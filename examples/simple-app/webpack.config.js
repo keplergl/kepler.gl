@@ -9,7 +9,7 @@ const webpack = require('webpack');
 const CONFIG = {
   // bundle app.js and everything it imports, recursively.
   entry: {
-    app: resolve('./src/app.js')
+    app: resolve('./src/main.js')
   },
 
   devtool: 'source-map',
@@ -21,20 +21,6 @@ const CONFIG = {
 
   module: {
     rules: [
-      // {
-      //   // Transpile ES6 to ES5 with buble
-      //   // Remove if your app does not use JSX or you don't need to support old browsers
-      //   test: /\.js$/,
-      //   loader: 'buble-loader',
-      //   exclude: [/node_modules/],
-      //   options: {
-      //     objectAssign: 'Object.assign', // Note: may need polyfill on old browsers
-      //     transforms: {
-      //       modules: false,      // Let Webpack take care of import/exports
-      //       dangerousForOf: true // Use for/of in spite of buble's limitations
-      //     }
-      //   }
-      // },
       {
         test: /\.js$/,
         loader: 'babel-loader',

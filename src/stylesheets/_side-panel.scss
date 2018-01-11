@@ -1,0 +1,22 @@
+$metric-table-heading-height: 60px;
+$side-nav-background-color: $uber-black-80;
+$side-panel-background-color: #232324;
+$side-panel-text-color: $uber-white-20;
+$side-panel-panel-text-color: $uber-white-20;
+$side-nav-width: 72px;
+$side-panel-width: 394px;
+
+$side-panel-title-height: 37px;
+$side-panel-logo-height: 59px;
+
+$app-header-height: 62px;
+$dark-panel-color: $uber-black-60;
+
+.link-btn {
+  span {
+    color: $uber-white;
+    &:hover {
+      color: $white;
+    }
+  }
+}

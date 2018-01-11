@@ -39,7 +39,16 @@ function makeLocalDevConfig(EXAMPLE_DIR = LIB_DIR) {
           // Unfortunately, webpack doesn't import library sourcemaps on its own...
           test: /\.js$/,
           use: ['source-map-loader'],
-          enforce: 'pre'
+          enforce: 'pre',
+          exclude: [
+            /node_modules\/react-palm/
+          ]
+        },
+        {
+          test: /\.scss$/,
+          // TODO: need to add postcss to replace the autoprefix-loader that is deprecated
+          use: ['style-loader', 'css-loader', 'sass-loader'],
+          include: [SRC_DIR]
         }
       ]
     },
@@ -52,10 +61,12 @@ function makeLocalDevConfig(EXAMPLE_DIR = LIB_DIR) {
 
 const BABEL_CONFIG = {
   presets: [
-    'es2015',
-    'stage-2',
-    'react'
-  ].map(name => require.resolve(`babel-preset-${name}`)),
+    ['es2015', {modules: false, loose: true}],
+    'react',
+    'stage-0',
+  ].map(name => Array.isArray(name) ?
+    [require.resolve(`babel-preset-${name[0]}`), name[1]] :
+    require.resolve(`babel-preset-${name}`)),
   plugins: [
     'transform-decorators-legacy', 'transform-runtime'
   ].map(name => require.resolve(`babel-plugin-${name}`))
@@ -100,19 +111,18 @@ function addBableSettings(config) {
 
 module.exports = (config, exampleDir) => env => {
   // npm run start-local now transpiles the lib
-  console.log(env)
-  if (env && env.local) {
-    config = addLocalDevSettings(config, exampleDir);
-    config = addBableSettings(config);
-    console.warn(JSON.stringify(config, null, 2));
-  }
+  //if (env && env.local) {
+  config = addLocalDevSettings(config, exampleDir);
+  config = addBableSettings(config);
+  console.warn(JSON.stringify(config, null, 2));
+  //}
 
   // npm run start-es6 does not transpile the lib
-  if (env && env.es6) {
-    config = addLocalDevSettings(config, exampleDir);
-    config = addBableSettings(config);
-    console.warn(JSON.stringify(config, null, 2));
-  }
+  // if (env && env.es6) {
+  //   config = addLocalDevSettings(config, exampleDir);
+  //   config = addBableSettings(config);
+  //   console.warn(JSON.stringify(config, null, 2));
+  // }
 
   return config;
 };

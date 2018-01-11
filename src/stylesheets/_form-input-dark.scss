@@ -1,0 +1,109 @@
+$input-dark-primary-background-color: $uber-black-80;
+$input-dark-primary-color: $uber-white-80;
+
+$input-dark-primary-disabled-background-color: $uber-black-90;
+$input-dark-primary-disabled-color: $uber-black-60;
+$input-dark-secondary-background-color: transparent;
+$input-dark-secondary-color: $uber-white-80;
+$input-dark-border-color-hover: $uber-black-40;
+$input-dark-border-color-focus: $uber-blue;
+
+//------- dark input ---------//
+
+%dark-input-primary {
+  background: $input-dark-primary-background-color;
+  border: 1px solid $input-dark-primary-background-color;
+  color: $input-dark-primary-color;
+}
+
+%dark-input-secondary {
+  background: $input-dark-secondary-background-color;
+  border: 1px solid $input-dark-primary-background-color;
+  color: $input-dark-secondary-color;
+}
+
+.text-input.text-input--borderless {
+  &.dark {
+    color: $input-dark-primary-color;
+
+    &:hover {
+      color: $uber-white-20;
+      border-color: transparent;
+    }
+
+    &:focus, &.focus {
+      color: $uber-white-20;
+      border: 0;
+      box-shadow: none;
+    }
+  }
+}
+
+.text-input--textarea, .text-input {
+  &.text-input--small {
+    padding: 4px 10px;
+  }
+}
+
+.btn.dark{
+  &[disabled] {
+    background-color: $uber-black-60;
+    border-color: $uber-black-60;
+    color: $uber-black-40;
+  }
+}
+
+.radio {
+  &.dark {
+    &:before {
+      @extend %dark-input-primary;
+    }
+  }
+
+  &.small {
+    padding-left: 26px;
+    margin-bottom: 8px;
+
+    &:before {
+      width: 16px;
+      height: 16px;
+    }
+
+    &:after {
+      width: 8px;
+      height: 8px;
+      top: 4px;
+      left: 4px;
+    }
+  }
+}
+
+.switch.switch--small {
+  padding: 0 0 0 30px;
+  line-height: 18px;
+}
+
+// slider
+.range-slider {
+  background-color: #3A414C;
+  height: 6px;
+  border-radius: 3px;
+
+  .range-slider__bar {
+    background-color: #A0A7B4;
+    border-radius: 3px;
+    height: 6px;
+  }
+
+  .range-slider__handle {
+    width: 14px;
+    height: 14px;
+    top: -4px;
+    .range-slider__handle__dot {
+      width: 50%;
+      height: 50%;
+      left: 25%;
+      top: 25%;
+    }
+  }
+}

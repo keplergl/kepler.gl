@@ -1,0 +1,62 @@
+/**
+ * Superfine variable overrides.
+ * If you wish to override the default Superfine settings, put them here.
+ */
+
+/**
+ * Superfine theme
+ * https://web-platform.uberinternal.com/docs/superfine#quick-start
+ */
+
+@import '../../node_modules/@uber/superfine/settings';
+
+/*
+ * TODO: add these global styles to styled-components
+ */
+*,
+*:before,
+*:after {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+}
+
+li {
+  margin: 0;
+}
+
+a {
+  text-decoration: none;
+}
+
+html {
+  font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
+  font-weight: 400;
+}
+/**
+ * Superfine Objects
+ * https://web-platform.uberinternal.com/docs/superfine-objects
+ */
+
+/**
+ * Third-party styles
+ */
+
+/**
+ * Project-specific UI styles
+ */
+@import 'side-panel';
+@import 'form-input-dark';
+
+.application {
+  overflow: hidden;
+}
+
+.mapboxgl-control-container {
+  display: none;
+}

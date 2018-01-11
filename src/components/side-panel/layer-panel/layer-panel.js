@@ -1,0 +1,102 @@
+import React from 'react';
+import classnames from 'classnames';
+
+import {ReactBaseComponent} from '../../../utils/react-utils';
+import LayerConfigurator from './layer-configurator';
+import {sortable} from 'react-anything-sortable';
+import LayerPanelItem from '../../common/layer-panel-item';
+import {DIMENSIONS} from '../../../constants/default-settings';
+
+const propTypes = {
+  layer: React.PropTypes.object.isRequired,
+  datasets: React.PropTypes.object.isRequired,
+  idx: React.PropTypes.number.isRequired,
+  panelWidth: React.PropTypes.number.isRequired,
+  layerConfigChange: React.PropTypes.func.isRequired,
+  layerTypeChange: React.PropTypes.func.isRequired,
+  openModal: React.PropTypes.func.isRequired,
+  removeLayer: React.PropTypes.func.isRequired,
+  onCloseConfig: React.PropTypes.func,
+
+  layerVisConfigChange: React.PropTypes.func,
+  layerVisualChannelConfigChange: React.PropTypes.func
+};
+
+@sortable
+export default class LayerPanel extends ReactBaseComponent {
+
+  updateLayerConfig(newProp) {
+    this.props.layerConfigChange(this.props.layer, newProp);
+  }
+
+  updateLayerType(newType) {
+    this.props.layerTypeChange(this.props.layer, newType);
+  }
+
+  updateLayerVisConfig(newVisConfig) {
+    this.props.layerVisConfigChange(this.props.layer, newVisConfig);
+  }
+
+  updateLayerVisualChannelConfig(newConfig, channel, scaleKey) {
+    this.props.layerVisualChannelConfigChange(this.props.layer, newConfig, channel, scaleKey);
+  }
+
+  _updateLayerLabel({target: {value}}) {
+    this.updateLayerConfig({label: value});
+  }
+
+  _toggleVisibility(e) {
+    e.stopPropagation();
+    const isVisible = !this.props.layer.config.isVisible;
+    this.updateLayerConfig({isVisible});
+  }
+
+  _toggleEnableConfig(event) {
+    event.stopPropagation();
+    const {layer: {config: {isConfigActive}}} = this.props;
+    this.updateLayerConfig({isConfigActive: !isConfigActive});
+  }
+
+  render() {
+    const {layer, idx, removeLayer, datasets, isAdding} = this.props;
+    const {config} = layer;
+    const {isConfigActive} = config;
+
+    return (
+      <div ref="container"
+           className={classnames(`layer-panel ${this.props.className}`, {active: isConfigActive})}
+           style={this.props.style}
+           onMouseDown={this.props.onMouseDown}
+           onTouchStart={this.props.onTouchStart}>
+        <LayerPanelItem
+          isConfigActive={isConfigActive}
+          id={layer.id}
+          idx={idx}
+          isVisible={config.isVisible}
+          label={config.label}
+          labelRCGColorValues={datasets[config.dataId].color}
+          onToggleEnableConfig={this._toggleEnableConfig}
+          onToggleVisibility={this._toggleVisibility}
+          onUpdateLayerLabel={this._updateLayerLabel}
+          removeLayer={removeLayer}
+        />
+        {isConfigActive &&
+          <LayerConfigurator
+            isAdding={isAdding}
+            layer={layer}
+            datasets={datasets}
+            openModal={this.props.openModal}
+            panelWidth={this.props.panelWidth - DIMENSIONS.layerPanelPadding * 2}
+            updateLayerConfig={this.updateLayerConfig}
+            updateLayerVisualChannelConfig={this.updateLayerVisualChannelConfig}
+            updateLayerType={this.updateLayerType}
+            updateLayerVisConfig={this.updateLayerVisConfig}
+          />
+        }
+      </div>
+    );
+  }
+}
+
+LayerPanel.propTypes = propTypes;
+LayerPanel.displayName = 'LayerPanel';

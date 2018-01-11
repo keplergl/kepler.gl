@@ -1,4 +1,15 @@
 dist/
-yarn-error.log
+build/
+dist-es6/
+dist-demo/
 node_modules/
-.idea/
+*/**/node_modules/
+coverage/
+.nyc_output/
+
+*/**/yarn.lock
+yarn-error.log
+package-lock.json
+
+.DS_Store
+.idea
