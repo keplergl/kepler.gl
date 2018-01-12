@@ -1,16 +1,17 @@
 import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import UploadButton from './upload-button';
 
-import {File, DragNDrop} from 'kepler.gl/components/common/icons';
-import {isChrome} from 'kepler.gl/utils/utils';
+import UploadButton from './upload-button';
+import {File, DragNDrop} from 'components/common/icons';
+import {isChrome} from 'utils/utils';
 
 // do not mount MapContainer in server side rendering
-const FileDrop = process.env.BROWSER ? require('react-file-drop') : null;
+import FileDrop from 'react-file-drop';
 
 const propTypes = {
-  onFileUpload: React.PropTypes.func.isRequired,
-  validFileExt: React.PropTypes.array
+  onFileUpload: PropTypes.func.isRequired,
+  validFileExt: PropTypes.array
 };
 
 // File.type is not reliable if the OS does not have a

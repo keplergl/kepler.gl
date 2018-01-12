@@ -217,7 +217,7 @@ class Typeahead extends Component {
     return this.state.searchResults[index];
   }
 
-  _onOptionSelected(option, event) {
+  _onOptionSelected = (option, event) => {
     if (this.props.searchable) {
       // reset entry input
       this.setState({
@@ -228,7 +228,7 @@ class Typeahead extends Component {
     }
 
     return this.props.onOptionSelected(option, event);
-  }
+  };
 
   // use () => {} to avoid binding 'this'
   _onTextEntryUpdated = () => {
@@ -312,13 +312,13 @@ class Typeahead extends Component {
     this.setState({selectionIndex: newIndex});
   }
 
-  navDown() {
+  navDown = () => {
     this._nav(1);
-  }
+  };
 
-  navUp() {
+  navUp = () => {
     this._nav(-1);
-  }
+  };
 
   _onChange = (event) => {
     if (this.props.onChange) {

@@ -4,6 +4,7 @@ import {ACTION_PREFIX} from './default-settings';
 const ActionTypes = keyMirror({
 
   // visState
+  ADD_DATA: null,
   ADD_FILTER: null,
   ADD_LAYER: null,
   INTERACTION_CONFIG_CHANGE: null,

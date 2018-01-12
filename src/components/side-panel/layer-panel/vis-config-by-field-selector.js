@@ -1,36 +1,36 @@
-import React from 'react';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 
-import {ReactBaseComponent} from '../../../utils/react-utils';
-
-import {PanelLabel, SidePanelSection} from '../../common/styled-components';
-import FieldSelector from '../../common/field-selector';
-import InfoHelper from '../../common/info-helper';
+import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
+import FieldSelector from 'components/common/field-selector';
+import InfoHelper from 'components/common/info-helper';
 import DimensionScaleSelector from './dimension-scale-selector';
+import {capitalizeFirstLetter} from 'utils/utils';
 
 const propTypes = {
-  channel: React.PropTypes.string.isRequired,
-  domain: React.PropTypes.array.isRequired,
-  fields: React.PropTypes.array.isRequired,
-  id: React.PropTypes.string.isRequired,
-  innerPanelWidth: React.PropTypes.number.isRequired,
-  property: React.PropTypes.string.isRequired,
-  range: React.PropTypes.any.isRequired,
-  scaleType: React.PropTypes.string.isRequired,
-  showScale: React.PropTypes.bool.isRequired,
-  updateField: React.PropTypes.func.isRequired,
-  updateScale: React.PropTypes.func.isRequired,
+  channel: PropTypes.string.isRequired,
+  domain: PropTypes.array.isRequired,
+  fields: PropTypes.array.isRequired,
+  id: PropTypes.string.isRequired,
+  innerPanelWidth: PropTypes.number.isRequired,
+  property: PropTypes.string.isRequired,
+  range: PropTypes.any.isRequired,
+  scaleType: PropTypes.string.isRequired,
+  showScale: PropTypes.bool.isRequired,
+  updateField: PropTypes.func.isRequired,
+  updateScale: PropTypes.func.isRequired,
 
   // optional
-  selectedField: React.PropTypes.object,
-  description: React.PropTypes.string,
-  label: React.PropTypes.string
+  selectedField: PropTypes.object,
+  description: PropTypes.string,
+  label: PropTypes.string
 };
 
-export default class VisConfigByFieldSelector extends ReactBaseComponent {
+export default class VisConfigByFieldSelector extends Component {
 
-  _updateVisByField(val) {
+  _updateVisByField = (val) => {
     this.props.updateField(val);
-  }
+  };
 
   render() {
     const {property, showScale, selectedField, description, scaleOptions = []} = this.props;
@@ -39,7 +39,7 @@ export default class VisConfigByFieldSelector extends ReactBaseComponent {
       <SidePanelSection>
         <div>
           <PanelLabel>{this.props.label ||
-          `${property.capitalizeFirstLetter()} based on`}</PanelLabel>
+          `${capitalizeFirstLetter(property)} based on`}</PanelLabel>
           {description && <InfoHelper
             description={description} id={`${this.props.id}-${property}`}
           />}

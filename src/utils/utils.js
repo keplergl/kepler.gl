@@ -9,13 +9,6 @@ export function generateHashId(count) {
   return Math.random().toString(36).substr(count);
 }
 
-export function padNumber(n) {
-  if (isNaN(n) || n === null) {
-    return '';
-  }
-  return n < 10 ? `0${n}` : n.toString();
-}
-
 /**
  * Detect chrome
  * @returns {boolean} - yes or no
@@ -39,4 +32,8 @@ export function isPlainObject(obj) {
  */
 export function notNullorUndefined(d) {
   return d !== undefined && d !== null;
+}
+
+export function capitalizeFirstLetter(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }

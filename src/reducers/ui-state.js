@@ -18,7 +18,7 @@ export const INITIAL_UI_STATE = {
 };
 
 /* Transition Functions */
-const onToggleSidePanel = (state, {payload: id}) => {
+export const onToggleSidePanel = (state, {payload: id}) => {
   if (id === state.activeSidePanel) {
     return state;
   }
@@ -38,18 +38,18 @@ const onToggleSidePanel = (state, {payload: id}) => {
   };
 };
 
-const onToggleModal = (state, {payload: id}) => ({
+export const onToggleModal = (state, {payload: id}) => ({
   ...state,
   currentModal: id
 });
 
-const onOpenDeleteModal = (state, {payload: datasetKeyToRemove}) => ({
+export const onOpenDeleteModal = (state, {payload: datasetKeyToRemove}) => ({
   ...state,
   currentModal: DELETE_DATA_ID,
   datasetKeyToRemove
 });
 
-const closeAddDataModel = (state) => ({
+export const closeAddDataModel = (state) => ({
   ...state,
   currentModal: false // we always set to false since we show the dialog at the beginning
 });

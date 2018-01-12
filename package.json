@@ -26,7 +26,8 @@
     "build-clean": "rm -rf ./dist && mkdir dist",
     "build-static": "cp -r ./src/static/* dist && cp index.html dist",
     "build-script": "webpack -p --env.prod",
-    "build": "npm run build-clean && npm run build-static && npm run build-script"
+    "build": "npm run build-clean && npm run build-static && npm run build-script",
+    "lint": "eslint . --ignore-path=.gitignore"
   },
   "dependencies": {
     "@mapbox/geo-viewport": "^0.2.2",

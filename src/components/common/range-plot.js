@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {Component} from 'react';
 import {scaleLinear} from 'd3-scale';
 import moment from 'moment';
 import {max} from 'd3-array';
@@ -8,7 +8,6 @@ import styled from 'styled-components';
 
 import {COLORS} from '../../styles/styles';
 import RangeBrush from './range-brush';
-import {ReactBaseComponent} from '../../utils/react-utils';
 import {getTimeWidgetHintFormatter} from '../../utils/filter-utils';
 
 const propTypes = {
@@ -25,7 +24,7 @@ const chartMargin = {top: 18, bottom: 0, left: 0, right: 0};
 const chartH = 52;
 const containerH = 78;
 
-export default class RangePlot extends ReactBaseComponent {
+export default class RangePlot extends Component {
   domainSelector = props => props.lineChart && props.lineChart.xDomain;
   hintFormatter = createSelector(
     this.domainSelector,
@@ -36,9 +35,9 @@ export default class RangePlot extends ReactBaseComponent {
     hoveredDP: null
   };
 
-  onMouseMove(hoveredDP) {
+  onMouseMove = (hoveredDP) => {
     this.setState({hoveredDP});
-  }
+  };
 
   render() {
     const {onBrush, range, value, width, plotType, lineChart, histogram} = this.props;

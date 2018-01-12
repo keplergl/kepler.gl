@@ -1,8 +1,8 @@
 // libraries
-import React from 'react';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import MapboxGLMap from 'react-map-gl';
 import geoViewport from '@mapbox/geo-viewport';
-
 import DeckGL from 'deck.gl';
 import {GL} from 'luma.gl';
 import throttle from 'lodash.throttle';
@@ -18,11 +18,11 @@ import {PolygonLayer} from 'deck.gl';
 import {
   MAPBOX_ACCESS_TOKEN,
   LAYER_BLENDINGS
-} from '../constants/default-settings';
+} from 'constants/default-settings';
 
 // utils
-import {getLightSettingsFromBounds} from '../utils/layer-utils/layer-utils';
-import {ReactBaseComponent} from '../utils/react-utils';
+import {getLightSettingsFromBounds} from 'utils/layer-utils/layer-utils';
+import {ReactBaseComponent} from 'utils/react-utils';
 
 const MAP_STYLE = {
   container: {
@@ -36,22 +36,22 @@ const getGlConst = d => GL[d];
 
 const propTypes = {
   // required
-  data: React.PropTypes.array.isRequired,
-  fields: React.PropTypes.array.isRequired,
-  interactionConfig: React.PropTypes.object.isRequired,
-  layerBlending: React.PropTypes.string.isRequired,
-  layerData: React.PropTypes.array.isRequired,
-  layers: React.PropTypes.array.isRequired,
-  mapState: React.PropTypes.object.isRequired,
-  mapStyle: React.PropTypes.object.isRequired,
-  popoverOffset: React.PropTypes.object.isRequired,
+  data: PropTypes.array.isRequired,
+  fields: PropTypes.array.isRequired,
+  interactionConfig: PropTypes.object.isRequired,
+  layerBlending: PropTypes.string.isRequired,
+  layerData: PropTypes.array.isRequired,
+  layers: PropTypes.array.isRequired,
+  mapState: PropTypes.object.isRequired,
+  mapStyle: PropTypes.object.isRequired,
+  popoverOffset: PropTypes.object.isRequired,
 
   // optional
   mapLayers: React.PropTypes.object,
   onMapToggleLayer: React.PropTypes.func
 };
 
-export default class MapContainer extends ReactBaseComponent {
+export default class MapContainer extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -95,17 +95,17 @@ export default class MapContainer extends ReactBaseComponent {
 
   /* component private functions */
 
-  _onCloseMapPopover() {
+  _onCloseMapPopover = () => {
     this.props.visStateActions.onLayerClick(null);
-  }
+  };
 
-  _onLayerSetDomain(idx, colorDomain) {
+  _onLayerSetDomain = (idx, colorDomain) => {
     this.props.visStateActions.layerConfigChange(
       this.props.layers[idx], {colorDomain}
     );
-  }
+  };
 
-  _onWebGLInitialized(gl) {
+  _onWebGLInitialized = (gl) => {
     // enable depth test for perspective mode
     if (this.props.mapState.dragRotate) {
       gl.enable(gl.DEPTH_TEST);
@@ -120,15 +120,15 @@ export default class MapContainer extends ReactBaseComponent {
     this._togglelayerBlending(gl);
 
     this.setState({gl});
-  }
+  };
 
-  _onMouseMove(evt) {
+  _onMouseMove = evt => {
     const {interactionConfig: {brush}} = this.props;
 
     if (evt.nativeEvent && brush.enabled) {
       this.setState({mousePosition: [evt.nativeEvent.offsetX, evt.nativeEvent.offsetY]});
     }
-  }
+  };
 
   _handleMapToggleLayer = (layerId) => {
     const {index: mapIndex = 0, visStateActions} = this.props;
@@ -138,7 +138,7 @@ export default class MapContainer extends ReactBaseComponent {
   /* deck.gl doesn't support blendFuncSeparate yet
    * so we're applying the blending ourselves
   */
-  _togglelayerBlending(gl) {
+  _togglelayerBlending = (gl) => {
     const blending = LAYER_BLENDINGS[this.props.layerBlending];
     const {
       enable,
@@ -245,7 +245,7 @@ export default class MapContainer extends ReactBaseComponent {
     return layer.shouldRenderLayer(data) && isAvailableAndVisible;
   }
 
-  _renderLayer(overlays, idx) {
+  _renderLayer = (overlays, idx) => {
     const {
       layers, layerData, hoverInfo, clicked,
       mapLayers, mapState, visStateActions,

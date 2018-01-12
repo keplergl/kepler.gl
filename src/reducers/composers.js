@@ -1,5 +1,6 @@
-import ActionTypes from '../constants/action-types';
+import ActionTypes from 'constants/action-types';
 import {fitMapBounds} from './map-state';
+import {closeAddDataModel} from './ui-state';
 import {receiveVisData} from './vis-state-updaters';
 
 // compose action to apply result multiple reducers, with the output of one
@@ -17,7 +18,8 @@ const updateVisDataComposed = (state, action) => {
     visState,
     mapState: bounds ? fitMapBounds(state.mapState, {
       payload: bounds
-    }) : state.mapState
+    }) : state.mapState,
+    uiState: closeAddDataModel(state.uiState)
   };
 };
 

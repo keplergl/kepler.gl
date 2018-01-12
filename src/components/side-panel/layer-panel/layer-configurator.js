@@ -1,41 +1,44 @@
-import React from 'react';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import {rgb} from 'd3-color';
 import {Switch} from '@uber/react-switch';
 
-import {ReactBaseComponent} from '../../../utils/react-utils';
+import RangeSlider from 'components/common/range-slider';
+import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
+import InfoHelper from 'components/common/info-helper';
+import ItemSelector from 'components/common/item-selector/item-selector';
 
-import ColorSingleSelector from './color-single-selector';
-import RangeSlider from '../../common/range-slider';
 import VisConfigByFieldSelector from './vis-config-by-field-selector';
 import LayerColumnConfig from './layer-column-config';
 import ColorRangeSelector from './color-range-selector';
 import DimensionScaleSelector from './dimension-scale-selector';
-import InfoHelper from '../../common/info-helper';
+import ColorSingleSelector from './color-single-selector';
 import SourceDataSelector from '../source-data-selector';
-import {PanelLabel, SidePanelSection} from '../../common/styled-components';
-import ItemSelector from '../../common/item-selector/item-selector';
 
-import {LAYER_VIS_CONFIGS} from '../../../keplergl-layers/layer-factory';
-import {hexToRgb} from '../../../utils/color-utils';
+
+import {LAYER_VIS_CONFIGS} from 'keplergl-layers/layer-factory';
+
+import {capitalizeFirstLetter} from 'utils/utils';
+import {hexToRgb} from 'utils/color-utils';
 
 import {
   FIELD_OPTS,
   LAYER_TYPES,
   CHANNEL_SCALE_SUPPORTED_FIELDS
-} from '../../../constants/default-settings';
+} from 'constants/default-settings';
 
 const propTypes = {
-  layer: React.PropTypes.object.isRequired,
-  datasets: React.PropTypes.object.isRequired,
-  openModal: React.PropTypes.func.isRequired,
-  panelWidth: React.PropTypes.number.isRequired,
-  updateLayerConfig: React.PropTypes.func.isRequired,
-  updateLayerType: React.PropTypes.func.isRequired,
-  updateLayerVisConfig: React.PropTypes.func.isRequired,
-  updateLayerVisualChannelConfig: React.PropTypes.func.isRequired
+  layer: PropTypes.object.isRequired,
+  datasets: PropTypes.object.isRequired,
+  openModal: PropTypes.func.isRequired,
+  panelWidth: PropTypes.number.isRequired,
+  updateLayerConfig: PropTypes.func.isRequired,
+  updateLayerType: PropTypes.func.isRequired,
+  updateLayerVisConfig: PropTypes.func.isRequired,
+  updateLayerVisualChannelConfig: PropTypes.func.isRequired
 };
 
-export default class LayerConfigurator extends ReactBaseComponent {
+export default class LayerConfigurator extends Component {
 
   _renderPointLayerConfig(props) {
     return this._renderScatterplotLayerConfig(props);
@@ -425,7 +428,7 @@ export default class LayerConfigurator extends ReactBaseComponent {
     };
 
     const renderTemplate = layer.type &&
-      `_render${layer.type.capitalizeFirstLetter()}LayerConfig`;
+      `_render${capitalizeFirstLetter(layer.type)}LayerConfig`;
 
     return (
       <div className="soft-tiny layer-panel__config">
@@ -454,14 +457,13 @@ export default class LayerConfigurator extends ReactBaseComponent {
 }
 
 LayerConfigurator.propTypes = propTypes;
-LayerConfigurator.displayName = 'LayerConfigurator';
 
 /*
  * Componentize config component into pure functional components
  */
 const VisConfigSwitch = ({layer: {id, config}, property, onChange, label, description, disabled}) => (
   <SidePanelSection disabled={Boolean(disabled)}>
-    <PanelLabel>{label || property.capitalizeFirstLetter()}</PanelLabel>
+    <PanelLabel>{label || capitalizeFirstLetter(property)}</PanelLabel>
     {description ? <div className="display--inline-block">
       <InfoHelper description={description} id={`${id}-${property}`}/>
     </div> : null}
@@ -484,7 +486,7 @@ export const VisConfigSlider = ({layer: {config}, property, label, range, step, 
   <SidePanelSection disabled={Boolean(disabled)}>
     <PanelLabel>{typeof label === 'string' ? label :
       typeof label === 'function' ? label(config) :
-      property.capitalizeFirstLetter()}</PanelLabel>
+      capitalizeFirstLetter(property)}</PanelLabel>
     <RangeSlider
       minValue={range[0]}
       maxValue={range[1]}

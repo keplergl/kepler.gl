@@ -5,11 +5,11 @@ import {connect as keplerGlConnect} from '../connect/keplergl-connect';
 
 import {ThemeProvider} from 'styled-components';
 
-import * as VisStateActions from '../actions/vis-state-actions';
-import * as MapStateActions from '../actions/map-state-actions';
-import * as MapStyleActions from '../actions/map-style-actions';
-import * as BuildingDataActions from '../actions/building-data-actions';
-import * as UIStateActions from '../actions/ui-state-actions';
+import * as VisStateActions from 'actions/vis-state-actions';
+import * as MapStateActions from 'actions/map-state-actions';
+import * as MapStyleActions from 'actions/map-style-actions';
+import * as BuildingDataActions from 'actions/building-data-actions';
+import * as UIStateActions from 'actions/ui-state-actions';
 
 import {DIMENSIONS} from '../constants/default-settings';
 

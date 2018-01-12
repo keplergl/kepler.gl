@@ -99,7 +99,7 @@ class ModalDialog extends Component {
           overlay: {
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
             zIndex: 10000,
-            overflowY: 'scroll',
+            overflowY: 'auto',
             position: 'absolute'
           }
         }}
@@ -122,7 +122,6 @@ class ModalDialog extends Component {
 const StyledModal = styled(ModalDialog)`
   width: 100%;
   height: 100%;
-  overflow-y: scroll;
   top: 0;
   left: 0;
   z-index: 10000;

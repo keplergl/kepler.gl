@@ -144,6 +144,7 @@ class FilterPanel extends Component {
             <FieldSelector
               fields={allAvailableFields}
               value={name}
+              erasable={false}
               onSelect={value => setFilter(idx, 'name', value.name)}
             />
           </div>

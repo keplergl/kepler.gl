@@ -1,16 +1,17 @@
-import React from 'react';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import uniq from 'lodash.uniq';
 import classnames from 'classnames';
-
 import {Switch} from '@uber/react-switch';
 import {Accordion, StatefulAccordionItem} from '@uber/react-accordion';
-import {PanelLabel} from '../../common/styled-components';
-import RangeSlider from '../../common/range-slider';
 
+import {PanelLabel} from 'components/common/styled-components';
+import RangeSlider from 'components/common/range-slider';
 import ColorRangePalette from './color-range-palette';
-import {ReactBaseComponent} from '../../../utils/react-utils';
 
-import {COLOR_RANGES} from '../../../constants/color-ranges';
+import {COLOR_RANGES} from 'constants/color-ranges';
+import {capitalizeFirstLetter} from 'utils/utils';
+
 const PALETTE_HEIGHT = 12;
 
 const ALL_COLORS = COLOR_RANGES
@@ -20,12 +21,12 @@ const ALL_TYPES = uniq(ALL_COLORS.map(c => c.type).concat(['all']));
 const ALL_STEPS = uniq(ALL_COLORS.map(d => d.colors.length));
 
 const propTypes = {
-  width: React.PropTypes.number.isRequired,
-  selectedColorRange: React.PropTypes.object.isRequired,
-  onSelectColorRange: React.PropTypes.func.isRequired
+  width: PropTypes.number.isRequired,
+  selectedColorRange: PropTypes.object.isRequired,
+  onSelectColorRange: PropTypes.func.isRequired
 };
 
-export default class ColorRangeSelect extends ReactBaseComponent {
+export default class ColorRangeSelect extends Component {
   state = {
     configs: {
       Uber: {
@@ -54,7 +55,7 @@ export default class ColorRangeSelect extends ReactBaseComponent {
     }
   };
 
-  _updateConfig({category, key, value}) {
+  _updateConfig = ({category, key, value}) => {
     const currentValue = this.state.configs[category][key].value;
     if (value !== currentValue) {
       this.setState({
@@ -70,7 +71,7 @@ export default class ColorRangeSelect extends ReactBaseComponent {
         }
       });
     }
-  }
+  };
 
   _renderPaletteConfig(category) {
     const config = this.state.configs[category];
@@ -95,12 +96,12 @@ export default class ColorRangeSelect extends ReactBaseComponent {
       <StatefulAccordionItem
         linkText={category}>
         {this._renderPaletteConfig(category)}
-        {ColorPalette({
-          category,
-          config: this.state.configs[category],
-          width,
-          onSelect: this.props.onSelectColorRange,
-          selected: this.props.selectedColorRange})}
+        <ColorPalette
+          category={category}
+          config={this.state.configs[category]}
+          width={width}
+          onSelect={this.props.onSelectColorRange}
+          selected={this.props.selectedColorRange}/>
       </StatefulAccordionItem>
     );
   }
@@ -138,7 +139,7 @@ const PaletteConfig = ({category, label, config: {type, value, options}, onChang
                     onChange={({target}) => onChange(target.value)}>
               {options.map(option =>
                 <option value={option} key={option}>
-                  {typeof option === 'string' ? option.capitalizeFirstLetter() : option}</option>
+                  {typeof option === 'string' ? capitalizeFirstLetter(option) : option}</option>
               )}
             </select>
           </div>}

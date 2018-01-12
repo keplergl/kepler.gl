@@ -1,8 +1,9 @@
 import React from 'react';
 import styled from 'styled-components';
 import {rgb} from 'd3-color';
-import ColorLegend from './common/color-legend';
-import {DIMENSIONS} from '../constants/default-settings';
+import ColorLegend from 'components/common/color-legend';
+import {DIMENSIONS} from 'constants/default-settings';
+import {capitalizeFirstLetter} from 'utils/utils';
 
 const StyledMapControlLegend = styled.div`
   padding: 10px ${props => props.theme.mapControlPadding}px;
@@ -67,7 +68,7 @@ const MapLegend = ({layers}) => (
           last={index === layers.length - 1}
           key={index}>
           <div className="legend--layer_name">{layer.config.label}</div>
-          <div className="legend--layer_type">{`${layer.type.capitalizeFirstLetter()} color`}</div>
+          <div className="legend--layer_type">{`${capitalizeFirstLetter(layer.type)} color`}</div>
           <div className="legend--layer_color-schema">
             <div>
               {enableColorBy ? <VisualChannelMetric name={enableColorBy}/> : null}

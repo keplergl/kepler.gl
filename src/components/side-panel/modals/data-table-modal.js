@@ -5,12 +5,11 @@ import {navigator} from 'global';
 import {ALL_FIELD_TYPES} from '../../../constants/default-settings';
 import FieldToken from '../../common/field-token';
 import {Clock} from '../../common/icons';
-const ReactDataGrid = process.env.BROWSER
-  ? require('react-data-grid') : null;
+import ReactDataGrid from 'react-data-grid';
 
 let shouldPreventScrollBack = false;
 
-if (process.env.BROWSER) {
+if (window.navigator && window.navigator.userAgent) {
 // Detect browsers
 // http://stackoverflow.com/questions/5899783/detect-safari-using-jquery
   const isMac = navigator.userAgent.match(/Macintosh/);
@@ -22,6 +21,10 @@ if (process.env.BROWSER) {
   shouldPreventScrollBack = isMac && (is_chrome || is_safari || is_firefox);
 }
 
+export function isChrome() {
+  // Chrome 1+
+  return window.chrome && window.chrome.webstore;
+}
 const dgSettings = {
   sidePadding: '38px'
 };

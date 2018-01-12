@@ -1,45 +1,39 @@
 import React from 'react';
-import r from 'r-dom';
-
-import {ReactBaseComponent} from '../../../utils/react-utils';
+import PropTypes from 'prop-types';
 
 const propTypes = {
-  width: React.PropTypes.number.isRequired,
-  height: React.PropTypes.number.isRequired,
-  colors: React.PropTypes.array.isRequired,
-  className: React.PropTypes.string,
-  style: React.PropTypes.object
+  width: PropTypes.number.isRequired,
+  height: PropTypes.number.isRequired,
+  colors: PropTypes.array.isRequired,
+  className: PropTypes.string,
+  style: PropTypes.object
 };
 
-export default class ColorRangePalette extends ReactBaseComponent {
-
-  render() {
-    const {colors, width, height, className} = this.props;
-    const bandWidth = width / colors.length;
-    const style = {...this.props.style, width, height};
-
-    return r.svg({style, className}, [
-      colors.map((color, i) => (
-        r.rect({
-          width: bandWidth,
-          height,
-          x: bandWidth * i,
-          style: {fill: color, stroke: 'none'}
-        })
-      )).concat(r.rect({
-        x: 0.5,
-        y: 0.5,
-        width: width - 1.5,
-        height: height - 1.5,
-        style: {
-          stroke: 'none',
-          fill: 'none',
-          strokeWidth: 1.5
-        }
-      }))
-    ]);
-  }
-}
+const ColorRangePalette = ({colors, width, height, className, style}) => (
+  <svg style={{...style, width, height}} className={className}>
+    {colors.map((color, i) => (
+      <rect
+        key={i}
+        width={width / colors.length}
+        height={height}
+        x={width / colors.length * i}
+        style={{fill: color, stroke: 'none'}}
+      />
+    )).concat(<rect
+      x="0.5"
+      y="0.5"
+      key="selected"
+      width={width - 1.5}
+      height={height - 1.5}
+      style={{
+        stroke: 'none',
+        fill: 'none',
+        strokeWidth: 1.5
+      }}/>)
+    }
+  </svg>
+);
 
 ColorRangePalette.propTypes = propTypes;
-ColorRangePalette.displayName = 'ColorRangePalette';
+
+export default ColorRangePalette;

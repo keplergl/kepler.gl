@@ -68,8 +68,12 @@ const BABEL_CONFIG = {
     [require.resolve(`babel-preset-${name[0]}`), name[1]] :
     require.resolve(`babel-preset-${name}`)),
   plugins: [
-    'transform-decorators-legacy', 'transform-runtime'
-  ].map(name => require.resolve(`babel-plugin-${name}`))
+    'transform-decorators-legacy',
+    'transform-runtime',
+    ['module-resolver', {root: [SRC_DIR]}]
+  ].map(name => Array.isArray(name) ?
+    [require.resolve(`babel-plugin-${name[0]}`), name[1]] :
+    require.resolve(`babel-plugin-${name}`))
 };
 
 const BABEL_RULE = {

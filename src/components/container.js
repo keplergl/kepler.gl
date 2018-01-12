@@ -3,12 +3,12 @@ import {connect} from 'react-redux'
 import memoize from 'lodash.memoize';
 
 import KeplerGl from './kepler-gl';
-import {forwardTo} from '../actions/action-wrapper';
+import {forwardTo} from 'actions/action-wrapper';
 
 import {
   registerEntry,
   deleteEntry
-} from '../actions/identity-actions';
+} from 'actions/identity-actions';
 
 // default id and address if not provided
 const defaultProps = {

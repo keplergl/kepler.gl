@@ -1,32 +1,31 @@
-import React from 'react';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import classnames from 'classnames';
-
 import {Switch} from '@uber/react-switch';
-import {ReactBaseComponent} from '../../../utils/react-utils';
-import RangeSlider from '../../common/range-slider';
+import RangeSlider from 'components/common/range-slider';
+import FieldSelector from 'components/common/field-selector';
+import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
 import {DatasetTag} from '../source-data-catalog';
-import FieldSelector from '../../common/field-selector';
-import {PanelLabel, SidePanelSection} from '../../common/styled-components';
 
 const propTypes = {
-  datasets: React.PropTypes.object.isRequired,
-  config: React.PropTypes.object.isRequired,
-  onConfigChange: React.PropTypes.func.isRequired
+  datasets: PropTypes.object.isRequired,
+  config: PropTypes.object.isRequired,
+  onConfigChange: PropTypes.func.isRequired
 };
 
-export default class InteractionPanel extends ReactBaseComponent {
+export default class InteractionPanel extends Component {
   state = {isConfigActive: false};
 
-  _updateConfig(newProp) {
+  _updateConfig = (newProp) => {
     this.props.onConfigChange({
       ...this.props.config,
       ...newProp
     });
-  }
+  };
 
-  _enableConfig() {
+  _enableConfig = () => {
     this.setState({isConfigActive: !this.state.isConfigActive});
-  }
+  };
 
   render() {
     const {config, datasets} = this.props;

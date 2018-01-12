@@ -1,7 +1,7 @@
-import React from 'react';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import {scaleBand} from 'd3-scale';
 import {range} from 'd3-array';
-import {ReactBaseComponent} from '../../../utils/react-utils';
 
 // TODO: remove uber colors, replace with generic color schemes
 import {ColorsByTheme, Themes} from '../../../constants/uber-colors';
@@ -13,17 +13,17 @@ const PALLETE_HEIGHT = 8;
 const PADDING = 6;
 
 const propTypes = {
-  width: React.PropTypes.number.isRequired,
-  setColor: React.PropTypes.func.isRequired,
-  selectedColor: React.PropTypes.string.isRequired
+  width: PropTypes.number.isRequired,
+  setColor: PropTypes.func.isRequired,
+  selectedColor: PropTypes.string.isRequired
 };
 
-export default class ColorSingleSelect extends ReactBaseComponent {
+export default class ColorSingleSelect extends Component {
 
-  _onSelectColor(color, e) {
+  _onSelectColor = (color, e) => {
     e.stopPropagation();
     this.props.setColor(color);
-  }
+  };
 
   render() {
     const {width, selectedColor} = this.props;

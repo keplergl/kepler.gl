@@ -1,6 +1,6 @@
-const React = require('react');
-const PropTypes = require('prop-types');
-const Base = require('./base');
+import React from 'react';
+import PropTypes from 'prop-types';
+import Base from './base';
 
 const ArrowRight = React.createClass({
   displayName: 'ArrowRight',
@@ -11,7 +11,6 @@ const ArrowRight = React.createClass({
   getDefaultProps() {
     return {
       height: null,
-      size: 'tiny',
       predefinedClassName: 'data-ex-icons-arrowright'
     };
   },
