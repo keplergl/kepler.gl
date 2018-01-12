@@ -1,29 +1,29 @@
-import React from 'react';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import classnames from 'classnames';
-
-import {ReactBaseComponent} from '../../../utils/react-utils';
-import LayerConfigurator from './layer-configurator';
 import {sortable} from 'react-anything-sortable';
-import LayerPanelItem from '../../common/layer-panel-item';
-import {DIMENSIONS} from '../../../constants/default-settings';
+
+import LayerConfigurator from './layer-configurator';
+import LayerPanelItem from 'components/common/layer-panel-item';
+import {DIMENSIONS} from 'constants/default-settings';
 
 const propTypes = {
-  layer: React.PropTypes.object.isRequired,
-  datasets: React.PropTypes.object.isRequired,
-  idx: React.PropTypes.number.isRequired,
-  panelWidth: React.PropTypes.number.isRequired,
-  layerConfigChange: React.PropTypes.func.isRequired,
-  layerTypeChange: React.PropTypes.func.isRequired,
-  openModal: React.PropTypes.func.isRequired,
-  removeLayer: React.PropTypes.func.isRequired,
-  onCloseConfig: React.PropTypes.func,
+  layer: PropTypes.object.isRequired,
+  datasets: PropTypes.object.isRequired,
+  idx: PropTypes.number.isRequired,
+  panelWidth: PropTypes.number.isRequired,
+  layerConfigChange: PropTypes.func.isRequired,
+  layerTypeChange: PropTypes.func.isRequired,
+  openModal: PropTypes.func.isRequired,
+  removeLayer: PropTypes.func.isRequired,
+  onCloseConfig: PropTypes.func,
 
-  layerVisConfigChange: React.PropTypes.func,
-  layerVisualChannelConfigChange: React.PropTypes.func
+  layerVisConfigChange: PropTypes.func,
+  layerVisualChannelConfigChange: PropTypes.func
 };
 
 @sortable
-export default class LayerPanel extends ReactBaseComponent {
+export default class LayerPanel extends Component {
 
   updateLayerConfig(newProp) {
     this.props.layerConfigChange(this.props.layer, newProp);
@@ -41,21 +41,21 @@ export default class LayerPanel extends ReactBaseComponent {
     this.props.layerVisualChannelConfigChange(this.props.layer, newConfig, channel, scaleKey);
   }
 
-  _updateLayerLabel({target: {value}}) {
+  _updateLayerLabel = ({target: {value}}) => {
     this.updateLayerConfig({label: value});
-  }
+  };
 
-  _toggleVisibility(e) {
+  _toggleVisibility = (e) => {
     e.stopPropagation();
     const isVisible = !this.props.layer.config.isVisible;
     this.updateLayerConfig({isVisible});
-  }
+  };
 
-  _toggleEnableConfig(event) {
+  _toggleEnableConfig = (event) => {
     event.stopPropagation();
     const {layer: {config: {isConfigActive}}} = this.props;
     this.updateLayerConfig({isConfigActive: !isConfigActive});
-  }
+  };
 
   render() {
     const {layer, idx, removeLayer, datasets, isAdding} = this.props;

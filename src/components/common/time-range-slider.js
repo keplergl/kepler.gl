@@ -1,4 +1,5 @@
-import React from 'react';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import moment from 'moment';
 import {requestAnimationFrame, cancelAnimationFrame} from 'global/window';
 import classnames from 'classnames';
@@ -6,30 +7,28 @@ import throttle from 'lodash.throttle';
 import styled from 'styled-components';
 import {createSelector} from 'reselect';
 
-import {ReactBaseComponent} from '../../utils/react-utils';
-
-import {SelectTextBold, Button} from '../common/styled-components';
-import {getTimeWidgetTitleFormatter} from '../../utils/filter-utils';
+import {SelectTextBold, Button} from 'components/common/styled-components';
+import {getTimeWidgetTitleFormatter} from 'utils/filter-utils';
 
 import RangeSlider from './range-slider';
 import TimeSliderMarker from './time-slider-marker';
 
 const propTypes = {
-  onChange: React.PropTypes.func.isRequired,
-  domain: React.PropTypes.array.isRequired,
-  value: React.PropTypes.array.isRequired,
-  step: React.PropTypes.number.isRequired,
-  plotType: React.PropTypes.string,
-  histogram: React.PropTypes.array,
-  lineChart: React.PropTypes.object,
-  toggleAnimation: React.PropTypes.func.isRequired,
-  isAnimatable: React.PropTypes.bool,
-  isEnlarged: React.PropTypes.bool
+  onChange: PropTypes.func.isRequired,
+  domain: PropTypes.array.isRequired,
+  value: PropTypes.array.isRequired,
+  step: PropTypes.number.isRequired,
+  plotType: PropTypes.string,
+  histogram: PropTypes.array,
+  lineChart: PropTypes.object,
+  toggleAnimation: PropTypes.func.isRequired,
+  isAnimatable: PropTypes.bool,
+  isEnlarged: PropTypes.bool
 };
 
 const defaultTimeFormat = val => moment.utc(val).format('MM/DD/YY hh:mma');
 
-export default class TimeRangeSlider extends ReactBaseComponent {
+export default class TimeRangeSlider extends Component {
   domainSelector = props => props.domain;
   titleFormatter = createSelector(
     this.domainSelector,
@@ -53,15 +52,15 @@ export default class TimeRangeSlider extends ReactBaseComponent {
 
   componentDidUpdate() {
     if (!this._animation && this.state.isAnimating) {
-      this._animation = requestAnimationFrame(this._nextFrame.bind(this));
+      this._animation = requestAnimationFrame(this._nextFrame);
     }
     this._resize();
   }
 
-  _sliderUpdate(args) {
+  _sliderUpdate = (args) => {
     this._sliderThrottle.cancel();
     this._sliderThrottle(args);
-  }
+  };
 
   _resize() {
     const width = this.props.isEnlarged ? this.refs.sliderContainer.offsetWidth : 288;
@@ -70,32 +69,32 @@ export default class TimeRangeSlider extends ReactBaseComponent {
     }
   }
 
-  _startAnimation() {
+  _startAnimation = () => {
     this._pauseAnimation();
     this.props.toggleAnimation();
     this.setState({isAnimating: true});
-  }
+  };
 
-  _pauseAnimation() {
+  _pauseAnimation = () => {
     if (this._animation) {
       cancelAnimationFrame(this._animation);
       this.props.toggleAnimation();
       this._animation = null;
     }
     this.setState({isAnimating: false});
-  }
+  };
 
-  _increaseAnimationSpeed() {
+  _increaseAnimationSpeed = () => {
     this._animationSpeed = Math.round(this._animationSpeed *
       Math.pow(0.75, 1));
-  }
+  };
 
-  _reduceAnimationSpeed() {
+  _reduceAnimationSpeed = () => {
     this._animationSpeed = Math.round(this._animationSpeed *
       Math.pow(0.75, -1));
-  }
+  };
 
-  _nextFrame() {
+  _nextFrame = () => {
     this._animation = null;
 
     const {domain, value} = this.props;
@@ -106,7 +105,7 @@ export default class TimeRangeSlider extends ReactBaseComponent {
     value[0] + speed;
     const value1 = value0 + value[1] - value[0];
     this.props.onChange([value0, value1]);
-  }
+  };
 
   render() {
     const {domain, value, isEnlarged} = this.props;

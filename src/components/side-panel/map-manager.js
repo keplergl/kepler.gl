@@ -1,50 +1,47 @@
 /** @jsx createElement */
 import createElement from 'react-stylematic';
 
-import React from 'react';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import {rgb} from 'd3-color';
 import {Switch} from '@uber/react-switch';
 import classnames from 'classnames';
 
-import InfoHelper from '../common/info-helper';
-import {PanelLabel, Tooltip} from '../common/styled-components';
-
-import {ReactBaseComponent} from '../../utils/react-utils';
-import {hexToRgb} from '../../utils/color-utils';
-
-import {mapStyleSelector} from '../../styles/side-panel';
-import {EnableConfig} from '../common/layer-panel-item';
+import InfoHelper from 'components/common/info-helper';
+import {PanelLabel, Tooltip} from 'components/common/styled-components';
+import {EnableConfig} from 'components/common/layer-panel-item';
 import ColorSingleSelector from './layer-panel/color-single-selector';
 import {VisConfigSlider} from './layer-panel/layer-configurator';
+import {LAYER_VIS_CONFIGS} from 'keplergl-layers/layer-factory';
+import {hexToRgb} from 'utils/color-utils';
+import {mapStyleSelector} from 'styles/side-panel';
 
-import {LAYER_VIS_CONFIGS} from '../../keplergl-layers/layer-factory';
-
-export default class MapManager extends ReactBaseComponent {
+export default class MapManager extends Component {
 
   static propTypes = {
-    mapStyle: React.PropTypes.object.isRequired,
-    onConfigChange: React.PropTypes.func.isRequired,
-    onStyleChange: React.PropTypes.func.isRequired,
-    onBuildingChange: React.PropTypes.func.isRequired
+    mapStyle: PropTypes.object.isRequired,
+    onConfigChange: PropTypes.func.isRequired,
+    onStyleChange: PropTypes.func.isRequired,
+    onBuildingChange: PropTypes.func.isRequired
   };
 
   state = {
     isSelecting: false
   };
 
-  _updateConfig(newProp) {
+  _updateConfig = (newProp) => {
     const newConfig = {...this.props.mapStyle, ...newProp};
     this.props.onConfigChange(newConfig);
-  }
+  };
 
-  _toggleSelecting() {
+  _toggleSelecting = () => {
     this.setState({isSelecting: !this.state.isSelecting});
-  }
+  };
 
-  _selectStyle(val) {
+  _selectStyle = (val) => {
     this.props.onStyleChange(val);
     this._toggleSelecting();
-  }
+  };
 
   render() {
     const {mapStyle} = this.props;

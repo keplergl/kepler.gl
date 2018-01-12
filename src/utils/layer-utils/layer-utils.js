@@ -10,14 +10,14 @@ import {
   TRIP_ARC_FIELDS,
   TRIP_POINT_FIELDS,
   LAYER_CLASSES
-} from '../../constants/default-settings';
+} from 'constants/default-settings';
 
-import {notNullorUndefined, isPlainObject} from '../data-utils';
-import {hexToRgb} from '../color-utils';
+import {notNullorUndefined, isPlainObject} from 'utils/data-utils';
+import {hexToRgb} from 'utils/color-utils';
 
-import * as KeplerGLLayers from '../../keplergl-layers';
+import * as KeplerGLLayers from 'keplergl-layers';
 
-import {uberDataVizColors} from '../../constants/uber-viz-colors';
+import {uberDataVizColors} from 'constants/uber-viz-colors';
 
 const DEFAULT_LAYER_COLOR = {
   tripArc: uberDataVizColors.aqua,

@@ -8,8 +8,8 @@ import {GL} from 'luma.gl';
 import throttle from 'lodash.throttle';
 
 // components
-import MapPopover from './map/map-popover';
-import MapControl from './map-control';
+import MapPopover from 'components/map/map-popover';
+import MapControl from 'components/map-control';
 
 // deckgl layers
 import {PolygonLayer} from 'deck.gl';
@@ -22,7 +22,6 @@ import {
 
 // utils
 import {getLightSettingsFromBounds} from 'utils/layer-utils/layer-utils';
-import {ReactBaseComponent} from 'utils/react-utils';
 
 const MAP_STYLE = {
   container: {

@@ -23,7 +23,7 @@ import LoadDataModal from './side-panel/modals/load-data-modal';
 // import LayerConfigModal from '../../../components/modal/layer-config-modal';
 
 import {DIMENSIONS, PANELS, DATA_TABLE_ID, LAYER_CONFIG_ID, DELETE_DATA_ID, ADD_DATA_ID} from '../constants/default-settings';
-import {sidePanel} from '../styles/side-panel';
+import {sidePanel} from 'styles/side-panel';
 
 const propTypes = {
   editingDataset: PropTypes.string,

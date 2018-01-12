@@ -1,13 +1,13 @@
-import React, {PropTypes} from 'react';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import uniq from 'lodash.uniq';
 import listensToClickOutside from 'react-onclickoutside/decorator';
 import styled from 'styled-components';
 
-import {ReactBaseComponent} from '../../../utils/react-utils';
 import Accessor from './accessor';
 import ChickletedInput from './chickleted-input';
 import Typeahead from './typeahead';
-import {Delete} from '../icons/index';
+import {Delete} from 'components/common/icons';
 import DropdownList, {ListItem} from './dropdown-list';
 
 /**
@@ -100,29 +100,29 @@ const defaultProps = {
   DropDownLineItemRenderComponent: ListItem
 };
 
-class ItemSelector extends ReactBaseComponent {
+class ItemSelector extends Component {
   state = {
     showTypeahead: false
   };
 
-  handleClickOutside() {
+  handleClickOutside = () => {
     this._hideTypeahead();
-  }
+  };
 
   _hideTypeahead() {
     this.setState({showTypeahead: false});
     this._onBlur();
   }
 
-  _onBlur() {
+  _onBlur = () => {
     // note: chickleted input is not a real form element so we call onBlur()
     // when we feel the events are appropriate
     if (this.props.onBlur) {
       this.props.onBlur();
     }
-  }
+  };
 
-  _removeItem(item, e) {
+  _removeItem = (item, e) => {
     // only used when multiSelect = true
     e.preventDefault();
     e.stopPropagation();
@@ -145,9 +145,9 @@ class ItemSelector extends ReactBaseComponent {
       this.setState({showTypeahead: false});
       this._onBlur();
     }
-  }
+  };
 
-  _selectItem(item) {
+  _selectItem = (item) => {
     const getValue = Accessor.generateOptionToStringFor(
       this.props.getOptionValue || this.props.displayOption
     );
@@ -165,21 +165,21 @@ class ItemSelector extends ReactBaseComponent {
       this.setState({showTypeahead: false});
       this._onBlur();
     }
-  }
+  };
 
-  _onErase(e) {
+  _onErase = (e) => {
     e.stopPropagation();
     this.props.onChange(null);
-  }
+  };
 
-  _showTypeahead() {
+  _showTypeahead = () => {
     if (!this.props.disabled) {
       this.setState({
           showTypeahead: true
         }
       );
     }
-  }
+  };
 
   _renderDropdown() {
     return (

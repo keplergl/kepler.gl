@@ -1,37 +1,37 @@
 /** @jsx createElement */
+import React, {Component} from 'react';
 import createElement from 'react-stylematic';
-
-import React from 'react';
-import {ReactBaseComponent} from '../../utils/react-utils';
+import PropTypes from 'prop-types';
 import window from 'global/window';
-import {ArrowLeft} from '../common/icons';
+import {ArrowLeft} from 'components/common/icons';
 
-import {sideBar} from '../../styles/side-panel';
+import {sideBar} from 'styles/side-panel';
 
 const DEFAULT_WIDTH = 330;
 
-export default class SideBar extends ReactBaseComponent {
-  defaultProps = {
-    width: DEFAULT_WIDTH,
-    height: window.innerHeight,
-    top: 0,
-    minifiedWidth: 0,
-    isOpen: false,
-    onOpenOrClose: function noop() {}
-  };
+const  defaultProps = {
+  width: DEFAULT_WIDTH,
+  height: window.innerHeight,
+  top: 0,
+  minifiedWidth: 0,
+  isOpen: false,
+  onOpenOrClose: function noop() {}
+};
 
-  static propTypes = {
-    width: React.PropTypes.number,
-    height: React.PropTypes.number,
-    top: React.PropTypes.number,
-    isOpen: React.PropTypes.bool,
-    minifiedWidth: React.PropTypes.number,
-    onOpenOrClose: React.PropTypes.func
-  };
+const propTypes = {
+  width: PropTypes.number,
+  height: PropTypes.number,
+  top: PropTypes.number,
+  isOpen: PropTypes.bool,
+  minifiedWidth: PropTypes.number,
+  onOpenOrClose: PropTypes.func
+};
 
-  _onOpenOrClose() {
+export default class SideBar extends Component {
+
+  _onOpenOrClose = () => {
     this.props.onOpenOrClose({isOpen: !this.props.isOpen});
-  }
+  };
 
   render() {
     const {isOpen, minifiedWidth, width, top, height} = this.props;
@@ -76,4 +76,5 @@ const SideBarTitle = ({onClick, title}) => (
   </div>
 );
 
-SideBar.displayName = 'SideBar';
+SideBar.propTypes = propTypes;
+SideBar.defaultProps = defaultProps;

@@ -1,9 +1,7 @@
-import React from 'react';
+import React, {Component} from 'react';
+import {svgIcons as SvgIcons} from 'keplergl-layers/icon-layer/svg-icons.json';
 
-import {ReactBaseComponent} from '../../../utils/react-utils';
-import {svgIcons as SvgIcons} from '../../../keplergl-layers/icon-layer/svg-icons.json';
-
-export default class IconInfoModal extends ReactBaseComponent {
+export default class IconInfoModal extends Component {
 
   _renderUberIcon(id) {
     return (
@@ -19,7 +17,6 @@ export default class IconInfoModal extends ReactBaseComponent {
   }
 
   _renderIconItem({id, type}) {
-
     return (
       <div
         key={id}
@@ -114,5 +111,3 @@ export default class IconInfoModal extends ReactBaseComponent {
     );
   }
 }
-
-IconInfoModal.displayName = 'IconInfoModal';

@@ -1,4 +1,5 @@
 import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import {scaleLinear} from 'd3-scale';
 import moment from 'moment';
 import {max} from 'd3-array';
@@ -6,18 +7,18 @@ import {createSelector} from 'reselect';
 import {LineSeries, XYPlot, CustomSVGSeries, Hint, MarkSeries} from 'react-vis';
 import styled from 'styled-components';
 
-import {COLORS} from '../../styles/styles';
+import {COLORS} from 'styles/styles';
 import RangeBrush from './range-brush';
-import {getTimeWidgetHintFormatter} from '../../utils/filter-utils';
+import {getTimeWidgetHintFormatter} from 'utils/filter-utils';
 
 const propTypes = {
-  value: React.PropTypes.array.isRequired,
-  histogram: React.PropTypes.array,
-  lineChart: React.PropTypes.object,
-  plotType: React.PropTypes.string,
-  isEnlarged: React.PropTypes.bool,
-  onBlur: React.PropTypes.func,
-  width: React.PropTypes.number.isRequired
+  value: PropTypes.array.isRequired,
+  histogram: PropTypes.array,
+  lineChart: PropTypes.object,
+  plotType: PropTypes.string,
+  isEnlarged: PropTypes.bool,
+  onBlur: PropTypes.func,
+  width: PropTypes.number.isRequired
 };
 
 const chartMargin = {top: 18, bottom: 0, left: 0, right: 0};

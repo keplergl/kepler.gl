@@ -1,28 +1,28 @@
 /** @jsx createElement */
-import React from 'react';
 import createElement from 'react-stylematic';
-import {ReactBaseComponent} from '../../utils/react-utils';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import {Slider} from '@uber/react-slider';
-import {roundValToStep} from '../../utils/data-utils';
+import {roundValToStep} from 'utils/data-utils';
 import RangePlot from './range-plot';
-import {inputs} from '../../styles/side-panel';
+import {inputs} from 'styles/side-panel';
 
 const propTypes = {
-  minValue: React.PropTypes.number.isRequired,
-  maxValue: React.PropTypes.number.isRequired,
-  value0: React.PropTypes.number.isRequired,
-  value1: React.PropTypes.number.isRequired,
-  onChange: React.PropTypes.func.isRequired,
-  histogram: React.PropTypes.array,
-  isRanged: React.PropTypes.bool,
-  isEnlarged: React.PropTypes.bool,
-  showInput: React.PropTypes.bool,
-  step: React.PropTypes.number,
-  width: React.PropTypes.number,
-  xAxis: React.PropTypes.node
+  minValue: PropTypes.number.isRequired,
+  maxValue: PropTypes.number.isRequired,
+  value0: PropTypes.number.isRequired,
+  value1: PropTypes.number.isRequired,
+  onChange: PropTypes.func.isRequired,
+  histogram: PropTypes.array,
+  isRanged: PropTypes.bool,
+  isEnlarged: PropTypes.bool,
+  showInput: PropTypes.bool,
+  step: PropTypes.number,
+  width: PropTypes.number,
+  xAxis: PropTypes.element
 };
 
-export default class RangeSlider extends ReactBaseComponent {
+export default class RangeSlider extends Component {
   constructor(props) {
     super(props);
     this.state = {value0: 0, value1: 1};
@@ -36,33 +36,33 @@ export default class RangeSlider extends ReactBaseComponent {
     this._setValueFromProps(this.props);
   }
 
-  _setValueFromProps(props) {
+  _setValueFromProps = (props) => {
     const {value0, value1} = props;
 
     if (!isNaN(value0) && !isNaN(value1)) {
       this.setState({value0, value1});
     }
-  }
+  };
 
-  _isVal0InRange(val) {
+  _isVal0InRange = (val) => {
     const {value1, minValue} = this.props;
 
     return Boolean(val >= minValue && val <= value1);
-  }
+  };
 
-  _isVal1InRange(val) {
+  _isVal1InRange = (val) => {
     const {maxValue, value0} = this.props;
 
     return Boolean(val <= maxValue && val >= value0);
-  }
+  };
 
-  _roundValToStep(val) {
+  _roundValToStep = (val) => {
     const {minValue, step} = this.props;
 
     return roundValToStep(minValue, step, val);
-  }
+  };
 
-  _setRangeVal1(val) {
+  _setRangeVal1 = (val) => {
     const {value0, onChange} = this.props;
     val = Number(val);
 
@@ -71,9 +71,9 @@ export default class RangeSlider extends ReactBaseComponent {
       return true;
     }
     return false;
-  }
+  };
 
-  _setRangeVal0(val) {
+  _setRangeVal0 = (val) => {
     const {value1, onChange} = this.props;
     val = Number(val);
 
@@ -82,7 +82,7 @@ export default class RangeSlider extends ReactBaseComponent {
       return true;
     }
     return false;
-  }
+  };
 
   _renderSlider() {
     const {isRanged, minValue, maxValue, onChange, value0, value1, xAxis} = this.props;
@@ -169,4 +169,3 @@ export default class RangeSlider extends ReactBaseComponent {
 }
 
 RangeSlider.propTypes = propTypes;
-RangeSlider.displayName = 'RangeSlider';
