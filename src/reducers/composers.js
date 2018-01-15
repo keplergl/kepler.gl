@@ -23,8 +23,13 @@ const updateVisDataComposed = (state, action) => {
   };
 };
 
+const addDataComposed = (state, action) => {
+
+};
+
 const compostedUpdaters = {
   [ActionTypes.UPDATE_VIS_DATA]: updateVisDataComposed
+  // [ActionTypes.ADD_DATA]:
 };
 
 export default compostedUpdaters

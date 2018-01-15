@@ -1,17 +1,89 @@
 import moment from 'moment';
 import assert from 'assert';
 import {range} from 'd3-array';
+import {ALL_FIELD_TYPES} from 'constants/default-settings';
+import {getFieldsFromData} from 'processor/data-processor';
+/**
+ *
+ * @param data
+ * @returns {{allData: Array, fields: Array}}
+ */
+export function validateInputData(data) {
+  /*
+   * expected input data format
+   * {
+   *   fields: [],
+   *   rows: []
+   * }
+   */
+  let proceed = true;
+  if (!data) {
+    assert('receiveVisData: data cannot be null');
+    proceed = false;
+  }
 
-import {ALL_FIELD_TYPES} from '../constants/default-settings';
+  if (!Array.isArray(data.fields)) {
+    assert('receiveVisData: expect data.fields to be an array');
+    proceed = false;
+  }
+
+  if (!Array.isArray(data.rows)) {
+    assert('receiveVisData: expect data.rows to be an array');
+    proceed = false;
+  }
+
+  if (!proceed) {
+    return null;
+  }
+
+  const {fields, rows} = data;
+
+  // check if all fields has name, format and type
+  const allValid = fields.every((f, i) => {
+    if (typeof f !== 'object') {
+      assert(`fields needs to be an array of object, but find ${f}`);
+      return false;
+    }
+
+    if (!f.name) {
+      assert(`field.name is required but missing in field ${JSON.stringify(f)}`);
+      // assign a name
+      f.name = `column_${i}`;
+    }
+
+    if (!ALL_FIELD_TYPES[f.type]) {
+      assert(`unknown field type ${f.type}`);
+      return false;
+    }
+
+    return f.type && f.format && f.name;
+  });
+
+  if (allValid) {
+    return {rows, fields};
+  }
+
+  // if any field has missing type, recalculate it for everyone
+  // because we simply lost faith in humanity
+  const sampleData = getSampleForTypeAnalyze({fields, allData: rows});
+  const meta = getFieldsFromData(sampleData, fieldOrder);
+  const updatedFields = fields.map((f, i) => ({
+    ...f,
+    type: meta[i].type,
+    format: meta[i].format
+  }));
+
+  return {fields: updatedFields, rows};
+}
 
 /**
  * get fields from csv data
  *
- * @param {array} data
- * @param {array} fieldOrder
+ * @param {array} fields
+ * @param {array} allData
+ * @param {array} sampleCount
  * @returns {array} formatted fields
  */
-
 export function getSampleForTypeAnalyze({fields, allData, sampleCount = 50}) {
   const total = Math.min(sampleCount, allData.length);
   const fieldOrder = fields.map(f => f.name);

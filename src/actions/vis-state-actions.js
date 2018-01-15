@@ -103,6 +103,13 @@ export function showDatasetTable(dataId) {
   }
 }
 
+/**
+ *
+ * @param datasets - Array of datasets :
+ * {info: {id: '', color: hex, label: '']}, data: {fields: [], rows: []}}
+ * @param options
+ * @returns {{type: null, datasets: *, options: *}}
+ */
 export function updateVisData(datasets, options) {
   return {
     type: ActionTypes.UPDATE_VIS_DATA,

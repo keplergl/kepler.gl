@@ -69,6 +69,7 @@
     "lodash.pick": "^4.4.0",
     "lodash.throttle": "^4.1.1",
     "lodash.uniq": "^4.0.1",
+    "lodash.uniqby": "^4.7.0",
     "luma.gl": "4.0.5",
     "moment": "^2.10.6",
     "prop-types": "^15.6.0",

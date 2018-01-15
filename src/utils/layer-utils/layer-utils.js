@@ -8,7 +8,6 @@ import {
   ICON_FIELDS,
   LAYER_TYPES,
   TRIP_ARC_FIELDS,
-  TRIP_POINT_FIELDS,
   LAYER_CLASSES
 } from 'constants/default-settings';
 
@@ -91,12 +90,12 @@ export function findDefaultLayer({fields, fieldPairs, id: dataId, label}) {
   ];
 }
 
-function removeSuffixAndDelimiters(layerName, suffix) {
-  return layerName
-    .replace(new RegExp(suffix, 'ig'), '')
-    .replace(/[_,.]+/g, ' ')
-    .trim();
-}
+// function removeSuffixAndDelimiters(layerName, suffix) {
+//   return layerName
+//     .replace(new RegExp(suffix, 'ig'), '')
+//     .replace(/[_,.]+/g, ' ')
+//     .trim();
+// }
 
 /**
  * Find point fields pairs from fields
@@ -104,44 +103,44 @@ function removeSuffixAndDelimiters(layerName, suffix) {
  * @param {Array} fields
  * @returns {Array} found point fields
  */
-export function findPointFieldPairs(fields) {
-  const allNames = fields.map(f => f.name.toLowerCase());
-
-  // get list of all fields with matching suffixes
-  return allNames.reduce((carry, fieldName, idx) => {
-    // This search for pairs will early exit if found.
-    for (const suffixPair of TRIP_POINT_FIELDS) {
-      // match first suffix```
-      if (fieldName.endsWith(suffixPair[0])) {
-        // match second suffix
-        const otherPattern = new RegExp(`${suffixPair[0]}\$`);
-        const partner = fieldName.replace(otherPattern, suffixPair[1]);
-
-        const partnerIdx = allNames.findIndex(d => d === partner);
-        if (partnerIdx > -1) {
-          const defaultName = removeSuffixAndDelimiters(fieldName, suffixPair[0]);
-
-          carry.push({
-            defaultName,
-            pair: {
-              lat: {
-                fieldIdx: idx,
-                value: fields[idx].name
-              },
-              lng: {
-                fieldIdx: partnerIdx,
-                value: fields[partnerIdx].name
-              }
-            },
-            suffix: suffixPair
-          });
-          return carry;
-        }
-      }
-    }
-    return carry;
-  }, []);
-}
+// export function findPointFieldPairs(fields) {
+//   const allNames = fields.map(f => f.name.toLowerCase());
+//
+//   // get list of all fields with matching suffixes
+//   return allNames.reduce((carry, fieldName, idx) => {
+//     // This search for pairs will early exit if found.
+//     for (const suffixPair of TRIP_POINT_FIELDS) {
+//       // match first suffix```
+//       if (fieldName.endsWith(suffixPair[0])) {
+//         // match second suffix
+//         const otherPattern = new RegExp(`${suffixPair[0]}\$`);
+//         const partner = fieldName.replace(otherPattern, suffixPair[1]);
+//
+//         const partnerIdx = allNames.findIndex(d => d === partner);
+//         if (partnerIdx > -1) {
+//           const defaultName = removeSuffixAndDelimiters(fieldName, suffixPair[0]);
+//
+//           carry.push({
+//             defaultName,
+//             pair: {
+//               lat: {
+//                 fieldIdx: idx,
+//                 value: fields[idx].name
+//               },
+//               lng: {
+//                 fieldIdx: partnerIdx,
+//                 value: fields[partnerIdx].name
+//               }
+//             },
+//             suffix: suffixPair
+//           });
+//           return carry;
+//         }
+//       }
+//     }
+//     return carry;
+//   }, []);
+// }
 
 /**
  * Find default point layers from fields

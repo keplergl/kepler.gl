@@ -3,32 +3,31 @@ import {console as Console} from 'global/window';
 import {Task, withTask} from 'react-palm'
 
 // Tasks
-import {LOAD_FILE_TASK} from '../tasks/tasks';
+import {LOAD_FILE_TASK} from 'tasks/tasks';
 
 // Actions
-import {updateVisData, loadFilesErr} from '../actions/vis-state-actions';
+import {updateVisData, loadFilesErr} from 'actions/vis-state-actions';
 
 // Utils
-import {getDefaultInteraction} from '../utils/interaction-utils';
-import {generateHashId} from '../utils/utils';
-import {findFieldsToShow} from '../utils/interaction-utils';
+import {getDefaultInteraction} from 'utils/interaction-utils';
+import {generateHashId} from 'utils/utils';
+import {findFieldsToShow} from 'utils/interaction-utils';
 import {
   getDefaultfilter,
   getFilterProps,
   getFilterPlot,
   getDefaultFilterPlotType,
   filterData
-} from '../utils/filter-utils';
-import {datasetColorMaker} from '../utils/dataset-utils';
+} from 'utils/filter-utils';
+import {createNewDataEntry} from 'utils/dataset-utils';
 
 import {
   findDefaultLayer,
-  findPointFieldPairs,
   calculateLayerData
-} from '../utils/layer-utils/layer-utils';
+} from 'utils/layer-utils/layer-utils';
 
-import {getFileHandler} from '../processor/file-handler';
-import {findMapBounds} from '../utils/data-utils';
+import {getFileHandler} from 'processor/file-handler';
+import {findMapBounds} from 'utils/data-utils';
 
 import {
   mergeFilters,
@@ -37,8 +36,8 @@ import {
   mergeLayerBlending
 } from './vis-state-merger';
 
-import * as KeplerGLLayers from '../keplergl-layers';
-import {LAYER_CLASSES} from '../constants/default-settings';
+import * as KeplerGLLayers from 'keplergl-layers';
+import {LAYER_CLASSES} from 'constants/default-settings';
 
 export const INITIAL_VIS_STATE = {
   // layers
@@ -463,36 +462,6 @@ export const updateLayerBlending = (state, action) => ({
   layerBlending: action.mode
 });
 
-function createNewDataEntry({info = {}, data}) {
-  if (!data || !data.fields || !data.rows) {
-    return null;
-  }
-
-  const allData = data.rows;
-  const datasetInfo = {id: generateHashId(4), label: 'new dataset', ...info};
-  const dataId = datasetInfo.id;
-
-  // add tableFieldIndex and id to fields
-  const fields = data.fields.map((f, i) => ({
-    ...f,
-    id: f.name,
-    tableFieldIndex: i + 1
-  }));
-
-  return {
-    [dataId]: {
-      ...datasetInfo,
-      color: datasetInfo.color || datasetColorMaker.next().value,
-      id: dataId,
-      allData,
-      data: allData.slice(),
-      filteredIndex: allData.map((_, i) => i),
-      fieldPairs: findPointFieldPairs(fields),
-      fields
-    }
-  };
-}
-
 export const showDatasetTable = (state, action) => {
   return {
     ...state,
@@ -506,9 +475,9 @@ export const receiveVisData = (state, action) => {
   const datasets = Array.isArray(action.datasets) ? action.datasets : [action.datasets];
   const {options = {centerMap: true}} = action;
 
-  const newDateEntries = datasets.reduce((accu, {info, data}) => ({
+  const newDateEntries = datasets.reduce((accu, {info = {}, data}) => ({
     ...accu,
-    ...(createNewDataEntry({info, data}) || {})
+    ...(createNewDataEntry({info, data}, state.datasets) || {})
   }), {});
 
   if (!Object.keys(newDateEntries).length) {
