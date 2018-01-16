@@ -1,27 +1,8 @@
 import Immutable from 'immutable';
 import memoize from 'lodash.memoize';
 
-import {LayerGroups} from '../../constants/mapbox-gl-styles';
-
-const LayerFilters = LayerGroups.reduce((accu, group) => ({
-  ...accu,
-  [group.slug]: group.filter
-}), {});
-
-/**
- * Process loaded map styles
- * @param {Array[]} styles
- * @returns {object} map styles object
- */
-export function processMapStyles(styles) {
-  return styles.reduce((accu, style) => ({
-    ...accu,
-    ...style
-  }));
-}
-
-export function getDefaultLayerGroupVisibility() {
-  return LayerGroups
+export function getDefaultLayerGroupVisibility({layerGroups = []}) {
+  return layerGroups
     .reduce((accu, layer) => ({
       ...accu,
       [layer.slug]: layer.defaultVisibility
@@ -41,21 +22,17 @@ const resolver = ({id, mapStyle, visibleLayerGroups = {}}) =>
  */
 export const editTopMapStyle = memoize(({id, mapStyle, visibleLayerGroups}) => {
 
-  // an array of layer filters
-  // visibleLayerGroups = {land: true, road: false}
-  const visibleFilters = Object.keys(visibleLayerGroups)
-    .reduce((accu, slug) => [
-      ...accu,
-      ...visibleLayerGroups[slug] ? [LayerFilters[slug]] : []
-    ], []);
+  const visibleFilters = mapStyle.layerGroups
+    .filter(lg => visibleLayerGroups[lg.slug])
+    .map(lg => lg.filter);
 
   // if top map
   // keep only visible layers
-  const filteredLayers = mapStyle.layers
+  const filteredLayers = mapStyle.style.layers
     .filter(layer => visibleFilters.some(match => match(layer)));
 
   return Immutable.fromJS({
-    ...mapStyle,
+    ...mapStyle.style,
     layers: filteredLayers
   });
 }, resolver);
@@ -69,18 +46,17 @@ export const editTopMapStyle = memoize(({id, mapStyle, visibleLayerGroups}) => {
  */
 export const editBottomMapStyle = memoize(({id, mapStyle, visibleLayerGroups}) => {
 
-  const invisibleFilters = Object.keys(visibleLayerGroups)
-    .reduce((accu, slug) => [
-      ...accu,
-      ...!visibleLayerGroups[slug] ? [LayerFilters[slug]] : []
-    ], []);
+  const invisibleFilters = mapStyle.layerGroups
+    .filter(lg => !visibleLayerGroups[lg.slug])
+    .map(lg => lg.filter);
 
   // if bottom map
   // filter out invisible layers
-  const filteredLayers = mapStyle.layers
+  const filteredLayers = mapStyle.style.layers
     .filter(layer => invisibleFilters.every(match => !match(layer)));
+
   return Immutable.fromJS({
-    ...mapStyle,
+    ...mapStyle.style,
     layers: filteredLayers
   });
 }, resolver);

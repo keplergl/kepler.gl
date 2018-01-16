@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import {console as Console} from 'global/window'
 import {bindActionCreators} from 'redux'
+import request from 'd3-request';
 import {connect as keplerGlConnect} from '../connect/keplergl-connect';
 
 import {ThemeProvider} from 'styled-components';
@@ -11,7 +12,7 @@ import * as MapStyleActions from 'actions/map-style-actions';
 import * as BuildingDataActions from 'actions/building-data-actions';
 import * as UIStateActions from 'actions/ui-state-actions';
 
-import {DIMENSIONS} from '../constants/default-settings';
+import {DIMENSIONS, DEFAULT_MAP_STYLES} from 'constants/default-settings';
 
 import SidePanel from './side-panel';
 import MapContainer from './map-container';
@@ -21,8 +22,15 @@ import {theme} from '../styles/base';
 // webpack css-loader handles css loading
 import '../stylesheets/kepler.gl.scss';
 
+const defaultProps = {
+  mapStyles: [],
+  width: 800,
+  height: 800
+};
+
 class KeplerGL extends Component {
   componentDidMount() {
+    this._loadMapStyle(this.props.mapStyles);
     this._handleResize(this.props);
   }
 
@@ -40,6 +48,32 @@ class KeplerGL extends Component {
     this.props.mapStateActions.updateMap({
       width: width / (1 + Number(this.props.mapState.isSplit)),
       height
+    });
+  }
+
+  _loadMapStyle() {
+    [...this.props.mapStyles, ...Object.values(DEFAULT_MAP_STYLES)]
+      .forEach(style => {
+        console.log(style)
+      if (style.style) {
+        this.props.dispatch(MapStyleActions.loadMapStyles({
+          [style.id]: style
+        }));
+      } else {
+        this._requestMapStyle(style);
+      }
+    })
+  }
+
+  _requestMapStyle(mapStyle) {
+    const {url, id} = mapStyle;
+    request.json(url, (error, result) => {
+      if (error) {
+        Console.warn(`Error loading map style ${mapStyle.url}`);
+      }
+      this.props.dispatch(MapStyleActions.loadMapStyles({
+        [id]: {...mapStyle, style: result}
+      }));
     });
   }
 
@@ -159,6 +193,8 @@ class KeplerGL extends Component {
     );
   }
 }
+
+KeplerGL.defaultProps = defaultProps;
 
 function mapStateToProps(state, props) {
   return {

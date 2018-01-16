@@ -19,8 +19,6 @@ export const DATA_TABLE_ID = 'dataTable';
 export const DELETE_DATA_ID = 'deleteData';
 export const ADD_DATA_ID = 'addData';
 
-export const INITIAL_STYLE_TYPE = 'dark';
-
 export const DIMENSIONS = {
   qbHeight: 62,
   headerHeight: 55,
@@ -66,60 +64,101 @@ export const PANELS_FOOTER = [
   }
 ];
 
-export const MAP_STYLES = {
-  dark: {
+// MAP STYLES
+export const INITIAL_STYLE_TYPE = 'dark';
+
+export const DEFAULT_LAYER_GROUPS = [
+  {
+    slug: 'label',
+    filter: ({id}) => id.match(/label/),
+    defaultVisibility: true
+  },
+  {
+    slug: 'road',
+    filter: ({id}) => id.match(/(?=(road|railway))(?!.*label)/),
+    defaultVisibility: true
+  },
+  {
+    slug: 'border',
+    filter: ({id}) => id.match(/border/),
+    defaultVisibility: false
+  },
+  {
+    slug: 'building',
+    filter: ({id}) => id.match(/building/),
+    defaultVisibility: true
+  },
+  {
+    slug: 'water',
+    filter: ({id}) => id.match(/(?=(water|stream|ferry))/),
+    defaultVisibility: true
+  },
+  {
+    slug: 'land',
+    filter: ({id}) => id.match(/(?=(parks))/),
+    defaultVisibility: true
+  }
+];
+
+export const DEFAULT_MAP_STYLES = [
+  {
     id: 'dark',
     label: 'Dark',
     url: `${STYLE_PREFIX}/tools-dark.json`,
     icon: `${ICON_PREFIX}/UBER_DARK_V2.png`,
-    style: require('./map-styles/tools-dark.json')
+    style: require('./map-styles/tools-dark.json'),
+    layerGroups: DEFAULT_LAYER_GROUPS
   },
-  light: {
+  {
     id: 'light',
     label: 'Light',
     url: `${STYLE_PREFIX}/tools-light.json`,
-    icon: `${ICON_PREFIX}/UBER_LIGHT_V2.png`
+    icon: `${ICON_PREFIX}/UBER_LIGHT_V2.png`,
+    layerGroups: DEFAULT_LAYER_GROUPS
   },
-  places: {
+  {
     id: 'places',
     label: 'Places',
     url: `${STYLE_PREFIX}/driver-ticker.json`,
-    icon: `${ICON_PREFIX}/UBER_DRIVER_TICKER.png`
+    icon: `${ICON_PREFIX}/UBER_DRIVER_TICKER.png`,
+    layerGroups:[
+      ...DEFAULT_LAYER_GROUPS,
+      {
+        slug: 'places',
+        filter: ({id}) => id.match(/poi/),
+        defaultVisibility: true,
+        editable: true
+      }
+    ]
   },
-  muted: {
+  {
     id: 'muted',
     label: 'Muted',
     url: `${STYLE_PREFIX}/driver-muted.json`,
-    icon: `${ICON_PREFIX}/UBER_MUTED.png`
+    icon: `${ICON_PREFIX}/UBER_MUTED.png`,
+    layerGroups: DEFAULT_LAYER_GROUPS
   },
-  muted_night: {
+  {
     id: 'muted_night',
     label: 'Muted Night',
     url: `${STYLE_PREFIX}/driver-night-muted.json`,
-    icon: `${ICON_PREFIX}/UBER_NIGHT_MUTED.png`
+    icon: `${ICON_PREFIX}/UBER_NIGHT_MUTED.png`,
+    layerGroups: DEFAULT_LAYER_GROUPS
   },
-  street: {
+  {
     id: 'street',
     label: 'Street',
     url: `${STYLE_PREFIX}/tools-street.json`,
     icon: `${ICON_PREFIX}/UBER_MAP.jpg`
   },
-  google_satellite: {
-    type: 'raster',
+  {
+    //type: 'raster',
     label: 'Google Satellite',
     id: 'google_satellite',
     url: `${STYLE_PREFIX}/tools-google-satellite.json`,
     icon: `${ICON_PREFIX}/GOOGLE_SATELLITE.jpg`
-  },
-  uber_opus_aerial: {
-    // load from folder
-    id: 'uber_opus_aerial',
-    label: 'Uber Opus Aerial',
-    type: 'raster',
-    style: require('./map-styles/tools-opus.json'),
-    icon: `${ICON_PREFIX}/UBER_OPUS.png`
   }
-};
+];
 
 export const GEOJSON_FIELDS = {
   geojson: ['_geojson', 'all_points', 'geojson']

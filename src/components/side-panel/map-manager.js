@@ -45,7 +45,7 @@ export default class MapManager extends Component {
 
   render() {
     const {mapStyle} = this.props;
-    const {editableLayers} = mapStyle.mapStyles[mapStyle.styleType];
+    const editableLayers = mapStyle.visibleLayerGroups;
 
     return (
       <div className="map-style__panel">
@@ -55,11 +55,11 @@ export default class MapManager extends Component {
             isSelecting={this.state.isSelecting}
             onChange={this._selectStyle}
             toggleActive={this._toggleSelecting}/>
-          {!mapStyle.isSatellite && <LayerGroupSelector
+          {Object.keys(editableLayers).length ? <LayerGroupSelector
             layers={mapStyle.visibleLayerGroups}
             editableLayers={editableLayers}
             topLayers={mapStyle.topLayerGroups}
-            onChange={this._updateConfig}/>}
+            onChange={this._updateConfig}/> : null}
         </div>
         <BuildingLayer
           buildingLayer={mapStyle.buildingLayer}
@@ -97,7 +97,7 @@ const LayerGroupSelector = ({layers, editableLayers, onChange, topLayers}) => (
     </div>
     <div className="panel">
       <div className="panel__content">
-        {Object.keys(editableLayers).filter(key => editableLayers[key]).map(slug => (
+        {Object.keys(editableLayers).map(slug => (
           <div className="layer-group__select" key={slug}>
             <PanelLabel>{slug}</PanelLabel>
             <div className="layer-group__switch">

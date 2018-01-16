@@ -3,28 +3,6 @@ import request from 'd3-request';
 import {getQueryURL} from '../utils/mapzen-utils';
 
 /*
- * load map style, if style already loaded, resolve the object
- */
-export const LOAD_MAP_STYLE_TASK = taskCreator(
-  (mapStyle, success, err) =>
-    new Promise((resolve, reject) => {
-      if (mapStyle.style) {
-        // if already loaded
-        resolve(mapStyle.style);
-      } else {
-        request.json(mapStyle.url, (error, result) => {
-          if (error) {
-            resolve(null);
-          }
-          resolve(result);
-        });
-      }
-    }).then(style => success(style)),
-
-  'LOAD_MAP_STYLE_TASK'
-);
-
-/*
  * request vector building tile from Mapzen
  */
 export const LOAD_BUILDING_TILE_TASK = taskCreator(

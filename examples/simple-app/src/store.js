@@ -16,10 +16,11 @@ const enhancers = [
 
 const initialState = {};
 
+// add redux devtools
+const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+
 export default createStore(
   reducers,
   initialState,
-  compose(...enhancers)
-  // add redux devtools
-  // window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+  composeEnhancers(...enhancers)
 );

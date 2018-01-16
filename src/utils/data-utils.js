@@ -66,6 +66,7 @@ export function validateInputData(data) {
   // if any field has missing type, recalculate it for everyone
   // because we simply lost faith in humanity
   const sampleData = getSampleForTypeAnalyze({fields, allData: rows});
+  const fieldOrder = fields.map(f => f.name);
   const meta = getFieldsFromData(sampleData, fieldOrder);
   const updatedFields = fields.map((f, i) => ({
     ...f,
