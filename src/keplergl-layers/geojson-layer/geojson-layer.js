@@ -2,7 +2,7 @@ import memoize from 'lodash.memoize';
 
 import Layer from '../base-layer';
 import {GeoJsonLayer as DeckGLGeoJsonLayer} from 'deck.gl';
-import {hexToRgb} from '../../utils/color-utils';
+import {hexToRgb} from 'utils/color-utils';
 import {
   getGeojsonDataMaps,
   getGeojsonBounds,

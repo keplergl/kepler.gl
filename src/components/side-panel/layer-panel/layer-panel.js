@@ -25,21 +25,21 @@ const propTypes = {
 @sortable
 export default class LayerPanel extends Component {
 
-  updateLayerConfig(newProp) {
+  updateLayerConfig = (newProp) => {
     this.props.layerConfigChange(this.props.layer, newProp);
-  }
+  };
 
-  updateLayerType(newType) {
+  updateLayerType = (newType) => {
     this.props.layerTypeChange(this.props.layer, newType);
-  }
+  };
 
-  updateLayerVisConfig(newVisConfig) {
+  updateLayerVisConfig = (newVisConfig) => {
     this.props.layerVisConfigChange(this.props.layer, newVisConfig);
-  }
+  };
 
-  updateLayerVisualChannelConfig(newConfig, channel, scaleKey) {
+  updateLayerVisualChannelConfig = (newConfig, channel, scaleKey) => {
     this.props.layerVisualChannelConfigChange(this.props.layer, newConfig, channel, scaleKey);
-  }
+  };
 
   _updateLayerLabel = ({target: {value}}) => {
     this.updateLayerConfig({label: value});

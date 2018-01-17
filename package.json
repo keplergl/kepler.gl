@@ -3,7 +3,7 @@
   "author": "Shan He <shan@uber.com>",
   "version": "0.0.1",
   "description": "kepler.gl is a webgl based application to visualize large scale location data in the browser",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "engines": {
     "node": "8.7.0",
     "npm": "5.4.2",
@@ -24,11 +24,14 @@
     "test": "test",
     "start": "(cd examples/simple-app && (path-exists node_modules || npm i) && npm run start-local)",
     "build-clean": "rm -rf ./dist && mkdir dist",
-    "build-static": "cp -r ./src/static/* dist && cp index.html dist",
     "build-script": "webpack -p --env.prod",
-    "build": "npm run build-clean && npm run build-static && npm run build-script",
+    "build": "npm run build-clean && npm run build-script",
     "lint": "eslint . --ignore-path=.gitignore"
   },
+  "files": [
+    "dist",
+    "src"
+  ],
   "dependencies": {
     "@mapbox/geo-viewport": "^0.2.2",
     "@mapbox/geojson-extent": "^0.3.2",

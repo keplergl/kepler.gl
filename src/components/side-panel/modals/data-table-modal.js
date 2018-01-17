@@ -2,9 +2,9 @@ import React, {Component} from 'react';
 import styled from 'styled-components';
 import {navigator} from 'global';
 
-import {ALL_FIELD_TYPES} from '../../../constants/default-settings';
-import FieldToken from '../../common/field-token';
-import {Clock} from '../../common/icons';
+import {ALL_FIELD_TYPES} from 'constants/default-settings';
+import FieldToken from 'components/common/field-token';
+import {Clock} from 'components/common/icons';
 import ReactDataGrid from 'react-data-grid';
 
 let shouldPreventScrollBack = false;

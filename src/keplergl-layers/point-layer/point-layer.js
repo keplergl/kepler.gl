@@ -1,8 +1,8 @@
 import Layer from '../base-layer';
 import memoize from 'lodash.memoize';
 import {ScatterplotLayer} from 'deck.gl';
-import ScatterplotBrushingLayer from '../../deckgl-layers/scatterplot-brushing-layer/scatterplot-brushing-layer';
-import {hexToRgb} from '../../utils/color-utils';
+import ScatterplotBrushingLayer from 'deckgl-layers/scatterplot-brushing-layer/scatterplot-brushing-layer';
+import {hexToRgb} from 'utils/color-utils';
 
 export const pointPosAccessor = ({lat, lng, altitude}) => d => [
   d.data[lng.fieldIdx],

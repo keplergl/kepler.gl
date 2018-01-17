@@ -1,6 +1,6 @@
 import {GeoJsonLayer} from 'deck.gl';
 import AggregationLayer from '../aggregation-layer';
-import EnhancedHexagonLayer from '../../deckgl-layers/hexagon-layer/enhanced-hexagon-layer';
+import EnhancedHexagonLayer from 'deckgl-layers/hexagon-layer/enhanced-hexagon-layer';
 import {hexagonToPolygonGeo} from './hexagon-utils';
 
 export const hexagonVisConfigs = {

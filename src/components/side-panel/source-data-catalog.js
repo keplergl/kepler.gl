@@ -2,8 +2,8 @@ import React from 'react';
 import styled from 'styled-components';
 import {format} from 'd3-format';
 
-import {SidePanelSection, Tooltip} from '../common/styled-components'
-import {Table, Trash, ArrowRight} from '../common/icons';
+import {SidePanelSection, Tooltip} from 'components/common/styled-components'
+import {Table, Trash, ArrowRight} from 'components/common/icons';
 
 const defaultRemoveDataset = datasetKey => {};
 const numFormat = format(',');

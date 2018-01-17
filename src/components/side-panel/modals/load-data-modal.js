@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import FileUpload from 'kepler.gl/components/common/file-uploader/file-upload';
+import FileUpload from 'components/common/file-uploader/file-upload';
 
 const ContentWraooer = styled.div`
   padding: 10px 96px;

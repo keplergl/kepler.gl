@@ -2,7 +2,7 @@ import memoize from 'lodash.memoize';
 
 import Layer from '../base-layer';
 import {HexagonCellLayer, GeoJsonLayer} from 'deck.gl';
-import {hexToRgb} from '../../utils/color-utils';
+import {hexToRgb} from 'utils/color-utils';
 import {getVertices, getCentroid, idToPolygonGeo} from './h3-utils';
 
 export const hexIdRequiredColumns = ['hex_id'];

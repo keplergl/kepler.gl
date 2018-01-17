@@ -1,7 +1,7 @@
 import {ScatterplotLayer} from 'deck.gl';
 import AggregationLayer from '../aggregation-layer';
-import DeckGLClusterLayer from '../../deckgl-layers/cluster-layer/cluster-layer';
-import {CHANNEL_SCALES} from '../../constants/default-settings';
+import DeckGLClusterLayer from 'deckgl-layers/cluster-layer/cluster-layer';
+import {CHANNEL_SCALES} from 'constants/default-settings';
 
 export const clusterVisConfigs = {
   opacity: 'opacity',

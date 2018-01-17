@@ -2,19 +2,19 @@ import React, {Component} from 'react';
 import {createSelector} from 'reselect';
 import styled from 'styled-components';
 
-import FieldSelector from '../common/field-selector';
-import {SidePanelSection, SidePanelDivider, Tooltip, Button} from '../common/styled-components';
-import {Add, Trash, Clock} from '../common/icons';
+import FieldSelector from 'components/common/field-selector';
+import {SidePanelSection, SidePanelDivider, Tooltip, Button} from 'components/common/styled-components';
+import {Add, Trash, Clock} from 'components/common/icons';
 import SourceDataSelector from './source-data-selector';
 import SourceDataCatalog from './source-data-catalog';
 
-import * as Filters from '../../components/filters';
+import * as Filters from 'components/filters';
 import {
   FILTER_TYPES,
   FILTER_COMPONENTS
-} from '../../utils/filter-utils';
+} from 'utils/filter-utils';
 
-import {ALL_FIELD_TYPES} from '../../constants/default-settings';
+import {ALL_FIELD_TYPES} from 'constants/default-settings';
 
 const propTypes = {
   panelWidth: React.PropTypes.number.isRequired,

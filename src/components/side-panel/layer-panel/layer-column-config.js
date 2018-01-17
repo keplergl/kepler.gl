@@ -1,10 +1,10 @@
 import React, {Component, PropTypes} from 'react';
 import styled from 'styled-components';
 
-import {LAYER_TYPES} from '../../../constants/default-settings';
-import FieldSelector from '../../common/field-selector';
-import ItemSelector from '../../common/item-selector/item-selector';
-import {PanelLabel, SidePanelSection} from '../../common/styled-components';
+import {LAYER_TYPES} from 'constants/default-settings';
+import FieldSelector from 'components/common/field-selector';
+import ItemSelector from 'components/common/item-selector/item-selector';
+import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
 
 const propTypes = {
   layer: PropTypes.object.isRequired,

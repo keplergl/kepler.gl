@@ -2,7 +2,7 @@ import geojsonExtent from '@mapbox/geojson-extent';
 import wktParser from 'wellknown';
 import normalize from 'geojson-normalize';
 
-import {getSampleData} from '../../utils/data-utils';
+import {getSampleData} from 'utils/data-utils';
 
 /**
  * Parse raw data to geojson feature

@@ -1,10 +1,11 @@
 const resolve = require('path').resolve;
 const webpack = require('webpack');
 
-const LIBRARY_BUNDLE_CONFIG = {
+const  SRC_DIR = resolve('./src');
+const LIBRARY_BUNDLE_CONFIG = env => ({
   // Bundle the source code
   entry: {
-    lib: resolve('./src/index.js')
+    lib: SRC_DIR + '/index.js'
   },
 
   // Silence warnings about big bundles
@@ -15,7 +16,7 @@ const LIBRARY_BUNDLE_CONFIG = {
   output: {
     // Generate the bundle in dist folder
     path: resolve('./dist'),
-    filename: '[name]-bundle.js',
+    filename: 'index.js',
     library: 'kepler.gl',
     libraryTarget: 'umd'
   },
@@ -29,13 +30,15 @@ const LIBRARY_BUNDLE_CONFIG = {
     rules: [{
       test: /\.js$/,
       loader: 'babel-loader',
-      include: src
+      include: [SRC_DIR]
     }, {
       test: /\.json$/,
       loader: 'json-loader'
     }, {
-      test: /.*\.(gif|png|jpe?g|svg)$/i,
-      loader: 'url-loader'
+      test: /\.scss$/,
+      // TODO: need to add postcss to replace the autoprefix-loader that is deprecated
+      use: ['style-loader', 'css-loader', 'sass-loader'],
+      include: [SRC_DIR]
     }]
   },
 
@@ -53,7 +56,7 @@ const LIBRARY_BUNDLE_CONFIG = {
       }
     })
   ]
-};
+});
 
 const TEST_BROWSER_CONFIG = {
   devServer: {
@@ -100,5 +103,5 @@ module.exports = env => {
   if (env.test) {
     return TEST_BROWSER_CONFIG;
   }
-  return LIBRARY_BUNDLE_CONFIG;
+  return LIBRARY_BUNDLE_CONFIG(env);
 };

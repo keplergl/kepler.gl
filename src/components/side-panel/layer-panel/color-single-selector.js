@@ -4,7 +4,7 @@ import {scaleBand} from 'd3-scale';
 import {range} from 'd3-array';
 
 // TODO: remove uber colors, replace with generic color schemes
-import {ColorsByTheme, Themes} from '../../../constants/uber-colors';
+import {ColorsByTheme, Themes} from 'constants/uber-colors';
 
 // TODO: remove uber/react-accordion
 import {Accordion, StatefulAccordionItem} from '@uber/react-accordion';

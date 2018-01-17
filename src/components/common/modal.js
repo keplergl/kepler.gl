@@ -1,8 +1,8 @@
 import React, {Component} from 'react';
 import styled from 'styled-components';
 import Modal from 'react-modal';
-import {Delete} from 'kepler.gl/components/common/icons';
-import {Button} from 'kepler.gl/components/common/styled-components';
+import {Delete} from 'components/common/icons';
+import {Button} from 'components/common/styled-components';
 
 const ModalContentWrapper = styled.div`
   width: 60%;

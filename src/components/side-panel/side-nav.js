@@ -1,7 +1,7 @@
 import React from 'react';
 import classnames from 'classnames';
-import {Tooltip} from '../common/styled-components';
-import {PANELS, PANELS_FOOTER} from '../../constants/default-settings';
+import {Tooltip} from 'components/common/styled-components';
+import {PANELS, PANELS_FOOTER} from 'constants/default-settings';
 
 const SideNav = itemProps => (
   <div className={classnames('side-navi', {collapsed: itemProps.isCollapsed})}>

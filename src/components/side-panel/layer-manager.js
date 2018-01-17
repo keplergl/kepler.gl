@@ -4,11 +4,11 @@ import styled from 'styled-components';
 
 import LayerPanel from './layer-panel/layer-panel';
 import SourceDataCatalog from './source-data-catalog';
-import {Add} from '../common/icons';
-import ItemSelector from '../common/item-selector/item-selector';
-import {PanelLabel, SidePanelDivider, SidePanelSection, Button} from '../common/styled-components';
+import {Add} from 'components/common/icons';
+import ItemSelector from 'components/common/item-selector/item-selector';
+import {PanelLabel, SidePanelDivider, SidePanelSection, Button} from 'components/common/styled-components';
 
-import {LAYER_BLENDINGS} from '../../constants/default-settings';
+import {LAYER_BLENDINGS} from 'constants/default-settings';
 
 const propTypes = {
   addLayer: React.PropTypes.func.isRequired,
