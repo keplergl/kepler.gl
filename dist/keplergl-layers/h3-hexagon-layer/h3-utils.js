@@ -1,0 +1,51 @@
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.getVertices = getVertices;
+exports.getCentroid = getCentroid;
+exports.idToPolygonGeo = idToPolygonGeo;
+
+var _ref = process.env.BROWSER || process.env.NODE_ENV === 'test' ? require('@uber/h3-transitional') : { h3ToGeo: null, h3ToGeoBoundary: null, V2: null },
+    h3ToGeo = _ref.h3ToGeo,
+    h3ToGeoBoundary = _ref.h3ToGeoBoundary;
+
+// get vertices should return [lon, lat]
+
+
+function getVertices(_ref2) {
+  var id = _ref2.id;
+
+  // always reverse it
+  return h3ToGeoBoundary(id).map(function (d) {
+    return d.reverse();
+  });
+}
+
+// get centroid should return [lon, lat]
+function getCentroid(_ref3) {
+  var id = _ref3.id;
+
+  // always reverse it to [lng, lat]
+  return h3ToGeo(id).reverse();
+}
+
+function idToPolygonGeo(_ref4, properties) {
+  var object = _ref4.object;
+
+  if (!object || !object.id) {
+    return null;
+  }
+
+  var vertices = getVertices(object);
+
+  return {
+    geometry: {
+      coordinates: [].concat(vertices, [vertices[0]]),
+      type: 'LineString'
+    },
+    properties: properties
+  };
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9rZXBsZXJnbC1sYXllcnMvaDMtaGV4YWdvbi1sYXllci9oMy11dGlscy5qcyJdLCJuYW1lcyI6WyJnZXRWZXJ0aWNlcyIsImdldENlbnRyb2lkIiwiaWRUb1BvbHlnb25HZW8iLCJwcm9jZXNzIiwiZW52IiwiQlJPV1NFUiIsIk5PREVfRU5WIiwicmVxdWlyZSIsImgzVG9HZW8iLCJoM1RvR2VvQm91bmRhcnkiLCJWMiIsImlkIiwibWFwIiwiZCIsInJldmVyc2UiLCJwcm9wZXJ0aWVzIiwib2JqZWN0IiwidmVydGljZXMiLCJnZW9tZXRyeSIsImNvb3JkaW5hdGVzIiwidHlwZSJdLCJtYXBwaW5ncyI6Ijs7Ozs7UUFJZ0JBLFcsR0FBQUEsVztRQU1BQyxXLEdBQUFBLFc7UUFLQUMsYyxHQUFBQSxjOztXQWZtQkMsUUFBUUMsR0FBUixDQUFZQyxPQUFaLElBQXVCRixRQUFRQyxHQUFSLENBQVlFLFFBQVosS0FBeUIsTUFBaEQsR0FDakNDLFFBQVEsdUJBQVIsQ0FEaUMsR0FDRSxFQUFDQyxTQUFTLElBQVYsRUFBZ0JDLGlCQUFpQixJQUFqQyxFQUF1Q0MsSUFBSSxJQUEzQyxFO0lBRDlCRixPLFFBQUFBLE87SUFBU0MsZSxRQUFBQSxlOztBQUdoQjs7O0FBQ08sU0FBU1QsV0FBVCxRQUEyQjtBQUFBLE1BQUxXLEVBQUssU0FBTEEsRUFBSzs7QUFDaEM7QUFDQSxTQUFPRixnQkFBZ0JFLEVBQWhCLEVBQW9CQyxHQUFwQixDQUF3QjtBQUFBLFdBQUtDLEVBQUVDLE9BQUYsRUFBTDtBQUFBLEdBQXhCLENBQVA7QUFDRDs7QUFFRDtBQUNPLFNBQVNiLFdBQVQsUUFBMkI7QUFBQSxNQUFMVSxFQUFLLFNBQUxBLEVBQUs7O0FBQ2hDO0FBQ0EsU0FBT0gsUUFBUUcsRUFBUixFQUFZRyxPQUFaLEVBQVA7QUFDRDs7QUFFTSxTQUFTWixjQUFULFFBQWtDYSxVQUFsQyxFQUE4QztBQUFBLE1BQXJCQyxNQUFxQixTQUFyQkEsTUFBcUI7O0FBQ25ELE1BQUksQ0FBQ0EsTUFBRCxJQUFXLENBQUNBLE9BQU9MLEVBQXZCLEVBQTJCO0FBQ3pCLFdBQU8sSUFBUDtBQUNEOztBQUVELE1BQU1NLFdBQVdqQixZQUFZZ0IsTUFBWixDQUFqQjs7QUFFQSxTQUFPO0FBQ0xFLGNBQVU7QUFDUkMsNkJBQWlCRixRQUFqQixHQUEyQkEsU0FBUyxDQUFULENBQTNCLEVBRFE7QUFFUkcsWUFBTTtBQUZFLEtBREw7QUFLTEw7QUFMSyxHQUFQO0FBT0QiLCJmaWxlIjoiaDMtdXRpbHMuanMiLCJzb3VyY2VzQ29udGVudCI6WyJjb25zdCB7aDNUb0dlbywgaDNUb0dlb0JvdW5kYXJ5fSA9IHByb2Nlc3MuZW52LkJST1dTRVIgfHwgcHJvY2Vzcy5lbnYuTk9ERV9FTlYgPT09ICd0ZXN0JyA/XG4gIHJlcXVpcmUoJ0B1YmVyL2gzLXRyYW5zaXRpb25hbCcpIDoge2gzVG9HZW86IG51bGwsIGgzVG9HZW9Cb3VuZGFyeTogbnVsbCwgVjI6IG51bGx9O1xuXG4vLyBnZXQgdmVydGljZXMgc2hvdWxkIHJldHVybiBbbG9uLCBsYXRdXG5leHBvcnQgZnVuY3Rpb24gZ2V0VmVydGljZXMoe2lkfSkge1xuICAvLyBhbHdheXMgcmV2ZXJzZSBpdFxuICByZXR1cm4gaDNUb0dlb0JvdW5kYXJ5KGlkKS5tYXAoZCA9PiBkLnJldmVyc2UoKSk7XG59XG5cbi8vIGdldCBjZW50cm9pZCBzaG91bGQgcmV0dXJuIFtsb24sIGxhdF1cbmV4cG9ydCBmdW5jdGlvbiBnZXRDZW50cm9pZCh7aWR9KSB7XG4gIC8vIGFsd2F5cyByZXZlcnNlIGl0IHRvIFtsbmcsIGxhdF1cbiAgcmV0dXJuIGgzVG9HZW8oaWQpLnJldmVyc2UoKTtcbn1cblxuZXhwb3J0IGZ1bmN0aW9uIGlkVG9Qb2x5Z29uR2VvKHtvYmplY3R9LCBwcm9wZXJ0aWVzKSB7XG4gIGlmICghb2JqZWN0IHx8ICFvYmplY3QuaWQpIHtcbiAgICByZXR1cm4gbnVsbDtcbiAgfVxuXG4gIGNvbnN0IHZlcnRpY2VzID0gZ2V0VmVydGljZXMob2JqZWN0KTtcblxuICByZXR1cm4ge1xuICAgIGdlb21ldHJ5OiB7XG4gICAgICBjb29yZGluYXRlczogWy4uLnZlcnRpY2VzLCB2ZXJ0aWNlc1swXV0sXG4gICAgICB0eXBlOiAnTGluZVN0cmluZydcbiAgICB9LFxuICAgIHByb3BlcnRpZXNcbiAgfTtcbn1cbiJdfQ==

@@ -1,0 +1,38 @@
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.mapBuildingChange = exports.loadMapStyleErr = exports.loadMapStyles = exports.mapStyleChange = exports.mapConfigChange = undefined;
+
+var _reduxActions = require('redux-actions');
+
+var _actionTypes = require('../constants/action-types');
+
+var _actionTypes2 = _interopRequireDefault(_actionTypes);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var MAP_CONFIG_CHANGE = _actionTypes2.default.MAP_CONFIG_CHANGE,
+    MAP_STYLE_CHANGE = _actionTypes2.default.MAP_STYLE_CHANGE,
+    LOAD_MAP_STYLES = _actionTypes2.default.LOAD_MAP_STYLES,
+    LOAD_MAP_STYLE_ERR = _actionTypes2.default.LOAD_MAP_STYLE_ERR,
+    MAP_BUILDING_CHANGE = _actionTypes2.default.MAP_BUILDING_CHANGE;
+
+// second argument of createAction is expected to be payloadCreator or undefined
+
+var _map = [MAP_CONFIG_CHANGE, LOAD_MAP_STYLES, LOAD_MAP_STYLE_ERR, MAP_STYLE_CHANGE, MAP_BUILDING_CHANGE].map(function (a) {
+  return (0, _reduxActions.createAction)(a);
+}),
+    mapConfigChange = _map[0],
+    loadMapStyles = _map[1],
+    loadMapStyleErr = _map[2],
+    mapStyleChange = _map[3],
+    mapBuildingChange = _map[4];
+
+exports.mapConfigChange = mapConfigChange;
+exports.mapStyleChange = mapStyleChange;
+exports.loadMapStyles = loadMapStyles;
+exports.loadMapStyleErr = loadMapStyleErr;
+exports.mapBuildingChange = mapBuildingChange;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9hY3Rpb25zL21hcC1zdHlsZS1hY3Rpb25zLmpzIl0sIm5hbWVzIjpbIk1BUF9DT05GSUdfQ0hBTkdFIiwiTUFQX1NUWUxFX0NIQU5HRSIsIkxPQURfTUFQX1NUWUxFUyIsIkxPQURfTUFQX1NUWUxFX0VSUiIsIk1BUF9CVUlMRElOR19DSEFOR0UiLCJtYXAiLCJhIiwibWFwQ29uZmlnQ2hhbmdlIiwibG9hZE1hcFN0eWxlcyIsImxvYWRNYXBTdHlsZUVyciIsIm1hcFN0eWxlQ2hhbmdlIiwibWFwQnVpbGRpbmdDaGFuZ2UiXSwibWFwcGluZ3MiOiI7Ozs7Ozs7QUFBQTs7QUFDQTs7Ozs7O0lBR0VBLGlCLHlCQUFBQSxpQjtJQUNBQyxnQix5QkFBQUEsZ0I7SUFDQUMsZSx5QkFBQUEsZTtJQUNBQyxrQix5QkFBQUEsa0I7SUFDQUMsbUIseUJBQUFBLG1COztBQUdGOztXQU9JLENBQ0ZKLGlCQURFLEVBRUZFLGVBRkUsRUFHRkMsa0JBSEUsRUFJRkYsZ0JBSkUsRUFLRkcsbUJBTEUsRUFNRkMsR0FORSxDQU1FO0FBQUEsU0FBSyxnQ0FBYUMsQ0FBYixDQUFMO0FBQUEsQ0FORixDO0lBTEZDLGU7SUFDQUMsYTtJQUNBQyxlO0lBQ0FDLGM7SUFDQUMsaUI7O1FBVUFKLGUsR0FBQUEsZTtRQUNBRyxjLEdBQUFBLGM7UUFDQUYsYSxHQUFBQSxhO1FBQ0FDLGUsR0FBQUEsZTtRQUNBRSxpQixHQUFBQSxpQiIsImZpbGUiOiJtYXAtc3R5bGUtYWN0aW9ucy5qcyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7Y3JlYXRlQWN0aW9ufSBmcm9tICdyZWR1eC1hY3Rpb25zJztcbmltcG9ydCBBY3Rpb25UeXBlcyBmcm9tICcuLi9jb25zdGFudHMvYWN0aW9uLXR5cGVzJztcblxuY29uc3Qge1xuICBNQVBfQ09ORklHX0NIQU5HRSxcbiAgTUFQX1NUWUxFX0NIQU5HRSxcbiAgTE9BRF9NQVBfU1RZTEVTLFxuICBMT0FEX01BUF9TVFlMRV9FUlIsXG4gIE1BUF9CVUlMRElOR19DSEFOR0Vcbn0gPSBBY3Rpb25UeXBlcztcblxuLy8gc2Vjb25kIGFyZ3VtZW50IG9mIGNyZWF0ZUFjdGlvbiBpcyBleHBlY3RlZCB0byBiZSBwYXlsb2FkQ3JlYXRvciBvciB1bmRlZmluZWRcbmNvbnN0IFtcbiAgbWFwQ29uZmlnQ2hhbmdlLFxuICBsb2FkTWFwU3R5bGVzLFxuICBsb2FkTWFwU3R5bGVFcnIsXG4gIG1hcFN0eWxlQ2hhbmdlLFxuICBtYXBCdWlsZGluZ0NoYW5nZVxuXSA9IFtcbiAgTUFQX0NPTkZJR19DSEFOR0UsXG4gIExPQURfTUFQX1NUWUxFUyxcbiAgTE9BRF9NQVBfU1RZTEVfRVJSLFxuICBNQVBfU1RZTEVfQ0hBTkdFLFxuICBNQVBfQlVJTERJTkdfQ0hBTkdFXG5dLm1hcChhID0+IGNyZWF0ZUFjdGlvbihhKSk7XG5cbmV4cG9ydCB7XG4gIG1hcENvbmZpZ0NoYW5nZSxcbiAgbWFwU3R5bGVDaGFuZ2UsXG4gIGxvYWRNYXBTdHlsZXMsXG4gIGxvYWRNYXBTdHlsZUVycixcbiAgbWFwQnVpbGRpbmdDaGFuZ2Vcbn07XG4iXX0=
