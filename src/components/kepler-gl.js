@@ -20,7 +20,7 @@ import BottomWidget from './bottom-widget';
 import {theme} from '../styles/base';
 
 // webpack css-loader handles css loading
-import '../stylesheets/kepler.gl.scss';
+// import '../stylesheets/kepler.gl.scss';
 
 const defaultProps = {
   mapStyles: [],

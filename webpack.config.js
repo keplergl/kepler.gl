@@ -17,8 +17,8 @@ const LIBRARY_BUNDLE_CONFIG = env => ({
     // Generate the bundle in dist folder
     path: resolve('./dist'),
     filename: 'index.js',
-    library: 'kepler.gl',
-    libraryTarget: 'umd'
+    library: 'kepler.gl'
+    // libraryTarget: 'umd'
   },
 
   // Exclude any non-relative imports from resulting bundle
@@ -48,11 +48,11 @@ const LIBRARY_BUNDLE_CONFIG = env => ({
 
   plugins: [
     // leave minification to app
-    // new webpack.optimize.UglifyJsPlugin({comments: false})
+    // new webpack.optimize.UglifyJsPlugin({comments: false}),
     new webpack.DefinePlugin({
       'process.env': {
         NODE_ENV: JSON.stringify(env),
-        BROWSER: JSON.stringify(true)
+        BROWSER: JSON.stringify(true),
       }
     })
   ]
@@ -103,5 +103,8 @@ module.exports = env => {
   if (env.test) {
     return TEST_BROWSER_CONFIG;
   }
+
+  console.log(
+    JSON.stringify(LIBRARY_BUNDLE_CONFIG(env), null, 2));
   return LIBRARY_BUNDLE_CONFIG(env);
 };

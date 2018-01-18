@@ -1,3 +1,4 @@
+/*global window */
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
@@ -6,9 +7,7 @@ import UploadButton from './upload-button';
 import {File, DragNDrop} from 'components/common/icons';
 import {isChrome} from 'utils/utils';
 
-// do not mount MapContainer in server side rendering
-import FileDrop from 'react-file-drop';
-
+const FileDrop = typeof document !== 'undefined' ? require('react-file-drop') : null;
 const propTypes = {
   onFileUpload: PropTypes.func.isRequired,
   validFileExt: PropTypes.array

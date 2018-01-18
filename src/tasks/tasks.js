@@ -40,7 +40,7 @@ export const LOAD_FILE_TASK = taskCreator(
         success({data: result, info});
       }
     })
-    .catch(err => error(err)),
+      .catch(err => error(err)),
 
   'LOAD_FILE_TASK'
 );

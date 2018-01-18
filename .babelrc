@@ -10,6 +10,7 @@
       "polyfill": false,
       "regenerator": true
     }],
+    ["inline-json-import", {}],
     [
       "module-resolver",
       {

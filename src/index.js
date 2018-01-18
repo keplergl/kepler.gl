@@ -1,4 +1,5 @@
 // Actions
+// require('babel-polyfill');
 export * from './actions/actions';
 
 // Constants

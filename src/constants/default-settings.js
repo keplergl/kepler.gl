@@ -1,4 +1,5 @@
 import keyMirror from 'keymirror';
+import toolsDark from './map-styles/tools-dark.json';
 
 export const ACTION_PREFIX = '@@kepler.gl/';
 
@@ -106,7 +107,7 @@ export const DEFAULT_MAP_STYLES = [
     label: 'Dark',
     url: `${STYLE_PREFIX}/tools-dark.json`,
     icon: `${ICON_PREFIX}/UBER_DARK_V2.png`,
-    style: require('./map-styles/tools-dark.json'),
+    style: toolsDark,
     layerGroups: DEFAULT_LAYER_GROUPS
   },
   {

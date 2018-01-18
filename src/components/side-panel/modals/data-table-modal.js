@@ -1,11 +1,12 @@
 import React, {Component} from 'react';
 import styled from 'styled-components';
-import {navigator} from 'global';
+import window from 'global/window';
 
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
 import FieldToken from 'components/common/field-token';
 import {Clock} from 'components/common/icons';
-import ReactDataGrid from 'react-data-grid';
+const ReactDataGrid = null;
+// const ReactDataGrid = window.navigator ? require('react-data-grid') : null;
 
 let shouldPreventScrollBack = false;
 
@@ -21,10 +22,6 @@ if (window.navigator && window.navigator.userAgent) {
   shouldPreventScrollBack = isMac && (is_chrome || is_safari || is_firefox);
 }
 
-export function isChrome() {
-  // Chrome 1+
-  return window.chrome && window.chrome.webstore;
-}
 const dgSettings = {
   sidePadding: '38px'
 };
