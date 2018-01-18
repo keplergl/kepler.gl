@@ -28,7 +28,8 @@
   },
   "files": [
     "dist",
-    "src"
+    "src",
+    "examples"
   ],
   "dependencies": {
     "@mapbox/geo-viewport": "^0.2.2",
