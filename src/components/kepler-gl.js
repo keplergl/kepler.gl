@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
-import {console as Console} from 'global/window'
-import {bindActionCreators} from 'redux'
+import {console as Console} from 'global/window';
+import {bindActionCreators} from 'redux';
 import request from 'd3-request';
 import {connect as keplerGlConnect} from '../connect/keplergl-connect';
 
@@ -35,7 +35,10 @@ class KeplerGL extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    if (this.props.width !== nextProps.width || this.props.height !== nextProps.height) {
+    if (
+      this.props.width !== nextProps.width ||
+      this.props.height !== nextProps.height
+    ) {
       this._handleResize(nextProps);
     }
   }
@@ -52,17 +55,19 @@ class KeplerGL extends Component {
   }
 
   _loadMapStyle() {
-    [...this.props.mapStyles, ...Object.values(DEFAULT_MAP_STYLES)]
-      .forEach(style => {
-        console.log(style)
-      if (style.style) {
-        this.props.dispatch(MapStyleActions.loadMapStyles({
-          [style.id]: style
-        }));
-      } else {
-        this._requestMapStyle(style);
+    [...this.props.mapStyles, ...Object.values(DEFAULT_MAP_STYLES)].forEach(
+      style => {
+        if (style.style) {
+          this.props.dispatch(
+            MapStyleActions.loadMapStyles({
+              [style.id]: style
+            })
+          );
+        } else {
+          this._requestMapStyle(style);
+        }
       }
-    })
+    );
   }
 
   _requestMapStyle(mapStyle) {
@@ -71,9 +76,11 @@ class KeplerGL extends Component {
       if (error) {
         Console.warn(`Error loading map style ${mapStyle.url}`);
       }
-      this.props.dispatch(MapStyleActions.loadMapStyles({
-        [id]: {...mapStyle, style: result}
-      }));
+      this.props.dispatch(
+        MapStyleActions.loadMapStyles({
+          [id]: {...mapStyle, style: result}
+        })
+      );
     });
   }
 
@@ -139,33 +146,37 @@ class KeplerGL extends Component {
 
     const isSplit = splitMaps && splitMaps.length > 1;
 
-    const mapContainers = !isSplit ? [
-      (
-        <MapContainer
-          key={0}
-          index={0}
-          {...mapFields}
-          mapLayers={isSplit ? splitMaps[0].layers : null}
-          popoverOffset={{left: 0, top: 0}}
-        />
-      )
-    ] : splitMaps.map((settings, index) => (
-      <MapContainer
-        key={index}
-        index={index}
-        {...mapFields}
-        mapLayers={splitMaps[index].layers}
-        popoverOffset={{left: 0, top: 0}}
-      />
-    ));
+    const mapContainers = !isSplit
+      ? [
+          <MapContainer
+            key={0}
+            index={0}
+            {...mapFields}
+            mapLayers={isSplit ? splitMaps[0].layers : null}
+            popoverOffset={{left: 0, top: 0}}
+          />
+        ]
+      : splitMaps.map((settings, index) => (
+          <MapContainer
+            key={index}
+            index={index}
+            {...mapFields}
+            mapLayers={splitMaps[index].layers}
+            popoverOffset={{left: 0, top: 0}}
+          />
+        ));
 
     const containerW = mapState.width * (Number(isSplit) + 1);
     return (
       <ThemeProvider theme={theme}>
-        <div style={{position: 'relative'}} className="kepler-gl" id={`kepler-gl__${id}`}
-             ref={node => {
-               this.root = node;
-             }}>
+        <div
+          style={{position: 'relative'}}
+          className="kepler-gl"
+          id={`kepler-gl__${id}`}
+          ref={node => {
+            this.root = node;
+          }}
+        >
           {!mapState.isFullScreen && (
             <SidePanel
               {...sideFields}
@@ -223,7 +234,8 @@ function mapDispatchToProps(dispatch, ownProps) {
     BuildingDataActions,
     UIStateActions
   ].map(actions =>
-    bindActionCreators(mergeActions(actions, userActions), dispatch));
+    bindActionCreators(mergeActions(actions, userActions), dispatch)
+  );
 
   return {
     visStateActions,
@@ -249,7 +261,4 @@ function mergeActions(actions, userActions) {
   return {...actions, ...overrides};
 }
 
-export default keplerGlConnect(
-  mapStateToProps,
-  mapDispatchToProps
-)(KeplerGL);
+export default keplerGlConnect(mapStateToProps, mapDispatchToProps)(KeplerGL);

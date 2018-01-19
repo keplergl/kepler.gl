@@ -20,8 +20,10 @@ function mercatorY(latitude) {
  * https://mapzen.com/documentation/vector-tiles/use-service/
  */
 export function getQueryURL(x, y, z) {
-  return 'https://vector.mapzen.com/osm/buildings/' +
-    `${z}/${x}/${y}.json?api_key=${MAPZEN_API_KEY}`;
+  return (
+    'https://vector.mapzen.com/osm/buildings/' +
+    `${z}/${x}/${y}.json?api_key=${MAPZEN_API_KEY}`
+  );
 }
 
 /*
@@ -58,10 +60,14 @@ export function getBounds(mapState) {
 
   // normalize bearing, always return [[lngMin, latMax], [lngMax. latMin]]
   const [lngMin, lngMax] = extent(
-    [topLeft, bottomRight, topRight, bottomLeft], d => d[0]);
+    [topLeft, bottomRight, topRight, bottomLeft],
+    d => d[0]
+  );
 
   const [latMin, latMax] = extent(
-    [topLeft, bottomRight, topRight, bottomLeft],  d => d[1]);
+    [topLeft, bottomRight, topRight, bottomLeft],
+    d => d[1]
+  );
 
   return [[lngMin, latMax], [lngMax, latMin]];
 }
@@ -71,21 +77,21 @@ export function getBounds(mapState) {
  */
 export class TilesCache {
   constructor() {
-    this.cache = {}
+    this.cache = {};
   }
 
   set(x, y, z, value) {
     this.cache[`${x}-${y}-${z}`] = value;
     return this;
-  };
+  }
 
   get(x, y, z) {
     return this.cache[`${x}-${y}-${z}`];
-  };
+  }
 
   has(x, y, z) {
-    return (`${x}-${y}-${z}` in this.cache);
-  };
+    return `${x}-${y}-${z}` in this.cache;
+  }
 }
 
 /*
@@ -95,7 +101,6 @@ export class TilesCache {
 export class TilesCollection {
   constructor(mapState) {
     if (mapState && mapState.zoom >= MIN_ZOOM) {
-
       // approx. bounds of the viewport
       const queryZoom = normalizeZ(mapState.zoom);
       const bounds = getBounds(mapState);
@@ -108,8 +113,8 @@ export class TilesCollection {
       this.zoom = queryZoom;
       this.top = topLeft.y;
       this.bottom = bottomRight.y;
-      this.size = (bottomRight.x - topLeft.x + 1) *
-        (bottomRight.y - topLeft.y + 1);
+      this.size =
+        (bottomRight.x - topLeft.x + 1) * (bottomRight.y - topLeft.y + 1);
     } else {
       this.size = 0;
     }
@@ -119,7 +124,6 @@ export class TilesCollection {
 
   // returns an array of tiles as {x, y} coordinates
   getTiles() {
-
     if (this.tiles) {
       return this.tiles;
     }
@@ -136,7 +140,7 @@ export class TilesCollection {
     }
 
     return tiles;
-  };
+  }
 
   // supplying 2 parameters x, y:
   // [returns] true if the given tile is inside this collection
@@ -145,12 +149,22 @@ export class TilesCollection {
   contains(x, y, z) {
     if (y === undefined) {
       const that = x;
-      return (this.zoom === that.zoom && this.left <= that.left && this.right >= that.right &&
-        this.top <= that.top && this.bottom >= that.bottom);
+      return (
+        this.zoom === that.zoom &&
+        this.left <= that.left &&
+        this.right >= that.right &&
+        this.top <= that.top &&
+        this.bottom >= that.bottom
+      );
     }
 
-    return (z === this.zoom && x >= this.left && x <= this.right &&
-      y >= this.top && y <= this.bottom);
-  };
+    return (
+      z === this.zoom &&
+      x >= this.left &&
+      x <= this.right &&
+      y >= this.top &&
+      y <= this.bottom
+    );
+  }
 }
 /* eslint-enable max-statements */

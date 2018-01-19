@@ -4,7 +4,10 @@ import classnames from 'classnames';
 import {Switch} from '@uber/react-switch';
 import RangeSlider from 'components/common/range-slider';
 import FieldSelector from 'components/common/field-selector';
-import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
+import {
+  PanelLabel,
+  SidePanelSection
+} from 'components/common/styled-components';
 import {DatasetTag} from '../source-data-catalog';
 
 const propTypes = {
@@ -16,7 +19,7 @@ const propTypes = {
 export default class InteractionPanel extends Component {
   state = {isConfigActive: false};
 
-  _updateConfig = (newProp) => {
+  _updateConfig = newProp => {
     this.props.onConfigChange({
       ...this.props.config,
       ...newProp

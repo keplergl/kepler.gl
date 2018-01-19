@@ -31,7 +31,13 @@ export default class GridLayer extends AggregationLayer {
   }
 
   formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
-    const formattedData = super.formatLayerData(_, allData, filteredIndex, oldLayerData, opt);
+    const formattedData = super.formatLayerData(
+      _,
+      allData,
+      filteredIndex,
+      oldLayerData,
+      opt
+    );
 
     const {getPosition, data} = formattedData;
 
@@ -48,7 +54,15 @@ export default class GridLayer extends AggregationLayer {
     };
   }
 
-  renderLayer({data, idx, layerInteraction, objectHovered, mapState, interaction, layerCallbacks}) {
+  renderLayer({
+    data,
+    idx,
+    layerInteraction,
+    objectHovered,
+    mapState,
+    interaction,
+    layerCallbacks
+  }) {
     const zoomFactor = this.getZoomFactor(mapState.zoom);
     const eleZoomFactor = this.getElevationZoomFactor(mapState.zoom);
     const {visConfig} = this.config;
@@ -85,20 +99,23 @@ export default class GridLayer extends AggregationLayer {
         onSetColorDomain: layerCallbacks.onSetLayerDomain
       }),
 
-      ...this.isLayerHovered(objectHovered) && !visConfig.enable3d ?
-        [new GeoJsonLayer({
-          id: `${this.id}-hovered`,
-          data: [
-            pointToPolygonGeo({
-              object: objectHovered.object,
-              cellSize,
-              coverage: visConfig.coverage,
-              properties: {lineColor: this.config.highlightColor},
-              mapState
+      ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d
+        ? [
+            new GeoJsonLayer({
+              id: `${this.id}-hovered`,
+              data: [
+                pointToPolygonGeo({
+                  object: objectHovered.object,
+                  cellSize,
+                  coverage: visConfig.coverage,
+                  properties: {lineColor: this.config.highlightColor},
+                  mapState
+                })
+              ],
+              lineWidthScale: 8 * zoomFactor
             })
-          ],
-          lineWidthScale: 8 * zoomFactor
-        })] : []
+          ]
+        : [])
     ];
   }
 }

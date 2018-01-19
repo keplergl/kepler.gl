@@ -4,94 +4,96 @@ import {handleActions} from 'redux-actions';
 // updater functions
 import {
   INITIAL_VIS_STATE,
-  addFilter,
-  addLayer,
-  enlargeFilter,
-  handleLayerClick,
-  handleLayerHover,
-  handleMapClick,
-  onToggleFilterAnimation,
-  handleReceiveMapConfig,
-  handleResetConfig,
-  onFileUpload,
-  onFileUploadError,
-  receiveVisData,
-  removeDataset,
-  removeFilter,
-  removeLayer,
-  reorderLayer,
-  showDatasetTable,
-  updateFilter,
-  updateFilterPlot,
-  updateInteractionConfig,
-  updateLayerBlending,
-  updateLayerConfig,
-  updateLayerType,
-  handleSplitToggle,
-  setVisibleLayersForMap,
-  toggleLayerForMap,
-  updateLayerVisConfig,
-  updateLayerVisualChannelConfig
+  addFilterUpdater,
+  addLayerUpdater,
+  enlargeFilterUpdater,
+  layerClickUpdater,
+  layerHoverUpdater,
+  mapClickUpdater,
+  toggleFilterAnimationUpdater,
+  receiveMapConfigUpdater,
+  resetMapConfigUpdater,
+  loadFilesUpdater,
+  loadFilesErrUpdater,
+  updateVisDataUpdater,
+  removeDatasetUpdater,
+  removeFilterUpdater,
+  removeLayerUpdater,
+  reorderLayerUpdater,
+  showDatasetTableUpdater,
+  setFilterUpdater,
+  setFilterPlotUpdater,
+  interactionConfigChangeUpdater,
+  updateLayerBlendingUpdater,
+  layerConfigChangeUpdater,
+  layerTypeChangeUpdater,
+  toggleSplitMapUpdater,
+  setVisibleLayersForMapUpdater,
+  toggleLayerForMapUpdater,
+  layerVisConfigChangeUpdater,
+  layerVisualChannelChangeUpdater
 } from './vis-state-updaters';
 
 // construct vis-state reducer
-const rootReducer = handleActions({
-  [ActionTypes.ADD_FILTER]: addFilter,
+const rootReducer = handleActions(
+  {
+    [ActionTypes.ADD_FILTER]: addFilterUpdater,
 
-  [ActionTypes.ADD_LAYER]: addLayer,
+    [ActionTypes.ADD_LAYER]: addLayerUpdater,
 
-  [ActionTypes.ENLARGE_FILTER]: enlargeFilter,
+    [ActionTypes.ENLARGE_FILTER]: enlargeFilterUpdater,
 
-  [ActionTypes.INTERACTION_CONFIG_CHANGE]: updateInteractionConfig,
+    [ActionTypes.INTERACTION_CONFIG_CHANGE]: interactionConfigChangeUpdater,
 
-  [ActionTypes.LAYER_CLICK]: handleLayerClick,
+    [ActionTypes.LAYER_CLICK]: layerClickUpdater,
 
-  [ActionTypes.LAYER_CONFIG_CHANGE]: updateLayerConfig,
+    [ActionTypes.LAYER_CONFIG_CHANGE]: layerConfigChangeUpdater,
 
-  [ActionTypes.LAYER_HOVER]: handleLayerHover,
+    [ActionTypes.LAYER_HOVER]: layerHoverUpdater,
 
-  [ActionTypes.LAYER_TYPE_CHANGE]: updateLayerType,
+    [ActionTypes.LAYER_TYPE_CHANGE]: layerTypeChangeUpdater,
 
-  [ActionTypes.LAYER_VIS_CONFIG_CHANGE]: updateLayerVisConfig,
+    [ActionTypes.LAYER_VIS_CONFIG_CHANGE]: layerVisConfigChangeUpdater,
 
-  [ActionTypes.LAYER_VISUAL_CHANNEL_CONFIG_CHANGE]: updateLayerVisualChannelConfig,
+    [ActionTypes.LAYER_VISUAL_CHANNEL_CHANGE]: layerVisualChannelChangeUpdater,
 
-  [ActionTypes.LOAD_FILES]: onFileUpload,
+    [ActionTypes.LOAD_FILES]: loadFilesUpdater,
 
-  [ActionTypes.LOAD_FILES_ERR]: onFileUploadError,
+    [ActionTypes.LOAD_FILES_ERR]: loadFilesErrUpdater,
 
-  [ActionTypes.MAP_CLICK]: handleMapClick,
+    [ActionTypes.MAP_CLICK]: mapClickUpdater,
 
-  [ActionTypes.RECEIVE_MAP_CONFIG]: handleReceiveMapConfig,
+    [ActionTypes.RECEIVE_MAP_CONFIG]: receiveMapConfigUpdater,
 
-  [ActionTypes.REMOVE_DATASET]: removeDataset,
+    [ActionTypes.REMOVE_DATASET]: removeDatasetUpdater,
 
-  [ActionTypes.REMOVE_FILTER]: removeFilter,
+    [ActionTypes.REMOVE_FILTER]: removeFilterUpdater,
 
-  [ActionTypes.REMOVE_LAYER]: removeLayer,
+    [ActionTypes.REMOVE_LAYER]: removeLayerUpdater,
 
-  [ActionTypes.REORDER_LAYER]: reorderLayer,
+    [ActionTypes.REORDER_LAYER]: reorderLayerUpdater,
 
-  [ActionTypes.RESET_MAP_CONFIG]: handleResetConfig,
+    [ActionTypes.RESET_MAP_CONFIG]: resetMapConfigUpdater,
 
-  [ActionTypes.SET_FILTER]: updateFilter,
+    [ActionTypes.SET_FILTER]: setFilterUpdater,
 
-  [ActionTypes.SET_FILTER_PLOT]: updateFilterPlot,
+    [ActionTypes.SET_FILTER_PLOT]: setFilterPlotUpdater,
 
-  [ActionTypes.SET_VISIBLE_LAYERS_FOR_MAP]: setVisibleLayersForMap,
+    [ActionTypes.SET_VISIBLE_LAYERS_FOR_MAP]: setVisibleLayersForMapUpdater,
 
-  [ActionTypes.SHOW_DATASET_TABLE]: showDatasetTable,
+    [ActionTypes.SHOW_DATASET_TABLE]: showDatasetTableUpdater,
 
-  [ActionTypes.TOGGLE_FILTER_ANIMATION]: onToggleFilterAnimation,
+    [ActionTypes.TOGGLE_FILTER_ANIMATION]: toggleFilterAnimationUpdater,
 
-  [ActionTypes.TOGGLE_LAYER_FOR_MAP]: toggleLayerForMap,
+    [ActionTypes.TOGGLE_LAYER_FOR_MAP]: toggleLayerForMapUpdater,
 
-  [ActionTypes.TOGGLE_SPLIT_MAP]: handleSplitToggle,
+    [ActionTypes.TOGGLE_SPLIT_MAP]: toggleSplitMapUpdater,
 
-  [ActionTypes.UPDATE_LAYER_BLENDING]: updateLayerBlending,
+    [ActionTypes.UPDATE_LAYER_BLENDING]: updateLayerBlendingUpdater,
 
-  [ActionTypes.UPDATE_VIS_DATA]: receiveVisData
-
-}, INITIAL_VIS_STATE);
+    [ActionTypes.UPDATE_VIS_DATA]: updateVisDataUpdater
+  },
+  INITIAL_VIS_STATE
+);
 
 export default rootReducer;

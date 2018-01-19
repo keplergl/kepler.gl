@@ -33,8 +33,10 @@ function geojsonSizeFieldV0ToV1(config) {
 
   // if radius changed, or radius Range Changed, sizeField is most likely used for radius
   // this is the most unreliable guess, that's why we put it in the end
-  if (config.visConfig.radius !== defaultRaiuds ||
-    config.visConfig.radiusRange.some((d, i) => d !== defaultRadiusRange[i])) {
+  if (
+    config.visConfig.radius !== defaultRaiuds ||
+    config.visConfig.radiusRange.some((d, i) => d !== defaultRadiusRange[i])
+  ) {
     return 'radiusField';
   }
 
@@ -161,10 +163,15 @@ class LayerVisConfigSchemaV0 extends Schema {
       return {
         config: {
           ...(accumulator.config || {}),
-          visConfig: Object.keys(visConfig).reduce((accu, key) => ({
-            ...accu,
-            ...(propToRename[key] ? {[propToRename[key]]: visConfig[key]} : {[key]: visConfig[key]})
-          }), {})
+          visConfig: Object.keys(visConfig).reduce(
+            (accu, key) => ({
+              ...accu,
+              ...(propToRename[key]
+                ? {[propToRename[key]]: visConfig[key]}
+                : {[key]: visConfig[key]})
+            }),
+            {}
+          )
         }
       };
     }
@@ -231,7 +238,9 @@ export const layerPropsV0 = {
 
   // move into config.visConfig
   enable3d: new LayerConfigToVisConfigSchemaV0({key: 'enable3d'}),
-  colorAggregation: new LayerConfigToVisConfigSchemaV0({key: 'colorAggregation'}),
+  colorAggregation: new LayerConfigToVisConfigSchemaV0({
+    key: 'colorAggregation'
+  }),
   sizeAggregation: new LayerConfigToVisConfigSchemaV0({key: 'sizeAggregation'}),
 
   // delete
@@ -384,10 +393,12 @@ class InteractionSchemaV0 extends Schema {
       [this.key]: this.properties.reduce(
         (accu, key) => ({
           ...accu,
-          ...{[key]: {
-            ...(interactionConfig[key] || {}),
-            enabled: Boolean(interactionConfig[key])
-          }}
+          ...{
+            [key]: {
+              ...(interactionConfig[key] || {}),
+              enabled: Boolean(interactionConfig[key])
+            }
+          }
         }),
         {}
       )
@@ -429,13 +440,17 @@ export const filterPropsV0 = {
 
 export class DimensionFieldSchema extends Schema {
   save(field) {
-    return {[this.key]: field ? this.savePropertiesOrApplySchema(field)[this.key] : null}
+    return {
+      [this.key]: field
+        ? this.savePropertiesOrApplySchema(field)[this.key]
+        : null
+    };
   }
 
   load(field) {
-    return {[this.key]: field}
+    return {[this.key]: field};
   }
-};
+}
 
 export const filterPropsV1 = {
   ...filterPropsV0,
@@ -498,7 +513,8 @@ export const visStateSchemaV1 = new Schema({
 export const visStateSchema = {
   [VERSIONS.v0]: {
     save: toSave => visStateSchemaV0.save(toSave),
-    load: toLoad => visStateSchemaV1.load(visStateSchemaV0.load(toLoad).visState)
+    load: toLoad =>
+      visStateSchemaV1.load(visStateSchemaV0.load(toLoad).visState)
   },
   [VERSIONS.v1]: visStateSchemaV1
 };

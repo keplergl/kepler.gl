@@ -88,7 +88,6 @@ const Footer = ({cancel, confirm}) => (
 );
 
 class ModalDialog extends Component {
-
   render() {
     const {props} = this;
     return (
@@ -111,7 +110,7 @@ class ModalDialog extends Component {
           {props.title ? <ModalTitle>{props.title}</ModalTitle> : null}
           <ModalContent>{props.children}</ModalContent>
           {props.footer ? (
-            <Footer cancel={props.onClose} confirm={props.onConfirm} />
+            <Footer cancel={props.close} confirm={props.onConfirm} />
           ) : null}
         </ModalContentWrapper>
       </Modal>

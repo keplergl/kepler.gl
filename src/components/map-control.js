@@ -5,7 +5,16 @@ import styled from 'styled-components';
 import {Tooltip, IconRoundSmall} from './common/styled-components';
 import MapLayerSelector from './common/map-layer-selector';
 import MapLegend from './map-legend';
-import {Close, Reduce, Expand, Split, Legend, Cube3d, Delete, Layers}  from './common/icons';
+import {
+  Close,
+  Reduce,
+  Expand,
+  Split,
+  Legend,
+  Cube3d,
+  Delete,
+  Layers
+} from './common/icons';
 
 const StyledMapControl = styled.div`
   right: 0;
@@ -24,11 +33,17 @@ const StyledMapControlAction = styled.div`
 
 const StyledMapControlButton = styled.div`
   align-items: center;
-  background-color: ${props => props.active ? props.theme.secondaryBtnActBgd : props.theme.secondaryBtnBgd};
+  background-color: ${props =>
+    props.active
+      ? props.theme.secondaryBtnActBgd
+      : props.theme.secondaryBtnBgd};
   border-radius: 18px;
   border: 0;
   box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.16);
-  color: ${props => props.active ? props.theme.secondaryBtnActColor : props.theme.secondaryBtnColor};
+  color: ${props =>
+    props.active
+      ? props.theme.secondaryBtnActColor
+      : props.theme.secondaryBtnColor};
   cursor: pointer;
   display: flex;
   height: 36px;
@@ -42,11 +57,11 @@ const StyledMapControlButton = styled.div`
   :focus {
     outline: none;
   }
-  
+
   :hover {
     cursor: pointer;
-    background-color:  ${props => props.theme.secondaryBtnActBgd};
-    color:  ${props => props.theme.secondaryBtnActColor};
+    background-color: ${props => props.theme.secondaryBtnActBgd};
+    color: ${props => props.theme.secondaryBtnActColor};
   }
 `;
 
@@ -60,8 +75,7 @@ const StyledMapControlPanel = styled.div`
 `;
 
 const StyledMapControlPanelContent = styled.div`
-  ${props => props.theme.dropdownScrollBar}
-  max-height: 500px;
+  ${props => props.theme.dropdownScrollBar} max-height: 500px;
   min-height: 100px;
   overflow: overlay;
 `;
@@ -74,7 +88,7 @@ const StyledMapControlPanelHeader = styled.div`
   padding: 6px 12px;
   font-size: 11px;
   color: ${props => props.theme.secondaryBtnColor};
-  
+
   button {
     width: 18px;
     height: 18px;
@@ -105,28 +119,40 @@ const defaultProps = {
  * @returns {[id, label, isVisible]}
  */
 const layerSelector = (layers, mapLayers) => {
-  const availableItems = Object.keys(layers)
-    .reduce((availableLayers, currentLayerId) => {
+  const availableItems = Object.keys(layers).reduce(
+    (availableLayers, currentLayerId) => {
       // is available ? if yes add to available list
       const currentLayer = layers[currentLayerId];
       // if maplayers exists we need to make sure currentlayer
       // is contained in mapLayers in order to add onto availableLayers
       // otherwise we add all layers
 
-      const layerConfig = mapLayers ? mapLayers[currentLayer.id] : currentLayer.config;
+      const layerConfig = mapLayers
+        ? mapLayers[currentLayer.id]
+        : currentLayer.config;
 
-      const mustBeAdded = mapLayers && mapLayers[currentLayer.id] ? mapLayers[currentLayer.id].isAvailable : layerConfig.isVisible;
+      const mustBeAdded =
+        mapLayers && mapLayers[currentLayer.id]
+          ? mapLayers[currentLayer.id].isAvailable
+          : layerConfig.isVisible;
 
-      return mustBeAdded ? [
-        ...availableLayers,
-        {
-          id: currentLayer.id,
-          name: currentLayer.config.label,
-          isVisible: mapLayers && mapLayers[currentLayer.id] ? mapLayers[currentLayer.id].isVisible : layerConfig.isVisible,
-          layer: currentLayer
-        }
-      ] : availableLayers;
-    }, []);
+      return mustBeAdded
+        ? [
+            ...availableLayers,
+            {
+              id: currentLayer.id,
+              name: currentLayer.config.label,
+              isVisible:
+                mapLayers && mapLayers[currentLayer.id]
+                  ? mapLayers[currentLayer.id].isVisible
+                  : layerConfig.isVisible,
+              layer: currentLayer
+            }
+          ]
+        : availableLayers;
+    },
+    []
+  );
 
   return availableItems;
 };
@@ -155,7 +181,7 @@ class MapControl extends Component {
       isLegendVisible: false,
       [panelId]: !this.state[panelId]
     });
-  };
+  }
 
   _renderLayerSelector(items) {
     const {onMapToggleLayer} = this.props;
@@ -164,9 +190,14 @@ class MapControl extends Component {
     return !areLayersVisible ? (
       <StyledMapControlButton
         key={1}
-        onClick={e => {e.preventDefault(); this._toggleMenuPanel('areLayersVisible')}}
-        data-tip data-for="toggle-layer">
-        <Layers height="22px"/>
+        onClick={e => {
+          e.preventDefault();
+          this._toggleMenuPanel('areLayersVisible');
+        }}
+        data-tip
+        data-for="toggle-layer"
+      >
+        <Layers height="22px" />
         <MapLegendTooltip
           id="toggle-layer"
           message={areLayersVisible ? 'Hide layer panel' : 'Show layer panel'}
@@ -175,11 +206,9 @@ class MapControl extends Component {
     ) : (
       <MapControlPanel
         header={'Visible layers'}
-        onClick={() => this._toggleMenuPanel('areLayersVisible')}>
-        <MapLayerSelector
-          layers={items}
-          onMapToggleLayer={onMapToggleLayer}
-        />
+        onClick={() => this._toggleMenuPanel('areLayersVisible')}
+      >
+        <MapLayerSelector layers={items} onMapToggleLayer={onMapToggleLayer} />
       </MapControlPanel>
     );
   }
@@ -190,19 +219,24 @@ class MapControl extends Component {
       <StyledMapControlButton
         key={2}
         className={'legend'}
-        data-tip data-for="show-legend"
-        onClick={e => {e.preventDefault(); this._toggleMenuPanel('isLegendVisible')}}>
-        <Legend height="22px"/>
-        <MapLegendTooltip
-          id="show-legend"
-          message={'show legend'}
-        />
+        data-tip
+        data-for="show-legend"
+        onClick={e => {
+          e.preventDefault();
+          this._toggleMenuPanel('isLegendVisible');
+        }}
+      >
+        <Legend height="22px" />
+        <MapLegendTooltip id="show-legend" message={'show legend'} />
       </StyledMapControlButton>
     ) : (
       <MapControlPanel
         header={'Layer Legend'}
-        onClick={() => this._toggleMenuPanel('isLegendVisible')}>
-        <MapLegend layers={items.filter(item => item.isVisible).map(item => item.layer)}/>
+        onClick={() => this._toggleMenuPanel('isLegendVisible')}
+      >
+        <MapLegend
+          layers={items.filter(item => item.isVisible).map(item => item.layer)}
+        />
       </MapControlPanel>
     );
   }
@@ -215,8 +249,13 @@ class MapControl extends Component {
     }
 
     const {
-      dragRotate, isFullScreen, isSplit, mapIndex,
-      onToggleFullScreen, onTogglePerspective, onToggleSplitMap
+      dragRotate,
+      isFullScreen,
+      isSplit,
+      mapIndex,
+      onToggleFullScreen,
+      onTogglePerspective,
+      onToggleSplitMap
     } = this.props;
 
     return (
@@ -225,28 +264,38 @@ class MapControl extends Component {
         <ActionPanel key={0}>
           <StyledMapControlButton
             active={isSplit}
-            onClick={e => {e.preventDefault(); onToggleSplitMap(isSplit ? mapIndex : undefined)}}
-            data-tip data-for={`action-toggle_${mapIndex}`}>
-            {isSplit ? <Delete height={'18px'}/> : <Split height={'18px'}/>}
+            onClick={e => {
+              e.preventDefault();
+              onToggleSplitMap(isSplit ? mapIndex : undefined);
+            }}
+            data-tip
+            data-for={`action-toggle_${mapIndex}`}
+          >
+            {isSplit ? <Delete height={'18px'} /> : <Split height={'18px'} />}
             <MapLegendTooltip
               id={`action-toggle_${mapIndex}`}
-              message={isSplit ? 'Close current panel' : 'Switch to dual map view'}
+              message={
+                isSplit ? 'Close current panel' : 'Switch to dual map view'
+              }
             />
           </StyledMapControlButton>
         </ActionPanel>
         {/* Map Layers */}
         {isSplit && (
-          <ActionPanel key={1}>
-            {this._renderLayerSelector(items)}
-          </ActionPanel>
+          <ActionPanel key={1}>{this._renderLayerSelector(items)}</ActionPanel>
         )}
         {/* 3D Map */}
         <ActionPanel key={2}>
           <StyledMapControlButton
-            onClick={e => {e.preventDefault(); onTogglePerspective()}}
+            onClick={e => {
+              e.preventDefault();
+              onTogglePerspective();
+            }}
             active={dragRotate}
-            data-tip data-for="action-3d">
-            <Cube3d height={'22px'}/>
+            data-tip
+            data-for="action-3d"
+          >
+            <Cube3d height={'22px'} />
             {/* No icon since we are injecting through css .threeD-map class*/}
             <MapLegendTooltip
               id="action-3d"
@@ -255,17 +304,23 @@ class MapControl extends Component {
           </StyledMapControlButton>
         </ActionPanel>
         {/* Map Legend */}
-        <ActionPanel key={3}>
-          {this._renderLegend(items)}
-        </ActionPanel>
+        <ActionPanel key={3}>{this._renderLegend(items)}</ActionPanel>
         {/* Full Screen */}
-        <ActionPanel
-          key={4}>
+        <ActionPanel key={4}>
           <StyledMapControlButton
-            onClick={e => {e.preventDefault(); onToggleFullScreen()}}
+            onClick={e => {
+              e.preventDefault();
+              onToggleFullScreen();
+            }}
             active={isFullScreen}
-            data-tip data-for={`action-fullscreen_${mapIndex}_${isFullScreen}`}>
-            {isFullScreen ? (<Reduce height={'22px'} />) : (<Expand height={'22px'} />)}
+            data-tip
+            data-for={`action-fullscreen_${mapIndex}_${isFullScreen}`}
+          >
+            {isFullScreen ? (
+              <Reduce height={'22px'} />
+            ) : (
+              <Expand height={'22px'} />
+            )}
             <MapLegendTooltip
               id={`action-fullscreen_${mapIndex}_${isFullScreen}`}
               message={!isFullScreen ? 'Go full screen' : 'Exit full screen'}
@@ -287,26 +342,19 @@ const MapControlPanel = ({children, header, onClick}) => (
     <StyledMapControlPanelHeader style={{position: 'relative'}}>
       <span style={{verticalAlign: 'middle'}}>{header}</span>
       <IconRoundSmall>
-        <Close height="16px" onClick={onClick}/>
+        <Close height="16px" onClick={onClick} />
       </IconRoundSmall>
     </StyledMapControlPanelHeader>
-    <StyledMapControlPanelContent>
-    {children}
-    </StyledMapControlPanelContent>
+    <StyledMapControlPanelContent>{children}</StyledMapControlPanelContent>
   </StyledMapControlPanel>
 );
 
 const ActionPanel = ({children}) => (
-  <StyledMapControlAction>
-    {children}
-  </StyledMapControlAction>
+  <StyledMapControlAction>{children}</StyledMapControlAction>
 );
 
 const MapLegendTooltip = ({id, message}) => (
-  <Tooltip
-    id={id}
-    place="left"
-    effect="solid">
+  <Tooltip id={id} place="left" effect="solid">
     <span>{message}</span>
   </Tooltip>
 );

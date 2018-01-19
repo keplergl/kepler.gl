@@ -11,8 +11,15 @@ import {getSampleData} from 'utils/data-utils';
  * @returns {{}}
  */
 export function getGeojsonDataMaps(allData, getFeature) {
-  const acceptableTypes = ['Point', 'MultiPoint', 'LineString', 'MultiLineString',
-    'Polygon', 'MultiPolygon', 'GeometryCollection'];
+  const acceptableTypes = [
+    'Point',
+    'MultiPoint',
+    'LineString',
+    'MultiLineString',
+    'Polygon',
+    'MultiPolygon',
+    'GeometryCollection'
+  ];
 
   const dataToFeature = {};
 
@@ -25,19 +32,16 @@ export function getGeojsonDataMaps(allData, getFeature) {
     // parse feature from field
     if (Array.isArray(rawFeature)) {
       // Support geojson as an array of points
-      feature = ({
+      feature = {
         type: 'Feature',
         geometry: {
           // why do we need to flip it...
           coordinates: rawFeature.map(pts => [pts[1], pts[0]]),
           type: 'LineString'
         }
-      });
-
+      };
     } else if (typeof rawFeature === 'string') {
-
       feature = parseGeometryFromString(rawFeature);
-
     } else if (typeof rawFeature === 'object') {
       // Support geojson feature as object
       // probably need to normalize it as well
@@ -50,11 +54,14 @@ export function getGeojsonDataMaps(allData, getFeature) {
       feature = normalized.features[0];
     }
 
-    if (feature && feature.geometry && acceptableTypes.includes(feature.geometry.type)) {
-
+    if (
+      feature &&
+      feature.geometry &&
+      acceptableTypes.includes(feature.geometry.type)
+    ) {
       // store index of the data in feature properties
       feature.properties = {
-        ...feature.properties || {},
+        ...(feature.properties || {}),
         index
       };
 
@@ -105,13 +112,15 @@ export function parseGeometryFromString(geoString) {
 }
 
 export function getGeojsonBounds(features = []) {
-
   // calculate feature bounds is computation heavy
   // here we only pick couple
-  const samples = features.length > 500 ? getSampleData(features, 500) : features;
+  const samples =
+    features.length > 500 ? getSampleData(features, 500) : features;
 
-  const nonEmpty = samples.filter(d => d && d.geometry && d.geometry.coordinates &&
-  d.geometry.coordinates.length);
+  const nonEmpty = samples.filter(
+    d =>
+      d && d.geometry && d.geometry.coordinates && d.geometry.coordinates.length
+  );
 
   try {
     return geojsonExtent({

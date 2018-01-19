@@ -5,15 +5,8 @@ import window from 'global/window';
 
 class App extends Component {
   state = {
-    width: window.inner,
+    width: window.innerWidth,
     height: 800
-  };
-
-  _handleResize = () => {
-    this.setState({
-      width: window.innerWidth,
-      height: window.innerHeight
-    });
   };
 
   componentWillMount() {
@@ -24,6 +17,13 @@ class App extends Component {
   componentWillUnMount() {
     window.removeEventListener('resize', this._handleResize)
   }
+
+  _handleResize = () => {
+    this.setState({
+      width: window.innerWidth,
+      height: window.innerHeight
+    });
+  };
 
   render() {
     return (

@@ -36,10 +36,18 @@ export default class ClusterLayer extends AggregationLayer {
         defaultMeasure: 'Point Count',
         channelScaleType: CHANNEL_SCALES.colorAggr
       }
-    }
+    };
   }
 
-  renderLayer({data, idx, layerInteraction, objectHovered, mapState, interaction, layerCallbacks}) {
+  renderLayer({
+    data,
+    idx,
+    layerInteraction,
+    objectHovered,
+    mapState,
+    interaction,
+    layerCallbacks
+  }) {
     const {visConfig} = this.config;
 
     return [
@@ -62,12 +70,15 @@ export default class ClusterLayer extends AggregationLayer {
         onSetColorDomain: layerCallbacks.onSetLayerDomain
       }),
 
-      ...this.isLayerHovered(objectHovered) ?
-        [new ScatterplotLayer({
-          id: `${this.id}-hovered`,
-          data: [objectHovered.object],
-          getColor: d => this.config.highlightColor
-        })] : []
+      ...(this.isLayerHovered(objectHovered)
+        ? [
+            new ScatterplotLayer({
+              id: `${this.id}-hovered`,
+              data: [objectHovered.object],
+              getColor: d => this.config.highlightColor
+            })
+          ]
+        : [])
     ];
   }
 }

@@ -40,9 +40,7 @@ export default class RangeBrush extends React.Component {
           return;
         }
 
-        event.selection === null ?
-          this._reset() :
-          this._brush(event.selection);
+        event.selection === null ? this._reset() : this._brush(event.selection);
       })
       .on('end', () => {
         if (!this.moving && event.selection === null) {
@@ -70,7 +68,6 @@ export default class RangeBrush extends React.Component {
     }
 
     if (!this.brushing && !this.moving) {
-
       if (val0 === min && val1 === max) {
         this.moving = true;
         this.brush.move(this.root, null);
@@ -101,11 +98,9 @@ export default class RangeBrush extends React.Component {
   }
 
   render() {
-    return (
-      <g ref='root' style={style} />
-    );
+    return <g ref="root" style={style} />;
   }
-};
+}
 
 RangeBrush.displayName = 'RangeBrush';
 RangeBrush.propTypes = propTypes;

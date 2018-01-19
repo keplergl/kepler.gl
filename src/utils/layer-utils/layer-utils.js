@@ -38,12 +38,13 @@ export function assignPropToEmptyLayer(emptyLayer, layer) {
   const notToDeepMerge = ['colorField', 'sizeField'];
 
   Object.keys(emptyLayer).forEach(key => {
-    if (isPlainObject(emptyLayer[key]) && isPlainObject(layer[key]) &&
-      !notToDeepMerge.includes(key)) {
-
+    if (
+      isPlainObject(emptyLayer[key]) &&
+      isPlainObject(layer[key]) &&
+      !notToDeepMerge.includes(key)
+    ) {
       // recursively assign object
       emptyLayer[key] = assignPropToEmptyLayer(emptyLayer[key], layer[key]);
-
     } else if (notNullorUndefined(layer[key]) && !notToOverride.includes(key)) {
       emptyLayer[key] = layer[key];
     }
@@ -62,7 +63,6 @@ export function assignPropToEmptyLayer(emptyLayer, layer) {
  * @returns {Array} found layers
  */
 export function findDefaultLayer({fields, fieldPairs, id: dataId, label}) {
-
   if (!fields) {
     return [];
   }
@@ -198,8 +198,11 @@ function _findDefaultPointLayers(fields, fieldPairs, dataId) {
  * @param {string} dataId
  * @returns {Array} found arc layers
  */
-export function _findDefaultArcLayers(pointLayers, type = LAYER_TYPES.arc, dataId) {
-
+export function _findDefaultArcLayers(
+  pointLayers,
+  type = LAYER_TYPES.arc,
+  dataId
+) {
   if (pointLayers.length < 2) {
     return [];
   }
@@ -211,8 +214,10 @@ export function _findDefaultArcLayers(pointLayers, type = LAYER_TYPES.arc, dataI
   };
 
   // all point layer fields
-  const fields = pointLayers.reduce((prev, curr) =>
-      prev.concat(Object.values(curr.config.columns)), []);
+  const fields = pointLayers.reduce(
+    (prev, curr) => prev.concat(Object.values(curr.config.columns)),
+    []
+  );
 
   // found the default trip arc fields
   const tripArcFields = Object.keys(TRIP_ARC_FIELDS).reduce((prev, key) => {
@@ -232,8 +237,9 @@ export function _findDefaultArcLayers(pointLayers, type = LAYER_TYPES.arc, dataI
       lat1: pointLayers[1].config.columns.lat,
       lng1: pointLayers[1].config.columns.lng
     };
-    props.label =
-      `${pointLayers[0].config.label} -> ${pointLayers[1].config.label} arc`;
+    props.label = `${pointLayers[0].config.label} -> ${
+      pointLayers[1].config.label
+    } arc`;
   }
 
   const tripArcLayer = new KeplerGLLayers.ArcLayer(props);
@@ -250,17 +256,18 @@ export function _findDefaultArcLayers(pointLayers, type = LAYER_TYPES.arc, dataI
  * @returns {object[] | null} all possible required layer column pairs
  */
 function _findDefaultColumnField(defaultFields, allFields) {
-
   // find all matched fields for each required col
   const requiredColumns = Object.keys(defaultFields).reduce((prev, key) => {
+    const requiredFields = allFields.filter(
+      f => f.name === defaultFields[key] || defaultFields[key].includes(f.name)
+    );
 
-    const requiredFields = allFields.filter(f => f.name === defaultFields[key] ||
-    defaultFields[key].includes(f.name));
-
-    prev[key] = requiredFields.length ? requiredFields.map(f => ({
-      value: f.name,
-      fieldIdx: f.tableFieldIndex - 1
-    })) : null;
+    prev[key] = requiredFields.length
+      ? requiredFields.map(f => ({
+          value: f.name,
+          fieldIdx: f.tableFieldIndex - 1
+        }))
+      : null;
     return prev;
   }, {});
 
@@ -286,7 +293,7 @@ export function _getAllPossibleColumnParis(requiredColumns) {
   // combinations, e. g. if column a has 2 matched, column b has 3 matched
   // 6 possible column pairs will be returned
   const allKeys = Object.keys(requiredColumns);
-  const pointers = allKeys.map((k, i) => i === allKeys.length - 1 ? -1 : 0);
+  const pointers = allKeys.map((k, i) => (i === allKeys.length - 1 ? -1 : 0));
   const countPerKey = allKeys.map(k => requiredColumns[k].length);
   const pairs = [];
 
@@ -342,7 +349,13 @@ export function _findDefaultClusterLayers(pointLayers) {
   return _findDefaultAggregationLayers(pointLayers, LAYER_TYPES.cluster);
 }
 
-export function _findDefaultFeatureLayer({fields, defaultColumns, type, label, dataId}) {
+export function _findDefaultFeatureLayer({
+  fields,
+  defaultColumns,
+  type,
+  label,
+  dataId
+}) {
   // find all possible required column pairs
   const columns = _findDefaultColumnField(defaultColumns, fields);
 
@@ -352,7 +365,8 @@ export function _findDefaultFeatureLayer({fields, defaultColumns, type, label, d
 
   const props = {
     dataId,
-    label: (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || type,
+    label:
+      (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || type,
     isVisible: true
   };
 
@@ -375,8 +389,11 @@ export function _findDefaultFeatureLayer({fields, defaultColumns, type, label, d
  */
 export function _findDefaultHexagonIdLayer(fields, dataId) {
   return _findDefaultFeatureLayer({
-    fields, defaultColumns: HEXAGON_ID_FIELDS,
-    type: LAYER_TYPES.hexagonId, label: 'Hexagon', dataId
+    fields,
+    defaultColumns: HEXAGON_ID_FIELDS,
+    type: LAYER_TYPES.hexagonId,
+    label: 'Hexagon',
+    dataId
   });
 }
 
@@ -388,14 +405,17 @@ export function _findDefaultHexagonIdLayer(fields, dataId) {
  * @returns {Array} found icon layers
  */
 export function _findDefaultIconLayers(pointLayers, fields) {
-
   if (!pointLayers.length) {
     return [];
   }
 
   const iconFields = fields.filter(({name}) =>
-    name.replace(/[_,.]+/g, ' ').trim().split(' ')
-      .some(seg => ICON_FIELDS.icon.some(t => t.includes(seg))));
+    name
+      .replace(/[_,.]+/g, ' ')
+      .trim()
+      .split(' ')
+      .some(seg => ICON_FIELDS.icon.some(t => t.includes(seg)))
+  );
 
   if (!iconFields.length) {
     return [];
@@ -414,17 +434,20 @@ export function _findDefaultIconLayers(pointLayers, fields) {
 
   const LayerClass = KeplerGLLayers[LAYER_CLASSES.icon];
 
-  return iconFields.map(iconField => new LayerClass({
-    ...props,
-    label: iconField.name.replace(/[_,.]+/g, ' ').trim(),
-    columns: {
-      ...props.columns,
-      icon: {
-        value: iconField.name,
-        fieldIdx: iconField.tableFieldIndex - 1
-      }
-    }
-  }));
+  return iconFields.map(
+    iconField =>
+      new LayerClass({
+        ...props,
+        label: iconField.name.replace(/[_,.]+/g, ' ').trim(),
+        columns: {
+          ...props.columns,
+          icon: {
+            value: iconField.name,
+            fieldIdx: iconField.tableFieldIndex - 1
+          }
+        }
+      })
+  );
 }
 
 /**
@@ -435,7 +458,6 @@ export function _findDefaultIconLayers(pointLayers, fields) {
  * @returns {Array} an array of founded grid layers
  */
 export function _findDefaultAggregationLayers(pointLayers, type) {
-
   if (!pointLayers.length) {
     return [];
   }
@@ -452,10 +474,13 @@ export function _findDefaultAggregationLayers(pointLayers, type) {
   const newLayer = new LayerClass(props);
 
   // copy point layer columns over
-  newLayer.config.columns = Object.keys(newLayer.config.columns).reduce((accu, key) => ({
-    ...accu,
-    [key]: {...ptLayer.config.columns[key]}
-  }), {});
+  newLayer.config.columns = Object.keys(newLayer.config.columns).reduce(
+    (accu, key) => ({
+      ...accu,
+      [key]: {...ptLayer.config.columns[key]}
+    }),
+    {}
+  );
 
   return [newLayer];
 }
@@ -479,18 +504,26 @@ export function calculateLayerData(layer, state, oldLayerData, opt = {}) {
     return {layer, layerData: {}};
   }
 
-  const layerData = layer.formatLayerData(data, allData, filteredIndex, oldLayerData, opt);
+  const layerData = layer.formatLayerData(
+    data,
+    allData,
+    filteredIndex,
+    oldLayerData,
+    opt
+  );
   return {layerData, layer};
 }
 
 export function getLightSettingsFromBounds(bounds) {
-  return Array.isArray(bounds) && bounds.length >= 4 ? {
-    ...DEFAULT_LIGHT_SETTINGS,
-    lightsPosition: [
-      ...bounds.slice(0, 2),
-      DEFAULT_LIGHT_SETTINGS.lightsPosition[2],
-      ...bounds.slice(2, 4),
-      DEFAULT_LIGHT_SETTINGS.lightsPosition[5]
-    ]
-  } : DEFAULT_LIGHT_SETTINGS;
+  return Array.isArray(bounds) && bounds.length >= 4
+    ? {
+        ...DEFAULT_LIGHT_SETTINGS,
+        lightsPosition: [
+          ...bounds.slice(0, 2),
+          DEFAULT_LIGHT_SETTINGS.lightsPosition[2],
+          ...bounds.slice(2, 4),
+          DEFAULT_LIGHT_SETTINGS.lightsPosition[5]
+        ]
+      }
+    : DEFAULT_LIGHT_SETTINGS;
 }

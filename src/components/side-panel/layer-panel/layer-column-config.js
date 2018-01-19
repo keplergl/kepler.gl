@@ -4,7 +4,10 @@ import styled from 'styled-components';
 import {LAYER_TYPES} from 'constants/default-settings';
 import FieldSelector from 'components/common/field-selector';
 import ItemSelector from 'components/common/item-selector/item-selector';
-import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
+import {
+  PanelLabel,
+  SidePanelSection
+} from 'components/common/styled-components';
 
 const propTypes = {
   layer: PropTypes.object.isRequired,
@@ -21,9 +24,10 @@ export default class LayerColumnConfig extends Component {
   _updateColumn(key, value) {
     const {layer} = this.props;
 
-    const columns = value.pair && layer.columnPairs ?
-      layer.assignColumnPairs(key, value.pair) :
-      layer.assignColumn(key, value);
+    const columns =
+      value.pair && layer.columnPairs
+        ? layer.assignColumnPairs(key, value.pair)
+        : layer.assignColumn(key, value);
 
     this.props.updateLayerConfig({columns});
   }
@@ -32,32 +36,36 @@ export default class LayerColumnConfig extends Component {
     const {layer, fields, fieldPairs} = this.props;
     return (
       <div>
-          <SidePanelSection>
-            <TypeSelector layer={layer} onSelect={this.props.updateLayerType}/>
-          </SidePanelSection>
-          <SidePanelSection>
-            <div style={{display: 'flex', justifyContent: 'space-between'}}>
-              <PanelLabel>Columns</PanelLabel>
-              <PanelLabel>* Required</PanelLabel>
-            </div>
-            {Object.keys(layer.config.columns).map(key => (
-              <ColumnSelector
-                column={layer.config.columns[key]}
-                label={key}
-                key={key}
-                allFields={fields}
-                fieldPairs={layer.columnPairs ? fieldPairs.map(fp => ({
-                  name: fp.defaultName,
-                  type: 'point',
-                  pair: fp.pair
-                })) : null}
-                onSelect={val => this._updateColumn(key, val)}
-              />
-            ))}
-            {layer.type === LAYER_TYPES.icon && (
-              <IconLayerInfo openModal={this.props.openModal} />
-            )}
-          </SidePanelSection>
+        <SidePanelSection>
+          <TypeSelector layer={layer} onSelect={this.props.updateLayerType} />
+        </SidePanelSection>
+        <SidePanelSection>
+          <div style={{display: 'flex', justifyContent: 'space-between'}}>
+            <PanelLabel>Columns</PanelLabel>
+            <PanelLabel>* Required</PanelLabel>
+          </div>
+          {Object.keys(layer.config.columns).map(key => (
+            <ColumnSelector
+              column={layer.config.columns[key]}
+              label={key}
+              key={key}
+              allFields={fields}
+              fieldPairs={
+                layer.columnPairs
+                  ? fieldPairs.map(fp => ({
+                      name: fp.defaultName,
+                      type: 'point',
+                      pair: fp.pair
+                    }))
+                  : null
+              }
+              onSelect={val => this._updateColumn(key, val)}
+            />
+          ))}
+          {layer.type === LAYER_TYPES.icon && (
+            <IconLayerInfo openModal={this.props.openModal} />
+          )}
+        </SidePanelSection>
       </div>
     );
   }

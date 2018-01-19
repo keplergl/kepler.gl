@@ -12,7 +12,13 @@ import {WebMercatorViewport} from 'deck.gl';
  */
 
 // TODO: TEST
-export function pointToPolygonGeo({object, cellSize, coverage, properties, mapState}) {
+export function pointToPolygonGeo({
+  object,
+  cellSize,
+  coverage,
+  properties,
+  mapState
+}) {
   const {position} = object;
   const viewport = new WebMercatorViewport(mapState);
 
@@ -23,11 +29,26 @@ export function pointToPolygonGeo({object, cellSize, coverage, properties, mapSt
   return {
     geometry: {
       coordinates: [
-        viewport.addMetersToLngLat(position, [cellSize * (0.5 - coverage / 2), cellSize * (0.5 - coverage / 2)]),
-        viewport.addMetersToLngLat(position, [cellSize * (0.5 + coverage / 2), cellSize * (0.5 - coverage / 2)]),
-        viewport.addMetersToLngLat(position, [cellSize * (0.5 + coverage / 2), cellSize * (0.5 + coverage / 2)]),
-        viewport.addMetersToLngLat(position, [cellSize * (0.5 - coverage / 2), cellSize * (0.5 + coverage / 2)]),
-        viewport.addMetersToLngLat(position, [cellSize * (0.5 - coverage / 2), cellSize * (0.5 - coverage / 2)])
+        viewport.addMetersToLngLat(position, [
+          cellSize * (0.5 - coverage / 2),
+          cellSize * (0.5 - coverage / 2)
+        ]),
+        viewport.addMetersToLngLat(position, [
+          cellSize * (0.5 + coverage / 2),
+          cellSize * (0.5 - coverage / 2)
+        ]),
+        viewport.addMetersToLngLat(position, [
+          cellSize * (0.5 + coverage / 2),
+          cellSize * (0.5 + coverage / 2)
+        ]),
+        viewport.addMetersToLngLat(position, [
+          cellSize * (0.5 - coverage / 2),
+          cellSize * (0.5 + coverage / 2)
+        ]),
+        viewport.addMetersToLngLat(position, [
+          cellSize * (0.5 - coverage / 2),
+          cellSize * (0.5 - coverage / 2)
+        ])
       ],
       type: 'LineString'
     },

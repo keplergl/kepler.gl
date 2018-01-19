@@ -1,7 +1,12 @@
 import React from 'react';
 import TimeRangeSlider from '../../components/common/time-range-slider';
 
-const TimeRangeFilter = ({filter, setFilter, isAnyFilterAnimating, toggleAnimation}) => (
+const TimeRangeFilter = ({
+  filter,
+  setFilter,
+  isAnyFilterAnimating,
+  toggleAnimation
+}) => (
   <div>
     <TimeRangeSlider
       domain={filter.domain}
@@ -13,7 +18,8 @@ const TimeRangeFilter = ({filter, setFilter, isAnyFilterAnimating, toggleAnimati
       onChange={setFilter}
       toggleAnimation={toggleAnimation}
       isAnimatable={!isAnyFilterAnimating || filter.isAnimating}
-      isEnlarged={filter.enlarged}/>
+      isEnlarged={filter.enlarged}
+    />
   </div>
 );
 

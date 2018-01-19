@@ -15,10 +15,7 @@ import MapControl from 'components/map-control';
 import {PolygonLayer} from 'deck.gl';
 
 // default-settings
-import {
-  MAPBOX_ACCESS_TOKEN,
-  LAYER_BLENDINGS
-} from 'constants/default-settings';
+import {MAPBOX_ACCESS_TOKEN, LAYER_BLENDINGS} from 'constants/default-settings';
 
 // utils
 import {getLightSettingsFromBounds} from 'utils/layer-utils/layer-utils';
@@ -64,8 +61,10 @@ export default class MapContainer extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    if (this.props.mapState.dragRotate !== nextProps.mapState.dragRotate ||
-      this.props.layerBlending !== nextProps.layerBlending) {
+    if (
+      this.props.mapState.dragRotate !== nextProps.mapState.dragRotate ||
+      this.props.layerBlending !== nextProps.layerBlending
+    ) {
       // increment rerender key to force gl reinitialize when
       // perspective or layer blending changed
       // TODO: layer blending can now be implemented per layer base
@@ -81,8 +80,11 @@ export default class MapContainer extends Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    if (this.props.mapState.dragRotate && this.state.hasBuildingLayer &&
-        this.props.mapState !== prevProps.mapState) {
+    if (
+      this.props.mapState.dragRotate &&
+      this.state.hasBuildingLayer &&
+      this.props.mapState !== prevProps.mapState
+    ) {
       this.loadBuildingTiles(this.props.mapState);
     }
   }
@@ -99,12 +101,12 @@ export default class MapContainer extends Component {
   };
 
   _onLayerSetDomain = (idx, colorDomain) => {
-    this.props.visStateActions.layerConfigChange(
-      this.props.layers[idx], {colorDomain}
-    );
+    this.props.visStateActions.layerConfigChange(this.props.layers[idx], {
+      colorDomain
+    });
   };
 
-  _onWebGLInitialized = (gl) => {
+  _onWebGLInitialized = gl => {
     // enable depth test for perspective mode
     if (this.props.mapState.dragRotate) {
       gl.enable(gl.DEPTH_TEST);
@@ -125,11 +127,13 @@ export default class MapContainer extends Component {
     const {interactionConfig: {brush}} = this.props;
 
     if (evt.nativeEvent && brush.enabled) {
-      this.setState({mousePosition: [evt.nativeEvent.offsetX, evt.nativeEvent.offsetY]});
+      this.setState({
+        mousePosition: [evt.nativeEvent.offsetX, evt.nativeEvent.offsetY]
+      });
     }
   };
 
-  _handleMapToggleLayer = (layerId) => {
+  _handleMapToggleLayer = layerId => {
     const {index: mapIndex = 0, visStateActions} = this.props;
     visStateActions.toggleLayerForMap(mapIndex, layerId);
   };
@@ -137,12 +141,14 @@ export default class MapContainer extends Component {
   /* deck.gl doesn't support blendFuncSeparate yet
    * so we're applying the blending ourselves
   */
-  _togglelayerBlending = (gl) => {
+  _togglelayerBlending = gl => {
     const blending = LAYER_BLENDINGS[this.props.layerBlending];
     const {
       enable,
-      blendFunc, blendEquation,
-      blendFuncSeparate, blendEquationSeparate
+      blendFunc,
+      blendEquation,
+      blendFuncSeparate,
+      blendEquationSeparate
     } = blending;
 
     if (enable) {
@@ -157,18 +163,29 @@ export default class MapContainer extends Component {
     } else {
       gl.disable(GL.BLEND);
     }
-  }
+  };
 
   /* component render functions */
   /* eslint-disable complexity */
   _renderObjectLayerPopover() {
-
     // TODO: move this into reducer so it can be tested
-    const {hoverInfo, clicked, datasets, interactionConfig, layers, mapLayers, popoverOffset} = this.props;
+    const {
+      hoverInfo,
+      clicked,
+      datasets,
+      interactionConfig,
+      layers,
+      mapLayers,
+      popoverOffset
+    } = this.props;
 
     // if clicked something, ignore hover behavior
     const objectInfo = clicked || hoverInfo;
-    if (!interactionConfig.tooltip.enabled || !objectInfo || !objectInfo.picked) {
+    if (
+      !interactionConfig.tooltip.enabled ||
+      !objectInfo ||
+      !objectInfo.picked
+    ) {
       // nothing hovered
       return null;
     }
@@ -178,8 +195,13 @@ export default class MapContainer extends Component {
     // deckgl layer to kepler-gl layer
     const layer = layers[overlay.props.idx];
 
-    if (!layer || !layer.config.isVisible || !object || !layer.getHoverData ||
-    (mapLayers && !mapLayers[layer.id].isVisible)) {
+    if (
+      !layer ||
+      !layer.config.isVisible ||
+      !object ||
+      !layer.getHoverData ||
+      (mapLayers && !mapLayers[layer.id].isVisible)
+    ) {
       // layer is no visible
       return null;
     }
@@ -206,7 +228,9 @@ export default class MapContainer extends Component {
     };
 
     return (
-      <div><MapPopover {...popoverProps}/></div>
+      <div>
+        <MapPopover {...popoverProps} />
+      </div>
     );
   }
   /* eslint-enable complexity */
@@ -219,35 +243,47 @@ export default class MapContainer extends Component {
 
   _renderBuildingLayer(layer, buildingData, mapState) {
     const {longitude, latitude, zoom, width, height} = mapState;
-    const bbox = geoViewport.bounds([longitude, latitude], Math.floor(zoom), [width, height]);
+    const bbox = geoViewport.bounds([longitude, latitude], Math.floor(zoom), [
+      width,
+      height
+    ]);
     const lightSettings = getLightSettingsFromBounds(bbox);
 
     // render one layer per tile
-    return buildingData.map(({tileId, data}) => new PolygonLayer({
-      id: tileId,
-      data,
-      fp64: Math.floor(zoom) >= 16,
-      extruded: true,
-      getFillColor: f => layer.color,
-      updateTriggers: {
-        getFillColor: layer.color
-      },
-      lightSettings,
-      getPolygon: f => f.geometry.coordinates,
-      getElevation: f => f.properties.height,
-      opacity: layer.opacity
-    }));
+    return buildingData.map(
+      ({tileId, data}) =>
+        new PolygonLayer({
+          id: tileId,
+          data,
+          fp64: Math.floor(zoom) >= 16,
+          extruded: true,
+          getFillColor: f => layer.color,
+          updateTriggers: {
+            getFillColor: layer.color
+          },
+          lightSettings,
+          getPolygon: f => f.geometry.coordinates,
+          getElevation: f => f.properties.height,
+          opacity: layer.opacity
+        })
+    );
   }
 
   _shouldRenderLayer(layer, data, mapLayers) {
-    const isAvailableAndVisible = !(mapLayers && mapLayers[layer.id]) || mapLayers[layer.id].isVisible;
+    const isAvailableAndVisible =
+      !(mapLayers && mapLayers[layer.id]) || mapLayers[layer.id].isVisible;
     return layer.shouldRenderLayer(data) && isAvailableAndVisible;
   }
 
   _renderLayer = (overlays, idx) => {
     const {
-      layers, layerData, hoverInfo, clicked,
-      mapLayers, mapState, visStateActions,
+      layers,
+      layerData,
+      hoverInfo,
+      clicked,
+      mapLayers,
+      mapState,
+      visStateActions,
       interactionConfig
     } = this.props;
     const {mousePosition} = this.state;
@@ -288,10 +324,16 @@ export default class MapContainer extends Component {
       overlays = overlays.concat(layerOverlay);
     }
     return overlays;
-  }
+  };
 
   _renderOverlay() {
-    const {mapState, mapStyle, buildingData, layerData, layerOrder} = this.props;
+    const {
+      mapState,
+      mapStyle,
+      buildingData,
+      layerData,
+      layerOrder
+    } = this.props;
     const {hasBuildingLayer} = this.state;
 
     let deckGlLayers = [];
@@ -299,14 +341,21 @@ export default class MapContainer extends Component {
     // wait until data is ready before render data layers
     if (layerData && layerData.length) {
       // last layer render first
-      deckGlLayers = layerOrder.slice().reverse()
+      deckGlLayers = layerOrder
+        .slice()
+        .reverse()
         .reduce(this._renderLayer, []);
     }
 
     // add 3d building layer
     if (hasBuildingLayer) {
-      deckGlLayers = deckGlLayers
-        .concat(this._renderBuildingLayer(mapStyle.buildingLayer, buildingData, mapState));
+      deckGlLayers = deckGlLayers.concat(
+        this._renderBuildingLayer(
+          mapStyle.buildingLayer,
+          buildingData,
+          mapState
+        )
+      );
     }
 
     return (
@@ -326,7 +375,7 @@ export default class MapContainer extends Component {
 
     if (!mapStyle.bottomMapStyle) {
       // style not yet loaded
-      return <div/>;
+      return <div />;
     }
 
     const {mapLayers, layers, datasets, index} = this.props;
@@ -339,9 +388,7 @@ export default class MapContainer extends Component {
     };
 
     return (
-      <div
-        style={MAP_STYLE.container}
-        onMouseMove={this._onMouseMove}>
+      <div style={MAP_STYLE.container} onMouseMove={this._onMouseMove}>
         <MapControl
           index={index}
           datasets={datasets}
@@ -361,7 +408,8 @@ export default class MapContainer extends Component {
           {...mapProps}
           key="bottom"
           mapStyle={mapStyle.bottomMapStyle}
-          onClick={onMapClick}>
+          onClick={onMapClick}
+        >
           {this._renderOverlay()}
         </MapboxGLMap>
         {mapStyle.topMapStyle && (

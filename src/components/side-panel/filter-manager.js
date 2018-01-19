@@ -3,16 +3,18 @@ import {createSelector} from 'reselect';
 import styled from 'styled-components';
 
 import FieldSelector from 'components/common/field-selector';
-import {SidePanelSection, SidePanelDivider, Tooltip, Button} from 'components/common/styled-components';
+import {
+  SidePanelSection,
+  SidePanelDivider,
+  Tooltip,
+  Button
+} from 'components/common/styled-components';
 import {Add, Trash, Clock} from 'components/common/icons';
 import SourceDataSelector from './source-data-selector';
 import SourceDataCatalog from './source-data-catalog';
 
 import * as Filters from 'components/filters';
-import {
-  FILTER_TYPES,
-  FILTER_COMPONENTS
-} from 'utils/filter-utils';
+import {FILTER_TYPES, FILTER_COMPONENTS} from 'utils/filter-utils';
 
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
 
@@ -55,30 +57,31 @@ export default class FilterManager extends Component {
           datasets={datasets}
           showDatasetTable={this.props.showDatasetTable}
         />
-        <SidePanelDivider/>
+        <SidePanelDivider />
         <SidePanelSection>
-        {filters &&
-          filters.map((filter, idx) => (
-            <FilterPanel
-              key={`${filter.id}-${idx}`}
-              idx={idx}
-              filters={filters}
-              filter={filter}
-              datasets={datasets}
-              isAnyFilterAnimating={isAnyFilterAnimating}
-              removeFilter={() => this.props.removeFilter(idx)}
-              enlargeFilter={() => this.props.enlargeFilter(idx)}
-              toggleAnimation={() => this.props.toggleAnimation(idx)}
-              setFilter={this.props.setFilter}
-              width={this.props.panelWidth - 24}
-            />
-          ))}
+          {filters &&
+            filters.map((filter, idx) => (
+              <FilterPanel
+                key={`${filter.id}-${idx}`}
+                idx={idx}
+                filters={filters}
+                filter={filter}
+                datasets={datasets}
+                isAnyFilterAnimating={isAnyFilterAnimating}
+                removeFilter={() => this.props.removeFilter(idx)}
+                enlargeFilter={() => this.props.enlargeFilter(idx)}
+                toggleAnimation={() => this.props.toggleAnimation(idx)}
+                setFilter={this.props.setFilter}
+                width={this.props.panelWidth - 24}
+              />
+            ))}
         </SidePanelSection>
         <Button
           inactive={hadEmptyFilter || !hadDataset}
           width="105px"
-          onClick={this._addFilter}>
-          <Add height="12px"/>Add Filter
+          onClick={this._addFilter}
+        >
+          <Add height="12px" />Add Filter
         </Button>
       </div>
     );
@@ -197,11 +200,15 @@ class FilterPanel extends Component {
 const FilterActionWrapper = styled.div`
   margin-left: 12px;
   height: 18px;
-  color: ${props => props.active ? props.theme.activeColor : props.theme.textColor};
+  color: ${props =>
+    props.active ? props.theme.activeColor : props.theme.textColor};
 
   :hover {
     cursor: pointer;
-    color: ${props => props.hoverColor ? props.theme[props.hoverColor] : props.theme.textColorHl};
+    color: ${props =>
+      props.hoverColor
+        ? props.theme[props.hoverColor]
+        : props.theme.textColorHl};
   }
 `;
 
@@ -211,8 +218,12 @@ class FilterAction extends Component {
     const {onClick, tooltip, id, active, hoverColor, tooltipType} = this.props;
     return (
       <FilterActionWrapper active={active} hoverColor={hoverColor}>
-        <this.props.IconComponent data-tip data-for={`${tooltip}_${id}`}
-          height="18px" onClick={onClick}/>
+        <this.props.IconComponent
+          data-tip
+          data-for={`${tooltip}_${id}`}
+          height="18px"
+          onClick={onClick}
+        />
         <Tooltip id={`${tooltip}_${id}`} effect="solid" type={tooltipType}>
           <span>{tooltip}</span>
         </Tooltip>

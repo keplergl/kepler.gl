@@ -23,9 +23,14 @@ export function pointToHexbin({data, radius, getPosition}, viewport) {
       return accu;
     }
 
-    accu.push(Object.assign({
-      screenCoord: viewport.projectFlat(getPosition(pt))
-    }, pt));
+    accu.push(
+      Object.assign(
+        {
+          screenCoord: viewport.projectFlat(getPosition(pt))
+        },
+        pt
+      )
+    );
 
     return accu;
   }, []);
@@ -54,7 +59,6 @@ export function pointToHexbin({data, radius, getPosition}, viewport) {
  * @return {Number} radius in mercator world spcae coordinates
  */
 export function getRadiusInPixel(radius, viewport) {
-
   const {pixelsPerMeter} = viewport.getDistanceScales();
 
   // x, y distance should be the same

@@ -10,7 +10,7 @@ const StyledMapControlLegend = styled.div`
   font-size: 11px;
   border-bottom-color: ${props => props.theme.panelBorderColor};
   border-bottom-style: solid;
-  border-bottom-width: ${props => props.last ? 0 : '1px'};
+  border-bottom-width: ${props => (props.last ? 0 : '1px')};
 
   .legend--layer_name {
     font-size: 12px;
@@ -31,7 +31,7 @@ const StyledMapControlLegend = styled.div`
     color: ${props => props.theme.textColor};
     font-weight: 500;
   }
-  
+
   .legend--layer_color-legend {
     margin-top: 6px;
   }
@@ -49,7 +49,7 @@ const LayerSize = ({label, name}) => (
     <p>
       <span className="legend--layer_by">{label}</span>
     </p>
-    <VisualChannelMetric name={name}/>
+    <VisualChannelMetric name={name} />
   </div>
 );
 
@@ -60,50 +60,80 @@ const propTypes = {
 const MapLegend = ({layers}) => (
   <div>
     {layers.map((layer, index) => {
-      const enableColorBy = layer.config.colorField ? layer.config.colorField.name :
-        layer.visualChannels.color.defaultMeasure;
+      const enableColorBy = layer.config.colorField
+        ? layer.config.colorField.name
+        : layer.visualChannels.color.defaultMeasure;
       return (
         <StyledMapControlLegend
           className="legend--layer"
           last={index === layers.length - 1}
-          key={index}>
+          key={index}
+        >
           <div className="legend--layer_name">{layer.config.label}</div>
-          <div className="legend--layer_type">{`${capitalizeFirstLetter(layer.type)} color`}</div>
+          <div className="legend--layer_type">{`${capitalizeFirstLetter(
+            layer.type
+          )} color`}</div>
           <div className="legend--layer_color-schema">
             <div>
-              {enableColorBy ? <VisualChannelMetric name={enableColorBy}/> : null}
+              {enableColorBy ? (
+                <VisualChannelMetric name={enableColorBy} />
+              ) : null}
               <div className="legend--layer_color-legend">
                 <ColorLegend
-                  scaleType={enableColorBy ? layer.config.colorScale : 'ordinal'}
+                  scaleType={
+                    enableColorBy ? layer.config.colorScale : 'ordinal'
+                  }
                   displayLabel={enableColorBy}
                   domain={enableColorBy ? layer.config.colorDomain : ['']}
-                  fieldType={enableColorBy ? (layer.config.colorField && layer.config.colorField.type) || 'real' : null}
-                  range={enableColorBy ? layer.config.visConfig.colorRange.colors : [
-                    rgb(...layer.config.color).toString()
-                  ]}
-                  width={DIMENSIONS.mapControlWidth - 2 * (DIMENSIONS.mapControlPadding)}
+                  fieldType={
+                    enableColorBy
+                      ? (layer.config.colorField &&
+                          layer.config.colorField.type) ||
+                        'real'
+                      : null
+                  }
+                  range={
+                    enableColorBy
+                      ? layer.config.visConfig.colorRange.colors
+                      : [rgb(...layer.config.color).toString()]
+                  }
+                  width={
+                    DIMENSIONS.mapControlWidth -
+                    2 * DIMENSIONS.mapControlPadding
+                  }
                 />
               </div>
             </div>
           </div>
-          {Object.keys(layer.visualChannels).filter(k => k !== 'color').map(key => {
-            const matchCondition = !layer.visualChannels[key].condition || layer.visualChannels[key].condition(layer.config);
-            const enabled = layer.config[layer.visualChannels[key].field] || layer.visualChannels[key].defaultMeasure;
-            if (matchCondition && enabled) {
-              return (
-                <LayerSize
-                  key={key}
-                  label={layer.visConfigSettings[layer.visualChannels[key].range].label}
-                  name={layer.config[layer.visualChannels[key].field] ?
-                    layer.config[layer.visualChannels[key].field].name :
-                    layer.visualChannels[key].defaultMeasure}
-                />
-              );
-            }
-            return null;
-          })}
+          {Object.keys(layer.visualChannels)
+            .filter(k => k !== 'color')
+            .map(key => {
+              const matchCondition =
+                !layer.visualChannels[key].condition ||
+                layer.visualChannels[key].condition(layer.config);
+              const enabled =
+                layer.config[layer.visualChannels[key].field] ||
+                layer.visualChannels[key].defaultMeasure;
+              if (matchCondition && enabled) {
+                return (
+                  <LayerSize
+                    key={key}
+                    label={
+                      layer.visConfigSettings[layer.visualChannels[key].range]
+                        .label
+                    }
+                    name={
+                      layer.config[layer.visualChannels[key].field]
+                        ? layer.config[layer.visualChannels[key].field].name
+                        : layer.visualChannels[key].defaultMeasure
+                    }
+                  />
+                );
+              }
+              return null;
+            })}
         </StyledMapControlLegend>
-      )
+      );
     })}
   </div>
 );

@@ -64,8 +64,10 @@ export function parseCsvDataByFieldType(rows, field, i) {
     // if it's '1495827326' we pass it to int
     case ALL_FIELD_TYPES.timestamp:
       rows.forEach(row => {
-        row[i] = row[i] !== null && row[i] !== '' && unixFormat.includes(field.format) ?
-          Number(row[i]) : row[i];
+        row[i] =
+          row[i] !== null && row[i] !== '' && unixFormat.includes(field.format)
+            ? Number(row[i])
+            : row[i];
       });
 
       break;
@@ -78,7 +80,8 @@ export function parseCsvDataByFieldType(rows, field, i) {
 
     case ALL_FIELD_TYPES.boolean:
       rows.forEach(row => {
-        row[i] = row[i] === null ? row[i] : row[i] === 'true' || row[i] === 'True';
+        row[i] =
+          row[i] === null ? row[i] : row[i] === 'true' || row[i] === 'True';
       });
       break;
 
@@ -96,10 +99,9 @@ export function parseCsvDataByFieldType(rows, field, i) {
  */
 export function getFieldsFromData(data, fieldOrder) {
   // add a check for epoch timestamp
-  const metadata = Analyzer.computeColMeta(data,
-    [
-      {regex: /.*geojson|all_points/g, dataType: 'GEOMETRY'}
-    ]);
+  const metadata = Analyzer.computeColMeta(data, [
+    {regex: /.*geojson|all_points/g, dataType: 'GEOMETRY'}
+  ]);
 
   const {fieldByIndex} = renameDuplicateFields(fieldOrder);
 
@@ -127,24 +129,27 @@ export function getFieldsFromData(data, fieldOrder) {
  * @returns {Object} new field name by index
  */
 export function renameDuplicateFields(fieldOrder) {
-  return fieldOrder.reduce((accu, field, i) => {
-    const {allNames} = accu;
-    let fieldName = field;
+  return fieldOrder.reduce(
+    (accu, field, i) => {
+      const {allNames} = accu;
+      let fieldName = field;
 
-    // add a counter to duplicated names
-    if (allNames.includes(field)) {
-      let counter = 0;
-      while (allNames.includes(`${field}-${counter}`)) {
-        counter++;
+      // add a counter to duplicated names
+      if (allNames.includes(field)) {
+        let counter = 0;
+        while (allNames.includes(`${field}-${counter}`)) {
+          counter++;
+        }
+        fieldName = `${field}-${counter}`;
       }
-      fieldName = `${field}-${counter}`;
-    }
 
-    accu.fieldByIndex[i] = fieldName;
-    accu.allNames.push(fieldName);
+      accu.fieldByIndex[i] = fieldName;
+      accu.allNames.push(fieldName);
 
-    return accu;
-  }, {allNames: [], fieldByIndex: {}});
+      return accu;
+    },
+    {allNames: [], fieldByIndex: {}}
+  );
 }
 
 /**
@@ -156,8 +161,18 @@ export function renameDuplicateFields(fieldOrder) {
 /* eslint-disable complexity */
 export function analyzerTypeToFieldType(aType) {
   const {
-    DATE, TIME, DATETIME, NUMBER, INT, FLOAT,
-    BOOLEAN, STRING, CITY, GEOMETRY, GEOMETRY_FROM_STRING, ZIPCODE,
+    DATE,
+    TIME,
+    DATETIME,
+    NUMBER,
+    INT,
+    FLOAT,
+    BOOLEAN,
+    STRING,
+    CITY,
+    GEOMETRY,
+    GEOMETRY_FROM_STRING,
+    ZIPCODE,
     PAIR_GEOMETRY_FROM_STRING
   } = AnalyzerDATA_TYPES;
 
@@ -210,7 +225,6 @@ export function processRowObject(rawData) {
 }
 
 export function processGeojson(rawData) {
-
   const normalizedGeojson = normalize(rawData);
 
   if (!normalizedGeojson || !Array.isArray(normalizedGeojson.features)) {

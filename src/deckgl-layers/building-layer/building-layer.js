@@ -1,4 +1,3 @@
-
 import {Layer, assembleShaders} from 'deck.gl';
 import earcut from 'earcut';
 import flattenDeep from 'lodash.flattendeep';
@@ -46,8 +45,9 @@ export default class BuildingLayer extends Layer {
 
     this.setUniforms({opacity: this.props.opacity});
 
-    const IndexType = gl.getExtension('OES_element_index_uint') ?
-      Uint32Array : Uint16Array;
+    const IndexType = gl.getExtension('OES_element_index_uint')
+      ? Uint32Array
+      : Uint16Array;
 
     this.setState({
       numInstances: 0,
@@ -101,14 +101,15 @@ export default class BuildingLayer extends Layer {
   // each top vertex is on 3 surfaces
   // each bottom vertex is on 2 surfaces
   calculatePositions(attribute) {
-    const positions = flattenDeep(this.state.groupedVertices.map(
-      vertices => {
+    const positions = flattenDeep(
+      this.state.groupedVertices.map(vertices => {
         const topVertices = Array.prototype.concat.apply([], vertices);
         const baseVertices = topVertices.map(v => [v[0], v[1], 0]);
-        return this.props.drawWireframe ? [topVertices, baseVertices] :
-          [topVertices, topVertices, topVertices, baseVertices, baseVertices];
-      }
-    ));
+        return this.props.drawWireframe
+          ? [topVertices, baseVertices]
+          : [topVertices, topVertices, topVertices, baseVertices, baseVertices];
+      })
+    );
     attribute.value = new Float32Array(positions);
   }
 
@@ -119,13 +120,20 @@ export default class BuildingLayer extends Layer {
       (vertices, buildingIndex) => {
         const topNormals = new Array(countVertices(vertices)).fill(up);
         const sideNormals = vertices.map(polygon =>
-          this.calculateSideNormals(polygon));
+          this.calculateSideNormals(polygon)
+        );
         const sideNormalsForward = sideNormals.map(n => n[0]);
         const sideNormalsBackward = sideNormals.map(n => n[1]);
 
-        return this.props.drawWireframe ? [topNormals, topNormals] :
-          [topNormals, sideNormalsForward, sideNormalsBackward,
-            sideNormalsForward, sideNormalsBackward];
+        return this.props.drawWireframe
+          ? [topNormals, topNormals]
+          : [
+              topNormals,
+              sideNormalsForward,
+              sideNormalsBackward,
+              sideNormalsForward,
+              sideNormalsBackward
+            ];
       }
     );
 
@@ -141,29 +149,29 @@ export default class BuildingLayer extends Layer {
       normals.push(n);
     }
 
-    return [
-      [...normals, normals[0]],
-      [normals[0], ...normals]
-    ];
+    return [[...normals, normals[0]], [normals[0], ...normals]];
   }
 
   calculateIndices(attribute) {
     // adjust index offset for multiple buildings
     const multiplier = this.props.drawWireframe ? 2 : 5;
     const offsets = this.state.groupedVertices.reduce(
-      (acc, vertices) =>
-        [...acc, acc[acc.length - 1] + countVertices(vertices) * multiplier],
+      (acc, vertices) => [
+        ...acc,
+        acc[acc.length - 1] + countVertices(vertices) * multiplier
+      ],
       [0]
     );
 
     const indices = this.state.groupedVertices.map(
-      (vertices, buildingIndex) => this.props.drawWireframe ?
-        // 1. get sequentially ordered indices of each building wireframe
-        // 2. offset them by the number of indices in previous buildings
-        this.calculateContourIndices(vertices, offsets[buildingIndex]) :
-        // 1. get triangulated indices for the internal areas
-        // 2. offset them by the number of indices in previous buildings
-        this.calculateSurfaceIndices(vertices, offsets[buildingIndex])
+      (vertices, buildingIndex) =>
+        this.props.drawWireframe
+          ? // 1. get sequentially ordered indices of each building wireframe
+            // 2. offset them by the number of indices in previous buildings
+            this.calculateContourIndices(vertices, offsets[buildingIndex])
+          : // 1. get triangulated indices for the internal areas
+            // 2. offset them by the number of indices in previous buildings
+            this.calculateSurfaceIndices(vertices, offsets[buildingIndex])
     );
 
     attribute.value = new Uint32Array(flattenDeep(indices));
@@ -190,16 +198,12 @@ export default class BuildingLayer extends Layer {
       }
     });
 
-    this.state.groupedVertices = this.state.buildings.map(
-      building => {
-        var h = building.properties.height || 15;
-        return building.coordinates.map(
-          polygon => polygon.map(
-            coordinate => [coordinate[0], coordinate[1], h]
-          )
-        );
-      }
-    );
+    this.state.groupedVertices = this.state.buildings.map(building => {
+      var h = building.properties.height || 15;
+      return building.coordinates.map(polygon =>
+        polygon.map(coordinate => [coordinate[0], coordinate[1], h])
+      );
+    });
   }
 
   calculateContourIndices(vertices, offset) {
@@ -229,20 +233,20 @@ export default class BuildingLayer extends Layer {
   calculateSurfaceIndices(vertices, offset) {
     const stride = countVertices(vertices);
     let holes = null;
-    const quad = [
-      [0, 1], [0, 3], [1, 2],
-      [1, 2], [0, 3], [1, 4]
-    ];
+    const quad = [[0, 1], [0, 3], [1, 2], [1, 2], [0, 3], [1, 4]];
 
     if (vertices.length > 1) {
-      holes = vertices.reduce(
-        (acc, polygon) => [...acc, acc[acc.length - 1] + polygon.length],
-        [0]
-      ).slice(1, vertices.length);
+      holes = vertices
+        .reduce(
+          (acc, polygon) => [...acc, acc[acc.length - 1] + polygon.length],
+          [0]
+        )
+        .slice(1, vertices.length);
     }
 
-    const topIndices = earcut(flattenDeep(vertices), holes, 3)
-      .map(index => index + offset);
+    const topIndices = earcut(flattenDeep(vertices), holes, 3).map(
+      index => index + offset
+    );
 
     const sideIndices = vertices.map(polygon => {
       const numVertices = polygon.length;
@@ -269,9 +273,15 @@ export default class BuildingLayer extends Layer {
     this.calculateUniforms();
     const {pixelPerMeter} = this.state;
     const {
-      color, opacity, ambientColor, pointLightColor,
-      pointLightLocation, pointLightAmbientCoefficient,
-      pointLightAttenuation, materialSpecularColor, materialShininess
+      color,
+      opacity,
+      ambientColor,
+      pointLightColor,
+      pointLightLocation,
+      pointLightAmbientCoefficient,
+      pointLightAttenuation,
+      materialSpecularColor,
+      materialShininess
     } = this.props;
 
     this.setUniforms({
@@ -318,8 +328,9 @@ function getNormal(p1, p2) {
   const lat2 = degrees2radians * p2[1];
 
   const a = Math.sin(lon2 - lon1) * Math.cos(lat2);
-  const b = Math.cos(lat1) * Math.sin(lat2) -
-     Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1);
+  const b =
+    Math.cos(lat1) * Math.sin(lat2) -
+    Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1);
 
   return vec3.normalize([], [b, 0, -a]);
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import PropTypes from 'prop-types'
+import PropTypes from 'prop-types';
 
 const Base = React.createClass({
   displayName: 'Base Icon',
@@ -33,15 +33,21 @@ const Base = React.createClass({
       children,
       predefinedClassName,
       className,
-      ...props} = this.props;
+      ...props
+    } = this.props;
     const svgHeight = height;
     const svgWidth = width || svgHeight;
     /* 'currentColor' will inherit the color of the parent element */
     style.fill = 'currentColor';
     return (
-      <svg viewBox={viewBox} width={svgWidth} height={svgHeight} style={style}
-           className={`${predefinedClassName} ${className}`}
-           {...props}>
+      <svg
+        viewBox={viewBox}
+        width={svgWidth}
+        height={svgHeight}
+        style={style}
+        className={`${predefinedClassName} ${className}`}
+        {...props}
+      >
         {children}
       </svg>
     );

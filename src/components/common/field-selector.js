@@ -10,7 +10,7 @@ const defaultDisplayOption = d => d.name;
 const FieldListItem = ({value, displayOption = defaultDisplayOption}) => (
   <div>
     <div style={{display: 'inline-block', margin: '0 4px 0 0'}}>
-      <FieldToken type={value.type}/>
+      <FieldToken type={value.type} />
     </div>
     <span className={classList.listItemAnchor}>{displayOption(value)}</span>
   </div>
@@ -56,9 +56,12 @@ export default class FieldSelector extends Component {
   selectedItemsSelector = createSelector(
     this.fieldsSelector,
     this.valueSelector,
-    (fields, value) => fields.filter(f =>
-      (Array.isArray(value) ? value : [value])
-      .includes(defaultDisplayOption(f)))
+    (fields, value) =>
+      fields.filter(f =>
+        (Array.isArray(value) ? value : [value]).includes(
+          defaultDisplayOption(f)
+        )
+      )
   );
 
   fieldOptionsSelector = createSelector(
@@ -68,7 +71,9 @@ export default class FieldSelector extends Component {
       if (!filterFieldTypes) {
         return fields;
       }
-      const filters = Array.isArray(filterFieldTypes) ? filterFieldTypes : [filterFieldTypes];
+      const filters = Array.isArray(filterFieldTypes)
+        ? filterFieldTypes
+        : [filterFieldTypes];
       return fields.filter(f => filters.includes(f.type));
     }
   );
@@ -91,7 +96,9 @@ export default class FieldSelector extends Component {
           placement={this.props.placement}
           onChange={this.props.onSelect}
           DropDownLineItemRenderComponent={FieldListItem}
-          DropdownHeaderComponent={this.props.suggested ? SuggestedFieldHeader : null}
+          DropdownHeaderComponent={
+            this.props.suggested ? SuggestedFieldHeader : null
+          }
         />
       </div>
     );

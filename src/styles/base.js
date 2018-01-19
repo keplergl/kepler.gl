@@ -1,5 +1,5 @@
 import {css} from 'styled-components';
-import {DIMENSIONS} from "../constants/default-settings";
+import {DIMENSIONS} from '../constants/default-settings';
 
 export const transition = 'all .4s ease';
 
@@ -111,9 +111,7 @@ const input = css`
     ${props =>
       props.active
         ? props.theme.selectActiveBorderColor
-        : props.error
-          ? props.theme.errorColor
-          : props.theme.selectBackground};
+        : props.error ? props.theme.errorColor : props.theme.selectBackground};
   caret-color: ${props => props.theme.selectActiveBorderColor};
   color: ${props => props.theme.selectColor};
   display: flex;
@@ -129,9 +127,9 @@ const input = css`
   white-space: nowrap;
   width: 100%;
   word-wrap: normal;
-  pointer-events: ${props => props.disabled ? 'none' : 'all'};
-  opacity: ${props => props.disabled ? 0.5 : 1};
-  
+  pointer-events: ${props => (props.disabled ? 'none' : 'all')};
+  opacity: ${props => (props.disabled ? 0.5 : 1)};
+
   :hover {
     cursor: pointer;
     background-color: ${props => props.theme.selectBackgroundHover};
@@ -194,22 +192,22 @@ const dropdownListSection = css`
 const dropdownList = css`
   overflow-y: overlay;
   max-height: 280px;
-  
+
   .list__section {
-    ${props => props.theme.dropdownListSection}
+    ${props => props.theme.dropdownListSection};
   }
   .list__header {
-    ${props => props.theme.dropdownListHeader}
+    ${props => props.theme.dropdownListHeader};
   }
-  
+
   .list__item {
-    ${props => props.theme.dropdownListItem}
+    ${props => props.theme.dropdownListItem};
   }
-  
+
   .list__item__anchor {
-    ${props => props.theme.dropdownListAnchor}
+    ${props => props.theme.dropdownListAnchor};
   }
-  
+
   ${props => props.theme.dropdownScrollBar};
 `;
 
@@ -251,7 +249,7 @@ export const modalScrollBar = css`
   }
   ::-webkit-scrollbar-thumb {
     background: ${props => props.theme.labelColorLT};
-    border: 4px solid white
+    border: 4px solid white;
   }
 
   ::-webkit-scrollbar-corner {
@@ -259,7 +257,7 @@ export const modalScrollBar = css`
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #969DA9;
+    background: #969da9;
   }
 
   ::-webkit-scrollbar-thumb:vertical {

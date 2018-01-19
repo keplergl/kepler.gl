@@ -1,5 +1,5 @@
 /** @jsx createElement */
-import React, {Component} from 'react';
+import {Component} from 'react';
 import createElement from 'react-stylematic';
 import PropTypes from 'prop-types';
 import window from 'global/window';
@@ -9,7 +9,7 @@ import {sideBar} from 'styles/side-panel';
 
 const DEFAULT_WIDTH = 330;
 
-const  defaultProps = {
+const defaultProps = {
   width: DEFAULT_WIDTH,
   height: window.innerHeight,
   top: 0,
@@ -28,7 +28,6 @@ const propTypes = {
 };
 
 export default class SideBar extends Component {
-
   _onOpenOrClose = () => {
     this.props.onOpenOrClose({isOpen: !this.props.isOpen});
   };
@@ -57,7 +56,10 @@ export default class SideBar extends Component {
         <div className="side-bar__wrapper" style={wrapperStyle}>
           <div className="side-bar__inner" style={innerStyle}>
             <div>
-              <SideBarTitle onClick={this._onOpenOrClose} title={this.props.title}/>
+              <SideBarTitle
+                onClick={this._onOpenOrClose}
+                title={this.props.title}
+              />
               {this.props.children}
             </div>
           </div>
@@ -71,7 +73,7 @@ const SideBarTitle = ({onClick, title}) => (
   <div className="side-bar__top" onClick={onClick}>
     <div className="side-bar__title">{title}</div>
     <div className="button button-link">
-      <ArrowLeft/>Collapse
+      <ArrowLeft />Collapse
     </div>
   </div>
 );

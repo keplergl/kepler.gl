@@ -24,34 +24,38 @@ const propTypes = {
 
 @sortable
 export default class LayerPanel extends Component {
-
-  updateLayerConfig = (newProp) => {
+  updateLayerConfig = newProp => {
     this.props.layerConfigChange(this.props.layer, newProp);
   };
 
-  updateLayerType = (newType) => {
+  updateLayerType = newType => {
     this.props.layerTypeChange(this.props.layer, newType);
   };
 
-  updateLayerVisConfig = (newVisConfig) => {
+  updateLayerVisConfig = newVisConfig => {
     this.props.layerVisConfigChange(this.props.layer, newVisConfig);
   };
 
   updateLayerVisualChannelConfig = (newConfig, channel, scaleKey) => {
-    this.props.layerVisualChannelConfigChange(this.props.layer, newConfig, channel, scaleKey);
+    this.props.layerVisualChannelConfigChange(
+      this.props.layer,
+      newConfig,
+      channel,
+      scaleKey
+    );
   };
 
   _updateLayerLabel = ({target: {value}}) => {
     this.updateLayerConfig({label: value});
   };
 
-  _toggleVisibility = (e) => {
+  _toggleVisibility = e => {
     e.stopPropagation();
     const isVisible = !this.props.layer.config.isVisible;
     this.updateLayerConfig({isVisible});
   };
 
-  _toggleEnableConfig = (event) => {
+  _toggleEnableConfig = event => {
     event.stopPropagation();
     const {layer: {config: {isConfigActive}}} = this.props;
     this.updateLayerConfig({isConfigActive: !isConfigActive});
@@ -63,11 +67,15 @@ export default class LayerPanel extends Component {
     const {isConfigActive} = config;
 
     return (
-      <div ref="container"
-           className={classnames(`layer-panel ${this.props.className}`, {active: isConfigActive})}
-           style={this.props.style}
-           onMouseDown={this.props.onMouseDown}
-           onTouchStart={this.props.onTouchStart}>
+      <div
+        ref="container"
+        className={classnames(`layer-panel ${this.props.className}`, {
+          active: isConfigActive
+        })}
+        style={this.props.style}
+        onMouseDown={this.props.onMouseDown}
+        onTouchStart={this.props.onTouchStart}
+      >
         <LayerPanelItem
           isConfigActive={isConfigActive}
           id={layer.id}
@@ -80,19 +88,21 @@ export default class LayerPanel extends Component {
           onUpdateLayerLabel={this._updateLayerLabel}
           removeLayer={removeLayer}
         />
-        {isConfigActive &&
+        {isConfigActive && (
           <LayerConfigurator
             isAdding={isAdding}
             layer={layer}
             datasets={datasets}
             openModal={this.props.openModal}
-            panelWidth={this.props.panelWidth - DIMENSIONS.layerPanelPadding * 2}
+            panelWidth={
+              this.props.panelWidth - DIMENSIONS.layerPanelPadding * 2
+            }
             updateLayerConfig={this.updateLayerConfig}
             updateLayerVisualChannelConfig={this.updateLayerVisualChannelConfig}
             updateLayerType={this.updateLayerType}
             updateLayerVisConfig={this.updateLayerVisConfig}
           />
-        }
+        )}
       </div>
     );
   }

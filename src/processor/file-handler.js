@@ -31,8 +31,9 @@ function readCSVFile(fileBlob) {
 }
 
 export function loadCsv(fileBlob, processor = processCsvData) {
-  return readCSVFile(fileBlob)
-    .then(rawData => rawData ? processor(rawData) : null);
+  return readCSVFile(fileBlob).then(
+    rawData => (rawData ? processor(rawData) : null)
+  );
 }
 
 function readGeoJSONFile(fileBlob) {
@@ -52,6 +53,7 @@ function readGeoJSONFile(fileBlob) {
 }
 
 export function loadGeoJSON(fileBlob, processor = processGeojson) {
-  return readGeoJSONFile(fileBlob)
-    .then(rawData => rawData ? processor(rawData) : null);
+  return readGeoJSONFile(fileBlob).then(
+    rawData => (rawData ? processor(rawData) : null)
+  );
 }

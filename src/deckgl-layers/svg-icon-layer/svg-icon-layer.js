@@ -2,14 +2,32 @@ import {CompositeLayer} from 'deck.gl';
 import ScatterplotIconLayer from './scatterplot-icon-layer';
 
 // default icon geometry is a square
-const DEFAULT_ICON_GEOMETRY = [1, 1, 0, 1, -1, 0, -1, -1, 0, -1, -1, 0, -1, 1, 0, 1, 1, 0];
+const DEFAULT_ICON_GEOMETRY = [
+  1,
+  1,
+  0,
+  1,
+  -1,
+  0,
+  -1,
+  -1,
+  0,
+  -1,
+  -1,
+  0,
+  -1,
+  1,
+  0,
+  1,
+  1,
+  0
+];
 const defaultProps = {
   getIconGeometry: iconId => DEFAULT_ICON_GEOMETRY,
   getIcon: d => d.icon
 };
 
 export default class SvgIconLayer extends CompositeLayer {
-
   // Must be defined
   initializeState() {
     this.state = {
@@ -51,15 +69,18 @@ export default class SvgIconLayer extends CompositeLayer {
   renderLayers() {
     const layerId = this.props.id;
 
-    const layers = this.state.data && this.state.data.length &&
-      this.state.data.map(({id, data, geometry}) => (
-        new ScatterplotIconLayer({
-          ...this.props,
-          id: `${layerId}-${id}`,
-          data,
-          iconGeometry: geometry
-        })
-      ));
+    const layers =
+      this.state.data &&
+      this.state.data.length &&
+      this.state.data.map(
+        ({id, data, geometry}) =>
+          new ScatterplotIconLayer({
+            ...this.props,
+            id: `${layerId}-${id}`,
+            data,
+            iconGeometry: geometry
+          })
+      );
 
     return layers && layers.length > 0 ? layers : null;
   }

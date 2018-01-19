@@ -2,14 +2,13 @@ import keyMirror from 'keymirror';
 import {ACTION_PREFIX} from './default-settings';
 
 const ActionTypes = keyMirror({
-
   // visState
   ADD_DATA: null,
   ADD_FILTER: null,
   ADD_LAYER: null,
   INTERACTION_CONFIG_CHANGE: null,
   LAYER_CONFIG_CHANGE: null,
-  LAYER_VISUAL_CHANNEL_CONFIG_CHANGE: null,
+  LAYER_VISUAL_CHANNEL_CHANGE: null,
   LAYER_TYPE_CHANGE: null,
   LAYER_VIS_CONFIG_CHANGE: null,
   LAYER_HOVER: null,
@@ -53,6 +52,7 @@ const ActionTypes = keyMirror({
   OPEN_DELETE_MODAL: null,
 
   // buildingData
+  // TODO: remove this after mapzen shut down
   UPDATE_BUILDING_TILES: null,
   LOAD_BUILDING_TILE: null,
   LOAD_BUILDING_TILE_START: null,
@@ -67,9 +67,12 @@ const ActionTypes = keyMirror({
 });
 
 const addPrefix = actions =>
-  Object.keys(actions).reduce((accu, key) => ({
-    ...accu,
-    [key]: `${ACTION_PREFIX}${actions[key]}`
-  }), {});
+  Object.keys(actions).reduce(
+    (accu, key) => ({
+      ...accu,
+      [key]: `${ACTION_PREFIX}${actions[key]}`
+    }),
+    {}
+  );
 
 export default addPrefix(ActionTypes);

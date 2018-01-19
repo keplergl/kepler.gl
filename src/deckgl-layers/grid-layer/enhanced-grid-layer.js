@@ -1,8 +1,5 @@
 import {GridLayer} from 'deck.gl';
-import {
-  getColorValueDomain,
-  getColorScaleFunction
-} from '../layer-utils/utils';
+import {getColorValueDomain, getColorScaleFunction} from '../layer-utils/utils';
 import EnhancedGridCellLayer from './enhanced-grid-cell-layer';
 
 const defaultProps = {
@@ -11,9 +8,7 @@ const defaultProps = {
 };
 
 export default class EnhancedGridLayer extends GridLayer {
-
   getDimensionUpdaters() {
-
     const dimensionUpdaters = super.getDimensionUpdaters();
     // add colorScale to dimension updates
     dimensionUpdaters.getColor[1].triggers.push('colorScale');

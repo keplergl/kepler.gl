@@ -14,8 +14,9 @@ import {capitalizeFirstLetter} from 'utils/utils';
 
 const PALETTE_HEIGHT = 12;
 
-const ALL_COLORS = COLOR_RANGES
-  .filter(colors => colors.category === 'ColorBrewer');
+const ALL_COLORS = COLOR_RANGES.filter(
+  colors => colors.category === 'ColorBrewer'
+);
 
 const ALL_TYPES = uniq(ALL_COLORS.map(c => c.type).concat(['all']));
 const ALL_STEPS = uniq(ALL_COLORS.map(d => d.colors.length));
@@ -78,13 +79,15 @@ export default class ColorRangeSelect extends Component {
 
     return (
       <div>
-        {Object.keys(config).map(key => <PaletteConfig
-          key={key}
-          label={key}
-          category={category}
-          config={config[key]}
-          onChange={value => this._updateConfig({category, key, value})}/>
-        )}
+        {Object.keys(config).map(key => (
+          <PaletteConfig
+            key={key}
+            label={key}
+            category={category}
+            config={config[key]}
+            onChange={value => this._updateConfig({category, key, value})}
+          />
+        ))}
       </div>
     );
   }
@@ -93,15 +96,15 @@ export default class ColorRangeSelect extends Component {
     const {width} = this.props;
 
     return (
-      <StatefulAccordionItem
-        linkText={category}>
+      <StatefulAccordionItem linkText={category}>
         {this._renderPaletteConfig(category)}
         <ColorPalette
           category={category}
           config={this.state.configs[category]}
           width={width}
           onSelect={this.props.onSelectColorRange}
-          selected={this.props.selectedColorRange}/>
+          selected={this.props.selectedColorRange}
+        />
       </StatefulAccordionItem>
     );
   }
@@ -114,10 +117,9 @@ export default class ColorRangeSelect extends Component {
         <ColorRangePalette
           width={width}
           height={PALETTE_HEIGHT}
-          colors={selectedColorRange.colors}/>
-        <Accordion
-          className="one-whole flush"
-          style={{width, margin: 'auto'}}>
+          colors={selectedColorRange.colors}
+        />
+        <Accordion className="one-whole flush" style={{width, margin: 'auto'}}>
           {this._renderEachCategory('Uber')}
           {this._renderEachCategory('ColorBrewer')}
         </Accordion>
@@ -126,26 +128,38 @@ export default class ColorRangeSelect extends Component {
   }
 }
 
-const PaletteConfig = ({category, label, config: {type, value, options}, onChange}) => {
+const PaletteConfig = ({
+  category,
+  label,
+  config: {type, value, options},
+  onChange
+}) => {
   return (
-    <div className="color-palette__config"
-         onClick={e => e.stopPropagation()}>
+    <div className="color-palette__config" onClick={e => e.stopPropagation()}>
       <div className="">
         <PanelLabel>{label}</PanelLabel>
       </div>
-        {type === 'select' &&
-          <div className="select dark select--small flush">
-            <select className="flush" id={label} value={value}
-                    onChange={({target}) => onChange(target.value)}>
-              {options.map(option =>
-                <option value={option} key={option}>
-                  {typeof option === 'string' ? capitalizeFirstLetter(option) : option}</option>
-              )}
-            </select>
-          </div>}
-        {type === 'slider' &&
-          <div className="color-palette__config__slider">
-            <div className="color-palette__config__slider__slider">
+      {type === 'select' && (
+        <div className="select dark select--small flush">
+          <select
+            className="flush"
+            id={label}
+            value={value}
+            onChange={({target}) => onChange(target.value)}
+          >
+            {options.map(option => (
+              <option value={option} key={option}>
+                {typeof option === 'string'
+                  ? capitalizeFirstLetter(option)
+                  : option}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+      {type === 'slider' && (
+        <div className="color-palette__config__slider">
+          <div className="color-palette__config__slider__slider">
             <RangeSlider
               minValue={options[0]}
               maxValue={options[1]}
@@ -154,16 +168,22 @@ const PaletteConfig = ({category, label, config: {type, value, options}, onChang
               step={1}
               isRanged={false}
               showInput={false}
-              onChange={val => onChange(val[1])}/>
-            </div>
-            <div className="color-palette__config__slider__number">{value}</div>
-          </div>}
-        {type === 'switch' &&
-          <Switch
-            style={{marginBottom: 0, marginRight: '-10px'}}
-            checked={value} id={`${category}-${label}-toggle`} label="" size="small"
-            onChange={() => onChange(!value)}/>
-        }
+              onChange={val => onChange(val[1])}
+            />
+          </div>
+          <div className="color-palette__config__slider__number">{value}</div>
+        </div>
+      )}
+      {type === 'switch' && (
+        <Switch
+          style={{marginBottom: 0, marginRight: '-10px'}}
+          checked={value}
+          id={`${category}-${label}-toggle`}
+          label=""
+          size="small"
+          onChange={() => onChange(!value)}
+        />
+      )}
     </div>
   );
 };
@@ -173,8 +193,8 @@ function ColorPalette({category, config, width, onSelect, selected}) {
 
   const colorRanges = COLOR_RANGES.filter(colorRange => {
     const isCategory = colorRange.category === category;
-    const isType = !type || type.value === 'all' ||
-      type.value === colorRange.type;
+    const isType =
+      !type || type.value === 'all' || type.value === colorRange.type;
     const isStep = !steps || Number(steps.value) === colorRange.colors.length;
 
     return isCategory && isType && isStep;
@@ -186,24 +206,37 @@ function ColorPalette({category, config, width, onSelect, selected}) {
   return (
     <div>
       {colorRanges.map(colorRange => (
-        <div className={classnames('color-ranges', {
-          selected: colorRange.name === selected.name &&
-            isReversed === Boolean(selected.reversed)})}
-             style={{paddingLeft: padding, paddingRight: padding}}
-             key={colorRange.name}
-             onClick={e => onSelect({
-               colorRange: {
-                 ...colorRange,
-                 reversed: isReversed,
-                 colors: isReversed ? colorRange.colors.slice().reverse() :
-                   colorRange.colors
-               }})}>
+        <div
+          className={classnames('color-ranges', {
+            selected:
+              colorRange.name === selected.name &&
+              isReversed === Boolean(selected.reversed)
+          })}
+          style={{paddingLeft: padding, paddingRight: padding}}
+          key={colorRange.name}
+          onClick={e =>
+            onSelect({
+              colorRange: {
+                ...colorRange,
+                reversed: isReversed,
+                colors: isReversed
+                  ? colorRange.colors.slice().reverse()
+                  : colorRange.colors
+              }
+            })
+          }
+        >
           <ColorRangePalette
             width={width - padding * 2 - 5}
             height={PALETTE_HEIGHT}
-            colors={isReversed ?
-              colorRange.colors.slice().reverse() : colorRange.colors}/>
-        </div>))}
+            colors={
+              isReversed
+                ? colorRange.colors.slice().reverse()
+                : colorRange.colors
+            }
+          />
+        </div>
+      ))}
     </div>
   );
 }

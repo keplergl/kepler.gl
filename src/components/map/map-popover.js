@@ -17,9 +17,7 @@ const propTypes = {
   fieldsToShow: PropTypes.array,
   isVisible: PropTypes.bool,
   layer: PropTypes.object,
-  data: PropTypes.oneOfType([
-    PropTypes.array, PropTypes.object
-  ]),
+  data: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
   freezed: PropTypes.bool,
   x: PropTypes.number,
   y: PropTypes.number,
@@ -27,7 +25,6 @@ const propTypes = {
 };
 
 export default class MapPopover extends Component {
-
   constructor(props) {
     super(props);
     this.state = {
@@ -83,8 +80,17 @@ export default class MapPopover extends Component {
   }
 
   render() {
-    const {x, y, isVisible, data, layer, freezed, fields, fieldsToShow = []} = this.props;
-    const hidden = (!isVisible && !this.state.isMouseOver);
+    const {
+      x,
+      y,
+      isVisible,
+      data,
+      layer,
+      freezed,
+      fields,
+      fieldsToShow = []
+    } = this.props;
+    const hidden = !isVisible && !this.state.isMouseOver;
 
     if (!data || !layer || !fieldsToShow.length) {
       return null;
@@ -92,30 +98,35 @@ export default class MapPopover extends Component {
 
     const infoProps = {data, layer, fieldsToShow, fields};
 
-    const style = Number.isFinite(x) && Number.isFinite(y) ?
-      this._getPosition(x, y) : {};
+    const style =
+      Number.isFinite(x) && Number.isFinite(y) ? this._getPosition(x, y) : {};
 
     return (
-      <div ref="popover" className={classnames({hidden})}
+      <div
+        ref="popover"
+        className={classnames({hidden})}
         style={{...mapPopover, ...style}}
         onMouseEnter={() => {
           this.setState({isMouseOver: true});
         }}
         onMouseLeave={() => {
           this.setState({isMouseOver: false});
-        }}>
-        {freezed ?
-          (<div>
-            <div className="gutter"/>
+        }}
+      >
+        {freezed ? (
+          <div>
+            <div className="gutter" />
             <div className="popover-pin" onClick={this.props.onClose}>
-              <Pin size={30}/>
+              <Pin size={30} />
             </div>
-          </div>)
-         : null}
+          </div>
+        ) : null}
         <table className="popover-table">
-          {layer.isAggregated ?
-            <CellInfo {...infoProps}/> :
-            <EntryInfo {...infoProps}/>}
+          {layer.isAggregated ? (
+            <CellInfo {...infoProps} />
+          ) : (
+            <EntryInfo {...infoProps} />
+          )}
         </table>
       </div>
     );
@@ -128,29 +139,31 @@ const Row = ({name, value, url}) => {
     url = value;
   }
 
-  const asImg = (/<img>/).test(name);
+  const asImg = /<img>/.test(name);
   return (
     <tr key={name}>
       <td>{name}</td>
       <td>
-        { asImg ? <img src={value}/> :
-          url ? <a target="_blank" href={url}>{value}</a> :
-            value
-        }
+        {asImg ? (
+          <img src={value} />
+        ) : url ? (
+          <a target="_blank" rel="noopener noreferrer" href={url}>
+            {value}
+          </a>
+        ) : (
+          value
+        )}
       </td>
     </tr>
   );
 };
 
 const EntryInfo = ({fieldsToShow, fields, data}) => (
-    <tbody>
-      {fieldsToShow.map(name => <EntryInfoRow
-        key={name}
-        name={name}
-        fields={fields}
-        data={data}
-      />)}
-    </tbody>
+  <tbody>
+    {fieldsToShow.map(name => (
+      <EntryInfoRow key={name} name={name} fields={fields} data={data} />
+    ))}
+  </tbody>
 );
 
 const EntryInfoRow = ({name, fields, data}) => {
@@ -163,10 +176,7 @@ const EntryInfoRow = ({name, fields, data}) => {
   const format = _getCellFormat(field.type);
 
   return (
-    <Row
-      name={name}
-      value={format ? format(data[valueIdx]) : data[valueIdx]}
-    />
+    <Row name={name} value={format ? format(data[valueIdx]) : data[valueIdx]} />
   );
 };
 
@@ -176,21 +186,21 @@ const CellInfo = ({data, layer}) => {
 
   return (
     <tbody>
-      <Row
-        name={'total points'}
-        key="count"
-        value={data.points.length}
-      />
-      {colorField ? <Row
-        name={`${colorAggregation} ${colorField.name}`}
-        key="color"
-        value={data.colorValue || 'N/A'}
-      /> : null}
-      {sizeField ? <Row
-        name={`${sizeAggregation} ${sizeField.name}`}
-        key="size"
-        value={data.elevationValue || 'N/A'}
-      /> : null}
+      <Row name={'total points'} key="count" value={data.points.length} />
+      {colorField ? (
+        <Row
+          name={`${colorAggregation} ${colorField.name}`}
+          key="color"
+          value={data.colorValue || 'N/A'}
+        />
+      ) : null}
+      {sizeField ? (
+        <Row
+          name={`${sizeAggregation} ${sizeField.name}`}
+          key="size"
+          value={data.elevationValue || 'N/A'}
+        />
+      ) : null}
     </tbody>
   );
 };

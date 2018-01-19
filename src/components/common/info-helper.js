@@ -11,7 +11,7 @@ const propTypes = {
 const InfoHelper = ({description, containerClass, icon, id}) => (
   <div className={`info-helper ${containerClass || ''}`}>
     <a data-tip data-for={id}>
-      <i className={`icon icon_${icon || 'info'} zeta transition--slow`}/>
+      <i className={`icon icon_${icon || 'info'} zeta transition--slow`} />
       <Tooltip id={id} effect="solid">
         <div className="info-helper__content">{description}</div>
       </Tooltip>

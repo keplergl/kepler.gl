@@ -1,4 +1,4 @@
-import {connect as reduxConnect} from 'react-redux'
+import {connect as reduxConnect} from 'react-redux';
 import withLocalSelector from './with-local-selector';
 
 const defaultMapStateToProps = state => state;
@@ -9,25 +9,23 @@ export const connect = (
   mapDispatchToProps = defaultMapDispatchToProps,
   reduxMergeProps,
   options
-  ) =>
-    BaseComponent => {
-      const reduxMapState = (state, props)  =>
-        mapStateToProps(props.selector(state), props, state);
+) => BaseComponent => {
+  const reduxMapState = (state, props) =>
+    mapStateToProps(props.selector(state), props, state);
 
-      const reduxMapDispatch = (dispatch, props) =>
-        mapDispatchToProps(props.dispatch, props, dispatch);
+  const reduxMapDispatch = (dispatch, props) =>
+    mapDispatchToProps(props.dispatch, props, dispatch);
 
-      // const reduxMergeProps = (stateProps, dispatchProps, ownProps) =>
-      //   ({ ...stateProps, ...dispatchProps, ...ownProps });
+  // const reduxMergeProps = (stateProps, dispatchProps, ownProps) =>
+  //   ({ ...stateProps, ...dispatchProps, ...ownProps });
 
-      const ReduxComponent = reduxConnect(
-        reduxMapState,
-        reduxMapDispatch,
-        reduxMergeProps,
-        options
-      )(BaseComponent);
+  const ReduxComponent = reduxConnect(
+    reduxMapState,
+    reduxMapDispatch,
+    reduxMergeProps,
+    options
+  )(BaseComponent);
 
-      // save selector to context so it can be accessed by its children
-      return withLocalSelector(ReduxComponent)
-    }
-;
+  // save selector to context so it can be accessed by its children
+  return withLocalSelector(ReduxComponent);
+};

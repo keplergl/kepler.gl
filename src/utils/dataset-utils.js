@@ -1,7 +1,7 @@
 import {hexToRgb} from './color-utils';
 import uniq from 'lodash.uniq';
 import {TRIP_POINT_FIELDS} from 'constants/default-settings';
-import {generateHashId} from "./utils";
+import {generateHashId} from './utils';
 import {validateInputData} from './data-utils';
 
 // apply a color for each dataset
@@ -34,8 +34,9 @@ export const datasetColorMaker = generateColor();
 function getNewDatasetColor(datasets) {
   const presetColors = datasetColors.map(String);
 
-  const usedColors = uniq(Object.values(datasets).map(d => String(d.color)))
-    .filter(c => presetColors.includes(c));
+  const usedColors = uniq(
+    Object.values(datasets).map(d => String(d.color))
+  ).filter(c => presetColors.includes(c));
 
   if (usedColors.length === presetColors.length) {
     // if we already depleted the pool of color
@@ -51,7 +52,6 @@ function getNewDatasetColor(datasets) {
 }
 
 export function createNewDataEntry({info = {}, data}, datasets) {
-
   const validatedData = validateInputData(data);
   if (!validatedData) {
     return {};

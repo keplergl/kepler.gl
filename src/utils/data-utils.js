@@ -46,7 +46,9 @@ export function validateInputData(data) {
     }
 
     if (!f.name) {
-      assert(`field.name is required but missing in field ${JSON.stringify(f)}`);
+      assert(
+        `field.name is required but missing in field ${JSON.stringify(f)}`
+      );
       // assign a name
       f.name = `column_${i}`;
     }
@@ -143,7 +145,9 @@ export function findMapBounds(layers, dataId) {
   // find bounds in formatted layerData
   // use first isVisible Layer
 
-  const newLayers = dataId ? layers.filter(l => l.config.dataId === dataId) : layers;
+  const newLayers = dataId
+    ? layers.filter(l => l.config.dataId === dataId)
+    : layers;
   const firstVisibleLayer = newLayers.find(l => l.config.isVisible);
   if (!firstVisibleLayer) {
     return null;
@@ -162,8 +166,10 @@ export function findMapBounds(layers, dataId) {
 /* eslint-enable max-statements */
 
 export function getLatLngBounds(points, idx, limit) {
-  const lats = points.map(d => Array.isArray(d) && d[idx])
-    .filter(Number.isFinite).sort(numberSort);
+  const lats = points
+    .map(d => Array.isArray(d) && d[idx])
+    .filter(Number.isFinite)
+    .sort(numberSort);
 
   if (!lats.length) {
     return null;
@@ -189,10 +195,9 @@ export function getSampleData(data, sampleSize = 500) {
 export function maybeToDate(isTime, fieldIdx, format, d) {
   if (isTime) {
     if (notNullorUndefined(d[fieldIdx])) {
-      return typeof d[fieldIdx] === 'string' ?
-        moment.utc(d[fieldIdx], format).valueOf() :
-        format === 'x' ? d[fieldIdx] * 1000 :
-          d[fieldIdx];
+      return typeof d[fieldIdx] === 'string'
+        ? moment.utc(d[fieldIdx], format).valueOf()
+        : format === 'x' ? d[fieldIdx] * 1000 : d[fieldIdx];
     }
 
     return null;
@@ -206,7 +211,9 @@ export function notNullorUndefined(d) {
 }
 
 export function isPlainObject(obj) {
-  return obj === Object(obj) && typeof obj !== 'function' && !Array.isArray(obj);
+  return (
+    obj === Object(obj) && typeof obj !== 'function' && !Array.isArray(obj)
+  );
 }
 
 export function numberSort(a, b) {
@@ -215,12 +222,12 @@ export function numberSort(a, b) {
 
 export function getSortingFunction(fieldType) {
   switch (fieldType) {
-  case ALL_FIELD_TYPES.real:
-  case ALL_FIELD_TYPES.integer:
-  case ALL_FIELD_TYPES.timestamp:
-    return numberSort;
-  default:
-    return undefined;
+    case ALL_FIELD_TYPES.real:
+    case ALL_FIELD_TYPES.integer:
+    case ALL_FIELD_TYPES.timestamp:
+      return numberSort;
+    default:
+      return undefined;
   }
 }
 
@@ -233,8 +240,13 @@ export function getSortingFunction(fieldType) {
  */
 export function preciseRound(num, decimals) {
   const t = Math.pow(10, decimals);
-  return (Math.round((num * t) + (decimals > 0 ? 1 : 0) *
-    (Math.sign(num) * (10 / Math.pow(100, decimals)))) / t).toFixed(decimals);
+  return (
+    Math.round(
+      num * t +
+        (decimals > 0 ? 1 : 0) *
+          (Math.sign(num) * (10 / Math.pow(100, decimals)))
+    ) / t
+  ).toFixed(decimals);
 }
 
 /**

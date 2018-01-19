@@ -1,9 +1,7 @@
 import React from 'react';
 import InteractionPanel from './interaction-panel/interaction-panel';
 
-const InteractionManager = ({
- interactionConfig, datasets, onConfigChange
-}) => (
+const InteractionManager = ({interactionConfig, datasets, onConfigChange}) => (
   <div>
     {Object.keys(interactionConfig).map(key => (
       <InteractionPanel

@@ -1,6 +1,6 @@
 /** @jsx createElement */
 import createElement from 'react-stylematic';
-import React, {Component} from 'react';
+import {Component} from 'react';
 import PropTypes from 'prop-types';
 import {Slider} from '@uber/react-slider';
 import {roundValToStep} from 'utils/data-utils';
@@ -28,15 +28,15 @@ export default class RangeSlider extends Component {
     this.state = {value0: 0, value1: 1};
   }
 
-  componentWillReceiveProps(nextProps) {
-    this._setValueFromProps(nextProps);
-  }
-
   componentDidMount() {
     this._setValueFromProps(this.props);
   }
 
-  _setValueFromProps = (props) => {
+  componentWillReceiveProps(nextProps) {
+    this._setValueFromProps(nextProps);
+  }
+
+  _setValueFromProps = props => {
     const {value0, value1} = props;
 
     if (!isNaN(value0) && !isNaN(value1)) {
@@ -44,25 +44,25 @@ export default class RangeSlider extends Component {
     }
   };
 
-  _isVal0InRange = (val) => {
+  _isVal0InRange = val => {
     const {value1, minValue} = this.props;
 
     return Boolean(val >= minValue && val <= value1);
   };
 
-  _isVal1InRange = (val) => {
+  _isVal1InRange = val => {
     const {maxValue, value0} = this.props;
 
     return Boolean(val <= maxValue && val >= value0);
   };
 
-  _roundValToStep = (val) => {
+  _roundValToStep = val => {
     const {minValue, step} = this.props;
 
     return roundValToStep(minValue, step, val);
   };
 
-  _setRangeVal1 = (val) => {
+  _setRangeVal1 = val => {
     const {value0, onChange} = this.props;
     val = Number(val);
 
@@ -73,7 +73,7 @@ export default class RangeSlider extends Component {
     return false;
   };
 
-  _setRangeVal0 = (val) => {
+  _setRangeVal0 = val => {
     const {value1, onChange} = this.props;
     val = Number(val);
 
@@ -85,7 +85,15 @@ export default class RangeSlider extends Component {
   };
 
   _renderSlider() {
-    const {isRanged, minValue, maxValue, onChange, value0, value1, xAxis} = this.props;
+    const {
+      isRanged,
+      minValue,
+      maxValue,
+      onChange,
+      value0,
+      value1,
+      xAxis
+    } = this.props;
     const height = xAxis ? '24px' : '16px';
     return (
       <div style={{height, marginTop: '-25px', position: 'relative'}}>
@@ -102,7 +110,10 @@ export default class RangeSlider extends Component {
           onSlider1Change={this._setRangeVal1}
           onSliderBarChange={(val0, val1) => {
             if (this._isVal1InRange(val1) && this._isVal0InRange(val0)) {
-              onChange([this._roundValToStep(val0), this._roundValToStep(val1)]);
+              onChange([
+                this._roundValToStep(val0),
+                this._roundValToStep(val1)
+              ]);
             }
           }}
         />
@@ -113,7 +124,7 @@ export default class RangeSlider extends Component {
   _renderInput(key) {
     const type = 'text-input';
     const setRange = key === 'value0' ? this._setRangeVal0 : this._setRangeVal1;
-    const update = (e) => {
+    const update = e => {
       if (!setRange(e.target.value)) {
         this.setState({[key]: this.state[key]});
       }
@@ -133,31 +144,46 @@ export default class RangeSlider extends Component {
             update(e);
           }
         }}
-        onBlur={update}>
-      </input>
+        onBlur={update}
+      />
     );
   }
 
   render() {
-    const {isRanged, showInput,  histogram, lineChart, plotType,
-      isEnlarged, maxValue, minValue, onChange, value0, value1, width} = this.props;
+    const {
+      isRanged,
+      showInput,
+      histogram,
+      lineChart,
+      plotType,
+      isEnlarged,
+      maxValue,
+      minValue,
+      onChange,
+      value0,
+      value1,
+      width
+    } = this.props;
 
     return (
       <div>
-        {histogram && histogram.length ?
+        {histogram && histogram.length ? (
           <RangePlot
             histogram={histogram}
             lineChart={lineChart}
             plotType={plotType}
             isEnlarged={isEnlarged}
             onBrush={(val0, val1) => {
-              onChange([this._roundValToStep(val0), this._roundValToStep(val1)]);
+              onChange([
+                this._roundValToStep(val0),
+                this._roundValToStep(val1)
+              ]);
             }}
             range={[minValue, maxValue]}
             value={[value0, value1]}
             width={width}
-          /> : null
-        }
+          />
+        ) : null}
         {this._renderSlider()}
         <div style={inputs}>
           {isRanged && showInput && this._renderInput('value0')}

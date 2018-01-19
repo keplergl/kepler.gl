@@ -14,7 +14,7 @@ const basicSearcher = (items, query) => {
     // TODO: keep track of this one
   }
 
-  return items
+  return items;
 };
 
 const StyledListItem = styled.div`
@@ -31,7 +31,6 @@ const propTypes = {
 };
 
 class MapLayerSelector extends Component {
-
   constructor(props) {
     super(props);
     this.state = {
@@ -49,13 +48,15 @@ class MapLayerSelector extends Component {
     return (
       <div>
         {availableItems.map((layer, index) => (
-          <StyledListItem
-            key={index}>
+          <StyledListItem key={index}>
             <CustomSwitch
               checked={layer.isVisible}
               id={`${layer.id}-toggle-${generateHashId(4)}`}
               label={layer.name}
-              onChange={e => {e.preventDefault(); onMapToggleLayer(layer.id);}}
+              onChange={e => {
+                e.preventDefault();
+                onMapToggleLayer(layer.id);
+              }}
               size="small"
               style={{
                 marginBottom: 0
@@ -73,8 +74,8 @@ MapLayerSelector.propTypes = propTypes;
 
 export default MapLayerSelector;
 
-const CustomSwitch = (props) => (
+const CustomSwitch = props => (
   <StyledSwitch>
-    <Switch {...props}/>
+    <Switch {...props} />
   </StyledSwitch>
 );

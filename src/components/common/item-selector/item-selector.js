@@ -32,9 +32,9 @@ function _toArray(item) {
 
 const StyledDropdownSelect = styled.div`
   ${props => props.theme.input};
-  
+
   .list__item__anchor {
-    ${props => props.theme.dropdownListAnchor}
+    ${props => props.theme.dropdownListAnchor};
   }
 `;
 
@@ -61,7 +61,11 @@ const DropdownWrapper = styled.div`
 const propTypes = {
   // required properties
   selectedItems: PropTypes.oneOfType([
-    PropTypes.array, PropTypes.string, PropTypes.object, PropTypes.bool]),
+    PropTypes.array,
+    PropTypes.string,
+    PropTypes.object,
+    PropTypes.bool
+  ]),
   onChange: PropTypes.func.isRequired,
   options: PropTypes.array.isRequired,
 
@@ -127,8 +131,7 @@ class ItemSelector extends Component {
     e.preventDefault();
     e.stopPropagation();
     const {selectedItems} = this.props;
-    const index = selectedItems
-      .findIndex(t => t === item);
+    const index = selectedItems.findIndex(t => t === item);
 
     if (index < 0) {
       return;
@@ -147,7 +150,7 @@ class ItemSelector extends Component {
     }
   };
 
-  _selectItem = (item) => {
+  _selectItem = item => {
     const getValue = Accessor.generateOptionToStringFor(
       this.props.getOptionValue || this.props.displayOption
     );
@@ -167,7 +170,7 @@ class ItemSelector extends Component {
     }
   };
 
-  _onErase = (e) => {
+  _onErase = e => {
     e.stopPropagation();
     this.props.onChange(null);
   };
@@ -175,9 +178,8 @@ class ItemSelector extends Component {
   _showTypeahead = () => {
     if (!this.props.disabled) {
       this.setState({
-          showTypeahead: true
-        }
-      );
+        showTypeahead: true
+      });
     }
   };
 
@@ -242,10 +244,14 @@ class ItemSelector extends Component {
               disabled={this.props.disabled}
             >
               <DropdownSelectValue placeholder={!hasValue}>
-                {hasValue ? <this.props.DropDownLineItemRenderComponent
-                  displayOption={displayOption}
-                  value={selected[0]}/>
-                  : this.props.placeholder}
+                {hasValue ? (
+                  <this.props.DropDownLineItemRenderComponent
+                    displayOption={displayOption}
+                    value={selected[0]}
+                  />
+                ) : (
+                  this.props.placeholder
+                )}
               </DropdownSelectValue>
               {this.props.erasable && hasValue ? (
                 <Delete height="12px" onClick={this._onErase} />

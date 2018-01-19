@@ -3,19 +3,23 @@ import styled from 'styled-components';
 import {createSelector} from 'reselect';
 import {format} from 'd3-format';
 import moment from 'moment';
-import {SCALE_TYPES, SCALE_FUNC, ALL_FIELD_TYPES} from '../../constants/default-settings';
+import {
+  SCALE_TYPES,
+  SCALE_FUNC,
+  ALL_FIELD_TYPES
+} from '../../constants/default-settings';
 import {getTimeWidgetHintFormatter} from '../../utils/filter-utils';
 
 const ROW_H = 10;
 const GAP = 4;
 const RECT_W = 20;
 
-const StyledLegend = styled.div`  
+const StyledLegend = styled.div`
   ${props => props.theme.dropdownScrollBar};
-  
+
   max-height: 150px;
   overflow-y: overlay;
-  
+
   svg {
     text {
       font-size: 9px;
@@ -29,21 +33,18 @@ const defaultFormat = d => d;
 const propTypes = {
   width: PropTypes.number.isRequired,
   scaleType: PropTypes.string.isRequired,
-  domain: PropTypes.oneOfType([
-    PropTypes.array,
-    PropTypes.object
-  ]).isRequired,
+  domain: PropTypes.oneOfType([PropTypes.array, PropTypes.object]).isRequired,
   fieldType: PropTypes.string,
   range: PropTypes.arrayOf(PropTypes.string),
   abelFormat: PropTypes.func
 };
 
-const getTimeLabelFormat = (domain) => {
+const getTimeLabelFormat = domain => {
   const formatter = getTimeWidgetHintFormatter(domain);
   return val => moment.utc(val).format(formatter);
 };
 
-const getNumericLabelFormat = (domain) => {
+const getNumericLabelFormat = domain => {
   const diff = domain[1] - domain[0];
 
   if (diff < 10) {
@@ -54,12 +55,10 @@ const getNumericLabelFormat = (domain) => {
 };
 
 const getQuantLabelFormat = (domain, fieldType) => {
-
   // quant scale can only be assigned to linear Fields: real, timestamp, integer
-  return fieldType === ALL_FIELD_TYPES.timestamp ?
-    getTimeLabelFormat(domain) :
-    !fieldType ? defaultFormat :
-    getNumericLabelFormat(domain);
+  return fieldType === ALL_FIELD_TYPES.timestamp
+    ? getTimeLabelFormat(domain)
+    : !fieldType ? defaultFormat : getNumericLabelFormat(domain);
 };
 
 const getOrdinalLegends = scale => {
@@ -106,7 +105,8 @@ export default class ColorLegend extends Component {
         return getOrdinalLegends(scale);
       }
 
-      const formatLabel = labelFormat || getQuantLabelFormat(scale.domain(), fieldType);
+      const formatLabel =
+        labelFormat || getQuantLabelFormat(scale.domain(), fieldType);
 
       return getQuantLegends(scale, formatLabel);
     }
@@ -125,13 +125,15 @@ export default class ColorLegend extends Component {
     return (
       <StyledLegend>
         <svg width={width - 24} height={height}>
-          {legends.data.map((color, idx) => <LegendRow
-            key={idx}
-            label={legends.labels[idx]}
-            displayLabel={displayLabel}
-            color={color}
-            idx={idx}/>
-          )}
+          {legends.data.map((color, idx) => (
+            <LegendRow
+              key={idx}
+              label={legends.labels[idx]}
+              displayLabel={displayLabel}
+              color={color}
+              idx={idx}
+            />
+          ))}
         </svg>
       </StyledLegend>
     );
@@ -140,8 +142,10 @@ export default class ColorLegend extends Component {
 
 const LegendRow = ({label = '', displayLabel, color, idx}) => (
   <g transform={`translate(0, ${idx * (ROW_H + GAP)})`}>
-    <rect width={RECT_W} height={ROW_H} style={{fill: color}}/>
-    <text x={RECT_W + 8} y={ROW_H - 1}>{displayLabel ? label.toString() : ''}</text>
+    <rect width={RECT_W} height={ROW_H} style={{fill: color}} />
+    <text x={RECT_W + 8} y={ROW_H - 1}>
+      {displayLabel ? label.toString() : ''}
+    </text>
   </g>
 );
 

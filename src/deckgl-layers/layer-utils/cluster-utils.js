@@ -2,18 +2,20 @@ import supercluster from 'supercluster';
 import memoize from 'lodash/memoize';
 
 export function getGeoJSON(data, getPosition) {
-  return data.map(d => ({
-    type: 'Point',
-    properties: {
-      data: d,
-      points: [d],
-      point_count: 1,
-      point_count_abbreviated: '1'
-    },
-    geometry: {
-      coordinates: getPosition(d)
-    }
-  })).filter(d => d.geometry.coordinates.every(Number.isFinite));
+  return data
+    .map(d => ({
+      type: 'Point',
+      properties: {
+        data: d,
+        points: [d],
+        point_count: 1,
+        point_count_abbreviated: '1'
+      },
+      geometry: {
+        coordinates: getPosition(d)
+      }
+    }))
+    .filter(d => d.geometry.coordinates.every(Number.isFinite));
 }
 
 const clusterResolver = ({clusterRadius}) => `${clusterRadius}`;
@@ -29,7 +31,7 @@ const getClusterer = memoize(({clusterRadius, geoJSON}) => {
         // avoid using spread to prevent max call stack exceeded error
         props.points.forEach(p => {
           accumulated.points.push(p);
-        })
+        });
       } else {
         accumulated.points.push(props);
       }

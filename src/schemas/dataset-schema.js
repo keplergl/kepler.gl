@@ -23,8 +23,7 @@ class FieldSchema extends Schema {
   key = 'fields';
   save(fields) {
     return {
-      [this.key]: fields.map(f =>
-        this.savePropertiesOrApplySchema(f)[this.key])
+      [this.key]: fields.map(f => this.savePropertiesOrApplySchema(f)[this.key])
     };
   }
   load(fields) {
@@ -82,7 +81,9 @@ class DatasetSchema extends Schema {
         if (meta[i].type !== f.type) {
           // if newly detected field type is different from saved type
           // we log it but won't update it, cause we don't want to break people's map
-          globalConsole.warn(`detect ${f.name} type is now ${meta[i].type} instead of ${f.type}`);
+          globalConsole.warn(
+            `detect ${f.name} type is now ${meta[i].type} instead of ${f.type}`
+          );
         }
       });
     }

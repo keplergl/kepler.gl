@@ -1,7 +1,10 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 
-import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
+import {
+  PanelLabel,
+  SidePanelSection
+} from 'components/common/styled-components';
 import FieldSelector from 'components/common/field-selector';
 import InfoHelper from 'components/common/info-helper';
 import DimensionScaleSelector from './dimension-scale-selector';
@@ -27,22 +30,31 @@ const propTypes = {
 };
 
 export default class VisConfigByFieldSelector extends Component {
-
-  _updateVisByField = (val) => {
+  _updateVisByField = val => {
     this.props.updateField(val);
   };
 
   render() {
-    const {property, showScale, selectedField, description, scaleOptions = []} = this.props;
+    const {
+      property,
+      showScale,
+      selectedField,
+      description,
+      scaleOptions = []
+    } = this.props;
 
     return (
       <SidePanelSection>
         <div>
-          <PanelLabel>{this.props.label ||
-          `${capitalizeFirstLetter(property)} based on`}</PanelLabel>
-          {description && <InfoHelper
-            description={description} id={`${this.props.id}-${property}`}
-          />}
+          <PanelLabel>
+            {this.props.label || `${capitalizeFirstLetter(property)} based on`}
+          </PanelLabel>
+          {description && (
+            <InfoHelper
+              description={description}
+              id={`${this.props.id}-${property}`}
+            />
+          )}
         </div>
         <div>
           <FieldSelector
@@ -51,13 +63,15 @@ export default class VisConfigByFieldSelector extends Component {
             onSelect={this._updateVisByField}
             erasable
           />
-          {showScale ? <DimensionScaleSelector
-            scaleType={this.props.scaleType}
-            options={scaleOptions}
-            label={`${property} scale`}
-            onSelect={this.props.updateScale}
-            disabled={scaleOptions.length < 2}
-          /> : null}
+          {showScale ? (
+            <DimensionScaleSelector
+              scaleType={this.props.scaleType}
+              options={scaleOptions}
+              label={`${property} scale`}
+              onSelect={this.props.updateScale}
+              disabled={scaleOptions.length < 2}
+            />
+          ) : null}
         </div>
       </SidePanelSection>
     );

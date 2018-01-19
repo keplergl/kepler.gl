@@ -118,13 +118,11 @@ module.exports = (config, exampleDir) => env => {
   //if (env && env.local) {
   config = addLocalDevSettings(config, exampleDir);
   config = addBableSettings(config);
-  console.warn(JSON.stringify(config, null, 2));
   //}
 
   // npm run start-es6 does not transpile the lib
   // if (env && env.es6) {
   //   config = addLocalDevSettings(config, exampleDir);
-  //   config = addBableSettings(config);
   //   console.warn(JSON.stringify(config, null, 2));
   // }
 

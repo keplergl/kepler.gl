@@ -6,22 +6,26 @@ import SvgIconLayer from '../../deckgl-layers/svg-icon-layer/svg-icon-layer';
 import ScatterplotIconLayer from '../../deckgl-layers/svg-icon-layer/scatterplot-icon-layer';
 
 const IconIds = SvgIcons.map(d => d.id);
-const SvgIconGeometry = SvgIcons.reduce((accu, curr) => ({
-  ...accu,
-  [curr.id]: curr.mesh.cells.reduce((prev, cell) => {
-    cell.forEach(p => {
-      Array.prototype.push.apply(prev, curr.mesh.positions[p]);
-    });
-    return prev;
-  }, [])
-}), {});
+const SvgIconGeometry = SvgIcons.reduce(
+  (accu, curr) => ({
+    ...accu,
+    [curr.id]: curr.mesh.cells.reduce((prev, cell) => {
+      cell.forEach(p => {
+        Array.prototype.push.apply(prev, curr.mesh.positions[p]);
+      });
+      return prev;
+    }, [])
+  }),
+  {}
+);
 
 export const iconPosAccessor = ({lat, lng}) => d => [
   d.data[lng.fieldIdx],
   d.data[lat.fieldIdx]
 ];
 
-export const iconPosResolver = ({lat, lng}) => `${lat.fieldIdx}-${lng.fieldIdx}`;
+export const iconPosResolver = ({lat, lng}) =>
+  `${lat.fieldIdx}-${lng.fieldIdx}`;
 
 export const iconAccessor = ({icon}) => d => d.data[icon.fieldIdx];
 export const iconResolver = ({icon}) => icon.fieldIdx;
@@ -71,22 +75,30 @@ export default class IconLayer extends Layer {
   }
 
   formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
-    const {colorScale, colorDomain, colorField, color, columns, sizeField, sizeScale, sizeDomain,
-      visConfig: {radiusRange, colorRange}} = this.config;
-
-    // point color
-    const cScale = colorField && this.getVisChannelScale(
+    const {
       colorScale,
       colorDomain,
-      colorRange.colors.map(hexToRgb)
-    );
-
-    // point radius
-    const rScale = sizeField && this.getVisChannelScale(
+      colorField,
+      color,
+      columns,
+      sizeField,
       sizeScale,
       sizeDomain,
-      radiusRange
-    );
+      visConfig: {radiusRange, colorRange}
+    } = this.config;
+
+    // point color
+    const cScale =
+      colorField &&
+      this.getVisChannelScale(
+        colorScale,
+        colorDomain,
+        colorRange.colors.map(hexToRgb)
+      );
+
+    // point radius
+    const rScale =
+      sizeField && this.getVisChannelScale(sizeScale, sizeDomain, radiusRange);
 
     const getPosition = this.getPosition(columns);
     const getIcon = this.getIcon(columns);
@@ -96,13 +108,15 @@ export default class IconLayer extends Layer {
     }
 
     let data;
-    if (oldLayerData && oldLayerData.data && opt.sameData &&
+    if (
+      oldLayerData &&
+      oldLayerData.data &&
+      opt.sameData &&
       oldLayerData.getPosition === getPosition &&
-      oldLayerData.getIcon === getIcon) {
-
+      oldLayerData.getIcon === getIcon
+    ) {
       data = oldLayerData.data;
     } else {
-
       data = filteredIndex.reduce((accu, index) => {
         const pos = getPosition({data: allData[index]});
         const icon = getIcon({data: allData[index]});
@@ -123,11 +137,11 @@ export default class IconLayer extends Layer {
       }, []);
     }
 
-    const getRadius = d => rScale ?
-      this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
+    const getRadius = d =>
+      rScale ? this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
 
-    const getColor = d => cScale ?
-      this.getEncodedChannelValue(cScale, d.data, colorField) : color;
+    const getColor = d =>
+      cScale ? this.getEncodedChannelValue(cScale, d.data, colorField) : color;
 
     return {
       data,
@@ -143,8 +157,14 @@ export default class IconLayer extends Layer {
     this.updateMeta({bounds});
   }
 
-  renderLayer({data, idx, layerInteraction, objectHovered, mapState, interactionConfig}) {
-
+  renderLayer({
+    data,
+    idx,
+    layerInteraction,
+    objectHovered,
+    mapState,
+    interactionConfig
+  }) {
     const layerProps = {
       radiusMinPixels: 1,
       fp64: this.config.visConfig['hi-precision'],
@@ -176,19 +196,24 @@ export default class IconLayer extends Layer {
           }
         }
       }),
-      ...this.isLayerHovered(objectHovered) ? [
-        new ScatterplotIconLayer({
-          ...layerProps,
-          id: `${this.id}-hovered`,
-          data: [{
-            ...objectHovered.object,
-            position: data.getPosition(objectHovered.object),
-            radius: data.getRadius(objectHovered.object),
-            color: this.config.highlightColor
-          }],
-          iconGeometry: SvgIconGeometry[objectHovered.object.icon],
-          pickable: false
-      })] : []
+      ...(this.isLayerHovered(objectHovered)
+        ? [
+            new ScatterplotIconLayer({
+              ...layerProps,
+              id: `${this.id}-hovered`,
+              data: [
+                {
+                  ...objectHovered.object,
+                  position: data.getPosition(objectHovered.object),
+                  radius: data.getRadius(objectHovered.object),
+                  color: this.config.highlightColor
+                }
+              ],
+              iconGeometry: SvgIconGeometry[objectHovered.object.icon],
+              pickable: false
+            })
+          ]
+        : [])
     ];
   }
 }

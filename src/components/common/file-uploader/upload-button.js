@@ -10,7 +10,7 @@ const Wrapper = styled.div`
   color: ${props => props.theme.textColorLT};
   font-size: 12px;
   text-decoration: underline;
-  
+
   :hover {
     cursor: pointer;
     font-weight: 500;
@@ -20,7 +20,6 @@ const Wrapper = styled.div`
 Inspired by https://github.com/okonet/react-dropzone/blob/master/src/index.js
 */
 export default class UploadButton extends Component {
-
   _onClick = () => {
     this.refs.fileInput.value = null;
     this.refs.fileInput.click();
@@ -37,12 +36,13 @@ export default class UploadButton extends Component {
   render() {
     return (
       <Wrapper>
-        <input type="file" ref="fileInput"
+        <input
+          type="file"
+          ref="fileInput"
           style={{display: 'none'}}
-          onChange={this._onChange}/>
-        <span onClick={this._onClick}>
-        {this.props.children}
-        </span>
+          onChange={this._onChange}
+        />
+        <span onClick={this._onClick}>{this.props.children}</span>
       </Wrapper>
     );
   }

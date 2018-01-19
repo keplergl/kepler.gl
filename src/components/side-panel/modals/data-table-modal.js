@@ -5,20 +5,20 @@ import window from 'global/window';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
 import FieldToken from 'components/common/field-token';
 import {Clock} from 'components/common/icons';
-const ReactDataGrid = null;
-// const ReactDataGrid = window.navigator ? require('react-data-grid') : null;
+const ReactDataGrid = window.navigator ? require('react-data-grid') : null;
 
 let shouldPreventScrollBack = false;
 
 if (window.navigator && window.navigator.userAgent) {
-// Detect browsers
-// http://stackoverflow.com/questions/5899783/detect-safari-using-jquery
+  const {navigator} = window;
+  // Detect browsers
+  // http://stackoverflow.com/questions/5899783/detect-safari-using-jquery
   const isMac = navigator.userAgent.match(/Macintosh/);
   const is_chrome = navigator.userAgent.indexOf('Chrome') > -1;
-  const is_safari = navigator.userAgent.indexOf("Safari") > -1;
+  const is_safari = navigator.userAgent.indexOf('Safari') > -1;
   const is_firefox = navigator.userAgent.indexOf('Firefox') > -1;
 
-// prevent chrome scroll back
+  // prevent chrome scroll back
   shouldPreventScrollBack = isMac && (is_chrome || is_safari || is_firefox);
 }
 
@@ -67,7 +67,7 @@ const DataGridWrapper = styled.div`
 const BooleanFormatter = ({value}) => <span>{String(value)}</span>;
 
 export default class DataTableModal extends Component {
-  _onMouseWheel = (e) => {
+  _onMouseWheel = e => {
     // Prevent futile scroll, which would trigger the Back/Next page event
     // https://github.com/micho/jQuery.preventMacBackScroll
     // This prevents scroll when reaching the topmost or leftmost
@@ -84,7 +84,7 @@ export default class DataTableModal extends Component {
     if (prevent_left || prevent_up) {
       e.preventDefault();
     }
-  }
+  };
 
   render() {
     const {datasets, dataId, showDatasetTable} = this.props;
@@ -114,20 +114,20 @@ export default class DataTableModal extends Component {
           showDatasetTable={showDatasetTable}
         />
         <DataGridWrapper
-          onWheel={
-            shouldPreventScrollBack ? this._onMouseWheel : null
-          }
+          onWheel={shouldPreventScrollBack ? this._onMouseWheel : null}
         >
-          {ReactDataGrid ? <ReactDataGrid
-            headerRowHeight={72}
-            columns={columns}
-            minColumnWidth={172}
-            minWidth={this.props.width}
-            minHeight={this.props.height - 65}
-            rowGetter={i => rows[i]}
-            rowHeight={48}
-            rowsCount={rows.length}
-          /> : null}
+          {ReactDataGrid ? (
+            <ReactDataGrid
+              headerRowHeight={72}
+              columns={columns}
+              minColumnWidth={172}
+              minWidth={this.props.width}
+              minHeight={this.props.height - 65}
+              rowGetter={i => rows[i]}
+              rowHeight={48}
+              rowsCount={rows.length}
+            />
+          ) : null}
         </DataGridWrapper>
       </div>
     );
@@ -143,12 +143,18 @@ const tagContainerStyle = {
 const FieldHeader = ({name, type}) => (
   <div style={tagContainerStyle}>
     <div style={{display: 'flex', alignItems: 'center'}}>
-      <div style={{marginRight: type === 'timestamp' ? '2px' : '18px', height: '16px'}}>
-        {type === 'timestamp' ? <Clock height="16px"/> : null}</div>
-        {name}
+      <div
+        style={{
+          marginRight: type === 'timestamp' ? '2px' : '18px',
+          height: '16px'
+        }}
+      >
+        {type === 'timestamp' ? <Clock height="16px" /> : null}
+      </div>
+      {name}
     </div>
     <div style={{marginLeft: '18px'}}>
-      <FieldToken type={type}/>
+      <FieldToken type={type} />
     </div>
   </div>
 );

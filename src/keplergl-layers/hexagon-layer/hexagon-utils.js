@@ -29,6 +29,8 @@ function hex_corner(center, radius, i) {
   const angle_deg = 60 * i + 30;
   const angle_rad = Math.PI / 180 * angle_deg;
 
-  return [center[0] + radius * Math.cos(angle_rad),
-    center[1] + radius * Math.sin(angle_rad)];
+  return [
+    center[0] + radius * Math.cos(angle_rad),
+    center[1] + radius * Math.sin(angle_rad)
+  ];
 }

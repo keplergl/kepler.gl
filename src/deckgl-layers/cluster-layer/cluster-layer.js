@@ -13,7 +13,11 @@ import {defaultUberColorRange} from '../../constants/uber-viz-colors';
 import {LAYER_VIS_CONFIGS} from '../../keplergl-layers/layer-factory';
 import {SCALE_TYPES} from '../../constants/default-settings';
 
-import {clearClustererCache, clustersAtZoom, getGeoJSON} from '../layer-utils/cluster-utils';
+import {
+  clearClustererCache,
+  clustersAtZoom,
+  getGeoJSON
+} from '../layer-utils/cluster-utils';
 
 const defaultRadius = LAYER_VIS_CONFIGS.clusterRadius.defaultValue;
 const defaultRadiusRange = LAYER_VIS_CONFIGS.clusterRadiusRange.defaultValue;
@@ -40,7 +44,6 @@ const defaultProps = {
 };
 
 export default class ClusterLayer extends CompositeLayer {
-
   initializeState() {
     this.state = {
       clusters: null,
@@ -60,32 +63,34 @@ export default class ClusterLayer extends CompositeLayer {
 
       // this needs clustered data to be set
       this.getColorValueDomain();
-
     } else if (this.needsReclusterPoints(oldContext, context)) {
-
       this.getClusters();
       this.getColorValueDomain();
-
     } else if (this.needsRecalculateScaleFunction(oldProps, props)) {
-
       this.getColorValueDomain();
     }
   }
 
   needsReProjectPoints(oldProps, props) {
-    return oldProps.clusterRadius !== props.clusterRadius ||
-      oldProps.getPosition !== props.getPosition;
+    return (
+      oldProps.clusterRadius !== props.clusterRadius ||
+      oldProps.getPosition !== props.getPosition
+    );
   }
 
   needsReclusterPoints(oldContext, context) {
-    return Math.round(oldContext.viewport.zoom) !== Math.round(context.viewport.zoom);
+    return (
+      Math.round(oldContext.viewport.zoom) !== Math.round(context.viewport.zoom)
+    );
   }
 
   needsRecalculateScaleFunction(oldProps, props) {
-    return needsRecalculateColorDomain(oldProps, props) ||
+    return (
+      needsRecalculateColorDomain(oldProps, props) ||
       needReCalculateScaleFunction(oldProps, props) ||
       needsRecalculateRadiusRange(oldProps, props) ||
-      oldProps.getColorValue !== props.getColorValue;
+      oldProps.getColorValue !== props.getColorValue
+    );
   }
 
   processGeoJSON() {
@@ -97,11 +102,17 @@ export default class ClusterLayer extends CompositeLayer {
   getClusters() {
     const {geoJSON} = this.state;
     const {clusterRadius} = this.props;
-    const {viewport, viewport: {longitude, latitude, height, width}} = this.context;
+    const {
+      viewport,
+      viewport: {longitude, latitude, height, width}
+    } = this.context;
 
     // zoom needs to be an integer for the different map utils. Also helps with cache key.
     const zoom = Math.round(viewport.zoom);
-    const bbox = geoViewport.bounds([longitude, latitude], zoom, [width, height]);
+    const bbox = geoViewport.bounds([longitude, latitude], zoom, [
+      width,
+      height
+    ]);
 
     const clusters = clustersAtZoom({bbox, clusterRadius, geoJSON, zoom});
 
@@ -109,13 +120,23 @@ export default class ClusterLayer extends CompositeLayer {
   }
 
   getColorValueDomain() {
-    const {colorScale, getColorValue, getRadiusValue, onSetColorDomain} = this.props;
+    const {
+      colorScale,
+      getColorValue,
+      getRadiusValue,
+      onSetColorDomain
+    } = this.props;
     const {clusters} = this.state;
 
     const radiusDomain = [0, max(clusters, getRadiusValue)];
 
-    const colorValues = clusters.map(d => getColorValue(d.properties.points)).filter(n => Number.isFinite(n));
-    const colorDomain = colorScale === SCALE_TYPES.quantize ? extent(colorValues) : colorValues.sort(ascending);
+    const colorValues = clusters
+      .map(d => getColorValue(d.properties.points))
+      .filter(n => Number.isFinite(n));
+    const colorDomain =
+      colorScale === SCALE_TYPES.quantize
+        ? extent(colorValues)
+        : colorValues.sort(ascending);
 
     this.setState({
       colorDomain,
@@ -146,7 +167,7 @@ export default class ClusterLayer extends CompositeLayer {
     };
   }
 
-   /*
+  /*
    * override default layer method to calculate cell color based on color scale function
    */
   _onGetSublayerColor(cell) {
@@ -156,8 +177,12 @@ export default class ClusterLayer extends CompositeLayer {
     const cv = getColorValue(cell.properties.points);
 
     // if cell value is outside domain, set alpha to 0
-    const color = Number.isFinite(cv) && cv >= colorDomain[0] && cv <= colorDomain[colorDomain.length - 1] ?
-      colorScaleFunc(cv) : [0, 0, 0, 0];
+    const color =
+      Number.isFinite(cv) &&
+      cv >= colorDomain[0] &&
+      cv <= colorDomain[colorDomain.length - 1]
+        ? colorScaleFunc(cv)
+        : [0, 0, 0, 0];
 
     // add final alpha to color
     color[3] = Number.isFinite(color[3]) ? color[3] : 255;
@@ -177,7 +202,6 @@ export default class ClusterLayer extends CompositeLayer {
 
     let object = null;
     if (isPicked) {
-
       // add cluster colorValue to object
       const cluster = clusters[info.index];
       const colorValue = this.props.getColorValue(cluster.properties.points);

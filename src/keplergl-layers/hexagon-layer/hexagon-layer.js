@@ -30,7 +30,15 @@ export default class HexagonLayer extends AggregationLayer {
     return 'hexagon';
   }
 
-  renderLayer({data, idx, layerInteraction, objectHovered, mapState, interaction, layerCallbacks}) {
+  renderLayer({
+    data,
+    idx,
+    layerInteraction,
+    objectHovered,
+    mapState,
+    interaction,
+    layerCallbacks
+  }) {
     const zoomFactor = this.getZoomFactor(mapState.zoom);
     const eleZoomFactor = this.getElevationZoomFactor(mapState.zoom);
     const {visConfig} = this.config;
@@ -67,19 +75,22 @@ export default class HexagonLayer extends AggregationLayer {
         onSetColorDomain: layerCallbacks.onSetLayerDomain
       }),
 
-      ...this.isLayerHovered(objectHovered) && !visConfig.enable3d ?
-        [new GeoJsonLayer({
-          id: `${this.id}-hovered`,
-          data: [
-            hexagonToPolygonGeo(
-              objectHovered,
-              {lineColor: this.config.highlightColor},
-              radius * visConfig.coverage,
-              mapState
-            )
-          ],
-          lineWidthScale: 8 * zoomFactor
-        })] : []
+      ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d
+        ? [
+            new GeoJsonLayer({
+              id: `${this.id}-hovered`,
+              data: [
+                hexagonToPolygonGeo(
+                  objectHovered,
+                  {lineColor: this.config.highlightColor},
+                  radius * visConfig.coverage,
+                  mapState
+                )
+              ],
+              lineWidthScale: 8 * zoomFactor
+            })
+          ]
+        : [])
     ];
   }
 }

@@ -20,8 +20,14 @@ const propTypes = {
   allowCustomValues: PropTypes.number,
   customClasses: PropTypes.object,
   customValues: PropTypes.array,
-  customListItemComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
-  customListHeaderComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
+  customListItemComponent: PropTypes.oneOfType([
+    PropTypes.element,
+    PropTypes.func
+  ]),
+  customListHeaderComponent: PropTypes.oneOfType([
+    PropTypes.element,
+    PropTypes.func
+  ]),
   selectionIndex: PropTypes.number,
   onOptionSelected: PropTypes.func,
   displayOption: PropTypes.func.isRequired,
@@ -45,7 +51,7 @@ const defaultProps = {
 
 const DropdownListWrapper = styled.div`
   border-top: 1px solid ${props => props.theme.panelActiveBg};
-  ${props => props.theme.dropdownList}
+  ${props => props.theme.dropdownList};
 `;
 
 class DropdownList extends Component {
@@ -69,32 +75,46 @@ class DropdownList extends Component {
     // onMouseDown is used here as a workaround of #205 and other
     return (
       <DropdownListWrapper className={classList.list}>
-        {this.props.customListHeaderComponent ?
+        {this.props.customListHeaderComponent ? (
           <div className={classList.listHeader}>
-            <this.props.customListHeaderComponent /></div> : null}
+            <this.props.customListHeaderComponent />
+          </div>
+        ) : null}
 
-        {valueOffset > 0 ?
+        {valueOffset > 0 ? (
           <div className={classList.listSection}>
             {fixedOptions.map((value, i) => (
-              <div className={classNames(classList.listItem, {hover: this.props.selectionIndex === i, fixed: true})}
-                   key={`${display(value)}_${i}`}
-                   onMouseDown={e => this._onClick(value, e)}
-                   onClick={e => this._onClick(value, e)}>
+              <div
+                className={classNames(classList.listItem, {
+                  hover: this.props.selectionIndex === i,
+                  fixed: true
+                })}
+                key={`${display(value)}_${i}`}
+                onMouseDown={e => this._onClick(value, e)}
+                onClick={e => this._onClick(value, e)}
+              >
                 <this.props.customListItemComponent
-                  value={value} displayOption={display}/>
+                  value={value}
+                  displayOption={display}
+                />
               </div>
             ))}
           </div>
-         : null
-        }
+        ) : null}
 
         {this.props.options.map((value, i) => (
-          <div className={classNames(classList.listItem, {hover: this.props.selectionIndex === i + valueOffset})}
-               key={`${display(value)}_${i}`}
-               onMouseDown={e => this._onClick(value, e)}
-               onClick={e => this._onClick(value, e)}>
+          <div
+            className={classNames(classList.listItem, {
+              hover: this.props.selectionIndex === i + valueOffset
+            })}
+            key={`${display(value)}_${i}`}
+            onMouseDown={e => this._onClick(value, e)}
+            onClick={e => this._onClick(value, e)}
+          >
             <this.props.customListItemComponent
-              value={value} displayOption={display}/>
+              value={value}
+              displayOption={display}
+            />
           </div>
         ))}
       </DropdownListWrapper>

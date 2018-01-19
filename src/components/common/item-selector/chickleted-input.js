@@ -27,7 +27,7 @@ const ChickletButton = styled.div`
   padding: 4px 6px;
   display: flex;
   align-items: center;
-  
+
   :hover {
     color: ${props => props.theme.textColorHl};
   }
@@ -40,16 +40,12 @@ const ChickletTag = styled.div`
 const Chicklet = ({disabled, name, remove}) => (
   <ChickletButton>
     <ChickletTag>{name}</ChickletTag>
-    <Delete
-      height="10px"
-      onClick={disabled ? null : remove}
-    />
+    <Delete height="10px" onClick={disabled ? null : remove} />
   </ChickletButton>
 );
 
 const ChickletedInputContainer = styled.div`
-  ${props => props.theme.input}
-  justify-content: start;
+  ${props => props.theme.input} justify-content: start;
   cursor: pointer;
   flex-wrap: wrap;
   height: auto;
@@ -71,15 +67,18 @@ const ChickletedInput = ({
     focus={focus}
     disabled={disabled}
     error={isError}
-    onClick={onClick}>
-    {selectedItems.length > 0 ? selectedItems.map((item, i) => (
-      <Chicklet
-        disabled={disabled}
-        key={`${displayOption(item)}_${i}`}
-        name={displayOption(item)}
-        remove={e => removeItem(item, e)}
-      />
-    )) : placeholder}
+    onClick={onClick}
+  >
+    {selectedItems.length > 0
+      ? selectedItems.map((item, i) => (
+          <Chicklet
+            disabled={disabled}
+            key={`${displayOption(item)}_${i}`}
+            name={displayOption(item)}
+            remove={e => removeItem(item, e)}
+          />
+        ))
+      : placeholder}
   </ChickletedInputContainer>
 );
 

@@ -6,7 +6,9 @@ import window from 'global/window';
  * @returns {string} hash string
  */
 export function generateHashId(count) {
-  return Math.random().toString(36).substr(count);
+  return Math.random()
+    .toString(36)
+    .substr(count);
 }
 
 /**
@@ -23,7 +25,9 @@ export function isChrome() {
  * @returns {boolean} - yes or no
  */
 export function isPlainObject(obj) {
-  return obj === Object(obj) && typeof obj !== 'function' && !Array.isArray(obj);
+  return (
+    obj === Object(obj) && typeof obj !== 'function' && !Array.isArray(obj)
+  );
 }
 
 /**

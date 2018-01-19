@@ -1,7 +1,7 @@
 import ActionTypes from 'constants/action-types';
-import {fitMapBounds} from './map-state';
-import {closeAddDataModel} from './ui-state';
-import {receiveVisData} from './vis-state-updaters';
+import {fitBoundsUpdater} from './map-state-updaters';
+import {toggleModalUpdater} from './ui-state-updaters';
+import {updateVisDataUpdater} from './vis-state-updaters';
 
 // compose action to apply result multiple reducers, with the output of one
 
@@ -12,24 +12,21 @@ import {receiveVisData} from './vis-state-updaters';
  * @returns {{visState, mapState: {latitude, longitude, zoom}}}
  */
 const updateVisDataComposed = (state, action) => {
-  const {visState, bounds} = receiveVisData(state.visState, action);
+  const {visState, bounds} = updateVisDataUpdater(state.visState, action);
   return {
     ...state,
     visState,
-    mapState: bounds ? fitMapBounds(state.mapState, {
-      payload: bounds
-    }) : state.mapState,
-    uiState: closeAddDataModel(state.uiState)
+    mapState: bounds
+      ? fitBoundsUpdater(state.mapState, {
+          payload: bounds
+        })
+      : state.mapState,
+    uiState: toggleModalUpdater(state.uiState, {payload: null})
   };
-};
-
-const addDataComposed = (state, action) => {
-
 };
 
 const compostedUpdaters = {
   [ActionTypes.UPDATE_VIS_DATA]: updateVisDataComposed
-  // [ActionTypes.ADD_DATA]:
 };
 
-export default compostedUpdaters
+export default compostedUpdaters;

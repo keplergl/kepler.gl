@@ -25,7 +25,8 @@ const SideNav = itemProps => (
 const NavItem = ({activePanel, item, isCollapsed, togglePanel}) => (
   <li
     className={classnames('side-navi__item', {active: activePanel === item.id})}
-    onClick={() => togglePanel(item.id)}>
+    onClick={() => togglePanel(item.id)}
+  >
     <a className="hover align--middle" data-tip data-for={`${item.id}-nav`}>
       <span className={`icon icon_${item.icon}`} />
       {isCollapsed ? (
@@ -33,7 +34,8 @@ const NavItem = ({activePanel, item, isCollapsed, togglePanel}) => (
           id={`${item.id}-nav`}
           effect="solid"
           delayShow={500}
-          place="right">
+          place="right"
+        >
           <span>{item.label}</span>
         </Tooltip>
       ) : (

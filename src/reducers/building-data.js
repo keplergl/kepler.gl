@@ -1,12 +1,12 @@
 import {handleActions} from 'redux-actions';
-import {withTask} from 'react-palm'
+import {withTask} from 'react-palm';
 
 import ActionTypes from '../constants/action-types';
 import {TilesCache, TilesCollection} from '../utils/mapzen-utils';
 import {
   loadBuildingTileError,
   loadBuildingTileSuccess
-} from "../actions/building-data-actions";
+} from '../actions/building-data-actions';
 import {LOAD_BUILDING_TILE_TASK} from '../tasks/tasks';
 
 const {
@@ -86,15 +86,17 @@ const onLoadBuildingTile = (state, action) => {
     newState = onUpdateBuildingTiles(newState, {payload: {loaded}});
   }
 
-  return toLoad.length ? withTask(
-    newState,
-    toLoad.map(({x, y, z}) =>
-      LOAD_BUILDING_TILE_TASK({x, y, z}).bimap(
-        result => loadBuildingTileSuccess({x, y, z, result}),
-        error => loadBuildingTileError(error)
+  return toLoad.length
+    ? withTask(
+        newState,
+        toLoad.map(({x, y, z}) =>
+          LOAD_BUILDING_TILE_TASK({x, y, z}).bimap(
+            result => loadBuildingTileSuccess({x, y, z, result}),
+            error => loadBuildingTileError(error)
+          )
+        )
       )
-    )
-  ) : newState;
+    : newState;
 };
 
 const onInitiateCache = state => ({
@@ -117,9 +119,9 @@ const onLoadBuildingTileSuccess = (state, {payload: {x, y, z, result}}) => {
 
   let newState = state;
   if (state.tiles.contains(x, y, z)) {
-    newState = onUpdateBuildingTiles(
-      state,
-      {payload: {loaded: [...state.loaded, data]}});
+    newState = onUpdateBuildingTiles(state, {
+      payload: {loaded: [...state.loaded, data]}
+    });
   }
 
   return {
@@ -133,20 +135,23 @@ const onLoadBuildingTileError = (state, {payload: error}) => ({
   error
 });
 
-const buildingDataReducer = handleActions({
-  [LOAD_BUILDING_TILE]: onLoadBuildingTile,
-  [LOAD_BUILDING_TILE_START]: onLoadBuildingTileStart,
-  [LOAD_BUILDING_TILE_SUCCESS]: onLoadBuildingTileSuccess,
-  [LOAD_BUILDING_TILE_ERROR]: onLoadBuildingTileError,
-  [UPDATE_BUILDING_TILES]: onUpdateBuildingTiles,
-  [INIT]: onInitiateCache
-}, {
-  cache: {},
-  tiles: {},
-  loaded: [],
-  error: null,
-  buildingData: [],
-  loadProgress: 0
-});
+const buildingDataReducer = handleActions(
+  {
+    [LOAD_BUILDING_TILE]: onLoadBuildingTile,
+    [LOAD_BUILDING_TILE_START]: onLoadBuildingTileStart,
+    [LOAD_BUILDING_TILE_SUCCESS]: onLoadBuildingTileSuccess,
+    [LOAD_BUILDING_TILE_ERROR]: onLoadBuildingTileError,
+    [UPDATE_BUILDING_TILES]: onUpdateBuildingTiles,
+    [INIT]: onInitiateCache
+  },
+  {
+    cache: {},
+    tiles: {},
+    loaded: [],
+    error: null,
+    buildingData: [],
+    loadProgress: 0
+  }
+);
 
 export default buildingDataReducer;

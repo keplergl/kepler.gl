@@ -14,10 +14,10 @@ const propTypes = {
   onFileUpload: React.PropTypes.func.isRequired
 };
 
-const LoadDataModal = (props) => (
+const LoadDataModal = props => (
   <ContentWraooer>
     <div className="">
-      <FileUpload onFileUpload={props.onFileUpload}/>
+      <FileUpload onFileUpload={props.onFileUpload} />
     </div>
   </ContentWraooer>
 );

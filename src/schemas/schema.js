@@ -20,25 +20,22 @@ export default class Schema {
   _getPropertyValueFromSchema(operation, node, parent, accumulator) {
     const internal = `_${operation}`;
     const loaded = {
-      [this.key]:
-        this.properties ? Object.keys(this.properties).reduce(
-          (accu, key) => {
+      [this.key]: this.properties
+        ? Object.keys(this.properties).reduce((accu, key) => {
             return {
               ...accu,
               ...(key in node
                 ? this.properties[key]
                   ? // if it's another schema
-                  this.properties[key][operation]
+                    this.properties[key][operation]
                     ? // call save or load
-                    this.properties[key][internal](node[key], node, accu)
-                    :
-                    {}
+                      this.properties[key][internal](node[key], node, accu)
+                    : {}
                   : {[key]: node[key]}
                 : {})
-            }
-          },
-          {}
-      ) : node
+            };
+          }, {})
+        : node
     };
 
     return loaded;
@@ -50,7 +47,11 @@ export default class Schema {
 
   outdatedVersionError() {
     if (!this._isCurrentVersion()) {
-      Console.error(`${this.key} ${this.version} is outdated. save should not be called anymore`)
+      Console.error(
+        `${this.key} ${
+          this.version
+        } is outdated. save should not be called anymore`
+      );
     }
   }
 

@@ -1,4 +1,3 @@
-/*global window */
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
@@ -7,7 +6,8 @@ import UploadButton from './upload-button';
 import {File, DragNDrop} from 'components/common/icons';
 import {isChrome} from 'utils/utils';
 
-const FileDrop = typeof document !== 'undefined' ? require('react-file-drop') : null;
+const FileDrop =
+  typeof document !== 'undefined' ? require('react-file-drop') : null;
 const propTypes = {
   onFileUpload: PropTypes.func.isRequired,
   validFileExt: PropTypes.array
@@ -168,7 +168,7 @@ class FileUpload extends Component {
                       <FileTypeIcon key={ext} ext={ext} />
                     ))}
                   </div>
-                  <DragNDrop height="44px"/>
+                  <DragNDrop height="44px" />
                 </DragNDropIconWrapper>
                 <div>{this._renderMessage()}</div>
               </div>

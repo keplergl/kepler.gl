@@ -6,7 +6,12 @@ import LayerPanel from './layer-panel/layer-panel';
 import SourceDataCatalog from './source-data-catalog';
 import {Add} from 'components/common/icons';
 import ItemSelector from 'components/common/item-selector/item-selector';
-import {PanelLabel, SidePanelDivider, SidePanelSection, Button} from 'components/common/styled-components';
+import {
+  PanelLabel,
+  SidePanelDivider,
+  SidePanelSection,
+  Button
+} from 'components/common/styled-components';
 
 import {LAYER_BLENDINGS} from 'constants/default-settings';
 
@@ -29,52 +34,51 @@ const propTypes = {
 };
 
 const StyledSortable = styled.div`
-   .ui-sortable {
+  .ui-sortable {
     display: block;
     position: relative;
     overflow: visible;
     user-select: none;
 
     :before {
-      content: " ";
-      display: table
-    };
-    
-    :after {
-      content: " ";
-      display: table
+      content: ' ';
+      display: table;
     }
-  };
 
-   .ui-sortable-item.ui-sortable-dragging {
+    :after {
+      content: ' ';
+      display: table;
+    }
+  }
+
+  .ui-sortable-item.ui-sortable-dragging {
     position: absolute;
     z-index: 1688;
-    cursor: move
-  };
-
-   .ui-sortable-item.ui-sortable-dragging:hover {
     cursor: move;
-    opacity: 0.5
-  };
+  }
 
-   .ui-sortable-placeholder {
-    display: none
-  };
+  .ui-sortable-item.ui-sortable-dragging:hover {
+    cursor: move;
+    opacity: 0.5;
+  }
 
-   .ui-sortable-placeholder.visible {
+  .ui-sortable-placeholder {
+    display: none;
+  }
+
+  .ui-sortable-placeholder.visible {
     display: block;
     opacity: 0;
-    z-index: -1
+    z-index: -1;
   }
 `;
 
 export default class LayerManager extends Component {
-
   _addEmptyNewLayer = () => {
     this.props.addLayer();
   };
 
-  _handleSort = (order) => {
+  _handleSort = order => {
     this.props.updateLayerOrder(order);
   };
 
@@ -98,41 +102,47 @@ export default class LayerManager extends Component {
           datasets={datasets}
           showDatasetTable={this.props.showDatasetTable}
           removeDataset={this.props.removeDataset}
-          showDeleteDataset/>
+          showDeleteDataset
+        />
         <Button
           onClick={this.props.showAddDataModal}
           isInactive={!defaultDataset}
           width="105px"
           secondary
         >
-          <Add height="12px"/>Add Data</Button>
-        <SidePanelDivider/>
+          <Add height="12px" />Add Data
+        </Button>
+        <SidePanelDivider />
         <SidePanelSection>
-        <Sortable onSort={this._handleSort}
-                  direction="vertical"
-                  sortHandle="sort--handle"
-                  dynamic>
-          {layerOrder.map(idx => (
-            <LayerPanel
-              {...panelProps}
-              {...layerActions}
-              sortData={idx}
-              key={layers[idx].id}
-              idx={idx}
-              layer={layers[idx]}/>
-          ))}
-        </Sortable>
+          <Sortable
+            onSort={this._handleSort}
+            direction="vertical"
+            sortHandle="sort--handle"
+            dynamic
+          >
+            {layerOrder.map(idx => (
+              <LayerPanel
+                {...panelProps}
+                {...layerActions}
+                sortData={idx}
+                key={layers[idx].id}
+                idx={idx}
+                layer={layers[idx]}
+              />
+            ))}
+          </Sortable>
         </SidePanelSection>
         <SidePanelSection>
-        {defaultDataset ? <Button
-          onClick={this._addEmptyNewLayer}
-          width="105px">
-          <Add height="12px"/>Add Layer
-        </Button> : null}
+          {defaultDataset ? (
+            <Button onClick={this._addEmptyNewLayer} width="105px">
+              <Add height="12px" />Add Layer
+            </Button>
+          ) : null}
         </SidePanelSection>
         <LayerBlendingSelector
           layerBlending={this.props.layerBlending}
-          updateLayerBlending={this.props.updateLayerBlending}/>
+          updateLayerBlending={this.props.updateLayerBlending}
+        />
       </StyledSortable>
     );
   }

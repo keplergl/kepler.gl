@@ -12,7 +12,10 @@ import curry from 'curry';
  *    payload: {
  *      type: '@@kepler.gl/LAYER_CONFIG_CHANGE',
  *      payload: {},
- *      meta: {}
+ *      meta: {
+ *        // other meta,
+ *        _id_: id
+ *      }
  *    },
  *    meta: {
  *      forward: '@redux-forward/FORWARD',
@@ -29,13 +32,19 @@ export const wrapTo = curry((id, action) => ({
   type: action.type,
 
   // actual action
-  payload: action,
+  payload: {
+    ...action,
+    meta: {
+      ...action.meta,
+      _id_: id
+    }
+  },
 
   // add forward signature to meta
   meta: {
     ...(action.meta || {}),
     _forward_: FORWARD,
-    _id_: getActionForwardAddress(id)
+    _addr_: getActionForwardAddress(id)
   }
 }));
 
@@ -49,7 +58,7 @@ export const unwrap = action =>
 // given a id to forward to, returns the action for that id
 export const actionFor = (id, action) =>
   isForwardAction(action)
-    ? action.meta._id_ === getActionForwardAddress(id) ? action.payload : {}
+    ? action.meta._addr_ === getActionForwardAddress(id) ? action.payload : {}
     : action;
 
 // returns a new dispatch that wraps and forwards the actions with the given id

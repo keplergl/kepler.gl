@@ -2,12 +2,18 @@ import ArcLayer from '../arc-layer/arc-layer';
 import DeckGLLineLayer from '../../deckgl-layers/line-layer/line-layer';
 
 export default class LineLayer extends ArcLayer {
-
   get type() {
     return 'line';
   }
 
-  renderLayer({data, idx, layerInteraction, objectHovered, mapState, interactionConfig}) {
+  renderLayer({
+    data,
+    idx,
+    layerInteraction,
+    objectHovered,
+    mapState,
+    interactionConfig
+  }) {
     const {brush} = interactionConfig;
 
     const colorUpdateTriggers = {

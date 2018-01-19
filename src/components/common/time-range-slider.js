@@ -29,11 +29,6 @@ const propTypes = {
 const defaultTimeFormat = val => moment.utc(val).format('MM/DD/YY hh:mma');
 
 export default class TimeRangeSlider extends Component {
-  domainSelector = props => props.domain;
-  titleFormatter = createSelector(
-    this.domainSelector,
-    domain => getTimeWidgetTitleFormatter(domain)
-  );
 
   constructor(props) {
     super(props);
@@ -57,13 +52,20 @@ export default class TimeRangeSlider extends Component {
     this._resize();
   }
 
-  _sliderUpdate = (args) => {
+  domainSelector = props => props.domain;
+  titleFormatter = createSelector(this.domainSelector, domain =>
+    getTimeWidgetTitleFormatter(domain)
+  );
+
+  _sliderUpdate = args => {
     this._sliderThrottle.cancel();
     this._sliderThrottle(args);
   };
 
   _resize() {
-    const width = this.props.isEnlarged ? this.refs.sliderContainer.offsetWidth : 288;
+    const width = this.props.isEnlarged
+      ? this.refs.sliderContainer.offsetWidth
+      : 288;
     if (width !== this.state.width) {
       this.setState({width});
     }
@@ -85,13 +87,13 @@ export default class TimeRangeSlider extends Component {
   };
 
   _increaseAnimationSpeed = () => {
-    this._animationSpeed = Math.round(this._animationSpeed *
-      Math.pow(0.75, 1));
+    this._animationSpeed = Math.round(this._animationSpeed * Math.pow(0.75, 1));
   };
 
   _reduceAnimationSpeed = () => {
-    this._animationSpeed = Math.round(this._animationSpeed *
-      Math.pow(0.75, -1));
+    this._animationSpeed = Math.round(
+      this._animationSpeed * Math.pow(0.75, -1)
+    );
   };
 
   _nextFrame = () => {
@@ -101,8 +103,7 @@ export default class TimeRangeSlider extends Component {
     const speed = (domain[1] - domain[0]) / this._animationSpeed;
 
     // loop when reaches the end
-    const value0 = (value[1] + speed > domain[1]) ? domain[0] :
-    value[0] + speed;
+    const value0 = value[1] + speed > domain[1] ? domain[0] : value[0] + speed;
     const value1 = value0 + value[1] - value[0];
     this.props.onChange([value0, value1]);
   };
@@ -144,22 +145,17 @@ export default class TimeRangeSlider extends Component {
             step={this.props.step}
             onChange={this._sliderUpdate}
             width={sliderWidth}
-            xAxis={
-              <TimeSliderMarker
-                width={sliderWidth}
-                domain={domain}
-              />
-            }
+            xAxis={<TimeSliderMarker width={sliderWidth} domain={domain} />}
           />
-         <AnimationControls
-           isAnimatable={this.props.isAnimatable}
-           isEnlarged={isEnlarged}
-           isAnimating={isAnimating}
-           reduceAnimationSpeed={this._reduceAnimationSpeed}
-           pauseAnimation={this._pauseAnimation}
-           startAnimation={this._startAnimation}
-           increaseAnimationSpeed={this._increaseAnimationSpeed}
-         />
+          <AnimationControls
+            isAnimatable={this.props.isAnimatable}
+            isEnlarged={isEnlarged}
+            isAnimating={isAnimating}
+            reduceAnimationSpeed={this._reduceAnimationSpeed}
+            pauseAnimation={this._pauseAnimation}
+            startAnimation={this._startAnimation}
+            increaseAnimationSpeed={this._increaseAnimationSpeed}
+          />
         </div>
       </div>
     );
@@ -169,7 +165,7 @@ export default class TimeRangeSlider extends Component {
 const TimeValueWrapper = styled.div`
   display: flex;
   font-size: 11px;
-  justify-content: ${props => props.isEnlarged ? 'center' : 'space-between'};
+  justify-content: ${props => (props.isEnlarged ? 'center' : 'space-between')};
   .horizontal-bar {
     padding: 0 6px;
   }
@@ -177,14 +173,20 @@ const TimeValueWrapper = styled.div`
 
 const TimeTitle = ({value, isEnlarged, timeFormat = defaultTimeFormat}) => (
   <TimeValueWrapper isEnlarged={isEnlarged}>
-    <TimeValue key={0} value={moment.utc(value[0]).format(timeFormat)}/>
-    {isEnlarged ? <div className="horizontal-bar"><SelectTextBold>―</SelectTextBold></div> : null}
-    <TimeValue key={1} value={moment.utc(value[0]).format(timeFormat)}/>
+    <TimeValue key={0} value={moment.utc(value[0]).format(timeFormat)} />
+    {isEnlarged ? (
+      <div className="horizontal-bar">
+        <SelectTextBold>―</SelectTextBold>
+      </div>
+    ) : null}
+    <TimeValue key={1} value={moment.utc(value[0]).format(timeFormat)} />
   </TimeValueWrapper>
 );
 
 const TimeValue = ({value}) => (
-  <div><SelectTextBold>{value}</SelectTextBold></div>
+  <div>
+    <SelectTextBold>{value}</SelectTextBold>
+  </div>
 );
 
 const AnimationControls = ({
@@ -196,28 +198,36 @@ const AnimationControls = ({
   pauseAnimation,
   startAnimation
 }) => (
-  <div className={classnames(
-    'soft-micro--top', {
+  <div
+    className={classnames('soft-micro--top', {
       'text--center': !isEnlarged,
-      'text--right': isEnlarged})} style={isAnimatable ? {
-    display: 'flex',
-    marginTop: isEnlarged ? 0 : 14
-  } : {
-    opacity: 0.4,
-    pointerEvents: 'none'
-  }}>
+      'text--right': isEnlarged
+    })}
+    style={
+      isAnimatable
+        ? {
+            display: 'flex',
+            marginTop: isEnlarged ? 0 : 14
+          }
+        : {
+            opacity: 0.4,
+            pointerEvents: 'none'
+          }
+    }
+  >
     <Button onClick={reduceAnimationSpeed}>
-      <i className="icon icon_previous"/>
+      <i className="icon icon_previous" />
     </Button>
-    <Button size="tiny"
-            onClick={isAnimating ? pauseAnimation : startAnimation}>
-      <i className={classnames({
-        'icon icon_pause': isAnimating,
-        'icon icon_play': !isAnimating
-      })}/>
+    <Button size="tiny" onClick={isAnimating ? pauseAnimation : startAnimation}>
+      <i
+        className={classnames({
+          'icon icon_pause': isAnimating,
+          'icon icon_play': !isAnimating
+        })}
+      />
     </Button>
     <Button onClick={increaseAnimationSpeed}>
-      <i className="icon icon_skip"/>
+      <i className="icon icon_skip" />
     </Button>
   </div>
 );

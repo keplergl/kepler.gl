@@ -137,8 +137,12 @@ export const LAYER_VIS_CONFIGS = {
   percentile: {
     type: 'number',
     defaultValue: [0, 100],
-    label: config => `Filter by ${config.colorField ? 
-      `${config.visConfig.colorAggregation} ${config.colorField.name}` : 'count'} percentile`,
+    label: config =>
+      `Filter by ${
+        config.colorField
+          ? `${config.visConfig.colorAggregation} ${config.colorField.name}`
+          : 'count'
+      } percentile`,
     isRanged: true,
     range: [0, 100],
     step: 0.01,
@@ -148,8 +152,12 @@ export const LAYER_VIS_CONFIGS = {
   elevationPercentile: {
     type: 'number',
     defaultValue: [0, 100],
-    label: config => `Filter by ${config.sizeField ?
-      `${config.visConfig.sizeAggregation} ${config.sizeField.name}` : 'count'} percentile`,
+    label: config =>
+      `Filter by ${
+        config.sizeField
+          ? `${config.visConfig.sizeAggregation} ${config.sizeField.name}`
+          : 'count'
+      } percentile`,
     isRanged: true,
     range: [0, 100],
     step: 0.01,

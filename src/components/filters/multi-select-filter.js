@@ -8,7 +8,8 @@ const MultiSelectFilter = ({filter, setFilter}) => (
     <ItemSelector
       options={filter.domain}
       selectedItems={filter.value}
-      onChange={setFilter}/>
+      onChange={setFilter}
+    />
   </div>
 );
 

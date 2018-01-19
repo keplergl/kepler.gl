@@ -11,7 +11,7 @@ import {
   SCALE_FUNC
 } from '../constants/default-settings';
 import {uberDataVizColors} from '../constants/uber-viz-colors';
-import {LAYER_VIS_CONFIGS} from './layer-factory'
+import {LAYER_VIS_CONFIGS} from './layer-factory';
 
 import {
   generateHashId,
@@ -19,7 +19,12 @@ import {
   isPlainObject
 } from '../utils/utils';
 
-import {getSampleData, getLatLngBounds, maybeToDate, getSortingFunction} from '../utils/data-utils';
+import {
+  getSampleData,
+  getLatLngBounds,
+  maybeToDate,
+  getSortingFunction
+} from '../utils/data-utils';
 
 import {
   getQuantileDomain,
@@ -74,7 +79,6 @@ export function getDefaultLayerConfig(props = {}) {
 
 export default class Layer {
   constructor(props = {}) {
-
     this.id = props.id || generateHashId(6);
 
     this.config = getDefaultLayerConfig({
@@ -108,12 +112,7 @@ export default class Layer {
   }
 
   get noneLayerDataAffectingProps() {
-    return [
-      'label',
-      'opacity',
-      'thickness',
-      'isVisible'
-    ];
+    return ['label', 'opacity', 'thickness', 'isVisible'];
   }
 
   get visualChannels() {
@@ -136,7 +135,7 @@ export default class Layer {
         key: 'size',
         channelScaleType: CHANNEL_SCALES.size
       }
-    }
+    };
   }
 
   /*
@@ -238,7 +237,6 @@ export default class Layer {
   // when received saved config, or copy config over from a different layer type
   // make sure to only copy over value to existing keys
   assignConfigToLayer(oldConfig, newConfig) {
-
     // TODO: have a better way to copy over dimension config range
     // e.g. hexagon height sizeRange -> point radius sizeRange
     // don't deep merge visualChannel field
@@ -252,16 +250,20 @@ export default class Layer {
     const copied = {};
 
     Object.keys(oldConfig).forEach(key => {
-      if (isPlainObject(oldConfig[key]) && isPlainObject(newConfig[key]) &&
-        !notToDeepMerge.includes(key) && !notToCopy.includes(key)) {
-
+      if (
+        isPlainObject(oldConfig[key]) &&
+        isPlainObject(newConfig[key]) &&
+        !notToDeepMerge.includes(key) &&
+        !notToCopy.includes(key)
+      ) {
         // recursively assign object value
         copied[key] = this.assignConfigToLayer(oldConfig[key], newConfig[key]);
-      } else if (notNullorUndefined(newConfig[key]) && !notToCopy.includes(key)) {
-
+      } else if (
+        notNullorUndefined(newConfig[key]) &&
+        !notToCopy.includes(key)
+      ) {
         copied[key] = newConfig[key];
       } else {
-
         copied[key] = oldConfig[key];
       }
     });
@@ -271,13 +273,17 @@ export default class Layer {
 
   registerVisConfig(layerVisConfigs) {
     Object.keys(layerVisConfigs).forEach(item => {
-      if (typeof item === 'string' && LAYER_VIS_CONFIGS[layerVisConfigs[item]]) {
-
+      if (
+        typeof item === 'string' &&
+        LAYER_VIS_CONFIGS[layerVisConfigs[item]]
+      ) {
         // if assigned one of default LAYER_CONFIGS
-        this.config.visConfig[item] = LAYER_VIS_CONFIGS[layerVisConfigs[item]].defaultValue;
+        this.config.visConfig[item] =
+          LAYER_VIS_CONFIGS[layerVisConfigs[item]].defaultValue;
         this.visConfigSettings[item] = LAYER_VIS_CONFIGS[layerVisConfigs[item]];
-      } else if (['type', 'defaultValue'].every(p => layerVisConfigs[item][p])) {
-
+      } else if (
+        ['type', 'defaultValue'].every(p => layerVisConfigs[item][p])
+      ) {
         // if provided customized visConfig, and has type && defaultValue
         // TODO: further check if customized visConfig is valid
         this.config.visConfig[item] = layerVisConfigs[item].defaultValue;
@@ -287,16 +293,20 @@ export default class Layer {
   }
 
   getLayerColumns() {
-    const required =
-      this.requiredLayerColumns.reduce((accu, key) => ({
+    const required = this.requiredLayerColumns.reduce(
+      (accu, key) => ({
         ...accu,
         [key]: {value: null, fieldIdx: -1}
-      }), {});
-    const optional =
-      this.optionalColumns.reduce((accu, key) => ({
+      }),
+      {}
+    );
+    const optional = this.optionalColumns.reduce(
+      (accu, key) => ({
         ...accu,
         [key]: {value: null, fieldIdx: -1, optional: true}
-      }), {});
+      }),
+      {}
+    );
 
     return {...required, ...optional};
   }
@@ -318,10 +328,12 @@ export default class Layer {
    */
   hasAllColumns() {
     const {columns} = this.config;
-    return columns &&
+    return (
+      columns &&
       Object.values(columns).every(v => {
         return Boolean(v.optional || (v.value && v.fieldIdx > -1));
-      });
+      })
+    );
   }
 
   /**
@@ -344,7 +356,12 @@ export default class Layer {
   }
 
   shouldRenderLayer(data) {
-    return this.type && this.hasAllColumns() && this.config.isVisible && this.hasLayerData(data);
+    return (
+      this.type &&
+      this.hasAllColumns() &&
+      this.config.isVisible &&
+      this.hasLayerData(data)
+    );
   }
 
   getVisChannelScale(scale, domain, range, fixed) {
@@ -356,7 +373,10 @@ export default class Layer {
   getPointsBounds(allData, getPosition) {
     // no need to loop through the entire dataset
     // get a sample of data to calculate bounds
-    const sampleData = allData.length > MAX_SAMPLE_SIZE ? getSampleData(allData, MAX_SAMPLE_SIZE) : allData;
+    const sampleData =
+      allData.length > MAX_SAMPLE_SIZE
+        ? getSampleData(allData, MAX_SAMPLE_SIZE)
+        : allData;
     const points = sampleData.map(getPosition);
 
     const latBounds = getLatLngBounds(points, 1, [-90, 90]);
@@ -370,18 +390,26 @@ export default class Layer {
   }
 
   getLightSettingsFromBounds(bounds) {
-    return Array.isArray(bounds) && bounds.length >= 4 ? {
-      ...DEFAULT_LIGHT_SETTINGS,
-      lightsPosition: [
-        ...bounds.slice(0, 2),
-        DEFAULT_LIGHT_SETTINGS.lightsPosition[2],
-        ...bounds.slice(2, 4),
-        DEFAULT_LIGHT_SETTINGS.lightsPosition[5]
-      ]
-    } : DEFAULT_LIGHT_SETTINGS;
+    return Array.isArray(bounds) && bounds.length >= 4
+      ? {
+          ...DEFAULT_LIGHT_SETTINGS,
+          lightsPosition: [
+            ...bounds.slice(0, 2),
+            DEFAULT_LIGHT_SETTINGS.lightsPosition[2],
+            ...bounds.slice(2, 4),
+            DEFAULT_LIGHT_SETTINGS.lightsPosition[5]
+          ]
+        }
+      : DEFAULT_LIGHT_SETTINGS;
   }
 
-  getEncodedChannelValue(scale, data, field, defaultValue = NO_VALUE_COLOR, getValue = defaultGetFieldValue) {
+  getEncodedChannelValue(
+    scale,
+    data,
+    field,
+    defaultValue = NO_VALUE_COLOR,
+    getValue = defaultGetFieldValue
+  ) {
     const {type} = field;
     const value = getValue(field, data);
     let attributeValue;
@@ -430,9 +458,10 @@ export default class Layer {
     if (this.config[field]) {
       // if field is selected, check if current selected scale is
       // supported, if not, update to default
-      const scaleOptions = FIELD_OPTS[this.config[field].type].scale[channelScaleType];
+      const scaleOptions =
+        FIELD_OPTS[this.config[field].type].scale[channelScaleType];
       if (!scaleOptions.includes(this.config[scale])) {
-        this.updateLayerConfig({[scale]: scaleOptions[0]})
+        this.updateLayerConfig({[scale]: scaleOptions[0]});
       }
     }
 
@@ -464,7 +493,12 @@ export default class Layer {
     // TODO: refactor to add valueAccessor to field
     const fieldIdx = field.tableFieldIndex - 1;
     const isTime = field.type === ALL_FIELD_TYPES.timestamp;
-    const valueAccessor = maybeToDate.bind(null, isTime, fieldIdx, field.format);
+    const valueAccessor = maybeToDate.bind(
+      null,
+      isTime,
+      fieldIdx,
+      field.format
+    );
     const sortFunction = getSortingFunction(field.type);
 
     switch (scaleType) {
@@ -485,23 +519,33 @@ export default class Layer {
   }
 
   isLayerHovered(objectInfo) {
-    return objectInfo && objectInfo.layer && objectInfo.picked &&
-      objectInfo.layer.props.id === this.id;
+    return (
+      objectInfo &&
+      objectInfo.layer &&
+      objectInfo.picked &&
+      objectInfo.layer.props.id === this.id
+    );
   }
 
   getRadiusScaleByZoom(zoom, fixedRadius) {
-    const radiusChannel = Object.values(this.visualChannels)
-      .find(vc => vc.property === 'radius');
+    const radiusChannel = Object.values(this.visualChannels).find(
+      vc => vc.property === 'radius'
+    );
 
     if (!radiusChannel) {
       return 1;
     }
 
     const field = radiusChannel.field;
-    const fixed = fixedRadius === undefined ? this.config.visConfig.fixedRadius : fixedRadius;
+    const fixed =
+      fixedRadius === undefined
+        ? this.config.visConfig.fixedRadius
+        : fixedRadius;
     const {radius} = this.config.visConfig;
 
-    return fixed ? 1 : ((this.config[field] ? 1 : radius) * this.getZoomFactor(zoom))
+    return fixed
+      ? 1
+      : (this.config[field] ? 1 : radius) * this.getZoomFactor(zoom);
   }
 
   shouldCalculateLayerData(props) {

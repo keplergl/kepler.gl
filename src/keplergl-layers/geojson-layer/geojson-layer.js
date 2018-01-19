@@ -98,14 +98,32 @@ export default class GeoJsonLayer extends Layer {
   }
 
   formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
-    const {colorScale, colorField, colorDomain, color,
-      sizeScale, sizeDomain, sizeField,
-      heightField, heightDomain, heightScale,
-      radiusField, radiusDomain, radiusScale,
-      visConfig, columns
+    const {
+      colorScale,
+      colorField,
+      colorDomain,
+      color,
+      sizeScale,
+      sizeDomain,
+      sizeField,
+      heightField,
+      heightDomain,
+      heightScale,
+      radiusField,
+      radiusDomain,
+      radiusScale,
+      visConfig,
+      columns
     } = this.config;
 
-    const {enable3d, stroked, colorRange, heightRange, sizeRange, radiusRange} = visConfig;
+    const {
+      enable3d,
+      stroked,
+      colorRange,
+      heightRange,
+      sizeRange,
+      radiusRange
+    } = visConfig;
 
     const getFeature = this.getFeature(columns);
 
@@ -117,58 +135,93 @@ export default class GeoJsonLayer extends Layer {
 
     let geojsonData;
 
-    if (oldLayerData && oldLayerData.data && opt.sameData &&
-      oldLayerData.getFeature === getFeature) {
-
+    if (
+      oldLayerData &&
+      oldLayerData.data &&
+      opt.sameData &&
+      oldLayerData.getFeature === getFeature
+    ) {
       // no need to create a new array of data
       // use updateTriggers to selectively re-calculate attributes
       geojsonData = oldLayerData.data;
     } else {
-
       // filteredIndex is a reference of index in allData which can map to feature
-      geojsonData = filteredIndex.map(i => this.dataToFeature[i]).filter(d => d);
+      geojsonData = filteredIndex
+        .map(i => this.dataToFeature[i])
+        .filter(d => d);
     }
 
-    const cScale = colorField && this.getVisChannelScale(
-      colorScale,
-      colorDomain,
-      colorRange.colors.map(hexToRgb)
-    );
+    const cScale =
+      colorField &&
+      this.getVisChannelScale(
+        colorScale,
+        colorDomain,
+        colorRange.colors.map(hexToRgb)
+      );
 
     // calculate stroke scale - if stroked = true
-    const sScale = sizeField && stroked && this.getVisChannelScale(
-      sizeScale,
-      sizeDomain,
-      sizeRange
-    );
+    const sScale =
+      sizeField &&
+      stroked &&
+      this.getVisChannelScale(sizeScale, sizeDomain, sizeRange);
 
     // calculate elevation scale - if extruded = true
-    const eScale = heightField && enable3d && this.getVisChannelScale(
-      heightScale,
-      heightDomain,
-      heightRange
-    );
+    const eScale =
+      heightField &&
+      enable3d &&
+      this.getVisChannelScale(heightScale, heightDomain, heightRange);
 
     // point radius
-    const rScale = radiusField && this.getVisChannelScale(
-      radiusScale,
-      radiusDomain,
-      radiusRange
-    );
+    const rScale =
+      radiusField &&
+      this.getVisChannelScale(radiusScale, radiusDomain, radiusRange);
 
     return {
       data: geojsonData,
       getFeature,
-      getFillColor: d => cScale ?
-        this.getEncodedChannelValue(cScale, allData[d.properties.index], colorField) : (d.properties.fillColor || color),
-      getLineColor: d => cScale ?
-        this.getEncodedChannelValue(cScale, allData[d.properties.index], colorField) : (d.properties.lineColor || color),
-      getLineWidth: d => sScale ?
-        this.getEncodedChannelValue(sScale, allData[d.properties.index], sizeField, 0) : (d.properties.lineWidth || 1),
-      getElevation: d => eScale ?
-        this.getEncodedChannelValue(eScale, allData[d.properties.index], heightField, 0) : (d.properties.elevation || 500),
-      getRadius: d => rScale ?
-        this.getEncodedChannelValue(rScale, allData[d.properties.index], radiusField, 0) : (d.properties.radius || 1)
+      getFillColor: d =>
+        cScale
+          ? this.getEncodedChannelValue(
+              cScale,
+              allData[d.properties.index],
+              colorField
+            )
+          : d.properties.fillColor || color,
+      getLineColor: d =>
+        cScale
+          ? this.getEncodedChannelValue(
+              cScale,
+              allData[d.properties.index],
+              colorField
+            )
+          : d.properties.lineColor || color,
+      getLineWidth: d =>
+        sScale
+          ? this.getEncodedChannelValue(
+              sScale,
+              allData[d.properties.index],
+              sizeField,
+              0
+            )
+          : d.properties.lineWidth || 1,
+      getElevation: d =>
+        eScale
+          ? this.getEncodedChannelValue(
+              eScale,
+              allData[d.properties.index],
+              heightField,
+              0
+            )
+          : d.properties.elevation || 500,
+      getRadius: d =>
+        rScale
+          ? this.getEncodedChannelValue(
+              rScale,
+              allData[d.properties.index],
+              radiusField,
+              0
+            )
+          : d.properties.radius || 1
     };
   }
 
@@ -185,12 +238,18 @@ export default class GeoJsonLayer extends Layer {
     const lightSettings = this.getLightSettingsFromBounds(bounds);
 
     // if any of the feature has properties.hi-precision set to be true
-    const fp64 = Boolean(allFeatures.find(d => d && d.properties && d.properties['hi-precision']));
-    const fixedRadius = Boolean(allFeatures.find(d => d && d.properties && d.properties.radius));
+    const fp64 = Boolean(
+      allFeatures.find(d => d && d.properties && d.properties['hi-precision'])
+    );
+    const fixedRadius = Boolean(
+      allFeatures.find(d => d && d.properties && d.properties.radius)
+    );
 
     // keep a record of what type of geometry the collection has
     const featureTypes = allFeatures.reduce((accu, f) => {
-      const geoType = featureToDeckGlGeoType(f && f.geometry && f.geometry.type);
+      const geoType = featureToDeckGlGeoType(
+        f && f.geometry && f.geometry.type
+      );
 
       if (geoType) {
         accu[geoType] = true;
@@ -201,7 +260,14 @@ export default class GeoJsonLayer extends Layer {
     this.updateMeta({bounds, lightSettings, fp64, fixedRadius, featureTypes});
   }
 
-  renderLayer({data, idx, layerInteraction, objectHovered, mapState, interactionConfig}) {
+  renderLayer({
+    data,
+    idx,
+    layerInteraction,
+    objectHovered,
+    mapState,
+    interactionConfig
+  }) {
     const {fp64, lightSettings, fixedRadius} = this.meta;
     const radiusScale = this.getRadiusScaleByZoom(mapState.zoom, fixedRadius);
     const zoomFactor = this.getZoomFactor(mapState.zoom);
@@ -266,26 +332,31 @@ export default class GeoJsonLayer extends Layer {
         lightSettings,
         updateTriggers
       }),
-      ...this.isLayerHovered(objectHovered) ? [
-        new DeckGLGeoJsonLayer({
-        ...layerProps,
-        id: `${this.id}-hovered`,
-        data: [{
-          ...objectHovered.object,
-          properties: {
-            ...objectHovered.object.properties,
-            lineColor: this.config.highlightColor,
-            fillColor: this.config.highlightColor
-          },
-          getLineWidth: data.getLineWidth,
-          getRadius: data.getRadius,
-          getElevation: data.getElevation
-        }],
-        updateTriggers,
-        stroked: true,
-        pickable: false,
-        filled: false
-      })] : []
+      ...(this.isLayerHovered(objectHovered)
+        ? [
+            new DeckGLGeoJsonLayer({
+              ...layerProps,
+              id: `${this.id}-hovered`,
+              data: [
+                {
+                  ...objectHovered.object,
+                  properties: {
+                    ...objectHovered.object.properties,
+                    lineColor: this.config.highlightColor,
+                    fillColor: this.config.highlightColor
+                  },
+                  getLineWidth: data.getLineWidth,
+                  getRadius: data.getRadius,
+                  getElevation: data.getElevation
+                }
+              ],
+              updateTriggers,
+              stroked: true,
+              pickable: false,
+              filled: false
+            })
+          ]
+        : [])
     ];
   }
 }

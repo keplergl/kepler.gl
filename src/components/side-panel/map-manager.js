@@ -1,7 +1,7 @@
 /** @jsx createElement */
 import createElement from 'react-stylematic';
 
-import React, {Component} from 'react';
+import {Component} from 'react';
 import PropTypes from 'prop-types';
 import {rgb} from 'd3-color';
 import {Switch} from '@uber/react-switch';
@@ -17,7 +17,6 @@ import {hexToRgb} from 'utils/color-utils';
 import {mapStyleSelector} from 'styles/side-panel';
 
 export default class MapManager extends Component {
-
   static propTypes = {
     mapStyle: PropTypes.object.isRequired,
     onConfigChange: PropTypes.func.isRequired,
@@ -29,7 +28,7 @@ export default class MapManager extends Component {
     isSelecting: false
   };
 
-  _updateConfig = (newProp) => {
+  _updateConfig = newProp => {
     const newConfig = {...this.props.mapStyle, ...newProp};
     this.props.onConfigChange(newConfig);
   };
@@ -38,7 +37,7 @@ export default class MapManager extends Component {
     this.setState({isSelecting: !this.state.isSelecting});
   };
 
-  _selectStyle = (val) => {
+  _selectStyle = val => {
     this.props.onStyleChange(val);
     this._toggleSelecting();
   };
@@ -54,16 +53,21 @@ export default class MapManager extends Component {
             mapStyle={mapStyle}
             isSelecting={this.state.isSelecting}
             onChange={this._selectStyle}
-            toggleActive={this._toggleSelecting}/>
-          {Object.keys(editableLayers).length ? <LayerGroupSelector
-            layers={mapStyle.visibleLayerGroups}
-            editableLayers={editableLayers}
-            topLayers={mapStyle.topLayerGroups}
-            onChange={this._updateConfig}/> : null}
+            toggleActive={this._toggleSelecting}
+          />
+          {Object.keys(editableLayers).length ? (
+            <LayerGroupSelector
+              layers={mapStyle.visibleLayerGroups}
+              editableLayers={editableLayers}
+              topLayers={mapStyle.topLayerGroups}
+              onChange={this._updateConfig}
+            />
+          ) : null}
         </div>
         <BuildingLayer
           buildingLayer={mapStyle.buildingLayer}
-          onChange={this.props.onBuildingChange}/>
+          onChange={this.props.onBuildingChange}
+        />
       </div>
     );
   }
@@ -73,18 +77,26 @@ const MapStyleSelector = ({mapStyle, onChange, toggleActive, isSelecting}) => (
   <div>
     <PanelLabel>Base map style</PanelLabel>
     {Object.keys(mapStyle.mapStyles).map(op => (
-      <div className={classnames('map-dropdown-option',
-        {collapsed: !isSelecting && mapStyle.styleType !== op})}
+      <div
+        className={classnames('map-dropdown-option', {
+          collapsed: !isSelecting && mapStyle.styleType !== op
+        })}
         key={op}
-        onClick={isSelecting ? () => onChange(op) : toggleActive}>
+        onClick={isSelecting ? () => onChange(op) : toggleActive}
+      >
         <div className="map-title-block">
-          <img className="map-preview" src={mapStyle.mapStyles[op].icon}/>
-          <span className="map-preview-name">{mapStyle.mapStyles[op].label}</span>
+          <img className="map-preview" src={mapStyle.mapStyles[op].icon} />
+          <span className="map-preview-name">
+            {mapStyle.mapStyles[op].label}
+          </span>
         </div>
-        {!isSelecting && <EnableConfig
-          disableTooltip={true}
-          isActive={false}
-          onClick={toggleActive}/>}
+        {!isSelecting && (
+          <EnableConfig
+            disableTooltip={true}
+            isActive={false}
+            onClick={toggleActive}
+          />
+        )}
       </div>
     ))}
   </div>
@@ -107,15 +119,21 @@ const LayerGroupSelector = ({layers, editableLayers, onChange, topLayers}) => (
                 id={`${slug}-toggle`}
                 label={''}
                 size="small"
-                onChange={() => onChange({visibleLayerGroups: {
-                  ...layers,
-                  [slug]: !layers[slug]
-                }})}/>
+                onChange={() =>
+                  onChange({
+                    visibleLayerGroups: {
+                      ...layers,
+                      [slug]: !layers[slug]
+                    }
+                  })
+                }
+              />
               <BringToTopToggle
                 slug={slug}
                 disabled={!layers[slug]}
                 topLayers={topLayers}
-                onChange={onChange}/>
+                onChange={onChange}
+              />
             </div>
           </div>
         ))}
@@ -126,15 +144,25 @@ const LayerGroupSelector = ({layers, editableLayers, onChange, topLayers}) => (
 
 const BringToTopToggle = ({topLayers, onChange, slug, disabled}) => (
   <span className="layer--toggle">
-    <a className="hover" data-tip data-for={`${slug}-top`}
-       onClick={() => onChange({topLayerGroups: {
-         ...topLayers,
-         [slug]: !topLayers[slug]
-       }})}>
-      <i className={classnames('icon icon_upload', {
-        active: topLayers[slug],
-        disabled
-      })}/>
+    <a
+      className="hover"
+      data-tip
+      data-for={`${slug}-top`}
+      onClick={() =>
+        onChange({
+          topLayerGroups: {
+            ...topLayers,
+            [slug]: !topLayers[slug]
+          }
+        })
+      }
+    >
+      <i
+        className={classnames('icon icon_upload', {
+          active: topLayers[slug],
+          disabled
+        })}
+      />
       <Tooltip id={`${slug}-top`} effect="solid">
         <span>Move to top of data layers</span>
       </Tooltip>
@@ -147,8 +175,10 @@ const BuildingLayer = ({buildingLayer, onChange}) => (
     <div className="layer-panel__header no-highlight">
       <span>
         <PanelLabel>3D Buildings</PanelLabel>
-        <InfoHelper id="building-info"
-                    description="3D building only visible when zoom in to an area of the map"/>
+        <InfoHelper
+          id="building-info"
+          description="3D building only visible when zoom in to an area of the map"
+        />
       </span>
       <Switch
         checked={buildingLayer.isVisible}
@@ -156,19 +186,25 @@ const BuildingLayer = ({buildingLayer, onChange}) => (
         id={`3d-building-toggle`}
         label={''}
         size="small"
-        onChange={() => onChange({isVisible: !buildingLayer.isVisible})}/>
-    </div>
-    {buildingLayer.isVisible ? <div className="soft-tiny layer-panel__config">
-      <PanelLabel>Color</PanelLabel>
-      <ColorSingleSelector
-        width={268}
-        setColor={hex => onChange({color: hexToRgb(hex)})}
-        selectedColor={rgb(...buildingLayer.color).toString().toUpperCase()}/>
-      <VisConfigSlider
-        {...LAYER_VIS_CONFIGS.opacity}
-        layer={{config: {visConfig: buildingLayer}}}
-        onChange={onChange}
+        onChange={() => onChange({isVisible: !buildingLayer.isVisible})}
       />
-    </div> : null}
+    </div>
+    {buildingLayer.isVisible ? (
+      <div className="soft-tiny layer-panel__config">
+        <PanelLabel>Color</PanelLabel>
+        <ColorSingleSelector
+          width={268}
+          setColor={hex => onChange({color: hexToRgb(hex)})}
+          selectedColor={rgb(...buildingLayer.color)
+            .toString()
+            .toUpperCase()}
+        />
+        <VisConfigSlider
+          {...LAYER_VIS_CONFIGS.opacity}
+          layer={{config: {visConfig: buildingLayer}}}
+          onChange={onChange}
+        />
+      </div>
+    ) : null}
   </div>
 );

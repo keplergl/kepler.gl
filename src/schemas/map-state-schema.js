@@ -26,6 +26,7 @@ const mapStateSchema = {
     version: VERSIONS.v1,
     properties: propertiesV1,
     key: 'mapState'
-  })};
+  })
+};
 
 export default mapStateSchema;

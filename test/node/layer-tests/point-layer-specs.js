@@ -126,12 +126,12 @@ test('#PointLayer -> formatLayerData', async t => {
         }
       },
       updates: [
-        {method: 'updateLayerConfig', args: [{colorField: testFields[6]}]},
+        {method: 'layerConfigChangeUpdater', args: [{colorField: testFields[6]}]},
         {
           method: 'updateLayerVisualChannel',
           args: [{data: dataWithNull, allData: allDataWithNull}, 'color']
         },
-        {method: 'updateLayerConfig', args: [{sizeField: testFields[6]}]},
+        {method: 'layerConfigChangeUpdater', args: [{sizeField: testFields[6]}]},
         {
           method: 'updateLayerVisualChannel',
           args: [{data: dataWithNull, allData: allDataWithNull}, 'size']

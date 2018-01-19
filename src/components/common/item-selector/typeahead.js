@@ -44,8 +44,14 @@ const propTypes = {
   formInputOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
   defaultClassNames: PropTypes.bool,
   customListComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
-  customListItemComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
-  customListHeaderComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
+  customListItemComponent: PropTypes.oneOfType([
+    PropTypes.element,
+    PropTypes.func
+  ]),
+  customListHeaderComponent: PropTypes.oneOfType([
+    PropTypes.element,
+    PropTypes.func
+  ]),
   showOptionsWhenEmpty: PropTypes.bool,
   searchable: PropTypes.bool
 };
@@ -82,15 +88,14 @@ const defaultProps = {
 const TypeaheadWrapper = styled.div`
   display: flex;
   flex-direction: column;
-  
+
   :focus {
     outline: 0;
   }
 `;
 
 const TypeaheadInput = styled.input`
-  ${props => props.theme.input} 
-  flex-grow: 1;
+  ${props => props.theme.input} flex-grow: 1;
   background-color: ${props => props.theme.selectBackgroundHover};
   margin: 8px;
   width: auto;
@@ -134,6 +139,15 @@ class Typeahead extends Component {
     }
   }
 
+  componentWillReceiveProps(nextProps) {
+    const searchResults = this.getOptionsForValue(
+      this.state.entryValue,
+      nextProps.options
+    );
+
+    this.setState({searchResults});
+  }
+
   _shouldSkipSearch(input) {
     const emptyValue = !input || input.trim().length === 0;
 
@@ -163,9 +177,11 @@ class Typeahead extends Component {
   }
 
   _hasCustomValue() {
-    return this.props.allowCustomValues > 0 &&
+    return (
+      this.props.allowCustomValues > 0 &&
       this.state.entryValue.length >= this.props.allowCustomValues &&
-      this.state.searchResults.indexOf(this.state.entryValue) < 0;
+      this.state.searchResults.indexOf(this.state.entryValue) < 0
+    );
   }
 
   _getCustomValue() {
@@ -173,10 +189,9 @@ class Typeahead extends Component {
   }
 
   _renderIncrementalSearchResults() {
-
     return (
       <this.props.customListComponent
-        ref='sel'
+        ref="sel"
         fixedOptions={this.props.fixedOptions}
         options={
           this.props.maxVisible
@@ -211,8 +226,9 @@ class Typeahead extends Component {
       index--;
     }
     if (this._hasFixedOptions()) {
-      return index < this.props.fixedOptions.length ? this.props.fixedOptions[index] :
-        this.state.searchResults[index - this.props.fixedOptions.length];
+      return index < this.props.fixedOptions.length
+        ? this.props.fixedOptions[index]
+        : this.state.searchResults[index - this.props.fixedOptions.length];
     }
     return this.state.searchResults[index];
   }
@@ -243,7 +259,7 @@ class Typeahead extends Component {
     }
   };
 
-  _onEnter = (event) => {
+  _onEnter = event => {
     const selection = this.getSelection();
     if (!selection) {
       return this.props.onKeyDown(event);
@@ -320,7 +336,7 @@ class Typeahead extends Component {
     this._nav(-1);
   };
 
-  _onChange = (event) => {
+  _onChange = event => {
     if (this.props.onChange) {
       this.props.onChange(event);
     }
@@ -328,7 +344,7 @@ class Typeahead extends Component {
     this._onTextEntryUpdated();
   };
 
-  _onKeyDown = (event) => {
+  _onKeyDown = event => {
     // If there are no visible elements, don't perform selector navigation.
     // Just pass this up to the upstream onKeydown handler.
     // Also skip if the user is pressing the shift key, since none of our handlers are looking for shift
@@ -347,18 +363,76 @@ class Typeahead extends Component {
     event.preventDefault();
   };
 
-  componentWillReceiveProps(nextProps) {
-    const searchResults = this.getOptionsForValue(
-      this.state.entryValue,
-      nextProps.options
-    );
+  _onFocus = event => {
+    this.setState({isFocused: true});
+    if (this.props.onFocus) {
+      return this.props.onFocus(event);
+    }
+  };
 
-    this.setState({searchResults});
+  _onBlur = event => {
+    this.setState({isFocused: false});
+    if (this.props.onBlur) {
+      return this.props.onBlur(event);
+    }
+  };
+
+  _renderHiddenInput() {
+    if (!this.props.name) {
+      return null;
+    }
+
+    return (
+      <input
+        type="hidden"
+        name={this.props.name}
+        value={this.state.selection}
+      />
+    );
+  }
+
+  _generateSearchFunction() {
+    const searchOptionsProp = this.props.searchOptions;
+    const filterOptionProp = this.props.filterOption;
+    if (typeof searchOptionsProp === 'function') {
+      if (filterOptionProp !== null) {
+        Console.warn(
+          'searchOptions prop is being used, filterOption prop will be ignored'
+        );
+      }
+      return searchOptionsProp;
+    } else if (typeof filterOptionProp === 'function') {
+      // use custom filter option
+      return (value, options) =>
+        options.filter(o => filterOptionProp(value, o));
+    }
+
+    const mapper =
+      typeof filterOptionProp === 'string'
+        ? Accessor.generateAccessor(filterOptionProp)
+        : Accessor.IDENTITY_FN;
+
+    return (value, options) =>
+      fuzzy
+        .filter(value, options, {extract: mapper})
+        .map(res => options[res.index]);
+  }
+
+  _hasHint() {
+    return this.state.searchResults.length > 0 || this._hasCustomValue();
+  }
+
+  _hasFixedOptions() {
+    return (
+      Array.isArray(this.props.fixedOptions) && this.props.fixedOptions.length
+    );
   }
 
   render() {
     const inputClasses = {};
-    inputClasses[this.props.customClasses.input] = Boolean(this.props.customClasses.input);
+    inputClasses[this.props.customClasses.input] = Boolean(
+      this.props.customClasses.input
+    );
     const inputClassList = classNames(inputClasses);
 
     const classes = {
@@ -380,85 +454,24 @@ class Typeahead extends Component {
         onFocus={this._onFocus}
       >
         {this._renderHiddenInput()}
-        {this.props.searchable ? <TypeaheadInput
-          innerRef={comp => {this.entry = comp}}
-          type='text'
-          disabled={this.props.disabled}
-          {...this.props.inputProps}
-          placeholder={this.props.placeholder}
-          className={inputClassList}
-          value={this.state.entryValue}
-          onChange={this._onChange}
-          onBlur={this._onBlur}
-        /> : null}
+        {this.props.searchable ? (
+          <TypeaheadInput
+            innerRef={comp => {
+              this.entry = comp;
+            }}
+            type="text"
+            disabled={this.props.disabled}
+            {...this.props.inputProps}
+            placeholder={this.props.placeholder}
+            className={inputClassList}
+            value={this.state.entryValue}
+            onChange={this._onChange}
+            onBlur={this._onBlur}
+          />
+        ) : null}
         {this._renderIncrementalSearchResults()}
       </TypeaheadWrapper>
     );
-  }
-
-  _onFocus = (event) => {
-    this.setState(
-      {isFocused: true}
-    );
-    if (this.props.onFocus) {
-      return this.props.onFocus(event);
-    }
-  };
-
-  _onBlur = (event) => {
-    this.setState(
-      {isFocused: false}
-    );
-    if (this.props.onBlur) {
-      return this.props.onBlur(event);
-    }
-  };
-
-  _renderHiddenInput() {
-    if (!this.props.name) {
-      return null;
-    }
-
-    return (
-      <input
-        type='hidden'
-        name={this.props.name}
-        value={this.state.selection}
-      />
-    );
-  }
-
-  _generateSearchFunction() {
-    const searchOptionsProp = this.props.searchOptions;
-    const filterOptionProp = this.props.filterOption;
-    if (typeof searchOptionsProp === 'function') {
-      if (filterOptionProp !== null) {
-        Console.warn(
-          'searchOptions prop is being used, filterOption prop will be ignored'
-        );
-      }
-      return searchOptionsProp;
-    } else if (typeof filterOptionProp === 'function') {
-
-      // use custom filter option
-      return (value, options) => options.filter(o => filterOptionProp(value, o));
-    }
-
-    const mapper = typeof filterOptionProp === 'string' ?
-      Accessor.generateAccessor(filterOptionProp) :
-      Accessor.IDENTITY_FN;
-
-    return (value, options) => fuzzy
-      .filter(value, options, {extract: mapper})
-      .map(res => options[res.index]);
-  }
-
-  _hasHint() {
-    return this.state.searchResults.length > 0 || this._hasCustomValue();
-  }
-
-  _hasFixedOptions() {
-    return Array.isArray(this.props.fixedOptions) && this.props.fixedOptions.length;
   }
 }
 

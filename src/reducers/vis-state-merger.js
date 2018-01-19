@@ -10,10 +10,7 @@ import {
   adjustValueToFilterDomain
 } from '../utils/filter-utils';
 
-import {
-  LAYER_BLENDINGS,
-  LAYER_CLASSES
-} from '../constants/default-settings';
+import {LAYER_BLENDINGS, LAYER_CLASSES} from '../constants/default-settings';
 
 /**
  * Merge loaded filters with current state, if no fields or data are loaded
@@ -145,7 +142,6 @@ export function mergeInteractions(state, interactionToBeMerged) {
       let configToMerge = configSaved;
 
       if (key === 'tooltip') {
-
         const {mergedTooltip, unmergedTooltip} = mergeInteractionTooltipConfig(
           state,
           configSaved
@@ -302,9 +298,7 @@ export function validateSavedVisualChannels(
     return {
       ...found,
       ...(foundField ? {[field]: foundField} : {}),
-      ...(savedLayer.config[scale]
-        ? {[scale]: savedLayer.config[scale]}
-        : {})
+      ...(savedLayer.config[scale] ? {[scale]: savedLayer.config[scale]} : {})
     };
   }, {});
 }
@@ -408,14 +402,17 @@ export function validateFilterWithData({fields, allData}, filter) {
 
   const {yAxis} = matchedFilter;
   if (yAxis) {
-    const matcheAxis = fields.find(({name, type}) =>
-      name === yAxis.name && type === yAxis.type);
+    const matcheAxis = fields.find(
+      ({name, type}) => name === yAxis.name && type === yAxis.type
+    );
 
-    matchedFilter = matcheAxis ? {
-      ...matchedFilter,
-      yAxis: matcheAxis,
-      ...getFilterPlot({...matchedFilter, yAxis: matcheAxis}, allData)
-    } : matchedFilter
+    matchedFilter = matcheAxis
+      ? {
+          ...matchedFilter,
+          yAxis: matcheAxis,
+          ...getFilterPlot({...matchedFilter, yAxis: matcheAxis}, allData)
+        }
+      : matchedFilter;
   }
 
   matchedFilter.value = adjustValueToFilterDomain(value, matchedFilter);

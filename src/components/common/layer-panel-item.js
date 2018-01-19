@@ -7,11 +7,11 @@ import {Tooltip} from './styled-components';
 
 const StyledLayerPanelItem = styled.div`
   border-left: 4px solid rgb(${props => props.labelRCGColorValues.join(',')});
-  
+
   .label-wrapper {
     text-align: left;
     padding-left: 4px !important;
-    
+
     label {
       color: ${props => props.theme.textColor};
       font-size: 12px;
@@ -42,48 +42,59 @@ const defaultProps = {
 };
 
 const LayerPanelItem = ({
-  className, idx, isConfigActive,
-  isDragNDropEnabled, isVisible, label,
-  layerId, labelRCGColorValues, onToggleVisibility,
-  onUpdateLayerLabel, onToggleEnableConfig, removeLayer,
+  className,
+  idx,
+  isConfigActive,
+  isDragNDropEnabled,
+  isVisible,
+  label,
+  layerId,
+  labelRCGColorValues,
+  onToggleVisibility,
+  onUpdateLayerLabel,
+  onToggleEnableConfig,
+  removeLayer,
   showRemoveLayer
 }) => (
   <StyledLayerPanelItem
-    className={classnames(`soft-tiny--ends layout layout--flush
-           layer-panel__header`, {'sort--handle': !isConfigActive})}
+    className={classnames(
+      `soft-tiny--ends layout layout--flush
+           layer-panel__header`,
+      {'sort--handle': !isConfigActive}
+    )}
     labelRCGColorValues={labelRCGColorValues}
-    onClick={onToggleEnableConfig}>
+    onClick={onToggleEnableConfig}
+  >
     <div className="layout__item two-thirds soft-tiny--left">
       <div className={`layer-panel-item layout layout--flush ${className}`}>
-        {
-          isDragNDropEnabled && (
-            <div
-              className="layout__item one-eighth layer__drag-handle">
-              <VertDots/>
-            </div>
-          )
-        }
+        {isDragNDropEnabled && (
+          <div className="layout__item one-eighth layer__drag-handle">
+            <VertDots />
+          </div>
+        )}
         <div className="layout__item one-eighth">
           <VisibilityToggle
             id={layerId}
             isVisible={isVisible}
-            onClick={onToggleVisibility}/>
+            onClick={onToggleVisibility}
+          />
         </div>
-        <div
-          className="label-wrapper layout__item three-quarters layer__title">
-          {isConfigActive ?
-            <LayerLabelEditor label={label} onEdit={onUpdateLayerLabel}/> :
+        <div className="label-wrapper layout__item three-quarters layer__title">
+          {isConfigActive ? (
+            <LayerLabelEditor label={label} onEdit={onUpdateLayerLabel} />
+          ) : (
             <label>{label}</label>
-          }
+          )}
         </div>
       </div>
     </div>
     <div className="layout__item one-third text--right soft-tiny--right">
-      {showRemoveLayer && (<RemoveLayer idx={idx} removeLayer={removeLayer}/>)}
+      {showRemoveLayer && <RemoveLayer idx={idx} removeLayer={removeLayer} />}
       <EnableConfig
         id={layerId}
         isActive={isConfigActive}
-        onClick={onToggleEnableConfig}/>
+        onClick={onToggleEnableConfig}
+      />
     </div>
   </StyledLayerPanelItem>
 );
@@ -102,28 +113,44 @@ const LayerLabelEditor = ({label, onEdit}) => (
     value={label}
     onClick={e => e.stopPropagation()}
     onChange={onEdit}
-    id="input-layer-label" />
+    id="input-layer-label"
+  />
 );
 
 export const EnableConfig = ({id, isActive, onClick, disableTooltip}) => (
   <span className="push-tiny--left layer--toggle">
-    <a className="hover align--middle" data-tip data-for={`enable-${id}`}
-       onClick={onClick}>
-      <i className={classnames('icon icon_down-arrow epsilon', {
-        'text-uber-blue': isActive
-      })}/>
-      {!disableTooltip && <Tooltip id={`enable-${id}`} effect="solid">
-        <span>Settings</span>
-      </Tooltip>}
+    <a
+      className="hover align--middle"
+      data-tip
+      data-for={`enable-${id}`}
+      onClick={onClick}
+    >
+      <i
+        className={classnames('icon icon_down-arrow epsilon', {
+          'text-uber-blue': isActive
+        })}
+      />
+      {!disableTooltip && (
+        <Tooltip id={`enable-${id}`} effect="solid">
+          <span>Settings</span>
+        </Tooltip>
+      )}
     </a>
   </span>
 );
 
 const RemoveLayer = ({idx, removeLayer}) => (
   <span className="push-tiny--left layer--toggle">
-    <a className="hover align--middle" data-tip data-for={`delete-${idx}`}
-       onClick={(e) => {e.stopPropagation(); removeLayer(idx);}}>
-      <i className="icon icon_trash epsilon"/>
+    <a
+      className="hover align--middle"
+      data-tip
+      data-for={`delete-${idx}`}
+      onClick={e => {
+        e.stopPropagation();
+        removeLayer(idx);
+      }}
+    >
+      <i className="icon icon_trash epsilon" />
       <Tooltip id={`delete-${idx}`} effect="solid" type="error">
         <span>Remove layer</span>
       </Tooltip>

@@ -10,13 +10,13 @@ import {Close, Clock} from '../common/icons';
 const innerPdSide = 32;
 
 const WidgetContainer = styled.div`
-	position: fixed;
-	padding: 20px;
-	bottom: 0;
+  position: fixed;
+  padding: 20px;
+  bottom: 0;
   right: 0;
   z-index: 1;
   width: ${props => props.width}px;
-  
+
   .bottom-widget--inner {
     background-color: ${props => props.theme.sidePanelBg};
     padding: 10px ${innerPdSide}px;
@@ -41,12 +41,14 @@ const Tab = styled.div`
   display: inline-block;
   width: 24px;
   height: 24px;
-  border-bottom: 1px solid ${props => props.active ? props.theme.textColorHl : 'transparent'};
+  border-bottom: 1px solid
+    ${props => (props.active ? props.theme.textColorHl : 'transparent')};
   margin-right: 4px;
 
   svg {
     path {
-      fill: ${props => props.active ? props.theme.textColorHl : props.theme.textColor};
+      fill: ${props =>
+        props.active ? props.theme.textColorHl : props.theme.textColor};
     }
   }
 
@@ -57,21 +59,20 @@ const Tab = styled.div`
 /* eslint-enable no-unused-vars */
 
 const StyledTitle = styled.div`
-    flex-grow: 0;
-    display: flex;
-    align-items: center;
-    color: ${props => props.theme.textColor};
-    
-    .icon {
-      margin-right: 6px;
-    }
+  flex-grow: 0;
+  display: flex;
+  align-items: center;
+  color: ${props => props.theme.textColor};
+
+  .icon {
+    margin-right: 6px;
+  }
 `;
 
 class TimeWidget extends Component {
   fieldSelector = props => props.fields;
-  yAxisFieldsSelector = createSelector(
-    this.fieldSelector,
-    fields => fields.filter(f => f.type === 'integer' || f.type === 'real')
+  yAxisFieldsSelector = createSelector(this.fieldSelector, fields =>
+    fields.filter(f => f.type === 'integer' || f.type === 'real')
   );
 
   render() {
@@ -91,24 +92,32 @@ class TimeWidget extends Component {
         <div className="bottom-widget--inner">
           <TopSectionWrapper>
             <StyledTitle>
-              <div className="icon"><Clock height="15px"/></div>
+              <div className="icon">
+                <Clock height="15px" />
+              </div>
               <SelectTextBold>{filter.name}</SelectTextBold>
             </StyledTitle>
             <div style={{flexGrow: 1, marginLeft: '20px'}}>
               <SelectTextBold>Y Axis</SelectTextBold>
-              <div style={{width: '160px', display: 'inline-block', marginLeft: '20px'}}>
+              <div
+                style={{
+                  width: '160px',
+                  display: 'inline-block',
+                  marginLeft: '20px'
+                }}
+              >
                 <FieldSelector
                   fields={this.yAxisFieldsSelector(this.props)}
                   placement="top"
                   id="selected-time-widget-field"
                   value={filter.yAxis ? filter.yAxis.name : null}
-                  onSelect={(value) => setFilterPlot(enlargedIdx, {yAxis: value})}
+                  onSelect={value => setFilterPlot(enlargedIdx, {yAxis: value})}
                   erasable
                 />
               </div>
             </div>
             <IconRoundSmall>
-              <Close height="12px" onClick={() => enlargeFilter(enlargedIdx)}/>
+              <Close height="12px" onClick={() => enlargeFilter(enlargedIdx)} />
             </IconRoundSmall>
           </TopSectionWrapper>
           <TimeRangeFilter

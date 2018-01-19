@@ -127,7 +127,7 @@ test('#HexagonLayer -> formatLayerData', async t => {
         }
       },
       updates: [
-        {method: 'updateLayerConfig', args: [{colorField: testFields[6]}]},
+        {method: 'layerConfigChangeUpdater', args: [{colorField: testFields[6]}]},
         {
           method: 'updateLayerVisualChannel',
           args: [{data: dataWithNull, allData: allDataWithNull}, 'color']

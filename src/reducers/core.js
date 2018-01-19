@@ -1,4 +1,3 @@
-
 import {combineReducers} from 'redux';
 
 import visState from './vis-state';
@@ -21,7 +20,7 @@ const composedReducer = (state, action) => {
   if (composers[action.type]) {
     return composers[action.type](state, action);
   }
-  return combined(state, action)
+  return combined(state, action);
 };
 
 export default composedReducer;

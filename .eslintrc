@@ -1,0 +1,33 @@
+{
+  "extends": [
+    "eslint-config-uber-jsx",
+    "eslint-config-uber-es2015",
+    "prettier",
+    "prettier/react"
+  ],
+  "parser": "babel-eslint",
+  "plugins": [
+    "babel",
+    "prettier",
+    "react"
+  ],
+  "rules": {
+    "valid-jsdoc": 0,
+    "no-var": 0,
+    "max-len": 0,
+    "react/no-did-mount-set-state": 0,
+    "react/no-multi-comp": 0,
+    "prefer-spread": 1,
+    "prefer-template": 1,
+    "quote-props": 1,
+    "spaced-comment": 1,
+    "max-params": 0,
+    "no-multiple-empty-lines": 1,
+    "no-inline-comments": 0,
+    "no-invalid-this": 0,
+    "no-unused-expressions": 0,
+    "camelcase": 0,
+    "consistent-return": 0,
+    "comma-dangle": 1
+  }
+}

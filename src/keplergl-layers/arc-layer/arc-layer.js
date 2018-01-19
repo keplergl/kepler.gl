@@ -61,22 +61,30 @@ export default class ArcLayer extends Layer {
   }
 
   formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
-    const {colorScale, colorDomain, colorField, color, columns, sizeField, sizeScale, sizeDomain,
-      visConfig: {sizeRange, colorRange, targetColor}} = this.config;
-
-    // arc color
-    const cScale = colorField && this.getVisChannelScale(
+    const {
       colorScale,
       colorDomain,
-      colorRange.colors.map(hexToRgb)
-    );
-
-    // arc thickness
-    const sScale = sizeField && this.getVisChannelScale(
+      colorField,
+      color,
+      columns,
+      sizeField,
       sizeScale,
       sizeDomain,
-      sizeRange
-    );
+      visConfig: {sizeRange, colorRange, targetColor}
+    } = this.config;
+
+    // arc color
+    const cScale =
+      colorField &&
+      this.getVisChannelScale(
+        colorScale,
+        colorDomain,
+        colorRange.colors.map(hexToRgb)
+      );
+
+    // arc thickness
+    const sScale =
+      sizeField && this.getVisChannelScale(sizeScale, sizeDomain, sizeRange);
 
     const getPosition = this.getPosition(columns);
 
@@ -85,8 +93,12 @@ export default class ArcLayer extends Layer {
     }
 
     let data;
-    if (oldLayerData && oldLayerData.data && opt.sameData
-      && oldLayerData.getPosition === getPosition) {
+    if (
+      oldLayerData &&
+      oldLayerData.data &&
+      opt.sameData &&
+      oldLayerData.getPosition === getPosition
+    ) {
       data = oldLayerData.data;
     } else {
       data = filteredIndex.reduce((accu, index) => {
@@ -109,14 +121,16 @@ export default class ArcLayer extends Layer {
       }, []);
     }
 
-    const getStrokeWidth = d => sScale ?
-      this.getEncodedChannelValue(sScale, d.data, sizeField) : 1;
+    const getStrokeWidth = d =>
+      sScale ? this.getEncodedChannelValue(sScale, d.data, sizeField) : 1;
 
-    const getColor = d => cScale ?
-      this.getEncodedChannelValue(cScale, d.data, colorField) : color;
+    const getColor = d =>
+      cScale ? this.getEncodedChannelValue(cScale, d.data, colorField) : color;
 
-    const getTargetColor = d => cScale ?
-      this.getEncodedChannelValue(cScale, d.data, colorField) : (targetColor || color);
+    const getTargetColor = d =>
+      cScale
+        ? this.getEncodedChannelValue(cScale, d.data, colorField)
+        : targetColor || color;
 
     return {
       data,
@@ -149,7 +163,14 @@ export default class ArcLayer extends Layer {
     this.updateMeta({bounds});
   }
 
-  renderLayer({data, idx, layerInteraction, objectHovered, mapState, interactionConfig}) {
+  renderLayer({
+    data,
+    idx,
+    layerInteraction,
+    objectHovered,
+    mapState,
+    interactionConfig
+  }) {
     const {brush} = interactionConfig;
 
     const colorUpdateTriggers = {

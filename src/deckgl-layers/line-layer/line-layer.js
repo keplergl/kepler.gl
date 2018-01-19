@@ -1,4 +1,3 @@
-
 import {LineLayer} from 'deck.gl';
 import {GL} from 'luma.gl';
 
@@ -25,7 +24,6 @@ const defaultProps = {
 };
 
 export default class LineBrushingLayer extends LineLayer {
-
   getShaders() {
     const shaders = super.getShaders();
     const addons = getExtrusion + isPicked + isPtInRange;
@@ -45,27 +43,46 @@ export default class LineBrushingLayer extends LineLayer {
         accessor: ['getStrokeWidth'],
         update: this.calculateInstanceStrokeWidth
       },
-      instanceTargetColors: {size: 4, type: GL.UNSIGNED_BYTE, accessor: 'getTargetColor', update: this.calculateInstanceTargetColors}
+      instanceTargetColors: {
+        size: 4,
+        type: GL.UNSIGNED_BYTE,
+        accessor: 'getTargetColor',
+        update: this.calculateInstanceTargetColors
+      }
     });
   }
 
   draw({uniforms}) {
-    const {brushSource, brushTarget, brushRadius,
-      enableBrushing, pickedColor, mousePosition, strokeScale} = this.props;
-
-    const picked = !Array.isArray(pickedColor) ? defaultProps.pickedColor : pickedColor;
-
-    super.draw({uniforms: {
-      ...uniforms,
+    const {
       brushSource,
       brushTarget,
       brushRadius,
       enableBrushing,
-      strokeScale,
-      pickedColor: new Uint8ClampedArray(!Number.isFinite(pickedColor[3]) ? [...picked, 255] : picked),
-      mousePos: mousePosition ?
-        new Float32Array(this.unproject(mousePosition)) : defaultProps.mousePosition
-    }});
+      pickedColor,
+      mousePosition,
+      strokeScale
+    } = this.props;
+
+    const picked = !Array.isArray(pickedColor)
+      ? defaultProps.pickedColor
+      : pickedColor;
+
+    super.draw({
+      uniforms: {
+        ...uniforms,
+        brushSource,
+        brushTarget,
+        brushRadius,
+        enableBrushing,
+        strokeScale,
+        pickedColor: new Uint8ClampedArray(
+          !Number.isFinite(pickedColor[3]) ? [...picked, 255] : picked
+        ),
+        mousePos: mousePosition
+          ? new Float32Array(this.unproject(mousePosition))
+          : defaultProps.mousePosition
+      }
+    });
   }
 
   calculateInstanceStrokeWidth(attribute) {

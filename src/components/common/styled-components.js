@@ -112,7 +112,7 @@ export const Button = styled.div`
       : props.link ? props.theme.linkBtnColor : props.theme.primaryBtnColor};
   cursor: pointer;
   display: inline-flex;
-  font-size: ${props => props.large ? '14px' : '11px'};
+  font-size: ${props => (props.large ? '14px' : '11px')};
   font-weight: 500;
   justify-content: center;
   outline: 0;
@@ -120,7 +120,7 @@ export const Button = styled.div`
   transition: ${props => props.theme.transition};
   vertical-align: middle;
   line-height: 14px;
-  padding: ${props => props.large ? '14px 32px' : '9px 12px'};
+  padding: ${props => (props.large ? '14px 32px' : '9px 12px')};
   width: ${props => props.width || 'auto'};
 
   :hover,
@@ -129,11 +129,15 @@ export const Button = styled.div`
     background-color: ${props =>
       props.secondary
         ? props.theme.secondaryBtnBgdHover
-        : props.link ? props.theme.linkBtnActBgdHover : props.theme.primaryBtnBgdHover};
+        : props.link
+          ? props.theme.linkBtnActBgdHover
+          : props.theme.primaryBtnBgdHover};
     color: ${props =>
       props.secondary
         ? props.theme.secondaryBtnActColor
-        : props.link ? props.theme.linkBtnActColor : props.theme.primaryBtnActColor};
+        : props.link
+          ? props.theme.linkBtnActColor
+          : props.theme.primaryBtnActColor};
   }
 
   svg {

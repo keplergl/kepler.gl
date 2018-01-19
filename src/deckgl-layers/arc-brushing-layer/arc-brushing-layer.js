@@ -43,7 +43,6 @@ const defaultProps = {
 };
 
 export default class ArcBrushingLayer extends ArcLayer {
-
   getShaders() {
     const shaders = super.getShaders();
     const addons = getExtrusion + isPicked + isPtInRange;
@@ -67,21 +66,35 @@ export default class ArcBrushingLayer extends ArcLayer {
   }
 
   draw({uniforms}) {
-    const {brushSource, brushTarget, brushRadius, enableBrushing,
-      pickedColor, mousePosition, strokeScale} = this.props;
-
-    const picked = !Array.isArray(pickedColor) ? defaultProps.pickedColor : pickedColor;
-    super.draw({uniforms: {
-      ...uniforms,
+    const {
       brushSource,
       brushTarget,
       brushRadius,
       enableBrushing,
-      strokeScale,
-      pickedColor: new Uint8ClampedArray(!Number.isFinite(pickedColor[3]) ? [...picked, 255] : picked),
-      mousePos: mousePosition ?
-        new Float32Array(this.unproject(mousePosition)) : defaultProps.mousePosition
-    }});
+      pickedColor,
+      mousePosition,
+      strokeScale
+    } = this.props;
+
+    const picked = !Array.isArray(pickedColor)
+      ? defaultProps.pickedColor
+      : pickedColor;
+    super.draw({
+      uniforms: {
+        ...uniforms,
+        brushSource,
+        brushTarget,
+        brushRadius,
+        enableBrushing,
+        strokeScale,
+        pickedColor: new Uint8ClampedArray(
+          !Number.isFinite(pickedColor[3]) ? [...picked, 255] : picked
+        ),
+        mousePos: mousePosition
+          ? new Float32Array(this.unproject(mousePosition))
+          : defaultProps.mousePosition
+      }
+    });
   }
 
   calculateInstanceStrokeWidth(attribute) {

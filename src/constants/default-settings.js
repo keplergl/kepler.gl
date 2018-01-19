@@ -21,8 +21,10 @@ export const DELETE_DATA_ID = 'deleteData';
 export const ADD_DATA_ID = 'addData';
 
 export const DIMENSIONS = {
+  // TODO: remove use to qbHeihgt
   qbHeight: 62,
   headerHeight: 55,
+
   sideBarWidth: 360,
   sideNavW: 120,
   sideNavC: 40,
@@ -67,6 +69,7 @@ export const PANELS_FOOTER = [
 
 // MAP STYLES
 export const INITIAL_STYLE_TYPE = 'dark';
+export const DEFAULT_BLDG_COLOR = '#D1CEC7';
 
 export const DEFAULT_LAYER_GROUPS = [
   {
@@ -122,7 +125,7 @@ export const DEFAULT_MAP_STYLES = [
     label: 'Places',
     url: `${STYLE_PREFIX}/driver-ticker.json`,
     icon: `${ICON_PREFIX}/UBER_DRIVER_TICKER.png`,
-    layerGroups:[
+    layerGroups: [
       ...DEFAULT_LAYER_GROUPS,
       {
         slug: 'places',
@@ -153,7 +156,6 @@ export const DEFAULT_MAP_STYLES = [
     icon: `${ICON_PREFIX}/UBER_MAP.jpg`
   },
   {
-    //type: 'raster',
     label: 'Google Satellite',
     id: 'google_satellite',
     url: `${STYLE_PREFIX}/tools-google-satellite.json`,
@@ -380,11 +382,17 @@ export const FIELD_OPTS = {
   }
 };
 
-export const CHANNEL_SCALE_SUPPORTED_FIELDS = Object.keys(CHANNEL_SCALES).reduce((accu, key) => ({
-  ...accu,
-  [key]: Object.keys(FIELD_OPTS)
-    .filter(ft => FIELD_OPTS[ft].scale[key] && FIELD_OPTS[ft].scale[key].length)
-}), {});
+export const CHANNEL_SCALE_SUPPORTED_FIELDS = Object.keys(
+  CHANNEL_SCALES
+).reduce(
+  (accu, key) => ({
+    ...accu,
+    [key]: Object.keys(FIELD_OPTS).filter(
+      ft => FIELD_OPTS[ft].scale[key] && FIELD_OPTS[ft].scale[key].length
+    )
+  }),
+  {}
+);
 
 export const LAYER_TYPES = keyMirror({
   point: null,

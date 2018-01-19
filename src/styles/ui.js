@@ -199,13 +199,15 @@ const inputLight = {
 };
 
 function assignInputSelectColor(inputClass, selectClass, colorConfig) {
-  const [inputStyle, selectStyle] = [inputClass, selectClass].map(className => ({
-    [className]: colorConfig.normal,
-    [`${className}:hover`]: colorConfig.hover,
-    [`${className}.error`]: colorConfig.error,
-    [`${className}.focus, ${className}:focus`]: colorConfig.focus,
-    [`${className}.disabled`]: colorConfig.disabled
-  }));
+  const [inputStyle, selectStyle] = [inputClass, selectClass].map(
+    className => ({
+      [className]: colorConfig.normal,
+      [`${className}:hover`]: colorConfig.hover,
+      [`${className}.error`]: colorConfig.error,
+      [`${className}.focus, ${className}:focus`]: colorConfig.focus,
+      [`${className}.disabled`]: colorConfig.disabled
+    })
+  );
 
   inputStyle[`${inputClass}.text-input--textarea`] = {
     width: '100%',
@@ -245,8 +247,16 @@ function assignInputSelectColor(inputClass, selectClass, colorConfig) {
   return [inputStyle, selectStyle];
 }
 
-export const [textInput, select] = assignInputSelectColor(' .text-input', ' .select', input);
-export const [textInputLight, selectLight] = assignInputSelectColor(' .text-input--light', ' .select--light', inputLight);
+export const [textInput, select] = assignInputSelectColor(
+  ' .text-input',
+  ' .select',
+  input
+);
+export const [textInputLight, selectLight] = assignInputSelectColor(
+  ' .text-input--light',
+  ' .select--light',
+  inputLight
+);
 
 // TODO: this needs to be removed since we have the styled-component element
 // defined in base.js Keep it for now until re reword side-panel.js using styed-components

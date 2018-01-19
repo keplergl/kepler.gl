@@ -98,7 +98,7 @@ export default class TimeSliderMarker extends Component {
           this.svgContainer = comp;
         }}
       >
-        <g className="x axis" transform="translate(0, 0)"/>
+        <g className="x axis" transform="translate(0, 0)" />
       </TimeSliderContainer>
     );
   }

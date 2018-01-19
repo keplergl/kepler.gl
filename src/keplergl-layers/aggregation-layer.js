@@ -9,7 +9,8 @@ export const pointPosAccessor = ({lat, lng}) => d => [
   d[lat.fieldIdx]
 ];
 
-export const pointPosResolver = ({lat, lng}) => `${lat.fieldIdx}-${lng.fieldIdx}`;
+export const pointPosResolver = ({lat, lng}) =>
+  `${lat.fieldIdx}-${lng.fieldIdx}`;
 
 export const getValueAggr = (field, aggregation) => points =>
   aggregate(points.map(p => p[field.tableFieldIndex - 1]), aggregation);
@@ -82,7 +83,7 @@ export default class AggregationLayer extends Layer {
         defaultMeasure: 'Point Count',
         condition: config => config.visConfig.enable3d
       }
-    }
+    };
   }
 
   getHoverData(object) {
@@ -100,9 +101,10 @@ export default class AggregationLayer extends Layer {
     if (this.config[field]) {
       // if field is selected, check if current selected scale is
       // supported, if not, update to default
-      const scaleOptions = FIELD_OPTS[this.config[field].type].scale[channelScaleType];
+      const scaleOptions =
+        FIELD_OPTS[this.config[field].type].scale[channelScaleType];
       if (!scaleOptions.includes(this.config[scale])) {
-        this.updateLayerConfig({[scale]: scaleOptions[0]})
+        this.updateLayerConfig({[scale]: scaleOptions[0]});
       }
     }
   }
@@ -131,20 +133,29 @@ export default class AggregationLayer extends Layer {
       this.updateLayerMeta(allData, getPosition);
     }
 
-    const getColorValue = this.config.colorField ?
-      this.getColorValue(this.config.colorField, this.config.visConfig.colorAggregation) : undefined;
+    const getColorValue = this.config.colorField
+      ? this.getColorValue(
+          this.config.colorField,
+          this.config.visConfig.colorAggregation
+        )
+      : undefined;
 
-    const getElevationValue = this.config.sizeField ?
-      this.getElevationValue(this.config.sizeField, this.config.visConfig.sizeAggregation) : undefined;
+    const getElevationValue = this.config.sizeField
+      ? this.getElevationValue(
+          this.config.sizeField,
+          this.config.visConfig.sizeAggregation
+        )
+      : undefined;
 
     let data;
-    if (oldLayerData && oldLayerData.data && opt.sameData
-      && oldLayerData.getPosition === getPosition) {
-
+    if (
+      oldLayerData &&
+      oldLayerData.data &&
+      opt.sameData &&
+      oldLayerData.getPosition === getPosition
+    ) {
       data = oldLayerData.data;
-
     } else {
-
       data = filteredIndex.map(i => allData[i]);
     }
 

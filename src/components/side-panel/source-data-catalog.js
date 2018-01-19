@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import {format} from 'd3-format';
 
-import {SidePanelSection, Tooltip} from 'components/common/styled-components'
+import {SidePanelSection, Tooltip} from 'components/common/styled-components';
 import {Table, Trash, ArrowRight} from 'components/common/icons';
 
 const defaultRemoveDataset = datasetKey => {};
@@ -54,10 +54,7 @@ const DataRowCount = styled.div`
 `;
 
 export const DatasetTag = ({onClick, dataset}) => (
-  <DatasetTagWrapper
-    className="source-data-tag"
-    onClick={onClick}
-  >
+  <DatasetTagWrapper className="source-data-tag" onClick={onClick}>
     <Square color={dataset.color} />
     <span className="dataset-name">{dataset.label}</span>
   </DatasetTagWrapper>
@@ -75,11 +72,16 @@ const SourceDataCatalog = ({
         <DatasetTitle clickable={Boolean(showDatasetTable)}>
           <DatasetTag
             dataset={dataset}
-            onClick={showDatasetTable ? () => showDatasetTable(dataset.id) : null}
+            onClick={
+              showDatasetTable ? () => showDatasetTable(dataset.id) : null
+            }
           />
           {showDatasetTable ? <ArrowRight height="12px" /> : null}
           {showDatasetTable ? (
-            <ShowDataTable id={dataset.id} showDatasetTable={showDatasetTable} />
+            <ShowDataTable
+              id={dataset.id}
+              showDatasetTable={showDatasetTable}
+            />
           ) : null}
           {showDeleteDataset ? (
             <RemoveDataset
@@ -111,10 +113,7 @@ const ShowDataTable = ({id, showDatasetTable}) => (
     data-tip
     data-for={`data-table-${id}`}
   >
-    <Table
-      height="16px"
-      onClick={() => showDatasetTable(id)}
-    />
+    <Table height="16px" onClick={() => showDatasetTable(id)} />
     <Tooltip id={`data-table-${id}`} effect="solid">
       <span>Show data table</span>
     </Tooltip>

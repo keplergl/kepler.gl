@@ -10,7 +10,8 @@ export const pointPosAccessor = ({lat, lng, altitude}) => d => [
   altitude && altitude.fieldIdx > -1 ? d.data[altitude.fieldIdx] : 0
 ];
 
-export const pointPosResolver = ({lat, lng, altitude}) => `${lat.fieldIdx}-${lng.fieldIdx}-${altitude ? altitude.fieldIdx : 'z'}`;
+export const pointPosResolver = ({lat, lng, altitude}) =>
+  `${lat.fieldIdx}-${lng.fieldIdx}-${altitude ? altitude.fieldIdx : 'z'}`;
 export const pointRequiredColumns = ['lat', 'lng'];
 export const pointOptionalColumns = ['altitude'];
 
@@ -70,23 +71,31 @@ export default class PointLayer extends Layer {
   }
 
   formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
-    const {colorScale, colorDomain, colorField, color, columns, sizeField, sizeScale, sizeDomain,
-      visConfig: {radiusRange, fixedRadius, colorRange}} = this.config;
-
-    // point color
-    const cScale = colorField && this.getVisChannelScale(
+    const {
       colorScale,
       colorDomain,
-      colorRange.colors.map(hexToRgb)
-    );
-
-    // point radius
-    const rScale = sizeField && this.getVisChannelScale(
+      colorField,
+      color,
+      columns,
+      sizeField,
       sizeScale,
       sizeDomain,
-      radiusRange,
-      fixedRadius
-    );
+      visConfig: {radiusRange, fixedRadius, colorRange}
+    } = this.config;
+
+    // point color
+    const cScale =
+      colorField &&
+      this.getVisChannelScale(
+        colorScale,
+        colorDomain,
+        colorRange.colors.map(hexToRgb)
+      );
+
+    // point radius
+    const rScale =
+      sizeField &&
+      this.getVisChannelScale(sizeScale, sizeDomain, radiusRange, fixedRadius);
 
     const getPosition = this.getPosition(columns);
 
@@ -95,8 +104,12 @@ export default class PointLayer extends Layer {
     }
 
     let data;
-    if (oldLayerData && oldLayerData.data && opt.sameData
-      && oldLayerData.getPosition === getPosition) {
+    if (
+      oldLayerData &&
+      oldLayerData.data &&
+      opt.sameData &&
+      oldLayerData.getPosition === getPosition
+    ) {
       data = oldLayerData.data;
     } else {
       data = filteredIndex.reduce((accu, index) => {
@@ -116,11 +129,11 @@ export default class PointLayer extends Layer {
       }, []);
     }
 
-    const getRadius = d => rScale ?
-      this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
+    const getRadius = d =>
+      rScale ? this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
 
-    const getColor = d => cScale ?
-      this.getEncodedChannelValue(cScale, d.data, colorField) : color;
+    const getColor = d =>
+      cScale ? this.getEncodedChannelValue(cScale, d.data, colorField) : color;
 
     return {
       data,
@@ -135,8 +148,14 @@ export default class PointLayer extends Layer {
     this.updateMeta({bounds});
   }
 
-  renderLayer({data, idx, layerInteraction, objectHovered, mapState, interactionConfig}) {
-
+  renderLayer({
+    data,
+    idx,
+    layerInteraction,
+    objectHovered,
+    mapState,
+    interactionConfig
+  }) {
     const layerProps = {
       outline: this.config.visConfig.outline,
       radiusMinPixels: 1,
@@ -171,30 +190,35 @@ export default class PointLayer extends Layer {
 
     return [
       // base layer
-      interactionConfig.brush.enabled ?
-        new ScatterplotBrushingLayer({
-          ...baseLayerProp,
-          id: `${this.id}-brush`,
-          enableBrushing: true,
-          brushRadius: interactionConfig.brush.config.size * 1000
-        }) :
-        new ScatterplotLayer({
-          id: this.id,
-          ...baseLayerProp
-        }),
+      interactionConfig.brush.enabled
+        ? new ScatterplotBrushingLayer({
+            ...baseLayerProp,
+            id: `${this.id}-brush`,
+            enableBrushing: true,
+            brushRadius: interactionConfig.brush.config.size * 1000
+          })
+        : new ScatterplotLayer({
+            id: this.id,
+            ...baseLayerProp
+          }),
 
       // hover layer
-      ...this.isLayerHovered(objectHovered) ?
-        [new ScatterplotLayer({
-          ...layerProps,
-          id: `${this.id}-hovered`,
-          data: [{
-            color: this.config.highlightColor,
-            position: data.getPosition(objectHovered.object),
-            radius: data.getRadius(objectHovered.object)
-          }],
-          pickable: false
-        })] : []
+      ...(this.isLayerHovered(objectHovered)
+        ? [
+            new ScatterplotLayer({
+              ...layerProps,
+              id: `${this.id}-hovered`,
+              data: [
+                {
+                  color: this.config.highlightColor,
+                  position: data.getPosition(objectHovered.object),
+                  radius: data.getRadius(objectHovered.object)
+                }
+              ],
+              pickable: false
+            })
+          ]
+        : [])
     ];
   }
 }

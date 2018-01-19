@@ -2,16 +2,14 @@ import React, {PropTypes, Component} from 'react';
 
 const identity = state => state;
 
-const mergeSelectors =
-  (parentSelector, childSelector) =>
-    state =>
-      childSelector(parentSelector(state));
+const mergeSelectors = (parentSelector, childSelector) => state =>
+  childSelector(parentSelector(state));
 
-const computeSelector = (props, ctx) => (
+const computeSelector = (props, ctx) =>
   mergeSelectors(
     ctx.selector ? ctx.selector : identity,
     props.selector ? props.selector : identity
-  ));
+  );
 
 // store the parent selector in the parent context
 // and return the parent component
@@ -20,24 +18,24 @@ const computeSelector = (props, ctx) => (
 // as well as prop to the given component
 const withLocalSelector = ParentComponent => {
   class WithConnectSelector extends Component {
-    constructor(props, ctx){
+    constructor(props, ctx) {
       super(props, ctx);
 
       this.selector = computeSelector(props, ctx);
     }
 
-    getChildContext(){
+    getChildContext() {
       return {
         selector: this.selector
-      }
+      };
     }
 
-    componentWillReceiveProps(nextProps, nextContext){
+    componentWillReceiveProps(nextProps, nextContext) {
       this.selector = computeSelector(nextProps, nextContext);
     }
 
-    render(){
-      return <ParentComponent {...this.props} selector={this.selector}/>
+    render() {
+      return <ParentComponent {...this.props} selector={this.selector} />;
     }
   }
 
@@ -49,7 +47,7 @@ const withLocalSelector = ParentComponent => {
     selector: PropTypes.func
   };
 
-  return WithConnectSelector
+  return WithConnectSelector;
 };
 
 export default withLocalSelector;

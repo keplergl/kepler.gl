@@ -13,7 +13,8 @@ const SingleSelectFilter = ({filter, setFilter}) => (
       searchable={false}
       displayOption={d => String(d)}
       getOptionValue={d => d}
-      onChange={setFilter}/>
+      onChange={setFilter}
+    />
   </SidePanelSection>
 );
 

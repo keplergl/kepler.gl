@@ -17,9 +17,11 @@ export const LOAD_BUILDING_TILE_TASK = taskCreator(
           } else if (!result.features) {
             resolve(null);
           } else {
-
-            const cleaned = result.features.filter(f =>
-              (f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon') && f.properties.height
+            const cleaned = result.features.filter(
+              f =>
+                (f.geometry.type === 'Polygon' ||
+                  f.geometry.type === 'MultiPolygon') &&
+                f.properties.height
             );
 
             resolve(cleaned);
@@ -33,13 +35,14 @@ export const LOAD_BUILDING_TILE_TASK = taskCreator(
 
 export const LOAD_FILE_TASK = taskCreator(
   ({fileBlob, info, handler, processor}, success, error) =>
-    handler(fileBlob, processor).then(result => {
-      if (!result) {
-        throw new Error('fail to load data')
-      } else {
-        success({data: result, info});
-      }
-    })
+    handler(fileBlob, processor)
+      .then(result => {
+        if (!result) {
+          throw new Error('fail to load data');
+        } else {
+          success({data: result, info});
+        }
+      })
       .catch(err => error(err)),
 
   'LOAD_FILE_TASK'

@@ -19,7 +19,7 @@ export function layerTypeChange(oldLayer, newType) {
 
 export function layerVisualChannelConfigChange(oldLayer, newConfig, channel) {
   return {
-    type: ActionTypes.LAYER_VISUAL_CHANNEL_CONFIG_CHANGE,
+    type: ActionTypes.LAYER_VISUAL_CHANNEL_CHANGE,
     oldLayer,
     newConfig,
     channel
@@ -51,7 +51,9 @@ export function interactionConfigChange(config) {
 export function setFilter(idx, prop, value) {
   return {
     type: ActionTypes.SET_FILTER,
-    idx, prop, value
+    idx,
+    prop,
+    value
   };
 }
 
@@ -93,14 +95,14 @@ export function removeDataset(key) {
   return {
     type: ActionTypes.REMOVE_DATASET,
     key
-  }
+  };
 }
 
 export function showDatasetTable(dataId) {
   return {
     type: ActionTypes.SHOW_DATASET_TABLE,
     dataId
-  }
+  };
 }
 
 /**
@@ -177,7 +179,7 @@ export function setVisibleLayersForMap(mapIndex, layerIds) {
     type: ActionTypes.SET_VISIBLE_LAYERS_FOR_MAP,
     mapIndex,
     layerIds
-  }
+  };
 }
 
 export function setFilterPlot(idx, newProp) {
@@ -185,19 +187,19 @@ export function setFilterPlot(idx, newProp) {
     type: ActionTypes.SET_FILTER_PLOT,
     idx,
     newProp
-  }
+  };
 }
 
 export function loadFiles(files) {
   return {
     type: ActionTypes.LOAD_FILES,
     files
-  }
+  };
 }
 
 export function loadFilesErr(error) {
   return {
     type: ActionTypes.LOAD_FILES_ERR,
     error
-  }
+  };
 }

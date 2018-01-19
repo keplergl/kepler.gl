@@ -1,10 +1,7 @@
 import {HexagonLayer} from 'deck.gl';
 import {pointToHexbin} from './hexagon-aggregator';
 
-import {
-  getColorValueDomain,
-  getColorScaleFunction
-} from '../layer-utils/utils';
+import {getColorValueDomain, getColorScaleFunction} from '../layer-utils/utils';
 import EnhancedHexagonCellLayer from './enhanced-hexagon-cell-layer';
 
 const defaultProps = {
@@ -15,7 +12,6 @@ const defaultProps = {
 
 export default class EnhancedHexagonLayer extends HexagonLayer {
   getDimensionUpdaters() {
-
     const dimensionUpdaters = super.getDimensionUpdaters();
     // add colorScale to dimension updates
     dimensionUpdaters.getColor[1].triggers.push('colorScale');

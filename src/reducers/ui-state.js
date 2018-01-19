@@ -1,14 +1,10 @@
 import {handleActions} from 'redux-actions';
-import ActionTypes from '../constants/action-types';
-import {LAYER_CONFIG_ID, DELETE_DATA_ID} from '../constants/default-settings';
-
-const {
-  QUERY_BEGIN,
-  TOGGLE_SIDE_PANEL,
-  TOGGLE_MODAL,
-  OPEN_DELETE_MODAL,
-  UPDATE_SAVING_STATUS
-} = ActionTypes;
+import ActionTypes from 'constants/action-types';
+import {
+  toggleModalUpdater,
+  toggleSidePanelUpdater,
+  openDeleteModalUpdater
+} from './ui-state-updaters';
 
 export const INITIAL_UI_STATE = {
   activeSidePanel: null,
@@ -17,50 +13,14 @@ export const INITIAL_UI_STATE = {
   datasetKeyToRemove: null
 };
 
-/* Transition Functions */
-export const onToggleSidePanel = (state, {payload: id}) => {
-  if (id === state.activeSidePanel) {
-    return state;
-  }
-
-  if (id === LAYER_CONFIG_ID) {
-    return {
-      ...state,
-      isNavCollapsed: true,
-      currentModal: id
-    }
-  }
-
-  return {
-    ...state,
-    isNavCollapsed: true,
-    activeSidePanel: id
-  };
-};
-
-export const onToggleModal = (state, {payload: id}) => ({
-  ...state,
-  currentModal: id
-});
-
-export const onOpenDeleteModal = (state, {payload: datasetKeyToRemove}) => ({
-  ...state,
-  currentModal: DELETE_DATA_ID,
-  datasetKeyToRemove
-});
-
-export const closeAddDataModel = (state) => ({
-  ...state,
-  currentModal: false // we always set to false since we show the dialog at the beginning
-});
-
 /* Reducer */
-const uiStateReducer = handleActions({
-  [TOGGLE_SIDE_PANEL]: onToggleSidePanel,
-  [TOGGLE_MODAL]: onToggleModal,
-  [OPEN_DELETE_MODAL]: onOpenDeleteModal,
-  [QUERY_BEGIN]: closeAddDataModel,
-  [UPDATE_SAVING_STATUS]: closeAddDataModel
-}, INITIAL_UI_STATE);
+const uiStateReducer = handleActions(
+  {
+    [ActionTypes.TOGGLE_SIDE_PANEL]: toggleSidePanelUpdater,
+    [ActionTypes.TOGGLE_MODAL]: toggleModalUpdater,
+    [ActionTypes.OPEN_DELETE_MODAL]: openDeleteModalUpdater
+  },
+  INITIAL_UI_STATE
+);
 
 export default uiStateReducer;

@@ -26,22 +26,29 @@ const chartH = 52;
 const containerH = 78;
 
 export default class RangePlot extends Component {
-  domainSelector = props => props.lineChart && props.lineChart.xDomain;
-  hintFormatter = createSelector(
-    this.domainSelector,
-    domain => getTimeWidgetHintFormatter(domain)
-  );
-
   state = {
     hoveredDP: null
   };
 
-  onMouseMove = (hoveredDP) => {
+  domainSelector = props => props.lineChart && props.lineChart.xDomain;
+  hintFormatter = createSelector(this.domainSelector, domain =>
+    getTimeWidgetHintFormatter(domain)
+  );
+
+  onMouseMove = hoveredDP => {
     this.setState({hoveredDP});
   };
 
   render() {
-    const {onBrush, range, value, width, plotType, lineChart, histogram} = this.props;
+    const {
+      onBrush,
+      range,
+      value,
+      width,
+      plotType,
+      lineChart,
+      histogram
+    } = this.props;
     const domain = [histogram[0].x0, histogram[histogram.length - 1].x1];
 
     const brushComponent = (
@@ -55,11 +62,13 @@ export default class RangePlot extends Component {
     );
 
     return (
-      <div style={{
-        height: `${containerH}px`,
-        position: 'relative'
-      }}>
-        {plotType === 'lineChart' ?
+      <div
+        style={{
+          height: `${containerH}px`,
+          position: 'relative'
+        }}
+      >
+        {plotType === 'lineChart' ? (
           <LineChart
             hoveredDP={this.state.hoveredDP}
             width={width}
@@ -70,7 +79,8 @@ export default class RangePlot extends Component {
             yDomain={lineChart.yDomain}
             hintFormat={this.hintFormatter(this.props)}
             data={lineChart.series}
-          /> :
+          />
+        ) : (
           <Histogram
             width={width}
             height={chartH}
@@ -79,15 +89,22 @@ export default class RangePlot extends Component {
             histogram={histogram}
             brushComponent={brushComponent}
           />
-        }
+        )}
       </div>
     );
   }
-};
+}
 
 RangePlot.propTypes = propTypes;
 
-const Histogram = ({width, height, margin, histogram, value, brushComponent}) => {
+const Histogram = ({
+  width,
+  height,
+  margin,
+  histogram,
+  value,
+  brushComponent
+}) => {
   const domain = [histogram[0].x0, histogram[histogram.length - 1].x1];
 
   const highlightedPadding = histogram.length / 40;
@@ -108,7 +125,7 @@ const Histogram = ({width, height, margin, histogram, value, brushComponent}) =>
 
   return (
     <svg width={width} height={height} style={{marginTop: `${margin.top}px`}}>
-      <g className='histogram-bars'>
+      <g className="histogram-bars">
         {histogram.map(bar => {
           const inRange = bar.x0 >= value[0] && bar.x1 <= value[1];
           const fill = inRange ? highlightedColor : unHighlightedColor;
@@ -130,7 +147,7 @@ const Histogram = ({width, height, margin, histogram, value, brushComponent}) =>
       </g>
       {brushComponent}
     </svg>
-  )
+  );
 };
 
 const LineChartWrapper = styled.div`
@@ -140,17 +157,25 @@ const LineChartWrapper = styled.div`
   }
 `;
 
-const LineChart = ({width, height, yDomain, hintFormat, hoveredDP, margin, color, data, onMouseMove, children}) => {
+const LineChart = ({
+  width,
+  height,
+  yDomain,
+  hintFormat,
+  hoveredDP,
+  margin,
+  color,
+  data,
+  onMouseMove,
+  children
+}) => {
   const brushData = [
     {x: data[0].x, y: yDomain[1], customComponent: () => children}
   ];
 
   return (
     <LineChartWrapper>
-      <XYPlot
-        width={width}
-        height={height}
-        margin={{...margin, bottom: 12}}>
+      <XYPlot width={width} height={height} margin={{...margin, bottom: 12}}>
         <LineSeries
           strokeWidth={2}
           color={color}
@@ -162,17 +187,22 @@ const LineChart = ({width, height, yDomain, hintFormat, hoveredDP, margin, color
           color={color}
           size={3}
         />
-        <CustomSVGSeries data={brushData}/>
-        {hoveredDP ? (<Hint value={hoveredDP}>
-          <HintContent {...hoveredDP} format={val => moment.utc(val).format(hintFormat)}/>
-        </Hint>) : null}
+        <CustomSVGSeries data={brushData} />
+        {hoveredDP ? (
+          <Hint value={hoveredDP}>
+            <HintContent
+              {...hoveredDP}
+              format={val => moment.utc(val).format(hintFormat)}
+            />
+          </Hint>
+        ) : null}
       </XYPlot>
     </LineChartWrapper>
   );
 };
 
 const StyledHint = styled.div`
-  background-color: #D3D8E0;
+  background-color: #d3d8e0;
   border-radius: 2px;
   color: ${props => props.theme.textColorLT};
   font-size: 9px;

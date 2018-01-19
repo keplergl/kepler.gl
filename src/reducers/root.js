@@ -3,10 +3,7 @@ import {handleActions} from 'redux-actions';
 import {actionFor, updateProperty} from '../actions/action-wrapper';
 import coreReducer from './core';
 
-import {
-  REGISTER_ENTRY,
-  DELETE_ENTRY
-} from '../actions/identity-actions';
+import {REGISTER_ENTRY, DELETE_ENTRY} from '../actions/identity-actions';
 
 import {keplerGlInit} from '../actions/actions';
 /*
@@ -26,10 +23,13 @@ const handleRegisterEntry = (state, {payload: id}) => ({
 });
 
 const handleDeleteEntry = (state, {payload: id}) => {
-  return Object.keys(state).reduce((accu, curr) => ({
-    ...accu,
-    ...(curr === id ? {} : {[curr]: state[curr]})
-  }), {});
+  return Object.keys(state).reduce(
+    (accu, curr) => ({
+      ...accu,
+      ...(curr === id ? {} : {[curr]: state[curr]})
+    }),
+    {}
+  );
 };
 
 const keplerGlReducer = (state = initialCoreState, action) => {
@@ -40,32 +40,34 @@ const keplerGlReducer = (state = initialCoreState, action) => {
   });
 
   // perform additional state reducing (e.g. switch action.type etc...)
-  return handleActions({
-    [REGISTER_ENTRY]: handleRegisterEntry,
-    [DELETE_ENTRY]: handleDeleteEntry
-  }, initialCoreState)(state, action);
+  return handleActions(
+    {
+      [REGISTER_ENTRY]: handleRegisterEntry,
+      [DELETE_ENTRY]: handleDeleteEntry
+    },
+    initialCoreState
+  )(state, action);
 };
 
 function decorate(target) {
-
   // plugin to core reducer
   target.plugin = function plugin(customReducer) {
-
     // use 'function' keyword to enable 'this'
     return decorate((state = {}, action = {}) => {
-        let nextState = this(state, action);
-        Object.keys(nextState).forEach(id => {
-          // update child states
-          nextState = updateProperty(
-            nextState,
-            id,
-            customReducer(nextState[id], actionFor(id, action))
-          );
-        });
+      let nextState = this(state, action);
 
-        return nextState;
-      }
-    )
+      // for each entry in the staten
+      Object.keys(nextState).forEach(id => {
+        // update child states
+        nextState = updateProperty(
+          nextState,
+          id,
+          customReducer(nextState[id], actionFor(id, action))
+        );
+      });
+
+      return nextState;
+    });
   };
 
   return target;

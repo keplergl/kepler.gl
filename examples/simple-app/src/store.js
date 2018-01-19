@@ -1,7 +1,8 @@
 import {createStore, combineReducers, applyMiddleware, compose} from 'redux'
 import {keplerGlReducer} from 'kepler.gl';
 import appReducer from './app-reducer';
-import {taskMiddleware} from 'react-palm'
+import {taskMiddleware} from 'react-palm';
+import window from 'global/window';
 
 const reducers = combineReducers({
   keplerGl: keplerGlReducer,

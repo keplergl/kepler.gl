@@ -95,50 +95,58 @@ export function getFilterProps(data, field) {
   const filterDomain = getFieldDomain(data, field);
 
   switch (field.type) {
-  case ALL_FIELD_TYPES.real:
-  case ALL_FIELD_TYPES.integer:
-    type = FILTER_TYPES.range;
-    const typeOptions = [FILTER_TYPES.range];
-    value = filterDomain.domain;
-    return {
-      ...filterDomain,
-      value, type, fieldType, typeOptions
-    };
+    case ALL_FIELD_TYPES.real:
+    case ALL_FIELD_TYPES.integer:
+      type = FILTER_TYPES.range;
+      const typeOptions = [FILTER_TYPES.range];
+      value = filterDomain.domain;
+      return {
+        ...filterDomain,
+        value,
+        type,
+        fieldType,
+        typeOptions
+      };
 
-  case ALL_FIELD_TYPES.boolean:
-    type = FILTER_TYPES.select;
-    value = true;
-    return {
-      ...filterDomain,
-      type, value, fieldType
-    };
+    case ALL_FIELD_TYPES.boolean:
+      type = FILTER_TYPES.select;
+      value = true;
+      return {
+        ...filterDomain,
+        type,
+        value,
+        fieldType
+      };
 
-  case ALL_FIELD_TYPES.string:
-  case ALL_FIELD_TYPES.date:
+    case ALL_FIELD_TYPES.string:
+    case ALL_FIELD_TYPES.date:
+      type = FILTER_TYPES.multiSelect;
+      value = [];
+      return {
+        ...filterDomain,
+        type,
+        value,
+        fieldType
+      };
 
-    type = FILTER_TYPES.multiSelect;
-    value = [];
-    return {
-      ...filterDomain,
-      type, value, fieldType
-    };
+    case ALL_FIELD_TYPES.timestamp:
+      type = FILTER_TYPES.timeRange;
+      value = filterDomain.domain;
 
-  case ALL_FIELD_TYPES.timestamp:
+      return {
+        ...filterDomain,
+        type,
+        value,
+        fieldType
+      };
 
-    type = FILTER_TYPES.timeRange;
-    value = filterDomain.domain;
-
-    return {
-      ...filterDomain,
-      type, value, fieldType
-    };
-
-  default:
-    type = fieldType;
-    return {
-      ...filterDomain,
-      type, fieldType
-    };
+    default:
+      type = fieldType;
+      return {
+        ...filterDomain,
+        type,
+        fieldType
+      };
   }
 }
 
@@ -156,27 +164,24 @@ export function getFieldDomain(data, field) {
   let domain;
 
   switch (field.type) {
-  case ALL_FIELD_TYPES.real:
-  case ALL_FIELD_TYPES.integer:
+    case ALL_FIELD_TYPES.real:
+    case ALL_FIELD_TYPES.integer:
+      // calculate domain and step
+      return getNumericFieldDomain(data, valueAccessor);
 
-    // calculate domain and step
-    return getNumericFieldDomain(data, valueAccessor);
+    case ALL_FIELD_TYPES.boolean:
+      return {domain: [true, false]};
 
-  case ALL_FIELD_TYPES.boolean:
-    return {domain: [true, false]};
+    case ALL_FIELD_TYPES.string:
+    case ALL_FIELD_TYPES.date:
+      domain = ScaleUtils.getOrdinalDomain(data, valueAccessor);
+      return {domain};
 
-  case ALL_FIELD_TYPES.string:
-  case ALL_FIELD_TYPES.date:
+    case ALL_FIELD_TYPES.timestamp:
+      return getTimestampFieldDomain(data, valueAccessor);
 
-    domain = ScaleUtils.getOrdinalDomain(data, valueAccessor);
-    return {domain};
-
-  case ALL_FIELD_TYPES.timestamp:
-
-    return getTimestampFieldDomain(data, valueAccessor);
-
-  default:
-    return {domain: ScaleUtils.getOrdinalDomain(data, valueAccessor)};
+    default:
+      return {domain: ScaleUtils.getOrdinalDomain(data, valueAccessor)};
   }
 }
 
@@ -190,7 +195,6 @@ export function getFieldDomain(data, field) {
  * @returns {Number[]} filteredIndex
  */
 export function filterData(data, dataId, filters) {
-
   if (!data || !dataId) {
     // why would there not be any data? are we over doing this?
     return {data: [], filteredIndex: []};
@@ -200,22 +204,27 @@ export function filterData(data, dataId, filters) {
     return {data, filteredIndex: data.map((d, i) => i)};
   }
 
-  const appliedFilters = filters.filter(d =>
-  d.dataId === dataId && d.fieldIdx > -1 && d.value !== null);
+  const appliedFilters = filters.filter(
+    d => d.dataId === dataId && d.fieldIdx > -1 && d.value !== null
+  );
 
   // we save a reference of allData index here to access dataToFeature
   // in geojson and hexgonId layer
-  const {filtered, filteredIndex} = data.reduce((accu, d, i) => {
-    const matched = appliedFilters
-      .every(filter => isDataMatchFilter(d, filter, i));
+  const {filtered, filteredIndex} = data.reduce(
+    (accu, d, i) => {
+      const matched = appliedFilters.every(filter =>
+        isDataMatchFilter(d, filter, i)
+      );
 
-    if (matched) {
-      accu.filtered.push(d);
-      accu.filteredIndex.push(i);
-    }
+      if (matched) {
+        accu.filtered.push(d);
+        accu.filteredIndex.push(i);
+      }
 
-    return accu;
-  }, {filtered: [], filteredIndex: []});
+      return accu;
+    },
+    {filtered: [], filteredIndex: []}
+  );
 
   return {data: filtered, filteredIndex};
 }
@@ -235,22 +244,23 @@ export function isDataMatchFilter(data, filter, i) {
   }
 
   switch (filter.type) {
-  case FILTER_TYPES.range:
-    return isInRange(val, filter.value);
+    case FILTER_TYPES.range:
+      return isInRange(val, filter.value);
 
-  case FILTER_TYPES.timeRange:
+    case FILTER_TYPES.timeRange:
+      const timeVal = filter.mappedValue
+        ? filter.mappedValue[i]
+        : moment.utc(val).valueOf();
+      return isInRange(timeVal, filter.value);
 
-    const timeVal = filter.mappedValue ? filter.mappedValue[i] : moment.utc(val).valueOf();
-    return isInRange(timeVal, filter.value);
+    case FILTER_TYPES.multiSelect:
+      return filter.value.includes(val);
 
-  case FILTER_TYPES.multiSelect:
-    return filter.value.includes(val);
+    case FILTER_TYPES.select:
+      return filter.value === val;
 
-  case FILTER_TYPES.select:
-    return filter.value === val;
-
-  default:
-    return true;
+    default:
+      return true;
   }
 }
 
@@ -267,33 +277,34 @@ export function isDataMatchFilter(data, filter, i) {
 
 /* eslint-disable complexity */
 export function adjustValueToFilterDomain(value, {domain, type}) {
-
   if (!domain || !type) {
     return false;
   }
 
   switch (type) {
-  case FILTER_TYPES.range:
-  case FILTER_TYPES.timeRange:
-    if (!Array.isArray(value) || value.length !== 2) {
-      return domain.map(d => d);
-    }
+    case FILTER_TYPES.range:
+    case FILTER_TYPES.timeRange:
+      if (!Array.isArray(value) || value.length !== 2) {
+        return domain.map(d => d);
+      }
 
-    return value.map((d, i) =>
-      notNullorUndefined(d) && isInRange(d, domain) ? d : domain[i]);
+      return value.map(
+        (d, i) =>
+          notNullorUndefined(d) && isInRange(d, domain) ? d : domain[i]
+      );
 
-  case FILTER_TYPES.multiSelect:
-    if (!Array.isArray(value)) {
-      return [];
-    }
-    const filteredValue = value.filter(d => domain.includes(d));
-    return filteredValue.length ? filteredValue : [];
+    case FILTER_TYPES.multiSelect:
+      if (!Array.isArray(value)) {
+        return [];
+      }
+      const filteredValue = value.filter(d => domain.includes(d));
+      return filteredValue.length ? filteredValue : [];
 
-  case FILTER_TYPES.select:
-    return domain.includes(value) ? value : true;
+    case FILTER_TYPES.select:
+      return domain.includes(value) ? value : true;
 
-  default:
-    return null;
+    default:
+      return null;
   }
 }
 /* eslint-enable complexity */
@@ -387,7 +398,7 @@ function getHistogram(domain, mappedValue) {
   const histogram = histogramConstruct(domain, mappedValue, 50);
   const enlargedHistogram = histogramConstruct(domain, mappedValue, 100);
 
-  return {histogram, enlargedHistogram}
+  return {histogram, enlargedHistogram};
 }
 
 /**
@@ -420,8 +431,9 @@ export function getTimeWidgetTitleFormatter(domain) {
   }
 
   const diff = domain[1] - domain[0];
-  return diff > durationYear ? 'MM/DD/YY' :
-    diff > durationDay ? 'MM/DD hha' : 'MM/DD hh:mma';
+  return diff > durationYear
+    ? 'MM/DD/YY'
+    : diff > durationDay ? 'MM/DD hha' : 'MM/DD hh:mma';
 }
 
 export function getTimeWidgetHintFormatter(domain) {
@@ -430,11 +442,13 @@ export function getTimeWidgetHintFormatter(domain) {
   }
 
   const diff = domain[1] - domain[0];
-  return diff > durationYear ? 'MM/DD/YY' :
-    diff > durationWeek ? 'MM/DD' :
-    diff > durationDay ? 'MM/DD hha' :
-    diff > durationHour ? 'hh:mma' :
-      'hh:mm:ssa'
+  return diff > durationYear
+    ? 'MM/DD/YY'
+    : diff > durationWeek
+      ? 'MM/DD'
+      : diff > durationDay
+        ? 'MM/DD hha'
+        : diff > durationHour ? 'hh:mma' : 'hh:mm:ssa';
 }
 
 /**
@@ -448,22 +462,21 @@ export function isValidFilterValue({type, value}) {
     return false;
   }
   switch (type) {
-  case FILTER_TYPES.select:
-    return value === true || value === false;
+    case FILTER_TYPES.select:
+      return value === true || value === false;
 
-  case FILTER_TYPES.range:
-  case FILTER_TYPES.timeRange:
-    return Array.isArray(value) && value.every(v => v !== null && !isNaN(v));
+    case FILTER_TYPES.range:
+    case FILTER_TYPES.timeRange:
+      return Array.isArray(value) && value.every(v => v !== null && !isNaN(v));
 
-  case FILTER_TYPES.multiSelect:
-    return Array.isArray(value) && Boolean(value.length);
+    case FILTER_TYPES.multiSelect:
+      return Array.isArray(value) && Boolean(value.length);
 
-  case FILTER_TYPES.input:
-    return Boolean(value.length);
+    case FILTER_TYPES.input:
+      return Boolean(value.length);
 
-  default:
-    return true;
-
+    default:
+      return true;
   }
 }
 
@@ -477,10 +490,11 @@ export function getFilterPlot(filter, allData) {
   const {yAxis} = filter;
 
   // return lineChart
-  const series = allData.map((d, i) => ({
-    x: mappedValue[i],
-    y: d[yAxis.tableFieldIndex - 1]
-  }))
+  const series = allData
+    .map((d, i) => ({
+      x: mappedValue[i],
+      y: d[yAxis.tableFieldIndex - 1]
+    }))
     .filter(({x, y}) => Number.isFinite(x) && Number.isFinite(y))
     .sort((a, b) => ascending(a.x, b.x));
 
@@ -491,7 +505,6 @@ export function getFilterPlot(filter, allData) {
 }
 
 export function getDefaultFilterPlotType(filter) {
-
   const filterPlotTypes = SupportedPlotType[filter.type];
   if (!filterPlotTypes) {
     return null;

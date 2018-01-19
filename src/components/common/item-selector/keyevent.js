@@ -1,4 +1,3 @@
-
 /* eslint-disable no-use-before-define */
 const KeyEvent = KeyEvent || {};
 /* eslint-enable no-use-before-define */

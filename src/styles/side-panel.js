@@ -148,7 +148,6 @@ export const slider = {
 
 export const accordion = {
   ' .accordion': {
-
     border: panelBorder,
     borderBottom: 0,
 
