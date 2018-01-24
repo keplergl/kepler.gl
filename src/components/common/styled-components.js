@@ -177,23 +177,32 @@ export const InlineInput = Input.extend`
   ${props => props.theme.inlineInput};
 `;
 
-export const StyledLayerConfigGroupHeader = styled.div.attrs({
-  className: 'layer-config-group__header'
-})`
-  border-left: 2px solid ${props => props.theme.labelColor};
-  color: ${props => props.theme.textColor};
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 12px;
-  margin-left: -12px;
-  padding-left: 10px;
-  text-transform: capitalize;
-  letter-spacing: 0.2px;
-`;
+// export const StyledLayerConfigGroupHeader = styled.div.attrs({
+//   className: 'layer-config-group__header'
+// })`
+//   border-left: 2px solid ${props => props.theme.labelColor};
+//   color: ${props => props.theme.textColor};
+//   font-size: 12px;
+//   font-weight: 500;
+//   line-height: 12px;
+//   margin-left: -12px;
+//   padding-left: 10px;
+//   text-transform: capitalize;
+//   letter-spacing: 0.2px;
+// `;
+//
+// export const StyledLayerConfigGroup = styled.div.attrs({
+//   className: 'layer-config-group'
+// })`
+//   padding-left: 18px;
+//   margin-bottom: 18px;
+// `;
 
-export const StyledLayerConfigGroup = styled.div.attrs({
-  className: 'layer-config-group'
-})`
-  padding-left: 18px;
-  margin-bottom: 18px;
+export const StyledPanelDropdown = styled.div`
+  background-color: ${props => props.theme.panelBackground};
+  overflow-y: overlay;
+  box-shadow: ${props => props.theme.panelBoxShadow};
+  border-radius:  ${props => props.theme.panelBorderRadius};
+  margin-top: 2px;
+  max-height: 500px;
 `;

@@ -294,7 +294,7 @@ const switchButton = css`
 const inputSwitch = css`
   user-select: none;
   cursor: pointer;
-  line-height: ${props => props.theme.switchHeight}px;
+  line-height: 0;
   font-weight: 500;
   font-size: 12px;
   color: ${props => props.theme.label};

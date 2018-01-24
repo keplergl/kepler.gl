@@ -3,8 +3,8 @@ import {connect} from 'react-redux';
 import window from 'global/window';
 import KeplerGl, {updateVisData} from 'kepler.gl';
 
-import sampleData from './sample-data';
-import sampleTripData from './sample-trip-data';
+import sampleData from './data/sample-data';
+import sampleTripData from './data/sample-trip-data';
 
 class App extends Component {
   state = {
