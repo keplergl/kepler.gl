@@ -1,17 +1,16 @@
 import React, {Component} from 'react';
+import styled from 'styled-components';
 import PropTypes from 'prop-types';
-import classnames from 'classnames';
 import {sortable} from 'react-anything-sortable';
 
 import LayerConfigurator from './layer-configurator';
-import LayerPanelItem from 'components/common/layer-panel-item';
+import LayerPanelHeader from './layer-panel-header';
 import {DIMENSIONS} from 'constants/default-settings';
 
 const propTypes = {
   layer: PropTypes.object.isRequired,
   datasets: PropTypes.object.isRequired,
   idx: PropTypes.number.isRequired,
-  panelWidth: PropTypes.number.isRequired,
   layerConfigChange: PropTypes.func.isRequired,
   layerTypeChange: PropTypes.func.isRequired,
   openModal: PropTypes.func.isRequired,
@@ -21,6 +20,12 @@ const propTypes = {
   layerVisConfigChange: PropTypes.func,
   layerVisualChannelConfigChange: PropTypes.func
 };
+
+const PanelWrapper = styled.div`
+  font-size: 12px;
+  border-radius: 1px;
+  margin-bottom: 8px;
+`;
 
 @sortable
 export default class LayerPanel extends Component {
@@ -55,55 +60,54 @@ export default class LayerPanel extends Component {
     this.updateLayerConfig({isVisible});
   };
 
-  _toggleEnableConfig = event => {
-    event.stopPropagation();
+  _toggleEnableConfig = e => {
+    e.stopPropagation();
     const {layer: {config: {isConfigActive}}} = this.props;
     this.updateLayerConfig({isConfigActive: !isConfigActive});
   };
 
+  _removeLayer = e => {
+    e.stopPropagation();
+    this.props.removeLayer(this.props.idx);
+  };
   render() {
-    const {layer, idx, removeLayer, datasets, isAdding} = this.props;
+    const {layer, idx, datasets} = this.props;
     const {config} = layer;
     const {isConfigActive} = config;
 
     return (
-      <div
-        ref="container"
-        className={classnames(`layer-panel ${this.props.className}`, {
-          active: isConfigActive
-        })}
+      <PanelWrapper
+        active={isConfigActive}
+        className="layer-panel"
         style={this.props.style}
         onMouseDown={this.props.onMouseDown}
         onTouchStart={this.props.onTouchStart}
       >
-        <LayerPanelItem
+        <LayerPanelHeader
           isConfigActive={isConfigActive}
           id={layer.id}
           idx={idx}
           isVisible={config.isVisible}
           label={config.label}
           labelRCGColorValues={datasets[config.dataId].color}
+          layerType={layer.type}
           onToggleEnableConfig={this._toggleEnableConfig}
           onToggleVisibility={this._toggleVisibility}
           onUpdateLayerLabel={this._updateLayerLabel}
-          removeLayer={removeLayer}
+          onRemoveLayer={this._removeLayer}
         />
         {isConfigActive && (
           <LayerConfigurator
-            isAdding={isAdding}
             layer={layer}
             datasets={datasets}
             openModal={this.props.openModal}
-            panelWidth={
-              this.props.panelWidth - DIMENSIONS.layerPanelPadding * 2
-            }
             updateLayerConfig={this.updateLayerConfig}
             updateLayerVisualChannelConfig={this.updateLayerVisualChannelConfig}
             updateLayerType={this.updateLayerType}
             updateLayerVisConfig={this.updateLayerVisConfig}
           />
         )}
-      </div>
+      </PanelWrapper>
     );
   }
 }

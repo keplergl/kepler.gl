@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import {console as Console} from 'global/window';
 import {bindActionCreators} from 'redux';
 import request from 'd3-request';
+import styled from 'styled-components';
 import {connect as keplerGlConnect} from '../connect/keplergl-connect';
 
 import {ThemeProvider} from 'styled-components';
@@ -27,6 +28,34 @@ const defaultProps = {
   width: 800,
   height: 800
 };
+
+const GlobalStyle = styled.div`
+  font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
+  font-weight: 400;
+  font-size: .875em;
+  line-height: 1.71429;
+  
+  *,
+  *:before,
+  *:after {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+  }
+  
+  ul {
+    margin: 0;
+    padding: 0;
+  }
+  
+  li {
+    margin: 0;
+  }
+  
+  a {
+    text-decoration: none;
+  }
+`;
 
 class KeplerGL extends Component {
   componentDidMount() {
@@ -169,7 +198,7 @@ class KeplerGL extends Component {
     const containerW = mapState.width * (Number(isSplit) + 1);
     return (
       <ThemeProvider theme={theme}>
-        <div
+        <GlobalStyle
           style={{position: 'relative'}}
           className="kepler-gl"
           id={`kepler-gl__${id}`}
@@ -180,7 +209,7 @@ class KeplerGL extends Component {
           {!mapState.isFullScreen && (
             <SidePanel
               {...sideFields}
-              width={DIMENSIONS.sideBarWidth}
+              width={DIMENSIONS.sidePanel.width}
               containerW={containerW}
               containerH={mapState.height}
               height={mapState.height}
@@ -195,11 +224,11 @@ class KeplerGL extends Component {
             datasets={datasets}
             uiState={uiState}
             visStateActions={visStateActions}
-            sidePanelWidth={DIMENSIONS.sideBarWidth}
+            sidePanelWidth={DIMENSIONS.sidePanel.width}
             sideNavWidth={DIMENSIONS.sideNavC}
             containerW={containerW}
           />
-        </div>
+        </GlobalStyle>
       </ThemeProvider>
     );
   }

@@ -50,19 +50,35 @@ export const StyledSwitch = styled.div`
   }
 `;
 
-export const PanelLabel = styled.label`
+export const PanelLabel = styled.label.attrs({
+  className: 'side-panel-panel__label'
+})`
   color: ${props => props.theme.labelColor};
+  display: inline-block;
   font-size: 11px;
   font-weight: 400;
+  margin-bottom: 4px;
+  text-transform: capitalize;
 `;
 
-export const SidePanelSection = styled.div`
+export const PanelLabelWrapper = styled.div.attrs({
+  className: 'side-panel-panel__label-wrapper'
+})`
+  display: flex;
+  align-items: self-start;
+`;
+
+export const SidePanelSection = styled.div.attrs({
+  className: 'side-panel-section'
+})`
   margin-bottom: 12px;
   opacity: ${props => (props.disabled ? 0.4 : 1)};
   pointer-events: ${props => (props.disabled ? 'none' : 'all')};
 `;
 
-export const SidePanelDivider = styled.div`
+export const SidePanelDivider = styled.div.attrs({
+  className: 'side-panel-divider'
+})`
   border-bottom: 1px solid ${props => props.theme.panelBorderColor};
   height: 12px;
   margin-bottom: 12px;
@@ -77,6 +93,11 @@ export const Tooltip = styled(ReactTooltip)`
     &.type-dark {
       background-color: ${props => props.theme.tooltipBg};
       color: ${props => props.theme.tooltipColor};
+      &.place-bottom {
+        :after {
+          border-bottom-color: ${props => props.theme.tooltipBg};
+        }
+      }
 
       &.place-top {
         :after {
@@ -99,7 +120,9 @@ export const Tooltip = styled(ReactTooltip)`
   }
 `;
 
-export const Button = styled.div`
+export const Button = styled.div.attrs({
+  className: 'button'
+})`
   align-items: center;
   background-color: ${props =>
     props.secondary
@@ -115,12 +138,13 @@ export const Button = styled.div`
   font-size: ${props => (props.large ? '14px' : '11px')};
   font-weight: 500;
   justify-content: center;
+  letter-spacing: 0.3px;
+  line-height: 14px;
   outline: 0;
+  padding: ${props => (props.large ? '14px 32px' : '9px 12px')};
   text-align: center;
   transition: ${props => props.theme.transition};
   vertical-align: middle;
-  line-height: 14px;
-  padding: ${props => (props.large ? '14px 32px' : '9px 12px')};
   width: ${props => props.width || 'auto'};
 
   :hover,
@@ -143,4 +167,33 @@ export const Button = styled.div`
   svg {
     margin-right: 8px;
   }
+`;
+
+export const Input = styled.input`
+  ${props => props.theme.input};
+`;
+
+export const InlineInput = Input.extend`
+  ${props => props.theme.inlineInput};
+`;
+
+export const StyledLayerConfigGroupHeader = styled.div.attrs({
+  className: 'layer-config-group__header'
+})`
+  border-left: 2px solid ${props => props.theme.labelColor};
+  color: ${props => props.theme.textColor};
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 12px;
+  margin-left: -12px;
+  padding-left: 10px;
+  text-transform: capitalize;
+  letter-spacing: 0.2px;
+`;
+
+export const StyledLayerConfigGroup = styled.div.attrs({
+  className: 'layer-config-group'
+})`
+  padding-left: 18px;
+  margin-bottom: 18px;
 `;

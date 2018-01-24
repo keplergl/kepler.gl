@@ -35,6 +35,7 @@ const DatasetTagWrapper = styled.div`
   display: inline-block;
   color: ${props => props.theme.textColor};
   font-size: 11px;
+  letter-spacing: 0.2px;
 
   .dataset-name {
     padding: 0 4px 0 12px;
@@ -55,7 +56,7 @@ const DataRowCount = styled.div`
 
 export const DatasetTag = ({onClick, dataset}) => (
   <DatasetTagWrapper className="source-data-tag" onClick={onClick}>
-    <Square color={dataset.color} />
+    <Square className="dataset-color" color={dataset.color} />
     <span className="dataset-name">{dataset.label}</span>
   </DatasetTagWrapper>
 );

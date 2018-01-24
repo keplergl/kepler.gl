@@ -1,7 +1,7 @@
 const {h3ToGeo, h3ToGeoBoundary} = require('@uber/h3-transitional');
-  // process.env.BROWSER || process.env.NODE_ENV === 'test'
-  //   ? require('@uber/h3-transitional')
-  //   : {h3ToGeo: null, h3ToGeoBoundary: null, V2: null};
+// process.env.BROWSER || process.env.NODE_ENV === 'test'
+//   ? require('@uber/h3-transitional')
+//   : {h3ToGeo: null, h3ToGeoBoundary: null, V2: null};
 
 // get vertices should return [lon, lat]
 export function getVertices({id}) {

@@ -1,27 +1,26 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {rgb} from 'd3-color';
-import {Switch} from '@uber/react-switch';
+import styled from 'styled-components';
 
-import RangeSlider from 'components/common/range-slider';
 import {
   PanelLabel,
-  SidePanelSection
+  SidePanelSection,
+  StyledLayerConfigGroupHeader,
+  StyledLayerConfigGroup
 } from 'components/common/styled-components';
-import InfoHelper from 'components/common/info-helper';
 import ItemSelector from 'components/common/item-selector/item-selector';
 
 import VisConfigByFieldSelector from './vis-config-by-field-selector';
 import LayerColumnConfig from './layer-column-config';
-import ColorRangeSelector from './color-range-selector';
 import DimensionScaleSelector from './dimension-scale-selector';
-import ColorSingleSelector from './color-single-selector';
+import ColorSelector from './color-selector';
 import SourceDataSelector from '../source-data-selector';
-
+import VisConfigSwitch from './vis-config-switch';
+import VisConfigSlider from './vis-config-slider';
 import {LAYER_VIS_CONFIGS} from 'keplergl-layers/layer-factory';
+import Switch from 'components/common/switch';
 
 import {capitalizeFirstLetter} from 'utils/utils';
-import {hexToRgb} from 'utils/color-utils';
 
 import {
   FIELD_OPTS,
@@ -33,12 +32,23 @@ const propTypes = {
   layer: PropTypes.object.isRequired,
   datasets: PropTypes.object.isRequired,
   openModal: PropTypes.func.isRequired,
-  panelWidth: PropTypes.number.isRequired,
   updateLayerConfig: PropTypes.func.isRequired,
   updateLayerType: PropTypes.func.isRequired,
   updateLayerVisConfig: PropTypes.func.isRequired,
   updateLayerVisualChannelConfig: PropTypes.func.isRequired
 };
+
+const StyledLayerConfigurator = styled.div.attrs({
+  className: 'layer-panel__config'
+})`
+  margin-top: 12px;
+`;
+
+const StyledLayerVisualConfigurator = styled.div.attrs({
+  className: 'layer-panel__config__visualC-config'
+})`
+  margin-top: 12px;
+`;
 
 export default class LayerConfigurator extends Component {
   _renderPointLayerConfig(props) {
@@ -56,60 +66,75 @@ export default class LayerConfigurator extends Component {
     layerConfiguratorProps
   }) {
     return (
-      <div className="push-small--top">
+      <StyledLayerVisualConfigurator>
         {/* Color */}
-        <LayerColorSelector {...layerConfiguratorProps} />
-        <ChannelByValueSelector
-          channel={layer.visualChannels.color}
-          {...layerChannelConfigProps}
-        />
-        {layer.config.colorField ? (
-          <ColorRangeConfig {...visConfiguratorProps} />
-        ) : null}
-        <VisConfigSlider
-          {...LAYER_VIS_CONFIGS.opacity}
-          {...visConfiguratorProps}
-        />
+        <LayerConfigGroup label={'color'}>
+          {layer.config.colorField ? (
+            <ColorRangeConfig {...visConfiguratorProps} />
+          ) : (
+            <LayerColorSelector {...layerConfiguratorProps} />
+          )}
+          <ChannelByValueSelector
+            channel={layer.visualChannels.color}
+            {...layerChannelConfigProps}
+          />
+          <VisConfigSlider
+            {...LAYER_VIS_CONFIGS.opacity}
+            {...visConfiguratorProps}
+          />
+        </LayerConfigGroup>
+
         {/* Radius */}
-        <VisConfigSlider
-          {...LAYER_VIS_CONFIGS.radius}
-          {...visConfiguratorProps}
-          disabled={Boolean(layer.config.sizeField)}
-        />
-        <ChannelByValueSelector
-          channel={layer.visualChannels.size}
-          {...layerChannelConfigProps}
-        />
-        <VisConfigSwitch
-          {...LAYER_VIS_CONFIGS.fixedRadius}
-          {...visConfiguratorProps}
-          disabled={!layer.config.sizeField}
-        />
-        <VisConfigSlider
-          {...LAYER_VIS_CONFIGS.radiusRange}
-          {...visConfiguratorProps}
-          disabled={
-            !layer.config.sizeField || layer.config.visConfig.fixedRadius
-          }
-        />
+        <LayerConfigGroup label={'radius'}>
+          {!layer.config.sizeField ? (
+            <VisConfigSlider
+              {...LAYER_VIS_CONFIGS.radius}
+              {...visConfiguratorProps}
+              label={false}
+              disabled={Boolean(layer.config.sizeField)}
+            />
+          ) : (
+            <VisConfigSlider
+              {...LAYER_VIS_CONFIGS.radiusRange}
+              {...visConfiguratorProps}
+              disabled={
+                !layer.config.sizeField || layer.config.visConfig.fixedRadius
+              }
+            />
+          )}
+          <ChannelByValueSelector
+            channel={layer.visualChannels.size}
+            {...layerChannelConfigProps}
+          />
+          {layer.config.sizeField ? (
+            <VisConfigSwitch
+              {...LAYER_VIS_CONFIGS.fixedRadius}
+              {...visConfiguratorProps}
+              disabled={!layer.config.sizeField}
+            />
+          ) : null}
+        </LayerConfigGroup>
+
         {/* outline */}
         {layer.type === LAYER_TYPES.point ? (
-          <VisConfigSwitch
+          <LayerConfigGroup
             {...LAYER_VIS_CONFIGS.outline}
             {...visConfiguratorProps}
-          />
-        ) : null}
-        {layer.type === LAYER_TYPES.point ? (
-          <VisConfigSlider
-            {...LAYER_VIS_CONFIGS.thickness}
-            {...visConfiguratorProps}
-            label={''}
-            disabled={!layer.config.visConfig.outline}
-          />
+          >
+            <VisConfigSlider
+              {...LAYER_VIS_CONFIGS.thickness}
+              {...visConfiguratorProps}
+              label={false}
+              disabled={!layer.config.visConfig.outline}
+            />
+          </LayerConfigGroup>
         ) : null}
         {/* high precision */}
-        <HighPrecisionSwitch {...visConfiguratorProps} />
-      </div>
+        <LayerConfigGroup
+          {...LAYER_VIS_CONFIGS['hi-precision']}
+          {...visConfiguratorProps}
+        />
+      </StyledLayerVisualConfigurator>
     );
   }
 
@@ -120,7 +145,7 @@ export default class LayerConfigurator extends Component {
     layerChannelConfigProps
   }) {
     return (
-      <div className="push-small--top">
+      <StyledLayerVisualConfigurator>
         {/* Cluster Radius */}
         <VisConfigSlider
           {...LAYER_VIS_CONFIGS.clusterRadius}
@@ -147,7 +172,7 @@ export default class LayerConfigurator extends Component {
           {...visConfiguratorProps}
           field={layer.config.colorField}
         />
-      </div>
+      </StyledLayerVisualConfigurator>
     );
   }
 
@@ -172,7 +197,7 @@ export default class LayerConfigurator extends Component {
     const colorByDescription = 'When off, color is based on count of points';
 
     return (
-      <div className="push-small--top">
+      <StyledLayerVisualConfigurator>
         <VisConfigSlider
           {...LAYER_VIS_CONFIGS.opacity}
           {...visConfiguratorProps}
@@ -235,7 +260,7 @@ export default class LayerConfigurator extends Component {
           {...visConfiguratorProps}
         />
         <HighPrecisionSwitch {...visConfiguratorProps} />
-      </div>
+      </StyledLayerVisualConfigurator>
     );
   }
 
@@ -246,7 +271,7 @@ export default class LayerConfigurator extends Component {
     layerChannelConfigProps
   }) {
     return (
-      <div className="push-small--top">
+      <StyledLayerVisualConfigurator>
         {/* Color */}
         <LayerColorSelector {...layerConfiguratorProps} />
         <ChannelByValueSelector
@@ -276,7 +301,7 @@ export default class LayerConfigurator extends Component {
           disabled={!layer.config.sizeField}
         />
         <HighPrecisionSwitch {...visConfiguratorProps} />
-      </div>
+      </StyledLayerVisualConfigurator>
     );
   }
 
@@ -291,42 +316,56 @@ export default class LayerConfigurator extends Component {
     layerChannelConfigProps
   }) {
     return (
-      <div className="push-small--top">
+      <StyledLayerVisualConfigurator>
         {/* Color */}
-        <LayerColorSelector {...layerConfiguratorProps} label="Source Color" />
-        <VisColorSelector
-          {...visConfiguratorProps}
-          {...LAYER_VIS_CONFIGS.targetColor}
-        />
-        <ChannelByValueSelector
-          channel={layer.visualChannels.color}
-          {...layerChannelConfigProps}
-        />
-        {layer.config.colorField ? (
-          <ColorRangeConfig {...visConfiguratorProps} />
-        ) : null}
-        <VisConfigSlider
-          {...LAYER_VIS_CONFIGS.opacity}
-          {...visConfiguratorProps}
-        />
+        <LayerConfigGroup label={'color'}>
+          <LayerColorSelector
+            {...layerConfiguratorProps}
+            label="Source Color"
+          />
+          <VisColorSelector
+            {...visConfiguratorProps}
+            {...LAYER_VIS_CONFIGS.targetColor}
+          />
+          <ChannelByValueSelector
+            channel={layer.visualChannels.color}
+            {...layerChannelConfigProps}
+          />
+          {layer.config.colorField ? (
+            <ColorRangeConfig {...visConfiguratorProps} />
+          ) : null}
+          <VisConfigSlider
+            {...LAYER_VIS_CONFIGS.opacity}
+            {...visConfiguratorProps}
+          />
+        </LayerConfigGroup>
 
         {/* thickness */}
-        <VisConfigSlider
-          {...LAYER_VIS_CONFIGS.thickness}
-          {...visConfiguratorProps}
-        />
-        <ChannelByValueSelector
-          channel={layer.visualChannels.size}
-          {...layerChannelConfigProps}
-        />
-        <VisConfigSlider
-          {...LAYER_VIS_CONFIGS.strokeWidthRange}
-          {...visConfiguratorProps}
-          disabled={!layer.config.sizeField}
-        />
+        <LayerConfigGroup label={'stroke'}>
+          {layer.config.sizeField ? (
+            <VisConfigSlider
+              {...LAYER_VIS_CONFIGS.strokeWidthRange}
+              {...visConfiguratorProps}
+              disabled={!layer.config.sizeField}
+            />
+          ) : (
+            <VisConfigSlider
+              {...LAYER_VIS_CONFIGS.thickness}
+              {...visConfiguratorProps}
+            />
+          )}
+          <ChannelByValueSelector
+            channel={layer.visualChannels.size}
+            {...layerChannelConfigProps}
+          />
+        </LayerConfigGroup>
+
         {/* high precision */}
-        <HighPrecisionSwitch {...visConfiguratorProps} />
-      </div>
+        <LayerConfigGroup
+          {...LAYER_VIS_CONFIGS['hi-precision']}
+          {...visConfiguratorProps}
+        />
+      </StyledLayerVisualConfigurator>
     );
   }
 
@@ -339,7 +378,7 @@ export default class LayerConfigurator extends Component {
     const {meta: {featureTypes = {}}, config: {visConfig}} = layer;
 
     return (
-      <div className="push-small--top">
+      <StyledLayerVisualConfigurator>
         <LayerColorSelector {...layerConfiguratorProps} />
         <VisConfigSlider
           {...LAYER_VIS_CONFIGS.opacity}
@@ -437,18 +476,12 @@ export default class LayerConfigurator extends Component {
 
         {/* vis Switches */}
         <HighPrecisionSwitch {...visConfiguratorProps} />
-      </div>
+      </StyledLayerVisualConfigurator>
     );
   }
 
   render() {
-    const {
-      layer,
-      datasets,
-      panelWidth,
-      isAdding,
-      updateLayerConfig
-    } = this.props;
+    const {layer, datasets, updateLayerConfig} = this.props;
     const {fields = [], fieldPairs} = layer.config.dataId
       ? datasets[layer.config.dataId]
       : {};
@@ -456,7 +489,6 @@ export default class LayerConfigurator extends Component {
 
     const commonConfigProp = {
       layer,
-      panelWidth,
       fields
     };
 
@@ -479,33 +511,34 @@ export default class LayerConfigurator extends Component {
       layer.type && `_render${capitalizeFirstLetter(layer.type)}LayerConfig`;
 
     return (
-      <div className="soft-tiny layer-panel__config">
-        {Object.keys(datasets).length > 1 && (
-          <SourceDataSelector
-            datasets={datasets}
-            id={layer.id}
-            disabled={layer.tyep && config.columns}
-            dataId={config.dataId}
-            onSelect={value => updateLayerConfig({dataId: value})}
+      <StyledLayerConfigurator>
+        <LayerConfigGroup label={'basic'}>
+          {Object.keys(datasets).length > 1 && (
+            <SourceDataSelector
+              datasets={datasets}
+              id={layer.id}
+              disabled={layer.tyep && config.columns}
+              dataId={config.dataId}
+              onSelect={value => updateLayerConfig({dataId: value})}
+            />
+          )}
+          <LayerColumnConfig
+            layer={layer}
+            fields={fields}
+            fieldPairs={fieldPairs}
+            updateLayerConfig={updateLayerConfig}
+            updateLayerType={this.props.updateLayerType}
+            openModal={this.props.openModal}
           />
-        )}
-        <LayerColumnConfig
-          layer={layer}
-          fields={fields}
-          fieldPairs={fieldPairs}
-          updateLayerConfig={updateLayerConfig}
-          updateLayerType={this.props.updateLayerType}
-          openModal={this.props.openModal}
-        />
-        {!isAdding &&
-          this[renderTemplate] &&
+        </LayerConfigGroup>
+        {this[renderTemplate] &&
           this[renderTemplate]({
             layer,
             visConfiguratorProps,
             layerChannelConfigProps,
             layerConfiguratorProps
           })}
-      </div>
+      </StyledLayerConfigurator>
     );
   }
 }
@@ -515,70 +548,6 @@ LayerConfigurator.propTypes = propTypes;
 /*
  * Componentize config component into pure functional components
  */
-const VisConfigSwitch = ({
-  layer: {id, config},
-  property,
-  onChange,
-  label,
-  description,
-  disabled
-}) => (
-  <SidePanelSection disabled={Boolean(disabled)}>
-    <PanelLabel>{label || capitalizeFirstLetter(property)}</PanelLabel>
-    {description ? (
-      <div className="display--inline-block">
-        <InfoHelper description={description} id={`${id}-${property}`} />
-      </div>
-    ) : null}
-    <div className="display--inline-block float--right">
-      <Switch
-        className="micro text-uber-black-40"
-        style={{marginBottom: 0, marginRight: '-10px'}}
-        checked={config.visConfig[property]}
-        id={`${id}-${property}`}
-        label={' '}
-        onChange={() => onChange({[property]: !config.visConfig[property]})}
-        size="small"
-      />
-    </div>
-  </SidePanelSection>
-);
-
-/* eslint-disable max-params */
-export const VisConfigSlider = ({
-  layer: {config},
-  property,
-  label,
-  range,
-  step,
-  isRanged,
-  disabled,
-  onChange
-}) => (
-  <SidePanelSection disabled={Boolean(disabled)}>
-    <PanelLabel>
-      {typeof label === 'string'
-        ? label
-        : typeof label === 'function'
-          ? label(config)
-          : capitalizeFirstLetter(property)}
-    </PanelLabel>
-    <RangeSlider
-      minValue={range[0]}
-      maxValue={range[1]}
-      value0={isRanged ? config.visConfig[property][0] : range[0]}
-      value1={
-        isRanged ? config.visConfig[property][1] : config.visConfig[property]
-      }
-      step={step}
-      isRanged={Boolean(isRanged)}
-      showInput={true}
-      onChange={value => onChange({[property]: isRanged ? value : value[1]})}
-    />
-  </SidePanelSection>
-);
-/* eslint-enable max-params */
-
 const HighPrecisionSwitch = ({layer, onChange}) => (
   <VisConfigSwitch
     {...LAYER_VIS_CONFIGS['hi-precision']}
@@ -587,41 +556,32 @@ const HighPrecisionSwitch = ({layer, onChange}) => (
   />
 );
 
-const LayerColorSelector = ({layer, panelWidth, onChange, label}) => (
+const LayerColorSelector = ({layer, onChange, label}) => (
   <SidePanelSection disabled={layer.config.colorField}>
-    <PanelLabel>{label || 'Layer Color'}</PanelLabel>
-    <ColorSingleSelector
-      width={panelWidth}
-      setColor={hex => onChange({color: hexToRgb(hex)})}
-      selectedColor={rgb(...layer.config.color)
-        .toString()
-        .toUpperCase()}
+    <ColorSelector
+      disabled={layer.config.colorField}
+      setColor={rgbValue => onChange({color: rgbValue})}
+      selectedColor={layer.config.color}
+      colorGroup=""
     />
   </SidePanelSection>
 );
 
-const VisColorSelector = ({layer, panelWidth, onChange, label, property}) => (
+const VisColorSelector = ({layer, onChange, label, property}) => (
   <SidePanelSection disabled={layer.config.colorField}>
-    <PanelLabel>{label || 'Target Color'}</PanelLabel>
-    <ColorSingleSelector
-      width={panelWidth}
-      setColor={hex => onChange({[property]: hexToRgb(hex)})}
-      selectedColor={rgb(
-        ...(layer.config.visConfig[property] || layer.config.color)
-      )
-        .toString()
-        .toUpperCase()}
+    <ColorSelector
+      setColor={rgbValue => onChange({[property]: rgbValue})}
+      selectedColor={layer.config.visConfig[property] || layer.config.color}
     />
   </SidePanelSection>
 );
 
-const ColorRangeConfig = ({layer, panelWidth, onChange}) => (
+const ColorRangeConfig = ({layer, onChange}) => (
   <SidePanelSection>
-    <PanelLabel>Color Palette</PanelLabel>
-    <ColorRangeSelector
-      width={panelWidth}
+    <ColorSelector
       selectedColorRange={layer.config.visConfig.colorRange}
-      onSelectColorRange={onChange}
+      setColor={colorRange => onChange({colorRange})}
+      isRange
     />
   </SidePanelSection>
 );
@@ -629,7 +589,6 @@ const ColorRangeConfig = ({layer, panelWidth, onChange}) => (
 const ChannelByValueSelector = ({
   layer,
   channel,
-  panelWidth,
   onChange,
   fields,
   description
@@ -661,7 +620,6 @@ const ChannelByValueSelector = ({
       domain={layer.config[domain]}
       fields={supportedFields}
       id={layer.id}
-      innerPanelWidth={panelWidth}
       key={`${key}-channel-selector`}
       property={property}
       range={layer.config.visConfig[range]}
@@ -707,4 +665,37 @@ const AggregationTypeSelector = ({
     />
   </SidePanelSection>
 );
+
+const ConfigGroupHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+`;
+
+export const LayerConfigGroup = ({
+  group,
+  label,
+  children,
+  property,
+  layer,
+  onChange
+}) => (
+  <StyledLayerConfigGroup>
+    <ConfigGroupHeader>
+      <StyledLayerConfigGroupHeader>{label}</StyledLayerConfigGroupHeader>
+      {property ? (
+        <Switch
+          checked={layer.config.visConfig[property]}
+          id={`${layer.id}-${property}`}
+          onChange={() =>
+            onChange({[property]: !layer.config.visConfig[property]})
+          }
+        />
+      ) : null}
+    </ConfigGroupHeader>
+    {children}
+  </StyledLayerConfigGroup>
+);
+
 /* eslint-enable max-params */

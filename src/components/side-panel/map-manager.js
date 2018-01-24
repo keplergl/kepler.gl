@@ -9,9 +9,11 @@ import classnames from 'classnames';
 
 import InfoHelper from 'components/common/info-helper';
 import {PanelLabel, Tooltip} from 'components/common/styled-components';
-import {EnableConfig} from 'components/common/layer-panel-item';
-import ColorSingleSelector from './layer-panel/color-single-selector';
+import PanelHeaderAction from 'components/side-panel/panel-header-action';
+import {ArrowDown} from 'components/common/icons';
+import ColorSingleSelector from './layer-panel/color-selector';
 import {VisConfigSlider} from './layer-panel/layer-configurator';
+
 import {LAYER_VIS_CONFIGS} from 'keplergl-layers/layer-factory';
 import {hexToRgb} from 'utils/color-utils';
 import {mapStyleSelector} from 'styles/side-panel';
@@ -48,7 +50,7 @@ export default class MapManager extends Component {
 
     return (
       <div className="map-style__panel">
-        <div className="layer-panel active" style={mapStyleSelector}>
+        <div style={mapStyleSelector}>
           <MapStyleSelector
             mapStyle={mapStyle}
             isSelecting={this.state.isSelecting}
@@ -90,13 +92,13 @@ const MapStyleSelector = ({mapStyle, onChange, toggleActive, isSelecting}) => (
             {mapStyle.mapStyles[op].label}
           </span>
         </div>
-        {!isSelecting && (
-          <EnableConfig
-            disableTooltip={true}
-            isActive={false}
-            onClick={toggleActive}
-          />
-        )}
+        {!isSelecting ?
+          <PanelHeaderAction
+            className="map-dropdown-option__enable-config"
+            id="map-enable-config"
+            IconComponent={ArrowDown}
+            tooltip={'Select Base Map Style'}
+            onClick={toggleActive}/> : null}
       </div>
     ))}
   </div>
@@ -195,9 +197,8 @@ const BuildingLayer = ({buildingLayer, onChange}) => (
         <ColorSingleSelector
           width={268}
           setColor={hex => onChange({color: hexToRgb(hex)})}
-          selectedColor={rgb(...buildingLayer.color)
-            .toString()
-            .toUpperCase()}
+          selectedColor={buildingLayer.color}
+          single
         />
         <VisConfigSlider
           {...LAYER_VIS_CONFIGS.opacity}

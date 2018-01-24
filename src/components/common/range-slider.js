@@ -1,11 +1,12 @@
-/** @jsx createElement */
-import createElement from 'react-stylematic';
-import {Component} from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {Slider} from '@uber/react-slider';
-import {roundValToStep} from 'utils/data-utils';
+import styled from 'styled-components';
+
 import RangePlot from './range-plot';
-import {inputs} from 'styles/side-panel';
+import Slider from 'components/common/slider/slider';
+import {Input} from 'components/common/styled-components';
+
+import {roundValToStep} from 'utils/data-utils';
 
 const propTypes = {
   minValue: PropTypes.number.isRequired,
@@ -21,6 +22,24 @@ const propTypes = {
   width: PropTypes.number,
   xAxis: PropTypes.element
 };
+
+const SliderInput = Input.extend`
+  height: 24px;
+  width: 40px;
+  padding: 4px 6px;
+  margin-left: ${props => props.flush ? 0 : 12}px;
+`;
+
+const SliderWrapper = styled.div`
+  display: flex;
+  position: relative;
+`;
+
+const RangeInputWrapper =styled.div`
+  margin-top: 12px;
+  display: flex;
+  justify-content: space-between;
+`;
 
 export default class RangeSlider extends Component {
   constructor(props) {
@@ -92,11 +111,12 @@ export default class RangeSlider extends Component {
       onChange,
       value0,
       value1,
-      xAxis
+      xAxis,
+      showInput
     } = this.props;
     const height = xAxis ? '24px' : '16px';
     return (
-      <div style={{height, marginTop: '-25px', position: 'relative'}}>
+      <SliderWrapper style={{height}} className="range-slider__slider">
         {xAxis}
         <Slider
           showValues={false}
@@ -117,12 +137,12 @@ export default class RangeSlider extends Component {
             }
           }}
         />
-      </div>
+        {!isRanged && showInput ? this._renderInput('value1') : null}
+      </SliderWrapper>
     );
   }
 
   _renderInput(key) {
-    const type = 'text-input';
     const setRange = key === 'value0' ? this._setRangeVal0 : this._setRangeVal1;
     const update = e => {
       if (!setRange(e.target.value)) {
@@ -131,8 +151,8 @@ export default class RangeSlider extends Component {
     };
 
     return (
-      <input
-        className={`${type} ${type}--small dark dark-primary`}
+      <SliderInput
+        className="range-slider__input"
         type="number"
         id={`filter-${key}`}
         value={this.state[key]}
@@ -145,6 +165,7 @@ export default class RangeSlider extends Component {
           }
         }}
         onBlur={update}
+        flush={key === 'value0'}
       />
     );
   }
@@ -166,7 +187,7 @@ export default class RangeSlider extends Component {
     } = this.props;
 
     return (
-      <div>
+      <div className="range-slider">
         {histogram && histogram.length ? (
           <RangePlot
             histogram={histogram}
@@ -185,10 +206,10 @@ export default class RangeSlider extends Component {
           />
         ) : null}
         {this._renderSlider()}
-        <div style={inputs}>
-          {isRanged && showInput && this._renderInput('value0')}
-          {showInput && this._renderInput('value1')}
-        </div>
+        {isRanged && showInput ? <RangeInputWrapper className="range-slider__input-group">
+          {this._renderInput('value0')}
+          {this._renderInput('value1')}
+        </RangeInputWrapper> : null}
       </div>
     );
   }

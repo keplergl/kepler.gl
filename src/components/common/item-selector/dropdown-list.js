@@ -50,7 +50,8 @@ const defaultProps = {
 };
 
 const DropdownListWrapper = styled.div`
-  border-top: 1px solid ${props => props.theme.panelActiveBg};
+  background-color: ${props => props.theme.dropdownListBgd};
+  border-top: 1px solid ${props => props.theme.dropdownListBorderTop};
   ${props => props.theme.dropdownList};
 `;
 

@@ -45,7 +45,8 @@ const Chicklet = ({disabled, name, remove}) => (
 );
 
 const ChickletedInputContainer = styled.div`
-  ${props => props.theme.input} justify-content: start;
+  ${props => props.theme.input} 
+  justify-content: start;
   cursor: pointer;
   flex-wrap: wrap;
   height: auto;

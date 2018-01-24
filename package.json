@@ -24,7 +24,8 @@
     "test": "test",
     "start": "(cd examples/simple-app && (path-exists node_modules || npm i) && npm run start-local)",
     "build": "rm -fr dist && babel src --out-dir dist --plugins=transform-es2015-modules-commonjs --source-maps inline",
-    "lint": "eslint src examples/simple-app/src"
+    "lint": "eslint src examples/simple-app/src",
+    "prepublish": "npm run build"
   },
   "files": [
     "dist",

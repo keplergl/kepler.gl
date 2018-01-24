@@ -1,7 +1,5 @@
-/** @jsx createElement */
-import createElement from 'react-stylematic';
-
-import {Component} from 'react';
+import styled from 'styled-components';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {css} from 'styled-components';
 import {findDOMNode} from 'react-dom';
@@ -9,7 +7,7 @@ import {findDOMNode} from 'react-dom';
 import ModalDialog from './common/modal';
 
 import Sidebar from './side-panel/side-bar';
-import SideNav from './side-panel/side-nav';
+import PanelHeader from './side-panel/panel-header';
 import LayerManager from './side-panel/layer-manager';
 import FilterManager from './side-panel/filter-manager';
 import InteractionManager from './side-panel/interaction-manager';
@@ -28,7 +26,6 @@ import {
   DELETE_DATA_ID,
   ADD_DATA_ID
 } from '../constants/default-settings';
-import {sidePanel} from 'styles/side-panel';
 
 const propTypes = {
   editingDataset: PropTypes.string,
@@ -49,7 +46,23 @@ const DataTableModalStyle = css`
   height: 85%;
   width: 90%;
   top: 80px;
-  padding: 32px 0px 0px 0px;
+  padding: 32px 0 0 0;
+`;
+
+const SidePanelContent = styled.div`
+  ${props => props.theme.sidePanelScrollBar};
+  
+  flex-grow: 1;
+  padding: 16px;
+  overflow-y: overlay;
+`;
+
+const PanelTitle = styled.div`
+  color: ${props => props.theme.titleTextColor};
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: 1.25px;
+  margin-bottom: 14px;
 `;
 
 /**
@@ -176,7 +189,10 @@ export default class SidePanel extends Component {
       mapStyleActions,
       uiStateActions
     } = this.props;
-    const {isNavCollapsed, activeSidePanel, currentModal} = uiState;
+    const {
+      activeSidePanel,
+      currentModal
+    } = uiState;
     const isOpen = Boolean(activeSidePanel);
     const panelWidth = this.props.width - DIMENSIONS.sideBarPadding * 2;
 
@@ -219,24 +235,22 @@ export default class SidePanel extends Component {
     const enlargedFilterIdx = filters.findIndex(f => f.enlarged);
 
     return (
-      <div className="side-panel--container" style={sidePanel}>
-        <SideNav
-          activeSidePanel={activeSidePanel}
-          togglePanel={uiStateActions.toggleSidePanel}
-          isCollapsed={isNavCollapsed || enlargedFilterIdx > -1}
-        />
+      <div>
         <Sidebar
-          width={this.props.width + DIMENSIONS.sideNavC}
-          height={this.props.height}
+          width={this.props.width}
           isOpen={isOpen}
-          title={
-            activeSidePanel &&
-            PANELS.find(({id}) => id === activeSidePanel).label
-          }
-          minifiedWidth={DIMENSIONS.sideNavC}
+          minifiedWidth={0}
           onOpenOrClose={this._onOpenOrClose}
         >
-          <div className="side-panel">
+          <PanelHeader
+            currentPanel={activeSidePanel}
+            togglePanel={uiStateActions.toggleSidePanel}
+          />
+          <SidePanelContent className="side-panel__content">
+            <div>
+            <PanelTitle className="side-panel__content__title">
+              {(PANELS.find(({id}) => id === activeSidePanel) || {}).label}
+            </PanelTitle>
             {activeSidePanel === 'layer' && (
               <LayerManager
                 {...layerManagerActions}
@@ -244,7 +258,6 @@ export default class SidePanel extends Component {
                 layers={layers}
                 layerOrder={layerOrder}
                 layerBlending={layerBlending}
-                panelWidth={panelWidth}
                 openModal={uiStateActions.toggleModal}
               />
             )}
@@ -270,7 +283,8 @@ export default class SidePanel extends Component {
                 mapStyle={this.props.mapStyle}
               />
             )}
-          </div>
+            </div>
+          </SidePanelContent>
         </Sidebar>
         {this._renderModalContent(currentModal)}
       </div>

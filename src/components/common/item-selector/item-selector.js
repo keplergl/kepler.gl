@@ -46,7 +46,7 @@ const DropdownSelectValue = styled.span`
 `;
 
 const DropdownWrapper = styled.div`
-  background: ${props => props.theme.selectBackground};
+  background: ${props => props.theme.dropdownBgd};
   border: 0;
   width: 100%;
   left: 0;
@@ -60,12 +60,7 @@ const DropdownWrapper = styled.div`
 
 const propTypes = {
   // required properties
-  selectedItems: PropTypes.oneOfType([
-    PropTypes.array,
-    PropTypes.string,
-    PropTypes.object,
-    PropTypes.bool
-  ]),
+  selectedItems: PropTypes.any,
   onChange: PropTypes.func.isRequired,
   options: PropTypes.array.isRequired,
 
@@ -239,6 +234,7 @@ class ItemSelector extends Component {
           ) : (
             <StyledDropdownSelect
               {...eventProps}
+              className="item-selector__dropdown"
               active={this.state.showTypeahead}
               error={this.props.isError}
               disabled={this.props.disabled}

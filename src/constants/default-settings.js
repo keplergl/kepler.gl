@@ -20,12 +20,26 @@ export const DATA_TABLE_ID = 'dataTable';
 export const DELETE_DATA_ID = 'deleteData';
 export const ADD_DATA_ID = 'addData';
 
+import {
+  Layers,
+  FilterFunnel,
+  Settings,
+  CursorClick
+} from 'components/common/icons';
+
 export const DIMENSIONS = {
   // TODO: remove use to qbHeihgt
   qbHeight: 62,
   headerHeight: 55,
 
-  sideBarWidth: 360,
+  sidePanel: {
+    width: 300,
+    margin: 20,
+    headerHeight: 96
+  },
+
+  sidePanelWidth: 300,
+
   sideNavW: 120,
   sideNavC: 40,
   topOffset: 117,
@@ -40,22 +54,22 @@ export const PANELS = [
   {
     id: 'layer',
     label: 'Layers',
-    icon: 'layers'
+    iconComponent: Layers
   },
   {
     id: 'filter',
     label: 'Filters',
-    icon: 'search'
+    iconComponent: FilterFunnel
   },
   {
     id: 'interaction',
     label: 'Interactions',
-    icon: 'location'
+    iconComponent: CursorClick
   },
   {
     id: 'map',
     label: 'Base map',
-    icon: 'place'
+    iconComponent: Settings
   }
 ];
 

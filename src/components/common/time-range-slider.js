@@ -29,7 +29,6 @@ const propTypes = {
 const defaultTimeFormat = val => moment.utc(val).format('MM/DD/YY hh:mma');
 
 export default class TimeRangeSlider extends Component {
-
   constructor(props) {
     super(props);
     this.state = {

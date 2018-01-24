@@ -507,7 +507,12 @@ export const updateVisDataUpdater = (state, action) => {
   const datasets = Array.isArray(action.datasets)
     ? action.datasets
     : [action.datasets];
-  const {options = {centerMap: true}} = action;
+
+  const defaultOptions = {centerMap: true};
+  const options = {
+    ...defaultOptions,
+    ...action.options
+  };
 
   const newDateEntries = datasets.reduce(
     (accu, {info = {}, data}) => ({

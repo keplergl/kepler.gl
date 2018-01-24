@@ -12,7 +12,7 @@ export const PROPERTY_GROUPS = keyMirror({
 
   // for heatmap aggregation
   cell: null,
-  display: null
+  precision: null
 });
 
 export const LAYER_VIS_CONFIGS = {
@@ -208,7 +208,7 @@ export const LAYER_VIS_CONFIGS = {
     type: 'boolean',
     defaultValue: false,
     label: 'High Precision Rendering',
-    group: PROPERTY_GROUPS.display,
+    group: PROPERTY_GROUPS.precision,
     property: 'hi-precision',
     description: 'High precision will result in slower performance'
   },

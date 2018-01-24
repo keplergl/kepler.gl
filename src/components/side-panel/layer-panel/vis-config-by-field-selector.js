@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 
 import {
   PanelLabel,
+  PanelLabelWrapper,
   SidePanelSection
 } from 'components/common/styled-components';
 import FieldSelector from 'components/common/field-selector';
@@ -15,7 +16,6 @@ const propTypes = {
   domain: PropTypes.array.isRequired,
   fields: PropTypes.array.isRequired,
   id: PropTypes.string.isRequired,
-  innerPanelWidth: PropTypes.number.isRequired,
   property: PropTypes.string.isRequired,
   range: PropTypes.any.isRequired,
   scaleType: PropTypes.string.isRequired,
@@ -45,24 +45,26 @@ export default class VisConfigByFieldSelector extends Component {
 
     return (
       <SidePanelSection>
-        <div>
-          <PanelLabel>
-            {this.props.label || `${capitalizeFirstLetter(property)} based on`}
-          </PanelLabel>
-          {description && (
-            <InfoHelper
-              description={description}
-              id={`${this.props.id}-${property}`}
-            />
-          )}
-        </div>
-        <div>
+        <SidePanelSection>
+          <PanelLabelWrapper>
+            <PanelLabel>
+              {this.props.label || `${capitalizeFirstLetter(property)} based on`}
+            </PanelLabel>
+            {description && (
+              <InfoHelper
+                description={description}
+                id={`${this.props.id}-${property}`}
+              />
+            )}
+          </PanelLabelWrapper>
           <FieldSelector
             fields={this.props.fields}
             value={selectedField && selectedField.name}
             onSelect={this._updateVisByField}
             erasable
           />
+        </SidePanelSection>
+        <div>
           {showScale ? (
             <DimensionScaleSelector
               scaleType={this.props.scaleType}

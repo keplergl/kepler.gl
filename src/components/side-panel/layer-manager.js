@@ -17,7 +17,6 @@ import {LAYER_BLENDINGS} from 'constants/default-settings';
 
 const propTypes = {
   addLayer: React.PropTypes.func.isRequired,
-  panelWidth: React.PropTypes.number.isRequired,
   datasets: React.PropTypes.object.isRequired,
   layerBlending: React.PropTypes.string.isRequired,
   layers: React.PropTypes.array.isRequired,
@@ -83,7 +82,7 @@ export default class LayerManager extends Component {
   };
 
   render() {
-    const {layers, datasets, layerOrder, panelWidth, openModal} = this.props;
+    const {layers, datasets, layerOrder, openModal} = this.props;
     const defaultDataset = Object.keys(datasets)[0];
 
     const layerActions = {
@@ -94,7 +93,7 @@ export default class LayerManager extends Component {
       removeLayer: this.props.removeLayer
     };
 
-    const panelProps = {datasets, panelWidth, openModal};
+    const panelProps = {datasets, openModal};
 
     return (
       <StyledSortable>

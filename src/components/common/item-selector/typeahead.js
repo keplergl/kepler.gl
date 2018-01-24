@@ -8,6 +8,7 @@ import {console as Console} from 'global/window';
 import Accessor from './accessor';
 import KeyEvent from './keyevent';
 import DropdownList, {ListItem} from './dropdown-list';
+import {Search} from 'components/common/icons';
 
 const DEFAULT_CLASS = 'typeahead';
 /**
@@ -88,17 +89,26 @@ const defaultProps = {
 const TypeaheadWrapper = styled.div`
   display: flex;
   flex-direction: column;
+  background-color: ${props => props.theme.dropdownListBgd};
 
   :focus {
     outline: 0;
   }
 `;
 
+const InputBox = styled.div`
+  padding: 8px;
+`;
+
 const TypeaheadInput = styled.input`
-  ${props => props.theme.input} flex-grow: 1;
-  background-color: ${props => props.theme.selectBackgroundHover};
-  margin: 8px;
-  width: auto;
+  ${props => props.theme.secondaryInput} 
+`;
+
+const InputIcon = styled.div`
+  position: absolute;
+  right: 15px;
+  top: 14px;
+  color: ${props => props.theme.inputPlaceholderColor};
 `;
 
 class Typeahead extends Component {
@@ -455,6 +465,7 @@ class Typeahead extends Component {
       >
         {this._renderHiddenInput()}
         {this.props.searchable ? (
+        <InputBox>
           <TypeaheadInput
             innerRef={comp => {
               this.entry = comp;
@@ -468,6 +479,10 @@ class Typeahead extends Component {
             onChange={this._onChange}
             onBlur={this._onBlur}
           />
+          <InputIcon>
+            <Search height="18px"/>
+          </InputIcon>
+        </InputBox>
         ) : null}
         {this._renderIncrementalSearchResults()}
       </TypeaheadWrapper>

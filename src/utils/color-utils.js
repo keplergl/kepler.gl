@@ -13,3 +13,19 @@ export function hexToRgb(hex) {
 
   return [r, g, b];
 }
+
+
+function PadNum(c) {
+  const hex = c.toString(16);
+  return hex.length === 1 ? `0${hex}` : hex;
+}
+
+/**
+ * get hex from r g b
+ *
+ * @param {array} rgb
+ * @returns {string} hex string
+ */
+export function rgbToHex([r, g, b]) {
+  return `#${[r, g, b].map(n => PadNum(n)).join('')}`.toUpperCase();
+}

@@ -1,31 +1,74 @@
 /** @jsx createElement */
-import {Component} from 'react';
 import createElement from 'react-stylematic';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import window from 'global/window';
-import {ArrowLeft} from 'components/common/icons';
+import styled from 'styled-components';
+import {ArrowRight} from 'components/common/icons';
 
 import {sideBar} from 'styles/side-panel';
-
-const DEFAULT_WIDTH = 330;
+import {sidePanel} from 'styles/side-panel';
 
 const defaultProps = {
-  width: DEFAULT_WIDTH,
-  height: window.innerHeight,
-  top: 0,
+  width: 300,
   minifiedWidth: 0,
-  isOpen: false,
+  isOpen: true,
   onOpenOrClose: function noop() {}
 };
 
 const propTypes = {
   width: PropTypes.number,
-  height: PropTypes.number,
-  top: PropTypes.number,
   isOpen: PropTypes.bool,
   minifiedWidth: PropTypes.number,
   onOpenOrClose: PropTypes.func
 };
+
+const StyledSidePanelContainer = styled.div`
+  z-index: 99;
+  height: 100%;
+  width: ${props => props.width + 2 * props.theme.sidePanel.margin}px;
+  display: flex;
+  transition: width 250ms;
+  position: absolute;
+  padding: ${props => props.theme.sidePanel.margin}px;
+`;
+
+const SideBarContainer = styled.div`
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: left 250ms, right 250ms;
+  left: ${props => props.left}px;
+  align-items: stretch;
+  flex-grow: 1;
+`;
+
+const SideBarInner = styled.div`
+  background-color: ${props => props.theme.sidePanelBg};
+  border-radius: 1px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+`;
+
+const CollapseButton = styled.div`
+  align-items: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  justify-content: center;
+  background-color: ${props => props.theme.sideBarCloseBtnBgd};
+  border-radius: 1px;
+  color: ${props => props.theme.sideBarCloseBtnColor};
+  display: flex;
+  height: 20px;
+  position: absolute;
+  right: -8px;
+  top: ${props => props.theme.sidePanel.margin}px;
+  width: 20px;
+
+  :hover {
+    cursor: pointer;
+    box-shadow: none;
+    background-color: ${props => props.theme.sideBarCloseBtnBgdHover};
+  }
+`;
 
 export default class SideBar extends Component {
   _onOpenOrClose = () => {
@@ -33,50 +76,34 @@ export default class SideBar extends Component {
   };
 
   render() {
-    const {isOpen, minifiedWidth, width, top, height} = this.props;
+    const {isOpen, minifiedWidth, width} = this.props;
     const horizontalOffset = isOpen ? 0 : minifiedWidth - width;
-    const contentWidth = isOpen ? width : minifiedWidth;
-
-    const containerStyle = {
-      ...sideBar,
-      top,
-      width,
-      height,
-      left: horizontalOffset
-    };
-
-    const wrapperStyle = {height};
-
-    const innerStyle = {
-      width: contentWidth
-    };
 
     return (
-      <div className="side-bar" style={containerStyle}>
-        <div className="side-bar__wrapper" style={wrapperStyle}>
-          <div className="side-bar__inner" style={innerStyle}>
-            <div>
-              <SideBarTitle
-                onClick={this._onOpenOrClose}
-                title={this.props.title}
-              />
+      <StyledSidePanelContainer
+        width={isOpen ? width : 0}
+        className="side-panel--container"
+      >
+        <SideBarContainer className="side-bar" left={horizontalOffset}>
+          {isOpen ? (
+            <SideBarInner className="side-bar__inner">
               {this.props.children}
-            </div>
-          </div>
-        </div>
-      </div>
+            </SideBarInner>
+          ) : null}
+          <CollapseButton
+            className="side-bar__close"
+            onClick={this._onOpenOrClose}
+          >
+            <ArrowRight
+              height="12px"
+              style={{transform: `rotate(${isOpen ? 180 : 0}deg)`}}
+            />
+          </CollapseButton>
+        </SideBarContainer>
+      </StyledSidePanelContainer>
     );
   }
 }
-
-const SideBarTitle = ({onClick, title}) => (
-  <div className="side-bar__top" onClick={onClick}>
-    <div className="side-bar__title">{title}</div>
-    <div className="button button-link">
-      <ArrowLeft />Collapse
-    </div>
-  </div>
-);
 
 SideBar.propTypes = propTypes;
 SideBar.defaultProps = defaultProps;

@@ -1,7 +1,10 @@
 import React, {Component} from 'react';
-import KeplerGl from 'kepler.gl';
 import {connect} from 'react-redux';
 import window from 'global/window';
+import KeplerGl, {updateVisData} from 'kepler.gl';
+
+import sampleData from './sample-data';
+import sampleTripData from './sample-trip-data';
 
 class App extends Component {
   state = {
@@ -16,6 +19,11 @@ class App extends Component {
 
   componentWillUnMount() {
     window.removeEventListener('resize', this._handleResize)
+  }
+
+  componentDidMount() {
+    this.props.dispatch(updateVisData(sampleData));
+    this.props.dispatch(updateVisData(sampleTripData));
   }
 
   _handleResize = () => {

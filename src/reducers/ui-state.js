@@ -1,13 +1,14 @@
 import {handleActions} from 'redux-actions';
 import ActionTypes from 'constants/action-types';
 import {
+  openDeleteModalUpdater,
   toggleModalUpdater,
-  toggleSidePanelUpdater,
-  openDeleteModalUpdater
+  toggleSidePanelUpdater
 } from './ui-state-updaters';
 
 export const INITIAL_UI_STATE = {
-  activeSidePanel: null,
+  isSideBarOpen: true,
+  activeSidePanel: 'layer',
   isNavCollapsed: false,
   currentModal: 'addData',
   datasetKeyToRemove: null
