@@ -1,5 +1,5 @@
 import React from 'react';
-import TimeRangeSlider from '../../components/common/time-range-slider';
+import TimeRangeSlider from 'components/common/time-range-slider';
 
 const TimeRangeFilter = ({
   filter,

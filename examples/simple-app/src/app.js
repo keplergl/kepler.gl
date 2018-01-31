@@ -3,8 +3,14 @@ import {connect} from 'react-redux';
 import window from 'global/window';
 import KeplerGl, {updateVisData} from 'kepler.gl';
 
+// Sample data
 import sampleData from './data/sample-data';
 import sampleTripData from './data/sample-trip-data';
+import sampleHexIdCsv from './data/sample-hex-id-csv';
+import sampleGeojson from './data/sample-geojson.json';
+
+// Data processor
+import {Processor} from 'kepler.gl';
 
 class App extends Component {
   state = {
@@ -18,12 +24,31 @@ class App extends Component {
   }
 
   componentWillUnMount() {
-    window.removeEventListener('resize', this._handleResize)
+    window.removeEventListener('resize', this._handleResize);
   }
 
   componentDidMount() {
-    this.props.dispatch(updateVisData(sampleData));
+    // load trip based data
     this.props.dispatch(updateVisData(sampleTripData));
+
+    // load point based data
+    this.props.dispatch(updateVisData(sampleData));
+
+    // load data with h3 hex id
+    this.props.dispatch(
+      updateVisData({
+        info: {label: 'Hexagon by Id'},
+        data: Processor.processCsvData(sampleHexIdCsv)
+      })
+    );
+
+    // load geojson
+    this.props.dispatch(
+      updateVisData({
+        info: {label: 'SF Zip Geo'},
+        data: Processor.processGeojson(sampleGeojson)
+      })
+    )
   }
 
   _handleResize = () => {
@@ -49,7 +74,4 @@ class App extends Component {
 const mapStateToProps = state => state;
 const dispatchToProps = dispatch => ({dispatch});
 
-export default connect(
-  mapStateToProps,
-  dispatchToProps
-)(App);
+export default connect(mapStateToProps, dispatchToProps)(App);

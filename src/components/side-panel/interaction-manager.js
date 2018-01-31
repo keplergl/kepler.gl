@@ -2,7 +2,7 @@ import React from 'react';
 import InteractionPanel from './interaction-panel/interaction-panel';
 
 const InteractionManager = ({interactionConfig, datasets, onConfigChange}) => (
-  <div>
+  <div className="interaction-manager">
     {Object.keys(interactionConfig).map(key => (
       <InteractionPanel
         datasets={datasets}

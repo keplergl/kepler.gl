@@ -10,7 +10,7 @@ import {
   Trash
 } from 'components/common/icons';
 
-import {InlineInput} from 'components/common/styled-components';
+import {InlineInput, StyledPanelHeader} from 'components/common/styled-components';
 
 const propTypes = {
   // required
@@ -34,18 +34,7 @@ const defaultProps = {
   showRemoveLayer: true
 };
 
-const StyledLayerPanelHeader = styled.div`
-  background-color: ${props =>
-  props.active
-    ? props.theme.panelBackgroundHover
-    : props.theme.panelBackground};
-  border-left: 3px solid rgb(${props => props.labelRCGColorValues.join(',')});
-  padding: 0 10px 0 0;
-  height: 48px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: ${props => props.theme.transition};
+const StyledLayerPanelHeader = StyledPanelHeader.extend`
   
   .layer__remove-layer {
     opacity: 0;

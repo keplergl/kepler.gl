@@ -5,7 +5,6 @@ import {sortable} from 'react-anything-sortable';
 
 import LayerConfigurator from './layer-configurator';
 import LayerPanelHeader from './layer-panel-header';
-import {DIMENSIONS} from 'constants/default-settings';
 
 const propTypes = {
   layer: PropTypes.object.isRequired,
@@ -78,7 +77,7 @@ export default class LayerPanel extends Component {
     return (
       <PanelWrapper
         active={isConfigActive}
-        className="layer-panel"
+        className={`layer-panel ${this.props.className}`}
         style={this.props.style}
         onMouseDown={this.props.onMouseDown}
         onTouchStart={this.props.onTouchStart}

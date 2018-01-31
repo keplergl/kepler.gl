@@ -43,7 +43,7 @@ export default class FilterManager extends Component {
     const hadDataset = Object.keys(datasets).length;
 
     return (
-      <div>
+      <div className="filter-manager">
         <SourceDataCatalog
           datasets={datasets}
           showDatasetTable={this.props.showDatasetTable}

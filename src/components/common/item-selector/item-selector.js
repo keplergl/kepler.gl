@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
+import classnames from 'classnames';
 import uniq from 'lodash.uniq';
 import listensToClickOutside from 'react-onclickoutside/decorator';
 import styled from 'styled-components';
@@ -31,7 +32,10 @@ function _toArray(item) {
 }
 
 const StyledDropdownSelect = styled.div`
-  ${props => props.theme.input};
+  ${props =>
+    props.inputTheme === 'secondary'
+      ? props.theme.secondaryInput
+      : props.theme.input};
 
   .list__item__anchor {
     ${props => props.theme.dropdownListAnchor};
@@ -73,6 +77,7 @@ const propTypes = {
   disabled: PropTypes.bool,
   isError: PropTypes.bool,
   multiSelect: PropTypes.bool,
+  inputTheme: PropTypes.string,
   onBlur: PropTypes.func,
   placeholder: PropTypes.string,
   closeOnSelect: PropTypes.bool,
@@ -89,6 +94,7 @@ const defaultProps = {
   getOptionValue: null,
   filterOption: null,
   fixedOptions: null,
+  inputTheme: 'primary',
   multiSelect: true,
   placeholder: 'Enter a value',
   closeOnSelect: true,
@@ -212,9 +218,16 @@ class ItemSelector extends Component {
     const displayOption = Accessor.generateOptionToStringFor(
       this.props.displayOption
     );
-    const eventProps = {
+
+    const dropdownSelectProps = {
+      className: classnames(`item-selector__dropdown`, {
+        active: this.state.showTypeahead
+      }),
+      disabled: this.props.disabled,
       onClick: this._showTypeahead,
-      onFocus: this._showPopover
+      onFocus: this._showPopover,
+      error: this.props.isError,
+      inputTheme: this.props.inputTheme
     };
 
     return (
@@ -223,22 +236,14 @@ class ItemSelector extends Component {
           {/* this part is used to display the label */}
           {this.props.multiSelect ? (
             <ChickletedInput
-              {...eventProps}
-              disabled={this.props.disabled}
-              isError={this.props.isError}
+              {...dropdownSelectProps}
               selectedItems={_toArray(this.props.selectedItems)}
               placeholder={this.props.placeholder}
               displayOption={displayOption}
               removeItem={this._removeItem}
             />
           ) : (
-            <StyledDropdownSelect
-              {...eventProps}
-              className="item-selector__dropdown"
-              active={this.state.showTypeahead}
-              error={this.props.isError}
-              disabled={this.props.disabled}
-            >
+            <StyledDropdownSelect {...dropdownSelectProps}>
               <DropdownSelectValue placeholder={!hasValue}>
                 {hasValue ? (
                   <this.props.DropDownLineItemRenderComponent

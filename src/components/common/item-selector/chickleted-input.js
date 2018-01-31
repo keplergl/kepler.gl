@@ -13,7 +13,7 @@ const propTypes = {
   disabled: React.PropTypes.bool,
   displayOption: React.PropTypes.func,
   focus: React.PropTypes.bool,
-  isError: React.PropTypes.bool,
+  error: React.PropTypes.bool,
   placeholder: React.PropTypes.string
 };
 
@@ -27,14 +27,22 @@ const ChickletButton = styled.div`
   padding: 4px 6px;
   display: flex;
   align-items: center;
+  max-width: calc(100% - 8px);
 
   :hover {
     color: ${props => props.theme.textColorHl};
   }
 `;
 
-const ChickletTag = styled.div`
+const ChickletTag = styled.span`
   margin-right: 10px;
+  text-overflow: ellipsis;
+  width: 100%;
+  overflow: hidden;
+  
+  :hover {
+    overflow: visible;
+  }
 `;
 
 const Chicklet = ({disabled, name, remove}) => (
@@ -45,29 +53,25 @@ const Chicklet = ({disabled, name, remove}) => (
 );
 
 const ChickletedInputContainer = styled.div`
-  ${props => props.theme.input} 
-  justify-content: start;
-  cursor: pointer;
-  flex-wrap: wrap;
-  height: auto;
-  margin-bottom: 2px;
-  padding: 4px 7px 4px 4px;
+  ${props => props.theme.chickletedInput} 
 `;
 
 const ChickletedInput = ({
   focus,
   disabled,
-  isError,
+  error,
   onClick,
+  className,
   selectedItems = [],
   placeholder = '',
   removeItem,
   displayOption = d => d
 }) => (
   <ChickletedInputContainer
+    className={`${className} chickleted-input`}
     focus={focus}
     disabled={disabled}
-    error={isError}
+    error={error}
     onClick={onClick}
   >
     {selectedItems.length > 0

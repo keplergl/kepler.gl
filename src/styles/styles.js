@@ -8,46 +8,6 @@ export const COLORS = {
   'uber-orange-20': '#FEEFEB'
 };
 
-export const INPUT = {
-  primary: {
-    background: '#494949',
-    color: '#C6C6C6',
-    border: '1px solid #717171',
-
-    '.disabled': {
-      background: '#282727',
-      color: '#717171'
-    },
-
-    ':hover': {
-      border: `1px solid ${COLORS['uber-blue']}`
-    },
-
-    ':focus': {
-      border: '1px solid #11939A'
-    }
-  },
-
-  secondary: {
-    background: 'transparent',
-    color: '#C6C6C6'
-  }
-};
-
-export const CLOSE_ICON = {
-  position: 'absolute',
-  [' path']: {
-    fill: COLORS['uber-black-40']
-  },
-  ' :hover': {
-    cursor: 'pointer'
-  },
-
-  ' :hover path': {
-    fill: COLORS['uber-black-95']
-  }
-};
-
 export const mapPopover = {
   fontSize: '11px',
   fontWeight: 500,
@@ -67,7 +27,7 @@ export const mapPopover = {
     transform: 'rotate(30deg)',
     top: '10px',
     [' path']: {
-      fill: COLORS['uber-orange']
+      fill: '#CA3B27'
     },
     ' :hover': {
       cursor: 'pointer'

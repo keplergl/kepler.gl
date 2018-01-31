@@ -1,6 +1,5 @@
-import RangeSlider from '../../components/common/range-slider';
-
 import React from 'react';
+import RangeSlider from '../../components/common/range-slider';
 
 const RangeFilter = ({filter, setFilter, width}) => (
   <div>
@@ -12,10 +11,11 @@ const RangeFilter = ({filter, setFilter, width}) => (
       step={filter.step}
       histogram={filter.histogram}
       isEnlarged={filter.isEnlarged}
-      isRanged={true}
-      showInput={true}
       onChange={setFilter}
       width={width}
+      isRanged
+      showInput
+      inputTheme="secondary"
     />
   </div>
 );

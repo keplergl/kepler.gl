@@ -1,6 +1,5 @@
-/** @jsx createElement */
 import React from 'react';
-import createElement from 'react-stylematic';
+import styled from 'styled-components';
 import {event, select} from 'd3-selection';
 import {brushX} from 'd3-brush';
 
@@ -12,12 +11,13 @@ const propTypes = {
   width: React.PropTypes.number.isRequired
 };
 
-const style = {
-  ' .selection': {
-    stroke: 'none'
+const StyledG = styled.g`
+  .selection {
+    stroke: none;
+    fill: #FFFFFF;
+    opacity: 0.1;
   }
-};
-
+`;
 export default class RangeBrush extends React.Component {
   componentDidMount() {
     const {range: [min, max], value: [val0, val1]} = this.props;
@@ -30,7 +30,7 @@ export default class RangeBrush extends React.Component {
     this.brushing = false;
     this.moving = false;
 
-    this.root = select(this.refs.root);
+    this.root = select(this.rootContainer);
     this.brush = brushX()
       .on('start', () => {
         this.brushing = true;
@@ -98,7 +98,10 @@ export default class RangeBrush extends React.Component {
   }
 
   render() {
-    return <g ref="root" style={style} />;
+    return <StyledG className="range-slider__brush"
+                    innerRef={comp => {
+      this.rootContainer = comp;
+    }}/>;
   }
 }
 

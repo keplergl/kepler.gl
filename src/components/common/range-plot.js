@@ -6,10 +6,9 @@ import {max} from 'd3-array';
 import {createSelector} from 'reselect';
 import {LineSeries, XYPlot, CustomSVGSeries, Hint, MarkSeries} from 'react-vis';
 import styled from 'styled-components';
-
-import {COLORS} from 'styles/styles';
 import RangeBrush from './range-brush';
 import {getTimeWidgetHintFormatter} from 'utils/filter-utils';
+import {theme} from 'styles/base';
 
 const propTypes = {
   value: PropTypes.array.isRequired,
@@ -24,6 +23,12 @@ const propTypes = {
 const chartMargin = {top: 18, bottom: 0, left: 0, right: 0};
 const chartH = 52;
 const containerH = 78;
+const histogramStyle = {
+  highlightW: 0.7,
+  unHighlightedW: 0.4,
+  highlightedColor: theme.activeColor,
+  unHighlightedColor: theme.sliderBarColor
+};
 
 export default class RangePlot extends Component {
   state = {
@@ -106,13 +111,6 @@ const Histogram = ({
   brushComponent
 }) => {
   const domain = [histogram[0].x0, histogram[histogram.length - 1].x1];
-
-  const highlightedPadding = histogram.length / 40;
-  const unHighlightedPadding = histogram.length / 20;
-
-  const highlightedColor = COLORS['uber-blue'];
-  const unHighlightedColor = COLORS['uber-black-40'];
-
   const barWidth = width / histogram.length;
 
   const x = scaleLinear()
@@ -128,16 +126,16 @@ const Histogram = ({
       <g className="histogram-bars">
         {histogram.map(bar => {
           const inRange = bar.x0 >= value[0] && bar.x1 <= value[1];
-          const fill = inRange ? highlightedColor : unHighlightedColor;
-          const padding = inRange ? highlightedPadding : unHighlightedPadding;
+          const fill = inRange ? histogramStyle.highlightedColor : histogramStyle.unHighlightedColor;
+          const wRatio = inRange ? histogramStyle.highlightW : histogramStyle.unHighlightedW;
 
           return (
             <rect
               key={bar.x0}
               fill={fill}
               height={y(bar.count)}
-              width={barWidth - padding}
-              x={x(bar.x0)}
+              width={barWidth * wRatio}
+              x={x(bar.x0) + barWidth * (1 - wRatio) / 2}
               rx={1}
               ry={1}
               y={height - y(bar.count)}

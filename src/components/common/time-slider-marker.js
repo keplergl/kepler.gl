@@ -17,7 +17,7 @@ const TimeSliderContainer = styled.svg`
   .axis line,
   .axis path {
     fill: none;
-    stroke: ${props => props.theme.panelBorderColor};
+    stroke: ${props => props.theme.sliderBarBgd};
     shape-rendering: crispEdges;
     stroke-width: 2;
   }
@@ -76,8 +76,8 @@ export default class TimeSliderMarker extends Component {
       return;
     }
     const xAxis = axisBottom(scale)
-      .ticks(6)
-      .tickSize(10)
+      .ticks(4)
+      .tickSize(8)
       .tickPadding(6);
 
     const svg = select(this.svgContainer);

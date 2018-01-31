@@ -4,7 +4,7 @@ import styled from 'styled-components';
 
 import RangePlot from './range-plot';
 import Slider from 'components/common/slider/slider';
-import {Input} from 'components/common/styled-components';
+import {Input, SecondaryInput} from 'components/common/styled-components';
 
 import {roundValToStep} from 'utils/data-utils';
 
@@ -18,6 +18,7 @@ const propTypes = {
   isRanged: PropTypes.bool,
   isEnlarged: PropTypes.bool,
   showInput: PropTypes.bool,
+  inputTheme: PropTypes.string,
   step: PropTypes.number,
   width: PropTypes.number,
   xAxis: PropTypes.element
@@ -36,7 +37,7 @@ const SliderWrapper = styled.div`
 `;
 
 const RangeInputWrapper =styled.div`
-  margin-top: 12px;
+  margin-top: 6px;
   display: flex;
   justify-content: space-between;
 `;
@@ -166,6 +167,7 @@ export default class RangeSlider extends Component {
         }}
         onBlur={update}
         flush={key === 'value0'}
+        secondary={this.props.inputTheme === 'secondary'}
       />
     );
   }

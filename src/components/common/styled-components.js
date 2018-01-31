@@ -2,9 +2,9 @@ import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 
 export const SelectText = styled.span`
-  color: ${props => props.theme.selectColor};
+  color: ${props => props.theme.labelColor};
   font-size: ${props => props.theme.selectFontSize};
-  font-weight: ${props => props.theme.selectFontWeight};
+  font-weight: 400;
 
   i {
     font-size: 13px;
@@ -13,7 +13,8 @@ export const SelectText = styled.span`
 `;
 
 export const SelectTextBold = SelectText.extend`
-  font-weight: ${props => props.theme.selectFontWeightBold};
+  color: ${props => props.theme.textColor};
+  font-weight: 500;
 `;
 
 export const IconRoundSmall = styled.div`
@@ -170,39 +171,33 @@ export const Button = styled.div.attrs({
 `;
 
 export const Input = styled.input`
-  ${props => props.theme.input};
+  ${props =>
+    props.secondary ? props.theme.secondaryInput : props.theme.input};
 `;
 
 export const InlineInput = Input.extend`
   ${props => props.theme.inlineInput};
 `;
 
-// export const StyledLayerConfigGroupHeader = styled.div.attrs({
-//   className: 'layer-config-group__header'
-// })`
-//   border-left: 2px solid ${props => props.theme.labelColor};
-//   color: ${props => props.theme.textColor};
-//   font-size: 12px;
-//   font-weight: 500;
-//   line-height: 12px;
-//   margin-left: -12px;
-//   padding-left: 10px;
-//   text-transform: capitalize;
-//   letter-spacing: 0.2px;
-// `;
-//
-// export const StyledLayerConfigGroup = styled.div.attrs({
-//   className: 'layer-config-group'
-// })`
-//   padding-left: 18px;
-//   margin-bottom: 18px;
-// `;
+export const StyledPanelHeader = styled.div`
+  background-color: ${props =>
+    props.active
+      ? props.theme.panelBackgroundHover
+      : props.theme.panelBackground};
+  border-left: 3px solid rgb(${props => props.labelRCGColorValues.join(',')});
+  padding: 0 10px 0 0;
+  height: ${props => props.theme.panelHeaderHeight}px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: ${props => props.theme.transition};
+`;
 
 export const StyledPanelDropdown = styled.div`
   background-color: ${props => props.theme.panelBackground};
   overflow-y: overlay;
   box-shadow: ${props => props.theme.panelBoxShadow};
-  border-radius:  ${props => props.theme.panelBorderRadius};
+  border-radius: ${props => props.theme.panelBorderRadius};
   margin-top: 2px;
   max-height: 500px;
 `;

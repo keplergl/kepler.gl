@@ -7,7 +7,7 @@ import throttle from 'lodash.throttle';
 import styled from 'styled-components';
 import {createSelector} from 'reselect';
 
-import {SelectTextBold, Button} from 'components/common/styled-components';
+import {SelectTextBold, SelectText, Button} from 'components/common/styled-components';
 import {getTimeWidgetTitleFormatter} from 'utils/filter-utils';
 
 import RangeSlider from './range-slider';
@@ -27,6 +27,14 @@ const propTypes = {
 };
 
 const defaultTimeFormat = val => moment.utc(val).format('MM/DD/YY hh:mma');
+
+const StyledSliderContainer = styled.div`
+  margin-top: ${props => props.isEnlarged ? '12px' : '0px'};
+  align-items: center;
+  display: flex;
+  flex-direction: ${props => props.isEnlarged ? 'row' : 'column'};
+  justify-content: space-between;
+`;
 
 export default class TimeRangeSlider extends Component {
   constructor(props) {
@@ -62,9 +70,7 @@ export default class TimeRangeSlider extends Component {
   };
 
   _resize() {
-    const width = this.props.isEnlarged
-      ? this.refs.sliderContainer.offsetWidth
-      : 288;
+    const width = this.sliderContainer.offsetWidth;
     if (width !== this.state.width) {
       this.setState({width});
     }
@@ -114,22 +120,16 @@ export default class TimeRangeSlider extends Component {
 
     const sliderWidth = isEnlarged ? width - controlWidth : width;
 
-    const style = {
-      marginTop: isEnlarged ? '12px' : '0px',
-      alignItems: 'center',
-      display: 'flex',
-      flexDirection: isEnlarged ? 'row' : 'column',
-      justifyContent: 'space-between'
-    };
-
     return (
-      <div>
+      <div className="time-range-slider">
         <TimeTitle
           timeFormat={this.titleFormatter(this.props)}
           value={value}
           isEnlarged={isEnlarged}
         />
-        <div ref="sliderContainer" style={style}>
+        <StyledSliderContainer
+          className="time-range-slider__container"
+          innerRef={comp => this.sliderContainer = comp}>
           <RangeSlider
             minValue={domain[0]}
             maxValue={domain[1]}
@@ -144,7 +144,9 @@ export default class TimeRangeSlider extends Component {
             step={this.props.step}
             onChange={this._sliderUpdate}
             width={sliderWidth}
-            xAxis={<TimeSliderMarker width={sliderWidth} domain={domain} />}
+            xAxis={
+              <TimeSliderMarker width={sliderWidth} domain={domain} />
+            }
           />
           <AnimationControls
             isAnimatable={this.props.isAnimatable}
@@ -155,7 +157,7 @@ export default class TimeRangeSlider extends Component {
             startAnimation={this._startAnimation}
             increaseAnimationSpeed={this._increaseAnimationSpeed}
           />
-        </div>
+        </StyledSliderContainer>
       </div>
     );
   }
@@ -178,14 +180,26 @@ const TimeTitle = ({value, isEnlarged, timeFormat = defaultTimeFormat}) => (
         <SelectTextBold>―</SelectTextBold>
       </div>
     ) : null}
-    <TimeValue key={1} value={moment.utc(value[0]).format(timeFormat)} />
+    <TimeValue key={1} value={moment.utc(value[0]).format(timeFormat)} last/>
   </TimeValueWrapper>
 );
 
-const TimeValue = ({value}) => (
-  <div>
-    <SelectTextBold>{value}</SelectTextBold>
-  </div>
+const StyledTimeValue = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: ${props => props.last ? 'flex-end' : 'flex-start'};
+`;
+
+const TimeValue = ({value, last}) => (
+  // render two lines
+  <StyledTimeValue last={last}>
+    {value.split(' ').map((v, i) => (
+      <div key={i}>
+        {i === 0 ? <SelectText>{v}</SelectText> :
+        <SelectTextBold>{v}</SelectTextBold>}
+      </div>
+    ))}
+  </StyledTimeValue>
 );
 
 const AnimationControls = ({

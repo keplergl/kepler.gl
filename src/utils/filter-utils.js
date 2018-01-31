@@ -395,7 +395,7 @@ export function histogramConstruct(domain, mappedValue, bins) {
  * @returns {Array[]} histogram
  */
 function getHistogram(domain, mappedValue) {
-  const histogram = histogramConstruct(domain, mappedValue, 50);
+  const histogram = histogramConstruct(domain, mappedValue, 30);
   const enlargedHistogram = histogramConstruct(domain, mappedValue, 100);
 
   return {histogram, enlargedHistogram};

@@ -4,7 +4,7 @@ import styled from 'styled-components';
 
 import {
   PanelLabel,
-  SidePanelSection,
+  SidePanelSection
 } from 'components/common/styled-components';
 import ItemSelector from 'components/common/item-selector/item-selector';
 
@@ -161,14 +161,14 @@ export default class LayerConfigurator extends Component {
 
         {/* Cluster Radius */}
         <LayerConfigGroup label={'radius'}>
-        <VisConfigSlider
-          {...LAYER_VIS_CONFIGS.clusterRadius}
-          {...visConfiguratorProps}
-        />
-        <VisConfigSlider
-          {...LAYER_VIS_CONFIGS.clusterRadiusRange}
-          {...visConfiguratorProps}
-        />
+          <VisConfigSlider
+            {...LAYER_VIS_CONFIGS.clusterRadius}
+            {...visConfiguratorProps}
+          />
+          <VisConfigSlider
+            {...LAYER_VIS_CONFIGS.clusterRadiusRange}
+            {...visConfiguratorProps}
+          />
         </LayerConfigGroup>
         {/* Aggregation Type */}
         <LayerConfigGroup label={'aggregation'}>
@@ -204,7 +204,6 @@ export default class LayerConfigurator extends Component {
 
     return (
       <StyledLayerVisualConfigurator>
-
         {/* Color */}
         <LayerConfigGroup label={'color'}>
           <ColorRangeConfig {...visConfiguratorProps} />
@@ -236,7 +235,7 @@ export default class LayerConfigurator extends Component {
             {...visConfiguratorProps}
             label={`${
               type === LAYER_TYPES.grid ? 'Grid Size' : 'Hexagon Radius'
-              } (km)`}
+            } (km)`}
           />
           <VisConfigSlider
             {...LAYER_VIS_CONFIGS.coverage}
@@ -249,6 +248,10 @@ export default class LayerConfigurator extends Component {
           {...LAYER_VIS_CONFIGS.enable3d}
           {...visConfiguratorProps}
         >
+          <VisConfigSlider
+            {...LAYER_VIS_CONFIGS.elevationScale}
+            {...visConfiguratorProps}
+          />
           <ChannelByValueSelector
             {...layerChannelConfigProps}
             channel={layer.visualChannels.size}
@@ -266,10 +269,6 @@ export default class LayerConfigurator extends Component {
             {...visConfiguratorProps}
             property={'elevationPercentile'}
             disabled={!enable3d || (!colorField && !sizeField)}
-          />
-          <VisConfigSlider
-            {...LAYER_VIS_CONFIGS.elevationScale}
-            {...visConfiguratorProps}
           />
         </LayerConfigGroup>
         <LayerConfigGroup
@@ -289,34 +288,40 @@ export default class LayerConfigurator extends Component {
     return (
       <StyledLayerVisualConfigurator>
         {/* Color */}
-        <LayerColorSelector {...layerConfiguratorProps} />
-        <ChannelByValueSelector
-          channel={layer.visualChannels.color}
-          {...layerChannelConfigProps}
-        />
-        {layer.config.colorField ? (
-          <ColorRangeConfig {...visConfiguratorProps} />
-        ) : null}
-        <VisConfigSlider
-          {...LAYER_VIS_CONFIGS.opacity}
-          {...visConfiguratorProps}
-        />
+        <LayerConfigGroup label={'color'}>
+          {layer.config.colorField ? (
+            <ColorRangeConfig {...visConfiguratorProps} />
+          ) : (
+            <LayerColorSelector {...layerConfiguratorProps} />
+          )}
+          <ChannelByValueSelector
+            channel={layer.visualChannels.color}
+            {...layerChannelConfigProps}
+          />
+          <VisConfigSlider
+            {...LAYER_VIS_CONFIGS.opacity}
+            {...visConfiguratorProps}
+          />
+        </LayerConfigGroup>
         {/* height */}
-        <ChannelByValueSelector
-          channel={layer.visualChannels.size}
-          {...layerChannelConfigProps}
-        />
-        <VisConfigSlider
-          {...LAYER_VIS_CONFIGS.elevationScale}
+        <LayerConfigGroup
+          {...LAYER_VIS_CONFIGS.enable3d}
+          {...visConfiguratorProps}
+        >
+          <ChannelByValueSelector
+            channel={layer.visualChannels.size}
+            {...layerChannelConfigProps}
+          />
+          <VisConfigSlider
+            {...LAYER_VIS_CONFIGS.elevationRange}
+            {...visConfiguratorProps}
+          />
+        </LayerConfigGroup>
+        {/* high precision */}
+        <LayerConfigGroup
+          {...LAYER_VIS_CONFIGS['hi-precision']}
           {...visConfiguratorProps}
         />
-        <VisConfigSlider
-          {...LAYER_VIS_CONFIGS.elevationRange}
-          {...visConfiguratorProps}
-          label={'Height Range'}
-          disabled={!layer.config.sizeField}
-        />
-        <HighPrecisionSwitch {...visConfiguratorProps} />
       </StyledLayerVisualConfigurator>
     );
   }
@@ -393,78 +398,76 @@ export default class LayerConfigurator extends Component {
 
     return (
       <StyledLayerVisualConfigurator>
-        <LayerColorSelector {...layerConfiguratorProps} />
-        <VisConfigSlider
-          {...LAYER_VIS_CONFIGS.opacity}
-          {...visConfiguratorProps}
-        />
-
         {/* Color By */}
+        <LayerConfigGroup label={'color'}>
+          {featureTypes.polygon ? (
+            <VisConfigSwitch
+              {...visConfiguratorProps}
+              {...LAYER_VIS_CONFIGS.filled}
+            />
+          ) : null}
 
-        {featureTypes.polygon ? (
-          <VisConfigSwitch
-            {...visConfiguratorProps}
-            {...LAYER_VIS_CONFIGS.filled}
+          {layer.config.colorField ? (
+            <ColorRangeConfig {...visConfiguratorProps} />
+          ) : (
+            <LayerColorSelector {...layerConfiguratorProps} />
+          )}
+
+          <ChannelByValueSelector
+            channel={layer.visualChannels.color}
+            {...layerChannelConfigProps}
           />
-        ) : null}
-        <ChannelByValueSelector
-          channel={layer.visualChannels.color}
-          {...layerChannelConfigProps}
-        />
-        {layer.config.colorField ? (
-          <ColorRangeConfig {...visConfiguratorProps} />
-        ) : null}
+
+          <VisConfigSlider
+            {...LAYER_VIS_CONFIGS.opacity}
+            {...visConfiguratorProps}
+          />
+        </LayerConfigGroup>
 
         {/* Stroke Width */}
-        {featureTypes.polygon ? (
-          <VisConfigSwitch
-            {...visConfiguratorProps}
-            {...LAYER_VIS_CONFIGS.stroked}
-          />
-        ) : null}
-
         {featureTypes.line || (featureTypes.polygon && visConfig.stroked) ? (
-          <div>
-            <VisConfigSlider
-              {...LAYER_VIS_CONFIGS.thickness}
-              {...visConfiguratorProps}
-            />
-            <ChannelByValueSelector
-              channel={layer.visualChannels.size}
-              {...layerChannelConfigProps}
-            />
-            <VisConfigSlider
-              {...LAYER_VIS_CONFIGS.strokeWidthRange}
-              {...visConfiguratorProps}
-              disabled={!layer.config.sizeField}
-            />
-          </div>
+          <LayerConfigGroup
+            label="stroke"
+            {...visConfiguratorProps}
+            {...(featureTypes.polygon ? LAYER_VIS_CONFIGS.stroked : {})}
+          >
+            <div>
+              <VisConfigSlider
+                {...LAYER_VIS_CONFIGS.thickness}
+                {...visConfiguratorProps}
+              />
+              <ChannelByValueSelector
+                channel={layer.visualChannels.size}
+                {...layerChannelConfigProps}
+              />
+              <VisConfigSlider
+                {...LAYER_VIS_CONFIGS.strokeWidthRange}
+                {...visConfiguratorProps}
+                disabled={!layer.config.sizeField}
+              />
+            </div>
+          </LayerConfigGroup>
         ) : null}
 
         {/* Elevation */}
         {featureTypes.polygon && visConfig.filled ? (
-          <div>
-            <VisConfigSwitch
+          <LayerConfigGroup
+            {...visConfiguratorProps}
+            {...LAYER_VIS_CONFIGS.enable3d}
+          >
+            <VisConfigSlider
+              {...LAYER_VIS_CONFIGS.elevationScale}
               {...visConfiguratorProps}
-              {...LAYER_VIS_CONFIGS.enable3d}
+            />
+            <ChannelByValueSelector
+              channel={layer.visualChannels.height}
+              {...layerChannelConfigProps}
             />
             <VisConfigSwitch
               {...visConfiguratorProps}
               {...LAYER_VIS_CONFIGS.wireframe}
-              disabled={!visConfig.enable3d}
             />
-            {visConfig.enable3d ? (
-              <ChannelByValueSelector
-                channel={layer.visualChannels.height}
-                {...layerChannelConfigProps}
-              />
-            ) : null}
-            <VisConfigSlider
-              {...LAYER_VIS_CONFIGS.elevationScale}
-              {...visConfiguratorProps}
-              disabled={!visConfig.enable3d}
-            />
-          </div>
+          </LayerConfigGroup>
         ) : null}
 
         {/* Radius */}
@@ -488,8 +491,11 @@ export default class LayerConfigurator extends Component {
           </div>
         ) : null}
 
-        {/* vis Switches */}
-        <HighPrecisionSwitch {...visConfiguratorProps} />
+        {/* high precision */}
+        <LayerConfigGroup
+          {...LAYER_VIS_CONFIGS['hi-precision']}
+          {...visConfiguratorProps}
+        />
       </StyledLayerVisualConfigurator>
     );
   }
@@ -562,21 +568,16 @@ LayerConfigurator.propTypes = propTypes;
 /*
  * Componentize config component into pure functional components
  */
-const HighPrecisionSwitch = ({layer, onChange}) => (
-  <VisConfigSwitch
-    {...LAYER_VIS_CONFIGS['hi-precision']}
-    layer={layer}
-    onChange={onChange}
-  />
-);
 
 const LayerColorSelector = ({layer, onChange, label}) => (
   <SidePanelSection disabled={layer.config.colorField}>
     <ColorSelector
-      colorSets={[{
-        selectedColor: layer.config.color,
-        setColor:rgbValue => onChange({color: rgbValue})
-      }]}
+      colorSets={[
+        {
+          selectedColor: layer.config.color,
+          setColor: rgbValue => onChange({color: rgbValue})
+        }
+      ]}
     />
   </SidePanelSection>
 );
@@ -584,15 +585,19 @@ const LayerColorSelector = ({layer, onChange, label}) => (
 const ArcLayerColorSelector = ({layer, onChangeConfig, onChangeVisConfig}) => (
   <SidePanelSection>
     <ColorSelector
-      colorSets={[{
-        selectedColor: layer.config.color,
-        setColor:rgbValue => onChangeConfig({color: rgbValue}),
-        label: 'Source'
-      },{
-        selectedColor: layer.config.visConfig.targetColor || layer.config.color,
-        setColor: rgbValue => onChangeVisConfig({targetColor: rgbValue}),
-        label: 'Target'
-      }]}
+      colorSets={[
+        {
+          selectedColor: layer.config.color,
+          setColor: rgbValue => onChangeConfig({color: rgbValue}),
+          label: 'Source'
+        },
+        {
+          selectedColor:
+            layer.config.visConfig.targetColor || layer.config.color,
+          setColor: rgbValue => onChangeVisConfig({targetColor: rgbValue}),
+          label: 'Target'
+        }
+      ]}
     />
   </SidePanelSection>
 );
@@ -600,11 +605,13 @@ const ArcLayerColorSelector = ({layer, onChangeConfig, onChangeVisConfig}) => (
 const ColorRangeConfig = ({layer, onChange}) => (
   <SidePanelSection>
     <ColorSelector
-      colorSets={[{
-        selectedColor: layer.config.visConfig.colorRange,
-        isRange: true,
-        setColor: colorRange => onChange({colorRange})
-      }]}
+      colorSets={[
+        {
+          selectedColor: layer.config.visConfig.colorRange,
+          isRange: true,
+          setColor: colorRange => onChange({colorRange})
+        }
+      ]}
     />
   </SidePanelSection>
 );

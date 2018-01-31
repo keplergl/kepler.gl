@@ -78,6 +78,7 @@ export default class LayerManager extends Component {
   };
 
   _handleSort = order => {
+    console.log(order)
     this.props.updateLayerOrder(order);
   };
 
@@ -96,7 +97,7 @@ export default class LayerManager extends Component {
     const panelProps = {datasets, openModal};
 
     return (
-      <StyledSortable>
+      <StyledSortable className="layer-manager">
         <SourceDataCatalog
           datasets={datasets}
           showDatasetTable={this.props.showDatasetTable}

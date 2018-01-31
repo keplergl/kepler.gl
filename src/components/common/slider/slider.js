@@ -56,8 +56,8 @@ const SliderInput = styled.div`
 
 const SliderWrapper = styled.div`
   flex-grow: 1;
-  margin-top: 8px;
 `;
+
 class Slider extends React.Component {
 
   _saveRef = ref => {
@@ -70,7 +70,7 @@ class Slider extends React.Component {
     )[1].offsetWidth;
   }
 
-  handleWidth = 23;
+  handleWidth = 12;
   ref = undefined;
 
   slide0Listener = x => {
@@ -110,8 +110,8 @@ class Slider extends React.Component {
 
   calcHandleLeft1 = (w, l) => {
     return this.props.isRanged && w === 0
-      ? `calc(l% - ${this.handleWidth / 2}px)`
-      : `calc(${l + w}% - ${this.handleWidth / 2}px)`;
+      ? `calc(l% - ${this.handleWidth}px)`
+      : `calc(${l + w}% - ${this.handleWidth}px)`;
   };
 
   onBlur0 = () => {

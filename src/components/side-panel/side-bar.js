@@ -84,7 +84,8 @@ export default class SideBar extends Component {
         width={isOpen ? width : 0}
         className="side-panel--container"
       >
-        <SideBarContainer className="side-bar" left={horizontalOffset}>
+        <SideBarContainer className="side-bar" style={{width: `${width}px`}}
+                          left={horizontalOffset}>
           {isOpen ? (
             <SideBarInner className="side-bar__inner">
               {this.props.children}

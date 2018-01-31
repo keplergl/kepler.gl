@@ -90,6 +90,7 @@ const TypeaheadWrapper = styled.div`
   display: flex;
   flex-direction: column;
   background-color: ${props => props.theme.dropdownListBgd};
+  box-shadow: ${props => props.theme.dropdownListShadow};
 
   :focus {
     outline: 0;
@@ -101,7 +102,11 @@ const InputBox = styled.div`
 `;
 
 const TypeaheadInput = styled.input`
-  ${props => props.theme.secondaryInput} 
+  ${props => props.theme.secondaryInput}
+  :hover {
+    cursor: pointer;
+    background-color: ${props => props.theme.secondaryInputBgd};
+  }
 `;
 
 const InputIcon = styled.div`

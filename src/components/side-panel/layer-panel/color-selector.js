@@ -28,7 +28,7 @@ const ColorBlock = styled.div`
   width: 32px;
   height: 18px;
   border-radius: 1px;
-  background-color: ${props => `rgb(${props.color.join(',')})`};
+  background-color: ${props => `rgb(${props.color.slice(0, 3).join(',')})`};
 `;
 
 const ColorSelectorInput = styled.div`

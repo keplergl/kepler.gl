@@ -29,7 +29,8 @@ export default class SourceDataSelector extends Component {
       dataId,
       disabled,
       onSelect,
-      defaultValue = defaultPlaceHolder
+      defaultValue = defaultPlaceHolder,
+      inputTheme
     } = this.props;
     const dsOptions = this.dsOptionsSelector(this.props);
 
@@ -37,6 +38,7 @@ export default class SourceDataSelector extends Component {
       <SidePanelSection className="data-source-selector">
         <PanelLabel>Data Source</PanelLabel>
         <ItemSelector
+          inputTheme={inputTheme}
           selectedItems={dataId ? this.props.datasets[dataId] : null}
           options={dsOptions}
           getOptionValue={'value'}

@@ -3,21 +3,31 @@ import {createSelector} from 'reselect';
 import styled from 'styled-components';
 import PanelHeaderAction from 'components/side-panel/panel-header-action';
 import FieldSelector from 'components/common/field-selector';
-
 import {Trash, Clock} from 'components/common/icons';
 import SourceDataSelector from 'components/side-panel/source-data-selector';
-
+import {StyledPanelHeader} from 'components/common/styled-components';
 import * as Filters from 'components/filters';
+
 import {FILTER_TYPES, FILTER_COMPONENTS} from 'utils/filter-utils';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
 
-const FilterHeaderWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  border-left-color: rgb(${props => props.color.join(',')});
+const StyledFilterPanel = styled.div`
+  margin-bottom: 12px;
+  border-radius: 1px;
+
+
+  .filter-panel__filter {
+    margin-top: 24px;
+  }
+`;
+
+const StyledFilterHeader = StyledPanelHeader.extend`
   cursor: pointer;
-  border-left-width: 4px;
-  border-left-style: solid;
+  padding: 10px 12px;
+`;
+
+const StyledFilterContent = styled.div`
+  background-color: ${props => props.theme.panelBackground};
   padding: 12px;
 `;
 
@@ -62,10 +72,12 @@ export default class FilterPanel extends Component {
     const allAvailableFields = this.availableFieldsSelector(this.props);
 
     return (
-      <div className="layer-panel active">
-        <FilterHeaderWrapper color={datasets[dataId].color}>
+      <StyledFilterPanel className="filter-panel">
+        <StyledFilterHeader className="filter-panel__header"
+          labelRCGColorValues={datasets[dataId].color}>
           <div style={{flexGrow: 1}}>
             <FieldSelector
+              inputTheme="secondary"
               fields={allAvailableFields}
               value={name}
               erasable={false}
@@ -89,10 +101,11 @@ export default class FilterPanel extends Component {
               active={enlarged}
             />
           )}
-        </FilterHeaderWrapper>
-        <div className="soft-tiny layer-panel__config">
+        </StyledFilterHeader>
+        <StyledFilterContent className="filter-panel__content">
           {Object.keys(datasets).length > 1 && (
             <SourceDataSelector
+              inputTheme="secondary"
               datasets={datasets}
               disabled={filter.freeze}
               dataId={filter.dataId}
@@ -101,7 +114,7 @@ export default class FilterPanel extends Component {
           )}
           {type &&
           !enlarged && (
-            <div style={{marginTop: '24px'}}>
+            <div className="filter-panel__filter">
               <FilterComponent
                 filter={filter}
                 idx={idx}
@@ -112,8 +125,8 @@ export default class FilterPanel extends Component {
               />
             </div>
           )}
-        </div>
-      </div>
+        </StyledFilterContent>
+      </StyledFilterPanel>
     );
   }
 }

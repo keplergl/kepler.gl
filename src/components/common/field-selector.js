@@ -1,4 +1,5 @@
 import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
 
 import ItemSelector from './item-selector/item-selector';
@@ -17,22 +18,23 @@ const FieldListItem = ({value, displayOption = defaultDisplayOption}) => (
 );
 
 const propTypes = {
-  fields: React.PropTypes.array.isRequired,
-  onSelect: React.PropTypes.func.isRequired,
-  placement: React.PropTypes.string,
-  value: React.PropTypes.oneOfType([
-    React.PropTypes.array,
-    React.PropTypes.string
+  fields: PropTypes.array.isRequired,
+  onSelect: PropTypes.func.isRequired,
+  placement: PropTypes.string,
+  value: PropTypes.oneOfType([
+    PropTypes.array,
+    PropTypes.string
   ]),
-  filterFieldTypes: React.PropTypes.oneOfType([
-    React.PropTypes.array,
-    React.PropTypes.string
+  filterFieldTypes: PropTypes.oneOfType([
+    PropTypes.array,
+    PropTypes.string
   ]),
-  erasable: React.PropTypes.bool,
-  error: React.PropTypes.bool,
-  multiSelect: React.PropTypes.bool,
-  closeOnSelect: React.PropTypes.bool,
-  suggested: React.PropTypes.array
+  inputTheme: PropTypes.string,
+  erasable: PropTypes.bool,
+  error: PropTypes.bool,
+  multiSelect: PropTypes.bool,
+  closeOnSelect: PropTypes.bool,
+  suggested: PropTypes.array
 };
 
 const defaultProps = {
@@ -87,6 +89,7 @@ export default class FieldSelector extends Component {
           displayOption={defaultDisplayOption}
           filterOption={'id'}
           fixedOptions={this.props.suggested}
+          inputTheme={this.props.inputTheme}
           isError={this.props.error}
           selectedItems={this.selectedItemsSelector(this.props)}
           erasable={this.props.erasable}

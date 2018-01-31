@@ -60,7 +60,7 @@ export const inputFontWeight = 500;
 export const inputBgd = '#29323C';
 export const inputBgdHover = '#3A414C';
 export const inputBgdActive = '#3A414C';
-export const inputBorderColor = '#D3D8E0';
+export const inputBorderColor = '#29323C';
 export const inputBorderHoverColor = '#3A414C';
 export const inputBorderActiveColor = '#D3D8E0';
 export const inputColor = '#A0A7B4';
@@ -69,8 +69,12 @@ export const inputPlaceholderColor = '#6A7485';
 export const inputPlaceholderFontWeight = 400;
 
 export const secondaryInputHeight = '28px';
-export const secondaryInputBgd = '#262C35';
-export const secondaryInputColo = '#A0A7B4';
+export const secondaryInputBgd = '#242730';
+export const secondaryInputBgdHover = '#3A414C';
+export const secondaryInputBgdActive = '#3A414C';
+export const secondaryInputColor = '#A0A7B4';
+export const secondaryInputBorderColor = '#242730';
+export const secondaryInputBorderActiveColor = '#D3D8E0';
 
 export const switchWidth = 24;
 export const switchHeight = 12;
@@ -122,6 +126,7 @@ export const panelBackgroundHover = '#3A4552';
 export const panelActiveBg = '#3A4552';
 export const panelHeaderIcon = '#6A7485';
 export const panelHeaderIconActive = '#A0A7B4';
+export const panelHeaderHeight = 48;
 export const panelBoxShadow = '0 6px 12px 0 rgba(0,0,0,0.16)';
 export const panelBorderRadius = '2px';
 export const panelBackgroundLT = '#f8f8f9';
@@ -165,8 +170,7 @@ export const textTruncate = {
 
 const input = css`
   align-items: center;
-  background-color: ${props =>
-  props.active ? props.theme.inputBgdActive : props.theme.inputBgd};
+  background-color: ${props => props.theme.inputBgd};
   border: 1px solid
     ${props =>
       props.active
@@ -192,14 +196,16 @@ const input = css`
 
   :hover {
     cursor: pointer;
-    background-color: ${props => props.active ? 
-      props.theme.inputBgdActive : props.theme.inputBgdHover};
-    border-color: ${props => props.active ? 
-      props.theme.inputBorderActiveColor : props.theme.inputBorderHoverColor};
+    background-color: ${props =>
+      props.active ? props.theme.inputBgdActive : props.theme.inputBgdHover};
+    border-color: ${props =>
+      props.active
+        ? props.theme.inputBorderActiveColor
+        : props.theme.inputBorderHoverColor};
   }
-  
+
   :active,
-  .active {
+  &.active {
     background-color: ${props => props.theme.inputBgdActive};
     border-color: ${props => props.theme.inputBorderActiveColor};
   }
@@ -208,18 +214,51 @@ const input = css`
     color: ${props => props.theme.inputPlaceholderColor};
     font-weight: ${props => props.theme.inputPlaceholderFontWeight};
   }
-  
+
   /* Disable Arrows on Number Inputs */
-  ::-webkit-inner-spin-button, 
+  ::-webkit-inner-spin-button,
   ::-webkit-outer-spin-button {
-    -webkit-appearance: none; 
+    -webkit-appearance: none;
     margin: 0;
   }
 `;
 
+const secondaryInput = css`
+  ${props => props.theme.input} 
+  color: ${props => props.theme.secondaryInputColor};
+  background-color: ${props => props.theme.secondaryInputBgd};
+  height: ${props => props.theme.secondaryInputHeight};
+  border: 1px solid
+    ${props => props.error
+          ? props.theme.errorColor
+          : props.theme.secondaryInputBorderColor};
+
+  :hover {
+    cursor: pointer;
+    background-color: ${props => props.theme.secondaryInputBgdHover};
+    border-color: ${props => props.theme.secondaryInputBgdHover};
+  }
+
+  :active,
+  &.active {
+    background-color: ${props => props.theme.secondaryInputBgdActive};
+    border-color: ${props => props.theme.secondaryInputBorderActiveColor};
+  }
+`;
+
+const chickletedInput = css`
+  ${props => props.theme.secondaryInput} 
+  cursor: pointer;
+  flex-wrap: wrap;
+  height: auto;
+  justify-content: start;
+  margin-bottom: 2px;
+  padding: 4px 7px 4px 4px;
+  white-space: normal;
+`;
+
 const inlineInput = css`
-  ${props => props.theme.input}
-  color: ${props => props.theme.textColor};
+  ${props => props.theme.input} color: ${props => props.theme.textColor};
   font-size: 13px;
   letter-spacing: 0.43px;
   line-height: 18px;
@@ -229,14 +268,14 @@ const inlineInput = css`
   margin-left: -4px;
   background-color: transparent;
   border: 1px solid transparent;
-  
+
   :hover {
     height: 24px;
     cursor: text;
     background-color: transparent;
     border: 1px solid ${props => props.theme.labelColor};
   }
-  
+
   :active,
   .active,
   :focus {
@@ -245,32 +284,15 @@ const inlineInput = css`
   }
 `;
 
-const secondaryInput = css`
-  ${props => props.theme.input}
-  color: ${props => props.theme.secondaryInputColor};
-  background-color: ${props => props.theme.secondaryInputBgd};
-  height: ${props => props.theme.secondaryInputHeight};
-  
-  :active,
-  .active {
-    background-color: ${props => props.theme.secondaryInputBgd};
-    border-color: ${props => props.theme.secondaryInputBgd};
-  }
-  
-  :hover {
-    cursor: pointer;
-    background-color: ${props => props.theme.secondaryInputBgd};
-    border-color: ${props => props.theme.secondaryInputBgd};
-  }
-`;
-
 const switchTrack = css`
-  background: ${props => props.checked ?
-    props.theme.switchTrackBgdActive : props.theme.switchTrackBgd};
+  background: ${props =>
+    props.checked
+      ? props.theme.switchTrackBgdActive
+      : props.theme.switchTrackBgd};
   position: absolute;
   top: 0;
   left: 0;
-  content: "";
+  content: '';
   display: block;
   width: ${props => props.theme.switchWidth}px;
   height: ${props => props.theme.switchHeight}px;
@@ -281,13 +303,13 @@ const switchButton = css`
   transition: ${props => props.theme.transition};
   position: absolute;
   top: 0;
-  left: ${props => props.checked ? switchWidth / 2 : -1}px;
-  content: "";
+  left: ${props => (props.checked ? switchWidth / 2 : -1)}px;
+  content: '';
   display: block;
   height: ${props => props.theme.switchBtnHeight};
   width: ${props => props.theme.switchBtnWidth};
-  background: ${props => props => props.checked ? 
-    props.theme.switchBtnBgdActive : props.theme.switchBtnBgd};
+  background: ${props => props =>
+    props.checked ? props.theme.switchBtnBgdActive : props.theme.switchBtnBgd};
   box-shadow: ${props => props.theme.switchBtnBoxShadow};
 `;
 
@@ -304,29 +326,29 @@ const inputSwitch = css`
   padding-right: 0;
   padding-bottom: 0;
   padding-left: ${props => props.theme.switchWidth}px;
-  
+
   :before {
-    ${props => props.theme.switchTrack}
+    ${props => props.theme.switchTrack};
   }
-  
+
   :after {
-    ${props => props.theme.switchButton}
+    ${props => props.theme.switchButton};
   }
 `;
 
 const secondarySwitch = css`
-  ${props => props.theme.inputSwitch}
-  
-  :before {
-    ${props => props.theme.switchTrack}
-    background: ${props => props.checked ?
-      props.theme.switchTrackBgdActive : props.theme.secondarySwitchTrackBgd};
+  ${props => props.theme.inputSwitch} :before {
+    ${props => props.theme.switchTrack} background: ${props =>
+        props.checked
+          ? props.theme.switchTrackBgdActive
+          : props.theme.secondarySwitchTrackBgd};
   }
-  
+
   :after {
-    ${props => props.theme.switchButton}
-    background: ${props => props => props.checked ?
-      props.theme.switchBtnBgdActive : props.theme.secondarySwitchBtnBgd};
+    ${props => props.theme.switchButton} background: ${props => props =>
+        props.checked
+          ? props.theme.switchBtnBgdActive
+          : props.theme.secondarySwitchBtnBgd};
   }
 `;
 
@@ -394,7 +416,7 @@ const dropdownListItem = css`
   &:hover {
     cursor: pointer;
     background-color: ${props => props.theme.dropdownListHighlightBg};
-    
+
     .list__item__anchor {
       color: ${props => props.theme.textColorHl};
     }
@@ -418,7 +440,7 @@ const dropdownList = css`
   max-height: 280px;
   box-shadow: ${props => props.theme.dropdownListShadow};
   border-radius: 2px;
-  
+
   .list__section {
     ${props => props.theme.dropdownListSection};
   }
@@ -501,6 +523,7 @@ export const theme = {
   // templates
   input,
   inlineInput,
+  chickletedInput,
   secondaryInput,
   dropdownScrollBar,
   dropdownList,
@@ -570,8 +593,12 @@ export const theme = {
   inputPlaceholderFontWeight,
 
   secondaryInputBgd,
+  secondaryInputBgdHover,
+  secondaryInputBgdActive,
   secondaryInputHeight,
-  secondaryInputColo,
+  secondaryInputColor,
+  secondaryInputBorderColor,
+  secondaryInputBorderActiveColor,
 
   switchWidth,
   switchHeight,
@@ -630,6 +657,7 @@ export const theme = {
   panelBorderLT,
   panelHeaderIcon,
   panelHeaderIconActive,
+  panelHeaderHeight,
 
   // Text
   textColor,
