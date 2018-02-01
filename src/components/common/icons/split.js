@@ -10,7 +10,7 @@ const Split = React.createClass({
   },
   getDefaultProps() {
     return {
-      height: null,
+      height: '16px',
       predefinedClassName: 'data-ex-icons-split'
     };
   },

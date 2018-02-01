@@ -1,23 +1,34 @@
-/** @jsx createElement */
-import createElement from 'react-stylematic';
-
-import {Component} from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {rgb} from 'd3-color';
-import {Switch} from '@uber/react-switch';
 import classnames from 'classnames';
+import styled from 'styled-components';
 
+import Switch from 'components/common/switch';
 import InfoHelper from 'components/common/info-helper';
-import {PanelLabel, Tooltip} from 'components/common/styled-components';
+import {
+  PanelLabel,
+  StyledPanelHeader,
+  PanelHeaderTitle,
+  PanelHeaderContent,
+  PanelContent,
+  PanelLabelBold,
+  PanelLabelWrapper,
+  CenterFlexbox,
+  SidePanelSection
+} from 'components/common/styled-components';
 import PanelHeaderAction from 'components/side-panel/panel-header-action';
-import {ArrowDown} from 'components/common/icons';
-import ColorSingleSelector from './layer-panel/color-selector';
-import {VisConfigSlider} from './layer-panel/layer-configurator';
-
+import {ArrowDown, EyeSeen, EyeUnseen, Upload} from 'components/common/icons';
+import ColorSelector from './layer-panel/color-selector';
+import VisConfigSlider from './layer-panel/vis-config-slider';
 import {LAYER_VIS_CONFIGS} from 'keplergl-layers/layer-factory';
-import {hexToRgb} from 'utils/color-utils';
-import {mapStyleSelector} from 'styles/side-panel';
 
+const StyledInteractionPanel = styled.div`
+  padding-bottom: 12px;
+`;
+
+const StyledPanelContent = PanelContent.extend`
+  border-top: 1px solid ${props => props.theme.panelBorderColor};
+`;
 export default class MapManager extends Component {
   static propTypes = {
     mapStyle: PropTypes.object.isRequired,
@@ -49,8 +60,8 @@ export default class MapManager extends Component {
     const editableLayers = mapStyle.visibleLayerGroups;
 
     return (
-      <div className="map-style__panel">
-        <div style={mapStyleSelector}>
+      <div className="map-style-panel">
+        <div>
           <MapStyleSelector
             mapStyle={mapStyle}
             isSelecting={this.state.isSelecting}
@@ -75,137 +86,175 @@ export default class MapManager extends Component {
   }
 }
 
+const StyledMapDropdown = StyledPanelHeader.extend`
+  height: 48px;
+  margin-bottom: 5px;
+  opacity: 1;
+  position: relative;
+  transition: opacity 0.05s ease-in, height 0.25s ease-out;
+  
+  &.collapsed {
+    height: 0;
+    margin-bottom: 0;
+    opacity: 0;
+  }
+
+  :hover {
+    cursor: pointer;
+    background-color: ${props => props.theme.panelBackgroundHover};
+  }
+
+  .map-title-block img {
+    margin-right: 12px;
+  }
+
+  .map-preview {
+    border-radius: 3px;
+    height: 30px;
+    width: 40px;
+  }
+`;
+
 const MapStyleSelector = ({mapStyle, onChange, toggleActive, isSelecting}) => (
   <div>
-    <PanelLabel>Base map style</PanelLabel>
+    <PanelLabel>Map style</PanelLabel>
     {Object.keys(mapStyle.mapStyles).map(op => (
-      <div
+      <StyledMapDropdown
         className={classnames('map-dropdown-option', {
           collapsed: !isSelecting && mapStyle.styleType !== op
         })}
         key={op}
         onClick={isSelecting ? () => onChange(op) : toggleActive}
       >
-        <div className="map-title-block">
+        <PanelHeaderContent className="map-title-block">
           <img className="map-preview" src={mapStyle.mapStyles[op].icon} />
-          <span className="map-preview-name">
+          <PanelHeaderTitle className="map-preview-name">
             {mapStyle.mapStyles[op].label}
-          </span>
-        </div>
-        {!isSelecting ?
+          </PanelHeaderTitle>
+        </PanelHeaderContent>
+        {!isSelecting ? (
           <PanelHeaderAction
             className="map-dropdown-option__enable-config"
             id="map-enable-config"
             IconComponent={ArrowDown}
             tooltip={'Select Base Map Style'}
-            onClick={toggleActive}/> : null}
-      </div>
+            onClick={toggleActive}
+          />
+        ) : null}
+      </StyledMapDropdown>
     ))}
   </div>
 );
 
+const StyledLayerGroupItem = styled.div`
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .layer-group__visibility-toggle {
+    margin-right: 12px;
+  }
+`;
+
+const LayerLabel = PanelLabelBold.extend`
+  color: ${props =>
+    props.active ? props.theme.textColor : props.theme.labelColor};
+`;
 const LayerGroupSelector = ({layers, editableLayers, onChange, topLayers}) => (
-  <div>
+  <StyledInteractionPanel className="map-style__layer-group__selector">
     <div className="layer-group__header">
       <PanelLabel>Map Layers</PanelLabel>
     </div>
-    <div className="panel">
-      <div className="panel__content">
-        {Object.keys(editableLayers).map(slug => (
-          <div className="layer-group__select" key={slug}>
-            <PanelLabel>{slug}</PanelLabel>
-            <div className="layer-group__switch">
-              <Switch
-                checked={layers[slug]}
-                style={{marginBottom: 0, marginRight: '-10px'}}
-                id={`${slug}-toggle`}
-                label={''}
-                size="small"
-                onChange={() =>
-                  onChange({
-                    visibleLayerGroups: {
-                      ...layers,
-                      [slug]: !layers[slug]
-                    }
-                  })
-                }
-              />
-              <BringToTopToggle
-                slug={slug}
-                disabled={!layers[slug]}
-                topLayers={topLayers}
-                onChange={onChange}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  </div>
-);
-
-const BringToTopToggle = ({topLayers, onChange, slug, disabled}) => (
-  <span className="layer--toggle">
-    <a
-      className="hover"
-      data-tip
-      data-for={`${slug}-top`}
-      onClick={() =>
-        onChange({
-          topLayerGroups: {
-            ...topLayers,
-            [slug]: !topLayers[slug]
-          }
-        })
-      }
-    >
-      <i
-        className={classnames('icon icon_upload', {
-          active: topLayers[slug],
-          disabled
-        })}
-      />
-      <Tooltip id={`${slug}-top`} effect="solid">
-        <span>Move to top of data layers</span>
-      </Tooltip>
-    </a>
-  </span>
+    <PanelContent className="map-style__layer-group">
+      {Object.keys(editableLayers).map(slug => (
+        <StyledLayerGroupItem className="layer-group__select" key={slug}>
+          <PanelLabelWrapper>
+            <PanelHeaderAction
+              className="layer-group__visibility-toggle"
+              id={`${slug}-toggle`}
+              tooltip={layers[slug] ? 'hide' : 'show'}
+              onClick={() =>
+                onChange({
+                  visibleLayerGroups: {
+                    ...layers,
+                    [slug]: !layers[slug]
+                  }
+                })
+              }
+              IconComponent={layers[slug] ? EyeSeen : EyeUnseen}
+              active={layers[slug]}
+              flush
+            />
+            <LayerLabel active={layers[slug]}>{slug}</LayerLabel>
+          </PanelLabelWrapper>
+          <CenterFlexbox className="layer-group__bring-top">
+            <PanelHeaderAction
+              id={`${slug}-top`}
+              tooltip="Move to top of data layers"
+              disabled={!layers[slug]}
+              IconComponent={Upload}
+              active={topLayers[slug]}
+              onClick={() =>
+                onChange({
+                  topLayerGroups: {
+                    ...topLayers,
+                    [slug]: !topLayers[slug]
+                  }
+                })
+              }
+            />
+          </CenterFlexbox>
+        </StyledLayerGroupItem>
+      ))}
+    </PanelContent>
+  </StyledInteractionPanel>
 );
 
 const BuildingLayer = ({buildingLayer, onChange}) => (
-  <div className="layer-panel active">
-    <div className="layer-panel__header no-highlight">
-      <span>
-        <PanelLabel>3D Buildings</PanelLabel>
-        <InfoHelper
-          id="building-info"
-          description="3D building only visible when zoom in to an area of the map"
-        />
-      </span>
+  <StyledInteractionPanel className="map-style__building-layer">
+    <StyledPanelHeader className="map-style__building-layer__header">
+      <PanelHeaderContent>
+        <PanelLabelWrapper>
+          <PanelLabel>3D Buildings</PanelLabel>
+          <InfoHelper
+            id="building-info"
+            description="3D building only visible when zoom in to an area of the map"
+          />
+        </PanelLabelWrapper>
+      </PanelHeaderContent>
       <Switch
         checked={buildingLayer.isVisible}
-        style={{marginBottom: 0, marginRight: '-10px'}}
         id={`3d-building-toggle`}
         label={''}
-        size="small"
         onChange={() => onChange({isVisible: !buildingLayer.isVisible})}
+        secondary
       />
-    </div>
+    </StyledPanelHeader>
     {buildingLayer.isVisible ? (
-      <div className="soft-tiny layer-panel__config">
-        <PanelLabel>Color</PanelLabel>
-        <ColorSingleSelector
-          width={268}
-          setColor={hex => onChange({color: hexToRgb(hex)})}
-          selectedColor={buildingLayer.color}
-          single
-        />
-        <VisConfigSlider
-          {...LAYER_VIS_CONFIGS.opacity}
-          layer={{config: {visConfig: buildingLayer}}}
-          onChange={onChange}
-        />
-      </div>
+      <StyledPanelContent className="map-style__building-layer__content">
+        <SidePanelSection>
+          <PanelLabel>Color</PanelLabel>
+          <ColorSelector
+            colorSets={[{
+              selectedColor: buildingLayer.color,
+              setColor: rgbValue => onChange({color: rgbValue})
+            }]}
+            inputTheme="secondary"
+          />
+        </SidePanelSection>
+        <SidePanelSection>
+          <VisConfigSlider
+            {...LAYER_VIS_CONFIGS.opacity}
+            layer={{config: {visConfig: buildingLayer}}}
+            inputTheme="secondary"
+            onChange={onChange}
+          />
+        </SidePanelSection>
+      </StyledPanelContent>
     ) : null}
-  </div>
+  </StyledInteractionPanel>
 );

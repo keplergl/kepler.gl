@@ -34,21 +34,9 @@ export const IconRoundSmall = styled.div`
   }
 `;
 
-export const StyledSwitch = styled.div`
-  margin-bottom: 0 !important;
-  label {
-    color: ${props => props.theme.secondaryBtnColor} !important;
-    
-    &:before {
-      background: #282727 !important;
-      border: 1px solid #232324 !important;  
-    }
-  }
-  input {
-    outline: none;
-    :focus {
-      outline: none;
-  }
+export const CenterFlexbox = styled.div`
+  display: flex;
+  align-items: center;
 `;
 
 export const PanelLabel = styled.label.attrs({
@@ -67,6 +55,40 @@ export const PanelLabelWrapper = styled.div.attrs({
 })`
   display: flex;
   align-items: self-start;
+`;
+
+export const PanelLabelBold = PanelLabel.extend`
+  font-weight: 500;
+`;
+
+export const PanelHeaderTitle = styled.span.attrs({
+  className: 'side-panel-panel__header__title'
+})`
+  color: ${props => props.theme.textColor};;
+  font-size: 13px;
+  letter-spacing: 0.43px;
+  text-transform: capitalize;
+`;
+
+export const PanelHeaderContent = styled.div`
+  display: flex;
+  align-items: center;
+  color: ${props => props.theme.textColor};
+  padding-left: 12px;
+  
+  .icon {
+    color: ${props => props.theme.labelColor};
+    display: flex;
+    align-items: center;
+    margin-right: 12px;
+  }
+`;
+
+export const PanelContent = styled.div.attrs({
+  className: 'side-panel-panel__content'
+})`
+  background-color: ${props => props.theme.panelBackground};
+  padding: 12px;
 `;
 
 export const SidePanelSection = styled.div.attrs({
@@ -185,7 +207,13 @@ export const StyledPanelHeader = styled.div`
     props.active
       ? props.theme.panelBackgroundHover
       : props.theme.panelBackground};
-  border-left: 3px solid rgb(${props => props.labelRCGColorValues.join(',')});
+  border-left: 3px solid
+    rgb(
+      ${props =>
+        props.labelRCGColorValues
+          ? props.labelRCGColorValues.join(',')
+          : 'transparent'}
+    );
   padding: 0 10px 0 0;
   height: ${props => props.theme.panelHeaderHeight}px;
   display: flex;

@@ -56,6 +56,7 @@ const SliderInput = styled.div`
 
 const SliderWrapper = styled.div`
   flex-grow: 1;
+  margin-top: ${props => props.isRanged ? 0 : 10}px;
 `;
 
 class Slider extends React.Component {
@@ -208,6 +209,7 @@ class Slider extends React.Component {
       <SliderWrapper
         className={classnames({...classSet, slider: true})}
         innerRef={this._saveRef}
+        isRanged={isRanged}
       >
         {this.createSlider(width, length)}
         {/*this.createInput0()*/}

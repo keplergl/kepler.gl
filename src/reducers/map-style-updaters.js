@@ -75,8 +75,11 @@ function getBuildingColor(style) {
   // brighten or darken building based on style
   const operation = style.id.match(/(?=(dark|night))/) ? 'brighter' : 'darker';
   const adjusted = rgb(buildingColor)[operation](0.2);
-
-  return [adjusted.r, adjusted.g, adjusted.b];
+  return [
+    Math.round(adjusted.r),
+    Math.round(adjusted.g),
+    Math.round(adjusted.b)
+  ];
 }
 
 // Updaters

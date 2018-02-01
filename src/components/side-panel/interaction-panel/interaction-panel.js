@@ -1,12 +1,16 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import classnames from 'classnames';
-import {Switch} from '@uber/react-switch';
+import styled from 'styled-components';
+import Switch from 'components/common/switch';
 import RangeSlider from 'components/common/range-slider';
 import FieldSelector from 'components/common/field-selector';
 import {
   PanelLabel,
-  SidePanelSection
+  SidePanelSection,
+  StyledPanelHeader,
+  PanelHeaderTitle,
+  PanelHeaderContent,
+  PanelContent
 } from 'components/common/styled-components';
 import {DatasetTag} from '../source-data-catalog';
 
@@ -15,6 +19,14 @@ const propTypes = {
   config: PropTypes.object.isRequired,
   onConfigChange: PropTypes.func.isRequired
 };
+
+const StyledPanelContent = PanelContent.extend`
+  border-top: 1px solid ${props => props.theme.panelBorderColor};
+`;
+
+const StyledInteractionPanel = styled.div`
+  padding-bottom: 6px;
+`;
 
 export default class InteractionPanel extends Component {
   state = {isConfigActive: false};
@@ -56,33 +68,34 @@ export default class InteractionPanel extends Component {
     }
 
     return (
-      <div
-        className={classnames('layer-panel', {
-          disabled: config.id === 'select',
-          active: config.enabled
-        })}
-      >
-        <div
-          className="soft-small--sides soft-tiny--ends cursor--pointer
-          layer-panel__header no-highlight"
+      <StyledInteractionPanel className="interaction-panel">
+        <StyledPanelHeader
+          className="interaction-panel__header"
           onClick={this._enableConfig}
-          style={{borderLeftWidth: 0}}
         >
-          <span
-            className={`icon icon_${
-              config.icon
-            } text-uber-black-60 push-tiny--right`}
-          />
-          <PanelLabel>{config.id}</PanelLabel>
-          <EnableConfig
-            config={config}
-            onClick={() => this._updateConfig({enabled: !config.enabled})}
-          />
-        </div>
+          <PanelHeaderContent className="interaction-panel__header__content">
+            <div className="interaction-panel__header__icon icon">
+              <config.iconComponent height="12px"/>
+            </div>
+            <div className="interaction-panel__header__title">
+              <PanelHeaderTitle>{config.id}</PanelHeaderTitle>
+            </div>
+          </PanelHeaderContent>
+          <div className="interaction-panel__header__actions">
+            <Switch
+              checked={config.enabled}
+              id={`${config.id}-toggle`}
+              onChange={() => this._updateConfig({enabled: !config.enabled})}
+              secondary
+            />
+          </div>
+        </StyledPanelHeader>
         {config.enabled && (
-          <div className="soft-tiny layer-panel__config">{template}</div>
+          <StyledPanelContent className="interaction-panel__content">
+            {template}
+          </StyledPanelContent>
         )}
-      </div>
+      </StyledInteractionPanel>
     );
   }
 }
@@ -127,19 +140,18 @@ const BrushConfig = ({config, onChange}) => (
       isRanged={false}
       showInput={true}
       onChange={value => onChange({...config, size: value[1]})}
+      inputTheme="secondary"
     />
   </SidePanelSection>
 );
 
-export const EnableConfig = ({config, onClick}) => (
-  <div className="float--right push-tiny--left display--inline-block flush">
+const EnableConfig = ({config, onClick}) => (
+  <div>
     <Switch
-      style={{marginBottom: 0, marginRight: '-10px'}}
       checked={config.enabled}
       id={`${config.id}-toggle`}
-      label={config.enabled ? 'on' : 'off'}
       onChange={onClick}
-      size="small"
+      secondary
     />
   </div>
 );

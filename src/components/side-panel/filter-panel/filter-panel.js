@@ -15,7 +15,6 @@ const StyledFilterPanel = styled.div`
   margin-bottom: 12px;
   border-radius: 1px;
 
-
   .filter-panel__filter {
     margin-top: 24px;
   }

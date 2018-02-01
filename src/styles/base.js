@@ -79,6 +79,8 @@ export const secondaryInputBorderActiveColor = '#D3D8E0';
 
 export const switchWidth = 24;
 export const switchHeight = 12;
+export const switchLabelMargin = 12;
+
 export const switchTrackBgd = '#29323C';
 export const switchTrackBgdActive = activeColor;
 export const switchTrackBorderRadius = '1px';
@@ -295,7 +297,7 @@ const switchTrack = css`
       : props.theme.switchTrackBgd};
   position: absolute;
   top: 0;
-  left: 0;
+  left: ${props => -props.theme.switchLabelMargin}px;
   content: '';
   display: block;
   width: ${props => props.theme.switchWidth}px;
@@ -307,7 +309,7 @@ const switchButton = css`
   transition: ${props => props.theme.transition};
   position: absolute;
   top: 0;
-  left: ${props => (props.checked ? switchWidth / 2 : -1)}px;
+  left: ${props => (props.checked ? props.theme.switchWidth / 2 : -1) - props.theme.switchLabelMargin}px;
   content: '';
   display: block;
   height: ${props => props.theme.switchBtnHeight};
@@ -323,10 +325,10 @@ const inputSwitch = css`
   line-height: 0;
   font-weight: 500;
   font-size: 12px;
-  color: ${props => props.theme.label};
+  color: ${props => props.theme.labelColor};
   position: relative;
   display: inline-block;
-  padding-top: ${props => props.theme.switchHeight}px;
+  padding-top: ${props => props.theme.switchHeight / 2}px;
   padding-right: 0;
   padding-bottom: 0;
   padding-left: ${props => props.theme.switchWidth}px;
@@ -341,7 +343,8 @@ const inputSwitch = css`
 `;
 
 const secondarySwitch = css`
-  ${props => props.theme.inputSwitch} :before {
+  ${props => props.theme.inputSwitch} 
+  :before {
     ${props => props.theme.switchTrack} background: ${props =>
         props.checked
           ? props.theme.switchTrackBgdActive
@@ -615,6 +618,7 @@ export const theme = {
   switchBtnBorderRadius,
   switchBtnWidth,
   switchBtnHeight,
+  switchLabelMargin,
 
   secondarySwitchTrackBgd,
   secondarySwitchBtnBgd,

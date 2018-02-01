@@ -40,6 +40,12 @@ const HiddenInput = styled.input`
   display: none;
 `;
 
+const StyledCheckbox = styled.div`
+  line-height: 0;
+  height: ${props => props.theme.switchBtnHeight};
+  margin-left: ${props => props.theme.switchLabelMargin}px;
+`;
+
 class Checkbox extends React.Component {
   state = {
     focused: false
@@ -68,12 +74,12 @@ class Checkbox extends React.Component {
       htmlFor: this.props.id
     };
     return (
-      <div className="checkbox">
+      <StyledCheckbox className="checkbox">
         <HiddenInput {...inputProps} />
         <StyledLabel chassName="checkbox__label" {...labelProps}>
           {this.props.label}
         </StyledLabel>
-      </div>
+      </StyledCheckbox>
     );
   }
 }

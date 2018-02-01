@@ -13,12 +13,13 @@ const propTypes = {
   label: PropTypes.oneOfType([
     PropTypes.string,
     PropTypes.bool,
-    PropTypes.func,
+    PropTypes.func
   ]),
   range: PropTypes.arrayOf(PropTypes.number).isRequired,
   step: PropTypes.number,
   isRanged: PropTypes.bool,
-  disabled: PropTypes.bool
+  disabled: PropTypes.bool,
+  inputTheme: PropTypes.bool
 };
 
 export const VisConfigSlider = ({
@@ -29,7 +30,8 @@ export const VisConfigSlider = ({
   step,
   isRanged,
   disabled,
-  onChange
+  onChange,
+  inputTheme
 }) => (
   <SidePanelSection disabled={Boolean(disabled)}>
     {label ? (
@@ -51,6 +53,7 @@ export const VisConfigSlider = ({
       step={step}
       isRanged={Boolean(isRanged)}
       onChange={value => onChange({[property]: isRanged ? value : value[1]})}
+      inputTheme={inputTheme}
       showInput
     />
   </SidePanelSection>

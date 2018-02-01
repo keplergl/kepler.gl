@@ -14,6 +14,7 @@ const SingleSelectFilter = ({filter, setFilter}) => (
       displayOption={d => String(d)}
       getOptionValue={d => d}
       onChange={setFilter}
+      inputTheme="secondary"
     />
   </SidePanelSection>
 );

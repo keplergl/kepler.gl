@@ -126,14 +126,6 @@ export const sidePanel = {
     background: selectBackground
   },
 
-  // ' .layer-panel:hover': {
-  //   background: panelActiveBg
-  // },
-
-  ' .layer-panel.dragging': {
-    cursor: 'move'
-  },
-
   ' .layer-panel__header:hover': {
     cursor: 'pointer'
   },
@@ -185,23 +177,23 @@ export const mapStyleSelector = {
     position: 'relative',
     transition: 'opacity .05s ease-in, height .25s ease-out',
 
-    ' .map-title-block': {
-      display: 'flex'
-    },
-
-    ' .map-preview': {
-      border: 'thin solid #212122',
-      borderRadius: '3px',
-      height: '30px',
-      width: '40px'
-    },
-
-    ' .map-preview-name': {
-      color: selectColor,
-      fontSize: '10px',
-      marginLeft: '10px',
-      marginTop: '5px'
-    }
+    // ' .map-title-block': {
+    //   display: 'flex'
+    // },
+    //
+    // ' .map-preview': {
+    //   border: 'thin solid #212122',
+    //   borderRadius: '3px',
+    //   height: '30px',
+    //   width: '40px'
+    // },
+    //
+    // ' .map-preview-name': {
+    //   color: selectColor,
+    //   fontSize: '10px',
+    //   marginLeft: '10px',
+    //   marginTop: '5px'
+    // }
   },
 
   // ' .layer--toggle': {
@@ -226,16 +218,16 @@ export const mapStyleSelector = {
   //   }
   // },
 
-  ' .map-dropdown-option:hover': {
-    cursor: 'pointer',
-    color: 'white',
-    background: panelActiveBg
-  },
+  // ' .map-dropdown-option:hover': {
+  //   cursor: 'pointer',
+  //   color: 'white',
+  //   background: panelActiveBg
+  // },
 
-  ' .map-dropdown-option.collapsed': {
-    height: '0px',
-    marginBottom: 0,
-    padding: 0,
-    opacity: 0
-  }
+  // ' .map-dropdown-option.collapsed': {
+  //   height: '0px',
+  //   marginBottom: 0,
+  //   padding: 0,
+  //   opacity: 0
+  // }
 };

@@ -10,8 +10,7 @@ const Clock = React.createClass({
   },
   getDefaultProps() {
     return {
-      height: null,
-      size: 'tiny',
+      height: '16px',
       predefinedClassName: 'data-ex-icons-clock'
     };
   },

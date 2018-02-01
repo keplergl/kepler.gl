@@ -5,7 +5,10 @@ import {rgbToHex} from 'utils/color-utils';
 import SingleColorPalette from 'components/side-panel/layer-panel/single-color-palette';
 import ColorRangeSelector from 'components/side-panel/layer-panel/color-range-selector';
 import ColorPalette from 'components/side-panel/layer-panel/color-palette';
-import {PanelLabel, StyledPanelDropdown} from "components/common/styled-components";
+import {
+  PanelLabel,
+  StyledPanelDropdown
+} from 'components/common/styled-components';
 import listensToClickOutside from 'react-onclickoutside/decorator';
 
 const propTypes = {
@@ -17,6 +20,7 @@ const propTypes = {
       label: PropTypes.string
     })
   ),
+  inputTheme: PropTypes.string,
   disabled: PropTypes.bool
 };
 
@@ -32,13 +36,17 @@ const ColorBlock = styled.div`
 `;
 
 const ColorSelectorInput = styled.div`
-  ${props => props.theme.input};
+  ${props =>
+    props.inputTheme === 'secondary'
+      ? props.theme.secondaryInput
+      : props.theme.input};
+  height: ${props => props.theme.inputBoxHeight};
 `;
 
 const InputBoxContainer = styled.div`
   display: flex;
   justify-content: space-between;
-  
+
   .color-select__input-group {
     flex-grow: 1;
   }
@@ -52,7 +60,7 @@ class ColorSelector extends Component {
     editing: false
   };
 
-  handleClickOutside = (e) => {
+  handleClickOutside = e => {
     this._hideDropdown(e);
   };
 
@@ -78,20 +86,22 @@ class ColorSelector extends Component {
   };
 
   render() {
-    const {colorSets, disabled} = this.props;
+    const {colorSets, disabled, inputTheme} = this.props;
     const {editing} = this.state;
-    const currentEditing = colorSets[editing] && typeof colorSets[editing] === 'object';
+    const currentEditing =
+      colorSets[editing] && typeof colorSets[editing] === 'object';
 
     return (
       <div className="color-selector">
         <InputBoxContainer>
           {colorSets.map((cSet, i) => (
-            <div className="color-select__input-group"  key={i}>
+            <div className="color-select__input-group" key={i}>
               {cSet.label ? <PanelLabel>{cSet.label}</PanelLabel> : null}
               <ColorSelectorInput
                 className="color-selector__selector"
                 active={editing === i}
                 disabled={disabled}
+                inputTheme={inputTheme}
                 onMouseDown={e => this._showDropdown(e, i)}
               >
                 {cSet.isRange ? (
@@ -107,9 +117,7 @@ class ColorSelector extends Component {
           ))}
         </InputBoxContainer>
         {currentEditing ? (
-          <StyledPanelDropdown
-            className="color-selector__dropdown"
-          >
+          <StyledPanelDropdown className="color-selector__dropdown">
             {colorSets[editing].isRange ? (
               <ColorRangeSelector
                 selectedColorRange={colorSets[editing].selectedColor}

@@ -9,7 +9,8 @@ const Table = React.createClass({
   },
   getDefaultProps() {
     return {
-      height: '16px'
+      height: '16px',
+      predefinedClassName: 'data-ex-icons-table'
     };
   },
   render() {

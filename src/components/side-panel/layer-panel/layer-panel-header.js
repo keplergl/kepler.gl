@@ -35,7 +35,6 @@ const defaultProps = {
 };
 
 const StyledLayerPanelHeader = StyledPanelHeader.extend`
-  
   .layer__remove-layer {
     opacity: 0;
   }

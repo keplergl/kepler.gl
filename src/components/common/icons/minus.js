@@ -11,7 +11,8 @@ class Minus extends React.Component {
   };
 
   static defaultProps = {
-    height: null
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-minus'
   };
 
   render() {

@@ -4,13 +4,14 @@ import {
   ALL_FIELD_TYPES,
   TRIP_POINT_FIELDS
 } from '../constants/default-settings';
+import {Messages, Crosshairs} from 'components/common/icons/index';
 
 export function getDefaultInteraction() {
   return {
     tooltip: {
       id: 'tooltip',
       enabled: true,
-      icon: 'messages',
+      iconComponent: Messages,
       config: {
         fieldsToShow: {}
       }
@@ -18,7 +19,7 @@ export function getDefaultInteraction() {
     brush: {
       id: 'brush',
       enabled: false,
-      icon: 'crosshairs',
+      iconComponent: Crosshairs,
       config: {
         // size is in km
         size: 0.5

@@ -24,6 +24,10 @@ const PanelWrapper = styled.div`
   font-size: 12px;
   border-radius: 1px;
   margin-bottom: 8px;
+  
+  &.dragging {
+    cursor: move;
+  }
 `;
 
 @sortable
