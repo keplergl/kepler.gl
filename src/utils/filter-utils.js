@@ -56,6 +56,18 @@ export const FILTER_COMPONENTS = {
   [FILTER_TYPES.range]: 'RangeFilter'
 };
 
+export const BASE_SPEED = 600;
+export const TIME_ANIMATION_SPEED = [{
+  label: '1x',
+  value: 1
+}, {
+  label: '2x',
+  value: 2
+}, {
+  label: '4x',
+  value: 4
+}];
+
 export function getDefaultfilter(dataId) {
   return {
     // link to dataset Id
@@ -65,6 +77,7 @@ export function getDefaultfilter(dataId) {
     id: generateHashId(4),
     enlarged: false,
     isAnimating: false,
+    speed: 1,
 
     // field specific
     name: null,

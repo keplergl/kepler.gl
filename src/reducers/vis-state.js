@@ -11,6 +11,7 @@ import {
   layerHoverUpdater,
   mapClickUpdater,
   toggleFilterAnimationUpdater,
+  updateAnimationSpeedUpdater,
   receiveMapConfigUpdater,
   resetMapConfigUpdater,
   loadFilesUpdater,
@@ -84,6 +85,7 @@ const rootReducer = handleActions(
     [ActionTypes.SHOW_DATASET_TABLE]: showDatasetTableUpdater,
 
     [ActionTypes.TOGGLE_FILTER_ANIMATION]: toggleFilterAnimationUpdater,
+    [ActionTypes.UPDATE_FILTER_ANIMATION_SPEED]: updateAnimationSpeedUpdater,
 
     [ActionTypes.TOGGLE_LAYER_FOR_MAP]: toggleLayerForMapUpdater,
 

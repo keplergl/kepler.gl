@@ -2,11 +2,11 @@ import React, {Component} from 'react';
 import styled from 'styled-components';
 import {createSelector} from 'reselect';
 
-import FieldSelector from '../common/field-selector';
-import {SelectTextBold, IconRoundSmall} from '../common/styled-components';
-import TimeRangeFilter from '../filters/time-range-filter';
-import {Close, Clock} from '../common/icons';
-
+import FieldSelector from 'components/common/field-selector';
+import {SelectTextBold, IconRoundSmall} from 'components/common/styled-components';
+import TimeRangeFilter from 'components/filters/time-range-filter';
+import {Close, Clock} from 'components/common/icons';
+import {TIME_ANIMATION_SPEED} from 'utils/filter-utils';
 const innerPdSide = 32;
 
 const WidgetContainer = styled.div`
@@ -30,6 +30,18 @@ const TopSectionWrapper = styled.div`
   justify-content: space-between;
   width: 100%;
   padding-right: ${innerPdSide * 2}px;
+  color: ${props => props.theme.labelColor};
+  
+  .bottom-widget__y-axis {
+    flex-grow: 1;
+    margin-left: 20px;
+  }
+  
+  .bottom-widget__field-select {
+    width: 160px;
+    display: inline-block;
+    margin-left: 12px;
+  }
 `;
 
 /* eslint-disable no-unused-vars */
@@ -38,20 +50,18 @@ const Tabs = styled.div`
 `;
 
 const Tab = styled.div`
-  display: inline-block;
-  width: 24px;
-  height: 24px;
   border-bottom: 1px solid
     ${props => (props.active ? props.theme.textColorHl : 'transparent')};
+  color: ${props =>
+  props.active ? props.theme.textColorHl : props.theme.labelColor};
+  display: inline-block;
+  font-size: 12px;
+  height: 24px;
   margin-right: 4px;
-
-  svg {
-    path {
-      fill: ${props =>
-        props.active ? props.theme.textColorHl : props.theme.textColor};
-    }
-  }
-
+  text-align: center;
+  width: 24px;
+  line-height: 24px;
+  
   :hover {
     cursor: pointer;
   }
@@ -64,10 +74,19 @@ const StyledTitle = styled.div`
   align-items: center;
   color: ${props => props.theme.textColor};
 
-  .icon {
+  .bottom-widget__icon {
     margin-right: 6px;
   }
 `;
+
+const AnimationSpeedToggle = ({updateAnimationSpeed, speed}) => (
+  <Tabs>
+    {TIME_ANIMATION_SPEED.map(({label, value}) => (
+      <Tab key={value} active={value === speed}
+        onClick={() => updateAnimationSpeed(value)}>{label}</Tab>
+    ))}
+  </Tabs>
+);
 
 class TimeWidget extends Component {
   fieldSelector = props => props.fields;
@@ -84,6 +103,7 @@ class TimeWidget extends Component {
       setFilter,
       setFilterPlot,
       toggleAnimation,
+      updateAnimationSpeed,
       width
     } = this.props;
 
@@ -92,30 +112,28 @@ class TimeWidget extends Component {
         <div className="bottom-widget--inner">
           <TopSectionWrapper>
             <StyledTitle>
-              <div className="icon">
-                <Clock height="15px" />
+              <div className="bottom-widget__icon">
+                <Clock height="15px"/>
               </div>
               <SelectTextBold>{filter.name}</SelectTextBold>
             </StyledTitle>
-            <div style={{flexGrow: 1, marginLeft: '20px'}}>
+            <div className="bottom-widget__y-axis">
               <SelectTextBold>Y Axis</SelectTextBold>
-              <div
-                style={{
-                  width: '160px',
-                  display: 'inline-block',
-                  marginLeft: '20px'
-                }}
-              >
+              <div className="bottom-widget__field-select">
                 <FieldSelector
                   fields={this.yAxisFieldsSelector(this.props)}
                   placement="top"
                   id="selected-time-widget-field"
                   value={filter.yAxis ? filter.yAxis.name : null}
                   onSelect={value => setFilterPlot(enlargedIdx, {yAxis: value})}
+                  inputTheme="secondary"
                   erasable
                 />
               </div>
             </div>
+            <AnimationSpeedToggle
+              updateAnimationSpeed={(speed) => updateAnimationSpeed(enlargedIdx, speed)}
+              speed={filter.speed}/>
             <IconRoundSmall>
               <Close height="12px" onClick={() => enlargeFilter(enlargedIdx)} />
             </IconRoundSmall>
@@ -124,6 +142,7 @@ class TimeWidget extends Component {
             filter={filter}
             setFilter={value => setFilter(enlargedIdx, 'value', value)}
             isAnyFilterAnimating={isAnyFilterAnimating}
+            updateAnimationSpeed={(speed) => updateAnimationSpeed(enlargedIdx, speed)}
             toggleAnimation={() => toggleAnimation(enlargedIdx)}
           />
         </div>

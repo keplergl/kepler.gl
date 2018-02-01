@@ -39,6 +39,7 @@ export const primaryBtnActBgd = '#13B17B';
 export const primaryBtnColor = '#FFFFFF';
 export const primaryBtnActColor = '#FFFFFF';
 export const primaryBtnBgdHover = '#13B17B';
+export const primaryBtnRadius = '2px';
 
 export const secondaryBtnBgd = '#6A7485';
 export const secondaryBtnActBgd = '#A0A7B4';
@@ -155,6 +156,9 @@ export const sliderHandleWidth = '12px';
 export const sliderHandleColor = '#D3D8E0';
 export const sliderHandleHoverColor = '#FFFFFF';
 export const sliderHandleShadow = '0 2px 4px 0 rgba(0,0,0,0.40)';
+
+// Plot
+export const rangeBrushBgd = '#3A414C';
 
 export const textTruncate = {
   maxWidth: '100%',
@@ -621,6 +625,7 @@ export const theme = {
   primaryBtnColor,
   primaryBtnActColor,
   primaryBtnBgdHover,
+  primaryBtnRadius,
   secondaryBtnBgd,
   secondaryBtnActBgd,
   secondaryBtnBgdHover,
@@ -682,5 +687,8 @@ export const theme = {
   sliderHandleWidth,
   sliderHandleColor,
   sliderHandleHoverColor,
-  sliderHandleShadow
+  sliderHandleShadow,
+
+  // Plot
+  rangeBrushBgd
 };

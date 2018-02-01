@@ -6,10 +6,9 @@ import classnames from 'classnames';
 import throttle from 'lodash.throttle';
 import styled from 'styled-components';
 import {createSelector} from 'reselect';
-
-import {SelectTextBold, SelectText, Button} from 'components/common/styled-components';
-import {getTimeWidgetTitleFormatter} from 'utils/filter-utils';
-
+import {Play, Reset, Pause, Minus} from 'components/common/icons';
+import {SelectTextBold, SelectText, Button, ButtonGroup} from 'components/common/styled-components';
+import {getTimeWidgetTitleFormatter, BASE_SPEED} from 'utils/filter-utils';
 import RangeSlider from './range-slider';
 import TimeSliderMarker from './time-slider-marker';
 
@@ -23,14 +22,15 @@ const propTypes = {
   lineChart: PropTypes.object,
   toggleAnimation: PropTypes.func.isRequired,
   isAnimatable: PropTypes.bool,
-  isEnlarged: PropTypes.bool
+  isEnlarged: PropTypes.bool,
+  speed: PropTypes.number
 };
 
 const defaultTimeFormat = val => moment.utc(val).format('MM/DD/YY hh:mma');
 
 const StyledSliderContainer = styled.div`
   margin-top: ${props => props.isEnlarged ? '12px' : '0px'};
-  align-items: center;
+  align-items: flex-end;
   display: flex;
   flex-direction: ${props => props.isEnlarged ? 'row' : 'column'};
   justify-content: space-between;
@@ -44,7 +44,8 @@ export default class TimeRangeSlider extends Component {
       width: 288
     };
     this._animation = null;
-    this._animationSpeed = 120;
+    // this._baseSpeed = 60;
+    // this._animationSpeed = this._baseSpeed;
     this._sliderThrottle = throttle(this.props.onChange, 20);
   }
 
@@ -75,6 +76,12 @@ export default class TimeRangeSlider extends Component {
       this.setState({width});
     }
   }
+  _resetAnimation = () => {
+    const {domain, value} = this.props;
+    const value0 = domain[0];
+    const value1 = value0 + value[1] - value[0];
+    this.props.onChange([value0, value1]);
+  };
 
   _startAnimation = () => {
     this._pauseAnimation();
@@ -91,21 +98,12 @@ export default class TimeRangeSlider extends Component {
     this.setState({isAnimating: false});
   };
 
-  _increaseAnimationSpeed = () => {
-    this._animationSpeed = Math.round(this._animationSpeed * Math.pow(0.75, 1));
-  };
-
-  _reduceAnimationSpeed = () => {
-    this._animationSpeed = Math.round(
-      this._animationSpeed * Math.pow(0.75, -1)
-    );
-  };
-
   _nextFrame = () => {
     this._animation = null;
 
     const {domain, value} = this.props;
-    const speed = (domain[1] - domain[0]) / this._animationSpeed;
+    console.log(this.props.speed);
+    const speed = ((domain[1] - domain[0]) / BASE_SPEED) * this.props.speed;
 
     // loop when reaches the end
     const value0 = value[1] + speed > domain[1] ? domain[0] : value[0] + speed;
@@ -129,7 +127,16 @@ export default class TimeRangeSlider extends Component {
         />
         <StyledSliderContainer
           className="time-range-slider__container"
+          isEnlarged={isEnlarged}
           innerRef={comp => this.sliderContainer = comp}>
+          {isEnlarged ? <AnimationControls
+            isAnimatable={this.props.isAnimatable}
+            isEnlarged={isEnlarged}
+            isAnimating={isAnimating}
+            pauseAnimation={this._pauseAnimation}
+            resetAnimation={this._resetAnimation}
+            startAnimation={this._startAnimation}
+          /> : null}
           <RangeSlider
             minValue={domain[0]}
             maxValue={domain[1]}
@@ -148,15 +155,6 @@ export default class TimeRangeSlider extends Component {
               <TimeSliderMarker width={sliderWidth} domain={domain} />
             }
           />
-          <AnimationControls
-            isAnimatable={this.props.isAnimatable}
-            isEnlarged={isEnlarged}
-            isAnimating={isAnimating}
-            reduceAnimationSpeed={this._reduceAnimationSpeed}
-            pauseAnimation={this._pauseAnimation}
-            startAnimation={this._startAnimation}
-            increaseAnimationSpeed={this._increaseAnimationSpeed}
-          />
         </StyledSliderContainer>
       </div>
     );
@@ -165,84 +163,86 @@ export default class TimeRangeSlider extends Component {
 
 const TimeValueWrapper = styled.div`
   display: flex;
+  height: ${props => props.theme.secondaryInputHeight};
+  align-items: center;
   font-size: 11px;
-  justify-content: ${props => (props.isEnlarged ? 'center' : 'space-between')};
+  justify-content: ${props => props.isEnlarged ? 'center' : 'space-between'};
+  color: ${props => props.theme.labelColor};
+  
   .horizontal-bar {
-    padding: 0 6px;
+    padding: 0 12px;
+  }
+  
+  .time-value {
+    display: flex;
+    flex-direction: ${props => props.isEnlarged ? 'row' : 'column'};
+    align-items: flex-start;
+  }
+  
+  .time-value:last-child {
+    align-items: flex-end;
   }
 `;
 
 const TimeTitle = ({value, isEnlarged, timeFormat = defaultTimeFormat}) => (
   <TimeValueWrapper isEnlarged={isEnlarged}>
-    <TimeValue key={0} value={moment.utc(value[0]).format(timeFormat)} />
+    <TimeValue key={0} value={moment.utc(value[0]).format(timeFormat)} split={!isEnlarged}/>
     {isEnlarged ? (
       <div className="horizontal-bar">
-        <SelectTextBold>―</SelectTextBold>
+        <Minus height="12px"/>
       </div>
     ) : null}
-    <TimeValue key={1} value={moment.utc(value[0]).format(timeFormat)} last/>
+    <TimeValue key={1} value={moment.utc(value[0]).format(timeFormat)} split={!isEnlarged}/>
   </TimeValueWrapper>
 );
 
-const StyledTimeValue = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: ${props => props.last ? 'flex-end' : 'flex-start'};
-`;
-
-const TimeValue = ({value, last}) => (
-  // render two lines
-  <StyledTimeValue last={last}>
-    {value.split(' ').map((v, i) => (
+const TimeValue = ({value, split}) => (
+  // render two lines if not enlarged
+  <div className="time-value">
+    {split ? value.split(' ').map((v, i) => (
       <div key={i}>
         {i === 0 ? <SelectText>{v}</SelectText> :
         <SelectTextBold>{v}</SelectTextBold>}
       </div>
-    ))}
-  </StyledTimeValue>
+    )) : <SelectTextBold>{value}</SelectTextBold>}
+  </div>
 );
+
+const StyledAnimationControls = styled.div`
+  margin-bottom: 12px;
+  &.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+`;
+
+const IconButton = Button.extend`
+  svg {
+    margin: 0 6px;
+  }
+`;
 
 const AnimationControls = ({
   isAnimatable,
   isAnimating,
-  isEnlarged,
-  increaseAnimationSpeed,
-  reduceAnimationSpeed,
   pauseAnimation,
+  resetAnimation,
   startAnimation
 }) => (
-  <div
-    className={classnames('soft-micro--top', {
-      'text--center': !isEnlarged,
-      'text--right': isEnlarged
-    })}
-    style={
-      isAnimatable
-        ? {
-            display: 'flex',
-            marginTop: isEnlarged ? 0 : 14
-          }
-        : {
-            opacity: 0.4,
-            pointerEvents: 'none'
-          }
-    }
+  <StyledAnimationControls
+    className={classnames('time-range-slider__control', {disabled: !isAnimatable})}
   >
-    <Button onClick={reduceAnimationSpeed}>
-      <i className="icon icon_previous" />
-    </Button>
-    <Button size="tiny" onClick={isAnimating ? pauseAnimation : startAnimation}>
-      <i
-        className={classnames({
-          'icon icon_pause': isAnimating,
-          'icon icon_play': !isAnimating
-        })}
-      />
-    </Button>
-    <Button onClick={increaseAnimationSpeed}>
-      <i className="icon icon_skip" />
-    </Button>
-  </div>
+    <ButtonGroup>
+      <IconButton className="playback-control-button"
+        onClick={resetAnimation} secondary>
+        <Reset height="12px"/>
+      </IconButton>
+      <IconButton className={classnames('playback-control-button', {active: isAnimating})}
+        onClick={isAnimating ? pauseAnimation : startAnimation} secondary>
+        {isAnimating ? <Pause height="12px"/> : <Play height="12px"/>}
+      </IconButton>
+    </ButtonGroup>
+  </StyledAnimationControls>
 );
 
 TimeRangeSlider.propTypes = propTypes;

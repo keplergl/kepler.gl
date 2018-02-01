@@ -129,7 +129,7 @@ export const Button = styled.div.attrs({
     props.secondary
       ? props.theme.secondaryBtnBgd
       : props.link ? props.theme.linkBtnBgd : props.theme.primaryBtnBgd};
-  border-radius: 2px;
+  border-radius: ${props => props.theme.primaryBtnRadius};
   color: ${props =>
     props.secondary
       ? props.theme.secondaryBtnColor
@@ -150,7 +150,8 @@ export const Button = styled.div.attrs({
 
   :hover,
   :focus,
-  :active {
+  :active,
+  &.active {
     background-color: ${props =>
       props.secondary
         ? props.theme.secondaryBtnBgdHover
@@ -200,4 +201,20 @@ export const StyledPanelDropdown = styled.div`
   border-radius: ${props => props.theme.panelBorderRadius};
   margin-top: 2px;
   max-height: 500px;
+`;
+
+export const ButtonGroup = styled.div`
+  .button {
+    border-radius: 0;
+    margin-left: 2px;
+  }
+  .button:first-child {
+    border-bottom-left-radius: ${props => props.theme.primaryBtnRadius};
+    border-top-left-radius: ${props => props.theme.primaryBtnRadius};
+    margin-left: 0;
+  }
+  .button:last-child {
+    border-bottom-right-radius: ${props => props.theme.primaryBtnRadius};
+    border-top-right-radius: ${props => props.theme.primaryBtnRadius};
+  }
 `;

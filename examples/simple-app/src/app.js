@@ -28,8 +28,32 @@ class App extends Component {
   }
 
   componentDidMount() {
-    // load trip based data
-    this.props.dispatch(updateVisData(sampleTripData));
+    // load trip based data with config
+    this.props.dispatch(
+      updateVisData(
+      // datasets
+      {
+        info: {
+          label: 'Test Trip Data',
+          id: 'test_trip_data'
+        },
+        data: sampleTripData
+      },
+      // option
+      {},
+      // config
+      {
+        filters: [
+          {
+            id: 'me',
+            dataId: 'test_trip_data',
+            name: 'tpep_pickup_datetime',
+            type: 'timeRange',
+            enlarged: true
+          }
+        ]
+      })
+    );
 
     // load point based data
     this.props.dispatch(updateVisData(sampleData));
@@ -37,7 +61,10 @@ class App extends Component {
     // load data with h3 hex id
     this.props.dispatch(
       updateVisData({
-        info: {label: 'Hexagon by Id'},
+        info: {
+          label: 'Hexagon by Id',
+          id: 'test_phone_data'
+        },
         data: Processor.processCsvData(sampleHexIdCsv)
       })
     );
@@ -48,7 +75,7 @@ class App extends Component {
         info: {label: 'SF Zip Geo'},
         data: Processor.processGeojson(sampleGeojson)
       })
-    )
+    );
   }
 
   _handleResize = () => {

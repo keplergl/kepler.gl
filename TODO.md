@@ -12,3 +12,6 @@
 - Reimplement file upload to use event streaming
 - Layer API to add custom layer
 - Map style API to add custom map style
+
+### Design
+- Better transition from time filter to time playback

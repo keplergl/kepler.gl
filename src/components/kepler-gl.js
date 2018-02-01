@@ -224,8 +224,7 @@ class KeplerGL extends Component {
             datasets={datasets}
             uiState={uiState}
             visStateActions={visStateActions}
-            sidePanelWidth={DIMENSIONS.sidePanel.width}
-            sideNavWidth={DIMENSIONS.sideNavC}
+            sidePanelWidth={DIMENSIONS.sidePanel.width - DIMENSIONS.sidePanel.margin}
             containerW={containerW}
           />
         </GlobalStyle>

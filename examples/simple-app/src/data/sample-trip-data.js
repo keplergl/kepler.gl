@@ -1,8 +1,4 @@
 export default {
-  info: {
-    label: 'NYC Taxi Trips'
-  },
-  data: {
     fields: [
       {
         name: 'tpep_pickup_datetime',
@@ -3331,5 +3327,4 @@ export default {
         28
       ]
     ]
-  }
 };

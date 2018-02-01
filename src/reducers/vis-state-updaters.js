@@ -357,7 +357,14 @@ export const toggleFilterAnimationUpdater = (state, action) => ({
   )
 });
 
-export const enlargeFilterUpdater = (state, action) => {
+export const updateAnimationSpeedUpdater = (state, action) => ({
+  ...state,
+  filters: state.filters.map(
+    (f, i) => (i === action.idx ? {...f, speed: action.speed} : f)
+  )
+});
+
+  export const enlargeFilterUpdater = (state, action) => {
   const isEnlarged = state.filters[action.idx].enlarged;
 
   return {
@@ -513,6 +520,11 @@ export const updateVisDataUpdater = (state, action) => {
     ...defaultOptions,
     ...action.options
   };
+
+  if (action.config) {
+    // apply config if passed from action
+    state = receiveMapConfigUpdater(state, {payload: {visState: action.config}})
+  }
 
   const newDateEntries = datasets.reduce(
     (accu, {info = {}, data}) => ({

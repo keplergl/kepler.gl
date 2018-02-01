@@ -14,8 +14,8 @@ const propTypes = {
 const StyledG = styled.g`
   .selection {
     stroke: none;
-    fill: #FFFFFF;
-    opacity: 0.1;
+    fill: ${props => props.theme.rangeBrushBgd};
+    opacity: 1;
   }
 `;
 export default class RangeBrush extends React.Component {

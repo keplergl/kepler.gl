@@ -110,13 +110,15 @@ export function showDatasetTable(dataId) {
  * @param datasets - Array of datasets :
  * {info: {id: '', color: hex, label: '']}, data: {fields: [], rows: []}}
  * @param options
+ * @param config
  * @returns {{type: null, datasets: *, options: *}}
  */
-export function updateVisData(datasets, options) {
+export function updateVisData(datasets, options, config) {
   return {
     type: ActionTypes.UPDATE_VIS_DATA,
     datasets,
-    options
+    options,
+    config
   };
 }
 
@@ -124,6 +126,15 @@ export function toggleAnimation(idx) {
   return {
     type: ActionTypes.TOGGLE_FILTER_ANIMATION,
     idx
+  };
+}
+
+
+export function updateAnimationSpeed(idx, speed) {
+  return {
+    type: ActionTypes.UPDATE_FILTER_ANIMATION_SPEED,
+    idx,
+    speed
   };
 }
 
