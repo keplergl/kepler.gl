@@ -384,31 +384,6 @@ const dropdownScrollBar = css`
   }
 }`;
 
-const sidePanelScrollBar = css`
-  ::-webkit-scrollbar {
-    height: 10px;
-    width: 10px;
-  }
-  
-  ::-webkit-scrollbar-corner {
-    background: ${props => props.theme.sidePanelBg};
-  }
-  
-  ::-webkit-scrollbar-track {
-    background: ${props => props.theme.sidePanelBg};
-  }
-  
-  ::-webkit-scrollbar-thumb {
-    border-radius: 10px;
-    background: ${props => props.theme.labelColor};
-    border: 3px solid ${props => props.theme.sidePanelBg};
-  };
-  
-  :vertical:hover {
-    background: ${props => props.theme.textColorHl};
-  }
-}`;
-
 const dropdownListAnchor = css`
   color: ${props => props.theme.selectColor};
   padding-left: 3px;
@@ -466,9 +441,14 @@ const dropdownList = css`
   ${props => props.theme.dropdownScrollBar};
 `;
 
-const scrollBar = css`
+const sidePanelScrollBar = css`
   ::-webkit-scrollbar {
-    width: 14px;
+    height: 10px;
+    width: 10px;
+  }
+  
+  ::-webkit-scrollbar-corner {
+    background: ${props => props.theme.sidePanelBg};
   }
   
   ::-webkit-scrollbar-track {
@@ -477,15 +457,41 @@ const scrollBar = css`
   
   ::-webkit-scrollbar-thumb {
     border-radius: 10px;
-    background: ${props => props.theme.panelBackground};
-    border: 3px solid ${props => props.theme.sidePanelBg}
+    background: ${props => props.theme.labelColor};
+    border: 3px solid ${props => props.theme.sidePanelBg};
+  };
+  
+  :vertical:hover {
+    background: ${props => props.theme.textColorHl};
+  }
+}`;
 
-    ':vertical': {
-      background: ${props => props.theme.panelBackground};
-    },
+const scrollBar = css`
+  ::-webkit-scrollbar {
+    height: 10px;
+    width: 10px;
+  }
+
+  
+  ::-webkit-scrollbar-corner {
+    background: ${props => props.theme.panelBackground};
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: ${props => props.theme.panelBackground};
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background: ${props => props.theme.labelColor};
+    border: 3px solid ${props => props.theme.panelBackground}
 
     ':vertical:hover': {
-      background: ${props => props.theme.selectBackgroundHover};
+      background: ${props => props.theme.textColorHl};
+    }
+    
+     ':horizontal:hover': {
+      background: ${props => props.theme.textColorHl};
     }
   }
 }`;

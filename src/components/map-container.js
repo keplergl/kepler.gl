@@ -170,6 +170,7 @@ export default class MapContainer extends Component {
   _renderObjectLayerPopover() {
     // TODO: move this into reducer so it can be tested
     const {
+      mapState,
       hoverInfo,
       clicked,
       datasets,
@@ -202,7 +203,7 @@ export default class MapContainer extends Component {
       !layer.getHoverData ||
       (mapLayers && !mapLayers[layer.id].isVisible)
     ) {
-      // layer is no visible
+      // layer is not visible
       return null;
     }
 
@@ -220,11 +221,11 @@ export default class MapContainer extends Component {
       fieldsToShow: interactionConfig.tooltip.config.fieldsToShow[dataId],
       layer,
       isVisible: true,
-      lngLat,
       x,
       y: y + popoverOffset.top,
       freezed: Boolean(clicked),
-      onClose: this._onCloseMapPopover
+      onClose: this._onCloseMapPopover,
+      mapState
     };
 
     return (

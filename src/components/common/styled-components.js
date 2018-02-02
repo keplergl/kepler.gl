@@ -64,7 +64,7 @@ export const PanelLabelBold = PanelLabel.extend`
 export const PanelHeaderTitle = styled.span.attrs({
   className: 'side-panel-panel__header__title'
 })`
-  color: ${props => props.theme.textColor};;
+  color: ${props => props.theme.textColor};
   font-size: 13px;
   letter-spacing: 0.43px;
   text-transform: capitalize;

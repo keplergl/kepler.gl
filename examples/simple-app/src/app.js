@@ -56,7 +56,7 @@ class App extends Component {
     );
 
     // load point based data
-    this.props.dispatch(updateVisData(sampleData));
+    //this.props.dispatch(updateVisData(sampleData));
 
     // load data with h3 hex id
     this.props.dispatch(
@@ -70,12 +70,12 @@ class App extends Component {
     );
 
     // load geojson
-    this.props.dispatch(
-      updateVisData({
-        info: {label: 'SF Zip Geo'},
-        data: Processor.processGeojson(sampleGeojson)
-      })
-    );
+    // this.props.dispatch(
+    //   updateVisData({
+    //     info: {label: 'SF Zip Geo'},
+    //     data: Processor.processGeojson(sampleGeojson)
+    //   })
+    // );
   }
 
   _handleResize = () => {

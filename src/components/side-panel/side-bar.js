@@ -1,13 +1,7 @@
-/** @jsx createElement */
-import createElement from 'react-stylematic';
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import window from 'global/window';
 import styled from 'styled-components';
 import {ArrowRight} from 'components/common/icons';
-
-import {sideBar} from 'styles/side-panel';
-import {sidePanel} from 'styles/side-panel';
 
 const defaultProps = {
   width: 300,

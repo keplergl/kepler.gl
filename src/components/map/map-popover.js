@@ -1,13 +1,10 @@
-/** @jsx createElement */
-import createElement from 'react-stylematic';
-import {Component} from 'react';
+import React, {Component} from 'react';
+import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
-import window from 'global/window';
 
 import {Pin} from '../common/icons';
-import {FIELD_DISPLAY_FORMAT} from '../../constants/default-settings';
-import {mapPopover} from '../../styles/styles';
+import {FIELD_DISPLAY_FORMAT} from 'constants/default-settings';
 
 const MAX_WIDTH = 400;
 const MAX_HEIGHT = 600;
@@ -21,8 +18,55 @@ const propTypes = {
   freezed: PropTypes.bool,
   x: PropTypes.number,
   y: PropTypes.number,
-  onClose: PropTypes.func
+  onClose: PropTypes.func,
+  mapState: PropTypes.object.isRequired
 };
+
+const StyledMapPopover = styled.div`
+  ${props => props.theme.scrollBar} 
+  font-size: 11px;
+  font-weight: 500;
+  background-color: ${props => props.theme.panelBackground};
+  color: ${props => props.theme.textColor};
+  z-index: 1001;
+  position: absolute;
+  overflow-x: auto;
+  
+  .gutter {
+    height: 6px;
+  }
+
+  table {
+    margin: 2px 12px 12px 12px;
+    td.row__value {
+      text-align: right;
+      font-weight: 500;
+      color: ${props => props.theme.textColorHl};
+    }
+  }
+`;
+
+const StyledPin = styled.div`
+  position: absolute;
+  left: 50%;
+  transform: rotate(30deg);
+  top: 10px;
+  color: ${props => props.theme.primaryBtnBgd};
+
+  :hover {
+    cursor: pointer;
+    color: ${props => props.theme.linkBtnColor};
+  }
+`;
+
+const StyledLayerName = styled.div`
+  color: ${props => props.theme.textColorHl};
+  font-size: 12px;
+  letter-spacing: 0.43px;
+  text-transform: capitalize;
+  padding-left: 14px;
+  margin-top: 12px;
+`;
 
 export default class MapPopover extends Component {
   constructor(props) {
@@ -43,7 +87,7 @@ export default class MapPopover extends Component {
   }
 
   _setContainerSize() {
-    const node = this.refs.popover;
+    const node = this.popover;
     if (!node) {
       return;
     }
@@ -59,18 +103,16 @@ export default class MapPopover extends Component {
   _getPosition(x, y) {
     const topOffset = 30;
     const leftOffset = 30;
+    const {mapState} = this.props;
     const {width, height} = this.state;
-    const pos = {
-      maxWidth: width
-    };
-
-    if (x + leftOffset + width > window.innerWidth) {
-      pos.right = window.innerWidth - x + leftOffset;
+    const pos = {};
+    if (x + leftOffset + width > mapState.innerWidth) {
+      pos.right = mapState.innerWidth - x + leftOffset;
     } else {
       pos.left = x + leftOffset;
     }
 
-    if (y + topOffset + height > window.innerHeight) {
+    if (y + topOffset + height > mapState.innerHeight) {
       pos.bottom = 10;
     } else {
       pos.top = y + topOffset;
@@ -91,6 +133,7 @@ export default class MapPopover extends Component {
       fieldsToShow = []
     } = this.props;
     const hidden = !isVisible && !this.state.isMouseOver;
+    const {width} = this.state;
 
     if (!data || !layer || !fieldsToShow.length) {
       return null;
@@ -102,10 +145,15 @@ export default class MapPopover extends Component {
       Number.isFinite(x) && Number.isFinite(y) ? this._getPosition(x, y) : {};
 
     return (
-      <div
-        ref="popover"
+      <StyledMapPopover
+        innerRef={comp => {
+          this.popover = comp;
+        }}
         className={classnames({hidden})}
-        style={{...mapPopover, ...style}}
+        style={{
+          ...style,
+          maxWidth: width
+        }}
         onMouseEnter={() => {
           this.setState({isMouseOver: true});
         }}
@@ -116,11 +164,12 @@ export default class MapPopover extends Component {
         {freezed ? (
           <div>
             <div className="gutter" />
-            <div className="popover-pin" onClick={this.props.onClose}>
-              <Pin size={30} />
-            </div>
+            <StyledPin className="popover-pin" onClick={this.props.onClose}>
+              <Pin height="16px" />
+            </StyledPin>
           </div>
         ) : null}
+        <StyledLayerName>{layer.config.label}</StyledLayerName>
         <table className="popover-table">
           {layer.isAggregated ? (
             <CellInfo {...infoProps} />
@@ -128,7 +177,7 @@ export default class MapPopover extends Component {
             <EntryInfo {...infoProps} />
           )}
         </table>
-      </div>
+      </StyledMapPopover>
     );
   }
 }
@@ -141,9 +190,9 @@ const Row = ({name, value, url}) => {
 
   const asImg = /<img>/.test(name);
   return (
-    <tr key={name}>
-      <td>{name}</td>
-      <td>
+    <tr className="row" key={name}>
+      <td className="row__name">{name}</td>
+      <td className="row__value">
         {asImg ? (
           <img src={value} />
         ) : url ? (

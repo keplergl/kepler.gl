@@ -1,21 +1,28 @@
+import PropTypes from 'prop-types';
 import React from 'react';
+import Base from './base';
 
-const Pin = ({size = 14}) => (
-  <svg viewBox="0 0 64 64" width={size} height={size}>
-    <path
-      d={`m 17.8571 19.2857 v -10 q 0 -0.314286 -0.2 -0.514286 t -0.514286
-    -0.2 t -0.514286 0.2 t -0.2 0.514286 v 10 q 0 0.314286 0.2 0.514286
-    t 0.514286 0.2 t 0.514286 -0.2 t 0.2 -0.514286 Z m 15 7.85714
-    q 0 0.58 -0.424286 1.00429 t -1.00429 0.424286 h -9.57571 l -1.13857 10.7814
-    q -0.0428571 0.267143 -0.234286 0.457143 t -0.457143 0.19 h -0.0228571
-    q -0.602857 0 -0.714286 -0.602857 l -1.69714 -10.8257 h -9.01714
-    q -0.58 0 -1.00429 -0.424286 t -0.424286 -1.00429 q 0 -2.74571 1.75286 -4.94286
-    t 3.96143 -2.2 v -11.4286 q -1.16 0 -2.00857 -0.848571 t -0.848571 -2.00857
-    t 0.848571 -2.00857 t 2.00857 -0.848571 h 14.2857 q 1.16 0 2.00857 0.848571
-    t 0.848571 2.00857 t -0.848571 2.00857 t -2.00857 0.848571 v 11.4286
-    q 2.21 0 3.96143 2.2 t 1.75286 4.94286 Z`}
-    />
-  </svg>
-);
+class Pin extends React.Component {
+  static displayName = 'Pin';
+
+  static propTypes = {
+    /** Set the height of the icon, ex. '16px' */
+    height: PropTypes.string
+  };
+
+  static defaultProps = {
+    size: 'tiny',
+    predefinedClassName: 'data-ex-icons-pin'
+
+  };
+
+  render() {
+    return (
+      <Base {...this.props}>
+        <path d="M36 35.476V59a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1V35.476C21.103 33.696 16 27.453 16 20c0-8.836 7.163-16 16-16s16 7.164 16 16c0 7.453-5.103 13.697-12 15.476z"/>
+      </Base>
+    );
+  }
+}
 
 export default Pin;
