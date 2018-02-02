@@ -2,8 +2,8 @@ import React, {Component} from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
-
-import {Pin} from '../common/icons';
+import {CenterFlexbox} from 'components/common/styled-components';
+import {Pin, Layers} from 'components/common/icons';
 import {FIELD_DISPLAY_FORMAT} from 'constants/default-settings';
 
 const MAX_WIDTH = 400;
@@ -59,13 +59,17 @@ const StyledPin = styled.div`
   }
 `;
 
-const StyledLayerName = styled.div`
+const StyledLayerName = CenterFlexbox.extend`
   color: ${props => props.theme.textColorHl};
   font-size: 12px;
   letter-spacing: 0.43px;
   text-transform: capitalize;
   padding-left: 14px;
   margin-top: 12px;
+  
+  svg {
+    margin-right: 4px;
+  }
 `;
 
 export default class MapPopover extends Component {
@@ -149,7 +153,7 @@ export default class MapPopover extends Component {
         innerRef={comp => {
           this.popover = comp;
         }}
-        className={classnames({hidden})}
+        className={classnames('map-popover', {hidden})}
         style={{
           ...style,
           maxWidth: width
@@ -162,15 +166,16 @@ export default class MapPopover extends Component {
         }}
       >
         {freezed ? (
-          <div>
+          <div className="map-popover__top">
             <div className="gutter" />
             <StyledPin className="popover-pin" onClick={this.props.onClose}>
               <Pin height="16px" />
             </StyledPin>
           </div>
         ) : null}
-        <StyledLayerName>{layer.config.label}</StyledLayerName>
-        <table className="popover-table">
+        <StyledLayerName className="map-popover__layer-name">
+          <Layers height="12px"/>{layer.config.label}</StyledLayerName>
+        <table className="map-popover__table">
           {layer.isAggregated ? (
             <CellInfo {...infoProps} />
           ) : (
