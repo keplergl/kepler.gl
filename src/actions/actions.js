@@ -30,7 +30,8 @@ export {
   toggleAnimation,
   toggleLayerForMap,
   updateLayerBlending,
-  updateVisData
+  updateVisData,
+  updateVisDataAndConfiguration
 } from './vis-state-actions';
 
 export {

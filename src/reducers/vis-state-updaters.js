@@ -608,6 +608,12 @@ export const updateVisDataUpdater = (state, action) => {
 
 export const resetMapConfigUpdater = () => cloneDeep(INITIAL_VIS_STATE);
 
+/**
+ * Loads custom configuration into state
+ * @param state
+ * @param action
+ * @returns {*}
+ */
 export const receiveMapConfigUpdater = (state, action) => {
   if (!action.payload.visState) {
     return state;
@@ -632,6 +638,15 @@ export const receiveMapConfigUpdater = (state, action) => {
   mergedState = mergeLayers(mergedState, layers);
   mergedState = mergeInteractions(mergedState, interactionConfig);
   mergedState = mergeLayerBlending(mergedState, layerBlending);
+
+
+  // const newState ={
+  //   ...resetState,
+  //   ...mergeFilters(mergedState, filters),
+  //   ...mergeLayers(mergedState, layers),
+  //   ...mergeInteractions(mergedState, interactionConfig),
+  //   ...mergeLayerBlending(mergedState, layerBlending)
+  // };
 
   return mergedState;
 };
@@ -1023,3 +1038,4 @@ export function updateAllLayerDomainData(state, dataId) {
     layerData: newLayerDatas
   };
 }
+

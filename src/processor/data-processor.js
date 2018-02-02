@@ -108,11 +108,12 @@ export function getFieldsFromData(data, fieldOrder) {
   return fieldOrder.reduce((orderedArray, field, index) => {
     const name = fieldByIndex[index];
     const fieldMeta = metadata.find(m => m.key === field);
-    const {type, format} = fieldMeta || {};
+    const {type, format, category} = fieldMeta || {};
 
     orderedArray[index] = {
       name,
       format,
+      category, // need this for mapbuilder conversion: filter type detection
       tableFieldIndex: index + 1,
       type: analyzerTypeToFieldType(type)
     };

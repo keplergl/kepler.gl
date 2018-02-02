@@ -21,7 +21,7 @@ const StyledInfoHelper = styled.div`
 
 const propTypes = {
   description: React.PropTypes.string.isRequired,
-  containerClass: React.PropTypes.string,
+  containerClass: React.PropTypes.string
 };
 
 const InfoHelper = ({description, containerClass, id}) => (

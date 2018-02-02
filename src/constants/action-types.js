@@ -31,6 +31,7 @@ const ActionTypes = keyMirror({
   SET_FILTER_PLOT: null,
   LOAD_FILES: null,
   LOAD_FILES_ERR: null,
+  UPDATE_VIS_DATA_CONFIG: null,
 
   // mapState
   UPDATE_MAP: null,

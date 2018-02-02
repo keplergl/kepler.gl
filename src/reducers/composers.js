@@ -1,7 +1,7 @@
 import ActionTypes from 'constants/action-types';
 import {fitBoundsUpdater} from './map-state-updaters';
 import {toggleModalUpdater} from './ui-state-updaters';
-import {updateVisDataUpdater} from './vis-state-updaters';
+import {receiveMapConfigUpdater, resetMapConfigUpdater, updateVisDataUpdater} from './vis-state-updaters';
 
 // compose action to apply result multiple reducers, with the output of one
 
@@ -25,8 +25,29 @@ const updateVisDataComposed = (state, action) => {
   };
 };
 
+/**
+ * Combine data and configuration update in a single action
+ * @param state
+ * @param action
+ * @returns {{}}
+ */
+const updateVisDataAndConfigComposed = (state, action) => {
+  const newCustomVisState = receiveMapConfigUpdater(state, {payload: {...action.appConfig}});
+
+  const newState = {
+    ...state,
+    visState: newCustomVisState
+  };
+
+  return {
+    ...newState,
+    ...updateVisDataComposed(newState, {datasets: action.datasets})
+  };
+};
+
 const compostedUpdaters = {
-  [ActionTypes.UPDATE_VIS_DATA]: updateVisDataComposed
+  [ActionTypes.UPDATE_VIS_DATA]: updateVisDataComposed,
+  [ActionTypes.UPDATE_VIS_DATA_CONFIG]: updateVisDataAndConfigComposed
 };
 
 export default compostedUpdaters;

@@ -5,7 +5,7 @@ import window from 'global/window';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
 import FieldToken from 'components/common/field-token';
 import {Clock} from 'components/common/icons';
-const ReactDataGrid = window.navigator ? require('react-data-grid') : null;
+const ReactDataGrid = window.navigator ? require('react-data-grid/dist/react-data-grid.min') : null;
 
 let shouldPreventScrollBack = false;
 

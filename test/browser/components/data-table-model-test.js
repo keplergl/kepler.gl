@@ -8,7 +8,7 @@ configure({adapter: new Adapter()});
 
 import DataTableModal, {DatasetTabs, DatasetModalTab} from
   '../../../src/components/side-panel/modals/data-table-modal';
-import ReactDataGrid from 'react-data-grid';
+import ReactDataGrid from 'react-data-grid/dist/react-data-grid.min';
 
 import {testFields, testAllData} from '../../fixtures/test-csv-data';
 

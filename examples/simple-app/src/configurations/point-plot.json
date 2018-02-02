@@ -1,0 +1,286 @@
+{
+  "appConfig": {
+    "version": "v1",
+    "config": {
+      "visState": {
+        "filters": [],
+        "layers": [
+          {
+            "id": "a9j5bzc",
+            "type": "arc",
+            "config": {
+              "dataId": "ayc5qhbln",
+              "label": "trip arc",
+              "color": [
+                18,
+                147,
+                154
+              ],
+              "columns": {
+                "lat0": "begintrip_lat",
+                "lng0": "begintrip_lng",
+                "lat1": "dropoff_lat",
+                "lng1": "dropoff_lng"
+              },
+              "isVisible": false,
+              "visConfig": {
+                "opacity": 0.8,
+                "thickness": 2,
+                "colorRange": {
+                  "name": "Global Warming",
+                  "type": "sequential",
+                  "category": "Uber",
+                  "colors": [
+                    "#5A1846",
+                    "#900C3F",
+                    "#C70039",
+                    "#E3611C",
+                    "#F1920E",
+                    "#FFC300"
+                  ]
+                },
+                "sizeRange": [
+                  0,
+                  10
+                ],
+                "targetColor": null,
+                "hi-precision": false
+              }
+            },
+            "visualChannels": {
+              "colorField": null,
+              "colorScale": "quantile",
+              "sizeField": null,
+              "sizeScale": "linear"
+            }
+          },
+          {
+            "id": "qzl1a8j",
+            "type": "point",
+            "config": {
+              "dataId": "ayc5qhbln",
+              "label": "begintrip",
+              "color": [
+                218,
+                112,
+                191
+              ],
+              "columns": {
+                "lat": "begintrip_lat",
+                "lng": "begintrip_lng",
+                "altitude": null
+              },
+              "isVisible": false,
+              "visConfig": {
+                "radius": 10,
+                "fixedRadius": false,
+                "opacity": 0.8,
+                "outline": false,
+                "thickness": 2,
+                "colorRange": {
+                  "name": "Global Warming",
+                  "type": "sequential",
+                  "category": "Uber",
+                  "colors": [
+                    "#5A1846",
+                    "#900C3F",
+                    "#C70039",
+                    "#E3611C",
+                    "#F1920E",
+                    "#FFC300"
+                  ]
+                },
+                "radiusRange": [
+                  0,
+                  50
+                ],
+                "hi-precision": false
+              }
+            },
+            "visualChannels": {
+              "colorField": null,
+              "colorScale": "quantile",
+              "sizeField": null,
+              "sizeScale": "linear"
+            }
+          },
+          {
+            "id": "vbpenb",
+            "type": "point",
+            "config": {
+              "dataId": "ayc5qhbln",
+              "label": "dropoff",
+              "color": [
+                255,
+                153,
+                31
+              ],
+              "columns": {
+                "lat": "dropoff_lat",
+                "lng": "dropoff_lng",
+                "altitude": null
+              },
+              "isVisible": true,
+              "visConfig": {
+                "radius": 10,
+                "fixedRadius": false,
+                "opacity": 0.8,
+                "outline": false,
+                "thickness": 2,
+                "colorRange": {
+                  "name": "Global Warming",
+                  "type": "sequential",
+                  "category": "Uber",
+                  "colors": [
+                    "#5A1846",
+                    "#900C3F",
+                    "#C70039",
+                    "#E3611C",
+                    "#F1920E",
+                    "#FFC300"
+                  ]
+                },
+                "radiusRange": [
+                  0,
+                  101.9
+                ],
+                "hi-precision": false
+              }
+            },
+            "visualChannels": {
+              "colorField": {
+                "name": "dropoff_lat",
+                "type": "real"
+              },
+              "colorScale": "quantile",
+              "sizeField": {
+                "name": "base_fare_usd",
+                "type": "real"
+              },
+              "sizeScale": "sqrt"
+            }
+          },
+          {
+            "id": "qhgtw4s",
+            "type": "point",
+            "config": {
+              "dataId": "ayc5qhbln",
+              "label": "request",
+              "color": [
+                130,
+                154,
+                227
+              ],
+              "columns": {
+                "lat": "request_lat",
+                "lng": "request_lng",
+                "altitude": null
+              },
+              "isVisible": false,
+              "visConfig": {
+                "radius": 10,
+                "fixedRadius": false,
+                "opacity": 0.8,
+                "outline": false,
+                "thickness": 2,
+                "colorRange": {
+                  "name": "Global Warming",
+                  "type": "sequential",
+                  "category": "Uber",
+                  "colors": [
+                    "#5A1846",
+                    "#900C3F",
+                    "#C70039",
+                    "#E3611C",
+                    "#F1920E",
+                    "#FFC300"
+                  ]
+                },
+                "radiusRange": [
+                  0,
+                  50
+                ],
+                "hi-precision": false
+              }
+            },
+            "visualChannels": {
+              "colorField": null,
+              "colorScale": "quantile",
+              "sizeField": null,
+              "sizeScale": "linear"
+            }
+          }
+        ],
+        "interactionConfig": {
+          "tooltip": {
+            "fieldsToShow": {
+              "ayc5qhbln": [
+                "begintrip_timestamp_local",
+                "dropoff_timestamp_local"
+              ]
+            },
+            "enabled": true
+          },
+          "brush": {
+            "size": 0.5,
+            "enabled": false
+          }
+        },
+        "layerBlending": "normal",
+        "splitMaps": []
+      },
+      "mapStyle": {
+        "styleType": "dark",
+        "topLayerGroups": {},
+        "visibleLayerGroups": {
+          "label": true,
+          "places": true,
+          "road": true,
+          "border": false,
+          "building": true,
+          "water": true,
+          "land": true
+        },
+        "buildingLayer": {
+          "isVisible": false,
+          "color": [
+            32,
+            32,
+            37
+          ],
+          "opacity": 0.7
+        }
+      },
+      "mapState": {
+        "bearing": 0,
+        "dragRotate": false,
+        "latitude": 37.512594580605494,
+        "longitude": -122.269505381781,
+        "pitch": 0,
+        "zoom": 8,
+        "isSplit": false
+      },
+      "queryStatus": {
+        "pastQueries": [
+          {
+            "id": "ayc5qhbln",
+            "label": "voyager_sample_trip_data.csv",
+            "queryType": "file",
+            "queryOption": "csv",
+            "params": {
+              "file": null
+            },
+            "size": 87230
+          }
+        ]
+      }
+    }
+  },
+  "info": {
+    "app": "VOYAGER",
+    "datasetUuids": [],
+    "title": "Voyager test",
+    "userEmail": "test@uber.com",
+    "userUuid": "1234567890"
+  }
+}
