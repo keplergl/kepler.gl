@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import {format} from 'd3-format';
 
-import {SidePanelSection, Tooltip} from 'components/common/styled-components';
+import {SidePanelSection, Tooltip, DatasetSquare} from 'components/common/styled-components';
 import {Table, Trash, ArrowRight} from 'components/common/icons';
 
 const defaultRemoveDataset = datasetKey => {};
@@ -36,10 +36,6 @@ const DatasetTagWrapper = styled.div`
   color: ${props => props.theme.textColor};
   font-size: 11px;
   letter-spacing: 0.2px;
-
-  .dataset-name {
-    padding: 0 4px 0 12px;
-  }
 `;
 
 const DataTagAction = styled.div`
@@ -56,7 +52,7 @@ const DataRowCount = styled.div`
 
 export const DatasetTag = ({onClick, dataset}) => (
   <DatasetTagWrapper className="source-data-tag" onClick={onClick}>
-    <Square className="dataset-color" color={dataset.color} />
+    <DatasetSquare className="dataset-color" color={dataset.color} />
     <span className="dataset-name">{dataset.label}</span>
   </DatasetTagWrapper>
 );
@@ -100,13 +96,6 @@ const SourceDataCatalog = ({
     ))}
   </SourceDataCatelog>
 );
-
-const Square = styled.div`
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  background-color: rgb(${props => props.color.join(',')});
-`;
 
 const ShowDataTable = ({id, showDatasetTable}) => (
   <DataTagAction

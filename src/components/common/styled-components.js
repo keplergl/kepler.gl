@@ -75,7 +75,7 @@ export const PanelHeaderContent = styled.div`
   align-items: center;
   color: ${props => props.theme.textColor};
   padding-left: 12px;
-  
+
   .icon {
     color: ${props => props.theme.labelColor};
     display: flex;
@@ -148,14 +148,18 @@ export const Button = styled.div.attrs({
 })`
   align-items: center;
   background-color: ${props =>
-    props.secondary
-      ? props.theme.secondaryBtnBgd
-      : props.link ? props.theme.linkBtnBgd : props.theme.primaryBtnBgd};
+    props.negative
+      ? props.theme.negativeBtnBgd
+      : props.secondary
+        ? props.theme.secondaryBtnBgd
+        : props.link ? props.theme.linkBtnBgd : props.theme.primaryBtnBgd};
   border-radius: ${props => props.theme.primaryBtnRadius};
   color: ${props =>
-    props.secondary
-      ? props.theme.secondaryBtnColor
-      : props.link ? props.theme.linkBtnColor : props.theme.primaryBtnColor};
+    props.negative
+      ? props.theme.negativeBtnColor
+      : props.secondary
+        ? props.theme.secondaryBtnColor
+        : props.link ? props.theme.linkBtnColor : props.theme.primaryBtnColor};
   cursor: pointer;
   display: inline-flex;
   font-size: ${props => (props.large ? '14px' : '11px')};
@@ -175,17 +179,21 @@ export const Button = styled.div.attrs({
   :active,
   &.active {
     background-color: ${props =>
-      props.secondary
-        ? props.theme.secondaryBtnBgdHover
-        : props.link
-          ? props.theme.linkBtnActBgdHover
-          : props.theme.primaryBtnBgdHover};
+      props.negative
+        ? props.theme.negativeBtnBgdHover
+        : props.secondary
+          ? props.theme.secondaryBtnBgdHover
+          : props.link
+            ? props.theme.linkBtnActBgdHover
+            : props.theme.primaryBtnBgdHover};
     color: ${props =>
-      props.secondary
-        ? props.theme.secondaryBtnActColor
-        : props.link
-          ? props.theme.linkBtnActColor
-          : props.theme.primaryBtnActColor};
+      props.negative
+        ? props.theme.negativeBtnActColor
+        : props.secondary
+          ? props.theme.secondaryBtnActColor
+          : props.link
+            ? props.theme.linkBtnActColor
+            : props.theme.primaryBtnActColor};
   }
 
   svg {
@@ -244,5 +252,34 @@ export const ButtonGroup = styled.div`
   .button:last-child {
     border-bottom-right-radius: ${props => props.theme.primaryBtnRadius};
     border-top-right-radius: ${props => props.theme.primaryBtnRadius};
+  }
+`;
+
+export const DatasetSquare = styled.div`
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: rgb(${props => props.color.join(',')});
+  margin-right: 12px
+`;
+
+export const Table = styled.table`
+  width: 100%;
+  border-spacing: 0;
+  
+  thead {
+    tr th {
+      background: ${props => props.theme.panelBackgroundLT};
+      color: ${props => props.theme.titleColorLT};
+      padding: 18px 12px;
+      text-align: start;
+    }
+  }
+  
+  tbody {
+   tr td {
+     border-bottom: ${props => props.theme.panelBorderLT};
+     padding: 12px;
+   }
   }
 `;

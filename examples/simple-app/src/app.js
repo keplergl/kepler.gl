@@ -9,6 +9,7 @@ import sampleTripData from './data/sample-trip-data';
 import sampleHexIdCsv from './data/sample-hex-id-csv';
 import sampleGeojson from './data/sample-geojson.json';
 import jsonTripData from './data/json-sample-trip-data';
+import sampleIconCsv from './data/sample-icon-csv';
 
 // configurations
 import pointPlotConfiguration from './configurations/point-plot';
@@ -114,6 +115,17 @@ class App extends Component {
           id: 'test_phone_data'
         },
         data: Processor.processCsvData(sampleHexIdCsv)
+      })
+    );
+
+    // load icon data
+    this.props.dispatch(
+      updateVisData({
+        info: {
+          label: 'Icon Data',
+          id: 'test_icon_data'
+        },
+        data: Processor.processCsvData(sampleIconCsv)
       })
     );
 

@@ -46,7 +46,7 @@ const PositiveMsg = styled.span`
   color: ${props => props.theme.primaryBtnActBgd};
 `;
 
-const FileDropWrapper = styled.div`
+const StyledFileDrop = styled.div`
   background-color: white;
   border-radius: 4px;
   border-style: dashed;
@@ -69,12 +69,18 @@ const MsgWrapper = styled.div`
   height: 36px;
 `;
 
-const DragNDropIconWrapper = styled.div`
+const StyledDragNDropIcon = styled.div`
   color: ${fileIconColor};
   margin-bottom: 60px;
 
   .file-type-row {
     margin-bottom: 26px;
+  }
+`;
+
+const StyledFileUpload = styled.div`
+  .filter-upload__input {
+    visibility: hidden;
   }
 `;
 
@@ -145,31 +151,32 @@ class FileUpload extends Component {
     const {dragOver} = this.state;
     const {validFileExt} = this.props;
     return (
-      <div className="file-uploader" ref="frame">
+      <StyledFileUpload className="file-uploader"
+                        innerRef={cmp => this.frame = cmp}>
         <input
+          className="filter-upload__input"
           type="file"
           ref="fileInput"
-          className="hidden"
           onChange={this._onChange}
         />
         {FileDrop ? (
           <FileDrop
-            frame={this.refs.frame}
+            frame={this.frame}
             targetAlwaysVisible={true}
             onDragOver={() => this._toggleDragState(true)}
             onDragLeave={() => this._toggleDragState(false)}
             onDrop={this._handleFileDrop}
           >
-            <FileDropWrapper dragOver={dragOver}>
+            <StyledFileDrop dragOver={dragOver}>
               <div style={{opacity: dragOver ? 0.5 : 1}}>
-                <DragNDropIconWrapper>
+                <StyledDragNDropIcon>
                   <div className="file-type-row">
                     {validFileExt.map(ext => (
                       <FileTypeIcon key={ext} ext={ext} />
                     ))}
                   </div>
-                  <DragNDrop height="44px" />
-                </DragNDropIconWrapper>
+                  <DragNDrop height="44px"/>
+                </StyledDragNDropIcon>
                 <div>{this._renderMessage()}</div>
               </div>
               <div>
@@ -179,11 +186,11 @@ class FileUpload extends Component {
                   browse your files
                 </UploadButton>
               </div>
-            </FileDropWrapper>
+            </StyledFileDrop>
           </FileDrop>
         ) : null}
         <WarningMsg>{isChrome() ? CHROME_MSG : ''}</WarningMsg>
-      </div>
+      </StyledFileUpload>
     );
   }
 }

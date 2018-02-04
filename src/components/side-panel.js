@@ -14,7 +14,7 @@ import InteractionManager from './side-panel/interaction-manager';
 import MapManager from './side-panel/map-manager';
 
 // modal
-import {DeleteDatasetModal} from './side-panel/modals/delete-data-modal';
+import DeleteDatasetModal from './side-panel/modals/delete-data-modal';
 import IconInfoModal from './side-panel/modals/icon-info-modal';
 import DataTableModal from './side-panel/modals/data-table-modal';
 import LoadDataModal from './side-panel/modals/load-data-modal';
@@ -51,7 +51,6 @@ const DataTableModalStyle = css`
 
 const SidePanelContent = styled.div`
   ${props => props.theme.sidePanelScrollBar};
-  
   flex-grow: 1;
   padding: 16px;
   overflow-y: overlay;
@@ -63,6 +62,11 @@ const PanelTitle = styled.div`
   font-weight: 400;
   letter-spacing: 1.25px;
   margin-bottom: 14px;
+`;
+
+const DeleteDatasetModalStyled = css`
+  width: 40%;
+  padding: 40px 40px 32px 40px;
 `;
 
 /**
@@ -116,6 +120,7 @@ export default class SidePanel extends Component {
     switch (type) {
       case 'iconInfo':
         template = <IconInfoModal />;
+        modalProps.title = 'How to draw icons';
         break;
       // case LAYER_CONFIG_ID:
       //   template = <LayerConfigModal close={this._closeModal}/>;
@@ -141,10 +146,21 @@ export default class SidePanel extends Component {
             <DeleteDatasetModal
               dataset={datasets[datasetKeyToRemove]}
               layers={layers}
-              deleteAction={() => this._deleteDataset(datasetKeyToRemove)}
-              cancelAction={this._closeModal}
             />
           );
+
+          modalProps = {
+            title: 'Delete Dataset',
+            cssStyle: DeleteDatasetModalStyled,
+            footer: true,
+            onConfirm: () => this._deleteDataset(datasetKeyToRemove),
+            onCancel: this._closeModal,
+            confirmButton: {
+              negative: true,
+              large: true,
+              children: 'Delete'
+            }
+          };
         }
         break; // in case we add a new case after this one
       case ADD_DATA_ID:
@@ -230,9 +246,6 @@ export default class SidePanel extends Component {
       onStyleChange: mapStyleActions.mapStyleChange,
       onBuildingChange: mapStyleActions.mapBuildingChange
     };
-
-    // props for enlarged filters
-    const enlargedFilterIdx = filters.findIndex(f => f.enlarged);
 
     return (
       <div>

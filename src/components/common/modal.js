@@ -1,13 +1,44 @@
 import React, {Component} from 'react';
+import PropTypes from 'prop-types';
+
 import styled from 'styled-components';
 import Modal from 'react-modal';
 import {Delete} from 'components/common/icons';
 import {Button} from 'components/common/styled-components';
 
+const propTypes = {
+  footer: PropTypes.bool,
+  close: PropTypes.func.isRequired,
+  onConfirm: PropTypes.func,
+  onCancel: PropTypes.func,
+  confirmButton: PropTypes.object,
+  confirmButtonLabel: PropTypes.string,
+  cancelButton: PropTypes.object,
+  cancelButtonLabel: PropTypes.string,
+  cssStyle: PropTypes.array
+};
+
+const defaultProps = {
+  footer: false,
+  close: () => {},
+  onConfirm: () => {},
+  onCancel: () => {},
+  cancelButton: {
+    link: true,
+    large: true,
+    children: 'Cancel'
+  },
+  confirmButton: {
+    large: true,
+    width: '160px',
+    children: 'Confirm'
+  },
+  cssStyle: []
+};
+
 const ModalContentWrapper = styled.div`
   width: 60%;
-  padding-top: 77px;
-  padding-bottom: ${props => (props.footer ? '150px' : '77px')};
+  padding: 77px 96px;
   position: absolute;
   top: 92px;
   left: 0;
@@ -21,6 +52,7 @@ const ModalContentWrapper = styled.div`
   box-sizing: border-box;
   margin-right: auto;
   font-size: 12px;
+  color: ${props => props.theme.labelColorLT};
   ${props => props.cssStyle || ''};
 `;
 
@@ -44,7 +76,6 @@ const ModalTitle = styled.div`
   font-size: ${props => props.theme.modalTitleFontSize};
   color: ${props => props.theme.modalTitleColor};
   margin-bottom: 10px;
-  padding: 0 96px;
   position: relative;
   z-index: 10003;
 `;
@@ -56,10 +87,11 @@ const ModalFooter = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding-bottom: 64px;
-  background-color: ${props => props.theme.modalFooterBgd};
-  height: 234px;
-  position: absolute;
+  padding-top: 36px;
+  //padding-bottom: 64px;
+  //background-color: ${props => props.theme.modalFooterBgd};
+  //height: 234px;
+  //position: absolute;
   z-index: 10001;
 `;
 
@@ -71,17 +103,17 @@ const ModalContent = styled.div`
 const FooterActionWrapper = styled.div`
   display: flex;
   justify-content: flex-end;
-  padding-right: 96px;
+  //padding-right: 96px;
 `;
 
-const Footer = ({cancel, confirm}) => (
-  <ModalFooter>
+const Footer = ({cancel, confirm, cancelButton, confirmButton}) => (
+  <ModalFooter className="modal--footer">
     <FooterActionWrapper>
-      <Button link large onClick={cancel}>
-        Cancel
+      <Button {...cancelButton} onClick={cancel}>
+        {cancelButton.children}
       </Button>
-      <Button large onClick={confirm} width="160px">
-        Confirm
+      <Button {...confirmButton} onClick={confirm}>
+        {confirmButton.children}
       </Button>
     </FooterActionWrapper>
   </ModalFooter>
@@ -103,20 +135,36 @@ class ModalDialog extends Component {
           }
         }}
       >
-        <ModalContentWrapper cssStyle={props.cssStyle} footer={props.footer}>
-          <CloseButton onClick={props.close}>
-            <Delete height="14px" />
-          </CloseButton>
-          {props.title ? <ModalTitle>{props.title}</ModalTitle> : null}
-          <ModalContent>{props.children}</ModalContent>
+        <ModalContentWrapper
+          className="modal--content"
+          cssStyle={props.cssStyle}
+          footer={props.footer}
+        >
+          {props.close ? (
+            <CloseButton className="modal--close" onClick={props.close}>
+              <Delete height="14px" />
+            </CloseButton>
+          ) : null}
+          {props.title ? (
+            <ModalTitle className="modal--title">{props.title}</ModalTitle>
+          ) : null}
+          <ModalContent className="content">{props.children}</ModalContent>
           {props.footer ? (
-            <Footer cancel={props.close} confirm={props.onConfirm} />
+            <Footer
+              cancel={props.close}
+              confirm={props.onConfirm}
+              cancelButton={props.cancelButton}
+              confirmButton={props.confirmButton}
+            />
           ) : null}
         </ModalContentWrapper>
       </Modal>
     );
   }
 }
+
+ModalDialog.defaultProps = defaultProps;
+ModalDialog.propTypes = propTypes;
 
 const StyledModal = styled(ModalDialog)`
   width: 100%;

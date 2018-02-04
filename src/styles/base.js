@@ -28,10 +28,7 @@ export const titleTextColor = '#FFFFFF';
 export const textColorHl = '#D3D8E0';
 export const activeColor = '#1FBAD6';
 export const activeColorHover = '#108188';
-export const errorColor = '#CA3B27';
-export const errorBgColor = '#FEEFEB';
-export const positiveColor = '#629A41';
-export const positiveBgColor = '#F3F9ED';
+export const errorColor = '#F9042C';
 
 // Button
 export const primaryBtnBgd = '#0F9668';
@@ -52,6 +49,12 @@ export const linkBtnActBgd = linkBtnBgd;
 export const linkBtnColor = '#A0A7B4';
 export const linkBtnActColor = '#3A414C';
 export const linkBtnActBgdHover = linkBtnBgd;
+
+export const negativeBtnBgd = errorColor;
+export const negativeBtnActBgd = '#FF193E';
+export const negativeBtnBgdHover = '#FF193E';
+export const negativeBtnColor = '#FFFFFF';
+export const negativeBtnActColor = '#FFFFFF';
 
 // Input
 export const inputBoxHeight = '34px';
@@ -641,6 +644,13 @@ export const theme = {
   secondaryBtnBgdHover,
   secondaryBtnColor,
   secondaryBtnActColor,
+
+  negativeBtnBgd,
+  negativeBtnActBgd,
+  negativeBtnBgdHover,
+  negativeBtnColor,
+  negativeBtnActColor,
+
   linkBtnBgd,
   linkBtnActBgd,
   linkBtnColor,

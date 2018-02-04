@@ -4,6 +4,7 @@ import window from 'global/window';
 
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
 import FieldToken from 'components/common/field-token';
+import DatasetLabel from 'components/common/dataset-label';
 import {Clock} from 'components/common/icons';
 const ReactDataGrid = window.navigator ? require('react-data-grid/dist/react-data-grid.min') : null;
 
@@ -179,19 +180,6 @@ export const DatasetModalTab = styled.div`
   }
 `;
 
-const DatasetName = styled.div`
-  font-weight: 500;
-  color: ${props => props.theme.titleColorLT};
-`;
-
-const DatasetColorIcon = styled.div`
-  display: inline-block;
-  margin-right: 20px;
-  height: 10px;
-  width: 10px;
-  background: rgb(${props => props.color.join(',')});
-`;
-
 export const DatasetTabs = ({activeDataset, datasets, showDatasetTable}) => (
   <DatasetCatalog className="dataset-modal-catalog">
     {Object.values(datasets).map(dataset => (
@@ -201,8 +189,7 @@ export const DatasetTabs = ({activeDataset, datasets, showDatasetTable}) => (
         key={dataset.id}
         onClick={() => showDatasetTable(dataset.id)}
       >
-        <DatasetColorIcon className="indicator" color={dataset.color} />
-        <DatasetName className="dataset-name">{dataset.label}</DatasetName>
+        <DatasetLabel dataset={dataset}/>
       </DatasetModalTab>
     ))}
   </DatasetCatalog>

@@ -3,8 +3,8 @@ import styled from 'styled-components';
 
 import FileUpload from 'components/common/file-uploader/file-upload';
 
-const ContentWraooer = styled.div`
-  padding: 10px 96px;
+const StyledLoadDataModal = styled.div`
+  padding: 10px 0;
 `;
 
 const propTypes = {
@@ -15,11 +15,11 @@ const propTypes = {
 };
 
 const LoadDataModal = props => (
-  <ContentWraooer>
-    <div className="">
+  <StyledLoadDataModal>
+    <div className="load-data-modal">
       <FileUpload onFileUpload={props.onFileUpload} />
     </div>
-  </ContentWraooer>
+  </StyledLoadDataModal>
 );
 
 LoadDataModal.propTypes = propTypes;
