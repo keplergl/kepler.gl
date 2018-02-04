@@ -169,7 +169,6 @@ class App extends Component {
           id="kepler.gl"
           width={this.state.width}
           height={this.state.height}
-          // create default prop for getAddress
         />
       </div>
     );

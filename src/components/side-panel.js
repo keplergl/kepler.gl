@@ -8,6 +8,7 @@ import LayerManager from './side-panel/layer-manager';
 import FilterManager from './side-panel/filter-manager';
 import InteractionManager from './side-panel/interaction-manager';
 import MapManager from './side-panel/map-manager';
+import PanelToggle from './side-panel/panel-toggle';
 
 import {
   DIMENSIONS,
@@ -130,8 +131,10 @@ export default class SidePanel extends Component {
           minifiedWidth={0}
           onOpenOrClose={this._onOpenOrClose}
         >
-          <PanelHeader
-            currentPanel={activeSidePanel}
+          <PanelHeader/>
+          <PanelToggle
+            panels={PANELS}
+            activePanel={activeSidePanel}
             togglePanel={uiStateActions.toggleSidePanel}
           />
           <SidePanelContent className="side-panel__content">

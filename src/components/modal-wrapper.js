@@ -18,11 +18,11 @@ import {
 } from '../constants/default-settings';
 
 const propTypes = {
-  containerW: PropTypes.number.isRequired,
-  containerH: PropTypes.number.isRequired,
+  rootNode: PropTypes.object,
+  containerW: PropTypes.number,
+  containerH: PropTypes.number,
   uiState: PropTypes.object.isRequired,
   visState: PropTypes.object.isRequired,
-  rootNode: PropTypes.element.isRequired,
   visStateActions: PropTypes.object.isRequired
 };
 

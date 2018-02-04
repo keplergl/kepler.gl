@@ -1,19 +1,18 @@
-import React, {Component} from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import {Tooltip} from 'components/common/styled-components';
 import KeplerGlLogo from 'components/common/logo';
 import {Email, Docs, Save} from 'components/common/icons';
-import {PANELS} from 'constants/default-settings';
 
-const PanelHeaderWrapper = styled.div.attrs({
+const StyledPanelHeader = styled.div.attrs({
   className: 'side-side-panel__header'
 })`
   background-color: ${props => props.theme.sidePanelHeaderBg};
   padding: 12px 16px 0 16px;
 `;
 
-const PanelHeaderTop = styled.div.attrs({
+const StyledPanelHeaderTop = styled.div.attrs({
   className: 'side-panel__header__top'
 })`
   display: flex;
@@ -22,19 +21,13 @@ const PanelHeaderTop = styled.div.attrs({
   width: 100%;
 `;
 
-const PanelHeaderBottom = styled.div.attrs({
-  className: 'side-side-panel__header__bottom'
-})`
-  display: flex;
-`;
-
-const PanelTopActions = styled.div.attrs({
+const StyledPanelTopActions = styled.div.attrs({
   className: 'side-panel__header__actions'
 })`
   display: flex;
 `;
 
-const PanelAction = styled.div.attrs({
+const StyledPanelAction = styled.div.attrs({
   className: 'side-panel__header__actions'
 })`
   align-items: center;
@@ -54,116 +47,66 @@ const PanelAction = styled.div.attrs({
   }
 `;
 
-const PanelTab = styled.div.attrs({
-  className: 'side-panel__tab'
-})`
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: ${props =>
-    props.active ? props.theme.subtextColorActive : 'transparent'};
-  color: ${props =>
-    props.active ? props.theme.subtextColorActive : props.theme.subtextColor};
-  display: flex;
-  height: 30px;
-  justify-content: center;
-  margin-right: 12px;
-  width: 30px;
-
-  :hover {
-    cursor: pointer;
-    color: ${props => props.theme.textColorHl};
-  }
-`;
-
 const defaultActionItems = [
   {
     id: 'email',
     iconComponent: Email,
-    tooltip: 'Email us with questions',
+    tooltip: 'Email us',
     onClick: () => {}
   },
   {
     id: 'docs',
     iconComponent: Docs,
-    tooltip: 'Link to Documentation',
+    tooltip: 'Documentation',
     onClick: () => {}
   },
   {
     id: 'save',
     iconComponent: Save,
-    tooltip: 'Save Current Map',
+    tooltip: 'Save / Export',
     onClick: () => {}
   }
 ];
 
 const defaultProps = {
   logoComponent: KeplerGlLogo,
-  actionItems: defaultActionItems,
-  panels: PANELS,
-  currentPanel: 'layer'
+  actionItems: defaultActionItems
 };
 
 const propTypes = {
   logoComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
-  actionItems: PropTypes.array,
-  panels: PropTypes.array,
-  currentPanel: PropTypes.string,
-  togglePanel: PropTypes.func
+  actionItems: PropTypes.array
 };
 
-class PanelHeader extends Component {
-  render() {
-    const {actionItems, panels, togglePanel, currentPanel} = this.props;
+const PanelAction = ({item}) => (
+  <StyledPanelAction
+    data-tip
+    data-for={`${item.id}-action`}
+  >
+    <item.iconComponent height="20px" />
+    <Tooltip
+      id={`${item.id}-action`}
+      place="bottom"
+      delayShow={500}
+      effect="solid"
+    >
+      <span>{item.tooltip}</span>
+    </Tooltip>
+  </StyledPanelAction>
+);
 
-    return (
-      <PanelHeaderWrapper>
-        <PanelHeaderTop>
-          <this.props.logoComponent />
-          <PanelTopActions>
-            {actionItems.map(item => (
-              <PanelAction
-                key={item.id}
-                data-tip
-                data-for={`${item.id}-action`}
-              >
-                <item.iconComponent height="20px" />
-                <Tooltip
-                  id={`${item.id}-action`}
-                  place="bottom"
-                  delayShow={500}
-                  effect="solid"
-                >
-                  <span>{item.tooltip}</span>
-                </Tooltip>
-              </PanelAction>
-            ))}
-          </PanelTopActions>
-        </PanelHeaderTop>
-        <PanelHeaderBottom>
-          {panels.map(panel => (
-            <PanelTab
-              key={panel.id}
-              data-tip
-              data-for={`${panel.id}-nav`}
-              active={currentPanel === panel.id}
-              onClick={() => togglePanel(panel.id)}
-            >
-              <panel.iconComponent height="20px" />
-              <Tooltip
-                id={`${panel.id}-nav`}
-                effect="solid"
-                delayShow={500}
-                place="bottom"
-              >
-                <span>{panel.label || panel.id}</span>
-              </Tooltip>
-            </PanelTab>
-          ))}
-        </PanelHeaderBottom>
-      </PanelHeaderWrapper>
-    );
-  }
-}
+const PanelHeader = (props) => (
+  <StyledPanelHeader>
+    <StyledPanelHeaderTop>
+      <props.logoComponent/>
+      <StyledPanelTopActions>
+        {props.actionItems.map(item => (
+          <PanelAction key={item.id} item={item}/>
+        ))}
+      </StyledPanelTopActions>
+    </StyledPanelHeaderTop>
+  </StyledPanelHeader>
+);
 
 PanelHeader.defaultProps = defaultProps;
 PanelHeader.propTypes = propTypes;
