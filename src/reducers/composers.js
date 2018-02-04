@@ -1,7 +1,7 @@
 import ActionTypes from 'constants/action-types';
 import {fitBoundsUpdater} from './map-state-updaters';
 import {toggleModalUpdater} from './ui-state-updaters';
-import {receiveMapConfigUpdater, resetMapConfigUpdater, updateVisDataUpdater} from './vis-state-updaters';
+import {receiveMapConfigUpdater, updateVisDataUpdater} from './vis-state-updaters';
 
 // compose action to apply result multiple reducers, with the output of one
 

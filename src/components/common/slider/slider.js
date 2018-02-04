@@ -60,11 +60,6 @@ const SliderWrapper = styled.div`
 `;
 
 class Slider extends React.Component {
-
-  _saveRef = ref => {
-    this.ref = ref;
-  };
-
   componentDidMount() {
     this.handleWidth = this.ref.getElementsByClassName(
       'range-slider__handle'
@@ -73,6 +68,10 @@ class Slider extends React.Component {
 
   handleWidth = 12;
   ref = undefined;
+
+  _saveRef = ref => {
+    this.ref = ref;
+  };
 
   slide0Listener = x => {
     const xPercent = x / this.ref.offsetWidth;
@@ -212,8 +211,6 @@ class Slider extends React.Component {
         isRanged={isRanged}
       >
         {this.createSlider(width, length)}
-        {/*this.createInput0()*/}
-        {/*this.createInput1()*/}
       </SliderWrapper>
     );
   }

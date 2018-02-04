@@ -14,7 +14,6 @@ export function hexToRgb(hex) {
   return [r, g, b];
 }
 
-
 function PadNum(c) {
   const hex = c.toString(16);
   return hex.length === 1 ? `0${hex}` : hex;

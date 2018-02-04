@@ -1,10 +1,6 @@
-import styled from 'styled-components';
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {css} from 'styled-components';
-import {findDOMNode} from 'react-dom';
-
-import ModalDialog from './common/modal';
+import styled from 'styled-components';
 
 import Sidebar from './side-panel/side-bar';
 import PanelHeader from './side-panel/panel-header';
@@ -13,25 +9,15 @@ import FilterManager from './side-panel/filter-manager';
 import InteractionManager from './side-panel/interaction-manager';
 import MapManager from './side-panel/map-manager';
 
-// modal
-import DeleteDatasetModal from './side-panel/modals/delete-data-modal';
-import IconInfoModal from './side-panel/modals/icon-info-modal';
-import DataTableModal from './side-panel/modals/data-table-modal';
-import LoadDataModal from './side-panel/modals/load-data-modal';
-
 import {
   DIMENSIONS,
   PANELS,
   DATA_TABLE_ID,
-  DELETE_DATA_ID,
   ADD_DATA_ID
 } from '../constants/default-settings';
 
 const propTypes = {
-  editingDataset: PropTypes.string,
-  containerW: PropTypes.number.isRequired,
   filters: PropTypes.array.isRequired,
-  height: PropTypes.number.isRequired,
   interactionConfig: PropTypes.object.isRequired,
   layerBlending: PropTypes.string.isRequired,
   layers: PropTypes.array.isRequired,
@@ -41,13 +27,6 @@ const propTypes = {
   visStateActions: PropTypes.object.isRequired,
   mapStyleActions: PropTypes.object.isRequired
 };
-
-const DataTableModalStyle = css`
-  height: 85%;
-  width: 90%;
-  top: 80px;
-  padding: 32px 0 0 0;
-`;
 
 const SidePanelContent = styled.div`
   ${props => props.theme.sidePanelScrollBar};
@@ -64,11 +43,6 @@ const PanelTitle = styled.div`
   margin-bottom: 14px;
 `;
 
-const DeleteDatasetModalStyled = css`
-  width: 40%;
-  padding: 40px 40px 32px 40px;
-`;
-
 /**
  *
  * Vertical sidebar containing input components for the rendering layers
@@ -81,12 +55,8 @@ export default class SidePanel extends Component {
     );
   };
 
-  _closeModal = () => {
-    this.props.uiStateActions.toggleModal(null);
-  };
-
-  // this will open data table modal
   _showDatasetTable = dataId => {
+    // this will open data table modal
     this.props.visStateActions.showDatasetTable(dataId);
     this.props.uiStateActions.toggleModal(DATA_TABLE_ID);
   };
@@ -95,102 +65,10 @@ export default class SidePanel extends Component {
     this.props.uiStateActions.toggleModal(ADD_DATA_ID);
   };
 
-  // this will show the modal dialog to confirm deletion
   _removeDataset = key => {
-    // show modal
+    // this will show the modal dialog to confirm deletion
     this.props.uiStateActions.openDeleteModal(key);
   };
-
-  _onFileUpload = blob => {
-    this.props.visStateActions.loadFiles(blob);
-    // this._closeModal();
-  };
-
-  // this will delete the dataset
-  _deleteDataset = key => {
-    this.props.visStateActions.removeDataset(key);
-    this._closeModal();
-  };
-
-  /* render functions */
-  _renderModalContent(type) {
-    let template = null;
-    let modalProps = {};
-
-    switch (type) {
-      case 'iconInfo':
-        template = <IconInfoModal />;
-        modalProps.title = 'How to draw icons';
-        break;
-      // case LAYER_CONFIG_ID:
-      //   template = <LayerConfigModal close={this._closeModal}/>;
-      //   break;
-      case DATA_TABLE_ID:
-        template = (
-          <DataTableModal
-            width={this.props.containerW * 0.9}
-            height={(this.props.containerH + DIMENSIONS.topOffset) * 0.85}
-            datasets={this.props.datasets}
-            dataId={this.props.editingDataset}
-            showDatasetTable={this.props.visStateActions.showDatasetTable}
-          />
-        );
-        modalProps.cssStyle = DataTableModalStyle;
-        break;
-      case DELETE_DATA_ID:
-        const {datasetKeyToRemove} = this.props.uiState;
-        const {datasets, layers} = this.props;
-        // validate options
-        if (datasetKeyToRemove && datasets && datasets[datasetKeyToRemove]) {
-          template = (
-            <DeleteDatasetModal
-              dataset={datasets[datasetKeyToRemove]}
-              layers={layers}
-            />
-          );
-
-          modalProps = {
-            title: 'Delete Dataset',
-            cssStyle: DeleteDatasetModalStyled,
-            footer: true,
-            onConfirm: () => this._deleteDataset(datasetKeyToRemove),
-            onCancel: this._closeModal,
-            confirmButton: {
-              negative: true,
-              large: true,
-              children: 'Delete'
-            }
-          };
-        }
-        break; // in case we add a new case after this one
-      case ADD_DATA_ID:
-        template = (
-          <LoadDataModal
-            onClose={this._closeModal}
-            onFileUpload={this._onFileUpload}
-          />
-        );
-        modalProps = {
-          title: 'Add Data To Map',
-          footer: true,
-          onConfirm: this._closeModal
-        };
-        break;
-      default:
-        break;
-    }
-
-    return this.props.rootNode ? (
-      <ModalDialog
-        {...modalProps}
-        parentSelector={() => findDOMNode(this.props.rootNode)}
-        isOpen={Boolean(type)}
-        close={this._closeModal}
-      >
-        {template}
-      </ModalDialog>
-    ) : null;
-  }
 
   render() {
     const {
@@ -205,10 +83,7 @@ export default class SidePanel extends Component {
       mapStyleActions,
       uiStateActions
     } = this.props;
-    const {
-      activeSidePanel,
-      currentModal
-    } = uiState;
+    const {activeSidePanel} = uiState;
     const isOpen = Boolean(activeSidePanel);
     const panelWidth = this.props.width - DIMENSIONS.sideBarPadding * 2;
 
@@ -299,7 +174,6 @@ export default class SidePanel extends Component {
             </div>
           </SidePanelContent>
         </Sidebar>
-        {this._renderModalContent(currentModal)}
       </div>
     );
   }

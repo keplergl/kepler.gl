@@ -151,8 +151,10 @@ class FileUpload extends Component {
     const {dragOver} = this.state;
     const {validFileExt} = this.props;
     return (
-      <StyledFileUpload className="file-uploader"
-                        innerRef={cmp => this.frame = cmp}>
+      <StyledFileUpload
+        className="file-uploader"
+        innerRef={cmp => (this.frame = cmp)}
+      >
         <input
           className="filter-upload__input"
           type="file"
@@ -175,7 +177,7 @@ class FileUpload extends Component {
                       <FileTypeIcon key={ext} ext={ext} />
                     ))}
                   </div>
-                  <DragNDrop height="44px"/>
+                  <DragNDrop height="44px" />
                 </StyledDragNDropIcon>
                 <div>{this._renderMessage()}</div>
               </div>

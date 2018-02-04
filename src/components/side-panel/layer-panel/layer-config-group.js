@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 import Switch from 'components/common/switch';

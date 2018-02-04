@@ -7,7 +7,7 @@ import Adapter from 'enzyme-adapter-react-15.4';
 configure({adapter: new Adapter()});
 
 import DataTableModal, {DatasetTabs, DatasetModalTab} from
-  '../../../src/components/side-panel/modals/data-table-modal';
+  '../../../src/components/modals/data-table-modal';
 import ReactDataGrid from 'react-data-grid/dist/react-data-grid.min';
 
 import {testFields, testAllData} from '../../fixtures/test-csv-data';

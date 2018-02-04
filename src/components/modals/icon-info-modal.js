@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import {line} from 'd3-shape'
 import {svgIcons as SvgIcons} from 'keplergl-layers/icon-layer/svg-icons.json';
@@ -14,7 +14,7 @@ const IconShape = ({mesh}) => (
     {mesh.cells.map((cell, i) =>
       <path key={i}
         fill="#000000"
-            d={lineFunction(cell.map(i => mesh.positions[i]))}/>
+            d={lineFunction(cell.map(idx => mesh.positions[idx]))}/>
     )}
     </g>
   </svg>

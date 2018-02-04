@@ -508,104 +508,6 @@ export const showDatasetTableUpdater = (state, action) => {
   };
 };
 
-/* eslint-disable max-statements */
-export const updateVisDataUpdater = (state, action) => {
-  // datasets can be a single data entries or an array of multiple data entries
-  const datasets = Array.isArray(action.datasets)
-    ? action.datasets
-    : [action.datasets];
-
-  const defaultOptions = {centerMap: true};
-  const options = {
-    ...defaultOptions,
-    ...action.options
-  };
-
-  if (action.config) {
-    // apply config if passed from action
-    state = receiveMapConfigUpdater(state, {payload: {visState: action.config}})
-  }
-
-  const newDateEntries = datasets.reduce(
-    (accu, {info = {}, data}) => ({
-      ...accu,
-      ...(createNewDataEntry({info, data}, state.datasets) || {})
-    }),
-    {}
-  );
-
-  if (!Object.keys(newDateEntries).length) {
-    return state;
-  }
-
-  const stateWithNewData = {
-    ...state,
-    datasets: {
-      ...state.datasets,
-      ...newDateEntries
-    }
-  };
-
-  // previously saved config before data loaded
-  const {
-    filterToBeMerged = [],
-    layerToBeMerged = [],
-    interactionToBeMerged = {}
-  } = stateWithNewData;
-
-  // keep a copy of oldLayers
-  const oldLayers = state.layers.map(l => l.id);
-
-  // merge state with saved filters
-  let mergedState = mergeFilters(stateWithNewData, filterToBeMerged);
-  // merge state with saved layers
-  mergedState = mergeLayers(mergedState, layerToBeMerged);
-
-  if (mergedState.layers.length === state.layers.length) {
-    // no layer merged, find defaults
-    mergedState = addDefaultLayers(mergedState, newDateEntries);
-  }
-
-  if (mergedState.splitMaps.length) {
-    const newLayers = mergedState.layers.filter(
-      l => l.config.dataId in newDateEntries
-    );
-    // if map is splited, add new layers to splitMaps
-    mergedState = {
-      ...mergedState,
-      splitMaps: addNewLayersToSplitMap(mergedState.splitMaps, newLayers)
-    };
-  }
-
-  // merge state with saved interactions
-  mergedState = mergeInteractions(mergedState, interactionToBeMerged);
-
-  // if no tooltips merged add default tooltips
-  Object.keys(newDateEntries).forEach(dataId => {
-    const tooltipFields =
-      mergedState.interactionConfig.tooltip.config.fieldsToShow[dataId];
-    if (!Array.isArray(tooltipFields) || !tooltipFields.length) {
-      mergedState = addDefaultTooltips(mergedState, newDateEntries[dataId]);
-    }
-  });
-
-  const visState = updateAllLayerDomainData(
-    mergedState,
-    Object.keys(newDateEntries)
-  );
-
-  let bounds;
-  if (options.centerMap) {
-    // find map bounds for new layers
-    const newLayers = visState.layers.filter(l => !oldLayers.includes(l.id));
-    bounds = findMapBounds(newLayers);
-  }
-
-  // action is being composed in the combine reducer level to further update map bounds
-  return {visState, bounds};
-};
-/* eslint-enable max-statements */
-
 export const resetMapConfigUpdater = () => cloneDeep(INITIAL_VIS_STATE);
 
 /**
@@ -638,7 +540,6 @@ export const receiveMapConfigUpdater = (state, action) => {
   mergedState = mergeLayers(mergedState, layers);
   mergedState = mergeInteractions(mergedState, interactionConfig);
   mergedState = mergeLayerBlending(mergedState, layerBlending);
-
 
   // const newState ={
   //   ...resetState,
@@ -763,6 +664,104 @@ export const toggleLayerForMapUpdater = (state, action) => {
     splitMaps: newSplitMaps
   };
 };
+
+/* eslint-disable max-statements */
+export const updateVisDataUpdater = (state, action) => {
+  // datasets can be a single data entries or an array of multiple data entries
+  const datasets = Array.isArray(action.datasets)
+    ? action.datasets
+    : [action.datasets];
+
+  const defaultOptions = {centerMap: true};
+  const options = {
+    ...defaultOptions,
+    ...action.options
+  };
+
+  if (action.config) {
+    // apply config if passed from action
+    state = receiveMapConfigUpdater(state, {payload: {visState: action.config}})
+  }
+
+  const newDateEntries = datasets.reduce(
+    (accu, {info = {}, data}) => ({
+      ...accu,
+      ...(createNewDataEntry({info, data}, state.datasets) || {})
+    }),
+    {}
+  );
+
+  if (!Object.keys(newDateEntries).length) {
+    return state;
+  }
+
+  const stateWithNewData = {
+    ...state,
+    datasets: {
+      ...state.datasets,
+      ...newDateEntries
+    }
+  };
+
+  // previously saved config before data loaded
+  const {
+    filterToBeMerged = [],
+    layerToBeMerged = [],
+    interactionToBeMerged = {}
+  } = stateWithNewData;
+
+  // keep a copy of oldLayers
+  const oldLayers = state.layers.map(l => l.id);
+
+  // merge state with saved filters
+  let mergedState = mergeFilters(stateWithNewData, filterToBeMerged);
+  // merge state with saved layers
+  mergedState = mergeLayers(mergedState, layerToBeMerged);
+
+  if (mergedState.layers.length === state.layers.length) {
+    // no layer merged, find defaults
+    mergedState = addDefaultLayers(mergedState, newDateEntries);
+  }
+
+  if (mergedState.splitMaps.length) {
+    const newLayers = mergedState.layers.filter(
+      l => l.config.dataId in newDateEntries
+    );
+    // if map is splited, add new layers to splitMaps
+    mergedState = {
+      ...mergedState,
+      splitMaps: addNewLayersToSplitMap(mergedState.splitMaps, newLayers)
+    };
+  }
+
+  // merge state with saved interactions
+  mergedState = mergeInteractions(mergedState, interactionToBeMerged);
+
+  // if no tooltips merged add default tooltips
+  Object.keys(newDateEntries).forEach(dataId => {
+    const tooltipFields =
+      mergedState.interactionConfig.tooltip.config.fieldsToShow[dataId];
+    if (!Array.isArray(tooltipFields) || !tooltipFields.length) {
+      mergedState = addDefaultTooltips(mergedState, newDateEntries[dataId]);
+    }
+  });
+
+  const visState = updateAllLayerDomainData(
+    mergedState,
+    Object.keys(newDateEntries)
+  );
+
+  let bounds;
+  if (options.centerMap) {
+    // find map bounds for new layers
+    const newLayers = visState.layers.filter(l => !oldLayers.includes(l.id));
+    bounds = findMapBounds(newLayers);
+  }
+
+  // action is being composed in the combine reducer level to further update map bounds
+  return {visState, bounds};
+};
+/* eslint-enable max-statements */
 
 function generateLayerMetaForSplitViews(layer) {
   return {

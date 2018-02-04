@@ -78,7 +78,6 @@ export default class LayerManager extends Component {
   };
 
   _handleSort = order => {
-    console.log(order)
     this.props.updateLayerOrder(order);
   };
 

@@ -4,6 +4,8 @@ import {
   SidePanelSection,
   PanelLabel
 } from 'components/common/styled-components';
+import {capitalizeFirstLetter} from 'utils/utils';
+
 import RangeSlider from 'components/common/range-slider';
 
 const propTypes = {

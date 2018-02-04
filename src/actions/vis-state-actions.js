@@ -129,7 +129,6 @@ export function toggleAnimation(idx) {
   };
 }
 
-
 export function updateAnimationSpeed(idx, speed) {
   return {
     type: ActionTypes.UPDATE_FILTER_ANIMATION_SPEED,

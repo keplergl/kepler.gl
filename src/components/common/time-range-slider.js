@@ -102,7 +102,6 @@ export default class TimeRangeSlider extends Component {
     this._animation = null;
 
     const {domain, value} = this.props;
-    console.log(this.props.speed);
     const speed = ((domain[1] - domain[0]) / BASE_SPEED) * this.props.speed;
 
     // loop when reaches the end
@@ -128,7 +127,9 @@ export default class TimeRangeSlider extends Component {
         <StyledSliderContainer
           className="time-range-slider__container"
           isEnlarged={isEnlarged}
-          innerRef={comp => this.sliderContainer = comp}>
+          innerRef={comp => {
+            this.sliderContainer = comp;
+          }}>
           {isEnlarged ? <AnimationControls
             isAnimatable={this.props.isAnimatable}
             isEnlarged={isEnlarged}

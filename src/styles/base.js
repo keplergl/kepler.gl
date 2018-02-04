@@ -317,8 +317,8 @@ const switchButton = css`
   display: block;
   height: ${props => props.theme.switchBtnHeight};
   width: ${props => props.theme.switchBtnWidth};
-  background: ${props => props =>
-    props.checked ? props.theme.switchBtnBgdActive : props.theme.switchBtnBgd};
+  background: ${props => props.checked ? 
+  props.theme.switchBtnBgdActive : props.theme.switchBtnBgd};
   box-shadow: ${props => props.theme.switchBtnBoxShadow};
 `;
 
@@ -355,8 +355,8 @@ const secondarySwitch = css`
   }
 
   :after {
-    ${props => props.theme.switchButton} background: ${props => props =>
-        props.checked
+    ${props => props.theme.switchButton} 
+    background: ${props => props.checked
           ? props.theme.switchBtnBgdActive
           : props.theme.secondarySwitchBtnBgd};
   }

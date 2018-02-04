@@ -4,12 +4,14 @@ import window from 'global/window';
 import KeplerGl, {KeplerGlSchema, Processor, updateVisDataAndConfiguration, updateVisData} from 'kepler.gl';
 
 // Sample data
+/* eslint-disable no-unused-vars */
 import sampleData from './data/sample-data';
 import sampleTripData from './data/sample-trip-data';
 import sampleHexIdCsv from './data/sample-hex-id-csv';
 import sampleGeojson from './data/sample-geojson.json';
 import jsonTripData from './data/json-sample-trip-data';
 import sampleIconCsv from './data/sample-icon-csv';
+/* eslint-enable no-unused-vars */
 
 // configurations
 import pointPlotConfiguration from './configurations/point-plot';
@@ -72,10 +74,6 @@ class App extends Component {
     window.addEventListener('resize', this._handleResize);
   }
 
-  componentWillUnMount() {
-    window.removeEventListener('resize', this._handleResize);
-  }
-
   componentDidMount() {
     // load trip based data with config
     this.props.dispatch(
@@ -105,7 +103,7 @@ class App extends Component {
     );
 
     // load point based data
-    //this.props.dispatch(updateVisData(sampleData));
+    // this.props.dispatch(updateVisData(sampleData));
 
     // load data with h3 hex id
     this.props.dispatch(
@@ -138,6 +136,10 @@ class App extends Component {
     // );
 
     // this._loadConfig();
+  }
+
+  componentWillUnMount() {
+    window.removeEventListener('resize', this._handleResize);
   }
 
   /**

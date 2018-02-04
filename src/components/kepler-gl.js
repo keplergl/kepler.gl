@@ -18,6 +18,8 @@ import {DIMENSIONS, DEFAULT_MAP_STYLES} from 'constants/default-settings';
 import SidePanel from './side-panel';
 import MapContainer from './map-container';
 import BottomWidget from './bottom-widget';
+import ModalWrapper from './modal-wrapper';
+
 import {theme} from '../styles/base';
 
 const defaultProps = {
@@ -29,9 +31,9 @@ const defaultProps = {
 const GlobalStyle = styled.div`
   font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
   font-weight: 400;
-  font-size: .875em;
+  font-size: 0.875em;
   line-height: 1.71429;
-  
+
   *,
   *:before,
   *:after {
@@ -39,16 +41,16 @@ const GlobalStyle = styled.div`
     -moz-box-sizing: border-box;
     box-sizing: border-box;
   }
-  
+
   ul {
     margin: 0;
     padding: 0;
   }
-  
+
   li {
     margin: 0;
   }
-  
+
   a {
     text-decoration: none;
   }
@@ -115,20 +117,10 @@ class KeplerGL extends Component {
       // props
       id,
       buildingData,
-      editingDataset,
-      filters,
-      layers,
-      splitMaps, // this will store support for split map view is necessary
-      layerOrder,
-      layerBlending,
-      interactionConfig,
-      datasets,
       mapStyle,
       mapState,
-      layerData,
-      hoverInfo,
-      clicked,
       uiState,
+      visState,
 
       // actions,
       buildingDataActions,
@@ -138,9 +130,21 @@ class KeplerGL extends Component {
       uiStateActions
     } = this.props;
 
+    const {
+      filters,
+      layers,
+      splitMaps, // this will store support for split map view is necessary
+      layerOrder,
+      layerBlending,
+      interactionConfig,
+      datasets,
+      layerData,
+      hoverInfo,
+      clicked
+    } = visState;
+
     const sideFields = {
       datasets,
-      editingDataset,
       filters,
       layers,
       layerOrder,
@@ -150,7 +154,8 @@ class KeplerGL extends Component {
       uiState,
       mapStyleActions,
       visStateActions,
-      uiStateActions
+      uiStateActions,
+      width: DIMENSIONS.sidePanel.width
     };
 
     const mapFields = {
@@ -171,6 +176,7 @@ class KeplerGL extends Component {
     };
 
     const isSplit = splitMaps && splitMaps.length > 1;
+    const containerW = mapState.width * (Number(isSplit) + 1);
 
     const mapContainers = !isSplit
       ? [
@@ -179,7 +185,6 @@ class KeplerGL extends Component {
             index={0}
             {...mapFields}
             mapLayers={isSplit ? splitMaps[0].layers : null}
-            popoverOffset={{left: 0, top: 0}}
           />
         ]
       : splitMaps.map((settings, index) => (
@@ -188,11 +193,9 @@ class KeplerGL extends Component {
             index={index}
             {...mapFields}
             mapLayers={splitMaps[index].layers}
-            popoverOffset={{left: 0, top: 0}}
           />
         ));
 
-    const containerW = mapState.width * (Number(isSplit) + 1);
     return (
       <ThemeProvider theme={theme}>
         <GlobalStyle
@@ -203,16 +206,7 @@ class KeplerGL extends Component {
             this.root = node;
           }}
         >
-          {!mapState.isFullScreen && (
-            <SidePanel
-              {...sideFields}
-              width={DIMENSIONS.sidePanel.width}
-              containerW={containerW}
-              containerH={mapState.height}
-              height={mapState.height}
-              rootNode={this.root}
-            />
-          )}
+          {!mapState.isFullScreen && <SidePanel {...sideFields} />}
           <div className="maps" style={{display: 'flex'}}>
             {mapContainers}
           </div>
@@ -221,8 +215,19 @@ class KeplerGL extends Component {
             datasets={datasets}
             uiState={uiState}
             visStateActions={visStateActions}
-            sidePanelWidth={DIMENSIONS.sidePanel.width - DIMENSIONS.sidePanel.margin}
+            sidePanelWidth={
+              DIMENSIONS.sidePanel.width - DIMENSIONS.sidePanel.margin
+            }
             containerW={containerW}
+          />
+          <ModalWrapper
+            visState={visState}
+            uiState={uiState}
+            visStateActions={visStateActions}
+            uiStateActions={uiStateActions}
+            rootNode={this.root}
+            containerW={containerW}
+            containerH={mapState.height}
           />
         </GlobalStyle>
       </ThemeProvider>
@@ -235,7 +240,7 @@ KeplerGL.defaultProps = defaultProps;
 function mapStateToProps(state, props) {
   return {
     ...props,
-    ...state.visState,
+    visState: state.visState,
     buildingData: state.buildingData.buildingData,
     mapStyle: state.mapStyle,
     mapState: state.mapState,

@@ -51,8 +51,8 @@ const StyledSliderHandle = styled.span`
  *  valueListener
  */
 class SliderHandle extends React.Component {
-  prevX = 0;
   state = {mouseOver: false};
+  prevX = 0;
 
   handleMouseDown = () => {
     document.addEventListener('mouseup', this.mouseup);

@@ -9,7 +9,7 @@ import throttle from 'lodash.throttle';
 
 // components
 import MapPopover from 'components/map/map-popover';
-import MapControl from 'components/map-control';
+import MapControl from 'components/map/map-control';
 
 // deckgl layers
 import {PolygonLayer} from 'deck.gl';
@@ -176,8 +176,7 @@ export default class MapContainer extends Component {
       datasets,
       interactionConfig,
       layers,
-      mapLayers,
-      popoverOffset
+      mapLayers
     } = this.props;
 
     // if clicked something, ignore hover behavior
@@ -222,7 +221,7 @@ export default class MapContainer extends Component {
       layer,
       isVisible: true,
       x,
-      y: y + popoverOffset.top,
+      y,
       freezed: Boolean(clicked),
       onClose: this._onCloseMapPopover,
       mapState

@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import InfoHelper from 'components/common/info-helper';
 import Switch from 'components/common/switch';
 import {SidePanelSection, PanelLabel} from 'components/common/styled-components';
+import {capitalizeFirstLetter} from 'utils/utils';
 
 const propTypes = {
   layer: PropTypes.object.isRequired,
@@ -12,7 +13,7 @@ const propTypes = {
   label: PropTypes.oneOfType([
     PropTypes.string,
     PropTypes.bool,
-    PropTypes.func,
+    PropTypes.func
   ]),
   description: PropTypes.string,
   disabled: PropTypes.bool

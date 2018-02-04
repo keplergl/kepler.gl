@@ -144,14 +144,3 @@ const BrushConfig = ({config, onChange}) => (
     />
   </SidePanelSection>
 );
-
-const EnableConfig = ({config, onClick}) => (
-  <div>
-    <Switch
-      checked={config.enabled}
-      id={`${config.id}-toggle`}
-      onChange={onClick}
-      secondary
-    />
-  </div>
-);

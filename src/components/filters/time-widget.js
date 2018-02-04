@@ -3,9 +3,9 @@ import styled from 'styled-components';
 import {createSelector} from 'reselect';
 
 import FieldSelector from 'components/common/field-selector';
-import {SelectTextBold, IconRoundSmall} from 'components/common/styled-components';
+import {SelectTextBold, IconRoundSmall, CenterFlexbox} from 'components/common/styled-components';
 import TimeRangeFilter from 'components/filters/time-range-filter';
-import {Close, Clock} from 'components/common/icons';
+import {Close, Clock, LineChart} from 'components/common/icons';
 import {TIME_ANIMATION_SPEED} from 'utils/filter-utils';
 const innerPdSide = 32;
 
@@ -68,10 +68,8 @@ const Tab = styled.div`
 `;
 /* eslint-enable no-unused-vars */
 
-const StyledTitle = styled.div`
+const StyledTitle = CenterFlexbox.extend`
   flex-grow: 0;
-  display: flex;
-  align-items: center;
   color: ${props => props.theme.textColor};
 
   .bottom-widget__icon {
@@ -111,13 +109,16 @@ class TimeWidget extends Component {
       <WidgetContainer width={width}>
         <div className="bottom-widget--inner">
           <TopSectionWrapper>
-            <StyledTitle>
-              <div className="bottom-widget__icon">
+            <StyledTitle className="bottom-widget__field">
+              <CenterFlexbox className="bottom-widget__icon">
                 <Clock height="15px"/>
-              </div>
+              </CenterFlexbox>
               <SelectTextBold>{filter.name}</SelectTextBold>
             </StyledTitle>
-            <div className="bottom-widget__y-axis">
+            <StyledTitle className="bottom-widget__y-axis">
+              <CenterFlexbox className="bottom-widget__icon">
+                <LineChart height="15px"/>
+              </CenterFlexbox>
               <SelectTextBold>Y Axis</SelectTextBold>
               <div className="bottom-widget__field-select">
                 <FieldSelector
@@ -130,7 +131,7 @@ class TimeWidget extends Component {
                   erasable
                 />
               </div>
-            </div>
+            </StyledTitle>
             <AnimationSpeedToggle
               updateAnimationSpeed={(speed) => updateAnimationSpeed(enlargedIdx, speed)}
               speed={filter.speed}/>

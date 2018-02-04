@@ -2,8 +2,8 @@ import React, {Component} from 'react';
 import {createSelector} from 'reselect';
 import styled from 'styled-components';
 
-import {Tooltip, IconRoundSmall} from './common/styled-components';
-import MapLayerSelector from './common/map-layer-selector';
+import {Tooltip, IconRoundSmall} from 'components/common/styled-components';
+import MapLayerSelector from 'components/common/map-layer-selector';
 import MapLegend from './map-legend';
 import {
   Close,
@@ -14,7 +14,7 @@ import {
   Cube3d,
   Delete,
   Layers
-} from './common/icons';
+} from 'components/common/icons';
 
 const StyledMapControl = styled.div`
   right: 0;
