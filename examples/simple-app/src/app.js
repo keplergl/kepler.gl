@@ -166,7 +166,7 @@ class App extends Component {
     return (
       <div style={{position: 'absolute', width: '100%', height: '100%'}}>
         <KeplerGl
-          id="kepler.gl"
+          id="map"
           width={this.state.width}
           height={this.state.height}
         />

@@ -1,9 +1,8 @@
 
 ### Styling
-- Remove dataset modal
-- File Uplader
 
 ### Bugs
+- Slider input is not working
 
 ### Testing
 - Fix all the tests
@@ -15,3 +14,5 @@
 
 ### Design
 - Better transition from time filter to time playback
+- File Upload progress bar
+- Layer processing progress bar (add hexagon heatmap)

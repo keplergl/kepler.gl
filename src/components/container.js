@@ -10,15 +10,15 @@ import {registerEntry, deleteEntry} from 'actions/identity-actions';
 // default id and address if not provided
 const defaultProps = {
   id: 'map',
-  getAddress: state => state.keplerGl
+  getState: state => state.keplerGl
 };
 
 class Container extends Component {
   constructor(props, ctx) {
     super(props, ctx);
 
-    this.getSelector = memoize((id, getAddress) => state =>
-      getAddress(state)[id]
+    this.getSelector = memoize((id, getState) => state =>
+      getState(state)[id]
     );
     this.getDispatch = memoize((id, dispatch) => forwardTo(id, dispatch));
   }
@@ -38,13 +38,13 @@ class Container extends Component {
   }
 
   render() {
-    const {id, getAddress, dispatch} = this.props;
+    const {id, getState, dispatch} = this.props;
 
     return (
       <KeplerGl
         {...this.props}
         id={id}
-        selector={this.getSelector(id, getAddress)}
+        selector={this.getSelector(id, getState)}
         dispatch={this.getDispatch(id, dispatch)}
       />
     );

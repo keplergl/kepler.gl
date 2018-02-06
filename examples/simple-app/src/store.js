@@ -1,5 +1,5 @@
-import {createStore, combineReducers, applyMiddleware, compose} from 'redux'
-import {keplerGlReducer} from 'kepler.gl';
+import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
+import {keplerGlReducer, visStateUpdaters} from 'kepler.gl';
 import appReducer from './app-reducer';
 import {taskMiddleware} from 'react-palm';
 import window from 'global/window';
@@ -10,10 +10,25 @@ const reducers = combineReducers({
   app: appReducer
 });
 
+const composedReducer = (state, action) => {
+  switch (action.type) {
+    case 'QUERY_SUCCESS':
+      return {
+        ...state,
+        keplerGl: {
+          ...state.keplerGl,
+          // 'map' is the id of the keplerGl instance
+          map: visStateUpdaters.updateVisDataUpdater(state.keplerGl.map, {datasets: action.payload})
+        },
+        loaded: true
+      };
+  }
+  return reducers(state, action);
+};
+
+
 const middlewares = [taskMiddleware];
-const enhancers = [
-  applyMiddleware(...middlewares)
-];
+const enhancers = [applyMiddleware(...middlewares)];
 
 const initialState = {};
 
@@ -21,7 +36,7 @@ const initialState = {};
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 
 export default createStore(
-  reducers,
+  composedReducer,
   initialState,
   composeEnhancers(...enhancers)
 );
