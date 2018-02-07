@@ -23,8 +23,14 @@ const StyledSliderHandle = styled.span`
   z-index: 10;
   display: ${props => (props.hidden ? 'none' : 'block')};
   margin-top: -4px;
-  height: ${props => props.theme.sliderHandleHeight};
-  width: ${props => props.theme.sliderHandleWidth};
+  height: ${props =>
+    Number.isFinite(props.sliderHandleWidth)
+      ? `${props.sliderHandleWidth}px`
+      : props.theme.sliderHandleHeight};
+  width: ${props =>
+    Number.isFinite(props.sliderHandleWidth)
+      ? `${props.sliderHandleWidth}px`
+      : props.theme.sliderHandleHeight};
   box-shadow: ${props => props.theme.sliderHandleShadow};
   background-color: ${props => props.theme.sliderHandleColor};
   border-width: 1px;
@@ -96,6 +102,7 @@ class SliderHandle extends React.Component {
         className={classnames('range-slider__handle', {
           'range-slider__handle--active': this.state.mouseOver
         })}
+        sliderHandleWidth={this.props.sliderHandleWidth}
         active={this.state.mouseOver}
         hidden={!this.props.display}
         style={{left: this.props.left}}

@@ -36,12 +36,13 @@ function makeLocalDevConfig(EXAMPLE_DIR = LIB_DIR) {
     module: {
       rules: [
         {
-          // Unfortunately, webpack doesn't import library sourcemaps on its own...
+          // Unfortunately, webpack doesn't import library source maps on its own...
           test: /\.js$/,
           use: ['source-map-loader'],
           enforce: 'pre',
           exclude: [
-            /node_modules\/react-palm/
+            /node_modules\/react-palm/,
+            /node_modules\/react-data-grid/,
           ]
         },
         {

@@ -12,7 +12,7 @@ const reducers = combineReducers({
 
 const composedReducer = (state, action) => {
   switch (action.type) {
-    case 'QUERY_SUCCESS':
+    case 'LOAD_DATA_SUCCESS':
       return {
         ...state,
         keplerGl: {
@@ -22,10 +22,11 @@ const composedReducer = (state, action) => {
         },
         loaded: true
       };
+    default:
+      break;
   }
   return reducers(state, action);
 };
-
 
 const middlewares = [taskMiddleware];
 const enhancers = [applyMiddleware(...middlewares)];

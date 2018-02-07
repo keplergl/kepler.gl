@@ -13,6 +13,7 @@ import {
   PanelContent
 } from 'components/common/styled-components';
 import {DatasetTag} from '../source-data-catalog';
+import {BRUSH_CONFIG} from 'constants/default-settings';
 
 const propTypes = {
   datasets: PropTypes.object.isRequired,
@@ -132,13 +133,11 @@ const BrushConfig = ({config, onChange}) => (
   <SidePanelSection>
     <PanelLabel>Brush Radius (km)</PanelLabel>
     <RangeSlider
-      minValue={0}
-      maxValue={10}
+      range={BRUSH_CONFIG.range}
       value0={0}
       value1={config.size || 10 / 2}
       step={0.1}
       isRanged={false}
-      showInput={true}
       onChange={value => onChange({...config, size: value[1]})}
       inputTheme="secondary"
     />

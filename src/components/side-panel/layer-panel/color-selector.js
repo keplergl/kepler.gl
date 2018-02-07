@@ -61,8 +61,9 @@ class ColorSelector extends Component {
   };
 
   handleClickOutside = e => {
-    this._hideDropdown(e);
-  };
+    if (this.state.editing !== false) {
+      this.setState({editing: false});
+    }  };
 
   _onSelectColor = (color, e) => {
     e.stopPropagation();
@@ -75,14 +76,6 @@ class ColorSelector extends Component {
     e.stopPropagation();
     e.preventDefault();
     this.setState({editing: i});
-  };
-
-  _hideDropdown = e => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (this.state.editing !== false) {
-      this.setState({editing: false});
-    }
   };
 
   render() {

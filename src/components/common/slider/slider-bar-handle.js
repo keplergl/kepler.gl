@@ -87,7 +87,7 @@ class SliderHandle extends React.Component {
         })}
         style={{
           width: `${this.props.width}%`,
-          left: `${this.props.length}%`
+          left: `${this.props.v0Left}%`
         }}
         onMouseDown={this.props.enableBarDrag && this.handleMouseDown}
         onTouchStart={this.props.enableBarDrag && this.handleTouchStart}

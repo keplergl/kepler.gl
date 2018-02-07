@@ -240,6 +240,7 @@ export const StyledPanelDropdown = styled.div`
 `;
 
 export const ButtonGroup = styled.div`
+  display: flex;
   .button {
     border-radius: 0;
     margin-left: 2px;

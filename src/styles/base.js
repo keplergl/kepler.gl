@@ -204,7 +204,7 @@ const input = css`
   opacity: ${props => (props.disabled ? 0.5 : 1)};
 
   :hover {
-    cursor: pointer;
+    cursor: ${props => props.type === 'number' ? 'text' : 'pointer'};
     background-color: ${props =>
       props.active ? props.theme.inputBgdActive : props.theme.inputBgdHover};
     border-color: ${props =>
@@ -214,6 +214,8 @@ const input = css`
   }
 
   :active,
+  :focus,
+  &.focus,
   &.active {
     background-color: ${props => props.theme.inputBgdActive};
     border-color: ${props => props.theme.inputBorderActiveColor};

@@ -32,8 +32,12 @@ const StyledSliderContainer = styled.div`
   margin-top: ${props => props.isEnlarged ? '12px' : '0px'};
   align-items: flex-end;
   display: flex;
-  flex-direction: ${props => props.isEnlarged ? 'row' : 'column'};
+  flex-direction: row;
   justify-content: space-between;
+  
+  .time-range-slider__slider {
+    //flex-grow: 1;
+  }
 `;
 
 export default class TimeRangeSlider extends Component {
@@ -50,14 +54,14 @@ export default class TimeRangeSlider extends Component {
   }
 
   componentDidMount() {
-    this._resize();
+    // this._resize();
   }
 
   componentDidUpdate() {
     if (!this._animation && this.state.isAnimating) {
       this._animation = requestAnimationFrame(this._nextFrame);
     }
-    this._resize();
+    // this._resize();
   }
 
   domainSelector = props => props.domain;
@@ -70,12 +74,12 @@ export default class TimeRangeSlider extends Component {
     this._sliderThrottle(args);
   };
 
-  _resize() {
-    const width = this.sliderContainer.offsetWidth;
-    if (width !== this.state.width) {
-      this.setState({width});
-    }
-  }
+  // _resize() {
+  //   const width = this.sliderContainer.offsetWidth;
+  //   if (width !== this.state.width) {
+  //     this.setState({width});
+  //   }
+  // }
   _resetAnimation = () => {
     const {domain, value} = this.props;
     const value0 = domain[0];
@@ -112,10 +116,7 @@ export default class TimeRangeSlider extends Component {
 
   render() {
     const {domain, value, isEnlarged} = this.props;
-    const {width, isAnimating} = this.state;
-    const controlWidth = 130;
-
-    const sliderWidth = isEnlarged ? width - controlWidth : width;
+    const {isAnimating} = this.state;
 
     return (
       <div className="time-range-slider">
@@ -126,10 +127,7 @@ export default class TimeRangeSlider extends Component {
         />
         <StyledSliderContainer
           className="time-range-slider__container"
-          isEnlarged={isEnlarged}
-          innerRef={comp => {
-            this.sliderContainer = comp;
-          }}>
+          isEnlarged={isEnlarged}>
           {isEnlarged ? <AnimationControls
             isAnimatable={this.props.isAnimatable}
             isEnlarged={isEnlarged}
@@ -139,22 +137,17 @@ export default class TimeRangeSlider extends Component {
             startAnimation={this._startAnimation}
           /> : null}
           <RangeSlider
-            minValue={domain[0]}
-            maxValue={domain[1]}
+            range={domain}
             value0={value[0]}
             value1={value[1]}
             histogram={this.props.histogram}
             lineChart={this.props.lineChart}
             plotType={this.props.plotType}
-            isRanged={true}
             isEnlarged={isEnlarged}
             showInput={false}
             step={this.props.step}
             onChange={this._sliderUpdate}
-            width={sliderWidth}
-            xAxis={
-              <TimeSliderMarker width={sliderWidth} domain={domain} />
-            }
+            xAxis={TimeSliderMarker}
           />
         </StyledSliderContainer>
       </div>
@@ -211,6 +204,8 @@ const TimeValue = ({value, split}) => (
 
 const StyledAnimationControls = styled.div`
   margin-bottom: 12px;
+  margin-right: 42px;
+  
   &.disabled {
     opacity: 0.4;
     pointer-events: none;

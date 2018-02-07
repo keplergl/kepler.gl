@@ -1,4 +1,5 @@
 import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
 import {
   SidePanelSection,
@@ -10,15 +11,17 @@ import SourceDataCatalog from './source-data-catalog';
 import FilterPanel from './filter-panel/filter-panel';
 
 const propTypes = {
-  panelWidth: React.PropTypes.number.isRequired,
-  addFilter: React.PropTypes.func.isRequired,
-  removeFilter: React.PropTypes.func.isRequired,
-  filters: React.PropTypes.array.isRequired,
-  setFilter: React.PropTypes.func.isRequired,
-  showDatasetTable: React.PropTypes.func,
+  datasets: PropTypes.array,
+  addFilter: PropTypes.func.isRequired,
+  removeFilter: PropTypes.func.isRequired,
+  enlargeFilter: PropTypes.func.isRequired,
+  toggleAnimation: PropTypes.func.isRequired,
+  setFilter: PropTypes.func.isRequired,
+  filters: PropTypes.array.isRequired,
+  showDatasetTable: PropTypes.func,
 
   // fields can be undefined when dataset is not selected
-  fields: React.PropTypes.array
+  fields: PropTypes.array
 };
 
 export default class FilterManager extends Component {
@@ -63,7 +66,6 @@ export default class FilterManager extends Component {
                 enlargeFilter={() => this.props.enlargeFilter(idx)}
                 toggleAnimation={() => this.props.toggleAnimation(idx)}
                 setFilter={this.props.setFilter}
-                width={this.props.panelWidth - 24}
               />
             ))}
         </SidePanelSection>

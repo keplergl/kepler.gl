@@ -11,7 +11,6 @@ import MapManager from './side-panel/map-manager';
 import PanelToggle from './side-panel/panel-toggle';
 
 import {
-  DIMENSIONS,
   PANELS,
   DATA_TABLE_ID,
   ADD_DATA_ID
@@ -86,7 +85,6 @@ export default class SidePanel extends Component {
     } = this.props;
     const {activeSidePanel} = uiState;
     const isOpen = Boolean(activeSidePanel);
-    const panelWidth = this.props.width - DIMENSIONS.sideBarPadding * 2;
 
     const layerManagerActions = {
       addLayer: visStateActions.addLayer,
@@ -157,8 +155,6 @@ export default class SidePanel extends Component {
                 {...filterManagerActions}
                 datasets={datasets}
                 filters={filters}
-                panelWidth={panelWidth}
-                openModal={uiStateActions.toggleModal}
               />
             )}
             {activeSidePanel === 'interaction' && (

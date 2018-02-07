@@ -15,7 +15,7 @@ const propTypes = {
   value1: PropTypes.number,
   minValue: PropTypes.number,
   maxValue: PropTypes.number,
-  showValues: PropTypes.bool,
+  sliderHandleWidth: PropTypes.number,
   onSlider0Change: PropTypes.func,
   onInput0Change: PropTypes.func,
   onSlider1Change: PropTypes.func,
@@ -32,8 +32,8 @@ const defaultProps = {
   value1: 100,
   minValue: 0,
   maxValue: 100,
-  showValues: true,
   step: 1,
+  sliderHandleWidth: 12,
   enableBarDrag: false,
   onSlider0Change: noop,
   onInput0Change: noop,
@@ -50,23 +50,13 @@ const StyledRangeSlider = styled.div`
   height: ${props => props.theme.sliderBarHeight};
 `;
 
-const SliderInput = styled.div`
-  ${props => props.theme.input};
-`;
-
 const SliderWrapper = styled.div`
   flex-grow: 1;
   margin-top: ${props => props.isRanged ? 0 : 10}px;
 `;
 
 class Slider extends React.Component {
-  componentDidMount() {
-    this.handleWidth = this.ref.getElementsByClassName(
-      'range-slider__handle'
-    )[1].offsetWidth;
-  }
 
-  handleWidth = 12;
   ref = undefined;
 
   _saveRef = ref => {
@@ -96,96 +86,42 @@ class Slider extends React.Component {
     this.props.onSliderBarChange(val0, val1);
   };
 
-  input0Listener = e => {
-    this.props.onInput0Change(Number(e.target.value), true);
-  };
-
-  input1Listener = e => {
-    this.props.onInput1Change(Number(e.target.value), true);
-  };
-
   calcHandleLeft0 = (w, l, num) => {
-    return w === 0 ? `calc(l% - ${this.handleWidth / 2} px)` : `${l}%`;
+    return w === 0 ? `calc(${l}% - ${this.props.sliderHandleWidth / 2}px)` :
+      `calc(${l}% - ${this.props.sliderHandleWidth / 2}px)`;
   };
 
   calcHandleLeft1 = (w, l) => {
     return this.props.isRanged && w === 0
-      ? `calc(l% - ${this.handleWidth}px)`
-      : `calc(${l + w}% - ${this.handleWidth}px)`;
+      ? `${l}%`
+      : `calc(${l + w}% - ${this.props.sliderHandleWidth / 2}px)`;
   };
 
-  onBlur0 = () => {
-    this.props.onInput0Change(this.props.value0, false);
-  };
-
-  onBlur1 = () => {
-    this.props.onInput1Change(this.props.value1, false);
-  };
-
-  createSlider = (width, length) => {
+  createSlider = (width, v0Left) => {
     return (
       <div>
         <StyledRangeSlider className="range-slider">
           <SliderHandle
             className="range-slider__handle"
-            left={this.calcHandleLeft0(width, length)}
+            left={this.calcHandleLeft0(width, v0Left)}
             valueListener={this.slide0Listener}
+            sliderHandleWidth={this.props.sliderHandleWidth}
             display={this.props.isRanged}
           />
           <SliderHandle
             className="range-slider__handle"
-            left={this.calcHandleLeft1(width, length)}
+            left={this.calcHandleLeft1(width, v0Left)}
             valueListener={this.slide1Listener}
+            sliderHandleWidth={this.props.sliderHandleWidth}
           />
           <SliderBarHandle
             width={width}
-            length={length}
+            v0Left={v0Left}
             enableBarDrag={this.props.enableBarDrag}
             sliderBarListener={this.sliderBarListener}
           />
         </StyledRangeSlider>
       </div>
-    );
-  };
-
-  createInput0 = () => {
-    return (
-      <span
-        className={classnames({
-          'position--relative': true,
-          hidden: !this.props.showValues || !this.props.isRanged
-        })}
-      >
-        <input
-          className="range-slider__input hard text-input borderless one-quarter float--left bg-transparent"
-          step={this.props.step}
-          type={'number'}
-          value={this.props.value0}
-          onChange={this.input0Listener}
-          onBlur={this.onBlur0}
-          disabled={this.props.disabled}
-        />
-      </span>
-    );
-  };
-
-  createInput1 = () => {
-    return (
-      <span
-        className={classnames({
-          hidden: !this.props.showValues
-        })}
-      >
-        <SliderInput
-          className="range-slider__input"
-          step={this.props.step}
-          type={'number'}
-          value={this.props.value1}
-          onChange={this.input1Listener}
-          onBlur={this.onBlur1}
-          disabled={this.props.disabled}
-        />
-      </span>
     );
   };
 
@@ -195,22 +131,22 @@ class Slider extends React.Component {
       isRanged,
       maxValue,
       minValue,
-      value0,
       value1
     } = this.props;
-    const value = !isRanged && minValue > 0 ? minValue : value0;
-    const currValDelta = value1 - value;
+    const value0 = !isRanged && minValue > 0 ? minValue : this.props.value0;
+    const currValDelta = value1 - value0;
     const maxDelta = maxValue - minValue;
     const width = currValDelta / maxDelta * 100;
 
-    const length = (value - minValue) / maxDelta * 100;
+    const v0Left = (value0 - minValue) / maxDelta * 100;
+
     return (
       <SliderWrapper
         className={classnames({...classSet, slider: true})}
         innerRef={this._saveRef}
         isRanged={isRanged}
       >
-        {this.createSlider(width, length)}
+        {this.createSlider(width, v0Left)}
       </SliderWrapper>
     );
   }

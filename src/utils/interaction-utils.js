@@ -28,6 +28,10 @@ export function getDefaultInteraction() {
   };
 }
 
+export const BRUSH_CONFIG = {
+  range: [0, 50]
+};
+
 export function findFieldsToShow({fields, id}) {
   // first find default tooltip fields for trips
   const fieldsToShow = DEFAULT_TOOLTIP_FIELDS.reduce((prev, curr) => {

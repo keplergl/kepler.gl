@@ -46,8 +46,7 @@ export const VisConfigSlider = ({
       </PanelLabel>
     ) : null}
     <RangeSlider
-      minValue={range[0]}
-      maxValue={range[1]}
+      range={range}
       value0={isRanged ? config.visConfig[property][0] : range[0]}
       value1={
         isRanged ? config.visConfig[property][1] : config.visConfig[property]
@@ -61,6 +60,6 @@ export const VisConfigSlider = ({
   </SidePanelSection>
 );
 
-VisConfigSlider.propTyupes = propTypes;
+VisConfigSlider.propTypes = propTypes;
 
 export default VisConfigSlider;

@@ -1,4 +1,5 @@
 import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
 import styled from 'styled-components';
 import PanelHeaderAction from 'components/side-panel/panel-header-action';
@@ -10,6 +11,19 @@ import * as Filters from 'components/filters';
 
 import {FILTER_TYPES, FILTER_COMPONENTS} from 'utils/filter-utils';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
+
+const propTypes = {
+  idx: PropTypes.number,
+  filters: PropTypes.array.isRequired,
+  filter: PropTypes.object.isRequired,
+  setFilter: PropTypes.func.isRequired,
+  removeFilter: PropTypes.func.isRequired,
+  enlargeFilter: PropTypes.func.isRequired,
+  toggleAnimation: PropTypes.func.isRequired,
+  datasets: PropTypes.array,
+  showDatasetTable: PropTypes.func,
+  isAnyFilterAnimating: PropTypes.bool
+};
 
 const StyledFilterPanel = styled.div`
   margin-bottom: 12px;
@@ -63,8 +77,7 @@ export default class FilterPanel extends Component {
       isAnyFilterAnimating,
       removeFilter,
       setFilter,
-      toggleAnimation,
-      width
+      toggleAnimation
     } = this.props;
     const {name, enlarged, type, dataId} = filter;
     const FilterComponent = type && Filters[FILTER_COMPONENTS[type]];
@@ -120,7 +133,6 @@ export default class FilterPanel extends Component {
                 isAnyFilterAnimating={isAnyFilterAnimating}
                 toggleAnimation={toggleAnimation}
                 setFilter={value => setFilter(idx, 'value', value)}
-                width={width}
               />
             </div>
           )}
@@ -129,3 +141,5 @@ export default class FilterPanel extends Component {
     );
   }
 }
+
+FilterPanel.propTypes = propTypes;

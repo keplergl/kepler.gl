@@ -136,8 +136,7 @@ const PaletteConfig = ({
       <div className="color-palette__config__slider">
         <div className="color-palette__config__slider__slider">
           <RangeSlider
-            minValue={options[0]}
-            maxValue={options[1]}
+            range={options}
             value0={options[0]}
             value1={value}
             step={1}
