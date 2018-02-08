@@ -34,10 +34,6 @@ const StyledSliderContainer = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  
-  .time-range-slider__slider {
-    //flex-grow: 1;
-  }
 `;
 
 export default class TimeRangeSlider extends Component {
@@ -48,20 +44,13 @@ export default class TimeRangeSlider extends Component {
       width: 288
     };
     this._animation = null;
-    // this._baseSpeed = 60;
-    // this._animationSpeed = this._baseSpeed;
     this._sliderThrottle = throttle(this.props.onChange, 20);
-  }
-
-  componentDidMount() {
-    // this._resize();
   }
 
   componentDidUpdate() {
     if (!this._animation && this.state.isAnimating) {
       this._animation = requestAnimationFrame(this._nextFrame);
     }
-    // this._resize();
   }
 
   domainSelector = props => props.domain;
@@ -74,12 +63,6 @@ export default class TimeRangeSlider extends Component {
     this._sliderThrottle(args);
   };
 
-  // _resize() {
-  //   const width = this.sliderContainer.offsetWidth;
-  //   if (width !== this.state.width) {
-  //     this.setState({width});
-  //   }
-  // }
   _resetAnimation = () => {
     const {domain, value} = this.props;
     const value0 = domain[0];

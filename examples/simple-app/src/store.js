@@ -12,6 +12,9 @@ const reducers = combineReducers({
 
 const composedReducer = (state, action) => {
   switch (action.type) {
+    // this is how you can directly update kepler.gl
+    // state using state updaters in your root reducer
+    // by listen on none kepler.gl actions
     case 'LOAD_DATA_SUCCESS':
       return {
         ...state,
