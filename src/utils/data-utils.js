@@ -4,11 +4,11 @@ import {range} from 'd3-array';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
 import {getFieldsFromData} from 'processor/data-processor';
 /**
- *
  * @param data
  * @returns {{allData: Array, fields: Array}}
  */
 export function validateInputData(data) {
+  // TODO: add test
   /*
    * expected input data format
    * {
@@ -20,14 +20,10 @@ export function validateInputData(data) {
   if (!data) {
     assert('receiveVisData: data cannot be null');
     proceed = false;
-  }
-
-  if (!Array.isArray(data.fields)) {
+  } else if (!Array.isArray(data.fields)) {
     assert('receiveVisData: expect data.fields to be an array');
     proceed = false;
-  }
-
-  if (!Array.isArray(data.rows)) {
+  } else if (!Array.isArray(data.rows)) {
     assert('receiveVisData: expect data.rows to be an array');
     proceed = false;
   }

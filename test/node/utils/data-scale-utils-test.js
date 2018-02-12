@@ -3,7 +3,7 @@ import {
   getOrdinalDomain,
   getQuantileDomain,
   getLinearDomain
-} from '../../../src/utils/data-scale-utils';
+} from 'utils/data-scale-utils';
 
 function numberSort(a, b) {
   return a - b;

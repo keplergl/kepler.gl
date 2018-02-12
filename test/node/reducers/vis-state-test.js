@@ -1,34 +1,26 @@
 import test from 'tape-catch';
 import CloneDeep from 'lodash.clonedeep';
 
-import * as VisStateActions from '../../../src/actions/vis-state-actions';
-import * as MapStateActions from '../../../src/actions/map-state-actions';
-import reducer from '../../../src/reducers/vis-state';
+import * as VisStateActions from 'actions/vis-state-actions';
+import * as MapStateActions from 'actions/map-state-actions';
+import reducer from 'reducers/vis-state';
 
-import {INITIAL_VIS_STATE} from '../../../src/reducers/vis-state-updaters';
+import {INITIAL_VIS_STATE} from 'reducers/vis-state-updaters';
 
-import {getLightSettingsFromBounds} from '../../../src/utils/layer-utils/layer-utils';
-import {filterData, getDefaultfilter} from '../../../src/utils/filter-utils';
-import {
-  processCsvData,
-  processGeoJSONData
-} from '../../../../utils/data-utils';
+import {getLightSettingsFromBounds} from 'utils/layer-utils/layer-utils';
+import {filterData, getDefaultfilter} from 'utils/filter-utils';
+import {processCsvData, processGeojson} from 'processor/data-processor';
 
-import {
-  Layer,
-  ArcLayer,
-  PointLayer,
-  GeojsonLayer
-} from '../../../src/keplergl-layers/index';
+import {Layer, ArcLayer, PointLayer, GeojsonLayer} from 'keplergl-layers';
 
 // fixtures
-import testData from '../../../../../test/fixtures/test-csv-data';
+import testData from 'test/fixtures/test-csv-data';
 import {
   geojsonData,
   geoBounds,
   geoLghtSettings,
   fields as geojsonFields
-} from '../../../../../test/fixtures/geojson';
+} from 'test/fixtures/geojson';
 
 // test helpers
 import {
@@ -36,13 +28,7 @@ import {
   cmpLayers,
   cmpDatasets,
   cmpDataset
-} from '../../../../../test/util/comparison-utils';
-
-/* eslint-disable no-extend-native */
-String.prototype.capitalizeFirstLetter = function capitalizeFirstLetter() {
-  return this.charAt(0).toUpperCase() + this.slice(1);
-};
-/* eslint-enable no-extend-native */
+} from 'test/helpers/comparison-utils';
 
 const mockData = {
   fields: [
@@ -76,25 +62,29 @@ const expectedFields = [
     name: 'start_point_lat',
     id: 'start_point_lat',
     type: 'real',
-    tableFieldIndex: 1
+    tableFieldIndex: 1,
+    format: ''
   },
   {
     name: 'start_point_lng',
     id: 'start_point_lng',
     type: 'real',
-    tableFieldIndex: 2
+    tableFieldIndex: 2,
+    format: ''
   },
   {
     name: 'end_point_lat',
     id: 'end_point_lat',
     type: 'real',
-    tableFieldIndex: 3
+    tableFieldIndex: 3,
+    format: ''
   },
   {
     name: 'end_point_lng',
     id: 'end_point_lng',
     type: 'real',
-    tableFieldIndex: 4
+    tableFieldIndex: 4,
+    format: ''
   }
 ];
 
@@ -186,59 +176,61 @@ test('#visStateReducer -> ADD_LAYER.1', t => {
     layers: [{id: 'existing_layer'}],
     layerData: [[{data: [1, 2, 3]}, {data: [4, 5, 6]}]],
     layerOrder: [0],
-    splitMaps: [{
-      layers: {
-        existing_layer: {
-          isAvailable: true,
-          isVisible: false
+    splitMaps: [
+      {
+        layers: {
+          existing_layer: {
+            isAvailable: true,
+            isVisible: false
+          }
+        }
+      },
+      {
+        layers: {
+          existing_layer: {
+            isAvailable: true,
+            isVisible: false
+          }
         }
       }
-    }, {
-      layers: {
-        existing_layer: {
-          isAvailable: true,
-          isVisible: false
-        }
-      }
-    }]
+    ]
   };
 
   const newReducer = reducer(oldState, VisStateActions.addLayer());
   const newId = newReducer.layers[1].id;
-  const expectedSplitMaps = [{
-    layers: {
-      existing_layer: {
-        isAvailable: true,
-        isVisible: false
-      },
-      [newId]: {
-        isAvailable: true,
-        isVisible: true
+  const expectedSplitMaps = [
+    {
+      layers: {
+        existing_layer: {
+          isAvailable: true,
+          isVisible: false
+        },
+        [newId]: {
+          isAvailable: true,
+          isVisible: true
+        }
+      }
+    },
+    {
+      layers: {
+        existing_layer: {
+          isAvailable: true,
+          isVisible: false
+        },
+        [newId]: {
+          isAvailable: true,
+          isVisible: true
+        }
       }
     }
-  }, {
-    layers: {
-      existing_layer: {
-        isAvailable: true,
-        isVisible: false
-      },
-      [newId]: {
-        isAvailable: true,
-        isVisible: true
-      }
-    }
-  }];
+  ];
 
   t.deepEqual(
     Object.keys(newReducer),
     ['datasets', 'layers', 'layerData', 'layerOrder', 'splitMaps'],
     'should have all keys'
   );
-  t.equal(
-    newReducer.layers.length,
-    2,
-    'should have 2 layers'
-  );
+  t.equal(newReducer.layers.length, 2, 'should have 2 layers');
   t.equal(
     newReducer.layers[1].config.isVisible,
     true,
@@ -259,11 +251,7 @@ test('#visStateReducer -> ADD_LAYER.1', t => {
     [oldState.layerData[0], {}],
     'newState should have empty layer datat'
   );
-  t.deepEqual(
-    newReducer.layerOrder,
-    [0, 1],
-    'should add to layerOrder'
-  );
+  t.deepEqual(newReducer.layerOrder, [0, 1], 'should add to layerOrder');
   t.deepEqual(
     newReducer.splitMaps,
     expectedSplitMaps,
@@ -285,67 +273,69 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.1', t => {
     layers: [{id: 'existing_layer'}, layer],
     layerData: [[{data: [1, 2, 3]}, {data: [4, 5, 6]}]],
     layerOrder: [1, 0],
-    splitMaps: [{
+    splitMaps: [
+      {
+        layers: {
+          existing_layer: {
+            isAvailable: true,
+            isVisible: false
+          },
+          more_layer: {
+            isAvailable: true,
+            isVisible: true
+          }
+        }
+      },
+      {
+        layers: {
+          existing_layer: {
+            isAvailable: true,
+            isVisible: false
+          },
+          more_layer: {
+            isAvailable: true,
+            isVisible: false
+          }
+        }
+      }
+    ]
+  };
+
+  const nextState = reducer(
+    oldState,
+    VisStateActions.layerTypeChange(layer, 'point')
+  );
+  const newId = nextState.layers[1].id;
+  const expectedSplitMaps = [
+    {
       layers: {
         existing_layer: {
           isAvailable: true,
           isVisible: false
         },
-        more_layer: {
+        [newId]: {
           isAvailable: true,
           isVisible: true
         }
       }
-    }, {
+    },
+    {
       layers: {
         existing_layer: {
           isAvailable: true,
           isVisible: false
         },
-        more_layer: {
+        [newId]: {
           isAvailable: true,
           isVisible: false
         }
       }
-    }]
-  };
-
-  const nextState = reducer(oldState, VisStateActions.layerTypeChange(layer, 'point'));
-  const newId = nextState.layers[1].id;
-  const expectedSplitMaps = [{
-    layers: {
-      existing_layer: {
-        isAvailable: true,
-        isVisible: false
-      },
-      [newId]: {
-        isAvailable: true,
-        isVisible: true
-      }
     }
-  }, {
-    layers: {
-      existing_layer: {
-        isAvailable: true,
-        isVisible: false
-      },
-      [newId]: {
-        isAvailable: true,
-        isVisible: false
-      }
-    }
-  }];
+  ];
 
-  t.ok(
-    nextState.layers[1].id !== 'more_layer',
-    'should update layer id'
-  );
+  t.ok(nextState.layers[1].id !== 'more_layer', 'should update layer id');
 
-  t.equal(
-    nextState.layers[1].type,
-    'point',
-    'should update type to point'
-  );
+  t.equal(nextState.layers[1].type, 'point', 'should update type to point');
 
   t.deepEqual(
     nextState.splitMaps,
@@ -827,9 +817,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3', t => {
 test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson', async t => {
   const initialVisState = CloneDeep(INITIAL_VIS_STATE);
 
-  const {fields, rows} = await processGeoJSONData({
-    'test.geo.json': CloneDeep(geojsonData)
-  });
+  const {fields, rows} = await processGeojson(CloneDeep(geojsonData));
 
   const payload = [
     {
@@ -955,134 +943,11 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
     plotType: 'histogram',
     yAxis: null,
     interval: null,
-    histogram: [
-      {count: 1, x0: 12.25, x1: 12.251},
-      {count: 0, x0: 12.251, x1: 12.252},
-      {count: 0, x0: 12.252, x1: 12.253},
-      {count: 0, x0: 12.253, x1: 12.254},
-      {count: 0, x0: 12.254, x1: 12.255},
-      {count: 0, x0: 12.255, x1: 12.256},
-      {count: 0, x0: 12.256, x1: 12.257},
-      {count: 0, x0: 12.257, x1: 12.258},
-      {count: 0, x0: 12.258, x1: 12.259},
-      {count: 0, x0: 12.259, x1: 12.26},
-      {count: 0, x0: 12.26, x1: 12.261},
-      {count: 0, x0: 12.261, x1: 12.262},
-      {count: 0, x0: 12.262, x1: 12.263},
-      {count: 0, x0: 12.263, x1: 12.264},
-      {count: 0, x0: 12.264, x1: 12.265},
-      {count: 0, x0: 12.265, x1: 12.266},
-      {count: 0, x0: 12.266, x1: 12.267},
-      {count: 0, x0: 12.267, x1: 12.268},
-      {count: 0, x0: 12.268, x1: 12.269},
-      {count: 0, x0: 12.269, x1: 12.27},
-      {count: 0, x0: 12.27, x1: 12.271},
-      {count: 0, x0: 12.271, x1: 12.272},
-      {count: 0, x0: 12.272, x1: 12.273},
-      {count: 0, x0: 12.273, x1: 12.274},
-      {count: 0, x0: 12.274, x1: 12.275},
-      {count: 0, x0: 12.275, x1: 12.276},
-      {count: 0, x0: 12.276, x1: 12.277},
-      {count: 0, x0: 12.277, x1: 12.278},
-      {count: 0, x0: 12.278, x1: 12.279},
-      {count: 0, x0: 12.279, x1: 12.28},
-      {count: 0, x0: 12.28, x1: 12.281},
-      {count: 0, x0: 12.281, x1: 12.282},
-      {count: 0, x0: 12.282, x1: 12.283},
-      {count: 0, x0: 12.283, x1: 12.284},
-      {count: 0, x0: 12.284, x1: 12.285},
-      {count: 0, x0: 12.285, x1: 12.286},
-      {count: 0, x0: 12.286, x1: 12.287},
-      {count: 0, x0: 12.287, x1: 12.288},
-      {count: 0, x0: 12.288, x1: 12.289},
-      {count: 0, x0: 12.289, x1: 12.29},
-      {count: 1, x0: 12.29, x1: 12.29}
-    ],
-    enlargedHistogram: [
-      {count: 1, x0: 12.25, x1: 12.2505},
-      {count: 0, x0: 12.2505, x1: 12.251},
-      {count: 0, x0: 12.251, x1: 12.2515},
-      {count: 0, x0: 12.2515, x1: 12.252},
-      {count: 0, x0: 12.252, x1: 12.2525},
-      {count: 0, x0: 12.2525, x1: 12.253},
-      {count: 0, x0: 12.253, x1: 12.2535},
-      {count: 0, x0: 12.2535, x1: 12.254},
-      {count: 0, x0: 12.254, x1: 12.2545},
-      {count: 0, x0: 12.2545, x1: 12.255},
-      {count: 0, x0: 12.255, x1: 12.2555},
-      {count: 0, x0: 12.2555, x1: 12.256},
-      {count: 0, x0: 12.256, x1: 12.2565},
-      {count: 0, x0: 12.2565, x1: 12.257},
-      {count: 0, x0: 12.257, x1: 12.2575},
-      {count: 0, x0: 12.2575, x1: 12.258},
-      {count: 0, x0: 12.258, x1: 12.2585},
-      {count: 0, x0: 12.2585, x1: 12.259},
-      {count: 0, x0: 12.259, x1: 12.2595},
-      {count: 0, x0: 12.2595, x1: 12.26},
-      {count: 0, x0: 12.26, x1: 12.2605},
-      {count: 0, x0: 12.2605, x1: 12.261},
-      {count: 0, x0: 12.261, x1: 12.2615},
-      {count: 0, x0: 12.2615, x1: 12.262},
-      {count: 0, x0: 12.262, x1: 12.2625},
-      {count: 0, x0: 12.2625, x1: 12.263},
-      {count: 0, x0: 12.263, x1: 12.2635},
-      {count: 0, x0: 12.2635, x1: 12.264},
-      {count: 0, x0: 12.264, x1: 12.2645},
-      {count: 0, x0: 12.2645, x1: 12.265},
-      {count: 0, x0: 12.265, x1: 12.2655},
-      {count: 0, x0: 12.2655, x1: 12.266},
-      {count: 0, x0: 12.266, x1: 12.2665},
-      {count: 0, x0: 12.2665, x1: 12.267},
-      {count: 0, x0: 12.267, x1: 12.2675},
-      {count: 0, x0: 12.2675, x1: 12.268},
-      {count: 0, x0: 12.268, x1: 12.2685},
-      {count: 0, x0: 12.2685, x1: 12.269},
-      {count: 0, x0: 12.269, x1: 12.2695},
-      {count: 0, x0: 12.2695, x1: 12.27},
-      {count: 0, x0: 12.27, x1: 12.2705},
-      {count: 0, x0: 12.2705, x1: 12.271},
-      {count: 0, x0: 12.271, x1: 12.2715},
-      {count: 0, x0: 12.2715, x1: 12.272},
-      {count: 0, x0: 12.272, x1: 12.2725},
-      {count: 0, x0: 12.2725, x1: 12.273},
-      {count: 0, x0: 12.273, x1: 12.2735},
-      {count: 0, x0: 12.2735, x1: 12.274},
-      {count: 0, x0: 12.274, x1: 12.2745},
-      {count: 0, x0: 12.2745, x1: 12.275},
-      {count: 0, x0: 12.275, x1: 12.2755},
-      {count: 0, x0: 12.2755, x1: 12.276},
-      {count: 0, x0: 12.276, x1: 12.2765},
-      {count: 0, x0: 12.2765, x1: 12.277},
-      {count: 0, x0: 12.277, x1: 12.2775},
-      {count: 0, x0: 12.2775, x1: 12.278},
-      {count: 0, x0: 12.278, x1: 12.2785},
-      {count: 0, x0: 12.2785, x1: 12.279},
-      {count: 0, x0: 12.279, x1: 12.2795},
-      {count: 0, x0: 12.2795, x1: 12.28},
-      {count: 0, x0: 12.28, x1: 12.2805},
-      {count: 0, x0: 12.2805, x1: 12.281},
-      {count: 0, x0: 12.281, x1: 12.2815},
-      {count: 0, x0: 12.2815, x1: 12.282},
-      {count: 0, x0: 12.282, x1: 12.2825},
-      {count: 0, x0: 12.2825, x1: 12.283},
-      {count: 0, x0: 12.283, x1: 12.2835},
-      {count: 0, x0: 12.2835, x1: 12.284},
-      {count: 0, x0: 12.284, x1: 12.2845},
-      {count: 0, x0: 12.2845, x1: 12.285},
-      {count: 0, x0: 12.285, x1: 12.2855},
-      {count: 0, x0: 12.2855, x1: 12.286},
-      {count: 0, x0: 12.286, x1: 12.2865},
-      {count: 0, x0: 12.2865, x1: 12.287},
-      {count: 0, x0: 12.287, x1: 12.2875},
-      {count: 0, x0: 12.2875, x1: 12.288},
-      {count: 0, x0: 12.288, x1: 12.2885},
-      {count: 0, x0: 12.2885, x1: 12.289},
-      {count: 0, x0: 12.289, x1: 12.2895},
-      {count: 0, x0: 12.2895, x1: 12.29},
-      {count: 1, x0: 12.29, x1: 12.29}
-    ],
+    histogram: [1],
+    enlargedHistogram: [1],
     isAnimating: false,
     name: mockFilter.name,
+    speed: 1,
     step: 0.001,
     type: mockFilter.type,
     typeOptions: ['range'],
@@ -1158,7 +1023,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
     datasets: expectedDatasets
   };
 
-  cmpFilters(t, newState.filters, expectedState.filters);
+  cmpFilters(t, expectedState.filters, newState.filters);
 
   t.deepEqual(
     newState.filterToBeMerged,
@@ -1191,30 +1056,34 @@ test('#visStateReducer -> UPDATE_VIS_DATA.SPLIT_MAPS', t => {
   });
 
   const oldState = {
+    ...INITIAL_VIS_STATE,
     layers: [layer0, layer1, layer2],
-    splitMaps: [{
-      layers: {
-        a: {
-          isAvailable: true,
-          isVisible: true
-        },
-        b: {
-          isAvailable: true,
-          isVisible: false
+    splitMaps: [
+      {
+        layers: {
+          a: {
+            isAvailable: true,
+            isVisible: true
+          },
+          b: {
+            isAvailable: true,
+            isVisible: false
+          }
+        }
+      },
+      {
+        layers: {
+          a: {
+            isAvailable: true,
+            isVisible: false
+          },
+          b: {
+            isAvailable: true,
+            isVisible: true
+          }
         }
       }
-    }, {
-      layers: {
-        a: {
-          isAvailable: true,
-          isVisible: false
-        },
-        b: {
-          isAvailable: true,
-          isVisible: true
-        }
-      }
-    }],
+    ],
     interactionConfig: {
       tooltip: {
         config: {
@@ -1277,8 +1146,16 @@ test('#visStateReducer -> UPDATE_VIS_DATA.SPLIT_MAPS', t => {
   ];
 
   t.equal(newState.layers.length, 6, 'should create 1 arc 2 point layers');
-  t.deepEqual(newState.layerOrder, [3, 4, 5, 2, 1, 0], 'should move new layers to front');
-  t.deepEqual(newState.splitMaps, expectedSplitMaps, 'should add new layers to splitmaps');
+  t.deepEqual(
+    newState.layerOrder,
+    [3, 4, 5, 2, 1, 0],
+    'should move new layers to front'
+  );
+  t.deepEqual(
+    newState.splitMaps,
+    expectedSplitMaps,
+    'should add new layers to splitmaps'
+  );
 
   t.end();
 });
@@ -1348,6 +1225,7 @@ test('#visStateReducer -> setFilter', async t => {
     isAnimating: false,
     plotType: 'histogram',
     yAxis: null,
+    speed: 1,
     interval: null
   };
 
@@ -1374,6 +1252,7 @@ test('#visStateReducer -> setFilter', async t => {
     fieldType: 'date',
     plotType: 'histogram',
     yAxis: null,
+    speed: 1,
     interval: null
   };
 
@@ -1565,9 +1444,7 @@ test('#visStateReducer -> setFilter', async t => {
 });
 
 test('#visStateReducer -> setFilter.geojson', async t => {
-  const {fields, rows} = await processGeoJSONData({
-    'test.geo.json': CloneDeep(geojsonData)
-  });
+  const {fields, rows} = await processGeojson(CloneDeep(geojsonData));
   const payload = [
     {
       info: {
@@ -1727,14 +1604,15 @@ test('#visStateReducer -> setFilter.geojson', async t => {
     step: 0.01,
     value: [4, 20],
     enlarged: false,
-    histogram: expectedHistogram,
-    enlargedHistogram: expectedEnlarged,
+    histogram: [],
+    enlargedHistogram: [],
     isAnimating: false,
     fieldType: 'integer',
     typeOptions: ['range'],
     plotType: 'histogram',
     yAxis: null,
-    interval: null
+    interval: null,
+    speed: 1
   };
 
   // test filter
@@ -1959,6 +1837,7 @@ test('#visStateReducer -> setFilterPlot', async t => {
       yDomain: [1, 12124],
       xDomain: [1474070995000, 1474072203000]
     },
+    speed: 1,
     mappedValue: [
       1474070995000,
       1474071056000,
@@ -1985,194 +1864,8 @@ test('#visStateReducer -> setFilterPlot', async t => {
       1474072203000,
       1474072208000
     ],
-    histogram: [
-      {count: 1, x0: 1474070995000, x1: 1474071000000},
-      {count: 0, x0: 1474071000000, x1: 1474071020000},
-      {count: 0, x0: 1474071020000, x1: 1474071040000},
-      {count: 1, x0: 1474071040000, x1: 1474071060000},
-      {count: 0, x0: 1474071060000, x1: 1474071080000},
-      {count: 0, x0: 1474071080000, x1: 1474071100000},
-      {count: 1, x0: 1474071100000, x1: 1474071120000},
-      {count: 0, x0: 1474071120000, x1: 1474071140000},
-      {count: 0, x0: 1474071140000, x1: 1474071160000},
-      {count: 1, x0: 1474071160000, x1: 1474071180000},
-      {count: 0, x0: 1474071180000, x1: 1474071200000},
-      {count: 0, x0: 1474071200000, x1: 1474071220000},
-      {count: 0, x0: 1474071220000, x1: 1474071240000},
-      {count: 1, x0: 1474071240000, x1: 1474071260000},
-      {count: 0, x0: 1474071260000, x1: 1474071280000},
-      {count: 0, x0: 1474071280000, x1: 1474071300000},
-      {count: 1, x0: 1474071300000, x1: 1474071320000},
-      {count: 0, x0: 1474071320000, x1: 1474071340000},
-      {count: 0, x0: 1474071340000, x1: 1474071360000},
-      {count: 1, x0: 1474071360000, x1: 1474071380000},
-      {count: 0, x0: 1474071380000, x1: 1474071400000},
-      {count: 0, x0: 1474071400000, x1: 1474071420000},
-      {count: 1, x0: 1474071420000, x1: 1474071440000},
-      {count: 0, x0: 1474071440000, x1: 1474071460000},
-      {count: 0, x0: 1474071460000, x1: 1474071480000},
-      {count: 1, x0: 1474071480000, x1: 1474071500000},
-      {count: 0, x0: 1474071500000, x1: 1474071520000},
-      {count: 0, x0: 1474071520000, x1: 1474071540000},
-      {count: 1, x0: 1474071540000, x1: 1474071560000},
-      {count: 1, x0: 1474071560000, x1: 1474071580000},
-      {count: 0, x0: 1474071580000, x1: 1474071600000},
-      {count: 1, x0: 1474071600000, x1: 1474071620000},
-      {count: 0, x0: 1474071620000, x1: 1474071640000},
-      {count: 0, x0: 1474071640000, x1: 1474071660000},
-      {count: 1, x0: 1474071660000, x1: 1474071680000},
-      {count: 0, x0: 1474071680000, x1: 1474071700000},
-      {count: 0, x0: 1474071700000, x1: 1474071720000},
-      {count: 0, x0: 1474071720000, x1: 1474071740000},
-      {count: 1, x0: 1474071740000, x1: 1474071760000},
-      {count: 0, x0: 1474071760000, x1: 1474071780000},
-      {count: 0, x0: 1474071780000, x1: 1474071800000},
-      {count: 1, x0: 1474071800000, x1: 1474071820000},
-      {count: 0, x0: 1474071820000, x1: 1474071840000},
-      {count: 0, x0: 1474071840000, x1: 1474071860000},
-      {count: 1, x0: 1474071860000, x1: 1474071880000},
-      {count: 0, x0: 1474071880000, x1: 1474071900000},
-      {count: 0, x0: 1474071900000, x1: 1474071920000},
-      {count: 1, x0: 1474071920000, x1: 1474071940000},
-      {count: 0, x0: 1474071940000, x1: 1474071960000},
-      {count: 0, x0: 1474071960000, x1: 1474071980000},
-      {count: 1, x0: 1474071980000, x1: 1474072000000},
-      {count: 0, x0: 1474072000000, x1: 1474072020000},
-      {count: 0, x0: 1474072020000, x1: 1474072040000},
-      {count: 1, x0: 1474072040000, x1: 1474072060000},
-      {count: 0, x0: 1474072060000, x1: 1474072080000},
-      {count: 0, x0: 1474072080000, x1: 1474072100000},
-      {count: 1, x0: 1474072100000, x1: 1474072120000},
-      {count: 0, x0: 1474072120000, x1: 1474072140000},
-      {count: 0, x0: 1474072140000, x1: 1474072160000},
-      {count: 0, x0: 1474072160000, x1: 1474072180000},
-      {count: 1, x0: 1474072180000, x1: 1474072200000},
-      {count: 3, x0: 1474072200000, x1: 1474072208000}
-    ],
-    enlargedHistogram: [
-      {count: 1, x0: 1474070995000, x1: 1474071000000},
-      {count: 0, x0: 1474071000000, x1: 1474071010000},
-      {count: 0, x0: 1474071010000, x1: 1474071020000},
-      {count: 0, x0: 1474071020000, x1: 1474071030000},
-      {count: 0, x0: 1474071030000, x1: 1474071040000},
-      {count: 0, x0: 1474071040000, x1: 1474071050000},
-      {count: 1, x0: 1474071050000, x1: 1474071060000},
-      {count: 0, x0: 1474071060000, x1: 1474071070000},
-      {count: 0, x0: 1474071070000, x1: 1474071080000},
-      {count: 0, x0: 1474071080000, x1: 1474071090000},
-      {count: 0, x0: 1474071090000, x1: 1474071100000},
-      {count: 0, x0: 1474071100000, x1: 1474071110000},
-      {count: 1, x0: 1474071110000, x1: 1474071120000},
-      {count: 0, x0: 1474071120000, x1: 1474071130000},
-      {count: 0, x0: 1474071130000, x1: 1474071140000},
-      {count: 0, x0: 1474071140000, x1: 1474071150000},
-      {count: 0, x0: 1474071150000, x1: 1474071160000},
-      {count: 0, x0: 1474071160000, x1: 1474071170000},
-      {count: 1, x0: 1474071170000, x1: 1474071180000},
-      {count: 0, x0: 1474071180000, x1: 1474071190000},
-      {count: 0, x0: 1474071190000, x1: 1474071200000},
-      {count: 0, x0: 1474071200000, x1: 1474071210000},
-      {count: 0, x0: 1474071210000, x1: 1474071220000},
-      {count: 0, x0: 1474071220000, x1: 1474071230000},
-      {count: 0, x0: 1474071230000, x1: 1474071240000},
-      {count: 1, x0: 1474071240000, x1: 1474071250000},
-      {count: 0, x0: 1474071250000, x1: 1474071260000},
-      {count: 0, x0: 1474071260000, x1: 1474071270000},
-      {count: 0, x0: 1474071270000, x1: 1474071280000},
-      {count: 0, x0: 1474071280000, x1: 1474071290000},
-      {count: 0, x0: 1474071290000, x1: 1474071300000},
-      {count: 1, x0: 1474071300000, x1: 1474071310000},
-      {count: 0, x0: 1474071310000, x1: 1474071320000},
-      {count: 0, x0: 1474071320000, x1: 1474071330000},
-      {count: 0, x0: 1474071330000, x1: 1474071340000},
-      {count: 0, x0: 1474071340000, x1: 1474071350000},
-      {count: 0, x0: 1474071350000, x1: 1474071360000},
-      {count: 1, x0: 1474071360000, x1: 1474071370000},
-      {count: 0, x0: 1474071370000, x1: 1474071380000},
-      {count: 0, x0: 1474071380000, x1: 1474071390000},
-      {count: 0, x0: 1474071390000, x1: 1474071400000},
-      {count: 0, x0: 1474071400000, x1: 1474071410000},
-      {count: 0, x0: 1474071410000, x1: 1474071420000},
-      {count: 1, x0: 1474071420000, x1: 1474071430000},
-      {count: 0, x0: 1474071430000, x1: 1474071440000},
-      {count: 0, x0: 1474071440000, x1: 1474071450000},
-      {count: 0, x0: 1474071450000, x1: 1474071460000},
-      {count: 0, x0: 1474071460000, x1: 1474071470000},
-      {count: 0, x0: 1474071470000, x1: 1474071480000},
-      {count: 1, x0: 1474071480000, x1: 1474071490000},
-      {count: 0, x0: 1474071490000, x1: 1474071500000},
-      {count: 0, x0: 1474071500000, x1: 1474071510000},
-      {count: 0, x0: 1474071510000, x1: 1474071520000},
-      {count: 0, x0: 1474071520000, x1: 1474071530000},
-      {count: 0, x0: 1474071530000, x1: 1474071540000},
-      {count: 0, x0: 1474071540000, x1: 1474071550000},
-      {count: 1, x0: 1474071550000, x1: 1474071560000},
-      {count: 1, x0: 1474071560000, x1: 1474071570000},
-      {count: 0, x0: 1474071570000, x1: 1474071580000},
-      {count: 0, x0: 1474071580000, x1: 1474071590000},
-      {count: 0, x0: 1474071590000, x1: 1474071600000},
-      {count: 0, x0: 1474071600000, x1: 1474071610000},
-      {count: 1, x0: 1474071610000, x1: 1474071620000},
-      {count: 0, x0: 1474071620000, x1: 1474071630000},
-      {count: 0, x0: 1474071630000, x1: 1474071640000},
-      {count: 0, x0: 1474071640000, x1: 1474071650000},
-      {count: 0, x0: 1474071650000, x1: 1474071660000},
-      {count: 0, x0: 1474071660000, x1: 1474071670000},
-      {count: 1, x0: 1474071670000, x1: 1474071680000},
-      {count: 0, x0: 1474071680000, x1: 1474071690000},
-      {count: 0, x0: 1474071690000, x1: 1474071700000},
-      {count: 0, x0: 1474071700000, x1: 1474071710000},
-      {count: 0, x0: 1474071710000, x1: 1474071720000},
-      {count: 0, x0: 1474071720000, x1: 1474071730000},
-      {count: 0, x0: 1474071730000, x1: 1474071740000},
-      {count: 1, x0: 1474071740000, x1: 1474071750000},
-      {count: 0, x0: 1474071750000, x1: 1474071760000},
-      {count: 0, x0: 1474071760000, x1: 1474071770000},
-      {count: 0, x0: 1474071770000, x1: 1474071780000},
-      {count: 0, x0: 1474071780000, x1: 1474071790000},
-      {count: 0, x0: 1474071790000, x1: 1474071800000},
-      {count: 1, x0: 1474071800000, x1: 1474071810000},
-      {count: 0, x0: 1474071810000, x1: 1474071820000},
-      {count: 0, x0: 1474071820000, x1: 1474071830000},
-      {count: 0, x0: 1474071830000, x1: 1474071840000},
-      {count: 0, x0: 1474071840000, x1: 1474071850000},
-      {count: 0, x0: 1474071850000, x1: 1474071860000},
-      {count: 1, x0: 1474071860000, x1: 1474071870000},
-      {count: 0, x0: 1474071870000, x1: 1474071880000},
-      {count: 0, x0: 1474071880000, x1: 1474071890000},
-      {count: 0, x0: 1474071890000, x1: 1474071900000},
-      {count: 0, x0: 1474071900000, x1: 1474071910000},
-      {count: 0, x0: 1474071910000, x1: 1474071920000},
-      {count: 1, x0: 1474071920000, x1: 1474071930000},
-      {count: 0, x0: 1474071930000, x1: 1474071940000},
-      {count: 0, x0: 1474071940000, x1: 1474071950000},
-      {count: 0, x0: 1474071950000, x1: 1474071960000},
-      {count: 0, x0: 1474071960000, x1: 1474071970000},
-      {count: 0, x0: 1474071970000, x1: 1474071980000},
-      {count: 1, x0: 1474071980000, x1: 1474071990000},
-      {count: 0, x0: 1474071990000, x1: 1474072000000},
-      {count: 0, x0: 1474072000000, x1: 1474072010000},
-      {count: 0, x0: 1474072010000, x1: 1474072020000},
-      {count: 0, x0: 1474072020000, x1: 1474072030000},
-      {count: 0, x0: 1474072030000, x1: 1474072040000},
-      {count: 0, x0: 1474072040000, x1: 1474072050000},
-      {count: 1, x0: 1474072050000, x1: 1474072060000},
-      {count: 0, x0: 1474072060000, x1: 1474072070000},
-      {count: 0, x0: 1474072070000, x1: 1474072080000},
-      {count: 0, x0: 1474072080000, x1: 1474072090000},
-      {count: 0, x0: 1474072090000, x1: 1474072100000},
-      {count: 0, x0: 1474072100000, x1: 1474072110000},
-      {count: 1, x0: 1474072110000, x1: 1474072120000},
-      {count: 0, x0: 1474072120000, x1: 1474072130000},
-      {count: 0, x0: 1474072130000, x1: 1474072140000},
-      {count: 0, x0: 1474072140000, x1: 1474072150000},
-      {count: 0, x0: 1474072150000, x1: 1474072160000},
-      {count: 0, x0: 1474072160000, x1: 1474072170000},
-      {count: 0, x0: 1474072170000, x1: 1474072180000},
-      {count: 1, x0: 1474072180000, x1: 1474072190000},
-      {count: 0, x0: 1474072190000, x1: 1474072200000},
-      {count: 3, x0: 1474072200000, x1: 1474072208000}
-    ],
+    histogram: [],
+    enlargedHistogram: [],
     enlarged: false,
     isAnimating: false,
     fieldType: 'timestamp'
@@ -2613,7 +2306,7 @@ test('#visStateReducer -> SPLIT_MAP: TOGGLE_SPLIT_MAP', t => {
             isAvailable: true,
             isVisible: true
           },
-          b :{
+          b: {
             isAvailable: true,
             isVisible: false
           }
@@ -2622,16 +2315,9 @@ test('#visStateReducer -> SPLIT_MAP: TOGGLE_SPLIT_MAP', t => {
     ]
   };
 
-  const newReducer = reducer(
-    oldState,
-    MapStateActions.toggleSplitMap(0)
-  );
+  const newReducer = reducer(oldState, MapStateActions.toggleSplitMap(0));
 
-  t.equal(
-    newReducer.layers.length,
-    2,
-    'should have 2 global layers'
-  );
+  t.equal(newReducer.layers.length, 2, 'should have 2 global layers');
   t.equal(
     newReducer.layers[0].config.isVisible,
     true,
@@ -2754,10 +2440,6 @@ test('#visStateReducer -> SPLIT_MAP: HIDE LAYER', t => {
             isVisible: true,
             isAvailable: true
           }
-          // b: {
-          //   isVisible: true,
-          //   isAvailable: true
-          // }
         }
       },
       {
@@ -2766,10 +2448,6 @@ test('#visStateReducer -> SPLIT_MAP: HIDE LAYER', t => {
             isVisible: true,
             isAvailable: true
           }
-          // b: {
-          //   isVisible: true,
-          //   isAvailable: true
-          // }
         }
       }
     ]
@@ -2786,10 +2464,6 @@ test('#visStateReducer -> SPLIT_MAP: HIDE LAYER', t => {
             isVisible: true,
             isAvailable: true
           }
-          // b: {
-          //   isVisible: true,
-          //   isAvailable: true
-          // }
         }
       },
       {
@@ -2798,10 +2472,6 @@ test('#visStateReducer -> SPLIT_MAP: HIDE LAYER', t => {
             isVisible: false,
             isAvailable: true
           }
-          // b: {
-          //   isVisible: false,
-          //   isAvailable: true
-          // }
         }
       }
     ]

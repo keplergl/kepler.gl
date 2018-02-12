@@ -27,7 +27,6 @@ import {
 } from 'utils/layer-utils/layer-utils';
 
 import {getFileHandler} from 'processor/file-handler';
-import {findMapBounds} from 'utils/data-utils';
 
 import {
   mergeFilters,
@@ -402,11 +401,11 @@ export const removeFilterUpdater = (state, action) => {
 
 export const addLayerUpdater = (state, action) => {
   const defaultDataset = Object.keys(state.datasets)[0];
-
   const newLayer = new KeplerGLLayers.Layer({
     isVisible: true,
     isConfigActive: true,
-    dataId: defaultDataset
+    dataId: defaultDataset,
+    ...action.props
   });
 
   return {
@@ -672,12 +671,6 @@ export const updateVisDataUpdater = (state, action) => {
     ? action.datasets
     : [action.datasets];
 
-  const defaultOptions = {centerMap: true};
-  const options = {
-    ...defaultOptions,
-    ...action.options
-  };
-
   if (action.config) {
     // apply config if passed from action
     state = receiveMapConfigUpdater(state, {payload: {visState: action.config}})
@@ -709,9 +702,6 @@ export const updateVisDataUpdater = (state, action) => {
     layerToBeMerged = [],
     interactionToBeMerged = {}
   } = stateWithNewData;
-
-  // keep a copy of oldLayers
-  const oldLayers = state.layers.map(l => l.id);
 
   // merge state with saved filters
   let mergedState = mergeFilters(stateWithNewData, filterToBeMerged);
@@ -746,20 +736,10 @@ export const updateVisDataUpdater = (state, action) => {
     }
   });
 
-  const visState = updateAllLayerDomainData(
+  return updateAllLayerDomainData(
     mergedState,
     Object.keys(newDateEntries)
   );
-
-  let bounds;
-  if (options.centerMap) {
-    // find map bounds for new layers
-    const newLayers = visState.layers.filter(l => !oldLayers.includes(l.id));
-    bounds = findMapBounds(newLayers);
-  }
-
-  // action is being composed in the combine reducer level to further update map bounds
-  return {visState, bounds};
 };
 /* eslint-enable max-statements */
 

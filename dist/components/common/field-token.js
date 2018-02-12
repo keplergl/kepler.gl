@@ -4,11 +4,11 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _taggedTemplateLiteralLoose2 = require('babel-runtime/helpers/taggedTemplateLiteralLoose');
+var _taggedTemplateLiteral2 = require('babel-runtime/helpers/taggedTemplateLiteral');
 
-var _taggedTemplateLiteralLoose3 = _interopRequireDefault(_taggedTemplateLiteralLoose2);
+var _taggedTemplateLiteral3 = _interopRequireDefault(_taggedTemplateLiteral2);
 
-var _templateObject = (0, _taggedTemplateLiteralLoose3.default)(['\n  background-color: rgba(', ', 0.2);\n  border-radius: 2px;\n  border: 1px solid rgb(', ');\n  color: rgb(', ');\n  display: inline-block;\n  font-size: 10px;\n  font-weight: 400;\n  padding: 0 5px;\n  text-align: center;\n  width: 40px;\n'], ['\n  background-color: rgba(', ', 0.2);\n  border-radius: 2px;\n  border: 1px solid rgb(', ');\n  color: rgb(', ');\n  display: inline-block;\n  font-size: 10px;\n  font-weight: 400;\n  padding: 0 5px;\n  text-align: center;\n  width: 40px;\n']);
+var _templateObject = (0, _taggedTemplateLiteral3.default)(['\n  background-color: rgba(', ', 0.2);\n  border-radius: 2px;\n  border: 1px solid rgb(', ');\n  color: rgb(', ');\n  display: inline-block;\n  font-size: 10px;\n  font-weight: 400;\n  padding: 0 5px;\n  text-align: center;\n  width: 40px;\n'], ['\n  background-color: rgba(', ', 0.2);\n  border-radius: 2px;\n  border: 1px solid rgb(', ');\n  color: rgb(', ');\n  display: inline-block;\n  font-size: 10px;\n  font-weight: 400;\n  padding: 0 5px;\n  text-align: center;\n  width: 40px;\n']);
 
 var _react = require('react');
 

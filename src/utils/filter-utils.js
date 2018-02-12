@@ -17,6 +17,9 @@ export const TimestampStepMap = [
   {max: Number.POSITIVE_INFINITY, step: 1000}
 ];
 
+export const histogramBins = 30;
+export const enlargedHistogramBins = 100;
+
 const durationSecond = 1000;
 const durationMinute = durationSecond * 60;
 const durationHour = durationMinute * 60;
@@ -404,12 +407,12 @@ export function histogramConstruct(domain, mappedValue, bins) {
  * Calculate histogram from domain and array of values
  *
  * @param {number[]} domain
- * @param {Object[]} mappedvalue
+ * @param {Object[]} mappedValue
  * @returns {Array[]} histogram
  */
 function getHistogram(domain, mappedValue) {
-  const histogram = histogramConstruct(domain, mappedValue, 30);
-  const enlargedHistogram = histogramConstruct(domain, mappedValue, 100);
+  const histogram = histogramConstruct(domain, mappedValue, histogramBins);
+  const enlargedHistogram = histogramConstruct(domain, mappedValue, enlargedHistogramBins);
 
   return {histogram, enlargedHistogram};
 }

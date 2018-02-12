@@ -1,10 +1,10 @@
 import test from 'tape';
-import SchemaManager from '../../../../schemas/app-schema';
-import {InitialAppState} from '../../../../../test/util/mock-app-state';
+import SchemaManager from 'schemas';
+import {InitialState} from 'test/helpers/mock-state';
 
 test('#mapStateSchema -> v1 -> save load mapState', t => {
-  const initialState = InitialAppState.toJS();
-  const savedState = SchemaManager.getAppConfigToSave(initialState);
+  const initialState = InitialState.toJS();
+  const savedState = SchemaManager.getConfigToSave(initialState);
 
   // save state
   const msToSave = savedState.config.mapState;

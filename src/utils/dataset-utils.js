@@ -33,7 +33,6 @@ export const datasetColorMaker = generateColor();
 
 function getNewDatasetColor(datasets) {
   const presetColors = datasetColors.map(String);
-
   const usedColors = uniq(
     Object.values(datasets).map(d => String(d.color))
   ).filter(c => presetColors.includes(c));

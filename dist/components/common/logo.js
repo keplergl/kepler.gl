@@ -4,15 +4,15 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _taggedTemplateLiteralLoose2 = require('babel-runtime/helpers/taggedTemplateLiteralLoose');
+var _taggedTemplateLiteral2 = require('babel-runtime/helpers/taggedTemplateLiteral');
 
-var _taggedTemplateLiteralLoose3 = _interopRequireDefault(_taggedTemplateLiteralLoose2);
+var _taggedTemplateLiteral3 = _interopRequireDefault(_taggedTemplateLiteral2);
 
-var _templateObject = (0, _taggedTemplateLiteralLoose3.default)(['\n  display: inline-block;\n  margin-left: 6px;\n'], ['\n  display: inline-block;\n  margin-left: 6px;\n']),
-    _templateObject2 = (0, _taggedTemplateLiteralLoose3.default)(['\n  color: ', ';\n  font-size: 14px;\n  font-weight: 600;\n  letter-spacing: 1.17px;\n'], ['\n  color: ', ';\n  font-size: 14px;\n  font-weight: 600;\n  letter-spacing: 1.17px;\n']),
-    _templateObject3 = (0, _taggedTemplateLiteralLoose3.default)(['\n  font-size: 10px;\n  color: ', ';\n  letter-spacing: 0.83px;\n  line-height: 14px;\n'], ['\n  font-size: 10px;\n  color: ', ';\n  letter-spacing: 0.83px;\n  line-height: 14px;\n']),
-    _templateObject4 = (0, _taggedTemplateLiteralLoose3.default)(['\n  display: flex;\n  align-items: flex-start;\n'], ['\n  display: flex;\n  align-items: flex-start;\n']),
-    _templateObject5 = (0, _taggedTemplateLiteralLoose3.default)(['\n  margin-top: 3px;\n'], ['\n  margin-top: 3px;\n']);
+var _templateObject = (0, _taggedTemplateLiteral3.default)(['\n  display: inline-block;\n  margin-left: 6px;\n'], ['\n  display: inline-block;\n  margin-left: 6px;\n']),
+    _templateObject2 = (0, _taggedTemplateLiteral3.default)(['\n  color: ', ';\n  font-size: 14px;\n  font-weight: 600;\n  letter-spacing: 1.17px;\n'], ['\n  color: ', ';\n  font-size: 14px;\n  font-weight: 600;\n  letter-spacing: 1.17px;\n']),
+    _templateObject3 = (0, _taggedTemplateLiteral3.default)(['\n  font-size: 10px;\n  color: ', ';\n  letter-spacing: 0.83px;\n  line-height: 14px;\n'], ['\n  font-size: 10px;\n  color: ', ';\n  letter-spacing: 0.83px;\n  line-height: 14px;\n']),
+    _templateObject4 = (0, _taggedTemplateLiteral3.default)(['\n  display: flex;\n  align-items: flex-start;\n'], ['\n  display: flex;\n  align-items: flex-start;\n']),
+    _templateObject5 = (0, _taggedTemplateLiteral3.default)(['\n  margin-top: 3px;\n'], ['\n  margin-top: 3px;\n']);
 
 var _react = require('react');
 

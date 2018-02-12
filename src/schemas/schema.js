@@ -19,7 +19,7 @@ export default class Schema {
 
   _getPropertyValueFromSchema(operation, node, parent, accumulator) {
     const internal = `_${operation}`;
-    const loaded = {
+    return {
       [this.key]: this.properties
         ? Object.keys(this.properties).reduce((accu, key) => {
             return {
@@ -37,8 +37,6 @@ export default class Schema {
           }, {})
         : node
     };
-
-    return loaded;
   }
 
   _isCurrentVersion() {

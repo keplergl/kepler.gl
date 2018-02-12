@@ -44,12 +44,6 @@ function makeLocalDevConfig(EXAMPLE_DIR = LIB_DIR) {
             /node_modules\/react-palm/,
             /node_modules\/react-data-grid/,
           ]
-        },
-        {
-          test: /\.scss$/,
-          // TODO: need to add postcss to replace the autoprefix-loader that is deprecated
-          use: ['style-loader', 'css-loader', 'sass-loader'],
-          include: [SRC_DIR]
         }
       ]
     },
@@ -61,6 +55,11 @@ function makeLocalDevConfig(EXAMPLE_DIR = LIB_DIR) {
 }
 
 const BABEL_CONFIG = {
+  // use babelrc: false to prevent babel-loader using root .babelrc
+  // https://github.com/babel/babel-preset-env/issues/399
+  // so that we can set modules: false, to avoid tree shaking
+  // https://github.com/webpack/webpack/issues/3974
+  babelrc: false,
   presets: [
     ['es2015', {modules: false, loose: true}],
     'react',

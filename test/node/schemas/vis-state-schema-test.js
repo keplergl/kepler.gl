@@ -1,312 +1,22 @@
 import test from 'tape';
 
-import {cmpFilters, cmpSavedLayers} from '../../../../../test/util/comparison-utils';
-import SchemaManager from '../../../../schemas/app-schema';
+import {cmpFilters, cmpSavedLayers} from 'test/helpers/comparison-utils';
+import SchemaManager from 'schemas';
 
-import {StateWFilesFiltersLayerColor} from '../../../../../test/util/mock-app-state';
-
-const expectedSavedLayer0 = {
-  id: 'hexagon-2',
-  type: 'hexagon',
-  config: {
-    dataId: '190vdll3di',
-    label: 'new layer',
-    color: [34, 63, 154],
-    columns: {
-      lat: 'gps_data.lat',
-      lng: 'gps_data.lng'
-    },
-    isVisible: true,
-    visConfig: {
-      opacity: 0.8,
-      worldUnitSize: 1,
-      resolution: 8,
-      colorRange: {
-        name: 'Global Warming',
-        type: 'sequential',
-        category: 'Uber',
-        colors: [
-          '#5A1846',
-          '#900C3F',
-          '#C70039',
-          '#E3611C',
-          '#F1920E',
-          '#FFC300'
-        ]
-      },
-      coverage: 1,
-      sizeRange: [0, 500],
-      percentile: [0, 100],
-      elevationPercentile: [0, 100],
-      elevationScale: 5,
-      'hi-precision': false,
-      colorAggregation: 'average',
-      sizeAggregation: 'average',
-      enable3d: false
-    }
-  },
-  visualChannels: {
-    colorField: null,
-    colorScale: 'quantile',
-    sizeField: null,
-    sizeScale: 'linear'
-  }
-};
-
-const expectedLoadedLayer0 = {
-  id: 'hexagon-2',
-  type: 'hexagon',
-  config: {
-    dataId: '190vdll3di',
-    label: 'new layer',
-    color: [
-      34,
-      63,
-      154
-    ],
-    columns: {
-      lat: 'gps_data.lat',
-      lng: 'gps_data.lng'
-    },
-    isVisible: true,
-    visConfig: {
-      opacity: 0.8,
-      worldUnitSize: 1,
-      resolution: 8,
-      colorRange: {
-        name: 'Global Warming',
-        type: 'sequential',
-        category: 'Uber',
-        colors: [
-          '#5A1846',
-          '#900C3F',
-          '#C70039',
-          '#E3611C',
-          '#F1920E',
-          '#FFC300'
-        ]
-      },
-      coverage: 1,
-      sizeRange: [0, 500],
-      percentile: [0, 100],
-      elevationPercentile: [0, 100],
-      elevationScale: 5,
-      'hi-precision': false,
-      colorAggregation: 'average',
-      sizeAggregation: 'average',
-      enable3d: false
-    },
-    colorField: null,
-    colorScale: 'quantile',
-    sizeField: null,
-    sizeScale: 'linear'
-  }
-};
-
-const expectedSavedLayer1 = {
-  id: 'point-0',
-  type: 'point',
-  config: {
-    dataId: '190vdll3di',
-    label: 'gps data',
-    color: [136, 87, 44],
-    columns: {
-      lat: 'gps_data.lat',
-      lng: 'gps_data.lng',
-      altitude: null
-    },
-    isVisible: true,
-    visConfig: {
-      radius: 10,
-      fixedRadius: false,
-      opacity: 0.8,
-      outline: false,
-      thickness: 2,
-      colorRange: {
-        name: 'Uber Viz Sequential 2',
-        type: 'sequential',
-        category: 'Uber',
-        colors: [
-          '#E6FAFA',
-          '#AAD7DA',
-          '#68B4BB',
-          '#00939C'
-        ]
-      },
-      radiusRange: [
-        0,
-        50
-      ],
-      'hi-precision': false
-    }
-  },
-  visualChannels: {
-    colorField: {
-      name: 'gps_data.types',
-      type: 'string'
-    },
-    colorScale: 'ordinal',
-    sizeField: null,
-    sizeScale: 'linear'
-  }
-};
-
-const expectedLoadedLayer1 = {
-  id: 'point-0',
-  type: 'point',
-  config: {
-    dataId: '190vdll3di',
-    label: 'gps data',
-    color: [
-      136,
-      87,
-      44
-    ],
-    columns: {
-      lat: 'gps_data.lat',
-      lng: 'gps_data.lng',
-      altitude: null
-    },
-    isVisible: true,
-    visConfig: {
-      radius: 10,
-      fixedRadius: false,
-      opacity: 0.8,
-      outline: false,
-      thickness: 2,
-      colorRange: {
-        name: 'Uber Viz Sequential 2',
-        type: 'sequential',
-        category: 'Uber',
-        colors: [
-          '#E6FAFA',
-          '#AAD7DA',
-          '#68B4BB',
-          '#00939C'
-        ]
-      },
-      radiusRange: [0, 50],
-      'hi-precision': false
-    },
-    colorField: {
-      name: 'gps_data.types',
-      type: 'string'
-    },
-    colorScale: 'ordinal',
-    sizeField: null,
-    sizeScale: 'linear'
-  }
-};
-
-const expectedSavedLayer2 = {
-  id :'geojson-1',
-  type :'geojson',
-  config :{
-    dataId :'ieukmgne',
-    label :'zip',
-    color :[
-      255,
-      153,
-      31
-    ],
-    columns :{
-      geojson :'_geojson'
-    },
-    isVisible :true,
-    visConfig :{
-      opacity :0.8,
-      thickness :2,
-      colorRange :{
-        name :'Global Warming',
-        type :'sequential',
-        category :'Uber',
-        colors :[
-          '#5A1846',
-          '#900C3F',
-          '#C70039',
-          '#E3611C',
-          '#F1920E',
-          '#FFC300'
-        ]
-      },
-      radius :10,
-      sizeRange :[0, 10],
-      radiusRange :[0, 50],
-      heightRange :[0, 500],
-      elevationScale :5,
-      'hi-precision' :false,
-      stroked :true,
-      filled :false,
-      enable3d :false,
-      wireframe :false
-    }
-  },
-  visualChannels :{
-    colorField :null,
-    colorScale :'quantile',
-    sizeField :null,
-    sizeScale :'linear',
-    heightField :null,
-    heightScale :'linear',
-    radiusField :null,
-    radiusScale :'linear'
-  }
-};
-
-const expectedLoadedLayer2 = {
-  id: 'geojson-1',
-  type: 'geojson',
-  config: {
-    dataId: 'ieukmgne',
-    label: 'zip',
-    color: [255, 153, 31],
-    columns: {
-      geojson: '_geojson'
-    },
-    isVisible: true,
-    visConfig: {
-      opacity: 0.8,
-      thickness: 2,
-      colorRange: {
-        name: 'Global Warming',
-        type: 'sequential',
-        category: 'Uber',
-        colors: [
-          '#5A1846',
-          '#900C3F',
-          '#C70039',
-          '#E3611C',
-          '#F1920E',
-          '#FFC300'
-        ]
-      },
-      radius: 10,
-      sizeRange: [0, 10],
-      radiusRange: [0, 50],
-      heightRange: [0, 500],
-      elevationScale: 5,
-      'hi-precision': false,
-      stroked: true,
-      filled: false,
-      enable3d: false,
-      wireframe: false
-    },
-    colorField: null,
-    colorScale: 'quantile',
-    sizeField: null,
-    sizeScale: 'linear',
-    heightField: null,
-    heightScale: 'linear',
-    radiusField: null,
-    radiusScale: 'linear'
-  }
-};
+import {StateWFilesFiltersLayerColor,
+  expectedSavedLayer0,
+  expectedLoadedLayer0,
+  expectedSavedLayer1,
+  expectedLoadedLayer1,
+  expectedSavedLayer2,
+  expectedLoadedLayer2
+} from 'test/helpers/mock-state';
 
 test('#visStateSchema -> v1 -> save layers', t => {
   const initialState = StateWFilesFiltersLayerColor.toJS();
 
   // save state
-  const vsToSave = SchemaManager.getAppConfigToSave(initialState).config.visState;
+  const vsToSave = SchemaManager.getConfigToSave(initialState).config.visState;
 
   t.deepEqual(Object.keys(vsToSave),
     ['filters', 'layers', 'interactionConfig', 'layerBlending', 'splitMaps'],
@@ -328,7 +38,7 @@ test('#visStateSchema -> v1 -> load layers', t => {
   const initialState = StateWFilesFiltersLayerColor.toJS();
 
   // save state
-  const savedState = SchemaManager.getAppConfigToSave(initialState);
+  const savedState = SchemaManager.getConfigToSave(initialState);
   const vsLoaded = SchemaManager.parseSavedConfig(savedState).visState;
 
   t.deepEqual(Object.keys(vsLoaded),
@@ -349,7 +59,7 @@ test('#visStateSchema -> v1 -> load layers', t => {
 
 test('#visStateSchema -> v1 -> save load filters', t => {
   const initialState = StateWFilesFiltersLayerColor.toJS();
-  const savedState = SchemaManager.getAppConfigToSave(initialState);
+  const savedState = SchemaManager.getConfigToSave(initialState);
 
   // save state
   const vsToSave = savedState.config.visState;
@@ -387,7 +97,7 @@ test('#visStateSchema -> v1 -> save load filters', t => {
 
 test('#visStateSchema -> v1 -> save load interaction', t => {
   const initialState = StateWFilesFiltersLayerColor.toJS();
-  const savedState = SchemaManager.getAppConfigToSave(initialState);
+  const savedState = SchemaManager.getConfigToSave(initialState);
 
   // save state
   const interactionToSave = savedState.config.visState.interactionConfig;
@@ -401,7 +111,7 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
           'gps_data.utc_timestamp',
           'gps_data.types',
           'epoch',
-          'has_driver_initiated_contact',
+          'has_result',
           'id'
         ],
         ieukmgne: [
@@ -421,7 +131,7 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
 
 test('#visStateSchema -> v1 -> save load layerBlending', t => {
   const initialState = StateWFilesFiltersLayerColor.toJS();
-  const savedState = SchemaManager.getAppConfigToSave(initialState);
+  const savedState = SchemaManager.getConfigToSave(initialState);
 
   // save state
   const layerBlendingToSave = savedState.config.visState.layerBlending;

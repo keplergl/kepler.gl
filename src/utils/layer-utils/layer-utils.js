@@ -67,14 +67,14 @@ export function findDefaultLayer({fields, fieldPairs, id: dataId, label}) {
     return [];
   }
 
-  const pointLayers = _findDefaultPointLayers(fields, fieldPairs, dataId);
+  const pointLayers = _findDefaultPointLayers(fieldPairs, dataId);
   const arcLayers = _findDefaultArcLayers(pointLayers, 'arc', dataId);
   // const clusterLayers = _findDefaultClusterLayers(pointLayers, dataId);
   const geojsonLayers = _findDefaultGeojsonLayer(fields, dataId, label);
   const iconLayers = _findDefaultIconLayers(pointLayers, fields, dataId);
   const hexagonIdLayers = _findDefaultHexagonIdLayer(fields, dataId);
 
-  // for performance, do not create too many default layerss
+  // for performance, do not create too many default layers
   // const hexagonLayer = _findDefaultAggregationLayers(pointLayers, 'hexagon');
   // const gridLayer = _findDefaultAggregationLayers(pointLayers, 'grid');
 
@@ -90,67 +90,14 @@ export function findDefaultLayer({fields, fieldPairs, id: dataId, label}) {
   ];
 }
 
-// function removeSuffixAndDelimiters(layerName, suffix) {
-//   return layerName
-//     .replace(new RegExp(suffix, 'ig'), '')
-//     .replace(/[_,.]+/g, ' ')
-//     .trim();
-// }
-
-/**
- * Find point fields pairs from fields
- *
- * @param {Array} fields
- * @returns {Array} found point fields
- */
-// export function findPointFieldPairs(fields) {
-//   const allNames = fields.map(f => f.name.toLowerCase());
-//
-//   // get list of all fields with matching suffixes
-//   return allNames.reduce((carry, fieldName, idx) => {
-//     // This search for pairs will early exit if found.
-//     for (const suffixPair of TRIP_POINT_FIELDS) {
-//       // match first suffix```
-//       if (fieldName.endsWith(suffixPair[0])) {
-//         // match second suffix
-//         const otherPattern = new RegExp(`${suffixPair[0]}\$`);
-//         const partner = fieldName.replace(otherPattern, suffixPair[1]);
-//
-//         const partnerIdx = allNames.findIndex(d => d === partner);
-//         if (partnerIdx > -1) {
-//           const defaultName = removeSuffixAndDelimiters(fieldName, suffixPair[0]);
-//
-//           carry.push({
-//             defaultName,
-//             pair: {
-//               lat: {
-//                 fieldIdx: idx,
-//                 value: fields[idx].name
-//               },
-//               lng: {
-//                 fieldIdx: partnerIdx,
-//                 value: fields[partnerIdx].name
-//               }
-//             },
-//             suffix: suffixPair
-//           });
-//           return carry;
-//         }
-//       }
-//     }
-//     return carry;
-//   }, []);
-// }
-
 /**
  * Find default point layers from fields
  *
- * @param {Array} fields
  * @param {Array} fieldPairs
  * @param {string} dataId
  * @returns {Array} found point layers
  */
-function _findDefaultPointLayers(fields, fieldPairs, dataId) {
+function _findDefaultPointLayers(fieldPairs, dataId) {
   const layers = [];
 
   // Make layer for each pair

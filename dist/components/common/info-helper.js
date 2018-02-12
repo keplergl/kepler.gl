@@ -4,11 +4,11 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _taggedTemplateLiteralLoose2 = require('babel-runtime/helpers/taggedTemplateLiteralLoose');
+var _taggedTemplateLiteral2 = require('babel-runtime/helpers/taggedTemplateLiteral');
 
-var _taggedTemplateLiteralLoose3 = _interopRequireDefault(_taggedTemplateLiteralLoose2);
+var _taggedTemplateLiteral3 = _interopRequireDefault(_taggedTemplateLiteral2);
 
-var _templateObject = (0, _taggedTemplateLiteralLoose3.default)(['\n  align-items: center;\n  margin-left: 10px;\n  color: ', ';\n  display: inline-flex;\n\n  .info-helper__content {\n    max-width: 100px;\n  }\n  \n  :hover {\n    cursor: pointer;\n    color: ', ';\n  }\n'], ['\n  align-items: center;\n  margin-left: 10px;\n  color: ', ';\n  display: inline-flex;\n\n  .info-helper__content {\n    max-width: 100px;\n  }\n  \n  :hover {\n    cursor: pointer;\n    color: ', ';\n  }\n']);
+var _templateObject = (0, _taggedTemplateLiteral3.default)(['\n  align-items: center;\n  margin-left: 10px;\n  color: ', ';\n  display: inline-flex;\n\n  .info-helper__content {\n    max-width: 100px;\n  }\n  \n  :hover {\n    cursor: pointer;\n    color: ', ';\n  }\n'], ['\n  align-items: center;\n  margin-left: 10px;\n  color: ', ';\n  display: inline-flex;\n\n  .info-helper__content {\n    max-width: 100px;\n  }\n  \n  :hover {\n    cursor: pointer;\n    color: ', ';\n  }\n']);
 
 var _react = require('react');
 

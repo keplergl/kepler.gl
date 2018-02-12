@@ -1,11 +1,11 @@
 import test from 'tape';
 
-import SchemaManager from '../../../../schemas/app-schema';
-import {InitialAppState} from '../../../../../test/util/mock-app-state';
+import SchemaManager from 'schemas';
+import {InitialState} from 'test/helpers/mock-state';
 
 test('#mapStyleSchema -> v1 -> save load mapStyle', t => {
-  const initialState = InitialAppState.toJS();
-  const savedState = SchemaManager.getAppConfigToSave(initialState);
+  const initialState = InitialState.toJS();
+  const savedState = SchemaManager.getConfigToSave(initialState);
 
   // save state
   const msToSave = savedState.config.mapStyle;
@@ -18,15 +18,7 @@ test('#mapStyleSchema -> v1 -> save load mapStyle', t => {
   const expectedSaved = {
     styleType: 'dark',
     topLayerGroups: {},
-    visibleLayerGroups: {
-      label: true,
-      places: true,
-      road: true,
-      border: false,
-      building: true,
-      water: true,
-      land: true
-    },
+    visibleLayerGroups: {},
     buildingLayer: {
       isVisible: false,
       color: [209, 206, 199],

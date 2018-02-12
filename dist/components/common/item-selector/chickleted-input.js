@@ -4,13 +4,13 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _taggedTemplateLiteralLoose2 = require('babel-runtime/helpers/taggedTemplateLiteralLoose');
+var _taggedTemplateLiteral2 = require('babel-runtime/helpers/taggedTemplateLiteral');
 
-var _taggedTemplateLiteralLoose3 = _interopRequireDefault(_taggedTemplateLiteralLoose2);
+var _taggedTemplateLiteral3 = _interopRequireDefault(_taggedTemplateLiteral2);
 
-var _templateObject = (0, _taggedTemplateLiteralLoose3.default)(['\n  background: ', ';\n  border-radius: 1px;\n  color: ', ';\n  font-size: 11px;\n  line-height: 20px;\n  margin: 3px 10px 3px 3px;\n  padding: 4px 6px;\n  display: flex;\n  align-items: center;\n  max-width: calc(100% - 8px);\n\n  :hover {\n    color: ', ';\n  }\n'], ['\n  background: ', ';\n  border-radius: 1px;\n  color: ', ';\n  font-size: 11px;\n  line-height: 20px;\n  margin: 3px 10px 3px 3px;\n  padding: 4px 6px;\n  display: flex;\n  align-items: center;\n  max-width: calc(100% - 8px);\n\n  :hover {\n    color: ', ';\n  }\n']),
-    _templateObject2 = (0, _taggedTemplateLiteralLoose3.default)(['\n  margin-right: 10px;\n  text-overflow: ellipsis;\n  width: 100%;\n  overflow: hidden;\n  \n  :hover {\n    overflow: visible;\n  }\n'], ['\n  margin-right: 10px;\n  text-overflow: ellipsis;\n  width: 100%;\n  overflow: hidden;\n  \n  :hover {\n    overflow: visible;\n  }\n']),
-    _templateObject3 = (0, _taggedTemplateLiteralLoose3.default)(['\n  ', ' \n'], ['\n  ', ' \n']);
+var _templateObject = (0, _taggedTemplateLiteral3.default)(['\n  background: ', ';\n  border-radius: 1px;\n  color: ', ';\n  font-size: 11px;\n  line-height: 20px;\n  margin: 3px 10px 3px 3px;\n  padding: 4px 6px;\n  display: flex;\n  align-items: center;\n  max-width: calc(100% - 8px);\n\n  :hover {\n    color: ', ';\n  }\n'], ['\n  background: ', ';\n  border-radius: 1px;\n  color: ', ';\n  font-size: 11px;\n  line-height: 20px;\n  margin: 3px 10px 3px 3px;\n  padding: 4px 6px;\n  display: flex;\n  align-items: center;\n  max-width: calc(100% - 8px);\n\n  :hover {\n    color: ', ';\n  }\n']),
+    _templateObject2 = (0, _taggedTemplateLiteral3.default)(['\n  margin-right: 10px;\n  text-overflow: ellipsis;\n  width: 100%;\n  overflow: hidden;\n  \n  :hover {\n    overflow: visible;\n  }\n'], ['\n  margin-right: 10px;\n  text-overflow: ellipsis;\n  width: 100%;\n  overflow: hidden;\n  \n  :hover {\n    overflow: visible;\n  }\n']),
+    _templateObject3 = (0, _taggedTemplateLiteral3.default)(['\n  ', ' \n'], ['\n  ', ' \n']);
 
 var _react = require('react');
 

@@ -38,12 +38,4 @@ const mapStateReducer = handleActions(
   INITIAL_MAP_STATE
 );
 
-// function getMapDimForFullScreen(isFullScreen, state) {
-//   return {
-//     height: state.height
-//       + (DIMENSIONS.qbHeight + DIMENSIONS.headerHeight) * Number(isFullScreen)
-//       - (DIMENSIONS.qbHeight + DIMENSIONS.headerHeight) * Number(!isFullScreen)
-//   }
-// }
-
 export default mapStateReducer;

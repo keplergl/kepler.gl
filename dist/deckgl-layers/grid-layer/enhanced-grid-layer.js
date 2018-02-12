@@ -9,9 +9,17 @@ var _classCallCheck2 = require('babel-runtime/helpers/classCallCheck');
 
 var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
 
+var _createClass2 = require('babel-runtime/helpers/createClass');
+
+var _createClass3 = _interopRequireDefault(_createClass2);
+
 var _possibleConstructorReturn2 = require('babel-runtime/helpers/possibleConstructorReturn');
 
 var _possibleConstructorReturn3 = _interopRequireDefault(_possibleConstructorReturn2);
+
+var _get2 = require('babel-runtime/helpers/get');
+
+var _get3 = _interopRequireDefault(_get2);
 
 var _inherits2 = require('babel-runtime/helpers/inherits');
 
@@ -40,39 +48,44 @@ var EnhancedGridLayer = function (_GridLayer) {
 
   function EnhancedGridLayer() {
     (0, _classCallCheck3.default)(this, EnhancedGridLayer);
-    return (0, _possibleConstructorReturn3.default)(this, _GridLayer.apply(this, arguments));
+    return (0, _possibleConstructorReturn3.default)(this, (EnhancedGridLayer.__proto__ || Object.getPrototypeOf(EnhancedGridLayer)).apply(this, arguments));
   }
 
-  EnhancedGridLayer.prototype.getDimensionUpdaters = function getDimensionUpdaters() {
-    var dimensionUpdaters = _GridLayer.prototype.getDimensionUpdaters.call(this);
-    // add colorScale to dimension updates
-    dimensionUpdaters.getColor[1].triggers.push('colorScale');
-    return dimensionUpdaters;
-  };
+  (0, _createClass3.default)(EnhancedGridLayer, [{
+    key: 'getDimensionUpdaters',
+    value: function getDimensionUpdaters() {
+      var dimensionUpdaters = (0, _get3.default)(EnhancedGridLayer.prototype.__proto__ || Object.getPrototypeOf(EnhancedGridLayer.prototype), 'getDimensionUpdaters', this).call(this);
+      // add colorScale to dimension updates
+      dimensionUpdaters.getColor[1].triggers.push('colorScale');
+      return dimensionUpdaters;
+    }
 
-  /*
-   * override default layer method to calculate color domain
-   * and scale function base on color scale type
-   */
+    /*
+     * override default layer method to calculate color domain
+     * and scale function base on color scale type
+     */
 
+  }, {
+    key: 'getColorValueDomain',
+    value: function getColorValueDomain() {
+      (0, _utils.getColorValueDomain)(this);
+    }
+  }, {
+    key: 'getColorScale',
+    value: function getColorScale() {
+      (0, _utils.getColorScaleFunction)(this);
+    }
 
-  EnhancedGridLayer.prototype.getColorValueDomain = function getColorValueDomain() {
-    (0, _utils.getColorValueDomain)(this);
-  };
+    /*
+     * override default getSubLayerClass to return customized cellLayer
+     */
 
-  EnhancedGridLayer.prototype.getColorScale = function getColorScale() {
-    (0, _utils.getColorScaleFunction)(this);
-  };
-
-  /*
-   * override default getSubLayerClass to return customized cellLayer
-   */
-
-
-  EnhancedGridLayer.prototype.getSubLayerClass = function getSubLayerClass() {
-    return _enhancedGridCellLayer2.default;
-  };
-
+  }, {
+    key: 'getSubLayerClass',
+    value: function getSubLayerClass() {
+      return _enhancedGridCellLayer2.default;
+    }
+  }]);
   return EnhancedGridLayer;
 }(_deck.GridLayer);
 
@@ -81,4 +94,4 @@ exports.default = EnhancedGridLayer;
 
 EnhancedGridLayer.layerName = 'EnhancedGridLayer';
 EnhancedGridLayer.defaultProps = defaultProps;
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9kZWNrZ2wtbGF5ZXJzL2dyaWQtbGF5ZXIvZW5oYW5jZWQtZ3JpZC1sYXllci5qcyJdLCJuYW1lcyI6WyJkZWZhdWx0UHJvcHMiLCJjb2xvclNjYWxlIiwiRW5oYW5jZWRHcmlkTGF5ZXIiLCJnZXREaW1lbnNpb25VcGRhdGVycyIsImRpbWVuc2lvblVwZGF0ZXJzIiwiZ2V0Q29sb3IiLCJ0cmlnZ2VycyIsInB1c2giLCJnZXRDb2xvclZhbHVlRG9tYWluIiwiZ2V0Q29sb3JTY2FsZSIsImdldFN1YkxheWVyQ2xhc3MiLCJsYXllck5hbWUiXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7O0FBQUE7O0FBQ0E7O0FBQ0E7Ozs7OztBQUVBLElBQU1BLDBDQUNELGdCQUFVQSxZQURUO0FBRUpDLGNBQVk7QUFGUixFQUFOOztJQUtxQkMsaUI7Ozs7Ozs7OzhCQUNuQkMsb0IsbUNBQXVCO0FBQ3JCLFFBQU1DLG9CQUFvQixxQkFBTUQsb0JBQU4sV0FBMUI7QUFDQTtBQUNBQyxzQkFBa0JDLFFBQWxCLENBQTJCLENBQTNCLEVBQThCQyxRQUE5QixDQUF1Q0MsSUFBdkMsQ0FBNEMsWUFBNUM7QUFDQSxXQUFPSCxpQkFBUDtBQUNELEc7O0FBRUQ7Ozs7Ozs4QkFJQUksbUIsa0NBQXNCO0FBQ3BCLG9DQUFvQixJQUFwQjtBQUNELEc7OzhCQUVEQyxhLDRCQUFnQjtBQUNkLHNDQUFzQixJQUF0QjtBQUNELEc7O0FBRUQ7Ozs7OzhCQUdBQyxnQiwrQkFBbUI7QUFDakI7QUFDRCxHOzs7OztrQkF6QmtCUixpQjs7O0FBNEJyQkEsa0JBQWtCUyxTQUFsQixHQUE4QixtQkFBOUI7QUFDQVQsa0JBQWtCRixZQUFsQixHQUFpQ0EsWUFBakMiLCJmaWxlIjoiZW5oYW5jZWQtZ3JpZC1sYXllci5qcyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7R3JpZExheWVyfSBmcm9tICdkZWNrLmdsJztcbmltcG9ydCB7Z2V0Q29sb3JWYWx1ZURvbWFpbiwgZ2V0Q29sb3JTY2FsZUZ1bmN0aW9ufSBmcm9tICcuLi9sYXllci11dGlscy91dGlscyc7XG5pbXBvcnQgRW5oYW5jZWRHcmlkQ2VsbExheWVyIGZyb20gJy4vZW5oYW5jZWQtZ3JpZC1jZWxsLWxheWVyJztcblxuY29uc3QgZGVmYXVsdFByb3BzID0ge1xuICAuLi5HcmlkTGF5ZXIuZGVmYXVsdFByb3BzLFxuICBjb2xvclNjYWxlOiAncXVhbnRpbGUnXG59O1xuXG5leHBvcnQgZGVmYXVsdCBjbGFzcyBFbmhhbmNlZEdyaWRMYXllciBleHRlbmRzIEdyaWRMYXllciB7XG4gIGdldERpbWVuc2lvblVwZGF0ZXJzKCkge1xuICAgIGNvbnN0IGRpbWVuc2lvblVwZGF0ZXJzID0gc3VwZXIuZ2V0RGltZW5zaW9uVXBkYXRlcnMoKTtcbiAgICAvLyBhZGQgY29sb3JTY2FsZSB0byBkaW1lbnNpb24gdXBkYXRlc1xuICAgIGRpbWVuc2lvblVwZGF0ZXJzLmdldENvbG9yWzFdLnRyaWdnZXJzLnB1c2goJ2NvbG9yU2NhbGUnKTtcbiAgICByZXR1cm4gZGltZW5zaW9uVXBkYXRlcnM7XG4gIH1cblxuICAvKlxuICAgKiBvdmVycmlkZSBkZWZhdWx0IGxheWVyIG1ldGhvZCB0byBjYWxjdWxhdGUgY29sb3IgZG9tYWluXG4gICAqIGFuZCBzY2FsZSBmdW5jdGlvbiBiYXNlIG9uIGNvbG9yIHNjYWxlIHR5cGVcbiAgICovXG4gIGdldENvbG9yVmFsdWVEb21haW4oKSB7XG4gICAgZ2V0Q29sb3JWYWx1ZURvbWFpbih0aGlzKTtcbiAgfVxuXG4gIGdldENvbG9yU2NhbGUoKSB7XG4gICAgZ2V0Q29sb3JTY2FsZUZ1bmN0aW9uKHRoaXMpO1xuICB9XG5cbiAgLypcbiAgICogb3ZlcnJpZGUgZGVmYXVsdCBnZXRTdWJMYXllckNsYXNzIHRvIHJldHVybiBjdXN0b21pemVkIGNlbGxMYXllclxuICAgKi9cbiAgZ2V0U3ViTGF5ZXJDbGFzcygpIHtcbiAgICByZXR1cm4gRW5oYW5jZWRHcmlkQ2VsbExheWVyO1xuICB9XG59XG5cbkVuaGFuY2VkR3JpZExheWVyLmxheWVyTmFtZSA9ICdFbmhhbmNlZEdyaWRMYXllcic7XG5FbmhhbmNlZEdyaWRMYXllci5kZWZhdWx0UHJvcHMgPSBkZWZhdWx0UHJvcHM7XG4iXX0=
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9kZWNrZ2wtbGF5ZXJzL2dyaWQtbGF5ZXIvZW5oYW5jZWQtZ3JpZC1sYXllci5qcyJdLCJuYW1lcyI6WyJkZWZhdWx0UHJvcHMiLCJjb2xvclNjYWxlIiwiRW5oYW5jZWRHcmlkTGF5ZXIiLCJkaW1lbnNpb25VcGRhdGVycyIsImdldENvbG9yIiwidHJpZ2dlcnMiLCJwdXNoIiwibGF5ZXJOYW1lIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7O0FBQUE7O0FBQ0E7O0FBQ0E7Ozs7OztBQUVBLElBQU1BLDBDQUNELGdCQUFVQSxZQURUO0FBRUpDLGNBQVk7QUFGUixFQUFOOztJQUtxQkMsaUI7Ozs7Ozs7Ozs7MkNBQ0k7QUFDckIsVUFBTUMsNEtBQU47QUFDQTtBQUNBQSx3QkFBa0JDLFFBQWxCLENBQTJCLENBQTNCLEVBQThCQyxRQUE5QixDQUF1Q0MsSUFBdkMsQ0FBNEMsWUFBNUM7QUFDQSxhQUFPSCxpQkFBUDtBQUNEOztBQUVEOzs7Ozs7OzBDQUlzQjtBQUNwQixzQ0FBb0IsSUFBcEI7QUFDRDs7O29DQUVlO0FBQ2Qsd0NBQXNCLElBQXRCO0FBQ0Q7O0FBRUQ7Ozs7Ozt1Q0FHbUI7QUFDakI7QUFDRDs7Ozs7a0JBekJrQkQsaUI7OztBQTRCckJBLGtCQUFrQkssU0FBbEIsR0FBOEIsbUJBQTlCO0FBQ0FMLGtCQUFrQkYsWUFBbEIsR0FBaUNBLFlBQWpDIiwiZmlsZSI6ImVuaGFuY2VkLWdyaWQtbGF5ZXIuanMiLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQge0dyaWRMYXllcn0gZnJvbSAnZGVjay5nbCc7XG5pbXBvcnQge2dldENvbG9yVmFsdWVEb21haW4sIGdldENvbG9yU2NhbGVGdW5jdGlvbn0gZnJvbSAnLi4vbGF5ZXItdXRpbHMvdXRpbHMnO1xuaW1wb3J0IEVuaGFuY2VkR3JpZENlbGxMYXllciBmcm9tICcuL2VuaGFuY2VkLWdyaWQtY2VsbC1sYXllcic7XG5cbmNvbnN0IGRlZmF1bHRQcm9wcyA9IHtcbiAgLi4uR3JpZExheWVyLmRlZmF1bHRQcm9wcyxcbiAgY29sb3JTY2FsZTogJ3F1YW50aWxlJ1xufTtcblxuZXhwb3J0IGRlZmF1bHQgY2xhc3MgRW5oYW5jZWRHcmlkTGF5ZXIgZXh0ZW5kcyBHcmlkTGF5ZXIge1xuICBnZXREaW1lbnNpb25VcGRhdGVycygpIHtcbiAgICBjb25zdCBkaW1lbnNpb25VcGRhdGVycyA9IHN1cGVyLmdldERpbWVuc2lvblVwZGF0ZXJzKCk7XG4gICAgLy8gYWRkIGNvbG9yU2NhbGUgdG8gZGltZW5zaW9uIHVwZGF0ZXNcbiAgICBkaW1lbnNpb25VcGRhdGVycy5nZXRDb2xvclsxXS50cmlnZ2Vycy5wdXNoKCdjb2xvclNjYWxlJyk7XG4gICAgcmV0dXJuIGRpbWVuc2lvblVwZGF0ZXJzO1xuICB9XG5cbiAgLypcbiAgICogb3ZlcnJpZGUgZGVmYXVsdCBsYXllciBtZXRob2QgdG8gY2FsY3VsYXRlIGNvbG9yIGRvbWFpblxuICAgKiBhbmQgc2NhbGUgZnVuY3Rpb24gYmFzZSBvbiBjb2xvciBzY2FsZSB0eXBlXG4gICAqL1xuICBnZXRDb2xvclZhbHVlRG9tYWluKCkge1xuICAgIGdldENvbG9yVmFsdWVEb21haW4odGhpcyk7XG4gIH1cblxuICBnZXRDb2xvclNjYWxlKCkge1xuICAgIGdldENvbG9yU2NhbGVGdW5jdGlvbih0aGlzKTtcbiAgfVxuXG4gIC8qXG4gICAqIG92ZXJyaWRlIGRlZmF1bHQgZ2V0U3ViTGF5ZXJDbGFzcyB0byByZXR1cm4gY3VzdG9taXplZCBjZWxsTGF5ZXJcbiAgICovXG4gIGdldFN1YkxheWVyQ2xhc3MoKSB7XG4gICAgcmV0dXJuIEVuaGFuY2VkR3JpZENlbGxMYXllcjtcbiAgfVxufVxuXG5FbmhhbmNlZEdyaWRMYXllci5sYXllck5hbWUgPSAnRW5oYW5jZWRHcmlkTGF5ZXInO1xuRW5oYW5jZWRHcmlkTGF5ZXIuZGVmYXVsdFByb3BzID0gZGVmYXVsdFByb3BzO1xuIl19

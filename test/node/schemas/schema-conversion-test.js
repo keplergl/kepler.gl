@@ -1,37 +1,62 @@
 import test from 'tape';
 
-import SchemaManager from '../../../../schemas/app-schema';
-import {cmpParsedAppConfigs} from '../../../../../test/util/comparison-utils';
+import SchemaManager from 'schemas';
+import {cmpParsedAppConfigs} from 'test/helpers/comparison-utils';
 import {console as Console} from 'global/window';
+import {
+  savedConfigV0 as savedConfig0,
+  parsedConfigV0 as parsedConfig0
+} from 'test/fixtures/config_v0_arc_cluster_point';
 
-const TEST_CASES = [{
-  name: 'v0 -> v1',
-  cases: [{
-    name: 'load config with arc cluster point layer',
-    saved: require('../../../../../test/schemas/fixtures/v0_arc_cluster_point.json'),
-    parsed: require('../../../../../test/schemas/fixtures/v0_arc_cluster_point_parsed.json')
-  }, {
-    name: 'load config with geojson layer',
-    saved: require('../../../../../test/schemas/fixtures/v0_geojson_poly_fill_ele.json'),
-    parsed: require('../../../../../test/schemas/fixtures/v0_geojson_poly_fill_ele_parsed.json')
-  }, {
-    name: 'load config with geojson contains points',
-    saved: require('../../../../../test/schemas/fixtures/v0_geojson_point.json'),
-    parsed: require('../../../../../test/schemas/fixtures/v0_geojson_point_parsed.json')
-  }, {
-    name: 'load config with geojson contains 3d and stroked polygon',
-    saved: require('../../../../../test/schemas/fixtures/v0_geojson_polygon.json'),
-    parsed: require('../../../../../test/schemas/fixtures/v0_geojson_polygon_parsed.json')
-  }]
-}];
+import {
+  savedConfigV0 as savedConfig1,
+  parsedConfigV0 as parsedConfig1
+} from 'test/fixtures/config_v0_geojson_poly_fill_ele';
+
+import {
+  savedConfigV0 as savedConfig2,
+  parsecConfigV0 as parsedConfig2
+} from 'test/fixtures/config_v0_geojson_point';
+
+import {
+  savedConfigV0 as savedConfig3,
+  parsedConfigV0 as parsecConfig3
+} from 'test/fixtures/config_v0_geojson_polygon';
+
+const TEST_CASES = [
+  {
+    name: 'v0 -> v1',
+    cases: [
+      {
+        name: 'load config with arc cluster point layer',
+        saved: savedConfig0,
+        parsed: parsedConfig0
+      },
+      {
+        name: 'load config with geojson layer',
+        saved: savedConfig1,
+        parsed: parsedConfig1
+      },
+      {
+        name: 'load config with geojson contains points',
+        saved: savedConfig2,
+        parsed: parsedConfig2
+      },
+      {
+        name: 'load config with geojson contains 3d and stroked polygon',
+        saved: savedConfig3,
+        parsed: parsecConfig3
+      }
+    ]
+  }
+];
 
 test('#appSchema -> Convert Saved Configs', t => {
-
   TEST_CASES.forEach(({name, cases}) => {
-    Console.log(`test: ${name}`);
+    Console.log(`---> test: ${name}`);
 
     cases.forEach(cs => {
-      Console.log(`test: ${cs.name}`);
+      Console.log(`------> test: ${cs.name}`);
 
       const parsed = SchemaManager.parseSavedConfig(cs.saved);
       cmpParsedAppConfigs(t, cs.parsed, parsed, {name: cs.name});
@@ -40,4 +65,3 @@ test('#appSchema -> Convert Saved Configs', t => {
 
   t.end();
 });
-

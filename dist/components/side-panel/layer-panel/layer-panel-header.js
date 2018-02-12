@@ -4,15 +4,15 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _taggedTemplateLiteralLoose2 = require('babel-runtime/helpers/taggedTemplateLiteralLoose');
+var _taggedTemplateLiteral2 = require('babel-runtime/helpers/taggedTemplateLiteral');
 
-var _taggedTemplateLiteralLoose3 = _interopRequireDefault(_taggedTemplateLiteralLoose2);
+var _taggedTemplateLiteral3 = _interopRequireDefault(_taggedTemplateLiteral2);
 
-var _templateObject = (0, _taggedTemplateLiteralLoose3.default)(['\n  .layer__remove-layer {\n    opacity: 0;\n  }\n  :hover {\n    cursor: pointer;\n    background-color: ', ';\n    \n    .layer__drag-handle {\n      opacity: 1;\n    }\n    \n    .layer__remove-layer {\n      opacity: 1;  \n    }\n    \n    .layer__enable-config {\n      color: white\n    }\n  }\n'], ['\n  .layer__remove-layer {\n    opacity: 0;\n  }\n  :hover {\n    cursor: pointer;\n    background-color: ', ';\n    \n    .layer__drag-handle {\n      opacity: 1;\n    }\n    \n    .layer__remove-layer {\n      opacity: 1;  \n    }\n    \n    .layer__enable-config {\n      color: white\n    }\n  }\n']),
-    _templateObject2 = (0, _taggedTemplateLiteralLoose3.default)(['\n  display: flex;\n  color: ', ';\n'], ['\n  display: flex;\n  color: ', ';\n']),
-    _templateObject3 = (0, _taggedTemplateLiteralLoose3.default)(['\n  display: flex;\n'], ['\n  display: flex;\n']),
-    _templateObject4 = (0, _taggedTemplateLiteralLoose3.default)(['\n  margin-left: 12px;\n\n  .layer__title__type {\n    color: ', ';\n    font-size: 10px;\n    line-height: 12px;\n    letter-spacing: 0.37px;\n    text-transform: capitalize;\n  }\n'], ['\n  margin-left: 12px;\n\n  .layer__title__type {\n    color: ', ';\n    font-size: 10px;\n    line-height: 12px;\n    letter-spacing: 0.37px;\n    text-transform: capitalize;\n  }\n']),
-    _templateObject5 = (0, _taggedTemplateLiteralLoose3.default)(['\n  display: flex;\n  align-items: center;\n  opacity: 0;\n  \n  :hover {\n    cursor: move;\n    color: ', ';\n  }\n'], ['\n  display: flex;\n  align-items: center;\n  opacity: 0;\n  \n  :hover {\n    cursor: move;\n    color: ', ';\n  }\n']);
+var _templateObject = (0, _taggedTemplateLiteral3.default)(['\n  .layer__remove-layer {\n    opacity: 0;\n  }\n  :hover {\n    cursor: pointer;\n    background-color: ', ';\n    \n    .layer__drag-handle {\n      opacity: 1;\n    }\n    \n    .layer__remove-layer {\n      opacity: 1;  \n    }\n    \n    .layer__enable-config {\n      color: white\n    }\n  }\n'], ['\n  .layer__remove-layer {\n    opacity: 0;\n  }\n  :hover {\n    cursor: pointer;\n    background-color: ', ';\n    \n    .layer__drag-handle {\n      opacity: 1;\n    }\n    \n    .layer__remove-layer {\n      opacity: 1;  \n    }\n    \n    .layer__enable-config {\n      color: white\n    }\n  }\n']),
+    _templateObject2 = (0, _taggedTemplateLiteral3.default)(['\n  display: flex;\n  color: ', ';\n'], ['\n  display: flex;\n  color: ', ';\n']),
+    _templateObject3 = (0, _taggedTemplateLiteral3.default)(['\n  display: flex;\n'], ['\n  display: flex;\n']),
+    _templateObject4 = (0, _taggedTemplateLiteral3.default)(['\n  margin-left: 12px;\n\n  .layer__title__type {\n    color: ', ';\n    font-size: 10px;\n    line-height: 12px;\n    letter-spacing: 0.37px;\n    text-transform: capitalize;\n  }\n'], ['\n  margin-left: 12px;\n\n  .layer__title__type {\n    color: ', ';\n    font-size: 10px;\n    line-height: 12px;\n    letter-spacing: 0.37px;\n    text-transform: capitalize;\n  }\n']),
+    _templateObject5 = (0, _taggedTemplateLiteral3.default)(['\n  display: flex;\n  align-items: center;\n  opacity: 0;\n  \n  :hover {\n    cursor: move;\n    color: ', ';\n  }\n'], ['\n  display: flex;\n  align-items: center;\n  opacity: 0;\n  \n  :hover {\n    cursor: move;\n    color: ', ';\n  }\n']);
 
 var _react = require('react');
 

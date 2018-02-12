@@ -1,6 +1,6 @@
 
 /* eslint-disable max-lens */
-const data = `gps_data.utc_timestamp,gps_data.lat,gps_data.lng,gps_data.types,epoch,has_driver_initiated_contact,id,time,begintrip_ts_utc,begintrip_ts_local,date
+const data = `gps_data.utc_timestamp,gps_data.lat,gps_data.lng,gps_data.types,epoch,has_result,id,time,begintrip_ts_utc,begintrip_ts_local,date
 2016-09-17 00:09:55,29.9900937,31.2590542,driver_analytics,1472688000000,False,1,2016-09-23T00:00:00.000Z,2016-10-01 09:41:39+00:00,2016-10-01 09:41:39+00:00,2016-09-23
 2016-09-17 00:10:56,29.9927699,31.2461142,driver_analytics,1472688000000,False,2,2016-09-23T00:00:00.000Z,2016-10-01 09:46:37+00:00,2016-10-01 16:46:37+00:00,2016-09-23
 2016-09-17 00:11:56,29.9907261,31.2312742,driver_analytics,1472688000000,False,3,2016-09-23T00:00:00.000Z,,,2016-09-23
@@ -26,7 +26,7 @@ const data = `gps_data.utc_timestamp,gps_data.lat,gps_data.lng,gps_data.types,ep
 2016-09-17 00:30:03,30.0612697,31.2191059,driver_gps,1472774400000,True,7,2016-09-23T08:00:00.000Z,2016-10-01 09:53:35+00:00,2016-10-01 16:53:35+00:00,2016-10-10
 2016-09-17 00:30:08,30.0610977,31.2194728,driver_gps,1472774400000,True,,2016-09-23T08:00:00.000Z,,,`;
 
-export const wktCsv = `a_zip,simplified_shape_v2,simplified_shape,m_unemployment_rate,c_zip_type,c_avg_trips_per_rider
+export const wktCsv = `a_zip,simplified_shape_v2,simplified_shape,m_rate,c_zip_type,c_number
 7014,"{""type"":""Polygon"",""coordinates"":[[[-74.158491,40.835947],[-74.157914,40.83902],[-74.148473,40.834522]]]}","POLYGON ((-74.158491 40.835947, -74.158491 40.835947))",7.5,C_Medium_High,29.07437458
 7016,"{""type"":""Polygon"",""coordinates"":[[[-74.31687,40.656696],[-74.319449,40.658154],[-74.31687,40.656696]]]}","POLYGON ((-74.31687 40.656696, -74.312298 40.654042, -74.31687 40.656696))",6.5,C_Medium_High,27.60106201
 7023,"{""type"":""Polygon"",""coordinates"":[[[-74.387589,40.632238],[-74.387589,40.632238]]]}","POLYGON ((-74.387589 40.632238, -74.382333 40.632417, -74.384457 40.630453, -74.387589 40.632238))",7.6,C_Medium_High,23.85239437
@@ -60,7 +60,7 @@ export const testFields = [{
   tableFieldIndex: 5
 }, {
   type: 'boolean',
-  name: 'has_driver_initiated_contact',
+  name: 'has_result',
   format: '',
   tableFieldIndex: 6
 }, {
@@ -107,7 +107,7 @@ export const wktCsvFields = [{
   tableFieldIndex: 3
 }, {
   type: 'real',
-  name: 'm_unemployment_rate',
+  name: 'm_rate',
   format: '',
   tableFieldIndex: 4
 }, {
@@ -117,7 +117,7 @@ export const wktCsvFields = [{
   tableFieldIndex: 5
 }, {
   type: 'real',
-  name: 'c_avg_trips_per_rider',
+  name: 'c_number',
   format: '',
   tableFieldIndex: 6
 }];

@@ -2,7 +2,7 @@ import ActionTypes from 'constants/action-types';
 import {fitBoundsUpdater} from './map-state-updaters';
 import {toggleModalUpdater} from './ui-state-updaters';
 import {receiveMapConfigUpdater, updateVisDataUpdater} from './vis-state-updaters';
-
+import {findMapBounds} from 'utils/data-utils';
 // compose action to apply result multiple reducers, with the output of one
 
 /**
@@ -12,7 +12,24 @@ import {receiveMapConfigUpdater, updateVisDataUpdater} from './vis-state-updater
  * @returns {{visState, mapState: {latitude, longitude, zoom}}}
  */
 const updateVisDataComposed = (state, action) => {
-  const {visState, bounds} = updateVisDataUpdater(state.visState, action);
+  // keep a copy of oldLayers
+  const oldLayers = state.visState.layers.map(l => l.id);
+
+  const visState = updateVisDataUpdater(state.visState, action);
+
+  const defaultOptions = {centerMap: true};
+  const options = {
+    ...defaultOptions,
+    ...action.options
+  };
+
+  let bounds;
+  if (options.centerMap) {
+    // find map bounds for new layers
+    const newLayers = visState.layers.filter(l => !oldLayers.includes(l.id));
+    bounds = findMapBounds(newLayers);
+  }
+
   return {
     ...state,
     visState,

@@ -1,7 +1,6 @@
 import test from 'tape';
 import {
   findDefaultLayer,
-  findPointFieldPairs,
   _getAllPossibleColumnParis,
   _findDefaultHexagonIdLayer,
   _findDefaultGeojsonLayer,
@@ -10,12 +9,13 @@ import {
   _findDefaultAggregationLayers
 } from 'utils/layer-utils/layer-utils';
 
-import {processCsvData} from 'utils/data-utils';
+import {findPointFieldPairs} from 'utils/dataset-utils';
+import {processCsvData} from 'processor/data-processor';
 import {GEOJSON_FIELDS} from 'constants/default-settings';
-import {wktCsv} from 'test/fixtures/test-csv-data';
-import {PointLayer, ArcLayer, GeojsonLayer, GridLayer} from 'kepler.gl/keplergl-layers';
+import {PointLayer, ArcLayer, GeojsonLayer, GridLayer} from 'keplergl-layers';
 
-import {cmpLayers} from 'util/comparison-utils';
+import {wktCsv} from 'test/fixtures/test-csv-data';
+import {cmpLayers} from 'test/helpers/comparison-utils';
 
 test('layerUtils -> findDefaultLayer.1', t => {
   const inputFields = [

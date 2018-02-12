@@ -2,9 +2,10 @@ import test from 'tape';
 
 import {
   toggleSidePanel,
-  toggleModal
-} from '../../../src/actions/ui-state-actions';
-import reducer, {INITIAL_UI_STATE}  from '../../../src/reducers/ui-state';
+  toggleModal,
+  openDeleteModal
+} from 'actions/ui-state-actions';
+import reducer, {INITIAL_UI_STATE}  from 'reducers/ui-state';
 
 test('#uiStateReducer', t => {
 
@@ -52,6 +53,21 @@ test('#uiStateReducer -> TOGGLE_SIDE_PANEL', t => {
   };
 
   t.deepEqual(nextState3, expectedNextState3, 'should close panel');
+
+  t.end();
+});
+
+test('#uiStateReducer -> OPEN_DELETE_MODAL', t => {
+
+  const newReducer = reducer(INITIAL_UI_STATE, openDeleteModal('chai'));
+
+  const expectedState = {
+    ...INITIAL_UI_STATE,
+    currentModal: 'deleteData',
+    datasetKeyToRemove: 'chai'
+  };
+
+  t.deepEqual(newReducer, expectedState, 'should open delete data modal and save key to remove');
 
   t.end();
 });

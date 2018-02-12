@@ -4,13 +4,13 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _taggedTemplateLiteralLoose2 = require('babel-runtime/helpers/taggedTemplateLiteralLoose');
+var _taggedTemplateLiteral2 = require('babel-runtime/helpers/taggedTemplateLiteral');
 
-var _taggedTemplateLiteralLoose3 = _interopRequireDefault(_taggedTemplateLiteralLoose2);
+var _taggedTemplateLiteral3 = _interopRequireDefault(_taggedTemplateLiteral2);
 
-var _templateObject = (0, _taggedTemplateLiteralLoose3.default)(['\n  border-radius: 2px;\n  display: flex;\n  flex-direction: row;\n  flex-grow: 1;\n  justify-content: space-between;\n  overflow: hidden;\n'], ['\n  border-radius: 2px;\n  display: flex;\n  flex-direction: row;\n  flex-grow: 1;\n  justify-content: space-between;\n  overflow: hidden;\n']),
-    _templateObject2 = (0, _taggedTemplateLiteralLoose3.default)(['\n  display: flex;\n  flex-grow: 1;\n  border-width: 1px;\n  border-style: solid;\n  border-color: ', ';\n  padding: 4px;\n  border-radius: 4px;\n'], ['\n  display: flex;\n  flex-grow: 1;\n  border-width: 1px;\n  border-style: solid;\n  border-color: ', ';\n  padding: 4px;\n  border-radius: 4px;\n']),
-    _templateObject3 = (0, _taggedTemplateLiteralLoose3.default)(['\n  flex-grow: 1;\n'], ['\n  flex-grow: 1;\n']);
+var _templateObject = (0, _taggedTemplateLiteral3.default)(['\n  border-radius: 2px;\n  display: flex;\n  flex-direction: row;\n  flex-grow: 1;\n  justify-content: space-between;\n  overflow: hidden;\n'], ['\n  border-radius: 2px;\n  display: flex;\n  flex-direction: row;\n  flex-grow: 1;\n  justify-content: space-between;\n  overflow: hidden;\n']),
+    _templateObject2 = (0, _taggedTemplateLiteral3.default)(['\n  display: flex;\n  flex-grow: 1;\n  border-width: 1px;\n  border-style: solid;\n  border-color: ', ';\n  padding: 4px;\n  border-radius: 4px;\n'], ['\n  display: flex;\n  flex-grow: 1;\n  border-width: 1px;\n  border-style: solid;\n  border-color: ', ';\n  padding: 4px;\n  border-radius: 4px;\n']),
+    _templateObject3 = (0, _taggedTemplateLiteral3.default)(['\n  flex-grow: 1;\n'], ['\n  flex-grow: 1;\n']);
 
 var _react = require('react');
 

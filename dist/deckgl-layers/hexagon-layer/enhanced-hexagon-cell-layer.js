@@ -13,9 +13,17 @@ var _classCallCheck2 = require('babel-runtime/helpers/classCallCheck');
 
 var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
 
+var _createClass2 = require('babel-runtime/helpers/createClass');
+
+var _createClass3 = _interopRequireDefault(_createClass2);
+
 var _possibleConstructorReturn2 = require('babel-runtime/helpers/possibleConstructorReturn');
 
 var _possibleConstructorReturn3 = _interopRequireDefault(_possibleConstructorReturn2);
+
+var _get2 = require('babel-runtime/helpers/get');
+
+var _get3 = _interopRequireDefault(_get2);
 
 var _inherits2 = require('babel-runtime/helpers/inherits');
 
@@ -32,15 +40,17 @@ var EnhancedHexagonCellLayer = function (_HexagonCellLayer) {
 
   function EnhancedHexagonCellLayer() {
     (0, _classCallCheck3.default)(this, EnhancedHexagonCellLayer);
-    return (0, _possibleConstructorReturn3.default)(this, _HexagonCellLayer.apply(this, arguments));
+    return (0, _possibleConstructorReturn3.default)(this, (EnhancedHexagonCellLayer.__proto__ || Object.getPrototypeOf(EnhancedHexagonCellLayer)).apply(this, arguments));
   }
 
-  EnhancedHexagonCellLayer.prototype.getShaders = function getShaders() {
-    var shaders = _HexagonCellLayer.prototype.getShaders.call(this);
-    var vs = (0, _getCellLayerVertext.getCellLayerVertex)(shaders.vs, { highlightPicked: true });
-    return (0, _extends3.default)({}, shaders, { vs: vs });
-  };
-
+  (0, _createClass3.default)(EnhancedHexagonCellLayer, [{
+    key: 'getShaders',
+    value: function getShaders() {
+      var shaders = (0, _get3.default)(EnhancedHexagonCellLayer.prototype.__proto__ || Object.getPrototypeOf(EnhancedHexagonCellLayer.prototype), 'getShaders', this).call(this);
+      var vs = (0, _getCellLayerVertext.getCellLayerVertex)(shaders.vs, { highlightPicked: true });
+      return (0, _extends3.default)({}, shaders, { vs: vs });
+    }
+  }]);
   return EnhancedHexagonCellLayer;
 }(_deck.HexagonCellLayer);
 
@@ -48,4 +58,4 @@ exports.default = EnhancedHexagonCellLayer;
 
 
 EnhancedHexagonCellLayer.layerName = 'EnhancedHexagonCellLayer';
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9kZWNrZ2wtbGF5ZXJzL2hleGFnb24tbGF5ZXIvZW5oYW5jZWQtaGV4YWdvbi1jZWxsLWxheWVyLmpzIl0sIm5hbWVzIjpbIkVuaGFuY2VkSGV4YWdvbkNlbGxMYXllciIsImdldFNoYWRlcnMiLCJzaGFkZXJzIiwidnMiLCJoaWdobGlnaHRQaWNrZWQiLCJsYXllck5hbWUiXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7O0FBQUE7O0FBQ0E7Ozs7SUFFcUJBLHdCOzs7Ozs7OztxQ0FDbkJDLFUseUJBQWE7QUFDWCxRQUFNQyxVQUFVLDRCQUFNRCxVQUFOLFdBQWhCO0FBQ0EsUUFBTUUsS0FBSyw2Q0FBbUJELFFBQVFDLEVBQTNCLEVBQStCLEVBQUNDLGlCQUFpQixJQUFsQixFQUEvQixDQUFYO0FBQ0Esc0NBQVdGLE9BQVgsSUFBb0JDLE1BQXBCO0FBQ0QsRzs7Ozs7a0JBTGtCSCx3Qjs7O0FBUXJCQSx5QkFBeUJLLFNBQXpCLEdBQXFDLDBCQUFyQyIsImZpbGUiOiJlbmhhbmNlZC1oZXhhZ29uLWNlbGwtbGF5ZXIuanMiLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQge0hleGFnb25DZWxsTGF5ZXJ9IGZyb20gJ2RlY2suZ2wnO1xuaW1wb3J0IHtnZXRDZWxsTGF5ZXJWZXJ0ZXh9IGZyb20gJy4uL2xheWVyLXV0aWxzL2dldC1jZWxsLWxheWVyLXZlcnRleHQnO1xuXG5leHBvcnQgZGVmYXVsdCBjbGFzcyBFbmhhbmNlZEhleGFnb25DZWxsTGF5ZXIgZXh0ZW5kcyBIZXhhZ29uQ2VsbExheWVyIHtcbiAgZ2V0U2hhZGVycygpIHtcbiAgICBjb25zdCBzaGFkZXJzID0gc3VwZXIuZ2V0U2hhZGVycygpO1xuICAgIGNvbnN0IHZzID0gZ2V0Q2VsbExheWVyVmVydGV4KHNoYWRlcnMudnMsIHtoaWdobGlnaHRQaWNrZWQ6IHRydWV9KTtcbiAgICByZXR1cm4gey4uLnNoYWRlcnMsIHZzfTtcbiAgfVxufVxuXG5FbmhhbmNlZEhleGFnb25DZWxsTGF5ZXIubGF5ZXJOYW1lID0gJ0VuaGFuY2VkSGV4YWdvbkNlbGxMYXllcic7XG4iXX0=
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9kZWNrZ2wtbGF5ZXJzL2hleGFnb24tbGF5ZXIvZW5oYW5jZWQtaGV4YWdvbi1jZWxsLWxheWVyLmpzIl0sIm5hbWVzIjpbIkVuaGFuY2VkSGV4YWdvbkNlbGxMYXllciIsInNoYWRlcnMiLCJ2cyIsImhpZ2hsaWdodFBpY2tlZCIsImxheWVyTmFtZSJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7OztBQUFBOztBQUNBOzs7O0lBRXFCQSx3Qjs7Ozs7Ozs7OztpQ0FDTjtBQUNYLFVBQU1DLHNLQUFOO0FBQ0EsVUFBTUMsS0FBSyw2Q0FBbUJELFFBQVFDLEVBQTNCLEVBQStCLEVBQUNDLGlCQUFpQixJQUFsQixFQUEvQixDQUFYO0FBQ0Esd0NBQVdGLE9BQVgsSUFBb0JDLE1BQXBCO0FBQ0Q7Ozs7O2tCQUxrQkYsd0I7OztBQVFyQkEseUJBQXlCSSxTQUF6QixHQUFxQywwQkFBckMiLCJmaWxlIjoiZW5oYW5jZWQtaGV4YWdvbi1jZWxsLWxheWVyLmpzIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHtIZXhhZ29uQ2VsbExheWVyfSBmcm9tICdkZWNrLmdsJztcbmltcG9ydCB7Z2V0Q2VsbExheWVyVmVydGV4fSBmcm9tICcuLi9sYXllci11dGlscy9nZXQtY2VsbC1sYXllci12ZXJ0ZXh0JztcblxuZXhwb3J0IGRlZmF1bHQgY2xhc3MgRW5oYW5jZWRIZXhhZ29uQ2VsbExheWVyIGV4dGVuZHMgSGV4YWdvbkNlbGxMYXllciB7XG4gIGdldFNoYWRlcnMoKSB7XG4gICAgY29uc3Qgc2hhZGVycyA9IHN1cGVyLmdldFNoYWRlcnMoKTtcbiAgICBjb25zdCB2cyA9IGdldENlbGxMYXllclZlcnRleChzaGFkZXJzLnZzLCB7aGlnaGxpZ2h0UGlja2VkOiB0cnVlfSk7XG4gICAgcmV0dXJuIHsuLi5zaGFkZXJzLCB2c307XG4gIH1cbn1cblxuRW5oYW5jZWRIZXhhZ29uQ2VsbExheWVyLmxheWVyTmFtZSA9ICdFbmhhbmNlZEhleGFnb25DZWxsTGF5ZXInO1xuIl19

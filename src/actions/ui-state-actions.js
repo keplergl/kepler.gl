@@ -1,5 +1,5 @@
 import {createAction} from 'redux-actions';
-import ActionTypes from '../constants/action-types';
+import ActionTypes from 'constants/action-types';
 
 const {TOGGLE_SIDE_PANEL, TOGGLE_MODAL, OPEN_DELETE_MODAL} = ActionTypes;
 

@@ -64,9 +64,10 @@ export function addFilter(dataId) {
   };
 }
 
-export function addLayer() {
+export function addLayer(props) {
   return {
-    type: ActionTypes.ADD_LAYER
+    type: ActionTypes.ADD_LAYER,
+    props
   };
 }
 

@@ -38,14 +38,14 @@ import {
  */
 const MAX_SAMPLE_SIZE = 5000;
 
+const layerColors = Object.values(uberDataVizColors).map(hexToRgb);
 function* generateColor() {
   let index = 0;
-  const uberColors = Object.values(uberDataVizColors);
-  while (index < uberColors.length + 1) {
-    if (index === uberColors.length) {
+  while (index < layerColors.length + 1) {
+    if (index === layerColors.length) {
       index = 0;
     }
-    yield hexToRgb(uberColors[index++]);
+    yield layerColors[index++];
   }
 }
 

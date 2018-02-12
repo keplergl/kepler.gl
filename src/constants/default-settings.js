@@ -433,7 +433,7 @@ export const LAYER_CLASSES = {
   [LAYER_TYPES.hexagonId]: 'H3HexagonLayer'
 };
 
-// user should pass in tooltip fields
+// let user pass in default tooltip fields
 export const DEFAULT_TOOLTIP_FIELDS = [];
 
 export const DEFAULT_LIGHT_SETTINGS = {
