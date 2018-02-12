@@ -2,7 +2,7 @@
  * Query, manage and format OpenStreetMap data
  */
 
-import {MAPZEN_API_KEY} from '../constants/default-settings';
+import {MAPZEN_API_KEY} from 'constants/default-settings';
 import {WebMercatorViewport} from 'deck.gl';
 import {extent} from 'd3-array';
 

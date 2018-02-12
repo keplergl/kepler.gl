@@ -1,6 +1,6 @@
 import {taskCreator} from 'react-palm/tasks';
 import request from 'd3-request';
-import {getQueryURL} from '../utils/mapzen-utils';
+import {getQueryURL} from 'utils/mapzen-utils';
 
 /*
  * request vector building tile from Mapzen

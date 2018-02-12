@@ -21,8 +21,9 @@
     ]
   },
   "scripts": {
-    "test": "npm run test-node && npm run test-browser",
+    "test": "npm run test-node",
     "test-node": "NODE_ENV=test babel-tape-runner ./test/node.js | tap-spec",
+    "cover": "nyc --reporter html --reporter cobertura --reporter json-summary npm test",
     "start": "(cd examples/simple-app && (path-exists node_modules || npm i) && npm run start-local)",
     "build": "rm -fr dist && babel src --out-dir dist --plugins=transform-es2015-modules-commonjs --source-maps inline",
     "lint": "eslint src examples/simple-app/src",
@@ -88,7 +89,6 @@
     "simplify-geometry": "0.0.2",
     "styled-components": "^2.2.4",
     "supercluster": "^3.0.0",
-    "tap-spec": "^4.1.1",
     "type-analyzer": "https://registry.npmjs.org/uber-web/-/type-analyzer-0.1.1.tgz",
     "wellknown": "^0.5.0"
   },
@@ -126,7 +126,7 @@
     "file-loader": "^0.9.0",
     "jsdom": "^11.1.0",
     "json-loader": "^0.5.4",
-    "nyc": "10.1.2",
+    "nyc": "^11.4.1",
     "prettier": "^1.7.0",
     "progress-bar-webpack-plugin": "^1.9.3",
     "react": "^15.3.1",
@@ -136,6 +136,7 @@
     "redux-mock-store": "^1.2.1",
     "sinon": "^2.4.1",
     "source-map-loader": "^0.2.1",
+    "tap-spec": "^4.1.1",
     "tape": "4.8.0",
     "tape-catch": "^1.0.6",
     "url-loader": "^0.5.7",
