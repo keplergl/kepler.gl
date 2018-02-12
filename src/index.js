@@ -9,8 +9,11 @@ export * as mapStateUpdaters from 'reducers/map-state-updaters';
 export * as mapStyleUpdaters from 'reducers/map-style-updaters';
 export * as uiStateUpdaters from 'reducers/ui-state-updaters';
 
+// reducer merges
+export * as visStateMergers from 'reducers/vis-state-merger';
+
 // Constants
-export {DIMENSIONS, ALL_FIELD_TYPES} from './constants/default-settings';
+export {DIMENSIONS, ALL_FIELD_TYPES, FIELD_OPTS} from './constants/default-settings';
 
 // Processor
 export * as Processor from 'processor/data-processor';
