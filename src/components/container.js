@@ -1,8 +1,8 @@
 import React, {Component} from 'react';
 import {connect} from 'react-redux';
 import memoize from 'lodash.memoize';
-
-import KeplerGl from './kepler-gl';
+import {injector} from './injector';
+import {keplerGlChildDeps, keplerGlFactory} from './kepler-gl';
 import {forwardTo} from 'actions/action-wrapper';
 
 import {registerEntry, deleteEntry} from 'actions/identity-actions';
@@ -13,49 +13,68 @@ const defaultProps = {
   getState: state => state.keplerGl
 };
 
-class Container extends Component {
-  constructor(props, ctx) {
-    super(props, ctx);
+containerFactory.deps = [keplerGlFactory];
 
-    this.getSelector = memoize((id, getState) => state =>
-      getState(state)[id]
-    );
-    this.getDispatch = memoize((id, dispatch) => forwardTo(id, dispatch));
-  }
+// provide all recipes to injector
+export const appInjector = [
+  containerFactory,
+  ...containerFactory.deps,
+  ...keplerGlFactory.deps,
+  ...keplerGlChildDeps
+].reduce((inj, factory) => inj.provide(factory, factory), injector());
 
-  componentWillMount() {
-    // add a new entry to reducer
-    this.props.dispatch(registerEntry(this.props.id));
-  }
-
-  componentWillReceiveProps(nextProps) {
-    // TODO: need to check if id has changed
-  }
-
-  componentWillUnmount() {
-    // delete entry in reducer
-    this.props.dispatch(deleteEntry(this.props.id));
-  }
-
-  render() {
-    const {id, getState, dispatch} = this.props;
-
-    return (
-      <KeplerGl
-        {...this.props}
-        id={id}
-        selector={this.getSelector(id, getState)}
-        dispatch={this.getDispatch(id, dispatch)}
-      />
-    );
-  }
+// Helper to inject custom components and return kepler.gl container
+export function injectComponents(recipes) {
+  return recipes
+    .reduce((inj, recipe) => inj.provide(...recipe), appInjector)
+    .get(containerFactory);
 }
 
-Container.defaultProps = defaultProps;
+export function containerFactory(KeplerGl) {
+  class Container extends Component {
+    constructor(props, ctx) {
+      super(props, ctx);
 
-const mapStateToProps = (state, props) => props;
-const dispatchToProps = dispatch => ({dispatch});
+      this.getSelector = memoize((id, getState) => state =>
+        getState(state)[id]
+      );
+      this.getDispatch = memoize((id, dispatch) => forwardTo(id, dispatch));
+    }
 
-const ConnectedWrapper = connect(mapStateToProps, dispatchToProps)(Container);
+    componentWillMount() {
+      // add a new entry to reducer
+      this.props.dispatch(registerEntry(this.props.id));
+    }
 
-export default ConnectedWrapper;
+    componentWillReceiveProps(nextProps) {
+      // TODO: need to check if id has changed
+    }
+
+    componentWillUnmount() {
+      // delete entry in reducer
+      this.props.dispatch(deleteEntry(this.props.id));
+    }
+
+    render() {
+      const {id, getState, dispatch} = this.props;
+
+      return (
+        <KeplerGl
+          {...this.props}
+          id={id}
+          selector={this.getSelector(id, getState)}
+          dispatch={this.getDispatch(id, dispatch)}
+        />
+      );
+    }
+  }
+
+  Container.defaultProps = defaultProps;
+  const mapStateToProps = (state, props) => props;
+  const dispatchToProps = dispatch => ({dispatch});
+  return connect(mapStateToProps, dispatchToProps)(Container);
+}
+
+const Container = appInjector.get(containerFactory);
+
+export default Container;

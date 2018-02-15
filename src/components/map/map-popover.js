@@ -264,3 +264,5 @@ function _getCellFormat(type) {
 }
 
 MapPopover.propTypes = propTypes;
+
+export const mapPopoverFactory =  () => MapPopover;

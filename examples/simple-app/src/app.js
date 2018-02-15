@@ -1,7 +1,18 @@
 import React, {Component} from 'react';
 import {connect} from 'react-redux';
 import window from 'global/window';
-import KeplerGl, {KeplerGlSchema, Processor, updateVisDataAndConfiguration, updateVisData} from 'kepler.gl';
+import {KeplerGlSchema, Processor, updateVisDataAndConfiguration, updateVisData} from 'kepler.gl';
+import {injectComponents} from 'kepler.gl/components/container';
+import {withState, visStateLens} from 'kepler.gl/components/injector';
+
+import {PanelHeaderFactory} from 'kepler.gl/components/side-panel/panel-header';
+
+const CustomHeader = ({visState}) => (<div>{`${Object.keys(visState.datasets).length} dataset loaded`}</div>);
+const myCustomHeaderFactory = () => withState([visStateLens], CustomHeader);
+
+const KeplerGl = injectComponents([
+  [PanelHeaderFactory, myCustomHeaderFactory]
+]);
 
 // Sample data
 /* eslint-disable no-unused-vars */

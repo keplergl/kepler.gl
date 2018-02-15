@@ -15,12 +15,12 @@ import * as UIStateActions from 'actions/ui-state-actions';
 
 import {DIMENSIONS, DEFAULT_MAP_STYLES} from 'constants/default-settings';
 
-import SidePanel from './side-panel';
-import MapContainer from './map-container';
-import BottomWidget from './bottom-widget';
-import ModalWrapper from './modal-wrapper';
+import {sidePanelFactory} from './side-panel';
+import {mapContainerFactory} from './map-container';
+import {bottomWidgetFactory} from './bottom-widget';
+import {modalWrapperFactory} from './modal-wrapper';
 
-import {theme} from '../styles/base';
+import {theme} from 'styles/base';
 
 const defaultProps = {
   mapStyles: [],
@@ -56,186 +56,208 @@ const GlobalStyle = styled.div`
   }
 `;
 
-class KeplerGL extends Component {
-  componentDidMount() {
-    this._loadMapStyle(this.props.mapStyles);
-    this._handleResize(this.props);
-  }
+keplerGlFactory.deps = [
+  bottomWidgetFactory,
+  mapContainerFactory,
+  modalWrapperFactory,
+  sidePanelFactory
+];
 
-  componentWillReceiveProps(nextProps) {
-    if (
-      this.props.width !== nextProps.width ||
-      this.props.height !== nextProps.height
-    ) {
-      this._handleResize(nextProps);
+export const keplerGlChildDeps = [
+  ...bottomWidgetFactory.deps,
+  ...sidePanelFactory.deps,
+  ...modalWrapperFactory.deps,
+  ...mapContainerFactory.deps
+];
+
+export function keplerGlFactory(
+  BottomWidget,
+  MapContainer,
+  ModalWrapper,
+  SidePanel
+) {
+  class KeplerGL extends Component {
+    componentDidMount() {
+      this._loadMapStyle(this.props.mapStyles);
+      this._handleResize(this.props);
     }
-  }
 
-  _handleResize({width, height}) {
-    if (!Number.isFinite(width) || !Number.isFinite(height)) {
-      Console.warn('width and height is required');
-      return;
+    componentWillReceiveProps(nextProps) {
+      if (
+        this.props.width !== nextProps.width ||
+        this.props.height !== nextProps.height
+      ) {
+        this._handleResize(nextProps);
+      }
     }
-    this.props.mapStateActions.updateMap({
-      width: width / (1 + Number(this.props.mapState.isSplit)),
-      height
-    });
-  }
 
-  _loadMapStyle() {
-    [...this.props.mapStyles, ...Object.values(DEFAULT_MAP_STYLES)].forEach(
-      style => {
-        if (style.style) {
-          this.props.dispatch(
-            MapStyleActions.loadMapStyles({
-              [style.id]: style
-            })
-          );
-        } else {
-          this._requestMapStyle(style);
+    _handleResize({width, height}) {
+      if (!Number.isFinite(width) || !Number.isFinite(height)) {
+        Console.warn('width and height is required');
+        return;
+      }
+      this.props.mapStateActions.updateMap({
+        width: width / (1 + Number(this.props.mapState.isSplit)),
+        height
+      });
+    }
+
+    _loadMapStyle() {
+      [...this.props.mapStyles, ...Object.values(DEFAULT_MAP_STYLES)].forEach(
+        style => {
+          if (style.style) {
+            this.props.dispatch(
+              MapStyleActions.loadMapStyles({
+                [style.id]: style
+              })
+            );
+          } else {
+            this._requestMapStyle(style);
+          }
         }
-      }
-    );
-  }
-
-  _requestMapStyle(mapStyle) {
-    const {url, id} = mapStyle;
-    request.json(url, (error, result) => {
-      if (error) {
-        Console.warn(`Error loading map style ${mapStyle.url}`);
-      }
-      this.props.dispatch(
-        MapStyleActions.loadMapStyles({
-          [id]: {...mapStyle, style: result}
-        })
       );
-    });
+    }
+
+    _requestMapStyle(mapStyle) {
+      const {url, id} = mapStyle;
+      request.json(url, (error, result) => {
+        if (error) {
+          Console.warn(`Error loading map style ${mapStyle.url}`);
+        }
+        this.props.dispatch(
+          MapStyleActions.loadMapStyles({
+            [id]: {...mapStyle, style: result}
+          })
+        );
+      });
+    }
+
+    render() {
+      const {
+        // props
+        id,
+        buildingData,
+        mapStyle,
+        mapState,
+        uiState,
+        visState,
+
+        // actions,
+        buildingDataActions,
+        visStateActions,
+        mapStateActions,
+        mapStyleActions,
+        uiStateActions
+      } = this.props;
+
+      const {
+        filters,
+        layers,
+        splitMaps, // this will store support for split map view is necessary
+        layerOrder,
+        layerBlending,
+        interactionConfig,
+        datasets,
+        layerData,
+        hoverInfo,
+        clicked
+      } = visState;
+
+      const sideFields = {
+        datasets,
+        filters,
+        layers,
+        layerOrder,
+        interactionConfig,
+        mapStyle,
+        layerBlending,
+        uiState,
+        mapStyleActions,
+        visStateActions,
+        uiStateActions,
+        width: DIMENSIONS.sidePanel.width
+      };
+
+      const mapFields = {
+        buildingData,
+        datasets,
+        mapState,
+        mapStyle,
+        layers,
+        layerOrder,
+        layerData,
+        layerBlending,
+        interactionConfig,
+        hoverInfo,
+        clicked,
+        visStateActions,
+        mapStateActions,
+        buildingDataActions
+      };
+
+      const isSplit = splitMaps && splitMaps.length > 1;
+      const containerW = mapState.width * (Number(isSplit) + 1);
+
+      const mapContainers = !isSplit
+        ? [
+            <MapContainer
+              key={0}
+              index={0}
+              {...mapFields}
+              mapLayers={isSplit ? splitMaps[0].layers : null}
+            />
+          ]
+        : splitMaps.map((settings, index) => (
+            <MapContainer
+              key={index}
+              index={index}
+              {...mapFields}
+              mapLayers={splitMaps[index].layers}
+            />
+          ));
+
+      return (
+        <ThemeProvider theme={theme}>
+          <GlobalStyle
+            style={{position: 'relative'}}
+            className="kepler-gl"
+            id={`kepler-gl__${id}`}
+            innerRef={node => {
+              this.root = node;
+            }}
+          >
+            {!mapState.isFullScreen && <SidePanel {...sideFields} />}
+            <dv className="maps" style={{display: 'flex'}}>
+              {mapContainers}
+            </dv>
+            <BottomWidget
+              filters={filters}
+              datasets={datasets}
+              uiState={uiState}
+              visStateActions={visStateActions}
+              sidePanelWidth={
+                DIMENSIONS.sidePanel.width - DIMENSIONS.sidePanel.margin
+              }
+              containerW={containerW}
+            />
+            <ModalWrapper
+              visState={visState}
+              uiState={uiState}
+              visStateActions={visStateActions}
+              uiStateActions={uiStateActions}
+              rootNode={this.root}
+              containerW={containerW}
+              containerH={mapState.height}
+            />
+          </GlobalStyle>
+        </ThemeProvider>
+      );
+    }
   }
+  KeplerGL.defaultProps = defaultProps;
 
-  render() {
-    const {
-      // props
-      id,
-      buildingData,
-      mapStyle,
-      mapState,
-      uiState,
-      visState,
-
-      // actions,
-      buildingDataActions,
-      visStateActions,
-      mapStateActions,
-      mapStyleActions,
-      uiStateActions
-    } = this.props;
-
-    const {
-      filters,
-      layers,
-      splitMaps, // this will store support for split map view is necessary
-      layerOrder,
-      layerBlending,
-      interactionConfig,
-      datasets,
-      layerData,
-      hoverInfo,
-      clicked
-    } = visState;
-
-    const sideFields = {
-      datasets,
-      filters,
-      layers,
-      layerOrder,
-      interactionConfig,
-      mapStyle,
-      layerBlending,
-      uiState,
-      mapStyleActions,
-      visStateActions,
-      uiStateActions,
-      width: DIMENSIONS.sidePanel.width
-    };
-
-    const mapFields = {
-      buildingData,
-      datasets,
-      mapState,
-      mapStyle,
-      layers,
-      layerOrder,
-      layerData,
-      layerBlending,
-      interactionConfig,
-      hoverInfo,
-      clicked,
-      visStateActions,
-      mapStateActions,
-      buildingDataActions
-    };
-
-    const isSplit = splitMaps && splitMaps.length > 1;
-    const containerW = mapState.width * (Number(isSplit) + 1);
-
-    const mapContainers = !isSplit
-      ? [
-          <MapContainer
-            key={0}
-            index={0}
-            {...mapFields}
-            mapLayers={isSplit ? splitMaps[0].layers : null}
-          />
-        ]
-      : splitMaps.map((settings, index) => (
-          <MapContainer
-            key={index}
-            index={index}
-            {...mapFields}
-            mapLayers={splitMaps[index].layers}
-          />
-        ));
-
-    return (
-      <ThemeProvider theme={theme}>
-        <GlobalStyle
-          style={{position: 'relative'}}
-          className="kepler-gl"
-          id={`kepler-gl__${id}`}
-          innerRef={node => {
-            this.root = node;
-          }}
-        >
-          {!mapState.isFullScreen && <SidePanel {...sideFields} />}
-          <div className="maps" style={{display: 'flex'}}>
-            {mapContainers}
-          </div>
-          <BottomWidget
-            filters={filters}
-            datasets={datasets}
-            uiState={uiState}
-            visStateActions={visStateActions}
-            sidePanelWidth={
-              DIMENSIONS.sidePanel.width - DIMENSIONS.sidePanel.margin
-            }
-            containerW={containerW}
-          />
-          <ModalWrapper
-            visState={visState}
-            uiState={uiState}
-            visStateActions={visStateActions}
-            uiStateActions={uiStateActions}
-            rootNode={this.root}
-            containerW={containerW}
-            containerH={mapState.height}
-          />
-        </GlobalStyle>
-      </ThemeProvider>
-    );
-  }
+  return keplerGlConnect(mapStateToProps, mapDispatchToProps)(KeplerGL);
 }
-
-KeplerGL.defaultProps = defaultProps;
 
 function mapStateToProps(state, props) {
   return {
@@ -290,5 +312,3 @@ function mergeActions(actions, userActions) {
 
   return {...actions, ...overrides};
 }
-
-export default keplerGlConnect(mapStateToProps, mapDispatchToProps)(KeplerGL);

@@ -5,7 +5,8 @@ import DatasetLabel from 'components/common/dataset-label';
 const StyledMsg = styled.div`
   margin-top: 24px;
 `;
-export const DeleteDatasetModal = ({dataset = {}, layers = []}) => {
+
+const DeleteDatasetModal = ({dataset = {}, layers = []}) => {
   // retrieve only layers related to the current dataset
   const currDatasetLayers = layers.filter(
     layer => layer.config.dataId === dataset.id
@@ -20,4 +21,6 @@ export const DeleteDatasetModal = ({dataset = {}, layers = []}) => {
     </div>
   );
 };
+
+export const deleteDatasetModalFactory = () => DeleteDatasetModal;
 export default DeleteDatasetModal;

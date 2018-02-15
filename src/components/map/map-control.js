@@ -332,11 +332,6 @@ class MapControl extends Component {
   }
 }
 
-MapControl.propTypes = propTypes;
-MapControl.defaultProps = defaultProps;
-
-export default MapControl;
-
 const MapControlPanel = ({children, header, onClick}) => (
   <StyledMapControlPanel>
     <StyledMapControlPanelHeader style={{position: 'relative'}}>
@@ -358,3 +353,10 @@ const MapLegendTooltip = ({id, message}) => (
     <span>{message}</span>
   </Tooltip>
 );
+
+MapControl.propTypes = propTypes;
+MapControl.defaultProps = defaultProps;
+
+export default MapControl;
+
+export const mapControlFactory =  () => MapControl;

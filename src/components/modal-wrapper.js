@@ -6,16 +6,16 @@ import {findDOMNode} from 'react-dom';
 import ModalDialog from './common/modal';
 
 // modal
-import DeleteDatasetModal from './modals/delete-data-modal';
-import IconInfoModal from './modals/icon-info-modal';
-import DataTableModal from './modals/data-table-modal';
-import LoadDataModal from './modals/load-data-modal';
+import {deleteDatasetModalFactory} from './modals/delete-data-modal';
+import {iconInfoModalFactory} from './modals/icon-info-modal';
+import {dataTableModalFactory} from './modals/data-table-modal';
+import {loadDataModalFactory} from './modals/load-data-modal';
 
 import {
   DATA_TABLE_ID,
   DELETE_DATA_ID,
   ADD_DATA_ID
-} from '../constants/default-settings';
+} from 'constants/default-settings';
 
 const propTypes = {
   rootNode: PropTypes.object,
@@ -38,106 +38,121 @@ const DeleteDatasetModalStyled = css`
   padding: 40px 40px 32px 40px;
 `;
 
-export default class ModalWrapper extends Component {
-  _closeModal = () => {
-    this.props.uiStateActions.toggleModal(null);
-  };
+modalWrapperFactory.deps = [
+  deleteDatasetModalFactory,
+  iconInfoModalFactory,
+  dataTableModalFactory,
+  loadDataModalFactory
+];
 
-  _deleteDataset = key => {
-    this.props.visStateActions.removeDataset(key);
-    this._closeModal();
-  };
+export function modalWrapperFactory(
+  DeleteDatasetModal,
+  IconInfoModal,
+  DataTableModal,
+  LoadDataModal
+) {
+  class ModalWrapper extends Component {
+    _closeModal = () => {
+      this.props.uiStateActions.toggleModal(null);
+    };
 
-  _onFileUpload = blob => {
-    this.props.visStateActions.loadFiles(blob);
-  };
+    _deleteDataset = key => {
+      this.props.visStateActions.removeDataset(key);
+      this._closeModal();
+    };
 
-  render() {
+    _onFileUpload = blob => {
+      this.props.visStateActions.loadFiles(blob);
+    };
 
-    const {
-      containerW,
-      containerH,
-      uiState,
-      visState,
-      rootNode,
-      visStateActions
-    } = this.props;
-    const {currentModal, datasetKeyToRemove} = uiState;
-    const {datasets, layers, editingDataset} = visState;
+    render() {
+      const {
+        containerW,
+        containerH,
+        uiState,
+        visState,
+        rootNode,
+        visStateActions
+      } = this.props;
+      const {currentModal, datasetKeyToRemove} = uiState;
+      const {datasets, layers, editingDataset} = visState;
 
-    let template = null;
-    let modalProps = {};
+      let template = null;
+      let modalProps = {};
 
-    switch (currentModal) {
-      case 'iconInfo':
-        template = <IconInfoModal />;
-        modalProps.title = 'How to draw icons';
-        break;
+      switch (currentModal) {
+        case 'iconInfo':
+          template = <IconInfoModal />;
+          modalProps.title = 'How to draw icons';
+          break;
 
-      case DATA_TABLE_ID:
-        template = (
-          <DataTableModal
-            width={containerW * 0.9}
-            height={(containerH) * 0.85}
-            datasets={datasets}
-            dataId={editingDataset}
-            showDatasetTable={visStateActions.showDatasetTable}
-          />
-        );
-        modalProps.cssStyle = DataTableModalStyle;
-        break;
-      case DELETE_DATA_ID:
-        // validate options
-        if (datasetKeyToRemove && datasets && datasets[datasetKeyToRemove]) {
+        case DATA_TABLE_ID:
           template = (
-            <DeleteDatasetModal
-              dataset={datasets[datasetKeyToRemove]}
-              layers={layers}
+            <DataTableModal
+              width={containerW * 0.9}
+              height={containerH * 0.85}
+              datasets={datasets}
+              dataId={editingDataset}
+              showDatasetTable={visStateActions.showDatasetTable}
             />
           );
+          modalProps.cssStyle = DataTableModalStyle;
+          break;
+        case DELETE_DATA_ID:
+          // validate options
+          if (datasetKeyToRemove && datasets && datasets[datasetKeyToRemove]) {
+            template = (
+              <DeleteDatasetModal
+                dataset={datasets[datasetKeyToRemove]}
+                layers={layers}
+              />
+            );
 
+            modalProps = {
+              title: 'Delete Dataset',
+              cssStyle: DeleteDatasetModalStyled,
+              footer: true,
+              onConfirm: () => this._deleteDataset(datasetKeyToRemove),
+              onCancel: this._closeModal,
+              confirmButton: {
+                negative: true,
+                large: true,
+                children: 'Delete'
+              }
+            };
+          }
+          break; // in case we add a new case after this one
+        case ADD_DATA_ID:
+          template = (
+            <LoadDataModal
+              onClose={this._closeModal}
+              onFileUpload={this._onFileUpload}
+            />
+          );
           modalProps = {
-            title: 'Delete Dataset',
-            cssStyle: DeleteDatasetModalStyled,
+            title: 'Add Data To Map',
             footer: true,
-            onConfirm: () => this._deleteDataset(datasetKeyToRemove),
-            onCancel: this._closeModal,
-            confirmButton: {
-              negative: true,
-              large: true,
-              children: 'Delete'
-            }
+            onConfirm: this._closeModal
           };
-        }
-        break; // in case we add a new case after this one
-      case ADD_DATA_ID:
-        template = (
-          <LoadDataModal
-            onClose={this._closeModal}
-            onFileUpload={this._onFileUpload}
-          />
-        );
-        modalProps = {
-          title: 'Add Data To Map',
-          footer: true,
-          onConfirm: this._closeModal
-        };
-        break;
-      default:
-        break;
+          break;
+        default:
+          break;
+      }
+
+      return this.props.rootNode ? (
+        <ModalDialog
+          {...modalProps}
+          parentSelector={() => findDOMNode(rootNode)}
+          isOpen={Boolean(currentModal)}
+          close={this._closeModal}
+        >
+          {template}
+        </ModalDialog>
+      ) : null;
     }
-
-    return this.props.rootNode ? (
-      <ModalDialog
-        {...modalProps}
-        parentSelector={() => findDOMNode(rootNode)}
-        isOpen={Boolean(currentModal)}
-        close={this._closeModal}
-      >
-        {template}
-      </ModalDialog>
-    ) : null;
   }
-}
 
-ModalWrapper.propTypes = propTypes;
+  ModalWrapper.propTypes = propTypes;
+
+  return ModalWrapper;
+}

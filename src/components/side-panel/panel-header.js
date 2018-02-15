@@ -112,3 +112,4 @@ PanelHeader.defaultProps = defaultProps;
 PanelHeader.propTypes = propTypes;
 
 export default PanelHeader;
+export const PanelHeaderFactory = () => PanelHeader;

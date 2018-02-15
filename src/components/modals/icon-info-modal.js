@@ -124,3 +124,5 @@ const IconInfoModal = () => (
 );
 
 export default IconInfoModal;
+
+export const iconInfoModalFactory = () => IconInfoModal;
