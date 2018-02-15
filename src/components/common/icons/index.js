@@ -28,6 +28,7 @@ export {default as Play} from './play';
 export {default as Reduce} from './reduce';
 export {default as Reset} from './reset';
 export {default as Save} from './save';
+export {default as Share} from './share';
 export {default as Select} from './select';
 export {default as Settings} from './settings';
 export {default as Search} from './search';

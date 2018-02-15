@@ -25,7 +25,9 @@ import {theme} from 'styles/base';
 const defaultProps = {
   mapStyles: [],
   width: 800,
-  height: 800
+  height: 800,
+  appName: 'Kepler.Gl',
+  version: 'v1.0'
 };
 
 const GlobalStyle = styled.div`
@@ -136,6 +138,11 @@ export function keplerGlFactory(
       const {
         // props
         id,
+        appName,
+        version,
+        onSaveMap,
+
+        // redux state
         buildingData,
         mapStyle,
         mapState,
@@ -164,6 +171,8 @@ export function keplerGlFactory(
       } = visState;
 
       const sideFields = {
+        appName,
+        version,
         datasets,
         filters,
         layers,
@@ -171,6 +180,7 @@ export function keplerGlFactory(
         interactionConfig,
         mapStyle,
         layerBlending,
+        onSaveMap,
         uiState,
         mapStyleActions,
         visStateActions,

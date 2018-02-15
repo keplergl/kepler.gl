@@ -1,6 +1,8 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
+import document from 'global/document';
+import {Blob, URL} from 'global/window';
 
 import Sidebar from './side-panel/side-bar';
 import {PanelHeaderFactory} from './side-panel/panel-header';
@@ -9,6 +11,7 @@ import FilterManager from './side-panel/filter-manager';
 import InteractionManager from './side-panel/interaction-manager';
 import MapManager from './side-panel/map-manager';
 import PanelToggle from './side-panel/panel-toggle';
+import {formatCsv} from 'processor/data-processor';
 
 import {
   PANELS,
@@ -74,8 +77,27 @@ export function sidePanelFactory(PanelHeader) {
       this.props.uiStateActions.openDeleteModal(key);
     };
 
+    _onDownloadCsv = () => {
+      const filename = 'kepler-gl';
+
+      // save multiple csv
+      Object.values(this.props.datasets).forEach(({data, fields, label}) => {
+        const type = 'text/csv';
+        const csv = formatCsv(data, fields);
+        const csvFile = new Blob([csv], {type});
+        const url = URL.createObjectURL(csvFile);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `${filename}_${label}.csv`);
+        link.click();
+        URL.revokeObjectURL(url);
+      });
+    };
+
     render() {
       const {
+        appName,
+        version,
         datasets,
         filters,
         layers,
@@ -133,7 +155,12 @@ export function sidePanelFactory(PanelHeader) {
             minifiedWidth={0}
             onOpenOrClose={this._onOpenOrClose}
           >
-            <PanelHeader/>
+            <PanelHeader
+              appName={appName}
+              version={version}
+              onDownloadData={this._onDownloadCsv}
+              onSaveMap={this.props.onSaveMap}
+            />
             <PanelToggle
               panels={PANELS}
               activePanel={activeSidePanel}
