@@ -17,7 +17,6 @@ const propTypes = {
   fields: PropTypes.array.isRequired,
   id: PropTypes.string.isRequired,
   property: PropTypes.string.isRequired,
-  range: PropTypes.any.isRequired,
   scaleType: PropTypes.string.isRequired,
   showScale: PropTypes.bool.isRequired,
   updateField: PropTypes.func.isRequired,

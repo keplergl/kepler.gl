@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import {connect} from 'react-redux';
 import window from 'global/window';
+
 import {KeplerGlSchema, Processor, updateVisDataAndConfiguration, updateVisData} from 'kepler.gl';
 import {injectComponents} from 'kepler.gl/components/container';
 import {withState, visStateLens} from 'kepler.gl/components/injector';
@@ -89,32 +90,32 @@ class App extends Component {
     // load trip based data with config
     this.props.dispatch(
       updateVisData(
-      // datasets
-      {
-        info: {
-          label: 'Test Trip Data',
-          id: 'test_trip_data'
+        // datasets
+        {
+          info: {
+            label: 'Test Trip Data',
+            id: 'test_trip_data'
+          },
+          data: sampleTripData
         },
-        data: sampleTripData
-      },
-      // option
-      {},
-      // config
-      {
-        filters: [
-          {
-            id: 'me',
-            dataId: 'test_trip_data',
-            name: 'tpep_pickup_datetime',
-            type: 'timeRange',
-            enlarged: true
-          }
-        ]
-      })
+        // option
+        {},
+        // config
+        {
+          filters: [
+            {
+              id: 'me',
+              dataId: 'test_trip_data',
+              name: 'tpep_pickup_datetime',
+              type: 'timeRange',
+              enlarged: true
+            }
+          ]
+        })
     );
 
     // load point based data
-    // this.props.dispatch(updateVisData(sampleData));
+    this.props.dispatch(updateVisData(sampleData));
 
     // load data with h3 hex id
     this.props.dispatch(
@@ -139,12 +140,12 @@ class App extends Component {
     );
 
     // load geojson
-    // this.props.dispatch(
-    //   updateVisData({
-    //     info: {label: 'SF Zip Geo'},
-    //     data: Processor.processGeojson(sampleGeojson)
-    //   })
-    // );
+    this.props.dispatch(
+      updateVisData({
+        info: {label: 'SF Zip Geo'},
+        data: Processor.processGeojson(sampleGeojson)
+      })
+    );
 
     // this._loadConfig();
   }

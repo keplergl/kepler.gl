@@ -416,6 +416,7 @@ export const LAYER_TYPES = keyMirror({
   grid: null,
   geojson: null,
   icon: null,
+  heatmap: null,
   hexagon: null,
   hexagonId: null
 });
@@ -429,6 +430,7 @@ export const LAYER_CLASSES = {
   [LAYER_TYPES.grid]: 'GridLayer',
   [LAYER_TYPES.geojson]: 'GeojsonLayer',
   [LAYER_TYPES.icon]: 'IconLayer',
+  [LAYER_TYPES.heatmap]: 'HeatmapLayer',
   [LAYER_TYPES.hexagon]: 'HexagonLayer',
   [LAYER_TYPES.hexagonId]: 'H3HexagonLayer'
 };

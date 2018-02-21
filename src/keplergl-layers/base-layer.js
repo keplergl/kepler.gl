@@ -1,5 +1,6 @@
 import {hexToRgb} from '../utils/color-utils';
 import {console as Console} from 'global/window';
+import keymirror from 'keymirror';
 
 import {
   ALL_FIELD_TYPES,
@@ -37,6 +38,11 @@ import {
  * @type {number}
  */
 const MAX_SAMPLE_SIZE = 5000;
+
+export const OVERLAY_TYPE = keymirror({
+  deckgl: null,
+  mapboxgl: null
+});
 
 const layerColors = Object.values(uberDataVizColors).map(hexToRgb);
 function* generateColor() {
@@ -93,6 +99,10 @@ export default class Layer {
     this.visConfigSettings = {};
     // layer utility methods
     // this.getLightSettingsFromBounds = getLightSettingsFromBounds;
+  }
+
+  get overlayType() {
+    return OVERLAY_TYPE.deckgl;
   }
 
   get type() {

@@ -1,6 +1,6 @@
 import test from 'tape-catch';
-import Layer from 'kepler.gl/keplergl-layers/base-layer';
-import AggregationLayer from 'kepler.gl/keplergl-layers/aggregation-layer';
+import Layer from 'keplergl-layers/base-layer';
+import AggregationLayer from 'keplergl-layers/aggregation-layer';
 
 test('#BaseLayer -> updateLayerDomain', t => {
 

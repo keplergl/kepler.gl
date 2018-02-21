@@ -36,6 +36,7 @@ import {
 } from './vis-state-merger';
 
 import * as KeplerGLLayers from 'keplergl-layers';
+import * as MapboxGLLayers from 'mapboxgl-layers';
 import {LAYER_CLASSES} from 'constants/default-settings';
 
 export const INITIAL_VIS_STATE = {
@@ -127,7 +128,12 @@ export function layerTypeChangeUpdater(state, action) {
   const oldId = oldLayer.id;
   const idx = state.layers.findIndex(l => l.id === oldId);
 
-  if (!LAYER_CLASSES[newType] || !KeplerGLLayers[LAYER_CLASSES[newType]]) {
+  if (
+    !LAYER_CLASSES[newType] ||
+    !(
+      KeplerGLLayers[LAYER_CLASSES[newType]] ||
+      MapboxGLLayers[LAYER_CLASSES[newType]]
+    )) {
     Console.error(`${newType} is not a valid layer type`);
     return state;
   }
@@ -135,7 +141,8 @@ export function layerTypeChangeUpdater(state, action) {
   // get a mint layer, with new id and type
   // because deck.gl uses id to match between new and old layer.
   // If type has changed but id is the same, it will break
-  const LayerClass = KeplerGLLayers[LAYER_CLASSES[newType]];
+  const LayerClass = KeplerGLLayers[LAYER_CLASSES[newType]] ||
+    MapboxGLLayers[LAYER_CLASSES[newType]];
   const newLayer = new LayerClass();
 
   newLayer.config = newLayer.assignConfigToLayer(

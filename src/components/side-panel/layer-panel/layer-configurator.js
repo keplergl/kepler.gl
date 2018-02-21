@@ -182,6 +182,34 @@ export default class LayerConfigurator extends Component {
     );
   }
 
+  _renderHeatmapLayerConfig({
+                              layer,
+                              visConfiguratorProps,
+                              layerConfiguratorProps,
+                              layerChannelConfigProps
+                            }) {
+    return (
+      <StyledLayerVisualConfigurator>
+        {/* Color */}
+        <LayerConfigGroup label={'color'}>
+          <ColorRangeConfig {...visConfiguratorProps} />
+          <VisConfigSlider
+            {...LAYER_VIS_CONFIGS.opacity}
+            {...visConfiguratorProps}
+          />
+        </LayerConfigGroup>
+
+        {/* Weight */}
+        <LayerConfigGroup label={'weight'}>
+          <ChannelByValueSelector
+            channel={layer.visualChannels.weight}
+            {...layerChannelConfigProps}
+          />
+        </LayerConfigGroup>
+      </StyledLayerVisualConfigurator>
+    );
+  }
+
   _renderGridLayerConfig(props) {
     return this._renderAggregationLayerConfig(props);
   }

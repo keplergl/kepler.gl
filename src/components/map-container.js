@@ -1,5 +1,6 @@
 // libraries
 import React, {Component} from 'react';
+import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import MapboxGLMap from 'react-map-gl';
 import geoViewport from '@mapbox/geo-viewport';
@@ -14,6 +15,9 @@ import {mapControlFactory} from 'components/map/map-control';
 // deckgl layers
 import {PolygonLayer} from 'deck.gl';
 
+// Overlay type
+import {generateMapboxLayers, updateMapboxLayers} from '../mapboxgl-layers/mapbox-utils';
+
 // default-settings
 import {MAPBOX_ACCESS_TOKEN, LAYER_BLENDINGS} from 'constants/default-settings';
 
@@ -25,8 +29,22 @@ const MAP_STYLE = {
     display: 'inline-block',
     position: 'relative'
   },
-  top: {position: 'absolute', top: '0px', pointerEvents: 'none'}
+  top: {
+    position: 'absolute', top: '0px', pointerEvents: 'none'
+  }
 };
+
+
+/**
+ * Newer versions of mapbox.gl display an error message banner on top of the map by default
+ * which will cause the map to display points in the wrong locations
+ * This workaround will hide the error banner.
+ */
+const StyledMapContainer = styled.div`
+  .mapboxgl-map .mapboxgl-missing-css {
+    display: none;
+  }
+`;
 
 const getGlConst = d => GL[d];
 
@@ -47,6 +65,8 @@ const propTypes = {
   onMapToggleLayer: React.PropTypes.func
 };
 
+const MAPBOXGL_STYLE_UPDATE = 'style.load';
+
 mapContainerFactory.deps = [
   mapPopoverFactory,
   mapControlFactory
@@ -61,6 +81,9 @@ export function mapContainerFactory(MapPopover, MapControl) {
         reRenderKey: 0,
         gl: null,
         mousePosition: [0, 0]
+      };
+      this.previousLayers = {
+        // [layers.id]: mapboxLayerConfig
       };
 
       this.loadBuildingTiles = throttle(this.loadBuildingTiles, 100);
@@ -92,6 +115,26 @@ export function mapContainerFactory(MapPopover, MapControl) {
         this.props.mapState !== prevProps.mapState
       ) {
         this.loadBuildingTiles(this.props.mapState);
+      }
+      if (!this._map && this.refs.mapbox) {
+        this._map = this.refs.mapbox.getMap();
+        // bind mapboxgl event listener
+        this._map.on(MAPBOXGL_STYLE_UPDATE, () => {
+          // force refresh mapboxgl layers
+          updateMapboxLayers(
+            this._map,
+            this._renderMapboxLayers(),
+            this.previousLayers,
+            {force: true}
+          );
+        })
+      }
+    }
+
+    componentWillUnmount() {
+      // unbind mapboxgl event listener
+      if (this._map) {
+        this._map.off(MAPBOXGL_STYLE_UPDATE);
       }
     }
 
@@ -276,7 +319,7 @@ export function mapContainerFactory(MapPopover, MapControl) {
           })
       );
     }
-
+    
     _shouldRenderLayer(layer, data, mapLayers) {
       const isAvailableAndVisible =
         !(mapLayers && mapLayers[layer.id]) || mapLayers[layer.id].isVisible;
@@ -312,9 +355,9 @@ export function mapContainerFactory(MapPopover, MapControl) {
       if (!this._shouldRenderLayer(layer, data, mapLayers)) {
         return overlays;
       }
-
+      
       let layerOverlay = [];
-
+      
       // Layer is Layer class
       if (typeof layer.renderLayer === 'function') {
         layerOverlay = layer.renderLayer({
@@ -377,6 +420,34 @@ export function mapContainerFactory(MapPopover, MapControl) {
       );
     }
 
+    _renderMapboxLayers() {
+      const {
+        layers,
+        layerData,
+        layerOrder
+      } = this.props;
+
+      return generateMapboxLayers(layers, layerData, layerOrder);
+    }
+
+    _renderMapboxOverlays() {
+      if (this._map && this._map.isStyleLoaded()) {
+
+        const mapboxLayers = this._renderMapboxLayers();
+
+        updateMapboxLayers(
+          this._map,
+          mapboxLayers,
+          this.previousLayers
+        );
+
+        this.previousLayers = mapboxLayers.reduce((final, layer) => ({
+          ...final,
+          [layer.id]: layer.config
+        }), {})
+      }
+    }
+
     render() {
       const {mapState, mapStyle, mapStateActions} = this.props;
       const {updateMap, onMapClick} = mapStateActions;
@@ -385,7 +456,7 @@ export function mapContainerFactory(MapPopover, MapControl) {
         // style not yet loaded
         return <div/>;
       }
-
+      
       const {mapLayers, layers, datasets, index} = this.props;
 
       const mapProps = {
@@ -396,7 +467,7 @@ export function mapContainerFactory(MapPopover, MapControl) {
       };
 
       return (
-        <div style={MAP_STYLE.container} onMouseMove={this._onMouseMove}>
+        <StyledMapContainer style={MAP_STYLE.container} onMouseMove={this._onMouseMove}>
           <MapControl
             index={index}
             datasets={datasets}
@@ -415,10 +486,12 @@ export function mapContainerFactory(MapPopover, MapControl) {
           <MapboxGLMap
             {...mapProps}
             key="bottom"
+            ref="mapbox"
             mapStyle={mapStyle.bottomMapStyle}
             onClick={onMapClick}
           >
             {this._renderOverlay()}
+            {this._renderMapboxOverlays()}
           </MapboxGLMap>
           {mapStyle.topMapStyle && (
             <div style={MAP_STYLE.top}>
@@ -430,7 +503,7 @@ export function mapContainerFactory(MapPopover, MapControl) {
             </div>
           )}
           {this._renderObjectLayerPopover()}
-        </div>
+        </StyledMapContainer>
       );
     }
   }

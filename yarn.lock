@@ -12,6 +12,12 @@
   dependencies:
     "@mapbox/sphericalmercator" "~1.0.2"
 
+"@mapbox/geojson-area@0.2.2":
+  version "0.2.2"
+  resolved "https://unpm.uberinternal.com/@mapbox%2fgeojson-area/-/geojson-area-0.2.2.tgz#18d7814aa36bf23fbbcc379f8e26a22927debf10"
+  dependencies:
+    wgs84 "0.0.0"
+
 "@mapbox/geojson-coords@0.0.0":
   version "0.0.0"
   resolved "https://unpm.uberinternal.com/@mapbox%2fgeojson-coords/-/geojson-coords-0.0.0.tgz#4847a5b96059666e527a2139e75e35d84fd58f50"
@@ -36,7 +42,15 @@
   version "0.0.1"
   resolved "https://unpm.uberinternal.com/@mapbox%2fgl-matrix/-/gl-matrix-0.0.1.tgz#e5126aab4d64c36b81c7a97d0ae0dddde5773d2b"
 
-"@mapbox/shelf-pack@^3.0.0":
+"@mapbox/mapbox-gl-supported@^1.3.0":
+  version "1.3.0"
+  resolved "https://unpm.uberinternal.com/@mapbox%2fmapbox-gl-supported/-/mapbox-gl-supported-1.3.0.tgz#89daee16845400ea1c76e084bdfab2971e552a9c"
+
+"@mapbox/point-geometry@0.1.0", "@mapbox/point-geometry@^0.1.0", "@mapbox/point-geometry@~0.1.0":
+  version "0.1.0"
+  resolved "https://unpm.uberinternal.com/@mapbox%2fpoint-geometry/-/point-geometry-0.1.0.tgz#8a83f9335c7860effa2eeeca254332aa0aeed8f2"
+
+"@mapbox/shelf-pack@^3.1.0":
   version "3.1.0"
   resolved "https://unpm.uberinternal.com/@mapbox%2fshelf-pack/-/shelf-pack-3.1.0.tgz#1edea9c0bf6715b217171ba60646c201af520f6a"
 
@@ -44,9 +58,19 @@
   version "1.0.5"
   resolved "https://unpm.uberinternal.com/@mapbox%2fsphericalmercator/-/sphericalmercator-1.0.5.tgz#70237b9774095ed1cfdbcea7a8fd1fc82b2691f2"
 
+"@mapbox/tiny-sdf@^1.1.0":
+  version "1.1.0"
+  resolved "https://unpm.uberinternal.com/@mapbox%2ftiny-sdf/-/tiny-sdf-1.1.0.tgz#b0b8f5c22005e6ddb838f421ffd257c1f74f9a20"
+
 "@mapbox/unitbezier@^0.0.0":
   version "0.0.0"
   resolved "https://unpm.uberinternal.com/@mapbox%2funitbezier/-/unitbezier-0.0.0.tgz#15651bd553a67b8581fb398810c98ad86a34524e"
+
+"@mapbox/vector-tile@^1.3.0":
+  version "1.3.0"
+  resolved "https://unpm.uberinternal.com/@mapbox%2fvector-tile/-/vector-tile-1.3.0.tgz#c495f972525befccefcd838f45ffa37ef3b70fe8"
+  dependencies:
+    "@mapbox/point-geometry" "~0.1.0"
 
 "@mapbox/whoots-js@^3.0.0":
   version "3.0.0"
@@ -79,6 +103,10 @@ JSONStream@^1.0.3:
   dependencies:
     jsonparse "^1.2.0"
     through ">=2.2.7 <3"
+
+"JSV@>= 4.0.x":
+  version "4.0.2"
+  resolved "https://unpm.uberinternal.com/JSV/-/JSV-4.0.2.tgz#d077f6825571f82132f9dffaed587b4029feff57"
 
 abab@^1.0.3:
   version "1.0.4"
@@ -179,6 +207,10 @@ ansi-regex@^3.0.0:
 ansi-styles@^2.2.1:
   version "2.2.1"
   resolved "https://unpm.uberinternal.com/ansi-styles/-/ansi-styles-2.2.1.tgz#b432dd3358b634cf75e1e4664368240533c1ddbe"
+
+ansi-styles@~1.0.0:
+  version "1.0.0"
+  resolved "https://unpm.uberinternal.com/ansi-styles/-/ansi-styles-1.0.0.tgz#cb102df1c56f5123eab8b67cd7b98027a0279178"
 
 anymatch@^1.3.0:
   version "1.3.2"
@@ -1073,7 +1105,7 @@ babel-register@^6.24.1, babel-register@^6.26.0, babel-register@^6.3.13:
     mkdirp "^0.5.1"
     source-map-support "^0.4.15"
 
-babel-runtime@^6.18.0, babel-runtime@^6.2.0, babel-runtime@^6.22.0, babel-runtime@^6.26.0:
+babel-runtime@^6.18.0, babel-runtime@^6.2.0, babel-runtime@^6.22.0, babel-runtime@^6.23.0, babel-runtime@^6.26.0:
   version "6.26.0"
   resolved "https://unpm.uberinternal.com/babel-runtime/-/babel-runtime-6.26.0.tgz#965c7058668e82b55d7bfe04ff2337bc8b5647fe"
   dependencies:
@@ -1472,6 +1504,14 @@ chalk@^1.0.0, chalk@^1.1.1, chalk@^1.1.3:
     strip-ansi "^3.0.0"
     supports-color "^2.0.0"
 
+chalk@~0.4.0:
+  version "0.4.0"
+  resolved "https://unpm.uberinternal.com/chalk/-/chalk-0.4.0.tgz#5199a3ddcd0c1efe23bc08c1b027b06176e0c64f"
+  dependencies:
+    ansi-styles "~1.0.0"
+    has-color "~0.1.0"
+    strip-ansi "~0.1.0"
+
 cheerio@^1.0.0-rc.2:
   version "1.0.0-rc.2"
   resolved "https://unpm.uberinternal.com/cheerio/-/cheerio-1.0.0-rc.2.tgz#4b9f53a81b27e4d5dac31c0ffd0cfa03cc6830db"
@@ -1760,6 +1800,10 @@ css-to-react-native@^2.0.3:
 css-what@2.1:
   version "2.1.0"
   resolved "https://unpm.uberinternal.com/css-what/-/css-what-2.1.0.tgz#9467d032c38cfaefb9f2d79501253062f87fa1bd"
+
+csscolorparser@~1.0.2:
+  version "1.0.3"
+  resolved "https://unpm.uberinternal.com/csscolorparser/-/csscolorparser-1.0.3.tgz#b34f391eea4da8f3e98231e2ccd8df9c041f171b"
 
 cssom@0.3.x, "cssom@>= 0.3.2 < 0.4.0":
   version "0.3.2"
@@ -2172,7 +2216,7 @@ duplexer@^0.1.1:
   version "0.1.1"
   resolved "https://unpm.uberinternal.com/duplexer/-/duplexer-0.1.1.tgz#ace6ff808c1ce66b57d1ebf97977acb02334cfc1"
 
-earcut@^2.0.3, earcut@^2.0.6:
+earcut@^2.0.6, earcut@^2.1.3:
   version "2.1.3"
   resolved "https://unpm.uberinternal.com/earcut/-/earcut-2.1.3.tgz#ca579545f351941af7c3d0df49c9f7d34af99b0c"
 
@@ -2613,6 +2657,12 @@ expand-range@^1.8.1:
   dependencies:
     fill-range "^2.1.0"
 
+extend-shallow@^2.0.1:
+  version "2.0.1"
+  resolved "https://unpm.uberinternal.com/extend-shallow/-/extend-shallow-2.0.1.tgz#51af7d614ad9a9f610ea1bafbb989d6b1c56890f"
+  dependencies:
+    is-extendable "^0.1.0"
+
 extend@~3.0.0, extend@~3.0.1:
   version "3.0.1"
   resolved "https://unpm.uberinternal.com/extend/-/extend-3.0.1.tgz#a755ea7bc1adfcc5a31ce7e762dbaadc5e636444"
@@ -2890,12 +2940,6 @@ generate-object-property@^1.1.0:
   dependencies:
     is-property "^1.0.0"
 
-geojson-area@0.1.0:
-  version "0.1.0"
-  resolved "https://unpm.uberinternal.com/geojson-area/-/geojson-area-0.1.0.tgz#d48d807082cfadf4a78df1349be50f38bf1894ae"
-  dependencies:
-    wgs84 "0.0.0"
-
 geojson-flatten@~0.2.1:
   version "0.2.1"
   resolved "https://unpm.uberinternal.com/geojson-flatten/-/geojson-flatten-0.2.1.tgz#476fc6b041e94d016983ec95400f8777bd60c45c"
@@ -2907,17 +2951,17 @@ geojson-normalize@0.0.1:
   version "0.0.1"
   resolved "https://unpm.uberinternal.com/geojson-normalize/-/geojson-normalize-0.0.1.tgz#8e9bc3614dea0402a145c10a518de03e02465a09"
 
-geojson-rewind@^0.1.0:
-  version "0.1.0"
-  resolved "https://unpm.uberinternal.com/geojson-rewind/-/geojson-rewind-0.1.0.tgz#57022a054b196660d755354fe5d26684d90cd019"
+geojson-rewind@^0.3.0:
+  version "0.3.0"
+  resolved "https://unpm.uberinternal.com/geojson-rewind/-/geojson-rewind-0.3.0.tgz#d5c35025fa708910e2da1a97fc23a2e2478a876a"
   dependencies:
-    concat-stream "~1.2.1"
-    geojson-area "0.1.0"
-    minimist "0.0.5"
+    "@mapbox/geojson-area" "0.2.2"
+    concat-stream "~1.6.0"
+    minimist "1.2.0"
 
-geojson-vt@^2.4.0:
-  version "2.4.0"
-  resolved "https://unpm.uberinternal.com/geojson-vt/-/geojson-vt-2.4.0.tgz#3c1cf44493f35eb4d2c70c95da6550de66072c05"
+geojson-vt@^3.0.0:
+  version "3.0.0"
+  resolved "https://unpm.uberinternal.com/geojson-vt/-/geojson-vt-3.0.0.tgz#a24cae5488ab4897e86ca0e4bf0d9760d628ae0a"
 
 get-caller-file@^1.0.1:
   version "1.0.2"
@@ -3045,6 +3089,15 @@ graceful-fs@^4.1.11, graceful-fs@^4.1.2, graceful-fs@^4.1.4:
   version "4.1.11"
   resolved "https://unpm.uberinternal.com/graceful-fs/-/graceful-fs-4.1.11.tgz#0e8bdfe4d1ddb8854d64e04ea7c00e2a026e5658"
 
+gray-matter@^3.0.8:
+  version "3.1.1"
+  resolved "https://unpm.uberinternal.com/gray-matter/-/gray-matter-3.1.1.tgz#101f80d9e69eeca6765cdce437705b18f40876ac"
+  dependencies:
+    extend-shallow "^2.0.1"
+    js-yaml "^3.10.0"
+    kind-of "^5.0.2"
+    strip-bom-string "^1.0.0"
+
 grid-index@^1.0.0:
   version "1.0.0"
   resolved "https://unpm.uberinternal.com/grid-index/-/grid-index-1.0.0.tgz#ad2c5d54ce5b35437faff1d70a9aeb3d1d261110"
@@ -3090,6 +3143,10 @@ has-ansi@^2.0.0:
   resolved "https://unpm.uberinternal.com/has-ansi/-/has-ansi-2.0.0.tgz#34f5049ce1ecdf2b0649af3ef24e45ed35416d91"
   dependencies:
     ansi-regex "^2.0.0"
+
+has-color@~0.1.0:
+  version "0.1.7"
+  resolved "https://unpm.uberinternal.com/has-color/-/has-color-0.1.7.tgz#67144a5260c34fc3cca677d041daf52fe7b78b2f"
 
 has-flag@^1.0.0:
   version "1.0.0"
@@ -3235,7 +3292,7 @@ ignore@^3.2.0:
   version "3.3.7"
   resolved "https://unpm.uberinternal.com/ignore/-/ignore-3.3.7.tgz#612289bfb3c220e186a58118618d5be8c1bab021"
 
-immutable@*:
+immutable@^3.8.2:
   version "3.8.2"
   resolved "https://unpm.uberinternal.com/immutable/-/immutable-3.8.2.tgz#c2439951455bb39913daf281376f1530e104adf3"
 
@@ -3363,7 +3420,7 @@ is-equal-shallow@^0.1.3:
   dependencies:
     is-primitive "^2.0.0"
 
-is-extendable@^0.1.1:
+is-extendable@^0.1.0, is-extendable@^0.1.1:
   version "0.1.1"
   resolved "https://unpm.uberinternal.com/is-extendable/-/is-extendable-0.1.1.tgz#62b110e289a471418e3ec36a617d472e301dfc89"
 
@@ -3578,7 +3635,7 @@ js-tokens@^3.0.0, js-tokens@^3.0.2:
   version "3.0.2"
   resolved "https://unpm.uberinternal.com/js-tokens/-/js-tokens-3.0.2.tgz#9866df395102130e38f7f996bceb65443209c25b"
 
-js-yaml@3.x, js-yaml@^3.5.1:
+js-yaml@3.x, js-yaml@^3.10.0, js-yaml@^3.5.1:
   version "3.10.0"
   resolved "https://unpm.uberinternal.com/js-yaml/-/js-yaml-3.10.0.tgz#2e78441646bd4682e963f22b6e92823c309c62dc"
   dependencies:
@@ -3662,6 +3719,13 @@ jsonify@~0.0.0:
   version "0.0.0"
   resolved "https://unpm.uberinternal.com/jsonify/-/jsonify-0.0.0.tgz#2c74b6ee41d93ca51b7b5aaee8f503631d252a73"
 
+jsonlint-lines-primitives@~1.6.0:
+  version "1.6.0"
+  resolved "https://unpm.uberinternal.com/jsonlint-lines-primitives/-/jsonlint-lines-primitives-1.6.0.tgz#bb89f60c8b9b612fd913ddaa236649b840d86611"
+  dependencies:
+    JSV ">= 4.0.x"
+    nomnom ">= 1.5.x"
+
 jsonparse@^1.2.0:
   version "1.3.1"
   resolved "https://unpm.uberinternal.com/jsonparse/-/jsonparse-1.3.1.tgz#3f4dae4a91fac315f71062f8521cc239f1366280"
@@ -3702,6 +3766,10 @@ kind-of@^4.0.0:
   resolved "https://unpm.uberinternal.com/kind-of/-/kind-of-4.0.0.tgz#20813df3d712928b207378691a45066fae72dd57"
   dependencies:
     is-buffer "^1.1.5"
+
+kind-of@^5.0.2:
+  version "5.1.0"
+  resolved "https://unpm.uberinternal.com/kind-of/-/kind-of-5.1.0.tgz#729c91e2d857b7a419a1f9aa65685c4c33f5845d"
 
 labeled-stream-splicer@^2.0.0:
   version "2.0.0"
@@ -3973,37 +4041,51 @@ magic-string@^0.14.0:
   dependencies:
     vlq "^0.2.1"
 
-mapbox-gl-supported@^1.2.0:
-  version "1.2.0"
-  resolved "https://unpm.uberinternal.com/mapbox-gl-supported/-/mapbox-gl-supported-1.2.0.tgz#cbd34df894206cadda9a33c8d9a4609f26bb1989"
-
-mapbox-gl@0.38.0:
-  version "0.38.0"
-  resolved "https://unpm.uberinternal.com/mapbox-gl/-/mapbox-gl-0.38.0.tgz#64731bb55eabdaa520270815175fcf31e5a3cd80"
+mapbox-gl@0.44:
+  version "0.44.1"
+  resolved "https://unpm.uberinternal.com/mapbox-gl/-/mapbox-gl-0.44.1.tgz#bd4964f71a937c0eca4cc8b00330f2bfcbddc37c"
   dependencies:
     "@mapbox/gl-matrix" "^0.0.1"
-    "@mapbox/shelf-pack" "^3.0.0"
+    "@mapbox/mapbox-gl-supported" "^1.3.0"
+    "@mapbox/point-geometry" "^0.1.0"
+    "@mapbox/shelf-pack" "^3.1.0"
+    "@mapbox/tiny-sdf" "^1.1.0"
     "@mapbox/unitbezier" "^0.0.0"
+    "@mapbox/vector-tile" "^1.3.0"
     "@mapbox/whoots-js" "^3.0.0"
     brfs "^1.4.0"
     bubleify "^0.7.0"
-    earcut "^2.0.3"
-    geojson-rewind "^0.1.0"
-    geojson-vt "^2.4.0"
+    csscolorparser "~1.0.2"
+    earcut "^2.1.3"
+    geojson-rewind "^0.3.0"
+    geojson-vt "^3.0.0"
+    gray-matter "^3.0.8"
     grid-index "^1.0.0"
-    mapbox-gl-supported "^1.2.0"
+    jsonlint-lines-primitives "~1.6.0"
+    minimist "0.0.8"
     package-json-versionify "^1.0.2"
-    pbf "^1.3.2"
-    point-geometry "^0.0.0"
+    pbf "^3.0.5"
     quickselect "^1.0.0"
-    supercluster "^2.0.1"
+    rw "^1.3.3"
+    shuffle-seed "^1.1.6"
+    sort-object "^0.3.2"
+    supercluster "^2.3.0"
     through2 "^2.0.3"
     tinyqueue "^1.1.0"
     unassertify "^2.0.0"
     unflowify "^1.0.0"
-    vector-tile "^1.3.0"
-    vt-pbf "^2.0.2"
-    webworkify "^1.4.0"
+    vt-pbf "^3.0.1"
+    webworkify "^1.5.0"
+
+math.gl@^1.0.0:
+  version "1.0.2"
+  resolved "https://unpm.uberinternal.com/math.gl/-/math.gl-1.0.2.tgz#b714c0d0f68b787c90ba026dad38e104a3e004d9"
+  dependencies:
+    gl-mat4 "^1.1.4"
+    gl-quat "^1.0.0"
+    gl-vec2 "^1.0.0"
+    gl-vec3 "^1.0.3"
+    gl-vec4 "^1.0.1"
 
 md5-hex@^1.2.0:
   version "1.3.0"
@@ -4122,13 +4204,19 @@ minimist@0.0.8:
   version "0.0.8"
   resolved "https://unpm.uberinternal.com/minimist/-/minimist-0.0.8.tgz#857fcabfc3397d2625b8228262e86aa7a011b05d"
 
-minimist@^1.1.0, minimist@^1.1.3, minimist@^1.2.0, minimist@~1.2.0:
+minimist@1.2.0, minimist@^1.1.0, minimist@^1.1.3, minimist@^1.2.0, minimist@~1.2.0:
   version "1.2.0"
   resolved "https://unpm.uberinternal.com/minimist/-/minimist-1.2.0.tgz#a35008b20f41383eec1fb914f4cd5df79a264284"
 
 minimist@~0.0.1:
   version "0.0.10"
   resolved "https://unpm.uberinternal.com/minimist/-/minimist-0.0.10.tgz#de3f98543dbf96082be48ad1a0c7cda836301dcf"
+
+mjolnir.js@^1.0.0:
+  version "1.0.1"
+  resolved "https://unpm.uberinternal.com/mjolnir.js/-/mjolnir.js-1.0.1.tgz#0ce2389c18e8de00a402b3ff4b91aaee0b2a6dc6"
+  dependencies:
+    hammerjs "^2.0.8"
 
 mkdirp@0.5.x, "mkdirp@>=0.5 0", mkdirp@^0.5.0, mkdirp@^0.5.1, mkdirp@~0.5.0:
   version "0.5.1"
@@ -4244,6 +4332,13 @@ node-pre-gyp@^0.6.39:
     semver "^5.3.0"
     tar "^2.2.1"
     tar-pack "^3.4.0"
+
+"nomnom@>= 1.5.x":
+  version "1.8.1"
+  resolved "https://unpm.uberinternal.com/nomnom/-/nomnom-1.8.1.tgz#2151f722472ba79e50a76fc125bb8c8f2e4dc2a7"
+  dependencies:
+    chalk "~0.4.0"
+    underscore "~1.6.0"
 
 nomnom@~1.6.2:
   version "1.6.2"
@@ -4612,9 +4707,9 @@ path-type@^1.0.0:
     pify "^2.0.0"
     pinkie-promise "^2.0.0"
 
-pbf@^1.3.2:
-  version "1.3.7"
-  resolved "https://unpm.uberinternal.com/pbf/-/pbf-1.3.7.tgz#1e3d047ba3cbe8086ae854a25503ab4537d4335d"
+pbf@^3.0.5:
+  version "3.1.0"
+  resolved "https://unpm.uberinternal.com/pbf/-/pbf-3.1.0.tgz#f70004badcb281761eabb1e76c92f179f08189e9"
   dependencies:
     ieee754 "^1.1.6"
     resolve-protobuf-schema "^2.0.0"
@@ -4674,10 +4769,6 @@ pluralize@^1.2.1:
 pn@^1.0.0:
   version "1.1.0"
   resolved "https://unpm.uberinternal.com/pn/-/pn-1.1.0.tgz#e2f4cef0e219f463c179ab37463e4e1ecdccbafb"
-
-point-geometry@0.0.0, point-geometry@^0.0.0:
-  version "0.0.0"
-  resolved "https://unpm.uberinternal.com/point-geometry/-/point-geometry-0.0.0.tgz#6fcbcad7a803b6418247dd6e49c2853c584daff7"
 
 postcss-value-parser@^3.3.0:
   version "3.3.0"
@@ -4922,16 +5013,18 @@ react-hot-loader@^3.0.0-beta.6:
     redbox-react "^1.3.6"
     source-map "^0.6.1"
 
-react-map-gl@3.0.0-beta.3:
-  version "3.0.0-beta.3"
-  resolved "https://unpm.uberinternal.com/react-map-gl/-/react-map-gl-3.0.0-beta.3.tgz#ea9dbbc1198c49031a62da0f2d3a6b0587c0577d"
+react-map-gl@^3.2.1:
+  version "3.2.4"
+  resolved "https://unpm.uberinternal.com/react-map-gl/-/react-map-gl-3.2.4.tgz#5e384c49e9b1a9adaf6553661816fa0a6400fdd7"
   dependencies:
+    babel-runtime "^6.23.0"
     bowser "^1.2.0"
-    hammerjs "^2.0.8"
-    immutable "*"
-    mapbox-gl "0.38.0"
+    immutable "^3.8.2"
+    mapbox-gl "0.44"
+    math.gl "^1.0.0"
+    mjolnir.js "^1.0.0"
     prop-types "^15.5.7"
-    viewport-mercator-project "^4.0.1"
+    viewport-mercator-project "^5.0.0"
 
 react-modal@^3.1.10:
   version "3.1.10"
@@ -5374,7 +5467,7 @@ run-async@^0.1.0:
   dependencies:
     once "^1.3.0"
 
-rw@1:
+rw@1, rw@^1.3.3:
   version "1.3.3"
   resolved "https://unpm.uberinternal.com/rw/-/rw-1.3.3.tgz#3f862dfa91ab766b14885ef4d01124bfda074fb4"
 
@@ -5403,6 +5496,10 @@ schema-utils@^0.3.0:
   resolved "https://unpm.uberinternal.com/schema-utils/-/schema-utils-0.3.0.tgz#f5877222ce3e931edae039f17eb3716e7137f8cf"
   dependencies:
     ajv "^5.0.0"
+
+seedrandom@^2.4.2:
+  version "2.4.3"
+  resolved "https://unpm.uberinternal.com/seedrandom/-/seedrandom-2.4.3.tgz#2438504dad33917314bff18ac4d794f16d6aaecc"
 
 seer@^0.2.2, seer@^0.2.3:
   version "0.2.3"
@@ -5477,6 +5574,12 @@ shelljs@^0.7.5:
     interpret "^1.0.0"
     rechoir "^0.6.2"
 
+shuffle-seed@^1.1.6:
+  version "1.1.6"
+  resolved "https://unpm.uberinternal.com/shuffle-seed/-/shuffle-seed-1.1.6.tgz#533c12683bab3b4fa3e8751fc4e562146744260b"
+  dependencies:
+    seedrandom "^2.4.2"
+
 signal-exit@^3.0.0, signal-exit@^3.0.1, signal-exit@^3.0.2:
   version "3.0.2"
   resolved "https://unpm.uberinternal.com/signal-exit/-/signal-exit-3.0.2.tgz#b5fdc08f1287ea1178628e415e25132b73646c6d"
@@ -5521,6 +5624,21 @@ sntp@2.x.x:
   resolved "https://unpm.uberinternal.com/sntp/-/sntp-2.1.0.tgz#2c6cec14fedc2222739caf9b5c3d85d1cc5a2cc8"
   dependencies:
     hoek "4.x.x"
+
+sort-asc@^0.1.0:
+  version "0.1.0"
+  resolved "https://unpm.uberinternal.com/sort-asc/-/sort-asc-0.1.0.tgz#ab799df61fc73ea0956c79c4b531ed1e9e7727e9"
+
+sort-desc@^0.1.1:
+  version "0.1.1"
+  resolved "https://unpm.uberinternal.com/sort-desc/-/sort-desc-0.1.1.tgz#198b8c0cdeb095c463341861e3925d4ee359a9ee"
+
+sort-object@^0.3.2:
+  version "0.3.2"
+  resolved "https://unpm.uberinternal.com/sort-object/-/sort-object-0.3.2.tgz#98e0d199ede40e07c61a84403c61d6c3b290f9e2"
+  dependencies:
+    sort-asc "^0.1.0"
+    sort-desc "^0.1.1"
 
 source-list-map@^2.0.0:
   version "2.0.0"
@@ -5735,6 +5853,14 @@ strip-ansi@^4.0.0:
   dependencies:
     ansi-regex "^3.0.0"
 
+strip-ansi@~0.1.0:
+  version "0.1.1"
+  resolved "https://unpm.uberinternal.com/strip-ansi/-/strip-ansi-0.1.1.tgz#39e8a98d044d150660abe4a6808acf70bb7bc991"
+
+strip-bom-string@^1.0.0:
+  version "1.0.0"
+  resolved "https://unpm.uberinternal.com/strip-bom-string/-/strip-bom-string-1.0.0.tgz#e5211e9224369fbb81d633a2f00044dc8cedad92"
+
 strip-bom@^2.0.0:
   version "2.0.0"
   resolved "https://unpm.uberinternal.com/strip-bom/-/strip-bom-2.0.0.tgz#6219a85616520491f35788bdbf1447a99c7e6b0e"
@@ -5776,7 +5902,7 @@ subarg@^1.0.0:
   dependencies:
     minimist "^1.1.0"
 
-supercluster@^2.0.1:
+supercluster@^2.3.0:
   version "2.3.0"
   resolved "https://unpm.uberinternal.com/supercluster/-/supercluster-2.3.0.tgz#87ab56081bbea9a1d724df5351ee9e8c3af2f48b"
   dependencies:
@@ -6094,6 +6220,10 @@ underscore@~1.4.4:
   version "1.4.4"
   resolved "https://unpm.uberinternal.com/underscore/-/underscore-1.4.4.tgz#61a6a32010622afa07963bf325203cf12239d604"
 
+underscore@~1.6.0:
+  version "1.6.0"
+  resolved "https://unpm.uberinternal.com/underscore/-/underscore-1.6.0.tgz#8b38b10cacdef63337b8b24e4ff86d45aea529a8"
+
 unflowify@^1.0.0:
   version "1.0.1"
   resolved "https://unpm.uberinternal.com/unflowify/-/unflowify-1.0.1.tgz#a2ea0d25c0affcc46955e6473575f7c5a1f4a696"
@@ -6152,12 +6282,6 @@ validate-npm-package-license@^3.0.1:
     spdx-correct "~1.0.0"
     spdx-expression-parse "~1.0.0"
 
-vector-tile@^1.1.3, vector-tile@^1.3.0:
-  version "1.3.0"
-  resolved "https://unpm.uberinternal.com/vector-tile/-/vector-tile-1.3.0.tgz#06d516a83b063f04c82ef539cf1bb1aebeb696b4"
-  dependencies:
-    point-geometry "0.0.0"
-
 verror@1.10.0:
   version "1.10.0"
   resolved "https://unpm.uberinternal.com/verror/-/verror-1.10.0.tgz#3a105ca17053af55d6e270c1f8288682e18da400"
@@ -6166,14 +6290,11 @@ verror@1.10.0:
     core-util-is "1.0.2"
     extsprintf "^1.2.0"
 
-viewport-mercator-project@^4.0.1:
-  version "4.1.1"
-  resolved "https://unpm.uberinternal.com/viewport-mercator-project/-/viewport-mercator-project-4.1.1.tgz#92b0611fa0041041d2f3568da3529a8a846017d0"
+viewport-mercator-project@^5.0.0:
+  version "5.0.0"
+  resolved "https://unpm.uberinternal.com/viewport-mercator-project/-/viewport-mercator-project-5.0.0.tgz#d18709dad652581108a6dd58f320409491d40982"
   dependencies:
-    gl-mat4 "^1.1.4"
-    gl-vec2 "^1.0.0"
-    gl-vec3 "^1.0.3"
-    gl-vec4 "^1.0.1"
+    math.gl "^1.0.0"
 
 vlq@^0.2.1:
   version "0.2.3"
@@ -6185,13 +6306,13 @@ vm-browserify@0.0.4, vm-browserify@~0.0.1:
   dependencies:
     indexof "0.0.1"
 
-vt-pbf@^2.0.2:
-  version "2.1.4"
-  resolved "https://unpm.uberinternal.com/vt-pbf/-/vt-pbf-2.1.4.tgz#b5df7c3f9706156e0b9881a99dcb05635740b522"
+vt-pbf@^3.0.1:
+  version "3.1.0"
+  resolved "https://unpm.uberinternal.com/vt-pbf/-/vt-pbf-3.1.0.tgz#d7e63f585b362cbff6b84fcd052c159112e0acc7"
   dependencies:
-    pbf "^1.3.2"
-    point-geometry "0.0.0"
-    vector-tile "^1.1.3"
+    "@mapbox/point-geometry" "0.1.0"
+    "@mapbox/vector-tile" "^1.3.0"
+    pbf "^3.0.5"
 
 warning@^3.0.0:
   version "3.0.0"
@@ -6283,7 +6404,7 @@ webpack@^2.6.1:
     webpack-sources "^1.0.1"
     yargs "^6.0.0"
 
-webworkify@^1.4.0:
+webworkify@^1.5.0:
   version "1.5.0"
   resolved "https://unpm.uberinternal.com/webworkify/-/webworkify-1.5.0.tgz#734ad87a774de6ebdd546e1d3e027da5b8f4a42c"
 

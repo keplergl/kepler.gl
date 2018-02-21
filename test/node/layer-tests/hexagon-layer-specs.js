@@ -3,10 +3,10 @@ import {
   testCreateCases,
   testFormatLayerDataCases
 } from '../test-utils/layer-utils';
-import {HexagonLayer} from '../../../shared/kepler.gl/keplergl-layers';
+import {HexagonLayer} from 'keplergl-layers';
 
-import {processCsvData} from '../../../../utils/data-utils';
-import csvData, {testFields} from '../../../../../test/fixtures/test-csv-data';
+import {processCsvData} from 'processor/data-processor';
+import csvData, {testFields} from '../../fixtures/test-csv-data';
 
 test('#HexagonLayer -> constructor', t => {
   const TEST_CASES = {

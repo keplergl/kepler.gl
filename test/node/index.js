@@ -20,3 +20,6 @@ import './schemas/schema-conversion-test';
 
 // test mergers
 import './reducers/vis-state-merger-test';
+
+// test layers
+import './layer-tests/index';

@@ -247,5 +247,16 @@ export const LAYER_VIS_CONFIGS = {
     label: 'Show Wireframe',
     group: PROPERTY_GROUPS.display,
     property: 'wireframe'
+  },
+  // used for heatmap
+  weight: {
+    type: 'number',
+    defaultValue: 1,
+    label: 'Weight',
+    isRanged: false,
+    range: [0.01, 500],
+    step: 0.01,
+    group: PROPERTY_GROUPS.cell,
+    property: 'weight'
   }
 };

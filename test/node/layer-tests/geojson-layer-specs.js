@@ -1,10 +1,10 @@
 import test from 'tape';
 import {testCreateCases, testFormatLayerDataCases} from '../test-utils/layer-utils';
-import {GeojsonLayer} from '../../../shared/kepler.gl/keplergl-layers';
+import {GeojsonLayer} from 'keplergl-layers';
 
-import {processCsvData} from '../../../../utils/data-utils';
+import {processCsvData} from 'processor/data-processor';
 import {wktCsv, updatedLayerSimplifiedShape, updatedLayerV2}
-from '../../../../../test/fixtures/test-csv-data';
+from '../../fixtures/test-csv-data';
 
 test('#GeojsonLayer -> constructor', t => {
   const TEST_CASES = {
