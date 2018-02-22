@@ -5,9 +5,9 @@
   "description": "kepler.gl is a webgl based application to visualize large scale location data in the browser",
   "main": "dist/index.js",
   "engines": {
-    "node": "8.7.0",
-    "npm": "5.4.2",
-    "yarn": "0.27.5"
+    "node": "^8.7.0",
+    "npm": "^5.4.2",
+    "yarn": "^0.27.5"
   },
   "keywords": [
     "babel",
