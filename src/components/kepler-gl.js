@@ -15,10 +15,10 @@ import * as UIStateActions from 'actions/ui-state-actions';
 
 import {DIMENSIONS, DEFAULT_MAP_STYLES} from 'constants/default-settings';
 
-import {sidePanelFactory} from './side-panel';
-import {mapContainerFactory} from './map-container';
-import {bottomWidgetFactory} from './bottom-widget';
-import {modalWrapperFactory} from './modal-wrapper';
+import SidePanelFactory from './side-panel';
+import MapContainerFactory from './map-container';
+import BottomWidgetFactory from './bottom-widget';
+import ModalContainerFactory from './modal-container';
 
 import {theme} from 'styles/base';
 
@@ -55,24 +55,25 @@ const GlobalStyle = styled.div`
 
   a {
     text-decoration: none;
+    color: ${props => props.theme.labelColor};
   }
 `;
 
-keplerGlFactory.deps = [
-  bottomWidgetFactory,
-  mapContainerFactory,
-  modalWrapperFactory,
-  sidePanelFactory
-];
-
 export const keplerGlChildDeps = [
-  ...bottomWidgetFactory.deps,
-  ...sidePanelFactory.deps,
-  ...modalWrapperFactory.deps,
-  ...mapContainerFactory.deps
+  ...BottomWidgetFactory.deps,
+  ...SidePanelFactory.deps,
+  ...ModalContainerFactory.deps,
+  ...MapContainerFactory.deps
 ];
 
-export function keplerGlFactory(
+KeplerGlFactory.deps = [
+  BottomWidgetFactory,
+  MapContainerFactory,
+  ModalContainerFactory,
+  SidePanelFactory
+];
+
+function KeplerGlFactory(
   BottomWidget,
   MapContainer,
   ModalWrapper,
@@ -237,9 +238,9 @@ export function keplerGlFactory(
             }}
           >
             {!mapState.isFullScreen && <SidePanel {...sideFields} />}
-            <dv className="maps" style={{display: 'flex'}}>
+            <div className="maps" style={{display: 'flex'}}>
               {mapContainers}
-            </dv>
+            </div>
             <BottomWidget
               filters={filters}
               datasets={datasets}
@@ -264,6 +265,7 @@ export function keplerGlFactory(
       );
     }
   }
+
   KeplerGL.defaultProps = defaultProps;
 
   return keplerGlConnect(mapStateToProps, mapDispatchToProps)(KeplerGL);
@@ -273,7 +275,7 @@ function mapStateToProps(state, props) {
   return {
     ...props,
     visState: state.visState,
-    buildingData: state.buildingData.buildingData,
+    buildingData: (state.buildingData || {}).buildingData,
     mapStyle: state.mapStyle,
     mapState: state.mapState,
     uiState: state.uiState
@@ -322,3 +324,5 @@ function mergeActions(actions, userActions) {
 
   return {...actions, ...overrides};
 }
+
+export default KeplerGlFactory;

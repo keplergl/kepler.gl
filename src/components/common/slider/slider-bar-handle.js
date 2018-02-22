@@ -82,8 +82,8 @@ class SliderHandle extends React.Component {
     return (
       <StyledSlider
         active={this.state.mouseOver}
-        className={classnames('range-slider__bar', {
-          'range-slider__bar--active': this.state.mouseOver
+        className={classnames('kg-range-slider__bar', {
+          'kg-range-slider__bar--active': this.state.mouseOver
         })}
         style={{
           width: `${this.props.width}%`,

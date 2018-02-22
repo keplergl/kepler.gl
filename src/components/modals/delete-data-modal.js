@@ -6,7 +6,7 @@ const StyledMsg = styled.div`
   margin-top: 24px;
 `;
 
-const DeleteDatasetModal = ({dataset = {}, layers = []}) => {
+export const DeleteDatasetModal = ({dataset = {}, layers = []}) => {
   // retrieve only layers related to the current dataset
   const currDatasetLayers = layers.filter(
     layer => layer.config.dataId === dataset.id
@@ -22,5 +22,5 @@ const DeleteDatasetModal = ({dataset = {}, layers = []}) => {
   );
 };
 
-export const deleteDatasetModalFactory = () => DeleteDatasetModal;
-export default DeleteDatasetModal;
+const DeleteDatasetModalFactory = () => DeleteDatasetModal;
+export default DeleteDatasetModalFactory;

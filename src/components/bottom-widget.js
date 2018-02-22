@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import TimeWidget from './filters/time-widget';
+import TimeWidgetFactory from './filters/time-widget';
 
 const propsTypes = {
   filters: PropTypes.array,
@@ -13,10 +13,9 @@ const propsTypes = {
 
 const MaxWidth = 1080;
 
-export const TimeWidgetFactory = () => TimeWidget;
-bottomWidgetFactory.deps = [TimeWidgetFactory];
+BottomWidgetFactory.deps = [TimeWidgetFactory];
 
-export function bottomWidgetFactory(BottomTimeWidget) {
+export default function BottomWidgetFactory(TimeWidget) {
 
   class BottomWidget extends Component {
     render() {
@@ -40,7 +39,7 @@ export function bottomWidgetFactory(BottomTimeWidget) {
       }
 
       return (
-        <BottomTimeWidget
+        <TimeWidget
           fields={datasets[filters[enlargedFilterIdx].dataId].fields}
           setFilterPlot={visStateActions.setFilterPlot}
           setFilter={visStateActions.setFilter}

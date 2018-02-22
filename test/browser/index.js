@@ -1,0 +1,2 @@
+// component tests
+import './components';

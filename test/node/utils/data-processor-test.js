@@ -7,7 +7,7 @@ import {
   parseCsvDataByFieldType,
   processCsvData,
   processGeojson
-} from 'processor/data-processor';
+} from 'processors/data-processor';
 
 import {
   ALL_FIELD_TYPES

@@ -86,7 +86,7 @@ const AnimationSpeedToggle = ({updateAnimationSpeed, speed}) => (
   </Tabs>
 );
 
-class TimeWidget extends Component {
+export class TimeWidget extends Component {
   fieldSelector = props => props.fields;
   yAxisFieldsSelector = createSelector(this.fieldSelector, fields =>
     fields.filter(f => f.type === 'integer' || f.type === 'real')
@@ -152,4 +152,5 @@ class TimeWidget extends Component {
   }
 }
 
-export default TimeWidget;
+const TimeWidgetFactory = () => TimeWidget;
+export default TimeWidgetFactory;

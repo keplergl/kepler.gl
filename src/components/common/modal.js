@@ -72,7 +72,7 @@ const CloseButton = styled.div`
   }
 `;
 
-const ModalTitle = styled.div`
+export const ModalTitle = styled.div`
   font-size: ${props => props.theme.modalTitleFontSize};
   color: ${props => props.theme.modalTitleColor};
   margin-bottom: 10px;
@@ -80,7 +80,7 @@ const ModalTitle = styled.div`
   z-index: 10003;
 `;
 
-const ModalFooter = styled.div`
+const StyledModalFooter = styled.div`
   width: 100%;
   left: 0;
   bottom: 0;
@@ -88,10 +88,6 @@ const ModalFooter = styled.div`
   flex-direction: column;
   justify-content: flex-end;
   padding-top: 36px;
-  //padding-bottom: 64px;
-  //background-color: ${props => props.theme.modalFooterBgd};
-  //height: 234px;
-  //position: absolute;
   z-index: 10001;
 `;
 
@@ -103,22 +99,29 @@ const ModalContent = styled.div`
 const FooterActionWrapper = styled.div`
   display: flex;
   justify-content: flex-end;
-  //padding-right: 96px;
 `;
 
-const Footer = ({cancel, confirm, cancelButton, confirmButton}) => (
-  <ModalFooter className="modal--footer">
-    <FooterActionWrapper>
-      <Button {...cancelButton} onClick={cancel}>
-        {cancelButton.children}
-      </Button>
-      <Button {...confirmButton} onClick={confirm}>
-        {confirmButton.children}
-      </Button>
-    </FooterActionWrapper>
-  </ModalFooter>
-);
-
+export const ModalFooter = ({
+  cancel,
+  confirm,
+  cancelButton,
+  confirmButton
+}) => {
+  const cancelButtonProps = {...defaultProps.cancelButton, cancelButton};
+  const confirmButtonProps = {...defaultProps.confirmButton, confirmButton};
+  return (
+    <StyledModalFooter className="modal--footer">
+      <FooterActionWrapper>
+        <Button {...cancelButtonProps} onClick={cancel}>
+          {cancelButtonProps.children}
+        </Button>
+        <Button {...confirmButtonProps} onClick={confirm}>
+          {confirmButtonProps.children}
+        </Button>
+      </FooterActionWrapper>
+    </StyledModalFooter>
+  );
+}
 class ModalDialog extends Component {
   render() {
     const {props} = this;
@@ -150,7 +153,7 @@ class ModalDialog extends Component {
           ) : null}
           <ModalContent className="content">{props.children}</ModalContent>
           {props.footer ? (
-            <Footer
+            <ModalFooter
               cancel={props.close}
               confirm={props.onConfirm}
               cancelButton={props.cancelButton}

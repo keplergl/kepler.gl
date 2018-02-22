@@ -10,7 +10,7 @@ import {
 } from 'utils/layer-utils/layer-utils';
 
 import {findPointFieldPairs} from 'utils/dataset-utils';
-import {processCsvData} from 'processor/data-processor';
+import {processCsvData} from 'processors/data-processor';
 import {GEOJSON_FIELDS} from 'constants/default-settings';
 import {PointLayer, ArcLayer, GeojsonLayer, GridLayer} from 'keplergl-layers';
 

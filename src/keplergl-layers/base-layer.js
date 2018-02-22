@@ -11,7 +11,7 @@ import {
   FIELD_OPTS,
   SCALE_FUNC
 } from '../constants/default-settings';
-import {uberDataVizColors} from '../constants/uber-viz-colors';
+import {DataVizColors} from 'constants/custom-color-ranges';
 import {LAYER_VIS_CONFIGS} from './layer-factory';
 
 import {
@@ -44,7 +44,7 @@ export const OVERLAY_TYPE = keymirror({
   mapboxgl: null
 });
 
-const layerColors = Object.values(uberDataVizColors).map(hexToRgb);
+const layerColors = Object.values(DataVizColors).map(hexToRgb);
 function* generateColor() {
   let index = 0;
   while (index < layerColors.length + 1) {

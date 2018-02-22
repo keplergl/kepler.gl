@@ -11,9 +11,7 @@ import {
   getDefaultfilter
 } from 'utils/filter-utils';
 
-import {processCsvData} from 'processor/data-processor';
-
-import {histogramBins, enlargedHistogramBins} from 'utils/filter-utils';
+import {processCsvData} from 'processors/data-processor';
 
 /* eslint-disable max-statements */
 test('filterUtils -> adjustValueToFilterDomain', t => {

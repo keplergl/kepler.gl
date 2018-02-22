@@ -10,12 +10,11 @@ class Share extends React.Component {
     height: PropTypes.string
   };
 
-  getDefaultProps() {
-    return {
-      height: '16px',
-      predefinedClassName: 'data-ex-icons-share'
-    };
-  }
+  defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-share'
+  };
+
   render() {
     return (
       <Base {...this.props}>

@@ -174,7 +174,7 @@ export default class PointLayer extends Layer {
       pickable: true,
       updateTriggers: {
         getRadius: {
-          sizeField: this.config.colorField,
+          sizeField: this.config.sizeField,
           radiusRange: this.config.visConfig.radiusRange,
           fixedRadius: this.config.visConfig.fixedRadius,
           sizeScale: this.config.sizeScale

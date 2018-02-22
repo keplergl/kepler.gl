@@ -130,7 +130,7 @@ export default class RangeSlider extends Component {
 
     return (
       <SliderInput
-        className="range-slider__input"
+        className="kg-range-slider__input"
         type="number"
         innerRef={comp => {
           this[`input-${key}`] = comp;
@@ -173,7 +173,7 @@ export default class RangeSlider extends Component {
     const plotWidth =  width - sliderHandleWidth;
 
     return (
-      <div className="range-slider" style={{width: '100%', padding: '0 6px'}}
+      <div className="kg-range-slider" style={{width: '100%', padding: '0 6px'}}
          ref={comp => {
            this.sliderContainer = comp;
          }}>
@@ -196,7 +196,7 @@ export default class RangeSlider extends Component {
         ) : null}
         <SliderWrapper
           style={{height}}
-          className="range-slider__slider">
+          className="kg-range-slider__slider">
           {this.props.xAxis ? <this.props.xAxis width={plotWidth} domain={range}/> : null}
           <Slider
             showValues={false}

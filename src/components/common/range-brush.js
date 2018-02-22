@@ -98,7 +98,7 @@ export default class RangeBrush extends React.Component {
   }
 
   render() {
-    return <StyledG className="range-slider__brush"
+    return <StyledG className="kg-range-slider__brush"
                     innerRef={comp => {
       this.rootContainer = comp;
     }}/>;

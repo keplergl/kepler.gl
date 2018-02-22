@@ -1,7 +1,7 @@
 {
   "name": "@uber/kepler.gl",
   "author": "Shan He <shan@uber.com>",
-  "version": "0.0.2-8",
+  "version": "0.0.2-9",
   "description": "kepler.gl is a webgl based application to visualize large scale location data in the browser",
   "main": "dist/index.js",
   "engines": {
@@ -17,14 +17,15 @@
     "sourceMap": false,
     "instrument": false,
     "exclude": [
-      "src/test/**/*.js"
+      "test/**/*.js"
     ]
   },
   "scripts": {
-    "test": "npm run test-node",
+    "test": "npm run test-node && npm run test-browser",
+    "test-browser": "NODE_ENV=test babel-tape-runner -r ./test/setup-browser-env.js ./test/browser.js | tap-spec",
     "test-node": "NODE_ENV=test babel-tape-runner ./test/node.js | tap-spec",
-    "cover": "nyc --reporter html --reporter cobertura --reporter json-summary npm test",
-    "start": "(cd examples/simple-app && (path-exists node_modules || npm i) && npm run start-local)",
+    "cover": "nyc --reporter html --reporter cobertura --reporter json-summary npm test && nyc report",
+    "start": "(cd examples/demo-app && (path-exists node_modules || npm i) && npm run start-local)",
     "build": "rm -fr dist && babel src --out-dir dist --plugins=transform-es2015-modules-commonjs --source-maps inline",
     "lint": "eslint src examples/simple-app/src",
     "prepublish": "npm run build"
@@ -89,7 +90,7 @@
     "simplify-geometry": "0.0.2",
     "styled-components": "^2.2.4",
     "supercluster": "^3.0.0",
-    "type-analyzer": "https://registry.npmjs.org/uber-web/-/type-analyzer-0.1.1.tgz",
+    "type-analyzer": "https://registry.npmjs.org/uber-web/-/type-analyzer-0.1.2.tgz",
     "wellknown": "^0.5.0"
   },
   "devDependencies": {

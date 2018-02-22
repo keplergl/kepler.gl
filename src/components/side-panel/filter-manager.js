@@ -11,7 +11,7 @@ import SourceDataCatalog from './source-data-catalog';
 import FilterPanel from './filter-panel/filter-panel';
 
 const propTypes = {
-  datasets: PropTypes.array,
+  datasets: PropTypes.object,
   addFilter: PropTypes.func.isRequired,
   removeFilter: PropTypes.func.isRequired,
   enlargeFilter: PropTypes.func.isRequired,

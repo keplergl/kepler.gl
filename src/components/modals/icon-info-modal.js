@@ -97,7 +97,7 @@ const IconTable = styled.div`
   flex-wrap: wrap;
 `;
 
-const IconInfoModal = () => (
+export const IconInfoModal = () => (
   <div className="icon-info-modal">
     <div className="icon-info-modal__description">
       <span>
@@ -123,6 +123,5 @@ const IconInfoModal = () => (
   </div>
 );
 
-export default IconInfoModal;
-
-export const iconInfoModalFactory = () => IconInfoModal;
+const IconInfoModalFactory = () => IconInfoModal;
+export default IconInfoModalFactory;

@@ -5,13 +5,13 @@ import document from 'global/document';
 import {Blob, URL} from 'global/window';
 
 import Sidebar from './side-panel/side-bar';
-import {PanelHeaderFactory} from './side-panel/panel-header';
+import PanelHeaderFactory from './side-panel/panel-header';
 import LayerManager from './side-panel/layer-manager';
 import FilterManager from './side-panel/filter-manager';
 import InteractionManager from './side-panel/interaction-manager';
 import MapManager from './side-panel/map-manager';
 import PanelToggle from './side-panel/panel-toggle';
-import {formatCsv} from 'processor/data-processor';
+import {formatCsv} from 'processors/data-processor';
 
 import {
   PANELS,
@@ -46,13 +46,13 @@ const PanelTitle = styled.div`
   margin-bottom: 14px;
 `;
 
-sidePanelFactory.deps = [PanelHeaderFactory];
+SidePanelFactory.deps = [PanelHeaderFactory];
 
 /**
  *
  * Vertical sidebar containing input components for the rendering layers
  */
-export function sidePanelFactory(PanelHeader) {
+export default function SidePanelFactory(PanelHeader) {
 
   class SidePanel extends Component {
     /* component private functions */

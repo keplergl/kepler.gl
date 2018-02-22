@@ -38,6 +38,19 @@ const StyledMapPopover = styled.div`
 
   table {
     margin: 2px 12px 12px 12px;
+    width: auto;
+    
+    tbody {
+      border-top: transparent;
+      border-bottom: transparent;
+    }
+  
+    td {
+      border-color: transparent;
+      padding: 4px;
+      color: ${props => props.theme.textColor};
+    }
+    
     td.row__value {
       text-align: right;
       font-weight: 500;
@@ -72,7 +85,7 @@ const StyledLayerName = CenterFlexbox.extend`
   }
 `;
 
-export default class MapPopover extends Component {
+export class MapPopover extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -265,4 +278,5 @@ function _getCellFormat(type) {
 
 MapPopover.propTypes = propTypes;
 
-export const mapPopoverFactory =  () => MapPopover;
+const MapPopoverFactory =  () => MapPopover;
+export default MapPopoverFactory;

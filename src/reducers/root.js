@@ -3,7 +3,7 @@ import {handleActions} from 'redux-actions';
 import {actionFor, updateProperty} from '../actions/action-wrapper';
 import coreReducer from './core';
 
-import {REGISTER_ENTRY, DELETE_ENTRY} from '../actions/identity-actions';
+import {REGISTER_ENTRY, DELETE_ENTRY, RENAME_ENTRY} from '../actions/identity-actions';
 
 import {keplerGlInit} from '../actions/actions';
 /*
@@ -18,19 +18,27 @@ const handleRegisterEntry = (state, {payload: id}) => ({
   // register a new entry to voyager reducer
   ...state,
   [id]: {
-    ...coreReducer(undefined, keplerGlInit(id))
+    ...coreReducer(undefined, keplerGlInit())
   }
 });
 
-const handleDeleteEntry = (state, {payload: id}) => {
-  return Object.keys(state).reduce(
+const handleDeleteEntry = (state, {payload: id}) =>
+  Object.keys(state).reduce(
     (accu, curr) => ({
       ...accu,
       ...(curr === id ? {} : {[curr]: state[curr]})
     }),
     {}
   );
-};
+
+const handleRenameEntry = (state, {payload: [oldId, newId]}) =>
+  Object.keys(state).reduce(
+    (accu, curr) => ({
+      ...accu,
+      ...{[curr === oldId ? newId : curr]: state[curr]}
+    }),
+    {}
+  );
 
 const keplerGlReducer = (state = initialCoreState, action) => {
   // update child states
@@ -43,7 +51,8 @@ const keplerGlReducer = (state = initialCoreState, action) => {
   return handleActions(
     {
       [REGISTER_ENTRY]: handleRegisterEntry,
-      [DELETE_ENTRY]: handleDeleteEntry
+      [DELETE_ENTRY]: handleDeleteEntry,
+      [RENAME_ENTRY]: handleRenameEntry
     },
     initialCoreState
   )(state, action);

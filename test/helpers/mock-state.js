@@ -1,6 +1,6 @@
 import Immutable from 'immutable';
 import cloneDeep from 'lodash.clonedeep';
-import {UberVizColorPalette} from 'constants/uber-viz-colors';
+import {VizColorPalette} from 'constants/custom-color-ranges';
 
 import keplerGlReducer from 'reducers/core';
 import * as VisStateActions from 'actions/vis-state-actions';
@@ -132,7 +132,7 @@ function mockStateWithLayerDimensions(state) {
 
   const colorRangePayload = [
     layer0,
-    {colorRange: UberVizColorPalette.find(c => c.name === 'Uber Viz Sequential 2')},
+    {colorRange: VizColorPalette.find(c => c.name === 'Uber Viz Sequential 2')},
     'color'
   ];
 

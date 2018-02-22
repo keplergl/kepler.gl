@@ -1,16 +1,13 @@
 import React from 'react';
-import test from 'tape-catch';
-import {mount, configure} from 'enzyme';
+import test from 'tape';
+import {mount} from 'enzyme';
 
-// required by enzymev3
-import Adapter from 'enzyme-adapter-react-15.4';
-configure({adapter: new Adapter()});
-
-import DataTableModal, {DatasetTabs, DatasetModalTab} from
-  '../../../src/components/modals/data-table-modal';
+import DataTableModalFactory, {DatasetTabs, DatasetModalTab} from
+  'components/modals/data-table-modal';
 import ReactDataGrid from 'react-data-grid/dist/react-data-grid.min';
 
-import {testFields, testAllData} from '../../fixtures/test-csv-data';
+const DataTableModal = DataTableModalFactory();
+import {testFields, testAllData} from 'test/fixtures/test-csv-data';
 
 /* eslint-disable max-statements */
 test('Components -> DataTableModal.render', t => {

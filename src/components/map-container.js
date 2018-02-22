@@ -9,8 +9,8 @@ import {GL} from 'luma.gl';
 import throttle from 'lodash.throttle';
 
 // components
-import {mapPopoverFactory} from 'components/map/map-popover';
-import {mapControlFactory} from 'components/map/map-control';
+import MapPopoverFactory from 'components/map/map-popover';
+import MapControlFactory from 'components/map/map-control';
 
 // deckgl layers
 import {PolygonLayer} from 'deck.gl';
@@ -64,15 +64,11 @@ const propTypes = {
   mapLayers: React.PropTypes.object,
   onMapToggleLayer: React.PropTypes.func
 };
-
 const MAPBOXGL_STYLE_UPDATE = 'style.load';
+MapContainerFactory.deps = [
+  MapPopoverFactory, MapControlFactory];
 
-mapContainerFactory.deps = [
-  mapPopoverFactory,
-  mapControlFactory
-];
-
-export function mapContainerFactory(MapPopover, MapControl) {
+export default function MapContainerFactory(MapPopover, MapControl) {
   class MapContainer extends Component {
     constructor(props) {
       super(props);

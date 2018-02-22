@@ -26,6 +26,7 @@ export const subtextColorActive = '#FFFFFF';
 
 export const titleTextColor = '#FFFFFF';
 export const textColorHl = '#D3D8E0';
+export const textColorHlLT = '#F1F1F1';
 export const activeColor = '#1FBAD6';
 export const activeColorHover = '#108188';
 export const errorColor = '#F9042C';
@@ -112,6 +113,7 @@ export const selectBackgroundHover = inputBgdHover;
 export const selectBackgroundLT = '#FFFFFF';
 export const selectBackgroundHoverLT = '#F8F8F9';
 export const selectBorderColor = '#D3D8E0';
+export const selectBorderColorLT = '#D3D8E0';
 export const selectBorderRadius = '1px';
 export const selectBorder = 0;
 
@@ -130,6 +132,7 @@ export const sideBarCloseBtnBgdHover = secondaryBtnActBgd;
 export const panelBackground = '#29323C';
 export const panelBackgroundHover = '#3A4552';
 export const panelActiveBg = '#3A4552';
+export const panelActiveBgLT = '#6A7485';
 export const panelHeaderIcon = '#6A7485';
 export const panelHeaderIconActive = '#A0A7B4';
 export const panelHeaderHeight = 48;
@@ -292,6 +295,29 @@ const inlineInput = css`
   :focus {
     background-color: transparent;
     border: 1px solid ${props => props.theme.inputBorderActiveColor};
+  }
+`;
+
+const inputLT = css`
+  ${input}
+  background-color: ${props => props.theme.selectBackgroundLT};
+  border: 1px solid
+  ${props =>
+  props.active
+    ? props.theme.selectActiveBorderColor
+    : props.error
+    ? props.theme.errorColor
+    : props.theme.selectBorderColorLT};
+  color: ${props => props.theme.selectColorLT};
+  
+  ::-webkit-input-placeholder {
+    color: ${props => props.theme.subtextColorLT};
+    font-weight: 400;
+  }
+  
+  :hover {
+    cursor: pointer;
+    background-color: ${props => props.theme.selectBackgroundHoverLT};
   }
 `;
 
@@ -588,6 +614,7 @@ export const theme = {
   selectBorder,
   selectBorderColor,
   selectBorderRadius,
+  selectBorderColorLT,
   selectColor,
   selectColorPlaceHolder,
   selectFontSize,
@@ -713,4 +740,14 @@ export const theme = {
 
   // Plot
   rangeBrushBgd
+};
+
+export const themeLT = {
+  ...theme,
+
+  // template
+  input: inputLT,
+  panelActiveBg: panelActiveBgLT,
+  textColor: textColorLT,
+  textColorHl: textColorHlLT
 };

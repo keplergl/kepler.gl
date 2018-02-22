@@ -1,11 +1,16 @@
 import React, {Component} from 'react';
 import {connect} from 'react-redux';
 import memoize from 'lodash.memoize';
+import {console as Console} from 'global/window';
 import {injector} from './injector';
-import {keplerGlChildDeps, keplerGlFactory} from './kepler-gl';
+import KeplerGlFactory, {keplerGlChildDeps} from './kepler-gl';
 import {forwardTo} from 'actions/action-wrapper';
 
-import {registerEntry, deleteEntry} from 'actions/identity-actions';
+import {
+  registerEntry,
+  deleteEntry,
+  renameEntry
+} from 'actions/identity-actions';
 
 // default id and address if not provided
 const defaultProps = {
@@ -13,31 +18,35 @@ const defaultProps = {
   getState: state => state.keplerGl
 };
 
-containerFactory.deps = [keplerGlFactory];
+export const errorMsg = {
+  noState:
+    `kepler.gl state doesnt exist. ` +
+    `You might forget to mount keplerGlReducer in your root reducer.` +
+    `If it is not mounted as state.keplerGl by default, you need to provide getState as a prop`,
 
-// provide all recipes to injector
-export const appInjector = [
-  containerFactory,
-  ...containerFactory.deps,
-  ...keplerGlFactory.deps,
-  ...keplerGlChildDeps
-].reduce((inj, factory) => inj.provide(factory, factory), injector());
+  wrongType: type => `injectComponents takes an array of factories replacement pairs as input, ` +
+    `${type} is provided`,
 
-// Helper to inject custom components and return kepler.gl container
-export function injectComponents(recipes) {
-  return recipes
-    .reduce((inj, recipe) => inj.provide(...recipe), appInjector)
-    .get(containerFactory);
-}
+  wrongPairType: `injectComponents takes an array of factories replacement pairs as input, ` +
+  `each pair be a array as [originalFactory, replacement]`
+};
 
-export function containerFactory(KeplerGl) {
+ContainerFactory.deps = [KeplerGlFactory];
+
+export function ContainerFactory(KeplerGl) {
   class Container extends Component {
     constructor(props, ctx) {
       super(props, ctx);
 
-      this.getSelector = memoize((id, getState) => state =>
-        getState(state)[id]
-      );
+      this.getSelector = memoize((id, getState) => state => {
+        if (!getState(state)) {
+          // log error
+          Console.error(errorMsg.noState);
+
+          return null;
+        }
+        return getState(state)[id];
+      });
       this.getDispatch = memoize((id, dispatch) => forwardTo(id, dispatch));
     }
 
@@ -47,7 +56,10 @@ export function containerFactory(KeplerGl) {
     }
 
     componentWillReceiveProps(nextProps) {
-      // TODO: need to check if id has changed
+      // check if id has changed, if true, copy state over
+      if (nextProps.id !== this.props.id) {
+        this.props.dispatch(renameEntry(this.props.id, nextProps));
+      }
     }
 
     componentWillUnmount() {
@@ -56,13 +68,19 @@ export function containerFactory(KeplerGl) {
     }
 
     render() {
-      const {id, getState, dispatch} = this.props;
+      const {id, getState, dispatch, state} = this.props;
+      const selector = this.getSelector(id, getState);
+
+      if (!selector || !selector(state)) {
+        // instance state hasn't been mounted yet
+        return <div />;
+      }
 
       return (
         <KeplerGl
           {...this.props}
           id={id}
-          selector={this.getSelector(id, getState)}
+          selector={selector}
           dispatch={this.getDispatch(id, dispatch)}
         />
       );
@@ -70,11 +88,37 @@ export function containerFactory(KeplerGl) {
   }
 
   Container.defaultProps = defaultProps;
-  const mapStateToProps = (state, props) => props;
+  const mapStateToProps = (state, props) => ({state, ...props});
   const dispatchToProps = dispatch => ({dispatch});
   return connect(mapStateToProps, dispatchToProps)(Container);
 }
 
-const Container = appInjector.get(containerFactory);
+// provide all recipes to injector
+export const appInjector = [
+  ContainerFactory,
+  ...ContainerFactory.deps,
+  ...KeplerGlFactory.deps,
+  ...keplerGlChildDeps
+].reduce((inj, factory) => inj.provide(factory, factory), injector());
 
-export default Container;
+// Helper to inject custom components and return kepler.gl container
+export function injectComponents(recipes) {
+  if (!Array.isArray(recipes)) {
+    Console.error(errorMsg.wrongType(typeof(recipes)));
+    return appInjector.get(ContainerFactory);
+  }
+
+  return recipes
+    .reduce((inj, recipe) => {
+      if (!Array.isArray(recipes)) {
+        Console.error(errorMsg.wrongPairType);
+        return inj;
+      }
+      return inj.provide(...recipe);
+    }, appInjector)
+    .get(ContainerFactory);
+}
+
+const InjectedContainer = appInjector.get(ContainerFactory);
+
+export default InjectedContainer;

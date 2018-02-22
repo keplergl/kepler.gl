@@ -1,7 +1,6 @@
 import colorbrewer from 'colorbrewer';
-import {SEQ, QUA, DIV, UberVizColorPalette} from './uber-viz-colors';
+import {SEQ, QUA, DIV, VizColorPalette} from './custom-color-ranges';
 
-// Uber branded' color schemes
 const colorBrewerMap = {
   YlGn: SEQ,
   YlGnBu: SEQ,
@@ -40,7 +39,7 @@ const colorBrewerMap = {
   Set3: QUA
 };
 
-const colorRanges = [...UberVizColorPalette];
+const colorRanges = [...VizColorPalette];
 
 // Add colorbrewer color schemes (Data Science requirement)
 // See http://colorbrewer2.org/
@@ -60,3 +59,7 @@ for (const [keyName, colorScheme] of entries(colorbrewer)) {
 }
 
 export const COLOR_RANGES = colorRanges;
+
+export const DefaultColorRange = colorRanges.find(
+  ({name}) => name === 'Global Warming'
+);

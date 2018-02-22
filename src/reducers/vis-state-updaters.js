@@ -26,7 +26,7 @@ import {
   calculateLayerData
 } from 'utils/layer-utils/layer-utils';
 
-import {getFileHandler} from 'processor/file-handler';
+import {getFileHandler} from 'processors/file-handler';
 
 import {
   mergeFilters,

@@ -2,11 +2,11 @@ import test from 'tape';
 import {
   testCreateCases,
   testFormatLayerDataCases
-} from '../test-utils/layer-utils';
-import {PointLayer} from 'keplergl-layers';
+} from 'test/helpers/layer-utils';
+import csvData, {testFields} from 'test/fixtures/test-csv-data';
 
-import {processCsvData} from 'processor/data-processor';
-import csvData, {testFields} from '../../fixtures/test-csv-data';
+import {PointLayer} from 'keplergl-layers';
+import {processCsvData} from 'processors/data-processor';
 
 test('#PointLayer -> constructor', t => {
   const TEST_CASES = {
@@ -126,12 +126,12 @@ test('#PointLayer -> formatLayerData', async t => {
         }
       },
       updates: [
-        {method: 'layerConfigChangeUpdater', args: [{colorField: testFields[6]}]},
+        {method: 'updateLayerConfig', args: [{colorField: testFields[6]}]},
         {
           method: 'updateLayerVisualChannel',
           args: [{data: dataWithNull, allData: allDataWithNull}, 'color']
         },
-        {method: 'layerConfigChangeUpdater', args: [{sizeField: testFields[6]}]},
+        {method: 'updateLayerConfig', args: [{sizeField: testFields[6]}]},
         {
           method: 'updateLayerVisualChannel',
           args: [{data: dataWithNull, allData: allDataWithNull}, 'size']

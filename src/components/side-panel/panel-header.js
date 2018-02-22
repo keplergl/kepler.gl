@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import {Tooltip} from 'components/common/styled-components';
 import KeplerGlLogo from 'components/common/logo';
-import {Email, Docs, Save, Layers, Share} from 'components/common/icons';
+import {Save, Layers, Share} from 'components/common/icons';
 import PanelDropdown from 'components/side-panel/panel-dropdown';
 
 const StyledPanelHeader = styled.div.attrs({
@@ -40,11 +40,19 @@ const StyledPanelAction = styled.div.attrs({
   justify-content: center;
   margin-left: 4px;
   width: 26px;
-
+  
+  a {
+    height: 20px;
+  }
+  
   :hover {
     cursor: pointer;
     background-color: ${props => props.theme.secondaryBtnActBgd};
     color: ${props => props.theme.textColorHl};
+    
+    a {
+      color: ${props => props.theme.textColorHl};
+    }
   }
 `;
 
@@ -56,15 +64,17 @@ const StyledPanelDropdown = styled.div`
   position: absolute;
   transition: ${props => props.theme.transitionSlow};
   display: flex;
-  margin-top: ${props => (props.show ? '6px' : '20px')};
-  opacity: ${props => (props.show ? 1 : 0)};
+  margin-top: ${props => props.show ? '6px' : '20px'};
+  opacity: ${props => props.show ? 1 : 0};
   transform: translateX(calc(-50% + 20px));
-
+  pointer-events:  ${props => props.show ? 'all' : 'none'};
+  
   .save-export-dropdown__inner {
     box-shadow: none;
     background-color: transparent;
     display: flex;
   }
+
   .save-export-dropdown__item {
     align-items: center;
     border-right: 1px solid ${props => props.theme.panelHeaderIcon};
@@ -95,8 +105,11 @@ const propTypes = {
 };
 
 export const PanelAction = ({item, onClick}) => (
-  <StyledPanelAction data-tip data-for={`${item.id}-action`} onClick={onClick}>
-    <item.iconComponent height="20px" />
+  <StyledPanelAction className="side-panel__panel-header__action"
+    data-tip data-for={`${item.id}-action`} onClick={onClick}>
+    <a target={item.blank ? '_blank' : ''} href={item.href}>
+      <item.iconComponent height="20px" />
+    </a>
     <Tooltip
       id={`${item.id}-action`}
       place="bottom"
@@ -130,7 +143,7 @@ export const SaveExportDropdown = ({
           <div className="save-export-dropdown__item" onClick={(e) => {
             e.stopPropagation();
             onClose();
-            onDownloadData();
+            onSaveMap();
           }}>
             <Share height="16px" />
             <div className="save-export-dropdown__title">Save Map Url</div>
@@ -142,18 +155,6 @@ export const SaveExportDropdown = ({
 };
 
 const defaultActionItems = [
-  {
-    id: 'email',
-    iconComponent: Email,
-    tooltip: 'Email us',
-    onClick: () => {}
-  },
-  {
-    id: 'docs',
-    iconComponent: Docs,
-    tooltip: 'Documentation',
-    onClick: () => {}
-  },
   {
     id: 'save',
     iconComponent: Save,
@@ -168,63 +169,67 @@ const defaultProps = {
   actionItems: defaultActionItems
 };
 
-class PanelHeader extends Component {
-  state = {
-    dropdown: null
-  };
+function PanelHeaderFactory() {
+  class PanelHeader extends Component {
+    state = {
+      dropdown: null
+    };
 
-  showDropdown = id => {
-    this.setState({dropdown: id});
-  };
+    showDropdown = id => {
+      this.setState({dropdown: id});
+    };
 
-  hideDropdown = () => {
-    this.setState({dropdown: null});
-  };
+    hideDropdown = () => {
+      this.setState({dropdown: null});
+    };
 
-  render() {
-    const {
-      appName,
-      version,
-      actionItems,
-      onSaveMap,
-      onDownloadData
-    } = this.props;
-    return (
-      <StyledPanelHeader>
-        <StyledPanelHeaderTop>
-          <this.props.logoComponent appName={appName} version={version} />
-          <StyledPanelTopActions>
-            {actionItems.map(item => (
-              <div key={item.id} style={{position: 'relative'}}>
-                <PanelAction
-                  item={item}
-                  onClick={() => {
-                    if (item.dropdownComponent) {
-                      this.showDropdown(item.id);
-                    }
+    render() {
+      const {
+        appName,
+        version,
+        actionItems,
+        onSaveMap,
+        onDownloadData
+      } = this.props;
+      return (
+        <StyledPanelHeader className="side-panel__panel-header">
+          <StyledPanelHeaderTop className="side-panel__panel-header__top">
+            <this.props.logoComponent appName={appName} version={version}/>
+            <StyledPanelTopActions>
+              {actionItems.map(item => (
+                <div className="side-panel__panel-header__right"
+                  key={item.id} style={{position: 'relative'}}>
+                  <PanelAction
+                    item={item}
+                    onClick={() => {
+                      if (item.dropdownComponent) {
+                        this.showDropdown(item.id);
+                      }
 
-                    item.onClick();
-                  }}
-                />
-                {item.dropdownComponent ? (
-                  <item.dropdownComponent
-                    onClose={this.hideDropdown}
-                    show={this.state.dropdown === item.id}
-                    onSaveMap={onSaveMap}
-                    onDownloadData={onDownloadData}
+                      item.onClick();
+                    }}
                   />
-                ) : null}
-              </div>
-            ))}
-          </StyledPanelTopActions>
-        </StyledPanelHeaderTop>
-      </StyledPanelHeader>
-    );
+                  {item.dropdownComponent ? (
+                    <item.dropdownComponent
+                      onClose={this.hideDropdown}
+                      show={this.state.dropdown === item.id}
+                      onSaveMap={onSaveMap}
+                      onDownloadData={onDownloadData}
+                    />
+                  ) : null}
+                </div>
+              ))}
+            </StyledPanelTopActions>
+          </StyledPanelHeaderTop>
+        </StyledPanelHeader>
+      );
+    }
   }
+
+  PanelHeader.defaultProps = defaultProps;
+  PanelHeader.propTypes = propTypes;
+
+  return PanelHeader;
 }
 
-PanelHeader.defaultProps = defaultProps;
-PanelHeader.propTypes = propTypes;
-
-export default PanelHeader;
-export const PanelHeaderFactory = () => PanelHeader;
+export default PanelHeaderFactory;

@@ -27,9 +27,9 @@ function makeLocalDevConfig(EXAMPLE_DIR = LIB_DIR) {
     resolve: {
       alias: {
         // For importing modules that are not exported at root
-        'kepler.gl/dist': SRC_DIR,
+        '@uber/kepler.gl/dist': SRC_DIR,
         // Imports the kepler.gl library from the src directory in this repo
-        'kepler.gl': SRC_DIR,
+        '@uber/kepler.gl': SRC_DIR,
         react: resolve(LIB_DIR, './node_modules/react')
       }
     },

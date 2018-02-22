@@ -22,16 +22,19 @@ const withLocalSelector = ParentComponent => {
       super(props, ctx);
 
       this.selector = computeSelector(props, ctx);
+      this.id = props.id;
     }
 
     getChildContext() {
       return {
-        selector: this.selector
+        selector: this.selector,
+        id: this.id
       };
     }
 
     componentWillReceiveProps(nextProps, nextContext) {
       this.selector = computeSelector(nextProps, nextContext);
+      this.id = nextProps.id;
     }
 
     render() {
@@ -40,11 +43,13 @@ const withLocalSelector = ParentComponent => {
   }
 
   WithConnectSelector.contextTypes = {
-    selector: PropTypes.func
+    selector: PropTypes.func,
+    id: PropTypes.string
   };
 
   WithConnectSelector.childContextTypes = {
-    selector: PropTypes.func
+    selector: PropTypes.func,
+    id: PropTypes.string
   };
 
   return WithConnectSelector;

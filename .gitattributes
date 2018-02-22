@@ -1,1 +1,2 @@
 dist/**/* binary
+dist/**/* diff=nodiff

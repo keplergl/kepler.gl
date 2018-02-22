@@ -15,11 +15,13 @@ const PanelHeaderBottom = styled.div.attrs({
   background-color: ${props => props.theme.sidePanelHeaderBg};
   padding: 0 16px;
   display: flex;
+  min-height: 30px;
 `;
 
 const PanelTab = styled.div.attrs({
   className: 'side-panel__tab'
 })`
+  align-items: flex-end;
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: ${props =>
@@ -27,11 +29,11 @@ const PanelTab = styled.div.attrs({
   color: ${props =>
   props.active ? props.theme.subtextColorActive : props.theme.subtextColor};
   display: flex;
-  height: 30px;
   justify-content: center;
   margin-right: 12px;
+  padding-bottom: 6px;
   width: 30px;
-
+  
   :hover {
     cursor: pointer;
     color: ${props => props.theme.textColorHl};

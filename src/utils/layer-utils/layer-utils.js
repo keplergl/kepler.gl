@@ -16,13 +16,13 @@ import {hexToRgb} from 'utils/color-utils';
 
 import * as KeplerGLLayers from 'keplergl-layers';
 
-import {uberDataVizColors} from 'constants/uber-viz-colors';
+import {DataVizColors} from 'constants/custom-color-ranges';
 
 const DEFAULT_LAYER_COLOR = {
-  tripArc: uberDataVizColors.aqua,
-  begintrip_lat: uberDataVizColors.orchid,
-  dropoff_lat: uberDataVizColors.tree_poppy,
-  request_lat: uberDataVizColors.portage
+  tripArc: DataVizColors.aqua,
+  begintrip_lat: DataVizColors.orchid,
+  dropoff_lat: DataVizColors.tree_poppy,
+  request_lat: DataVizColors.portage
 };
 
 /**

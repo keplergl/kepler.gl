@@ -24,3 +24,8 @@ const composedReducer = (state, action) => {
 };
 
 export default composedReducer;
+
+export const mapStateLens = (reduxState) => ({mapState: reduxState.mapState});
+export const mapStyleLens = (reduxState) => ({mapStyle: reduxState.mapStyle});
+export const visStateLens = (reduxState) => ({visState: reduxState.visState});
+export const uiStateLens = (reduxState) => ({uiState: reduxState.uiState});

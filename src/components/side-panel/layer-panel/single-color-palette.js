@@ -4,8 +4,7 @@ import {range} from 'd3-array';
 import styled from 'styled-components';
 import {hexToRgb} from 'utils/color-utils';
 
-// TODO: remove uber colors, replace with generic color schemes
-import {ColorsByTheme, Themes} from 'constants/uber-colors';
+import {ColorsByTheme, Themes} from 'constants/color-palette';
 
 const propTypes = {
   onSelectColor: PropTypes.func.isRequired,

@@ -24,8 +24,10 @@ function getMapStyles({
   topLayerGroups,
   mapStyles
 }) {
-  const mapStyle = mapStyles[styleType] && mapStyles[styleType];
-  if (!mapStyle.style) {
+  const mapStyle = mapStyles[styleType];
+
+  // style might not be loaded yet
+  if (!mapStyle || !mapStyle.style) {
     return {};
   }
 

@@ -13,7 +13,7 @@ import {
   PanelContent
 } from 'components/common/styled-components';
 import {DatasetTag} from '../source-data-catalog';
-import {BRUSH_CONFIG} from 'constants/default-settings';
+import {BRUSH_CONFIG} from 'utils/interaction-utils';
 
 const propTypes = {
   datasets: PropTypes.object.isRequired,

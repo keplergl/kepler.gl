@@ -6150,9 +6150,9 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   version "0.14.5"
   resolved "https://unpm.uberinternal.com/tweetnacl/-/tweetnacl-0.14.5.tgz#5ae68177f192d4456269d108afa93ff8743f4f64"
 
-"type-analyzer@https://registry.npmjs.org/uber-web/-/type-analyzer-0.1.1.tgz":
-  version "0.1.1"
-  resolved "https://registry.npmjs.org/uber-web/-/type-analyzer-0.1.1.tgz#7ecf355e49dacdd7f1015544301a3ff7fe93280a"
+"type-analyzer@https://registry.npmjs.org/uber-web/-/type-analyzer-0.1.2.tgz":
+  version "0.1.2"
+  resolved "https://registry.npmjs.org/uber-web/-/type-analyzer-0.1.2.tgz#2e082734a9496344441ae3c7d8f6bad2a41f9ebc"
 
 type-check@~0.3.1, type-check@~0.3.2:
   version "0.3.2"

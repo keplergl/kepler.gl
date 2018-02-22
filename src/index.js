@@ -1,43 +1,27 @@
-// Actions
-export * from 'actions/actions';
-
-export {default as ActionTypes} from 'constants/action-types';
-
-// reducer updaters
-export * as visStateUpdaters from 'reducers/vis-state-updaters';
-export * as mapStateUpdaters from 'reducers/map-state-updaters';
-export * as mapStyleUpdaters from 'reducers/map-style-updaters';
-export * as uiStateUpdaters from 'reducers/ui-state-updaters';
-
-// reducer merges
-export * as visStateMergers from 'reducers/vis-state-merger';
-
-// Constants
-export {DIMENSIONS, ALL_FIELD_TYPES, FIELD_OPTS} from './constants/default-settings';
-
-// Processor
-export * as Processor from 'processor/data-processor';
-
-// File Handlers
-export {getFileHandler, getFileType} from './processor/file-handler';
-
-// Schemas
-export {default as KeplerGlSchema} from 'schemas';
-export {CURRENT_VERSION, VERSIONS} from 'schemas/versions';
 
 // Reducers
-export {default as keplerGlReducer} from 'reducers/root';
+export * from 'reducers';
 
-// Dispatch
-export {
-  actionFor,
-  forwardTo,
-  getActionForwardAddress,
-  isForwardAction,
-  unwrap,
-  wrapTo
-} from 'actions/action-wrapper';
+// Schemas
+export * from './schemas';
+
+// Actions
+export * from './actions';
+
+// Constants
+export * from './constants';
+
+// Processors
+export * from './processors';
 
 // Components
-export {default as KeplerGl} from 'components/container';
-export {default} from 'components/container';
+export * from './components';
+
+// Layers
+export * from './keplergl-layers';
+
+// Styles
+export * from './styles/base';
+
+// Default export
+export {default} from './components';

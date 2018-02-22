@@ -9,9 +9,9 @@ import {
   needsRecalculateColorDomain,
   needReCalculateScaleFunction
 } from '../layer-utils/utils';
-import {defaultUberColorRange} from '../../constants/uber-viz-colors';
-import {LAYER_VIS_CONFIGS} from '../../keplergl-layers/layer-factory';
-import {SCALE_TYPES} from '../../constants/default-settings';
+import {DefaultColorRange} from 'constants/color-ranges';
+import {LAYER_VIS_CONFIGS} from 'keplergl-layers/layer-factory';
+import {SCALE_TYPES} from 'constants/default-settings';
 
 import {
   clearClustererCache,
@@ -25,7 +25,7 @@ const defaultRadiusRange = LAYER_VIS_CONFIGS.clusterRadiusRange.defaultValue;
 const defaultProps = {
   clusterRadius: defaultRadius,
   colorDomain: null,
-  colorRange: defaultUberColorRange,
+  colorRange: DefaultColorRange,
   colorScale: SCALE_TYPES.quantize,
   radiusRange: defaultRadiusRange,
 

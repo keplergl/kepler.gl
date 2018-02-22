@@ -169,7 +169,7 @@ const TimeTitle = ({value, isEnlarged, timeFormat = defaultTimeFormat}) => (
         <Minus height="12px"/>
       </div>
     ) : null}
-    <TimeValue key={1} value={moment.utc(value[0]).format(timeFormat)} split={!isEnlarged}/>
+    <TimeValue key={1} value={moment.utc(value[1]).format(timeFormat)} split={!isEnlarged}/>
   </TimeValueWrapper>
 );
 

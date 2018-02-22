@@ -100,16 +100,16 @@ class Slider extends React.Component {
   createSlider = (width, v0Left) => {
     return (
       <div>
-        <StyledRangeSlider className="range-slider">
+        <StyledRangeSlider className="kg-range-slider">
           <SliderHandle
-            className="range-slider__handle"
+            className="kg-range-slider__handle"
             left={this.calcHandleLeft0(width, v0Left)}
             valueListener={this.slide0Listener}
             sliderHandleWidth={this.props.sliderHandleWidth}
             display={this.props.isRanged}
           />
           <SliderHandle
-            className="range-slider__handle"
+            className="kg-range-slider__handle"
             left={this.calcHandleLeft1(width, v0Left)}
             valueListener={this.slide1Listener}
             sliderHandleWidth={this.props.sliderHandleWidth}
@@ -142,7 +142,7 @@ class Slider extends React.Component {
 
     return (
       <SliderWrapper
-        className={classnames({...classSet, slider: true})}
+        className={classnames('kg-slider', {...classSet})}
         innerRef={this._saveRef}
         isRanged={isRanged}
       >

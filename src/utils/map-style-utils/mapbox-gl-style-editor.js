@@ -25,7 +25,7 @@ const resolver = ({id, mapStyle, visibleLayerGroups = {}}) =>
  * @returns {Immutable.Map} top map style
  */
 export const editTopMapStyle = memoize(({id, mapStyle, visibleLayerGroups}) => {
-  const visibleFilters = mapStyle.layerGroups
+  const visibleFilters = (mapStyle.layerGroups || [])
     .filter(lg => visibleLayerGroups[lg.slug])
     .map(lg => lg.filter);
 
@@ -50,7 +50,7 @@ export const editTopMapStyle = memoize(({id, mapStyle, visibleLayerGroups}) => {
  */
 export const editBottomMapStyle = memoize(
   ({id, mapStyle, visibleLayerGroups}) => {
-    const invisibleFilters = mapStyle.layerGroups
+    const invisibleFilters = (mapStyle.layerGroups || [])
       .filter(lg => !visibleLayerGroups[lg.slug])
       .map(lg => lg.filter);
 

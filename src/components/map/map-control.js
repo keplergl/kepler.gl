@@ -157,7 +157,7 @@ const layerSelector = (layers, mapLayers) => {
   return availableItems;
 };
 
-class MapControl extends Component {
+export class MapControl extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -357,6 +357,5 @@ const MapLegendTooltip = ({id, message}) => (
 MapControl.propTypes = propTypes;
 MapControl.defaultProps = defaultProps;
 
-export default MapControl;
-
-export const mapControlFactory =  () => MapControl;
+const MapControlFactory =  () => MapControl;
+export default MapControlFactory;

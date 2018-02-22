@@ -2,7 +2,7 @@ import moment from 'moment';
 import assert from 'assert';
 import {range} from 'd3-array';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
-import {getFieldsFromData} from 'processor/data-processor';
+import {getFieldsFromData} from 'processors/data-processor';
 /**
  * @param data
  * @returns {{allData: Array, fields: Array}}

@@ -14,7 +14,7 @@ const propTypes = {
   onFileUpload: React.PropTypes.func.isRequired
 };
 
-const LoadDataModal = props => (
+export const LoadDataModal = props => (
   <StyledLoadDataModal>
     <div className="load-data-modal">
       <FileUpload onFileUpload={props.onFileUpload} />
@@ -24,6 +24,5 @@ const LoadDataModal = props => (
 
 LoadDataModal.propTypes = propTypes;
 
-export default LoadDataModal;
-
-export const loadDataModalFactory = () => LoadDataModal;
+const loadDataModalFactory = () => LoadDataModal;
+export default loadDataModalFactory;

@@ -74,9 +74,9 @@ class Checkbox extends React.Component {
       htmlFor: this.props.id
     };
     return (
-      <StyledCheckbox className="checkbox">
+      <StyledCheckbox className="kg-checkbox">
         <HiddenInput {...inputProps} />
-        <StyledLabel chassName="checkbox__label" {...labelProps}>
+        <StyledLabel chassName="kg-checkbox__label" {...labelProps}>
           {this.props.label}
         </StyledLabel>
       </StyledCheckbox>

@@ -20,7 +20,7 @@ const propTypes = {
   removeFilter: PropTypes.func.isRequired,
   enlargeFilter: PropTypes.func.isRequired,
   toggleAnimation: PropTypes.func.isRequired,
-  datasets: PropTypes.array,
+  datasets: PropTypes.object,
   showDatasetTable: PropTypes.func,
   isAnyFilterAnimating: PropTypes.bool
 };

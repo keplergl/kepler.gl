@@ -1,8 +1,7 @@
 import keyMirror from 'keymirror';
 
-import {AGGREGATION_TYPES} from '../constants/default-settings';
-
-import {defaultUberColorRange} from '../constants/uber-viz-colors';
+import {AGGREGATION_TYPES} from 'constants/default-settings';
+import {DefaultColorRange} from 'constants/color-ranges';
 
 export const PROPERTY_GROUPS = keyMirror({
   color: null,
@@ -114,7 +113,7 @@ export const LAYER_VIS_CONFIGS = {
   },
   colorRange: {
     type: 'color-range-select',
-    defaultValue: defaultUberColorRange,
+    defaultValue: DefaultColorRange,
     label: 'Color range',
     group: PROPERTY_GROUPS.color,
     property: 'colorRange'

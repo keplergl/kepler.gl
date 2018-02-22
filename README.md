@@ -33,7 +33,7 @@ An Example app will be served at
 http://localhost:8080/
 
 ### Basic Usage
-You can also take a look at `kepler.gl/examples/simple-app` for How to uer kepler.gl in your app
+You can also take a look at `kepler.gl/examples/demo-app` for How to uer kepler.gl in your app
 Here are the basic steps:
 
 #### 1. Mount kepler.gl reducer in your app reducer. Kepler.gl is using [react-palm](https://github.com/btford/react-palm) to handle side effects.
@@ -122,7 +122,7 @@ There are multiple ways to dispatch actions to a specific `KeplerGl` instance.
 - In the root reducer
 
 ```
-import {keplerGlReducer} from '@uber/kepler.gl';
+import keplerGlReducer from '@uber/kepler.gl/reducers';
 
 // Root Reducer
 const reducers = combineReducers({
@@ -156,11 +156,11 @@ using connect.
 
 
 ```
-import KeplerGl, {// component
-  toggleFullScreen, // action
-  forwardTo // forward dispatcher
-} from '@uber/kepler.gl';
+// component
+import KeplerGl from '@uber/kepler.gl';
 
+// action and forward dispatcher
+import {toggleFullScreen, forwardTo} from '@uber/kepler.gl/actions';
 import {connect} from 'react-redux';
 
 Const MapContainer = props => (
@@ -189,20 +189,80 @@ export default  connect(
 You can also simply wrap an action into a forward action with the `wrapTo` helper
 
 ```
-import KeplerGl, {// component
-  toggleFullScreen, // action
-  wrapTo // forward action wrapper
-} from 'mapbuilder';
+// component
+import KeplerGl from '@uber/kepler.gl';
 
-const wrapToMap = wrapTo('map');
+// action and forward dispatcher
+import {toggleFullScreen, wrapTo} from '@uber/kepler.gl/actions';
+
+// create a function to wrapper action payload to 'foo'
+const wrapToMap = wrapTo('foo');
 const MapContainer = ({dispatch}) => (
   <div>
     <button onClick=() => dispatch(wrapToMap(toggleFullScreen())/>
-    <Mapbuilder
-      id="map"
+    <KeplerGl
+      id="foo"
     />
   </div>
 );
 
 ```
 
+#### 4. Replace default components.
+Everyone wants the flexibility to render custom kepler.gl componenents. Kepler.gl has a dependency injection system that allow you to inject
+components to KeplerGl replacing existing ones. All you need to do is to create a component factory for the one you want to replace, import the original component factory
+and call `injectComponents` at the root component of your app where `KeplerGl` is mounted.
+Take a look at `examples/demo-app/src/app.js` and see how it renders custom side panel header in kepler.gl
+
+```
+// import injectComponents helper and original PanelHeaderFactory
+import {injectComponents, PanelHeaderFactory} from '@uber/kepler.gl/components';
+
+// define custom header
+const CustomHeader = () => (<div>My kepler.gl app</div>);
+const myCustomHeaderFactory = () => CustomHeader;
+
+// Inject custom header into Kepler.gl, replacing original one
+const KeplerGl = injectComponents([
+  [PanelHeaderFactory, myCustomHeaderFactory]
+]);
+
+// render KeplerGl, it's going to render your custom header instead
+const MapContainer = (}) => (
+  <div>
+    <KeplerGl
+      id="foo"
+    />
+  </div>
+);
+
+```
+
+Using `withState` helper to Add reducer state and actions to customized component as additional props.
+
+```
+import {withState, injectComponents, PanelHeaderFactory} from '@uber/kepler.gl/components';
+import {visStateLens} from '@uber/kepler.gl/reducers';
+
+// custom action wrap to mounted instance
+const addTodo = (text) => wrapTo('map', {
+    type: 'ADD_TODO',
+    text
+});
+
+// define custom header
+const CustomHeader = ({visState, addTodo}) => (
+  <div onClick={() => addTodo('hello')}>{`${Object.keys(visState.datasets).length} dataset loaded`}</div>
+);
+
+// now CustomHeader will receive `visState` and `addTodo` as additional props.
+const myCustomHeaderFactory = () => withState(
+  // keplerGl state lenses
+  [visStateLens],
+  // customMapStateToProps
+  headerStateToProps,
+  // actions
+  {addTodo}
+)(CustomHeader);
+
+```

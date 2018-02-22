@@ -67,7 +67,7 @@ const DataGridWrapper = styled.div`
 
 const BooleanFormatter = ({value}) => <span>{String(value)}</span>;
 
-class DataTableModal extends Component {
+export class DataTableModal extends Component {
   _onMouseWheel = e => {
     // Prevent futile scroll, which would trigger the Back/Next page event
     // https://github.com/micho/jQuery.preventMacBackScroll
@@ -195,5 +195,5 @@ export const DatasetTabs = ({activeDataset, datasets, showDatasetTable}) => (
   </DatasetCatalog>
 );
 
-export default DataTableModal;
-export const dataTableModalFactory = () => DataTableModal;
+const DataTableModalFactory = () => DataTableModal;
+export default DataTableModalFactory;
