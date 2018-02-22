@@ -33,7 +33,15 @@
   "files": [
     "dist",
     "src",
-    "examples"
+    "examples",
+    "actions.js",
+    "components.js",
+    "constants.js",
+    "layers.js",
+    "processors.js",
+    "reducers.js",
+    "schemas.js",
+    "styles.js"
   ],
   "dependencies": {
     "@mapbox/geo-viewport": "^0.2.2",
