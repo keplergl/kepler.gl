@@ -26,9 +26,11 @@
     "test-node": "NODE_ENV=test babel-tape-runner ./test/node.js | tap-spec",
     "cover": "nyc --reporter html --reporter cobertura --reporter json-summary npm test && nyc report",
     "start": "(cd examples/demo-app && (path-exists node_modules || npm i) && npm run start-local)",
-    "build": "rm -fr dist && babel src --out-dir dist --plugins=transform-es2015-modules-commonjs --source-maps inline",
+    "build": "rm -fr dist && uber-licence && babel src --out-dir dist --plugins=transform-es2015-modules-commonjs --source-maps inline",
     "lint": "eslint src examples/simple-app/src",
-    "prepublish": "npm run build"
+    "check-licence": "uber-licence --dry",
+    "add-licence": "uber-licence",
+    "prepublish": "uber-licence && npm run build"
   },
   "files": [
     "dist",
@@ -99,6 +101,7 @@
     "styled-components": "^2.2.4",
     "supercluster": "^3.0.0",
     "type-analyzer": "https://registry.npmjs.org/uber-web/-/type-analyzer-0.1.2.tgz",
+    "uber-licence": "^3.1.1",
     "wellknown": "^0.5.0"
   },
   "devDependencies": {
