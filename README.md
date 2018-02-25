@@ -22,7 +22,7 @@ npm install
 ```
 or
 ```
-yarn
+yarn --ignore-engines
 ```
 then
 ```
@@ -41,7 +41,7 @@ You need to add `taskMiddleware` to your store too. We are actively working on a
 `react-palm` will not be required. However it is still a very nice side effects management tool that much easy for testing (unlike react-thunk).
 
 ```
-import {keplerGlReducer} from '@uber/kepler.gl';
+import keplerGlReducer from '@uber/kepler.gl/reducers';
 import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
 import {taskMiddleware} from 'react-palm';
 
@@ -110,19 +110,45 @@ Width of the KeplerGl UI.
 
 - Default: `800`
 
-Height of the KeplerGl UI.
+##### `appName` (String, optional)
+
+- Default: `Kepler.Gl`
+
+App name displayed in side panel header
+
+##### `version` (String, optional)
+
+- Default: `v1.0`
+
+version displayed in side panel header
+
+##### `onSaveMap` (Function, optional)
+
+- Default: `() => {}`
+
+Action called when click Save Map Url in side panel header.
+
+##### `actions` (Object, optional)
+
+- Default: `{}`
+
+Actions payload creator to replace default kepler.gl action. Only use custom action when you want to modify action payload.
 
 #### 3. Dispatch custom actions to `keplerGl` reducer.
 
-One greatest advantages of using reducer to handle keplerGl state with vs. react component state is the flexibility
-to customize it's behavior. If you only have one `KeplerGl` instance in your app or never intent to dispatch actions to KeplerGl from outside the component itself,
+One greatest advantages of using reducer vs. react component state to handle keplerGl state is the flexibility
+to customize its behavior. If you only have one `KeplerGl` instance in your app or never intent to dispatch actions to KeplerGl from outside the component itself,
 you don’t need to worry about forwarding dispatch and can move on to the next section. But life is full of customizations, and we want to make yours as enjoyable as possible.
 
 There are multiple ways to dispatch actions to a specific `KeplerGl` instance.
-- In the root reducer
 
+- In the root reducer, with reducer updaters.
+
+Each action is mapped to a reducer updater in kepler.gl. You can import the reducer updater correspond to a specific action, and call it with the previous state and action payload to get the updated state.
+e.g. `updateVisDataUpdater` is the updater for `ActionTypes.UPDATE_VIS_DATA` (take a look at each reducer `reducers/vis-state.js` for action to updater mapping).
+Here is an example how you can listen to an app action `QUERY_SUCCESS` and call `updateVisDataUpdater` to load data into Kepler.Gl.
 ```
-import keplerGlReducer from '@uber/kepler.gl/reducers';
+import keplerGlReducer, {visStateUpdaters} from '@uber/kepler.gl/reducers';
 
 // Root Reducer
 const reducers = combineReducers({
@@ -138,8 +164,13 @@ const composedReducer = (state, action) => {
        ...state,
        keplerGl: {
          ...state.keplerGl,
+
          // 'map' is the id of the keplerGl instance
-         map: visStateUpdaters.updateVisDataUpdater(state.keplerGl.map, {datasets: action.payload})
+         map: {
+            ...state.keplerGl.map,
+            visState: visStateUpdaters.updateVisDataUpdater(
+              state.keplerGl.map.visState, {datasets: action.payload})
+         }
        }
      };
  }

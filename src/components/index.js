@@ -56,5 +56,6 @@ export {default as TimeRangeSlider} from './common/time-range-slider';
 export {default as Modal, ModalFooter, ModalTitle} from './common/modal';
 export {default as AppLogo} from './common/logo';
 export {default as Switch} from './common/switch';
+export * from './common/styled-components';
 export * from './common/icons';
 

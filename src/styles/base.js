@@ -174,6 +174,11 @@ export const modalTitleColor = '#3A414C';
 export const modalTitleFontSize = '32px';
 export const modalFooterBgd = '#F8F8F9';
 
+// Modal Dialog (Dark)
+export const modalDialogBgd = '#3A414C';
+export const modalDialogColor = textColorHl;
+
+// Slider
 export const sliderBarColor = '#6A7485';
 export const sliderBarBgd = '#3A414C';
 export const sliderBarHoverColor = '#D3D8E0';
@@ -710,6 +715,9 @@ export const theme = {
   modalTitleColor,
   modalTitleFontSize,
   modalFooterBgd,
+
+  modalDialogBgd,
+  modalDialogColor,
 
   // Side Panel
   sidePanelBg,
