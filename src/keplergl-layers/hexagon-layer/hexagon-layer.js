@@ -22,6 +22,7 @@ import {GeoJsonLayer} from 'deck.gl';
 import AggregationLayer from '../aggregation-layer';
 import EnhancedHexagonLayer from 'deckgl-layers/hexagon-layer/enhanced-hexagon-layer';
 import {hexagonToPolygonGeo} from './hexagon-utils';
+import HexagonLayerIcon from './hexagon-layer-icon';
 
 export const hexagonVisConfigs = {
   opacity: 'opacity',
@@ -48,6 +49,14 @@ export default class HexagonLayer extends AggregationLayer {
 
   get type() {
     return 'hexagon';
+  }
+
+  get name() {
+    return 'Hexbin';
+  }
+
+  get layerIcon() {
+    return HexagonLayerIcon;
   }
 
   renderLayer({

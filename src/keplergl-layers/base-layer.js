@@ -21,6 +21,7 @@
 import {hexToRgb} from '../utils/color-utils';
 import {console as Console} from 'global/window';
 import keymirror from 'keymirror';
+import DefaultLayerIcon from './default-layer-icon';
 
 import {
   ALL_FIELD_TYPES,
@@ -117,8 +118,10 @@ export default class Layer {
 
     // visConfigSettings
     this.visConfigSettings = {};
-    // layer utility methods
-    // this.getLightSettingsFromBounds = getLightSettingsFromBounds;
+  }
+
+  get layerIcon() {
+    return DefaultLayerIcon;
   }
 
   get overlayType() {
@@ -127,6 +130,10 @@ export default class Layer {
 
   get type() {
     return null;
+  }
+
+  get name() {
+    return this.type;
   }
 
   get isAggregated() {

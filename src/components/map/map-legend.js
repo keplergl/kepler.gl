@@ -91,7 +91,7 @@ const MapLegend = ({layers}) => (
         >
           <div className="legend--layer_name">{layer.config.label}</div>
           <div className="legend--layer_type">{`${capitalizeFirstLetter(
-            layer.type
+            layer.name
           )} color`}</div>
           <div className="legend--layer_color-schema">
             <div>

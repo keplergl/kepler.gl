@@ -21,8 +21,9 @@
 import memoize from 'lodash.memoize';
 
 import Layer from '../base-layer';
-import ArcBrushingLayer from '../../deckgl-layers/arc-brushing-layer/arc-brushing-layer';
-import {hexToRgb} from '../../utils/color-utils';
+import ArcBrushingLayer from 'deckgl-layers/arc-brushing-layer/arc-brushing-layer';
+import {hexToRgb} from 'utils/color-utils';
+import ArcLayerIcon from './arc-layer-icon';
 
 export const arcPosAccessor = ({lat0, lng0, lat1, lng1}) => d => [
   d.data[lng0.fieldIdx],
@@ -60,6 +61,10 @@ export default class ArcLayer extends Layer {
 
   get isAggregated() {
     return false;
+  }
+
+  get layerIcon() {
+    return ArcLayerIcon;
   }
 
   get requiredLayerColumns() {

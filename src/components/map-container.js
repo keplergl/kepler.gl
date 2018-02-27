@@ -36,7 +36,7 @@ import MapControlFactory from 'components/map/map-control';
 import {PolygonLayer} from 'deck.gl';
 
 // Overlay type
-import {generateMapboxLayers, updateMapboxLayers} from '../mapboxgl-layers/mapbox-utils';
+import {generateMapboxLayers, updateMapboxLayers} from '../keplergl-layers/mapbox-utils';
 
 // default-settings
 import {MAPBOX_ACCESS_TOKEN, LAYER_BLENDINGS} from 'constants/default-settings';
@@ -53,7 +53,6 @@ const MAP_STYLE = {
     position: 'absolute', top: '0px', pointerEvents: 'none'
   }
 };
-
 
 /**
  * Newer versions of mapbox.gl display an error message banner on top of the map by default

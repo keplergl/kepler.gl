@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {OVERLAY_TYPE} from '../keplergl-layers/base-layer';
+import {OVERLAY_TYPE} from './base-layer';
 
 /**
  * This function will convert layers to mapbox layers

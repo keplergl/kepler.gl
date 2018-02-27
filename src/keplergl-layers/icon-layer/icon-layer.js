@@ -24,6 +24,7 @@ import {hexToRgb} from '../../utils/color-utils';
 import {svgIcons as SvgIcons} from './svg-icons.json';
 import SvgIconLayer from '../../deckgl-layers/svg-icon-layer/svg-icon-layer';
 import ScatterplotIconLayer from '../../deckgl-layers/svg-icon-layer/scatterplot-icon-layer';
+import IconLayerIcon from './icon-layer-icon';
 
 const IconIds = SvgIcons.map(d => d.id);
 const SvgIconGeometry = SvgIcons.reduce(
@@ -80,6 +81,10 @@ export default class IconLayer extends Layer {
 
   get columnPairs() {
     return this.defaultPointColumnPairs;
+  }
+
+  get layerIcon() {
+    return IconLayerIcon;
   }
 
   get visualChannels() {

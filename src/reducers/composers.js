@@ -62,7 +62,6 @@ const updateVisDataComposed = (state, action) => {
   };
 };
 
-
 /**
  * Combine data and configuration update in a single action
  * @param state

@@ -28,4 +28,4 @@ export {default as GeojsonLayer} from './geojson-layer/geojson-layer';
 export {default as H3HexagonLayer} from './h3-hexagon-layer/h3-hexagon-layer';
 export {default as ClusterLayer} from './cluster-layer/cluster-layer';
 export {default as IconLayer} from './icon-layer/icon-layer';
-
+export {default as HeatmapLayer} from './heatmap-layer/heatmap-layer';

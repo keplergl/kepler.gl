@@ -19,11 +19,11 @@
 // THE SOFTWARE.
 
 import {createSelector} from 'reselect';
-import {CHANNEL_SCALES} from 'constants/default-settings';
-import {geojsonFromPoints} from './mapbox-utils';
-import {SCALE_FUNC} from "../constants/default-settings";
+import {CHANNEL_SCALES, SCALE_FUNC} from 'constants/default-settings';
 import {hexToRgb} from 'utils/color-utils';
-import MapboxGLLayer from './mapboxgl-layer';
+import {geojsonFromPoints} from '../mapbox-utils';
+import MapboxGLLayer from '../mapboxgl-layer';
+import HeatmapLayerIcon from './heatmap-layer-icon';
 
 const MAX_ZOOM_LEVEL = 18;
 const DEFAULT_OPACITY = .8;
@@ -31,7 +31,8 @@ const DEFAULT_OPACITY = .8;
 export const heatmapVisConfigs = {
   opacity: 'opacity',
   weight: 'weight',
-  colorRange: 'colorRange'
+  colorRange: 'colorRange',
+  radius: 'heatmapRadius'
 };
 
 const heatmapDensity = (colorDomain, colorScale, visConfig) => {
@@ -56,6 +57,43 @@ const heatmapDensity = (colorDomain, colorScale, visConfig) => {
 const shouldRebuild = (sameData, sameConfig) => !(sameData && sameConfig);
 
 class HeatmapLayer extends MapboxGLLayer {
+  constructor(props) {
+    super(props);
+    this.config = {
+      ...this.config,
+      // add height visual channel
+      weightField: null,
+      weightDomain: [0, 1],
+      weightRange: [0, 1],
+      weightScale: 'linear'
+    };
+    this.registerVisConfig(heatmapVisConfigs);
+  }
+
+  get type() {
+    return 'heatmap';
+  }
+
+  get visualChannels() {
+    return {
+      ...super.visualChannels,
+      weight: {
+        property: 'weight',
+        field: 'weightField',
+        scale: 'weightScale',
+        domain: 'weightDomain',
+        range: 'weightRange',
+        key: 'weight',
+        channelScaleType: CHANNEL_SCALES.sizeAggr,
+        defaultMeasure: 'Weight'
+      }
+    };
+  }
+
+  get layerIcon() {
+    return HeatmapLayerIcon;
+  }
+
   sameDataSelector = ({allData, filteredIndex, oldLayerData, opt = {}}) => {
     return Boolean(oldLayerData &&
       oldLayerData.data && oldLayerData.columns &&
@@ -89,6 +127,7 @@ class HeatmapLayer extends MapboxGLLayer {
   weightFieldSelector = config => config.weightField;
   colorDomainSelector = config => config.colorDomain;
   colorScaleSelector = config => config.colorScale;
+  radiusSelector = config => config.visConfig.radius;
 
   computeHeatmapConfiguration = createSelector(
     this.datasetSelector,
@@ -97,7 +136,8 @@ class HeatmapLayer extends MapboxGLLayer {
     this.weightFieldSelector,
     this.colorDomainSelector,
     this.colorScaleSelector,
-    (datasetId, isVisible, visConfig, weightField, colorDomain, colorScale) => {
+    this.radiusSelector,
+    (datasetId, isVisible, visConfig, weightField, colorDomain, colorScale, radius) => {
       // TODO: improve using setPaintProperty
       return {
         type: 'heatmap',
@@ -132,46 +172,13 @@ class HeatmapLayer extends MapboxGLLayer {
             ['linear'],
             ['zoom'],
             0, 2,
-            MAX_ZOOM_LEVEL, 20 // radius
+            MAX_ZOOM_LEVEL, radius // radius
           ],
           'heatmap-opacity': visConfig.opacity || DEFAULT_OPACITY
         }
       };
     }
   );
-
-  constructor(props) {
-    super(props);
-    this.config = {
-      ...this.config,
-      // add height visual channel
-      weightField: null,
-      weightDomain: [0, 1],
-      weightRange: [0, 1],
-      weightScale: 'linear'
-    };
-    this.registerVisConfig(heatmapVisConfigs);
-  }
-
-  get type() {
-    return 'heatmap';
-  }
-
-  get visualChannels() {
-    return {
-      ...super.visualChannels,
-      weight: {
-        property: 'weight',
-        field: 'weightField',
-        scale: 'weightScale',
-        domain: 'weightDomain',
-        range: 'weightRange',
-        key: 'weight',
-        channelScaleType: CHANNEL_SCALES.sizeAggr,
-        defaultMeasure: 'Weight'
-      }
-    };
-  }
 
   formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
     const options = {

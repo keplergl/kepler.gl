@@ -227,6 +227,7 @@ class ItemSelector extends Component {
           )}
           searchable={this.props.searchable}
           showOptionsWhenEmpty
+          selectedItems={_toArray(this.props.selectedItems)}
         />
       </DropdownWrapper>
     );

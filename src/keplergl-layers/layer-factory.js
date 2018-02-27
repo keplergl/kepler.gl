@@ -277,5 +277,15 @@ export const LAYER_VIS_CONFIGS = {
     step: 0.01,
     group: PROPERTY_GROUPS.cell,
     property: 'weight'
+  },
+  heatmapRadius: {
+    type: 'number',
+    defaultValue: 20,
+    label: 'Radius',
+    isRanged: false,
+    range: [0, 100],
+    step: 0.1,
+    group: PROPERTY_GROUPS.cell,
+    property: 'radius'
   }
 };

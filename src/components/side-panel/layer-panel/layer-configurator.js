@@ -30,6 +30,7 @@ import ItemSelector from 'components/common/item-selector/item-selector';
 
 import VisConfigByFieldSelector from './vis-config-by-field-selector';
 import LayerColumnConfig from './layer-column-config';
+import LayerTypeSelector from './layer-type-selector';
 import DimensionScaleSelector from './dimension-scale-selector';
 import ColorSelector from './color-selector';
 import SourceDataSelector from '../source-data-selector';
@@ -218,7 +219,14 @@ export default class LayerConfigurator extends Component {
             {...visConfiguratorProps}
           />
         </LayerConfigGroup>
-
+        {/* Radius */}
+        <LayerConfigGroup label={'radius'}>
+          <VisConfigSlider
+            {...LAYER_VIS_CONFIGS.radius}
+            {...visConfiguratorProps}
+            label={false}
+          />
+        </LayerConfigGroup>
         {/* Weight */}
         <LayerConfigGroup label={'weight'}>
           <ChannelByValueSelector
@@ -590,6 +598,10 @@ export default class LayerConfigurator extends Component {
               onSelect={value => updateLayerConfig({dataId: value})}
             />
           )}
+          <LayerTypeSelector
+            layer={layer}
+            onSelect={this.props.updateLayerType}
+          />
           <LayerColumnConfig
             layer={layer}
             fields={fields}
@@ -617,7 +629,7 @@ LayerConfigurator.propTypes = propTypes;
  * Componentize config component into pure functional components
  */
 
-const LayerColorSelector = ({layer, onChange, label}) => (
+export const LayerColorSelector = ({layer, onChange, label}) => (
   <SidePanelSection disabled={layer.config.colorField}>
     <ColorSelector
       colorSets={[
@@ -630,7 +642,7 @@ const LayerColorSelector = ({layer, onChange, label}) => (
   </SidePanelSection>
 );
 
-const ArcLayerColorSelector = ({layer, onChangeConfig, onChangeVisConfig}) => (
+export const ArcLayerColorSelector = ({layer, onChangeConfig, onChangeVisConfig}) => (
   <SidePanelSection>
     <ColorSelector
       colorSets={[
@@ -650,7 +662,7 @@ const ArcLayerColorSelector = ({layer, onChangeConfig, onChangeVisConfig}) => (
   </SidePanelSection>
 );
 
-const ColorRangeConfig = ({layer, onChange}) => (
+export const ColorRangeConfig = ({layer, onChange}) => (
   <SidePanelSection>
     <ColorSelector
       colorSets={[
@@ -664,7 +676,7 @@ const ColorRangeConfig = ({layer, onChange}) => (
   </SidePanelSection>
 );
 
-const ChannelByValueSelector = ({
+export const ChannelByValueSelector = ({
   layer,
   channel,
   onChange,
@@ -711,7 +723,7 @@ const ChannelByValueSelector = ({
   );
 };
 
-const AggrColorScaleSelector = ({layer: {config}, onChange}) => (
+export const AggrColorScaleSelector = ({layer: {config}, onChange}) => (
   <DimensionScaleSelector
     label="Color Scale"
     options={
@@ -724,7 +736,7 @@ const AggrColorScaleSelector = ({layer: {config}, onChange}) => (
   />
 );
 
-const AggregationTypeSelector = ({
+export const AggregationTypeSelector = ({
   layer: {config: {visConfig}},
   field,
   property,

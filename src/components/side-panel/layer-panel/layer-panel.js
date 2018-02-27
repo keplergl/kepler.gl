@@ -113,7 +113,7 @@ export default class LayerPanel extends Component {
           isVisible={config.isVisible}
           label={config.label}
           labelRCGColorValues={datasets[config.dataId].color}
-          layerType={layer.type}
+          layerType={layer.name}
           onToggleEnableConfig={this._toggleEnableConfig}
           onToggleVisibility={this._toggleVisibility}
           onUpdateLayerLabel={this._updateLayerLabel}

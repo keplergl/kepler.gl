@@ -34,7 +34,7 @@ import {
 import {notNullorUndefined, isPlainObject} from 'utils/data-utils';
 import {hexToRgb} from 'utils/color-utils';
 
-import * as KeplerGLLayers from 'keplergl-layers';
+import * as KeplerGlLayers from 'keplergl-layers';
 
 import {DataVizColors} from 'constants/custom-color-ranges';
 
@@ -143,7 +143,7 @@ function _findDefaultPointLayers(fieldPairs, dataId) {
       prop.isVisible = true;
     }
 
-    const newLayer = new KeplerGLLayers.PointLayer(prop);
+    const newLayer = new KeplerGlLayers.PointLayer(prop);
     newLayer.config.columns = {
       ...newLayer.config.columns,
       lat: latField,
@@ -209,7 +209,7 @@ export function _findDefaultArcLayers(
     } arc`;
   }
 
-  const tripArcLayer = new KeplerGLLayers.ArcLayer(props);
+  const tripArcLayer = new KeplerGlLayers.ArcLayer(props);
 
   return [tripArcLayer];
 }
@@ -337,7 +337,7 @@ export function _findDefaultFeatureLayer({
     isVisible: true
   };
 
-  const LayerClass = KeplerGLLayers[LAYER_CLASSES[type]];
+  const LayerClass = KeplerGlLayers[LAYER_CLASSES[type]];
 
   // create one layer for each possible column paris
   return columns.reduce((prev, curr) => {
@@ -399,7 +399,7 @@ export function _findDefaultIconLayers(pointLayers, fields) {
     isVisible: true
   };
 
-  const LayerClass = KeplerGLLayers[LAYER_CLASSES.icon];
+  const LayerClass = KeplerGlLayers[LAYER_CLASSES.icon];
 
   return iconFields.map(
     iconField =>
@@ -437,7 +437,7 @@ export function _findDefaultAggregationLayers(pointLayers, type) {
     label: `${ptLayer.config.label} ${type}`
   };
 
-  const LayerClass = KeplerGLLayers[LAYER_CLASSES[type]];
+  const LayerClass = KeplerGlLayers[LAYER_CLASSES[type]];
   const newLayer = new LayerClass(props);
 
   // copy point layer columns over

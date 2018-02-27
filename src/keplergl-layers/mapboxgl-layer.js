@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {CHANNEL_SCALES} from 'constants/default-settings';
-import Layer, {OVERLAY_TYPE} from "../keplergl-layers/base-layer";
+import Layer, {OVERLAY_TYPE} from './base-layer';
 
 export const mapboxRequiredColumns = ['lat', 'lng'];
 

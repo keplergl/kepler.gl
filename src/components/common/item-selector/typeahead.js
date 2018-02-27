@@ -247,6 +247,7 @@ class Typeahead extends Component {
         selectionIndex={this.state.selectionIndex}
         defaultClassNames={this.props.defaultClassNames}
         displayOption={this.props.displayOption}
+        selectedItems={this.props.selectedItems}
       />
     );
   }

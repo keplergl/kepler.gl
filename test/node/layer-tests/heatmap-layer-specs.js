@@ -26,7 +26,7 @@ import {
 import {processCsvData} from "processors/data-processor";
 import csvData from 'test/fixtures/test-csv-data';
 
-import HeatmapLayer from 'mapboxgl-layers/heatmap-layer';
+import HeatmapLayer from 'keplergl-layers/heatmap-layer/heatmap-layer';
 
 test('#HeatmapLayer -> contructor', t => {
   const TEST_CASES = {

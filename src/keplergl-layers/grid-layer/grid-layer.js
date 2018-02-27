@@ -19,10 +19,10 @@
 // THE SOFTWARE.
 
 import {GeoJsonLayer} from 'deck.gl';
-
 import AggregationLayer from '../aggregation-layer';
-import EnhancedGridLayer from '../../deckgl-layers/grid-layer/enhanced-grid-layer';
+import EnhancedGridLayer from 'deckgl-layers/grid-layer/enhanced-grid-layer';
 import {pointToPolygonGeo} from './grid-utils';
+import GridLayerIcon from './grid-layer-icon';
 
 export const gridVisConfigs = {
   opacity: 'opacity',
@@ -50,6 +50,9 @@ export default class GridLayer extends AggregationLayer {
     return 'grid';
   }
 
+  get layerIcon() {
+    return GridLayerIcon;
+  }
   formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
     const formattedData = super.formatLayerData(
       _,

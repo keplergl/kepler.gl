@@ -19,11 +19,16 @@
 // THE SOFTWARE.
 
 import ArcLayer from '../arc-layer/arc-layer';
-import DeckGLLineLayer from '../../deckgl-layers/line-layer/line-layer';
+import DeckGLLineLayer from 'deckgl-layers/line-layer/line-layer';
+import LineLayerIcon from './line-layer-icon';
 
 export default class LineLayer extends ArcLayer {
   get type() {
     return 'line';
+  }
+
+  get layerIcon() {
+    return LineLayerIcon;
   }
 
   renderLayer({

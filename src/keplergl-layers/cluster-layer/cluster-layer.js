@@ -22,6 +22,7 @@ import {ScatterplotLayer} from 'deck.gl';
 import AggregationLayer from '../aggregation-layer';
 import DeckGLClusterLayer from 'deckgl-layers/cluster-layer/cluster-layer';
 import {CHANNEL_SCALES} from 'constants/default-settings';
+import ClusterLayerIcon from './cluster-layer-icon';
 
 export const clusterVisConfigs = {
   opacity: 'opacity',
@@ -44,6 +45,9 @@ export default class ClusterLayer extends AggregationLayer {
     return 'cluster';
   }
 
+  get layerIcon() {
+    return ClusterLayerIcon;
+  }
   get visualChannels() {
     return {
       color: {

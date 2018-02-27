@@ -28,6 +28,7 @@ import {
   getGeojsonBounds,
   featureToDeckGlGeoType
 } from './geojson-utils';
+import GeojsonLayerIcon from './geojson-layer-icon';
 
 export const pointVisConfigs = {
   opacity: 'opacity',
@@ -76,6 +77,14 @@ export default class GeoJsonLayer extends Layer {
 
   get type() {
     return 'geojson';
+  }
+
+  get name() {
+    return 'Polygon';
+  }
+
+  get layerIcon() {
+    return GeojsonLayerIcon;
   }
 
   get requiredLayerColumns() {

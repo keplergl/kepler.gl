@@ -157,37 +157,37 @@ class App extends Component {
     );
 
     // load point based data
-    this.props.dispatch(updateVisData(sampleData));
+    // this.props.dispatch(updateVisData(sampleData));
 
     // load data with h3 hex id
-    this.props.dispatch(
-      updateVisData({
-        info: {
-          label: 'Hexagon by Id',
-          id: 'test_phone_data'
-        },
-        data: Processor.processCsvData(sampleHexIdCsv)
-      })
-    );
+    // this.props.dispatch(
+    //   updateVisData({
+    //     info: {
+    //       label: 'Hexagon by Id',
+    //       id: 'test_phone_data'
+    //     },
+    //     data: Processor.processCsvData(sampleHexIdCsv)
+    //   })
+    // );
 
     // load icon data
-    this.props.dispatch(
-      updateVisData({
-        info: {
-          label: 'Icon Data',
-          id: 'test_icon_data'
-        },
-        data: Processor.processCsvData(sampleIconCsv)
-      })
-    );
+    // this.props.dispatch(
+    //   updateVisData({
+    //     info: {
+    //       label: 'Icon Data',
+    //       id: 'test_icon_data'
+    //     },
+    //     data: Processor.processCsvData(sampleIconCsv)
+    //   })
+    // );
 
     // load geojson
-    this.props.dispatch(
-      updateVisData({
-        info: {label: 'SF Zip Geo'},
-        data: Processor.processGeojson(sampleGeojson)
-      })
-    );
+    // this.props.dispatch(
+    //   updateVisData({
+    //     info: {label: 'SF Zip Geo'},
+    //     data: Processor.processGeojson(sampleGeojson)
+    //   })
+    // );
 
     // this._loadConfig();
   }

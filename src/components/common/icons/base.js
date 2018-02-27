@@ -21,6 +21,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+const getStyleClassFromColor = (totalColor, colors) =>
+  new Array(totalColor)
+    .fill(1)
+    .reduce(
+      (accu, c, i) => `${accu}.cr${i + 1} {fill:${colors[i % colors.length]};}`,
+      ''
+    );
+
 const Base = React.createClass({
   displayName: 'Base Icon',
   propTypes: {
@@ -32,6 +40,7 @@ const Base = React.createClass({
     viewBox: PropTypes.string,
     /** Path element */
     children: React.PropTypes.node,
+
     predefinedClassName: PropTypes.string,
     className: PropTypes.string
   },
@@ -53,12 +62,19 @@ const Base = React.createClass({
       children,
       predefinedClassName,
       className,
+      colors,
+      totalColor,
       ...props
     } = this.props;
     const svgHeight = height;
     const svgWidth = width || svgHeight;
-    /* 'currentColor' will inherit the color of the parent element */
     style.fill = 'currentColor';
+
+    const fillStyle =
+      Array.isArray(colors) &&
+      totalColor &&
+      getStyleClassFromColor(totalColor, colors);
+
     return (
       <svg
         viewBox={viewBox}
@@ -68,6 +84,8 @@ const Base = React.createClass({
         className={`${predefinedClassName} ${className}`}
         {...props}
       >
+        {fillStyle ?
+          <style type="text/css">{fillStyle}</style> : null}
         {children}
       </svg>
     );

@@ -24,6 +24,7 @@ import Layer from '../base-layer';
 import {HexagonCellLayer, GeoJsonLayer} from 'deck.gl';
 import {hexToRgb} from 'utils/color-utils';
 import {getVertices, getCentroid, idToPolygonGeo} from './h3-utils';
+import H3HexagonLayerIcon from './h3-hexagon-layer-icon';
 
 export const hexIdRequiredColumns = ['hex_id'];
 export const hexIdAccessor = ({hex_id}) => d => d[hex_id.fieldIdx];
@@ -48,8 +49,17 @@ export default class HexagonIdLayer extends Layer {
     return 'hexagonId';
   }
 
+  get name() {
+    return 'H3';
+  }
+
   get requiredLayerColumns() {
     return hexIdRequiredColumns;
+  }
+
+  get layerIcon() {
+    // use hexagon layer icon for now
+    return H3HexagonLayerIcon;
   }
 
   get visualChannels() {

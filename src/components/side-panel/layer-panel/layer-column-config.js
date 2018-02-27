@@ -18,12 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, PropTypes} from 'react';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
 import {LAYER_TYPES} from 'constants/default-settings';
 import FieldSelector from 'components/common/field-selector';
-import ItemSelector from 'components/common/item-selector/item-selector';
 import {Docs} from 'components/common/icons';
 
 import {
@@ -35,12 +35,9 @@ const propTypes = {
   layer: PropTypes.object.isRequired,
   fields: PropTypes.array.isRequired,
   updateLayerConfig: PropTypes.func.isRequired,
-  updateLayerType: PropTypes.func.isRequired,
   openModal: PropTypes.func.isRequired,
   fieldPairs: PropTypes.array
 };
-
-const typeOptions = Object.keys(LAYER_TYPES);
 
 const TopRow = styled.div`
   display: flex;
@@ -63,9 +60,6 @@ export default class LayerColumnConfig extends Component {
     const {layer, fields, fieldPairs} = this.props;
     return (
       <div>
-        <SidePanelSection>
-          <TypeSelector layer={layer} onSelect={this.props.updateLayerType} />
-        </SidePanelSection>
         <SidePanelSection>
           <div className="layer-config__column">
           <TopRow>
@@ -132,19 +126,6 @@ const ColumnSelector = ({column, label, allFields, onSelect, fieldPairs}) => (
       />
     </ColumnSelect>
   </ColumnRow>
-);
-
-const TypeSelector = ({layer, onSelect}) => (
-  <div className="layer-config__type">
-    <PanelLabel>Layer type</PanelLabel>
-    <ItemSelector
-      selectedItems={layer.type}
-      options={typeOptions}
-      multiSelect={false}
-      placeholder="Select A Type"
-      onChange={onSelect}
-    />
-  </div>
 );
 
 const LayerInstruction = styled.div`

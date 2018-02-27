@@ -23,6 +23,7 @@ import memoize from 'lodash.memoize';
 import {ScatterplotLayer} from 'deck.gl';
 import ScatterplotBrushingLayer from 'deckgl-layers/scatterplot-brushing-layer/scatterplot-brushing-layer';
 import {hexToRgb} from 'utils/color-utils';
+import PointLayerIcon from './point-layer-icon';
 
 export const pointPosAccessor = ({lat, lng, altitude}) => d => [
   d.data[lng.fieldIdx],
@@ -62,6 +63,9 @@ export default class PointLayer extends Layer {
     return false;
   }
 
+  get layerIcon() {
+    return PointLayerIcon;
+  }
   get requiredLayerColumns() {
     return pointRequiredColumns;
   }
