@@ -63,7 +63,6 @@ import sampleData from './data/sample-data';
 import sampleTripData from './data/sample-trip-data';
 import sampleHexIdCsv from './data/sample-hex-id-csv';
 import sampleGeojson from './data/sample-geojson.json';
-import jsonTripData from './data/json-sample-trip-data';
 import sampleIconCsv from './data/sample-icon-csv';
 /* eslint-enable no-unused-vars */
 
@@ -188,25 +187,10 @@ class App extends Component {
     //     data: Processor.processGeojson(sampleGeojson)
     //   })
     // );
-
-    // this._loadConfig();
   }
 
   componentWillUnMount() {
     window.removeEventListener('resize', this._handleResize);
-  }
-
-  /**
-   * Loads an existing configuration from disk
-   * @private
-   */
-  _loadConfig() {
-    const {datasets, parsedConfig} = migrateDataAndConfiguration(jsonTripData, pointPlotConfiguration);
-    const {dispatch} = this.props;
-
-    // if (parsedConfig) {
-    //   dispatch(updateVisDataAndConfiguration({datasets, appConfig: parsedConfig}));
-    // }
   }
 
   _handleResize = () => {

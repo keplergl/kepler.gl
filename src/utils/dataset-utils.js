@@ -22,8 +22,8 @@ import {hexToRgb} from './color-utils';
 import uniq from 'lodash.uniq';
 import {TRIP_POINT_FIELDS} from 'constants/default-settings';
 import {generateHashId} from './utils';
-import {validateInputData} from './data-utils';
-
+import {validateInputData} from 'processors/data-processor'
+  ;
 // apply a color for each dataset
 // to use as label colors
 const datasetColors = [

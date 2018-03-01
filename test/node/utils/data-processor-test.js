@@ -19,11 +19,12 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import testData, {testFields, testAllData, wktCsv, wktCsvFields} from 'test/fixtures/test-csv-data';
+import testData, {dataWithNulls, parsedDataWithNulls, testFields, testAllData, wktCsv, wktCsvFields} from 'test/fixtures/test-csv-data';
 import {geojsonData, fields as geojsonFields, rows as geojsonRows} from 'test/fixtures/geojson';
 
 import {
   getFieldsFromData,
+  getSampleForTypeAnalyze,
   parseCsvDataByFieldType,
   processCsvData,
   processGeojson
@@ -76,33 +77,18 @@ test('Processor -> getFieldsFromData', t => {
   t.end();
 });
 
-test('Processor -> processCsvData', async t => {
+test('Processor -> processCsvData', t => {
 
   // load sample dataset csv as text
-  const data = testData;
+  const {fields, rows} = processCsvData(testData);
 
-  const expectedFields = [
-    'timestamp',
-    'real',
-    'real',
-    'string',
-    'timestamp',
-    'boolean',
-    'integer',
-    'timestamp',
-    'timestamp',
-    'timestamp',
-    'date'
-  ];
-
-  const {fields, rows} = await processCsvData(data);
-
-  t.equal(fields.length, testFields.length, `should return ${testFields.length} fields`);
   t.equal(rows.length, testAllData.length, `should return ${testAllData.length} rows`);
 
+  t.deepEqual(fields, testFields, 'should parse fields correctly');
+  t.deepEqual(rows, testAllData, 'should parse rows correctly');
+
   fields.forEach((f, i) => {
-    t.equal(f.type, expectedFields[i], `should find field type as ${expectedFields[i]}`);
-    t.deepEqual(f, testFields[i], `should find correct field ${testFields[i].label}`);
+    t.deepEqual(f, testFields[i], `should parse correct field ${testFields[i].name}`);
   });
 
   rows.forEach((r, i) => {
@@ -112,17 +98,32 @@ test('Processor -> processCsvData', async t => {
   t.end();
 });
 
-test('Processor -> processCsv.wkt', async t => {
-  const {fields} = await processCsvData(wktCsv);
+test('Processor -> processCsvData -> with nulls', t => {
+  const {fields, rows} = processCsvData(dataWithNulls);
+  t.deepEqual(fields, testFields, 'should parse fields correctly');
+
+  fields.forEach((f, i) => {
+    t.deepEqual(f, testFields[i], `should parse correct field ${testFields[i].name}`);
+  });
+
+  t.deepEqual(rows, parsedDataWithNulls, 'should parse rows correctly');
+  rows.forEach((r, i) => {
+    t.deepEqual(r, parsedDataWithNulls[i], `should parse row ${i} correctly`);
+  });
+  t.end();
+});
+
+test('Processor -> processCsv.wkt', t => {
+  const {fields} = processCsvData(wktCsv);
 
   t.deepEqual(fields, wktCsvFields, 'should find geometry fields as type:geojson');
 
   t.end();
 });
 
-test('Processor => processGeojson', async t => {
+test('Processor => processGeojson', t => {
 
-  const {fields, rows} = await processGeojson(geojsonData);
+  const {fields, rows} = processGeojson(geojsonData);
 
   t.deepEqual(fields, geojsonFields, 'should format geojson fields');
   t.deepEqual(rows, geojsonRows, 'should format geojson rows');
@@ -205,8 +206,8 @@ test('Processor -> parseCsvDataByFieldType -> boolean', t => {
     ['1'],
     ['True'],
     ['False'],
-    [0],
-    [1],
+    ['0'],
+    ['1'],
     ['true']
   ];
 
@@ -214,15 +215,62 @@ test('Processor -> parseCsvDataByFieldType -> boolean', t => {
   const expected = [
     [null],
     [false],
-    [false],
+    [true],
     [true],
     [false],
     [false],
-    [false],
+    [true],
     [true]
   ];
 
   parseCsvDataByFieldType(rows, field, 0);
   t.same(rows, expected, 'should parsed boolean properly');
+  t.end();
+});
+
+test('dataUtils -> getSampleForTypeAnalyze', t => {
+  const fields =['string','int','bool','time'];
+
+  const allData = [
+    ['a', 0, true, null],
+    ['b', 2, false, null],
+    ['c', 3, true, '2017-01-01'],
+    [null, 1, false, '2017-01-02'],
+    ['d', 6, false, '2017-01-03'],
+    ['e', 4, true, null],
+    ['f', 5, true, undefined],
+    ['g', null, true, null],
+    ['h', undefined, true, '2017-01-04']
+  ];
+
+  const sample = getSampleForTypeAnalyze({fields, allData, sampleCount: 5});
+  const expected = [{
+    string: 'a',
+    int: 0,
+    bool: true,
+    time: '2017-01-01'
+  }, {
+    string: 'b',
+    int: 2,
+    bool: false,
+    time: '2017-01-02'
+  }, {
+    string: 'c',
+    int: 3,
+    bool: true,
+    time: '2017-01-03'
+  }, {
+    string: 'd',
+    int: 1,
+    bool: false,
+    time: '2017-01-04'
+  }, {
+    string: 'e',
+    int: 6,
+    bool: false,
+    time: null
+  }];
+
+  t.deepEqual(sample, expected, 'Should find correct sample for type analyzer');
   t.end();
 });

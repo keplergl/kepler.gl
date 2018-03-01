@@ -53,8 +53,8 @@ test('#PointLayer -> constructor', t => {
   t.end();
 });
 
-test('#PointLayer -> formatLayerData', async t => {
-  const {rows} = await processCsvData(csvData);
+test('#PointLayer -> formatLayerData', t => {
+  const {rows} = processCsvData(csvData);
 
   const filteredIndex = [0, 2, 4];
   const data = [rows[0], rows[2], rows[4]];

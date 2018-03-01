@@ -22,7 +22,6 @@ import test from 'tape';
 
 import {
   getRoundingDecimalFromStep,
-  getSampleForTypeAnalyze,
   preciseRound,
   roundValToStep
 } from 'utils/data-utils';
@@ -78,59 +77,4 @@ test('dataUtils -> getRoundingDecimalFromStep', t => {
     'should round -14.5 to -14');
   t.end();
 
-});
-
-test('dataUtils -> getSampleForTypeAnalyze', t => {
-  const fields = [{
-    name: 'string'
-  }, {
-    name: 'int'
-  }, {
-    name: 'bool'
-  }, {
-    name: 'time'
-  }];
-
-  const allData = [
-    ['a', 0, true, null],
-    ['b', 2, false, null],
-    ['c', 3, true, '2017-01-01'],
-    [null, 1, false, '2017-01-02'],
-    ['d', 6, false, '2017-01-03'],
-    ['e', 4, true, null],
-    ['f', 5, true, undefined],
-    ['g', null, true, null],
-    ['h', undefined, true, '2017-01-04']
-  ];
-
-  const sample = getSampleForTypeAnalyze({fields, allData, sampleCount: 5});
-  const expected = [{
-    string: 'a',
-    int: 0,
-    bool: true,
-    time: '2017-01-01'
-  }, {
-    string: 'b',
-    int: 2,
-    bool: false,
-    time: '2017-01-02'
-  }, {
-    string: 'c',
-    int: 3,
-    bool: true,
-    time: '2017-01-03'
-  }, {
-    string: 'd',
-    int: 1,
-    bool: false,
-    time: '2017-01-04'
-  }, {
-    string: 'e',
-    int: 6,
-    bool: false,
-    time: null
-  }];
-
-  t.deepEqual(sample, expected, 'Should find correct sample for type analyzer');
-  t.end();
 });

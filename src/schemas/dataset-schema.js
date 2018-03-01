@@ -23,8 +23,7 @@ import {console as globalConsole} from 'global/window';
 
 import {VERSIONS} from './versions';
 import Schema from './schema';
-import {getSampleForTypeAnalyze} from 'utils/data-utils';
-import {getFieldsFromData} from 'processors/data-processor';
+import {getFieldsFromData, getSampleForTypeAnalyze} from 'processors/data-processor';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
 
 // version v0
@@ -88,7 +87,7 @@ class DatasetSchema extends Schema {
     if (needCalculateMeta) {
       const fieldOrder = fields.map(f => f.name);
 
-      const sampleData = getSampleForTypeAnalyze({fields, allData});
+      const sampleData = getSampleForTypeAnalyze({fields: fieldOrder, allData});
       const meta = getFieldsFromData(sampleData, fieldOrder);
 
       updatedFields = fields.map((f, i) => ({
