@@ -80,8 +80,8 @@ const propTypes = {
   popoverOffset: PropTypes.object.isRequired,
 
   // optional
-  mapLayers: React.PropTypes.object,
-  onMapToggleLayer: React.PropTypes.func
+  mapLayers: PropTypes.object,
+  onMapToggleLayer: PropTypes.func
 };
 const MAPBOXGL_STYLE_UPDATE = 'style.load';
 MapContainerFactory.deps = [

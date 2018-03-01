@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {min, max, mean, median, sum} from 'd3-array';
-import {AGGREGATION_TYPES} from '../constants/default-settings';
+import {AGGREGATION_TYPES} from 'constants/default-settings';
 
 export function aggregate(data, technique) {
   switch (technique) {

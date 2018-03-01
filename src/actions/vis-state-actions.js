@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 // vis-state-reducer
-import ActionTypes from '../constants/action-types';
+import ActionTypes from 'constants/action-types';
 
 export function layerConfigChange(oldLayer, newConfig) {
   return {

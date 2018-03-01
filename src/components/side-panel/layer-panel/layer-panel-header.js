@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import styled from 'styled-components';
 import PanelHeaderAction from 'components/side-panel/panel-header-action';
@@ -34,19 +35,19 @@ import {InlineInput, StyledPanelHeader} from 'components/common/styled-component
 
 const propTypes = {
   // required
-  id: React.PropTypes.string.isRequired,
-  isDragNDropEnabled: React.PropTypes.bool,
-  isVisible: React.PropTypes.bool.isRequired,
-  label: React.PropTypes.string.isRequired,
-  onToggleVisibility: React.PropTypes.func.isRequired,
+  id: PropTypes.string.isRequired,
+  isDragNDropEnabled: PropTypes.bool,
+  isVisible: PropTypes.bool.isRequired,
+  label: PropTypes.string.isRequired,
+  onToggleVisibility: PropTypes.func.isRequired,
 
   // optional
-  className: React.PropTypes.string,
-  idx: React.PropTypes.number,
-  isConfigActive: React.PropTypes.bool,
-  labelRCGColorValues: React.PropTypes.array,
-  onUpdateLayerLabel: React.PropTypes.func,
-  onRemoveLayer: React.PropTypes.func
+  className: PropTypes.string,
+  idx: PropTypes.number,
+  isConfigActive: PropTypes.bool,
+  labelRCGColorValues: PropTypes.array,
+  onUpdateLayerLabel: PropTypes.func,
+  onRemoveLayer: PropTypes.func
 };
 
 const defaultProps = {

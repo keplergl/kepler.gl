@@ -52,6 +52,7 @@ const myCustomHeaderFactory = () => withState(
   // actions
   {addTodo}
 )(CustomHeader);
+
 //
 // const KeplerGl = injectComponents([
 //   [PanelHeaderFactory, myCustomHeaderFactory]

@@ -22,8 +22,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-class Select extends React.Component {
-  static displayName = 'Select';
+class SquareSelect extends React.Component {
+  static displayName = 'SquareSelect';
   static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
@@ -44,4 +44,4 @@ class Select extends React.Component {
   }
 }
 
-export default Select;
+export default SquareSelect;

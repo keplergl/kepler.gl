@@ -20,9 +20,9 @@
 
 import memoize from 'lodash.memoize';
 import Layer from './base-layer';
-import {hexToRgb} from '../utils/color-utils';
-import {aggregate} from '../utils/aggregate-utils';
-import {CHANNEL_SCALES, FIELD_OPTS} from '../constants/default-settings';
+import {hexToRgb} from 'utils/color-utils';
+import {aggregate} from 'utils/aggregate-utils';
+import {CHANNEL_SCALES, FIELD_OPTS} from 'constants/default-settings';
 
 export const pointPosAccessor = ({lat, lng}) => d => [
   d[lng.fieldIdx],

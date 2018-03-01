@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
 import styled from 'styled-components';
 
@@ -116,13 +117,13 @@ const StyledMapControlPanelHeader = styled.div`
 `;
 
 const propTypes = {
-  dragRotate: React.PropTypes.bool.isRequired,
-  isFullScreen: React.PropTypes.bool.isRequired,
-  isSplit: React.PropTypes.bool.isRequired,
-  onToggleFullScreen: React.PropTypes.func.isRequired,
-  onTogglePerspective: React.PropTypes.func.isRequired,
-  onToggleSplitMap: React.PropTypes.func.isRequired,
-  top: React.PropTypes.number.isRequired
+  dragRotate: PropTypes.bool.isRequired,
+  isFullScreen: PropTypes.bool.isRequired,
+  isSplit: PropTypes.bool.isRequired,
+  onToggleFullScreen: PropTypes.func.isRequired,
+  onTogglePerspective: PropTypes.func.isRequired,
+  onToggleSplitMap: PropTypes.func.isRequired,
+  top: PropTypes.number.isRequired
 };
 
 const defaultProps = {

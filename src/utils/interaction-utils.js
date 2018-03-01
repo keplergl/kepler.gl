@@ -23,7 +23,7 @@ import {
   MAX_DEFAULT_TOOLTIPS,
   ALL_FIELD_TYPES,
   TRIP_POINT_FIELDS
-} from '../constants/default-settings';
+} from 'constants/default-settings';
 import {Messages, Crosshairs} from 'components/common/icons/index';
 
 export function getDefaultInteraction() {

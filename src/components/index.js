@@ -44,8 +44,10 @@ export {default as LoadDataModalFactory} from './modals/load-data-modal';
 export {default as TimeWidgetFactory} from './filters/time-widget';
 
 // Injector
-export {injector as injector} from './injector'
-export {withState as withState} from './injector'
+export {
+  injector as injector,
+  withState as withState
+} from './injector'
 
 // Common Components
 export {default as FileUpload} from './common/file-uploader/file-upload';

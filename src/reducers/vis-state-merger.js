@@ -28,9 +28,9 @@ import {
   getFilterPlot,
   filterData,
   adjustValueToFilterDomain
-} from '../utils/filter-utils';
+} from 'utils/filter-utils';
 
-import {LAYER_BLENDINGS, LAYER_CLASSES} from '../constants/default-settings';
+import {LAYER_BLENDINGS, LAYER_CLASSES} from 'constants/default-settings';
 
 /**
  * Merge loaded filters with current state, if no fields or data are loaded

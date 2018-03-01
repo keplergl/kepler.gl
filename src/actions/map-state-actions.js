@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {createAction} from 'redux-actions';
-import ActionTypes from '../constants/action-types';
+import ActionTypes from 'constants/action-types';
 
 // second argument of createAction is expected
 // to be payloadCreator or undefined

@@ -19,16 +19,17 @@
 // THE SOFTWARE.
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {event, select} from 'd3-selection';
 import {brushX} from 'd3-brush';
 
 const propTypes = {
-  domain: React.PropTypes.arrayOf(React.PropTypes.number).isRequired,
-  onBrush: React.PropTypes.func.isRequired,
-  range: React.PropTypes.arrayOf(React.PropTypes.number).isRequired,
-  value: React.PropTypes.arrayOf(React.PropTypes.number).isRequired,
-  width: React.PropTypes.number.isRequired
+  domain: PropTypes.arrayOf(PropTypes.number).isRequired,
+  onBrush: PropTypes.func.isRequired,
+  range: PropTypes.arrayOf(PropTypes.number).isRequired,
+  value: PropTypes.arrayOf(PropTypes.number).isRequired,
+  width: PropTypes.number.isRequired
 };
 
 const StyledG = styled.g`

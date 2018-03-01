@@ -20,7 +20,7 @@
 
 import pick from 'lodash.pick';
 import {VERSIONS} from './versions';
-import {isValidFilterValue} from '../utils/filter-utils';
+import {isValidFilterValue} from 'utils/filter-utils';
 
 import Schema from './schema';
 

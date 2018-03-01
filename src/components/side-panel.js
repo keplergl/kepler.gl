@@ -37,7 +37,7 @@ import {
   PANELS,
   DATA_TABLE_ID,
   ADD_DATA_ID
-} from '../constants/default-settings';
+} from 'constants/default-settings';
 
 const propTypes = {
   filters: PropTypes.array.isRequired,

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {hexToRgb} from '../utils/color-utils';
+import {hexToRgb} from 'utils/color-utils';
 import {console as Console} from 'global/window';
 import keymirror from 'keymirror';
 import DefaultLayerIcon from './default-layer-icon';
@@ -31,7 +31,7 @@ import {
   CHANNEL_SCALES,
   FIELD_OPTS,
   SCALE_FUNC
-} from '../constants/default-settings';
+} from 'constants/default-settings';
 import {DataVizColors} from 'constants/custom-color-ranges';
 import {LAYER_VIS_CONFIGS} from './layer-factory';
 
@@ -39,20 +39,20 @@ import {
   generateHashId,
   notNullorUndefined,
   isPlainObject
-} from '../utils/utils';
+} from 'utils/utils';
 
 import {
   getSampleData,
   getLatLngBounds,
   maybeToDate,
   getSortingFunction
-} from '../utils/data-utils';
+} from 'utils/data-utils';
 
 import {
   getQuantileDomain,
   getOrdinalDomain,
   getLinearDomain
-} from '../utils/data-scale-utils';
+} from 'utils/data-scale-utils';
 
 /**
  * Approx. number of points to sample in a large data set

@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {css} from 'styled-components';
-import {DIMENSIONS} from '../constants/default-settings';
+import {DIMENSIONS} from 'constants/default-settings';
 
 export const transition = 'all .4s ease';
 export const transitionFast = 'all .2s ease';

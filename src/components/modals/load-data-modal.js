@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
 import FileUpload from 'components/common/file-uploader/file-upload';
@@ -28,10 +29,10 @@ const StyledLoadDataModal = styled.div`
 `;
 
 const propTypes = {
-  onClose: React.PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired,
 
   // call backs
-  onFileUpload: React.PropTypes.func.isRequired
+  onFileUpload: PropTypes.func.isRequired
 };
 
 export const LoadDataModal = props => (

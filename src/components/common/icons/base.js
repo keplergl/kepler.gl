@@ -39,7 +39,7 @@ const Base = React.createClass({
     /** Set the viewbox of the svg */
     viewBox: PropTypes.string,
     /** Path element */
-    children: React.PropTypes.node,
+    children: PropTypes.node,
 
     predefinedClassName: PropTypes.string,
     className: PropTypes.string

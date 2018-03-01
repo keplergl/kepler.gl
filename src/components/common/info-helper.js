@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import {Tooltip} from './styled-components';
 import {Docs} from 'components/common/icons';
 import styled from 'styled-components';
@@ -40,8 +41,8 @@ const StyledInfoHelper = styled.div`
 `;
 
 const propTypes = {
-  description: React.PropTypes.string.isRequired,
-  containerClass: React.PropTypes.string
+  description: PropTypes.string.isRequired,
+  containerClass: PropTypes.string
 };
 
 const InfoHelper = ({description, containerClass, id}) => (

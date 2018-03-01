@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import Sortable from 'react-anything-sortable';
 import styled from 'styled-components';
 
@@ -36,20 +37,20 @@ import {
 import {LAYER_BLENDINGS} from 'constants/default-settings';
 
 const propTypes = {
-  addLayer: React.PropTypes.func.isRequired,
-  datasets: React.PropTypes.object.isRequired,
-  layerBlending: React.PropTypes.string.isRequired,
-  layers: React.PropTypes.array.isRequired,
-  layerConfigChange: React.PropTypes.func.isRequired,
-  layerVisualChannelConfigChange: React.PropTypes.func.isRequired,
-  layerTypeChange: React.PropTypes.func.isRequired,
-  layerVisConfigChange: React.PropTypes.func.isRequired,
-  openModal: React.PropTypes.func.isRequired,
-  removeLayer: React.PropTypes.func.isRequired,
-  removeDataset: React.PropTypes.func.isRequired,
-  showDatasetTable: React.PropTypes.func.isRequired,
-  updateLayerBlending: React.PropTypes.func.isRequired,
-  updateLayerOrder: React.PropTypes.func.isRequired
+  addLayer: PropTypes.func.isRequired,
+  datasets: PropTypes.object.isRequired,
+  layerBlending: PropTypes.string.isRequired,
+  layers: PropTypes.array.isRequired,
+  layerConfigChange: PropTypes.func.isRequired,
+  layerVisualChannelConfigChange: PropTypes.func.isRequired,
+  layerTypeChange: PropTypes.func.isRequired,
+  layerVisConfigChange: PropTypes.func.isRequired,
+  openModal: PropTypes.func.isRequired,
+  removeLayer: PropTypes.func.isRequired,
+  removeDataset: PropTypes.func.isRequired,
+  showDatasetTable: PropTypes.func.isRequired,
+  updateLayerBlending: PropTypes.func.isRequired,
+  updateLayerOrder: PropTypes.func.isRequired
 };
 
 const StyledSortable = styled.div`

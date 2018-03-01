@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {handleActions} from 'redux-actions';
-import ActionTypes from '../constants/action-types';
+import ActionTypes from 'constants/action-types';
 
 export const INITIAL_MAP_STATE = {
   pitch: 0,

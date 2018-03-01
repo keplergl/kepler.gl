@@ -18,23 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {PropTypes} from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 
 import styled from 'styled-components';
 import Delete from '../icons/delete';
 
 const propTypes = {
   // required properties
-  onClick: React.PropTypes.func.isRequired,
-  removeItem: React.PropTypes.func.isRequired,
+  onClick: PropTypes.func.isRequired,
+  removeItem: PropTypes.func.isRequired,
 
   // optional properties
   selectedItems: PropTypes.array,
-  disabled: React.PropTypes.bool,
-  displayOption: React.PropTypes.func,
-  focus: React.PropTypes.bool,
-  error: React.PropTypes.bool,
-  placeholder: React.PropTypes.string
+  disabled: PropTypes.bool,
+  displayOption: PropTypes.func,
+  focus: PropTypes.bool,
+  error: PropTypes.bool,
+  placeholder: PropTypes.string
 };
 
 const ChickletButton = styled.div`

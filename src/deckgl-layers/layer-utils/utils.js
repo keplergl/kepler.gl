@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {scaleQuantize, scaleQuantile, scaleSqrt} from 'd3-scale';
-import {SCALE_TYPES} from '../../constants/default-settings';
+import {SCALE_TYPES} from 'constants/default-settings';
 
 // Enable render color by customized color Scale
 export function getBinColorDomain(scaleType, bins, [lowerIdx, upperIdx]) {

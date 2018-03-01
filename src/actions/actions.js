@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import ActionTypes from '../constants/action-types';
+import ActionTypes from 'constants/action-types';
 import {createAction} from 'redux-actions';
 
 // create actions

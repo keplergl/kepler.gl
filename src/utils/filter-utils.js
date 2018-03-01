@@ -22,7 +22,7 @@ import moment from 'moment';
 import {ascending, extent, histogram as d3Histogram, ticks} from 'd3-array';
 import keyMirror from 'keymirror';
 
-import {ALL_FIELD_TYPES} from '../constants/default-settings';
+import {ALL_FIELD_TYPES} from 'constants/default-settings';
 import {maybeToDate, notNullorUndefined} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
 import {generateHashId} from './utils';

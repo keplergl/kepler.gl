@@ -18,7 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, PropTypes} from 'react';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {createSelector} from 'reselect';
 import {format} from 'd3-format';
@@ -27,8 +28,8 @@ import {
   SCALE_TYPES,
   SCALE_FUNC,
   ALL_FIELD_TYPES
-} from '../../constants/default-settings';
-import {getTimeWidgetHintFormatter} from '../../utils/filter-utils';
+} from 'constants/default-settings';
+import {getTimeWidgetHintFormatter} from 'utils/filter-utils';
 
 const ROW_H = 10;
 const GAP = 4;

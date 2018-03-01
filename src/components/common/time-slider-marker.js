@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import {scaleUtc} from 'd3-scale';
 import {select} from 'd3-selection';
 import {axisBottom} from 'd3-axis';
@@ -61,8 +62,8 @@ const TimeSliderContainer = styled.svg`
 `;
 
 const propTypes = {
-  domain: React.PropTypes.array.isRequired,
-  width: React.PropTypes.number.isRequired
+  domain: PropTypes.array.isRequired,
+  width: PropTypes.number.isRequired
 };
 
 const height = 30;

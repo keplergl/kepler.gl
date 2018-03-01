@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {rgb} from 'd3-color';
 import ColorLegend from 'components/common/color-legend';
@@ -74,7 +75,7 @@ const LayerSize = ({label, name}) => (
 );
 
 const propTypes = {
-  layers: React.PropTypes.array
+  layers: PropTypes.array
 };
 
 const MapLegend = ({layers}) => (

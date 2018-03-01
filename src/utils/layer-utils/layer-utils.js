@@ -36,13 +36,11 @@ import {hexToRgb} from 'utils/color-utils';
 
 import * as KeplerGlLayers from 'keplergl-layers';
 
-import {DataVizColors} from 'constants/custom-color-ranges';
-
 const DEFAULT_LAYER_COLOR = {
-  tripArc: DataVizColors.aqua,
-  begintrip_lat: DataVizColors.orchid,
-  dropoff_lat: DataVizColors.tree_poppy,
-  request_lat: DataVizColors.portage
+  tripArc: '#9226C6',
+  begintrip_lat: '#1E96BE',
+  dropoff_lat: '#FF991F',
+  request_lat: '#52A353'
 };
 
 /**

@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {createAction} from 'redux-actions';
-import ActionTypes from '../constants/action-types';
+import ActionTypes from 'constants/action-types';
 
 const {
   MAP_CONFIG_CHANGE,

@@ -21,8 +21,8 @@
 import {handleActions} from 'redux-actions';
 import {withTask} from 'react-palm';
 
-import ActionTypes from '../constants/action-types';
-import {TilesCache, TilesCollection} from '../utils/mapzen-utils';
+import ActionTypes from 'constants/action-types';
+import {TilesCache, TilesCollection} from 'utils/mapzen-utils';
 import {
   loadBuildingTileError,
   loadBuildingTileSuccess
