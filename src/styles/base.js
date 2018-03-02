@@ -171,7 +171,7 @@ export const tooltipColor = '#333334';
 
 // Modal
 export const modalTitleColor = '#3A414C';
-export const modalTitleFontSize = '32px';
+export const modalTitleFontSize = '24px';
 export const modalFooterBgd = '#F8F8F9';
 
 // Modal Dialog (Dark)
@@ -213,6 +213,7 @@ const input = css`
       props.active
         ? props.theme.inputBorderActiveColor
         : props.error ? props.theme.errorColor : props.theme.inputBgd};
+  border-radius: 2px;
   caret-color: ${props => props.theme.inputBorderActiveColor};
   color: ${props => props.theme.inputColor};
   display: flex;
@@ -437,6 +438,7 @@ const dropdownScrollBar = css`
   
   :vertical:hover {
     background: ${props => props.theme.textColorHl};
+    cursor: pointer;
   }
 }`;
 
@@ -513,21 +515,46 @@ const sidePanelScrollBar = css`
   
   ::-webkit-scrollbar-thumb {
     border-radius: 10px;
-    background: ${props => props.theme.labelColor};
+    background: ${props => props.theme.panelBackgroundHover};
     border: 3px solid ${props => props.theme.sidePanelBg};
+    
+    :hover {
+      background: ${props => props.theme.labelColor};
+      cursor: pointer;
+    }
   };
-  
-  :vertical:hover {
-    background: ${props => props.theme.textColorHl};
-  }
 }`;
+
+const panelDropdownScrollBar = css`
+  ::-webkit-scrollbar {
+    height: 10px;
+    width: 10px;
+  }
+  
+  ::-webkit-scrollbar-corner {
+    background: ${props => props.theme.panelBackground};
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: ${props => props.theme.panelBackground};
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background: ${props => props.theme.panelBackgroundHover};
+    border: 3px solid ${props => props.theme.panelBackground};
+    :hover {
+      background: ${props => props.theme.labelColor};
+      cursor: pointer;
+    }
+  };
+`;
 
 const scrollBar = css`
   ::-webkit-scrollbar {
     height: 10px;
     width: 10px;
   }
-
   
   ::-webkit-scrollbar-corner {
     background: ${props => props.theme.panelBackground};
@@ -542,12 +569,14 @@ const scrollBar = css`
     background: ${props => props.theme.labelColor};
     border: 3px solid ${props => props.theme.panelBackground}
 
-    ':vertical:hover': {
+    :vertical:hover {
       background: ${props => props.theme.textColorHl};
+      cursor: pointer;
     }
     
-     ':horizontal:hover': {
+    :horizontal:hover {
       background: ${props => props.theme.textColorHl};
+      cursor: pointer;
     }
   }
 }`;
@@ -740,6 +769,7 @@ export const theme = {
   panelHeaderIcon,
   panelHeaderIconActive,
   panelHeaderHeight,
+  panelDropdownScrollBar,
 
   // Text
   textColor,

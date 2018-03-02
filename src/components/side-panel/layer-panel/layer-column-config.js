@@ -49,7 +49,7 @@ export default class LayerColumnConfig extends Component {
     const {layer} = this.props;
 
     const columns =
-      value.pair && layer.columnPairs
+      value && value.pair && layer.columnPairs
         ? layer.assignColumnPairs(key, value.pair)
         : layer.assignColumn(key, value);
 

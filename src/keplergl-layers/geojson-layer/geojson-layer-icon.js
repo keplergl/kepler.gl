@@ -39,27 +39,26 @@ const GeojsonLayerIcon = React.createClass({
       <Base {...this.props}>
         <polygon
           className="cr1"
-          points="9.5 38.22 22.75 38.22 36 25.07 36 8.71 9.5 8.71 9.5 38.22"
-          style={{opacity: 0.4}}
+          points="25.04 23.08 9.72 31.79 8.19 43.2 19.57 53.83 28.79 53.83 35.6 46.57 39.45 30.08 25.04 23.08"
         />
         <polygon
           className="cr2"
-          points="38.27 29.13 26.98 40.41 26.98 54.88 54.46 54.88 54.46 29.13 38.27 29.13"
-        />
-        <rect
-          className="cr3"
-          x="9.5"
-          y="41.88"
-          width="13.86"
-          height="13"
+          points="52.8 26.3 41.74 30.32 37.9 46.75 45.26 53.83 51.45 53.83 55.07 43.51 52.8 26.3"
           style={{opacity: 0.8}}
         />
-        <rect
+        <polygon
+          className="cr3"
+          points="36.69 48.75 31.93 53.83 41.96 53.83 36.69 48.75"
+          style={{opacity: 0.4}}
+        />
+        <polygon
+          className="cr3"
+          points="25.95 20.98 40.84 28.22 52.57 24.06 50.89 11.5 23.24 11.5 25.95 20.98"
+          style={{opacity: 0.4}}
+        />
+        <polygon
           className="cr4"
-          x="39.58"
-          y="8.71"
-          width="14.87"
-          height="16.83"
+          points="20.79 11.9 11.73 15.72 10.08 28.96 23.64 21.25 20.79 11.9"
           style={{opacity: 0.8}}
         />
       </Base>

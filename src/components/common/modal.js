@@ -58,7 +58,7 @@ const defaultProps = {
 
 const ModalContentWrapper = styled.div`
   width: 60%;
-  padding: 77px 96px;
+  padding: 40px 96px;
   position: absolute;
   top: 92px;
   left: 0;

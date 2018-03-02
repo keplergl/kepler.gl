@@ -35,11 +35,7 @@ import {
 import {DataVizColors} from 'constants/custom-color-ranges';
 import {LAYER_VIS_CONFIGS} from './layer-factory';
 
-import {
-  generateHashId,
-  notNullorUndefined,
-  isPlainObject
-} from 'utils/utils';
+import {generateHashId, notNullorUndefined, isPlainObject} from 'utils/utils';
 
 import {
   getSampleData,
@@ -212,12 +208,19 @@ export default class Layer {
    * @returns {{}} - Column config
    */
   assignColumn(key, field) {
+    // field value could be null for optional columns
+    const update = field
+      ? {
+          value: field.name,
+          fieldIdx: field.tableFieldIndex - 1
+        }
+      : {value: null, fieldIdx: -1};
+
     return {
       ...this.config.columns,
       [key]: {
         ...this.config.columns[key],
-        value: field.name,
-        fieldIdx: field.tableFieldIndex - 1
+        ...update
       }
     };
   }

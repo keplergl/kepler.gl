@@ -56,6 +56,7 @@ const SidePanelContent = styled.div`
   flex-grow: 1;
   padding: 16px;
   overflow-y: overlay;
+  overflow-x: hidden;
 `;
 
 const PanelTitle = styled.div`

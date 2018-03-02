@@ -135,7 +135,7 @@ class App extends Component {
         // datasets
         {
           info: {
-            label: 'Test Trip Data',
+            label: 'Sample Taxi Trips in New York City',
             id: 'test_trip_data'
           },
           data: sampleTripData

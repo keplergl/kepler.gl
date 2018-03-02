@@ -27,33 +27,35 @@ import FieldToken from '../common/field-token';
 import {classList} from './item-selector/dropdown-list';
 
 const defaultDisplayOption = d => d.name;
+
 // custom list Item
-const FieldListItem = ({value, displayOption = defaultDisplayOption}) => (
-  <div>
-    <div style={{display: 'inline-block', margin: '0 4px 0 0'}}>
-      <FieldToken type={value.type} />
+const FieldListItemFactory = showToken => {
+  const FieldListItem = ({value, displayOption = defaultDisplayOption}) => (
+    <div>
+      {showToken ? (
+        <div style={{display: 'inline-block', margin: '0 4px 0 0'}}>
+          <FieldToken type={value.type} />
+        </div>
+      ) : null}
+      <span className={classList.listItemAnchor}>{displayOption(value)}</span>
     </div>
-    <span className={classList.listItemAnchor}>{displayOption(value)}</span>
-  </div>
-);
+  );
+
+  return FieldListItem;
+};
 
 const propTypes = {
   fields: PropTypes.array.isRequired,
   onSelect: PropTypes.func.isRequired,
   placement: PropTypes.string,
-  value: PropTypes.oneOfType([
-    PropTypes.array,
-    PropTypes.string
-  ]),
-  filterFieldTypes: PropTypes.oneOfType([
-    PropTypes.array,
-    PropTypes.string
-  ]),
+  value: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
+  filterFieldTypes: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   inputTheme: PropTypes.string,
   erasable: PropTypes.bool,
   error: PropTypes.bool,
   multiSelect: PropTypes.bool,
   closeOnSelect: PropTypes.bool,
+  showToken: PropTypes.bool,
   suggested: PropTypes.array
 };
 
@@ -65,7 +67,9 @@ const defaultProps = {
   placement: 'bottom',
   value: null,
   multiSelect: false,
-  closeOnSelect: true
+  closeOnSelect: true,
+  showToken: true,
+  placeholder: 'Select a field'
 };
 
 const SuggestedFieldHeader = () => <div>Suggested Field</div>;
@@ -74,6 +78,7 @@ export default class FieldSelector extends Component {
   fieldsSelector = props => props.fields;
   valueSelector = props => props.value;
   filterFieldTypesSelector = props => props.filterFieldTypes;
+  showTokenSelector = props => props.showToken;
 
   selectedItemsSelector = createSelector(
     this.fieldsSelector,
@@ -100,6 +105,11 @@ export default class FieldSelector extends Component {
     }
   );
 
+  fieldListItemSelector = createSelector(
+    this.showTokenSelector,
+    FieldListItemFactory
+  );
+
   render() {
     return (
       <div>
@@ -115,10 +125,12 @@ export default class FieldSelector extends Component {
           erasable={this.props.erasable}
           options={this.fieldOptionsSelector(this.props)}
           multiSelect={this.props.multiSelect}
-          placeholder={'Select a field'}
+          placeholder={this.props.placeholder}
           placement={this.props.placement}
           onChange={this.props.onSelect}
-          DropDownLineItemRenderComponent={FieldListItem}
+          DropDownLineItemRenderComponent={this.fieldListItemSelector(
+            this.props
+          )}
           DropdownHeaderComponent={
             this.props.suggested ? SuggestedFieldHeader : null
           }

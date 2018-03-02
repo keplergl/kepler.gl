@@ -172,6 +172,7 @@ export function getFilterProps(data, field) {
       return {
         ...filterDomain,
         type,
+        enlarged: true,
         value,
         fieldType
       };

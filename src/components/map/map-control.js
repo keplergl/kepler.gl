@@ -28,8 +28,6 @@ import MapLayerSelector from 'components/common/map-layer-selector';
 import MapLegend from './map-legend';
 import {
   Close,
-  Reduce,
-  Expand,
   Split,
   Legend,
   Cube3d,
@@ -215,6 +213,7 @@ export class MapControl extends Component {
           e.preventDefault();
           this._toggleMenuPanel('areLayersVisible');
         }}
+        className="map-control-button toggle-layer"
         data-tip
         data-for="toggle-layer"
       >
@@ -239,9 +238,9 @@ export class MapControl extends Component {
     return !isLegendVisible ? (
       <StyledMapControlButton
         key={2}
-        className={'legend'}
         data-tip
         data-for="show-legend"
+        className="map-control-button show-legend"
         onClick={e => {
           e.preventDefault();
           this._toggleMenuPanel('isLegendVisible');
@@ -271,16 +270,14 @@ export class MapControl extends Component {
 
     const {
       dragRotate,
-      isFullScreen,
       isSplit,
       mapIndex,
-      onToggleFullScreen,
       onTogglePerspective,
       onToggleSplitMap
     } = this.props;
 
     return (
-      <StyledMapControl className={'map-control'}>
+      <StyledMapControl className="map-control">
         {/* Split Map */}
         <ActionPanel key={0}>
           <StyledMapControlButton
@@ -289,12 +286,17 @@ export class MapControl extends Component {
               e.preventDefault();
               onToggleSplitMap(isSplit ? mapIndex : undefined);
             }}
+            key={`split-${isSplit}`}
+            className="map-control-button split-map"
             data-tip
-            data-for={`action-toggle_${mapIndex}`}
+            data-for="action-toggle"
           >
-            {isSplit ? <Delete height={'18px'} /> : <Split height={'18px'} />}
+            {isSplit ?
+              <Delete height={'18px'} /> :
+              <Split height={'18px'} />
+            }
             <MapLegendTooltip
-              id={`action-toggle_${mapIndex}`}
+              id="action-toggle"
               message={
                 isSplit ? 'Close current panel' : 'Switch to dual map view'
               }
@@ -326,28 +328,6 @@ export class MapControl extends Component {
         </ActionPanel>
         {/* Map Legend */}
         <ActionPanel key={3}>{this._renderLegend(items)}</ActionPanel>
-        {/* Full Screen */}
-        <ActionPanel key={4}>
-          <StyledMapControlButton
-            onClick={e => {
-              e.preventDefault();
-              onToggleFullScreen();
-            }}
-            active={isFullScreen}
-            data-tip
-            data-for={`action-fullscreen_${mapIndex}_${isFullScreen}`}
-          >
-            {isFullScreen ? (
-              <Reduce height={'22px'} />
-            ) : (
-              <Expand height={'22px'} />
-            )}
-            <MapLegendTooltip
-              id={`action-fullscreen_${mapIndex}_${isFullScreen}`}
-              message={!isFullScreen ? 'Go full screen' : 'Exit full screen'}
-            />
-          </StyledMapControlButton>
-        </ActionPanel>
       </StyledMapControl>
     );
   }

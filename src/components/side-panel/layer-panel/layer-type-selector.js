@@ -27,7 +27,7 @@ import * as KeplerGlLayers from 'keplergl-layers';
 import {classList} from 'components/common/item-selector/dropdown-list';
 
 import ItemSelector from 'components/common/item-selector/item-selector';
-import {LAYER_CLASSES} from 'constants/default-settings';
+import {LAYER_CLASSES, ICON_PREFIX} from 'constants/default-settings';
 
 import {
   PanelLabel,
@@ -74,19 +74,19 @@ const StyledListItem = styled.div`
   &.list {
     display: flex;
     align-items: center;
-    
+
     .layer-type-selector__item__icon {
       color: ${props => props.theme.activeColor};
-    }
-  
-    svg {
-      margin-right: 12px;
+      background-size: 28px 28px;
+      margin-right: 12px;  
     }
   }
   
   .layer-type-selector__item__icon {
     color: ${props => props.theme.labelColor};
     display: flex;
+    background-image: url(${`${ICON_PREFIX}/kepler.gl-layer-icon-bg.png`});
+    background-size: 64px 64px;
   }
 
   .layer-type-selector__item__label {
@@ -114,7 +114,6 @@ const LayerTypeListItem = ({value, isTile}) => (
     <div className="layer-type-selector__item__icon">
       <value.icon
         height={isTile ? '64px' : '28px'}
-        style={{backgroundColor: '#151E29'}}
       />
     </div>
     <div className="layer-type-selector__item__label">{value.label}</div>
@@ -150,9 +149,15 @@ const propTypes = {
   onSelect: PropTypes.func.isRequired
 };
 
+const StyledLayerTypeSelector = styled.div`
+  // override item-selector dropdown padding
+  .item-selector .item-selector__dropdown {
+    padding: 4px 10px 4px 2px;
+  }
+`;
 const LayerTypeSelector = ({layer, onSelect}) => (
   <SidePanelSection>
-    <div className="layer-config__type">
+    <StyledLayerTypeSelector className="layer-config__type">
       <PanelLabel>Layer type</PanelLabel>
       <ItemSelector
         selectedItems={TypeOptions.find(op => op.id === layer.type)}
@@ -166,7 +171,7 @@ const LayerTypeSelector = ({layer, onSelect}) => (
         DropDownLineItemRenderComponent={LayerTypeListItem}
         DropDownRenderComponent={LayerTypeDropdownList}
       />
-    </div>
+    </StyledLayerTypeSelector>
   </SidePanelSection>
 );
 

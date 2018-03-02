@@ -67,6 +67,12 @@ const DropdownSelectValue = styled.span`
     props.placeholder
       ? props.theme.selectColorPlaceHolder
       : props.theme.selectColor};
+  overflow: hidden;
+`;
+
+const DropdownSelectErase = styled.div`
+  margin-left: 6px;
+  display: flex;
 `;
 
 const DropdownWrapper = styled.div`
@@ -90,6 +96,7 @@ const propTypes = {
 
   // optional properties
   fixedOptions: PropTypes.array,
+  erasable: PropTypes.bool,
   displayOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
   getOptionValue: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
   filterOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
@@ -276,7 +283,9 @@ class ItemSelector extends Component {
                 )}
               </DropdownSelectValue>
               {this.props.erasable && hasValue ? (
-                <Delete height="12px" onClick={this._onErase} />
+                <DropdownSelectErase>
+                  <Delete height="12px" onClick={this._onErase} />
+                </DropdownSelectErase>
               ) : null}
             </StyledDropdownSelect>
           )}

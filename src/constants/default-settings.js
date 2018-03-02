@@ -30,9 +30,9 @@ export const MAPBOX_ACCESS_TOKEN =
 export const MAPZEN_API_KEY = 'vector-tiles-u4xpG7G';
 
 // TODO: cleanup styles, don't load uber style
-const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net';
-const STYLE_PREFIX = `${CLOUDFRONT}/map_styles`;
-const ICON_PREFIX = `${CLOUDFRONT}/geodude`;
+export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net';
+export const STYLE_PREFIX = `${CLOUDFRONT}/map_styles`;
+export const ICON_PREFIX = `${CLOUDFRONT}/geodude`;
 
 // Modal Ids
 export const LAYER_CONFIG_ID = 'copyConfig';

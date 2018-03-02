@@ -22,7 +22,7 @@ import React from 'react';
 import styled from 'styled-components';
 import {format} from 'd3-format';
 
-import {SidePanelSection, Tooltip, DatasetSquare} from 'components/common/styled-components';
+import {SidePanelSection, Tooltip, DatasetSquare, CenterFlexbox} from 'components/common/styled-components';
 import {Table, Trash, ArrowRight} from 'components/common/icons';
 
 const defaultRemoveDataset = datasetKey => {};
@@ -35,7 +35,11 @@ const SourceDataCatelog = styled.div`
 const DatasetTitle = styled.div`
   color: ${props => props.theme.textColor};
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  
+  .source-data-arrow {
+    height: 16px;
+  }
   :hover {
     color: ${props =>
       props.clickable ? props.theme.textColorHl : props.theme.textColor};
@@ -52,10 +56,14 @@ const DatasetTitle = styled.div`
   }
 `;
 const DatasetTagWrapper = styled.div`
-  display: inline-block;
+  display: flex;
   color: ${props => props.theme.textColor};
   font-size: 11px;
   letter-spacing: 0.2px;
+  
+  .dataset-color {
+    margin-top: 5px;
+  }
 `;
 
 const DataTagAction = styled.div`
@@ -73,7 +81,7 @@ const DataRowCount = styled.div`
 export const DatasetTag = ({onClick, dataset}) => (
   <DatasetTagWrapper className="source-data-tag" onClick={onClick}>
     <DatasetSquare className="dataset-color" color={dataset.color} />
-    <span className="dataset-name">{dataset.label}</span>
+    <div className="dataset-name">{dataset.label}</div>
   </DatasetTagWrapper>
 );
 
@@ -86,14 +94,17 @@ const SourceDataCatalog = ({
   <SourceDataCatelog className="source-data-catalog">
     {Object.values(datasets).map((dataset, index) => (
       <SidePanelSection key={dataset.id}>
-        <DatasetTitle clickable={Boolean(showDatasetTable)}>
+        <DatasetTitle className="source-data-title" clickable={Boolean(showDatasetTable)}>
           <DatasetTag
             dataset={dataset}
             onClick={
               showDatasetTable ? () => showDatasetTable(dataset.id) : null
             }
           />
-          {showDatasetTable ? <ArrowRight height="12px" /> : null}
+          {showDatasetTable ?
+            <CenterFlexbox className="source-data-arrow">
+              <ArrowRight height="12px" />
+            </CenterFlexbox> : null}
           {showDatasetTable ? (
             <ShowDataTable
               id={dataset.id}
