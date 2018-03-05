@@ -81,6 +81,9 @@ export const FILTER_COMPONENTS = {
 
 export const BASE_SPEED = 600;
 export const TIME_ANIMATION_SPEED = [{
+  label: '0.5x',
+  value: 0.5
+}, {
   label: '1x',
   value: 1
 }, {

@@ -58,6 +58,7 @@ export const LOAD_FILE_TASK = taskCreator(
     handler(fileBlob, processor)
       .then(result => {
         if (!result) {
+          // TODO: capture in the UI and show message
           throw new Error('fail to load data');
         } else {
           success({data: result, info});

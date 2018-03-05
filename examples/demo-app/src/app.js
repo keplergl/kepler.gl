@@ -67,55 +67,7 @@ import sampleGeojson from './data/sample-geojson.json';
 import sampleIconCsv from './data/sample-icon-csv';
 /* eslint-enable no-unused-vars */
 
-// configurations
-import pointPlotConfiguration from './configurations/point-plot';
 
-// helper
-const overrideDataId = (configuration, datasetId) => {
-  configuration.appConfig.config.visState.filters =
-    configuration.appConfig.config.visState.filters.map(filter => ({
-      ...filter,
-      dataId: datasetId
-    }));
-  configuration.appConfig.config.visState.layers =
-    configuration.appConfig.config.visState.layers.map(layer => ({
-      ...layer,
-      config: {
-        ...layer.config,
-        dataId: datasetId
-      }
-    }));
-
-  return configuration;
-};
-
-/**
- * TODO: we need to decide if we should define this helpers within kepler.gl module or not
- * @param data
- * @param configuration
- * @returns {{datasets: {info: {id: string}, data: *}, parsedConfig: Object}}
- */
-const migrateDataAndConfiguration = (data, configuration) => {
-  // this is a mocked dataset. Kepler.gl requires at least one dataset to bind layers against
-  // mapbuilder
-  const dataId = 'test_this_one';
-  const config = overrideDataId(configuration, dataId);
-
-  // call out this in the documentation
-  const parsedConfig = KeplerGlSchema.parseSavedConfig(config.appConfig);
-  //
-  const jsonData = Processor.processRowObject(data);
-
-  // pass this structure to keplergl
-  const newData = {
-    info: {
-      id: dataId
-    },
-    data: jsonData
-  };
-
-  return {datasets: newData, parsedConfig};
-};
 
 class App extends Component {
   state = {

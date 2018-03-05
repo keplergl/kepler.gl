@@ -234,12 +234,3 @@ export function loadFilesErr(error) {
     error
   };
 }
-
-export function updateVisDataAndConfiguration({datasets, options, appConfig}) {
-  return {
-    type: ActionTypes.UPDATE_VIS_DATA_CONFIG,
-    datasets,
-    options,
-    appConfig
-  };
-}
