@@ -22,6 +22,7 @@ import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
 import keplerGlReducer, {visStateUpdaters} from '@uber/kepler.gl/reducers';
 import appReducer from './app-reducer';
 import {taskMiddleware} from 'react-palm';
+import window from 'global/window';
 
 const reducers = combineReducers({
   keplerGl: keplerGlReducer,
@@ -62,8 +63,8 @@ const enhancers = [applyMiddleware(...middlewares)];
 const initialState = {};
 
 // add redux devtools
-// const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
-const composeEnhancers = compose;
+const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+// const composeEnhancers = compose;
 
 export default createStore(
   composedReducer,

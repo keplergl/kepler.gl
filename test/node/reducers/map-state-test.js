@@ -158,26 +158,3 @@ test('#mapStateReducer -> SPLIT_MAP: close map at specific point', t => {
 
   t.end();
 });
-
-test('#mapStateReducer -> toggle map full screen', t => {
-  let newState = reducer(INITIAL_MAP_STATE, toggleFullScreen());
-
-  const expectedState = {
-    ...INITIAL_MAP_STATE,
-    isFullScreen: true
-  };
-
-  // toggle full screen
-  t.deepEqual(newState, expectedState, 'should validate toggle full screen');
-
-  // toggle back
-  newState = reducer(newState, toggleFullScreen());
-
-  t.deepEqual(
-    INITIAL_MAP_STATE,
-    newState,
-    'should validate toggle back to normal screen'
-  );
-
-  t.end();
-});

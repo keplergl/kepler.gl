@@ -334,7 +334,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           })
       );
     }
-    
+
     _shouldRenderLayer(layer, data, mapLayers) {
       const isAvailableAndVisible =
         !(mapLayers && mapLayers[layer.id]) || mapLayers[layer.id].isVisible;
@@ -370,9 +370,9 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       if (!this._shouldRenderLayer(layer, data, mapLayers)) {
         return overlays;
       }
-      
+
       let layerOverlay = [];
-      
+
       // Layer is Layer class
       if (typeof layer.renderLayer === 'function') {
         layerOverlay = layer.renderLayer({
@@ -471,7 +471,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         // style not yet loaded
         return <div/>;
       }
-      
+
       const {mapLayers, layers, datasets, index} = this.props;
 
       const mapProps = {
@@ -488,7 +488,6 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             datasets={datasets}
             dragRotate={mapState.dragRotate}
             isSplit={mapState.isSplit}
-            isFullScreen={mapState.isFullScreen}
             layers={layers}
             mapIndex={this.props.index}
             mapLayers={mapLayers}

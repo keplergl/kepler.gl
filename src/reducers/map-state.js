@@ -30,15 +30,13 @@ export const INITIAL_MAP_STATE = {
   dragRotate: false,
   width: 800,
   height: 800,
-  isSplit: false,
-  isFullScreen: false
+  isSplit: false
 };
 
 import {
   closeMapAtIndexUpdater,
   fitBoundsUpdater,
   receiveMapConfigUpdater,
-  toggleFullScreenUpdater,
   togglePerspectiveUpdater,
   toggleSplitMapUpdater,
   updateMapUpdater
@@ -52,8 +50,7 @@ const mapStateReducer = handleActions(
     [ActionTypes.TOGGLE_PERSPECTIVE]: togglePerspectiveUpdater,
     [ActionTypes.RECEIVE_MAP_CONFIG]: receiveMapConfigUpdater,
     [ActionTypes.TOGGLE_SPLIT_MAP]: toggleSplitMapUpdater,
-    [ActionTypes.CLOSE_MAP_AT_INDEX]: closeMapAtIndexUpdater,
-    [ActionTypes.TOGGLE_FULLSCREEN]: toggleFullScreenUpdater
+    [ActionTypes.CLOSE_MAP_AT_INDEX]: closeMapAtIndexUpdater
   },
   INITIAL_MAP_STATE
 );

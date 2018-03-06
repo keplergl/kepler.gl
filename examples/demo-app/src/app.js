@@ -93,7 +93,10 @@ class App extends Component {
           data: sampleTripData
         },
         // option
-        {},
+        {
+          centerMap: true,
+          readOnly: false
+        },
         // config
         {
           filters: [

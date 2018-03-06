@@ -27,6 +27,7 @@ import {
 } from './ui-state-updaters';
 
 export const INITIAL_UI_STATE = {
+  readOnly: false,
   isSideBarOpen: true,
   activeSidePanel: 'layer',
   isNavCollapsed: false,

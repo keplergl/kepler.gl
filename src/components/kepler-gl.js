@@ -257,7 +257,7 @@ function KeplerGlFactory(
               this.root = node;
             }}
           >
-            {!mapState.isFullScreen && <SidePanel {...sideFields} />}
+            {!uiState.readOnly && <SidePanel {...sideFields} />}
             <div className="maps" style={{display: 'flex'}}>
               {mapContainers}
             </div>

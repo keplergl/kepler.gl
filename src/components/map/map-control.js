@@ -116,7 +116,6 @@ const StyledMapControlPanelHeader = styled.div`
 
 const propTypes = {
   dragRotate: PropTypes.bool.isRequired,
-  isFullScreen: PropTypes.bool.isRequired,
   isSplit: PropTypes.bool.isRequired,
   onToggleFullScreen: PropTypes.func.isRequired,
   onTogglePerspective: PropTypes.func.isRequired,
@@ -125,7 +124,6 @@ const propTypes = {
 };
 
 const defaultProps = {
-  isFullScreen: false,
   isSplit: false,
   top: 0
 };

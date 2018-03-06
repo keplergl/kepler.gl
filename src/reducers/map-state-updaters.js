@@ -67,11 +67,6 @@ export const toggleSplitMapUpdater = (state, action) => ({
   ...getMapDimForSplitMap(!state.isSplit, state)
 });
 
-export const toggleFullScreenUpdater = (state, action) => ({
-  ...state,
-  isFullScreen: !state.isFullScreen
-});
-
 export const closeMapAtIndexUpdater = (state, action) =>
   toggleSplitMapUpdater(state, action);
 

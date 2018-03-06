@@ -37,7 +37,11 @@ const updateVisDataComposed = (state, action) => {
 
   const visState = updateVisDataUpdater(state.visState, action);
 
-  const defaultOptions = {centerMap: true};
+  const defaultOptions = {
+    centerMap: true,
+    // this will hide the left hand panel completely
+    readOnly: false
+  };
   const options = {
     ...defaultOptions,
     ...action.options
@@ -58,7 +62,10 @@ const updateVisDataComposed = (state, action) => {
           payload: bounds
         })
       : state.mapState,
-    uiState: toggleModalUpdater(state.uiState, {payload: null})
+    uiState: {
+      ...toggleModalUpdater(state.uiState, {payload: null}),
+      readOnly: options.readOnly
+    }
   };
 };
 
