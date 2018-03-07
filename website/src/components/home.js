@@ -185,17 +185,18 @@ const StyledCaption = styled.div`
   }
 `;
 
-const StyledFooter = styled.div`
-  align-items: center;
-  //bottom: 32px;
-  color: ${props => props.theme.footerColor};
+const StyledHeader = styled.div`
+  top: 0;
+  position: absolute;
   display: flex;
+
+  align-items: center;
+  color: ${props => props.theme.footerColor};
   font-size: 11px;
   justify-content: center;
   letter-spacing: 0.5px;
   line-height: 14px;
   margin: 32px 0;
-  //position: absolute;
   width: 100%;
   z-index: 101;
 
@@ -267,6 +268,15 @@ class Home extends Component {
     return (
       <Container>
         <StyledHome className="kg-home">
+          <StyledHeader>
+            <div>Created By</div>
+            <StyledLogo className="fg">
+              <a target="_blank" rel="noopener noreferrer" href="http://vis.gl">
+                VIS.GL
+              </a>
+            </StyledLogo>
+          </StyledHeader>
+
           <StyledMapContainer className="kg-home__map">
             <div className="kg-home__map__blocker" />
             <img
@@ -301,7 +311,7 @@ class Home extends Component {
                 <span className="t-bold">large-scale </span>
                 <span>data sets.</span>
               </div>
-              {isPalm ? (
+              {isPalm && (
                 <StyledImgContainer
                   style={{
                     width: `${imgW}px`,
@@ -322,7 +332,7 @@ class Home extends Component {
                     />
                   ))}
                 </StyledImgContainer>
-              ) : null}
+              )}
               <div className="kg-home__caption__bottom">
                 <div className="kg-home__caption__bottom__title">Coming soon in April 2018</div>
                 <Button large>
@@ -336,7 +346,7 @@ class Home extends Component {
                 </Button>
               </div>
             </StyledCaption>
-            {!isPalm ? (
+            {!isPalm && (
               <StyledImgContainer
                 style={{
                   width: `${imgW}px`,
@@ -353,16 +363,8 @@ class Home extends Component {
                   />
                 ))}
               </StyledImgContainer>
-            ) : null}
+            )}
           </StyledHomeContent>
-          <StyledFooter>
-            <div>Created By</div>
-            <StyledLogo className="fg">
-              <a target="_blank" rel="noopener noreferrer" href="http://vis.gl">
-                VIS.GL
-              </a>
-            </StyledLogo>
-          </StyledFooter>
         </StyledHome>
       </Container>
     );
