@@ -20,11 +20,7 @@ const screenMinW = imgMinW / imgToScrRatio;
 const minRight = imageSize.right / imageSize.w * imgMinW;
 const minTop = imageSize.top / imageSize.w * imgMinW;
 
-const IMAGES = [
-  'kepler.gl-hexagon.png',
-  'kepler.gl-points.png',
-  'kepler.gl-contours.png'
-];
+const IMAGES = ['kepler.gl-hexagon.png', 'kepler.gl-points.png', 'kepler.gl-contours.png'];
 
 const IMAGES_S = IMAGES.map(img => img.replace('.png', '_s.png'));
 const LOGO = 'viz_logo_bw.png';
@@ -41,11 +37,11 @@ const StyledMapContainer = styled.div`
   top: 0;
   left: 0;
   z-index: 0;
-  
+
   .kg-home__map__blocker {
     width: 100%;
     height: 100%;
-    position: fixed;  
+    position: fixed;
     top: 0;
     left: 0;
     background-color: ${props => props.theme.mapBlocker};
@@ -61,7 +57,7 @@ const StyledHomeContent = styled.div`
   z-index: 1;
   display: flex;
   justify-content: space-between;
-  
+
   ${media.palm`
     padding-left: 24px;
     padding-right: 24px;
@@ -69,7 +65,7 @@ const StyledHomeContent = styled.div`
     align-items: center;
     flex-direction: column;
     display: flex;
-  `}
+  `};
 `;
 
 // based on keyframe aniamtion to fade img
@@ -103,22 +99,20 @@ const animationName = keyframes`
 `;
 
 const StyledImgContainer = styled.div`
-  box-shadow: 0 12px 24px 0 rgba(0,0,0,0.50);
+  box-shadow: 0 12px 24px 0 rgba(0, 0, 0, 0.5);
   flex-shrink: 0;
   opacity: 1;
   position: relative;
-  
+
   ${media.palm`
     width: 100%;
-  `}
-
-  img {
+  `} img {
     animation-name: ${animationName};
     animation-timing-function: ease-in-out;
     animation-iteration-count: infinite;
     animation-duration: ${d * n}s;
   }
-  
+
   img:nth-of-type(1) {
     animation-delay: ${d * 2}s;
   }
@@ -128,7 +122,6 @@ const StyledImgContainer = styled.div`
   img:nth-of-type(3) {
     animation-delay: 0s;
   }
-
 `;
 
 const StyledCaption = styled.div`
@@ -136,7 +129,7 @@ const StyledCaption = styled.div`
   max-width: 280px;
   margin-right: 60px;
   padding-top: 70px;
-  
+
   ${media.palm`
     width: auto;
     padding-top: 0;
@@ -144,15 +137,13 @@ const StyledCaption = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
-  `}
-
-  .kg-home__caption__title {
+  `} .kg-home__caption__title {
     font-size: 44px;
     letter-spacing: 1.83px;
     margin-bottom: 20px;
     font-weight: 600;
   }
-  
+
   .kg-home__caption__description {
     font-size: 14px;
     color: ${props => props.theme.labelColor};
@@ -163,35 +154,32 @@ const StyledCaption = styled.div`
       color: ${props => props.theme.textColor};
       font-weight: 500;
     }
-    
-      
+
     ${media.palm`
       margin-bottom: 32px;
       text-align: center;
-    `}
+    `};
   }
-  
+
   .kg-home__caption__bottom {
     ${media.palm`
       margin-top: 30px;
       text-align: center;
-    `}
-
-    .kg-home__caption__bottom__title {
+    `} .kg-home__caption__bottom__title {
       font-size: 16px;
       letter-spacing: 0.67px;
       margin-bottom: 16px;
       font-weight: 600;
     }
-    
+
     .kg-button {
-      background: #005CD2;
-      box-shadow: 0 4px 16px 0 rgba(0,0,0,0.24);
+      background: #005cd2;
+      box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.24);
       letter-spacing: 0.25px;
       font-weight: 600;
-      
+
       :hover {
-        background: #196CD6;
+        background: #196cd6;
       }
     }
   }
@@ -210,13 +198,13 @@ const StyledFooter = styled.div`
   //position: absolute;
   width: 100%;
   z-index: 101;
-  
+
   ${media.palm`
     margin-top: 16px;
     position: relative;
     bottom: auto;
     margin-bottom: 64px;
-  `}
+  `};
 `;
 
 const StyledLogo = styled.span`
@@ -230,12 +218,12 @@ const StyledLogo = styled.span`
 
   a {
     padding: 0 1rem 0 0;
-    color: #E5E5E4;
+    color: #e5e5e4;
     letter-spacing: 2px;
   }
-  
+
   :before {
-    content: "";
+    content: '';
     background: url(${`${CLOUDFRONT}${KEPLER_GL_BUCKET}${LOGO}`}) no-repeat;
     background-size: cover;
     height: 20px;
@@ -250,7 +238,7 @@ const Container = styled.div`
   height: 100vh;
   overflow-y: auto;
   overflow-x: hidden;
-  background-color: #0D1823;
+  background-color: #0d1823;
 `;
 
 class Home extends Component {
@@ -278,69 +266,104 @@ class Home extends Component {
 
     return (
       <Container>
-      <StyledHome className="kg-home">
-        <StyledMapContainer className="kg-home__map">
-          <div className="kg-home__map__blocker"/>
-          <img style={{
-            width: `${this.state.width}px`,
-            height: 'auto',
-            minWidth: `${screenMinW}px`
-          }} src={`${CLOUDFRONT}${KEPLER_GL_BUCKET}kepler.gl-background.png`}/>
-        </StyledMapContainer>
-
-        <StyledHomeContent style={isPalm ? {} : {
-          paddingLeft: '72px',
-          paddingRight: `${Math.max(imageSize.right * shrink, minRight)}px`,
-          paddingTop: `${Math.max(imageSize.top * shrink, minTop)}px`
-        }}>
-          <StyledCaption>
-            <div className="kg-home__caption__title">Kepler.Gl</div>
-            <div className="kg-home__caption__description">
-              <span>Kepler is a powerful </span>
-              <span className="t-bold">web-based </span>
-              <span>geospatial data analysis tool. Built on a </span>
-              <span className="t-bold">high performance </span>
-              <span>rendering engine and designed for </span>
-              <span className="t-bold">large-scale </span>
-              <span>data sets.</span>
-            </div>
-            {isPalm ? <StyledImgContainer
+        <StyledHome className="kg-home">
+          <StyledMapContainer className="kg-home__map">
+            <div className="kg-home__map__blocker" />
+            <img
               style={{
-                width: `${imgW}px`,
-                height: `${imgW * imgRatio}px`}}
-            >
-              {IMAGES_S.map(src => (
-                <img key={src} style={{width: '100%', height: '100%', display: 'block', position: 'absolute', top: 0}}
-                src={`${CLOUDFRONT}${KEPLER_GL_BUCKET}${src}`}/>))}
-            </StyledImgContainer> : null}
-            <div className="kg-home__caption__bottom">
-              <div className="kg-home__caption__bottom__title">Coming soon in April 2018</div>
-              <Button large>
-                <a target="_blank" rel="noopener noreferrer"
-                   href="http://t.uber.com/join-kepler.gl"
-                >Keep Me Updated</a>
-              </Button>
-            </div>
-          </StyledCaption>
-          {!isPalm ? <StyledImgContainer style={{
-            width: `${imgW}px`,
-            height: `${imgW * imgRatio}px`,
-            minWidth: `${imgMinW}px`,
-            minHeight: `${imgMinW * imgRatio}px`
-          }}>
-            {IMAGES.map(src => (
-              <img key={src} style={{width: '100%', height: '100%', position: 'absolute', top: 0}}
-              src={`${CLOUDFRONT}${KEPLER_GL_BUCKET}${src}`}/>
-            ))}
-          </StyledImgContainer> : null}
-        </StyledHomeContent>
-        <StyledFooter>
-          <div>Created By</div>
-          <StyledLogo className="fg">
-            <a target="_blank" rel="noopener noreferrer" href="http://vis.gl">VIS.GL</a>
-          </StyledLogo>
-        </StyledFooter>
-      </StyledHome>
+                width: `${this.state.width}px`,
+                height: 'auto',
+                minWidth: `${screenMinW}px`
+              }}
+              src={`${CLOUDFRONT}${KEPLER_GL_BUCKET}kepler.gl-background.png`}
+            />
+          </StyledMapContainer>
+
+          <StyledHomeContent
+            style={
+              isPalm
+                ? {}
+                : {
+                    paddingLeft: '72px',
+                    paddingRight: `${Math.max(imageSize.right * shrink, minRight)}px`,
+                    paddingTop: `${Math.max(imageSize.top * shrink, minTop)}px`
+                  }
+            }
+          >
+            <StyledCaption>
+              <div className="kg-home__caption__title">Kepler.Gl</div>
+              <div className="kg-home__caption__description">
+                <span>Kepler is a powerful </span>
+                <span className="t-bold">web-based </span>
+                <span>geospatial data analysis tool. Built on a </span>
+                <span className="t-bold">high performance </span>
+                <span>rendering engine and designed for </span>
+                <span className="t-bold">large-scale </span>
+                <span>data sets.</span>
+              </div>
+              {isPalm ? (
+                <StyledImgContainer
+                  style={{
+                    width: `${imgW}px`,
+                    height: `${imgW * imgRatio}px`
+                  }}
+                >
+                  {IMAGES_S.map(src => (
+                    <img
+                      key={src}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'block',
+                        position: 'absolute',
+                        top: 0
+                      }}
+                      src={`${CLOUDFRONT}${KEPLER_GL_BUCKET}${src}`}
+                    />
+                  ))}
+                </StyledImgContainer>
+              ) : null}
+              <div className="kg-home__caption__bottom">
+                <div className="kg-home__caption__bottom__title">Coming soon in April 2018</div>
+                <Button large>
+                  <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href="http://t.uber.com/join-kepler.gl"
+                  >
+                    Keep Me Updated
+                  </a>
+                </Button>
+              </div>
+            </StyledCaption>
+            {!isPalm ? (
+              <StyledImgContainer
+                style={{
+                  width: `${imgW}px`,
+                  height: `${imgW * imgRatio}px`,
+                  minWidth: `${imgMinW}px`,
+                  minHeight: `${imgMinW * imgRatio}px`
+                }}
+              >
+                {IMAGES.map(src => (
+                  <img
+                    key={src}
+                    style={{width: '100%', height: '100%', position: 'absolute', top: 0}}
+                    src={`${CLOUDFRONT}${KEPLER_GL_BUCKET}${src}`}
+                  />
+                ))}
+              </StyledImgContainer>
+            ) : null}
+          </StyledHomeContent>
+          <StyledFooter>
+            <div>Created By</div>
+            <StyledLogo className="fg">
+              <a target="_blank" rel="noopener noreferrer" href="http://vis.gl">
+                VIS.GL
+              </a>
+            </StyledLogo>
+          </StyledFooter>
+        </StyledHome>
       </Container>
     );
   }

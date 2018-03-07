@@ -9,7 +9,7 @@ const GlobalStyle = styled.div`
   font-size: 0.875em;
   line-height: 1.71429;
   color: ${props => props.theme.textColor};
-  
+
   *,
   *:before,
   *:after {
@@ -34,20 +34,15 @@ const GlobalStyle = styled.div`
 `;
 
 class App extends Component {
-
   render() {
     const {children} = this.props;
 
     return (
       <ThemeProvider theme={theme}>
-        <GlobalStyle className="kg-web-content">
-          {children}
-        </GlobalStyle>
+        <GlobalStyle className="kg-web-content">{children}</GlobalStyle>
       </ThemeProvider>
     );
   }
 }
 
-export default connect(
-  state => state
-)(App);
+export default connect(state => state)(App);
