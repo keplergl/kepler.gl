@@ -16,13 +16,13 @@ const imageSize = {w: 1080, h: 696, top: 137, right: 132, palm: 272};
 const screenSize = {w: 1680, h: 954};
 const imgToScrRatio = imageSize.w / screenSize.w;
 
-const imgMinW = 800;
-const screenMinW = 840 / imgToScrRatio;
+const imgMinW = 880;
+const screenMinW = imgMinW / imgToScrRatio;
 const minRight = imageSize.right / imageSize.w * imgMinW;
 const minTop = imageSize.top / imageSize.w * imgMinW;
 
 const IMAGES = [
-  'kepler.gl-hex.png',
+  'kepler.gl-hexagon.png',
   'kepler.gl-scatterplot.png',
   'kepler.gl-contour.png'
 ];
@@ -139,10 +139,10 @@ const StyledImgContainer = styled.div`
 `;
 
 const StyledCaption = styled.div`
-  width: 240px;
+  min-width: 250px;
+  max-width: 280px;
   margin-right: 60px;
   padding-top: 70px;
-  flex-shrink: 0;
   
   ${media.palm`
     width: auto;
@@ -286,7 +286,7 @@ class Home extends Component {
         </StyledMapContainer>
 
         <StyledHomeContent style={isPalm ? {} : {
-          paddingLeft: `${Math.max(imageSize.right * shrink, minRight)}px`,
+          paddingLeft: '72px',
           paddingRight: `${Math.max(imageSize.right * shrink, minRight)}px`,
           paddingTop: `${Math.max(imageSize.top * shrink, minTop)}px`
         }}>

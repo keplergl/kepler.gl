@@ -10,7 +10,7 @@
     "yarn": "^0.27.5"
   },
   "scripts": {
-    "start": "webpack-dev-server --env.local --progress --open",
+    "start": "webpack-dev-server --env.local --content-base ./src/static --progress --open",
     "build-clean": "rm -rf ./dist && mkdir dist",
     "build-static": "cp -r ./src/static/* dist && cd `git rev-parse --show-toplevel`",
     "build-script": "webpack -p --env.prod",

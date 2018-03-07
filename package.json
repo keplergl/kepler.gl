@@ -13,7 +13,8 @@
     "build-clean": "rm -rf ./dist && mkdir dist",
     "build-static": "cp -r ./src/static/* dist && cp index.html dist",
     "build-script": "webpack -p --env.prod",
-    "build": "npm run build-clean && npm run build-static && npm run build-script"
+    "build": "npm run build-clean && npm run build-static && npm run build-script",
+    "start:website": "(cd website && (path-exists node_modules || npm i) && npm run start)"
   },
   "dependencies": {
     "classnames": "^2.2.5",
@@ -22,12 +23,13 @@
     "react-dom": "^15.4.1"
   },
   "devDependencies": {
+    "autoprefixer-loader": "^3.2.0",
     "babel-core": "^6.25.0",
     "babel-loader": "^7.1.1",
     "babel-preset-es2015": "^6.24.1",
     "babel-preset-react": "^6.24.1",
     "babel-preset-stage-0": "^6.24.1",
-    "autoprefixer-loader": "^3.2.0",
+    "path-exists-cli": "^1.0.0",
     "url-loader": "^0.5.9",
     "webpack": "^2.2.0",
     "webpack-dev-server": "^2.2.0"
