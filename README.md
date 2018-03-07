@@ -1,32 +1,25 @@
 # kepler.gl
 
-##Links
+### Development
 
-### Node
-Use Node v6
+Install node (`> 6`), yarn, and project dependencies
 
-### Local dev
-```
-npm install
-```
-or
-```
-yarn --ignore-engines
-```
-then
-```
-npm start
-```
+    yarn --ignore-engines
 
-### Develope kepler.gl website
+Run the project
 
-To start website
-```
-npm run start:website
-```
+    npm start
 
-To build website
-```
-cd website
-npm run build
-```
+### Website
+
+In order to start
+
+    yarn web
+
+To checkout the build
+
+    cd website && yarn build
+
+Publish on github pages
+
+    yarn deploy

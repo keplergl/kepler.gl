@@ -10,3 +10,7 @@ package-lock.json
 
 .DS_Store
 .idea
+
+/bundle*.js
+/favicon.png
+/index.html
