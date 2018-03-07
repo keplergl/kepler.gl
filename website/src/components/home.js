@@ -4,7 +4,6 @@ import styled, {keyframes} from 'styled-components';
 import {media, breakPoints} from '../styles';
 
 export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/';
-
 export const KEPLER_GL_BUCKET = 'kepler.gl/';
 
 import {Button} from './common/styled-components';
@@ -47,19 +46,11 @@ const StyledMapContainer = styled.div`
     position: fixed;  
     top: 0;
     left: 0;
-    background-color: ${props => props.theme.mapBackground};
-    opacity: 0;
+    background-color: ${props => props.theme.mapBlocker};
+    opacity: 0.6;
     z-index: 1;
     pointer-events: none;
   }
-
-  .mapboxgl-map .mapboxgl-missing-css {
-    display: none;
-  }
-  
-  ${media.palm`
-    display: none;
-  `}
 `;
 
 const StyledHomeContent = styled.div`
@@ -277,12 +268,11 @@ class Home extends Component {
       <StyledHome className="kg-home">
         <StyledMapContainer className="kg-home__map">
           <div className="kg-home__map__blocker"/>
-            <img style={{
-              width: `${this.state.width}px`,
-              height: 'auto',
-              minWidth: `${screenMinW}px`
-            }}
-                 src={`${CLOUDFRONT}${KEPLER_GL_BUCKET}kepler.gl-background.png`}/>
+          <img style={{
+            width: `${this.state.width}px`,
+            height: 'auto',
+            minWidth: `${screenMinW}px`
+          }} src={`${CLOUDFRONT}${KEPLER_GL_BUCKET}kepler.gl-background.png`}/>
         </StyledMapContainer>
 
         <StyledHomeContent style={isPalm ? {} : {

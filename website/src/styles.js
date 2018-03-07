@@ -30,7 +30,8 @@ export const errorColor = '#F9042C';
 export const theme = {
   textColor: '#FFFFFF',
   labelColor: '#D0D0D0',
-  mapBackground: '#0f1d28',
+  mapBackground: '#0D1823',
+  mapBlocker: '#0B151F',
   footerColor: '#C0C0C0',
   // button:
   primaryBtnBgd: '#0F9668',
