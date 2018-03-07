@@ -22,16 +22,18 @@ const minTop = imageSize.top / imageSize.w * imgMinW;
 
 const IMAGES = [
   'kepler.gl-hexagon.png',
-  'kepler.gl-scatterplot.png',
-  'kepler.gl-contour.png'
+  'kepler.gl-points.png',
+  'kepler.gl-contours.png'
 ];
 
 const IMAGES_S = IMAGES.map(img => img.replace('.png', '_s.png'));
 const LOGO = 'viz_logo_bw.png';
 
 const StyledHome = styled.div`
-  background-color: ${props => props.theme.mapBackground};
-  height: 100vh;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 `;
 
 const StyledMapContainer = styled.div`
@@ -196,21 +198,24 @@ const StyledCaption = styled.div`
 `;
 
 const StyledFooter = styled.div`
-  position: absolute;
-  bottom: 32px;
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  font-size: 11px;
-  color: ${props => props.theme.footerColor};
-  letter-spacing: 0.5px;
   align-items: center;
+  //bottom: 32px;
+  color: ${props => props.theme.footerColor};
+  display: flex;
+  font-size: 11px;
+  justify-content: center;
+  letter-spacing: 0.5px;
   line-height: 14px;
+  margin: 32px 0;
+  //position: absolute;
+  width: 100%;
+  z-index: 101;
   
   ${media.palm`
     margin-top: 16px;
     position: relative;
     bottom: auto;
+    margin-bottom: 64px;
   `}
 `;
 
@@ -241,6 +246,13 @@ const StyledLogo = styled.span`
   }
 `;
 
+const Container = styled.div`
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background-color: #0D1823;
+`;
+
 class Home extends Component {
   state = {
     window: window.innerWidth,
@@ -265,6 +277,7 @@ class Home extends Component {
     const shrink = this.state.width / screenSize.w;
 
     return (
+      <Container>
       <StyledHome className="kg-home">
         <StyledMapContainer className="kg-home__map">
           <div className="kg-home__map__blocker"/>
@@ -328,6 +341,7 @@ class Home extends Component {
           </StyledLogo>
         </StyledFooter>
       </StyledHome>
+      </Container>
     );
   }
 }
