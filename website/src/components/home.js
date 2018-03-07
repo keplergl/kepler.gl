@@ -301,7 +301,7 @@ class Home extends Component {
             }
           >
             <StyledCaption>
-              <div className="kg-home__caption__title">Kepler.Gl</div>
+              <div className="kg-home__caption__title">Kepler.gl</div>
               <div className="kg-home__caption__description">
                 <span>Kepler is a powerful </span>
                 <span className="t-bold">web-based </span>

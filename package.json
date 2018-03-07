@@ -14,7 +14,7 @@
     "build-static": "cp -r ./src/static/* dist && cp index.html dist",
     "build-script": "webpack -p --env.prod",
     "build": "npm run build-clean && npm run build-static && npm run build-script",
-    "web": "(cd website && (path-exists node_modules || npm i) && npm run start)",
+    "web": "(cd website && yarn start)",
     "deploy": "(cd website && yarn build && cp dist/* .. && git checkout gh-pages && cd .. && git add . && git commit -m 'Update website' && git push origin gh-pages && git checkout master)"
   },
   "dependencies": {

@@ -9,7 +9,7 @@ import App from './components/app';
 // eslint-disable-next-line react/display-name
 export default () => (
   <Router history={syncHistoryWithStore(browserHistory, store)}>
-    <Route path="/" component={App}>
+    <Route path="*" component={App}>
       <IndexRoute component={Home} />
     </Route>
   </Router>
