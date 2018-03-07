@@ -17,3 +17,14 @@ then
 ```
 npm start
 ```
+
+To start website
+```
+npm start:website
+```
+
+To Build website
+```
+cd website
+npm run build
+```

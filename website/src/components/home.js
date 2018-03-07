@@ -206,7 +206,7 @@ const StyledCaption = styled.div`
 
 const StyledFooter = styled.div`
   position: absolute;
-  bottom: 24px;
+  bottom: 32px;
   display: flex;
   justify-content: center;
   width: 100%;
