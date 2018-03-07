@@ -15,7 +15,7 @@
     "build-script": "webpack -p --env.prod",
     "build": "npm run build-clean && npm run build-static && npm run build-script",
     "web": "(cd website && yarn start)",
-    "deploy": "(cd website && yarn build && cp dist/* .. && git checkout gh-pages && cd .. && git add . && git commit -m 'Update website' && git push origin gh-pages && git checkout master)"
+    "deploy": "(cd website && yarn build && git checkout gh-pages && cp dist/* .. && git add .. && git commit -m 'Update website' && git push origin gh-pages && git checkout master)"
   },
   "dependencies": {
     "classnames": "^2.2.5",
