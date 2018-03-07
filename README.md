@@ -18,12 +18,14 @@ then
 npm start
 ```
 
+### Develope kepler.gl website
+
 To start website
 ```
-npm start:website
+npm run start:website
 ```
 
-To Build website
+To build website
 ```
 cd website
 npm run build
