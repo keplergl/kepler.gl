@@ -303,7 +303,7 @@ class Home extends Component {
             <StyledCaption>
               <div className="kg-home__caption__title">Kepler.gl</div>
               <div className="kg-home__caption__description">
-                <span>Kepler is a powerful </span>
+                <span>Kepler.gl is a powerful </span>
                 <span className="t-bold">web-based </span>
                 <span>geospatial data analysis tool. Built on a </span>
                 <span className="t-bold">high performance </span>
