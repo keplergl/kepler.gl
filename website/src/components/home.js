@@ -202,7 +202,6 @@ const StyledHeader = styled.div`
 
   ${media.palm`
     margin-top: 16px;
-    position: relative;
     bottom: auto;
     margin-bottom: 64px;
   `};
