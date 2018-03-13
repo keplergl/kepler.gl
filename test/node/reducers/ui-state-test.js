@@ -41,8 +41,7 @@ test('#uiStateReducer -> TOGGLE_SIDE_PANEL', t => {
 
   const expectedState = {
     ...INITIAL_UI_STATE,
-    activeSidePanel: 'foo',
-    isNavCollapsed: true
+    activeSidePanel: 'foo'
   };
 
   t.deepEqual(newReducer, expectedState, 'should update side panel');

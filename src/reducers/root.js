@@ -21,9 +21,13 @@
 import {handleActions} from 'redux-actions';
 
 import {actionFor, updateProperty} from '../actions/action-wrapper';
-import coreReducer from './core';
+import {coreReducerFactory} from './core';
 
-import {REGISTER_ENTRY, DELETE_ENTRY, RENAME_ENTRY} from '../actions/identity-actions';
+import {
+  REGISTER_ENTRY,
+  DELETE_ENTRY,
+  RENAME_ENTRY
+} from '../actions/identity-actions';
 
 import {keplerGlInit} from '../actions/actions';
 /*
@@ -34,49 +38,55 @@ import {keplerGlInit} from '../actions/actions';
 // INITIAL_STATE
 const initialCoreState = {};
 
-const handleRegisterEntry = (state, {payload: id}) => ({
-  // register a new entry to voyager reducer
-  ...state,
-  [id]: {
-    ...coreReducer(undefined, keplerGlInit())
-  }
-});
+export function provideInitialState(initialState) {
+  const coreReducer = coreReducerFactory(initialState);
 
-const handleDeleteEntry = (state, {payload: id}) =>
-  Object.keys(state).reduce(
-    (accu, curr) => ({
-      ...accu,
-      ...(curr === id ? {} : {[curr]: state[curr]})
-    }),
-    {}
-  );
-
-const handleRenameEntry = (state, {payload: [oldId, newId]}) =>
-  Object.keys(state).reduce(
-    (accu, curr) => ({
-      ...accu,
-      ...{[curr === oldId ? newId : curr]: state[curr]}
-    }),
-    {}
-  );
-
-const keplerGlReducer = (state = initialCoreState, action) => {
-  // update child states
-  Object.keys(state).forEach(id => {
-    const updateItemState = coreReducer(state[id], actionFor(id, action));
-    state = updateProperty(state, id, updateItemState);
+  const handleRegisterEntry = (state, {payload: id}) => ({
+    // register a new entry to voyager reducer
+    ...state,
+    [id]: {
+      ...coreReducer(undefined, keplerGlInit())
+    }
   });
 
-  // perform additional state reducing (e.g. switch action.type etc...)
-  return handleActions(
-    {
-      [REGISTER_ENTRY]: handleRegisterEntry,
-      [DELETE_ENTRY]: handleDeleteEntry,
-      [RENAME_ENTRY]: handleRenameEntry
-    },
-    initialCoreState
-  )(state, action);
-};
+  const handleDeleteEntry = (state, {payload: id}) =>
+    Object.keys(state).reduce(
+      (accu, curr) => ({
+        ...accu,
+        ...(curr === id ? {} : {[curr]: state[curr]})
+      }),
+      {}
+    );
+
+  const handleRenameEntry = (state, {payload: [oldId, newId]}) =>
+    Object.keys(state).reduce(
+      (accu, curr) => ({
+        ...accu,
+        ...{[curr === oldId ? newId : curr]: state[curr]}
+      }),
+      {}
+    );
+
+  return (state = initialCoreState, action) => {
+    // update child states
+    Object.keys(state).forEach(id => {
+      const updateItemState = coreReducer(state[id], actionFor(id, action));
+      state = updateProperty(state, id, updateItemState);
+    });
+
+    // perform additional state reducing (e.g. switch action.type etc...)
+    return handleActions(
+      {
+        [REGISTER_ENTRY]: handleRegisterEntry,
+        [DELETE_ENTRY]: handleDeleteEntry,
+        [RENAME_ENTRY]: handleRenameEntry
+      },
+      initialCoreState
+    )(state, action);
+  };
+}
+
+const keplerGlReducer = provideInitialState();
 
 function decorate(target) {
   // plugin to core reducer
@@ -98,6 +108,11 @@ function decorate(target) {
       return nextState;
     });
   };
+
+  // pass in initialState for reducer slices
+  // e.g. initialState = {uiState: {currentModal : null}}
+  target.initialState = initialState =>
+    decorate(provideInitialState(initialState));
 
   return target;
 }

@@ -42,17 +42,19 @@ import {
   updateMapUpdater
 } from './map-state-updaters';
 
+const actionHandler = {
+  [ActionTypes.UPDATE_MAP]: updateMapUpdater,
+  [ActionTypes.FIT_BOUNDS]: fitBoundsUpdater,
+  [ActionTypes.TOGGLE_PERSPECTIVE]: togglePerspectiveUpdater,
+  [ActionTypes.RECEIVE_MAP_CONFIG]: receiveMapConfigUpdater,
+  [ActionTypes.TOGGLE_SPLIT_MAP]: toggleSplitMapUpdater,
+  [ActionTypes.CLOSE_MAP_AT_INDEX]: closeMapAtIndexUpdater,
+};
+
 /* Reducer */
-const mapStateReducer = handleActions(
-  {
-    [ActionTypes.UPDATE_MAP]: updateMapUpdater,
-    [ActionTypes.FIT_BOUNDS]: fitBoundsUpdater,
-    [ActionTypes.TOGGLE_PERSPECTIVE]: togglePerspectiveUpdater,
-    [ActionTypes.RECEIVE_MAP_CONFIG]: receiveMapConfigUpdater,
-    [ActionTypes.TOGGLE_SPLIT_MAP]: toggleSplitMapUpdater,
-    [ActionTypes.CLOSE_MAP_AT_INDEX]: closeMapAtIndexUpdater
-  },
-  INITIAL_MAP_STATE
+export const mapStateReducerFactory = (initialState = {}) => handleActions(
+  actionHandler,
+  {...INITIAL_MAP_STATE, ...initialState}
 );
 
-export default mapStateReducer;
+export default mapStateReducerFactory();

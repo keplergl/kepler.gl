@@ -1886,7 +1886,7 @@ test('#visStateReducer -> setFilterPlot', async t => {
     ],
     histogram: [],
     enlargedHistogram: [],
-    enlarged: false,
+    enlarged: true,
     isAnimating: false,
     fieldType: 'timestamp'
   };

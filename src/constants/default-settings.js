@@ -102,7 +102,6 @@ export const PANELS_FOOTER = [
 ];
 
 // MAP STYLES
-export const INITIAL_STYLE_TYPE = 'dark';
 export const DEFAULT_BLDG_COLOR = '#D1CEC7';
 
 export const DEFAULT_LAYER_GROUPS = [

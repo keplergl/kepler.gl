@@ -20,32 +20,33 @@
 
 import {combineReducers} from 'redux';
 
-import visState from './vis-state';
-import mapState from './map-state';
-import mapStyle from './map-style';
+import {visStateReducerFactory} from './vis-state';
+import {mapStateReducerFactory} from './map-state';
+import {mapStyleReducerFactory} from './map-style';
 import buildingData from './building-data';
-import uiState from './ui-state';
+import {uiStateReducerFactory} from './ui-state';
 
 import composers from './composers';
 
-const combined = combineReducers({
-  buildingData,
-  visState,
-  mapState,
-  mapStyle,
-  uiState
-});
+const combined = (initialState = {}) =>
+  combineReducers({
+    buildingData,
+    visState: visStateReducerFactory(initialState.visState),
+    mapState: mapStateReducerFactory(initialState.mapState),
+    mapStyle: mapStyleReducerFactory(initialState.mapStyle),
+    uiState: uiStateReducerFactory(initialState.uiState)
+  });
 
-const composedReducer = (state, action) => {
+export const coreReducerFactory = (initialState = {}) => (state, action) => {
   if (composers[action.type]) {
     return composers[action.type](state, action);
   }
-  return combined(state, action);
+  return combined(initialState)(state, action);
 };
 
-export default composedReducer;
+export default coreReducerFactory();
 
-export const mapStateLens = (reduxState) => ({mapState: reduxState.mapState});
-export const mapStyleLens = (reduxState) => ({mapStyle: reduxState.mapStyle});
-export const visStateLens = (reduxState) => ({visState: reduxState.visState});
-export const uiStateLens = (reduxState) => ({uiState: reduxState.uiState});
+export const mapStateLens = reduxState => ({mapState: reduxState.mapState});
+export const mapStyleLens = reduxState => ({mapStyle: reduxState.mapStyle});
+export const visStateLens = reduxState => ({visState: reduxState.visState});
+export const uiStateLens = reduxState => ({uiState: reduxState.uiState});

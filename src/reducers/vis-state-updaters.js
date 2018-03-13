@@ -97,7 +97,9 @@ export const INITIAL_VIS_STATE = {
     //     }
     //   }
     // ]
-  ]
+  ],
+
+  // defaults
 };
 
 function updateStateWithLayerAndData(state, {layerData, layer, idx}) {

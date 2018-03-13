@@ -55,68 +55,68 @@ import {
   layerVisualChannelChangeUpdater
 } from './vis-state-updaters';
 
+const actionHandler = {
+  [ActionTypes.ADD_FILTER]: addFilterUpdater,
+
+  [ActionTypes.ADD_LAYER]: addLayerUpdater,
+
+  [ActionTypes.ENLARGE_FILTER]: enlargeFilterUpdater,
+
+  [ActionTypes.INTERACTION_CONFIG_CHANGE]: interactionConfigChangeUpdater,
+
+  [ActionTypes.LAYER_CLICK]: layerClickUpdater,
+
+  [ActionTypes.LAYER_CONFIG_CHANGE]: layerConfigChangeUpdater,
+
+  [ActionTypes.LAYER_HOVER]: layerHoverUpdater,
+
+  [ActionTypes.LAYER_TYPE_CHANGE]: layerTypeChangeUpdater,
+
+  [ActionTypes.LAYER_VIS_CONFIG_CHANGE]: layerVisConfigChangeUpdater,
+
+  [ActionTypes.LAYER_VISUAL_CHANNEL_CHANGE]: layerVisualChannelChangeUpdater,
+
+  [ActionTypes.LOAD_FILES]: loadFilesUpdater,
+
+  [ActionTypes.LOAD_FILES_ERR]: loadFilesErrUpdater,
+
+  [ActionTypes.MAP_CLICK]: mapClickUpdater,
+
+  [ActionTypes.RECEIVE_MAP_CONFIG]: receiveMapConfigUpdater,
+
+  [ActionTypes.REMOVE_DATASET]: removeDatasetUpdater,
+
+  [ActionTypes.REMOVE_FILTER]: removeFilterUpdater,
+
+  [ActionTypes.REMOVE_LAYER]: removeLayerUpdater,
+
+  [ActionTypes.REORDER_LAYER]: reorderLayerUpdater,
+
+  [ActionTypes.RESET_MAP_CONFIG]: resetMapConfigUpdater,
+
+  [ActionTypes.SET_FILTER]: setFilterUpdater,
+
+  [ActionTypes.SET_FILTER_PLOT]: setFilterPlotUpdater,
+
+  [ActionTypes.SET_VISIBLE_LAYERS_FOR_MAP]: setVisibleLayersForMapUpdater,
+
+  [ActionTypes.SHOW_DATASET_TABLE]: showDatasetTableUpdater,
+
+  [ActionTypes.TOGGLE_FILTER_ANIMATION]: toggleFilterAnimationUpdater,
+
+  [ActionTypes.UPDATE_FILTER_ANIMATION_SPEED]: updateAnimationSpeedUpdater,
+
+  [ActionTypes.TOGGLE_LAYER_FOR_MAP]: toggleLayerForMapUpdater,
+
+  [ActionTypes.TOGGLE_SPLIT_MAP]: toggleSplitMapUpdater,
+
+  [ActionTypes.UPDATE_LAYER_BLENDING]: updateLayerBlendingUpdater,
+
+  [ActionTypes.UPDATE_VIS_DATA]: updateVisDataUpdater
+};
+
 // construct vis-state reducer
-const rootReducer = handleActions(
-  {
-    [ActionTypes.ADD_FILTER]: addFilterUpdater,
+export const visStateReducerFactory = (initialState = {}) =>
+  handleActions(actionHandler, {...INITIAL_VIS_STATE, ...initialState});
 
-    [ActionTypes.ADD_LAYER]: addLayerUpdater,
-
-    [ActionTypes.ENLARGE_FILTER]: enlargeFilterUpdater,
-
-    [ActionTypes.INTERACTION_CONFIG_CHANGE]: interactionConfigChangeUpdater,
-
-    [ActionTypes.LAYER_CLICK]: layerClickUpdater,
-
-    [ActionTypes.LAYER_CONFIG_CHANGE]: layerConfigChangeUpdater,
-
-    [ActionTypes.LAYER_HOVER]: layerHoverUpdater,
-
-    [ActionTypes.LAYER_TYPE_CHANGE]: layerTypeChangeUpdater,
-
-    [ActionTypes.LAYER_VIS_CONFIG_CHANGE]: layerVisConfigChangeUpdater,
-
-    [ActionTypes.LAYER_VISUAL_CHANNEL_CHANGE]: layerVisualChannelChangeUpdater,
-
-    [ActionTypes.LOAD_FILES]: loadFilesUpdater,
-
-    [ActionTypes.LOAD_FILES_ERR]: loadFilesErrUpdater,
-
-    [ActionTypes.MAP_CLICK]: mapClickUpdater,
-
-    [ActionTypes.RECEIVE_MAP_CONFIG]: receiveMapConfigUpdater,
-
-    [ActionTypes.REMOVE_DATASET]: removeDatasetUpdater,
-
-    [ActionTypes.REMOVE_FILTER]: removeFilterUpdater,
-
-    [ActionTypes.REMOVE_LAYER]: removeLayerUpdater,
-
-    [ActionTypes.REORDER_LAYER]: reorderLayerUpdater,
-
-    [ActionTypes.RESET_MAP_CONFIG]: resetMapConfigUpdater,
-
-    [ActionTypes.SET_FILTER]: setFilterUpdater,
-
-    [ActionTypes.SET_FILTER_PLOT]: setFilterPlotUpdater,
-
-    [ActionTypes.SET_VISIBLE_LAYERS_FOR_MAP]: setVisibleLayersForMapUpdater,
-
-    [ActionTypes.SHOW_DATASET_TABLE]: showDatasetTableUpdater,
-
-    [ActionTypes.TOGGLE_FILTER_ANIMATION]: toggleFilterAnimationUpdater,
-
-    [ActionTypes.UPDATE_FILTER_ANIMATION_SPEED]: updateAnimationSpeedUpdater,
-
-    [ActionTypes.TOGGLE_LAYER_FOR_MAP]: toggleLayerForMapUpdater,
-
-    [ActionTypes.TOGGLE_SPLIT_MAP]: toggleSplitMapUpdater,
-
-    [ActionTypes.UPDATE_LAYER_BLENDING]: updateLayerBlendingUpdater,
-
-    [ActionTypes.UPDATE_VIS_DATA]: updateVisDataUpdater
-  },
-  INITIAL_VIS_STATE
-);
-
-export default rootReducer;
+export default visStateReducerFactory();

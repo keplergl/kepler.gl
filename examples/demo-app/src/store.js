@@ -25,7 +25,14 @@ import {taskMiddleware} from 'react-palm';
 import window from 'global/window';
 
 const reducers = combineReducers({
-  keplerGl: keplerGlReducer,
+  keplerGl: keplerGlReducer.initialState({
+    uiState: {
+      activeSidePanel: null
+    },
+    mapStyle: {
+      styleType: 'light'
+    }
+  }),
 
   app: appReducer
 });

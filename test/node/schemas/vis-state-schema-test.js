@@ -95,7 +95,7 @@ test('#visStateSchema -> v1 -> save load filters', t => {
     name: 'time',
     type: 'timeRange',
     value: [1474606800000, 1474617600000],
-    enlarged: false,
+    enlarged: true,
     plotType: 'histogram',
     yAxis: null
   }, {

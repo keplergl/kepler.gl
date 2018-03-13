@@ -28,21 +28,19 @@ import {
 
 export const INITIAL_UI_STATE = {
   readOnly: false,
-  isSideBarOpen: true,
   activeSidePanel: 'layer',
-  isNavCollapsed: false,
   currentModal: 'addData',
   datasetKeyToRemove: null
 };
 
-/* Reducer */
-const uiStateReducer = handleActions(
-  {
-    [ActionTypes.TOGGLE_SIDE_PANEL]: toggleSidePanelUpdater,
-    [ActionTypes.TOGGLE_MODAL]: toggleModalUpdater,
-    [ActionTypes.OPEN_DELETE_MODAL]: openDeleteModalUpdater
-  },
-  INITIAL_UI_STATE
-);
+const actionHandler = {
+  [ActionTypes.TOGGLE_SIDE_PANEL]: toggleSidePanelUpdater,
+  [ActionTypes.TOGGLE_MODAL]: toggleModalUpdater,
+  [ActionTypes.OPEN_DELETE_MODAL]: openDeleteModalUpdater
+};
 
-export default uiStateReducer;
+/* Reducer */
+export const uiStateReducerFactory = (initialState = {}) =>
+  handleActions(actionHandler, {...INITIAL_UI_STATE, ...initialState});
+
+export default uiStateReducerFactory();

@@ -34,16 +34,13 @@ import {
 import {hexToRgb} from 'utils/color-utils';
 
 // Constants
-import {
-  INITIAL_STYLE_TYPE,
-  DEFAULT_BLDG_COLOR
-} from 'constants/default-settings';
+import {DEFAULT_BLDG_COLOR} from 'constants/default-settings';
 
 // bedrock browserInit flattens our immutable object into a plain object
 // we have to recreate the state after the app is loaded
 const getDefaultState = () => {
   const visibleLayerGroups = {};
-  const styleType = INITIAL_STYLE_TYPE;
+  const styleType = 'dark';
   const topLayerGroups = {};
 
   return {
@@ -61,16 +58,16 @@ const getDefaultState = () => {
 
 export const INITIAL_MAP_STYLE = getDefaultState();
 
-const mapStyleReducer = handleActions(
-  {
-    [ActionTypes.MAP_CONFIG_CHANGE]: mapConfigChangeUpdater,
-    [ActionTypes.MAP_STYLE_CHANGE]: mapStyleChangeUpdater,
-    [ActionTypes.MAP_BUILDING_CHANGE]: mapBuildingChangeUpdater,
-    [ActionTypes.LOAD_MAP_STYLES]: loadMapStylesUpdater,
-    [ActionTypes.LOAD_MAP_STYLE_ERR]: loadMapStyleErrUpdater,
-    [ActionTypes.RECEIVE_MAP_CONFIG]: receiveMapConfigUpdater
-  },
-  INITIAL_MAP_STYLE
-);
+const actionHandler = {
+  [ActionTypes.MAP_CONFIG_CHANGE]: mapConfigChangeUpdater,
+  [ActionTypes.MAP_STYLE_CHANGE]: mapStyleChangeUpdater,
+  [ActionTypes.MAP_BUILDING_CHANGE]: mapBuildingChangeUpdater,
+  [ActionTypes.LOAD_MAP_STYLES]: loadMapStylesUpdater,
+  [ActionTypes.LOAD_MAP_STYLE_ERR]: loadMapStyleErrUpdater,
+  [ActionTypes.RECEIVE_MAP_CONFIG]: receiveMapConfigUpdater
+};
 
-export default mapStyleReducer;
+export const mapStyleReducerFactory = (initialState = {}) =>
+  handleActions(actionHandler, {...INITIAL_MAP_STYLE, ...initialState});
+
+export default mapStyleReducerFactory();
