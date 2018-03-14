@@ -30,6 +30,7 @@ import './utils/interaction-utils-test';
 import './reducers/map-state-test';
 import './reducers/vis-state-test';
 import './reducers/ui-state-test';
+import './reducers/composer-state-test';
 
 // test schemas
 import './schemas/vis-state-schema-test';

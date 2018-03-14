@@ -34,7 +34,6 @@ export const INITIAL_MAP_STATE = {
 };
 
 import {
-  closeMapAtIndexUpdater,
   fitBoundsUpdater,
   receiveMapConfigUpdater,
   togglePerspectiveUpdater,
@@ -47,8 +46,7 @@ const actionHandler = {
   [ActionTypes.FIT_BOUNDS]: fitBoundsUpdater,
   [ActionTypes.TOGGLE_PERSPECTIVE]: togglePerspectiveUpdater,
   [ActionTypes.RECEIVE_MAP_CONFIG]: receiveMapConfigUpdater,
-  [ActionTypes.TOGGLE_SPLIT_MAP]: toggleSplitMapUpdater,
-  [ActionTypes.CLOSE_MAP_AT_INDEX]: closeMapAtIndexUpdater,
+  [ActionTypes.TOGGLE_SPLIT_MAP]: toggleSplitMapUpdater
 };
 
 /* Reducer */

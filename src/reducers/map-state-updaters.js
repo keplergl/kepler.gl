@@ -67,9 +67,6 @@ export const toggleSplitMapUpdater = (state, action) => ({
   ...getMapDimForSplitMap(!state.isSplit, state)
 });
 
-export const closeMapAtIndexUpdater = (state, action) =>
-  toggleSplitMapUpdater(state, action);
-
 // Helpers
 function getMapDimForSplitMap(isSplit, state) {
   return {

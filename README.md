@@ -92,7 +92,10 @@ const Map = props => (
 The id of this KeplerGl instance. `id` is required if you have multiple
 KeplerGl instances in your app. It defines the prop name of this KeplerGl state that
 stored in the KeplerGl reducer. For example. the state of the KeplerGl component with id `foo` is
-stored in `state.keplerGl.foo`
+stored in `state.keplerGl.foo`.
+
+In case you create multiple kepler.gl instances using the same id, kepler.gl state defined by the entry will be 
+overridden by the latest instance and reset to a blank state.
 
 ##### `getState` (Function, optional)
 
@@ -297,3 +300,43 @@ const myCustomHeaderFactory = () => withState(
 )(CustomHeader);
 
 ```
+#### 5. How to add data to map
+In order to interact with a kepler.gl instance and add new data to it the following methods are available:
+- updateVisData
+- addDataToMap
+It is also important to remember that Kepler.gl provides an easy API (```MapBuilderSchema.getConfigToSave```) to generate a dump of the current kepler instance configuration.
+
+
+##### UpdateVisData
+This action will upload a new datasets and update the visState according with input parameters.
+The method takes 3 parameters as input:
+- ```datasets | object```: new data to be added to the current kepler.gl instance
+- ```options | object ``` - ```{centerMap: true, readOnly: false}```:
+    - if centerMap is set to true kepler.gl will place the map view within the data points boundaries
+    - if readOnly is set to true the left setting panel will not be visible
+- ```config | object```: this is the new visState configuration that will be loaded into the kepler.gl instance.
+Properties defined in this object will override the current ones in the redux state.
+
+
+##### addDataToMap
+This method is really similar to the previous one but it is able to update the full kepler.gl configuration (mapState, mapStyle, visState).
+This action takes an object as input with the following properties
+```javascript
+{
+    datasets | object: same as previous
+    options | object: same as previous
+    config | object: this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}. 
+}
+``` 
+It is important to notice that the config object value will always have higher priority than the options properties. 
+For instance, if you provide ```{centerMap: true}``` as part of the options object and in your config object you pass 
+the mapState configuration with latitude and longitude define as it follows:
+```javascript
+config: {
+  mapState: {
+    latitude: 33.88608913680742,
+    longitude: -84.43459130456425
+  }
+}
+```
+the latter one will be applied and the map view will be moved the defined coordinates.

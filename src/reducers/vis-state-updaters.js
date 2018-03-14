@@ -97,7 +97,7 @@ export const INITIAL_VIS_STATE = {
     //     }
     //   }
     // ]
-  ],
+  ]
 
   // defaults
 };
@@ -565,14 +565,6 @@ export const receiveMapConfigUpdater = (state, action) => {
   mergedState = mergeLayers(mergedState, layers);
   mergedState = mergeInteractions(mergedState, interactionConfig);
   mergedState = mergeLayerBlending(mergedState, layerBlending);
-
-  // const newState ={
-  //   ...resetState,
-  //   ...mergeFilters(mergedState, filters),
-  //   ...mergeLayers(mergedState, layers),
-  //   ...mergeInteractions(mergedState, interactionConfig),
-  //   ...mergeLayerBlending(mergedState, layerBlending)
-  // };
 
   return mergedState;
 };

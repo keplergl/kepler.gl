@@ -21,7 +21,9 @@
 import ActionTypes from 'constants/action-types';
 import {fitBoundsUpdater} from './map-state-updaters';
 import {toggleModalUpdater} from './ui-state-updaters';
-import {receiveMapConfigUpdater, updateVisDataUpdater} from './vis-state-updaters';
+import {updateVisDataUpdater} from './vis-state-updaters';
+import {receiveMapConfigUpdater as stateMapConfigUpdater} from './map-state-updaters';
+import {receiveMapConfigUpdater as styleMapConfigUpdater} from './map-style-updaters';
 import {findMapBounds} from 'utils/data-utils';
 // compose action to apply result multiple reducers, with the output of one
 
@@ -31,7 +33,7 @@ import {findMapBounds} from 'utils/data-utils';
  * @param action
  * @returns {{visState, mapState: {latitude, longitude, zoom}}}
  */
-const updateVisDataComposed = (state, action) => {
+export const updateVisDataComposed = (state, action) => {
   // keep a copy of oldLayers
   const oldLayers = state.visState.layers.map(l => l.id);
 
@@ -39,7 +41,7 @@ const updateVisDataComposed = (state, action) => {
 
   const defaultOptions = {
     centerMap: true,
-    // this will hide the left hand panel completely
+    // this will hide the left panel completely
     readOnly: false
   };
   const options = {
@@ -69,8 +71,37 @@ const updateVisDataComposed = (state, action) => {
   };
 };
 
+/**
+ * Combine data and full configuration update in a single action
+ * @param state
+ * @param action {datasets, options, config}
+ * @returns {{}}
+ */
+export const addDataToMapComposed = (state, action) => {
+
+  const {datasets, options, config} = action.payload;
+
+  // Update visState store
+  let mergedState = updateVisDataComposed(state, {datasets, options, config: config && config.visState});
+
+  // Update mapState store
+  mergedState = {
+    ...mergedState,
+    mapState: stateMapConfigUpdater(mergedState.mapState, {payload: {mapState: config && config.mapState}})
+  };
+
+  // Update mapStyle store
+  mergedState = {
+    ...mergedState,
+    mapStyle: styleMapConfigUpdater(mergedState.mapStyle, {payload: {mapStyle: config && config.mapStyle}})
+  };
+
+  return mergedState
+};
+
 const compostedUpdaters = {
-  [ActionTypes.UPDATE_VIS_DATA]: updateVisDataComposed
+  [ActionTypes.UPDATE_VIS_DATA]: updateVisDataComposed,
+  [ActionTypes.ADD_DATA_TO_MAP]: addDataToMapComposed
 };
 
 export default compostedUpdaters;

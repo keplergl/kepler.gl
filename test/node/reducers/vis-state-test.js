@@ -834,10 +834,10 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3', t => {
   t.end();
 });
 
-test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson', async t => {
+test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson', t => {
   const initialVisState = CloneDeep(INITIAL_VIS_STATE);
 
-  const {fields, rows} = await processGeojson(CloneDeep(geojsonData));
+  const {fields, rows} = processGeojson(CloneDeep(geojsonData));
 
   const payload = [
     {
@@ -1180,9 +1180,9 @@ test('#visStateReducer -> UPDATE_VIS_DATA.SPLIT_MAPS', t => {
   t.end();
 });
 
-test('#visStateReducer -> setFilter', async t => {
+test('#visStateReducer -> setFilter', t => {
   // get test data
-  const {fields, rows} = await processCsvData(testData);
+  const {fields, rows} = processCsvData(testData);
   const payload = [
     {
       info: {
@@ -1463,8 +1463,8 @@ test('#visStateReducer -> setFilter', async t => {
   t.end();
 });
 
-test('#visStateReducer -> setFilter.geojson', async t => {
-  const {fields, rows} = await processGeojson(CloneDeep(geojsonData));
+test('#visStateReducer -> setFilter.geojson', t => {
+  const {fields, rows} = processGeojson(CloneDeep(geojsonData));
   const payload = [
     {
       info: {
@@ -1775,9 +1775,9 @@ test('#visStateReducer -> setFilter.geojson', async t => {
 });
 /* eslint-enable max-statements */
 
-test('#visStateReducer -> setFilterPlot', async t => {
+test('#visStateReducer -> setFilterPlot', t => {
   // get test data
-  const {fields, rows} = await processCsvData(testData);
+  const {fields, rows} = processCsvData(testData);
   const payload = [
     {
       info: {

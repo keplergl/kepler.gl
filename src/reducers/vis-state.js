@@ -112,6 +112,8 @@ const actionHandler = {
 
   [ActionTypes.UPDATE_LAYER_BLENDING]: updateLayerBlendingUpdater,
 
+  // currently not used
+  // but may be useful if users import vist state reducer
   [ActionTypes.UPDATE_VIS_DATA]: updateVisDataUpdater
 };
 

@@ -25,7 +25,7 @@ import window from 'global/window';
 import Processor from '@uber/kepler.gl/processors';
 import KeplerGlSchema from '@uber/kepler.gl/schemas';
 import {withState, injectComponents, PanelHeaderFactory} from '@uber/kepler.gl/components';
-import {updateVisDataAndConfiguration, updateVisData} from '@uber/kepler.gl/actions';
+import {updateVisDataAndConfiguration, updateVisData, addDataToMap} from '@uber/kepler.gl/actions';
 import {visStateLens} from '@uber/kepler.gl/reducers';
 import {wrapTo} from '@uber/kepler.gl/actions';
 import KeplerGl from '@uber/kepler.gl';
@@ -114,15 +114,30 @@ class App extends Component {
     // load point based data
     // this.props.dispatch(updateVisData(sampleData));
 
+    // load point based data
+    // this.props.dispatch(updateVisData(sampleData));
+
     // load data with h3 hex id
     // this.props.dispatch(
-    //   updateVisData({
-    //     info: {
-    //       label: 'Hexagon by Id',
-    //       id: 'test_phone_data'
-    //     },
-    //     data: Processor.processCsvData(sampleHexIdCsv)
-    //   })
+    //   addDataToMap(
+    //     {
+    //       datasets: {
+    //         info: {
+    //           label: 'Hexagon by Id',
+    //           id: 'test_phone_data'
+    //         },
+    //         data: Processor.processCsvData(sampleHexIdCsv)
+    //       },
+    //       options: {
+    //         centerMap: true
+    //       },
+    //       config: {
+    //         mapStyle: {
+    //           styleType: 'light'
+    //         }
+    //       }
+    //     }
+    //   )
     // );
 
     // load icon data

@@ -83,6 +83,7 @@ const ActionTypes = keyMirror({
 
   // all
   INIT: null,
+  ADD_DATA_TO_MAP: null,
   RECEIVE_MAP_CONFIG: null,
   RESET_MAP_CONFIG: null
 });
