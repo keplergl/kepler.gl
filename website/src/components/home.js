@@ -1,18 +1,19 @@
-import React, {Component} from 'react';
-import window from 'global/window';
-import styled, {keyframes} from 'styled-components';
-import {media, breakPoints} from '../styles';
+import React, { Component } from "react";
+import window from "global/window";
+import styled, { keyframes } from "styled-components";
+import { media, breakPoints } from "../styles";
+import Helmet from "react-helmet";
 
-export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/';
-export const KEPLER_GL_BUCKET = 'kepler.gl/';
+export const CLOUDFRONT = "https://d1a3f4spazzrp4.cloudfront.net/";
+export const KEPLER_GL_BUCKET = "kepler.gl/";
 
-import {Button} from './common/styled-components';
+import { Button } from "./common/styled-components";
 
 // ee755ad8-3d68-4559-ab6b-cdcedb3a4d04
 const imgRatio = 696 / 1080;
 
-const imageSize = {w: 1080, h: 696, top: 137, right: 132, palm: 272};
-const screenSize = {w: 1680, h: 954};
+const imageSize = { w: 1080, h: 696, top: 137, right: 132, palm: 272 };
+const screenSize = { w: 1680, h: 954 };
 const imgToScrRatio = imageSize.w / screenSize.w;
 
 const imgMinW = 880;
@@ -20,10 +21,14 @@ const screenMinW = imgMinW / imgToScrRatio;
 const minRight = imageSize.right / imageSize.w * imgMinW;
 const minTop = imageSize.top / imageSize.w * imgMinW;
 
-const IMAGES = ['kepler.gl-hexagon.png', 'kepler.gl-points.png', 'kepler.gl-contours.png'];
+const IMAGES = [
+  "kepler.gl-hexagon.png",
+  "kepler.gl-points.png",
+  "kepler.gl-contours.png"
+];
 
-const IMAGES_S = IMAGES.map(img => img.replace('.png', '_s.png'));
-const LOGO = 'viz_logo_bw.png';
+const IMAGES_S = IMAGES.map(img => img.replace(".png", "_s.png"));
+const LOGO = "viz_logo_bw.png";
 
 const StyledHome = styled.div`
   min-height: 100vh;
@@ -223,7 +228,7 @@ const StyledLogo = styled.span`
   }
 
   :before {
-    content: '';
+    content: "";
     background: url(${`${CLOUDFRONT}${KEPLER_GL_BUCKET}${LOGO}`}) no-repeat;
     background-size: cover;
     height: 20px;
@@ -247,11 +252,11 @@ class Home extends Component {
     height: window.innerHeight
   };
   componentDidMount() {
-    window.addEventListener('resize', this.resize);
+    window.addEventListener("resize", this.resize);
     this.resize();
   }
   componentWillUnmount() {
-    window.removeEventListener('resize', this.resize);
+    window.removeEventListener("resize", this.resize);
   }
   resize = () => {
     this.setState({
@@ -261,11 +266,25 @@ class Home extends Component {
   };
   render() {
     const isPalm = this.state.width <= breakPoints.palm;
-    const imgW = isPalm ? this.state.width - 48 : this.state.width * imgToScrRatio;
+    const imgW = isPalm
+      ? this.state.width - 48
+      : this.state.width * imgToScrRatio;
     const shrink = this.state.width / screenSize.w;
 
     return (
       <Container>
+        <Helmet>
+          <script
+            async
+            src="https://www.googletagmanager.com/gtag/js?id=UA-64694404-19"
+          />
+          <script>
+            {`window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-64694404-19');`}
+          </script>
+        </Helmet>
         <StyledHome className="kg-home">
           <StyledHeader>
             <div>Created By</div>
@@ -281,7 +300,7 @@ class Home extends Component {
             <img
               style={{
                 width: `${this.state.width}px`,
-                height: 'auto',
+                height: "auto",
                 minWidth: `${screenMinW}px`
               }}
               src={`${CLOUDFRONT}${KEPLER_GL_BUCKET}kepler.gl-background.png`}
@@ -293,8 +312,11 @@ class Home extends Component {
               isPalm
                 ? {}
                 : {
-                    paddingLeft: '72px',
-                    paddingRight: `${Math.max(imageSize.right * shrink, minRight)}px`,
+                    paddingLeft: "72px",
+                    paddingRight: `${Math.max(
+                      imageSize.right * shrink,
+                      minRight
+                    )}px`,
                     paddingTop: `${Math.max(imageSize.top * shrink, minTop)}px`
                   }
             }
@@ -321,10 +343,10 @@ class Home extends Component {
                     <img
                       key={src}
                       style={{
-                        width: '100%',
-                        height: '100%',
-                        display: 'block',
-                        position: 'absolute',
+                        width: "100%",
+                        height: "100%",
+                        display: "block",
+                        position: "absolute",
                         top: 0
                       }}
                       src={`${CLOUDFRONT}${KEPLER_GL_BUCKET}${src}`}
@@ -333,7 +355,9 @@ class Home extends Component {
                 </StyledImgContainer>
               )}
               <div className="kg-home__caption__bottom">
-                <div className="kg-home__caption__bottom__title">Coming soon in April 2018</div>
+                <div className="kg-home__caption__bottom__title">
+                  Coming soon in April 2018
+                </div>
                 <Button large>
                   <a
                     target="_blank"
@@ -357,7 +381,12 @@ class Home extends Component {
                 {IMAGES.map(src => (
                   <img
                     key={src}
-                    style={{width: '100%', height: '100%', position: 'absolute', top: 0}}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      position: "absolute",
+                      top: 0
+                    }}
                     src={`${CLOUDFRONT}${KEPLER_GL_BUCKET}${src}`}
                   />
                 ))}
