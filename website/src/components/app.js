@@ -1,7 +1,7 @@
-import React, { Component } from 'react';
-import styled, { ThemeProvider } from 'styled-components';
-import { theme } from '../styles';
-import { connect } from 'react-redux';
+import React, {Component} from 'react';
+import styled, {ThemeProvider} from 'styled-components';
+import {theme} from '../styles';
+import {connect} from 'react-redux';
 
 const GlobalStyle = styled.div`
   font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
@@ -35,7 +35,7 @@ const GlobalStyle = styled.div`
 
 class App extends Component {
   render() {
-    const { children } = this.props;
+    const {children} = this.props;
 
     return (
       <ThemeProvider theme={theme}>

@@ -1,19 +1,19 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import window from 'global/window';
-import styled, { keyframes } from 'styled-components';
-import { media, breakPoints } from '../styles';
+import styled, {keyframes} from 'styled-components';
+import {media, breakPoints} from '../styles';
 import Helmet from 'react-helmet';
 
 export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/';
 export const KEPLER_GL_BUCKET = 'kepler.gl/';
 
-import { Button } from './common/styled-components';
+import {Button} from './common/styled-components';
 
 // ee755ad8-3d68-4559-ab6b-cdcedb3a4d04
 const imgRatio = 696 / 1080;
 
-const imageSize = { w: 1080, h: 696, top: 137, right: 132, palm: 272 };
-const screenSize = { w: 1680, h: 954 };
+const imageSize = {w: 1080, h: 696, top: 137, right: 132, palm: 272};
+const screenSize = {w: 1680, h: 954};
 const imgToScrRatio = imageSize.w / screenSize.w;
 
 const imgMinW = 880;
