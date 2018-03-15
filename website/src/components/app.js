@@ -1,10 +1,10 @@
-import React, { Component } from "react";
-import styled, { ThemeProvider } from "styled-components";
-import { theme } from "../styles";
-import { connect } from "react-redux";
+import React, { Component } from 'react';
+import styled, { ThemeProvider } from 'styled-components';
+import { theme } from '../styles';
+import { connect } from 'react-redux';
 
 const GlobalStyle = styled.div`
-  font-family: ff-clan-web-pro, "Helvetica Neue", Helvetica, sans-serif;
+  font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
   font-weight: 400;
   font-size: 0.875em;
   line-height: 1.71429;
