@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import window from 'global/window';
 import styled, {keyframes} from 'styled-components';
 import {media, breakPoints} from '../styles';
+import Helmet from 'react-helmet';
 
 export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/';
 export const KEPLER_GL_BUCKET = 'kepler.gl/';
@@ -20,7 +21,11 @@ const screenMinW = imgMinW / imgToScrRatio;
 const minRight = imageSize.right / imageSize.w * imgMinW;
 const minTop = imageSize.top / imageSize.w * imgMinW;
 
-const IMAGES = ['kepler.gl-hexagon.png', 'kepler.gl-points.png', 'kepler.gl-contours.png'];
+const IMAGES = [
+  'kepler.gl-hexagon.png',
+  'kepler.gl-points.png',
+  'kepler.gl-contours.png'
+];
 
 const IMAGES_S = IMAGES.map(img => img.replace('.png', '_s.png'));
 const LOGO = 'viz_logo_bw.png';
@@ -261,11 +266,25 @@ class Home extends Component {
   };
   render() {
     const isPalm = this.state.width <= breakPoints.palm;
-    const imgW = isPalm ? this.state.width - 48 : this.state.width * imgToScrRatio;
+    const imgW = isPalm
+      ? this.state.width - 48
+      : this.state.width * imgToScrRatio;
     const shrink = this.state.width / screenSize.w;
 
     return (
       <Container>
+        <Helmet>
+          <script
+            async
+            src="https://www.googletagmanager.com/gtag/js?id=UA-64694404-19"
+          />
+          <script>
+            {`window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-64694404-19');`}
+          </script>
+        </Helmet>
         <StyledHome className="kg-home">
           <StyledHeader>
             <div>Created By</div>
@@ -294,7 +313,10 @@ class Home extends Component {
                 ? {}
                 : {
                     paddingLeft: '72px',
-                    paddingRight: `${Math.max(imageSize.right * shrink, minRight)}px`,
+                    paddingRight: `${Math.max(
+                      imageSize.right * shrink,
+                      minRight
+                    )}px`,
                     paddingTop: `${Math.max(imageSize.top * shrink, minTop)}px`
                   }
             }
@@ -333,7 +355,9 @@ class Home extends Component {
                 </StyledImgContainer>
               )}
               <div className="kg-home__caption__bottom">
-                <div className="kg-home__caption__bottom__title">Coming soon in April 2018</div>
+                <div className="kg-home__caption__bottom__title">
+                  Coming soon in April 2018
+                </div>
                 <Button large>
                   <a
                     target="_blank"
@@ -357,7 +381,12 @@ class Home extends Component {
                 {IMAGES.map(src => (
                   <img
                     key={src}
-                    style={{width: '100%', height: '100%', position: 'absolute', top: 0}}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      position: 'absolute',
+                      top: 0
+                    }}
                     src={`${CLOUDFRONT}${KEPLER_GL_BUCKET}${src}`}
                   />
                 ))}
