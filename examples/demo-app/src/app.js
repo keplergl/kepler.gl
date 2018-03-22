@@ -20,8 +20,7 @@
 
 import React, {Component} from 'react';
 import {connect} from 'react-redux';
-import window from 'global/window';
-
+import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer'
 import Processor from '@uber/kepler.gl/processors';
 import KeplerGlSchema from '@uber/kepler.gl/schemas';
 import {withState, injectComponents, PanelHeaderFactory} from '@uber/kepler.gl/components';
@@ -67,18 +66,7 @@ import sampleGeojson from './data/sample-geojson.json';
 import sampleIconCsv from './data/sample-icon-csv';
 /* eslint-enable no-unused-vars */
 
-
-
 class App extends Component {
-  state = {
-    width: window.innerWidth,
-    height: 800
-  };
-
-  componentWillMount() {
-    this._handleResize();
-    window.addEventListener('resize', this._handleResize);
-  }
 
   componentDidMount() {
     // load trip based data with config
@@ -160,25 +148,18 @@ class App extends Component {
     // );
   }
 
-  componentWillUnMount() {
-    window.removeEventListener('resize', this._handleResize);
-  }
-
-  _handleResize = () => {
-    this.setState({
-      width: window.innerWidth,
-      height: window.innerHeight
-    });
-  };
-
   render() {
     return (
       <div style={{position: 'absolute', width: '100%', height: '100%'}}>
-        <KeplerGl
-          id="map"
-          width={this.state.width}
-          height={this.state.height}
-        />
+        <AutoSizer>
+          {({ height, width }) => (
+            <KeplerGl
+              id="map"
+              width={width}
+              height={height}
+            />
+          )}
+        </AutoSizer>
       </div>
     );
   }

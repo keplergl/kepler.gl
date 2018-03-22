@@ -30,8 +30,8 @@ import {findMapBounds} from 'utils/data-utils';
 /**
  * Apply map bounds to mapState from received vis data
  * @param state
- * @param action
- * @returns {{visState, mapState: {latitude, longitude, zoom}}}
+ * @param action {options, config: {}}
+ * @returns state new reducer state
  */
 export const updateVisDataComposed = (state, action) => {
   // keep a copy of oldLayers
@@ -75,7 +75,7 @@ export const updateVisDataComposed = (state, action) => {
  * Combine data and full configuration update in a single action
  * @param state
  * @param action {datasets, options, config}
- * @returns {{}}
+ * @returns state
  */
 export const addDataToMapComposed = (state, action) => {
 

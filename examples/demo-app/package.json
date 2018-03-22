@@ -5,13 +5,14 @@
     "start-local-es5": "webpack-dev-server --env.local --progress --hot --open"
   },
   "dependencies": {
+    "global": "^4.3.0",
+    "kepler.gl": "^0.0.1",
     "react": "^15.3.1",
     "react-dom": "^15.6.1",
-    "kepler.gl": "^0.0.1",
-    "global": "^4.3.0",
+    "react-palm": "^0.8.1",
     "react-redux": "^4.0.0",
-    "redux-actions": "^2.2.1",
-    "react-palm": "^0.8.1"
+    "react-virtualized": "^9.18.5",
+    "redux-actions": "^2.2.1"
   },
   "devDependencies": {
     "babel-core": "^6.7.7",

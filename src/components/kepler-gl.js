@@ -55,6 +55,8 @@ const GlobalStyle = styled.div`
   font-weight: 400;
   font-size: 0.875em;
   line-height: 1.71429;
+  width: ${props => props.width}px;
+  height: ${props => props.height}px;
 
   *,
   *:before,
@@ -162,6 +164,8 @@ function KeplerGlFactory(
         appName,
         version,
         onSaveMap,
+        width,
+        height,
 
         // redux state
         buildingData,
@@ -256,6 +260,8 @@ function KeplerGlFactory(
             innerRef={node => {
               this.root = node;
             }}
+            width={width}
+            height={height}
           >
             {!uiState.readOnly && <SidePanel {...sideFields} />}
             <div className="maps" style={{display: 'flex'}}>
