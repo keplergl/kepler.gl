@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {createSelector} from 'reselect';
-import {CHANNEL_SCALES, SCALE_FUNC} from 'constants/default-settings';
+import {CHANNEL_SCALES, SCALE_FUNC, SCALE_TYPES} from 'constants/default-settings';
 import {hexToRgb} from 'utils/color-utils';
 import {geojsonFromPoints} from '../mapbox-utils';
 import MapboxGLLayer from '../mapboxgl-layer';
@@ -35,14 +35,41 @@ export const heatmapVisConfigs = {
   radius: 'heatmapRadius'
 };
 
+/**
+ *
+ * @param colorDomain
+ * @param colorScale
+ * @param visConfig
+ * @return [
+ *  0, "rgba(33,102,172,0)",
+ *  0.2, "rgb(103,169,207)",
+ *  0.4, "rgb(209,229,240)",
+ *  0.6, "rgb(253,219,199)",
+ *  0.8, "rgb(239,138,98)",
+ *  1, "rgb(178,24,43)"
+ * ]
+ */
 const heatmapDensity = (colorDomain, colorScale, visConfig) => {
-  const scaleFunction = SCALE_FUNC[colorScale];
-  // color scale can only be quantize, quantile or ordinal
 
-  // this is for the quantile case
+  // this is work around to deal with ordinal scale type.
+  // I checked other aggregate layers and we don't deal with ordinal scales
+  const scaleType =  colorScale === SCALE_TYPES.ordinal ?
+    SCALE_TYPES.quantize : colorScale;
+
+  const scaleFunction = SCALE_FUNC[scaleType];
+
   const scale = scaleFunction()
     .domain(colorDomain)
     .range(visConfig.colorRange.colors);
+
+  if (colorScale === SCALE_TYPES.ordinal) {
+    scale.domain().map(level => {
+      return [
+        scale(level),
+        `rgb(${hexToRgb(scale(level)).join(',')})` // color
+      ];
+    })
+  }
 
   return scale.range().reduce((bands, level) => {
     const invert = scale.invertExtent(level);
