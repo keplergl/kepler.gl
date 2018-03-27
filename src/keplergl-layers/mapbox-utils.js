@@ -33,6 +33,7 @@ export function generateMapboxLayers(layers = [], layerData = [], layerOrder = [
       .reverse()
       .reduce((overlays, idx) => {
         const layer = layers[idx];
+
         return layer.overlayType !== OVERLAY_TYPE.mapboxgl ?
           overlays
           : [
@@ -56,8 +57,9 @@ export function generateMapboxLayers(layers = [], layerData = [], layerOrder = [
  * @param newLayers Array of new mapbox layers to be displayed
  * @param oldLayers Map of the old layers to be compare with the current ones to detect deleted layers
  *                  {layerId: datasetId}
+ * @param mapLayers carries information about split map view
  */
-export function updateMapboxLayers(map, newLayers = [], oldLayers = null, opt = {force: true}) {
+export function updateMapboxLayers(map, newLayers = [], oldLayers = null, mapLayers = null, opt = {force: true}) {
   // delete non existing layers
   if (oldLayers) {
     const oldLayersKeys = Object.keys(oldLayers);
@@ -90,8 +92,11 @@ export function updateMapboxLayers(map, newLayers = [], oldLayers = null, opt = 
     if (!data && !config) {
       return;
     }
+    const isAvailableAndVisible =
+      !(mapLayers && mapLayers[layerId]) || mapLayers[layerId].isVisible;
     // checking if source already exists
-    if (data) {
+
+    if (data && isAvailableAndVisible) {
       const source = map.getSource(datasetId);
       if (!source) {
         map.addSource(datasetId, {
@@ -110,10 +115,14 @@ export function updateMapboxLayers(map, newLayers = [], oldLayers = null, opt = 
 
     if (!oldConfig || oldConfig !== config || !mapboxLayer || opt.force) {
       // check if layer already is set
+      // remove it if exists
       if (mapboxLayer) {
         map.removeLayer(layerId);
       }
-      map.addLayer(config);
+      // add if visible and available
+      if (isAvailableAndVisible) {
+        map.addLayer(config);
+      }
     }
   });
   // TODO: think about removing sources

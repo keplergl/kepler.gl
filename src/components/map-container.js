@@ -140,6 +140,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             this._map,
             this._renderMapboxLayers(),
             this.previousLayers,
+            this.props.mapLayers,
             {force: true}
           );
         })
@@ -453,7 +454,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         updateMapboxLayers(
           this._map,
           mapboxLayers,
-          this.previousLayers
+          this.previousLayers,
+          this.props.mapLayers
         );
 
         this.previousLayers = mapboxLayers.reduce((final, layer) => ({
