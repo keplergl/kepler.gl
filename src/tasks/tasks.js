@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {taskCreator} from 'react-palm/tasks';
-import request from 'd3-request';
+import {json as requestJson} from 'd3-request';
 import {getQueryURL} from 'utils/mapzen-utils';
 
 /*
@@ -31,7 +31,7 @@ export const LOAD_BUILDING_TILE_TASK = taskCreator(
       if (features) {
         resolve(features);
       } else {
-        request.json(getQueryURL(x, y, z), (err, result) => {
+        requestJson(getQueryURL(x, y, z), (err, result) => {
           if (err) {
             error(err);
           } else if (!result.features) {

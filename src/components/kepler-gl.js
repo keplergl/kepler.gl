@@ -21,7 +21,7 @@
 import React, {Component} from 'react';
 import {console as Console} from 'global/window';
 import {bindActionCreators} from 'redux';
-import request from 'd3-request';
+import {json as requestJson} from 'd3-request';
 import styled from 'styled-components';
 import {connect as keplerGlConnect} from '../connect/keplergl-connect';
 
@@ -145,7 +145,7 @@ function KeplerGlFactory(
 
     _requestMapStyle(mapStyle) {
       const {url, id} = mapStyle;
-      request.json(url, (error, result) => {
+      requestJson(url, (error, result) => {
         if (error) {
           Console.warn(`Error loading map style ${mapStyle.url}`);
         }
