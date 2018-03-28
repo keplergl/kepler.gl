@@ -102,9 +102,6 @@ class App extends Component {
     // load point based data
     // this.props.dispatch(updateVisData(sampleData));
 
-    // load point based data
-    // this.props.dispatch(updateVisData(sampleData));
-
     // load data with h3 hex id
     // this.props.dispatch(
     //   addDataToMap(

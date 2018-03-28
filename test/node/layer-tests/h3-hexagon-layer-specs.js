@@ -59,7 +59,7 @@ test('#H3HexagonLayer -> constructor', t => {
   t.end();
 });
 
-test('#H3HexagonLayer -> formatLayerData', async t => {
+test('#H3HexagonLayer -> formatLayerData', t => {
   const data = [
     ['', 5],
     [null, 3],
@@ -93,10 +93,7 @@ test('#H3HexagonLayer -> formatLayerData', async t => {
   ].map(id => getCentroid({id}));
 
   const bounds = [
-    -122.45514368970282,
-    37.36708911155212,
-    -121.92297052823525,
-    37.79218213227278
+    -122.45514368970282, 37.36708911155212, -121.92297052823525, 37.79218213227278
   ];
   const centroids = {
     2: centroid2,

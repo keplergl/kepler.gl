@@ -55,22 +55,8 @@ export const featureResolver = ({geojson}) => geojson.fieldIdx;
 export default class GeoJsonLayer extends Layer {
   constructor(props) {
     super(props);
-    this.config = {
-      ...this.config,
-
-      // add height visual channel
-      heightField: null,
-      heightDomain: [0, 1],
-      heightScale: 'linear',
-
-      // add radius visual channel
-      radiusField: null,
-      radiusDomain: [0, 1],
-      radiusScale: 'linear'
-    };
 
     this.dataToFeature = {};
-
     this.registerVisConfig(pointVisConfigs);
     this.getFeature = memoize(featureAccessor, featureResolver);
   }
@@ -119,6 +105,22 @@ export default class GeoJsonLayer extends Layer {
         channelScaleType: 'radius'
       }
     };
+  }
+
+  getDefaultLayerConfig(props = {}) {
+    return {
+      ...super.getDefaultLayerConfig(props),
+
+      // add height visual channel
+      heightField: null,
+      heightDomain: [0, 1],
+      heightScale: 'linear',
+
+      // add radius visual channel
+      radiusField: null,
+      radiusDomain: [0, 1],
+      radiusScale: 'linear'
+    }
   }
 
   getHoverData(object, allData) {

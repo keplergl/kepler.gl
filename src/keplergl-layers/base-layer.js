@@ -30,7 +30,8 @@ import {
   SCALE_TYPES,
   CHANNEL_SCALES,
   FIELD_OPTS,
-  SCALE_FUNC
+  SCALE_FUNC,
+  CHANNEL_SCALE_SUPPORTED_FIELDS
 } from 'constants/default-settings';
 import {DataVizColors} from 'constants/custom-color-ranges';
 import {LAYER_VIS_CONFIGS} from './layer-factory';
@@ -75,45 +76,20 @@ function* generateColor() {
 const colorMaker = generateColor();
 const defaultGetFieldValue = (field, d) => d[field.tableFieldIndex - 1];
 
-export function getDefaultLayerConfig(props = {}) {
-  return {
-    dataId: props.dataId || null,
-    label: props.label || 'new layer',
-    color: props.color || colorMaker.next().value,
-    columns: props.columns || null,
-    isVisible: props.isVisible || false,
-    isConfigActive: props.isConfigActive || false,
-    highlightColor: props.highlightColor || [252, 242, 26],
-
-    // TODO: refactor this into seperate visual Channel config
-    // color by field, domain is set by filters, field, scale type
-    colorField: null,
-    colorDomain: [0, 1],
-    colorScale: 'quantile',
-
-    // color by size, domain is set by filters, field, scale type
-    sizeDomain: [0, 1],
-    sizeScale: 'linear',
-    sizeField: null,
-
-    visConfig: {}
-  };
-}
-
 export default class Layer {
   constructor(props = {}) {
     this.id = props.id || generateHashId(6);
-
-    this.config = getDefaultLayerConfig({
-      columns: this.getLayerColumns(),
-      ...props
-    });
 
     // meta
     this.meta = {};
 
     // visConfigSettings
     this.visConfigSettings = {};
+
+    this.config = this.getDefaultLayerConfig({
+      columns: this.getLayerColumns(),
+      ...props
+    });
   }
 
   get layerIcon() {
@@ -201,6 +177,31 @@ export default class Layer {
     };
   }
 
+  getDefaultLayerConfig(props = {}) {
+    return {
+      dataId: props.dataId || null,
+      label: props.label || 'new layer',
+      color: props.color || colorMaker.next().value,
+      columns: props.columns || null,
+      isVisible: props.isVisible || false,
+      isConfigActive: props.isConfigActive || false,
+      highlightColor: props.highlightColor || [252, 242, 26],
+
+      // TODO: refactor this into seperate visual Channel config
+      // color by field, domain is set by filters, field, scale type
+      colorField: null,
+      colorDomain: [0, 1],
+      colorScale: 'quantile',
+
+      // color by size, domain is set by filters, field, scale type
+      sizeDomain: [0, 1],
+      sizeScale: 'linear',
+      sizeField: null,
+
+      visConfig: {}
+    };
+  }
+
   /**
    * Assign a field to layer column, return column config
    * @param key - Column Key
@@ -273,12 +274,12 @@ export default class Layer {
     return object.data;
   }
 
-  // Recursively copy config over to an empty layer
-  // when received saved config, or copy config over from a different layer type
-  // make sure to only copy over value to existing keys
-  assignConfigToLayer(oldConfig, newConfig) {
-    // TODO: have a better way to copy over dimension config range
-    // e.g. hexagon height sizeRange -> point radius sizeRange
+  /**
+   * When change layer type, try to copy over layer configs as much as possible
+   * @param configToCopy - config to copy over
+   * @param visConfigSettings - visConfig settings of config to copy
+   */
+  assignConfigToLayer(configToCopy, visConfigSettings) {
     // don't deep merge visualChannel field
     const notToDeepMerge = Object.values(this.visualChannels).map(v => v.field);
 
@@ -287,24 +288,56 @@ export default class Layer {
 
     // don't copy over domain
     const notToCopy = Object.values(this.visualChannels).map(v => v.domain);
-    const copied = {};
 
-    Object.keys(oldConfig).forEach(key => {
+    // if range is for the same property group copy it, otherwise, not to copy
+    Object.values(this.visualChannels).forEach(v => {
+      if (configToCopy.visConfig[v.range] && visConfigSettings[v.range].group !== this.visConfigSettings[v.range].group) {
+        notToCopy.push(v.range);
+      }
+    });
+
+    // don't copy over visualChannel range
+    const currentConfig = this.config;
+    const copied = this.copyLayerConfig(currentConfig, configToCopy, {notToDeepMerge, notToCopy});
+
+    this.updateLayerConfig(copied);
+
+    // validate visualChannel field type and scale types
+    Object.keys(this.visualChannels).forEach(channel => {
+      this.validateVisualChannel(channel);
+    });
+  }
+
+  /*
+   * Recursively copy config over to an empty layer
+   * when received saved config, or copy config over from a different layer type
+   * make sure to only copy over value to existing keys
+   * @param {object} currentConfig - existing config to be override
+   * @param {object} configToCopy - new Config to copy over
+   * @param {string[]} notToDeepMerge - array of properties to not to be deep copied
+   * @param {string[]} notToCopy - array of properties not to copy
+   * @returns {object} - copied config
+   */
+  copyLayerConfig(currentConfig, configToCopy, {notToDeepMerge = [], notToCopy = []} = {}) {
+    const copied = {};
+    Object.keys(currentConfig).forEach(key => {
       if (
-        isPlainObject(oldConfig[key]) &&
-        isPlainObject(newConfig[key]) &&
+        isPlainObject(currentConfig[key]) &&
+        isPlainObject(configToCopy[key]) &&
         !notToDeepMerge.includes(key) &&
         !notToCopy.includes(key)
       ) {
         // recursively assign object value
-        copied[key] = this.assignConfigToLayer(oldConfig[key], newConfig[key]);
+        copied[key] = this.copyLayerConfig(currentConfig[key], configToCopy[key], {notToDeepMerge, notToCopy});
       } else if (
-        notNullorUndefined(newConfig[key]) &&
+        notNullorUndefined(configToCopy[key]) &&
         !notToCopy.includes(key)
       ) {
-        copied[key] = newConfig[key];
+        // copy
+        copied[key] = configToCopy[key];
       } else {
-        copied[key] = oldConfig[key];
+        // keep existing
+        copied[key] = currentConfig[key];
       }
     });
 
@@ -491,27 +524,48 @@ export default class Layer {
     return this;
   }
 
-  updateLayerVisualChannel({data, allData}, channel) {
+  /**
+   * Validate visual channel field and scales based on supported field & scale type
+   * @param channel
+   */
+  validateVisualChannel(channel) {
     const visualChannel = this.visualChannels[channel];
-    const {field, scale, domain, channelScaleType} = visualChannel;
+    const {field, scale, channelScaleType} = visualChannel;
 
     if (this.config[field]) {
-      // if field is selected, check if current selected scale is
+      // if field is selected, check if field type is supported
+      const supportedFieldType = CHANNEL_SCALE_SUPPORTED_FIELDS[channelScaleType];
+
+      if (!supportedFieldType.includes(this.config[field].type)) {
+        // field type is not supported, set it back to null
+        // set scale back to default
+        const defaultScale = this.getDefaultLayerConfig()[scale];
+        this.updateLayerConfig({[field]: null, [scale]: defaultScale});
+      }
+
+      // check if current selected scale is
       // supported, if not, update to default
-      const scaleOptions =
-        FIELD_OPTS[this.config[field].type].scale[channelScaleType];
-      if (!scaleOptions.includes(this.config[scale])) {
-        this.updateLayerConfig({[scale]: scaleOptions[0]});
+      if (this.config[field]) {
+        const scaleOptions =
+          FIELD_OPTS[this.config[field].type].scale[channelScaleType];
+        if (!scaleOptions.includes(this.config[scale])) {
+          this.updateLayerConfig({[scale]: scaleOptions[0]});
+        }
       }
     }
+  }
 
-    // calculate layer channel domain
+  updateLayerVisualChannel({data, allData}, channel) {
+    const visualChannel = this.visualChannels[channel];
+
+    this.validateVisualChannel(channel);
+      // calculate layer channel domain
     const updatedDomain = this.calculateLayerDomain(
       {data, allData},
       visualChannel
     );
 
-    this.updateLayerConfig({[domain]: updatedDomain});
+    this.updateLayerConfig({[visualChannel.domain]: updatedDomain});
   }
 
   calculateLayerDomain({data, allData}, visualChannel) {

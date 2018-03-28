@@ -164,10 +164,15 @@ export function layerTypeChangeUpdater(state, action) {
   const LayerClass = KeplerGLLayers[LAYER_CLASSES[newType]];
   const newLayer = new LayerClass();
 
-  newLayer.config = newLayer.assignConfigToLayer(
-    newLayer.config,
-    oldLayer.config
+  newLayer.assignConfigToLayer(
+    oldLayer.config,
+    oldLayer.visConfigSettings
   );
+
+  if (newLayer.config.dataId) {
+    const {data, allData} = state.datasets[newLayer.config.dataId];
+    newLayer.updateLayerDomain({data, allData});
+  }
 
   const {layerData, layer} = calculateLayerData(newLayer, state);
 

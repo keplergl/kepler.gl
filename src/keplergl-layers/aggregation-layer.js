@@ -22,7 +22,7 @@ import memoize from 'lodash.memoize';
 import Layer from './base-layer';
 import {hexToRgb} from 'utils/color-utils';
 import {aggregate} from 'utils/aggregate-utils';
-import {CHANNEL_SCALES, FIELD_OPTS} from 'constants/default-settings';
+import {CHANNEL_SCALES} from 'constants/default-settings';
 
 export const pointPosAccessor = ({lat, lng}) => d => [
   d[lng.fieldIdx],
@@ -115,18 +115,7 @@ export default class AggregationLayer extends Layer {
    * Aggregation layer handles visual channel aggregation inside deck.gl layer
    */
   updateLayerVisualChannel({data, allData}, channel) {
-    const visualChannel = this.visualChannels[channel];
-    const {field, scale, channelScaleType} = visualChannel;
-
-    if (this.config[field]) {
-      // if field is selected, check if current selected scale is
-      // supported, if not, update to default
-      const scaleOptions =
-        FIELD_OPTS[this.config[field].type].scale[channelScaleType];
-      if (!scaleOptions.includes(this.config[scale])) {
-        this.updateLayerConfig({[scale]: scaleOptions[0]});
-      }
-    }
+    this.validateVisualChannel(channel);
   }
 
   /**

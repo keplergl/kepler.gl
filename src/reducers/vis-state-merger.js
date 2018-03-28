@@ -374,9 +374,10 @@ export function validateLayerWithData({fields, id: dataId}, savedLayer) {
   );
 
   // copy visConfig over to emptyLayer to make sure it has all the props
-  const visConfig = newLayer.assignConfigToLayer(
+  const visConfig = newLayer.copyLayerConfig(
     newLayer.config.visConfig,
-    savedLayer.config.visConfig || {}
+    savedLayer.config.visConfig || {},
+    {notToDeepMerge: 'colorRange'}
   );
 
   newLayer.updateLayerConfig({

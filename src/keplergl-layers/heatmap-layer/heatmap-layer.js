@@ -32,7 +32,8 @@ export const heatmapVisConfigs = {
   opacity: 'opacity',
   weight: 'weight',
   colorRange: 'colorRange',
-  radius: 'heatmapRadius'
+  radius: 'heatmapRadius',
+  weightRange: 'weight'
 };
 
 /**
@@ -86,14 +87,6 @@ const shouldRebuild = (sameData, sameConfig) => !(sameData && sameConfig);
 class HeatmapLayer extends MapboxGLLayer {
   constructor(props) {
     super(props);
-    this.config = {
-      ...this.config,
-      // add height visual channel
-      weightField: null,
-      weightDomain: [0, 1],
-      weightRange: [0, 1],
-      weightScale: 'linear'
-    };
     this.registerVisConfig(heatmapVisConfigs);
   }
 
@@ -111,8 +104,7 @@ class HeatmapLayer extends MapboxGLLayer {
         domain: 'weightDomain',
         range: 'weightRange',
         key: 'weight',
-        channelScaleType: CHANNEL_SCALES.sizeAggr,
-        defaultMeasure: 'Weight'
+        channelScaleType: CHANNEL_SCALES.sizeAggr
       }
     };
   }
@@ -121,12 +113,24 @@ class HeatmapLayer extends MapboxGLLayer {
     return HeatmapLayerIcon;
   }
 
+  getDefaultLayerConfig(props = {}) {
+    return {
+      ...super.getDefaultLayerConfig(props),
+      // add height visual channel
+      weightField: null,
+      weightDomain: [0, 1],
+      weightRange: [0, 1],
+      weightScale: 'linear'
+    }
+  }
+
   sameDataSelector = ({allData, filteredIndex, oldLayerData, opt = {}}) => {
     return Boolean(oldLayerData &&
       oldLayerData.data && oldLayerData.columns &&
       opt.sameData
     );
   };
+
   sameConfigSelector = ({oldLayerData, config}) => {
     // columns must use the same filedIdx
     // this is a fast way to compare columns object
@@ -143,11 +147,13 @@ class HeatmapLayer extends MapboxGLLayer {
     const sameWeightField = weightField === oldLayerData.weightField;
     return sameColumns && sameWeightField;
   };
+
   rebuildSelector = createSelector(
     this.sameDataSelector,
     this.sameConfigSelector,
     (sameData, sameColumns) => !(sameData && sameColumns)
   );
+
   datasetSelector = config => config.dataId;
   isVisibleSelector = config => config.isVisible;
   visConfigSelector = config => config.visConfig;

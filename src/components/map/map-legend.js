@@ -84,6 +84,11 @@ const MapLegend = ({layers}) => (
       const enableColorBy = layer.config.colorField
         ? layer.config.colorField.name
         : layer.visualChannels.color.defaultMeasure;
+
+      if (!layer.isValidToSave()) {
+        return null;
+      }
+
       return (
         <StyledMapControlLegend
           className="legend--layer"
