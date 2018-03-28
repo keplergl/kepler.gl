@@ -24,9 +24,10 @@ import {
   updateMap,
   togglePerspective,
   fitBounds,
-  toggleSplitMap,
-  toggleFullScreen
+  toggleSplitMap
 } from 'actions/map-state-actions';
+
+import {receiveMapConfig} from 'actions/actions';
 
 import reducer, {INITIAL_MAP_STATE} from 'reducers/map-state';
 
@@ -134,6 +135,78 @@ test('#mapStateReducer -> SPLIT_MAP: toggle', t => {
   );
 
   t.end();
+});
+
+test('#mapStateReducer -> SPLIT_MAP: upload mapState config to update split map state', t => {
+  let state = {
+    ...INITIAL_MAP_STATE,
+    isSplit: true,
+    width: 400
+  };
+
+  // cases:
+
+  // 1. state split: true - isSplit: true
+  // do nothing
+  let newState = reducer(state, receiveMapConfig({mapState: {isSplit: true}}));
+  t.deepEqual(
+    newState,
+    state,
+    'setting isSplit to true when state is already split should not change the state'
+  );
+
+  // 2. state split: false - isSplit: false
+  // do nothing
+  state = {
+    ...state,
+    isSplit: false,
+    width: 800
+  };
+  newState = reducer(state, receiveMapConfig({mapState: {isSplit: false}}));
+  t.deepEqual(
+    newState,
+    state,
+    'setting isSplit to false when state is not split should not change the state'
+  );
+
+  // 3. state split: true - isSplit: false
+  // double width
+  state = {
+    ...state,
+    isSplit: true,
+    width: 400
+  };
+  newState = reducer(state, receiveMapConfig({mapState: {isSplit: false}}));
+  t.deepEqual(
+    newState,
+    {
+      ...state,
+      width: 800,
+      isSplit: false
+    },
+    'setting isSplit to false when state is already split should double width'
+  );
+
+  // 4. state split: false - isSplit: true
+  // split width
+  state = {
+    ...state,
+    isSplit: false,
+    width: 800
+  };
+  newState = reducer(state, receiveMapConfig({mapState: {isSplit: true}}));
+  t.deepEqual(
+    newState,
+    {
+      ...state,
+      width: 400,
+      isSplit: true
+    },
+    'setting isSplit to true when state is already split should reduce width by half'
+  );
+
+  t.end();
+
 });
 
 test('#mapStateReducer -> SPLIT_MAP: close map at specific point', t => {

@@ -50,6 +50,7 @@ export const togglePerspectiveUpdater = (state, action) => ({
   dragRotate: !state.dragRotate
 });
 
+// consider case where you have a split map and user wants to reset
 export const receiveMapConfigUpdater = (state, action) => {
   const {isSplit = false} = action.payload.mapState || {};
 
@@ -57,7 +58,7 @@ export const receiveMapConfigUpdater = (state, action) => {
     ...state,
     ...(action.payload.mapState || {}),
     isSplit,
-    ...(isSplit ? getMapDimForSplitMap(isSplit, state) : {})
+    ...getMapDimForSplitMap(isSplit, state)
   };
 };
 
@@ -69,7 +70,24 @@ export const toggleSplitMapUpdater = (state, action) => ({
 
 // Helpers
 function getMapDimForSplitMap(isSplit, state) {
+  // cases:
+  // 1. state split: true - isSplit: true
+  // do nothing
+  // 2. state split: false - isSplit: false
+  // do nothing
+  if (state.isSplit === isSplit) {
+    return {};
+  }
+
+  const width = state.isSplit && !isSplit ?
+    // 3. state split: true - isSplit: false
+    // double width
+    state.width * 2
+    // 4. state split: false - isSplit: true
+    // split width
+    : state.width / 2;
+
   return {
-    width: isSplit ? state.width / 2 : state.width * 2
+    width
   };
 }
