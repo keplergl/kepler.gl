@@ -1,0 +1,9036 @@
+{
+  "layers": [
+    {
+      "paint": {
+        "background-opacity": 1,
+        "background-color": "#09101d"
+      },
+      "type": "background",
+      "id": "background"
+    },
+    {
+      "source": "composite",
+      "filter": [
+        "any",
+        [
+          "in",
+          "Place.type",
+          "PARK_OR_OPEN_SPACE",
+          "GOLF_COURSE"
+        ],
+        [
+          "in",
+          "PlaceFeature.categoryName",
+          "PARK",
+          "GOLF"
+        ],
+        [
+          "in",
+          "PlaceAreaFeature.categoryName",
+          "PARK",
+          "GOLF"
+        ]
+      ],
+      "paint": {
+        "fill-color": "#01171E",
+        "fill-opacity": 1
+      },
+      "minzoom": 1,
+      "source-layer": "polygons",
+      "type": "fill",
+      "id": "parks"
+    },
+    {
+      "source": "composite",
+      "filter": [
+        "any",
+        [
+          "in",
+          "Place.type",
+          "AIRPORT"
+        ],
+        [
+          "in",
+          "PlaceFeature.categoryName",
+          "AIRPORT"
+        ],
+        [
+          "in",
+          "PlaceAreaFeature.categoryName",
+          "AIRPORT"
+        ]
+      ],
+      "paint": {
+        "fill-color": {
+          "stops": [
+            [
+              11,
+              "#101520"
+            ],
+            [
+              16,
+              "#101520"
+            ]
+          ]
+        },
+        "fill-opacity": 1
+      },
+      "minzoom": 7,
+      "source-layer": "polygons",
+      "type": "fill",
+      "id": "place-airport"
+    },
+    {
+      "source": "composite",
+      "filter": [
+        "any",
+        [
+          "in",
+          "Place.type",
+          "AIRPORT_RUNWAY"
+        ],
+        [
+          "in",
+          "PlaceFeature.categoryName",
+          "AIRPORT_RUNWAY"
+        ],
+        [
+          "in",
+          "PlaceAreaFeature.categoryName",
+          "AIRPORT_RUNWAY"
+        ]
+      ],
+      "paint": {
+        "fill-color": {
+          "stops": [
+            [
+              11,
+              "#151c28"
+            ],
+            [
+              16,
+              "#151c28"
+            ]
+          ]
+        },
+        "fill-opacity": 1
+      },
+      "minzoom": 10,
+      "source-layer": "polygons",
+      "type": "fill",
+      "id": "place-airport-runways"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "any",
+        [
+          "all",
+          [
+            "in",
+            "NaturalFeature.type",
+            "INTERMITTENT_STREAM"
+          ],
+          [
+            "in",
+            "NaturalFeature.priority",
+            "MEDIUM",
+            "LOW",
+            "VERY_LOW"
+          ]
+        ],
+        [
+          "all",
+          [
+            "in",
+            "DisplayNaturalFeature.type",
+            "INTERMITTENT_STREAM"
+          ],
+          [
+            "in",
+            "DisplayNaturalFeature.priority",
+            "MEDIUM",
+            "LOW",
+            "VERY_LOW"
+          ]
+        ]
+      ],
+      "paint": {
+        "line-color": "#0a151e",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              14,
+              2
+            ],
+            [
+              17,
+              7
+            ]
+          ]
+        }
+      },
+      "minzoom": 14,
+      "source-layer": "lines",
+      "type": "line",
+      "id": "stream-intermittent-minor-CASING"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "any",
+        [
+          "all",
+          [
+            "in",
+            "NaturalFeature.type",
+            "INTERMITTENT_STREAM"
+          ],
+          [
+            "in",
+            "NaturalFeature.priority",
+            "VERY_HIGH",
+            "HIGH"
+          ]
+        ],
+        [
+          "all",
+          [
+            "in",
+            "DisplayNaturalFeature.type",
+            "INTERMITTENT_STREAM"
+          ],
+          [
+            "in",
+            "DisplayNaturalFeature.priority",
+            "VERY_HIGH",
+            "HIGH"
+          ]
+        ]
+      ],
+      "paint": {
+        "line-color": "#0a151e",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              14,
+              2
+            ],
+            [
+              17,
+              7
+            ]
+          ]
+        }
+      },
+      "minzoom": 13,
+      "source-layer": "lines",
+      "type": "line",
+      "id": "stream-intermittent-major-CASING"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "any",
+        [
+          "all",
+          [
+            "in",
+            "NaturalFeature.type",
+            "STREAM"
+          ],
+          [
+            "in",
+            "NaturalFeature.priority",
+            "MEDIUM",
+            "LOW",
+            "VERY_LOW"
+          ]
+        ],
+        [
+          "all",
+          [
+            "in",
+            "DisplayNaturalFeature.type",
+            "STREAM"
+          ],
+          [
+            "in",
+            "DisplayNaturalFeature.priority",
+            "MEDIUM",
+            "LOW",
+            "VERY_LOW"
+          ]
+        ]
+      ],
+      "paint": {
+        "line-color": "#0a151e",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              14,
+              2
+            ],
+            [
+              17,
+              7
+            ]
+          ]
+        }
+      },
+      "minzoom": 13,
+      "source-layer": "lines",
+      "type": "line",
+      "id": "stream-minor-CASING"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "any",
+        [
+          "all",
+          [
+            "in",
+            "NaturalFeature.type",
+            "STREAM"
+          ],
+          [
+            "in",
+            "NaturalFeature.priority",
+            "VERY_HIGH",
+            "HIGH"
+          ]
+        ],
+        [
+          "all",
+          [
+            "in",
+            "DisplayNaturalFeature.type",
+            "STREAM"
+          ],
+          [
+            "in",
+            "DisplayNaturalFeature.priority",
+            "VERY_HIGH",
+            "HIGH"
+          ]
+        ]
+      ],
+      "paint": {
+        "line-color": "#0a151e",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              14,
+              2
+            ],
+            [
+              17,
+              7
+            ]
+          ]
+        }
+      },
+      "minzoom": 11,
+      "source-layer": "lines",
+      "type": "line",
+      "id": "stream-major-CASING"
+    },
+    {
+      "paint": {
+        "line-color": "#0e1d28",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              14,
+              0.5
+            ],
+            [
+              17,
+              5
+            ]
+          ]
+        }
+      },
+      "ref": "stream-intermittent-minor-CASING",
+      "id": "stream-intermittent-minor-FILL"
+    },
+    {
+      "paint": {
+        "line-color": "#0e1d28",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              14,
+              0.5
+            ],
+            [
+              17,
+              5
+            ]
+          ]
+        }
+      },
+      "ref": "stream-intermittent-major-CASING",
+      "id": "stream-intermittent-major-FILL"
+    },
+    {
+      "paint": {
+        "line-color": "#0e1d28",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              14,
+              0.5
+            ],
+            [
+              17,
+              5
+            ]
+          ]
+        }
+      },
+      "ref": "stream-minor-CASING",
+      "id": "stream-minor-FILL"
+    },
+    {
+      "paint": {
+        "line-color": "#0e1d28",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              14,
+              0.5
+            ],
+            [
+              17,
+              5
+            ]
+          ]
+        }
+      },
+      "ref": "stream-major-CASING",
+      "id": "stream-major-FILL"
+    },
+    {
+      "source": "composite",
+      "filter": [
+        "any",
+        [
+          "in",
+          "NaturalFeature.type",
+          "SEA_OR_OCEAN",
+          "LAKE",
+          "OTHER_WATER"
+        ],
+        [
+          "in",
+          "DisplayNaturalFeature.type",
+          "WATER"
+        ]
+      ],
+      "paint": {
+        "fill-outline-color": "#0a151e",
+        "fill-color": "#0E1D28",
+        "fill-antialias": true,
+        "fill-opacity": 1
+      },
+      "source-layer": "polygons",
+      "type": "fill",
+      "id": "water"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "==",
+          "Segment.type",
+          "FERRY"
+        ]
+      ],
+      "paint": {
+        "line-color": "#0f2431",
+        "line-opacity": 0,
+        "line-width": {
+          "stops": [
+            [
+              8.9,
+              0
+            ],
+            [
+              9.0,
+              0.25
+            ],
+            [
+              10,
+              0.25
+            ],
+            [
+              11,
+              0.5
+            ],
+            [
+              12,
+              1
+            ],
+            [
+              13,
+              1
+            ],
+            [
+              15.5,
+              2
+            ]
+          ]
+        }
+      },
+      "minzoom": 9,
+      "source-layer": "lines",
+      "type": "line",
+      "id": "ferry"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "in",
+          "Segment.roadClass",
+          "MINOR_ARTERY"
+        ],
+        [
+          "==",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "line-color": "#09101d",
+        "line-opacity": 0,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0
+            ],
+            [
+              13,
+              1.5
+            ],
+            [
+              13.8,
+              3.5
+            ],
+            [
+              14,
+              4
+            ],
+            [
+              15,
+              7
+            ],
+            [
+              16,
+              11
+            ],
+            [
+              17,
+              19.5
+            ],
+            [
+              18,
+              22
+            ],
+            [
+              20,
+              66
+            ]
+          ]
+        }
+      },
+      "minzoom": 8,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-tunnel-minor-arterial-CASING"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "in",
+          "Segment.roadClass",
+          "MAJOR_ARTERY"
+        ],
+        [
+          "==",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "line-color": {
+          "stops": [
+            [
+              14,
+              "#09101d"
+            ],
+            [
+              16,
+              "#09101d"
+            ]
+          ]
+        },
+        "line-opacity": 0,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0
+            ],
+            [
+              14,
+              0
+            ],
+            [
+              14.2,
+              4
+            ],
+            [
+              14.3,
+              5
+            ],
+            [
+              15,
+              8
+            ],
+            [
+              16,
+              12
+            ],
+            [
+              17,
+              22
+            ],
+            [
+              18,
+              26
+            ],
+            [
+              20,
+              66
+            ]
+          ]
+        }
+      },
+      "minzoom": 9,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-tunnel-major-arterial-CASING"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "in",
+          "Segment.roadClass",
+          "MINOR_HIGHWAY"
+        ],
+        [
+          "!=",
+          "Segment.controlledAccessRoad",
+          true
+        ],
+        [
+          "==",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "line-color": "#09101d",
+        "line-opacity": 0,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0
+            ],
+            [
+              14,
+              0
+            ],
+            [
+              14.2,
+              4
+            ],
+            [
+              14.3,
+              5
+            ],
+            [
+              15,
+              8
+            ],
+            [
+              16,
+              12
+            ],
+            [
+              17,
+              22
+            ],
+            [
+              18,
+              26
+            ],
+            [
+              20,
+              66
+            ]
+          ]
+        }
+      },
+      "minzoom": 7,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-tunnel-UNcontrolled-minor-highway-CASING"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "in",
+          "Segment.roadClass",
+          "MINOR_HIGHWAY"
+        ],
+        [
+          "in",
+          "Segment.controlledAccessRoad",
+          true
+        ],
+        [
+          "==",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "line-color": "#09101d",
+        "line-opacity": 0,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0
+            ],
+            [
+              14,
+              0
+            ],
+            [
+              14.2,
+              4
+            ],
+            [
+              14.3,
+              5
+            ],
+            [
+              15,
+              8
+            ],
+            [
+              16,
+              12
+            ],
+            [
+              17,
+              22
+            ],
+            [
+              18,
+              26
+            ],
+            [
+              20,
+              66
+            ]
+          ]
+        }
+      },
+      "minzoom": 7,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-tunnel-controlled-minor-highway-CASING"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "any",
+        [
+          "in",
+          "Segment.roadUsage",
+          "WALKWAY",
+          "STAIRS"
+        ]
+      ],
+      "paint": {
+        "line-color": {
+          "stops": [
+            [
+              15,
+              "#09101d"
+            ],
+            [
+              17,
+              "#09101d"
+            ]
+          ]
+        },
+        "line-opacity": 0,
+        "line-width": {
+          "stops": [
+            [
+              15,
+              4
+            ],
+            [
+              17,
+              5
+            ],
+            [
+              20,
+              26
+            ]
+          ]
+        }
+      },
+      "minzoom": 15,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-path-CASING"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "in",
+          "Segment.roadUsage",
+          "PARKING_ROAD"
+        ]
+      ],
+      "paint": {
+        "line-color": "#09101d",
+        "line-opacity": 0
+      },
+      "minzoom": 14,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-parking-CASING"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "in",
+          "Segment.roadClass",
+          "LOCAL_ROAD_MINOR_IMPORTANCE"
+        ],
+        [
+          "!in",
+          "Segment.roadUsage",
+          "WALKWAY"
+        ],
+        [
+          "!in",
+          "Segment.roadUsage",
+          "STAIRS"
+        ],
+        [
+          "!in",
+          "Segment.roadUsage",
+          "PARKING_ROAD"
+        ],
+        [
+          "!=",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "line-color": "#09101d",
+        "line-opacity": 0,
+        "line-width": {
+          "stops": [
+            [
+              12.95,
+              0
+            ],
+            [
+              14,
+              0
+            ],
+            [
+              14.2,
+              1.5
+            ],
+            [
+              14.3,
+              2.5
+            ],
+            [
+              15,
+              5
+            ],
+            [
+              16,
+              8
+            ],
+            [
+              17,
+              13
+            ],
+            [
+              18,
+              18
+            ],
+            [
+              20,
+              42
+            ]
+          ]
+        }
+      },
+      "minzoom": 12,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-local-minor-importance-CASING"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "in",
+          "Segment.roadClass",
+          "LOCAL_ROAD"
+        ],
+        [
+          "!in",
+          "Segment.roadUsage",
+          "WALKWAY"
+        ],
+        [
+          "!in",
+          "Segment.roadUsage",
+          "STAIRS"
+        ],
+        [
+          "!in",
+          "Segment.roadUsage",
+          "PARKING_ROAD"
+        ],
+        [
+          "!=",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "line-color": "#09101d",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              12.95,
+              0
+            ],
+            [
+              14,
+              0
+            ],
+            [
+              14.2,
+              1.5
+            ],
+            [
+              14.3,
+              2.5
+            ],
+            [
+              15,
+              5
+            ],
+            [
+              16,
+              8
+            ],
+            [
+              17,
+              13
+            ],
+            [
+              18,
+              18
+            ],
+            [
+              20,
+              42
+            ]
+          ]
+        }
+      },
+      "minzoom": 11,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-local-CASING"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "in",
+          "Segment.roadClass",
+          "MINOR_ARTERY"
+        ],
+        [
+          "!=",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "line-color": "#09101d",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0
+            ],
+            [
+              14,
+              0
+            ],
+            [
+              14.2,
+              2
+            ],
+            [
+              14.3,
+              4
+            ],
+            [
+              15,
+              7
+            ],
+            [
+              16,
+              11
+            ],
+            [
+              17,
+              19.5
+            ],
+            [
+              18,
+              22
+            ],
+            [
+              20,
+              66
+            ]
+          ]
+        }
+      },
+      "minzoom": 10,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-minor-arterial-CASING"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "in",
+          "Segment.roadClass",
+          "MAJOR_ARTERY"
+        ],
+        [
+          "!=",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "line-color": "#09101d",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0
+            ],
+            [
+              14,
+              0
+            ],
+            [
+              14.2,
+              4
+            ],
+            [
+              14.3,
+              5
+            ],
+            [
+              15,
+              8
+            ],
+            [
+              16,
+              12
+            ],
+            [
+              17,
+              22
+            ],
+            [
+              18,
+              26
+            ],
+            [
+              20,
+              66
+            ]
+          ]
+        }
+      },
+      "minzoom": 9,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-major-arterial-CASING"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "in",
+          "Segment.roadClass",
+          "MINOR_HIGHWAY"
+        ],
+        [
+          "!=",
+          "Segment.controlledAccessRoad",
+          true
+        ],
+        [
+          "!=",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "line-color": "#09101d",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0
+            ],
+            [
+              14,
+              0
+            ],
+            [
+              14.2,
+              4
+            ],
+            [
+              14.3,
+              5
+            ],
+            [
+              15,
+              8
+            ],
+            [
+              16,
+              12
+            ],
+            [
+              17,
+              22
+            ],
+            [
+              18,
+              26
+            ],
+            [
+              20,
+              66
+            ]
+          ]
+        }
+      },
+      "minzoom": 7,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-UNcontrolled-minor-highway-CASING"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "in",
+          "Segment.roadClass",
+          "MINOR_HIGHWAY"
+        ],
+        [
+          "in",
+          "Segment.controlledAccessRoad",
+          true
+        ],
+        [
+          "!=",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "line-color": "#09101d",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0
+            ],
+            [
+              14,
+              0
+            ],
+            [
+              14.2,
+              4
+            ],
+            [
+              14.3,
+              5
+            ],
+            [
+              15,
+              8
+            ],
+            [
+              16,
+              12
+            ],
+            [
+              17,
+              22
+            ],
+            [
+              18,
+              26
+            ],
+            [
+              20,
+              66
+            ]
+          ]
+        }
+      },
+      "minzoom": 7,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-controlled-minor-highway-CASING"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "!in",
+          "GeographyRelations.countryCode",
+          "GBR",
+          "IRL"
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "HIGHWAY"
+        ],
+        [
+          "in",
+          "Segment.roadUsage",
+          "RAMP",
+          "SLIP_ROAD"
+        ],
+        [
+          "!=",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "line-color": "#09101d",
+        "line-width": {
+          "stops": [
+            [
+              12.95,
+              0
+            ],
+            [
+              14,
+              2
+            ],
+            [
+              14.2,
+              3
+            ],
+            [
+              14.3,
+              4
+            ],
+            [
+              15,
+              5
+            ],
+            [
+              16,
+              8
+            ],
+            [
+              17,
+              13
+            ],
+            [
+              18,
+              18
+            ],
+            [
+              20,
+              42
+            ]
+          ]
+        }
+      },
+      "minzoom": 9,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-ramp-highway-CASING"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "in",
+          "GeographyRelations.countryCode",
+          "GBR",
+          "IRL"
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "HIGHWAY"
+        ],
+        [
+          "in",
+          "Segment.roadUsage",
+          "RAMP",
+          "SLIP_ROAD"
+        ],
+        [
+          "!=",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "line-color": "#09101d",
+        "line-width": {
+          "stops": [
+            [
+              12.95,
+              0
+            ],
+            [
+              14,
+              2
+            ],
+            [
+              14.2,
+              3
+            ],
+            [
+              14.3,
+              4
+            ],
+            [
+              15,
+              5
+            ],
+            [
+              16,
+              8
+            ],
+            [
+              17,
+              13
+            ],
+            [
+              18,
+              18
+            ],
+            [
+              20,
+              42
+            ]
+          ]
+        }
+      },
+      "minzoom": 9,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-ramp-highway-CASING-GBR-IRL"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "!in",
+          "GeographyRelations.countryCode",
+          "GBR",
+          "IRL"
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "MOTORWAY"
+        ],
+        [
+          "in",
+          "Segment.roadUsage",
+          "RAMP",
+          "SLIP_ROAD"
+        ],
+        [
+          "!=",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "line-color": "#09101d",
+        "line-width": {
+          "stops": [
+            [
+              12.95,
+              0
+            ],
+            [
+              14,
+              2
+            ],
+            [
+              14.2,
+              3
+            ],
+            [
+              14.3,
+              4
+            ],
+            [
+              15,
+              5
+            ],
+            [
+              16,
+              8
+            ],
+            [
+              17,
+              13
+            ],
+            [
+              18,
+              18
+            ],
+            [
+              20,
+              42
+            ]
+          ]
+        }
+      },
+      "minzoom": 9,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-ramp-motorway-CASING"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "in",
+          "GeographyRelations.countryCode",
+          "GBR",
+          "IRL"
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "MOTORWAY"
+        ],
+        [
+          "in",
+          "Segment.roadUsage",
+          "RAMP",
+          "SLIP_ROAD"
+        ],
+        [
+          "!=",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "line-color": "#09101d",
+        "line-width": {
+          "stops": [
+            [
+              12.95,
+              0
+            ],
+            [
+              14,
+              2
+            ],
+            [
+              14.2,
+              3
+            ],
+            [
+              14.3,
+              4
+            ],
+            [
+              15,
+              5
+            ],
+            [
+              16,
+              8
+            ],
+            [
+              17,
+              13
+            ],
+            [
+              18,
+              18
+            ],
+            [
+              20,
+              42
+            ]
+          ]
+        }
+      },
+      "minzoom": 9,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-ramp-motorway-CASING-GBR-IRL"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "!in",
+          "GeographyRelations.countryCode",
+          "GBR",
+          "IRL"
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "HIGHWAY"
+        ],
+        [
+          "!=",
+          "Segment.controlledAccessRoad",
+          true
+        ],
+        [
+          "==",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "line-color": "#09101d",
+        "line-opacity": 0,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0
+            ],
+            [
+              14,
+              0
+            ],
+            [
+              14.2,
+              4
+            ],
+            [
+              14.3,
+              5
+            ],
+            [
+              15,
+              8
+            ],
+            [
+              16,
+              12
+            ],
+            [
+              17,
+              22
+            ],
+            [
+              18,
+              26
+            ],
+            [
+              20,
+              66
+            ]
+          ]
+        }
+      },
+      "minzoom": 6,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-tunnel-UNcontrolled-highway-CASING"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "in",
+          "GeographyRelations.countryCode",
+          "GBR",
+          "IRL"
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "HIGHWAY"
+        ],
+        [
+          "!=",
+          "Segment.controlledAccessRoad",
+          true
+        ],
+        [
+          "==",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "line-color": "#09101d",
+        "line-opacity": 0,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0
+            ],
+            [
+              14,
+              0
+            ],
+            [
+              14.2,
+              4
+            ],
+            [
+              14.3,
+              5
+            ],
+            [
+              15,
+              8
+            ],
+            [
+              16,
+              12
+            ],
+            [
+              17,
+              22
+            ],
+            [
+              18,
+              26
+            ],
+            [
+              20,
+              66
+            ]
+          ]
+        }
+      },
+      "minzoom": 6,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-tunnel-UNcontrolled-highway-CASING-GBR-IRL"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "!in",
+          "GeographyRelations.countryCode",
+          "GBR",
+          "IRL"
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "HIGHWAY"
+        ],
+        [
+          "!in",
+          "Segment.roadUsage",
+          "RAMP",
+          "SLIP_ROAD"
+        ],
+        [
+          "!=",
+          "Segment.controlledAccessRoad",
+          true
+        ],
+        [
+          "!=",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "line-color": "#09101d",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0
+            ],
+            [
+              14,
+              0
+            ],
+            [
+              14.2,
+              4
+            ],
+            [
+              14.3,
+              5
+            ],
+            [
+              15,
+              8
+            ],
+            [
+              16,
+              12
+            ],
+            [
+              17,
+              22
+            ],
+            [
+              18,
+              26
+            ],
+            [
+              20,
+              66
+            ]
+          ]
+        }
+      },
+      "minzoom": 5,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-UNcontrolled-highway-CASING"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "in",
+          "GeographyRelations.countryCode",
+          "GBR",
+          "IRL"
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "HIGHWAY"
+        ],
+        [
+          "!in",
+          "Segment.roadUsage",
+          "RAMP",
+          "SLIP_ROAD"
+        ],
+        [
+          "!=",
+          "Segment.controlledAccessRoad",
+          true
+        ],
+        [
+          "!=",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "line-color": "#f99f1c",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0
+            ],
+            [
+              14,
+              0
+            ],
+            [
+              14.2,
+              4
+            ],
+            [
+              14.3,
+              5
+            ],
+            [
+              15,
+              8
+            ],
+            [
+              16,
+              12
+            ],
+            [
+              17,
+              22
+            ],
+            [
+              18,
+              26
+            ],
+            [
+              20,
+              66
+            ]
+          ]
+        }
+      },
+      "minzoom": 5,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-UNcontrolled-highway-CASING-GBR-IRL"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "!in",
+          "GeographyRelations.countryCode",
+          "GBR",
+          "IRL"
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "HIGHWAY"
+        ],
+        [
+          "in",
+          "Segment.controlledAccessRoad",
+          true
+        ],
+        [
+          "==",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "line-color": "#09101d",
+        "line-opacity": 0,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0
+            ],
+            [
+              14,
+              0
+            ],
+            [
+              14.2,
+              4
+            ],
+            [
+              14.3,
+              5
+            ],
+            [
+              15,
+              8
+            ],
+            [
+              16,
+              12
+            ],
+            [
+              17,
+              22
+            ],
+            [
+              18,
+              26
+            ],
+            [
+              20,
+              66
+            ]
+          ]
+        }
+      },
+      "minzoom": 6,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-tunnel-controlled-highway-CASING"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "in",
+          "GeographyRelations.countryCode",
+          "GBR",
+          "IRL"
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "HIGHWAY"
+        ],
+        [
+          "in",
+          "Segment.controlledAccessRoad",
+          true
+        ],
+        [
+          "==",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "line-color": "#09101d",
+        "line-opacity": 0,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0
+            ],
+            [
+              14,
+              0
+            ],
+            [
+              14.2,
+              4
+            ],
+            [
+              14.3,
+              5
+            ],
+            [
+              15,
+              8
+            ],
+            [
+              16,
+              12
+            ],
+            [
+              17,
+              22
+            ],
+            [
+              18,
+              26
+            ],
+            [
+              20,
+              66
+            ]
+          ]
+        }
+      },
+      "minzoom": 6,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-tunnel-controlled-highway-CASING-GBR-IRL"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "!in",
+          "GeographyRelations.countryCode",
+          "GBR",
+          "IRL"
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "HIGHWAY"
+        ],
+        [
+          "!in",
+          "Segment.roadUsage",
+          "RAMP",
+          "SLIP_ROAD"
+        ],
+        [
+          "in",
+          "Segment.controlledAccessRoad",
+          true
+        ],
+        [
+          "!=",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "line-color": "#09101d",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0
+            ],
+            [
+              14,
+              0
+            ],
+            [
+              14.2,
+              4
+            ],
+            [
+              14.3,
+              5
+            ],
+            [
+              15,
+              8
+            ],
+            [
+              16,
+              12
+            ],
+            [
+              17,
+              22
+            ],
+            [
+              18,
+              26
+            ],
+            [
+              20,
+              66
+            ]
+          ]
+        }
+      },
+      "minzoom": 5,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-controlled-highway-CASING"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "in",
+          "GeographyRelations.countryCode",
+          "GBR",
+          "IRL"
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "HIGHWAY"
+        ],
+        [
+          "!in",
+          "Segment.roadUsage",
+          "RAMP",
+          "SLIP_ROAD"
+        ],
+        [
+          "in",
+          "Segment.controlledAccessRoad",
+          true
+        ],
+        [
+          "!=",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "line-color": "#09101d",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0
+            ],
+            [
+              14,
+              0
+            ],
+            [
+              14.2,
+              4
+            ],
+            [
+              14.3,
+              5
+            ],
+            [
+              15,
+              8
+            ],
+            [
+              16,
+              12
+            ],
+            [
+              17,
+              22
+            ],
+            [
+              18,
+              26
+            ],
+            [
+              20,
+              66
+            ]
+          ]
+        }
+      },
+      "minzoom": 5,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-controlled-highway-CASING-GBR-IRL"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "!in",
+          "GeographyRelations.countryCode",
+          "GBR",
+          "IRL"
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "MOTORWAY"
+        ],
+        [
+          "==",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "line-color": "#09101d",
+        "line-opacity": 0,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0
+            ],
+            [
+              14,
+              0
+            ],
+            [
+              14.2,
+              4
+            ],
+            [
+              14.3,
+              5
+            ],
+            [
+              15,
+              8
+            ],
+            [
+              16,
+              12
+            ],
+            [
+              17,
+              22
+            ],
+            [
+              18,
+              26
+            ],
+            [
+              20,
+              66
+            ]
+          ]
+        }
+      },
+      "minzoom": 5,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-tunnel-motorway-CASING"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "in",
+          "GeographyRelations.countryCode",
+          "GBR",
+          "IRL"
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "MOTORWAY"
+        ],
+        [
+          "==",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "line-color": "#09101d",
+        "line-opacity": 0,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0
+            ],
+            [
+              14,
+              0
+            ],
+            [
+              14.2,
+              4
+            ],
+            [
+              14.3,
+              5
+            ],
+            [
+              15,
+              8
+            ],
+            [
+              16,
+              12
+            ],
+            [
+              17,
+              22
+            ],
+            [
+              18,
+              26
+            ],
+            [
+              20,
+              66
+            ]
+          ]
+        }
+      },
+      "minzoom": 5,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-tunnel-motorway-CASING-GBR-IRL"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "!in",
+          "GeographyRelations.countryCode",
+          "GBR",
+          "IRL"
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "MOTORWAY"
+        ],
+        [
+          "!in",
+          "Segment.roadUsage",
+          "RAMP",
+          "SLIP_ROAD"
+        ],
+        [
+          "!=",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "line-color": "#09101d",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0
+            ],
+            [
+              14,
+              0
+            ],
+            [
+              14.2,
+              4
+            ],
+            [
+              14.3,
+              5
+            ],
+            [
+              15,
+              8
+            ],
+            [
+              16,
+              12
+            ],
+            [
+              17,
+              22
+            ],
+            [
+              18,
+              26
+            ],
+            [
+              20,
+              66
+            ]
+          ]
+        }
+      },
+      "minzoom": 4,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-motorway-CASING"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "in",
+          "GeographyRelations.countryCode",
+          "GBR",
+          "IRL"
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "MOTORWAY"
+        ],
+        [
+          "!in",
+          "Segment.roadUsage",
+          "RAMP",
+          "SLIP_ROAD"
+        ],
+        [
+          "!=",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "line-color": "#09101d",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0
+            ],
+            [
+              14,
+              0
+            ],
+            [
+              14.2,
+              4
+            ],
+            [
+              14.3,
+              5
+            ],
+            [
+              15,
+              8
+            ],
+            [
+              16,
+              12
+            ],
+            [
+              17,
+              22
+            ],
+            [
+              18,
+              26
+            ],
+            [
+              20,
+              66
+            ]
+          ]
+        }
+      },
+      "minzoom": 4,
+      "source-layer": "roads",
+      "type": "line",
+      "id": "road-motorway-CASING-GBR-IRL"
+    },
+    {
+      "paint": {
+        "line-color": "#31393d",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              10.95,
+              0.5
+            ],
+            [
+              11,
+              1
+            ],
+            [
+              12.5,
+              1
+            ],
+            [
+              13,
+              1.5
+            ],
+            [
+              14,
+              3
+            ],
+            [
+              15,
+              5
+            ],
+            [
+              16,
+              9
+            ],
+            [
+              17,
+              17.5
+            ],
+            [
+              18,
+              20
+            ],
+            [
+              20,
+              64
+            ]
+          ]
+        }
+      },
+      "ref": "road-tunnel-minor-arterial-CASING",
+      "id": "road-tunnel-minor-arterial-FILL"
+    },
+    {
+      "paint": {
+        "line-color": "#31393d",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              1
+            ],
+            [
+              12,
+              2
+            ],
+            [
+              13,
+              2
+            ],
+            [
+              14,
+              3
+            ],
+            [
+              15,
+              6
+            ],
+            [
+              16,
+              10
+            ],
+            [
+              17,
+              20
+            ],
+            [
+              18,
+              24
+            ],
+            [
+              20,
+              64
+            ]
+          ]
+        }
+      },
+      "ref": "road-tunnel-major-arterial-CASING",
+      "id": "road-tunnel-major-arterial-FILL"
+    },
+    {
+      "paint": {
+        "line-color": "#31393d",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              1
+            ],
+            [
+              12,
+              2
+            ],
+            [
+              13,
+              2
+            ],
+            [
+              14,
+              3
+            ],
+            [
+              15,
+              6
+            ],
+            [
+              16,
+              10
+            ],
+            [
+              17,
+              20
+            ],
+            [
+              18,
+              24
+            ],
+            [
+              20,
+              64
+            ]
+          ]
+        }
+      },
+      "ref": "road-tunnel-UNcontrolled-minor-highway-CASING",
+      "id": "road-tunnel-UNcontrolled-minor-highway-FILL"
+    },
+    {
+      "paint": {
+        "line-color": "#31393d",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              1
+            ],
+            [
+              12,
+              2
+            ],
+            [
+              13,
+              2
+            ],
+            [
+              14,
+              3
+            ],
+            [
+              15,
+              6
+            ],
+            [
+              16,
+              10
+            ],
+            [
+              17,
+              20
+            ],
+            [
+              18,
+              24
+            ],
+            [
+              20,
+              64
+            ]
+          ]
+        }
+      },
+      "ref": "road-tunnel-controlled-minor-highway-CASING",
+      "id": "road-tunnel-controlled-minor-highway-FILL"
+    },
+    {
+      "paint": {
+        "line-color": "#1e2027",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              15,
+              2
+            ],
+            [
+              17,
+              3
+            ],
+            [
+              20,
+              24
+            ]
+          ]
+        }
+      },
+      "ref": "road-path-CASING",
+      "id": "road-path-FILL"
+    },
+    {
+      "paint": {
+        "line-color": "#132834",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              14,
+              1
+            ],
+            [
+              15,
+              2
+            ],
+            [
+              16,
+              3.5
+            ],
+            [
+              17,
+              8
+            ],
+            [
+              18,
+              12
+            ],
+            [
+              20,
+              36
+            ]
+          ]
+        }
+      },
+      "ref": "road-parking-CASING",
+      "id": "road-parking-FILL"
+    },
+    {
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "type": "line",
+      "filter": [
+        "all",
+        [
+          "==",
+          "Segment.type",
+          "RAILWAY"
+        ]
+      ],
+      "paint": {
+        "line-color": "#182539",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              14,
+              1
+            ],
+            [
+              15,
+              2
+            ],
+            [
+              16,
+              5
+            ],
+            [
+              17,
+              6
+            ],
+            [
+              18,
+              7
+            ],
+            [
+              22,
+              25
+            ]
+          ]
+        }
+      },
+      "minzoom": 14,
+      "source-layer": "lines",
+      "is-stroke": true,
+      "id": "railway-line"
+    },
+    {
+      "layout": {
+        "line-cap": "square",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "==",
+          "Segment.type",
+          "RAILWAY"
+        ]
+      ],
+      "paint": {
+        "line-color": "#182539",
+        "line-dasharray": [
+          0.1,
+          2.1,
+          0.1
+        ],
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              14,
+              0
+            ],
+            [
+              15,
+              6
+            ],
+            [
+              16,
+              10
+            ],
+            [
+              17,
+              12
+            ],
+            [
+              18,
+              18
+            ],
+            [
+              19,
+              20
+            ],
+            [
+              20,
+              29
+            ]
+          ]
+        }
+      },
+      "minzoom": 14,
+      "source-layer": "lines",
+      "type": "line",
+      "id": "railway-crosshatch"
+    },
+    {
+      "paint": {
+        "line-color": {
+          "stops": [
+            [
+              13,
+              "#12212a"
+            ],
+            [
+              14,
+              "#21394a"
+            ]
+          ]
+        },
+        "line-opacity": {
+          "stops": [
+            [
+              12,
+              0.3
+            ],
+            [
+              13,
+              1
+            ]
+          ]
+        },
+        "line-width": {
+          "stops": [
+            [
+              12.95,
+              0.5
+            ],
+            [
+              13.95,
+              0.75
+            ],
+            [
+              14,
+              1
+            ],
+            [
+              15,
+              2
+            ],
+            [
+              16,
+              3.5
+            ],
+            [
+              17,
+              8
+            ],
+            [
+              18,
+              12
+            ],
+            [
+              20,
+              36
+            ]
+          ]
+        }
+      },
+      "ref": "road-local-minor-importance-CASING",
+      "id": "road-local-minor-importance-FILL"
+    },
+    {
+      "paint": {
+        "line-color": {
+          "stops": [
+            [
+              13,
+              "#12212a"
+            ],
+            [
+              14,
+              "#21394a"
+            ]
+          ]
+        },
+        "line-opacity": {
+          "stops": [
+            [
+              12,
+              0.3
+            ],
+            [
+              13,
+              1
+            ]
+          ]
+        },
+        "line-width": {
+          "stops": [
+            [
+              12.95,
+              0.5
+            ],
+            [
+              13.95,
+              1
+            ],
+            [
+              14,
+              1.5
+            ],
+            [
+              15,
+              3
+            ],
+            [
+              16,
+              6
+            ],
+            [
+              17,
+              11
+            ],
+            [
+              18,
+              16
+            ],
+            [
+              20,
+              40
+            ]
+          ]
+        }
+      },
+      "ref": "road-local-CASING",
+      "id": "road-local-FILL"
+    },
+    {
+      "layout": {
+        "icon-image": {
+          "stops": [
+            [
+              15,
+              "oneway-spaced-large"
+            ],
+            [
+              16,
+              "oneway-spaced-xl"
+            ],
+            [
+              17,
+              "oneway-spaced-xxl"
+            ]
+          ]
+        },
+        "symbol-spacing": 200,
+        "icon-rotation-alignment": "map",
+        "symbol-placement": "line",
+        "icon-padding": 2
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "==",
+          "oneway",
+          true
+        ],
+        [
+          "!in",
+          "Segment.roadUsage",
+          "RAMP",
+          "SLIP_ROAD",
+          "PARKING_ROAD",
+          "CONNECTOR",
+          "WALKWAY",
+          "ROUNDABOUT"
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "LOCAL_ROAD",
+          "LOCAL_ROAD_MINOR_IMPORTANCE"
+        ]
+      ],
+      "paint": {
+        "icon-opacity": 0
+      },
+      "minzoom": 15,
+      "source-layer": "roads",
+      "type": "symbol",
+      "id": "road-oneway-arrows-minor"
+    },
+    {
+      "layout": {
+        "icon-image": {
+          "stops": [
+            [
+              16,
+              "oneway-spaced-xl"
+            ],
+            [
+              17,
+              "oneway-spaced-xxl"
+            ]
+          ]
+        },
+        "symbol-spacing": 200,
+        "icon-rotation-alignment": "map",
+        "symbol-placement": "line",
+        "icon-padding": 2
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "==",
+          "oneway",
+          true
+        ],
+        [
+          "==",
+          "Segment.roadUsage",
+          "ROUNDABOUT"
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "LOCAL_ROAD",
+          "LOCAL_ROAD_MINOR_IMPORTANCE"
+        ]
+      ],
+      "paint": {
+        "icon-opacity": 0
+      },
+      "minzoom": 16,
+      "source-layer": "roads",
+      "type": "symbol",
+      "id": "road-oneway-arrows-minor-ROUNDABOUT"
+    },
+    {
+      "paint": {
+        "line-color": {
+          "stops": [
+            [
+              12,
+              "#12212a"
+            ],
+            [
+              13,
+              "#21394a"
+            ]
+          ]
+        },
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              10.95,
+              0.5
+            ],
+            [
+              12,
+              0.5
+            ],
+            [
+              12.5,
+              1
+            ],
+            [
+              13,
+              1.5
+            ],
+            [
+              14,
+              3
+            ],
+            [
+              15,
+              5
+            ],
+            [
+              16,
+              9
+            ],
+            [
+              17,
+              17.5
+            ],
+            [
+              18,
+              20
+            ],
+            [
+              20,
+              64
+            ]
+          ]
+        }
+      },
+      "ref": "road-minor-arterial-CASING",
+      "id": "road-minor-arterial-FILL"
+    },
+    {
+      "paint": {
+        "line-color": {
+          "stops": [
+            [
+              9,
+              "#0f1c23"
+            ],
+            [
+              12,
+              "#18323e"
+            ],
+            [
+              13,
+              "#21394a"
+            ]
+          ]
+        },
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              1
+            ],
+            [
+              12,
+              2
+            ],
+            [
+              13,
+              2
+            ],
+            [
+              14,
+              3
+            ],
+            [
+              15,
+              6
+            ],
+            [
+              16,
+              10
+            ],
+            [
+              17,
+              20
+            ],
+            [
+              18,
+              24
+            ],
+            [
+              20,
+              64
+            ]
+          ]
+        }
+      },
+      "ref": "road-major-arterial-CASING",
+      "id": "road-major-arterial-FILL"
+    },
+    {
+      "paint": {
+        "line-color": {
+          "stops": [
+            [
+              12,
+              "#18323e"
+            ],
+            [
+              13,
+              "#21394a"
+            ]
+          ]
+        },
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0.3
+            ],
+            [
+              8,
+              1
+            ],
+            [
+              10,
+              1.5
+            ],
+            [
+              12,
+              2
+            ],
+            [
+              13,
+              2
+            ],
+            [
+              14,
+              3
+            ],
+            [
+              15,
+              6
+            ],
+            [
+              16,
+              10
+            ],
+            [
+              17,
+              20
+            ],
+            [
+              18,
+              24
+            ],
+            [
+              20,
+              64
+            ]
+          ]
+        }
+      },
+      "ref": "road-UNcontrolled-minor-highway-CASING",
+      "id": "road-UNcontrolled-minor-highway-FILL"
+    },
+    {
+      "paint": {
+        "line-color": {
+          "stops": [
+            [
+              12,
+              "#18323e"
+            ],
+            [
+              13,
+              "#21394a"
+            ]
+          ]
+        },
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0.3
+            ],
+            [
+              8,
+              1
+            ],
+            [
+              10,
+              1.5
+            ],
+            [
+              12,
+              2
+            ],
+            [
+              13,
+              2
+            ],
+            [
+              14,
+              3
+            ],
+            [
+              15,
+              6
+            ],
+            [
+              16,
+              10
+            ],
+            [
+              17,
+              20
+            ],
+            [
+              18,
+              24
+            ],
+            [
+              20,
+              64
+            ]
+          ]
+        }
+      },
+      "ref": "road-controlled-minor-highway-CASING",
+      "id": "road-controlled-minor-highway-FILL"
+    },
+    {
+      "paint": {
+        "line-color": "#314A5C",
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0
+            ],
+            [
+              12,
+              1.5
+            ],
+            [
+              14,
+              2
+            ],
+            [
+              15,
+              3
+            ],
+            [
+              16,
+              6
+            ],
+            [
+              17,
+              11
+            ],
+            [
+              18,
+              16
+            ],
+            [
+              20,
+              40
+            ]
+          ]
+        }
+      },
+      "ref": "road-ramp-highway-CASING",
+      "id": "road-ramp-highway-FILL"
+    },
+    {
+      "paint": {
+        "line-color": "#314A5C",
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0
+            ],
+            [
+              12,
+              1.5
+            ],
+            [
+              14,
+              2
+            ],
+            [
+              15,
+              3
+            ],
+            [
+              16,
+              6
+            ],
+            [
+              17,
+              11
+            ],
+            [
+              18,
+              16
+            ],
+            [
+              20,
+              40
+            ]
+          ]
+        }
+      },
+      "ref": "road-ramp-highway-CASING-GBR-IRL",
+      "id": "road-ramp-highway-FILL-GBR-IRL"
+    },
+    {
+      "paint": {
+        "line-color": "#314A5C",
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0
+            ],
+            [
+              12,
+              1.5
+            ],
+            [
+              14,
+              2
+            ],
+            [
+              15,
+              3
+            ],
+            [
+              16,
+              6
+            ],
+            [
+              17,
+              11
+            ],
+            [
+              18,
+              16
+            ],
+            [
+              20,
+              40
+            ]
+          ]
+        }
+      },
+      "line-color": {
+        "stops": [
+          [
+            6,
+            "#fff"
+          ],
+          [
+            12,
+            "#ffbe33"
+          ]
+        ]
+      },
+      "ref": "road-ramp-motorway-CASING",
+      "id": "road-ramp-motorway-FILL"
+    },
+    {
+      "paint": {
+        "line-color": "#314A5C",
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0
+            ],
+            [
+              12,
+              1.5
+            ],
+            [
+              14,
+              2
+            ],
+            [
+              15,
+              3
+            ],
+            [
+              16,
+              6
+            ],
+            [
+              17,
+              11
+            ],
+            [
+              18,
+              16
+            ],
+            [
+              20,
+              40
+            ]
+          ]
+        }
+      },
+      "ref": "road-ramp-motorway-CASING-GBR-IRL",
+      "id": "road-ramp-motorway-FILL-GBR-IRL"
+    },
+    {
+      "layout": {
+        "icon-image": {
+          "stops": [
+            [
+              14,
+              "oneway-spaced-large"
+            ],
+            [
+              16,
+              "oneway-spaced-xl"
+            ],
+            [
+              17,
+              "oneway-spaced-xxl"
+            ]
+          ]
+        },
+        "symbol-spacing": 200,
+        "icon-rotation-alignment": "map",
+        "symbol-placement": "line",
+        "icon-padding": 2
+      },
+      "paint": {
+        "icon-opacity": 0
+      },
+      "filter": [
+        "all",
+        [
+          "==",
+          "oneway",
+          true
+        ],
+        [
+          "!in",
+          "Segment.roadUsage",
+          "RAMP",
+          "SLIP_ROAD",
+          "CONNECTOR",
+          "WALKWAY",
+          "PARKING_ROAD",
+          "ROUNDABOUT"
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "MINOR_ARTERY",
+          "MAJOR_ARTERY",
+          "MINOR_HIGHWAY"
+        ]
+      ],
+      "source": "composite",
+      "minzoom": 14,
+      "source-layer": "roads",
+      "type": "symbol",
+      "id": "road-oneway-arrows-major"
+    },
+    {
+      "layout": {
+        "icon-image": {
+          "stops": [
+            [
+              16,
+              "oneway-spaced-xl"
+            ],
+            [
+              17,
+              "oneway-spaced-xxl"
+            ]
+          ]
+        },
+        "symbol-spacing": 200,
+        "icon-rotation-alignment": "map",
+        "symbol-placement": "line",
+        "icon-padding": 2
+      },
+      "paint": {
+        "icon-opacity": 0
+      },
+      "filter": [
+        "all",
+        [
+          "==",
+          "oneway",
+          true
+        ],
+        [
+          "==",
+          "Segment.roadUsage",
+          "ROUNDABOUT"
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "MINOR_ARTERY",
+          "MAJOR_ARTERY",
+          "MINOR_HIGHWAY"
+        ]
+      ],
+      "source": "composite",
+      "minzoom": 16,
+      "source-layer": "roads",
+      "type": "symbol",
+      "id": "road-oneway-arrows-major-ROUNDABOUT"
+    },
+    {
+      "paint": {
+        "line-color": "#314A5C",
+        "line-opacity": 0.49,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              1
+            ],
+            [
+              12,
+              2
+            ],
+            [
+              13,
+              2
+            ],
+            [
+              14,
+              3
+            ],
+            [
+              15,
+              6
+            ],
+            [
+              16,
+              10
+            ],
+            [
+              17,
+              20
+            ],
+            [
+              18,
+              24
+            ],
+            [
+              20,
+              64
+            ]
+          ]
+        }
+      },
+      "ref": "road-tunnel-UNcontrolled-highway-CASING",
+      "id": "road-tunnel-UNcontrolled-highway-FILL"
+    },
+    {
+      "paint": {
+        "line-color": "#314A5C",
+        "line-opacity": 0.49,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              1
+            ],
+            [
+              12,
+              2
+            ],
+            [
+              13,
+              2
+            ],
+            [
+              14,
+              3
+            ],
+            [
+              15,
+              6
+            ],
+            [
+              16,
+              10
+            ],
+            [
+              17,
+              20
+            ],
+            [
+              18,
+              24
+            ],
+            [
+              20,
+              64
+            ]
+          ]
+        }
+      },
+      "ref": "road-tunnel-UNcontrolled-highway-CASING-GBR-IRL",
+      "id": "road-tunnel-UNcontrolled-highway-FILL-GBR-IRL"
+    },
+    {
+      "paint": {
+        "line-color": {
+          "stops": [
+            [
+              4,
+              "#1D2D3D"
+            ],
+            [
+              6,
+              "#314A5C"
+            ]
+          ]
+        },
+        "line-opacity": {
+          "stops": [
+            [
+              6,
+              0.2
+            ],
+            [
+              7,
+              1
+            ]
+          ]
+        },
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0.3
+            ],
+            [
+              8,
+              1
+            ],
+            [
+              10,
+              1.5
+            ],
+            [
+              12,
+              2
+            ],
+            [
+              13,
+              2
+            ],
+            [
+              14,
+              3
+            ],
+            [
+              15,
+              6
+            ],
+            [
+              16,
+              10
+            ],
+            [
+              17,
+              20
+            ],
+            [
+              18,
+              24
+            ],
+            [
+              20,
+              64
+            ]
+          ]
+        }
+      },
+      "ref": "road-UNcontrolled-highway-CASING",
+      "id": "road-UNcontrolled-highway-FILL"
+    },
+    {
+      "paint": {
+        "line-color": "#314A5C",
+        "line-opacity": {
+          "stops": [
+            [
+              6,
+              0.2
+            ],
+            [
+              7,
+              1
+            ]
+          ]
+        },
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0.3
+            ],
+            [
+              8,
+              1
+            ],
+            [
+              10,
+              1.5
+            ],
+            [
+              12,
+              2
+            ],
+            [
+              13,
+              2
+            ],
+            [
+              14,
+              3
+            ],
+            [
+              15,
+              6
+            ],
+            [
+              16,
+              10
+            ],
+            [
+              17,
+              20
+            ],
+            [
+              18,
+              24
+            ],
+            [
+              20,
+              64
+            ]
+          ]
+        }
+      },
+      "ref": "road-UNcontrolled-highway-CASING-GBR-IRL",
+      "id": "road-UNcontrolled-highway-FILL-GBR-IRL"
+    },
+    {
+      "paint": {
+        "line-color": "#476072",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              1
+            ],
+            [
+              12,
+              2
+            ],
+            [
+              13,
+              2
+            ],
+            [
+              14,
+              3
+            ],
+            [
+              15,
+              6
+            ],
+            [
+              16,
+              10
+            ],
+            [
+              17,
+              20
+            ],
+            [
+              18,
+              24
+            ],
+            [
+              20,
+              64
+            ]
+          ]
+        }
+      },
+      "ref": "road-tunnel-controlled-highway-CASING",
+      "id": "road-tunnel-controlled-highway-FILL"
+    },
+    {
+      "paint": {
+        "line-color": "#476072",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              1
+            ],
+            [
+              12,
+              2
+            ],
+            [
+              13,
+              2
+            ],
+            [
+              14,
+              3
+            ],
+            [
+              15,
+              6
+            ],
+            [
+              16,
+              10
+            ],
+            [
+              17,
+              20
+            ],
+            [
+              18,
+              24
+            ],
+            [
+              20,
+              64
+            ]
+          ]
+        }
+      },
+      "ref": "road-tunnel-controlled-highway-CASING-GBR-IRL",
+      "id": "road-tunnel-controlled-highway-FILL-GBR-IRL"
+    },
+    {
+      "paint": {
+        "line-color": {
+          "stops": [
+            [
+              4,
+              "#283948"
+            ],
+            [
+              6,
+              "#476072"
+            ]
+          ]
+        },
+        "line-opacity": {
+          "stops": [
+            [
+              6,
+              0.2
+            ],
+            [
+              7,
+              1
+            ]
+          ]
+        },
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0.5
+            ],
+            [
+              8,
+              1
+            ],
+            [
+              10,
+              1.5
+            ],
+            [
+              12,
+              2
+            ],
+            [
+              13,
+              2
+            ],
+            [
+              14,
+              3
+            ],
+            [
+              15,
+              6
+            ],
+            [
+              16,
+              10
+            ],
+            [
+              17,
+              20
+            ],
+            [
+              18,
+              24
+            ],
+            [
+              20,
+              64
+            ]
+          ]
+        }
+      },
+      "ref": "road-controlled-highway-CASING",
+      "id": "road-controlled-highway-FILL"
+    },
+    {
+      "paint": {
+        "line-color": {
+          "stops": [
+            [
+              4,
+              "#283948"
+            ],
+            [
+              6,
+              "#476072"
+            ]
+          ]
+        },
+        "line-opacity": {
+          "stops": [
+            [
+              6,
+              0.2
+            ],
+            [
+              7,
+              1
+            ]
+          ]
+        },
+        "line-width": {
+          "stops": [
+            [
+              6,
+              0.5
+            ],
+            [
+              8,
+              1
+            ],
+            [
+              10,
+              1.5
+            ],
+            [
+              12,
+              2
+            ],
+            [
+              13,
+              2
+            ],
+            [
+              14,
+              3
+            ],
+            [
+              15,
+              6
+            ],
+            [
+              16,
+              10
+            ],
+            [
+              17,
+              20
+            ],
+            [
+              18,
+              24
+            ],
+            [
+              20,
+              64
+            ]
+          ]
+        }
+      },
+      "ref": "road-controlled-highway-CASING-GBR-IRL",
+      "id": "road-controlled-highway-FILL-GBR-IRL"
+    },
+    {
+      "layout": {
+        "icon-image": {
+          "stops": [
+            [
+              14,
+              "oneway-spaced-highway-large"
+            ],
+            [
+              16,
+              "oneway-spaced-highway-xl"
+            ],
+            [
+              17,
+              "oneway-spaced-highway-xxl"
+            ]
+          ]
+        },
+        "symbol-spacing": 200,
+        "icon-rotation-alignment": "map",
+        "symbol-placement": "line",
+        "icon-padding": 2
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "==",
+          "oneway",
+          true
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "HIGHWAY"
+        ],
+        [
+          "!in",
+          "Segment.roadUsage",
+          "RAMP",
+          "SLIP_ROAD"
+        ],
+        [
+          "!=",
+          "Segment.controlledAccessRoad",
+          true
+        ],
+        [
+          "!=",
+          "Segment.groundLevel",
+          "TUNNEL"
+        ]
+      ],
+      "paint": {
+        "icon-opacity": 0
+      },
+      "minzoom": 14,
+      "source-layer": "roads",
+      "type": "symbol",
+      "id": "road-oneway-arrows-highway"
+    },
+    {
+      "paint": {
+        "line-color": "#476072",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              1
+            ],
+            [
+              12,
+              2
+            ],
+            [
+              13,
+              2
+            ],
+            [
+              14,
+              3
+            ],
+            [
+              15,
+              6
+            ],
+            [
+              16,
+              10
+            ],
+            [
+              17,
+              20
+            ],
+            [
+              18,
+              24
+            ],
+            [
+              20,
+              64
+            ]
+          ]
+        }
+      },
+      "ref": "road-tunnel-motorway-CASING",
+      "id": "road-tunnel-motorway-FILL"
+    },
+    {
+      "paint": {
+        "line-color": "#476072",
+        "line-opacity": 1,
+        "line-width": {
+          "stops": [
+            [
+              6,
+              1
+            ],
+            [
+              12,
+              2
+            ],
+            [
+              13,
+              2
+            ],
+            [
+              14,
+              3
+            ],
+            [
+              15,
+              6
+            ],
+            [
+              16,
+              10
+            ],
+            [
+              17,
+              20
+            ],
+            [
+              18,
+              24
+            ],
+            [
+              20,
+              64
+            ]
+          ]
+        }
+      },
+      "ref": "road-tunnel-motorway-CASING-GBR-IRL",
+      "id": "road-tunnel-motorway-FILL-GBR-IRL"
+    },
+    {
+      "paint": {
+        "line-color": {
+          "stops": [
+            [
+              4,
+              "#283948"
+            ],
+            [
+              6,
+              "#476072"
+            ]
+          ]
+        },
+        "line-opacity": {
+          "stops": [
+            [
+              4,
+              0.2
+            ],
+            [
+              5,
+              1
+            ]
+          ]
+        },
+        "line-width": {
+          "stops": [
+            [
+              4,
+              0.5
+            ],
+            [
+              6,
+              0.8
+            ],
+            [
+              8,
+              1
+            ],
+            [
+              10,
+              1.5
+            ],
+            [
+              12,
+              2
+            ],
+            [
+              13,
+              2
+            ],
+            [
+              14,
+              3
+            ],
+            [
+              15,
+              6
+            ],
+            [
+              16,
+              10
+            ],
+            [
+              17,
+              20
+            ],
+            [
+              18,
+              24
+            ],
+            [
+              20,
+              64
+            ]
+          ]
+        }
+      },
+      "ref": "road-motorway-CASING",
+      "id": "road-motorway-FILL"
+    },
+    {
+      "paint": {
+        "line-color": {
+          "stops": [
+            [
+              4,
+              "#283948"
+            ],
+            [
+              6,
+              "#476072"
+            ]
+          ]
+        },
+        "line-opacity": {
+          "stops": [
+            [
+              4,
+              0.2
+            ],
+            [
+              5,
+              1
+            ]
+          ]
+        },
+        "line-width": {
+          "stops": [
+            [
+              4,
+              0.5
+            ],
+            [
+              6,
+              0.8
+            ],
+            [
+              8,
+              1
+            ],
+            [
+              10,
+              1.5
+            ],
+            [
+              12,
+              2
+            ],
+            [
+              13,
+              2
+            ],
+            [
+              14,
+              3
+            ],
+            [
+              15,
+              6
+            ],
+            [
+              16,
+              10
+            ],
+            [
+              17,
+              20
+            ],
+            [
+              18,
+              24
+            ],
+            [
+              20,
+              64
+            ]
+          ]
+        }
+      },
+      "ref": "road-motorway-CASING-GBR-IRL",
+      "id": "road-motorway-FILL-GBR-IRL"
+    },
+    {
+      "source": "buildings",
+      "filter": [
+        "==",
+        "PhysicalSpace.spaceType",
+        "STRUCTURE"
+      ],
+      "paint": {
+        "fill-translate": [
+          0,
+          3
+        ],
+        "fill-color": "#000",
+        "fill-opacity": 0.06
+      },
+      "minzoom": 16,
+      "source-layer": "polygons",
+      "type": "fill",
+      "id": "building-shadow"
+    },
+    {
+      "paint": {
+        "fill-color": "#111723",
+        "fill-opacity": 0
+      },
+      "ref": "building-shadow",
+      "id": "building-fill"
+    },
+    {
+      "layout": {
+        "line-cap": "square",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "in",
+          "Border.adminType",
+          "G1_COUNTRY_SUBDIVISION"
+        ],
+        [
+          "!in",
+          "WorldFeature.iso_3166_1_a2",
+          "AU",
+          "BR",
+          "CA",
+          "CN",
+          "IN",
+          "MX",
+          "RU",
+          "US"
+        ]
+      ],
+      "paint": {
+        "line-color": "#283f5d",
+        "line-dasharray": [
+          0.5,
+          1,
+          0.5
+        ],
+        "line-opacity": 1,
+        "line-width": {
+          "base": 1.3,
+          "stops": [
+            [
+              3,
+              0.7
+            ],
+            [
+              5,
+              1
+            ],
+            [
+              7,
+              1.2
+            ],
+            [
+              10,
+              1.7
+            ],
+            [
+              22,
+              15
+            ]
+          ]
+        }
+      },
+      "minzoom": 4,
+      "source-layer": "lines",
+      "type": "line",
+      "id": "state-border-minor"
+    },
+    {
+      "layout": {
+        "line-cap": "square",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "all",
+        [
+          "in",
+          "Border.adminType",
+          "G1_COUNTRY_SUBDIVISION"
+        ],
+        [
+          "in",
+          "WorldFeature.iso_3166_1_a2",
+          "AU",
+          "BR",
+          "CA",
+          "CN",
+          "IN",
+          "MX",
+          "RU",
+          "US"
+        ]
+      ],
+      "paint": {
+        "line-color": "#283f5d",
+        "line-dasharray": [
+          0.5,
+          1,
+          0.5
+        ],
+        "line-opacity": {
+          "stops": [
+            [
+              2,
+              0
+            ],
+            [
+              2.5,
+              1
+            ]
+          ]
+        },
+        "line-width": {
+          "base": 1.3,
+          "stops": [
+            [
+              3,
+              0.7
+            ],
+            [
+              5,
+              1
+            ],
+            [
+              7,
+              1.2
+            ],
+            [
+              10,
+              1.7
+            ],
+            [
+              22,
+              15
+            ]
+          ]
+        }
+      },
+      "minzoom": 2,
+      "source-layer": "lines",
+      "type": "line",
+      "id": "state-border-major"
+    },
+    {
+      "layout": {
+        "line-cap": "square",
+        "line-join": "round"
+      },
+      "source": "composite",
+      "is-stroke": true,
+      "filter": [
+        "in",
+        "Border.adminType",
+        "G0_COUNTRY"
+      ],
+      "paint": {
+        "line-color": "#24528b",
+        "line-dasharray": [
+          0.5,
+          1,
+          0.5
+        ],
+        "line-opacity": 1,
+        "line-width": {
+          "base": 1.3,
+          "stops": [
+            [
+              3,
+              0.7
+            ],
+            [
+              5,
+              1
+            ],
+            [
+              7,
+              1.2
+            ],
+            [
+              10,
+              1.7
+            ],
+            [
+              22,
+              15
+            ]
+          ]
+        }
+      },
+      "source-layer": "lines",
+      "type": "line",
+      "id": "country-border"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": {
+          "stops": [
+            [
+              14,
+              0.075
+            ],
+            [
+              15,
+              0.1
+            ],
+            [
+              16,
+              0.11
+            ],
+            [
+              17,
+              0.09
+            ],
+            [
+              18,
+              0.07
+            ]
+          ]
+        },
+        "text-max-angle": 28,
+        "symbol-placement": "line",
+        "text-padding": 1,
+        "text-font": [
+          "ClanProForUBER-News",
+          "NotoSansHebrew-Regular",
+          "NotoSansThai-Regular",
+          "NotoSansDevanagari-Regular",
+          "KacstBook",
+          "Arial Unicode"
+        ],
+        "text-anchor": {
+          "stops": [
+            [
+              14,
+              "bottom"
+            ],
+            [
+              15,
+              "center"
+            ]
+          ]
+        },
+        "text-field": "{name}",
+        "text-offset": {
+          "stops": [
+            [
+              14,
+              [
+                0,
+                0.2
+              ]
+            ],
+            [
+              15,
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        },
+        "text-rotation-alignment": "map",
+        "text-size": {
+          "stops": [
+            [
+              9,
+              10
+            ],
+            [
+              17,
+              11
+            ],
+            [
+              18,
+              13
+            ]
+          ]
+        },
+        "symbol-spacing": 300
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "Segment.roadClass",
+          "LOCAL_ROAD",
+          "LOCAL_ROAD_MINOR_IMPORTANCE"
+        ],
+        [
+          "!in",
+          "Segment.roadUsage",
+          "WALKWAY"
+        ]
+      ],
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              14,
+              "#bbbabf"
+            ],
+            [
+              15,
+              "#dbdae0"
+            ]
+          ]
+        },
+        "text-halo-width": 1,
+        "text-halo-color": {
+          "stops": [
+            [
+              16,
+              "rgba(9, 16, 29, 0.8)"
+            ],
+            [
+              17,
+              "rgba(9, 16, 29, 0)"
+            ]
+          ]
+        },
+        "text-opacity": 1
+      },
+      "minzoom": 14,
+      "source-layer": "roads",
+      "type": "symbol",
+      "id": "road-label-minor"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": 0.04,
+        "icon-padding": 20,
+        "text-padding": 2,
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "Arial Unicode"
+        ],
+        "text-anchor": "top-left",
+        "icon-image": {
+          "stops": [
+            [
+              12,
+              "{icon}-small"
+            ],
+            [
+              13,
+              "{icon}-medium"
+            ]
+          ]
+        },
+        "text-field": "{name}",
+        "text-justify": "left",
+        "text-offset": [
+          0,
+          0.8
+        ],
+        "text-size": {
+          "stops": [
+            [
+              12,
+              10.5
+            ],
+            [
+              15,
+              11
+            ],
+            [
+              16,
+              12
+            ]
+          ]
+        },
+        "text-max-width": 8,
+        "icon-offset": [
+          6,
+          0
+        ]
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "$type",
+          "Point"
+        ],
+        [
+          "in",
+          "PlaceFeature.categoryName",
+          "PARK"
+        ]
+      ],
+      "paint": {
+        "text-color": "#496248",
+        "icon-opacity": 0,
+        "text-halo-width": 1,
+        "text-halo-color": "rgba(9, 16, 29, 0.8)",
+        "text-opacity": 0
+      },
+      "minzoom": 5,
+      "source-layer": "points",
+      "type": "symbol",
+      "id": "poi-label-park-composite",
+      "interactive": true
+    },
+    {
+      "layout": {
+        "text-letter-spacing": {
+          "stops": [
+            [
+              11,
+              0.08
+            ],
+            [
+              12,
+              0.05
+            ],
+            [
+              15,
+              0.1
+            ]
+          ]
+        },
+        "text-max-angle": 28,
+        "symbol-placement": "line",
+        "text-padding": 1,
+        "text-font": [
+          "ClanProForUBER-News",
+          "NotoSansHebrew-Regular",
+          "NotoSansThai-Regular",
+          "NotoSansDevanagari-Regular",
+          "KacstBook",
+          "Arial Unicode"
+        ],
+        "text-anchor": {
+          "stops": [
+            [
+              14,
+              "bottom"
+            ],
+            [
+              15,
+              "center"
+            ]
+          ]
+        },
+        "text-field": "{name}",
+        "text-offset": {
+          "stops": [
+            [
+              14,
+              [
+                0,
+                0.2
+              ]
+            ],
+            [
+              15,
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        },
+        "text-rotation-alignment": "map",
+        "text-size": {
+          "stops": [
+            [
+              9,
+              10
+            ],
+            [
+              17,
+              11
+            ],
+            [
+              18,
+              13
+            ]
+          ]
+        },
+        "symbol-spacing": 300
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "Segment.roadClass",
+          "MINOR_ARTERY"
+        ]
+      ],
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              14,
+              "#bbbabf"
+            ],
+            [
+              15,
+              "#dbdae0"
+            ]
+          ]
+        },
+        "text-halo-width": 1,
+        "text-halo-color": {
+          "stops": [
+            [
+              16,
+              "rgba(9, 16, 29, 0.8)"
+            ],
+            [
+              17,
+              "rgba(9, 16, 29, 0)"
+            ]
+          ]
+        },
+        "text-opacity": 1
+      },
+      "minzoom": 11,
+      "source-layer": "roads",
+      "type": "symbol",
+      "id": "road-label-minor-arterial"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": 0.15,
+        "text-size": {
+          "stops": [
+            [
+              6,
+              10
+            ],
+            [
+              13,
+              12
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "ArialUnicode-Bold"
+        ],
+        "text-field": "{name}",
+        "text-padding": 10,
+        "text-transform": "uppercase",
+        "text-max-width": 8
+      },
+      "source": "composite",
+      "filter": [
+        "any",
+        [
+          "in",
+          "Locality.type",
+          "NEIGHBORHOOD"
+        ],
+        [
+          "all",
+          [
+            "in",
+            "Locality.type",
+            "CITY",
+            "CAPITAL_CITY"
+          ],
+          [
+            "in",
+            "Locality.displayClass",
+            "CLASS_12"
+          ]
+        ]
+      ],
+      "paint": {
+        "text-color": "#5d707c",
+        "text-halo-width": 1,
+        "text-halo-color": "rgba(9, 16, 29, 0.8)",
+        "text-opacity": {
+          "stops": [
+            [
+              14,
+              1
+            ],
+            [
+              14.5,
+              0
+            ]
+          ]
+        }
+      },
+      "minzoom": 10,
+      "source-layer": "points",
+      "maxzoom": 14.5,
+      "type": "symbol",
+      "id": "neighborhood-label"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": {
+          "stops": [
+            [
+              11,
+              0.06
+            ],
+            [
+              12,
+              0.05
+            ],
+            [
+              15,
+              0.1
+            ],
+            [
+              16,
+              0.08
+            ]
+          ]
+        },
+        "text-max-angle": 28,
+        "symbol-placement": "line",
+        "text-padding": 1,
+        "text-font": [
+          "ClanProForUBER-News",
+          "NotoSansHebrew-Regular",
+          "NotoSansThai-Regular",
+          "NotoSansDevanagari-Regular",
+          "KacstBook",
+          "Arial Unicode"
+        ],
+        "text-anchor": {
+          "stops": [
+            [
+              14,
+              "bottom"
+            ],
+            [
+              15,
+              "center"
+            ]
+          ]
+        },
+        "text-field": "{name}",
+        "text-offset": {
+          "stops": [
+            [
+              14,
+              [
+                0,
+                0.2
+              ]
+            ],
+            [
+              15,
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        },
+        "text-rotation-alignment": "map",
+        "text-size": {
+          "stops": [
+            [
+              9,
+              11
+            ],
+            [
+              12,
+              11
+            ],
+            [
+              17,
+              12
+            ],
+            [
+              18,
+              13
+            ]
+          ]
+        },
+        "symbol-spacing": 300
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "Segment.roadClass",
+          "MAJOR_ARTERY"
+        ]
+      ],
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              14,
+              "#bbbabf"
+            ],
+            [
+              15,
+              "#dbdae0"
+            ]
+          ]
+        },
+        "text-halo-width": 1,
+        "text-halo-color": {
+          "stops": [
+            [
+              16,
+              "rgba(9, 16, 29, 0.8)"
+            ],
+            [
+              17,
+              "rgba(9, 16, 29, 0)"
+            ]
+          ]
+        },
+        "text-opacity": 1
+      },
+      "minzoom": 11,
+      "source-layer": "roads",
+      "type": "symbol",
+      "id": "road-label-major-arterial"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": {
+          "stops": [
+            [
+              11,
+              0.08
+            ],
+            [
+              12,
+              0.05
+            ],
+            [
+              13,
+              0.1
+            ],
+            [
+              14,
+              0.05
+            ]
+          ]
+        },
+        "text-max-angle": 28,
+        "symbol-placement": "line",
+        "text-padding": 1,
+        "text-font": [
+          "ClanProForUBER-News",
+          "NotoSansHebrew-Regular",
+          "NotoSansThai-Regular",
+          "NotoSansDevanagari-Regular",
+          "KacstBook",
+          "Arial Unicode"
+        ],
+        "text-anchor": {
+          "stops": [
+            [
+              14,
+              "bottom"
+            ],
+            [
+              15,
+              "center"
+            ]
+          ]
+        },
+        "text-field": "{name}",
+        "text-offset": {
+          "stops": [
+            [
+              14,
+              [
+                0,
+                0.2
+              ]
+            ],
+            [
+              15,
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        },
+        "text-rotation-alignment": "map",
+        "text-size": {
+          "stops": [
+            [
+              9,
+              8
+            ],
+            [
+              12,
+              12
+            ],
+            [
+              17,
+              14
+            ]
+          ]
+        },
+        "symbol-spacing": 300
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "Segment.roadClass",
+          "MINOR_HIGHWAY"
+        ],
+        [
+          "!in",
+          "Segment.controlledAccessRoad",
+          true
+        ]
+      ],
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              14,
+              "#bbbabf"
+            ],
+            [
+              15,
+              "#dbdae0"
+            ]
+          ]
+        },
+        "text-halo-width": 1,
+        "text-halo-color": {
+          "stops": [
+            [
+              16,
+              "rgba(9, 16, 29, 0.8)"
+            ],
+            [
+              17,
+              "rgba(9, 16, 29, 0)"
+            ]
+          ]
+        },
+        "text-opacity": 1
+      },
+      "minzoom": 11,
+      "source-layer": "roads",
+      "type": "symbol",
+      "id": "road-label-UNcontrolled-minor-highway"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": {
+          "stops": [
+            [
+              11,
+              0.08
+            ],
+            [
+              12,
+              0.05
+            ],
+            [
+              13,
+              0.1
+            ],
+            [
+              14,
+              0.05
+            ]
+          ]
+        },
+        "text-max-angle": 28,
+        "symbol-placement": "line",
+        "text-padding": 1,
+        "text-font": [
+          "ClanProForUBER-News",
+          "NotoSansHebrew-Regular",
+          "NotoSansThai-Regular",
+          "NotoSansDevanagari-Regular",
+          "KacstBook",
+          "Arial Unicode"
+        ],
+        "text-anchor": {
+          "stops": [
+            [
+              14,
+              "bottom"
+            ],
+            [
+              15,
+              "center"
+            ]
+          ]
+        },
+        "text-field": "{name}",
+        "text-offset": {
+          "stops": [
+            [
+              14,
+              [
+                0,
+                0.2
+              ]
+            ],
+            [
+              15,
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        },
+        "text-rotation-alignment": "map",
+        "text-size": {
+          "stops": [
+            [
+              9,
+              14
+            ],
+            [
+              12,
+              14
+            ],
+            [
+              17,
+              16
+            ],
+            [
+              18,
+              17
+            ]
+          ]
+        },
+        "symbol-spacing": 300
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "Segment.roadClass",
+          "MINOR_HIGHWAY"
+        ],
+        [
+          "in",
+          "Segment.controlledAccessRoad",
+          true
+        ]
+      ],
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              14,
+              "#bbbabf"
+            ],
+            [
+              15,
+              "#dbdae0"
+            ]
+          ]
+        },
+        "text-halo-width": 1,
+        "text-halo-color": {
+          "stops": [
+            [
+              16,
+              "rgba(9, 16, 29, 0.8)"
+            ],
+            [
+              17,
+              "rgba(9, 16, 29, 0)"
+            ]
+          ]
+        },
+        "text-opacity": 1
+      },
+      "minzoom": 11,
+      "source-layer": "roads",
+      "type": "symbol",
+      "id": "road-label-controlled-minor-highway"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": {
+          "stops": [
+            [
+              11,
+              0.08
+            ],
+            [
+              12,
+              0.05
+            ],
+            [
+              13,
+              0.1
+            ],
+            [
+              14,
+              0.05
+            ]
+          ]
+        },
+        "text-max-angle": 28,
+        "symbol-placement": "line",
+        "text-padding": 1,
+        "text-font": [
+          "ClanProForUBER-News",
+          "NotoSansHebrew-Regular",
+          "NotoSansThai-Regular",
+          "NotoSansDevanagari-Regular",
+          "KacstBook",
+          "Arial Unicode"
+        ],
+        "text-anchor": {
+          "stops": [
+            [
+              14,
+              "bottom"
+            ],
+            [
+              15,
+              "center"
+            ]
+          ]
+        },
+        "text-field": "{name}",
+        "text-offset": {
+          "stops": [
+            [
+              14,
+              [
+                0,
+                0.1
+              ]
+            ],
+            [
+              15,
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        },
+        "text-rotation-alignment": "map",
+        "text-size": {
+          "stops": [
+            [
+              9,
+              8
+            ],
+            [
+              12,
+              12
+            ],
+            [
+              17,
+              14
+            ]
+          ]
+        },
+        "symbol-spacing": 300
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "!in",
+          "GeographyRelations.countryCode",
+          "GBR",
+          "IRL"
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "HIGHWAY"
+        ],
+        [
+          "!in",
+          "Segment.controlledAccessRoad",
+          true
+        ]
+      ],
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              16,
+              "#bbbabf"
+            ],
+            [
+              17,
+              "#efedef"
+            ]
+          ]
+        },
+        "text-halo-width": 1,
+        "text-halo-color": {
+          "stops": [
+            [
+              16,
+              "rgba(9, 16, 29, 0.8)"
+            ],
+            [
+              17,
+              "rgba(9, 16, 29, 0)"
+            ]
+          ]
+        },
+        "text-opacity": 1
+      },
+      "minzoom": 10,
+      "source-layer": "roads",
+      "type": "symbol",
+      "id": "road-label-UNcontrolled-highway"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": {
+          "stops": [
+            [
+              11,
+              0.08
+            ],
+            [
+              12,
+              0.05
+            ],
+            [
+              13,
+              0.1
+            ],
+            [
+              14,
+              0.05
+            ]
+          ]
+        },
+        "text-max-angle": 28,
+        "symbol-placement": "line",
+        "text-padding": 1,
+        "text-font": [
+          "ClanProForUBER-News",
+          "NotoSansHebrew-Regular",
+          "NotoSansThai-Regular",
+          "NotoSansDevanagari-Regular",
+          "KacstBook",
+          "Arial Unicode"
+        ],
+        "text-anchor": {
+          "stops": [
+            [
+              14,
+              "bottom"
+            ],
+            [
+              15,
+              "center"
+            ]
+          ]
+        },
+        "text-field": "{name}",
+        "text-offset": {
+          "stops": [
+            [
+              14,
+              [
+                0,
+                0.1
+              ]
+            ],
+            [
+              15,
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        },
+        "text-rotation-alignment": "map",
+        "text-size": {
+          "stops": [
+            [
+              9,
+              14
+            ],
+            [
+              12,
+              14
+            ],
+            [
+              17,
+              16
+            ],
+            [
+              18,
+              17
+            ]
+          ]
+        },
+        "symbol-spacing": 300
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "GeographyRelations.countryCode",
+          "GBR",
+          "IRL"
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "HIGHWAY"
+        ],
+        [
+          "!in",
+          "Segment.controlledAccessRoad",
+          true
+        ]
+      ],
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              14,
+              "#bbbabf"
+            ],
+            [
+              15,
+              "#efedef"
+            ]
+          ]
+        },
+        "text-halo-width": 1,
+        "text-halo-color": {
+          "stops": [
+            [
+              16,
+              "rgba(9, 16, 29, 0.8)"
+            ],
+            [
+              17,
+              "rgba(9, 16, 29, 0)"
+            ]
+          ]
+        },
+        "text-opacity": 1
+      },
+      "minzoom": 10,
+      "source-layer": "roads",
+      "type": "symbol",
+      "id": "road-label-UNcontrolled-highway-GBR-IRL"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": {
+          "stops": [
+            [
+              11,
+              0.08
+            ],
+            [
+              12,
+              0.05
+            ],
+            [
+              13,
+              0.1
+            ],
+            [
+              14,
+              0.05
+            ]
+          ]
+        },
+        "text-max-angle": 28,
+        "symbol-placement": "line",
+        "text-padding": 1,
+        "text-font": [
+          "ClanProForUBER-News",
+          "NotoSansHebrew-Regular",
+          "NotoSansThai-Regular",
+          "NotoSansDevanagari-Regular",
+          "KacstBook",
+          "Arial Unicode"
+        ],
+        "text-anchor": {
+          "stops": [
+            [
+              14,
+              "bottom"
+            ],
+            [
+              15,
+              "center"
+            ]
+          ]
+        },
+        "text-field": "{name}",
+        "text-offset": {
+          "stops": [
+            [
+              14,
+              [
+                0,
+                0.2
+              ]
+            ],
+            [
+              15,
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        },
+        "text-rotation-alignment": "map",
+        "text-size": {
+          "stops": [
+            [
+              9,
+              12
+            ],
+            [
+              12,
+              12
+            ],
+            [
+              17,
+              14
+            ],
+            [
+              18,
+              15
+            ]
+          ]
+        },
+        "symbol-spacing": 300
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "!in",
+          "GeographyRelations.countryCode",
+          "GBR",
+          "IRL"
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "HIGHWAY"
+        ],
+        [
+          "in",
+          "Segment.controlledAccessRoad",
+          true
+        ]
+      ],
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              16.9,
+              "#bbbabf"
+            ],
+            [
+              17,
+              "#efedef"
+            ]
+          ]
+        },
+        "text-halo-width": 1,
+        "text-halo-color": {
+          "stops": [
+            [
+              16,
+              "rgba(9, 16, 29, 0.8)"
+            ],
+            [
+              17,
+              "rgba(9, 16, 29, 0)"
+            ]
+          ]
+        },
+        "text-opacity": 1
+      },
+      "minzoom": 10,
+      "source-layer": "roads",
+      "type": "symbol",
+      "id": "road-label-controlled-highway"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": {
+          "stops": [
+            [
+              11,
+              0.08
+            ],
+            [
+              12,
+              0.05
+            ],
+            [
+              13,
+              0.1
+            ],
+            [
+              14,
+              0.05
+            ]
+          ]
+        },
+        "text-max-angle": 28,
+        "symbol-placement": "line",
+        "text-padding": 1,
+        "text-font": [
+          "ClanProForUBER-News",
+          "NotoSansHebrew-Regular",
+          "NotoSansThai-Regular",
+          "NotoSansDevanagari-Regular",
+          "KacstBook",
+          "Arial Unicode"
+        ],
+        "text-anchor": {
+          "stops": [
+            [
+              14,
+              "bottom"
+            ],
+            [
+              15,
+              "center"
+            ]
+          ]
+        },
+        "text-field": "{name}",
+        "text-offset": {
+          "stops": [
+            [
+              14,
+              [
+                0,
+                0.2
+              ]
+            ],
+            [
+              15,
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        },
+        "text-rotation-alignment": "map",
+        "text-size": {
+          "stops": [
+            [
+              9,
+              14
+            ],
+            [
+              12,
+              14
+            ],
+            [
+              17,
+              16
+            ],
+            [
+              18,
+              17
+            ]
+          ]
+        },
+        "symbol-spacing": 300
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "GeographyRelations.countryCode",
+          "GBR",
+          "IRL"
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "HIGHWAY"
+        ],
+        [
+          "in",
+          "Segment.controlledAccessRoad",
+          true
+        ]
+      ],
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              14,
+              "#bbbabf"
+            ],
+            [
+              15,
+              "#efedef"
+            ]
+          ]
+        },
+        "text-halo-width": 1,
+        "text-halo-color": {
+          "stops": [
+            [
+              16,
+              "rgba(235, 240, 240, 1)"
+            ],
+            [
+              17,
+              "rgba(235, 240, 240, 0)"
+            ]
+          ]
+        },
+        "text-opacity": 1
+      },
+      "minzoom": 10,
+      "source-layer": "roads",
+      "type": "symbol",
+      "id": "road-label-controlled-highway-GBR-IRL"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": {
+          "stops": [
+            [
+              11,
+              0.06
+            ],
+            [
+              12,
+              0.04
+            ],
+            [
+              13,
+              0.04
+            ]
+          ]
+        },
+        "text-max-angle": 28,
+        "symbol-placement": "line",
+        "text-padding": 1,
+        "text-font": [
+          "ClanProForUBER-News",
+          "NotoSansHebrew-Regular",
+          "NotoSansThai-Regular",
+          "NotoSansDevanagari-Regular",
+          "KacstBook",
+          "Arial Unicode"
+        ],
+        "text-anchor": {
+          "stops": [
+            [
+              14,
+              "bottom"
+            ],
+            [
+              15,
+              "center"
+            ]
+          ]
+        },
+        "text-field": "{name}",
+        "text-offset": {
+          "stops": [
+            [
+              14,
+              [
+                0,
+                0
+              ]
+            ],
+            [
+              17,
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        },
+        "text-rotation-alignment": "map",
+        "text-size": {
+          "stops": [
+            [
+              9,
+              12
+            ],
+            [
+              12,
+              12
+            ],
+            [
+              17,
+              14
+            ],
+            [
+              18,
+              15
+            ]
+          ]
+        },
+        "symbol-spacing": 300
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "!in",
+          "GeographyRelations.countryCode",
+          "GBR",
+          "IRL"
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "MOTORWAY"
+        ]
+      ],
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              16.9,
+              "#bbbabf"
+            ],
+            [
+              17,
+              "#efedef"
+            ]
+          ]
+        },
+        "text-halo-width": 1,
+        "text-halo-color": {
+          "stops": [
+            [
+              16,
+              "rgba(9, 16, 29, 0.8)"
+            ],
+            [
+              17,
+              "rgba(9, 16, 29, 0)"
+            ]
+          ]
+        },
+        "text-opacity": 1
+      },
+      "minzoom": 10,
+      "source-layer": "roads",
+      "type": "symbol",
+      "id": "road-label-motorway"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": {
+          "stops": [
+            [
+              11,
+              0.06
+            ],
+            [
+              12,
+              0.04
+            ],
+            [
+              13,
+              0.04
+            ]
+          ]
+        },
+        "text-max-angle": 28,
+        "symbol-placement": "line",
+        "text-padding": 1,
+        "text-font": [
+          "ClanProForUBER-News",
+          "NotoSansHebrew-Regular",
+          "NotoSansThai-Regular",
+          "NotoSansDevanagari-Regular",
+          "KacstBook",
+          "Arial Unicode"
+        ],
+        "text-anchor": {
+          "stops": [
+            [
+              14,
+              "bottom"
+            ],
+            [
+              15,
+              "center"
+            ]
+          ]
+        },
+        "text-field": "{name}",
+        "text-offset": {
+          "stops": [
+            [
+              14,
+              [
+                0,
+                0
+              ]
+            ],
+            [
+              17,
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        },
+        "text-rotation-alignment": "map",
+        "text-size": {
+          "stops": [
+            [
+              9,
+              14
+            ],
+            [
+              12,
+              14
+            ],
+            [
+              17,
+              16
+            ],
+            [
+              18,
+              17
+            ]
+          ]
+        },
+        "symbol-spacing": 300
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "GeographyRelations.countryCode",
+          "GBR",
+          "IRL"
+        ],
+        [
+          "in",
+          "Segment.roadClass",
+          "MOTORWAY"
+        ]
+      ],
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              14,
+              "#bbbabf"
+            ],
+            [
+              15,
+              "#efedef"
+            ]
+          ]
+        },
+        "text-halo-width": 1,
+        "text-halo-color": {
+          "stops": [
+            [
+              16,
+              "rgba(235, 240, 240, 1)"
+            ],
+            [
+              17,
+              "rgba(235, 240, 240, 0)"
+            ]
+          ]
+        },
+        "text-opacity": 1
+      },
+      "minzoom": 10,
+      "source-layer": "roads",
+      "type": "symbol",
+      "id": "road-label-motorway-GBR-IRL"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": 0.01,
+        "text-max-angle": 360,
+        "symbol-placement": "line",
+        "icon-padding": {
+          "stops": [
+            [
+              6,
+              15
+            ],
+            [
+              9,
+              5
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "ArialUnicode-Bold"
+        ],
+        "icon-image": {
+          "stops": [
+            [
+              9,
+              "{shield}-{reflen}-large"
+            ],
+            [
+              12,
+              "{shield}-{reflen}-xl"
+            ]
+          ]
+        },
+        "text-field": "{ref}",
+        "icon-rotation-alignment": "viewport",
+        "text-offset": [
+          0,
+          0.1
+        ],
+        "text-rotation-alignment": "viewport",
+        "text-size": {
+          "stops": [
+            [
+              11.99,
+              11
+            ],
+            [
+              12,
+              13
+            ]
+          ]
+        },
+        "symbol-spacing": 375
+      },
+      "source": "composite",
+      "filter": [
+        "in",
+        "shield",
+        "USA_ROUTE_66"
+      ],
+      "paint": {
+        "text-opacity": 0,
+        "text-color": "#A47D6E",
+        "icon-opacity": 0
+      },
+      "minzoom": 6,
+      "source-layer": "roads",
+      "type": "symbol",
+      "id": "shield-text-color-A47D6E"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": 0.01,
+        "text-max-angle": 360,
+        "symbol-placement": "line",
+        "icon-padding": {
+          "stops": [
+            [
+              6,
+              15
+            ],
+            [
+              9,
+              5
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "ArialUnicode-Bold"
+        ],
+        "icon-image": {
+          "stops": [
+            [
+              9,
+              "{shield}-{reflen}-large"
+            ],
+            [
+              12,
+              "{shield}-{reflen}-xl"
+            ]
+          ]
+        },
+        "text-field": "{ref}",
+        "icon-rotation-alignment": "viewport",
+        "text-offset": [
+          0,
+          0.1
+        ],
+        "text-rotation-alignment": "viewport",
+        "text-size": {
+          "stops": [
+            [
+              11.99,
+              11
+            ],
+            [
+              12,
+              13
+            ]
+          ]
+        },
+        "symbol-spacing": 375
+      },
+      "source": "composite",
+      "filter": [
+        "in",
+        "shield",
+        "ISR_NATIONAL_ROAD",
+        "USA_STATE_SOUTH_CAROLINA"
+      ],
+      "paint": {
+        "text-opacity": 0,
+        "text-color": "#5676DD",
+        "icon-opacity": 0
+      },
+      "minzoom": 6,
+      "source-layer": "roads",
+      "type": "symbol",
+      "id": "shield-text-color-5676DD"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": 0.01,
+        "text-max-angle": 360,
+        "symbol-placement": "line",
+        "icon-padding": {
+          "stops": [
+            [
+              6,
+              15
+            ],
+            [
+              9,
+              5
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "ArialUnicode-Bold"
+        ],
+        "icon-image": {
+          "stops": [
+            [
+              9,
+              "{shield}-{reflen}-large"
+            ],
+            [
+              12,
+              "{shield}-{reflen}-xl"
+            ]
+          ]
+        },
+        "text-field": "{ref}",
+        "icon-rotation-alignment": "viewport",
+        "text-offset": [
+          0,
+          0.1
+        ],
+        "text-rotation-alignment": "viewport",
+        "text-size": {
+          "stops": [
+            [
+              11.99,
+              11
+            ],
+            [
+              12,
+              13
+            ]
+          ]
+        },
+        "symbol-spacing": 375
+      },
+      "source": "composite",
+      "filter": [
+        "in",
+        "shield",
+        "ISR_INNER_CITY_ROAD"
+      ],
+      "paint": {
+        "text-opacity": 0,
+        "text-color": "#ED427C",
+        "icon-opacity": 0
+      },
+      "minzoom": 6,
+      "source-layer": "roads",
+      "type": "symbol",
+      "id": "shield-text-color-ED427C"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": 0.01,
+        "text-max-angle": 360,
+        "symbol-placement": "line",
+        "icon-padding": {
+          "stops": [
+            [
+              6,
+              15
+            ],
+            [
+              9,
+              5
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "ArialUnicode-Bold"
+        ],
+        "icon-image": {
+          "stops": [
+            [
+              9,
+              "{shield}-{reflen}-large"
+            ],
+            [
+              12,
+              "{shield}-{reflen}-xl"
+            ]
+          ]
+        },
+        "text-field": "{ref}",
+        "icon-rotation-alignment": "viewport",
+        "text-offset": [
+          0,
+          0.1
+        ],
+        "text-rotation-alignment": "viewport",
+        "text-size": {
+          "stops": [
+            [
+              11.99,
+              11
+            ],
+            [
+              12,
+              13
+            ]
+          ]
+        },
+        "symbol-spacing": 375
+      },
+      "source": "composite",
+      "filter": [
+        "in",
+        "shield",
+        "ARE_EMIRATE_HIGHWAY",
+        "ARE_NATIONAL_HIGHWAY",
+        "AUS_NATIONAL_HIGHWAY",
+        "AUS_NATIONAL_HIGHWAY",
+        "AUS_NATIONAL_HIGHWAY",
+        "AUS_STATE_ROAD",
+        "AUS_STATE_ROAD",
+        "AUS_STATE_ROAD",
+        "AUS_STATE_ROAD",
+        "GBR_PRIMARY_ROAD",
+        "IRL_PRIMARY_ROAD",
+        "USA_COUNTY_HIGHWAY",
+        "ZAF_PROVINCIAL_ROAD"
+      ],
+      "paint": {
+        "text-opacity": 0,
+        "text-color": "#FFD344",
+        "icon-opacity": 0
+      },
+      "minzoom": 6,
+      "source-layer": "roads",
+      "type": "symbol",
+      "id": "shield-text-color-FFD344"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": 0.01,
+        "text-max-angle": 360,
+        "symbol-placement": "line",
+        "icon-padding": {
+          "stops": [
+            [
+              6,
+              15
+            ],
+            [
+              9,
+              5
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "ArialUnicode-Bold"
+        ],
+        "icon-image": {
+          "stops": [
+            [
+              9,
+              "{shield}-{reflen}-large"
+            ],
+            [
+              12,
+              "{shield}-{reflen}-xl"
+            ]
+          ]
+        },
+        "text-field": "{ref}",
+        "icon-rotation-alignment": "viewport",
+        "text-offset": [
+          0,
+          0.1
+        ],
+        "text-rotation-alignment": "viewport",
+        "text-size": {
+          "stops": [
+            [
+              11.99,
+              11
+            ],
+            [
+              12,
+              13
+            ]
+          ]
+        },
+        "symbol-spacing": 375
+      },
+      "source": "composite",
+      "filter": [
+        "in",
+        "shield",
+        "CAN_TRANS_CANADA_HIGHWAY",
+        "CAN_TRANS_CANADA_HIGHWAY",
+        "ISR_REGIONAL_ROAD",
+        "USA_STATE_VERMONT"
+      ],
+      "paint": {
+        "text-opacity": 0,
+        "text-color": "#28A084",
+        "icon-opacity": 0
+      },
+      "minzoom": 6,
+      "source-layer": "roads",
+      "type": "symbol",
+      "id": "shield-text-color-28A084"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": 0.01,
+        "text-max-angle": 360,
+        "symbol-placement": "line",
+        "icon-padding": {
+          "stops": [
+            [
+              6,
+              15
+            ],
+            [
+              9,
+              5
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "ArialUnicode-Bold"
+        ],
+        "icon-image": {
+          "stops": [
+            [
+              9,
+              "{shield}-{reflen}-large"
+            ],
+            [
+              12,
+              "{shield}-{reflen}-xl"
+            ]
+          ]
+        },
+        "text-field": "{ref}",
+        "icon-rotation-alignment": "viewport",
+        "text-offset": [
+          0,
+          0.1
+        ],
+        "text-rotation-alignment": "viewport",
+        "text-size": {
+          "stops": [
+            [
+              11.99,
+              11
+            ],
+            [
+              12,
+              13
+            ]
+          ]
+        },
+        "symbol-spacing": 375
+      },
+      "source": "composite",
+      "filter": [
+        "in",
+        "shield",
+        "ESP_CARRETERA_AUTONOMICA_ORANGE"
+      ],
+      "paint": {
+        "text-opacity": 0,
+        "text-color": "#515051",
+        "icon-opacity": 0
+      },
+      "minzoom": 6,
+      "source-layer": "roads",
+      "type": "symbol",
+      "id": "shield-text-color-515051"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": 0.01,
+        "text-max-angle": 360,
+        "symbol-placement": "line",
+        "icon-padding": {
+          "stops": [
+            [
+              6,
+              15
+            ],
+            [
+              9,
+              5
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "ArialUnicode-Bold"
+        ],
+        "icon-image": {
+          "stops": [
+            [
+              9,
+              "{shield}-{reflen}-large"
+            ],
+            [
+              12,
+              "{shield}-{reflen}-xl"
+            ]
+          ]
+        },
+        "text-field": "{ref}",
+        "icon-rotation-alignment": "viewport",
+        "text-offset": [
+          0,
+          0.1
+        ],
+        "text-rotation-alignment": "viewport",
+        "text-size": {
+          "stops": [
+            [
+              11.99,
+              11
+            ],
+            [
+              12,
+              13
+            ]
+          ]
+        },
+        "symbol-spacing": 375
+      },
+      "source": "composite",
+      "filter": [
+        "in",
+        "shield",
+        "ARE_OTHER_HIGHWAY",
+        "ASIAN_HIGHWAY",
+        "ASIAN_HIGHWAY",
+        "ASIAN_HIGHWAY",
+        "AUS_STATE_HIGHWAY",
+        "AUS_TOURIST_DRIVE",
+        "AUT_AUTOBAHN",
+        "AUT_BUNDESSTRASSE",
+        "AUT_SCHNELLSTRASSE",
+        "BEL_NATIONAL_ROAD",
+        "CAN_AUTOROUTE_QUEBEC",
+        "CAN_PROVINCIAL_NEW_BRUNSWICK",
+        "CAN_PROVINCIAL_QUEBEC",
+        "CAN_PROVINCIAL_SASKATCHEWAN",
+        "CHE_AUTOBAHN",
+        "CHE_KANTONSSTRASSE",
+        "CHL_FEDERAL_HIGHWAY",
+        "CHL_STATE_HIGHWAY",
+        "DEU_AUTOBAHN",
+        "ESP_AUTOPISTA",
+        "ESP_CARRETERA_AUTONOMICA_RED",
+        "ESP_CARRETERA_RIGE",
+        "EST_MAIN_ROAD",
+        "EUROPEAN_ROAD",
+        "FIN_VALTATIE",
+        "FIN_YHDYSTIE",
+        "FRA_AUTOROUTE",
+        "FRA_METROPOLITAN_ROAD",
+        "FRA_NATIONAL_ROAD",
+        "GBR_MOTORWAY",
+        "GRC_MOTORWAY",
+        "GRC_NATIONAL_ROAD",
+        "HUN_FREEWAY",
+        "HUN_PRIMARY_SECONDARY",
+        "IRL_MOTORWAY",
+        "ITA_AUTOSTRADA",
+        "ITA_STATE_HIGHWAY",
+        "ITA_TRAFORO",
+        "JPN_NATIONAL_ROAD",
+        "JPN_REGIONAL_ROAD",
+        "JPN_URBAN_EXPRESSWAY",
+        "KOR_EXPRESS_HIGHWAY",
+        "KOR_MOTORWAY",
+        "KOR_NATIONAL_ROAD",
+        "LTU_MAIN_ROAD",
+        "MEX_MEXICO_CITY_EJE_VIAL",
+        "MEX_MONTERREY_EJE_METROPOLITANO",
+        "NLD_AUTOSNELWEG",
+        "NOR_RIKSVEG",
+        "NZL_STATE_HIGHWAY",
+        "POL_NATIONAL_ROAD",
+        "PRT_AUTO_ESTRADA_IP_IC",
+        "PRT_MAIN_ROAD",
+        "ROU_COUNTY_ROAD",
+        "ROU_MOTORWAY",
+        "ROU_NATIONAL_ROAD",
+        "RUS_FEDERAL_ROAD",
+        "SGP_MOTORWAY",
+        "SVK_CESTY",
+        "SVK_DIALNICE",
+        "SWE_RIKSVAG",
+        "THA_MOTORWAY",
+        "TUR_GOVERNMENTAL_ROAD",
+        "TUR_MOTORWAY",
+        "TWN_EXPRESSWAY",
+        "TWN_PROVINCE_ROAD",
+        "UKR_INTERNATIONAL_NATIONAL_REGIONAL",
+        "USA_INTERSTATE_BUSINESS",
+        "USA_INTERSTATE_HIGHWAY",
+        "USA_STATE_CALIFORNIA",
+        "USA_STATE_MINNESOTA",
+        "ZAF_NATIONAL_ROAD"
+      ],
+      "paint": {
+        "text-opacity": 0,
+        "text-color": "#FFFFFF",
+        "icon-opacity": 0
+      },
+      "minzoom": 6,
+      "source-layer": "roads",
+      "type": "symbol",
+      "id": "shield-text-color-FFFFFF"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": 0.01,
+        "text-max-angle": 360,
+        "symbol-placement": "line",
+        "icon-padding": {
+          "stops": [
+            [
+              6,
+              15
+            ],
+            [
+              9,
+              5
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "ArialUnicode-Bold"
+        ],
+        "icon-image": {
+          "stops": [
+            [
+              9,
+              "{shield}-{reflen}-large"
+            ],
+            [
+              12,
+              "{shield}-{reflen}-xl"
+            ]
+          ]
+        },
+        "text-field": "{ref}",
+        "icon-rotation-alignment": "viewport",
+        "text-offset": [
+          0,
+          0.1
+        ],
+        "text-rotation-alignment": "viewport",
+        "text-size": {
+          "stops": [
+            [
+              11.99,
+              11
+            ],
+            [
+              12,
+              13
+            ]
+          ]
+        },
+        "symbol-spacing": 375
+      },
+      "source": "composite",
+      "filter": [
+        "in",
+        "shield",
+        "AUS_METROPOLITAN_ROAD",
+        "AUS_NATIONAL_HIGHWAY_ALT",
+        "AUS_NATIONAL_ROAD",
+        "BEL_AUTOROUTE",
+        "BEL_RINGWEG",
+        "BRA_FEDERAL_HIGHWAY",
+        "BRA_STATE_HIGHWAY",
+        "CAN_PROVINCIAL_ALBERTA",
+        "CAN_PROVINCIAL_BRITISH_COLUMBIA",
+        "CAN_PROVINCIAL_MANITOBA",
+        "CAN_PROVINCIAL_PRINCE_EDWARD",
+        "DEU_BUNDESSTRASSE",
+        "DNK_PRIMARY_ROAD",
+        "ESP_CARRETERA_AUTONOMICA_YELLOW",
+        "EST_STATE_ROAD",
+        "FIN_KANTATIE",
+        "FRA_DEPARTMENTAL_ROAD",
+        "IDN_NATIONAL_ROAD",
+        "IDN_PROVINCIAL_ROAD",
+        "IND_NATIONAL_EXPRESSWAY",
+        "IND_NATIONAL_HIGHWAY",
+        "IND_STATE_HIGHWAY",
+        "LTU_STATE_ROAD",
+        "MEX_FEDERAL_HIGHWAY",
+        "MEX_STATE_HIGHWAY",
+        "MYS_EXPRESSWAY",
+        "NLD_NATIONAL_ROAD",
+        "NLD_ONTSLUITINGS_ROAD",
+        "NOR_RING_ROAD",
+        "POL_VOIVODESHIP",
+        "ROU_LOCAL_ROAD",
+        "SAU_NATIONAL_HIGHWAY",
+        "SAU_NATIONAL_HIGHWAY_BYWAY",
+        "THA_NATIONAL_ROAD",
+        "TWN_NATIONAL_HIGHWAY",
+        "USA_DISTRICT_WASHINGTON_DC",
+        "USA_HIGHWAY",
+        "USA_HIGHWAY_ALTERNATE_ROUTE",
+        "USA_HIGHWAY_BUSINESS_ROUTE",
+        "USA_STATE_ALABAMA",
+        "USA_STATE_ALASKA",
+        "USA_STATE_ARIZONA",
+        "USA_STATE_ARKANSAS",
+        "USA_STATE_COLORADO",
+        "USA_STATE_CONNECTICUT",
+        "USA_STATE_DELAWARE",
+        "USA_STATE_FLORIDA",
+        "USA_STATE_GEORGIA",
+        "USA_STATE_HAWAII",
+        "USA_STATE_IDAHO",
+        "USA_STATE_ILLINOIS",
+        "USA_STATE_INDIANA",
+        "USA_STATE_IOWA",
+        "USA_STATE_KANSAS",
+        "USA_STATE_KENTUCKY",
+        "USA_STATE_LOUISIANA",
+        "USA_STATE_MAINE",
+        "USA_STATE_MARYLAND",
+        "USA_STATE_MASSACHUSETTS",
+        "USA_STATE_MICHIGAN",
+        "USA_STATE_MISSISSIPPI",
+        "USA_STATE_MISSOURI",
+        "USA_STATE_MONTANA",
+        "USA_STATE_NEBRASKA",
+        "USA_STATE_NEVADA",
+        "USA_STATE_NEW_HAMPSHIRE",
+        "USA_STATE_NEW_JERSEY",
+        "USA_STATE_NEW_MEXICO",
+        "USA_STATE_NEW_YORK",
+        "USA_STATE_NORTH_CAROLINA",
+        "USA_STATE_NORTH_DAKOTA",
+        "USA_STATE_OHIO",
+        "USA_STATE_OKLAHOMA",
+        "USA_STATE_OREGON",
+        "USA_STATE_PENNSYLVANIA",
+        "USA_STATE_RHODE_ISLAND",
+        "USA_STATE_SOUTH_DAKOTA",
+        "USA_STATE_TENNESSEE",
+        "USA_STATE_TEXAS",
+        "USA_STATE_UTAH",
+        "USA_STATE_VIRGINIA",
+        "USA_STATE_WASHINGTON",
+        "USA_STATE_WEST_VIRGINIA",
+        "USA_STATE_WISCONSIN",
+        "USA_STATE_WYOMING",
+        "ZAF_REGIONAL_ROAD"
+      ],
+      "paint": {
+        "text-opacity": 0,
+        "text-color": "#666466",
+        "icon-opacity": 0
+      },
+      "minzoom": 6,
+      "source-layer": "roads",
+      "type": "symbol",
+      "id": "shield-text-color-666466"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": 0.01,
+        "text-max-angle": 360,
+        "symbol-placement": "line",
+        "icon-padding": {
+          "stops": [
+            [
+              6,
+              15
+            ],
+            [
+              9,
+              5
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "ArialUnicode-Bold"
+        ],
+        "icon-image": {
+          "stops": [
+            [
+              9,
+              "default-{reflen}-large"
+            ],
+            [
+              12,
+              "default-{reflen}-xl"
+            ]
+          ]
+        },
+        "text-field": "{ref}",
+        "icon-rotation-alignment": "viewport",
+        "text-offset": [
+          0,
+          0.05
+        ],
+        "text-rotation-alignment": "viewport",
+        "text-size": {
+          "stops": [
+            [
+              11.99,
+              11
+            ],
+            [
+              12,
+              13
+            ]
+          ]
+        },
+        "symbol-spacing": 375
+      },
+      "source": "composite",
+      "filter": [
+        "==",
+        "shield",
+        "default"
+      ],
+      "paint": {
+        "text-color": "#666466",
+        "icon-opacity": 0,
+        "text-opacity": 0
+      },
+      "minzoom": 6,
+      "source-layer": "roads",
+      "type": "symbol",
+      "id": "shield-default"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": 0.15,
+        "text-size": {
+          "stops": [
+            [
+              6,
+              10
+            ],
+            [
+              11.5,
+              10
+            ],
+            [
+              12,
+              11
+            ],
+            [
+              13,
+              14
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "ArialUnicode-Bold"
+        ],
+        "text-field": "{name}",
+        "text-padding": 10,
+        "text-transform": "uppercase",
+        "text-max-width": 8
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "Locality.type",
+          "CITY",
+          "CAPITAL_CITY"
+        ],
+        [
+          "in",
+          "Locality.displayClass",
+          "CLASS_11"
+        ]
+      ],
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              10.5,
+              "#7398ad"
+            ],
+            [
+              11,
+              "#5d707c"
+            ]
+          ]
+        },
+        "text-halo-width": 1,
+        "text-halo-color": "rgba(9, 16, 29, 0.8)",
+        "text-opacity": {
+          "stops": [
+            [
+              12,
+              1
+            ],
+            [
+              12.5,
+              0
+            ]
+          ]
+        }
+      },
+      "minzoom": 9,
+      "source-layer": "points",
+      "maxzoom": 12.5,
+      "type": "symbol",
+      "id": "municipality-label-11"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": 0.15,
+        "text-size": {
+          "stops": [
+            [
+              11.5,
+              10
+            ],
+            [
+              12,
+              11
+            ],
+            [
+              13,
+              14
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "ArialUnicode-Bold"
+        ],
+        "text-field": "{name}",
+        "text-padding": 10,
+        "text-transform": "uppercase",
+        "text-max-width": 8
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "Locality.type",
+          "CITY",
+          "CAPITAL_CITY"
+        ],
+        [
+          "in",
+          "Locality.displayClass",
+          "CLASS_10"
+        ]
+      ],
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              10.5,
+              "#7398ad"
+            ],
+            [
+              11,
+              "#5d707c"
+            ]
+          ]
+        },
+        "text-halo-width": 1,
+        "text-halo-color": "rgba(9, 16, 29, 0.8)",
+        "text-opacity": {
+          "stops": [
+            [
+              12,
+              1
+            ],
+            [
+              12.5,
+              0
+            ]
+          ]
+        }
+      },
+      "minzoom": 8.5,
+      "source-layer": "points",
+      "maxzoom": 12.5,
+      "type": "symbol",
+      "id": "municipality-label-10"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": 0.15,
+        "text-size": {
+          "stops": [
+            [
+              6,
+              10
+            ],
+            [
+              11,
+              11
+            ],
+            [
+              12,
+              13
+            ],
+            [
+              13,
+              16
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "ArialUnicode-Bold"
+        ],
+        "text-field": "{name}",
+        "text-padding": 10,
+        "text-transform": "uppercase",
+        "text-max-width": 8
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "Locality.type",
+          "CITY",
+          "CAPITAL_CITY"
+        ],
+        [
+          "in",
+          "Locality.displayClass",
+          "CLASS_9"
+        ]
+      ],
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              10.5,
+              "#7398ad"
+            ],
+            [
+              11,
+              "#5d707c"
+            ]
+          ]
+        },
+        "text-halo-width": 1,
+        "text-halo-color": "rgba(9, 16, 29, 0.8)",
+        "text-opacity": {
+          "stops": [
+            [
+              12,
+              1
+            ],
+            [
+              12.5,
+              0
+            ]
+          ]
+        }
+      },
+      "minzoom": 8,
+      "source-layer": "points",
+      "maxzoom": 12.5,
+      "type": "symbol",
+      "id": "municipality-label-9"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": 0.15,
+        "text-size": {
+          "stops": [
+            [
+              6,
+              11
+            ],
+            [
+              11,
+              13
+            ],
+            [
+              12,
+              14
+            ],
+            [
+              13,
+              16
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "ArialUnicode-Bold"
+        ],
+        "text-field": "{name}",
+        "text-padding": 10,
+        "text-transform": "uppercase",
+        "text-max-width": 8
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "Locality.type",
+          "CITY",
+          "CAPITAL_CITY"
+        ],
+        [
+          "in",
+          "Locality.displayClass",
+          "CLASS_8"
+        ]
+      ],
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              10.5,
+              "#7398ad"
+            ],
+            [
+              11,
+              "#5d707c"
+            ]
+          ]
+        },
+        "text-halo-width": 1,
+        "text-halo-color": "rgba(9, 16, 29, 0.8)",
+        "text-opacity": {
+          "stops": [
+            [
+              12,
+              1
+            ],
+            [
+              12.5,
+              0
+            ]
+          ]
+        }
+      },
+      "minzoom": 8,
+      "source-layer": "points",
+      "maxzoom": 12.5,
+      "type": "symbol",
+      "id": "municipality-label-8"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": 0.15,
+        "text-size": {
+          "stops": [
+            [
+              6,
+              10
+            ],
+            [
+              12,
+              14
+            ],
+            [
+              13,
+              16
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "ArialUnicode-Bold"
+        ],
+        "text-field": "{name}",
+        "text-padding": 10,
+        "text-transform": "uppercase",
+        "text-max-width": 8
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "!in",
+          "Locality.countryCode",
+          "GBR"
+        ],
+        [
+          "in",
+          "Locality.type",
+          "CITY",
+          "CAPITAL_CITY"
+        ],
+        [
+          "in",
+          "Locality.displayClass",
+          "CLASS_7"
+        ]
+      ],
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              10.5,
+              "#7398ad"
+            ],
+            [
+              11,
+              "#5d707c"
+            ]
+          ]
+        },
+        "text-halo-width": 1,
+        "text-halo-color": "rgba(9, 16, 29, 0.8)",
+        "text-opacity": {
+          "stops": [
+            [
+              12,
+              1
+            ],
+            [
+              12.5,
+              0
+            ]
+          ]
+        }
+      },
+      "minzoom": 7,
+      "source-layer": "points",
+      "maxzoom": 12.5,
+      "type": "symbol",
+      "id": "municipality-label-7"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": 0.2,
+        "text-size": {
+          "stops": [
+            [
+              6,
+              10
+            ],
+            [
+              12,
+              14
+            ],
+            [
+              13,
+              16
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "ArialUnicode-Bold"
+        ],
+        "text-field": "{name}",
+        "text-padding": 30,
+        "text-transform": "uppercase",
+        "text-max-width": 8
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "Locality.countryCode",
+          "GBR"
+        ],
+        [
+          "in",
+          "Locality.type",
+          "CITY",
+          "CAPITAL_CITY"
+        ],
+        [
+          "in",
+          "Locality.displayClass",
+          "CLASS_7"
+        ]
+      ],
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              10.5,
+              "#7398ad"
+            ],
+            [
+              11,
+              "#5d707c"
+            ]
+          ]
+        },
+        "text-halo-width": 1,
+        "text-halo-color": "rgba(9, 16, 29, 0.8)",
+        "text-opacity": {
+          "stops": [
+            [
+              12,
+              1
+            ],
+            [
+              12.5,
+              0
+            ]
+          ]
+        }
+      },
+      "minzoom": 7,
+      "source-layer": "points",
+      "maxzoom": 12.5,
+      "type": "symbol",
+      "id": "municipality-label-7-GBR-TOMTOM"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": {
+          "stops": [
+            [
+              5,
+              0.3
+            ],
+            [
+              6,
+              0.4
+            ],
+            [
+              7,
+              0.5
+            ]
+          ]
+        },
+        "text-size": {
+          "stops": [
+            [
+              5,
+              8
+            ],
+            [
+              6,
+              10
+            ],
+            [
+              7,
+              14
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "Arial Unicode"
+        ],
+        "visibility": "none",
+        "text-field": "{name}",
+        "text-padding": 5,
+        "text-transform": "uppercase"
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "AdminFeature.adminType",
+          "G1_COUNTRY_SUBDIVISION"
+        ],
+        [
+          "!in",
+          "WorldFeature.iso_3166_1_a2",
+          "AU",
+          "BR",
+          "CA",
+          "CN",
+          "IN",
+          "MX",
+          "US"
+        ]
+      ],
+      "paint": {
+        "text-color": "#2d5267",
+        "text-halo-width": 1,
+        "text-halo-color": "rgba(9, 16, 29, 0.8)",
+        "text-opacity": 0
+      },
+      "minzoom": 5,
+      "source-layer": "points",
+      "maxzoom": 8,
+      "type": "symbol",
+      "id": "state-label-minor"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": {
+          "stops": [
+            [
+              3,
+              0.3
+            ],
+            [
+              4,
+              0.4
+            ],
+            [
+              5,
+              0.5
+            ]
+          ]
+        },
+        "text-size": {
+          "stops": [
+            [
+              3,
+              8
+            ],
+            [
+              5,
+              10
+            ],
+            [
+              8,
+              16
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "Arial Unicode"
+        ],
+        "text-field": "{name}",
+        "text-padding": 5,
+        "text-transform": "uppercase"
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "AdminFeature.adminType",
+          "G1_COUNTRY_SUBDIVISION"
+        ],
+        [
+          "in",
+          "WorldFeature.iso_3166_1_a2",
+          "AU",
+          "BR",
+          "CA",
+          "CN",
+          "IN",
+          "MX",
+          "US"
+        ]
+      ],
+      "paint": {
+        "text-color": "#2d5267",
+        "text-halo-width": 1,
+        "text-halo-color": "rgba(9, 16, 29, 0.8)",
+        "text-opacity": {
+          "stops": [
+            [
+              3,
+              0
+            ],
+            [
+              3.3,
+              1
+            ]
+          ]
+        }
+      },
+      "minzoom": 3,
+      "source-layer": "points",
+      "maxzoom": 8,
+      "type": "symbol",
+      "id": "state-label-major"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": 0.04,
+        "icon-padding": 2,
+        "text-padding": 2,
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "Arial Unicode"
+        ],
+        "text-anchor": "top-left",
+        "icon-image": {
+          "stops": [
+            [
+              12,
+              "{icon}-small"
+            ],
+            [
+              13,
+              "{icon}-medium"
+            ]
+          ]
+        },
+        "text-field": "{name}",
+        "text-justify": "left",
+        "text-offset": [
+          0,
+          0.8
+        ],
+        "text-size": {
+          "stops": [
+            [
+              15,
+              11
+            ],
+            [
+              16,
+              12
+            ]
+          ]
+        },
+        "text-max-width": 8,
+        "icon-offset": [
+          6,
+          0
+        ]
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "$type",
+          "Point"
+        ],
+        [
+          "in",
+          "PlaceFeature.categoryName",
+          "AIRPORT"
+        ]
+      ],
+      "paint": {
+        "text-color": "#4e5f67",
+        "icon-opacity": 1,
+        "text-halo-width": 1,
+        "text-halo-color": "rgba(9, 16, 29, 0.8)",
+        "text-opacity": 1
+      },
+      "minzoom": 10,
+      "source-layer": "points",
+      "type": "symbol",
+      "id": "poi-label-airport-composite",
+      "interactive": true
+    },
+    {
+      "layout": {
+        "text-letter-spacing": 0.15,
+        "text-size": {
+          "stops": [
+            [
+              6,
+              10
+            ],
+            [
+              11,
+              13.5
+            ],
+            [
+              12,
+              16
+            ],
+            [
+              13,
+              19
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "ArialUnicode-Bold"
+        ],
+        "text-field": "{name}",
+        "text-padding": 2,
+        "text-transform": "uppercase",
+        "text-max-width": 8
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "Locality.type",
+          "CITY",
+          "CAPITAL_CITY"
+        ],
+        [
+          "in",
+          "Locality.displayClass",
+          "CLASS_6"
+        ]
+      ],
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              10.5,
+              "#7398ad"
+            ],
+            [
+              11,
+              "#5d707c"
+            ]
+          ]
+        },
+        "text-halo-width": 1,
+        "text-halo-color": "rgba(9, 16, 29, 0.8)",
+        "text-opacity": {
+          "stops": [
+            [
+              12,
+              1
+            ],
+            [
+              12.5,
+              0
+            ]
+          ]
+        }
+      },
+      "minzoom": 6,
+      "source-layer": "points",
+      "maxzoom": 12.5,
+      "type": "symbol",
+      "id": "municipality-label-6"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": 0.15,
+        "text-size": {
+          "stops": [
+            [
+              5,
+              8
+            ],
+            [
+              6,
+              10
+            ],
+            [
+              11,
+              14.5
+            ],
+            [
+              12,
+              17
+            ],
+            [
+              13,
+              20
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "ArialUnicode-Bold"
+        ],
+        "text-field": "{name}",
+        "text-padding": 2,
+        "text-transform": "uppercase",
+        "text-max-width": 8
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "Locality.type",
+          "CITY",
+          "CAPITAL_CITY"
+        ],
+        [
+          "in",
+          "Locality.displayClass",
+          "CLASS_5"
+        ]
+      ],
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              10.5,
+              "#7398ad"
+            ],
+            [
+              11,
+              "#5d707c"
+            ]
+          ]
+        },
+        "text-halo-width": 1,
+        "text-halo-color": "rgba(9, 16, 29, 0.8)",
+        "text-opacity": {
+          "stops": [
+            [
+              12,
+              1
+            ],
+            [
+              12.5,
+              0
+            ]
+          ]
+        }
+      },
+      "minzoom": 5.5,
+      "source-layer": "points",
+      "maxzoom": 12.5,
+      "type": "symbol",
+      "id": "municipality-label-5"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": 0.15,
+        "text-size": {
+          "stops": [
+            [
+              5,
+              8
+            ],
+            [
+              6,
+              10
+            ],
+            [
+              11,
+              14.5
+            ],
+            [
+              12,
+              17
+            ],
+            [
+              13,
+              20
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "ArialUnicode-Bold"
+        ],
+        "text-field": "{name}",
+        "text-padding": 2,
+        "text-transform": "uppercase",
+        "text-max-width": 8
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "Locality.type",
+          "CITY",
+          "CAPITAL_CITY"
+        ],
+        [
+          "in",
+          "Locality.displayClass",
+          "CLASS_4"
+        ]
+      ],
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              10.5,
+              "#7398ad"
+            ],
+            [
+              11,
+              "#5d707c"
+            ]
+          ]
+        },
+        "text-halo-width": 1,
+        "text-halo-color": "rgba(9, 16, 29, 0.8)",
+        "text-opacity": {
+          "stops": [
+            [
+              12,
+              1
+            ],
+            [
+              12.5,
+              0
+            ]
+          ]
+        }
+      },
+      "minzoom": 5,
+      "source-layer": "points",
+      "maxzoom": 12.5,
+      "type": "symbol",
+      "id": "municipality-label-4"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": {
+          "stops": [
+            [
+              2,
+              0.2
+            ],
+            [
+              3,
+              0.3
+            ],
+            [
+              4,
+              0.3
+            ],
+            [
+              5,
+              0.4
+            ]
+          ]
+        },
+        "text-size": {
+          "stops": [
+            [
+              1,
+              6
+            ],
+            [
+              3,
+              12
+            ],
+            [
+              5,
+              16
+            ],
+            [
+              8,
+              22
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "ArialUnicode-Bold"
+        ],
+        "text-field": "{name}",
+        "text-padding": 1,
+        "text-transform": "uppercase",
+        "text-max-width": 8
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "AdminFeature.adminType",
+          "G0_COUNTRY"
+        ],
+        [
+          "!in",
+          "AdminFeature.displayClass",
+          "CLASS_1",
+          "CLASS_2",
+          "CLASS_3"
+        ]
+      ],
+      "paint": {
+        "text-color": "#7398ad",
+        "text-halo-width": 2,
+        "text-halo-color": "rgba(9, 16, 29, 0.8)",
+        "text-opacity": {
+          "stops": [
+            [
+              7,
+              1
+            ],
+            [
+              7.5,
+              0
+            ]
+          ]
+        }
+      },
+      "minzoom": 3,
+      "source-layer": "points",
+      "maxzoom": 8,
+      "type": "symbol",
+      "id": "country-label-4"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": 0.15,
+        "text-size": {
+          "stops": [
+            [
+              5,
+              8
+            ],
+            [
+              6,
+              10
+            ],
+            [
+              10,
+              15
+            ],
+            [
+              11,
+              18.5
+            ],
+            [
+              12,
+              21
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "ArialUnicode-Bold"
+        ],
+        "text-field": "{name}",
+        "text-padding": 2,
+        "text-transform": "uppercase",
+        "text-max-width": 8
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "Locality.type",
+          "CITY",
+          "CAPITAL_CITY"
+        ],
+        [
+          "in",
+          "Locality.displayClass",
+          "CLASS_3"
+        ]
+      ],
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              10.5,
+              "#7398ad"
+            ],
+            [
+              11,
+              "#5d707c"
+            ]
+          ]
+        },
+        "text-halo-width": 1,
+        "text-halo-color": "rgba(9, 16, 29, 0.8)",
+        "text-opacity": {
+          "stops": [
+            [
+              12,
+              1
+            ],
+            [
+              12.5,
+              0
+            ]
+          ]
+        }
+      },
+      "minzoom": 5,
+      "source-layer": "points",
+      "maxzoom": 12.5,
+      "type": "symbol",
+      "id": "municipality-label-3"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": 0.15,
+        "text-size": {
+          "stops": [
+            [
+              4,
+              6
+            ],
+            [
+              5,
+              8
+            ],
+            [
+              6,
+              10
+            ],
+            [
+              10,
+              15
+            ],
+            [
+              11,
+              18.5
+            ],
+            [
+              12,
+              21
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "ArialUnicode-Bold"
+        ],
+        "text-field": "{name}",
+        "text-padding": 2,
+        "text-transform": "uppercase",
+        "text-max-width": 8
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "Locality.type",
+          "CITY",
+          "CAPITAL_CITY"
+        ],
+        [
+          "in",
+          "Locality.displayClass",
+          "CLASS_2"
+        ]
+      ],
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              10.5,
+              "#7398ad"
+            ],
+            [
+              11,
+              "#5d707c"
+            ]
+          ]
+        },
+        "text-halo-width": 1,
+        "text-halo-color": "rgba(9, 16, 29, 0.8)",
+        "text-opacity": {
+          "stops": [
+            [
+              2,
+              0
+            ],
+            [
+              2.3,
+              1
+            ],
+            [
+              12,
+              1
+            ],
+            [
+              12.5,
+              0
+            ]
+          ]
+        }
+      },
+      "minzoom": 1,
+      "source-layer": "points",
+      "maxzoom": 12.5,
+      "type": "symbol",
+      "id": "municipality-label-2"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": 0.2,
+        "text-size": {
+          "stops": [
+            [
+              4,
+              6
+            ],
+            [
+              6,
+              10
+            ],
+            [
+              10,
+              14.5
+            ],
+            [
+              11,
+              18
+            ],
+            [
+              12,
+              21
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "ArialUnicode-Bold"
+        ],
+        "text-field": "{name}",
+        "text-padding": 2,
+        "text-transform": "uppercase",
+        "text-max-width": 8
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "Locality.type",
+          "CITY",
+          "CAPITAL_CITY"
+        ],
+        [
+          "in",
+          "Locality.displayClass",
+          "CLASS_1"
+        ]
+      ],
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              10.5,
+              "#7398ad"
+            ],
+            [
+              11,
+              "#5d707c"
+            ]
+          ]
+        },
+        "text-halo-width": 1,
+        "text-halo-color": "rgba(9, 16, 29, 0.8)",
+        "text-opacity": {
+          "stops": [
+            [
+              12,
+              1
+            ],
+            [
+              12.5,
+              0
+            ]
+          ]
+        }
+      },
+      "minzoom": 1,
+      "source-layer": "points",
+      "maxzoom": 12.5,
+      "type": "symbol",
+      "id": "municipality-label-1"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": {
+          "stops": [
+            [
+              2,
+              0.2
+            ],
+            [
+              3,
+              0.3
+            ],
+            [
+              4,
+              0.3
+            ],
+            [
+              5,
+              0.4
+            ]
+          ]
+        },
+        "text-size": {
+          "stops": [
+            [
+              1,
+              6
+            ],
+            [
+              3,
+              12
+            ],
+            [
+              5,
+              16
+            ],
+            [
+              8,
+              22
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanPro-NarrMedium",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "ArialUnicode-Bold"
+        ],
+        "text-field": "{name}",
+        "text-padding": 1,
+        "text-transform": "uppercase",
+        "text-max-width": 8
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "AdminFeature.adminType",
+          "G0_COUNTRY"
+        ],
+        [
+          "in",
+          "AdminFeature.displayClass",
+          "CLASS_3"
+        ]
+      ],
+      "paint": {
+        "text-color": "#7398ad",
+        "text-halo-width": 2,
+        "text-halo-color": "rgba(9, 16, 29, 0.8)",
+        "text-opacity": {
+          "stops": [
+            [
+              7,
+              1
+            ],
+            [
+              7.5,
+              0
+            ]
+          ]
+        }
+      },
+      "minzoom": 1,
+      "source-layer": "points",
+      "maxzoom": 8,
+      "type": "symbol",
+      "id": "country-label-3"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": {
+          "stops": [
+            [
+              2,
+              0.2
+            ],
+            [
+              3,
+              0.3
+            ],
+            [
+              4,
+              0.4
+            ],
+            [
+              5,
+              0.5
+            ]
+          ]
+        },
+        "text-size": {
+          "stops": [
+            [
+              1,
+              6
+            ],
+            [
+              3,
+              12
+            ],
+            [
+              5,
+              16
+            ],
+            [
+              8,
+              22
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanPro-NarrMedium",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "ArialUnicode-Bold"
+        ],
+        "text-field": "{name}",
+        "text-padding": 1,
+        "text-transform": "uppercase",
+        "text-max-width": 8
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "AdminFeature.adminType",
+          "G0_COUNTRY"
+        ],
+        [
+          "in",
+          "AdminFeature.displayClass",
+          "CLASS_2"
+        ]
+      ],
+      "paint": {
+        "text-color": "#7398ad",
+        "text-halo-width": 2,
+        "text-halo-color": "rgba(9, 16, 29, 0.8)",
+        "text-opacity": {
+          "stops": [
+            [
+              7,
+              1
+            ],
+            [
+              7.5,
+              0
+            ]
+          ]
+        }
+      },
+      "minzoom": 1,
+      "source-layer": "points",
+      "maxzoom": 8,
+      "type": "symbol",
+      "id": "country-label-2"
+    },
+    {
+      "layout": {
+        "text-letter-spacing": {
+          "stops": [
+            [
+              2,
+              0.2
+            ],
+            [
+              3,
+              0.3
+            ],
+            [
+              4,
+              0.4
+            ],
+            [
+              5,
+              0.5
+            ]
+          ]
+        },
+        "text-size": {
+          "stops": [
+            [
+              1,
+              6
+            ],
+            [
+              3,
+              12
+            ],
+            [
+              5,
+              16
+            ],
+            [
+              8,
+              22
+            ]
+          ]
+        },
+        "text-font": [
+          "ClanProForUBER-MediumNarrow",
+          "NotoSansHebrew-Bold",
+          "NotoSansThai-Bold",
+          "NotoSansDevanagari-Bold",
+          "KacstBook",
+          "ArialUnicode-Bold"
+        ],
+        "text-field": "{name}",
+        "text-padding": 1,
+        "text-transform": "uppercase",
+        "text-max-width": 8
+      },
+      "source": "composite",
+      "filter": [
+        "all",
+        [
+          "in",
+          "AdminFeature.adminType",
+          "G0_COUNTRY"
+        ],
+        [
+          "in",
+          "AdminFeature.displayClass",
+          "CLASS_1"
+        ]
+      ],
+      "paint": {
+        "text-color": "#7398ad",
+        "text-halo-width": 2,
+        "text-halo-color": "rgba(9, 16, 29, 0.8)",
+        "text-opacity": {
+          "stops": [
+            [
+              7,
+              1
+            ],
+            [
+              7.5,
+              0
+            ]
+          ]
+        }
+      },
+      "minzoom": 1,
+      "source-layer": "points",
+      "maxzoom": 8,
+      "type": "symbol",
+      "id": "country-label-1"
+    }
+  ],
+  "name": "uber-stylesheet",
+  "created": "2015-07-30",
+  "sources": {
+    "composite": {
+      "tiles": [
+        "https://d3dt5tsgfu6lcf.cloudfront.net/tile/v1/{z}/{x}/{y}/COMPOSITE"
+      ],
+      "name": "uber",
+      "bounds": [
+        -180,
+        -85.0511,
+        180,
+        85.0511
+      ],
+      "prefetchable": true,
+      "minzoom": 0,
+      "maxzoom": 14,
+      "tilejson": "2.0.0",
+      "scheme": "xyz",
+      "type": "vector",
+      "tilezooms": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "center": [
+        0,
+        0,
+        0
+      ]
+    },
+    "buildings": {
+      "tiles": [
+        "https://d3dt5tsgfu6lcf.cloudfront.net/tile/v1/{z}/{x}/{y}/BUILDINGS"
+      ],
+      "name": "uber",
+      "bounds": [
+        -180,
+        -85.0511,
+        180,
+        85.0511
+      ],
+      "minzoom": 15,
+      "maxzoom": 15,
+      "tilejson": "2.0.0",
+      "scheme": "xyz",
+      "type": "vector",
+      "tilezooms": [
+        15
+      ],
+      "center": [
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  "minzoom": 0,
+  "version": 8,
+  "owner": "cwachsman",
+  "maxzoom": 22,
+  "glyphs": "https://d3dt5tsgfu6lcf.cloudfront.net/glyph/{fontstack}/{range}",
+  "sprite": "https://d3dt5tsgfu6lcf.cloudfront.net/sprite/tools/5/sprites"
+}
