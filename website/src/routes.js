@@ -5,6 +5,7 @@ import store from './reducers';
 
 import Home from './components/home';
 import App from './components/app';
+import Demo from './components/app';
 
 // eslint-disable-next-line react/display-name
 export default () => (
@@ -12,5 +13,6 @@ export default () => (
     <Route path="*" component={App}>
       <IndexRoute component={Home} />
     </Route>
+    <Route path="/demo(/:id)" component={Demo} />
   </Router>
 );

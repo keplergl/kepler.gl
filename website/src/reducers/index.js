@@ -1,6 +1,6 @@
 import {createStore, combineReducers} from 'redux';
 import appReducer from './app';
-import {routerReducer } from 'react-router-redux'
+import {routerReducer} from 'react-router-redux'
 
 export default createStore(
   combineReducers({
