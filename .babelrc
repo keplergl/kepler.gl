@@ -1,0 +1,33 @@
+{
+  "presets": [
+    "babel-preset-es2015",
+    "babel-preset-react",
+    "babel-preset-stage-0"
+  ],
+  "plugins": [
+    "transform-decorators-legacy",
+    ["transform-runtime", {
+      "polyfill": false,
+      "regenerator": true
+    }],
+    ["inline-json-import", {}],
+    [
+      "module-resolver",
+      {
+        "root": [
+          "./src"
+        ],
+        "alias": {
+          "test": "./test"
+        }
+      }
+    ]
+  ],
+  "env": {
+    "test": {
+      "plugins": [
+        "istanbul"
+      ]
+    }
+  }
+}
