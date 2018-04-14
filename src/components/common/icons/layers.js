@@ -22,18 +22,19 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-const Layers = React.createClass({
-  displayName: 'Layers',
-  propTypes: {
+class Layers extends React.Component {
+  static displayName = 'Layers';
+
+  static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
-  },
-  getDefaultProps() {
-    return {
-      height: '16px',
-      predefinedClassName: 'data-ex-icons-layers'
-    };
-  },
+  };
+
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-layers'
+  };
+
   render() {
     return (
       <Base {...this.props}>
@@ -41,6 +42,6 @@ const Layers = React.createClass({
       </Base>
     );
   }
-});
+}
 
 export default Layers;

@@ -22,17 +22,18 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-const Table = React.createClass({
-  displayName: 'Table',
-  propTypes: {
+class Table extends React.Component {
+  static displayName = 'Table';
+
+  static propTypes = {
     height: PropTypes.string
-  },
-  getDefaultProps() {
-    return {
-      height: '16px',
-      predefinedClassName: 'data-ex-icons-table'
-    };
-  },
+  };
+
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-table'
+  };
+
   render() {
     return (
       <Base {...this.props}>
@@ -42,6 +43,6 @@ const Table = React.createClass({
       </Base>
     );
   }
-});
+}
 
 export default Table;

@@ -22,18 +22,19 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-const Cube3D = React.createClass({
-  displayName: 'Cube3D',
-  propTypes: {
+class Cube3D extends React.Component {
+  static displayName = 'Cube3D';
+
+  static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
-  },
-  getDefaultProps() {
-    return {
-      height: '16px',
-      predefinedClassName: 'data-ex-icons-cube3d'
-    };
-  },
+  };
+
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-cube3d'
+  };
+
   render() {
     return (
       <Base {...this.props}>
@@ -43,6 +44,6 @@ const Cube3D = React.createClass({
       </Base>
     );
   }
-});
+}
 
 export default Cube3D;

@@ -22,18 +22,19 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-const Expand = React.createClass({
-  displayName: 'Expand',
-  propTypes: {
+class Expand extends React.Component {
+  static displayName = 'Expand';
+
+  static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
-  },
-  getDefaultProps() {
-    return {
-      height: '16px',
-      predefinedClassName: 'data-ex-icons-expand'
-    };
-  },
+  };
+
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-expand'
+  };
+
   render() {
     return (
       <Base {...this.props}>
@@ -43,6 +44,6 @@ const Expand = React.createClass({
       </Base>
     );
   }
-});
+}
 
 export default Expand;

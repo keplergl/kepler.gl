@@ -22,18 +22,19 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-const Trash = React.createClass({
-  displayName: 'Trash',
-  propTypes: {
+class Trash extends React.Component {
+  static displayName = 'Trash';
+
+  static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
-  },
-  getDefaultProps() {
-    return {
-      height: '16px',
-      predefinedClassName: 'data-ex-icons-trash'
-    };
-  },
+  };
+
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-trash'
+  };
+
   render() {
     return (
       <Base {...this.props}>
@@ -45,6 +46,6 @@ const Trash = React.createClass({
       </Base>
     );
   }
-});
+}
 
 export default Trash;

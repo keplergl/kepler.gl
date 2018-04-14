@@ -22,18 +22,19 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-const ArrowRight = React.createClass({
-  displayName: 'ArrowRight',
-  propTypes: {
+class ArrowRight extends React.Component {
+  static displayName = 'ArrowRight';
+
+  static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
-  },
-  getDefaultProps() {
-    return {
-      height: '16px',
-      predefinedClassName: 'data-ex-icons-arrowright'
-    };
-  },
+  };
+
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-arrowright'
+  };
+
   render() {
     return (
       <Base {...this.props}>
@@ -42,6 +43,6 @@ const ArrowRight = React.createClass({
       </Base>
     );
   }
-});
+}
 
 export default ArrowRight;

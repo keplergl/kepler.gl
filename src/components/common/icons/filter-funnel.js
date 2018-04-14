@@ -22,18 +22,19 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-const FilterFunnel = React.createClass({
-  displayName: 'FilterFunnel',
-  propTypes: {
+class FilterFunnel extends React.Component {
+  static displayName = 'FilterFunnel';
+
+  static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
-  },
-  getDefaultProps() {
-    return {
-      height: '16px',
-      predefinedClassName: 'data-ex-icons-filterfunnel'
-    };
-  },
+  };
+
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-filterfunnel'
+  };
+
   render() {
     return (
       <Base {...this.props}>
@@ -41,7 +42,7 @@ const FilterFunnel = React.createClass({
       </Base>
     );
   }
-});
+}
 
 // this export method must be used for generated documentation to work
 export default FilterFunnel;

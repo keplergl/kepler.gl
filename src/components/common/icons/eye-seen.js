@@ -22,18 +22,19 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-const EyeSeen = React.createClass({
-  displayName: 'EyeSeen',
-  propTypes: {
+class EyeSeen extends React.Component {
+  static displayName = 'EyeSeen';
+
+  static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
-  },
-  getDefaultProps() {
-    return {
-      height: '16px',
-      predefinedClassName: 'data-ex-icons-eyeseen'
-    };
-  },
+  };
+
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-eyeseen'
+  };
+
   render() {
     return (
       <Base {...this.props}>
@@ -42,6 +43,6 @@ const EyeSeen = React.createClass({
       </Base>
     );
   }
-});
+}
 
 export default EyeSeen;

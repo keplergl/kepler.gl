@@ -22,18 +22,19 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-const Docs = React.createClass({
-  displayName: 'Docs',
-  propTypes: {
+class Docs extends React.Component {
+  static displayName = 'Docs';
+
+  static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
-  },
-  getDefaultProps() {
-    return {
-      height: '16px',
-      predefinedClassName: 'data-ex-icons-docs'
-    };
-  },
+  };
+
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-docs'
+  };
+
   render() {
     return (
       <Base {...this.props}>
@@ -51,6 +52,6 @@ const Docs = React.createClass({
       </Base>
     );
   }
-});
+}
 
 export default Docs;

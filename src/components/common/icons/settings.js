@@ -22,18 +22,19 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-const Settings = React.createClass({
-  displayName: 'Settings',
-  propTypes: {
+class Settings extends React.Component {
+  static displayName = 'Settings';
+
+  static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
-  },
-  getDefaultProps() {
-    return {
-      height: '16px',
-      predefinedClassName: 'data-ex-icons-settings'
-    };
-  },
+  };
+
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-settings'
+  };
+
   render() {
     return (
       <Base {...this.props}>
@@ -43,6 +44,6 @@ const Settings = React.createClass({
       </Base>
     );
   }
-});
+}
 
 export default Settings;

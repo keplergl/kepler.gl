@@ -18,22 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base from 'components/common/icons/base';
 
-const GridLayerIcon = React.createClass({
-  displayName: 'GridLayerIcon',
-  propTypes: {
-    /** Set the height of the icon, ex. '16px' */
-    height: PropTypes.string,
-    colors: PropTypes.arrayOf(PropTypes.string)
-  },
-  defaultProps: {
-    height: '16px',
-    predefinedClassName: 'grid-layer-icon',
-    totalColor: 6
-  },
+const propTypes = {
+  /** Set the height of the icon, ex. '16px' */
+  height: PropTypes.string,
+  colors: PropTypes.arrayOf(PropTypes.string)
+};
+
+const defaultProps = {
+  height: '16px',
+  predefinedClassName: 'grid-layer-icon',
+  totalColor: 6
+};
+
+class GridLayerIcon extends Component {
   render() {
     return (
       <Base {...this.props}>
@@ -91,6 +92,10 @@ const GridLayerIcon = React.createClass({
       </Base>
     );
   }
-});
+};
+
+GridLayerIcon.displayName = 'GridLayerIcon';
+GridLayerIcon.propTypes = propTypes;
+GridLayerIcon.defaultProps = defaultProps;
 
 export default GridLayerIcon;

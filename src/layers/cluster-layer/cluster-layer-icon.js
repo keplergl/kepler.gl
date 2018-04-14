@@ -18,22 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base from 'components/common/icons/base';
 
-const ClusterLayerIcon = React.createClass({
-  displayName: 'ClusterLayerIcon',
-  propTypes: {
-    /** Set the height of the icon, ex. '16px' */
-    height: PropTypes.string,
-    colors: PropTypes.arrayOf(PropTypes.string)
-  },
-  defaultProps: {
-    height: '16px',
-    predefinedClassName: 'cluster-layer-icon',
-    totalColor: 5
-  },
+const propTypes = {
+  /** Set the height of the icon, ex. '16px' */
+  height: PropTypes.string,
+  colors: PropTypes.arrayOf(PropTypes.string)
+};
+
+const defaultProps = {
+  height: '16px',
+  predefinedClassName: 'cluster-layer-icon',
+  totalColor: 5
+};
+
+class ClusterLayerIcon extends Component {
   render() {
     return (
       <Base {...this.props}>
@@ -65,6 +66,10 @@ const ClusterLayerIcon = React.createClass({
       </Base>
     );
   }
-});
+};
+
+ClusterLayerIcon.displayName = 'ClusterLayerIcon';
+ClusterLayerIcon.propTypes = propTypes;
+ClusterLayerIcon.defaultProps = defaultProps;
 
 export default ClusterLayerIcon;

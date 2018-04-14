@@ -22,17 +22,18 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-const Histogram = React.createClass({
-  displayName: 'Histogram',
-  propTypes: {
+class Histogram extends React.Component {
+  static displayName = 'Histogram';
+
+  static propTypes = {
     height: PropTypes.string
-  },
-  getDefaultProps() {
-    return {
-      height: '16px',
-      predefinedClassName: 'data-ex-icons-histogram'
-    };
-  },
+  };
+
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-histogram'
+  };
+
   render() {
     return (
       <Base {...this.props}>
@@ -45,6 +46,6 @@ const Histogram = React.createClass({
       </Base>
     );
   }
-});
+}
 
 export default Histogram;

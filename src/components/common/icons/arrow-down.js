@@ -22,18 +22,19 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-const ArrowDown = React.createClass({
-  displayName: 'ArrowDown',
-  propTypes: {
+class ArrowDown extends React.Component {
+  static displayName = 'ArrowDown';
+
+  static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
-  },
-  getDefaultProps() {
-    return {
-      height: '16px',
-      predefinedClassName: 'data-ex-icons-arrowdown'
-    };
-  },
+  };
+
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-arrowdown'
+  };
+
   render() {
     return (
       <Base {...this.props}>
@@ -41,6 +42,6 @@ const ArrowDown = React.createClass({
       </Base>
     );
   }
-});
+}
 
 export default ArrowDown;

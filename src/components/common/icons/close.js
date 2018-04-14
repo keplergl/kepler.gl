@@ -22,18 +22,19 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-const Close = React.createClass({
-  displayName: 'Close',
-  propTypes: {
+class Close extends React.Component {
+  static displayName = 'Close';
+
+  static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
-  },
-  getDefaultProps() {
-    return {
-      height: '16px',
-      predefinedClassName: 'data-ex-icons-closewindow'
-    };
-  },
+  };
+
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-closewindow'
+  };
+
   render() {
     return (
       <Base {...this.props}>
@@ -47,6 +48,6 @@ const Close = React.createClass({
       </Base>
     );
   }
-});
+}
 
 export default Close;

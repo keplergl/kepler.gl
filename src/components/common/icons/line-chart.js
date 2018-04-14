@@ -22,17 +22,18 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-const LineChart = React.createClass({
-  displayName: 'LineChart',
-  propTypes: {
+class LineChart extends React.Component {
+  static displayName = 'LineChart';
+
+  static propTypes = {
     height: PropTypes.string
-  },
-  getDefaultProps() {
-    return {
-      height: '16px',
-      predefinedClassName: 'data-ex-icons-linechart'
-    };
-  },
+  };
+
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-linechart'
+  };
+
   render() {
     return (
       <Base {...this.props}>
@@ -41,6 +42,6 @@ const LineChart = React.createClass({
       </Base>
     );
   }
-});
+}
 
 export default LineChart;

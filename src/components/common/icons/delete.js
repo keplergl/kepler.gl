@@ -22,17 +22,18 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-const Cross = React.createClass({
-  displayName: 'Cross',
-  propTypes: {
+class Cross extends React.Component {
+  static displayName = 'Cross';
+
+  static propTypes = {
     height: PropTypes.string
-  },
-  getDefaultProps() {
-    return {
-      height: '16px',
-      predefinedClassName: 'data-ex-icons-delete'
-    };
-  },
+  };
+
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-delete'
+  };
+
   render() {
     return (
       <Base {...this.props}>
@@ -42,6 +43,6 @@ const Cross = React.createClass({
       </Base>
     );
   }
-});
+}
 
 export default Cross;

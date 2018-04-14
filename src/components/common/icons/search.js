@@ -22,18 +22,19 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-const Search = React.createClass({
-  displayName: 'Search',
-  propTypes: {
+class Search extends React.Component {
+  static displayName = 'Search';
+
+  static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
-  },
-  getDefaultProps() {
-    return {
-      height: '16px',
-      predefinedClassName: 'data-ex-icons-search'
-    };
-  },
+  };
+
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-search'
+  };
+
   render() {
     return (
       <Base {...this.props}>
@@ -42,6 +43,6 @@ const Search = React.createClass({
       </Base>
     );
   }
-});
+}
 
 export default Search;

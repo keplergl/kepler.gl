@@ -18,22 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base from 'components/common/icons/base';
 
-const ArcLayerIcon = React.createClass({
-  displayName: 'ArcLayerIcon',
-  propTypes: {
-    /** Set the height of the icon, ex. '16px' */
-    height: PropTypes.string,
-    colors: PropTypes.arrayOf(PropTypes.string)
-  },
-  defaultProps: {
-    height: '16px',
-    predefinedClassName: 'point-layer-icon',
-    totalColor: 4
-  },
+const propTypes = {
+  /** Set the height of the icon, ex. '16px' */
+  height: PropTypes.string,
+  colors: PropTypes.arrayOf(PropTypes.string)
+};
+
+const defaultProps = {
+  height: '16px',
+  predefinedClassName: 'point-layer-icon',
+  totalColor: 4
+};
+
+class ArcLayerIcon extends Component {
   render() {
     return (
       <Base {...this.props}>
@@ -61,6 +62,9 @@ const ArcLayerIcon = React.createClass({
       </Base>
     );
   }
-});
+};
+ArcLayerIcon.displayName = 'ArcLayerIcon';
+ArcLayerIcon.propTypes = propTypes;
+ArcLayerIcon.defaultProps = defaultProps;
 
 export default ArcLayerIcon;

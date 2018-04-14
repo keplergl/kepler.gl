@@ -18,22 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base from 'components/common/icons/base';
 
-const HexagonLayerIcon = React.createClass({
-  displayName: 'HexagonLayerIcon',
-  propTypes: {
-    /** Set the height of the icon, ex. '16px' */
-    height: PropTypes.string,
-    colors: PropTypes.arrayOf(PropTypes.string)
-  },
-  defaultProps: {
-    height: '16px',
-    predefinedClassName: 'hexagon-layer-icon',
-    totalColor: 6
-  },
+const propTypes = {
+  /** Set the height of the icon, ex. '16px' */
+  height: PropTypes.string,
+  colors: PropTypes.arrayOf(PropTypes.string)
+};
+
+const defaultProps = {
+  height: '16px',
+  predefinedClassName: 'hexagon-layer-icon',
+  totalColor: 6
+};
+
+class HexagonLayerIcon extends Component {
   render() {
     return (
       <Base {...this.props}>
@@ -73,6 +74,10 @@ const HexagonLayerIcon = React.createClass({
       </Base>
     );
   }
-});
+};
+
+HexagonLayerIcon.displayName = 'HexagonLayerIcon';
+HexagonLayerIcon.propTypes = propTypes;
+HexagonLayerIcon.defaultProps = defaultProps;
 
 export default HexagonLayerIcon;

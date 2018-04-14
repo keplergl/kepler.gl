@@ -18,20 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base from 'components/common/icons/base';
 
-const DefaultLayerIcon = React.createClass({
-  displayName: 'DefaultLayerIcon',
-  propTypes: {
-    height: PropTypes.string,
-    colors: PropTypes.arrayOf(PropTypes.string)
-  },
-  defaultProps: {
-    height: '16px',
-    predefinedClassName: 'default-layer-icon'
-  },
+const propTypes = {
+  height: PropTypes.string,
+  colors: PropTypes.arrayOf(PropTypes.string)
+};
+
+const defaultProps = {
+  height: '16px',
+  predefinedClassName: 'default-layer-icon'
+};
+
+class DefaultLayerIcon extends Component {
   render() {
     return (
       <Base {...this.props}>
@@ -44,6 +45,10 @@ const DefaultLayerIcon = React.createClass({
       </Base>
     );
   }
-});
+};
+
+DefaultLayerIcon.displayName = 'DefaultLayerIcon';
+DefaultLayerIcon.propTypes = propTypes;
+DefaultLayerIcon.defaultProps = defaultProps;
 
 export default DefaultLayerIcon;

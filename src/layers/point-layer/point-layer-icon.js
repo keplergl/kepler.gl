@@ -18,21 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base from 'components/common/icons/base';
 
-const PointLayerIcon = React.createClass({
-  displayName: 'PointLayerIcon',
-  propTypes: {
-    height: PropTypes.string,
-    colors: PropTypes.arrayOf(PropTypes.string)
-  },
-  defaultProps: {
-    height: '16px',
-    predefinedClassName: 'point-layer-icon',
-    totalColor: 6
-  },
+const propTypes = {
+  height: PropTypes.string,
+  colors: PropTypes.arrayOf(PropTypes.string)
+};
+
+const defaultProps = {
+  height: '16px',
+  predefinedClassName: 'point-layer-icon',
+  totalColor: 6
+};
+
+class PointLayerIcon extends Component {
   render() {
     return (
       <Base {...this.props}>
@@ -45,6 +46,10 @@ const PointLayerIcon = React.createClass({
       </Base>
     );
   }
-});
+};
+
+PointLayerIcon.displayName = 'PointLayerIcon';
+PointLayerIcon.propTypes = propTypes;
+PointLayerIcon.defaultProps = defaultProps;
 
 export default PointLayerIcon;

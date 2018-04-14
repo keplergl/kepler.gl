@@ -22,18 +22,19 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-const CursorClick = React.createClass({
-  displayName: 'CursorClick',
-  propTypes: {
+class CursorClick extends React.Component {
+  static displayName = 'CursorClick';
+
+  static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
-  },
-  getDefaultProps() {
-    return {
-      height: '16px',
-      predefinedClassName: 'data-ex-icons-cursorclick'
-    };
-  },
+  };
+
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-cursorclick'
+  };
+
   render() {
     return (
       <Base {...this.props}>
@@ -45,6 +46,6 @@ const CursorClick = React.createClass({
       </Base>
     );
   }
-});
+}
 
 export default CursorClick;

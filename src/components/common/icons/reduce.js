@@ -22,18 +22,19 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-const Reduce = React.createClass({
-  displayName: 'Reduce',
-  propTypes: {
+class Reduce extends React.Component {
+  static displayName = 'Reduce';
+
+  static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
-  },
-  getDefaultProps() {
-    return {
-      height: '16px',
-      predefinedClassName: 'data-ex-icons-reduce'
-    };
-  },
+  };
+
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-reduce'
+  };
+
   render() {
     return (
       <Base {...this.props}>
@@ -46,6 +47,6 @@ const Reduce = React.createClass({
       </Base>
     );
   }
-});
+}
 
 export default Reduce;

@@ -22,18 +22,19 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-const Add = React.createClass({
-  displayName: 'Add',
-  propTypes: {
+class Add extends React.Component {
+  static displayName = 'Add';
+
+  static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
-  },
-  getDefaultProps() {
-    return {
-      height: '16px',
-      predefinedClassName: 'data-ex-icons-add'
-    };
-  },
+  };
+
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-add'
+  };
+
   render() {
     return (
       <Base {...this.props}>
@@ -41,6 +42,6 @@ const Add = React.createClass({
       </Base>
     );
   }
-});
+}
 
 export default Add;

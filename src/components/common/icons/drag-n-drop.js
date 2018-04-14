@@ -22,18 +22,19 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-const DragNDrop = React.createClass({
-  displayName: 'DragNDrop',
-  propTypes: {
+class DragNDrop extends React.Component {
+  static displayName = 'DragNDrop';
+
+  static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
-  },
-  getDefaultProps() {
-    return {
-      height: '16px',
-      predefinedClassName: 'data-ex-icons-dragndrop'
-    };
-  },
+  };
+
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-dragndrop'
+  };
+
   render() {
     return (
       <Base {...this.props}>
@@ -42,6 +43,6 @@ const DragNDrop = React.createClass({
       </Base>
     );
   }
-});
+}
 
 export default DragNDrop;

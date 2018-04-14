@@ -18,22 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base from 'components/common/icons/base';
 
-const GeojsonLayerIcon = React.createClass({
-  displayName: 'GeojsonLayerIcon',
-  propTypes: {
-    /** Set the height of the icon, ex. '16px' */
-    height: PropTypes.string,
-    colors: PropTypes.arrayOf(PropTypes.string)
-  },
-  defaultProps: {
-    height: null,
-    size: 'tiny',
-    predefinedClassName: 'geojson-layer-icon'
-  },
+const propTypes = {
+  /** Set the height of the icon, ex. '16px' */
+  height: PropTypes.string,
+  colors: PropTypes.arrayOf(PropTypes.string)
+};
+
+const defaultProps = {
+  height: null,
+  size: 'tiny',
+  predefinedClassName: 'geojson-layer-icon'
+};
+
+class GeojsonLayerIcon extends Component {
   render() {
     return (
       <Base {...this.props}>
@@ -64,6 +65,10 @@ const GeojsonLayerIcon = React.createClass({
       </Base>
     );
   }
-});
+};
+
+GeojsonLayerIcon.displayName = 'GeojsonLayerIcon',
+GeojsonLayerIcon.propTypes = propTypes;
+GeojsonLayerIcon.defaultProps = defaultProps;
 
 export default GeojsonLayerIcon;

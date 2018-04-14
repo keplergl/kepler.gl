@@ -29,9 +29,10 @@ const getStyleClassFromColor = (totalColor, colors) =>
       ''
     );
 
-const Base = React.createClass({
-  displayName: 'Base Icon',
-  propTypes: {
+class Base extends React.Component {
+  static displayName = 'Base Icon';
+
+  static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string,
     /** Set the width of the icon, ex. '16px' */
@@ -43,16 +44,16 @@ const Base = React.createClass({
 
     predefinedClassName: PropTypes.string,
     className: PropTypes.string
-  },
-  getDefaultProps() {
-    return {
-      height: null,
-      width: null,
-      viewBox: '0 0 64 64',
-      predefinedClassName: '',
-      className: ''
-    };
-  },
+  };
+
+  static defaultProps = {
+    height: null,
+    width: null,
+    viewBox: '0 0 64 64',
+    predefinedClassName: '',
+    className: ''
+  };
+
   render() {
     const {
       height,
@@ -90,6 +91,6 @@ const Base = React.createClass({
       </svg>
     );
   }
-});
+}
 
 export default Base;

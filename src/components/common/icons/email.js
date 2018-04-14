@@ -22,18 +22,19 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-const Email = React.createClass({
-  displayName: 'Email',
-  propTypes: {
+class Email extends React.Component {
+  static displayName = 'Email';
+
+  static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
-  },
-  getDefaultProps() {
-    return {
-      height: '16px',
-      predefinedClassName: 'data-ex-icons-email'
-    };
-  },
+  };
+
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-email'
+  };
+
   render() {
     return (
       <Base {...this.props}>
@@ -43,7 +44,7 @@ const Email = React.createClass({
       </Base>
     );
   }
-});
+}
 
 // this export method must be used for generated documentation to work
 export default Email;
