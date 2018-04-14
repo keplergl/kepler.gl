@@ -18,45 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
-import styled, {ThemeProvider} from 'styled-components';
-import {theme} from '../styles';
-import {connect} from 'react-redux';
+import React from 'react';
+import document from 'global/document';
+import {Provider} from 'react-redux';
+import {hashHistory, Router, Route} from 'react-router';
+import {syncHistoryWithStore} from 'react-router-redux';
+import {render} from 'react-dom';
+import store from './store';
+import App from './app';
+// import {getAppUrlPrefix} from './constants/default-settings';
 
-const GlobalStyleDiv = styled.div`
-  font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
-  font-weight: 400;
-  font-size: 0.875em;
-  line-height: 1.71429;
+const history = syncHistoryWithStore(hashHistory, store);
+// const prefix = getAppUrlPrefix();
+// const path = prefix === '' ? '(:id)' : `${prefix}(/:id)`;
 
-  *,
-  *:before,
-  *:after {
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-  }
+const Root = () => (
+  <Provider store={store}>
+    <Router history={history}>
+      <Route path="/(:id)" component={App} />
+      <Route path="/demo/(:id)" component={App} />
+    </Router>
+  </Provider>
+);
 
-  ul {
-    margin: 0;
-    padding: 0;
-  }
-
-  li {
-    margin: 0;
-  }
-
-  a {
-    text-decoration: none;
-  }
-`;
-
-class App extends Component {
-  render() {
-    return (
-      <GlobalStyleDiv className="kg-web-content">{this.props.children}</GlobalStyleDiv>
-    );
-  }
-}
-
-export default connect(state => state)(App);
+render(<Root />, document.body.appendChild(document.createElement('div')));

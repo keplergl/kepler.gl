@@ -1,23 +1,63 @@
+// Copyright (c) 2018 Uber Technologies, Inc.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 const {resolve, join} = require('path');
 const webpack = require('webpack');
 
 const rootDir = join(__dirname, '..');
 const libSources = join(rootDir, 'src');
 
-// Otherwise modules imported from outside this directory does not compile
-// Seems to be a Babel bug
-// https://github.com/babel/babel-loader/issues/149#issuecomment-191991686
 const BABEL_CONFIG = {
+  // use babelrc: false to prevent babel-loader using root .babelrc
+  // https://github.com/babel/babel-preset-env/issues/399
+  // so that we can set modules: false, to avoid tree shaking
+  // https://github.com/webpack/webpack/issues/3974
+  babelrc: false,
   presets: [
-    'es2015',
-    'stage-2',
-    'react'
-  ].map(name => require.resolve(`babel-preset-${name}`))
+    ['es2015', {modules: false, loose: true}],
+    'react',
+    'stage-0',
+  ].map(name => Array.isArray(name) ?
+    [require.resolve(`babel-preset-${name[0]}`), name[1]] :
+    require.resolve(`babel-preset-${name}`)),
+  plugins: [
+    'transform-decorators-legacy',
+    'transform-runtime',
+    ['module-resolver', {root: [libSources]}]
+  ].map(name => Array.isArray(name) ?
+    [require.resolve(`babel-plugin-${name[0]}`), name[1]] :
+    require.resolve(`babel-plugin-${name}`))
 };
 
 const COMMON_CONFIG = {
 
   entry: ['./src/main'],
+
+  resolve: {
+    alias: {
+      'kepler.gl/dist': libSources,
+      // Imports the kepler.gl library from the src directory in this repo
+      'kepler.gl': libSources,
+      react: resolve(rootDir, './node_modules/react')
+    }
+  },
 
   module: {
     rules: [
@@ -56,7 +96,11 @@ const addDevConfig = config => {
     // Unfortunately, webpack doesn't import library sourcemaps on its own...
     test: /\.js$/,
     use: ['source-map-loader'],
-    enforce: 'pre'
+    enforce: 'pre',
+    exclude: [
+      /node_modules\/react-palm/,
+      /node_modules\/react-data-grid/,
+    ]
   });
 
   return Object.assign(config, {

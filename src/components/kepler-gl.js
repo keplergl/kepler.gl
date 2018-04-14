@@ -55,8 +55,6 @@ const GlobalStyle = styled.div`
   font-weight: 400;
   font-size: 0.875em;
   line-height: 1.71429;
-  width: ${props => props.width}px;
-  height: ${props => props.height}px;
 
   *,
   *:before,
@@ -258,14 +256,16 @@ function KeplerGlFactory(
       return (
         <ThemeProvider theme={theme}>
           <GlobalStyle
-            style={{position: 'relative'}}
+            style={{
+              position: 'relative',
+              width: `${width}px`,
+              height: `${height}px`
+            }}
             className="kepler-gl"
             id={`kepler-gl__${id}`}
             innerRef={node => {
               this.root = node;
             }}
-            width={width}
-            height={height}
           >
             {!uiState.readOnly && <SidePanel {...sideFields} />}
             <div className="maps" style={{display: 'flex'}}>

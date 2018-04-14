@@ -27,8 +27,10 @@
     "react-redux": "^4.4.5",
     "react-router": "^3.0.5",
     "react-router-redux": "^4.0.8",
-    "redux": "^3.6.0",
+    "react-palm": "^0.8.1",
+    "redux": "^3.0.4",
     "redux-actions": "^1.2.0",
+    "redux-thunk": "^1.0.0",
     "styled-components": "^2.2.4"
   },
   "devDependencies": {

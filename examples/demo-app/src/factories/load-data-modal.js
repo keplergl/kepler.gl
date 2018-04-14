@@ -18,45 +18,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
-import styled, {ThemeProvider} from 'styled-components';
-import {theme} from '../styles';
-import {connect} from 'react-redux';
+import {LoadDataModalFactory} from 'kepler.gl/components';
+import LoadDataModal from '../components/load-data-modal/load-data-modal';
+import {withState} from 'kepler.gl/components';
 
-const GlobalStyleDiv = styled.div`
-  font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
-  font-weight: 400;
-  font-size: 0.875em;
-  line-height: 1.71429;
+import {
+  loadSampleMap,
+  setLoadingMethod
+} from '../actions';
 
-  *,
-  *:before,
-  *:after {
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-  }
+export const CustomLoadDataModalFactory = () =>
+  withState(
+    [],
+    state => ({...state.demo.app}),
+    {
+      onSetLoadingMethod: setLoadingMethod,
+      onLoadSampleData: loadSampleMap
+    }
+  )(LoadDataModal);
 
-  ul {
-    margin: 0;
-    padding: 0;
-  }
-
-  li {
-    margin: 0;
-  }
-
-  a {
-    text-decoration: none;
-  }
-`;
-
-class App extends Component {
-  render() {
-    return (
-      <GlobalStyleDiv className="kg-web-content">{this.props.children}</GlobalStyleDiv>
-    );
-  }
+export function replaceLoadDataModal() {
+  return [LoadDataModalFactory, CustomLoadDataModalFactory];
 }
-
-export default connect(state => state)(App);

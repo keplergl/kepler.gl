@@ -18,45 +18,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
-import styled, {ThemeProvider} from 'styled-components';
-import {theme} from '../styles';
-import {connect} from 'react-redux';
+import {combineReducers, createStore, applyMiddleware, compose} from 'redux';
+import {routerReducer, routerMiddleware} from 'react-router-redux';
+import {hashHistory} from 'react-router';
 
-const GlobalStyleDiv = styled.div`
-  font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
-  font-weight: 400;
-  font-size: 0.875em;
-  line-height: 1.71429;
+import thunk from 'redux-thunk';
+import window from 'global/window';
+import {taskMiddleware} from 'react-palm';
 
-  *,
-  *:before,
-  *:after {
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-  }
+import demoReducer from './reducers';
 
-  ul {
-    margin: 0;
-    padding: 0;
-  }
+const reducers = combineReducers({
+  demo: demoReducer,
+  routing: routerReducer
+});
 
-  li {
-    margin: 0;
-  }
+export const middlewares = [
+  taskMiddleware,
+  thunk,
+  routerMiddleware(hashHistory)
+];
 
-  a {
-    text-decoration: none;
-  }
-`;
+export const enhancers = [applyMiddleware(...middlewares)];
 
-class App extends Component {
-  render() {
-    return (
-      <GlobalStyleDiv className="kg-web-content">{this.props.children}</GlobalStyleDiv>
-    );
-  }
-}
+const initialState = {};
 
-export default connect(state => state)(App);
+// add redux devtools
+const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+
+export default createStore(
+  reducers,
+  initialState,
+  composeEnhancers(...enhancers)
+);
