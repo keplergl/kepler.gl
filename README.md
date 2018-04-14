@@ -1,15 +1,17 @@
 # Kepler.gl
 
-Kepler.gl is the core package of Voyager. It is a map visualization tool that provides the UI
-to visualize any type of geospatial dataset. For what it is capable of. Take a look at [Voyager](voyager.uberinternal.com)
+Kepler.gl is the core package of Voyager, a map visualization tool that provides the UI
+to visualize any type of geospatial dataset.
 
-Kepler.gl is a redux component that uses redux reducer to store and manage state transitions.
-The package consists of a reducer and the UI component to render and customize the map
+For what it is capable of, take a look at [Voyager](voyager.uberinternal.com).
 
-##Links
+Kepler.gl is a redux component that uses a redux reducer to store and manage state transitions.
+This package consists of a reducer and the UI components to render and customize the map.
+
+## Links
 
 ### Env
-Use Node v6 and above, older node version has not been tested
+Use Node v6 and above, older node versions have not been tested
 
 ### Install
 Install node (`> 6`), yarn, and project dependencies
@@ -50,12 +52,12 @@ An Example app will be served at
 http://localhost:8080/
 
 ### Basic Usage
-You can also take a look at `kepler.gl/examples/demo-app` for How to uer kepler.gl in your app
+You can also take a look at `kepler.gl/examples/demo-app` for how to use kepler.gl in your app
 Here are the basic steps:
 
-#### 1. Mount kepler.gl reducer in your app reducer. Kepler.gl is using [react-palm](https://github.com/btford/react-palm) to handle side effects.
+#### 1. Mount kepler.gl reducer in your app reducer. Kepler.gl uses [react-palm](https://github.com/btford/react-palm) to handle side effects.
 You need to add `taskMiddleware` to your store too. We are actively working on a solution where
-`react-palm` will not be required. However it is still a very nice side effects management tool that much easy for testing (unlike react-thunk).
+`react-palm` will not be required, however it is still a very nice side effects management tool that works easier for testing than react-thunk.
 
 ```
 import keplerGlReducer from '@uber/kepler.gl/reducers';
@@ -71,7 +73,7 @@ const reducers = combineReducers({
 });
 
 // using createStore
-const store = createStore(reducer, applyMiddleWare(taskMiddleware))
+const store = createStore(reducer, applyMiddleware(taskMiddleware))
 
 // using enhancers
 const initialState = {}
@@ -83,7 +85,7 @@ const enhancers = [
 const store = createStore(reducer, initialState, compose(...enhancers))
 ```
 
-If you mount kepler.gl reducer in another address instead of `keplerGl`, or kepler.gl reducer is not
+If you mount kepler.gl reducer in another address instead of `keplerGl`, or the kepler.gl reducer is not
 mounted at root of your state, you will need to specify the path to it when you mount the component
 with the `getState` prop.
 
@@ -107,11 +109,11 @@ const Map = props => (
 - Default: `map`
 
 The id of this KeplerGl instance. `id` is required if you have multiple
-KeplerGl instances in your app. It defines the prop name of this KeplerGl state that
-stored in the KeplerGl reducer. For example. the state of the KeplerGl component with id `foo` is
+KeplerGl instances in your app. It defines the prop name of the KeplerGl state that is
+stored in the KeplerGl reducer. For example, the state of the KeplerGl component with id `foo` is
 stored in `state.keplerGl.foo`.
 
-In case you create multiple kepler.gl instances using the same id, kepler.gl state defined by the entry will be
+In case you create multiple kepler.gl instances using the same id, the kepler.gl state defined by the entry will be
 overridden by the latest instance and reset to a blank state.
 
 
@@ -163,15 +165,15 @@ Actions payload creator to replace default kepler.gl action. Only use custom act
 
 #### 3. Dispatch custom actions to `keplerGl` reducer.
 
-One greatest advantages of using reducer vs. react component state to handle keplerGl state is the flexibility
-to customize its behavior. If you only have one `KeplerGl` instance in your app or never intent to dispatch actions to KeplerGl from outside the component itself,
+One advantage of using the reducer over React component state to handle keplerGl state is the flexibility
+to customize its behavior. If you only have one `KeplerGl` instance in your app or never intend to dispatch actions to KeplerGl from outside the component itself,
 you don’t need to worry about forwarding dispatch and can move on to the next section. But life is full of customizations, and we want to make yours as enjoyable as possible.
 
 There are multiple ways to dispatch actions to a specific `KeplerGl` instance.
 
 - In the root reducer, with reducer updaters.
 
-Each action is mapped to a reducer updater in kepler.gl. You can import the reducer updater correspond to a specific action, and call it with the previous state and action payload to get the updated state.
+Each action is mapped to a reducer updater in kepler.gl. You can import the reducer updater corresponding to a specific action, and call it with the previous state and action payload to get the updated state.
 e.g. `updateVisDataUpdater` is the updater for `ActionTypes.UPDATE_VIS_DATA` (take a look at each reducer `reducers/vis-state.js` for action to updater mapping).
 Here is an example how you can listen to an app action `QUERY_SUCCESS` and call `updateVisDataUpdater` to load data into Kepler.Gl.
 ```
@@ -204,12 +206,12 @@ const composedReducer = (state, action) => {
  return reducers(state, action);
 };
 
-export default composeddReducer;
+export default composedReducer;
 ```
 
 - Using redux `connect`
 
-You can add dispatch function to your component that dispatch action to a specific `keplerGl` component,
+You can add a dispatch function to your component that dispatches actions to a specific `keplerGl` component,
 using connect.
 
 
@@ -231,14 +233,14 @@ Const MapContainer = props => (
 )
 
 const mapStateToProps = state => state
-const dispatchToProps = (dispatch, props) => ({
+const mapDispatchToProps = (dispatch, props) => ({
  dispatch,
  keplerGlDispatch: forwardTo(‘foo’, dispatch)
 });
 
-export default  connect(
+export default connect(
  mapStateToProps,
- dispatchToProps
+ mapDispatchToProps
 )(MapContainer);
 ```
 
@@ -270,23 +272,22 @@ const MapContainer = ({dispatch}) => (
 Everyone wants the flexibility to render custom kepler.gl componenents. Kepler.gl has a dependency injection system that allow you to inject
 components to KeplerGl replacing existing ones. All you need to do is to create a component factory for the one you want to replace, import the original component factory
 and call `injectComponents` at the root component of your app where `KeplerGl` is mounted.
-Take a look at `examples/demo-app/src/app.js` and see how it renders custom side panel header in kepler.gl
+Take a look at `examples/demo-app/src/app.js` and see how it renders a custom side panel header in kepler.gl
 
 ```
-// import injectComponents helper and original PanelHeaderFactory
 import {injectComponents, PanelHeaderFactory} from '@uber/kepler.gl/components';
 
 // define custom header
 const CustomHeader = () => (<div>My kepler.gl app</div>);
 const myCustomHeaderFactory = () => CustomHeader;
 
-// Inject custom header into Kepler.gl, replacing original one
+// Inject custom header into Kepler.gl, replacing default
 const KeplerGl = injectComponents([
   [PanelHeaderFactory, myCustomHeaderFactory]
 ]);
 
-// render KeplerGl, it's going to render your custom header instead
-const MapContainer = (}) => (
+// render KeplerGl, it will render your custom header instead of the default
+const MapContainer = () => (
   <div>
     <KeplerGl
       id="foo"
@@ -296,7 +297,7 @@ const MapContainer = (}) => (
 
 ```
 
-Using `withState` helper to Add reducer state and actions to customized component as additional props.
+Using `withState` helper to add reducer state and actions to customized component as additional props.
 
 ```
 import {withState, injectComponents, PanelHeaderFactory} from '@uber/kepler.gl/components';
@@ -332,7 +333,7 @@ It is also important to remember that Kepler.gl provides an easy API (```KeplerG
 
 
 ##### UpdateVisData
-This action will upload a new datasets and update the visState according with input parameters.
+This action will upload a new dataset and update the visState according to input parameters.
 The method takes 3 parameters as input:
 - ```datasets | object```: new data to be added to the current kepler.gl instance
 - ```options | object ``` - ```{centerMap: true, readOnly: false}```:
@@ -343,16 +344,16 @@ Properties defined in this object will override the current ones in the redux st
 
 
 ##### addDataToMap
-This method is really similar to the previous one but it is able to update the full kepler.gl configuration (mapState, mapStyle, visState).
-This action takes an object as input with the following properties
+This method is similar to UpdateVisData but it is able to update the full kepler.gl configuration (mapState, mapStyle, visState).
+This action takes an object as input with the following properties:
 ```javascript
 {
-    datasets | object: same as previous
-    options | object: same as previous
+    datasets | object: same as UpdateVisData
+    options | object: same as UpdateVisData
     config | object: this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}.
 }
 ```
-It is important to notice that the config object value will always have higher priority than the options properties.
+It is important to notice that the config object value will always have higher precedence than the options properties.
 For instance, if you provide ```{centerMap: true}``` as part of the options object and in your config object you pass
 the mapState configuration with latitude and longitude define as it follows:
 ```javascript
@@ -363,4 +364,4 @@ config: {
   }
 }
 ```
-the latter one will be applied and the map view will be moved the defined coordinates.
+the latter will be applied and the map view will be moved the defined coordinates.
