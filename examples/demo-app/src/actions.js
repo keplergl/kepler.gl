@@ -20,11 +20,9 @@
 
 import {push} from 'react-router-redux';
 import {text as requestText, json as requestJson} from 'd3-request';
-
 import {toggleModal} from 'kepler.gl/actions';
-
+import {console as Console} from 'global/window';
 import {MAP_CONFIG_URL} from './constants/sample-maps';
-// import {getAppUrlPrefix} from './constants/default-settings';
 
 // CONSTANTS
 export const INIT = 'INIT';
@@ -58,8 +56,6 @@ export function laodMapSampleFile(samples) {
 
 export function loadSampleMap(sample) {
   return (dispatch) => {
-    // const prefix = getAppUrlPrefix();
-    // const appendPrefix = prefix !== '' ? `/${getAppUrlPrefix()}/` : '/';
     dispatch(push(`/demo/${sample.id}`));
     dispatch(loadRemoteMap(sample));
     dispatch(toggleModal(null));
@@ -70,13 +66,13 @@ function loadRemoteMap(sample) {
   return (dispatch) => {
     requestJson(sample.configUrl, (confError, config) => {
       if (confError) {
-        console.warn(`Error loading config file ${sample.configUrl}`);
+        Console.warn(`Error loading config file ${sample.configUrl}`);
         // dispatch(error)
         return;
       }
       requestText(sample.dataUrl, (dataError, result) => {
         if (dataError) {
-          console.warn(`Error loading datafile ${sample.dataUrl}`);
+          Console.warn(`Error loading datafile ${sample.dataUrl}`);
           // dispatch(ERROR)
         } else {
           dispatch(loadResponseFromRemoteFile(result, config, sample));
@@ -96,8 +92,7 @@ export function loadSampleConfigurations(sampleMapId = null) {
   return (dispatch) => {
     requestJson(MAP_CONFIG_URL, (error, samples) => {
       if (error) {
-        console.warn(`Error loading sample configuration file ${MAP_CONFIG_URL}`);
-        // dispatch(ERROR)
+        Console.warn(`Error loading sample configuration file ${MAP_CONFIG_URL}`);
       } else {
         dispatch(laodMapSampleFile(samples));
         // Load the specified map

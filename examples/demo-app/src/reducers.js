@@ -18,15 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {routerReducer} from 'react-router-redux';
 import {combineReducers} from 'redux';
 import {handleActions} from 'redux-actions';
 
 import keplerGlReducer, {combineUpdaters} from 'kepler.gl/reducers';
 import Processor from 'kepler.gl/processors';
 import KeplerGlSchema from 'kepler.gl/schemas';
-
-// import {LOAD_REMOTE_FILE_DATA_SUCCESS} from './actions';
 
 import {
   INIT,
@@ -69,7 +66,7 @@ export const appReducer = handleActions({
 const demoReducer = combineReducers({
   // mount keplerGl reducer
   keplerGl: keplerGlReducer,
-  app: appReducer,
+  app: appReducer
 });
 
 // this can be moved into a action and call kepler.gl action

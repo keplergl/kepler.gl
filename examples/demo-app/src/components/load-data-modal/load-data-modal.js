@@ -21,7 +21,7 @@
 import React, {Component} from 'react';
 import classnames from 'classnames';
 import styled, {ThemeProvider} from 'styled-components';
-import {FileUpload, ModalFooter} from 'kepler.gl/components';
+import {FileUpload} from 'kepler.gl/components';
 import {themeLT} from 'kepler.gl/styles';
 import {Icons} from 'kepler.gl/components/';
 

@@ -39,6 +39,7 @@ export {default as FileType} from './file-type';
 export {default as FilterFunnel} from './filter-funnel';
 export {default as Histogram} from './histogram';
 export {default as Layers} from './layers';
+export {default as LeftArrow} from './left-arrow';
 export {default as Legend} from './legend';
 export {default as LineChart} from './line-chart';
 export {default as Minus} from './minus';

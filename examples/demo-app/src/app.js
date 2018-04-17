@@ -21,8 +21,6 @@
 import React, {Component} from 'react';
 import {connect} from 'react-redux';
 import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
-import Processor from 'kepler.gl/processors';
-import {updateVisData, addDataToMap} from 'kepler.gl/actions';
 
 import {loadSampleConfigurations} from './actions';
 import {replaceLoadDataModal} from './factories/load-data-modal';
@@ -33,43 +31,11 @@ const KeplerGl = require('kepler.gl/components').injectComponents([
 
 const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
 
-/*
-  define custom header
-  inject custom component factory to replace default one
-
-import {withState} from 'kepler.gl/components';
-import {visStateLens} from 'kepler.gl/reducers';
-import {wrapTo} from 'kepler.gl/actions';
-
-// custom action wrap to mounted instance
-const addTodoAction = (text) => wrapTo('map', {
-    type: 'ADD_TODO',
-    text
-});
-
-const CustomHeader = ({visState, addTodo}) => (
-  <div onClick={() => addTodo('hello')}>{`${Object.keys(visState.datasets).length} dataset loaded`}</div>
-);
-
-const headerStateToProps = state => ({loaded: state.app.loaded});
-const myCustomHeaderFactory = () => withState(
-  // keplerGl state lenses
-  [visStateLens],
-  // customMapStateToProps
-  headerStateToProps,
-  // actions
-  {addTodo: addTodoAction}
-)(CustomHeader);
-
-const KeplerGl = injectComponents([
-  [PanelHeaderFactory, myCustomHeaderFactory]
-]);
- */
-
 // Sample data
 /* eslint-disable no-unused-vars */
 import sampleTripData from './data/sample-trip-data';
 import sampleGeojson from './data/sample-geojson.json';
+import {updateVisData, addDataToMap} from 'kepler.gl/actions';
 /* eslint-enable no-unused-vars */
 
 class App extends Component {

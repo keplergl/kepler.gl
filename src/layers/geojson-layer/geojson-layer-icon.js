@@ -65,9 +65,9 @@ class GeojsonLayerIcon extends Component {
       </Base>
     );
   }
-};
+}
 
-GeojsonLayerIcon.displayName = 'GeojsonLayerIcon',
+GeojsonLayerIcon.displayName = 'GeojsonLayerIcon';
 GeojsonLayerIcon.propTypes = propTypes;
 GeojsonLayerIcon.defaultProps = defaultProps;
 

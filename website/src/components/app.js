@@ -19,8 +19,7 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import styled, {ThemeProvider} from 'styled-components';
-import {theme} from '../styles';
+import styled from 'styled-components';
 import {connect} from 'react-redux';
 
 const GlobalStyleDiv = styled.div`

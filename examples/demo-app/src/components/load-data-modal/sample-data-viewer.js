@@ -21,10 +21,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import {SAMPLE_MAPS} from '../../constants/sample-maps';
-// TODO: change this one
-// import {LeftArrow} from '@uber/react-inline-icons';
-import {Icons} from 'kepler.gl/components/';
+import {Icons} from 'kepler.gl/components';
 import {format} from 'd3-format';
 
 const numFormat = format(',');
@@ -129,7 +126,7 @@ const SampleMap = ({sample, onClick}) => (
 const SampleMapGallery = ({sampleData, sampleMaps, onLoadSampleData, back}) => (
   <div className="sample-data-modal">
     <BackLink onClick={back}>
-      <Icons.ArrowLeft height="12px" />
+      <Icons.LeftArrow height="12px" />
       <span>Back</span>
     </BackLink>
     <StyledSampleGallery className="sample-map-gallery">
