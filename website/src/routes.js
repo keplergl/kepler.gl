@@ -27,12 +27,26 @@ import Home from './components/home';
 import App from './components/app';
 import Demo from '../../examples/demo-app/src/app';
 
+
+const tokens = [
+  'test1',
+  'test2',
+  'test3',
+  'test4'
+];
+
+const checkAccessCode = ({location: {pathname, query}}, replace) => {
+  if (pathname === '/demo' && (!query.token || !tokens.includes(query.token))) {
+    replace('/');
+  }
+};
+
 // eslint-disable-next-line react/display-name
 export default () => (
   <Router history={syncHistoryWithStore(hashHistory, store)}>
     <Route path="/" component={App}>
       <IndexRoute component={Home} />
-      <Route path="demo(/:id)" component={Demo} />
+      <Route path="demo(/:id)" component={Demo} onEnter={checkAccessCode}/>
     </Route>
   </Router>
 );
