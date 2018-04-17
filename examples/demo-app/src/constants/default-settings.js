@@ -67,6 +67,4 @@ export const LOADING_METHODS = [
 
 export const DEFAULT_LOADING_METHOD = LOADING_METHODS[0];
 
-export const ASSETS_URL = 'https://s3.amazonaws.com/uber-static/kepler.gl/';
-
-export const getAppUrlPrefix = () => 'demo'; // /demo!
+export const ASSETS_URL = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/';

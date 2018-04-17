@@ -9,7 +9,8 @@
   "parser": "babel-eslint",
   "plugins": [
     "babel",
-    "prettier"
+    "prettier",
+    "react"
   ],
   "rules": {
     "valid-jsdoc": 0,
@@ -30,8 +31,5 @@
     "camelcase": 0,
     "consistent-return": 0,
     "comma-dangle": 1
-  },
-  "globals": {
-    "process": false
   }
 }

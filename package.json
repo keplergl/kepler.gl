@@ -33,7 +33,7 @@
     "start": "(cd examples/demo-app && (path-exists node_modules || npm i) && npm run start-local)",
     "start:custom-layer": "(cd examples/custom-layer && (path-exists node_modules || npm i) && npm run start-local)",
     "build": "rm -fr dist && uber-licence && babel src --out-dir dist --plugins=transform-es2015-modules-commonjs --source-maps inline",
-    "lint": "eslint src examples/demo-app/src examples/custom-layer/src",
+    "lint": "eslint src examples/**/src website/src",
     "check-licence": "uber-licence --dry",
     "add-licence": "uber-licence",
     "prepublish": "uber-licence && npm run build",

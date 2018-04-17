@@ -19,13 +19,10 @@
 // THE SOFTWARE.
 
 import keyMirror from 'keymirror';
-import toolsDark from './map-styles/tools-dark.json';
 
 export const ACTION_PREFIX = '@@kepler.gl/';
-
-// TODO: cleanup styles, don't load uber style
-export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net';
-export const STYLE_PREFIX = `${CLOUDFRONT}/map_styles`;
+export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl';
+export const STYLE_PREFIX = `${CLOUDFRONT}/map-styles`;
 export const ICON_PREFIX = `${CLOUDFRONT}/geodude`;
 
 // Modal Ids
@@ -92,17 +89,17 @@ export const PANELS_FOOTER = [
 export const DEFAULT_LAYER_GROUPS = [
   {
     slug: 'label',
-    filter: ({id}) => id.match(/label/),
+    filter: ({id}) => id.match(/(?=(label|place-|poi-))/),
     defaultVisibility: true
   },
   {
     slug: 'road',
-    filter: ({id}) => id.match(/(?=(road|railway))(?!.*label)/),
+    filter: ({id}) => id.match(/(?=(road|railway|tunnel|street|bridge))(?!.*label)/),
     defaultVisibility: true
   },
   {
     slug: 'border',
-    filter: ({id}) => id.match(/border/),
+    filter: ({id}) => id.match(/border|boundaries/),
     defaultVisibility: false
   },
   {
@@ -117,7 +114,7 @@ export const DEFAULT_LAYER_GROUPS = [
   },
   {
     slug: 'land',
-    filter: ({id}) => id.match(/(?=(parks))/),
+    filter: ({id}) => id.match(/(?=(parks|landcover|industrial|sand|hillshade))/),
     defaultVisibility: true
   }
 ];
@@ -126,58 +123,16 @@ export const DEFAULT_MAP_STYLES = [
   {
     id: 'dark',
     label: 'Dark',
-    url: `${STYLE_PREFIX}/tools-dark.json`,
+    url: `${STYLE_PREFIX}/dark`,
     icon: `${ICON_PREFIX}/UBER_DARK_V2.png`,
-    style: toolsDark,
     layerGroups: DEFAULT_LAYER_GROUPS
   },
   {
     id: 'light',
     label: 'Light',
-    url: `${STYLE_PREFIX}/tools-light.json`,
+    url: `${STYLE_PREFIX}/light`,
     icon: `${ICON_PREFIX}/UBER_LIGHT_V2.png`,
     layerGroups: DEFAULT_LAYER_GROUPS
-  },
-  {
-    id: 'places',
-    label: 'Places',
-    url: `${STYLE_PREFIX}/driver-ticker.json`,
-    icon: `${ICON_PREFIX}/UBER_DRIVER_TICKER.png`,
-    layerGroups: [
-      ...DEFAULT_LAYER_GROUPS,
-      {
-        slug: 'places',
-        filter: ({id}) => id.match(/poi/),
-        defaultVisibility: true,
-        editable: true
-      }
-    ]
-  },
-  {
-    id: 'muted',
-    label: 'Muted',
-    url: `${STYLE_PREFIX}/driver-muted.json`,
-    icon: `${ICON_PREFIX}/UBER_MUTED.png`,
-    layerGroups: DEFAULT_LAYER_GROUPS
-  },
-  {
-    id: 'muted_night',
-    label: 'Muted Night',
-    url: `${STYLE_PREFIX}/driver-night-muted.json`,
-    icon: `${ICON_PREFIX}/UBER_NIGHT_MUTED.png`,
-    layerGroups: DEFAULT_LAYER_GROUPS
-  },
-  {
-    id: 'street',
-    label: 'Street',
-    url: `${STYLE_PREFIX}/tools-street.json`,
-    icon: `${ICON_PREFIX}/UBER_MAP.jpg`
-  },
-  {
-    label: 'Google Satellite',
-    id: 'google_satellite',
-    url: `${STYLE_PREFIX}/tools-google-satellite.json`,
-    icon: `${ICON_PREFIX}/GOOGLE_SATELLITE.jpg`
   }
 ];
 
