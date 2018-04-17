@@ -32,6 +32,7 @@ import PanelToggle from './side-panel/panel-toggle';
 
 import {
   ADD_DATA_ID,
+  ADD_MAP_STYLE_ID,
   DATA_TABLE_ID,
   EXPORT_IMAGE_ID,
   EXPORT_DATA_ID,
@@ -94,6 +95,10 @@ export default function SidePanelFactory(PanelHeader) {
       this.props.uiStateActions.toggleModal(ADD_DATA_ID);
     };
 
+    _showAddMapStyleModal = () => {
+      this.props.uiStateActions.toggleModal(ADD_MAP_STYLE_ID);
+    };
+
     _removeDataset = key => {
       // this will show the modal dialog to confirm deletion
       this.props.uiStateActions.openDeleteModal(key);
@@ -152,9 +157,11 @@ export default function SidePanelFactory(PanelHeader) {
       };
 
       const mapManagerActions = {
+        addMapStyleUrl: mapStyleActions.addMapStyleUrl,
         onConfigChange: mapStyleActions.mapConfigChange,
         onStyleChange: mapStyleActions.mapStyleChange,
-        onBuildingChange: mapStyleActions.mapBuildingChange
+        onBuildingChange: mapStyleActions.mapBuildingChange,
+        showAddMapStyleModal: this._showAddMapStyleModal
       };
 
       return (

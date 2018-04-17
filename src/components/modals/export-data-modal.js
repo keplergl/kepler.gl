@@ -24,15 +24,7 @@ import styled from 'styled-components';
 
 import {EXPORT_DATA_TYPE_OPTIONS} from 'constants/default-settings';
 import {FileType} from 'components/common/icons';
-
-const StyledExportDataModal = styled.div`
-  background: ${props => props.theme.panelBackgroundLT};
-  display: flex;
-  flex-direction: column;
-  font-size: 10px;
-  margin: 0 -20px;
-  padding: 30px 80px;
-`;
+import {StyledModalContent} from 'components/common/styled-components';
 
 const StyledExportDataSection = styled.div`
   display: flex;
@@ -187,7 +179,7 @@ const ExportDataModal = ({
   onClose
 }) => (
   <div className="export-data-modal">
-    <StyledExportDataModal>
+    <StyledModalContent>
       <StyledExportDataSection>
         <div className="description">
           <div className="title">
@@ -249,7 +241,7 @@ const ExportDataModal = ({
           </StyledFilteredDataOption>
         </div>
       </StyledExportDataSection>
-    </StyledExportDataModal>
+    </StyledModalContent>
   </div>
 );
 

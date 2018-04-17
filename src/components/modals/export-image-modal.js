@@ -29,6 +29,7 @@ import {
   RESOLUTION_OPTIONS
 } from 'constants/default-settings';
 import LoadingSpinner from 'components/common/loading-spinner';
+import {StyledModalContent} from 'components/common/styled-components';
 
 const ImageOptionList = styled.div`
   display: flex;
@@ -108,15 +109,6 @@ const Button = styled.div`
   }
 `;
 
-const StyledExportImageModal = styled.div`
-  background: ${props => props.theme.panelBackgroundLT};
-  display: flex;
-  flex-direction: row;
-  font-size: 10px;
-  margin: 0 -20px;
-  padding: 30px 80px;
-`;
-
 class ExportImageModal extends Component {
 
   static propTypes = {
@@ -153,7 +145,7 @@ class ExportImageModal extends Component {
 
     return (
       <div className="export-image-modal">
-        <StyledExportImageModal>
+        <StyledModalContent>
           <ImageOptionList>
             <div className="image-option-section">
               <div className="image-option-section-title">Ratio</div>
@@ -199,9 +191,8 @@ class ExportImageModal extends Component {
                 <img className="preview-image-placeholder" src={imageDataUri} />
               }
             </div>
-            <div className="instruction">Or drag and drop to export immediately</div>
           </PreviewImageSection>
-        </StyledExportImageModal>
+        </StyledModalContent>
       </div>
     );
   }  

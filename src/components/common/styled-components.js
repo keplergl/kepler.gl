@@ -193,6 +193,8 @@ export const Button = styled.div.attrs({
   transition: ${props => props.theme.transition};
   vertical-align: middle;
   width: ${props => props.width || 'auto'};
+  opacity: ${props => (props.disabled ? 0.4 : 1)};
+  pointer-events: ${props => (props.disabled ? 'none' : 'all')};
 
   :hover,
   :focus,
@@ -224,6 +226,10 @@ export const Button = styled.div.attrs({
 export const Input = styled.input`
   ${props =>
     props.secondary ? props.theme.secondaryInput : props.theme.input};
+`;
+
+export const InputLight = styled.input`
+  ${props => props.theme.inputLT}
 `;
 
 export const InlineInput = Input.extend`
@@ -303,5 +309,27 @@ export const Table = styled.table`
      border-bottom: ${props => props.theme.panelBorderLT};
      padding: 12px;
    }
+  }
+`;
+
+export const StyledModalContent = styled.div`
+  background: ${props => props.theme.panelBackgroundLT};
+  color: ${props => props.theme.textColorLT};
+  display: flex;
+  flex-direction: row;
+  font-size: 10px;
+  margin: 0 -96px;
+  padding: 30px 96px;
+  justify-content: space-between;
+`;
+
+/**
+ * Newer versions of mapbox.gl display an error message banner on top of the map by default
+ * which will cause the map to display points in the wrong locations
+ * This workaround will hide the error banner.
+ */
+export const StyledMapContainer = styled.div`
+  .mapboxgl-map .mapboxgl-missing-css {
+    display: none;
   }
 `;

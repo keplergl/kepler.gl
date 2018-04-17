@@ -24,6 +24,7 @@ import classnames from 'classnames';
 import styled from 'styled-components';
 
 import {
+  Button,
   PanelLabel,
   StyledPanelHeader,
   PanelHeaderTitle,
@@ -33,8 +34,9 @@ import {
   PanelLabelWrapper,
   CenterFlexbox
 } from 'components/common/styled-components';
+
 import PanelHeaderAction from 'components/side-panel/panel-header-action';
-import {ArrowDown, EyeSeen, EyeUnseen, Upload} from 'components/common/icons';
+import {Add, ArrowDown, EyeSeen, EyeUnseen, Upload} from 'components/common/icons';
 
 const StyledInteractionPanel = styled.div`
   padding-bottom: 12px;
@@ -45,7 +47,7 @@ export default class MapManager extends Component {
     mapStyle: PropTypes.object.isRequired,
     onConfigChange: PropTypes.func.isRequired,
     onStyleChange: PropTypes.func.isRequired,
-    onBuildingChange: PropTypes.func.isRequired
+    showAddMapStyleModal: PropTypes.func.isRequired
   };
 
   state = {
@@ -87,6 +89,11 @@ export default class MapManager extends Component {
               onChange={this._updateConfig}
             />
           ) : null}
+          <Button
+            onClick={this.props.showAddMapStyleModal}
+            secondary>
+            <Add height="12px" />Add Map Style
+          </Button>
         </div>
       </div>
     );

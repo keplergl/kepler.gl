@@ -24,11 +24,14 @@ import {handleActions} from 'redux-actions';
 import ActionTypes from 'constants/action-types';
 
 import {
+  inputMapStyleUpdater,
   mapConfigChangeUpdater,
   mapStyleChangeUpdater,
   loadMapStylesUpdater,
   loadMapStyleErrUpdater,
-  receiveMapConfigUpdater
+  receiveMapConfigUpdater,
+  loadCustomMapStyleUpdater,
+  addCustomMapStyleUpdater
 } from './map-style-updaters';
 
 // bedrock browserInit flattens our immutable object into a plain object
@@ -42,18 +45,28 @@ const getDefaultState = () => {
     styleType,
     visibleLayerGroups,
     topLayerGroups,
-    mapStyles: {}
+    mapStyles: {},
+
+    inputStyle: {
+      url: null,
+      isValid: false,
+      label: null,
+      style: null
+    }
   };
 };
 
 export const INITIAL_MAP_STYLE = getDefaultState();
 
 const actionHandler = {
+  [ActionTypes.INPUT_MAP_STYLE]: inputMapStyleUpdater,
   [ActionTypes.MAP_CONFIG_CHANGE]: mapConfigChangeUpdater,
   [ActionTypes.MAP_STYLE_CHANGE]: mapStyleChangeUpdater,
   [ActionTypes.LOAD_MAP_STYLES]: loadMapStylesUpdater,
   [ActionTypes.LOAD_MAP_STYLE_ERR]: loadMapStyleErrUpdater,
-  [ActionTypes.RECEIVE_MAP_CONFIG]: receiveMapConfigUpdater
+  [ActionTypes.RECEIVE_MAP_CONFIG]: receiveMapConfigUpdater,
+  [ActionTypes.LOAD_CUSTOM_MAP_STYLE]: loadCustomMapStyleUpdater,
+  [ActionTypes.ADD_CUSTOM_MAP_STYLE]: addCustomMapStyleUpdater
 };
 
 export const mapStyleReducerFactory = (initialState = {}) =>

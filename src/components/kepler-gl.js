@@ -127,35 +127,32 @@ function KeplerGlFactory(
       });
     }
 
-    _loadMapStyle() {
+    _loadMapStyle = () => {
       [...this.props.mapStyles, ...Object.values(DEFAULT_MAP_STYLES)].forEach(
         style => {
           if (style.style) {
-            this.props.dispatch(
-              MapStyleActions.loadMapStyles({
-                [style.id]: style
-              })
-            );
+            this.props.mapStyleActions.loadMapStyles({
+              [style.id]: style
+            })
           } else {
             this._requestMapStyle(style);
           }
         }
       );
-    }
+    };
 
-    _requestMapStyle(mapStyle) {
+    _requestMapStyle = (mapStyle) => {
       const {url, id} = mapStyle;
       requestJson(url, (error, result) => {
         if (error) {
           Console.warn(`Error loading map style ${mapStyle.url}`);
-        }
-        this.props.dispatch(
-          MapStyleActions.loadMapStyles({
+        } else {
+          this.props.mapStyleActions.loadMapStyles({
             [id]: {...mapStyle, style: result}
-          })
-        );
+          });
+        }
       });
-    }
+    };
 
     render() {
       const {
@@ -292,10 +289,14 @@ function KeplerGlFactory(
               containerW={containerW}
             />
             <ModalWrapper
+              mapStyle={mapStyle}
               visState={visState}
+              mapState={mapState}
               uiState={uiState}
+              mapboxApiAccessToken={mapboxApiAccessToken}
               visStateActions={visStateActions}
               uiStateActions={uiStateActions}
+              mapStyleActions={mapStyleActions}
               rootNode={this.root}
               containerW={containerW}
               containerH={mapState.height}

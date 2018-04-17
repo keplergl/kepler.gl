@@ -65,6 +65,9 @@ const ActionTypes = keyMirror({
   MAP_STYLE_CHANGE: null,
   LOAD_MAP_STYLES: null,
   LOAD_MAP_STYLE_ERR: null,
+  INPUT_MAP_STYLE: null,
+  LOAD_CUSTOM_MAP_STYLE: null,
+  ADD_CUSTOM_MAP_STYLE: null,
 
   // uiState
   TOGGLE_SIDE_PANEL: null,

@@ -87,3 +87,12 @@ export const editBottomMapStyle = memoize(
   },
   resolver
 );
+
+const mapUrlRg = /^mapbox:\/\/styles\/[-a-z0-9]{2,256}\/[-a-z0-9]{2,256}/;
+
+// valid style url
+// mapbox://styles/uberdata/cjfyl03kp1tul2smf5v2tbdd4
+// lowercase letters, numbers and dashes only.
+export function isValidStyleUrl(url) {
+  return typeof url === 'string' && Boolean(url.match(mapUrlRg));
+}

@@ -58,6 +58,7 @@ const defaultProps = {
 
 const ModalContentWrapper = styled.div`
   width: 60%;
+  max-width: 960px;
   padding: 40px 96px;
   position: absolute;
   top: 92px;
@@ -127,8 +128,8 @@ export const ModalFooter = ({
   cancelButton,
   confirmButton
 }) => {
-  const cancelButtonProps = {...defaultProps.cancelButton, cancelButton};
-  const confirmButtonProps = {...defaultProps.confirmButton, confirmButton};
+  const cancelButtonProps = {...defaultProps.cancelButton, ...cancelButton};
+  const confirmButtonProps = {...defaultProps.confirmButton, ...confirmButton};
   return (
     <StyledModalFooter className="modal--footer">
       <FooterActionWrapper>

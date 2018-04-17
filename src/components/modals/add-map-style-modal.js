@@ -1,0 +1,226 @@
+// Copyright (c) 2018 Uber Technologies, Inc.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
+import classnames from 'classnames';
+import styled from 'styled-components';
+import MapboxGLMap from 'react-map-gl';
+import {findDOMNode} from 'react-dom';
+import {StyledModalContent, InputLight, StyledMapContainer} from 'components/common/styled-components';
+
+const MapH = 190;
+const MapW = 264;
+const ErrorMsg = {
+  styleError : 'Failed to load map style, make sure it is published'
+};
+
+const InstructionPanel = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  font-size: 12px;
+  .modal-section {
+    margin-bottom: 32px;
+  }
+  .modal-section:first-child {
+    margin-top: 24px;
+  }
+  
+  .modal-section {
+    .modal-section-title {
+      font-weight: 500;
+    }
+    .modal-section-subtitle {
+      color: ${props => props.theme.subtextColorLT};
+    }
+    
+    input {
+      margin-top: 8px;
+    }
+  }
+
+  input {
+    margin-right: 8px;
+  }
+`;
+
+const PreviewMap = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-left: 116px;
+  flex-shrink: 0;
+  
+  .preview-title {
+    font-weight: 500;
+    font-size: 10px;
+    padding: 8px 0px;
+  }
+  
+  .preview-title.error {
+    color: ${props => props.theme.errorColor};
+  }
+
+  .preview-image {
+    background: ${props => props.theme.modalImagePlaceHolder};
+    border-radius: 4px;
+    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.18);
+    width: ${MapW}px;
+    height: ${MapH}px;
+    position: relative;
+  }
+
+  .preview-image-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .preview-image-spinner {
+    position: absolute;
+    left: calc(50% - 25px);
+    top: calc(50% - 25px);
+  }
+`;
+
+const InlineLink = styled.a`
+  font-weight: 500;
+  
+  :hover {
+    cursor: pointer;
+  }
+`;
+
+class AddMapStyleModal extends Component {
+
+  static propTypes = {
+    mapState: PropTypes.object.isRequired,
+    inputMapStyle: PropTypes.func.isRequired,
+    loadCustomMapStyle: PropTypes.func.isRequired,
+    inputStyle: PropTypes.object.isRequired
+  };
+
+  componentDidUpdate() {
+    const map = this.mapRef && this.mapRef.getMap();
+    if (map && this._map !== map) {
+      this._map = map;
+
+      map.on('style.load', () => {
+        const style = map.getStyle();
+        this.loadMapStyleJson(style);
+      });
+
+      map.on('render', () => {
+        if (map.isStyleLoaded()) {
+          this.loadMapStyleIcon();
+        }
+      });
+
+      map.on('error', () => {
+        this.loadMaoStyleError();
+      })
+    }
+  }
+
+  loadMapStyleJson = (style) => {
+    this.props.loadCustomMapStyle({style, error: false});
+  };
+
+  loadMapStyleIcon = () => {
+    const canvas = findDOMNode(this.mapRef).querySelector('.mapboxgl-canvas');
+    const dataUri = canvas.toDataURL();
+    this.props.loadCustomMapStyle({
+      icon: dataUri
+    });
+  };
+
+  loadMaoStyleError = () => {
+    this.props.loadCustomMapStyle({error: true});
+  };
+
+  render() {
+    const {inputStyle, mapState} = this.props;
+
+    return (
+      <div className="add-map-style-modal">
+        <StyledModalContent>
+          <InstructionPanel>
+            <div className="modal-section">
+              <div className="modal-section-title">1. Publish your style at mapbox</div>
+              <div className="modal-section-subtitle">
+                You can create your own map style at
+                <InlineLink target="_blank" href="https://www.mapbox.com/studio/styles/"> mapbox</InlineLink> and
+                <InlineLink target="_blank" href="https://www.mapbox.com/help/studio-manual-publish/"> publish</InlineLink> it.
+              </div>
+            </div>
+            <div className="modal-section">
+              <div className="modal-section-title">2. Paste style url</div>
+              <div className="modal-section-subtitle">
+                What is a
+                <InlineLink target="_blank" href="https://www.mapbox.com/help/studio-manual-publish/#style-url"> style URL</InlineLink>
+              </div>
+              <InputLight
+                type="text"
+                value={inputStyle.url || ''}
+                onChange={({target: {value}}) => this.props.inputMapStyle({...inputStyle, url: value})}
+                placeholder="e.g. mapbox://styles/uberdataviz/abcdefghijklmnopq"
+              />
+            </div>
+            <div className="modal-section">
+              <div className="modal-section-title">3. Name your style</div>
+              <InputLight
+                type="text"
+                value={inputStyle.label || ''}
+                onChange={({target: {value}}) => this.props.inputMapStyle({...inputStyle, label: value})}
+              />
+            </div>
+          </InstructionPanel>
+          <PreviewMap>
+            <div className={classnames('preview-title', {error: inputStyle.error})}>
+              {inputStyle.error ? ErrorMsg.styleError :
+                (inputStyle.style && inputStyle.style.name) || ''}</div>
+            <div className="preview-image">
+              {!inputStyle.isValid ?
+                <div className="preview-image-spinner"/> :
+                <StyledMapContainer>
+                  <MapboxGLMap
+                    {...mapState}
+                    mapboxApiAccessToken={this.props.mapboxApiAccessToken}
+                    ref={el => {
+                      this.mapRef = el;
+                    }}
+                    preserveDrawingBuffer
+                    width={MapW}
+                    height={MapH}
+                    mapStyle={inputStyle.url}/>
+                </StyledMapContainer>
+              }
+            </div>
+          </PreviewMap>
+        </StyledModalContent>
+      </div>
+    );
+  }
+}
+
+const AddMapStyleModalFactory = () => AddMapStyleModal;
+export default AddMapStyleModalFactory;

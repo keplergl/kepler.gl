@@ -23,9 +23,12 @@ import Immutable from 'immutable';
 // Utils
 import {
   getDefaultLayerGroupVisibility,
+  isValidStyleUrl,
   editTopMapStyle,
   editBottomMapStyle
 } from 'utils/map-style-utils/mapbox-gl-style-editor';
+import {DEFAULT_LAYER_GROUPS} from 'constants/default-settings';
+import {generateHashId} from 'utils/utils';
 
 /**
  * Create two map styles from preset map style, one for top map one for bottom
@@ -133,3 +136,47 @@ export const receiveMapConfigUpdater = (state, action) =>
   action.payload.mapStyle
     ? mapConfigChangeUpdater(state, {payload: action.payload.mapStyle})
     : state;
+
+export const loadCustomMapStyleUpdater = (state, {payload: {icon, style, error}}) => ({
+  ...state,
+  inputStyle: {
+    ...state.inputStyle,
+    // style json and icon will load asynchronously
+    ...(style ? {
+      id: style.id || generateHashId(),
+      style,
+      label: style.name,
+      layerGroups: DEFAULT_LAYER_GROUPS.filter(lg => style.layers.filter(lg.filter).length)
+    } : {}),
+    ...(icon ? {icon} : {}),
+    ...(error !== undefined ? {error} : {})
+  }
+});
+
+export const inputMapStyleUpdater = (state, {payload: inputStyle}) => ({
+  ...state,
+  inputStyle: {
+    ...inputStyle,
+    isValid: isValidStyleUrl(inputStyle.url)
+  }
+});
+
+export const addCustomMapStyleUpdater = (state, action) => {
+  const styleId = state.inputStyle.id;
+  const newState = {
+    ...state,
+    mapStyles: {
+      ...state.mapStyles,
+      [styleId]: state.inputStyle
+    },
+    // set to default
+    inputStyle: {
+      url: null,
+      isValid: false,
+      label: null,
+      style: null
+    }
+  };
+  // set new style
+  return mapStyleChangeUpdater(newState, {payload: styleId});
+};

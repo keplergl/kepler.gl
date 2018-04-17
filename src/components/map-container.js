@@ -20,7 +20,6 @@
 
 // libraries
 import React, {Component} from 'react';
-import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import MapboxGLMap from 'react-map-gl';
 import DeckGL from 'deck.gl';
@@ -29,6 +28,7 @@ import {GL} from 'luma.gl';
 // components
 import MapPopoverFactory from 'components/map/map-popover';
 import MapControlFactory from 'components/map/map-control';
+import {StyledMapContainer} from 'components/common/styled-components';
 
 // Overlay type
 import {generateMapboxLayers, updateMapboxLayers} from '../layers/mapbox-utils';
@@ -45,17 +45,6 @@ const MAP_STYLE = {
     position: 'absolute', top: '0px', pointerEvents: 'none'
   }
 };
-
-/**
- * Newer versions of mapbox.gl display an error message banner on top of the map by default
- * which will cause the map to display points in the wrong locations
- * This workaround will hide the error banner.
- */
-const StyledMapContainer = styled.div`
-  .mapboxgl-map .mapboxgl-missing-css {
-    display: none;
-  }
-`;
 
 const getGlConst = d => GL[d];
 

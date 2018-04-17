@@ -173,6 +173,7 @@ export const tooltipColor = '#333334';
 export const modalTitleColor = '#3A414C';
 export const modalTitleFontSize = '24px';
 export const modalFooterBgd = '#F8F8F9';
+export const modalImagePlaceHolder = '#DDDFE3';
 
 // Modal Dialog (Dark)
 export const modalDialogBgd = '#3A414C';
@@ -263,6 +264,43 @@ const input = css`
   }
 `;
 
+const inputLT = css`
+  ${input}
+  
+  background-color: ${props => props.theme.selectBackgroundLT};
+  border: 1px solid
+  ${props =>
+    props.active
+      ? props.theme.selectActiveBorderColor
+      : props.error
+      ? props.theme.errorColor
+      : props.theme.selectBorderColorLT};
+  color: ${props => props.theme.selectColorLT};
+  caret-color: ${props => props.theme.selectColorLT};
+
+  ::-webkit-input-placeholder {
+    color: ${props => props.theme.subtextColorLT};
+    font-weight: 400;
+  }
+
+  :active,
+  :focus,
+  &.focus,
+  &.active {
+    background-color: ${props => props.theme.selectBackgroundLT};
+    border-color: ${props => props.theme.textColorLT};
+  }
+
+  :hover {
+    background-color: ${props => props.theme.selectBackgroundLT};
+    cursor: ${props => ['number', 'text'].includes(props.type) ? 'text' : 'pointer'};
+    border-color: ${props =>
+    props.active
+      ? props.theme.textColorLT
+      : props.theme.subtextColor};
+  }
+`;
+
 const secondaryInput = css`
   ${props => props.theme.input} 
   color: ${props => props.theme.secondaryInputColor};
@@ -321,29 +359,6 @@ const inlineInput = css`
   :focus {
     background-color: transparent;
     border: 1px solid ${props => props.theme.inputBorderActiveColor};
-  }
-`;
-
-const inputLT = css`
-  ${input}
-  background-color: ${props => props.theme.selectBackgroundLT};
-  border: 1px solid
-  ${props =>
-  props.active
-    ? props.theme.selectActiveBorderColor
-    : props.error
-    ? props.theme.errorColor
-    : props.theme.selectBorderColorLT};
-  color: ${props => props.theme.selectColorLT};
-  
-  ::-webkit-input-placeholder {
-    color: ${props => props.theme.subtextColorLT};
-    font-weight: 400;
-  }
-  
-  :hover {
-    cursor: pointer;
-    background-color: ${props => props.theme.selectBackgroundHoverLT};
   }
 `;
 
@@ -620,6 +635,7 @@ export const theme = {
   ...DIMENSIONS,
   // templates
   input,
+  inputLT,
   inlineInput,
   chickletedInput,
   secondaryInput,
@@ -744,6 +760,7 @@ export const theme = {
   modalTitleColor,
   modalTitleFontSize,
   modalFooterBgd,
+  modalImagePlaceHolder,
 
   modalDialogBgd,
   modalDialogColor,

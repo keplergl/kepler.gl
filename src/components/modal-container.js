@@ -35,6 +35,7 @@ import DataTableModalFactory from './modals/data-table-modal';
 import LoadDataModalFactory from './modals/load-data-modal';
 import ExportImageModalFactory from './modals/export-image-modal';
 import ExportDataModalFactory from './modals/export-data-modal';
+import AddMapStyleModalFactory from './modals/add-map-style-modal';
 
 import {
   ADD_DATA_ID,
@@ -43,17 +44,22 @@ import {
   DELETE_DATA_ID,
   EXPORT_DATA_ID,
   EXPORT_DATA_TYPE,
-  EXPORT_IMAGE_ID
+  EXPORT_IMAGE_ID,
+  ADD_MAP_STYLE_ID
 } from 'constants/default-settings';
 
 const propTypes = {
   rootNode: PropTypes.object,
   containerW: PropTypes.number,
   containerH: PropTypes.number,
+  mapboxApiAccessToken: PropTypes.string.isRequired,
+  mapState: PropTypes.object.isRequired,
+  mapStyle: PropTypes.object.isRequired,
   uiState: PropTypes.object.isRequired,
   visState: PropTypes.object.isRequired,
   visStateActions: PropTypes.object.isRequired,
-  uiStateActions: PropTypes.object.isRequired
+  uiStateActions: PropTypes.object.isRequired,
+  mapStyleActions: PropTypes.object.isRequired
 };
 
 const DataTableModalStyle = css`
@@ -61,6 +67,7 @@ const DataTableModalStyle = css`
   width: 90%;
   top: 80px;
   padding: 32px 0 0 0;
+  max-width: unset;
 `;
 
 const DeleteDatasetModalStyled = css`
@@ -72,17 +79,14 @@ const LoadDataModalStyle = css`
   top: 60px;
 `;
 
-const ExportModalStyle = css`
-  padding: 20px;
-`;
-
 ModalContainerFactory.deps = [
   DeleteDatasetModalFactory,
   IconInfoModalFactory,
   DataTableModalFactory,
   LoadDataModalFactory,
   ExportImageModalFactory,
-  ExportDataModalFactory
+  ExportDataModalFactory,
+  AddMapStyleModalFactory
 ];
 
 export default function ModalContainerFactory(
@@ -91,7 +95,8 @@ export default function ModalContainerFactory(
   DataTableModal,
   LoadDataModal,
   ExportImageModal,
-  ExportDataModal
+  ExportDataModal,
+  AddMapStyleModal
 ) {
   class ModalWrapper extends Component {
     _closeModal = () => {
@@ -100,6 +105,11 @@ export default function ModalContainerFactory(
 
     _deleteDataset = key => {
       this.props.visStateActions.removeDataset(key);
+      this._closeModal();
+    };
+
+    _onAddCustomMapStyle = () => {
+      this.props.mapStyleActions.addCustomMapStyle();
       this._closeModal();
     };
 
@@ -117,7 +127,7 @@ export default function ModalContainerFactory(
       }
       this.props.uiStateActions.cleanupExportImage();
       this._closeModal();
-    }
+    };
 
     _onExportData = () => {
       const {datasets} = this.props.visState;
@@ -150,12 +160,13 @@ export default function ModalContainerFactory(
         break;
       }
       this._closeModal();
-    }
+    };
 
     render() {
       const {
         containerW,
         containerH,
+        mapStyle,
         uiState,
         visState,
         rootNode,
@@ -243,12 +254,10 @@ export default function ModalContainerFactory(
           modalProps = {
             close: false,
             title: 'Export Image',
-            cssStyle: ExportModalStyle,
             footer: true,
             onCancel: this._closeModal,
             onConfirm: this._onExportImage,
             confirmButton: {
-              negative: true,
               large: true,
               children: 'Export'
             }
@@ -272,18 +281,39 @@ export default function ModalContainerFactory(
           modalProps = {
             close: false,
             title: 'Export Data',
-            cssStyle: ExportModalStyle,
             footer: true,
             onCancel: this._closeModal,
             onConfirm: this._onExportData,
             confirmButton: {
-              negative: true,
               large: true,
               children: 'Export'
             }
           };
           break;
 
+        case ADD_MAP_STYLE_ID:
+          template = (
+            <AddMapStyleModal
+              mapboxApiAccessToken={this.props.mapboxApiAccessToken}
+              mapState={this.props.mapState}
+              inputStyle={mapStyle.inputStyle}
+              inputMapStyle={this.props.mapStyleActions.inputMapStyle}
+              loadCustomMapStyle={this.props.mapStyleActions.loadCustomMapStyle}
+            />
+          );
+          modalProps = {
+            close: false,
+            title: 'Add Custom Mapbox Style',
+            footer: true,
+            onCancel: this._closeModal,
+            onConfirm: this._onAddCustomMapStyle,
+            confirmButton: {
+              large: true,
+              disabled: !mapStyle.inputStyle.style,
+              children: 'Add Style'
+            }
+          };
+          break;
         default:
           break;
       }

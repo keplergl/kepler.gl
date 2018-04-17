@@ -22,28 +22,40 @@ import {createAction} from 'redux-actions';
 import ActionTypes from 'constants/action-types';
 
 const {
+  ADD_CUSTOM_MAP_STYLE,
+  INPUT_MAP_STYLE,
   MAP_CONFIG_CHANGE,
   MAP_STYLE_CHANGE,
   LOAD_MAP_STYLES,
-  LOAD_MAP_STYLE_ERR
+  LOAD_MAP_STYLE_ERR,
+  LOAD_CUSTOM_MAP_STYLE
 } = ActionTypes;
 
 // second argument of createAction is expected to be payloadCreator or undefined
 const [
+  addCustomMapStyle,
+  inputMapStyle,
   mapConfigChange,
   loadMapStyles,
   loadMapStyleErr,
-  mapStyleChange
+  mapStyleChange,
+  loadCustomMapStyle
 ] = [
+  ADD_CUSTOM_MAP_STYLE,
+  INPUT_MAP_STYLE,
   MAP_CONFIG_CHANGE,
   LOAD_MAP_STYLES,
   LOAD_MAP_STYLE_ERR,
-  MAP_STYLE_CHANGE
+  MAP_STYLE_CHANGE,
+  LOAD_CUSTOM_MAP_STYLE
 ].map(a => createAction(a));
 
 export {
+  addCustomMapStyle,
+  inputMapStyle,
   mapConfigChange,
   mapStyleChange,
   loadMapStyles,
-  loadMapStyleErr
+  loadMapStyleErr,
+  loadCustomMapStyle
 };
