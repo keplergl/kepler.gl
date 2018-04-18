@@ -29,6 +29,7 @@ export const INIT = 'INIT';
 export const SET_LOADING_METHOD = 'SET_LOADING_METHOD';
 export const LOAD_REMOTE_FILE_DATA_SUCCESS = 'LOAD_DATA_SUCCESS';
 export const LOAD_MAP_SAMPLE_FILE = 'LOAD_MAP_SAMPLE_FILE';
+export const SET_SAMPLE_LOADING_STATUS = 'SET_SAMPLE_LOADING_STATUS';
 
 // ACTIONS
 export function setLoadingMethod(method) {
@@ -47,10 +48,17 @@ export function loadResponseFromRemoteFile(response, config, map) {
   };
 }
 
-export function laodMapSampleFile(samples) {
+export function loadMapSampleFile(samples) {
   return {
     type: LOAD_MAP_SAMPLE_FILE,
     samples
+  };
+}
+
+export function setLoadingMapStatus(isMapLoading) {
+  return {
+    type: SET_SAMPLE_LOADING_STATUS,
+    isMapLoading
   };
 }
 
@@ -58,7 +66,7 @@ export function loadSampleMap(sample) {
   return (dispatch) => {
     dispatch(push(`/demo/${sample.id}`));
     dispatch(loadRemoteMap(sample));
-    dispatch(toggleModal(null));
+    dispatch(setLoadingMapStatus(true));
   };
 }
 
@@ -76,6 +84,7 @@ function loadRemoteMap(sample) {
           // dispatch(ERROR)
         } else {
           dispatch(loadResponseFromRemoteFile(result, config, sample));
+          dispatch(toggleModal(null));
         }
       });
     })
@@ -94,7 +103,7 @@ export function loadSampleConfigurations(sampleMapId = null) {
       if (error) {
         Console.warn(`Error loading sample configuration file ${MAP_CONFIG_URL}`);
       } else {
-        dispatch(laodMapSampleFile(samples));
+        dispatch(loadMapSampleFile(samples));
         // Load the specified map
         if (sampleMapId) {
           const map = samples.find(s => s.id === sampleMapId);

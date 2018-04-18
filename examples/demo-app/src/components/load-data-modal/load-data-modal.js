@@ -22,6 +22,7 @@ import React, {Component} from 'react';
 import classnames from 'classnames';
 import styled, {ThemeProvider} from 'styled-components';
 import {FileUpload} from 'kepler.gl/components';
+import LoadingSpinner from 'kepler.gl/components/common/loading-spinner';
 import {themeLT} from 'kepler.gl/styles';
 import {Icons} from 'kepler.gl/components/';
 
@@ -75,6 +76,12 @@ export const ModalTab = styled.div`
     border-bottom: 3px solid ${props => props.theme.textColorLT};
     font-weight: 500;
   }
+  
+  .preview-image-spinner {
+    * {
+      margin: 0 auto;
+    }
+  }
 `;
 
 const StyledMapIcon = styled.div`
@@ -125,27 +132,35 @@ const StyledTrySampleData = styled.div`
 class LoadDataModal extends Component {
 
   render() {
-    const {loadingMethod, currentOption, previousMethod, sampleMaps} = this.props;
+    const {loadingMethod, currentOption, previousMethod, sampleMaps, isMapLoading} = this.props;
 
     return (
       <ThemeProvider theme={themeLT}>
         <div className="load-data-modal">
-          {loadingMethod.id !== 'sample' ? (
-            <Tabs
-              method={loadingMethod.id}
-              toggleMethod={this.props.onSetLoadingMethod}
-            />
-          ) : null}
-          {loadingMethod.id === 'upload' ? (
-            <FileUpload onFileUpload={this.props.onFileUpload} />
-          ) : null}
-          {loadingMethod.id === 'sample' ? (
-            <SampleMapGallery
-              sampleData={currentOption}
-              sampleMaps={sampleMaps}
-              back={() => this.props.onSetLoadingMethod(previousMethod.id)}
-              onLoadSampleData={this.props.onLoadSampleData}/>
-          ) : null}
+          {isMapLoading ? (
+            <div className="preview-image-spinner">
+              <LoadingSpinner />
+            </div>
+            ) : (
+              <div>
+                {loadingMethod.id !== 'sample' ? (
+                  <Tabs
+                    method={loadingMethod.id}
+                    toggleMethod={this.props.onSetLoadingMethod}
+                  />
+                ) : null}
+                {loadingMethod.id === 'upload' ? (
+                  <FileUpload onFileUpload={this.props.onFileUpload} />
+                ) : null}
+                {loadingMethod.id === 'sample' ? (
+                  <SampleMapGallery
+                    sampleData={currentOption}
+                    sampleMaps={sampleMaps}
+                    back={() => this.props.onSetLoadingMethod(previousMethod.id)}
+                    onLoadSampleData={this.props.onLoadSampleData}/>
+                ) : null}
+              </div>)
+          }
         </div>
       </ThemeProvider>
     );
