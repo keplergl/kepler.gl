@@ -42,7 +42,7 @@ const propTypes = {
   onSetLoadingMethod: React.PropTypes.func.isRequired
 };
 
-export const ModalTab = styled.div`
+const ModalTab = styled.div`
   align-items: flex-end;
   display: flex;
   border-bottom: 1px solid #d8d8d8;
@@ -75,12 +75,6 @@ export const ModalTab = styled.div`
     color: ${props => props.theme.textColorLT};
     border-bottom: 3px solid ${props => props.theme.textColorLT};
     font-weight: 500;
-  }
-  
-  .preview-image-spinner {
-    * {
-      margin: 0 auto;
-    }
   }
 `;
 
@@ -129,6 +123,13 @@ const StyledTrySampleData = styled.div`
   }
 `;
 
+const StyledSpinner = styled.div`
+  text-align: center;
+  span {
+    margin: 0 auto;
+  }
+`;
+
 class LoadDataModal extends Component {
 
   render() {
@@ -138,9 +139,9 @@ class LoadDataModal extends Component {
       <ThemeProvider theme={themeLT}>
         <div className="load-data-modal">
           {isMapLoading ? (
-            <div className="preview-image-spinner">
+            <StyledSpinner>
               <LoadingSpinner />
-            </div>
+            </StyledSpinner>
             ) : (
               <div>
                 {loadingMethod.id !== 'sample' ? (

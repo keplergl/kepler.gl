@@ -123,7 +123,7 @@ export function loadSampleConfigurations(sampleMapId = null) {
           const map = samples.find(s => s.id === sampleMapId);
           if (map) {
             dispatch(loadRemoteMap(map));
-            dispatch(toggleModal(null));
+            dispatch(setLoadingMapStatus(true));
           }
         }
       }
