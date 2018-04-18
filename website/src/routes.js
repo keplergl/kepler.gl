@@ -27,16 +27,12 @@ import Home from './components/home';
 import App from './components/app';
 import Demo from '../../examples/demo-app/src/app';
 
-
-const tokens = [
-  'test1',
-  'test2',
-  'test3',
-  'test4'
-];
+// Token
+// TODO: remove this when beta is over
+import {tokens} from './beta/tokens';
 
 const checkAccessCode = ({location: {pathname, query}}, replace) => {
-  if (pathname === '/demo' && (!query.token || !tokens.includes(query.token))) {
+  if (pathname.includes('/demo') && (!query.token || !tokens.includes(query.token))) {
     replace('/');
   }
 };
