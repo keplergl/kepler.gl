@@ -29,6 +29,7 @@ export const INIT = 'INIT';
 export const SET_LOADING_METHOD = 'SET_LOADING_METHOD';
 export const LOAD_REMOTE_FILE_DATA_SUCCESS = 'LOAD_DATA_SUCCESS';
 export const LOAD_MAP_SAMPLE_FILE = 'LOAD_MAP_SAMPLE_FILE';
+export const SET_SAMPLE_LOADING_STATUS = 'SET_SAMPLE_LOADING_STATUS';
 
 // ACTIONS
 export function setLoadingMethod(method) {
@@ -47,10 +48,17 @@ export function loadResponseFromRemoteFile(response, config, map) {
   };
 }
 
-export function laodMapSampleFile(samples) {
+export function loadMapSampleFile(samples) {
   return {
     type: LOAD_MAP_SAMPLE_FILE,
     samples
+  };
+}
+
+export function setLoadingMapStatus(isMapLoading) {
+  return {
+    type: SET_SAMPLE_LOADING_STATUS,
+    isMapLoading
   };
 }
 
@@ -58,25 +66,40 @@ export function loadSampleMap(sample) {
   return (dispatch) => {
     dispatch(push(`/demo/${sample.id}`));
     dispatch(loadRemoteMap(sample));
-    dispatch(toggleModal(null));
+    dispatch(setLoadingMapStatus(true));
   };
+}
+
+function loadMapCallback(dispatch, error, result, sample, config) {
+  if (error) {
+    console.warn(`Error loading datafile ${sample.dataUrl}`);
+    // dispatch(ERROR)
+  } else {
+    dispatch(loadResponseFromRemoteFile(result, config, sample));
+    dispatch(toggleModal(null));
+  }
 }
 
 function loadRemoteMap(sample) {
   return (dispatch) => {
+    // Load configuration first
     requestJson(sample.configUrl, (confError, config) => {
       if (confError) {
         Console.warn(`Error loading config file ${sample.configUrl}`);
         // dispatch(error)
         return;
       }
-      requestText(sample.dataUrl, (dataError, result) => {
-        if (dataError) {
-          Console.warn(`Error loading datafile ${sample.dataUrl}`);
-          // dispatch(ERROR)
-        } else {
-          dispatch(loadResponseFromRemoteFile(result, config, sample));
-        }
+
+      let requestMethod = requestText;
+
+
+      if (sample.dataUrl.includes('.json') || sample.dataUrl.includes('.geojson')) {
+        requestMethod = requestJson;
+      }
+
+      // Load data
+      requestMethod(sample.dataUrl, (dataError, result) => {
+        loadMapCallback(dispatch, dataError, result, sample, config);
       });
     })
   }
@@ -94,13 +117,13 @@ export function loadSampleConfigurations(sampleMapId = null) {
       if (error) {
         Console.warn(`Error loading sample configuration file ${MAP_CONFIG_URL}`);
       } else {
-        dispatch(laodMapSampleFile(samples));
+        dispatch(loadMapSampleFile(samples));
         // Load the specified map
         if (sampleMapId) {
           const map = samples.find(s => s.id === sampleMapId);
           if (map) {
             dispatch(loadRemoteMap(map));
-            dispatch(toggleModal(null));
+            dispatch(setLoadingMapStatus(true));
           }
         }
       }
