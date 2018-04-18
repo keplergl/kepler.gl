@@ -6,9 +6,9 @@
   "main": "dist/index.js",
   "version": "0.0.1",
   "engines": {
-    "node": "^8.7.0",
-    "npm": "^5.4.2",
-    "yarn": "^0.27.5"
+    "node": ">=8.0.0",
+    "npm": ">=5.4.2",
+    "yarn": ">=0.27.5"
   },
   "scripts": {
     "start": "webpack-dev-server --env.local --content-base ./src/static --progress --open",
@@ -28,6 +28,9 @@
     "react-router-redux": "^4.0.8",
     "react-palm": "^0.8.1",
     "redux": "^3.0.4",
+    "react-spring": "^4.1.8",
+    "react-swipeable-views": "^0.12.13",
+    "react-waypoint": "^8.0.1",
     "redux-actions": "^1.2.0",
     "redux-thunk": "^1.0.0",
     "styled-components": "^2.2.4"
