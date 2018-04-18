@@ -79,19 +79,19 @@ const demoReducer = combineReducers({
 export const loadRemoteFileDataSuccess = (state, action) => {
   const datasetId = action.map.id;
   const {dataUrl} = action.map;
-  let newData = null;
+  let processorMethod = Processor.processCsvData;
+
   if (dataUrl.includes('.json') || dataUrl.includes('.geojson')) {
-    newData = Processor.processGeojson(JSON.parse(action.response));
-  } else {
-    newData = Processor.processCsvData(action.response);
+    processorMethod = Processor.processGeojson;
   }
 
   const datasets = {
     info: {
       id: datasetId
     },
-    data: newData
+    data: processorMethod(action.response)
   };
+
   const config = KeplerGlSchema.parseSavedConfig(action.config);
 
   const keplerGlInstance = combineUpdaters.addDataToMapComposed(

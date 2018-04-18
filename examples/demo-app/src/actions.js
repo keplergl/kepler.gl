@@ -70,22 +70,36 @@ export function loadSampleMap(sample) {
   };
 }
 
+function loadMapCallback(dispatch, error, result, sample, config) {
+  if (error) {
+    console.warn(`Error loading datafile ${sample.dataUrl}`);
+    // dispatch(ERROR)
+  } else {
+    dispatch(loadResponseFromRemoteFile(result, config, sample));
+    dispatch(toggleModal(null));
+  }
+}
+
 function loadRemoteMap(sample) {
   return (dispatch) => {
+    // Load configuration first
     requestJson(sample.configUrl, (confError, config) => {
       if (confError) {
         Console.warn(`Error loading config file ${sample.configUrl}`);
         // dispatch(error)
         return;
       }
-      requestText(sample.dataUrl, (dataError, result) => {
-        if (dataError) {
-          Console.warn(`Error loading datafile ${sample.dataUrl}`);
-          // dispatch(ERROR)
-        } else {
-          dispatch(loadResponseFromRemoteFile(result, config, sample));
-          dispatch(toggleModal(null));
-        }
+
+      let requestMethod = requestText;
+
+
+      if (sample.dataUrl.includes('.json') || sample.dataUrl.includes('.geojson')) {
+        requestMethod = requestJson;
+      }
+
+      // Load data
+      requestMethod(sample.dataUrl, (dataError, result) => {
+        loadMapCallback(dispatch, dataError, result, sample, config);
       });
     })
   }
