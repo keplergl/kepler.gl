@@ -29,7 +29,8 @@ import {
   INIT,
   SET_LOADING_METHOD,
   LOAD_MAP_SAMPLE_FILE,
-  LOAD_REMOTE_FILE_DATA_SUCCESS
+  LOAD_REMOTE_FILE_DATA_SUCCESS,
+  SET_SAMPLE_LOADING_STATUS
 } from './actions';
 
 import {DEFAULT_LOADING_METHOD, LOADING_METHODS} from './constants/default-settings';
@@ -41,7 +42,8 @@ const initialAppState = {
   loadingMethod: DEFAULT_LOADING_METHOD,
   currentOption: DEFAULT_LOADING_METHOD.options[0],
   previousMethod: null,
-  sampleMaps: [] // this is used to store sample maps fetch from a remote json file
+  sampleMaps: [], // this is used to store sample maps fetch from a remote json file
+  isMapLoading: false // determine whether we are loading a sample map
 };
 
 // App reducer
@@ -58,6 +60,10 @@ export const appReducer = handleActions({
   [LOAD_MAP_SAMPLE_FILE]: (state, action) => ({
     ...state,
     sampleMaps: action.samples
+  }),
+  [SET_SAMPLE_LOADING_STATUS]: (state, action) => ({
+    ...state,
+    isMapLoading: action.isMapLoading
   })
 }, initialAppState);
 
@@ -100,6 +106,10 @@ export const loadRemoteFileDataSuccess = (state, action) => {
 
   return {
     ...state,
+    app: {
+      ...state.app,
+      isMapLoading: false, // we turn of the spinner
+    },
     keplerGl: {
       ...state.keplerGl, // in case you keep multiple instances
       map: keplerGlInstance
