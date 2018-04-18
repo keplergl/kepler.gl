@@ -72,7 +72,14 @@ const demoReducer = combineReducers({
 // this can be moved into a action and call kepler.gl action
 export const loadRemoteFileDataSuccess = (state, action) => {
   const datasetId = action.map.id;
-  const newData = Processor.processCsvData(action.response);
+  const {dataUrl} = action.map;
+  let newData = null;
+  if (dataUrl.includes('.json') || dataUrl.includes('.geojson')) {
+    newData = Processor.processGeojson(JSON.parse(action.response));
+  } else {
+    newData = Processor.processCsvData(action.response);
+  }
+
   const datasets = {
     info: {
       id: datasetId
