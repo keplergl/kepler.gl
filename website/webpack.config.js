@@ -82,10 +82,9 @@ const COMMON_CONFIG = {
     fs: 'empty'
   },
 
+  // Optional: Enables reading mapbox token from environment variable
   plugins: [
-    new webpack.DefinePlugin({
-      MapboxAccessToken: `"${process.env.MapboxAccessToken}"` // eslint-disable-line
-    })
+    new webpack.EnvironmentPlugin(['MapboxAccessToken'])
   ]
 
 };
