@@ -20,6 +20,7 @@
 
 import {console as Console} from 'global/window';
 import {Task, withTask} from 'react-palm';
+import {disableStackCapturing} from 'react-palm/tasks';
 
 // Tasks
 import {LOAD_FILE_TASK} from 'tasks/tasks';
@@ -55,6 +56,10 @@ import {
 } from './vis-state-merger';
 
 import {LayerClasses, Layer} from 'layers';
+
+// react-palm
+// disable capture exception for react-palm call to withTasks
+disableStackCapturing();
 
 export const INITIAL_VIS_STATE = {
   // layers
