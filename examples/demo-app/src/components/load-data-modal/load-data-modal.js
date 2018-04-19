@@ -140,7 +140,9 @@ class LoadDataModal extends Component {
         <div className="load-data-modal">
           {isMapLoading ? (
             <StyledSpinner>
-              <LoadingSpinner />
+              <LoadingSpinner>
+                test spinner
+              </LoadingSpinner>
             </StyledSpinner>
             ) : (
               <div>
