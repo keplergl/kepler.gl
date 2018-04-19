@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
+import window from 'global/window';
 import {connect} from 'react-redux';
 import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 
@@ -48,8 +49,8 @@ class App extends Component {
     this.props.dispatch(loadSampleConfigurations(sampleMapId));
 
     if (window.gtag) {
-      gtag('config', 'UA-64694404-19', {
-        'user_id': this.props.location.query.token
+      window.gtag('config', 'UA-64694404-19', {
+        user_id: this.props.location.query.token
       });
     }
   }

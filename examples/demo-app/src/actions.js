@@ -73,7 +73,7 @@ export function loadSampleMap(sample) {
 
 function loadMapCallback(dispatch, error, result, sample, config) {
   if (error) {
-    console.warn(`Error loading datafile ${sample.dataUrl}`);
+    Console.warn(`Error loading datafile ${sample.dataUrl}`);
     // dispatch(ERROR)
   } else {
     dispatch(loadResponseFromRemoteFile(result, config, sample));
@@ -92,8 +92,6 @@ function loadRemoteMap(sample) {
       }
 
       let requestMethod = requestText;
-
-
       if (sample.dataUrl.includes('.json') || sample.dataUrl.includes('.geojson')) {
         requestMethod = requestJson;
       }
