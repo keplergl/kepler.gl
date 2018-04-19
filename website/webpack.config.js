@@ -56,7 +56,8 @@ const COMMON_CONFIG = {
       // Imports the kepler.gl library from the src directory in this repo
       'kepler.gl': libSources,
       react: resolve(rootDir, './node_modules/react'),
-      'styled-components': resolve(rootDir, './node_modules/styled-components')
+      'styled-components': resolve(rootDir, './node_modules/styled-components'),
+      'react-palm': resolve(rootDir, './node_modules/react-palm')
     }
   },
 
