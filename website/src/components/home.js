@@ -300,7 +300,6 @@ class Home extends Component {
 
     return (
       <ThemeProvider theme={theme}>
-
       <Container>
         <Helmet>
           <script

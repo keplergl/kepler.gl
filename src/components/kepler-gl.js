@@ -22,10 +22,8 @@ import React, {Component} from 'react';
 import {console as Console} from 'global/window';
 import {bindActionCreators} from 'redux';
 import {json as requestJson} from 'd3-request';
-import styled from 'styled-components';
+import styled, {ThemeProvider}  from 'styled-components';
 import {connect as keplerGlConnect} from '../connect/keplergl-connect';
-
-import {ThemeProvider} from 'styled-components';
 
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';

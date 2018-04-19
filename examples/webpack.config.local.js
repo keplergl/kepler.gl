@@ -54,7 +54,8 @@ function makeLocalDevConfig(EXAMPLE_DIR = LIB_DIR) {
         //   // Imports the kepler.gl library from the src directory in this repo
         'kepler.gl': SRC_DIR,
         'kepler.gl/test': TEST_DIR,
-        react: resolve(LIB_DIR, './node_modules/react')
+        react: resolve(LIB_DIR, './node_modules/react'),
+        'styled-components': resolve(LIB_DIR, './node_modules/styled-components')
       }
     },
     module: {
