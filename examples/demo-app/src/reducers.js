@@ -108,7 +108,7 @@ export const loadRemoteFileDataSuccess = (state, action) => {
     ...state,
     app: {
       ...state.app,
-      isMapLoading: false, // we turn of the spinner
+      isMapLoading: false // we turn of the spinner
     },
     keplerGl: {
       ...state.keplerGl, // in case you keep multiple instances

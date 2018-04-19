@@ -22,7 +22,6 @@ import React, {Component} from 'react';
 import window from 'global/window';
 import styled, {keyframes, ThemeProvider} from 'styled-components';
 import {media, breakPoints, theme} from '../styles';
-import Helmet from 'react-helmet';
 
 export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/';
 export const KEPLER_GL_BUCKET = 'kepler.gl/';
@@ -301,18 +300,6 @@ class Home extends Component {
     return (
       <ThemeProvider theme={theme}>
       <Container>
-        <Helmet>
-          <script
-            async
-            src="https://www.googletagmanager.com/gtag/js?id=UA-64694404-19"
-          />
-          <script>
-            {`window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'UA-64694404-19');`}
-          </script>
-        </Helmet>
         <StyledHome className="kg-home">
           <StyledHeader>
             <div>Created By</div>
