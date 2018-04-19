@@ -24,10 +24,11 @@ import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 
 import {loadSampleConfigurations} from './actions';
 import {replaceLoadDataModal} from './factories/load-data-modal';
-
-const KeplerGl = require('kepler.gl/components').injectComponents([
-  replaceLoadDataModal()
-]);
+import KeplerGl from 'kepler.gl/components';
+// const KeplerGl = require('kepler.gl/components')
+//   .injectComponents([
+//   replaceLoadDataModal()
+// ]);
 
 const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
 

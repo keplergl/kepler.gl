@@ -53,7 +53,7 @@ const GlobalStyleDiv = styled.div`
 class App extends Component {
   render() {
     return (
-      <GlobalStyleDiv className="kg-web-content">{this.props.children}</GlobalStyleDiv>
+      <div className="kg-web-content">{this.props.children}</div>
     );
   }
 }
