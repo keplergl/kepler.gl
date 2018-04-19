@@ -25,7 +25,7 @@ import styled from 'styled-components';
 
 import {classList} from 'components/common/item-selector/dropdown-list';
 import ItemSelector from 'components/common/item-selector/item-selector';
-import {ICON_PREFIX} from 'constants/default-settings';
+import {CLOUDFRONT} from 'constants/default-settings';
 
 import {
   PanelLabel,
@@ -70,7 +70,7 @@ const StyledListItem = styled.div`
   .layer-type-selector__item__icon {
     color: ${props => props.theme.labelColor};
     display: flex;
-    background-image: url(${`${ICON_PREFIX}/kepler.gl-layer-icon-bg.png`});
+    background-image: url(${`${CLOUDFRONT}/kepler.gl-layer-icon-bg.png`});
     background-size: 64px 64px;
   }
 
