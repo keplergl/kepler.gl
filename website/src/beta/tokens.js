@@ -82,5 +82,6 @@ export const tokens = [
   'ef067cf09ffd3cc8f069bacec73c8202',
   'f64b30b6d78d505f9bc9cd958fa7d306',
   'f96cf9be860278c622bb76ce8a042327',
-  'fbc7d59193a015987f80b93965ffa8ea'
+  'fbc7d59193a015987f80b93965ffa8ea',
+  'testkepler',
 ];
