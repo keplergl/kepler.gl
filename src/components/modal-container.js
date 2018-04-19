@@ -27,7 +27,7 @@ import document from 'global/document';
 
 import ModalDialog from './common/modal';
 import {formatCsv} from 'processors/data-processor';
-import KeplerGlSchema from '@uber/kepler.gl/schemas';
+import KeplerGlSchema from 'schemas';
 
 // modals
 import DeleteDatasetModalFactory from './modals/delete-data-modal';
