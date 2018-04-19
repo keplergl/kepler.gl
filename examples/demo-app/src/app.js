@@ -46,6 +46,12 @@ class App extends Component {
     const {params: {id: sampleMapId} = {}} = this.props;
     // if (sampleMapId) {
     this.props.dispatch(loadSampleConfigurations(sampleMapId));
+
+    if (window.gtag) {
+      gtag('config', 'UA-64694404-19', {
+        'user_id': this.props.location.query.token
+      });
+    }
   }
 
   componentDidMount() {
