@@ -475,11 +475,11 @@ export const DEFAULT_EXPORT_IMAGE_NAME = 'kepler-gl.png';
 export const WAIT_FOR_LOADING = 1200;
 
 export const EXPORT_DATA_TYPE = keyMirror({
-  CSV: null,
-  SHAPEFILE: null,
-  JSON: null,
-  GEOJSON: null,
-  TOPOJSON: null
+  CSV: null
+  // SHAPEFILE: null,
+  // JSON: null,
+  // GEOJSON: null,
+  // TOPOJSON: null
 });
 
 export const EXPORT_DATA_TYPE_OPTIONS = [
@@ -487,25 +487,25 @@ export const EXPORT_DATA_TYPE_OPTIONS = [
     id: EXPORT_DATA_TYPE.CSV,
     label: 'csv',
     available: true
-  },
-  {
-    id: EXPORT_DATA_TYPE.SHAPEFILE,
-    label: 'shapefile',
-    available: false
-  },
-  {
-    id: EXPORT_DATA_TYPE.JSON,
-    label: 'json',
-    available: false
-  },
-  {
-    id: EXPORT_DATA_TYPE.GEOJSON,
-    label: 'geojson',
-    available: false
-  },
-  {
-    id: EXPORT_DATA_TYPE.TOPOJSON,
-    label: 'topojson',
-    available: false
   }
+  // {
+  //   id: EXPORT_DATA_TYPE.SHAPEFILE,
+  //   label: 'shapefile',
+  //   available: false
+  // },
+  // {
+  //   id: EXPORT_DATA_TYPE.JSON,
+  //   label: 'json',
+  //   available: false
+  // },
+  // {
+  //   id: EXPORT_DATA_TYPE.GEOJSON,
+  //   label: 'geojson',
+  //   available: false
+  // },
+  // {
+  //   id: EXPORT_DATA_TYPE.TOPOJSON,
+  //   label: 'topojson',
+  //   available: false
+  // }
 ];

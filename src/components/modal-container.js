@@ -27,6 +27,7 @@ import document from 'global/document';
 
 import ModalDialog from './common/modal';
 import {formatCsv} from 'processors/data-processor';
+import KeplerGlSchema from '@uber/kepler.gl/schemas';
 
 // modals
 import DeleteDatasetModalFactory from './modals/delete-data-modal';
@@ -129,36 +130,59 @@ export default function ModalContainerFactory(
       this._closeModal();
     };
 
+    _downloadFile(data, type, filename) {
+      const fileBlob = new Blob([data], {type});
+      const url = URL.createObjectURL(fileBlob);
+      const link = document.createElement('a');
+
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
     _onExportData = () => {
-      const {datasets} = this.props.visState;
-      const {selectedDataset, dataType, filtered} = this.props.uiState.exportData;
+      const {mapStyle, visState, mapState, uiState} = this.props;
+      const {datasets} = visState;
+      const {selectedDataset, dataType, filtered, config} = uiState.exportData;
       // get the selected data
       const filename = 'kepler-gl';
-      const selectedData = datasets[selectedDataset];
-      if (!selectedData) {
+      const selectedDatasets = datasets[selectedDataset] ? [datasets[selectedDataset]] : Object.values(datasets);
+      if (!selectedDatasets.length) {
         // error: selected dataset not found.
         this._closeModal();
       }
-      const {allData, data, fields, label} = selectedData;
-      const exportData = filtered ? data : allData;
-      // start to export data according to selected data type
-      switch (dataType) {
-        case EXPORT_DATA_TYPE.CSV: {
-          const type = 'text/csv';
-          const csv = formatCsv(exportData, fields);
-          const csvFile = new Blob([csv], {type});
-          const url = URL.createObjectURL(csvFile);
-          const link = document.createElement('a');
-          link.setAttribute('href', url);
-          link.setAttribute('download', `${filename}_${label}.csv`);
-          link.click();
-          URL.revokeObjectURL(url);
-          break;
+
+      selectedDatasets.forEach(selectedData => {
+        const {allData, data, fields, label} = selectedData;
+        const exportData = filtered ? data : allData;
+        // start to export data according to selected data type
+        switch (dataType) {
+          case EXPORT_DATA_TYPE.CSV: {
+            const type = 'text/csv';
+            const csv = formatCsv(exportData, fields);
+            this._downloadFile(csv, type, `${filename}_${label}.csv`);
+            break;
+          }
+          // TODO: support more different data type later.
+          default:
+            break;
         }
-        // TODO: support more different data type later.
-        default:
-        break;
+
+      });
+
+      if (config) {
+        const keplerGlConfig = KeplerGlSchema.getConfigToSave(
+          {mapStyle, visState, mapState, uiState}
+        );
+
+        this._downloadFile(
+          JSON.stringify(keplerGlConfig, null, 2),
+          'application/json',
+          'kepler-gl_config.json'
+        );
       }
+
       this._closeModal();
     };
 
@@ -265,17 +289,15 @@ export default function ModalContainerFactory(
           break;
 
         case EXPORT_DATA_ID:
-          const {selectedDataset, dataType, filtered} = uiState.exportData;
           template = (
             <ExportDataModal
+              {...uiState.exportData}
               datasets={datasets}
-              selectedDataset={selectedDataset}
-              dataType={dataType}
-              filtered={filtered}
               onClose={this._closeModal}
               onChangeExportDataType={this.props.uiStateActions.setExportDataType}
               onChangeExportSelectedDataset={this.props.uiStateActions.setExportSelectedDataset}
               onChangeExportFiltered={this.props.uiStateActions.setExportFiltered}
+              onChangeExportConfig={this.props.uiStateActions.setExportConfig}
             />
           );
           modalProps = {

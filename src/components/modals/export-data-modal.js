@@ -25,6 +25,7 @@ import styled from 'styled-components';
 import {EXPORT_DATA_TYPE_OPTIONS} from 'constants/default-settings';
 import {FileType} from 'components/common/icons';
 import {StyledModalContent} from 'components/common/styled-components';
+import Switch from 'components/common/switch';
 
 const StyledExportDataSection = styled.div`
   display: flex;
@@ -160,11 +161,11 @@ const propTypes = {
 const getDataRowCount = (datasets, selectedDataset, filtered) => {
   const selectedData = datasets[selectedDataset];
   if (!selectedData) {
-    return 0;
+    return `${Object.keys(datasets).length} Files ` ;
   }
   const {allData, data} = selectedData;
   const rowCount = filtered ? data.length : allData.length;
-  return rowCount.toLocaleString('en');
+  return `${rowCount.toLocaleString('en')} Rows`;
 };
 
 const ExportDataModal = ({
@@ -172,75 +173,97 @@ const ExportDataModal = ({
   selectedDataset,
   dataType,
   filtered,
+  config,
   // callbacks:
   onChangeExportDataType,
   onChangeExportSelectedDataset,
   onChangeExportFiltered,
+  onChangeExportConfig,
   onClose
 }) => (
   <div className="export-data-modal">
     <StyledModalContent>
-      <StyledExportDataSection>
-        <div className="description">
-          <div className="title">
-            Dataset
+      <div>
+        <StyledExportDataSection>
+          <div className="description">
+            <div className="title">
+              Dataset
+            </div>
+            <div className="subtitle">
+              Choose the datasets you want to export
+            </div>
           </div>
-          <div className="subtitle">
-            Choose the datasets you want to export
+          <div className="selection">
+            <select value={selectedDataset} onChange={e => onChangeExportSelectedDataset({dataset: e.target.value})}>
+            {['All'].concat(Object.keys(datasets)).map(d => (
+              <option key={d} value={d}>{(datasets[d] && datasets[d].label) || d}</option>
+            ))}
+            </select>
           </div>
-        </div>
-        <div className="selection">
-          <select value={selectedDataset} onChange={e => onChangeExportSelectedDataset({dataset: e.target.value})}>
-          {['Select dataset'].concat(Object.keys(datasets)).map(d => (
-            <option key={d} value={d}>{d}</option>
-          ))}
-          </select>
-        </div>
-      </StyledExportDataSection>
+        </StyledExportDataSection>
 
-      <StyledExportDataSection>
-        <div className="description">
-          <div className="title">
-            Data Type
+        <StyledExportDataSection>
+          <div className="description">
+            <div className="title">
+              Data Type
+            </div>
+            <div className="subtitle">
+              Choose the type of data you want to export
+            </div>
           </div>
-          <div className="subtitle">
-            Choose the type of data you want to export
+          <div className="selection">
+            {EXPORT_DATA_TYPE_OPTIONS.map(op =>
+              <StyledDataType
+                key={op.id}
+                selected={dataType === op.id}
+                available={op.available}
+                onClick={() => op.available && onChangeExportDataType({dataType: op.id})}
+              >
+                <FileType ext={op.label} height="80px" fontSize="11px" />
+              </StyledDataType>
+            )}
           </div>
-        </div>
-        <div className="selection">
-          {EXPORT_DATA_TYPE_OPTIONS.map(op => 
-            <StyledDataType
-              key={op.id}
-              selected={dataType === op.id}
-              available={op.available}
-              onClick={() => op.available && onChangeExportDataType({dataType: op.id})}
-            >
-              <FileType ext={op.label} height="80px" fontSize="11px" />
-            </StyledDataType>
-          )}
-        </div>
-      </StyledExportDataSection>
+        </StyledExportDataSection>
 
-      <StyledExportDataSection>
-        <div className="description">
-          <div className="title">
-            Filter Data
+        <StyledExportDataSection>
+          <div className="description">
+            <div className="title">
+              Filter Data
+            </div>
+            <div className="subtitle">
+              You can choose exporting original data or filtered data
+            </div>
           </div>
-          <div className="subtitle">
-            You can choose exporting original data or filtered data 
+          <div className="selection">
+            <StyledFilteredDataOption selected={!filtered} onClick={() => onChangeExportFiltered({filtered: false})}>
+              <div className="filtered-title">Unfiltered Data</div>
+              <div className="filtered-subtitle">{getDataRowCount(datasets, selectedDataset, false)}</div>
+            </StyledFilteredDataOption>
+            <StyledFilteredDataOption selected={filtered} onClick={() => onChangeExportFiltered({filtered: true})}>
+              <div className="filtered-title">Filtered Data</div>
+              <div className="filtered-subtitle">{getDataRowCount(datasets, selectedDataset, true)}</div>
+            </StyledFilteredDataOption>
           </div>
-        </div>
-        <div className="selection">
-          <StyledFilteredDataOption selected={!filtered} onClick={() => onChangeExportFiltered({filtered: false})}>
-            <div className="filtered-title">Unfiltered Data</div>
-            <div className="filtered-subtitle">{`${getDataRowCount(datasets, selectedDataset, false)} Rows`}</div>
-          </StyledFilteredDataOption>
-          <StyledFilteredDataOption selected={filtered} onClick={() => onChangeExportFiltered({filtered: true})}>
-            <div className="filtered-title">Filtered Data</div>
-            <div className="filtered-subtitle">{`${getDataRowCount(datasets, selectedDataset, true)} Rows`}</div>
-          </StyledFilteredDataOption>
-        </div>
-      </StyledExportDataSection>
+        </StyledExportDataSection>
+
+        <StyledExportDataSection>
+          <div className="description">
+            <div className="title">
+              Include Map Config
+            </div>
+            <div className="subtitle">
+              Export current map config as a Json file
+            </div>
+          </div>
+          <div className="selection">
+            <Switch type="checkbox"
+                    id="export-map-config"
+                    checked={config}
+                    onChange={onChangeExportConfig}/>
+          </div>
+        </StyledExportDataSection>
+
+      </div>
     </StyledModalContent>
   </div>
 );

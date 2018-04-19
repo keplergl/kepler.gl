@@ -27,6 +27,7 @@ const {
   SET_EXPORT_DATA_TYPE,
   SET_EXPORT_FILTERED,
   SET_EXPORT_IMAGE_DATA_URI,
+  SET_EXPORT_CONFIG,
   SET_EXPORT_SELECTED_DATASET,
   SET_RATIO,
   SET_RESOLUTION,
@@ -51,7 +52,8 @@ const [
   // export data
   setExportSelectedDataset,
   setExportDataType,
-  setExportFiltered
+  setExportFiltered,
+  setExportConfig
 ] = [
   TOGGLE_SIDE_PANEL,
   TOGGLE_MODAL,
@@ -64,11 +66,12 @@ const [
   CLEANUP_EXPORT_IMAGE,
   SET_EXPORT_SELECTED_DATASET,
   SET_EXPORT_DATA_TYPE,
-  SET_EXPORT_FILTERED
+  SET_EXPORT_FILTERED,
+  SET_EXPORT_CONFIG
 ].map(a => createAction(a));
 
 export {
-  toggleSidePanel, toggleModal, openDeleteModal,
+  toggleSidePanel, toggleModal, openDeleteModal, setExportConfig,
   setRatio, setResolution, toggleLegend, startExportingImage, setExportImageDataUri, cleanupExportImage,
   setExportSelectedDataset, setExportDataType, setExportFiltered
 };

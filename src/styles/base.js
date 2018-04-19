@@ -101,23 +101,6 @@ export const secondaryInputColor = '#A0A7B4';
 export const secondaryInputBorderColor = '#242730';
 export const secondaryInputBorderActiveColor = '#D3D8E0';
 
-export const switchWidth = 24;
-export const switchHeight = 12;
-export const switchLabelMargin = 12;
-
-export const switchTrackBgd = '#29323C';
-export const switchTrackBgdActive = activeColor;
-export const switchTrackBorderRadius = '1px';
-export const switchBtnBgd = '#6A7485';
-export const switchBtnBgdActive = '#D3D8E0';
-export const switchBtnBoxShadow = '0 2px 4px 0 rgba(0,0,0,0.40)';
-export const switchBtnBorderRadius = '1px';
-export const switchBtnWidth = '12px';
-export const switchBtnHeight = '12px';
-
-export const secondarySwitchTrackBgd = '#242730';
-export const secondarySwitchBtnBgd = '#3A414C';
-
 // Select
 export const selectColor = inputColor;
 export const selectColorLT = titleColorLT;
@@ -141,6 +124,34 @@ export const dropdownListHighlightBg = '#6A7485';
 export const dropdownListShadow = '0 6px 12px 0 rgba(0,0,0,0.16)';
 export const dropdownListBgd = '#3A414C';
 export const dropdownListBorderTop = '#242730';
+
+// Switch
+export const switchWidth = 24;
+export const switchHeight = 12;
+export const switchLabelMargin = 12;
+
+export const switchTrackBgd = '#29323C';
+export const switchTrackBgdActive = activeColor;
+export const switchTrackBorderRadius = '1px';
+export const switchBtnBgd = '#6A7485';
+export const switchBtnBgdActive = '#D3D8E0';
+export const switchBtnBoxShadow = '0 2px 4px 0 rgba(0,0,0,0.40)';
+export const switchBtnBorderRadius = '1px';
+export const switchBtnWidth = '12px';
+export const switchBtnHeight = '12px';
+
+export const secondarySwitchTrackBgd = '#242730';
+export const secondarySwitchBtnBgd = '#3A414C';
+
+// Checkbox
+export const checkboxWidth = 16;
+export const checkboxHeight = 16;
+export const checkboxMargin = 12;
+export const checkboxBorderColor = selectBorderColor;
+export const checkboxBorderRadius = '2px';
+export const checkboxBorderColorLT = selectBorderColorLT;
+export const checkboxBoxBgd = 'white';
+export const checkboxBoxBgdChecked = primaryBtnBgd;
 
 // Side Panel
 export const sidePanelHeaderBg = '#29323C';
@@ -414,6 +425,55 @@ const inputSwitch = css`
   }
 `;
 
+// This is a light version checkbox
+const checkboxBox = css`
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: ${props => props.theme.checkboxWidth}px;
+  height: ${props => props.theme.checkboxHeight}px;
+  background: ${props => props.checked ? props.theme.checkboxBoxBgdChecked : props.theme.checkboxBoxBgd};
+  border: 1px solid ${props => props.checked ? props.theme.checkboxBoxBgdChecked : props.theme.checkboxBorderColor};
+  border-radius: 2px;
+  content: '';
+`;
+
+const checkboxCheck = css`
+  width: 10px;
+  height: 5px;
+  border-bottom: 2px solid white;
+  border-left: 2px solid white;
+  top: 4px;
+  left: 3px;
+  transform: rotate(-45deg);
+  display: block;
+  position: absolute;
+  opacity: ${props => props.checked ? 1 : 0};
+  content: "";
+`;
+
+const inputCheckbox = css`
+  display: inline-block;
+  position: relative;
+  padding-left: 32px;
+  margin-bottom: 24px;
+  line-height: 20px;
+  vertical-align: middle;
+  cursor: pointer;
+  font-size: 12px;
+  color: ${props => props.theme.labelColor};
+  margin-left: -${props => props.theme.switchLabelMargin}px;
+
+  :before {
+     ${props => props.theme.checkboxBox};
+  }
+  
+  :after {
+    ${props => props.theme.checkboxCheck};
+  }
+`;
+
 const secondarySwitch = css`
   ${props => props.theme.inputSwitch} 
   :before {
@@ -653,6 +713,9 @@ export const theme = {
   secondarySwitch,
   switchTrack,
   switchButton,
+  inputCheckbox,
+  checkboxBox,
+  checkboxCheck,
 
   // Transitions
   transition,
@@ -715,6 +778,7 @@ export const theme = {
   secondaryInputBorderColor,
   secondaryInputBorderActiveColor,
 
+  // Switch
   switchWidth,
   switchHeight,
   switchTrackBgd,
@@ -730,6 +794,16 @@ export const theme = {
 
   secondarySwitchTrackBgd,
   secondarySwitchBtnBgd,
+
+  // Checkbox
+  checkboxWidth,
+  checkboxHeight,
+  checkboxMargin,
+  checkboxBorderColor,
+  checkboxBorderRadius,
+  checkboxBorderColorLT,
+  checkboxBoxBgd,
+  checkboxBoxBgdChecked,
 
   // Button
   primaryBtnBgd,

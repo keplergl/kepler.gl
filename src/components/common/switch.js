@@ -36,7 +36,7 @@ const propTypes = {
 const Switch = (props) => {
   const switchProps = {
     ...props,
-    switch: true
+    switch: props.type !== 'checkbox'
   };
 
   return <Checkbox {...switchProps}/>;

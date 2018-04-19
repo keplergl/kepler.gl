@@ -36,6 +36,7 @@ const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
 import sampleTripData from './data/sample-trip-data';
 import sampleGeojson from './data/sample-geojson.json';
 import {updateVisData, addDataToMap} from 'kepler.gl/actions';
+import Processors from 'kepler.gl/processors';
 /* eslint-enable no-unused-vars */
 
 class App extends Component {
@@ -46,14 +47,8 @@ class App extends Component {
     // if (sampleMapId) {
     this.props.dispatch(loadSampleConfigurations(sampleMapId));
   }
-  componentDidMount() {
-    // if we pass an id as part f the url
-    // we ry to fetch along map configurations
-    // const {params: {id: sampleMapId} = {}} = this.props;
-    // if (sampleMapId) {
-    // this.props.dispatch(loadSampleConfigurations(sampleMapId));
-    // }
 
+  componentDidMount() {
     /**
      * ENABLE THE FOLLOWING CODE TO PRE-POLUATE KEPLER.GL INSTANCE
      */
@@ -102,7 +97,7 @@ class App extends Component {
     // this.props.dispatch(
     //   updateVisData({
     //     info: {label: 'SF Zip Geo'},
-    //     data: Processor.processGeojson(sampleGeojson)
+    //     data: Processors.processGeojson(sampleGeojson)
     //   })
     // );
   }

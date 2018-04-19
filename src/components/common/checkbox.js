@@ -50,9 +50,13 @@ const defaultProps = {
   label: ''
 };
 
-const StyledLabel = styled.label`
+const StyledSwitchInput = styled.label`
   ${props =>
     props.secondary ? props.theme.secondarySwitch : props.theme.inputSwitch};
+`;
+
+const StyledCheckboxInput = styled.label`
+  ${props => props.theme.inputCheckbox}
 `;
 
 const HiddenInput = styled.input`
@@ -93,12 +97,14 @@ class Checkbox extends React.Component {
       ...pick(this.props, ['checked', 'disabled', 'secondary']),
       htmlFor: this.props.id
     };
+
+    const LabelElement = this.props.type === 'checkbox' ? StyledCheckboxInput : StyledSwitchInput;
     return (
       <StyledCheckbox className="kg-checkbox">
         <HiddenInput {...inputProps} />
-        <StyledLabel chassName="kg-checkbox__label" {...labelProps}>
+        <LabelElement chassName="kg-checkbox__label" {...labelProps}>
           {this.props.label}
-        </StyledLabel>
+        </LabelElement>
       </StyledCheckbox>
     );
   }

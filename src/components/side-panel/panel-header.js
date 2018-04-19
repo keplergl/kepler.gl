@@ -88,6 +88,7 @@ const StyledPanelDropdown = styled.div`
   opacity: ${props => props.show ? 1 : 0};
   transform: translateX(calc(-50% + 20px));
   pointer-events:  ${props => props.show ? 'all' : 'none'};
+  z-index: 1000;
   
   .save-export-dropdown__inner {
     box-shadow: none;
@@ -221,7 +222,8 @@ function PanelHeaderFactory() {
         actionItems,
         onSaveMap,
         onExportImage,
-        onExportData
+        onExportData,
+        onExportConfig
       } = this.props;
       return (
         <StyledPanelHeader className="side-panel__panel-header">
@@ -248,6 +250,7 @@ function PanelHeaderFactory() {
                       onSaveMap={onSaveMap}
                       onExportData={onExportData}
                       onExportImage={onExportImage}
+                      onExportConfig={onExportConfig}
                     />
                   ) : null}
                 </div>

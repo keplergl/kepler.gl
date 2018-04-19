@@ -86,6 +86,7 @@ const ActionTypes = keyMirror({
   SET_EXPORT_SELECTED_DATASET: null,
   SET_EXPORT_DATA_TYPE: null,
   SET_EXPORT_FILTERED: null,
+  SET_EXPORT_CONFIG: null,
 
   // all
   INIT: null,

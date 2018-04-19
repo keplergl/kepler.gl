@@ -24,7 +24,7 @@ import {console as globalConsole} from 'global/window';
 import assert from 'assert';
 import {Analyzer, DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from 'geojson-normalize';
-import {ALL_FIELD_TYPES} from 'constants/default-settings';
+import {ALL_FIELD_TYPES, GEOJSON_FIELDS} from 'constants/default-settings';
 import {notNullorUndefined} from 'utils/data-utils';
 
 // if any of these value occurs in csv, parse it to null;
@@ -325,9 +325,26 @@ export function processGeojson(rawData) {
   return processRowObject(allData);
 }
 
+/**
+ * On export data to csv
+ * @param data
+ * @param fields
+ */
 export function formatCsv(data, fields) {
   const columns = fields.map(f => f.name);
-  return csvFormatRows([columns, ...data]);
+  const formattedData = [columns];
+
+  // parse geojson object as string
+  data.forEach(row => {
+    formattedData.push(
+      row.map(
+        (d, i) => d && GEOJSON_FIELDS.geojson.includes(fields[i].name) ?
+          JSON.stringify(d) : d
+      )
+    )
+  });
+
+  return csvFormatRows(formattedData);
 }
 
 /**

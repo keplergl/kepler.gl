@@ -127,3 +127,11 @@ export const setExportFilteredUpdater = (state, {payload}) => ({
     filtered: payload.filtered
   }
 });
+
+export const setExportConfigUpdater = (state, action) => ({
+  ...state,
+  exportData: {
+    ...state.exportData,
+    config: !state.exportData.config
+  }
+});

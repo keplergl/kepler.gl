@@ -40,7 +40,8 @@ import {
   // export data
   setExportSelectedDatasetUpdater,
   setExportDataTypeUpdater,
-  setExportFilteredUpdater
+  setExportFilteredUpdater,
+  setExportConfigUpdater
 } from './ui-state-updaters';
 
 export const INITIAL_UI_STATE = {
@@ -63,7 +64,8 @@ export const INITIAL_UI_STATE = {
   exportData: {
     selectedDataset: '',
     dataType: EXPORT_DATA_TYPE.CSV,
-    filtered: true
+    filtered: true,
+    config: true
   }
 };
 
@@ -81,7 +83,8 @@ const actionHandler = {
 
   [ActionTypes.SET_EXPORT_SELECTED_DATASET]: setExportSelectedDatasetUpdater,
   [ActionTypes.SET_EXPORT_DATA_TYPE]: setExportDataTypeUpdater,
-  [ActionTypes.SET_EXPORT_FILTERED]: setExportFilteredUpdater
+  [ActionTypes.SET_EXPORT_FILTERED]: setExportFilteredUpdater,
+  [ActionTypes.SET_EXPORT_CONFIG]: setExportConfigUpdater
 };
 
 /* Reducer */
