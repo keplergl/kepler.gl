@@ -22,6 +22,10 @@
 and segments both use queryRunner */
 import keyMirror from 'keymirror';
 
+export const ASSETS_URL = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/';
+
+export const DATA_URL = 'https://raw.githubusercontent.com/uber-web/kepler.gl-data/master/';
+
 export const QUERY_TYPES = keyMirror({
   file: null,
   sample: null
@@ -66,5 +70,3 @@ export const LOADING_METHODS = [
 ];
 
 export const DEFAULT_LOADING_METHOD = LOADING_METHODS[0];
-
-export const ASSETS_URL = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/';

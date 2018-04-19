@@ -63,8 +63,9 @@ export function setLoadingMapStatus(isMapLoading) {
 }
 
 export function loadSampleMap(sample) {
-  return (dispatch) => {
-    dispatch(push(`/demo/${sample.id}`));
+  return (dispatch, getState) => {
+    const {routing} = getState();
+    dispatch(push(`/demo/${sample.id}${routing.locationBeforeTransitions.search}`));
     dispatch(loadRemoteMap(sample));
     dispatch(setLoadingMapStatus(true));
   };
