@@ -46,10 +46,10 @@ export const middlewares = [
 export const enhancers = [applyMiddleware(...middlewares)];
 
 // add redux devtools
-const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+// const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 
 export default createStore(
   combinedReducers,
   initialState,
-  composeEnhancers(...enhancers)
+  compose(...enhancers)
 );

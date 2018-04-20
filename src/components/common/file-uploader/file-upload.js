@@ -39,8 +39,8 @@ const defaultValidFileExt = [
   // 'tgz',
   // 'zip',
   // 'gpx',
-  'kml',
-  'json',
+  // 'kml',
+  // 'json',
   'geojson'
 ];
 
