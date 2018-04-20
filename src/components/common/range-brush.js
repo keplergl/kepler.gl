@@ -18,19 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {event, select} from 'd3-selection';
 import {brushX} from 'd3-brush';
-
-const propTypes = {
-  domain: PropTypes.arrayOf(PropTypes.number).isRequired,
-  onBrush: PropTypes.func.isRequired,
-  range: PropTypes.arrayOf(PropTypes.number).isRequired,
-  value: PropTypes.arrayOf(PropTypes.number).isRequired,
-  width: PropTypes.number.isRequired
-};
 
 const StyledG = styled.g`
   .selection {
@@ -39,7 +31,16 @@ const StyledG = styled.g`
     opacity: 1;
   }
 `;
-export default class RangeBrush extends React.Component {
+
+export default class RangeBrush extends Component {
+  static propTypes = {
+    domain: PropTypes.arrayOf(PropTypes.number).isRequired,
+    onBrush: PropTypes.func.isRequired,
+    range: PropTypes.arrayOf(PropTypes.number).isRequired,
+    value: PropTypes.arrayOf(PropTypes.number).isRequired,
+    width: PropTypes.number.isRequired
+  };
+
   componentDidMount() {
     const {range: [min, max], value: [val0, val1]} = this.props;
     // We want the React app to respond to brush state and vice-versa
@@ -124,7 +125,4 @@ export default class RangeBrush extends React.Component {
       this.rootContainer = comp;
     }}/>;
   }
-}
-
-RangeBrush.displayName = 'RangeBrush';
-RangeBrush.propTypes = propTypes;
+};

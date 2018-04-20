@@ -44,37 +44,39 @@ const FieldListItemFactory = showToken => {
   return FieldListItem;
 };
 
-const propTypes = {
-  fields: PropTypes.array.isRequired,
-  onSelect: PropTypes.func.isRequired,
-  placement: PropTypes.string,
-  value: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
-  filterFieldTypes: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
-  inputTheme: PropTypes.string,
-  erasable: PropTypes.bool,
-  error: PropTypes.bool,
-  multiSelect: PropTypes.bool,
-  closeOnSelect: PropTypes.bool,
-  showToken: PropTypes.bool,
-  suggested: PropTypes.array
-};
-
-const defaultProps = {
-  erasable: true,
-  error: false,
-  fields: [],
-  onSelect: () => {},
-  placement: 'bottom',
-  value: null,
-  multiSelect: false,
-  closeOnSelect: true,
-  showToken: true,
-  placeholder: 'Select a field'
-};
-
 const SuggestedFieldHeader = () => <div>Suggested Field</div>;
 
+const FieldType = PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.string), PropTypes.string]);
+
 export default class FieldSelector extends Component {
+  static propTypes = {
+    fields: PropTypes.arrayOf(FieldType).isRequired,
+    onSelect: PropTypes.func.isRequired,
+    placement: PropTypes.string,
+    value: FieldType,
+    filterFieldTypes: FieldType,
+    inputTheme: PropTypes.string,
+    erasable: PropTypes.bool,
+    error: PropTypes.bool,
+    multiSelect: PropTypes.bool,
+    closeOnSelect: PropTypes.bool,
+    showToken: PropTypes.bool,
+    suggested: PropTypes.arrayOf(PropTypes.any)
+  };
+
+  static defaultProps = {
+    erasable: true,
+    error: false,
+    fields: [],
+    onSelect: () => {},
+    placement: 'bottom',
+    value: null,
+    multiSelect: false,
+    closeOnSelect: true,
+    showToken: true,
+    placeholder: 'Select a field'
+  };
+
   fieldsSelector = props => props.fields;
   valueSelector = props => props.value;
   filterFieldTypesSelector = props => props.filterFieldTypes;
@@ -138,7 +140,4 @@ export default class FieldSelector extends Component {
       </div>
     );
   }
-}
-
-FieldSelector.propTypes = propTypes;
-FieldSelector.defaultProps = defaultProps;
+};

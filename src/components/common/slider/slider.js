@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import styled from 'styled-components';
@@ -27,41 +27,6 @@ import SliderHandle from './slider-handle';
 import SliderBarHandle from './slider-bar-handle';
 
 function noop() {}
-
-const propTypes = {
-  title: PropTypes.string,
-  isRanged: PropTypes.bool,
-  value0: PropTypes.number,
-  value1: PropTypes.number,
-  minValue: PropTypes.number,
-  maxValue: PropTypes.number,
-  sliderHandleWidth: PropTypes.number,
-  onSlider0Change: PropTypes.func,
-  onInput0Change: PropTypes.func,
-  onSlider1Change: PropTypes.func,
-  onInput1Change: PropTypes.func,
-  onSliderBarChange: PropTypes.func,
-  step: PropTypes.number,
-  enableBarDrag: PropTypes.bool
-};
-
-const defaultProps = {
-  title: '',
-  isRanged: true,
-  value0: 0,
-  value1: 100,
-  minValue: 0,
-  maxValue: 100,
-  step: 1,
-  sliderHandleWidth: 12,
-  enableBarDrag: false,
-  onSlider0Change: noop,
-  onInput0Change: noop,
-  onSlider1Change: noop,
-  onInput1Change: noop,
-  onSliderBarChange: noop,
-  disabled: false
-};
 
 const StyledRangeSlider = styled.div`
   position: relative;
@@ -75,7 +40,41 @@ const SliderWrapper = styled.div`
   margin-top: ${props => props.isRanged ? 0 : 10}px;
 `;
 
-class Slider extends React.Component {
+export default class Slider extends Component {
+  static propTypes = {
+    title: PropTypes.string,
+    isRanged: PropTypes.bool,
+    value0: PropTypes.number,
+    value1: PropTypes.number,
+    minValue: PropTypes.number,
+    maxValue: PropTypes.number,
+    sliderHandleWidth: PropTypes.number,
+    onSlider0Change: PropTypes.func,
+    onInput0Change: PropTypes.func,
+    onSlider1Change: PropTypes.func,
+    onInput1Change: PropTypes.func,
+    onSliderBarChange: PropTypes.func,
+    step: PropTypes.number,
+    enableBarDrag: PropTypes.bool
+  };
+
+  static defaultProps = {
+    title: '',
+    isRanged: true,
+    value0: 0,
+    value1: 100,
+    minValue: 0,
+    maxValue: 100,
+    step: 1,
+    sliderHandleWidth: 12,
+    enableBarDrag: false,
+    onSlider0Change: noop,
+    onInput0Change: noop,
+    onSlider1Change: noop,
+    onInput1Change: noop,
+    onSliderBarChange: noop,
+    disabled: false
+  };
 
   ref = undefined;
 
@@ -171,8 +170,3 @@ class Slider extends React.Component {
     );
   }
 }
-
-Slider.defaultProps = defaultProps;
-Slider.propTypes = propTypes;
-
-export default Slider;

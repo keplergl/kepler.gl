@@ -31,20 +31,20 @@ import {
   SidePanelSection
 } from 'components/common/styled-components';
 
-const propTypes = {
-  layer: PropTypes.object.isRequired,
-  fields: PropTypes.array.isRequired,
-  updateLayerConfig: PropTypes.func.isRequired,
-  openModal: PropTypes.func.isRequired,
-  fieldPairs: PropTypes.array
-};
-
 const TopRow = styled.div`
   display: flex;
   justify-content: space-between;
 `;
 
 export default class LayerColumnConfig extends Component {
+  static propTypes = {
+    layer: PropTypes.object.isRequired,
+    fields: PropTypes.arrayOf(PropTypes.any).isRequired,
+    updateLayerConfig: PropTypes.func.isRequired,
+    openModal: PropTypes.func.isRequired,
+    fieldPairs: PropTypes.arrayOf(PropTypes.any)
+  };
+
   _updateColumn(key, value) {
     const {layer} = this.props;
 
@@ -92,9 +92,7 @@ export default class LayerColumnConfig extends Component {
       </div>
     );
   }
-}
-
-LayerColumnConfig.propTypes = propTypes;
+};
 
 const ColumnRow = styled.div`
   display: flex;

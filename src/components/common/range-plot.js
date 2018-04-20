@@ -30,16 +30,6 @@ import RangeBrush from './range-brush';
 import {getTimeWidgetHintFormatter} from 'utils/filter-utils';
 import {theme} from 'styles/base';
 
-const propTypes = {
-  value: PropTypes.array.isRequired,
-  histogram: PropTypes.array,
-  lineChart: PropTypes.object,
-  plotType: PropTypes.string,
-  isEnlarged: PropTypes.bool,
-  onBlur: PropTypes.func,
-  width: PropTypes.number.isRequired
-};
-
 const chartMargin = {top: 18, bottom: 0, left: 0, right: 0};
 const chartH = 52;
 const containerH = 78;
@@ -51,6 +41,21 @@ const histogramStyle = {
 };
 
 export default class RangePlot extends Component {
+  static propTypes = {
+    value: PropTypes.arrayOf(PropTypes.number).isRequired,
+    histogram: PropTypes.arrayOf(
+      PropTypes.shape({
+        x0: PropTypes.number,
+        x1: PropTypes.number
+      })
+    ),
+    lineChart: PropTypes.object,
+    plotType: PropTypes.string,
+    isEnlarged: PropTypes.bool,
+    onBlur: PropTypes.func,
+    width: PropTypes.number.isRequired
+  };
+
   state = {
     hoveredDP: null
   };
@@ -119,8 +124,6 @@ export default class RangePlot extends Component {
     );
   }
 }
-
-RangePlot.propTypes = propTypes;
 
 const Histogram = ({
   width,

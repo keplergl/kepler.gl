@@ -40,14 +40,6 @@ import PlotContainerFactory from './plot-container';
 
 import {theme} from 'styles/base';
 
-const defaultProps = {
-  mapStyles: [],
-  width: 800,
-  height: 800,
-  appName: 'Kepler.Gl',
-  version: 'v1.0'
-};
-
 const GlobalStyle = styled.div`
   font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
   font-weight: 400;
@@ -100,6 +92,14 @@ function KeplerGlFactory(
   PlotContainer
 ) {
   class KeplerGL extends Component {
+    static defaultProps = {
+      mapStyles: [],
+      width: 800,
+      height: 800,
+      appName: 'Kepler.Gl',
+      version: 'v1.0'
+    };
+
     componentDidMount() {
       this._loadMapStyle(this.props.mapStyles);
       this._handleResize(this.props);
@@ -304,8 +304,6 @@ function KeplerGlFactory(
       );
     }
   }
-
-  KeplerGL.defaultProps = defaultProps;
 
   return keplerGlConnect(mapStateToProps, mapDispatchToProps)(KeplerGL);
 }

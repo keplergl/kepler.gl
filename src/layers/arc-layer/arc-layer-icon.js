@@ -22,19 +22,19 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base from 'components/common/icons/base';
 
-const propTypes = {
-  /** Set the height of the icon, ex. '16px' */
-  height: PropTypes.string,
-  colors: PropTypes.arrayOf(PropTypes.string)
-};
-
-const defaultProps = {
-  height: '16px',
-  predefinedClassName: 'point-layer-icon',
-  totalColor: 4
-};
-
 class ArcLayerIcon extends Component {
+  static propTypes = {
+    /** Set the height of the icon, ex. '16px' */
+    height: PropTypes.string,
+    colors: PropTypes.arrayOf(PropTypes.string)
+  };
+
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'point-layer-icon',
+    totalColor: 4
+  };
+
   render() {
     return (
       <Base {...this.props}>
@@ -63,8 +63,5 @@ class ArcLayerIcon extends Component {
     );
   }
 };
-ArcLayerIcon.displayName = 'ArcLayerIcon';
-ArcLayerIcon.propTypes = propTypes;
-ArcLayerIcon.defaultProps = defaultProps;
 
 export default ArcLayerIcon;

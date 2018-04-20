@@ -114,20 +114,6 @@ const StyledMapControlPanelHeader = styled.div`
   }
 `;
 
-const propTypes = {
-  dragRotate: PropTypes.bool.isRequired,
-  isSplit: PropTypes.bool.isRequired,
-  onToggleFullScreen: PropTypes.func.isRequired,
-  onTogglePerspective: PropTypes.func.isRequired,
-  onToggleSplitMap: PropTypes.func.isRequired,
-  top: PropTypes.number.isRequired
-};
-
-const defaultProps = {
-  isSplit: false,
-  top: 0
-};
-
 /**
  * Generates all layers available for the current map
  * TODO: this may be moved into map-container or map-control or even at the reducer level
@@ -175,6 +161,20 @@ const layerSelector = (layers, mapLayers) => {
 };
 
 export class MapControl extends Component {
+  static propTypes = {
+    dragRotate: PropTypes.bool.isRequired,
+    isSplit: PropTypes.bool.isRequired,
+    onToggleFullScreen: PropTypes.func.isRequired,
+    onTogglePerspective: PropTypes.func.isRequired,
+    onToggleSplitMap: PropTypes.func.isRequired,
+    top: PropTypes.number.isRequired
+  };
+
+  static defaultProps = {
+    isSplit: false,
+    top: 0
+  };
+
   constructor(props) {
     super(props);
     this.state = {
@@ -352,9 +352,6 @@ const MapLegendTooltip = ({id, message}) => (
     <span>{message}</span>
   </Tooltip>
 );
-
-MapControl.propTypes = propTypes;
-MapControl.defaultProps = defaultProps;
 
 const MapControlFactory =  () => MapControl;
 export default MapControlFactory;

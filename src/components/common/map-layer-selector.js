@@ -32,7 +32,7 @@ const propTypes = {
 
 const MapLayerSelect = styled.div`
   padding: 12px;
-  
+
   .map-layer-selector__item {
     margin: 12px 0;
   }
@@ -56,7 +56,6 @@ const MapLayerSelector = ({layers, onMapToggleLayer}) => (
   </MapLayerSelect>
 );
 
-MapLayerSelector.displayName = 'LayerSelector';
 MapLayerSelector.propTypes = propTypes;
 
 export default MapLayerSelector;

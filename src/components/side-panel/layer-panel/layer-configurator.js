@@ -48,17 +48,6 @@ import {
   CHANNEL_SCALE_SUPPORTED_FIELDS
 } from 'constants/default-settings';
 
-const propTypes = {
-  layer: PropTypes.object.isRequired,
-  datasets: PropTypes.object.isRequired,
-  layerTypeOptions: PropTypes.array.isRequired,
-  openModal: PropTypes.func.isRequired,
-  updateLayerConfig: PropTypes.func.isRequired,
-  updateLayerType: PropTypes.func.isRequired,
-  updateLayerVisConfig: PropTypes.func.isRequired,
-  updateLayerVisualChannelConfig: PropTypes.func.isRequired
-};
-
 const StyledLayerConfigurator = styled.div.attrs({
   className: 'layer-panel__config'
 })`
@@ -72,6 +61,17 @@ const StyledLayerVisualConfigurator = styled.div.attrs({
 `;
 
 export default class LayerConfigurator extends Component {
+  static propTypes = {
+    layer: PropTypes.object.isRequired,
+    datasets: PropTypes.object.isRequired,
+    layerTypeOptions: PropTypes.arrayOf(PropTypes.any).isRequired,
+    openModal: PropTypes.func.isRequired,
+    updateLayerConfig: PropTypes.func.isRequired,
+    updateLayerType: PropTypes.func.isRequired,
+    updateLayerVisConfig: PropTypes.func.isRequired,
+    updateLayerVisualChannelConfig: PropTypes.func.isRequired
+  };
+
   _renderPointLayerConfig(props) {
     return this._renderScatterplotLayerConfig(props);
   }
@@ -625,8 +625,6 @@ export default class LayerConfigurator extends Component {
     );
   }
 }
-
-LayerConfigurator.propTypes = propTypes;
 
 /*
  * Componentize config component into pure functional components

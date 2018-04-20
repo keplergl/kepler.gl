@@ -37,74 +37,6 @@ const DEFAULT_CLASS = 'typeahead';
  * Renders an text input that shows options nearby that you can use the
  * keyboard or mouse to select.
  */
-const propTypes = {
-  name: PropTypes.string,
-  customClasses: PropTypes.object,
-  maxVisible: PropTypes.number,
-  resultsTruncatedMessage: PropTypes.string,
-  options: PropTypes.array,
-  fixedOptions: PropTypes.array,
-  allowCustomValues: PropTypes.number,
-  initialValue: PropTypes.string,
-  value: PropTypes.string,
-  placeholder: PropTypes.string,
-  disabled: PropTypes.bool,
-  textarea: PropTypes.bool,
-  inputProps: PropTypes.object,
-  onOptionSelected: PropTypes.func,
-  onChange: PropTypes.func,
-  onKeyDown: PropTypes.func,
-  onKeyPress: PropTypes.func,
-  onKeyUp: PropTypes.func,
-  onFocus: PropTypes.func,
-  onBlur: PropTypes.func,
-  filterOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
-  searchOptions: PropTypes.func,
-  displayOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
-  inputDisplayOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
-  formInputOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
-  defaultClassNames: PropTypes.bool,
-  customListComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
-  customListItemComponent: PropTypes.oneOfType([
-    PropTypes.element,
-    PropTypes.func
-  ]),
-  customListHeaderComponent: PropTypes.oneOfType([
-    PropTypes.element,
-    PropTypes.func
-  ]),
-  showOptionsWhenEmpty: PropTypes.bool,
-  searchable: PropTypes.bool
-};
-
-const defaultProps = {
-  options: [],
-  customClasses: {},
-  allowCustomValues: 0,
-  initialValue: '',
-  value: '',
-  placeholder: '',
-  disabled: false,
-  textarea: false,
-  inputProps: {},
-  onOptionSelected(option) {},
-  onChange(event) {},
-  onKeyDown(event) {},
-  onKeyPress(event) {},
-  onKeyUp(event) {},
-  onFocus(event) {},
-  onBlur(event) {},
-  filterOption: null,
-  searchOptions: null,
-  inputDisplayOption: null,
-  defaultClassNames: true,
-  customListComponent: DropdownList,
-  customListItemComponent: ListItem,
-  customListHeaderComponent: null,
-  showOptionsWhenEmpty: true,
-  searchable: true,
-  resultsTruncatedMessage: null
-};
 
 const TypeaheadWrapper = styled.div`
   display: flex;
@@ -136,7 +68,76 @@ const InputIcon = styled.div`
   color: ${props => props.theme.inputPlaceholderColor};
 `;
 
-class Typeahead extends Component {
+export default class Typeahead extends Component {
+  static propTypes = {
+    name: PropTypes.string,
+    customClasses: PropTypes.object,
+    maxVisible: PropTypes.number,
+    resultsTruncatedMessage: PropTypes.string,
+    options: PropTypes.arrayOf(PropTypes.any),
+    fixedOptions: PropTypes.arrayOf(PropTypes.any),
+    allowCustomValues: PropTypes.number,
+    initialValue: PropTypes.string,
+    value: PropTypes.string,
+    placeholder: PropTypes.string,
+    disabled: PropTypes.bool,
+    textarea: PropTypes.bool,
+    inputProps: PropTypes.object,
+    onOptionSelected: PropTypes.func,
+    onChange: PropTypes.func,
+    onKeyDown: PropTypes.func,
+    onKeyPress: PropTypes.func,
+    onKeyUp: PropTypes.func,
+    onFocus: PropTypes.func,
+    onBlur: PropTypes.func,
+    filterOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+    searchOptions: PropTypes.func,
+    displayOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+    inputDisplayOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+    formInputOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+    defaultClassNames: PropTypes.bool,
+    customListComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
+    customListItemComponent: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func
+    ]),
+    customListHeaderComponent: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func
+    ]),
+    showOptionsWhenEmpty: PropTypes.bool,
+    searchable: PropTypes.bool
+  };
+
+  static defaultProps = {
+    options: [],
+    customClasses: {},
+    allowCustomValues: 0,
+    initialValue: '',
+    value: '',
+    placeholder: '',
+    disabled: false,
+    textarea: false,
+    inputProps: {},
+    onOptionSelected(option) {},
+    onChange(event) {},
+    onKeyDown(event) {},
+    onKeyPress(event) {},
+    onKeyUp(event) {},
+    onFocus(event) {},
+    onBlur(event) {},
+    filterOption: null,
+    searchOptions: null,
+    inputDisplayOption: null,
+    defaultClassNames: true,
+    customListComponent: DropdownList,
+    customListItemComponent: ListItem,
+    customListHeaderComponent: null,
+    showOptionsWhenEmpty: true,
+    searchable: true,
+    resultsTruncatedMessage: null
+  };
+
   constructor(props) {
     super(props);
 
@@ -514,9 +515,4 @@ class Typeahead extends Component {
       </TypeaheadWrapper>
     );
   }
-}
-
-Typeahead.propTypes = propTypes;
-Typeahead.defaultProps = defaultProps;
-
-export default Typeahead;
+};

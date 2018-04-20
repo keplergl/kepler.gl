@@ -31,23 +31,6 @@ import {
 } from 'components/common/styled-components';
 import listensToClickOutside from 'react-onclickoutside/decorator';
 
-const propTypes = {
-  colorSets: PropTypes.arrayOf(
-    PropTypes.shape({
-      selectedColor: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
-      setColor: PropTypes.func.isRequired,
-      isRange: PropTypes.bool,
-      label: PropTypes.string
-    })
-  ),
-  inputTheme: PropTypes.string,
-  disabled: PropTypes.bool
-};
-
-const defaultProps = {
-  colorSets: []
-};
-
 const ColorBlock = styled.div`
   width: 32px;
   height: 18px;
@@ -76,6 +59,23 @@ const InputBoxContainer = styled.div`
 `;
 
 class ColorSelector extends Component {
+  static propTypes = {
+    colorSets: PropTypes.arrayOf(
+      PropTypes.shape({
+        selectedColor: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.any), PropTypes.object]),
+        setColor: PropTypes.func.isRequired,
+        isRange: PropTypes.bool,
+        label: PropTypes.string
+      })
+    ),
+    inputTheme: PropTypes.string,
+    disabled: PropTypes.bool
+  };
+
+  static defaultProps = {
+    colorSets: []
+  };
+
   state = {
     editing: false
   };
@@ -147,9 +147,6 @@ class ColorSelector extends Component {
       </div>
     );
   }
-}
-
-ColorSelector.propTypes = propTypes;
-ColorSelector.defaultProps = defaultProps;
+};
 
 export default listensToClickOutside(ColorSelector);

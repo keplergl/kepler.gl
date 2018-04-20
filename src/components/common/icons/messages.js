@@ -18,13 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import React from 'react';
 import Base from './base';
 
-class Messages extends React.Component {
-  static displayName = 'Messages';
-
+export default class Messages extends Component {
   static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
@@ -42,6 +40,4 @@ class Messages extends React.Component {
       </Base>
     );
   }
-}
-
-export default Messages;
+};

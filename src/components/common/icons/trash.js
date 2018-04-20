@@ -18,13 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-class Trash extends React.Component {
-  static displayName = 'Trash';
-
+export default class Trash extends Component {
   static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
@@ -47,5 +45,3 @@ class Trash extends React.Component {
     );
   }
 }
-
-export default Trash;

@@ -39,19 +39,6 @@ import {
   PANELS
 } from 'constants/default-settings';
 
-const propTypes = {
-  filters: PropTypes.array.isRequired,
-  interactionConfig: PropTypes.object.isRequired,
-  layerBlending: PropTypes.string.isRequired,
-  layers: PropTypes.array.isRequired,
-  layerClasses: PropTypes.object.isRequired,
-  mapStyle: PropTypes.object.isRequired,
-  width: PropTypes.number.isRequired,
-  datasets: PropTypes.object.isRequired,
-  visStateActions: PropTypes.object.isRequired,
-  mapStyleActions: PropTypes.object.isRequired
-};
-
 const SidePanelContent = styled.div`
   ${props => props.theme.sidePanelScrollBar};
   flex-grow: 1;
@@ -76,7 +63,19 @@ SidePanelFactory.deps = [PanelHeaderFactory];
  */
 export default function SidePanelFactory(PanelHeader) {
 
-  class SidePanel extends Component {
+  return class SidePanel extends Component {
+    static propTypes = {
+      filters: PropTypes.arrayOf(PropTypes.any).isRequired,
+      interactionConfig: PropTypes.object.isRequired,
+      layerBlending: PropTypes.string.isRequired,
+      layers: PropTypes.arrayOf(PropTypes.any).isRequired,
+      layerClasses: PropTypes.object.isRequired,
+      mapStyle: PropTypes.object.isRequired,
+      width: PropTypes.number.isRequired,
+      datasets: PropTypes.object.isRequired,
+      visStateActions: PropTypes.object.isRequired,
+      mapStyleActions: PropTypes.object.isRequired
+    };
 
     /* component private functions */
     _onOpenOrClose = () => {
@@ -226,9 +225,5 @@ export default function SidePanelFactory(PanelHeader) {
         </div>
       );
     }
-  }
-
-  SidePanel.propTypes = propTypes;
-
-  return SidePanel;
+  };
 }

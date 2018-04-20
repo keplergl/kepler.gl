@@ -18,13 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-class Expand extends React.Component {
-  static displayName = 'Expand';
-
+export default class Expand extends Component {
   static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
@@ -44,6 +42,4 @@ class Expand extends React.Component {
       </Base>
     );
   }
-}
-
-export default Expand;
+};

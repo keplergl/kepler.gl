@@ -22,9 +22,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-class Histogram extends React.Component {
-  static displayName = 'Histogram';
-
+export default class Histogram extends React.Component {
   static propTypes = {
     height: PropTypes.string
   };
@@ -47,5 +45,3 @@ class Histogram extends React.Component {
     );
   }
 }
-
-export default Histogram;

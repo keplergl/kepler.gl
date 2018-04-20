@@ -18,13 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-class Cross extends React.Component {
-  static displayName = 'Cross';
-
+export default class Cross extends Component {
   static propTypes = {
     height: PropTypes.string
   };
@@ -44,5 +42,3 @@ class Cross extends React.Component {
     );
   }
 }
-
-export default Cross;

@@ -19,22 +19,10 @@
 // THE SOFTWARE.
 
 import document from 'global/document';
-import React from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import styled from 'styled-components';
-
-const propTypes = {
-  width: PropTypes.number,
-  left: PropTypes.string,
-  sliderBarListener: PropTypes.func,
-  enableBarDrag: PropTypes.bool
-};
-
-const defaultProps = {
-  sliderBarListener: function sliderBarListenerTn() {},
-  enableBarDrag: false
-};
 
 const StyledSlider = styled.div`
   position: relative;
@@ -58,7 +46,19 @@ const StyledSlider = styled.div`
  *  onMove
  *  sliderBarListener
  */
-class SliderHandle extends React.Component {
+export default class SliderHandle extends Component {
+  static propTypes = {
+    width: PropTypes.number,
+    left: PropTypes.string,
+    sliderBarListener: PropTypes.func,
+    enableBarDrag: PropTypes.bool
+  };
+
+  static defaultProps = {
+    sliderBarListener: function sliderBarListenerTn() {},
+    enableBarDrag: false
+  };
+
   state = {mouseOver: false};
   prevX = 0;
 
@@ -114,9 +114,4 @@ class SliderHandle extends React.Component {
       />
     );
   }
-}
-
-SliderHandle.propTypes = propTypes;
-SliderHandle.defaultProps = defaultProps;
-
-export default SliderHandle;
+};

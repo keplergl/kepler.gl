@@ -18,19 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import React from 'react';
 import Base from './base';
 
-class Share extends React.Component {
-  displayName: 'Share';
-
-  propTypes: {
+export default class Share extends Component {
+  static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
   };
 
-  defaultProps = {
+  static defaultProps = {
     height: '16px',
     predefinedClassName: 'data-ex-icons-share'
   };
@@ -42,6 +40,4 @@ class Share extends React.Component {
       </Base>
     );
   }
-}
-
-export default Share;
+};

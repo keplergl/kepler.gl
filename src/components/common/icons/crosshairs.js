@@ -18,13 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import React from 'react';
 import Base from './base';
 
-class Crosshairs extends React.Component {
-  static displayName = 'Crosshairs';
-
+export default class Crosshairs extends Component {
   static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
@@ -42,6 +40,4 @@ class Crosshairs extends React.Component {
       </Base>
     );
   }
-}
-
-export default Crosshairs;
+};

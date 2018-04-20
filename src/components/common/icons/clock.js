@@ -18,12 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-class Clock extends React.Component {
-  static displayName = 'Clock';
+export default class Clock extends Component {
 
   static propTypes = {
     /** Set the height of the icon, ex. '16px' */
@@ -43,6 +42,4 @@ class Clock extends React.Component {
       </Base>
     );
   }
-}
-
-export default Clock;
+};

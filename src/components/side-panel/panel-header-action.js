@@ -24,24 +24,6 @@ import classnames from 'classnames';
 import styled from 'styled-components';
 import {Tooltip} from 'components/common/styled-components';
 
-const propTypes = {
-  id: PropTypes.string,
-  flush: PropTypes.bool,
-  tooltip: PropTypes.string,
-  onClick: PropTypes.func,
-  active: PropTypes.bool,
-  disabled: PropTypes.bool,
-  hoverColor: PropTypes.string,
-  className: PropTypes.string,
-  tooltipType: PropTypes.string
-};
-
-const defaultProps = {
-  onClick: () => {},
-  hoverColor: null,
-  active: false
-};
-
 const HeaderActionWrapper = styled.div`
   margin-left: ${props => (props.flush ? 0 : 8)}px;
   display: flex;
@@ -67,6 +49,24 @@ const HeaderActionWrapper = styled.div`
 
 // Need to use react class to access props.component
 export default class PanelHeaderAction extends Component {
+  static propTypes = {
+    id: PropTypes.string,
+    flush: PropTypes.bool,
+    tooltip: PropTypes.string,
+    onClick: PropTypes.func,
+    active: PropTypes.bool,
+    disabled: PropTypes.bool,
+    hoverColor: PropTypes.string,
+    className: PropTypes.string,
+    tooltipType: PropTypes.string
+  };
+
+  static defaultProps = {
+    onClick: () => {},
+    hoverColor: null,
+    active: false
+  };
+
   render() {
     const {
       onClick,
@@ -105,7 +105,4 @@ export default class PanelHeaderAction extends Component {
       </HeaderActionWrapper>
     );
   }
-}
-
-PanelHeaderAction.defaultProps = defaultProps;
-PanelHeaderAction.propTypes = propTypes;
+};

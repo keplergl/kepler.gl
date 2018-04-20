@@ -22,19 +22,19 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base from 'components/common/icons/base';
 
-const propTypes = {
-  /** Set the height of the icon, ex. '16px' */
-  height: PropTypes.string,
-  colors: PropTypes.arrayOf(PropTypes.string)
-};
+export default class LineLayerIcon extends Component {
+  static propTypes = {
+    /** Set the height of the icon, ex. '16px' */
+    height: PropTypes.string,
+    colors: PropTypes.arrayOf(PropTypes.string)
+  };
 
-const defaultProps = {
-  height: '16px',
-  predefinedClassName: 'line-layer-icon',
-  totalColor: 5
-};
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'line-layer-icon',
+    totalColor: 5
+  };
 
-class LineLayerIcon extends Component {
   render() {
     return (
       <Base {...this.props}>
@@ -67,9 +67,3 @@ class LineLayerIcon extends Component {
     );
   }
 };
-
-LineLayerIcon.displayName = 'LineLayerIcon';
-LineLayerIcon.propTypes = propTypes;
-LineLayerIcon.defaultProps = defaultProps;
-
-export default LineLayerIcon;
