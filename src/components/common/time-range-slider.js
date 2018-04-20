@@ -32,20 +32,6 @@ import {getTimeWidgetTitleFormatter, BASE_SPEED} from 'utils/filter-utils';
 import RangeSlider from './range-slider';
 import TimeSliderMarker from './time-slider-marker';
 
-const propTypes = {
-  onChange: PropTypes.func.isRequired,
-  domain: PropTypes.array.isRequired,
-  value: PropTypes.array.isRequired,
-  step: PropTypes.number.isRequired,
-  plotType: PropTypes.string,
-  histogram: PropTypes.array,
-  lineChart: PropTypes.object,
-  toggleAnimation: PropTypes.func.isRequired,
-  isAnimatable: PropTypes.bool,
-  isEnlarged: PropTypes.bool,
-  speed: PropTypes.number
-};
-
 const defaultTimeFormat = val => moment.utc(val).format('MM/DD/YY hh:mma');
 
 const StyledSliderContainer = styled.div`
@@ -57,6 +43,20 @@ const StyledSliderContainer = styled.div`
 `;
 
 export default class TimeRangeSlider extends Component {
+  static propTypes = {
+    onChange: PropTypes.func.isRequired,
+    domain: PropTypes.arrayOf(PropTypes.number).isRequired,
+    value: PropTypes.arrayOf(PropTypes.number).isRequired,
+    step: PropTypes.number.isRequired,
+    plotType: PropTypes.string,
+    histogram: PropTypes.arrayOf(PropTypes.any),
+    lineChart: PropTypes.object,
+    toggleAnimation: PropTypes.func.isRequired,
+    isAnimatable: PropTypes.bool,
+    isEnlarged: PropTypes.bool,
+    speed: PropTypes.number
+  };
+
   constructor(props) {
     super(props);
     this.state = {
@@ -165,17 +165,17 @@ const TimeValueWrapper = styled.div`
   font-size: 11px;
   justify-content: ${props => props.isEnlarged ? 'center' : 'space-between'};
   color: ${props => props.theme.labelColor};
-  
+
   .horizontal-bar {
     padding: 0 12px;
   }
-  
+
   .time-value {
     display: flex;
     flex-direction: ${props => props.isEnlarged ? 'row' : 'column'};
     align-items: flex-start;
   }
-  
+
   .time-value:last-child {
     align-items: flex-end;
   }
@@ -208,7 +208,7 @@ const TimeValue = ({value, split}) => (
 const StyledAnimationControls = styled.div`
   margin-bottom: 12px;
   margin-right: 42px;
-  
+
   &.disabled {
     opacity: 0.4;
     pointer-events: none;
@@ -243,6 +243,3 @@ const AnimationControls = ({
     </ButtonGroup>
   </StyledAnimationControls>
 );
-
-TimeRangeSlider.propTypes = propTypes;
-TimeRangeSlider.displayName = 'TimeRangeSlider';

@@ -37,24 +37,6 @@ import {
 
 import {LAYER_BLENDINGS} from 'constants/default-settings';
 
-const propTypes = {
-  addLayer: PropTypes.func.isRequired,
-  datasets: PropTypes.object.isRequired,
-  layerBlending: PropTypes.string.isRequired,
-  layerClasses: PropTypes.object.isRequired,
-  layers: PropTypes.array.isRequired,
-  layerConfigChange: PropTypes.func.isRequired,
-  layerVisualChannelConfigChange: PropTypes.func.isRequired,
-  layerTypeChange: PropTypes.func.isRequired,
-  layerVisConfigChange: PropTypes.func.isRequired,
-  openModal: PropTypes.func.isRequired,
-  removeLayer: PropTypes.func.isRequired,
-  removeDataset: PropTypes.func.isRequired,
-  showDatasetTable: PropTypes.func.isRequired,
-  updateLayerBlending: PropTypes.func.isRequired,
-  updateLayerOrder: PropTypes.func.isRequired
-};
-
 const StyledSortable = styled.div`
   .ui-sortable {
     display: block;
@@ -96,6 +78,24 @@ const StyledSortable = styled.div`
 `;
 
 export default class LayerManager extends Component {
+  static propTypes = {
+    addLayer: PropTypes.func.isRequired,
+    datasets: PropTypes.object.isRequired,
+    layerBlending: PropTypes.string.isRequired,
+    layerClasses: PropTypes.object.isRequired,
+    layers: PropTypes.arrayOf(PropTypes.any).isRequired,
+    layerConfigChange: PropTypes.func.isRequired,
+    layerVisualChannelConfigChange: PropTypes.func.isRequired,
+    layerTypeChange: PropTypes.func.isRequired,
+    layerVisConfigChange: PropTypes.func.isRequired,
+    openModal: PropTypes.func.isRequired,
+    removeLayer: PropTypes.func.isRequired,
+    removeDataset: PropTypes.func.isRequired,
+    showDatasetTable: PropTypes.func.isRequired,
+    updateLayerBlending: PropTypes.func.isRequired,
+    updateLayerOrder: PropTypes.func.isRequired
+  };
+
   layerClassSelector = props => props.layerClasses;
   layerTypeOptionsSelector = createSelector(
     this.layerClassSelector,
@@ -182,8 +182,6 @@ export default class LayerManager extends Component {
     );
   }
 }
-
-LayerManager.propTypes = propTypes;
 
 const LayerBlendingSelector = ({layerBlending, updateLayerBlending}) => (
   <SidePanelSection>

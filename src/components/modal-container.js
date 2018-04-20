@@ -49,20 +49,6 @@ import {
   ADD_MAP_STYLE_ID
 } from 'constants/default-settings';
 
-const propTypes = {
-  rootNode: PropTypes.object,
-  containerW: PropTypes.number,
-  containerH: PropTypes.number,
-  mapboxApiAccessToken: PropTypes.string.isRequired,
-  mapState: PropTypes.object.isRequired,
-  mapStyle: PropTypes.object.isRequired,
-  uiState: PropTypes.object.isRequired,
-  visState: PropTypes.object.isRequired,
-  visStateActions: PropTypes.object.isRequired,
-  uiStateActions: PropTypes.object.isRequired,
-  mapStyleActions: PropTypes.object.isRequired
-};
-
 const DataTableModalStyle = css`
   height: 85%;
   width: 90%;
@@ -100,6 +86,20 @@ export default function ModalContainerFactory(
   AddMapStyleModal
 ) {
   class ModalWrapper extends Component {
+    static propTypes = {
+      rootNode: PropTypes.object,
+      containerW: PropTypes.number,
+      containerH: PropTypes.number,
+      mapboxApiAccessToken: PropTypes.string.isRequired,
+      mapState: PropTypes.object.isRequired,
+      mapStyle: PropTypes.object.isRequired,
+      uiState: PropTypes.object.isRequired,
+      visState: PropTypes.object.isRequired,
+      visStateActions: PropTypes.object.isRequired,
+      uiStateActions: PropTypes.object.isRequired,
+      mapStyleActions: PropTypes.object.isRequired
+    };
+
     _closeModal = () => {
       this.props.uiStateActions.toggleModal(null);
     };
@@ -352,8 +352,6 @@ export default function ModalContainerFactory(
       ) : null;
     }
   }
-
-  ModalWrapper.propTypes = propTypes;
 
   return ModalWrapper;
 }

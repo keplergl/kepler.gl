@@ -29,21 +29,8 @@ import {FIELD_DISPLAY_FORMAT} from 'constants/default-settings';
 const MAX_WIDTH = 400;
 const MAX_HEIGHT = 600;
 
-const propTypes = {
-  fields: PropTypes.array,
-  fieldsToShow: PropTypes.array,
-  isVisible: PropTypes.bool,
-  layer: PropTypes.object,
-  data: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
-  freezed: PropTypes.bool,
-  x: PropTypes.number,
-  y: PropTypes.number,
-  onClose: PropTypes.func,
-  mapState: PropTypes.object.isRequired
-};
-
 const StyledMapPopover = styled.div`
-  ${props => props.theme.scrollBar} 
+  ${props => props.theme.scrollBar}
   font-size: 11px;
   font-weight: 500;
   background-color: ${props => props.theme.panelBackground};
@@ -51,7 +38,7 @@ const StyledMapPopover = styled.div`
   z-index: 1001;
   position: absolute;
   overflow-x: auto;
-  
+
   .gutter {
     height: 6px;
   }
@@ -59,18 +46,18 @@ const StyledMapPopover = styled.div`
   table {
     margin: 2px 12px 12px 12px;
     width: auto;
-    
+
     tbody {
       border-top: transparent;
       border-bottom: transparent;
     }
-  
+
     td {
       border-color: transparent;
       padding: 4px;
       color: ${props => props.theme.textColor};
     }
-    
+
     td.row__value {
       text-align: right;
       font-weight: 500;
@@ -99,13 +86,26 @@ const StyledLayerName = CenterFlexbox.extend`
   text-transform: capitalize;
   padding-left: 14px;
   margin-top: 12px;
-  
+
   svg {
     margin-right: 4px;
   }
 `;
 
 export class MapPopover extends Component {
+  static propTypes = {
+    fields: PropTypes.arrayOf(PropTypes.any),
+    fieldsToShow: PropTypes.arrayOf(PropTypes.any),
+    isVisible: PropTypes.bool,
+    layer: PropTypes.object,
+    data: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.any), PropTypes.object]),
+    freezed: PropTypes.bool,
+    x: PropTypes.number,
+    y: PropTypes.number,
+    onClose: PropTypes.func,
+    mapState: PropTypes.object.isRequired
+  };
+
   constructor(props) {
     super(props);
     this.state = {
@@ -295,8 +295,6 @@ const CellInfo = ({data, layer}) => {
 function _getCellFormat(type) {
   return FIELD_DISPLAY_FORMAT[type];
 }
-
-MapPopover.propTypes = propTypes;
 
 const MapPopoverFactory =  () => MapPopover;
 export default MapPopoverFactory;

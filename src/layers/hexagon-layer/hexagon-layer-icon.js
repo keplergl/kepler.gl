@@ -22,19 +22,19 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base from 'components/common/icons/base';
 
-const propTypes = {
-  /** Set the height of the icon, ex. '16px' */
-  height: PropTypes.string,
-  colors: PropTypes.arrayOf(PropTypes.string)
-};
+export default class HexagonLayerIcon extends Component {
+  static propTypes = {
+    /** Set the height of the icon, ex. '16px' */
+    height: PropTypes.string,
+    colors: PropTypes.arrayOf(PropTypes.string)
+  };
 
-const defaultProps = {
-  height: '16px',
-  predefinedClassName: 'hexagon-layer-icon',
-  totalColor: 6
-};
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'hexagon-layer-icon',
+    totalColor: 6
+  };
 
-class HexagonLayerIcon extends Component {
   render() {
     return (
       <Base {...this.props}>
@@ -75,9 +75,3 @@ class HexagonLayerIcon extends Component {
     );
   }
 };
-
-HexagonLayerIcon.displayName = 'HexagonLayerIcon';
-HexagonLayerIcon.propTypes = propTypes;
-HexagonLayerIcon.defaultProps = defaultProps;
-
-export default HexagonLayerIcon;

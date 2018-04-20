@@ -30,21 +30,21 @@ import {Add} from 'components/common/icons';
 import SourceDataCatalog from './source-data-catalog';
 import FilterPanel from './filter-panel/filter-panel';
 
-const propTypes = {
-  datasets: PropTypes.object,
-  addFilter: PropTypes.func.isRequired,
-  removeFilter: PropTypes.func.isRequired,
-  enlargeFilter: PropTypes.func.isRequired,
-  toggleAnimation: PropTypes.func.isRequired,
-  setFilter: PropTypes.func.isRequired,
-  filters: PropTypes.array.isRequired,
-  showDatasetTable: PropTypes.func,
-
-  // fields can be undefined when dataset is not selected
-  fields: PropTypes.array
-};
-
 export default class FilterManager extends Component {
+  static propTypes = {
+    datasets: PropTypes.object,
+    addFilter: PropTypes.func.isRequired,
+    removeFilter: PropTypes.func.isRequired,
+    enlargeFilter: PropTypes.func.isRequired,
+    toggleAnimation: PropTypes.func.isRequired,
+    setFilter: PropTypes.func.isRequired,
+    filters: PropTypes.arrayOf(PropTypes.any).isRequired,
+    showDatasetTable: PropTypes.func,
+
+    // fields can be undefined when dataset is not selected
+    fields: PropTypes.arrayOf(PropTypes.any)
+  };
+
   /* selectors */
   datasetsSelector = state => state.datasets;
   defaultDatasetSelector = createSelector(
@@ -99,6 +99,4 @@ export default class FilterManager extends Component {
       </div>
     );
   }
-}
-
-FilterManager.propTypes = propTypes;
+};

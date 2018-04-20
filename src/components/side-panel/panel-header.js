@@ -60,16 +60,16 @@ const StyledPanelAction = styled.div.attrs({
   justify-content: center;
   margin-left: 4px;
   width: 26px;
-  
+
   a {
     height: 20px;
   }
-  
+
   :hover {
     cursor: pointer;
     background-color: ${props => props.theme.secondaryBtnActBgd};
     color: ${props => props.theme.textColorHl};
-    
+
     a {
       color: ${props => props.theme.textColorHl};
     }
@@ -89,7 +89,7 @@ const StyledPanelDropdown = styled.div`
   transform: translateX(calc(-50% + 20px));
   pointer-events:  ${props => props.show ? 'all' : 'none'};
   z-index: 1000;
-  
+
   .save-export-dropdown__inner {
     box-shadow: none;
     background-color: transparent;
@@ -119,11 +119,6 @@ const StyledPanelDropdown = styled.div`
     margin-top: 4px;
   }
 `;
-
-const propTypes = {
-  logoComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
-  actionItems: PropTypes.array
-};
 
 export const PanelAction = ({item, onClick}) => (
   <StyledPanelAction className="side-panel__panel-header__action"
@@ -196,13 +191,18 @@ const defaultActionItems = [
   }
 ];
 
-const defaultProps = {
-  logoComponent: KeplerGlLogo,
-  actionItems: defaultActionItems
-};
-
 function PanelHeaderFactory() {
-  class PanelHeader extends Component {
+  return class PanelHeader extends Component {
+    static propTypes = {
+      logoComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
+      actionItems: PropTypes.arrayOf(PropTypes.any)
+    };
+
+    static defaultProps = {
+      logoComponent: KeplerGlLogo,
+      actionItems: defaultActionItems
+    };
+
     state = {
       dropdown: null
     };
@@ -261,11 +261,6 @@ function PanelHeaderFactory() {
       );
     }
   }
-
-  PanelHeader.defaultProps = defaultProps;
-  PanelHeader.propTypes = propTypes;
-
-  return PanelHeader;
 }
 
 export default PanelHeaderFactory;

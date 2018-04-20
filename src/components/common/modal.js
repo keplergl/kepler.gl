@@ -26,36 +26,6 @@ import Modal from 'react-modal';
 import {Delete} from 'components/common/icons';
 import {Button} from 'components/common/styled-components';
 
-const propTypes = {
-  footer: PropTypes.bool,
-  close: PropTypes.func.isRequired,
-  onConfirm: PropTypes.func,
-  onCancel: PropTypes.func,
-  confirmButton: PropTypes.object,
-  confirmButtonLabel: PropTypes.string,
-  cancelButton: PropTypes.object,
-  cancelButtonLabel: PropTypes.string,
-  cssStyle: PropTypes.array
-};
-
-const defaultProps = {
-  footer: false,
-  close: () => {},
-  onConfirm: () => {},
-  onCancel: () => {},
-  cancelButton: {
-    link: true,
-    large: true,
-    children: 'Cancel'
-  },
-  confirmButton: {
-    large: true,
-    width: '160px',
-    children: 'Confirm'
-  },
-  cssStyle: []
-};
-
 const ModalContentWrapper = styled.div`
   width: 60%;
   max-width: 960px;
@@ -122,14 +92,26 @@ const FooterActionWrapper = styled.div`
   justify-content: flex-end;
 `;
 
+const defaultCancelButton = {
+  link: true,
+  large: true,
+  children: 'Cancel'
+};
+
+const defaultConfirmButton = {
+  large: true,
+  width: '160px',
+  children: 'Confirm'
+};
+
 export const ModalFooter = ({
   cancel,
   confirm,
   cancelButton,
   confirmButton
 }) => {
-  const cancelButtonProps = {...defaultProps.cancelButton, ...cancelButton};
-  const confirmButtonProps = {...defaultProps.confirmButton, ...confirmButton};
+  const cancelButtonProps = {...defaultCancelButton, ...cancelButton};
+  const confirmButtonProps = {...defaultConfirmButton, ...confirmButton};
   return (
     <StyledModalFooter className="modal--footer">
       <FooterActionWrapper>
@@ -143,7 +125,30 @@ export const ModalFooter = ({
     </StyledModalFooter>
   );
 }
+
 class ModalDialog extends Component {
+  static propTypes = {
+    footer: PropTypes.bool,
+    close: PropTypes.func.isRequired,
+    onConfirm: PropTypes.func,
+    onCancel: PropTypes.func,
+    confirmButton: PropTypes.object,
+    confirmButtonLabel: PropTypes.string,
+    cancelButton: PropTypes.object,
+    cancelButtonLabel: PropTypes.string,
+    cssStyle: PropTypes.arrayOf(PropTypes.any)
+  };
+
+  static defaultProps = {
+    footer: false,
+    close: () => {},
+    onConfirm: () => {},
+    onCancel: () => {},
+    cancelButton: defaultCancelButton,
+    confirmButton: defaultConfirmButton,
+    cssStyle: []
+  };
+
   render() {
     const {props} = this;
     return (
@@ -186,9 +191,6 @@ class ModalDialog extends Component {
     );
   }
 }
-
-ModalDialog.defaultProps = defaultProps;
-ModalDialog.propTypes = propTypes;
 
 const StyledModal = styled(ModalDialog)`
   width: 100%;

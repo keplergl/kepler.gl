@@ -22,19 +22,19 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base from 'components/common/icons/base';
 
-const propTypes = {
-  /** Set the height of the icon, ex. '16px' */
-  height: PropTypes.string,
-  colors: PropTypes.arrayOf(PropTypes.string)
-};
-
-const defaultProps = {
-  height: '16px',
-  predefinedClassName: 'cluster-layer-icon',
-  totalColor: 5
-};
-
 class ClusterLayerIcon extends Component {
+  static propTypes = {
+    /** Set the height of the icon, ex. '16px' */
+    height: PropTypes.string,
+    colors: PropTypes.arrayOf(PropTypes.string)
+  };
+
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'cluster-layer-icon',
+    totalColor: 5
+  };
+
   render() {
     return (
       <Base {...this.props}>
@@ -67,9 +67,5 @@ class ClusterLayerIcon extends Component {
     );
   }
 };
-
-ClusterLayerIcon.displayName = 'ClusterLayerIcon';
-ClusterLayerIcon.propTypes = propTypes;
-ClusterLayerIcon.defaultProps = defaultProps;
 
 export default ClusterLayerIcon;

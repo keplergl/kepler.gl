@@ -18,13 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import React from 'react';
 import Base from './base';
 
-class LeftArrow extends React.Component {
-  static displayName = 'LeftArrow';
-
+export default class LeftArrow extends Component {
   static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
@@ -43,5 +41,3 @@ class LeftArrow extends React.Component {
     );
   }
 }
-
-export default LeftArrow;

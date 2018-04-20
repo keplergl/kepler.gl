@@ -18,37 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import pick from 'lodash.pick';
 
 function noop() {}
-
-const propTypes = {
-  id: PropTypes.string.isRequired,
-  label: PropTypes.node,
-  value: PropTypes.oneOf([true, false, 'indeterminate']),
-  checked: PropTypes.bool,
-  disabled: PropTypes.bool,
-
-  error: PropTypes.string,
-  switch: PropTypes.bool,
-  activeColor: PropTypes.string,
-  secondary: PropTypes.bool,
-  onBlur: PropTypes.func,
-  onChange: PropTypes.func,
-  onFocus: PropTypes.func
-};
-
-const defaultProps = {
-  disabled: false,
-  checked: false,
-  onBlur: noop,
-  onChange: noop,
-  onFocus: noop,
-  label: ''
-};
 
 const StyledSwitchInput = styled.label`
   ${props =>
@@ -70,7 +45,32 @@ const StyledCheckbox = styled.div`
   margin-left: ${props => props.theme.switchLabelMargin}px;
 `;
 
-class Checkbox extends React.Component {
+export default class Checkbox extends Component {
+  static propTypes = {
+    id: PropTypes.string.isRequired,
+    label: PropTypes.node,
+    value: PropTypes.oneOf([true, false, 'indeterminate']),
+    checked: PropTypes.bool,
+    disabled: PropTypes.bool,
+
+    error: PropTypes.string,
+    switch: PropTypes.bool,
+    activeColor: PropTypes.string,
+    secondary: PropTypes.bool,
+    onBlur: PropTypes.func,
+    onChange: PropTypes.func,
+    onFocus: PropTypes.func
+  };
+
+  static defaultProps = {
+    disabled: false,
+    checked: false,
+    onBlur: noop,
+    onChange: noop,
+    onFocus: noop,
+    label: ''
+  };
+
   state = {
     focused: false
   };
@@ -109,8 +109,3 @@ class Checkbox extends React.Component {
     );
   }
 }
-
-Checkbox.propTypes = propTypes;
-Checkbox.defaultProps = defaultProps;
-
-export default Checkbox;

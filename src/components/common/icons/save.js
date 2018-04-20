@@ -18,13 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-class Save extends React.Component {
-  static displayName = 'Save';
-
+export default class Save extends Component {
   static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
@@ -43,6 +41,4 @@ class Save extends React.Component {
       </Base>
     );
   }
-}
-
-export default Save;
+};

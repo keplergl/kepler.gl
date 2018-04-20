@@ -23,20 +23,6 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {ArrowRight} from 'components/common/icons';
 
-const defaultProps = {
-  width: 300,
-  minifiedWidth: 0,
-  isOpen: true,
-  onOpenOrClose: function noop() {}
-};
-
-const propTypes = {
-  width: PropTypes.number,
-  isOpen: PropTypes.bool,
-  minifiedWidth: PropTypes.number,
-  onOpenOrClose: PropTypes.func
-};
-
 const StyledSidePanelContainer = styled.div`
   z-index: 99;
   height: 100%;
@@ -85,6 +71,20 @@ const CollapseButton = styled.div`
 `;
 
 export default class SideBar extends Component {
+  static defaultProps = {
+    width: 300,
+    minifiedWidth: 0,
+    isOpen: true,
+    onOpenOrClose: function noop() {}
+  };
+
+  static propTypes = {
+    width: PropTypes.number,
+    isOpen: PropTypes.bool,
+    minifiedWidth: PropTypes.number,
+    onOpenOrClose: PropTypes.func
+  };
+
   _onOpenOrClose = () => {
     this.props.onOpenOrClose({isOpen: !this.props.isOpen});
   };
@@ -118,7 +118,4 @@ export default class SideBar extends Component {
       </StyledSidePanelContainer>
     );
   }
-}
-
-SideBar.propTypes = propTypes;
-SideBar.defaultProps = defaultProps;
+};

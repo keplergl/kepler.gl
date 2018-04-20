@@ -21,6 +21,11 @@
 import React from 'react';
 import styled from 'styled-components';
 
+const defaultProps = {
+  appName: 'Kepler.Gl',
+  version: 'v1.0'
+};
+
 const LogoTitle = styled.div`
   display: inline-block;
   margin-left: 6px;
@@ -74,9 +79,6 @@ const KeplerGlLogo = ({appName, version}) => (
   </LogoWrapper>
 );
 
-KeplerGlLogo.defaultProps = {
-  appName: 'Kepler.Gl',
-  version: 'v1.0'
-};
+KeplerGlLogo.defaultProps = defaultProps;
 
 export default KeplerGlLogo;

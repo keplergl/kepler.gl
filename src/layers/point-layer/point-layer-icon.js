@@ -22,18 +22,18 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base from 'components/common/icons/base';
 
-const propTypes = {
-  height: PropTypes.string,
-  colors: PropTypes.arrayOf(PropTypes.string)
-};
-
-const defaultProps = {
-  height: '16px',
-  predefinedClassName: 'point-layer-icon',
-  totalColor: 6
-};
-
 class PointLayerIcon extends Component {
+  static propTypes = {
+    height: PropTypes.string,
+    colors: PropTypes.arrayOf(PropTypes.string)
+  };
+
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'point-layer-icon',
+    totalColor: 6
+  };
+
   render() {
     return (
       <Base {...this.props}>
@@ -47,9 +47,5 @@ class PointLayerIcon extends Component {
     );
   }
 };
-
-PointLayerIcon.displayName = 'PointLayerIcon';
-PointLayerIcon.propTypes = propTypes;
-PointLayerIcon.defaultProps = defaultProps;
 
 export default PointLayerIcon;

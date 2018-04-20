@@ -18,13 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-class DragNDrop extends React.Component {
-  static displayName = 'DragNDrop';
-
+export default class DragNDrop extends Component {
   static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
@@ -44,5 +42,3 @@ class DragNDrop extends React.Component {
     );
   }
 }
-
-export default DragNDrop;

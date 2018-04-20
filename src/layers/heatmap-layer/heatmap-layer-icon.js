@@ -22,19 +22,19 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base from 'components/common/icons/base';
 
-const propTypes = {
-  /** Set the height of the icon, ex. '16px' */
-  height: PropTypes.string,
-  colors: PropTypes.arrayOf(PropTypes.string)
-};
+export default class HeatmapLayerIcon extends Component {
+  static propTypes = {
+    /** Set the height of the icon, ex. '16px' */
+    height: PropTypes.string,
+    colors: PropTypes.arrayOf(PropTypes.string)
+  };
 
-const defaultProps = {
-  height: '16px',
-  predefinedClassName: 'heatmap-layer-icon',
-  totalColor: 3
-};
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'heatmap-layer-icon',
+    totalColor: 3
+  };
 
-class HeatmapLayerIcon extends Component {
   render() {
     return (
       <Base {...this.props}>
@@ -52,9 +52,3 @@ class HeatmapLayerIcon extends Component {
     );
   }
 };
-
-HeatmapLayerIcon.displayName = 'HeatmapLayerIcon';
-HeatmapLayerIcon.propTypes = propTypes;
-HeatmapLayerIcon.defaultProps = defaultProps;
-
-export default HeatmapLayerIcon;

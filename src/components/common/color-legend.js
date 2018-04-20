@@ -51,15 +51,6 @@ const StyledLegend = styled.div`
 
 const defaultFormat = d => d;
 
-const propTypes = {
-  width: PropTypes.number.isRequired,
-  scaleType: PropTypes.string.isRequired,
-  domain: PropTypes.oneOfType([PropTypes.array, PropTypes.object]).isRequired,
-  fieldType: PropTypes.string,
-  range: PropTypes.arrayOf(PropTypes.string),
-  abelFormat: PropTypes.func
-};
-
 const getTimeLabelFormat = domain => {
   const formatter = getTimeWidgetHintFormatter(domain);
   return val => moment.utc(val).format(formatter);
@@ -103,6 +94,15 @@ const getQuantLegends = (scale, labelFormat) => {
 };
 
 export default class ColorLegend extends Component {
+  static propTypes = {
+    width: PropTypes.number.isRequired,
+    scaleType: PropTypes.string.isRequired,
+    domain: PropTypes.oneOfType([PropTypes.array, PropTypes.object]).isRequired,
+    fieldType: PropTypes.string,
+    range: PropTypes.arrayOf(PropTypes.string),
+    labelFormat: PropTypes.func
+  };
+
   domainSelector = props => props.domain;
   rangeSelector = props => props.range;
   labelFormatSelector = props => props.labelFormat;
@@ -169,5 +169,3 @@ const LegendRow = ({label = '', displayLabel, color, idx}) => (
     </text>
   </g>
 );
-
-ColorLegend.propTypes = propTypes;

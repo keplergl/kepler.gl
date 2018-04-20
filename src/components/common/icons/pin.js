@@ -18,13 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import React from 'react';
 import Base from './base';
 
-class Pin extends React.Component {
-  static displayName = 'Pin';
-
+export default class Pin extends Component {
   static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
@@ -43,6 +41,4 @@ class Pin extends React.Component {
       </Base>
     );
   }
-}
-
-export default Pin;
+};

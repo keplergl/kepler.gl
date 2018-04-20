@@ -32,19 +32,6 @@ import * as Filters from 'components/filters';
 import {FILTER_TYPES, FILTER_COMPONENTS} from 'utils/filter-utils';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
 
-const propTypes = {
-  idx: PropTypes.number,
-  filters: PropTypes.array.isRequired,
-  filter: PropTypes.object.isRequired,
-  setFilter: PropTypes.func.isRequired,
-  removeFilter: PropTypes.func.isRequired,
-  enlargeFilter: PropTypes.func.isRequired,
-  toggleAnimation: PropTypes.func.isRequired,
-  datasets: PropTypes.object,
-  showDatasetTable: PropTypes.func,
-  isAnyFilterAnimating: PropTypes.bool
-};
-
 const StyledFilterPanel = styled.div`
   margin-bottom: 12px;
   border-radius: 1px;
@@ -65,6 +52,19 @@ const StyledFilterContent = styled.div`
 `;
 
 export default class FilterPanel extends Component {
+  static propTypes = {
+    idx: PropTypes.number,
+    filters: PropTypes.arrayOf(PropTypes.any).isRequired,
+    filter: PropTypes.object.isRequired,
+    setFilter: PropTypes.func.isRequired,
+    removeFilter: PropTypes.func.isRequired,
+    enlargeFilter: PropTypes.func.isRequired,
+    toggleAnimation: PropTypes.func.isRequired,
+    datasets: PropTypes.object,
+    showDatasetTable: PropTypes.func,
+    isAnyFilterAnimating: PropTypes.bool
+  };
+
   /* selectors */
   fieldsSelector = props =>
     (props.filter.dataId && props.datasets[props.filter.dataId].fields) || [];
@@ -161,5 +161,3 @@ export default class FilterPanel extends Component {
     );
   }
 }
-
-FilterPanel.propTypes = propTypes;

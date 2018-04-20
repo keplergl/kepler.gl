@@ -48,28 +48,28 @@ const MAP_STYLE = {
 
 const getGlConst = d => GL[d];
 
-const propTypes = {
-  // required
-  data: PropTypes.array.isRequired,
-  fields: PropTypes.array.isRequired,
-  interactionConfig: PropTypes.object.isRequired,
-  layerBlending: PropTypes.string.isRequired,
-  layerData: PropTypes.array.isRequired,
-  layers: PropTypes.array.isRequired,
-  mapState: PropTypes.object.isRequired,
-  mapStyle: PropTypes.object.isRequired,
-  popoverOffset: PropTypes.object.isRequired,
-
-  // optional
-  mapLayers: PropTypes.object,
-  onMapToggleLayer: PropTypes.func
-};
 const MAPBOXGL_STYLE_UPDATE = 'style.load';
 MapContainerFactory.deps = [
   MapPopoverFactory, MapControlFactory];
 
 export default function MapContainerFactory(MapPopover, MapControl) {
   class MapContainer extends Component {
+    static propTypes = {
+      // required
+      data: PropTypes.arrayOf(PropTypes.any),
+      fields: PropTypes.arrayOf(PropTypes.any),
+      interactionConfig: PropTypes.object.isRequired,
+      layerBlending: PropTypes.string.isRequired,
+      layerData: PropTypes.arrayOf(PropTypes.any).isRequired,
+      layers: PropTypes.arrayOf(PropTypes.any).isRequired,
+      mapState: PropTypes.object.isRequired,
+      mapStyle: PropTypes.object.isRequired,
+
+      // optional
+      mapLayers: PropTypes.object,
+      onMapToggleLayer: PropTypes.func
+    };
+
     constructor(props) {
       super(props);
       this.state = {
@@ -442,8 +442,6 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       );
     }
   }
-
-  MapContainer.propsTypes = propTypes;
 
   return MapContainer;
 }

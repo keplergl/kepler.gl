@@ -35,12 +35,6 @@ import {
 import {DatasetTag} from '../source-data-catalog';
 import {BRUSH_CONFIG} from 'utils/interaction-utils';
 
-const propTypes = {
-  datasets: PropTypes.object.isRequired,
-  config: PropTypes.object.isRequired,
-  onConfigChange: PropTypes.func.isRequired
-};
-
 const StyledPanelContent = PanelContent.extend`
   border-top: 1px solid ${props => props.theme.panelBorderColor};
 `;
@@ -50,6 +44,12 @@ const StyledInteractionPanel = styled.div`
 `;
 
 export default class InteractionPanel extends Component {
+  static propTypes = {
+    datasets: PropTypes.object.isRequired,
+    config: PropTypes.object.isRequired,
+    onConfigChange: PropTypes.func.isRequired
+  };
+
   state = {isConfigActive: false};
 
   _updateConfig = newProp => {
@@ -120,8 +120,6 @@ export default class InteractionPanel extends Component {
     );
   }
 }
-
-InteractionPanel.propTypes = propTypes;
 
 const TooltipConfig = ({config, datasets, width, onChange}) => (
   <div>

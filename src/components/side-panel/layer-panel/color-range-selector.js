@@ -33,17 +33,6 @@ import {COLOR_RANGES} from 'constants/color-ranges';
 const ALL_TYPES = uniq(COLOR_RANGES.map(c => c.type).concat(['all']));
 const ALL_STEPS = uniq(COLOR_RANGES.map(d => d.colors.length));
 
-const propTypes = {
-  colorRanges: PropTypes.array,
-  selectedColorRange: PropTypes.object,
-  onSelectColorRange: PropTypes.func.isRequired
-};
-
-const defaultProps = {
-  colorRanges: COLOR_RANGES,
-  onSelectColorRange: () => {}
-};
-
 const StyledColorConfig = styled.div`
   padding: 12px 12px 0 12px;
 `;
@@ -52,6 +41,17 @@ const ColorRangeSelector = styled.div`
   padding-bottom: 12px;
 `;
 export default class ColorRangeSelect extends Component {
+  static propTypes = {
+    colorRanges: PropTypes.arrayOf(PropTypes.any),
+    selectedColorRange: PropTypes.object,
+    onSelectColorRange: PropTypes.func.isRequired
+  };
+
+  static defaultProps = {
+    colorRanges: COLOR_RANGES,
+    onSelectColorRange: () => {}
+  };
+
   state = {
     config: {
       type: {
@@ -232,6 +232,3 @@ const ColorPaletteGroup = ({config = {}, onSelect, selected, colorRanges}) => {
     </div>
   );
 };
-
-ColorRangeSelect.propTypes = propTypes;
-ColorRangeSelect.defaultProps = defaultProps;

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 
 const getStyleClassFromColor = (totalColor, colors) =>
@@ -29,7 +29,7 @@ const getStyleClassFromColor = (totalColor, colors) =>
       ''
     );
 
-class Base extends React.Component {
+export default class Base extends Component {
   static displayName = 'Base Icon';
 
   static propTypes = {
@@ -91,6 +91,4 @@ class Base extends React.Component {
       </svg>
     );
   }
-}
-
-export default Base;
+};

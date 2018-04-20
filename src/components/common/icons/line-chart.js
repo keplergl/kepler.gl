@@ -18,13 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-class LineChart extends React.Component {
-  static displayName = 'LineChart';
-
+export default class LineChart extends Component {
   static propTypes = {
     height: PropTypes.string
   };
@@ -42,6 +40,4 @@ class LineChart extends React.Component {
       </Base>
     );
   }
-}
-
-export default LineChart;
+};

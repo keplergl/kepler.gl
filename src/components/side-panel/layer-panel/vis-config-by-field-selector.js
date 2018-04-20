@@ -31,24 +31,24 @@ import InfoHelper from 'components/common/info-helper';
 import DimensionScaleSelector from './dimension-scale-selector';
 import {capitalizeFirstLetter} from 'utils/utils';
 
-const propTypes = {
-  channel: PropTypes.string.isRequired,
-  domain: PropTypes.array.isRequired,
-  fields: PropTypes.array.isRequired,
-  id: PropTypes.string.isRequired,
-  property: PropTypes.string.isRequired,
-  scaleType: PropTypes.string.isRequired,
-  showScale: PropTypes.bool.isRequired,
-  updateField: PropTypes.func.isRequired,
-  updateScale: PropTypes.func.isRequired,
-
-  // optional
-  selectedField: PropTypes.object,
-  description: PropTypes.string,
-  label: PropTypes.string
-};
-
 export default class VisConfigByFieldSelector extends Component {
+  static propTypes = {
+    channel: PropTypes.string.isRequired,
+    domain: PropTypes.arrayOf(PropTypes.any).isRequired,
+    fields: PropTypes.arrayOf(PropTypes.any).isRequired,
+    id: PropTypes.string.isRequired,
+    property: PropTypes.string.isRequired,
+    scaleType: PropTypes.string.isRequired,
+    showScale: PropTypes.bool.isRequired,
+    updateField: PropTypes.func.isRequired,
+    updateScale: PropTypes.func.isRequired,
+
+    // optional
+    selectedField: PropTypes.object,
+    description: PropTypes.string,
+    label: PropTypes.string
+  };
+
   _updateVisByField = val => {
     this.props.updateField(val);
   };
@@ -97,6 +97,4 @@ export default class VisConfigByFieldSelector extends Component {
       </SidePanelSection>
     );
   }
-}
-
-VisConfigByFieldSelector.propTypes = propTypes;
+};

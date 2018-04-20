@@ -28,10 +28,6 @@ import {isChrome} from 'utils/utils';
 
 const FileDrop =
   typeof document !== 'undefined' ? require('react-file-drop') : null;
-const propTypes = {
-  onFileUpload: PropTypes.func.isRequired,
-  validFileExt: PropTypes.array
-};
 
 // File.type is not reliable if the OS does not have a
 // registered mapping for the extension.
@@ -47,10 +43,6 @@ const defaultValidFileExt = [
   'json',
   'geojson'
 ];
-
-const defaultProps = {
-  validFileExt: defaultValidFileExt
-};
 
 const MESSAGE = ' Drag & Drop Your File(s) Here';
 const CHROME_MSG =
@@ -104,7 +96,16 @@ const StyledFileUpload = styled.div`
   }
 `;
 
-class FileUpload extends Component {
+export default class FileUpload extends Component {
+  static defaultProps = {
+    validFileExt: defaultValidFileExt
+  };
+
+  static propTypes = {
+    onFileUpload: PropTypes.func.isRequired,
+    validFileExt: PropTypes.arrayOf(PropTypes.string)
+  };
+
   state = {
     dragOver: false,
     files: null,
@@ -216,8 +217,3 @@ class FileUpload extends Component {
     );
   }
 }
-
-FileUpload.propTypes = propTypes;
-FileUpload.defaultProps = defaultProps;
-
-export default FileUpload;

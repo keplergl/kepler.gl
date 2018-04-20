@@ -88,51 +88,51 @@ const DropdownWrapper = styled.div`
   margin-bottom: ${props => (props.placement === 'top' ? '4px' : 'auto')};
 `;
 
-const propTypes = {
-  // required properties
-  selectedItems: PropTypes.any,
-  onChange: PropTypes.func.isRequired,
-  options: PropTypes.array.isRequired,
-
-  // optional properties
-  fixedOptions: PropTypes.array,
-  erasable: PropTypes.bool,
-  displayOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
-  getOptionValue: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
-  filterOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
-  placement: PropTypes.string,
-  disabled: PropTypes.bool,
-  isError: PropTypes.bool,
-  multiSelect: PropTypes.bool,
-  inputTheme: PropTypes.string,
-  onBlur: PropTypes.func,
-  placeholder: PropTypes.string,
-  closeOnSelect: PropTypes.bool,
-  DropdownHeaderComponent: PropTypes.func,
-  DropDownRenderComponent: PropTypes.func,
-  DropDownLineItemRenderComponent: PropTypes.func
-};
-
-const defaultProps = {
-  erasable: false,
-  placement: 'bottom',
-  selectedItems: [],
-  displayOption: null,
-  getOptionValue: null,
-  filterOption: null,
-  fixedOptions: null,
-  inputTheme: 'primary',
-  multiSelect: true,
-  placeholder: 'Enter a value',
-  closeOnSelect: true,
-  searchable: true,
-  dropdownHeader: null,
-  DropdownHeaderComponent: null,
-  DropDownRenderComponent: DropdownList,
-  DropDownLineItemRenderComponent: ListItem
-};
-
 class ItemSelector extends Component {
+  static propTypes = {
+    // required properties
+    selectedItems: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.any), PropTypes.string]),
+    onChange: PropTypes.func.isRequired,
+    options: PropTypes.arrayOf(PropTypes.any).isRequired,
+
+    // optional properties
+    fixedOptions: PropTypes.arrayOf(PropTypes.any),
+    erasable: PropTypes.bool,
+    displayOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+    getOptionValue: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+    filterOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+    placement: PropTypes.string,
+    disabled: PropTypes.bool,
+    isError: PropTypes.bool,
+    multiSelect: PropTypes.bool,
+    inputTheme: PropTypes.string,
+    onBlur: PropTypes.func,
+    placeholder: PropTypes.string,
+    closeOnSelect: PropTypes.bool,
+    DropdownHeaderComponent: PropTypes.func,
+    DropDownRenderComponent: PropTypes.func,
+    DropDownLineItemRenderComponent: PropTypes.func
+  };
+
+  static defaultProps = {
+    erasable: false,
+    placement: 'bottom',
+    selectedItems: [],
+    displayOption: null,
+    getOptionValue: null,
+    filterOption: null,
+    fixedOptions: null,
+    inputTheme: 'primary',
+    multiSelect: true,
+    placeholder: 'Enter a value',
+    closeOnSelect: true,
+    searchable: true,
+    dropdownHeader: null,
+    DropdownHeaderComponent: null,
+    DropDownRenderComponent: DropdownList,
+    DropDownLineItemRenderComponent: ListItem
+  };
+
   state = {
     showTypeahead: false
   };
@@ -295,9 +295,6 @@ class ItemSelector extends Component {
       </div>
     );
   }
-}
-
-ItemSelector.propTypes = propTypes;
-ItemSelector.defaultProps = defaultProps;
+};
 
 export default listensToClickOutside(ItemSelector);

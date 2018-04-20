@@ -36,47 +36,47 @@ export const ListItem = ({value, displayOption = defaultDisplay}) => (
   <span className={classList.listItemAnchor}>{displayOption(value)}</span>
 );
 
-const propTypes = {
-  options: PropTypes.array,
-  allowCustomValues: PropTypes.number,
-  customClasses: PropTypes.object,
-  customValues: PropTypes.array,
-  customListItemComponent: PropTypes.oneOfType([
-    PropTypes.element,
-    PropTypes.func
-  ]),
-  customListHeaderComponent: PropTypes.oneOfType([
-    PropTypes.element,
-    PropTypes.func
-  ]),
-  selectionIndex: PropTypes.number,
-  onOptionSelected: PropTypes.func,
-  displayOption: PropTypes.func.isRequired,
-  defaultClassNames: PropTypes.bool,
-  areResultsTruncated: PropTypes.bool,
-  resultsTruncatedMessage: PropTypes.string,
-  listItemComponent: PropTypes.func
-};
-
-const defaultProps = {
-  customClasses: {},
-  customListItemComponent: ListItem,
-  customListHeaderComponent: null,
-  allowCustomValues: 0,
-  customValues: [],
-  displayOption: defaultDisplay,
-  onOptionSelected: () => {},
-  defaultClassNames: true,
-  selectionIndex: null
-};
-
 const DropdownListWrapper = styled.div`
   background-color: ${props => props.theme.dropdownListBgd};
   border-top: 1px solid ${props => props.theme.dropdownListBorderTop};
   ${props => props.theme.dropdownList};
 `;
 
-class DropdownList extends Component {
+export default class DropdownList extends Component {
+  static propTypes = {
+    options: PropTypes.arrayOf(PropTypes.any),
+    allowCustomValues: PropTypes.number,
+    customClasses: PropTypes.object,
+    customValues: PropTypes.arrayOf(PropTypes.any),
+    customListItemComponent: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func
+    ]),
+    customListHeaderComponent: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func
+    ]),
+    selectionIndex: PropTypes.number,
+    onOptionSelected: PropTypes.func,
+    displayOption: PropTypes.func.isRequired,
+    defaultClassNames: PropTypes.bool,
+    areResultsTruncated: PropTypes.bool,
+    resultsTruncatedMessage: PropTypes.string,
+    listItemComponent: PropTypes.func
+  };
+
+  static defaultProps = {
+    customClasses: {},
+    customListItemComponent: ListItem,
+    customListHeaderComponent: null,
+    allowCustomValues: 0,
+    customValues: [],
+    displayOption: defaultDisplay,
+    onOptionSelected: () => {},
+    defaultClassNames: true,
+    selectionIndex: null
+  };
+
   _onClick(result, event) {
     event.preventDefault();
     this.props.onOptionSelected(result, event);
@@ -142,9 +142,4 @@ class DropdownList extends Component {
       </DropdownListWrapper>
     );
   }
-}
-
-DropdownList.propTypes = propTypes;
-DropdownList.defaultProps = defaultProps;
-
-export default DropdownList;
+};

@@ -22,19 +22,19 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base from 'components/common/icons/base';
 
-const propTypes = {
-  /** Set the height of the icon, ex. '16px' */
-  height: PropTypes.string,
-  colors: PropTypes.arrayOf(PropTypes.string)
-};
+export default class IconLayerIcon extends Component {
+  static propTypes = {
+    /** Set the height of the icon, ex. '16px' */
+    height: PropTypes.string,
+    colors: PropTypes.arrayOf(PropTypes.string)
+  };
 
-const defaultProps = {
-  height: '16px',
-  predefinedClassName: 'icon-layer-icon',
-  totalColor: 3
-};
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'icon-layer-icon',
+    totalColor: 3
+  };
 
-class IconLayerIcon extends Component {
   render() {
     return (
       <Base {...this.props}>
@@ -45,9 +45,3 @@ class IconLayerIcon extends Component {
     );
   }
 }
-
-IconLayerIcon.displayName = 'IconLayerIcon';
-IconLayerIcon.propTypes = propTypes;
-IconLayerIcon.defaultProps = defaultProps;
-
-export default IconLayerIcon;

@@ -18,13 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-class Table extends React.Component {
-  static displayName = 'Table';
-
+export default class Table extends Component {
   static propTypes = {
     height: PropTypes.string
   };
@@ -43,6 +41,4 @@ class Table extends React.Component {
       </Base>
     );
   }
-}
-
-export default Table;
+};

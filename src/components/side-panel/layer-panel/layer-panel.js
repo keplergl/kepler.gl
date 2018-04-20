@@ -26,26 +26,11 @@ import {sortable} from 'react-anything-sortable';
 import LayerConfigurator from './layer-configurator';
 import LayerPanelHeader from './layer-panel-header';
 
-const propTypes = {
-  layer: PropTypes.object.isRequired,
-  datasets: PropTypes.object.isRequired,
-  idx: PropTypes.number.isRequired,
-  layerConfigChange: PropTypes.func.isRequired,
-  layerTypeChange: PropTypes.func.isRequired,
-  openModal: PropTypes.func.isRequired,
-  removeLayer: PropTypes.func.isRequired,
-  onCloseConfig: PropTypes.func,
-
-  layerTypeOptions: PropTypes.array,
-  layerVisConfigChange: PropTypes.func,
-  layerVisualChannelConfigChange: PropTypes.func
-};
-
 const PanelWrapper = styled.div`
   font-size: 12px;
   border-radius: 1px;
   margin-bottom: 8px;
-  
+
   &.dragging {
     cursor: move;
   }
@@ -53,6 +38,21 @@ const PanelWrapper = styled.div`
 
 @sortable
 export default class LayerPanel extends Component {
+  static propTypes = {
+    layer: PropTypes.object.isRequired,
+    datasets: PropTypes.object.isRequired,
+    idx: PropTypes.number.isRequired,
+    layerConfigChange: PropTypes.func.isRequired,
+    layerTypeChange: PropTypes.func.isRequired,
+    openModal: PropTypes.func.isRequired,
+    removeLayer: PropTypes.func.isRequired,
+    onCloseConfig: PropTypes.func,
+
+    layerTypeOptions: PropTypes.arrayOf(PropTypes.any),
+    layerVisConfigChange: PropTypes.func,
+    layerVisualChannelConfigChange: PropTypes.func
+  };
+
   updateLayerConfig = newProp => {
     this.props.layerConfigChange(this.props.layer, newProp);
   };
@@ -136,6 +136,3 @@ export default class LayerPanel extends Component {
     );
   }
 }
-
-LayerPanel.propTypes = propTypes;
-LayerPanel.displayName = 'LayerPanel';

@@ -32,12 +32,6 @@ import {
   renameEntry
 } from 'actions/identity-actions';
 
-// default id and address if not provided
-const defaultProps = {
-  id: 'map',
-  getState: state => state.keplerGl
-};
-
 export const errorMsg = {
   noState:
     `kepler.gl state doesnt exist. ` +
@@ -55,6 +49,12 @@ ContainerFactory.deps = [KeplerGlFactory];
 
 export function ContainerFactory(KeplerGl) {
   class Container extends Component {
+    // default id and address if not provided
+    static defaultProps = {
+      id: 'map',
+      getState: state => state.keplerGl
+    };
+
     constructor(props, ctx) {
       super(props, ctx);
 
@@ -108,7 +108,6 @@ export function ContainerFactory(KeplerGl) {
     }
   }
 
-  Container.defaultProps = defaultProps;
   const mapStateToProps = (state, props) => ({state, ...props});
   const dispatchToProps = dispatch => ({dispatch});
   return connect(mapStateToProps, dispatchToProps)(Container);

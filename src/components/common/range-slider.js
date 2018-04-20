@@ -28,29 +28,6 @@ import {Input} from 'components/common/styled-components';
 
 import {roundValToStep} from 'utils/data-utils';
 
-const propTypes = {
-  range: PropTypes.arrayOf(PropTypes.number).isRequired,
-  value0: PropTypes.number.isRequired,
-  value1: PropTypes.number.isRequired,
-  onChange: PropTypes.func.isRequired,
-  histogram: PropTypes.array,
-  isRanged: PropTypes.bool,
-  isEnlarged: PropTypes.bool,
-  showInput: PropTypes.bool,
-  inputTheme: PropTypes.string,
-  step: PropTypes.number,
-  sliderHandleWidth: PropTypes.number,
-  xAxis: PropTypes.func
-};
-
-const defaultProps = {
-  isEnlarged: false,
-  isRanged: true,
-  showInput: true,
-  sliderHandleWidth: 12,
-  onChange: () => {}
-};
-
 const SliderInput = Input.extend`
   height: 24px;
   width: 40px;
@@ -70,6 +47,29 @@ const RangeInputWrapper =styled.div`
 `;
 
 export default class RangeSlider extends Component {
+  static propTypes = {
+    range: PropTypes.arrayOf(PropTypes.number).isRequired,
+    value0: PropTypes.number.isRequired,
+    value1: PropTypes.number.isRequired,
+    onChange: PropTypes.func.isRequired,
+    histogram: PropTypes.arrayOf(PropTypes.any),
+    isRanged: PropTypes.bool,
+    isEnlarged: PropTypes.bool,
+    showInput: PropTypes.bool,
+    inputTheme: PropTypes.string,
+    step: PropTypes.number,
+    sliderHandleWidth: PropTypes.number,
+    xAxis: PropTypes.func
+  };
+
+  static defaultProps = {
+    isEnlarged: false,
+    isRanged: true,
+    showInput: true,
+    sliderHandleWidth: 12,
+    onChange: () => {}
+  };
+
   state = {value0: 0, value1: 1, width: 288};
 
   componentDidMount() {
@@ -247,7 +247,4 @@ export default class RangeSlider extends Component {
       </div>
     );
   }
-}
-
-RangeSlider.propTypes = propTypes;
-RangeSlider.defaultProps = defaultProps;
+};

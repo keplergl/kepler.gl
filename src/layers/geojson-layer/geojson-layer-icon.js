@@ -22,19 +22,19 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base from 'components/common/icons/base';
 
-const propTypes = {
-  /** Set the height of the icon, ex. '16px' */
-  height: PropTypes.string,
-  colors: PropTypes.arrayOf(PropTypes.string)
-};
+export default class GeojsonLayerIcon extends Component {
+  static propTypes = {
+    /** Set the height of the icon, ex. '16px' */
+    height: PropTypes.string,
+    colors: PropTypes.arrayOf(PropTypes.string)
+  };
 
-const defaultProps = {
-  height: null,
-  size: 'tiny',
-  predefinedClassName: 'geojson-layer-icon'
-};
+  static defaultProps = {
+    height: null,
+    size: 'tiny',
+    predefinedClassName: 'geojson-layer-icon'
+  };
 
-class GeojsonLayerIcon extends Component {
   render() {
     return (
       <Base {...this.props}>
@@ -65,10 +65,4 @@ class GeojsonLayerIcon extends Component {
       </Base>
     );
   }
-}
-
-GeojsonLayerIcon.displayName = 'GeojsonLayerIcon';
-GeojsonLayerIcon.propTypes = propTypes;
-GeojsonLayerIcon.defaultProps = defaultProps;
-
-export default GeojsonLayerIcon;
+};

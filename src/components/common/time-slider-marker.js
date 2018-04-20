@@ -61,14 +61,14 @@ const TimeSliderContainer = styled.svg`
   }
 `;
 
-const propTypes = {
-  domain: PropTypes.array.isRequired,
-  width: PropTypes.number.isRequired
-};
-
 const height = 30;
 
 export default class TimeSliderMarker extends Component {
+  static propTypes = {
+    domain: PropTypes.arrayOf(PropTypes.any).isRequired,
+    width: PropTypes.number.isRequired
+  };
+
   componentDidMount() {
     this._updateAxis(this.scaleSelector(this.props));
   }
@@ -123,6 +123,4 @@ export default class TimeSliderMarker extends Component {
       </TimeSliderContainer>
     );
   }
-}
-
-TimeSliderMarker.propTypes = propTypes;
+};
