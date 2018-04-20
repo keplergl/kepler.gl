@@ -46,7 +46,17 @@ const FieldListItemFactory = showToken => {
 
 const SuggestedFieldHeader = () => <div>Suggested Field</div>;
 
-const FieldType = PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.string), PropTypes.string]);
+const FieldType = PropTypes.oneOfType([
+  PropTypes.arrayOf(PropTypes.string),
+  PropTypes.string,
+  PropTypes.shape({
+    format: PropTypes.string,
+    id: PropTypes.string,
+    name: PropTypes.string,
+    tableFieldIndex: PropTypes.number,
+    type: PropTypes.number
+  })
+]);
 
 export default class FieldSelector extends Component {
   static propTypes = {
@@ -54,7 +64,7 @@ export default class FieldSelector extends Component {
     onSelect: PropTypes.func.isRequired,
     placement: PropTypes.string,
     value: FieldType,
-    filterFieldTypes: FieldType,
+    filterFieldTypes: PropTypes.oneOfType([FieldType, PropTypes.arrayOf(FieldType)]),
     inputTheme: PropTypes.string,
     erasable: PropTypes.bool,
     error: PropTypes.bool,

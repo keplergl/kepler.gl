@@ -91,7 +91,7 @@ const DropdownWrapper = styled.div`
 class ItemSelector extends Component {
   static propTypes = {
     // required properties
-    selectedItems: PropTypes.arrayOf(PropTypes.any),
+    selectedItems: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.any), PropTypes.string]),
     onChange: PropTypes.func.isRequired,
     options: PropTypes.arrayOf(PropTypes.any).isRequired,
 
