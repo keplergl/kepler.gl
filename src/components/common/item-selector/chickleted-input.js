@@ -30,7 +30,7 @@ const propTypes = {
   removeItem: PropTypes.func.isRequired,
 
   // optional properties
-  selectedItems: PropTypes.array,
+  selectedItems: PropTypes.arrayOf(PropTypes.any),
   disabled: PropTypes.bool,
   displayOption: PropTypes.func,
   focus: PropTypes.bool,
@@ -60,7 +60,7 @@ const ChickletTag = styled.span`
   text-overflow: ellipsis;
   width: 100%;
   overflow: hidden;
-  
+
   :hover {
     overflow: visible;
   }
@@ -74,7 +74,7 @@ const Chicklet = ({disabled, name, remove}) => (
 );
 
 const ChickletedInputContainer = styled.div`
-  ${props => props.theme.chickletedInput} 
+  ${props => props.theme.chickletedInput}
 `;
 
 const ChickletedInput = ({

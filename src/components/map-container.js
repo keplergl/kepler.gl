@@ -56,15 +56,14 @@ export default function MapContainerFactory(MapPopover, MapControl) {
   class MapContainer extends Component {
     static propTypes = {
       // required
-      data: PropTypes.arrayOf(PropTypes.any).isRequired,
-      fields: PropTypes.arrayOf(PropTypes.any).isRequired,
+      data: PropTypes.arrayOf(PropTypes.any),
+      fields: PropTypes.arrayOf(PropTypes.any),
       interactionConfig: PropTypes.object.isRequired,
       layerBlending: PropTypes.string.isRequired,
       layerData: PropTypes.arrayOf(PropTypes.any).isRequired,
       layers: PropTypes.arrayOf(PropTypes.any).isRequired,
       mapState: PropTypes.object.isRequired,
       mapStyle: PropTypes.object.isRequired,
-      popoverOffset: PropTypes.object.isRequired,
 
       // optional
       mapLayers: PropTypes.object,

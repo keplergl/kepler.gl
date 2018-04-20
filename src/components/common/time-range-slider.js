@@ -47,7 +47,7 @@ export default class TimeRangeSlider extends Component {
     onChange: PropTypes.func.isRequired,
     domain: PropTypes.arrayOf(PropTypes.number).isRequired,
     value: PropTypes.arrayOf(PropTypes.number).isRequired,
-    step: PropTypes.arrayOf(PropTypes.number).isRequired,
+    step: PropTypes.number.isRequired,
     plotType: PropTypes.string,
     histogram: PropTypes.arrayOf(PropTypes.any),
     lineChart: PropTypes.object,
