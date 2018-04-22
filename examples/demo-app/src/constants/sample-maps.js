@@ -23,4 +23,4 @@ import {DATA_URL} from './default-settings';
 /*
  * If you want to add more samples, feel free to edit the json file on github kepler.gl data repo
  */
-export const MAP_CONFIG_URL = `${DATA_URL}samples.json`;
+export const MAP_CONFIG_URL = `${DATA_URL}samples.json?nocache=${(new Date()).getTime()}`;
