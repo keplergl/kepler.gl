@@ -28,7 +28,7 @@ import {
   isDataMatchFilter,
   getFieldDomain,
   getTimestampFieldDomain,
-  getDefaultfilter
+  getDefaultFilter
 } from 'utils/filter-utils';
 
 import {processCsvData} from 'processors/data-processor';
@@ -36,7 +36,7 @@ import {processCsvData} from 'processors/data-processor';
 /* eslint-disable max-statements */
 test('filterUtils -> adjustValueToFilterDomain', t => {
   // TODO: needs id
-  const rangeFilter = getDefaultfilter();
+  const rangeFilter = getDefaultFilter();
   rangeFilter.type = FILTER_TYPES.range;
   rangeFilter.domain = [0, 1];
 
@@ -77,7 +77,7 @@ test('filterUtils -> adjustValueToFilterDomain', t => {
   );
 
   // TODO needs id
-  const multiSelectFilter = getDefaultfilter();
+  const multiSelectFilter = getDefaultFilter();
   multiSelectFilter.type = FILTER_TYPES.multiSelect;
   multiSelectFilter.domain = ['a', 'b', 'c'];
 
@@ -112,7 +112,7 @@ test('filterUtils -> adjustValueToFilterDomain', t => {
   );
 
   // TODO needs id
-  const selectFilter = getDefaultfilter();
+  const selectFilter = getDefaultFilter();
   selectFilter.type = FILTER_TYPES.select;
   selectFilter.domain = ['a', 'b', 'c'];
 

@@ -591,18 +591,24 @@ export default class Layer {
 
   /**
    * helper function to update one layer domain when state.data changed
-   *
-   * @param {Object[]} data
-   * @param {Object[]} allData
-   * @param {object} layer
+   * if state.data change is due ot update filter, newFiler will be passed
+   * called by updateAllLayerDomainData
+   * @param {Object} dataset
+   * @param {Object} newFilter
    * @returns {object} layer
    */
-  updateLayerDomain({data, allData}) {
+  updateLayerDomain(dataset, newFilter = {}) {
     Object.values(this.visualChannels).forEach(channel => {
-      const {domain} = channel;
-      const updatedDomain = this.calculateLayerDomain({data, allData}, channel);
+      const {scale} = channel;
+      const scaleType = this.config[scale];
+      // ordinal domain is based on allData, if only filter changed
+      // no need to update ordinal domain
+      if (!newFilter || scaleType !== SCALE_TYPES.ordinal) {
+        const {domain} = channel;
+        const updatedDomain = this.calculateLayerDomain(dataset, channel);
 
-      this.updateLayerConfig({[domain]: updatedDomain});
+        this.updateLayerConfig({[domain]: updatedDomain});
+      }
     });
 
     return this;
@@ -639,20 +645,18 @@ export default class Layer {
     }
   }
 
-  updateLayerVisualChannel({data, allData}, channel) {
+  updateLayerVisualChannel(dataset, channel) {
     const visualChannel = this.visualChannels[channel];
 
     this.validateVisualChannel(channel);
       // calculate layer channel domain
-    const updatedDomain = this.calculateLayerDomain(
-      {data, allData},
-      visualChannel
-    );
+    const updatedDomain = this.calculateLayerDomain(dataset, visualChannel);
 
     this.updateLayerConfig({[visualChannel.domain]: updatedDomain});
   }
 
-  calculateLayerDomain({data, allData}, visualChannel) {
+  calculateLayerDomain(dataset, visualChannel) {
+    const {allData, filteredIndexForDomain} = dataset;
     const defaultDomain = [0, 1];
     const {scale} = visualChannel;
     const scaleType = this.config[scale];
@@ -677,22 +681,28 @@ export default class Layer {
       fieldIdx,
       field.format
     );
+    const indexValueAccessor = i => valueAccessor(allData[i]);
+
     const sortFunction = getSortingFunction(field.type);
 
     switch (scaleType) {
       case SCALE_TYPES.ordinal:
       case SCALE_TYPES.point:
-        // do not recalculate ordinal domain based on filterred data
+        // do not recalculate ordinal domain based on filtered data
+        // don't need to update ordinal domain every time
+        console.log('use allDAta get ordinal domain');
         return getOrdinalDomain(allData, valueAccessor);
 
       case SCALE_TYPES.quantile:
-        return getQuantileDomain(data, valueAccessor, sortFunction);
+        console.log('user filteredIndexForDomain get quantile domain')
+        return getQuantileDomain(filteredIndexForDomain, indexValueAccessor, sortFunction);
 
       case SCALE_TYPES.quantize:
       case SCALE_TYPES.linear:
       case SCALE_TYPES.sqrt:
       default:
-        return getLinearDomain(data, valueAccessor);
+        console.log('user filteredIndexForDomain get quantize/linear/sqrt domain')
+        return getLinearDomain(filteredIndexForDomain, indexValueAccessor);
     }
   }
 

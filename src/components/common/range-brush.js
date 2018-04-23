@@ -85,7 +85,8 @@ export default class RangeBrush extends Component {
     const [prevVal0, prevVal1] = prevProps.value;
 
     if (prevProps.width !== width) {
-      this.root.call(this.brush);
+      console.log(width)
+      // this.root.call(this.brush);
       this._move(val0, val1);
     }
 

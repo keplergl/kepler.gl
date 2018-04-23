@@ -28,7 +28,7 @@ import reducer from 'reducers/vis-state';
 import {INITIAL_VIS_STATE} from 'reducers/vis-state-updaters';
 
 import {getLightSettingsFromBounds} from 'utils/layer-utils/layer-utils';
-import {filterData, getDefaultfilter} from 'utils/filter-utils';
+import {filterData, getDefaultFilter} from 'utils/filter-utils';
 import {processCsvData, processGeojson} from 'processors/data-processor';
 
 import {Layer, KeplerGlLayers} from 'layers';
@@ -163,7 +163,7 @@ test('#visStateReducer', t => {
 
 test('#visStateReducer -> ADD_FILTER', t => {
   const dataId = 'kitten';
-  const newFilter = getDefaultfilter(dataId);
+  const newFilter = getDefaultFilter(dataId);
   const newReducer = reducer(
     {filters: [mockFilter]},
     VisStateActions.addFilter(dataId)

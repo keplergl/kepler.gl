@@ -139,19 +139,21 @@ export default class TimeRangeSlider extends Component {
             resetAnimation={this._resetAnimation}
             startAnimation={this._startAnimation}
           /> : null}
-          <RangeSlider
-            range={domain}
-            value0={value[0]}
-            value1={value[1]}
-            histogram={this.props.histogram}
-            lineChart={this.props.lineChart}
-            plotType={this.props.plotType}
-            isEnlarged={isEnlarged}
-            showInput={false}
-            step={this.props.step}
-            onChange={this._sliderUpdate}
-            xAxis={TimeSliderMarker}
-          />
+          <div style={{width: isEnlarged ? 'calc(100% - 140px)' : '100%'}}>
+            <RangeSlider
+              range={domain}
+              value0={value[0]}
+              value1={value[1]}
+              histogram={this.props.histogram}
+              lineChart={this.props.lineChart}
+              plotType={this.props.plotType}
+              isEnlarged={isEnlarged}
+              showInput={false}
+              step={this.props.step}
+              onChange={this._sliderUpdate}
+              xAxis={TimeSliderMarker}
+            />
+          </div>
         </StyledSliderContainer>
       </div>
     );
