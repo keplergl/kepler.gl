@@ -193,11 +193,10 @@ export default class RangeSlider extends Component {
     const plotWidth =  width - sliderHandleWidth;
 
     return (
-      <div
-        className="kg-range-slider" style={{width: '100%', padding: `0 ${sliderHandleWidth / 2}px`}}
-        ref={comp => {
-          this.sliderContainer = comp;
-        }}>
+      <div className="kg-range-slider" style={{width: '100%', padding: '0 6px'}}
+         ref={comp => {
+           this.sliderContainer = comp;
+         }}>
         {histogram && histogram.length ? (
           <RangePlot
             histogram={histogram}
