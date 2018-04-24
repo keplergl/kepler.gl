@@ -85,8 +85,8 @@ export default class RangeBrush extends Component {
     const [prevVal0, prevVal1] = prevProps.value;
 
     if (prevProps.width !== width) {
-      // shouldn't need to call onBrush when width changes
-      this.root.call(this.brush);
+      console.log(width)
+      // this.root.call(this.brush);
       this._move(val0, val1);
     }
 
@@ -117,9 +117,6 @@ export default class RangeBrush extends Component {
   _brush([sel0, sel1]) {
     const {domain: [min, max], onBrush, width} = this.props;
     const invert = x => x * (max - min) / width + min;
-    console.log('onBrush')
-    console.log(this.props.value)
-    console.log([invert(sel0), invert(sel1)])
     onBrush(invert(sel0), invert(sel1));
   }
 
