@@ -163,10 +163,7 @@ export function layerTypeChangeUpdater(state, action) {
   // If type has changed but id is the same, it will break
   const newLayer = new state.layerClasses[newType]();
 
-  newLayer.assignConfigToLayer(
-    oldLayer.config,
-    oldLayer.visConfigSettings
-  );
+  newLayer.assignConfigToLayer(oldLayer.config, oldLayer.visConfigSettings);
 
   if (newLayer.config.dataId) {
     const dataset = state.datasets[newLayer.config.dataId];
@@ -393,7 +390,7 @@ export const updateAnimationSpeedUpdater = (state, action) => ({
   )
 });
 
-  export const enlargeFilterUpdater = (state, action) => {
+export const enlargeFilterUpdater = (state, action) => {
   const isEnlarged = state.filters[action.idx].enlarged;
 
   return {
@@ -484,7 +481,10 @@ export const removeDatasetUpdater = (state, action) => {
   }
 
   /* eslint-disable no-unused-vars */
-  const {layers, datasets: {[datasetKey]: dataset, ...newDatasets}} = state;
+  const {
+    layers,
+    datasets: {[datasetKey]: dataset, ...newDatasets}
+  } = state;
   /* eslint-enable no-unused-vars */
 
   const indexes = layers.reduce((listOfIndexes, layer, index) => {
@@ -699,7 +699,9 @@ export const updateVisDataUpdater = (state, action) => {
 
   if (action.config) {
     // apply config if passed from action
-    state = receiveMapConfigUpdater(state, {payload: {visState: action.config}})
+    state = receiveMapConfigUpdater(state, {
+      payload: {visState: action.config}
+    });
   }
 
   const newDateEntries = datasets.reduce(
@@ -762,10 +764,7 @@ export const updateVisDataUpdater = (state, action) => {
     }
   });
 
-  return updateAllLayerDomainData(
-    mergedState,
-    Object.keys(newDateEntries)
-  );
+  return updateAllLayerDomainData(mergedState, Object.keys(newDateEntries));
 };
 /* eslint-enable max-statements */
 
@@ -963,7 +962,10 @@ export const loadFilesErrUpdater = (state, {error}) => ({
  */
 export function addDefaultLayers(state, datasets) {
   const defaultLayers = Object.values(datasets).reduce(
-    (accu, dataset) => [...accu, ...(findDefaultLayer(dataset, state.layerClasses) || [])],
+    (accu, dataset) => [
+      ...accu,
+      ...(findDefaultLayer(dataset, state.layerClasses) || [])
+    ],
     []
   );
   return {
@@ -1013,19 +1015,21 @@ export function addDefaultTooltips(state, dataset) {
  * @param {object} newFilter - if is called by setFilter, the filter that has changed
  * @returns {object} state
  */
-export function updateAllLayerDomainData(state, dataId, newFilter = {}) {
+export function updateAllLayerDomainData(state, dataId, newFilter) {
   const dataIds = typeof dataId === 'string' ? [dataId] : dataId;
   const newLayers = [];
   const newLayerDatas = [];
 
   state.layers.forEach((oldLayer, i) => {
     if (oldLayer.config.dataId && dataIds.includes(oldLayer.config.dataId)) {
-
       // No need to recalculate layer domain if filter has fixed domain
-      const newLayer = !newFilter.fixedDomain ? oldLayer.updateLayerDomain(
-        state.datasets[oldLayer.config.dataId],
-        newFilter
-      ) : oldLayer;
+      const newLayer =
+        newFilter && newFilter.fixedDomain
+          ? oldLayer
+          : oldLayer.updateLayerDomain(
+              state.datasets[oldLayer.config.dataId],
+              newFilter
+            );
 
       const {layerData, layer} = calculateLayerData(
         newLayer,
@@ -1047,4 +1051,3 @@ export function updateAllLayerDomainData(state, dataId, newFilter = {}) {
     layerData: newLayerDatas
   };
 }
-

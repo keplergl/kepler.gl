@@ -597,7 +597,7 @@ export default class Layer {
    * @param {Object} newFilter
    * @returns {object} layer
    */
-  updateLayerDomain(dataset, newFilter = {}) {
+  updateLayerDomain(dataset, newFilter) {
     Object.values(this.visualChannels).forEach(channel => {
       const {scale} = channel;
       const scaleType = this.config[scale];
@@ -690,18 +690,15 @@ export default class Layer {
       case SCALE_TYPES.point:
         // do not recalculate ordinal domain based on filtered data
         // don't need to update ordinal domain every time
-        console.log('use allDAta get ordinal domain');
         return getOrdinalDomain(allData, valueAccessor);
 
       case SCALE_TYPES.quantile:
-        console.log('user filteredIndexForDomain get quantile domain')
         return getQuantileDomain(filteredIndexForDomain, indexValueAccessor, sortFunction);
 
       case SCALE_TYPES.quantize:
       case SCALE_TYPES.linear:
       case SCALE_TYPES.sqrt:
       default:
-        console.log('user filteredIndexForDomain get quantize/linear/sqrt domain')
         return getLinearDomain(filteredIndexForDomain, indexValueAccessor);
     }
   }

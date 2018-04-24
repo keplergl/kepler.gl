@@ -67,6 +67,11 @@ test('#PointLayer -> formatLayerData', t => {
   const expectedLayerMeta = {
     bounds: [31.2148748, 29.9870074, 31.2590542, 30.0614122]
   };
+  const dataset = {
+    data: dataWithNull,
+    allData: allDataWithNull,
+    filteredIndexForDomain: [0, 2, 4, 5, 6, 7, 8, 9, 10]
+  };
 
   const TEST_CASES = [
     {
@@ -148,15 +153,16 @@ test('#PointLayer -> formatLayerData', t => {
         }
       },
       updates: [
+        // update layer config to an integer field
         {method: 'updateLayerConfig', args: [{colorField: testFields[6]}]},
         {
           method: 'updateLayerVisualChannel',
-          args: [{data: dataWithNull, allData: allDataWithNull}, 'color']
+          args: [dataset, 'color']
         },
         {method: 'updateLayerConfig', args: [{sizeField: testFields[6]}]},
         {
           method: 'updateLayerVisualChannel',
-          args: [{data: dataWithNull, allData: allDataWithNull}, 'size']
+          args: [dataset, 'size']
         },
         {
           method: 'updateLayerVisConfig',
@@ -182,7 +188,7 @@ test('#PointLayer -> formatLayerData', t => {
         };
         t.deepEqual(
           layer.config.colorDomain,
-          [1, 3, 5],
+          [2, 4, 5, 222, 345, 12124],
           'should update layer color domain'
         );
         t.deepEqual(
@@ -213,7 +219,7 @@ test('#PointLayer -> formatLayerData', t => {
         );
         t.deepEqual(
           layerData.getColor(layerData.data[0]),
-          [144, 12, 63],
+          [90, 24, 70],
           'getColor should return correct lat lng'
         );
         t.equal(

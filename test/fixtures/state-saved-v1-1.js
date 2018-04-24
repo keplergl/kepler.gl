@@ -854,7 +854,8 @@ export const mergedFilters = [
     enlargedHistogram: ['Not tested'],
     speed: 1,
     fieldType: 'real',
-    typeOptions: ['range']
+    typeOptions: ['range'],
+    fixedDomain: false
   }
 ];
 

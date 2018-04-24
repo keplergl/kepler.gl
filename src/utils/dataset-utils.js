@@ -70,7 +70,7 @@ function getNewDatasetColor(datasets) {
   return color;
 }
 
-export function createNewDataEntry({info = {}, data}, datasets) {
+export function createNewDataEntry({info = {}, data}, datasets = {}) {
   const validatedData = validateInputData(data);
   if (!validatedData) {
     return {};
