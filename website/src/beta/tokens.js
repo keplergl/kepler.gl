@@ -89,5 +89,6 @@ export const tokens = [
   // Phase 2
   '6cb8c7c6faa557420ce79320232b2abf',
   '033be0e51354a04046e261b4e5740533',
-  'a67d02c98f7048209c8dbda4302424ae'
+  'a67d02c98f7048209c8dbda4302424ae',
+  '83f79bf681a411e2d2d0b6563dddf33e'
 ];
