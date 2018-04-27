@@ -21,6 +21,11 @@
 import keyMirror from 'keymirror';
 import {ACTION_PREFIX} from './default-settings';
 
+// Actions to add and remove entries
+// export const REGISTER_ENTRY = `${ACTION_PREFIX}REGISTER_ENTRY`;
+// export const DELETE_ENTRY = `${ACTION_PREFIX}DELETE_ENTRY`;
+// export const RENAME_ENTRY = `${ACTION_PREFIX}RENAME_ENTRY`;
+
 const ActionTypes = keyMirror({
   // identity action
   REGISTER_ENTRY: null,
@@ -96,7 +101,6 @@ const ActionTypes = keyMirror({
   SET_EXPORT_SELECTED_DATASET: null,
   SET_EXPORT_DATA_TYPE: null,
   SET_EXPORT_FILTERED: null,
-  SET_EXPORT_CONFIG: null,
   SET_EXPORT_DATA: null,
 
   // all

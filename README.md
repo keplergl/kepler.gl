@@ -21,34 +21,33 @@
 </h1>
 <h3></h3>
 
-[Kepler.gl][web] is a data-agnostic, high-performance web-based application for visual exploration of large-scale geolocation data sets. Built on top of [deck.gl](http://uber.github.io/deck.gl/#/), kepler.gl can render millions of points representing thousands of trips and perform spatial aggregations on the fly.
+[<img width="120" alt="Kepler.gl" src="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/website/icons/kepler.gl-logo.png">](http://www.kepler.gl/)
 
-For what it is capable of, take a look at [kepler.gl demo app][demo-app].
+[<img width="600" alt="Kepler.gl Demo" src="https://eng.uber.com/wp-content/uploads/2018/05/image4-3-768x493.png">](https://uber.github.io/kepler.gl/#/demo)
 
-Kepler.gl is a redux component that uses redux reducer to store and manage state transitions.
-This package consists of a reducer and the UI components to render and customize the map.
+[Kepler.gl][web] is a data-agnostic, high-performance web-based application for visual exploration of large-scale geolocation data sets. Built on top of [Mapbox GL](https://www.mapbox.com) and [deck.gl](http://uber.github.io/deck.gl/#/), kepler.gl can render millions of points representing thousands of trips and perform spatial aggregations on the fly.
 
-For information on how to embed kepler.gl in your app take a look at [this tutorial][vis-academy] on vis.academy.
+Kepler.gl is also a React component that uses [Redux](https://redux.js.org/) to manage its state and data flow. It can be embedded into other React-Redux applications and is highly customizable. For information on how to embed kepler.gl in your app take a look at this step-by-step [tutorial][vis-academy] on vis.academy.
 
 ## Links
 - [Website][web]
 - [Demo][demo-app]
 - [Examples][examples]
+- [Get Started](./docs/get-started.md)
 - [App User guide][user-guide]
 - [Tutorial][vis-academy]
 - [Stack Overflow][stack]
 - [Contribution Guidelines][contributing]
-- API Docs - Coming Soon
+- [Api Refernece](./docs/api-reference/overview.md)
 
 ## Env
-Use Node v6 and above, older node versions have not been tested
-
+Use Node v6 and above, older node versions have not been tested.
 For best results, use [nvm](https://github.com/creationix/nvm) `nvm install`.
 
 ## Install kepler.gl
 Install node (`> 6`), yarn, and project dependencies
 
-```
+```sh
 npm install --save kepler.gl
 // or
 yarn add kepler.gl
@@ -74,11 +73,12 @@ Take a look at the [development guide][developers] to develop kepler.gl locally.
 
 Here are the basic steps to import kepler.gl into your app. You also take a look at the examples folder. Each example in the folder can be installed and run locally.
 
-#### 1. Mount kepler.gl reducer in your app reducer.
+### 1. Mount reducer
+
 Kepler.gl uses Redux to manage its internal state, along with [react-palm][react-palm] middleware to handle side effects.
 
-You need to add `taskMiddleware` to your store too. We are actively working on a solution where
-`react-palm` will not be required, however it is still a very nice side effects management tool that works easier for testing than react-thunk.
+You need to add `taskMiddleware` of `react-palm` to your store too. We are actively working on a solution where
+`react-palm` will not be required, however it is still a very lightweight side effects management tool that is easier to test than react-thunk.
 
 ```js
 import keplerGlReducer from 'kepler.gl/reducers';
@@ -94,8 +94,12 @@ const reducers = combineReducers({
 });
 
 // using createStore
-const store = createStore(reducer, applyMiddleware(taskMiddleware))
+export default createStore(reducer, applyMiddleware(taskMiddleware))
 
+```
+
+Or if use enhancer:
+```js
 // using enhancers
 const initialState = {}
 const middlewares = [taskMiddleware]
@@ -103,14 +107,15 @@ const enhancers = [
   applyMiddleware(...middlewares)
 ]
 
-const store = createStore(reducer, initialState, compose(...enhancers))
+export default createStore(reducer, initialState, compose(...enhancers));
+
 ```
 
 If you mount kepler.gl reducer in another address instead of `keplerGl`, or the kepler.gl reducer is not
 mounted at root of your state, you will need to specify the path to it when you mount the component
 with the `getState` prop.
 
-#### 2. Mount kepler.gl Component
+### 2. Mount Component
 
 ```js
 import KeplerGl from 'kepler.gl';
@@ -124,7 +129,7 @@ const Map = props => (
 );
 ```
 
-##### Component Props
+#### Props
 
 ##### `id` (String, required)
 
@@ -183,7 +188,7 @@ Action called when click Save Map Url in side panel header.
 
 - Default: `{}`
 
-Actions payload creator to replace default kepler.gl action. Only use custom action when you want to modify action payload.
+Actions creators to replace default kepler.gl action creator. Only use custom action when you want to modify action payload.
 
 ##### `mint` (Boolean, optional)
 
@@ -192,7 +197,7 @@ Actions payload creator to replace default kepler.gl action. Only use custom act
 Whether to load a fresh empty state when component is mounted. when parse `mint: true` kepler.gl component will always load a fresh state when re-mount the same component, state inside this component will be destroyed once its unmounted.
 By Parsing `mint: false` kepler.gl will keep the component state in the store even when it is unmounted, and use it as initial state when re-mounted again. This is useful when mounting kepler.gl in a modal, and keep the same map when re-open.
 
-#### 3. Dispatch custom actions to `keplerGl` reducer.
+### 3. Dispatch custom actions to `keplerGl` reducer.
 
 One advantage of using the reducer over React component state to handle keplerGl state is the flexibility
 to customize its behavior. If you only have one `KeplerGl` instance in your app or never intend to dispatch actions to KeplerGl from outside the component itself,
@@ -296,7 +301,7 @@ const MapContainer = ({dispatch}) => (
 
 ```
 
-#### 4. Replace default components.
+### 4. Render Custom UI components.
 Everyone wants the flexibility to render custom kepler.gl componenents. Kepler.gl has a dependency injection system that allow you to inject
 components to KeplerGl replacing existing ones. All you need to do is to create a component factory for the one you want to replace, import the original component factory
 and call `injectComponents` at the root component of your app where `KeplerGl` is mounted.
@@ -351,39 +356,18 @@ const myCustomHeaderFactory = () => withState(
   // actions
   {addTodo}
 )(CustomHeader);
-
 ```
 
-#### 5. How to add data to map
-In order to interact with a kepler.gl instance and add new data to it the following methods are available:
-- updateVisData
-- addDataToMap
-It is also important to remember that Kepler.gl provides an easy API (```KeplerGlSchema.getConfigToSave```) to generate a dump of the current kepler instance configuration.
+### 5. How to add data to map
+To interact with a kepler.gl instance and add new data to it, you can dispatch __`addDataToMap`__ action from anywhere inside your app. It adds dataset to kepler.gl instance and update the full configuration (mapState, mapStyle, visState).
 
-##### addDataToMap
-This method is similar to UpdateVisData but it is able to update the full kepler.gl configuration (mapState, mapStyle, visState).
-This action takes an object as input with the following properties:
-```js
-{
-    datasets | object: same as UpdateVisData
-    options | object: same as UpdateVisData
-    config | object: this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}.
-}
-```
+Kepler.gl provides an easy API `KeplerGlSchema.getConfigToSave` to generate a json blob of the current kepler instance configuration.
 
-<p id="config-notice"> It is important to notice that the config object value will always have higher precedence than the options properties.
-For instance, if you provide <code>{centerMap: true}</code> as part of the options object and in your config object you pass
-the mapState configuration with latitude and longitude define as it follows:</p>
+The options properties will alway have higher precedence than config object value.
+For instance, if you provide `{centerMap: true}` as part of the options object and in your config object you pass
+the mapState configuration with latitude and longitude define, the map will be centered based on the new data added in.
 
-```js
-config: {
-  mapState: {
-    latitude: 33.88608913680742,
-    longitude: -84.43459130456425
-  }
-}
-```
-the latter will be applied and the map view will be moved the defined coordinates.
+Read more about [addDataToMap](./docs/api-reference/actions/actions.md#adddatatomap)
 
 [contributing]: contributing/CONTRIBUTING.md
 [demo-app]: https://uber.github.io/kepler.gl/#/demo

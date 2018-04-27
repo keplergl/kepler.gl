@@ -141,10 +141,10 @@ A commit with this format is automatically created by the [`git revert`][git-rev
 ### Type
 Must be one of the following, capitalizd.
 
-* **[Feat]]**: A new feature
-* **[Enhancement]]**: An update of a existing feature
-* **[Bug]]**: A bug fix
-* **[Docs]]**: Documentation only changes
+* **[Feat]**: A new feature
+* **[Enhancement]**: An update of a existing feature
+* **[Bug]**: A bug fix
+* **[Docs]**: Documentation only changes
 * **[Style]**: Changes that do not affect the meaning of the code (white-space, formatting, missing
   semi-colons, typos, etc)
 * **[Refactor]**: A code change that neither fixes a bug nor adds a feature

@@ -29,6 +29,10 @@
       "plugins": [
         "istanbul"
       ]
+    },
+    "debug": {
+      "sourceMaps": "inline",
+      "retainLines": true
     }
   }
 }

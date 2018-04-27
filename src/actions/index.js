@@ -21,9 +21,16 @@
 // Actions
 export * from 'actions/actions';
 
+// kepler.gl actions accessible outside component
+export * from './vis-state-actions';
+export * from './ui-state-actions';
+export * from './map-state-actions';
+export * from './map-style-actions';
+export * from './identity-actions';
+
 // Dispatch
 export {
-  actionFor,
+  _actionFor,
   forwardTo,
   getActionForwardAddress,
   isForwardAction,

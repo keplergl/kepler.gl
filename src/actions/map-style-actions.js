@@ -21,41 +21,50 @@
 import {createAction} from 'redux-actions';
 import ActionTypes from 'constants/action-types';
 
-const {
-  ADD_CUSTOM_MAP_STYLE,
-  INPUT_MAP_STYLE,
-  MAP_CONFIG_CHANGE,
-  MAP_STYLE_CHANGE,
-  LOAD_MAP_STYLES,
-  LOAD_MAP_STYLE_ERR,
-  LOAD_CUSTOM_MAP_STYLE
-} = ActionTypes;
+/**
+ * Add map style from user input to reducer and set it to current style
+ * This action is called when user click confirm after putting in a valid style url in the custom map style dialog.
+ * It should not be called from outside kepler.gl without a valid `inputStyle` in the `mapStyle` reducer.
+ * param {void}
+ * @public
+ */
+export const addCustomMapStyle = createAction(
+  ActionTypes.ADD_CUSTOM_MAP_STYLE,
+);
 
-// second argument of createAction is expected to be payloadCreator or undefined
-const [
-  addCustomMapStyle,
-  inputMapStyle,
-  mapConfigChange,
-  loadMapStyles,
-  loadMapStyleErr,
-  mapStyleChange,
-  loadCustomMapStyle
-] = [
-  ADD_CUSTOM_MAP_STYLE,
-  INPUT_MAP_STYLE,
-  MAP_CONFIG_CHANGE,
-  LOAD_MAP_STYLES,
-  LOAD_MAP_STYLE_ERR,
-  MAP_STYLE_CHANGE,
-  LOAD_CUSTOM_MAP_STYLE
-].map(a => createAction(a));
+/**
+ * Add map style from user input to reducer and set it to current style
+ * This action is called when user click confirm after putting in a valid style url in the custom map style dialog.
+ * It should not be called from outside kepler.gl without a valid `inputStyle` in the `mapStyle` reducer.
+ * param {void}
+ * @public
+ */
+export const inputMapStyle = createAction(
+  ActionTypes.INPUT_MAP_STYLE,
+  inputStyle => inputStyle
+);
 
-export {
-  addCustomMapStyle,
-  inputMapStyle,
-  mapConfigChange,
-  mapStyleChange,
-  loadMapStyles,
-  loadMapStyleErr,
-  loadCustomMapStyle
-};
+export const mapConfigChange = createAction(
+  ActionTypes.MAP_CONFIG_CHANGE,
+  mapStyle => mapStyle
+);
+
+export const loadMapStyles = createAction(
+  ActionTypes.LOAD_MAP_STYLES,
+  newStyles => newStyles
+);
+
+export const loadMapStyleErr = createAction(
+  ActionTypes.LOAD_MAP_STYLE_ERR,
+  error => error
+);
+
+export const mapStyleChange = createAction(
+  ActionTypes.MAP_STYLE_CHANGE,
+  styleType => styleType
+);
+
+export const loadCustomMapStyle = createAction(
+  ActionTypes.LOAD_CUSTOM_MAP_STYLE,
+  customMapStyle => customMapStyle
+);

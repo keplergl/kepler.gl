@@ -68,7 +68,7 @@ class KeplerGLSchema {
    *
    * Get config and data of current map to save
    * @param {Object} state
-   * @returns {Object | null} app state to save
+   * @returns {{datasets: Object[], config: Object, info: Object}} app state to save
    */
   save(state) {
     return {

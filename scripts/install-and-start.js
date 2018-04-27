@@ -32,5 +32,3 @@ execSync(cmd, {
   cwd: folder,
   stdio: 'inherit'
 });
-
-process.exit();

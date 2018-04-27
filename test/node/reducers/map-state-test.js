@@ -29,7 +29,8 @@ import {
 
 import {receiveMapConfig} from 'actions/actions';
 
-import reducer, {mapStateReducerFactory, INITIAL_MAP_STATE} from 'reducers/map-state';
+import reducer, {mapStateReducerFactory} from 'reducers/map-state';
+import {INITIAL_MAP_STATE} from 'reducers/map-state-updaters';
 
 const InitialMapState = reducer(undefined, {});
 test('#mapStateReducer', t => {

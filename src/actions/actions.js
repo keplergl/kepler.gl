@@ -21,13 +21,6 @@
 import ActionTypes from 'constants/action-types';
 import {createAction} from 'redux-actions';
 
-// kepler.gl actions accessible outside component
-export * from './vis-state-actions';
-export * from './ui-state-actions';
-export * from './map-state-actions';
-export * from './map-style-actions';
-export * from './identity-actions';
-
   /**
    * Add data to kepler.gl reducer, prepare map with preset configuration if config is passed.
    * Kepler.gl provides a handy set of utils to parse data from different format to the `data` object required in dataset. You rarely need to manually format the data obejct.

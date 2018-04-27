@@ -34,7 +34,7 @@ const StyledExportDataSection = styled.div`
 
   .description {
     width: 185px;
-    
+
     .title {
       font-weight: 500;
       color: ${props => props.theme.textColorLT};
@@ -59,7 +59,7 @@ const StyledExportDataSection = styled.div`
       font: inherit;
       line-height: 1.5em;
       padding: 0.5em 3.5em 0.5em 1em;
-      margin: 0;      
+      margin: 0;
       box-sizing: border-box;
       appearance: none;
       width: 250px;
@@ -192,7 +192,7 @@ const ExportDataModal = ({
             </div>
           </div>
           <div className="selection">
-            <select value={selectedDataset} onChange={e => onChangeExportSelectedDataset({dataset: e.target.value})}>
+            <select value={selectedDataset} onChange={e => onChangeExportSelectedDataset(e.target.value)}>
             {['All'].concat(Object.keys(datasets)).map(d => (
               <option key={d} value={d}>{(datasets[d] && datasets[d].label) || d}</option>
             ))}
@@ -215,7 +215,7 @@ const ExportDataModal = ({
                 key={op.id}
                 selected={dataType === op.id}
                 available={op.available}
-                onClick={() => op.available && onChangeExportDataType({dataType: op.id})}
+                onClick={() => op.available && onChangeExportDataType(op.id)}
               >
                 <FileType ext={op.label} height="80px" fontSize="11px" />
               </StyledDataType>
@@ -233,11 +233,11 @@ const ExportDataModal = ({
             </div>
           </div>
           <div className="selection">
-            <StyledFilteredDataOption selected={!filtered} onClick={() => onChangeExportFiltered({filtered: false})}>
+            <StyledFilteredDataOption selected={!filtered} onClick={() => onChangeExportFiltered(false)}>
               <div className="filtered-title">Unfiltered Data</div>
               <div className="filtered-subtitle">{getDataRowCount(datasets, selectedDataset, false)}</div>
             </StyledFilteredDataOption>
-            <StyledFilteredDataOption selected={filtered} onClick={() => onChangeExportFiltered({filtered: true})}>
+            <StyledFilteredDataOption selected={filtered} onClick={() => onChangeExportFiltered(true)}>
               <div className="filtered-title">Filtered Data</div>
               <div className="filtered-subtitle">{getDataRowCount(datasets, selectedDataset, true)}</div>
             </StyledFilteredDataOption>
