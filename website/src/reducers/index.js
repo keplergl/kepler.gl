@@ -22,7 +22,6 @@ import {combineReducers, createStore, applyMiddleware, compose} from 'redux';
 import {routerReducer} from 'react-router-redux'
 import {taskMiddleware} from 'react-palm';
 import thunk from 'redux-thunk';
-import window from 'global/window';
 import {routerMiddleware} from 'react-router-redux';
 import {hashHistory} from 'react-router';
 import appReducer from './app';
