@@ -80,27 +80,35 @@ export const FILTER_COMPONENTS = {
 };
 
 export const BASE_SPEED = 600;
-export const TIME_ANIMATION_SPEED = [{
-  label: '0.5x',
-  value: 0.5
-}, {
-  label: '1x',
-  value: 1
-}, {
-  label: '2x',
-  value: 2
-}, {
-  label: '4x',
-  value: 4
-}];
+export const TIME_ANIMATION_SPEED = [
+  {
+    label: '0.5x',
+    value: 0.5
+  },
+  {
+    label: '1x',
+    value: 1
+  },
+  {
+    label: '2x',
+    value: 2
+  },
+  {
+    label: '4x',
+    value: 4
+  }
+];
 
-export function getDefaultfilter(dataId) {
+export function getDefaultFilter(dataId) {
   return {
     // link to dataset Id
     dataId,
     // should allow to edit dataId
     freeze: false,
     id: generateHashId(4),
+
+    // time range filter specific
+    fixedDomain: false,
     enlarged: false,
     isAnimating: false,
     speed: 1,
@@ -127,65 +135,50 @@ export function getDefaultfilter(dataId) {
  * @returns {object} default filter
  */
 export function getFilterProps(data, field) {
-  const fieldType = field.type;
-  let type;
-  let value;
-
-  const filterDomain = getFieldDomain(data, field);
+  const filterProp = {
+    ...getFieldDomain(data, field),
+    fieldType: field.type
+  };
 
   switch (field.type) {
     case ALL_FIELD_TYPES.real:
     case ALL_FIELD_TYPES.integer:
-      type = FILTER_TYPES.range;
-      const typeOptions = [FILTER_TYPES.range];
-      value = filterDomain.domain;
       return {
-        ...filterDomain,
-        value,
-        type,
-        fieldType,
-        typeOptions
+        ...filterProp,
+        value: filterProp.domain,
+        type: FILTER_TYPES.range,
+        typeOptions: [FILTER_TYPES.range]
       };
 
     case ALL_FIELD_TYPES.boolean:
-      type = FILTER_TYPES.select;
-      value = true;
       return {
-        ...filterDomain,
-        type,
-        value,
-        fieldType
+        ...filterProp,
+        type: FILTER_TYPES.select,
+        value: true
       };
 
     case ALL_FIELD_TYPES.string:
     case ALL_FIELD_TYPES.date:
-      type = FILTER_TYPES.multiSelect;
-      value = [];
       return {
-        ...filterDomain,
-        type,
-        value,
-        fieldType
+        ...filterProp,
+        type: FILTER_TYPES.multiSelect,
+        value: []
       };
 
     case ALL_FIELD_TYPES.timestamp:
-      type = FILTER_TYPES.timeRange;
-      value = filterDomain.domain;
-
       return {
-        ...filterDomain,
-        type,
+        ...filterProp,
+        type: FILTER_TYPES.timeRange,
         enlarged: true,
-        value,
-        fieldType
+        fixedDomain: true,
+        value: filterProp.domain
       };
 
     default:
-      type = fieldType;
       return {
-        ...filterDomain,
-        type,
-        fieldType
+        ...filterProp,
+        fieldType,
+        type: fieldType
       };
   }
 }
@@ -248,25 +241,56 @@ export function filterData(data, dataId, filters) {
     d => d.dataId === dataId && d.fieldIdx > -1 && d.value !== null
   );
 
+  const [dynamicDomainFilters, fixedDomainFilters] = appliedFilters.reduce(
+    (accu, f) => {
+      if (f.dataId === dataId && f.fieldIdx > -1 && f.value !== null) {
+        (f.fixedDomain ? accu[1] : accu[0]).push(f);
+      }
+      return accu;
+    },
+    [[], []]
+  );
+  // console.log(dynamicDomainFilters)
+  // console.log(fixedDomainFilters)
   // we save a reference of allData index here to access dataToFeature
   // in geojson and hexgonId layer
-  const {filtered, filteredIndex} = data.reduce(
+  // console.time('filterData');
+
+  const {filtered, filteredIndex, filteredIndexForDomain} = data.reduce(
     (accu, d, i) => {
-      const matched = appliedFilters.every(filter =>
+      // generate 2 sets of
+      // filter data used to calculate layer Domain
+      const matchForDomain = dynamicDomainFilters.every(filter =>
         isDataMatchFilter(d, filter, i)
       );
 
-      if (matched) {
-        accu.filtered.push(d);
-        accu.filteredIndex.push(i);
+      if (matchForDomain) {
+        accu.filteredIndexForDomain.push(i);
+
+        // filter data for render
+        const matchForRender = fixedDomainFilters.every(filter =>
+          isDataMatchFilter(d, filter, i)
+        );
+
+        if (matchForRender) {
+          accu.filtered.push(d);
+          accu.filteredIndex.push(i);
+        }
       }
 
       return accu;
     },
-    {filtered: [], filteredIndex: []}
+    {filtered: [], filteredIndex: [], filteredIndexForDomain: []}
   );
 
-  return {data: filtered, filteredIndex};
+  // console.log('data==', data.length)
+  // console.log('filtered==', filtered.length)
+  // console.log('filteredIndex==', filteredIndex.length)
+  // console.log('filteredIndexForDomain==', filteredIndexForDomain.length)
+  //
+  // console.timeEnd('filterData');
+
+  return {data: filtered, filteredIndex, filteredIndexForDomain};
 }
 
 /**
@@ -436,7 +460,11 @@ export function histogramConstruct(domain, mappedValue, bins) {
  */
 function getHistogram(domain, mappedValue) {
   const histogram = histogramConstruct(domain, mappedValue, histogramBins);
-  const enlargedHistogram = histogramConstruct(domain, mappedValue, enlargedHistogramBins);
+  const enlargedHistogram = histogramConstruct(
+    domain,
+    mappedValue,
+    enlargedHistogramBins
+  );
 
   return {histogram, enlargedHistogram};
 }
@@ -473,7 +501,9 @@ export function getTimeWidgetTitleFormatter(domain) {
   const diff = domain[1] - domain[0];
   return diff > durationYear
     ? 'MM/DD/YY'
-    : diff > durationDay ? 'MM/DD hha' : 'MM/DD hh:mma';
+    : diff > durationDay
+      ? 'MM/DD hha'
+      : 'MM/DD hh:mma';
 }
 
 export function getTimeWidgetHintFormatter(domain) {
@@ -488,7 +518,9 @@ export function getTimeWidgetHintFormatter(domain) {
       ? 'MM/DD'
       : diff > durationDay
         ? 'MM/DD hha'
-        : diff > durationHour ? 'hh:mma' : 'hh:mm:ssa';
+        : diff > durationHour
+          ? 'hh:mma'
+          : 'hh:mm:ssa';
 }
 
 /**

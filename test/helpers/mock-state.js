@@ -48,7 +48,7 @@ const geojsonInfo = {
   params: {file: null}
 };
 
-function applyActions(reducer, initialState, actions) {
+export function applyActions(reducer, initialState, actions) {
   const actionQ = Array.isArray(actions) ? actions : [actions];
 
   return actionQ.reduce(

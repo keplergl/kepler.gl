@@ -22,7 +22,7 @@ import uniq from 'lodash.uniq';
 import pick from 'lodash.pick';
 
 import {
-  getDefaultfilter,
+  getDefaultFilter,
   getFilterProps,
   getFilterPlot,
   filterData,
@@ -413,7 +413,7 @@ export function validateFilterWithData({fields, allData}, filter) {
   const filterPropsFromField = getFilterProps(allData, field);
 
   let matchedFilter = {
-    ...getDefaultfilter(filter.dataId),
+    ...getDefaultFilter(filter.dataId),
     ...filter,
     ...filterPropsFromField,
     freeze: true,

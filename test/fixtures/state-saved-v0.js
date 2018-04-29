@@ -903,7 +903,8 @@ export const mergedFilters = [
     plotType: 'histogram',
     yAxis: null,
     interval: null,
-    speed: 1
+    speed: 1,
+    fixedDomain: false
   },
   {
     dataId: '9h10t7fyb',
@@ -934,7 +935,8 @@ export const mergedFilters = [
       1453770394000,
       1453770540000
     ],
-    fieldType: 'timestamp'
+    fieldType: 'timestamp',
+    fixedDomain: true
   },
   {
     dataId: '9h10t7fyb',
@@ -951,7 +953,8 @@ export const mergedFilters = [
     plotType: 'histogram',
     yAxis: null,
     interval: null,
-    speed: 1
+    speed: 1,
+    fixedDomain: false
   },
   {
     dataId: '9h10t7fyb',
@@ -972,7 +975,8 @@ export const mergedFilters = [
     step: 1,
     speed: 1,
     fieldType: 'integer',
-    typeOptions: ['range']
+    typeOptions: ['range'],
+    fixedDomain: false
   },
   {
     dataId: 'v79816te8',
@@ -993,7 +997,8 @@ export const mergedFilters = [
     step: 0.1,
     speed: 1,
     fieldType: 'integer',
-    typeOptions: ['range']
+    typeOptions: ['range'],
+    fixedDomain: false
   }
 ];
 
