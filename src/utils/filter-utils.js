@@ -199,7 +199,6 @@ export function getFieldDomain(data, field) {
   switch (field.type) {
     case ALL_FIELD_TYPES.real:
     case ALL_FIELD_TYPES.integer:
-      // console.log('getNumericFieldDomain');
       // calculate domain and step
       return getNumericFieldDomain(data, valueAccessor);
 
@@ -208,16 +207,13 @@ export function getFieldDomain(data, field) {
 
     case ALL_FIELD_TYPES.string:
     case ALL_FIELD_TYPES.date:
-      // console.log('getOrdinalDomain');
       domain = ScaleUtils.getOrdinalDomain(data, valueAccessor);
       return {domain};
 
     case ALL_FIELD_TYPES.timestamp:
-      // console.log('getTimestampFieldDomain');
       return getTimestampFieldDomain(data, valueAccessor);
 
     default:
-      // console.log('defatul==getOrdinalDomain');
       return {domain: ScaleUtils.getOrdinalDomain(data, valueAccessor)};
   }
 }
