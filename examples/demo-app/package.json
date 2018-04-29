@@ -5,7 +5,7 @@
     "start-local-es5": "webpack-dev-server --env.local --progress --hot --open"
   },
   "dependencies": {
-    "@uber/kepler.gl": "^0.0.11",
+    "kepler.gl": "^0.0.11",
     "d3-request": "^1.0.6",
     "global": "^4.3.0",
     "react": "^15.3.1",

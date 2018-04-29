@@ -52,7 +52,8 @@ export function ContainerFactory(KeplerGl) {
     // default id and address if not provided
     static defaultProps = {
       id: 'map',
-      getState: state => state.keplerGl
+      getState: state => state.keplerGl,
+      mint: true
     };
 
     constructor(props, ctx) {
@@ -71,8 +72,9 @@ export function ContainerFactory(KeplerGl) {
     }
 
     componentWillMount() {
+      const {id, mint} = this.props;
       // add a new entry to reducer
-      this.props.dispatch(registerEntry(this.props.id));
+      this.props.dispatch(registerEntry({id, mint}));
     }
 
     componentWillReceiveProps(nextProps) {
@@ -83,9 +85,10 @@ export function ContainerFactory(KeplerGl) {
     }
 
     componentWillUnmount() {
-      // delete entry in reducer
-      // TODO: Allow user to preserve state when unmount
-      this.props.dispatch(deleteEntry(this.props.id));
+      if (this.props.mint !== false) {
+        // delete entry in reducer
+        this.props.dispatch(deleteEntry(this.props.id));
+      }
     }
 
     render() {

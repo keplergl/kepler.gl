@@ -41,10 +41,12 @@ const initialCoreState = {};
 export function provideInitialState(initialState) {
   const coreReducer = coreReducerFactory(initialState);
 
-  const handleRegisterEntry = (state, {payload: id}) => ({
+  const handleRegisterEntry = (state, {payload: {id, mint}}) => ({
     // register a new entry to voyager reducer
+    // by default, always create a mint state even if the same id already exist
+    // if state.id exist and mint=false, keep the existing state
     ...state,
-    [id]: {
+    [id]: state[id] && mint === false ? state[id] : {
       ...coreReducer(undefined, keplerGlInit())
     }
   });
