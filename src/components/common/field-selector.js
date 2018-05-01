@@ -60,7 +60,10 @@ const FieldType = PropTypes.oneOfType([
 
 export default class FieldSelector extends Component {
   static propTypes = {
-    fields: PropTypes.arrayOf(FieldType).isRequired,
+    fields: PropTypes.oneOfType([
+      PropTypes.array,
+      PropTypes.arrayOf(FieldType)
+    ]),
     onSelect: PropTypes.func.isRequired,
     placement: PropTypes.string,
     value: FieldType,
