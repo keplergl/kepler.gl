@@ -46,7 +46,8 @@ export default class VisConfigByFieldSelector extends Component {
     // optional
     selectedField: PropTypes.object,
     description: PropTypes.string,
-    label: PropTypes.string
+    label: PropTypes.string,
+    placeholder: PropTypes.string
   };
 
   _updateVisByField = val => {
@@ -79,6 +80,7 @@ export default class VisConfigByFieldSelector extends Component {
           <FieldSelector
             fields={this.props.fields}
             value={selectedField && selectedField.name}
+            placeholder={this.props.placeholder}
             onSelect={this._updateVisByField}
             erasable
           />

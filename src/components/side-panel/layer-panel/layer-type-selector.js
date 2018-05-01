@@ -32,11 +32,6 @@ import {
   SidePanelSection
 } from 'components/common/styled-components';
 
-const ITEM_SIZE = {
-  large: 60,
-  small: 28
-};
-
 const StyledDropdownListItem = styled.div`
   padding-bottom: 12px;
   padding-right: 12px;
@@ -67,7 +62,7 @@ const StyledListItem = styled.div`
 
     .layer-type-selector__item__icon {
       color: ${props => props.theme.activeColor};
-      background-size: ${ITEM_SIZE.small}px ${ITEM_SIZE.small}px;
+      background-size: 28px 28px;
       margin-right: 12px;  
     }
   }
@@ -76,7 +71,7 @@ const StyledListItem = styled.div`
     color: ${props => props.theme.labelColor};
     display: flex;
     background-image: url(${`${CLOUDFRONT}/kepler.gl-layer-icon-bg.png`});
-    background-size: ${ITEM_SIZE.large}px ${ITEM_SIZE.large}px;
+    background-size: 64px 64px;
   }
 
   .layer-type-selector__item__label {
@@ -103,7 +98,7 @@ const LayerTypeListItem = ({value, isTile}) => (
   >
     <div className="layer-type-selector__item__icon">
       <value.icon
-        height={`${isTile ? ITEM_SIZE.large : ITEM_SIZE.small}px`}
+        height={isTile ? '64px' : '28px'}
       />
     </div>
     <div className="layer-type-selector__item__label">{value.label}</div>

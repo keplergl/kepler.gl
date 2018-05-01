@@ -36,7 +36,7 @@ export const hexagonVisConfigs = {
   elevationScale: 'elevationScale',
   'hi-precision': 'hi-precision',
   colorAggregation: 'aggregation',
-  sizeAggregation: 'aggregation',
+  sizeAggregation: 'sizeAggregation',
   enable3d: 'enable3d'
 };
 

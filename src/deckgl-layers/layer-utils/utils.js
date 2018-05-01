@@ -18,7 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {scaleQuantize, scaleQuantile, scaleSqrt} from 'd3-scale';
+import {scaleQuantize, scaleOrdinal, scaleQuantile, scaleSqrt} from 'd3-scale';
+import {unique} from 'utils//data-utils';
+
 import {SCALE_TYPES} from 'constants/default-settings';
 
 // Enable render color by customized color Scale
@@ -29,7 +31,8 @@ export function getBinColorDomain(scaleType, bins, [lowerIdx, upperIdx]) {
 
     case SCALE_TYPES.quantile:
       return bins.slice(lowerIdx, upperIdx + 1).map(d => d.value);
-
+    case SCALE_TYPES.ordinal:
+      return unique(bins.map(b => b.value)).sort();
     default:
       return [bins[lowerIdx].value, bins[upperIdx].value];
   }
@@ -42,7 +45,8 @@ export function getScaleFunctor(scaleType) {
 
     case SCALE_TYPES.quantile:
       return scaleQuantile;
-
+    case SCALE_TYPES.ordinal:
+      return scaleOrdinal;
     default:
       return scaleQuantile;
   }

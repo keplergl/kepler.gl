@@ -897,7 +897,7 @@ export const mergedFilters = [
     name: 'song_name',
     type: 'multiSelect',
     fieldIdx: 0,
-    domain: ['3.68.4', '2.117.1', '2.116.2', '2.103.2', '2.107.3'],
+    domain: ['2.103.2', '2.107.3', '2.116.2', '2.117.1', '3.68.4' ],
     value: ['3.68.4', '2.117.1', '2.103.2', '2.116.2'],
     fieldType: 'string',
     plotType: 'histogram',
@@ -1152,7 +1152,7 @@ mergedLayer2.config = {
     tableFieldIndex: 1
   },
   colorScale: 'ordinal',
-  colorDomain: ['3.68.4', '2.117.1', '2.116.2', '2.103.2', '2.107.3'],
+  colorDomain: ['2.103.2', '2.107.3', '2.116.2', '2.117.1', '3.68.4'],
   sizeField: {
     name: 'int_range',
     format: '',

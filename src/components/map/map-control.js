@@ -97,7 +97,7 @@ const StyledMapControlPanel = styled.div`
 const StyledMapControlPanelContent = styled.div`
   ${props => props.theme.dropdownScrollBar} max-height: 500px;
   min-height: 100px;
-  overflow: auto;
+  overflow: scroll;
 `;
 
 const StyledMapControlPanelHeader = styled.div`
@@ -195,6 +195,74 @@ export class MapControl extends Component {
     layerSelector
   );
 
+<<<<<<< HEAD
+=======
+  // if one panel is already open and user tries to open a new one well the previous one will be closed
+  _toggleMenuPanel(panelId) {
+    this.setState({
+      areLayersVisible: false,
+      isLegendVisible: false,
+      [panelId]: !this.state[panelId]
+    });
+  }
+
+  _renderLayerSelector(items) {
+    const {onMapToggleLayer} = this.props;
+    const {areLayersVisible} = this.state;
+
+    return !areLayersVisible ? (
+      <StyledMapControlButton
+        key={1}
+        onClick={e => {
+          e.preventDefault();
+          this._toggleMenuPanel('areLayersVisible');
+        }}
+        className="map-control-button toggle-layer"
+        data-tip
+        data-for="toggle-layer"
+      >
+        <Layers height="22px" />
+        <MapLegendTooltip
+          id="toggle-layer"
+          message={areLayersVisible ? 'Hide layer panel' : 'Show layer panel'}
+        />
+      </StyledMapControlButton>
+    ) : (
+      <MapControlPanel
+        header={'Visible layers'}
+        onClick={() => this._toggleMenuPanel('areLayersVisible')}>
+        <MapLayerSelector layers={items} onMapToggleLayer={onMapToggleLayer} />
+      </MapControlPanel>
+    );
+  }
+
+  _renderLegend(items) {
+    const {isLegendVisible} = this.state;
+    return !isLegendVisible ? (
+      <StyledMapControlButton
+        key={2}
+        data-tip
+        data-for="show-legend"
+        className="map-control-button show-legend"
+        onClick={e => {
+          e.preventDefault();
+          this._toggleMenuPanel('isLegendVisible');
+        }}>
+        <Legend height="22px" />
+        <MapLegendTooltip id="show-legend" message={'show legend'} />
+      </StyledMapControlButton>
+    ) : (
+      <MapControlPanel
+        header={'Layer Legend'}
+        onClick={() => this._toggleMenuPanel('isLegendVisible')}>
+        <MapLegend
+          layers={items.filter(item => item.isVisible).map(item => item.layer)}
+        />
+      </MapControlPanel>
+    );
+  }
+
+>>>>>>> fix render map legend
   render() {
     const items = this.initialDataSelector(this.props);
 

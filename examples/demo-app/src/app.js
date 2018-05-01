@@ -49,7 +49,7 @@ class App extends Component {
   }
 
   componentDidMount() {
-    // load trip based data with config
+    // load sample data
     // this._loadSampleData();
   }
 

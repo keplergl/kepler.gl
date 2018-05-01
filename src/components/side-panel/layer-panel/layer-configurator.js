@@ -43,7 +43,6 @@ import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
 import {capitalizeFirstLetter} from 'utils/utils';
 
 import {
-  FIELD_OPTS,
   LAYER_TYPES,
   CHANNEL_SCALE_SUPPORTED_FIELDS
 } from 'constants/default-settings';
@@ -196,8 +195,9 @@ export default class LayerConfigurator extends Component {
         <LayerConfigGroup label={'aggregation'}>
           <AggregationTypeSelector
             {...LAYER_VIS_CONFIGS.aggregation}
-            {...visConfiguratorProps}
-            field={layer.config.colorField}
+            {...layerChannelConfigProps}
+            property={'colorAggregation'}
+            channel={layer.visualChannels.color}
           />
         </LayerConfigGroup>
       </StyledLayerVisualConfigurator>
@@ -205,11 +205,11 @@ export default class LayerConfigurator extends Component {
   }
 
   _renderHeatmapLayerConfig({
-                              layer,
-                              visConfiguratorProps,
-                              layerConfiguratorProps,
-                              layerChannelConfigProps
-                            }) {
+    layer,
+    visConfiguratorProps,
+    layerConfiguratorProps,
+    layerChannelConfigProps
+  }) {
     return (
       <StyledLayerVisualConfigurator>
         {/* Color */}
@@ -254,7 +254,9 @@ export default class LayerConfigurator extends Component {
     layerChannelConfigProps
   }) {
     const {type, config} = layer;
-    const {visConfig: {enable3d}, colorField, sizeField} = config;
+    const {
+      visConfig: {enable3d}
+    } = config;
     const elevationByDescription =
       'When off, height is based on count of points';
     const colorByDescription = 'When off, color is based on count of points';
@@ -269,16 +271,20 @@ export default class LayerConfigurator extends Component {
             channel={layer.visualChannels.color}
             {...layerChannelConfigProps}
           />
-          <AggregationTypeSelector
-            {...LAYER_VIS_CONFIGS.aggregation}
-            {...visConfiguratorProps}
-            descreiption={colorByDescription}
-            field={colorField}
-          />
-          <VisConfigSlider
-            {...LAYER_VIS_CONFIGS.percentile}
-            {...visConfiguratorProps}
-          />
+          {layer.visConfigSettings.colorAggregation.condition(layer.config) ? (
+            <AggregationTypeSelector
+              {...layer.visConfigSettings.colorAggregation}
+              {...layerChannelConfigProps}
+              descreiption={colorByDescription}
+              channel={layer.visualChannels.color}
+            />
+          ) : null}
+          {layer.visConfigSettings.percentile.condition(layer.config) ? (
+            <VisConfigSlider
+              {...layer.visConfigSettings.percentile}
+              {...visConfiguratorProps}
+            />
+          ) : null}
           <VisConfigSlider
             {...LAYER_VIS_CONFIGS.opacity}
             {...visConfiguratorProps}
@@ -315,18 +321,21 @@ export default class LayerConfigurator extends Component {
             description={elevationByDescription}
             disabled={!enable3d}
           />
-          <AggregationTypeSelector
-            {...LAYER_VIS_CONFIGS.aggregation}
-            {...visConfiguratorProps}
-            property={'sizeAggregation'}
-            field={sizeField}
-          />
-          <VisConfigSlider
-            {...LAYER_VIS_CONFIGS.percentile}
-            {...visConfiguratorProps}
-            property={'elevationPercentile'}
-            disabled={!enable3d || (!colorField && !sizeField)}
-          />
+          {layer.visConfigSettings.sizeAggregation.condition(layer.config) ? (
+            <AggregationTypeSelector
+              {...layer.visConfigSettings.sizeAggregation}
+              {...layerChannelConfigProps}
+              channel={layer.visualChannels.size}
+            />
+          ) : null}
+          {layer.visConfigSettings.elevationPercentile.condition(
+            layer.config
+          ) ? (
+            <VisConfigSlider
+              {...layer.visConfigSettings.elevationPercentile}
+              {...visConfiguratorProps}
+            />
+          ) : null}
         </LayerConfigGroup>
         <LayerConfigGroup
           {...LAYER_VIS_CONFIGS['hi-precision']}
@@ -452,7 +461,10 @@ export default class LayerConfigurator extends Component {
     layerConfiguratorProps,
     layerChannelConfigProps
   }) {
-    const {meta: {featureTypes = {}}, config: {visConfig}} = layer;
+    const {
+      meta: {featureTypes = {}},
+      config: {visConfig}
+    } = layer;
 
     return (
       <StyledLayerVisualConfigurator>
@@ -559,7 +571,13 @@ export default class LayerConfigurator extends Component {
   }
 
   render() {
-    const {layer, datasets, updateLayerConfig, layerTypeOptions, updateLayerType} = this.props;
+    const {
+      layer,
+      datasets,
+      updateLayerConfig,
+      layerTypeOptions,
+      updateLayerType
+    } = this.props;
     const {fields = [], fieldPairs} = layer.config.dataId
       ? datasets[layer.config.dataId]
       : {};
@@ -643,7 +661,11 @@ export const LayerColorSelector = ({layer, onChange, label}) => (
   </SidePanelSection>
 );
 
-export const ArcLayerColorSelector = ({layer, onChangeConfig, onChangeVisConfig}) => (
+export const ArcLayerColorSelector = ({
+  layer,
+  onChangeConfig,
+  onChangeVisConfig
+}) => (
   <SidePanelSection>
     <ColorSelector
       colorSets={[
@@ -691,16 +713,14 @@ export const ChannelByValueSelector = ({
     key,
     property,
     range,
-    scale
+    scale,
+    defaultMeasure
   } = channel;
   const supportedFieldTypes = CHANNEL_SCALE_SUPPORTED_FIELDS[channelScaleType];
   const supportedFields = fields.filter(({type}) =>
     supportedFieldTypes.includes(type)
   );
-  const selectedField = layer.config[field];
-  const scaleOptions =
-    (selectedField && FIELD_OPTS[selectedField.type].scale[channelScaleType]) ||
-    [];
+  const scaleOptions = layer.getScaleOptions(channel.key);
   const showScale = !layer.isAggregated && scaleOptions.length > 1;
   const defaultDescription = `Calculate ${property} based on selected field`;
 
@@ -713,6 +733,7 @@ export const ChannelByValueSelector = ({
       id={layer.id}
       key={`${key}-channel-selector`}
       property={property}
+      placeholder={defaultMeasure || 'Select a field'}
       range={layer.config.visConfig[range]}
       scaleOptions={scaleOptions}
       scaleType={layer.config[scale]}
@@ -724,36 +745,44 @@ export const ChannelByValueSelector = ({
   );
 };
 
-export const AggrColorScaleSelector = ({layer: {config}, onChange}) => (
+export const AggrColorScaleSelector = ({layer, onChange}) => (
   <DimensionScaleSelector
     label="Color Scale"
-    options={
-      config.colorField
-        ? FIELD_OPTS[config.colorField.type].scale.colorAggr
-        : FIELD_OPTS.integer.scale.colorAggr
-    }
-    scaleType={config.colorScale}
+    options={layer.getScaleOptions('color')}
+    scaleType={layer.config.colorScale}
     onSelect={val => onChange({colorScale: val}, 'color')}
   />
 );
 
-export const AggregationTypeSelector = ({
-  layer: {config: {visConfig}},
-  field,
-  property,
-  options,
-  onChange
-}) => (
-  <SidePanelSection>
-    <PanelLabel>{`Aggregate ${field ? field.name : ''} by`}</PanelLabel>
-    <ItemSelector
-      disabled={!field}
-      selectedItems={visConfig[property]}
-      options={options}
-      multiSelect={false}
-      searchable={false}
-      onChange={value => onChange({[property]: value})}
-    />
-  </SidePanelSection>
-);
+export const AggregationTypeSelector = ({layer, channel, onChange}) => {
+  const {field, aggregation, key} = channel;
+  const selectedField = layer.config[field];
+  const {visConfig} = layer.config;
+
+  // aggregation should only be selectable when field is selected
+  const aggregationOptions = layer.getAggregationOptions(key);
+
+  return (
+    <SidePanelSection>
+      <PanelLabel>{`Aggregate ${selectedField.name} by`}</PanelLabel>
+      <ItemSelector
+        selectedItems={visConfig[aggregation]}
+        options={aggregationOptions}
+        multiSelect={false}
+        searchable={false}
+        onChange={value =>
+          onChange(
+            {
+              visConfig: {
+                ...layer.config.visConfig,
+                [aggregation]: value
+              }
+            },
+            channel.key
+          )
+        }
+      />
+    </SidePanelSection>
+  );
+};
 /* eslint-enable max-params */

@@ -287,8 +287,8 @@ export const expectedSavedLayer0 = {
       elevationPercentile: [0, 100],
       elevationScale: 5,
       'hi-precision': false,
-      colorAggregation: 'average',
-      sizeAggregation: 'average',
+      colorAggregation: 'count',
+      sizeAggregation: 'count',
       enable3d: false
     }
   },
@@ -335,8 +335,8 @@ export const expectedLoadedLayer0 = {
       elevationPercentile: [0, 100],
       elevationScale: 5,
       'hi-precision': false,
-      colorAggregation: 'average',
-      sizeAggregation: 'average',
+      colorAggregation: 'count',
+      sizeAggregation: 'count',
       enable3d: false
     },
     colorField: null,

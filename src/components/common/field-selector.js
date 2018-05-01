@@ -69,6 +69,7 @@ export default class FieldSelector extends Component {
     value: FieldType,
     filterFieldTypes: PropTypes.oneOfType([FieldType, PropTypes.arrayOf(FieldType)]),
     inputTheme: PropTypes.string,
+    placeholder: PropTypes.string,
     erasable: PropTypes.bool,
     error: PropTypes.bool,
     multiSelect: PropTypes.bool,

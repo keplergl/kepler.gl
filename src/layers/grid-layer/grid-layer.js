@@ -31,11 +31,11 @@ export const gridVisConfigs = {
   coverage: 'coverage',
   sizeRange: 'elevationRange',
   percentile: 'percentile',
-  elevationPercentile: 'percentile',
+  elevationPercentile: 'elevationPercentile',
   elevationScale: 'elevationScale',
   'hi-precision': 'hi-precision',
   colorAggregation: 'aggregation',
-  sizeAggregation: 'aggregation',
+  sizeAggregation: 'sizeAggregation',
   enable3d: 'enable3d'
 };
 

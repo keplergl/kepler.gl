@@ -45,7 +45,7 @@ export function getOrdinalDomain(data, valueAccessor) {
   const values =
     typeof valueAccessor === 'function' ? data.map(valueAccessor) : data;
 
-  return unique(values).filter(notNullorUndefined);
+  return unique(values).filter(notNullorUndefined).sort();
 }
 
 /**

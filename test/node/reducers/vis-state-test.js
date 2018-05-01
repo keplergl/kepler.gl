@@ -458,18 +458,18 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
   t.equal(newLayer3.type, 'hexagon', 'should change type to hexagon');
   t.equal(
     newLayer3.config.colorField,
-    null,
-    'should set colorField back to null'
+    stringField,
+    'should keep colorField'
   );
   t.deepEqual(
     newLayer3.config.colorDomain,
     [0, 1],
-    'should set colorDomain back to default'
+    'should set colorDomain to default, it is calculated inside deck.gl layer'
   );
   t.equal(
     newLayer3.config.colorScale,
-    'quantile',
-    'should set colorScale to default'
+    'ordinal',
+    'should set colorScale to ordinal'
   );
   t.equal(
     newLayer3.config.sizeScale,

@@ -275,6 +275,20 @@ export const CHANNEL_SCALES = keyMirror({
   sizeAggr: null
 });
 
+export const AGGREGATION_TYPES = {
+  // default
+  count: 'count',
+  // linear
+  average: 'average',
+  maximum: 'maximum',
+  minimum: 'minimum',
+  median: 'median',
+  sum: 'sum',
+  // ordinal
+  mode: 'mode',
+  countUnique: 'count unique'
+};
+
 export const linearFieldScaleFunctions = {
   [CHANNEL_SCALES.color]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
   [CHANNEL_SCALES.radius]: [SCALE_TYPES.sqrt],
@@ -282,8 +296,21 @@ export const linearFieldScaleFunctions = {
 };
 
 export const linearFieldAggrScaleFunctions = {
-  [CHANNEL_SCALES.colorAggr]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
-  [CHANNEL_SCALES.sizeAggr]: [SCALE_TYPES.linear]
+  [CHANNEL_SCALES.colorAggr]: {
+    [AGGREGATION_TYPES.average]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
+    [AGGREGATION_TYPES.maximum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
+    [AGGREGATION_TYPES.minimum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
+    [AGGREGATION_TYPES.median]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
+    [AGGREGATION_TYPES.sum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile]
+  },
+
+  [CHANNEL_SCALES.sizeAggr]: {
+    [AGGREGATION_TYPES.average]: [SCALE_TYPES.linear],
+    [AGGREGATION_TYPES.maximum]: [SCALE_TYPES.linear],
+    [AGGREGATION_TYPES.minimum]: [SCALE_TYPES.linear],
+    [AGGREGATION_TYPES.median]: [SCALE_TYPES.linear],
+    [AGGREGATION_TYPES.sum]: [SCALE_TYPES.linear]
+  }
 };
 
 export const OrdinalFieldScaleFunctions = {
@@ -293,17 +320,37 @@ export const OrdinalFieldScaleFunctions = {
 };
 
 export const OrdinalFieldAggrScaleFunctions = {
+  // [CHANNEL_SCALES.colorAggr]: [SCALE_TYPES.ordinal, SCALE_TYPES.linear],
+  [CHANNEL_SCALES.colorAggr]: {
+    [AGGREGATION_TYPES.mode]: [SCALE_TYPES.ordinal],
+    [AGGREGATION_TYPES.countUnique]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile]
+  },
+
   // Currently doesn't support yet
-  [CHANNEL_SCALES.colorAggr]: [],
-  [CHANNEL_SCALES.sizeAggr]: []
+  [CHANNEL_SCALES.sizeAggr]: {}
 };
 
 export const notSupportedScaleOpts = {
   [CHANNEL_SCALES.color]: [],
   [CHANNEL_SCALES.radius]: [],
-  [CHANNEL_SCALES.size]: [],
-  [CHANNEL_SCALES.colorAggr]: [],
-  [CHANNEL_SCALES.sizeAggr]: []
+  [CHANNEL_SCALES.size]: []
+};
+
+export const  notSupportAggrOpts = {
+  [CHANNEL_SCALES.colorAggr]: {},
+  [CHANNEL_SCALES.sizeAggr]: {}
+};
+
+/**
+ * Default aggregation are based on ocunt
+ */
+export const DEFAULT_AGGREGATION = {
+  [CHANNEL_SCALES.colorAggr]: {
+    [AGGREGATION_TYPES.count]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
+  },
+  [CHANNEL_SCALES.sizeAggr]: {
+    [AGGREGATION_TYPES.count]: [SCALE_TYPES.linear],
+  }
 };
 
 /**
@@ -332,7 +379,10 @@ export const FIELD_OPTS = {
   },
   timestamp: {
     type: 'time',
-    scale: linearFieldScaleFunctions,
+    scale: {
+      ...linearFieldScaleFunctions,
+      ...notSupportAggrOpts
+    },
     format: {
       legend: d => d
     }
@@ -349,20 +399,29 @@ export const FIELD_OPTS = {
   },
   boolean: {
     type: 'boolean',
-    scale: OrdinalFieldScaleFunctions,
+    scale: {
+      ...OrdinalFieldScaleFunctions,
+      ...OrdinalFieldAggrScaleFunctions
+    },
     format: {
       legend: d => d
     }
   },
   date: {
-    scale: OrdinalFieldScaleFunctions,
+    scale: {
+      ...OrdinalFieldScaleFunctions,
+      ...OrdinalFieldAggrScaleFunctions
+    },
     format: {
       legend: d => d
     }
   },
   geojson: {
     type: 'geometry',
-    scale: notSupportedScaleOpts,
+    scale: {
+      ...notSupportedScaleOpts,
+      ...notSupportAggrOpts
+    },
     format: {
       legend: d => '...'
     }
@@ -375,7 +434,7 @@ export const CHANNEL_SCALE_SUPPORTED_FIELDS = Object.keys(
   (accu, key) => ({
     ...accu,
     [key]: Object.keys(FIELD_OPTS).filter(
-      ft => FIELD_OPTS[ft].scale[key] && FIELD_OPTS[ft].scale[key].length
+      ft => Object.keys(FIELD_OPTS[ft].scale[key]).length
     )
   }),
   {}
@@ -439,15 +498,6 @@ export const LAYER_BLENDINGS = {
     blendEquationSeparate: ['FUNC_SUBTRACT', 'FUNC_ADD']
   }
 };
-
-export const AGGREGATION_TYPES = keyMirror({
-  average: null,
-  maximum: null,
-  minimum: null,
-  median: null,
-  sum: null,
-  countUnique: null
-});
 
 export const MAX_DEFAULT_TOOLTIPS = 5;
 
