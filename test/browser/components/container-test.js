@@ -40,7 +40,7 @@ const mockStore = configureStore();
 
 import Container, {errorMsg} from 'components/container';
 
-test('Components -> Container -> Mount', t => {
+test('Components -> Container -> Mount with mint:true', t => {
   // mount with empty store
   let store = mockStore({});
   const spy = sinon.spy(Console, 'error');
@@ -74,7 +74,7 @@ test('Components -> Container -> Mount', t => {
 
   let actions = store.getActions();
 
-  let expectedActions0 = {type: '@@kepler.gl/REGISTER_ENTRY', payload: 'map'};
+  let expectedActions0 = {type: '@@kepler.gl/REGISTER_ENTRY', payload: {id: 'map', mint: true}};
 
   t.deepEqual(
     actions,
@@ -106,6 +106,8 @@ test('Components -> Container -> Mount', t => {
   const testId = {
     id: 'milkshake'
   };
+
+  // mount with mint: true
   t.doesNotThrow(() => {
     wrapper = mount(
       <Provider store={store}>
@@ -116,7 +118,7 @@ test('Components -> Container -> Mount', t => {
 
   actions = store.getActions();
 
-  expectedActions0 = {type: '@@kepler.gl/REGISTER_ENTRY', payload: 'milkshake'};
+  expectedActions0 = {type: '@@kepler.gl/REGISTER_ENTRY', payload: {id: 'milkshake', mint: true}};
 
   t.deepEqual(
     actions,
@@ -153,6 +155,62 @@ test('Components -> Container -> Mount', t => {
     expectedState,
     'should delete milkshake from root reducer'
   );
+
+  spy.restore();
+  t.end();
+});
+
+test('Components -> Container -> Mount with mint:false', t => {
+  const spy = sinon.spy(Console, 'error');
+
+  // mount with custom state
+  const store = mockStore({smoothie: {}});
+  const appReducer = combineReducers({
+    smoothie: rootReducer
+  });
+
+  let wrapper;
+  const testId = {
+    id: 'milkshake'
+  };
+
+  // mount with mint: false
+  t.doesNotThrow(() => {
+    wrapper = mount(
+      <Provider store={store}>
+        <Container getState={s => s.smoothie} id={testId.id} mint={false}/>
+      </Provider>
+    );
+  }, 'Should not throw error when mount');
+
+  let actions = store.getActions();
+
+  let expectedActions0 = {type: '@@kepler.gl/REGISTER_ENTRY', payload: {id: 'milkshake', mint: false}};
+
+  t.deepEqual(
+    actions,
+    [expectedActions0],
+    'should register entry and request map style'
+  );
+  actions.splice(0, 2);
+
+  let nextState = appReducer({}, expectedActions0);
+  let expectedState = {
+    smoothie: {
+      milkshake: initialCoreState
+    }
+  };
+  t.deepEqual(
+    nextState,
+    expectedState,
+    'should register milkshake to root reducer'
+  );
+
+  // unmount
+  wrapper.unmount();
+
+  actions = store.getActions();
+  t.deepEqual(actions, [], 'should not call unmount');
 
   spy.restore();
   t.end();
