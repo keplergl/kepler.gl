@@ -39,7 +39,7 @@ export const QUERY_OPTIONS = keyMirror({
 export const LOADING_METHODS = [
   {
     id: 'upload',
-    label: 'Upload Your Data',
+    label: 'Load Your Data',
     options: [
       {
         id: QUERY_OPTIONS.csv,

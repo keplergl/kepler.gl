@@ -33,8 +33,6 @@ const animationName = keyframes`
 const Loader = styled.span`
     border-left-color: rgb(198, 198, 198);
     border-top-color: rgb(198, 198, 198);
-    height: 32px;
-    width: 32px;
     animation: _preloader_spin_ 500ms linear infinite;
     border-radius: 50%;
     border-bottom-color: transparent;
@@ -45,8 +43,8 @@ const Loader = styled.span`
     animation-name: ${animationName};
 }`;
 
-const LoadingSpinner = () => (
-    <Loader/>
+const LoadingSpinner = ({size = 32}) => (
+    <Loader style={{width: `${size}px`, height: `${size}px`}}/>
 );
 
 export default LoadingSpinner;
