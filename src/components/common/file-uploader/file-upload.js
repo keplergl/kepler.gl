@@ -24,6 +24,7 @@ import styled from 'styled-components';
 
 import UploadButton from './upload-button';
 import {FileType, DragNDrop} from 'components/common/icons';
+import LoadingSpinner from 'components/common/loading-spinner';
 import {isChrome} from 'utils/utils';
 
 const FileDrop =
@@ -47,6 +48,9 @@ const defaultValidFileExt = [
 const MESSAGE = ' Drag & Drop Your File(s) Here';
 const CHROME_MSG =
   '*Chrome user: Limit file size to 250mb, if need to upload larger file, try Safari';
+const DISCLAIMER = '*Kepler.gl is a pure client side app. Data lives only on your machine/browser. ' +
+  'No information or maps is sent back up to our server.';
+
 const fileIconColor = '#D3D8E0';
 
 const WarningMsg = styled.span`
@@ -94,6 +98,22 @@ const StyledFileUpload = styled.div`
   .filter-upload__input {
     visibility: hidden;
   }
+  
+  .file-drop {
+    position: relative;
+  }
+`;
+
+const StyledMessage = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const StyledDisclaimer = StyledMessage.extend`
+  position: absolute;
+  bottom: 0;
+  padding: 10px 30px;
 `;
 
 export default class FileUpload extends Component {
@@ -108,7 +128,7 @@ export default class FileUpload extends Component {
 
   state = {
     dragOver: false,
-    files: null,
+    files: [],
     errorFiles: []
   };
 
@@ -120,7 +140,9 @@ export default class FileUpload extends Component {
   };
 
   _handleFileDrop = (files, e) => {
-    e.stopPropagation();
+    if (e) {
+      e.stopPropagation();
+    }
 
     const nextState = {files: [], errorFiles: [], dragOver: false};
     for (let i = 0; i < files.length; i++) {
@@ -145,7 +167,7 @@ export default class FileUpload extends Component {
   };
 
   _renderMessage() {
-    const {errorFiles} = this.state;
+    const {errorFiles, files} = this.state;
 
     if (errorFiles.length) {
       return (
@@ -155,21 +177,23 @@ export default class FileUpload extends Component {
       );
     }
 
-    if (!this.state.files) {
+    if (!files.length) {
       return null;
     }
 
     return (
-      <span>
-        Uploading...<PositiveMsg>
-          {`${this.state.files.map(f => f.name).join(' and ')}...`}
+      <StyledMessage className="file-uploader__message">
+        <div>Uploading...</div>
+        <PositiveMsg>
+          {`${files.map(f => f.name).join(' and ')}...`}
         </PositiveMsg>
-      </span>
+        <LoadingSpinner size={20} />
+      </StyledMessage>
     );
   }
 
   render() {
-    const {dragOver} = this.state;
+    const {dragOver, files} = this.state;
     const {validFileExt} = this.props;
     return (
       <StyledFileUpload
@@ -185,7 +209,7 @@ export default class FileUpload extends Component {
         {FileDrop ? (
           <FileDrop
             frame={this.frame}
-            targetAlwaysVisible={true}
+            targetAlwaysVisible
             onDragOver={() => this._toggleDragState(true)}
             onDragLeave={() => this._toggleDragState(false)}
             onDrop={this._handleFileDrop}
@@ -202,16 +226,18 @@ export default class FileUpload extends Component {
                 </StyledDragNDropIcon>
                 <div>{this._renderMessage()}</div>
               </div>
-              <div>
+              {!files.length ? <div>
                 <MsgWrapper>{MESSAGE}</MsgWrapper>
                 <span className="file-upload-or">or</span>
                 <UploadButton onUpload={this._handleFileDrop}>
                   browse your files
                 </UploadButton>
-              </div>
+              </div> : null}
+              <StyledDisclaimer>{DISCLAIMER}</StyledDisclaimer>
             </StyledFileDrop>
           </FileDrop>
         ) : null}
+
         <WarningMsg>{isChrome() ? CHROME_MSG : ''}</WarningMsg>
       </StyledFileUpload>
     );
