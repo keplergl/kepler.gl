@@ -18,37 +18,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {combineReducers, createStore, applyMiddleware, compose} from 'redux';
-import {routerReducer} from 'react-router-redux'
-import {taskMiddleware} from 'react-palm';
-import thunk from 'redux-thunk';
-import {routerMiddleware} from 'react-router-redux';
-import {hashHistory} from 'react-router';
-import appReducer from './app';
-import demoReducer from '../../../examples/demo-app/src/reducers';
+import {createAction, handleActions} from 'redux-actions';
 
-const initialState = {};
-const reducers = {
-  demo: demoReducer,
-  app: appReducer,
-  routing: routerReducer
+// CONSTANTS
+export const INIT = 'INIT';
+export const SHOW_MODAL = 'SHOW_MODAL';
+
+// ACTIONS
+export const appInit = createAction(INIT);
+export const showModal = createAction(SHOW_MODAL);
+
+// INITIAL_STATE
+const initialState = {
+  appName: 'example',
+  loaded: false,
+  modal: null
 };
 
-const combinedReducers = combineReducers(reducers);
+// REDUCER
+const appReducer = handleActions({
+  [INIT]: (state, action) => ({
+    ...state,
+    loaded: true
+  }),
 
-export const middlewares = [
-  taskMiddleware,
-  thunk,
-  routerMiddleware(hashHistory)
-];
+  [SHOW_MODAL]: (state, action) => ({
+    ...state,
+    modal: action.payload
+  })
+}, initialState);
 
-export const enhancers = [applyMiddleware(...middlewares)];
-
-// add redux devtools
-// const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
-
-export default createStore(
-  combinedReducers,
-  initialState,
-  compose(...enhancers)
-);
+export default appReducer;

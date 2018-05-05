@@ -25,6 +25,8 @@ import {updateVisDataUpdater} from './vis-state-updaters';
 import {receiveMapConfigUpdater as stateMapConfigUpdater} from './map-state-updaters';
 import {receiveMapConfigUpdater as styleMapConfigUpdater} from './map-style-updaters';
 import {findMapBounds} from 'utils/data-utils';
+import KeplerGlSchema from 'schemas';
+
 // compose action to apply result multiple reducers, with the output of one
 
 /**
@@ -80,20 +82,25 @@ export const updateVisDataComposed = (state, action) => {
 export const addDataToMapComposed = (state, action) => {
 
   const {datasets, options, config} = action.payload;
+  let parsedConfig = config;
 
+  if (config && config.config && config.version) {
+    // if passed in saved config
+    parsedConfig = KeplerGlSchema.parseSavedConfig(config)
+  }
   // Update visState store
-  let mergedState = updateVisDataComposed(state, {datasets, options, config: config && config.visState});
+  let mergedState = updateVisDataComposed(state, {datasets, options, config: parsedConfig && parsedConfig.visState});
 
   // Update mapState store
   mergedState = {
     ...mergedState,
-    mapState: stateMapConfigUpdater(mergedState.mapState, {payload: {mapState: config && config.mapState}})
+    mapState: stateMapConfigUpdater(mergedState.mapState, {payload: {mapState: parsedConfig && parsedConfig.mapState}})
   };
 
   // Update mapStyle store
   mergedState = {
     ...mergedState,
-    mapStyle: styleMapConfigUpdater(mergedState.mapStyle, {payload: {mapStyle: config && config.mapStyle}})
+    mapStyle: styleMapConfigUpdater(mergedState.mapStyle, {payload: {mapStyle: parsedConfig && parsedConfig.mapStyle}})
   };
 
   return mergedState

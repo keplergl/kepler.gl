@@ -18,37 +18,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {combineReducers, createStore, applyMiddleware, compose} from 'redux';
-import {routerReducer} from 'react-router-redux'
-import {taskMiddleware} from 'react-palm';
-import thunk from 'redux-thunk';
-import {routerMiddleware} from 'react-router-redux';
-import {hashHistory} from 'react-router';
-import appReducer from './app';
-import demoReducer from '../../../examples/demo-app/src/reducers';
+import React, {Component} from 'react';
+import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer'
+import KeplerGl from 'kepler.gl';
 
-const initialState = {};
-const reducers = {
-  demo: demoReducer,
-  app: appReducer,
-  routing: routerReducer
-};
+export default class SavedMap extends Component {
+  render() {
+    const {mapboxApiAccessToken, id} = this.props;
 
-const combinedReducers = combineReducers(reducers);
-
-export const middlewares = [
-  taskMiddleware,
-  thunk,
-  routerMiddleware(hashHistory)
-];
-
-export const enhancers = [applyMiddleware(...middlewares)];
-
-// add redux devtools
-// const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
-
-export default createStore(
-  combinedReducers,
-  initialState,
-  compose(...enhancers)
-);
+    return (
+      <AutoSizer>
+        {({height, width}) => (
+          <KeplerGl
+            mapboxApiAccessToken={mapboxApiAccessToken}
+            id={id}
+            width={width}
+            height={height}
+            mint={false}
+          />
+        )}
+      </AutoSizer>
+    )
+  }
+}

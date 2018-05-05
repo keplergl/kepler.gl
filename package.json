@@ -32,6 +32,7 @@
     "cover": "nyc --reporter html --reporter cobertura --reporter json-summary npm test && nyc report",
     "start": "(cd examples/demo-app && (path-exists node_modules || npm i) && npm run start-local)",
     "start:custom-layer": "(cd examples/custom-layer && (path-exists node_modules || npm i) && npm run start-local)",
+    "start:open-modal": "(cd examples/open-modal && (path-exists node_modules || npm i) && npm run start-local)",
     "build": "rm -fr dist && uber-licence && babel src --out-dir dist --plugins=transform-es2015-modules-commonjs --source-maps inline",
     "lint": "eslint src examples/**/src website/src",
     "check-licence": "uber-licence --dry",

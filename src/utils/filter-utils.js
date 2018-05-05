@@ -175,11 +175,7 @@ export function getFilterProps(data, field) {
       };
 
     default:
-      return {
-        ...filterProp,
-        fieldType,
-        type: fieldType
-      };
+      return {};
   }
 }
 

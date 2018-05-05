@@ -58,7 +58,7 @@ const mockRawData = {
 
 test('#composerStateReducer - addDataToMapComposed: mapStyle', t => {
   // init kepler.gl root and instance
-  const state = keplerGlReducer({}, registerEntry('test')).test;
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
 
   const newState = addDataToMapComposed(state, {
     payload: {
@@ -84,7 +84,7 @@ test('#composerStateReducer - addDataToMapComposed: mapStyle', t => {
 
 test('#composerStateReducer - addDataToMapComposed: mapState should not be centered', t => {
   // init kepler.gl root and instance
-  const state = keplerGlReducer({}, registerEntry('test')).test;
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
   const mapStateProperties = {
     latitude: 33.88608913680742,
     longitude: -84.43459130456425

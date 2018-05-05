@@ -100,15 +100,19 @@ function KeplerGlFactory(
       version: 'v1.0'
     };
 
-    componentDidMount() {
+    componentWillMount() {
       this._loadMapStyle(this.props.mapStyles);
       this._handleResize(this.props);
     }
 
     componentWillReceiveProps(nextProps) {
       if (
+        // if dimension props has changed
+        this.props.height !== nextProps.height ||
         this.props.width !== nextProps.width ||
-        this.props.height !== nextProps.height
+        // react-map-gl will dispatch updateViewport after this._handleResize is called
+        // here we check if this.props.mapState.height is sync with props.height
+        nextProps.height !== this.props.mapState.height
       ) {
         this._handleResize(nextProps);
       }

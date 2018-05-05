@@ -18,37 +18,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {combineReducers, createStore, applyMiddleware, compose} from 'redux';
-import {routerReducer} from 'react-router-redux'
-import {taskMiddleware} from 'react-palm';
-import thunk from 'redux-thunk';
-import {routerMiddleware} from 'react-router-redux';
-import {hashHistory} from 'react-router';
-import appReducer from './app';
-import demoReducer from '../../../examples/demo-app/src/reducers';
+import React, {Component} from 'react';
+import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer'
+import {addDataToMap, wrapTo} from 'kepler.gl/actions';
+import KeplerGl from 'kepler.gl';
 
-const initialState = {};
-const reducers = {
-  demo: demoReducer,
-  app: appReducer,
-  routing: routerReducer
-};
+import sampleData from '../data/sample-data';
+import config from '../configurations/config.json';
 
-const combinedReducers = combineReducers(reducers);
+export default class FreshMap extends Component {
+  componentDidMount() {
+    this.props.dispatch(
+      wrapTo(this.props.id, addDataToMap(
+        {
+          datasets: sampleData,
+          options: {
+            centerMap: true
+          },
+          config
+        })
+      )
+    );
+  }
 
-export const middlewares = [
-  taskMiddleware,
-  thunk,
-  routerMiddleware(hashHistory)
-];
+  render() {
+    const {mapboxApiAccessToken, id} = this.props;
 
-export const enhancers = [applyMiddleware(...middlewares)];
-
-// add redux devtools
-// const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
-
-export default createStore(
-  combinedReducers,
-  initialState,
-  compose(...enhancers)
-);
+    return (
+      <AutoSizer>
+        {({height, width}) => (
+          <KeplerGl
+            mapboxApiAccessToken={mapboxApiAccessToken}
+            id={id}
+            width={width}
+            height={height}
+          />
+        )}
+      </AutoSizer>
+    )
+  }
+}
