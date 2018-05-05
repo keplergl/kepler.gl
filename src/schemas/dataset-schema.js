@@ -82,7 +82,7 @@ class DatasetSchema extends Schema {
     // recalculate field type
     // because we have updated type-analyzer
     // we need to add format to each field
-    const needCalculateMeta = !fields[0].format;
+    const needCalculateMeta = fields[0] && !fields[0].hasOwnProperty('format');
 
     if (needCalculateMeta) {
       const fieldOrder = fields.map(f => f.name);
