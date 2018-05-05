@@ -5023,7 +5023,7 @@ export const stateSavedV1_2 = {
           {name: 'meta_data', type: 'real', format: ''},
           {name: 'start_ts', type: 'timestamp', format: 'x'},
           {name: 'end_ts', type: 'timestamp', format: 'x'},
-          {name: 'time string', type: 'timestamp', format: 'M/D/YYYY H:m'}
+          {name: 'time string', type: 'timestamp', format: 'YYYY/M/D H:m'}
         ]
       }
     }
