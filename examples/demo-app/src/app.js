@@ -50,8 +50,12 @@ class App extends Component {
 
     if (window.gtag) {
       window.gtag('config', 'UA-64694404-19', {
-        user_id: this.props.location.query.token
+        user_id: this.props.location.query.token,
+        {
+         'custom_map': {'dimension0': 'token'}
+        }
       });
+      window.gtag('set', {'token': this.props.location.query.token});
     }
   }
 
