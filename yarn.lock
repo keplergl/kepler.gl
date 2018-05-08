@@ -76,12 +76,6 @@
   version "3.0.0"
   resolved "https://unpm.uberinternal.com/@mapbox%2fwhoots-js/-/whoots-js-3.0.0.tgz#c1de4293081424da3ac30c23afa850af1019bb54"
 
-"@sinonjs/formatio@^2.0.0":
-  version "2.0.0"
-  resolved "https://unpm.uberinternal.com/@sinonjs%2fformatio/-/formatio-2.0.0.tgz#84db7e9eb5531df18a8c5e0bfb6e449e55e654b2"
-  dependencies:
-    samsam "1.3.0"
-
 "@types/node@*":
   version "9.6.5"
   resolved "https://unpm.uberinternal.com/@types%2fnode/-/node-9.6.5.tgz#ee700810fdf49ac1c399fc5980b7559b3e5a381d"
@@ -677,7 +671,7 @@ babel-plugin-inline-json-import@^0.2.1:
   dependencies:
     decache "^4.1.0"
 
-babel-plugin-istanbul@^4.1.4, babel-plugin-istanbul@^4.1.5:
+babel-plugin-istanbul@^4.1.4:
   version "4.1.6"
   resolved "https://unpm.uberinternal.com/babel-plugin-istanbul/-/babel-plugin-istanbul-4.1.6.tgz#36c59b2192efce81c5b378321b74175add1c9a45"
   dependencies:
@@ -4455,10 +4449,6 @@ jsx-ast-utils@^1.3.3, jsx-ast-utils@^1.3.4:
   version "1.4.1"
   resolved "https://unpm.uberinternal.com/jsx-ast-utils/-/jsx-ast-utils-1.4.1.tgz#3867213e8dd79bf1e8f2300c0cfc1efb182c0df1"
 
-just-extend@^1.1.27:
-  version "1.1.27"
-  resolved "https://unpm.uberinternal.com/just-extend/-/just-extend-1.1.27.tgz#ec6e79410ff914e472652abfa0e603c03d60e905"
-
 kdbush@^1.0.1:
   version "1.0.1"
   resolved "https://unpm.uberinternal.com/kdbush/-/kdbush-1.0.1.tgz#3cbd03e9dead9c0f6f66ccdb96450e5cecc640e0"
@@ -4597,10 +4587,6 @@ lodash.flattendeep@^4.2.0, lodash.flattendeep@^4.4.0:
   version "4.4.0"
   resolved "https://unpm.uberinternal.com/lodash.flattendeep/-/lodash.flattendeep-4.4.0.tgz#fb030917f86a3134e5bc9bec0d69e0013ddfedb2"
 
-lodash.get@^4.4.2:
-  version "4.4.2"
-  resolved "https://unpm.uberinternal.com/lodash.get/-/lodash.get-4.4.2.tgz#2d177f652fa31e939b4438d5341499dfa3825e99"
-
 lodash.isplainobject@^4.0.6:
   version "4.0.6"
   resolved "https://unpm.uberinternal.com/lodash.isplainobject/-/lodash.isplainobject-4.0.6.tgz#7c526a52d89b45c45cc690b88163be0497f550cb"
@@ -4648,10 +4634,6 @@ loglevel@^1.4.1:
 lolex@^1.6.0:
   version "1.6.0"
   resolved "https://unpm.uberinternal.com/lolex/-/lolex-1.6.0.tgz#3a9a0283452a47d7439e72731b9e07d7386e49f6"
-
-lolex@^2.2.0, lolex@^2.3.2:
-  version "2.3.2"
-  resolved "https://unpm.uberinternal.com/lolex/-/lolex-2.3.2.tgz#85f9450425103bf9e7a60668ea25dc43274ca807"
 
 longest@^1.0.1:
   version "1.0.1"
@@ -5064,16 +5046,6 @@ neo-async@^2.5.0:
 next-tick@1:
   version "1.0.0"
   resolved "https://unpm.uberinternal.com/next-tick/-/next-tick-1.0.0.tgz#ca86d1fe8828169b0120208e3dc8424b9db8342c"
-
-nise@^1.2.0:
-  version "1.3.3"
-  resolved "https://unpm.uberinternal.com/nise/-/nise-1.3.3.tgz#c17a850066a8a1dfeb37f921da02441afc4a82ba"
-  dependencies:
-    "@sinonjs/formatio" "^2.0.0"
-    just-extend "^1.1.27"
-    lolex "^2.3.2"
-    path-to-regexp "^1.7.0"
-    text-encoding "^0.6.4"
 
 node-fetch@^1.0.1:
   version "1.7.3"
@@ -5921,15 +5893,6 @@ react-file-drop@^0.1.8:
     create-react-class "^15.5.2"
     prop-types "^15.5.8"
 
-react-fileupload-progress@^0.4.1:
-  version "0.4.1"
-  resolved "https://unpm.uberinternal.com/react-fileupload-progress/-/react-fileupload-progress-0.4.1.tgz#1bf2bc3969467a6a2a24f4555cfb2a10e9165a82"
-  dependencies:
-    babel-plugin-istanbul "^4.1.5"
-    object-assign "^4.1.0"
-    prop-types "^15.5.10"
-    sinon "^4.2.0"
-
 react-hot-loader@^3.0.0-beta.6:
   version "3.1.3"
   resolved "https://unpm.uberinternal.com/react-hot-loader/-/react-hot-loader-3.1.3.tgz#6f92877326958c7cb0134b512474517869126082"
@@ -6461,7 +6424,7 @@ safer-buffer@^2.1.0:
   version "2.1.2"
   resolved "https://unpm.uberinternal.com/safer-buffer/-/safer-buffer-2.1.2.tgz#44fa161b0187b9549dd84bb91802f9bd8385cd6a"
 
-samsam@1.3.0, samsam@1.x, samsam@^1.1.3:
+samsam@1.x, samsam@^1.1.3:
   version "1.3.0"
   resolved "https://unpm.uberinternal.com/samsam/-/samsam-1.3.0.tgz#8d1d9350e25622da30de3e44ba692b5221ab7c50"
 
@@ -6652,18 +6615,6 @@ sinon@^2.4.1:
     samsam "^1.1.3"
     text-encoding "0.6.4"
     type-detect "^4.0.0"
-
-sinon@^4.2.0:
-  version "4.5.0"
-  resolved "https://unpm.uberinternal.com/sinon/-/sinon-4.5.0.tgz#427ae312a337d3c516804ce2754e8c0d5028cb04"
-  dependencies:
-    "@sinonjs/formatio" "^2.0.0"
-    diff "^3.1.0"
-    lodash.get "^4.4.2"
-    lolex "^2.2.0"
-    nise "^1.2.0"
-    supports-color "^5.1.0"
-    type-detect "^4.0.5"
 
 slash@^1.0.0:
   version "1.0.0"
@@ -7238,7 +7189,7 @@ test-exclude@^4.2.0, test-exclude@^4.2.1:
     read-pkg-up "^1.0.1"
     require-main-filename "^1.0.1"
 
-text-encoding@0.6.4, text-encoding@^0.6.4:
+text-encoding@0.6.4:
   version "0.6.4"
   resolved "https://unpm.uberinternal.com/text-encoding/-/text-encoding-0.6.4.tgz#e399a982257a276dae428bb92845cb71bdc26d19"
 
@@ -7371,7 +7322,7 @@ type-check@~0.3.1, type-check@~0.3.2:
   dependencies:
     prelude-ls "~1.1.2"
 
-type-detect@^4.0.0, type-detect@^4.0.5:
+type-detect@^4.0.0:
   version "4.0.8"
   resolved "https://unpm.uberinternal.com/type-detect/-/type-detect-4.0.8.tgz#7646fb5f18871cfbb7749e69bd39a6388eb7450c"
 
