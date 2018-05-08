@@ -48,8 +48,8 @@ const defaultValidFileExt = [
 const MESSAGE = ' Drag & Drop Your File(s) Here';
 const CHROME_MSG =
   '*Chrome user: Limit file size to 250mb, if need to upload larger file, try Safari';
-const DISCLAIMER = '*Kepler.gl is a pure client side app. Data lives only on your machine/browser. ' +
-  'No information or maps is sent back up to our server.';
+const DISCLAIMER = '*Kepler.gl is a client-side application with no server backend. Data lives only on your machine/browser. ' +
+  'No information or map data is sent to any server.';
 
 const fileIconColor = '#D3D8E0';
 
