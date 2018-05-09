@@ -15,3 +15,5 @@ package-lock.json
 /bundle*.js
 /favicon.png
 /index.html
+
+npm-debug.log
