@@ -128,7 +128,7 @@ export class DataTableModal extends Component {
       .filter(({name}) => name !== '_geojson');
 
     return (
-      <div ref="root" className="dataset-modal" style={{overflow: 'overlay'}}>
+      <div ref="root" className="dataset-modal" style={{overflow: 'scroll'}}>
         <DatasetTabs
           activeDataset={activeDataset}
           datasets={datasets}

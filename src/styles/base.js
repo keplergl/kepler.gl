@@ -551,7 +551,7 @@ const dropdownListSection = css`
 `;
 
 const dropdownList = css`
-  overflow-y: overlay;
+  overflow-y: scroll;
   max-height: 280px;
   box-shadow: ${props => props.theme.dropdownListShadow};
   border-radius: 2px;
@@ -580,11 +580,24 @@ const sidePanelScrollBar = css`
     width: 10px;
   }
   
+  ::-webkit-scrollbar:hover {
+    height: 10px;
+    width: 10px;
+    
+    ::-webkit-scrollbar-track {
+      background: ${props => props.theme.sidePanelBg};
+    }
+  }
+  
   ::-webkit-scrollbar-corner {
     background: ${props => props.theme.sidePanelBg};
   }
   
   ::-webkit-scrollbar-track {
+    background: ${props => props.theme.sidePanelBg};
+  }
+  
+  ::-webkit-scrollbar-track:hover {
     background: ${props => props.theme.sidePanelBg};
   }
   
