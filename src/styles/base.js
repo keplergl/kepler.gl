@@ -580,24 +580,11 @@ const sidePanelScrollBar = css`
     width: 10px;
   }
   
-  ::-webkit-scrollbar:hover {
-    height: 10px;
-    width: 10px;
-    
-    ::-webkit-scrollbar-track {
-      background: ${props => props.theme.sidePanelBg};
-    }
-  }
-  
   ::-webkit-scrollbar-corner {
     background: ${props => props.theme.sidePanelBg};
   }
   
   ::-webkit-scrollbar-track {
-    background: ${props => props.theme.sidePanelBg};
-  }
-  
-  ::-webkit-scrollbar-track:hover {
     background: ${props => props.theme.sidePanelBg};
   }
   
