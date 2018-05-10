@@ -29,7 +29,7 @@ import {
   PanelLabel,
   StyledPanelDropdown
 } from 'components/common/styled-components';
-import listensToClickOutside from 'react-onclickoutside/decorator';
+import onClickOutside from 'react-onclickoutside';
 
 const ColorBlock = styled.div`
   width: 32px;
@@ -149,4 +149,4 @@ class ColorSelector extends Component {
   }
 };
 
-export default listensToClickOutside(ColorSelector);
+export default onClickOutside(ColorSelector);

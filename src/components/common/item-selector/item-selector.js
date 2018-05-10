@@ -22,7 +22,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import uniq from 'lodash.uniq';
-import listensToClickOutside from 'react-onclickoutside/decorator';
+import listensToClickOutside from 'react-onclickoutside';
 import styled from 'styled-components';
 
 import Accessor from './accessor';

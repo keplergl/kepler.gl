@@ -23,7 +23,7 @@ import {range} from 'd3-array';
 import {console as globalConsole} from 'global/window';
 import assert from 'assert';
 import {Analyzer, DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
-import normalize from 'geojson-normalize';
+import normalize from '@mapbox/geojson-normalize';
 import {ALL_FIELD_TYPES, GEOJSON_FIELDS} from 'constants/default-settings';
 import {notNullorUndefined} from 'utils/data-utils';
 
