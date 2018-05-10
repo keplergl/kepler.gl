@@ -21,7 +21,7 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {StyledPanelDropdown} from 'components/common/styled-components';
-import listensToClickOutside from 'react-onclickoutside/decorator';
+import listensToClickOutside from 'react-onclickoutside';
 
 class PanelDropdown extends Component {
   static propTypes = {
