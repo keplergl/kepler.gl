@@ -32,24 +32,33 @@ then
 ```
 npm start
 ```
+An Example app will be served at
+http://localhost:8080/
 
 ### Website
 
-In order to start
+Make sure to export mapbox token in the same terminal before start the server.
+```sh
+    export MapboxAccessToken=<insert_your_token> && npm start
+```
 
+In order to start
+```
     yarn web
+```
 
 To checkout the build
-
+```
     cd website && yarn build
+```
 
-Publish on github pages
+Publish on github pages.
 
+<b>important Before publish. Copy the mapbox token at [this link](https://code.uberinternal.com/P101549). Deploy will fail if token is missing<b>
+```
+    export MapboxAccessToken=<insert_your_token>
     yarn deploy
-
-
-An Example app will be served at
-http://localhost:8080/
+```
 
 ### Basic Usage
 You can also take a look at `kepler.gl/examples/demo-app` for how to use kepler.gl in your app
