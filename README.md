@@ -39,7 +39,7 @@ http://localhost:8080/
 
 Make sure to export mapbox token in the same terminal before start the server.
 ```sh
-    export MapboxAccessToken=<insert_your_token> && npm start
+    export MapboxAccessToken=<insert_your_token>
 ```
 
 In order to start
