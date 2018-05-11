@@ -49,12 +49,12 @@ class App extends Component {
     this.props.dispatch(loadSampleConfigurations(sampleMapId));
 
     if (window.gtag) {
-      window.gtag('config', 'UA-64694404-19', {
-        user_id: this.props.location.query.token,
+      window.gtag('config', 'UA-64694404-19',
         {
-         'custom_map': {'dimension1': 'token'}
+          user_id: this.props.location.query.token,
+          custom_map: {dimension1: 'token'}
         }
-      });
+      );
       window.gtag('set', {'token': this.props.location.query.token});
     }
   }
