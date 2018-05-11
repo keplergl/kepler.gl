@@ -127,6 +127,14 @@ const addProdConfig = config => {
   });
 };
 
+function logError(msg) {
+  console.log('\x1b[31m%s\x1b[0m', msg);
+}
+
+function logInstruction(msg) {
+  console.log('\x1b[36m%s\x1b[0m', msg);
+}
+
 module.exports = env => {
   env = env || {};
 
@@ -137,11 +145,14 @@ module.exports = env => {
   }
 
   if (env.prod) {
+    if (!process.env.MapboxAccessToken) {
+      logError('Error! MapboxAccessToken is not defined');
+      logInstruction(`Make sure to run "export MapboxAccessToken=<token>" before deploy the website`);
+      logInstruction('You can get the token at https://code.uberinternal.com/P101549');
+      throw new Error('Missing Mapbox Access token');
+    }
     config = addProdConfig(config);
   }
-
-  // Enable to debug config
-  // console.warn(JSON.stringify(config, null, 2));
 
   return config;
 };
