@@ -30,7 +30,7 @@ import {TIME_ANIMATION_SPEED} from 'utils/filter-utils';
 const innerPdSide = 32;
 
 const WidgetContainer = styled.div`
-  position: fixed;
+  position: absolute;
   padding: 20px;
   bottom: 0;
   right: 0;
