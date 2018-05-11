@@ -43,7 +43,7 @@ const SidePanelContent = styled.div`
   ${props => props.theme.sidePanelScrollBar};
   flex-grow: 1;
   padding: 16px;
-  overflow-y: overlay;
+  overflow-y: scroll;
   overflow-x: hidden;
 `;
 
