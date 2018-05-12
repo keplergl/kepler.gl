@@ -21,6 +21,7 @@
 import React from 'react';
 import {Router, Route, IndexRoute, hashHistory} from 'react-router';
 import {syncHistoryWithStore} from 'react-router-redux';
+import window from 'global/window';
 import store from './reducers';
 
 import Home from './components/home';
@@ -36,6 +37,24 @@ const checkAccessCode = ({location: {pathname, query}}, replace) => {
     replace('/');
   }
 };
+
+const trackPageChange = (location) => {
+  const links = location.split('/');
+
+  if (links.length === 3) {
+    const sampleId = links[2];
+    window.gtag('event', 'load_sample', {
+      event_label: sampleId,
+      value: sampleId
+    })
+  }
+};
+const history = syncHistoryWithStore(hashHistory, store);
+history.listen(location => {
+  if (location.action === 'POP' && location.query.token !== 'testkepler') {
+    trackPageChange(location.pathname);
+  }
+});
 
 // eslint-disable-next-line react/display-name
 export default () => (

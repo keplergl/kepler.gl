@@ -45,13 +45,20 @@ class App extends Component {
     // if we pass an id as part f the url
     // we ry to fetch along map configurations
     const {params: {id: sampleMapId} = {}} = this.props;
-    // if (sampleMapId) {
     this.props.dispatch(loadSampleConfigurations(sampleMapId));
 
     if (window.gtag) {
-      window.gtag('config', 'UA-64694404-19', {
-        user_id: this.props.location.query.token
-      });
+      const {token} = this.props.location.query;
+      window.gtag('set', {token});
+
+      window.gtag('config', 'UA-64694404-19',
+        {
+          user_id: token,
+          custom_map: {dimension1: 'token'}
+        }
+      );
+
+      window.gtag('send', 'pageview', {token});
     }
   }
 
