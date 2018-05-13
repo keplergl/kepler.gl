@@ -147,7 +147,7 @@ export const DEFAULT_MAP_STYLES = [
     url: `${STYLE_PREFIX}/muted-night`,
     icon: `${ICON_PREFIX}/UBER_MUTED_NIGHT.png`,
     layerGroups: DEFAULT_LAYER_GROUPS
-  },
+  }
 ];
 
 export const GEOJSON_FIELDS = {
