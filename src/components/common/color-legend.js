@@ -39,7 +39,7 @@ const StyledLegend = styled.div`
   ${props => props.theme.dropdownScrollBar};
 
   max-height: 150px;
-  overflow-y: scroll;
+  overflow-y: auto;
 
   svg {
     text {
