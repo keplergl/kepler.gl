@@ -27,7 +27,7 @@ import {DIMENSIONS} from 'constants/default-settings';
 import {capitalizeFirstLetter} from 'utils/utils';
 
 const StyledMapControlLegend = styled.div`
-  padding: 10px ${props => props.theme.mapControl.padding}px;
+  padding: 10px 0 10px ${props => props.theme.mapControl.padding}px;
   font-size: 11px;
   border-bottom-color: ${props => props.theme.panelBorderColor};
   border-bottom-style: solid;
@@ -35,6 +35,7 @@ const StyledMapControlLegend = styled.div`
 
   .legend--layer_name {
     font-size: 12px;
+    padding-right: ${props => props.theme.mapControl.padding}px;
     color: ${props => props.theme.textColorHl};
     font-weight: 500;
   }
@@ -42,12 +43,17 @@ const StyledMapControlLegend = styled.div`
     color: ${props => props.theme.subtextColor};
     font-weight: 500;
     font-size: 11px;
+    padding-right: ${props => props.theme.mapControl.padding}px;
   }
-
+  
+  .legend--layer__title { 
+    padding-right: ${props => props.theme.mapControl.padding}px;
+  }
+  
   .legend--layer_by {
     color: ${props => props.theme.subtextColor};
   }
-
+  
   .legend--layer_color_field {
     color: ${props => props.theme.textColor};
     font-weight: 500;
@@ -59,7 +65,7 @@ const StyledMapControlLegend = styled.div`
 `;
 
 const VisualChannelMetric = ({name}) => (
-  <div>
+  <div className="legend--layer__title">
     <span className="legend--layer_by">by </span>
     <span className="legend--layer_color_field">{name}</span>
   </div>

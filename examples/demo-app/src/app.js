@@ -67,34 +67,34 @@ class App extends Component {
      * ENABLE THE FOLLOWING CODE TO PRE-POLUATE KEPLER.GL INSTANCE
      */
     // load trip based data with config
-    // this.props.dispatch(
-    //   updateVisData(
-    //     // datasets
-    //     {
-    //       info: {
-    //         label: 'Sample Taxi Trips in New York City',
-    //         id: 'test_trip_data'
-    //       },
-    //       data: sampleTripData
-    //     },
-    //     // option
-    //     {
-    //       centerMap: true,
-    //       readOnly: false
-    //     },
-    //     // config
-    //     {
-    //       filters: [
-    //         {
-    //           id: 'me',
-    //           dataId: 'test_trip_data',
-    //           name: 'tpep_pickup_datetime',
-    //           type: 'timeRange',
-    //           enlarged: true
-    //         }
-    //       ]
-    //     })
-    // );
+    this.props.dispatch(
+      updateVisData(
+        // datasets
+        {
+          info: {
+            label: 'Sample Taxi Trips in New York City',
+            id: 'test_trip_data'
+          },
+          data: sampleTripData
+        },
+        // option
+        {
+          centerMap: true,
+          readOnly: false
+        },
+        // config
+        {
+          filters: [
+            {
+              id: 'me',
+              dataId: 'test_trip_data',
+              name: 'tpep_pickup_datetime',
+              type: 'timeRange',
+              enlarged: true
+            }
+          ]
+        })
+    );
 
     // load icon data
     // this.props.dispatch(
