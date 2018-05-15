@@ -1,0 +1,19 @@
+{
+  "name": "kepler.gl",
+  "version": "1.0.0",
+  "description": "Website for ocular.gl",
+  "main": "index.js",
+  "scripts": {
+    "clean": "rm -rf ../docs/*{.js,.css,index.html,appcache,fonts,images}",
+    "start": "ocular start",
+    "build": "ocular build",
+    "lint": "ocular lint",
+    "publish": "npm run clean && npm run build && mv dist/* ../docs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "ocular": "^0.5.0"
+  }
+}
