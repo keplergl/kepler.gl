@@ -53,7 +53,7 @@ const StyledMapControlLegend = styled.div`
   .legend--layer_by {
     color: ${props => props.theme.subtextColor};
   }
-  
+
   .legend--layer_color_field {
     color: ${props => props.theme.textColor};
     font-weight: 500;
