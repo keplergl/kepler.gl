@@ -53,6 +53,28 @@ export default function PlotContainerFactory(MapContainer) {
       }
     }
 
+    componentDidUpdate() {
+      const map = this.mapRef && this.mapRef.getMap();
+      if (map && this._map !== map) {
+        this._map = map;
+
+        map.on('style.load', () => {
+          const style = map.getStyle();
+          this.loadMapStyleJson(style);
+        });
+
+        map.on('render', () => {
+          if (map.isStyleLoaded()) {
+            this.loadMapStyleIcon();
+          }
+        });
+
+        map.on('error', () => {
+          this.loadMaoStyleError();
+        })
+      }
+    }
+
     _retrieveNewScreenshot = () => {
       this.props.startExportingImage();
       // Quick hack: wait for few seconds to load the map tiles and deck.gl layers.
