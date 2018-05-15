@@ -36,10 +36,10 @@ const GAP = 4;
 const RECT_W = 20;
 
 const StyledLegend = styled.div`
-  ${props => props.theme.dropdownScrollBar};
+  ${props => props.theme.sidePanelScrollBar};
 
   max-height: 150px;
-  overflow-y: scroll;
+  overflow-y: auto;
 
   svg {
     text {

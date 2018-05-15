@@ -96,7 +96,7 @@ const StyledMapControlPanel = styled.div`
 const StyledMapControlPanelContent = styled.div`
   ${props => props.theme.dropdownScrollBar} max-height: 500px;
   min-height: 100px;
-  overflow: scroll;
+  overflow: auto;
 `;
 
 const StyledMapControlPanelHeader = styled.div`
