@@ -18,28 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
-import classnames from 'classnames';
-import styled, {ThemeProvider} from 'styled-components';
-import {FileUpload} from 'kepler.gl/components';
-import LoadingSpinner from 'kepler.gl/components/common/loading-spinner';
-import {themeLT} from 'kepler.gl/styles';
-import {Icons} from 'kepler.gl/components/';
+import React, { Component } from "react";
+import classnames from "classnames";
+import styled, { ThemeProvider } from "styled-components";
+import PropTypes from "prop-types";
+import { FileUpload } from "kepler.gl/components";
+import LoadingSpinner from "kepler.gl/components/common/loading-spinner";
+import { themeLT } from "kepler.gl/styles";
+import { Icons } from "kepler.gl/components/";
 
-import {LOADING_METHODS, QUERY_TYPES, ASSETS_URL} from '../../constants/default-settings';
+import {
+  LOADING_METHODS,
+  QUERY_TYPES,
+  ASSETS_URL
+} from "../../constants/default-settings";
 
-import SampleMapGallery from './sample-data-viewer';
+import SampleMapGallery from "./sample-data-viewer";
 
 const propTypes = {
   // query options
-  loadingMethod: React.PropTypes.object.isRequired,
-  currentOption: React.PropTypes.object.isRequired,
-  sampleMaps: React.PropTypes.array.isRequired,
+  loadingMethod: PropTypes.object.isRequired,
+  currentOption: PropTypes.object.isRequired,
+  sampleMaps: PropTypes.array.isRequired,
 
   // call backs
-  onFileUpload: React.PropTypes.func.isRequired,
-  onLoadSampleData: React.PropTypes.func.isRequired,
-  onSetLoadingMethod: React.PropTypes.func.isRequired
+  onFileUpload: PropTypes.func.isRequired,
+  onLoadSampleData: PropTypes.func.isRequired,
+  onSetLoadingMethod: PropTypes.func.isRequired
 };
 
 const ModalTab = styled.div`
@@ -113,7 +118,7 @@ const StyledTrySampleData = styled.div`
     :hover {
       font-weight: 500;
     }
-  
+
     span {
       white-space: nowrap;
     }
@@ -131,9 +136,14 @@ const StyledSpinner = styled.div`
 `;
 
 class LoadDataModal extends Component {
-
   render() {
-    const {loadingMethod, currentOption, previousMethod, sampleMaps, isMapLoading} = this.props;
+    const {
+      loadingMethod,
+      currentOption,
+      previousMethod,
+      sampleMaps,
+      isMapLoading
+    } = this.props;
 
     return (
       <ThemeProvider theme={themeLT}>
@@ -142,40 +152,41 @@ class LoadDataModal extends Component {
             <StyledSpinner>
               <LoadingSpinner />
             </StyledSpinner>
-            ) : (
-              <div>
-                {loadingMethod.id !== 'sample' ? (
-                  <Tabs
-                    method={loadingMethod.id}
-                    toggleMethod={this.props.onSetLoadingMethod}
-                  />
-                ) : null}
-                {loadingMethod.id === 'upload' ? (
-                  <FileUpload onFileUpload={this.props.onFileUpload} />
-                ) : null}
-                {loadingMethod.id === 'sample' ? (
-                  <SampleMapGallery
-                    sampleData={currentOption}
-                    sampleMaps={sampleMaps}
-                    back={() => this.props.onSetLoadingMethod(previousMethod.id)}
-                    onLoadSampleData={this.props.onLoadSampleData}/>
-                ) : null}
-              </div>)
-          }
+          ) : (
+            <div>
+              {loadingMethod.id !== "sample" ? (
+                <Tabs
+                  method={loadingMethod.id}
+                  toggleMethod={this.props.onSetLoadingMethod}
+                />
+              ) : null}
+              {loadingMethod.id === "upload" ? (
+                <FileUpload onFileUpload={this.props.onFileUpload} />
+              ) : null}
+              {loadingMethod.id === "sample" ? (
+                <SampleMapGallery
+                  sampleData={currentOption}
+                  sampleMaps={sampleMaps}
+                  back={() => this.props.onSetLoadingMethod(previousMethod.id)}
+                  onLoadSampleData={this.props.onLoadSampleData}
+                />
+              ) : null}
+            </div>
+          )}
         </div>
       </ThemeProvider>
     );
   }
 }
 
-const Tabs = ({method, toggleMethod}) => (
+const Tabs = ({ method, toggleMethod }) => (
   <ModalTab className="load-data-modal__tab">
     <div className="load-data-modal__tab__inner">
       {LOADING_METHODS.map(
-        ({id, label}) =>
-          id !== 'sample' ? (
+        ({ id, label }) =>
+          id !== "sample" ? (
             <div
-              className={classnames('load-data-modal__tab__item', {
+              className={classnames("load-data-modal__tab__item", {
                 active: method && id === method
               })}
               key={id}
@@ -190,7 +201,7 @@ const Tabs = ({method, toggleMethod}) => (
   </ModalTab>
 );
 
-const TrySampleData = ({onClick}) => (
+const TrySampleData = ({ onClick }) => (
   <StyledTrySampleData className="try-sample-data">
     <StyledMapIcon className="demo-map-icon" />
     <div className="demo-map-title">
