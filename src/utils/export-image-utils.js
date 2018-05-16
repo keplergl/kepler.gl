@@ -24,9 +24,14 @@ import {RESOLUTION_OPTIONS, RATIO_OPTIONS} from 'constants/default-settings';
 export function calculateExportImageSize({width, height, ratio, resolution}) {
   const {
     width: scaledWidth,
-    height: scaledHeight
+    height: scaledHeight,
+		zoomOffset
   } = RESOLUTION_OPTIONS.find(op => op.id === resolution).getSize(width, height);
-  return RATIO_OPTIONS.find(op => op.id === ratio).getSize(scaledWidth, scaledHeight);
+
+  return {
+    zoomOffset,
+    ...RATIO_OPTIONS.find(op => op.id === ratio).getSize(scaledWidth, scaledHeight)
+  };
 }
 
 export function convertToPng(sourceElem) {

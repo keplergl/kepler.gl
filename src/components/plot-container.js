@@ -83,7 +83,6 @@ export default function PlotContainerFactory(MapContainer) {
         width, height, ratio, resolution
       });
 
-      // TODO: should override the map style according to the resolution
       const mapboxStyle = mapFields.mapStyle;
 
       // figure out how to turn on legend through mapProps
@@ -92,8 +91,7 @@ export default function PlotContainerFactory(MapContainer) {
         mapboxStyle,
         mapState: {
           ...mapFields.mapState,
-          // zoom: mapFields.mapState.zoom + Math.log2(exportRatio),
-          zoom: mapFields.mapState.zoom,
+          zoom: mapFields.mapState.zoom + exportImageSize.zoomOffset,
           width: exportImageSize.width,
           height: exportImageSize.height
         },

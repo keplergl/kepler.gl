@@ -476,12 +476,12 @@ export const RESOLUTION_OPTIONS = [{
   id: RESOLUTIONS.ONE_X,
   label: '1x',
   available: true,
-  getSize: (screenW, screenH) => ({width: screenW, height: screenH})
+  getSize: (screenW, screenH) => ({width: screenW, height: screenH, zoomOffset: Math.log2(1)})
 }, {
   id: RESOLUTIONS.TWO_X,
   label: '2x',
-  available: false,
-  getSize: (screenW, screenH) => ({width: screenW * 2, height: screenH * 2})
+  available: true,
+  getSize: (screenW, screenH) => ({width: screenW * 2, height: screenH * 2, zoomOffset: Math.log2(2)})
 }];
 
 export const DEFAULT_EXPORT_IMAGE_NAME = 'kepler-gl.png';
