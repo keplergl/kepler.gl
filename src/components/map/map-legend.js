@@ -130,7 +130,7 @@ const MapLegend = ({layers}) => (
                       : [rgb(...layer.config.color).toString()]
                   }
                   width={
-                    DIMENSIONS.mapControlWidth -
+                    DIMENSIONS.mapControl.width -
                     2 * DIMENSIONS.mapControl.padding
                   }
                 />

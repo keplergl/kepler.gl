@@ -73,8 +73,9 @@ const ActionTypes = keyMirror({
   TOGGLE_SIDE_PANEL: null,
   TOGGLE_MODAL: null,
   OPEN_DELETE_MODAL: null,
+  TOGGLE_MAP_CONTROL: null,
 
-  // export image modal ui state
+  // uiState > export image
   SET_RATIO: null,
   SET_RESOLUTION: null,
   TOGGLE_LEGEND: null,
@@ -82,7 +83,7 @@ const ActionTypes = keyMirror({
   SET_EXPORT_IMAGE_DATA_URI: null,
   CLEANUP_EXPORT_IMAGE: null,
 
-  // export data modal ui state
+  // uiState > export data
   SET_EXPORT_SELECTED_DATASET: null,
   SET_EXPORT_DATA_TYPE: null,
   SET_EXPORT_FILTERED: null,

@@ -44,6 +44,17 @@ export const toggleModalUpdater = (state, {payload: id}) => ({
   currentModal: id
 });
 
+export const toggleMapControlUpdater = (state, {payload: panelId}) => ({
+  ...state,
+  mapControls: {
+    ...state.mapControls,
+    [panelId]: {
+      ...state.mapControls[panelId],
+      active: !state.mapControls[panelId].active
+    }
+  }
+});
+
 export const openDeleteModalUpdater = (
   state,
   {payload: datasetKeyToRemove}
@@ -57,7 +68,7 @@ export const toggleLegendUpdater = state => ({
   ...state,
   exportImage: {
     ...state.exportImage,
-    legend: !state.legend
+    legend: !state.exportImage.legend
   }
 });
 

@@ -121,23 +121,26 @@ export default function ModalContainerFactory(
     _onExportImage = () => {
       const {exporting, imageDataUri} = this.props.uiState.exportImage;
       if (!exporting && imageDataUri) {
-        const link = document.createElement('a');
-        link.download = DEFAULT_EXPORT_IMAGE_NAME;
-        link.href = imageDataUri;
-        link.click();
+        this._downloadWithLink(imageDataUri, DEFAULT_EXPORT_IMAGE_NAME)
       }
       this.props.uiStateActions.cleanupExportImage();
       this._closeModal();
     };
 
+    _downloadWithLink(href, filename) {
+      const link = document.createElement('a');
+      link.setAttribute('href', href);
+      link.setAttribute('download', filename);
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
     _downloadFile(data, type, filename) {
       const fileBlob = new Blob([data], {type});
       const url = URL.createObjectURL(fileBlob);
-      const link = document.createElement('a');
-
-      link.setAttribute('href', url);
-      link.setAttribute('download', filename);
-      link.click();
+      this._downloadWithLink(url, filename);
       URL.revokeObjectURL(url);
     }
 

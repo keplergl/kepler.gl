@@ -34,13 +34,15 @@ const {
   START_EXPORTING_IMAGE,
   TOGGLE_LEGEND,
   TOGGLE_MODAL,
-  TOGGLE_SIDE_PANEL
+  TOGGLE_SIDE_PANEL,
+  TOGGLE_MAP_CONTROL
 } = ActionTypes;
 
 // second argument of createAction is expected to be payloadCreator or undefined
 const [
   toggleSidePanel,
   toggleModal,
+  toggleMapControl,
   openDeleteModal,
   // export image
   setRatio,
@@ -57,6 +59,7 @@ const [
 ] = [
   TOGGLE_SIDE_PANEL,
   TOGGLE_MODAL,
+  TOGGLE_MAP_CONTROL,
   OPEN_DELETE_MODAL,
   SET_RATIO,
   SET_RESOLUTION,
@@ -71,7 +74,7 @@ const [
 ].map(a => createAction(a));
 
 export {
-  toggleSidePanel, toggleModal, openDeleteModal, setExportConfig,
+  toggleSidePanel, toggleModal, toggleMapControl, openDeleteModal, setExportConfig,
   setRatio, setResolution, toggleLegend, startExportingImage, setExportImageDataUri, cleanupExportImage,
   setExportSelectedDataset, setExportDataType, setExportFiltered
 };
