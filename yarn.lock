@@ -2461,9 +2461,9 @@ dom-serializer@0, dom-serializer@~0.1.0:
     domelementtype "~1.1.1"
     entities "~1.1.1"
 
-dom-to-image@^2.6.0:
+"dom-to-image@github:heshan0131/dom-to-image":
   version "2.6.0"
-  resolved "https://registry.yarnpkg.com/dom-to-image/-/dom-to-image-2.6.0.tgz#8a503608088c87b1c22f9034ae032e1898955867"
+  resolved "https://codeload.github.com/heshan0131/dom-to-image/tar.gz/f125ad908824ca31f00aea4dc02c552f0b4a7595"
 
 dom-walk@^0.1.0:
   version "0.1.1"
