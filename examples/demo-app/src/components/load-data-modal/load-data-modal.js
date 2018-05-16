@@ -21,6 +21,7 @@
 import React, {Component} from 'react';
 import classnames from 'classnames';
 import styled, {ThemeProvider} from 'styled-components';
+import PropTypes from 'prop-types';
 import {FileUpload} from 'kepler.gl/components';
 import LoadingSpinner from 'kepler.gl/components/common/loading-spinner';
 import {themeLT} from 'kepler.gl/styles';
@@ -32,14 +33,14 @@ import SampleMapGallery from './sample-data-viewer';
 
 const propTypes = {
   // query options
-  loadingMethod: React.PropTypes.object.isRequired,
-  currentOption: React.PropTypes.object.isRequired,
-  sampleMaps: React.PropTypes.array.isRequired,
+  loadingMethod: PropTypes.object.isRequired,
+  currentOption: PropTypes.object.isRequired,
+  sampleMaps: PropTypes.array.isRequired,
 
   // call backs
-  onFileUpload: React.PropTypes.func.isRequired,
-  onLoadSampleData: React.PropTypes.func.isRequired,
-  onSetLoadingMethod: React.PropTypes.func.isRequired
+  onFileUpload: PropTypes.func.isRequired,
+  onLoadSampleData: PropTypes.func.isRequired,
+  onSetLoadingMethod: PropTypes.func.isRequired
 };
 
 const ModalTab = styled.div`
