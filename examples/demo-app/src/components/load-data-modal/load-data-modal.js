@@ -21,19 +21,15 @@
 import React, {Component} from 'react';
 import classnames from 'classnames';
 import styled, {ThemeProvider} from 'styled-components';
-import PropTypes from "prop-types";
-import { FileUpload } from "kepler.gl/components";
-import LoadingSpinner from "kepler.gl/components/common/loading-spinner";
-import { themeLT } from "kepler.gl/styles";
-import { Icons } from "kepler.gl/components/";
+import PropTypes from 'prop-types';
+import {FileUpload} from 'kepler.gl/components';
+import LoadingSpinner from 'kepler.gl/components/common/loading-spinner';
+import {themeLT} from 'kepler.gl/styles';
+import {Icons} from 'kepler.gl/components/';
 
-import {
-  LOADING_METHODS,
-  QUERY_TYPES,
-  ASSETS_URL
-} from "../../constants/default-settings";
+import {LOADING_METHODS, QUERY_TYPES, ASSETS_URL} from '../../constants/default-settings';
 
-import SampleMapGallery from "./sample-data-viewer";
+import SampleMapGallery from './sample-data-viewer';
 
 const propTypes = {
   // query options
@@ -46,7 +42,6 @@ const propTypes = {
   onLoadSampleData: PropTypes.func.isRequired,
   onSetLoadingMethod: PropTypes.func.isRequired
 };
-
 
 const ModalTab = styled.div`
   align-items: flex-end;

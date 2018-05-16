@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-
 import PropTypes from 'prop-types';
 
 const identity = state => state;
