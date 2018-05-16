@@ -319,7 +319,6 @@ const MapLegendPanel = ({items, isActive, toggleMenuPanel}) => (
   )
 );
 
-
 const LayerSelectorPanel = ({items, onMapToggleLayer, isActive, toggleMenuPanel}) => (
   !isActive ? (
     <StyledMapControlButton

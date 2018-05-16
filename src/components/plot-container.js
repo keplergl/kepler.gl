@@ -22,12 +22,9 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import {setTimeout} from 'global/window';
 import throttle from 'lodash.throttle';
-import {text as requestText} from 'd3-request';
 
 import MapContainerFactory from './map-container';
-import {RATIOS} from 'constants/default-settings';
 import {calculateExportImageSize, convertToPng} from 'utils/export-image-utils';
 
 const propTypes = {
@@ -86,9 +83,7 @@ export default function PlotContainerFactory(MapContainer) {
         width, height, ratio, resolution
       });
 
-      const exportRatio = ratio === RATIOS.ONE_X ? 1 : 2;
-
-      // TODO: should override the map style according to the exportRatio
+      // TODO: should override the map style according to the resolution
       const mapboxStyle = mapFields.mapStyle;
 
       // figure out how to turn on legend through mapProps
@@ -103,6 +98,7 @@ export default function PlotContainerFactory(MapContainer) {
           height: exportImageSize.height
         },
         mapControls: {
+          // override map legend visibility
           mapLegend: {
             show: legend,
             active: true

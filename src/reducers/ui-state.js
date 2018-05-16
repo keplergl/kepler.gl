@@ -46,7 +46,6 @@ import {
   setExportConfigUpdater
 } from './ui-state-updaters';
 
-
 export const DEFAULT_ACTIVE_SIDE_PANEL = 'layer';
 export const DEFAULT_MODAL = ADD_DATA_ID;
 
