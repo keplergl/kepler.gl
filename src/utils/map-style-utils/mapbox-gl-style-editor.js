@@ -20,6 +20,7 @@
 
 import Immutable from 'immutable';
 import memoize from 'lodash.memoize';
+import {DEFAULT_LAYER_GROUPS, RESOLUTIONS, RESOLUTION_OPTIONS} from 'constants/default-settings';
 
 export function getDefaultLayerGroupVisibility({layerGroups = []}) {
   return layerGroups.reduce(
@@ -95,4 +96,30 @@ const mapUrlRg = /^mapbox:\/\/styles\/[-a-z0-9]{2,256}\/[-a-z0-9]{2,256}/;
 // lowercase letters, numbers and dashes only.
 export function isValidStyleUrl(url) {
   return typeof url === 'string' && Boolean(url.match(mapUrlRg));
+}
+
+export function scaleMapStyleByResolution(mapboxStyle, resolution) {
+  const labelLayerGroup = DEFAULT_LAYER_GROUPS.find(lg => lg.slug === 'label');
+  const {filter} = labelLayerGroup;
+
+	if (resolution !== RESOLUTIONS.ONE_X && mapboxStyle) {
+	  const {scale} = RESOLUTION_OPTIONS.find(r => r.id === RESOLUTIONS.ONE_X);
+
+		const copyStyle = mapboxStyle.toJS();
+    (copyStyle.layers || []).forEach(d => {
+			if (filter(d)) {
+			  console.log(d.layout['text-size'])
+				if (d.layout && d.layout['text-size'] &&
+					Array.isArray(d.layout['text-size'].stops)) {
+					d.layout['text-size'].stops.forEach(label => {
+						label[1] *= scale;
+					});
+				}
+			}
+		});
+    console.log(copyStyle)
+		return Immutable.fromJS(copyStyle);
+	}
+
+	return mapboxStyle;
 }

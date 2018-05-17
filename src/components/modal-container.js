@@ -28,7 +28,7 @@ import document from 'global/document';
 import ModalDialog from './common/modal';
 import {formatCsv} from 'processors/data-processor';
 import KeplerGlSchema from 'schemas';
-
+import {downloadFile, dataURItoBlob} from 'utils/export-image-utils';
 // modals
 import DeleteDatasetModalFactory from './modals/delete-data-modal';
 import IconInfoModalFactory from './modals/icon-info-modal';
@@ -121,7 +121,9 @@ export default function ModalContainerFactory(
     _onExportImage = () => {
       const {exporting, imageDataUri} = this.props.uiState.exportImage;
       if (!exporting && imageDataUri) {
-        this._downloadWithLink(imageDataUri, DEFAULT_EXPORT_IMAGE_NAME)
+        const file = dataURItoBlob(imageDataUri);
+        downloadFile(file, DEFAULT_EXPORT_IMAGE_NAME);
+        // this._downloadWithLink(imageDataUri, DEFAULT_EXPORT_IMAGE_NAME)
       }
       this.props.uiStateActions.cleanupExportImage();
       this._closeModal();

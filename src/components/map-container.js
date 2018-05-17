@@ -79,6 +79,10 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       onMapRender: PropTypes.func
     };
 
+		static defaultProps = {
+			MapComponent: MapboxGLMap
+		};
+
     constructor(props) {
       super(props);
       this.state = {
@@ -441,7 +445,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             onToggleMapControl={toggleMapControl}
             top={0}
           />
-          <MapboxGLMap
+          <this.props.MapComponent
             {...mapProps}
             key="bottom"
             ref="mapbox"
@@ -450,10 +454,10 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           >
             {this._renderOverlay()}
             {this._renderMapboxOverlays()}
-          </MapboxGLMap>
+          </this.props.MapComponent>
           {mapStyle.topMapStyle && (
             <div style={MAP_STYLE.top}>
-              <MapboxGLMap
+              <this.props.MapComponent
                 {...mapProps}
                 key="top"
                 mapStyle={mapStyle.topMapStyle}

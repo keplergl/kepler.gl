@@ -21,12 +21,14 @@
 // libraries
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
+import {createSelector} from 'reselect';
 import styled from 'styled-components';
 import throttle from 'lodash.throttle';
+import {StaticMap} from 'react-map-gl';
 
 import MapContainerFactory from './map-container';
 import {calculateExportImageSize, convertToPng} from 'utils/export-image-utils';
-
+import {scaleMapStyleByResolution} from 'utils/map-style-utils/mapbox-gl-style-editor';
 const propTypes = {
   width: PropTypes.number.isRequired,
   height: PropTypes.number.isRequired,
@@ -43,6 +45,7 @@ const StyledPlotContainer = styled.div`
   }
 `;
 
+let previousStyle = null;
 export default function PlotContainerFactory(MapContainer) {
   class PlotContainer extends Component {
     constructor(props) {
@@ -60,6 +63,17 @@ export default function PlotContainerFactory(MapContainer) {
         this._retrieveNewScreenshot();
       }
     }
+
+    mapStyleSelector = props => props.mapFields.mapStyle;
+    resolutionSelector = props => props.exportImageSetting.resolution;
+    scaledMapStyleSelector = createSelector(
+      this.mapStyleSelector,
+      this.resolutionSelector,
+      (mapStyle, resolution) => ({
+				bottomMapStyle: scaleMapStyleByResolution(mapStyle.bottomMapStyle, resolution),
+				topMapStyle: scaleMapStyleByResolution(mapStyle.topMapStyle, resolution),
+      })
+    );
 
     _onMapRender = (map) => {
       if (map.isStyleLoaded()) {
@@ -83,12 +97,10 @@ export default function PlotContainerFactory(MapContainer) {
         width, height, ratio, resolution
       });
 
-      const mapboxStyle = mapFields.mapStyle;
-
       // figure out how to turn on legend through mapProps
       const mapProps = {
         ...mapFields,
-        mapboxStyle,
+				mapStyle: this.scaledMapStyleSelector(this.props),
         mapState: {
           ...mapFields.mapState,
           zoom: mapFields.mapState.zoom + exportImageSize.zoomOffset,
@@ -102,10 +114,7 @@ export default function PlotContainerFactory(MapContainer) {
             active: true
           }
         },
-        mapStateActions: {
-          ...mapFields.mapStateActions,
-          updateMap: () => {}
-        }
+				MapComponent: StaticMap
       };
 
       return (
