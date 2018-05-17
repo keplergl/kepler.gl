@@ -486,8 +486,6 @@ export const RESOLUTION_OPTIONS = [{
 
 export const DEFAULT_EXPORT_IMAGE_NAME = 'kepler-gl.png';
 
-export const WAIT_FOR_LOADING = 1200;
-
 export const EXPORT_DATA_TYPE = keyMirror({
   CSV: null
   // SHAPEFILE: null,

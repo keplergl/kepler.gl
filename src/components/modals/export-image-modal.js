@@ -30,6 +30,7 @@ import {
 } from 'constants/default-settings';
 import LoadingSpinner from 'components/common/loading-spinner';
 import {StyledModalContent} from 'components/common/styled-components';
+import Switch from 'components/common/switch';
 
 const ImageOptionList = styled.div`
   display: flex;
@@ -179,8 +180,11 @@ class ExportImageModal extends Component {
             </div>
             <div className="image-option-section">
               <div className="image-option-section-title">Map Legend</div>
-              <input type="checkbox" disabled checked={legend} onClick={onToggleLegend}/>
-              Add legend on map
+              <Switch type="checkbox"
+                      id="add-map-legend"
+                      checked={legend}
+                      label="Add legend on map"
+                      onChange={onToggleLegend}/>
             </div>
           </ImageOptionList>
           <PreviewImageSection ratio={ratio} width={width} height={height}>

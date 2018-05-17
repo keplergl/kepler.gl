@@ -30,7 +30,9 @@ import {
   openDeleteModalUpdater,
   toggleModalUpdater,
   toggleSidePanelUpdater,
-  // export image  
+  toggleMapControlUpdater,
+
+  // export image
   cleanupExportImage,
   setExportImageDataUri,
   setRatioUpdater,
@@ -44,35 +46,62 @@ import {
   setExportConfigUpdater
 } from './ui-state-updaters';
 
+export const DEFAULT_ACTIVE_SIDE_PANEL = 'layer';
+export const DEFAULT_MODAL = ADD_DATA_ID;
+
+export const DEFAULT_MAP_CONTROLS = {
+  visibleLayers: {
+    show: true,
+    active: false
+  },
+  mapLegend: {
+    show: true,
+    active: false
+  },
+  toggle3d: {
+    show: true
+  },
+  splitMap: {
+    show: true
+  }
+};
+
+export const DEFAULT_EXPORT_IMAGE = {
+  // user options
+  ratio: RATIOS.SCREEN,
+  resolution: RESOLUTIONS.ONE_X,
+  legend: false,
+  // exporting state
+  imageDataUri: '',
+  exporting: false
+};
+
+export const DEFAULT_EXPORT_DATA = {
+  selectedDataset: '',
+  dataType: EXPORT_DATA_TYPE.CSV,
+  filtered: true,
+  config: true
+};
+
 export const INITIAL_UI_STATE = {
   readOnly: false,
-  activeSidePanel: 'layer',
-  currentModal: ADD_DATA_ID,
+  activeSidePanel: DEFAULT_ACTIVE_SIDE_PANEL,
+  currentModal: DEFAULT_MODAL,
   datasetKeyToRemove: null,
 
   // export image modal ui
-  exportImage: {
-    // user options
-    ratio: RATIOS.SCREEN,
-    resolution: RESOLUTIONS.ONE_X,
-    legend: false,
-    // exporting state
-    imageDataUri: '',
-    exporting: false
-  },
+  exportImage: DEFAULT_EXPORT_IMAGE,
   // export data modal ui
-  exportData: {
-    selectedDataset: '',
-    dataType: EXPORT_DATA_TYPE.CSV,
-    filtered: true,
-    config: true
-  }
+  exportData: DEFAULT_EXPORT_DATA,
+  // map control panels
+  mapControls: DEFAULT_MAP_CONTROLS
 };
 
 const actionHandler = {
   [ActionTypes.TOGGLE_SIDE_PANEL]: toggleSidePanelUpdater,
   [ActionTypes.TOGGLE_MODAL]: toggleModalUpdater,
   [ActionTypes.OPEN_DELETE_MODAL]: openDeleteModalUpdater,
+  [ActionTypes.TOGGLE_MAP_CONTROL]: toggleMapControlUpdater,
 
   [ActionTypes.SET_RATIO]: setRatioUpdater,
   [ActionTypes.SET_RESOLUTION]: setResolutionUpdater,

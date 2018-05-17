@@ -27,6 +27,7 @@ import {
   setResolution,
   setRatio,
   toggleLegend,
+  toggleMapControl,
   setExportSelectedDataset,
   setExportDataType,
   setExportFiltered
@@ -156,6 +157,26 @@ test('#uiStateReducer -> TOGGLE_LEGEND', t => {
   t.deepEqual(newReducer, expectedState, 'should set the legend to true');
 
   t.end();
+});
+
+test('#uiStateReducer -> TOGGLE_MAP_CONTROL', t => {
+
+	const newReducer = reducer(INITIAL_UI_STATE, toggleMapControl('mapLegend'));
+
+	const expectedState = {
+		...INITIAL_UI_STATE,
+		mapControls: {
+			...INITIAL_UI_STATE.mapControls,
+			mapLegend: {
+				show: INITIAL_UI_STATE.mapControls.mapLegend.show,
+				active: !INITIAL_UI_STATE.mapControls.mapLegend.active
+			},
+		}
+	};
+
+	t.deepEqual(newReducer, expectedState, 'should set map legend to be seen');
+
+	t.end();
 });
 
 test('#uiStateReducer -> SET_EXPORT_SELECTED_DATASET', t => {

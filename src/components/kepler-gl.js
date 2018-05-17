@@ -218,6 +218,7 @@ function KeplerGlFactory(
         mapboxApiAccessToken,
         mapState,
         mapStyle,
+        mapControls: uiState.mapControls,
         layers,
         layerOrder,
         layerData,
@@ -225,6 +226,8 @@ function KeplerGlFactory(
         interactionConfig,
         hoverInfo,
         clicked,
+        toggleMapControl: uiStateActions.toggleMapControl,
+        uiStateActions,
         visStateActions,
         mapStateActions
       };

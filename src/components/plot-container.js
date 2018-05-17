@@ -21,10 +21,10 @@
 // libraries
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {setTimeout} from 'global/window';
+import styled from 'styled-components';
+import throttle from 'lodash.throttle';
 
 import MapContainerFactory from './map-container';
-import {RATIOS, WAIT_FOR_LOADING} from 'constants/default-settings';
 import {calculateExportImageSize, convertToPng} from 'utils/export-image-utils';
 
 const propTypes = {
@@ -36,47 +36,54 @@ const propTypes = {
 
 PlotContainerFactory.deps = [MapContainerFactory];
 
+const StyledPlotContainer = styled.div`
+  .mapboxgl-ctrl-bottom-left,
+  .mapboxgl-ctrl-bottom-right {
+    display: none
+  }
+`;
+
 export default function PlotContainerFactory(MapContainer) {
   class PlotContainer extends Component {
-    
-    componentDidMount() {
-      this._retrieveNewScreenshot();
+    constructor(props) {
+      super(props);
+      this._onMapRender = throttle(this._onMapRender, 500);
     }
 
     componentWillReceiveProps(newProps) {
       // re-fetch the new screenshot only when ratio or resolution changes
       if (
         this.props.exportImageSetting.ratio !== newProps.exportImageSetting.ratio ||
-        this.props.exportImageSetting.resolution !== this.props.exportImageSetting.resolution
+        this.props.exportImageSetting.resolution !== newProps.exportImageSetting.resolution ||
+        this.props.exportImageSetting.legend !== newProps.exportImageSetting.legend
       ) {
         this._retrieveNewScreenshot();
       }
     }
 
+    _onMapRender = (map) => {
+      if (map.isStyleLoaded()) {
+        this._retrieveNewScreenshot();
+      }
+    };
+
     _retrieveNewScreenshot = () => {
-      this.props.startExportingImage();
-      // Quick hack: wait for few seconds to load the map tiles and deck.gl layers.
-      // TODO: we should hook up with the map loaded event
-      // https://www.mapbox.com/mapbox-gl-js/api/#mapdataevent
-      // and the "onAfterRender" event from deck.gl
-      setTimeout(() => {
+      if (this.plottingAreaRef) {
+        this.props.startExportingImage();
         convertToPng(this.plottingAreaRef).then(
           dataUri => this.props.setExportImageDataUri({dataUri})
         );
-      }, WAIT_FOR_LOADING);
+      }
     };
 
     render() {
       const {width, height, exportImageSetting, mapFields} = this.props;
-      const {ratio, resolution} = exportImageSetting;
-      // const {exportImageSetting} = exportImageSetting; <= not used yet.
+      const {ratio, resolution, legend} = exportImageSetting;
       const exportImageSize = calculateExportImageSize({
         width, height, ratio, resolution
       });
 
-      const exportRatio = ratio === RATIOS.ONE_X ? 1 : 2;
-
-      // TODO: should override the map style accoring to the exportRatio
+      // TODO: should override the map style according to the resolution
       const mapboxStyle = mapFields.mapStyle;
 
       // figure out how to turn on legend through mapProps
@@ -85,9 +92,17 @@ export default function PlotContainerFactory(MapContainer) {
         mapboxStyle,
         mapState: {
           ...mapFields.mapState,
-          zoom: mapFields.mapState.zoom + Math.log2(exportRatio),
+          // zoom: mapFields.mapState.zoom + Math.log2(exportRatio),
+          zoom: mapFields.mapState.zoom,
           width: exportImageSize.width,
           height: exportImageSize.height
+        },
+        mapControls: {
+          // override map legend visibility
+          mapLegend: {
+            show: legend,
+            active: true
+          }
         },
         mapStateActions: {
           ...mapFields.mapStateActions,
@@ -96,7 +111,7 @@ export default function PlotContainerFactory(MapContainer) {
       };
 
       return (
-        <div style={{position: 'absolute', top: -9999, left: -9999}}>
+        <StyledPlotContainer style={{position: 'absolute', top: -9999, left: -9999}}>
           <div
             ref={element => {this.plottingAreaRef = element}}
             style={{
@@ -106,10 +121,11 @@ export default function PlotContainerFactory(MapContainer) {
           >
             <MapContainer
               index={0}
+              onMapRender={this._onMapRender}
               {...mapProps}
             />
           </div>
-        </div>
+        </StyledPlotContainer>
       );
     }
   }

@@ -56,18 +56,27 @@ export default function MapContainerFactory(MapPopover, MapControl) {
   class MapContainer extends Component {
     static propTypes = {
       // required
-      data: PropTypes.arrayOf(PropTypes.any),
-      fields: PropTypes.arrayOf(PropTypes.any),
+      datasets: PropTypes.object,
       interactionConfig: PropTypes.object.isRequired,
       layerBlending: PropTypes.string.isRequired,
+      layerOrder: PropTypes.arrayOf(PropTypes.any).isRequired,
       layerData: PropTypes.arrayOf(PropTypes.any).isRequired,
       layers: PropTypes.arrayOf(PropTypes.any).isRequired,
       mapState: PropTypes.object.isRequired,
       mapStyle: PropTypes.object.isRequired,
+      mapControls: PropTypes.object.isRequired,
+      mapboxApiAccessToken: PropTypes.string.isRequired,
+      toggleMapControl: PropTypes.func.isRequired,
+      visStateActions: PropTypes.object.isRequired,
+      mapStateActions: PropTypes.object.isRequired,
 
       // optional
+      clicked: PropTypes.object,
+      hoverInfo: PropTypes.object,
       mapLayers: PropTypes.object,
-      onMapToggleLayer: PropTypes.func
+      onMapToggleLayer: PropTypes.func,
+      onMapStyleLoaded: PropTypes.func,
+      onMapRender: PropTypes.func
     };
 
     constructor(props) {
@@ -102,6 +111,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         // bind mapboxgl event listener
         this._map.on(MAPBOXGL_STYLE_UPDATE, () => {
           // force refresh mapboxgl layers
+
           updateMapboxLayers(
             this._map,
             this._renderMapboxLayers(),
@@ -109,7 +119,17 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             this.props.mapLayers,
             {force: true}
           );
-        })
+
+          if (typeof this.props.onMapStyleLoaded === 'function') {
+            this.props.onMapStyleLoaded(this._map);
+          }
+        });
+
+        this._map.on('render', () => {
+          if (typeof this.props.onMapRender === 'function') {
+            this.props.onMapRender(this._map);
+          }
+        });
       }
     }
 
@@ -393,7 +413,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         return <div/>;
       }
 
-      const {mapLayers, layers, datasets, index, mapboxApiAccessToken} = this.props;
+      const {mapLayers, layers, datasets, index, mapboxApiAccessToken,
+        mapControls, toggleMapControl} = this.props;
 
       const mapProps = {
         ...mapState,
@@ -412,10 +433,12 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             layers={layers}
             mapIndex={this.props.index}
             mapLayers={mapLayers}
+            mapControls={mapControls}
             onTogglePerspective={mapStateActions.togglePerspective}
             onToggleSplitMap={mapStateActions.toggleSplitMap}
             onMapToggleLayer={this._handleMapToggleLayer}
             onToggleFullScreen={mapStateActions.toggleFullScreen}
+            onToggleMapControl={toggleMapControl}
             top={0}
           />
           <MapboxGLMap
