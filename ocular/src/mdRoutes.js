@@ -1,23 +1,34 @@
-import introduction from 'docs/a-introduction.md'
+import introduction from 'docs/a-Introduction.md'
 import bKeplerGlWorkflowAddDataToTheMap from 'docs/b-kepler-gl-workflow/a-add-data-to-the-map.md'
 import bKeplerGlWorkflowBAddDataLayersAddingDataLayers from 'docs/b-kepler-gl-workflow/b-add-data-layers/a-adding-data-layers.md'
 import bKeplerGlWorkflowBAddDataLayersCreateALayer from 'docs/b-kepler-gl-workflow/b-add-data-layers/b-create-a-layer.md'
 import bKeplerGlWorkflowBAddDataLayersHideEditAndDeleteLayers from 'docs/b-kepler-gl-workflow/b-add-data-layers/c-hide-edit-and-delete-layers.md'
 import bKeplerGlWorkflowBAddDataLayersBlendAndRearrangeLayers from 'docs/b-kepler-gl-workflow/b-add-data-layers/d-blend-and-rearrange-layers.md'
-import typesOfLayersPoint from 'docs/types-of-layers/a-point.md'
-import typesOfLayersArc from 'docs/types-of-layers/b-arc.md'
-import typesOfLayersLine from 'docs/types-of-layers/c-line.md'
-import typesOfLayersGrid from 'docs/types-of-layers/d-grid.md'
-import typesOfLayersGeojson from 'docs/types-of-layers/e-geojson.md'
-import typesOfLayersCluster from 'docs/types-of-layers/f-cluster.md'
-import typesOfLayersIcon from 'docs/types-of-layers/g-icon.md'
+import cTypesOfLayersPoint from 'docs/c-types-of-layers/a-point.md'
+import cTypesOfLayersArc from 'docs/c-types-of-layers/b-arc.md'
+import cTypesOfLayersLine from 'docs/c-types-of-layers/c-line.md'
+import cTypesOfLayersGrid from 'docs/c-types-of-layers/d-grid.md'
+import cTypesOfLayersGeojson from 'docs/c-types-of-layers/e-geojson.md'
+import cTypesOfLayersCluster from 'docs/c-types-of-layers/f-cluster.md'
+import cTypesOfLayersIcon from 'docs/c-types-of-layers/g-icon.md'
+import layerAttributes from 'docs/d-layer-attributes.md'
+import filters from 'docs/e-filters.md'
+import fMapStylesBaseMapStyles from 'docs/f-map-styles/1-base-map-styles.md'
+import fMapStylesMapLayers from 'docs/f-map-styles/2-map-layers.md'
+import fMapStylesAddCustomMapboxStyles from 'docs/f-map-styles/3-custom-styles.md'
+import fMapStylesViewMapsIn3d from 'docs/f-map-styles/4-view-maps-in-3d.md'
+import fMapStylesDisplayLegend from 'docs/f-map-styles/5-display-legend.md'
+import fMapStylesSplitMaps from 'docs/f-map-styles/6-split-maps.md'
+import mapSettings from 'docs/g-map-settings.md'
+import playback from 'docs/h-playback.md'
+import faq from 'docs/i-FAQ.md'
 
 export default [{
   name: "Documentation",
   path: "/documentation",
   data: [
     {
-      fileLocation: "/src/docs/a-introduction.md",
+      fileLocation: "/src/docs/a-Introduction.md",
       name: "Introduction",
       markdown: introduction
     },
@@ -60,44 +71,105 @@ export default [{
     },
     {
       name: "Types of Layers",
-      path: "types-of-layers",
+      path: "c-types-of-layers",
       children: [
         {
-          fileLocation: "/src/docs/types-of-layers/a-point.md",
+          fileLocation: "/src/docs/c-types-of-layers/a-point.md",
           name: "Point",
-          markdown: typesOfLayersPoint
+          markdown: cTypesOfLayersPoint
         },
         {
-          fileLocation: "/src/docs/types-of-layers/b-arc.md",
+          fileLocation: "/src/docs/c-types-of-layers/b-arc.md",
           name: "Arc",
-          markdown: typesOfLayersArc
+          markdown: cTypesOfLayersArc
         },
         {
-          fileLocation: "/src/docs/types-of-layers/c-line.md",
+          fileLocation: "/src/docs/c-types-of-layers/c-line.md",
           name: "Line",
-          markdown: typesOfLayersLine
+          markdown: cTypesOfLayersLine
         },
         {
-          fileLocation: "/src/docs/types-of-layers/d-grid.md",
+          fileLocation: "/src/docs/c-types-of-layers/d-grid.md",
           name: "Grid",
-          markdown: typesOfLayersGrid
+          markdown: cTypesOfLayersGrid
         },
         {
-          fileLocation: "/src/docs/types-of-layers/e-geojson.md",
+          fileLocation: "/src/docs/c-types-of-layers/e-geojson.md",
           name: "Geo j s o n",
-          markdown: typesOfLayersGeojson
+          markdown: cTypesOfLayersGeojson
         },
         {
-          fileLocation: "/src/docs/types-of-layers/f-cluster.md",
+          fileLocation: "/src/docs/c-types-of-layers/f-cluster.md",
           name: "Cluster",
-          markdown: typesOfLayersCluster
+          markdown: cTypesOfLayersCluster
         },
         {
-          fileLocation: "/src/docs/types-of-layers/g-icon.md",
+          fileLocation: "/src/docs/c-types-of-layers/g-icon.md",
           name: "Icon",
-          markdown: typesOfLayersIcon
+          markdown: cTypesOfLayersIcon
         }
       ]
+    },
+    {
+      fileLocation: "/src/docs/d-layer-attributes.md",
+      name: "Layer attributes",
+      markdown: layerAttributes
+    },
+    {
+      fileLocation: "/src/docs/e-filters.md",
+      name: "Filters",
+      markdown: filters
+    },
+    {
+      name: "Map Styles\n",
+      path: "f-map-styles",
+      children: [
+        {
+          fileLocation: "/src/docs/f-map-styles/1-base-map-styles.md",
+          name: "Base map styles",
+          markdown: fMapStylesBaseMapStyles
+        },
+        {
+          fileLocation: "/src/docs/f-map-styles/2-map-layers.md",
+          name: "Map layers",
+          markdown: fMapStylesMapLayers
+        },
+        {
+          fileLocation: "/src/docs/f-map-styles/3-custom-styles.md",
+          name: "Add custom mapbox styles",
+          markdown: fMapStylesAddCustomMapboxStyles
+        },
+        {
+          fileLocation: "/src/docs/f-map-styles/4-view-maps-in-3d.md",
+          name: "View maps in 3d",
+          markdown: fMapStylesViewMapsIn3d
+        },
+        {
+          fileLocation: "/src/docs/f-map-styles/5-display-legend.md",
+          name: "Display legend",
+          markdown: fMapStylesDisplayLegend
+        },
+        {
+          fileLocation: "/src/docs/f-map-styles/6-split-maps.md",
+          name: "Split maps",
+          markdown: fMapStylesSplitMaps
+        }
+      ]
+    },
+    {
+      fileLocation: "/src/docs/g-map-settings.md",
+      name: "Map settings",
+      markdown: mapSettings
+    },
+    {
+      fileLocation: "/src/docs/h-playback.md",
+      name: "Playback",
+      markdown: playback
+    },
+    {
+      fileLocation: "/src/docs/i-FAQ.md",
+      name: "Faq",
+      markdown: faq
     }
   ]
 }];

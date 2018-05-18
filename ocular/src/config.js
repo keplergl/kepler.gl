@@ -23,7 +23,7 @@ export const PROJECT_TYPE = 'github';
 export const PROJECT_NAME = 'kepler.gl';
 export const PROJECT_ORG = 'uber';
 export const PROJECT_URL = `https://github.com/${PROJECT_ORG}/${PROJECT_NAME}`;
-export const PROJECT_DESC = 'Website for ocular.gl';
+export const PROJECT_DESC = 'Website for kepler.gl';
 
 export const GITHUB = true;
 
@@ -34,16 +34,16 @@ export const FOOTER_LOGO = '';
 export const WEBSITE_PATH = '/ocular/';
 
 export const HOME_PATH = '/';
-export const HOME_HEADING = 'Website for ocular.gl';
+export const HOME_HEADING = 'Website for kepler.gl';
 
 export const HOME_RIGHT = null;
 
 export const HOME_BULLETS = [{
-  text: 'Designed for React',
-  desc: 'Seamless integration.',
+  text: 'This will go away so fast',
+  desc: 'so so fast.',
   img: 'images/icon-react.svg',
 }, {
-  text: 'Totally ready for production',
+  text: 'we\'ll replace this with such a better home page',
   img: 'images/icon-layers.svg',
 }];
 
