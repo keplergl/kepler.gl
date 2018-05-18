@@ -274,7 +274,8 @@ export default function ModalContainerFactory(
             onConfirm: this._onExportImage,
             confirmButton: {
               large: true,
-              children: 'Export'
+							disabled: exporting,
+							children: 'Download'
             }
           };
           break;
