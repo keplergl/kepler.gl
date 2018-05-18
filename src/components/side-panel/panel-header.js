@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import {Tooltip} from 'components/common/styled-components';
 import KeplerGlLogo from 'components/common/logo';
-import {Save, Layers, Share} from 'components/common/icons';
+import {Save, Files, Share, Picture} from 'components/common/icons';
 import PanelDropdown from 'components/side-panel/panel-dropdown';
 
 const StyledPanelHeader = styled.div.attrs({
@@ -153,7 +153,7 @@ export const SaveExportDropdown = ({
           onClose();
           onExportImage();
         }}>
-          <Layers height="16px" />
+          <Picture height="16px" />
           <div className="save-export-dropdown__title">Export Image</div>
         </div>
 
@@ -162,7 +162,7 @@ export const SaveExportDropdown = ({
           onClose();
           onExportData();
         }}>
-          <Layers height="16px" />
+          <Files height="16px" />
           <div className="save-export-dropdown__title">Export Data</div>
         </div>
 

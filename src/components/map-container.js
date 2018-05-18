@@ -71,7 +71,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       mapStateActions: PropTypes.object.isRequired,
 
       // optional
-      clicked: PropTypes.object,
+			isExport: PropTypes.bool,
+			clicked: PropTypes.object,
       hoverInfo: PropTypes.object,
       mapLayers: PropTypes.object,
       onMapToggleLayer: PropTypes.func,
@@ -433,17 +434,18 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             datasets={datasets}
             dragRotate={mapState.dragRotate}
             isSplit={mapState.isSplit}
+            isExport={this.props.isExport}
             layers={layers}
-            scale={mapState.scale || 1}
             mapIndex={this.props.index}
             mapLayers={mapLayers}
             mapControls={mapControls}
+            scale={mapState.scale || 1}
+            top={0}
             onTogglePerspective={mapStateActions.togglePerspective}
             onToggleSplitMap={mapStateActions.toggleSplitMap}
             onMapToggleLayer={this._handleMapToggleLayer}
             onToggleFullScreen={mapStateActions.toggleFullScreen}
             onToggleMapControl={toggleMapControl}
-            top={0}
           />
           <this.props.MapComponent
             {...mapProps}

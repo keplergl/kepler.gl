@@ -25,6 +25,7 @@ import {createSelector} from 'reselect';
 import styled from 'styled-components';
 import {StaticMap} from 'react-map-gl';
 import debounce from 'lodash.debounce';
+import window from 'global/window';
 
 import MapContainerFactory from './map-container';
 import {calculateExportImageSize, convertToPng} from 'utils/export-image-utils';
@@ -151,6 +152,7 @@ export default function PlotContainerFactory(MapContainer) {
             <MapContainer
               index={0}
               onMapRender={this._onMapRender}
+              isExport
               {...mapProps}
             />
           </div>

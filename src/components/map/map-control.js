@@ -25,6 +25,7 @@ import styled from 'styled-components';
 
 import {Tooltip, IconRoundSmall} from 'components/common/styled-components';
 import MapLayerSelector from 'components/common/map-layer-selector';
+import KeplerGlLogo from 'components/common/logo';
 import MapLegend from './map-legend';
 import {
   Close,
@@ -162,25 +163,23 @@ const layerSelector = (layers, mapLayers) => {
 
 export class MapControl extends Component {
   static propTypes = {
-		datasets: PropTypes.object.isRequired,
+    datasets: PropTypes.object.isRequired,
     dragRotate: PropTypes.bool.isRequired,
     isSplit: PropTypes.bool.isRequired,
-		layers: PropTypes.arrayOf(
-			PropTypes.object
-    ),
-		mapIndex: PropTypes.number.isRequired,
+    layers: PropTypes.arrayOf(PropTypes.object),
+    mapIndex: PropTypes.number.isRequired,
     mapControls: PropTypes.object.isRequired,
     onToggleFullScreen: PropTypes.func.isRequired,
     onTogglePerspective: PropTypes.func.isRequired,
     onToggleSplitMap: PropTypes.func.isRequired,
     onToggleMapControl: PropTypes.func.isRequired,
-		onMapToggleLayer: PropTypes.func.isRequired,
+    onMapToggleLayer: PropTypes.func.isRequired,
     top: PropTypes.number.isRequired,
 
     // optional
-		scale: PropTypes.number,
-		mapLayers: PropTypes.object
-	};
+    scale: PropTypes.number,
+    mapLayers: PropTypes.object
+  };
 
   static defaultProps = {
     isSplit: false,
@@ -206,44 +205,49 @@ export class MapControl extends Component {
     const {
       dragRotate,
       isSplit,
+      isExport,
       mapIndex,
       mapControls,
       onTogglePerspective,
       onToggleSplitMap,
       onMapToggleLayer,
       onToggleMapControl,
-			scale
-		} = this.props;
+      scale
+    } = this.props;
 
-    const {visibleLayers = {}, mapLegend = {}, toggle3d = {}, splitMap = {}} = mapControls;
+    const {
+      visibleLayers = {},
+      mapLegend = {},
+      toggle3d = {},
+      splitMap = {}
+    } = mapControls;
 
     return (
       <StyledMapControl className="map-control">
         {/* Split Map */}
-        {splitMap.show ? <ActionPanel key={0}>
-          <StyledMapControlButton
-            active={isSplit}
-            onClick={e => {
-              e.preventDefault();
-              onToggleSplitMap(isSplit ? mapIndex : undefined);
-            }}
-            key={`split-${isSplit}`}
-            className="map-control-button split-map"
-            data-tip
-            data-for="action-toggle"
-          >
-            {isSplit ?
-              <Delete height="18px" /> :
-              <Split height="18px" />
-            }
-            <MapLegendTooltip
-              id="action-toggle"
-              message={
-                isSplit ? 'Close current panel' : 'Switch to dual map view'
-              }
-            />
-          </StyledMapControlButton>
-        </ActionPanel> : null}
+        {splitMap.show ? (
+          <ActionPanel key={0}>
+            <StyledMapControlButton
+              active={isSplit}
+              onClick={e => {
+                e.preventDefault();
+                onToggleSplitMap(isSplit ? mapIndex : undefined);
+              }}
+              key={`split-${isSplit}`}
+              className="map-control-button split-map"
+              data-tip
+              data-for="action-toggle"
+            >
+              {isSplit ? <Delete height="18px" /> : <Split height="18px" />}
+              <MapLegendTooltip
+                id="action-toggle"
+                message={
+                  isSplit ? 'Close current panel' : 'Switch to dual map view'
+                }
+              />
+            </StyledMapControlButton>
+          </ActionPanel>
+        ) : null}
 
         {/* Map Layers */}
         {isSplit && visibleLayers.show ? (
@@ -258,53 +262,69 @@ export class MapControl extends Component {
         ) : null}
 
         {/* 3D Map */}
-        {toggle3d.show ? <ActionPanel key={2}>
-          <StyledMapControlButton
-            onClick={e => {
-              e.preventDefault();
-              onTogglePerspective();
-            }}
-            active={dragRotate}
-            data-tip
-            data-for="action-3d"
-          >
-            <Cube3d height="22px" />
-            {/* No icon since we are injecting through css .threeD-map class*/}
-            <MapLegendTooltip
-              id="action-3d"
-              message={dragRotate ? 'Disable 3D Map' : '3D Map'}
-            />
-          </StyledMapControlButton>
-        </ActionPanel> : null}
+        {toggle3d.show ? (
+          <ActionPanel key={2}>
+            <StyledMapControlButton
+              onClick={e => {
+                e.preventDefault();
+                onTogglePerspective();
+              }}
+              active={dragRotate}
+              data-tip
+              data-for="action-3d"
+            >
+              <Cube3d height="22px" />
+              {/* No icon since we are injecting through css .threeD-map class*/}
+              <MapLegendTooltip
+                id="action-3d"
+                message={dragRotate ? 'Disable 3D Map' : '3D Map'}
+              />
+            </StyledMapControlButton>
+          </ActionPanel>
+        ) : null}
 
         {/* Map Legend */}
-        {mapLegend.show ? <ActionPanel key={3}>
-          <MapLegendPanel
-            items={items}
-            scale={scale}
-            onMapToggleLayer={onMapToggleLayer}
-            isActive={mapLegend.active}
-            toggleMenuPanel={() => onToggleMapControl('mapLegend')}
-          />
-        </ActionPanel> : null}
+        {mapLegend.show ? (
+          <ActionPanel key={3}>
+            <MapLegendPanel
+              items={items}
+              scale={scale}
+              isExport={isExport}
+              onMapToggleLayer={onMapToggleLayer}
+              isActive={mapLegend.active}
+              toggleMenuPanel={() => onToggleMapControl('mapLegend')}
+            />
+          </ActionPanel>
+        ) : null}
       </StyledMapControl>
     );
   }
 }
 
-const MapControlPanel = ({children, header, onClick, scale}) => (
-  <StyledMapControlPanel style={scale > 1 ? {transform: `scale(${scale}) translate(-25%, 25%)`} : {}}>
+const MapControlPanel = ({children, header, onClick, scale = 1, isExport}) => (
+  <StyledMapControlPanel
+    style={{
+      transform: `scale(${scale}) translate(calc(-${25 * (scale - 1)}% - ${10 *
+        scale}px), calc(${25 * (scale - 1)}% + ${10 * scale}px))`
+    }}
+  >
     <StyledMapControlPanelHeader style={{position: 'relative'}}>
-      <span style={{verticalAlign: 'middle'}}>{header}</span>
-      <IconRoundSmall>
-        <Close height="16px" onClick={onClick} />
-      </IconRoundSmall>
+      {isExport ? (
+        <KeplerGlLogo version={false} />
+      ) : (
+        <span style={{verticalAlign: 'middle'}}>{header}</span>
+      )}
+      {isExport ? null : (
+        <IconRoundSmall>
+          <Close height="16px" onClick={onClick} />
+        </IconRoundSmall>
+      )}
     </StyledMapControlPanelHeader>
     <StyledMapControlPanelContent>{children}</StyledMapControlPanelContent>
   </StyledMapControlPanel>
 );
 
-const MapLegendPanel = ({items, isActive, scale, toggleMenuPanel}) => (
+const MapLegendPanel = ({items, isActive, scale, toggleMenuPanel, isExport}) =>
   !isActive ? (
     <StyledMapControlButton
       key={2}
@@ -313,7 +333,7 @@ const MapLegendPanel = ({items, isActive, scale, toggleMenuPanel}) => (
       className="map-control-button show-legend"
       onClick={e => {
         e.preventDefault();
-        toggleMenuPanel()
+        toggleMenuPanel();
       }}
     >
       <Legend height="22px" />
@@ -324,15 +344,20 @@ const MapLegendPanel = ({items, isActive, scale, toggleMenuPanel}) => (
       scale={scale}
       header={'Layer Legend'}
       onClick={toggleMenuPanel}
+      isExport={isExport}
     >
       <MapLegend
         layers={items.filter(item => item.isVisible).map(item => item.layer)}
       />
     </MapControlPanel>
-  )
-);
+  );
 
-const LayerSelectorPanel = ({items, onMapToggleLayer, isActive, toggleMenuPanel}) => (
+const LayerSelectorPanel = ({
+  items,
+  onMapToggleLayer,
+  isActive,
+  toggleMenuPanel
+}) =>
   !isActive ? (
     <StyledMapControlButton
       key={1}
@@ -344,21 +369,17 @@ const LayerSelectorPanel = ({items, onMapToggleLayer, isActive, toggleMenuPanel}
       data-tip
       data-for="toggle-layer"
     >
-      <Layers height="22px"/>
+      <Layers height="22px" />
       <MapLegendTooltip
         id="toggle-layer"
         message={isActive ? 'Hide layer panel' : 'Show layer panel'}
       />
     </StyledMapControlButton>
   ) : (
-    <MapControlPanel
-      header="Visible layers"
-      onClick={toggleMenuPanel}
-    >
+    <MapControlPanel header="Visible layers" onClick={toggleMenuPanel}>
       <MapLayerSelector layers={items} onMapToggleLayer={onMapToggleLayer} />
     </MapControlPanel>
-  )
-);
+  );
 
 const ActionPanel = ({children}) => (
   <StyledMapControlAction>{children}</StyledMapControlAction>
@@ -370,5 +391,5 @@ const MapLegendTooltip = ({id, message}) => (
   </Tooltip>
 );
 
-const MapControlFactory =  () => MapControl;
+const MapControlFactory = () => MapControl;
 export default MapControlFactory;

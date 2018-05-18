@@ -74,7 +74,7 @@ const KeplerGlLogo = ({appName, version}) => (
     </LogoSvgWrapper>
     <LogoTitle className="logo__title">
       <LogoName className="logo__name">{appName}</LogoName>
-      <LogoVersion className="logo__version">{version}</LogoVersion>
+      {version ? <LogoVersion className="logo__version">{version}</LogoVersion> : null}
     </LogoTitle>
   </LogoWrapper>
 );
