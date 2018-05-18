@@ -230,7 +230,7 @@ export default class IconLayer extends Layer {
     const layerProps = {
       radiusMinPixels: 1,
       fp64: this.config.visConfig['hi-precision'],
-      radiusScale: this.getRadiusScaleByZoom(mapState.zoom),
+      radiusScale: this.getRadiusScaleByZoom(mapState),
       ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
     };
 

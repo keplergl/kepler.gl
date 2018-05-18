@@ -223,7 +223,7 @@ export default class PointLayer extends Layer {
       radiusMinPixels: 1,
       fp64: this.config.visConfig['hi-precision'],
       strokeWidth: this.config.visConfig.thickness,
-      radiusScale: this.getRadiusScaleByZoom(mapState.zoom),
+      radiusScale: this.getRadiusScaleByZoom(mapState),
       ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
     };
 

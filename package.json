@@ -76,6 +76,7 @@
     "global": "^4.3.0",
     "keymirror": "^0.1.1",
     "lodash.clonedeep": "^4.0.1",
+    "lodash.debounce": "^4.0.8",
     "lodash.flattendeep": "^4.2.0",
     "lodash.memoize": "^4.1.2",
     "lodash.pick": "^4.4.0",

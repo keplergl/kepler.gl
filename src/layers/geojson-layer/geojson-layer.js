@@ -323,12 +323,12 @@ export default class GeoJsonLayer extends Layer {
     interactionConfig
   }) {
     const {fp64, lightSettings, fixedRadius} = this.meta;
-    const radiusScale = this.getRadiusScaleByZoom(mapState.zoom, fixedRadius);
-    const zoomFactor = this.getZoomFactor(mapState.zoom);
+    const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius);
+    const zoomFactor = this.getZoomFactor(mapState);
 
     const layerProps = {
       // multiplier applied just so it being consistent with previously saved maps
-      lineWidthScale: this.config.visConfig.thickness * zoomFactor * 8,
+      lineWidthScale: this.config.visConfig.thickness * zoomFactor * 8 * (mapState.scale || 1),
       lineWidthMinPixels: 1,
       elevationScale: this.config.visConfig.elevationScale,
       pointRadiusScale: radiusScale,

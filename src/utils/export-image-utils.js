@@ -19,18 +19,17 @@
 // THE SOFTWARE.
 
 import domtoimage from 'dom-to-image';
-import {Blob, URL, atob, Uint8Array, ArrayBuffer} from 'global/window';
+import {Blob, URL, atob, Uint8Array, ArrayBuffer, document} from 'global/window';
 import {RESOLUTION_OPTIONS, RATIO_OPTIONS} from 'constants/default-settings';
 
 export function calculateExportImageSize({width, height, ratio, resolution}) {
-  const {
-    width: scaledWidth,
-    height: scaledHeight,
-		zoomOffset
-  } = RESOLUTION_OPTIONS.find(op => op.id === resolution).getSize(width, height);
+	const resolutionItem = RESOLUTION_OPTIONS.find(op => op.id === resolution);
+	const {width: scaledWidth, height: scaledHeight} = resolutionItem.getSize(width, height);
+  const {zoomOffset, scale} = resolutionItem;
 
   return {
     zoomOffset,
+		scale,
     ...RATIO_OPTIONS.find(op => op.id === ratio).getSize(scaledWidth, scaledHeight)
   };
 }
@@ -40,11 +39,11 @@ export function convertToPng(sourceElem) {
 }
 
 export function dataURItoBlob(dataURI) {
-	const binary = window.atob(dataURI.split(',')[1]);
+	const binary = atob(dataURI.split(',')[1]);
 
 	// separate out the mime component
 	const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0]
-  console.log(mimeString);
+
 	// write the bytes of the string to an ArrayBuffer
 	const ab = new ArrayBuffer(binary.length);
 
@@ -70,13 +69,3 @@ export function downloadFile(fileBlob, filename) {
 	document.body.removeChild(link);
 	URL.revokeObjectURL(url);
 }
-
-// export function downloadFile(href, filename) {
-// 	const link = document.createElement('a');
-// 	link.setAttribute('href', href);
-// 	link.setAttribute('download', filename);
-//
-// 	document.body.appendChild(link);
-// 	link.click();
-// 	document.body.removeChild(link);
-// }

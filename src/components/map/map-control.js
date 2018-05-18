@@ -162,15 +162,25 @@ const layerSelector = (layers, mapLayers) => {
 
 export class MapControl extends Component {
   static propTypes = {
+		datasets: PropTypes.object.isRequired,
     dragRotate: PropTypes.bool.isRequired,
     isSplit: PropTypes.bool.isRequired,
+		layers: PropTypes.arrayOf(
+			PropTypes.object
+    ),
+		mapIndex: PropTypes.number.isRequired,
     mapControls: PropTypes.object.isRequired,
     onToggleFullScreen: PropTypes.func.isRequired,
     onTogglePerspective: PropTypes.func.isRequired,
     onToggleSplitMap: PropTypes.func.isRequired,
     onToggleMapControl: PropTypes.func.isRequired,
-    top: PropTypes.number.isRequired
-  };
+		onMapToggleLayer: PropTypes.func.isRequired,
+    top: PropTypes.number.isRequired,
+
+    // optional
+		scale: PropTypes.number,
+		mapLayers: PropTypes.object
+	};
 
   static defaultProps = {
     isSplit: false,
@@ -201,8 +211,9 @@ export class MapControl extends Component {
       onTogglePerspective,
       onToggleSplitMap,
       onMapToggleLayer,
-      onToggleMapControl
-    } = this.props;
+      onToggleMapControl,
+			scale
+		} = this.props;
 
     const {visibleLayers = {}, mapLegend = {}, toggle3d = {}, splitMap = {}} = mapControls;
 
@@ -270,6 +281,7 @@ export class MapControl extends Component {
         {mapLegend.show ? <ActionPanel key={3}>
           <MapLegendPanel
             items={items}
+            scale={scale}
             onMapToggleLayer={onMapToggleLayer}
             isActive={mapLegend.active}
             toggleMenuPanel={() => onToggleMapControl('mapLegend')}
@@ -280,8 +292,8 @@ export class MapControl extends Component {
   }
 }
 
-const MapControlPanel = ({children, header, onClick}) => (
-  <StyledMapControlPanel>
+const MapControlPanel = ({children, header, onClick, scale}) => (
+  <StyledMapControlPanel style={scale > 1 ? {transform: `scale(${scale}) translate(-25%, 25%)`} : {}}>
     <StyledMapControlPanelHeader style={{position: 'relative'}}>
       <span style={{verticalAlign: 'middle'}}>{header}</span>
       <IconRoundSmall>
@@ -292,7 +304,7 @@ const MapControlPanel = ({children, header, onClick}) => (
   </StyledMapControlPanel>
 );
 
-const MapLegendPanel = ({items, isActive, toggleMenuPanel}) => (
+const MapLegendPanel = ({items, isActive, scale, toggleMenuPanel}) => (
   !isActive ? (
     <StyledMapControlButton
       key={2}
@@ -309,6 +321,7 @@ const MapLegendPanel = ({items, isActive, toggleMenuPanel}) => (
     </StyledMapControlButton>
   ) : (
     <MapControlPanel
+      scale={scale}
       header={'Layer Legend'}
       onClick={toggleMenuPanel}
     >

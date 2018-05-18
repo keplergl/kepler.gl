@@ -86,8 +86,8 @@ export default class GridLayer extends AggregationLayer {
     interaction,
     layerCallbacks
   }) {
-    const zoomFactor = this.getZoomFactor(mapState.zoom);
-    const eleZoomFactor = this.getElevationZoomFactor(mapState.zoom);
+    const zoomFactor = this.getZoomFactor(mapState);
+    const eleZoomFactor = this.getElevationZoomFactor(mapState);
     const {visConfig} = this.config;
     const cellSize = visConfig.worldUnitSize * 1000;
 

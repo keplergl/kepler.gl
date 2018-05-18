@@ -417,7 +417,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         return <div/>;
       }
 
-      const {mapLayers, layers, datasets, index, mapboxApiAccessToken,
+      const {mapLayers, layers, datasets, mapboxApiAccessToken,
         mapControls, toggleMapControl} = this.props;
 
       const mapProps = {
@@ -430,11 +430,11 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       return (
         <StyledMapContainer style={MAP_STYLE.container} onMouseMove={this._onMouseMove}>
           <MapControl
-            index={index}
             datasets={datasets}
             dragRotate={mapState.dragRotate}
             isSplit={mapState.isSplit}
             layers={layers}
+            scale={mapState.scale || 1}
             mapIndex={this.props.index}
             mapLayers={mapLayers}
             mapControls={mapControls}

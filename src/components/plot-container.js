@@ -23,8 +23,8 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
 import styled from 'styled-components';
-import throttle from 'lodash.throttle';
 import {StaticMap} from 'react-map-gl';
+import debounce from 'lodash.debounce';
 
 import MapContainerFactory from './map-container';
 import {calculateExportImageSize, convertToPng} from 'utils/export-image-utils';
@@ -41,25 +41,30 @@ PlotContainerFactory.deps = [MapContainerFactory];
 const StyledPlotContainer = styled.div`
   .mapboxgl-ctrl-bottom-left,
   .mapboxgl-ctrl-bottom-right {
-    display: none
+    display: none;
   }
 `;
 
-let previousStyle = null;
 export default function PlotContainerFactory(MapContainer) {
   class PlotContainer extends Component {
     constructor(props) {
       super(props);
-      this._onMapRender = throttle(this._onMapRender, 500);
+      this._onMapRender = debounce(this._onMapRender, 500);
+    }
+
+    componentWillMount() {
+      this.props.startExportingImage();
     }
 
     componentWillReceiveProps(newProps) {
-      // re-fetch the new screenshot only when ratio or resolution changes
-      if (
-        this.props.exportImageSetting.ratio !== newProps.exportImageSetting.ratio ||
-        this.props.exportImageSetting.resolution !== newProps.exportImageSetting.resolution ||
-        this.props.exportImageSetting.legend !== newProps.exportImageSetting.legend
-      ) {
+      // re-fetch the new screenshot only when ratio legend or resolution changes
+      const checks = ['ratio', 'resolution', 'legend'];
+      const shouldRetrieveScreenshot = checks.some(
+        item =>
+          this.props.exportImageSetting[item] !==
+          newProps.exportImageSetting[item]
+      );
+      if (shouldRetrieveScreenshot) {
         this._retrieveNewScreenshot();
       }
     }
@@ -70,12 +75,15 @@ export default function PlotContainerFactory(MapContainer) {
       this.mapStyleSelector,
       this.resolutionSelector,
       (mapStyle, resolution) => ({
-				bottomMapStyle: scaleMapStyleByResolution(mapStyle.bottomMapStyle, resolution),
-				topMapStyle: scaleMapStyleByResolution(mapStyle.topMapStyle, resolution),
+        bottomMapStyle: scaleMapStyleByResolution(
+          mapStyle.bottomMapStyle,
+          resolution
+        ),
+        topMapStyle: scaleMapStyleByResolution(mapStyle.topMapStyle, resolution)
       })
     );
 
-    _onMapRender = (map) => {
+    _onMapRender = map => {
       if (map.isStyleLoaded()) {
         this._retrieveNewScreenshot();
       }
@@ -84,8 +92,8 @@ export default function PlotContainerFactory(MapContainer) {
     _retrieveNewScreenshot = () => {
       if (this.plottingAreaRef) {
         this.props.startExportingImage();
-        convertToPng(this.plottingAreaRef).then(
-          dataUri => this.props.setExportImageDataUri({dataUri})
+        convertToPng(this.plottingAreaRef).then(dataUri =>
+          this.props.setExportImageDataUri({dataUri})
         );
       }
     };
@@ -94,18 +102,21 @@ export default function PlotContainerFactory(MapContainer) {
       const {width, height, exportImageSetting, mapFields} = this.props;
       const {ratio, resolution, legend} = exportImageSetting;
       const exportImageSize = calculateExportImageSize({
-        width, height, ratio, resolution
+        width,
+        height,
+        ratio,
+        resolution
       });
 
-      // figure out how to turn on legend through mapProps
       const mapProps = {
         ...mapFields,
-				mapStyle: this.scaledMapStyleSelector(this.props),
+        mapStyle: this.scaledMapStyleSelector(this.props),
+
+        // override viewport based on export settings
         mapState: {
           ...mapFields.mapState,
-          zoom: mapFields.mapState.zoom + exportImageSize.zoomOffset,
-          width: exportImageSize.width,
-          height: exportImageSize.height
+          ...exportImageSize,
+          zoom: mapFields.mapState.zoom + exportImageSize.zoomOffset
         },
         mapControls: {
           // override map legend visibility
@@ -114,13 +125,17 @@ export default function PlotContainerFactory(MapContainer) {
             active: true
           }
         },
-				MapComponent: StaticMap
+        MapComponent: StaticMap
       };
 
       return (
-        <StyledPlotContainer style={{position: 'absolute', top: -9999, left: -9999}}>
+        <StyledPlotContainer
+          style={{position: 'absolute', top: -9999, left: -9999}}
+        >
           <div
-            ref={element => {this.plottingAreaRef = element}}
+            ref={element => {
+              this.plottingAreaRef = element;
+            }}
             style={{
               width: exportImageSize.width,
               height: exportImageSize.height
