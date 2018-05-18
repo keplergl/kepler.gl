@@ -328,7 +328,7 @@ export default class GeoJsonLayer extends Layer {
 
     const layerProps = {
       // multiplier applied just so it being consistent with previously saved maps
-      lineWidthScale: this.config.visConfig.thickness * zoomFactor * 8 * (mapState.scale || 1),
+      lineWidthScale: this.config.visConfig.thickness * zoomFactor * 8,
       lineWidthMinPixels: 1,
       elevationScale: this.config.visConfig.elevationScale,
       pointRadiusScale: radiusScale,
