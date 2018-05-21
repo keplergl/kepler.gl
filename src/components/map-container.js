@@ -71,8 +71,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       mapStateActions: PropTypes.object.isRequired,
 
       // optional
-			isExport: PropTypes.bool,
-			clicked: PropTypes.object,
+      isExport: PropTypes.bool,
+      clicked: PropTypes.object,
       hoverInfo: PropTypes.object,
       mapLayers: PropTypes.object,
       onMapToggleLayer: PropTypes.func,
@@ -80,9 +80,9 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       onMapRender: PropTypes.func
     };
 
-		static defaultProps = {
-			MapComponent: MapboxGLMap
-		};
+    static defaultProps = {
+      MapComponent: MapboxGLMap
+    };
 
     constructor(props) {
       super(props);
