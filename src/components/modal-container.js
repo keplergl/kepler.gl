@@ -22,13 +22,12 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {css} from 'styled-components';
 import {findDOMNode} from 'react-dom';
-import {Blob, URL} from 'global/window';
-import document from 'global/document';
+import {Blob} from 'global/window';
 
 import ModalDialog from './common/modal';
 import {formatCsv} from 'processors/data-processor';
 import KeplerGlSchema from 'schemas';
-
+import {downloadFile, dataURItoBlob} from 'utils/export-image-utils';
 // modals
 import DeleteDatasetModalFactory from './modals/delete-data-modal';
 import IconInfoModalFactory from './modals/icon-info-modal';
@@ -121,27 +120,16 @@ export default function ModalContainerFactory(
     _onExportImage = () => {
       const {exporting, imageDataUri} = this.props.uiState.exportImage;
       if (!exporting && imageDataUri) {
-        this._downloadWithLink(imageDataUri, DEFAULT_EXPORT_IMAGE_NAME)
+        const file = dataURItoBlob(imageDataUri);
+        downloadFile(file, DEFAULT_EXPORT_IMAGE_NAME);
       }
       this.props.uiStateActions.cleanupExportImage();
       this._closeModal();
     };
 
-    _downloadWithLink(href, filename) {
-      const link = document.createElement('a');
-      link.setAttribute('href', href);
-      link.setAttribute('download', filename);
-
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-
     _downloadFile(data, type, filename) {
       const fileBlob = new Blob([data], {type});
-      const url = URL.createObjectURL(fileBlob);
-      this._downloadWithLink(url, filename);
-      URL.revokeObjectURL(url);
+      downloadFile(fileBlob, filename);
     }
 
     _onExportData = () => {
@@ -286,7 +274,8 @@ export default function ModalContainerFactory(
             onConfirm: this._onExportImage,
             confirmButton: {
               large: true,
-              children: 'Export'
+              disabled: exporting,
+              children: 'Download'
             }
           };
           break;

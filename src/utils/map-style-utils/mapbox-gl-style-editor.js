@@ -20,6 +20,11 @@
 
 import Immutable from 'immutable';
 import memoize from 'lodash.memoize';
+import {
+  DEFAULT_LAYER_GROUPS,
+  RESOLUTIONS,
+  RESOLUTION_OPTIONS
+} from 'constants/default-settings';
 
 export function getDefaultLayerGroupVisibility({layerGroups = []}) {
   return layerGroups.reduce(
@@ -95,4 +100,46 @@ const mapUrlRg = /^mapbox:\/\/styles\/[-a-z0-9]{2,256}\/[-a-z0-9]{2,256}/;
 // lowercase letters, numbers and dashes only.
 export function isValidStyleUrl(url) {
   return typeof url === 'string' && Boolean(url.match(mapUrlRg));
+}
+
+export function scaleMapStyleByResolution(mapboxStyle, resolution) {
+  const labelLayerGroup = DEFAULT_LAYER_GROUPS.find(lg => lg.slug === 'label');
+  const {filter: labelLayerFilter} = labelLayerGroup;
+
+  if (resolution !== RESOLUTIONS.ONE_X && mapboxStyle) {
+    const {scale, zoomOffset} = RESOLUTION_OPTIONS.find(
+      r => r.id === resolution
+    );
+    const copyStyle = mapboxStyle.toJS();
+    (copyStyle.layers || []).forEach(d => {
+      // edit minzoom and maxzoom
+      if (d.maxzoom) {
+        d.maxzoom += zoomOffset;
+      }
+
+      if (d.minzoom) {
+        d.minzoom += zoomOffset;
+      }
+
+      // edit text size
+      if (labelLayerFilter(d)) {
+        if (
+          d.layout &&
+          d.layout['text-size'] &&
+          Array.isArray(d.layout['text-size'].stops)
+        ) {
+          d.layout['text-size'].stops.forEach(stop => {
+            // zoom
+            stop[0] += Math.log2(scale);
+            // size
+            stop[1] *= scale;
+          });
+        }
+      }
+    });
+
+    return Immutable.fromJS(copyStyle);
+  }
+
+  return mapboxStyle;
 }

@@ -94,6 +94,7 @@ class ItemSelector extends Component {
     selectedItems: PropTypes.oneOfType([
       PropTypes.array,
       PropTypes.string,
+      PropTypes.number,
       PropTypes.bool,
       PropTypes.object
     ]),

@@ -332,12 +332,26 @@ export default class Layer {
     };
   }
 
-  getZoomFactor(zoom) {
-    return Math.pow(2, Math.max(14 - zoom, 0));
+	/**
+   * Calculate a radius zoom multiplier to render points, so they are visible in all zoom level
+   * @param mapState
+   * @param mapState.zoom - actual zoom
+   * @param mapState.zoomOffset - zoomOffset when render in the plot container for export image
+   * @returns {number}
+   */
+  getZoomFactor({zoom, zoomOffset = 0}) {
+    return Math.pow(2, Math.max(14 - zoom + zoomOffset, 0));
   }
 
-  getElevationZoomFactor(zoom) {
-    return Math.pow(2, Math.max(8 - zoom, 0));
+	/**
+   * Calculate a elevation zoom multiplier to render points, so they are visible in all zoom level
+   * @param mapState
+   * @param mapState.zoom - actual zoom
+   * @param mapState.zoomOffset - zoomOffset when render in the plot container for export image
+   * @returns {number}
+   */
+  getElevationZoomFactor({zoom, zoomOffset = 0}) {
+    return Math.pow(2, Math.max(8 - zoom + zoomOffset, 0));
   }
 
   formatLayerData(data, allData, filteredIndex) {
@@ -712,7 +726,7 @@ export default class Layer {
     );
   }
 
-  getRadiusScaleByZoom(zoom, fixedRadius) {
+  getRadiusScaleByZoom(mapState, fixedRadius) {
     const radiusChannel = Object.values(this.visualChannels).find(
       vc => vc.property === 'radius'
     );
@@ -730,7 +744,7 @@ export default class Layer {
 
     return fixed
       ? 1
-      : (this.config[field] ? 1 : radius) * this.getZoomFactor(zoom);
+      : (this.config[field] ? 1 : radius) * this.getZoomFactor(mapState);
   }
 
   shouldCalculateLayerData(props) {

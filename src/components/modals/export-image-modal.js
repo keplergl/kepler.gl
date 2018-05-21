@@ -165,7 +165,7 @@ class ExportImageModal extends Component {
             </div>
             <div className="image-option-section">
               <div className="image-option-section-title">Resolution</div>
-              For print choose 2x (available soon). For digital use choose 1x.
+              High resolution is better for prints.
               <div className="button-list">
                 {RESOLUTION_OPTIONS.map(op => 
                   <Button

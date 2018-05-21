@@ -181,3 +181,108 @@ export default `time,event_lat,event_lng,icon,icon-bk,annotation-severity,annota
 2016-06-28 20:01:29,37.38603,-122.400986,,up-arrow,5,"Braking at 10:32pm, -0.3g"
 2016-06-28 20:04:58,37.776512,-122.46835,,upload,4,"10:33pm,37.3490528616667,-121.972682895794,accel,3,""Acceleration at 10:33pm, +0.2g"""
 2016-06-28 20:02:13,37.764816,-122.04143,,wrench,2,"Aborted lane change, 10:34pm"`;
+
+export const config = {
+  version: 'v1',
+  config: {
+    visState: {
+      filters: [],
+      layers: [
+        {
+          id: 'xbbp4of',
+          type: 'hexagon',
+          config: {
+            dataId: 'test_icon_data',
+            label: 'new layer',
+            color: [221, 178, 124],
+            columns: {
+              lat: 'event_lat',
+              lng: 'event_lng'
+            },
+            isVisible: true,
+            visConfig: {
+              opacity: 0.8,
+              worldUnitSize: 0.5,
+              resolution: 8,
+              colorRange: {
+                name: 'Global Warming',
+                type: 'sequential',
+                category: 'Uber',
+                colors: [
+                  '#5A1846',
+                  '#900C3F',
+                  '#C70039',
+                  '#E3611C',
+                  '#F1920E',
+                  '#FFC300'
+                ]
+              },
+              coverage: 1,
+              sizeRange: [0, 500],
+              percentile: [0, 100],
+              elevationPercentile: [0, 100],
+              elevationScale: 5,
+              'hi-precision': false,
+              colorAggregation: 'average',
+              sizeAggregation: 'average',
+              enable3d: true
+            }
+          },
+          visualChannels: {
+            colorField: {
+              name: 'annotation-severity',
+              type: 'integer'
+            },
+            colorScale: 'quantile',
+            sizeField: null,
+            sizeScale: 'linear'
+          }
+        }
+      ],
+      interactionConfig: {
+        tooltip: {
+          fieldsToShow: {
+            test_icon_data: [
+              'time',
+              'icon',
+              'icon-bk',
+              'annotation-severity',
+              'annotation-html'
+            ],
+            '6b69fg6ca': ['OBJECTID', 'ZIP_CODE', 'ID']
+          },
+          enabled: true
+        },
+        brush: {
+          size: 0.5,
+          enabled: false
+        }
+      },
+      layerBlending: 'normal',
+      splitMaps: []
+    },
+    mapState: {
+      bearing: 24,
+      dragRotate: true,
+      latitude: 37.77189215118738,
+      longitude: -122.42436896812978,
+      pitch: 50,
+      zoom: 12.132280694715416,
+      isSplit: false
+    },
+    mapStyle: {
+      styleType: 'dark',
+      topLayerGroups: {
+        label: true
+      },
+      visibleLayerGroups: {
+        label: true,
+        road: true,
+        border: false,
+        building: true,
+        water: true,
+        land: true
+      }
+    }
+  }
+};

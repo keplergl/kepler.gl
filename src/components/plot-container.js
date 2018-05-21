@@ -21,12 +21,15 @@
 // libraries
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
+import {createSelector} from 'reselect';
 import styled from 'styled-components';
-import throttle from 'lodash.throttle';
+import {StaticMap} from 'react-map-gl';
+import debounce from 'lodash.debounce';
+import window from 'global/window';
 
 import MapContainerFactory from './map-container';
 import {calculateExportImageSize, convertToPng} from 'utils/export-image-utils';
-
+import {scaleMapStyleByResolution} from 'utils/map-style-utils/mapbox-gl-style-editor';
 const propTypes = {
   width: PropTypes.number.isRequired,
   height: PropTypes.number.isRequired,
@@ -39,7 +42,7 @@ PlotContainerFactory.deps = [MapContainerFactory];
 const StyledPlotContainer = styled.div`
   .mapboxgl-ctrl-bottom-left,
   .mapboxgl-ctrl-bottom-right {
-    display: none
+    display: none;
   }
 `;
 
@@ -47,21 +50,41 @@ export default function PlotContainerFactory(MapContainer) {
   class PlotContainer extends Component {
     constructor(props) {
       super(props);
-      this._onMapRender = throttle(this._onMapRender, 500);
+      this._onMapRender = debounce(this._onMapRender, 500);
+    }
+
+    componentWillMount() {
+      this.props.startExportingImage();
     }
 
     componentWillReceiveProps(newProps) {
-      // re-fetch the new screenshot only when ratio or resolution changes
-      if (
-        this.props.exportImageSetting.ratio !== newProps.exportImageSetting.ratio ||
-        this.props.exportImageSetting.resolution !== newProps.exportImageSetting.resolution ||
-        this.props.exportImageSetting.legend !== newProps.exportImageSetting.legend
-      ) {
+      // re-fetch the new screenshot only when ratio legend or resolution changes
+      const checks = ['ratio', 'resolution', 'legend'];
+      const shouldRetrieveScreenshot = checks.some(
+        item =>
+          this.props.exportImageSetting[item] !==
+          newProps.exportImageSetting[item]
+      );
+      if (shouldRetrieveScreenshot) {
         this._retrieveNewScreenshot();
       }
     }
 
-    _onMapRender = (map) => {
+    mapStyleSelector = props => props.mapFields.mapStyle;
+    resolutionSelector = props => props.exportImageSetting.resolution;
+    scaledMapStyleSelector = createSelector(
+      this.mapStyleSelector,
+      this.resolutionSelector,
+      (mapStyle, resolution) => ({
+        bottomMapStyle: scaleMapStyleByResolution(
+          mapStyle.bottomMapStyle,
+          resolution
+        ),
+        topMapStyle: scaleMapStyleByResolution(mapStyle.topMapStyle, resolution)
+      })
+    );
+
+    _onMapRender = map => {
       if (map.isStyleLoaded()) {
         this._retrieveNewScreenshot();
       }
@@ -69,10 +92,16 @@ export default function PlotContainerFactory(MapContainer) {
 
     _retrieveNewScreenshot = () => {
       if (this.plottingAreaRef) {
+      // setting windowDevicePixelRatio to 1
+      // so that large mapbox base map will load in full
+        const savedDevicePixelRatio = window.devicePixelRatio;
+        window.devicePixelRatio = 1;
+
         this.props.startExportingImage();
-        convertToPng(this.plottingAreaRef).then(
-          dataUri => this.props.setExportImageDataUri({dataUri})
-        );
+        convertToPng(this.plottingAreaRef).then(dataUri => {
+          this.props.setExportImageDataUri({dataUri});
+          window.devicePixelRatio = savedDevicePixelRatio;
+        });
       }
     };
 
@@ -80,22 +109,21 @@ export default function PlotContainerFactory(MapContainer) {
       const {width, height, exportImageSetting, mapFields} = this.props;
       const {ratio, resolution, legend} = exportImageSetting;
       const exportImageSize = calculateExportImageSize({
-        width, height, ratio, resolution
+        width,
+        height,
+        ratio,
+        resolution
       });
 
-      // TODO: should override the map style according to the resolution
-      const mapboxStyle = mapFields.mapStyle;
-
-      // figure out how to turn on legend through mapProps
       const mapProps = {
         ...mapFields,
-        mapboxStyle,
+        mapStyle: this.scaledMapStyleSelector(this.props),
+
+        // override viewport based on export settings
         mapState: {
           ...mapFields.mapState,
-          // zoom: mapFields.mapState.zoom + Math.log2(exportRatio),
-          zoom: mapFields.mapState.zoom,
-          width: exportImageSize.width,
-          height: exportImageSize.height
+          ...exportImageSize,
+          zoom: mapFields.mapState.zoom + exportImageSize.zoomOffset
         },
         mapControls: {
           // override map legend visibility
@@ -104,16 +132,17 @@ export default function PlotContainerFactory(MapContainer) {
             active: true
           }
         },
-        mapStateActions: {
-          ...mapFields.mapStateActions,
-          updateMap: () => {}
-        }
+        MapComponent: StaticMap
       };
 
       return (
-        <StyledPlotContainer style={{position: 'absolute', top: -9999, left: -9999}}>
+        <StyledPlotContainer
+          style={{position: 'absolute', top: -9999, left: -9999}}
+        >
           <div
-            ref={element => {this.plottingAreaRef = element}}
+            ref={element => {
+              this.plottingAreaRef = element;
+            }}
             style={{
               width: exportImageSize.width,
               height: exportImageSize.height
@@ -122,6 +151,7 @@ export default function PlotContainerFactory(MapContainer) {
             <MapContainer
               index={0}
               onMapRender={this._onMapRender}
+              isExport
               {...mapProps}
             />
           </div>

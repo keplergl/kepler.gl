@@ -71,12 +71,17 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       mapStateActions: PropTypes.object.isRequired,
 
       // optional
+      isExport: PropTypes.bool,
       clicked: PropTypes.object,
       hoverInfo: PropTypes.object,
       mapLayers: PropTypes.object,
       onMapToggleLayer: PropTypes.func,
       onMapStyleLoaded: PropTypes.func,
       onMapRender: PropTypes.func
+    };
+
+    static defaultProps = {
+      MapComponent: MapboxGLMap
     };
 
     constructor(props) {
@@ -413,7 +418,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         return <div/>;
       }
 
-      const {mapLayers, layers, datasets, index, mapboxApiAccessToken,
+      const {mapLayers, layers, datasets, mapboxApiAccessToken,
         mapControls, toggleMapControl} = this.props;
 
       const mapProps = {
@@ -426,22 +431,23 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       return (
         <StyledMapContainer style={MAP_STYLE.container} onMouseMove={this._onMouseMove}>
           <MapControl
-            index={index}
             datasets={datasets}
             dragRotate={mapState.dragRotate}
             isSplit={mapState.isSplit}
+            isExport={this.props.isExport}
             layers={layers}
             mapIndex={this.props.index}
             mapLayers={mapLayers}
             mapControls={mapControls}
+            scale={mapState.scale || 1}
+            top={0}
             onTogglePerspective={mapStateActions.togglePerspective}
             onToggleSplitMap={mapStateActions.toggleSplitMap}
             onMapToggleLayer={this._handleMapToggleLayer}
             onToggleFullScreen={mapStateActions.toggleFullScreen}
             onToggleMapControl={toggleMapControl}
-            top={0}
           />
-          <MapboxGLMap
+          <this.props.MapComponent
             {...mapProps}
             key="bottom"
             ref="mapbox"
@@ -450,10 +456,10 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           >
             {this._renderOverlay()}
             {this._renderMapboxOverlays()}
-          </MapboxGLMap>
+          </this.props.MapComponent>
           {mapStyle.topMapStyle && (
             <div style={MAP_STYLE.top}>
-              <MapboxGLMap
+              <this.props.MapComponent
                 {...mapProps}
                 key="top"
                 mapStyle={mapStyle.topMapStyle}
