@@ -18,7 +18,7 @@ export const SECTIONS = [
   },
   {
     id: 'features',
-    title: 'Software Engineer?',
+    title: 'Developer?',
     description:
       'A customizable geospatial toolbox to help make data-driven decisions.',
     icon: cdnUrl('icons/features.png')
@@ -118,19 +118,19 @@ export const FEATURES = [
   {
     title: 'Performance',
     description:
-      'Kepler.gl utilized the latest WebGL technologies so you can  render large datasets quickly and effeciently.',
+      'Built with Deck.gl, Kepler.gl utilizes WebGL to render large datasets quickly and efficiently.',
+    image: cdnUrl('showcase/points.png')
+  },
+  {
+    title: 'Interaction',
+    description:
+      'You can easily drag and drop a dataset, add filters, apply scales, and do aggregation on the fly.',
     image: cdnUrl('showcase/points.png')
   },
   {
     title: 'Embeddable',
     description:
-      'Kepler.gl is built on top of React & Redux and can be embedded within your mapping application.',
-    image: cdnUrl('showcase/points.png')
-  },
-  {
-    title: 'Ease of Use',
-    description:
-      'Drag and drop datasets to visualize them, and easily apply filtering, scaling, etc.',
+      'Built on React & Redux, Kepler.gl can be embedded inside your own mapping applications.',
     image: cdnUrl('showcase/points.png')
   }
 ];
@@ -178,7 +178,8 @@ export const TUTORIALS = [
   {
     title: 'How to create a map in 3 minutes',
     description: 'Some description is needed here. This is just a placeholder',
-    image: cdnUrl('examples/earthquake.png')
+    image: cdnUrl('examples/earthquake.png'),
+    url: '<placeholder>'
   },
   {
     title: '5 tips for creating an elegant map',
