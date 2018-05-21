@@ -71,62 +71,62 @@ class App extends Component {
   }
 
   _loadSampleData() {
-		this.props.dispatch(
-			updateVisData(
-				// datasets
-				{
-					info: {
-						label: 'Sample Taxi Trips in New York City',
-						id: 'test_trip_data'
-					},
-					data: sampleTripData
-				},
-				// option
-				{
-					centerMap: true,
-					readOnly: false
-				},
-				// config
-				{
-					filters: [
-						{
-							id: 'me',
-							dataId: 'test_trip_data',
-							name: 'tpep_pickup_datetime',
-							type: 'timeRange',
-							enlarged: true
-						}
-					]
-				}
-			)
-		);
+    this.props.dispatch(
+      updateVisData(
+        // datasets
+        {
+          info: {
+            label: 'Sample Taxi Trips in New York City',
+            id: 'test_trip_data'
+          },
+          data: sampleTripData
+        },
+        // option
+        {
+          centerMap: true,
+          readOnly: false
+        },
+        // config
+        {
+          filters: [
+            {
+              id: 'me',
+              dataId: 'test_trip_data',
+              name: 'tpep_pickup_datetime',
+              type: 'timeRange',
+              enlarged: true
+            }
+          ]
+        }
+      )
+    );
 
-		// load icon data and config and process csv file
-		this.props.dispatch(
-			addDataToMap({
-				datasets: [
-					{
-						info: {
-							label: 'Icon Data',
-							id: 'test_icon_data'
-						},
-						data: Processors.processCsvData(sampleIconCsv)
-					}
-				],
-				options: {
-					centerMap: false
-				},
-				config: savedMapConfig
-			})
-		);
+    // load icon data and config and process csv file
+    this.props.dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {
+              label: 'Icon Data',
+              id: 'test_icon_data'
+            },
+            data: Processors.processCsvData(sampleIconCsv)
+          }
+        ],
+        options: {
+          centerMap: false
+        },
+        config: savedMapConfig
+      })
+    );
 
-		// load geojson
-		this.props.dispatch(
-			updateVisData({
-				info: {label: 'SF Zip Geo'},
-				data: Processors.processGeojson(sampleGeojson)
-			})
-		);
+    // load geojson
+    this.props.dispatch(
+      updateVisData({
+        info: {label: 'SF Zip Geo'},
+        data: Processors.processGeojson(sampleGeojson)
+      })
+    );
   }
 
   render() {
