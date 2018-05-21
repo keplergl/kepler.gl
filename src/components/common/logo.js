@@ -20,10 +20,11 @@
 
 import React from 'react';
 import styled from 'styled-components';
+import {KEPLER_GL_NAME, KEPLER_GL_VERSION} from 'constants/default-settings';
 
 const defaultProps = {
-  appName: 'Kepler.Gl',
-  version: 'v1.0'
+  appName: KEPLER_GL_NAME,
+  version: KEPLER_GL_VERSION
 };
 
 const LogoTitle = styled.div`
