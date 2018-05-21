@@ -67,7 +67,7 @@ class App extends Component {
      */
 
     // load trip based data with config
-    this._loadSampleData();
+    // this._loadSampleData();
   }
 
   _loadSampleData() {

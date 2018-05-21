@@ -392,4 +392,5 @@ const MapLegendTooltip = ({id, message}) => (
 );
 
 const MapControlFactory = () => MapControl;
+
 export default MapControlFactory;

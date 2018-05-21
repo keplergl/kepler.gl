@@ -129,7 +129,7 @@ export default function ModalContainerFactory(
 
     _downloadFile(data, type, filename) {
       const fileBlob = new Blob([data], {type});
-			downloadFile(fileBlob, filename);
+      downloadFile(fileBlob, filename);
     }
 
     _onExportData = () => {
@@ -274,8 +274,8 @@ export default function ModalContainerFactory(
             onConfirm: this._onExportImage,
             confirmButton: {
               large: true,
-							disabled: exporting,
-							children: 'Download'
+              disabled: exporting,
+              children: 'Download'
             }
           };
           break;
