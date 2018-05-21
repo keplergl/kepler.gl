@@ -335,21 +335,21 @@ export default class Layer {
 	/**
    * Calculate a radius zoom multiplier to render points, so they are visible in all zoom level
    * @param mapState
-	 * @param mapState.zoom - actual zoom
-	 * @param mapState.zoomOffset - zoomOffset when render in the plot container for export image
-	 * @returns {number}
-	 */
+   * @param mapState.zoom - actual zoom
+   * @param mapState.zoomOffset - zoomOffset when render in the plot container for export image
+   * @returns {number}
+   */
   getZoomFactor({zoom, zoomOffset = 0}) {
     return Math.pow(2, Math.max(14 - zoom + zoomOffset, 0));
   }
 
 	/**
-	 * Calculate a elevation zoom multiplier to render points, so they are visible in all zoom level
-	 * @param mapState
-	 * @param mapState.zoom - actual zoom
-	 * @param mapState.zoomOffset - zoomOffset when render in the plot container for export image
-	 * @returns {number}
-	 */
+   * Calculate a elevation zoom multiplier to render points, so they are visible in all zoom level
+   * @param mapState
+   * @param mapState.zoom - actual zoom
+   * @param mapState.zoomOffset - zoomOffset when render in the plot container for export image
+   * @returns {number}
+   */
   getElevationZoomFactor({zoom, zoomOffset = 0}) {
     return Math.pow(2, Math.max(8 - zoom + zoomOffset, 0));
   }

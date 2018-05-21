@@ -92,17 +92,16 @@ export default function PlotContainerFactory(MapContainer) {
 
     _retrieveNewScreenshot = () => {
       if (this.plottingAreaRef) {
-        // setting windowDevicePixelRatio to 1
-        // so that large mapbox base map will load in full
+      // setting windowDevicePixelRatio to 1
+      // so that large mapbox base map will load in full
         const savedDevicePixelRatio = window.devicePixelRatio;
-				window.devicePixelRatio = 1;
+        window.devicePixelRatio = 1;
 
         this.props.startExportingImage();
         convertToPng(this.plottingAreaRef).then(dataUri => {
-					this.props.setExportImageDataUri({dataUri});
-					window.devicePixelRatio = savedDevicePixelRatio;
-				}
-			);
+          this.props.setExportImageDataUri({dataUri});
+          window.devicePixelRatio = savedDevicePixelRatio;
+        });
       }
     };
 
