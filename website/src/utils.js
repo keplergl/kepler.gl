@@ -18,46 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
-import styled from 'styled-components';
-import {connect} from 'react-redux';
+import {CLOUDFRONT, KEPLER_GL_BUCKET, WEBSITE_ASSET_FOLDER} from './constants';
 
-const GlobalStyleDiv = styled.div`
-  font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
-  font-weight: 400;
-  font-size: 0.875em;
-  line-height: 1.71429;
-
-  *,
-  *:before,
-  *:after {
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-  }
-
-  ul {
-    margin: 0;
-    padding: 0;
-  }
-
-  li {
-    margin: 0;
-  }
-
-  a {
-    text-decoration: none;
-  }
-`;
-
-class App extends Component {
-  render() {
-    return (
-      <GlobalStyleDiv className="kg-web-content">
-        {this.props.children}
-      </GlobalStyleDiv>
-    );
-  }
+export function cdnUrl(path) {
+  return `${CLOUDFRONT}/${KEPLER_GL_BUCKET}/${WEBSITE_ASSET_FOLDER}/${path}`;
 }
-
-export default connect(state => state)(App);

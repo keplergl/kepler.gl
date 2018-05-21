@@ -18,46 +18,59 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {PureComponent} from 'react';
 import styled from 'styled-components';
-import {connect} from 'react-redux';
 
-const GlobalStyleDiv = styled.div`
-  font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
-  font-weight: 400;
-  font-size: 0.875em;
-  line-height: 1.71429;
+import {WALKTHROUGH_ITEMS} from '../content';
+import {media} from '../styles';
+import YoutubeVideo from './common/youtube-video';
+import Swipeable from './common/swipeable';
 
-  *,
-  *:before,
-  *:after {
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-  }
+const ItemWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 
-  ul {
-    margin: 0;
-    padding: 0;
-  }
-
-  li {
-    margin: 0;
-  }
-
-  a {
-    text-decoration: none;
-  }
+  ${media.palm`
+    width: 100%;
+    font-size: 12px;
+  `};
 `;
 
-class App extends Component {
+const VideoContainer = styled.div`
+  width: 640px;
+  height: 420px;
+
+  ${media.portable`
+    width: 500px;
+    height: 330px;
+  `} ${media.palm`
+    width: 100%;
+    height: 250px;
+  `};
+`;
+
+const ItemDescription = styled.div`
+  margin-top: 16px;
+`;
+
+class Walkthrough extends PureComponent {
   render() {
     return (
-      <GlobalStyleDiv className="kg-web-content">
-        {this.props.children}
-      </GlobalStyleDiv>
+      <div>
+        <Swipeable>
+          {WALKTHROUGH_ITEMS.map(({videoUrl, description}) => (
+            <ItemWrapper>
+              <VideoContainer>
+                <YoutubeVideo src={videoUrl} width="100%" height />
+              </VideoContainer>
+              <ItemDescription>{description}</ItemDescription>
+            </ItemWrapper>
+          ))}
+        </Swipeable>
+      </div>
     );
   }
 }
 
-export default connect(state => state)(App);
+export default Walkthrough;

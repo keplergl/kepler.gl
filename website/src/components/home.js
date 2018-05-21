@@ -18,402 +18,54 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
-import window from 'global/window';
-import styled, {keyframes, ThemeProvider} from 'styled-components';
-import {media, breakPoints, theme} from '../styles';
+import React, {PureComponent} from 'react';
+import {ThemeProvider} from 'styled-components';
 
-export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/';
-export const KEPLER_GL_BUCKET = 'kepler.gl/';
+import {theme} from '../styles';
+import {SECTIONS} from '../content';
+import Hero from './hero';
+import Showcase from './showcase';
+import Examples from './examples';
+import Tutorials from './tutorials';
+import Walkthrough from './walkthrough';
+import Features from './features';
+import Footer from './footer';
+import Section from './common/section';
 
-import {Button} from './common/styled-components';
+const SECTION_CONTENT = {
+  showcase: Showcase,
+  walkthrough: Walkthrough,
+  features: Features,
+  examples: Examples,
+  tutorials: Tutorials
+};
 
-// ee755ad8-3d68-4559-ab6b-cdcedb3a4d04
-const imgRatio = 696 / 1080;
-
-const imageSize = {w: 1080, h: 696, top: 137, right: 132, palm: 272};
-const screenSize = {w: 1680, h: 954};
-const imgToScrRatio = imageSize.w / screenSize.w;
-
-const imgMinW = 880;
-const screenMinW = imgMinW / imgToScrRatio;
-const minRight = imageSize.right / imageSize.w * imgMinW;
-const minTop = imageSize.top / imageSize.w * imgMinW;
-
-const IMAGES = [
-  'kepler.gl-hexagon.png',
-  'kepler.gl-points.png',
-  'kepler.gl-contours.png'
-];
-
-const IMAGES_S = IMAGES.map(img => img.replace('.png', '_s.png'));
-const LOGO = 'viz_logo_bw.png';
-
-const StyledHome = styled.div`
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  color: ${props => props.theme.textColor};
-  
-  
-  a {
-    color: ${props => props.theme.labelColor};
-  }
-
-`;
-
-const StyledMapContainer = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 0;
-
-  .kg-home__map__blocker {
-    width: 100%;
-    height: 100%;
-    position: fixed;
-    top: 0;
-    left: 0;
-    background-color: ${props => props.theme.mapBlocker};
-    opacity: 0.6;
-    z-index: 1;
-    pointer-events: none;
-  }
-`;
-
-const StyledHomeContent = styled.div`
-  padding-top: 136px;
-  position: relative;
-  z-index: 1;
-  display: flex;
-  justify-content: space-between;
-
-  ${media.palm`
-    padding-left: 24px;
-    padding-right: 24px;
-    padding-top: 76px;
-    align-items: center;
-    flex-direction: column;
-    display: flex;
-  `};
-`;
-
-// based on keyframe aniamtion to fade img
-// http://css3.bradshawenterprises.com/cfimg/
-
-// styled-components keyframe
-// https://github.com/styled-components/styled-components/blob/master/docs/tips-and-tricks.md
-
-const a = 3;
-const b = 2;
-const d = a + b;
-const n = 3;
-const t = d * 3;
-
-const animationName = keyframes`
-  0% {
-    opacity:1;
-  }
-  ${a / t * 100}% {
-    opacity:1;
-  }
-  ${1 / n * 100}% {
-    opacity:0;
-  }
-  ${(1 - b / t) * 100}% {
-    opacity:0;
-  }
-  100% {
-    opacity:1;
-  }
-`;
-
-const StyledImgContainer = styled.div`
-  box-shadow: 0 12px 24px 0 rgba(0, 0, 0, 0.5);
-  flex-shrink: 0;
-  opacity: 1;
-  position: relative;
-
-  ${media.palm`
-    width: 100%;
-  `} img {
-    animation-name: ${animationName};
-    animation-timing-function: ease-in-out;
-    animation-iteration-count: infinite;
-    animation-duration: ${d * n}s;
-  }
-
-  img:nth-of-type(1) {
-    animation-delay: ${d * 2}s;
-  }
-  img:nth-of-type(2) {
-    animation-delay: ${d}s;
-  }
-  img:nth-of-type(3) {
-    animation-delay: 0s;
-  }
-`;
-
-const StyledCaption = styled.div`
-  min-width: 250px;
-  max-width: 280px;
-  margin-right: 60px;
-  padding-top: 70px;
-
-  ${media.palm`
-    width: auto;
-    padding-top: 0;
-    margin-right: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  `} .kg-home__caption__title {
-    font-size: 44px;
-    letter-spacing: 1.83px;
-    margin-bottom: 20px;
-    font-weight: 600;
-  }
-
-  .kg-home__caption__description {
-    font-size: 14px;
-    color: ${props => props.theme.labelColor};
-    line-height: 24px;
-    margin-bottom: 64px;
-
-    span.t-bold {
-      color: ${props => props.theme.textColor};
-      font-weight: 500;
-    }
-
-    ${media.palm`
-      margin-bottom: 32px;
-      text-align: center;
-    `};
-  }
-
-  .kg-home__caption__bottom {
-    ${media.palm`
-      margin-top: 30px;
-      text-align: center;
-    `} .kg-home__caption__bottom__title {
-      font-size: 16px;
-      letter-spacing: 0.67px;
-      margin-bottom: 16px;
-      font-weight: 600;
-    }
-
-    .kg-button {
-      background: #005cd2;
-      box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.24);
-      letter-spacing: 0.25px;
-      font-weight: 600;
-
-      :hover {
-        background: #196cd6;
-      }
-    }
-  }
-`;
-
-const StyledHeader = styled.div`
-  top: 0;
-  position: absolute;
-  display: flex;
-
-  align-items: center;
-  color: ${props => props.theme.footerColor};
-  font-size: 11px;
-  justify-content: center;
-  letter-spacing: 0.5px;
-  line-height: 14px;
-  margin: 32px 0;
-  width: 100%;
-  z-index: 101;
-
-  ${media.palm`
-    margin-top: 16px;
-    bottom: auto;
-    margin-bottom: 64px;
-  `};
-`;
-
-const StyledLogo = styled.span`
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 4px;
-  position: relative;
-  margin-left: 2.2rem;
-  margin-top: 0;
-  margin-bottom: 0;
-
-  a {
-    padding: 0 1rem 0 0;
-    color: #e5e5e4;
-    letter-spacing: 2px;
-  }
-
-  :before {
-    content: '';
-    background: url(${`${CLOUDFRONT}${KEPLER_GL_BUCKET}${LOGO}`}) no-repeat;
-    background-size: cover;
-    height: 20px;
-    width: 24px;
-    position: absolute;
-    top: -2px;
-    left: -30px;
-  }
-`;
-
-const Container = styled.div`
-  height: 100vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  background-color: #0d1823;
-`;
-
-class Home extends Component {
-  state = {
-    window: window.innerWidth,
-    height: window.innerHeight
-  };
-  componentDidMount() {
-    window.addEventListener('resize', this.resize);
-    this.resize();
-  }
-  componentWillUnmount() {
-    window.removeEventListener('resize', this.resize);
-  }
-  resize = () => {
-    this.setState({
-      width: window.innerWidth,
-      height: window.innerHeight
-    });
-  };
+export default class Home extends PureComponent {
   render() {
-    const isPalm = this.state.width <= breakPoints.palm;
-    const imgW = isPalm
-      ? this.state.width - 48
-      : this.state.width * imgToScrRatio;
-    const shrink = this.state.width / screenSize.w;
-
     return (
       <ThemeProvider theme={theme}>
-      <Container>
-        <StyledHome className="kg-home">
-          <StyledHeader>
-            <div>Created By</div>
-            <StyledLogo className="fg">
-              <a target="_blank" rel="noopener noreferrer" href="http://vis.gl">
-                VIS.GL
-              </a>
-            </StyledLogo>
-          </StyledHeader>
-
-          <StyledMapContainer className="kg-home__map">
-            <div className="kg-home__map__blocker" />
-            <img
-              style={{
-                width: `${this.state.width}px`,
-                height: 'auto',
-                minWidth: `${screenMinW}px`
-              }}
-              src={`${CLOUDFRONT}${KEPLER_GL_BUCKET}kepler.gl-background.png`}
-            />
-          </StyledMapContainer>
-
-          <StyledHomeContent
-            style={
-              isPalm
-                ? {}
-                : {
-                    paddingLeft: '72px',
-                    paddingRight: `${Math.max(
-                      imageSize.right * shrink,
-                      minRight
-                    )}px`,
-                    paddingTop: `${Math.max(imageSize.top * shrink, minTop)}px`
-                  }
-            }
-          >
-            <StyledCaption>
-              <div className="kg-home__caption__title">Kepler.gl</div>
-              <div className="kg-home__caption__description">
-                <span>Kepler.gl is a powerful </span>
-                <span className="t-bold">web-based </span>
-                <span>geospatial data analysis tool. Built on a </span>
-                <span className="t-bold">high performance </span>
-                <span>rendering engine and designed for </span>
-                <span className="t-bold">large-scale </span>
-                <span>data sets.</span>
-              </div>
-              {isPalm && (
-                <StyledImgContainer
-                  style={{
-                    width: `${imgW}px`,
-                    height: `${imgW * imgRatio}px`
-                  }}
+        <div>
+          <Hero />
+          {SECTIONS.map(
+            ({id, title, description, icon, isDark, background}, i) => {
+              const SectionContent = SECTION_CONTENT[id];
+              return (
+                <Section
+                  key={`section-${i}`}
+                  title={title}
+                  description={description}
+                  icon={icon}
+                  isDark={isDark}
+                  background={background}
                 >
-                  {IMAGES_S.map(src => (
-                    <img
-                      key={src}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        display: 'block',
-                        position: 'absolute',
-                        top: 0
-                      }}
-                      src={`${CLOUDFRONT}${KEPLER_GL_BUCKET}${src}`}
-                    />
-                  ))}
-                </StyledImgContainer>
-              )}
-              <div className="kg-home__caption__bottom">
-                <div className="kg-home__caption__bottom__title">
-                  Coming soon in April 2018
-                </div>
-                <Button large>
-                  <a
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    href="http://t.uber.com/join-kepler.gl"
-                  >
-                    Keep Me Updated
-                  </a>
-                </Button>
-              </div>
-            </StyledCaption>
-            {!isPalm && (
-              <StyledImgContainer
-                style={{
-                  width: `${imgW}px`,
-                  height: `${imgW * imgRatio}px`,
-                  minWidth: `${imgMinW}px`,
-                  minHeight: `${imgMinW * imgRatio}px`
-                }}
-              >
-                {IMAGES.map(src => (
-                  <img
-                    key={src}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      position: 'absolute',
-                      top: 0
-                    }}
-                    src={`${CLOUDFRONT}${KEPLER_GL_BUCKET}${src}`}
-                  />
-                ))}
-              </StyledImgContainer>
-            )}
-          </StyledHomeContent>
-        </StyledHome>
-      </Container>
+                  <SectionContent />
+                </Section>
+              );
+            }
+          )}
+          <Footer />
+        </div>
       </ThemeProvider>
-
     );
   }
 }
-
-export default Home;

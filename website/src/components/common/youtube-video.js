@@ -18,46 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
-import styled from 'styled-components';
-import {connect} from 'react-redux';
+import React, {PureComponent} from 'react';
 
-const GlobalStyleDiv = styled.div`
-  font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
-  font-weight: 400;
-  font-size: 0.875em;
-  line-height: 1.71429;
-
-  *,
-  *:before,
-  *:after {
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-  }
-
-  ul {
-    margin: 0;
-    padding: 0;
-  }
-
-  li {
-    margin: 0;
-  }
-
-  a {
-    text-decoration: none;
-  }
-`;
-
-class App extends Component {
+export default class YoutubeVideo extends PureComponent {
   render() {
+    const {src} = this.props;
     return (
-      <GlobalStyleDiv className="kg-web-content">
-        {this.props.children}
-      </GlobalStyleDiv>
+      <iframe
+        src={src}
+        style={{
+          border: 'none',
+          width: '100%',
+          height: '100%'
+        }}
+      />
     );
   }
 }
-
-export default connect(state => state)(App);
