@@ -49,7 +49,7 @@ export const HOME_BULLETS = [{
 
 export const ADDITIONAL_LINKS = [];
 
-export const GA_TRACKING = null;
+export const GA_TRACKING = 'UA-64694404-19';
 
 // For showing star counts and contributors.
 // Should be like btoa('YourUsername:YourKey') and should be readonly.
