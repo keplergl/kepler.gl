@@ -19,22 +19,41 @@
 // THE SOFTWARE.
 
 import React, {PureComponent} from 'react';
-import styled, {keyframes} from 'styled-components';
+import styled from 'styled-components';
 
-import {WALKTHROUGH_ITEMS} from '../content/walkthrough';
+import {WALKTHROUGH_ITEMS} from '../content';
+import {media} from '../styles';
 import YoutubeVideo from './common/youtube-video';
-import Swipeable from './common/Swipeable';
-import FadeIn from './common/fade-in';
+import Swipeable from './common/swipeable';
 
 const ItemWrapper = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-`
+
+  ${media.palm`
+    width: 100%;
+    font-size: 12px;
+  `};
+`;
+
+const VideoContainer = styled.div`
+  width: 640px;
+  height: 420px;
+
+  ${media.portable`
+    width: 500px;
+    height: 330px;
+  `} ${media.palm`
+    width: 100%;
+    height: 250px;
+  `};
+`;
 
 const ItemDescription = styled.div`
   margin-top: 16px;
-`
+`;
+
 class Walkthrough extends PureComponent {
   render() {
     return (
@@ -42,12 +61,10 @@ class Walkthrough extends PureComponent {
         <Swipeable>
           {WALKTHROUGH_ITEMS.map(({videoUrl, description}) => (
             <ItemWrapper>
-              <FadeIn>
-                <YoutubeVideo src={videoUrl} />
-              </FadeIn>
-              <FadeIn>
-                <ItemDescription>{description}</ItemDescription>
-              </FadeIn>
+              <VideoContainer>
+                <YoutubeVideo src={videoUrl} width="100%" height />
+              </VideoContainer>
+              <ItemDescription>{description}</ItemDescription>
             </ItemWrapper>
           ))}
         </Swipeable>
@@ -57,4 +74,3 @@ class Walkthrough extends PureComponent {
 }
 
 export default Walkthrough;
-

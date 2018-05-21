@@ -25,13 +25,12 @@ export default class YoutubeVideo extends PureComponent {
     const {src} = this.props;
     return (
       <iframe
-        width="640"
-        height="480"
         src={src}
-        frameborder="0"
-        allow="autoplay; encrypted-media"
-        allowfullscreen
-        style={{border: 'none'}}
+        style={{
+          border: 'none',
+          width: '100%',
+          height: '100%'
+        }}
       />
     );
   }

@@ -19,23 +19,15 @@
 // THE SOFTWARE.
 
 import React, {PureComponent} from 'react';
-import styled, {keyframes} from 'styled-components';
-
-
-const items = [
-  {text: 'A', color: '#af2b2b'},
-  {text: 'B', color: '#af5f2a'},
-  {text: 'C', color: '#b7ae2a'},
-  {text: 'D', color: '#52b527'},
-  {text: 'E', color: '#24af8d'},
-  {text: 'F', color: '#2442af'},
-  {text: 'G', color: '#9822aa'}
-];
+import PropTypes from 'prop-types';
+import styled from 'styled-components';
+import Waypoint from 'react-waypoint';
 
 const Container = styled.div`
   position: relative;
   display: flex;
   justify-content: center;
+  min-height: 200px;
 `;
 
 const Content = styled.div`
@@ -49,54 +41,61 @@ const Item = styled.div`
   position: absolute;
   transition: transform 1s;
   cursor: pointer;
+  transform: perspective(600px)
+    translate3d(${props => props.tX}%, 0, ${props => props.tZ}px);
 `;
-
-const TestItem = styled.div`
-  width: 300px;
-  height: 250px;
-  color: white;
-  background: ${props => props.color};
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  transition: transform 200ms;
-`;
-
-
-const VISIBLE_Z = 9999;
 
 export default class Carousel extends PureComponent {
+  static propTypes = {
+    children: PropTypes.node,
+    selectedIndex: PropTypes.number.isRequired,
+    xOffset: PropTypes.number,
+    zOffset: PropTypes.number
+  };
+
+  static defaultProps = {
+    xOffset: 15,
+    zOffset: 60
+  };
+
   state = {
-    selectedIndex: 3
-  }
+    isVisible: false
+  };
+
+  _onWaypointEnter = () => {
+    this.setState({isVisible: true});
+  };
+
+  _onWaypointLeave = () => {
+    this.setState({isVisible: false});
+  };
 
   render() {
-    const {selectedIndex} = this.props;
-    const selectedAngle = selectedIndex * -1 *  (360 / items.length);
-    const {children} = this.props;
+    const {selectedIndex, children, xOffset, zOffset} = this.props;
+    const {isVisible} = this.state;
     return (
-      <Container>
-        <Content>
-          {children.map((item, i) => {
-            const translateX = (i - selectedIndex) * 60;
-            const translateZ = -Math.abs(i - selectedIndex) * 50;
-            // const scale = 1.0 - Math.abs((i - selectedIndex) / 10);
-            const zIndex = VISIBLE_Z - Math.abs(i - selectedIndex);
-            const scale = 1;
-            return (
-              <Item style={{
-                transform: `perspective(600px) translate3d(${translateX}px, 0, ${translateZ}px)`,
-                // zIndex: VISIBLE_Z - Math.abs(selectedIndex - i)
-              }} onClick={() => {
-                this.props.onChange(i);
-              }}>
-                {item}
-              </Item>
-            )
-          })}
-        </Content>
-      </Container>
+      <Waypoint onEnter={this._onWaypointEnter} onLeave={this._onWaypointLeave}>
+        <Container>
+          <Content>
+            {children.map((item, i) => {
+              const translateX = isVisible ? (i - selectedIndex) * xOffset : 0;
+              const translateZ = -Math.abs(i - selectedIndex) * zOffset;
+              return (
+                <Item
+                  key={`carousel-item-${i}`}
+                  tX={translateX}
+                  tZ={translateZ}
+                  onClick={() => {
+                    this.props.onChange(i);
+                  }}
+                >
+                  {item}
+                </Item>
+              );
+            })}
+          </Content>
+        </Container>
+      </Waypoint>
     );
   }
 }

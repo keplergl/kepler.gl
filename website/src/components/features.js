@@ -19,36 +19,52 @@
 // THE SOFTWARE.
 
 import React, {PureComponent} from 'react';
-import styled, {keyframes} from 'styled-components';
+import styled from 'styled-components';
 
-import {FEATURES} from '../content/features';
+import {cdnUrl} from '../utils';
+import {FEATURES} from '../content';
+import {media} from '../styles';
+import StaggeredScrollAnimation from './common/staggered-scroll-animation';
+import {LinkButton, CenteredContent} from './common/styled-components';
+
+const FeaturesContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: ${props => props.theme.margins.large};
+`;
 
 const FeatureContainer = styled.div`
   text-align: center;
-  width: 400px;
+  width: 350px;
   padding: 24px;
-  margin: 5px;
+  margin: ${props => props.theme.margins.small};
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  ${media.palm`
+    margin: 0px;
+    margin-bottom: ${props => props.theme.margins.small}
+  `};
 `;
 
 const FeatureImage = styled.img`
+  display: inline;
   border-radius: 50px;
   width: 75px;
   height: 75px;
-`
+  margin-bottom: ${props => props.theme.margins.small};
+`;
 
 const FeatureTitle = styled.div`
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 500;
+  margin-bottom: ${props => props.theme.margins.small};
 `;
 
 const FeatureDescription = styled.div`
   font-size: 16px;
   color: #535353;
-`;
-
-const SectionBody = styled.div`
-  display: flex;
-  justify-content: center;
 `;
 
 const Feature = ({title, description, image}) => (
@@ -62,11 +78,23 @@ const Feature = ({title, description, image}) => (
 class Features extends PureComponent {
   render() {
     return (
-      <SectionBody>
-        {FEATURES.map(({title, description, image}) => (
-          <Feature title={title} description={description} image={image}/>
-        ))}
-      </SectionBody>
+      <div>
+        <StaggeredScrollAnimation Container={FeaturesContainer}>
+          {FEATURES.map(({title, description, image}, i) => (
+            <Feature
+              key={`feature-${i}`}
+              title={title}
+              description={description}
+              image={image}
+            />
+          ))}
+        </StaggeredScrollAnimation>
+        <CenteredContent>
+          <LinkButton large outline href="https://github.com/uber/kepler.gl">
+            <img src={cdnUrl('icons/github-black.svg')} /> Open Source
+          </LinkButton>
+        </CenteredContent>
+      </div>
     );
   }
 }

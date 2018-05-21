@@ -19,69 +19,87 @@
 // THE SOFTWARE.
 
 import React, {PureComponent} from 'react';
-import styled, {keyframes} from 'styled-components';
-import Waypoint from 'react-waypoint';
-import FadeIn from './fade-in';
+import PropTypes from 'prop-types';
+import styled from 'styled-components';
+import StaggeredScrollAnimation from './staggered-scroll-animation';
+
+import {media} from '../../styles';
 
 export const SectionIcon = styled.img`
   width: 64px;
+  ${media.palm`
+    width: 48px;
+  `};
 `;
 
 export const SectionContainer = styled.div`
-  color: ${props => props.theme === 'dark' ? 'white' : 'black'};
-  background: ${props => props.theme === 'dark' ? '#242730' : 'white'};
-  padding: 46px 0px;
-  margin-top: 32px;
+  color: ${props => (props.isDark ? 'white' : 'black')};
+  background: ${props =>
+    props.isDark
+      ? props.theme.darkBackgroundColor
+      : props.background
+        ? `url(${props.background})`
+        : 'white'};
+  padding: ${props => props.theme.margins.huge};
+  margin-bottom: ${props => props.theme.margins.large};
+  background-size: cover;
+
+  ${media.portable`
+    padding: ${props => props.theme.margins.large}
+  `} ${media.palm`
+    padding: ${props => props.theme.margins.medium}
+  `};
 `;
 
 export const SectionHeader = styled.div`
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: ${props => props.theme.margins.large};
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 `;
 
 export const SectionTitle = styled.div`
   font-size: 30px;
   font-weight: 500;
+  ${media.palm`
+    font-size: 24px;
+  `};
 `;
 
 export const SectionDescription = styled.div`
   font-size: 20px;
-`;
-
-export const SectionBody = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  max-width: 500px;
+  ${media.palm`
+    font-size: 16px;
+  `};
 `;
 
 class Section extends PureComponent {
-  _onSectionEnter = () => {
-    console.log('Entering section: ', this.props.title);
+  static propTypes = {
+    title: PropTypes.string.isRequired,
+    description: PropTypes.string.isRequired,
+    icon: PropTypes.string.isRequired,
+    isDark: PropTypes.bool,
+    background: PropTypes.string,
+    children: PropTypes.node.isRequired
   };
 
-  _onSectionLeave = () => {
-    console.log('Leaving section: ', this.props.title);
+  static defaultProps = {
+    isDark: false
   };
 
   render() {
-    const {icon, title, description, theme, children} = this.props;
+    const {icon, title, description, isDark, background, children} = this.props;
     return (
-      <Waypoint onEnter={this._onSectionEnter} onLeave={this._onSectionLeave}>
-        <SectionContainer theme={theme}>
-          <SectionHeader>
-            <FadeIn>
-              <SectionIcon src={icon} />
-            </FadeIn>
-            <FadeIn transitionDelay={300}>
-              <SectionTitle>{title}</SectionTitle>
-            </FadeIn>
-            <FadeIn transitionDelay={600}>
-              <SectionDescription>{description}</SectionDescription>
-            </FadeIn>
-          </SectionHeader>
-          {children}
-        </SectionContainer>
-      </Waypoint>
+      <SectionContainer isDark={isDark} background={background}>
+        <StaggeredScrollAnimation Container={SectionHeader}>
+          <SectionIcon src={icon} />
+          <SectionTitle>{title}</SectionTitle>
+          <SectionDescription>{description}</SectionDescription>
+        </StaggeredScrollAnimation>
+        {children}
+      </SectionContainer>
     );
   }
 }

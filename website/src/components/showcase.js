@@ -19,16 +19,37 @@
 // THE SOFTWARE.
 
 import React, {PureComponent} from 'react';
-import styled, {keyframes} from 'styled-components';
+import styled from 'styled-components';
 
-import {SHOWCASE_ITEMS} from '../content/showcase';
+import {SHOWCASE_ITEMS} from '../content';
+import {media} from '../styles';
 import Carousel from './common/carousel';
 
+const CarouselContainer = styled.div`
+  height: 360px;
+  ${media.palm`
+    height: 240px;
+  `} ${media.desk`
+    height: 480px;
+  `};
+`;
+
 const Image = styled.img`
-  width: 640px;
-  height: 480px;
+  width: 100%;
+  height: 100%;
   box-shadow: 0px 12px 24px rgba(0, 0, 0, 0.25);
   object-fit: cover;
+
+  width: 420px;
+  height: 320px;
+
+  ${media.palm`
+    width: 300px;
+    height: 200px;
+  `} ${media.desk`
+    width: 560px;
+    height: 420px;
+  `};
 `;
 
 const NavContainer = styled.div`
@@ -38,24 +59,40 @@ const NavContainer = styled.div`
 `;
 
 const NavItem = styled.div`
-  margin: 10px;
-  width: 48px;
+  margin: ${props => props.theme.margins.tiny};
   font-size: 10px;
   text-align: center;
   filter: ${props => props.isActive && 'brightness(300%)'};
-  transform: ${props => props.isActive && 'scale(1.2)'};
+  transform: ${props => props.isActive && 'scale(1.1)'};
   transition: transform 500ms, filter 500ms;
   cursor: pointer;
   :hover {
-    transform: scale(1.2);
+    transform: scale(1.1);
   }
+
+  ${media.palm`
+    margin: 2px 4px;
+    font-size: 8px;
+  `};
+`;
+
+const NavIcon = styled.img`
+  display: block;
+
+  width: 48px;
+  height: 48px;
+
+  ${media.palm`
+    width: 32px;
+    height: 32px;
+  `};
 `;
 
 const Nav = ({items, selectedIndex, onClick}) => (
   <NavContainer>
     {items.map(({text, icon}, i) => (
       <NavItem isActive={selectedIndex === i} onClick={() => onClick(i)}>
-        <img src={icon} style={{width: 48}} />
+        <NavIcon src={icon} />
         {text}
       </NavItem>
     ))}
@@ -70,14 +107,16 @@ class Showcase extends PureComponent {
   render() {
     return (
       <div>
-        <div style={{height: '480px'}}>
+        <CarouselContainer>
           <Carousel
             selectedIndex={this.state.selectedIndex}
             onChange={i => this.setState({selectedIndex: i})}
           >
-            {SHOWCASE_ITEMS.map(({image}) => <Image src={image} />)}
+            {SHOWCASE_ITEMS.map(({image}, i) => (
+              <Image key={`showcase-image-${i}`} src={image} />
+            ))}
           </Carousel>
-        </div>
+        </CarouselContainer>
         <Nav
           items={SHOWCASE_ITEMS}
           selectedIndex={this.state.selectedIndex}

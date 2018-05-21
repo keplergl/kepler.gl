@@ -30,24 +30,25 @@ const BABEL_CONFIG = {
   // so that we can set modules: false, to avoid tree shaking
   // https://github.com/webpack/webpack/issues/3974
   babelrc: false,
-  presets: [
-    ['es2015', {modules: false, loose: true}],
-    'react',
-    'stage-0',
-  ].map(name => Array.isArray(name) ?
-    [require.resolve(`babel-preset-${name[0]}`), name[1]] :
-    require.resolve(`babel-preset-${name}`)),
+  presets: [['es2015', {modules: false, loose: true}], 'react', 'stage-0'].map(
+    name =>
+      Array.isArray(name)
+        ? [require.resolve(`babel-preset-${name[0]}`), name[1]]
+        : require.resolve(`babel-preset-${name}`)
+  ),
   plugins: [
     'transform-decorators-legacy',
     'transform-runtime',
     ['module-resolver', {root: [libSources]}]
-  ].map(name => Array.isArray(name) ?
-    [require.resolve(`babel-plugin-${name[0]}`), name[1]] :
-    require.resolve(`babel-plugin-${name}`))
+  ].map(
+    name =>
+      Array.isArray(name)
+        ? [require.resolve(`babel-plugin-${name[0]}`), name[1]]
+        : require.resolve(`babel-plugin-${name}`)
+  )
 };
 
 const COMMON_CONFIG = {
-
   entry: ['./src/main'],
 
   resolve: {
@@ -70,10 +71,12 @@ const COMMON_CONFIG = {
         options: BABEL_CONFIG,
         include: [resolve('..'), libSources],
         exclude: [/node_modules/]
-      }, {
+      },
+      {
         test: /\.(eot|svg|ico|ttf|woff|woff2|gif|jpe?g|png)$/,
         loader: 'url-loader'
-      }, {
+      },
+      {
         test: /\.(svg|ico|gif|jpe?g|png)$/,
         loader: 'file-loader?name=[name].[ext]'
       }
@@ -88,37 +91,28 @@ const COMMON_CONFIG = {
   plugins: [
     new webpack.EnvironmentPlugin(['MapboxAccessToken'])
   ]
-
 };
 
 const addDevConfig = config => {
-
   config.module.rules.push({
     // Unfortunately, webpack doesn't import library sourcemaps on its own...
     test: /\.js$/,
     use: ['source-map-loader'],
     enforce: 'pre',
-    exclude: [
-      /node_modules\/react-palm/,
-      /node_modules\/react-data-grid/,
-    ]
+    exclude: [/node_modules\/react-palm/, /node_modules\/react-data-grid/]
   });
 
   return Object.assign(config, {
-
     devtool: 'source-maps',
 
     plugins: config.plugins.concat([
       // new webpack.HotModuleReplacementPlugin(),
       new webpack.NoEmitOnErrorsPlugin()
     ])
-
   });
-
 };
 
 const addProdConfig = config => {
-
   return Object.assign(config, {
     output: {
       path: resolve(__dirname, './dist'),

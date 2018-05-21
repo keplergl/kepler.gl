@@ -35,12 +35,12 @@ const PaginationBarWrapper = styled.div`
   :first-child {
     margin-left: 0px;
   }
-`
+`;
 const PaginationBar = styled.div`
   width: 50px;
   height: 4px;
   background: white;
-  opacity: ${props => props.isActive ? '1.0' : '0.5'};
+  opacity: ${props => (props.isActive ? '1.0' : '0.5')};
   transition: opacity 200ms;
 `;
 

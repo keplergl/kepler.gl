@@ -27,7 +27,6 @@ import store from './reducers';
 import Home from './components/home';
 import App from './components/app';
 import Demo from '../../examples/demo-app/src/app';
-import Main from './components/main';
 
 // Token
 // TODO: remove this when beta is over
