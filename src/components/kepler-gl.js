@@ -30,7 +30,8 @@ import * as MapStateActions from 'actions/map-state-actions';
 import * as MapStyleActions from 'actions/map-style-actions';
 import * as UIStateActions from 'actions/ui-state-actions';
 
-import {EXPORT_IMAGE_ID, DIMENSIONS, DEFAULT_MAP_STYLES} from 'constants/default-settings';
+import {EXPORT_IMAGE_ID, DIMENSIONS, DEFAULT_MAP_STYLES,
+  KEPLER_GL_NAME, KEPLER_GL_VERSION} from 'constants/default-settings';
 
 import SidePanelFactory from './side-panel';
 import MapContainerFactory from './map-container';
@@ -96,8 +97,8 @@ function KeplerGlFactory(
       mapStyles: [],
       width: 800,
       height: 800,
-      appName: 'Kepler.Gl',
-      version: 'v1.0'
+      appName: KEPLER_GL_NAME,
+      version: KEPLER_GL_VERSION
     };
 
     componentWillMount() {
