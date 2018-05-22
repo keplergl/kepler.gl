@@ -72,7 +72,7 @@ const buttonStyles = css`
   :hover,
   :focus,
   :active,
-  /*:visited,*/
+  :visited,
   &.active {
     background-color: ${props =>
       props.negative
@@ -94,7 +94,7 @@ const buttonStyles = css`
           : props.outline
             ? props.theme.outlineBtnActColor
             : props.outlineDark
-              ? props.outlineDarkBtnActColor
+              ? props.theme.outlineDarkBtnActColor
               : props.link
                 ? props.theme.linkBtnActColor
                 : props.theme.primaryBtnActColor};
