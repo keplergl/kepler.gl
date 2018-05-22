@@ -47,7 +47,7 @@ export const KEPLER_GL_VERSION = 'v1.0';
 export const DIMENSIONS = {
   sidePanel: {
     width: 300,
-    margin: 20,
+    margin: {top: 20, left: 20, bottom: 30, right: 20},
     headerHeight: 96
   },
   mapControl: {

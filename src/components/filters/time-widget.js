@@ -31,7 +31,10 @@ const innerPdSide = 32;
 
 const WidgetContainer = styled.div`
   position: absolute;
-  padding: 20px;
+  padding-top: ${props => props.theme.sidePanel.margin.top}px;
+  padding-right: ${props => props.theme.sidePanel.margin.right}px;
+  padding-bottom: ${props => props.theme.sidePanel.margin.bottom}px;
+  padding-left: ${props => props.theme.sidePanel.margin.left}px;  
   bottom: 0;
   right: 0;
   z-index: 1;
