@@ -111,7 +111,7 @@ export default class Footer extends PureComponent {
     return (
       <Container>
         <LogosContainer>
-          <img src={cdnUrl('icons/kepler-s.svg')} />
+          <img src={cdnUrl('icons/kepler.svg')} />
           <BrandingContainer>
             <img src={cdnUrl('icons/uber.svg')} />
             <CreatedBy>
