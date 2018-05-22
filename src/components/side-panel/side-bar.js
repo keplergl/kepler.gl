@@ -26,11 +26,14 @@ import {ArrowRight} from 'components/common/icons';
 const StyledSidePanelContainer = styled.div`
   z-index: 99;
   height: 100%;
-  width: ${props => props.width + 2 * props.theme.sidePanel.margin}px;
+  width: ${props => props.width + 2 * props.theme.sidePanel.margin.left}px;
   display: flex;
   transition: width 250ms;
   position: absolute;
-  padding: ${props => props.theme.sidePanel.margin}px;
+  padding-top: ${props => props.theme.sidePanel.margin.top}px;
+  padding-right: ${props => props.theme.sidePanel.margin.right}px;
+  padding-bottom: ${props => props.theme.sidePanel.margin.bottom}px;
+  padding-left: ${props => props.theme.sidePanel.margin.left}px;
 `;
 
 const SideBarContainer = styled.div`
@@ -60,7 +63,7 @@ const CollapseButton = styled.div`
   height: 20px;
   position: absolute;
   right: -8px;
-  top: ${props => props.theme.sidePanel.margin}px;
+  top: ${props => props.theme.sidePanel.margin.top}px;
   width: 20px;
 
   :hover {
