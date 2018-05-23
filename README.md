@@ -29,7 +29,7 @@ yarn --ignore-engines
 ```
 then
 ```
-npm start
+MapboxAccessToken=MapboxAPIKey npm start
 ```
 An Example app will be served at
 http://localhost:8080/
