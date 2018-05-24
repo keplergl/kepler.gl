@@ -74,7 +74,7 @@ const HorizontalCardImage = styled.img`
 `;
 
 const Title = styled.div`
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 500;
   margin-bottom: 8px;
 `;
