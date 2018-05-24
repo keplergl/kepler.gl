@@ -143,13 +143,13 @@ export class MapPopover extends Component {
     const {mapState} = this.props;
     const {width, height} = this.state;
     const pos = {};
-    if (x + leftOffset + width > mapState.innerWidth) {
-      pos.right = mapState.innerWidth - x + leftOffset;
+    if (x + leftOffset + width > mapState.width) {
+      pos.right = mapState.width - x + leftOffset;
     } else {
       pos.left = x + leftOffset;
     }
 
-    if (y + topOffset + height > mapState.innerHeight) {
+    if (y + topOffset + height > mapState.height) {
       pos.bottom = 10;
     } else {
       pos.top = y + topOffset;
