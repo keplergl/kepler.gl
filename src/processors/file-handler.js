@@ -20,7 +20,7 @@
 
 import {FileReader} from 'global/window';
 import {processCsvData, processGeojson} from './data-processor';
-import KeplerGlSchema from 'kepler.gl/schemas';
+import KeplerGlSchema from 'schemas';
 
 const FILE_HANDLERS = {
   csv: loadCsv,
