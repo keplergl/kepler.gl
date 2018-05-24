@@ -49,11 +49,8 @@ const FeatureContainer = styled.div`
 `;
 
 const FeatureImage = styled.img`
-  display: inline;
-  border-radius: 50px;
   width: 75px;
   height: 75px;
-  margin-bottom: ${props => props.theme.margins.small};
 `;
 
 const FeatureTitle = styled.div`
