@@ -18,37 +18,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {combineReducers, createStore, applyMiddleware, compose} from 'redux';
-import {routerReducer} from 'react-router-redux';
-import {taskMiddleware} from 'react-palm';
-import thunk from 'redux-thunk';
-import {routerMiddleware} from 'react-router-redux';
-import {hashHistory} from 'react-router';
-import appReducer from './app';
-import demoReducer from '../../../examples/demo-app/src/reducers';
+export const PROJECT_TYPE = 'github';
 
-const initialState = {};
-const reducers = {
-  demo: demoReducer,
-  app: appReducer,
-  routing: routerReducer
-};
+export const PROJECT_NAME = 'kepler.gl';
+export const PROJECT_ORG = 'uber';
+export const PROJECT_URL = `https://github.com/${PROJECT_ORG}/${PROJECT_NAME}`;
+export const PROJECT_DESC = 'Website for kepler.gl';
 
-const combinedReducers = combineReducers(reducers);
+export const GITHUB = true;
 
-export const middlewares = [
-  taskMiddleware,
-  thunk,
-  routerMiddleware(hashHistory)
-];
+export const PROJECTS = {};
 
-export const enhancers = [applyMiddleware(...middlewares)];
+export const FOOTER_LOGO = '';
 
-// add redux devtools
-// const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+export const WEBSITE_PATH = '/website/';
 
-export default createStore(
-  combinedReducers,
-  initialState,
-  compose(...enhancers)
-);
+export const HOME_PATH = '/';
+export const HOME_HEADING = 'Website for kepler.gl';
+
+export const HOME_RIGHT = null;
+
+export const HOME_BULLETS = [];
+
+export const ADDITIONAL_LINKS = [];
+
+export const GA_TRACKING = 'UA-64694404-19';
+
+// For showing star counts and contributors.
+// Should be like btoa('YourUsername:YourKey') and should be readonly.
+export const GITHUB_KEY = null;

@@ -73,7 +73,7 @@ export default class StaggeredScrollAnimation extends PureComponent {
       >
         <Container>
           {children.map((item, i) => (
-            <FadeIn isVisible={isVisible} delay={delay * i}>
+            <FadeIn key={i} isVisible={isVisible} delay={delay * i}>
               {item}
             </FadeIn>
           ))}

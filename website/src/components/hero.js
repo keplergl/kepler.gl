@@ -127,18 +127,6 @@ const StyledCaption = styled.div`
   }
 `;
 
-const Logo = styled.img`
-  position: absolute;
-  left: 0;
-  top: 0;
-
-  ${media.palm`
-    position: inherit;
-    margin-top: ${props => props.theme.margins.normal};
-    margin-bottom: ${props => props.theme.margins.small};
-  `};
-`;
-
 const ButtonContainer = styled.div`
   display: flex;
   justify-content: center;
@@ -186,7 +174,6 @@ export default class Hero extends PureComponent {
       <Container>
         <BackgroundImage src={cdnUrl('hero/kepler.gl-background.png')} />
         <Content>
-          <Logo src={cdnUrl('icons/kepler.svg')} />
           <StyledCaption>
             <div className="kg-home__caption__subtitle">
               Make an impact with your location data

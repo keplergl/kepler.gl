@@ -53,7 +53,7 @@ const buttonStyles = css`
   font-size: ${props => (props.large ? '14px' : '11px')};
   font-weight: 500;
   justify-content: center;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
   line-height: 14px;
   outline: 0;
   border: ${props =>

@@ -112,6 +112,7 @@ class Walkthrough extends PureComponent {
     const {selectedIndex} = this.state;
     return (
       <div>
+<<<<<<< HEAD
         <Swipeable onChange={this._onChange} selectedIndex={selectedIndex}>
           {WALKTHROUGH_ITEMS.map(({videoUrl, imageUrl, description}, i) => (
             <WalkthroughItem>
@@ -128,6 +129,16 @@ class Walkthrough extends PureComponent {
               </VideoWrapper>
               <VideoDescription>{description}</VideoDescription>
             </WalkthroughItem>
+=======
+        <Swipeable>
+          {WALKTHROUGH_ITEMS.map(({videoUrl, description}, i) => (
+            <ItemWrapper key={i}>
+              <VideoContainer>
+                <YoutubeVideo src={videoUrl} width="100%" height />
+              </VideoContainer>
+              <ItemDescription>{description}</ItemDescription>
+            </ItemWrapper>
+>>>>>>> just one website folder with marketing website AND ocular
           ))}
         </Swipeable>
       </div>
