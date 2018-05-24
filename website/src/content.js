@@ -139,19 +139,19 @@ export const FEATURES = [
     title: 'Performance',
     description:
       'Built with Deck.gl, Kepler.gl utilizes WebGL to render large datasets quickly and efficiently.',
-    image: cdnUrl('showcase/points.png')
+    image: cdnUrl('features/performance.svg')
   },
   {
     title: 'Interaction',
     description:
       'You can easily drag and drop a dataset, add filters, apply scales, and do aggregation on the fly.',
-    image: cdnUrl('showcase/points.png')
+    image: cdnUrl('features/interaction.svg')
   },
   {
     title: 'Embeddable',
     description:
       'Built on React & Redux, Kepler.gl can be embedded inside your own mapping applications.',
-    image: cdnUrl('showcase/points.png')
+    image: cdnUrl('features/embeddable.svg')
   }
 ];
 
