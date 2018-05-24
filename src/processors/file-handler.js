@@ -25,7 +25,7 @@ import KeplerGlSchema from 'schemas';
 const FILE_HANDLERS = {
   csv: loadCsv,
   geojson: loadGeoJSON,
-  'keplergl': loadKeplerglJSON
+  keplergl: loadKeplerglJSON
 };
 
 export function getFileHandler(fileBlob) {

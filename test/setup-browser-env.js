@@ -39,5 +39,5 @@ Object.keys(global.window).forEach(property => {
 global.navigator = {
   userAgent: 'node.js',
   platform: 'mac',
-  appName: 'kepler.gl'
+  appName: 'kepler.glsrc/components/modals/export-data-modal.js'
 };

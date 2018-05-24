@@ -25,7 +25,6 @@ import styled from 'styled-components';
 import {EXPORT_DATA_TYPE_OPTIONS} from 'constants/default-settings';
 import {FileType} from 'components/common/icons';
 import {StyledModalContent} from 'components/common/styled-components';
-import Switch from 'components/common/switch';
 
 const StyledExportDataSection = styled.div`
   display: flex;

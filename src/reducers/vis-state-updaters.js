@@ -26,7 +26,7 @@ import {disableStackCapturing} from 'react-palm/tasks';
 import {LOAD_FILE_TASK} from 'tasks/tasks';
 
 // Actions
-import {updateVisData, loadFilesErr} from 'actions/vis-state-actions';
+import {loadFilesErr} from 'actions/vis-state-actions';
 import {addDataToMap} from 'actions';
 
 // Utils

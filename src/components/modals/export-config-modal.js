@@ -26,7 +26,6 @@ import Switch from 'components/common/switch';
 
 import {StyledModalContent} from 'components/common/styled-components';
 
-
 const propTypes = {
   config: PropTypes.object.required
 };
@@ -154,7 +153,7 @@ const ExportConfigModal = ({
                 enableLiveAutocompletion: true,
                 enableSnippets: false,
                 showLineNumbers: true,
-                tabSize: 2,
+                tabSize: 2
               }}/>
           </div>
         </StyledExportConfigSection>
@@ -178,7 +177,6 @@ const ExportConfigModal = ({
     </StyledModalContent>
   </div>
 );
-
 
 ExportConfigModal.propTypes = propTypes;
 
