@@ -50,9 +50,42 @@ const VideoContainer = styled.div`
   `};
 `;
 
+const VideoElement = styled.video`
+  width: 100%;
+  height: 100%;
+`;
+
 const ItemDescription = styled.div`
   margin-top: 16px;
 `;
+
+const VideoWrapperHeader = styled.div`
+  height: 15px;
+  background: #E5E5E4;
+  border-radius: 3px 3px 0px 0px;
+  display: flex;
+  align-items: center;
+  padding: 0px 5px;
+`;
+
+const VideoWrapperHeaderCircle = styled.div`
+  width: 6px;
+  height: 6px;
+  border-radius: 10px;
+  background: ${props => props.color};
+  margin-left: 5px;
+`;
+
+const VideoWrapper = ({children}) => (
+  <div>
+    <VideoWrapperHeader>
+      <VideoWrapperHeaderCircle color="#12BB00" />
+      <VideoWrapperHeaderCircle color="#D3AE00" />
+      <VideoWrapperHeaderCircle color="#DE3131" />
+    </VideoWrapperHeader>
+    {children}
+  </div>
+);
 
 class Walkthrough extends PureComponent {
   render() {
@@ -61,9 +94,11 @@ class Walkthrough extends PureComponent {
         <Swipeable>
           {WALKTHROUGH_ITEMS.map(({videoUrl, description}) => (
             <ItemWrapper>
-              <VideoContainer>
-                <YoutubeVideo src={videoUrl} width="100%" height />
-              </VideoContainer>
+              <VideoWrapper>
+                <VideoContainer>
+                  <VideoElement src={videoUrl} autoPlay loop />
+                </VideoContainer>
+              </VideoWrapper>
               <ItemDescription>{description}</ItemDescription>
             </ItemWrapper>
           ))}
