@@ -35,6 +35,7 @@ import DataTableModalFactory from './modals/data-table-modal';
 import LoadDataModalFactory from './modals/load-data-modal';
 import ExportImageModalFactory from './modals/export-image-modal';
 import ExportDataModalFactory from './modals/export-data-modal';
+import ExportConfigModalFactory from './modals/export-config-modal';
 import AddMapStyleModalFactory from './modals/add-map-style-modal';
 
 import {
@@ -45,6 +46,7 @@ import {
   EXPORT_DATA_ID,
   EXPORT_DATA_TYPE,
   EXPORT_IMAGE_ID,
+  EXPORT_CONFIG_ID,
   ADD_MAP_STYLE_ID
 } from 'constants/default-settings';
 
@@ -72,6 +74,7 @@ ModalContainerFactory.deps = [
   LoadDataModalFactory,
   ExportImageModalFactory,
   ExportDataModalFactory,
+  ExportConfigModalFactory,
   AddMapStyleModalFactory
 ];
 
@@ -82,6 +85,7 @@ export default function ModalContainerFactory(
   LoadDataModal,
   ExportImageModal,
   ExportDataModal,
+  ExportConfigModal,
   AddMapStyleModal
 ) {
   class ModalWrapper extends Component {
@@ -133,9 +137,9 @@ export default function ModalContainerFactory(
     }
 
     _onExportData = () => {
-      const {mapStyle, visState, mapState, uiState} = this.props;
+      const {visState, uiState} = this.props;
       const {datasets} = visState;
-      const {selectedDataset, dataType, filtered, config} = uiState.exportData;
+      const {selectedDataset, dataType, filtered} = uiState.exportData;
       // get the selected data
       const filename = 'kepler-gl';
       const selectedDatasets = datasets[selectedDataset] ? [datasets[selectedDataset]] : Object.values(datasets);
@@ -162,17 +166,21 @@ export default function ModalContainerFactory(
 
       });
 
-      if (config) {
-        const keplerGlConfig = KeplerGlSchema.getConfigToSave(
-          {mapStyle, visState, mapState, uiState}
-        );
+      this._closeModal();
+    };
 
-        this._downloadFile(
-          JSON.stringify(keplerGlConfig, null, 2),
-          'application/json',
-          'kepler-gl_config.json'
-        );
-      }
+    _onExportConfig = () => {
+      const {data} = this.props.uiState.exportData;
+
+      // we pass all props because we avoid to create new variables
+      const dump = data ? KeplerGlSchema.save(this.props)
+        : KeplerGlSchema.getConfigToSave(this.props);
+
+      this._downloadFile(
+        JSON.stringify(dump, null, 2),
+        'application/json',
+        'kepler-gl.config.json'
+      );
 
       this._closeModal();
     };
@@ -182,6 +190,7 @@ export default function ModalContainerFactory(
         containerW,
         containerH,
         mapStyle,
+        mapState,
         uiState,
         visState,
         rootNode,
@@ -281,6 +290,7 @@ export default function ModalContainerFactory(
           break;
 
         case EXPORT_DATA_ID:
+
           template = (
             <ExportDataModal
               {...uiState.exportData}
@@ -289,7 +299,6 @@ export default function ModalContainerFactory(
               onChangeExportDataType={this.props.uiStateActions.setExportDataType}
               onChangeExportSelectedDataset={this.props.uiStateActions.setExportSelectedDataset}
               onChangeExportFiltered={this.props.uiStateActions.setExportFiltered}
-              onChangeExportConfig={this.props.uiStateActions.setExportConfig}
             />
           );
           modalProps = {
@@ -298,6 +307,31 @@ export default function ModalContainerFactory(
             footer: true,
             onCancel: this._closeModal,
             onConfirm: this._onExportData,
+            confirmButton: {
+              large: true,
+              children: 'Export'
+            }
+          };
+          break;
+
+        case EXPORT_CONFIG_ID:
+          const keplerGlConfig = KeplerGlSchema.getConfigToSave(
+            {mapStyle, visState, mapState, uiState}
+          );
+          template = (
+            <ExportConfigModal
+              config={keplerGlConfig}
+              data={uiState.exportData.data}
+              onClose={this._closeModal}
+              onChangeExportData={this.props.uiStateActions.setExportData}
+            />
+          );
+          modalProps = {
+            close: false,
+            title: 'Export Config',
+            footer: true,
+            onCancel: this._closeModal,
+            onConfirm: this._onExportConfig,
             confirmButton: {
               large: true,
               children: 'Export'

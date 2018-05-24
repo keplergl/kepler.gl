@@ -86,6 +86,7 @@
     "luma.gl": "4.0.6",
     "moment": "^2.10.6",
     "prop-types": "^15.6.0",
+    "react-ace": "^6.1.1",
     "react-anything-sortable": "^1.7.2",
     "react-data-grid": "2.0.80-am-fix-defaultprops-warnings3337",
     "react-file-drop": "^0.1.8",

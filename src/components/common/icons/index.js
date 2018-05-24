@@ -62,3 +62,4 @@ export {default as Trash} from './trash';
 export {default as Upload} from './upload';
 export {default as VertDots} from './vert-dots';
 export {default as IconWrapper} from './base';
+export {default as CodeAlt} from './code-alt';

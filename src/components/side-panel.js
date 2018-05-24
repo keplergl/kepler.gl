@@ -36,6 +36,7 @@ import {
   DATA_TABLE_ID,
   EXPORT_IMAGE_ID,
   EXPORT_DATA_ID,
+  EXPORT_CONFIG_ID,
   PANELS
 } from 'constants/default-settings';
 
@@ -107,6 +108,8 @@ export default function SidePanelFactory(PanelHeader) {
 
     _onExportData = () => this.props.uiStateActions.toggleModal(EXPORT_DATA_ID);
 
+    _onExportConfig = () => this.props.uiStateActions.toggleModal(EXPORT_CONFIG_ID);
+
     render() {
       const {
         appName,
@@ -176,6 +179,7 @@ export default function SidePanelFactory(PanelHeader) {
               version={version}
               onExportImage={this._onExportImage}
               onExportData={this._onExportData}
+              onExportConfig={this._onExportConfig}
               onSaveMap={this.props.onSaveMap}
             />
             <PanelToggle

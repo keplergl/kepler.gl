@@ -43,7 +43,8 @@ import {
   setExportSelectedDatasetUpdater,
   setExportDataTypeUpdater,
   setExportFilteredUpdater,
-  setExportConfigUpdater
+  setExportConfigUpdater,
+  setExportDataUpdater
 } from './ui-state-updaters';
 
 export const DEFAULT_ACTIVE_SIDE_PANEL = 'layer';
@@ -80,7 +81,8 @@ export const DEFAULT_EXPORT_DATA = {
   selectedDataset: '',
   dataType: EXPORT_DATA_TYPE.CSV,
   filtered: true,
-  config: true
+  config: false, // no longer used, since we removed the option to export config from modal data export
+  data: false // this is used in modal config export
 };
 
 export const INITIAL_UI_STATE = {
@@ -113,7 +115,8 @@ const actionHandler = {
   [ActionTypes.SET_EXPORT_SELECTED_DATASET]: setExportSelectedDatasetUpdater,
   [ActionTypes.SET_EXPORT_DATA_TYPE]: setExportDataTypeUpdater,
   [ActionTypes.SET_EXPORT_FILTERED]: setExportFilteredUpdater,
-  [ActionTypes.SET_EXPORT_CONFIG]: setExportConfigUpdater
+  [ActionTypes.SET_EXPORT_CONFIG]: setExportConfigUpdater,
+  [ActionTypes.SET_EXPORT_DATA]: setExportDataUpdater
 };
 
 /* Reducer */

@@ -155,7 +155,8 @@ const propTypes = {
   onClose: PropTypes.func.isRequired,
   onChangeExportSelectedDataset: PropTypes.func.isRequired,
   onChangeExportDataType: PropTypes.func.isRequired,
-  onChangeExportFiltered: PropTypes.func.isRequired
+  onChangeExportFiltered: PropTypes.func.isRequired,
+  onChangeExportConfig: PropTypes.func.isRequired
 };
 
 const getDataRowCount = (datasets, selectedDataset, filtered) => {
@@ -177,9 +178,7 @@ const ExportDataModal = ({
   // callbacks:
   onChangeExportDataType,
   onChangeExportSelectedDataset,
-  onChangeExportFiltered,
-  onChangeExportConfig,
-  onClose
+  onChangeExportFiltered
 }) => (
   <div className="export-data-modal">
     <StyledModalContent>
@@ -243,23 +242,6 @@ const ExportDataModal = ({
               <div className="filtered-title">Filtered Data</div>
               <div className="filtered-subtitle">{getDataRowCount(datasets, selectedDataset, true)}</div>
             </StyledFilteredDataOption>
-          </div>
-        </StyledExportDataSection>
-
-        <StyledExportDataSection>
-          <div className="description">
-            <div className="title">
-              Include Map Config
-            </div>
-            <div className="subtitle">
-              Export current map config as a Json file
-            </div>
-          </div>
-          <div className="selection">
-            <Switch type="checkbox"
-                    id="export-map-config"
-                    checked={config}
-                    onChange={onChangeExportConfig}/>
           </div>
         </StyledExportDataSection>
 
