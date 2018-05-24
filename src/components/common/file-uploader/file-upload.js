@@ -50,7 +50,7 @@ const CHROME_MSG =
   '*Chrome user: Limit file size to 250mb, if need to upload larger file, try Safari';
 const DISCLAIMER = '*Kepler.gl is a client-side application with no server backend. Data lives only on your machine/browser. ' +
   'No information or map data is sent to any server.';
-const CONFIG_UPLOAD_MESSAGE = '* Upload files to an empty map or Load saved maps from keplergl.json';
+const CONFIG_UPLOAD_MESSAGE = '* Upload files to an empty map or Load saved maps from keplergl.json. You can only upload keplergl.json files including both map config and data';
 
 const fileIconColor = '#D3D8E0';
 
