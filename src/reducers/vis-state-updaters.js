@@ -27,6 +27,7 @@ import {LOAD_FILE_TASK} from 'tasks/tasks';
 
 // Actions
 import {updateVisData, loadFilesErr} from 'actions/vis-state-actions';
+import {addDataToMap} from 'actions';
 
 // Utils
 import {getDefaultInteraction} from 'utils/interaction-utils';
@@ -933,7 +934,19 @@ export const loadFilesUpdater = (state, action) => {
   // reader -> parser -> augment -> receiveVisData
   const loadFileTasks = [
     Task.all(filesToLoad.map(LOAD_FILE_TASK)).bimap(
-      results => updateVisData(results, {centerMap: true}),
+      results => {
+        const data = results.reduce((f, c) => ({
+          // using concat here because the current datasets could be an array or a single item
+          datasets: f.datasets.concat(c.datasets),
+          // we need to deep merge this thing unless we find a better solution
+          // this case will only happen if we allow to load multiple keplergl json files
+          config: {
+            ...f.config,
+            ...(c.config || {})
+          }
+        }), {datasets: [], config: {}, options: {centerMap: true}});
+        return addDataToMap(data);
+      },
       error => loadFilesErr(error)
     )
   ];

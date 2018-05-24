@@ -79,6 +79,7 @@ class KeplerGLSchema {
       config: savedConfig ? this.parseSavedConfig(savedConfig) : undefined
     };
   }
+
   /**
    * Get data to save
    * @param {Object} state - app state

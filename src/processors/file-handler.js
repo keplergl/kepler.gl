@@ -20,17 +20,27 @@
 
 import {FileReader} from 'global/window';
 import {processCsvData, processGeojson} from './data-processor';
+import KeplerGlSchema from 'kepler.gl/schemas';
+
+const FILE_HANDLERS = {
+  csv: loadCsv,
+  geojson: loadGeoJSON,
+  'keplergl': loadKeplerglJSON
+};
 
 export function getFileHandler(fileBlob) {
   const type = getFileType(fileBlob.name);
-
-  return type === 'csv' ? loadCsv : type === 'geojson' ? loadGeoJSON : null;
+  return FILE_HANDLERS[type];
 }
 
 export function getFileType(filename) {
   if (filename.endsWith('csv')) {
     return 'csv';
-  } else if (filename.endsWith('json') || filename.endsWith('geojson')) {
+  }
+  else if (filename.includes('keplergl')) { // we need to come up with a better way to handle this case
+    return 'keplergl';
+  }
+  else if (filename.endsWith('json') || filename.endsWith('geojson')) {
     // Read GeoJson from browser
     return 'geojson';
   }
@@ -56,13 +66,13 @@ export function loadCsv(fileBlob, processor = processCsvData) {
   );
 }
 
-function readGeoJSONFile(fileBlob) {
+function readJSONFile(fileBlob) {
   return new Promise((resolve, reject) => {
     const fileReader = new FileReader();
     fileReader.onload = ({target: {result}}) => {
       try {
-        const geo = JSON.parse(result);
-        resolve(geo);
+        const json = JSON.parse(result);
+        resolve(json);
       } catch (err) {
         resolve(null);
       }
@@ -73,7 +83,20 @@ function readGeoJSONFile(fileBlob) {
 }
 
 export function loadGeoJSON(fileBlob, processor = processGeojson) {
-  return readGeoJSONFile(fileBlob).then(
+  return readJSONFile(fileBlob).then(
     rawData => (rawData ? processor(rawData) : null)
+  );
+}
+
+export function loadKeplerglJSON(fileBlob) {
+  return readJSONFile(fileBlob).then(
+    rawData => {
+      const data = rawData ?
+        KeplerGlSchema.load(rawData.datasets, rawData.config) : null;
+      return {
+        ...data,
+        reset: true // this will reset the state
+      };
+    }
   );
 }

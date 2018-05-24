@@ -179,7 +179,7 @@ export default function ModalContainerFactory(
       this._downloadFile(
         JSON.stringify(dump, null, 2),
         'application/json',
-        'kepler-gl.config.json'
+        'keplergl.json'
       );
 
       this._closeModal();
