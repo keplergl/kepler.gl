@@ -55,29 +55,20 @@ const Pagination = ({items, selectedIndex, onChange}) => (
 );
 
 export default class Swipeable extends PureComponent {
-  state = {
-    selectedIndex: 0
-  };
-
-  _onChange = index => {
-    this.setState({selectedIndex: index});
-  };
-
   render() {
-    const {children} = this.props;
-    const {selectedIndex} = this.state;
+    const {children, onChange, selectedIndex} = this.props;
     return (
       <div>
         <SwipeableViews
           enableMouseEvents
           index={selectedIndex}
-          onChange={this._onChange}>
+          onChange={onChange}>
           {children}
         </SwipeableViews>
         <Pagination
           items={children}
           selectedIndex={selectedIndex}
-          onChange={this._onChange}
+          onChange={onChange}
         />
       </div>
     );

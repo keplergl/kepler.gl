@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import {cdnUrl} from './utils';
-import {VIDEO_TYPES} from './constants';
 
 export const SECTIONS = [
   {
@@ -115,20 +114,20 @@ export const SHOWCASE_ITEMS = [
 
 export const WALKTHROUGH_ITEMS = [
   {
-    videoUrl: 'https://www.youtube.com/embed/nLy3OQYsXWA',
-    videoType: VIDEO_TYPES.YOUTUBE,
+    videoUrl: cdnUrl('videos/0.upload_file.mp4'),
+    imageUrl: cdnUrl('videos/0.upload_file.png'),
     description:
       'Easily import various formats of data by simplily drag and drop'
   },
   {
-    videoUrl: 'https://www.youtube.com/embed/pjzCMQBqjFw',
-    videoType: VIDEO_TYPES.YOUTUBE,
+    videoUrl: cdnUrl('videos/1.time_filter.mp4'),
+    imageUrl: cdnUrl('videos/1.time_filter.png'),
     description:
       'Easily import various formats of data by simplily drag and drop'
   },
   {
-    videoUrl: 'https://www.youtube.com/embed/LPQGHJldEvU',
-    videoType: VIDEO_TYPES.YOUTUBE,
+    videoUrl: cdnUrl('videos/2.aggregation.mp4'),
+    imageUrl: cdnUrl('videos/2.aggregation.png'),
     description:
       'Easily import various formats of data by simplily drag and drop'
   }
