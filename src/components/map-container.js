@@ -427,16 +427,17 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         mapboxApiAccessToken,
         onViewportChange: updateMap,
         transformRequest: (url, resourceType) => {
-          if ( url.slice(8,22) === 'api.mapbox.com' || 
-              url.slice(10,26) === 'tiles.mapbox.com' ) {
-                //Add parameter to identify kepler.gl Mapbox app traffic
-                return {
-                  url: [url.slice(0, url.indexOf("?")+1), "pluginName=Keplergl&", url.slice(url.indexOf("?")+1)].join('')
-                }
-            }
+          let transformedUrl;
+          if ( url.slice(8,22) === 'api.mapbox.com' || url.slice(10,26) === 'tiles.mapbox.com' ) {
+            // Add parameter to identify kepler.gl Mapbox app traffic
+            transformedUrl = [url.slice(0, url.indexOf("?")+1), "pluginName=Keplergl&", url.slice(url.indexOf("?")+1)].join('');
+          }
           else {
-            //Do not transform URL for non-Mapbox API requests
-            return {url: url}
+            // Do not transform URL for non-Mapbox API requests
+            transformedUrl = url
+          }
+          return {
+            url: transformedUrl
           }
         }
       };
