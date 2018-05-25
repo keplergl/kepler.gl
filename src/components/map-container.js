@@ -425,7 +425,19 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         ...mapState,
         preserveDrawingBuffer: true,
         mapboxApiAccessToken,
-        onViewportChange: updateMap
+        onViewportChange: updateMap,
+        transformRequest: (url, resourceType) => {
+          if ( url.slice(0,22) == 'https://api.mapbox.com' || 
+              url.slice(10,26) == 'tiles.mapbox.com') {
+                return {
+                  url: [url.slice(0, url.indexOf("?")+1), "pluginName=Keplergl&", url.slice(url.indexOf("?")+1)].join('')
+                }
+            }
+          else {
+            //Do not transform URL for non-Mapbox API requests
+            return {url: url}
+          }
+        }
       };
 
       return (
