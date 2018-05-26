@@ -100,7 +100,7 @@
     "reselect": "^3.0.1",
     "styled-components": "^2.2.4",
     "supercluster": "^3.0.0",
-    "type-analyzer": "https://registry.npmjs.org/uber-web/-/type-analyzer-0.1.4.tgz",
+    "type-analyzer": "https://registry.npmjs.org/type-analyzer/-/type-analyzer-0.1.4.tgz",
     "uber-licence": "^3.1.1",
     "wellknown": "^0.5.0"
   },

@@ -7247,9 +7247,9 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   version "0.14.5"
   resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-0.14.5.tgz#5ae68177f192d4456269d108afa93ff8743f4f64"
 
-"type-analyzer@https://registry.npmjs.org/uber-web/-/type-analyzer-0.1.4.tgz":
+"type-analyzer@https://registry.npmjs.org/type-analyzer/-/type-analyzer-0.1.4.tgz":
   version "0.1.4"
-  resolved "https://registry.npmjs.org/uber-web/-/type-analyzer-0.1.4.tgz#4592d5792831d0fb061a68feb870d7d171c287aa"
+  resolved "https://registry.npmjs.org/type-analyzer/-/type-analyzer-0.1.4.tgz#4592d5792831d0fb061a68feb870d7d171c287aa"
 
 type-check@~0.3.1, type-check@~0.3.2:
   version "0.3.2"
