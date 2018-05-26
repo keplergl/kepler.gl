@@ -160,6 +160,22 @@ class AddMapStyleModal extends Component {
   render() {
     const {inputStyle, mapState} = this.props;
 
+  const mapProps = {
+    ...mapState,
+    preserveDrawingBuffer: true,
+    mapboxApiAccessToken: this.props.mapboxApiAccessToken,
+    transformRequest: (url, resourceType) => {
+      let transformedUrl = url;
+      if ( url.slice(8,22) === 'api.mapbox.com' || url.slice(10,26) === 'tiles.mapbox.com' ) {
+        // Add parameter to identify kepler.gl Mapbox app traffic
+        transformedUrl = [url.slice(0, url.indexOf("?")+1), "pluginName=Keplergl&", url.slice(url.indexOf("?")+1)].join('');
+      }
+      return {
+        url: transformedUrl
+      }
+    }
+  }
+
     return (
       <div className="add-map-style-modal">
         <StyledModalContent>
@@ -203,12 +219,10 @@ class AddMapStyleModal extends Component {
                 <div className="preview-image-spinner"/> :
                 <StyledMapContainer>
                   <MapboxGLMap
-                    {...mapState}
-                    mapboxApiAccessToken={this.props.mapboxApiAccessToken}
+                    {...mapProps}
                     ref={el => {
                       this.mapRef = el;
                     }}
-                    preserveDrawingBuffer
                     width={MapW}
                     height={MapH}
                     mapStyle={inputStyle.url}/>
