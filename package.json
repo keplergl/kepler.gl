@@ -90,7 +90,7 @@
     "react-file-drop": "^0.1.8",
     "react-map-gl": "^3.2.1",
     "react-modal": "^3.1.10",
-    "react-onclickoutside": "https://registry.npmjs.org/Pomax/-/react-onclickoutside-6.7.1.tgz",
+    "react-onclickoutside": "https://registry.npmjs.org/react-onclickoutside/-/react-onclickoutside-6.7.1.tgz",
     "react-palm": "^0.8.1",
     "react-redux": "^4.0.0",
     "react-tooltip": "https://registry.npmjs.org/react-tooltip/-/react-tooltip-3.3.0.tgz",
@@ -100,7 +100,7 @@
     "reselect": "^3.0.1",
     "styled-components": "^2.2.4",
     "supercluster": "^3.0.0",
-    "type-analyzer": "https://registry.npmjs.org/uber-web/-/type-analyzer-0.1.4.tgz",
+    "type-analyzer": "https://registry.npmjs.org/type-analyzer/-/type-analyzer-0.1.4.tgz",
     "uber-licence": "^3.1.1",
     "wellknown": "^0.5.0"
   },
