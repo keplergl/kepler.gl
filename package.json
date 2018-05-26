@@ -90,7 +90,7 @@
     "react-file-drop": "^0.1.8",
     "react-map-gl": "^3.2.1",
     "react-modal": "^3.1.10",
-    "react-onclickoutside": "https://registry.npmjs.org/Pomax/-/react-onclickoutside-6.7.1.tgz",
+    "react-onclickoutside": "git://github.com/Pomax/react-onclickoutside.git#v6.7.1",
     "react-palm": "^0.8.1",
     "react-redux": "^4.0.0",
     "react-tooltip": "https://registry.npmjs.org/react-tooltip/-/react-tooltip-3.3.0.tgz",
