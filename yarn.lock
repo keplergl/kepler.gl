@@ -5907,9 +5907,9 @@ react-motion@^0.5.2:
     prop-types "^15.5.8"
     raf "^3.1.0"
 
-"react-onclickoutside@git://github.com/Pomax/react-onclickoutside.git#v6.7.1":
+"react-onclickoutside@https://registry.npmjs.org/react-onclickoutside/-/react-onclickoutside-6.7.1.tgz":
   version "6.7.1"
-  resolved "git://github.com/Pomax/react-onclickoutside.git#cc1d179bd177615fab0204d0293b771a844068ba"
+  resolved "https://registry.npmjs.org/react-onclickoutside/-/react-onclickoutside-6.7.1.tgz#6a5b5b8b4eae6b776259712c89c8a2b36b17be93"
 
 react-palm@^0.8.1:
   version "0.8.1"
