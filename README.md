@@ -1,11 +1,10 @@
 # Kepler.gl
 
-Kepler.gl is the core package of Voyager, a map visualization tool that provides the UI
-to visualize any type of geospatial dataset.
+[kepler.gl](http://www.kepler.gl/) is a data-agnostic, high-performance web-based application for visual exploration of large-scale geolocation data sets. Built on top of [deck.gl](http://uber.github.io/deck.gl/#/), kepler.gl can render millions of points representing thousands of trips and perform spatial aggregations on the fly.
 
-For what it is capable of, take a look at [Voyager](voyager.uberinternal.com).
+For what it is capable of, take a look at [kepler.gl demo app](https://uber.github.io/kepler.gl/#/demo).
 
-Kepler.gl is a redux component that uses a redux reducer to store and manage state transitions.
+Kepler.gl is a redux component that uses redux reducer to store and manage state transitions.
 This package consists of a reducer and the UI components to render and customize the map.
 
 ## Links
@@ -17,7 +16,7 @@ Use Node v6 and above, older node versions have not been tested
 Install node (`> 6`), yarn, and project dependencies
 
 ```
-npm install --save @uber/kepler.gl
+npm install --save kepler.gl
 ```
 
 ### Local dev
@@ -69,7 +68,7 @@ You need to add `taskMiddleware` to your store too. We are actively working on a
 `react-palm` will not be required, however it is still a very nice side effects management tool that works easier for testing than react-thunk.
 
 ```
-import keplerGlReducer from '@uber/kepler.gl/reducers';
+import keplerGlReducer from 'kepler.gl/reducers';
 import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
 import {taskMiddleware} from 'react-palm';
 
@@ -101,12 +100,13 @@ with the `getState` prop.
 #### 2. Mount kepler.gl Component
 
 ```
-import KeplerGl from '@uber/kepler.gl';
+import KeplerGl from 'kepler.gl';
 
 const Map = props => (
   <KeplerGl
       id="foo"
       width={width}
+      mapboxApiAccessToken={token}
       height={height}/>
 );
 ```
@@ -172,6 +172,13 @@ Action called when click Save Map Url in side panel header.
 
 Actions payload creator to replace default kepler.gl action. Only use custom action when you want to modify action payload.
 
+##### `mint` (Boolean, optional)
+
+- Default: `true`
+
+Whether to load a fresh empty state when component is mounted. when parse `mint: true` kepler.gl component will always load a fresh state when re-mount the same component, state inside this component will be destroyed once its unmounted.
+By Parsing `mint: false` kepler.gl will keep the component state in the store even when it is unmounted, and use it as initial state when re-mounted again. This is useful when mounting kepler.gl in a modal, and keep the same map when re-open.
+
 #### 3. Dispatch custom actions to `keplerGl` reducer.
 
 One advantage of using the reducer over React component state to handle keplerGl state is the flexibility
@@ -186,7 +193,7 @@ Each action is mapped to a reducer updater in kepler.gl. You can import the redu
 e.g. `updateVisDataUpdater` is the updater for `ActionTypes.UPDATE_VIS_DATA` (take a look at each reducer `reducers/vis-state.js` for action to updater mapping).
 Here is an example how you can listen to an app action `QUERY_SUCCESS` and call `updateVisDataUpdater` to load data into Kepler.Gl.
 ```
-import keplerGlReducer, {visStateUpdaters} from '@uber/kepler.gl/reducers';
+import keplerGlReducer, {visStateUpdaters} from 'kepler.gl/reducers';
 
 // Root Reducer
 const reducers = combineReducers({
@@ -226,10 +233,10 @@ using connect.
 
 ```
 // component
-import KeplerGl from '@uber/kepler.gl';
+import KeplerGl from 'kepler.gl';
 
 // action and forward dispatcher
-import {toggleFullScreen, forwardTo} from '@uber/kepler.gl/actions';
+import {toggleFullScreen, forwardTo} from 'kepler.gl/actions';
 import {connect} from 'react-redux';
 
 Const MapContainer = props => (
@@ -259,10 +266,10 @@ You can also simply wrap an action into a forward action with the `wrapTo` helpe
 
 ```
 // component
-import KeplerGl from '@uber/kepler.gl';
+import KeplerGl from 'kepler.gl';
 
 // action and forward dispatcher
-import {toggleFullScreen, wrapTo} from '@uber/kepler.gl/actions';
+import {toggleFullScreen, wrapTo} from 'kepler.gl/actions';
 
 // create a function to wrapper action payload to 'foo'
 const wrapToMap = wrapTo('foo');
@@ -284,7 +291,7 @@ and call `injectComponents` at the root component of your app where `KeplerGl` i
 Take a look at `examples/demo-app/src/app.js` and see how it renders a custom side panel header in kepler.gl
 
 ```
-import {injectComponents, PanelHeaderFactory} from '@uber/kepler.gl/components';
+import {injectComponents, PanelHeaderFactory} from 'kepler.gl/components';
 
 // define custom header
 const CustomHeader = () => (<div>My kepler.gl app</div>);
@@ -309,8 +316,8 @@ const MapContainer = () => (
 Using `withState` helper to add reducer state and actions to customized component as additional props.
 
 ```
-import {withState, injectComponents, PanelHeaderFactory} from '@uber/kepler.gl/components';
-import {visStateLens} from '@uber/kepler.gl/reducers';
+import {withState, injectComponents, PanelHeaderFactory} from 'kepler.gl/components';
+import {visStateLens} from 'kepler.gl/reducers';
 
 // custom action wrap to mounted instance
 const addTodo = (text) => wrapTo('map', {
@@ -339,18 +346,6 @@ In order to interact with a kepler.gl instance and add new data to it the follow
 - updateVisData
 - addDataToMap
 It is also important to remember that Kepler.gl provides an easy API (```KeplerGlSchema.getConfigToSave```) to generate a dump of the current kepler instance configuration.
-
-
-##### UpdateVisData
-This action will upload a new dataset and update the visState according to input parameters.
-The method takes 3 parameters as input:
-- ```datasets | object```: new data to be added to the current kepler.gl instance
-- ```options | object ``` - ```{centerMap: true, readOnly: false}```:
-    - if centerMap is set to true kepler.gl will place the map view within the data points boundaries
-    - if readOnly is set to true the left setting panel will not be visible
-- ```config | object```: this is the new visState configuration that will be loaded into the kepler.gl instance.
-Properties defined in this object will override the current ones in the redux state.
-
 
 ##### addDataToMap
 This method is similar to UpdateVisData but it is able to update the full kepler.gl configuration (mapState, mapStyle, visState).
