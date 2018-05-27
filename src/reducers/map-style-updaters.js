@@ -146,6 +146,7 @@ export const loadCustomMapStyleUpdater = (state, {payload: {icon, style, error}}
       id: style.id || generateHashId(),
       style,
       label: style.name,
+      // gathering layer group info from style json
       layerGroups: DEFAULT_LAYER_GROUPS.filter(lg => style.layers.filter(lg.filter).length)
     } : {}),
     ...(icon ? {icon} : {}),

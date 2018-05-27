@@ -48,10 +48,12 @@ const getDefaultState = () => {
     mapStyles: {},
 
     inputStyle: {
-      url: null,
+      accessToken: null,
+      error: false,
       isValid: false,
       label: null,
-      style: null
+      style: null,
+      url: null
     }
   };
 };

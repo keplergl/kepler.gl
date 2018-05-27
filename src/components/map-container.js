@@ -32,6 +32,7 @@ import {StyledMapContainer} from 'components/common/styled-components';
 
 // Overlay type
 import {generateMapboxLayers, updateMapboxLayers} from '../layers/mapbox-utils';
+import terrainStyle from './terrain-style';
 
 import {transformRequest} from 'utils/mapbox-utils';
 

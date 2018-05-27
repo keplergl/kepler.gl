@@ -32,7 +32,7 @@ import {transformRequest} from 'utils/mapbox-utils';
 const MapH = 190;
 const MapW = 264;
 const ErrorMsg = {
-  styleError : 'Failed to load map style, make sure it is published'
+  styleError : 'Failed to load map style, make sure it is published. For private style, paste in your access token.'
 };
 
 const InstructionPanel = styled.div`
@@ -114,6 +114,9 @@ const InlineLink = styled.a`
 `;
 
 class AddMapStyleModal extends Component {
+  state = {
+    reRenderKey: 0
+  };
 
   static propTypes = {
     mapState: PropTypes.object.isRequired,
@@ -144,16 +147,28 @@ class AddMapStyleModal extends Component {
     }
   }
 
+  componentWillReceiveProps(nextProps) {
+    if (this.props.inputStyle.accessToken !== nextProps.inputStyle.accessToken) {
+      // toke has changed
+      // ReactMapGl doesn't re-create map when token has changed
+      // here we force the map to update
+      console.log('token has changed')
+      this.state.reRenderKey += 1;
+    }
+  }
+
   loadMapStyleJson = (style) => {
     this.props.loadCustomMapStyle({style, error: false});
   };
 
   loadMapStyleIcon = () => {
-    const canvas = findDOMNode(this.mapRef).querySelector('.mapboxgl-canvas');
-    const dataUri = canvas.toDataURL();
-    this.props.loadCustomMapStyle({
-      icon: dataUri
-    });
+    if (this.mapRef) {
+      const canvas = findDOMNode(this.mapRef).querySelector('.mapboxgl-canvas');
+      const dataUri = canvas.toDataURL();
+      this.props.loadCustomMapStyle({
+        icon: dataUri
+      });
+    }
   };
 
   loadMaoStyleError = () => {
@@ -175,12 +190,22 @@ class AddMapStyleModal extends Component {
         <StyledModalContent>
           <InstructionPanel>
             <div className="modal-section">
-              <div className="modal-section-title">1. Publish your style at mapbox</div>
+              <div className="modal-section-title">1. Publish your style at mapbox or provide access token</div>
               <div className="modal-section-subtitle">
                 You can create your own map style at
                 <InlineLink target="_blank" href="https://www.mapbox.com/studio/styles/"> mapbox</InlineLink> and
                 <InlineLink target="_blank" href="https://www.mapbox.com/help/studio-manual-publish/"> publish</InlineLink> it.
               </div>
+              <div className="modal-section-subtitle">
+                To use private style, paste your
+                <InlineLink target="_blank" href="https://www.mapbox.com/help/how-access-tokens-work/"> access token</InlineLink> here. *kepler.gl is a client-side application, data stays in your browser..
+              </div>
+              <InputLight
+                type="text"
+                value={inputStyle.accessToken || ''}
+                onChange={({target: {value}}) => this.props.inputMapStyle({...inputStyle, accessToken: value})}
+                placeholder="e.g. pk.abcdefg.xxxxxx"
+              />
             </div>
             <div className="modal-section">
               <div className="modal-section-title">2. Paste style url</div>
@@ -217,6 +242,7 @@ class AddMapStyleModal extends Component {
                     ref={el => {
                       this.mapRef = el;
                     }}
+                    key={this.state.reRenderKey}
                     width={MapW}
                     height={MapH}
                     mapStyle={inputStyle.url}/>
