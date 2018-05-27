@@ -26,6 +26,9 @@ import MapboxGLMap from 'react-map-gl';
 import {findDOMNode} from 'react-dom';
 import {StyledModalContent, InputLight, StyledMapContainer} from 'components/common/styled-components';
 
+// Utils
+import {transformRequest} from 'utils/mapbox-utils';
+
 const MapH = 190;
 const MapW = 264;
 const ErrorMsg = {
@@ -160,6 +163,13 @@ class AddMapStyleModal extends Component {
   render() {
     const {inputStyle, mapState} = this.props;
 
+  const mapProps = {
+    ...mapState,
+    preserveDrawingBuffer: true,
+    mapboxApiAccessToken: this.props.mapboxApiAccessToken,
+    transformRequest
+  };
+
     return (
       <div className="add-map-style-modal">
         <StyledModalContent>
@@ -203,12 +213,10 @@ class AddMapStyleModal extends Component {
                 <div className="preview-image-spinner"/> :
                 <StyledMapContainer>
                   <MapboxGLMap
-                    {...mapState}
-                    mapboxApiAccessToken={this.props.mapboxApiAccessToken}
+                    {...mapProps}
                     ref={el => {
                       this.mapRef = el;
                     }}
-                    preserveDrawingBuffer
                     width={MapW}
                     height={MapH}
                     mapStyle={inputStyle.url}/>
