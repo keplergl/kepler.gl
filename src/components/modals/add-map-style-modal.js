@@ -26,6 +26,9 @@ import MapboxGLMap from 'react-map-gl';
 import {findDOMNode} from 'react-dom';
 import {StyledModalContent, InputLight, StyledMapContainer} from 'components/common/styled-components';
 
+// Utils
+import {transformRequest} from 'utils/mapbox-utils';
+
 const MapH = 190;
 const MapW = 264;
 const ErrorMsg = {
@@ -164,17 +167,8 @@ class AddMapStyleModal extends Component {
     ...mapState,
     preserveDrawingBuffer: true,
     mapboxApiAccessToken: this.props.mapboxApiAccessToken,
-    transformRequest: (url, resourceType) => {
-      let transformedUrl = url;
-      if ( url.slice(8,22) === 'api.mapbox.com' || url.slice(10,26) === 'tiles.mapbox.com' ) {
-        // Add parameter to identify kepler.gl Mapbox app traffic
-        transformedUrl = [url.slice(0, url.indexOf("?")+1), "pluginName=Keplergl&", url.slice(url.indexOf("?")+1)].join('');
-      }
-      return {
-        url: transformedUrl
-      }
-    }
-  }
+    transformRequest
+  };
 
     return (
       <div className="add-map-style-modal">

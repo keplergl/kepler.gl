@@ -33,6 +33,8 @@ import {StyledMapContainer} from 'components/common/styled-components';
 // Overlay type
 import {generateMapboxLayers, updateMapboxLayers} from '../layers/mapbox-utils';
 
+import {transformRequest} from 'utils/mapbox-utils';
+
 // default-settings
 import {LAYER_BLENDINGS} from 'constants/default-settings';
 
@@ -426,16 +428,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         preserveDrawingBuffer: true,
         mapboxApiAccessToken,
         onViewportChange: updateMap,
-        transformRequest: (url, resourceType) => {
-          let transformedUrl = url;
-          if ( url.slice(8,22) === 'api.mapbox.com' || url.slice(10,26) === 'tiles.mapbox.com' ) {
-            // Add parameter to identify kepler.gl Mapbox app traffic
-            transformedUrl = [url.slice(0, url.indexOf("?")+1), "pluginName=Keplergl&", url.slice(url.indexOf("?")+1)].join('');
-          }
-          return {
-            url: transformedUrl
-          }
-        }
+        transformRequest
       };
 
       return (
