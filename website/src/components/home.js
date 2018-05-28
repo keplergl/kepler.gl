@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React, {PureComponent} from 'react';
-import {ThemeProvider} from 'styled-components';
+import styled, {ThemeProvider} from 'styled-components';
 
 import {theme} from '../styles';
 import {SECTIONS} from '../content';
@@ -40,32 +40,41 @@ const SECTION_CONTENT = {
   tutorials: Tutorials
 };
 
+const StyledKGContent = styled.div`
+  width: 100vw;
+  font-weight: 400;
+  font-size: 0.875em;
+  line-height: 1.71429;
+`;
+
 export default class Home extends PureComponent {
   render() {
     return (
-      <ThemeProvider theme={theme}>
-        <div>
-          <Hero />
-          {SECTIONS.map(
-            ({id, title, description, icon, isDark, background}, i) => {
-              const SectionContent = SECTION_CONTENT[id];
-              return (
-                <Section
-                  key={`section-${i}`}
-                  title={title}
-                  description={description}
-                  icon={icon}
-                  isDark={isDark}
-                  background={background}
-                >
-                  <SectionContent />
-                </Section>
-              );
-            }
-          )}
-          <Footer />
-        </div>
-      </ThemeProvider>
+      <StyledKGContent className="kg-web-content">
+        <ThemeProvider theme={theme}>
+          <div>
+            <Hero />
+            {SECTIONS.map(
+              ({id, title, description, icon, isDark, background}, i) => {
+                const SectionContent = SECTION_CONTENT[id];
+                return (
+                  <Section
+                    key={`section-${i}`}
+                    title={title}
+                    description={description}
+                    icon={icon}
+                    isDark={isDark}
+                    background={background}
+                  >
+                    <SectionContent />
+                  </Section>
+                );
+              }
+            )}
+            <Footer />
+          </div>
+        </ThemeProvider>
+      </StyledKGContent>
     );
   }
 }
