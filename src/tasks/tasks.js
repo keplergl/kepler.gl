@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import {taskCreator} from 'react-palm/tasks';
+import {json as requestJson} from 'd3-request';
 
 export const LOAD_FILE_TASK = taskCreator(
   ({fileBlob, info, handler, processor}, success, error) =>
@@ -34,4 +35,20 @@ export const LOAD_FILE_TASK = taskCreator(
       .catch(err => error(err)),
 
   'LOAD_FILE_TASK'
+);
+
+export const LOAD_MAP_STYLE_TASK = taskCreator(
+  ({url, id}, success, error) =>
+    requestJson(url, (err, result) => {
+      if (err) {
+        error(err);
+      } else {
+        if (!result) {
+          error(new Error('Map style response is empty'));
+        }
+        success({id, style: result})
+      }
+    }),
+
+  'LOAD_MAP_STYLE_TASK'
 );

@@ -19,16 +19,21 @@
 // THE SOFTWARE.
 
 import Immutable from 'immutable';
+import {Task, withTask} from 'react-palm';
 
 // Utils
 import {
   getDefaultLayerGroupVisibility,
   isValidStyleUrl,
+  getStyleDownloadUrl,
+  mergeLayerGroupVisibility,
   editTopMapStyle,
   editBottomMapStyle
 } from 'utils/map-style-utils/mapbox-gl-style-editor';
 import {DEFAULT_LAYER_GROUPS} from 'constants/default-settings';
 import {generateHashId} from 'utils/utils';
+import {LOAD_MAP_STYLE_TASK} from 'tasks/tasks';
+import {loadMapStyles, loadMapStyleErr} from 'actions/map-style-actions';
 
 /**
  * Create two map styles from preset map style, one for top map one for bottom
@@ -86,7 +91,17 @@ function getMapStyles({
   return {bottomMapStyle, topMapStyle, editable};
 }
 
+function getLayerGroupsFromStyle(style) {
+  return DEFAULT_LAYER_GROUPS.filter(lg => style.layers.filter(lg.filter).length);
+}
+
 // Updaters
+export const initMapStyleUpdater = (state, action) => ({
+  ...state,
+  // save mapbox access token to map style state
+  mapboxApiAccessToken: (action.payload || {}).mapboxApiAccessToken
+});
+
 export const mapConfigChangeUpdater = (state, action) => ({
   ...state,
   ...action.payload,
@@ -97,9 +112,11 @@ export const mapConfigChangeUpdater = (state, action) => ({
 });
 
 export const mapStyleChangeUpdater = (state, {payload: styleType}) => {
-  const visibleLayerGroups = getDefaultLayerGroupVisibility(
+  const defaultLGVisibility = getDefaultLayerGroupVisibility(
     state.mapStyles[styleType]
   );
+
+  const visibleLayerGroups = mergeLayerGroupVisibility(defaultLGVisibility, state.visibleLayerGroups);
 
   return {
     ...state,
@@ -132,10 +149,45 @@ export const loadMapStylesUpdater = (state, action) => {
 
 // do nothing for now, if didn't load, skip it
 export const loadMapStyleErrUpdater = (state, action) => state;
-export const receiveMapConfigUpdater = (state, action) =>
-  action.payload.mapStyle
-    ? mapConfigChangeUpdater(state, {payload: action.payload.mapStyle})
-    : state;
+export const receiveMapConfigUpdater = (state, {payload: {mapStyle}}) => {
+  if (!mapStyle) {
+    return state;
+  }
+
+  // if saved custom mapStyles load the style object
+  const loadMapStyleTasks = mapStyle.mapStyles ? [
+    Task.all(
+      Object.values(mapStyle.mapStyles)
+      .map(({id, url, accessToken}) => ({
+        id, url: getStyleDownloadUrl(url, accessToken || state.mapboxApiAccessToken)
+      }))
+      .map(LOAD_MAP_STYLE_TASK))
+      .bimap(
+        // success
+        results => (
+          loadMapStyles(
+            results.reduce((accu, {id, style}) => ({
+              ...accu,
+              [id]: {
+                ...mapStyle.mapStyles[id],
+                layerGroups: getLayerGroupsFromStyle(style),
+                style
+              }
+            }), {})
+          )
+        ),
+        // error
+        error => loadMapStyleErr(error)
+      )
+  ] : null;
+
+  const newState = mapConfigChangeUpdater(state, {payload: mapStyle});
+
+  return loadMapStyleTasks ? withTask(
+    newState,
+    loadMapStyleTasks
+  ) : newState;
+};
 
 export const loadCustomMapStyleUpdater = (state, {payload: {icon, style, error}}) => ({
   ...state,
@@ -144,10 +196,11 @@ export const loadCustomMapStyleUpdater = (state, {payload: {icon, style, error}}
     // style json and icon will load asynchronously
     ...(style ? {
       id: style.id || generateHashId(),
-      style,
+      // make a copy of the style object
+      style: JSON.parse(JSON.stringify(style)),
       label: style.name,
       // gathering layer group info from style json
-      layerGroups: DEFAULT_LAYER_GROUPS.filter(lg => style.layers.filter(lg.filter).length)
+      layerGroups: getLayerGroupsFromStyle(style)
     } : {}),
     ...(icon ? {icon} : {}),
     ...(error !== undefined ? {error} : {})
@@ -171,13 +224,20 @@ export const addCustomMapStyleUpdater = (state, action) => {
       [styleId]: state.inputStyle
     },
     // set to default
-    inputStyle: {
-      url: null,
-      isValid: false,
-      label: null,
-      style: null
-    }
+    inputStyle: getInitialInputStyle()
   };
   // set new style
   return mapStyleChangeUpdater(newState, {payload: styleId});
 };
+
+export function getInitialInputStyle() {
+  return {
+    accessToken: null,
+    error: false,
+    isValid: false,
+    label: null,
+    style: null,
+    url: null,
+    custom: true
+  };
+}

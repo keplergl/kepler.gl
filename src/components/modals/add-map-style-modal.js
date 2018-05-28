@@ -27,7 +27,7 @@ import {findDOMNode} from 'react-dom';
 import {StyledModalContent, InputLight, StyledMapContainer} from 'components/common/styled-components';
 
 // Utils
-import {transformRequest} from 'utils/mapbox-utils';
+import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 
 const MapH = 190;
 const MapW = 264;
@@ -72,7 +72,8 @@ const PreviewMap = styled.div`
   justify-content: center;
   margin-left: 116px;
   flex-shrink: 0;
-  
+  width: ${MapW}px;
+
   .preview-title {
     font-weight: 500;
     font-size: 10px;
@@ -114,16 +115,27 @@ const InlineLink = styled.a`
 `;
 
 class AddMapStyleModal extends Component {
-  state = {
-    reRenderKey: 0
-  };
-
   static propTypes = {
     mapState: PropTypes.object.isRequired,
     inputMapStyle: PropTypes.func.isRequired,
     loadCustomMapStyle: PropTypes.func.isRequired,
     inputStyle: PropTypes.object.isRequired
   };
+
+  state = {
+    reRenderKey: 0
+  };
+
+  componentWillReceiveProps(nextProps) {
+    if (this.props.inputStyle.accessToken !== nextProps.inputStyle.accessToken) {
+      // toke has changed
+      // ReactMapGl doesn't re-create map when token has changed
+      // here we force the map to update
+      this.setState({
+        reRenderKey: this.state.reRenderKey + 1
+      });
+    }
+  }
 
   componentDidUpdate() {
     const map = this.mapRef && this.mapRef.getMap();
@@ -144,16 +156,6 @@ class AddMapStyleModal extends Component {
       map.on('error', () => {
         this.loadMaoStyleError();
       })
-    }
-  }
-
-  componentWillReceiveProps(nextProps) {
-    if (this.props.inputStyle.accessToken !== nextProps.inputStyle.accessToken) {
-      // toke has changed
-      // ReactMapGl doesn't re-create map when token has changed
-      // here we force the map to update
-      console.log('token has changed')
-      this.state.reRenderKey += 1;
     }
   }
 
@@ -181,7 +183,7 @@ class AddMapStyleModal extends Component {
   const mapProps = {
     ...mapState,
     preserveDrawingBuffer: true,
-    mapboxApiAccessToken: this.props.mapboxApiAccessToken,
+    mapboxApiAccessToken: inputStyle.accessToken || this.props.mapboxApiAccessToken,
     transformRequest
   };
 

@@ -21,7 +21,7 @@
 import test from 'tape';
 
 import SchemaManager from 'schemas';
-import {InitialState} from 'test/helpers/mock-state';
+import {InitialState, StateWCustomMapStyle} from 'test/helpers/mock-state';
 
 test('#mapStyleSchema -> v1 -> save load mapStyle', t => {
   const initialState = InitialState.toJS();
@@ -32,13 +32,46 @@ test('#mapStyleSchema -> v1 -> save load mapStyle', t => {
   const msLoaded = SchemaManager.parseSavedConfig(savedState).mapStyle;
 
   t.deepEqual(Object.keys(msToSave),
-    ['styleType', 'topLayerGroups', 'visibleLayerGroups'],
-    'mapStyle should have all 6 entries');
+    ['styleType', 'topLayerGroups', 'visibleLayerGroups', 'mapStyles'],
+    'mapStyle should have all 4 entries');
 
   const expectedSaved = {
     styleType: 'dark',
     topLayerGroups: {},
-    visibleLayerGroups: {}
+    visibleLayerGroups: {},
+    mapStyles: {}
+  };
+
+  t.deepEqual(msToSave, expectedSaved, 'saved mapStyle should be current');
+  t.deepEqual(msLoaded, expectedSaved, 'loaded mapStyle should be current');
+  t.end();
+});
+
+test('#mapStyleSchema -> v1 -> save load mapStyle with custom style', t => {
+  const initialState = StateWCustomMapStyle.toJS();
+  const savedState = SchemaManager.getConfigToSave(initialState);
+
+  // save state
+  const msToSave = savedState.config.mapStyle;
+  const msLoaded = SchemaManager.parseSavedConfig(savedState).mapStyle;
+
+  const expectedSaved = {
+    styleType: 'smoothie_the_cat',
+    topLayerGroups: {},
+    visibleLayerGroups: {
+      label: true,
+      road: true
+    },
+    mapStyles: {
+      'smoothie_the_cat': {
+        id: 'smoothie_the_cat',
+        accessToken: 'secret_token',
+        label: 'Smoothie the Cat',
+        icon: 'data:image/png;base64,xyz',
+        custom: true,
+        url: 'mapbox://styles/shanhe/smoothie.the.cat'
+      }
+    }
   };
 
   t.deepEqual(msToSave, expectedSaved, 'saved mapStyle should be current');

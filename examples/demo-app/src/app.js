@@ -62,10 +62,6 @@ class App extends Component {
   }
 
   componentDidMount() {
-    /**
-     * ENABLE THE FOLLOWING CODE TO PRE-POLUATE KEPLER.GL INSTANCE
-     */
-
     // load trip based data with config
     // this._loadSampleData();
   }

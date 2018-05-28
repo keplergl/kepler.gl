@@ -24,7 +24,9 @@ import {handleActions} from 'redux-actions';
 import ActionTypes from 'constants/action-types';
 
 import {
+  getInitialInputStyle,
   inputMapStyleUpdater,
+  initMapStyleUpdater,
   mapConfigChangeUpdater,
   mapStyleChangeUpdater,
   loadMapStylesUpdater,
@@ -46,21 +48,16 @@ const getDefaultState = () => {
     visibleLayerGroups,
     topLayerGroups,
     mapStyles: {},
-
-    inputStyle: {
-      accessToken: null,
-      error: false,
-      isValid: false,
-      label: null,
-      style: null,
-      url: null
-    }
+    // save mapbox access token
+    mapboxApiAccessToken: null,
+    inputStyle: getInitialInputStyle()
   };
 };
 
 export const INITIAL_MAP_STYLE = getDefaultState();
 
 const actionHandler = {
+  [ActionTypes.INIT]: initMapStyleUpdater,
   [ActionTypes.INPUT_MAP_STYLE]: inputMapStyleUpdater,
   [ActionTypes.MAP_CONFIG_CHANGE]: mapConfigChangeUpdater,
   [ActionTypes.MAP_STYLE_CHANGE]: mapStyleChangeUpdater,

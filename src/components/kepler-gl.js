@@ -150,7 +150,7 @@ function KeplerGlFactory(
         if (error) {
           Console.warn(`Error loading map style ${mapStyle.url}`);
         } else {
-          this.props.mapStyleActions.loadMapStyles({
+            this.props.mapStyleActions.loadMapStyles({
             [id]: {...mapStyle, style: result}
           });
         }

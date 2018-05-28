@@ -21,9 +21,11 @@
 import Immutable from 'immutable';
 import cloneDeep from 'lodash.clonedeep';
 import {VizColorPalette} from 'constants/custom-color-ranges';
+import {getInitialInputStyle} from 'reducers/map-style-updaters';
 
 import keplerGlReducer from 'reducers/core';
 import * as VisStateActions from 'actions/vis-state-actions';
+import * as MapStyleActions from 'actions/map-style-actions';
 
 // fixtures
 import {testFields, testAllData} from 'test/fixtures/test-csv-data';
@@ -206,11 +208,48 @@ function mockStateWithLayerDimensions(state) {
   return Immutable.fromJS(resultState);
 }
 
+function mockStateWithCustomMapStyle(state) {
+  const initialState = InitialState.toJS();
+  const testCustomMapStyle = {
+    ...getInitialInputStyle(),
+    accessToken: 'secret_token',
+    isValid: true,
+    label: 'Smoothie the Cat',
+    icon: 'data:image/png;base64,xyz',
+    style: {version: 'v8', id: 'smoothie_the_cat', layers: [
+      {id: 'background'}, {id: 'road'}, {id: 'label'}
+    ], name: 'Smoothie the Cat'},
+    url: 'mapbox://styles/shanhe/smoothie.the.cat'
+  };
+
+  // add custom map style
+  const updatedState = applyActions(keplerGlReducer, initialState, [
+    {
+      action: MapStyleActions.inputMapStyle,
+      payload: [testCustomMapStyle]
+    },
+    {
+      action: MapStyleActions.loadCustomMapStyle,
+      payload: [{
+        style: testCustomMapStyle.style
+      }]
+    },
+    {
+      action: MapStyleActions.addCustomMapStyle,
+      payload: [{}]
+    },
+  ]);
+
+  return Immutable.fromJS(updatedState);
+}
+
 export const StateWFiles = mockStateWithFileUpload();
 export const StateWFilters = mockStateWithFilters();
 export const StateWFilesFiltersLayerColor = mockStateWithLayerDimensions(
   StateWFilters
 );
+
+export const StateWCustomMapStyle = mockStateWithCustomMapStyle();
 
 // saved hexagon layer
 export const expectedSavedLayer0 = {
