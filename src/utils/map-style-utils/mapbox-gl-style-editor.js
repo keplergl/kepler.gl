@@ -98,7 +98,7 @@ const mapUrlRg = /^mapbox:\/\/styles\/[-a-z0-9]{2,256}\/[-a-z0-9]{2,256}/;
 const httpRg = /^(?=(http:|https:))/;
 const mapboxStyleApiUrl = 'https://api.mapbox.com/styles/v1/';
 
-// valid valid style url
+// valid style url
 // mapbox://styles/uberdata/cjfyl03kp1tul2smf5v2tbdd4
 // lowercase letters, numbers and dashes only.
 export function isValidStyleUrl(url) {
