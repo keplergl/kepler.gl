@@ -114,10 +114,10 @@ class Walkthrough extends PureComponent {
       <div>
         <Swipeable onChange={this._onChange} selectedIndex={selectedIndex}>
           {WALKTHROUGH_ITEMS.map(({videoUrl, imageUrl, description}, i) => (
-            <WalkthroughItem>
-              <VideoWrapper key={videoUrl}>
+            <WalkthroughItem key={videoUrl}>
+              <VideoWrapper>
                 <VideoContainer>
-                  <video 
+                  <video
                     src={videoUrl}
                     poster={imageUrl}
                     autoPlay={i === selectedIndex}
