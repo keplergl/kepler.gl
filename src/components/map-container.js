@@ -33,7 +33,7 @@ import {StyledMapContainer} from 'components/common/styled-components';
 // Overlay type
 import {generateMapboxLayers, updateMapboxLayers} from '../layers/mapbox-utils';
 
-import {transformRequest} from 'utils/mapbox-utils';
+import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 
 // default-settings
 import {LAYER_BLENDINGS} from 'constants/default-settings';

@@ -72,9 +72,9 @@ export function ContainerFactory(KeplerGl) {
     }
 
     componentWillMount() {
-      const {id, mint} = this.props;
+      const {id, mint, mapboxApiAccessToken} = this.props;
       // add a new entry to reducer
-      this.props.dispatch(registerEntry({id, mint}));
+      this.props.dispatch(registerEntry({id, mint, mapboxApiAccessToken}));
     }
 
     componentWillReceiveProps(nextProps) {

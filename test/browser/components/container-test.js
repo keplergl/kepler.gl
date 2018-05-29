@@ -74,7 +74,7 @@ test('Components -> Container -> Mount with mint:true', t => {
 
   let actions = store.getActions();
 
-  let expectedActions0 = {type: '@@kepler.gl/REGISTER_ENTRY', payload: {id: 'map', mint: true}};
+  let expectedActions0 = {type: '@@kepler.gl/REGISTER_ENTRY', payload: {id: 'map', mint: true, mapboxApiAccessToken: undefined}};
 
   t.deepEqual(
     actions,
@@ -104,21 +104,22 @@ test('Components -> Container -> Mount with mint:true', t => {
 
   let wrapper;
   const testId = {
-    id: 'milkshake'
+    id: 'milkshake',
+    mapboxApiAccessToken: 'pk.smoothie'
   };
 
   // mount with mint: true
   t.doesNotThrow(() => {
     wrapper = mount(
       <Provider store={store}>
-        <Container getState={s => s.smoothie} id={testId.id} />
+        <Container getState={s => s.smoothie} id={testId.id} mapboxApiAccessToken={testId.mapboxApiAccessToken}/>
       </Provider>
     );
   }, 'Should not throw error when mount');
 
   actions = store.getActions();
 
-  expectedActions0 = {type: '@@kepler.gl/REGISTER_ENTRY', payload: {id: 'milkshake', mint: true}};
+  expectedActions0 = {type: '@@kepler.gl/REGISTER_ENTRY', payload: {id: 'milkshake', mint: true, mapboxApiAccessToken: 'pk.smoothie'}};
 
   t.deepEqual(
     actions,
@@ -130,7 +131,13 @@ test('Components -> Container -> Mount with mint:true', t => {
   nextState = appReducer({}, expectedActions0);
   expectedState = {
     smoothie: {
-      milkshake: initialCoreState
+      milkshake: {
+        ...initialCoreState,
+        mapStyle: {
+          ...initialCoreState.mapStyle,
+          mapboxApiAccessToken: 'pk.smoothie'
+        }
+      }
     }
   };
   t.deepEqual(
@@ -178,14 +185,14 @@ test('Components -> Container -> Mount with mint:false', t => {
   t.doesNotThrow(() => {
     wrapper = mount(
       <Provider store={store}>
-        <Container getState={s => s.smoothie} id={testId.id} mint={false}/>
+        <Container getState={s => s.smoothie} id={testId.id} mint={false} mapboxApiAccessToken="hello.world"/>
       </Provider>
     );
   }, 'Should not throw error when mount');
 
   let actions = store.getActions();
 
-  let expectedActions0 = {type: '@@kepler.gl/REGISTER_ENTRY', payload: {id: 'milkshake', mint: false}};
+  let expectedActions0 = {type: '@@kepler.gl/REGISTER_ENTRY', payload: {id: 'milkshake', mint: false, mapboxApiAccessToken: 'hello.world'}};
 
   t.deepEqual(
     actions,
@@ -197,7 +204,14 @@ test('Components -> Container -> Mount with mint:false', t => {
   let nextState = appReducer({}, expectedActions0);
   let expectedState = {
     smoothie: {
-      milkshake: initialCoreState
+      milkshake: {
+        ...initialCoreState,
+        mapStyle: {
+          ...initialCoreState.mapStyle,
+          // should replace access token
+          mapboxApiAccessToken: 'hello.world'
+        }
+      }
     }
   };
   t.deepEqual(

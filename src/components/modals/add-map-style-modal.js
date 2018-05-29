@@ -27,12 +27,12 @@ import {findDOMNode} from 'react-dom';
 import {StyledModalContent, InputLight, StyledMapContainer} from 'components/common/styled-components';
 
 // Utils
-import {transformRequest} from 'utils/mapbox-utils';
+import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 
 const MapH = 190;
 const MapW = 264;
 const ErrorMsg = {
-  styleError : 'Failed to load map style, make sure it is published'
+  styleError : 'Failed to load map style, make sure it is published. For private style, paste in your access token.'
 };
 
 const InstructionPanel = styled.div`
@@ -72,7 +72,8 @@ const PreviewMap = styled.div`
   justify-content: center;
   margin-left: 116px;
   flex-shrink: 0;
-  
+  width: ${MapW}px;
+
   .preview-title {
     font-weight: 500;
     font-size: 10px;
@@ -114,13 +115,27 @@ const InlineLink = styled.a`
 `;
 
 class AddMapStyleModal extends Component {
-
   static propTypes = {
     mapState: PropTypes.object.isRequired,
     inputMapStyle: PropTypes.func.isRequired,
     loadCustomMapStyle: PropTypes.func.isRequired,
     inputStyle: PropTypes.object.isRequired
   };
+
+  state = {
+    reRenderKey: 0
+  };
+
+  componentWillReceiveProps(nextProps) {
+    if (this.props.inputStyle.accessToken !== nextProps.inputStyle.accessToken) {
+      // toke has changed
+      // ReactMapGl doesn't re-create map when token has changed
+      // here we force the map to update
+      this.setState({
+        reRenderKey: this.state.reRenderKey + 1
+      });
+    }
+  }
 
   componentDidUpdate() {
     const map = this.mapRef && this.mapRef.getMap();
@@ -149,11 +164,13 @@ class AddMapStyleModal extends Component {
   };
 
   loadMapStyleIcon = () => {
-    const canvas = findDOMNode(this.mapRef).querySelector('.mapboxgl-canvas');
-    const dataUri = canvas.toDataURL();
-    this.props.loadCustomMapStyle({
-      icon: dataUri
-    });
+    if (this.mapRef) {
+      const canvas = findDOMNode(this.mapRef).querySelector('.mapboxgl-canvas');
+      const dataUri = canvas.toDataURL();
+      this.props.loadCustomMapStyle({
+        icon: dataUri
+      });
+    }
   };
 
   loadMaoStyleError = () => {
@@ -166,7 +183,7 @@ class AddMapStyleModal extends Component {
   const mapProps = {
     ...mapState,
     preserveDrawingBuffer: true,
-    mapboxApiAccessToken: this.props.mapboxApiAccessToken,
+    mapboxApiAccessToken: inputStyle.accessToken || this.props.mapboxApiAccessToken,
     transformRequest
   };
 
@@ -175,12 +192,22 @@ class AddMapStyleModal extends Component {
         <StyledModalContent>
           <InstructionPanel>
             <div className="modal-section">
-              <div className="modal-section-title">1. Publish your style at mapbox</div>
+              <div className="modal-section-title">1. Publish your style at mapbox or provide access token</div>
               <div className="modal-section-subtitle">
                 You can create your own map style at
                 <InlineLink target="_blank" href="https://www.mapbox.com/studio/styles/"> mapbox</InlineLink> and
                 <InlineLink target="_blank" href="https://www.mapbox.com/help/studio-manual-publish/"> publish</InlineLink> it.
               </div>
+              <div className="modal-section-subtitle">
+                To use private style, paste your
+                <InlineLink target="_blank" href="https://www.mapbox.com/help/how-access-tokens-work/"> access token</InlineLink> here. *kepler.gl is a client-side application, data stays in your browser..
+              </div>
+              <InputLight
+                type="text"
+                value={inputStyle.accessToken || ''}
+                onChange={({target: {value}}) => this.props.inputMapStyle({...inputStyle, accessToken: value})}
+                placeholder="e.g. pk.abcdefg.xxxxxx"
+              />
             </div>
             <div className="modal-section">
               <div className="modal-section-title">2. Paste style url</div>
@@ -217,6 +244,7 @@ class AddMapStyleModal extends Component {
                     ref={el => {
                       this.mapRef = el;
                     }}
+                    key={this.state.reRenderKey}
                     width={MapW}
                     height={MapH}
                     mapStyle={inputStyle.url}/>

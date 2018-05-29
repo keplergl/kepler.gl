@@ -25,9 +25,11 @@ import './utils/filter-utils-test';
 import './utils/layer-utils-test';
 import './utils/data-scale-utils-test';
 import './utils/interaction-utils-test';
+import './utils/mapbox-gl-style-editor-test';
 
 // test reducer
 import './reducers/map-state-test';
+import './reducers/map-style-test';
 import './reducers/vis-state-test';
 import './reducers/ui-state-test';
 import './reducers/composer-state-test';

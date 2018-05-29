@@ -85,6 +85,7 @@ export const editBottomMapStyle = memoize(
       invisibleFilters.every(match => !match(layer))
     );
 
+    // console.log(filteredLayers)
     return Immutable.fromJS({
       ...mapStyle.style,
       layers: filteredLayers
@@ -94,12 +95,31 @@ export const editBottomMapStyle = memoize(
 );
 
 const mapUrlRg = /^mapbox:\/\/styles\/[-a-z0-9]{2,256}\/[-a-z0-9]{2,256}/;
+const httpRg = /^(?=(http:|https:))/;
+const mapboxStyleApiUrl = 'https://api.mapbox.com/styles/v1/';
 
 // valid style url
 // mapbox://styles/uberdata/cjfyl03kp1tul2smf5v2tbdd4
 // lowercase letters, numbers and dashes only.
 export function isValidStyleUrl(url) {
-  return typeof url === 'string' && Boolean(url.match(mapUrlRg));
+  return typeof url === 'string' && Boolean(url.match(mapUrlRg) || url.match(httpRg));
+}
+
+export function getStyleDownloadUrl(styleUrl, accessToken) {
+  if (styleUrl.startsWith('http')) {
+    return styleUrl;
+  }
+
+  // mapbox://styles/jckr/cjhcl0lxv13di2rpfoytdbdyj
+  if (styleUrl.startsWith('mapbox://styles')) {
+    const styleId = styleUrl.replace('mapbox://styles/', '');
+
+    // https://api.mapbox.com/styles/v1/heshan0131/cjg1bfumo1cwm2rlrjxkinfgw?pluginName=Keplergl&access_token=<token>
+    return `${mapboxStyleApiUrl}${styleId}?pluginName=Keplergl&access_token=${accessToken}`
+  }
+
+  // style url not recognized
+  return null;
 }
 
 export function scaleMapStyleByResolution(mapboxStyle, resolution) {
@@ -143,3 +163,19 @@ export function scaleMapStyleByResolution(mapboxStyle, resolution) {
 
   return mapboxStyle;
 }
+
+/**
+ * When switch to a new style, try to keep current layer group visibility
+ * by merging default and current
+ * @param {object} defaultLayerGroup
+ * @param {object} currentLayerGroup
+ * @return {object} mergedLayerGroups
+ */
+export function mergeLayerGroupVisibility(defaultLayerGroup, currentLayerGroup) {
+  return Object.keys(currentLayerGroup)
+    .reduce((accu, key) => ({
+      ...accu,
+      ...(defaultLayerGroup.hasOwnProperty(key) ? {[key]: currentLayerGroup[key]} : {})
+    }), defaultLayerGroup);
+}
+

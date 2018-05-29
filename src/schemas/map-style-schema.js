@@ -21,12 +21,48 @@
 import {VERSIONS} from './versions';
 import Schema from './schema';
 
+export const customMapStylePropsV1 = {
+  accessToken: null,
+  custom: null,
+  icon: null,
+  id: null,
+  label: null,
+  url: null
+};
+
+const CustomMapStyleSchema = new Schema({
+  version: VERSIONS.v1,
+  key: 'customStyle',
+  properties: customMapStylePropsV1
+});
+
+class MapStyleSchemaV1 extends Schema {
+  version = VERSIONS.v1;
+  key = 'mapStyles';
+  save(mapStyles, mapStyle) {
+
+    // save all custom styles
+    const saveCustomStyle = Object.keys(mapStyles).reduce((accu, key) => ({
+      ...(mapStyles[key].custom ?
+          {[key]: CustomMapStyleSchema.save(mapStyles[key]).customStyle} : {}
+      )
+    }), {});
+
+    return {[this.key]: saveCustomStyle};
+  }
+
+  load(mapStyles) {
+    return {[this.key]: mapStyles}
+  }
+}
+
 // version v0
 export const propertiesV0 = {
   styleType: null,
   topLayerGroups: null,
   visibleLayerGroups: null,
-  buildingLayer: null
+  buildingLayer: null,
+  mapStyles: new MapStyleSchemaV1()
 };
 
 const mapStyleSchema = {

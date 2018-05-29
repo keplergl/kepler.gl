@@ -33,7 +33,7 @@ import {errorMsg} from 'components/injector';
 import {visStateLens, uiStateLens, mapStateLens, mapStyleLens} from 'reducers';
 
 const mockStore = configureStore();
-const initialCoreState = coreReducer(undefined, keplerGlInit());
+const initialCoreState = coreReducer(undefined, keplerGlInit({}));
 
 test('Components -> injector -> injectComponents', t => {
   const CustomHeader = () => <div className="my-test-header">smoothie</div>;
