@@ -1,5 +1,4 @@
 import React, {Component} from 'react';
-// import {Link} from 'react-router';
 import styled from 'styled-components';
 
 import {HEADER_NAVS} from '../content';
@@ -12,19 +11,32 @@ const StyledLink = styled.a`
   border-style: solid;
   border-width: 3px 0 0;
   border-color: transparent;
-:hover {
-  border-color: #8d9ba3;
-}
+  display: inline-block;
+  :hover {
+    border-color: #8d9ba3;
+    cursor: pointer;
+  }
 `;
 
 const StyledHeader = styled.div`
   max-width: 100%;
-  padding: 0 24px;
+  padding: 0 36px;
   margin: 0 auto;
   width: 100%;
   overflow: hidden;
+  position: absolute;
+  background: transparent;
+  z-index: 1000;
   display: flex;
+  justify-content: flex-end;
   
+  .links {
+    margin-top: 20px;
+  }
+  
+  .icon-github:before {
+    content: "\\e904";
+  }
 `;
 
 export default class Header extends Component {
@@ -35,7 +47,7 @@ export default class Header extends Component {
       <StyledHeader className="container stretch">
         <div className="links">
           {HEADER_NAVS.map((item, i) => (
-            <StyledLink key={i} href={item.link}>
+            <StyledLink key={i} href={item.link} target="_blank">
               {item.text}
             </StyledLink>
           ))}
