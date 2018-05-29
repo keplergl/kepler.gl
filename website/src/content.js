@@ -69,6 +69,18 @@ export const HERO_IMAGES_SCALED = [
   cdnUrl('hero/kepler.gl-contours_s.png')
 ];
 
+export const HEADER_NAVS = [
+  {
+    text: 'Get Started',
+    link: 'https://github.com/uber/kepler.gl/blob/master/docs/a-introduction.md'
+  },
+
+  {
+    text: 'Github',
+    link: 'https://github.com/uber/kepler.gl/blob/master/docs/a-introduction.md'
+  }
+];
+
 export const SHOWCASE_ITEMS = [
   {
     text: 'Arc',
