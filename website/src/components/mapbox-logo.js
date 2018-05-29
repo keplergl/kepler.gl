@@ -1,4 +1,3 @@
-import React, {PureComponent} from 'react';
 import styled from 'styled-components';
 
 const MapboxLogo = styled.a`
