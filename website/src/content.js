@@ -117,19 +117,25 @@ export const WALKTHROUGH_ITEMS = [
     videoUrl: cdnUrl('videos/0.upload_file.mp4'),
     imageUrl: cdnUrl('videos/0.upload_file.png'),
     description:
-      'Easily import various formats of data by simplily drag and drop'
+      'Easily add data to map by drag and drop files'
   },
   {
     videoUrl: cdnUrl('videos/1.time_filter.mp4'),
     imageUrl: cdnUrl('videos/1.time_filter.png'),
     description:
-      'Easily import various formats of data by simplily drag and drop'
+      'Free form filtering with time playback'
   },
   {
     videoUrl: cdnUrl('videos/2.aggregation.mp4'),
     imageUrl: cdnUrl('videos/2.aggregation.png'),
     description:
-      'Easily import various formats of data by simplily drag and drop'
+      'Gain deeper insights by performing geo aggregation'
+  },
+  {
+    videoUrl: cdnUrl('videos/3.brushing.mp4'),
+    imageUrl: cdnUrl('videos/3.brushing.png'),
+    description:
+      'Explore origin-destination correlations with brushing'
   }
 ];
 
@@ -202,23 +208,26 @@ export const EXAMPLES = [
 export const TUTORIALS = [
   {
     title: 'How to create a map in 3 minutes',
-    description: 'Some description is needed here. This is just a placeholder',
+    description: 'Animating 40 years of California Earthquakes.',
     image: cdnUrl('examples/earthquake.png'),
-    url: '<placeholder>'
+    url: 'https://medium.com/vis-gl/animating-40-years-of-california-earthquakes-e4ffcdd4a289'
   },
   {
-    title: '5 tips for creating an elegant map',
-    description: 'Some description is needed here. This is just a placeholder',
-    image: cdnUrl('examples/earthquake.png')
+    title: 'Adding altitude to points',
+    description: 'Mapping the Parisian trees.',
+    image: cdnUrl('examples/parisian.png'),
+    url: 'com/vis-gl/animating-40-years-of-california-earthquakes-e4ffcdd4a289'
   },
   {
-    title: 'Bay Area forest mapping',
-    description: 'Some description is needed here. This is just a placeholder',
-    image: cdnUrl('examples/earthquake.png')
+    title: 'Mapping a choropleth map',
+    description: 'Visualizing US County Unemployment with kepler.gl',
+    image: cdnUrl('examples/unemployment.png'),
+    url: 'com/vis-gl/animating-40-years-of-california-earthquakes-e4ffcdd4a289'
+  },
+  {
+    title: 'Uber Movement and kepler.gl',
+    description: 'Using kepler.gl and Movement data to Visualize Traffic Effects of a Rainstorm',
+    image: cdnUrl('examples/movement.png'),
+    url: 'com/vis-gl/animating-40-years-of-california-earthquakes-e4ffcdd4a289'
   }
-  // {
-  //   title: 'How to create a map in 3 minutes',
-  //   description: 'Some description is needed here. This is just a placeholder',
-  //   image: cdnUrl('examples/earthquake.png')
-  // }
 ];

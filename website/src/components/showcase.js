@@ -91,7 +91,7 @@ const NavIcon = styled.img`
 const Nav = ({items, selectedIndex, onClick}) => (
   <NavContainer>
     {items.map(({text, icon}, i) => (
-      <NavItem isActive={selectedIndex === i} onClick={() => onClick(i)}>
+      <NavItem key={i} isActive={selectedIndex === i} onClick={() => onClick(i)}>
         <NavIcon src={icon} />
         {text}
       </NavItem>

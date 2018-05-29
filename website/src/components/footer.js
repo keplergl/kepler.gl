@@ -72,7 +72,7 @@ const StyledLogo = styled.span`
   font-weight: 700;
   letter-spacing: 4px;
   position: relative;
-  margin-left: 1rem;
+  margin-left: 1.8rem;
   margin-top: 0;
   margin-bottom: 0;
 
@@ -148,13 +148,14 @@ export default class Footer extends PureComponent {
           <BrandingContainer>
             <img src={cdnUrl('icons/uber.svg')} />
             <CreatedBy>
+              created by
               <StyledLogo className="fg">
                 <a
                   target="_blank"
                   rel="noopener noreferrer"
                   href="http://vis.gl"
                 >
-                  ISUALIZATION
+                  VIS.GL
                 </a>
               </StyledLogo>
             </CreatedBy>

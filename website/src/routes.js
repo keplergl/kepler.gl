@@ -28,16 +28,6 @@ import Home from './components/home';
 import App from './components/app';
 import Demo from '../../examples/demo-app/src/app';
 
-// Token
-// TODO: remove this when beta is over
-import {tokens} from './beta/tokens';
-
-const checkAccessCode = ({location: {pathname, query}}, replace) => {
-  if (pathname.includes('/demo') && (!query.token || !tokens.includes(query.token))) {
-    replace('/');
-  }
-};
-
 const trackPageChange = (location) => {
   const links = location.split('/');
 
@@ -51,7 +41,7 @@ const trackPageChange = (location) => {
 };
 const history = syncHistoryWithStore(hashHistory, store);
 history.listen(location => {
-  if (location.action === 'POP' && location.query.token !== 'testkepler') {
+  if (location.action === 'POP') {
     trackPageChange(location.pathname);
   }
 });
@@ -61,7 +51,7 @@ export default () => (
   <Router history={syncHistoryWithStore(hashHistory, store)}>
     <Route path="/" component={App}>
       <IndexRoute component={Home} />
-      <Route path="demo(/:id)" component={Demo} onEnter={checkAccessCode}/>
+      <Route path="demo(/:id)" component={Demo}/>
     </Route>
   </Router>
 );
