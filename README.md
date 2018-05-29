@@ -7,6 +7,9 @@ For what it is capable of, take a look at [kepler.gl demo app](https://uber.gith
 Kepler.gl is a redux component that uses redux reducer to store and manage state transitions.
 This package consists of a reducer and the UI components to render and customize the map.
 
+## User guide
+Check out [kepler's user documentation here](../docs/introduction.md)
+
 ## Links
 
 ### Env
