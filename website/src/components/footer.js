@@ -20,6 +20,12 @@
 
 import React, {PureComponent} from 'react';
 import styled from 'styled-components';
+import {
+  FacebookIcon,
+  FacebookShareButton,
+  TwitterIcon,
+  TwitterShareButton
+} from 'react-share';
 
 import {cdnUrl} from '../utils';
 import {LinkButton} from './common/styled-components';
@@ -87,10 +93,20 @@ const StyledLogo = styled.span`
   }
 `;
 
-const ButtonContainer = styled.div`
+const ButtonSection = styled.div`
   display: flex;
   margin-top: 32px;
 
+  ${media.palm`
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    flex-direction: column;
+  `};
+`;
+
+const ButtonContainer = styled.div`
+  display: flex;
   a {
     width: 160px;
   }
@@ -103,6 +119,19 @@ const ButtonContainer = styled.div`
     a {
       width: 50%;
     }
+  `};
+`;
+
+const SocialContainer = styled.div`
+  display: flex;
+  flex: 1;
+  justify-content: flex-end;
+
+  ${media.palm`
+    display: flex;
+    justify-content: center;
+    margin-top: 12px;
+    width: 100%;
   `};
 `;
 
@@ -127,19 +156,30 @@ export default class Footer extends PureComponent {
             </CreatedBy>
           </BrandingContainer>
         </LogosContainer>
-        <ButtonContainer>
-          <LinkButton large href="#/demo">
-            Get Started
-          </LinkButton>
-          <LinkButton
-            large
-            outlineDark
-            href="https://github.com/uber/kepler.gl"
-            style={{marginLeft: '5px'}}
-          >
-            <img src={cdnUrl('icons/github.svg')} /> Github
-          </LinkButton>
-        </ButtonContainer>
+        <ButtonSection>
+          <ButtonContainer>
+            <LinkButton large href="#/demo">
+              Get Started
+            </LinkButton>
+            <LinkButton
+              large
+              outlineDark
+              href="https://github.com/uber/kepler.gl"
+              style={{marginLeft: '5px'}}
+            >
+              <img src={cdnUrl('icons/github.svg')} /> Github
+            </LinkButton>
+          </ButtonContainer>
+          <SocialContainer>
+            <FacebookShareButton url="https://uber.github.io/kepler.gl/">
+              <FacebookIcon size={32} />
+            </FacebookShareButton>
+            {' '}
+            <TwitterShareButton url="https://uber.github.io/kepler.gl/" hashtags={['keplergl']}>
+              <TwitterIcon size={32} />
+            </TwitterShareButton>
+          </SocialContainer>
+        </ButtonSection>
       </Container>
     );
   }
