@@ -228,7 +228,7 @@ export const TUTORIALS = [
     title: 'Adding altitude to points',
     description: 'Mapping the Parisian trees.',
     image: cdnUrl('examples/parisian.png'),
-    url: 'https://medium.com/@jerome_56098/34caf9133673'
+    url: 'https://medium.com/vis-gl/mapping-the-parisian-trees-6dc30f6aabc7'
   },
   {
     description: 'Visualizing U.S. County Unemployment with kepler.gl',
