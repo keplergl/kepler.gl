@@ -8,12 +8,11 @@ const StyledLink = styled.a`
   color: #8d9ba3;
   text-transform: uppercase;
   margin-left: 40px;
-  border-style: solid;
-  border-width: 3px 0 0;
-  border-color: transparent;
+  transition: color 500ms;
   display: inline-block;
+  
   :hover {
-    border-color: #8d9ba3;
+    color: white;
     cursor: pointer;
   }
 `;
