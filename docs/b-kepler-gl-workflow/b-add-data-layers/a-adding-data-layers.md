@@ -8,4 +8,6 @@ Each blue dot represents the point (latitude and longitude). Layers work like pa
 
 ![Sample NYC Map with colors](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image6.png "Sample NYC Map with colors")
 
-Learn more about the [types of layers] available in Kepler.gl.                                               
+Learn more about the [types of layers] available in Kepler.gl.
+
+[Back to table of contents](docs/a-introduction.md)

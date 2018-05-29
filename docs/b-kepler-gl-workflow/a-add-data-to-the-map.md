@@ -76,3 +76,5 @@ To add additional datasets to your map:
 2. Choose one of the options above: upload a JSON/CSV file, or use Kepler.gl’s sample data.
 
 3. Repeat as needed. There is no limit on the number of datasets you can add. However, adding too many might cause its performance to suffer.
+
+[Back to table of contents](docs/a-introduction.md)

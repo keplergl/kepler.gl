@@ -15,3 +15,5 @@ To control the order in which map imagery layers are displayed, toggle the move 
 __TIP__: Move labels to the top on maps with colored layers to keep the labels from being concealed.
 
 ![exmaple of ordered layers](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image40.png "exmaple of ordered layers")
+
+[Back to table of contents](docs/a-introduction.md)

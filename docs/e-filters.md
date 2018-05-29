@@ -16,3 +16,5 @@ To add a filter:
 5. Delete a filter anytime by clicking the __trashcan__ to the right of the filter you wish to delete.
 
 __Note__: filters apply to all layers in the same dataset on your map.
+
+[Back to table of contents](docs/a-introduction.md)

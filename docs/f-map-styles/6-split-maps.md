@@ -12,3 +12,5 @@ You can display a side-by-side comparison of the same map area with different la
 ![Toggle Layers](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image35.png "Toggle Layers")
 
 3. Zoom in and out on each map and the other will automatically mimic.
+
+[Back to table of contents](docs/a-introduction.md)

@@ -17,3 +17,5 @@ Additive blending adds the color values for overlapping data points. It makes la
 ## Subtractive Blending
 Subtractive layer blending does not alter the color values of overlapping data points. 
 ![Subtractive blending](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image26.png "Subtractive blending")
+
+[Back to table of contents](docs/a-introduction.md)

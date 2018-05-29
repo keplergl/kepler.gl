@@ -14,3 +14,5 @@
 
 5. Fill in the required columns and adjust the optional settings if desired. 
 6. Collapse the layer settings menu when finished.
+
+[Back to table of contents](docs/a-introduction.md)

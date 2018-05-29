@@ -16,3 +16,5 @@ Tip: click a point to pin the tooltip info. To unpin the tooltip, press the blue
 ![pin/unpin tooltip](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image15.png "pin/unpin tooltip")
 - __Brush__: Brush allows you to highlight areas with the cursor. When brush is turned on, all layers darken. Only the portion you hover over with the cursor is illuminated. Brush works well with arc layers in particular.
 ![brush](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image12.png "brush")
+
+[Back to table of contents](docs/a-introduction.md)

@@ -7,3 +7,5 @@ Icon layers are a type of point layer. They allow you to differentiate between p
 To see the icon menu, create a new icon layer and click how to draw an icon layer:
 
 ![How to Draw Icon Layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image38.png "How to Draw Icon Layer")
+
+[Back to table of contents](docs/a-introduction.md)

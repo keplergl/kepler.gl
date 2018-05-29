@@ -21,3 +21,5 @@
 | Extruded                           | In 3D mode, assign polygon height values based on some value from your dataset.                                                                        | GeoJSON                                        |
 | Wireframe                          | Create outlines around extruded polygons.                                                                                                              | GeoJSON                                        |
 | Stroke or radius based on          | Control the radius/thickness of GeoJSON line and point features.                                                                                       | GeoJSON                                        |
+
+[Back to table of contents](docs/a-introduction.md)
