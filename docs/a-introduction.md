@@ -32,19 +32,19 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 
 ### Types of layers
 
-[point](./c-types-of-layers/a-point.md)
+[Point](./c-types-of-layers/a-point.md)
 
-[arc](./c-types-of-layers/b-arc.md)
+[Arc](./c-types-of-layers/b-arc.md)
 
-[line](./c-types-of-layers/c-line.md)
+[Line](./c-types-of-layers/c-line.md)
 
-[grid](./c-types-of-layers/d-grid.md)
+[Grid](./c-types-of-layers/d-grid.md)
 
-[geojson](./c-types-of-layers/e-geojson.md)
+[GeoJSON](./c-types-of-layers/e-geojson.md)
 
-[cluster](./c-types-of-layers/f-cluster.md)
+[Cluster](./c-types-of-layers/f-cluster.md)
 
-[icon](./c-types-of-layers/g-icon.md)
+[Icon](./c-types-of-layers/g-icon.md)
 
 ### Layer attributes
 

@@ -16,4 +16,4 @@ __TIP__: Move labels to the top on maps with colored layers to keep the labels f
 
 ![exmaple of ordered layers](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image40.png "exmaple of ordered layers")
 
-[Back to table of contents](docs/a-introduction.md)
+[Back to table of contents](../a-introduction.md)

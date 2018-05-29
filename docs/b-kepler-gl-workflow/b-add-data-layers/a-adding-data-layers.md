@@ -10,4 +10,4 @@ Each blue dot represents the point (latitude and longitude). Layers work like pa
 
 Learn more about the [types of layers] available in Kepler.gl.
 
-[Back to table of contents](docs/a-introduction.md)
+[Back to table of contents](../../a-introduction.md)

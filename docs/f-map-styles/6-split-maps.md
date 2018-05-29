@@ -13,4 +13,4 @@ You can display a side-by-side comparison of the same map area with different la
 
 3. Zoom in and out on each map and the other will automatically mimic.
 
-[Back to table of contents](docs/a-introduction.md)
+[Back to table of contents](../a-introduction.md)

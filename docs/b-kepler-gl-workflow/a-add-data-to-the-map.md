@@ -77,4 +77,4 @@ To add additional datasets to your map:
 
 3. Repeat as needed. There is no limit on the number of datasets you can add. However, adding too many might cause its performance to suffer.
 
-[Back to table of contents](docs/a-introduction.md)
+[Back to table of contents](../a-introduction.md)

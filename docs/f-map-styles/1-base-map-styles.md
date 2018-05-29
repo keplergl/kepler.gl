@@ -7,4 +7,4 @@ Open the __base map style__ drop down menu to change map color scheme and imager
 - __Dark__: dark base map with light-colored text.
 - __Light__: light base map with dark-colored text.
 
-[Back to table of contents](docs/a-introduction.md)
+[Back to table of contents](../a-introduction.md)

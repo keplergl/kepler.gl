@@ -5,4 +5,4 @@ To add a custom base map style, click the add map style button to open the custo
 
 ![Add Custom Mapbox Styles popup](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image13.png "Add Custom Mapbox Styles popup")
 
-[Back to table of contents](docs/a-introduction.md)
+[Back to table of contents](../a-introduction.md)

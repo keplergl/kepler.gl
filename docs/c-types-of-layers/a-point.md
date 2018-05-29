@@ -4,4 +4,4 @@
 
 Point layers draw points for a given event or object.
 
-[Back to table of contents](docs/a-introduction.md)
+[Back to table of contents](../a-introduction.md)
