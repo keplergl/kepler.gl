@@ -131,7 +131,7 @@ const Logo = styled.img`
   position: absolute;
   left: 0;
   top: 0;
-
+  width: 120px;
   ${media.palm`
     position: inherit;
     margin-top: ${props => props.theme.margins.normal};

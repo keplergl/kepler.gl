@@ -108,7 +108,7 @@ export const SHOWCASE_ITEMS = [
   {
     text: 'Buildings',
     image: cdnUrl('showcase/buildings-s.png'),
-    icon: cdnUrl('showcase/icons/heatmap.png')
+    icon: cdnUrl('showcase/icons/cluster.png')
   }
 ];
 
