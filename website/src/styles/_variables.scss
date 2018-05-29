@@ -1,10 +1,10 @@
-$primary: #00ADE6;
-$secondary: #05E3D5;
+$primary: #00ade6;
+$secondary: #05e3d5;
 $black: #041725;
 $black-20: #213746;
-$black-40: #5A666D;
-$white: #EDEDED;
-$white-40: #8D9BA3;
+$black-40: #5a666d;
+$white: #ededed;
+$white-40: #8d9ba3;
 
 $font-family: 'ff-clan-web-pro';
 
@@ -18,30 +18,72 @@ $gradient-1: linear-gradient(to right, $primary 0%, $secondary 100%);
 $gradient-2: linear-gradient(to bottom, $primary 0%, $secondary 100%);
 
 @font-face {
-    font-family: "ff-clan-web-pro";
-    font-style: normal;
-    font-weight: 100;
-    src: url(https://uber-design-herokuapp-com.global.ssl.fastly.net/03b64805a8cd2d53fadc5814445c2fb5.woff2) format("woff2"),
-        url(https://uber-design-herokuapp-com.global.ssl.fastly.net/341462317dd033a9d3d14a14a55e9d09.woff) format("woff")
+  font-family: 'ff-clan-web-pro';
+  font-style: normal;
+  font-weight: 100;
+  src: url(https://uber-design-herokuapp-com.global.ssl.fastly.net/03b64805a8cd2d53fadc5814445c2fb5.woff2)
+  format('woff2'),
+  url(https://uber-design-herokuapp-com.global.ssl.fastly.net/341462317dd033a9d3d14a14a55e9d09.woff)
+  format('woff');
 }
 @font-face {
-    font-family: "ff-clan-web-pro";
-    font-style: normal;
-    font-weight: 400;
-    src: url(https://uber-design-herokuapp-com.global.ssl.fastly.net/ca614426b50ca7d007056aa00954764b.woff2) format("woff2"),
-        url(https://uber-design-herokuapp-com.global.ssl.fastly.net/a9e39356639e85c045725ab277a8d423.woff) format("woff")
+  font-family: 'ff-clan-web-pro';
+  font-style: normal;
+  font-weight: 400;
+  src: url(https://uber-design-herokuapp-com.global.ssl.fastly.net/ca614426b50ca7d007056aa00954764b.woff2)
+  format('woff2'),
+  url(https://uber-design-herokuapp-com.global.ssl.fastly.net/a9e39356639e85c045725ab277a8d423.woff)
+  format('woff');
 }
 @font-face {
-    font-family: "ff-clan-web-pro";
-    font-style: normal;
-    font-weight: 500;
-    src: url(https://uber-design-herokuapp-com.global.ssl.fastly.net/ca104da8af9a2e0771e8fe2b31f8ec1e.woff2) format("woff2"),
-        url(https://uber-design-herokuapp-com.global.ssl.fastly.net/f39b50d5fd213136c91b31d423ab89f1.woff) format("woff")
+  font-family: 'ff-clan-web-pro';
+  font-style: normal;
+  font-weight: 500;
+  src: url(https://uber-design-herokuapp-com.global.ssl.fastly.net/ca104da8af9a2e0771e8fe2b31f8ec1e.woff2)
+  format('woff2'),
+  url(https://uber-design-herokuapp-com.global.ssl.fastly.net/f39b50d5fd213136c91b31d423ab89f1.woff)
+  format('woff');
 }
 @font-face {
-    font-family: "ff-clan-web-pro";
-    font-style: normal;
-    font-weight: 600;
-    src: url(https://uber-design-herokuapp-com.global.ssl.fastly.net/ad875b9818771a1350232d99278c40e8.woff2) format("woff2"),
-        url(https://uber-design-herokuapp-com.global.ssl.fastly.net/49e5932ee0897877dbf33c945b7e408f.woff) format("woff")
+  font-family: 'ff-clan-web-pro';
+  font-style: normal;
+  font-weight: 600;
+  src: url(https://uber-design-herokuapp-com.global.ssl.fastly.net/ad875b9818771a1350232d99278c40e8.woff2)
+  format('woff2'),
+  url(https://uber-design-herokuapp-com.global.ssl.fastly.net/49e5932ee0897877dbf33c945b7e408f.woff)
+  format('woff');
+}
+
+body {
+  font-weight: 400;
+  font-size: 0.875em;
+  line-height: 1.71429;
+}
+
+.f {
+  display: block;
+}
+
+.f.container.page {
+  line-height: 1.71429;
+}
+.f.header-content {
+  display: flex;
+}
+
+.site-links {
+  display: none;
+}
+
+header .logo {
+  color: transparent !important;
+  &:after {
+    content: '';
+    background: url(https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/website/icons/kepler-s.svg);
+    height: 20px;
+    display: block;
+    width: 114px;
+    position: absolute;
+    top: 22px;
+  }
 }
