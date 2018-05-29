@@ -77,7 +77,7 @@ export const HEADER_NAVS = [
 
   {
     text: 'Github',
-    link: 'https://github.com/uber/kepler.gl/blob/master/docs/a-introduction.md'
+    link: 'https://github.com/uber/kepler.gl'
   }
 ];
 
