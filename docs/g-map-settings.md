@@ -6,8 +6,10 @@ You can toggle customization options on your map, including tooltips, brush high
 
 To toggle customization options on your map:
 1. Open the Interactions menu by clicking the Interactions icon:
+
 ![Interaction menu](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image30.png "Interaction menu")
 2. Click the switch next to the options you wish to activate/deactivate.
+
 ![activate interactions](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image32.png "activate interactions")
 
 There are two types of interactions to choose from: Tooltips and Brush. Note that only one can be on at a time.
