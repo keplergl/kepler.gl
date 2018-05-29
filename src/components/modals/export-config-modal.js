@@ -127,10 +127,10 @@ const ExportConfigModal = ({
               You can copy or export the current Kepler.gl configuration.
             </div>
             <div className="note">
-              * The current configuration is coupled with loaded datasets.
-              DataID key is used to bind configuration properties to a specific dataset.
+              * kepler.gl map config is coupled with loaded datasets.
+              dataId key is used to bind layers and filters to a specific dataset.
               If you try to upload a configuration with a specific dataId you also need to make sure
-              you existing datasets match the configuration dataId/s.
+              you existing dataset id match the dataId/s in the config.
             </div>
           </div>
           <div className="selection">
@@ -160,10 +160,10 @@ const ExportConfigModal = ({
         <StyledExportConfigSection>
           <div className="description">
             <div className="title">
-              Include Data
+              Export Current Map
             </div>
             <div className="subtitle">
-              Add current map data to your export
+              Export current map, including data and config. You can later load the same map by loading this file to kepler.gl.
             </div>
           </div>
           <div className="selection">

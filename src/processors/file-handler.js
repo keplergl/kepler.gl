@@ -24,8 +24,7 @@ import KeplerGlSchema from 'schemas';
 
 const FILE_HANDLERS = {
   csv: loadCsv,
-  geojson: loadGeoJSON,
-  keplergl: loadKeplerglJSON
+  json: loadJSON
 };
 
 export function getFileHandler(fileBlob) {
@@ -37,12 +36,10 @@ export function getFileType(filename) {
   if (filename.endsWith('csv')) {
     return 'csv';
   }
-  else if (filename.includes('keplergl')) { // we need to come up with a better way to handle this case
-    return 'keplergl';
-  }
+
   else if (filename.endsWith('json') || filename.endsWith('geojson')) {
     // Read GeoJson from browser
-    return 'geojson';
+    return 'json';
   }
 
   // Wait to add other file type handler
@@ -82,21 +79,37 @@ function readJSONFile(fileBlob) {
   });
 }
 
-export function loadGeoJSON(fileBlob, processor = processGeojson) {
-  return readJSONFile(fileBlob).then(
-    rawData => (rawData ? processor(rawData) : null)
+export function isKeplerGlMap(json) {
+  return (
+    typeof json === 'object' &&
+    json.datasets &&
+    json.config &&
+    json.info &&
+    json.info.app === 'kepler.gl'
   );
 }
 
-export function loadKeplerglJSON(fileBlob) {
+export function determineJsonProcess(jsonData, defaultProcessor) {
+  if (isKeplerGlMap(jsonData)) {
+    return processKeplerglJSON;
+  }
+
+  return defaultProcessor;
+}
+
+export function loadJSON(fileBlob, processor = processGeojson) {
   return readJSONFile(fileBlob).then(
-    rawData => {
-      const data = rawData ?
-        KeplerGlSchema.load(rawData.datasets, rawData.config) : null;
-      return {
-        ...data,
-        reset: true // this will reset the state
-      };
-    }
+    rawData =>
+      rawData ? determineJsonProcess(rawData, processor)(rawData) : null
   );
+}
+
+export function processKeplerglJSON(rawData) {
+  const data = rawData
+    ? KeplerGlSchema.load(rawData.datasets, rawData.config)
+    : null;
+  return {
+    ...data,
+    reset: true // this will reset the state
+  };
 }
