@@ -31,6 +31,7 @@ import Walkthrough from './walkthrough';
 import Features from './features';
 import Footer from './footer';
 import Section from './common/section';
+import Header from './header';
 
 const SECTION_CONTENT = {
   showcase: Showcase,
@@ -45,6 +46,7 @@ export default class Home extends PureComponent {
     return (
       <ThemeProvider theme={theme}>
         <div>
+          <Header/>
           <Hero />
           {SECTIONS.map(
             ({id, title, description, icon, isDark, background}, i) => {
