@@ -32,6 +32,7 @@ export const DELETE_DATA_ID = 'deleteData';
 export const ADD_DATA_ID = 'addData';
 export const EXPORT_IMAGE_ID = 'exportImage';
 export const EXPORT_DATA_ID = 'exportData';
+export const EXPORT_CONFIG_ID = 'exportConfig';
 export const ADD_MAP_STYLE_ID = 'addMapStyle';
 
 import {

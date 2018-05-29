@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import {Tooltip} from 'components/common/styled-components';
 import KeplerGlLogo from 'components/common/logo';
-import {Save, Files, Share, Picture} from 'components/common/icons';
+import {CodeAlt, Save, Files, Share, Picture} from 'components/common/icons';
 import PanelDropdown from 'components/side-panel/panel-dropdown';
 
 const StyledPanelHeader = styled.div.attrs({
@@ -137,9 +137,21 @@ export const PanelAction = ({item, onClick}) => (
   </StyledPanelAction>
 );
 
+const PanelItem = ({onClose, onClickHandler, label, icon}) => (
+  <div className="save-export-dropdown__item" onClick={(e) => {
+    e.stopPropagation();
+    onClose();
+    onClickHandler();
+  }}>
+    {icon}
+    <div className="save-export-dropdown__title">{label}</div>
+  </div>
+);
+
 export const SaveExportDropdown = ({
   onExportImage,
   onExportData,
+  onExportConfig,
   onSaveMap,
   show,
   onClose
@@ -147,34 +159,34 @@ export const SaveExportDropdown = ({
   return (
     <StyledPanelDropdown show={show} className="save-export-dropdown">
       <PanelDropdown onClose={onClose} className="save-export-dropdown__inner">
+        <PanelItem
+          label="Export Image"
+          onClickHandler={onExportImage}
+          onClose={onClose}
+          icon={(<Picture height="16px" />)}
+        />
 
-        <div className="save-export-dropdown__item" onClick={(e) => {
-          e.stopPropagation();
-          onClose();
-          onExportImage();
-        }}>
-          <Picture height="16px" />
-          <div className="save-export-dropdown__title">Export Image</div>
-        </div>
+        <PanelItem
+          label="Export Data"
+          onClickHandler={onExportData}
+          onClose={onClose}
+          icon={(<Files height="16px" />)}
+        />
 
-        <div className="save-export-dropdown__item" onClick={(e) => {
-          e.stopPropagation();
-          onClose();
-          onExportData();
-        }}>
-          <Files height="16px" />
-          <div className="save-export-dropdown__title">Export Data</div>
-        </div>
+        <PanelItem
+          label="Export Config"
+          onClickHandler={onExportConfig}
+          onClose={onClose}
+          icon={(<CodeAlt height="16px" />)}
+        />
 
         {onSaveMap ? (
-          <div className="save-export-dropdown__item" onClick={(e) => {
-            e.stopPropagation();
-            onClose();
-            onSaveMap();
-          }}>
-            <Share height="16px" />
-            <div className="save-export-dropdown__title">Save Map Url</div>
-          </div>
+          <PanelItem
+            label="Save Map Url"
+            onClickHandler={onSaveMap}
+            onClose={onClose}
+            icon={(<Share height="16px" />)}
+          />
         ) : null}
       </PanelDropdown>
     </StyledPanelDropdown>

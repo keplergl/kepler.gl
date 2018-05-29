@@ -41,7 +41,7 @@ const defaultValidFileExt = [
   // 'zip',
   // 'gpx',
   // 'kml',
-  // 'json',
+  'json',
   'geojson'
 ];
 
@@ -50,6 +50,7 @@ const CHROME_MSG =
   '*Chrome user: Limit file size to 250mb, if need to upload larger file, try Safari';
 const DISCLAIMER = '*Kepler.gl is a client-side application with no server backend. Data lives only on your machine/browser. ' +
   'No information or map data is sent to any server.';
+const CONFIG_UPLOAD_MESSAGE = 'Upload data files or upload saved maps from Json containing config and data';
 
 const fileIconColor = '#D3D8E0';
 
@@ -97,10 +98,18 @@ const StyledDragNDropIcon = styled.div`
 const StyledFileUpload = styled.div`
   .filter-upload__input {
     visibility: hidden;
+    height: 0;
+    position: absolute;
   }
   
   .file-drop {
     position: relative;
+  }
+  
+  .file-upload__message {
+    color: ${props => props.theme.textColorLT};
+    font-size: 14px;
+    margin-bottom: 12px;
   }
 `;
 
@@ -214,6 +223,7 @@ export default class FileUpload extends Component {
             onDragLeave={() => this._toggleDragState(false)}
             onDrop={this._handleFileDrop}
           >
+            <div className="file-upload__message">{CONFIG_UPLOAD_MESSAGE}</div>
             <StyledFileDrop dragOver={dragOver}>
               <div style={{opacity: dragOver ? 0.5 : 1}}>
                 <StyledDragNDropIcon>

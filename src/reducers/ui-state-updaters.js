@@ -146,3 +146,11 @@ export const setExportConfigUpdater = (state, action) => ({
     config: !state.exportData.config
   }
 });
+
+export const setExportDataUpdater = (state, action) => ({
+  ...state,
+  exportData: {
+    ...state.exportData,
+    data: !state.exportData.data
+  }
+});

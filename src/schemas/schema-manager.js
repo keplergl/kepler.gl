@@ -59,6 +59,10 @@ class KeplerGLSchema {
    *   config: {
    *     version: 'v0',
    *     config: {}
+   *   },
+   *   info: {
+   *     app: 'kepler.gl',
+   *     create_at: 'Mon May 28 2018 21:04:46 GMT-0700 (PDT)'
    *   }
    * }
    *
@@ -69,7 +73,11 @@ class KeplerGLSchema {
   save(state) {
     return {
       datasets: this.getDatasetToSave(state),
-      config: this.getConfigToSave(state)
+      config: this.getConfigToSave(state),
+      info: {
+        app: 'kepler.gl',
+        created_at: new Date().toString()
+      }
     };
   }
 
@@ -79,6 +87,7 @@ class KeplerGLSchema {
       config: savedConfig ? this.parseSavedConfig(savedConfig) : undefined
     };
   }
+
   /**
    * Get data to save
    * @param {Object} state - app state

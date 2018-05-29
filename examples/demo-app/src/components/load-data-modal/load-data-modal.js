@@ -23,7 +23,7 @@ import classnames from 'classnames';
 import styled, {ThemeProvider} from 'styled-components';
 import PropTypes from 'prop-types';
 import {FileUpload} from 'kepler.gl/components';
-import LoadingSpinner from 'kepler.gl/components/common/loading-spinner';
+import {LoadingSpinner} from 'kepler.gl/components';
 import {themeLT} from 'kepler.gl/styles';
 import {Icons} from 'kepler.gl/components/';
 

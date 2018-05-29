@@ -20,19 +20,26 @@
 
 import {FileReader} from 'global/window';
 import {processCsvData, processGeojson} from './data-processor';
+import KeplerGlSchema from 'schemas';
+
+const FILE_HANDLERS = {
+  csv: loadCsv,
+  json: loadJSON
+};
 
 export function getFileHandler(fileBlob) {
   const type = getFileType(fileBlob.name);
-
-  return type === 'csv' ? loadCsv : type === 'geojson' ? loadGeoJSON : null;
+  return FILE_HANDLERS[type];
 }
 
 export function getFileType(filename) {
   if (filename.endsWith('csv')) {
     return 'csv';
-  } else if (filename.endsWith('json') || filename.endsWith('geojson')) {
+  }
+
+  else if (filename.endsWith('json') || filename.endsWith('geojson')) {
     // Read GeoJson from browser
-    return 'geojson';
+    return 'json';
   }
 
   // Wait to add other file type handler
@@ -56,13 +63,13 @@ export function loadCsv(fileBlob, processor = processCsvData) {
   );
 }
 
-function readGeoJSONFile(fileBlob) {
+function readJSONFile(fileBlob) {
   return new Promise((resolve, reject) => {
     const fileReader = new FileReader();
     fileReader.onload = ({target: {result}}) => {
       try {
-        const geo = JSON.parse(result);
-        resolve(geo);
+        const json = JSON.parse(result);
+        resolve(json);
       } catch (err) {
         resolve(null);
       }
@@ -72,8 +79,37 @@ function readGeoJSONFile(fileBlob) {
   });
 }
 
-export function loadGeoJSON(fileBlob, processor = processGeojson) {
-  return readGeoJSONFile(fileBlob).then(
-    rawData => (rawData ? processor(rawData) : null)
+export function isKeplerGlMap(json) {
+  return (
+    typeof json === 'object' &&
+    json.datasets &&
+    json.config &&
+    json.info &&
+    json.info.app === 'kepler.gl'
   );
+}
+
+export function determineJsonProcess(jsonData, defaultProcessor) {
+  if (isKeplerGlMap(jsonData)) {
+    return processKeplerglJSON;
+  }
+
+  return defaultProcessor;
+}
+
+export function loadJSON(fileBlob, processor = processGeojson) {
+  return readJSONFile(fileBlob).then(
+    rawData =>
+      rawData ? determineJsonProcess(rawData, processor)(rawData) : null
+  );
+}
+
+export function processKeplerglJSON(rawData) {
+  const data = rawData
+    ? KeplerGlSchema.load(rawData.datasets, rawData.config)
+    : null;
+  return {
+    ...data,
+    reset: true // this will reset the state
+  };
 }
