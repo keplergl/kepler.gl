@@ -127,6 +127,10 @@ const SocialContainer = styled.div`
   flex: 1;
   justify-content: flex-end;
 
+  .SocialMediaShareButton {
+    margin-right: 5px;
+  }
+
   ${media.palm`
     display: flex;
     justify-content: center;
