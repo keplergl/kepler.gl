@@ -142,7 +142,7 @@ module.exports = env => {
     if (!process.env.MapboxAccessToken) {
       logError('Error! MapboxAccessToken is not defined');
       logInstruction(`Make sure to run "export MapboxAccessToken=<token>" before deploy the website`);
-      logInstruction('You can get the token at https://code.uberinternal.com/P101549');
+      logInstruction('You can get the token at http://t.uber.com/kepler.gl-token');
       throw new Error('Missing Mapbox Access token');
     }
     config = addProdConfig(config);
