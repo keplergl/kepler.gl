@@ -47,18 +47,6 @@ class App extends Component {
     // we ry to fetch along map configurations
     const {params: {id: sampleMapId} = {}} = this.props;
     this.props.dispatch(loadSampleConfigurations(sampleMapId));
-
-    if (window.gtag) {
-      const {token} = this.props.location.query;
-      window.gtag('set', {token});
-
-      window.gtag('config', 'UA-64694404-19', {
-        user_id: token,
-        custom_map: {dimension1: 'token'}
-      });
-
-      window.gtag('send', 'pageview', {token});
-    }
   }
 
   componentDidMount() {

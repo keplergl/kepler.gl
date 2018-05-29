@@ -47,7 +47,7 @@ const PaginationBar = styled.div`
 const Pagination = ({items, selectedIndex, onChange}) => (
   <PaginationContainer>
     {items.map((item, index) => (
-      <PaginationBarWrapper onClick={() => onChange(index)}>
+      <PaginationBarWrapper key={index} onClick={() => onChange(index)}>
         <PaginationBar isActive={index === selectedIndex} />
       </PaginationBarWrapper>
     ))}

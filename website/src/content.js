@@ -117,19 +117,25 @@ export const WALKTHROUGH_ITEMS = [
     videoUrl: cdnUrl('videos/0.upload_file.mp4'),
     imageUrl: cdnUrl('videos/0.upload_file.png'),
     description:
-      'Easily import various formats of data by simplily drag and drop'
+      'Easily add data to map by drag and drop files'
   },
   {
     videoUrl: cdnUrl('videos/1.time_filter.mp4'),
     imageUrl: cdnUrl('videos/1.time_filter.png'),
     description:
-      'Easily import various formats of data by simplily drag and drop'
+      'Free form filtering with time playback'
   },
   {
     videoUrl: cdnUrl('videos/2.aggregation.mp4'),
     imageUrl: cdnUrl('videos/2.aggregation.png'),
     description:
-      'Easily import various formats of data by simplily drag and drop'
+      'Gain deeper insights by performing geo aggregation'
+  },
+  {
+    videoUrl: cdnUrl('videos/3.brushing.mp4'),
+    imageUrl: cdnUrl('videos/3.brushing.png'),
+    description:
+      'Explore origin-destination correlations with brushing'
   }
 ];
 
