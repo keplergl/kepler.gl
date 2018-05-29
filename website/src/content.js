@@ -108,7 +108,7 @@ export const SHOWCASE_ITEMS = [
   {
     text: 'Buildings',
     image: cdnUrl('showcase/buildings-s.png'),
-    icon: cdnUrl('showcase/icons/heatmap.png')
+    icon: cdnUrl('showcase/icons/cluster.png')
   }
 ];
 
@@ -216,18 +216,18 @@ export const TUTORIALS = [
     title: 'Adding altitude to points',
     description: 'Mapping the Parisian trees.',
     image: cdnUrl('examples/parisian.png'),
-    url: 'com/vis-gl/animating-40-years-of-california-earthquakes-e4ffcdd4a289'
+    url: 'https://medium.com/@jerome_56098/34caf9133673'
   },
   {
     title: 'Mapping a choropleth map',
     description: 'Visualizing US County Unemployment with kepler.gl',
     image: cdnUrl('examples/unemployment.png'),
-    url: 'com/vis-gl/animating-40-years-of-california-earthquakes-e4ffcdd4a289'
+    url: 'https://medium.com/@uber_movement/movement-in-kepler-d00e843f464d'
   },
   {
     title: 'Uber Movement and kepler.gl',
     description: 'Using kepler.gl and Movement data to Visualize Traffic Effects of a Rainstorm',
     image: cdnUrl('examples/movement.png'),
-    url: 'com/vis-gl/animating-40-years-of-california-earthquakes-e4ffcdd4a289'
+    url: 'https://medium.com/@uber_movement/movement-in-kepler-d00e843f464d'
   }
 ];

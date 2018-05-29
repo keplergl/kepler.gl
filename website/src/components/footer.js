@@ -30,6 +30,7 @@ import {
 import {cdnUrl} from '../utils';
 import {LinkButton} from './common/styled-components';
 import {media} from '../styles';
+import MapboxLogo from './mapbox-logo';
 
 const Container = styled.div`
   background: #242730;
@@ -48,7 +49,7 @@ const LogosContainer = styled.div`
 
 const BrandingContainer = styled.div`
   display: inline-flex;
-  align-items: flex-end;
+  align-items: center;
   ${media.palm`
     margin-top: ${props => props.theme.margins.small};
   `};
@@ -144,9 +145,10 @@ export default class Footer extends PureComponent {
     return (
       <Container>
         <LogosContainer>
-          <img src={cdnUrl('icons/kepler.svg')} />
+          <img style={{width: '120px'}} src={cdnUrl('icons/kepler.svg')} />
           <BrandingContainer>
             <img src={cdnUrl('icons/uber.svg')} />
+            <MapboxLogo/>
             <CreatedBy>
               created by
               <StyledLogo className="fg">
