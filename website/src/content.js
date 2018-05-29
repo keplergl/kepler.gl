@@ -220,9 +220,9 @@ export const TUTORIALS = [
   },
   {
     title: 'Mapping a choropleth map',
-    description: 'Visualizing US County Unemployment with kepler.gl',
+    description: 'Visualizing U.S. County Unemployment with kepler.gl',
     image: cdnUrl('examples/unemployment.png'),
-    url: 'https://medium.com/@uber_movement/movement-in-kepler-d00e843f464d'
+    url: 'https://medium.com/vis-gl/visualizing-u-s-county-unemployment-with-kepler-gl-c5f2ed31c71'
   },
   {
     title: 'Uber Movement and kepler.gl',
