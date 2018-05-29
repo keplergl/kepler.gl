@@ -219,8 +219,8 @@ export const TUTORIALS = [
     url: 'https://medium.com/@jerome_56098/34caf9133673'
   },
   {
-    title: 'Mapping a choropleth map',
     description: 'Visualizing U.S. County Unemployment with kepler.gl',
+    title: 'Making a choropleth map',
     image: cdnUrl('examples/unemployment.png'),
     url: 'https://medium.com/vis-gl/visualizing-u-s-county-unemployment-with-kepler-gl-c5f2ed31c71'
   },
