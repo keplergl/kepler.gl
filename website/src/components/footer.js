@@ -145,7 +145,7 @@ export default class Footer extends PureComponent {
     return (
       <Container>
         <LogosContainer>
-          <img style={{width: '120px'}} src={cdnUrl('icons/kepler.svg')} />
+          <img style={{width: '120px'}} src={cdnUrl('icons/kepler.gl-logo.png')} />
           <BrandingContainer>
             <img src={cdnUrl('icons/uber.svg')} />
             <MapboxLogo/>

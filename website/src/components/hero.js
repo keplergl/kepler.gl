@@ -186,7 +186,7 @@ export default class Hero extends PureComponent {
       <Container>
         <BackgroundImage src={cdnUrl('hero/kepler.gl-background.png')} />
         <Content>
-          <Logo src={cdnUrl('icons/kepler.svg')} />
+          <Logo src={cdnUrl('icons/kepler.gl-logo.png')} />
           <StyledCaption>
             <div className="kg-home__caption__subtitle">
               Make an impact with your location data
