@@ -4,7 +4,6 @@
   "version": "0.0.18",
   "description": "kepler.gl is a webgl based application to visualize large scale location data in the browser",
   "license": "MIT",
-  "private": true,
   "main": "dist/index.js",
   "engines": {
     "node": ">=8.1.0",
