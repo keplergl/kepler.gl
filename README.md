@@ -56,7 +56,7 @@ To checkout the build
 
 Publish on github pages.
 
-<b>important Before publish. Copy the mapbox token at [this link](https://code.uberinternal.com/P101549). Deploy will fail if token is missing</b>
+<b>important Before publish. Copy the mapbox token at [this link](http://t.uber.com/kepler.gl-token). Deploy will fail if token is missing</b>
 ```
     export MapboxAccessToken=<insert_your_token>
     yarn deploy
