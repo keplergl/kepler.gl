@@ -101,11 +101,11 @@ const StyledFileUpload = styled.div`
     height: 0;
     position: absolute;
   }
-  
+
   .file-drop {
     position: relative;
   }
-  
+
   .file-upload__message {
     color: ${props => props.theme.textColorLT};
     font-size: 14px;
@@ -212,7 +212,6 @@ export default class FileUpload extends Component {
         <input
           className="filter-upload__input"
           type="file"
-          ref="fileInput"
           onChange={this._onChange}
         />
         {FileDrop ? (

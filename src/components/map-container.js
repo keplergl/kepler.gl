@@ -113,8 +113,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     }
 
     componentDidUpdate(prevProps, prevState) {
-      if (!this._map && this.refs.mapbox) {
-        this._map = this.refs.mapbox.getMap();
+      if (!this._map && this._mapbox) {
+        this._map = this._mapbox.getMap();
         // bind mapboxgl event listener
         this._map.on(MAPBOXGL_STYLE_UPDATE, () => {
           // force refresh mapboxgl layers
@@ -453,7 +453,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           <this.props.MapComponent
             {...mapProps}
             key="bottom"
-            ref="mapbox"
+            ref={ref => {this._mapbox = ref}}
             mapStyle={mapStyle.bottomMapStyle}
             onClick={onMapClick}
           >

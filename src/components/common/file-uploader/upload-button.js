@@ -42,8 +42,8 @@ export default class UploadButton extends Component {
   };
 
   _onClick = () => {
-    this.refs.fileInput.value = null;
-    this.refs.fileInput.click();
+    this._fileInput.value = null;
+    this._fileInput.click();
   };
 
   _onChange = ({target: {files}}) => {
@@ -59,7 +59,7 @@ export default class UploadButton extends Component {
       <Wrapper>
         <input
           type="file"
-          ref="fileInput"
+          ref={ref => {this._fileInput = ref}}
           style={{display: 'none'}}
           onChange={this._onChange}
         />

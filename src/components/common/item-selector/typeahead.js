@@ -227,7 +227,6 @@ export default class Typeahead extends Component {
   _renderIncrementalSearchResults() {
     return (
       <this.props.customListComponent
-        ref="sel"
         fixedOptions={this.props.fixedOptions}
         options={
           this.props.maxVisible
