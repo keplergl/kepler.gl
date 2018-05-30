@@ -70,7 +70,7 @@ Here are the basic steps:
 You need to add `taskMiddleware` to your store too. We are actively working on a solution where
 `react-palm` will not be required, however it is still a very nice side effects management tool that works easier for testing than react-thunk.
 
-```
+```js
 import keplerGlReducer from 'kepler.gl/reducers';
 import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
 import {taskMiddleware} from 'react-palm';
@@ -102,7 +102,7 @@ with the `getState` prop.
 
 #### 2. Mount kepler.gl Component
 
-```
+```js
 import KeplerGl from 'kepler.gl';
 
 const Map = props => (
@@ -195,7 +195,7 @@ There are multiple ways to dispatch actions to a specific `KeplerGl` instance.
 Each action is mapped to a reducer updater in kepler.gl. You can import the reducer updater corresponding to a specific action, and call it with the previous state and action payload to get the updated state.
 e.g. `updateVisDataUpdater` is the updater for `ActionTypes.UPDATE_VIS_DATA` (take a look at each reducer `reducers/vis-state.js` for action to updater mapping).
 Here is an example how you can listen to an app action `QUERY_SUCCESS` and call `updateVisDataUpdater` to load data into Kepler.Gl.
-```
+```js
 import keplerGlReducer, {visStateUpdaters} from 'kepler.gl/reducers';
 
 // Root Reducer
@@ -234,7 +234,7 @@ You can add a dispatch function to your component that dispatches actions to a s
 using connect.
 
 
-```
+```js
 // component
 import KeplerGl from 'kepler.gl';
 
@@ -267,7 +267,7 @@ export default connect(
 
 You can also simply wrap an action into a forward action with the `wrapTo` helper
 
-```
+```js
 // component
 import KeplerGl from 'kepler.gl';
 
@@ -293,7 +293,7 @@ components to KeplerGl replacing existing ones. All you need to do is to create 
 and call `injectComponents` at the root component of your app where `KeplerGl` is mounted.
 Take a look at `examples/demo-app/src/app.js` and see how it renders a custom side panel header in kepler.gl
 
-```
+```js
 import {injectComponents, PanelHeaderFactory} from 'kepler.gl/components';
 
 // define custom header
@@ -318,7 +318,7 @@ const MapContainer = () => (
 
 Using `withState` helper to add reducer state and actions to customized component as additional props.
 
-```
+```js
 import {withState, injectComponents, PanelHeaderFactory} from 'kepler.gl/components';
 import {visStateLens} from 'kepler.gl/reducers';
 
@@ -353,7 +353,7 @@ It is also important to remember that Kepler.gl provides an easy API (```KeplerG
 ##### addDataToMap
 This method is similar to UpdateVisData but it is able to update the full kepler.gl configuration (mapState, mapStyle, visState).
 This action takes an object as input with the following properties:
-```javascript
+```js
 {
     datasets | object: same as UpdateVisData
     options | object: same as UpdateVisData
@@ -363,7 +363,7 @@ This action takes an object as input with the following properties:
 It is important to notice that the config object value will always have higher precedence than the options properties.
 For instance, if you provide ```{centerMap: true}``` as part of the options object and in your config object you pass
 the mapState configuration with latitude and longitude define as it follows:
-```javascript
+```js
 config: {
   mapState: {
     latitude: 33.88608913680742,
