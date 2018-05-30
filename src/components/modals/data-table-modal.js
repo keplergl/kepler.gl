@@ -95,7 +95,7 @@ export class DataTableModal extends Component {
     // positions of a container.
 
     // react-data-grid canvas element can be scrolled
-    const canvas = this.refs.root.querySelector('.react-grid-Canvas');
+    const canvas = this._root.querySelector('.react-grid-Canvas');
 
     // If canvas can not be scrolled left anymore when we try to scroll left
     const prevent_left = e.deltaX < 0 && canvas.scrollLeft <= 0;
@@ -128,7 +128,7 @@ export class DataTableModal extends Component {
       .filter(({name}) => name !== '_geojson');
 
     return (
-      <div ref="root" className="dataset-modal" style={{overflow: 'scroll'}}>
+      <div ref={ref => {this._root = ref}} className="dataset-modal" style={{overflow: 'scroll'}}>
         <DatasetTabs
           activeDataset={activeDataset}
           datasets={datasets}
