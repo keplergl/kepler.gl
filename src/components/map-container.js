@@ -112,34 +112,6 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       }
     }
 
-    componentDidUpdate(prevProps, prevState) {
-      if (!this._map && this._mapbox) {
-        this._map = this._mapbox.getMap();
-        // bind mapboxgl event listener
-        this._map.on(MAPBOXGL_STYLE_UPDATE, () => {
-          // force refresh mapboxgl layers
-
-          updateMapboxLayers(
-            this._map,
-            this._renderMapboxLayers(),
-            this.previousLayers,
-            this.props.mapLayers,
-            {force: true}
-          );
-
-          if (typeof this.props.onMapStyleLoaded === 'function') {
-            this.props.onMapStyleLoaded(this._map);
-          }
-        });
-
-        this._map.on('render', () => {
-          if (typeof this.props.onMapRender === 'function') {
-            this.props.onMapRender(this._map);
-          }
-        });
-      }
-    }
-
     componentWillUnmount() {
       // unbind mapboxgl event listener
       if (this._map) {
@@ -190,6 +162,34 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       const {index: mapIndex = 0, visStateActions} = this.props;
       visStateActions.toggleLayerForMap(mapIndex, layerId);
     };
+
+    _setMapboxMap = (mapbox) => {
+      if (!this._map && mapbox) {
+        this._map = mapbox.getMap();
+        // bind mapboxgl event listener
+        this._map.on(MAPBOXGL_STYLE_UPDATE, () => {
+          // force refresh mapboxgl layers
+
+          updateMapboxLayers(
+            this._map,
+            this._renderMapboxLayers(),
+            this.previousLayers,
+            this.props.mapLayers,
+            {force: true}
+          );
+
+          if (typeof this.props.onMapStyleLoaded === 'function') {
+            this.props.onMapStyleLoaded(this._map);
+          }
+        });
+
+        this._map.on('render', () => {
+          if (typeof this.props.onMapRender === 'function') {
+            this.props.onMapRender(this._map);
+          }
+        });
+      }
+    }
 
     /* deck.gl doesn't support blendFuncSeparate yet
      * so we're applying the blending ourselves
@@ -453,7 +453,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           <this.props.MapComponent
             {...mapProps}
             key="bottom"
-            ref={ref => {this._mapbox = ref}}
+            ref={this._setMapboxMap}
             mapStyle={mapStyle.bottomMapStyle}
             onClick={onMapClick}
           >
