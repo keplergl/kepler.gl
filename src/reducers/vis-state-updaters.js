@@ -296,7 +296,7 @@ export function setFilterUpdater(state, action) {
           filterProp: getFilterProps(allData, field)
         };
       }
-      
+
       newFilter = {
         ...newFilter,
         ...field.filterProp,
