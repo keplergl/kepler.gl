@@ -296,7 +296,7 @@ export function setFilterUpdater(state, action) {
           filterProp: getFilterProps(allData, field)
         };
       }
-
+      
       newFilter = {
         ...newFilter,
         ...field.filterProp,
@@ -305,6 +305,11 @@ export function setFilterUpdater(state, action) {
         freeze: true,
         fieldIdx
       };
+      const enlargedFilterIdx = state.filters.findIndex(f => f.enlarged);
+      if (enlargedFilterIdx > -1 && enlargedFilterIdx !== idx) {
+        // there should be only one enlarged filter
+        newFilter.enlarged = false;
+      }
 
       newState = {
         ...state,
