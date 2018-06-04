@@ -7,7 +7,7 @@ For what it is capable of, take a look at [kepler.gl demo app](https://uber.gith
 Kepler.gl is a redux component that uses redux reducer to store and manage state transitions.
 This package consists of a reducer and the UI components to render and customize the map. 
 
-For information on how to save the map state you've created and have it persist after you've closed the browser, take a look at this tutorial on [vis.academy](http://vis.academy/#/kepler.gl/setup).
+For information on how to save the map state you've created and have it persist after you've closed the browser, take a look at [this tutorial on vis.academy](http://vis.academy/#/kepler.gl/).
 
 ## User guide
 Check out [kepler.gl's user documentation here](docs/a-introduction.md)
