@@ -65,7 +65,7 @@ export default class TimeRangeSlider extends Component {
       width: 288
     };
     this._animation = null;
-    this._sliderThrottle = throttle(this.props.onChange, 20);
+    this._sliderThrottle = throttle((...value) => this.props.onChange(...value), 20);
   }
 
   componentDidUpdate() {
