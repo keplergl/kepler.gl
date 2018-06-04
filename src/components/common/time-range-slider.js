@@ -65,6 +65,7 @@ export default class TimeRangeSlider extends Component {
       width: 288
     };
     this._animation = null;
+    this._sliderThrottle = throttle((value) => this.props.onChange(value), 20);
   }
 
   componentDidUpdate() {
@@ -118,9 +119,9 @@ export default class TimeRangeSlider extends Component {
   };
 
   render() {
-    const {domain, value, isEnlarged, onChange} = this.props;
+    const {domain, value, isEnlarged} = this.props;
     const {isAnimating} = this.state;
-    this._sliderThrottle = throttle(onChange, 20);
+
     return (
       <div className="time-range-slider">
         <TimeTitle
