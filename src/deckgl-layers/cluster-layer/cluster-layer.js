@@ -253,7 +253,7 @@ export default class ClusterLayer extends CompositeLayer {
     const {id, radiusScale, fp64} = this.props;
 
     // base layer props
-    const {opacity, pickable} = this.props;
+    const {opacity, pickable, autoHighlight, highlightColor} = this.props;
 
     // return props to the sublayer constructor
     return new ScatterplotLayer({
@@ -261,10 +261,12 @@ export default class ClusterLayer extends CompositeLayer {
       data: this.state.clusters,
       radiusScale,
       fp64,
-      getPosition: d => d.geometry.coordinates,
-      getRadius: this._onGetSublayerRadius.bind(this),
       opacity,
       pickable,
+      autoHighlight,
+      highlightColor,
+      getPosition: d => d.geometry.coordinates,
+      getRadius: this._onGetSublayerRadius.bind(this),
       getColor: this._onGetSublayerColor.bind(this),
       updateTriggers: this.getUpdateTriggers()
     });

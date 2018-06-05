@@ -97,7 +97,7 @@ function mockStateWithFileUpload() {
   // replace layer id and color with controlled value for easy testing
   updatedState.visState.layers.forEach((l, i) => {
     l.id = `${l.type}-${i}`;
-    l.config.color = [i, i, i]
+    l.config.color = [i, i, i];
   });
 
   return Immutable.fromJS(updatedState);
@@ -172,7 +172,10 @@ function mockStateWithLayerDimensions(state) {
     {action: VisStateActions.layerVisConfigChange, payload: colorRangePayload},
 
     // add layer
-    {action: VisStateActions.addLayer, payload: [{id: 'hexagon-2', color: [2, 2, 2]}]}
+    {
+      action: VisStateActions.addLayer,
+      payload: [{id: 'hexagon-2', color: [2, 2, 2]}]
+    }
   ]);
 
   const newLayer = prepareState.visState.layers[2];
@@ -216,9 +219,12 @@ function mockStateWithCustomMapStyle(state) {
     isValid: true,
     label: 'Smoothie the Cat',
     icon: 'data:image/png;base64,xyz',
-    style: {version: 'v8', id: 'smoothie_the_cat', layers: [
-      {id: 'background'}, {id: 'road'}, {id: 'label'}
-    ], name: 'Smoothie the Cat'},
+    style: {
+      version: 'v8',
+      id: 'smoothie_the_cat',
+      layers: [{id: 'background'}, {id: 'road'}, {id: 'label'}],
+      name: 'Smoothie the Cat'
+    },
     url: 'mapbox://styles/shanhe/smoothie.the.cat'
   };
 
@@ -230,14 +236,16 @@ function mockStateWithCustomMapStyle(state) {
     },
     {
       action: MapStyleActions.loadCustomMapStyle,
-      payload: [{
-        style: testCustomMapStyle.style
-      }]
+      payload: [
+        {
+          style: testCustomMapStyle.style
+        }
+      ]
     },
     {
       action: MapStyleActions.addCustomMapStyle,
       payload: [{}]
-    },
+    }
   ]);
 
   return Immutable.fromJS(updatedState);
@@ -369,17 +377,9 @@ export const expectedSavedLayer1 = {
         name: 'Uber Viz Sequential 2',
         type: 'sequential',
         category: 'Uber',
-        colors: [
-          '#E6FAFA',
-          '#AAD7DA',
-          '#68B4BB',
-          '#00939C'
-        ]
+        colors: ['#E6FAFA', '#AAD7DA', '#68B4BB', '#00939C']
       },
-      radiusRange: [
-        0,
-        50
-      ],
+      radiusRange: [0, 50],
       'hi-precision': false
     }
   },
@@ -417,12 +417,7 @@ export const expectedLoadedLayer1 = {
         name: 'Uber Viz Sequential 2',
         type: 'sequential',
         category: 'Uber',
-        colors: [
-          '#E6FAFA',
-          '#AAD7DA',
-          '#68B4BB',
-          '#00939C'
-        ]
+        colors: ['#E6FAFA', '#AAD7DA', '#68B4BB', '#00939C']
       },
       radiusRange: [0, 50],
       'hi-precision': false
@@ -438,24 +433,24 @@ export const expectedLoadedLayer1 = {
 };
 
 export const expectedSavedLayer2 = {
-  id :'geojson-1',
-  type :'geojson',
-  config :{
-    dataId :'ieukmgne',
-    label :'zip',
-    color :[1, 1, 1],
-    columns :{
-      geojson :'_geojson'
+  id: 'geojson-1',
+  type: 'geojson',
+  config: {
+    dataId: 'ieukmgne',
+    label: 'zip',
+    color: [1, 1, 1],
+    columns: {
+      geojson: '_geojson'
     },
-    isVisible :true,
-    visConfig :{
-      opacity :0.8,
-      thickness :2,
-      colorRange :{
-        name :'Global Warming',
-        type :'sequential',
-        category :'Uber',
-        colors :[
+    isVisible: true,
+    visConfig: {
+      opacity: 0.8,
+      thickness: 0.5,
+      colorRange: {
+        name: 'Global Warming',
+        type: 'sequential',
+        category: 'Uber',
+        colors: [
           '#5A1846',
           '#900C3F',
           '#C70039',
@@ -464,27 +459,27 @@ export const expectedSavedLayer2 = {
           '#FFC300'
         ]
       },
-      radius :10,
-      sizeRange :[0, 10],
-      radiusRange :[0, 50],
-      heightRange :[0, 500],
-      elevationScale :5,
-      'hi-precision' :false,
-      stroked :true,
-      filled :false,
-      enable3d :false,
-      wireframe :false
+      radius: 10,
+      sizeRange: [0, 10],
+      radiusRange: [0, 50],
+      heightRange: [0, 500],
+      elevationScale: 5,
+      'hi-precision': false,
+      stroked: true,
+      filled: false,
+      enable3d: false,
+      wireframe: false
     }
   },
-  visualChannels :{
-    colorField :null,
-    colorScale :'quantile',
-    sizeField :null,
-    sizeScale :'linear',
-    heightField :null,
-    heightScale :'linear',
-    radiusField :null,
-    radiusScale :'linear'
+  visualChannels: {
+    colorField: null,
+    colorScale: 'quantile',
+    sizeField: null,
+    sizeScale: 'linear',
+    heightField: null,
+    heightScale: 'linear',
+    radiusField: null,
+    radiusScale: 'linear'
   }
 };
 
@@ -501,7 +496,7 @@ export const expectedLoadedLayer2 = {
     isVisible: true,
     visConfig: {
       opacity: 0.8,
-      thickness: 2,
+      thickness: 0.5,
       colorRange: {
         name: 'Global Warming',
         type: 'sequential',

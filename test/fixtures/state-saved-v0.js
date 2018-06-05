@@ -1141,7 +1141,7 @@ mergedLayer2.config = {
       optional: true
     }
   },
-  highlightColor: [252, 242, 26],
+  highlightColor: [252, 242, 26, 255],
   isConfigActive: false,
   isVisible: true,
   colorField: {
@@ -1225,7 +1225,7 @@ mergedLayer3.config = {
     format: '',
     tableFieldIndex: 10
   },
-  highlightColor: [252, 242, 26],
+  highlightColor: [252, 242, 26, 255],
   isConfigActive: false,
   colorScale: 'quantile',
   colorDomain: [0, 1],
@@ -1285,7 +1285,7 @@ mergedLayer4.config = {
       fieldIdx: 0
     }
   },
-  highlightColor: [252, 242, 26],
+  highlightColor: [252, 242, 26, 255],
   isConfigActive: false,
   isVisible: true,
   colorField: {

@@ -63,7 +63,6 @@ export default class HexagonLayer extends AggregationLayer {
   renderLayer({
     data,
     idx,
-    layerInteraction,
     objectHovered,
     mapState,
     interaction,
@@ -77,9 +76,12 @@ export default class HexagonLayer extends AggregationLayer {
     return [
       new EnhancedHexagonLayer({
         ...data,
-        ...layerInteraction,
         id: this.id,
         idx,
+
+        // highlight
+        autoHighlight: visConfig.enable3d,
+
         radius,
         coverage: visConfig.coverage,
 
@@ -105,6 +107,7 @@ export default class HexagonLayer extends AggregationLayer {
         onSetColorDomain: layerCallbacks.onSetLayerDomain
       }),
 
+      // render an outline of each hexagon if not extruded
       ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d
         ? [
             new GeoJsonLayer({
