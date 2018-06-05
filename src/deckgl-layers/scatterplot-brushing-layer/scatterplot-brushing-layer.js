@@ -19,10 +19,16 @@
 // THE SOFTWARE.
 
 import {ScatterplotLayer} from 'deck.gl';
+import {editShader} from 'deckgl-layers/layer-utils/shader-utils';
 
-import scatterplotVertex from './scatterplot-brushing-layer-vertex.glsl';
-import isPtInRange from '../../shaderlib/is-point-in-range';
-import scatterplotFragment from './scatterplot-brushing-layer-fragment.glsl';
+function addBrushingVsShader(vs) {
+  return editShader(
+    vs,
+    'scatterplot brushing vs',
+    'outerRadiusPixels += outline * strokeWidth / 2.0;',
+    'outerRadiusPixels = brushing_getRadius(instancePositions, outerRadiusPixels + outline * strokeWidth / 2.0);'
+  );
+}
 
 const defaultProps = {
   ...ScatterplotLayer.defaultProps,
@@ -34,26 +40,33 @@ const defaultProps = {
 };
 
 export default class ScatterplotBrushingLayer extends ScatterplotLayer {
+
   getShaders() {
-    // get customized shaders
+    const shaders = super.getShaders();
     return {
-      vs: isPtInRange + scatterplotVertex,
-      fs: scatterplotFragment,
-      shaderCache: this.context.shaderCache
+      vs: addBrushingVsShader(shaders.vs),
+      fs: shaders.fs,
+      modules: shaders.modules.concat(['brushing'])
     };
   }
-
   draw({uniforms}) {
+    const {
+      brushRadius,
+      enableBrushing,
+      mousePosition,
+      outsideBrushRadius
+    } = this.props;
+
     // add uniforms
     super.draw({
       uniforms: {
         ...uniforms,
-        brushRadius: this.props.brushRadius,
-        outsideBrushRadius: this.props.outsideBrushRadius,
-        mousePos: this.props.mousePosition
-          ? new Float32Array(this.unproject(this.props.mousePosition))
+        brushing_uBrushRadius: brushRadius,
+        brushing_uOutsideBrushRadius: outsideBrushRadius,
+        brushing_uMousePosition: mousePosition
+          ? new Float32Array(this.unproject(mousePosition))
           : defaultProps.mousePosition,
-        enableBrushing: this.props.enableBrushing
+        brushing_uEnableBrushing: enableBrushing ? 1 : 0
       }
     });
   }

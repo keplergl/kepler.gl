@@ -383,7 +383,7 @@ mergedLayer0.config = {
     tableFieldIndex: 1
   },
   colorDomain: [1000, 1000, 2000, 2000, 2000, 3000, 3000, 3000, 3000],
-  highlightColor: [252, 242, 26],
+  highlightColor: [252, 242, 26, 255],
   isConfigActive: false,
   colorScale: 'quantile',
   sizeField: {
@@ -441,7 +441,7 @@ mergedLayer1.config = {
   isVisible: true,
   colorField: null,
   colorDomain: [0, 1],
-  highlightColor: [252, 242, 26],
+  highlightColor: [252, 242, 26, 255],
   isConfigActive: false,
   colorScale: 'quantize',
   sizeField: null,

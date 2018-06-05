@@ -169,15 +169,14 @@ export default class ArcLayer extends Layer {
       }, []);
     }
 
-    const getStrokeWidth = d =>
-      sScale ? this.getEncodedChannelValue(sScale, d.data, sizeField) : 1;
+    const getStrokeWidth = sScale ? d =>
+       this.getEncodedChannelValue(sScale, d.data, sizeField, 0) : 1;
 
-    const getColor = d =>
-      cScale ? this.getEncodedChannelValue(cScale, d.data, colorField) : color;
+    const getColor = cScale ? d =>
+       this.getEncodedChannelValue(cScale, d.data, colorField) : color;
 
-    const getTargetColor = d =>
-      cScale
-        ? this.getEncodedChannelValue(cScale, d.data, colorField)
+    const getTargetColor = cScale ? d =>
+       this.getEncodedChannelValue(cScale, d.data, colorField)
         : targetColor || color;
 
     return {
@@ -214,8 +213,8 @@ export default class ArcLayer extends Layer {
   renderLayer({
     data,
     idx,
-    layerInteraction,
     objectHovered,
+    layerInteraction,
     mapState,
     interactionConfig
   }) {
@@ -225,23 +224,32 @@ export default class ArcLayer extends Layer {
       color: this.config.color,
       colorField: this.config.colorField,
       colorRange: this.config.visConfig.colorRange,
-      colorScale: this.config.colorScale
+      colorScale: this.config.colorScale,
+      targetColor: this.config.visConfig.targetColor
+    };
+
+    const interaction = {
+      // auto highlighting
+      pickable: true,
+      autoHighlight: !brush.enabled,
+      highlightColor: this.config.highlightColor,
+
+      // brushing
+      brushRadius: brush.config.size * 1000,
+      brushSource: true,
+      brushTarget: true,
+      enableBrushing: brush.enabled
     };
 
     return [
-      // base layer
       new ArcBrushingLayer({
-        ...layerInteraction,
         ...data,
+        ...interaction,
+        ...layerInteraction,
         id: this.id,
         idx,
-        brushRadius: brush.config.size * 1000,
-        brushSource: true,
-        brushTarget: true,
-        enableBrushing: brush.enabled,
         fp64: this.config.visConfig['hi-precision'],
         opacity: this.config.visConfig.opacity,
-        pickable: true,
         pickedColor: this.config.highlightColor,
         strokeScale: this.config.visConfig.thickness,
         updateTriggers: {
@@ -249,7 +257,6 @@ export default class ArcLayer extends Layer {
             sizeField: this.config.sizeField,
             sizeRange: this.config.visConfig.sizeRange
           },
-          getColor: colorUpdateTriggers,
           getSourceColor: colorUpdateTriggers,
           getTargetColor: colorUpdateTriggers
         }

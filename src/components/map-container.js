@@ -24,6 +24,9 @@ import PropTypes from 'prop-types';
 import MapboxGLMap from 'react-map-gl';
 import DeckGL from 'deck.gl';
 import {GL} from 'luma.gl';
+import {registerShaderModules} from 'luma.gl';
+import pickingModule from 'shaderlib/picking-module';
+import brushingModule from 'shaderlib/brushing-module';
 
 // components
 import MapPopoverFactory from 'components/map/map-popover';
@@ -133,6 +136,11 @@ export default function MapContainerFactory(MapPopover, MapControl) {
 
     _onWebGLInitialized = gl => {
       // enable depth test for perspective mode
+      registerShaderModules(
+        [pickingModule, brushingModule], {
+        ignoreMultipleRegistrations: true
+      });
+
       if (this.props.mapState.dragRotate) {
         gl.enable(gl.DEPTH_TEST);
         gl.depthFunc(gl.LEQUAL);
@@ -318,8 +326,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       const data = layerData[idx];
 
       const layerInteraction = {
-        onHover: visStateActions.onLayerHover,
-        onClick: visStateActions.onLayerClick,
+        // onHover: visStateActions.onLayerHover,
+        // onClick: visStateActions.onLayerClick,
         mousePosition
       };
 
@@ -357,7 +365,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       const {
         mapState,
         layerData,
-        layerOrder
+        layerOrder,
+        visStateActions
       } = this.props;
 
       let deckGlLayers = [];
@@ -378,6 +387,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           layers={deckGlLayers}
           key={this.state.reRenderKey}
           onWebGLInitialized={this._onWebGLInitialized}
+          onLayerHover={visStateActions.onLayerHover}
+          onLayerClick={visStateActions.onLayerClick}
         />
       );
     }
