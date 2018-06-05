@@ -284,7 +284,7 @@ export default class Layer {
       columns: props.columns || null,
       isVisible: props.isVisible || false,
       isConfigActive: props.isConfigActive || false,
-      highlightColor: props.highlightColor || [252, 242, 26],
+      highlightColor: props.highlightColor || [252, 242, 26, 255],
 
       // TODO: refactor this into separate visual Channel config
       // color by field, domain is set by filters, field, scale type

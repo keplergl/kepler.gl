@@ -31,11 +31,15 @@ export default class ScatterplotIconLayer extends ScatterplotLayer {
     const geometry = iconGeometry
       ? new Geometry({
           drawMode: GL.TRIANGLES,
-          positions: new Float32Array(iconGeometry)
+          attributes: {
+            positions: new Float32Array(iconGeometry)
+          }
         })
       : new Geometry({
           drawMode: GL.TRIANGLE_FAN,
-          positions: new Float32Array(defaultPos)
+          attributes: {
+            positions: new Float32Array(defaultPos)
+          }
         });
 
     return new Model(gl, {
