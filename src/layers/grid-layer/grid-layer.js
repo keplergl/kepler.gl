@@ -44,6 +44,7 @@ export default class GridLayer extends AggregationLayer {
     super(props);
 
     this.registerVisConfig(gridVisConfigs);
+    this.visConfigSettings.worldUnitSize.label = 'Grid Size (km)';
   }
 
   get type() {

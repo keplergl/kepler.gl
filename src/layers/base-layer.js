@@ -414,7 +414,6 @@ export default class Layer {
     const copied = this.copyLayerConfig(currentConfig, configToCopy, {notToDeepMerge, notToCopy});
 
     this.updateLayerConfig(copied);
-
     // validate visualChannel field type and scale types
     Object.keys(this.visualChannels).forEach(channel => {
       this.validateVisualChannel(channel);
@@ -657,13 +656,13 @@ export default class Layer {
    */
   validateFieldType(channel) {
     const visualChannel = this.visualChannels[channel];
-    const {field, channelScaleType} = visualChannel;
+    const {field, channelScaleType, supportedFieldTypes} = visualChannel;
 
     if (this.config[field]) {
       // if field is selected, check if field type is supported
-      const supportedFieldType = CHANNEL_SCALE_SUPPORTED_FIELDS[channelScaleType];
+      const channelSupportedFieldTypes = supportedFieldTypes || CHANNEL_SCALE_SUPPORTED_FIELDS[channelScaleType];
 
-      if (!supportedFieldType.includes(this.config[field].type)) {
+      if (!channelSupportedFieldTypes.includes(this.config[field].type)) {
         // field type is not supported, set it back to null
         // set scale back to default
         this.updateLayerConfig({[field]: null});
@@ -677,7 +676,10 @@ export default class Layer {
   validateScale(channel) {
     const visualChannel = this.visualChannels[channel];
     const {scale} = visualChannel;
-
+    if (!scale) {
+      // visualChannel doesn't have scale
+      return;
+    }
     const scaleOptions = this.getScaleOptions(channel);
     // check if current selected scale is
     // supported, if not, change to default

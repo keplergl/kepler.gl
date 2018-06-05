@@ -96,8 +96,8 @@ const getQuantLegends = (scale, labelFormat) => {
 export default class ColorLegend extends Component {
   static propTypes = {
     width: PropTypes.number.isRequired,
-    scaleType: PropTypes.string.isRequired,
-    domain: PropTypes.oneOfType([PropTypes.array, PropTypes.object]).isRequired,
+    scaleType: PropTypes.string,
+    domain: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
     fieldType: PropTypes.string,
     range: PropTypes.arrayOf(PropTypes.string),
     labelFormat: PropTypes.func

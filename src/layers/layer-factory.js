@@ -20,7 +20,7 @@
 
 import keyMirror from 'keymirror';
 
-import {AGGREGATION_TYPES, FIELD_OPTS, LinearFieldAggrTypes} from 'constants/default-settings';
+import {AGGREGATION_TYPES} from 'constants/default-settings';
 import {DefaultColorRange} from 'constants/color-ranges';
 
 export const PROPERTY_GROUPS = keyMirror({
@@ -226,7 +226,7 @@ export const LAYER_VIS_CONFIGS = {
     label: 'Elevation Scale',
     isRanged: false,
     range: [0, 100],
-    step: 1,
+    step: 0.1,
     group: PROPERTY_GROUPS.height,
     property: 'elevationScale'
   },
@@ -288,12 +288,13 @@ export const LAYER_VIS_CONFIGS = {
   weight: {
     type: 'number',
     defaultValue: 1,
-    label: 'Weight',
+    label: 'Weight Intensity',
     isRanged: false,
     range: [0.01, 500],
     step: 0.01,
     group: PROPERTY_GROUPS.cell,
-    property: 'weight'
+    property: 'weight',
+    condition: config => config.weightField
   },
   heatmapRadius: {
     type: 'number',

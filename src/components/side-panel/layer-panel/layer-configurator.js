@@ -174,8 +174,15 @@ export default class LayerConfigurator extends Component {
             channel={layer.visualChannels.color}
             {...layerChannelConfigProps}
           />
+          {layer.visConfigSettings.colorAggregation.condition(layer.config) ?
+            <AggregationTypeSelector
+              {...layer.visConfigSettings.colorAggregation}
+              {...layerChannelConfigProps}
+              channel={layer.visualChannels.color}
+            />
+            : null}
           <VisConfigSlider
-            {...LAYER_VIS_CONFIGS.opacity}
+            {...layer.visConfigSettings.opacity}
             {...visConfiguratorProps}
           />
         </LayerConfigGroup>
@@ -183,21 +190,12 @@ export default class LayerConfigurator extends Component {
         {/* Cluster Radius */}
         <LayerConfigGroup label={'radius'}>
           <VisConfigSlider
-            {...LAYER_VIS_CONFIGS.clusterRadius}
+            {...layer.visConfigSettings.clusterRadius}
             {...visConfiguratorProps}
           />
           <VisConfigSlider
-            {...LAYER_VIS_CONFIGS.clusterRadiusRange}
+            {...layer.visConfigSettings.radiusRange}
             {...visConfiguratorProps}
-          />
-        </LayerConfigGroup>
-
-        {/* Aggregation Type */}
-        <LayerConfigGroup label={'aggregation'}>
-          <AggregationTypeSelector
-            {...LAYER_VIS_CONFIGS.aggregation}
-            {...layerChannelConfigProps}
-            channel={layer.visualChannels.color}
           />
         </LayerConfigGroup>
       </StyledLayerVisualConfigurator>
@@ -216,14 +214,14 @@ export default class LayerConfigurator extends Component {
         <LayerConfigGroup label={'color'}>
           <ColorRangeConfig {...visConfiguratorProps} />
           <VisConfigSlider
-            {...LAYER_VIS_CONFIGS.opacity}
+            {...layer.visConfigSettings.opacity}
             {...visConfiguratorProps}
           />
         </LayerConfigGroup>
         {/* Radius */}
         <LayerConfigGroup label={'radius'}>
           <VisConfigSlider
-            {...LAYER_VIS_CONFIGS.radius}
+            {...layer.visConfigSettings.radius}
             {...visConfiguratorProps}
             label={false}
           />
@@ -253,7 +251,7 @@ export default class LayerConfigurator extends Component {
     layerConfiguratorProps,
     layerChannelConfigProps
   }) {
-    const {type, config} = layer;
+    const {config} = layer;
     const {
       visConfig: {enable3d}
     } = config;
@@ -279,14 +277,14 @@ export default class LayerConfigurator extends Component {
               channel={layer.visualChannels.color}
             />
           ) : null}
-          {layer.visConfigSettings.percentile.condition(layer.config) ? (
+          {layer.visConfigSettings.percentile && layer.visConfigSettings.percentile.condition(layer.config) ? (
             <VisConfigSlider
               {...layer.visConfigSettings.percentile}
               {...visConfiguratorProps}
             />
           ) : null}
           <VisConfigSlider
-            {...LAYER_VIS_CONFIGS.opacity}
+            {...layer.visConfigSettings.opacity}
             {...visConfiguratorProps}
           />
         </LayerConfigGroup>
@@ -294,51 +292,51 @@ export default class LayerConfigurator extends Component {
         {/* Cell size */}
         <LayerConfigGroup label={'radius'}>
           <VisConfigSlider
-            {...LAYER_VIS_CONFIGS.worldUnitSize}
+            {...layer.visConfigSettings.worldUnitSize}
             {...visConfiguratorProps}
-            label={`${
-              type === LAYER_TYPES.grid ? 'Grid Size' : 'Hexagon Radius'
-            } (km)`}
           />
           <VisConfigSlider
-            {...LAYER_VIS_CONFIGS.coverage}
+            {...layer.visConfigSettings.coverage}
             {...visConfiguratorProps}
           />
         </LayerConfigGroup>
 
         {/* Elevation */}
-        <LayerConfigGroup
-          {...LAYER_VIS_CONFIGS.enable3d}
-          {...visConfiguratorProps}
-        >
-          <VisConfigSlider
-            {...LAYER_VIS_CONFIGS.elevationScale}
+        {layer.visConfigSettings.enable3d ?
+          <LayerConfigGroup
+            {...layer.visConfigSettings.enable3d}
             {...visConfiguratorProps}
-          />
-          <ChannelByValueSelector
-            {...layerChannelConfigProps}
-            channel={layer.visualChannels.size}
-            description={elevationByDescription}
-            disabled={!enable3d}
-          />
-          {layer.visConfigSettings.sizeAggregation.condition(layer.config) ? (
-            <AggregationTypeSelector
-              {...layer.visConfigSettings.sizeAggregation}
-              {...layerChannelConfigProps}
-              channel={layer.visualChannels.size}
-            />
-          ) : null}
-          {layer.visConfigSettings.elevationPercentile.condition(
-            layer.config
-          ) ? (
+          >
             <VisConfigSlider
-              {...layer.visConfigSettings.elevationPercentile}
+              {...layer.visConfigSettings.elevationScale}
               {...visConfiguratorProps}
             />
-          ) : null}
-        </LayerConfigGroup>
+            <ChannelByValueSelector
+              {...layerChannelConfigProps}
+              channel={layer.visualChannels.size}
+              description={elevationByDescription}
+              disabled={!enable3d}
+            />
+            {layer.visConfigSettings.sizeAggregation.condition(layer.config) ? (
+              <AggregationTypeSelector
+                {...layer.visConfigSettings.sizeAggregation}
+                {...layerChannelConfigProps}
+                channel={layer.visualChannels.size}
+              />
+            ) : null}
+            {layer.visConfigSettings.elevationPercentile.condition(
+              layer.config
+            ) ? (
+              <VisConfigSlider
+                {...layer.visConfigSettings.elevationPercentile}
+                {...visConfiguratorProps}
+              />
+            ) : null}
+          </LayerConfigGroup> : null}
+
+        {/* High Precision */}
         <LayerConfigGroup
-          {...LAYER_VIS_CONFIGS['hi-precision']}
+          {...layer.visConfigSettings['hi-precision']}
           {...visConfiguratorProps}
         />
       </StyledLayerVisualConfigurator>
@@ -714,14 +712,15 @@ export const ChannelByValueSelector = ({
     property,
     range,
     scale,
-    defaultMeasure
+    defaultMeasure,
+    supportedFieldTypes
   } = channel;
-  const supportedFieldTypes = CHANNEL_SCALE_SUPPORTED_FIELDS[channelScaleType];
+  const channelSupportedFieldTypes = supportedFieldTypes || CHANNEL_SCALE_SUPPORTED_FIELDS[channelScaleType];
   const supportedFields = fields.filter(({type}) =>
-    supportedFieldTypes.includes(type)
+    channelSupportedFieldTypes.includes(type)
   );
   const scaleOptions = layer.getScaleOptions(channel.key);
-  const showScale = !layer.isAggregated && scaleOptions.length > 1;
+  const showScale = !layer.isAggregated && layer.config[scale] && scaleOptions.length > 1;
   const defaultDescription = `Calculate ${property} based on selected field`;
 
   return (
@@ -736,7 +735,7 @@ export const ChannelByValueSelector = ({
       placeholder={defaultMeasure || 'Select a field'}
       range={layer.config.visConfig[range]}
       scaleOptions={scaleOptions}
-      scaleType={layer.config[scale]}
+      scaleType={scale ? layer.config[scale] : null}
       selectedField={layer.config[field]}
       showScale={showScale}
       updateField={val => onChange({[field]: val}, key)}

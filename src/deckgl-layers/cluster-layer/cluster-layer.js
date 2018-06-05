@@ -20,8 +20,12 @@
 
 import {CompositeLayer, ScatterplotLayer} from 'deck.gl';
 import geoViewport from '@mapbox/geo-viewport';
-import {ascending, extent, max} from 'd3-array';
-
+import {ascending, max} from 'd3-array';
+import {
+  getQuantileDomain,
+  getOrdinalDomain,
+  getLinearDomain
+} from 'utils/data-scale-utils';
 import {
   getColorScaleFunction,
   getRadiusScaleFunction,
@@ -150,13 +154,16 @@ export default class ClusterLayer extends CompositeLayer {
 
     const radiusDomain = [0, max(clusters, getRadiusValue)];
 
-    const colorValues = clusters
-      .map(d => getColorValue(d.properties.points))
-      .filter(n => Number.isFinite(n));
+    const colorValues = clusters.map(d => getColorValue(d.properties.points));
+
+    const identity = d => d;
+
     const colorDomain =
-      colorScale === SCALE_TYPES.quantize
-        ? extent(colorValues)
-        : colorValues.sort(ascending);
+      colorScale === SCALE_TYPES.ordinal
+        ? getOrdinalDomain(colorValues, identity)
+        : colorScale === SCALE_TYPES.quantile
+          ? getQuantileDomain(colorValues, identity, ascending)
+          : getLinearDomain(colorValues, identity);
 
     this.setState({
       colorDomain,
@@ -198,9 +205,7 @@ export default class ClusterLayer extends CompositeLayer {
 
     // if cell value is outside domain, set alpha to 0
     const color =
-      Number.isFinite(cv) &&
-      cv >= colorDomain[0] &&
-      cv <= colorDomain[colorDomain.length - 1]
+      cv >= colorDomain[0] && cv <= colorDomain[colorDomain.length - 1]
         ? colorScaleFunc(cv)
         : [0, 0, 0, 0];
 

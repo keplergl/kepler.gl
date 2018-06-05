@@ -30,14 +30,12 @@ export const clusterVisConfigs = {
   colorRange: 'colorRange',
   radiusRange: 'clusterRadiusRange',
   'hi-precision': 'hi-precision',
-  colorAggregation: 'aggregation',
-  sizeAggregation: 'aggregation'
+  colorAggregation: 'aggregation'
 };
 
 export default class ClusterLayer extends AggregationLayer {
   constructor(props) {
     super(props);
-
     this.registerVisConfig(clusterVisConfigs);
   }
 
@@ -51,14 +49,15 @@ export default class ClusterLayer extends AggregationLayer {
   get visualChannels() {
     return {
       color: {
-        property: 'color',
-        field: 'colorField',
-        scale: 'colorScale',
-        domain: 'colorDomain',
-        range: 'colorRange',
-        key: 'color',
+        aggregation: 'colorAggregation',
+        channelScaleType: CHANNEL_SCALES.colorAggr,
         defaultMeasure: 'Point Count',
-        channelScaleType: CHANNEL_SCALES.colorAggr
+        domain: 'colorDomain',
+        field: 'colorField',
+        key: 'color',
+        property: 'color',
+        range: 'colorRange',
+        scale: 'colorScale'
       }
     };
   }

@@ -346,10 +346,10 @@ export const  notSupportAggrOpts = {
  */
 export const DEFAULT_AGGREGATION = {
   [CHANNEL_SCALES.colorAggr]: {
-    [AGGREGATION_TYPES.count]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
+    [AGGREGATION_TYPES.count]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile]
   },
   [CHANNEL_SCALES.sizeAggr]: {
-    [AGGREGATION_TYPES.count]: [SCALE_TYPES.linear],
+    [AGGREGATION_TYPES.count]: [SCALE_TYPES.linear]
   }
 };
 

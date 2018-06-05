@@ -83,27 +83,27 @@ export default class AggregationLayer extends Layer {
   get visualChannels() {
     return {
       color: {
-        property: 'color',
-        field: 'colorField',
-        scale: 'colorScale',
-        domain: 'colorDomain',
-        range: 'colorRange',
         aggregation: 'colorAggregation',
-        key: 'color',
         channelScaleType: CHANNEL_SCALES.colorAggr,
-        defaultMeasure: 'Point Count'
+        defaultMeasure: 'Point Count',
+        domain: 'colorDomain',
+        field: 'colorField',
+        key: 'color',
+        property: 'color',
+        range: 'colorRange',
+        scale: 'colorScale'
       },
       size: {
-        property: 'height',
-        field: 'sizeField',
-        scale: 'sizeScale',
-        domain: 'sizeDomain',
-        range: 'sizeRange',
         aggregation: 'sizeAggregation',
-        key: 'size',
         channelScaleType: CHANNEL_SCALES.sizeAggr,
+        condition: config => config.visConfig.enable3d,
         defaultMeasure: 'Point Count',
-        condition: config => config.visConfig.enable3d
+        domain: 'sizeDomain',
+        field: 'sizeField',
+        key: 'size',
+        property: 'height',
+        range: 'sizeRange',
+        scale: 'sizeScale'
       }
     };
   }
@@ -155,6 +155,10 @@ export default class AggregationLayer extends Layer {
     const visualChannel = this.visualChannels[channel];
     const {field, aggregation} = visualChannel;
     const aggregationOptions = this.getAggregationOptions(channel);
+
+    if (!aggregation) {
+      return;
+    }
 
     if (!aggregationOptions.length) {
       // if field cannot be aggregated, set field to null
