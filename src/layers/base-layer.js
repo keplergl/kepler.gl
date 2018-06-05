@@ -271,7 +271,7 @@ export default class Layer {
       isConfigActive: props.isConfigActive || false,
       highlightColor: props.highlightColor || [252, 242, 26],
 
-      // TODO: refactor this into seperate visual Channel config
+      // TODO: refactor this into separate visual Channel config
       // color by field, domain is set by filters, field, scale type
       colorField: null,
       colorDomain: [0, 1],

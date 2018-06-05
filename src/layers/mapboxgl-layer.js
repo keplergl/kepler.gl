@@ -51,26 +51,26 @@ class MapboxLayerGL extends Layer {
 
   get visualChannels() {
     return {
-      color: {
-        property: 'color',
-        field: 'colorField',
-        scale: 'colorScale',
-        domain: 'colorDomain',
-        range: 'colorRange',
-        key: 'color',
-        channelScaleType: CHANNEL_SCALES.colorAggr,
-        defaultMeasure: 'Point Count'
-      },
-      weight: {
-        property: 'weight',
-        field: 'weightField',
-        scale: 'weightScale',
-        domain: 'weightDomain',
-        range: 'weightRange',
-        key: 'weight',
-        channelScaleType: CHANNEL_SCALES.sizeAggr,
-        defaultMeasure: 'Weight'
-      }
+      // color: {
+      //   property: 'color',
+      //   field: 'colorField',
+      //   scale: 'colorScale',
+      //   domain: 'colorDomain',
+      //   range: 'colorRange',
+      //   key: 'color',
+      //   channelScaleType: CHANNEL_SCALES.colorAggr,
+      //   defaultMeasure: 'Point Count'
+      // },
+      // weight: {
+      //   property: 'weight',
+      //   field: 'weightField',
+      //   scale: 'weightScale',
+      //   domain: 'weightDomain',
+      //   range: 'weightRange',
+      //   key: 'weight',
+      //   channelScaleType: CHANNEL_SCALES.sizeAggr,
+      //   defaultMeasure: 'Weight'
+      // }
     };
   }
 

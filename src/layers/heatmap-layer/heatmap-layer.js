@@ -50,27 +50,25 @@ export const heatmapVisConfigs = {
  *  1, "rgb(178,24,43)"
  * ]
  */
-const heatmapDensity = (colorDomain, colorScale, visConfig) => {
+const heatmapDensity = (visConfig) => {
 
-  // this is work around to deal with ordinal scale type.
-  // I checked other aggregate layers and we don't deal with ordinal scales
-  const scaleType =  colorScale === SCALE_TYPES.ordinal ?
-    SCALE_TYPES.quantize : colorScale;
+  // const scaleType =  colorScale === SCALE_TYPES.ordinal ?
+  //   SCALE_TYPES.quantize : colorScale;
 
-  const scaleFunction = SCALE_FUNC[scaleType];
+  const scaleFunction = SCALE_FUNC.quantize;
 
   const scale = scaleFunction()
-    .domain(colorDomain)
+    .domain([0, 1])
     .range(visConfig.colorRange.colors);
 
-  if (colorScale === SCALE_TYPES.ordinal) {
-    scale.domain().map(level => {
-      return [
-        scale(level),
-        `rgb(${hexToRgb(scale(level)).join(',')})` // color
-      ];
-    })
-  }
+  // if (colorScale === SCALE_TYPES.ordinal) {
+  //   scale.domain().map(level => {
+  //     return [
+  //       scale(level),
+  //       `rgb(${hexToRgb(scale(level)).join(',')})` // color
+  //     ];
+  //   })
+  // }
 
   return scale.range().reduce((bands, level) => {
     const invert = scale.invertExtent(level);
@@ -96,7 +94,7 @@ class HeatmapLayer extends MapboxGLLayer {
 
   get visualChannels() {
     return {
-      ...super.visualChannels,
+      // ...super.visualChannels,
       weight: {
         property: 'weight',
         field: 'weightField',
@@ -114,14 +112,23 @@ class HeatmapLayer extends MapboxGLLayer {
   }
 
   getDefaultLayerConfig(props = {}) {
-    return {
+    // const layerConfig = super.getDefaultLayerConfig(props);
+    const layerConfig = {
       ...super.getDefaultLayerConfig(props),
-      // add height visual channel
+      // add weight visual channel
+      colorScale: 'quantize',
+
       weightField: null,
       weightDomain: [0, 1],
       weightRange: [0, 1],
       weightScale: 'linear'
-    }
+    };
+
+    // mapbox heatmap layer color is always based on density
+    // delete colorField
+    delete layerConfig.colorField;
+
+    return layerConfig;
   }
 
   sameDataSelector = ({allData, filteredIndex, oldLayerData, opt = {}}) => {
@@ -157,23 +164,27 @@ class HeatmapLayer extends MapboxGLLayer {
   datasetSelector = config => config.dataId;
   isVisibleSelector = config => config.isVisible;
   visConfigSelector = config => config.visConfig;
-  weightFieldSelector = config => config.weightField;
-  colorDomainSelector = config => config.colorDomain;
-  colorScaleSelector = config => config.colorScale;
+  weightSelector = config => config.visConfig.weight;
+  weightFieldSelector = config => config.weightField ? config.weightField.name : null;
+  // colorDomainSelector = config => config.colorDomain;
+  // colorScaleSelector = config => config.colorScale;
+  opacitySelector = config => config.visConfig.opacity;
   radiusSelector = config => config.visConfig.radius;
 
   computeHeatmapConfiguration = createSelector(
     this.datasetSelector,
     this.isVisibleSelector,
     this.visConfigSelector,
+    this.weightSelector,
     this.weightFieldSelector,
-    this.colorDomainSelector,
-    this.colorScaleSelector,
+    // this.colorDomainSelector,
+    // this.colorScaleSelector,
     this.radiusSelector,
-    (datasetId, isVisible, visConfig, weightField, colorDomain, colorScale, radius) => {
+    (datasetId, isVisible, visConfig, weight, weightField, opacity, radius) => {
       // TODO: improve using setPaintProperty
       return {
         type: 'heatmap',
+        id: this.id,
         source: datasetId,
         layout: {
           visibility: isVisible ? 'visible' : 'none'
@@ -183,9 +194,9 @@ class HeatmapLayer extends MapboxGLLayer {
           'heatmap-weight': weightField ? [
             'interpolate',
             ['linear'],
-            ['get', weightField.name],
+            ['get', weightField],
             0, 0,
-            MAX_ZOOM_LEVEL, visConfig.weight
+            MAX_ZOOM_LEVEL, weight
           ] : 1,
           'heatmap-intensity': [
             'interpolate',
@@ -198,7 +209,7 @@ class HeatmapLayer extends MapboxGLLayer {
             'interpolate',
             ['linear'],
             ['heatmap-density'],
-            ...heatmapDensity(colorDomain, colorScale, visConfig)
+            ...heatmapDensity(visConfig)
           ],
           'heatmap-radius': [
             'interpolate',
@@ -207,7 +218,7 @@ class HeatmapLayer extends MapboxGLLayer {
             0, 2,
             MAX_ZOOM_LEVEL, radius // radius
           ],
-          'heatmap-opacity': visConfig.opacity || DEFAULT_OPACITY
+          'heatmap-opacity': opacity || DEFAULT_OPACITY
         }
       };
     }

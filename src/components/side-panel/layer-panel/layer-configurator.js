@@ -191,12 +191,12 @@ export default class LayerConfigurator extends Component {
             {...visConfiguratorProps}
           />
         </LayerConfigGroup>
+
         {/* Aggregation Type */}
         <LayerConfigGroup label={'aggregation'}>
           <AggregationTypeSelector
             {...LAYER_VIS_CONFIGS.aggregation}
             {...layerChannelConfigProps}
-            property={'colorAggregation'}
             channel={layer.visualChannels.color}
           />
         </LayerConfigGroup>
@@ -745,14 +745,18 @@ export const ChannelByValueSelector = ({
   );
 };
 
-export const AggrColorScaleSelector = ({layer, onChange}) => (
-  <DimensionScaleSelector
-    label="Color Scale"
-    options={layer.getScaleOptions('color')}
-    scaleType={layer.config.colorScale}
-    onSelect={val => onChange({colorScale: val}, 'color')}
-  />
-);
+export const AggrColorScaleSelector = ({layer, onChange}) => {
+  const scaleOptions = layer.getScaleOptions('color');
+  return (
+    Array.isArray(scaleOptions) && scaleOptions.length > 1 ?
+      <DimensionScaleSelector
+        label="Color Scale"
+        options={scaleOptions}
+        scaleType={layer.config.colorScale}
+        onSelect={val => onChange({colorScale: val}, 'color')}
+      /> : null
+  );
+};
 
 export const AggregationTypeSelector = ({layer, channel, onChange}) => {
   const {field, aggregation, key} = channel;
