@@ -149,9 +149,21 @@ export const LAYER_VIS_CONFIGS = {
     type: 'select',
     defaultValue: AGGREGATION_TYPES.average,
     label: 'Color Aggregation',
+    // aggregation options are based on color field types
     options: Object.keys(AGGREGATION_TYPES),
     group: PROPERTY_GROUPS.color,
-    property: 'colorAggregation'
+    property: 'colorAggregation',
+    condition: config => config.colorField
+  },
+  sizeAggregation: {
+    type: 'select',
+    defaultValue: AGGREGATION_TYPES.average,
+    label: 'Height Aggregation',
+    // aggregation options are based on color field types
+    options: Object.keys(AGGREGATION_TYPES),
+    group: PROPERTY_GROUPS.height,
+    property: 'sizeAggregation',
+    condition: config => config.sizeField
   },
   percentile: {
     type: 'number',
@@ -166,7 +178,10 @@ export const LAYER_VIS_CONFIGS = {
     range: [0, 100],
     step: 0.01,
     group: PROPERTY_GROUPS.color,
-    property: 'percentile'
+    property: 'percentile',
+
+    // percentile filter only makes sense with linear aggregation
+    condition: config => config.colorScale !== 'ordinal'
   },
   elevationPercentile: {
     type: 'number',
@@ -181,7 +196,9 @@ export const LAYER_VIS_CONFIGS = {
     range: [0, 100],
     step: 0.01,
     group: PROPERTY_GROUPS.height,
-    property: 'elevationPercentile'
+    property: 'elevationPercentile',
+    // percentile filter only makes sense with linear aggregation
+    condition: config => config.visConfig.enable3d && (config.colorField || config.sizeField)
   },
   resolution: {
     type: 'number',
@@ -209,7 +226,7 @@ export const LAYER_VIS_CONFIGS = {
     label: 'Elevation Scale',
     isRanged: false,
     range: [0, 100],
-    step: 1,
+    step: 0.1,
     group: PROPERTY_GROUPS.height,
     property: 'elevationScale'
   },
@@ -271,12 +288,13 @@ export const LAYER_VIS_CONFIGS = {
   weight: {
     type: 'number',
     defaultValue: 1,
-    label: 'Weight',
+    label: 'Weight Intensity',
     isRanged: false,
     range: [0.01, 500],
     step: 0.01,
     group: PROPERTY_GROUPS.cell,
-    property: 'weight'
+    property: 'weight',
+    condition: config => config.weightField
   },
   heatmapRadius: {
     type: 'number',

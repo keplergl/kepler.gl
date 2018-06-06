@@ -61,6 +61,7 @@ export function generateMapboxLayers(layers = [], layerData = [], layerOrder = [
  */
 export function updateMapboxLayers(map, newLayers = [], oldLayers = null, mapLayers = null, opt = {force: true}) {
   // delete non existing layers
+
   if (oldLayers) {
     const oldLayersKeys = Object.keys(oldLayers);
     if (newLayers.length === 0 && oldLayersKeys.length > 0) {

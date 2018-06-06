@@ -21,6 +21,17 @@
 import {min, max, mean, median, sum} from 'd3-array';
 import {AGGREGATION_TYPES} from 'constants/default-settings';
 
+const getFrenquency = data => data.reduce((uniques, val) => {
+  uniques[val] = (uniques[val] || 0) + 1;
+  return uniques;
+}, {});
+
+function getMode(data) {
+  const occur = getFrenquency(data);
+  return Object.keys(occur).reduce((prev, key) =>
+    occur[prev] >= occur[key] ? prev : key, Object.keys(occur)[0]);
+}
+
 export function aggregate(data, technique) {
   switch (technique) {
     case AGGREGATION_TYPES.average:
@@ -28,10 +39,14 @@ export function aggregate(data, technique) {
     case AGGREGATION_TYPES.countUnique:
       return Object.keys(
         data.reduce((uniques, val) => {
-          uniques[val] = true;
+          uniques[val] = uniques[val] || 0;
+          uniques[val] += 1;
           return uniques;
         }, {})
       ).length;
+    case AGGREGATION_TYPES.mode:
+      return getMode(data);
+
     case AGGREGATION_TYPES.maximum:
       return max(data);
     case AGGREGATION_TYPES.minimum:

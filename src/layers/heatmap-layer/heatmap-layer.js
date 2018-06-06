@@ -19,29 +19,24 @@
 // THE SOFTWARE.
 
 import {createSelector} from 'reselect';
-import {CHANNEL_SCALES, SCALE_FUNC, SCALE_TYPES} from 'constants/default-settings';
+import {CHANNEL_SCALES, SCALE_FUNC, ALL_FIELD_TYPES} from 'constants/default-settings';
 import {hexToRgb} from 'utils/color-utils';
 import {geojsonFromPoints} from '../mapbox-utils';
 import MapboxGLLayer from '../mapboxgl-layer';
 import HeatmapLayerIcon from './heatmap-layer-icon';
 
 const MAX_ZOOM_LEVEL = 18;
-const DEFAULT_OPACITY = .8;
 
 export const heatmapVisConfigs = {
   opacity: 'opacity',
-  weight: 'weight',
   colorRange: 'colorRange',
-  radius: 'heatmapRadius',
-  weightRange: 'weight'
+  radius: 'heatmapRadius'
 };
 
 /**
  *
- * @param colorDomain
- * @param colorScale
- * @param visConfig
- * @return [
+ * @param {Object} colorRange
+ * @return {Array} [
  *  0, "rgba(33,102,172,0)",
  *  0.2, "rgb(103,169,207)",
  *  0.4, "rgb(209,229,240)",
@@ -50,27 +45,13 @@ export const heatmapVisConfigs = {
  *  1, "rgb(178,24,43)"
  * ]
  */
-const heatmapDensity = (colorDomain, colorScale, visConfig) => {
+const heatmapDensity = (colorRange) => {
 
-  // this is work around to deal with ordinal scale type.
-  // I checked other aggregate layers and we don't deal with ordinal scales
-  const scaleType =  colorScale === SCALE_TYPES.ordinal ?
-    SCALE_TYPES.quantize : colorScale;
-
-  const scaleFunction = SCALE_FUNC[scaleType];
+  const scaleFunction = SCALE_FUNC.quantize;
 
   const scale = scaleFunction()
-    .domain(colorDomain)
-    .range(visConfig.colorRange.colors);
-
-  if (colorScale === SCALE_TYPES.ordinal) {
-    scale.domain().map(level => {
-      return [
-        scale(level),
-        `rgb(${hexToRgb(scale(level)).join(',')})` // color
-      ];
-    })
-  }
+    .domain([0, 1])
+    .range(colorRange.colors);
 
   return scale.range().reduce((bands, level) => {
     const invert = scale.invertExtent(level);
@@ -96,15 +77,17 @@ class HeatmapLayer extends MapboxGLLayer {
 
   get visualChannels() {
     return {
-      ...super.visualChannels,
       weight: {
         property: 'weight',
         field: 'weightField',
         scale: 'weightScale',
         domain: 'weightDomain',
-        range: 'weightRange',
         key: 'weight',
-        channelScaleType: CHANNEL_SCALES.sizeAggr
+        // supportedFieldTypes can be determined by channelScaleType
+        // or specified here
+        defaultMeasure: 'density',
+        supportedFieldTypes: [ALL_FIELD_TYPES.real, ALL_FIELD_TYPES.integer],
+        channelScaleType: CHANNEL_SCALES.size
       }
     };
   }
@@ -113,25 +96,40 @@ class HeatmapLayer extends MapboxGLLayer {
     return HeatmapLayerIcon;
   }
 
-  getDefaultLayerConfig(props = {}) {
-    return {
-      ...super.getDefaultLayerConfig(props),
-      // add height visual channel
-      weightField: null,
-      weightDomain: [0, 1],
-      weightRange: [0, 1],
-      weightScale: 'linear'
+  getVisualChannelDescription(channel) {
+    return channel === 'color' ? {
+      label: 'color',
+      measure: 'Density'
+    } : {
+      label: 'weight',
+      measure: this.config.weightField ? this.config.weightField.name : 'Density'
     }
   }
 
-  sameDataSelector = ({allData, filteredIndex, oldLayerData, opt = {}}) => {
-    return Boolean(oldLayerData &&
-      oldLayerData.data && oldLayerData.columns &&
+  getDefaultLayerConfig(props = {}) {
+
+    // mapbox heatmap layer color is always based on density
+    // no need to set colorField, colorDomain and colorScale
+    /* eslint-disable no-unused-vars */
+    const {colorField, colorDomain, colorScale, ...layerConfig} = {
+      ...super.getDefaultLayerConfig(props),
+
+      weightField: null,
+      weightDomain: [0, 1],
+      weightScale: 'linear'
+    };
+    /* eslint-enable no-unused-vars */
+
+    return layerConfig;
+  }
+
+  isSameData = ({allData, filteredIndex, oldLayerData, opt = {}}, config) => {
+    return Boolean(oldLayerData && oldLayerData.columns === config.columns &&
       opt.sameData
     );
   };
 
-  sameConfigSelector = ({oldLayerData, config}) => {
+  isSameConfig = ({oldLayerData, config}) => {
     // columns must use the same filedIdx
     // this is a fast way to compare columns object
     const {
@@ -148,32 +146,24 @@ class HeatmapLayer extends MapboxGLLayer {
     return sameColumns && sameWeightField;
   };
 
-  rebuildSelector = createSelector(
-    this.sameDataSelector,
-    this.sameConfigSelector,
-    (sameData, sameColumns) => !(sameData && sameColumns)
-  );
-
   datasetSelector = config => config.dataId;
   isVisibleSelector = config => config.isVisible;
   visConfigSelector = config => config.visConfig;
-  weightFieldSelector = config => config.weightField;
-  colorDomainSelector = config => config.colorDomain;
-  colorScaleSelector = config => config.colorScale;
-  radiusSelector = config => config.visConfig.radius;
+  weightFieldSelector = config => config.weightField ? config.weightField.name : null;
+  weightDomainSelector = config => config.weightDomain;
 
   computeHeatmapConfiguration = createSelector(
     this.datasetSelector,
     this.isVisibleSelector,
     this.visConfigSelector,
     this.weightFieldSelector,
-    this.colorDomainSelector,
-    this.colorScaleSelector,
-    this.radiusSelector,
-    (datasetId, isVisible, visConfig, weightField, colorDomain, colorScale, radius) => {
-      // TODO: improve using setPaintProperty
-      return {
+    this.weightDomainSelector,
+
+    (datasetId, isVisible, visConfig, weightField, weightDomain) => {
+
+      const layer = {
         type: 'heatmap',
+        id: this.id,
         source: datasetId,
         layout: {
           visibility: isVisible ? 'visible' : 'none'
@@ -183,9 +173,9 @@ class HeatmapLayer extends MapboxGLLayer {
           'heatmap-weight': weightField ? [
             'interpolate',
             ['linear'],
-            ['get', weightField.name],
-            0, 0,
-            MAX_ZOOM_LEVEL, visConfig.weight
+            ['get', weightField],
+            weightDomain[0], 0,
+            weightDomain[1], 1
           ] : 1,
           'heatmap-intensity': [
             'interpolate',
@@ -198,18 +188,20 @@ class HeatmapLayer extends MapboxGLLayer {
             'interpolate',
             ['linear'],
             ['heatmap-density'],
-            ...heatmapDensity(colorDomain, colorScale, visConfig)
+            ...heatmapDensity(visConfig.colorRange)
           ],
           'heatmap-radius': [
             'interpolate',
             ['linear'],
             ['zoom'],
             0, 2,
-            MAX_ZOOM_LEVEL, radius // radius
+            MAX_ZOOM_LEVEL, visConfig.radius // radius
           ],
-          'heatmap-opacity': visConfig.opacity || DEFAULT_OPACITY
+          'heatmap-opacity': visConfig.opacity
         }
       };
+
+      return layer;
     }
   );
 
@@ -223,8 +215,10 @@ class HeatmapLayer extends MapboxGLLayer {
     };
 
     const {weightField} = this.config;
+    const isSameData = this.isSameData(options, this.config);
+    const isSameConfig = this.isSameConfig(options);
 
-    const data = !shouldRebuild(this.sameDataSelector(options), this.sameConfigSelector(options)) ?
+    const data = !shouldRebuild(isSameData, isSameConfig) ?
       null :
       geojsonFromPoints(
         allData,

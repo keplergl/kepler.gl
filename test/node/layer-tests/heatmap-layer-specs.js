@@ -40,9 +40,9 @@ test('#HeatmapLayer -> contructor', t => {
         test: layer => {
           // test constructor
           t.equal(
-            layer.config.visConfig.weight,
-            1,
-            'Heatmap default layer weight should be 1'
+            layer.config.visConfig.radius,
+            20,
+            'Heatmap default radius should be 20'
           )
         }
       }

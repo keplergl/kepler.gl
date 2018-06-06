@@ -271,7 +271,7 @@ export default class Layer {
       isConfigActive: props.isConfigActive || false,
       highlightColor: props.highlightColor || [252, 242, 26],
 
-      // TODO: refactor this into seperate visual Channel config
+      // TODO: refactor this into separate visual Channel config
       // color by field, domain is set by filters, field, scale type
       colorField: null,
       colorDomain: [0, 1],
@@ -284,6 +284,21 @@ export default class Layer {
 
       visConfig: {}
     };
+  }
+
+  /**
+   * Get the description of a visualChannel config
+   * @param key
+   * @returns {{label: string, measure: (string|string)}}
+   */
+  getVisualChannelDescription(key) {
+    // e.g. label: Color, measure: Vehicle Type
+    return {
+      label: this.visConfigSettings[this.visualChannels[key].range].label,
+      measure: this.config[this.visualChannels[key].field]
+        ? this.config[this.visualChannels[key].field].name
+        : this.visualChannels[key].defaultMeasure
+    }
   }
 
   /**
@@ -399,7 +414,6 @@ export default class Layer {
     const copied = this.copyLayerConfig(currentConfig, configToCopy, {notToDeepMerge, notToCopy});
 
     this.updateLayerConfig(copied);
-
     // validate visualChannel field type and scale types
     Object.keys(this.visualChannels).forEach(channel => {
       this.validateVisualChannel(channel);
@@ -633,30 +647,59 @@ export default class Layer {
    * @param channel
    */
   validateVisualChannel(channel) {
+    this.validateFieldType(channel);
+    this.validateScale(channel);
+  }
+
+  /**
+   * Validate field type based on channelScaleType
+   */
+  validateFieldType(channel) {
     const visualChannel = this.visualChannels[channel];
-    const {field, scale, channelScaleType} = visualChannel;
+    const {field, channelScaleType, supportedFieldTypes} = visualChannel;
 
     if (this.config[field]) {
       // if field is selected, check if field type is supported
-      const supportedFieldType = CHANNEL_SCALE_SUPPORTED_FIELDS[channelScaleType];
+      const channelSupportedFieldTypes = supportedFieldTypes || CHANNEL_SCALE_SUPPORTED_FIELDS[channelScaleType];
 
-      if (!supportedFieldType.includes(this.config[field].type)) {
+      if (!channelSupportedFieldTypes.includes(this.config[field].type)) {
         // field type is not supported, set it back to null
         // set scale back to default
-        const defaultScale = this.getDefaultLayerConfig()[scale];
-        this.updateLayerConfig({[field]: null, [scale]: defaultScale});
-      }
-
-      // check if current selected scale is
-      // supported, if not, update to default
-      if (this.config[field]) {
-        const scaleOptions =
-          FIELD_OPTS[this.config[field].type].scale[channelScaleType];
-        if (!scaleOptions.includes(this.config[scale])) {
-          this.updateLayerConfig({[scale]: scaleOptions[0]});
-        }
+        this.updateLayerConfig({[field]: null});
       }
     }
+  }
+
+  /**
+   * Validate scale type based on aggregation
+   */
+  validateScale(channel) {
+    const visualChannel = this.visualChannels[channel];
+    const {scale} = visualChannel;
+    if (!scale) {
+      // visualChannel doesn't have scale
+      return;
+    }
+    const scaleOptions = this.getScaleOptions(channel);
+    // check if current selected scale is
+    // supported, if not, change to default
+    if (!scaleOptions.includes(this.config[scale])) {
+      this.updateLayerConfig({[scale]: scaleOptions[0]});
+    }
+  }
+
+  /**
+   * Get scale options based on current field
+   * @param {string} channel
+   * @returns {string[]}
+   */
+  getScaleOptions(channel) {
+    const visualChannel = this.visualChannels[channel];
+    const {field, scale, channelScaleType} = visualChannel;
+
+    return this.config[field] ?
+      FIELD_OPTS[this.config[field].type].scale[channelScaleType] :
+      [this.getDefaultLayerConfig()[scale]];
   }
 
   updateLayerVisualChannel(dataset, channel) {

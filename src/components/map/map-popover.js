@@ -269,21 +269,20 @@ const EntryInfoRow = ({name, fields, data}) => {
 
 const CellInfo = ({data, layer}) => {
   const {colorField, sizeField} = layer.config;
-  const {colorAggregation, sizeAggregation} = layer.config.visConfig;
 
   return (
     <tbody>
       <Row name={'total points'} key="count" value={data.points.length} />
       {colorField ? (
         <Row
-          name={`${colorAggregation} ${colorField.name}`}
+          name={layer.getVisualChannelDescription('color').measure}
           key="color"
           value={data.colorValue || 'N/A'}
         />
       ) : null}
       {sizeField ? (
         <Row
-          name={`${sizeAggregation} ${sizeField.name}`}
+          name={layer.getVisualChannelDescription('size').measure}
           key="size"
           value={data.elevationValue || 'N/A'}
         />

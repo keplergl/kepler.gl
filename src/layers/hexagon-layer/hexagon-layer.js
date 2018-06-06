@@ -36,7 +36,7 @@ export const hexagonVisConfigs = {
   elevationScale: 'elevationScale',
   'hi-precision': 'hi-precision',
   colorAggregation: 'aggregation',
-  sizeAggregation: 'aggregation',
+  sizeAggregation: 'sizeAggregation',
   enable3d: 'enable3d'
 };
 
@@ -45,6 +45,7 @@ export default class HexagonLayer extends AggregationLayer {
     super(props);
 
     this.registerVisConfig(hexagonVisConfigs);
+    this.visConfigSettings.worldUnitSize.label = 'Hexagon Radius (km)';
   }
 
   get type() {

@@ -34,19 +34,19 @@ import {capitalizeFirstLetter} from 'utils/utils';
 export default class VisConfigByFieldSelector extends Component {
   static propTypes = {
     channel: PropTypes.string.isRequired,
-    domain: PropTypes.arrayOf(PropTypes.any).isRequired,
     fields: PropTypes.arrayOf(PropTypes.any).isRequired,
     id: PropTypes.string.isRequired,
     property: PropTypes.string.isRequired,
-    scaleType: PropTypes.string.isRequired,
     showScale: PropTypes.bool.isRequired,
     updateField: PropTypes.func.isRequired,
     updateScale: PropTypes.func.isRequired,
 
     // optional
+    scaleType: PropTypes.string,
     selectedField: PropTypes.object,
     description: PropTypes.string,
-    label: PropTypes.string
+    label: PropTypes.string,
+    placeholder: PropTypes.string
   };
 
   _updateVisByField = val => {
@@ -79,6 +79,7 @@ export default class VisConfigByFieldSelector extends Component {
           <FieldSelector
             fields={this.props.fields}
             value={selectedField && selectedField.name}
+            placeholder={this.props.placeholder}
             onSelect={this._updateVisByField}
             erasable
           />

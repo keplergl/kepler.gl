@@ -30,7 +30,6 @@ function numberSort(a, b) {
 }
 
 test('DataScaleUtils -> getOrdinalDomain', t => {
-  t.plan(2);
 
   const data = ['a', 'a', 'b', undefined, null, 0];
   function valueAccessor(d) {
@@ -39,15 +38,16 @@ test('DataScaleUtils -> getOrdinalDomain', t => {
 
   const values = [{value: 'a'}, {value: 'b'}, {value: 'b'}];
 
-  t.deepEqual(getOrdinalDomain(data), ['a', 'b', 0],
+  t.deepEqual(getOrdinalDomain(data), [0, 'a', 'b'],
     'should get correct ordinal domain');
 
   t.deepEqual(getOrdinalDomain(values, valueAccessor), ['a', 'b'],
     'should get correct ordinal domain');
+
+  t.end();
 });
 
 test('DataScaleUtils -> getQuantileDomain', t => {
-  t.plan(3);
 
   const data = ['a', 'b', 'c', 'b', undefined, null];
   const quanData = [1, 4, 2, 3, 1, undefined, null, 0];
@@ -65,10 +65,11 @@ test('DataScaleUtils -> getQuantileDomain', t => {
 
   t.deepEqual(getQuantileDomain(values, valueAccessor), ['a', 'b', 'b'],
     'should get correct quantile domain');
+
+  t.end();
 });
 
 test('DataScaleUtils -> getLinearDomain', t => {
-  t.plan(5);
 
   const quanData = [1, 4, 2, 3, 1, undefined, null, 0];
   function valueAccessor(d) {
@@ -91,4 +92,6 @@ test('DataScaleUtils -> getLinearDomain', t => {
 
   t.deepEqual(getLinearDomain(values, valueAccessor), [-3, 1],
     'should get correct Linear domain');
+
+  t.end();
 });
