@@ -1,17 +1,4 @@
 language: node_js
-dist: precise
-os: linux
-group: stable
-sudo: required
-dist: trusty
-env:
-  - CXX=g++-6
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-      - g++-6
 install:
   - yarn --ignore-engines
 node_js:
