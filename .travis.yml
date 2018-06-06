@@ -15,7 +15,8 @@ addons:
 install:
   - yarn --ignore-engines
 node_js:
-  - 8.7.0
+  - 8
+  - 10
 script:
   - npm run lint
   - npm run test
