@@ -36,7 +36,7 @@ const DatasetTitle = styled.div`
   color: ${props => props.theme.textColor};
   display: flex;
   align-items: flex-start;
-  
+
   .source-data-arrow {
     height: 16px;
   }
@@ -60,9 +60,16 @@ const DatasetTagWrapper = styled.div`
   color: ${props => props.theme.textColor};
   font-size: 11px;
   letter-spacing: 0.2px;
-  
+
   .dataset-color {
     margin-top: 5px;
+  }
+
+  .dataset-name {
+    width: 11rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 `;
 
