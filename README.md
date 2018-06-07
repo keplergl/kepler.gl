@@ -24,6 +24,8 @@ Install node (`> 6`), yarn, and project dependencies
 npm install --save kepler.gl
 ```
 
+Get a [Mapbox Access Token](https://www.mapbox.com/help/define-access-token/).
+
 ### Local dev
 ```
 npm install
@@ -34,7 +36,9 @@ yarn --ignore-engines
 ```
 then
 ```
-MapboxAccessToken=MapboxAPIKey npm start
+export MapboxAccessToken=<insert_your_token>
+
+npm start
 ```
 An Example app will be served at
 http://localhost:8080/
