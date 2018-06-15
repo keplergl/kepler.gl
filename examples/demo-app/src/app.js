@@ -19,8 +19,11 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
+import styled from 'styled-components';
+import window from 'global/window';
 import {connect} from 'react-redux';
-import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
+import Banner from './components/banner';
+import Announcement from './components/announcement';
 
 import {loadSampleConfigurations} from './actions';
 import {replaceLoadDataModal} from './factories/load-data-modal';
@@ -40,18 +43,71 @@ import {updateVisData, addDataToMap} from 'kepler.gl/actions';
 import Processors from 'kepler.gl/processors';
 /* eslint-enable no-unused-vars */
 
+const bannerHeight = 30;
+
+const GlobalStyleDiv = styled.div`
+  font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
+  font-weight: 400;
+  font-size: 0.875em;
+  line-height: 1.71429;
+
+  *,
+  *:before,
+  *:after {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+  }
+`;
+
 class App extends Component {
+  state = {
+    showBanner: false,
+    width: window.innerWidth,
+    height: window.innerHeight
+  };
+
   componentWillMount() {
     // if we pass an id as part f the url
     // we ry to fetch along map configurations
     const {params: {id: sampleMapId} = {}} = this.props;
     this.props.dispatch(loadSampleConfigurations(sampleMapId));
+    window.addEventListener('resize', this._onResize);
+    this._onResize();
   }
 
   componentDidMount() {
+    // delay 2s to show the banner
+    if (!window.localStorage.getItem('kgHideBanner')) {
+      window.setTimeout(this._showBanner, 3000);
+    }
     // load sample data
     // this._loadSampleData();
   }
+
+  componentWillUnmount() {
+    window.remmoveEventListener('resize', this._onResize);
+  }
+
+  _onResize = () => {
+    this.setState({
+      width: window.innerWidth,
+      height: window.innerHeight
+    });
+  };
+
+  _showBanner = () => {
+    this.setState({showBanner: true});
+  };
+
+  _hideBanner = () => {
+    this.setState({showBanner: false});
+  };
+
+  _disableBanner = () => {
+    this._hideBanner();
+    window.localStorage.setItem('kgHideBanner', 'true');
+  };
 
   _loadSampleData() {
     this.props.dispatch(
@@ -113,23 +169,39 @@ class App extends Component {
   }
 
   render() {
+    const {showBanner, width, height} = this.state;
     return (
-      <div style={{position: 'absolute', width: '100%', height: '100%'}}>
-        <AutoSizer>
-          {({height, width}) => (
-            <KeplerGl
-              mapboxApiAccessToken={MAPBOX_TOKEN}
-              id="map"
-              /*
-               * Specify path to keplerGl state, because it is not mount at the root
-               */
-              getState={state => state.demo.keplerGl}
-              width={width}
-              height={height}
-            />
+      <GlobalStyleDiv>
+        <Banner
+          show={this.state.showBanner}
+          height={bannerHeight}
+          onClose={this._hideBanner}
+        >
+          <Announcement onDisable={this._disableBanner}/>
+        </Banner>
+        <div
+          style={{
+            transition: 'margin 1s, height 1s',
+            position: 'absolute',
+            width: '100%',
+            height: showBanner ? `calc(100% - ${bannerHeight}px)` : '100%',
+            minHeight: `calc(100% - ${bannerHeight}px)`,
+            marginTop: showBanner ? `${bannerHeight}px` : 0
+          }}
+        >
+          <KeplerGl
+            mapboxApiAccessToken={MAPBOX_TOKEN}
+            id="map"
+            /*
+             * Specify path to keplerGl state, because it is not mount at the root
+             */
+            getState={state => state.demo.keplerGl}
+            width={width}
+            height={height - (showBanner ? bannerHeight : 0)}
+          />
           )}
-        </AutoSizer>
-      </div>
+        </div>
+      </GlobalStyleDiv>
     );
   }
 }
@@ -137,4 +209,7 @@ class App extends Component {
 const mapStateToProps = state => state;
 const dispatchToProps = dispatch => ({dispatch});
 
-export default connect(mapStateToProps, dispatchToProps)(App);
+export default connect(
+  mapStateToProps,
+  dispatchToProps
+)(App);
