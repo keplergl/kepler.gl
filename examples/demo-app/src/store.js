@@ -27,6 +27,7 @@ import window from 'global/window';
 import {taskMiddleware} from 'react-palm';
 
 import demoReducer from './reducers';
+import analyticsMiddleware from "./analytics";
 
 const reducers = combineReducers({
   demo: demoReducer,
@@ -34,6 +35,7 @@ const reducers = combineReducers({
 });
 
 export const middlewares = [
+  analyticsMiddleware,
   taskMiddleware,
   thunk,
   routerMiddleware(hashHistory)
