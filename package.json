@@ -44,7 +44,6 @@
   "files": [
     "dist",
     "src",
-    "examples",
     "actions.js",
     "components.js",
     "constants.js",
