@@ -199,7 +199,7 @@ class App extends Component {
             width={width}
             height={height - (showBanner ? bannerHeight : 0)}
           />
-          )}
+
         </div>
       </GlobalStyleDiv>
     );
