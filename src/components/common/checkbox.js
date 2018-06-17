@@ -102,7 +102,7 @@ export default class Checkbox extends Component {
     return (
       <StyledCheckbox className="kg-checkbox">
         <HiddenInput {...inputProps} />
-        <LabelElement chassName="kg-checkbox__label" {...labelProps}>
+        <LabelElement className="kg-checkbox__label" {...labelProps}>
           {this.props.label}
         </LabelElement>
       </StyledCheckbox>
