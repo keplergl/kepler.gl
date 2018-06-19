@@ -20,13 +20,13 @@
 
 import React, {Component} from 'react';
 import {connect} from 'react-redux';
-import {ACTION_PREFIX} from 'constants/default-settings.js';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import {Tooltip} from 'components/common/styled-components';
 import KeplerGlLogo from 'components/common/logo';
 import {CodeAlt, Save, Files, Share, Picture} from 'components/common/icons';
 import PanelDropdown from 'components/side-panel/panel-dropdown';
+import {ACTION_PREFIX} from 'constants/default-settings.js';
 
 const StyledPanelHeader = styled.div.attrs({
   className: 'side-side-panel__header'
