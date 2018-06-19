@@ -27,7 +27,7 @@ import window from 'global/window';
 import {taskMiddleware} from 'react-palm';
 
 import demoReducer from './reducers';
-import analyticsMiddleware from "./analytics";
+import analyticsMiddleware from './analytics';
 
 const reducers = combineReducers({
   demo: demoReducer,

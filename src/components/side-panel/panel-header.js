@@ -207,10 +207,10 @@ const defaultActionItems = [
 
 const PanelHeaderFactory = connect(undefined, {
   trackingActionShowExportDropdown: () => ({
-    type: `${ACTION_PREFIX}/TRACKING_ACTION_SHOW_EXPORT_DROPDOWN`
+    type: `${ACTION_PREFIX}TRACKING_ACTION_SHOW_EXPORT_DROPDOWN`
   }),
   trackingActionHideExportDropdown: () => ({
-    type: `${ACTION_PREFIX}/TRACKING_ACTION_HIDE_EXPORT_DROPDOWN`
+    type: `${ACTION_PREFIX}TRACKING_ACTION_HIDE_EXPORT_DROPDOWN`
   })
 })(() => {
   return class PanelHeader extends Component {
