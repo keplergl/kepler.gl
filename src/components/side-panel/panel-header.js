@@ -205,15 +205,8 @@ const defaultActionItems = [
   }
 ];
 
-const PanelHeaderFactory = connect(undefined, {
-  trackingActionShowExportDropdown: () => ({
-    type: `${ACTION_PREFIX}TRACKING_ACTION_SHOW_EXPORT_DROPDOWN`
-  }),
-  trackingActionHideExportDropdown: () => ({
-    type: `${ACTION_PREFIX}TRACKING_ACTION_HIDE_EXPORT_DROPDOWN`
-  })
-})(() => {
-  return class PanelHeader extends Component {
+function PanelHeaderFactory() {
+  class PanelHeader extends Component {
     static propTypes = {
       logoComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
       actionItems: PropTypes.arrayOf(PropTypes.any)
@@ -284,6 +277,14 @@ const PanelHeaderFactory = connect(undefined, {
       );
     }
   }
-});
+  return connect(undefined, {
+      trackingActionShowExportDropdown: () => ({
+        type: `${ACTION_PREFIX}TRACKING_ACTION_SHOW_EXPORT_DROPDOWN`
+      }),
+      trackingActionHideExportDropdown: () => ({
+        type: `${ACTION_PREFIX}TRACKING_ACTION_HIDE_EXPORT_DROPDOWN`
+      })
+    })(PanelHeader);
+}
 
 export default PanelHeaderFactory;
