@@ -284,6 +284,6 @@ const PanelHeaderFactory = connect(undefined, {
       );
     }
   }
-}
+});
 
 export default PanelHeaderFactory;
