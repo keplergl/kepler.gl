@@ -18,22 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
-import {connect} from 'react-redux';
-import {ACTION_PREFIX} from 'constants/default-settings.js';
-import styled from 'styled-components';
-import PropTypes from 'prop-types';
-import {Tooltip} from 'components/common/styled-components';
-import KeplerGlLogo from 'components/common/logo';
-import {CodeAlt, Save, Files, Share, Picture} from 'components/common/icons';
-import PanelDropdown from 'components/side-panel/panel-dropdown';
+import React, {Component} from 'react'
+import {connect} from 'react-redux'
+import {ACTION_PREFIX} from 'constants/default-settings.js'
+import styled from 'styled-components'
+import PropTypes from 'prop-types'
+import {Tooltip} from 'components/common/styled-components'
+import KeplerGlLogo from 'components/common/logo'
+import {CodeAlt, Save, Files, Share, Picture} from 'components/common/icons'
+import PanelDropdown from 'components/side-panel/panel-dropdown'
 
 const StyledPanelHeader = styled.div.attrs({
   className: 'side-side-panel__header'
 })`
   background-color: ${props => props.theme.sidePanelHeaderBg};
   padding: 12px 16px 0 16px;
-`;
+`
 
 const StyledPanelHeaderTop = styled.div.attrs({
   className: 'side-panel__header__top'
@@ -42,13 +42,13 @@ const StyledPanelHeaderTop = styled.div.attrs({
   justify-content: space-between;
   margin-bottom: 16px;
   width: 100%;
-`;
+`
 
 const StyledPanelTopActions = styled.div.attrs({
   className: 'side-panel__header__actions'
 })`
   display: flex;
-`;
+`
 
 const StyledPanelAction = styled.div.attrs({
   className: 'side-panel__header__actions'
@@ -76,7 +76,7 @@ const StyledPanelAction = styled.div.attrs({
       color: ${props => props.theme.textColorHl};
     }
   }
-`;
+`
 
 const StyledPanelDropdown = styled.div`
   background-color: ${props => props.theme.dropdownListBgd};
@@ -120,7 +120,7 @@ const StyledPanelDropdown = styled.div`
     white-space: nowrap;
     margin-top: 4px;
   }
-`;
+`
 
 export const PanelAction = ({item, onClick}) => (
   <StyledPanelAction
@@ -141,21 +141,21 @@ export const PanelAction = ({item, onClick}) => (
       <span>{item.tooltip}</span>
     </Tooltip>
   </StyledPanelAction>
-);
+)
 
 const PanelItem = ({onClose, onClickHandler, label, icon}) => (
   <div
     className="save-export-dropdown__item"
     onClick={e => {
-      e.stopPropagation();
-      onClose();
-      onClickHandler();
+      e.stopPropagation()
+      onClose()
+      onClickHandler()
     }}
   >
     {icon}
     <div className="save-export-dropdown__title">{label}</div>
   </div>
-);
+)
 
 export const SaveExportDropdown = ({
   onExportImage,
@@ -199,8 +199,8 @@ export const SaveExportDropdown = ({
         ) : null}
       </PanelDropdown>
     </StyledPanelDropdown>
-  );
-};
+  )
+}
 
 const defaultActionItems = [
   {
@@ -210,7 +210,7 @@ const defaultActionItems = [
     onClick: () => {},
     dropdownComponent: SaveExportDropdown
   }
-];
+]
 
 const PanelHeaderFactory = connect(undefined, {
   trackingActionShowExportDropdown: () => ({
@@ -224,26 +224,26 @@ const PanelHeaderFactory = connect(undefined, {
     static propTypes = {
       logoComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
       actionItems: PropTypes.arrayOf(PropTypes.any)
-    };
+    }
 
     static defaultProps = {
       logoComponent: KeplerGlLogo,
       actionItems: defaultActionItems
-    };
+    }
 
     state = {
       dropdown: null
-    };
+    }
 
     showDropdown = id => {
-      this.setState({dropdown: id});
-      this.props.trackingActionShowExportDropdown();
-    };
+      this.setState({dropdown: id})
+      this.props.trackingActionShowExportDropdown()
+    }
 
     hideDropdown = () => {
-      this.setState({dropdown: null});
-      this.props.trackingActionHideExportDropdown();
-    };
+      this.setState({dropdown: null})
+      this.props.trackingActionHideExportDropdown()
+    }
 
     render() {
       const {
@@ -254,7 +254,7 @@ const PanelHeaderFactory = connect(undefined, {
         onExportImage,
         onExportData,
         onExportConfig
-      } = this.props;
+      } = this.props
       return (
         <StyledPanelHeader className="side-panel__panel-header">
           <StyledPanelHeaderTop className="side-panel__panel-header__top">
@@ -270,10 +270,10 @@ const PanelHeaderFactory = connect(undefined, {
                     item={item}
                     onClick={() => {
                       if (item.dropdownComponent) {
-                        this.showDropdown(item.id);
+                        this.showDropdown(item.id)
                       }
 
-                      item.onClick();
+                      item.onClick()
                     }}
                   />
                   {item.dropdownComponent ? (
@@ -291,9 +291,9 @@ const PanelHeaderFactory = connect(undefined, {
             </StyledPanelTopActions>
           </StyledPanelHeaderTop>
         </StyledPanelHeader>
-      );
+      )
     }
-  };
-});
+  }
+})
 
-export default PanelHeaderFactory;
+export default PanelHeaderFactory
