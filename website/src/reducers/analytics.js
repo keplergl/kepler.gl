@@ -25,88 +25,41 @@ import {LOCATION_CHANGE} from 'react-router-redux';
 
 const getPayload = ({payload}) => payload;
 
-const getFilterFromStore = (payload, store) => {
-  if (payload.prop !== 'name') {
-    return payload;
-  }
-  try {
-    const {
-      demo: {
-        keplerGl: {
-          map: {
-            visState: {datasets = {}, filters = [], layers = []}
-          }
-        }
-      }
-    } = store.getState();
-    const trackingInformation = {
-      ...payload,
-      filter: filters[payload.idx],
-      datasetsCount: Object.keys(datasets).length,
-      layersCount: layers.length,
-      filtersCount: filters.length
-    };
-    return trackingInformation; 
-  } catch (err) {
-    /* eslint-disable */
-    console.warn(err);
-    /* eslint-enable */
-    return payload;
-  }
-};
-
-const withStoreInformation = getTracking => (payload, store) => {
-  const trackingFromPayload = getTracking(payload, store);
-  try {
-    const {
-      demo: {
-        keplerGl: {
-          map: {
-            visState: {datasets = {}, filters = [], layers = []}
-          }
-        }
-      }
-    } = store.getState();
-    const trackingFromStore = {
-      datasetsCount: Object.keys(datasets).length,
-      layersCount: layers.length,
-      filtersCount: filters.length
-    };
-    return {
-      ...trackingFromStore,
-      ...trackingFromPayload
-    };
-  } catch (err) {
-    /* eslint-disable */
-    console.warn(err);
-    /* eslint-enable */
-    return trackingFromPayload;
-  }
-};
-
 const trackingInformation = {
   [ActionTypes.LOAD_FILES]: ({files}) =>
     files.map(({size, type}) => ({size, type})),
-  [ActionTypes.LAYER_HOVER]: ({
-    payload: {
-      info: {lngLat}
-    }
-  }) => lngLat,
   [ActionTypes.LAYER_TYPE_CHANGE]: ({payload: {newType}}) => ({
     newType
   }),
   [ActionTypes.MAP_STYLE_CHANGE]: getPayload,
   [ActionTypes.TOGGLE_MODAL]: getPayload,
-  [ActionTypes.ADD_LAYER]: withStoreInformation(x => x),
-  [ActionTypes.ADD_FILTER]: withStoreInformation(x => x),
-  [ActionTypes.SET_FILTER]: getFilterFromStore,
-  [ActionTypes.INTERACTION_CONFIG_CHANGE]: ({config: {id, enabled}}) => ({[id]: enabled}),
+  [ActionTypes.ADD_LAYER]: (payload, store) => ({
+    total: store.getState().demo.keplerGl.map.visState.layers.length
+  }),
+  [ActionTypes.ADD_FILTER]: (payload, store) => ({
+    total: store.getState().demo.keplerGl.map.visState.filters.length
+  }),
+  [ActionTypes.SET_FILTER]: ({prop, idx}, store) => {
+    if (prop !== 'name') {
+      return {};
+    }
+    return {
+      filterType: store.getState().demo.keplerGl.map.visState.filters[
+        idx
+      ].type
+    };
+  },
+  [ActionTypes.INTERACTION_CONFIG_CHANGE]: ({config: {id, enabled}}) => ({
+    [id]: enabled
+  }),
   [LOCATION_CHANGE]: x => x
 };
 
+const EXCLUDED_ACTIONS = [ActionTypes.LAYER_HOVER, ActionTypes.UPDATE_MAP];
+
 const analyticsMiddleware = store => next => action => {
   // eslint-disable-next-line no-undef
-  if (window && window.ga) {
+  if (window && window.ga && !EXCLUDED_ACTIONS.includes(action.type)) {
     // eslint-disable-next-line no-undef
     window.ga(
       'demo_app',

@@ -72,6 +72,8 @@ const ActionTypes = keyMirror({
   // uiState
   TOGGLE_SIDE_PANEL: null,
   TOGGLE_MODAL: null,
+  SHOW_EXPORT_DROPDOWN: null,
+  HIDE_EXPORT_DROPDOWN: null,
   OPEN_DELETE_MODAL: null,
   TOGGLE_MAP_CONTROL: null,
 

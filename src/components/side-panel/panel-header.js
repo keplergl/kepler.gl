@@ -213,8 +213,9 @@ function PanelHeaderFactory() {
         onExportData,
         onExportConfig,
         logoComponent = KeplerGlLogo,
-        uiState: dropdown,
-        uiStateActions: {showExportDropdown, hideExportDropdown}
+        dropdown,
+        showExportDropdown,
+        hideExportDropdown
       }) => (
         <StyledPanelHeader className="side-panel__panel-header">
           <StyledPanelHeaderTop className="side-panel__panel-header__top">
@@ -251,9 +252,11 @@ function PanelHeaderFactory() {
       );
 
   PanelHeader.propTypes = {
-      logoComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
-      actionItems: PropTypes.arrayOf(PropTypes.any)
-    };
+    uiState: PropTypes.object,
+    uiStateActions: PropTypes.object,
+    logoComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
+    actionItems: PropTypes.arrayOf(PropTypes.any)
+  };
   return PanelHeader;
 }
 
