@@ -219,7 +219,7 @@ function PanelHeaderFactory() {
       }) => (
         <StyledPanelHeader className="side-panel__panel-header">
           <StyledPanelHeaderTop className="side-panel__panel-header__top">
-            <logoComponent appName={appName} version={version}/>
+            <logoComponent version={version}/>
             <StyledPanelTopActions>
               {actionItems.map(item => (
                 <div className="side-panel__panel-header__right"
@@ -230,7 +230,6 @@ function PanelHeaderFactory() {
                       if (item.dropdownComponent) {
                         showExportDropdown(item.id);
                       }
-
                       item.onClick();
                     }}
                   />
