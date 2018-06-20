@@ -252,6 +252,8 @@ function PanelHeaderFactory() {
       );
 
   PanelHeader.propTypes = {
+    appName: PropTypes.string,
+    version: PropTypes.string,
     uiState: PropTypes.object,
     uiStateActions: PropTypes.object,
     logoComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),

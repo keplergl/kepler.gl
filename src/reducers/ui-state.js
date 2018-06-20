@@ -92,7 +92,7 @@ export const INITIAL_UI_STATE = {
   activeSidePanel: DEFAULT_ACTIVE_SIDE_PANEL,
   currentModal: DEFAULT_MODAL,
   datasetKeyToRemove: null,
-  dropdown: null,
+  visibleDropdown: null,
   // export image modal ui
   exportImage: DEFAULT_EXPORT_IMAGE,
   // export data modal ui
