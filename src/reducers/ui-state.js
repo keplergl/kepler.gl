@@ -31,6 +31,8 @@ import {
   toggleModalUpdater,
   toggleSidePanelUpdater,
   toggleMapControlUpdater,
+  showExportDropdownUpdater,
+  hideExportDropdownUpdater,
 
   // export image
   cleanupExportImage,
@@ -90,7 +92,7 @@ export const INITIAL_UI_STATE = {
   activeSidePanel: DEFAULT_ACTIVE_SIDE_PANEL,
   currentModal: DEFAULT_MODAL,
   datasetKeyToRemove: null,
-
+  dropdown: null,
   // export image modal ui
   exportImage: DEFAULT_EXPORT_IMAGE,
   // export data modal ui
@@ -104,6 +106,9 @@ const actionHandler = {
   [ActionTypes.TOGGLE_MODAL]: toggleModalUpdater,
   [ActionTypes.OPEN_DELETE_MODAL]: openDeleteModalUpdater,
   [ActionTypes.TOGGLE_MAP_CONTROL]: toggleMapControlUpdater,
+
+  [ActionTypes.SHOW_EXPORT_DROPDOWN]: showExportDropdownUpdater,
+  [ActionTypes.HIDE_EXPORT_DROPDOWN]: hideExportDropdownUpdater,
 
   [ActionTypes.SET_RATIO]: setRatioUpdater,
   [ActionTypes.SET_RESOLUTION]: setResolutionUpdater,

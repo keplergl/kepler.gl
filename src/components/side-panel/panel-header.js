@@ -18,15 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
-import {connect} from 'react-redux';
+import React from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import {Tooltip} from 'components/common/styled-components';
 import KeplerGlLogo from 'components/common/logo';
 import {CodeAlt, Save, Files, Share, Picture} from 'components/common/icons';
 import PanelDropdown from 'components/side-panel/panel-dropdown';
-import {ACTION_PREFIX} from 'constants/default-settings.js';
 
 const StyledPanelHeader = styled.div.attrs({
   className: 'side-side-panel__header'
@@ -206,45 +204,21 @@ const defaultActionItems = [
 ];
 
 function PanelHeaderFactory() {
-  class PanelHeader extends Component {
-    static propTypes = {
-      logoComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
-      actionItems: PropTypes.arrayOf(PropTypes.any)
-    };
-
-    static defaultProps = {
-      logoComponent: KeplerGlLogo,
-      actionItems: defaultActionItems
-    };
-
-    state = {
-      dropdown: null
-    };
-
-    showDropdown = id => {
-      this.setState({dropdown: id});
-      this.props.trackingActionShowExportDropdown();
-    };
-
-    hideDropdown = () => {
-      this.setState({dropdown: null});
-      this.props.trackingActionHideExportDropdown();
-    };
-
-    render() {
-      const {
+  const PanelHeader = ({
         appName,
         version,
-        actionItems,
+        actionItems = defaultActionItems,
         onSaveMap,
         onExportImage,
         onExportData,
-        onExportConfig
-      } = this.props;
-      return (
+        onExportConfig,
+        logoComponent = KeplerGlLogo,
+        uiState: dropdown,
+        uiStateActions: {showExportDropdown, hideExportDropdown}
+      }) => (
         <StyledPanelHeader className="side-panel__panel-header">
           <StyledPanelHeaderTop className="side-panel__panel-header__top">
-            <this.props.logoComponent appName={appName} version={version}/>
+            <logoComponent appName={appName} version={version}/>
             <StyledPanelTopActions>
               {actionItems.map(item => (
                 <div className="side-panel__panel-header__right"
@@ -253,7 +227,7 @@ function PanelHeaderFactory() {
                     item={item}
                     onClick={() => {
                       if (item.dropdownComponent) {
-                        this.showDropdown(item.id);
+                        showExportDropdown(item.id);
                       }
 
                       item.onClick();
@@ -261,8 +235,8 @@ function PanelHeaderFactory() {
                   />
                   {item.dropdownComponent ? (
                     <item.dropdownComponent
-                      onClose={this.hideDropdown}
-                      show={this.state.dropdown === item.id}
+                      onClose={hideExportDropdown}
+                      show={dropdown === item.id}
                       onSaveMap={onSaveMap}
                       onExportData={onExportData}
                       onExportImage={onExportImage}
@@ -275,16 +249,12 @@ function PanelHeaderFactory() {
           </StyledPanelHeaderTop>
         </StyledPanelHeader>
       );
-    }
-  }
-  return connect(undefined, {
-      trackingActionShowExportDropdown: () => ({
-        type: `${ACTION_PREFIX}TRACKING_ACTION_SHOW_EXPORT_DROPDOWN`
-      }),
-      trackingActionHideExportDropdown: () => ({
-        type: `${ACTION_PREFIX}TRACKING_ACTION_HIDE_EXPORT_DROPDOWN`
-      })
-    })(PanelHeader);
+
+  PanelHeader.propTypes = {
+      logoComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
+      actionItems: PropTypes.arrayOf(PropTypes.any)
+    };
+  return PanelHeader;
 }
 
 export default PanelHeaderFactory;

@@ -35,6 +35,8 @@ const {
   START_EXPORTING_IMAGE,
   TOGGLE_LEGEND,
   TOGGLE_MODAL,
+  SHOW_EXPORT_DROPDOWN,
+  HIDE_EXPORT_DROPDOWN,
   TOGGLE_SIDE_PANEL,
   TOGGLE_MAP_CONTROL
 } = ActionTypes;
@@ -43,6 +45,8 @@ const {
 const [
   toggleSidePanel,
   toggleModal,
+  showExportDropdown,
+  hideExportDropdown,
   toggleMapControl,
   openDeleteModal,
   // export image
@@ -61,6 +65,8 @@ const [
 ] = [
   TOGGLE_SIDE_PANEL,
   TOGGLE_MODAL,
+  SHOW_EXPORT_DROPDOWN,
+  HIDE_EXPORT_DROPDOWN,
   TOGGLE_MAP_CONTROL,
   OPEN_DELETE_MODAL,
   SET_RATIO,
@@ -77,7 +83,7 @@ const [
 ].map(a => createAction(a));
 
 export {
-  toggleSidePanel, toggleModal, toggleMapControl, openDeleteModal, setExportConfig, setExportData,
+  toggleSidePanel, toggleModal, showExportDropdown, hideExportDropdown, toggleMapControl, openDeleteModal, setExportConfig, setExportData,
   setRatio, setResolution, toggleLegend, startExportingImage, setExportImageDataUri, cleanupExportImage,
   setExportSelectedDataset, setExportDataType, setExportFiltered
 };
