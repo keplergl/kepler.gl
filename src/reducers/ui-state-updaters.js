@@ -46,12 +46,12 @@ export const toggleModalUpdater = (state, {payload: id}) => ({
 
 export const showExportDropdownUpdater = (state, {payload: id}) => ({
   ...state,
-  dropdown: id
+  visibleDropdown: id
 });
 
 export const hideExportDropdownUpdater = (state, {payload}) => ({
   ...state,
-  dropdown: null
+  visibleDropdown: null
 });
 
 export const toggleMapControlUpdater = (state, {payload: panelId}) => ({

@@ -213,7 +213,7 @@ function PanelHeaderFactory() {
         onExportData,
         onExportConfig,
         logoComponent = KeplerGlLogo,
-        dropdown,
+        visibleDropdown,
         showExportDropdown,
         hideExportDropdown
       }) => (
@@ -237,7 +237,7 @@ function PanelHeaderFactory() {
                   {item.dropdownComponent ? (
                     <item.dropdownComponent
                       onClose={hideExportDropdown}
-                      show={dropdown === item.id}
+                      show={visibleDropdown === item.id}
                       onSaveMap={onSaveMap}
                       onExportData={onExportData}
                       onExportImage={onExportImage}
