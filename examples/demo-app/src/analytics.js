@@ -25,8 +25,10 @@ import {LOCATION_CHANGE} from 'react-router-redux';
 
 const getPayload = ({payload}) => payload;
 
-const withStoreInformation = getTracking => (payload, store) => {
-  const trackingFromPayload = getTracking(payload, store);
+const getFilterFromStore = (payload, store) => {
+  if (payload.prop !== 'name') {
+    return payload;
+  }
   try {
     const {
       demo: {
@@ -37,20 +39,19 @@ const withStoreInformation = getTracking => (payload, store) => {
         }
       }
     } = store.getState();
-    const trackingFromStore = {
+    const trackingInformation = {
+      ...payload,
+      filter: filters[payload.idx],
       datasetsCount: Object.keys(datasets).length,
       layersCount: layers.length,
       filtersCount: filters.length
     };
-    return {
-      ...trackingFromStore,
-      ...trackingFromPayload
-    };
+    return trackingInformation; 
   } catch (err) {
     /* eslint-disable */
     console.warn(err);
     /* eslint-enable */
-    return trackingFromPayload;
+    return payload;
   }
 };
 
@@ -62,20 +63,12 @@ const trackingInformation = {
       info: {lngLat}
     }
   }) => lngLat,
-  [ActionTypes.LAYER_CONFIG_CHANGE]: ({
-    payload: {
-      oldLayer: {type},
-      newConfig
-    }
-  }) => ({
-    type,
-    newConfig
+  [ActionTypes.LAYER_TYPE_CHANGE]: ({payload: {newType}}) => ({
+    newType
   }),
   [ActionTypes.MAP_STYLE_CHANGE]: getPayload,
   [ActionTypes.TOGGLE_MODAL]: getPayload,
-  [ActionTypes.TOGGLE_SIDE_PANEL]: getPayload,
-  [ActionTypes.UPDATE_MAP]: withStoreInformation(getPayload),
-  [ActionTypes.SET_FILTER]: withStoreInformation(getPayload),
+  [ActionTypes.SET_FILTER]: getFilterFromStore,
   [ActionTypes.INTERACTION_CONFIG_CHANGE]: ({config}) => config,
   [LOCATION_CHANGE]: x => x
 };

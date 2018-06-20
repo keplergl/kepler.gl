@@ -35,10 +35,10 @@ const reducers = combineReducers({
 });
 
 export const middlewares = [
-  analyticsMiddleware,
   taskMiddleware,
   thunk,
-  routerMiddleware(hashHistory)
+  routerMiddleware(hashHistory),
+  analyticsMiddleware
 ];
 
 export const enhancers = [applyMiddleware(...middlewares)];
