@@ -83,7 +83,7 @@ class Tutorials extends PureComponent {
             outline
             large
             target="_blank"
-            href="https://medium.com/@vis.gl"
+            href="https://medium.com/vis-gl"
           >
             Read More
           </LinkButton>
