@@ -109,7 +109,7 @@ export default class IconLayer extends Layer {
       modalProps: {
         title: 'How to draw icons'
       }
-    }
+    };
   }
 
   static findDefaultLayerProps({fieldPairs, fields}) {
