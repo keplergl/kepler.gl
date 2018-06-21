@@ -206,6 +206,10 @@ const defaultActionItems = [
 function PanelHeaderFactory() {
   return class PanelHeader extends Component {
     static propTypes = {
+      appName: PropTypes.string,
+      version: PropTypes.string,
+      uiState: PropTypes.object,
+      uiStateActions: PropTypes.object,
       logoComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
       actionItems: PropTypes.arrayOf(PropTypes.any)
     };
@@ -213,18 +217,6 @@ function PanelHeaderFactory() {
     static defaultProps = {
       logoComponent: KeplerGlLogo,
       actionItems: defaultActionItems
-    };
-
-    state = {
-      dropdown: null
-    };
-
-    showDropdown = id => {
-      this.setState({dropdown: id});
-    };
-
-    hideDropdown = () => {
-      this.setState({dropdown: null});
     };
 
     render() {
@@ -235,8 +227,12 @@ function PanelHeaderFactory() {
         onSaveMap,
         onExportImage,
         onExportData,
-        onExportConfig
+        onExportConfig,
+        visibleDropdown,
+        showExportDropdown,
+        hideExportDropdown
       } = this.props;
+
       return (
         <StyledPanelHeader className="side-panel__panel-header">
           <StyledPanelHeaderTop className="side-panel__panel-header__top">
@@ -244,21 +240,20 @@ function PanelHeaderFactory() {
             <StyledPanelTopActions>
               {actionItems.map(item => (
                 <div className="side-panel__panel-header__right"
-                  key={item.id} style={{position: 'relative'}}>
+                     key={item.id} style={{position: 'relative'}}>
                   <PanelAction
                     item={item}
                     onClick={() => {
                       if (item.dropdownComponent) {
-                        this.showDropdown(item.id);
+                        showExportDropdown(item.id);
                       }
-
                       item.onClick();
                     }}
                   />
                   {item.dropdownComponent ? (
                     <item.dropdownComponent
-                      onClose={this.hideDropdown}
-                      show={this.state.dropdown === item.id}
+                      onClose={hideExportDropdown}
+                      show={visibleDropdown === item.id}
                       onSaveMap={onSaveMap}
                       onExportData={onExportData}
                       onExportImage={onExportImage}

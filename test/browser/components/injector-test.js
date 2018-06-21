@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React from 'react';
 import test from 'tape';
-import {mount, shallow} from 'enzyme';
+import {mount} from 'enzyme';
 import configureStore from 'redux-mock-store';
 import {Provider} from 'react-redux';
 import sinon from 'sinon';
@@ -108,7 +108,8 @@ test('Components -> injector -> missing deps', t => {
 
 test('Components -> injector -> wrong factory type', t => {
   const spy = sinon.spy(Console, 'error');
-  const myCustomHeaderFactory = () => () => (
+  // const spy = sinon.spy(Console, 'error');
+  const myCustomHeaderFactory = Name => () => (
     <div className="my-test-header-2">
       <Name />smoothie
     </div>

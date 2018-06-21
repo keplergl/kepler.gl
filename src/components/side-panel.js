@@ -179,6 +179,9 @@ export default function SidePanelFactory(PanelHeader) {
               version={version}
               onExportImage={this._onExportImage}
               onExportData={this._onExportData}
+              visibleDropdown={uiState.visibleDropdown}
+              showExportDropdown={uiStateActions.showExportDropdown}
+              hideExportDropdown={uiStateActions.hideExportDropdown}
               onExportConfig={this._onExportConfig}
               onSaveMap={this.props.onSaveMap}
             />

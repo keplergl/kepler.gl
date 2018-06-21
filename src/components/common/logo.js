@@ -19,13 +19,9 @@
 // THE SOFTWARE.
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {KEPLER_GL_NAME, KEPLER_GL_VERSION} from 'constants/default-settings';
-
-const defaultProps = {
-  appName: KEPLER_GL_NAME,
-  version: KEPLER_GL_VERSION
-};
 
 const LogoTitle = styled.div`
   display: inline-block;
@@ -68,7 +64,7 @@ const LogoSvg = () => (
   </svg>
 );
 
-const KeplerGlLogo = ({appName, version}) => (
+const KeplerGlLogo = ({appName=KEPLER_GL_NAME, version=KEPLER_GL_VERSION}) => (
   <LogoWrapper className="side-panel-logo">
     <LogoSvgWrapper>
       <LogoSvg />
@@ -80,6 +76,9 @@ const KeplerGlLogo = ({appName, version}) => (
   </LogoWrapper>
 );
 
-KeplerGlLogo.defaultProps = defaultProps;
+KeplerGlLogo.defaultProps = {
+  appName: PropTypes.string,
+  version: PropTypes.string
+};
 
 export default KeplerGlLogo;

@@ -26,6 +26,7 @@ import {routerMiddleware} from 'react-router-redux';
 import {hashHistory} from 'react-router';
 import appReducer from './app';
 import demoReducer from '../../../examples/demo-app/src/reducers';
+import analyticsMiddleware from './analytics';
 
 const initialState = {};
 const reducers = {
@@ -39,7 +40,8 @@ const combinedReducers = combineReducers(reducers);
 export const middlewares = [
   taskMiddleware,
   thunk,
-  routerMiddleware(hashHistory)
+  routerMiddleware(hashHistory),
+  analyticsMiddleware
 ];
 
 export const enhancers = [applyMiddleware(...middlewares)];
