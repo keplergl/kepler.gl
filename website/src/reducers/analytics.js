@@ -22,31 +22,63 @@
 
 import {ActionTypes} from 'kepler.gl/actions';
 import {LOCATION_CHANGE} from 'react-router-redux';
+import window from 'global/window';
+import {ALL_FIELD_TYPES} from 'kepler.gl/constants';
 
 const getPayload = ({payload}) => payload;
+
+// Hack, because we don't have a way to access next state
+const getFilterType = (store, idx, value) => {
+  const {visState} = store.getState().demo.keplerGl.map;
+  const filter = visState.filters[idx];
+  const {dataId} = filter;
+  if (!dataId) {
+    return {};
+  }
+  const {fields} = visState.datasets[dataId];
+  const field = fields.find(f => f.name === value);
+
+  // Hack
+  switch (field.type) {
+    case ALL_FIELD_TYPES.real:
+    case ALL_FIELD_TYPES.integer:
+      return 'range';
+
+    case ALL_FIELD_TYPES.boolean:
+      return 'select';
+
+    case ALL_FIELD_TYPES.string:
+    case ALL_FIELD_TYPES.date:
+      return 'multiSelect';
+
+    case ALL_FIELD_TYPES.timestamp:
+      return 'timeRange';
+
+    default:
+      return null;
+  }
+};
 
 const trackingInformation = {
   [ActionTypes.LOAD_FILES]: ({files}) =>
     files.map(({size, type}) => ({size, type})),
-  [ActionTypes.LAYER_TYPE_CHANGE]: ({payload: {newType}}) => ({
+  [ActionTypes.LAYER_TYPE_CHANGE]: ({newType}) => ({
     newType
   }),
   [ActionTypes.MAP_STYLE_CHANGE]: getPayload,
   [ActionTypes.TOGGLE_MODAL]: getPayload,
   [ActionTypes.ADD_LAYER]: (payload, store) => ({
-    total: store.getState().demo.keplerGl.map.visState.layers.length
+    total: store.getState().demo.keplerGl.map.visState.layers.length + 1
   }),
   [ActionTypes.ADD_FILTER]: (payload, store) => ({
-    total: store.getState().demo.keplerGl.map.visState.filters.length
+    total: store.getState().demo.keplerGl.map.visState.filters.length + 1
   }),
-  [ActionTypes.SET_FILTER]: ({prop, idx}, store) => {
+  [ActionTypes.SET_FILTER]: ({prop, idx, value}, store) => {
     if (prop !== 'name') {
       return {};
     }
     return {
-      filterType: store.getState().demo.keplerGl.map.visState.filters[
-        idx
-      ].type
+      filterType: getFilterType(store, idx, value)
     };
   },
   [ActionTypes.INTERACTION_CONFIG_CHANGE]: ({config: {id, enabled}}) => ({
@@ -58,19 +90,18 @@ const trackingInformation = {
 const EXCLUDED_ACTIONS = [ActionTypes.LAYER_HOVER, ActionTypes.UPDATE_MAP];
 
 const analyticsMiddleware = store => next => action => {
-  // eslint-disable-next-line no-undef
-  if (window && window.ga && !EXCLUDED_ACTIONS.includes(action.type)) {
+  if (window.gtag && !EXCLUDED_ACTIONS.includes(action.type)) {
     // eslint-disable-next-line no-undef
-    window.ga(
-      'demo_app',
-      action.type,
-      trackingInformation[action.type]
+    window.gtag('event', 'action', {
+      event_category: action.type,
+      event_label: trackingInformation[action.type]
         ? JSON.stringify(
-            trackingInformation[action.type](action.payload, store)
-          )
+          trackingInformation[action.type](action.payload, store)
+        )
         : undefined
-    );
+    });
   }
+
   return next(action);
 };
 
