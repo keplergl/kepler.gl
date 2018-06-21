@@ -36,7 +36,6 @@ export {default as MapControlFactory} from './map/map-control';
 
 // // modal container factories
 export {default as DeleteDatasetModalFactory} from './modals/delete-data-modal';
-export {default as IconInfoModalFactory} from './modals/icon-info-modal';
 export {default as DataTableModalFactory} from './modals/data-table-modal';
 export {default as LoadDataModalFactory} from './modals/load-data-modal';
 

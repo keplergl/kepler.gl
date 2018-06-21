@@ -68,7 +68,7 @@ class App extends Component {
   };
 
   componentWillMount() {
-    // if we pass an id as part f the url
+    // if we pass an id as part of the url
     // we ry to fetch along map configurations
     const {params: {id: sampleMapId} = {}} = this.props;
     this.props.dispatch(loadSampleConfigurations(sampleMapId));
@@ -82,7 +82,7 @@ class App extends Component {
       window.setTimeout(this._showBanner, 3000);
     }
     // load sample data
-    // this._loadSampleData();
+    this._loadSampleData();
   }
 
   componentWillUnmount() {

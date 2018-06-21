@@ -25,7 +25,7 @@ import {LOCATION_CHANGE} from 'react-router-redux';
 import window from 'global/window';
 import {ALL_FIELD_TYPES} from 'kepler.gl/constants';
 
-const getPayload = ({payload}) => payload;
+const getPayload = ({payload} = {}) => payload;
 
 // Hack, because we don't have a way to access next state
 const getFilterType = (store, idx, value) => {

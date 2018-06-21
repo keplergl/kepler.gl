@@ -38,6 +38,7 @@ export const StyledLayerConfigGroupLabel = styled.div`
 export const StyledLayerConfigGroup = styled.div`
   padding-left: 18px;
   margin-bottom: 18px;
+
 `;
 
 export const StyledConfigGroupHeader = styled.div`

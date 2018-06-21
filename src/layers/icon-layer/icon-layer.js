@@ -20,13 +20,15 @@
 
 import Layer from '../base-layer';
 import memoize from 'lodash.memoize';
-import {hexToRgb} from '../../utils/color-utils';
+import {hexToRgb} from 'utils/color-utils';
 import {svgIcons as SvgIcons} from './svg-icons.json';
-import SvgIconLayer from '../../deckgl-layers/svg-icon-layer/svg-icon-layer';
-import ScatterplotIconLayer from '../../deckgl-layers/svg-icon-layer/scatterplot-icon-layer';
+import SvgIconLayer from 'deckgl-layers/svg-icon-layer/svg-icon-layer';
+import ScatterplotIconLayer from 'deckgl-layers/svg-icon-layer/scatterplot-icon-layer';
 import IconLayerIcon from './icon-layer-icon';
 import {ICON_FIELDS} from 'constants/default-settings';
+import IconInfoModalFactory from './icon-info-modal';
 
+const IconInfoModal = IconInfoModalFactory();
 const IconIds = SvgIcons.map(d => d.id);
 const SvgIconGeometry = SvgIcons.reduce(
   (accu, curr) => ({
@@ -98,6 +100,16 @@ export default class IconLayer extends Layer {
         channelScaleType: 'radius'
       }
     };
+  }
+
+  get layerInfoModal() {
+    return {
+      id: 'iconInfo',
+      template: IconInfoModal,
+      modalProps: {
+        title: 'How to draw icons'
+      }
+    }
   }
 
   static findDefaultLayerProps({fieldPairs, fields}) {

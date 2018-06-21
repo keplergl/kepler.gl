@@ -23,6 +23,7 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
 import {
+  Button,
   PanelLabel,
   SidePanelSection
 } from 'components/common/styled-components';
@@ -50,6 +51,7 @@ import {
 const StyledLayerConfigurator = styled.div.attrs({
   className: 'layer-panel__config'
 })`
+  position: relative;
   margin-top: 12px;
 `;
 
@@ -606,6 +608,7 @@ export default class LayerConfigurator extends Component {
 
     return (
       <StyledLayerConfigurator>
+        {layer.layerInfoModal ? <HowToButton onClick={() => this.props.openModal(layer.layerInfoModal)}/> : null}
         <LayerConfigGroup label={'basic'}>
           {Object.keys(datasets).length > 1 && (
             <SourceDataSelector
@@ -627,7 +630,6 @@ export default class LayerConfigurator extends Component {
             fieldPairs={fieldPairs}
             updateLayerConfig={updateLayerConfig}
             updateLayerType={this.props.updateLayerType}
-            openModal={this.props.openModal}
           />
         </LayerConfigGroup>
         {this[renderTemplate] &&
@@ -645,6 +647,18 @@ export default class LayerConfigurator extends Component {
 /*
  * Componentize config component into pure functional components
  */
+
+const StyledHowToButton = styled.div`
+  position: absolute;
+  right: 0;
+  top: 0;
+`;
+
+export const HowToButton = ({onClick}) => (
+  <StyledHowToButton>
+    <Button secondary small onClick={onClick}>How to</Button>
+  </StyledHowToButton>
+);
 
 export const LayerColorSelector = ({layer, onChange, label}) => (
   <SidePanelSection disabled={layer.config.colorField}>

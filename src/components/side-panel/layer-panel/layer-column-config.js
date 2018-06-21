@@ -21,10 +21,7 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-
-import {LAYER_TYPES} from 'constants/default-settings';
 import FieldSelector from 'components/common/field-selector';
-import {Docs} from 'components/common/icons';
 
 import {
   PanelLabel,
@@ -41,7 +38,6 @@ export default class LayerColumnConfig extends Component {
     layer: PropTypes.object.isRequired,
     fields: PropTypes.arrayOf(PropTypes.any).isRequired,
     updateLayerConfig: PropTypes.func.isRequired,
-    openModal: PropTypes.func.isRequired,
     fieldPairs: PropTypes.arrayOf(PropTypes.any)
   };
 
@@ -84,9 +80,6 @@ export default class LayerColumnConfig extends Component {
               onSelect={val => this._updateColumn(key, val)}
             />
           ))}
-          {layer.type === LAYER_TYPES.icon && (
-            <IconLayerInfo openModal={this.props.openModal} />
-          )}
           </div>
         </SidePanelSection>
       </div>
@@ -124,27 +117,4 @@ const ColumnSelector = ({column, label, allFields, onSelect, fieldPairs}) => (
       />
     </ColumnSelect>
   </ColumnRow>
-);
-
-const LayerInstruction = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  color: ${props => props.theme.textColor};
-
-  :hover {
-    cursor: pointer;
-    color: ${props => props.theme.textColorHL};
-  }
-`;
-
-const InfoIcon = styled.div`
-  margin-right: 4px;
-`;
-
-const IconLayerInfo = ({openModal}) => (
-  <LayerInstruction className="layer-config__info"
-    onClick={() => openModal('iconInfo')}>
-    <InfoIcon><Docs height="16px"/></InfoIcon>
-    <PanelLabel>How to draw icon layer</PanelLabel>
-  </LayerInstruction>
 );
