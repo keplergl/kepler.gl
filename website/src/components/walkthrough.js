@@ -118,6 +118,7 @@ class Walkthrough extends PureComponent {
               <VideoWrapper key={videoUrl}>
                 <VideoContainer>
                   <video
+                    muted
                     src={videoUrl}
                     poster={imageUrl}
                     autoPlay={i === selectedIndex}
