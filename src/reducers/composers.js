@@ -30,9 +30,13 @@ import KeplerGlSchema from 'schemas';
 // compose action to apply result multiple reducers, with the output of one
 
 /**
- * Apply map bounds to mapState from received vis data
- * @param state
- * @param action {options, config: {}}
+ * Apply data and config to visState reducer
+ * @param {object} state
+ * @param {object} action
+ * @param {object} action.options
+ * @param {Boolean} action.options.centerMap
+ * @param {Boolean} action.options.readOnly
+ * @param {object} action.config
  * @returns state new reducer state
  */
 export const updateVisDataComposed = (state, action) => {
@@ -53,8 +57,13 @@ export const updateVisDataComposed = (state, action) => {
 
   let bounds;
   if (options.centerMap) {
+<<<<<<< HEAD
     // find map bounds for new layers
     const newLayers = visState.layers.filter(nl => !oldLayers.find(ol => ol === nl));
+=======
+    // find map bounds for new added layers
+    const newLayers = visState.layers.filter(l => !oldLayers.includes(l.id));
+>>>>>>> update doc images
     bounds = findMapBounds(newLayers);
   }
 

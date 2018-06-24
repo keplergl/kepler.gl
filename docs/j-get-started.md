@@ -26,7 +26,7 @@ Learn more about [adding data layers](./b-kepler-gl-workflow/b-add-data-layers/a
 
 ## 3) Add Filters
 
-![choose a dataset](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image29.png "choose a dataset")
+![choose a dataset](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/add-filter.png "choose a dataset")
 
 Add filters to your map to limit the data that is displayed. Filters must be based on the columns in your dataset. To create a new filter, open the Filter menu and click Add Filter. Note that filters apply to all layers and cannot be toggled on and off.
 
@@ -34,8 +34,14 @@ Learn more about [filters](./e-filters.md).
 
 ## 4) Customize Map Settings
 
-![activate interactions](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image32.png "activate interactions")
+![Customize Map Settings](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/interactions.png "Customize Map Settings")
 
 Change the settings on your map in the Interactions and Base Map menus. Customization options include tooltips, brush highlighting, base map style, map imagery toggles (water, parks, satellite image, etc.), and many more.
 
 Read about [base map styles](./f-map-styles/1-base-map-styles.md) and [map settings](./g-map-settings.md).
+
+## 5) Save and Export
+![Save and Export](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/export-save.png "Save and Export")
+Save your map as an image, export current map data, export current map as a json file to be load back into kepler.gl.
+
+Read about [Save and export](./k-save-and-export.md).
