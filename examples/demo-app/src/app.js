@@ -68,7 +68,7 @@ class App extends Component {
   };
 
   componentWillMount() {
-    // if we pass an id as part f the url
+    // if we pass an id as part of the url
     // we ry to fetch along map configurations
     const {params: {id: sampleMapId} = {}} = this.props;
     this.props.dispatch(loadSampleConfigurations(sampleMapId));

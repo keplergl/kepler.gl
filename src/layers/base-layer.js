@@ -177,6 +177,21 @@ export default class Layer {
     };
   }
 
+  /**
+   * Return a React component for to render layer instructions in a modal
+   * @returns {object} - an object
+   * @example
+   *  return {
+   *    id: 'iconInfo',
+   *    template: IconInfoModal,
+   *    modalProps: {
+   *      title: 'How to draw icons'
+   *   };
+   * }
+   */
+  get layerInfoModal() {
+    return null;
+  }
   /*
    * Given a dataset, automatically create layers based on it
    * and return the props

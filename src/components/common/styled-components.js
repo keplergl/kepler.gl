@@ -182,13 +182,23 @@ export const Button = styled.div.attrs({
         : props.link ? props.theme.linkBtnColor : props.theme.primaryBtnColor};
   cursor: pointer;
   display: inline-flex;
-  font-size: ${props => (props.large ? '14px' : '11px')};
+  font-size: ${props =>
+    props.large ?
+      '14px'
+      : props.small
+        ? '10px'
+        : '11px'};
   font-weight: 500;
   justify-content: center;
   letter-spacing: 0.3px;
   line-height: 14px;
   outline: 0;
-  padding: ${props => (props.large ? '14px 32px' : '9px 12px')};
+  padding: ${props =>
+    props.large ?
+      '14px 32px'
+      : props.small
+        ? '6px 9px'
+        : '9px 12px'};
   text-align: center;
   transition: ${props => props.theme.transition};
   vertical-align: middle;
@@ -294,7 +304,7 @@ export const DatasetSquare = styled.div`
 export const Table = styled.table`
   width: 100%;
   border-spacing: 0;
-  
+
   thead {
     tr th {
       background: ${props => props.theme.panelBackgroundLT};
@@ -303,7 +313,7 @@ export const Table = styled.table`
       text-align: start;
     }
   }
-  
+
   tbody {
    tr td {
      border-bottom: ${props => props.theme.panelBorderLT};

@@ -199,6 +199,10 @@ const StyledModal = styled(ModalDialog)`
   left: 0;
   z-index: 10000;
   transition: ${props => props.theme.transition};
+
+  :focus {
+    outline: 0
+  }
 `;
 
 export default StyledModal;
