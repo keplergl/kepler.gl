@@ -37,7 +37,7 @@ import KeplerGlSchema from 'schemas';
  */
 export const updateVisDataComposed = (state, action) => {
   // keep a copy of oldLayers
-  const oldLayers = state.visState.layers.map(l => l.id);
+  const oldLayers = state.visState.layers;
 
   const visState = updateVisDataUpdater(state.visState, action);
 
@@ -54,7 +54,7 @@ export const updateVisDataComposed = (state, action) => {
   let bounds;
   if (options.centerMap) {
     // find map bounds for new layers
-    const newLayers = visState.layers.filter(l => !oldLayers.includes(l.id));
+    const newLayers = visState.layers.filter(nl => !oldLayers.find(ol => ol === nl));
     bounds = findMapBounds(newLayers);
   }
 

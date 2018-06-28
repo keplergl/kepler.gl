@@ -22,6 +22,11 @@ import moment from 'moment';
 import assert from 'assert';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
 
+const MAX_LATITUDE = 90;
+const MIN_LATITUDE = -90;
+const MAX_LONGITUDE = 180;
+const MIN_LONGITUDE = -180;
+
 /**
  * simple getting unique values of an array
  *
@@ -46,27 +51,29 @@ export function unique(values) {
  * @param {string} dataId
  * @returns {object} coordinates of map center, empty if not found
  */
-export function findMapBounds(layers, dataId) {
+export function findMapBounds(layers) {
   // find bounds in formatted layerData
-  // use first isVisible Layer
-
-  const newLayers = dataId
-    ? layers.filter(l => l.config.dataId === dataId)
-    : layers;
-  const firstVisibleLayer = newLayers.find(l => l.config.isVisible);
-  if (!firstVisibleLayer) {
+  // take ALL layers into account when finding map bounds
+  const availableLayerBounds = layers.reduce((res, l) => {
+    if (l.meta && l.meta.bounds) {
+      res.push(l.meta.bounds);
+    }
+    return res;
+  }, [])
+  // return null if no layer is available
+  if (availableLayerBounds.length === 0) {
     return null;
   }
-
-  // if first visible layer has bounds, use it
-  if (firstVisibleLayer.meta && firstVisibleLayer.meta.bounds) {
-    return firstVisibleLayer.meta.bounds;
-  }
-
-  // if not, find any layer that has bound
-  const anyLayerWBound = newLayers.find(l => l.meta && l.meta.bounds);
-
-  return anyLayerWBound ? anyLayerWBound.meta.bounds : null;
+  // merge bounds in each layer
+  const newBounds = availableLayerBounds.reduce((res, b) => {
+    return [
+      Math.min(res[0], b[0]),
+      Math.min(res[1], b[1]),
+      Math.max(res[2], b[2]),
+      Math.max(res[3], b[3])
+    ];
+  }, [MAX_LONGITUDE, MAX_LATITUDE, MIN_LONGITUDE, MIN_LATITUDE]);
+  return newBounds;
 }
 /* eslint-enable max-statements */
 
