@@ -15,7 +15,7 @@ Read more about adding [Add data to the map](./b-kepler-gl-workflow/a-add-data-t
 
 ## 2) Add Layers
 
-![Add layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image16.png "Add layer")
+![Add layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/j-get-started-layers.png "Add layer")
 
 Open the Data Layers menu to start building your visualization. Layers are simply data visualizations that can be built on top of one another. The map pictured above contains a GeoJSON path layer showing trip routes.
 
