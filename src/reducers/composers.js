@@ -57,13 +57,8 @@ export const updateVisDataComposed = (state, action) => {
 
   let bounds;
   if (options.centerMap) {
-<<<<<<< HEAD
     // find map bounds for new layers
     const newLayers = visState.layers.filter(nl => !oldLayers.find(ol => ol === nl));
-=======
-    // find map bounds for new added layers
-    const newLayers = visState.layers.filter(l => !oldLayers.includes(l.id));
->>>>>>> update doc images
     bounds = findMapBounds(newLayers);
   }
 
