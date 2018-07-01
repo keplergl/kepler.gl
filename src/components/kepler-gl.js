@@ -30,7 +30,7 @@ import * as MapStateActions from 'actions/map-state-actions';
 import * as MapStyleActions from 'actions/map-style-actions';
 import * as UIStateActions from 'actions/ui-state-actions';
 
-import {EXPORT_IMAGE_ID, DIMENSIONS, DEFAULT_MAP_STYLES,
+import {EXPORT_IMAGE_ID, DIMENSIONS,
   KEPLER_GL_NAME, KEPLER_GL_VERSION} from 'constants/default-settings';
 
 import SidePanelFactory from './side-panel';
@@ -38,6 +38,8 @@ import MapContainerFactory from './map-container';
 import BottomWidgetFactory from './bottom-widget';
 import ModalContainerFactory from './modal-container';
 import PlotContainerFactory from './plot-container';
+
+import {generateHashId} from 'utils/utils';
 
 import {theme} from 'styles/base';
 
@@ -131,7 +133,14 @@ function KeplerGlFactory(
     }
 
     _loadMapStyle = () => {
-      [...this.props.mapStyles, ...Object.values(DEFAULT_MAP_STYLES)].forEach(
+      const defaultStyles = Object.values(this.props.mapStyle.mapStyles);
+      // add id to custom map styles if not given
+      const customeStyles = (this.props.mapStyles || []).map(ms => ({
+        ...ms,
+        id: ms.id || generateHashId()
+      }));
+
+      [...customeStyles, ...defaultStyles].forEach(
         style => {
           if (style.style) {
             this.props.mapStyleActions.loadMapStyles({

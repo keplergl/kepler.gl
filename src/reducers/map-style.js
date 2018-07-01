@@ -22,6 +22,7 @@ import {handleActions} from 'redux-actions';
 
 // Actions
 import ActionTypes from 'constants/action-types';
+import {DEFAULT_MAP_STYLES} from 'constants/default-settings';
 
 import {
   getInitialInputStyle,
@@ -47,7 +48,10 @@ const getDefaultState = () => {
     styleType,
     visibleLayerGroups,
     topLayerGroups,
-    mapStyles: {},
+    mapStyles: DEFAULT_MAP_STYLES.reduce((accu, curr) => ({
+      ...accu,
+      [curr.id]: curr
+    }), {}),
     // save mapbox access token
     mapboxApiAccessToken: null,
     inputStyle: getInitialInputStyle()
