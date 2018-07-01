@@ -22,10 +22,12 @@
 export {default as KeplerGl, default, injectComponents} from './container';
 
 // factories
+export {default as KeplerGlFactory} from './kepler-gl';
 export {default as SidePanelFactory} from './side-panel';
 export {default as MapContainerFactory} from './map-container';
 export {default as BottomWidgetFactory} from './bottom-widget';
 export {default as ModalContainerFactory} from './modal-container';
+export {default as PlotContainerFactory} from './plot-container';
 
 // // side panel factories
 export {default as PanelHeaderFactory} from './side-panel/panel-header'
@@ -60,4 +62,3 @@ export {default as Switch} from './common/switch';
 export {default as LoadingSpinner} from './common/loading-spinner';
 export * from './common/styled-components';
 export * as Icons from './common/icons';
-
