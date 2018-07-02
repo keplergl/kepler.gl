@@ -55,18 +55,19 @@ const DatasetTitle = styled.div`
     }
   }
 `;
+
 const DatasetTagWrapper = styled.div`
   display: flex;
   color: ${props => props.theme.textColor};
   font-size: 11px;
   letter-spacing: 0.2px;
+  overflow: auto;
 
   .dataset-color {
     margin-top: 5px;
   }
 
   .dataset-name {
-    width: 11rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
