@@ -139,7 +139,7 @@ overridden by the latest instance and reset to a blank state.
 
 - Default: `undefined`
 
-You can create a free account at [www.mapbox.com](www.mapbox.com) and create a token at [www.mapbox.com/account/access-tokens](www.mapbox.com/account/access-tokens)
+You can create a free account at [www.mapbox.com](https://www.mapbox.com) and create a token at [www.mapbox.com/account/access-tokens](https://www.mapbox.com/account/access-tokens)
 
 ##### `getState` (Function, optional)
 
