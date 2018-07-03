@@ -54,7 +54,7 @@
     "prettier": "^1.7.0",
     "source-map-loader": "^0.2.1",
     "url-loader": "^0.5.9",
-    "webpack": "^2.2.0",
+    "webpack": "2.2.0",
     "webpack-dev-server": "^2.2.0"
   },
   "peerDependencies": {
