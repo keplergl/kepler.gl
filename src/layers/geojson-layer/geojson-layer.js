@@ -23,6 +23,8 @@ import uniq from 'lodash.uniq';
 
 import Layer from '../base-layer';
 import HighlightPolygonLayer from 'deckgl-layers/geojson-layer/solid-polygon-layer';
+import {GeoJsonLayer as DeckGLGeoJsonLayer} from 'deck.gl';
+
 import {hexToRgb} from 'utils/color-utils';
 import {
   getGeojsonDataMaps,
@@ -374,7 +376,7 @@ export default class GeoJsonLayer extends Layer {
     };
 
     return [
-      new HighlightPolygonLayer({
+      new DeckGLGeoJsonLayer({
         ...layerProps,
         id: this.id,
         idx,
@@ -398,12 +400,13 @@ export default class GeoJsonLayer extends Layer {
         updateTriggers,
 
         subLayers: {
+          ...DeckGLGeoJsonLayer.defaultProps.subLayers,
           PolygonLayer: HighlightPolygonLayer
         }
       }),
       ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d
         ? [
-            new HighlightPolygonLayer({
+            new DeckGLGeoJsonLayer({
               ...layerProps,
               id: `${this.id}-hovered`,
               data: [

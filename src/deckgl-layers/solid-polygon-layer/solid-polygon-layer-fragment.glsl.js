@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2015 - 2017 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,18 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// TODO: a hack becaue solid-polygon-layer is not exported from @deck.gl/layers
-import SolidPolygonLayer from '../solid-polygon-layer/solid-polygon-layer';
+export default `\
+#define SHADER_NAME solid-polygon-layer-fragment-shader
 
-export default class HighlightSolidPolygonLayer extends SolidPolygonLayer {
-  draw({uniforms}) {
-    super.draw({
-      uniforms: {
-        ...uniforms,
-        picking_uHighlightScale: this.props.extruded ? 1.2 : 0.0
-      }
-    })
-  }
+#ifdef GL_ES
+precision highp float;
+#endif
+
+varying vec4 vColor;
+
+void main(void) {
+  gl_FragColor = vColor;
+
+  // use highlight color if this fragment belongs to the selected object.
+  gl_FragColor = picking_filterHighlightColor(gl_FragColor);
+
+  // use picking color if rendering to picking FBO.
+  gl_FragColor = picking_filterPickingColor(gl_FragColor);
 }
-
-HighlightSolidPolygonLayer.layerName = 'HighlightSolidPolygonLayer';
+`;
