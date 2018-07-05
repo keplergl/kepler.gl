@@ -64,7 +64,7 @@ const LogoSvg = () => (
   </svg>
 );
 
-const KeplerGlLogo = ({appName=KEPLER_GL_NAME, version=KEPLER_GL_VERSION}) => (
+const KeplerGlLogo = ({appName = KEPLER_GL_NAME, version = KEPLER_GL_VERSION}) => (
   <LogoWrapper className="side-panel-logo">
     <LogoSvgWrapper>
       <LogoSvg />

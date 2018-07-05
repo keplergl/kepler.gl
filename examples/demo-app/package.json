@@ -7,7 +7,7 @@
   "dependencies": {
     "d3-request": "^1.0.6",
     "global": "^4.3.0",
-    "kepler.gl": "^0.0.22",
+    "kepler.gl": "^0.0.23",
     "lodash.debounce": "^4.0.8",
     "react": "^15.3.1",
     "react-dom": "^15.6.1",

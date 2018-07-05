@@ -3,6 +3,7 @@ node_modules/
 coverage/
 .nyc_output/
 dist/
+*/**/dist/
 
 */**/yarn.lock
 yarn-error.log

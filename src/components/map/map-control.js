@@ -310,7 +310,7 @@ const MapControlPanel = ({children, header, onClick, scale = 1, isExport}) => (
   >
     <StyledMapControlPanelHeader style={{position: 'relative'}}>
       {isExport ? (
-        <KeplerGlLogo version={false} />
+        <KeplerGlLogo version={false} appName="kepler.gl"/>
       ) : (
         <span style={{verticalAlign: 'middle'}}>{header}</span>
       )}
