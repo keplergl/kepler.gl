@@ -50,9 +50,7 @@ export const SECTIONS = [
     background: cdnUrl('examples/section-background.png')
   },
   {
-    id: 'tutorials',
-    title: 'Getting Started',
-    description: 'Get started with tutorials created by our team.',
+    id: https://github.com/uber/kepler.gl/blob/master/docs/j-get-started.mdth tutorials created by our team.',
     icon: cdnUrl('icons/tutorials.png')
   }
 ];
@@ -71,8 +69,8 @@ export const HERO_IMAGES_SCALED = [
 
 export const HEADER_NAVS = [
   {
-    text: 'Get Started',
-    link: 'https://github.com/uber/kepler.gl/blob/get-started/docs/j-get-started.md'
+    text: 'User Guide',
+    link: 'https://github.com/uber/kepler.gl/blob/master/docs/j-get-started.md'
   },
 
   {
