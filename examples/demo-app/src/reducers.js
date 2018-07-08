@@ -71,52 +71,7 @@ export const appReducer = handleActions({
 // to mimic the reducer state of kepler.gl website
 const demoReducer = combineReducers({
   // mount keplerGl reducer
-  keplerGl: keplerGlReducer
-  .initialState({
-    mapStyle: {
-      styleType: 'light'
-    }
-  })
-  .initialState({
-    mapState: {
-      dragRotate: true
-    }
-  })
-  // plugin custom action hanler as reducer map
-  .plugin({
-    HIDE_AND_SHOW_SIDE_PANEL: (state, action) => ({
-      ...state,
-      uiState: {
-        ...state.uiState,
-        readOnly: !state.uiState.readOnly
-      }
-    })
-  })
-  .plugin(handleActions({
-    // plugin custom reducer
-    HIDE_MAP_CONTROLS: (state, action) => ({
-      ...state,
-      uiState: {
-        ...state.uiState,
-        mapControls: {
-          visibleLayers: {
-            show: false,
-            active: false
-          },
-          mapLegend: {
-            show: false,
-            active: false
-          },
-          toggle3d: {
-            show: false
-          },
-          splitMap: {
-            show: false
-          }
-        }
-      }
-    })
-  }, {})),
+  keplerGl: keplerGlReducer,
   app: appReducer
 });
 
