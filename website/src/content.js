@@ -50,7 +50,9 @@ export const SECTIONS = [
     background: cdnUrl('examples/section-background.png')
   },
   {
-    id: https://github.com/uber/kepler.gl/blob/master/docs/j-get-started.mdth tutorials created by our team.',
+    id: 'tutorials',
+    title: 'Getting Started',
+    description: 'Get started with tutorials created by our team.',
     icon: cdnUrl('icons/tutorials.png')
   }
 ];
