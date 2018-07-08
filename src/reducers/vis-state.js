@@ -33,7 +33,7 @@ import {
   toggleFilterAnimationUpdater,
   updateAnimationSpeedUpdater,
   receiveMapConfigUpdater,
-  resetMapConfigUpdater,
+  resetMapConfigVisStateUpdater,
   loadFilesUpdater,
   loadFilesErrUpdater,
   updateVisDataUpdater,
@@ -92,7 +92,7 @@ const actionHandler = {
 
   [ActionTypes.REORDER_LAYER]: reorderLayerUpdater,
 
-  [ActionTypes.RESET_MAP_CONFIG]: resetMapConfigUpdater,
+  [ActionTypes.RESET_MAP_CONFIG]: resetMapConfigVisStateUpdater,
 
   [ActionTypes.SET_FILTER]: setFilterUpdater,
 

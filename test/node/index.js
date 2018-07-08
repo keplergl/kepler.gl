@@ -33,6 +33,7 @@ import './reducers/map-style-test';
 import './reducers/vis-state-test';
 import './reducers/ui-state-test';
 import './reducers/composer-state-test';
+import './reducers/root-test';
 
 // test schemas
 import './schemas/vis-state-schema-test';

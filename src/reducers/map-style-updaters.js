@@ -30,10 +30,31 @@ import {
   editTopMapStyle,
   editBottomMapStyle
 } from 'utils/map-style-utils/mapbox-gl-style-editor';
-import {DEFAULT_LAYER_GROUPS} from 'constants/default-settings';
+import {DEFAULT_MAP_STYLES, DEFAULT_LAYER_GROUPS} from 'constants/default-settings';
 import {generateHashId} from 'utils/utils';
 import {LOAD_MAP_STYLE_TASK} from 'tasks/tasks';
 import {loadMapStyles, loadMapStyleErr} from 'actions/map-style-actions';
+
+const getDefaultState = () => {
+  const visibleLayerGroups = {};
+  const styleType = 'dark';
+  const topLayerGroups = {};
+
+  return {
+    styleType,
+    visibleLayerGroups,
+    topLayerGroups,
+    mapStyles: DEFAULT_MAP_STYLES.reduce((accu, curr) => ({
+      ...accu,
+      [curr.id]: curr
+    }), {}),
+    // save mapbox access token
+    mapboxApiAccessToken: null,
+    inputStyle: getInitialInputStyle()
+  };
+};
+
+export const INITIAL_MAP_STYLE = getDefaultState();
 
 /**
  * Create two map styles from preset map style, one for top map one for bottom
@@ -112,6 +133,10 @@ export const mapConfigChangeUpdater = (state, action) => ({
 });
 
 export const mapStyleChangeUpdater = (state, {payload: styleType}) => {
+  if (!state.mapStyles[styleType]) {
+    // we might not have received the style yet
+    return state;
+  }
   const defaultLGVisibility = getDefaultLayerGroupVisibility(
     state.mapStyles[styleType]
   );
@@ -187,6 +212,18 @@ export const receiveMapConfigUpdater = (state, {payload: {mapStyle}}) => {
     newState,
     loadMapStyleTasks
   ) : newState;
+};
+
+export const resetMapConfigMapStyleUpdater = (state) => {
+  const emptyConfig = {
+    ...INITIAL_MAP_STYLE,
+    mapboxApiAccessToken: state.mapboxApiAccessToken,
+    ...state.initialState,
+    mapStyles: state.mapStyles,
+    initialState: state.initialState
+  };
+
+  return mapStyleChangeUpdater(emptyConfig, {payload: emptyConfig.styleType});
 };
 
 export const loadCustomMapStyleUpdater = (state, {payload: {icon, style, error}}) => ({

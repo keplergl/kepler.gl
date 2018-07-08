@@ -90,9 +90,28 @@ export function provideInitialState(initialState) {
 
 const keplerGlReducer = provideInitialState();
 
-function decorate(target) {
+function mergeInitialState(saved = {}, provided = {}) {
+  const keys = ['mapState', 'mapStyle', 'visState', 'uiState'];
+
+  // shallow merge each reducer
+  return keys.reduce((accu, key) => ({
+    ...accu,
+    ...(saved[key] && provided[key] ?
+        {[key]: {...saved[key], ...provided[key]}} :
+        {[key]: saved[key] || provided[key] || {}})
+  }), {});
+}
+
+function decorate(target, savedInitialState = {}) {
+  const targetInitialState = savedInitialState;
+
   // plugin to core reducer
   target.plugin = function plugin(customReducer) {
+    if (typeof customReducer === 'object') {
+      // if only provided a reducerMap, wrap it in a reducer
+      customReducer = handleActions(customReducer, {});
+    }
+
     // use 'function' keyword to enable 'this'
     return decorate((state = {}, action = {}) => {
       let nextState = this(state, action);
@@ -113,8 +132,12 @@ function decorate(target) {
 
   // pass in initialState for reducer slices
   // e.g. initialState = {uiState: {currentModal : null}}
-  target.initialState = initialState =>
-    decorate(provideInitialState(initialState));
+  target.initialState = function initialState(iniSt) {
+    const merged = mergeInitialState(targetInitialState, iniSt);
+    const targetReducer = provideInitialState(merged);
+
+    return decorate(targetReducer, merged);
+  }
 
   return target;
 }
