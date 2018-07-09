@@ -18,32 +18,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-/*eslint-disable */
-import './utils/data-utils-test';
-import './utils/data-processor-test';
-import './utils/filter-utils-test';
-import './utils/layer-utils-test';
-import './utils/data-scale-utils-test';
-import './utils/interaction-utils-test';
-import './utils/mapbox-gl-style-editor-test';
+import {createAction, handleActions} from 'redux-actions';
 
-// test reducer
-import './reducers/map-state-test';
-import './reducers/map-style-test';
-import './reducers/vis-state-test';
-import './reducers/ui-state-test';
-import './reducers/composer-state-test';
-import './reducers/root-test';
+// CONSTANTS
+export const INIT = 'INIT';
 
-// test schemas
-import './schemas/vis-state-schema-test';
-import './schemas/map-state-schema-test';
-import './schemas/map-style-schema-test';
-import './schemas/dataset-schema-test';
-import './schemas/schema-conversion-test';
+// ACTIONS
+export const appInit = createAction(INIT);
 
-// test mergers
-import './reducers/vis-state-merger-test';
+// INITIAL_STATE
+const initialState = {
+  appName: 'example',
+  loaded: false
+};
 
-// test layers
-import './layer-tests/index';
+// REDUCER
+const appReducer = handleActions({
+  [INIT]: (state, action) => ({
+    ...state,
+    loaded: true
+  })
+}, initialState);
+
+export default appReducer;

@@ -55,7 +55,7 @@ const StyledSampleMap = styled.div`
     transition: opacity 0.4s ease;
     position: relative;
     line-height: 0;
-    
+
     img {
       max-width: 100%;
     }
@@ -86,7 +86,7 @@ const BackLink = styled.div`
   color: ${props => props.theme.titleColorLT};
   cursor: pointer;
   margin-bottom: 40px;
-  
+
   :hover {
     font-weight: 500;
   }

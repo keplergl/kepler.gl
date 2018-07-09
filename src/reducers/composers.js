@@ -46,10 +46,9 @@ export const updateVisDataComposed = (state, action) => {
   const visState = updateVisDataUpdater(state.visState, action);
 
   const defaultOptions = {
-    centerMap: true,
-    // this will hide the left panel completely
-    readOnly: false
+    centerMap: true
   };
+
   const options = {
     ...defaultOptions,
     ...action.options
@@ -72,7 +71,7 @@ export const updateVisDataComposed = (state, action) => {
       : state.mapState,
     uiState: {
       ...toggleModalUpdater(state.uiState, {payload: null}),
-      readOnly: options.readOnly
+      ...(options.hasOwnProperty('readOnly') ? {readOnly: options.readOnly} : {})
     }
   };
 };

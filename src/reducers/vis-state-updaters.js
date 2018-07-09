@@ -543,7 +543,7 @@ export const showDatasetTableUpdater = (state, action) => {
   };
 };
 
-export const resetMapConfigUpdater = (state, action) => ({
+export const resetMapConfigVisStateUpdater = (state, action) => ({
   ...INITIAL_VIS_STATE,
   ...state.initialState,
   initialState: state.initialState
@@ -569,7 +569,7 @@ export const receiveMapConfigUpdater = (state, action) => {
   } = action.payload.visState;
 
   // always reset config when receive a new config
-  const resetState = resetMapConfigUpdater(state);
+  const resetState = resetMapConfigVisStateUpdater(state);
   let mergedState = {
     ...resetState,
     splitMaps: splitMaps || [] // maps doesn't require any logic

@@ -20,7 +20,8 @@
 
 import test from 'tape';
 
-import reducer, {INITIAL_MAP_STYLE} from 'reducers/map-style';
+import reducer from 'reducers/map-style';
+import {INITIAL_MAP_STYLE} from 'reducers/map-style-updaters';
 import {keplerGlInit, receiveMapConfig} from 'actions/actions';
 import SchemaManager from 'schemas';
 import {
