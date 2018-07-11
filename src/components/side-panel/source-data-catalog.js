@@ -36,7 +36,7 @@ const DatasetTitle = styled.div`
   color: ${props => props.theme.textColor};
   display: flex;
   align-items: flex-start;
-  
+
   .source-data-arrow {
     height: 16px;
   }
@@ -55,14 +55,23 @@ const DatasetTitle = styled.div`
     }
   }
 `;
+
 const DatasetTagWrapper = styled.div`
   display: flex;
   color: ${props => props.theme.textColor};
   font-size: 11px;
   letter-spacing: 0.2px;
-  
+  overflow: auto;
+
   .dataset-color {
+    flex-shrink: 0;
     margin-top: 5px;
+  }
+
+  .dataset-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 `;
 
