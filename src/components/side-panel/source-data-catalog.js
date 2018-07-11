@@ -64,6 +64,7 @@ const DatasetTagWrapper = styled.div`
   overflow: auto;
 
   .dataset-color {
+    flex-shrink: 0;
     margin-top: 5px;
   }
 
