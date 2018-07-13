@@ -18,32 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-export default `\
+// TODO: a hack becaue solid-polygon-layer is not exported from @deck.gl/layers
+import SolidPolygonLayer from '../solid-polygon-layer/solid-polygon-layer';
 
-const float R_EARTH = 6371000.; // earth radius in meter
-
-// uniform for brushing
-uniform vec2 mousePos;
-uniform float brushRadius;
-
-// approximate distance between lng lat in meters
-float distanceBetweenLatLng(vec2 source, vec2 target) {
-
-  vec2 delta = (source - target) * PI / 180.;
-
-  float a =
-    sin(delta.y / 2.) * sin(delta.y / 2.) +
-    cos(source.y * PI / 180.) * cos(target.y * PI / 180.) *
-    sin(delta.x / 2.) * sin(delta.x / 2.);
-
-  float c = 2. * atan(sqrt(a), sqrt(1. - a));
-
-  return R_EARTH * c;
+export default class HighlightSolidPolygonLayer extends SolidPolygonLayer {
+  draw({uniforms}) {
+    super.draw({
+      uniforms: {
+        ...uniforms,
+        picking_uHighlightScale: this.props.extruded ? 1.2 : 0.0
+      }
+    })
+  }
 }
 
-// range is km
-float isPointInRange(vec2 ptLatLng, float enabled) {
-
-  return float(enabled <= 0. || distanceBetweenLatLng(ptLatLng, mousePos) <= brushRadius);
-}
-`;
+HighlightSolidPolygonLayer.layerName = 'HighlightSolidPolygonLayer';

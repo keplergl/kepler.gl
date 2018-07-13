@@ -875,7 +875,7 @@ mergedLayer0.config = {
   },
   isVisible: true,
   isConfigActive: false,
-  highlightColor: [252, 242, 26],
+  highlightColor: [252, 242, 26, 255],
   colorField: {
     name: 'c_m_r',
     type: 'integer',
@@ -2667,7 +2667,7 @@ mergedLayer1.config = {
   },
   isVisible: true,
   isConfigActive: false,
-  highlightColor: [252, 242, 26],
+  highlightColor: [252, 242, 26, 255],
   colorField: null,
   colorScale: 'quantile',
   colorDomain: [0, 1],

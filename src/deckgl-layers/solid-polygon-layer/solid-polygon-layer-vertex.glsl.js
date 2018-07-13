@@ -39,24 +39,61 @@
 // THE SOFTWARE.
 
 export default `\
-#define SHADER_NAME scatterplot-layer-fragment-shader
+#define SHADER_NAME solid-polygon-layer-vertex-shader
 
-#ifdef GL_ES
-precision highp float;
-#endif
+attribute vec2 vertexPositions;
+attribute vec3 positions;
+attribute vec2 positions64xyLow;
+attribute vec3 nextPositions;
+attribute vec2 nextPositions64xyLow;
+attribute float elevations;
+attribute vec4 colors;
+attribute vec3 pickingColors;
+
+uniform float isSideVertex;
+uniform float extruded;
+uniform float elevationScale;
+uniform float opacity;
 
 varying vec4 vColor;
-varying vec2 unitPosition;
-varying float innerUnitRadius;
 
 void main(void) {
+  vec3 pos;
+  vec2 pos64xyLow;
+  vec3 normal;
 
-  float distToCenter = length(unitPosition);
-
-  if (distToCenter <= 1.0 && distToCenter >= innerUnitRadius) {
-    gl_FragColor = vColor;
+  if (isSideVertex > 0.5) {
+    pos = mix(positions, nextPositions, vertexPositions.x);
+    pos64xyLow = mix(positions64xyLow, nextPositions64xyLow, vertexPositions.x);
   } else {
-    discard;
+    pos = positions;
+    pos64xyLow = positions64xyLow;
   }
+  if (extruded > 0.5) {
+    pos.z += elevations * vertexPositions.y;
+  }
+  pos.z *= elevationScale;
+
+  vec4 position_worldspace;
+  gl_Position = project_position_to_clipspace(pos, pos64xyLow, vec3(0.), position_worldspace);
+
+  float lightWeight = 1.0;
+  
+  if (extruded > 0.5) {
+    if (isSideVertex > 0.5) {
+      normal = vec3(positions.y - nextPositions.y, nextPositions.x - positions.x, 0.0);
+      normal = project_normal(normal);
+    } else {
+      normal = vec3(0.0, 0.0, 1.0);
+    }
+
+    lightWeight = lighting_getLightWeight(position_worldspace.xyz, normal);
+  }
+
+  vec3 lightWeightedColor = lightWeight * colors.rgb;
+  vColor = vec4(lightWeightedColor, colors.a * opacity) / 255.0;
+
+  // Set color to be rendered to picking fbo (also used to check for selection highlight).
+  picking_setPickingColor(pickingColors);
 }
 `;

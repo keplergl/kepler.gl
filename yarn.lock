@@ -2,6 +2,32 @@
 # yarn lockfile v1
 
 
+"@deck.gl/core@^5.3.1":
+  version "5.3.1"
+  resolved "https://registry.yarnpkg.com/@deck.gl/core/-/core-5.3.1.tgz#acfc1e5fefd3b12e9142419b0aeb77c07885626c"
+  dependencies:
+    luma.gl "^5.3.0"
+    math.gl "^1.2.1"
+    mjolnir.js "^1.0.0"
+    probe.gl "^1.0.0"
+    seer "^0.2.4"
+    viewport-mercator-project "^5.1.0"
+
+"@deck.gl/layers@^5.3.2":
+  version "5.3.2"
+  resolved "https://registry.yarnpkg.com/@deck.gl/layers/-/layers-5.3.2.tgz#c76b9a7890305a5d6a0fdd56bd0d0d68d4046f6f"
+  dependencies:
+    "@deck.gl/core" "^5.3.1"
+    d3-hexbin "^0.2.1"
+    earcut "^2.0.6"
+
+"@deck.gl/react@^5.3.1":
+  version "5.3.1"
+  resolved "https://registry.yarnpkg.com/@deck.gl/react/-/react-5.3.1.tgz#0c16fac59061924eb3509dea06c837bcef8044f2"
+  dependencies:
+    "@deck.gl/core" "^5.3.1"
+    prop-types "^15.6.0"
+
 "@mapbox/extent@0.4.0":
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/@mapbox/extent/-/extent-0.4.0.tgz#3e591f32e1f0c3981c864239f7b0ac06e610f8a9"
@@ -1144,7 +1170,7 @@ babel-register@^6.24.1, babel-register@^6.26.0, babel-register@^6.3.13:
     mkdirp "^0.5.1"
     source-map-support "^0.4.15"
 
-babel-runtime@^6.18.0, babel-runtime@^6.2.0, babel-runtime@^6.22.0, babel-runtime@^6.23.0, babel-runtime@^6.26.0:
+babel-runtime@^6.11.6, babel-runtime@^6.18.0, babel-runtime@^6.2.0, babel-runtime@^6.22.0, babel-runtime@^6.23.0, babel-runtime@^6.26.0:
   version "6.26.0"
   resolved "https://registry.yarnpkg.com/babel-runtime/-/babel-runtime-6.26.0.tgz#965c7058668e82b55d7bfe04ff2337bc8b5647fe"
   dependencies:
@@ -2253,20 +2279,13 @@ decamelize@^1.0.0, decamelize@^1.1.1, decamelize@^1.1.2:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/decamelize/-/decamelize-1.2.0.tgz#f6534d15148269b20352e7bee26f501f9a191290"
 
-deck.gl@4.1.6:
-  version "4.1.6"
-  resolved "https://registry.yarnpkg.com/deck.gl/-/deck.gl-4.1.6.tgz#9d5ca87c41c4dde86f9351b981b0bcf3132184e7"
+deck.gl@5.3.2:
+  version "5.3.2"
+  resolved "https://registry.yarnpkg.com/deck.gl/-/deck.gl-5.3.2.tgz#2297d820fb8fb02eab95ac6a03261a689500bc11"
   dependencies:
-    d3-hexbin "^0.2.1"
-    earcut "^2.0.6"
-    gl-mat4 "^1.1.4"
-    gl-vec2 "^1.0.0"
-    gl-vec3 "^1.0.3"
-    gl-vec4 "^1.0.1"
-    hammerjs "^2.0.8"
-    lodash.flattendeep "^4.4.0"
-    prop-types "^15.5.8"
-    seer "^0.2.3"
+    "@deck.gl/core" "^5.3.1"
+    "@deck.gl/layers" "^5.3.2"
+    "@deck.gl/react" "^5.3.1"
 
 decode-uri-component@^0.2.0:
   version "0.2.0"
@@ -2457,6 +2476,10 @@ dom-serializer@0, dom-serializer@~0.1.0:
   dependencies:
     domelementtype "~1.1.1"
     entities "~1.1.1"
+
+"dom-to-image@github:heshan0131/dom-to-image":
+  version "2.6.0"
+  resolved "https://codeload.github.com/heshan0131/dom-to-image/tar.gz/02d2d97a42c75b2a082381fdc4e3c161268e40ec"
 
 dom-walk@^0.1.0:
   version "0.1.1"
@@ -3354,10 +3377,6 @@ getpass@^0.1.1:
   dependencies:
     assert-plus "^1.0.0"
 
-gl-constants@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/gl-constants/-/gl-constants-1.0.0.tgz#597a504e364750ff50253aa35f8dea7af4a5d233"
-
 gl-mat3@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/gl-mat3/-/gl-mat3-1.0.0.tgz#89633219ca429379a16b9185d95d41713453b912"
@@ -3763,7 +3782,7 @@ ignore@^3.2.0:
 
 immutable@^3.8.2:
   version "3.8.2"
-  resolved "https://registry.yarnpkg.com/immutable/-/immutable-3.8.2.tgz#c2439951455bb39913daf281376f1530e104adf3"
+  resolved "https://unpm.uberinternal.com/immutable/-/immutable-3.8.2.tgz#c2439951455bb39913daf281376f1530e104adf3"
 
 import-local@^1.0.0:
   version "1.0.0"
@@ -4577,18 +4596,14 @@ lru-cache@^4.0.1:
     pseudomap "^1.0.2"
     yallist "^2.1.2"
 
-luma.gl@4.0.6:
-  version "4.0.6"
-  resolved "https://registry.yarnpkg.com/luma.gl/-/luma.gl-4.0.6.tgz#815de594f121d4dca1d68abd941fd6db60440c67"
+luma.gl@^5.3.0:
+  version "5.3.0"
+  resolved "https://registry.yarnpkg.com/luma.gl/-/luma.gl-5.3.0.tgz#a93b2f34489d8230eb6d8c871335800d9b83ee67"
   dependencies:
-    gl-constants "^1.0.0"
-    gl-mat4 "^1.1.4"
-    gl-quat "^1.0.0"
-    gl-vec2 "^1.0.0"
-    gl-vec3 "^1.0.3"
-    gl-vec4 "^1.0.1"
-    seer "^0.2.2"
-    webgl-debug "^1.0.2"
+    math.gl "^1.1.0"
+    probe.gl "^1.0.0"
+    seer "^0.2.4"
+    webgl-debug "^2.0.0"
 
 magic-string@^0.14.0:
   version "0.14.0"
@@ -4656,7 +4671,18 @@ math-random@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/math-random/-/math-random-1.0.1.tgz#8b3aac588b8a66e4975e3cdea67f7bb329601fac"
 
-math.gl@^1.1.0, math.gl@^1.1.3:
+math.gl@^1.1.0, math.gl@^1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/math.gl/-/math.gl-1.2.1.tgz#3c7da0ae4f3383116c24bc183533cc4d7b8065a9"
+  dependencies:
+    gl-mat3 "^1.0.0"
+    gl-mat4 "^1.1.4"
+    gl-quat "^1.0.0"
+    gl-vec2 "^1.0.0"
+    gl-vec3 "^1.0.3"
+    gl-vec4 "^1.0.1"
+
+math.gl@^1.1.3:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/math.gl/-/math.gl-1.2.0.tgz#65c6fb6bdb70f5e82a82c2d3fc7d9ec2a357e7ce"
   dependencies:
@@ -4863,7 +4889,7 @@ mixin-deep@^1.2.0:
     for-in "^1.0.2"
     is-extendable "^1.0.1"
 
-mjolnir.js@^1.1.0:
+mjolnir.js@^1.0.0, mjolnir.js@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/mjolnir.js/-/mjolnir.js-1.1.0.tgz#16361c5fc5a5eea47f5f9083e0cc0d540c37932f"
   dependencies:
@@ -5617,6 +5643,12 @@ private@^0.1.6, private@^0.1.8:
   version "0.1.8"
   resolved "https://registry.yarnpkg.com/private/-/private-0.1.8.tgz#2381edb3689f7a53d653190060fcf822d2f368ff"
 
+probe.gl@^1.0.0:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/probe.gl/-/probe.gl-1.0.2.tgz#3b0bdf015ff07dba6582badc6993890cfa5219e6"
+  dependencies:
+    babel-runtime "^6.11.6"
+
 process-nextick-args@~1.0.6:
   version "1.0.7"
   resolved "https://registry.yarnpkg.com/process-nextick-args/-/process-nextick-args-1.0.7.tgz#150e20b756590ad3f91093f25a4f2ad8bff30ba3"
@@ -5869,7 +5901,7 @@ react-map-gl@^3.2.1:
   dependencies:
     babel-runtime "^6.23.0"
     bowser "^1.2.0"
-    immutable "^3.8.2"
+    immutable "*"
     mapbox-gl "0.44"
     math.gl "^1.1.3"
     mjolnir.js "^1.1.0"
@@ -6372,7 +6404,7 @@ seedrandom@^2.4.2:
   version "2.4.3"
   resolved "https://registry.yarnpkg.com/seedrandom/-/seedrandom-2.4.3.tgz#2438504dad33917314bff18ac4d794f16d6aaecc"
 
-seer@^0.2.2, seer@^0.2.3:
+seer@^0.2.4:
   version "0.2.4"
   resolved "https://registry.yarnpkg.com/seer/-/seer-0.2.4.tgz#6b8a81d09bfe6b3b3ad0268971a65e7f7405135c"
 
@@ -7530,9 +7562,9 @@ wbuf@^1.1.0, wbuf@^1.7.2:
   dependencies:
     minimalistic-assert "^1.0.0"
 
-webgl-debug@^1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/webgl-debug/-/webgl-debug-1.0.2.tgz#93bac5aed181343a136ad34f249920d3b9ccc69a"
+webgl-debug@^2.0.0:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/webgl-debug/-/webgl-debug-2.0.1.tgz#dc11bea3d947764bce061fdb5a23109c13787c95"
 
 webidl-conversions@^4.0.2:
   version "4.0.2"

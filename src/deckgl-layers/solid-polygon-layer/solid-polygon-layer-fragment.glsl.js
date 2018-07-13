@@ -39,61 +39,21 @@
 // THE SOFTWARE.
 
 export default `\
-#define SHADER_NAME scatterplot-brushing-layer-vertex-shader
+#define SHADER_NAME solid-polygon-layer-fragment-shader
 
-attribute vec3 positions;
-
-attribute vec3 instancePositions;
-attribute float instanceRadius;
-attribute vec4 instanceColors;
-attribute vec3 instancePickingColors;
-
-uniform float opacity;
-uniform float radiusScale;
-uniform float radiusMinPixels;
-uniform float radiusMaxPixels;
-uniform float renderPickingBuffer;
-uniform float outline;
-uniform float strokeWidth;
-
-// uniform for brushing
-uniform float enableBrushing;
-uniform float outsideBrushRadius;
+#ifdef GL_ES
+precision highp float;
+#endif
 
 varying vec4 vColor;
-varying vec2 unitPosition;
-varying float innerUnitRadius;
 
 void main(void) {
+  gl_FragColor = vColor;
 
-  // if enableBrushing is truthy calculate whether instancePosition is in range
-  float isPtInBrush = isPointInRange(instancePositions.xy, enableBrushing);
+  // use highlight color if this fragment belongs to the selected object.
+  gl_FragColor = picking_filterHighlightColor(gl_FragColor);
 
-  float finalRadius = mix(outsideBrushRadius, instanceRadius, isPtInBrush);
-
-  // Multiply out radius and clamp to limits
-  float outerRadiusPixels = clamp(
-    project_scale(radiusScale * finalRadius),
-    mix(0.0, radiusMinPixels, isPtInBrush),
-    radiusMaxPixels
-  );
-  // outline is centered at the radius
-  // outer radius needs to offset by half stroke width
-  outerRadiusPixels += outline * mix(0., strokeWidth, isPtInBrush) / 2.;
-
-  // position on the containing square in [-1, 1] space
-  unitPosition = positions.xy;
-  // 0 - solid circle, 1 - stroke with lineWidth=0
-  innerUnitRadius = outline * (1. - strokeWidth / outerRadiusPixels);
-
-  // Find the center of the point and add the current vertex
-  vec3 center = project_position(instancePositions);
-  vec3 vertex = positions * outerRadiusPixels;
-  gl_Position = project_to_clipspace(vec4(center + vertex, 1.));
-
-  // Apply opacity to instance color, or return instance picking color
-  vec4 color = vec4(instanceColors.rgb, instanceColors.a * opacity) / 255.;
-  vec4 pickingColor = vec4(instancePickingColors / 255., 1.);
-  vColor = mix(color, pickingColor, renderPickingBuffer);
+  // use picking color if rendering to picking FBO.
+  gl_FragColor = picking_filterPickingColor(gl_FragColor);
 }
 `;

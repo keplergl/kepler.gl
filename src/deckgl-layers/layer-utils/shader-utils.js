@@ -18,14 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-export default `\
+import {console as Console} from 'global/window';
 
-uniform vec3 selectedPickingColor;
+/*
+ * Amendment to default layer vertex shader
+ * @param {string} vs
+ * @param {string} type
+ * @param {string} originalText
+ * @param {string} testToReplace
+ * @return {string} output shader
+ *
+ */
+export function editShader(vs, type, originalText, testToReplace) {
 
-float isPicked(vec3 pickingColors) {
- return float(pickingColors.x == selectedPickingColor.x
- && pickingColors.y == selectedPickingColor.y
- && pickingColors.z == selectedPickingColor.z);
+  if (!vs.includes(originalText)) {
+    Console.warn(`Cannot edit ${type} layer shader`);
+    return vs;
+  }
+
+  return vs.replace(originalText, testToReplace);
 }
-
-`;

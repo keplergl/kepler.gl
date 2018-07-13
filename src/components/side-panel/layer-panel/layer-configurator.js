@@ -516,27 +516,28 @@ export default class LayerConfigurator extends Component {
         </LayerConfigGroup>
 
         {/* Stroke Width */}
-        {featureTypes.line || (featureTypes.polygon && visConfig.stroked) ? (
+        {featureTypes.line || featureTypes.polygon ? (
           <LayerConfigGroup
             label="stroke"
             {...visConfiguratorProps}
             {...(featureTypes.polygon ? LAYER_VIS_CONFIGS.stroked : {})}
           >
-            <div>
-              <VisConfigSlider
-                {...LAYER_VIS_CONFIGS.thickness}
-                {...visConfiguratorProps}
-              />
-              <ChannelByValueSelector
-                channel={layer.visualChannels.size}
-                {...layerChannelConfigProps}
-              />
-              <VisConfigSlider
-                {...LAYER_VIS_CONFIGS.strokeWidthRange}
-                {...visConfiguratorProps}
-                disabled={!layer.config.sizeField}
-              />
-            </div>
+            {visConfig.stroked ?
+              <div>
+                <VisConfigSlider
+                  {...LAYER_VIS_CONFIGS.thickness}
+                  {...visConfiguratorProps}
+                />
+                <ChannelByValueSelector
+                  channel={layer.visualChannels.size}
+                  {...layerChannelConfigProps}
+                />
+                <VisConfigSlider
+                  {...LAYER_VIS_CONFIGS.strokeWidthRange}
+                  {...visConfiguratorProps}
+                  disabled={!layer.config.sizeField}
+                />
+              </div> : null}
           </LayerConfigGroup>
         ) : null}
 
