@@ -271,10 +271,8 @@ export default class PointLayer extends Layer {
               getSize: this.config.textLabel.size,
               getText: d => {
                 const t = d.data[this.config.textLabel.field.tableFieldIndex - 1];
-                // console.log(d, t);
                 return t;
               },
-              // getText: d => 'test',
               getColor: d => this.config.textLabel.color
             })
           ]
