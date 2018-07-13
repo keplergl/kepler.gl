@@ -28,6 +28,7 @@ import {
   SidePanelSection
 } from 'components/common/styled-components';
 import ItemSelector from 'components/common/item-selector/item-selector';
+import FieldSelector from 'components/common/field-selector';
 
 import VisConfigByFieldSelector from './vis-config-by-field-selector';
 import LayerColumnConfig from './layer-column-config';
@@ -151,6 +152,26 @@ export default class LayerConfigurator extends Component {
             />
           </LayerConfigGroup>
         ) : null}
+
+        {/* text label */}
+        <LayerConfigGroup label={'text'}>
+          <PanelLabel>{`Show text label by`}</PanelLabel>
+          <FieldSelector
+            fields={visConfiguratorProps.fields}
+            value={layer.config.textLabel.field && layer.config.textLabel.field.name || 'select a field'}
+            placeholder={'empty'}
+            onSelect={v => {
+              console.log(v);
+              layerConfiguratorProps.onChange({
+                textLabel: {
+                  ...layer.config.textLabel,
+                  field: v
+                }
+              });
+            }}
+            erasable
+          />
+        </LayerConfigGroup>
         {/* high precision */}
         <LayerConfigGroup
           {...LAYER_VIS_CONFIGS['hi-precision']}

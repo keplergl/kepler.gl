@@ -297,7 +297,15 @@ export default class Layer {
       sizeScale: 'linear',
       sizeField: null,
 
-      visConfig: {}
+      visConfig: {},
+
+      textLabel: {
+        field: null,
+        color: [255, 255, 255],
+        size: 20,
+        placement: 'top',
+        alignment: 'center'
+      }
     };
   }
 

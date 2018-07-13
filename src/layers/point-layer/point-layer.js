@@ -21,6 +21,7 @@
 import Layer from '../base-layer';
 import memoize from 'lodash.memoize';
 import {ScatterplotLayer} from 'deck.gl';
+import TextLayer from './text-layer';
 import ScatterplotBrushingLayer from 'deckgl-layers/scatterplot-brushing-layer/scatterplot-brushing-layer';
 import {hexToRgb} from 'utils/color-utils';
 import PointLayerIcon from './point-layer-icon';
@@ -263,6 +264,19 @@ export default class PointLayer extends Layer {
             id: this.id,
             ...baseLayerProp
           }),
+
+      // text label layer
+      ...(this.config.textLabel.field
+        ? [
+            new TextLayer({
+              id: `${this.id}-label`,
+              ...data,
+              getSize: d => this.config.textLabel.size,
+              getLabel: d => d[this.config.textLabel.field.tableFieldIndex - 1],
+              getColor: d => this.config.textLabel.color
+            })
+          ]
+        : []),
 
       // hover layer
       ...(this.isLayerHovered(objectHovered)
