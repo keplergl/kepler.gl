@@ -269,11 +269,12 @@ export default class PointLayer extends Layer {
               data: data.data,
               getPosition: data.getPosition,
               getSize: this.config.textLabel.size,
-              getText: d => {
-                const t = d.data[this.config.textLabel.field.tableFieldIndex - 1];
-                return t;
-              },
-              getColor: d => this.config.textLabel.color
+              getText: d => String(d.data[this.config.textLabel.field.tableFieldIndex - 1]),
+              getColor: d => this.config.textLabel.color,
+              updateTriggers: {
+                getText: this.config.textLabel.field,
+                getSize: this.config.textLabel.size
+              }
             })
           ]
         : []),

@@ -29,6 +29,7 @@ import {
 } from 'components/common/styled-components';
 import ItemSelector from 'components/common/item-selector/item-selector';
 import FieldSelector from 'components/common/field-selector';
+import RangeSlider from 'components/common/range-slider';
 
 import VisConfigByFieldSelector from './vis-config-by-field-selector';
 import LayerColumnConfig from './layer-column-config';
@@ -155,13 +156,12 @@ export default class LayerConfigurator extends Component {
 
         {/* text label */}
         <LayerConfigGroup label={'text'}>
-          <PanelLabel>{`Show text label by`}</PanelLabel>
+          <PanelLabel>{`Show text label based on`}</PanelLabel>
           <FieldSelector
             fields={visConfiguratorProps.fields}
             value={layer.config.textLabel.field && layer.config.textLabel.field.name || 'select a field'}
             placeholder={'empty'}
             onSelect={v => {
-              console.log(v);
               layerConfiguratorProps.onChange({
                 textLabel: {
                   ...layer.config.textLabel,
@@ -170,6 +170,23 @@ export default class LayerConfigurator extends Component {
               });
             }}
             erasable
+          />
+          <PanelLabel>{`Font size`}</PanelLabel>
+          <RangeSlider
+            range={[1, 100]}
+            value0={1}
+            value1={layer.config.textLabel.size}
+            step={1}
+            isRanged={false}
+            onChange={v => {
+              layerConfiguratorProps.onChange({
+                textLabel: {
+                  ...layer.config.textLabel,
+                  size: v[1]
+                }
+              });
+            }}
+            showInput
           />
         </LayerConfigGroup>
         {/* high precision */}
