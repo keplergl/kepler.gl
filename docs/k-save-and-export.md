@@ -6,7 +6,7 @@ kepler.gl is a client-side only application. In the demo app, the data you uploa
 
 However, in the demo app, you can:
 
-- [Export map as an iamge](#export-image).
+- [Export map as an image](#export-image).
 - [Export filtered or unfiltered data as a csv](#export-data).
 - [Export current map configuration as a `json` file](#export-config), this file does not contain any map data.
 - [Export current map configuration __AND__ map data as a `json` file](#export-config), which can be loaded back to kepler.gl to reproduce the current map.
@@ -15,7 +15,7 @@ However, in the demo app, you can:
 
 ![Export Image](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/k-save-and-export-2.png "activate interactions")
 
-You can export current map as an image. The export window will use the current map viewport, and the preview will show the entire exported map area. To adjust the viewport, you will have to close the export dialog. You can choose different export ratio, resolution, and add map legend.
+You can export the current map as an image. The export window will use the current map viewport, and the preview will show the entire exported map area. To adjust the viewport, you will have to close the export dialog. You can choose different export ratios or resolutions, and also to add a map legend.
 
 ## <a href="#export-data">Export Data</a>
 
@@ -29,10 +29,10 @@ You can export map data as a csv file, with the option to export ONLY the filter
 
 #### 1.Export Current Config
 
-You can export current map configuration as a `json` file. This is useful when you are running your own kepler.gl application, and want to load data with a specific preset configuration. The map config includes current layer, filter, map style and interaction settings.
+You can export the current map configuration as a `json` file. This is useful when you are running your own kepler.gl application and want to load data with a specific preset configuration. The map config includes the current layer, filter, map style and interaction settings.
 
-**Note:** kepler.gl map config is coupled with loaded datasets. The __`dataId`__ key is used to bind layers, filters and tooltip settings to a specific dataset. If you try to upload a configuration with a dataset in your own kepler.gl app, you also need to make sure your dataset __`id`__ match the __`dataId`__ in the config.
+**Note:** kepler.gl map config is coupled with loaded datasets. The __`dataId`__ key is used to bind layers, filters and tooltip settings to a specific dataset. If you try to upload a configuration with a dataset in your own kepler.gl app, you also need to make sure your dataset __`id`__ matches the __`dataId`__ in the config.
 
 #### 2.Save and Export Current Map
 
-To Save and share your current map, click the __Export Current Map__ check box to export current configuration __AND__ uploaded data in a single `json` file.  **You can load this json file back to kepler.gl by simply drag and drop it in the __Add Data to Map__ dialog.**
+To save and share your current map, click the __Export Current Map__ check box to export current configuration __AND__ uploaded data in a single `json` file.  **You can load this json file back to kepler.gl by simply drag and drop it in the __Add Data to Map__ dialog.**
