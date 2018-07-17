@@ -318,7 +318,6 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         clicked,
         mapLayers,
         mapState,
-        visStateActions,
         interactionConfig
       } = this.props;
       const {mousePosition} = this.state;
@@ -326,8 +325,6 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       const data = layerData[idx];
 
       const layerInteraction = {
-        // onHover: visStateActions.onLayerHover,
-        // onClick: visStateActions.onLayerClick,
         mousePosition
       };
 
