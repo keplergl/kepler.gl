@@ -52,7 +52,8 @@ class MapStyleSchemaV1 extends Schema {
   }
 
   load(mapStyles) {
-    return {[this.key]: mapStyles}
+    // If mapStyle is an empty object, do not load it
+    return Object.keys(mapStyles).length ? {[this.key]: mapStyles} : {};
   }
 }
 
