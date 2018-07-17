@@ -86,7 +86,7 @@ class App extends Component {
   }
 
   componentWillUnmount() {
-    window.remmoveEventListener('resize', this._onResize);
+    window.removeEventListener('resize', this._onResize);
   }
 
   _onResize = () => {
