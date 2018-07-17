@@ -20,10 +20,7 @@
 
 import Layer from '../base-layer';
 import memoize from 'lodash.memoize';
-<<<<<<< HEAD
 import {TextLayer} from 'deck.gl';
-=======
->>>>>>> deckgl-5
 import ScatterplotBrushingLayer from 'deckgl-layers/scatterplot-brushing-layer/scatterplot-brushing-layer';
 import {hexToRgb} from 'utils/color-utils';
 import PointLayerIcon from './point-layer-icon';
@@ -263,7 +260,6 @@ export default class PointLayer extends Layer {
             colorScale: this.config.colorScale
           }
         }
-<<<<<<< HEAD
       }),
       // text label layer
       ...(this.config.textLabel.field
@@ -281,10 +277,7 @@ export default class PointLayer extends Layer {
               }
             })
           ]
-        : []),
-=======
-      })
->>>>>>> deckgl-5
+        : [])
     ];
   }
 }
