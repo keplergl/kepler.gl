@@ -308,6 +308,7 @@ export default class SolidPolygonLayer extends Layer {
   _updateAttributes(attributes) {
     const {modelsByName} = this.state;
 
+    /* eslint-disable guard-for-in */
     for (const modelName in modelsByName) {
       const model = modelsByName[modelName];
 
@@ -331,6 +332,7 @@ export default class SolidPolygonLayer extends Layer {
       }
       model.setAttributes(newAttributes);
     }
+    /* eslint-enable guard-for-in */
   }
 
   _getModels(gl) {
