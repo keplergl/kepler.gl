@@ -301,7 +301,7 @@ export default class Layer {
 
       textLabel: {
         field: null,
-        color: [255, 0, 0],
+        color: [255, 255, 255],
         size: 50,
         placement: 'top',
         alignment: 'center'
