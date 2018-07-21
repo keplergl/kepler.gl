@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {LineLayer} from 'deck.gl';
-import {GL} from 'luma.gl';
+import GL from 'luma.gl/constants';
 import {editShader} from 'deckgl-layers/layer-utils/shader-utils';
 
 const defaultProps = {

@@ -19,9 +19,9 @@
 // THE SOFTWARE.
 
 // TODO: a hack becaue solid-polygon-layer is not exported from @deck.gl/layers
-import SolidPolygonLayer from '../solid-polygon-layer/solid-polygon-layer';
+import {_SolidPolygonLayer} from '@deck.gl/layers';
 
-export default class HighlightSolidPolygonLayer extends SolidPolygonLayer {
+export default class HighlightSolidPolygonLayer extends _SolidPolygonLayer {
   draw({uniforms}) {
     super.draw({
       uniforms: {
