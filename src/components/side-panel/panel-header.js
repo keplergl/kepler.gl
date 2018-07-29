@@ -158,7 +158,7 @@ export const SaveExportDropdown = ({
 }) => {
   return (
     <StyledPanelDropdown show={show} className="save-export-dropdown">
-      <PanelDropdown onClose={onClose} className="save-export-dropdown__inner">
+      <PanelDropdown onClose={show ? onClose : null} className="save-export-dropdown__inner">
         <PanelItem
           label="Export Image"
           onClickHandler={onExportImage}

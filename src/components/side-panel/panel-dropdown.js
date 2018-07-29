@@ -29,7 +29,9 @@ class PanelDropdown extends Component {
   };
 
   handleClickOutside = (e) => {
-    this.props.onClose(e);
+    if (typeof this.props.onClose === 'function') {
+      this.props.onClose(e);
+    }
   };
 
   render() {
