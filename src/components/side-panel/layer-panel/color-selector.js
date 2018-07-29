@@ -83,7 +83,8 @@ class ColorSelector extends Component {
   handleClickOutside = e => {
     if (this.state.editing !== false) {
       this.setState({editing: false});
-    }  };
+    }
+  };
 
   _onSelectColor = (color, e) => {
     e.stopPropagation();

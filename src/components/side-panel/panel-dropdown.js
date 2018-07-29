@@ -23,13 +23,18 @@ import PropTypes from 'prop-types';
 import {StyledPanelDropdown} from 'components/common/styled-components';
 import listensToClickOutside from 'react-onclickoutside';
 
-class PanelDropdown extends Component {
+class ClickOutsideCloseDropdown extends Component {
   static propTypes = {
-    onClose: PropTypes.func
+    onClose: PropTypes.func,
+    show: PropTypes.bool
+  };
+
+  static defaultProps = {
+    show: true
   };
 
   handleClickOutside = (e) => {
-    if (typeof this.props.onClose === 'function') {
+    if (typeof this.props.onClose === 'function' && this.props.show) {
       this.props.onClose(e);
     }
   };
@@ -43,4 +48,4 @@ class PanelDropdown extends Component {
   }
 };
 
-export default listensToClickOutside(PanelDropdown);
+export default listensToClickOutside(ClickOutsideCloseDropdown);
