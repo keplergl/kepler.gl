@@ -126,14 +126,6 @@ export const PanelAction = ({item, onClick}) => (
     <a target={item.blank ? '_blank' : ''} href={item.href}>
       <item.iconComponent height="20px" />
     </a>
-    <Tooltip
-      id={`${item.id}-action`}
-      place="bottom"
-      delayShow={500}
-      effect="solid"
-    >
-      <span>{item.tooltip}</span>
-    </Tooltip>
   </StyledPanelAction>
 );
 
@@ -197,7 +189,6 @@ const defaultActionItems = [
   {
     id: 'save',
     iconComponent: Save,
-    tooltip: 'Save / Export',
     onClick: () => {},
     dropdownComponent: SaveExportDropdown
   }
