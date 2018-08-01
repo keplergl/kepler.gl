@@ -17,17 +17,12 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-
 import React, {Component} from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
-import {Tooltip} from 'components/common/styled-components';
 import KeplerGlLogo from 'components/common/logo';
 import {CodeAlt, Save, Files, Share, Picture} from 'components/common/icons';
-import PanelDropdown from 'components/side-panel/panel-dropdown';
-
 import ClickOutsideCloseDropdown from 'components/side-panel/panel-dropdown';
-
 
 const StyledPanelHeader = styled.div.attrs({
   className: 'side-side-panel__header'
