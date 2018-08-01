@@ -25,6 +25,7 @@ import {Tooltip} from 'components/common/styled-components';
 import KeplerGlLogo from 'components/common/logo';
 import {CodeAlt, Save, Files, Share, Picture} from 'components/common/icons';
 import PanelDropdown from 'components/side-panel/panel-dropdown';
+import { inputFontWeight } from 'styles';
 
 const StyledPanelHeader = styled.div.attrs({
   className: 'side-side-panel__header'
@@ -57,9 +58,10 @@ const StyledPanelAction = styled.div.attrs({
     props.active ? props.theme.textColorHl : props.theme.subtextColor};
   display: flex;
   height: 26px;
-  justify-content: center;
+  justify-content: space-between;
   margin-left: 4px;
-  width: 26px;
+  width: 70px;
+  padding: 5px;
 
   a {
     height: 20px;
@@ -123,6 +125,7 @@ const StyledPanelDropdown = styled.div`
 export const PanelAction = ({item, onClick}) => (
   <StyledPanelAction className="side-panel__panel-header__action"
     data-tip data-for={`${item.id}-action`} onClick={onClick}>
+    <p style={{fontWeight:'bold'}}>Share</p>
     <a target={item.blank ? '_blank' : ''} href={item.href}>
       <item.iconComponent height="20px" />
     </a>
