@@ -25,7 +25,9 @@ import {Tooltip} from 'components/common/styled-components';
 import KeplerGlLogo from 'components/common/logo';
 import {CodeAlt, Save, Files, Share, Picture} from 'components/common/icons';
 import PanelDropdown from 'components/side-panel/panel-dropdown';
-import { inputFontWeight } from 'styles';
+
+import ClickOutsideCloseDropdown from 'components/side-panel/panel-dropdown';
+
 
 const StyledPanelHeader = styled.div.attrs({
   className: 'side-side-panel__header'
@@ -153,7 +155,9 @@ export const SaveExportDropdown = ({
 }) => {
   return (
     <StyledPanelDropdown show={show} className="save-export-dropdown">
-      <PanelDropdown onClose={onClose} className="save-export-dropdown__inner">
+      <ClickOutsideCloseDropdown className="save-export-dropdown__inner"
+        show={show}
+        onClose={onClose}>
         <PanelItem
           label="Export Image"
           onClickHandler={onExportImage}
@@ -183,7 +187,7 @@ export const SaveExportDropdown = ({
             icon={(<Share height="16px" />)}
           />
         ) : null}
-      </PanelDropdown>
+      </ClickOutsideCloseDropdown>
     </StyledPanelDropdown>
   );
 };
