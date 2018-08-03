@@ -698,7 +698,7 @@ function newFontFaces() {
       return Promise.all(
         styleSheets.map(sheet => {
           if (sheet.href) {
-            return fetch(sheet.href)
+            return fetch(sheet.href, {credentials: 'omit'})
               .then(toText)
               .then(setBaseHref(sheet.href))
               .then(toStyleSheet)
