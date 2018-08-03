@@ -17,11 +17,12 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
+import { Tooltip } from 'components/common/styled-components';
 import KeplerGlLogo from 'components/common/logo';
-import {CodeAlt, Save, Files, Share, Picture} from 'components/common/icons';
+import { CodeAlt, Save, Files, Share, Picture } from 'components/common/icons';
 import ClickOutsideCloseDropdown from 'components/side-panel/panel-dropdown';
 
 const StyledPanelHeader = styled.div.attrs({
@@ -119,17 +120,25 @@ const StyledPanelDropdown = styled.div`
   }
 `;
 
-export const PanelAction = ({item, onClick}) => (
+export const PanelAction = ({ item, onClick }) => (
   <StyledPanelAction className="side-panel__panel-header__action"
     data-tip data-for={`${item.id}-action`} onClick={onClick}>
     <p>Share</p>
     <a target={item.blank ? '_blank' : ''} href={item.href}>
       <item.iconComponent height="20px" />
     </a>
+    {item.tooltip ? (<Tooltip
+      id={`${item.id}-action`}
+      place="bottom"
+      delayShow={500}
+      effect="solid"
+    >
+      <span>{item.tooltip}</span>
+    </Tooltip>) : null }
   </StyledPanelAction>
 );
 
-const PanelItem = ({onClose, onClickHandler, label, icon}) => (
+const PanelItem = ({ onClose, onClickHandler, label, icon }) => (
   <div className="save-export-dropdown__item" onClick={(e) => {
     e.stopPropagation();
     onClose();
@@ -191,7 +200,7 @@ const defaultActionItems = [
   {
     id: 'save',
     iconComponent: Save,
-    onClick: () => {},
+    onClick: () => { },
     dropdownComponent: SaveExportDropdown
   }
 ];
@@ -229,11 +238,11 @@ function PanelHeaderFactory() {
       return (
         <StyledPanelHeader className="side-panel__panel-header">
           <StyledPanelHeaderTop className="side-panel__panel-header__top">
-            <this.props.logoComponent appName={appName} version={version}/>
+            <this.props.logoComponent appName={appName} version={version} />
             <StyledPanelTopActions>
               {actionItems.map(item => (
                 <div className="side-panel__panel-header__right"
-                     key={item.id} style={{position: 'relative'}}>
+                  key={item.id} style={{ position: 'relative' }}>
                   <PanelAction
                     item={item}
                     onClick={() => {
