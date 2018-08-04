@@ -141,31 +141,31 @@ class App extends Component {
     );
 
     // load icon data and config and process csv file
-    this.props.dispatch(
-      addDataToMap({
-        datasets: [
-          {
-            info: {
-              label: 'Icon Data',
-              id: 'test_icon_data'
-            },
-            data: Processors.processCsvData(sampleIconCsv)
-          }
-        ],
-        options: {
-          centerMap: false
-        },
-        config: savedMapConfig
-      })
-    );
+    // this.props.dispatch(
+    //   addDataToMap({
+    //     datasets: [
+    //       {
+    //         info: {
+    //           label: 'Icon Data',
+    //           id: 'test_icon_data'
+    //         },
+    //         data: Processors.processCsvData(sampleIconCsv)
+    //       }
+    //     ],
+    //     options: {
+    //       centerMap: false
+    //     },
+    //     config: savedMapConfig
+    //   })
+    // );
 
     // load geojson
-    this.props.dispatch(
-      updateVisData({
-        info: {label: 'SF Zip Geo'},
-        data: Processors.processGeojson(sampleGeojson)
-      })
-    );
+    // this.props.dispatch(
+    //   updateVisData({
+    //     info: {label: 'SF Zip Geo'},
+    //     data: Processors.processGeojson(sampleGeojson)
+    //   })
+    // );
   }
 
   render() {

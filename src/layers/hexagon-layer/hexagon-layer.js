@@ -115,11 +115,12 @@ export default class HexagonLayer extends AggregationLayer {
               data: [
                 hexagonToPolygonGeo(
                   objectHovered,
-                  {lineColor: this.config.highlightColor},
+                  {},
                   radius * visConfig.coverage,
                   mapState
                 )
               ],
+              getLineColor: this.config.highlightColor,
               lineWidthScale: 8 * zoomFactor
             })
           ]
