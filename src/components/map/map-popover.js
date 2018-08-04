@@ -272,15 +272,15 @@ const CellInfo = ({data, layer}) => {
 
   return (
     <tbody>
-      <Row name={'total points'} key="count" value={data.points.length} />
-      {colorField ? (
+      <Row name={'total points'} key="count" value={data.points && data.points.length} />
+      {colorField && layer.visualChannels.color ? (
         <Row
           name={layer.getVisualChannelDescription('color').measure}
           key="color"
           value={data.colorValue || 'N/A'}
         />
       ) : null}
-      {sizeField ? (
+      {sizeField && layer.visualChannels.size ? (
         <Row
           name={layer.getVisualChannelDescription('size').measure}
           key="size"
