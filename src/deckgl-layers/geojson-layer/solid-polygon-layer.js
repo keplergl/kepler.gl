@@ -22,8 +22,11 @@
 import {_SolidPolygonLayer} from '@deck.gl/layers';
 
 export default class HighlightSolidPolygonLayer extends _SolidPolygonLayer {
-  draw({uniforms}) {
+  draw(opts) {
+    const {uniforms} = opts;
+
     super.draw({
+      ...opts,
       uniforms: {
         ...uniforms,
         picking_uHighlightScale: this.props.extruded ? 1.2 : 0.0

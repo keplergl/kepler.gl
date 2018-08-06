@@ -21,8 +21,11 @@
 import {HexagonCellLayer} from 'deck.gl';
 
 export default class EnhancedHexagonCellLayer extends HexagonCellLayer {
-  draw({uniforms}) {
+  draw(opts) {
+    const {uniforms} = opts;
+
     super.draw({
+      ...opts,
       uniforms: {
         ...uniforms,
         picking_uHighlightScale: this.props.extruded ? 1.2 : 0.0

@@ -118,10 +118,9 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     };
 
     _onWebGLInitialized = gl => {
-      // enable depth test for perspective mode
       registerShaderModules(
         [pickingModule, brushingModule], {
-        ignoreMultipleRegistrations: true
+          ignoreMultipleRegistrations: true
       });
 
       // allow Uint32 indices in building layer
@@ -425,6 +424,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             ref={this._setMapboxMap}
             mapStyle={mapStyle.bottomMapStyle}
             onClick={onMapClick}
+            getCursor={this.props.hoverInfo ? () => 'pointer' : undefined}
           >
             {this._renderOverlay()}
             {this._renderMapboxOverlays()}

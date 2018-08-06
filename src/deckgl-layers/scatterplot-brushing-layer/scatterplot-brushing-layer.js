@@ -49,7 +49,8 @@ export default class ScatterplotBrushingLayer extends ScatterplotLayer {
       modules: shaders.modules.concat(['brushing'])
     };
   }
-  draw({uniforms}) {
+  draw(opts) {
+    const {uniforms} = opts;
     const {
       brushRadius,
       enableBrushing,
@@ -59,6 +60,7 @@ export default class ScatterplotBrushingLayer extends ScatterplotLayer {
 
     // add uniforms
     super.draw({
+      ...opts,
       uniforms: {
         ...uniforms,
         brushing_uBrushRadius: brushRadius,
