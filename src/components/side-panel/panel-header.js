@@ -17,7 +17,6 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-
 import React, {Component} from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
@@ -57,10 +56,11 @@ const StyledPanelAction = styled.div.attrs({
     props.active ? props.theme.textColorHl : props.theme.subtextColor};
   display: flex;
   height: 26px;
-  justify-content: center;
+  justify-content: space-between;
   margin-left: 4px;
-  width: 26px;
-
+  width: 70px;
+  padding: 5px;
+  font-weight: bold;
   a {
     height: 20px;
   }
@@ -123,17 +123,18 @@ const StyledPanelDropdown = styled.div`
 export const PanelAction = ({item, onClick}) => (
   <StyledPanelAction className="side-panel__panel-header__action"
     data-tip data-for={`${item.id}-action`} onClick={onClick}>
+    {item.label ? <p>{item.label}</p> : null}
     <a target={item.blank ? '_blank' : ''} href={item.href}>
       <item.iconComponent height="20px" />
     </a>
-    <Tooltip
+    {item.tooltip ? (<Tooltip
       id={`${item.id}-action`}
       place="bottom"
       delayShow={500}
       effect="solid"
     >
       <span>{item.tooltip}</span>
-    </Tooltip>
+    </Tooltip>) : null }
   </StyledPanelAction>
 );
 
@@ -199,8 +200,8 @@ const defaultActionItems = [
   {
     id: 'save',
     iconComponent: Save,
-    tooltip: 'Save / Export',
     onClick: () => {},
+    label: 'Share',
     dropdownComponent: SaveExportDropdown
   }
 ];
