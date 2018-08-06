@@ -123,7 +123,7 @@ const StyledPanelDropdown = styled.div`
 export const PanelAction = ({item, onClick}) => (
   <StyledPanelAction className="side-panel__panel-header__action"
     data-tip data-for={`${item.id}-action`} onClick={onClick}>
-    {item.label ? <p>Share</p> : null}
+    {item.label ? <p>{item.label}</p> : null}
     <a target={item.blank ? '_blank' : ''} href={item.href}>
       <item.iconComponent height="20px" />
     </a>
