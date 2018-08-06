@@ -476,26 +476,23 @@ export const NO_VALUE_COLOR = [147, 147, 147];
 
 export const LAYER_BLENDINGS = {
   additive: {
-    enable: true,
     blendFunc: ['SRC_ALPHA', 'DST_ALPHA'],
     blendEquation: 'FUNC_ADD'
   },
   normal: {
-    enable: true,
     // reference to
     // https://limnu.com/webgl-blending-youre-probably-wrong/
-    blendFuncSeparate: [
+    blendFunc: [
       'SRC_ALPHA',
       'ONE_MINUS_SRC_ALPHA',
       'ONE',
       'ONE_MINUS_SRC_ALPHA'
     ],
-    blendEquationSeparate: ['FUNC_ADD', 'FUNC_ADD']
+    blendEquation: ['FUNC_ADD', 'FUNC_ADD']
   },
   subtractive: {
-    enable: true,
-    blendFuncSeparate: ['ONE', 'ONE_MINUS_DST_COLOR', 'SRC_ALPHA', 'DST_ALPHA'],
-    blendEquationSeparate: ['FUNC_SUBTRACT', 'FUNC_ADD']
+    blendFunc: ['ONE', 'ONE_MINUS_DST_COLOR', 'SRC_ALPHA', 'DST_ALPHA'],
+    blendEquation: ['FUNC_SUBTRACT', 'FUNC_ADD']
   }
 };
 

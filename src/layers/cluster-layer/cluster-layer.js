@@ -89,6 +89,9 @@ export default class ClusterLayer extends AggregationLayer {
         fp64: visConfig['hi-precision'],
         lightSettings: this.meta.lightSettings,
 
+        // parameters
+        parameters: {depthTest: mapState.dragRotate},
+
         // call back from layer after calculate clusters
         onSetColorDomain: layerCallbacks.onSetLayerDomain
       })

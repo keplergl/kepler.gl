@@ -94,6 +94,8 @@ export default class LineLayer extends ArcLayer {
         fp64: this.config.visConfig['hi-precision'],
         opacity: this.config.visConfig.opacity,
         strokeScale: this.config.visConfig.thickness,
+        // parameters
+        parameters: {depthTest: mapState.dragRotate},
         updateTriggers: {
           getStrokeWidth: {
             sizeField: this.config.sizeField,

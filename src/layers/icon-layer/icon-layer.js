@@ -258,6 +258,9 @@ export default class IconLayer extends Layer {
         highlightColor: this.config.highlightColor,
         pickable: true,
 
+        // parameters
+        parameters: {depthTest: mapState.dragRotate},
+
         // update triggers
         updateTriggers: {
           getRadius: {

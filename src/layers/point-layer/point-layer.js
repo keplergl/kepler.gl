@@ -245,6 +245,9 @@ export default class PointLayer extends Layer {
         id: this.id,
         opacity: this.config.visConfig.opacity,
         pickable: true,
+        // parameters
+        parameters: {depthTest: mapState.dragRotate},
+
         updateTriggers: {
           getRadius: {
             sizeField: this.config.sizeField,
