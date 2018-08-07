@@ -88,6 +88,7 @@ export default class ClusterLayer extends AggregationLayer {
         opacity: visConfig.opacity,
         fp64: visConfig['hi-precision'],
         lightSettings: this.meta.lightSettings,
+        zoom: mapState.zoom,
 
         // parameters
         parameters: {depthTest: mapState.dragRotate},
