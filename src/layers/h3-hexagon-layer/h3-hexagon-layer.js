@@ -43,6 +43,7 @@ export const hexIdResolver = ({hex_id}) => hex_id.fieldIdx;
 export const HexagonIdVisConfigs = {
   opacity: 'opacity',
   colorRange: 'colorRange',
+  coverage: 'coverage',
   sizeRange: 'elevationRange',
   elevationScale: 'elevationScale',
   'hi-precision': 'hi-precision'
@@ -247,7 +248,7 @@ export default class HexagonIdLayer extends Layer {
         ...layerInteraction,
         ...data,
         hexagonVertices,
-        // coverage: 0.8,
+        coverage: visConfig.coverage,
         id: this.id,
         idx,
         pickable: true,
