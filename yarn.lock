@@ -2,30 +2,30 @@
 # yarn lockfile v1
 
 
-"@deck.gl/core@^6.0.1":
-  version "6.0.1"
-  resolved "https://registry.yarnpkg.com/@deck.gl/core/-/core-6.0.1.tgz#a563dfbbc631f2d7436b97fd53f98f3836c1d46a"
+"@deck.gl/core@^5.3.3":
+  version "5.3.3"
+  resolved "https://registry.yarnpkg.com/@deck.gl/core/-/core-5.3.3.tgz#a13c07e5fa3e22297fd450d6da8ab9aac334b1f0"
   dependencies:
-    luma.gl "^6.0.0"
-    math.gl "^2.0.0"
+    luma.gl "^5.3.0"
+    math.gl "^1.2.1"
     mjolnir.js "^1.0.0"
     probe.gl "^1.0.0"
     seer "^0.2.4"
-    viewport-mercator-project "^5.2.0"
+    viewport-mercator-project "^5.1.0"
 
-"@deck.gl/layers@^6.0.1":
-  version "6.0.1"
-  resolved "https://registry.yarnpkg.com/@deck.gl/layers/-/layers-6.0.1.tgz#8fed40f83558758fb47391c9ab036568fd3949ba"
+"@deck.gl/layers@^5.3.4":
+  version "5.3.4"
+  resolved "https://registry.yarnpkg.com/@deck.gl/layers/-/layers-5.3.4.tgz#ab3de1bf8bb68d67772642acbb4e0f87f4f11300"
   dependencies:
-    "@deck.gl/core" "^6.0.1"
+    "@deck.gl/core" "^5.3.3"
     d3-hexbin "^0.2.1"
     earcut "^2.0.6"
 
-"@deck.gl/react@^6.0.1":
-  version "6.0.1"
-  resolved "https://registry.yarnpkg.com/@deck.gl/react/-/react-6.0.1.tgz#570c27f758fea982c4dd1a7952ed27fa04bdfc36"
+"@deck.gl/react@^5.3.3":
+  version "5.3.3"
+  resolved "https://registry.yarnpkg.com/@deck.gl/react/-/react-5.3.3.tgz#e7352934f6742d3ce672a394cbff312aab5ccaa0"
   dependencies:
-    "@deck.gl/core" "^6.0.1"
+    "@deck.gl/core" "^5.3.3"
     prop-types "^15.6.0"
 
 "@mapbox/extent@0.4.0":
@@ -2279,13 +2279,13 @@ decamelize@^1.0.0, decamelize@^1.1.1, decamelize@^1.1.2:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/decamelize/-/decamelize-1.2.0.tgz#f6534d15148269b20352e7bee26f501f9a191290"
 
-deck.gl@6.0.1:
-  version "6.0.1"
-  resolved "https://registry.yarnpkg.com/deck.gl/-/deck.gl-6.0.1.tgz#0903ffef3ae7454def280e3c10006022bee08c45"
+deck.gl@5.3.4:
+  version "5.3.4"
+  resolved "https://registry.yarnpkg.com/deck.gl/-/deck.gl-5.3.4.tgz#35e5a7087ef0d8ca7811d06a721ea289edbe7c24"
   dependencies:
-    "@deck.gl/core" "^6.0.1"
-    "@deck.gl/layers" "^6.0.1"
-    "@deck.gl/react" "^6.0.1"
+    "@deck.gl/core" "^5.3.3"
+    "@deck.gl/layers" "^5.3.4"
+    "@deck.gl/react" "^5.3.3"
 
 decode-uri-component@^0.2.0:
   version "0.2.0"
@@ -4592,11 +4592,11 @@ lru-cache@^4.0.1:
     pseudomap "^1.0.2"
     yallist "^2.1.2"
 
-luma.gl@^6.0.0:
-  version "6.0.0"
-  resolved "https://registry.yarnpkg.com/luma.gl/-/luma.gl-6.0.0.tgz#1df3298d9f0934f5790c89a41daf9b5a30f89f5c"
+luma.gl@^5.3.0:
+  version "5.3.0"
+  resolved "https://registry.yarnpkg.com/luma.gl/-/luma.gl-5.3.0.tgz#a93b2f34489d8230eb6d8c871335800d9b83ee67"
   dependencies:
-    math.gl "^2.0.0"
+    math.gl "^1.1.0"
     probe.gl "^1.0.0"
     seer "^0.2.4"
     webgl-debug "^2.0.0"
@@ -4678,9 +4678,9 @@ math.gl@^1.1.0, math.gl@^1.1.3:
     gl-vec3 "^1.0.3"
     gl-vec4 "^1.0.1"
 
-math.gl@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/math.gl/-/math.gl-2.0.0.tgz#c41cf8f5cfce820161511c435d3f706eebd7deb0"
+math.gl@^1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/math.gl/-/math.gl-1.2.1.tgz#3c7da0ae4f3383116c24bc183533cc4d7b8065a9"
   dependencies:
     gl-mat3 "^1.0.0"
     gl-mat4 "^1.1.4"
@@ -7497,12 +7497,6 @@ viewport-mercator-project@^5.1.0:
   resolved "https://registry.yarnpkg.com/viewport-mercator-project/-/viewport-mercator-project-5.1.0.tgz#68bc5586988c2808d1456e1eff950d424eccec16"
   dependencies:
     math.gl "^1.1.0"
-
-viewport-mercator-project@^5.2.0:
-  version "5.2.0"
-  resolved "https://registry.yarnpkg.com/viewport-mercator-project/-/viewport-mercator-project-5.2.0.tgz#2c50bc624a085d01a3a486f22ec329c0511fe4bd"
-  dependencies:
-    math.gl "^2.0.0"
 
 vlq@^0.2.1, vlq@^0.2.2:
   version "0.2.3"
