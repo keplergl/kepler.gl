@@ -926,6 +926,7 @@ function closeSpecificMapAtIndex(state, action) {
 // TODO: redo write handler to not use tasks
 export const loadFilesUpdater = (state, action) => {
   const {files} = action;
+
   const filesToLoad = files.map(fileBlob => ({
     fileBlob,
     info: {

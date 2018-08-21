@@ -24,6 +24,9 @@ import PropTypes from 'prop-types';
 import MapboxGLMap from 'react-map-gl';
 import DeckGL from 'deck.gl';
 import {GL} from 'luma.gl';
+import {registerShaderModules, setParameters} from 'luma.gl';
+import pickingModule from 'shaderlib/picking-module';
+import brushingModule from 'shaderlib/brushing-module';
 
 // components
 import MapPopoverFactory from 'components/map/map-popover';
@@ -89,27 +92,11 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     constructor(props) {
       super(props);
       this.state = {
-        reRenderKey: 0,
-        gl: null,
         mousePosition: [0, 0]
       };
       this.previousLayers = {
         // [layers.id]: mapboxLayerConfig
       };
-    }
-
-    componentWillReceiveProps(nextProps) {
-      if (
-        this.props.mapState.dragRotate !== nextProps.mapState.dragRotate ||
-        this.props.layerBlending !== nextProps.layerBlending
-      ) {
-        // increment rerender key to force gl reinitialize when
-        // perspective or layer blending changed
-        // TODO: layer blending can now be implemented per layer base
-        this.setState({
-          reRenderKey: this.state.reRenderKey + 1
-        });
-      }
     }
 
     componentWillUnmount() {
@@ -120,7 +107,6 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     }
 
     /* component private functions */
-
     _onCloseMapPopover = () => {
       this.props.visStateActions.onLayerClick(null);
     };
@@ -132,20 +118,13 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     };
 
     _onWebGLInitialized = gl => {
-      // enable depth test for perspective mode
-      if (this.props.mapState.dragRotate) {
-        gl.enable(gl.DEPTH_TEST);
-        gl.depthFunc(gl.LEQUAL);
-      } else {
-        gl.disable(gl.DEPTH_TEST);
-      }
+      registerShaderModules(
+        [pickingModule, brushingModule], {
+          ignoreMultipleRegistrations: true
+      });
 
       // allow Uint32 indices in building layer
-      gl.getExtension('OES_element_index_uint');
-
-      this._togglelayerBlending(gl);
-
-      this.setState({gl});
+      // gl.getExtension('OES_element_index_uint');
     };
 
     _onMouseMove = evt => {
@@ -191,35 +170,24 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       }
     }
 
-    /* deck.gl doesn't support blendFuncSeparate yet
-     * so we're applying the blending ourselves
-    */
-    _togglelayerBlending = gl => {
-      const blending = LAYER_BLENDINGS[this.props.layerBlending];
-      const {
-        enable,
-        blendFunc,
-        blendEquation,
-        blendFuncSeparate,
-        blendEquationSeparate
-      } = blending;
+    _onBeforeRender = ({gl}) => {
+      this._setlayerBlending(gl);
+    };
 
-      if (enable) {
-        gl.enable(GL.BLEND);
-        if (blendFunc) {
-          gl.blendFunc(...blendFunc.map(getGlConst));
-          gl.blendEquation(GL[blendEquation]);
-        } else {
-          gl.blendFuncSeparate(...blendFuncSeparate.map(getGlConst));
-          gl.blendEquationSeparate(...blendEquationSeparate.map(getGlConst));
-        }
-      } else {
-        gl.disable(GL.BLEND);
-      }
+    _setlayerBlending = gl => {
+      const blending = LAYER_BLENDINGS[this.props.layerBlending];
+      const {blendFunc, blendEquation} = blending;
+
+      setParameters(gl, {
+        [GL.BLEND]: true,
+        ...(blendFunc ? {
+          blendFunc: blendFunc.map(getGlConst),
+          blendEquation: Array.isArray(blendEquation) ? blendEquation.map(getGlConst) : getGlConst(blendEquation)
+        } : {})
+      });
     };
 
     /* component render functions */
-
     /* eslint-disable complexity */
     _renderObjectLayerPopover() {
       // TODO: move this into reducer so it can be tested
@@ -310,7 +278,6 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         clicked,
         mapLayers,
         mapState,
-        visStateActions,
         interactionConfig
       } = this.props;
       const {mousePosition} = this.state;
@@ -318,8 +285,6 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       const data = layerData[idx];
 
       const layerInteraction = {
-        onHover: visStateActions.onLayerHover,
-        onClick: visStateActions.onLayerClick,
         mousePosition
       };
 
@@ -357,7 +322,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       const {
         mapState,
         layerData,
-        layerOrder
+        layerOrder,
+        visStateActions
       } = this.props;
 
       let deckGlLayers = [];
@@ -373,11 +339,13 @@ export default function MapContainerFactory(MapPopover, MapControl) {
 
       return (
         <DeckGL
-          {...mapState}
+          viewState={mapState}
           id="default-deckgl-overlay"
           layers={deckGlLayers}
-          key={this.state.reRenderKey}
           onWebGLInitialized={this._onWebGLInitialized}
+          onBeforeRender={this._onBeforeRender}
+          onLayerHover={visStateActions.onLayerHover}
+          onLayerClick={visStateActions.onLayerClick}
         />
       );
     }
@@ -456,6 +424,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             ref={this._setMapboxMap}
             mapStyle={mapStyle.bottomMapStyle}
             onClick={onMapClick}
+            getCursor={this.props.hoverInfo ? () => 'pointer' : undefined}
           >
             {this._renderOverlay()}
             {this._renderMapboxOverlays()}

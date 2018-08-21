@@ -18,14 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-export default `\
+// TODO: a hack becaue solid-polygon-layer is not exported from @deck.gl/layers
+import {_SolidPolygonLayer} from '@deck.gl/layers';
 
-uniform vec3 selectedPickingColor;
+export default class HighlightSolidPolygonLayer extends _SolidPolygonLayer {
+  draw(opts) {
+    const {uniforms} = opts;
 
-float isPicked(vec3 pickingColors) {
- return float(pickingColors.x == selectedPickingColor.x
- && pickingColors.y == selectedPickingColor.y
- && pickingColors.z == selectedPickingColor.z);
+    super.draw({
+      ...opts,
+      uniforms: {
+        ...uniforms,
+        picking_uHighlightScale: this.props.extruded ? 1.4 : 0.0
+      }
+    })
+  }
 }
 
-`;
+HighlightSolidPolygonLayer.layerName = 'HighlightSolidPolygonLayer';

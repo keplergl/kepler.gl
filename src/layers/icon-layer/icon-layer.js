@@ -23,7 +23,6 @@ import memoize from 'lodash.memoize';
 import {hexToRgb} from 'utils/color-utils';
 import {svgIcons as SvgIcons} from './svg-icons.json';
 import SvgIconLayer from 'deckgl-layers/svg-icon-layer/svg-icon-layer';
-import ScatterplotIconLayer from 'deckgl-layers/svg-icon-layer/scatterplot-icon-layer';
 import IconLayerIcon from './icon-layer-icon';
 import {ICON_FIELDS} from 'constants/default-settings';
 import IconInfoModalFactory from './icon-info-modal';
@@ -211,11 +210,11 @@ export default class IconLayer extends Layer {
       }, []);
     }
 
-    const getRadius = d =>
-      rScale ? this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
+    const getRadius = rScale ? d =>
+      this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
 
-    const getColor = d =>
-      cScale ? this.getEncodedChannelValue(cScale, d.data, colorField) : color;
+    const getColor = cScale ? d =>
+      this.getEncodedChannelValue(cScale, d.data, colorField) : color;
 
     return {
       data,
@@ -234,7 +233,6 @@ export default class IconLayer extends Layer {
   renderLayer({
     data,
     idx,
-    layerInteraction,
     objectHovered,
     mapState,
     interactionConfig
@@ -249,13 +247,21 @@ export default class IconLayer extends Layer {
     return [
       new SvgIconLayer({
         ...layerProps,
-        ...layerInteraction,
         ...data,
         id: this.id,
         idx,
         opacity: this.config.visConfig.opacity,
         getIconGeometry: id => SvgIconGeometry[id],
+
+        // picking
+        autoHighlight: true,
+        highlightColor: this.config.highlightColor,
         pickable: true,
+
+        // parameters
+        parameters: {depthTest: mapState.dragRotate},
+
+        // update triggers
         updateTriggers: {
           getRadius: {
             sizeField: this.config.colorField,
@@ -269,25 +275,7 @@ export default class IconLayer extends Layer {
             colorScale: this.config.colorScale
           }
         }
-      }),
-      ...(this.isLayerHovered(objectHovered)
-        ? [
-            new ScatterplotIconLayer({
-              ...layerProps,
-              id: `${this.id}-hovered`,
-              data: [
-                {
-                  ...objectHovered.object,
-                  position: data.getPosition(objectHovered.object),
-                  radius: data.getRadius(objectHovered.object),
-                  color: this.config.highlightColor
-                }
-              ],
-              iconGeometry: SvgIconGeometry[objectHovered.object.icon],
-              pickable: false
-            })
-          ]
-        : [])
+      })
     ];
   }
 }

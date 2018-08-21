@@ -19,13 +19,7 @@
 // THE SOFTWARE.
 
 import {ArcLayer} from 'deck.gl';
-
-import isPicked from '../../shaderlib/is-picked';
-import isPtInRange from '../../shaderlib/is-point-in-range';
-import getExtrusion from '../../shaderlib/get-extrusion-offset.glsl';
-
-import vs from './arc-brushing-layer-vertex.glsl';
-import vs64 from './arc-brushing-layer-vertex-64.glsl';
+import {editShader} from 'deckgl-layers/layer-utils/shader-utils';
 
 const defaultProps = {
   ...ArcLayer.defaultProps,
@@ -38,74 +32,65 @@ const defaultProps = {
   strokeScale: 1,
   // brush radius in meters
   brushRadius: 100000,
-  pickedColor: [254, 210, 26, 255],
   mousePosition: [0, 0]
 };
+
+function addBrushingVsShader(vs) {
+  return editShader(
+    vs,
+    'arc brushing vs',
+    'vec2 offset = getExtrusionOffset((next.xy - curr.xy) * indexDir, positions.y);',
+    'vec2 offset = brushing_getExtrusionOffset((next.xy - curr.xy) * indexDir, positions.y, project_uViewportSize, instancePositions, instanceWidths);'
+  );
+}
+
+function addBrushingVs64Shader(vs) {
+  return editShader(
+    vs,
+    'arc brushing vs64',
+    'vec2 offset = getExtrusionOffset(next_pos_clipspace.xy - curr_pos_clipspace.xy, positions.y);',
+    'vec2 offset = brushing_getExtrusionOffset(next_pos_clipspace.xy - curr_pos_clipspace.xy, positions.y, project_uViewportSize, instancePositions, instanceWidths);'
+  );
+}
 
 export default class ArcBrushingLayer extends ArcLayer {
   getShaders() {
     const shaders = super.getShaders();
-    const addons = getExtrusion + isPicked + isPtInRange;
-
     return {
-      ...shaders,
-      vs: addons + (this.props.fp64 ? vs64 : vs)
+      vs: this.is64bitEnabled()
+        ? addBrushingVs64Shader(shaders.vs)
+        : addBrushingVsShader(shaders.vs),
+      fs: shaders.fs,
+      modules: shaders.modules.concat(['brushing'])
     };
   }
 
-  initializeState() {
-    super.initializeState();
-    const {attributeManager} = this.state;
-    attributeManager.addInstanced({
-      instanceStrokeWidth: {
-        size: 1,
-        accessor: ['getStrokeWidth'],
-        update: this.calculateInstanceStrokeWidth
-      }
-    });
-  }
+  draw(opts) {
+    const {uniforms} = opts;
 
-  draw({uniforms}) {
     const {
       brushSource,
       brushTarget,
       brushRadius,
       enableBrushing,
-      pickedColor,
       mousePosition,
       strokeScale
     } = this.props;
 
-    const picked = !Array.isArray(pickedColor)
-      ? defaultProps.pickedColor
-      : pickedColor;
     super.draw({
+      ...opts,
       uniforms: {
         ...uniforms,
-        brushSource,
-        brushTarget,
-        brushRadius,
-        enableBrushing,
-        strokeScale,
-        pickedColor: new Uint8ClampedArray(
-          !Number.isFinite(pickedColor[3]) ? [...picked, 255] : picked
-        ),
-        mousePos: mousePosition
+        brushing_uBrushSource: brushSource ? 1 : 0,
+        brushing_uBrushTarget: brushTarget ? 1 : 0,
+        brushing_uBrushRadius: brushRadius,
+        brushing_uEnableBrushing: enableBrushing ? 1 : 0,
+        brushing_uStrokeScale: strokeScale,
+        brushing_uMousePosition: mousePosition
           ? new Float32Array(this.unproject(mousePosition))
           : defaultProps.mousePosition
       }
     });
-  }
-
-  calculateInstanceStrokeWidth(attribute) {
-    const {data, getStrokeWidth} = this.props;
-    const {value, size} = attribute;
-    let i = 0;
-    for (const object of data) {
-      const width = getStrokeWidth(object);
-      value[i] = Number.isFinite(width) ? width : 1;
-      i += size;
-    }
   }
 }
 

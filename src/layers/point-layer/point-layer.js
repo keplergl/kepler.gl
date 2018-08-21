@@ -20,7 +20,6 @@
 
 import Layer from '../base-layer';
 import memoize from 'lodash.memoize';
-import {ScatterplotLayer} from 'deck.gl';
 import ScatterplotBrushingLayer from 'deckgl-layers/scatterplot-brushing-layer/scatterplot-brushing-layer';
 import {hexToRgb} from 'utils/color-utils';
 import PointLayerIcon from './point-layer-icon';
@@ -191,11 +190,11 @@ export default class PointLayer extends Layer {
       }, []);
     }
 
-    const getRadius = d =>
-      rScale ? this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
+    const getRadius = rScale ? d =>
+      this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
 
-    const getColor = d =>
-      cScale ? this.getEncodedChannelValue(cScale, d.data, colorField) : color;
+    const getColor = cScale ? d =>
+      this.getEncodedChannelValue(cScale, d.data, colorField) : color;
 
     return {
       data,
@@ -218,6 +217,8 @@ export default class PointLayer extends Layer {
     mapState,
     interactionConfig
   }) {
+    const enableBrushing = interactionConfig.brush.enabled;
+
     const layerProps = {
       outline: this.config.visConfig.outline,
       radiusMinPixels: 1,
@@ -227,60 +228,43 @@ export default class PointLayer extends Layer {
       ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
     };
 
-    const baseLayerProp = {
-      ...layerProps,
-      ...layerInteraction,
-      ...data,
-      idx,
-      opacity: this.config.visConfig.opacity,
-      pickable: true,
-      updateTriggers: {
-        getRadius: {
-          sizeField: this.config.sizeField,
-          radiusRange: this.config.visConfig.radiusRange,
-          fixedRadius: this.config.visConfig.fixedRadius,
-          sizeScale: this.config.sizeScale
-        },
-        getColor: {
-          color: this.config.color,
-          colorField: this.config.colorField,
-          colorRange: this.config.visConfig.colorRange,
-          colorScale: this.config.colorScale
-        }
-      }
+    const interaction = {
+      autoHighlight: !enableBrushing,
+      enableBrushing,
+      brushRadius: interactionConfig.brush.config.size * 1000,
+      highlightColor: this.config.highlightColor
     };
 
     return [
-      // base layer
-      interactionConfig.brush.enabled
-        ? new ScatterplotBrushingLayer({
-            ...baseLayerProp,
-            id: `${this.id}-brush`,
-            enableBrushing: true,
-            brushRadius: interactionConfig.brush.config.size * 1000
-          })
-        : new ScatterplotLayer({
-            id: this.id,
-            ...baseLayerProp
-          }),
+      new ScatterplotBrushingLayer({
+        ...layerProps,
+        ...layerInteraction,
+        ...data,
+        ...interaction,
+        idx,
+        id: this.id,
+        opacity: this.config.visConfig.opacity,
+        pickable: true,
+        // parameters
+        parameters: {
+          depthTest: mapState.dragRotate
+        },
 
-      // hover layer
-      ...(this.isLayerHovered(objectHovered)
-        ? [
-            new ScatterplotLayer({
-              ...layerProps,
-              id: `${this.id}-hovered`,
-              data: [
-                {
-                  color: this.config.highlightColor,
-                  position: data.getPosition(objectHovered.object),
-                  radius: data.getRadius(objectHovered.object)
-                }
-              ],
-              pickable: false
-            })
-          ]
-        : [])
+        updateTriggers: {
+          getRadius: {
+            sizeField: this.config.sizeField,
+            radiusRange: this.config.visConfig.radiusRange,
+            fixedRadius: this.config.visConfig.fixedRadius,
+            sizeScale: this.config.sizeScale
+          },
+          getColor: {
+            color: this.config.color,
+            colorField: this.config.colorField,
+            colorRange: this.config.visConfig.colorRange,
+            colorScale: this.config.colorScale
+          }
+        }
+      })
     ];
   }
 }

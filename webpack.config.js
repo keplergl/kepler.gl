@@ -21,7 +21,7 @@
 const resolve = require('path').resolve;
 const webpack = require('webpack');
 
-const  SRC_DIR = resolve('./src');
+const SRC_DIR = resolve('./src');
 const LIBRARY_BUNDLE_CONFIG = env => ({
   // Bundle the source code
   entry: {

@@ -54,6 +54,7 @@ export default class GridLayer extends AggregationLayer {
   get layerIcon() {
     return GridLayerIcon;
   }
+
   formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
     const formattedData = super.formatLayerData(
       _,
@@ -81,7 +82,6 @@ export default class GridLayer extends AggregationLayer {
   renderLayer({
     data,
     idx,
-    layerInteraction,
     objectHovered,
     mapState,
     interaction,
@@ -95,11 +95,12 @@ export default class GridLayer extends AggregationLayer {
     return [
       new EnhancedGridLayer({
         ...data,
-        ...layerInteraction,
         id: this.id,
         idx,
         cellSize,
         coverage: visConfig.coverage,
+        // highlight
+        autoHighlight: visConfig.enable3d,
 
         // color
         colorRange: this.getColorRange(visConfig.colorRange),
@@ -113,6 +114,8 @@ export default class GridLayer extends AggregationLayer {
         elevationScale: visConfig.elevationScale * eleZoomFactor,
         elevationLowerPercentile: visConfig.elevationPercentile[0],
         elevationUpperPercentile: visConfig.elevationPercentile[1],
+        // parameters
+        parameters: {depthTest: Boolean(visConfig.enable3d || mapState.dragRotate)},
 
         // render
         fp64: visConfig['hi-precision'],
@@ -123,6 +126,7 @@ export default class GridLayer extends AggregationLayer {
         onSetColorDomain: layerCallbacks.onSetLayerDomain
       }),
 
+      // render an outline of each cell if not extruded
       ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d
         ? [
             new GeoJsonLayer({

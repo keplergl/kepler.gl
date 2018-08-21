@@ -120,10 +120,18 @@ test('#PointLayer -> formatLayerData', t => {
           'should format correct grid layerData'
         );
         t.ok(
-          ['getPosition', 'getColor', 'getRadius'].every(
-            k => typeof layerData[k] === 'function'
-          ),
-          'should have getPosition, getColor, getRadius accessor as function'
+          typeof layerData.getPosition === 'function',
+          'should have getPosition accessor as function'
+        );
+        t.deepEqual(
+          layerData.getColor,
+          layer.config.color,
+          'getColor should be a constant'
+        );
+        t.deepEqual(
+          layerData.getRadius,
+          1,
+          'getRadius should be a constant'
         );
         t.deepEqual(
           layerData.getPosition(layerData.data[0]),
