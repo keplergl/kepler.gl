@@ -21,17 +21,6 @@
 import {console as Console} from 'global/window';
 import {Task, withTask} from 'react-palm';
 import {disableStackCapturing} from 'react-palm/tasks';
-// import {default as ArcLayer} from 'layers/arc-layer/arc-layer';
-
-import {default as PointLayer} from 'layers/point-layer/point-layer';
-import {default as ArcLayer} from 'layers/arc-layer/arc-layer';
-import {default as LineLayer} from 'layers/line-layer/line-layer';
-import {default as GridLayer} from 'layers/grid-layer/grid-layer';
-import {default as HexagonLayer} from 'layers/hexagon-layer/hexagon-layer';
-import {default as GeojsonLayer} from 'layers/geojson-layer/geojson-layer';
-import {default as ClusterLayer} from 'layers/cluster-layer/cluster-layer';
-import {default as IconLayer} from 'layers/icon-layer/icon-layer';
-import {default as HeatmapLayer} from 'layers/heatmap-layer/heatmap-layer';
 
 // Tasks
 import {LOAD_FILE_TASK} from 'tasks/tasks';
@@ -67,23 +56,10 @@ import {
   mergeLayerBlending
 } from './vis-state-merger';
 
-import isBrowser from 'utils/is-browser';
-import isTesting from 'utils/is-testing';
-
 // LayerClasses contain ES6 Class, do not instatiate in iso rendering
 // const {LayerClasses} = isBrowser || isTesting ?
 //   require('layers') : {
-//     LayerClasses: {
-//       point: PointLayer,
-//       arc: ArcLayer,
-//       line: LineLayer,
-//       grid: GridLayer,
-//       hexagon: HexagonLayer,
-//       geojson: GeojsonLayer,
-//       cluster: ClusterLayer,
-//       icon: IconLayer,
-//       heatmap: HeatmapLayer
-//     }
+//     LayerClasses: {}
 //   };
 
 import {Layer, LayerClasses} from 'layers'
@@ -183,7 +159,6 @@ export function layerTypeChangeUpdater(state, action) {
   const {oldLayer, newType} = action;
   const oldId = oldLayer.id;
   const idx = state.layers.findIndex(l => l.id === oldId);
-  console.log('...........................layerTypeChangeUpdater')
   if (!state.layerClasses[newType]) {
     Console.error(`${newType} is not a valid layer type`);
     return state;
