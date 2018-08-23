@@ -65,7 +65,7 @@ import {
 import {Layer, LayerClasses} from 'layers'
 
 // react-palm
-// disable capture exception for react-palm call to layers
+// disable capture exception for react-palm call to withTask
 disableStackCapturing();
 
 export const INITIAL_VIS_STATE = {
@@ -159,6 +159,7 @@ export function layerTypeChangeUpdater(state, action) {
   const {oldLayer, newType} = action;
   const oldId = oldLayer.id;
   const idx = state.layers.findIndex(l => l.id === oldId);
+
   if (!state.layerClasses[newType]) {
     Console.error(`${newType} is not a valid layer type`);
     return state;
@@ -439,12 +440,12 @@ export const removeFilterUpdater = (state, action) => {
 
 export const addLayerUpdater = (state, action) => {
   const defaultDataset = Object.keys(state.datasets)[0];
-  const newLayer = Layer ? new Layer({
+  const newLayer = new Layer({
     isVisible: true,
     isConfigActive: true,
     dataId: defaultDataset,
     ...action.props
-  }) : {};
+  });
 
   return {
     ...state,
