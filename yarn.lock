@@ -5927,7 +5927,7 @@ react-motion@^0.5.2:
 
 react-palm@^1.1.2:
   version "1.1.2"
-  resolved "https://unpm.uberinternal.com/react-palm/-/react-palm-1.1.2.tgz#3c6262fbbb37c9e6f844d65d5086dc67ec5fae8e"
+  resolved "https://registry.yarnpkg.com/react-palm/-/react-palm-1.1.2.tgz#3c6262fbbb37c9e6f844d65d5086dc67ec5fae8e"
 
 react-proxy@^3.0.0-alpha.0:
   version "3.0.0-alpha.1"
