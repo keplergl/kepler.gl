@@ -15,6 +15,11 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+
+#### [0.1.1] - Aug 24 2018
+
+- [Enhancement] Bump react-palm@1.1.2 (#215)
+
 #### [0.1.0] - Aug 21 2018
 
 - Upgrade to Deck.gl v5.3.4 (#153)
