@@ -24,7 +24,7 @@ import {hashHistory} from 'react-router';
 
 import thunk from 'redux-thunk';
 import window from 'global/window';
-import {taskMiddleware} from 'react-palm';
+import {taskMiddleware} from 'react-palm/tasks';
 
 import demoReducer from './reducers';
 

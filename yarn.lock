@@ -5925,11 +5925,9 @@ react-motion@^0.5.2:
   version "6.7.1"
   resolved "https://registry.npmjs.org/react-onclickoutside/-/react-onclickoutside-6.7.1.tgz#6a5b5b8b4eae6b776259712c89c8a2b36b17be93"
 
-react-palm@^0.8.1:
-  version "0.8.1"
-  resolved "https://registry.yarnpkg.com/react-palm/-/react-palm-0.8.1.tgz#7c7fd7348235ea04fd46c5da4a11000e0ee9343d"
-  dependencies:
-    prop-types "^15.6.0"
+react-palm@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/react-palm/-/react-palm-1.1.2.tgz#3c6262fbbb37c9e6f844d65d5086dc67ec5fae8e"
 
 react-proxy@^3.0.0-alpha.0:
   version "3.0.0-alpha.1"

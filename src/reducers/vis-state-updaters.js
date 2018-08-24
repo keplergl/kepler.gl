@@ -19,8 +19,7 @@
 // THE SOFTWARE.
 
 import {console as Console} from 'global/window';
-import {Task, withTask} from 'react-palm';
-import {disableStackCapturing} from 'react-palm/tasks';
+import Task, {disableStackCapturing, withTask} from 'react-palm/tasks';
 
 // Tasks
 import {LOAD_FILE_TASK} from 'tasks/tasks';
