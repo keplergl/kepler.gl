@@ -91,7 +91,7 @@
     "react-map-gl": "^3.2.1",
     "react-modal": "^3.1.10",
     "react-onclickoutside": "https://registry.npmjs.org/react-onclickoutside/-/react-onclickoutside-6.7.1.tgz",
-    "react-palm": "^0.8.1",
+    "react-palm": "^1.1.2",
     "react-redux": "^4.0.0",
     "react-tooltip": "https://registry.npmjs.org/react-tooltip/-/react-tooltip-3.3.0.tgz",
     "react-vis": "^1.8.0",

@@ -82,7 +82,7 @@ You need to add `taskMiddleware` to your store too. We are actively working on a
 ```js
 import keplerGlReducer from 'kepler.gl/reducers';
 import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
-import {taskMiddleware} from 'react-palm';
+import {taskMiddleware} from 'react-palm/tasks';
 
 const reducers = combineReducers({
   // <-- mount kepler.gl reducer in your app
