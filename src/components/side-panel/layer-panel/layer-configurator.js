@@ -188,6 +188,20 @@ export default class LayerConfigurator extends Component {
             }}
             showInput
           />
+          <PanelLabel>{`Font color`}</PanelLabel>
+          <ColorSelector
+            colorSets={[
+              {
+                selectedColor: layer.config.textLabel.color,
+                setColor: rgbValue => layerConfiguratorProps.onChange({
+                  textLabel: {
+                    ...layer.config.textLabel,
+                    color: rgbValue
+                  }
+                })
+              }
+            ]}
+          />
         </LayerConfigGroup>
         {/* high precision */}
         <LayerConfigGroup
