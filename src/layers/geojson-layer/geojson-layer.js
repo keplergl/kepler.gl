@@ -34,7 +34,7 @@ import {
 import GeojsonLayerIcon from './geojson-layer-icon';
 import {GEOJSON_FIELDS} from 'constants/default-settings';
 
-export const pointVisConfigs = {
+export const geojsonVisConfigs = {
   opacity: 'opacity',
   thickness: {
     type: 'number',
@@ -70,7 +70,7 @@ export default class GeoJsonLayer extends Layer {
     super(props);
 
     this.dataToFeature = {};
-    this.registerVisConfig(pointVisConfigs);
+    this.registerVisConfig(geojsonVisConfigs);
     this.getFeature = memoize(featureAccessor, featureResolver);
   }
 
@@ -390,7 +390,8 @@ export default class GeoJsonLayer extends Layer {
         pickable: true,
         // highlightColor: this.config.highlightColor,
         autoHighlight: visConfig.enable3d,
-
+        // parameters
+        parameters: {depthTest: Boolean(visConfig.enable3d || mapState.dragRotate)},
         opacity: visConfig.opacity,
         stroked: visConfig.stroked,
         filled: visConfig.filled,

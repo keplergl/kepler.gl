@@ -21,11 +21,14 @@
 import {GridCellLayer} from 'deck.gl';
 
 export default class EnhancedGridCellLayer extends GridCellLayer {
-  draw({uniforms}) {
+  draw(opts) {
+    const {uniforms} = opts;
+
     super.draw({
+      ...opts,
       uniforms: {
         ...uniforms,
-        picking_uHighlightScale: this.props.extruded ? 1.2 : 0.0
+        picking_uHighlightScale: this.props.extruded ? 1.4 : 0.0
       }
     })
   }

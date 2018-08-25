@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import Immutable from 'immutable';
-import {Task, withTask} from 'react-palm';
+import Task, {withTask} from 'react-palm/tasks';
 
 // Utils
 import {

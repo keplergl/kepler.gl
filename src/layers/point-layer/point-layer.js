@@ -20,7 +20,6 @@
 
 import Layer from '../base-layer';
 import memoize from 'lodash.memoize';
-import {TextLayer} from 'deck.gl';
 import ScatterplotBrushingLayer from 'deckgl-layers/scatterplot-brushing-layer/scatterplot-brushing-layer';
 import {hexToRgb} from 'utils/color-utils';
 import PointLayerIcon from './point-layer-icon';
@@ -246,6 +245,11 @@ export default class PointLayer extends Layer {
         id: this.id,
         opacity: this.config.visConfig.opacity,
         pickable: true,
+        // parameters
+        parameters: {
+          depthTest: mapState.dragRotate
+        },
+
         updateTriggers: {
           getRadius: {
             sizeField: this.config.sizeField,
@@ -260,24 +264,7 @@ export default class PointLayer extends Layer {
             colorScale: this.config.colorScale
           }
         }
-      }),
-      // text label layer
-      ...(this.config.textLabel.field
-        ? [
-            new TextLayer({
-              id: `${this.id}-label`,
-              data: data.data,
-              getPosition: data.getPosition,
-              getSize: this.config.textLabel.size,
-              getText: d => String(d.data[this.config.textLabel.field.tableFieldIndex - 1]),
-              getColor: d => this.config.textLabel.color,
-              updateTriggers: {
-                getText: this.config.textLabel.field,
-                getSize: this.config.textLabel.size
-              }
-            })
-          ]
-        : [])
+      })
     ];
   }
 }

@@ -2,9 +2,9 @@
 # yarn lockfile v1
 
 
-"@deck.gl/core@^5.3.1":
-  version "5.3.1"
-  resolved "https://registry.yarnpkg.com/@deck.gl/core/-/core-5.3.1.tgz#acfc1e5fefd3b12e9142419b0aeb77c07885626c"
+"@deck.gl/core@^5.3.3":
+  version "5.3.3"
+  resolved "https://registry.yarnpkg.com/@deck.gl/core/-/core-5.3.3.tgz#a13c07e5fa3e22297fd450d6da8ab9aac334b1f0"
   dependencies:
     luma.gl "^5.3.0"
     math.gl "^1.2.1"
@@ -13,19 +13,19 @@
     seer "^0.2.4"
     viewport-mercator-project "^5.1.0"
 
-"@deck.gl/layers@^5.3.2":
-  version "5.3.2"
-  resolved "https://registry.yarnpkg.com/@deck.gl/layers/-/layers-5.3.2.tgz#c76b9a7890305a5d6a0fdd56bd0d0d68d4046f6f"
+"@deck.gl/layers@^5.3.4":
+  version "5.3.4"
+  resolved "https://registry.yarnpkg.com/@deck.gl/layers/-/layers-5.3.4.tgz#ab3de1bf8bb68d67772642acbb4e0f87f4f11300"
   dependencies:
-    "@deck.gl/core" "^5.3.1"
+    "@deck.gl/core" "^5.3.3"
     d3-hexbin "^0.2.1"
     earcut "^2.0.6"
 
-"@deck.gl/react@^5.3.1":
-  version "5.3.1"
-  resolved "https://registry.yarnpkg.com/@deck.gl/react/-/react-5.3.1.tgz#0c16fac59061924eb3509dea06c837bcef8044f2"
+"@deck.gl/react@^5.3.3":
+  version "5.3.3"
+  resolved "https://registry.yarnpkg.com/@deck.gl/react/-/react-5.3.3.tgz#e7352934f6742d3ce672a394cbff312aab5ccaa0"
   dependencies:
-    "@deck.gl/core" "^5.3.1"
+    "@deck.gl/core" "^5.3.3"
     prop-types "^15.6.0"
 
 "@mapbox/extent@0.4.0":
@@ -1335,10 +1335,6 @@ brace-expansion@^1.0.0, brace-expansion@^1.1.7:
     balanced-match "^1.0.0"
     concat-map "0.0.1"
 
-brace@^0.11.0:
-  version "0.11.1"
-  resolved "https://registry.yarnpkg.com/brace/-/brace-0.11.1.tgz#4896fcc9d544eef45f4bb7660db320d3b379fe58"
-
 braces@^1.8.2:
   version "1.8.5"
   resolved "https://registry.yarnpkg.com/braces/-/braces-1.8.5.tgz#ba77962e12dff969d6b76711e914b737857bf6a7"
@@ -2279,13 +2275,13 @@ decamelize@^1.0.0, decamelize@^1.1.1, decamelize@^1.1.2:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/decamelize/-/decamelize-1.2.0.tgz#f6534d15148269b20352e7bee26f501f9a191290"
 
-deck.gl@5.3.2:
-  version "5.3.2"
-  resolved "https://registry.yarnpkg.com/deck.gl/-/deck.gl-5.3.2.tgz#2297d820fb8fb02eab95ac6a03261a689500bc11"
+deck.gl@5.3.4:
+  version "5.3.4"
+  resolved "https://registry.yarnpkg.com/deck.gl/-/deck.gl-5.3.4.tgz#35e5a7087ef0d8ca7811d06a721ea289edbe7c24"
   dependencies:
-    "@deck.gl/core" "^5.3.1"
-    "@deck.gl/layers" "^5.3.2"
-    "@deck.gl/react" "^5.3.1"
+    "@deck.gl/core" "^5.3.3"
+    "@deck.gl/layers" "^5.3.4"
+    "@deck.gl/react" "^5.3.3"
 
 decode-uri-component@^0.2.0:
   version "0.2.0"
@@ -2420,10 +2416,6 @@ detective@^5.0.2:
     defined "^1.0.0"
     minimist "^1.1.1"
 
-diff-match-patch@^1.0.0:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/diff-match-patch/-/diff-match-patch-1.0.1.tgz#d5f880213d82fbc124d2b95111fb3c033dbad7fa"
-
 diff@^3.1.0:
   version "3.5.0"
   resolved "https://registry.yarnpkg.com/diff/-/diff-3.5.0.tgz#800c0dd1e0a8bfbc95835c202ad220fe317e5a12"
@@ -2476,10 +2468,6 @@ dom-serializer@0, dom-serializer@~0.1.0:
   dependencies:
     domelementtype "~1.1.1"
     entities "~1.1.1"
-
-"dom-to-image@github:heshan0131/dom-to-image":
-  version "2.6.0"
-  resolved "https://codeload.github.com/heshan0131/dom-to-image/tar.gz/02d2d97a42c75b2a082381fdc4e3c161268e40ec"
 
 dom-walk@^0.1.0:
   version "0.1.1"
@@ -3782,7 +3770,7 @@ ignore@^3.2.0:
 
 immutable@^3.8.2:
   version "3.8.2"
-  resolved "https://unpm.uberinternal.com/immutable/-/immutable-3.8.2.tgz#c2439951455bb39913daf281376f1530e104adf3"
+  resolved "https://registry.yarnpkg.com/immutable/-/immutable-3.8.2.tgz#c2439951455bb39913daf281376f1530e104adf3"
 
 import-local@^1.0.0:
   version "1.0.0"
@@ -4512,14 +4500,6 @@ lodash.flattendeep@^4.2.0, lodash.flattendeep@^4.4.0:
   version "4.4.0"
   resolved "https://registry.yarnpkg.com/lodash.flattendeep/-/lodash.flattendeep-4.4.0.tgz#fb030917f86a3134e5bc9bec0d69e0013ddfedb2"
 
-lodash.get@^4.4.2:
-  version "4.4.2"
-  resolved "https://registry.yarnpkg.com/lodash.get/-/lodash.get-4.4.2.tgz#2d177f652fa31e939b4438d5341499dfa3825e99"
-
-lodash.isequal@^4.1.1:
-  version "4.5.0"
-  resolved "https://registry.yarnpkg.com/lodash.isequal/-/lodash.isequal-4.5.0.tgz#415c4478f2bcc30120c22ce10ed3226f7d3e18e0"
-
 lodash.isplainobject@^4.0.6:
   version "4.0.6"
   resolved "https://registry.yarnpkg.com/lodash.isplainobject/-/lodash.isplainobject-4.0.6.tgz#7c526a52d89b45c45cc690b88163be0497f550cb"
@@ -4671,18 +4651,7 @@ math-random@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/math-random/-/math-random-1.0.1.tgz#8b3aac588b8a66e4975e3cdea67f7bb329601fac"
 
-math.gl@^1.1.0, math.gl@^1.2.1:
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/math.gl/-/math.gl-1.2.1.tgz#3c7da0ae4f3383116c24bc183533cc4d7b8065a9"
-  dependencies:
-    gl-mat3 "^1.0.0"
-    gl-mat4 "^1.1.4"
-    gl-quat "^1.0.0"
-    gl-vec2 "^1.0.0"
-    gl-vec3 "^1.0.3"
-    gl-vec4 "^1.0.1"
-
-math.gl@^1.1.3:
+math.gl@^1.1.0, math.gl@^1.1.3:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/math.gl/-/math.gl-1.2.0.tgz#65c6fb6bdb70f5e82a82c2d3fc7d9ec2a357e7ce"
   dependencies:
@@ -5847,16 +5816,6 @@ re-emitter@^1.0.0:
   version "1.1.3"
   resolved "https://registry.yarnpkg.com/re-emitter/-/re-emitter-1.1.3.tgz#fa9e319ffdeeeb35b27296ef0f3d374dac2f52a7"
 
-react-ace@^6.1.1:
-  version "6.1.1"
-  resolved "https://registry.yarnpkg.com/react-ace/-/react-ace-6.1.1.tgz#c8339b4f0a27401bff53f477f125d3d7eac2a090"
-  dependencies:
-    brace "^0.11.0"
-    diff-match-patch "^1.0.0"
-    lodash.get "^4.4.2"
-    lodash.isequal "^4.1.1"
-    prop-types "^15.5.8"
-
 react-addons-test-utils@^15.6.2:
   version "15.6.2"
   resolved "https://registry.yarnpkg.com/react-addons-test-utils/-/react-addons-test-utils-15.6.2.tgz#c12b6efdc2247c10da7b8770d185080a7b047156"
@@ -5902,6 +5861,12 @@ react-hot-loader@^3.0.0-beta.6:
     redbox-react "^1.3.6"
     source-map "^0.6.1"
 
+react-json-pretty@^1.7.9:
+  version "1.7.9"
+  resolved "https://registry.yarnpkg.com/react-json-pretty/-/react-json-pretty-1.7.9.tgz#d153c52579fda9e245c81fceb3da22fdf1d93c1e"
+  dependencies:
+    create-react-class "^15.5.2"
+
 react-lifecycles-compat@^3.0.0:
   version "3.0.3"
   resolved "https://registry.yarnpkg.com/react-lifecycles-compat/-/react-lifecycles-compat-3.0.3.tgz#473820154732f1ccd762e89324abab154255da6b"
@@ -5912,7 +5877,7 @@ react-map-gl@^3.2.1:
   dependencies:
     babel-runtime "^6.23.0"
     bowser "^1.2.0"
-    immutable "*"
+    immutable "^3.8.2"
     mapbox-gl "0.44"
     math.gl "^1.1.3"
     mjolnir.js "^1.1.0"
@@ -5940,11 +5905,9 @@ react-motion@^0.5.2:
   version "6.7.1"
   resolved "https://registry.npmjs.org/react-onclickoutside/-/react-onclickoutside-6.7.1.tgz#6a5b5b8b4eae6b776259712c89c8a2b36b17be93"
 
-react-palm@^0.8.1:
-  version "0.8.1"
-  resolved "https://registry.yarnpkg.com/react-palm/-/react-palm-0.8.1.tgz#7c7fd7348235ea04fd46c5da4a11000e0ee9343d"
-  dependencies:
-    prop-types "^15.6.0"
+react-palm@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/react-palm/-/react-palm-1.1.2.tgz#3c6262fbbb37c9e6f844d65d5086dc67ec5fae8e"
 
 react-proxy@^3.0.0-alpha.0:
   version "3.0.0-alpha.1"

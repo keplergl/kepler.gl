@@ -21,7 +21,7 @@
 import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
 import keplerGlReducer from 'kepler.gl/reducers';
 import appReducer from './app-reducer';
-import {taskMiddleware} from 'react-palm';
+import {taskMiddleware} from 'react-palm/tasks';
 import window from 'global/window';
 
 const customizedKeplerGlReducer = keplerGlReducer

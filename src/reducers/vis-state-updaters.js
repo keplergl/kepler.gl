@@ -19,8 +19,7 @@
 // THE SOFTWARE.
 
 import {console as Console} from 'global/window';
-import {Task, withTask} from 'react-palm';
-import {disableStackCapturing} from 'react-palm/tasks';
+import Task, {disableStackCapturing, withTask} from 'react-palm/tasks';
 
 // Tasks
 import {LOAD_FILE_TASK} from 'tasks/tasks';
@@ -56,10 +55,16 @@ import {
   mergeLayerBlending
 } from './vis-state-merger';
 
-import {LayerClasses, Layer} from 'layers';
+// LayerClasses contain ES6 Class, do not instatiate in iso rendering
+// const {LayerClasses} = isBrowser || isTesting ?
+//   require('layers') : {
+//     LayerClasses: {}
+//   };
+
+import {Layer, LayerClasses} from 'layers'
 
 // react-palm
-// disable capture exception for react-palm call to withTasks
+// disable capture exception for react-palm call to withTask
 disableStackCapturing();
 
 export const INITIAL_VIS_STATE = {
@@ -926,6 +931,7 @@ function closeSpecificMapAtIndex(state, action) {
 // TODO: redo write handler to not use tasks
 export const loadFilesUpdater = (state, action) => {
   const {files} = action;
+
   const filesToLoad = files.map(fileBlob => ({
     fileBlob,
     info: {

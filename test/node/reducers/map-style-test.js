@@ -25,9 +25,7 @@ import {INITIAL_MAP_STYLE} from 'reducers/map-style-updaters';
 import {keplerGlInit, receiveMapConfig} from 'actions/actions';
 import SchemaManager from 'schemas';
 import {
-  drainTasksForTesting,
-  succeedTaskInTest,
-  errorTaskInTest
+  drainTasksForTesting
 } from 'react-palm/tasks';
 
 // helpers
@@ -69,7 +67,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
   const stateLoaded = SchemaManager.parseSavedConfig(savedState);
   console.log(stateLoaded);
 
-  const stateWithConfig= reducer(
+  const stateWithConfig = reducer(
     stateWithToken,
     receiveMapConfig(stateLoaded)
   );

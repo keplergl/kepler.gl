@@ -24,7 +24,7 @@ import PropTypes from 'prop-types';
 import {Tooltip} from 'components/common/styled-components';
 import KeplerGlLogo from 'components/common/logo';
 import {CodeAlt, Save, Files, Share, Picture} from 'components/common/icons';
-import PanelDropdown from 'components/side-panel/panel-dropdown';
+import ClickOutsideCloseDropdown from 'components/side-panel/panel-dropdown';
 
 const StyledPanelHeader = styled.div.attrs({
   className: 'side-side-panel__header'
@@ -57,10 +57,11 @@ const StyledPanelAction = styled.div.attrs({
     props.active ? props.theme.textColorHl : props.theme.subtextColor};
   display: flex;
   height: 26px;
-  justify-content: center;
+  justify-content: space-between;
   margin-left: 4px;
-  width: 26px;
-
+  width: 70px;
+  padding: 5px;
+  font-weight: bold;
   a {
     height: 20px;
   }
@@ -123,17 +124,18 @@ const StyledPanelDropdown = styled.div`
 export const PanelAction = ({item, onClick}) => (
   <StyledPanelAction className="side-panel__panel-header__action"
     data-tip data-for={`${item.id}-action`} onClick={onClick}>
+    {item.label ? <p>{item.label}</p> : null}
     <a target={item.blank ? '_blank' : ''} href={item.href}>
       <item.iconComponent height="20px" />
     </a>
-    <Tooltip
+    {item.tooltip ? (<Tooltip
       id={`${item.id}-action`}
       place="bottom"
       delayShow={500}
       effect="solid"
     >
       <span>{item.tooltip}</span>
-    </Tooltip>
+    </Tooltip>) : null }
   </StyledPanelAction>
 );
 
@@ -158,7 +160,9 @@ export const SaveExportDropdown = ({
 }) => {
   return (
     <StyledPanelDropdown show={show} className="save-export-dropdown">
-      <PanelDropdown onClose={onClose} className="save-export-dropdown__inner">
+      <ClickOutsideCloseDropdown className="save-export-dropdown__inner"
+        show={show}
+        onClose={onClose}>
         <PanelItem
           label="Export Image"
           onClickHandler={onExportImage}
@@ -188,7 +192,7 @@ export const SaveExportDropdown = ({
             icon={(<Share height="16px" />)}
           />
         ) : null}
-      </PanelDropdown>
+      </ClickOutsideCloseDropdown>
     </StyledPanelDropdown>
   );
 };
@@ -197,8 +201,8 @@ const defaultActionItems = [
   {
     id: 'save',
     iconComponent: Save,
-    tooltip: 'Save / Export',
     onClick: () => {},
+    label: 'Share',
     dropdownComponent: SaveExportDropdown
   }
 ];

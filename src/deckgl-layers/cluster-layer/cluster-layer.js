@@ -79,7 +79,7 @@ export default class ClusterLayer extends CompositeLayer {
     return changeFlags.somethingChanged;
   }
 
-  updateState({oldContext, context, oldProps, props, changeFlags}) {
+  updateState({context, oldProps, props, changeFlags}) {
     if (changeFlags.dataChanged || this.needsReProjectPoints(oldProps, props)) {
       // project data into clusters, and get clustered data
       this.processGeoJSON();
@@ -87,7 +87,7 @@ export default class ClusterLayer extends CompositeLayer {
 
       // this needs clustered data to be set
       this.getColorValueDomain();
-    } else if (this.needsReclusterPoints(oldContext, context)) {
+    } else if (this.needsReclusterPoints(oldProps, props)) {
       this.getClusters();
       this.getColorValueDomain();
     } else if (this.needsRecalculateScaleFunction(oldProps, props)) {
@@ -102,9 +102,9 @@ export default class ClusterLayer extends CompositeLayer {
     );
   }
 
-  needsReclusterPoints(oldContext, context) {
+  needsReclusterPoints(oldProps, props) {
     return (
-      Math.round(oldContext.viewport.zoom) !== Math.round(context.viewport.zoom)
+      Math.round(oldProps.zoom) !== Math.round(props.zoom)
     );
   }
 

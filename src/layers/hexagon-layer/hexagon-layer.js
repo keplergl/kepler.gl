@@ -92,6 +92,9 @@ export default class HexagonLayer extends AggregationLayer {
         upperPercentile: visConfig.percentile[1],
         lowerPercentile: visConfig.percentile[0],
 
+        // parameters
+        parameters: {depthTest: Boolean(visConfig.enable3d || mapState.dragRotate)},
+
         // elevation
         extruded: visConfig.enable3d,
         elevationScale: visConfig.elevationScale * eleZoomFactor,
@@ -102,7 +105,6 @@ export default class HexagonLayer extends AggregationLayer {
         fp64: visConfig['hi-precision'],
         pickable: true,
         lightSettings: this.meta.lightSettings,
-
         // callbacks
         onSetColorDomain: layerCallbacks.onSetLayerDomain
       }),
@@ -115,11 +117,12 @@ export default class HexagonLayer extends AggregationLayer {
               data: [
                 hexagonToPolygonGeo(
                   objectHovered,
-                  {lineColor: this.config.highlightColor},
+                  {},
                   radius * visConfig.coverage,
                   mapState
                 )
               ],
+              getLineColor: this.config.highlightColor,
               lineWidthScale: 8 * zoomFactor
             })
           ]

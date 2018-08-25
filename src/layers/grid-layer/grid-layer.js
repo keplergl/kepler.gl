@@ -114,6 +114,8 @@ export default class GridLayer extends AggregationLayer {
         elevationScale: visConfig.elevationScale * eleZoomFactor,
         elevationLowerPercentile: visConfig.elevationPercentile[0],
         elevationUpperPercentile: visConfig.elevationPercentile[1],
+        // parameters
+        parameters: {depthTest: Boolean(visConfig.enable3d || mapState.dragRotate)},
 
         // render
         fp64: visConfig['hi-precision'],

@@ -252,6 +252,10 @@ export default class ArcLayer extends Layer {
         opacity: this.config.visConfig.opacity,
         pickedColor: this.config.highlightColor,
         strokeScale: this.config.visConfig.thickness,
+
+        // parameters
+        parameters: {depthTest: mapState.dragRotate},
+
         updateTriggers: {
           getStrokeWidth: {
             sizeField: this.config.sizeField,

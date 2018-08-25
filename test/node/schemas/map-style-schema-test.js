@@ -42,8 +42,14 @@ test('#mapStyleSchema -> v1 -> save load mapStyle', t => {
     mapStyles: {}
   };
 
+  const expectedLoaded = {
+    styleType: 'dark',
+    topLayerGroups: {},
+    visibleLayerGroups: {}
+  }
+
   t.deepEqual(msToSave, expectedSaved, 'saved mapStyle should be current');
-  t.deepEqual(msLoaded, expectedSaved, 'loaded mapStyle should be current');
+  t.deepEqual(msLoaded, expectedLoaded, 'loaded mapStyle should be current');
   t.end();
 });
 

@@ -12,6 +12,9 @@ For information on how to save the map state you've created and have it persist 
 ## User guide
 Check out [kepler.gl's user documentation here](docs/a-introduction.md)
 
+## Dev Questions - StackOverflow
+Check out this [StackOverflow](https://stackoverflow.com/questions/tagged/kepler.gl) 
+
 ## Links
 
 ### Env
@@ -79,7 +82,7 @@ You need to add `taskMiddleware` to your store too. We are actively working on a
 ```js
 import keplerGlReducer from 'kepler.gl/reducers';
 import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
-import {taskMiddleware} from 'react-palm';
+import {taskMiddleware} from 'react-palm/tasks';
 
 const reducers = combineReducers({
   // <-- mount kepler.gl reducer in your app

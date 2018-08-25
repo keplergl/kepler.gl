@@ -65,7 +65,9 @@ export default class ArcBrushingLayer extends ArcLayer {
     };
   }
 
-  draw({uniforms}) {
+  draw(opts) {
+    const {uniforms} = opts;
+
     const {
       brushSource,
       brushTarget,
@@ -76,6 +78,7 @@ export default class ArcBrushingLayer extends ArcLayer {
     } = this.props;
 
     super.draw({
+      ...opts,
       uniforms: {
         ...uniforms,
         brushing_uBrushSource: brushSource ? 1 : 0,
