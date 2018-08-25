@@ -15,6 +15,9 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+#### [0.1.2] - Aug 24 2018
+
+- [Bug] Fix server render error, remove react-ace (#206)
 
 #### [0.1.1] - Aug 24 2018
 
