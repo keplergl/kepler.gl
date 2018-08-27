@@ -370,6 +370,15 @@ export default class LayerConfigurator extends Component {
             {...visConfiguratorProps}
           />
         </LayerConfigGroup>
+
+        {/* Cell size */}
+        <LayerConfigGroup label={'radius'}>
+          <VisConfigSlider
+            {...layer.visConfigSettings.coverage}
+            {...visConfiguratorProps}
+          />
+        </LayerConfigGroup>
+
         {/* height */}
         <LayerConfigGroup
           {...LAYER_VIS_CONFIGS.enable3d}
