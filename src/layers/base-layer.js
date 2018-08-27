@@ -303,8 +303,9 @@ export default class Layer {
         field: null,
         color: [255, 255, 255],
         size: 50,
-        placement: 'top',
-        alignment: 'center'
+        xOffset: 0,
+        yOffset: 0,
+        anchor: 'middle'
       }
     };
   }

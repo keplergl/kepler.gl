@@ -40,6 +40,7 @@ import SourceDataSelector from '../source-data-selector';
 import VisConfigSwitch from './vis-config-switch';
 import VisConfigSlider from './vis-config-slider';
 import LayerConfigGroup from './layer-config-group';
+import TextLabelPanel from './text-label-panel';
 
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
 
@@ -155,54 +156,11 @@ export default class LayerConfigurator extends Component {
         ) : null}
 
         {/* text label */}
-        <LayerConfigGroup label={'text'}>
-          <PanelLabel>{`Show text label based on`}</PanelLabel>
-          <FieldSelector
-            fields={visConfiguratorProps.fields}
-            value={layer.config.textLabel.field && layer.config.textLabel.field.name || 'select a field'}
-            placeholder={'empty'}
-            onSelect={v => {
-              layerConfiguratorProps.onChange({
-                textLabel: {
-                  ...layer.config.textLabel,
-                  field: v
-                }
-              });
-            }}
-            erasable
-          />
-          <PanelLabel>{`Font size`}</PanelLabel>
-          <RangeSlider
-            range={[1, 100]}
-            value0={1}
-            value1={layer.config.textLabel.size}
-            step={1}
-            isRanged={false}
-            onChange={v => {
-              layerConfiguratorProps.onChange({
-                textLabel: {
-                  ...layer.config.textLabel,
-                  size: v[1]
-                }
-              });
-            }}
-            showInput
-          />
-          <PanelLabel>{`Font color`}</PanelLabel>
-          <ColorSelector
-            colorSets={[
-              {
-                selectedColor: layer.config.textLabel.color,
-                setColor: rgbValue => layerConfiguratorProps.onChange({
-                  textLabel: {
-                    ...layer.config.textLabel,
-                    color: rgbValue
-                  }
-                })
-              }
-            ]}
-          />
-        </LayerConfigGroup>
+        <TextLabelPanel
+          visConfiguratorProps={visConfiguratorProps}
+          layerConfiguratorProps={layerConfiguratorProps}
+          textLabel={layer.config.textLabel}
+        />
         {/* high precision */}
         <LayerConfigGroup
           {...LAYER_VIS_CONFIGS['hi-precision']}
