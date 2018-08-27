@@ -28,8 +28,6 @@ import {
   SidePanelSection
 } from 'components/common/styled-components';
 import ItemSelector from 'components/common/item-selector/item-selector';
-import FieldSelector from 'components/common/field-selector';
-import RangeSlider from 'components/common/range-slider';
 
 import VisConfigByFieldSelector from './vis-config-by-field-selector';
 import LayerColumnConfig from './layer-column-config';
