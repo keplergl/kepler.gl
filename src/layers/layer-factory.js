@@ -312,6 +312,7 @@ export const LAYER_TEXT_CONFIGS = {
   fontSize: {
     type: 'number',
     range: [1, 100],
+    value0: 1,
     step: 1,
     isRanged: false,
     label: 'Font size',

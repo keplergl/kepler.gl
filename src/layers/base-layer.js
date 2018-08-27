@@ -303,8 +303,7 @@ export default class Layer {
         field: null,
         color: [255, 255, 255],
         size: 50,
-        xOffset: 0,
-        yOffset: 0,
+        offset: [0, 0],
         anchor: 'middle'
       }
     };

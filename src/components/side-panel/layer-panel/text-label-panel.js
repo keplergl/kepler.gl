@@ -46,7 +46,22 @@ export default class LayerConfigurator extends Component {
         [attribute]: v
       }
     });
-  }
+  };
+
+  onChangeTextAnchor = anchor => {
+    const {layerConfiguratorProps, textLabel} = this.props;
+    // TODO: we can be smarter on determining the offset of the text
+    layerConfiguratorProps.onChange({
+      textLabel: {
+        ...textLabel,
+        anchor,
+        offset: [
+          anchor === 'start' ? 10 : anchor === 'end' ? -10 : 0,
+          anchor === 'middle' ? 10 : 0
+        ]
+      }
+    });
+  };
 
   render() {
     const {
@@ -82,7 +97,7 @@ export default class LayerConfigurator extends Component {
           <ItemSelector
             {...LAYER_TEXT_CONFIGS.textAnchor}
             selectedItems={textLabel.anchor}
-            onChange={this.onAttributeChange('anchor')}
+            onChange={this.onChangeTextAnchor}
           />
       </LayerConfigGroup>
     );
