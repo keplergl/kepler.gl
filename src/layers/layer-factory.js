@@ -307,3 +307,20 @@ export const LAYER_VIS_CONFIGS = {
     property: 'radius'
   }
 };
+
+export const LAYER_TEXT_CONFIGS = {
+  fontSize: {
+    type: 'number',
+    range: [1, 100],
+    step: 1,
+    isRanged: false,
+    label: 'Font size',
+    showInput: true
+  },
+  textAnchor: {
+    type: 'select',
+    options: ['start', 'middle', 'end'],
+    multiSelect: false,
+    searchable: false
+  }
+};

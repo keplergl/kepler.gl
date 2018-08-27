@@ -29,6 +29,8 @@ import ItemSelector from 'components/common/item-selector/item-selector';
 import LayerConfigGroup from './layer-config-group';
 import RangeSlider from 'components/common/range-slider';
 
+import {LAYER_TEXT_CONFIGS} from 'layers/layer-factory';
+
 export default class LayerConfigurator extends Component {
   static propTypes = {
     layerConfiguratorProps: PropTypes.object.isRequired,
@@ -63,13 +65,9 @@ export default class LayerConfigurator extends Component {
           />
           <PanelLabel>{`Font size`}</PanelLabel>
           <RangeSlider
-            range={[1, 100]}
-            value0={1}
+            {...LAYER_TEXT_CONFIGS.fontSize}
             value1={textLabel.size}
-            step={1}
-            isRanged={false}
             onChange={v => this.onAttributeChange('size')(v[1])}
-            showInput
           />
           <PanelLabel>{`Font color`}</PanelLabel>
           <ColorSelector
@@ -82,10 +80,8 @@ export default class LayerConfigurator extends Component {
           />
           <PanelLabel>{`Text anchor`}</PanelLabel>
           <ItemSelector
+            {...LAYER_TEXT_CONFIGS.textAnchor}
             selectedItems={textLabel.anchor}
-            options={['start', 'middle', 'end']}
-            multiSelect={false}
-            searchable={false}
             onChange={this.onAttributeChange('anchor')}
           />
       </LayerConfigGroup>
