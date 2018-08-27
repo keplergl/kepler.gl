@@ -22,9 +22,10 @@ import memoize from 'lodash.memoize';
 
 import Layer from '../base-layer';
 import {GeoJsonLayer} from 'deck.gl';
-import H3HexagonCellLayer from './h3-hexagon-cell-layer';
+import H3HexagonCellLayer from 'deckgl-layers/h3-hexagon-cell-layer/h3-hexagon-cell-layer';
 import {getVertices, getCentroid, idToPolygonGeo} from './h3-utils';
 import H3HexagonLayerIcon from './h3-hexagon-layer-icon';
+import {CHANNEL_SCALES} from 'constants/default-settings';
 
 export const HEXAGON_ID_FIELDS = {
   hex_id: ['hex_id', 'hexagon_id', 'h3_id']
@@ -39,6 +40,7 @@ export const HexagonIdVisConfigs = {
   colorRange: 'colorRange',
   coverage: 'coverage',
   sizeRange: 'elevationRange',
+  coverageRange: 'coverageRange',
   elevationScale: 'elevationScale',
   'hi-precision': 'hi-precision'
 };
@@ -83,6 +85,15 @@ export default class HexagonIdLayer extends Layer {
       size: {
         ...super.visualChannels.size,
         property: 'height'
+      },
+      coverage: {
+        property: 'coverage',
+        field: 'coverageField',
+        scale: 'coverageScale',
+        domain: 'coverageDomain',
+        range: 'coverageRange',
+        key: 'coverage',
+        channelScaleType: CHANNEL_SCALES.radius
       }
     };
   }
@@ -100,6 +111,17 @@ export default class HexagonIdLayer extends Layer {
     }));
   }
 
+  getDefaultLayerConfig(props = {}) {
+    return {
+      ...super.getDefaultLayerConfig(props),
+
+      // add height visual channel
+      coverageField: null,
+      coverageDomain: [0, 1],
+      coverageScale: 'linear'
+    };
+  }
+
   formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
     const {
       colorScale,
@@ -110,7 +132,10 @@ export default class HexagonIdLayer extends Layer {
       sizeField,
       sizeScale,
       sizeDomain,
-      visConfig: {sizeRange, colorRange}
+      coverageField,
+      coverageScale,
+      coverageDomain,
+      visConfig: {sizeRange, colorRange, coverageRange}
     } = this.config;
 
     // color
@@ -125,6 +150,10 @@ export default class HexagonIdLayer extends Layer {
     // height
     const sScale =
       sizeField && this.getVisChannelScale(sizeScale, sizeDomain, sizeRange);
+
+    // coverage
+    const coScale =
+      coverageField && this.getVisChannelScale(coverageScale, coverageDomain, coverageRange);
 
     const getHexId = this.getHexId(columns);
 
@@ -165,12 +194,16 @@ export default class HexagonIdLayer extends Layer {
     const getColor = cScale ? d =>
       this.getEncodedChannelValue(cScale, d.data, colorField) : color;
 
+    const getCoverage = coScale ? d =>
+      this.getEncodedChannelValue(coScale, d.data, coverageField, 0) : 1;
+
     // const layerData = {
     return {
       data,
       getElevation,
       getColor,
       getHexId,
+      getCoverage,
       hexagonVertices: this.dataToFeature.hexagonVertices,
       hexagonCenter: this.dataToFeature.hexagonCenter
     };
@@ -228,6 +261,10 @@ export default class HexagonIdLayer extends Layer {
       getElevation: {
         sizeField: config.sizeField,
         sizeRange: config.visConfig.sizeRange
+      },
+      getCoverage: {
+        coverageField: config.coverageField,
+        coverageRange: config.visConfig.coverageRange
       }
     };
 
@@ -240,7 +277,7 @@ export default class HexagonIdLayer extends Layer {
         pickable: true,
 
         // coverage
-        coverage: visConfig.coverage,
+        coverage: config.coverageField ? 1 : visConfig.coverage,
 
         // parameters
         parameters: {depthTest: Boolean(config.sizeField || mapState.dragRotate)},

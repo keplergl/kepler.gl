@@ -20,13 +20,40 @@
 
 import {HexagonCellLayer} from 'deck.gl';
 import {CylinderGeometry} from 'luma.gl';
-import {getAngle, getRadius, getH3VerticeTransform, transformCylinderPositions} from './h3-utils';
+import {getAngle, getRadius, getH3VerticeTransform, distortCylinderPositions} from 'layers/h3-hexagon-layer/h3-utils';
+import {editShader} from 'deckgl-layers/layer-utils/shader-utils';
+
+function addInstanceCoverage(vs) {
+  const addDecl = editShader(
+    vs,
+    'hexagon cell vs add instance',
+    'attribute vec3 instancePickingColors;',
+    `attribute vec3 instancePickingColors;
+     attribute float instanceCoverage;`
+  );
+
+  return editShader(
+    addDecl,
+    'hexagon cell vs add instance',
+    'float dotRadius = project_scale(radius) * mix(coverage, 0.0, noRender);',
+    'float dotRadius = project_scale(radius) * mix(coverage * instanceCoverage, 0.0, noRender);'
+  );
+}
 
 // TODO: export all dekc.gl layers from kepler.gl
 export default class H3HexagonCellLayer extends HexagonCellLayer {
 
+  getShaders() {
+    const shaders = super.getShaders();
+
+    return {
+      ...shaders,
+      vs: addInstanceCoverage(shaders.vs)
+    };
+  }
+
   getCylinderGeometry(radius) {
-    const transform = this.getTransform();
+    const distortion = this.getDistortion();
 
     const cylinderGeometry = new CylinderGeometry({
       radius,
@@ -40,17 +67,16 @@ export default class H3HexagonCellLayer extends HexagonCellLayer {
       nvertical: 1
     });
 
-    const pos = cylinderGeometry.attributes.positions.value;
-
-    if (transform) {
-      const adjusted = transformCylinderPositions(pos, transform);
+    if (distortion) {
+      const pos = cylinderGeometry.attributes.positions.value;
+      const adjusted = distortCylinderPositions(pos, distortion);
       cylinderGeometry.attributes.positions.value = adjusted;
     }
 
     return cylinderGeometry;
   }
 
-  getTransform() {
+  getDistortion() {
     const {hexagonVertices, hexagonCenter} = this.props;
 
     if (Array.isArray(hexagonVertices) &&
@@ -76,7 +102,7 @@ export default class H3HexagonCellLayer extends HexagonCellLayer {
       const vertex0 = vertices[0];
       const vertex3 = vertices[3];
 
-      // transform to space coordinates
+      // project to space coordinates
       const {pixelsPerMeter} = viewport.getDistanceScales();
       const spaceCoord0 = this.projectFlat(vertex0);
       const spaceCoord3 = this.projectFlat(vertex3);
@@ -98,6 +124,14 @@ export default class H3HexagonCellLayer extends HexagonCellLayer {
         picking_uHighlightScale: this.props.extruded ? 1.4 : 0.0
       }
     })
+  }
+
+  initializeState() {
+    super.initializeState();
+
+    this.getAttributeManager().addInstanced({
+      instanceCoverage: {size: 1, accessor: 'getCoverage'}
+    });
   }
 }
 

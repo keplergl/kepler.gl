@@ -371,11 +371,22 @@ export default class LayerConfigurator extends Component {
           />
         </LayerConfigGroup>
 
-        {/* Cell size */}
-        <LayerConfigGroup label={'radius'}>
-          <VisConfigSlider
-            {...layer.visConfigSettings.coverage}
-            {...visConfiguratorProps}
+        {/* Coverage */}
+        <LayerConfigGroup label={'coverage'}>
+          {!layer.config.coverageField ? (
+            <VisConfigSlider
+              {...layer.visConfigSettings.coverage}
+              {...visConfiguratorProps}
+            />
+          ) : (
+            <VisConfigSlider
+              {...layer.visConfigSettings.coverageRange}
+              {...visConfiguratorProps}
+            />
+          )}
+          <ChannelByValueSelector
+            channel={layer.visualChannels.coverage}
+            {...layerChannelConfigProps}
           />
         </LayerConfigGroup>
 

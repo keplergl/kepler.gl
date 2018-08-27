@@ -240,6 +240,16 @@ export const LAYER_VIS_CONFIGS = {
     group: PROPERTY_GROUPS.height,
     property: 'sizeRange'
   },
+  coverageRange: {
+    type: 'number',
+    defaultValue: [0, 1],
+    label: 'Coverage Range',
+    isRanged: true,
+    range: [0, 1],
+    step: 0.01,
+    group: PROPERTY_GROUPS.radius,
+    property: 'coverageRange'
+  },
   'hi-precision': {
     type: 'boolean',
     defaultValue: false,
