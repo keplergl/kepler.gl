@@ -395,6 +395,14 @@ mergedLayer0.config = {
   },
   sizeScale: 'sqrt',
   sizeDomain: [1000, 3000],
+  textLabel: {
+    field: null,
+    color: [255, 255, 255],
+    size: 50,
+    xOffset: 0,
+    yOffset: 0,
+    anchor: 'middle'
+  },
   visConfig: {
     radius: 10,
     fixedRadius: true,
@@ -447,6 +455,14 @@ mergedLayer1.config = {
   sizeField: null,
   sizeScale: 'linear',
   sizeDomain: [0, 1],
+  textLabel: {
+    field: null,
+    color: [255, 255, 255],
+    size: 50,
+    xOffset: 0,
+    yOffset: 0,
+    anchor: 'middle'
+  },
   visConfig: {
     opacity: 0.8,
     worldUnitSize: 2.73,

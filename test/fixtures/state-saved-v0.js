@@ -1033,6 +1033,14 @@ mergedLayer0.config = {
   sizeField: null,
   sizeScale: 'linear',
   sizeDomain: [0, 1],
+  textLabel: {
+    field: null,
+    color: [255, 255, 255],
+    size: 50,
+    xOffset: 0,
+    yOffset: 0,
+    anchor: 'middle'
+  },
   visConfig: {
     radius: 270.4,
     opacity: 0.8,
@@ -1103,6 +1111,14 @@ mergedLayer1.config = {
   sizeField: null,
   sizeScale: 'linear',
   sizeDomain: [0, 1],
+  textLabel: {
+    field: null,
+    color: [255, 255, 255],
+    size: 50,
+    xOffset: 0,
+    yOffset: 0,
+    anchor: 'middle'
+  },
   visConfig: {
     opacity: 0.41,
     thickness: 2,
@@ -1162,6 +1178,14 @@ mergedLayer2.config = {
   },
   sizeDomain: [78, 694],
   sizeScale: 'linear',
+  textLabel: {
+    field: null,
+    color: [255, 255, 255],
+    size: 50,
+    xOffset: 0,
+    yOffset: 0,
+    anchor: 'middle'
+  },
   visConfig: {
     radius: 10,
     opacity: 0.8,
@@ -1232,6 +1256,14 @@ mergedLayer3.config = {
   sizeField: null,
   sizeScale: 'linear',
   sizeDomain: [0, 1],
+  textLabel: {
+    field: null,
+    color: [255, 255, 255],
+    size: 50,
+    xOffset: 0,
+    yOffset: 0,
+    anchor: 'middle'
+  },
   visConfig: {
     colorAggregation: 'maximum',
     sizeAggregation: 'average',
@@ -1300,6 +1332,14 @@ mergedLayer4.config = {
   sizeField: null,
   sizeScale: 'linear',
   sizeDomain: [0, 1],
+  textLabel: {
+    field: null,
+    color: [255, 255, 255],
+    size: 50,
+    xOffset: 0,
+    yOffset: 0,
+    anchor: 'middle'
+  },
   heightField: null,
   heightDomain: [0, 1],
   heightScale: 'linear',
