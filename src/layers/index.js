@@ -56,5 +56,5 @@ export const LayerClasses = {
   cluster: ClusterLayer,
   icon: IconLayer,
   heatmap: HeatmapLayer,
-  h3: H3Layer
+  hexagonId: H3Layer
 };

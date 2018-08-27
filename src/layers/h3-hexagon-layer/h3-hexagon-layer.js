@@ -22,14 +22,8 @@ import memoize from 'lodash.memoize';
 
 import Layer from '../base-layer';
 import {GeoJsonLayer} from 'deck.gl';
-import EnhancedHexagonCellLayer from './enhanced-hexagon-cell-layer';
-import {
-  getCenterHex,
-  getVertices,
-  getCentroid,
-  h3GetResolution,
-  idToPolygonGeo
-} from './h3-utils';
+import H3HexagonCellLayer from './h3-hexagon-cell-layer';
+import {getVertices, getCentroid, idToPolygonGeo} from './h3-utils';
 import H3HexagonLayerIcon from './h3-hexagon-layer-icon';
 
 export const HEXAGON_ID_FIELDS = {
@@ -165,11 +159,11 @@ export default class HexagonIdLayer extends Layer {
       }, []);
     }
 
-    const getElevation = d =>
-      sScale ? this.getEncodedChannelValue(sScale, d.data, sizeField, 0) : 0;
+    const getElevation = sScale ? d =>
+      this.getEncodedChannelValue(sScale, d.data, sizeField, 0) : 0;
 
-    const getColor = d =>
-      cScale ? this.getEncodedChannelValue(cScale, d.data, colorField) : color;
+    const getColor = cScale ? d =>
+      this.getEncodedChannelValue(cScale, d.data, colorField) : color;
 
     // const layerData = {
     return {
@@ -177,15 +171,14 @@ export default class HexagonIdLayer extends Layer {
       getElevation,
       getColor,
       getHexId,
-      hexagonVertices: this.dataToFeature.vertices,
-      hexagonResolution: this.dataToFeature.resolution
+      hexagonVertices: this.dataToFeature.hexagonVertices,
+      hexagonCenter: this.dataToFeature.hexagonCenter
     };
-
-    // return {layerData, layer: this};
   }
 
   updateLayerMeta(allData, getHexId) {
-    let resolution = null;
+    let hexagonVertices;
+    let hexagonCenter;
     const centroids = {};
 
     allData.forEach((d, index) => {
@@ -193,11 +186,11 @@ export default class HexagonIdLayer extends Layer {
       if (typeof id !== 'string' || !id.length) {
         return;
       }
-
-      // Find resolution of first hex, to use in renderLayer
-      // to determine single hex vertices
-      if (resolution === null) {
-        resolution = h3GetResolution(id);
+      // find hexagonVertices
+      // only need 1 instance of hexagonVertices
+      if (!hexagonVertices) {
+        hexagonVertices = id && getVertices({id});
+        hexagonCenter = id && getCentroid({id})
       }
 
       // save a reference of centroids to dataToFeature
@@ -208,7 +201,7 @@ export default class HexagonIdLayer extends Layer {
     const bounds = this.getPointsBounds(Object.values(centroids), d => d);
     const lightSettings = this.getLightSettingsFromBounds(bounds);
 
-    this.dataToFeature = {resolution, centroids};
+    this.dataToFeature = {hexagonVertices, hexagonCenter, centroids};
     this.updateMeta({bounds, lightSettings});
   }
 
@@ -225,11 +218,6 @@ export default class HexagonIdLayer extends Layer {
     const {config, meta} = this;
     const {visConfig} = config;
 
-    // Get and pass the vertices of the center hex. Deck.gl will copy
-    // this hex across the whole hex grid for performant coverage.
-    const {hexagonResolution} = data;
-    const hexagonVertices = getVertices({id: getCenterHex(mapState, hexagonResolution)});
-
     const updateTriggers = {
       getColor: {
         color: config.color,
@@ -244,17 +232,30 @@ export default class HexagonIdLayer extends Layer {
     };
 
     return [
-      new EnhancedHexagonCellLayer({
+      new H3HexagonCellLayer({
         ...layerInteraction,
         ...data,
-        hexagonVertices,
-        coverage: visConfig.coverage,
         id: this.id,
         idx,
         pickable: true,
+
+        // coverage
+        coverage: visConfig.coverage,
+
+        // parameters
+        parameters: {depthTest: Boolean(config.sizeField || mapState.dragRotate)},
+
+        // highlight
+        autoHighlight: Boolean(config.sizeField),
+
+        // elevation
         extruded: Boolean(config.sizeField),
         elevationScale: visConfig.elevationScale * eleZoomFactor,
+
+        // color
         opacity: visConfig.opacity,
+
+        // render
         lightSettings: meta.lightSettings,
         updateTriggers
       }),

@@ -38,6 +38,7 @@ const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
 /* eslint-disable no-unused-vars */
 import sampleTripData from './data/sample-trip-data';
 import sampleGeojson from './data/sample-geojson.json';
+import sampleH3Data from './data/sample-hex-id-csv';
 import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
 import {updateVisData, addDataToMap} from 'kepler.gl/actions';
 import Processors from 'kepler.gl/processors';
@@ -82,7 +83,7 @@ class App extends Component {
       window.setTimeout(this._showBanner, 3000);
     }
     // load sample data
-    // this._loadSampleData();
+    this._loadSampleData();
   }
 
   componentWillUnmount() {
@@ -164,6 +165,21 @@ class App extends Component {
       updateVisData({
         info: {label: 'SF Zip Geo'},
         data: Processors.processGeojson(sampleGeojson)
+      })
+    );
+
+    // load h3 hexagon
+    this.props.dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {
+              label: 'H3 Hexagons V2',
+              id: 'h3-hex-id'
+            },
+            data: Processors.processCsvData(sampleH3Data)
+          }
+        ]
       })
     );
   }
