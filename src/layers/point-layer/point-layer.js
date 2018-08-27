@@ -272,21 +272,13 @@ export default class PointLayer extends Layer {
             new TextLayer({
               id: `${this.id}-label`,
               data: data.data,
-              getPosition: d => {
-                const pos = data.getPosition(d);
-                return pos;
-                // return [
-                //   pos[0] + this.config.textLabel.xOffset,
-                //   pos[1] + this.config.textLabel.yOffset,
-                //   pos[2]
-                // ];
-              },
+              getPosition: data.getPosition,
               getSize: this.config.textLabel.size,
               getTextAnchor: this.config.textLabel.anchor,
               getText: d => String(d.data[this.config.textLabel.field.tableFieldIndex - 1]),
               getColor: d => this.config.textLabel.color,
               updateTriggers: {
-                getPosition: [this.config.textLabel.xOffset, this.config.textLabel.yOffset],
+                getPosition: data.getPosition,
                 getText: this.config.textLabel.field,
                 getTextAnchor: this.config.textLabel.anchor,
                 getSize: this.config.textLabel.size,
