@@ -888,6 +888,13 @@ mergedLayer0.config = {
   sizeField: null,
   sizeScale: 'linear',
   sizeDomain: [0, 1],
+  textLabel: {
+    field: null,
+    color: [255, 255, 255],
+    size: 50,
+    offset: [0, 0],
+    anchor: 'middle'
+  },
   heightField: {
     name: 'c_a_v',
     type: 'real',
@@ -2680,6 +2687,13 @@ mergedLayer1.config = {
   },
   sizeScale: 'linear',
   sizeDomain: [0.970877074, 1],
+  textLabel: {
+    field: null,
+    color: [255, 255, 255],
+    size: 50,
+    offset: [0, 0],
+    anchor: 'middle'
+  },
   heightField: null,
   heightScale: 'linear',
   heightDomain: [0, 1],

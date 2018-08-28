@@ -38,6 +38,7 @@ import SourceDataSelector from '../source-data-selector';
 import VisConfigSwitch from './vis-config-switch';
 import VisConfigSlider from './vis-config-slider';
 import LayerConfigGroup from './layer-config-group';
+import TextLabelPanel from './text-label-panel';
 
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
 
@@ -151,6 +152,13 @@ export default class LayerConfigurator extends Component {
             />
           </LayerConfigGroup>
         ) : null}
+
+        {/* text label */}
+        <TextLabelPanel
+          visConfiguratorProps={visConfiguratorProps}
+          layerConfiguratorProps={layerConfiguratorProps}
+          textLabel={layer.config.textLabel}
+        />
         {/* high precision */}
         <LayerConfigGroup
           {...LAYER_VIS_CONFIGS['hi-precision']}
