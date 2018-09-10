@@ -79,9 +79,11 @@ class App extends Component {
 
   componentDidMount() {
     // delay 2s to show the banner
+    /* disable show banners 
     if (!window.localStorage.getItem('kgHideBanner')) {
       window.setTimeout(this._showBanner, 3000);
     }
+    */
     // load sample data
     // this._loadSampleData();
   }
