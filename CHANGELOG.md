@@ -15,6 +15,11 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+#### [0.1.3] - Sep 10 2018
+
+- [Enhancement] Add H3 layer (#217) (#198)
+- [Enhancement] Add text label in Point layer (#166)
+
 #### [0.1.2] - Aug 24 2018
 
 - [Bug] Fix server render error, remove react-ace (#206)
