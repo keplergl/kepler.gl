@@ -20,6 +20,8 @@ Check out this [StackOverflow](https://stackoverflow.com/questions/tagged/kepler
 ### Env
 Use Node v6 and above, older node versions have not been tested
 
+For best results, use [nvm](https://github.com/creationix/nvm) `nvm install`.
+
 ### Install
 Install node (`> 6`), yarn, and project dependencies
 

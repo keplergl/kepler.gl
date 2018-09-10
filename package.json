@@ -24,16 +24,16 @@
   },
   "scripts": {
     "install:example": "cd examples/demo-app && npm i",
-    "test": "npm run test-node && npm run test-browser",
+    "install-and-start": "node ./scripts/install-and-start",
     "fast-test": "NODE_ENV=test babel-tape-runner ./test/node.js && NODE_ENV=test babel-tape-runner -r ./test/setup-browser-env.js ./test/browser.js",
     "test-browser": "NODE_ENV=test babel-tape-runner -r ./test/setup-browser-env.js ./test/browser.js",
     "test-node": "NODE_ENV=test babel-tape-runner ./test/node.js | tap-spec",
     "cover": "nyc --reporter html --reporter cobertura --reporter json-summary npm test && nyc report",
-    "start": "cd examples/demo-app && (path-exists node_modules || npm i) && npm run start-local",
-    "start:custom-layer": "(cd examples/custom-layer && (path-exists node_modules || npm i) && npm run start-local)",
-    "start:open-modal": "(cd examples/open-modal && (path-exists node_modules || npm i) && npm run start-local)",
-    "start:custom-reducer": "(cd examples/custom-reducer && (path-exists node_modules || npm i) && npm run start-local)",
-    "start:": "(cd examples/open-modal && (path-exists node_modules || npm i) && npm run start-local)",
+    "start": "npm run install-and-start -- examples/demo-app start-local",
+    "start:custom-layer": "npm run install-and-start -- examples/custom-layer start-local",
+    "start:open-modal": "npm run install-and-start -- examples/open-modal start-local",
+    "start:custom-reducer": "npm run install-and-start -- examples/custom-reducer start-local",
+    "start:": "npm run install-and-start -- examples/open-modal start-local",
     "build": "rm -fr dist && uber-licence && babel src --out-dir dist --plugins=transform-es2015-modules-commonjs --source-maps inline",
     "lint": "eslint src examples/**/src website/src",
     "check-licence": "uber-licence --dry",
@@ -170,7 +170,7 @@
     ]
   },
   "maintainers": [
-    "Shan He heshan0131@gmail.com>",
-    "Giuseppe Macri gmacri@uber.com"
+    "Shan He <heshan0131@gmail.com>",
+    "Giuseppe Macri <gmacri@uber.com>"
   ]
 }
