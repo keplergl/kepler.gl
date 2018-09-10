@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import supercluster from 'supercluster';
-import memoize from 'lodash/memoize';
+import memoize from 'lodash.memoize';
 
 export function getGeoJSON(data, getPosition) {
   return data
