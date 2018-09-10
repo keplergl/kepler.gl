@@ -54,7 +54,7 @@ export function getCenterHex({latitude, longitude}, resolution) {
 }
 
 // H3 hexagon are not perfect hexagon after projection, they are slightly distorted
-// Here we calculate the translation from perfect hexagon to h3 hexagon
+// Here we calculate the distortion from perfect hexagon to h3 hexagon
 // A mathematica proof can be found at
 // https://beta.observablehq.com/@heshan0131/h3-hexagon-shape-normalize
 export function getH3VerticeTransform(rawVertices, centroid) {
@@ -74,15 +74,15 @@ export function getH3VerticeTransform(rawVertices, centroid) {
   // vertices of a perfect hexagon
   const normalVertices = getHexagonVertices(radius);
 
-  // calculate translation
-  return getTranslations(rotatedVertices, normalVertices)
+  // calculate distortion
+  return getDistortions(rotatedVertices, normalVertices)
 }
 
 // Vertices index based on
 // https://github.com/uber/luma.gl/blob/master/modules/core/src/geometry/truncated-cone-geometry.js
-export function transformCylinderPositions(positions, translations) {
+export function distortCylinderPositions(positions, distortions) {
 
-  const primitives = translations.map(({dr, da}, i) =>
+  const primitives = distortions.map(({dr, da}, i) =>
     getPtOnCircle(dr, da + Math.PI * i / 3));
   // close it
   primitives.push(primitives[0]);
@@ -153,10 +153,10 @@ function revertVertices(verts) {
   return seq.map(s => verts[s]);
 }
 
-function getTranslations(vts, origs) {
+function getDistortions(vts, origs) {
   // 0 and 3 should be the guide
   const ct = [0, 0];
-  const translations = [];
+  const distortions = [];
 
   for (let i = 0; i < 6; i++) {
     const vt = vts[i];
@@ -167,8 +167,8 @@ function getTranslations(vts, origs) {
 
     const da = Math.atan2(vt[1], vt[0]) - Math.atan2(org[1], org[0]);
 
-    translations.push({dr, da});
+    distortions.push({dr, da});
   }
 
-  return translations;
+  return distortions;
 }
