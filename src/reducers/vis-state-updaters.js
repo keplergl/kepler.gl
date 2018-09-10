@@ -29,9 +29,11 @@ import {loadFilesErr} from 'actions/vis-state-actions';
 import {addDataToMap} from 'actions';
 
 // Utils
-import {getDefaultInteraction} from 'utils/interaction-utils';
 import {generateHashId} from 'utils/utils';
-import {findFieldsToShow} from 'utils/interaction-utils';
+import {
+  getDefaultInteraction,
+  findFieldsToShow
+} from 'utils/interaction-utils';
 import {
   getDefaultFilter,
   getFilterProps,
@@ -61,7 +63,7 @@ import {
 //     LayerClasses: {}
 //   };
 
-import {Layer, LayerClasses} from 'layers'
+import {Layer, LayerClasses} from 'layers';
 
 // react-palm
 // disable capture exception for react-palm call to withTask
