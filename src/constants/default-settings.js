@@ -313,13 +313,13 @@ export const linearFieldAggrScaleFunctions = {
   }
 };
 
-export const OrdinalFieldScaleFunctions = {
+export const ordinalFieldScaleFunctions = {
   [CHANNEL_SCALES.color]: [SCALE_TYPES.ordinal],
   [CHANNEL_SCALES.radius]: [SCALE_TYPES.point],
   [CHANNEL_SCALES.size]: [SCALE_TYPES.point]
 };
 
-export const OrdinalFieldAggrScaleFunctions = {
+export const ordinalFieldAggrScaleFunctions = {
   // [CHANNEL_SCALES.colorAggr]: [SCALE_TYPES.ordinal, SCALE_TYPES.linear],
   [CHANNEL_SCALES.colorAggr]: {
     [AGGREGATION_TYPES.mode]: [SCALE_TYPES.ordinal],
@@ -360,8 +360,8 @@ export const FIELD_OPTS = {
   string: {
     type: 'categorical',
     scale: {
-      ...OrdinalFieldScaleFunctions,
-      ...OrdinalFieldAggrScaleFunctions
+      ...ordinalFieldScaleFunctions,
+      ...ordinalFieldAggrScaleFunctions
     },
     format: {
       legend: d => d
@@ -400,8 +400,8 @@ export const FIELD_OPTS = {
   boolean: {
     type: 'boolean',
     scale: {
-      ...OrdinalFieldScaleFunctions,
-      ...OrdinalFieldAggrScaleFunctions
+      ...ordinalFieldScaleFunctions,
+      ...ordinalFieldAggrScaleFunctions
     },
     format: {
       legend: d => d
@@ -409,8 +409,8 @@ export const FIELD_OPTS = {
   },
   date: {
     scale: {
-      ...OrdinalFieldScaleFunctions,
-      ...OrdinalFieldAggrScaleFunctions
+      ...ordinalFieldScaleFunctions,
+      ...ordinalFieldAggrScaleFunctions
     },
     format: {
       legend: d => d
