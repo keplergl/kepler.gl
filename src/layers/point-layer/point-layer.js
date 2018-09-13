@@ -248,7 +248,7 @@ export default class PointLayer extends Layer {
         pickable: true,
         // parameters
         parameters: {
-          depthTest: mapState.dragRotate
+          depthTest: this.config.columns.altitude.fieldIdx > -1
         },
 
         updateTriggers: {
