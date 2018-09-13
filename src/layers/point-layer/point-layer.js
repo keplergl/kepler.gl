@@ -278,6 +278,10 @@ export default class PointLayer extends Layer {
               getTextAnchor: this.config.textLabel.anchor,
               getText: d => String(d.data[this.config.textLabel.field.tableFieldIndex - 1]),
               getColor: d => this.config.textLabel.color,
+              fp64: this.config.visConfig['hi-precision'],
+              parameters: {
+                depthTest: false
+              },
               updateTriggers: {
                 getPosition: data.getPosition,
                 getPixelOffset: this.config.textLabel.offset,
