@@ -169,15 +169,17 @@ export default class ArcLayer extends Layer {
       }, []);
     }
 
-    const getStrokeWidth = sScale ? d =>
-       this.getEncodedChannelValue(sScale, d.data, sizeField, 0) : 1;
+    const getStrokeWidth = sScale
+      ? d => this.getEncodedChannelValue(sScale, d.data, sizeField, 0)
+      : 1;
 
-    const getColor = cScale ? d =>
-       this.getEncodedChannelValue(cScale, d.data, colorField) : color;
+    const getColor = cScale
+      ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
+      : color;
 
-    const getTargetColor = cScale ? d =>
-       this.getEncodedChannelValue(cScale, d.data, colorField)
-        : targetColor || color;
+    const getTargetColor = cScale
+      ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
+      : targetColor || color;
 
     return {
       data,
@@ -200,14 +202,15 @@ export default class ArcLayer extends Layer {
       return [pos[3], pos[4]];
     });
 
-    const bounds = tBounds
-      ? [
-          Math.min(sBounds[0], tBounds[0]),
-          Math.min(sBounds[1], tBounds[1]),
-          Math.max(sBounds[2], tBounds[2]),
-          Math.max(sBounds[3], tBounds[3])
-        ]
-      : sBounds;
+    const bounds =
+      tBounds && sBounds
+        ? [
+            Math.min(sBounds[0], tBounds[0]),
+            Math.min(sBounds[1], tBounds[1]),
+            Math.max(sBounds[2], tBounds[2]),
+            Math.max(sBounds[3], tBounds[3])
+          ]
+        : sBounds || tBounds;
 
     this.updateMeta({bounds});
   }
