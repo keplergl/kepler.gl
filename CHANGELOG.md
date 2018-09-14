@@ -15,6 +15,10 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+#### [0.1.4] - Sep 15 2018
+
+- [Enhancement] Null check for missing arc column (#235)
+
 #### [0.1.3] - Sep 10 2018
 
 - [Enhancement] Add H3 layer (#217) (#198)
