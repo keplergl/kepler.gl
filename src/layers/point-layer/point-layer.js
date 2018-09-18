@@ -246,9 +246,9 @@ export default class PointLayer extends Layer {
         id: this.id,
         opacity: this.config.visConfig.opacity,
         pickable: true,
-        // parameters
         parameters: {
-          depthTest: mapState.dragRotate
+          // circles will be flat on the map when the altitude column is not used
+          depthTest: this.config.columns.altitude.fieldIdx > -1
         },
 
         updateTriggers: {
@@ -278,6 +278,11 @@ export default class PointLayer extends Layer {
               getTextAnchor: this.config.textLabel.anchor,
               getText: d => String(d.data[this.config.textLabel.field.tableFieldIndex - 1]),
               getColor: d => this.config.textLabel.color,
+              fp64: this.config.visConfig['hi-precision'],
+              parameters: {
+                // text will always show on top of all layers
+                depthTest: false
+              },
               updateTriggers: {
                 getPosition: data.getPosition,
                 getPixelOffset: this.config.textLabel.offset,
