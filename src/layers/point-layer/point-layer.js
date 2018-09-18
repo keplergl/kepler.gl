@@ -246,8 +246,8 @@ export default class PointLayer extends Layer {
         id: this.id,
         opacity: this.config.visConfig.opacity,
         pickable: true,
-        // parameters
         parameters: {
+          // circles will be flat on the map when the altitude column is not used
           depthTest: this.config.columns.altitude.fieldIdx > -1
         },
 
@@ -280,6 +280,7 @@ export default class PointLayer extends Layer {
               getColor: d => this.config.textLabel.color,
               fp64: this.config.visConfig['hi-precision'],
               parameters: {
+                // text will always show on top of all layers
                 depthTest: false
               },
               updateTriggers: {
