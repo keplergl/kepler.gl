@@ -1,3 +1,11 @@
+# Features Added
+- Add dataset to the layer
+- Remove dataset from the layer
+- Layer click events
+- Draw ploygon on the layer & export geojson
+- Add custom markers/images to the layers
+
+
 # Kepler.gl
 
 [kepler.gl](http://www.kepler.gl/) is a data-agnostic, high-performance web-based application for visual exploration of large-scale geolocation data sets. Built on top of [deck.gl](http://uber.github.io/deck.gl/#/), kepler.gl can render millions of points representing thousands of trips and perform spatial aggregations on the fly.
@@ -381,3 +389,7 @@ config: {
 }
 ```
 the latter will be applied and the map view will be moved the defined coordinates.
+
+
+# Fork merges with official repository
+- 
