@@ -74,7 +74,6 @@ export default class InteractionPanel extends Component {
           <TooltipConfig
             datasets={datasets}
             config={config.config}
-            width={this.state.innerPanelWidth}
             onChange={onChange}
           />
         );
@@ -121,7 +120,7 @@ export default class InteractionPanel extends Component {
   }
 }
 
-const TooltipConfig = ({config, datasets, width, onChange}) => (
+const TooltipConfig = ({config, datasets, onChange}) => (
   <div>
     {Object.keys(config.fieldsToShow).map(dataId => (
       <SidePanelSection key={dataId}>
