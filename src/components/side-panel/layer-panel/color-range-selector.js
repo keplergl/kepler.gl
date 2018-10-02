@@ -29,9 +29,10 @@ import Switch from 'components/common/switch';
 import ColorPalette from './color-palette';
 
 import {COLOR_RANGES} from 'constants/color-ranges';
+import {numberSort} from 'utils/data-utils';
 
 const ALL_TYPES = uniq(COLOR_RANGES.map(c => c.type).concat(['all']));
-const ALL_STEPS = uniq(COLOR_RANGES.map(d => d.colors.length));
+const ALL_STEPS = uniq(COLOR_RANGES.map(d => d.colors.length)).sort(numberSort);
 
 const StyledColorConfig = styled.div`
   padding: 12px 12px 0 12px;
