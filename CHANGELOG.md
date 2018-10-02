@@ -14,6 +14,11 @@ Each version should:
   Security to invite users to upgrade in case of vulnerabilities.
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
+#### [0.1.5] - Oct 2 2018
+
+- [Enhancement] Fix z-fighting issue between text label and scatter plot (#234)
+- [Bug] Sort color steps (#241)
+- [Bug] fix a bug where field is valid is always false (#240)
 
 #### [0.1.4] - Sep 15 2018
 
