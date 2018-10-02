@@ -85,29 +85,25 @@ const expectedFields = [
     name: 'start_point_lat',
     id: 'start_point_lat',
     type: 'real',
-    tableFieldIndex: 1,
-    format: ''
+    tableFieldIndex: 1
   },
   {
     name: 'start_point_lng',
     id: 'start_point_lng',
     type: 'real',
-    tableFieldIndex: 2,
-    format: ''
+    tableFieldIndex: 2
   },
   {
     name: 'end_point_lat',
     id: 'end_point_lat',
     type: 'real',
-    tableFieldIndex: 3,
-    format: ''
+    tableFieldIndex: 3
   },
   {
     name: 'end_point_lng',
     id: 'end_point_lng',
     type: 'real',
-    tableFieldIndex: 4,
-    format: ''
+    tableFieldIndex: 4
   }
 ];
 
