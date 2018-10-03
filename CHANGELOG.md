@@ -14,6 +14,10 @@ Each version should:
   Security to invite users to upgrade in case of vulnerabilities.
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
+
+#### [0.1.6] - Oct 3 2018
+- [Enhancement] save and load text label config (#242)
+
 #### [0.1.5] - Oct 2 2018
 
 - [Enhancement] Fix z-fighting issue between text label and scatter plot (#234)
