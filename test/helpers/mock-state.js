@@ -158,6 +158,22 @@ function mockStateWithLayerDimensions(state) {
     'color'
   ];
 
+  const textLabelField = initialState.visState.datasets['190vdll3di'].fields.find(
+    f => f.name === 'date'
+  );
+
+  const textLabelPayload = [
+    layer0,
+    {
+      textLabel: {
+        field: textLabelField,
+        color: [255, 0, 0],
+        size: 100,
+        offset: [10, 0],
+        anchor: 'start'
+      }
+    }
+  ]
   // layers = [ 'point', 'geojson', 'hexagon' ]
   const reorderPayload = [[2, 0, 1]];
 
@@ -170,6 +186,9 @@ function mockStateWithLayerDimensions(state) {
 
     // change colorRange
     {action: VisStateActions.layerVisConfigChange, payload: colorRangePayload},
+
+    // change textLabel
+    {action: VisStateActions.layerConfigChange, payload: textLabelPayload},
 
     // add layer
     {
@@ -298,6 +317,13 @@ export const expectedSavedLayer0 = {
       colorAggregation: 'count',
       sizeAggregation: 'count',
       enable3d: false
+    },
+    textLabel: {
+      field: null,
+      color: [255, 255, 255],
+      size: 50,
+      offset: [0, 0],
+      anchor: 'middle'
     }
   },
   visualChannels: {
@@ -305,7 +331,7 @@ export const expectedSavedLayer0 = {
     colorScale: 'quantile',
     sizeField: null,
     sizeScale: 'linear'
-  }
+  },
 };
 
 export const expectedLoadedLayer0 = {
@@ -350,7 +376,14 @@ export const expectedLoadedLayer0 = {
     colorField: null,
     colorScale: 'quantile',
     sizeField: null,
-    sizeScale: 'linear'
+    sizeScale: 'linear',
+    textLabel: {
+      field: null,
+      color: [255, 255, 255],
+      size: 50,
+      offset: [0, 0],
+      anchor: 'middle'
+    }
   }
 };
 
@@ -365,6 +398,16 @@ export const expectedSavedLayer1 = {
       lat: 'gps_data.lat',
       lng: 'gps_data.lng',
       altitude: null
+    },
+    textLabel: {
+      field: {
+        name: 'date',
+        type: 'date'
+      },
+      color: [255, 0, 0],
+      size: 100,
+      offset: [10, 0],
+      anchor: 'start'
     },
     isVisible: true,
     visConfig: {
@@ -428,7 +471,17 @@ export const expectedLoadedLayer1 = {
     },
     colorScale: 'ordinal',
     sizeField: null,
-    sizeScale: 'linear'
+    sizeScale: 'linear',
+    textLabel: {
+      field: {
+        name: 'date',
+        type: 'date'
+      },
+      color: [255, 0, 0],
+      size: 100,
+      offset: [10, 0],
+      anchor: 'start'
+    }
   }
 };
 
@@ -469,6 +522,13 @@ export const expectedSavedLayer2 = {
       filled: false,
       enable3d: false,
       wireframe: false
+    },
+    textLabel: {
+      field: null,
+      color: [255, 255, 255],
+      size: 50,
+      offset: [0, 0],
+      anchor: 'middle'
     }
   },
   visualChannels: {
@@ -528,6 +588,13 @@ export const expectedLoadedLayer2 = {
     heightField: null,
     heightScale: 'linear',
     radiusField: null,
-    radiusScale: 'linear'
+    radiusScale: 'linear',
+    textLabel: {
+      field: null,
+      color: [255, 255, 255],
+      size: 50,
+      offset: [0, 0],
+      anchor: 'middle'
+    }
   }
 };
