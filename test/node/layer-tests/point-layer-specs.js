@@ -111,8 +111,8 @@ test('#PointLayer -> formatLayerData', t => {
 
         t.deepEqual(
           Object.keys(layerData),
-          ['data', 'getPosition', 'getColor', 'getRadius'],
-          'layerData should have 3 keys'
+          ['data', 'labelCharacterSet', 'getPosition', 'getColor', 'getRadius', 'getText'],
+          'layerData should have 6 keys'
         );
         t.deepEqual(
           layerData.data,
@@ -201,8 +201,8 @@ test('#PointLayer -> formatLayerData', t => {
         );
         t.deepEqual(
           Object.keys(layerData),
-          ['data', 'getPosition', 'getColor', 'getRadius'],
-          'layerData should have 4 keys'
+          ['data', 'labelCharacterSet', 'getPosition', 'getColor', 'getRadius', 'getText'],
+          'layerData should have 6 keys'
         );
         t.deepEqual(
           layerData.data,
