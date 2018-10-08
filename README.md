@@ -1,11 +1,3 @@
-# Features Added
-- Add dataset to the layer
-- Remove dataset from the layer
-- Layer click events
-- Draw ploygon on the layer & export geojson
-- Add custom markers/images to the layers
-
-
 # Kepler.gl
 
 [kepler.gl](http://www.kepler.gl/) is a data-agnostic, high-performance web-based application for visual exploration of large-scale geolocation data sets. Built on top of [deck.gl](http://uber.github.io/deck.gl/#/), kepler.gl can render millions of points representing thousands of trips and perform spatial aggregations on the fly.
@@ -363,10 +355,12 @@ const myCustomHeaderFactory = () => withState(
 )(CustomHeader);
 
 ```
-#### 5. How to add data to map
+#### 5. How to add/remove data to map
 In order to interact with a kepler.gl instance and add new data to it the following methods are available:
 - updateVisData
 - addDataToMap
+- addLayerData
+- removeLayerData
 It is also important to remember that Kepler.gl provides an easy API (```KeplerGlSchema.getConfigToSave```) to generate a dump of the current kepler instance configuration.
 
 ##### addDataToMap
@@ -392,6 +386,28 @@ config: {
 ```
 the latter will be applied and the map view will be moved the defined coordinates.
 
+##### addLayerData
+This method is similar to addDataToMap and also takes dataset key column to update the layer data.
+This action takes an object as input with the following properties:
+```
+js
+{
+    datasets | object: same as UpdateVisData
+    config | object: this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}.
+    key | string: dataset column 
+    
+}
+```
 
-# Fork merges with official repository
-- 
+##### removeLayerData
+This method is similar to removeLayerData and also takes dataset key column to update the layer data.
+This action takes an object as input with the following properties:
+```
+js
+{
+    datasets | object: same as UpdateVisData
+    key | string: dataset column 
+    
+}
+```
+ 

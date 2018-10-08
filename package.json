@@ -1,8 +1,8 @@
 {
-  "name": "kepler.gl",
-  "author": "Shan He <shan@uber.com>",
-  "version": "0.1.6",
-  "description": "kepler.gl is a webgl based application to visualize large scale location data in the browser",
+  "name": "ramesh-paul-kepler.gl",
+  "author": "Ramesh Paul <chrb.rameshbabu@gmail.com>",
+  "version": "0.1.2",
+  "description": "This is fork of -uber/kepler.gl- kepler.gl is a webgl based application to visualize large scale location data in the browser",
   "license": "MIT",
   "main": "dist/index.js",
   "engines": {
@@ -24,17 +24,16 @@
   },
   "scripts": {
     "install:example": "cd examples/demo-app && npm i",
-    "install-and-start": "node ./scripts/install-and-start",
+    "test": "npm run test-node && npm run test-browser",
     "fast-test": "NODE_ENV=test babel-tape-runner ./test/node.js && NODE_ENV=test babel-tape-runner -r ./test/setup-browser-env.js ./test/browser.js",
     "test-browser": "NODE_ENV=test babel-tape-runner -r ./test/setup-browser-env.js ./test/browser.js",
     "test-node": "NODE_ENV=test babel-tape-runner ./test/node.js | tap-spec",
-    "test": "npm run test-node && npm run test-browser",
     "cover": "nyc --reporter html --reporter cobertura --reporter json-summary npm test && nyc report",
-    "start": "npm run install-and-start -- examples/demo-app start-local",
-    "start:custom-layer": "npm run install-and-start -- examples/custom-layer start-local",
-    "start:open-modal": "npm run install-and-start -- examples/open-modal start-local",
-    "start:custom-reducer": "npm run install-and-start -- examples/custom-reducer start-local",
-    "start:": "npm run install-and-start -- examples/open-modal start-local",
+    "start": "cd examples/demo-app && (path-exists node_modules || npm i) && npm run start-local",
+    "start:custom-layer": "(cd examples/custom-layer && (path-exists node_modules || npm i) && npm run start-local)",
+    "start:open-modal": "(cd examples/open-modal && (path-exists node_modules || npm i) && npm run start-local)",
+    "start:custom-reducer": "(cd examples/custom-reducer && (path-exists node_modules || npm i) && npm run start-local)",
+    "start:": "(cd examples/open-modal && (path-exists node_modules || npm i) && npm run start-local)",
     "build": "rm -fr dist && uber-licence && babel src --out-dir dist --plugins=transform-es2015-modules-commonjs --source-maps inline",
     "lint": "eslint src examples/**/src website/src",
     "check-licence": "uber-licence --dry",
@@ -171,7 +170,6 @@
     ]
   },
   "maintainers": [
-    "Shan He <heshan0131@gmail.com>",
-    "Giuseppe Macri <gmacri@uber.com>"
+    "Ramesh Paul <chrb.rameshbabu@gmail.com>"
   ]
 }

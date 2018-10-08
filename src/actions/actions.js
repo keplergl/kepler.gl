@@ -32,7 +32,7 @@ export * from './map-style-actions';
 
 export * from './identity-actions';
 
-export const [receiveMapConfig, resetMapConfig, keplerGlInit, addDataToMap, removeDataRows, addLayerData] = [
+export const [receiveMapConfig, resetMapConfig, keplerGlInit, addDataToMap, removeLayerData, addLayerData] = [
   RECEIVE_MAP_CONFIG,
   RESET_MAP_CONFIG,
   INIT,

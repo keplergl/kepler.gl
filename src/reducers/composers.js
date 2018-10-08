@@ -100,7 +100,7 @@ export const addDataToMapComposed = (state, action) => {
  * @param action {datasets, options, config}
  * @returns state
  */
-export const removeDataRowsComposed = (state, action) => {
+export const removeLayerDataComposed = (state, action) => {
   // extract mapData
   const {payload: mapData} = action;
   const {key: datasetKey} = mapData;
@@ -215,7 +215,7 @@ export const addLayerDataComposed = (state, action) => {
 const compostedUpdaters = {
   [ActionTypes.UPDATE_VIS_DATA]: updateVisDataComposed,
   [ActionTypes.ADD_DATA_TO_MAP]: addDataToMapComposed,
-  [ActionTypes.REMOVE_DATA_ROWS]: removeDataRowsComposed,
+  [ActionTypes.REMOVE_DATA_ROWS]: removeLayerDataComposed,
   [ActionTypes.ADD_LAYER_DATA]: addLayerDataComposed,
 };
 export default compostedUpdaters;

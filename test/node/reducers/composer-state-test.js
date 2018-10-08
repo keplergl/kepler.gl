@@ -20,7 +20,7 @@
 
 import test from 'tape';
 import keplerGlReducer from 'reducers';
-import {addDataToMapComposed, removeDataRowsComposed, addLayerDataComposed} from 'reducers/composers';
+import {addDataToMapComposed, removeLayerDataComposed, addLayerDataComposed} from 'reducers/composers';
 import {keplerGlInit} from 'actions/actions';
 import {coreReducerFactory} from 'reducers/core';
 import {registerEntry} from 'actions/identity-actions';
@@ -106,7 +106,7 @@ test('#composerStateReducer - addDataToMapComposed: mapState should not be cente
   t.end()
 });
 
-test('#composerStateReducer - removeDataRowsComposed: visState.layerData', t => {
+test('#composerStateReducer - removeLayerDataComposed: visState.layerData', t => {
   // init kepler.gl root and instance
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
 
@@ -132,7 +132,7 @@ test('#composerStateReducer - removeDataRowsComposed: visState.layerData', t => 
   ];
 
 
-  let removeState = removeDataRowsComposed(newState, {
+  let removeState = removeLayerDataComposed(newState, {
     payload: {
       datasets: {
         data: {
@@ -161,7 +161,7 @@ test('#composerStateReducer - removeDataRowsComposed: visState.layerData', t => 
 
 
 
-  let emptyState = removeDataRowsComposed(removeState, {
+  let emptyState = removeLayerDataComposed(removeState, {
     payload: {
       datasets: {
         data: {
@@ -237,7 +237,7 @@ test('#composerStateReducer - addLayerDataComposed: visState.datasets', t => {
 
   t.equal(addState.visState.datasets.foo.data.length, (rows.length + mockRawData.rows.length), 'Add layer data passed');
 
-  addState = removeDataRowsComposed(addState, {
+  addState = removeLayerDataComposed(addState, {
     payload: {
       datasets: {
         data: {
