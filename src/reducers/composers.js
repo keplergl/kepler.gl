@@ -154,9 +154,9 @@ export const removeLayerDataComposed = (state, action) => {
 
   // iterate through layers & remove the data from layers
   indexes.forEach((index) => {
-    state.visState.layerData[index]['data'] = state.visState.layerData[index].data.filter((item, index) => {
+    state.visState.layerData[index].data = state.visState.layerData[index].data.filter((item, idx) => {
       return rows.every((row, pos) => {
-        return equals(row, item.data) === true ? false : true;
+        return !equals(row, item.data);
       });
     });
   });
@@ -216,6 +216,6 @@ const compostedUpdaters = {
   [ActionTypes.UPDATE_VIS_DATA]: updateVisDataComposed,
   [ActionTypes.ADD_DATA_TO_MAP]: addDataToMapComposed,
   [ActionTypes.REMOVE_DATA_ROWS]: removeLayerDataComposed,
-  [ActionTypes.ADD_LAYER_DATA]: addLayerDataComposed,
+  [ActionTypes.ADD_LAYER_DATA]: addLayerDataComposed
 };
 export default compostedUpdaters;

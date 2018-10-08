@@ -38,5 +38,5 @@ export const [receiveMapConfig, resetMapConfig, keplerGlInit, addDataToMap, remo
   INIT,
   ADD_DATA_TO_MAP,
   REMOVE_DATA_ROWS,
-  ADD_LAYER_DATA,
+  ADD_LAYER_DATA
 ].map(a => createAction(a));
