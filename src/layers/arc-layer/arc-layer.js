@@ -200,12 +200,15 @@ export default class ArcLayer extends Layer {
       return [pos[3], pos[4]];
     });
 
-    const bounds = [
-      Math.min(sBounds[0], tBounds[0]),
-      Math.min(sBounds[1], tBounds[1]),
-      Math.max(sBounds[2], tBounds[2]),
-      Math.max(sBounds[3], tBounds[3])
-    ];
+    const bounds =
+      tBounds && sBounds
+        ? [
+            Math.min(sBounds[0], tBounds[0]),
+            Math.min(sBounds[1], tBounds[1]),
+            Math.max(sBounds[2], tBounds[2]),
+            Math.max(sBounds[3], tBounds[3])
+          ]
+        : sBounds || tBounds;
 
     this.updateMeta({bounds});
   }

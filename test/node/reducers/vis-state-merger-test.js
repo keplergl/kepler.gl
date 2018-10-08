@@ -52,6 +52,10 @@ import {
   mergedLayers as mergedLayersV1Split,
   mergedSplitMaps as mergedSplitMapsV1
 } from 'test/fixtures/state-saved-v1-3';
+import {
+  stateSavedV1 as savedStateV1Label,
+  mergedLayers as mergedLayersV1Label
+} from 'test/fixtures/state-saved-v1-4';
 /*
 import {
   mergedFiltersV0,
@@ -332,6 +336,43 @@ test('VisStateMerger.v1 -> mergeLayers -> toEmptyState', t => {
 
   // test parsed layers
   cmpLayers(t, mergedLayersV1, stateWData.layers, {id: true});
+  t.end();
+});
+
+test('VisStateMerger.v1.label -> mergeLayers -> toEmptyState', t => {
+  const savedConfig = cloneDeep(savedStateV1Label);
+  const parsedConfig = SchemaManager.parseSavedConfig(savedConfig.config);
+
+  const oldState = InitialState.toJS();
+  const oldVisState = oldState.visState;
+
+  const parsedLayers = parsedConfig.visState.layers;
+
+  // mergeLayers
+  const mergedState = mergeLayers(oldState.visState, parsedLayers);
+
+  Object.keys(oldVisState).forEach(key => {
+    if (key === 'layerToBeMerged') {
+      t.deepEqual(
+        mergedState.layerToBeMerged,
+        parsedLayers,
+        'Should save layers to layerToBeMerged before data loaded'
+      );
+    } else {
+      t.deepEqual(
+        mergedState[key],
+        oldVisState[key],
+        'Should keep the rest of state same'
+      );
+    }
+  });
+  const parsedData = SchemaManager.parseSavedData(savedStateV1Label.datasets);
+
+  // load data into reducer
+  const stateWData = visStateReducer(mergedState, updateVisData(parsedData));
+
+  // test parsed layers
+  cmpLayers(t, mergedLayersV1Label, stateWData.layers, {id: true});
   t.end();
 });
 

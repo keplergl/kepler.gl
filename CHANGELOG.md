@@ -15,6 +15,24 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+#### [0.1.6] - Oct 3 2018
+- [Enhancement] save and load text label config (#242)
+
+#### [0.1.5] - Oct 2 2018
+
+- [Enhancement] Fix z-fighting issue between text label and scatter plot (#234)
+- [Bug] Sort color steps (#241)
+- [Bug] fix a bug where field is valid is always false (#240)
+
+#### [0.1.4] - Sep 15 2018
+
+- [Enhancement] Null check for missing arc column (#235)
+
+#### [0.1.3] - Sep 10 2018
+
+- [Enhancement] Add H3 layer (#217) (#198)
+- [Enhancement] Add text label in Point layer (#166)
+
 #### [0.1.2] - Aug 24 2018
 
 - [Bug] Fix server render error, remove react-ace (#206)

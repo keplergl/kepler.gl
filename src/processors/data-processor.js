@@ -398,7 +398,7 @@ export function validateInputData(data) {
       return false;
     }
 
-    return f.type && f.format && f.name;
+    return f.type !== ALL_FIELD_TYPES.timestamp || typeof f.format === 'string';
   });
 
   if (allValid) {

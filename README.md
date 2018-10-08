@@ -28,6 +28,8 @@ Check out this [StackOverflow](https://stackoverflow.com/questions/tagged/kepler
 ### Env
 Use Node v6 and above, older node versions have not been tested
 
+For best results, use [nvm](https://github.com/creationix/nvm) `nvm install`.
+
 ### Install
 Install node (`> 6`), yarn, and project dependencies
 
@@ -54,7 +56,7 @@ npm start
 An Example app will be served at
 http://localhost:8080/
 
-### Website
+### Develop The kepler.gl Website
 
 Make sure to export mapbox token in the same terminal before start the server.
 ```sh
@@ -71,9 +73,9 @@ To checkout the build
     cd website && yarn build
 ```
 
-Publish on github pages.
+Publish on github pages __Authorized User Only__.
 
-<b>important Before publish. Copy the mapbox token at [this link](http://t.uber.com/kepler.gl-token). Deploy will fail if token is missing</b>
+<b>important* Before publish. Copy the mapbox token at [this link](http://t.uber.com/kepler.gl-token). (Only accessible by Uber developer). Deploy will fail if token is missing</b>
 ```
     export MapboxAccessToken=<insert_your_token>
     yarn deploy
