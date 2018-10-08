@@ -20,7 +20,7 @@
 
 import test from 'tape';
 import keplerGlReducer from 'reducers';
-import {addDataToMapComposed} from 'reducers/composers';
+import {addDataToMapComposed, removeDataRowsComposed, addLayerDataComposed} from 'reducers/composers';
 import {keplerGlInit} from 'actions/actions';
 import {coreReducerFactory} from 'reducers/core';
 import {registerEntry} from 'actions/identity-actions';
@@ -86,8 +86,8 @@ test('#composerStateReducer - addDataToMapComposed: mapState should not be cente
   // init kepler.gl root and instance
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
   const mapStateProperties = {
-    latitude: 33.88608913680742,
-    longitude: -84.43459130456425
+    latitude: 29.23, //33.88608913680742,
+    longitude: 60.71, //-84.43459130456425
   };
   const newState = addDataToMapComposed(state, {
     payload: {
@@ -96,12 +96,6 @@ test('#composerStateReducer - addDataToMapComposed: mapState should not be cente
         info: {
           id: 'foo'
         }
-      },
-      options: {
-        centerMap: true
-      },
-      config: {
-        mapState: mapStateProperties
       }
     }
   });
@@ -110,4 +104,156 @@ test('#composerStateReducer - addDataToMapComposed: mapState should not be cente
   t.equal(newState.mapState.longitude, mapStateProperties.longitude, 'mapstate longitude is set correctly');
 
   t.end()
+});
+
+test('#composerStateReducer - removeDataRowsComposed: visState.layerData', t => {
+  // init kepler.gl root and instance
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+
+  const newState = addDataToMapComposed(state, {
+    payload: {
+      datasets: {
+        data: mockRawData,
+        info: {
+          id: 'foo'
+        }
+      },
+      options: null,
+      config: {
+      }
+    }
+  });
+
+  const rows = [
+    //[12.25, 37.75, 45.21, 100.12],
+    //[null, 35.2, 45.0, 21.3],
+    [12.29, 37.64, 46.21, 99.127],
+    [null, null, 33.1, 29.34]
+  ];
+
+
+  let removeState = removeDataRowsComposed(newState, {
+    payload: {
+      datasets: {
+        data: {
+          rows: rows
+        }
+      },
+      options: null,
+      config: {
+        mapStyle: {
+          styleType: 'light'
+        }
+      },
+      key: 'foo'
+    }
+  });
+
+
+  removeState.visState.layerData.forEach((layerData, index) => {
+    layerData.data.forEach((data, idx) => {
+      rows.forEach((rw, po) => {
+        let rs = rw.every(e => data.data.includes(e));
+        t.equal(rs, false, 'Remove layer data passed');
+      });
+    });
+  });
+
+
+
+  let emptyState = removeDataRowsComposed(removeState, {
+    payload: {
+      datasets: {
+        data: {
+          rows: []
+        }
+      },
+      options: null,
+      config: {
+        mapStyle: {
+          styleType: 'light'
+        }
+      },
+      key: 'foo'
+    }
+  });
+
+  emptyState.visState.layerData.forEach((layerData, index) => {
+    layerData.data.forEach((data, idx) => {
+      rows.forEach((rw, po) => {
+        let rs = rw.every(e => data.data.includes(e));
+        t.equal(rs, false, 'Remove empty layer data passed');
+      });
+    });
+  });
+
+  t.end();
+});
+
+test('#composerStateReducer - addLayerDataComposed: visState.datasets', t => {
+  // init kepler.gl root and instance
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+
+  const newState = addDataToMapComposed(state, {
+    payload: {
+      datasets: {
+        data: mockRawData,
+        info: {
+          id: 'foo'
+        }
+      },
+      options: null,
+      config: {
+        mapStyle: {
+          styleType: 'light'
+        }
+      }
+    }
+  });
+
+  const rows = [
+    //[12.25, 37.75, 45.21, 100.12],
+    //[null, 35.2, 45.0, 21.3],
+    [14.29, 26.64, 66.21, 88.127],
+    [14.29, 26.64, 23.1, 59.34]
+  ];
+
+  let addState = addLayerDataComposed(newState, {
+    payload: {
+      datasets: {
+        data: {
+          rows: rows
+        }
+      },
+      options: null,
+      config: {
+        mapStyle: {
+          styleType: 'light'
+        }
+      },
+      key: 'foo'
+    }
+  });
+
+  t.equal(addState.visState.datasets.foo.data.length, (rows.length + mockRawData.rows.length), 'Add layer data passed');
+
+  addState = removeDataRowsComposed(addState, {
+    payload: {
+      datasets: {
+        data: {
+          rows: []
+        }
+      },
+      options: null,
+      config: {
+        mapStyle: {
+          styleType: 'light'
+        }
+      },
+      key: 'foo'
+    }
+  });
+
+  t.equal(newState.visState.datasets.foo.data.length, mockRawData.rows.length, 'Add empty layer data test passed--');
+  t.end();
 });

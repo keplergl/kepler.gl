@@ -22,7 +22,7 @@ import ActionTypes from 'constants/action-types';
 import {createAction} from 'redux-actions';
 
 // create actions
-const {ADD_DATA_TO_MAP, INIT, RECEIVE_MAP_CONFIG, RESET_MAP_CONFIG} = ActionTypes;
+const {ADD_DATA_TO_MAP, ADD_LAYER_DATA, REMOVE_DATA_ROWS, INIT, RECEIVE_MAP_CONFIG, RESET_MAP_CONFIG} = ActionTypes;
 
 // kepler.gl actions accessible outside component
 export * from './vis-state-actions';
@@ -32,9 +32,11 @@ export * from './map-style-actions';
 
 export * from './identity-actions';
 
-export const [receiveMapConfig, resetMapConfig, keplerGlInit, addDataToMap] = [
+export const [receiveMapConfig, resetMapConfig, keplerGlInit, addDataToMap, removeDataRows, addLayerData] = [
   RECEIVE_MAP_CONFIG,
   RESET_MAP_CONFIG,
   INIT,
-  ADD_DATA_TO_MAP
+  ADD_DATA_TO_MAP,
+  REMOVE_DATA_ROWS,
+  ADD_LAYER_DATA,
 ].map(a => createAction(a));

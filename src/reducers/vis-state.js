@@ -85,7 +85,7 @@ const actionHandler = {
   [ActionTypes.RECEIVE_MAP_CONFIG]: receiveMapConfigUpdater,
 
   [ActionTypes.REMOVE_DATASET]: removeDatasetUpdater,
-
+  
   [ActionTypes.REMOVE_FILTER]: removeFilterUpdater,
 
   [ActionTypes.REMOVE_LAYER]: removeLayerUpdater,

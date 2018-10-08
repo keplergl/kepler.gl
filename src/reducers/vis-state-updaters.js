@@ -33,27 +33,27 @@ import {getDefaultInteraction} from 'utils/interaction-utils';
 import {generateHashId} from 'utils/utils';
 import {findFieldsToShow} from 'utils/interaction-utils';
 import {
-  getDefaultFilter,
-  getFilterProps,
-  getFilterPlot,
-  getDefaultFilterPlotType,
-  filterData
-} from 'utils/filter-utils';
+getDefaultFilter,
+    getFilterProps,
+    getFilterPlot,
+    getDefaultFilterPlotType,
+    filterData
+    } from 'utils/filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
 
 import {
-  findDefaultLayer,
-  calculateLayerData
-} from 'utils/layer-utils/layer-utils';
+findDefaultLayer,
+    calculateLayerData
+    } from 'utils/layer-utils/layer-utils';
 
 import {getFileHandler} from 'processors/file-handler';
 
 import {
-  mergeFilters,
-  mergeLayers,
-  mergeInteractions,
-  mergeLayerBlending
-} from './vis-state-merger';
+mergeFilters,
+    mergeLayers,
+    mergeInteractions,
+    mergeLayerBlending
+    } from './vis-state-merger';
 
 // LayerClasses contain ES6 Class, do not instatiate in iso rendering
 // const {LayerClasses} = isBrowser || isTesting ?
@@ -65,7 +65,7 @@ import {Layer, LayerClasses} from 'layers'
 
 // react-palm
 // disable capture exception for react-palm call to withTask
-disableStackCapturing();
+    disableStackCapturing();
 
 export const INITIAL_VIS_STATE = {
   // layers
@@ -117,8 +117,8 @@ function updateStateWithLayerAndData(state, {layerData, layer, idx}) {
     ...state,
     layers: state.layers.map((lyr, i) => (i === idx ? layer : lyr)),
     layerData: layerData
-      ? state.layerData.map((d, i) => (i === idx ? layerData : d))
-      : state.layerData
+        ? state.layerData.map((d, i) => (i === idx ? layerData : d))
+        : state.layerData
   };
 }
 
@@ -135,10 +135,10 @@ export function layerConfigChangeUpdater(state, action) {
   if (newLayer.shouldCalculateLayerData(props)) {
     const oldLayerData = state.layerData[idx];
     const {layerData, layer} = calculateLayerData(
-      newLayer,
-      state,
-      oldLayerData,
-      {sameData: true}
+        newLayer,
+        state,
+        oldLayerData,
+        {sameData: true}
     );
     return updateStateWithLayerAndData(state, {layerData, layer, idx});
   }
@@ -146,7 +146,7 @@ export function layerConfigChangeUpdater(state, action) {
   const newState = {
     ...state,
     splitMaps:
-      'isVisible' in action.newConfig
+        'isVisible' in action.newConfig
         ? toggleLayerFromSplitMaps(state, newLayer)
         : state.splitMaps
   };
@@ -232,10 +232,10 @@ export function layerVisConfigChangeUpdater(state, action) {
   if (newLayer.shouldCalculateLayerData(props)) {
     const oldLayerData = state.layerData[idx];
     const {layerData, layer} = calculateLayerData(
-      newLayer,
-      state,
-      oldLayerData,
-      {sameData: true}
+        newLayer,
+        state,
+        oldLayerData,
+        {sameData: true}
     );
     return updateStateWithLayerAndData(state, {layerData, layer, idx});
   }
@@ -365,9 +365,9 @@ export const setFilterPlotUpdater = (state, {idx, newProp}) => {
       newFilter = {
         ...newFilter,
         ...getFilterPlot(
-          {...newFilter, plotType},
-          state.datasets[newFilter.dataId].allData
-        ),
+            {...newFilter, plotType},
+            state.datasets[newFilter.dataId].allData
+            ),
         plotType
       };
     }
@@ -381,25 +381,25 @@ export const setFilterPlotUpdater = (state, {idx, newProp}) => {
 
 export const addFilterUpdater = (state, action) =>
   !action.dataId
-    ? state
-    : {
+      ? state
+      : {
         ...state,
         filters: [...state.filters, getDefaultFilter(action.dataId)]
       };
 
 export const toggleFilterAnimationUpdater = (state, action) => ({
-  ...state,
-  filters: state.filters.map(
-    (f, i) => (i === action.idx ? {...f, isAnimating: !f.isAnimating} : f)
-  )
-});
+    ...state,
+    filters: state.filters.map(
+        (f, i) => (i === action.idx ? {...f, isAnimating: !f.isAnimating} : f)
+    )
+  });
 
 export const updateAnimationSpeedUpdater = (state, action) => ({
-  ...state,
-  filters: state.filters.map(
-    (f, i) => (i === action.idx ? {...f, speed: action.speed} : f)
-  )
-});
+    ...state,
+    filters: state.filters.map(
+        (f, i) => (i === action.idx ? {...f, speed: action.speed} : f)
+    )
+  });
 
 export const enlargeFilterUpdater = (state, action) => {
   const isEnlarged = state.filters[action.idx].enlarged;
@@ -468,8 +468,8 @@ export const removeLayerUpdater = (state, {idx}) => {
       ...layerData.slice(idx + 1, layerData.length)
     ],
     layerOrder: state.layerOrder
-      .filter(i => i !== idx)
-      .map(pid => (pid > idx ? pid - 1 : pid)),
+        .filter(i => i !== idx)
+        .map(pid => (pid > idx ? pid - 1 : pid)),
     clicked: layerToRemove.isLayerHovered(clicked) ? undefined : clicked,
     hoverInfo: layerToRemove.isLayerHovered(hoverInfo) ? undefined : hoverInfo,
     splitMaps: newMaps
@@ -477,9 +477,9 @@ export const removeLayerUpdater = (state, {idx}) => {
 };
 
 export const reorderLayerUpdater = (state, {order}) => ({
-  ...state,
-  layerOrder: order
-});
+    ...state,
+    layerOrder: order
+  });
 
 export const removeDatasetUpdater = (state, action) => {
   // extract dataset key
@@ -507,13 +507,13 @@ export const removeDatasetUpdater = (state, action) => {
 
   // remove layers and datasets
   const {newState} = indexes.reduce(
-    ({newState: currentState, indexCounter}, idx) => {
-      const currentIndex = idx - indexCounter;
-      currentState = removeLayerUpdater(currentState, {idx: currentIndex});
-      indexCounter++;
-      return {newState: currentState, indexCounter};
-    },
-    {newState: {...state, datasets: newDatasets}, indexCounter: 0}
+      ({newState: currentState, indexCounter}, idx) => {
+    const currentIndex = idx - indexCounter;
+    currentState = removeLayerUpdater(currentState, {idx: currentIndex});
+    indexCounter++;
+    return {newState: currentState, indexCounter};
+  },
+      {newState: {...state, datasets: newDatasets}, indexCounter: 0}
   );
 
   // remove filters
@@ -537,9 +537,9 @@ export const removeDatasetUpdater = (state, action) => {
 };
 
 export const updateLayerBlendingUpdater = (state, action) => ({
-  ...state,
-  layerBlending: action.mode
-});
+    ...state,
+    layerBlending: action.mode
+  });
 
 export const showDatasetTableUpdater = (state, action) => {
   return {
@@ -549,10 +549,10 @@ export const showDatasetTableUpdater = (state, action) => {
 };
 
 export const resetMapConfigVisStateUpdater = (state, action) => ({
-  ...INITIAL_VIS_STATE,
-  ...state.initialState,
-  initialState: state.initialState
-});
+    ...INITIAL_VIS_STATE,
+    ...state.initialState,
+    initialState: state.initialState
+  });
 
 /**
  * Loads custom configuration into state
@@ -589,29 +589,29 @@ export const receiveMapConfigUpdater = (state, action) => {
 };
 
 export const layerHoverUpdater = (state, action) => ({
-  ...state,
-  hoverInfo: action.info
-});
+    ...state,
+    hoverInfo: action.info
+  });
 
 export const layerClickUpdater = (state, action) => ({
-  ...state,
-  clicked: action.info && action.info.picked ? action.info : null
-});
+    ...state,
+    clicked: action.info && action.info.picked ? action.info : null
+  });
 
 export const mapClickUpdater = (state, action) => ({
-  ...state,
-  clicked: null
-});
+    ...state,
+    clicked: null
+  });
 
 export const toggleSplitMapUpdater = (state, action) =>
   state.splitMaps && state.splitMaps.length === 0
-    ? {
+      ? {
         ...state,
         // maybe we should use an array to store state for a single map as well
         // if current maps length is equal to 0 it means that we are about to split the view
         splitMaps: computeSplitMapLayers(state.layers)
       }
-    : closeSpecificMapAtIndex(state, action);
+  : closeSpecificMapAtIndex(state, action);
 
 /**
  * This is triggered when view is split into multiple maps.
@@ -705,8 +705,8 @@ export const toggleLayerForMapUpdater = (state, action) => {
 export const updateVisDataUpdater = (state, action) => {
   // datasets can be a single data entries or an array of multiple data entries
   const datasets = Array.isArray(action.datasets)
-    ? action.datasets
-    : [action.datasets];
+      ? action.datasets
+      : [action.datasets];
 
   if (action.config) {
     // apply config if passed from action
@@ -716,11 +716,11 @@ export const updateVisDataUpdater = (state, action) => {
   }
 
   const newDateEntries = datasets.reduce(
-    (accu, {info = {}, data}) => ({
+      (accu, {info = {}, data}) => ({
       ...accu,
       ...(createNewDataEntry({info, data}, state.datasets) || {})
     }),
-    {}
+      {}
   );
 
   if (!Object.keys(newDateEntries).length) {
@@ -754,7 +754,7 @@ export const updateVisDataUpdater = (state, action) => {
 
   if (mergedState.splitMaps.length) {
     const newLayers = mergedState.layers.filter(
-      l => l.config.dataId in newDateEntries
+        l => l.config.dataId in newDateEntries
     );
     // if map is splited, add new layers to splitMaps
     mergedState = {
@@ -769,7 +769,7 @@ export const updateVisDataUpdater = (state, action) => {
   // if no tooltips merged add default tooltips
   Object.keys(newDateEntries).forEach(dataId => {
     const tooltipFields =
-      mergedState.interactionConfig.tooltip.config.fieldsToShow[dataId];
+        mergedState.interactionConfig.tooltip.config.fieldsToShow[dataId];
     if (!Array.isArray(tooltipFields) || !tooltipFields.length) {
       mergedState = addDefaultTooltips(mergedState, newDateEntries[dataId]);
     }
@@ -794,11 +794,11 @@ function generateLayerMetaForSplitViews(layer) {
  */
 function computeSplitMapLayers(layers) {
   const mapLayers = layers.reduce(
-    (newLayers, currentLayer) => ({
+      (newLayers, currentLayer) => ({
       ...newLayers,
       [currentLayer.id]: generateLayerMetaForSplitViews(currentLayer)
     }),
-    {}
+      {}
   );
   return [
     {
@@ -845,23 +845,23 @@ function addNewLayersToSplitMap(splitMaps, layers) {
   // add new layer to both maps,
   //  don't override, if layer.id is already in splitMaps.settings.layers
   return splitMaps.map(settings => ({
-    ...settings,
-    layers: {
-      ...settings.layers,
-      ...newLayers.reduce(
-        (accu, newLayer) =>
-          newLayer.config.isVisible
-            ? {
-                ...accu,
-                [newLayer.id]: settings.layers[newLayer.id]
-                  ? settings.layers[newLayer.id]
-                  : generateLayerMetaForSplitViews(newLayer)
-              }
+      ...settings,
+      layers: {
+        ...settings.layers,
+        ...newLayers.reduce(
+            (accu, newLayer) =>
+            newLayer.config.isVisible
+                ? {
+                    ...accu,
+                    [newLayer.id]: settings.layers[newLayer.id]
+                        ? settings.layers[newLayer.id]
+                        : generateLayerMetaForSplitViews(newLayer)
+                }
             : accu,
-        {}
-      )
-    }
-  }));
+            {}
+        )
+      }
+    }));
 }
 
 /**
@@ -915,8 +915,8 @@ function closeSpecificMapAtIndex(state, action) {
   const newLayers = layers.map(layer =>
     layer.updateLayerConfig({
       isVisible: metaSettings.layers[layer.id]
-        ? metaSettings.layers[layer.id].isVisible
-        : layer.config.isVisible
+          ? metaSettings.layers[layer.id].isVisible
+          : layer.config.isVisible
     })
   );
 
@@ -933,49 +933,49 @@ export const loadFilesUpdater = (state, action) => {
   const {files} = action;
 
   const filesToLoad = files.map(fileBlob => ({
-    fileBlob,
-    info: {
-      id: generateHashId(4),
-      label: fileBlob.name,
-      size: fileBlob.size
-    },
-    handler: getFileHandler(fileBlob)
-  }));
+      fileBlob,
+      info: {
+        id: generateHashId(4),
+        label: fileBlob.name,
+        size: fileBlob.size
+      },
+      handler: getFileHandler(fileBlob)
+    }));
 
   // reader -> parser -> augment -> receiveVisData
   const loadFileTasks = [
     Task.all(filesToLoad.map(LOAD_FILE_TASK)).bimap(
-      results => {
-        const data = results.reduce((f, c) => ({
-          // using concat here because the current datasets could be an array or a single item
-          datasets: f.datasets.concat(c.datasets),
-          // we need to deep merge this thing unless we find a better solution
-          // this case will only happen if we allow to load multiple keplergl json files
-          config: {
-            ...f.config,
-            ...(c.config || {})
-          }
-        }), {datasets: [], config: {}, options: {centerMap: true}});
-        return addDataToMap(data);
-      },
-      error => loadFilesErr(error)
+        results => {
+          const data = results.reduce((f, c) => ({
+              // using concat here because the current datasets could be an array or a single item
+              datasets: f.datasets.concat(c.datasets),
+              // we need to deep merge this thing unless we find a better solution
+              // this case will only happen if we allow to load multiple keplergl json files
+              config: {
+                ...f.config,
+                ...(c.config || {})
+              }
+            }), {datasets: [], config: {}, options: {centerMap: true}});
+          return addDataToMap(data);
+        },
+        error => loadFilesErr(error)
     )
   ];
 
   return withTask(
-    {
-      ...state,
-      fileLoading: true
-    },
-    loadFileTasks
-  );
+      {
+        ...state,
+        fileLoading: true
+      },
+      loadFileTasks
+      );
 };
 
 export const loadFilesErrUpdater = (state, {error}) => ({
-  ...state,
-  fileLoading: false,
-  fileLoadingErr: error
-});
+    ...state,
+    fileLoading: false,
+    fileLoadingErr: error
+  });
 
 /**
  * helper function to update All layer domain and layer data of state
@@ -986,12 +986,12 @@ export const loadFilesErrUpdater = (state, {error}) => ({
  */
 export function addDefaultLayers(state, datasets) {
   const defaultLayers = Object.values(datasets).reduce(
-    (accu, dataset) => [
+      (accu, dataset) => [
       ...accu,
       ...(findDefaultLayer(dataset, state.layerClasses) || [])
     ],
-    []
-  );
+      []
+      );
   return {
     ...state,
     layers: [...state.layers, ...defaultLayers],
@@ -1048,18 +1048,18 @@ export function updateAllLayerDomainData(state, dataId, newFilter) {
     if (oldLayer.config.dataId && dataIds.includes(oldLayer.config.dataId)) {
       // No need to recalculate layer domain if filter has fixed domain
       const newLayer =
-        newFilter && newFilter.fixedDomain
+          newFilter && newFilter.fixedDomain
           ? oldLayer
           : oldLayer.updateLayerDomain(
               state.datasets[oldLayer.config.dataId],
               newFilter
-            );
+              );
 
       const {layerData, layer} = calculateLayerData(
-        newLayer,
-        state,
-        state.layerData[i]
-      );
+          newLayer,
+          state,
+          state.layerData[i]
+          );
 
       newLayers.push(layer);
       newLayerDatas.push(layerData);

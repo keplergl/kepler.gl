@@ -32,7 +32,7 @@ Use Node v6 and above, older node versions have not been tested
 Install node (`> 6`), yarn, and project dependencies
 
 ```
-npm install --save kepler.gl
+npm install --save ramesh-paul-kepler.gl
 ```
 
 Get a [Mapbox Access Token](https://www.mapbox.com/help/define-access-token/).
