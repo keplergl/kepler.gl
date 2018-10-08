@@ -26,7 +26,7 @@ For best results, use [nvm](https://github.com/creationix/nvm) `nvm install`.
 Install node (`> 6`), yarn, and project dependencies
 
 ```
-npm install --save ramesh-paul-kepler.gl
+npm install --save kepler.gl
 ```
 
 Get a [Mapbox Access Token](https://www.mapbox.com/help/define-access-token/).
