@@ -380,16 +380,16 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     }
 
     render() {
-      const {mapState, mapStyle, mapStateActions} = this.props;
+      const {
+        mapState, mapStyle, mapStateActions, mapLayers, layers, MapComponent,
+        datasets, mapboxApiAccessToken, mapControls, toggleMapControl
+      } = this.props;
       const {updateMap, onMapClick} = mapStateActions;
 
       if (!mapStyle.bottomMapStyle) {
         // style not yet loaded
         return <div/>;
       }
-
-      const {mapLayers, layers, datasets, mapboxApiAccessToken,
-        mapControls, toggleMapControl} = this.props;
 
       const mapProps = {
         ...mapState,
@@ -418,7 +418,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             onToggleFullScreen={mapStateActions.toggleFullScreen}
             onToggleMapControl={toggleMapControl}
           />
-          <this.props.MapComponent
+          <MapComponent
             {...mapProps}
             key="bottom"
             ref={this._setMapboxMap}
@@ -428,10 +428,10 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           >
             {this._renderOverlay()}
             {this._renderMapboxOverlays()}
-          </this.props.MapComponent>
+          </MapComponent>
           {mapStyle.topMapStyle && (
             <div style={MAP_STYLE.top}>
-              <this.props.MapComponent
+              <MapComponent
                 {...mapProps}
                 key="top"
                 mapStyle={mapStyle.topMapStyle}
