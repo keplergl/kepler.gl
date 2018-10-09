@@ -124,16 +124,19 @@ export const removeLayerDataComposed = (state, action) => {
   /* eslint-enable no-unused-vars */
 
   // get layer index 
-  const indexes = layers.reduce((listOfIndexes, layer, index) => {
+  let indexes = [];
+  layers.forEach((layer, index) => {
     if (layer.config.dataId === datasetKey) {
-      listOfIndexes.push(index);
+      indexes.push(index);
     }
-    return listOfIndexes;
-  }, []);
-  
-  function equals(array1, array2) {
+  });
+
+  function arrayEquals(array1, array2) {
     // if the other array is a falsy value, return
     if (!array2 || !array1)
+      return false;
+    // check if both are arrays
+    if (!Array.isArray(array1) || !Array.isArray(array2))
       return false;
     // compare lengths - can save a lot of time 
     if (array1.length !== array2.length)
@@ -142,7 +145,7 @@ export const removeLayerDataComposed = (state, action) => {
       // Check if we have nested arrays
       if (array1[i] instanceof Array && array2[i] instanceof Array) {
         // recurse into the nested arrays
-        if (!array1[i].equals(array2[i]))
+        if (!arrayEquals(array1[i], array2[i]))
           return false;
       } else if (array1[i] !== array2[i]) {
         // Warning - two different object instances will never be equal: {x:20} != {x:20}
@@ -156,7 +159,7 @@ export const removeLayerDataComposed = (state, action) => {
   indexes.forEach((index) => {
     state.visState.layerData[index].data = state.visState.layerData[index].data.filter((item, idx) => {
       return rows.every((row, pos) => {
-        return !equals(row, item.data);
+        return !arrayEquals(row, item.data);
       });
     });
   });
