@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 
 const getStyleClassFromColor = (totalColor, colors) =>
@@ -29,66 +29,67 @@ const getStyleClassFromColor = (totalColor, colors) =>
       ''
     );
 
-export default class Base extends Component {
-  static displayName = 'Base Icon';
+const Base = (props) => {
 
-  static propTypes = {
-    /** Set the height of the icon, ex. '16px' */
-    height: PropTypes.string,
-    /** Set the width of the icon, ex. '16px' */
-    width: PropTypes.string,
-    /** Set the viewbox of the svg */
-    viewBox: PropTypes.string,
-    /** Path element */
-    children: PropTypes.node,
+  const {
+    height,
+    width,
+    viewBox,
+    style = {},
+    children,
+    predefinedClassName,
+    className,
+    colors,
+    totalColor
+  } = props;
+  const svgHeight = height;
+  const svgWidth = width || svgHeight;
+  style.fill = 'currentColor';
 
-    predefinedClassName: PropTypes.string,
-    className: PropTypes.string
-  };
+  const fillStyle =
+    Array.isArray(colors) &&
+    totalColor &&
+    getStyleClassFromColor(totalColor, colors);
 
-  static defaultProps = {
-    height: null,
-    width: null,
-    viewBox: '0 0 64 64',
-    predefinedClassName: '',
-    className: ''
-  };
-
-  render() {
-    const {
-      height,
-      width,
-      viewBox,
-      style = {},
-      children,
-      predefinedClassName,
-      className,
-      colors,
-      totalColor,
-      ...props
-    } = this.props;
-    const svgHeight = height;
-    const svgWidth = width || svgHeight;
-    style.fill = 'currentColor';
-
-    const fillStyle =
-      Array.isArray(colors) &&
-      totalColor &&
-      getStyleClassFromColor(totalColor, colors);
-
-    return (
-      <svg
-        viewBox={viewBox}
-        width={svgWidth}
-        height={svgHeight}
-        style={style}
-        className={`${predefinedClassName} ${className}`}
-        {...props}
-      >
-        {fillStyle ?
-          <style type="text/css">{fillStyle}</style> : null}
-        {children}
-      </svg>
-    );
-  }
+  return (
+    <svg
+      viewBox={viewBox}
+      width={svgWidth}
+      height={svgHeight}
+      style={style}
+      className={`${predefinedClassName} ${className}`}
+      {...props}
+    >
+      {fillStyle ?
+        <style type="text/css">{fillStyle}</style> : null}
+      {children}
+    </svg>
+  );
 };
+
+Base.displayName = 'Base Icon';
+
+Base.defaultProps = {
+  height: null,
+  width: null,
+  viewBox: '0 0 64 64',
+  predefinedClassName: '',
+  className: ''
+};
+
+Base.propTypes = {
+  /** Set the height of the icon, ex. '16px' */
+  height: PropTypes.string,
+  /** Set the width of the icon, ex. '16px' */
+  width: PropTypes.string,
+  /** Set the viewbox of the svg */
+  viewBox: PropTypes.string,
+  /** Path element */
+  children: PropTypes.node,
+
+  predefinedClassName: PropTypes.string,
+  className: PropTypes.string
+};
+
+export default Base;
+
