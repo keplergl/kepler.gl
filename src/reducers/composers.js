@@ -124,7 +124,7 @@ export const removeLayerDataComposed = (state, action) => {
   /* eslint-enable no-unused-vars */
 
   // get layer index 
-  let indexes = [];
+  const indexes = [];
   layers.forEach((layer, index) => {
     if (layer.config.dataId === datasetKey) {
       indexes.push(index);
