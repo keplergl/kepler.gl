@@ -45,6 +45,7 @@ import Processors from 'kepler.gl/processors';
 /* eslint-enable no-unused-vars */
 
 const bannerHeight = 30;
+const BannerKey = 'kgHideBanner-iiba';
 
 const GlobalStyleDiv = styled.div`
   font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
@@ -79,11 +80,9 @@ class App extends Component {
 
   componentDidMount() {
     // delay 2s to show the banner
-    /* disable show banners
-    if (!window.localStorage.getItem('kgHideBanner')) {
+    if (!window.localStorage.getItem(BannerKey)) {
       window.setTimeout(this._showBanner, 3000);
     }
-    */
     // load sample data
     // this._loadSampleData();
   }
@@ -109,7 +108,7 @@ class App extends Component {
 
   _disableBanner = () => {
     this._hideBanner();
-    window.localStorage.setItem('kgHideBanner', 'true');
+    window.localStorage.setItem(BannerKey, 'true');
   };
 
   _loadSampleData() {
@@ -193,6 +192,7 @@ class App extends Component {
         <Banner
           show={this.state.showBanner}
           height={bannerHeight}
+          bgColor="#82368c"
           onClose={this._hideBanner}
         >
           <Announcement onDisable={this._disableBanner}/>
@@ -217,7 +217,6 @@ class App extends Component {
             width={width}
             height={height - (showBanner ? bannerHeight : 0)}
           />
-
         </div>
       </GlobalStyleDiv>
     );
