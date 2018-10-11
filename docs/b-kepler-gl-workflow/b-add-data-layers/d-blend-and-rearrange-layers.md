@@ -1,10 +1,25 @@
 # Blend and Rearrange Layers
-Rearrange layers by dragging and dropping them in the Layers panel. The layers at the top of the list will be displayed in the foreground of the map. 
-![Rearrange layers](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image44.png "Rearrange layers")
+<p align="center">
+  <b>Rearrange layers by dragging and dropping them in the Layers panel. The layers at the top of the list will be displayed in the foreground of the map. 
+</b>
+  <br><br>
+  
+  ![Rearrange layers](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image44.png "Rearrange layers")
+  
+  <br><br>
+</p>
 
-Blend layers by selecting an option from the dropdown at the bottom of the Layers panel.
-![Blend layers](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image10.png "Blend layers")
-There are three different ways to blend layers: Normal, Additive, and Subtractive.
+<p align="center">
+  <b>Blend layers by selecting an option from the dropdown at the bottom of the Layers panel.</b>
+  <br><br>
+  
+  ![Blend layers](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image10.png "Blend layers")
+  
+  <br><br>
+  <b>There are three different ways to blend layers: Normal, Additive, and Subtractive.</b>
+  <br><br>
+</p>
+
 
 ## Normal Blending
 Normal layer blending does not alter the color values of overlapping data points. 
