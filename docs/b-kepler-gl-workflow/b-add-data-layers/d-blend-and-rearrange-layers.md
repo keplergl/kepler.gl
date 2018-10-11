@@ -3,8 +3,7 @@
   <b>Rearrange layers by dragging and dropping them in the Layers panel. The layers at the top of the list will be displayed in the foreground of the map. 
 </b>
   <br><br>
-  
-  ![Rearrange layers](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image44.png "Rearrange layers")
+  <img src="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image44.png" alt="Rearrange layers"/>
   
   <br><br>
 </p>
@@ -12,9 +11,7 @@
 <p align="center">
   <b>Blend layers by selecting an option from the dropdown at the bottom of the Layers panel.</b>
   <br><br>
-  
-  ![Blend layers](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image10.png "Blend layers")
-  
+  <img src="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image10.png" alt="Blend layers"/>
   <br><br>
   <b>There are three different ways to blend layers: Normal, Additive, and Subtractive.</b>
   <br><br>
