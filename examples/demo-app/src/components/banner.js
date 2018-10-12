@@ -34,7 +34,7 @@ const StyledBanner = styled.div`
   transition: top 1s;
   width: 100%;
   z-index: 9999;
-  
+
   svg:hover {
     cursor: pointer;
   }
