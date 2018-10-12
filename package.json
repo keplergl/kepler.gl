@@ -1,8 +1,8 @@
 {
-  "name": "kepler.gl",
-  "author": "Shan He <shan@uber.com>",
+  "name": "ramesh-paul-kepler.gl",
+  "author": "Ramesh Paul <chrb.rameshbabu@gmail.com>",
   "version": "0.1.6",
-  "description": "kepler.gl is a webgl based application to visualize large scale location data in the browser",
+  "description": "This is fork of kepler.gl, which is a webgl based application to visualize large scale location data in the browser",
   "license": "MIT",
   "main": "dist/index.js",
   "engines": {

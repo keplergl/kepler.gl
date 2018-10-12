@@ -1,3 +1,12 @@
+### This is fork of [kepler.gl](https://github.com/uber/kepler.gl) 
+# Features Added
+- Add dataset to the layer
+- Remove dataset from the layer
+
+# Features in development
+- Layer click events
+- Draw ploygon on the layer & export geojson
+- Add custom markers/images to the layers
 # Kepler.gl
 
 [kepler.gl](http://www.kepler.gl/) is a data-agnostic, high-performance web-based application for visual exploration of large-scale geolocation data sets. Built on top of [deck.gl](http://uber.github.io/deck.gl/#/), kepler.gl can render millions of points representing thousands of trips and perform spatial aggregations on the fly.
@@ -26,7 +35,7 @@ For best results, use [nvm](https://github.com/creationix/nvm) `nvm install`.
 Install node (`> 6`), yarn, and project dependencies
 
 ```
-npm install --save kepler.gl
+npm install --save rameshpaul-kepler.gl
 ```
 
 Get a [Mapbox Access Token](https://www.mapbox.com/help/define-access-token/).
@@ -366,7 +375,7 @@ It is also important to remember that Kepler.gl provides an easy API (```KeplerG
 ##### addDataToMap
 This method is similar to UpdateVisData but it is able to update the full kepler.gl configuration (mapState, mapStyle, visState).
 This action takes an object as input with the following properties:
-```js
+```
 {
     datasets | object: same as UpdateVisData
     options | object: same as UpdateVisData
@@ -376,7 +385,7 @@ This action takes an object as input with the following properties:
 It is important to notice that the config object value will always have higher precedence than the options properties.
 For instance, if you provide ```{centerMap: true}``` as part of the options object and in your config object you pass
 the mapState configuration with latitude and longitude define as it follows:
-```js
+```
 config: {
   mapState: {
     latitude: 33.88608913680742,
@@ -390,7 +399,6 @@ the latter will be applied and the map view will be moved the defined coordinate
 This method is similar to addDataToMap and also takes dataset key column to update the layer data.
 This action takes an object as input with the following properties:
 ```
-js
 {
     datasets | object: same as UpdateVisData
     config | object: this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}.
@@ -403,11 +411,9 @@ js
 This method is similar to removeLayerData and also takes dataset key column to update the layer data.
 This action takes an object as input with the following properties:
 ```
-js
 {
     datasets | object: same as UpdateVisData
     key | string: dataset column 
     
 }
 ```
- 
