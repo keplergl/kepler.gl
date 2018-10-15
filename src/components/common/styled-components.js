@@ -163,9 +163,10 @@ export const Tooltip = styled(ReactTooltip)`
   }
 `;
 
-export const Button = styled.div.attrs({
+export const Button = styled.button.attrs({
   className: 'button'
 })`
+  border: none;
   align-items: center;
   background-color: ${props =>
     props.negative
