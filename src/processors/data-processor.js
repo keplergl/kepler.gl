@@ -106,6 +106,7 @@ function cleanUpFalsyCsvValue(rows) {
     }
   }
 }
+
 /**
  * Process uploaded csv file to parse value by field type
  *
@@ -217,6 +218,7 @@ export function renameDuplicateFields(fieldOrder) {
  * @param {string} aType
  * @returns {string} corresponding type in ALL_FIELD_TYPES
  */
+
 /* eslint-disable complexity */
 export function analyzerTypeToFieldType(aType) {
   const {
@@ -263,6 +265,7 @@ export function analyzerTypeToFieldType(aType) {
       return ALL_FIELD_TYPES.string;
   }
 }
+
 /* eslint-enable complexity */
 
 /*
@@ -341,7 +344,7 @@ export function formatCsv(data, fields) {
         (d, i) => d && GEOJSON_FIELDS.geojson.includes(fields[i].name) ?
           JSON.stringify(d) : d
       )
-    )
+    );
   });
 
   return csvFormatRows(formattedData);
@@ -419,11 +422,42 @@ export function validateInputData(data) {
   return {fields: updatedFields, rows};
 }
 
+/**
+ *
+ * Prune rows of a dataset to a fixed length, append nulls to rows missing
+ * elements, slice rows that have extra.
+ * @param {Array} rows
+ * @param {Number} length
+ * @return {Array} - clean rows
+ */
+export function pruneRows(rows, length) {
+  return rows.reduce((accu, row) => {
+    if (!Array.isArray(row)) {
+      return accu;
+    }
+
+    if (row.length === length) {
+      accu.push(row);
+      return accu;
+    }
+
+    const cleaned = row.length > length ?
+      // row has extra element
+      row.slice(0, length) :
+      // row has missing element
+      row.concat(new Array(length - row.length).fill(null));
+
+    accu.push(cleaned);
+    return accu;
+  }, []);
+}
+
 export default {
   processGeojson,
   processCsvData,
   processRowObject,
   analyzerTypeToFieldType,
   getFieldsFromData,
-  parseCsvDataByFieldType
+  parseCsvDataByFieldType,
+  pruneRows
 };

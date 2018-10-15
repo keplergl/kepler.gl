@@ -26,7 +26,7 @@ const ActionTypes = keyMirror({
   ADD_DATA: null,
   ADD_FILTER: null,
   ADD_LAYER: null,
-  ADD_LAYER_DATA: null,
+  APPEND_ROWS_TO_DATASET: null,
   INTERACTION_CONFIG_CHANGE: null,
   LAYER_CONFIG_CHANGE: null,
   LAYER_VISUAL_CHANNEL_CHANGE: null,

@@ -20,7 +20,7 @@
 
 import test from 'tape';
 import keplerGlReducer from 'reducers';
-import {addDataToMapComposed, removeLayerDataComposed, addLayerDataComposed} from 'reducers/composers';
+import {addDataToMapComposed, removeLayerDataComposed, appendRowsToDatasetComposed} from 'reducers/composers';
 import {keplerGlInit} from 'actions/actions';
 import {coreReducerFactory} from 'reducers/core';
 import {registerEntry} from 'actions/identity-actions';
@@ -190,7 +190,7 @@ test('#composerStateReducer - removeLayerDataComposed: visState.layerData', t =>
   t.end();
 });
 
-test('#composerStateReducer - addLayerDataComposed: visState.datasets', t => {
+test('#composerStateReducer - appendRowsToDatasetComposed: visState.datasets', t => {
   // init kepler.gl root and instance
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
 
@@ -218,7 +218,7 @@ test('#composerStateReducer - addLayerDataComposed: visState.datasets', t => {
     [14.29, 26.64, 23.1, 59.34]
   ];
 
-  let addState = addLayerDataComposed(newState, {
+  let addState = appendRowsToDatasetComposed(newState, {
     payload: {
       datasets: {
         data: {

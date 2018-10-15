@@ -1,12 +1,3 @@
-### This is fork of [kepler.gl](https://github.com/uber/kepler.gl) 
-# Features Added
-- Add dataset to the layer
-- Remove dataset from the layer
-
-# Features in development
-- Layer click events
-- Draw ploygon on the layer & export geojson
-- Add custom markers/images to the layers
 # Kepler.gl
 
 [kepler.gl](http://www.kepler.gl/) is a data-agnostic, high-performance web-based application for visual exploration of large-scale geolocation data sets. Built on top of [deck.gl](http://uber.github.io/deck.gl/#/), kepler.gl can render millions of points representing thousands of trips and perform spatial aggregations on the fly.
@@ -368,8 +359,9 @@ const myCustomHeaderFactory = () => withState(
 In order to interact with a kepler.gl instance and add new data to it the following methods are available:
 - updateVisData
 - addDataToMap
-- addLayerData
+- appendRowsToDataset
 - removeLayerData
+
 It is also important to remember that Kepler.gl provides an easy API (```KeplerGlSchema.getConfigToSave```) to generate a dump of the current kepler instance configuration.
 
 ##### addDataToMap
@@ -395,7 +387,7 @@ config: {
 ```
 the latter will be applied and the map view will be moved the defined coordinates.
 
-##### addLayerData
+##### appendRowsToDataset
 This method is similar to addDataToMap and also takes dataset key column to update the layer data.
 This action takes an object as input with the following properties:
 ```
@@ -408,7 +400,7 @@ This action takes an object as input with the following properties:
 ```
 
 ##### removeLayerData
-This method is similar to removeLayerData and also takes dataset key column to update the layer data.
+This method takes dataset key column and datasets object to remove rows from the layer dataset.
 This action takes an object as input with the following properties:
 ```
 {

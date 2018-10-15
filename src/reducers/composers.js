@@ -26,6 +26,7 @@ import {receiveMapConfigUpdater as stateMapConfigUpdater} from './map-state-upda
 import {receiveMapConfigUpdater as styleMapConfigUpdater} from './map-style-updaters';
 import {findMapBounds} from 'utils/data-utils';
 import KeplerGlSchema from 'schemas';
+import {pruneRows} from '../processors/data-processor';
 // compose action to apply result multiple reducers, with the output of one
 
 /**
@@ -56,10 +57,10 @@ export const updateVisDataComposed = (state, action) => {
     ...state,
     visState,
     mapState: bounds
-        ? fitBoundsUpdater(state.mapState, {
-          payload: bounds
-        })
-        : state.mapState,
+      ? fitBoundsUpdater(state.mapState, {
+        payload: bounds
+      })
+      : state.mapState,
     uiState: {
       ...toggleModalUpdater(state.uiState, {payload: null}),
       ...(options.hasOwnProperty('readOnly') ? {readOnly: options.readOnly} : {})
@@ -171,7 +172,7 @@ export const removeLayerDataComposed = (state, action) => {
  * @param action {datasets, options, config}
  * @returns state
  */
-export const addLayerDataComposed = (state, action) => {
+export const appendRowsToDatasetComposed = (state, action) => {
   // check if dataset rows are present
   const {key: datasetKey, options, datasets: newDatasets, config} = action.payload;
   const {datasets: oldDatasets} = state.visState;
@@ -186,39 +187,24 @@ export const addLayerDataComposed = (state, action) => {
     return state;
   }
 
+  // prune rows before merging with datasets
+  const newDataRows = pruneRows(newDatasets.data.rows, oldDatasets[datasetKey].data[0].length);
+
   // merge old  and new datasets
-  const datasets = {data: {
+  const datasets = {
+    data: {
       fields: [...oldDatasets[datasetKey].fields],
-      rows: [...newDatasets.data.rows, ...oldDatasets[datasetKey].data]
+      rows: [...newDataRows, ...oldDatasets[datasetKey].data]
     },
     info: {id: oldDatasets[datasetKey].id, label: oldDatasets[datasetKey].label}
   };
 
-  let parsedConfig = config;
-
-  if (config && config.config && config.version) {
-    // if passed in saved config
-    parsedConfig = KeplerGlSchema.parseSavedConfig(config);
-  }
-
-  // Update visState store
-  let mergedState = updateVisDataComposed(state, {datasets, options, config: parsedConfig && parsedConfig.visState});
-  // Update mapState store
-  mergedState = {
-    ...mergedState,
-    mapState: stateMapConfigUpdater(mergedState.mapState, {payload: {mapState: parsedConfig && parsedConfig.mapState}})
-  };
-  // Update mapStyle store
-  mergedState = {
-    ...mergedState,
-    mapStyle: styleMapConfigUpdater(mergedState.mapStyle, {payload: {mapStyle: parsedConfig && parsedConfig.mapStyle}})
-  };
-  return mergedState;
+  return addDataToMapComposed(state, {payload: {datasets, config, key: datasetKey, options}});
 };
 const compostedUpdaters = {
   [ActionTypes.UPDATE_VIS_DATA]: updateVisDataComposed,
   [ActionTypes.ADD_DATA_TO_MAP]: addDataToMapComposed,
   [ActionTypes.REMOVE_DATA_ROWS]: removeLayerDataComposed,
-  [ActionTypes.ADD_LAYER_DATA]: addLayerDataComposed
+  [ActionTypes.APPEND_ROWS_TO_DATASET]: appendRowsToDatasetComposed
 };
 export default compostedUpdaters;
