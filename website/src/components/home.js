@@ -32,6 +32,11 @@ import Features from './features';
 import Footer from './footer';
 import Section from './common/section';
 import Header from './header';
+import Banner from '../../../examples/demo-app/src/components/banner';
+import Announcement from '../../../examples/demo-app/src/components/announcement';
+
+const BannerKey = 'kgHideBanner-iiba';
+const BannerHeight = 30;
 
 const SECTION_CONTENT = {
   showcase: Showcase,
@@ -42,10 +47,37 @@ const SECTION_CONTENT = {
 };
 
 export default class Home extends PureComponent {
+  state = {
+    showBanner: false
+  };
+
+  componentDidMount() {
+    // delay 2s to show the banner
+    if (!window.localStorage.getItem(BannerKey)) {
+      window.setTimeout(this._showBanner, 3000);
+    }
+  }
+
+  _showBanner = () => {
+    this.setState({showBanner: true});
+  };
+
+  _hideBanner = () => {
+    this.setState({showBanner: false});
+  };
+
   render() {
     return (
       <ThemeProvider theme={theme}>
         <div>
+          <Banner
+            show={this.state.showBanner}
+            height={BannerHeight}
+            bgColor="#82368c"
+            onClose={this._hideBanner}
+          >
+            <Announcement onDisable={this._disableBanner}/>
+          </Banner>
           <Header/>
           <Hero />
           {SECTIONS.map(

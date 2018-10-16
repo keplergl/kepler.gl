@@ -43,8 +43,8 @@ const FormLink = 'https://www.informationisbeautifulawards.com/showcase/3082-kep
 
 const Announcement = ({onDisable}) => (
   <StyledText>
-    <span>Kepler.gl is shortlisted in the Information is Beautiful Award. Vote for us at </span>
-    <StyledLink target="_blank" href={FormLink}>this link</StyledLink>
+    <span>Kepler.gl is shortlisted in the Information is Beautiful Award.  </span>
+    <StyledLink target="_blank" href={FormLink}>Vote for us</StyledLink>
     <span>  before Fri 19th Oct!</span>
     {onDisable ? <DisableBanner>
       <StyledLink onClick={onDisable}>Already Voted!</StyledLink>

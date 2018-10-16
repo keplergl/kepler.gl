@@ -45,7 +45,7 @@ const Banner = ({bgColor = '#1F7CF4', fontColor = '#FFFFFF', height = 30, childr
   bgColor={bgColor}
   fontColor={fontColor}
   height={height}
-  style={{top: show ? 0 : `-${height}px`}}>
+  style={{top: show ? 0 : `-100px`}}>
     <div>
       {children}
     </div>
