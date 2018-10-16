@@ -73,7 +73,7 @@ const KeplerGlLogo = ({appName = KEPLER_GL_NAME, version = KEPLER_GL_VERSION}) =
     </LogoSvgWrapper>
     <LogoTitle className="logo__title">
       <LogoName className="logo__name">
-        <a className="logo__link" target="_blank" href={KEPLER_GL_WEBSITE} rel={KEPLER_GL_WEBSITE}>{appName}</a>
+        <a className="logo__link" target="_blank" rel="noopener noreferrer" href={KEPLER_GL_WEBSITE}>{appName}</a>
       </LogoName>
       {version ? <LogoVersion className="logo__version">{version}</LogoVersion> : null}
     </LogoTitle>
