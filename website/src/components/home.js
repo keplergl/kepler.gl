@@ -66,6 +66,11 @@ export default class Home extends PureComponent {
     this.setState({showBanner: false});
   };
 
+  _disableBanner = () => {
+    this._hideBanner();
+    window.localStorage.setItem(BannerKey, 'true');
+  };
+
   render() {
     return (
       <ThemeProvider theme={theme}>
