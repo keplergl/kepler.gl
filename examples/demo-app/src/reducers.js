@@ -34,7 +34,7 @@ import {
 } from './actions';
 
 import {DEFAULT_LOADING_METHOD, LOADING_METHODS} from './constants/default-settings';
-import {generateHashId} from "../../../src/utils/utils";
+import {generateHashId} from 'kepler.gl/utils/utils';
 
 // INITIAL_APP_STATE
 const initialAppState = {
