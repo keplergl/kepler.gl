@@ -30,6 +30,7 @@ import {Icons} from 'kepler.gl/components/';
 import {LOADING_METHODS, QUERY_TYPES, ASSETS_URL} from '../../constants/default-settings';
 
 import SampleMapGallery from './sample-data-viewer';
+import LoadRemoteMap from './load-remote-map';
 
 const propTypes = {
   // query options
@@ -39,7 +40,8 @@ const propTypes = {
 
   // call backs
   onFileUpload: PropTypes.func.isRequired,
-  onLoadSampleData: PropTypes.func.isRequired,
+  onLoadRemoteMap: PropTypes.func.isRequired,
+  onLoadSample: PropTypes.func.isRequired,
   onSetLoadingMethod: PropTypes.func.isRequired
 };
 
@@ -154,12 +156,17 @@ class LoadDataModal extends Component {
                 {loadingMethod.id === 'upload' ? (
                   <FileUpload onFileUpload={this.props.onFileUpload} />
                 ) : null}
+                {loadingMethod.id === 'remote' ? (
+                  <LoadRemoteMap
+                    onLoadRemoteMap={this.props.onLoadRemoteMap}
+                  />
+                ) : null}
                 {loadingMethod.id === 'sample' ? (
                   <SampleMapGallery
                     sampleData={currentOption}
                     sampleMaps={sampleMaps}
                     back={() => this.props.onSetLoadingMethod(previousMethod.id)}
-                    onLoadSampleData={this.props.onLoadSampleData}/>
+                    onLoadSample={this.props.onLoadSample} />
                 ) : null}
               </div>)
           }

@@ -28,7 +28,7 @@ const numFormat = format(',');
 
 const propTypes = {
   sampleData: PropTypes.object.isRequired,
-  onLoadSampleData: PropTypes.func.isRequired,
+  onLoadSample: PropTypes.func.isRequired,
   back: PropTypes.func.isRequired
 };
 
@@ -123,7 +123,7 @@ const SampleMap = ({sample, onClick}) => (
   </StyledSampleMap>
 );
 
-const SampleMapGallery = ({sampleData, sampleMaps, onLoadSampleData, back}) => (
+const SampleMapGallery = ({sampleData, sampleMaps, onLoadSample, back}) => (
   <div className="sample-data-modal">
     <BackLink onClick={back}>
       <Icons.LeftArrow height="12px" />
@@ -134,7 +134,7 @@ const SampleMapGallery = ({sampleData, sampleMaps, onLoadSampleData, back}) => (
         <SampleMap
           sample={sp}
           key={sp.id}
-          onClick={() => onLoadSampleData(sp)}
+          onClick={() => onLoadSample(sp)}
         />
       ))}
     </StyledSampleGallery>

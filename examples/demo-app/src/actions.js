@@ -19,8 +19,8 @@
 // THE SOFTWARE.
 
 import {push} from 'react-router-redux';
-import {text as requestText, json as requestJson} from 'd3-request';
-import {toggleModal} from 'kepler.gl/actions';
+import {request, text as requestText, json as requestJson} from 'd3-request';
+import {loadFiles, toggleModal} from 'kepler.gl/actions';
 import {console as Console} from 'global/window';
 import {MAP_CONFIG_URL} from './constants/sample-maps';
 
@@ -39,12 +39,12 @@ export function setLoadingMethod(method) {
   };
 }
 
-export function loadResponseFromRemoteFile(response, config, map) {
+export function loadResponseFromRemoteFile(response, config, options) {
   return {
     type: LOAD_REMOTE_FILE_DATA_SUCCESS,
     response,
     config,
-    map
+    options
   };
 }
 
@@ -62,45 +62,155 @@ export function setLoadingMapStatus(isMapLoading) {
   };
 }
 
-export function loadSampleMap(sample) {
+// This can be moved into Kepler.gl to provide ability to load data from remote URLs
+/**
+ * The method is able to load both data and kepler.gl files.
+ * It uses loadFile action to dispatcha and add new datasets/configs
+ * to the kepler.gl instance
+ * @param options
+ * @returns {Function}
+ */
+export function loadRemoteMap(options) {
+  return dispatch => {
+    loadRemoteRawData(options.dataUrl).then(
+      file => {
+        dispatch(loadFiles([
+          // In this part we turn the response into a FileBlob
+          // so we can use it to call loadFiles
+          new File([file], options.dataUrl)
+        ]));
+      }
+    );
+    dispatch(setLoadingMapStatus(true));
+  }
+}
+
+/**
+ * Load a file from a remote URL
+ * @param url
+ * @returns {Promise<any>}
+ */
+function loadRemoteRawData(url) {
+  if (!url) {
+    // TODO: we should return reject with an appropriate error
+    return Promise.resolve(null)
+  }
+
+  return new Promise((resolve, reject) => {
+    request(url, (error, result) => {
+        error ? reject(error) : resolve(result.response)
+    })
+  });
+}
+
+// The following methods are only used to load SAMPLES
+/**
+ *
+ * @param options {
+    required "dataUrl": "https://raw.githubusercontent.com/uber-web/kepler.gl-data/master/earthquakes/data.csv",
+    optional "configUrl": "https://raw.githubusercontent.com/uber-web/kepler.gl-data/master/earthquakes/config.json"
+    optional "id": "earthquakes",
+    optional "label": "California Earthquakes",
+    optional "queryType": "sample",
+    optional "imageUrl": "https://s3.amazonaws.com/uber-static/kepler.gl/sample/earthquakes.png",
+    optional "description": "Location, maginitude and magtype of 2.5+ magnitude earthquakes in california.",
+    optional "size": 54936
+  },
+ * @returns {Function}
+ */
+export function loadSample(options) {
   return (dispatch, getState) => {
     const {routing} = getState();
-    dispatch(push(`/demo/${sample.id}${routing.locationBeforeTransitions.search}`));
-    dispatch(loadRemoteMap(sample));
+    if (options.id) {
+      dispatch(push(`/demo/${options.id}${routing.locationBeforeTransitions.search}`));
+    }
+    dispatch(loadRemoteSampleMap(options));
     dispatch(setLoadingMapStatus(true));
   };
 }
 
-function loadMapCallback(dispatch, error, result, sample, config) {
-  if (error) {
-    Console.warn(`Error loading datafile ${sample.dataUrl}`);
-    // dispatch(ERROR)
-  } else {
-    dispatch(loadResponseFromRemoteFile(result, config, sample));
-    dispatch(toggleModal(null));
+/**
+ * Load remote map with config and data
+ * @param options {configUrl, dataUrl}
+ * @returns {Function}
+ */
+function loadRemoteSampleMap(options) {
+  return (dispatch) => {
+    // Load configuration first
+    const {configUrl, dataUrl} = options;
+
+    Promise
+      .all([loadRemoteConfig(configUrl), loadRemoteData(dataUrl)])
+      .then(
+        ([config, data]) => loadMapCallback(dispatch, null, data, options, config),
+        error => {
+          if (error) {
+            Console.warn(`Error loading map data`);
+            Console.warn(options);
+            Console.warn(error)
+          }
+        }
+      );
   }
 }
 
-function loadRemoteMap(sample) {
-  return (dispatch) => {
-    // Load configuration first
-    requestJson(sample.configUrl, (confError, config) => {
-      if (confError) {
-        Console.warn(`Error loading config file ${sample.configUrl}`);
-        // dispatch(error)
-        return;
-      }
+/**
+ *
+ * @param url
+ * @returns {Promise<any>}
+ */
+function loadRemoteConfig(url) {
+  if (!url) {
+    // TODO: we should return reject with an appropriate error
+    return Promise.resolve(null)
+  }
 
-      let requestMethod = requestText;
-      if (sample.dataUrl.includes('.json') || sample.dataUrl.includes('.geojson')) {
-        requestMethod = requestJson;
-      }
-
-      // Load data
-      requestMethod(sample.dataUrl, (dataError, result) => {
-        loadMapCallback(dispatch, dataError, result, sample, config);
-      });
+  return new Promise((resolve, reject) => {
+    requestJson(url, (error, config) => {
+      error ? reject(error) : resolve(config)
     })
+  })
+}
+
+/**
+ *
+ * @param url to fetch data from (csv, json, geojson)
+ * @returns {Promise<any>}
+ */
+function loadRemoteData(url) {
+  if (!url) {
+    // TODO: we should return reject with an appropriate error
+    return Promise.resolve(null)
+  }
+
+  let requestMethod = requestText;
+  if (url.includes('.json') || url.includes('.geojson')) {
+    requestMethod = requestJson;
+  }
+
+  // Load data
+  return new Promise((resolve, reject) => {
+    requestMethod(url, (error, result) => {
+      // TODO: we need to let users know about CORS issues
+      error ? reject(error) : resolve(result)
+    })
+  });
+}
+
+/**
+ *
+ * @param dispatch
+ * @param error
+ * @param result
+ * @param options
+ * @param config
+ */
+function loadMapCallback(dispatch, error, result, options, config) {
+  if (error) {
+    Console.warn(`Error loading datafile ${options.dataUrl}`);
+  } else {
+    dispatch(loadResponseFromRemoteFile(result, config, options));
+    dispatch(toggleModal(null));
   }
 }
 
@@ -111,21 +221,19 @@ function loadRemoteMap(sample) {
  * @returns {function(*)}
  */
 export function loadSampleConfigurations(sampleMapId = null) {
-  return (dispatch) => {
+  return dispatch => {
     requestJson(MAP_CONFIG_URL, (error, samples) => {
       if (error) {
         Console.warn(`Error loading sample configuration file ${MAP_CONFIG_URL}`);
       } else {
         dispatch(loadMapSampleFile(samples));
         // Load the specified map
-        if (sampleMapId) {
-          const map = samples.find(s => s.id === sampleMapId);
-          if (map) {
-            dispatch(loadRemoteMap(map));
-            dispatch(setLoadingMapStatus(true));
-          }
+        const map = sampleMapId && samples.find(s => s.id === sampleMapId);
+        if (map) {
+          dispatch(loadSample(map));
         }
       }
     });
   }
 }
+

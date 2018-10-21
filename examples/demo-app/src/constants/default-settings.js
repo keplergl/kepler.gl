@@ -61,6 +61,10 @@ export const LOADING_METHODS = [
     ]
   },
   {
+    id: 'remote',
+    label: 'Load Map using URL'
+  },
+  {
     id: 'sample',
     label: 'Sample Data',
     options: [

@@ -57,6 +57,12 @@ function readCSVFile(fileBlob) {
   });
 }
 
+/**
+ *
+ * @param fileBlob
+ * @param processor
+ * @returns {*}
+ */
 export function loadCsv(fileBlob, processor = processCsvData) {
   return readCSVFile(fileBlob).then(
     rawData => (rawData ? processor(rawData) : null)

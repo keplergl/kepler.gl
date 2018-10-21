@@ -34,6 +34,7 @@ import {
 } from './actions';
 
 import {DEFAULT_LOADING_METHOD, LOADING_METHODS} from './constants/default-settings';
+import {generateHashId} from "../../../src/utils/utils";
 
 // INITIAL_APP_STATE
 const initialAppState = {
@@ -76,11 +77,18 @@ const demoReducer = combineReducers({
 });
 
 // this can be moved into a action and call kepler.gl action
+/**
+ *
+ * @param state
+ * @param action {map: resultset, config, map}
+ * @returns {{app: {isMapLoading: boolean}, keplerGl: {map: (state|*)}}}
+ */
 export const loadRemoteFileDataSuccess = (state, action) => {
-  const datasetId = action.map.id;
-  const {dataUrl} = action.map;
+  // TODO: replace generate with a different function
+  const datasetId = action.options.id || generateHashId(6);
+  const {dataUrl} = action.options;
   let processorMethod = Processor.processCsvData;
-
+  // TODO: create helper to determine file ext eligibility
   if (dataUrl.includes('.json') || dataUrl.includes('.geojson')) {
     processorMethod = Processor.processGeojson;
   }
@@ -92,7 +100,8 @@ export const loadRemoteFileDataSuccess = (state, action) => {
     data: processorMethod(action.response)
   };
 
-  const config = KeplerGlSchema.parseSavedConfig(action.config);
+  const config = action.config ?
+    KeplerGlSchema.parseSavedConfig(action.config) : null;
 
   const keplerGlInstance = combineUpdaters.addDataToMapComposed(
     state.keplerGl.map, // "map" is the id of your kepler.gl instance
