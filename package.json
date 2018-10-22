@@ -2,7 +2,8 @@
   "name": "kepler.gl",
   "author": "Shan He <shan@uber.com>",
   "version": "0.1.6",
-  "description": "kepler.gl is a webgl based application to visualize large scale location data in the browser",
+  "description":
+    "kepler.gl is a webgl based application to visualize large scale location data in the browser",
   "license": "MIT",
   "main": "dist/index.js",
   "engines": {
@@ -10,14 +11,7 @@
     "npm": ">=5.4.2",
     "yarn": ">=0.27.5"
   },
-  "keywords": [
-    "babel",
-    "es6",
-    "react",
-    "webgl",
-    "visualization",
-    "deck.gl"
-  ],
+  "keywords": ["babel", "es6", "react", "webgl", "visualization", "deck.gl"],
   "repository": {
     "type": "git",
     "url": "https://github.com/uber/kepler.gl.git"
@@ -25,24 +19,34 @@
   "scripts": {
     "install:example": "cd examples/demo-app && npm i",
     "install-and-start": "node ./scripts/install-and-start",
-    "fast-test": "NODE_ENV=test babel-tape-runner ./test/node.js && NODE_ENV=test babel-tape-runner -r ./test/setup-browser-env.js ./test/browser.js",
-    "test-browser": "NODE_ENV=test babel-tape-runner -r ./test/setup-browser-env.js ./test/browser.js",
+    "fast-test":
+      "NODE_ENV=test babel-tape-runner ./test/node.js && NODE_ENV=test babel-tape-runner -r ./test/setup-browser-env.js ./test/browser.js",
+    "test-browser":
+      "NODE_ENV=test babel-tape-runner -r ./test/setup-browser-env.js ./test/browser.js",
     "test-node": "NODE_ENV=test babel-tape-runner ./test/node.js | tap-spec",
     "test": "npm run test-node && npm run test-browser",
-    "cover": "nyc --reporter html --reporter cobertura --reporter json-summary npm test && nyc report",
+    "cover":
+      "nyc --reporter html --reporter cobertura --reporter json-summary npm test && nyc report",
     "start": "npm run install-and-start -- examples/demo-app start-local",
-    "start:custom-layer": "npm run install-and-start -- examples/custom-layer start-local",
-    "start:open-modal": "npm run install-and-start -- examples/open-modal start-local",
-    "start:custom-reducer": "npm run install-and-start -- examples/custom-reducer start-local",
+    "start:custom-layer":
+      "npm run install-and-start -- examples/custom-layer start-local",
+    "start:open-modal":
+      "npm run install-and-start -- examples/open-modal start-local",
+    "start:custom-reducer":
+      "npm run install-and-start -- examples/custom-reducer start-local",
     "start:": "npm run install-and-start -- examples/open-modal start-local",
-    "build": "rm -fr dist && uber-licence && babel src --out-dir dist --plugins=transform-es2015-modules-commonjs --source-maps inline",
+    "build":
+      "rm -fr dist && uber-licence && babel src --out-dir dist --plugins=transform-es2015-modules-commonjs --source-maps inline",
     "lint": "eslint src examples/**/src website/src",
     "check-licence": "uber-licence --dry",
     "add-licence": "uber-licence",
     "prepublish": "uber-licence && npm run build",
-    "web": "(npm run install:example && cd website && yarn --ignore-engines && yarn start)",
-    "deploy": "(cd website && yarn build && git checkout gh-pages && cp dist/* .. && git add .. && git commit -m 'Update website' && git push origin gh-pages && git checkout master)",
-    "clean": "rm -rf node_modules examples/demo-app/node_modules website/node_modules"
+    "web":
+      "(npm run install:example && cd website && yarn --ignore-engines && yarn start)",
+    "deploy":
+      "(cd website && yarn build && git checkout gh-pages && cp dist/* .. && git add .. && git commit -m 'Update website' && git push origin gh-pages && git checkout master)",
+    "clean":
+      "rm -rf node_modules examples/demo-app/node_modules website/node_modules"
   },
   "files": [
     "dist",
@@ -92,16 +96,19 @@
     "react-json-pretty": "^1.7.9",
     "react-map-gl": "^3.2.1",
     "react-modal": "^3.1.10",
-    "react-onclickoutside": "https://registry.npmjs.org/react-onclickoutside/-/react-onclickoutside-6.7.1.tgz",
+    "react-onclickoutside":
+      "https://registry.npmjs.org/react-onclickoutside/-/react-onclickoutside-6.7.1.tgz",
     "react-palm": "^1.1.2",
     "react-redux": "^4.0.0",
-    "react-tooltip": "https://registry.npmjs.org/react-tooltip/-/react-tooltip-3.3.0.tgz",
+    "react-tooltip":
+      "https://registry.npmjs.org/react-tooltip/-/react-tooltip-3.3.0.tgz",
     "react-vis": "^1.8.0",
     "redux": "^3.0.4",
     "redux-actions": "^2.2.1",
     "reselect": "^3.0.1",
     "supercluster": "^3.0.0",
-    "type-analyzer": "https://registry.npmjs.org/type-analyzer/-/type-analyzer-0.1.4.tgz",
+    "type-analyzer":
+      "https://registry.npmjs.org/type-analyzer/-/type-analyzer-0.1.4.tgz",
     "uber-licence": "^3.1.1",
     "wellknown": "^0.5.0"
   },
@@ -167,9 +174,7 @@
   "nyc": {
     "sourceMap": false,
     "instrument": false,
-    "exclude": [
-      "test/**/*.js"
-    ]
+    "exclude": ["test/**/*.js"]
   },
   "maintainers": [
     "Shan He <heshan0131@gmail.com>",
