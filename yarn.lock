@@ -1544,9 +1544,16 @@ buffer@^4.3.0:
     ieee754 "^1.1.4"
     isarray "^1.0.0"
 
-buffer@^5.0.2, buffer@^5.0.3:
+buffer@^5.0.2:
   version "5.1.0"
   resolved "https://registry.yarnpkg.com/buffer/-/buffer-5.1.0.tgz#c913e43678c7cb7c8bd16afbcddb6c5505e8f9fe"
+  dependencies:
+    base64-js "^1.0.2"
+    ieee754 "^1.1.4"
+
+buffer@^5.0.3:
+  version "5.2.1"
+  resolved "https://unpm.uberinternal.com/buffer/-/buffer-5.2.1.tgz#dd57fa0f109ac59c602479044dca7b8b3d0b71d6"
   dependencies:
     base64-js "^1.0.2"
     ieee754 "^1.1.4"
@@ -2027,7 +2034,7 @@ crypto-browserify@^3.0.0, crypto-browserify@^3.11.0:
 
 css-color-keywords@^1.0.0:
   version "1.0.0"
-  resolved "https://registry.yarnpkg.com/css-color-keywords/-/css-color-keywords-1.0.0.tgz#fea2616dc676b2962686b3af8dbdbe180b244e05"
+  resolved "https://unpm.uberinternal.com/css-color-keywords/-/css-color-keywords-1.0.0.tgz#fea2616dc676b2962686b3af8dbdbe180b244e05"
 
 css-select@~1.2.0:
   version "1.2.0"
@@ -2039,8 +2046,8 @@ css-select@~1.2.0:
     nth-check "~1.0.1"
 
 css-to-react-native@^2.0.3:
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/css-to-react-native/-/css-to-react-native-2.2.0.tgz#d524ef7f39a2747a8914e86563669ba35b7cf2e7"
+  version "2.2.2"
+  resolved "https://unpm.uberinternal.com/css-to-react-native/-/css-to-react-native-2.2.2.tgz#c077d0f7bf3e6c915a539e7325821c9dd01f9965"
   dependencies:
     css-color-keywords "^1.0.0"
     fbjs "^0.8.5"
@@ -3078,7 +3085,7 @@ faye-websocket@~0.11.0:
   dependencies:
     websocket-driver ">=0.5.1"
 
-fbjs@^0.8.16, fbjs@^0.8.5, fbjs@^0.8.9:
+fbjs@^0.8.16, fbjs@^0.8.9:
   version "0.8.16"
   resolved "https://registry.yarnpkg.com/fbjs/-/fbjs-0.8.16.tgz#5e67432f550dc41b572bf55847b8aca64e5337db"
   dependencies:
@@ -3089,6 +3096,18 @@ fbjs@^0.8.16, fbjs@^0.8.5, fbjs@^0.8.9:
     promise "^7.1.1"
     setimmediate "^1.0.5"
     ua-parser-js "^0.7.9"
+
+fbjs@^0.8.5:
+  version "0.8.17"
+  resolved "https://unpm.uberinternal.com/fbjs/-/fbjs-0.8.17.tgz#c4d598ead6949112653d6588b01a5cdcd9f90fdd"
+  dependencies:
+    core-js "^1.0.0"
+    isomorphic-fetch "^2.1.1"
+    loose-envify "^1.0.0"
+    object-assign "^4.1.0"
+    promise "^7.1.1"
+    setimmediate "^1.0.5"
+    ua-parser-js "^0.7.18"
 
 figures@^1.3.5, figures@^1.4.0:
   version "1.7.0"
@@ -3639,10 +3658,6 @@ hmac-drbg@^1.0.0:
 hoek@4.x.x:
   version "4.2.1"
   resolved "https://registry.yarnpkg.com/hoek/-/hoek-4.2.1.tgz#9634502aa12c445dd5a7c5734b572bb8738aacbb"
-
-hoist-non-react-statics@^1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/hoist-non-react-statics/-/hoist-non-react-statics-1.2.0.tgz#aa448cf0986d55cc40773b17174b7dd066cb7cfb"
 
 hoist-non-react-statics@^2.5.0:
   version "2.5.0"
@@ -5596,8 +5611,8 @@ posix-character-classes@^0.1.0:
   resolved "https://registry.yarnpkg.com/posix-character-classes/-/posix-character-classes-0.1.1.tgz#01eac0fe3b5af71a2a6c02feabb8c1fef7e00eab"
 
 postcss-value-parser@^3.3.0:
-  version "3.3.0"
-  resolved "https://registry.yarnpkg.com/postcss-value-parser/-/postcss-value-parser-3.3.0.tgz#87f38f9f18f774a4ab4c8a232f5c5ce8872a9d15"
+  version "3.3.1"
+  resolved "https://unpm.uberinternal.com/postcss-value-parser/-/postcss-value-parser-3.3.1.tgz#9ff822547e2893213cf1c30efa51ac5fd1ba8281"
 
 prelude-ls@~1.1.0, prelude-ls@~1.1.1, prelude-ls@~1.1.2:
   version "1.1.2"
@@ -5864,6 +5879,10 @@ react-hot-loader@^3.0.0-beta.6:
     react-proxy "^3.0.0-alpha.0"
     redbox-react "^1.3.6"
     source-map "^0.6.1"
+
+react-is@^16.3.1:
+  version "16.5.2"
+  resolved "https://unpm.uberinternal.com/react-is/-/react-is-16.5.2.tgz#e2a7b7c3f5d48062eb769fcb123505eb928722e3"
 
 react-json-pretty@^1.7.9:
   version "1.7.9"
@@ -6962,22 +6981,27 @@ strip-json-comments@~2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-2.0.1.tgz#3c531942e908c2697c0ec344858c286c7ca0a60a"
 
-styled-components@^2.2.4:
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/styled-components/-/styled-components-2.4.0.tgz#086d0fd483d54638837fca3ea546a030b94adf75"
+styled-components@^3.1.6:
+  version "3.4.10"
+  resolved "https://unpm.uberinternal.com/styled-components/-/styled-components-3.4.10.tgz#9a654c50ea2b516c36ade57ddcfa296bf85c96e1"
   dependencies:
     buffer "^5.0.3"
     css-to-react-native "^2.0.3"
-    fbjs "^0.8.9"
-    hoist-non-react-statics "^1.2.0"
-    is-plain-object "^2.0.1"
+    fbjs "^0.8.16"
+    hoist-non-react-statics "^2.5.0"
     prop-types "^15.5.4"
-    stylis "^3.4.0"
+    react-is "^16.3.1"
+    stylis "^3.5.0"
+    stylis-rule-sheet "^0.0.10"
     supports-color "^3.2.3"
 
-stylis@^3.4.0:
-  version "3.5.0"
-  resolved "https://registry.yarnpkg.com/stylis/-/stylis-3.5.0.tgz#016fa239663d77f868fef5b67cf201c4b7c701e1"
+stylis-rule-sheet@^0.0.10:
+  version "0.0.10"
+  resolved "https://unpm.uberinternal.com/stylis-rule-sheet/-/stylis-rule-sheet-0.0.10.tgz#44e64a2b076643f4b52e5ff71efc04d8c3c4a430"
+
+stylis@^3.5.0:
+  version "3.5.3"
+  resolved "https://unpm.uberinternal.com/stylis/-/stylis-3.5.3.tgz#99fdc46afba6af4deff570825994181a5e6ce546"
 
 subarg@^1.0.0:
   version "1.0.0"
@@ -7264,7 +7288,7 @@ typedarray@^0.0.6, typedarray@~0.0.5:
   version "0.0.6"
   resolved "https://registry.yarnpkg.com/typedarray/-/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
 
-ua-parser-js@^0.7.9:
+ua-parser-js@^0.7.18, ua-parser-js@^0.7.9:
   version "0.7.18"
   resolved "https://registry.yarnpkg.com/ua-parser-js/-/ua-parser-js-0.7.18.tgz#a7bfd92f56edfb117083b69e31d2aa8882d4b1ed"
 
