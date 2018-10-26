@@ -242,6 +242,6 @@ test('#composerStateReducer - appendRowsToDatasetComposed: visState.datasets', t
     }
   });
 
-  //t.equal(newState.visState.datasets.foo.data.length, mockRawData.rows.length, 'Add empty layer data test passed--');
+  t.equal(newState.visState.datasets.foo.data.length, mockRawData.rows.length, 'Add empty layer data test passed--');
   t.end();
 });
