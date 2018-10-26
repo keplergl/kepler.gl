@@ -93,6 +93,7 @@ export const addDataToMapComposed = (state, action) => {
     ...mergedState,
     mapStyle: styleMapConfigUpdater(mergedState.mapStyle, {payload: {mapStyle: parsedConfig && parsedConfig.mapStyle}})
   };
+
   return mergedState;
 };
 /**
@@ -101,70 +102,76 @@ export const addDataToMapComposed = (state, action) => {
  * @param action {datasets, options, config}
  * @returns state
  */
-export const removeLayerDataComposed = (state, action) => {
+export const removeRowsFromDatasetComposed = (state, action) => {
   // extract mapData
   const {payload: mapData} = action;
-  const {key: datasetKey} = mapData;
-  const {datasets, layers} = state.visState;
-  // check datasetKey matches with current state 
+  const {key: datasetKey, config, options} = mapData;
+  const {datasets} = state.visState;
+
+  // check datasetKey matches with current state
   if (!datasets[datasetKey]) {
     return state;
   }
 
-// get rows from
-  const {rows} = mapData.datasets.data;
-  // check if rows is present
-  if (!rows) {
+  // get rows & fields
+  const {rows, fields} = mapData.datasets.data;
+
+  // check if rows & fields are not empty
+  if (!Array.isArray(rows) || !rows.length || !Array.isArray(fields) || !fields.length) {
     return state;
   }
 
-  /* eslint-disable no-unused-vars */
-  const {
-    datasets: {[datasetKey]: dataset, ...newDatasets}
-  } = state.visState;
-  /* eslint-enable no-unused-vars */
-
-  // get layer index 
-  const indexes = [];
-  layers.forEach((layer, index) => {
-    if (layer.config.dataId === datasetKey) {
-      indexes.push(index);
-    }
-  });
-
-  function arrayEquals(array1, array2) {
-    // if the other array is a falsy value, return
-    if (!array2 || !array1)
-      return false;
-    // check if both are arrays
-    if (!Array.isArray(array1) || !Array.isArray(array2))
-      return false;
-    // compare lengths - can save a lot of time 
-    if (array1.length !== array2.length)
-      return false;
-    for (var i = 0, l = array1.length; i < l; i++) {
-      // Check if we have nested arrays
-      if (array1[i] instanceof Array && array2[i] instanceof Array) {
-        // recurse into the nested arrays
-        if (!arrayEquals(array1[i], array2[i]))
-          return false;
-      } else if (array1[i] !== array2[i]) {
-        // Warning - two different object instances will never be equal: {x:20} != {x:20}
-        return false;
-      }
-    }
-    return true;
+  // check fields have corresponding row values
+  if (rows[0].length !== fields.length) {
+    return state;
   }
 
-  // iterate through layers & remove the data from layers
-  indexes.forEach((index) => {
-    state.visState.layerData[index].data = state.visState.layerData[index].data.filter((item, idx) => {
-      return rows.every((row, pos) => {
-        return !arrayEquals(row, item.data);
-      });
+  // check fields exists in previous state
+  const fieldTabIndexes = fields.reduce((acc, newField) => {
+    let tabIndex = -1;
+    const exists = datasets[datasetKey].fields.some((oldField) => {
+      // collect tabIndexes of the fields
+      tabIndex = oldField.tableFieldIndex;
+      return newField.name === oldField.name;
     });
-  });
-  return {...state};
+    return (exists === true && tabIndex !== -1) ? [...acc, tabIndex] : acc;
+  }, []);
+
+  // return if new fields doesn't match with old ones
+  if (!fieldTabIndexes.length) {
+    return state;
+  }
+
+  // filter new rows from old one
+  const newRows = datasets[datasetKey].allData.reduce((acc, row, index) => {
+    // extract filed indexed values
+    let oldRow = row;
+
+    // extract row values when all row values are not supplied
+    if (datasets[datasetKey].fields.length !== fieldTabIndexes.length) {
+      oldRow = row.filter((r, i) => {
+        return fieldTabIndexes.indexOf(i + 1) !== -1 ? r : null;
+      });
+    }
+
+    // compare indexed fields are given for removal
+    const exists = rows.some((rw, idx) => {
+      return rw.every(re => oldRow.includes(re));
+    });
+
+    return exists === false ? [...acc, row] : acc;
+  }, []);
+
+  // build datasets
+  const newDatasets = {
+    data: {
+      fields: [...datasets[datasetKey].fields],
+      rows: [...newRows]
+    },
+    info: {id: datasets[datasetKey].id, label: datasets[datasetKey].label}
+  };
+
+  return addDataToMapComposed(state, {payload: {datasets: newDatasets, config, key: datasetKey, options}});
 };
 /**
  * Combine new layer data and full configuration update in a single action
@@ -204,7 +211,7 @@ export const appendRowsToDatasetComposed = (state, action) => {
 const compostedUpdaters = {
   [ActionTypes.UPDATE_VIS_DATA]: updateVisDataComposed,
   [ActionTypes.ADD_DATA_TO_MAP]: addDataToMapComposed,
-  [ActionTypes.REMOVE_DATA_ROWS]: removeLayerDataComposed,
+  [ActionTypes.REMOVE_ROWS_FROM_DATASET]: removeRowsFromDatasetComposed,
   [ActionTypes.APPEND_ROWS_TO_DATASET]: appendRowsToDatasetComposed
 };
 export default compostedUpdaters;

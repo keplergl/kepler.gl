@@ -20,7 +20,7 @@
 
 import test from 'tape';
 import keplerGlReducer from 'reducers';
-import {addDataToMapComposed, removeLayerDataComposed, appendRowsToDatasetComposed} from 'reducers/composers';
+import {addDataToMapComposed, removeRowsFromDatasetComposed, appendRowsToDatasetComposed} from 'reducers/composers';
 import {keplerGlInit} from 'actions/actions';
 import {coreReducerFactory} from 'reducers/core';
 import {registerEntry} from 'actions/identity-actions';
@@ -87,7 +87,7 @@ test('#composerStateReducer - addDataToMapComposed: mapState should not be cente
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
   const mapStateProperties = {
     latitude: 29.23, //33.88608913680742,
-    longitude: 60.71, //-84.43459130456425
+    longitude: 60.71 //-84.43459130456425
   };
   const newState = addDataToMapComposed(state, {
     payload: {
@@ -103,10 +103,10 @@ test('#composerStateReducer - addDataToMapComposed: mapState should not be cente
   t.equal(newState.mapState.latitude, mapStateProperties.latitude, 'mapstate latitude is set correctly');
   t.equal(newState.mapState.longitude, mapStateProperties.longitude, 'mapstate longitude is set correctly');
 
-  t.end()
+  t.end();
 });
 
-test('#composerStateReducer - removeLayerDataComposed: visState.layerData', t => {
+test('#composerStateReducer - removeRowsFromDatasetComposed: visState.layerData', t => {
   // init kepler.gl root and instance
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
 
@@ -119,24 +119,20 @@ test('#composerStateReducer - removeLayerDataComposed: visState.layerData', t =>
         }
       },
       options: null,
-      config: {
-      }
+      config: {}
     }
   });
 
-  const rows = [
-    //[12.25, 37.75, 45.21, 100.12],
-    //[null, 35.2, 45.0, 21.3],
-    [12.29, 37.64, 46.21, 99.127],
-    [null, null, 33.1, 29.34]
-  ];
+  const rows = (mockRawData.rows.slice(2)).reduce((acc, rw) => {
+    return [...acc, rw.slice(2)];
+  }, []);
 
-
-  let removeState = removeLayerDataComposed(newState, {
+  let removeState = removeRowsFromDatasetComposed(newState, {
     payload: {
       datasets: {
         data: {
-          rows: rows
+          rows: rows,
+          fields: mockRawData.fields.slice(2)
         }
       },
       options: null,
@@ -149,23 +145,19 @@ test('#composerStateReducer - removeLayerDataComposed: visState.layerData', t =>
     }
   });
 
-
-  removeState.visState.layerData.forEach((layerData, index) => {
-    layerData.data.forEach((data, idx) => {
-      rows.forEach((rw, po) => {
-        let rs = rw.every(e => data.data.includes(e));
-        t.equal(rs, false, 'Remove layer data passed');
-      });
+  removeState.visState.datasets.foo.allData.forEach((datasetRow, index) => {
+    rows.forEach((rw, po) => {
+      let rs = rw.every(e => datasetRow.includes(e));
+      t.equal(rs, false, 'Remove layer data passed');
     });
   });
 
-
-
-  let emptyState = removeLayerDataComposed(removeState, {
+  let emptyState = removeRowsFromDatasetComposed(removeState, {
     payload: {
       datasets: {
         data: {
-          rows: []
+          rows: [],
+          fields: []
         }
       },
       options: null,
@@ -211,18 +203,14 @@ test('#composerStateReducer - appendRowsToDatasetComposed: visState.datasets', t
     }
   });
 
-  const rows = [
-    //[12.25, 37.75, 45.21, 100.12],
-    //[null, 35.2, 45.0, 21.3],
-    [14.29, 26.64, 66.21, 88.127],
-    [14.29, 26.64, 23.1, 59.34]
-  ];
+  const rows = mockRawData.rows.slice(2);
 
   let addState = appendRowsToDatasetComposed(newState, {
     payload: {
       datasets: {
         data: {
-          rows: rows
+          rows: rows,
+          fields: mockRawData.fields
         }
       },
       options: null,
@@ -237,7 +225,7 @@ test('#composerStateReducer - appendRowsToDatasetComposed: visState.datasets', t
 
   t.equal(addState.visState.datasets.foo.data.length, (rows.length + mockRawData.rows.length), 'Add layer data passed');
 
-  addState = removeLayerDataComposed(addState, {
+  addState = removeRowsFromDatasetComposed(addState, {
     payload: {
       datasets: {
         data: {
@@ -254,6 +242,6 @@ test('#composerStateReducer - appendRowsToDatasetComposed: visState.datasets', t
     }
   });
 
-  t.equal(newState.visState.datasets.foo.data.length, mockRawData.rows.length, 'Add empty layer data test passed--');
+  //t.equal(newState.visState.datasets.foo.data.length, mockRawData.rows.length, 'Add empty layer data test passed--');
   t.end();
 });

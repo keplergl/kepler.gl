@@ -38,7 +38,7 @@ const ActionTypes = keyMirror({
   REMOVE_FILTER: null,
   REMOVE_LAYER: null,
   REMOVE_DATASET: null,
-  REMOVE_DATA_ROWS: null,
+  REMOVE_ROWS_FROM_DATASET: null,
   REORDER_LAYER: null,
   SET_FILTER: null,
   SHOW_DATASET_TABLE: null,

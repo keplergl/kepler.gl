@@ -26,7 +26,7 @@ For best results, use [nvm](https://github.com/creationix/nvm) `nvm install`.
 Install node (`> 6`), yarn, and project dependencies
 
 ```
-npm install --save rameshpaul-kepler.gl
+npm install --save kepler.gl
 ```
 
 Get a [Mapbox Access Token](https://www.mapbox.com/help/define-access-token/).
@@ -360,7 +360,7 @@ In order to interact with a kepler.gl instance and add new data to it the follow
 - updateVisData
 - addDataToMap
 - appendRowsToDataset
-- removeLayerData
+- removeRowsFromDataset
 
 It is also important to remember that Kepler.gl provides an easy API (```KeplerGlSchema.getConfigToSave```) to generate a dump of the current kepler instance configuration.
 
@@ -399,12 +399,13 @@ This action takes an object as input with the following properties:
 }
 ```
 
-##### removeLayerData
-This method takes dataset key column and datasets object to remove rows from the layer dataset.
+##### removeRowsFromDataset
+This method takes dataset key column, config and datasets object to remove rows from the dataset.
 This action takes an object as input with the following properties:
 ```
 {
     datasets | object: same as UpdateVisData
+    config | object: this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}.
     key | string: dataset column 
     
 }

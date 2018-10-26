@@ -2,7 +2,7 @@
   "name": "kepler.gl",
   "author": "Shan He <shan@uber.com>",
   "version": "0.1.6",
-  "description": "This is fork of kepler.gl, which is a webgl based application to visualize large scale location data in the browser",
+  "description": "kepler.gl is a webgl based application to visualize large scale location data in the browser",
   "license": "MIT",
   "main": "dist/index.js",
   "engines": {
