@@ -44,7 +44,7 @@ import {updateVisData, addDataToMap} from 'kepler.gl/actions';
 import Processors from 'kepler.gl/processors';
 /* eslint-enable no-unused-vars */
 
-const bannerHeight = 30;
+const BannerHeight = 30;
 const BannerKey = 'kgHideBanner-iiba';
 
 const GlobalStyleDiv = styled.div`
@@ -191,7 +191,7 @@ class App extends Component {
       <GlobalStyleDiv>
         <Banner
           show={this.state.showBanner}
-          height={bannerHeight}
+          height={BannerHeight}
           bgColor="#82368c"
           onClose={this._hideBanner}
         >
@@ -202,9 +202,9 @@ class App extends Component {
             transition: 'margin 1s, height 1s',
             position: 'absolute',
             width: '100%',
-            height: showBanner ? `calc(100% - ${bannerHeight}px)` : '100%',
-            minHeight: `calc(100% - ${bannerHeight}px)`,
-            marginTop: showBanner ? `${bannerHeight}px` : 0
+            height: showBanner ? `calc(100% - ${BannerHeight}px)` : '100%',
+            minHeight: `calc(100% - ${BannerHeight}px)`,
+            marginTop: showBanner ? `${BannerHeight}px` : 0
           }}
         >
           <KeplerGl
@@ -215,7 +215,7 @@ class App extends Component {
              */
             getState={state => state.demo.keplerGl}
             width={width}
-            height={height - (showBanner ? bannerHeight : 0)}
+            height={height - (showBanner ? BannerHeight : 0)}
           />
         </div>
       </GlobalStyleDiv>
