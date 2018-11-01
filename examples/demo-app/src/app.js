@@ -72,10 +72,10 @@ class App extends Component {
   componentWillMount() {
     // if we pass an id as part of the url
     // we ry to fetch along map configurations
-    const {route: {name}, params: {id} = {}, location: {query = {}}} = this.props;
-    if (name === 'demo' && id) {
-      this.props.dispatch(loadSampleConfigurations(id));
-    } else if (query.mapUrl) {
+    const {params: {id} = {}, location: {query = {}}} = this.props;
+    this.props.dispatch(loadSampleConfigurations(id));
+
+    if (query.mapUrl) {
       this.props.dispatch(loadRemoteMap({dataUrl: query.mapUrl}));
     }
 
