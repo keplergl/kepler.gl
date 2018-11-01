@@ -77,7 +77,9 @@ export function loadRemoteMap(options) {
         dispatch(loadFiles([
           // In this part we turn the response into a FileBlob
           // so we can use it to call loadFiles
+          /* eslint-disable no-undef */
           new File([file], options.dataUrl)
+          /* eslint-enable no-undef */
         ]));
       }
     );

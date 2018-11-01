@@ -29,7 +29,6 @@ import {loadFilesErr} from 'actions/vis-state-actions';
 import {addDataToMap} from 'actions';
 
 // Utils
-import {generateHashId} from 'utils/utils';
 import {
   getDefaultInteraction,
   findFieldsToShow
@@ -47,8 +46,6 @@ import {
   findDefaultLayer,
   calculateLayerData
 } from 'utils/layer-utils/layer-utils';
-
-import {getFileHandler} from 'processors/file-handler';
 
 import {
   mergeFilters,
