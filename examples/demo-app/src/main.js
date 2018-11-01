@@ -35,8 +35,8 @@ const history = syncHistoryWithStore(hashHistory, store);
 const Root = () => (
   <Provider store={store}>
     <Router history={history}>
-      <Route path="/(:id)" component={App} />
-      <Route path="/demo/(:id)" component={App} />
+      <Route name="demo" path="/demo/(:id)" component={App} />
+      <Route name="map" path="/map" component={App} />
     </Router>
   </Provider>
 );
