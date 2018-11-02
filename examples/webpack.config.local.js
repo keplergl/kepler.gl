@@ -47,15 +47,14 @@ function makeLocalDevConfig(EXAMPLE_DIR = LIB_DIR) {
     devtool: 'source-map',
 
     resolve: {
+      modules: [resolve(LIB_DIR, './node_modules')],
       alias: {
         //   // For importing modules that are not exported at root
         'kepler.gl/dist': DIST_DIR,
 
         //   // Imports the kepler.gl library from the src directory in this repo
         'kepler.gl': SRC_DIR,
-        'kepler.gl/test': TEST_DIR,
-        react: resolve(LIB_DIR, './node_modules/react'),
-        'styled-components': resolve(LIB_DIR, './node_modules/styled-components')
+        'kepler.gl/test': TEST_DIR
       }
     },
     module: {
@@ -121,6 +120,7 @@ function addLocalDevSettings(config, exampleDir) {
   config = Object.assign({}, LOCAL_DEV_CONFIG, config);
   config.resolve = config.resolve || {};
   config.resolve.alias = config.resolve.alias || {};
+  config.resolve.modules = [].concat(LOCAL_DEV_CONFIG.resolve.modules, config.resolve.modules);
   Object.assign(config.resolve.alias, LOCAL_DEV_CONFIG.resolve.alias);
 
   config.module = config.module || {};

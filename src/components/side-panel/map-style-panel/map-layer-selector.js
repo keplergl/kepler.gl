@@ -61,7 +61,7 @@ function LayerGroupSelectorFactory() {
         <PanelLabel>Map Layers</PanelLabel>
       </div>
       <PanelContent className="map-style__layer-group">
-        {Object.keys(editableLayers).map(slug => (
+        {editableLayers.map(slug => (
           <StyledLayerGroupItem className="layer-group__select" key={slug}>
             <PanelLabelWrapper>
               <PanelHeaderAction

@@ -26,6 +26,7 @@ import MapStyleSelectorFactory from 'components/side-panel/map-style-panel/map-s
 import LayerGroupSelectorFactory from 'components/side-panel/map-style-panel/map-layer-selector';
 
 import {Add} from 'components/common/icons';
+import { DEFAULT_LAYER_GROUPS } from 'constants/default-settings';
 
 MapManagerFactory.deps = [
   MapStyleSelectorFactory,
@@ -61,7 +62,9 @@ function MapManagerFactory(MapStyleSelector, LayerGroupSelector) {
 
     render() {
       const {mapStyle} = this.props;
-      const editableLayers = mapStyle.visibleLayerGroups;
+      const editableLayers = DEFAULT_LAYER_GROUPS.map(lg => 
+        lg.slug
+     );
 
       return (
         <div className="map-style-panel">
@@ -72,7 +75,7 @@ function MapManagerFactory(MapStyleSelector, LayerGroupSelector) {
               onChange={this._selectStyle}
               toggleActive={this._toggleSelecting}
             />
-            {Object.keys(editableLayers).length ? (
+            {editableLayers.length ? (
               <LayerGroupSelector
                 layers={mapStyle.visibleLayerGroups}
                 editableLayers={editableLayers}
