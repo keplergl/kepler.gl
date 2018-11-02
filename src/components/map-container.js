@@ -339,8 +339,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           .reverse()
           .reduce(this._renderLayer, []);
       }
-      const threeDBuildingLayerId = '3d-building';
-      if (mapStyle.visibleLayerGroups['3d building'] && !deckGlLayers.some(layer => layer.id === threeDBuildingLayerId)) {
+      const threeDBuildingLayerId = '_keplergl_3d-building';
+      if (mapStyle.visibleLayerGroups['3d building']) {
         deckGlLayers.push(new ThreeDBuildingLayer({id: threeDBuildingLayerId, styleType: mapStyle.styleType}));
       }
 

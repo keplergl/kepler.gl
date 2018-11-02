@@ -22,7 +22,7 @@
 /* eslint-disable */
 import {VectorTileFeature} from '@mapbox/vector-tile';
 
-export function vectorTileFeatureToGeoJSON(vectorTileFeature, project) {
+export function vectorTileFeatureToProp(vectorTileFeature, project) {
   let coords = getCoordinates(vectorTileFeature);
   const type = VectorTileFeature.types[vectorTileFeature.type];
   const extent = vectorTileFeature.extent;

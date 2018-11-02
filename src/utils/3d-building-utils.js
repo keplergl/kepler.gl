@@ -21,7 +21,7 @@
 import Protobuf from 'pbf';
 import {VectorTile} from '@mapbox/vector-tile';
 import {worldToLngLat} from 'viewport-mercator-project';
-import {vectorTileFeatureToGeoJSON} from './feature-utils';
+import {vectorTileFeatureToProp} from './feature-utils';
 
 /* global fetch process */
 const TILE_SIZE = 512;
@@ -57,7 +57,7 @@ export function decodeTile(x, y, z, arrayBuffer) {
   }
   for (let i = 0; i < vectorTileLayer.length; i++) {
     const vectorTileFeature = vectorTileLayer.feature(i);
-    const features = vectorTileFeatureToGeoJSON(vectorTileFeature, projectFunc);
+    const features = vectorTileFeatureToProp(vectorTileFeature, projectFunc);
     features.forEach(f => {
       f.properties.layer = layerName;
       if (f.properties.height) {
