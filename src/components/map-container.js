@@ -23,7 +23,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import MapboxGLMap from 'react-map-gl';
 import DeckGL from 'deck.gl';
-import {GL} from 'luma.gl';
+import GL from 'luma.gl/constants';
 import {registerShaderModules, setParameters} from 'luma.gl';
 import pickingModule from 'shaderlib/picking-module';
 import brushingModule from 'shaderlib/brushing-module';
