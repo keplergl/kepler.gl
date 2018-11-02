@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
 const propTypes = {
-  onLoadMapFromRemote: PropTypes.func.isRequired
+  onLoadRemoteMap: PropTypes.func.isRequired
 };
 
 const StyledDescription = styled.div`
