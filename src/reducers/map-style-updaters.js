@@ -34,6 +34,10 @@ import {DEFAULT_MAP_STYLES, DEFAULT_LAYER_GROUPS} from 'constants/default-settin
 import {generateHashId} from 'utils/utils';
 import {LOAD_MAP_STYLE_TASK} from 'tasks/tasks';
 import {loadMapStyles, loadMapStyleErr} from 'actions/map-style-actions';
+import {rgb} from 'd3-color';
+import { hexToRgb } from 'utils/color-utils';
+
+const DEFAULT_BLDG_COLOR = '#D1CEC7';
 
 const getDefaultState = () => {
   const visibleLayerGroups = {};
@@ -51,7 +55,7 @@ const getDefaultState = () => {
     // save mapbox access token
     mapboxApiAccessToken: null,
     inputStyle: getInitialInputStyle(),
-    threeDBuildingColor: get3DBuildingColor(styleType)
+    threeDBuildingColor: hexToRgb(DEFAULT_BLDG_COLOR)
   };
 };
 
@@ -109,22 +113,18 @@ function getMapStyles({
         visibleLayerGroups: topLayers
       })
     : null;
-  const threeDBuildingColor = get3DBuildingColor(styleType);
+  const threeDBuildingColor = get3DBuildingColor(mapStyle);
   return {bottomMapStyle, topMapStyle, editable, threeDBuildingColor};
 }
 
 function get3DBuildingColor(style) {
-  switch (style) {
-    case 'dark':
-      return [21, 28, 42];
-    case 'muted':
-      return [233, 233, 233];
-    case 'muted_night':
-      return [22, 25, 29];
-    case 'light':
-    default: 
-      return [160, 160, 180];
-  }
+  // set building color to be the same as the background color.
+  const backgroundLayer = (style.style.layers || []).find(({id}) => id === 'background');
+  const buildingColor = backgroundLayer ? backgroundLayer.paint['background-color'] : DEFAULT_BLDG_COLOR;
+  // brighten or darken building based on style
+  const operation = style.id.match(/(?=(dark|night))/) ? 'brighter':  'darker';
+  const rgbObj = rgb(buildingColor)[operation]([0.2]);
+  return [rgbObj.r, rgbObj.g, rgbObj.b];
 }
 
 function getLayerGroupsFromStyle(style) {
