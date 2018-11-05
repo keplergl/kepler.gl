@@ -90,11 +90,9 @@ class App extends Component {
 
   componentDidMount() {
     // delay 2s to show the banner
-    // if (!window.localStorage.getItem(BannerKey)) {
-    //  window.setTimeout(this._showBanner, 3000);
-    // }
-    // load sample data
-    this._loadSampleData();
+    if (!window.localStorage.getItem(BannerKey)) {
+      window.setTimeout(this._showBanner, 3000);
+    }
   }
 
   componentWillUnmount() {
@@ -121,79 +119,6 @@ class App extends Component {
     window.localStorage.setItem(BannerKey, 'true');
   };
 
-  _loadSampleData() {
-    this.props.dispatch(
-      updateVisData(
-        // datasets
-        {
-          info: {
-            label: 'Sample Taxi Trips in New York City',
-            id: 'test_trip_data'
-          },
-          data: sampleTripData
-        },
-        // option
-        {
-          centerMap: true,
-          readOnly: false
-        },
-        // config
-        {
-          filters: [
-            {
-              id: 'me',
-              dataId: 'test_trip_data',
-              name: 'tpep_pickup_datetime',
-              type: 'timeRange',
-              enlarged: true
-            }
-          ]
-        }
-      )
-    );
-
-    // load icon data and config and process csv file
-    this.props.dispatch(
-      addDataToMap({
-        datasets: [
-          {
-            info: {
-              label: 'Icon Data',
-              id: 'test_icon_data'
-            },
-            data: Processors.processCsvData(sampleIconCsv)
-          }
-        ],
-        options: {
-          centerMap: false
-        },
-        config: savedMapConfig
-      })
-    );
-
-    // load geojson
-    this.props.dispatch(
-      updateVisData({
-        info: {label: 'SF Zip Geo'},
-        data: Processors.processGeojson(sampleGeojson)
-      })
-    );
-
-    // load h3 hexagon
-    this.props.dispatch(
-      addDataToMap({
-        datasets: [
-          {
-            info: {
-              label: 'H3 Hexagons V2',
-              id: 'h3-hex-id'
-            },
-            data: Processors.processCsvData(sampleH3Data)
-          }
-        ]
-      })
-    );
-  }
 
   render() {
     const {showBanner, width, height} = this.state;
