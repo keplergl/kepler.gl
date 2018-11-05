@@ -43,26 +43,11 @@ export default class ThreeDBuildingLayer extends CompositeLayer {
       filled: true,
       getElevation: (feature) => feature.properties.height || 0,
       getPolygon: (feature) => feature.coordinates,
-      getFillColor: this.getFillColor(),
+      getFillColor: this.props.threeDBuildingColor,
       lightSetting: {
         ambientRatio: 0.2
       }
     });
-  }
-
-  getFillColor() {
-    switch (this.props.styleType) {
-      case 'dark':
-        return [21, 28, 42];
-      case 'muted':
-        return [233, 233, 233];
-      case 'muted_night':
-        return [22, 25, 29];
-      case 'light':
-      default: 
-        return [160, 160, 180];
-    }
-    
   }
 
   renderLayers() {

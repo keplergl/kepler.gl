@@ -50,7 +50,8 @@ const getDefaultState = () => {
     }), {}),
     // save mapbox access token
     mapboxApiAccessToken: null,
-    inputStyle: getInitialInputStyle()
+    inputStyle: getInitialInputStyle(),
+    threeDBuildingColor: get3DBuildingColor(styleType)
   };
 };
 
@@ -108,8 +109,22 @@ function getMapStyles({
         visibleLayerGroups: topLayers
       })
     : null;
+  const threeDBuildingColor = get3DBuildingColor(styleType);
+  return {bottomMapStyle, topMapStyle, editable, threeDBuildingColor};
+}
 
-  return {bottomMapStyle, topMapStyle, editable};
+function get3DBuildingColor(style) {
+  switch (style) {
+    case 'dark':
+      return [21, 28, 42];
+    case 'muted':
+      return [233, 233, 233];
+    case 'muted_night':
+      return [22, 25, 29];
+    case 'light':
+    default: 
+      return [160, 160, 180];
+  }
 }
 
 function getLayerGroupsFromStyle(style) {
