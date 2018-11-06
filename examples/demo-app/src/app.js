@@ -96,7 +96,7 @@ class App extends Component {
     // load sample data
     this._loadSampleData();
   }
-  
+
   componentWillUnmount() {
     window.removeEventListener('resize', this._onResize);
   }
@@ -151,7 +151,8 @@ class App extends Component {
         }
       )
     );
-     // load icon data and config and process csv file
+
+    // load icon data and config and process csv file
     this.props.dispatch(
       addDataToMap({
         datasets: [
@@ -169,14 +170,16 @@ class App extends Component {
         config: savedMapConfig
       })
     );
-     // load geojson
+
+    // load geojson
     this.props.dispatch(
       updateVisData({
         info: {label: 'SF Zip Geo'},
         data: Processors.processGeojson(sampleGeojson)
       })
     );
-     // load h3 hexagon
+
+    // load h3 hexagon
     this.props.dispatch(
       addDataToMap({
         datasets: [
@@ -190,7 +193,7 @@ class App extends Component {
         ]
       })
     );
-  } 
+  }
 
   render() {
     const {showBanner, width, height} = this.state;

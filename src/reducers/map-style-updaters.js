@@ -120,7 +120,8 @@ function getMapStyles({
 function get3DBuildingColor(style) {
   // set building color to be the same as the background color.
   const backgroundLayer = (style.style.layers || []).find(({id}) => id === 'background');
-  const buildingColor = backgroundLayer ? backgroundLayer.paint['background-color'] : DEFAULT_BLDG_COLOR;
+  const buildingColor = backgroundLayer && backgroundLayer.paint && backgroundLayer.paint['background-color'] ? 
+                        backgroundLayer.paint['background-color'] : DEFAULT_BLDG_COLOR;
   // brighten or darken building based on style
   const operation = style.id.match(/(?=(dark|night))/) ? 'brighter':  'darker';
   const rgbObj = rgb(buildingColor)[operation]([0.2]);
