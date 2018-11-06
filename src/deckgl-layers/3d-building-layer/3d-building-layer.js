@@ -20,7 +20,7 @@
 
 import {CompositeLayer} from '@deck.gl/core';
 import DeckGLTileLayer from '@deck.gl/experimental-layers/dist/tile-layer/tile-layer';
-import {getTileData} from 'utils/3d-building-utils';
+import {getTileData} from './3d-building-utils';
 import {_SolidPolygonLayer as SolidPolygonLayer} from '@deck.gl/layers';
 
 export default class ThreeDBuildingLayer extends CompositeLayer {
