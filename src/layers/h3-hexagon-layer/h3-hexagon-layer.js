@@ -301,10 +301,9 @@ export default class HexagonIdLayer extends Layer {
             new GeoJsonLayer({
               id: `${this.id}-hovered`,
               data: [
-                idToPolygonGeo(objectHovered, {
-                  lineColor: config.highlightColor
-                })
+                idToPolygonGeo(objectHovered)
               ],
+              getLineColor: config.highlightColor,
               lineWidthScale: 8 * zoomFactor
             })
           ]
