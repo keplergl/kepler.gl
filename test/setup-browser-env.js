@@ -24,7 +24,11 @@ import 'babel-polyfill';
 import {JSDOM} from 'jsdom';
 import global from 'global';
 
-const dom = new JSDOM('<!doctype html><html><body></body></html>');
+const dom = new JSDOM('<!doctype html><html><body></body></html>', {
+  // JSDom 11.12 causes SecurityError: localStorage is not available for opaque origins
+  // https://github.com/jsdom/jsdom/issues/2304
+  url: 'http://localhost'
+});
 const {window} = dom;
 
 global.window = window;
