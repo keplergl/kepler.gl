@@ -83,7 +83,6 @@ export const updateVisDataComposed = (state, action) => {
  * @returns state
  */
 export const addDataToMapComposed = (state, action) => {
-
   const {datasets, options, config} = action.payload;
   let parsedConfig = config;
 

@@ -72,11 +72,12 @@ test('#Heatmaplayer -> formatLayerData', t => {
     {
       props: {
         dataId: 'heatmap',
+        allData: rows,
         label: 'mapbox heatmap',
         isVisible: true,
         columns
       },
-      data: [data, rows, filteredIndex, undefined],
+      data: [data, filteredIndex, undefined],
       test: result => {
         const {layerData,  layer} = result;
         // log(layer);

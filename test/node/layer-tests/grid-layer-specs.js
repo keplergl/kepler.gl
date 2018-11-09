@@ -85,6 +85,7 @@ test('#GridLayer -> formatLayerData', t => {
     {
       props: {
         dataId: '0dj3h',
+        allData: rows,
         label: 'some geometry file',
         columns: {
           lat: {
@@ -97,7 +98,7 @@ test('#GridLayer -> formatLayerData', t => {
           }
         }
       },
-      data: [data, rows, filteredIndex, undefined],
+      data: [data, filteredIndex, undefined],
       test: result => {
         const {layerData, layer} = result;
         const expectedLayerData = {
@@ -134,6 +135,7 @@ test('#GridLayer -> formatLayerData', t => {
     {
       props: {
         dataId: '0dj3h',
+        allData: allDataWithNull,
         label: 'some geometry file',
         columns: {
           lat: {
@@ -153,7 +155,7 @@ test('#GridLayer -> formatLayerData', t => {
           args: [{data: dataWithNull, allData: allDataWithNull}, 'color']
         }
       ],
-      data: [dataWithNull, allDataWithNull, filteredIndex, undefined],
+      data: [dataWithNull, filteredIndex, undefined],
       test: result => {
         const {layerData, layer} = result;
 

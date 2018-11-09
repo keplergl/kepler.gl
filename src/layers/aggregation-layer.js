@@ -213,7 +213,8 @@ export default class AggregationLayer extends Layer {
     this.updateMeta({bounds, lightSettings});
   }
 
-  formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
+  formatLayerData(_, filteredIndex, oldLayerData, opt = {}) {
+    const {allData} = this;
     const getPosition = this.getPosition(this.config.columns);
 
     if (!oldLayerData || oldLayerData.getPosition !== getPosition) {

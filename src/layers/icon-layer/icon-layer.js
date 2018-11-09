@@ -147,7 +147,8 @@ export default class IconLayer extends Layer {
     return props;
   }
 
-  formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
+  formatLayerData(_, filteredIndex, oldLayerData, opt = {}) {
+    const {allData} = this;
     const {
       colorScale,
       colorDomain,
@@ -223,7 +224,7 @@ export default class IconLayer extends Layer {
       getColor,
       getRadius
     };
-  }
+}
 
   updateLayerMeta(allData, getPosition) {
     const bounds = this.getPointsBounds(allData, d => getPosition({data: d}));

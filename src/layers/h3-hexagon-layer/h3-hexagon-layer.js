@@ -122,7 +122,8 @@ export default class HexagonIdLayer extends Layer {
     };
   }
 
-  formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
+  formatLayerData(_, filteredIndex, oldLayerData, opt = {}) {
+    const {allData} = this;
     const {
       colorScale,
       colorDomain,

@@ -229,8 +229,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       }
 
       const {config: {dataId}} = layer;
-      const {allData, fields} = datasets[dataId];
-      const data = layer.getHoverData(object, allData);
+      const {fields} = datasets[dataId];
+      const data = layer.getHoverData(object);
 
       // project lnglat to screen so that tooltip follows the object on zoom
       const {viewport} = overlay.context;
@@ -278,7 +278,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         clicked,
         mapLayers,
         mapState,
-        interactionConfig
+        interactionConfig,
+        datasets
       } = this.props;
       const {mousePosition} = this.state;
       const layer = layers[idx];
@@ -297,12 +298,19 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         return overlays;
       }
 
+      // TODO: uncomment this line after we implement isTiled dataset
+      // const isTiled = datasets[layer.config.dataId].isTiled;
+      const isTiled = false;
+      // TODO: use real data for tiled data
+      const allData = isTiled ? null : datasets[layer.config.dataId].allData;
+
       let layerOverlay = [];
 
       // Layer is Layer class
       if (typeof layer.renderLayer === 'function') {
         layerOverlay = layer.renderLayer({
           data,
+          allData,
           idx,
           layerInteraction,
           objectHovered,
@@ -327,7 +335,6 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       } = this.props;
 
       let deckGlLayers = [];
-
       // wait until data is ready before render data layers
       if (layerData && layerData.length) {
         // last layer render first

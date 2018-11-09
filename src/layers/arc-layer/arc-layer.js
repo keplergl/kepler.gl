@@ -108,7 +108,8 @@ export default class ArcLayer extends Layer {
     return props;
   }
 
-  formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
+  formatLayerData(_, filteredIndex, oldLayerData, opt = {}) {
+    const {allData} = this;
     const {
       colorScale,
       colorDomain,
@@ -219,8 +220,12 @@ export default class ArcLayer extends Layer {
     objectHovered,
     layerInteraction,
     mapState,
-    interactionConfig
+    interactionConfig,
+    allData
   }) {
+    if (allData) {
+      this.allData = allData;
+    }
     const {brush} = interactionConfig;
 
     const colorUpdateTriggers = {

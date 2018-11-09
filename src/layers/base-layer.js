@@ -86,6 +86,8 @@ export default class Layer {
     // visConfigSettings
     this.visConfigSettings = {};
 
+    this.allData = props.allData || [];
+
     this.config = this.getDefaultLayerConfig({
       columns: this.getLayerColumns(),
       ...props

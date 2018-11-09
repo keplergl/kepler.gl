@@ -157,12 +157,13 @@ export default class GeoJsonLayer extends Layer {
     };
   }
 
-  getHoverData(object, allData) {
+  getHoverData(object) {
     // index of allData is saved to feature.properties
+    const {allData} = this;
     return allData[object.properties.index];
   }
 
-  formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
+  formatLayerData(_, filteredIndex, oldLayerData, opt = {}) {
     const {
       colorScale,
       colorField,
@@ -191,6 +192,7 @@ export default class GeoJsonLayer extends Layer {
     } = visConfig;
 
     const getFeature = this.getFeature(columns);
+    const {allData} = this;
 
     // geojson feature are object, if doesn't exists
     // create it and save to layer
@@ -330,8 +332,12 @@ export default class GeoJsonLayer extends Layer {
     idx,
     objectHovered,
     mapState,
+    allData,
     interactionConfig
   }) {
+    if (allData) {
+      this.allData = allData;
+    }
     const {fp64, lightSettings, fixedRadius} = this.meta;
     const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius);
     const zoomFactor = this.getZoomFactor(mapState);

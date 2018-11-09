@@ -55,6 +55,7 @@ test('#GeojsonLayer -> formatLayerData', async t => {
   const TEST_CASES = [{
     props: {
       dataId: '0dj3h',
+      allData: rows,
       label: 'some geometry file',
       columns: {
         geojson: {
@@ -63,7 +64,7 @@ test('#GeojsonLayer -> formatLayerData', async t => {
         }
       }
     },
-    data: [data, rows, filteredIndex, undefined],
+    data: [data, filteredIndex, undefined],
     test: result => {
       const {layerData, layer} = result;
       const expectedLayerData = {
@@ -96,6 +97,7 @@ test('#GeojsonLayer -> formatLayerData', async t => {
   }, {
     props: {
       dataId: '0dj3h',
+      allData: rows,
       label: 'some geometry file',
       columns: {
         geojson: {
@@ -104,7 +106,7 @@ test('#GeojsonLayer -> formatLayerData', async t => {
         }
       }
     },
-    data: [data, rows, filteredIndex, undefined],
+    data: [data, filteredIndex, undefined],
     test: result => {
       const {layerData, layer} = result;
 

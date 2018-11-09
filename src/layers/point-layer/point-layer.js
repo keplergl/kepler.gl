@@ -138,7 +138,8 @@ export default class PointLayer extends Layer {
     return props;
   }
 
-  formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
+  formatLayerData(_, filteredIndex, oldLayerData, opt = {}) {
+    const {allData} = this;
     const {
       colorScale,
       colorDomain,
@@ -183,7 +184,6 @@ export default class PointLayer extends Layer {
     } else {
       data = filteredIndex.reduce((accu, index) => {
         const pos = getPosition({data: allData[index]});
-
         // if doesn't have point lat or lng, do not add the point
         // deck.gl can't handle position = null
         if (!pos.every(Number.isFinite)) {
@@ -240,8 +240,12 @@ export default class PointLayer extends Layer {
     layerInteraction,
     objectHovered,
     mapState,
-    interactionConfig
+    interactionConfig,
+    allData
   }) {
+    if (allData) {
+      this.allData = allData;
+    }
     const enableBrushing = interactionConfig.brush.enabled;
 
     const layerProps = {

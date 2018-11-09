@@ -66,8 +66,13 @@ export default class HexagonLayer extends AggregationLayer {
     objectHovered,
     mapState,
     interaction,
-    layerCallbacks
+    layerCallbacks,
+    allData
   }) {
+    if (allData) {
+      this.allData = allData;
+    }
+    
     const zoomFactor = this.getZoomFactor(mapState);
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
     const {visConfig} = this.config;

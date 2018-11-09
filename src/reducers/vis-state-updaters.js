@@ -169,7 +169,9 @@ export function layerTypeChangeUpdater(state, action) {
   // get a mint layer, with new id and type
   // because deck.gl uses id to match between new and old layer.
   // If type has changed but id is the same, it will break
-  const newLayer = new state.layerClasses[newType]();
+
+  // When layer type changes, allData should remain the same.
+  const newLayer = new state.layerClasses[newType]({allData: oldLayer.allData});
 
   newLayer.assignConfigToLayer(oldLayer.config, oldLayer.visConfigSettings);
 
@@ -441,9 +443,11 @@ export const removeFilterUpdater = (state, action) => {
 
 export const addLayerUpdater = (state, action) => {
   const defaultDataset = Object.keys(state.datasets)[0];
+  // TODO: check if data is tiled, then pass all data 
   const newLayer = new Layer({
     isVisible: true,
     isConfigActive: true,
+    allData: state.datasets[defaultDataset].allData,
     dataId: defaultDataset,
     ...action.props
   });
@@ -776,7 +780,6 @@ export const updateVisDataUpdater = (state, action) => {
       mergedState = addDefaultTooltips(mergedState, newDateEntries[dataId]);
     }
   });
-
   return updateAllLayerDomainData(mergedState, Object.keys(newDateEntries));
 };
 /* eslint-enable max-statements */

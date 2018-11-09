@@ -77,6 +77,7 @@ test('#PointLayer -> formatLayerData', t => {
     {
       props: {
         dataId: '0dj3h',
+        allData: rows,
         label: 'gps point',
         columns: {
           lat: {
@@ -89,7 +90,7 @@ test('#PointLayer -> formatLayerData', t => {
           }
         }
       },
-      data: [data, rows, filteredIndex, undefined],
+      data: [data, filteredIndex, undefined],
       test: result => {
         const {layerData, layer} = result;
         const expectedLayerData = {
@@ -148,6 +149,7 @@ test('#PointLayer -> formatLayerData', t => {
     {
       props: {
         dataId: '0dj3h',
+        allData: allDataWithNull,
         label: 'some point file',
         columns: {
           lat: {
@@ -177,7 +179,7 @@ test('#PointLayer -> formatLayerData', t => {
           args: [{fixedRadius: true}]
         }
       ],
-      data: [dataWithNull, allDataWithNull, filteredIndex, undefined],
+      data: [dataWithNull, filteredIndex, undefined],
       test: result => {
         const {layerData, layer} = result;
 

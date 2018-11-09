@@ -2,30 +2,36 @@
 # yarn lockfile v1
 
 
-"@deck.gl/core@^6.1.0":
-  version "6.1.0"
-  resolved "https://registry.yarnpkg.com/@deck.gl/core/-/core-6.1.0.tgz#4880254c7beed91a498a7b21f80b8ef98927c732"
+"@babel/runtime@^7.0.0":
+  version "7.1.5"
+  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.1.5.tgz#4170907641cf1f61508f563ece3725150cc6fe39"
   dependencies:
-    luma.gl "^6.1.0"
+    regenerator-runtime "^0.12.0"
+
+"@deck.gl/core@^6.2.3", "@deck.gl/core@^6.2.4":
+  version "6.2.4"
+  resolved "https://registry.yarnpkg.com/@deck.gl/core/-/core-6.2.4.tgz#c569854633f3087dea9866276ad68812671487d7"
+  dependencies:
+    luma.gl "^6.2.0"
     math.gl "^2.1.0"
     mjolnir.js "^1.0.0"
-    probe.gl "^2.0.0-beta"
+    probe.gl "^2.0.1"
     seer "^0.2.4"
-    viewport-mercator-project "^5.2.0"
+    viewport-mercator-project "^6.0.0"
 
-"@deck.gl/layers@^6.1.0":
-  version "6.1.0"
-  resolved "https://registry.yarnpkg.com/@deck.gl/layers/-/layers-6.1.0.tgz#a6f370ddbf4eaf920de90d6b79887792c3a51c19"
+"@deck.gl/layers@^6.2.3":
+  version "6.2.4"
+  resolved "https://registry.yarnpkg.com/@deck.gl/layers/-/layers-6.2.4.tgz#c5c9473a174cd45d01cd404177cbff20c9da1f56"
   dependencies:
-    "@deck.gl/core" "^6.1.0"
+    "@deck.gl/core" "^6.2.4"
     d3-hexbin "^0.2.1"
     earcut "^2.0.6"
 
-"@deck.gl/react@^6.1.0":
-  version "6.1.0"
-  resolved "https://registry.yarnpkg.com/@deck.gl/react/-/react-6.1.0.tgz#597c325e27b0abd6c2866afe67704ecaf0e49a7a"
+"@deck.gl/react@^6.2.3":
+  version "6.2.4"
+  resolved "https://registry.yarnpkg.com/@deck.gl/react/-/react-6.2.4.tgz#fab68aaac23a1429c4ad84dd09879ca764543f2f"
   dependencies:
-    "@deck.gl/core" "^6.1.0"
+    "@deck.gl/core" "^6.2.4"
     prop-types "^15.6.0"
 
 "@mapbox/extent@0.4.0":
@@ -64,7 +70,11 @@
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/@mapbox/geojson-normalize/-/geojson-normalize-0.0.1.tgz#1da1e6b3a7add3ad29909b30f438f60581b7cd80"
 
-"@mapbox/jsonlint-lines-primitives@^2.0.1":
+"@mapbox/geojson-types@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@mapbox/geojson-types/-/geojson-types-1.0.2.tgz#9aecf642cb00eab1080a57c4f949a65b4a5846d6"
+
+"@mapbox/jsonlint-lines-primitives@^2.0.2":
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/@mapbox/jsonlint-lines-primitives/-/jsonlint-lines-primitives-2.0.2.tgz#ce56e539f83552b58d10d672ea4d6fc9adc7b234"
 
@@ -75,10 +85,6 @@
 "@mapbox/point-geometry@0.1.0", "@mapbox/point-geometry@^0.1.0", "@mapbox/point-geometry@~0.1.0":
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/@mapbox/point-geometry/-/point-geometry-0.1.0.tgz#8a83f9335c7860effa2eeeca254332aa0aeed8f2"
-
-"@mapbox/shelf-pack@^3.1.0":
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/@mapbox/shelf-pack/-/shelf-pack-3.2.0.tgz#df3630ecce8c042817c9a365b88078412963de64"
 
 "@mapbox/sphericalmercator@~1.0.2":
   version "1.0.5"
@@ -98,7 +104,7 @@
   dependencies:
     "@mapbox/point-geometry" "~0.1.0"
 
-"@mapbox/whoots-js@^3.0.0":
+"@mapbox/whoots-js@^3.1.0":
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/@mapbox/whoots-js/-/whoots-js-3.1.0.tgz#497c67a1cef50d1a2459ba60f315e448d2ad87fe"
 
@@ -1343,10 +1349,6 @@ boolbase@~1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/boolbase/-/boolbase-1.0.0.tgz#68dff5fbe60c51eb37725ea9e3ed310dcc1e776e"
 
-bowser@^1.2.0:
-  version "1.9.4"
-  resolved "https://registry.yarnpkg.com/bowser/-/bowser-1.9.4.tgz#890c58a2813a9d3243704334fa81b96a5c150c9a"
-
 boxen@^0.6.0:
   version "0.6.0"
   resolved "http://registry.npmjs.org/boxen/-/boxen-0.6.0.tgz#8364d4248ac34ff0ef1b2f2bf49a6c60ce0d81b6"
@@ -2287,13 +2289,13 @@ decamelize@^1.0.0, decamelize@^1.1.1, decamelize@^1.1.2:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/decamelize/-/decamelize-1.2.0.tgz#f6534d15148269b20352e7bee26f501f9a191290"
 
-deck.gl@6.1.0:
-  version "6.1.0"
-  resolved "https://registry.yarnpkg.com/deck.gl/-/deck.gl-6.1.0.tgz#b28f306333c71c661a3448bd6d9209a640201407"
+deck.gl@6.2.3:
+  version "6.2.3"
+  resolved "https://registry.yarnpkg.com/deck.gl/-/deck.gl-6.2.3.tgz#7f32b9225d06148ed3f7e945ef51b970f4caa302"
   dependencies:
-    "@deck.gl/core" "^6.1.0"
-    "@deck.gl/layers" "^6.1.0"
-    "@deck.gl/react" "^6.1.0"
+    "@deck.gl/core" "^6.2.3"
+    "@deck.gl/layers" "^6.2.3"
+    "@deck.gl/react" "^6.2.3"
 
 decode-uri-component@^0.2.0:
   version "0.2.0"
@@ -3392,9 +3394,9 @@ geojson-rewind@^0.3.0:
     minimist "1.2.0"
     sharkdown "^0.1.0"
 
-geojson-vt@^3.1.4:
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/geojson-vt/-/geojson-vt-3.2.0.tgz#039cea549df5f892c48cff8eb66c2e217d61c241"
+geojson-vt@^3.2.0:
+  version "3.2.1"
+  resolved "https://registry.yarnpkg.com/geojson-vt/-/geojson-vt-3.2.1.tgz#f8adb614d2c1d3f6ee7c4265cad4bbf3ad60c8b7"
 
 get-assigned-identifiers@^1.2.0:
   version "1.2.0"
@@ -3564,15 +3566,6 @@ got@^5.0.0:
 graceful-fs@^4.1.11, graceful-fs@^4.1.2, graceful-fs@^4.1.4:
   version "4.1.11"
   resolved "https://registry.yarnpkg.com/graceful-fs/-/graceful-fs-4.1.11.tgz#0e8bdfe4d1ddb8854d64e04ea7c00e2a026e5658"
-
-gray-matter@^3.0.8:
-  version "3.1.1"
-  resolved "https://registry.yarnpkg.com/gray-matter/-/gray-matter-3.1.1.tgz#101f80d9e69eeca6765cdce437705b18f40876ac"
-  dependencies:
-    extend-shallow "^2.0.1"
-    js-yaml "^3.10.0"
-    kind-of "^5.0.2"
-    strip-bom-string "^1.0.0"
 
 grid-index@^1.0.0:
   version "1.0.0"
@@ -4313,7 +4306,7 @@ js-tokens@^3.0.2:
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/js-tokens/-/js-tokens-3.0.2.tgz#9866df395102130e38f7f996bceb65443209c25b"
 
-js-yaml@3.x, js-yaml@^3.10.0, js-yaml@^3.5.1:
+js-yaml@3.x, js-yaml@^3.5.1:
   version "3.12.0"
   resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-3.12.0.tgz#eaed656ec8344f10f527c6bfa1b6e2244de167d1"
   dependencies:
@@ -4452,7 +4445,7 @@ kind-of@^4.0.0:
   dependencies:
     is-buffer "^1.1.5"
 
-kind-of@^5.0.0, kind-of@^5.0.2:
+kind-of@^5.0.0:
   version "5.1.0"
   resolved "https://registry.yarnpkg.com/kind-of/-/kind-of-5.1.0.tgz#729c91e2d857b7a419a1f9aa65685c4c33f5845d"
 
@@ -4662,12 +4655,13 @@ lru-queue@0.1:
   dependencies:
     es5-ext "~0.10.2"
 
-luma.gl@^6.1.0:
-  version "6.1.0"
-  resolved "https://registry.yarnpkg.com/luma.gl/-/luma.gl-6.1.0.tgz#17e48a21f904f27b3b285d67aa1070ade462e9b7"
+luma.gl@^6.2.0:
+  version "6.2.0"
+  resolved "https://registry.yarnpkg.com/luma.gl/-/luma.gl-6.2.0.tgz#449760dc735e2e89a55bb78697c8dd1093626b2c"
   dependencies:
-    math.gl "^2.1.0-alpha"
-    probe.gl "^2.0.0-beta"
+    "@babel/runtime" "^7.0.0"
+    math.gl "^2.2.0"
+    probe.gl "^2.0.1"
     seer "^0.2.4"
     webgl-debug "^2.0.0"
 
@@ -4691,34 +4685,32 @@ map-visit@^1.0.0:
   dependencies:
     object-visit "^1.0.0"
 
-mapbox-gl@0.47.0:
-  version "0.47.0"
-  resolved "https://registry.yarnpkg.com/mapbox-gl/-/mapbox-gl-0.47.0.tgz#c72f1d3462037f0bb5b8dc25cc8a029513f2b7cd"
+mapbox-gl@~0.50.0:
+  version "0.50.0"
+  resolved "https://registry.yarnpkg.com/mapbox-gl/-/mapbox-gl-0.50.0.tgz#49f44149f02fdd25ab64a2ec4efc7a11a5c96f55"
   dependencies:
-    "@mapbox/jsonlint-lines-primitives" "^2.0.1"
+    "@mapbox/geojson-types" "^1.0.2"
+    "@mapbox/jsonlint-lines-primitives" "^2.0.2"
     "@mapbox/mapbox-gl-supported" "^1.4.0"
     "@mapbox/point-geometry" "^0.1.0"
-    "@mapbox/shelf-pack" "^3.1.0"
     "@mapbox/tiny-sdf" "^1.1.0"
     "@mapbox/unitbezier" "^0.0.0"
     "@mapbox/vector-tile" "^1.3.1"
-    "@mapbox/whoots-js" "^3.0.0"
+    "@mapbox/whoots-js" "^3.1.0"
     brfs "^1.4.4"
     csscolorparser "~1.0.2"
     earcut "^2.1.3"
     geojson-rewind "^0.3.0"
-    geojson-vt "^3.1.4"
+    geojson-vt "^3.2.0"
     gl-matrix "^2.6.1"
-    gray-matter "^3.0.8"
     grid-index "^1.0.0"
     minimist "0.0.8"
+    murmurhash-js "^1.0.0"
     pbf "^3.0.5"
+    potpack "^1.0.1"
     quickselect "^1.0.0"
     rw "^1.3.3"
-    shuffle-seed "^1.1.6"
-    sort-object "^0.3.2"
-    supercluster "^4.0.1"
-    through2 "^2.0.3"
+    supercluster "^4.1.1"
     tinyqueue "^1.1.0"
     vt-pbf "^3.0.1"
 
@@ -4726,10 +4718,22 @@ math-random@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/math-random/-/math-random-1.0.1.tgz#8b3aac588b8a66e4975e3cdea67f7bb329601fac"
 
-math.gl@^2.0.0, math.gl@^2.1.0, math.gl@^2.1.0-alpha:
+math.gl@^2.0.0, math.gl@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/math.gl/-/math.gl-2.1.0.tgz#61a0e51cf765b9a11c449655120a6ddc3aa8aa91"
   dependencies:
+    gl-mat3 "^1.0.0"
+    gl-mat4 "^1.1.4"
+    gl-quat "^1.0.0"
+    gl-vec2 "^1.0.0"
+    gl-vec3 "^1.0.3"
+    gl-vec4 "^1.0.1"
+
+math.gl@^2.2.0:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/math.gl/-/math.gl-2.2.0.tgz#301dcda760ae235f5fdf471dd67ef2aa8c74d659"
+  dependencies:
+    "@babel/runtime" "^7.0.0"
     gl-mat3 "^1.0.0"
     gl-mat4 "^1.1.4"
     gl-quat "^1.0.0"
@@ -5008,6 +5012,10 @@ multicast-dns@^6.0.1:
   dependencies:
     dns-packet "^1.3.1"
     thunky "^1.0.2"
+
+murmurhash-js@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/murmurhash-js/-/murmurhash-js-1.0.0.tgz#b06278e21fc6c37fa5313732b0412bcb6ae15f51"
 
 mute-stream@0.0.5:
   version "0.0.5"
@@ -5712,6 +5720,10 @@ postcss-value-parser@^3.3.0:
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/postcss-value-parser/-/postcss-value-parser-3.3.0.tgz#87f38f9f18f774a4ab4c8a232f5c5ce8872a9d15"
 
+potpack@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/potpack/-/potpack-1.0.1.tgz#d1b1afd89e4c8f7762865ec30bd112ab767e2ebf"
+
 prelude-ls@~1.1.0, prelude-ls@~1.1.1, prelude-ls@~1.1.2:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/prelude-ls/-/prelude-ls-1.1.2.tgz#21932a549f5e52ffd9a827f570e04be62a97da54"
@@ -5740,9 +5752,11 @@ private@^0.1.6, private@^0.1.8:
   version "0.1.8"
   resolved "https://registry.yarnpkg.com/private/-/private-0.1.8.tgz#2381edb3689f7a53d653190060fcf822d2f368ff"
 
-probe.gl@^2.0.0-beta:
-  version "2.0.0-beta.1"
-  resolved "https://registry.yarnpkg.com/probe.gl/-/probe.gl-2.0.0-beta.1.tgz#7281d63e75d390a081c68fe201552e2e62effb6f"
+probe.gl@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/probe.gl/-/probe.gl-2.0.1.tgz#e42dfe02eca9ef262cdf89a24e1a4c0856e989e0"
+  dependencies:
+    "@babel/runtime" "^7.0.0"
 
 process-nextick-args@~1.0.6:
   version "1.0.7"
@@ -6016,18 +6030,17 @@ react-lifecycles-compat@^3.0.0:
   version "3.0.4"
   resolved "https://registry.yarnpkg.com/react-lifecycles-compat/-/react-lifecycles-compat-3.0.4.tgz#4f1a273afdfc8f3488a8c516bfda78f872352362"
 
-react-map-gl@^3.2.1:
-  version "3.3.4"
-  resolved "https://registry.yarnpkg.com/react-map-gl/-/react-map-gl-3.3.4.tgz#d1d9c971480501e5821f349e38b4a4f250cd2a51"
+react-map-gl@^3.3.0:
+  version "3.3.8"
+  resolved "https://registry.yarnpkg.com/react-map-gl/-/react-map-gl-3.3.8.tgz#59df5c9a852cf1720d42cd3260202841258bc2ec"
   dependencies:
     babel-runtime "^6.23.0"
-    bowser "^1.2.0"
     immutable "^3.8.2"
-    mapbox-gl "0.47.0"
+    mapbox-gl "~0.50.0"
     math.gl "^2.0.0"
     mjolnir.js "^1.2.1"
     prop-types "^15.5.7"
-    viewport-mercator-project "^5.1.0"
+    viewport-mercator-project "^6.0.0"
 
 react-modal@^3.1.10:
   version "3.5.1"
@@ -6286,6 +6299,10 @@ regenerator-runtime@^0.10.5:
 regenerator-runtime@^0.11.0:
   version "0.11.1"
   resolved "https://registry.yarnpkg.com/regenerator-runtime/-/regenerator-runtime-0.11.1.tgz#be05ad7f9bf7d22e056f9726cee5017fbf19e2e9"
+
+regenerator-runtime@^0.12.0:
+  version "0.12.1"
+  resolved "https://registry.yarnpkg.com/regenerator-runtime/-/regenerator-runtime-0.12.1.tgz#fa1a71544764c036f8c49b13a08b2594c9f8a0de"
 
 regenerator-transform@^0.10.0:
   version "0.10.1"
@@ -6562,10 +6579,6 @@ schedule@^0.4.0:
   dependencies:
     object-assign "^4.1.1"
 
-seedrandom@^2.4.2:
-  version "2.4.4"
-  resolved "https://registry.yarnpkg.com/seedrandom/-/seedrandom-2.4.4.tgz#b25ea98632c73e45f58b77cfaa931678df01f9ba"
-
 seer@^0.2.4:
   version "0.2.4"
   resolved "https://registry.yarnpkg.com/seer/-/seer-0.2.4.tgz#6b8a81d09bfe6b3b3ad0268971a65e7f7405135c"
@@ -6725,12 +6738,6 @@ shelljs@^0.7.5:
     interpret "^1.0.0"
     rechoir "^0.6.2"
 
-shuffle-seed@^1.1.6:
-  version "1.1.6"
-  resolved "https://registry.yarnpkg.com/shuffle-seed/-/shuffle-seed-1.1.6.tgz#533c12683bab3b4fa3e8751fc4e562146744260b"
-  dependencies:
-    seedrandom "^2.4.2"
-
 signal-exit@^3.0.0, signal-exit@^3.0.1, signal-exit@^3.0.2:
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/signal-exit/-/signal-exit-3.0.2.tgz#b5fdc08f1287ea1178628e415e25132b73646c6d"
@@ -6808,21 +6815,6 @@ sockjs@0.3.19:
   dependencies:
     faye-websocket "^0.10.0"
     uuid "^3.0.1"
-
-sort-asc@^0.1.0:
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/sort-asc/-/sort-asc-0.1.0.tgz#ab799df61fc73ea0956c79c4b531ed1e9e7727e9"
-
-sort-desc@^0.1.1:
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/sort-desc/-/sort-desc-0.1.1.tgz#198b8c0cdeb095c463341861e3925d4ee359a9ee"
-
-sort-object@^0.3.2:
-  version "0.3.2"
-  resolved "https://registry.yarnpkg.com/sort-object/-/sort-object-0.3.2.tgz#98e0d199ede40e07c61a84403c61d6c3b290f9e2"
-  dependencies:
-    sort-asc "^0.1.0"
-    sort-desc "^0.1.1"
 
 source-list-map@^2.0.0:
   version "2.0.0"
@@ -7134,10 +7126,6 @@ strip-ansi@^4.0.0:
   dependencies:
     ansi-regex "^3.0.0"
 
-strip-bom-string@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/strip-bom-string/-/strip-bom-string-1.0.0.tgz#e5211e9224369fbb81d633a2f00044dc8cedad92"
-
 strip-bom@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/strip-bom/-/strip-bom-2.0.0.tgz#6219a85616520491f35788bdbf1447a99c7e6b0e"
@@ -7191,7 +7179,7 @@ supercluster@^3.0.0:
   dependencies:
     kdbush "^1.0.1"
 
-supercluster@^4.0.1:
+supercluster@^4.1.1:
   version "4.1.1"
   resolved "https://registry.yarnpkg.com/supercluster/-/supercluster-4.1.1.tgz#cf13c3b28a3fb3db5290bfad7f524e244bd4ce78"
   dependencies:
@@ -7330,7 +7318,7 @@ text-table@~0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/text-table/-/text-table-0.2.0.tgz#7f5ee823ae805207c00af2df4a84ec3fcfa570b4"
 
-through2@^2.0.0, through2@^2.0.3, through2@~2.0.3:
+through2@^2.0.0, through2@~2.0.3:
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/through2/-/through2-2.0.3.tgz#0004569b37c7c74ba39c43f3ced78d1ad94140be"
   dependencies:
@@ -7667,11 +7655,12 @@ verror@1.10.0:
     core-util-is "1.0.2"
     extsprintf "^1.2.0"
 
-viewport-mercator-project@^5.1.0, viewport-mercator-project@^5.2.0:
-  version "5.2.0"
-  resolved "https://registry.yarnpkg.com/viewport-mercator-project/-/viewport-mercator-project-5.2.0.tgz#2c50bc624a085d01a3a486f22ec329c0511fe4bd"
+viewport-mercator-project@^6.0.0:
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/viewport-mercator-project/-/viewport-mercator-project-6.0.0.tgz#33b8bb40bae44978b889e5425f4f5d26f2367ecb"
   dependencies:
-    math.gl "^2.0.0"
+    "@babel/runtime" "^7.0.0"
+    math.gl "^2.1.0"
 
 vlq@^0.2.2:
   version "0.2.3"
