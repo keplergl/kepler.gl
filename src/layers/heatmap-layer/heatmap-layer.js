@@ -53,7 +53,7 @@ const heatmapDensity = (colorRange) => {
     .domain([0, 1])
     .range(colorRange.colors);
 
-  return scale.range().reduce((bands, level) => {
+  const colorDensity = scale.range().reduce((bands, level) => {
     const invert = scale.invertExtent(level);
     return [
       ...bands,
@@ -61,6 +61,8 @@ const heatmapDensity = (colorRange) => {
       `rgb(${hexToRgb(level).join(',')})` // color
     ]
   }, []);
+  colorDensity[1] = "rgba(0,0,0,0)"
+  return colorDensity
 };
 
 const shouldRebuild = (sameData, sameConfig) => !(sameData && sameConfig);
@@ -101,9 +103,9 @@ class HeatmapLayer extends MapboxGLLayer {
       label: 'color',
       measure: 'Density'
     } : {
-      label: 'weight',
-      measure: this.config.weightField ? this.config.weightField.name : 'Density'
-    }
+        label: 'weight',
+        measure: this.config.weightField ? this.config.weightField.name : 'Density'
+      }
   }
 
   getDefaultLayerConfig(props = {}) {
