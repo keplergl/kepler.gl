@@ -49,9 +49,11 @@ const heatmapDensity = (colorRange) => {
 
   const scaleFunction = SCALE_FUNC.quantize;
 
+  const colors = ['#000000', ...colorRange.colors]
+
   const scale = scaleFunction()
     .domain([0, 1])
-    .range(colorRange.colors);
+    .range(colors);
 
   const colorDensity = scale.range().reduce((bands, level) => {
     const invert = scale.invertExtent(level);
