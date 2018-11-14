@@ -48,7 +48,7 @@ export const heatmapVisConfigs = {
 const heatmapDensity = (colorRange) => {
   const scaleFunction = SCALE_FUNC.quantize;
 
-  const colors = ['#000000', ...colorRange.colors]
+  const colors = ['#000000', ...colorRange.colors];
 
   const scale = scaleFunction()
     .domain([0, 1])
@@ -62,8 +62,8 @@ const heatmapDensity = (colorRange) => {
       `rgb(${hexToRgb(level).join(',')})` // color
     ]
   }, []);
-  colorDensity[1] = "rgba(0,0,0,0)"
-  return colorDensity
+  colorDensity[1] = 'rgba(0,0,0,0)';
+  return colorDensity;
 };
 
 const shouldRebuild = (sameData, sameConfig) => !(sameData && sameConfig);
