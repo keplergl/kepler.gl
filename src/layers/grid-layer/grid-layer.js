@@ -136,10 +136,10 @@ export default class GridLayer extends AggregationLayer {
                   object: objectHovered.object,
                   cellSize,
                   coverage: visConfig.coverage,
-                  properties: {lineColor: this.config.highlightColor},
                   mapState
                 })
               ],
+              getLineColor: this.config.highlightColor,
               lineWidthScale: 8 * zoomFactor
             })
           ]

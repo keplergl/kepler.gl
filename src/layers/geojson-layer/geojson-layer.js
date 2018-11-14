@@ -410,19 +410,12 @@ export default class GeoJsonLayer extends Layer {
             new DeckGLGeoJsonLayer({
               ...layerProps,
               id: `${this.id}-hovered`,
-              data: [
-                {
-                  ...objectHovered.object,
-                  properties: {
-                    ...objectHovered.object.properties,
-                    lineColor: this.config.highlightColor,
-                    fillColor: this.config.highlightColor
-                  },
-                  getLineWidth: data.getLineWidth,
-                  getRadius: data.getRadius,
-                  getElevation: data.getElevation
-                }
-              ],
+              data: [objectHovered.object],
+              getLineWidth: data.getLineWidth,
+              getRadius: data.getRadius,
+              getElevation: data.getElevation,
+              getLineColor: this.config.highlightColor,
+              getFillColor: this.config.highlightColor,
               updateTriggers,
               stroked: true,
               pickable: false,

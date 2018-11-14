@@ -20,7 +20,7 @@
 
 import {ScatterplotLayer} from 'deck.gl';
 import {Geometry, Model} from 'luma.gl';
-import {GL} from 'luma.gl';
+import GL from 'luma.gl/constants';
 
 export default class ScatterplotIconLayer extends ScatterplotLayer {
   _getModel(gl) {
