@@ -52,14 +52,19 @@ export default class LineLayer extends ArcLayer {
   }
 
   renderLayer({
-    id,
     data,
     idx,
     layerInteraction,
     objectHovered,
     mapState,
     interactionConfig
-  }) {
+  }, {
+    id,
+    tileX,
+    tileY, 
+    tileZ,
+    sampleKeplerLayerId
+  } = {}) {
     const {brush} = interactionConfig;
 
     const colorUpdateTriggers = {
@@ -104,7 +109,11 @@ export default class LineLayer extends ArcLayer {
           },
           getColor: colorUpdateTriggers,
           getTargetColor: colorUpdateTriggers
-        }
+        },
+        // For tileLayer picking info
+        tileX,
+        tileY,
+        tileZ
       })
     ];
   }

@@ -61,14 +61,19 @@ export default class HexagonLayer extends AggregationLayer {
   }
 
   renderLayer({
-    id,
     data,
     idx,
     objectHovered,
     mapState,
     interaction,
     layerCallbacks
-  }) {
+  }, {
+    id,
+    tileX,
+    tileY, 
+    tileZ,
+    sampleKeplerLayerId
+  } = {}) {
     const zoomFactor = this.getZoomFactor(mapState);
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
     const {visConfig} = this.config;
@@ -107,11 +112,16 @@ export default class HexagonLayer extends AggregationLayer {
         pickable: true,
         lightSettings: this.meta.lightSettings,
         // callbacks
-        onSetColorDomain: layerCallbacks.onSetLayerDomain
+        onSetColorDomain: layerCallbacks.onSetLayerDomain,
+
+        // for TileLayer picking info
+        tileX,
+        tileY,
+        tileZ
       }),
 
       // render an outline of each hexagon if not extruded
-      ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d
+      ...(this.isLayerHovered(objectHovered, sampleKeplerLayerId) && !visConfig.enable3d
         ? [
             new GeoJsonLayer({
               id: `${id || this.id}-hovered`,

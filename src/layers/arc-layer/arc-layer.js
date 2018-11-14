@@ -214,14 +214,18 @@ export default class ArcLayer extends Layer {
   }
 
   renderLayer({
-    id,
     data,
     idx,
     objectHovered,
     layerInteraction,
     mapState,
     interactionConfig
-  }) {
+  }, {
+    id,
+    tileX,
+    tileY, 
+    tileZ
+  } = {}) {
     const {brush} = interactionConfig;
 
     const colorUpdateTriggers = {
@@ -267,7 +271,12 @@ export default class ArcLayer extends Layer {
           },
           getSourceColor: colorUpdateTriggers,
           getTargetColor: colorUpdateTriggers
-        }
+        },
+
+        // for TileLayer picking info
+        tileX,
+        tileY, 
+        tileZ
       })
     ];
   }

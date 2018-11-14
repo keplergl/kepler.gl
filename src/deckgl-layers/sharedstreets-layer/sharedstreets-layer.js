@@ -68,10 +68,25 @@ export default class SharedstreetsLayer extends CompositeLayer {
           isTiledSampleDataLoaded: true
         });
       }
-      // convert geojson to a format Kepler expects.
-      const allData = processGeojson(geoJson).rows;
-      return allData
+      const {allData, fields} = getAllData(geoJson);
+      return {
+        allData,
+        fields
+      };
     });
+  }
+
+  getPickingInfo({info, sourceLayer}) {
+    // info.sourceLayer is the source layer of TileLayer, in this case, 
+    // it is the deck gl layer that renders sample data.
+    const sourceLayerProps = info.sourceLayer.props;
+    const {tileX, tileY, tileZ, idx} = sourceLayerProps;
+    const tile = sourceLayer.state.tiles.find(t => t.x === tileX && t.y === tileY && t.z === tileZ);
+    const {allData, fields} = tile._data;
+    info.allData = allData;
+    info.fields = fields;
+    info.idx = idx;
+    return info;
   }
   
   /**
@@ -99,12 +114,17 @@ export default class SharedstreetsLayer extends CompositeLayer {
       this.setState({ oldLayerDataMaps });
 
       return layer.renderLayer({
-        id: `${subLayerProps.id}-${layer.id}`,
         data,
         idx,
         objectHovered,
         mapState,
         interactionConfig
+      }, {
+        sampleKeplerLayerId: this.props.id,
+        id: `${subLayerProps.id}-${layer.id}`,
+        tileX: tile.x,
+        tileY: tile.y,
+        tileZ: tile.z
       });
     })
   }
@@ -127,7 +147,7 @@ export default class SharedstreetsLayer extends CompositeLayer {
    */
   recomputeLayerData(keplerLayer, tile, oldLayerData) {
     if (tile.isLoaded) {
-      return keplerLayer.formatLayerData([], tile._data, Array.from(tile._data.keys()), oldLayerData, {sameData: true});
+      return keplerLayer.formatLayerData([], tile._data.allData, Array.from(tile._data.allData.keys()), oldLayerData, {sameData: true});
     }
     tile.data.then(data => {
       this.setLayerNeedsUpdate();
@@ -152,5 +172,14 @@ export default class SharedstreetsLayer extends CompositeLayer {
     // tile.isLoaded) changes.
     const result = tile.keplerCache[keplerLayer.id](keplerLayer, tile, oldLayerData, layerVersion, tile.isLoaded);
     return result;
+  }
+}
+
+function getAllData(rawData) {
+  // processedData follows format {rows: [], fields: []}
+  const processedData = processGeojson(rawData);
+  return {
+    allData: processedData.rows,
+    fields: processedData.fields
   }
 }

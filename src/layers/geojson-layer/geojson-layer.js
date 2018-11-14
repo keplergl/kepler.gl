@@ -326,13 +326,21 @@ export default class GeoJsonLayer extends Layer {
   }
 
   renderLayer({
-    id,
+    // the second arguments contain props that are only related to tile layers.
+    // which has properties: sampleKeplerLayerId, id, tileX, tileY, tileZ
+    tileLayerProps,
     data,
     idx,
     objectHovered,
     mapState,
     interactionConfig
-  }) {
+  }, {
+    id,
+    tileX,
+    tileY, 
+    tileZ,
+    sampleKeplerLayerId
+  } = {}) {
     const {fp64, lightSettings, fixedRadius} = this.meta;
     const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius);
     const zoomFactor = this.getZoomFactor(mapState);
@@ -404,9 +412,12 @@ export default class GeoJsonLayer extends Layer {
         subLayers: {
           ...DeckGLGeoJsonLayer.defaultProps.subLayers,
           PolygonLayer: HighlightPolygonLayer
-        }
+        },
+        tileX,
+        tileY,
+        tileZ
       }),
-      ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d
+      ...(this.isLayerHovered(objectHovered, sampleKeplerLayerId) && !visConfig.enable3d
         ? [
             new DeckGLGeoJsonLayer({
               ...layerProps,

@@ -239,14 +239,19 @@ export default class HexagonIdLayer extends Layer {
   }
 
   renderLayer({
-    id,
     data,
     idx,
     layerInteraction,
     objectHovered,
     mapState,
     interactionConfig
-  }) {
+  }, {
+    id,
+    tileX,
+    tileY, 
+    tileZ,
+    sampleKeplerLayerId
+  } = {}) {
     const zoomFactor = this.getZoomFactor(mapState);
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
     const {config, meta} = this;
@@ -295,9 +300,14 @@ export default class HexagonIdLayer extends Layer {
 
         // render
         lightSettings: meta.lightSettings,
-        updateTriggers
+        updateTriggers,
+
+        // for TileLayer picking info
+        tileX,
+        tileY,
+        tileZ
       }),
-      ...(this.isLayerHovered(objectHovered) && !config.sizeField
+      ...(this.isLayerHovered(objectHovered, sampleKeplerLayerId) && !config.sizeField
         ? [
             new GeoJsonLayer({
               id: `${id || this.id}-hovered`,
