@@ -239,6 +239,7 @@ export default class HexagonIdLayer extends Layer {
   }
 
   renderLayer({
+    id,
     data,
     idx,
     layerInteraction,
@@ -272,7 +273,7 @@ export default class HexagonIdLayer extends Layer {
       new H3HexagonCellLayer({
         ...layerInteraction,
         ...data,
-        id: this.id,
+        id: id || this.id,
         idx,
         pickable: true,
 
@@ -299,7 +300,7 @@ export default class HexagonIdLayer extends Layer {
       ...(this.isLayerHovered(objectHovered) && !config.sizeField
         ? [
             new GeoJsonLayer({
-              id: `${this.id}-hovered`,
+              id: `${id || this.id}-hovered`,
               data: [
                 idToPolygonGeo(objectHovered)
               ],

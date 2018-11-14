@@ -214,6 +214,7 @@ export default class ArcLayer extends Layer {
   }
 
   renderLayer({
+    id,
     data,
     idx,
     objectHovered,
@@ -249,7 +250,7 @@ export default class ArcLayer extends Layer {
         ...data,
         ...interaction,
         ...layerInteraction,
-        id: this.id,
+        id: id || this.id,
         idx,
         fp64: this.config.visConfig['hi-precision'],
         opacity: this.config.visConfig.opacity,

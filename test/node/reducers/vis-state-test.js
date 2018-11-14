@@ -588,7 +588,8 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
     },
 
     layers: [],
-    layerData: []
+    layerData: [],
+    layerVersion: 0
   };
 
   // remove smoothie filter
@@ -622,7 +623,8 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
       },
 
       layers: [],
-      layerData: []
+      layerData: [],
+      layerVersion: 1
     },
     'should remove filter and recalculate data only for associated dataset'
   );

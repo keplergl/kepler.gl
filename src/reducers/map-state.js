@@ -24,9 +24,9 @@ import ActionTypes from 'constants/action-types';
 export const INITIAL_MAP_STATE = {
   pitch: 0,
   bearing: 0,
-  latitude: 37.75043,
-  longitude: -122.34679,
-  zoom: 9,
+  latitude: 38.922427,
+  longitude: -77.029705,
+  zoom: 12,
   dragRotate: false,
   width: 800,
   height: 800,

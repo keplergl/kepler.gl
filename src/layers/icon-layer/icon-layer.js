@@ -231,6 +231,7 @@ export default class IconLayer extends Layer {
   }
 
   renderLayer({
+    id,
     data,
     idx,
     objectHovered,
@@ -248,10 +249,10 @@ export default class IconLayer extends Layer {
       new SvgIconLayer({
         ...layerProps,
         ...data,
-        id: this.id,
+        id: id || this.id,
         idx,
         opacity: this.config.visConfig.opacity,
-        getIconGeometry: id => SvgIconGeometry[id],
+        getIconGeometry: layerId => SvgIconGeometry[layerId],
 
         // picking
         autoHighlight: true,

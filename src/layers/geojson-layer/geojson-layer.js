@@ -326,6 +326,7 @@ export default class GeoJsonLayer extends Layer {
   }
 
   renderLayer({
+    id,
     data,
     idx,
     objectHovered,
@@ -378,7 +379,7 @@ export default class GeoJsonLayer extends Layer {
     return [
       new DeckGLGeoJsonLayer({
         ...layerProps,
-        id: this.id,
+        id: id || this.id,
         idx,
         data: data.data,
         getFillColor: data.getFillColor,
@@ -409,7 +410,7 @@ export default class GeoJsonLayer extends Layer {
         ? [
             new DeckGLGeoJsonLayer({
               ...layerProps,
-              id: `${this.id}-hovered`,
+              id: `${id || this.id}-hovered`,
               data: [objectHovered.object],
               getLineWidth: data.getLineWidth,
               getRadius: data.getRadius,

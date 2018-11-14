@@ -75,6 +75,7 @@ export const INITIAL_VIS_STATE = {
   layerData: [],
   layerToBeMerged: [],
   layerOrder: [],
+  layerVersion: 0,
 
   // filters
   filters: [],
@@ -83,6 +84,7 @@ export const INITIAL_VIS_STATE = {
   // a collection of multiple dataset
   datasets: {},
   editingDataset: undefined,
+  tiledDatasets: [],
 
   interactionConfig: getDefaultInteraction(),
   interactionToBeMerged: undefined,
@@ -142,7 +144,11 @@ export function layerConfigChangeUpdater(state, action) {
       oldLayerData,
       {sameData: true}
     );
-    return updateStateWithLayerAndData(state, {layerData, layer, idx});
+      
+    return {
+      ...updateStateWithLayerAndData(state, {layerData, layer, idx}),
+      layerVersion: state.layerVersion + 1
+    };
   }
 
   const newState = {
@@ -199,7 +205,10 @@ export function layerTypeChangeUpdater(state, action) {
     };
   }
 
-  return updateStateWithLayerAndData(newState, {layerData, layer, idx});
+  return {
+    ...updateStateWithLayerAndData(newState, {layerData, layer, idx}),
+    layerVersion: state.layerVersion + 1
+  };
 }
 
 export function layerVisualChannelChangeUpdater(state, action) {
@@ -216,7 +225,10 @@ export function layerVisualChannelChangeUpdater(state, action) {
     sameData: true
   });
 
-  return updateStateWithLayerAndData(state, {layerData, layer, idx});
+  return {
+    ...updateStateWithLayerAndData(state, {layerData, layer, idx}),
+    layerVersion: state.layerVersion + 1
+  }
 }
 
 export function layerVisConfigChangeUpdater(state, action) {
@@ -239,7 +251,10 @@ export function layerVisConfigChangeUpdater(state, action) {
       oldLayerData,
       {sameData: true}
     );
-    return updateStateWithLayerAndData(state, {layerData, layer, idx});
+    return {
+      ...updateStateWithLayerAndData(state, {layerData, layer, idx}),
+      layerVersion: state.layerVersion + 1
+    }
   }
 
   return updateStateWithLayerAndData(state, {layer: newLayer, idx});
@@ -1074,6 +1089,32 @@ export function updateAllLayerDomainData(state, dataId, newFilter) {
   return {
     ...state,
     layers: newLayers,
-    layerData: newLayerDatas
+    layerData: newLayerDatas,
+    layerVersion: state.layerVersion + 1
   };
 }
+
+export function addTiledDatasetSampleUpdater(state, action) {
+  const {dataset} = action;
+  const visState = updateVisDataUpdater(state, {
+    datasets: {
+      info: {
+        ...dataset.info,
+        isTiled: true
+      },
+      data: dataset.data
+    }
+  });
+  return visState;
+};
+
+export function addTiledDataIdUpdater(state, action) {
+  const {dataId} = action;
+  const {tiledDatasets} = state;
+  tiledDatasets.push(dataId);
+  return {
+    ...state,
+    tiledDatasets
+  };
+}
+
