@@ -511,7 +511,8 @@ export const removeDatasetUpdater = (state, action) => {
   /* eslint-disable no-unused-vars */
   const {
     layers,
-    datasets: {[datasetKey]: dataset, ...newDatasets}
+    datasets: {[datasetKey]: dataset, ...newDatasets},
+    tiledDatasets
   } = state;
   /* eslint-enable no-unused-vars */
 
@@ -550,7 +551,14 @@ export const removeDatasetUpdater = (state, action) => {
     };
   }
 
-  return {...newState, filters, interactionConfig};
+  // remove from tiledDataId
+  const newTiledDatasets = tiledDatasets.slice();
+  const index = newTiledDatasets.indexOf(datasetKey);
+  if (index !== -1) {
+    newTiledDatasets.splice(index, 1);
+  }
+
+  return {...newState, filters, interactionConfig, tiledDatasets: newTiledDatasets};
 };
 
 export const updateLayerBlendingUpdater = (state, action) => ({
@@ -1111,10 +1119,13 @@ export function addTiledDatasetSampleUpdater(state, action) {
 export function addTiledDataIdUpdater(state, action) {
   const {dataId} = action;
   const {tiledDatasets} = state;
-  tiledDatasets.push(dataId);
+  const newTiledDatasets = tiledDatasets.slice();
+  if (!newTiledDatasets.includes(dataId)) {
+    newTiledDatasets.push(dataId);
+  }
   return {
     ...state,
-    tiledDatasets
+    tiledDatasets: newTiledDatasets
   };
 }
 

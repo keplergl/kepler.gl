@@ -2270,6 +2270,7 @@ test('#visStateReducer -> REMOVE_DATASET', t => {
       puppy_1: {},
       puppy_2: {}
     },
+    tiledDatasets: [],
     layers: [layer0, layer1, layer2, layer3],
     layerData: [{data: 1}, {data: 2}, {data: 3}, {data: 4}],
     layerOrder: [2, 3, 1, 0],
@@ -2302,6 +2303,7 @@ test('#visStateReducer -> REMOVE_DATASET', t => {
         puppy_0: {},
         puppy_2: {}
       },
+      tiledDatasets: [],
       layers: [layer0, layer1, layer3],
       layerData: [{data: 1}, {data: 2}, {data: 4}],
       layerOrder: [2, 1, 0],
@@ -2458,6 +2460,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
       puppy_1: {},
       puppy_2: {}
     },
+    tiledDatasets: [],
     layers: [layer0, layer1, layer2, layer3],
     layerData: [{data: 1}, {data: 2}, {data: 3}, {data: 4}],
     layerOrder: [2, 3, 1, 0],
@@ -2529,6 +2532,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
       puppy_0: {},
       puppy_2: {}
     },
+    tiledDatasets: [],
     layers: [layer0, layer1, layer3],
     layerData: [{data: 1}, {data: 2}, {data: 4}],
     layerOrder: [2, 1, 0],
