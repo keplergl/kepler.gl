@@ -97,12 +97,12 @@ export default class SharedstreetsLayer extends CompositeLayer {
 
   recomputeLayerData(keplerLayer, tile) {
     if (tile.isLoaded) {
-      return keplerLayer.formatLayerData([], tile._data.allData, Array.from(tile._data.allData.keys()));
+      return keplerLayer.formatLayerData([], tile._data.allData, Array.from(tile._data.allData.keys()), keplerLayer);
     }
     tile.data.then(data => {
       this.setLayerNeedsUpdate();
     })
-    return keplerLayer.formatLayerData([], [], []);
+    return keplerLayer.formatLayerData([], [], [], keplerLayer);
   }
 
   getLayerData(keplerLayer, tile, layerVersion) {
