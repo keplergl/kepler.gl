@@ -130,7 +130,7 @@ const SampleMapGallery = ({sampleData, sampleMaps, onLoadSample, back}) => (
       <span>Back</span>
     </BackLink>
     <StyledSampleGallery className="sample-map-gallery">
-      {sampleMaps.map(sp => (
+      {sampleMaps.filter(sp => sp.visible).map(sp => (
         <SampleMap
           sample={sp}
           key={sp.id}
