@@ -60,8 +60,10 @@ const getFilterType = (store, idx, value) => {
 };
 
 const trackingInformation = {
-  [ActionTypes.LOAD_FILES]: ({files}) =>
-    files.map(({size, type}) => ({size, type})),
+  [ActionTypes.LOAD_FILES]: (payload) => {
+    return payload ? payload.files.map(({size, type}) => ({size, type})) : null;
+  },
+
   [ActionTypes.LAYER_TYPE_CHANGE]: ({newType}) => ({
     newType
   }),
@@ -96,7 +98,7 @@ const analyticsMiddleware = store => next => action => {
       event_category: action.type,
       event_label: trackingInformation[action.type]
         ? JSON.stringify(
-          trackingInformation[action.type](action.payload, store)
+          trackingInformation[action.type](action.payload || action, store)
         )
         : undefined
     });
