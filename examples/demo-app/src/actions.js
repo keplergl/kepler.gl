@@ -108,16 +108,15 @@ function loadRemoteRawData(url) {
 // The following methods are only used to load SAMPLES
 /**
  *
- * @param options {
-    required "dataUrl": "https://raw.githubusercontent.com/uber-web/kepler.gl-data/master/earthquakes/data.csv",
-    optional "configUrl": "https://raw.githubusercontent.com/uber-web/kepler.gl-data/master/earthquakes/config.json"
-    optional "id": "earthquakes",
-    optional "label": "California Earthquakes",
-    optional "queryType": "sample",
-    optional "imageUrl": "https://s3.amazonaws.com/uber-static/kepler.gl/sample/earthquakes.png",
-    optional "description": "Location, maginitude and magtype of 2.5+ magnitude earthquakes in california.",
-    optional "size": 54936
-  },
+ * @param {Object} options
+ * @param {string} options.dataUrl the URL to fetch data from, e.g. https://raw.githubusercontent.com/uber-web/kepler.gl-data/master/earthquakes/data.csv
+ * @param {string} [options.configUrl] the URL string to fetch kepler config from, e.g. https://raw.githubusercontent.com/uber-web/kepler.gl-data/master/earthquakes/config.json
+ * @param {string} [options.id] the id used as dataset unique identifier, e.g. earthquakes
+ * @param {string} [options.label] the label used to describe the new dataset, e.g. California Earthquakes
+ * @param {string} [options.queryType] the type of query to execute to load data/config, e.g. sample
+ * @param {string} [options.imageUrl] the URL to fetch the dataset image to use in sample gallery
+ * @param {string} [options.description] the description used in sample galley to define the current example
+ * @param {string} [options.size] the number of entries displayed in the current sample
  * @returns {Function}
  */
 export function loadSample(options) {
