@@ -42,7 +42,7 @@ const InputForm = styled.div`
 const StyledInput = styled.input`
   width: 100%;
   padding: ${props => props.theme.inputPadding};
-  color: ${props => props.theme.titleColorLT};
+  color: ${props => props.error ? 'red' : props.theme.titleColorLT};
   height: ${props => props.theme.inputBoxHeight};
   border: 0;
   outline: 0;
@@ -80,14 +80,26 @@ export const StyledError = styled.div`
   color: red;
 `;
 
-const Error = ({error}) => (
+export const StyledErrorDescription = styled.div`
+  font-size: 14px;
+`;
+
+const Error = ({error, url}) => (
   <StyledError>
-    <h3>Error: {error.message}</h3>
+    <StyledErrorDescription>{url}</StyledErrorDescription>
+    <StyledErrorDescription>{error.message}</StyledErrorDescription>
   </StyledError>
 );
 
 class LoadRemoteMap extends Component {
 
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      dataUrl: ''
+    };
+  }
   onMapUrlChange = (e) => {
     // TODO: validate url
     this.setState({
@@ -119,19 +131,19 @@ class LoadRemoteMap extends Component {
               <li>http://your.map.url/data.csv</li>
             </ul>
           </StyledInputLabel>
-          {this.props.error && (<Error error={this.props.error} />)}
           <StyledFromGroup>
             <StyledInput
               onChange={this.onMapUrlChange}
               type="text"
               placeholder="File Url"
-              value={this.props.option.dataUrl}
+              value={this.state.dataUrl}
+              error={this.props.error}
             />
             <StyledBtn type="submit" onClick={this.onLoadRemoteMap}>
               Fetch
             </StyledBtn>
           </StyledFromGroup>
-
+          {this.props.error && (<Error error={this.props.error} url={this.props.option.dataUrl} />)}
         </InputForm>
       </div>
     );
