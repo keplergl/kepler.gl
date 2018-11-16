@@ -31,6 +31,20 @@ export {default as PlotContainerFactory} from './plot-container';
 
 // // side panel factories
 export {default as PanelHeaderFactory} from './side-panel/panel-header'
+export {CollapseButtonFactory, default as SidebarFactory} from './side-panel/side-bar';
+
+export {AddDataButtonFactory, default as LayerManagerFactory} from './side-panel/layer-manager';
+export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel';
+export {default as SourceDataCatalogFactory} from './side-panel/source-data-catalog';
+
+export {default as FilterManagerFactory} from './side-panel/filter-manager';
+export {default as InteractionManagerFactory} from './side-panel/interaction-manager';
+export {default as BrushConfigFactory} from './side-panel/interaction-panel/brush-config';
+export {default as TooltipConfigFactory} from './side-panel/interaction-panel/tooltip-config';
+
+export {default as MapManagerFactory} from './side-panel/map-manager';
+export {default as LayerGroupSelectorFactory} from './side-panel/map-style-panel/map-layer-selector';
+export {default as MapStyleSelectorFactory} from './side-panel/map-style-panel/map-style-selector';
 
 // // map container factories
 export {default as MapPopoverFactory} from './map/map-popover';

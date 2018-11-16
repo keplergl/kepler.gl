@@ -30,73 +30,77 @@ import {Add} from 'components/common/icons';
 import SourceDataCatalog from './source-data-catalog';
 import FilterPanel from './filter-panel/filter-panel';
 
-export default class FilterManager extends Component {
-  static propTypes = {
-    datasets: PropTypes.object,
-    addFilter: PropTypes.func.isRequired,
-    removeFilter: PropTypes.func.isRequired,
-    enlargeFilter: PropTypes.func.isRequired,
-    toggleAnimation: PropTypes.func.isRequired,
-    setFilter: PropTypes.func.isRequired,
-    filters: PropTypes.arrayOf(PropTypes.any).isRequired,
-    showDatasetTable: PropTypes.func,
+function FilterManagerFactory() {
+  return class FilterManager extends Component {
+    static propTypes = {
+      datasets: PropTypes.object,
+      addFilter: PropTypes.func.isRequired,
+      removeFilter: PropTypes.func.isRequired,
+      enlargeFilter: PropTypes.func.isRequired,
+      toggleAnimation: PropTypes.func.isRequired,
+      setFilter: PropTypes.func.isRequired,
+      filters: PropTypes.arrayOf(PropTypes.any).isRequired,
+      showDatasetTable: PropTypes.func,
 
-    // fields can be undefined when dataset is not selected
-    fields: PropTypes.arrayOf(PropTypes.any)
-  };
+      // fields can be undefined when dataset is not selected
+      fields: PropTypes.arrayOf(PropTypes.any)
+    };
 
-  /* selectors */
-  datasetsSelector = state => state.datasets;
-  defaultDatasetSelector = createSelector(
-    this.datasetsSelector,
-    datasets =>
-      (Object.keys(datasets).length && Object.keys(datasets)[0]) || null
-  );
-
-  /* actions */
-  _addFilter = () => {
-    const defaultDataset = this.defaultDatasetSelector(this.props);
-    this.props.addFilter(defaultDataset);
-  };
-
-  render() {
-    const {filters, datasets} = this.props;
-    const isAnyFilterAnimating = filters.some(f => f.isAnimating);
-    const hadEmptyFilter = filters.some(f => !f.name);
-    const hadDataset = Object.keys(datasets).length;
-
-    return (
-      <div className="filter-manager">
-        <SourceDataCatalog
-          datasets={datasets}
-          showDatasetTable={this.props.showDatasetTable}
-        />
-        <SidePanelDivider />
-        <SidePanelSection>
-          {filters &&
-            filters.map((filter, idx) => (
-              <FilterPanel
-                key={`${filter.id}-${idx}`}
-                idx={idx}
-                filters={filters}
-                filter={filter}
-                datasets={datasets}
-                isAnyFilterAnimating={isAnyFilterAnimating}
-                removeFilter={() => this.props.removeFilter(idx)}
-                enlargeFilter={() => this.props.enlargeFilter(idx)}
-                toggleAnimation={() => this.props.toggleAnimation(idx)}
-                setFilter={this.props.setFilter}
-              />
-            ))}
-        </SidePanelSection>
-        <Button
-          inactive={hadEmptyFilter || !hadDataset}
-          width="105px"
-          onClick={this._addFilter}
-        >
-          <Add height="12px" />Add Filter
-        </Button>
-      </div>
+    /* selectors */
+    datasetsSelector = state => state.datasets;
+    defaultDatasetSelector = createSelector(
+      this.datasetsSelector,
+      datasets =>
+        (Object.keys(datasets).length && Object.keys(datasets)[0]) || null
     );
-  }
-};
+
+    /* actions */
+    _addFilter = () => {
+      const defaultDataset = this.defaultDatasetSelector(this.props);
+      this.props.addFilter(defaultDataset);
+    };
+
+    render() {
+      const {filters, datasets} = this.props;
+      const isAnyFilterAnimating = filters.some(f => f.isAnimating);
+      const hadEmptyFilter = filters.some(f => !f.name);
+      const hadDataset = Object.keys(datasets).length;
+
+      return (
+        <div className="filter-manager">
+          <SourceDataCatalog
+            datasets={datasets}
+            showDatasetTable={this.props.showDatasetTable}
+          />
+          <SidePanelDivider />
+          <SidePanelSection>
+            {filters &&
+              filters.map((filter, idx) => (
+                <FilterPanel
+                  key={`${filter.id}-${idx}`}
+                  idx={idx}
+                  filters={filters}
+                  filter={filter}
+                  datasets={datasets}
+                  isAnyFilterAnimating={isAnyFilterAnimating}
+                  removeFilter={() => this.props.removeFilter(idx)}
+                  enlargeFilter={() => this.props.enlargeFilter(idx)}
+                  toggleAnimation={() => this.props.toggleAnimation(idx)}
+                  setFilter={this.props.setFilter}
+                />
+              ))}
+          </SidePanelSection>
+          <Button
+            inactive={hadEmptyFilter || !hadDataset}
+            width="105px"
+            onClick={this._addFilter}
+          >
+            <Add height="12px" />Add Filter
+          </Button>
+        </div>
+      );
+    }
+  };
+}
+
+export default FilterManagerFactory;
