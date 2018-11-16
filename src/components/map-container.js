@@ -55,7 +55,8 @@ const getGlConst = d => GL[d];
 
 const MAPBOXGL_STYLE_UPDATE = 'style.load';
 MapContainerFactory.deps = [
-  MapPopoverFactory, MapControlFactory];
+  MapPopoverFactory, MapControlFactory
+];
 
 export default function MapContainerFactory(MapPopover, MapControl) {
   class MapContainer extends Component {

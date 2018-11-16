@@ -72,13 +72,6 @@ const GlobalStyle = styled.div`
   }
 `;
 
-export const keplerGlChildDeps = [
-  ...BottomWidgetFactory.deps,
-  ...SidePanelFactory.deps,
-  ...ModalContainerFactory.deps,
-  ...MapContainerFactory.deps
-];
-
 KeplerGlFactory.deps = [
   BottomWidgetFactory,
   MapContainerFactory,

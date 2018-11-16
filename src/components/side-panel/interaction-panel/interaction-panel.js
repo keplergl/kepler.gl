@@ -22,18 +22,16 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import Switch from 'components/common/switch';
-import RangeSlider from 'components/common/range-slider';
-import FieldSelector from 'components/common/field-selector';
+
+import BrushConfigFactory from './brush-config';
+import TooltipConfigFactory from './tooltip-config';
+
 import {
-  PanelLabel,
-  SidePanelSection,
   StyledPanelHeader,
   PanelHeaderTitle,
   PanelHeaderContent,
   PanelContent
 } from 'components/common/styled-components';
-import {DatasetTag} from '../source-data-catalog';
-import {BRUSH_CONFIG} from 'utils/interaction-utils';
 
 const StyledPanelContent = PanelContent.extend`
   border-top: 1px solid ${props => props.theme.panelBorderColor};
@@ -43,120 +41,88 @@ const StyledInteractionPanel = styled.div`
   padding-bottom: 6px;
 `;
 
-export default class InteractionPanel extends Component {
-  static propTypes = {
-    datasets: PropTypes.object.isRequired,
-    config: PropTypes.object.isRequired,
-    onConfigChange: PropTypes.func.isRequired
-  };
+InteractionPanelFactory.deps = [
+  TooltipConfigFactory,
+  BrushConfigFactory
+];
 
-  state = {isConfigActive: false};
+function InteractionPanelFactory(TooltipConfig, BrushConfig) {
+  return class InteractionPanel extends Component {
+    static propTypes = {
+      datasets: PropTypes.object.isRequired,
+      config: PropTypes.object.isRequired,
+      onConfigChange: PropTypes.func.isRequired
+    };
 
-  _updateConfig = newProp => {
-    this.props.onConfigChange({
-      ...this.props.config,
-      ...newProp
-    });
-  };
+    state = {isConfigActive: false};
 
-  _enableConfig = () => {
-    this.setState({isConfigActive: !this.state.isConfigActive});
-  };
+    _updateConfig = newProp => {
+      this.props.onConfigChange({
+        ...this.props.config,
+        ...newProp
+      });
+    };
 
-  render() {
-    const {config, datasets} = this.props;
-    const onChange = newConfig => this._updateConfig({config: newConfig});
-    let template = null;
+    _enableConfig = () => {
+      this.setState({isConfigActive: !this.state.isConfigActive});
+    };
 
-    switch (config.id) {
-      case 'tooltip':
-        template = (
-          <TooltipConfig
-            datasets={datasets}
-            config={config.config}
-            onChange={onChange}
-          />
-        );
-        break;
+    render() {
+      const {config, datasets} = this.props;
+      const onChange = newConfig => this._updateConfig({config: newConfig});
+      let template = null;
 
-      case 'brush':
-        template = <BrushConfig config={config.config} onChange={onChange} />;
-        break;
-
-      default:
-        break;
-    }
-
-    return (
-      <StyledInteractionPanel className="interaction-panel">
-        <StyledPanelHeader
-          className="interaction-panel__header"
-          onClick={this._enableConfig}
-        >
-          <PanelHeaderContent className="interaction-panel__header__content">
-            <div className="interaction-panel__header__icon icon">
-              <config.iconComponent height="12px"/>
-            </div>
-            <div className="interaction-panel__header__title">
-              <PanelHeaderTitle>{config.id}</PanelHeaderTitle>
-            </div>
-          </PanelHeaderContent>
-          <div className="interaction-panel__header__actions">
-            <Switch
-              checked={config.enabled}
-              id={`${config.id}-toggle`}
-              onChange={() => this._updateConfig({enabled: !config.enabled})}
-              secondary
+      switch (config.id) {
+        case 'tooltip':
+          template = (
+            <TooltipConfig
+              datasets={datasets}
+              config={config.config}
+              onChange={onChange}
             />
-          </div>
-        </StyledPanelHeader>
-        {config.enabled && (
-          <StyledPanelContent className="interaction-panel__content">
-            {template}
-          </StyledPanelContent>
-        )}
-      </StyledInteractionPanel>
-    );
+          );
+          break;
+
+        case 'brush':
+          template = <BrushConfig config={config.config} onChange={onChange} />;
+          break;
+
+        default:
+          break;
+      }
+
+      return (
+        <StyledInteractionPanel className="interaction-panel">
+          <StyledPanelHeader
+            className="interaction-panel__header"
+            onClick={this._enableConfig}
+          >
+            <PanelHeaderContent className="interaction-panel__header__content">
+              <div className="interaction-panel__header__icon icon">
+                <config.iconComponent height="12px"/>
+              </div>
+              <div className="interaction-panel__header__title">
+                <PanelHeaderTitle>{config.id}</PanelHeaderTitle>
+              </div>
+            </PanelHeaderContent>
+            <div className="interaction-panel__header__actions">
+              <Switch
+                checked={config.enabled}
+                id={`${config.id}-toggle`}
+                onChange={() => this._updateConfig({enabled: !config.enabled})}
+                secondary
+              />
+            </div>
+          </StyledPanelHeader>
+          {config.enabled && (
+            <StyledPanelContent className="interaction-panel__content">
+              {template}
+            </StyledPanelContent>
+          )}
+        </StyledInteractionPanel>
+      );
+    }
   }
 }
 
-const TooltipConfig = ({config, datasets, onChange}) => (
-  <div>
-    {Object.keys(config.fieldsToShow).map(dataId => (
-      <SidePanelSection key={dataId}>
-        <DatasetTag dataset={datasets[dataId]} />
-        <FieldSelector
-          fields={datasets[dataId].fields}
-          value={config.fieldsToShow[dataId]}
-          onSelect={fieldsToShow => {
-            const newConfig = {
-              ...config,
-              fieldsToShow: {
-                ...config.fieldsToShow,
-                [dataId]: fieldsToShow.map(d => d.name)
-              }
-            };
-            onChange(newConfig);
-          }}
-          closeOnSelect={false}
-          multiSelect
-        />
-      </SidePanelSection>
-    ))}
-  </div>
-);
-
-const BrushConfig = ({config, onChange}) => (
-  <SidePanelSection>
-    <PanelLabel>Brush Radius (km)</PanelLabel>
-    <RangeSlider
-      range={BRUSH_CONFIG.range}
-      value0={0}
-      value1={config.size || 10 / 2}
-      step={0.1}
-      isRanged={false}
-      onChange={value => onChange({...config, size: value[1]})}
-      inputTheme="secondary"
-    />
-  </SidePanelSection>
-);
+export default InteractionPanelFactory;
