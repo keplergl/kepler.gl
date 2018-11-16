@@ -60,10 +60,7 @@ const getFilterType = (store, idx, value) => {
 };
 
 const trackingInformation = {
-  [ActionTypes.LOAD_FILES]: (payload) => {
-    return payload ? payload.files.map(({size, type}) => ({size, type})) : null;
-  },
-
+  [ActionTypes.LOAD_FILES]: payload => payload.files.map(({size, type}) => ({size, type})),
   [ActionTypes.LAYER_TYPE_CHANGE]: ({newType}) => ({
     newType
   }),
@@ -93,12 +90,13 @@ const EXCLUDED_ACTIONS = [ActionTypes.LAYER_HOVER, ActionTypes.UPDATE_MAP];
 
 const analyticsMiddleware = store => next => action => {
   if (window.gtag && !EXCLUDED_ACTIONS.includes(action.type)) {
+    const payload = action.paylod || action;
     // eslint-disable-next-line no-undef
     window.gtag('event', 'action', {
       event_category: action.type,
       event_label: trackingInformation[action.type]
         ? JSON.stringify(
-          trackingInformation[action.type](action.payload || action, store)
+          trackingInformation[action.type](payload, store)
         )
         : undefined
     });
