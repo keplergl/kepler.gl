@@ -52,6 +52,7 @@ export default class LineLayer extends ArcLayer {
   }
 
   renderLayer({
+    id,
     data,
     idx,
     layerInteraction,
@@ -89,7 +90,7 @@ export default class LineLayer extends ArcLayer {
         ...data,
         ...interaction,
         getColor: data.getSourceColor,
-        id: this.id,
+        id: id || this.id,
         idx,
         fp64: this.config.visConfig['hi-precision'],
         opacity: this.config.visConfig.opacity,

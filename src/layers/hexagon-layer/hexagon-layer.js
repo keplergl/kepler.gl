@@ -61,6 +61,7 @@ export default class HexagonLayer extends AggregationLayer {
   }
 
   renderLayer({
+    id,
     data,
     idx,
     objectHovered,
@@ -76,7 +77,7 @@ export default class HexagonLayer extends AggregationLayer {
     return [
       new EnhancedHexagonLayer({
         ...data,
-        id: this.id,
+        id: id || this.id,
         idx,
 
         // highlight
@@ -113,7 +114,7 @@ export default class HexagonLayer extends AggregationLayer {
       ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d
         ? [
             new GeoJsonLayer({
-              id: `${this.id}-hovered`,
+              id: `${id || this.id}-hovered`,
               data: [
                 hexagonToPolygonGeo(
                   objectHovered,

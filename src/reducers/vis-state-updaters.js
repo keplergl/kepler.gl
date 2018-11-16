@@ -75,6 +75,7 @@ export const INITIAL_VIS_STATE = {
   layerData: [],
   layerToBeMerged: [],
   layerOrder: [],
+  layerVersion: 0,
 
   // filters
   filters: [],
@@ -83,6 +84,7 @@ export const INITIAL_VIS_STATE = {
   // a collection of multiple dataset
   datasets: {},
   editingDataset: undefined,
+  tiledDatasets: [],
 
   interactionConfig: getDefaultInteraction(),
   interactionToBeMerged: undefined,
@@ -142,7 +144,14 @@ export function layerConfigChangeUpdater(state, action) {
       oldLayerData,
       {sameData: true}
     );
-    return updateStateWithLayerAndData(state, {layerData, layer, idx});
+      
+    return {
+      ...updateStateWithLayerAndData(state, {layerData, layer, idx}),
+      // Update layer version whenever layer data is changed from redux store.
+      // This is here because we need to update all tiled datasets layers, whenever its 
+      // mapping sample kepler layer data is changed.
+      layerVersion: state.layerVersion + 1
+    };
   }
 
   const newState = {
@@ -199,7 +208,10 @@ export function layerTypeChangeUpdater(state, action) {
     };
   }
 
-  return updateStateWithLayerAndData(newState, {layerData, layer, idx});
+  return {
+    ...updateStateWithLayerAndData(newState, {layerData, layer, idx}),
+    layerVersion: state.layerVersion + 1
+  };
 }
 
 export function layerVisualChannelChangeUpdater(state, action) {
@@ -216,7 +228,10 @@ export function layerVisualChannelChangeUpdater(state, action) {
     sameData: true
   });
 
-  return updateStateWithLayerAndData(state, {layerData, layer, idx});
+  return {
+    ...updateStateWithLayerAndData(state, {layerData, layer, idx}),
+    layerVersion: state.layerVersion + 1
+  }
 }
 
 export function layerVisConfigChangeUpdater(state, action) {
@@ -239,7 +254,10 @@ export function layerVisConfigChangeUpdater(state, action) {
       oldLayerData,
       {sameData: true}
     );
-    return updateStateWithLayerAndData(state, {layerData, layer, idx});
+    return {
+      ...updateStateWithLayerAndData(state, {layerData, layer, idx}),
+      layerVersion: state.layerVersion + 1
+    }
   }
 
   return updateStateWithLayerAndData(state, {layer: newLayer, idx});
@@ -496,7 +514,8 @@ export const removeDatasetUpdater = (state, action) => {
   /* eslint-disable no-unused-vars */
   const {
     layers,
-    datasets: {[datasetKey]: dataset, ...newDatasets}
+    datasets: {[datasetKey]: dataset, ...newDatasets},
+    tiledDatasets
   } = state;
   /* eslint-enable no-unused-vars */
 
@@ -535,7 +554,14 @@ export const removeDatasetUpdater = (state, action) => {
     };
   }
 
-  return {...newState, filters, interactionConfig};
+  // remove from tiledDataId
+  const newTiledDatasets = tiledDatasets.slice();
+  const index = newTiledDatasets.indexOf(datasetKey);
+  if (index !== -1) {
+    newTiledDatasets.splice(index, 1);
+  }
+
+  return {...newState, filters, interactionConfig, tiledDatasets: newTiledDatasets};
 };
 
 export const updateLayerBlendingUpdater = (state, action) => ({
@@ -1074,6 +1100,39 @@ export function updateAllLayerDomainData(state, dataId, newFilter) {
   return {
     ...state,
     layers: newLayers,
-    layerData: newLayerDatas
+    layerData: newLayerDatas,
+    layerVersion: state.layerVersion + 1
   };
 }
+
+export function addTiledDatasetSampleUpdater(state, action) {
+  const {dataset} = action;
+  const visState = updateVisDataUpdater(state, {
+    datasets: {
+      info: {
+        ...dataset.info,
+        isTiled: true
+      },
+      data: dataset.data
+    }
+  });
+  return visState;
+};
+
+/**
+ * Add a dataset, with isTiled = true. 
+ * Because we are adding a tiled dataset, the data received is only a subset of all data. 
+ */
+export function addTiledDataIdUpdater(state, action) {
+  const {dataId} = action;
+  const {tiledDatasets} = state;
+  const newTiledDatasets = tiledDatasets.slice();
+  if (!newTiledDatasets.includes(dataId)) {
+    newTiledDatasets.push(dataId);
+  }
+  return {
+    ...state,
+    tiledDatasets: newTiledDatasets
+  };
+}
+

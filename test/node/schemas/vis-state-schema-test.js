@@ -49,7 +49,6 @@ test('#visStateSchema -> v1 -> save layers', t => {
   ];
 
   const layersToSave = vsToSave.layers;
-
   cmpSavedLayers(t, exptectedSavedLayers, layersToSave);
   t.end();
 });

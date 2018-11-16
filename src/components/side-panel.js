@@ -131,6 +131,7 @@ export default function SidePanelFactory(PanelHeader) {
 
       const layerManagerActions = {
         addLayer: visStateActions.addLayer,
+        addTiledDataId: visStateActions.addTiledDataId,
         layerConfigChange: visStateActions.layerConfigChange,
         layerVisualChannelConfigChange:
         visStateActions.layerVisualChannelConfigChange,

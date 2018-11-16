@@ -8,30 +8,37 @@
   dependencies:
     regenerator-runtime "^0.12.0"
 
-"@deck.gl/core@^6.2.3", "@deck.gl/core@^6.2.4":
-  version "6.2.4"
-  resolved "https://registry.yarnpkg.com/@deck.gl/core/-/core-6.2.4.tgz#c569854633f3087dea9866276ad68812671487d7"
+"@deck.gl/core@^6.3.0-alpha.1", "@deck.gl/core@^6.3.0-beta.2":
+  version "6.3.0-beta.2"
+  resolved "https://registry.yarnpkg.com/@deck.gl/core/-/core-6.3.0-beta.2.tgz#f167ecc0b13134856e1dea0f3a96f5f3b85715e1"
   dependencies:
-    luma.gl "^6.2.0"
-    math.gl "^2.1.0"
-    mjolnir.js "^1.0.0"
+    luma.gl "^6.3.0-beta"
+    math.gl "^2.2.0"
+    mjolnir.js "^2.0.0"
     probe.gl "^2.0.1"
     seer "^0.2.4"
     viewport-mercator-project "^6.0.0"
 
-"@deck.gl/layers@^6.2.3":
-  version "6.2.4"
-  resolved "https://registry.yarnpkg.com/@deck.gl/layers/-/layers-6.2.4.tgz#c5c9473a174cd45d01cd404177cbff20c9da1f56"
+"@deck.gl/experimental-layers@6.3.0-alpha.1":
+  version "6.3.0-alpha.1"
+  resolved "https://registry.yarnpkg.com/@deck.gl/experimental-layers/-/experimental-layers-6.3.0-alpha.1.tgz#f4de80c079c367530d83b29dac60468bc91d7839"
   dependencies:
-    "@deck.gl/core" "^6.2.4"
+    "@deck.gl/core" "^6.3.0-alpha.1"
+    "@deck.gl/layers" "^6.3.0-alpha.1"
+
+"@deck.gl/layers@^6.3.0-alpha.1":
+  version "6.3.0-beta.2"
+  resolved "https://registry.yarnpkg.com/@deck.gl/layers/-/layers-6.3.0-beta.2.tgz#806c761834d10633a8ad226cb3ab5220525d950f"
+  dependencies:
+    "@deck.gl/core" "^6.3.0-beta.2"
     d3-hexbin "^0.2.1"
     earcut "^2.0.6"
 
-"@deck.gl/react@^6.2.3":
-  version "6.2.4"
-  resolved "https://registry.yarnpkg.com/@deck.gl/react/-/react-6.2.4.tgz#fab68aaac23a1429c4ad84dd09879ca764543f2f"
+"@deck.gl/react@^6.3.0-alpha.1":
+  version "6.3.0-beta.2"
+  resolved "https://registry.yarnpkg.com/@deck.gl/react/-/react-6.3.0-beta.2.tgz#6295f23bb03187dbf0b2f1775d5b85d3b354b956"
   dependencies:
-    "@deck.gl/core" "^6.2.4"
+    "@deck.gl/core" "^6.3.0-beta.2"
     prop-types "^15.6.0"
 
 "@mapbox/extent@0.4.0":
@@ -371,6 +378,10 @@ array-map@~0.0.0:
 array-reduce@~0.0.0:
   version "0.0.0"
   resolved "https://registry.yarnpkg.com/array-reduce/-/array-reduce-0.0.0.tgz#173899d3ffd1c7d9383e4479525dbe278cab5f2b"
+
+array-source@0.0:
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/array-source/-/array-source-0.0.4.tgz#a525df4a84b1376d27c677cd426a97c3882f8aca"
 
 array-union@^1.0.1:
   version "1.0.2"
@@ -1874,7 +1885,7 @@ concat-map@0.0.1:
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/concat-map/-/concat-map-0.0.1.tgz#d8a96bd77fd68df7793a73036a3ba0d5405d477b"
 
-concat-stream@^1.5.2, concat-stream@^1.6.0, concat-stream@^1.6.1, concat-stream@~1.6.0:
+concat-stream@^1.5.2, concat-stream@^1.6.0, concat-stream@^1.6.1, concat-stream@^1.6.2, concat-stream@~1.6.0:
   version "1.6.2"
   resolved "https://registry.yarnpkg.com/concat-stream/-/concat-stream-1.6.2.tgz#904bdf194cd3122fc675c77fc4ac3d4ff0fd1a34"
   dependencies:
@@ -2294,13 +2305,13 @@ decamelize@^1.0.0, decamelize@^1.1.1, decamelize@^1.1.2:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/decamelize/-/decamelize-1.2.0.tgz#f6534d15148269b20352e7bee26f501f9a191290"
 
-deck.gl@6.2.3:
-  version "6.2.3"
-  resolved "https://registry.yarnpkg.com/deck.gl/-/deck.gl-6.2.3.tgz#7f32b9225d06148ed3f7e945ef51b970f4caa302"
+deck.gl@6.3.0-alpha.1:
+  version "6.3.0-alpha.1"
+  resolved "https://registry.yarnpkg.com/deck.gl/-/deck.gl-6.3.0-alpha.1.tgz#b663ba44a0866e7f9c728faa53fbe03418a25344"
   dependencies:
-    "@deck.gl/core" "^6.2.3"
-    "@deck.gl/layers" "^6.2.3"
-    "@deck.gl/react" "^6.2.3"
+    "@deck.gl/core" "^6.3.0-alpha.1"
+    "@deck.gl/layers" "^6.3.0-alpha.1"
+    "@deck.gl/react" "^6.3.0-alpha.1"
 
 decode-uri-component@^0.2.0:
   version "0.2.0"
@@ -3172,6 +3183,12 @@ file-entry-cache@^2.0.0:
     flat-cache "^1.2.1"
     object-assign "^4.0.1"
 
+file-source@0.6:
+  version "0.6.1"
+  resolved "https://registry.yarnpkg.com/file-source/-/file-source-0.6.1.tgz#ae189d4993766b865a77f83adcf9b9a504cd37dc"
+  dependencies:
+    stream-source "0.3"
+
 filename-regex@^2.0.0:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/filename-regex/-/filename-regex-2.0.1.tgz#c1c4b9bee3e09725ddb106b75c1e301fe2f18b26"
@@ -3381,6 +3398,14 @@ generate-object-property@^1.1.0:
   resolved "https://registry.yarnpkg.com/generate-object-property/-/generate-object-property-1.2.0.tgz#9c0e1c40308ce804f4783618b937fa88f99d50d0"
   dependencies:
     is-property "^1.0.0"
+
+geobuf@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/geobuf/-/geobuf-3.0.1.tgz#1de4376f1d270c87ea7551a12b857cf89ae777ad"
+  dependencies:
+    concat-stream "^1.6.2"
+    pbf "^3.1.0"
+    shapefile "~0.6.6"
 
 geojson-flatten@~0.2.1:
   version "0.2.2"
@@ -4641,9 +4666,9 @@ lru-queue@0.1:
   dependencies:
     es5-ext "~0.10.2"
 
-luma.gl@^6.2.0:
-  version "6.2.0"
-  resolved "https://registry.yarnpkg.com/luma.gl/-/luma.gl-6.2.0.tgz#449760dc735e2e89a55bb78697c8dd1093626b2c"
+luma.gl@^6.3.0-beta:
+  version "6.3.0-beta.1"
+  resolved "https://registry.yarnpkg.com/luma.gl/-/luma.gl-6.3.0-beta.1.tgz#f63db4ab44ff0453cd627c4af2312259312abf1a"
   dependencies:
     "@babel/runtime" "^7.0.0"
     math.gl "^2.2.0"
@@ -4930,10 +4955,17 @@ mixin-deep@^1.2.0:
     for-in "^1.0.2"
     is-extendable "^1.0.1"
 
-mjolnir.js@^1.0.0, mjolnir.js@^1.2.1:
+mjolnir.js@^1.2.1:
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/mjolnir.js/-/mjolnir.js-1.2.2.tgz#65938d6b443fed5b5c65456e6c934b01fece3610"
   dependencies:
+    hammerjs "^2.0.8"
+
+mjolnir.js@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/mjolnir.js/-/mjolnir.js-2.0.0.tgz#8475d2fb3b09780dbff122f245c6b3ddc46fc41e"
+  dependencies:
+    "@babel/runtime" "^7.0.0"
     hammerjs "^2.0.8"
 
 mkdirp@0.5.x, mkdirp@^0.5.0, mkdirp@^0.5.1, mkdirp@~0.5.0:
@@ -5589,6 +5621,13 @@ path-platform@~0.11.15:
   version "0.11.15"
   resolved "https://registry.yarnpkg.com/path-platform/-/path-platform-0.11.15.tgz#e864217f74c36850f0852b78dc7bf7d4a5721bf2"
 
+path-source@0.1:
+  version "0.1.3"
+  resolved "https://registry.yarnpkg.com/path-source/-/path-source-0.1.3.tgz#03907c595480aa2596a15a901c44f745736e7a73"
+  dependencies:
+    array-source "0.0"
+    file-source "0.6"
+
 path-to-regexp@0.1.7:
   version "0.1.7"
   resolved "https://registry.yarnpkg.com/path-to-regexp/-/path-to-regexp-0.1.7.tgz#df604178005f522f15eb4490e7247a1bfaa67f8c"
@@ -5607,7 +5646,7 @@ path-type@^1.0.0:
     pify "^2.0.0"
     pinkie-promise "^2.0.0"
 
-pbf@^3.0.5:
+pbf@^3.0.5, pbf@^3.1.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/pbf/-/pbf-3.1.0.tgz#f70004badcb281761eabb1e76c92f179f08189e9"
   dependencies:
@@ -6668,6 +6707,17 @@ shallow-copy@~0.0.1:
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/shallow-copy/-/shallow-copy-0.0.1.tgz#415f42702d73d810330292cc5ee86eae1a11a170"
 
+shapefile@~0.6.6:
+  version "0.6.6"
+  resolved "https://registry.yarnpkg.com/shapefile/-/shapefile-0.6.6.tgz#6fee152b9fb2b1c85f690285b692fb68c95a5f4f"
+  dependencies:
+    array-source "0.0"
+    commander "2"
+    path-source "0.1"
+    slice-source "0.4"
+    stream-source "0.3"
+    text-encoding "^0.6.4"
+
 sharkdown@^0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/sharkdown/-/sharkdown-0.1.0.tgz#61d4fe529e75d02442127cc9234362265099214f"
@@ -6741,6 +6791,10 @@ slash@^1.0.0:
 slice-ansi@0.0.4:
   version "0.0.4"
   resolved "http://registry.npmjs.org/slice-ansi/-/slice-ansi-0.0.4.tgz#edbf8903f66f7ce2f8eafd6ceed65e264c831b35"
+
+slice-source@0.4:
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/slice-source/-/slice-source-0.4.1.tgz#40a57ac03c6668b5da200e05378e000bf2a61d79"
 
 slide@^1.1.5:
   version "1.1.6"
@@ -7016,6 +7070,10 @@ stream-http@^2.0.0, stream-http@^2.7.2:
     to-arraybuffer "^1.0.0"
     xtend "^4.0.0"
 
+stream-source@0.3:
+  version "0.3.5"
+  resolved "https://registry.yarnpkg.com/stream-source/-/stream-source-0.3.5.tgz#b97f52d0f8ea566db071db679b985403a31e0340"
+
 stream-spigot@~2.1.2:
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/stream-spigot/-/stream-spigot-2.1.2.tgz#7de145e819f8dd0db45090d13dcf73a8ed3cc035"
@@ -7284,7 +7342,7 @@ test-exclude@^4.2.0, test-exclude@^4.2.1:
     read-pkg-up "^1.0.1"
     require-main-filename "^1.0.1"
 
-text-encoding@0.6.4:
+text-encoding@0.6.4, text-encoding@^0.6.4:
   version "0.6.4"
   resolved "http://registry.npmjs.org/text-encoding/-/text-encoding-0.6.4.tgz#e399a982257a276dae428bb92845cb71bdc26d19"
 

@@ -198,10 +198,12 @@ function KeplerGlFactory(
         layerBlending,
         layerClasses,
         interactionConfig,
+        tiledDatasets,
         datasets,
         layerData,
         hoverInfo,
-        clicked
+        clicked,
+        layerVersion
       } = visState;
 
       const sideFields = {
@@ -224,7 +226,9 @@ function KeplerGlFactory(
       };
 
       const mapFields = {
+        layerVersion,
         datasets,
+        tiledDatasets,
         mapboxApiAccessToken,
         mapState,
         mapStyle,

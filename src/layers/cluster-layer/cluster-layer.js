@@ -63,6 +63,7 @@ export default class ClusterLayer extends AggregationLayer {
   }
 
   renderLayer({
+    id,
     data,
     idx,
     objectHovered,
@@ -75,7 +76,7 @@ export default class ClusterLayer extends AggregationLayer {
     return [
       new DeckGLClusterLayer({
         ...data,
-        id: this.id,
+        id: id || this.id,
         idx,
         radiusScale: 1,
         radiusRange: visConfig.radiusRange,

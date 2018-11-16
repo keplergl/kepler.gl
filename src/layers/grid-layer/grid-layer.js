@@ -80,6 +80,7 @@ export default class GridLayer extends AggregationLayer {
   }
 
   renderLayer({
+    id,
     data,
     idx,
     objectHovered,
@@ -95,7 +96,7 @@ export default class GridLayer extends AggregationLayer {
     return [
       new EnhancedGridLayer({
         ...data,
-        id: this.id,
+        id: id || this.id,
         idx,
         cellSize,
         coverage: visConfig.coverage,
@@ -130,7 +131,7 @@ export default class GridLayer extends AggregationLayer {
       ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d
         ? [
             new GeoJsonLayer({
-              id: `${this.id}-hovered`,
+              id: `${id || this.id}-hovered`,
               data: [
                 pointToPolygonGeo({
                   object: objectHovered.object,
