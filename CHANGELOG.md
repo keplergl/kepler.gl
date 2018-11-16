@@ -15,6 +15,14 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+#### [0.2.0] - Nov 16 2018
+- [Enhancement] Export side panel component factories (#282)
+- [Feature] Upgrade to deck.gl v6 (#272)
+- [Refactor] Small update of readability (#250)
+- [website] Click logo should go to kepler.gl website (#251)
+- [Enhancement] Add contribution guidelines on contributing.md file (#108)
+- [Enhancement] Scan through all text labels to get the entire character set (#245)
+
 #### [0.1.6] - Oct 3 2018
 - [Enhancement] save and load text label config (#242)
 
