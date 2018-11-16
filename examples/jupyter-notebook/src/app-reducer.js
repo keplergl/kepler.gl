@@ -18,19 +18,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const {existsSync} = require('fs');
-const {execSync} = require('child_process');
+import {createAction, handleActions} from 'redux-actions';
 
-const folder = process.argv[2];
-const script = process.argv[3];
+// CONSTANTS
+export const INIT = 'INIT';
 
-const cmd = !existsSync(`${folder}/node_modules`)
-  ? `yarn --ignore-engines && npm run ${script}`
-  : `npm run ${script}`;
+// ACTIONS
+export const appInit = createAction(INIT);
 
-execSync(cmd, {
-  cwd: folder,
-  stdio: 'inherit'
-});
+// INITIAL_STATE
+const initialState = {
+  appName: 'example',
+  loaded: false
+};
 
-process.exit();
+// REDUCER
+const appReducer = handleActions({
+  [INIT]: (state, action) => ({
+    ...state,
+    loaded: true
+  })
+}, initialState);
+
+export default appReducer;

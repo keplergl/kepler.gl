@@ -18,19 +18,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const {existsSync} = require('fs');
-const {execSync} = require('child_process');
+import {combineReducers} from 'redux';
+import {handleActions} from 'redux-actions';
 
-const folder = process.argv[2];
-const script = process.argv[3];
+import keplerGlReducer from 'kepler.gl/reducers';
 
-const cmd = !existsSync(`${folder}/node_modules`)
-  ? `yarn --ignore-engines && npm run ${script}`
-  : `npm run ${script}`;
+const customizedKeplerGlReducer = keplerGlReducer
+  .initialState({
+    uiState: {
+      currentModal: null
+    }
+  })
 
-execSync(cmd, {
-  cwd: folder,
-  stdio: 'inherit'
+import {
+  INIT
+} from './actions';
+
+// INITIAL_APP_STATE
+const initialState = {
+  appName: 'jupyter-kepler',
+  loaded: false
+};
+
+// App reducer
+const appReducer = handleActions({
+  [INIT]: (state, action) => ({
+    ...state,
+    loaded: true
+  })
+}, initialState);
+
+// combine app reducer and keplerGl reducer
+// to mimic the reducer state of kepler.gl website
+const demoReducer = combineReducers({
+  // mount keplerGl reducer
+  keplerGl: customizedKeplerGlReducer,
+  app: appReducer
 });
 
-process.exit();
+// export demoReducer to be combined in website app
+export default demoReducer;

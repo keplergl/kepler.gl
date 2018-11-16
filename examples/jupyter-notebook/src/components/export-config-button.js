@@ -18,19 +18,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const {existsSync} = require('fs');
-const {execSync} = require('child_process');
+import React from 'react';
+import {Icons, Button, withState} from 'kepler.gl/components';
+import {toggleModal} from 'kepler.gl/actions';
 
-const folder = process.argv[2];
-const script = process.argv[3];
+const ExportConfigButton = (props) => (
+  <Button
+    onClick={() => props.toggleModal('exportConfig')}
+    width="105px"
+    secondary
+  >
+    <Icons.CodeAlt  height="12px"/>Config
+  </Button>
+);
 
-const cmd = !existsSync(`${folder}/node_modules`)
-  ? `yarn --ignore-engines && npm run ${script}`
-  : `npm run ${script}`;
+const ExportConfigButtonFactory = () =>
+  withState(
+    [],
+    state => state,
+    {toggleModal}
+  )(ExportConfigButton);
 
-execSync(cmd, {
-  cwd: folder,
-  stdio: 'inherit'
-});
-
-process.exit();
+export default ExportConfigButtonFactory;

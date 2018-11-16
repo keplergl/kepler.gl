@@ -18,19 +18,54 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const {existsSync} = require('fs');
-const {execSync} = require('child_process');
+import webpack from 'webpack';
+import ProgressBarPlugin from 'progress-bar-webpack-plugin';
+import path from 'path';
 
-const folder = process.argv[2];
-const script = process.argv[3];
+const webpackConfig = require('./config')();
 
-const cmd = !existsSync(`${folder}/node_modules`)
-  ? `yarn --ignore-engines && npm run ${script}`
-  : `npm run ${script}`;
+const src = path.resolve(__dirname, '../src');
 
-execSync(cmd, {
-  cwd: folder,
-  stdio: 'inherit'
-});
+export default {
 
-process.exit();
+  ...webpackConfig,
+
+  output: {
+    ...webpackConfig.output,
+    filename: 'main-[hash].js',
+    sourceMapFilename: '../_maps/main.map'
+  },
+
+  devtool: 'source-map',
+
+  module: {
+    rules: [...webpackConfig.module.rules, {
+      test: /\.js$/,
+      loader: 'babel-loader',
+      include: src
+    }
+    ]
+  },
+
+  plugins: [
+
+    ...webpackConfig.plugins,
+
+    new webpack.LoaderOptionsPlugin({minimize: true, debug: false}),
+    new webpack.optimize.UglifyJsPlugin({sourceMap: true, compressor: {comparisons: false, warnings: false}}),
+    new ProgressBarPlugin()
+  ],
+
+  stats: {
+    colors: true,
+    reasons: false,
+    hash: false,
+    version: false,
+    timings: true,
+    chunks: false,
+    chunkModules: false,
+    cached: false,
+    cachedAssets: false
+  }
+
+};

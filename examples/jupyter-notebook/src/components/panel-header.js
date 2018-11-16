@@ -18,19 +18,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const {existsSync} = require('fs');
-const {execSync} = require('child_process');
+import {PanelHeaderFactory, Icons} from 'kepler.gl/components';
 
-const folder = process.argv[2];
-const script = process.argv[3];
+// TODO: Move the doc to public repo
+const KEPLER_DOC = 'https://code.uberinternal.com/w/repo/vis/voyager/jupyter/';
 
-const cmd = !existsSync(`${folder}/node_modules`)
-  ? `yarn --ignore-engines && npm run ${script}`
-  : `npm run ${script}`;
+export function CustomPanelHeaderFactory() {
+  const PanelHeader = PanelHeaderFactory();
 
-execSync(cmd, {
-  cwd: folder,
-  stdio: 'inherit'
-});
+  PanelHeader.defaultProps = {
+    ...PanelHeader.defaultProps,
+    actionItems: [
+      {
+        id: 'docs',
+        label: 'Docs',
+        iconComponent: Icons.Docs,
+        href: KEPLER_DOC,
+        blank: true,
+        tooltip: 'Documentation',
+        onClick: () => {}
+      }
+    ]
+  };
+  return PanelHeader;
+}
 
-process.exit();
+export default CustomPanelHeaderFactory;

@@ -1,0 +1,127 @@
+{
+  "version": "v1",
+  "config": {
+    "visState": {
+      "filters": [],
+      "layers": [
+        {
+          "id": "2f6gf3m",
+          "type": "hexagonId",
+          "config": {
+            "dataId": "hex_data",
+            "label": "H3 Hexagon",
+            "color": [
+              18,
+              147,
+              154
+            ],
+            "columns": {
+              "hex_id": "hex_id"
+            },
+            "isVisible": true,
+            "visConfig": {
+              "opacity": 0.8,
+              "colorRange": {
+                "name": "ColorBrewer Spectral-10",
+                "type": "diverging",
+                "category": "ColorBrewer",
+                "colors": [
+                  "#9e0142",
+                  "#d53e4f",
+                  "#f46d43",
+                  "#fdae61",
+                  "#fee08b",
+                  "#e6f598",
+                  "#abdda4",
+                  "#66c2a5",
+                  "#3288bd",
+                  "#5e4fa2"
+                ],
+                "reversed": false
+              },
+              "coverage": 1,
+              "sizeRange": [
+                0,
+                500
+              ],
+              "coverageRange": [
+                0,
+                1
+              ],
+              "elevationScale": 5,
+              "hi-precision": false,
+              "enable3d": true
+            },
+            "textLabel": {
+              "field": null,
+              "color": [
+                255,
+                255,
+                255
+              ],
+              "size": 50,
+              "offset": [
+                0,
+                0
+              ],
+              "anchor": "middle"
+            }
+          },
+          "visualChannels": {
+            "colorField": {
+              "name": "value",
+              "type": "integer"
+            },
+            "colorScale": "quantile",
+            "sizeField": {
+              "name": "value",
+              "type": "integer"
+            },
+            "sizeScale": "linear",
+            "coverageField": null,
+            "coverageScale": "linear"
+          }
+        }
+      ],
+      "interactionConfig": {
+        "tooltip": {
+          "fieldsToShow": {
+            "hex_data": [
+              "hex_id",
+              "value"
+            ]
+          },
+          "enabled": true
+        },
+        "brush": {
+          "size": 0.5,
+          "enabled": false
+        }
+      },
+      "layerBlending": "normal",
+      "splitMaps": []
+    },
+    "mapState": {
+      "bearing": 24,
+      "dragRotate": true,
+      "latitude": 37.743367762621084,
+      "longitude": -122.44082866377508,
+      "pitch": 50,
+      "zoom": 12.833484491832886,
+      "isSplit": false
+    },
+    "mapStyle": {
+      "styleType": "dark",
+      "topLayerGroups": {},
+      "visibleLayerGroups": {
+        "label": true,
+        "road": true,
+        "border": false,
+        "building": true,
+        "water": true,
+        "land": true
+      },
+      "mapStyles": {}
+    }
+  }
+}

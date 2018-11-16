@@ -34,6 +34,7 @@
     "start:custom-layer": "npm run install-and-start -- examples/custom-layer start-local",
     "start:open-modal": "npm run install-and-start -- examples/open-modal start-local",
     "start:custom-reducer": "npm run install-and-start -- examples/custom-reducer start-local",
+    "start:jupyter-notebook": "npm run install-and-start -- examples/jupyter-notebook start-local",
     "build": "rm -fr dist && uber-licence && babel src --out-dir dist --plugins=transform-es2015-modules-commonjs --source-maps inline",
     "lint": "eslint src examples/**/src website/src",
     "check-licence": "uber-licence --dry",

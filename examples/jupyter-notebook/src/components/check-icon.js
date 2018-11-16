@@ -18,19 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const {existsSync} = require('fs');
-const {execSync} = require('child_process');
+import PropTypes from 'prop-types';
+import React from 'react';
+import {Icons} from 'kepler.gl/components';
 
-const folder = process.argv[2];
-const script = process.argv[3];
+class Check extends React.Component {
+  static propTypes = {
+    /** Set the height of the icon, ex. '16px' */
+    height: PropTypes.string
+  };
 
-const cmd = !existsSync(`${folder}/node_modules`)
-  ? `yarn --ignore-engines && npm run ${script}`
-  : `npm run ${script}`;
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-check'
+  };
 
-execSync(cmd, {
-  cwd: folder,
-  stdio: 'inherit'
-});
+  render() {
+    return (
+      <Icons.Base {...this.props}>
+        <path d="M59.712 16.534l-4.243-4.243a1 1 0 0 0-1.414 0L24 42.346 9.945 28.29a1 1 0 0 0-1.414 0L4.29 32.534a1 1 0 0 0 0 1.414L21.172 50.83a4 4 0 0 0 5.657 0l32.883-32.882a1 1 0 0 0 0-1.414z"/>
+      </Icons.Base>
+    );
+  }
+}
 
-process.exit();
+export default Check;

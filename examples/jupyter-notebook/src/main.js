@@ -18,19 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const {existsSync} = require('fs');
-const {execSync} = require('child_process');
+import React from 'react';
+import document from 'global/document';
+import {Provider} from 'react-redux';
+import {render} from 'react-dom';
+import store from './store';
+import App from './app';
 
-const folder = process.argv[2];
-const script = process.argv[3];
+const Root = () => (
+  <Provider store={store}>
+    <App/>
+  </Provider>
+);
 
-const cmd = !existsSync(`${folder}/node_modules`)
-  ? `yarn --ignore-engines && npm run ${script}`
-  : `npm run ${script}`;
-
-execSync(cmd, {
-  cwd: folder,
-  stdio: 'inherit'
-});
-
-process.exit();
+render(<Root />, document.body.appendChild(document.createElement('div')));

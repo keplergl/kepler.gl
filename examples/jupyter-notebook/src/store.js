@@ -18,19 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const {existsSync} = require('fs');
-const {execSync} = require('child_process');
+import {createStore, applyMiddleware, compose} from 'redux';
 
-const folder = process.argv[2];
-const script = process.argv[3];
+import thunk from 'redux-thunk';
+import window from 'global/window';
+import {taskMiddleware} from 'react-palm/tasks';
 
-const cmd = !existsSync(`${folder}/node_modules`)
-  ? `yarn --ignore-engines && npm run ${script}`
-  : `npm run ${script}`;
+import demoReducer from './reducers';
 
-execSync(cmd, {
-  cwd: folder,
-  stdio: 'inherit'
-});
+const reducers = demoReducer
 
-process.exit();
+export const middlewares = [
+  taskMiddleware,
+  thunk
+];
+
+export const enhancers = [applyMiddleware(...middlewares)];
+
+const initialState = {};
+
+// add redux devtools
+const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+
+export default createStore(
+  reducers,
+  initialState,
+  composeEnhancers(...enhancers)
+);

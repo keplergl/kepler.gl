@@ -18,19 +18,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const {existsSync} = require('fs');
-const {execSync} = require('child_process');
+import webpack from 'webpack';
+import {appendFileSync} from 'fs';
+import {join} from 'path';
 
-const folder = process.argv[2];
-const script = process.argv[3];
+import webpackConfig from '../webpack/build';
 
-const cmd = !existsSync(`${folder}/node_modules`)
-  ? `yarn --ignore-engines && npm run ${script}`
-  : `npm run ${script}`;
+const bundler = webpack(webpackConfig);
 
-execSync(cmd, {
-  cwd: folder,
-  stdio: 'inherit'
+bundler.run((err, stats) => {
+  /* eslint-disable */
+  if (err) {
+    return console.error(err);
+  }
+
+  const assets = stats.toJson().assetsByChunkName;
+  const [main, style] = assets.main;
+  const files = JSON.stringify({main, style});
+  appendFileSync(join(__dirname, '../dist/', main), `\nwindow.FILES=${files}`);
+
+  return console.log(stats.toString(webpackConfig.stats));
+  /* eslint-enable */
 });
-
-process.exit();

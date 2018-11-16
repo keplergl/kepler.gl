@@ -4,6 +4,7 @@ coverage/
 .nyc_output/
 dist/
 */**/dist/
+*/**/dist-workbench/
 
 */**/yarn.lock
 yarn-error.log
