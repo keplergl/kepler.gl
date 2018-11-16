@@ -112,7 +112,7 @@ const SampleMap = ({sample, onClick}) => (
   <StyledSampleMap className="sample-map-gallery__item">
     <div className="sample-map">
       <div className="sample-map__image" onClick={onClick}>
-        <img src={sample.imageUrl} />
+        {sample.imageUrl && <img src={sample.imageUrl} />}
       </div>
       <div className="sample-map__title">{sample.label}</div>
       <div className="sample-map__size">{`${numFormat(sample.size)} rows`}</div>
