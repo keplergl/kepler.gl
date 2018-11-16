@@ -27,10 +27,15 @@ import {
   Button
 } from 'components/common/styled-components';
 import {Add} from 'components/common/icons';
-import SourceDataCatalog from './source-data-catalog';
-import FilterPanel from './filter-panel/filter-panel';
+import SourceDataCatalogFactory from './source-data-catalog';
+import FilterPanelFactory from './filter-panel/filter-panel';
 
-function FilterManagerFactory() {
+FilterManagerFactory.deps = [
+  SourceDataCatalogFactory,
+  FilterPanelFactory
+];
+
+function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
   return class FilterManager extends Component {
     static propTypes = {
       datasets: PropTypes.object,

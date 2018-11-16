@@ -38,6 +38,8 @@ export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel
 export {default as SourceDataCatalogFactory} from './side-panel/source-data-catalog';
 
 export {default as FilterManagerFactory} from './side-panel/filter-manager';
+export {default as FilterPanelFactory} from './side-panel/filter-panel/filter-panel';
+
 export {default as InteractionManagerFactory} from './side-panel/interaction-manager';
 export {default as BrushConfigFactory} from './side-panel/interaction-panel/brush-config';
 export {default as TooltipConfigFactory} from './side-panel/interaction-panel/tooltip-config';

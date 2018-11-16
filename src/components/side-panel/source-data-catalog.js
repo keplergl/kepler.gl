@@ -28,7 +28,7 @@ import {Table, Trash, ArrowRight} from 'components/common/icons';
 const defaultRemoveDataset = datasetKey => {};
 const numFormat = format(',');
 
-const SourceDataCatelog = styled.div`
+const SourceDataCatelogWrapper = styled.div`
   transition: ${props => props.theme.transition};
 `;
 
@@ -94,6 +94,38 @@ export const DatasetTag = ({onClick, dataset}) => (
   </DatasetTagWrapper>
 );
 
+const ShowDataTable = ({id, showDatasetTable}) => (
+  <DataTagAction
+    className="dataset-action show-data-table"
+    data-tip
+    data-for={`data-table-${id}`}
+  >
+    <Table height="16px" onClick={() => showDatasetTable(id)} />
+    <Tooltip id={`data-table-${id}`} effect="solid">
+      <span>Show data table</span>
+    </Tooltip>
+  </DataTagAction>
+);
+
+const RemoveDataset = ({datasetKey, removeDataset = defaultRemoveDataset}) => (
+  <DataTagAction
+    className="dataset-action remove-dataset"
+    data-tip
+    data-for={`delete-${datasetKey}`}
+  >
+    <Trash
+      height="16px"
+      onClick={e => {
+        e.stopPropagation();
+        removeDataset(datasetKey);
+      }}
+    />
+    <Tooltip id={`delete-${datasetKey}`} effect="solid" type="error">
+      <span>Remove dataset</span>
+    </Tooltip>
+  </DataTagAction>
+);
+
 function SourceDataCatalogFactory() {
   const SourceDataCatalog = ({
     datasets,
@@ -101,7 +133,7 @@ function SourceDataCatalogFactory() {
     removeDataset,
     showDeleteDataset = false
   }) => (
-    <SourceDataCatelog className="source-data-catalog">
+    <SourceDataCatelogWrapper className="source-data-catalog">
       {Object.values(datasets).map((dataset, index) => (
         <SidePanelSection key={dataset.id}>
           <DatasetTitle className="source-data-title" clickable={Boolean(showDatasetTable)}>
@@ -135,42 +167,10 @@ function SourceDataCatalogFactory() {
           ) : null}
         </SidePanelSection>
       ))}
-    </SourceDataCatelog>
+    </SourceDataCatelogWrapper>
   );
 
   return SourceDataCatalog;
 }
-
-const ShowDataTable = ({id, showDatasetTable}) => (
-  <DataTagAction
-    className="dataset-action show-data-table"
-    data-tip
-    data-for={`data-table-${id}`}
-  >
-    <Table height="16px" onClick={() => showDatasetTable(id)} />
-    <Tooltip id={`data-table-${id}`} effect="solid">
-      <span>Show data table</span>
-    </Tooltip>
-  </DataTagAction>
-);
-
-const RemoveDataset = ({datasetKey, removeDataset = defaultRemoveDataset}) => (
-  <DataTagAction
-    className="dataset-action remove-dataset"
-    data-tip
-    data-for={`delete-${datasetKey}`}
-  >
-    <Trash
-      height="16px"
-      onClick={e => {
-        e.stopPropagation();
-        removeDataset(datasetKey);
-      }}
-    />
-    <Tooltip id={`delete-${datasetKey}`} effect="solid" type="error">
-      <span>Remove dataset</span>
-    </Tooltip>
-  </DataTagAction>
-);
 
 export default SourceDataCatalogFactory;
