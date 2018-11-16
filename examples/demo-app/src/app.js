@@ -88,15 +88,6 @@ class App extends Component {
     this._onResize();
   }
 
-  componentDidMount() {
-    // delay 2s to show the banner
-    if (!window.localStorage.getItem(BannerKey)) {
-      window.setTimeout(this._showBanner, 3000);
-    }
-    // load sample data
-    this._loadSampleData();
-  }
-
   componentWillUnmount() {
     window.removeEventListener('resize', this._onResize);
   }
