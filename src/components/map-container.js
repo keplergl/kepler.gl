@@ -349,6 +349,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       // render layers for tiled data sources, from sample data layers.
       tiledDatasets.forEach(tiledDataset => {
         const sampleKeplerLayers = layers.filter(layer => layer.config.dataId === tiledDataset)
+        // For now, we assume all tiled datasets are Sharedstreets datasets, thus we render
+        // sharedstreets layers.
         const sharedstreetsLayer = this._renderSharedstreetsLayer(sampleKeplerLayers);
         layersToRender.push(sharedstreetsLayer);
       });

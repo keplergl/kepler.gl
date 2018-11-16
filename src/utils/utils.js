@@ -61,3 +61,24 @@ export function notNullorUndefined(d) {
 export function capitalizeFirstLetter(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
+
+/**
+ * 
+ * @param {function} recompute function that will be called if current arguments are different from 
+ * previous arguments
+ * @returns {function} a memoized function
+ */
+export function memoize(recompute) {
+  let lastArgs = [];
+  let lastRes = null;
+  return (...args) => {
+    for (let i = 0; i < args.length; i++) {
+      if (args[i] !== lastArgs[i]) {
+        lastRes = recompute(...args);
+        lastArgs = args;
+        return lastRes;
+      }
+    }
+    return lastRes;
+  }
+}

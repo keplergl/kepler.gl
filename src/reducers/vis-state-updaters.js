@@ -147,6 +147,9 @@ export function layerConfigChangeUpdater(state, action) {
       
     return {
       ...updateStateWithLayerAndData(state, {layerData, layer, idx}),
+      // Update layer version whenever layer data is changed from redux store.
+      // This is here because we need to update all tiled datasets layers, whenever its 
+      // mapping sample kepler layer data is changed.
       layerVersion: state.layerVersion + 1
     };
   }
@@ -1116,6 +1119,10 @@ export function addTiledDatasetSampleUpdater(state, action) {
   return visState;
 };
 
+/**
+ * Add a dataset, with isTiled = true. 
+ * Because we are adding a tiled dataset, the data received is only a subset of all data. 
+ */
 export function addTiledDataIdUpdater(state, action) {
   const {dataId} = action;
   const {tiledDatasets} = state;
