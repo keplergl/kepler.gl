@@ -30,7 +30,7 @@ import {
   SET_LOADING_METHOD,
   LOAD_MAP_SAMPLE_FILE,
   LOAD_REMOTE_FILE_DATA_SUCCESS,
-  SET_SAMPLE_LOADING_STATUS
+  SET_SAMPLE_LOADING_STATUS, LOAD_REMOTE_FILE_DATA_FAIL
 } from './actions';
 
 import {DEFAULT_LOADING_METHOD, LOADING_METHODS} from './constants/default-settings';
@@ -44,7 +44,12 @@ const initialAppState = {
   currentOption: DEFAULT_LOADING_METHOD.options[0],
   previousMethod: null,
   sampleMaps: [], // this is used to store sample maps fetch from a remote json file
-  isMapLoading: false // determine whether we are loading a sample map
+  isMapLoading: false, // determine whether we are loading a sample map
+  error: null // contains error when loading/retrieving data/configuration
+    // {
+    //   status: null,
+    //   message: null
+    // }
 };
 
 // App reducer
@@ -56,7 +61,8 @@ export const appReducer = handleActions({
   [SET_LOADING_METHOD]: (state, action) => ({
     ...state,
     previousMethod: state.loadingMethod,
-    loadingMethod: LOADING_METHODS.find(({id}) => id === action.method)
+    loadingMethod: LOADING_METHODS.find(({id}) => id === action.method),
+    error: null
   }),
   [LOAD_MAP_SAMPLE_FILE]: (state, action) => ({
     ...state,
@@ -65,6 +71,12 @@ export const appReducer = handleActions({
   [SET_SAMPLE_LOADING_STATUS]: (state, action) => ({
     ...state,
     isMapLoading: action.isMapLoading
+  }),
+  [LOAD_REMOTE_FILE_DATA_FAIL]: (state, action) => ({
+    ...state,
+    error: action.error,
+    currentOption: {dataUrl: action.url},
+    isMapLoading: false
   })
 }, initialAppState);
 

@@ -27,7 +27,8 @@ import {MAP_CONFIG_URL} from './constants/sample-maps';
 // CONSTANTS
 export const INIT = 'INIT';
 export const SET_LOADING_METHOD = 'SET_LOADING_METHOD';
-export const LOAD_REMOTE_FILE_DATA_SUCCESS = 'LOAD_DATA_SUCCESS';
+export const LOAD_REMOTE_FILE_DATA_SUCCESS = 'LOAD_REMOTE_FILE_DATA_SUCCESS';
+export const LOAD_REMOTE_FILE_DATA_FAIL = 'LOAD_REMOTE_FILE_DATA_FAIL';
 export const LOAD_MAP_SAMPLE_FILE = 'LOAD_MAP_SAMPLE_FILE';
 export const SET_SAMPLE_LOADING_STATUS = 'SET_SAMPLE_LOADING_STATUS';
 
@@ -39,13 +40,21 @@ export function setLoadingMethod(method) {
   };
 }
 
-export function loadResponseFromRemoteFile(response, config, options) {
+export function loadRemoteFileSuccess(response, config, options) {
   return {
     type: LOAD_REMOTE_FILE_DATA_SUCCESS,
     response,
     config,
     options
   };
+}
+
+export function loadRemoteFileError(error, url) {
+  return {
+    type: LOAD_REMOTE_FILE_DATA_FAIL,
+    error,
+    url
+  }
 }
 
 export function loadMapSampleFile(samples) {
@@ -68,19 +77,23 @@ export function setLoadingMapStatus(isMapLoading) {
  * It uses loadFile action to dispatcha and add new datasets/configs
  * to the kepler.gl instance
  * @param options
+ * @param {string} options.dataUrl the URL to fetch data from. Current supoprted file type json,csv, kepler.json
  * @returns {Function}
  */
 export function loadRemoteMap(options) {
   return dispatch => {
     loadRemoteRawData(options.dataUrl).then(
-      file => {
-        dispatch(loadFiles([
-          // In this part we turn the response into a FileBlob
-          // so we can use it to call loadFiles
-          /* eslint-disable no-undef */
-          new File([file], options.dataUrl)
-          /* eslint-enable no-undef */
-        ]));
+      // In this part we turn the response into a FileBlob
+      // so we can use it to call loadFiles
+      file => dispatch(loadFiles([
+        /* eslint-disable no-undef */
+        new File([file], options.dataUrl)
+        /* eslint-enable no-undef */
+      ])),
+      error => {
+        const {target = {}} = error;
+        const {status, responseText} = target;
+        dispatch(loadRemoteFileError({status, message: responseText}, options.dataUrl));
       }
     );
     dispatch(setLoadingMapStatus(true));
@@ -210,7 +223,7 @@ function loadMapCallback(dispatch, error, result, options, config) {
   if (error) {
     Console.warn(`Error loading datafile ${options.dataUrl}`);
   } else {
-    dispatch(loadResponseFromRemoteFile(result, config, options));
+    dispatch(loadRemoteFileSuccess(result, config, options));
     dispatch(toggleModal(null));
   }
 }

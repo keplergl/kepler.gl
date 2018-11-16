@@ -159,6 +159,8 @@ class LoadDataModal extends Component {
                 {loadingMethod.id === 'remote' ? (
                   <LoadRemoteMap
                     onLoadRemoteMap={this.props.onLoadRemoteMap}
+                    option={this.props.currentOption}
+                    error={this.props.error}
                   />
                 ) : null}
                 {loadingMethod.id === 'sample' ? (
