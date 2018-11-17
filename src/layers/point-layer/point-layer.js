@@ -242,11 +242,9 @@ export default class PointLayer extends Layer {
     mapState,
     interactionConfig
   }, {
-    sampleKeplerLayerId,
     id,
-    tileX,
-    tileY,
-    tileZ
+    sampleKeplerLayerId,
+    tile
   } = {}) {
     const enableBrushing = interactionConfig.brush.enabled;
 
@@ -280,12 +278,7 @@ export default class PointLayer extends Layer {
           // circles will be flat on the map when the altitude column is not used
           depthTest: this.config.columns.altitude.fieldIdx > -1
         },
-                
-        // for TileLayer picking info
-        tileX,
-        tileY,
-        tileZ,
-
+        tile,
         updateTriggers: {
           getRadius: {
             sizeField: this.config.sizeField,
@@ -327,9 +320,7 @@ export default class PointLayer extends Layer {
                 getSize: this.config.textLabel.size,
                 getColor: this.config.textLabel.color
               },
-              tileX,
-              tileY,
-              tileZ
+              tile
             })
           ]
         : [])

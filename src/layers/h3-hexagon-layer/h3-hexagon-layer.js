@@ -247,10 +247,8 @@ export default class HexagonIdLayer extends Layer {
     interactionConfig
   }, {
     id,
-    tileX,
-    tileY, 
-    tileZ,
-    sampleKeplerLayerId
+    sampleKeplerLayerId,
+    tile
   } = {}) {
     const zoomFactor = this.getZoomFactor(mapState);
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
@@ -301,11 +299,7 @@ export default class HexagonIdLayer extends Layer {
         // render
         lightSettings: meta.lightSettings,
         updateTriggers,
-
-        // for TileLayer picking info
-        tileX,
-        tileY,
-        tileZ
+        tile
       }),
       ...(this.isLayerHovered(objectHovered, sampleKeplerLayerId) && !config.sizeField
         ? [
@@ -315,7 +309,8 @@ export default class HexagonIdLayer extends Layer {
                 idToPolygonGeo(objectHovered)
               ],
               getLineColor: config.highlightColor,
-              lineWidthScale: 8 * zoomFactor
+              lineWidthScale: 8 * zoomFactor,
+              tile
             })
           ]
         : [])

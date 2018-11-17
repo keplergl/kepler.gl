@@ -238,9 +238,8 @@ export default class IconLayer extends Layer {
     interactionConfig
   }, {
     id,
-    tileX,
-    tileY, 
-    tileZ
+    sampleKeplerLayerId,
+    tile
   } = {}) {
     const layerProps = {
       radiusMinPixels: 1,
@@ -280,10 +279,7 @@ export default class IconLayer extends Layer {
             colorScale: this.config.colorScale
           }
         },
-        // for TileLayer picking info
-        tileX,
-        tileY, 
-        tileZ
+        tile
       })
     ];
   }

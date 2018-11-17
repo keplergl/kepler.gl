@@ -71,9 +71,8 @@ export default class ClusterLayer extends AggregationLayer {
     layerCallbacks
   }, {
     id,
-    tileX,
-    tileY, 
-    tileZ
+    sampleKeplerLayerId,
+    tile
   } = {}) {
     const {visConfig} = this.config;
 
@@ -100,11 +99,7 @@ export default class ClusterLayer extends AggregationLayer {
 
         // call back from layer after calculate clusters
         onSetColorDomain: layerCallbacks.onSetLayerDomain,
-
-        // for TileLayer Picking info
-        tileX,
-        tileY, 
-        tileZ
+        tile
       })
     ];
   }

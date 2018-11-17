@@ -214,6 +214,7 @@ export default class ArcLayer extends Layer {
   }
 
   renderLayer({
+    
     data,
     idx,
     objectHovered,
@@ -222,9 +223,8 @@ export default class ArcLayer extends Layer {
     interactionConfig
   }, {
     id,
-    tileX,
-    tileY, 
-    tileZ
+    sampleKeplerLayerId,
+    tile
   } = {}) {
     const {brush} = interactionConfig;
 
@@ -272,11 +272,7 @@ export default class ArcLayer extends Layer {
           getSourceColor: colorUpdateTriggers,
           getTargetColor: colorUpdateTriggers
         },
-
-        // for TileLayer picking info
-        tileX,
-        tileY, 
-        tileZ
+        tile
       })
     ];
   }

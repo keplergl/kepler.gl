@@ -69,10 +69,8 @@ export default class HexagonLayer extends AggregationLayer {
     layerCallbacks
   }, {
     id,
-    tileX,
-    tileY, 
-    tileZ,
-    sampleKeplerLayerId
+    sampleKeplerLayerId,
+    tile
   } = {}) {
     const zoomFactor = this.getZoomFactor(mapState);
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
@@ -113,11 +111,7 @@ export default class HexagonLayer extends AggregationLayer {
         lightSettings: this.meta.lightSettings,
         // callbacks
         onSetColorDomain: layerCallbacks.onSetLayerDomain,
-
-        // for TileLayer picking info
-        tileX,
-        tileY,
-        tileZ
+        tile
       }),
 
       // render an outline of each hexagon if not extruded
@@ -134,7 +128,8 @@ export default class HexagonLayer extends AggregationLayer {
                 )
               ],
               getLineColor: this.config.highlightColor,
-              lineWidthScale: 8 * zoomFactor
+              lineWidthScale: 8 * zoomFactor,
+              tile
             })
           ]
         : [])

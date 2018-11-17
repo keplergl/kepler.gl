@@ -88,10 +88,8 @@ export default class GridLayer extends AggregationLayer {
     layerCallbacks
   }, {
     id,
-    tileX,
-    tileY, 
-    tileZ,
-    sampleKeplerLayerId
+    sampleKeplerLayerId,
+    tile
   } = {}) {
     const zoomFactor = this.getZoomFactor(mapState);
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
@@ -130,10 +128,7 @@ export default class GridLayer extends AggregationLayer {
 
         // callbacks
         onSetColorDomain: layerCallbacks.onSetLayerDomain,
-
-        tileX,
-        tileY, 
-        tileZ
+        tile
       }),
 
       // render an outline of each cell if not extruded
@@ -150,7 +145,8 @@ export default class GridLayer extends AggregationLayer {
                 })
               ],
               getLineColor: this.config.highlightColor,
-              lineWidthScale: 8 * zoomFactor
+              lineWidthScale: 8 * zoomFactor,
+              tile
             })
           ]
         : [])
