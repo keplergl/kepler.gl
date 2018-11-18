@@ -90,7 +90,7 @@ const LayerBlendingSelector = ({layerBlending, updateLayerBlending}) => (
   </SidePanelSection>
 );
 
-function AddDataButtonFactory() {
+export function AddDataButtonFactory() {
   const AddDataButton = ({onClick, isInactive}) => (
     <Button
       onClick={onClick}
