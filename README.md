@@ -355,16 +355,19 @@ const myCustomHeaderFactory = () => withState(
 )(CustomHeader);
 
 ```
-#### 5. How to add data to map
+#### 5. How to add/remove data to map
 In order to interact with a kepler.gl instance and add new data to it the following methods are available:
 - updateVisData
 - addDataToMap
+- appendRowsToDataset
+- removeRowsFromDataset
+
 It is also important to remember that Kepler.gl provides an easy API (```KeplerGlSchema.getConfigToSave```) to generate a dump of the current kepler instance configuration.
 
 ##### addDataToMap
 This method is similar to UpdateVisData but it is able to update the full kepler.gl configuration (mapState, mapStyle, visState).
 This action takes an object as input with the following properties:
-```js
+```
 {
     datasets | object: same as UpdateVisData
     options | object: same as UpdateVisData
@@ -374,7 +377,7 @@ This action takes an object as input with the following properties:
 It is important to notice that the config object value will always have higher precedence than the options properties.
 For instance, if you provide ```{centerMap: true}``` as part of the options object and in your config object you pass
 the mapState configuration with latitude and longitude define as it follows:
-```js
+```
 config: {
   mapState: {
     latitude: 33.88608913680742,
@@ -383,3 +386,27 @@ config: {
 }
 ```
 the latter will be applied and the map view will be moved the defined coordinates.
+
+##### appendRowsToDataset
+This method is similar to addDataToMap and also takes dataset key column to update the layer data.
+This action takes an object as input with the following properties:
+```
+{
+    datasets | object: same as UpdateVisData
+    config | object: this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}.
+    key | string: dataset column 
+    
+}
+```
+
+##### removeRowsFromDataset
+This method takes dataset key column, config and datasets object to remove rows from the dataset.
+This action takes an object as input with the following properties:
+```
+{
+    datasets | object: same as UpdateVisData
+    config | object: this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}.
+    key | string: dataset column 
+    
+}
+```

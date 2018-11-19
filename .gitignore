@@ -19,3 +19,5 @@ package-lock.json
 /index.html
 
 npm-debug.log
+nbproject/
+dist-bkp/
