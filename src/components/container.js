@@ -79,8 +79,8 @@ export function ContainerFactory(KeplerGl) {
 
     componentWillReceiveProps(nextProps) {
       // check if id has changed, if true, copy state over
-      if (nextProps.id !== this.props.id) {
-        this.props.dispatch(renameEntry(this.props.id, nextProps));
+      if (nextProps.id && nextProps.id !== this.props.id) {
+        this.props.dispatch(renameEntry(this.props.id, nextProps.id));
       }
     }
 

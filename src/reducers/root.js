@@ -22,12 +22,7 @@ import {handleActions} from 'redux-actions';
 
 import {actionFor, updateProperty} from '../actions/action-wrapper';
 import {coreReducerFactory} from './core';
-
-import {
-  REGISTER_ENTRY,
-  DELETE_ENTRY,
-  RENAME_ENTRY
-} from '../actions/identity-actions';
+import ActionTypes from 'constants/action-types';
 
 import {keplerGlInit} from '../actions/actions';
 /*
@@ -60,7 +55,7 @@ export function provideInitialState(initialState) {
       {}
     );
 
-  const handleRenameEntry = (state, {payload: [oldId, newId]}) =>
+  const handleRenameEntry = (state, {payload: {oldId, newId}}) =>
     Object.keys(state).reduce(
       (accu, curr) => ({
         ...accu,
@@ -79,9 +74,9 @@ export function provideInitialState(initialState) {
     // perform additional state reducing (e.g. switch action.type etc...)
     return handleActions(
       {
-        [REGISTER_ENTRY]: handleRegisterEntry,
-        [DELETE_ENTRY]: handleDeleteEntry,
-        [RENAME_ENTRY]: handleRenameEntry
+        [ActionTypes.REGISTER_ENTRY]: handleRegisterEntry,
+        [ActionTypes.DELETE_ENTRY]: handleDeleteEntry,
+        [ActionTypes.RENAME_ENTRY]: handleRenameEntry
       },
       initialCoreState
     )(state, action);

@@ -19,15 +19,40 @@
 // THE SOFTWARE.
 
 import {createAction} from 'redux-actions';
-import {ACTION_PREFIX} from 'constants/default-settings';
+import ActionTypes from 'constants/action-types';
 
-// Actions to add and remove entries
-export const REGISTER_ENTRY = `${ACTION_PREFIX}REGISTER_ENTRY`;
-export const DELETE_ENTRY = `${ACTION_PREFIX}DELETE_ENTRY`;
-export const RENAME_ENTRY = `${ACTION_PREFIX}RENAME_ENTRY`;
+/**
+ *
+ * Add a new entry in the root reducer
+ * @param {Object} payload
+ * @param {string} payload.id
+ * @param {Boolean} payload.mint
+ * @param {string} payload.mapboxApiAccessToken
+ * @public
+ */
+export const registerEntry = createAction(
+  ActionTypes.REGISTER_ENTRY,
+  ({id, mint, mapboxApiAccessToken}) => ({id, mint, mapboxApiAccessToken})
+);
 
-export const [registerEntry, deleteEntry, renameEntry] = [
-  REGISTER_ENTRY,
-  DELETE_ENTRY,
-  RENAME_ENTRY
-].map(a => createAction(a));
+/**
+ *
+ * Toggle between 3d and 2d map.
+ * @param {string} id
+ * @public
+ */
+export const deleteEntry = createAction(
+  ActionTypes.DELETE_ENTRY,
+  id => id
+);
+
+/**
+ *
+ * Toggle between 3d and 2d map.
+ * @param {void}
+ * @public
+ */
+export const renameEntry = createAction(
+  ActionTypes.RENAME_ENTRY,
+  (oldId, newId) => ({oldId, newId})
+);
