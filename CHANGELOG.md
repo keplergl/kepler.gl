@@ -15,6 +15,10 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+#### [0.2.0-beta0] - Nov 16 2018
+- [Bug] Fixing global color issue #130 for the heat map (#277)
+- [Enhancement] More exports (#284)
+
 #### [0.2.0] - Nov 16 2018
 - [Enhancement] Export side panel component factories (#282)
 - [Feature] Upgrade to deck.gl v6 (#272)
