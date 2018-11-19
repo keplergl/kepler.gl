@@ -15,7 +15,7 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
-#### [0.2.0-beta0] - Nov 16 2018
+#### [0.2.0-beta.0] - Nov 16 2018
 - [Bug] Fixing global color issue #130 for the heat map (#277)
 - [Enhancement] More exports (#284)
 
