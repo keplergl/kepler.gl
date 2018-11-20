@@ -29,8 +29,8 @@ import {
   INIT,
   SET_LOADING_METHOD,
   LOAD_MAP_SAMPLE_FILE,
-  LOAD_REMOTE_FILE_DATA_SUCCESS,
-  SET_SAMPLE_LOADING_STATUS, LOAD_REMOTE_FILE_DATA_FAIL
+  LOAD_REMOTE_RESOURCE_SUCCESS,
+  SET_SAMPLE_LOADING_STATUS, LOAD_REMOTE_RESOURCE_ERROR
 } from './actions';
 
 import {DEFAULT_LOADING_METHOD, LOADING_METHODS} from './constants/default-settings';
@@ -72,7 +72,7 @@ export const appReducer = handleActions({
     ...state,
     isMapLoading: action.isMapLoading
   }),
-  [LOAD_REMOTE_FILE_DATA_FAIL]: (state, action) => ({
+  [LOAD_REMOTE_RESOURCE_ERROR]: (state, action) => ({
     ...state,
     error: action.error,
     currentOption: {dataUrl: action.url},
@@ -139,7 +139,7 @@ export const loadRemoteFileDataSuccess = (state, action) => {
 };
 
 const composedUpdaters = {
-  [LOAD_REMOTE_FILE_DATA_SUCCESS]: loadRemoteFileDataSuccess
+  [LOAD_REMOTE_RESOURCE_SUCCESS]: loadRemoteFileDataSuccess
 };
 
 const composedReducer = (state, action) => {

@@ -73,8 +73,13 @@ class App extends Component {
     // if we pass an id as part of the url
     // we ry to fetch along map configurations
     const {params: {id} = {}, location: {query = {}}} = this.props;
-    this.props.dispatch(loadSampleConfigurations(id));
 
+    // Load sample using its id
+    if (id) {
+      this.props.dispatch(loadSampleConfigurations(id));
+    }
+
+    // Load map using a custom
     if (query.mapUrl) {
       this.props.dispatch(loadRemoteMap({dataUrl: query.mapUrl}));
     }

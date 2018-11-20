@@ -27,7 +27,7 @@ import {LoadingSpinner} from 'kepler.gl/components';
 import {themeLT} from 'kepler.gl/styles';
 import {Icons} from 'kepler.gl/components/';
 
-import {LOADING_METHODS, QUERY_TYPES, ASSETS_URL} from '../../constants/default-settings';
+import {LOADING_METHODS, ASSETS_URL, LOADING_METHODS_NAMES} from '../../constants/default-settings';
 
 import SampleMapGallery from './sample-data-viewer';
 import LoadRemoteMap from './load-remote-map';
@@ -42,7 +42,7 @@ const propTypes = {
   onFileUpload: PropTypes.func.isRequired,
   onLoadRemoteMap: PropTypes.func.isRequired,
   onLoadSample: PropTypes.func.isRequired,
-  onSetLoadingMethod: PropTypes.func.isRequired
+  onSwitchToLoadingMethod: PropTypes.func.isRequired
 };
 
 const ModalTab = styled.div`
@@ -136,7 +136,11 @@ const StyledSpinner = styled.div`
 class LoadDataModal extends Component {
 
   render() {
-    const {loadingMethod, currentOption, previousMethod, sampleMaps, isMapLoading} = this.props;
+    const {
+      loadingMethod, currentOption, previousMethod,
+      sampleMaps, isMapLoading, onSwitchToLoadingMethod,
+      error
+    } = this.props;
 
     return (
       <ThemeProvider theme={themeLT}>
@@ -150,7 +154,7 @@ class LoadDataModal extends Component {
                 {loadingMethod.id !== 'sample' ? (
                   <Tabs
                     method={loadingMethod.id}
-                    toggleMethod={this.props.onSetLoadingMethod}
+                    toggleMethod={this.props.onSwitchToLoadingMethod}
                   />
                 ) : null}
                 {loadingMethod.id === 'upload' ? (
@@ -167,8 +171,9 @@ class LoadDataModal extends Component {
                   <SampleMapGallery
                     sampleData={currentOption}
                     sampleMaps={sampleMaps}
-                    back={() => this.props.onSetLoadingMethod(previousMethod.id)}
-                    onLoadSample={this.props.onLoadSample} />
+                    back={() => onSwitchToLoadingMethod(previousMethod.id)}
+                    onLoadSample={this.props.onLoadSample}
+                    error={error} />
                 ) : null}
               </div>)
           }
@@ -196,7 +201,7 @@ const Tabs = ({method, toggleMethod}) => (
           ) : null
       )}
     </div>
-    <TrySampleData onClick={() => toggleMethod(QUERY_TYPES.sample)} />
+    <TrySampleData onClick={() => toggleMethod(LOADING_METHODS_NAMES.sample)} />
   </ModalTab>
 );
 

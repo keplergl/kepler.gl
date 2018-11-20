@@ -108,6 +108,12 @@ const StyledImageCaption = styled.div`
   opacity: 0;
 `;
 
+const StyledError = styled.div`
+  color: red;
+  font-size: 14px;
+  margin-bottom: 16px;
+`;
+
 const SampleMap = ({sample, onClick}) => (
   <StyledSampleMap className="sample-map-gallery__item">
     <div className="sample-map">
@@ -123,12 +129,17 @@ const SampleMap = ({sample, onClick}) => (
   </StyledSampleMap>
 );
 
-const SampleMapGallery = ({sampleData, sampleMaps, onLoadSample, back}) => (
+const SampleMapGallery = ({sampleData, sampleMaps, onLoadSample, back, error}) => (
   <div className="sample-data-modal">
     <BackLink onClick={back}>
       <Icons.LeftArrow height="12px" />
       <span>Back</span>
     </BackLink>
+    {error && (
+      <StyledError>
+        {error.message}
+      </StyledError>
+    )}
     <StyledSampleGallery className="sample-map-gallery">
       {sampleMaps.filter(sp => sp.visible).map(sp => (
         <SampleMap

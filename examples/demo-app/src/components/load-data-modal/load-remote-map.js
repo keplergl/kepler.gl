@@ -21,6 +21,7 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
+import {CORS_LINK, LOADING_URL_MESSAGE} from '../../constants/default-settings';
 
 const propTypes = {
   onLoadRemoteMap: PropTypes.func.isRequired
@@ -122,7 +123,7 @@ class LoadRemoteMap extends Component {
         <InputForm>
           <StyledDescription>Load your map using your custom URL</StyledDescription>
           <StyledInputLabel>
-            You can use the following formats: CSV | JSON | KEPLERGL.JSON. Make sure the url contains the file extension.
+            {LOADING_URL_MESSAGE}
           </StyledInputLabel>
           <StyledInputLabel>
             Examples:
@@ -130,6 +131,10 @@ class LoadRemoteMap extends Component {
               <li>https://your.map.url/map.json</li>
               <li>http://your.map.url/data.csv</li>
             </ul>
+          </StyledInputLabel>
+          <StyledInputLabel>
+            * CORS policy must be defined on your custom url domain in order to be accessible.
+            For more info <a rel="noopener noreferrer" target="_blank" href={`${CORS_LINK}`}>click here</a>
           </StyledInputLabel>
           <StyledFromGroup>
             <StyledInput

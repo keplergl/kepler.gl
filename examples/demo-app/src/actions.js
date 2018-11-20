@@ -21,18 +21,32 @@
 import {push} from 'react-router-redux';
 import {request, text as requestText, json as requestJson} from 'd3-request';
 import {loadFiles, toggleModal} from 'kepler.gl/actions';
-import {console as Console} from 'global/window';
-import {MAP_CONFIG_URL} from './constants/sample-maps';
+
+import {
+  LOADING_SAMPLE_ERROR_MESSAGE,
+  LOADING_SAMPLE_LIST_ERROR_MESSAGE,
+  MAP_CONFIG_URL
+} from './constants/default-settings';
+import {LOADING_METHODS_NAMES} from './constants/default-settings';
 
 // CONSTANTS
 export const INIT = 'INIT';
 export const SET_LOADING_METHOD = 'SET_LOADING_METHOD';
-export const LOAD_REMOTE_FILE_DATA_SUCCESS = 'LOAD_REMOTE_FILE_DATA_SUCCESS';
-export const LOAD_REMOTE_FILE_DATA_FAIL = 'LOAD_REMOTE_FILE_DATA_FAIL';
+export const LOAD_REMOTE_RESOURCE_SUCCESS = 'LOAD_REMOTE_RESOURCE_SUCCESS';
+export const LOAD_REMOTE_RESOURCE_ERROR = 'LOAD_REMOTE_RESOURCE_ERROR';
 export const LOAD_MAP_SAMPLE_FILE = 'LOAD_MAP_SAMPLE_FILE';
 export const SET_SAMPLE_LOADING_STATUS = 'SET_SAMPLE_LOADING_STATUS';
 
 // ACTIONS
+export function switchToLoadingMethod(method) {
+  return dispatch => {
+    dispatch(setLoadingMethod(method));
+    if (method === LOADING_METHODS_NAMES.sample) {
+      dispatch(loadSampleConfigurations());
+    }
+  };
+}
+
 export function setLoadingMethod(method) {
   return {
     type: SET_LOADING_METHOD,
@@ -40,18 +54,18 @@ export function setLoadingMethod(method) {
   };
 }
 
-export function loadRemoteFileSuccess(response, config, options) {
+export function loadRemoteResourceSuccess(response, config, options) {
   return {
-    type: LOAD_REMOTE_FILE_DATA_SUCCESS,
+    type: LOAD_REMOTE_RESOURCE_SUCCESS,
     response,
     config,
     options
   };
 }
 
-export function loadRemoteFileError(error, url) {
+export function loadRemoteResourceError(error, url) {
   return {
-    type: LOAD_REMOTE_FILE_DATA_FAIL,
+    type: LOAD_REMOTE_RESOURCE_ERROR,
     error,
     url
   }
@@ -69,6 +83,21 @@ export function setLoadingMapStatus(isMapLoading) {
     type: SET_SAMPLE_LOADING_STATUS,
     isMapLoading
   };
+}
+
+/**
+ * this method detects whther the response status is < 200 or > 300 in case the error
+ * is not caught by the actualy request framework
+ * @param response the response
+ * @returns {{status: *, message: (*|{statusCode}|Object)}}
+ */
+function detectResponseError(response) {
+  if (response.statusCode && (response.statusCode < 200 || response.statusCode >= 300)) {
+    return {
+      status: response.statusCode,
+      message: response.body || response.message || response
+    }
+  }
 }
 
 // This can be moved into Kepler.gl to provide ability to load data from remote URLs
@@ -93,7 +122,7 @@ export function loadRemoteMap(options) {
       error => {
         const {target = {}} = error;
         const {status, responseText} = target;
-        dispatch(loadRemoteFileError({status, message: responseText}, options.dataUrl));
+        dispatch(loadRemoteResourceError({status, message: responseText}, options.dataUrl));
       }
     );
     dispatch(setLoadingMapStatus(true));
@@ -113,7 +142,15 @@ function loadRemoteRawData(url) {
 
   return new Promise((resolve, reject) => {
     request(url, (error, result) => {
-        error ? reject(error) : resolve(result.response)
+      if (error) {
+        reject(error);
+      }
+      const responseError = detectResponseError(result);
+      if (responseError) {
+        reject(responseError);
+        return;
+      }
+      resolve(result.response)
     })
   });
 }
@@ -139,7 +176,7 @@ export function loadSample(options, pushRoute = true) {
     if (options.id && pushRoute) {
       dispatch(push(`/demo/${options.id}${routing.locationBeforeTransitions.search}`));
     }
-    // if the sample has a full configuration url we load it
+    // if the sample has a kepler.gl config file url we load it
     if (options.keplergl) {
       dispatch(loadRemoteMap({dataUrl: options.keplergl}));
     } else {
@@ -163,12 +200,16 @@ function loadRemoteSampleMap(options) {
     Promise
       .all([loadRemoteConfig(configUrl), loadRemoteData(dataUrl)])
       .then(
-        ([config, data]) => loadMapCallback(dispatch, null, data, options, config),
+        ([config, data]) => {
+          // TODO: these two actions can be merged
+          dispatch(loadRemoteResourceSuccess(data, config, options));
+          dispatch(toggleModal(null));
+        },
         error => {
           if (error) {
-            Console.warn(`Error loading map data`);
-            Console.warn(options);
-            Console.warn(error)
+            const {target = {}} = error;
+            const {status, responseText} = target;
+            dispatch(loadRemoteResourceError({status, message: `${responseText} - ${LOADING_SAMPLE_ERROR_MESSAGE} ${options.id} (${configUrl})`}, configUrl));
           }
         }
       );
@@ -188,7 +229,15 @@ function loadRemoteConfig(url) {
 
   return new Promise((resolve, reject) => {
     requestJson(url, (error, config) => {
-      error ? reject(error) : resolve(config)
+      if (error) {
+        reject(error);
+      }
+      const responseError = detectResponseError(config);
+      if (responseError) {
+        reject(responseError);
+        return;
+      }
+      resolve(config);
     })
   })
 }
@@ -212,27 +261,17 @@ function loadRemoteData(url) {
   // Load data
   return new Promise((resolve, reject) => {
     requestMethod(url, (error, result) => {
-      // TODO: we need to let users know about CORS issues
-      error ? reject(error) : resolve(result)
+      if (error) {
+        reject(error);
+      }
+      const responseError = detectResponseError(result);
+      if (responseError) {
+        reject(responseError);
+        return;
+      }
+      resolve(result);
     })
   });
-}
-
-/**
- *
- * @param dispatch
- * @param error
- * @param result
- * @param options
- * @param config
- */
-function loadMapCallback(dispatch, error, result, options, config) {
-  if (error) {
-    Console.warn(`Error loading datafile ${options.dataUrl}`);
-  } else {
-    dispatch(loadRemoteFileSuccess(result, config, options));
-    dispatch(toggleModal(null));
-  }
 }
 
 /**
@@ -245,8 +284,16 @@ export function loadSampleConfigurations(sampleMapId = null) {
   return dispatch => {
     requestJson(MAP_CONFIG_URL, (error, samples) => {
       if (error) {
-        Console.warn(`Error loading sample configuration file ${MAP_CONFIG_URL}`);
+        const {target = {}} = error;
+        const {status, responseText} = target;
+        dispatch(loadRemoteResourceError({status, message: `${responseText} - ${LOADING_SAMPLE_LIST_ERROR_MESSAGE}`}, MAP_CONFIG_URL));
       } else {
+        const responseError = detectResponseError(samples);
+        if (responseError) {
+          dispatch(loadRemoteResourceError(responseError, MAP_CONFIG_URL));
+          return;
+        }
+
         dispatch(loadMapSampleFile(samples));
         // Load the specified map
         const map = sampleMapId && samples.find(s => s.id === sampleMapId);
