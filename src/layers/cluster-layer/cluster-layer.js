@@ -63,14 +63,17 @@ export default class ClusterLayer extends AggregationLayer {
   }
 
   renderLayer({
-    id,
     data,
     idx,
     objectHovered,
     mapState,
     interaction,
     layerCallbacks
-  }) {
+  }, {
+    id,
+    sampleKeplerLayerId,
+    tile
+  } = {}) {
     const {visConfig} = this.config;
 
     return [
@@ -95,7 +98,8 @@ export default class ClusterLayer extends AggregationLayer {
         parameters: {depthTest: mapState.dragRotate},
 
         // call back from layer after calculate clusters
-        onSetColorDomain: layerCallbacks.onSetLayerDomain
+        onSetColorDomain: layerCallbacks.onSetLayerDomain,
+        tile
       })
     ];
   }

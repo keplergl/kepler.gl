@@ -783,12 +783,14 @@ export default class Layer {
     }
   }
 
-  isLayerHovered(objectInfo) {
+  isLayerHovered(objectInfo, id) {
     return (
       objectInfo &&
       objectInfo.layer &&
       objectInfo.picked &&
-      objectInfo.layer.props.id === this.id
+      (objectInfo.layer.props.id === this.id || 
+      // hack for tile layers
+      (id && objectInfo.layer.props.id === id))
     );
   }
 

@@ -80,14 +80,17 @@ export default class GridLayer extends AggregationLayer {
   }
 
   renderLayer({
-    id,
     data,
     idx,
     objectHovered,
     mapState,
     interaction,
     layerCallbacks
-  }) {
+  }, {
+    id,
+    sampleKeplerLayerId,
+    tile
+  } = {}) {
     const zoomFactor = this.getZoomFactor(mapState);
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
     const {visConfig} = this.config;
@@ -124,11 +127,12 @@ export default class GridLayer extends AggregationLayer {
         lightSettings: this.meta && this.meta.lightSettings,
 
         // callbacks
-        onSetColorDomain: layerCallbacks.onSetLayerDomain
+        onSetColorDomain: layerCallbacks.onSetLayerDomain,
+        tile
       }),
 
       // render an outline of each cell if not extruded
-      ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d
+      ...(this.isLayerHovered(objectHovered, sampleKeplerLayerId) && !visConfig.enable3d
         ? [
             new GeoJsonLayer({
               id: `${id || this.id}-hovered`,
@@ -141,7 +145,8 @@ export default class GridLayer extends AggregationLayer {
                 })
               ],
               getLineColor: this.config.highlightColor,
-              lineWidthScale: 8 * zoomFactor
+              lineWidthScale: 8 * zoomFactor,
+              tile
             })
           ]
         : [])

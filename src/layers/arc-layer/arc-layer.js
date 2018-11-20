@@ -214,14 +214,18 @@ export default class ArcLayer extends Layer {
   }
 
   renderLayer({
-    id,
+    
     data,
     idx,
     objectHovered,
     layerInteraction,
     mapState,
     interactionConfig
-  }) {
+  }, {
+    id,
+    sampleKeplerLayerId,
+    tile
+  } = {}) {
     const {brush} = interactionConfig;
 
     const colorUpdateTriggers = {
@@ -267,7 +271,8 @@ export default class ArcLayer extends Layer {
           },
           getSourceColor: colorUpdateTriggers,
           getTargetColor: colorUpdateTriggers
-        }
+        },
+        tile
       })
     ];
   }

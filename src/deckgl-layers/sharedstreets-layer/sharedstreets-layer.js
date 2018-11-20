@@ -21,7 +21,7 @@
 /* global fetch */
 
 import {CompositeLayer} from '@deck.gl/core';
-import DeckGLTileLayer from '@deck.gl/experimental-layers/dist/tile-layer/tile-layer';
+import {TileLayer as DeckGLTileLayer} from '@deck.gl/experimental-layers';
 import Pbf from "pbf";
 import * as geobuf from "geobuf";
 import dataProcessor from 'processors';
@@ -68,10 +68,23 @@ export default class SharedstreetsLayer extends CompositeLayer {
           isTiledSampleDataLoaded: true
         });
       }
-      // convert geojson to a format Kepler expects.
-      const allData = processGeojson(geoJson).rows;
-      return allData
+      const {allData, fields} = getAllData(geoJson);
+      return {
+        allData,
+        fields
+      };
     });
+  }
+
+  getPickingInfo({info, sourceLayer}) {
+    // info.sourceLayer is the deck gl layer that renders data.
+    const idx = info.sourceLayer.props.idx;
+    const tile = info.tile;
+    const {allData, fields} = tile._data;
+    info.allData = allData;
+    info.fields = fields;
+    info.idx = idx;
+    return info;
   }
   
   /**
@@ -79,11 +92,12 @@ export default class SharedstreetsLayer extends CompositeLayer {
    * @param {*} subLayerProps 
    * @param {*} tile current tile for this sub-layers 
    */
-  renderSubLayers(subLayerProps, tile) {
+  renderSubLayers(subLayerProps) {
     const {layers, objectHovered, mapState, interactionConfig, layerVersion} = this.props;
     const {oldLayerDataMaps} = this.state;
     // layers are kepler layers rendering a subset of data. We can render other layers in the 
     // viewport by giving different ids and data. 
+    const tile = subLayerProps.tile;
     return layers && layers.map((layer, idx) => {
       const layerDataId = `${layer.id}-${tile.z}-${tile.x}-${tile.y}`;
       let oldLayerData;
@@ -99,12 +113,15 @@ export default class SharedstreetsLayer extends CompositeLayer {
       this.setState({ oldLayerDataMaps });
 
       return layer.renderLayer({
-        id: `${subLayerProps.id}-${layer.id}`,
         data,
         idx,
         objectHovered,
         mapState,
         interactionConfig
+      }, {
+        sampleKeplerLayerId: this.props.id,
+        id: `${subLayerProps.id}-${layer.id}`,
+        tile
       });
     })
   }
@@ -127,7 +144,7 @@ export default class SharedstreetsLayer extends CompositeLayer {
    */
   recomputeLayerData(keplerLayer, tile, oldLayerData) {
     if (tile.isLoaded) {
-      return keplerLayer.formatLayerData([], tile._data, Array.from(tile._data.keys()), oldLayerData, {sameData: true});
+      return keplerLayer.formatLayerData([], tile._data.allData, Array.from(tile._data.allData.keys()), oldLayerData, {sameData: true});
     }
     tile.data.then(data => {
       this.setLayerNeedsUpdate();
@@ -152,5 +169,14 @@ export default class SharedstreetsLayer extends CompositeLayer {
     // tile.isLoaded) changes.
     const result = tile.keplerCache[keplerLayer.id](keplerLayer, tile, oldLayerData, layerVersion, tile.isLoaded);
     return result;
+  }
+}
+
+function getAllData(rawData) {
+  // processedData follows format {rows: [], fields: []}
+  const processedData = processGeojson(rawData);
+  return {
+    allData: processedData.rows,
+    fields: processedData.fields
   }
 }

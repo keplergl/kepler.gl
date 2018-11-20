@@ -217,8 +217,14 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       const {lngLat, object, layer: overlay} = objectInfo;
 
       // deckgl layer to kepler-gl layer
-      const layer = layers[overlay.props.idx];
+      let idx = overlay.props.idx;
 
+      // idx will be undefined if a tiled layer is picked
+      if (idx === undefined) {
+        idx = objectInfo.idx;
+      } 
+
+      const layer = layers[idx];
       if (
         !layer ||
         !layer.config.isVisible ||
@@ -231,7 +237,16 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       }
 
       const {config: {dataId}} = layer;
-      const {allData, fields} = datasets[dataId];
+      let {allData, fields} = datasets[dataId];
+      
+      // tile layers doesn't have the correct allData and fields. 
+      // so we get them from objectInfo. 
+      if (objectInfo.allData) {
+        allData = objectInfo.allData; 
+      }
+      if (objectInfo.fields) {
+        fields = objectInfo.fields;
+      }
       const data = layer.getHoverData(object, allData);
 
       // project lnglat to screen so that tooltip follows the object on zoom

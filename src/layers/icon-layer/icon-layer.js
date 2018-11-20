@@ -231,13 +231,16 @@ export default class IconLayer extends Layer {
   }
 
   renderLayer({
-    id,
     data,
     idx,
     objectHovered,
     mapState,
     interactionConfig
-  }) {
+  }, {
+    id,
+    sampleKeplerLayerId,
+    tile
+  } = {}) {
     const layerProps = {
       radiusMinPixels: 1,
       fp64: this.config.visConfig['hi-precision'],
@@ -275,7 +278,8 @@ export default class IconLayer extends Layer {
             colorRange: this.config.visConfig.colorRange,
             colorScale: this.config.colorScale
           }
-        }
+        },
+        tile
       })
     ];
   }
