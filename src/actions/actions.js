@@ -29,14 +29,14 @@ export * from './map-style-actions';
 export * from './identity-actions';
 
   /**
-   * Upload dataset to kepler.gl, propagate map with preset configuration if config is passed. Receive 3 arguemtns: `datasets`, `options` and `config`
+   * Add data to kepler.gl reducer, prepare map with preset configuration if config is passed.
    * Kepler.gl provides a handy set of utils to parse data from different format to the `data` object required in dataset. You rarely need to manually format the data obejct.
    *
-   * Use `KeplerGlSchema.getConfigToSave` to generate a json blob of the current kepler instance config.
+   * Use `KeplerGlSchema.getConfigToSave` to generate a json blob of the currents instance config.
    * The config object value will always have higher precedence than the options properties.
    *
-   * Kepler.gl uses `dataId` in the config to match with loaded dataset. If you passing some datasets with a config object, you need
-   * to match the `info.id` of your dataset to the `dataId` in eath `layer`, `filter` and `fieldsToShow` in `interactionConfig.tooltips`
+   * Kepler.gl uses `dataId` in the config to match with loaded dataset. If you pass a config object, you need
+   * to match the `info.id` of your dataset to the `dataId` in eath `layer`, `filter` and `interactionConfig.tooltips.fieldsToShow`
    *
    * @param {Array<Object>|Object} datasets - ***required** datasets can be a dataset or an array of datasets
    * Each dataset object needs to have `info` and `data` property.
