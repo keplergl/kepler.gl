@@ -48,7 +48,7 @@ export default class SharedstreetsLayer extends CompositeLayer {
       cache: "no-cache"
     };
     return fetch(
-      `http://d2sn2dqnporv7a.cloudfront.net/${z}-${x}-${y}-decoded`,
+      `https://d2sn2dqnporv7a.cloudfront.net/${z}-${x}-${y}-decoded`,
       fetchConfig
     )
     .then(response => {
