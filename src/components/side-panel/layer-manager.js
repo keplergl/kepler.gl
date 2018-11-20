@@ -93,8 +93,7 @@ export default class LayerManager extends Component {
     removeDataset: PropTypes.func.isRequired,
     showDatasetTable: PropTypes.func.isRequired,
     updateLayerBlending: PropTypes.func.isRequired,
-    updateLayerOrder: PropTypes.func.isRequired,
-    addTiledDataId: PropTypes.func.isRequired
+    updateLayerOrder: PropTypes.func.isRequired
   };
 
   layerClassSelector = props => props.layerClasses;
@@ -116,10 +115,6 @@ export default class LayerManager extends Component {
   _handleSort = order => {
     this.props.updateLayerOrder(order);
   };
-
-  _addTiledDataId = () => {
-    this.props.addTiledDataId("sharedstreets");
-  }
 
   render() {
     const {layers, datasets, layerOrder, openModal} = this.props;
@@ -151,10 +146,6 @@ export default class LayerManager extends Component {
           secondary
         >
           <Add height="12px" />Add Data
-        </Button>
-
-        <Button onClick={this._addTiledDataId} width="105px" secondary>
-          <Add height="12px" />Add Sharedstreets Data
         </Button>
 
         <SidePanelDivider />

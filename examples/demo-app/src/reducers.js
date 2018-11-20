@@ -21,7 +21,7 @@
 import {combineReducers} from 'redux';
 import {handleActions} from 'redux-actions';
 
-import keplerGlReducer, {combineUpdaters} from 'kepler.gl/reducers';
+import keplerGlReducer, {combineUpdaters, visStateUpdaters} from 'kepler.gl/reducers';
 import Processor from 'kepler.gl/processors';
 import KeplerGlSchema from 'kepler.gl/schemas';
 
@@ -30,7 +30,8 @@ import {
   SET_LOADING_METHOD,
   LOAD_MAP_SAMPLE_FILE,
   LOAD_REMOTE_FILE_DATA_SUCCESS,
-  SET_SAMPLE_LOADING_STATUS
+  SET_SAMPLE_LOADING_STATUS,
+  ADD_SHAREDSTREETS_DATA_ID
 } from './actions';
 
 import {DEFAULT_LOADING_METHOD, LOADING_METHODS} from './constants/default-settings';
@@ -43,7 +44,8 @@ const initialAppState = {
   currentOption: DEFAULT_LOADING_METHOD.options[0],
   previousMethod: null,
   sampleMaps: [], // this is used to store sample maps fetch from a remote json file
-  isMapLoading: false // determine whether we are loading a sample map
+  isMapLoading: false, // determine whether we are loading a sample map
+  sharedstreetsDataIds: [] // store sharedstreets data Id.
 };
 
 // App reducer
@@ -74,6 +76,33 @@ const demoReducer = combineReducers({
   keplerGl: keplerGlReducer,
   app: appReducer
 });
+
+export const addSharedstreetsDataId = (state, action) => {
+  const sharedstreetsDataIds = state.app.sharedstreetsDataIds.slice();
+  const dataId = action.dataId;
+  sharedstreetsDataIds.push(dataId);
+  const newVisState = visStateUpdaters.addTiledDataIdUpdater(
+    state.keplerGl.map.visState, // "map" is the id of your kepler.gl instance
+    {
+      dataId
+    }
+  );
+
+  return {
+    ...state,
+    app: {
+      ...state.app,
+      sharedstreetsDataIds
+    },
+    keplerGl: {
+      ...state.keplerGl, // in case you keep multiple instances
+      map: {
+        ...state.keplerGl.map,
+        visState: newVisState
+      }
+    }
+  };
+}
 
 // this can be moved into a action and call kepler.gl action
 export const loadRemoteFileDataSuccess = (state, action) => {
@@ -118,7 +147,8 @@ export const loadRemoteFileDataSuccess = (state, action) => {
 };
 
 const composedUpdaters = {
-  [LOAD_REMOTE_FILE_DATA_SUCCESS]: loadRemoteFileDataSuccess
+  [LOAD_REMOTE_FILE_DATA_SUCCESS]: loadRemoteFileDataSuccess,
+  [ADD_SHAREDSTREETS_DATA_ID]: addSharedstreetsDataId
 };
 
 const composedReducer = (state, action) => {

@@ -28,7 +28,8 @@ export const DATA_URL = 'https://raw.githubusercontent.com/uber-web/kepler.gl-da
 
 export const QUERY_TYPES = keyMirror({
   file: null,
-  sample: null
+  sample: null,
+  sharedstreets: null
 });
 
 export const QUERY_OPTIONS = keyMirror({
@@ -66,7 +67,24 @@ export const LOADING_METHODS = [
     options: [
       // Dynamically populated
     ]
+  },
+  {
+    id: 'sharedstreets',
+    label: 'Load SharedStreets Data'
   }
 ];
 
 export const DEFAULT_LOADING_METHOD = LOADING_METHODS[0];
+
+export const SHAREDSTREETS_DATASETS = [
+  {
+    id: 'pickup-dropoff',
+    configUrl: "",
+    dataUrl: "",
+    description: "Pick up and drop off data",
+    imageUrl: "https://s3.amazonaws.com/sharedstreets-samples/pickup-dropoff.png",
+    label: "Pick Up / Drop Off",
+    queryType: "sharedstreets",
+    visible: true
+  }
+]

@@ -59,8 +59,8 @@ export default class SharedstreetsLayer extends CompositeLayer {
       if (!this.state.isTiledSampleDataLoaded) {
         this.props.addTiledDatasetSample({
           info: {
-            label: 'sharedstreets',
-            id: "sharedstreets"
+            label: this.props.dataId,
+            id: this.props.dataId
           },
           data: dataProcessor.processGeojson(geoJson)
         });

@@ -27,7 +27,7 @@ import {LoadingSpinner} from 'kepler.gl/components';
 import {themeLT} from 'kepler.gl/styles';
 import {Icons} from 'kepler.gl/components/';
 
-import {LOADING_METHODS, QUERY_TYPES, ASSETS_URL} from '../../constants/default-settings';
+import {LOADING_METHODS, QUERY_TYPES, ASSETS_URL, SHAREDSTREETS_DATASETS} from '../../constants/default-settings';
 
 import SampleMapGallery from './sample-data-viewer';
 
@@ -40,6 +40,7 @@ const propTypes = {
   // call backs
   onFileUpload: PropTypes.func.isRequired,
   onLoadSampleData: PropTypes.func.isRequired,
+  onLoadSharedstreetsData: PropTypes.func.isRequired,
   onSetLoadingMethod: PropTypes.func.isRequired
 };
 
@@ -135,7 +136,6 @@ class LoadDataModal extends Component {
 
   render() {
     const {loadingMethod, currentOption, previousMethod, sampleMaps, isMapLoading} = this.props;
-
     return (
       <ThemeProvider theme={themeLT}>
         <div className="load-data-modal">
@@ -161,6 +161,12 @@ class LoadDataModal extends Component {
                     back={() => this.props.onSetLoadingMethod(previousMethod.id)}
                     onLoadSampleData={this.props.onLoadSampleData}/>
                 ) : null}
+                {loadingMethod.id === 'sharedstreets' ? (
+                  <SampleMapGallery
+                    sampleData={currentOption}
+                    sampleMaps={SHAREDSTREETS_DATASETS}
+                    onLoadSampleData={this.props.onLoadSharedstreetsData}/>
+                  ) : null}
               </div>)
           }
         </div>

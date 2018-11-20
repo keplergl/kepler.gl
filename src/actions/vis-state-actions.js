@@ -242,9 +242,3 @@ export function addTiledDatasetSample(dataset) {
   }
 }
 
-export function addTiledDataId(dataId) {
-  return {
-    type: ActionTypes.ADD_TILED_DATA_ID,
-    dataId
-  }
-}

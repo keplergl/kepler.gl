@@ -24,7 +24,8 @@ import {withState} from 'kepler.gl/components';
 
 import {
   loadSampleMap,
-  setLoadingMethod
+  setLoadingMethod,
+  loadSharedstreetsData
 } from '../actions';
 
 export const CustomLoadDataModalFactory = () =>
@@ -33,7 +34,8 @@ export const CustomLoadDataModalFactory = () =>
     state => ({...state.demo.app}),
     {
       onSetLoadingMethod: setLoadingMethod,
-      onLoadSampleData: loadSampleMap
+      onLoadSampleData: loadSampleMap,
+      onLoadSharedstreetsData: loadSharedstreetsData
     }
   )(LoadDataModal);
 
