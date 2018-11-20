@@ -23,11 +23,11 @@ import ActionTypes from 'constants/action-types';
 
 /**
  *
- * Add a new entry in the root reducer
+ * Add a new instance in the root reducer
  * @param {Object} payload
- * @param {string} payload.id
- * @param {Boolean} payload.mint
- * @param {string} payload.mapboxApiAccessToken
+ * @param {string} payload.id - The id of the instance
+ * @param {boolean} payload.mint - Whether to use a fresh empty state, when `mint: true` it will load a fresh state. When `mint: false` will register with existing instance state under the same `id`.
+ * @param {string} payload.mapboxApiAccessToken - mapboxApiAccessToken to be saved in map style reducer
  * @public
  */
 export const registerEntry = createAction(
@@ -37,8 +37,8 @@ export const registerEntry = createAction(
 
 /**
  *
- * Toggle between 3d and 2d map.
- * @param {string} id
+ * Delete an instance from the root reducer
+ * @param {string} id - the id of the instance to be deleted
  * @public
  */
 export const deleteEntry = createAction(
@@ -48,8 +48,9 @@ export const deleteEntry = createAction(
 
 /**
  *
- * Toggle between 3d and 2d map.
- * @param {void}
+ * Rename an instance in the root reducer, keep its entire state
+ * @param {string} oldId - old id
+ * @param {string} newId - new id
  * @public
  */
 export const renameEntry = createAction(
