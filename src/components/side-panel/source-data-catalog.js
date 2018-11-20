@@ -128,9 +128,9 @@ const SourceDataCatalog = ({
           ) : null}
         </DatasetTitle>
         {showDatasetTable ? (
-          <DataRowCount className="source-data-rows">{`${numFormat(
+          <DataRowCount className="source-data-rows">{!dataset.isTiled ? `${numFormat(
             dataset.allData.length
-          )} rows`}</DataRowCount>
+          )} rows` : null}</DataRowCount>
         ) : null}
       </SidePanelSection>
     ))}
