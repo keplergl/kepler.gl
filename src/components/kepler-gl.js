@@ -23,7 +23,8 @@ import {console as Console} from 'global/window';
 import {bindActionCreators} from 'redux';
 import {json as requestJson} from 'd3-request';
 import styled, {ThemeProvider}  from 'styled-components';
-import {connect as keplerGlConnect} from '../connect/keplergl-connect';
+import {connect as keplerGlConnect} from 'connect/keplergl-connect';
+import {isValidStyleUrl, getStyleDownloadUrl} from 'utils/map-style-utils/mapbox-gl-style-editor';
 
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
@@ -148,9 +149,15 @@ function KeplerGlFactory(
 
     _requestMapStyle = (mapStyle) => {
       const {url, id} = mapStyle;
-      requestJson(url, (error, result) => {
+      let downloadUrl = url;
+
+      if (isValidStyleUrl(url)) {
+        downloadUrl = getStyleDownloadUrl(url, this.props.mapboxApiAccessToken);
+      }
+
+      requestJson(downloadUrl, (error, result) => {
         if (error) {
-          Console.warn(`Error loading map style ${mapStyle.url}`);
+          Console.warn(`Error loading map style ${url}`);
         } else {
           this.props.mapStyleActions.loadMapStyles({
             [id]: {...mapStyle, style: result}
