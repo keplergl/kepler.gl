@@ -18,9 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {DATA_URL} from './default-settings';
+import {generateHashId} from 'utils/utils';
+import {getFileHandler} from 'processors/file-handler';
 
-/*
- * If you want to add more samples, feel free to edit the json file on github kepler.gl data repo
- */
-export const MAP_CONFIG_URL = `${DATA_URL}samples.json?nocache=${(new Date()).getTime()}`;
+export const processFileToLoad = (file) => {
+  return {
+    fileBlob: file,
+    info: {
+      id: generateHashId(4),
+      label: file.name,
+      size: file.size
+    },
+    handler: getFileHandler(file)
+  }
+};

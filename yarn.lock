@@ -8,7 +8,7 @@
   dependencies:
     regenerator-runtime "^0.12.0"
 
-"@deck.gl/core@^6.2.3", "@deck.gl/core@^6.2.4":
+"@deck.gl/core@^6.2.4":
   version "6.2.4"
   resolved "https://registry.yarnpkg.com/@deck.gl/core/-/core-6.2.4.tgz#c569854633f3087dea9866276ad68812671487d7"
   dependencies:
@@ -19,17 +19,17 @@
     seer "^0.2.4"
     viewport-mercator-project "^6.0.0"
 
-"@deck.gl/layers@^6.2.3":
+"@deck.gl/layers@^6.2.4":
   version "6.2.4"
-  resolved "https://registry.yarnpkg.com/@deck.gl/layers/-/layers-6.2.4.tgz#c5c9473a174cd45d01cd404177cbff20c9da1f56"
+  resolved "https://unpm.uberinternal.com/@deck.gl%2flayers/-/layers-6.2.4.tgz#c5c9473a174cd45d01cd404177cbff20c9da1f56"
   dependencies:
     "@deck.gl/core" "^6.2.4"
     d3-hexbin "^0.2.1"
     earcut "^2.0.6"
 
-"@deck.gl/react@^6.2.3":
+"@deck.gl/react@^6.2.4":
   version "6.2.4"
-  resolved "https://registry.yarnpkg.com/@deck.gl/react/-/react-6.2.4.tgz#fab68aaac23a1429c4ad84dd09879ca764543f2f"
+  resolved "https://unpm.uberinternal.com/@deck.gl%2freact/-/react-6.2.4.tgz#fab68aaac23a1429c4ad84dd09879ca764543f2f"
   dependencies:
     "@deck.gl/core" "^6.2.4"
     prop-types "^15.6.0"
@@ -2294,13 +2294,13 @@ decamelize@^1.0.0, decamelize@^1.1.1, decamelize@^1.1.2:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/decamelize/-/decamelize-1.2.0.tgz#f6534d15148269b20352e7bee26f501f9a191290"
 
-deck.gl@6.2.3:
-  version "6.2.3"
-  resolved "https://registry.yarnpkg.com/deck.gl/-/deck.gl-6.2.3.tgz#7f32b9225d06148ed3f7e945ef51b970f4caa302"
+deck.gl@^6.2.3:
+  version "6.2.4"
+  resolved "https://unpm.uberinternal.com/deck.gl/-/deck.gl-6.2.4.tgz#8652f492a6d6e30dc32925355d6f8f820967a70c"
   dependencies:
-    "@deck.gl/core" "^6.2.3"
-    "@deck.gl/layers" "^6.2.3"
-    "@deck.gl/react" "^6.2.3"
+    "@deck.gl/core" "^6.2.4"
+    "@deck.gl/layers" "^6.2.4"
+    "@deck.gl/react" "^6.2.4"
 
 decode-uri-component@^0.2.0:
   version "0.2.0"

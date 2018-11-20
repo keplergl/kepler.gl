@@ -29,7 +29,6 @@ import {loadFilesErr} from 'actions/vis-state-actions';
 import {addDataToMap} from 'actions';
 
 // Utils
-import {generateHashId} from 'utils/utils';
 import {
   getDefaultInteraction,
   findFieldsToShow
@@ -48,8 +47,6 @@ import {
   calculateLayerData
 } from 'utils/layer-utils/layer-utils';
 
-import {getFileHandler} from 'processors/file-handler';
-
 import {
   mergeFilters,
   mergeLayers,
@@ -64,6 +61,7 @@ import {
 //   };
 
 import {Layer, LayerClasses} from 'layers';
+import {processFileToLoad} from '/utils/file-utils';
 
 // react-palm
 // disable capture exception for react-palm call to withTask
@@ -934,15 +932,7 @@ function closeSpecificMapAtIndex(state, action) {
 export const loadFilesUpdater = (state, action) => {
   const {files} = action;
 
-  const filesToLoad = files.map(fileBlob => ({
-    fileBlob,
-    info: {
-      id: generateHashId(4),
-      label: fileBlob.name,
-      size: fileBlob.size
-    },
-    handler: getFileHandler(fileBlob)
-  }));
+  const filesToLoad = files.map(fileBlob => processFileToLoad(fileBlob));
 
   // reader -> parser -> augment -> receiveVisData
   const loadFileTasks = [

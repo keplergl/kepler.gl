@@ -25,7 +25,7 @@ import {connect} from 'react-redux';
 import Banner from './components/banner';
 import Announcement from './components/announcement';
 
-import {loadSampleConfigurations} from './actions';
+import {loadRemoteMap, loadSampleConfigurations} from './actions';
 import {replaceLoadDataModal} from './factories/load-data-modal';
 
 const KeplerGl = require('kepler.gl/components').injectComponents([
@@ -72,8 +72,18 @@ class App extends Component {
   componentWillMount() {
     // if we pass an id as part of the url
     // we ry to fetch along map configurations
-    const {params: {id: sampleMapId} = {}} = this.props;
-    this.props.dispatch(loadSampleConfigurations(sampleMapId));
+    const {params: {id} = {}, location: {query = {}}} = this.props;
+
+    // Load sample using its id
+    if (id) {
+      this.props.dispatch(loadSampleConfigurations(id));
+    }
+
+    // Load map using a custom
+    if (query.mapUrl) {
+      this.props.dispatch(loadRemoteMap({dataUrl: query.mapUrl}));
+    }
+
     window.addEventListener('resize', this._onResize);
     this._onResize();
   }

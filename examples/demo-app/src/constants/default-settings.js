@@ -26,6 +26,11 @@ export const ASSETS_URL = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/';
 
 export const DATA_URL = 'https://raw.githubusercontent.com/uber-web/kepler.gl-data/master/';
 
+/*
+ * If you want to add more samples, feel free to edit the json file on github kepler.gl data repo
+ */
+export const MAP_CONFIG_URL = `${DATA_URL}samples.json?nocache=${(new Date()).getTime()}`;
+
 export const QUERY_TYPES = keyMirror({
   file: null,
   sample: null
@@ -36,9 +41,15 @@ export const QUERY_OPTIONS = keyMirror({
   geojson: null
 });
 
+export const LOADING_METHODS_NAMES = keyMirror({
+  upload: null,
+  remote: null,
+  sample: null
+});
+
 export const LOADING_METHODS = [
   {
-    id: 'upload',
+    id: LOADING_METHODS_NAMES.upload,
     label: 'Load Your Data',
     options: [
       {
@@ -61,12 +72,21 @@ export const LOADING_METHODS = [
     ]
   },
   {
-    id: 'sample',
+    id: LOADING_METHODS_NAMES.remote,
+    label: 'Load Map using URL'
+  },
+  {
+    id: LOADING_METHODS_NAMES.sample,
     label: 'Sample Data',
     options: [
       // Dynamically populated
     ]
   }
 ];
+
+export const LOADING_SAMPLE_LIST_ERROR_MESSAGE = 'Not able to load sample gallery';
+export const LOADING_SAMPLE_ERROR_MESSAGE = 'Not able to load sample';
+export const LOADING_URL_MESSAGE = 'You can use the following formats: CSV | JSON | Kepler.gl config json. Make sure the url contains the file extension.';
+export const CORS_LINK = 'https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS';
 
 export const DEFAULT_LOADING_METHOD = LOADING_METHODS[0];

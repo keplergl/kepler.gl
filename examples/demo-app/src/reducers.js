@@ -29,11 +29,12 @@ import {
   INIT,
   SET_LOADING_METHOD,
   LOAD_MAP_SAMPLE_FILE,
-  LOAD_REMOTE_FILE_DATA_SUCCESS,
-  SET_SAMPLE_LOADING_STATUS
+  LOAD_REMOTE_RESOURCE_SUCCESS,
+  SET_SAMPLE_LOADING_STATUS, LOAD_REMOTE_RESOURCE_ERROR
 } from './actions';
 
 import {DEFAULT_LOADING_METHOD, LOADING_METHODS} from './constants/default-settings';
+import {generateHashId} from 'kepler.gl/utils/utils';
 
 // INITIAL_APP_STATE
 const initialAppState = {
@@ -43,7 +44,12 @@ const initialAppState = {
   currentOption: DEFAULT_LOADING_METHOD.options[0],
   previousMethod: null,
   sampleMaps: [], // this is used to store sample maps fetch from a remote json file
-  isMapLoading: false // determine whether we are loading a sample map
+  isMapLoading: false, // determine whether we are loading a sample map
+  error: null // contains error when loading/retrieving data/configuration
+    // {
+    //   status: null,
+    //   message: null
+    // }
 };
 
 // App reducer
@@ -55,7 +61,8 @@ export const appReducer = handleActions({
   [SET_LOADING_METHOD]: (state, action) => ({
     ...state,
     previousMethod: state.loadingMethod,
-    loadingMethod: LOADING_METHODS.find(({id}) => id === action.method)
+    loadingMethod: LOADING_METHODS.find(({id}) => id === action.method),
+    error: null
   }),
   [LOAD_MAP_SAMPLE_FILE]: (state, action) => ({
     ...state,
@@ -64,6 +71,12 @@ export const appReducer = handleActions({
   [SET_SAMPLE_LOADING_STATUS]: (state, action) => ({
     ...state,
     isMapLoading: action.isMapLoading
+  }),
+  [LOAD_REMOTE_RESOURCE_ERROR]: (state, action) => ({
+    ...state,
+    error: action.error,
+    currentOption: {dataUrl: action.url},
+    isMapLoading: false
   })
 }, initialAppState);
 
@@ -76,11 +89,18 @@ const demoReducer = combineReducers({
 });
 
 // this can be moved into a action and call kepler.gl action
+/**
+ *
+ * @param state
+ * @param action {map: resultset, config, map}
+ * @returns {{app: {isMapLoading: boolean}, keplerGl: {map: (state|*)}}}
+ */
 export const loadRemoteFileDataSuccess = (state, action) => {
-  const datasetId = action.map.id;
-  const {dataUrl} = action.map;
+  // TODO: replace generate with a different function
+  const datasetId = action.options.id || generateHashId(6);
+  const {dataUrl} = action.options;
   let processorMethod = Processor.processCsvData;
-
+  // TODO: create helper to determine file ext eligibility
   if (dataUrl.includes('.json') || dataUrl.includes('.geojson')) {
     processorMethod = Processor.processGeojson;
   }
@@ -92,7 +112,8 @@ export const loadRemoteFileDataSuccess = (state, action) => {
     data: processorMethod(action.response)
   };
 
-  const config = KeplerGlSchema.parseSavedConfig(action.config);
+  const config = action.config ?
+    KeplerGlSchema.parseSavedConfig(action.config) : null;
 
   const keplerGlInstance = combineUpdaters.addDataToMapComposed(
     state.keplerGl.map, // "map" is the id of your kepler.gl instance
@@ -118,7 +139,7 @@ export const loadRemoteFileDataSuccess = (state, action) => {
 };
 
 const composedUpdaters = {
-  [LOAD_REMOTE_FILE_DATA_SUCCESS]: loadRemoteFileDataSuccess
+  [LOAD_REMOTE_RESOURCE_SUCCESS]: loadRemoteFileDataSuccess
 };
 
 const composedReducer = (state, action) => {

@@ -28,7 +28,7 @@ const numFormat = format(',');
 
 const propTypes = {
   sampleData: PropTypes.object.isRequired,
-  onLoadSampleData: PropTypes.func.isRequired,
+  onLoadSample: PropTypes.func.isRequired,
   back: PropTypes.func.isRequired
 };
 
@@ -108,11 +108,17 @@ const StyledImageCaption = styled.div`
   opacity: 0;
 `;
 
+const StyledError = styled.div`
+  color: red;
+  font-size: 14px;
+  margin-bottom: 16px;
+`;
+
 const SampleMap = ({sample, onClick}) => (
   <StyledSampleMap className="sample-map-gallery__item">
     <div className="sample-map">
       <div className="sample-map__image" onClick={onClick}>
-        <img src={sample.imageUrl} />
+        {sample.imageUrl && <img src={sample.imageUrl} />}
       </div>
       <div className="sample-map__title">{sample.label}</div>
       <div className="sample-map__size">{`${numFormat(sample.size)} rows`}</div>
@@ -123,18 +129,23 @@ const SampleMap = ({sample, onClick}) => (
   </StyledSampleMap>
 );
 
-const SampleMapGallery = ({sampleData, sampleMaps, onLoadSampleData, back}) => (
+const SampleMapGallery = ({sampleData, sampleMaps, onLoadSample, back, error}) => (
   <div className="sample-data-modal">
     <BackLink onClick={back}>
       <Icons.LeftArrow height="12px" />
       <span>Back</span>
     </BackLink>
+    {error && (
+      <StyledError>
+        {error.message}
+      </StyledError>
+    )}
     <StyledSampleGallery className="sample-map-gallery">
-      {sampleMaps.map(sp => (
+      {sampleMaps.filter(sp => sp.visible).map(sp => (
         <SampleMap
           sample={sp}
           key={sp.id}
-          onClick={() => onLoadSampleData(sp)}
+          onClick={() => onLoadSample(sp)}
         />
       ))}
     </StyledSampleGallery>
