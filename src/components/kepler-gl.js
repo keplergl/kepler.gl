@@ -149,11 +149,8 @@ function KeplerGlFactory(
 
     _requestMapStyle = (mapStyle) => {
       const {url, id} = mapStyle;
-      let downloadUrl = url;
-
-      if (isValidStyleUrl(url)) {
-        downloadUrl = getStyleDownloadUrl(url, this.props.mapboxApiAccessToken);
-      }
+      const downloadUrl = isValidStyleUrl(url) ?
+        getStyleDownloadUrl(url, this.props.mapboxApiAccessToken) : url;
 
       requestJson(downloadUrl, (error, result) => {
         if (error) {
