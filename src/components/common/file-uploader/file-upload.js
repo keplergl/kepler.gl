@@ -148,22 +148,31 @@ export default class FileUpload extends Component {
     return Boolean(fileExt);
   };
 
+  _isFileNotEmpty = file => {
+    return file.size > 0;
+  };
+
   _handleFileDrop = (files, e) => {
     if (e) {
       e.stopPropagation();
     }
 
+    // TODO: Handle errors better here in order to specify which errors
+    // types are associated with which files.
     const nextState = {files: [], errorFiles: [], dragOver: false};
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
 
-      if (file && this._isValidFileType(file.name)) {
+      if (file &&
+          this._isValidFileType(file.name) &&
+          this._isFileNotEmpty(file)) {
         nextState.files.push(file);
       } else {
         nextState.errorFiles.push(file.name);
       }
     }
 
+    // TODO: Return file handle errors to UI
     this.setState(
       nextState,
       () =>
@@ -181,7 +190,7 @@ export default class FileUpload extends Component {
     if (errorFiles.length) {
       return (
         <WarningMsg>
-          {`File ${errorFiles.join(', ')} is not supported.`}
+          {`File ${errorFiles.join(', ')} is not supported or is empty.`}
         </WarningMsg>
       );
     }
