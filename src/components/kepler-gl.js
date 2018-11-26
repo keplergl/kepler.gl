@@ -148,6 +148,7 @@ function KeplerGlFactory(
 
     _requestMapStyle = (mapStyle) => {
       const {url, id} = mapStyle;
+      // TODO: should we change perform the json request using an action
       requestJson(url, (error, result) => {
         if (error) {
           Console.warn(`Error loading map style ${mapStyle.url}`);

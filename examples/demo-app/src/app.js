@@ -18,21 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import styled from 'styled-components';
 import window from 'global/window';
 import {connect} from 'react-redux';
+import KeplerGlSchema from 'kepler.gl/schemas';
 import Banner from './components/banner';
 import Announcement from './components/announcement';
-
-import {loadRemoteMap, loadSampleConfigurations} from './actions';
 import {replaceLoadDataModal} from './factories/load-data-modal';
+import ExportUrlModal from './components/export-url-modal';
+
+import {
+  initApp,
+  exportFileToCloud,
+  loadRemoteMap,
+  loadSampleConfigurations,
+  propagateStorageEvent
+} from './actions';
 
 const KeplerGl = require('kepler.gl/components').injectComponents([
   replaceLoadDataModal()
 ]);
-
-const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
 
 // Sample data
 /* eslint-disable no-unused-vars */
@@ -43,6 +49,8 @@ import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
 import {updateVisData, addDataToMap} from 'kepler.gl/actions';
 import Processors from 'kepler.gl/processors';
 /* eslint-enable no-unused-vars */
+
+const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
 
 const BannerHeight = 30;
 const BannerKey = 'kgHideBanner-iiba';
@@ -70,6 +78,7 @@ class App extends Component {
   };
 
   componentWillMount() {
+    this.props.dispatch(initApp());
     // if we pass an id as part of the url
     // we ry to fetch along map configurations
     const {params: {id} = {}, location: {query = {}}} = this.props;
@@ -84,15 +93,25 @@ class App extends Component {
       this.props.dispatch(loadRemoteMap({dataUrl: query.mapUrl}));
     }
 
+    // event listeners
     window.addEventListener('resize', this._onResize);
+    if (localStorage) {
+      window.addEventListener('storage', event => {
+        if (event.storageArea === localStorage) {
+          this.props.dispatch(propagateStorageEvent())
+        }
+      }, false);
+    }
+
     this._onResize();
   }
 
   componentDidMount() {
-    // delay 2s to show the banner
-    // if (!window.localStorage.getItem(BannerKey)) {
-    //  window.setTimeout(this._showBanner, 3000);
-    // }
+    // delay zs to show the banner
+    if (!window.localStorage.getItem(BannerKey)) {
+      window.setTimeout(this._showBanner, 3000);
+    }
+
     // load sample data
     // this._loadSampleData();
   }
@@ -195,8 +214,23 @@ class App extends Component {
     );
   }
 
+  _toggleCloudModal = () => {
+    // TODO: this lives only in the demo hence we use the state for now
+    // REFCOTOR using redux
+    this.setState({
+      cloudModalOpen: !this.state.cloudModalOpen
+    });
+  };
+
+  _onExportToCloud = () => {
+    // we pass all props because we avoid to create new variables
+    const fileContent = KeplerGlSchema.save(this.props.demo.keplerGl.map);
+    this.props.dispatch(exportFileToCloud(fileContent))
+  };
+
   render() {
     const {showBanner, width, height} = this.state;
+    const {sharing} = this.props.demo;
     return (
       <GlobalStyleDiv>
         <Banner
@@ -207,6 +241,12 @@ class App extends Component {
         >
           <Announcement onDisable={this._disableBanner}/>
         </Banner>
+        <ExportUrlModal
+          sharing={sharing}
+          isOpen={Boolean(this.state.cloudModalOpen)}
+          onClose={this._toggleCloudModal}
+          onExport={this._onExportToCloud}
+        />
         <div
           style={{
             transition: 'margin 1s, height 1s',
@@ -226,6 +266,7 @@ class App extends Component {
             getState={state => state.demo.keplerGl}
             width={width}
             height={height - (showBanner ? BannerHeight : 0)}
+            onSaveMap={this._toggleCloudModal}
           />
         </div>
       </GlobalStyleDiv>

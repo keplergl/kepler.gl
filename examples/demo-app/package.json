@@ -6,6 +6,7 @@
   },
   "dependencies": {
     "d3-request": "^1.0.6",
+    "dropbox": "^4.0.12",
     "global": "^4.3.0",
     "kepler.gl": "^0.1.6",
     "lodash.debounce": "^4.0.8",

@@ -21,23 +21,29 @@
 import React from 'react';
 import document from 'global/document';
 import {Provider} from 'react-redux';
-import {hashHistory, Router, Route} from 'react-router';
+import {browserHistory, Router, Route} from 'react-router';
 import {syncHistoryWithStore} from 'react-router-redux';
 import {render} from 'react-dom';
 import store from './store';
 import App from './app';
-// import {getAppUrlPrefix} from './constants/default-settings';
 
-const history = syncHistoryWithStore(hashHistory, store);
-// const prefix = getAppUrlPrefix();
-// const path = prefix === '' ? '(:id)' : `${prefix}(/:id)`;
+import {validateAndStoreAuth} from './utils/auth-token';
+
+const history = syncHistoryWithStore(browserHistory, store);
+
+const onEnterCallback = (nextState, transition, callback) => {
+  validateAndStoreAuth();
+  callback();
+};
 
 const Root = () => (
   <Provider store={store}>
     <Router history={history}>
-      <Route name="map" path="/" component={App} />
-      <Route name="demo" path="/demo/(:id)" component={App} />
-      <Route name="map" path="/map" component={App} />
+      <Route path="/auth" component={App} onEnter={onEnterCallback}/>
+      <Route path="/demo/(:id)" component={App} />
+      <Route path="/map" component={App} />
+      <Route path="/" component={App} />
+      <Route path="*" component={App} />
     </Router>
   </Provider>
 );

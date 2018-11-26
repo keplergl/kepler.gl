@@ -18,36 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {combineReducers, createStore, applyMiddleware, compose} from 'redux';
-import {routerReducer, routerMiddleware} from 'react-router-redux';
-import {browserHistory} from 'react-router';
+export function parseQueryString(query) {
+  const searchParams = new URLSearchParams(query);
+  const params = [...searchParams].reduce((queryParams, entry) => ({
+    ...queryParams,
+    ...(entry  && entry.length === 2 ?
+        {[entry[0]]: entry[1]} : null
+    )
+  }), {});
 
-import thunk from 'redux-thunk';
-import window from 'global/window';
-import {taskMiddleware} from 'react-palm/tasks';
-
-import demoReducer from './reducers';
-
-const reducers = combineReducers({
-  demo: demoReducer,
-  routing: routerReducer
-});
-
-export const middlewares = [
-  taskMiddleware,
-  thunk,
-  routerMiddleware(browserHistory)
-];
-
-export const enhancers = [applyMiddleware(...middlewares)];
-
-const initialState = {};
-
-// add redux devtools
-const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
-
-export default createStore(
-  reducers,
-  initialState,
-  composeEnhancers(...enhancers)
-);
+  return params;
+}

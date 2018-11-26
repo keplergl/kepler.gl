@@ -255,7 +255,7 @@ import {connect} from 'react-redux';
 
 Const MapContainer = props => (
   <div>
-    <button onClick=() => props.keplerGlDispatch(toggleFullScreen())/>
+    <button onClick={() => props.keplerGlDispatch(toggleFullScreen())}/>
     <KeplerGl
       id="foo"
     />

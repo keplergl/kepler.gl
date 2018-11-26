@@ -30,10 +30,17 @@ import {
   SET_LOADING_METHOD,
   LOAD_MAP_SAMPLE_FILE,
   LOAD_REMOTE_RESOURCE_SUCCESS,
-  SET_SAMPLE_LOADING_STATUS, LOAD_REMOTE_RESOURCE_ERROR
+  LOAD_REMOTE_RESOURCE_ERROR,
+  SET_SAMPLE_LOADING_STATUS,
+  SET_AUTH_TOKEN,
+  PROPAGATE_STORAGE_EVENT,
+  PUSHING_FILE
 } from './actions';
 
 import {DEFAULT_LOADING_METHOD, LOADING_METHODS} from './constants/default-settings';
+import {AUTH_HANDLERS, validateAndStoreAuth} from './utils/auth-token';
+
+const defaultAuthHandler = AUTH_HANDLERS.dropbox;
 
 /**
  * Generate a hash string based on number of character
@@ -54,7 +61,10 @@ const initialAppState = {
   currentOption: DEFAULT_LOADING_METHOD.options[0],
   previousMethod: null,
   sampleMaps: [], // this is used to store sample maps fetch from a remote json file
-  isMapLoading: false, // determine whether we are loading a sample map
+  isMapLoading: false, // determine whether we are loading a sample map,
+  authTokens: {
+    // dropbox: '12345'
+  },
   error: null // contains error when loading/retrieving data/configuration
     // {
     //   status: null,
@@ -62,9 +72,23 @@ const initialAppState = {
     // }
 };
 
+// Read auth tokens from localStorage
+function readAuthTokens() {
+  return [Object.keys(AUTH_HANDLERS)].reduce((tokens, key) => {
+    const authHandler = AUTH_HANDLERS[key];
+    return {
+      ...tokens,
+      [authHandler.name]: authHandler.retrieveAuthToken ?
+        authHandler.retrieveAuthToken()
+        : null
+    };
+  }, {});
+
+}
+
 // App reducer
 export const appReducer = handleActions({
-  [INIT]: (state, action) => ({
+  [INIT]: (state) => ({
     ...state,
     loaded: true
   }),
@@ -81,21 +105,71 @@ export const appReducer = handleActions({
   [SET_SAMPLE_LOADING_STATUS]: (state, action) => ({
     ...state,
     isMapLoading: action.isMapLoading
+  })
+}, initialAppState);
+
+const sharingInitialState = {
+  authTokens: {
+    // dropbox: '12345'
+  },
+  isLoading: false,
+  status: null,
+  info: null
+};
+
+// file upload reducer
+export const sharingReducer = handleActions({
+  [INIT]: (state) => ({
+    ...state,
+    authTokens: readAuthTokens()
   }),
   [LOAD_REMOTE_RESOURCE_ERROR]: (state, action) => ({
     ...state,
     error: action.error,
     currentOption: {dataUrl: action.url},
     isMapLoading: false
+  }),
+  [SET_AUTH_TOKEN]: state => {
+    // TODO: in the future we can pass the name of the auth hanlder we would like to use to be more flexbile
+
+    const authHandler = defaultAuthHandler;
+    const token = validateAndStoreAuth(authHandler);
+
+    if (!token) {
+      // TODO: show error
+      return {
+        ...state,
+        error: {
+          message: 'AUTHENTICATION FAILED'
+        }
+      }
+    }
+    return {
+      ...state,
+      authTokens: {
+        ...state.authTokens,
+        [authHandler.name]: token
+      }
+    };
+  },
+  [PROPAGATE_STORAGE_EVENT]: state => ({
+    ...state,
+    authTokens: readAuthTokens()
+  }),
+  [PUSHING_FILE]: (state, action) => ({
+    ...state,
+    isLoading: action.isLoading,
+    info: action.metadata
   })
-}, initialAppState);
+}, sharingInitialState);
 
 // combine app reducer and keplerGl reducer
 // to mimic the reducer state of kepler.gl website
 const demoReducer = combineReducers({
   // mount keplerGl reducer
   keplerGl: keplerGlReducer,
-  app: appReducer
+  app: appReducer,
+  sharing: sharingReducer
 });
 
 // this can be moved into a action and call kepler.gl action
@@ -105,7 +179,7 @@ const demoReducer = combineReducers({
  * @param action {map: resultset, config, map}
  * @returns {{app: {isMapLoading: boolean}, keplerGl: {map: (state|*)}}}
  */
-export const loadRemoteFileDataSuccess = (state, action) => {
+export const loadRemoteResourceSuccess = (state, action) => {
   // TODO: replace generate with a different function
   const datasetId = action.options.id || generateHashId(6);
   const {dataUrl} = action.options;
@@ -149,7 +223,7 @@ export const loadRemoteFileDataSuccess = (state, action) => {
 };
 
 const composedUpdaters = {
-  [LOAD_REMOTE_RESOURCE_SUCCESS]: loadRemoteFileDataSuccess
+  [LOAD_REMOTE_RESOURCE_SUCCESS]: loadRemoteResourceSuccess
 };
 
 const composedReducer = (state, action) => {
