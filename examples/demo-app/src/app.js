@@ -25,7 +25,7 @@ import {connect} from 'react-redux';
 import Banner from './components/banner';
 import Announcement from './components/announcement';
 
-import {loadSampleConfigurations} from './actions';
+import {loadSampleConfigurations, loadSampleMap} from './actions';
 import {replaceLoadDataModal} from './factories/load-data-modal';
 
 const KeplerGl = require('kepler.gl/components').injectComponents([
@@ -42,6 +42,7 @@ import sampleH3Data from './data/sample-hex-id-csv';
 import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
 import {updateVisData, addDataToMap} from 'kepler.gl/actions';
 import Processors from 'kepler.gl/processors';
+import { SHAREDSTREETS_DATASETS } from './constants/default-settings';
 /* eslint-enable no-unused-vars */
 
 const BannerHeight = 30;
@@ -71,9 +72,14 @@ class App extends Component {
 
   componentWillMount() {
     // if we pass an id as part of the url
-    // we ry to fetch along map configurations
-    const {params: {id: sampleMapId} = {}} = this.props;
-    this.props.dispatch(loadSampleConfigurations(sampleMapId));
+    // we try to fetch along map configurations
+    const {params: {section, id: sampleMapId} = {}} = this.props;
+    if (section === 'demo') {
+      this.props.dispatch(loadSampleConfigurations(sampleMapId));  
+    } else if (section === 'sharedstreets') {
+      const data = SHAREDSTREETS_DATASETS.find(dataset => dataset.id === sampleMapId);
+      this.props.dispatch(loadSampleMap(data, 'sharedstreets'));
+    }
     window.addEventListener('resize', this._onResize);
     this._onResize();
   }

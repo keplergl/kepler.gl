@@ -26,6 +26,9 @@ import {Analyzer, DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
 import {ALL_FIELD_TYPES, GEOJSON_FIELDS} from 'constants/default-settings';
 import {notNullorUndefined} from 'utils/data-utils';
+import Pbf from "pbf";
+import * as geobuf from "geobuf";
+import { Buffer } from 'buffer';
 
 // if any of these value occurs in csv, parse it to null;
 const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN'];
@@ -419,9 +422,20 @@ export function validateInputData(data) {
   return {fields: updatedFields, rows};
 }
 
+/**
+ * @param buffer geobuf: a binary encoding for geographic data
+ * https://github.com/mapbox/geobuf
+ */
+export function processGeobuf(bufferStr) {
+  const buffer = new Uint8Array(bufferStr)  ;
+  const geojson = geobuf.decode(new Pbf(buffer));
+  return processGeojson(geojson);
+}
+
 export default {
   processGeojson,
   processCsvData,
+  processGeobuf,
   processRowObject,
   analyzerTypeToFieldType,
   getFieldsFromData,

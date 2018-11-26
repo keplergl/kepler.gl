@@ -84,7 +84,6 @@ export const INITIAL_VIS_STATE = {
   // a collection of multiple dataset
   datasets: {},
   editingDataset: undefined,
-  tiledDatasets: [],
 
   interactionConfig: getDefaultInteraction(),
   interactionToBeMerged: undefined,
@@ -514,8 +513,7 @@ export const removeDatasetUpdater = (state, action) => {
   /* eslint-disable no-unused-vars */
   const {
     layers,
-    datasets: {[datasetKey]: dataset, ...newDatasets},
-    tiledDatasets
+    datasets: {[datasetKey]: dataset, ...newDatasets}
   } = state;
   /* eslint-enable no-unused-vars */
 
@@ -554,14 +552,7 @@ export const removeDatasetUpdater = (state, action) => {
     };
   }
 
-  // remove from tiledDataId
-  const newTiledDatasets = tiledDatasets.slice();
-  const index = newTiledDatasets.indexOf(datasetKey);
-  if (index !== -1) {
-    newTiledDatasets.splice(index, 1);
-  }
-
-  return {...newState, filters, interactionConfig, tiledDatasets: newTiledDatasets};
+  return {...newState, filters, interactionConfig};
 };
 
 export const updateLayerBlendingUpdater = (state, action) => ({
@@ -743,7 +734,7 @@ export const updateVisDataUpdater = (state, action) => {
     });
   }
 
-  const newDateEntries = datasets.reduce(
+  const newDataEntries = datasets.reduce(
     (accu, {info = {}, data}) => ({
       ...accu,
       ...(createNewDataEntry({info, data}, state.datasets) || {})
@@ -751,7 +742,7 @@ export const updateVisDataUpdater = (state, action) => {
     {}
   );
 
-  if (!Object.keys(newDateEntries).length) {
+  if (!Object.keys(newDataEntries).length) {
     return state;
   }
 
@@ -759,7 +750,7 @@ export const updateVisDataUpdater = (state, action) => {
     ...state,
     datasets: {
       ...state.datasets,
-      ...newDateEntries
+      ...newDataEntries
     }
   };
 
@@ -777,12 +768,12 @@ export const updateVisDataUpdater = (state, action) => {
 
   if (mergedState.layers.length === state.layers.length) {
     // no layer merged, find defaults
-    mergedState = addDefaultLayers(mergedState, newDateEntries);
+    mergedState = addDefaultLayers(mergedState, newDataEntries);
   }
 
   if (mergedState.splitMaps.length) {
     const newLayers = mergedState.layers.filter(
-      l => l.config.dataId in newDateEntries
+      l => l.config.dataId in newDataEntries
     );
     // if map is splited, add new layers to splitMaps
     mergedState = {
@@ -795,15 +786,15 @@ export const updateVisDataUpdater = (state, action) => {
   mergedState = mergeInteractions(mergedState, interactionToBeMerged);
 
   // if no tooltips merged add default tooltips
-  Object.keys(newDateEntries).forEach(dataId => {
+  Object.keys(newDataEntries).forEach(dataId => {
     const tooltipFields =
       mergedState.interactionConfig.tooltip.config.fieldsToShow[dataId];
     if (!Array.isArray(tooltipFields) || !tooltipFields.length) {
-      mergedState = addDefaultTooltips(mergedState, newDateEntries[dataId]);
+      mergedState = addDefaultTooltips(mergedState, newDataEntries[dataId]);
     }
   });
 
-  return updateAllLayerDomainData(mergedState, Object.keys(newDateEntries));
+  return updateAllLayerDomainData(mergedState, Object.keys(newDataEntries));
 };
 /* eslint-enable max-statements */
 
@@ -1104,35 +1095,3 @@ export function updateAllLayerDomainData(state, dataId, newFilter) {
     layerVersion: state.layerVersion + 1
   };
 }
-
-export function addTiledDatasetSampleUpdater(state, action) {
-  const {dataset} = action;
-  const visState = updateVisDataUpdater(state, {
-    datasets: {
-      info: {
-        ...dataset.info,
-        isTiled: true
-      },
-      data: dataset.data
-    }
-  });
-  return visState;
-};
-
-/**
- * Add a dataset, with isTiled = true. 
- * Because we are adding a tiled dataset, the data received is only a subset of all data. 
- */
-export function addTiledDataIdUpdater(state, action) {
-  const {dataId} = action;
-  const {tiledDatasets} = state;
-  const newTiledDatasets = tiledDatasets.slice();
-  if (!newTiledDatasets.includes(dataId)) {
-    newTiledDatasets.push(dataId);
-  }
-  return {
-    ...state,
-    tiledDatasets: newTiledDatasets
-  };
-}
-

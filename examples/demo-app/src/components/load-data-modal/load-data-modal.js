@@ -40,7 +40,6 @@ const propTypes = {
   // call backs
   onFileUpload: PropTypes.func.isRequired,
   onLoadSampleData: PropTypes.func.isRequired,
-  onLoadSharedstreetsData: PropTypes.func.isRequired,
   onSetLoadingMethod: PropTypes.func.isRequired
 };
 
@@ -134,6 +133,14 @@ const StyledSpinner = styled.div`
 
 class LoadDataModal extends Component {
 
+  onLoadGeneralSampleData = (data) => {
+    this.props.onLoadSampleData(data, 'demo');
+  }
+
+  onLoadSharedstreetsSampleData = (data) => {
+    this.props.onLoadSampleData(data, 'sharedstreets');
+  }
+
   render() {
     const {loadingMethod, currentOption, previousMethod, sampleMaps, isMapLoading} = this.props;
     return (
@@ -159,13 +166,13 @@ class LoadDataModal extends Component {
                     sampleData={currentOption}
                     sampleMaps={sampleMaps}
                     back={() => this.props.onSetLoadingMethod(previousMethod.id)}
-                    onLoadSampleData={this.props.onLoadSampleData}/>
+                    onLoadSampleData={this.onLoadGeneralSampleData}/>
                 ) : null}
                 {loadingMethod.id === 'sharedstreets' ? (
                   <SampleMapGallery
                     sampleData={currentOption}
                     sampleMaps={SHAREDSTREETS_DATASETS}
-                    onLoadSampleData={this.props.onLoadSharedstreetsData}/>
+                    onLoadSampleData={this.onLoadSharedstreetsSampleData}/>
                   ) : null}
               </div>)
           }

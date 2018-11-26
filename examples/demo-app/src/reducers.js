@@ -21,7 +21,7 @@
 import {combineReducers} from 'redux';
 import {handleActions} from 'redux-actions';
 
-import keplerGlReducer, {combineUpdaters, visStateUpdaters} from 'kepler.gl/reducers';
+import keplerGlReducer, {combineUpdaters} from 'kepler.gl/reducers';
 import Processor from 'kepler.gl/processors';
 import KeplerGlSchema from 'kepler.gl/schemas';
 
@@ -30,8 +30,7 @@ import {
   SET_LOADING_METHOD,
   LOAD_MAP_SAMPLE_FILE,
   LOAD_REMOTE_FILE_DATA_SUCCESS,
-  SET_SAMPLE_LOADING_STATUS,
-  ADD_SHAREDSTREETS_DATA_ID
+  SET_SAMPLE_LOADING_STATUS
 } from './actions';
 
 import {DEFAULT_LOADING_METHOD, LOADING_METHODS} from './constants/default-settings';
@@ -77,38 +76,16 @@ const demoReducer = combineReducers({
   app: appReducer
 });
 
-export const addSharedstreetsDataId = (state, action) => {
-  const sharedstreetsDataIds = state.app.sharedstreetsDataIds.slice();
-  const dataId = action.dataId;
-  sharedstreetsDataIds.push(dataId);
-  const newVisState = visStateUpdaters.addTiledDataIdUpdater(
-    state.keplerGl.map.visState, // "map" is the id of your kepler.gl instance
-    {
-      dataId
-    }
-  );
-
-  return {
-    ...state,
-    app: {
-      ...state.app,
-      sharedstreetsDataIds
-    },
-    keplerGl: {
-      ...state.keplerGl, // in case you keep multiple instances
-      map: {
-        ...state.keplerGl.map,
-        visState: newVisState
-      }
-    }
-  };
-}
-
 // this can be moved into a action and call kepler.gl action
 export const loadRemoteFileDataSuccess = (state, action) => {
   const datasetId = action.map.id;
-  const {dataUrl} = action.map;
+  const {dataUrl, isTiled, dataTemplateUrl} = action.map;
   let processorMethod = Processor.processCsvData;
+
+  // Assume all tiled data is sharedstreets data, which is in geobuf format
+  if (isTiled) {
+    processorMethod = Processor.processGeobuf;
+  }
 
   if (dataUrl.includes('.json') || dataUrl.includes('.geojson')) {
     processorMethod = Processor.processGeojson;
@@ -116,7 +93,10 @@ export const loadRemoteFileDataSuccess = (state, action) => {
 
   const datasets = {
     info: {
-      id: datasetId
+      id: datasetId,
+      isTiled,
+      dataUrl,
+      dataTemplateUrl
     },
     data: processorMethod(action.response)
   };
@@ -147,8 +127,7 @@ export const loadRemoteFileDataSuccess = (state, action) => {
 };
 
 const composedUpdaters = {
-  [LOAD_REMOTE_FILE_DATA_SUCCESS]: loadRemoteFileDataSuccess,
-  [ADD_SHAREDSTREETS_DATA_ID]: addSharedstreetsDataId
+  [LOAD_REMOTE_FILE_DATA_SUCCESS]: loadRemoteFileDataSuccess
 };
 
 const composedReducer = (state, action) => {

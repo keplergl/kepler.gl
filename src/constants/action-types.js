@@ -51,8 +51,6 @@ const ActionTypes = keyMirror({
   SET_FILTER_PLOT: null,
   LOAD_FILES: null,
   LOAD_FILES_ERR: null,
-  ADD_TILED_DATASET_SAMPLE: null,
-  ADD_TILED_DATA_ID: null,
 
   // mapState
   UPDATE_MAP: null,

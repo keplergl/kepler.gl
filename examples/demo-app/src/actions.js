@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {push} from 'react-router-redux';
-import {text as requestText, json as requestJson} from 'd3-request';
+import {text as requestText, json as requestJson, responseType, request} from 'd3-request';
 import {toggleModal} from 'kepler.gl/actions';
 import {console as Console} from 'global/window';
 import {MAP_CONFIG_URL} from './constants/sample-maps';
@@ -30,7 +30,6 @@ export const SET_LOADING_METHOD = 'SET_LOADING_METHOD';
 export const LOAD_REMOTE_FILE_DATA_SUCCESS = 'LOAD_DATA_SUCCESS';
 export const LOAD_MAP_SAMPLE_FILE = 'LOAD_MAP_SAMPLE_FILE';
 export const SET_SAMPLE_LOADING_STATUS = 'SET_SAMPLE_LOADING_STATUS';
-export const ADD_SHAREDSTREETS_DATA_ID = 'ADD_SHAREDSTREETS_DATA_ID';
 
 // ACTIONS
 export function setLoadingMethod(method) {
@@ -63,28 +62,12 @@ export function setLoadingMapStatus(isMapLoading) {
   };
 }
 
-export function loadSampleMap(sample) {
+export function loadSampleMap(sample, section) {
   return (dispatch, getState) => {
     const {routing} = getState();
-    dispatch(push(`/demo/${sample.id}${routing.locationBeforeTransitions.search}`));
+    dispatch(push(`/${section}/${sample.id}${routing.locationBeforeTransitions.search}`));
     dispatch(loadRemoteMap(sample));
     dispatch(setLoadingMapStatus(true));
-  };
-}
-
-export function addSharedstreetsDataId(dataId) {
-  return {
-    type: ADD_SHAREDSTREETS_DATA_ID,
-    dataId
-  }
-}
-
-export function loadSharedstreetsData(sample) {
-  return (dispatch, getState) => {
-    const {routing} = getState();
-    dispatch(push(`/demo/${sample.id}${routing.locationBeforeTransitions.search}`));
-    dispatch(addSharedstreetsDataId(sample.id));
-    dispatch(toggleModal(null));
   };
 }
 
@@ -112,12 +95,21 @@ function loadRemoteMap(sample) {
       if (sample.dataUrl.includes('.json') || sample.dataUrl.includes('.geojson')) {
         requestMethod = requestJson;
       }
-
-      // Load data
-      requestMethod(sample.dataUrl, (dataError, result) => {
-        loadMapCallback(dispatch, dataError, result, sample, config);
-      });
-    })
+      if (sample.isTiled) {
+        // Assume all tiled data has response type arraybuffer
+        request(sample.dataUrl)
+          .responseType('arraybuffer')
+          .response((xhr) => xhr.response)
+          .get((dataError, result) => {
+            loadMapCallback(dispatch, dataError, result, sample, config);
+          });
+      } else {
+        // Load data
+        requestMethod(sample.dataUrl, (dataError, result) => {
+          loadMapCallback(dispatch, dataError, result, sample, config);
+        });
+      };
+    });
   }
 }
 
