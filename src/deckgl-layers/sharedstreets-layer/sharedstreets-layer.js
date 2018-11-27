@@ -22,18 +22,18 @@
 
 import {CompositeLayer} from '@deck.gl/core';
 import {TileLayer as DeckGLTileLayer} from '@deck.gl/experimental-layers';
-import Pbf from "pbf";
-import * as geobuf from "geobuf";
 import dataProcessor from 'processors';
-import { processGeojson } from 'processors/data-processor';
-import { memoize } from 'utils/utils';
+import {memoize} from 'utils/utils';
  
 export default class SharedstreetsLayer extends CompositeLayer {
   initializeState() {
     this.setState({
-      isTiledSampleDataLoaded: false,
       oldLayerDataMaps: new Map()
     })
+  }
+  
+  shouldUpdateState({oldProps, props, context, changeFlags}) {
+    return changeFlags.propsOrDataChanged || changeFlags.stateChanged;
   }
 
   /**
@@ -47,28 +47,14 @@ export default class SharedstreetsLayer extends CompositeLayer {
       mode: "cors",
       cache: "no-cache"
     };
-    return fetch(
-      `http://d2sn2dqnporv7a.cloudfront.net/${z}-${x}-${y}-decoded`,
-      fetchConfig
-    )
+    // eslint-disable-next-line no-template-curly-in-string
+    const dataUrl = this.props.dataUrl.replace('${z}', z).replace('${x}', x).replace('${y}', y);
+    return fetch(dataUrl, fetchConfig)
     .then(response => {
       return response.arrayBuffer();
     })
     .then(buffer => {
-      const geoJson = geobuf.decode(new Pbf(buffer));
-      if (!this.state.isTiledSampleDataLoaded) {
-        this.props.addTiledDatasetSample({
-          info: {
-            label: 'sharedstreets',
-            id: "sharedstreets"
-          },
-          data: dataProcessor.processGeojson(geoJson)
-        });
-        this.setState({
-          isTiledSampleDataLoaded: true
-        });
-      }
-      const {allData, fields} = getAllData(geoJson);
+      const {rows: allData, fields} = dataProcessor.processGeobuf(buffer);
       return {
         allData,
         fields
@@ -172,11 +158,3 @@ export default class SharedstreetsLayer extends CompositeLayer {
   }
 }
 
-function getAllData(rawData) {
-  // processedData follows format {rows: [], fields: []}
-  const processedData = processGeojson(rawData);
-  return {
-    allData: processedData.rows,
-    fields: processedData.fields
-  }
-}

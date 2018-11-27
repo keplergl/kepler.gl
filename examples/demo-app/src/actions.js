@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {push} from 'react-router-redux';
-import {text as requestText, json as requestJson} from 'd3-request';
+import {text as requestText, json as requestJson, request} from 'd3-request';
 import {toggleModal} from 'kepler.gl/actions';
 import {console as Console} from 'global/window';
 import {MAP_CONFIG_URL} from './constants/sample-maps';
@@ -62,10 +62,10 @@ export function setLoadingMapStatus(isMapLoading) {
   };
 }
 
-export function loadSampleMap(sample) {
+export function loadSampleMap(sample, section) {
   return (dispatch, getState) => {
     const {routing} = getState();
-    dispatch(push(`/demo/${sample.id}${routing.locationBeforeTransitions.search}`));
+    dispatch(push(`/${section}/${sample.id}${routing.locationBeforeTransitions.search}`));
     dispatch(loadRemoteMap(sample));
     dispatch(setLoadingMapStatus(true));
   };
@@ -95,12 +95,21 @@ function loadRemoteMap(sample) {
       if (sample.dataUrl.includes('.json') || sample.dataUrl.includes('.geojson')) {
         requestMethod = requestJson;
       }
-
-      // Load data
-      requestMethod(sample.dataUrl, (dataError, result) => {
-        loadMapCallback(dispatch, dataError, result, sample, config);
-      });
-    })
+      if (sample.isTiled) {
+        // Assume all tiled data has response type arraybuffer
+        request(sample.dataUrl)
+          .responseType('arraybuffer')
+          .response((xhr) => xhr.response)
+          .get((dataError, result) => {
+            loadMapCallback(dispatch, dataError, result, sample, config);
+          });
+      } else {
+        // Load data
+        requestMethod(sample.dataUrl, (dataError, result) => {
+          loadMapCallback(dispatch, dataError, result, sample, config);
+        });
+      };
+    });
   }
 }
 

@@ -341,7 +341,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         layers,
         layerData,
         layerOrder,
-        tiledDatasets,
+        datasets,
         visStateActions
       } = this.props;
 
@@ -355,7 +355,9 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           .reverse()
           .reduce(this._renderLayer, []);
       }
-
+      const tiledDatasets = Object.keys(datasets).filter(dataset => {
+        return datasets[dataset].isTiled;
+      });
       // render layers for untiled data sources.
       const layersToRender = deckGlLayers.filter(deckGlLayer => {
         const sampleKeplerLayer = layers.find(keplerLayer => keplerLayer.id === deckGlLayer.id);
@@ -363,10 +365,10 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       });
       // render layers for tiled data sources, from sample data layers.
       tiledDatasets.forEach(tiledDataset => {
-        const sampleKeplerLayers = layers.filter(layer => layer.config.dataId === tiledDataset)
+        const sampleKeplerLayers = layers.filter(layer => layer.config.dataId === tiledDataset);
         // For now, we assume all tiled datasets are Sharedstreets datasets, thus we render
         // sharedstreets layers.
-        const sharedstreetsLayer = this._renderSharedstreetsLayer(sampleKeplerLayers);
+        const sharedstreetsLayer = this._renderSharedstreetsLayer(sampleKeplerLayers, datasets[tiledDataset]);
         layersToRender.push(sharedstreetsLayer);
       });
 
@@ -383,20 +385,20 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       );
     }
 
-    _renderSharedstreetsLayer(sampleDataLayers) {
+    _renderSharedstreetsLayer(sampleDataLayers, dataset) {
       const {
-        visStateActions,
         mapState,
         interactionConfig,
         clicked,
         hoverInfo,
         layerVersion
       } = this.props;
+      const {dataTemplateUrl: dataUrl} = dataset;
       const objectHovered = clicked || hoverInfo;
 
       return new SharedstreetsLayer({
         id: 'sharedstreet',
-        addTiledDatasetSample: visStateActions.addTiledDatasetSample,
+        dataUrl,
         layers: sampleDataLayers,
         layerVersion,
         objectHovered,

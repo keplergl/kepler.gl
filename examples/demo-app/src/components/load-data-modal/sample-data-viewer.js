@@ -29,7 +29,7 @@ const numFormat = format(',');
 const propTypes = {
   sampleData: PropTypes.object.isRequired,
   onLoadSampleData: PropTypes.func.isRequired,
-  back: PropTypes.func.isRequired
+  back: PropTypes.func
 };
 
 const StyledSampleGallery = styled.div`
@@ -115,7 +115,7 @@ const SampleMap = ({sample, onClick}) => (
         <img src={sample.imageUrl} />
       </div>
       <div className="sample-map__title">{sample.label}</div>
-      <div className="sample-map__size">{`${numFormat(sample.size)} rows`}</div>
+      <div className="sample-map__size">{sample.size ? `${numFormat(sample.size)} rows`: null}</div>
       <StyledImageCaption className="sample-map__image__caption">
         {sample.description}
       </StyledImageCaption>
@@ -125,10 +125,12 @@ const SampleMap = ({sample, onClick}) => (
 
 const SampleMapGallery = ({sampleData, sampleMaps, onLoadSampleData, back}) => (
   <div className="sample-data-modal">
-    <BackLink onClick={back}>
-      <Icons.LeftArrow height="12px" />
-      <span>Back</span>
-    </BackLink>
+    {back ? 
+      <BackLink onClick={back}>
+        <Icons.LeftArrow height="12px" />
+        <span>Back</span>
+      </BackLink>
+    : null}
     <StyledSampleGallery className="sample-map-gallery">
       {sampleMaps.map(sp => (
         <SampleMap

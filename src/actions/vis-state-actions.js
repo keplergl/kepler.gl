@@ -234,17 +234,3 @@ export function loadFilesErr(error) {
     error
   };
 }
-
-export function addTiledDatasetSample(dataset) {
-  return {
-    type: ActionTypes.ADD_TILED_DATASET_SAMPLE,
-    dataset
-  }
-}
-
-export function addTiledDataId(dataId) {
-  return {
-    type: ActionTypes.ADD_TILED_DATA_ID,
-    dataId
-  }
-}

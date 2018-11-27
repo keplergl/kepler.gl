@@ -78,8 +78,13 @@ const demoReducer = combineReducers({
 // this can be moved into a action and call kepler.gl action
 export const loadRemoteFileDataSuccess = (state, action) => {
   const datasetId = action.map.id;
-  const {dataUrl} = action.map;
+  const {dataUrl, isTiled, dataTemplateUrl} = action.map;
   let processorMethod = Processor.processCsvData;
+
+  // Assume all tiled data is sharedstreets data, which is in geobuf format
+  if (isTiled) {
+    processorMethod = Processor.processGeobuf;
+  }
 
   if (dataUrl.includes('.json') || dataUrl.includes('.geojson')) {
     processorMethod = Processor.processGeojson;
@@ -87,7 +92,10 @@ export const loadRemoteFileDataSuccess = (state, action) => {
 
   const datasets = {
     info: {
-      id: datasetId
+      id: datasetId,
+      isTiled,
+      dataUrl,
+      dataTemplateUrl
     },
     data: processorMethod(action.response)
   };

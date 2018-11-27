@@ -66,7 +66,29 @@ export const LOADING_METHODS = [
     options: [
       // Dynamically populated
     ]
+  },
+  {
+    id: 'sharedstreets',
+    label: 'Load SharedStreets Data'
   }
 ];
 
 export const DEFAULT_LOADING_METHOD = LOADING_METHODS[0];
+
+export const SHAREDSTREETS_DATASETS = [
+  {
+    id: 'pickup-dropoff',
+    configUrl: "https://s3.amazonaws.com/sharedstreets-samples/pickup-dropoff-config.json",
+    // sample data url
+    dataUrl: "https://d2sn2dqnporv7a.cloudfront.net/12-1171-1566-decoded",
+    // Sharedstreets layer will replace placeholder ${z} ${x} ${y} with the real value.
+    // eslint-disable-next-line no-template-curly-in-string
+    dataTemplateUrl: "https://d2sn2dqnporv7a.cloudfront.net/${z}-${x}-${y}-decoded",
+    description: "Pick up and drop off data",
+    imageUrl: "https://s3.amazonaws.com/sharedstreets-samples/pickup-dropoff.jpg",
+    label: "Pick Up / Drop Off",
+    queryType: QUERY_TYPES.sample,
+    visible: true,
+    isTiled: true
+  }
+]
