@@ -71,14 +71,14 @@ class App extends Component {
   };
 
   componentWillMount() {
-    // if we pass an id as part of the url
-    // we try to fetch along map configurations
     const {params: {section, id: sampleMapId} = {}} = this.props;
-    if (section === 'demo') {
-      this.props.dispatch(loadSampleConfigurations(sampleMapId));  
-    } else if (section === 'sharedstreets') {
+    if (section === 'sharedstreets') {
       const data = SHAREDSTREETS_DATASETS.find(dataset => dataset.id === sampleMapId);
       this.props.dispatch(loadSampleMap(data, 'sharedstreets'));
+    } else {
+      // if we pass an id as part of the url
+      // we try to fetch along map configurations
+      this.props.dispatch(loadSampleConfigurations(sampleMapId));  
     }
     window.addEventListener('resize', this._onResize);
     this._onResize();

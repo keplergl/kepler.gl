@@ -93,7 +93,7 @@ export default class SharedstreetsLayer extends CompositeLayer {
           oldLayerData = undefined;
         }
       }
-      
+
       const data = this.getLayerData(layer, tile, layerVersion, oldLayerData);
       oldLayerDataMaps.set(layerDataId, data);
       this.setState({ oldLayerDataMaps });
