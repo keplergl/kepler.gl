@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {push} from 'react-router-redux';
-import {text as requestText, json as requestJson, responseType, request} from 'd3-request';
+import {text as requestText, json as requestJson, request} from 'd3-request';
 import {toggleModal} from 'kepler.gl/actions';
 import {console as Console} from 'global/window';
 import {MAP_CONFIG_URL} from './constants/sample-maps';
