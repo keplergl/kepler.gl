@@ -470,8 +470,8 @@ export const removeLayerUpdater = (state, {idx}) => {
     layerOrder: state.layerOrder
       .filter(i => i !== idx)
       .map(pid => (pid > idx ? pid - 1 : pid)),
-    clicked: layerToRemove.isLayerHovered(clicked) ? undefined : clicked,
-    hoverInfo: layerToRemove.isLayerHovered(hoverInfo) ? undefined : hoverInfo,
+    clicked: layerToRemove.isLayerHovered(clicked) && clicked,
+    hoverInfo: layerToRemove.isLayerHovered(hoverInfo) && hoverInfo,
     splitMaps: newMaps
   };
 };
