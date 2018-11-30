@@ -504,17 +504,19 @@ export default class LayerConfigurator extends Component {
               {...LAYER_VIS_CONFIGS.filled}
             />
           ) : null}
+          {/* Fill Color */}
+          {layer.config.visConfig.filled ? (
+            [layer.config.colorField ? (
+              <ColorRangeConfig {...visConfiguratorProps} />
+            ) : (
+              <LayerColorSelector {...layerConfiguratorProps} />
+            ),
 
-          {layer.config.colorField ? (
-            <ColorRangeConfig {...visConfiguratorProps} />
-          ) : (
-            <LayerColorSelector {...layerConfiguratorProps} />
-          )}
-
-          <ChannelByValueSelector
-            channel={layer.visualChannels.color}
-            {...layerChannelConfigProps}
-          />
+            <ChannelByValueSelector
+              channel={layer.visualChannels.fillColor}
+              {...layerChannelConfigProps}
+            />]
+          ) : null}
 
           <VisConfigSlider
             {...LAYER_VIS_CONFIGS.opacity}
@@ -522,29 +524,42 @@ export default class LayerConfigurator extends Component {
           />
         </LayerConfigGroup>
 
-        {/* Stroke Width */}
+        {/* Stroke */}
         {featureTypes.line || featureTypes.polygon ? (
           <LayerConfigGroup
             label="stroke"
             {...visConfiguratorProps}
             {...(featureTypes.polygon ? LAYER_VIS_CONFIGS.stroked : {})}
           >
-            {visConfig.stroked ?
-              <div>
+            {visConfig.stroked ? (
+                [layer.config.strokeColorField ? (
+                    <ColorRangeConfig property="strokeColorRange" {...visConfiguratorProps} />
+                  ) : (
+                    <layerVisColorSelector
+                      property="strokeColor"
+                      {...visConfiguratorProps}
+                    />
+                  ),
+
+                <ChannelByValueSelector
+                  channel={layer.visualChannels.strokeColor}
+                  {...layerChannelConfigProps}
+                />,
+
                 <VisConfigSlider
                   {...LAYER_VIS_CONFIGS.thickness}
                   {...visConfiguratorProps}
-                />
+                />,
                 <ChannelByValueSelector
                   channel={layer.visualChannels.size}
                   {...layerChannelConfigProps}
-                />
+                />,
                 <VisConfigSlider
                   {...LAYER_VIS_CONFIGS.strokeWidthRange}
                   {...visConfiguratorProps}
                   disabled={!layer.config.sizeField}
-                />
-              </div> : null}
+                />]
+             ) : null}
           </LayerConfigGroup>
         ) : null}
 
@@ -689,13 +704,32 @@ export const HowToButton = ({onClick}) => (
   </StyledHowToButton>
 );
 
-export const LayerColorSelector = ({layer, onChange, label}) => (
+export const LayerColorSelector = ({layer, onChange, property="color"}) => (
   <SidePanelSection disabled={layer.config.colorField}>
     <ColorSelector
       colorSets={[
         {
-          selectedColor: layer.config.color,
-          setColor: rgbValue => onChange({color: rgbValue})
+          selectedColor: layer.config[property],
+          setColor: rgbValue => onChange({[property]: rgbValue})
+        }
+      ]}
+    />
+  </SidePanelSection>
+);
+
+export const layerVisColorSelector = ({
+  layer,
+  disabled,
+  field,
+  property="color"
+}) => (
+  <SidePanelSection disabled={disabled}>
+    <ColorSelector
+      colorSets={[
+        {
+          selectedColor: layer.config.visConfig[property] || layer.config.color,
+          setColor: rgbValue => onChange({[property]: rgbValue}),
+          label: property
         }
       ]}
     />
@@ -726,14 +760,14 @@ export const ArcLayerColorSelector = ({
   </SidePanelSection>
 );
 
-export const ColorRangeConfig = ({layer, onChange}) => (
+export const ColorRangeConfig = ({layer, onChange, property = 'colorRange'}) => (
   <SidePanelSection>
     <ColorSelector
       colorSets={[
         {
-          selectedColor: layer.config.visConfig.colorRange,
+          selectedColor: layer.config.visConfig[property],
           isRange: true,
-          setColor: colorRange => onChange({colorRange})
+          setColor: colorRange => onChange({[property]: colorRange})
         }
       ]}
     />
