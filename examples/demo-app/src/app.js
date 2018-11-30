@@ -90,7 +90,7 @@ class App extends Component {
     //  window.setTimeout(this._showBanner, 3000);
     // }
     // load sample data
-    // this._loadSampleData();
+    this._loadSampleData();
   }
 
   componentWillUnmount() {
@@ -118,54 +118,54 @@ class App extends Component {
   };
 
   _loadSampleData() {
-    this.props.dispatch(
-      updateVisData(
-        // datasets
-        {
-          info: {
-            label: 'Sample Taxi Trips in New York City',
-            id: 'test_trip_data'
-          },
-          data: sampleTripData
-        },
-        // option
-        {
-          centerMap: true,
-          readOnly: false
-        },
-        // config
-        {
-          filters: [
-            {
-              id: 'me',
-              dataId: 'test_trip_data',
-              name: 'tpep_pickup_datetime',
-              type: 'timeRange',
-              enlarged: true
-            }
-          ]
-        }
-      )
-    );
+    // this.props.dispatch(
+    //   updateVisData(
+    //     // datasets
+    //     {
+    //       info: {
+    //         label: 'Sample Taxi Trips in New York City',
+    //         id: 'test_trip_data'
+    //       },
+    //       data: sampleTripData
+    //     },
+    //     // option
+    //     {
+    //       centerMap: true,
+    //       readOnly: false
+    //     },
+    //     // config
+    //     {
+    //       filters: [
+    //         {
+    //           id: 'me',
+    //           dataId: 'test_trip_data',
+    //           name: 'tpep_pickup_datetime',
+    //           type: 'timeRange',
+    //           enlarged: true
+    //         }
+    //       ]
+    //     }
+    //   )
+    // );
 
     // load icon data and config and process csv file
-    this.props.dispatch(
-      addDataToMap({
-        datasets: [
-          {
-            info: {
-              label: 'Icon Data',
-              id: 'test_icon_data'
-            },
-            data: Processors.processCsvData(sampleIconCsv)
-          }
-        ],
-        options: {
-          centerMap: false
-        },
-        config: savedMapConfig
-      })
-    );
+    // this.props.dispatch(
+    //   addDataToMap({
+    //     datasets: [
+    //       {
+    //         info: {
+    //           label: 'Icon Data',
+    //           id: 'test_icon_data'
+    //         },
+    //         data: Processors.processCsvData(sampleIconCsv)
+    //       }
+    //     ],
+    //     options: {
+    //       centerMap: false
+    //     },
+    //     config: savedMapConfig
+    //   })
+    // );
 
     // load geojson
     this.props.dispatch(
@@ -176,19 +176,19 @@ class App extends Component {
     );
 
     // load h3 hexagon
-    this.props.dispatch(
-      addDataToMap({
-        datasets: [
-          {
-            info: {
-              label: 'H3 Hexagons V2',
-              id: 'h3-hex-id'
-            },
-            data: Processors.processCsvData(sampleH3Data)
-          }
-        ]
-      })
-    );
+    // this.props.dispatch(
+    //   addDataToMap({
+    //     datasets: [
+    //       {
+    //         info: {
+    //           label: 'H3 Hexagons V2',
+    //           id: 'h3-hex-id'
+    //         },
+    //         data: Processors.processCsvData(sampleH3Data)
+    //       }
+    //     ]
+    //   })
+    // );
   }
 
   render() {

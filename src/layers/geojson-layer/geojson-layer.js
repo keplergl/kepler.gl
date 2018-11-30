@@ -24,7 +24,6 @@ import uniq from 'lodash.uniq';
 import Layer from '../base-layer';
 import HighlightPolygonLayer from 'deckgl-layers/geojson-layer/solid-polygon-layer';
 import {GeoJsonLayer as DeckGLGeoJsonLayer} from 'deck.gl';
-
 import {hexToRgb} from 'utils/color-utils';
 import {
   getGeojsonDataMaps,
@@ -32,7 +31,7 @@ import {
   featureToDeckGlGeoType
 } from './geojson-utils';
 import GeojsonLayerIcon from './geojson-layer-icon';
-import {GEOJSON_FIELDS} from 'constants/default-settings';
+import {GEOJSON_FIELDS, CHANNEL_SCALES} from 'constants/default-settings';
 
 export const geojsonVisConfigs = {
   opacity: 'opacity',
@@ -47,6 +46,8 @@ export const geojsonVisConfigs = {
     property: 'thickness'
   },
   colorRange: 'colorRange',
+  targetColor: 'targetColor',
+  strokeColorRange: 'colorRange',
   radius: 'radius',
 
   sizeRange: 'strokeWidthRange',
@@ -64,6 +65,10 @@ export const geojsonVisConfigs = {
 export const geoJsonRequiredColumns = ['geojson'];
 export const featureAccessor = ({geojson}) => d => d[geojson.fieldIdx];
 export const featureResolver = ({geojson}) => geojson.fieldIdx;
+
+const defaultDataAccessor = d => d.data;
+const nullValueColor = [0, 0, 0, 0];
+const nullValueSize = 0;
 
 export default class GeoJsonLayer extends Layer {
   constructor(props) {
@@ -92,11 +97,44 @@ export default class GeoJsonLayer extends Layer {
 
   get visualChannels() {
     return {
-      ...super.visualChannels,
+      fillColor: {
+        property: 'fill color',
+        field: 'colorField',
+        scale: 'colorScale',
+        domain: 'colorDomain',
+        range: 'colorRange',
+        key: 'fillColor',
+        channelScaleType: CHANNEL_SCALES.color,
+        condition: config => config.visConfig.filled,
+        accessor: 'getFillColor',
+        nullValue: nullValueColor,
+        defaultValue: (d, config) => d.properties.fillColor || config.color
+      },
+      strokeColor: {
+        property: 'stroke color',
+        field: 'strokeColorField',
+        scale: 'strokeColorScale',
+        domain: 'strokeColorDomain',
+        range: 'strokeColorRange',
+        key: 'strokeColor',
+        channelScaleType: CHANNEL_SCALES.color,
+        condition: config => config.visConfig.stroked,
+        accessor: 'getLineColor',
+        nullValue: nullValueColor,
+        defaultValue: (d, config) => d.properties.lineColor || config.visConfig.strokeColor || config.color
+      },
       size: {
-        ...super.visualChannels.size,
         property: 'stroke',
-        condition: config => config.visConfig.stroked
+        field: 'sizeField',
+        scale: 'sizeScale',
+        domain: 'sizeDomain',
+        range: 'sizeRange',
+        key: 'size',
+        channelScaleType: CHANNEL_SCALES.size,
+        condition: config => config.visConfig.stroked,
+        accessor: 'getLineWidth',
+        nullValue: nullValueSize,
+        defaultValue: (d, config) => d.properties.lineWidth || 1
       },
       height: {
         property: 'height',
@@ -106,7 +144,10 @@ export default class GeoJsonLayer extends Layer {
         range: 'heightRange',
         key: 'height',
         channelScaleType: 'size',
-        condition: config => config.visConfig.enable3d
+        condition: config => config.visConfig.enable3d,
+        accessor: 'getElevation',
+        nullValue: nullValueSize,
+        defaultValue: (d, config) => d.properties.elevation || 500
       },
       radius: {
         property: 'radius',
@@ -115,7 +156,10 @@ export default class GeoJsonLayer extends Layer {
         domain: 'radiusDomain',
         range: 'radiusRange',
         key: 'radius',
-        channelScaleType: 'radius'
+        channelScaleType: 'radius',
+        accessor: 'getRadius',
+        nullValue: nullValueSize,
+        defaultValue: (d, config) => d.properties.radius || 1
       }
     };
   }
@@ -145,6 +189,11 @@ export default class GeoJsonLayer extends Layer {
     return {
       ...super.getDefaultLayerConfig(props),
 
+      // add stroke color channel
+      strokeColorField: null,
+      strokeColorDomain: [0, 1],
+      strokeColorScale: 'quantile',
+
       // add height visual channel
       heightField: null,
       heightDomain: [0, 1],
@@ -162,131 +211,88 @@ export default class GeoJsonLayer extends Layer {
     return allData[object.properties.index];
   }
 
+  shouldCalculateDeckLayerData(oldLayerData, opt, getFeature) {
+    return oldLayerData &&
+      opt.sameData &&
+      oldLayerData.getFeature === getFeature &&
+      oldLayerData.data;
+  }
+
+  calculateDeckLayerData(data, allData, filteredIndex, dataToFeature) {
+    return filteredIndex
+      .map(i => dataToFeature[i])
+      .filter(d => d);
+  }
+
+  shouldUpdateLayerMeta(oldLayerData, getFeature) {
+    return !oldLayerData || oldLayerData.getFeature !== getFeature;
+  }
+
+  /**
+   * Mapping from visual channels to deck.gl accesors
+   * @param {Function} dataAccessor - access kepler.gl layer data from deck.gl layer
+   * @return {Object} attributeAccessors - deck.gl layer attribute accessors
+   */
+  getAtributeAccessors(dataAccessor = defaultDataAccessor) {
+    const attributeAccessors = {};
+
+    for (let key in this.visualChannels) {
+      const {condition, field, scale, domain, range, accessor, defaultValue, nullValue, channelScaleType} = this.visualChannels[key];
+      const disabled = condition && !condition(this.config);
+
+      const scaleFunction = this.config[field] && !disabled
+        this.getVisChannelScale(
+          this.config[scale],
+          this.config[domain],
+          // for color, have to convert from hex to rgb
+          channelScaleType ===  CHANNEL_SCALES.color ?
+          this.config.visConfig[range].colors.map(hexToRgb) : this.config.visConfig[range]
+        );
+
+      attributeAccessors[accessor] = d => scaleFunction ?
+        this.getEncodedChannelValue(
+          scaleFunction,
+          dataAccessor(d),
+          this.config[field],
+          nullValue
+        )
+        : typeof defaultValue === 'function' ?
+        defaultValue(d, this.config) : defaultValue
+    }
+
+    return attributeAccessors;
+  }
+
   formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
-    const {
-      colorScale,
-      colorField,
-      colorDomain,
-      color,
-      sizeScale,
-      sizeDomain,
-      sizeField,
-      heightField,
-      heightDomain,
-      heightScale,
-      radiusField,
-      radiusDomain,
-      radiusScale,
-      visConfig,
-      columns
-    } = this.config;
-
-    const {
-      enable3d,
-      stroked,
-      colorRange,
-      heightRange,
-      sizeRange,
-      radiusRange
-    } = visConfig;
-
+    const {columns} = this.config;
     const getFeature = this.getFeature(columns);
 
     // geojson feature are object, if doesn't exists
     // create it and save to layer
-    if (!oldLayerData || oldLayerData.getFeature !== getFeature) {
+    if (this.shouldUpdateLayerMeta(oldLayerData, getFeature)) {
       this.updateLayerMeta(allData, getFeature);
     }
 
     let geojsonData;
-
-    if (
-      oldLayerData &&
-      oldLayerData.data &&
-      opt.sameData &&
-      oldLayerData.getFeature === getFeature
-    ) {
+    const carryoverOldData = this.shouldCalculateDeckLayerData(oldLayerData, opt, getFeature);
+    if (carryoverOldData) {
       // no need to create a new array of data
       // use updateTriggers to selectively re-calculate attributes
-      geojsonData = oldLayerData.data;
+      geojsonData = carryoverOldData;
     } else {
       // filteredIndex is a reference of index in allData which can map to feature
-      geojsonData = filteredIndex
-        .map(i => this.dataToFeature[i])
-        .filter(d => d);
+      geojsonData = this.calculateDeckLayerData(_, allData, filteredIndex, this.dataToFeature)
     }
 
-    const cScale =
-      colorField &&
-      this.getVisChannelScale(
-        colorScale,
-        colorDomain,
-        colorRange.colors.map(hexToRgb)
-      );
+    // access keplergl layer data from deck.gl layer
+    const dataAccessor = d => allData[d.properties.index];
 
-    // calculate stroke scale - if stroked = true
-    const sScale =
-      sizeField &&
-      stroked &&
-      this.getVisChannelScale(sizeScale, sizeDomain, sizeRange);
-
-    // calculate elevation scale - if extruded = true
-    const eScale =
-      heightField &&
-      enable3d &&
-      this.getVisChannelScale(heightScale, heightDomain, heightRange);
-
-    // point radius
-    const rScale =
-      radiusField &&
-      this.getVisChannelScale(radiusScale, radiusDomain, radiusRange);
+    const accessors = this.getAtributeAccessors(dataAccessor)
 
     return {
       data: geojsonData,
       getFeature,
-      getFillColor: d =>
-        cScale
-          ? this.getEncodedChannelValue(
-              cScale,
-              allData[d.properties.index],
-              colorField
-            )
-          : d.properties.fillColor || color,
-      getLineColor: d =>
-        cScale
-          ? this.getEncodedChannelValue(
-              cScale,
-              allData[d.properties.index],
-              colorField
-            )
-          : d.properties.lineColor || color,
-      getLineWidth: d =>
-        sScale
-          ? this.getEncodedChannelValue(
-              sScale,
-              allData[d.properties.index],
-              sizeField,
-              0
-            )
-          : d.properties.lineWidth || 1,
-      getElevation: d =>
-        eScale
-          ? this.getEncodedChannelValue(
-              eScale,
-              allData[d.properties.index],
-              heightField,
-              0
-            )
-          : d.properties.elevation || 500,
-      getRadius: d =>
-        rScale
-          ? this.getEncodedChannelValue(
-              rScale,
-              allData[d.properties.index],
-              radiusField,
-              0
-            )
-          : d.properties.radius || 1
+      ...accessors
     };
   }
 
