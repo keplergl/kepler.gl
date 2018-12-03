@@ -57,7 +57,9 @@ export const updateVisDataComposed = (state, action) => {
   let bounds;
   if (options.centerMap) {
     // find map bounds for new layers
-    const newLayers = visState.layers.filter(nl => !oldLayers.find(ol => ol === nl));
+    const newLayers = visState.layers.filter(
+      nl => !oldLayers.find(ol => ol === nl)
+    );
     bounds = findMapBounds(newLayers);
   }
 
@@ -71,7 +73,9 @@ export const updateVisDataComposed = (state, action) => {
       : state.mapState,
     uiState: {
       ...toggleModalUpdater(state.uiState, {payload: null}),
-      ...(options.hasOwnProperty('readOnly') ? {readOnly: options.readOnly} : {})
+      ...(options.hasOwnProperty('readOnly')
+        ? {readOnly: options.readOnly}
+        : {})
     }
   };
 };
@@ -83,30 +87,37 @@ export const updateVisDataComposed = (state, action) => {
  * @returns state
  */
 export const addDataToMapComposed = (state, action) => {
-
   const {datasets, options, config} = action.payload;
   let parsedConfig = config;
 
   if (config && config.config && config.version) {
     // if passed in saved config
-    parsedConfig = KeplerGlSchema.parseSavedConfig(config)
+    parsedConfig = KeplerGlSchema.parseSavedConfig(config);
   }
   // Update visState store
-  let mergedState = updateVisDataComposed(state, {datasets, options, config: parsedConfig && parsedConfig.visState});
+  let mergedState = updateVisDataComposed(state, {
+    datasets,
+    options,
+    config: parsedConfig && parsedConfig.visState
+  });
 
   // Update mapState store
   mergedState = {
     ...mergedState,
-    mapState: stateMapConfigUpdater(parsedConfig.mapState, {payload: {mapState: mergedState.mapState}})
+    mapState: stateMapConfigUpdater(parsedConfig.mapState, {
+      payload: {mapState: mergedState.mapState}
+    })
   };
 
   // Update mapStyle store
   mergedState = {
     ...mergedState,
-    mapStyle: {...parsedConfig.mapStyle,  ...mergedState.mapStyle}
+    mapStyle: styleMapConfigUpdater(parsedConfig.mapStyle, {
+      payload: {mapStyle: mergedState.mapStyle}
+    })
   };
 
-  return mergedState
+  return mergedState;
 };
 
 const compostedUpdaters = {
