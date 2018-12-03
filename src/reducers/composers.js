@@ -40,9 +40,6 @@ import KeplerGlSchema from 'schemas';
  * @returns state new reducer state
  */
 export const updateVisDataComposed = (state, action) => {
-  // keep a copy of oldLayers
-  const oldLayers = state.visState.layers;
-
   const visState = updateVisDataUpdater(state.visState, action);
 
   const defaultOptions = {
@@ -57,8 +54,7 @@ export const updateVisDataComposed = (state, action) => {
   let bounds;
   if (options.centerMap) {
     // find map bounds for new layers
-    const newLayers = visState.layers.filter(nl => !oldLayers.find(ol => ol === nl));
-    bounds = findMapBounds(newLayers);
+    bounds = findMapBounds(visState.layers);
   }
 
   return {
@@ -97,13 +93,13 @@ export const addDataToMapComposed = (state, action) => {
   // Update mapState store
   mergedState = {
     ...mergedState,
-    mapState: stateMapConfigUpdater(mergedState.mapState, {payload: {mapState: parsedConfig && parsedConfig.mapState}})
+    mapState: stateMapConfigUpdater(mergedState.mapState, {payload: {mapState: mergedState.mapState}})
   };
 
   // Update mapStyle store
   mergedState = {
     ...mergedState,
-    mapStyle: styleMapConfigUpdater(mergedState.mapStyle, {payload: {mapStyle: parsedConfig && parsedConfig.mapStyle}})
+    mapStyle: styleMapConfigUpdater(mergedState.mapStyle, {payload: {mapStyle: mergedState.mapStyle}})
   };
 
   return mergedState
