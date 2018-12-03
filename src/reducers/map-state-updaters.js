@@ -51,12 +51,12 @@ export const togglePerspectiveUpdater = (state, action) => ({
 });
 
 // consider case where you have a split map and user wants to reset
-export const receiveMapConfigUpdater = (state, action) => {
-  const {isSplit = false} = action.payload.mapState || {};
+export const receiveMapConfigUpdater = (state, {payload}) => {
+  const {isSplit = false} = payload.mapState || {};
 
   return {
     ...state,
-    ...(action.payload.mapState || {}),
+    ...(payload.mapState || {}),
     isSplit,
     ...getMapDimForSplitMap(isSplit, state)
   };
