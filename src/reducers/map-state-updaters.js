@@ -61,7 +61,7 @@ export const receiveMapConfigUpdater = (state, action) => {
     ...state,
     ...(action.payload.mapState || {}),
     latitude: state.latitude ? state.latitude : latitude,
-    longitude: state.latitude ? state.latitude : longitude,
+    longitude: state.longitude ? state.longitude : longitude,
     zoom: state.zoom ? state.zoom : zoom,
     isSplit,
     ...getMapDimForSplitMap(isSplit, state)
