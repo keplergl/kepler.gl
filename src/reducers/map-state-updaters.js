@@ -51,12 +51,18 @@ export const togglePerspectiveUpdater = (state, action) => ({
 });
 
 // consider case where you have a split map and user wants to reset
+// Bounds are calculated in updateVisData to focus newLayer if centerMap: true
+// We should respect the calculated bounds here.
 export const receiveMapConfigUpdater = (state, action) => {
-  const {isSplit = false} = action.payload.mapState || {};
+  const {isSplit = false, latitude, longitude, zoom} =
+    action.payload.mapState || {};
 
   return {
     ...state,
     ...(action.payload.mapState || {}),
+    latitude: state.latitude ? state.latitude : latitude,
+    longitude: state.latitude ? state.latitude : longitude,
+    zoom: state.zoom ? state.zoom : zoom,
     isSplit,
     ...getMapDimForSplitMap(isSplit, state)
   };
@@ -79,13 +85,14 @@ function getMapDimForSplitMap(isSplit, state) {
     return {};
   }
 
-  const width = state.isSplit && !isSplit ?
-    // 3. state split: true - isSplit: false
-    // double width
-    state.width * 2
-    // 4. state split: false - isSplit: true
-    // split width
-    : state.width / 2;
+  const width =
+    state.isSplit && !isSplit
+      ? // 3. state split: true - isSplit: false
+        // double width
+        state.width * 2
+      : // 4. state split: false - isSplit: true
+        // split width
+        state.width / 2;
 
   return {
     width
