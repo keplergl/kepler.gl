@@ -8,30 +8,30 @@
   dependencies:
     regenerator-runtime "^0.12.0"
 
-"@deck.gl/core@^6.2.4":
-  version "6.2.4"
-  resolved "https://registry.yarnpkg.com/@deck.gl/core/-/core-6.2.4.tgz#c569854633f3087dea9866276ad68812671487d7"
+"@deck.gl/core@^6.3.0":
+  version "6.3.0"
+  resolved "https://registry.yarnpkg.com/@deck.gl/core/-/core-6.3.0.tgz#35b3b4ead4afcfef8a67c288d9f13931741f9272"
   dependencies:
-    luma.gl "^6.2.0"
-    math.gl "^2.1.0"
-    mjolnir.js "^1.0.0"
+    luma.gl "^6.3.0"
+    math.gl "^2.2.0"
+    mjolnir.js "^2.0.0"
     probe.gl "^2.0.1"
     seer "^0.2.4"
     viewport-mercator-project "^6.0.0"
 
-"@deck.gl/layers@^6.2.4":
-  version "6.2.4"
-  resolved "https://unpm.uberinternal.com/@deck.gl%2flayers/-/layers-6.2.4.tgz#c5c9473a174cd45d01cd404177cbff20c9da1f56"
+"@deck.gl/layers@^6.3.0":
+  version "6.3.0"
+  resolved "https://registry.yarnpkg.com/@deck.gl/layers/-/layers-6.3.0.tgz#e317f24a29f68bddef7a3ab1eef5b47f3db9b3b3"
   dependencies:
-    "@deck.gl/core" "^6.2.4"
+    "@deck.gl/core" "^6.3.0"
     d3-hexbin "^0.2.1"
     earcut "^2.0.6"
 
-"@deck.gl/react@^6.2.4":
-  version "6.2.4"
-  resolved "https://unpm.uberinternal.com/@deck.gl%2freact/-/react-6.2.4.tgz#fab68aaac23a1429c4ad84dd09879ca764543f2f"
+"@deck.gl/react@^6.3.0":
+  version "6.3.0"
+  resolved "https://registry.yarnpkg.com/@deck.gl/react/-/react-6.3.0.tgz#49b6d7edd6b60744c2d49eb786a7f6a4bb27e2f4"
   dependencies:
-    "@deck.gl/core" "^6.2.4"
+    "@deck.gl/core" "^6.3.0"
     prop-types "^15.6.0"
 
 "@mapbox/extent@0.4.0":
@@ -2295,12 +2295,12 @@ decamelize@^1.0.0, decamelize@^1.1.1, decamelize@^1.1.2:
   resolved "https://registry.yarnpkg.com/decamelize/-/decamelize-1.2.0.tgz#f6534d15148269b20352e7bee26f501f9a191290"
 
 deck.gl@^6.2.3:
-  version "6.2.4"
-  resolved "https://unpm.uberinternal.com/deck.gl/-/deck.gl-6.2.4.tgz#8652f492a6d6e30dc32925355d6f8f820967a70c"
+  version "6.3.0"
+  resolved "https://registry.yarnpkg.com/deck.gl/-/deck.gl-6.3.0.tgz#23fdf5f3bc218ef32d67594c9e54ff38bc034a58"
   dependencies:
-    "@deck.gl/core" "^6.2.4"
-    "@deck.gl/layers" "^6.2.4"
-    "@deck.gl/react" "^6.2.4"
+    "@deck.gl/core" "^6.3.0"
+    "@deck.gl/layers" "^6.3.0"
+    "@deck.gl/react" "^6.3.0"
 
 decode-uri-component@^0.2.0:
   version "0.2.0"
@@ -4641,9 +4641,9 @@ lru-queue@0.1:
   dependencies:
     es5-ext "~0.10.2"
 
-luma.gl@^6.2.0:
-  version "6.2.0"
-  resolved "https://registry.yarnpkg.com/luma.gl/-/luma.gl-6.2.0.tgz#449760dc735e2e89a55bb78697c8dd1093626b2c"
+luma.gl@^6.3.0:
+  version "6.3.0"
+  resolved "https://registry.yarnpkg.com/luma.gl/-/luma.gl-6.3.0.tgz#05a253ea6912a8c075e85445275581b5369cde65"
   dependencies:
     "@babel/runtime" "^7.0.0"
     math.gl "^2.2.0"
@@ -4930,10 +4930,17 @@ mixin-deep@^1.2.0:
     for-in "^1.0.2"
     is-extendable "^1.0.1"
 
-mjolnir.js@^1.0.0, mjolnir.js@^1.2.1:
+mjolnir.js@^1.2.1:
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/mjolnir.js/-/mjolnir.js-1.2.2.tgz#65938d6b443fed5b5c65456e6c934b01fece3610"
   dependencies:
+    hammerjs "^2.0.8"
+
+mjolnir.js@^2.0.0:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/mjolnir.js/-/mjolnir.js-2.0.1.tgz#06c19bea397634d9eb7a5b5e3860eb251b3478bd"
+  dependencies:
+    "@babel/runtime" "^7.0.0"
     hammerjs "^2.0.8"
 
 mkdirp@0.5.x, mkdirp@^0.5.0, mkdirp@^0.5.1, mkdirp@~0.5.0:
