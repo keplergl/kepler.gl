@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import geoViewport from '@mapbox/geo-viewport';
+import {findMapBounds} from 'utils/data-utils';
 
 /* Updaters */
 export const updateMapUpdater = (state, action) => ({
@@ -52,11 +53,22 @@ export const togglePerspectiveUpdater = (state, action) => ({
 
 // consider case where you have a split map and user wants to reset
 export const receiveMapConfigUpdater = (state, action) => {
-  const {isSplit = false} = action.payload.mapState || {};
+  const {options = {}, mapState = {}} = action.payload;
+  const {isSplit = false} = mapState;
+  const layers = options.visState && options.visState.layers;
+
+  let bounds;
+  if (options && options.centerMap && layers && layers.length) {
+    bounds = findMapBounds(layers);
+  }
 
   return {
     ...state,
-    ...(action.payload.mapState || {}),
+    ...(bounds
+      ? fitBoundsUpdater(mapState, {
+          payload: bounds
+        })
+      : mapState),
     isSplit,
     ...getMapDimForSplitMap(isSplit, state)
   };
@@ -79,13 +91,14 @@ function getMapDimForSplitMap(isSplit, state) {
     return {};
   }
 
-  const width = state.isSplit && !isSplit ?
-    // 3. state split: true - isSplit: false
-    // double width
-    state.width * 2
-    // 4. state split: false - isSplit: true
-    // split width
-    : state.width / 2;
+  const width =
+    state.isSplit && !isSplit
+      ? // 3. state split: true - isSplit: false
+        // double width
+        state.width * 2
+      : // 4. state split: false - isSplit: true
+        // split width
+        state.width / 2;
 
   return {
     width

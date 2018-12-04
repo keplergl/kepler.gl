@@ -19,12 +19,10 @@
 // THE SOFTWARE.
 
 import ActionTypes from 'constants/action-types';
-import {fitBoundsUpdater} from './map-state-updaters';
 import {toggleModalUpdater} from './ui-state-updaters';
 import {updateVisDataUpdater} from './vis-state-updaters';
 import {receiveMapConfigUpdater as stateMapConfigUpdater} from './map-state-updaters';
 import {receiveMapConfigUpdater as styleMapConfigUpdater} from './map-style-updaters';
-import {findMapBounds} from 'utils/data-utils';
 import KeplerGlSchema from 'schemas';
 
 // compose action to apply result multiple reducers, with the output of one
@@ -40,9 +38,6 @@ import KeplerGlSchema from 'schemas';
  * @returns state new reducer state
  */
 export const updateVisDataComposed = (state, action) => {
-  // keep a copy of oldLayers
-  const oldLayers = state.visState.layers;
-
   const visState = updateVisDataUpdater(state.visState, action);
 
   const defaultOptions = {
@@ -54,23 +49,9 @@ export const updateVisDataComposed = (state, action) => {
     ...action.options
   };
 
-  let bounds;
-  if (options.centerMap) {
-    // find map bounds for new layers
-    const newLayers = visState.layers.filter(
-      nl => !oldLayers.find(ol => ol === nl)
-    );
-    bounds = findMapBounds(newLayers);
-  }
-
   return {
     ...state,
     visState,
-    mapState: bounds
-      ? fitBoundsUpdater(state.mapState, {
-          payload: bounds
-        })
-      : state.mapState,
     uiState: {
       ...toggleModalUpdater(state.uiState, {payload: null}),
       ...(options.hasOwnProperty('readOnly')
@@ -104,16 +85,19 @@ export const addDataToMapComposed = (state, action) => {
   // Update mapState store
   mergedState = {
     ...mergedState,
-    mapState: stateMapConfigUpdater(parsedConfig.mapState, {
-      payload: {mapState: mergedState.mapState}
+    mapState: stateMapConfigUpdater(mergedState.mapState, {
+      payload: {
+        options: {...options, visState: mergedState.visState},
+        mapState: parsedConfig && parsedConfig.mapState
+      }
     })
   };
 
   // Update mapStyle store
   mergedState = {
     ...mergedState,
-    mapStyle: styleMapConfigUpdater(parsedConfig.mapStyle, {
-      payload: {mapStyle: mergedState.mapStyle}
+    mapStyle: styleMapConfigUpdater(mergedState.mapStyle, {
+      payload: {mapStyle: parsedConfig && parsedConfig.mapStyle}
     })
   };
 

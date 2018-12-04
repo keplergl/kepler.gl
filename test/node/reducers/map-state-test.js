@@ -29,13 +29,20 @@ import {
 
 import {receiveMapConfig} from 'actions/actions';
 
-import reducer, {mapStateReducerFactory, INITIAL_MAP_STATE} from 'reducers/map-state';
+import reducer, {
+  mapStateReducerFactory,
+  INITIAL_MAP_STATE
+} from 'reducers/map-state';
 
 const InitialMapState = reducer(undefined, {});
 test('#mapStateReducer', t => {
   const newState = reducer(undefined, {});
 
-  t.deepEqual(newState, {...INITIAL_MAP_STATE, initialState: {}}, 'should return the initial state');
+  t.deepEqual(
+    newState,
+    {...INITIAL_MAP_STATE, initialState: {}},
+    'should return the initial state'
+  );
 
   t.end();
 });
@@ -44,7 +51,11 @@ test('#mapStateReducerFactory', t => {
   const mapStateReducer = mapStateReducerFactory({dragRotate: true});
   const newState = mapStateReducer(undefined, {});
 
-  t.deepEqual(newState, {...INITIAL_MAP_STATE, dragRotate: true, initialState: {dragRotate: true}}, 'should return the initial state');
+  t.deepEqual(
+    newState,
+    {...INITIAL_MAP_STATE, dragRotate: true, initialState: {dragRotate: true}},
+    'should return the initial state'
+  );
 
   t.end();
 });
@@ -216,7 +227,6 @@ test('#mapStateReducer -> SPLIT_MAP: upload mapState config to update split map 
   );
 
   t.end();
-
 });
 
 test('#mapStateReducer -> SPLIT_MAP: close map at specific point', t => {
