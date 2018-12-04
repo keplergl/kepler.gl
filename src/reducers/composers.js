@@ -40,14 +40,7 @@ import KeplerGlSchema from 'schemas';
 export const updateVisDataComposed = (state, action) => {
   const visState = updateVisDataUpdater(state.visState, action);
 
-  const defaultOptions = {
-    centerMap: true
-  };
-
-  const options = {
-    ...defaultOptions,
-    ...action.options
-  };
+  const options = action.options || {};
 
   return {
     ...state,

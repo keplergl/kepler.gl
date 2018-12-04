@@ -54,21 +54,28 @@ export const togglePerspectiveUpdater = (state, action) => ({
 // consider case where you have a split map and user wants to reset
 export const receiveMapConfigUpdater = (state, action) => {
   const {options = {}, mapState = {}} = action.payload;
+  const defaultOptions = {centerMap: true};
+  const mergedOptions = {...defaultOptions, ...options};
   const {isSplit = false} = mapState;
   const layers = options.visState && options.visState.layers;
 
   let bounds;
-  if (options && options.centerMap && layers && layers.length) {
+  if (mergedOptions.centerMap && layers && layers.length) {
     bounds = findMapBounds(layers);
   }
+
+  const mergedMapState = {
+    ...state,
+    ...mapState
+  };
 
   return {
     ...state,
     ...(bounds
-      ? fitBoundsUpdater(mapState, {
+      ? fitBoundsUpdater(mergedMapState, {
           payload: bounds
         })
-      : mapState),
+      : mergedMapState),
     isSplit,
     ...getMapDimForSplitMap(isSplit, state)
   };
