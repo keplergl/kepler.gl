@@ -22,7 +22,6 @@ import keyMirror from 'keymirror';
 
 export const ACTION_PREFIX = '@@kepler.gl/';
 export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl';
-export const STYLE_PREFIX = `${CLOUDFRONT}/map-styles`;
 export const ICON_PREFIX = `${CLOUDFRONT}/geodude`;
 
 // Modal Ids
@@ -128,28 +127,28 @@ export const DEFAULT_MAP_STYLES = [
   {
     id: 'dark',
     label: 'Dark',
-    url: `${STYLE_PREFIX}/dark`,
+    url: 'mapbox://styles/uberdata/cjoqbbf6l9k302sl96tyvka09',
     icon: `${ICON_PREFIX}/UBER_DARK_V2.png`,
     layerGroups: DEFAULT_LAYER_GROUPS
   },
   {
     id: 'light',
     label: 'Light',
-    url: `${STYLE_PREFIX}/light`,
+    url: 'mapbox://styles/uberdata/cjoqb9j339k1f2sl9t5ic5bn4',
     icon: `${ICON_PREFIX}/UBER_LIGHT_V2.png`,
     layerGroups: DEFAULT_LAYER_GROUPS
   },
   {
     id: 'muted',
     label: 'Muted Light',
-    url: `${STYLE_PREFIX}/muted-light`,
+    url: 'mapbox://styles/uberdata/cjfyl03kp1tul2smf5v2tbdd4',
     icon: `${ICON_PREFIX}/UBER_MUTED_LIGHT.png`,
     layerGroups: DEFAULT_LAYER_GROUPS
   },
   {
     id: 'muted_night',
     label: 'Muted Night',
-    url: `${STYLE_PREFIX}/muted-night`,
+    url: 'mapbox://styles/uberdata/cjfxhlikmaj1b2soyzevnywgs',
     icon: `${ICON_PREFIX}/UBER_MUTED_NIGHT.png`,
     layerGroups: DEFAULT_LAYER_GROUPS
   }
