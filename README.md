@@ -371,9 +371,11 @@ This action takes an object as input with the following properties:
     config | object: this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}.
 }
 ```
-It is important to notice that the config object value will always have higher precedence than the options properties.
-For instance, if you provide ```{centerMap: true}``` as part of the options object and in your config object you pass
-the mapState configuration with latitude and longitude define as it follows:
+
+<p id="config-notice"> It is important to notice that the config object value will always have higher precedence than the options properties.
+For instance, if you provide <code>{centerMap: true}</code> as part of the options object and in your config object you pass
+the mapState configuration with latitude and longitude define as it follows:</p>
+
 ```js
 config: {
   mapState: {
