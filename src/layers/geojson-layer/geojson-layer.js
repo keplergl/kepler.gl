@@ -245,6 +245,7 @@ export default class GeoJsonLayer extends Layer {
           this.config[scale],
           this.config[domain],
           // for color, have to convert from hex to rgb
+          // TODO: Shan refactor to remove this code
           channelScaleType ===  CHANNEL_SCALES.color ?
           this.config.visConfig[range].colors.map(hexToRgb) : this.config.visConfig[range]
         );
@@ -281,6 +282,7 @@ export default class GeoJsonLayer extends Layer {
       geojsonData = carryoverOldData;
     } else {
       // filteredIndex is a reference of index in allData which can map to feature
+      // here we create a new array of data, this will cause all deck.gl attributes being invalidated
       geojsonData = this.calculateDeckLayerData(_, allData, filteredIndex, this.dataToFeature)
     }
 
