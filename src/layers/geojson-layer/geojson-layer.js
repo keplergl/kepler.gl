@@ -234,7 +234,7 @@ export default class GeoJsonLayer extends Layer {
    * @param {Function} dataAccessor - access kepler.gl layer data from deck.gl layer
    * @return {Object} attributeAccessors - deck.gl layer attribute accessors
    */
-  getAtributeAccessors(dataAccessor = defaultDataAccessor) {
+  getAttributeAccessors(dataAccessor = defaultDataAccessor) {
     const attributeAccessors = {};
 
     for (let key in this.visualChannels) {
@@ -290,7 +290,7 @@ export default class GeoJsonLayer extends Layer {
     // access keplergl layer data from deck.gl layer
     const dataAccessor = d => allData[d.properties.index];
 
-    const accessors = this.getAtributeAccessors(dataAccessor)
+    const accessors = this.getAttributeAccessors(dataAccessor)
 
     return {
       data: geojsonData,
@@ -365,27 +365,32 @@ export default class GeoJsonLayer extends Layer {
 
     const updateTriggers = {
       getElevation: {
+        heightDomain: this.config.heightDomain,
         heightField: this.config.heightField,
         heightScale: this.config.heightScale,
         heightRange: visConfig.heightRange
       },
       getFillColor: {
         color: this.config.color,
+        colorDomain: this.config.colorDomain,
         colorField: this.config.colorField,
         colorRange: visConfig.colorRange,
         colorScale: this.config.colorScale
       },
       getLineColor: {
         color: visConfig.strokeColor || this.config.color,
+        colorDomain: this.config.colorDomain,
         colorField: this.config.strokeColorField,
         colorRange: visConfig.strokeColorRange,
         colorScale: this.config.strokeColorScale
       },
       getLineWidth: {
+        sizeDomain: this.config.sizeDomain,
         sizeField: this.config.sizeField,
         sizeRange: visConfig.sizeRange
       },
       getRadius: {
+        radiusDomain: this.config.radiusDomain,
         radiusField: this.config.radiusField,
         radiusRange: visConfig.radiusRange
       }
