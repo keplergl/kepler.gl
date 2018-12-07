@@ -24,7 +24,7 @@ import {CompositeLayer} from '@deck.gl/core';
 import {TileLayer as DeckGLTileLayer} from '@deck.gl/experimental-layers';
 import dataProcessor from 'processors';
 import {memoize} from 'utils/utils';
-import { mergeDomain } from 'utils/domain-utils';
+import {mergeDomain} from 'utils/domain-utils';
  
 export default class SharedstreetsLayer extends CompositeLayer {
   initializeState() {
