@@ -8,37 +8,37 @@
   dependencies:
     regenerator-runtime "^0.12.0"
 
-"@deck.gl/core@^6.3.0-alpha.1":
-  version "6.3.0-alpha.1"
-  resolved "https://registry.yarnpkg.com/@deck.gl/core/-/core-6.3.0-alpha.1.tgz#13714a77c97046e9d68f3571b1aaa227578c8cd7"
+"@deck.gl/core@^6.3.0", "@deck.gl/core@^6.3.1":
+  version "6.3.1"
+  resolved "https://registry.yarnpkg.com/@deck.gl/core/-/core-6.3.1.tgz#c9947524de119c9668966e0f704b410b50093f33"
   dependencies:
-    luma.gl "^6.3.0-alpha"
-    math.gl "^2.1.0"
-    mjolnir.js "^1.0.0"
-    probe.gl "^2.0.0"
+    luma.gl "^6.3.0"
+    math.gl "^2.2.0"
+    mjolnir.js "^2.0.0"
+    probe.gl "^2.0.1"
     seer "^0.2.4"
     viewport-mercator-project "^6.0.0"
 
-"@deck.gl/experimental-layers@6.3.0-alpha.1":
-  version "6.3.0-alpha.1"
-  resolved "https://registry.yarnpkg.com/@deck.gl/experimental-layers/-/experimental-layers-6.3.0-alpha.1.tgz#f4de80c079c367530d83b29dac60468bc91d7839"
+"@deck.gl/experimental-layers@6.3.0":
+  version "6.3.0"
+  resolved "https://registry.yarnpkg.com/@deck.gl/experimental-layers/-/experimental-layers-6.3.0.tgz#bafe9846144b7607f6982212ffafc7331570a8aa"
   dependencies:
-    "@deck.gl/core" "^6.3.0-alpha.1"
-    "@deck.gl/layers" "^6.3.0-alpha.1"
+    "@deck.gl/core" "^6.3.0"
+    "@deck.gl/layers" "^6.3.0"
 
-"@deck.gl/layers@^6.3.0-alpha.1":
-  version "6.3.0-alpha.1"
-  resolved "https://registry.yarnpkg.com/@deck.gl/layers/-/layers-6.3.0-alpha.1.tgz#9ec27f45c9306a2251ee40cf657710c3ba8db0b6"
+"@deck.gl/layers@^6.3.0":
+  version "6.3.1"
+  resolved "https://registry.yarnpkg.com/@deck.gl/layers/-/layers-6.3.1.tgz#aeae9fd44db20ff578af33fb8ae99be871da4d47"
   dependencies:
-    "@deck.gl/core" "^6.3.0-alpha.1"
+    "@deck.gl/core" "^6.3.1"
     d3-hexbin "^0.2.1"
     earcut "^2.0.6"
 
-"@deck.gl/react@^6.3.0-alpha.1":
-  version "6.3.0-alpha.1"
-  resolved "https://registry.yarnpkg.com/@deck.gl/react/-/react-6.3.0-alpha.1.tgz#49b02667a0922c3a8f06aa4d588de4f7e72767da"
+"@deck.gl/react@^6.3.0":
+  version "6.3.1"
+  resolved "https://registry.yarnpkg.com/@deck.gl/react/-/react-6.3.1.tgz#265c7b68b432c5e97111e23abc2d7576ffef4552"
   dependencies:
-    "@deck.gl/core" "^6.3.0-alpha.1"
+    "@deck.gl/core" "^6.3.1"
     prop-types "^15.6.0"
 
 "@mapbox/extent@0.4.0":
@@ -2305,13 +2305,13 @@ decamelize@^1.0.0, decamelize@^1.1.1, decamelize@^1.1.2:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/decamelize/-/decamelize-1.2.0.tgz#f6534d15148269b20352e7bee26f501f9a191290"
 
-deck.gl@6.3.0-alpha.1:
-  version "6.3.0-alpha.1"
-  resolved "https://registry.yarnpkg.com/deck.gl/-/deck.gl-6.3.0-alpha.1.tgz#b663ba44a0866e7f9c728faa53fbe03418a25344"
+deck.gl@6.3.0:
+  version "6.3.0"
+  resolved "https://registry.yarnpkg.com/deck.gl/-/deck.gl-6.3.0.tgz#23fdf5f3bc218ef32d67594c9e54ff38bc034a58"
   dependencies:
-    "@deck.gl/core" "^6.3.0-alpha.1"
-    "@deck.gl/layers" "^6.3.0-alpha.1"
-    "@deck.gl/react" "^6.3.0-alpha.1"
+    "@deck.gl/core" "^6.3.0"
+    "@deck.gl/layers" "^6.3.0"
+    "@deck.gl/react" "^6.3.0"
 
 decode-uri-component@^0.2.0:
   version "0.2.0"
@@ -4651,9 +4651,9 @@ lru-queue@0.1:
   dependencies:
     es5-ext "~0.10.2"
 
-luma.gl@^6.3.0-alpha:
-  version "6.3.0-alpha.1"
-  resolved "https://registry.yarnpkg.com/luma.gl/-/luma.gl-6.3.0-alpha.1.tgz#2dcb92ce57c83c9e8a6ef4f8ecf32c3cdbbb41f2"
+luma.gl@^6.3.0:
+  version "6.3.1"
+  resolved "https://registry.yarnpkg.com/luma.gl/-/luma.gl-6.3.1.tgz#51a8a25f121edf636cf5a1d8db2ec2a525487596"
   dependencies:
     "@babel/runtime" "^7.0.0"
     math.gl "^2.2.0"
@@ -4940,10 +4940,17 @@ mixin-deep@^1.2.0:
     for-in "^1.0.2"
     is-extendable "^1.0.1"
 
-mjolnir.js@^1.0.0, mjolnir.js@^1.2.1:
+mjolnir.js@^1.2.1:
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/mjolnir.js/-/mjolnir.js-1.2.2.tgz#65938d6b443fed5b5c65456e6c934b01fece3610"
   dependencies:
+    hammerjs "^2.0.8"
+
+mjolnir.js@^2.0.0:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/mjolnir.js/-/mjolnir.js-2.0.1.tgz#06c19bea397634d9eb7a5b5e3860eb251b3478bd"
+  dependencies:
+    "@babel/runtime" "^7.0.0"
     hammerjs "^2.0.8"
 
 mkdirp@0.5.x, mkdirp@^0.5.0, mkdirp@^0.5.1, mkdirp@~0.5.0:
@@ -5738,7 +5745,7 @@ private@^0.1.6, private@^0.1.8:
   version "0.1.8"
   resolved "https://registry.yarnpkg.com/private/-/private-0.1.8.tgz#2381edb3689f7a53d653190060fcf822d2f368ff"
 
-probe.gl@^2.0.0, probe.gl@^2.0.1:
+probe.gl@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/probe.gl/-/probe.gl-2.0.1.tgz#e42dfe02eca9ef262cdf89a24e1a4c0856e989e0"
   dependencies:
