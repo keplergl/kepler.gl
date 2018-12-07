@@ -35,6 +35,7 @@ import {GEOJSON_FIELDS, CHANNEL_SCALES} from 'constants/default-settings';
 
 export const geojsonVisConfigs = {
   opacity: 'opacity',
+  strokeOpacity: 'opacity',
   thickness: {
     type: 'number',
     defaultValue: 0.5,
@@ -240,7 +241,7 @@ export default class GeoJsonLayer extends Layer {
       const {condition, field, scale, domain, range, accessor, defaultValue, nullValue, channelScaleType} = this.visualChannels[key];
       const disabled = condition && !condition(this.config);
 
-      const scaleFunction = this.config[field] && !disabled
+      const scaleFunction = this.config[field] && !disabled &&
         this.getVisChannelScale(
           this.config[scale],
           this.config[domain],
@@ -368,10 +369,10 @@ export default class GeoJsonLayer extends Layer {
         colorScale: this.config.colorScale
       },
       getLineColor: {
-        color: this.config.color,
-        colorField: this.config.colorField,
-        colorRange: visConfig.colorRange,
-        colorScale: this.config.colorScale
+        color: visConfig.strokeColor || this.config.color,
+        colorField: this.config.strokeColorField,
+        colorRange: visConfig.strokeColorRange,
+        colorScale: this.config.strokeColorScale
       },
       getLineWidth: {
         sizeField: this.config.sizeField,
