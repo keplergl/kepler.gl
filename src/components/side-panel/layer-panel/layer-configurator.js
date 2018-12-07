@@ -108,40 +108,22 @@ export default class LayerConfigurator extends Component {
         </LayerConfigGroup>
 
         {/* Radius */}
-        <LayerConfigGroup label={'radius'}>
-          {!layer.config.sizeField ? (
-            <VisConfigSlider
-              {...LAYER_VIS_CONFIGS.radius}
-              {...visConfiguratorProps}
-              label={false}
-              disabled={Boolean(layer.config.sizeField)}
-            />
-          ) : (
-            <VisConfigSlider
-              {...LAYER_VIS_CONFIGS.radiusRange}
-              {...visConfiguratorProps}
-              disabled={
-                !layer.config.sizeField || layer.config.visConfig.fixedRadius
-              }
-            />
-          )}
-          <ChannelByValueSelector
-            channel={layer.visualChannels.size}
-            {...layerChannelConfigProps}
+        <RadiusConfigGroup
+          channel={layer.visualChannels.size}
+          visConfiguratorProps={visConfiguratorProps}
+          layerChannelConfigProps={layerChannelConfigProps}
+        >
+          <VisConfigSwitch
+            {...LAYER_VIS_CONFIGS.fixedRadius}
+            {...visConfiguratorProps}
+            disabled={!layer.config.sizeField}
           />
-          {layer.config.sizeField ? (
-            <VisConfigSwitch
-              {...LAYER_VIS_CONFIGS.fixedRadius}
-              {...visConfiguratorProps}
-              disabled={!layer.config.sizeField}
-            />
-          ) : null}
-        </LayerConfigGroup>
+        </RadiusConfigGroup>
 
-        {/* outline */}
-        {layer.type === LAYER_TYPES.point ? (
+        {/* Outline */}
+        {layer.visConfigSettings.outline ? (
           <LayerConfigGroup
-            {...LAYER_VIS_CONFIGS.outline}
+            {...layer.visConfigSettings.outline}
             {...visConfiguratorProps}
           >
             <VisConfigSlider
@@ -313,36 +295,28 @@ export default class LayerConfigurator extends Component {
 
         {/* Elevation */}
         {layer.visConfigSettings.enable3d ?
-          <LayerConfigGroup
-            {...layer.visConfigSettings.enable3d}
-            {...visConfiguratorProps}
-          >
-            <VisConfigSlider
-              {...layer.visConfigSettings.elevationScale}
-              {...visConfiguratorProps}
-            />
-            <ChannelByValueSelector
-              {...layerChannelConfigProps}
-              channel={layer.visualChannels.size}
-              description={elevationByDescription}
-              disabled={!enable3d}
-            />
-            {layer.visConfigSettings.sizeAggregation.condition(layer.config) ? (
-              <AggregationTypeSelector
-                {...layer.visConfigSettings.sizeAggregation}
-                {...layerChannelConfigProps}
-                channel={layer.visualChannels.size}
-              />
-            ) : null}
-            {layer.visConfigSettings.elevationPercentile.condition(
-              layer.config
-            ) ? (
-              <VisConfigSlider
-                {...layer.visConfigSettings.elevationPercentile}
-                {...visConfiguratorProps}
-              />
-            ) : null}
-          </LayerConfigGroup> : null}
+          <ElevationConfigGroup
+            channel={layer.visualChannels.size}
+            description={elevationByDescription}
+            visConfiguratorProps={visConfiguratorProps}
+            layerChannelConfigProps={layerChannelConfigProps}>
+
+              {layer.visConfigSettings.sizeAggregation.condition(layer.config) ? (
+                <AggregationTypeSelector
+                  {...layer.visConfigSettings.sizeAggregation}
+                  {...layerChannelConfigProps}
+                  channel={layer.visualChannels.size}
+                />
+              ) : null}
+              {layer.visConfigSettings.elevationPercentile.condition(
+                layer.config
+              ) ? (
+                <VisConfigSlider
+                  {...layer.visConfigSettings.elevationPercentile}
+                  {...visConfiguratorProps}
+                />
+              ) : null}
+          </ElevationConfigGroup> : null}
 
         {/* High Precision */}
         <LayerConfigGroup
@@ -399,19 +373,11 @@ export default class LayerConfigurator extends Component {
         </LayerConfigGroup>
 
         {/* height */}
-        <LayerConfigGroup
-          {...LAYER_VIS_CONFIGS.enable3d}
-          {...visConfiguratorProps}
-        >
-          <ChannelByValueSelector
+        <ElevationConfigGroup
             channel={layer.visualChannels.size}
-            {...layerChannelConfigProps}
-          />
-          <VisConfigSlider
-            {...LAYER_VIS_CONFIGS.elevationRange}
-            {...visConfiguratorProps}
-          />
-        </LayerConfigGroup>
+            visConfiguratorProps={visConfiguratorProps}
+            layerChannelConfigProps={layerChannelConfigProps}
+        />
         {/* high precision */}
         <LayerConfigGroup
           {...LAYER_VIS_CONFIGS['hi-precision']}
@@ -497,27 +463,21 @@ export default class LayerConfigurator extends Component {
     return (
       <StyledLayerVisualConfigurator>
         {/* Color By */}
-        <LayerConfigGroup label={'color'}>
-          {featureTypes.polygon ? (
-            <VisConfigSwitch
-              {...visConfiguratorProps}
-              {...LAYER_VIS_CONFIGS.filled}
-            />
-          ) : null}
+        <LayerConfigGroup
+          {...layer.visConfigSettings.filled}
+          {...visConfiguratorProps}>
+
           {/* Fill Color */}
-          {layer.config.visConfig.filled ? (
-            [layer.config.colorField ? (
-              <ColorRangeConfig {...visConfiguratorProps} />
-            ) : (
-              <LayerColorSelector {...layerConfiguratorProps} />
-            ),
+          {layer.config.colorField ? (
+            <ColorRangeConfig {...visConfiguratorProps} />
+          ) : (
+            <LayerColorSelector {...layerConfiguratorProps} />
+          )}
 
-            <ChannelByValueSelector
-              channel={layer.visualChannels.fillColor}
-              {...layerChannelConfigProps}
-            />]
-          ) : null}
-
+          <ChannelByValueSelector
+            channel={layer.visualChannels.fillColor}
+            {...layerChannelConfigProps}
+          />
           <VisConfigSlider
             {...LAYER_VIS_CONFIGS.opacity}
             {...visConfiguratorProps}
@@ -527,82 +487,61 @@ export default class LayerConfigurator extends Component {
         {/* Stroke */}
         {featureTypes.line || featureTypes.polygon ? (
           <LayerConfigGroup
-            label="stroke"
             {...visConfiguratorProps}
             {...(featureTypes.polygon ? LAYER_VIS_CONFIGS.stroked : {})}
           >
-            {visConfig.stroked ? (
-                [layer.config.strokeColorField ? (
-                    <ColorRangeConfig property="strokeColorRange" {...visConfiguratorProps} />
-                  ) : (
-                    <layerVisColorSelector
-                      property="strokeColor"
-                      {...visConfiguratorProps}
-                    />
-                  ),
-
-                <ChannelByValueSelector
-                  channel={layer.visualChannels.strokeColor}
-                  {...layerChannelConfigProps}
-                />,
-
-                <VisConfigSlider
-                  {...LAYER_VIS_CONFIGS.thickness}
+            {layer.config.strokeColorField ? (
+                <ColorRangeConfig property="strokeColorRange" {...visConfiguratorProps} />
+              ) : (
+                <LayerVisColorSelector
+                  property="strokeColor"
                   {...visConfiguratorProps}
-                />,
-                <ChannelByValueSelector
-                  channel={layer.visualChannels.size}
-                  {...layerChannelConfigProps}
-                />,
-                <VisConfigSlider
-                  {...LAYER_VIS_CONFIGS.strokeWidthRange}
-                  {...visConfiguratorProps}
-                  disabled={!layer.config.sizeField}
-                />]
-             ) : null}
+                />
+              )}
+
+            <ChannelByValueSelector
+              channel={layer.visualChannels.strokeColor}
+              {...layerChannelConfigProps}
+            />
+
+            <VisConfigSlider
+              {...LAYER_VIS_CONFIGS.thickness}
+              {...visConfiguratorProps}
+            />
+            <ChannelByValueSelector
+              channel={layer.visualChannels.size}
+              {...layerChannelConfigProps}
+            />
+            <VisConfigSlider
+              {...LAYER_VIS_CONFIGS.strokeWidthRange}
+              {...visConfiguratorProps}
+              disabled={!layer.config.sizeField}
+            />
           </LayerConfigGroup>
         ) : null}
 
         {/* Elevation */}
         {featureTypes.polygon && visConfig.filled ? (
-          <LayerConfigGroup
-            {...visConfiguratorProps}
-            {...LAYER_VIS_CONFIGS.enable3d}
+          <ElevationConfigGroup
+            channel={layer.visualChannels.height}
+            visConfiguratorProps={visConfiguratorProps}
+            layerChannelConfigProps={layerChannelConfigProps}
           >
-            <VisConfigSlider
-              {...LAYER_VIS_CONFIGS.elevationScale}
-              {...visConfiguratorProps}
-            />
-            <ChannelByValueSelector
-              channel={layer.visualChannels.height}
-              {...layerChannelConfigProps}
-            />
             <VisConfigSwitch
               {...visConfiguratorProps}
               {...LAYER_VIS_CONFIGS.wireframe}
             />
-          </LayerConfigGroup>
+          </ElevationConfigGroup>
         ) : null}
 
         {/* Radius */}
+
         {featureTypes.point ? (
-          <div>
-            <VisConfigSlider
-              {...LAYER_VIS_CONFIGS.radius}
-              {...visConfiguratorProps}
-              label="Point Radius"
-              disabled={Boolean(layer.config.radiusField)}
-            />
-            <ChannelByValueSelector
-              channel={layer.visualChannels.radius}
-              {...layerChannelConfigProps}
-            />
-            <VisConfigSlider
-              {...LAYER_VIS_CONFIGS.radiusRange}
-              {...visConfiguratorProps}
-              disabled={!layer.config.radiusField}
-            />
-          </div>
+          <RadiusConfigGroup
+            channel={layer.visualChannels.radius}
+            visConfiguratorProps={visConfiguratorProps}
+            layerChannelConfigProps={layerChannelConfigProps}
+          />
         ) : null}
 
         {/* high precision */}
@@ -717,10 +656,11 @@ export const LayerColorSelector = ({layer, onChange, property="color"}) => (
   </SidePanelSection>
 );
 
-export const layerVisColorSelector = ({
+export const LayerVisColorSelector = ({
   layer,
   disabled,
   field,
+  onChange,
   property="color"
 }) => (
   <SidePanelSection disabled={disabled}>
@@ -728,8 +668,7 @@ export const layerVisColorSelector = ({
       colorSets={[
         {
           selectedColor: layer.config.visConfig[property] || layer.config.color,
-          setColor: rgbValue => onChange({[property]: rgbValue}),
-          label: property
+          setColor: rgbValue => onChange({[property]: rgbValue})
         }
       ]}
     />
@@ -866,3 +805,67 @@ export const AggregationTypeSelector = ({layer, channel, onChange}) => {
   );
 };
 /* eslint-enable max-params */
+
+export const ElevationConfigGroup = ({
+  channel,
+  children,
+  description,
+  visConfiguratorProps,
+  layerChannelConfigProps
+}) => (
+  <LayerConfigGroup
+  {...LAYER_VIS_CONFIGS.enable3d}
+  {...visConfiguratorProps}
+  >
+    <VisConfigSlider
+      {...LAYER_VIS_CONFIGS.elevationScale}
+      {...visConfiguratorProps}
+    />
+    <ChannelByValueSelector
+      channel={channel}
+      description={description}
+      {...layerChannelConfigProps}
+    />
+    {children}
+  </LayerConfigGroup>
+);
+
+/**
+ * Render layer radius configuration as a group
+ * @param {Object} props
+ * @param {Object} props.channel - layer visual channel e.g. layer.visualChannels.radius
+ * @param {Object} props.children - Additional component
+ * @param {Object} props.visConfiguratorProps
+ * @param {Object} props.layerChannelConfigProps
+ */
+export const RadiusConfigGroup = ({
+  channel,
+  children,
+  visConfiguratorProps,
+  layerChannelConfigProps
+}) => {
+  const {layer} = layerChannelConfigProps;
+  return (
+    <LayerConfigGroup label={'radius'}>
+      {!layer.config[channel.field] ? (
+        <VisConfigSlider
+          {...LAYER_VIS_CONFIGS.radius}
+          {...visConfiguratorProps}
+          label={false}
+          disabled={Boolean(layer.config[channel.field])}
+        />
+      ) : (
+        <VisConfigSlider
+          {...LAYER_VIS_CONFIGS.radiusRange}
+          {...visConfiguratorProps}
+          disabled={layer.config.visConfig.fixedRadius}
+        />
+      )}
+      <ChannelByValueSelector
+        channel={channel}
+        {...layerChannelConfigProps}
+      />
+      {children}
+    </LayerConfigGroup>
+  );
+}
