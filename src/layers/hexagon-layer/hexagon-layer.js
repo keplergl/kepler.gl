@@ -23,6 +23,7 @@ import AggregationLayer from '../aggregation-layer';
 import EnhancedHexagonLayer from 'deckgl-layers/hexagon-layer/enhanced-hexagon-layer';
 import {hexagonToPolygonGeo} from './hexagon-utils';
 import HexagonLayerIcon from './hexagon-layer-icon';
+import {clamp} from 'utils/data-utils';
 
 export const hexagonVisConfigs = {
   opacity: 'opacity',
@@ -123,7 +124,7 @@ export default class HexagonLayer extends AggregationLayer {
                 )
               ],
               getLineColor: this.config.highlightColor,
-              lineWidthScale: 8 * zoomFactor
+              lineWidthScale: clamp([1, 100], radius * 0.1 * zoomFactor)
             })
           ]
         : [])

@@ -94,6 +94,10 @@ export function getLatLngBounds(points, idx, limit) {
   ];
 }
 
+export function clamp([min, max], val) {
+  return val <= min ? min : val >= max ? max : val;
+};
+
 export function getSampleData(data, sampleSize = 500) {
   const sampleStep = Math.max(Math.floor(data.length / sampleSize), 1);
   const output = [];
