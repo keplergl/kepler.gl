@@ -1,6 +1,6 @@
 language: node_js
 install:
-  - yarn --ignore-engines --production=true
+  - yarn --ignore-engines
 node_js:
   - 8
   - 10
@@ -9,5 +9,7 @@ before_script:
 script:
   - npm run lint
   - npm run test
+  - rm -r node_modules
+  - yarn --ignore-engines --production=true
   - fossa
 cache: yarn
