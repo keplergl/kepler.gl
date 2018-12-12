@@ -8,6 +8,7 @@ To toggle customization options on your map:
 1. Open the Interactions menu by clicking the Interactions icon:
 
 ![Interaction menu](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image30.png "Interaction menu")
+
 2. Click the switch next to the options you wish to activate/deactivate.
 
 ![activate interactions](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image32.png "activate interactions")
