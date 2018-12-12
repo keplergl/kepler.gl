@@ -84,34 +84,41 @@ function loadMapCallback(dispatch, error, result, sample, config) {
 function loadRemoteMap(sample) {
   return (dispatch) => {
     // Load configuration first
-    requestJson(sample.configUrl, (confError, config) => {
-      if (confError) {
-        Console.warn(`Error loading config file ${sample.configUrl}`);
-        // dispatch(error)
-        return;
-      }
-
-      let requestMethod = requestText;
-      if (sample.dataUrl.includes('.json') || sample.dataUrl.includes('.geojson')) {
-        requestMethod = requestJson;
-      }
-      if (sample.isTiled) {
-        // Assume all tiled data has response type arraybuffer
-        request(sample.dataUrl)
-          .responseType('arraybuffer')
-          .response((xhr) => xhr.response)
-          .get((dataError, result) => {
-            loadMapCallback(dispatch, dataError, result, sample, config);
-          });
-      } else {
-        // Load data
-        requestMethod(sample.dataUrl, (dataError, result) => {
-          loadMapCallback(dispatch, dataError, result, sample, config);
-        });
-      };
-    });
+    if (sample.configUrl) {
+      requestJson(sample.configUrl, (confError, config) => {
+        if (confError) {
+          Console.warn(`Error loading config file ${sample.configUrl}`);
+          // dispatch(error)
+          return;
+        }
+        loadRemoteMapOnly(dispatch, sample, config);
+      });
+    } else {
+      loadRemoteMapOnly(dispatch, sample, {});
+    }
   }
 }
+
+  function loadRemoteMapOnly(dispatch, sample, config) {
+    let requestMethod = requestText;
+    if (sample.dataUrl.includes('.json') || sample.dataUrl.includes('.geojson')) {
+      requestMethod = requestJson;
+    }
+    if (sample.isTiled) {
+      // Assume all tiled data has response type arraybuffer
+      request(sample.dataUrl)
+        .responseType('arraybuffer')
+        .response((xhr) => xhr.response)
+        .get((dataError, result) => {
+          loadMapCallback(dispatch, dataError, result, sample, config);
+        });
+    } else {
+      // Load data
+      requestMethod(sample.dataUrl, (dataError, result) => {
+        loadMapCallback(dispatch, dataError, result, sample, config);
+      });
+    };
+  }
 
 /**
  *

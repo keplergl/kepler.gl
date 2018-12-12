@@ -535,7 +535,6 @@ export default class LayerConfigurator extends Component {
         ) : null}
 
         {/* Radius */}
-
         {featureTypes.point ? (
           <RadiusConfigGroup
             channel={layer.visualChannels.radius}

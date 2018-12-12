@@ -78,7 +78,7 @@ export const DEFAULT_LOADING_METHOD = LOADING_METHODS[0];
 export const SHAREDSTREETS_DATASETS = [
   {
     id: 'pickup-dropoff',
-    configUrl: "https://s3.amazonaws.com/sharedstreets-samples/pickup-dropoff-config.json",
+    // configUrl: "https://s3.amazonaws.com/sharedstreets-samples/no-config-z-13.json",
     // sample data url
     dataUrl: "https://p7qhqqf3y5.execute-api.us-east-1.amazonaws.com/v1?x=1171&y=1566&z=12",
     // Sharedstreets layer will replace placeholder ${z} ${x} ${y} with the real value.

@@ -67,6 +67,9 @@ export default class SharedstreetsLayer extends CompositeLayer {
     const dataUrl = this.props.dataUrl.replace('${z}', z).replace('${x}', x).replace('${y}', y);
     return fetch(dataUrl, fetchConfig)
     .then(response => {
+      if (response.status !== 200) {
+        throw new Error(`Error loading ${dataUrl}: ${response.status}`);
+      }      
       return response.arrayBuffer();
     })
     .then(buffer => {
