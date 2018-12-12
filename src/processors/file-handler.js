@@ -19,8 +19,7 @@
 // THE SOFTWARE.
 
 import {FileReader} from 'global/window';
-import {processCsvData, processGeojson} from './data-processor';
-import KeplerGlSchema from 'schemas';
+import {processCsvData, processGeojson, processKeplerglJSON} from './data-processor';
 
 const FILE_HANDLERS = {
   csv: loadCsv,
@@ -102,14 +101,4 @@ export function loadJSON(fileBlob, processor = processGeojson) {
     rawData =>
       rawData ? determineJsonProcess(rawData, processor)(rawData) : null
   );
-}
-
-export function processKeplerglJSON(rawData) {
-  const data = rawData
-    ? KeplerGlSchema.load(rawData.datasets, rawData.config)
-    : null;
-  return {
-    ...data,
-    reset: true // this will reset the state
-  };
 }

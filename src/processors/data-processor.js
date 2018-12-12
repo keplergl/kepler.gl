@@ -26,6 +26,7 @@ import {Analyzer, DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
 import {ALL_FIELD_TYPES, GEOJSON_FIELDS} from 'constants/default-settings';
 import {notNullorUndefined} from 'utils/data-utils';
+import KeplerGlSchema from 'schemas';
 
 // if any of these value occurs in csv, parse it to null;
 const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN'];
@@ -283,6 +284,10 @@ export function processRowObject(rawData) {
   };
 }
 
+/**
+ *
+ * @param {Object} rawData - raw geojson feature collection
+ */
 export function processGeojson(rawData) {
   const normalizedGeojson = normalize(rawData);
 
@@ -419,10 +424,21 @@ export function validateInputData(data) {
   return {fields: updatedFields, rows};
 }
 
+/**
+ * Process kepler.gl json to be load by addDataToMap
+ * @param {Object} rawData
+ */
+export function processKeplerglJSON(rawData) {
+  return rawData
+    ? KeplerGlSchema.load(rawData.datasets, rawData.config)
+    : null;
+}
+
 export default {
   processGeojson,
   processCsvData,
   processRowObject,
+  processKeplerglJSON,
   analyzerTypeToFieldType,
   getFieldsFromData,
   parseCsvDataByFieldType
