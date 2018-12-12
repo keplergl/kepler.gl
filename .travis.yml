@@ -9,7 +9,5 @@ before_script:
 script:
   - npm run lint
   - npm run test
-  - rm -r node_modules
-  - yarn --ignore-engines --production=true
   - fossa
 cache: yarn
