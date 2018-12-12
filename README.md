@@ -16,7 +16,9 @@
   </a>
 </p>
 
-<h1 align="center">Kepler.gl | <a href="https://uber.github.io/kepler.gl">Website</a></h1>
+<h1 align="center">Kepler.gl | <a href="https://uber.github.io/kepler.gl">Website</a> |
+<a href="https://uber.github.io/kepler.gl/#/demo">Demo App</a>
+</h1>
 
 
 [kepler.gl](http://www.kepler.gl/) is a data-agnostic, high-performance web-based application for visual exploration of large-scale geolocation data sets. Built on top of [deck.gl](http://uber.github.io/deck.gl/#/), kepler.gl can render millions of points representing thousands of trips and perform spatial aggregations on the fly.
