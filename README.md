@@ -1,11 +1,32 @@
-# Kepler.gl
+<p align="right">
+  <a href="https://npmjs.org/package/kepler.gl">
+    <img src="https://img.shields.io/npm/v/kepler.gl.svg?style=flat" alt="version" />
+  </a>
+  <a href="https://travis-ci.com/uber/kepler.gl">
+    <img src="https://api.travis-ci.com/uber/kepler.gl.svg?branch=master" alt="build" />
+  </a>
+  <a href="https://github.com/uber/kepler.gl">
+    <img src="https://githubbadges.com/star.svg?user=uber&repo=kepler.gl&style=flat" alt="stars" />
+  </a>
+  <a href='https://opensource.org/licenses/MIT'>
+    <img src='https://img.shields.io/badge/License-MIT-blue.svg' alt='MIT License' />
+  </a>
+  <a href='https://app.fossa.io/projects/custom%2B4458%2Fgithub.com%2Fuber%2Fkepler.gl?ref=badge_shield'>
+    <img src='https://app.fossa.io/api/projects/custom%2B4458%2Fgithub.com%2Fuber%2Fkepler.gl.svg?type=shield' alt='Fossa' />
+  </a>
+</p>
+
+<h1 align="center">Kepler.gl | <a href="https://uber.github.io/kepler.gl">Website</a> |
+<a href="https://uber.github.io/kepler.gl/#/demo">Demo App</a>
+</h1>
+
 
 [kepler.gl](http://www.kepler.gl/) is a data-agnostic, high-performance web-based application for visual exploration of large-scale geolocation data sets. Built on top of [deck.gl](http://uber.github.io/deck.gl/#/), kepler.gl can render millions of points representing thousands of trips and perform spatial aggregations on the fly.
 
 For what it is capable of, take a look at [kepler.gl demo app](https://uber.github.io/kepler.gl/#/demo).
 
 Kepler.gl is a redux component that uses redux reducer to store and manage state transitions.
-This package consists of a reducer and the UI components to render and customize the map. 
+This package consists of a reducer and the UI components to render and customize the map.
 
 For information on how to save the map state you've created and have it persist after you've closed the browser, take a look at [this tutorial on vis.academy](http://vis.academy/#/kepler.gl/).
 
@@ -13,7 +34,7 @@ For information on how to save the map state you've created and have it persist 
 Check out [kepler.gl's user documentation here](docs/a-introduction.md)
 
 ## Dev Questions - StackOverflow
-Check out this [StackOverflow](https://stackoverflow.com/questions/tagged/kepler.gl) 
+Check out this [StackOverflow](https://stackoverflow.com/questions/tagged/kepler.gl)
 
 ## Links
 

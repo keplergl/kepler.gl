@@ -21,7 +21,7 @@
 export const FORWARD = '@redux-forward/FORWARD';
 export const ADDRESS_PREFIX = '@@KG_';
 
-import curry from 'curry';
+import curry from 'lodash.curry';
 
 /*
  * wrap an action into a forward action
