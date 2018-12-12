@@ -90,7 +90,7 @@ const EXCLUDED_ACTIONS = [ActionTypes.LAYER_HOVER, ActionTypes.UPDATE_MAP];
 
 const analyticsMiddleware = store => next => action => {
   if (window.gtag && !EXCLUDED_ACTIONS.includes(action.type)) {
-    const payload = action.paylod || action;
+    const payload = action.payload || action;
     // eslint-disable-next-line no-undef
     window.gtag('event', 'action', {
       event_category: action.type,
