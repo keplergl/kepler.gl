@@ -18,36 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {combineReducers, createStore, applyMiddleware, compose} from 'redux';
-import {routerReducer, routerMiddleware} from 'react-router-redux';
-import {browserHistory} from 'react-router';
+import React from 'react';
+import ModalDialog from 'kepler.gl/components/common/modal';
+import CloudStorage from './cloud-storage';
+import {ThemeProvider} from 'styled-components';
+import {themeLT as theme} from 'kepler.gl/styles';
 
-import thunk from 'redux-thunk';
-import window from 'global/window';
-import {taskMiddleware} from 'react-palm/tasks';
-
-import demoReducer from './reducers/index';
-
-const reducers = combineReducers({
-  demo: demoReducer,
-  routing: routerReducer
-});
-
-export const middlewares = [
-  taskMiddleware,
-  thunk,
-  routerMiddleware(browserHistory)
-];
-
-export const enhancers = [applyMiddleware(...middlewares)];
-
-const initialState = {};
-
-// add redux devtools
-const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
-
-export default createStore(
-  reducers,
-  initialState,
-  composeEnhancers(...enhancers)
+const ExportUrlModal = ({sharing, isOpen, onClose, onExport, onCloudLoginSuccess}) => (
+  <ThemeProvider theme={theme}>
+    <ModalDialog
+      isOpen={isOpen}
+      close={onClose}
+      title={'Store your map'}
+    >
+      <CloudStorage
+        isLoading={sharing.isLoading}
+        info={sharing.info}
+        onExport={onExport}
+        onCloudLoginSuccess={onCloudLoginSuccess}
+      />
+    </ModalDialog>
+  </ThemeProvider>
 );
+
+export default ExportUrlModal;

@@ -18,36 +18,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {combineReducers, createStore, applyMiddleware, compose} from 'redux';
-import {routerReducer, routerMiddleware} from 'react-router-redux';
-import {browserHistory} from 'react-router';
+import {MAP_URI} from '../constants/default-settings';
 
-import thunk from 'redux-thunk';
-import window from 'global/window';
-import {taskMiddleware} from 'react-palm/tasks';
+export function parseQueryString(query) {
+  const searchParams = new URLSearchParams(query);
+  const params = [...searchParams].reduce((queryParams, entry) => ({
+    ...queryParams,
+    ...(entry  && entry.length === 2 ?
+        {[entry[0]]: entry[1]} : null
+    )
+  }), {});
 
-import demoReducer from './reducers/index';
+  return params;
+}
 
-const reducers = combineReducers({
-  demo: demoReducer,
-  routing: routerReducer
-});
-
-export const middlewares = [
-  taskMiddleware,
-  thunk,
-  routerMiddleware(browserHistory)
-];
-
-export const enhancers = [applyMiddleware(...middlewares)];
-
-const initialState = {};
-
-// add redux devtools
-const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
-
-export default createStore(
-  reducers,
-  initialState,
-  composeEnhancers(...enhancers)
-);
+/**
+ * Returns a permalink with the given map url: kepler.gl/[]
+ * @param mapLink the sharing url used to store the map
+ * @returns {string}
+ */
+export function getMapPermalink(mapLink) {
+  return `${window.location.protocol}//${window.location.host}/${MAP_URI}${mapLink}`
+}

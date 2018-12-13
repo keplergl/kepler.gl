@@ -23,13 +23,19 @@ and segments both use queryRunner */
 import keyMirror from 'keymirror';
 
 export const ASSETS_URL = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/';
-
 export const DATA_URL = 'https://raw.githubusercontent.com/uber-web/kepler.gl-data/master/';
-
+export const MAP_URI = 'map?mapUrl=';
 /*
  * If you want to add more samples, feel free to edit the json file on github kepler.gl data repo
  */
 export const MAP_CONFIG_URL = `${DATA_URL}samples.json?nocache=${(new Date()).getTime()}`;
+
+/**
+ * I know this is already defined in Kepler core but it should be defined here
+ * because it belongs to the demo app
+ * @type {string}
+ */
+export const KEPLER_GL_WEBSITE = 'http://kepler.gl/';
 
 export const QUERY_TYPES = keyMirror({
   file: null,
@@ -88,5 +94,6 @@ export const LOADING_SAMPLE_LIST_ERROR_MESSAGE = 'Not able to load sample galler
 export const LOADING_SAMPLE_ERROR_MESSAGE = 'Not able to load sample';
 export const LOADING_URL_MESSAGE = 'You can use the following formats: CSV | JSON | Kepler.gl config json. Make sure the url contains the file extension.';
 export const CORS_LINK = 'https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS';
+export const KEPLER_DISCLAIMER = '* Kepler.gl is a client-side application with no server backend. Data lives only on your machine/browser/cloud account (Dropbox).';
 
 export const DEFAULT_LOADING_METHOD = LOADING_METHODS[0];

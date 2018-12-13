@@ -361,6 +361,9 @@ export default function ModalContainerFactory(
               }
             };
             break;
+
+          // TODO: add this options once we merge dropbox onto kepelr.gl core
+          // case SAVE_TO_CLOUD_ID
           default:
             break;
         }
