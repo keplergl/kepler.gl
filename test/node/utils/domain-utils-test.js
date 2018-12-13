@@ -28,16 +28,18 @@ import {
 
 test('DomainUtils -> mergeDomain', t => {
   const numericFieldTypes = [ALL_FIELD_TYPES.real, ALL_FIELD_TYPES.integer, ALL_FIELD_TYPES.timestamp];
+  const numericDomainLarge = [1, 20];
+  const numericDomainSmall = [3, 5];
   for (let i = 0; i < numericFieldTypes.length; i++) {
-    t.deepEqual(
-      mergeDomain([1, 20], [3, 5], numericFieldTypes[i]),
-      [1, 20],
+    t.is(
+      mergeDomain(numericDomainLarge, numericDomainSmall, numericFieldTypes[i]),
+      numericDomainLarge,
       `should return old domain if old domain includes new domain with field type ${numericFieldTypes[i]}`
     );
 
     t.deepEqual(
-      mergeDomain([3, 5], [1, 20], numericFieldTypes[i]),
-      [1, 20],
+      mergeDomain(numericDomainSmall, numericDomainLarge, numericFieldTypes[i]),
+      numericDomainLarge,
       `should return new domain if new domain includes old domain with field type ${numericFieldTypes[i]}`
     );
 
@@ -49,17 +51,18 @@ test('DomainUtils -> mergeDomain', t => {
   }
 
   const ordinalDomainTypes = [ALL_FIELD_TYPES.string, ALL_FIELD_TYPES.date];
-
+  const ordinalDomainLarge = ['a', 'b'];
+  const ordinalDomainSmall = ['b'];
   for (let i = 0; i < ordinalDomainTypes.length; i++) {
-    t.deepEqual(
-      mergeDomain(['a', 'b'], ['b'], ordinalDomainTypes[i]),
-      ['a', 'b'],
+    t.is(
+      mergeDomain(ordinalDomainLarge, ordinalDomainSmall, ordinalDomainTypes[i]),
+      ordinalDomainLarge,
       `should return old domain if old domain includes new domain with field type ${ordinalDomainTypes[i]}`
     );
 
     t.deepEqual(
-      mergeDomain(['a'], ['a', 'b'], ordinalDomainTypes[i]),
-      ['a', 'b'],
+      mergeDomain(ordinalDomainSmall, ordinalDomainLarge, ordinalDomainTypes[i]),
+      ordinalDomainLarge,
       `should return new domain if new domain includes old domain with field type ${ordinalDomainTypes[i]}`
     );
 
