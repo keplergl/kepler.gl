@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {CompositeLayer} from '@deck.gl/core';
-import DeckGLTileLayer from '@deck.gl/experimental-layers/dist/tile-layer/tile-layer';
+import {TileLayer as DeckGLTileLayer} from '@deck.gl/experimental-layers';
 import {getTileData} from './3d-building-utils';
 import {_SolidPolygonLayer as SolidPolygonLayer} from '@deck.gl/layers';
 
