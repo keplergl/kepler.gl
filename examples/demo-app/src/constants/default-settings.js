@@ -80,10 +80,10 @@ export const SHAREDSTREETS_DATASETS = [
     id: 'pickup-dropoff',
     // configUrl: "https://s3.amazonaws.com/sharedstreets-samples/no-config-z-13.json",
     // sample data url
-    dataUrl: "https://p7qhqqf3y5.execute-api.us-east-1.amazonaws.com/v1?x=1171&y=1566&z=12",
+    dataUrl: `https://p7qhqqf3y5.execute-api.us-east-1.amazonaws.com/dev?x=1171&y=1566&z=12`,
     // Sharedstreets layer will replace placeholder ${z} ${x} ${y} with the real value.
     // eslint-disable-next-line no-template-curly-in-string
-    dataTemplateUrl: "https://p7qhqqf3y5.execute-api.us-east-1.amazonaws.com/v1?x=${x}&y=${y}&z=${z}",
+    dataTemplateUrl: "https://p7qhqqf3y5.execute-api.us-east-1.amazonaws.com/dev?x=${x}&y=${y}&z=${z}",
     description: "Pick up and drop off data",
     imageUrl: "https://s3.amazonaws.com/sharedstreets-samples/pickup-dropoff.jpg",
     label: "Pick Up / Drop Off",
