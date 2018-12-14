@@ -108,6 +108,7 @@ export default class SharedstreetsLayer extends CompositeLayer {
           const channel = visualChannels[j];
           const field = layer.config[channel.field];
           if (field) {
+            // TODO: Ideally we can avoid updating a layer domain if this tile has already been merged
             const newDomain = this.getTileDomain(layer, tileId, field.name, channel, data);
             this.updateLayerDomain(layer, z, field, channel, newDomain);
           }
