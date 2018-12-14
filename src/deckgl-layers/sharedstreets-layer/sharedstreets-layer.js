@@ -182,7 +182,8 @@ export default class SharedstreetsLayer extends CompositeLayer {
       fieldName,
       tileId
     };
-    const key = JSON.stringify(keyObj, Object.keys(keyObj).sort());
+    const replacer = Object.keys(keyObj).sort();
+    const key = JSON.stringify(keyObj, replacer);
     if (this.state.tileDomains.has(key)) {
       return this.state.tileDomains.get(key);
     }
