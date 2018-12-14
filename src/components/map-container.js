@@ -40,6 +40,7 @@ import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 
 // default-settings
 import {LAYER_BLENDINGS} from 'constants/default-settings';
+import ThreeDBuildingLayer from '../deckgl-layers/3d-building-layer/3d-building-layer';
 
 const MAP_STYLE = {
   container: {
@@ -322,6 +323,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     _renderOverlay() {
       const {
         mapState,
+        mapStyle,
         layerData,
         layerOrder,
         visStateActions
@@ -336,6 +338,10 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           .slice()
           .reverse()
           .reduce(this._renderLayer, []);
+      }
+      const threeDBuildingLayerId = '_keplergl_3d-building';
+      if (mapStyle.visibleLayerGroups['3d building']) {
+        deckGlLayers.push(new ThreeDBuildingLayer({id: threeDBuildingLayerId, threeDBuildingColor: mapStyle.threeDBuildingColor}));
       }
 
       return (

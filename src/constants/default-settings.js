@@ -120,6 +120,11 @@ export const DEFAULT_LAYER_GROUPS = [
     slug: 'land',
     filter: ({id}) => id.match(/(?=(parks|landcover|industrial|sand|hillshade))/),
     defaultVisibility: true
+  },
+  {
+    slug: '3d building',
+    filter: () => false,
+    defaultVisibility: false
   }
 ];
 
