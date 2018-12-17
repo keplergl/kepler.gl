@@ -14,8 +14,19 @@ Each version should:
   Security to invite users to upgrade in case of vulnerabilities.
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
+#### [0.2.1-beta.1] - Dec 17 2018
+- [Feature] Added a Tiled 3D Building Deck.gl Layer (#270)
+- [Enhancement] Fossa Integration (#309)
+- [Enhancement] Change BottomWidget to pure functional component (#249)
+- [Docs]: updated docs for better readability(alignments) (#255)
+- [Enhancement] export processKeplerglJSON from processors (#299)
+- [website] BugFix: missing tracking payload (#311)
+- [Enhancement] Hexbin Layer: smaller radius step and dynamic hover (#310)
+- [Bug] remove unpm from yarn.lock (#303)
+- [Enhancement] use mapbox style url for default (published) uber map styles (#292)
+- [Feature] Load data and kepler.gl file using URLs (#260)
 
-#### [0.2.0-beta.0] - Nov 16 2018
+#### [0.2.1-beta.0] - Nov 16 2018
 - [Bug] Fixing global color issue #130 for the heat map (#277)
 - [Enhancement] More exports (#284)
 
