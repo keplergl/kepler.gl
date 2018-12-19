@@ -29,7 +29,7 @@ const ExportUrlModal = ({sharing, isOpen, onClose, onExport, onCloudLoginSuccess
     <ModalDialog
       isOpen={isOpen}
       close={onClose}
-      title={'Store your map'}
+      title={'Save / Share your map'}
     >
       <CloudStorage
         isLoading={sharing.isLoading}

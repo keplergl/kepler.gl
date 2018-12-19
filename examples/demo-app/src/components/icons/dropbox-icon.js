@@ -31,7 +31,7 @@ class DropboxIcon extends Component {
 
   static defaultProps = {
     height: '16px',
-    predefinedClassName: 'data-ex-icons-add',
+    predefinedClassName: 'data-ex-icons-dropbox',
     totalColor: 1
   };
 

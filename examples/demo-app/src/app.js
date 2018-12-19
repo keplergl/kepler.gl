@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import styled from 'styled-components';
 import window from 'global/window';
 import {connect} from 'react-redux';
@@ -29,7 +29,6 @@ import {replaceLoadDataModal} from './factories/load-data-modal';
 import ExportUrlModal from './components/sharing/export-url-modal';
 
 import {
-  initApp,
   exportFileToCloud,
   loadRemoteMap,
   loadSampleConfigurations,
@@ -78,7 +77,6 @@ class App extends Component {
   };
 
   componentWillMount() {
-    this.props.dispatch(initApp());
     // if we pass an id as part of the url
     // we ry to fetch along map configurations
     const {params: {id} = {}, location: {query = {}}} = this.props;

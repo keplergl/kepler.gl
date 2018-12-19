@@ -94,6 +94,6 @@ export const LOADING_SAMPLE_LIST_ERROR_MESSAGE = 'Not able to load sample galler
 export const LOADING_SAMPLE_ERROR_MESSAGE = 'Not able to load sample';
 export const LOADING_URL_MESSAGE = 'You can use the following formats: CSV | JSON | Kepler.gl config json. Make sure the url contains the file extension.';
 export const CORS_LINK = 'https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS';
-export const KEPLER_DISCLAIMER = '* Kepler.gl is a client-side application with no server backend. Data lives only on your machine/browser/cloud account (Dropbox).';
+export const KEPLER_DISCLAIMER = '* Kepler.gl will save your map data to your personal cloud storage, only people with the URL can access your map and data.';
 
 export const DEFAULT_LOADING_METHOD = LOADING_METHODS[0];

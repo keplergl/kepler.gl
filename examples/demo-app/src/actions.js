@@ -51,7 +51,7 @@ export function initApp() {
 
 /**
  * this method set the current loading method
- * @param method the string id for the loading method to use
+ * @param {string} method the string id for the loading method to use
  * @returns {{type: string, method: *}}
  */
 export function setLoadingMethod(method) {
@@ -63,13 +63,13 @@ export function setLoadingMethod(method) {
 
 /**
  * this action is triggered when user switches between load modal tabs
- * @param method
+ * @param {string} method
  * @returns {Function}
  */
 export function switchToLoadingMethod(method) {
-  return dispatch => {
+  return (dispatch, getState) => {
     dispatch(setLoadingMethod(method));
-    if (method === LOADING_METHODS_NAMES.sample) {
+    if (method === LOADING_METHODS_NAMES.sample && getState().demo.app.sampleMaps.length === 0) {
       dispatch(loadSampleConfigurations());
     }
   };
@@ -355,7 +355,7 @@ export function exportFileToCloud(data, handlerName = 'dropbox') {
     // we are exporting to json format with 2 spaces,
     // we could save bandwidth if we used a single line
     // but it wouldn't be readable
-    const newBlob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+    const newBlob = new Blob([JSON.stringify(data)], {type: 'application/json'});
     const file = new File([newBlob], `kepler.gl/keplergl_${(new Date()).toISOString()}.json`);
     dispatch(setPushingFile(true, {filename: file.name, status: 'uploading', metadata: null}));
     authHandler.uploadFile({blob: file, isPublic: true, authHandler})

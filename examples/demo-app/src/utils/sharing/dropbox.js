@@ -21,6 +21,7 @@
 // DROPBOX
 import {Dropbox} from 'dropbox';
 import {parseQueryString} from '../url';
+import window from 'global/window'
 
 const DROPBOX_CLIEND_ID = process.env.DropboxClientId;
 const NAME = 'dropbox';
@@ -35,13 +36,13 @@ const dropbox = new Dropbox({clientId: DROPBOX_CLIEND_ID});
 function authLink(path = 'auth') {
   return dropbox.getAuthenticationUrl(
     `${window.location.origin}/${path}`,
-    btoa(JSON.stringify({ handler: 'dropbox', origin: window.location.origin}))
+    btoa(JSON.stringify({handler: 'dropbox', origin: window.location.origin}))
   )
 }
 
 /**
  * This method will extract the atuch token from the third party service callback url. Default: Dropbox
- * @param {Location} location the window location provided by react router
+ * @param {object} location the window location provided by react router
  * @returns {?string} the token extracted from the oauth 2 callback URL
  */
 function getAccessTokenFromLocation(location) {
@@ -118,8 +119,8 @@ function handleLogin(onCloudLoginSuccess) {
     authWindow.close();
     window.removeEventListener('message', handleToken);
     dropbox.setAccessToken(e.data.token);
-    if (localStorage) {
-      localStorage.setItem('dropbox', JSON.stringify({
+    if (window.localStorage) {
+      window.localStorage.setItem('dropbox', JSON.stringify({
         // dropbox token doesn't expire unless revoked by the user
         token: e.data.token,
         timetamp: new Date()
@@ -136,8 +137,8 @@ function handleLogin(onCloudLoginSuccess) {
  */
 function getAccessToken() {
   let token = dropbox.getAccessToken();
-  if (!token && localStorage) {
-    const jsonString = localStorage.getItem('dropbox');
+  if (!token && window.localStorage) {
+    const jsonString = window.localStorage.getItem('dropbox');
     token = jsonString && JSON.parse(jsonString).token;
     if (token) {
       dropbox.setAccessToken(token);
