@@ -10,6 +10,7 @@
     "global": "^4.3.0",
     "kepler.gl": "^0.2.0",
     "lodash.debounce": "^4.0.8",
+    "lodash.get": "^4.4.2",
     "react": "^15.6.2",
     "react-copy-to-clipboard": "^5.0.1",
     "react-dom": "^15.6.1",

@@ -19,10 +19,12 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import styled from 'styled-components';
+import {findDOMNode} from 'react-dom';
+import styled, {ThemeProvider}  from 'styled-components';
 import window from 'global/window';
 import {connect} from 'react-redux';
 import KeplerGlSchema from 'kepler.gl/schemas';
+import {theme} from 'kepler.gl/styles';
 import Banner from './components/banner';
 import Announcement from './components/announcement';
 import {replaceLoadDataModal} from './factories/load-data-modal';
@@ -54,7 +56,7 @@ const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
 const BannerHeight = 30;
 const BannerKey = 'kgHideBanner-iiba';
 
-const GlobalStyleDiv = styled.div`
+const GlobalStyle = styled.div`
   font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
   font-weight: 400;
   font-size: 0.875em;
@@ -66,6 +68,20 @@ const GlobalStyleDiv = styled.div`
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
+  }
+
+  ul {
+    margin: 0;
+    padding: 0;
+  }
+
+  li {
+    margin: 0;
+  }
+
+  a {
+    text-decoration: none;
+    color: ${props => props.theme.labelColor};
   }
 `;
 
@@ -216,6 +232,7 @@ class App extends Component {
 
   _onExportToCloud = () => {
     // we pass all props because we avoid to create new variables
+    // TODO: move this fileContent onto action
     const fileContent = KeplerGlSchema.save(this.props.demo.keplerGl.map);
     this.props.dispatch(exportFileToCloud(fileContent))
   };
@@ -227,46 +244,59 @@ class App extends Component {
   render() {
     const {showBanner, width, height} = this.state;
     const {sharing} = this.props.demo;
+    const rootNode = this.root;
     return (
-      <GlobalStyleDiv>
-        <Banner
-          show={this.state.showBanner}
-          height={BannerHeight}
-          bgColor="#82368c"
-          onClose={this._hideBanner}
+      <ThemeProvider theme={theme}>
+        <GlobalStyle
+          // this is to apply the same modal style as kepler.gl core
+          // because styled-components doesn't always return a node
+          // https://github.com/styled-components/styled-components/issues/617
+          innerRef={node => {node ? this.root = node : null}}
         >
-          <Announcement onDisable={this._disableBanner}/>
-        </Banner>
-        <ExportUrlModal
-          sharing={sharing}
-          isOpen={Boolean(this.state.cloudModalOpen)}
-          onClose={this._toggleCloudModal}
-          onExport={this._onExportToCloud}
-          onCloudLoginSuccess={this._onCloudLoginSuccess}
-        />
-        <div
-          style={{
-            transition: 'margin 1s, height 1s',
-            position: 'absolute',
-            width: '100%',
-            height: showBanner ? `calc(100% - ${BannerHeight}px)` : '100%',
-            minHeight: `calc(100% - ${BannerHeight}px)`,
-            marginTop: showBanner ? `${BannerHeight}px` : 0
-          }}
-        >
-          <KeplerGl
-            mapboxApiAccessToken={MAPBOX_TOKEN}
-            id="map"
-            /*
-             * Specify path to keplerGl state, because it is not mount at the root
-             */
-            getState={state => state.demo.keplerGl}
-            width={width}
-            height={height - (showBanner ? BannerHeight : 0)}
-            onSaveMap={this._toggleCloudModal}
-          />
-        </div>
-      </GlobalStyleDiv>
+          <Banner
+            show={this.state.showBanner}
+            height={BannerHeight}
+            bgColor="#82368c"
+            onClose={this._hideBanner}
+          >
+            <Announcement onDisable={this._disableBanner}/>
+          </Banner>
+          {rootNode && (
+            <ExportUrlModal
+              sharing={sharing}
+              isOpen={Boolean(this.state.cloudModalOpen)}
+              onClose={this._toggleCloudModal}
+              onExport={this._onExportToCloud}
+              onCloudLoginSuccess={this._onCloudLoginSuccess}
+              // this is to apply the same modal style as kepler.gl core
+              parentSelector={() => findDOMNode(this.root)}
+            />
+          )}
+          <div
+            style={{
+              transition: 'margin 1s, height 1s',
+              position: 'absolute',
+              width: '100%',
+              height: showBanner ? `calc(100% - ${BannerHeight}px)` : '100%',
+              minHeight: `calc(100% - ${BannerHeight}px)`,
+              marginTop: showBanner ? `${BannerHeight}px` : 0
+            }}
+          >
+            <KeplerGl
+              mapboxApiAccessToken={MAPBOX_TOKEN}
+              id="map"
+              /*
+               * Specify path to keplerGl state, because it is not mount at the root
+               */
+              getState={state => state.demo.keplerGl}
+              width={width}
+              height={height - (showBanner ? BannerHeight : 0)}
+              onSaveMap={this._toggleCloudModal}
+            />
+          </div>
+        </GlobalStyle>
+      </ThemeProvider>
+
     );
   }
 }

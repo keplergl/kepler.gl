@@ -18,69 +18,154 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React from 'react';
 import styled from 'styled-components';
-import AuthHandlerTile from './auth-handler-tile';
+import get from 'lodash.get';
+import {CopyToClipboard} from 'react-copy-to-clipboard';
+import {StyledModalContent} from 'kepler.gl/components';
+import CloudTile from './cloud-tile';
 import StatusPanel from './status-panel';
 import {AUTH_HANDLERS} from '../../utils/sharing/authentication';
 import {KEPLER_DISCLAIMER} from '../../constants/default-settings';
+import {getMapPermalink} from '../../utils/url';
 
-const StyledWrapper = styled.div`
-  flex-grow: 1;
-  font-family: ff-clan-web-pro,'Helvetica Neue',Helvetica,sans-serif;
-  font-weight: 400;
-  font-size: 0.875em;
-  line-height: 1.71429;
-`;
-
-const StyledDescription = styled.div`
-  margin-bottom: 24px;
-
-  .title {
-    font-size: 24px;
-    color: #3A414C;
-    margin-bottom: 10px;
-    position: relative;
-    z-index: 10003;
-  }
-  .subtitle {
-    color: ${props => props.theme.textColor};
-    font-size: 14px;
-  }
-`;
-
-const StyledList = styled.div`
+const StyledExportDataSection = styled.div`
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  flex-direction: row;
+  margin: 35px 0;
+  width: 100%;
+
+  .description {
+    width: 185px;
+    
+    .title {
+      font-weight: 500;
+      color: ${props => props.theme.textColorLT};
+      font-size: 12px;
+    }
+    .subtitle {
+      color: ${props => props.theme.textColor};
+      font-size: 11px;
+    }
+  }
+
+  .selection {
+    display: flex;
+    flex-wrap: wrap;
+    flex: 1;
+    padding-left: 50px;
+  }
 `;
 
-class CloudStorage extends Component {
-  render() {
-    const {isLoading, info, onExport, onCloudLoginSuccess} = this.props;
+export const StyledInputLabel = styled.label`
+  font-size: 12px;
+  color: ${props => props.theme.textColorLT};
+  letter-spacing: 0.2px;
+`;
 
-    return (
-      <StyledWrapper>
-        <StyledDescription>
-          <div className="subtitle">{KEPLER_DISCLAIMER}</div>
-
-        </StyledDescription>
-        <StyledList>
-          {!isLoading && Object.keys(AUTH_HANDLERS).map((name, index) => (
-            <AuthHandlerTile
-              key={index}
-              token={AUTH_HANDLERS[name].getAccessToken()}
-              isLoading={isLoading}
-              metadata={info && info.metadata}
-              onExport={onExport}
-              onLogin={() => AUTH_HANDLERS[name].handleLogin(onCloudLoginSuccess)}
-            />
-          ))}
-        </StyledList>
-        {isLoading && (<StatusPanel isLoading={isLoading} {...info} />)}
-      </StyledWrapper>
-    );
+const StyledInput = styled.input`
+  width: 100%;
+  padding: ${props => props.theme.inputPadding};
+  color: ${props => props.error ? 'red' : props.theme.titleColorLT};
+  height: ${props => props.theme.inputBoxHeight};
+  border: 0;
+  outline: 0;
+  font-size: 14px;
+  
+  :active,
+  :focus,
+  &.focus,
+  &.active {
+    outline: 0;
   }
+`;
+
+export const StyledBtn = styled.button`
+  background-color: ${props => props.theme.primaryBtnActBgd};
+  color: ${props => props.theme.primaryBtnActColor};
+  &:focus {
+    outline: none;
+  }
+`;
+
+export const StyleSharingUrl = styled.div`
+  width: 100%;
+  display: flex;
+  margin-bottom: 14px;
+  flex-direction: column;
+`;
+
+const SharingUrl = ({url, message}) => (
+  <StyleSharingUrl>
+    <StyledInputLabel>{message}</StyledInputLabel>
+    <div style={{display: 'flex'}}>
+      <StyledInput type="text" value={url}/>
+      <CopyToClipboard text={url}>
+        <StyledBtn>copy</StyledBtn>
+      </CopyToClipboard>
+    </div>
+
+  </StyleSharingUrl>
+);
+
+const ExportCloudModal = ({
+  isLoading,
+  info,
+  onExport,
+  onCloudLoginSuccess
+}) => {
+  const metaUrl = get(info, ['metadata', 'url']);
+  const sharingLink = metaUrl ? getMapPermalink(metaUrl) : null;
+  return (
+    <div className="export-data-modal">
+      <StyledModalContent>
+        <div>
+          <StyledExportDataSection>
+            <div className="description">
+              <div className="title">
+                Save and share current map via URL
+              </div>
+              <div className="subtitle">
+                {KEPLER_DISCLAIMER}
+              </div>
+            </div>
+          </StyledExportDataSection>
+
+          <StyledExportDataSection>
+            <div className="description">
+              <div className="title">
+                Data Type
+              </div>
+              <div className="subtitle">
+                Choose the type of data you want to export
+              </div>
+            </div>
+            <div className="selection">
+              {Object.keys(AUTH_HANDLERS).map((name, index) => (
+                <CloudTile
+                  key={index}
+                  token={AUTH_HANDLERS[name].getAccessToken()}
+                  onExport={onExport}
+                  onLogin={() => AUTH_HANDLERS[name].handleLogin(onCloudLoginSuccess)}
+                />
+              ))}
+            </div>
+          </StyledExportDataSection>
+          <StyledExportDataSection>
+            <div className="selection">
+              {isLoading && (
+                <StatusPanel isLoading={isLoading} {...info} />
+              )}
+              {metaUrl && [
+                (<SharingUrl key={0} url={sharingLink} message={'Share your map with other users'}/>),
+                (<SharingUrl key={1} url={metaUrl} message={'Your new saved configuration'}/>)
+              ]}
+            </div>
+          </StyledExportDataSection>
+        </div>
+      </StyledModalContent>
+    </div>
+  )
 };
 
-export default CloudStorage;
+export default ExportCloudModal;

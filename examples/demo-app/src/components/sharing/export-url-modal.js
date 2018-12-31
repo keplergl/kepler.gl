@@ -19,26 +19,30 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import ModalDialog from 'kepler.gl/components/common/modal';
+import {Modal} from 'kepler.gl/components';
 import CloudStorage from './cloud-storage';
-import {ThemeProvider} from 'styled-components';
-import {themeLT as theme} from 'kepler.gl/styles';
 
-const ExportUrlModal = ({sharing, isOpen, onClose, onExport, onCloudLoginSuccess}) => (
-  <ThemeProvider theme={theme}>
-    <ModalDialog
-      isOpen={isOpen}
-      close={onClose}
-      title={'Save / Share your map'}
-    >
-      <CloudStorage
-        isLoading={sharing.isLoading}
-        info={sharing.info}
-        onExport={onExport}
-        onCloudLoginSuccess={onCloudLoginSuccess}
-      />
-    </ModalDialog>
-  </ThemeProvider>
+const ExportUrlModal = ({
+  sharing,
+  isOpen,
+  onClose,
+  onExport,
+  onCloudLoginSuccess,
+  parentSelector
+}) => (
+  <Modal
+    isOpen={isOpen}
+    close={onClose}
+    title={'Save / Share your map'}
+    parentSelector={parentSelector}
+  >
+    <CloudStorage
+      isLoading={sharing.isLoading}
+      info={sharing.info}
+      onExport={onExport}
+      onCloudLoginSuccess={onCloudLoginSuccess}
+    />
+  </Modal>
 );
 
 export default ExportUrlModal;
