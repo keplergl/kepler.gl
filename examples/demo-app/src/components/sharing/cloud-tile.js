@@ -20,7 +20,6 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import DropboxIcon from '../icons/dropbox-icon';
 
 const StyledTileWrapper = styled.div`
   display: flex;
@@ -64,29 +63,16 @@ const TileButton = styled.button`
   outline: 0;
 `;
 
-const dropboxLogo = (<DropboxIcon height="64px" />);
-
-const CloudTile = ({token, onExport, onLogin, icon = dropboxLogo}) => {
+const CloudTile = ({token, onExport, onLogin, Icon}) => {
   return (
     <StyledTileWrapper>
       <StyledTile>
-        {token ?
-          (
-            <div>
-              <TileButton onClick={onExport}>
-                {icon}
-              </TileButton>
-              <StyledLabel>Upload</StyledLabel>
-            </div>
-          ) : (
-            <div>
-              <TileButton onClick={onLogin}>
-                {icon}
-              </TileButton>
-              <StyledLabel>Login</StyledLabel>
-            </div>
-          )
-        }
+        <div>
+          <TileButton onClick={token ? onExport : onLogin}>
+            <Icon height="64px" />
+          </TileButton>
+          <StyledLabel>{token ? 'Upload' : 'Login'}</StyledLabel>
+        </div>
       </StyledTile>
     </StyledTileWrapper>
   );

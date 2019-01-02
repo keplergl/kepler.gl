@@ -147,6 +147,7 @@ const ExportCloudModal = ({
                   token={AUTH_HANDLERS[name].getAccessToken()}
                   onExport={onExport}
                   onLogin={() => AUTH_HANDLERS[name].handleLogin(onCloudLoginSuccess)}
+                  Icon={AUTH_HANDLERS[name].icon}
                 />
               ))}
             </div>

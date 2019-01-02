@@ -22,6 +22,7 @@
 import {Dropbox} from 'dropbox';
 import {parseQueryString} from '../url';
 import window from 'global/window'
+import DropboxIcon from '../../components/icons/dropbox-icon';
 
 const DROPBOX_CLIEND_ID = process.env.DropboxClientId;
 const NAME = 'dropbox';
@@ -52,9 +53,7 @@ function getAccessTokenFromLocation(location) {
   // dropbox token usually start with # therefore we want to remore the '#'
   const query = window.location.hash.substring(1);
 
-  const token = parseQueryString(query).access_token;
-
-  return token;
+  return parseQueryString(query).access_token;
 }
 
 /**
@@ -154,5 +153,6 @@ export default {
   getAccessTokenFromLocation,
   handleLogin,
   uploadFile,
-  getAccessToken
+  getAccessToken,
+  icon: DropboxIcon
 };
