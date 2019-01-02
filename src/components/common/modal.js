@@ -155,7 +155,9 @@ class ModalDialog extends Component {
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
             zIndex: 10000,
             overflowY: 'auto',
-            position: 'absolute'
+            position: 'absolute',
+            // in case we want to override the modal dialog style
+            ...props.style
           }
         }}
       >
@@ -164,24 +166,24 @@ class ModalDialog extends Component {
           cssStyle={props.cssStyle}
           footer={props.footer}
         >
-          {props.close ? (
+          {props.close && (
             <CloseButton className="modal--close" onClick={props.close}>
               <Delete height="14px" />
             </CloseButton>
-          ) : null}
+          )}
           <div style={{padding: '0px 72px'}}>
-            {props.title ? (
+            {props.title && (
               <ModalTitle className="modal--title">{props.title}</ModalTitle>
-            ) : null}
+            )}
             <ModalContent className="content">{props.children}</ModalContent>
-            {props.footer ? (
+            {props.footer && (
               <ModalFooter
                 cancel={props.close}
                 confirm={props.onConfirm}
                 cancelButton={props.cancelButton}
                 confirmButton={props.confirmButton}
               />
-            ) : null}
+            )}
           </div>
 
         </ModalContentWrapper>

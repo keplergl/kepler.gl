@@ -40,7 +40,7 @@ export * from './components';
 export * from './layers';
 
 // Styles
-export * from './styles/base';
+export * from './styles';
 
 // Default export
 export {default} from './components';

@@ -36,17 +36,7 @@ import {
 } from '../actions';
 
 import {DEFAULT_LOADING_METHOD, LOADING_METHODS} from '../constants/default-settings';
-
-/**
- * Generate a hash string based on number of character
- * @param {number} count
- * @returns {string} hash string
- */
-function generateHashId(count) {
-  return Math.random()
-    .toString(36)
-    .substr(count);
-}
+import { generateHashId } from '../utils/strings';
 
 // INITIAL_APP_STATE
 const initialAppState = {

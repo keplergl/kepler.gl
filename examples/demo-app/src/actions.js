@@ -29,6 +29,7 @@ import {
 } from './constants/default-settings';
 import {LOADING_METHODS_NAMES} from './constants/default-settings';
 import {AUTH_HANDLERS} from './utils/sharing/authentication';
+import {generateHashId} from './utils/strings';
 
 // CONSTANTS
 export const INIT = 'INIT';
@@ -358,7 +359,7 @@ export function exportFileToCloud(data, handlerName = 'dropbox') {
     // we could save bandwidth if we used a single line
     // but it wouldn't be readable
     const newBlob = new Blob([JSON.stringify(data)], {type: 'application/json'});
-    const file = new File([newBlob], `kepler.gl/keplergl_${(new Date()).toISOString()}.json`);
+    const file = new File([newBlob], `kepler.gl/keplergl_${generateHashId(6)}.json`);
     dispatch(setPushingFile(true, {filename: file.name, status: 'uploading', metadata: null}));
     authHandler.uploadFile({blob: file, isPublic: true, authHandler})
     // need to perform share as well

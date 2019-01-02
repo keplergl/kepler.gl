@@ -44,6 +44,8 @@ import {generateHashId} from 'utils/utils';
 
 import {theme} from 'styles/base';
 
+// Maybe we should think about exporting this or creating a variable
+// as part of the base.js theme
 const GlobalStyle = styled.div`
   font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
   font-weight: 400;
