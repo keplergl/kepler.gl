@@ -36,8 +36,6 @@ const StyledExportDataSection = styled.div`
   width: 100%;
 
   .description {
-    width: 185px;
-    
     .title {
       font-weight: 500;
       color: ${props => props.theme.textColorLT};
@@ -125,7 +123,7 @@ const ExportCloudModal = ({
               <div className="title">
                 Save and share current map via URL
               </div>
-              <div className="subtitle">
+              <div className="subtitle" style={{color: 'red', fontWeight: 500}}>
                 {KEPLER_DISCLAIMER}
               </div>
             </div>
