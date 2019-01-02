@@ -132,6 +132,7 @@ function detectResponseError(response) {
  */
 export function loadRemoteMap(options) {
   return dispatch => {
+    dispatch(setLoadingMapStatus(true));
     loadRemoteRawData(options.dataUrl).then(
       // In this part we turn the response into a FileBlob
       // so we can use it to call loadFiles
@@ -140,8 +141,10 @@ export function loadRemoteMap(options) {
           /* eslint-disable no-undef */
           new File([file], options.dataUrl)
           /* eslint-enable no-undef */
-        ]));
-        dispatch(setLoadingMapStatus(false));
+        ])).then(
+          () => dispatch(setLoadingMapStatus(false))
+        );
+
       },
       error => {
         const {target = {}} = error;
@@ -149,7 +152,6 @@ export function loadRemoteMap(options) {
         dispatch(loadRemoteResourceError({status, message: responseText}, options.dataUrl));
       }
     );
-    dispatch(setLoadingMapStatus(true));
   }
 }
 
