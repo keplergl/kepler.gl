@@ -23,7 +23,6 @@ import {findDOMNode} from 'react-dom';
 import styled, {ThemeProvider}  from 'styled-components';
 import window from 'global/window';
 import {connect} from 'react-redux';
-import KeplerGlSchema from 'kepler.gl/schemas';
 import {theme} from 'kepler.gl/styles';
 import Banner from './components/banner';
 import Announcement from './components/announcement';
@@ -231,10 +230,7 @@ class App extends Component {
   };
 
   _onExportToCloud = () => {
-    // we pass all props because we avoid to create new variables
-    // TODO: move this fileContent onto action
-    const fileContent = KeplerGlSchema.save(this.props.demo.keplerGl.map);
-    this.props.dispatch(exportFileToCloud(fileContent))
+    this.props.dispatch(exportFileToCloud())
   };
 
   _onCloudLoginSuccess = () => {
