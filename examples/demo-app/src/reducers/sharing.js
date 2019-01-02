@@ -18,29 +18,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// Reducers
-export * from 'reducers';
+import {handleActions} from 'redux-actions';
+import { AUTH_HANDLERS } from '../utils/sharing/authentication';
+import { CLOUD_LOGIC_SUCCESS, LOAD_REMOTE_RESOURCE_ERROR, PUSHING_FILE } from '../actions';
 
-// Schemas
-export * from './schemas';
+const readAuthTokens = () => Object.keys(AUTH_HANDLERS)
+  .reduce((tokens, name) => ({
+    ...tokens,
+    [name]: AUTH_HANDLERS[name].getAccessToken()
+  }), {});
 
-// Actions
-export * from './actions';
+const sharingInitialState = {
+  isLoading: false,
+  status: null,
+  info: null,
+  tokens: readAuthTokens()
+};
 
-// Constants
-export * from './constants';
+// file upload reducer
+export const sharingReducer = handleActions({
+  [LOAD_REMOTE_RESOURCE_ERROR]: (state, action) => ({
+    ...state,
+    error: action.error,
+    currentOption: {dataUrl: action.url},
+    isMapLoading: false
+  }),
+  [PUSHING_FILE]: (state, action) => ({
+    ...state,
+    isLoading: action.isLoading,
+    info: action.metadata
+  }),
+  [CLOUD_LOGIC_SUCCESS]: state => ({
+    ...state,
+    tokens: readAuthTokens()
+  })
+}, sharingInitialState);
 
-// Processors
-export * from './processors';
-
-// Components
-export * from './components';
-
-// Layers
-export * from './layers';
-
-// Styles
-export * from './styles';
-
-// Default export
-export {default} from './components';
+export default sharingReducer;

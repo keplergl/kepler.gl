@@ -19,20 +19,26 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import styled from 'styled-components';
+import {findDOMNode} from 'react-dom';
+import styled, {ThemeProvider}  from 'styled-components';
 import window from 'global/window';
 import {connect} from 'react-redux';
+import {theme} from 'kepler.gl/styles';
 import Banner from './components/banner';
 import Announcement from './components/announcement';
-
-import {loadRemoteMap, loadSampleConfigurations} from './actions';
 import {replaceLoadDataModal} from './factories/load-data-modal';
+import ExportUrlModal from './components/sharing/export-url-modal';
+
+import {
+  exportFileToCloud,
+  loadRemoteMap,
+  loadSampleConfigurations,
+  setCloudLoginSuccess
+} from './actions';
 
 const KeplerGl = require('kepler.gl/components').injectComponents([
   replaceLoadDataModal()
 ]);
-
-const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
 
 // Sample data
 /* eslint-disable no-unused-vars */
@@ -44,10 +50,12 @@ import {updateVisData, addDataToMap} from 'kepler.gl/actions';
 import Processors from 'kepler.gl/processors';
 /* eslint-enable no-unused-vars */
 
+const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
+
 const BannerHeight = 30;
 const BannerKey = 'kgHideBanner-iiba';
 
-const GlobalStyleDiv = styled.div`
+const GlobalStyle = styled.div`
   font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
   font-weight: 400;
   font-size: 0.875em;
@@ -59,6 +67,20 @@ const GlobalStyleDiv = styled.div`
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
+  }
+
+  ul {
+    margin: 0;
+    padding: 0;
+  }
+
+  li {
+    margin: 0;
+  }
+
+  a {
+    text-decoration: none;
+    color: ${props => props.theme.labelColor};
   }
 `;
 
@@ -81,18 +103,22 @@ class App extends Component {
 
     // Load map using a custom
     if (query.mapUrl) {
+      // TODO?: validate map url
       this.props.dispatch(loadRemoteMap({dataUrl: query.mapUrl}));
     }
 
+    // event listeners
     window.addEventListener('resize', this._onResize);
+
     this._onResize();
   }
 
   componentDidMount() {
-    // delay 2s to show the banner
-    // if (!window.localStorage.getItem(BannerKey)) {
-    //  window.setTimeout(this._showBanner, 3000);
-    // }
+    // delay zs to show the banner
+    if (!window.localStorage.getItem(BannerKey)) {
+      window.setTimeout(this._showBanner, 3000);
+    }
+
     // load sample data
     // this._loadSampleData();
   }
@@ -195,40 +221,78 @@ class App extends Component {
     );
   }
 
+  _toggleCloudModal = () => {
+    // TODO: this lives only in the demo hence we use the state for now
+    // REFCOTOR using redux
+    this.setState({
+      cloudModalOpen: !this.state.cloudModalOpen
+    });
+  };
+
+  _onExportToCloud = () => {
+    this.props.dispatch(exportFileToCloud())
+  };
+
+  _onCloudLoginSuccess = () => {
+    this.props.dispatch(setCloudLoginSuccess());
+  };
+
   render() {
     const {showBanner, width, height} = this.state;
+    const {sharing} = this.props.demo;
+    const rootNode = this.root;
     return (
-      <GlobalStyleDiv>
-        <Banner
-          show={this.state.showBanner}
-          height={BannerHeight}
-          bgColor="#82368c"
-          onClose={this._hideBanner}
+      <ThemeProvider theme={theme}>
+        <GlobalStyle
+          // this is to apply the same modal style as kepler.gl core
+          // because styled-components doesn't always return a node
+          // https://github.com/styled-components/styled-components/issues/617
+          innerRef={node => {node ? this.root = node : null}}
         >
-          <Announcement onDisable={this._disableBanner}/>
-        </Banner>
-        <div
-          style={{
-            transition: 'margin 1s, height 1s',
-            position: 'absolute',
-            width: '100%',
-            height: showBanner ? `calc(100% - ${BannerHeight}px)` : '100%',
-            minHeight: `calc(100% - ${BannerHeight}px)`,
-            marginTop: showBanner ? `${BannerHeight}px` : 0
-          }}
-        >
-          <KeplerGl
-            mapboxApiAccessToken={MAPBOX_TOKEN}
-            id="map"
-            /*
-             * Specify path to keplerGl state, because it is not mount at the root
-             */
-            getState={state => state.demo.keplerGl}
-            width={width}
-            height={height - (showBanner ? BannerHeight : 0)}
-          />
-        </div>
-      </GlobalStyleDiv>
+          <Banner
+            show={this.state.showBanner}
+            height={BannerHeight}
+            bgColor="#82368c"
+            onClose={this._hideBanner}
+          >
+            <Announcement onDisable={this._disableBanner}/>
+          </Banner>
+          {rootNode && (
+            <ExportUrlModal
+              sharing={sharing}
+              isOpen={Boolean(this.state.cloudModalOpen)}
+              onClose={this._toggleCloudModal}
+              onExport={this._onExportToCloud}
+              onCloudLoginSuccess={this._onCloudLoginSuccess}
+              // this is to apply the same modal style as kepler.gl core
+              parentSelector={() => findDOMNode(this.root)}
+            />
+          )}
+          <div
+            style={{
+              transition: 'margin 1s, height 1s',
+              position: 'absolute',
+              width: '100%',
+              height: showBanner ? `calc(100% - ${BannerHeight}px)` : '100%',
+              minHeight: `calc(100% - ${BannerHeight}px)`,
+              marginTop: showBanner ? `${BannerHeight}px` : 0
+            }}
+          >
+            <KeplerGl
+              mapboxApiAccessToken={MAPBOX_TOKEN}
+              id="map"
+              /*
+               * Specify path to keplerGl state, because it is not mount at the root
+               */
+              getState={state => state.demo.keplerGl}
+              width={width}
+              height={height - (showBanner ? BannerHeight : 0)}
+              onSaveMap={this._toggleCloudModal}
+            />
+          </div>
+        </GlobalStyle>
+      </ThemeProvider>
+
     );
   }
 }

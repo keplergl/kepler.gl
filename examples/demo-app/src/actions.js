@@ -28,6 +28,9 @@ import {
   MAP_CONFIG_URL
 } from './constants/default-settings';
 import {LOADING_METHODS_NAMES} from './constants/default-settings';
+import {AUTH_HANDLERS} from './utils/sharing/authentication';
+import {generateHashId} from './utils/strings';
+import KeplerGlSchema from 'kepler.gl/schemas';
 
 // CONSTANTS
 export const INIT = 'INIT';
@@ -37,20 +40,40 @@ export const LOAD_REMOTE_RESOURCE_ERROR = 'LOAD_REMOTE_RESOURCE_ERROR';
 export const LOAD_MAP_SAMPLE_FILE = 'LOAD_MAP_SAMPLE_FILE';
 export const SET_SAMPLE_LOADING_STATUS = 'SET_SAMPLE_LOADING_STATUS';
 
+// Sharing
+export const PUSHING_FILE = 'PUSHING_FILE';
+export const CLOUD_LOGIC_SUCCESS  = 'CLOUD_LOGIC_SUCCESS';
+
 // ACTIONS
-export function switchToLoadingMethod(method) {
-  return dispatch => {
-    dispatch(setLoadingMethod(method));
-    if (method === LOADING_METHODS_NAMES.sample) {
-      dispatch(loadSampleConfigurations());
-    }
+export function initApp() {
+  return {
+    type: INIT
   };
 }
 
+/**
+ * this method set the current loading method
+ * @param {string} method the string id for the loading method to use
+ * @returns {{type: string, method: *}}
+ */
 export function setLoadingMethod(method) {
   return {
     type: SET_LOADING_METHOD,
     method
+  };
+}
+
+/**
+ * this action is triggered when user switches between load modal tabs
+ * @param {string} method
+ * @returns {Function}
+ */
+export function switchToLoadingMethod(method) {
+  return (dispatch, getState) => {
+    dispatch(setLoadingMethod(method));
+    if (method === LOADING_METHODS_NAMES.sample && getState().demo.app.sampleMaps.length === 0) {
+      dispatch(loadSampleConfigurations());
+    }
   };
 }
 
@@ -111,21 +134,26 @@ function detectResponseError(response) {
  */
 export function loadRemoteMap(options) {
   return dispatch => {
+    dispatch(setLoadingMapStatus(true));
     loadRemoteRawData(options.dataUrl).then(
       // In this part we turn the response into a FileBlob
       // so we can use it to call loadFiles
-      file => dispatch(loadFiles([
-        /* eslint-disable no-undef */
-        new File([file], options.dataUrl)
-        /* eslint-enable no-undef */
-      ])),
+      file => {
+        dispatch(loadFiles([
+          /* eslint-disable no-undef */
+          new File([file], options.dataUrl)
+          /* eslint-enable no-undef */
+        ])).then(
+          () => dispatch(setLoadingMapStatus(false))
+        );
+
+      },
       error => {
         const {target = {}} = error;
         const {status, responseText} = target;
         dispatch(loadRemoteResourceError({status, message: responseText}, options.dataUrl));
       }
     );
-    dispatch(setLoadingMapStatus(true));
   }
 }
 
@@ -305,3 +333,50 @@ export function loadSampleConfigurations(sampleMapId = null) {
   }
 }
 
+/**
+ * this action will be triggered when the file is being uploaded
+ * @param isLoading
+ * @param metadata
+ * @returns {{type: string, isLoading: *, metadata: *}}
+ */
+export function setPushingFile(isLoading, metadata) {
+  return {
+    type: PUSHING_FILE,
+    isLoading,
+    metadata
+  };
+}
+
+/**
+ * This method will export the current kepler config file to the choosen cloud platform
+ * @param data
+ * @param handlerName
+ * @returns {Function}
+ */
+export function exportFileToCloud(handlerName = 'dropbox') {
+  const authHandler = AUTH_HANDLERS[handlerName];
+  return (dispatch, getState) => {
+    // extract data from kepler
+    const data = KeplerGlSchema.save(getState().demo.keplerGl.map);
+    const newBlob = new Blob([JSON.stringify(data)], {type: 'application/json'});
+    const file = new File([newBlob], `kepler.gl/keplergl_${generateHashId(6)}.json`);
+    dispatch(setPushingFile(true, {filename: file.name, status: 'uploading', metadata: null}));
+    authHandler.uploadFile({blob: file, isPublic: true, authHandler})
+    // need to perform share as well
+      .then(
+        response => {
+          dispatch(push(`/map?mapUrl=${response.url}`));
+          dispatch(setPushingFile(false, {filename: file.name, status: 'success', metadata: response}));
+        },
+        error => {
+          dispatch(setPushingFile(false, {filename: file.name, status: 'error', error}));
+        }
+      )
+  };
+}
+
+export function setCloudLoginSuccess() {
+  return {
+    type: CLOUD_LOGIC_SUCCESS
+  };
+}

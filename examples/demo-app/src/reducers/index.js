@@ -25,26 +25,18 @@ import keplerGlReducer, {combineUpdaters} from 'kepler.gl/reducers';
 import Processor from 'kepler.gl/processors';
 import KeplerGlSchema from 'kepler.gl/schemas';
 
+import sharingReducer from './sharing';
+
 import {
   INIT,
   SET_LOADING_METHOD,
   LOAD_MAP_SAMPLE_FILE,
   LOAD_REMOTE_RESOURCE_SUCCESS,
-  SET_SAMPLE_LOADING_STATUS, LOAD_REMOTE_RESOURCE_ERROR
-} from './actions';
+  SET_SAMPLE_LOADING_STATUS
+} from '../actions';
 
-import {DEFAULT_LOADING_METHOD, LOADING_METHODS} from './constants/default-settings';
-
-/**
- * Generate a hash string based on number of character
- * @param {number} count
- * @returns {string} hash string
- */
-function generateHashId(count) {
-  return Math.random()
-    .toString(36)
-    .substr(count);
-}
+import {DEFAULT_LOADING_METHOD, LOADING_METHODS} from '../constants/default-settings';
+import { generateHashId } from '../utils/strings';
 
 // INITIAL_APP_STATE
 const initialAppState = {
@@ -54,7 +46,7 @@ const initialAppState = {
   currentOption: DEFAULT_LOADING_METHOD.options[0],
   previousMethod: null,
   sampleMaps: [], // this is used to store sample maps fetch from a remote json file
-  isMapLoading: false, // determine whether we are loading a sample map
+  isMapLoading: false, // determine whether we are loading a sample map,
   error: null // contains error when loading/retrieving data/configuration
     // {
     //   status: null,
@@ -64,7 +56,7 @@ const initialAppState = {
 
 // App reducer
 export const appReducer = handleActions({
-  [INIT]: (state, action) => ({
+  [INIT]: (state) => ({
     ...state,
     loaded: true
   }),
@@ -81,12 +73,6 @@ export const appReducer = handleActions({
   [SET_SAMPLE_LOADING_STATUS]: (state, action) => ({
     ...state,
     isMapLoading: action.isMapLoading
-  }),
-  [LOAD_REMOTE_RESOURCE_ERROR]: (state, action) => ({
-    ...state,
-    error: action.error,
-    currentOption: {dataUrl: action.url},
-    isMapLoading: false
   })
 }, initialAppState);
 
@@ -95,7 +81,8 @@ export const appReducer = handleActions({
 const demoReducer = combineReducers({
   // mount keplerGl reducer
   keplerGl: keplerGlReducer,
-  app: appReducer
+  app: appReducer,
+  sharing: sharingReducer
 });
 
 // this can be moved into a action and call kepler.gl action
@@ -105,7 +92,7 @@ const demoReducer = combineReducers({
  * @param action {map: resultset, config, map}
  * @returns {{app: {isMapLoading: boolean}, keplerGl: {map: (state|*)}}}
  */
-export const loadRemoteFileDataSuccess = (state, action) => {
+export const loadRemoteResourceSuccess = (state, action) => {
   // TODO: replace generate with a different function
   const datasetId = action.options.id || generateHashId(6);
   const {dataUrl} = action.options;
@@ -149,7 +136,7 @@ export const loadRemoteFileDataSuccess = (state, action) => {
 };
 
 const composedUpdaters = {
-  [LOAD_REMOTE_RESOURCE_SUCCESS]: loadRemoteFileDataSuccess
+  [LOAD_REMOTE_RESOURCE_SUCCESS]: loadRemoteResourceSuccess
 };
 
 const composedReducer = (state, action) => {

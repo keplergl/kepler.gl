@@ -18,29 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// Reducers
-export * from 'reducers';
+import DropboxHandler from './dropbox';
 
-// Schemas
-export * from './schemas';
-
-// Actions
-export * from './actions';
-
-// Constants
-export * from './constants';
-
-// Processors
-export * from './processors';
-
-// Components
-export * from './components';
-
-// Layers
-export * from './layers';
-
-// Styles
-export * from './styles';
-
-// Default export
-export {default} from './components';
+export const AUTH_HANDLERS = {
+  [DropboxHandler.name]: DropboxHandler
+};

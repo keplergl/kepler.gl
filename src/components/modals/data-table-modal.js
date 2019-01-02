@@ -115,6 +115,7 @@ export class DataTableModal extends Component {
     }
 
     const activeDataset = datasets[dataId];
+    // TODO: this should be all data
     const rows = activeDataset.data;
     const columns = activeDataset.fields
       .map((field, i) => ({

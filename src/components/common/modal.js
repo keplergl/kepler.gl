@@ -29,7 +29,7 @@ import {Button} from 'components/common/styled-components';
 const ModalContentWrapper = styled.div`
   width: 60%;
   max-width: 960px;
-  padding: 40px 96px;
+  padding: 24px 24px 40px;
   position: absolute;
   top: 92px;
   left: 0;
@@ -51,11 +51,6 @@ const CloseButton = styled.div`
   color: ${props => props.theme.titleColorLT};
   display: flex;
   justify-content: flex-end;
-  left: 0;
-  padding: 24px;
-  position: absolute;
-  top: 0;
-  width: 100%;
   z-index: 10005;
 
   :hover {
@@ -124,7 +119,7 @@ export const ModalFooter = ({
       </FooterActionWrapper>
     </StyledModalFooter>
   );
-}
+};
 
 class ModalDialog extends Component {
   static propTypes = {
@@ -160,7 +155,9 @@ class ModalDialog extends Component {
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
             zIndex: 10000,
             overflowY: 'auto',
-            position: 'absolute'
+            position: 'absolute',
+            // in case we want to override the modal dialog style
+            ...props.style
           }
         }}
       >
@@ -169,23 +166,26 @@ class ModalDialog extends Component {
           cssStyle={props.cssStyle}
           footer={props.footer}
         >
-          {props.close ? (
+          {props.close && (
             <CloseButton className="modal--close" onClick={props.close}>
               <Delete height="14px" />
             </CloseButton>
-          ) : null}
-          {props.title ? (
-            <ModalTitle className="modal--title">{props.title}</ModalTitle>
-          ) : null}
-          <ModalContent className="content">{props.children}</ModalContent>
-          {props.footer ? (
-            <ModalFooter
-              cancel={props.close}
-              confirm={props.onConfirm}
-              cancelButton={props.cancelButton}
-              confirmButton={props.confirmButton}
-            />
-          ) : null}
+          )}
+          <div style={{padding: '0px 72px'}}>
+            {props.title && (
+              <ModalTitle className="modal--title">{props.title}</ModalTitle>
+            )}
+            <ModalContent className="content">{props.children}</ModalContent>
+            {props.footer && (
+              <ModalFooter
+                cancel={props.close}
+                confirm={props.onConfirm}
+                cancelButton={props.cancelButton}
+                confirmButton={props.confirmButton}
+              />
+            )}
+          </div>
+
         </ModalContentWrapper>
       </Modal>
     );

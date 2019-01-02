@@ -18,29 +18,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// Reducers
-export * from 'reducers';
+import React from 'react';
+import {Modal} from 'kepler.gl/components';
+import CloudStorage from './cloud-storage';
 
-// Schemas
-export * from './schemas';
+const ExportUrlModal = ({
+  sharing,
+  isOpen,
+  onClose,
+  onExport,
+  onCloudLoginSuccess,
+  parentSelector
+}) => (
+  <Modal
+    isOpen={isOpen}
+    close={onClose}
+    title={'Save / Share your map'}
+    parentSelector={parentSelector}
+  >
+    <CloudStorage
+      isLoading={sharing.isLoading}
+      info={sharing.info}
+      onExport={onExport}
+      onCloudLoginSuccess={onCloudLoginSuccess}
+    />
+  </Modal>
+);
 
-// Actions
-export * from './actions';
-
-// Constants
-export * from './constants';
-
-// Processors
-export * from './processors';
-
-// Components
-export * from './components';
-
-// Layers
-export * from './layers';
-
-// Styles
-export * from './styles';
-
-// Default export
-export {default} from './components';
+export default ExportUrlModal;

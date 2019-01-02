@@ -18,29 +18,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// Reducers
-export * from 'reducers';
+import {MAP_URI} from '../constants/default-settings';
 
-// Schemas
-export * from './schemas';
+export function parseQueryString(query) {
+  const searchParams = new URLSearchParams(query);
+  const params = [...searchParams].reduce((queryParams, entry) => ({
+    ...queryParams,
+    ...(entry  && entry.length === 2 ?
+        {[entry[0]]: entry[1]} : null
+    )
+  }), {});
 
-// Actions
-export * from './actions';
+  return params;
+}
 
-// Constants
-export * from './constants';
-
-// Processors
-export * from './processors';
-
-// Components
-export * from './components';
-
-// Layers
-export * from './layers';
-
-// Styles
-export * from './styles';
-
-// Default export
-export {default} from './components';
+/**
+ * Returns a permalink with the given map url: kepler.gl/[]
+ * @param mapLink the sharing url used to store the map
+ * @returns {string}
+ */
+export function getMapPermalink(mapLink) {
+  return `${window.location.protocol}//${window.location.host}/${MAP_URI}${mapLink}`
+}

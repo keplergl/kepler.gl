@@ -60,9 +60,14 @@ const CONFIG = {
     fs: 'empty'
   },
 
+  // to support browser history api and remove the '#' sign
+  devServer: {
+    historyApiFallback: true,
+  },
+
   // Optional: Enables reading mapbox token from environment variable
   plugins: [
-    new webpack.EnvironmentPlugin(['MapboxAccessToken'])
+    new webpack.EnvironmentPlugin(['MapboxAccessToken', 'DropboxClientId'])
   ]
 };
 
