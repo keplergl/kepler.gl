@@ -119,7 +119,7 @@ const ExportCloudModal = ({
   return (
     <div className="export-data-modal">
       <StyledModalContent>
-        <div>
+        <div style={{width: '100%'}}>
           <StyledExportDataSection>
             <div className="description">
               <div className="title">
