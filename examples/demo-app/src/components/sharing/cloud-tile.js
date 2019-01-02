@@ -70,8 +70,8 @@ const CloudTile = ({token, onExport, onLogin, Icon}) => {
         <div>
           <TileButton onClick={token ? onExport : onLogin}>
             <Icon height="64px" />
+            <StyledLabel>{token ? 'Upload' : 'Login'}</StyledLabel>
           </TileButton>
-          <StyledLabel>{token ? 'Upload' : 'Login'}</StyledLabel>
         </div>
       </StyledTile>
     </StyledTileWrapper>

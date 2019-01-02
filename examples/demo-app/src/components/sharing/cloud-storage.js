@@ -154,13 +154,15 @@ const ExportCloudModal = ({
           </StyledExportDataSection>
           <StyledExportDataSection>
             <div className="selection">
-              {isLoading && (
-                <StatusPanel isLoading={isLoading} {...info} />
-              )}
-              {metaUrl && [
-                (<SharingUrl key={0} url={sharingLink} message={'Share your map with other users'}/>),
-                (<SharingUrl key={1} url={metaUrl} message={'Your new saved configuration'}/>)
-              ]}
+              <div style={{margin: 'auto', width: '100%'}}>
+                {isLoading && (
+                  <StatusPanel isLoading={isLoading} {...info} />
+                )}
+                {metaUrl && [
+                  (<SharingUrl key={0} url={sharingLink} message={'Share your map with other users'}/>),
+                  (<SharingUrl key={1} url={metaUrl} message={'Your new saved configuration'}/>)
+                ]}
+              </div>
             </div>
           </StyledExportDataSection>
         </div>
