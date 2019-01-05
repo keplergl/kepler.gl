@@ -31,13 +31,16 @@ This package consists of a reducer and the UI components to render and customize
 For information on how to embed kepler.gl in your app take a look at [this tutorial][vis-academy] on vis.academy.
 
 ## Links
-- [Kepler.gl user guide][user-guide]
-- [Kepler.gl tutorial on vis.academy][vis-academy]
+- [Website][web]
+- [Demo][demo-app]
+- [Examples][examples]
+- [App User guide][user-guide]
+- [Tutorial][vis-academy]
 - [Stack Overflow][stack]
-- [Contribution guidelines][contributing]
+- [Contribution Guidelines][contributing]
 - API Docs - Coming Soon
 
-### Env
+## Env
 Use Node v6 and above, older node versions have not been tested
 
 For best results, use [nvm](https://github.com/creationix/nvm) `nvm install`.
@@ -53,7 +56,7 @@ yarn add kepler.gl
 
 kepler.gl is built upon [mapbox][mapbox]. You will need a [Mapbox Access Token][mapbox-token] to use it.
 
-### <a name="dev-env"></a> Develop kepler.gl
+## Develop kepler.gl
 
 Take a look at the [development guide][developers] to develop kepler.gl locally.
 
