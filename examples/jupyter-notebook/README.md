@@ -16,12 +16,12 @@ add mapbox access token to node env
 export MapboxAccessToken=<your_mapbox_token>
 ```
 
-to Start the app
+start the app
 ```sh
 npm start
 ```
 
-to Build. A single keplergl.html file will be put into `dist-workbench` folder
+build a single keplergl.html file inside `dist-workbench` folder
 
 ```sh
 mkdir dist-workbench

@@ -42,9 +42,9 @@ const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
 // Sample data
 import sampleData from './data/sample-data';
 import sampleConfig from './configurations/config.json';
-import keplerglJson from './data/keplergl.json';
 
 /* eslint-disable no-unused-vars */
+import keplerglJson from './data/keplergl.json';
 import {addDataToMap, resetMapConfig} from 'kepler.gl/actions';
 import Processors from 'kepler.gl/processors';
 /* eslint-enable no-unused-vars */
