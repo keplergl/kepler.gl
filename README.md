@@ -19,86 +19,54 @@
 <h1 align="center">Kepler.gl | <a href="https://uber.github.io/kepler.gl">Website</a> |
 <a href="https://uber.github.io/kepler.gl/#/demo">Demo App</a>
 </h1>
+<h3></h3>
 
+[Kepler.gl][web] is a data-agnostic, high-performance web-based application for visual exploration of large-scale geolocation data sets. Built on top of [deck.gl](http://uber.github.io/deck.gl/#/), kepler.gl can render millions of points representing thousands of trips and perform spatial aggregations on the fly.
 
-[kepler.gl](http://www.kepler.gl/) is a data-agnostic, high-performance web-based application for visual exploration of large-scale geolocation data sets. Built on top of [deck.gl](http://uber.github.io/deck.gl/#/), kepler.gl can render millions of points representing thousands of trips and perform spatial aggregations on the fly.
-
-For what it is capable of, take a look at [kepler.gl demo app](https://uber.github.io/kepler.gl/#/demo).
+For what it is capable of, take a look at [kepler.gl demo app][demo-app].
 
 Kepler.gl is a redux component that uses redux reducer to store and manage state transitions.
 This package consists of a reducer and the UI components to render and customize the map.
 
-For information on how to save the map state you've created and have it persist after you've closed the browser, take a look at [this tutorial on vis.academy](http://vis.academy/#/kepler.gl/).
-
-## User guide
-Check out [kepler.gl's user documentation here](docs/a-introduction.md)
-
-## Dev Questions - StackOverflow
-Check out this [StackOverflow](https://stackoverflow.com/questions/tagged/kepler.gl)
+For information on how to embed kepler.gl in your app take a look at [this tutorial][vis-academy] on vis.academy.
 
 ## Links
+- [Website][web]
+- [Demo][demo-app]
+- [Examples][examples]
+- [App User guide][user-guide]
+- [Tutorial][vis-academy]
+- [Stack Overflow][stack]
+- [Contribution Guidelines][contributing]
+- API Docs - Coming Soon
 
-### Env
+## Env
 Use Node v6 and above, older node versions have not been tested
 
 For best results, use [nvm](https://github.com/creationix/nvm) `nvm install`.
 
-### Install
+## Install kepler.gl
 Install node (`> 6`), yarn, and project dependencies
 
 ```
 npm install --save kepler.gl
+// or
+yarn add kepler.gl
 ```
 
-Get a [Mapbox Access Token](https://www.mapbox.com/help/define-access-token/).
+kepler.gl is built upon [mapbox][mapbox]. You will need a [Mapbox Access Token][mapbox-token] to use it.
 
-### Local dev
-```
-npm install
-```
-or
-```
-yarn --ignore-engines
-```
-then
-```
-export MapboxAccessToken=<insert_your_token>
+## Develop kepler.gl
 
-npm start
-```
-An Example app will be served at
-http://localhost:8080/
+Take a look at the [development guide][developers] to develop kepler.gl locally.
 
-### Develop The kepler.gl Website
+## Basic Usage
 
-Make sure to export mapbox token in the same terminal before start the server.
-```sh
-    export MapboxAccessToken=<insert_your_token>
-```
+Here are the basic steps to import kepler.gl into your app. You also take a look at the examples folder. Each example in the folder can be installed and run locally.
 
-In order to start
-```
-    yarn web
-```
+#### 1. Mount kepler.gl reducer in your app reducer.
+Kepler.gl uses Redux to manage its internal state, along with [react-palm][react-palm] middleware to handle side effects.
 
-To checkout the build
-```
-    cd website && yarn build
-```
-
-Publish on github pages __Authorized User Only__.
-
-<b>important* Before publish. Copy the mapbox token at [this link](http://t.uber.com/kepler.gl-token). (Only accessible by Uber developer). Deploy will fail if token is missing</b>
-```
-    export MapboxAccessToken=<insert_your_token>
-    yarn deploy
-```
-
-### Basic Usage
-You can also take a look at `kepler.gl/examples/demo-app` for how to use kepler.gl in your app
-Here are the basic steps:
-
-#### 1. Mount kepler.gl reducer in your app reducer. Kepler.gl uses [react-palm](https://github.com/btford/react-palm) to handle side effects.
 You need to add `taskMiddleware` to your store too. We are actively working on a solution where
 `react-palm` will not be required, however it is still a very nice side effects management tool that works easier for testing than react-thunk.
 
@@ -165,7 +133,7 @@ overridden by the latest instance and reset to a blank state.
 
 - Default: `undefined`
 
-You can create a free account at [www.mapbox.com](https://www.mapbox.com) and create a token at [www.mapbox.com/account/access-tokens](https://www.mapbox.com/account/access-tokens)
+You can create a free account at [mapbox][mapbox] and create a token at [www.mapbox.com/account/access-tokens][mapbox-token]
 
 ##### `getState` (Function, optional)
 
@@ -406,3 +374,17 @@ config: {
 }
 ```
 the latter will be applied and the map view will be moved the defined coordinates.
+
+[contributing]: contributing/CONTRIBUTING.md
+[demo-app]: https://uber.github.io/kepler.gl/#/demo
+[github]: https://github.com/uber/kepler.gl
+[github-pr]: https://help.github.com/articles/creating-a-pull-request/
+[mapbox]: https://www.mapbox.com
+[mapbox-token]: https://www.mapbox.com/help/define-access-token/
+[developers]: contributing/DEVELOPERS.md
+[examples]: https://github.com/uber/kepler.gl/tree/master/examples
+[user-guide]: docs/a-introduction.md
+[react-palm]: (https://github.com/btford/react-palm)
+[stack]: https://stackoverflow.com/questions/tagged/kepler.gl
+[web]: http://www.kepler.gl/
+[vis-academy]: http://vis.academy/#/kepler.gl/
