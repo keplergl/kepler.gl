@@ -12,6 +12,7 @@ you to accept the CLA when you open your pull request.
 * [Feature Requests](#feature)
 * [Improving Documentation](#docs)
 * [Submitting Pull Request](#submit-pr)
+* [Development Documentation][developers]
 
 ## <a name="coc"></a> Code of Conduct
 Help us keep kepler.gl open and inclusive. Please read and follow our [Code of Conduct](./CODE_OF_CONDUCT.md).
@@ -45,7 +46,7 @@ Questions about kepler.gl? you can checkout the examples and medium articles on 
 [User Guides][user-guide] and API Docs are saved in the [docs][api-docs] folder on Github. Help us improve documentation here by submitting a Pull Request.
 
 ## <a name="submit-pr"></a> Submitting Pull Request
-Before you submit your pull request consider the following guidelines:
+<b>First, follow the [development documentation][developers] for detailed guidance on environment setup, code style, testing and commit message conventions.</b>
 
 * Search [GitHub][git-pr] for an open or closed Pull Request
   that relates to your submission. You don't want to duplicate effort.
@@ -58,14 +59,9 @@ Before you submit your pull request consider the following guidelines:
 
 * Create your patch commit, **including appropriate test cases**.
 * If the changes affect public APIs, change or add relevant [documentation][developers.documentation].
-* Run the AngularJS [unit][developers.tests-unit] and [E2E test][developers.tests-e2e] suites, and ensure that all tests
-  pass. It is generally sufficient to run the tests only on Chrome, as our Travis integration will
-  run the tests on all supported browsers.
-* Run `yarn grunt eslint` to check that you have followed the automatically enforced coding rules
+* Run [tests][developers.tests], and ensure that all tests pass.
 * Commit your changes using a descriptive commit message that follows our
-  [commit message conventions][developers.commits]. Adherence to the
-  [commit message conventions][developers.commits] is required, because release notes are
-  automatically generated from these messages.
+  [commit message conventions][developers.commits]. Adherence to the conventions is required, because release notes are automatically generated from these messages.
 
 [cla]: https://cla-assistant.io/uber/kepler.gl
 [github]: https://github.com/uber/kepler.gl
@@ -83,3 +79,4 @@ Before you submit your pull request consider the following guidelines:
 [developers.documentation]: DEVELOPERS.md#documentation
 [developers.rules]: DEVELOPERS.md#rules
 [developers.setup]: DEVELOPERS.md#setup
+[developers.tests]: DEVELOPERS.md#tests
