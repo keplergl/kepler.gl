@@ -46,7 +46,7 @@ Questions about kepler.gl? you can checkout the examples and medium articles on 
 [User Guides][user-guide] and API Docs are saved in the [docs][api-docs] folder on Github. Help us improve documentation here by submitting a Pull Request.
 
 ## <a name="submit-pr"></a> Submitting Pull Request
-<b>First, follow the [development documentation][developers] for detailed guidance on setuping local environment, code style, testing and commit message conventions.</b>
+<b>First, follow the [development documentation][developers] for detailed guidance on environment setup, code style, testing and commit message conventions.</b>
 
 * Search [GitHub][git-pr] for an open or closed Pull Request
   that relates to your submission. You don't want to duplicate effort.
