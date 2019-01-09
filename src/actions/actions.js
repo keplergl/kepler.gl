@@ -102,7 +102,7 @@ export const addDataToMap = createAction(
 );
 
 /**
- * Reset all reducers to its initial state
+ * Reset all sub-reducers to its initial state. This can be used to clear out all configuration in the reducer.
  * @public
  */
 export const resetMapConfig = createAction(
@@ -136,7 +136,7 @@ export const receiveMapConfig = createAction(
 );
 
 /**
- * Initialize kepler.gl reducer. It is used to pass in `mapboxApiAccessToken` to `mapStyle` reducer
+ * Initialize kepler.gl reducer. It is used to pass in `mapboxApiAccessToken` to `mapStyle` reducer.
  * @param {Object} payload
  * @param {string} payload.mapboxApiAccessToken - mapboxApiAccessToken to be saved to mapStyle reducer
  * @public
