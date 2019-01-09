@@ -58,7 +58,7 @@ const mockRawData = {
 
 test('#composerStateReducer - addDataToMapComposed: mapStyle', t => {
   // init kepler.gl root and instance
-  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+  const state = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
 
   const newState = addDataToMapComposed(state, {
     payload: {

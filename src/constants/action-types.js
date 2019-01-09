@@ -22,6 +22,11 @@ import keyMirror from 'keymirror';
 import {ACTION_PREFIX} from './default-settings';
 
 const ActionTypes = keyMirror({
+  // identity action
+  REGISTER_ENTRY: null,
+  DELETE_ENTRY: null,
+  RENAME_ENTRY: null,
+
   // visState
   ADD_DATA: null,
   ADD_FILTER: null,
