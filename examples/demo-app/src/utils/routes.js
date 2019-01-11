@@ -19,6 +19,9 @@
 // THE SOFTWARE.
 
 import {AUTH_HANDLERS} from './sharing/authentication';
+import {IndexRoute, Route} from "react-router";
+import React from "react";
+import Demo from "../app";
 
 export function onAuthEnterCallback(nextState, replace, callback) {
   // TODO: detect auth provider
@@ -33,4 +36,17 @@ export function onAuthEnterCallback(nextState, replace, callback) {
   }
 
   callback();
+}
+
+export function buildAppRoutes(Component) {
+  return [
+    (<Route key="auth" path="auth" component={Demo} onEnter={onAuthEnterCallback} />),
+    (
+      <Route key="demo" path="demo">
+        <IndexRoute component={Component} />
+        <Route path="map" component={Component} />
+        <Route path="(:id)" component={Component} />
+      </Route>
+    )
+  ];
 }

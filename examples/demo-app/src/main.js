@@ -21,25 +21,22 @@
 import React from 'react';
 import document from 'global/document';
 import {Provider} from 'react-redux';
-import {browserHistory, IndexRoute, Router, Route} from 'react-router';
+import {browserHistory, Router, Route} from 'react-router';
 import {syncHistoryWithStore} from 'react-router-redux';
 import {render} from 'react-dom';
 import store from './store';
 import App from './app';
-import {onAuthEnterCallback} from './utils/routes';
+import {buildAppRoutes} from './utils/routes';
 
 const history = syncHistoryWithStore(browserHistory, store);
+
+const appRoute = buildAppRoutes(App);
 
 const Root = () => (
   <Provider store={store}>
     <Router history={history}>
       <Route path="/" component={App}>
-        <Route path="auth" component={App} onEnter={onAuthEnterCallback} />
-        <Route path="demo/">
-          <IndexRoute component={App} />
-          <Route path="map" component={App} />
-          <Route path="(:id)" component={App} />
-        </Route>
+        {appRoute}
       </Route>
     </Router>
   </Provider>

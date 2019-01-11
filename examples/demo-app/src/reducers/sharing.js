@@ -19,8 +19,8 @@
 // THE SOFTWARE.
 
 import {handleActions} from 'redux-actions';
-import { AUTH_HANDLERS } from '../utils/sharing/authentication';
-import { CLOUD_LOGIN_SUCCESS, LOAD_REMOTE_RESOURCE_ERROR, PUSHING_FILE } from '../actions';
+import {AUTH_HANDLERS} from '../utils/sharing/authentication';
+import {CLOUD_LOGIN_SUCCESS, LOAD_REMOTE_RESOURCE_ERROR, PUSHING_FILE} from '../actions';
 
 const readAuthTokens = () => Object.keys(AUTH_HANDLERS)
   .reduce((tokens, name) => ({

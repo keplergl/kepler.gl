@@ -200,7 +200,7 @@ export default class Hero extends PureComponent {
               <span>data sets.</span>
             </div>
             <ButtonContainer>
-              <LinkButton large href={`${DEMO_LINK}`}>
+              <LinkButton large href={DEMO_LINK}>
                 Get Started
               </LinkButton>
               <LinkButton

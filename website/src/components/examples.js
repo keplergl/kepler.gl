@@ -76,7 +76,7 @@ class Examples extends PureComponent {
           ))}
         </StaggeredScrollAnimation>
         <CenteredContent>
-          <LinkButton outline large href={`${DEMO_LINK}`}>
+          <LinkButton outline large href={DEMO_LINK}>
             See More
           </LinkButton>
         </CenteredContent>

@@ -166,7 +166,7 @@ export default class Footer extends PureComponent {
         </LogosContainer>
         <ButtonSection>
           <ButtonContainer>
-            <LinkButton large href={`${DEMO_LINK}`}>
+            <LinkButton large href={DEMO_LINK}>
               Get Started
             </LinkButton>
             <LinkButton

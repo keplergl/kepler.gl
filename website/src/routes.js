@@ -26,7 +26,9 @@ import store from './reducers';
 import Home from './components/home';
 import App from './components/app';
 import Demo from '../../examples/demo-app/src/app';
-import {onAuthEnterCallback} from '../../examples/demo-app/src/utils/routes';
+import {buildAppRoutes} from '../../examples/demo-app/src/utils/routes';
+
+const appRoute = buildAppRoutes(Demo);
 
 const trackPageChange = (location) => {
   const links = location.split('/');
@@ -60,23 +62,14 @@ function onEnter(nextState, replace, callback) {
     replace(location.hash.substring(1))
   }
   callback();
-};
+}
 
 // eslint-disable-next-line react/display-name
 export default () => (
   <Router history={history}>
     <Route path="/" component={App} onEnter={onEnter}>
       <IndexRoute component={Home} onEnter={onEnter} />
-      {/* Backward compatibility with hash history */}
-      <Route path="#/demo" component={Demo} />
-
-      <Route path="auth" component={Demo} onEnter={onAuthEnterCallback} />
-      <Route path="demo">
-        <IndexRoute component={Demo} />
-        <Route path="map" component={Demo} />
-        <Route path="(:id)" component={Demo} />
-      </Route>
-
+      {appRoute}
     </Route>
   </Router>
 );
