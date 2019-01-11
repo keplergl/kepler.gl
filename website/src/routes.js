@@ -47,17 +47,36 @@ history.listen(location => {
   }
 });
 
+function isOldUrl(location) {
+  return Boolean(location.pathname === '/' && location.hash && location.hash.startsWith('#/demo'))
+}
+
+function onEnter(nextState, replace, callback) {
+  /**
+   * For backward compatibility, when we see a url path starting with '#/demo/...'
+   * we redirect to '/demo/.../
+   **/
+  if (isOldUrl(nextState.location)) {
+    replace(location.hash.substring(1))
+  }
+  callback();
+};
+
 // eslint-disable-next-line react/display-name
 export default () => (
   <Router history={history}>
-    <Route path="/" component={App}>
-      <IndexRoute component={Home} />
+    <Route path="/" component={App} onEnter={onEnter}>
+      <IndexRoute component={Home} onEnter={onEnter} />
+      {/* Backward compatibility with hash history */}
+      <Route path="#/demo" component={Demo} />
+
       <Route path="auth" component={Demo} onEnter={onAuthEnterCallback} />
       <Route path="demo">
         <IndexRoute component={Demo} />
         <Route path="map" component={Demo} />
         <Route path="(:id)" component={Demo} />
       </Route>
+
     </Route>
   </Router>
 );

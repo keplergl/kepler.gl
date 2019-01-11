@@ -20,7 +20,7 @@
 
 import {AUTH_HANDLERS} from './sharing/authentication';
 
-export function onAuthEnterCallback(nextState, transition, callback) {
+export function onAuthEnterCallback(nextState, replace, callback) {
   // TODO: detect auth provider
   const defaultProvider = 'dropbox';
   const authProvider = AUTH_HANDLERS[defaultProvider];
