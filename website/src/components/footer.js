@@ -31,6 +31,7 @@ import {cdnUrl} from '../utils';
 import {LinkButton} from './common/styled-components';
 import {media} from '../styles';
 import MapboxLogo from './mapbox-logo';
+import {DEMO_LINK} from '../constants';
 
 const Container = styled.div`
   background: #242730;
@@ -165,7 +166,7 @@ export default class Footer extends PureComponent {
         </LogosContainer>
         <ButtonSection>
           <ButtonContainer>
-            <LinkButton large href="#/demo">
+            <LinkButton large href={`${DEMO_LINK}`}>
               Get Started
             </LinkButton>
             <LinkButton

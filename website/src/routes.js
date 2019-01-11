@@ -19,14 +19,14 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import {Router, Route, IndexRoute, hashHistory} from 'react-router';
+import {Router, Route, IndexRoute, browserHistory} from 'react-router';
 import {syncHistoryWithStore} from 'react-router-redux';
 import window from 'global/window';
 import store from './reducers';
-
 import Home from './components/home';
 import App from './components/app';
 import Demo from '../../examples/demo-app/src/app';
+import {onAuthEnterCallback} from '../../examples/demo-app/src/utils/routes';
 
 const trackPageChange = (location) => {
   const links = location.split('/');
@@ -39,7 +39,8 @@ const trackPageChange = (location) => {
     })
   }
 };
-const history = syncHistoryWithStore(hashHistory, store);
+
+const history = syncHistoryWithStore(browserHistory, store);
 history.listen(location => {
   if (location.action === 'POP') {
     trackPageChange(location.pathname);
@@ -48,10 +49,15 @@ history.listen(location => {
 
 // eslint-disable-next-line react/display-name
 export default () => (
-  <Router history={syncHistoryWithStore(hashHistory, store)}>
+  <Router history={history}>
     <Route path="/" component={App}>
       <IndexRoute component={Home} />
-      <Route path="demo(/:id)" component={Demo}/>
+      <Route path="auth" component={Demo} onEnter={onAuthEnterCallback} />
+      <Route path="demo">
+        <IndexRoute component={Demo} />
+        <Route path="map" component={Demo} />
+        <Route path="(:id)" component={Demo} />
+      </Route>
     </Route>
   </Router>
 );

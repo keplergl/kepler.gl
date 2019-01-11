@@ -23,7 +23,7 @@ import {routerReducer} from 'react-router-redux';
 import {taskMiddleware} from 'react-palm/tasks';
 import thunk from 'redux-thunk';
 import {routerMiddleware} from 'react-router-redux';
-import {hashHistory} from 'react-router';
+import {browserHistory} from 'react-router';
 import appReducer from './app';
 import demoReducer from '../../../examples/demo-app/src/reducers';
 import analyticsMiddleware from './analytics';
@@ -40,17 +40,18 @@ const combinedReducers = combineReducers(reducers);
 export const middlewares = [
   taskMiddleware,
   thunk,
-  routerMiddleware(hashHistory),
+  routerMiddleware(browserHistory),
   analyticsMiddleware
 ];
 
 export const enhancers = [applyMiddleware(...middlewares)];
 
+const composeEnhancers = compose;
 // add redux devtools
 // const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 
 export default createStore(
   combinedReducers,
   initialState,
-  compose(...enhancers)
+  composeEnhancers(...enhancers)
 );

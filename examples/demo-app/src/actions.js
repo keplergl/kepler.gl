@@ -42,7 +42,7 @@ export const SET_SAMPLE_LOADING_STATUS = 'SET_SAMPLE_LOADING_STATUS';
 
 // Sharing
 export const PUSHING_FILE = 'PUSHING_FILE';
-export const CLOUD_LOGIC_SUCCESS  = 'CLOUD_LOGIC_SUCCESS';
+export const CLOUD_LOGIN_SUCCESS  = 'CLOUD_LOGIN_SUCCESS';
 
 // ACTIONS
 export function initApp() {
@@ -377,6 +377,6 @@ export function exportFileToCloud(handlerName = 'dropbox') {
 
 export function setCloudLoginSuccess() {
   return {
-    type: CLOUD_LOGIC_SUCCESS
+    type: CLOUD_LOGIN_SUCCESS
   };
 }

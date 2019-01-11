@@ -18,24 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {MAP_URI} from '../constants/default-settings';
+import {AUTH_HANDLERS} from './sharing/authentication';
 
-export function parseQueryString(query) {
-  const searchParams = new URLSearchParams(query);
-  const params = {};
-  for (const p of searchParams) {
-    if (p && p.length === 2 && p[0])
-    params[p[0]] = p[1]
+export function onAuthEnterCallback(nextState, transition, callback) {
+  // TODO: detect auth provider
+  const defaultProvider = 'dropbox';
+  const authProvider = AUTH_HANDLERS[defaultProvider];
+
+  // Check if the current tab was opened by our previous tab
+  if (window.opener) {
+    const { location } = nextState;
+    const token = authProvider.getAccessTokenFromLocation(location);
+    window.opener.postMessage({token}, location.origin);
   }
 
-  return params;
-}
-
-/**
- * Returns a permalink with the given map url: kepler.gl/[]
- * @param mapLink the sharing url used to store the map
- * @returns {string}
- */
-export function getMapPermalink(mapLink) {
-  return `${window.location.protocol}//${window.location.host}/${MAP_URI}${mapLink}`
+  callback();
 }

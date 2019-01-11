@@ -24,6 +24,7 @@
   },
   "scripts": {
     "install:example": "cd examples/demo-app && npm i",
+    "install:web": "yarn install:example && cd website && yarn",
     "install-and-start": "node ./scripts/install-and-start",
     "fast-test": "npm run test-node && npm run test-browser",
     "test-browser": "NODE_ENV=test babel-tape-runner -r ./test/setup-browser-env.js ./test/browser.js",
@@ -34,13 +35,15 @@
     "start:custom-layer": "npm run install-and-start -- examples/custom-layer start-local",
     "start:open-modal": "npm run install-and-start -- examples/open-modal start-local",
     "start:custom-reducer": "npm run install-and-start -- examples/custom-reducer start-local",
+    "start:web": "cd website && yarn start",
     "build": "rm -fr dist && uber-licence && babel src --out-dir dist --plugins=transform-es2015-modules-commonjs --source-maps inline",
     "lint": "eslint src examples/**/src website/src",
     "check-licence": "uber-licence --dry",
     "add-licence": "uber-licence",
     "prepublish": "uber-licence && npm run build",
-    "web": "(npm run install:example && cd website && yarn --ignore-engines && yarn start)",
-    "deploy": "(cd website && yarn build && git checkout gh-pages && cp dist/* .. && git add .. && git commit -m 'Update website' && git push origin gh-pages && git checkout master)",
+    "web": "(yarn && yarn install:web && yarn start:web)",
+    "deploy": "yarn clean && yarn && yarn install:web && (cd website && yarn build && git checkout gh-pages && cp dist/* .. && git add .. && git commit -m 'Update website' && git push origin gh-pages && git checkout master)",
+    "deploy:test": "yarn clean && yarn && yarn install:web && (cd website && yarn build && git checkout -B gh-pages-test gh-pages && cp dist/* .. && git add .. && git commit -m 'Update website' && git push -f test gh-pages-test:master)",
     "clean": "rm -rf node_modules examples/demo-app/node_modules website/node_modules"
   },
   "files": [

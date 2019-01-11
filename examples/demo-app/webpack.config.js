@@ -62,7 +62,7 @@ const CONFIG = {
 
   // to support browser history api and remove the '#' sign
   devServer: {
-    historyApiFallback: true,
+    historyApiFallback: true
   },
 
   // Optional: Enables reading mapbox token from environment variable

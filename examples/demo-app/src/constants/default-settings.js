@@ -24,7 +24,7 @@ import keyMirror from 'keymirror';
 
 export const ASSETS_URL = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/';
 export const DATA_URL = 'https://raw.githubusercontent.com/uber-web/kepler.gl-data/master/';
-export const MAP_URI = 'map?mapUrl=';
+export const MAP_URI = 'demo/map?mapUrl=';
 /*
  * If you want to add more samples, feel free to edit the json file on github kepler.gl data repo
  */

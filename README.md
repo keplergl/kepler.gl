@@ -375,6 +375,23 @@ config: {
 ```
 the latter will be applied and the map view will be moved the defined coordinates.
 
+### Github pages
+We currently host the demo-app on Github pages. We have provided a way to test github pages before pushing the branch to 
+the actual repo.
+In order to test github pages with your changes, you need to satisfy the following requirements first:
+- Make sure you have your own github pages (username.github.io) repo, [click here](https://pages.github.com/)
+- In your local copy of kepler.gl, add your github pages repo to the list of git remotes by doing:
+```bash
+git remote add test git@github.com:username/username.github.io.git
+```
+with the above command, I am creating a new origin __test__ which will be used to push our own copy testing copy of gh pages.
+
+Once you have those requirements figured out, you can simply run the following command:
+```bash
+yarn deploy:test
+``` 
+it will build the application and push your changes to your gh pages repo in the master folder
+
 [contributing]: contributing/CONTRIBUTING.md
 [demo-app]: https://uber.github.io/kepler.gl/#/demo
 [github]: https://github.com/uber/kepler.gl
@@ -388,3 +405,4 @@ the latter will be applied and the map view will be moved the defined coordinate
 [stack]: https://stackoverflow.com/questions/tagged/kepler.gl
 [web]: http://www.kepler.gl/
 [vis-academy]: http://vis.academy/#/kepler.gl/
+

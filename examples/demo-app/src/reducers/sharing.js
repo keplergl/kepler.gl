@@ -20,7 +20,7 @@
 
 import {handleActions} from 'redux-actions';
 import { AUTH_HANDLERS } from '../utils/sharing/authentication';
-import { CLOUD_LOGIC_SUCCESS, LOAD_REMOTE_RESOURCE_ERROR, PUSHING_FILE } from '../actions';
+import { CLOUD_LOGIN_SUCCESS, LOAD_REMOTE_RESOURCE_ERROR, PUSHING_FILE } from '../actions';
 
 const readAuthTokens = () => Object.keys(AUTH_HANDLERS)
   .reduce((tokens, name) => ({
@@ -48,7 +48,7 @@ export const sharingReducer = handleActions({
     isLoading: action.isLoading,
     info: action.metadata
   }),
-  [CLOUD_LOGIC_SUCCESS]: state => ({
+  [CLOUD_LOGIN_SUCCESS]: state => ({
     ...state,
     tokens: readAuthTokens()
   })
