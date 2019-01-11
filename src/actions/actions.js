@@ -98,7 +98,7 @@ export * from './identity-actions';
    */
 export const addDataToMap = createAction(
   ActionTypes.ADD_DATA_TO_MAP,
-  (datasets, options, config) => ({datasets, options, config})
+  data => data
 );
 
 /**
