@@ -55,6 +55,8 @@ const MAP_STYLE = {
 const getGlConst = d => GL[d];
 
 const MAPBOXGL_STYLE_UPDATE = 'style.load';
+const TRANSITION_DURATION = 0;
+
 MapContainerFactory.deps = [
   MapPopoverFactory, MapControlFactory
 ];
@@ -432,6 +434,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             mapStyle={mapStyle.bottomMapStyle}
             onClick={onMapClick}
             getCursor={this.props.hoverInfo ? () => 'pointer' : undefined}
+            transitionDuration={TRANSITION_DURATION}
           >
             {this._renderOverlay()}
             {this._renderMapboxOverlays()}
