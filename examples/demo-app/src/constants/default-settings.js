@@ -97,3 +97,5 @@ export const CORS_LINK = 'https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
 export const KEPLER_DISCLAIMER = '* Kepler.gl will save your map data to your personal cloud storage, only people with the URL can access your map and data.';
 
 export const DEFAULT_LOADING_METHOD = LOADING_METHODS[0];
+
+export const DEFAULT_CLOUD_PROVIDER = 'dropbox';

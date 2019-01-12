@@ -18,19 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {AUTH_HANDLERS} from './sharing/authentication';
-import {IndexRoute, Route} from "react-router";
-import React from "react";
-import Demo from "../app";
+import {CLOUD_PROVIDERS} from './cloud-providers';
+import {IndexRoute, Route} from 'react-router';
+import React from 'react';
+import Demo from '../app';
+import {DEFAULT_CLOUD_PROVIDER} from '../constants/default-settings';
 
 export function onAuthEnterCallback(nextState, replace, callback) {
   // TODO: detect auth provider
-  const defaultProvider = 'dropbox';
-  const authProvider = AUTH_HANDLERS[defaultProvider];
+  const authProvider = CLOUD_PROVIDERS[DEFAULT_CLOUD_PROVIDER];
 
   // Check if the current tab was opened by our previous tab
   if (window.opener) {
-    const { location } = nextState;
+    const {location} = nextState;
     const token = authProvider.getAccessTokenFromLocation(location);
     window.opener.postMessage({token}, location.origin);
   }

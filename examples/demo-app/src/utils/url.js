@@ -33,7 +33,7 @@ export function parseQueryString(query) {
 
 /**
  * Returns a permalink with the given map url: kepler.gl/[]
- * @param mapLink the sharing url used to store the map
+ * @param mapLink the cloud-providers url used to store the map
  * @returns {string}
  */
 export function getMapPermalink(mapLink) {

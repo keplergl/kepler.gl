@@ -25,7 +25,7 @@ import {CopyToClipboard} from 'react-copy-to-clipboard';
 import {StyledModalContent} from 'kepler.gl/components';
 import CloudTile from './cloud-tile';
 import StatusPanel from './status-panel';
-import {AUTH_HANDLERS} from '../../utils/sharing/authentication';
+import {CLOUD_PROVIDERS} from '../../utils/cloud-providers';
 import {KEPLER_DISCLAIMER} from '../../constants/default-settings';
 import {getMapPermalink} from '../../utils/url';
 
@@ -139,13 +139,13 @@ const ExportCloudModal = ({
               </div>
             </div>
             <div className="selection">
-              {Object.keys(AUTH_HANDLERS).map((name, index) => (
+              {Object.keys(CLOUD_PROVIDERS).map((name, index) => (
                 <CloudTile
                   key={index}
-                  token={AUTH_HANDLERS[name].getAccessToken()}
+                  token={CLOUD_PROVIDERS[name].getAccessToken()}
                   onExport={onExport}
-                  onLogin={() => AUTH_HANDLERS[name].handleLogin(onCloudLoginSuccess)}
-                  Icon={AUTH_HANDLERS[name].icon}
+                  onLogin={() => CLOUD_PROVIDERS[name].handleLogin(onCloudLoginSuccess)}
+                  Icon={CLOUD_PROVIDERS[name].icon}
                 />
               ))}
             </div>

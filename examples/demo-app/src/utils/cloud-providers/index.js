@@ -20,6 +20,6 @@
 
 import DropboxHandler from './dropbox';
 
-export const AUTH_HANDLERS = {
+export const CLOUD_PROVIDERS = {
   [DropboxHandler.name]: DropboxHandler
 };

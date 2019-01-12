@@ -28,7 +28,7 @@ import {
   MAP_CONFIG_URL, MAP_URI
 } from './constants/default-settings';
 import {LOADING_METHODS_NAMES} from './constants/default-settings';
-import {AUTH_HANDLERS} from './utils/sharing/authentication';
+import {CLOUD_PROVIDERS} from './utils/cloud-providers';
 import {generateHashId} from './utils/strings';
 import KeplerGlSchema from 'kepler.gl/schemas';
 
@@ -354,7 +354,7 @@ export function setPushingFile(isLoading, metadata) {
  * @returns {Function}
  */
 export function exportFileToCloud(handlerName = 'dropbox') {
-  const authHandler = AUTH_HANDLERS[handlerName];
+  const authHandler = CLOUD_PROVIDERS[handlerName];
   return (dispatch, getState) => {
     // extract data from kepler
     const data = KeplerGlSchema.save(getState().demo.keplerGl.map);
