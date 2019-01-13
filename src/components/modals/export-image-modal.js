@@ -152,7 +152,7 @@ class ExportImageModal extends Component {
               <div className="image-option-section-title">Ratio</div>
               Choose the ratio for various usages.
               <div className="button-list">
-                {RATIO_OPTIONS.map(op => 
+                {RATIO_OPTIONS.map(op =>
                   <Button
                     key={op.id}
                     selected={ratio === op.id}
@@ -167,7 +167,7 @@ class ExportImageModal extends Component {
               <div className="image-option-section-title">Resolution</div>
               High resolution is better for prints.
               <div className="button-list">
-                {RESOLUTION_OPTIONS.map(op => 
+                {RESOLUTION_OPTIONS.map(op =>
                   <Button
                     key={op.id}
                     selected={resolution === op.id}
@@ -199,7 +199,7 @@ class ExportImageModal extends Component {
         </StyledModalContent>
       </div>
     );
-  }  
+  }
 }
 
 const ExportImageModalFactory = () => ExportImageModal;

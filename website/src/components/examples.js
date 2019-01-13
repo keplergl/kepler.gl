@@ -26,6 +26,7 @@ import {media} from '../styles';
 import StaggeredScrollAnimation from './common/staggered-scroll-animation';
 import {VerticalCard} from './common/card';
 import {LinkButton, CenteredContent} from './common/styled-components';
+import {DEMO_LINK} from '../constants';
 
 const CardsContainer = styled.div`
   display: flex;
@@ -75,7 +76,7 @@ class Examples extends PureComponent {
           ))}
         </StaggeredScrollAnimation>
         <CenteredContent>
-          <LinkButton outline large href="#/demo">
+          <LinkButton outline large href={DEMO_LINK}>
             See More
           </LinkButton>
         </CenteredContent>

@@ -19,14 +19,16 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import {Router, Route, IndexRoute, hashHistory} from 'react-router';
+import {Router, Route, IndexRoute, browserHistory} from 'react-router';
 import {syncHistoryWithStore} from 'react-router-redux';
 import window from 'global/window';
 import store from './reducers';
-
 import Home from './components/home';
 import App from './components/app';
 import Demo from '../../examples/demo-app/src/app';
+import {buildAppRoutes} from '../../examples/demo-app/src/utils/routes';
+
+const appRoute = buildAppRoutes(Demo);
 
 const trackPageChange = (location) => {
   const links = location.split('/');
@@ -39,19 +41,35 @@ const trackPageChange = (location) => {
     })
   }
 };
-const history = syncHistoryWithStore(hashHistory, store);
+
+const history = syncHistoryWithStore(browserHistory, store);
 history.listen(location => {
   if (location.action === 'POP') {
     trackPageChange(location.pathname);
   }
 });
 
+function isOldUrl(location) {
+  return Boolean(location.pathname === '/' && location.hash && location.hash.startsWith('#/demo'))
+}
+
+function onEnter(nextState, replace, callback) {
+  /**
+   * For backward compatibility, when we see a url path starting with '#/demo/...'
+   * we redirect to '/demo/.../
+   **/
+  if (isOldUrl(nextState.location)) {
+    replace(location.hash.substring(1))
+  }
+  callback();
+}
+
 // eslint-disable-next-line react/display-name
 export default () => (
-  <Router history={syncHistoryWithStore(hashHistory, store)}>
-    <Route path="/" component={App}>
-      <IndexRoute component={Home} />
-      <Route path="demo(/:id)" component={Demo}/>
+  <Router history={history}>
+    <Route path="/" component={App} onEnter={onEnter}>
+      <IndexRoute component={Home} onEnter={onEnter} />
+      {appRoute}
     </Route>
   </Router>
 );

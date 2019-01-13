@@ -24,7 +24,7 @@ import keyMirror from 'keymirror';
 
 export const ASSETS_URL = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/';
 export const DATA_URL = 'https://raw.githubusercontent.com/uber-web/kepler.gl-data/master/';
-export const MAP_URI = 'map?mapUrl=';
+export const MAP_URI = 'demo/map?mapUrl=';
 /*
  * If you want to add more samples, feel free to edit the json file on github kepler.gl data repo
  */
@@ -97,3 +97,5 @@ export const CORS_LINK = 'https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
 export const KEPLER_DISCLAIMER = '* Kepler.gl will save your map data to your personal cloud storage, only people with the URL can access your map and data.';
 
 export const DEFAULT_LOADING_METHOD = LOADING_METHODS[0];
+
+export const DEFAULT_CLOUD_PROVIDER = 'dropbox';

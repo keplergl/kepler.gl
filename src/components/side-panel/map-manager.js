@@ -62,7 +62,7 @@ function MapManagerFactory(MapStyleSelector, LayerGroupSelector) {
 
     render() {
       const {mapStyle} = this.props;
-      const editableLayers = DEFAULT_LAYER_GROUPS.map(lg => 
+      const editableLayers = DEFAULT_LAYER_GROUPS.map(lg =>
         lg.slug
      );
 

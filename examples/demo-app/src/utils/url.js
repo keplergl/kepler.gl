@@ -22,19 +22,18 @@ import {MAP_URI} from '../constants/default-settings';
 
 export function parseQueryString(query) {
   const searchParams = new URLSearchParams(query);
-  const params = [...searchParams].reduce((queryParams, entry) => ({
-    ...queryParams,
-    ...(entry  && entry.length === 2 ?
-        {[entry[0]]: entry[1]} : null
-    )
-  }), {});
+  const params = {};
+  for (const p of searchParams) {
+    if (p && p.length === 2 && p[0])
+    params[p[0]] = p[1]
+  }
 
   return params;
 }
 
 /**
  * Returns a permalink with the given map url: kepler.gl/[]
- * @param mapLink the sharing url used to store the map
+ * @param mapLink the cloud-providers url used to store the map
  * @returns {string}
  */
 export function getMapPermalink(mapLink) {

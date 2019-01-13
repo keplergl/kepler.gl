@@ -18,5 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// Run the tests
-require('./node/index.js');
+import DropboxHandler from './dropbox';
+
+export const CLOUD_PROVIDERS = {
+  [DropboxHandler.name]: DropboxHandler
+};

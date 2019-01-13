@@ -242,7 +242,7 @@ import KeplerGl from 'kepler.gl';
 import {toggleFullScreen, forwardTo} from 'kepler.gl/actions';
 import {connect} from 'react-redux';
 
-Const MapContainer = props => (
+const MapContainer = props => (
   <div>
     <button onClick={() => props.keplerGlDispatch(toggleFullScreen())}/>
     <KeplerGl
@@ -278,7 +278,7 @@ import {toggleFullScreen, wrapTo} from 'kepler.gl/actions';
 const wrapToMap = wrapTo('foo');
 const MapContainer = ({dispatch}) => (
   <div>
-    <button onClick=() => dispatch(wrapToMap(toggleFullScreen())/>
+    <button onClick={() => dispatch(wrapToMap(toggleFullScreen())} />
     <KeplerGl
       id="foo"
     />
@@ -344,6 +344,7 @@ const myCustomHeaderFactory = () => withState(
 )(CustomHeader);
 
 ```
+
 #### 5. How to add data to map
 In order to interact with a kepler.gl instance and add new data to it the following methods are available:
 - updateVisData
@@ -388,3 +389,5 @@ the latter will be applied and the map view will be moved the defined coordinate
 [stack]: https://stackoverflow.com/questions/tagged/kepler.gl
 [web]: http://www.kepler.gl/
 [vis-academy]: http://vis.academy/#/kepler.gl/
+
+

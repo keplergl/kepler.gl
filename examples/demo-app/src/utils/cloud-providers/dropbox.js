@@ -92,7 +92,7 @@ function shareFile(metadata) {
 }
 
 /**
- * Override dropbox sharing url
+ * Override dropbox cloud-providers url
  * https://www.dropbox.com/s/bxwwdb81z0jg7pb/keplergl_2018-11-01T23%3A22%3A43.940Z.json?dl=0
  * ->
  * https://dl.dropboxusercontent.com/s/bxwwdb81z0jg7pb/keplergl_2018-11-01T23%3A22%3A43.940Z.json
@@ -147,7 +147,7 @@ function getAccessToken() {
   return (token || '') !== '' ? token : null;
 }
 
-// All sharing providers must implement the following properties
+// All cloud-providers providers must implement the following properties
 export default {
   name: NAME,
   getAccessTokenFromLocation,

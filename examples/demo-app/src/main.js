@@ -26,33 +26,18 @@ import {syncHistoryWithStore} from 'react-router-redux';
 import {render} from 'react-dom';
 import store from './store';
 import App from './app';
-import { AUTH_HANDLERS } from "./utils/sharing/authentication";
+import {buildAppRoutes} from './utils/routes';
 
 const history = syncHistoryWithStore(browserHistory, store);
 
-const onEnterCallback = (nextState, transition, callback) => {
-  // TODO: detect auth provider
-  const defaultProvider = 'dropbox';
-  const authProvider = AUTH_HANDLERS[defaultProvider];
-
-  // Check if the current tab was opened by our previous tab
-  if (window.opener) {
-    const { location } = nextState;
-    const token = authProvider.getAccessTokenFromLocation(location);
-    window.opener.postMessage({token}, location.origin);
-  }
-
-  callback();
-};
+const appRoute = buildAppRoutes(App);
 
 const Root = () => (
   <Provider store={store}>
     <Router history={history}>
-      <Route path="/auth" component={App} onEnter={onEnterCallback} />
-      <Route path="/demo/(:id)" component={App} />
-      <Route path="/map" component={App} />
-      <Route path="/" component={App} />
-      <Route path="*" component={App} />
+      <Route path="/" component={App}>
+        {appRoute}
+      </Route>
     </Router>
   </Provider>
 );
