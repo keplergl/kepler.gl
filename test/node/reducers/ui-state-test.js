@@ -235,12 +235,12 @@ test('#uiStateReducer -> SET_EXPORT_FILTERED', t => {
 });
 
 test('#uiStateReducer -> ADD_NOTIFICATION', t => {
-  const newState = reducer(INITIAL_UI_STATE, addNotification(createNotification({
+  const newState = reducer(INITIAL_UI_STATE, addNotification({
     type: DEFAULT_NOTIFICATION_TYPES.ERROR,
     message: 'TEST',
     topic: DEFAULT_NOTIFICATION_TOPICS.GLOBAL,
     id: 'test-1'
-  })));
+  }));
 
   t.equal(newState.notifications.length, 1, 'AddNotification should add one new notification');
   t.deepEqual(newState.notifications[0], {
@@ -254,12 +254,12 @@ test('#uiStateReducer -> ADD_NOTIFICATION', t => {
 });
 
 test('#uiStateReducer -> REMOVE_NOTIFICATION', t => {
-  const newState = reducer(INITIAL_UI_STATE, addNotification(createNotification({
+  const newState = reducer(INITIAL_UI_STATE, addNotification({
     type: DEFAULT_NOTIFICATION_TYPES.ERROR,
     message: 'TEST',
     topic: DEFAULT_NOTIFICATION_TOPICS.GLOBAL,
     id: 'test-1'
-  })));
+  }));
 
   t.equal(newState.notifications.length, 1, 'AddNotification should add one new notification');
   t.deepEqual(newState.notifications[0], {

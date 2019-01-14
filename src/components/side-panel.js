@@ -144,6 +144,7 @@ export default function SidePanelFactory(
         mapStyleActions,
         uiStateActions
       } = this.props;
+
       const {activeSidePanel} = uiState;
       const isOpen = Boolean(activeSidePanel);
 

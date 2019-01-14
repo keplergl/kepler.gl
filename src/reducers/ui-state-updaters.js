@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import {LAYER_CONFIG_ID, DELETE_DATA_ID} from 'constants/default-settings';
+import {createNotification} from 'utils/notifications-utils';
 
 /* Updaters */
 export const toggleSidePanelUpdater = (state, {payload: id}) => {
@@ -169,7 +170,7 @@ export const addNotificationUpdater = (state, {payload}) => ({
   ...state,
   notifications: [
     ...state.notifications,
-    payload
+    createNotification(payload)
   ]
 });
 

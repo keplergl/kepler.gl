@@ -46,7 +46,7 @@ import sampleTripData from './data/sample-trip-data';
 import sampleGeojson from './data/sample-geojson.json';
 import sampleH3Data from './data/sample-hex-id-csv';
 import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
-import {updateVisData, addDataToMap} from 'kepler.gl/actions';
+import {updateVisData, addDataToMap, addNotification} from 'kepler.gl/actions';
 import Processors from 'kepler.gl/processors';
 /* eslint-enable no-unused-vars */
 
@@ -121,6 +121,12 @@ class App extends Component {
 
     // load sample data
     // this._loadSampleData();
+    this.props.dispatch(addNotification({
+      message: 'TEST 1'
+    }));
+    this.props.dispatch(addNotification({
+      message: 'TEST 2'
+    }));
   }
 
   componentWillUnmount() {

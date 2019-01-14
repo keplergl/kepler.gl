@@ -39,6 +39,7 @@ import MapContainerFactory from './map-container';
 import BottomWidgetFactory from './bottom-widget';
 import ModalContainerFactory from './modal-container';
 import PlotContainerFactory from './plot-container';
+import NotificationPanelFactory from './notification-panel';
 
 import {generateHashId} from 'utils/utils';
 
@@ -80,7 +81,8 @@ KeplerGlFactory.deps = [
   MapContainerFactory,
   ModalContainerFactory,
   SidePanelFactory,
-  PlotContainerFactory
+  PlotContainerFactory,
+  NotificationPanelFactory
 ];
 
 function KeplerGlFactory(
@@ -88,7 +90,8 @@ function KeplerGlFactory(
   MapContainer,
   ModalWrapper,
   SidePanel,
-  PlotContainer
+  PlotContainer,
+  NotificationPanel
 ) {
   class KeplerGL extends Component {
     static defaultProps = {
@@ -204,6 +207,11 @@ function KeplerGlFactory(
         clicked
       } = visState;
 
+      const notificationPanelFields = {
+        uiStateActions,
+        uiState
+      };
+
       const sideFields = {
         appName,
         version,
@@ -279,6 +287,7 @@ function KeplerGlFactory(
               this.root = node;
             }}
           >
+            {uiState.notifications.length && (<NotificationPanel {...notificationPanelFields} />)}
             {!uiState.readOnly && <SidePanel {...sideFields} />}
             <div className="maps" style={{display: 'flex'}}>
               {mapContainers}
