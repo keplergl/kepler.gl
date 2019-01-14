@@ -164,3 +164,16 @@ export const setExportDataUpdater = (state, action) => ({
     data: !state.exportData.data
   }
 });
+
+export const addNotificationUpdater = (state, {payload}) => ({
+  ...state,
+  notifications: [
+    ...state.notifications,
+    payload
+  ]
+});
+
+export const removeNotificationUpdater = (state, {payload}) => ({
+  ...state,
+  notifications: state.notifications.filter(n => n.id !== payload.id)
+});

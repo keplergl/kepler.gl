@@ -587,3 +587,19 @@ export const EXPORT_DATA_TYPE_OPTIONS = [
   //   available: false
   // }
 ];
+
+export const DEFAULT_UUID_COUNT = 6;
+
+export const DEFAULT_NOTIFICATION_MESSAGE = 'MESSAGE_NOT_PROVIDED';
+
+export const DEFAULT_NOTIFICATION_TYPES = keyMirror({
+  INFO: null,
+  ERROR: null,
+  WARNING: null,
+  SUCCESS: null
+});
+
+export const DEFAULT_NOTIFICATION_TOPICS = keyMirror({
+  GLOBAL: null,
+  FILE: null
+});

@@ -30,10 +30,14 @@ import {
   toggleMapControl,
   setExportSelectedDataset,
   setExportDataType,
-  setExportFiltered
+  setExportFiltered,
+  addNotification
 } from 'actions/ui-state-actions';
 import reducer, {uiStateReducerFactory, INITIAL_UI_STATE}  from 'reducers/ui-state';
 import {RATIOS, RESOLUTIONS, EXPORT_DATA_TYPE} from 'constants/default-settings';
+import {DEFAULT_NOTIFICATION_TOPICS, DEFAULT_NOTIFICATION_TYPES} from '../../../src/constants/default-settings';
+import {createNotification} from '../../../src/utils/notifications-utils';
+import {removeNotification} from '../../../src/actions/ui-state-actions';
 
 test('#uiStateReducer', t => {
 
@@ -226,6 +230,48 @@ test('#uiStateReducer -> SET_EXPORT_FILTERED', t => {
   };
 
   t.deepEqual(newReducer, expectedState, 'should set the filtered to false');
+
+  t.end();
+});
+
+test('#uiStateReducer -> ADD_NOTIFICATION', t => {
+  const newState = reducer(INITIAL_UI_STATE, addNotification(createNotification({
+    type: DEFAULT_NOTIFICATION_TYPES.ERROR,
+    message: 'TEST',
+    topic: DEFAULT_NOTIFICATION_TOPICS.GLOBAL,
+    id: 'test-1'
+  })));
+
+  t.equal(newState.notifications.length, 1, 'AddNotification should add one new notification');
+  t.deepEqual(newState.notifications[0], {
+    type: DEFAULT_NOTIFICATION_TYPES.ERROR,
+    message: 'TEST',
+    topic: DEFAULT_NOTIFICATION_TOPICS.GLOBAL,
+    id: 'test-1'
+  }, 'AddNotification should have propagated data correctly ');
+
+  t.end();
+});
+
+test('#uiStateReducer -> REMOVE_NOTIFICATION', t => {
+  const newState = reducer(INITIAL_UI_STATE, addNotification(createNotification({
+    type: DEFAULT_NOTIFICATION_TYPES.ERROR,
+    message: 'TEST',
+    topic: DEFAULT_NOTIFICATION_TOPICS.GLOBAL,
+    id: 'test-1'
+  })));
+
+  t.equal(newState.notifications.length, 1, 'AddNotification should add one new notification');
+  t.deepEqual(newState.notifications[0], {
+    type: DEFAULT_NOTIFICATION_TYPES.ERROR,
+    message: 'TEST',
+    topic: DEFAULT_NOTIFICATION_TOPICS.GLOBAL,
+    id: 'test-1'
+  }, 'AddNotification should have propagated data correctly ');
+
+  const nextState = reducer(newState, removeNotification({id: 'test-1'}));
+
+  t.equal(nextState.notifications.length, 0, 'RemoveNotification removed one notification');
 
   t.end();
 });

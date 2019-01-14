@@ -25,7 +25,7 @@ import window from 'global/window';
  * @param {number} count
  * @returns {string} hash string
  */
-export function generateHashId(count) {
+export function generateHashId(count = 6) {
   return Math.random()
     .toString(36)
     .substr(count);
