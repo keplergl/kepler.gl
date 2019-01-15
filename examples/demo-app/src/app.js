@@ -128,7 +128,28 @@ class App extends Component {
     }));
     this.props.dispatch(addNotification({
       type: 'error',
-      message: 'TEST 2 and this is a really long one i wanna make sure this works'
+      message: `TEST 2 and this is a really long one i wanna make sure this works. TEST 2 and this is a really long one i wanna make sure this works. 
+      even with a newline
+      
+      Empty line, why not
+      
+      And this is the end.
+      
+      TEST 2 and this is a really long one i wanna make sure this works. TEST 2 and this is a really long one i wanna make sure this works. 
+      even with a newline
+      
+      Empty line, why not
+      
+      And this is the end.
+      
+      
+      TEST 2 and this is a really long one i wanna make sure this works. TEST 2 and this is a really long one i wanna make sure this works. 
+      even with a newline
+      
+      Empty line, why not
+      
+      And this is the end
+      `
     }));
     this.props.dispatch(addNotification({
       type: 'warning',

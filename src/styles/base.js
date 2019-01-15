@@ -213,8 +213,9 @@ export const notificationColors = {
   warning: '#f1c40f'
 };
 
-export const notificationPanelWidth = 200;
+export const notificationPanelWidth = 240;
 export const notificationPanelItemWidth = notificationPanelWidth - 60;
+export const notificationPanelItemHeight = 60;
 
 export const textTruncate = {
   maxWidth: '100%',
@@ -904,7 +905,8 @@ export const theme = {
   // Notifications
   notificationColors,
   notificationPanelWidth,
-  notificationPanelItemWidth
+  notificationPanelItemWidth,
+  notificationPanelItemHeight
 };
 
 export const themeLT = {
