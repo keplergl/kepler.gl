@@ -236,17 +236,17 @@ test('#uiStateReducer -> SET_EXPORT_FILTERED', t => {
 
 test('#uiStateReducer -> ADD_NOTIFICATION', t => {
   const newState = reducer(INITIAL_UI_STATE, addNotification({
-    type: DEFAULT_NOTIFICATION_TYPES.ERROR,
+    type: DEFAULT_NOTIFICATION_TYPES.error,
     message: 'TEST',
-    topic: DEFAULT_NOTIFICATION_TOPICS.GLOBAL,
+    topic: DEFAULT_NOTIFICATION_TOPICS.global,
     id: 'test-1'
   }));
 
   t.equal(newState.notifications.length, 1, 'AddNotification should add one new notification');
   t.deepEqual(newState.notifications[0], {
-    type: DEFAULT_NOTIFICATION_TYPES.ERROR,
+    type: DEFAULT_NOTIFICATION_TYPES.error,
     message: 'TEST',
-    topic: DEFAULT_NOTIFICATION_TOPICS.GLOBAL,
+    topic: DEFAULT_NOTIFICATION_TOPICS.global,
     id: 'test-1'
   }, 'AddNotification should have propagated data correctly ');
 
@@ -255,21 +255,21 @@ test('#uiStateReducer -> ADD_NOTIFICATION', t => {
 
 test('#uiStateReducer -> REMOVE_NOTIFICATION', t => {
   const newState = reducer(INITIAL_UI_STATE, addNotification({
-    type: DEFAULT_NOTIFICATION_TYPES.ERROR,
+    type: DEFAULT_NOTIFICATION_TYPES.error,
     message: 'TEST',
-    topic: DEFAULT_NOTIFICATION_TOPICS.GLOBAL,
+    topic: DEFAULT_NOTIFICATION_TOPICS.global,
     id: 'test-1'
   }));
 
   t.equal(newState.notifications.length, 1, 'AddNotification should add one new notification');
   t.deepEqual(newState.notifications[0], {
-    type: DEFAULT_NOTIFICATION_TYPES.ERROR,
+    type: DEFAULT_NOTIFICATION_TYPES.error,
     message: 'TEST',
-    topic: DEFAULT_NOTIFICATION_TOPICS.GLOBAL,
+    topic: DEFAULT_NOTIFICATION_TOPICS.global,
     id: 'test-1'
   }, 'AddNotification should have propagated data correctly ');
 
-  const nextState = reducer(newState, removeNotification({id: 'test-1'}));
+  const nextState = reducer(newState, removeNotification('test-1'));
 
   t.equal(nextState.notifications.length, 0, 'RemoveNotification removed one notification');
 

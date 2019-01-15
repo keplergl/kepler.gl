@@ -121,6 +121,8 @@ class App extends Component {
 
     // load sample data
     // this._loadSampleData();
+
+    // Notifications
     this.props.dispatch(addNotification({
       message: 'TEST 1'
     }));

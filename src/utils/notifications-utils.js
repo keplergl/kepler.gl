@@ -1,7 +1,7 @@
 import {generateHashId} from './utils';
 
 import {
-  DEFAULT_MESSAGE, DEFAULT_NOTIFICATION_TOPICS,
+  DEFAULT_NOTIFICATION_MESSAGE, DEFAULT_NOTIFICATION_TOPICS,
   DEFAULT_NOTIFICATION_TYPES, DEFAULT_UUID_COUNT
 } from 'constants/default-settings';
 
@@ -15,9 +15,9 @@ import {
  * @returns {object}
  */
 export function createNotification({
-  message = DEFAULT_MESSAGE,
-  type = DEFAULT_NOTIFICATION_TYPES.INFO,
-  topic = DEFAULT_NOTIFICATION_TOPICS.GLOBAL,
+  message = DEFAULT_NOTIFICATION_MESSAGE,
+  type = DEFAULT_NOTIFICATION_TYPES.info,
+  topic = DEFAULT_NOTIFICATION_TOPICS.global,
   id = generateHashId(DEFAULT_UUID_COUNT),
   ...options
 }) {
@@ -36,7 +36,7 @@ export function createNotification({
  * @returns {{topic, id, message, type: (null|number)}}
  */
 export const errorNotification = options =>
-  ({...createNotification(options), type: DEFAULT_NOTIFICATION_TYPES.ERROR});
+  ({...createNotification(options), type: DEFAULT_NOTIFICATION_TYPES.error});
 
 /**
  * Creates a success notification
@@ -44,4 +44,4 @@ export const errorNotification = options =>
  * @returns {{topic, id, message, type: null}}
  */
 export const successNotification = options =>
-  ({...createNotification(options), type: DEFAULT_NOTIFICATION_TYPES.SUCCESS});
+  ({...createNotification(options), type: DEFAULT_NOTIFICATION_TYPES.success});

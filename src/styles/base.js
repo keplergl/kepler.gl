@@ -205,6 +205,11 @@ export const sliderHandleShadow = '0 2px 4px 0 rgba(0,0,0,0.40)';
 // Plot
 export const rangeBrushBgd = '#3A414C';
 
+// Notification
+export const notificationColors = {
+  info: '#3498db'
+};
+
 export const textTruncate = {
   maxWidth: '100%',
   overflow: 'hidden',
@@ -888,7 +893,10 @@ export const theme = {
   sliderHandleShadow,
 
   // Plot
-  rangeBrushBgd
+  rangeBrushBgd,
+
+  // Notifications
+  notificationColors
 };
 
 export const themeLT = {

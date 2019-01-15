@@ -7,8 +7,8 @@ test('#notificationsUtils -> errorNotification', t => {
   t.deepEqual(notification, {
     id: 'test-1',
     message: 'test',
-    type: 'ERROR',
-    topic: 'GLOBAL'
+    type: 'error',
+    topic: 'global'
   }, 'ErrorNotification creates an error notification');
 
   t.end();
@@ -20,8 +20,8 @@ test('#notificationsUtils -> successNotification', t => {
   t.deepEqual(notification, {
     id: 'test-1',
     message: 'test',
-    type: 'SUCCESS',
-    topic: 'GLOBAL'
+    type: 'success',
+    topic: 'global'
   }, 'SuccessNotification creates an error notification');
 
   t.end();

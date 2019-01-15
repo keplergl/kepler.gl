@@ -2,25 +2,27 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
+import NotificationItemFactory from './notification-panel/notification-item';
+
 const NotificationPanelContent = styled.div`
-  ${props => props.theme.sidePanelScrollBar};
-  background: red;
+  background: transparent;
   flex-grow: 1;
-  padding: 16px;
+  padding: 4px;
   overflow-y: scroll;
   overflow-x: hidden;
   position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 10000
+  top: 1em;
+  right: 1em;
+  z-index: 10000;
+  box-sizing: border-box;
 `;
 
 NotificationPanelFactory.deps = [
-  // NotificationItem
+  NotificationItemFactory
 ];
 
 export default function NotificationPanelFactory (
-  // NotificationItem
+  NotificationItem
 ) {
   return class NotificationPanel extends Component {
     static propTypes = {
@@ -37,10 +39,11 @@ export default function NotificationPanelFactory (
       return (
         <NotificationPanelContent className="notification-panel">
           {notifications.map(n => (
-            <div key={n.id}>
-              id: {n.id}
-              <button onClick={() => removeNotification(n.id)}>X</button>
-            </div>
+            <NotificationItem
+              key={n.id}
+              notification={n}
+              removeNotification={removeNotification}
+            />
           ))}
         </NotificationPanelContent>
       );

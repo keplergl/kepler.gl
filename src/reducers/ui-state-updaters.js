@@ -176,5 +176,5 @@ export const addNotificationUpdater = (state, {payload}) => ({
 
 export const removeNotificationUpdater = (state, {payload}) => ({
   ...state,
-  notifications: state.notifications.filter(n => n.id !== payload.id)
+  notifications: state.notifications.filter(n => n.id !== payload)
 });
