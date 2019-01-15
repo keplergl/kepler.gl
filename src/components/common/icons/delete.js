@@ -22,7 +22,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-export default class Cross extends Component {
+export default class Delete extends Component {
   static propTypes = {
     height: PropTypes.string
   };

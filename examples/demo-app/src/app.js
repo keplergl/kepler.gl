@@ -127,7 +127,8 @@ class App extends Component {
       message: 'TEST 1'
     }));
     this.props.dispatch(addNotification({
-      message: 'TEST 2'
+      type: 'error',
+      message: 'TEST 2 and this is a really long one i wanna make sure this works'
     }));
   }
 

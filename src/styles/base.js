@@ -207,8 +207,13 @@ export const rangeBrushBgd = '#3A414C';
 
 // Notification
 export const notificationColors = {
-  info: '#3498db'
+  info: '#3498db',
+  error: '#e74c3c',
+  success: '#07bc0c'
 };
+
+export const notificationPanelWidth = 200;
+export const notificationPanelItemWidth = notificationPanelWidth - 60;
 
 export const textTruncate = {
   maxWidth: '100%',
@@ -896,7 +901,9 @@ export const theme = {
   rangeBrushBgd,
 
   // Notifications
-  notificationColors
+  notificationColors,
+  notificationPanelWidth,
+  notificationPanelItemWidth
 };
 
 export const themeLT = {

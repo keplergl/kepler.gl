@@ -6,7 +6,8 @@ import NotificationItemFactory from './notification-panel/notification-item';
 
 const NotificationPanelContent = styled.div`
   background: transparent;
-  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
   padding: 4px;
   overflow-y: scroll;
   overflow-x: hidden;
