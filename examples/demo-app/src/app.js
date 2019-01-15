@@ -130,6 +130,14 @@ class App extends Component {
       type: 'error',
       message: 'TEST 2 and this is a really long one i wanna make sure this works'
     }));
+    this.props.dispatch(addNotification({
+      type: 'warning',
+      message: 'TEST 3 this is a warning'
+    }));
+    this.props.dispatch(addNotification({
+      type: 'success',
+      message: 'TEST 4 and this is a really long one i wanna make sure this works'
+    }));
   }
 
   componentWillUnmount() {

@@ -209,7 +209,8 @@ export const rangeBrushBgd = '#3A414C';
 export const notificationColors = {
   info: '#3498db',
   error: '#e74c3c',
-  success: '#07bc0c'
+  success: '#07bc0c',
+  warning: '#f1c40f'
 };
 
 export const notificationPanelWidth = 200;

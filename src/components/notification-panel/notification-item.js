@@ -2,9 +2,12 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import Delete from '../common/icons/delete';
+import Info from '../common/icons/info';
+import Warning from '../common/icons/warning';
+import Checkmark from '../common/icons/checkmark';
 
 const NotificationItemContent = styled.div`
-  background-color: ${props => props.theme.notificationColors[props.notification.type]};
+  background-color: ${props => props.theme.notificationColors[props.notification.type] || '#000'};
   color: #fff;
   display: flex;
   flex-direction: row;
@@ -31,6 +34,13 @@ const NotificationMessage = styled.div`
   margin: 0 1em;
 `;
 
+const icons = {
+  info: <Info />,
+  warning: <Warning />,
+  error: <Warning />,
+  success: <Checkmark />
+};
+
 export default function NotificationItemFactory()
 {
   return class NotificationItem extends Component {
@@ -41,16 +51,16 @@ export default function NotificationItemFactory()
         message: PropTypes.string.isRequired
       }).isRequired
     };
-    
+
     render() {
       const {notification, removeNotification} = this.props;
       return (
         <NotificationItemContent {...this.props}>
           <div>
-            {notification.type}
+            {icons[notification.type]}
           </div>
           <NotificationMessage theme={this.props.theme}>
-            {notification.message}
+            <span>{notification.message}</span>
           </NotificationMessage>
           <div>
             <DeleteIcon height="10px" onClick={() => removeNotification(notification.id)} />
