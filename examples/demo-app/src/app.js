@@ -122,13 +122,14 @@ class App extends Component {
     // load sample data
     // this._loadSampleData();
 
-    // Notifications
-    this.props.dispatch(addNotification({
-      message: 'TEST 1'
-    }));
-    this.props.dispatch(addNotification({
-      type: 'error',
-      message: `TEST 2 and this is a really long one i wanna make sure this works. TEST 2 and this is a really long one i wanna make sure this works. 
+    setTimeout(() => {
+      // Notifications
+      this.props.dispatch(addNotification({
+        message: `Implements [GitHub Flavored Markdown](https://github.github.com/gfm/)`
+      }));
+      this.props.dispatch(addNotification({
+        type: 'error',
+        message: `TEST 2 and this is a really long one i wanna make sure this works. TEST 2 and this is a really long one i wanna make sure this works. 
       even with a newline
       
       Empty line, why not
@@ -150,15 +151,24 @@ class App extends Component {
       
       And this is the end
       `
-    }));
-    this.props.dispatch(addNotification({
-      type: 'warning',
-      message: 'TEST 3 this is a warning'
-    }));
-    this.props.dispatch(addNotification({
-      type: 'success',
-      message: 'TEST 4 and this is a really long one i wanna make sure this works'
-    }));
+      }));
+      this.props.dispatch(addNotification({
+        type: 'warning',
+        message: `<blockquote>
+  This blockquote will change based on the HTML settings above.
+</blockquote>`
+      }));
+      this.props.dispatch(addNotification({
+        type: 'success',
+        message: `## Tables?
+
+| Feature   | Support |
+| --------- | ------- |
+| tables    | ✔ |
+| alignment | ✔ |
+| wewt      | ✔ |`
+      }));
+    }, 2000);
   }
 
   componentWillUnmount() {

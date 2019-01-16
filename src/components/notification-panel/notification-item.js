@@ -25,6 +25,7 @@ import Delete from '../common/icons/delete';
 import Info from '../common/icons/info';
 import Warning from '../common/icons/warning';
 import Checkmark from '../common/icons/checkmark';
+import ReactMarkdown from 'react-markdown';
 
 const NotificationItemContent = styled.div`
   background-color: ${props => props.theme.notificationColors[props.notification.type] || '#000'};
@@ -59,6 +60,9 @@ const NotificationMessage = styled.div`
   margin: 0 1em;
   overflow: ${props => props.expanded ? 'auto' : 'hidden'};
   padding-right: ${props => props.expanded ? '1em' : 0};
+  p {
+    margin-top: 0;
+  }
 `;
 
 const NotificationIcon = styled.div`
@@ -106,7 +110,7 @@ export default function NotificationItemFactory()
           <NotificationMessage
             expanded={this.state.expanded}
             theme={this.props.theme}>
-            {notification.message}
+            <ReactMarkdown source={notification.message} />
           </NotificationMessage>
           <div>
             <DeleteIcon height="10px" onClick={() => removeNotification(notification.id)} />
