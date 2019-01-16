@@ -121,54 +121,6 @@ class App extends Component {
 
     // load sample data
     // this._loadSampleData();
-
-    setTimeout(() => {
-      // Notifications
-      this.props.dispatch(addNotification({
-        message: `Implements [GitHub Flavored Markdown](https://github.github.com/gfm/)`
-      }));
-      this.props.dispatch(addNotification({
-        type: 'error',
-        message: `TEST 2 and this is a really long one i wanna make sure this works. TEST 2 and this is a really long one i wanna make sure this works. 
-      even with a newline
-      
-      Empty line, why not
-      
-      And this is the end.
-      
-      TEST 2 and this is a really long one i wanna make sure this works. TEST 2 and this is a really long one i wanna make sure this works. 
-      even with a newline
-      
-      Empty line, why not
-      
-      And this is the end.
-      
-      
-      TEST 2 and this is a really long one i wanna make sure this works. TEST 2 and this is a really long one i wanna make sure this works. 
-      even with a newline
-      
-      Empty line, why not
-      
-      And this is the end
-      `
-      }));
-      this.props.dispatch(addNotification({
-        type: 'warning',
-        message: `<blockquote>
-  This blockquote will change based on the HTML settings above.
-</blockquote>`
-      }));
-      this.props.dispatch(addNotification({
-        type: 'success',
-        message: `## Tables?
-
-| Feature   | Support |
-| --------- | ------- |
-| tables    | ✔ |
-| alignment | ✔ |
-| wewt      | ✔ |`
-      }));
-    }, 2000);
   }
 
   componentWillUnmount() {

@@ -44,9 +44,9 @@ const NotificationItemContent = styled.div`
   -webkit-border-radius: 4px;
   -moz-border-radius: 4px;
   border-radius: 4px;
-  -webkit-box-shadow: 1px 1px 5px 0px rgba(0,0,0,0.75);
-  -moz-box-shadow: 1px 1px 5px 0px rgba(0,0,0,0.75);
-  box-shadow: 1px 1px 5px 0px rgba(0,0,0,0.75);
+  -webkit-box-shadow: ${props => props.theme.boxShadow};
+  -moz-box-shadow: ${props => props.theme.boxShadow};
+  box-shadow: ${props => props.theme.boxShadow};
   cursor: pointer;
 `;
 
