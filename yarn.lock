@@ -168,7 +168,7 @@ acorn-globals@^4.1.0:
 
 acorn-jsx@^3.0.0:
   version "3.0.1"
-  resolved "http://registry.npmjs.org/acorn-jsx/-/acorn-jsx-3.0.1.tgz#afdf9488fb1ecefc8348f6fb22f464e32a58b36b"
+  resolved "https://unpm.uberinternal.com/acorn-jsx/-/acorn-jsx-3.0.1.tgz#afdf9488fb1ecefc8348f6fb22f464e32a58b36b"
   dependencies:
     acorn "^3.0.4"
 
@@ -187,7 +187,7 @@ acorn-walk@^6.0.1, acorn-walk@^6.1.0:
 
 acorn@^3.0.4:
   version "3.3.0"
-  resolved "http://registry.npmjs.org/acorn/-/acorn-3.3.0.tgz#45e37fb39e8da3f25baee3ff5369e2bb5f22017a"
+  resolved "https://unpm.uberinternal.com/acorn/-/acorn-3.3.0.tgz#45e37fb39e8da3f25baee3ff5369e2bb5f22017a"
 
 acorn@^4.0.3:
   version "4.0.13"
@@ -229,7 +229,7 @@ airbnb-js-shims@^2.1.1:
 
 ajv-keywords@^1.0.0, ajv-keywords@^1.1.1:
   version "1.5.1"
-  resolved "https://registry.yarnpkg.com/ajv-keywords/-/ajv-keywords-1.5.1.tgz#314dd0a4b3368fad3dfcdc54ede6171b886daf3c"
+  resolved "https://unpm.uberinternal.com/ajv-keywords/-/ajv-keywords-1.5.1.tgz#314dd0a4b3368fad3dfcdc54ede6171b886daf3c"
 
 ajv@^4.7.0:
   version "4.11.8"
@@ -267,7 +267,7 @@ ansi-align@^1.1.0:
 
 ansi-escapes@^1.1.0:
   version "1.4.0"
-  resolved "http://registry.npmjs.org/ansi-escapes/-/ansi-escapes-1.4.0.tgz#d3a8a83b319aa67793662b13e761c7911422306e"
+  resolved "https://unpm.uberinternal.com/ansi-escapes/-/ansi-escapes-1.4.0.tgz#d3a8a83b319aa67793662b13e761c7911422306e"
 
 ansi-html@0.0.7:
   version "0.0.7"
@@ -549,7 +549,7 @@ babel-core@6.x.x, babel-core@^6.26.0, babel-core@^6.7.7:
 
 babel-eslint@6.1.0:
   version "6.1.0"
-  resolved "http://registry.npmjs.org/babel-eslint/-/babel-eslint-6.1.0.tgz#ce97bb95590f67e0af43d585126fbdad7678b8ab"
+  resolved "https://unpm.uberinternal.com/babel-eslint/-/babel-eslint-6.1.0.tgz#ce97bb95590f67e0af43d585126fbdad7678b8ab"
   dependencies:
     babel-traverse "^6.0.20"
     babel-types "^6.0.19"
@@ -1624,7 +1624,7 @@ caching-transform@^1.0.0:
 
 caller-path@^0.1.0:
   version "0.1.0"
-  resolved "https://registry.yarnpkg.com/caller-path/-/caller-path-0.1.0.tgz#94085ef63581ecd3daa92444a8fe94e82577751f"
+  resolved "https://unpm.uberinternal.com/caller-path/-/caller-path-0.1.0.tgz#94085ef63581ecd3daa92444a8fe94e82577751f"
   dependencies:
     callsites "^0.2.0"
 
@@ -1634,7 +1634,7 @@ callsite@^1.0.0:
 
 callsites@^0.2.0:
   version "0.2.0"
-  resolved "https://registry.yarnpkg.com/callsites/-/callsites-0.2.0.tgz#afab96262910a7f33c19a5775825c69f34e350ca"
+  resolved "https://unpm.uberinternal.com/callsites/-/callsites-0.2.0.tgz#afab96262910a7f33c19a5775825c69f34e350ca"
 
 camelcase-keys@^2.0.0:
   version "2.1.0"
@@ -1793,7 +1793,7 @@ cli-color@^1.2.0:
 
 cli-cursor@^1.0.1:
   version "1.0.2"
-  resolved "https://registry.yarnpkg.com/cli-cursor/-/cli-cursor-1.0.2.tgz#64da3f7d56a54412e59794bd62dc35295e8f2987"
+  resolved "https://unpm.uberinternal.com/cli-cursor/-/cli-cursor-1.0.2.tgz#64da3f7d56a54412e59794bd62dc35295e8f2987"
   dependencies:
     restore-cursor "^1.0.1"
 
@@ -2487,7 +2487,7 @@ doctrine@^1.2.2:
 
 doctrine@^2.0.0:
   version "2.1.0"
-  resolved "https://registry.yarnpkg.com/doctrine/-/doctrine-2.1.0.tgz#5cd01fc101621b42c4cd7f5d1a66243716d3f39d"
+  resolved "https://unpm.uberinternal.com/doctrine/-/doctrine-2.1.0.tgz#5cd01fc101621b42c4cd7f5d1a66243716d3f39d"
   dependencies:
     esutils "^2.0.2"
 
@@ -2727,7 +2727,7 @@ es6-iterator@^2.0.1, es6-iterator@^2.0.3, es6-iterator@~2.0.1, es6-iterator@~2.0
 
 es6-map@^0.1.3:
   version "0.1.5"
-  resolved "https://registry.yarnpkg.com/es6-map/-/es6-map-0.1.5.tgz#9136e0503dcc06a301690f0bb14ff4e364e949f0"
+  resolved "https://unpm.uberinternal.com/es6-map/-/es6-map-0.1.5.tgz#9136e0503dcc06a301690f0bb14ff4e364e949f0"
   dependencies:
     d "1"
     es5-ext "~0.10.14"
@@ -2748,7 +2748,7 @@ es6-promisify@^5.0.0:
 
 es6-set@~0.1.5:
   version "0.1.5"
-  resolved "https://registry.yarnpkg.com/es6-set/-/es6-set-0.1.5.tgz#d2b3ec5d4d800ced818db538d28974db0a73ccb1"
+  resolved "https://unpm.uberinternal.com/es6-set/-/es6-set-0.1.5.tgz#d2b3ec5d4d800ced818db538d28974db0a73ccb1"
   dependencies:
     d "1"
     es5-ext "~0.10.14"
@@ -2819,7 +2819,7 @@ escodegen@~1.9.0:
 
 escope@^3.6.0:
   version "3.6.0"
-  resolved "https://registry.yarnpkg.com/escope/-/escope-3.6.0.tgz#e01975e812781a163a6dadfdd80398dc64c889c3"
+  resolved "https://unpm.uberinternal.com/escope/-/escope-3.6.0.tgz#e01975e812781a163a6dadfdd80398dc64c889c3"
   dependencies:
     es6-map "^0.1.3"
     es6-weak-map "^2.0.1"
@@ -2879,7 +2879,7 @@ eslint-plugin-react@~6.7.0:
 
 eslint@^3.0.0:
   version "3.19.0"
-  resolved "https://registry.yarnpkg.com/eslint/-/eslint-3.19.0.tgz#c8fc6201c7f40dd08941b87c085767386a679acc"
+  resolved "https://unpm.uberinternal.com/eslint/-/eslint-3.19.0.tgz#c8fc6201c7f40dd08941b87c085767386a679acc"
   dependencies:
     babel-code-frame "^6.16.0"
     chalk "^1.1.3"
@@ -2919,7 +2919,7 @@ eslint@^3.0.0:
 
 espree@^3.4.0:
   version "3.5.4"
-  resolved "http://registry.npmjs.org/espree/-/espree-3.5.4.tgz#b0f447187c8a8bed944b815a660bddf5deb5d1a7"
+  resolved "https://unpm.uberinternal.com/espree/-/espree-3.5.4.tgz#b0f447187c8a8bed944b815a660bddf5deb5d1a7"
   dependencies:
     acorn "^5.5.0"
     acorn-jsx "^3.0.0"
@@ -2946,7 +2946,7 @@ esprima@~1.0.4:
 
 esquery@^1.0.0:
   version "1.0.1"
-  resolved "https://registry.yarnpkg.com/esquery/-/esquery-1.0.1.tgz#406c51658b1f5991a5f9b62b1dc25b00e3e5c708"
+  resolved "https://unpm.uberinternal.com/esquery/-/esquery-1.0.1.tgz#406c51658b1f5991a5f9b62b1dc25b00e3e5c708"
   dependencies:
     estraverse "^4.0.0"
 
@@ -3022,7 +3022,7 @@ exenv@^1.2.0:
 
 exit-hook@^1.0.0:
   version "1.1.1"
-  resolved "https://registry.yarnpkg.com/exit-hook/-/exit-hook-1.1.1.tgz#f05ca233b48c05d54fff07765df8507e95c02ff8"
+  resolved "https://unpm.uberinternal.com/exit-hook/-/exit-hook-1.1.1.tgz#f05ca233b48c05d54fff07765df8507e95c02ff8"
 
 expand-brackets@^0.1.4:
   version "0.1.5"
@@ -3186,7 +3186,7 @@ fbjs@^0.8.16, fbjs@^0.8.5, fbjs@^0.8.9:
 
 figures@^1.3.5, figures@^1.4.0:
   version "1.7.0"
-  resolved "https://registry.yarnpkg.com/figures/-/figures-1.7.0.tgz#cbe1e3affcf1cd44b80cadfed28dc793a9701d2e"
+  resolved "https://unpm.uberinternal.com/figures/-/figures-1.7.0.tgz#cbe1e3affcf1cd44b80cadfed28dc793a9701d2e"
   dependencies:
     escape-string-regexp "^1.0.5"
     object-assign "^4.1.0"
@@ -3398,13 +3398,13 @@ gauge@~2.7.3:
 
 generate-function@^2.0.0:
   version "2.3.1"
-  resolved "https://registry.yarnpkg.com/generate-function/-/generate-function-2.3.1.tgz#f069617690c10c868e73b8465746764f97c3479f"
+  resolved "https://unpm.uberinternal.com/generate-function/-/generate-function-2.3.1.tgz#f069617690c10c868e73b8465746764f97c3479f"
   dependencies:
     is-property "^1.0.2"
 
 generate-object-property@^1.1.0:
   version "1.2.0"
-  resolved "https://registry.yarnpkg.com/generate-object-property/-/generate-object-property-1.2.0.tgz#9c0e1c40308ce804f4783618b937fa88f99d50d0"
+  resolved "https://unpm.uberinternal.com/generate-object-property/-/generate-object-property-1.2.0.tgz#9c0e1c40308ce804f4783618b937fa88f99d50d0"
   dependencies:
     is-property "^1.0.0"
 
@@ -3844,7 +3844,7 @@ ignore-walk@^3.0.1:
 
 ignore@^3.2.0:
   version "3.3.10"
-  resolved "https://registry.yarnpkg.com/ignore/-/ignore-3.3.10.tgz#0a97fb876986e8081c631160f8f9f389157f0043"
+  resolved "https://unpm.uberinternal.com/ignore/-/ignore-3.3.10.tgz#0a97fb876986e8081c631160f8f9f389157f0043"
 
 immutable@^3.8.2:
   version "3.8.2"
@@ -3898,7 +3898,7 @@ inline-source-map@~0.6.0:
 
 inquirer@^0.12.0:
   version "0.12.0"
-  resolved "http://registry.npmjs.org/inquirer/-/inquirer-0.12.0.tgz#1ef2bfd63504df0bc75785fff8c2c41df12f077e"
+  resolved "https://unpm.uberinternal.com/inquirer/-/inquirer-0.12.0.tgz#1ef2bfd63504df0bc75785fff8c2c41df12f077e"
   dependencies:
     ansi-escapes "^1.1.0"
     ansi-regex "^2.0.0"
@@ -4125,11 +4125,11 @@ is-hexadecimal@^1.0.0:
 
 is-my-ip-valid@^1.0.0:
   version "1.0.0"
-  resolved "https://registry.yarnpkg.com/is-my-ip-valid/-/is-my-ip-valid-1.0.0.tgz#7b351b8e8edd4d3995d4d066680e664d94696824"
+  resolved "https://unpm.uberinternal.com/is-my-ip-valid/-/is-my-ip-valid-1.0.0.tgz#7b351b8e8edd4d3995d4d066680e664d94696824"
 
 is-my-json-valid@^2.10.0:
   version "2.19.0"
-  resolved "https://registry.yarnpkg.com/is-my-json-valid/-/is-my-json-valid-2.19.0.tgz#8fd6e40363cd06b963fa877d444bfb5eddc62175"
+  resolved "https://unpm.uberinternal.com/is-my-json-valid/-/is-my-json-valid-2.19.0.tgz#8fd6e40363cd06b963fa877d444bfb5eddc62175"
   dependencies:
     generate-function "^2.0.0"
     generate-object-property "^1.1.0"
@@ -4205,7 +4205,7 @@ is-promise@^2.1:
 
 is-property@^1.0.0, is-property@^1.0.2:
   version "1.0.2"
-  resolved "https://registry.yarnpkg.com/is-property/-/is-property-1.0.2.tgz#57fe1c4e48474edd65b09911f26b1cd4095dda84"
+  resolved "https://unpm.uberinternal.com/is-property/-/is-property-1.0.2.tgz#57fe1c4e48474edd65b09911f26b1cd4095dda84"
 
 is-redirect@^1.0.0:
   version "1.0.0"
@@ -4219,7 +4219,7 @@ is-regex@^1.0.4:
 
 is-resolvable@^1.0.0:
   version "1.1.0"
-  resolved "https://registry.yarnpkg.com/is-resolvable/-/is-resolvable-1.1.0.tgz#fb18f87ce1feb925169c9a407c19318a3206ed88"
+  resolved "https://unpm.uberinternal.com/is-resolvable/-/is-resolvable-1.1.0.tgz#fb18f87ce1feb925169c9a407c19318a3206ed88"
 
 is-retry-allowed@^1.0.0:
   version "1.1.0"
@@ -4363,9 +4363,16 @@ js-tokens@^3.0.2:
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/js-tokens/-/js-tokens-3.0.2.tgz#9866df395102130e38f7f996bceb65443209c25b"
 
-js-yaml@3.x, js-yaml@^3.5.1:
+js-yaml@3.x:
   version "3.12.0"
   resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-3.12.0.tgz#eaed656ec8344f10f527c6bfa1b6e2244de167d1"
+  dependencies:
+    argparse "^1.0.7"
+    esprima "^4.0.0"
+
+js-yaml@^3.5.1:
+  version "3.12.1"
+  resolved "https://unpm.uberinternal.com/js-yaml/-/js-yaml-3.12.1.tgz#295c8632a18a23e054cf5c9d3cecafe678167600"
   dependencies:
     argparse "^1.0.7"
     esprima "^4.0.0"
@@ -4427,7 +4434,7 @@ json-schema@0.2.3:
 
 json-stable-stringify@^1.0.0, json-stable-stringify@^1.0.1:
   version "1.0.1"
-  resolved "https://registry.yarnpkg.com/json-stable-stringify/-/json-stable-stringify-1.0.1.tgz#9a759d39c5f2ff503fd5300646ed445f88c4f9af"
+  resolved "https://unpm.uberinternal.com/json-stable-stringify/-/json-stable-stringify-1.0.1.tgz#9a759d39c5f2ff503fd5300646ed445f88c4f9af"
   dependencies:
     jsonify "~0.0.0"
 
@@ -4459,7 +4466,7 @@ jsonparse@^1.2.0:
 
 jsonpointer@^4.0.0:
   version "4.0.1"
-  resolved "https://registry.yarnpkg.com/jsonpointer/-/jsonpointer-4.0.1.tgz#4fd92cb34e0e9db3c89c8622ecf51f9b978c6cb9"
+  resolved "https://unpm.uberinternal.com/jsonpointer/-/jsonpointer-4.0.1.tgz#4fd92cb34e0e9db3c89c8622ecf51f9b978c6cb9"
 
 jsprim@^1.2.2:
   version "1.4.1"
@@ -4604,7 +4611,7 @@ lodash-es@^4.2.1:
 
 lodash.assign@^4.0.0:
   version "4.2.0"
-  resolved "https://registry.yarnpkg.com/lodash.assign/-/lodash.assign-4.2.0.tgz#0d99f3ccd7a6d261d19bdaeb9245005d285808e7"
+  resolved "https://unpm.uberinternal.com/lodash.assign/-/lodash.assign-4.2.0.tgz#0d99f3ccd7a6d261d19bdaeb9245005d285808e7"
 
 lodash.camelcase@^4.3.0:
   version "4.3.0"
@@ -4652,7 +4659,7 @@ lodash.pick@^4.4.0:
 
 lodash.pickby@^4.0.0:
   version "4.6.0"
-  resolved "https://registry.yarnpkg.com/lodash.pickby/-/lodash.pickby-4.6.0.tgz#7dea21d8c18d7703a27c704c15d3b84a67e33aff"
+  resolved "https://unpm.uberinternal.com/lodash.pickby/-/lodash.pickby-4.6.0.tgz#7dea21d8c18d7703a27c704c15d3b84a67e33aff"
 
 lodash.sortby@^4.7.0:
   version "4.7.0"
@@ -5087,7 +5094,7 @@ murmurhash-js@^1.0.0:
 
 mute-stream@0.0.5:
   version "0.0.5"
-  resolved "https://registry.yarnpkg.com/mute-stream/-/mute-stream-0.0.5.tgz#8fbfabb0a98a253d3184331f9e8deb7372fac6c0"
+  resolved "https://unpm.uberinternal.com/mute-stream/-/mute-stream-0.0.5.tgz#8fbfabb0a98a253d3184331f9e8deb7372fac6c0"
 
 mute-stream@~0.0.4:
   version "0.0.7"
@@ -5459,7 +5466,7 @@ once@1.x, once@^1.3.0:
 
 onetime@^1.0.0:
   version "1.1.0"
-  resolved "http://registry.npmjs.org/onetime/-/onetime-1.1.0.tgz#a1f7838f8314c516f05ecefcbc4ccfe04b4ed789"
+  resolved "https://unpm.uberinternal.com/onetime/-/onetime-1.1.0.tgz#a1f7838f8314c516f05ecefcbc4ccfe04b4ed789"
 
 opn@^5.1.0:
   version "5.4.0"
@@ -5684,7 +5691,7 @@ path-key@^2.0.0:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/path-key/-/path-key-2.0.1.tgz#411cadb574c5a140d3a4b1910d40d80cc9f40b40"
 
-path-parse@^1.0.5:
+path-parse@^1.0.5, path-parse@^1.0.6:
   version "1.0.6"
   resolved "https://registry.yarnpkg.com/path-parse/-/path-parse-1.0.6.tgz#d62dbb5679405d72c4737ec58600e9ddcf06d24c"
 
@@ -5777,7 +5784,7 @@ plur@^1.0.0:
 
 pluralize@^1.2.1:
   version "1.2.1"
-  resolved "https://registry.yarnpkg.com/pluralize/-/pluralize-1.2.1.tgz#d1a21483fd22bb41e58a12fa3421823140897c45"
+  resolved "https://unpm.uberinternal.com/pluralize/-/pluralize-1.2.1.tgz#d1a21483fd22bb41e58a12fa3421823140897c45"
 
 pn@^1.1.0:
   version "1.1.0"
@@ -6326,7 +6333,7 @@ readdirp@^2.0.0, readdirp@^2.1.0:
 
 readline2@^1.0.1:
   version "1.0.1"
-  resolved "https://registry.yarnpkg.com/readline2/-/readline2-1.0.1.tgz#41059608ffc154757b715d9989d199ffbf372e35"
+  resolved "https://unpm.uberinternal.com/readline2/-/readline2-1.0.1.tgz#41059608ffc154757b715d9989d199ffbf372e35"
   dependencies:
     code-point-at "^1.0.0"
     is-fullwidth-code-point "^1.0.0"
@@ -6334,7 +6341,7 @@ readline2@^1.0.1:
 
 rechoir@^0.6.2:
   version "0.6.2"
-  resolved "https://registry.yarnpkg.com/rechoir/-/rechoir-0.6.2.tgz#85204b54dba82d5742e28c96756ef43af50e3384"
+  resolved "https://unpm.uberinternal.com/rechoir/-/rechoir-0.6.2.tgz#85204b54dba82d5742e28c96756ef43af50e3384"
   dependencies:
     resolve "^1.1.6"
 
@@ -6554,7 +6561,7 @@ require-main-filename@^1.0.1:
 
 require-uncached@^1.0.2:
   version "1.0.3"
-  resolved "http://registry.npmjs.org/require-uncached/-/require-uncached-1.0.3.tgz#4e0d56d6c9662fd31e43011c4b95aa49955421d3"
+  resolved "https://unpm.uberinternal.com/require-uncached/-/require-uncached-1.0.3.tgz#4e0d56d6c9662fd31e43011c4b95aa49955421d3"
   dependencies:
     caller-path "^0.1.0"
     resolve-from "^1.0.0"
@@ -6575,7 +6582,7 @@ resolve-cwd@^2.0.0:
 
 resolve-from@^1.0.0:
   version "1.0.1"
-  resolved "https://registry.yarnpkg.com/resolve-from/-/resolve-from-1.0.1.tgz#26cbfe935d1aeeeabb29bc3fe5aeb01e93d44226"
+  resolved "https://unpm.uberinternal.com/resolve-from/-/resolve-from-1.0.1.tgz#26cbfe935d1aeeeabb29bc3fe5aeb01e93d44226"
 
 resolve-from@^2.0.0:
   version "2.0.0"
@@ -6599,11 +6606,17 @@ resolve@1.1.7, resolve@1.1.x:
   version "1.1.7"
   resolved "https://registry.yarnpkg.com/resolve/-/resolve-1.1.7.tgz#203114d82ad2c5ed9e8e0411b3932875e889e97b"
 
-resolve@^1.1.4, resolve@^1.1.5, resolve@^1.1.6, resolve@^1.4.0:
+resolve@^1.1.4, resolve@^1.1.5, resolve@^1.4.0:
   version "1.8.1"
   resolved "https://registry.yarnpkg.com/resolve/-/resolve-1.8.1.tgz#82f1ec19a423ac1fbd080b0bab06ba36e84a7a26"
   dependencies:
     path-parse "^1.0.5"
+
+resolve@^1.1.6:
+  version "1.9.0"
+  resolved "https://unpm.uberinternal.com/resolve/-/resolve-1.9.0.tgz#a14c6fdfa8f92a7df1d996cb7105fa744658ea06"
+  dependencies:
+    path-parse "^1.0.6"
 
 resolve@~1.4.0:
   version "1.4.0"
@@ -6613,7 +6626,7 @@ resolve@~1.4.0:
 
 restore-cursor@^1.0.1:
   version "1.0.1"
-  resolved "https://registry.yarnpkg.com/restore-cursor/-/restore-cursor-1.0.1.tgz#34661f46886327fed2991479152252df92daa541"
+  resolved "https://unpm.uberinternal.com/restore-cursor/-/restore-cursor-1.0.1.tgz#34661f46886327fed2991479152252df92daa541"
   dependencies:
     exit-hook "^1.0.0"
     onetime "^1.0.0"
@@ -6656,7 +6669,7 @@ rst-selector-parser@^2.2.3:
 
 run-async@^0.1.0:
   version "0.1.0"
-  resolved "https://registry.yarnpkg.com/run-async/-/run-async-0.1.0.tgz#c8ad4a5e110661e402a7d21b530e009f25f8e389"
+  resolved "https://unpm.uberinternal.com/run-async/-/run-async-0.1.0.tgz#c8ad4a5e110661e402a7d21b530e009f25f8e389"
   dependencies:
     once "^1.3.0"
 
@@ -6670,7 +6683,7 @@ rw@~0.1.4:
 
 rx-lite@^3.1.2:
   version "3.1.2"
-  resolved "https://registry.yarnpkg.com/rx-lite/-/rx-lite-3.1.2.tgz#19ce502ca572665f3b647b10939f97fd1615f102"
+  resolved "https://unpm.uberinternal.com/rx-lite/-/rx-lite-3.1.2.tgz#19ce502ca572665f3b647b10939f97fd1615f102"
 
 safe-buffer@5.1.2, safe-buffer@^5.0.1, safe-buffer@^5.1.0, safe-buffer@^5.1.1, safe-buffer@^5.1.2, safe-buffer@~5.1.0, safe-buffer@~5.1.1:
   version "5.1.2"
@@ -6850,7 +6863,7 @@ shell-quote@^1.4.2, shell-quote@^1.6.1:
 
 shelljs@^0.7.5:
   version "0.7.8"
-  resolved "https://registry.yarnpkg.com/shelljs/-/shelljs-0.7.8.tgz#decbcf874b0d1e5fb72e14b164a9683048e9acb3"
+  resolved "https://unpm.uberinternal.com/shelljs/-/shelljs-0.7.8.tgz#decbcf874b0d1e5fb72e14b164a9683048e9acb3"
   dependencies:
     glob "^7.0.0"
     interpret "^1.0.0"
@@ -6883,7 +6896,7 @@ slash@^1.0.0:
 
 slice-ansi@0.0.4:
   version "0.0.4"
-  resolved "http://registry.npmjs.org/slice-ansi/-/slice-ansi-0.0.4.tgz#edbf8903f66f7ce2f8eafd6ceed65e264c831b35"
+  resolved "https://unpm.uberinternal.com/slice-ansi/-/slice-ansi-0.0.4.tgz#edbf8903f66f7ce2f8eafd6ceed65e264c831b35"
 
 slide@^1.1.5:
   version "1.1.6"
@@ -7255,7 +7268,7 @@ strip-bom@^2.0.0:
 
 strip-bom@^3.0.0:
   version "3.0.0"
-  resolved "https://registry.yarnpkg.com/strip-bom/-/strip-bom-3.0.0.tgz#2334c18e9c759f7bdd56fdef7e9ae3d588e68ed3"
+  resolved "https://unpm.uberinternal.com/strip-bom/-/strip-bom-3.0.0.tgz#2334c18e9c759f7bdd56fdef7e9ae3d588e68ed3"
 
 strip-eof@^1.0.0:
   version "1.0.0"
@@ -7350,7 +7363,7 @@ syntax-error@^1.1.1:
 
 table@^3.7.8:
   version "3.8.3"
-  resolved "http://registry.npmjs.org/table/-/table-3.8.3.tgz#2bbc542f0fda9861a755d3947fefd8b3f513855f"
+  resolved "https://unpm.uberinternal.com/table/-/table-3.8.3.tgz#2bbc542f0fda9861a755d3947fefd8b3f513855f"
   dependencies:
     ajv "^4.7.0"
     ajv-keywords "^1.0.0"
@@ -7437,7 +7450,7 @@ text-encoding@0.6.4:
 
 text-table@~0.2.0:
   version "0.2.0"
-  resolved "https://registry.yarnpkg.com/text-table/-/text-table-0.2.0.tgz#7f5ee823ae805207c00af2df4a84ec3fcfa570b4"
+  resolved "https://unpm.uberinternal.com/text-table/-/text-table-0.2.0.tgz#7f5ee823ae805207c00af2df4a84ec3fcfa570b4"
 
 through2@^2.0.0, through2@~2.0.3:
   version "2.0.3"
@@ -7791,7 +7804,7 @@ user-home@^1.1.1:
 
 user-home@^2.0.0:
   version "2.0.0"
-  resolved "https://registry.yarnpkg.com/user-home/-/user-home-2.0.0.tgz#9c70bfd8169bc1dcbf48604e0f04b8b49cde9e9f"
+  resolved "https://unpm.uberinternal.com/user-home/-/user-home-2.0.0.tgz#9c70bfd8169bc1dcbf48604e0f04b8b49cde9e9f"
   dependencies:
     os-homedir "^1.0.0"
 

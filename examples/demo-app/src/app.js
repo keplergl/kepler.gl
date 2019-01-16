@@ -121,6 +121,9 @@ class App extends Component {
 
     // load sample data
     // this._loadSampleData();
+
+    // Notifications
+    // this._loadMockNotifications();
   }
 
   componentWillUnmount() {
@@ -146,6 +149,26 @@ class App extends Component {
     this._hideBanner();
     window.localStorage.setItem(BannerKey, 'true');
   };
+
+  /* eslint-disable max-nested-callbacks */
+  _loadMockNotifications = () => {
+    setTimeout(() => {
+      this.props.dispatch(addNotification({message: 'Welcome to Kepler.gl'}));
+
+      setTimeout(() => {
+        this.props.dispatch(addNotification({message: 'Something is wrong', type: 'error'}));
+
+        setTimeout(() => {
+          this.props.dispatch(addNotification({message: 'I am getting better', type: 'warning'}));
+          setTimeout(() => {
+            this.props.dispatch(addNotification({message: 'Everything is fine', type: 'success'}));
+
+          }, 1000);
+        }, 1000);
+      }, 1000);
+    }, 3000);
+  };
+  /* eslint-enable max-nested-callbacks */
 
   _loadSampleData() {
     this.props.dispatch(

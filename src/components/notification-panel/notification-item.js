@@ -32,11 +32,9 @@ const NotificationItemContent = styled.div`
   color: #fff;
   display: flex;
   flex-direction: row;
-  width: ${props => 
-    props.theme.notificationPanelWidth + props.expanded * props.theme.notificationPanelWidth
-  }px;
+  width: ${props => props.theme.notificationPanelItemWidth * (1 + Number(props.isExpanded))}px;
   height: ${props => 
-    props.theme.notificationPanelItemHeight + props.expanded * props.theme.notificationPanelItemHeight 
+    props.theme.notificationPanelItemHeight * (1 + Number(props.isExpanded)) 
   }px;
   font-size: 10px;
   margin-bottom: 1rem;
@@ -58,8 +56,8 @@ const NotificationMessage = styled.div`
   flex-grow: 2;
   width: ${props => props.theme.notificationPanelItemWidth}px;
   margin: 0 1em;
-  overflow: ${props => props.expanded ? 'auto' : 'hidden'};
-  padding-right: ${props => props.expanded ? '1em' : 0};
+  overflow: ${props => props.isExpanded ? 'auto' : 'hidden'};
+  padding-right: ${props => props.isExpanded ? '1em' : 0};
   p {
     margin-top: 0;
   }
@@ -92,7 +90,7 @@ export default function NotificationItemFactory()
     constructor(props) {
       super(props);
       this.state = {
-        expanded: false
+        isExpanded: false
       };
     }
 
@@ -100,19 +98,22 @@ export default function NotificationItemFactory()
       const {notification, removeNotification} = this.props;
       return (
         <NotificationItemContent
+          className={`notification-item`}
           {...this.props}
-          onClick={() => this.setState({expanded: !this.state.expanded})}
-          expanded={this.state.expanded}
-        >
-          <NotificationIcon>
+          onClick={() => this.setState({isExpanded: !this.state.isExpanded})}
+          isExpanded={this.state.isExpanded}>
+          <NotificationIcon
+            className={`notification-item--icon`}>
             {icons[notification.type]}
           </NotificationIcon>
           <NotificationMessage
-            expanded={this.state.expanded}
+            className="notification-item--message"
+            expanded={this.state.isExpanded}
             theme={this.props.theme}>
             <ReactMarkdown source={notification.message} />
           </NotificationMessage>
-          <div>
+          <div
+            className="notification-item--action">
             <DeleteIcon height="10px" onClick={() => removeNotification(notification.id)} />
           </div>
         </NotificationItemContent>

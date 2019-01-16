@@ -35,24 +35,27 @@ import {
 } from 'actions/ui-state-actions';
 import reducer, {uiStateReducerFactory, INITIAL_UI_STATE}  from 'reducers/ui-state';
 import {RATIOS, RESOLUTIONS, EXPORT_DATA_TYPE} from 'constants/default-settings';
-import {DEFAULT_NOTIFICATION_TOPICS, DEFAULT_NOTIFICATION_TYPES} from '../../../src/constants/default-settings';
-import {createNotification} from '../../../src/utils/notifications-utils';
-import {removeNotification} from '../../../src/actions/ui-state-actions';
+import {DEFAULT_NOTIFICATION_TOPICS, DEFAULT_NOTIFICATION_TYPES} from 'constants/default-settings';
+import {removeNotification} from 'actions/ui-state-actions';
 
 test('#uiStateReducer', t => {
 
-  t.deepEqual(reducer(undefined, {}), {...INITIAL_UI_STATE, initialState: {}},
-    'should return the initial state');
-
+  t.deepEqual(
+    reducer(undefined, {}),
+    {...INITIAL_UI_STATE, initialState: {}},
+    'should return the initial state'
+  );
   t.end();
 });
 
 test('#uiStateReducerFactory', t => {
   const uiStateReducer = uiStateReducerFactory({readOnly: true});
 
-  t.deepEqual(uiStateReducer(undefined, {}), {...INITIAL_UI_STATE, readOnly: true, initialState: {readOnly: true}},
-    'should return the initial state');
-
+  t.deepEqual(
+    uiStateReducer(undefined, {}),
+    {...INITIAL_UI_STATE, readOnly: true, initialState: {readOnly: true}},
+    'should return the initial state'
+  );
   t.end();
 });
 
