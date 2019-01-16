@@ -23,6 +23,7 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
 import NotificationItemFactory from './notification-panel/notification-item';
+import {DEFAULT_NOTIFICATION_TOPICS} from 'constants/default-settings';
 
 const NotificationPanelContent = styled.div`
   background: transparent;
@@ -60,13 +61,16 @@ export default function NotificationPanelFactory (
 
       return (
         <NotificationPanelContent className="notification-panel">
-          {notifications.map(n => (
-            <NotificationItem
-              key={n.id}
-              notification={n}
-              removeNotification={removeNotification}
-            />
-          ))}
+          {notifications
+            .filter(n => n.topic === DEFAULT_NOTIFICATION_TOPICS.global)
+            .map(n => (
+              <NotificationItem
+                key={n.id}
+                notification={n}
+                removeNotification={removeNotification}
+              />
+            ))
+          }
         </NotificationPanelContent>
       );
     }
