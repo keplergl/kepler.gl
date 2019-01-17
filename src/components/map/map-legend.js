@@ -119,7 +119,8 @@ const MapLegend = ({layers}) => (
 
       const colorChannelConfig = layer.getVisualChannelDescription('color');
       const enableColorBy = colorChannelConfig.measure;
-      const width = DIMENSIONS.mapControl.width - 2 * DIMENSIONS.mapControl.padding;
+      const width =
+        DIMENSIONS.mapControl.width - 2 * DIMENSIONS.mapControl.padding;
 
       return (
         <StyledMapControlLegend
@@ -137,10 +138,11 @@ const MapLegend = ({layers}) => (
                 <VisualChannelMetric name={enableColorBy} />
               ) : null}
               <div className="legend--layer_color-legend">
-                {enableColorBy ?
-                  <MultiColorLegend layer={layer} width={width}/> :
-                  <SingleColorLegend layer={layer} width={width}/>
-                }
+                {enableColorBy ? (
+                  <MultiColorLegend layer={layer} width={width} />
+                ) : (
+                  <SingleColorLegend layer={layer} width={width} />
+                )}
               </div>
             </div>
           </div>
@@ -154,7 +156,9 @@ const MapLegend = ({layers}) => (
                 layer.config[layer.visualChannels[key].field] ||
                 layer.visualChannels[key].defaultMeasure;
 
-              const visualChannelDescription = layer.getVisualChannelDescription(key);
+              const visualChannelDescription = layer.getVisualChannelDescription(
+                key
+              );
               if (matchCondition && enabled) {
                 return (
                   <LayerSizeLegend

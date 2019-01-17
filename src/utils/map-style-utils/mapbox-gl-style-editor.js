@@ -102,7 +102,9 @@ const mapboxStyleApiUrl = 'https://api.mapbox.com/styles/v1/';
 // mapbox://styles/uberdata/cjfyl03kp1tul2smf5v2tbdd4
 // lowercase letters, numbers and dashes only.
 export function isValidStyleUrl(url) {
-  return typeof url === 'string' && Boolean(url.match(mapUrlRg) || url.match(httpRg));
+  return (
+    typeof url === 'string' && Boolean(url.match(mapUrlRg) || url.match(httpRg))
+  );
 }
 
 export function getStyleDownloadUrl(styleUrl, accessToken) {
@@ -115,7 +117,7 @@ export function getStyleDownloadUrl(styleUrl, accessToken) {
     const styleId = styleUrl.replace('mapbox://styles/', '');
 
     // https://api.mapbox.com/styles/v1/heshan0131/cjg1bfumo1cwm2rlrjxkinfgw?pluginName=Keplergl&access_token=<token>
-    return `${mapboxStyleApiUrl}${styleId}?pluginName=Keplergl&access_token=${accessToken}`
+    return `${mapboxStyleApiUrl}${styleId}?pluginName=Keplergl&access_token=${accessToken}`;
   }
 
   // style url not recognized
@@ -171,11 +173,17 @@ export function scaleMapStyleByResolution(mapboxStyle, resolution) {
  * @param {object} currentLayerGroup
  * @return {object} mergedLayerGroups
  */
-export function mergeLayerGroupVisibility(defaultLayerGroup, currentLayerGroup) {
-  return Object.keys(currentLayerGroup)
-    .reduce((accu, key) => ({
+export function mergeLayerGroupVisibility(
+  defaultLayerGroup,
+  currentLayerGroup
+) {
+  return Object.keys(currentLayerGroup).reduce(
+    (accu, key) => ({
       ...accu,
-      ...(defaultLayerGroup.hasOwnProperty(key) ? {[key]: currentLayerGroup[key]} : {})
-    }), defaultLayerGroup);
+      ...(defaultLayerGroup.hasOwnProperty(key)
+        ? {[key]: currentLayerGroup[key]}
+        : {})
+    }),
+    defaultLayerGroup
+  );
 }
-

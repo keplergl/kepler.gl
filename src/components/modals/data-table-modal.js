@@ -26,7 +26,9 @@ import {ALL_FIELD_TYPES} from 'constants/default-settings';
 import FieldToken from 'components/common/field-token';
 import DatasetLabel from 'components/common/dataset-label';
 import {Clock} from 'components/common/icons/index';
-const ReactDataGrid = window.navigator ? require('react-data-grid/dist/react-data-grid.min') : null;
+const ReactDataGrid = window.navigator
+  ? require('react-data-grid/dist/react-data-grid.min')
+  : null;
 
 let shouldPreventScrollBack = false;
 
@@ -129,7 +131,13 @@ export class DataTableModal extends Component {
       .filter(({name}) => name !== '_geojson');
 
     return (
-      <div ref={ref => {this._root = ref}} className="dataset-modal" style={{overflow: 'scroll'}}>
+      <div
+        ref={ref => {
+          this._root = ref;
+        }}
+        className="dataset-modal"
+        style={{overflow: 'scroll'}}
+      >
         <DatasetTabs
           activeDataset={activeDataset}
           datasets={datasets}
@@ -210,7 +218,7 @@ export const DatasetTabs = ({activeDataset, datasets, showDatasetTable}) => (
         key={dataset.id}
         onClick={() => showDatasetTable(dataset.id)}
       >
-        <DatasetLabel dataset={dataset}/>
+        <DatasetLabel dataset={dataset} />
       </DatasetModalTab>
     ))}
   </DatasetCatalog>

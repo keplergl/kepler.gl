@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 // Data Processor
-export {default as default} from './data-processor';
+export {default} from './data-processor';
 
 // File Handlers
 export {getFileHandler, getFileType} from './file-handler';

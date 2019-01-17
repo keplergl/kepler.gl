@@ -42,7 +42,10 @@ export default class RangeBrush extends Component {
   };
 
   componentDidMount() {
-    const {range: [min, max], value: [val0, val1]} = this.props;
+    const {
+      range: [min, max],
+      value: [val0, val1]
+    } = this.props;
     // We want the React app to respond to brush state and vice-versa
     // but d3-brush fires the same events for both user-initiated brushing
     // and programmatic brushing (brush.move). We need these flags to
@@ -81,7 +84,11 @@ export default class RangeBrush extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    const {range: [min, max], value: [val0, val1], width} = this.props;
+    const {
+      range: [min, max],
+      value: [val0, val1],
+      width
+    } = this.props;
     const [prevVal0, prevVal1] = prevProps.value;
 
     if (prevProps.width !== width) {
@@ -108,21 +115,32 @@ export default class RangeBrush extends Component {
   }
 
   _move(val0, val1) {
-    const {domain: [min, max], width} = this.props;
-    const scale = x => (x - min) * width / (max - min);
+    const {
+      domain: [min, max],
+      width
+    } = this.props;
+    const scale = x => ((x - min) * width) / (max - min);
     this.brush.move(this.root, [scale(val0), scale(val1)]);
   }
 
   _brush([sel0, sel1]) {
-    const {domain: [min, max], onBrush, width} = this.props;
-    const invert = x => x * (max - min) / width + min;
+    const {
+      domain: [min, max],
+      onBrush,
+      width
+    } = this.props;
+    const invert = x => (x * (max - min)) / width + min;
     onBrush(invert(sel0), invert(sel1));
   }
 
   render() {
-    return <StyledG className="kg-range-slider__brush"
-                    innerRef={comp => {
-      this.rootContainer = comp;
-    }}/>;
+    return (
+      <StyledG
+        className="kg-range-slider__brush"
+        innerRef={comp => {
+          this.rootContainer = comp;
+        }}
+      />
+    );
   }
-};
+}

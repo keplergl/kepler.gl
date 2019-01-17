@@ -28,74 +28,74 @@ export * from './map-state-actions';
 export * from './map-style-actions';
 export * from './identity-actions';
 
-  /**
-   * Add data to kepler.gl reducer, prepare map with preset configuration if config is passed.
-   * Kepler.gl provides a handy set of utils to parse data from different format to the `data` object required in dataset. You rarely need to manually format the data obejct.
-   *
-   * Use `KeplerGlSchema.getConfigToSave` to generate a json blob of the currents instance config.
-   * The config object value will always have higher precedence than the options properties.
-   *
-   * Kepler.gl uses `dataId` in the config to match with loaded dataset. If you pass a config object, you need
-   * to match the `info.id` of your dataset to the `dataId` in eath `layer`, `filter` and `interactionConfig.tooltips.fieldsToShow`
-   *
-   * @param {Array<Object>|Object} datasets - ***required** datasets can be a dataset or an array of datasets
-   * Each dataset object needs to have `info` and `data` property.
-   * @param {Object} datasets.info -info of a dataset
-   * @param {string} datasets.info.id - id of this dataset. If config is defined, `id` should matches the `dataId` in config.
-   * @param {string} datasets.info.label - A display name of this dataset
-   * @param {Object} datasets.data - ***required** The data object, in a tabular format with 2 properties `fields` and `rows`
-   * @param {Array<Object>} datasets.data.fields - ***required** Array of fields,
-   * @param {string} datasets.data.fields.name - ***required** Name of the field,
-   * @param {Array<Array>} datasets.data.rows - ***required** Array of rows, in a tabular format with `fields` and `rows`
-   *
-   * @param {Object} options
-   * @param {boolean} options.centerMap `default: true` if `centerMap` is set to `true` kepler.gl will
-   * place the map view within the data points boundaries
-   * @param {boolean} options.readOnly `default: false` if `readOnly` is set to `true`
-   * the left setting panel will be hidden
-   * @param {Object} config this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
-   * @public
-   * @example
-   * import {addDataToMap} from 'kepler.gl/actions';
-   *
-   * this.props.dispatch(
-   *   addDataToMap(
-   *     // datasets
-   *     {
-   *       info: {
-   *         label: 'Sample Taxi Trips in New York City',
-   *         id: 'test_trip_data'
-   *       },
-   *       data: {
-   *         fields: [{
-   *           name: 'begintrip_lat',
-   *           type: 'real',
-   *           format: ''
-   *         }, {
-   *           name: 'begintrip_lng',
-   *           type: 'real',
-   *           format: ''
-   *         }],
-   *         rows: [
-   *          [37.1234, -121.20292],
-   *          [34.1223, -121.98234]
-   *         ]
-   *       }
-   *     },
-   *     // option
-   *     {
-   *       centerMap: true,
-   *       readOnly: false
-   *     },
-   *     // config
-   *     {
-   *       mapStyle: {
-   *        styleType: 'light'
-   *       }
-   *     }
-   *   )
-   * );
-   */
+/**
+ * Add data to kepler.gl reducer, prepare map with preset configuration if config is passed.
+ * Kepler.gl provides a handy set of utils to parse data from different format to the `data` object required in dataset. You rarely need to manually format the data obejct.
+ *
+ * Use `KeplerGlSchema.getConfigToSave` to generate a json blob of the currents instance config.
+ * The config object value will always have higher precedence than the options properties.
+ *
+ * Kepler.gl uses `dataId` in the config to match with loaded dataset. If you pass a config object, you need
+ * to match the `info.id` of your dataset to the `dataId` in eath `layer`, `filter` and `interactionConfig.tooltips.fieldsToShow`
+ *
+ * @param {Array<Object>|Object} datasets - ***required** datasets can be a dataset or an array of datasets
+ * Each dataset object needs to have `info` and `data` property.
+ * @param {Object} datasets.info -info of a dataset
+ * @param {string} datasets.info.id - id of this dataset. If config is defined, `id` should matches the `dataId` in config.
+ * @param {string} datasets.info.label - A display name of this dataset
+ * @param {Object} datasets.data - ***required** The data object, in a tabular format with 2 properties `fields` and `rows`
+ * @param {Array<Object>} datasets.data.fields - ***required** Array of fields,
+ * @param {string} datasets.data.fields.name - ***required** Name of the field,
+ * @param {Array<Array>} datasets.data.rows - ***required** Array of rows, in a tabular format with `fields` and `rows`
+ *
+ * @param {Object} options
+ * @param {boolean} options.centerMap `default: true` if `centerMap` is set to `true` kepler.gl will
+ * place the map view within the data points boundaries
+ * @param {boolean} options.readOnly `default: false` if `readOnly` is set to `true`
+ * the left setting panel will be hidden
+ * @param {Object} config this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
+ * @public
+ * @example
+ * import {addDataToMap} from 'kepler.gl/actions';
+ *
+ * this.props.dispatch(
+ *   addDataToMap(
+ *     // datasets
+ *     {
+ *       info: {
+ *         label: 'Sample Taxi Trips in New York City',
+ *         id: 'test_trip_data'
+ *       },
+ *       data: {
+ *         fields: [{
+ *           name: 'begintrip_lat',
+ *           type: 'real',
+ *           format: ''
+ *         }, {
+ *           name: 'begintrip_lng',
+ *           type: 'real',
+ *           format: ''
+ *         }],
+ *         rows: [
+ *          [37.1234, -121.20292],
+ *          [34.1223, -121.98234]
+ *         ]
+ *       }
+ *     },
+ *     // option
+ *     {
+ *       centerMap: true,
+ *       readOnly: false
+ *     },
+ *     // config
+ *     {
+ *       mapStyle: {
+ *        styleType: 'light'
+ *       }
+ *     }
+ *   )
+ * );
+ */
 export const addDataToMap = createAction(
   ActionTypes.ADD_DATA_TO_MAP,
   data => data
@@ -105,9 +105,7 @@ export const addDataToMap = createAction(
  * Reset all sub-reducers to its initial state. This can be used to clear out all configuration in the reducer.
  * @public
  */
-export const resetMapConfig = createAction(
-  ActionTypes.RESET_MAP_CONFIG
-);
+export const resetMapConfig = createAction(ActionTypes.RESET_MAP_CONFIG);
 
 /**
  * Pass config to kepler.gl instance, prepare the state with preset configs.
@@ -141,7 +139,7 @@ export const receiveMapConfig = createAction(
  * @param {string} payload.mapboxApiAccessToken - mapboxApiAccessToken to be saved to mapStyle reducer
  * @public
  */
-export const keplerGlInit =  createAction(
+export const keplerGlInit = createAction(
   ActionTypes.INIT,
   ({mapboxApiAccessToken} = {}) => ({mapboxApiAccessToken})
 );

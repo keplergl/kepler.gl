@@ -79,13 +79,14 @@ function getMapDimForSplitMap(isSplit, state) {
     return {};
   }
 
-  const width = state.isSplit && !isSplit ?
-    // 3. state split: true - isSplit: false
-    // double width
-    state.width * 2
-    // 4. state split: false - isSplit: true
-    // split width
-    : state.width / 2;
+  const width =
+    state.isSplit && !isSplit
+      ? // 3. state split: true - isSplit: false
+        // double width
+        state.width * 2
+      : // 4. state split: false - isSplit: true
+        // split width
+        state.width / 2;
 
   return {
     width

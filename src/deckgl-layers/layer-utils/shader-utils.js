@@ -30,7 +30,6 @@ import {console as Console} from 'global/window';
  *
  */
 export function editShader(vs, type, originalText, testToReplace) {
-
   if (!vs.includes(originalText)) {
     Console.warn(`Cannot edit ${type} layer shader`);
     return vs;

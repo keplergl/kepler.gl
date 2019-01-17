@@ -31,7 +31,10 @@ import {
   Trash
 } from 'components/common/icons';
 
-import {InlineInput, StyledPanelHeader} from 'components/common/styled-components';
+import {
+  InlineInput,
+  StyledPanelHeader
+} from 'components/common/styled-components';
 
 const propTypes = {
   // required
@@ -62,17 +65,17 @@ const StyledLayerPanelHeader = StyledPanelHeader.extend`
   :hover {
     cursor: pointer;
     background-color: ${props => props.theme.panelBackgroundHover};
-    
+
     .layer__drag-handle {
       opacity: 1;
     }
-    
+
     .layer__remove-layer {
-      opacity: 1;  
+      opacity: 1;
     }
-    
+
     .layer__enable-config {
-      color: white
+      color: white;
     }
   }
 `;
@@ -102,7 +105,7 @@ const DragHandle = styled.div`
   display: flex;
   align-items: center;
   opacity: 0;
-  
+
   :hover {
     cursor: move;
     color: ${props => props.theme.textColorHl};

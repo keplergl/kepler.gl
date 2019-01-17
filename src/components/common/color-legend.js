@@ -70,7 +70,9 @@ const getQuantLabelFormat = (domain, fieldType) => {
   // quant scale can only be assigned to linear Fields: real, timestamp, integer
   return fieldType === ALL_FIELD_TYPES.timestamp
     ? getTimeLabelFormat(domain)
-    : !fieldType ? defaultFormat : getNumericLabelFormat(domain);
+    : !fieldType
+      ? defaultFormat
+      : getNumericLabelFormat(domain);
 };
 
 const getOrdinalLegends = scale => {

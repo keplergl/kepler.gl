@@ -93,39 +93,39 @@ const ExportConfigModal = ({
       <StyledModalContentInner className="export-config-modal__inner">
         <StyledExportConfigSection>
           <div className="description">
-            <div className="title">
-              Current Config
-            </div>
+            <div className="title">Current Config</div>
             <div className="subtitle">
               You can copy or export the current Kepler.gl configuration.
             </div>
             <div className="note">
-              * kepler.gl map config is coupled with loaded datasets.
-              dataId key is used to bind layers and filters to a specific dataset.
-              If you try to upload a configuration with a specific dataId you also need to make sure
-              you existing dataset id match the dataId/s in the config.
+              * kepler.gl map config is coupled with loaded datasets. dataId key
+              is used to bind layers and filters to a specific dataset. If you
+              try to upload a configuration with a specific dataId you also need
+              to make sure you existing dataset id match the dataId/s in the
+              config.
             </div>
           </div>
           <div className="selection">
             <div className="viewer">
-                <JSONPretty id="json-pretty" json={config}/>
+              <JSONPretty id="json-pretty" json={config} />
             </div>
           </div>
         </StyledExportConfigSection>
         <StyledExportConfigSection>
           <div className="description">
-            <div className="title">
-              Export Current Map
-            </div>
+            <div className="title">Export Current Map</div>
             <div className="subtitle">
-              Export current map, including data and config. You can later load the same map by loading this file to kepler.gl.
+              Export current map, including data and config. You can later load
+              the same map by loading this file to kepler.gl.
             </div>
           </div>
           <div className="selection">
-            <Switch type="checkbox"
-                    id="export-map-config"
-                    checked={data}
-                    onChange={onChangeExportData}/>
+            <Switch
+              type="checkbox"
+              id="export-map-config"
+              checked={data}
+              onChange={onChangeExportData}
+            />
           </div>
         </StyledExportConfigSection>
       </StyledModalContentInner>

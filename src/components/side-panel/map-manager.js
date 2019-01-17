@@ -26,12 +26,9 @@ import MapStyleSelectorFactory from 'components/side-panel/map-style-panel/map-s
 import LayerGroupSelectorFactory from 'components/side-panel/map-style-panel/map-layer-selector';
 
 import {Add} from 'components/common/icons';
-import { DEFAULT_LAYER_GROUPS } from 'constants/default-settings';
+import {DEFAULT_LAYER_GROUPS} from 'constants/default-settings';
 
-MapManagerFactory.deps = [
-  MapStyleSelectorFactory,
-  LayerGroupSelectorFactory
-];
+MapManagerFactory.deps = [MapStyleSelectorFactory, LayerGroupSelectorFactory];
 
 function MapManagerFactory(MapStyleSelector, LayerGroupSelector) {
   return class MapManager extends Component {
@@ -62,9 +59,7 @@ function MapManagerFactory(MapStyleSelector, LayerGroupSelector) {
 
     render() {
       const {mapStyle} = this.props;
-      const editableLayers = DEFAULT_LAYER_GROUPS.map(lg =>
-        lg.slug
-     );
+      const editableLayers = DEFAULT_LAYER_GROUPS.map(lg => lg.slug);
 
       return (
         <div className="map-style-panel">
@@ -83,16 +78,15 @@ function MapManagerFactory(MapStyleSelector, LayerGroupSelector) {
                 onChange={this._updateConfig}
               />
             ) : null}
-            <Button
-              onClick={this.props.showAddMapStyleModal}
-              secondary>
-              <Add height="12px" />Add Map Style
+            <Button onClick={this.props.showAddMapStyleModal} secondary>
+              <Add height="12px" />
+              Add Map Style
             </Button>
           </div>
         </div>
       );
     }
-  }
+  };
 }
 
 export default MapManagerFactory;

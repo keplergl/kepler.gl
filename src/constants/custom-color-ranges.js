@@ -353,93 +353,49 @@ const customPalette = [
     name: 'UberPool 6',
     type: DIV,
     category: 'Uber',
-    colors: [
-      '#213E9A',
-      '#551EAD',
-      '#C019BD',
-      '#D31256',
-      '#E6470A',
-      '#F9E200'
-    ]
+    colors: ['#213E9A', '#551EAD', '#C019BD', '#D31256', '#E6470A', '#F9E200']
   },
   {
     name: 'UberPool 5',
     type: DIV,
     category: 'Uber',
-    colors: [
-      '#213E9A',
-      '#6E1DB2',
-      '#CA168E',
-      '#E2260C',
-      '#F9E200'
-    ]
+    colors: ['#213E9A', '#6E1DB2', '#CA168E', '#E2260C', '#F9E200']
   },
   {
     name: 'UberPool 4',
     type: DIV,
     category: 'Uber',
-    colors: [
-      '#213E9A',
-      '#9B1BBA',
-      '#DA102C',
-      '#F9E200'
-    ]
+    colors: ['#213E9A', '#9B1BBA', '#DA102C', '#F9E200']
   },
   {
     name: 'UberPool 3',
     type: DIV,
     category: 'Uber',
-    colors: [
-      '#213E9A',
-      '#CA168E',
-      '#F9E200'
-    ]
+    colors: ['#213E9A', '#CA168E', '#F9E200']
   },
   {
     name: 'Ice And Fire 3',
     type: DIV,
     category: 'Uber',
-    colors: [
-      '#0198BD',
-      '#FAFEB3',
-      '#D50255'
-    ]
+    colors: ['#0198BD', '#FAFEB3', '#D50255']
   },
   {
     name: 'Ice And Fire 4',
     type: DIV,
     category: 'Uber',
-    colors: [
-      '#0198BD',
-      '#E8FEB5',
-      '#FEAD54',
-      '#D50255'
-    ]
+    colors: ['#0198BD', '#E8FEB5', '#FEAD54', '#D50255']
   },
   {
     name: 'Ice And Fire 5',
     type: DIV,
     category: 'Uber',
-    colors: [
-      '#0198BD',
-      '#49E3CE',
-      '#FAFEB3',
-      '#FEAD54',
-      '#D50255'
-    ]
+    colors: ['#0198BD', '#49E3CE', '#FAFEB3', '#FEAD54', '#D50255']
   },
   {
     name: 'Ice And Fire',
     type: DIV,
     category: 'Uber',
-    colors: [
-      '#0198BD',
-      '#49E3CE',
-      '#E8FEB5',
-      '#FEEDB1',
-      '#FEAD54',
-      '#D50255'
-    ]
+    colors: ['#0198BD', '#49E3CE', '#E8FEB5', '#FEEDB1', '#FEAD54', '#D50255']
   },
   {
     name: 'Ice And Fire 7',
@@ -527,47 +483,25 @@ const customPalette = [
     name: 'Sunrise 3',
     type: SEQ,
     category: 'Uber',
-    colors: [
-      '#355C7D',
-      '#C06C84',
-      '#F8B195'
-    ]
+    colors: ['#355C7D', '#C06C84', '#F8B195']
   },
   {
     name: 'Sunrise 4',
     type: SEQ,
     category: 'Uber',
-    colors: [
-      '#355C7D',
-      '#9A627C',
-      '#C86A7E',
-      '#F8B195'
-    ]
+    colors: ['#355C7D', '#9A627C', '#C86A7E', '#F8B195']
   },
   {
     name: 'Sunrise',
     type: SEQ,
     category: 'Uber',
-    colors: [
-      '#355C7D',
-      '#6C5B7B',
-      '#C06C84',
-      '#F67280',
-      '#F8B195'
-    ]
+    colors: ['#355C7D', '#6C5B7B', '#C06C84', '#F67280', '#F8B195']
   },
   {
     name: 'Sunrise 6',
     type: SEQ,
     category: 'Uber',
-    colors: [
-      '#355C7D',
-      '#63617F',
-      '#916681',
-      '#D88185',
-      '#E8998D',
-      '#F8B195'
-    ]
+    colors: ['#355C7D', '#63617F', '#916681', '#D88185', '#E8998D', '#F8B195']
   },
   {
     name: 'Sunrise 7',
@@ -602,47 +536,25 @@ const customPalette = [
     name: 'Ocean Green 3',
     type: SEQ,
     category: 'Uber',
-    colors: [
-      '#3A748A',
-      '#3EACA8',
-      '#E5EEc1'
-    ]
+    colors: ['#3A748A', '#3EACA8', '#E5EEc1']
   },
   {
     name: 'Ocean Green 4',
     type: SEQ,
     category: 'Uber',
-    colors: [
-      '#547A82',
-      '#3EACA8',
-      '#A2D4AB',
-      '#E5EEc1'
-    ]
+    colors: ['#547A82', '#3EACA8', '#A2D4AB', '#E5EEc1']
   },
   {
     name: 'Ocean Green 5',
     type: SEQ,
     category: 'Uber',
-    colors: [
-      '#3A748A',
-      '#54A38F',
-      '#73BC84',
-      '#A9D597',
-      '#E5EEc1'
-    ]
+    colors: ['#3A748A', '#54A38F', '#73BC84', '#A9D597', '#E5EEc1']
   },
   {
     name: 'Ocean Green 6',
     type: SEQ,
     category: 'Uber',
-    colors: [
-      '#37535E',
-      '#3A748A',
-      '#4095B5',
-      '#52AEC9',
-      '#72BFC4',
-      '#93CFBF'
-    ]
+    colors: ['#37535E', '#3A748A', '#4095B5', '#52AEC9', '#72BFC4', '#93CFBF']
   },
   {
     name: 'Ocean Green 7',
@@ -677,47 +589,25 @@ const customPalette = [
     name: 'Pink Wine 3',
     type: SEQ,
     category: 'Uber',
-    colors: [
-      '#50315E',
-      '#956485',
-      '#EDD1CA'
-    ]
+    colors: ['#50315E', '#956485', '#EDD1CA']
   },
   {
     name: 'Pink Wine 4',
     type: SEQ,
     category: 'Uber',
-    colors: [
-      '#50315E',
-      '#774976',
-      '#B28294',
-      '#EDD1CA'
-    ]
+    colors: ['#50315E', '#774976', '#B28294', '#EDD1CA']
   },
   {
     name: 'Pink Wine 5',
     type: SEQ,
     category: 'Uber',
-    colors: [
-      '#50315E',
-      '#643D68',
-      '#956485',
-      '#C1939D',
-      '#EDD1CA'
-    ]
+    colors: ['#50315E', '#643D68', '#956485', '#C1939D', '#EDD1CA']
   },
   {
     name: 'Pink Wine 6',
     type: SEQ,
     category: 'Uber',
-    colors: [
-      '#2C1E3D',
-      '#573660',
-      '#83537C',
-      '#A6758E',
-      '#C99DA4',
-      '#EDD1CA'
-    ]
+    colors: ['#2C1E3D', '#573660', '#83537C', '#A6758E', '#C99DA4', '#EDD1CA']
   },
   {
     name: 'Pink Wine 7',
@@ -752,47 +642,25 @@ const customPalette = [
     name: 'Purple Blue Yellow 3',
     type: SEQ,
     category: 'Uber',
-    colors: [
-      '#2B1E3E',
-      '#5EA28D',
-      '#D6DEBF'
-    ]
+    colors: ['#2B1E3E', '#5EA28D', '#D6DEBF']
   },
   {
     name: 'Purple Blue Yellow 4',
     type: SEQ,
     category: 'Uber',
-    colors: [
-      '#2B1E3E',
-      '#466373',
-      '#7BA889',
-      '#D6DEBF'
-    ]
+    colors: ['#2B1E3E', '#466373', '#7BA889', '#D6DEBF']
   },
   {
     name: 'Purple Blue Yellow 5',
     type: SEQ,
     category: 'Uber',
-    colors: [
-      '#2B1E3E',
-      '#3A4B66',
-      '#5F8E86',
-      '#8BB68D',
-      '#D6DEBF'
-    ]
+    colors: ['#2B1E3E', '#3A4B66', '#5F8E86', '#8BB68D', '#D6DEBF']
   },
   {
     name: 'Purple Blue Yellow 6',
     type: SEQ,
     category: 'Uber',
-    colors: [
-      '#2B1E3E',
-      '#343D5E',
-      '#4F777E',
-      '#709E87',
-      '#99BE95',
-      '#D6DEBF'
-    ]
+    colors: ['#2B1E3E', '#343D5E', '#4F777E', '#709E87', '#99BE95', '#D6DEBF']
   },
   {
     name: 'Purple Blue Yellow 7',

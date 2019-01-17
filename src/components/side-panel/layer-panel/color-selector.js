@@ -62,7 +62,10 @@ class ColorSelector extends Component {
   static propTypes = {
     colorSets: PropTypes.arrayOf(
       PropTypes.shape({
-        selectedColor: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.any), PropTypes.object]),
+        selectedColor: PropTypes.oneOfType([
+          PropTypes.arrayOf(PropTypes.any),
+          PropTypes.object
+        ]),
         setColor: PropTypes.func.isRequired,
         isRange: PropTypes.bool,
         label: PropTypes.string
@@ -148,6 +151,6 @@ class ColorSelector extends Component {
       </div>
     );
   }
-};
+}
 
 export default onClickOutside(ColorSelector);

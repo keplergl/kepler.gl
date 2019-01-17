@@ -94,7 +94,9 @@ export default class HexagonLayer extends AggregationLayer {
         lowerPercentile: visConfig.percentile[0],
 
         // parameters
-        parameters: {depthTest: Boolean(visConfig.enable3d || mapState.dragRotate)},
+        parameters: {
+          depthTest: Boolean(visConfig.enable3d || mapState.dragRotate)
+        },
 
         // elevation
         extruded: visConfig.enable3d,

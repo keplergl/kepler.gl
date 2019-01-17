@@ -47,7 +47,7 @@ export function hexagonToPolygonGeo({object}, properties, radius, mapState) {
 
 function hex_corner(center, radius, i) {
   const angle_deg = 60 * i + 30;
-  const angle_rad = Math.PI / 180 * angle_deg;
+  const angle_rad = (Math.PI / 180) * angle_deg;
 
   return [
     center[0] + radius * Math.cos(angle_rad),

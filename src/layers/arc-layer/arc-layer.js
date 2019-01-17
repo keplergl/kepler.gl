@@ -169,15 +169,17 @@ export default class ArcLayer extends Layer {
       }, []);
     }
 
-    const getStrokeWidth = sScale ? d =>
-       this.getEncodedChannelValue(sScale, d.data, sizeField, 0) : 1;
+    const getStrokeWidth = sScale
+      ? d => this.getEncodedChannelValue(sScale, d.data, sizeField, 0)
+      : 1;
 
-    const getColor = cScale ? d =>
-       this.getEncodedChannelValue(cScale, d.data, colorField) : color;
+    const getColor = cScale
+      ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
+      : color;
 
-    const getTargetColor = cScale ? d =>
-       this.getEncodedChannelValue(cScale, d.data, colorField)
-        : targetColor || color;
+    const getTargetColor = cScale
+      ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
+      : targetColor || color;
 
     return {
       data,

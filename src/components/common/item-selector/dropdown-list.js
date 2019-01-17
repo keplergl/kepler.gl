@@ -142,4 +142,4 @@ export default class DropdownList extends Component {
       </DropdownListWrapper>
     );
   }
-};
+}

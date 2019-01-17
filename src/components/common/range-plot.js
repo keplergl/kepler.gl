@@ -149,8 +149,12 @@ const Histogram = ({
       <g className="histogram-bars">
         {histogram.map(bar => {
           const inRange = bar.x0 >= value[0] && bar.x1 <= value[1];
-          const fill = inRange ? histogramStyle.highlightedColor : histogramStyle.unHighlightedColor;
-          const wRatio = inRange ? histogramStyle.highlightW : histogramStyle.unHighlightedW;
+          const fill = inRange
+            ? histogramStyle.highlightedColor
+            : histogramStyle.unHighlightedColor;
+          const wRatio = inRange
+            ? histogramStyle.highlightW
+            : histogramStyle.unHighlightedW;
 
           return (
             <rect
@@ -158,7 +162,7 @@ const Histogram = ({
               fill={fill}
               height={y(bar.count)}
               width={barWidth * wRatio}
-              x={x(bar.x0) + barWidth * (1 - wRatio) / 2}
+              x={x(bar.x0) + (barWidth * (1 - wRatio)) / 2}
               rx={1}
               ry={1}
               y={height - y(bar.count)}

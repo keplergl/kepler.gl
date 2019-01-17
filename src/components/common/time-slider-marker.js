@@ -123,4 +123,4 @@ export default class TimeSliderMarker extends Component {
       </TimeSliderContainer>
     );
   }
-};
+}

@@ -109,7 +109,7 @@ function toSvg(node, options) {
     if (options.height) clone.style.height = `${options.height}px`;
 
     if (options.style)
-      Object.keys(options.style).forEach((property) => {
+      Object.keys(options.style).forEach(property => {
         clone.style[property] = options.style[property];
       });
 
@@ -123,10 +123,11 @@ function toSvg(node, options) {
  * @return {Promise} - A promise that is fulfilled with a Uint8Array containing RGBA pixel data.
  * */
 function toPixelData(node, options) {
-  return draw(node, options || {}).then(canvas =>
-    canvas
-      .getContext('2d')
-      .getImageData(0, 0, util.width(node), util.height(node)).data
+  return draw(node, options || {}).then(
+    canvas =>
+      canvas
+        .getContext('2d')
+        .getImageData(0, 0, util.width(node), util.height(node)).data
   );
 }
 
@@ -146,7 +147,9 @@ function toPng(node, options) {
  * */
 function toJpeg(node, options) {
   options = options || {};
-  return draw(node, options).then(canvas => canvas.toDataURL('image/jpeg', options.quality || 1.0));
+  return draw(node, options).then(canvas =>
+    canvas.toDataURL('image/jpeg', options.quality || 1.0)
+  );
 }
 
 /**
@@ -161,8 +164,7 @@ function toBlob(node, options) {
 function copyOptions(options) {
   // Copy options to impl options for use in impl
   if (typeof options.imagePlaceholder === 'undefined') {
-    domtoimage.impl.options.imagePlaceholder =
-      defaultOptions.imagePlaceholder;
+    domtoimage.impl.options.imagePlaceholder = defaultOptions.imagePlaceholder;
   } else {
     domtoimage.impl.options.imagePlaceholder = options.imagePlaceholder;
   }
@@ -222,17 +224,16 @@ function cloneNode(node, filter, root) {
       return Promise.resolve(clone);
     }
 
-    return cloneChildrenInOrder(clone, util.asArray(children))
-    .then(() => clone);
+    return cloneChildrenInOrder(clone, util.asArray(children)).then(
+      () => clone
+    );
 
     function cloneChildrenInOrder(parent, arrChildren) {
       let done = Promise.resolve();
       arrChildren.forEach(child => {
-        done = done
-          .then(() => cloneNode(child, flt))
-          .then(childClone => {
-            if (childClone) parent.appendChild(childClone);
-          });
+        done = done.then(() => cloneNode(child, flt)).then(childClone => {
+          if (childClone) parent.appendChild(childClone);
+        });
       });
       return done;
     }
@@ -240,8 +241,8 @@ function cloneNode(node, filter, root) {
 
   function processClone(original, clone) {
     if (!(clone instanceof Element)) {
-      return clone
-    };
+      return clone;
+    }
 
     return Promise.resolve()
       .then(cloneStyle)
@@ -308,12 +309,15 @@ function cloneNode(node, filter, root) {
           }
 
           function formatCssProperties(stl2) {
-            return `${util.asArray(stl2).map(formatProperty).join('; ')};`;
+            return `${util
+              .asArray(stl2)
+              .map(formatProperty)
+              .join('; ')};`;
 
             function formatProperty(name) {
-              return (
-                `${name}:${stl.getPropertyValue(name)}${stl.getPropertyPriority(name) ? ' !important' : ''}`
-              );
+              return `${name}:${stl.getPropertyValue(name)}${
+                stl.getPropertyPriority(name) ? ' !important' : ''
+              }`;
             }
           }
         }
@@ -343,7 +347,7 @@ function cloneNode(node, filter, root) {
 }
 
 function embedFonts(node) {
-  return fontFaces.resolveAll().then((cssText) => {
+  return fontFaces.resolveAll().then(cssText => {
     const styleNode = document.createElement('style');
     node.appendChild(styleNode);
     styleNode.appendChild(document.createTextNode(cssText));
@@ -362,11 +366,13 @@ function makeSvgDataUri(node, width, height) {
       return new XMLSerializer().serializeToString(nd);
     })
     .then(util.escapeXhtml)
-    .then(xhtml =>
-      `<foreignObject x="0" y="0" width="100%" height="100%">${xhtml}</foreignObject>`
+    .then(
+      xhtml =>
+        `<foreignObject x="0" y="0" width="100%" height="100%">${xhtml}</foreignObject>`
     )
-    .then(foreignObject =>
-      `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">${foreignObject}</svg>`
+    .then(
+      foreignObject =>
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">${foreignObject}</svg>`
     )
     .then(svg => `data:image/svg+xml;charset=utf-8,${svg}`);
 }
@@ -444,9 +450,7 @@ function newUtil() {
       for (let i = 0; i < length; i++)
         binaryArray[i] = binaryString.charCodeAt(i);
 
-      resolve(
-        new Blob([binaryArray], {type: 'image/png'})
-      );
+      resolve(new Blob([binaryArray], {type: 'image/png'}));
     });
   }
 
@@ -472,7 +476,9 @@ function newUtil() {
 
   function fourRandomChars() {
     /* see http://stackoverflow.com/a/6248722/2519373 */
-    return `0000${((Math.random() * Math.pow(36, 4)) << 0).toString(36)}`.slice(-4);
+    return `0000${((Math.random() * Math.pow(36, 4)) << 0).toString(36)}`.slice(
+      -4
+    );
   }
 
   function uid() {
@@ -566,7 +572,7 @@ function newUtil() {
 
   function delay(ms) {
     return arg => {
-      return new Promise((resolve) => {
+      return new Promise(resolve => {
         setTimeout(() => {
           resolve(arg);
         }, ms);
@@ -625,23 +631,20 @@ function newInliner() {
     while ((match = URL_REGEX.exec(string)) !== null) {
       result.push(match[1]);
     }
-    return result.filter((url) => {
+    return result.filter(url => {
       return !util.isDataUrl(url);
     });
   }
 
   function inline(string, url, baseUrl, get) {
     return Promise.resolve(url)
-      .then(ul => baseUrl ? util.resolveUrl(ul, baseUrl) : ul)
+      .then(ul => (baseUrl ? util.resolveUrl(ul, baseUrl) : ul))
       .then(get || util.getAndEncode)
       .then(data => util.dataAsUrl(data, util.mimeType(url)))
       .then(dataUrl => string.replace(urlAsRegex(url), `$1${dataUrl}$3`));
 
     function urlAsRegex(url0) {
-      return new RegExp(
-        `(url\\([\'"]?)(${util.escape(url0)})([\'"]?\\))`,
-        'g'
-      );
+      return new RegExp(`(url\\([\'"]?)(${util.escape(url0)})([\'"]?\\))`, 'g');
     }
   }
 
@@ -674,9 +677,7 @@ function newFontFaces() {
   function resolveAll() {
     return readAll(document)
       .then(webFonts => {
-        return Promise.all(
-          webFonts.map(webFont => webFont.resolve())
-        );
+        return Promise.all(webFonts.map(webFont => webFont.resolve()));
       })
       .then(cssStrings => cssStrings.join('\n'));
   }
@@ -691,7 +692,9 @@ function newFontFaces() {
     function selectWebFontRules(cssRules) {
       return cssRules
         .filter(rule => rule.type === CSSRule.FONT_FACE_RULE)
-        .filter(rule => inliner.shouldProcess(rule.style.getPropertyValue('src')));
+        .filter(rule =>
+          inliner.shouldProcess(rule.style.getPropertyValue('src'))
+        );
     }
 
     function loadExternalStyleSheets(styleSheets) {
@@ -705,7 +708,7 @@ function newFontFaces() {
               .catch(err => {
                 // Handle any error that occurred in any of the previous
                 // promises in the chain.
-                console.log(err)
+                console.log(err);
                 return sheet;
               });
           }
@@ -769,7 +772,7 @@ function newFontFaces() {
 
     function getCssRules(styleSheets) {
       const cssRules = [];
-      styleSheets.forEach((sheet) => {
+      styleSheets.forEach(sheet => {
         if (sheet.cssRules && typeof sheet.cssRules === 'object') {
           try {
             util
@@ -782,7 +785,7 @@ function newFontFaces() {
             );
           }
         } else {
-          console.log('getCssRules can not fint cssRules')
+          console.log('getCssRules can not fint cssRules');
         }
       });
       return cssRules;
@@ -820,12 +823,13 @@ function newImages() {
       return Promise.resolve(element.src)
         .then(get || util.getAndEncode)
         .then(data => util.dataAsUrl(data, util.mimeType(element.src)))
-        .then(dataUrl =>
-          new Promise((resolve, reject) => {
-            element.onload = resolve;
-            element.onerror = reject;
-            element.src = dataUrl;
-          })
+        .then(
+          dataUrl =>
+            new Promise((resolve, reject) => {
+              element.onload = resolve;
+              element.onerror = reject;
+              element.src = dataUrl;
+            })
         );
     }
   }

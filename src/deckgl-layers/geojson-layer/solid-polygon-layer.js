@@ -31,7 +31,7 @@ export default class HighlightSolidPolygonLayer extends _SolidPolygonLayer {
         ...uniforms,
         picking_uHighlightScale: this.props.extruded ? 1.4 : 0.0
       }
-    })
+    });
   }
 }
 

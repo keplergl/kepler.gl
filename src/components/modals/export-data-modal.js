@@ -34,7 +34,7 @@ const StyledExportDataSection = styled.div`
 
   .description {
     width: 185px;
-    
+
     .title {
       font-weight: 500;
       color: ${props => props.theme.textColorLT};
@@ -59,40 +59,28 @@ const StyledExportDataSection = styled.div`
       font: inherit;
       line-height: 1.5em;
       padding: 0.5em 3.5em 0.5em 1em;
-      margin: 0;      
+      margin: 0;
       box-sizing: border-box;
       appearance: none;
       width: 250px;
       height: 36px;
 
-      background-image:
-        linear-gradient(45deg, transparent 50%, gray 50%),
+      background-image: linear-gradient(45deg, transparent 50%, gray 50%),
         linear-gradient(135deg, gray 50%, transparent 50%),
         linear-gradient(to right, #ccc, #ccc);
-      background-position:
-        calc(100% - 20px) calc(1em + 2px),
-        calc(100% - 15px) calc(1em + 2px),
-        calc(100% - 2.5em) 4.5em;
-      background-size:
-        5px 5px,
-        5px 5px,
-        1px 1.5em;
+      background-position: calc(100% - 20px) calc(1em + 2px),
+        calc(100% - 15px) calc(1em + 2px), calc(100% - 2.5em) 4.5em;
+      background-size: 5px 5px, 5px 5px, 1px 1.5em;
       background-repeat: no-repeat;
     }
 
     select:focus {
-      background-image:
-        linear-gradient(45deg, green 50%, transparent 50%),
+      background-image: linear-gradient(45deg, green 50%, transparent 50%),
         linear-gradient(135deg, transparent 50%, green 50%),
         linear-gradient(to right, #ccc, #ccc);
-      background-position:
-        calc(100% - 15px) 1em,
-        calc(100% - 20px) 1em,
+      background-position: calc(100% - 15px) 1em, calc(100% - 20px) 1em,
         calc(100% - 2.5em) 4.5em;
-      background-size:
-        5px 5px,
-        5px 5px,
-        1px 1.5em;
+      background-size: 5px 5px, 5px 5px, 1px 1.5em;
       background-repeat: no-repeat;
       border-color: green;
       outline: 0;
@@ -102,8 +90,15 @@ const StyledExportDataSection = styled.div`
 
 const StyledDataType = styled.div`
   border-radius: 2px;
-  border: 1px solid ${props => props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT};
-  color: ${props => props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT};
+  border: 1px solid
+    ${props =>
+      props.selected
+        ? props.theme.primaryBtnBgd
+        : props.theme.selectBorderColorLT};
+  color: ${props =>
+    props.selected
+      ? props.theme.primaryBtnBgd
+      : props.theme.selectBorderColorLT};
   cursor: pointer;
   font-weight: 500;
   height: 100px;
@@ -120,7 +115,11 @@ const StyledDataType = styled.div`
 const StyledFilteredDataOption = styled.div`
   align-items: center;
   border-radius: 2px;
-  border: 1px solid ${props => props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT};
+  border: 1px solid
+    ${props =>
+      props.selected
+        ? props.theme.primaryBtnBgd
+        : props.theme.selectBorderColorLT};
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -161,7 +160,7 @@ const propTypes = {
 const getDataRowCount = (datasets, selectedDataset, filtered) => {
   const selectedData = datasets[selectedDataset];
   if (!selectedData) {
-    return `${Object.keys(datasets).length} Files ` ;
+    return `${Object.keys(datasets).length} Files `;
   }
   const {allData, data} = selectedData;
   const rowCount = filtered ? data.length : allData.length;
@@ -184,66 +183,78 @@ const ExportDataModal = ({
       <div>
         <StyledExportDataSection>
           <div className="description">
-            <div className="title">
-              Dataset
-            </div>
+            <div className="title">Dataset</div>
             <div className="subtitle">
               Choose the datasets you want to export
             </div>
           </div>
           <div className="selection">
-            <select value={selectedDataset} onChange={e => onChangeExportSelectedDataset({dataset: e.target.value})}>
-            {['All'].concat(Object.keys(datasets)).map(d => (
-              <option key={d} value={d}>{(datasets[d] && datasets[d].label) || d}</option>
-            ))}
+            <select
+              value={selectedDataset}
+              onChange={e =>
+                onChangeExportSelectedDataset({dataset: e.target.value})
+              }
+            >
+              {['All'].concat(Object.keys(datasets)).map(d => (
+                <option key={d} value={d}>
+                  {(datasets[d] && datasets[d].label) || d}
+                </option>
+              ))}
             </select>
           </div>
         </StyledExportDataSection>
 
         <StyledExportDataSection>
           <div className="description">
-            <div className="title">
-              Data Type
-            </div>
+            <div className="title">Data Type</div>
             <div className="subtitle">
               Choose the type of data you want to export
             </div>
           </div>
           <div className="selection">
-            {EXPORT_DATA_TYPE_OPTIONS.map(op =>
+            {EXPORT_DATA_TYPE_OPTIONS.map(op => (
               <StyledDataType
                 key={op.id}
                 selected={dataType === op.id}
                 available={op.available}
-                onClick={() => op.available && onChangeExportDataType({dataType: op.id})}
+                onClick={() =>
+                  op.available && onChangeExportDataType({dataType: op.id})
+                }
               >
                 <FileType ext={op.label} height="80px" fontSize="11px" />
               </StyledDataType>
-            )}
+            ))}
           </div>
         </StyledExportDataSection>
 
         <StyledExportDataSection>
           <div className="description">
-            <div className="title">
-              Filter Data
-            </div>
+            <div className="title">Filter Data</div>
             <div className="subtitle">
               You can choose exporting original data or filtered data
             </div>
           </div>
           <div className="selection">
-            <StyledFilteredDataOption selected={!filtered} onClick={() => onChangeExportFiltered({filtered: false})}>
+            <StyledFilteredDataOption
+              selected={!filtered}
+              onClick={() => onChangeExportFiltered({filtered: false})}
+            >
               <div className="filtered-title">Unfiltered Data</div>
-              <div className="filtered-subtitle">{getDataRowCount(datasets, selectedDataset, false)}</div>
+              <div className="filtered-subtitle">
+                {getDataRowCount(datasets, selectedDataset, false)}
+              </div>
             </StyledFilteredDataOption>
-            <StyledFilteredDataOption selected={filtered} onClick={() => onChangeExportFiltered({filtered: true})}>
+            <StyledFilteredDataOption
+              selected={filtered}
+              onClick={() => onChangeExportFiltered({filtered: true})}
+            >
               <div className="filtered-title">Filtered Data</div>
-              <div className="filtered-subtitle">{getDataRowCount(datasets, selectedDataset, true)}</div>
+              <div className="filtered-subtitle">
+                {getDataRowCount(datasets, selectedDataset, true)}
+              </div>
             </StyledFilteredDataOption>
           </div>
         </StyledExportDataSection>
-
       </div>
     </StyledModalContent>
   </div>

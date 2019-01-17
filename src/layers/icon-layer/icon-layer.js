@@ -210,11 +210,13 @@ export default class IconLayer extends Layer {
       }, []);
     }
 
-    const getRadius = rScale ? d =>
-      this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
+    const getRadius = rScale
+      ? d => this.getEncodedChannelValue(rScale, d.data, sizeField)
+      : 1;
 
-    const getColor = cScale ? d =>
-      this.getEncodedChannelValue(cScale, d.data, colorField) : color;
+    const getColor = cScale
+      ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
+      : color;
 
     return {
       data,
@@ -230,13 +232,7 @@ export default class IconLayer extends Layer {
     this.updateMeta({bounds});
   }
 
-  renderLayer({
-    data,
-    idx,
-    objectHovered,
-    mapState,
-    interactionConfig
-  }) {
+  renderLayer({data, idx, objectHovered, mapState, interactionConfig}) {
     const layerProps = {
       radiusMinPixels: 1,
       fp64: this.config.visConfig['hi-precision'],

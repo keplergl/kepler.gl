@@ -30,23 +30,45 @@ export {default as ModalContainerFactory} from './modal-container';
 export {default as PlotContainerFactory} from './plot-container';
 
 // // side panel factories
-export {default as PanelHeaderFactory} from './side-panel/panel-header'
-export {CollapseButtonFactory, default as SidebarFactory} from './side-panel/side-bar';
+export {default as PanelHeaderFactory} from './side-panel/panel-header';
+export {
+  CollapseButtonFactory,
+  default as SidebarFactory
+} from './side-panel/side-bar';
 
-export {AddDataButtonFactory, default as LayerManagerFactory} from './side-panel/layer-manager';
-export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel';
-export {default as SourceDataCatalogFactory} from './side-panel/source-data-catalog';
+export {
+  AddDataButtonFactory,
+  default as LayerManagerFactory
+} from './side-panel/layer-manager';
+export {
+  default as LayerPanelFactory
+} from './side-panel/layer-panel/layer-panel';
+export {
+  default as SourceDataCatalogFactory
+} from './side-panel/source-data-catalog';
 
 export {default as FilterManagerFactory} from './side-panel/filter-manager';
-export {default as FilterPanelFactory} from './side-panel/filter-panel/filter-panel';
+export {
+  default as FilterPanelFactory
+} from './side-panel/filter-panel/filter-panel';
 
-export {default as InteractionManagerFactory} from './side-panel/interaction-manager';
-export {default as BrushConfigFactory} from './side-panel/interaction-panel/brush-config';
-export {default as TooltipConfigFactory} from './side-panel/interaction-panel/tooltip-config';
+export {
+  default as InteractionManagerFactory
+} from './side-panel/interaction-manager';
+export {
+  default as BrushConfigFactory
+} from './side-panel/interaction-panel/brush-config';
+export {
+  default as TooltipConfigFactory
+} from './side-panel/interaction-panel/tooltip-config';
 
 export {default as MapManagerFactory} from './side-panel/map-manager';
-export {default as LayerGroupSelectorFactory} from './side-panel/map-style-panel/map-layer-selector';
-export {default as MapStyleSelectorFactory} from './side-panel/map-style-panel/map-style-selector';
+export {
+  default as LayerGroupSelectorFactory
+} from './side-panel/map-style-panel/map-layer-selector';
+export {
+  default as MapStyleSelectorFactory
+} from './side-panel/map-style-panel/map-style-selector';
 
 // // map container factories
 export {default as MapPopoverFactory} from './map/map-popover';
@@ -58,17 +80,16 @@ export {default as DataTableModalFactory} from './modals/data-table-modal';
 export {default as LoadDataModalFactory} from './modals/load-data-modal';
 export {default as ExportImageModalFactory} from './modals/export-image-modal';
 export {default as ExportDataModalFactory} from './modals/export-data-modal';
-export {default as ExportConfigModalFactory} from './modals/export-config-modal';
+export {
+  default as ExportConfigModalFactory
+} from './modals/export-config-modal';
 export {default as AddMapStyleModalFactory} from './modals/add-map-style-modal';
 
 // // Bottom widget factory
 export {default as TimeWidgetFactory} from './filters/time-widget';
 
 // Injector
-export {
-  injector as injector,
-  withState as withState
-} from './injector'
+export {injector, withState} from './injector';
 
 // Common Components
 export {default as FileUpload} from './common/file-uploader/file-upload';

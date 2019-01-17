@@ -37,7 +37,7 @@ const StyledRangeSlider = styled.div`
 
 const SliderWrapper = styled.div`
   flex-grow: 1;
-  margin-top: ${props => props.isRanged ? 0 : 10}px;
+  margin-top: ${props => (props.isRanged ? 0 : 10)}px;
 `;
 
 export default class Slider extends Component {
@@ -106,8 +106,9 @@ export default class Slider extends Component {
   };
 
   calcHandleLeft0 = (w, l, num) => {
-    return w === 0 ? `calc(${l}% - ${this.props.sliderHandleWidth / 2}px)` :
-      `calc(${l}% - ${this.props.sliderHandleWidth / 2}px)`;
+    return w === 0
+      ? `calc(${l}% - ${this.props.sliderHandleWidth / 2}px)`
+      : `calc(${l}% - ${this.props.sliderHandleWidth / 2}px)`;
   };
 
   calcHandleLeft1 = (w, l) => {
@@ -145,19 +146,13 @@ export default class Slider extends Component {
   };
 
   render() {
-    const {
-      classSet,
-      isRanged,
-      maxValue,
-      minValue,
-      value1
-    } = this.props;
+    const {classSet, isRanged, maxValue, minValue, value1} = this.props;
     const value0 = !isRanged && minValue > 0 ? minValue : this.props.value0;
     const currValDelta = value1 - value0;
     const maxDelta = maxValue - minValue;
-    const width = currValDelta / maxDelta * 100;
+    const width = (currValDelta / maxDelta) * 100;
 
-    const v0Left = (value0 - minValue) / maxDelta * 100;
+    const v0Left = ((value0 - minValue) / maxDelta) * 100;
 
     return (
       <SliderWrapper

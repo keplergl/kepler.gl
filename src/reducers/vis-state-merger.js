@@ -300,18 +300,23 @@ export function validateSavedLayerColumns(fields, savedCols, emptyCols) {
  * @return {Object} - validated textlabel
  */
 export function validateSavedTextLabel(fields, layerTextLabel, savedTextLabel) {
-
   // validate field
-  const field = savedTextLabel.field ? fields.find(fd =>
-    Object.keys(savedTextLabel.field).every(
-      key => savedTextLabel.field[key] === fd[key]
-    )
-  ) : null;
+  const field = savedTextLabel.field
+    ? fields.find(fd =>
+        Object.keys(savedTextLabel.field).every(
+          key => savedTextLabel.field[key] === fd[key]
+        )
+      )
+    : null;
 
-  return Object.keys(layerTextLabel).reduce((accu, key) => ({
-    ...accu,
-    [key]: key === 'field' ? field : (savedTextLabel[key] || layerTextLabel[key])
-  }), {});
+  return Object.keys(layerTextLabel).reduce(
+    (accu, key) => ({
+      ...accu,
+      [key]:
+        key === 'field' ? field : savedTextLabel[key] || layerTextLabel[key]
+    }),
+    {}
+  );
 }
 
 /**
@@ -356,7 +361,11 @@ export function validateSavedVisualChannels(
  * @param {Object} layerClasses
  * @return {null | Object} - validated layer or null
  */
-export function validateLayerWithData({fields, id: dataId}, savedLayer, layerClasses) {
+export function validateLayerWithData(
+  {fields, id: dataId},
+  savedLayer,
+  layerClasses
+) {
   const {type} = savedLayer;
   // layer doesnt have a valid type
   if (
@@ -395,11 +404,14 @@ export function validateLayerWithData({fields, id: dataId}, savedLayer, layerCla
     savedLayer
   );
 
-  const textLabel = savedLayer.config.textLabel && newLayer.config.textLabel ? validateSavedTextLabel(
-    fields,
-    newLayer.config.textLabel,
-    savedLayer.config.textLabel
-  ) : newLayer.config.textLabel;
+  const textLabel =
+    savedLayer.config.textLabel && newLayer.config.textLabel
+      ? validateSavedTextLabel(
+          fields,
+          newLayer.config.textLabel,
+          savedLayer.config.textLabel
+        )
+      : newLayer.config.textLabel;
 
   // copy visConfig over to emptyLayer to make sure it has all the props
   const visConfig = newLayer.copyLayerConfig(

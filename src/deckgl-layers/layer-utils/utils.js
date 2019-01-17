@@ -61,8 +61,8 @@ export function getColorValueDomain(layer) {
     // err... what do we do
     layer.state.colorValueDomain = null;
   } else {
-    const lowerIdx = Math.ceil(lowerPercentile / 100 * (len - 1));
-    const upperIdx = Math.floor(upperPercentile / 100 * (len - 1));
+    const lowerIdx = Math.ceil((lowerPercentile / 100) * (len - 1));
+    const upperIdx = Math.floor((upperPercentile / 100) * (len - 1));
 
     // calculate valueDomain based on
     layer.state.colorValueDomain = getBinColorDomain(colorScale, sortedBins, [

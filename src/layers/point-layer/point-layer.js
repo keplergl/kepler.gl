@@ -36,8 +36,10 @@ export const pointPosAccessor = ({lat, lng, altitude}) => d => [
 export const pointPosResolver = ({lat, lng, altitude}) =>
   `${lat.fieldIdx}-${lng.fieldIdx}-${altitude ? altitude.fieldIdx : 'z'}`;
 
-export const pointLabelAccessor = textLabel => d => String(d.data[textLabel.field.tableFieldIndex - 1]);
-export const pointLabelResolver = textLabel => textLabel.field && textLabel.field.tableFieldIndex;
+export const pointLabelAccessor = textLabel => d =>
+  String(d.data[textLabel.field.tableFieldIndex - 1]);
+export const pointLabelResolver = textLabel =>
+  textLabel.field && textLabel.field.tableFieldIndex;
 
 export const pointRequiredColumns = ['lat', 'lng'];
 export const pointOptionalColumns = ['altitude'];
@@ -207,17 +209,19 @@ export default class PointLayer extends Layer {
       opt.sameData &&
       oldLayerData.getText === getText
     ) {
-      labelCharacterSet = oldLayerData.labelCharacterSet
+      labelCharacterSet = oldLayerData.labelCharacterSet;
     } else {
       const textLabels = textLabel.field ? data.map(getText) : [];
       labelCharacterSet = uniq(textLabels.join(''));
     }
 
-    const getRadius = rScale ? d =>
-      this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
+    const getRadius = rScale
+      ? d => this.getEncodedChannelValue(rScale, d.data, sizeField)
+      : 1;
 
-    const getColor = cScale ? d =>
-      this.getEncodedChannelValue(cScale, d.data, colorField) : color;
+    const getColor = cScale
+      ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
+      : color;
 
     return {
       data,

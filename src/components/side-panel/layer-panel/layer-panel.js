@@ -87,7 +87,11 @@ function LayerPanelFactory() {
 
     _toggleEnableConfig = e => {
       e.stopPropagation();
-      const {layer: {config: {isConfigActive}}} = this.props;
+      const {
+        layer: {
+          config: {isConfigActive}
+        }
+      } = this.props;
       this.updateLayerConfig({isConfigActive: !isConfigActive});
     };
 
@@ -128,7 +132,9 @@ function LayerPanelFactory() {
               layerTypeOptions={layerTypeOptions}
               openModal={this.props.openModal}
               updateLayerConfig={this.updateLayerConfig}
-              updateLayerVisualChannelConfig={this.updateLayerVisualChannelConfig}
+              updateLayerVisualChannelConfig={
+                this.updateLayerVisualChannelConfig
+              }
               updateLayerType={this.updateLayerType}
               updateLayerVisConfig={this.updateLayerVisConfig}
             />

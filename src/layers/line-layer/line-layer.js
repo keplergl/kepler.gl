@@ -46,7 +46,7 @@ export default class LineLayer extends ArcLayer {
     };
     props.label = `${fieldPairs[0].defaultName} -> ${
       fieldPairs[1].defaultName
-      } line`;
+    } line`;
 
     return props;
   }

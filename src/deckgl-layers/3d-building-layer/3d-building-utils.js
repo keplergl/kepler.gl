@@ -49,7 +49,7 @@ export function decodeTile(x, y, z, arrayBuffer) {
   const projectFunc = project.bind(null, xProj, yProj, scale);
 
   /* eslint-disable guard-for-in */
-  const layerName = "building";
+  const layerName = 'building';
   const vectorTileLayer = tile.layers[layerName];
   if (!vectorTileLayer) {
     return [];
@@ -73,7 +73,10 @@ function project(x, y, scale, line, extent) {
   for (let ii = 0; ii < line.length; ii++) {
     const p = line[ii];
     // LNGLAT
-    line[ii] = worldToLngLat([x + p[0] / sizeToPixel, y + p[1] / sizeToPixel], scale);
+    line[ii] = worldToLngLat(
+      [x + p[0] / sizeToPixel, y + p[1] / sizeToPixel],
+      scale
+    );
   }
 }
 
@@ -85,7 +88,7 @@ export function vectorTileFeatureToProp(vectorTileFeature, project) {
   const extent = vectorTileFeature.extent;
   let i;
   let j;
-  
+
   coords = classifyRings(coords);
   for (i = 0; i < coords.length; i++) {
     for (j = 0; j < coords[i].length; j++) {

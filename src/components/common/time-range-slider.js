@@ -27,7 +27,12 @@ import throttle from 'lodash.throttle';
 import styled from 'styled-components';
 import {createSelector} from 'reselect';
 import {Play, Reset, Pause, Minus} from 'components/common/icons';
-import {SelectTextBold, SelectText, Button, ButtonGroup} from 'components/common/styled-components';
+import {
+  SelectTextBold,
+  SelectText,
+  Button,
+  ButtonGroup
+} from 'components/common/styled-components';
 import {getTimeWidgetTitleFormatter, BASE_SPEED} from 'utils/filter-utils';
 import RangeSlider from './range-slider';
 import TimeSliderMarker from './time-slider-marker';
@@ -36,7 +41,7 @@ const defaultTimeFormat = val => moment.utc(val).format('MM/DD/YY hh:mma');
 const animationControlWidth = 140;
 
 const StyledSliderContainer = styled.div`
-  margin-top: ${props => props.isEnlarged ? '12px' : '0px'};
+  margin-top: ${props => (props.isEnlarged ? '12px' : '0px')};
   align-items: flex-end;
   display: flex;
   flex-direction: row;
@@ -65,7 +70,10 @@ export default class TimeRangeSlider extends Component {
       width: 288
     };
     this._animation = null;
-    this._sliderThrottle = throttle((...value) => this.props.onChange(...value), 20);
+    this._sliderThrottle = throttle(
+      (...value) => this.props.onChange(...value),
+      20
+    );
   }
 
   componentDidUpdate() {
@@ -131,16 +139,25 @@ export default class TimeRangeSlider extends Component {
         />
         <StyledSliderContainer
           className="time-range-slider__container"
-          isEnlarged={isEnlarged}>
-          {isEnlarged ? <AnimationControls
-            isAnimatable={this.props.isAnimatable}
-            isEnlarged={isEnlarged}
-            isAnimating={isAnimating}
-            pauseAnimation={this._pauseAnimation}
-            resetAnimation={this._resetAnimation}
-            startAnimation={this._startAnimation}
-          /> : null}
-          <div style={{width: isEnlarged ? `calc(100% - ${animationControlWidth}px)` : '100%'}}>
+          isEnlarged={isEnlarged}
+        >
+          {isEnlarged ? (
+            <AnimationControls
+              isAnimatable={this.props.isAnimatable}
+              isEnlarged={isEnlarged}
+              isAnimating={isAnimating}
+              pauseAnimation={this._pauseAnimation}
+              resetAnimation={this._resetAnimation}
+              startAnimation={this._startAnimation}
+            />
+          ) : null}
+          <div
+            style={{
+              width: isEnlarged
+                ? `calc(100% - ${animationControlWidth}px)`
+                : '100%'
+            }}
+          >
             <RangeSlider
               range={domain}
               value0={value[0]}
@@ -166,7 +183,7 @@ const TimeValueWrapper = styled.div`
   height: ${props => props.theme.secondaryInputHeight};
   align-items: center;
   font-size: 11px;
-  justify-content: ${props => props.isEnlarged ? 'center' : 'space-between'};
+  justify-content: ${props => (props.isEnlarged ? 'center' : 'space-between')};
   color: ${props => props.theme.labelColor};
 
   .horizontal-bar {
@@ -175,7 +192,7 @@ const TimeValueWrapper = styled.div`
 
   .time-value {
     display: flex;
-    flex-direction: ${props => props.isEnlarged ? 'row' : 'column'};
+    flex-direction: ${props => (props.isEnlarged ? 'row' : 'column')};
     align-items: flex-start;
   }
 
@@ -186,25 +203,42 @@ const TimeValueWrapper = styled.div`
 
 const TimeTitle = ({value, isEnlarged, timeFormat = defaultTimeFormat}) => (
   <TimeValueWrapper isEnlarged={isEnlarged}>
-    <TimeValue key={0} value={moment.utc(value[0]).format(timeFormat)} split={!isEnlarged}/>
+    <TimeValue
+      key={0}
+      value={moment.utc(value[0]).format(timeFormat)}
+      split={!isEnlarged}
+    />
     {isEnlarged ? (
       <div className="horizontal-bar">
-        <Minus height="12px"/>
+        <Minus height="12px" />
       </div>
     ) : null}
-    <TimeValue key={1} value={moment.utc(value[1]).format(timeFormat)} split={!isEnlarged}/>
+    <TimeValue
+      key={1}
+      value={moment.utc(value[1]).format(timeFormat)}
+      split={!isEnlarged}
+    />
   </TimeValueWrapper>
 );
 
 const TimeValue = ({value, split}) => (
   // render two lines if not enlarged
   <div className="time-value">
-    {split ? value.split(' ').map((v, i) => (
-      <div key={i}>
-        {i === 0 ? <SelectText>{v}</SelectText> :
-        <SelectTextBold>{v}</SelectTextBold>}
-      </div>
-    )) : <SelectTextBold>{value}</SelectTextBold>}
+    {split ? (
+      value
+        .split(' ')
+        .map((v, i) => (
+          <div key={i}>
+            {i === 0 ? (
+              <SelectText>{v}</SelectText>
+            ) : (
+              <SelectTextBold>{v}</SelectTextBold>
+            )}
+          </div>
+        ))
+    ) : (
+      <SelectTextBold>{value}</SelectTextBold>
+    )}
   </div>
 );
 
@@ -232,16 +266,24 @@ const AnimationControls = ({
   startAnimation
 }) => (
   <StyledAnimationControls
-    className={classnames('time-range-slider__control', {disabled: !isAnimatable})}
+    className={classnames('time-range-slider__control', {
+      disabled: !isAnimatable
+    })}
   >
     <ButtonGroup>
-      <IconButton className="playback-control-button"
-        onClick={resetAnimation} secondary>
-        <Reset height="12px"/>
+      <IconButton
+        className="playback-control-button"
+        onClick={resetAnimation}
+        secondary
+      >
+        <Reset height="12px" />
       </IconButton>
-      <IconButton className={classnames('playback-control-button', {active: isAnimating})}
-        onClick={isAnimating ? pauseAnimation : startAnimation} secondary>
-        {isAnimating ? <Pause height="12px"/> : <Play height="12px"/>}
+      <IconButton
+        className={classnames('playback-control-button', {active: isAnimating})}
+        onClick={isAnimating ? pauseAnimation : startAnimation}
+        secondary
+      >
+        {isAnimating ? <Pause height="12px" /> : <Play height="12px" />}
       </IconButton>
     </ButtonGroup>
   </StyledAnimationControls>

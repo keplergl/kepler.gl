@@ -52,7 +52,7 @@ const SideBarInner = styled.div`
   height: 100%;
 `;
 
-export const CollapseButtonFactory = () => (
+export const CollapseButtonFactory = () =>
   styled.div`
     align-items: center;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
@@ -72,8 +72,7 @@ export const CollapseButtonFactory = () => (
       box-shadow: none;
       background-color: ${props => props.theme.sideBarCloseBtnBgdHover};
     }
-  `
-);
+  `;
 
 SidebarFactory.deps = [CollapseButtonFactory];
 
@@ -106,8 +105,11 @@ function SidebarFactory(CollapseButton) {
           width={isOpen ? width : 0}
           className="side-panel--container"
         >
-          <SideBarContainer className="side-bar" style={{width: `${width}px`}}
-                            left={horizontalOffset}>
+          <SideBarContainer
+            className="side-bar"
+            style={{width: `${width}px`}}
+            left={horizontalOffset}
+          >
             {isOpen ? (
               <SideBarInner className="side-bar__inner">
                 {this.props.children}

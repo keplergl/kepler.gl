@@ -301,6 +301,6 @@ class ItemSelector extends Component {
       </div>
     );
   }
-};
+}
 
 export default listensToClickOutside(ItemSelector);

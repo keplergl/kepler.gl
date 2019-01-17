@@ -23,7 +23,11 @@ import styled from 'styled-components';
 import {createSelector} from 'reselect';
 
 import FieldSelector from 'components/common/field-selector';
-import {SelectTextBold, IconRoundSmall, CenterFlexbox} from 'components/common/styled-components';
+import {
+  SelectTextBold,
+  IconRoundSmall,
+  CenterFlexbox
+} from 'components/common/styled-components';
 import TimeRangeFilter from 'components/filters/time-range-filter';
 import {Close, Clock, LineChart} from 'components/common/icons';
 import {TIME_ANIMATION_SPEED} from 'utils/filter-utils';
@@ -34,7 +38,7 @@ const WidgetContainer = styled.div`
   padding-top: ${props => props.theme.sidePanel.margin.top}px;
   padding-right: ${props => props.theme.sidePanel.margin.right}px;
   padding-bottom: ${props => props.theme.sidePanel.margin.bottom}px;
-  padding-left: ${props => props.theme.sidePanel.margin.left}px;  
+  padding-left: ${props => props.theme.sidePanel.margin.left}px;
   bottom: 0;
   right: 0;
   z-index: 1;
@@ -54,12 +58,12 @@ const TopSectionWrapper = styled.div`
   width: 100%;
   padding-right: ${innerPdSide * 2}px;
   color: ${props => props.theme.labelColor};
-  
+
   .bottom-widget__y-axis {
     flex-grow: 1;
     margin-left: 20px;
   }
-  
+
   .bottom-widget__field-select {
     width: 160px;
     display: inline-block;
@@ -75,7 +79,7 @@ const Tab = styled.div`
   border-bottom: 1px solid
     ${props => (props.active ? props.theme.textColorHl : 'transparent')};
   color: ${props =>
-  props.active ? props.theme.textColorHl : props.theme.labelColor};
+    props.active ? props.theme.textColorHl : props.theme.labelColor};
   display: inline-block;
   font-size: 12px;
   height: 24px;
@@ -83,7 +87,7 @@ const Tab = styled.div`
   text-align: center;
   width: 24px;
   line-height: 24px;
-  
+
   :hover {
     cursor: pointer;
   }
@@ -102,8 +106,13 @@ const StyledTitle = CenterFlexbox.extend`
 const AnimationSpeedToggle = ({updateAnimationSpeed, speed}) => (
   <Tabs>
     {TIME_ANIMATION_SPEED.map(({label, value}) => (
-      <Tab key={value} active={value === speed}
-        onClick={() => updateAnimationSpeed(value)}>{label}</Tab>
+      <Tab
+        key={value}
+        active={value === speed}
+        onClick={() => updateAnimationSpeed(value)}
+      >
+        {label}
+      </Tab>
     ))}
   </Tabs>
 );
@@ -133,13 +142,13 @@ export class TimeWidget extends Component {
           <TopSectionWrapper>
             <StyledTitle className="bottom-widget__field">
               <CenterFlexbox className="bottom-widget__icon">
-                <Clock height="15px"/>
+                <Clock height="15px" />
               </CenterFlexbox>
               <SelectTextBold>{filter.name}</SelectTextBold>
             </StyledTitle>
             <StyledTitle className="bottom-widget__y-axis">
               <CenterFlexbox className="bottom-widget__icon">
-                <LineChart height="15px"/>
+                <LineChart height="15px" />
               </CenterFlexbox>
               <div className="bottom-widget__field-select">
                 <FieldSelector
@@ -156,8 +165,11 @@ export class TimeWidget extends Component {
               </div>
             </StyledTitle>
             <AnimationSpeedToggle
-              updateAnimationSpeed={(speed) => updateAnimationSpeed(enlargedIdx, speed)}
-              speed={filter.speed}/>
+              updateAnimationSpeed={speed =>
+                updateAnimationSpeed(enlargedIdx, speed)
+              }
+              speed={filter.speed}
+            />
             <IconRoundSmall>
               <Close height="12px" onClick={() => enlargeFilter(enlargedIdx)} />
             </IconRoundSmall>
@@ -166,7 +178,9 @@ export class TimeWidget extends Component {
             filter={filter}
             setFilter={value => setFilter(enlargedIdx, 'value', value)}
             isAnyFilterAnimating={isAnyFilterAnimating}
-            updateAnimationSpeed={(speed) => updateAnimationSpeed(enlargedIdx, speed)}
+            updateAnimationSpeed={speed =>
+              updateAnimationSpeed(enlargedIdx, speed)
+            }
             toggleAnimation={() => toggleAnimation(enlargedIdx)}
           />
         </div>

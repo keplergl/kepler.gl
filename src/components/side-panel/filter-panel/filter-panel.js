@@ -106,8 +106,10 @@ function FilterPanelFactory() {
 
       return (
         <StyledFilterPanel className="filter-panel">
-          <StyledFilterHeader className="filter-panel__header"
-            labelRCGColorValues={datasets[dataId].color}>
+          <StyledFilterHeader
+            className="filter-panel__header"
+            labelRCGColorValues={datasets[dataId].color}
+          >
             <div style={{flexGrow: 1}}>
               <FieldSelector
                 inputTheme="secondary"
@@ -146,22 +148,22 @@ function FilterPanelFactory() {
               />
             )}
             {type &&
-            !enlarged && (
-              <div className="filter-panel__filter">
-                <FilterComponent
-                  filter={filter}
-                  idx={idx}
-                  isAnyFilterAnimating={isAnyFilterAnimating}
-                  toggleAnimation={toggleAnimation}
-                  setFilter={value => setFilter(idx, 'value', value)}
-                />
-              </div>
-            )}
+              !enlarged && (
+                <div className="filter-panel__filter">
+                  <FilterComponent
+                    filter={filter}
+                    idx={idx}
+                    isAnyFilterAnimating={isAnyFilterAnimating}
+                    toggleAnimation={toggleAnimation}
+                    setFilter={value => setFilter(idx, 'value', value)}
+                  />
+                </div>
+              )}
           </StyledFilterContent>
         </StyledFilterPanel>
       );
     }
-  }
+  };
 }
 
 export default FilterPanelFactory;

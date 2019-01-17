@@ -39,12 +39,13 @@ export default class LayerConfigurator extends Component {
 
   onAttributeChange = attribute => {
     const {layerConfiguratorProps, textLabel} = this.props;
-    return v => layerConfiguratorProps.onChange({
-      textLabel: {
-        ...textLabel,
-        [attribute]: v
-      }
-    });
+    return v =>
+      layerConfiguratorProps.onChange({
+        textLabel: {
+          ...textLabel,
+          [attribute]: v
+        }
+      });
   };
 
   onChangeTextAnchor = anchor => {
@@ -63,41 +64,38 @@ export default class LayerConfigurator extends Component {
   };
 
   render() {
-    const {
-      visConfiguratorProps,
-      textLabel
-    } = this.props;
+    const {visConfiguratorProps, textLabel} = this.props;
     return (
       <LayerConfigGroup label={'text'}>
         <PanelLabel>{`Show text label based on`}</PanelLabel>
-          <FieldSelector
-            fields={visConfiguratorProps.fields}
-            value={textLabel.field && textLabel.field.name || 'select a field'}
-            placeholder={'empty'}
-            onSelect={this.onAttributeChange('field')}
-            erasable
-          />
-          <PanelLabel>{`Font size`}</PanelLabel>
-          <RangeSlider
-            {...LAYER_TEXT_CONFIGS.fontSize}
-            value1={textLabel.size}
-            onChange={v => this.onAttributeChange('size')(v[1])}
-          />
-          <PanelLabel>{`Font color`}</PanelLabel>
-          <ColorSelector
-            colorSets={[
-              {
-                selectedColor: textLabel.color,
-                setColor: this.onAttributeChange('color')
-              }
-            ]}
-          />
-          <PanelLabel>{`Text anchor`}</PanelLabel>
-          <ItemSelector
-            {...LAYER_TEXT_CONFIGS.textAnchor}
-            selectedItems={textLabel.anchor}
-            onChange={this.onChangeTextAnchor}
-          />
+        <FieldSelector
+          fields={visConfiguratorProps.fields}
+          value={(textLabel.field && textLabel.field.name) || 'select a field'}
+          placeholder={'empty'}
+          onSelect={this.onAttributeChange('field')}
+          erasable
+        />
+        <PanelLabel>{`Font size`}</PanelLabel>
+        <RangeSlider
+          {...LAYER_TEXT_CONFIGS.fontSize}
+          value1={textLabel.size}
+          onChange={v => this.onAttributeChange('size')(v[1])}
+        />
+        <PanelLabel>{`Font color`}</PanelLabel>
+        <ColorSelector
+          colorSets={[
+            {
+              selectedColor: textLabel.color,
+              setColor: this.onAttributeChange('color')
+            }
+          ]}
+        />
+        <PanelLabel>{`Text anchor`}</PanelLabel>
+        <ItemSelector
+          {...LAYER_TEXT_CONFIGS.textAnchor}
+          selectedItems={textLabel.anchor}
+          onChange={this.onChangeTextAnchor}
+        />
       </LayerConfigGroup>
     );
   }

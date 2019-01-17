@@ -23,7 +23,6 @@ import Layer, {OVERLAY_TYPE} from './base-layer';
 export const mapboxRequiredColumns = ['lat', 'lng'];
 
 class MapboxLayerGL extends Layer {
-
   get overlayType() {
     return OVERLAY_TYPE.mapboxgl;
   }
@@ -57,7 +56,6 @@ class MapboxLayerGL extends Layer {
   shouldRenderLayer() {
     return false;
   }
-
 }
 
 export default MapboxLayerGL;

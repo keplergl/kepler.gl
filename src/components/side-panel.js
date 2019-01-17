@@ -81,7 +81,6 @@ export default function SidePanelFactory(
   InteractionManager,
   MapManager
 ) {
-
   return class SidePanel extends Component {
     static propTypes = {
       filters: PropTypes.arrayOf(PropTypes.any).isRequired,
@@ -122,11 +121,13 @@ export default function SidePanelFactory(
       this.props.uiStateActions.openDeleteModal(key);
     };
 
-    _onExportImage = () => this.props.uiStateActions.toggleModal(EXPORT_IMAGE_ID);
+    _onExportImage = () =>
+      this.props.uiStateActions.toggleModal(EXPORT_IMAGE_ID);
 
     _onExportData = () => this.props.uiStateActions.toggleModal(EXPORT_DATA_ID);
 
-    _onExportConfig = () => this.props.uiStateActions.toggleModal(EXPORT_CONFIG_ID);
+    _onExportConfig = () =>
+      this.props.uiStateActions.toggleModal(EXPORT_CONFIG_ID);
 
     render() {
       const {
@@ -151,7 +152,7 @@ export default function SidePanelFactory(
         addLayer: visStateActions.addLayer,
         layerConfigChange: visStateActions.layerConfigChange,
         layerVisualChannelConfigChange:
-        visStateActions.layerVisualChannelConfigChange,
+          visStateActions.layerVisualChannelConfigChange,
         layerTypeChange: visStateActions.layerTypeChange,
         layerVisConfigChange: visStateActions.layerVisConfigChange,
         updateLayerBlending: visStateActions.updateLayerBlending,

@@ -83,7 +83,21 @@ const [
 ].map(a => createAction(a));
 
 export {
-  toggleSidePanel, toggleModal, showExportDropdown, hideExportDropdown, toggleMapControl, openDeleteModal, setExportConfig, setExportData,
-  setRatio, setResolution, toggleLegend, startExportingImage, setExportImageDataUri, cleanupExportImage,
-  setExportSelectedDataset, setExportDataType, setExportFiltered
+  toggleSidePanel,
+  toggleModal,
+  showExportDropdown,
+  hideExportDropdown,
+  toggleMapControl,
+  openDeleteModal,
+  setExportConfig,
+  setExportData,
+  setRatio,
+  setResolution,
+  toggleLegend,
+  startExportingImage,
+  setExportImageDataUri,
+  cleanupExportImage,
+  setExportSelectedDataset,
+  setExportDataType,
+  setExportFiltered
 };

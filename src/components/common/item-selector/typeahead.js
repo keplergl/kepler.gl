@@ -54,8 +54,7 @@ const InputBox = styled.div`
 `;
 
 const TypeaheadInput = styled.input`
-  ${props => props.theme.secondaryInput}
-  :hover {
+  ${props => props.theme.secondaryInput} :hover {
     cursor: pointer;
     background-color: ${props => props.theme.secondaryInputBgd};
   }
@@ -96,7 +95,10 @@ export default class Typeahead extends Component {
     inputDisplayOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
     formInputOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
     defaultClassNames: PropTypes.bool,
-    customListComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
+    customListComponent: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func
+    ]),
     customListItemComponent: PropTypes.oneOfType([
       PropTypes.element,
       PropTypes.func
@@ -346,7 +348,9 @@ export default class Typeahead extends Component {
     }
     let newIndex =
       this.state.selectionIndex === null
-        ? delta === 1 ? 0 : delta
+        ? delta === 1
+          ? 0
+          : delta
         : this.state.selectionIndex + delta;
     let length = this.props.maxVisible
       ? this.state.searchResults.slice(0, this.props.maxVisible).length
@@ -491,27 +495,27 @@ export default class Typeahead extends Component {
       >
         {this._renderHiddenInput()}
         {this.props.searchable ? (
-        <InputBox>
-          <TypeaheadInput
-            innerRef={comp => {
-              this.entry = comp;
-            }}
-            type="text"
-            disabled={this.props.disabled}
-            {...this.props.inputProps}
-            placeholder={this.props.placeholder}
-            className={inputClassList}
-            value={this.state.entryValue}
-            onChange={this._onChange}
-            onBlur={this._onBlur}
-          />
-          <InputIcon>
-            <Search height="18px"/>
-          </InputIcon>
-        </InputBox>
+          <InputBox>
+            <TypeaheadInput
+              innerRef={comp => {
+                this.entry = comp;
+              }}
+              type="text"
+              disabled={this.props.disabled}
+              {...this.props.inputProps}
+              placeholder={this.props.placeholder}
+              className={inputClassList}
+              value={this.state.entryValue}
+              onChange={this._onChange}
+              onBlur={this._onBlur}
+            />
+            <InputIcon>
+              <Search height="18px" />
+            </InputIcon>
+          </InputBox>
         ) : null}
         {this._renderIncrementalSearchResults()}
       </TypeaheadWrapper>
     );
   }
-};
+}

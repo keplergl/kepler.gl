@@ -297,7 +297,7 @@ class TextLabelSchemaV1 extends Schema {
         ...textLabel,
         field: textLabel.field ? pick(textLabel.field, ['name', 'type']) : null
       }
-    }
+    };
   }
 
   load(textLabel) {

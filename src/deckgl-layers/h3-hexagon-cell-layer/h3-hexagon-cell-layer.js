@@ -20,7 +20,12 @@
 
 import {HexagonCellLayer} from 'deck.gl';
 import {CylinderGeometry} from 'luma.gl';
-import {getAngle, getRadius, getH3VerticeTransform, distortCylinderPositions} from 'layers/h3-hexagon-layer/h3-utils';
+import {
+  getAngle,
+  getRadius,
+  getH3VerticeTransform,
+  distortCylinderPositions
+} from 'layers/h3-hexagon-layer/h3-utils';
 import {editShader} from 'deckgl-layers/layer-utils/shader-utils';
 
 function addInstanceCoverage(vs) {
@@ -42,7 +47,6 @@ function addInstanceCoverage(vs) {
 
 // TODO: export all dekc.gl layers from kepler.gl
 export default class H3HexagonCellLayer extends HexagonCellLayer {
-
   getShaders() {
     const shaders = super.getShaders();
 
@@ -79,12 +83,14 @@ export default class H3HexagonCellLayer extends HexagonCellLayer {
   getDistortion() {
     const {hexagonVertices, hexagonCenter} = this.props;
 
-    if (Array.isArray(hexagonVertices) &&
+    if (
+      Array.isArray(hexagonVertices) &&
       hexagonVertices.length >= 6 &&
-      Array.isArray(hexagonCenter)) {
-        const screenVertices = hexagonVertices.map(d => this.projectFlat(d));
-        const screenCentroid = this.projectFlat(hexagonCenter);
-        return getH3VerticeTransform(screenVertices, screenCentroid);
+      Array.isArray(hexagonCenter)
+    ) {
+      const screenVertices = hexagonVertices.map(d => this.projectFlat(d));
+      const screenCentroid = this.projectFlat(hexagonCenter);
+      return getH3VerticeTransform(screenVertices, screenCentroid);
     }
 
     return null;
@@ -108,7 +114,7 @@ export default class H3HexagonCellLayer extends HexagonCellLayer {
       const spaceCoord3 = this.projectFlat(vertex3);
 
       angle = getAngle(spaceCoord0, spaceCoord3);
-      radius = getRadius(spaceCoord0, spaceCoord3) /pixelsPerMeter[0];
+      radius = getRadius(spaceCoord0, spaceCoord3) / pixelsPerMeter[0];
     }
 
     this.setState({angle, radius});
@@ -123,7 +129,7 @@ export default class H3HexagonCellLayer extends HexagonCellLayer {
         ...uniforms,
         picking_uHighlightScale: this.props.extruded ? 1.4 : 0.0
       }
-    })
+    });
   }
 
   initializeState() {

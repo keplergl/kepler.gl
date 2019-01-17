@@ -66,4 +66,4 @@ export default class LineLayerIcon extends Component {
       </Base>
     );
   }
-};
+}

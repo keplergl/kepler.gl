@@ -172,33 +172,28 @@ export const Button = styled.div.attrs({
       ? props.theme.negativeBtnBgd
       : props.secondary
         ? props.theme.secondaryBtnBgd
-        : props.link ? props.theme.linkBtnBgd : props.theme.primaryBtnBgd};
+        : props.link
+          ? props.theme.linkBtnBgd
+          : props.theme.primaryBtnBgd};
   border-radius: ${props => props.theme.primaryBtnRadius};
   color: ${props =>
     props.negative
       ? props.theme.negativeBtnColor
       : props.secondary
         ? props.theme.secondaryBtnColor
-        : props.link ? props.theme.linkBtnColor : props.theme.primaryBtnColor};
+        : props.link
+          ? props.theme.linkBtnColor
+          : props.theme.primaryBtnColor};
   cursor: pointer;
   display: inline-flex;
-  font-size: ${props =>
-    props.large ?
-      '14px'
-      : props.small
-        ? '10px'
-        : '11px'};
+  font-size: ${props => (props.large ? '14px' : props.small ? '10px' : '11px')};
   font-weight: 500;
   justify-content: center;
   letter-spacing: 0.3px;
   line-height: 14px;
   outline: 0;
   padding: ${props =>
-    props.large ?
-      '14px 32px'
-      : props.small
-        ? '6px 9px'
-        : '9px 12px'};
+    props.large ? '14px 32px' : props.small ? '6px 9px' : '9px 12px'};
   text-align: center;
   transition: ${props => props.theme.transition};
   vertical-align: middle;
@@ -239,7 +234,7 @@ export const Input = styled.input`
 `;
 
 export const InputLight = styled.input`
-  ${props => props.theme.inputLT}
+  ${props => props.theme.inputLT};
 `;
 
 export const InlineInput = Input.extend`
@@ -298,7 +293,7 @@ export const DatasetSquare = styled.div`
   width: 8px;
   height: 8px;
   background-color: rgb(${props => props.color.join(',')});
-  margin-right: 12px
+  margin-right: 12px;
 `;
 
 export const Table = styled.table`
@@ -315,10 +310,10 @@ export const Table = styled.table`
   }
 
   tbody {
-   tr td {
-     border-bottom: ${props => props.theme.panelBorderLT};
-     padding: 12px;
-   }
+    tr td {
+      border-bottom: ${props => props.theme.panelBorderLT};
+      padding: 12px;
+    }
   }
 `;
 

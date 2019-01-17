@@ -30,8 +30,7 @@ const MAX_WIDTH = 400;
 const MAX_HEIGHT = 600;
 
 const StyledMapPopover = styled.div`
-  ${props => props.theme.scrollBar}
-  font-size: 11px;
+  ${props => props.theme.scrollBar} font-size: 11px;
   font-weight: 500;
   background-color: ${props => props.theme.panelBackground};
   color: ${props => props.theme.textColor};
@@ -98,7 +97,10 @@ export class MapPopover extends Component {
     fieldsToShow: PropTypes.arrayOf(PropTypes.any),
     isVisible: PropTypes.bool,
     layer: PropTypes.object,
-    data: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.any), PropTypes.object]),
+    data: PropTypes.oneOfType([
+      PropTypes.arrayOf(PropTypes.any),
+      PropTypes.object
+    ]),
     freezed: PropTypes.bool,
     x: PropTypes.number,
     y: PropTypes.number,
@@ -207,7 +209,9 @@ export class MapPopover extends Component {
           </div>
         ) : null}
         <StyledLayerName className="map-popover__layer-name">
-          <Layers height="12px"/>{layer.config.label}</StyledLayerName>
+          <Layers height="12px" />
+          {layer.config.label}
+        </StyledLayerName>
         <table className="map-popover__table">
           {layer.isAggregated ? (
             <CellInfo {...infoProps} />
@@ -272,7 +276,11 @@ const CellInfo = ({data, layer}) => {
 
   return (
     <tbody>
-      <Row name={'total points'} key="count" value={data.points && data.points.length} />
+      <Row
+        name={'total points'}
+        key="count"
+        value={data.points && data.points.length}
+      />
       {colorField && layer.visualChannels.color ? (
         <Row
           name={layer.getVisualChannelDescription('color').measure}
@@ -295,5 +303,5 @@ function _getCellFormat(type) {
   return FIELD_DISPLAY_FORMAT[type];
 }
 
-const MapPopoverFactory =  () => MapPopover;
+const MapPopoverFactory = () => MapPopover;
 export default MapPopoverFactory;

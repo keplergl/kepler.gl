@@ -30,7 +30,7 @@ export default class EnhancedHexagonCellLayer extends HexagonCellLayer {
         ...uniforms,
         picking_uHighlightScale: this.props.extruded ? 1.4 : 0.0
       }
-    })
+    });
   }
 }
 

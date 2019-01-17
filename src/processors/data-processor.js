@@ -32,7 +32,6 @@ import KeplerGlSchema from 'schemas';
 const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN'];
 
 export function processCsvData(rawData) {
-
   // here we assume the csv file that people uploaded will have first row
   // as name of the column
   //TODO: add a alert at upload csv to remind define first row
@@ -343,10 +342,12 @@ export function formatCsv(data, fields) {
   data.forEach(row => {
     formattedData.push(
       row.map(
-        (d, i) => d && GEOJSON_FIELDS.geojson.includes(fields[i].name) ?
-          JSON.stringify(d) : d
+        (d, i) =>
+          d && GEOJSON_FIELDS.geojson.includes(fields[i].name)
+            ? JSON.stringify(d)
+            : d
       )
-    )
+    );
   });
 
   return csvFormatRows(formattedData);
@@ -412,7 +413,10 @@ export function validateInputData(data) {
 
   // if any field has missing type, recalculate it for everyone
   // because we simply lost faith in humanity
-  const sampleData = getSampleForTypeAnalyze({fields: fields.map(f => f.name), allData: rows});
+  const sampleData = getSampleForTypeAnalyze({
+    fields: fields.map(f => f.name),
+    allData: rows
+  });
   const fieldOrder = fields.map(f => f.name);
   const meta = getFieldsFromData(sampleData, fieldOrder);
   const updatedFields = fields.map((f, i) => ({
@@ -429,9 +433,7 @@ export function validateInputData(data) {
  * @param {Object} rawData
  */
 export function processKeplerglJSON(rawData) {
-  return rawData
-    ? KeplerGlSchema.load(rawData.datasets, rawData.config)
-    : null;
+  return rawData ? KeplerGlSchema.load(rawData.datasets, rawData.config) : null;
 }
 
 export default {

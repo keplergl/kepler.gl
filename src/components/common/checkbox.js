@@ -31,7 +31,7 @@ const StyledSwitchInput = styled.label`
 `;
 
 const StyledCheckboxInput = styled.label`
-  ${props => props.theme.inputCheckbox}
+  ${props => props.theme.inputCheckbox};
 `;
 
 const HiddenInput = styled.input`
@@ -98,7 +98,8 @@ export default class Checkbox extends Component {
       htmlFor: this.props.id
     };
 
-    const LabelElement = this.props.type === 'checkbox' ? StyledCheckboxInput : StyledSwitchInput;
+    const LabelElement =
+      this.props.type === 'checkbox' ? StyledCheckboxInput : StyledSwitchInput;
     return (
       <StyledCheckbox className="kg-checkbox">
         <HiddenInput {...inputProps} />

@@ -66,10 +66,10 @@ export function injector(map = {}) {
   };
 }
 
-const identity = state => (state);
+const identity = state => state;
 // Helper to add reducer state to custom component
 export function withState(lenses, mapStateToProps = identity, actions = {}) {
-  return (Component) => {
+  return Component => {
     const WrappedComponent = ({state, ...props}, {selector, id}) => (
       <Component
         {...lenses.reduce(
@@ -87,12 +87,16 @@ export function withState(lenses, mapStateToProps = identity, actions = {}) {
     };
     return connect(
       state => ({...mapStateToProps(state), state}),
-      dispatch => Object.keys(actions).reduce((accu, key) => ({
-        ...accu,
-        [key]: bindActionCreators(actions[key], dispatch)
-      }), {})
+      dispatch =>
+        Object.keys(actions).reduce(
+          (accu, key) => ({
+            ...accu,
+            [key]: bindActionCreators(actions[key], dispatch)
+          }),
+          {}
+        )
     )(WrappedComponent);
-  }
+  };
 }
 
 // Helpter to add actionCreator to custom component

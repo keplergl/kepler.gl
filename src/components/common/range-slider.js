@@ -32,7 +32,7 @@ const SliderInput = Input.extend`
   height: 24px;
   width: 40px;
   padding: 4px 6px;
-  margin-left: ${props => props.flush ? 0 : 24}px;
+  margin-left: ${props => (props.flush ? 0 : 24)}px;
 `;
 
 const SliderWrapper = styled.div`
@@ -40,7 +40,7 @@ const SliderWrapper = styled.div`
   position: relative;
 `;
 
-const RangeInputWrapper =styled.div`
+const RangeInputWrapper = styled.div`
   margin-top: 6px;
   display: flex;
   justify-content: space-between;
@@ -190,14 +190,16 @@ export default class RangeSlider extends Component {
 
     const height = this.props.xAxis ? '24px' : '16px';
     const {width} = this.state;
-    const plotWidth =  width - sliderHandleWidth;
+    const plotWidth = width - sliderHandleWidth;
 
     return (
       <div
-        className="kg-range-slider" style={{width: '100%', padding: `0 ${sliderHandleWidth / 2}px`}}
+        className="kg-range-slider"
+        style={{width: '100%', padding: `0 ${sliderHandleWidth / 2}px`}}
         ref={comp => {
           this.sliderContainer = comp;
-        }}>
+        }}
+      >
         {histogram && histogram.length ? (
           <RangePlot
             histogram={histogram}
@@ -215,10 +217,10 @@ export default class RangeSlider extends Component {
             width={plotWidth}
           />
         ) : null}
-        <SliderWrapper
-          style={{height}}
-          className="kg-range-slider__slider">
-          {this.props.xAxis ? <this.props.xAxis width={plotWidth} domain={range}/> : null}
+        <SliderWrapper style={{height}} className="kg-range-slider__slider">
+          {this.props.xAxis ? (
+            <this.props.xAxis width={plotWidth} domain={range} />
+          ) : null}
           <Slider
             showValues={false}
             isRanged={isRanged}
@@ -241,11 +243,13 @@ export default class RangeSlider extends Component {
           />
           {!isRanged && showInput ? this._renderInput('value1') : null}
         </SliderWrapper>
-        {isRanged && showInput ? <RangeInputWrapper className="range-slider__input-group">
-          {this._renderInput('value0')}
-          {this._renderInput('value1')}
-        </RangeInputWrapper> : null}
+        {isRanged && showInput ? (
+          <RangeInputWrapper className="range-slider__input-group">
+            {this._renderInput('value0')}
+            {this._renderInput('value1')}
+          </RangeInputWrapper>
+        ) : null}
       </div>
     );
   }
-};
+}

@@ -22,17 +22,24 @@ import React, {Component} from 'react';
 import {console as Console} from 'global/window';
 import {bindActionCreators} from 'redux';
 import {json as requestJson} from 'd3-request';
-import styled, {ThemeProvider}  from 'styled-components';
+import styled, {ThemeProvider} from 'styled-components';
 import {connect as keplerGlConnect} from 'connect/keplergl-connect';
-import {isValidStyleUrl, getStyleDownloadUrl} from 'utils/map-style-utils/mapbox-gl-style-editor';
+import {
+  isValidStyleUrl,
+  getStyleDownloadUrl
+} from 'utils/map-style-utils/mapbox-gl-style-editor';
 
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
 import * as MapStyleActions from 'actions/map-style-actions';
 import * as UIStateActions from 'actions/ui-state-actions';
 
-import {EXPORT_IMAGE_ID, DIMENSIONS,
-  KEPLER_GL_NAME, KEPLER_GL_VERSION} from 'constants/default-settings';
+import {
+  EXPORT_IMAGE_ID,
+  DIMENSIONS,
+  KEPLER_GL_NAME,
+  KEPLER_GL_VERSION
+} from 'constants/default-settings';
 
 import SidePanelFactory from './side-panel';
 import MapContainerFactory from './map-container';
@@ -136,24 +143,23 @@ function KeplerGlFactory(
         id: ms.id || generateHashId()
       }));
 
-      [...customeStyles, ...defaultStyles].forEach(
-        style => {
-          if (style.style) {
-            this.props.mapStyleActions.loadMapStyles({
-              [style.id]: style
-            })
-          } else {
-            this._requestMapStyle(style);
-          }
+      [...customeStyles, ...defaultStyles].forEach(style => {
+        if (style.style) {
+          this.props.mapStyleActions.loadMapStyles({
+            [style.id]: style
+          });
+        } else {
+          this._requestMapStyle(style);
         }
-      );
+      });
     };
 
-    _requestMapStyle = (mapStyle) => {
+    _requestMapStyle = mapStyle => {
       const {url, id} = mapStyle;
 
-      const downloadUrl = isValidStyleUrl(url) ?
-        getStyleDownloadUrl(url, this.props.mapboxApiAccessToken) : url;
+      const downloadUrl = isValidStyleUrl(url)
+        ? getStyleDownloadUrl(url, this.props.mapboxApiAccessToken)
+        : url;
 
       requestJson(downloadUrl, (error, result) => {
         if (error) {
@@ -283,7 +289,7 @@ function KeplerGlFactory(
             <div className="maps" style={{display: 'flex'}}>
               {mapContainers}
             </div>
-            {isExporting &&
+            {isExporting && (
               <PlotContainer
                 width={width}
                 height={height}
@@ -292,7 +298,7 @@ function KeplerGlFactory(
                 startExportingImage={uiStateActions.startExportingImage}
                 setExportImageDataUri={uiStateActions.setExportImageDataUri}
               />
-            }
+            )}
             <BottomWidget
               filters={filters}
               datasets={datasets}
@@ -338,12 +344,7 @@ function mapStateToProps(state, props) {
 function mapDispatchToProps(dispatch, ownProps) {
   const userActions = ownProps.actions || {};
 
-  const [
-    visStateActions,
-    mapStateActions,
-    mapStyleActions,
-    uiStateActions
-  ] = [
+  const [visStateActions, mapStateActions, mapStyleActions, uiStateActions] = [
     VisStateActions,
     MapStateActions,
     MapStyleActions,

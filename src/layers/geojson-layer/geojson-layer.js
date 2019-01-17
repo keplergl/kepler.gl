@@ -135,7 +135,9 @@ export default class GeoJsonLayer extends Layer {
     }
 
     return foundColumns.map(columns => ({
-      label: typeof label === 'string' && label.replace(/\.[^/.]+$/, '') || this.type,
+      label:
+        (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) ||
+        this.type,
       columns,
       isVisible: true
     }));
@@ -325,13 +327,7 @@ export default class GeoJsonLayer extends Layer {
     this.updateMeta({bounds, lightSettings, fp64, fixedRadius, featureTypes});
   }
 
-  renderLayer({
-    data,
-    idx,
-    objectHovered,
-    mapState,
-    interactionConfig
-  }) {
+  renderLayer({data, idx, objectHovered, mapState, interactionConfig}) {
     const {fp64, lightSettings, fixedRadius} = this.meta;
     const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius);
     const zoomFactor = this.getZoomFactor(mapState);
@@ -391,7 +387,9 @@ export default class GeoJsonLayer extends Layer {
         // highlightColor: this.config.highlightColor,
         autoHighlight: visConfig.enable3d,
         // parameters
-        parameters: {depthTest: Boolean(visConfig.enable3d || mapState.dragRotate)},
+        parameters: {
+          depthTest: Boolean(visConfig.enable3d || mapState.dragRotate)
+        },
         opacity: visConfig.opacity,
         stroked: visConfig.stroked,
         filled: visConfig.filled,

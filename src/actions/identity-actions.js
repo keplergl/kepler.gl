@@ -46,10 +46,7 @@ export const registerEntry = createAction(
  * @param {string} id - the id of the instance to be deleted
  * @public
  */
-export const deleteEntry = createAction(
-  ActionTypes.DELETE_ENTRY,
-  id => id
-);
+export const deleteEntry = createAction(ActionTypes.DELETE_ENTRY, id => id);
 
 /**
  *

@@ -68,10 +68,10 @@ const StyledListItem = styled.div`
     .layer-type-selector__item__icon {
       color: ${props => props.theme.activeColor};
       background-size: ${ITEM_SIZE.small}px ${ITEM_SIZE.small}px;
-      margin-right: 12px;  
+      margin-right: 12px;
     }
   }
-  
+
   .layer-type-selector__item__icon {
     color: ${props => props.theme.labelColor};
     display: flex;
@@ -102,9 +102,7 @@ const LayerTypeListItem = ({value, isTile}) => (
     className={classNames('layer-type-selector__item__inner', {list: !isTile})}
   >
     <div className="layer-type-selector__item__icon">
-      <value.icon
-        height={`${isTile ? ITEM_SIZE.large : ITEM_SIZE.small}px`}
-      />
+      <value.icon height={`${isTile ? ITEM_SIZE.large : ITEM_SIZE.small}px`} />
     </div>
     <div className="layer-type-selector__item__label">{value.label}</div>
   </StyledListItem>

@@ -25,7 +25,7 @@ import {_SolidPolygonLayer as SolidPolygonLayer} from '@deck.gl/layers';
 
 export default class ThreeDBuildingLayer extends CompositeLayer {
   // this layer add its subLayers to the redux store, and push sample data
-  
+
   renderSubLayers(props) {
     return new SolidPolygonLayer({
       ...props,
@@ -41,8 +41,8 @@ export default class ThreeDBuildingLayer extends CompositeLayer {
       extruded: true,
       opacity: 1,
       filled: true,
-      getElevation: (feature) => feature.properties.height || 0,
-      getPolygon: (feature) => feature.coordinates,
+      getElevation: feature => feature.properties.height || 0,
+      getPolygon: feature => feature.coordinates,
       getFillColor: this.props.threeDBuildingColor,
       lightSetting: {
         ambientRatio: 0.2

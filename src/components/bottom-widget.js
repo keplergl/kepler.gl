@@ -36,8 +36,7 @@ const maxWidth = 1080;
 BottomWidgetFactory.deps = [TimeWidgetFactory];
 
 export default function BottomWidgetFactory(TimeWidget) {
-
-  const BottomWidget = (props) => {
+  const BottomWidget = props => {
     const {
       datasets,
       filters,
@@ -51,7 +50,9 @@ export default function BottomWidgetFactory(TimeWidget) {
 
     const enlargedFilterIdx = filters.findIndex(f => f.enlarged);
     const isAnyFilterAnimating = filters.some(f => f.isAnimating);
-    const enlargedFilterWidth = isOpen ? containerW - sidePanelWidth : containerW;
+    const enlargedFilterWidth = isOpen
+      ? containerW - sidePanelWidth
+      : containerW;
 
     if (enlargedFilterIdx < 0) {
       return null;
@@ -71,7 +72,7 @@ export default function BottomWidgetFactory(TimeWidget) {
         filter={filters[enlargedFilterIdx]}
       />
     );
-  }
+  };
 
   BottomWidget.propTypes = propTypes;
 

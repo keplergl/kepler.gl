@@ -92,8 +92,8 @@ export default function PlotContainerFactory(MapContainer) {
 
     _retrieveNewScreenshot = () => {
       if (this.plottingAreaRef) {
-      // setting windowDevicePixelRatio to 1
-      // so that large mapbox base map will load in full
+        // setting windowDevicePixelRatio to 1
+        // so that large mapbox base map will load in full
         const savedDevicePixelRatio = window.devicePixelRatio;
         window.devicePixelRatio = 1;
 

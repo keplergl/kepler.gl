@@ -114,4 +114,4 @@ export default class SliderHandle extends Component {
       />
     );
   }
-};
+}

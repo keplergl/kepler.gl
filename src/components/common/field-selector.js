@@ -67,7 +67,10 @@ export default class FieldSelector extends Component {
     onSelect: PropTypes.func.isRequired,
     placement: PropTypes.string,
     value: FieldType,
-    filterFieldTypes: PropTypes.oneOfType([FieldType, PropTypes.arrayOf(FieldType)]),
+    filterFieldTypes: PropTypes.oneOfType([
+      FieldType,
+      PropTypes.arrayOf(FieldType)
+    ]),
     inputTheme: PropTypes.string,
     placeholder: PropTypes.string,
     erasable: PropTypes.bool,
@@ -154,4 +157,4 @@ export default class FieldSelector extends Component {
       </div>
     );
   }
-};
+}

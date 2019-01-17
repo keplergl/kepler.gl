@@ -85,10 +85,10 @@ const StyledPanelDropdown = styled.div`
   position: absolute;
   transition: ${props => props.theme.transitionSlow};
   display: flex;
-  margin-top: ${props => props.show ? '6px' : '20px'};
-  opacity: ${props => props.show ? 1 : 0};
+  margin-top: ${props => (props.show ? '6px' : '20px')};
+  opacity: ${props => (props.show ? 1 : 0)};
   transform: translateX(calc(-50% + 20px));
-  pointer-events:  ${props => props.show ? 'all' : 'none'};
+  pointer-events: ${props => (props.show ? 'all' : 'none')};
   z-index: 1000;
 
   .save-export-dropdown__inner {
@@ -122,29 +122,38 @@ const StyledPanelDropdown = styled.div`
 `;
 
 export const PanelAction = ({item, onClick}) => (
-  <StyledPanelAction className="side-panel__panel-header__action"
-    data-tip data-for={`${item.id}-action`} onClick={onClick}>
+  <StyledPanelAction
+    className="side-panel__panel-header__action"
+    data-tip
+    data-for={`${item.id}-action`}
+    onClick={onClick}
+  >
     {item.label ? <p>{item.label}</p> : null}
     <a target={item.blank ? '_blank' : ''} href={item.href}>
       <item.iconComponent height="20px" />
     </a>
-    {item.tooltip ? (<Tooltip
-      id={`${item.id}-action`}
-      place="bottom"
-      delayShow={500}
-      effect="solid"
-    >
-      <span>{item.tooltip}</span>
-    </Tooltip>) : null }
+    {item.tooltip ? (
+      <Tooltip
+        id={`${item.id}-action`}
+        place="bottom"
+        delayShow={500}
+        effect="solid"
+      >
+        <span>{item.tooltip}</span>
+      </Tooltip>
+    ) : null}
   </StyledPanelAction>
 );
 
 const PanelItem = ({onClose, onClickHandler, label, icon}) => (
-  <div className="save-export-dropdown__item" onClick={(e) => {
-    e.stopPropagation();
-    onClose();
-    onClickHandler();
-  }}>
+  <div
+    className="save-export-dropdown__item"
+    onClick={e => {
+      e.stopPropagation();
+      onClose();
+      onClickHandler();
+    }}
+  >
     {icon}
     <div className="save-export-dropdown__title">{label}</div>
   </div>
@@ -160,28 +169,30 @@ export const SaveExportDropdown = ({
 }) => {
   return (
     <StyledPanelDropdown show={show} className="save-export-dropdown">
-      <ClickOutsideCloseDropdown className="save-export-dropdown__inner"
+      <ClickOutsideCloseDropdown
+        className="save-export-dropdown__inner"
         show={show}
-        onClose={onClose}>
+        onClose={onClose}
+      >
         <PanelItem
           label="Export Image"
           onClickHandler={onExportImage}
           onClose={onClose}
-          icon={(<Picture height="16px" />)}
+          icon={<Picture height="16px" />}
         />
 
         <PanelItem
           label="Export Data"
           onClickHandler={onExportData}
           onClose={onClose}
-          icon={(<Files height="16px" />)}
+          icon={<Files height="16px" />}
         />
 
         <PanelItem
           label="Export Config"
           onClickHandler={onExportConfig}
           onClose={onClose}
-          icon={(<CodeAlt height="16px" />)}
+          icon={<CodeAlt height="16px" />}
         />
 
         {onSaveMap ? (
@@ -189,7 +200,7 @@ export const SaveExportDropdown = ({
             label="Save Map Url"
             onClickHandler={onSaveMap}
             onClose={onClose}
-            icon={(<Share height="16px" />)}
+            icon={<Share height="16px" />}
           />
         ) : null}
       </ClickOutsideCloseDropdown>
@@ -240,11 +251,14 @@ function PanelHeaderFactory() {
       return (
         <StyledPanelHeader className="side-panel__panel-header">
           <StyledPanelHeaderTop className="side-panel__panel-header__top">
-            <this.props.logoComponent appName={appName} version={version}/>
+            <this.props.logoComponent appName={appName} version={version} />
             <StyledPanelTopActions>
               {actionItems.map(item => (
-                <div className="side-panel__panel-header__right"
-                     key={item.id} style={{position: 'relative'}}>
+                <div
+                  className="side-panel__panel-header__right"
+                  key={item.id}
+                  style={{position: 'relative'}}
+                >
                   <PanelAction
                     item={item}
                     onClick={() => {
@@ -271,7 +285,7 @@ function PanelHeaderFactory() {
         </StyledPanelHeader>
       );
     }
-  }
+  };
 }
 
 export default PanelHeaderFactory;

@@ -59,20 +59,23 @@ export function findMapBounds(layers) {
       res.push(l.meta.bounds);
     }
     return res;
-  }, [])
+  }, []);
   // return null if no layer is available
   if (availableLayerBounds.length === 0) {
     return null;
   }
   // merge bounds in each layer
-  const newBounds = availableLayerBounds.reduce((res, b) => {
-    return [
-      Math.min(res[0], b[0]),
-      Math.min(res[1], b[1]),
-      Math.max(res[2], b[2]),
-      Math.max(res[3], b[3])
-    ];
-  }, [MAX_LONGITUDE, MAX_LATITUDE, MIN_LONGITUDE, MIN_LATITUDE]);
+  const newBounds = availableLayerBounds.reduce(
+    (res, b) => {
+      return [
+        Math.min(res[0], b[0]),
+        Math.min(res[1], b[1]),
+        Math.max(res[2], b[2]),
+        Math.max(res[3], b[3])
+      ];
+    },
+    [MAX_LONGITUDE, MAX_LATITUDE, MIN_LONGITUDE, MIN_LATITUDE]
+  );
   return newBounds;
 }
 /* eslint-enable max-statements */
@@ -96,7 +99,7 @@ export function getLatLngBounds(points, idx, limit) {
 
 export function clamp([min, max], val) {
   return val <= min ? min : val >= max ? max : val;
-};
+}
 
 export function getSampleData(data, sampleSize = 500) {
   const sampleStep = Math.max(Math.floor(data.length / sampleSize), 1);
@@ -113,7 +116,9 @@ export function maybeToDate(isTime, fieldIdx, format, d) {
     if (notNullorUndefined(d[fieldIdx])) {
       return typeof d[fieldIdx] === 'string'
         ? moment.utc(d[fieldIdx], format).valueOf()
-        : format === 'x' ? d[fieldIdx] * 1000 : d[fieldIdx];
+        : format === 'x'
+          ? d[fieldIdx] * 1000
+          : d[fieldIdx];
     }
 
     return null;

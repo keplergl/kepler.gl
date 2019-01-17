@@ -27,29 +27,34 @@ import {OVERLAY_TYPE} from './base-layer';
  * @param layerOrder the order by which we should convert layers
  * @returns {*}
  */
-export function generateMapboxLayers(layers = [], layerData = [], layerOrder = []) {
+export function generateMapboxLayers(
+  layers = [],
+  layerData = [],
+  layerOrder = []
+) {
   if (layerData.length > 0) {
-    return layerOrder.slice()
+    return layerOrder
+      .slice()
       .reverse()
       .reduce((overlays, idx) => {
         const layer = layers[idx];
 
-        return layer.overlayType !== OVERLAY_TYPE.mapboxgl ?
-          overlays
+        return layer.overlayType !== OVERLAY_TYPE.mapboxgl
+          ? overlays
           : [
-            ...overlays,
-            {
-              id: layer.id,
-              data: layerData[idx].data,
-              config: layerData[idx].config,
-              datasetId: layer.config.dataId
-            }
-          ]
+              ...overlays,
+              {
+                id: layer.id,
+                data: layerData[idx].data,
+                config: layerData[idx].config,
+                datasetId: layer.config.dataId
+              }
+            ];
       }, []);
   }
 
   return [];
-};
+}
 
 /**
  * Update mapbox layers on the given map
@@ -59,7 +64,13 @@ export function generateMapboxLayers(layers = [], layerData = [], layerOrder = [
  *                  {layerId: datasetId}
  * @param mapLayers carries information about split map view
  */
-export function updateMapboxLayers(map, newLayers = [], oldLayers = null, mapLayers = null, opt = {force: true}) {
+export function updateMapboxLayers(
+  map,
+  newLayers = [],
+  oldLayers = null,
+  mapLayers = null,
+  opt = {force: true}
+) {
   // delete non existing layers
 
   if (oldLayers) {
@@ -68,10 +79,13 @@ export function updateMapboxLayers(map, newLayers = [], oldLayers = null, mapLay
       oldLayersKeys.forEach(layerId => map.removeLayer(layerId));
     } else {
       // remove layers
-      const currentLayersIds = newLayers.reduce((final, layer) => ({
-        ...final,
-        [layer.id]: true
-      }), {});
+      const currentLayersIds = newLayers.reduce(
+        (final, layer) => ({
+          ...final,
+          [layer.id]: true
+        }),
+        {}
+      );
 
       const layersToDelete = oldLayersKeys.reduce((final, layerId) => {
         // if layer doesn't exists anymore
@@ -104,8 +118,7 @@ export function updateMapboxLayers(map, newLayers = [], oldLayers = null, mapLay
           type: 'geojson',
           data
         });
-      }
-      else {
+      } else {
         source.setData(data);
       }
     }
@@ -127,7 +140,7 @@ export function updateMapboxLayers(map, newLayers = [], oldLayers = null, mapLay
     }
   });
   // TODO: think about removing sources
-};
+}
 
 /**
  *
@@ -140,15 +153,23 @@ export function updateMapboxLayers(map, newLayers = [], oldLayers = null, mapLay
  * @param properties [{label: {fieldIdx}]
  * @returns {{type: string, properties: {}, features: {type: string, properties: {}, geometry: {type: string, coordinates: *[]}}[]}}
  */
-export function geojsonFromPoints(allData = [], filteredIndex = [], columns = {}, properties = []) {
+export function geojsonFromPoints(
+  allData = [],
+  filteredIndex = [],
+  columns = {},
+  properties = []
+) {
   return {
     type: 'FeatureCollection',
     features: filteredIndex.map(index => allData[index]).map(point => ({
       type: 'Feature',
-      properties: properties.reduce((final, property) => ({
-        ...final,
-        [property.name]: point[property.tableFieldIndex - 1]
-      }), {}),
+      properties: properties.reduce(
+        (final, property) => ({
+          ...final,
+          [property.name]: point[property.tableFieldIndex - 1]
+        }),
+        {}
+      ),
       geometry: {
         type: 'Point',
         coordinates: [

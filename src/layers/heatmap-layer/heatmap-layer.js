@@ -19,7 +19,11 @@
 // THE SOFTWARE.
 
 import {createSelector} from 'reselect';
-import {CHANNEL_SCALES, SCALE_FUNC, ALL_FIELD_TYPES} from 'constants/default-settings';
+import {
+  CHANNEL_SCALES,
+  SCALE_FUNC,
+  ALL_FIELD_TYPES
+} from 'constants/default-settings';
 import {hexToRgb} from 'utils/color-utils';
 import {geojsonFromPoints} from '../mapbox-utils';
 import MapboxGLLayer from '../mapboxgl-layer';
@@ -45,7 +49,7 @@ export const heatmapVisConfigs = {
  *  1, "rgb(178,24,43)"
  * ]
  */
-const heatmapDensity = (colorRange) => {
+const heatmapDensity = colorRange => {
   const scaleFunction = SCALE_FUNC.quantize;
 
   const colors = ['#000000', ...colorRange.colors];
@@ -60,7 +64,7 @@ const heatmapDensity = (colorRange) => {
       ...bands,
       invert[0], // first value in the range
       `rgb(${hexToRgb(level).join(',')})` // color
-    ]
+    ];
   }, []);
   colorDensity[1] = 'rgba(0,0,0,0)';
   return colorDensity;
@@ -100,17 +104,20 @@ class HeatmapLayer extends MapboxGLLayer {
   }
 
   getVisualChannelDescription(channel) {
-    return channel === 'color' ? {
-      label: 'color',
-      measure: 'Density'
-    } : {
-      label: 'weight',
-      measure: this.config.weightField ? this.config.weightField.name : 'Density'
-    }
+    return channel === 'color'
+      ? {
+          label: 'color',
+          measure: 'Density'
+        }
+      : {
+          label: 'weight',
+          measure: this.config.weightField
+            ? this.config.weightField.name
+            : 'Density'
+        };
   }
 
   getDefaultLayerConfig(props = {}) {
-
     // mapbox heatmap layer color is always based on density
     // no need to set colorField, colorDomain and colorScale
     /* eslint-disable no-unused-vars */
@@ -127,18 +134,15 @@ class HeatmapLayer extends MapboxGLLayer {
   }
 
   isSameData = ({allData, filteredIndex, oldLayerData, opt = {}}, config) => {
-    return Boolean(oldLayerData && oldLayerData.columns === config.columns &&
-      opt.sameData
+    return Boolean(
+      oldLayerData && oldLayerData.columns === config.columns && opt.sameData
     );
   };
 
   isSameConfig = ({oldLayerData, config}) => {
     // columns must use the same filedIdx
     // this is a fast way to compare columns object
-    const {
-      columns,
-      weightField
-    } = config;
+    const {columns, weightField} = config;
 
     if (!oldLayerData) {
       return false;
@@ -152,7 +156,8 @@ class HeatmapLayer extends MapboxGLLayer {
   datasetSelector = config => config.dataId;
   isVisibleSelector = config => config.isVisible;
   visConfigSelector = config => config.visConfig;
-  weightFieldSelector = config => config.weightField ? config.weightField.name : null;
+  weightFieldSelector = config =>
+    config.weightField ? config.weightField.name : null;
   weightDomainSelector = config => config.weightDomain;
 
   computeHeatmapConfiguration = createSelector(
@@ -163,7 +168,6 @@ class HeatmapLayer extends MapboxGLLayer {
     this.weightDomainSelector,
 
     (datasetId, isVisible, visConfig, weightField, weightDomain) => {
-
       const layer = {
         type: 'heatmap',
         id: this.id,
@@ -173,19 +177,25 @@ class HeatmapLayer extends MapboxGLLayer {
         },
         maxzoom: MAX_ZOOM_LEVEL,
         paint: {
-          'heatmap-weight': weightField ? [
-            'interpolate',
-            ['linear'],
-            ['get', weightField],
-            weightDomain[0], 0,
-            weightDomain[1], 1
-          ] : 1,
+          'heatmap-weight': weightField
+            ? [
+                'interpolate',
+                ['linear'],
+                ['get', weightField],
+                weightDomain[0],
+                0,
+                weightDomain[1],
+                1
+              ]
+            : 1,
           'heatmap-intensity': [
             'interpolate',
             ['linear'],
             ['zoom'],
-            0, 1,
-            MAX_ZOOM_LEVEL, 3
+            0,
+            1,
+            MAX_ZOOM_LEVEL,
+            3
           ],
           'heatmap-color': [
             'interpolate',
@@ -197,8 +207,10 @@ class HeatmapLayer extends MapboxGLLayer {
             'interpolate',
             ['linear'],
             ['zoom'],
-            0, 2,
-            MAX_ZOOM_LEVEL, visConfig.radius // radius
+            0,
+            2,
+            MAX_ZOOM_LEVEL,
+            visConfig.radius // radius
           ],
           'heatmap-opacity': visConfig.opacity
         }
@@ -221,14 +233,14 @@ class HeatmapLayer extends MapboxGLLayer {
     const isSameData = this.isSameData(options, this.config);
     const isSameConfig = this.isSameConfig(options);
 
-    const data = !shouldRebuild(isSameData, isSameConfig) ?
-      null :
-      geojsonFromPoints(
-        allData,
-        filteredIndex,
-        this.config.columns,
-        weightField ? [weightField] : []
-      );
+    const data = !shouldRebuild(isSameData, isSameConfig)
+      ? null
+      : geojsonFromPoints(
+          allData,
+          filteredIndex,
+          this.config.columns,
+          weightField ? [weightField] : []
+        );
 
     const newConfig = this.computeHeatmapConfiguration(this.config);
     newConfig.id = this.id;

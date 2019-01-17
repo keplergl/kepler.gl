@@ -38,11 +38,13 @@ export const errorMsg = {
     `You might forget to mount keplerGlReducer in your root reducer.` +
     `If it is not mounted as state.keplerGl by default, you need to provide getState as a prop`,
 
-  wrongType: type => `injectComponents takes an array of factories replacement pairs as input, ` +
+  wrongType: type =>
+    `injectComponents takes an array of factories replacement pairs as input, ` +
     `${type} is provided`,
 
-  wrongPairType: `injectComponents takes an array of factories replacement pairs as input, ` +
-  `each pair be a array as [originalFactory, replacement]`
+  wrongPairType:
+    `injectComponents takes an array of factories replacement pairs as input, ` +
+    `each pair be a array as [originalFactory, replacement]`
 };
 
 ContainerFactory.deps = [KeplerGlFactory];
@@ -113,27 +115,32 @@ export function ContainerFactory(KeplerGl) {
 
   const mapStateToProps = (state, props) => ({state, ...props});
   const dispatchToProps = dispatch => ({dispatch});
-  return connect(mapStateToProps, dispatchToProps)(Container);
+  return connect(
+    mapStateToProps,
+    dispatchToProps
+  )(Container);
 }
 
 // entryPoint
 function flattenDeps(allDeps, factory) {
   const addToDeps = allDeps.concat([factory]);
-  return Array.isArray(factory.deps) && factory.deps.length ?
-    factory.deps.reduce((accu, dep) => flattenDeps(accu, dep), addToDeps) :
-    addToDeps;
+  return Array.isArray(factory.deps) && factory.deps.length
+    ? factory.deps.reduce((accu, dep) => flattenDeps(accu, dep), addToDeps)
+    : addToDeps;
 }
 
 const allDependencies = flattenDeps([], ContainerFactory);
 
 // provide all dependencites to appInjector
-export const appInjector = allDependencies
-  .reduce((inj, factory) => inj.provide(factory, factory), injector());
+export const appInjector = allDependencies.reduce(
+  (inj, factory) => inj.provide(factory, factory),
+  injector()
+);
 
 // Helper to inject custom components and return kepler.gl container
 export function injectComponents(recipes) {
   if (!Array.isArray(recipes)) {
-    Console.error(errorMsg.wrongType(typeof(recipes)));
+    Console.error(errorMsg.wrongType(typeof recipes));
     return appInjector.get(ContainerFactory);
   }
 

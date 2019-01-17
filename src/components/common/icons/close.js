@@ -46,4 +46,4 @@ export default class Close extends Component {
       </Base>
     );
   }
-};
+}

@@ -153,7 +153,8 @@ export default class HexagonIdLayer extends Layer {
 
     // coverage
     const coScale =
-      coverageField && this.getVisChannelScale(coverageScale, coverageDomain, coverageRange);
+      coverageField &&
+      this.getVisChannelScale(coverageScale, coverageDomain, coverageRange);
 
     const getHexId = this.getHexId(columns);
 
@@ -188,14 +189,17 @@ export default class HexagonIdLayer extends Layer {
       }, []);
     }
 
-    const getElevation = sScale ? d =>
-      this.getEncodedChannelValue(sScale, d.data, sizeField, 0) : 0;
+    const getElevation = sScale
+      ? d => this.getEncodedChannelValue(sScale, d.data, sizeField, 0)
+      : 0;
 
-    const getColor = cScale ? d =>
-      this.getEncodedChannelValue(cScale, d.data, colorField) : color;
+    const getColor = cScale
+      ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
+      : color;
 
-    const getCoverage = coScale ? d =>
-      this.getEncodedChannelValue(coScale, d.data, coverageField, 0) : 1;
+    const getCoverage = coScale
+      ? d => this.getEncodedChannelValue(coScale, d.data, coverageField, 0)
+      : 1;
 
     // const layerData = {
     return {
@@ -223,7 +227,7 @@ export default class HexagonIdLayer extends Layer {
       // only need 1 instance of hexagonVertices
       if (!hexagonVertices) {
         hexagonVertices = id && getVertices({id});
-        hexagonCenter = id && getCentroid({id})
+        hexagonCenter = id && getCentroid({id});
       }
 
       // save a reference of centroids to dataToFeature
@@ -280,7 +284,9 @@ export default class HexagonIdLayer extends Layer {
         coverage: config.coverageField ? 1 : visConfig.coverage,
 
         // parameters
-        parameters: {depthTest: Boolean(config.sizeField || mapState.dragRotate)},
+        parameters: {
+          depthTest: Boolean(config.sizeField || mapState.dragRotate)
+        },
 
         // highlight
         autoHighlight: Boolean(config.sizeField),
@@ -300,9 +306,7 @@ export default class HexagonIdLayer extends Layer {
         ? [
             new GeoJsonLayer({
               id: `${this.id}-hovered`,
-              data: [
-                idToPolygonGeo(objectHovered)
-              ],
+              data: [idToPolygonGeo(objectHovered)],
               getLineColor: config.highlightColor,
               lineWidthScale: 8 * zoomFactor
             })

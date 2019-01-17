@@ -125,6 +125,10 @@ const actionHandler = {
 
 /* Reducer */
 export const uiStateReducerFactory = (initialState = {}) =>
-  handleActions(actionHandler, {...INITIAL_UI_STATE, ...initialState, initialState});
+  handleActions(actionHandler, {
+    ...INITIAL_UI_STATE,
+    ...initialState,
+    initialState
+  });
 
 export default uiStateReducerFactory();

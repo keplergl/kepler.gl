@@ -78,7 +78,9 @@ export const unwrap = action =>
 // given a id to forward to, returns the action for that id
 export const actionFor = (id, action) =>
   isForwardAction(action)
-    ? action.meta._addr_ === getActionForwardAddress(id) ? action.payload : {}
+    ? action.meta._addr_ === getActionForwardAddress(id)
+      ? action.payload
+      : {}
     : action;
 
 // returns a new dispatch that wraps and forwards the actions with the given id

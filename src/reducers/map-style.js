@@ -51,6 +51,10 @@ const actionHandler = {
 };
 
 export const mapStyleReducerFactory = (initialState = {}) =>
-  handleActions(actionHandler, {...INITIAL_MAP_STYLE, ...initialState, initialState});
+  handleActions(actionHandler, {
+    ...INITIAL_MAP_STYLE,
+    ...initialState,
+    initialState
+  });
 
 export default mapStyleReducerFactory();

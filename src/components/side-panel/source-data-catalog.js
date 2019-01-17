@@ -22,7 +22,12 @@ import React from 'react';
 import styled from 'styled-components';
 import {format} from 'd3-format';
 
-import {SidePanelSection, Tooltip, DatasetSquare, CenterFlexbox} from 'components/common/styled-components';
+import {
+  SidePanelSection,
+  Tooltip,
+  DatasetSquare,
+  CenterFlexbox
+} from 'components/common/styled-components';
 import {Table, Trash, ArrowRight} from 'components/common/icons';
 
 const defaultRemoveDataset = datasetKey => {};
@@ -136,17 +141,21 @@ function SourceDataCatalogFactory() {
     <SourceDataCatelogWrapper className="source-data-catalog">
       {Object.values(datasets).map((dataset, index) => (
         <SidePanelSection key={dataset.id}>
-          <DatasetTitle className="source-data-title" clickable={Boolean(showDatasetTable)}>
+          <DatasetTitle
+            className="source-data-title"
+            clickable={Boolean(showDatasetTable)}
+          >
             <DatasetTag
               dataset={dataset}
               onClick={
                 showDatasetTable ? () => showDatasetTable(dataset.id) : null
               }
             />
-            {showDatasetTable ?
+            {showDatasetTable ? (
               <CenterFlexbox className="source-data-arrow">
                 <ArrowRight height="12px" />
-              </CenterFlexbox> : null}
+              </CenterFlexbox>
+            ) : null}
             {showDatasetTable ? (
               <ShowDataTable
                 id={dataset.id}

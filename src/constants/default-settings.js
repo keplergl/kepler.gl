@@ -98,7 +98,8 @@ export const DEFAULT_LAYER_GROUPS = [
   },
   {
     slug: 'road',
-    filter: ({id}) => id.match(/(?=(road|railway|tunnel|street|bridge))(?!.*label)/),
+    filter: ({id}) =>
+      id.match(/(?=(road|railway|tunnel|street|bridge))(?!.*label)/),
     defaultVisibility: true
   },
   {
@@ -118,7 +119,8 @@ export const DEFAULT_LAYER_GROUPS = [
   },
   {
     slug: 'land',
-    filter: ({id}) => id.match(/(?=(parks|landcover|industrial|sand|hillshade))/),
+    filter: ({id}) =>
+      id.match(/(?=(parks|landcover|industrial|sand|hillshade))/),
     defaultVisibility: true
   },
   {
@@ -328,7 +330,10 @@ export const ordinalFieldAggrScaleFunctions = {
   // [CHANNEL_SCALES.colorAggr]: [SCALE_TYPES.ordinal, SCALE_TYPES.linear],
   [CHANNEL_SCALES.colorAggr]: {
     [AGGREGATION_TYPES.mode]: [SCALE_TYPES.ordinal],
-    [AGGREGATION_TYPES.countUnique]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile]
+    [AGGREGATION_TYPES.countUnique]: [
+      SCALE_TYPES.quantize,
+      SCALE_TYPES.quantile
+    ]
   },
 
   // Currently doesn't support yet
@@ -341,7 +346,7 @@ export const notSupportedScaleOpts = {
   [CHANNEL_SCALES.size]: []
 };
 
-export const  notSupportAggrOpts = {
+export const notSupportAggrOpts = {
   [CHANNEL_SCALES.colorAggr]: {},
   [CHANNEL_SCALES.sizeAggr]: {}
 };
@@ -514,41 +519,54 @@ export const RATIOS = keyMirror({
   SIXTEEN_BY_NINE: null
 });
 
-export const RATIO_OPTIONS = [{
-  id: RATIOS.SCREEN,
-  label: 'Original Screen',
-  getSize: (screenW, screenH) => ({width: screenW, height: screenH})
-}, {
-  id: RATIOS.FOUR_BY_THREE,
-  label: '4:3',
-  getSize: (screenW, screenH) => ({width: screenW, height: Math.round(screenW * 0.75)})
-}, {
-  id: RATIOS.SIXTEEN_BY_NINE,
-  label: '16:9',
-  getSize: (screenW, screenH) => ({width: screenW, height: Math.round(screenW * 0.5625)})
-}];
+export const RATIO_OPTIONS = [
+  {
+    id: RATIOS.SCREEN,
+    label: 'Original Screen',
+    getSize: (screenW, screenH) => ({width: screenW, height: screenH})
+  },
+  {
+    id: RATIOS.FOUR_BY_THREE,
+    label: '4:3',
+    getSize: (screenW, screenH) => ({
+      width: screenW,
+      height: Math.round(screenW * 0.75)
+    })
+  },
+  {
+    id: RATIOS.SIXTEEN_BY_NINE,
+    label: '16:9',
+    getSize: (screenW, screenH) => ({
+      width: screenW,
+      height: Math.round(screenW * 0.5625)
+    })
+  }
+];
 
-export const RESOLUTION_OPTIONS = [{
-  id: RESOLUTIONS.ONE_X,
-  label: '1x',
-  available: true,
-  scale: 1,
-  zoomOffset: Math.log2(1),
-  getSize: (screenW, screenH) => ({
-    width: screenW,
-    height: screenH
-  })
-}, {
-  id: RESOLUTIONS.TWO_X,
-  label: '2x',
-  available: true,
-  scale: 2,
-  zoomOffset: Math.log2(2),
-  getSize: (screenW, screenH) => ({
-    width: screenW * 2,
-    height: screenH * 2
-  })
-}];
+export const RESOLUTION_OPTIONS = [
+  {
+    id: RESOLUTIONS.ONE_X,
+    label: '1x',
+    available: true,
+    scale: 1,
+    zoomOffset: Math.log2(1),
+    getSize: (screenW, screenH) => ({
+      width: screenW,
+      height: screenH
+    })
+  },
+  {
+    id: RESOLUTIONS.TWO_X,
+    label: '2x',
+    available: true,
+    scale: 2,
+    zoomOffset: Math.log2(2),
+    getSize: (screenW, screenH) => ({
+      width: screenW * 2,
+      height: screenH * 2
+    })
+  }
+];
 
 export const DEFAULT_EXPORT_IMAGE_NAME = 'kepler-gl.png';
 

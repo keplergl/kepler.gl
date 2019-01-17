@@ -60,7 +60,12 @@ const StyledMapDropdown = StyledPanelHeader.extend`
 `;
 
 function MapStyleSelectorFactory() {
-  const MapStyleSelector = ({mapStyle, onChange, toggleActive, isSelecting}) => (
+  const MapStyleSelector = ({
+    mapStyle,
+    onChange,
+    toggleActive,
+    isSelecting
+  }) => (
     <div>
       <PanelLabel>Map style</PanelLabel>
       {Object.keys(mapStyle.mapStyles).map(op => (

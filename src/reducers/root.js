@@ -36,14 +36,20 @@ const initialCoreState = {};
 export function provideInitialState(initialState) {
   const coreReducer = coreReducerFactory(initialState);
 
-  const handleRegisterEntry = (state, {payload: {id, mint, mapboxApiAccessToken}}) => ({
+  const handleRegisterEntry = (
+    state,
+    {payload: {id, mint, mapboxApiAccessToken}}
+  ) => ({
     // register a new entry to voyager reducer
     // by default, always create a mint state even if the same id already exist
     // if state.id exist and mint=false, keep the existing state
     ...state,
-    [id]: state[id] && mint === false ? state[id] : {
-      ...coreReducer(undefined, keplerGlInit({mapboxApiAccessToken}))
-    }
+    [id]:
+      state[id] && mint === false
+        ? state[id]
+        : {
+            ...coreReducer(undefined, keplerGlInit({mapboxApiAccessToken}))
+          }
   });
 
   const handleDeleteEntry = (state, {payload: id}) =>
@@ -89,12 +95,15 @@ function mergeInitialState(saved = {}, provided = {}) {
   const keys = ['mapState', 'mapStyle', 'visState', 'uiState'];
 
   // shallow merge each reducer
-  return keys.reduce((accu, key) => ({
-    ...accu,
-    ...(saved[key] && provided[key] ?
-        {[key]: {...saved[key], ...provided[key]}} :
-        {[key]: saved[key] || provided[key] || {}})
-  }), {});
+  return keys.reduce(
+    (accu, key) => ({
+      ...accu,
+      ...(saved[key] && provided[key]
+        ? {[key]: {...saved[key], ...provided[key]}}
+        : {[key]: saved[key] || provided[key] || {}})
+    }),
+    {}
+  );
 }
 
 function decorate(target, savedInitialState = {}) {
@@ -132,7 +141,7 @@ function decorate(target, savedInitialState = {}) {
     const targetReducer = provideInitialState(merged);
 
     return decorate(targetReducer, merged);
-  }
+  };
 
   return target;
 }

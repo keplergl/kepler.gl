@@ -48,7 +48,9 @@ const MAP_STYLE = {
     position: 'relative'
   },
   top: {
-    position: 'absolute', top: '0px', pointerEvents: 'none'
+    position: 'absolute',
+    top: '0px',
+    pointerEvents: 'none'
   }
 };
 
@@ -57,9 +59,7 @@ const getGlConst = d => GL[d];
 const MAPBOXGL_STYLE_UPDATE = 'style.load';
 const TRANSITION_DURATION = 0;
 
-MapContainerFactory.deps = [
-  MapPopoverFactory, MapControlFactory
-];
+MapContainerFactory.deps = [MapPopoverFactory, MapControlFactory];
 
 export default function MapContainerFactory(MapPopover, MapControl) {
   class MapContainer extends Component {
@@ -122,9 +122,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     };
 
     _onWebGLInitialized = gl => {
-      registerShaderModules(
-        [pickingModule, brushingModule], {
-          ignoreMultipleRegistrations: true
+      registerShaderModules([pickingModule, brushingModule], {
+        ignoreMultipleRegistrations: true
       });
 
       // allow Uint32 indices in building layer
@@ -132,7 +131,9 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     };
 
     _onMouseMove = evt => {
-      const {interactionConfig: {brush}} = this.props;
+      const {
+        interactionConfig: {brush}
+      } = this.props;
 
       if (evt.nativeEvent && brush.enabled) {
         this.setState({
@@ -146,7 +147,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       visStateActions.toggleLayerForMap(mapIndex, layerId);
     };
 
-    _setMapboxMap = (mapbox) => {
+    _setMapboxMap = mapbox => {
       if (!this._map && mapbox) {
         this._map = mapbox.getMap();
         // bind mapboxgl event listener
@@ -172,7 +173,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           }
         });
       }
-    }
+    };
 
     _onBeforeRender = ({gl}) => {
       this._setlayerBlending(gl);
@@ -184,10 +185,14 @@ export default function MapContainerFactory(MapPopover, MapControl) {
 
       setParameters(gl, {
         [GL.BLEND]: true,
-        ...(blendFunc ? {
-          blendFunc: blendFunc.map(getGlConst),
-          blendEquation: Array.isArray(blendEquation) ? blendEquation.map(getGlConst) : getGlConst(blendEquation)
-        } : {})
+        ...(blendFunc
+          ? {
+              blendFunc: blendFunc.map(getGlConst),
+              blendEquation: Array.isArray(blendEquation)
+                ? blendEquation.map(getGlConst)
+                : getGlConst(blendEquation)
+            }
+          : {})
       });
     };
 
@@ -232,7 +237,9 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         return null;
       }
 
-      const {config: {dataId}} = layer;
+      const {
+        config: {dataId}
+      } = layer;
       const {allData, fields} = datasets[dataId];
       const data = layer.getHoverData(object, allData);
 
@@ -263,7 +270,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     /* eslint-enable complexity */
 
     _getHoverXY(viewport, lngLat) {
-      const screenCoord = !viewport || !lngLat ? null : viewport.project(lngLat);
+      const screenCoord =
+        !viewport || !lngLat ? null : viewport.project(lngLat);
 
       return screenCoord && {x: screenCoord[0], y: screenCoord[1]};
     }
@@ -343,7 +351,12 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       }
       const threeDBuildingLayerId = '_keplergl_3d-building';
       if (mapStyle.visibleLayerGroups['3d building']) {
-        deckGlLayers.push(new ThreeDBuildingLayer({id: threeDBuildingLayerId, threeDBuildingColor: mapStyle.threeDBuildingColor}));
+        deckGlLayers.push(
+          new ThreeDBuildingLayer({
+            id: threeDBuildingLayerId,
+            threeDBuildingColor: mapStyle.threeDBuildingColor
+          })
+        );
       }
 
       return (
@@ -360,18 +373,13 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     }
 
     _renderMapboxLayers() {
-      const {
-        layers,
-        layerData,
-        layerOrder
-      } = this.props;
+      const {layers, layerData, layerOrder} = this.props;
 
       return generateMapboxLayers(layers, layerData, layerOrder);
     }
 
     _renderMapboxOverlays() {
       if (this._map && this._map.isStyleLoaded()) {
-
         const mapboxLayers = this._renderMapboxLayers();
 
         updateMapboxLayers(
@@ -381,23 +389,34 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           this.props.mapLayers
         );
 
-        this.previousLayers = mapboxLayers.reduce((final, layer) => ({
-          ...final,
-          [layer.id]: layer.config
-        }), {})
+        this.previousLayers = mapboxLayers.reduce(
+          (final, layer) => ({
+            ...final,
+            [layer.id]: layer.config
+          }),
+          {}
+        );
       }
     }
 
     render() {
       const {
-        mapState, mapStyle, mapStateActions, mapLayers, layers, MapComponent,
-        datasets, mapboxApiAccessToken, mapControls, toggleMapControl
+        mapState,
+        mapStyle,
+        mapStateActions,
+        mapLayers,
+        layers,
+        MapComponent,
+        datasets,
+        mapboxApiAccessToken,
+        mapControls,
+        toggleMapControl
       } = this.props;
       const {updateMap, onMapClick} = mapStateActions;
 
       if (!mapStyle.bottomMapStyle) {
         // style not yet loaded
-        return <div/>;
+        return <div />;
       }
 
       const mapProps = {
@@ -409,7 +428,10 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       };
 
       return (
-        <StyledMapContainer style={MAP_STYLE.container} onMouseMove={this._onMouseMove}>
+        <StyledMapContainer
+          style={MAP_STYLE.container}
+          onMouseMove={this._onMouseMove}
+        >
           <MapControl
             datasets={datasets}
             dragRotate={mapState.dragRotate}

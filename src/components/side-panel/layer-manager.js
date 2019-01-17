@@ -92,13 +92,9 @@ const LayerBlendingSelector = ({layerBlending, updateLayerBlending}) => (
 
 export function AddDataButtonFactory() {
   const AddDataButton = ({onClick, isInactive}) => (
-    <Button
-      onClick={onClick}
-      isInactive={!isInactive}
-      width="105px"
-      secondary
-    >
-      <Add height="12px" />Add Data
+    <Button onClick={onClick} isInactive={!isInactive} width="105px" secondary>
+      <Add height="12px" />
+      Add Data
     </Button>
   );
 
@@ -134,14 +130,16 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
     layerClassSelector = props => props.layerClasses;
     layerTypeOptionsSelector = createSelector(
       this.layerClassSelector,
-      layerClasses => Object.keys(layerClasses).map(key => {
-        const layer = new layerClasses[key]();
-        return {
-          id: key,
-          label: layer.name,
-          icon: layer.layerIcon
-        };
-    }));
+      layerClasses =>
+        Object.keys(layerClasses).map(key => {
+          const layer = new layerClasses[key]();
+          return {
+            id: key,
+            label: layer.name,
+            icon: layer.layerIcon
+          };
+        })
+    );
 
     _addEmptyNewLayer = () => {
       this.props.addLayer();
@@ -158,7 +156,8 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
 
       const layerActions = {
         layerConfigChange: this.props.layerConfigChange,
-        layerVisualChannelConfigChange: this.props.layerVisualChannelConfigChange,
+        layerVisualChannelConfigChange: this.props
+          .layerVisualChannelConfigChange,
         layerTypeChange: this.props.layerTypeChange,
         layerVisConfigChange: this.props.layerVisConfigChange,
         removeLayer: this.props.removeLayer
@@ -201,7 +200,8 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
           <SidePanelSection>
             {defaultDataset ? (
               <Button onClick={this._addEmptyNewLayer} width="105px">
-                <Add height="12px" />Add Layer
+                <Add height="12px" />
+                Add Layer
               </Button>
             ) : null}
           </SidePanelSection>
@@ -212,7 +212,7 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
         </StyledSortable>
       );
     }
-  }
+  };
 }
 
 export default LayerManagerFactory;

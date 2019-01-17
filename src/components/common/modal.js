@@ -99,12 +99,7 @@ const defaultConfirmButton = {
   children: 'Confirm'
 };
 
-export const ModalFooter = ({
-  cancel,
-  confirm,
-  cancelButton,
-  confirmButton
-}) => {
+export const ModalFooter = ({cancel, confirm, cancelButton, confirmButton}) => {
   const cancelButtonProps = {...defaultCancelButton, ...cancelButton};
   const confirmButtonProps = {...defaultConfirmButton, ...confirmButton};
   return (
@@ -185,7 +180,6 @@ class ModalDialog extends Component {
               />
             )}
           </div>
-
         </ModalContentWrapper>
       </Modal>
     );
@@ -201,7 +195,7 @@ const StyledModal = styled(ModalDialog)`
   transition: ${props => props.theme.transition};
 
   :focus {
-    outline: 0
+    outline: 0;
   }
 `;
 

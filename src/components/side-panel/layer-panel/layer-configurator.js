@@ -184,13 +184,13 @@ export default class LayerConfigurator extends Component {
             channel={layer.visualChannels.color}
             {...layerChannelConfigProps}
           />
-          {layer.visConfigSettings.colorAggregation.condition(layer.config) ?
+          {layer.visConfigSettings.colorAggregation.condition(layer.config) ? (
             <AggregationTypeSelector
               {...layer.visConfigSettings.colorAggregation}
               {...layerChannelConfigProps}
               channel={layer.visualChannels.color}
             />
-            : null}
+          ) : null}
           <VisConfigSlider
             {...layer.visConfigSettings.opacity}
             {...visConfiguratorProps}
@@ -287,7 +287,8 @@ export default class LayerConfigurator extends Component {
               channel={layer.visualChannels.color}
             />
           ) : null}
-          {layer.visConfigSettings.percentile && layer.visConfigSettings.percentile.condition(layer.config) ? (
+          {layer.visConfigSettings.percentile &&
+          layer.visConfigSettings.percentile.condition(layer.config) ? (
             <VisConfigSlider
               {...layer.visConfigSettings.percentile}
               {...visConfiguratorProps}
@@ -312,7 +313,7 @@ export default class LayerConfigurator extends Component {
         </LayerConfigGroup>
 
         {/* Elevation */}
-        {layer.visConfigSettings.enable3d ?
+        {layer.visConfigSettings.enable3d ? (
           <LayerConfigGroup
             {...layer.visConfigSettings.enable3d}
             {...visConfiguratorProps}
@@ -342,7 +343,8 @@ export default class LayerConfigurator extends Component {
                 {...visConfiguratorProps}
               />
             ) : null}
-          </LayerConfigGroup> : null}
+          </LayerConfigGroup>
+        ) : null}
 
         {/* High Precision */}
         <LayerConfigGroup
@@ -529,7 +531,7 @@ export default class LayerConfigurator extends Component {
             {...visConfiguratorProps}
             {...(featureTypes.polygon ? LAYER_VIS_CONFIGS.stroked : {})}
           >
-            {visConfig.stroked ?
+            {visConfig.stroked ? (
               <div>
                 <VisConfigSlider
                   {...LAYER_VIS_CONFIGS.thickness}
@@ -544,7 +546,8 @@ export default class LayerConfigurator extends Component {
                   {...visConfiguratorProps}
                   disabled={!layer.config.sizeField}
                 />
-              </div> : null}
+              </div>
+            ) : null}
           </LayerConfigGroup>
         ) : null}
 
@@ -637,7 +640,11 @@ export default class LayerConfigurator extends Component {
 
     return (
       <StyledLayerConfigurator>
-        {layer.layerInfoModal ? <HowToButton onClick={() => this.props.openModal(layer.layerInfoModal)}/> : null}
+        {layer.layerInfoModal ? (
+          <HowToButton
+            onClick={() => this.props.openModal(layer.layerInfoModal)}
+          />
+        ) : null}
         <LayerConfigGroup label={'basic'}>
           {Object.keys(datasets).length > 1 && (
             <SourceDataSelector
@@ -685,7 +692,9 @@ const StyledHowToButton = styled.div`
 
 export const HowToButton = ({onClick}) => (
   <StyledHowToButton>
-    <Button secondary small onClick={onClick}>How to</Button>
+    <Button secondary small onClick={onClick}>
+      How to
+    </Button>
   </StyledHowToButton>
 );
 
@@ -758,12 +767,14 @@ export const ChannelByValueSelector = ({
     defaultMeasure,
     supportedFieldTypes
   } = channel;
-  const channelSupportedFieldTypes = supportedFieldTypes || CHANNEL_SCALE_SUPPORTED_FIELDS[channelScaleType];
+  const channelSupportedFieldTypes =
+    supportedFieldTypes || CHANNEL_SCALE_SUPPORTED_FIELDS[channelScaleType];
   const supportedFields = fields.filter(({type}) =>
     channelSupportedFieldTypes.includes(type)
   );
   const scaleOptions = layer.getScaleOptions(channel.key);
-  const showScale = !layer.isAggregated && layer.config[scale] && scaleOptions.length > 1;
+  const showScale =
+    !layer.isAggregated && layer.config[scale] && scaleOptions.length > 1;
   const defaultDescription = `Calculate ${property} based on selected field`;
 
   return (
@@ -789,15 +800,14 @@ export const ChannelByValueSelector = ({
 
 export const AggrColorScaleSelector = ({layer, onChange}) => {
   const scaleOptions = layer.getScaleOptions('color');
-  return (
-    Array.isArray(scaleOptions) && scaleOptions.length > 1 ?
-      <DimensionScaleSelector
-        label="Color Scale"
-        options={scaleOptions}
-        scaleType={layer.config.colorScale}
-        onSelect={val => onChange({colorScale: val}, 'color')}
-      /> : null
-  );
+  return Array.isArray(scaleOptions) && scaleOptions.length > 1 ? (
+    <DimensionScaleSelector
+      label="Color Scale"
+      options={scaleOptions}
+      scaleType={layer.config.colorScale}
+      onSelect={val => onChange({colorScale: val}, 'color')}
+    />
+  ) : null;
 };
 
 export const AggregationTypeSelector = ({layer, channel, onChange}) => {

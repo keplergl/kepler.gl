@@ -74,7 +74,7 @@ const Chicklet = ({disabled, name, remove}) => (
 );
 
 const ChickletedInputContainer = styled.div`
-  ${props => props.theme.chickletedInput}
+  ${props => props.theme.chickletedInput};
 `;
 
 const ChickletedInput = ({

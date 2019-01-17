@@ -224,7 +224,9 @@ const input = css`
     ${props =>
       props.active
         ? props.theme.inputBorderActiveColor
-        : props.error ? props.theme.errorColor : props.theme.inputBgd};
+        : props.error
+          ? props.theme.errorColor
+          : props.theme.inputBgd};
   border-radius: 2px;
   caret-color: ${props => props.theme.inputBorderActiveColor};
   color: ${props => props.theme.inputColor};
@@ -245,7 +247,7 @@ const input = css`
   opacity: ${props => (props.disabled ? 0.5 : 1)};
 
   :hover {
-    cursor: ${props => props.type === 'number' ? 'text' : 'pointer'};
+    cursor: ${props => (props.type === 'number' ? 'text' : 'pointer')};
     background-color: ${props =>
       props.active ? props.theme.inputBgdActive : props.theme.inputBgdHover};
     border-color: ${props =>
@@ -284,8 +286,8 @@ const inputLT = css`
     props.active
       ? props.theme.selectActiveBorderColor
       : props.error
-      ? props.theme.errorColor
-      : props.theme.selectBorderColorLT};
+        ? props.theme.errorColor
+        : props.theme.selectBorderColorLT};
   color: ${props => props.theme.selectColorLT};
   caret-color: ${props => props.theme.selectColorLT};
 
@@ -304,11 +306,10 @@ const inputLT = css`
 
   :hover {
     background-color: ${props => props.theme.selectBackgroundLT};
-    cursor: ${props => ['number', 'text'].includes(props.type) ? 'text' : 'pointer'};
+    cursor: ${props =>
+      ['number', 'text'].includes(props.type) ? 'text' : 'pointer'};
     border-color: ${props =>
-    props.active
-      ? props.theme.textColorLT
-      : props.theme.subtextColor};
+      props.active ? props.theme.textColorLT : props.theme.subtextColor};
   }
 `;
 
@@ -318,9 +319,10 @@ const secondaryInput = css`
   background-color: ${props => props.theme.secondaryInputBgd};
   height: ${props => props.theme.secondaryInputHeight};
   border: 1px solid
-    ${props => props.error
-          ? props.theme.errorColor
-          : props.theme.secondaryInputBorderColor};
+    ${props =>
+      props.error
+        ? props.theme.errorColor
+        : props.theme.secondaryInputBorderColor};
 
   :hover {
     cursor: pointer;
@@ -336,8 +338,7 @@ const secondaryInput = css`
 `;
 
 const chickletedInput = css`
-  ${props => props.theme.secondaryInput} 
-  cursor: pointer;
+  ${props => props.theme.secondaryInput} cursor: pointer;
   flex-wrap: wrap;
   height: auto;
   justify-content: start;
@@ -392,13 +393,15 @@ const switchButton = css`
   transition: ${props => props.theme.transition};
   position: absolute;
   top: 0;
-  left: ${props => (props.checked ? props.theme.switchWidth / 2 : -1) - props.theme.switchLabelMargin}px;
+  left: ${props =>
+    (props.checked ? props.theme.switchWidth / 2 : -1) -
+    props.theme.switchLabelMargin}px;
   content: '';
   display: block;
   height: ${props => props.theme.switchBtnHeight};
   width: ${props => props.theme.switchBtnWidth};
-  background: ${props => props.checked ? 
-  props.theme.switchBtnBgdActive : props.theme.switchBtnBgd};
+  background: ${props =>
+    props.checked ? props.theme.switchBtnBgdActive : props.theme.switchBtnBgd};
   box-shadow: ${props => props.theme.switchBtnBoxShadow};
 `;
 
@@ -433,8 +436,15 @@ const checkboxBox = css`
   left: 0;
   width: ${props => props.theme.checkboxWidth}px;
   height: ${props => props.theme.checkboxHeight}px;
-  background: ${props => props.checked ? props.theme.checkboxBoxBgdChecked : props.theme.checkboxBoxBgd};
-  border: 1px solid ${props => props.checked ? props.theme.checkboxBoxBgdChecked : props.theme.checkboxBorderColor};
+  background: ${props =>
+    props.checked
+      ? props.theme.checkboxBoxBgdChecked
+      : props.theme.checkboxBoxBgd};
+  border: 1px solid
+    ${props =>
+      props.checked
+        ? props.theme.checkboxBoxBgdChecked
+        : props.theme.checkboxBorderColor};
   border-radius: 2px;
   content: '';
 `;
@@ -449,8 +459,8 @@ const checkboxCheck = css`
   transform: rotate(-45deg);
   display: block;
   position: absolute;
-  opacity: ${props => props.checked ? 1 : 0};
-  content: "";
+  opacity: ${props => (props.checked ? 1 : 0)};
+  content: '';
 `;
 
 const inputCheckbox = css`
@@ -466,9 +476,9 @@ const inputCheckbox = css`
   margin-left: -${props => props.theme.switchLabelMargin}px;
 
   :before {
-     ${props => props.theme.checkboxBox};
+    ${props => props.theme.checkboxBox};
   }
-  
+
   :after {
     ${props => props.theme.checkboxCheck};
   }
@@ -478,16 +488,17 @@ const secondarySwitch = css`
   ${props => props.theme.inputSwitch} 
   :before {
     ${props => props.theme.switchTrack} background: ${props =>
-        props.checked
-          ? props.theme.switchTrackBgdActive
-          : props.theme.secondarySwitchTrackBgd};
+  props.checked
+    ? props.theme.switchTrackBgdActive
+    : props.theme.secondarySwitchTrackBgd};
   }
 
   :after {
     ${props => props.theme.switchButton} 
-    background: ${props => props.checked
-          ? props.theme.switchBtnBgdActive
-          : props.theme.secondarySwitchBtnBgd};
+    background: ${props =>
+      props.checked
+        ? props.theme.switchBtnBgdActive
+        : props.theme.secondarySwitchBtnBgd};
   }
 `;
 
@@ -605,15 +616,15 @@ const panelDropdownScrollBar = css`
     height: 10px;
     width: 10px;
   }
-  
+
   ::-webkit-scrollbar-corner {
     background: ${props => props.theme.panelBackground};
   }
-  
+
   ::-webkit-scrollbar-track {
     background: ${props => props.theme.panelBackground};
   }
-  
+
   ::-webkit-scrollbar-thumb {
     border-radius: 10px;
     background: ${props => props.theme.panelBackgroundHover};
@@ -622,7 +633,7 @@ const panelDropdownScrollBar = css`
       background: ${props => props.theme.labelColor};
       cursor: pointer;
     }
-  };
+  }
 `;
 
 const scrollBar = css`
