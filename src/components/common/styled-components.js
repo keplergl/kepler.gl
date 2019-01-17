@@ -171,19 +171,19 @@ export const Button = styled.div.attrs({
     props.negative
       ? props.theme.negativeBtnBgd
       : props.secondary
-        ? props.theme.secondaryBtnBgd
-        : props.link
-          ? props.theme.linkBtnBgd
-          : props.theme.primaryBtnBgd};
+      ? props.theme.secondaryBtnBgd
+      : props.link
+      ? props.theme.linkBtnBgd
+      : props.theme.primaryBtnBgd};
   border-radius: ${props => props.theme.primaryBtnRadius};
   color: ${props =>
     props.negative
       ? props.theme.negativeBtnColor
       : props.secondary
-        ? props.theme.secondaryBtnColor
-        : props.link
-          ? props.theme.linkBtnColor
-          : props.theme.primaryBtnColor};
+      ? props.theme.secondaryBtnColor
+      : props.link
+      ? props.theme.linkBtnColor
+      : props.theme.primaryBtnColor};
   cursor: pointer;
   display: inline-flex;
   font-size: ${props => (props.large ? '14px' : props.small ? '10px' : '11px')};
@@ -209,18 +209,18 @@ export const Button = styled.div.attrs({
       props.negative
         ? props.theme.negativeBtnBgdHover
         : props.secondary
-          ? props.theme.secondaryBtnBgdHover
-          : props.link
-            ? props.theme.linkBtnActBgdHover
-            : props.theme.primaryBtnBgdHover};
+        ? props.theme.secondaryBtnBgdHover
+        : props.link
+        ? props.theme.linkBtnActBgdHover
+        : props.theme.primaryBtnBgdHover};
     color: ${props =>
       props.negative
         ? props.theme.negativeBtnActColor
         : props.secondary
-          ? props.theme.secondaryBtnActColor
-          : props.link
-            ? props.theme.linkBtnActColor
-            : props.theme.primaryBtnActColor};
+        ? props.theme.secondaryBtnActColor
+        : props.link
+        ? props.theme.linkBtnActColor
+        : props.theme.primaryBtnActColor};
   }
 
   svg {

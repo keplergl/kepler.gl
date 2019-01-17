@@ -36,7 +36,11 @@ const CONFIG = {
 
   resolve: {
     // Make src files outside of this dir resolve modules in our node_modules folder
-    modules: [resolve(__dirname, '.'), resolve(__dirname, 'node_modules'), 'node_modules']
+    modules: [
+      resolve(__dirname, '.'),
+      resolve(__dirname, 'node_modules'),
+      'node_modules'
+    ]
   },
 
   module: {
@@ -73,5 +77,7 @@ const CONFIG = {
 
 // This line enables bundling against src in this repo rather than installed deck.gl module
 module.exports = env => {
-  return env ? require('../webpack.config.local')(CONFIG, __dirname)(env) : CONFIG;
+  return env
+    ? require('../webpack.config.local')(CONFIG, __dirname)(env)
+    : CONFIG;
 };

@@ -106,8 +106,16 @@ test('#composerStateReducer - addDataToMapComposed: mapState should not be cente
     }
   });
 
-  t.equal(newState.mapState.latitude, mapStateProperties.latitude, 'mapstate latitude is set correctly');
-  t.equal(newState.mapState.longitude, mapStateProperties.longitude, 'mapstate longitude is set correctly');
+  t.equal(
+    newState.mapState.latitude,
+    mapStateProperties.latitude,
+    'mapstate latitude is set correctly'
+  );
+  t.equal(
+    newState.mapState.longitude,
+    mapStateProperties.longitude,
+    'mapstate longitude is set correctly'
+  );
 
-  t.end()
+  t.end();
 });

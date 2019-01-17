@@ -166,10 +166,8 @@ export default class FileUpload extends Component {
       }
     }
 
-    this.setState(
-      nextState,
-      () =>
-        nextState.files.length ? this.props.onFileUpload(nextState.files) : null
+    this.setState(nextState, () =>
+      nextState.files.length ? this.props.onFileUpload(nextState.files) : null
     );
   };
 

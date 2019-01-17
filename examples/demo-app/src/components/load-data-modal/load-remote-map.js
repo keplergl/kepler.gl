@@ -44,12 +44,12 @@ const InputForm = styled.div`
 const StyledInput = styled.input`
   width: 100%;
   padding: ${props => props.theme.inputPadding};
-  color: ${props => props.error ? 'red' : props.theme.titleColorLT};
+  color: ${props => (props.error ? 'red' : props.theme.titleColorLT)};
   height: ${props => props.theme.inputBoxHeight};
   border: 0;
   outline: 0;
   font-size: ${props => props.theme.inputFontSize};
-  
+
   :active,
   :focus,
   &.focus,
@@ -94,7 +94,6 @@ const Error = ({error, url}) => (
 );
 
 class LoadRemoteMap extends Component {
-
   constructor(props) {
     super(props);
 
@@ -102,14 +101,14 @@ class LoadRemoteMap extends Component {
       dataUrl: ''
     };
   }
-  onMapUrlChange = (e) => {
+  onMapUrlChange = e => {
     // TODO: validate url
     this.setState({
       dataUrl: e.target.value
     });
   };
 
-  onLoadRemoteMap  = () => {
+  onLoadRemoteMap = () => {
     const {dataUrl} = this.state;
     if (!dataUrl) {
       return;
@@ -122,10 +121,10 @@ class LoadRemoteMap extends Component {
     return (
       <div>
         <InputForm>
-          <StyledDescription>Load your map using your custom URL</StyledDescription>
-          <StyledInputLabel>
-            {LOADING_URL_MESSAGE}
-          </StyledInputLabel>
+          <StyledDescription>
+            Load your map using your custom URL
+          </StyledDescription>
+          <StyledInputLabel>{LOADING_URL_MESSAGE}</StyledInputLabel>
           <StyledInputLabel>
             Examples:
             <ul>
@@ -134,8 +133,11 @@ class LoadRemoteMap extends Component {
             </ul>
           </StyledInputLabel>
           <StyledInputLabel>
-            * CORS policy must be defined on your custom url domain in order to be accessible.
-            For more info <a rel="noopener noreferrer" target="_blank" href={`${CORS_LINK}`}>click here</a>
+            * CORS policy must be defined on your custom url domain in order to
+            be accessible. For more info{' '}
+            <a rel="noopener noreferrer" target="_blank" href={`${CORS_LINK}`}>
+              click here
+            </a>
           </StyledInputLabel>
           <StyledFromGroup>
             <StyledInput
@@ -149,7 +151,9 @@ class LoadRemoteMap extends Component {
               Fetch
             </StyledBtn>
           </StyledFromGroup>
-          {this.props.error && (<Error error={this.props.error} url={this.props.option.dataUrl} />)}
+          {this.props.error && (
+            <Error error={this.props.error} url={this.props.option.dataUrl} />
+          )}
         </InputForm>
       </div>
     );

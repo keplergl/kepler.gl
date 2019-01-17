@@ -27,7 +27,11 @@ import {LoadingSpinner} from 'kepler.gl/components';
 import {themeLT} from 'kepler.gl/styles';
 import {Icons} from 'kepler.gl/components/';
 
-import {LOADING_METHODS, ASSETS_URL, LOADING_METHODS_NAMES} from '../../constants/default-settings';
+import {
+  LOADING_METHODS,
+  ASSETS_URL,
+  LOADING_METHODS_NAMES
+} from '../../constants/default-settings';
 
 import SampleMapGallery from './sample-data-viewer';
 import LoadRemoteMap from './load-remote-map';
@@ -116,7 +120,7 @@ const StyledTrySampleData = styled.div`
     :hover {
       font-weight: 500;
     }
-  
+
     span {
       white-space: nowrap;
     }
@@ -134,11 +138,14 @@ const StyledSpinner = styled.div`
 `;
 
 class LoadDataModal extends Component {
-
   render() {
     const {
-      loadingMethod, currentOption, previousMethod,
-      sampleMaps, isMapLoading, onSwitchToLoadingMethod,
+      loadingMethod,
+      currentOption,
+      previousMethod,
+      sampleMaps,
+      isMapLoading,
+      onSwitchToLoadingMethod,
       error
     } = this.props;
 
@@ -149,34 +156,35 @@ class LoadDataModal extends Component {
             <StyledSpinner>
               <LoadingSpinner />
             </StyledSpinner>
-            ) : (
-              <div>
-                {loadingMethod.id !== 'sample' ? (
-                  <Tabs
-                    method={loadingMethod.id}
-                    toggleMethod={this.props.onSwitchToLoadingMethod}
-                  />
-                ) : null}
-                {loadingMethod.id === 'upload' ? (
-                  <FileUpload onFileUpload={this.props.onFileUpload} />
-                ) : null}
-                {loadingMethod.id === 'remote' ? (
-                  <LoadRemoteMap
-                    onLoadRemoteMap={this.props.onLoadRemoteMap}
-                    option={this.props.currentOption}
-                    error={this.props.error}
-                  />
-                ) : null}
-                {loadingMethod.id === 'sample' ? (
-                  <SampleMapGallery
-                    sampleData={currentOption}
-                    sampleMaps={sampleMaps}
-                    back={() => onSwitchToLoadingMethod(previousMethod.id)}
-                    onLoadSample={this.props.onLoadSample}
-                    error={error} />
-                ) : null}
-              </div>)
-          }
+          ) : (
+            <div>
+              {loadingMethod.id !== 'sample' ? (
+                <Tabs
+                  method={loadingMethod.id}
+                  toggleMethod={this.props.onSwitchToLoadingMethod}
+                />
+              ) : null}
+              {loadingMethod.id === 'upload' ? (
+                <FileUpload onFileUpload={this.props.onFileUpload} />
+              ) : null}
+              {loadingMethod.id === 'remote' ? (
+                <LoadRemoteMap
+                  onLoadRemoteMap={this.props.onLoadRemoteMap}
+                  option={this.props.currentOption}
+                  error={this.props.error}
+                />
+              ) : null}
+              {loadingMethod.id === 'sample' ? (
+                <SampleMapGallery
+                  sampleData={currentOption}
+                  sampleMaps={sampleMaps}
+                  back={() => onSwitchToLoadingMethod(previousMethod.id)}
+                  onLoadSample={this.props.onLoadSample}
+                  error={error}
+                />
+              ) : null}
+            </div>
+          )}
         </div>
       </ThemeProvider>
     );
@@ -186,19 +194,18 @@ class LoadDataModal extends Component {
 const Tabs = ({method, toggleMethod}) => (
   <ModalTab className="load-data-modal__tab">
     <div className="load-data-modal__tab__inner">
-      {LOADING_METHODS.map(
-        ({id, label}) =>
-          id !== 'sample' ? (
-            <div
-              className={classnames('load-data-modal__tab__item', {
-                active: method && id === method
-              })}
-              key={id}
-              onClick={() => toggleMethod(id)}
-            >
-              <div>{label}</div>
-            </div>
-          ) : null
+      {LOADING_METHODS.map(({id, label}) =>
+        id !== 'sample' ? (
+          <div
+            className={classnames('load-data-modal__tab__item', {
+              active: method && id === method
+            })}
+            key={id}
+            onClick={() => toggleMethod(id)}
+          >
+            <div>{label}</div>
+          </div>
+        ) : null
       )}
     </div>
     <TrySampleData onClick={() => toggleMethod(LOADING_METHODS_NAMES.sample)} />

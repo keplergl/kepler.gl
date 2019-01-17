@@ -55,7 +55,10 @@ function makeLocalDevConfig(EXAMPLE_DIR = LIB_DIR) {
         'kepler.gl': SRC_DIR,
         'kepler.gl/test': TEST_DIR,
         react: resolve(LIB_DIR, './node_modules/react'),
-        'styled-components': resolve(LIB_DIR, './node_modules/styled-components')
+        'styled-components': resolve(
+          LIB_DIR,
+          './node_modules/styled-components'
+        )
       }
     },
     module: {
@@ -65,10 +68,7 @@ function makeLocalDevConfig(EXAMPLE_DIR = LIB_DIR) {
           test: /\.js$/,
           use: ['source-map-loader'],
           enforce: 'pre',
-          exclude: [
-            /node_modules\/react-palm/,
-            /node_modules\/react-data-grid/,
-          ]
+          exclude: [/node_modules\/react-palm/, /node_modules\/react-data-grid/]
         }
       ]
     },
@@ -85,20 +85,21 @@ const BABEL_CONFIG = {
   // so that we can set modules: false, to avoid tree shaking
   // https://github.com/webpack/webpack/issues/3974
   babelrc: false,
-  presets: [
-    ['es2015', {modules: false, loose: true}],
-    'react',
-    'stage-0',
-  ].map(name => Array.isArray(name) ?
-    [require.resolve(`babel-preset-${name[0]}`), name[1]] :
-    require.resolve(`babel-preset-${name}`)),
+  presets: [['es2015', {modules: false, loose: true}], 'react', 'stage-0'].map(
+    name =>
+      Array.isArray(name)
+        ? [require.resolve(`babel-preset-${name[0]}`), name[1]]
+        : require.resolve(`babel-preset-${name}`)
+  ),
   plugins: [
     'transform-decorators-legacy',
     'transform-runtime',
     ['module-resolver', {root: [SRC_DIR]}]
-  ].map(name => Array.isArray(name) ?
-    [require.resolve(`babel-plugin-${name[0]}`), name[1]] :
-    require.resolve(`babel-plugin-${name}`))
+  ].map(name =>
+    Array.isArray(name)
+      ? [require.resolve(`babel-plugin-${name[0]}`), name[1]]
+      : require.resolve(`babel-plugin-${name}`)
+  )
 };
 
 const BABEL_RULE = {

@@ -40,7 +40,7 @@ import {
   stateSavedV1_2,
   v1expectedInfo_2,
   v1expectedFields_2
-} from "test/fixtures/state-saved-v1-2";
+} from 'test/fixtures/state-saved-v1-2';
 
 /* eslint-disable max-statements */
 test('#DatasetSchema -> SchemaManager.parseSavedData', t => {
@@ -135,7 +135,11 @@ test('#DatasetSchema -> SchemaManager.parseSavedData.v1', t => {
     expectedDataset,
     'should parse dataset correctly'
   );
-  t.deepEqual(parsedValid[0].info, v0ExpectedInfo, 'should parse info correctly');
+  t.deepEqual(
+    parsedValid[0].info,
+    v0ExpectedInfo,
+    'should parse info correctly'
+  );
   t.deepEqual(
     parsedValid[0].data.fields,
     v0ExpectedFields,
@@ -170,7 +174,11 @@ test('#DatasetSchema -> SchemaManager.parseSavedData.v1 with ts', t => {
     expectedDataset,
     'should parse dataset correctly'
   );
-  t.deepEqual(parsedValid[0].info, v1expectedInfo_2, 'should parse info correctly');
+  t.deepEqual(
+    parsedValid[0].info,
+    v1expectedInfo_2,
+    'should parse info correctly'
+  );
   t.deepEqual(
     parsedValid[0].data.fields,
     v1expectedFields_2,

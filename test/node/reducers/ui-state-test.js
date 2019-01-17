@@ -32,13 +32,22 @@ import {
   setExportDataType,
   setExportFiltered
 } from 'actions/ui-state-actions';
-import reducer, {uiStateReducerFactory, INITIAL_UI_STATE}  from 'reducers/ui-state';
-import {RATIOS, RESOLUTIONS, EXPORT_DATA_TYPE} from 'constants/default-settings';
+import reducer, {
+  uiStateReducerFactory,
+  INITIAL_UI_STATE
+} from 'reducers/ui-state';
+import {
+  RATIOS,
+  RESOLUTIONS,
+  EXPORT_DATA_TYPE
+} from 'constants/default-settings';
 
 test('#uiStateReducer', t => {
-
-  t.deepEqual(reducer(undefined, {}), {...INITIAL_UI_STATE, initialState: {}},
-    'should return the initial state');
+  t.deepEqual(
+    reducer(undefined, {}),
+    {...INITIAL_UI_STATE, initialState: {}},
+    'should return the initial state'
+  );
 
   t.end();
 });
@@ -46,14 +55,16 @@ test('#uiStateReducer', t => {
 test('#uiStateReducerFactory', t => {
   const uiStateReducer = uiStateReducerFactory({readOnly: true});
 
-  t.deepEqual(uiStateReducer(undefined, {}), {...INITIAL_UI_STATE, readOnly: true, initialState: {readOnly: true}},
-    'should return the initial state');
+  t.deepEqual(
+    uiStateReducer(undefined, {}),
+    {...INITIAL_UI_STATE, readOnly: true, initialState: {readOnly: true}},
+    'should return the initial state'
+  );
 
   t.end();
 });
 
 test('#uiStateReducer -> TOGGLE_SIDE_PANEL', t => {
-
   const newReducer = reducer(INITIAL_UI_STATE, toggleSidePanel('foo'));
 
   const expectedState = {
@@ -94,7 +105,6 @@ test('#uiStateReducer -> TOGGLE_SIDE_PANEL', t => {
 });
 
 test('#uiStateReducer -> OPEN_DELETE_MODAL', t => {
-
   const newReducer = reducer(INITIAL_UI_STATE, openDeleteModal('chai'));
 
   const expectedState = {
@@ -103,14 +113,20 @@ test('#uiStateReducer -> OPEN_DELETE_MODAL', t => {
     datasetKeyToRemove: 'chai'
   };
 
-  t.deepEqual(newReducer, expectedState, 'should open delete data modal and save key to remove');
+  t.deepEqual(
+    newReducer,
+    expectedState,
+    'should open delete data modal and save key to remove'
+  );
 
   t.end();
 });
 
 test('#uiStateReducer -> SET_RATIO', t => {
-
-  const newReducer = reducer(INITIAL_UI_STATE, setRatio({ratio: RATIOS.SIXTEEN_BY_NINE}));
+  const newReducer = reducer(
+    INITIAL_UI_STATE,
+    setRatio({ratio: RATIOS.SIXTEEN_BY_NINE})
+  );
 
   const expectedState = {
     ...INITIAL_UI_STATE,
@@ -120,14 +136,20 @@ test('#uiStateReducer -> SET_RATIO', t => {
     }
   };
 
-  t.deepEqual(newReducer, expectedState, 'should set the ratio to SIXTEEN_BY_NINE');
+  t.deepEqual(
+    newReducer,
+    expectedState,
+    'should set the ratio to SIXTEEN_BY_NINE'
+  );
 
   t.end();
 });
 
 test('#uiStateReducer -> SET_RESOLUTION', t => {
-
-  const newReducer = reducer(INITIAL_UI_STATE, setResolution({resolution: RESOLUTIONS.TWO_X}));
+  const newReducer = reducer(
+    INITIAL_UI_STATE,
+    setResolution({resolution: RESOLUTIONS.TWO_X})
+  );
 
   const expectedState = {
     ...INITIAL_UI_STATE,
@@ -143,7 +165,6 @@ test('#uiStateReducer -> SET_RESOLUTION', t => {
 });
 
 test('#uiStateReducer -> TOGGLE_LEGEND', t => {
-
   const newReducer = reducer(INITIAL_UI_STATE, toggleLegend());
 
   const expectedState = {
@@ -160,28 +181,29 @@ test('#uiStateReducer -> TOGGLE_LEGEND', t => {
 });
 
 test('#uiStateReducer -> TOGGLE_MAP_CONTROL', t => {
+  const newReducer = reducer(INITIAL_UI_STATE, toggleMapControl('mapLegend'));
 
-	const newReducer = reducer(INITIAL_UI_STATE, toggleMapControl('mapLegend'));
+  const expectedState = {
+    ...INITIAL_UI_STATE,
+    mapControls: {
+      ...INITIAL_UI_STATE.mapControls,
+      mapLegend: {
+        show: INITIAL_UI_STATE.mapControls.mapLegend.show,
+        active: !INITIAL_UI_STATE.mapControls.mapLegend.active
+      }
+    }
+  };
 
-	const expectedState = {
-		...INITIAL_UI_STATE,
-		mapControls: {
-			...INITIAL_UI_STATE.mapControls,
-			mapLegend: {
-				show: INITIAL_UI_STATE.mapControls.mapLegend.show,
-				active: !INITIAL_UI_STATE.mapControls.mapLegend.active
-			},
-		}
-	};
+  t.deepEqual(newReducer, expectedState, 'should set map legend to be seen');
 
-	t.deepEqual(newReducer, expectedState, 'should set map legend to be seen');
-
-	t.end();
+  t.end();
 });
 
 test('#uiStateReducer -> SET_EXPORT_SELECTED_DATASET', t => {
-
-  const newReducer = reducer(INITIAL_UI_STATE, setExportSelectedDataset({dataset: 'a'}));
+  const newReducer = reducer(
+    INITIAL_UI_STATE,
+    setExportSelectedDataset({dataset: 'a'})
+  );
 
   const expectedState = {
     ...INITIAL_UI_STATE,
@@ -197,8 +219,10 @@ test('#uiStateReducer -> SET_EXPORT_SELECTED_DATASET', t => {
 });
 
 test('#uiStateReducer -> SET_EXPORT_DATA_TYPE', t => {
-
-  const newReducer = reducer(INITIAL_UI_STATE, setExportDataType({dataType: EXPORT_DATA_TYPE.JSON}));
+  const newReducer = reducer(
+    INITIAL_UI_STATE,
+    setExportDataType({dataType: EXPORT_DATA_TYPE.JSON})
+  );
 
   const expectedState = {
     ...INITIAL_UI_STATE,
@@ -214,8 +238,10 @@ test('#uiStateReducer -> SET_EXPORT_DATA_TYPE', t => {
 });
 
 test('#uiStateReducer -> SET_EXPORT_FILTERED', t => {
-
-  const newReducer = reducer(INITIAL_UI_STATE, setExportFiltered({filtered: false}));
+  const newReducer = reducer(
+    INITIAL_UI_STATE,
+    setExportFiltered({filtered: false})
+  );
 
   const expectedState = {
     ...INITIAL_UI_STATE,

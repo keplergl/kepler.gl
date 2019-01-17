@@ -129,25 +129,25 @@ const SampleMap = ({sample, onClick}) => (
   </StyledSampleMap>
 );
 
-const SampleMapGallery = ({sampleData, sampleMaps, onLoadSample, back, error}) => (
+const SampleMapGallery = ({
+  sampleData,
+  sampleMaps,
+  onLoadSample,
+  back,
+  error
+}) => (
   <div className="sample-data-modal">
     <BackLink onClick={back}>
       <Icons.LeftArrow height="12px" />
       <span>Back</span>
     </BackLink>
-    {error && (
-      <StyledError>
-        {error.message}
-      </StyledError>
-    )}
+    {error && <StyledError>{error.message}</StyledError>}
     <StyledSampleGallery className="sample-map-gallery">
-      {sampleMaps.filter(sp => sp.visible).map(sp => (
-        <SampleMap
-          sample={sp}
-          key={sp.id}
-          onClick={() => onLoadSample(sp)}
-        />
-      ))}
+      {sampleMaps
+        .filter(sp => sp.visible)
+        .map(sp => (
+          <SampleMap sample={sp} key={sp.id} onClick={() => onLoadSample(sp)} />
+        ))}
     </StyledSampleGallery>
   </div>
 );

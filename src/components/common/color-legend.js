@@ -71,8 +71,8 @@ const getQuantLabelFormat = (domain, fieldType) => {
   return fieldType === ALL_FIELD_TYPES.timestamp
     ? getTimeLabelFormat(domain)
     : !fieldType
-      ? defaultFormat
-      : getNumericLabelFormat(domain);
+    ? defaultFormat
+    : getNumericLabelFormat(domain);
 };
 
 const getOrdinalLegends = scale => {

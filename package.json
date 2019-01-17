@@ -38,6 +38,7 @@
     "start:web": "cd website && yarn start",
     "build": "rm -fr dist && uber-licence && babel src --out-dir dist --plugins=transform-es2015-modules-commonjs --source-maps inline",
     "lint": "eslint src examples/**/src website/src",
+    "prettier-all": "prettier --write '{src,examples,test}/**/*.js'",
     "check-licence": "uber-licence --dry",
     "add-licence": "uber-licence",
     "prepublish": "uber-licence && npm run build",

@@ -25,7 +25,8 @@ import {loadFiles, toggleModal} from 'kepler.gl/actions';
 import {
   LOADING_SAMPLE_ERROR_MESSAGE,
   LOADING_SAMPLE_LIST_ERROR_MESSAGE,
-  MAP_CONFIG_URL, MAP_URI
+  MAP_CONFIG_URL,
+  MAP_URI
 } from './constants/default-settings';
 import {LOADING_METHODS_NAMES} from './constants/default-settings';
 import {CLOUD_PROVIDERS} from './utils/cloud-providers';
@@ -42,7 +43,7 @@ export const SET_SAMPLE_LOADING_STATUS = 'SET_SAMPLE_LOADING_STATUS';
 
 // Sharing
 export const PUSHING_FILE = 'PUSHING_FILE';
-export const CLOUD_LOGIN_SUCCESS  = 'CLOUD_LOGIN_SUCCESS';
+export const CLOUD_LOGIN_SUCCESS = 'CLOUD_LOGIN_SUCCESS';
 
 // ACTIONS
 export function initApp() {
@@ -71,7 +72,10 @@ export function setLoadingMethod(method) {
 export function switchToLoadingMethod(method) {
   return (dispatch, getState) => {
     dispatch(setLoadingMethod(method));
-    if (method === LOADING_METHODS_NAMES.sample && getState().demo.app.sampleMaps.length === 0) {
+    if (
+      method === LOADING_METHODS_NAMES.sample &&
+      getState().demo.app.sampleMaps.length === 0
+    ) {
       dispatch(loadSampleConfigurations());
     }
   };
@@ -91,7 +95,7 @@ export function loadRemoteResourceError(error, url) {
     type: LOAD_REMOTE_RESOURCE_ERROR,
     error,
     url
-  }
+  };
 }
 
 export function loadMapSampleFile(samples) {
@@ -115,11 +119,14 @@ export function setLoadingMapStatus(isMapLoading) {
  * @returns {{status: *, message: (*|{statusCode}|Object)}}
  */
 function detectResponseError(response) {
-  if (response.statusCode && (response.statusCode < 200 || response.statusCode >= 300)) {
+  if (
+    response.statusCode &&
+    (response.statusCode < 200 || response.statusCode >= 300)
+  ) {
     return {
       status: response.statusCode,
       message: response.body || response.message || response
-    }
+    };
   }
 }
 
@@ -139,22 +146,26 @@ export function loadRemoteMap(options) {
       // In this part we turn the response into a FileBlob
       // so we can use it to call loadFiles
       file => {
-        dispatch(loadFiles([
-          /* eslint-disable no-undef */
-          new File([file], options.dataUrl)
-          /* eslint-enable no-undef */
-        ])).then(
-          () => dispatch(setLoadingMapStatus(false))
-        );
-
+        dispatch(
+          loadFiles([
+            /* eslint-disable no-undef */
+            new File([file], options.dataUrl)
+            /* eslint-enable no-undef */
+          ])
+        ).then(() => dispatch(setLoadingMapStatus(false)));
       },
       error => {
         const {target = {}} = error;
         const {status, responseText} = target;
-        dispatch(loadRemoteResourceError({status, message: responseText}, options.dataUrl));
+        dispatch(
+          loadRemoteResourceError(
+            {status, message: responseText},
+            options.dataUrl
+          )
+        );
       }
     );
-  }
+  };
 }
 
 /**
@@ -165,7 +176,7 @@ export function loadRemoteMap(options) {
 function loadRemoteRawData(url) {
   if (!url) {
     // TODO: we should return reject with an appropriate error
-    return Promise.resolve(null)
+    return Promise.resolve(null);
   }
 
   return new Promise((resolve, reject) => {
@@ -178,8 +189,8 @@ function loadRemoteRawData(url) {
         reject(responseError);
         return;
       }
-      resolve(result.response)
-    })
+      resolve(result.response);
+    });
   });
 }
 
@@ -202,7 +213,9 @@ export function loadSample(options, pushRoute = true) {
   return (dispatch, getState) => {
     const {routing} = getState();
     if (options.id && pushRoute) {
-      dispatch(push(`/demo/${options.id}${routing.locationBeforeTransitions.search}`));
+      dispatch(
+        push(`/demo/${options.id}${routing.locationBeforeTransitions.search}`)
+      );
     }
     // if the sample has a kepler.gl config file url we load it
     if (options.keplergl) {
@@ -221,27 +234,35 @@ export function loadSample(options, pushRoute = true) {
  * @returns {Function}
  */
 function loadRemoteSampleMap(options) {
-  return (dispatch) => {
+  return dispatch => {
     // Load configuration first
     const {configUrl, dataUrl} = options;
 
-    Promise
-      .all([loadRemoteConfig(configUrl), loadRemoteData(dataUrl)])
-      .then(
-        ([config, data]) => {
-          // TODO: these two actions can be merged
-          dispatch(loadRemoteResourceSuccess(data, config, options));
-          dispatch(toggleModal(null));
-        },
-        error => {
-          if (error) {
-            const {target = {}} = error;
-            const {status, responseText} = target;
-            dispatch(loadRemoteResourceError({status, message: `${responseText} - ${LOADING_SAMPLE_ERROR_MESSAGE} ${options.id} (${configUrl})`}, configUrl));
-          }
+    Promise.all([loadRemoteConfig(configUrl), loadRemoteData(dataUrl)]).then(
+      ([config, data]) => {
+        // TODO: these two actions can be merged
+        dispatch(loadRemoteResourceSuccess(data, config, options));
+        dispatch(toggleModal(null));
+      },
+      error => {
+        if (error) {
+          const {target = {}} = error;
+          const {status, responseText} = target;
+          dispatch(
+            loadRemoteResourceError(
+              {
+                status,
+                message: `${responseText} - ${LOADING_SAMPLE_ERROR_MESSAGE} ${
+                  options.id
+                } (${configUrl})`
+              },
+              configUrl
+            )
+          );
         }
-      );
-  }
+      }
+    );
+  };
 }
 
 /**
@@ -252,7 +273,7 @@ function loadRemoteSampleMap(options) {
 function loadRemoteConfig(url) {
   if (!url) {
     // TODO: we should return reject with an appropriate error
-    return Promise.resolve(null)
+    return Promise.resolve(null);
   }
 
   return new Promise((resolve, reject) => {
@@ -266,8 +287,8 @@ function loadRemoteConfig(url) {
         return;
       }
       resolve(config);
-    })
-  })
+    });
+  });
 }
 
 /**
@@ -278,7 +299,7 @@ function loadRemoteConfig(url) {
 function loadRemoteData(url) {
   if (!url) {
     // TODO: we should return reject with an appropriate error
-    return Promise.resolve(null)
+    return Promise.resolve(null);
   }
 
   let requestMethod = requestText;
@@ -298,7 +319,7 @@ function loadRemoteData(url) {
         return;
       }
       resolve(result);
-    })
+    });
   });
 }
 
@@ -314,7 +335,15 @@ export function loadSampleConfigurations(sampleMapId = null) {
       if (error) {
         const {target = {}} = error;
         const {status, responseText} = target;
-        dispatch(loadRemoteResourceError({status, message: `${responseText} - ${LOADING_SAMPLE_LIST_ERROR_MESSAGE}`}, MAP_CONFIG_URL));
+        dispatch(
+          loadRemoteResourceError(
+            {
+              status,
+              message: `${responseText} - ${LOADING_SAMPLE_LIST_ERROR_MESSAGE}`
+            },
+            MAP_CONFIG_URL
+          )
+        );
       } else {
         const responseError = detectResponseError(samples);
         if (responseError) {
@@ -330,7 +359,7 @@ export function loadSampleConfigurations(sampleMapId = null) {
         }
       }
     });
-  }
+  };
 }
 
 /**
@@ -358,20 +387,40 @@ export function exportFileToCloud(handlerName = 'dropbox') {
   return (dispatch, getState) => {
     // extract data from kepler
     const data = KeplerGlSchema.save(getState().demo.keplerGl.map);
-    const newBlob = new Blob([JSON.stringify(data)], {type: 'application/json'});
-    const file = new File([newBlob], `kepler.gl/keplergl_${generateHashId(6)}.json`);
-    dispatch(setPushingFile(true, {filename: file.name, status: 'uploading', metadata: null}));
-    authHandler.uploadFile({blob: file, isPublic: true, authHandler})
-    // need to perform share as well
+    const newBlob = new Blob([JSON.stringify(data)], {
+      type: 'application/json'
+    });
+    const file = new File(
+      [newBlob],
+      `kepler.gl/keplergl_${generateHashId(6)}.json`
+    );
+    dispatch(
+      setPushingFile(true, {
+        filename: file.name,
+        status: 'uploading',
+        metadata: null
+      })
+    );
+    authHandler
+      .uploadFile({blob: file, isPublic: true, authHandler})
+      // need to perform share as well
       .then(
         response => {
           dispatch(push(`/${MAP_URI}${response.url}`));
-          dispatch(setPushingFile(false, {filename: file.name, status: 'success', metadata: response}));
+          dispatch(
+            setPushingFile(false, {
+              filename: file.name,
+              status: 'success',
+              metadata: response
+            })
+          );
         },
         error => {
-          dispatch(setPushingFile(false, {filename: file.name, status: 'error', error}));
+          dispatch(
+            setPushingFile(false, {filename: file.name, status: 'error', error})
+          );
         }
-      )
+      );
   };
 }
 

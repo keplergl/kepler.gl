@@ -26,8 +26,15 @@ const StyledTileWrapper = styled.div`
   align-items: center;
   justify-content: center;
   border-radius: 2px;
-  border: 1px solid ${props => props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT};
-  color: ${props => props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT};
+  border: 1px solid
+    ${props =>
+      props.selected
+        ? props.theme.primaryBtnBgd
+        : props.theme.selectBorderColorLT};
+  color: ${props =>
+    props.selected
+      ? props.theme.primaryBtnBgd
+      : props.theme.selectBorderColorLT};
   cursor: pointer;
   font-weight: 500;
   width: 120px;

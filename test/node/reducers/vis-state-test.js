@@ -452,11 +452,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
 
   const newLayer3 = nextState3.layers[0];
   t.equal(newLayer3.type, 'hexagon', 'should change type to hexagon');
-  t.equal(
-    newLayer3.config.colorField,
-    stringField,
-    'should keep colorField'
-  );
+  t.equal(newLayer3.config.colorField, stringField, 'should keep colorField');
   t.deepEqual(
     newLayer3.config.colorDomain,
     [0, 1],
@@ -1921,24 +1917,23 @@ test('#visStateReducer -> setFilter', t => {
 
     // receive Vis Data will add id to fields
     // filter will add filterProps to fields
-    fields: geojsonFields.map(
-      f =>
-        f.name === 'TRIPS'
-          ? {
-              ...f,
-              id: f.name,
-              filterProp: {
-                domain: [4, 20],
-                fieldType: 'integer',
-                histogram: expectedHistogram,
-                enlargedHistogram: expectedEnlarged,
-                step: 0.01,
-                type: 'range',
-                typeOptions: ['range'],
-                value: [4, 20]
-              }
+    fields: geojsonFields.map(f =>
+      f.name === 'TRIPS'
+        ? {
+            ...f,
+            id: f.name,
+            filterProp: {
+              domain: [4, 20],
+              fieldType: 'integer',
+              histogram: expectedHistogram,
+              enlargedHistogram: expectedEnlarged,
+              step: 0.01,
+              type: 'range',
+              typeOptions: ['range'],
+              value: [4, 20]
             }
-          : {...f, id: f.name}
+          }
+        : {...f, id: f.name}
     ),
     filteredIndex: [0, 2],
     filteredIndexForDomain: [0, 2]
@@ -2063,25 +2058,25 @@ test('#visStateReducer -> setFilter.fixedDomain', t => {
   const expectedDatasetSmoothie = {
     ...datasetSmoothie,
     // add filter prop to fields
-    fields: datasetSmoothie.fields.map(
-      f =>
-        f.name === 'gps_data.utc_timestamp'
-          ? {
-              ...f,
-              filterProp: {
-                domain: [1474070995000, 1474072208000],
-                step: 1000,
-                mappedValue: expectedFilterTs.mappedValue,
-                histogram: stateWidthTsFilter.filters[0].histogram,
-                enlargedHistogram: stateWidthTsFilter.filters[0].enlargedHistogram,
-                fieldType: 'timestamp',
-                type: 'timeRange',
-                enlarged: true,
-                fixedDomain: true,
-                value: [1474070995000, 1474072208000]
-              }
+    fields: datasetSmoothie.fields.map(f =>
+      f.name === 'gps_data.utc_timestamp'
+        ? {
+            ...f,
+            filterProp: {
+              domain: [1474070995000, 1474072208000],
+              step: 1000,
+              mappedValue: expectedFilterTs.mappedValue,
+              histogram: stateWidthTsFilter.filters[0].histogram,
+              enlargedHistogram:
+                stateWidthTsFilter.filters[0].enlargedHistogram,
+              fieldType: 'timestamp',
+              type: 'timeRange',
+              enlarged: true,
+              fixedDomain: true,
+              value: [1474070995000, 1474072208000]
             }
-          : f
+          }
+        : f
     ),
     data: [7, 8, 9, 10, 11, 12, 13].map(i => datasetSmoothie.allData[i]),
     filteredIndex: [7, 8, 9, 10, 11, 12, 13],
@@ -2110,10 +2105,9 @@ test('#visStateReducer -> setFilter.fixedDomain', t => {
 
   const expectedFilteredDataset = {
     ...stateWidthTsFilter.datasets.smoothie,
-    fields: stateWidthTsFilter.datasets.smoothie.fields.map(
-      f =>
-        f.name === 'date'
-          ? {
+    fields: stateWidthTsFilter.datasets.smoothie.fields.map(f =>
+      f.name === 'date'
+        ? {
             ...f,
             filterProp: {
               domain: ['2016-09-23', '2016-09-24', '2016-10-10'],
@@ -2122,14 +2116,18 @@ test('#visStateReducer -> setFilter.fixedDomain', t => {
               value: []
             }
           }
-          : f
+        : f
     ),
     data: [7, 8, 9, 10, 11, 12].map(i => datasetSmoothie.allData[i]),
     filteredIndex: [7, 8, 9, 10, 11, 12],
     filteredIndexForDomain: [7, 8, 9, 10, 11, 12, 17, 18, 19, 20, 21, 22]
   };
 
-  cmpDataset(t, expectedFilteredDataset, stateWidthTsAndNameFilter.datasets.smoothie);
+  cmpDataset(
+    t,
+    expectedFilteredDataset,
+    stateWidthTsAndNameFilter.datasets.smoothie
+  );
 
   t.end();
 });

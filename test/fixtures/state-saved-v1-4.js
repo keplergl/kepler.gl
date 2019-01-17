@@ -251,18 +251,11 @@ mergedLayer0.config = {
       name: 'Global Warming',
       type: 'sequential',
       category: 'Uber',
-      colors: [
-        '#5A1846',
-        '#900C3F',
-        '#C70039',
-        '#E3611C',
-        '#F1920E',
-        '#FFC300'
-      ]
+      colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
     },
     radiusRange: [0, 50],
     'hi-precision': false
-  },
+  }
 };
 
 export const mergedLayers = [mergedLayer0];

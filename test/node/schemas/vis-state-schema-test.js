@@ -23,7 +23,8 @@ import test from 'tape';
 import {cmpFilters, cmpSavedLayers} from 'test/helpers/comparison-utils';
 import SchemaManager from 'schemas';
 
-import {StateWFilesFiltersLayerColor,
+import {
+  StateWFilesFiltersLayerColor,
   expectedSavedLayer0,
   expectedLoadedLayer0,
   expectedSavedLayer1,
@@ -38,9 +39,11 @@ test('#visStateSchema -> v1 -> save layers', t => {
   // save state
   const vsToSave = SchemaManager.getConfigToSave(initialState).config.visState;
 
-  t.deepEqual(Object.keys(vsToSave),
+  t.deepEqual(
+    Object.keys(vsToSave),
     ['filters', 'layers', 'interactionConfig', 'layerBlending', 'splitMaps'],
-    'visState should have all 5 entries');
+    'visState should have all 5 entries'
+  );
 
   const exptectedSavedLayers = [
     expectedSavedLayer0,
@@ -61,9 +64,11 @@ test('#visStateSchema -> v1 -> load layers', t => {
   const savedState = SchemaManager.getConfigToSave(initialState);
   const vsLoaded = SchemaManager.parseSavedConfig(savedState).visState;
 
-  t.deepEqual(Object.keys(vsLoaded),
+  t.deepEqual(
+    Object.keys(vsLoaded),
     ['filters', 'layers', 'interactionConfig', 'layerBlending', 'splitMaps'],
-    'visState should have all 5 entries');
+    'visState should have all 5 entries'
+  );
 
   const loadedLayers = vsLoaded.layers;
 
@@ -89,25 +94,28 @@ test('#visStateSchema -> v1 -> save load filters', t => {
   // test saved filters
   const filtersToSave = vsToSave.filters;
 
-  const expectedSavedFilters = [{
-    dataId: '190vdll3di',
-    id: 'hjpn8frza',
-    name: 'time',
-    type: 'timeRange',
-    value: [1474606800000, 1474617600000],
-    enlarged: true,
-    plotType: 'histogram',
-    yAxis: null
-  }, {
-    dataId: 'ieukmgne',
-    id: 'vpk2466o',
-    name: 'RATE',
-    type: 'multiSelect',
-    value: ['a'],
-    enlarged: false,
-    plotType: 'histogram',
-    yAxis: null
-  }];
+  const expectedSavedFilters = [
+    {
+      dataId: '190vdll3di',
+      id: 'hjpn8frza',
+      name: 'time',
+      type: 'timeRange',
+      value: [1474606800000, 1474617600000],
+      enlarged: true,
+      plotType: 'histogram',
+      yAxis: null
+    },
+    {
+      dataId: 'ieukmgne',
+      id: 'vpk2466o',
+      name: 'RATE',
+      type: 'multiSelect',
+      value: ['a'],
+      enlarged: false,
+      plotType: 'histogram',
+      yAxis: null
+    }
+  ];
 
   cmpFilters(t, expectedSavedFilters, filtersToSave);
   cmpFilters(t, expectedSavedFilters, loadedFilters);
@@ -121,7 +129,8 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
 
   // save state
   const interactionToSave = savedState.config.visState.interactionConfig;
-  const interactionLoaded = SchemaManager.parseSavedConfig(savedState).visState.interactionConfig;
+  const interactionLoaded = SchemaManager.parseSavedConfig(savedState).visState
+    .interactionConfig;
 
   const expectedSaved = {
     tooltip: {
@@ -134,9 +143,9 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
           'has_result',
           'id'
         ],
-        ieukmgne: [
-          'OBJECTID', 'ZIP_CODE', 'ID', 'TRIPS', 'RATE'
-        ]}},
+        ieukmgne: ['OBJECTID', 'ZIP_CODE', 'ID', 'TRIPS', 'RATE']
+      }
+    },
     brush: {
       enabled: false,
       size: 0.5
@@ -155,7 +164,8 @@ test('#visStateSchema -> v1 -> save load layerBlending', t => {
 
   // save state
   const layerBlendingToSave = savedState.config.visState.layerBlending;
-  const layerBlendingLoaded = SchemaManager.parseSavedConfig(savedState).visState.layerBlending;
+  const layerBlendingLoaded = SchemaManager.parseSavedConfig(savedState)
+    .visState.layerBlending;
 
   const expectedSaved = 'normal';
 

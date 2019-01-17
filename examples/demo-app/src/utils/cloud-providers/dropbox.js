@@ -21,7 +21,7 @@
 // DROPBOX
 import {Dropbox} from 'dropbox';
 import {parseQueryString} from '../url';
-import window from 'global/window'
+import window from 'global/window';
 import DropboxIcon from '../../components/icons/dropbox-icon';
 
 const DROPBOX_CLIEND_ID = process.env.DropboxClientId;
@@ -38,7 +38,7 @@ function authLink(path = 'auth') {
   return dropbox.getAuthenticationUrl(
     `${window.location.origin}/${path}`,
     btoa(JSON.stringify({handler: 'dropbox', origin: window.location.origin}))
-  )
+  );
 }
 
 /**
@@ -78,17 +78,19 @@ function uploadFile({blob, name, isPublic = true}) {
  * @returns {Promise<DropboxTypes.sharing.FileLinkMetadataReference | DropboxTypes.sharing.FolderLinkMetadataReference | DropboxTypes.sharing.SharedLinkMetadataReference>}
  */
 function shareFile(metadata) {
-  return dropbox.sharingCreateSharedLinkWithSettings({
-    path: metadata.path_display || metadata.path_lower
-  }).then(
-    // Update URL to avoid CORS issue
-    // Unfortunately this is not the ideal scenario but it will make sure people
-    // can share dropbox urls with users without the dropbox account (publish on twitter, facebook)
-    result => ({
-      ...result,
-      url: overrideUrl(result.url)
+  return dropbox
+    .sharingCreateSharedLinkWithSettings({
+      path: metadata.path_display || metadata.path_lower
     })
-  );
+    .then(
+      // Update URL to avoid CORS issue
+      // Unfortunately this is not the ideal scenario but it will make sure people
+      // can share dropbox urls with users without the dropbox account (publish on twitter, facebook)
+      result => ({
+        ...result,
+        url: overrideUrl(result.url)
+      })
+    );
 }
 
 /**
@@ -100,7 +102,9 @@ function shareFile(metadata) {
  * @returns {DropboxTypes.sharing.FileLinkMetadataReference}
  */
 function overrideUrl(url) {
-  return url ? url.slice(0, url.indexOf('?')).replace(DOMAIN, CORS_FREE_DOMAIN) : null;
+  return url
+    ? url.slice(0, url.indexOf('?')).replace(DOMAIN, CORS_FREE_DOMAIN)
+    : null;
 }
 
 /**
@@ -119,11 +123,14 @@ function handleLogin(onCloudLoginSuccess) {
     window.removeEventListener('message', handleToken);
     dropbox.setAccessToken(e.data.token);
     if (window.localStorage) {
-      window.localStorage.setItem('dropbox', JSON.stringify({
-        // dropbox token doesn't expire unless revoked by the user
-        token: e.data.token,
-        timetamp: new Date()
-      }));
+      window.localStorage.setItem(
+        'dropbox',
+        JSON.stringify({
+          // dropbox token doesn't expire unless revoked by the user
+          token: e.data.token,
+          timetamp: new Date()
+        })
+      );
     }
     onCloudLoginSuccess();
   };

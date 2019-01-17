@@ -119,8 +119,9 @@ const AnimationSpeedToggle = ({updateAnimationSpeed, speed}) => (
 
 export class TimeWidget extends Component {
   fieldSelector = props => props.fields;
-  yAxisFieldsSelector = createSelector(this.fieldSelector, fields =>
-    fields.filter(f => f.type === 'integer' || f.type === 'real')
+  yAxisFieldsSelector = createSelector(
+    this.fieldSelector,
+    fields => fields.filter(f => f.type === 'integer' || f.type === 'real')
   );
 
   render() {

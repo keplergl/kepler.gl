@@ -23,8 +23,14 @@ import {Layer} from 'layers';
 import AggregationLayer from 'layers/aggregation-layer';
 
 test('#BaseLayer -> updateLayerDomain', t => {
-
-  const allData = [['a', 3], ['b', 4], ['c', 1], ['d', null], ['e', 5], ['f', 0]];
+  const allData = [
+    ['a', 3],
+    ['b', 4],
+    ['c', 1],
+    ['d', null],
+    ['e', 5],
+    ['f', 0]
+  ];
   const data = [['a', 3], ['b', 4], ['c', 1], ['d', null]];
   const filteredIndex = [0, 1, 2, 3];
   const filteredIndexForDomain = [0, 1, 2, 3, 4];
@@ -50,11 +56,17 @@ test('#BaseLayer -> updateLayerDomain', t => {
     filteredIndexForDomain
   });
 
-  t.deepEqual(updatedLayer.config.colorDomain, expectedDomain,
-    'should calculate layer color domain');
+  t.deepEqual(
+    updatedLayer.config.colorDomain,
+    expectedDomain,
+    'should calculate layer color domain'
+  );
 
-  t.deepEqual(updatedLayer.config.sizeDomain, [0, 1],
-    'should not calculate layer size domain');
+  t.deepEqual(
+    updatedLayer.config.sizeDomain,
+    [0, 1],
+    'should not calculate layer size domain'
+  );
 
   mockLayer.updateLayerConfig({
     colorField: {
@@ -76,11 +88,22 @@ test('#BaseLayer -> updateLayerDomain', t => {
 
   const expectedOrdinalDomain = ['a', 'b', 'c', 'd', 'e', 'f'];
 
-  t.deepEqual(updatedLayer.config.colorDomain, expectedOrdinalDomain,
-    'should calculate layer color domain based on ordinal domain');
+  t.deepEqual(
+    updatedLayer.config.colorDomain,
+    expectedOrdinalDomain,
+    'should calculate layer color domain based on ordinal domain'
+  );
 
   const newDataset = {
-    allData: [['a', 3], ['b', 4], ['c', 1], ['d', null], ['e', 5], ['f', 0], ['g', 6]],
+    allData: [
+      ['a', 3],
+      ['b', 4],
+      ['c', 1],
+      ['d', null],
+      ['e', 5],
+      ['f', 0],
+      ['g', 6]
+    ],
     data,
     filteredIndex,
     filteredIndexForDomain
@@ -88,8 +111,11 @@ test('#BaseLayer -> updateLayerDomain', t => {
 
   updatedLayer = mockLayer.updateLayerDomain(newDataset, {id: 'newFilter'});
 
-  t.deepEqual(updatedLayer.config.colorDomain, expectedOrdinalDomain,
-    'should skip domain calculation if field is oridinal');
+  t.deepEqual(
+    updatedLayer.config.colorDomain,
+    expectedOrdinalDomain,
+    'should skip domain calculation if field is oridinal'
+  );
 
   t.end();
 });
@@ -110,8 +136,11 @@ test('#AggregationLayer -> updateLayerDomain', t => {
   });
 
   const updatedLayer = mockLayer.updateLayerDomain({data, allData: data});
-  t.deepEqual(updatedLayer.config.colorDomain, [0, 1],
-    'should not calculate aggregation layer domain');
+  t.deepEqual(
+    updatedLayer.config.colorDomain,
+    [0, 1],
+    'should not calculate aggregation layer domain'
+  );
 
   t.end();
 });
@@ -129,8 +158,20 @@ test('#BaseLayer -> getAllPossibleColumnParis', t => {
   const columnes3 = {
     a: [1]
   };
-  t.equal(Layer.getAllPossibleColumnParis(columnes1).length, 4, 'should find 4 pairs');
-  t.equal(Layer.getAllPossibleColumnParis(columnes2).length, 2, 'should find 4 pairs');
-  t.equal(Layer.getAllPossibleColumnParis(columnes3).length, 1, 'should find 4 pairs');
+  t.equal(
+    Layer.getAllPossibleColumnParis(columnes1).length,
+    4,
+    'should find 4 pairs'
+  );
+  t.equal(
+    Layer.getAllPossibleColumnParis(columnes2).length,
+    2,
+    'should find 4 pairs'
+  );
+  t.equal(
+    Layer.getAllPossibleColumnParis(columnes3).length,
+    1,
+    'should find 4 pairs'
+  );
   t.end();
 });

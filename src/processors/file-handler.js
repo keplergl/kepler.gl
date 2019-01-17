@@ -59,8 +59,8 @@ function readCSVFile(fileBlob) {
 }
 
 export function loadCsv(fileBlob, processor = processCsvData) {
-  return readCSVFile(fileBlob).then(
-    rawData => (rawData ? processor(rawData) : null)
+  return readCSVFile(fileBlob).then(rawData =>
+    rawData ? processor(rawData) : null
   );
 }
 
@@ -99,8 +99,7 @@ export function determineJsonProcess(jsonData, defaultProcessor) {
 }
 
 export function loadJSON(fileBlob, processor = processGeojson) {
-  return readJSONFile(fileBlob).then(
-    rawData =>
-      rawData ? determineJsonProcess(rawData, processor)(rawData) : null
+  return readJSONFile(fileBlob).then(rawData =>
+    rawData ? determineJsonProcess(rawData, processor)(rawData) : null
   );
 }

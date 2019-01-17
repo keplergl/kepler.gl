@@ -225,8 +225,8 @@ const input = css`
       props.active
         ? props.theme.inputBorderActiveColor
         : props.error
-          ? props.theme.errorColor
-          : props.theme.inputBgd};
+        ? props.theme.errorColor
+        : props.theme.inputBgd};
   border-radius: 2px;
   caret-color: ${props => props.theme.inputBorderActiveColor};
   color: ${props => props.theme.inputColor};
@@ -286,8 +286,8 @@ const inputLT = css`
     props.active
       ? props.theme.selectActiveBorderColor
       : props.error
-        ? props.theme.errorColor
-        : props.theme.selectBorderColorLT};
+      ? props.theme.errorColor
+      : props.theme.selectBorderColorLT};
   color: ${props => props.theme.selectColorLT};
   caret-color: ${props => props.theme.selectColorLT};
 

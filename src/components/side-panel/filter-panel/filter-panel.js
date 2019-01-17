@@ -147,18 +147,17 @@ function FilterPanelFactory() {
                 onSelect={value => setFilter(idx, 'dataId', value)}
               />
             )}
-            {type &&
-              !enlarged && (
-                <div className="filter-panel__filter">
-                  <FilterComponent
-                    filter={filter}
-                    idx={idx}
-                    isAnyFilterAnimating={isAnyFilterAnimating}
-                    toggleAnimation={toggleAnimation}
-                    setFilter={value => setFilter(idx, 'value', value)}
-                  />
-                </div>
-              )}
+            {type && !enlarged && (
+              <div className="filter-panel__filter">
+                <FilterComponent
+                  filter={filter}
+                  idx={idx}
+                  isAnyFilterAnimating={isAnyFilterAnimating}
+                  toggleAnimation={toggleAnimation}
+                  setFilter={value => setFilter(idx, 'value', value)}
+                />
+              </div>
+            )}
           </StyledFilterContent>
         </StyledFilterPanel>
       );

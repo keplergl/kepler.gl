@@ -158,9 +158,9 @@ function mockStateWithLayerDimensions(state) {
     'color'
   ];
 
-  const textLabelField = initialState.visState.datasets['190vdll3di'].fields.find(
-    f => f.name === 'date'
-  );
+  const textLabelField = initialState.visState.datasets[
+    '190vdll3di'
+  ].fields.find(f => f.name === 'date');
 
   const textLabelPayload = [
     layer0,
@@ -173,7 +173,7 @@ function mockStateWithLayerDimensions(state) {
         anchor: 'start'
       }
     }
-  ]
+  ];
   // layers = [ 'point', 'geojson', 'hexagon' ]
   const reorderPayload = [[2, 0, 1]];
 
@@ -331,7 +331,7 @@ export const expectedSavedLayer0 = {
     colorScale: 'quantile',
     sizeField: null,
     sizeScale: 'linear'
-  },
+  }
 };
 
 export const expectedLoadedLayer0 = {

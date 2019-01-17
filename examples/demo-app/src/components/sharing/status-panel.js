@@ -32,16 +32,16 @@ const spinnerBorderColor = 'rgba(128, 128, 128, 0.2)';
 const StyledWrapper = styled.div`
   font-size: 14px;
   font-weight: 500;
-  color: #3A414C;
+  color: #3a414c;
   display: flex;
   position: relative;
   align-items: center;
   flex-direction: column;
-  
+
   .title {
     margin-bottom: 12px;
   }
-  
+
   .subtitle {
     font-size: 12px;
   }
@@ -56,7 +56,7 @@ const StyledTileWrapper = styled.div`
   justify-content: center;
   text-align: center;
   margin: 0 auto;
-  
+
   .loader,
   .loader:after {
     border-radius: 50%;
@@ -69,12 +69,12 @@ const StyledTileWrapper = styled.div`
     position: absolute;
     text-indent: -9999em;
     border: ${spinnerBorderSize}px solid ${spinnerBorderColor};
-    border-left: ${spinnerBorderSize}px solid #D6D6D6;
+    border-left: ${spinnerBorderSize}px solid #d6d6d6;
     -webkit-transform: translateZ(0);
     -ms-transform: translateZ(0);
     transform: translateZ(0);
-    -webkit-animation: load8 2.0s infinite linear;
-    animation: load8 2.0s infinite linear;
+    -webkit-animation: load8 2s infinite linear;
+    animation: load8 2s infinite linear;
   }
   @-webkit-keyframes load8 {
     0% {
@@ -119,10 +119,7 @@ const StatusPanel = ({filename, isLoading, status, metadata}) => (
         <MapIcon width="100%" height="100%" />
       </StyledTile>
     </StyledTileWrapper>
-    <div className="subtitle">
-      {metadata && metadata.url}
-    </div>
-
+    <div className="subtitle">{metadata && metadata.url}</div>
   </StyledWrapper>
 );
 

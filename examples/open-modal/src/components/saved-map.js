@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer'
+import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import KeplerGl from 'kepler.gl';
 
 export default class SavedMap extends Component {
@@ -38,6 +38,6 @@ export default class SavedMap extends Component {
           />
         )}
       </AutoSizer>
-    )
+    );
   }
 }

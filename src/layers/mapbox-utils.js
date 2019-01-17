@@ -161,23 +161,25 @@ export function geojsonFromPoints(
 ) {
   return {
     type: 'FeatureCollection',
-    features: filteredIndex.map(index => allData[index]).map(point => ({
-      type: 'Feature',
-      properties: properties.reduce(
-        (final, property) => ({
-          ...final,
-          [property.name]: point[property.tableFieldIndex - 1]
-        }),
-        {}
-      ),
-      geometry: {
-        type: 'Point',
-        coordinates: [
-          columns.lng ? point[columns.lng.fieldIdx] : null, // lng
-          columns.lat ? point[columns.lat.fieldIdx] : null, // lat
-          columns.altitude ? point[columns.altitude.fieldIdx] : 0 // altitude
-        ]
-      }
-    }))
+    features: filteredIndex
+      .map(index => allData[index])
+      .map(point => ({
+        type: 'Feature',
+        properties: properties.reduce(
+          (final, property) => ({
+            ...final,
+            [property.name]: point[property.tableFieldIndex - 1]
+          }),
+          {}
+        ),
+        geometry: {
+          type: 'Point',
+          coordinates: [
+            columns.lng ? point[columns.lng.fieldIdx] : null, // lng
+            columns.lat ? point[columns.lat.fieldIdx] : null, // lat
+            columns.altitude ? point[columns.altitude.fieldIdx] : 0 // altitude
+          ]
+        }
+      }))
   };
 }

@@ -341,11 +341,10 @@ export function formatCsv(data, fields) {
   // parse geojson object as string
   data.forEach(row => {
     formattedData.push(
-      row.map(
-        (d, i) =>
-          d && GEOJSON_FIELDS.geojson.includes(fields[i].name)
-            ? JSON.stringify(d)
-            : d
+      row.map((d, i) =>
+        d && GEOJSON_FIELDS.geojson.includes(fields[i].name)
+          ? JSON.stringify(d)
+          : d
       )
     );
   });

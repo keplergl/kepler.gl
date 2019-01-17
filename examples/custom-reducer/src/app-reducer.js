@@ -33,11 +33,14 @@ const initialState = {
 };
 
 // REDUCER
-const appReducer = handleActions({
-  [INIT]: (state, action) => ({
-    ...state,
-    loaded: true
-  })
-}, initialState);
+const appReducer = handleActions(
+  {
+    [INIT]: (state, action) => ({
+      ...state,
+      loaded: true
+    })
+  },
+  initialState
+);
 
 export default appReducer;

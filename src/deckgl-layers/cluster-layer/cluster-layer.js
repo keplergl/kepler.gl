@@ -160,8 +160,8 @@ export default class ClusterLayer extends CompositeLayer {
       colorScale === SCALE_TYPES.ordinal
         ? getOrdinalDomain(colorValues, identity)
         : colorScale === SCALE_TYPES.quantile
-          ? getQuantileDomain(colorValues, identity, ascending)
-          : getLinearDomain(colorValues, identity);
+        ? getQuantileDomain(colorValues, identity, ascending)
+        : getLinearDomain(colorValues, identity);
 
     this.setState({
       colorDomain,

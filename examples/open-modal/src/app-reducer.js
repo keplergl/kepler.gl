@@ -36,16 +36,19 @@ const initialState = {
 };
 
 // REDUCER
-const appReducer = handleActions({
-  [INIT]: (state, action) => ({
-    ...state,
-    loaded: true
-  }),
+const appReducer = handleActions(
+  {
+    [INIT]: (state, action) => ({
+      ...state,
+      loaded: true
+    }),
 
-  [SHOW_MODAL]: (state, action) => ({
-    ...state,
-    modal: action.payload
-  })
-}, initialState);
+    [SHOW_MODAL]: (state, action) => ({
+      ...state,
+      modal: action.payload
+    })
+  },
+  initialState
+);
 
 export default appReducer;

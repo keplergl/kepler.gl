@@ -436,9 +436,7 @@ test('VisStateMerger.v1.split -> mergeLayers -> toEmptyState', t => {
 
 test('VisStateMerger.v0 -> mergeLayers -> toWorkingState', t => {
   const savedConfig = cloneDeep(savedStateV0);
-  const parsedConfig = SchemaManager.parseSavedConfig(
-    savedConfig.config
-  );
+  const parsedConfig = SchemaManager.parseSavedConfig(savedConfig.config);
 
   const oldState = StateWFilesFiltersLayerColor.toJS();
   const oldVisState = oldState.visState;
@@ -490,9 +488,7 @@ test('VisStateMerger.v0 -> mergeLayers -> toWorkingState', t => {
 
 test('VisStateMerger.v1 -> mergeLayers -> toWorkingState', t => {
   const savedConfig = cloneDeep(savedStateV1);
-  const parsedConfig = SchemaManager.parseSavedConfig(
-    savedConfig.config
-  );
+  const parsedConfig = SchemaManager.parseSavedConfig(savedConfig.config);
 
   const oldState = StateWFilesFiltersLayerColor.toJS();
   const oldVisState = oldState.visState;

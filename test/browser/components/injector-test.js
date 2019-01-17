@@ -67,7 +67,8 @@ test('Components -> injector -> missing deps', t => {
   const myCutomNameFactory = () => () => <div>name</div>;
   const myCustomHeaderFactory = Name => () => (
     <div className="my-test-header-1">
-      <Name />smoothie
+      <Name />
+      smoothie
     </div>
   );
   myCustomHeaderFactory.deps = [myCutomNameFactory];
@@ -111,13 +112,12 @@ test('Components -> injector -> wrong factory type', t => {
   // const spy = sinon.spy(Console, 'error');
   const myCustomHeaderFactory = Name => () => (
     <div className="my-test-header-2">
-      <Name />smoothie
+      <Name />
+      smoothie
     </div>
   );
 
-  const KeplerGl = injectComponents([
-    [undefined, myCustomHeaderFactory]
-  ]);
+  const KeplerGl = injectComponents([[undefined, myCustomHeaderFactory]]);
 
   // assume instance reducer is already mounted
   const store = mockStore({
@@ -140,7 +140,10 @@ test('Components -> injector -> wrong factory type', t => {
   );
 
   // test if custom header is rendered
-  t.ok(wrapper.find('.side-panel__panel-header').length, 'should render default header');
+  t.ok(
+    wrapper.find('.side-panel__panel-header').length,
+    'should render default header'
+  );
 
   spy.restore();
   t.end();
@@ -151,9 +154,9 @@ test('Components -> injector -> withState', t => {
     <div className="my-test-header-3">smoothie</div>
   );
   const myCustomHeaderFactory = () =>
-    withState(
-      [visStateLens, mapStateLens, uiStateLens, mapStyleLens]
-    )(CustomHeader);
+    withState([visStateLens, mapStateLens, uiStateLens, mapStyleLens])(
+      CustomHeader
+    );
 
   const KeplerGl = injectComponents([
     [PanelHeaderFactory, myCustomHeaderFactory]

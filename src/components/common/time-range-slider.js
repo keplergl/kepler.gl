@@ -83,8 +83,9 @@ export default class TimeRangeSlider extends Component {
   }
 
   domainSelector = props => props.domain;
-  titleFormatter = createSelector(this.domainSelector, domain =>
-    getTimeWidgetTitleFormatter(domain)
+  titleFormatter = createSelector(
+    this.domainSelector,
+    domain => getTimeWidgetTitleFormatter(domain)
   );
 
   _sliderUpdate = args => {

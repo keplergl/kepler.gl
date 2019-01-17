@@ -117,8 +117,8 @@ export function maybeToDate(isTime, fieldIdx, format, d) {
       return typeof d[fieldIdx] === 'string'
         ? moment.utc(d[fieldIdx], format).valueOf()
         : format === 'x'
-          ? d[fieldIdx] * 1000
-          : d[fieldIdx];
+        ? d[fieldIdx] * 1000
+        : d[fieldIdx];
     }
 
     return null;

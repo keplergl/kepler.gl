@@ -111,7 +111,14 @@ test('#PointLayer -> formatLayerData', t => {
 
         t.deepEqual(
           Object.keys(layerData),
-          ['data', 'labelCharacterSet', 'getPosition', 'getColor', 'getRadius', 'getText'],
+          [
+            'data',
+            'labelCharacterSet',
+            'getPosition',
+            'getColor',
+            'getRadius',
+            'getText'
+          ],
           'layerData should have 6 keys'
         );
         t.deepEqual(
@@ -128,11 +135,7 @@ test('#PointLayer -> formatLayerData', t => {
           layer.config.color,
           'getColor should be a constant'
         );
-        t.deepEqual(
-          layerData.getRadius,
-          1,
-          'getRadius should be a constant'
-        );
+        t.deepEqual(layerData.getRadius, 1, 'getRadius should be a constant');
         t.deepEqual(
           layerData.getPosition(layerData.data[0]),
           [31.2590542, 29.9900937, 0],
@@ -201,7 +204,14 @@ test('#PointLayer -> formatLayerData', t => {
         );
         t.deepEqual(
           Object.keys(layerData),
-          ['data', 'labelCharacterSet', 'getPosition', 'getColor', 'getRadius', 'getText'],
+          [
+            'data',
+            'labelCharacterSet',
+            'getPosition',
+            'getColor',
+            'getRadius',
+            'getText'
+          ],
           'layerData should have 6 keys'
         );
         t.deepEqual(

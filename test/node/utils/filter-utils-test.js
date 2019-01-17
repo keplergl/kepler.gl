@@ -650,13 +650,9 @@ test('filterUtils -> getTimestampFieldDomain', t => {
     );
 
     Object.keys(timeData[key].expect).forEach(k => {
-
       // histogram is created by d3, only need to test they exist
       if (k === 'histogram' || k === 'enlargedHistogram') {
-        t.ok(
-          tsFieldDomain[k].length,
-          `should create ${k}`
-        );
+        t.ok(tsFieldDomain[k].length, `should create ${k}`);
       } else {
         t.deepEqual(
           tsFieldDomain[k],

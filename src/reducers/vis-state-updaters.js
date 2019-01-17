@@ -386,15 +386,15 @@ export const addFilterUpdater = (state, action) =>
 
 export const toggleFilterAnimationUpdater = (state, action) => ({
   ...state,
-  filters: state.filters.map(
-    (f, i) => (i === action.idx ? {...f, isAnimating: !f.isAnimating} : f)
+  filters: state.filters.map((f, i) =>
+    i === action.idx ? {...f, isAnimating: !f.isAnimating} : f
   )
 });
 
 export const updateAnimationSpeedUpdater = (state, action) => ({
   ...state,
-  filters: state.filters.map(
-    (f, i) => (i === action.idx ? {...f, speed: action.speed} : f)
+  filters: state.filters.map((f, i) =>
+    i === action.idx ? {...f, speed: action.speed} : f
   )
 });
 

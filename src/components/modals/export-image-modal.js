@@ -78,8 +78,8 @@ const PreviewImageSection = styled.div`
       props.ratio === RATIOS.SCREEN
         ? `${(100 * props.height) / props.width}%`
         : props.ratio === RATIOS.SIXTEEN_BY_NINE
-          ? '56.25%'
-          : '75%'};
+        ? '56.25%'
+        : '75%'};
     position: relative;
   }
 

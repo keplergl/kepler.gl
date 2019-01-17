@@ -31,9 +31,11 @@ test('#mapStyleSchema -> v1 -> save load mapStyle', t => {
   const msToSave = savedState.config.mapStyle;
   const msLoaded = SchemaManager.parseSavedConfig(savedState).mapStyle;
 
-  t.deepEqual(Object.keys(msToSave),
+  t.deepEqual(
+    Object.keys(msToSave),
     ['styleType', 'topLayerGroups', 'visibleLayerGroups', 'mapStyles'],
-    'mapStyle should have all 4 entries');
+    'mapStyle should have all 4 entries'
+  );
 
   const expectedSaved = {
     styleType: 'dark',
@@ -46,7 +48,7 @@ test('#mapStyleSchema -> v1 -> save load mapStyle', t => {
     styleType: 'dark',
     topLayerGroups: {},
     visibleLayerGroups: {}
-  }
+  };
 
   t.deepEqual(msToSave, expectedSaved, 'saved mapStyle should be current');
   t.deepEqual(msLoaded, expectedLoaded, 'loaded mapStyle should be current');
@@ -69,7 +71,7 @@ test('#mapStyleSchema -> v1 -> save load mapStyle with custom style', t => {
       road: true
     },
     mapStyles: {
-      'smoothie_the_cat': {
+      smoothie_the_cat: {
         id: 'smoothie_the_cat',
         accessToken: 'secret_token',
         label: 'Smoothie the Cat',

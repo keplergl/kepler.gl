@@ -64,12 +64,12 @@ export const StyledInputLabel = styled.label`
 const StyledInput = styled.input`
   width: 100%;
   padding: ${props => props.theme.inputPadding};
-  color: ${props => props.error ? 'red' : props.theme.titleColorLT};
+  color: ${props => (props.error ? 'red' : props.theme.titleColorLT)};
   height: ${props => props.theme.inputBoxHeight};
   border: 0;
   outline: 0;
   font-size: 14px;
-  
+
   :active,
   :focus,
   &.focus,
@@ -97,21 +97,15 @@ const SharingUrl = ({url, message}) => (
   <StyleSharingUrl>
     <StyledInputLabel>{message}</StyledInputLabel>
     <div style={{display: 'flex'}}>
-      <StyledInput type="text" value={url}/>
+      <StyledInput type="text" value={url} />
       <CopyToClipboard text={url}>
         <StyledBtn>copy</StyledBtn>
       </CopyToClipboard>
     </div>
-
   </StyleSharingUrl>
 );
 
-const ExportCloudModal = ({
-  isLoading,
-  info,
-  onExport,
-  onCloudLoginSuccess
-}) => {
+const ExportCloudModal = ({isLoading, info, onExport, onCloudLoginSuccess}) => {
   const metaUrl = get(info, ['metadata', 'url']);
   const sharingLink = metaUrl ? getMapPermalink(metaUrl) : null;
   return (
@@ -120,9 +114,7 @@ const ExportCloudModal = ({
         <div style={{width: '100%'}}>
           <StyledExportDataSection>
             <div className="description">
-              <div className="title">
-                Save and share current map via URL
-              </div>
+              <div className="title">Save and share current map via URL</div>
               <div className="subtitle" style={{color: 'red', fontWeight: 500}}>
                 {KEPLER_DISCLAIMER}
               </div>
@@ -131,9 +123,7 @@ const ExportCloudModal = ({
 
           <StyledExportDataSection>
             <div className="description">
-              <div className="title">
-                Data Type
-              </div>
+              <div className="title">Data Type</div>
               <div className="subtitle">
                 Choose the type of data you want to export
               </div>
@@ -144,7 +134,9 @@ const ExportCloudModal = ({
                   key={index}
                   token={CLOUD_PROVIDERS[name].getAccessToken()}
                   onExport={onExport}
-                  onLogin={() => CLOUD_PROVIDERS[name].handleLogin(onCloudLoginSuccess)}
+                  onLogin={() =>
+                    CLOUD_PROVIDERS[name].handleLogin(onCloudLoginSuccess)
+                  }
                   Icon={CLOUD_PROVIDERS[name].icon}
                 />
               ))}
@@ -153,12 +145,18 @@ const ExportCloudModal = ({
           <StyledExportDataSection>
             <div className="selection">
               <div style={{margin: 'auto', width: '100%'}}>
-                {isLoading && (
-                  <StatusPanel isLoading={isLoading} {...info} />
-                )}
+                {isLoading && <StatusPanel isLoading={isLoading} {...info} />}
                 {metaUrl && [
-                  (<SharingUrl key={0} url={sharingLink} message={'Share your map with other users'}/>),
-                  (<SharingUrl key={1} url={metaUrl} message={'Your new saved configuration'}/>)
+                  <SharingUrl
+                    key={0}
+                    url={sharingLink}
+                    message={'Share your map with other users'}
+                  />,
+                  <SharingUrl
+                    key={1}
+                    url={metaUrl}
+                    message={'Your new saved configuration'}
+                  />
                 ]}
               </div>
             </div>
@@ -166,7 +164,7 @@ const ExportCloudModal = ({
         </div>
       </StyledModalContent>
     </div>
-  )
+  );
 };
 
 export default ExportCloudModal;

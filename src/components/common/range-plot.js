@@ -61,8 +61,9 @@ export default class RangePlot extends Component {
   };
 
   domainSelector = props => props.lineChart && props.lineChart.xDomain;
-  hintFormatter = createSelector(this.domainSelector, domain =>
-    getTimeWidgetHintFormatter(domain)
+  hintFormatter = createSelector(
+    this.domainSelector,
+    domain => getTimeWidgetHintFormatter(domain)
   );
 
   onMouseMove = hoveredDP => {

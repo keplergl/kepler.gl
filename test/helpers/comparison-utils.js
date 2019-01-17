@@ -50,7 +50,10 @@ export function cmpFilters(
 
     Object.keys(actualFilter).forEach(key => {
       if (key === 'histogram' || key === 'enlargedHistogram') {
-        if (actualFilter.type === FILTER_TYPES.range || FILTER_TYPES.timeRange) {
+        if (
+          actualFilter.type === FILTER_TYPES.range ||
+          FILTER_TYPES.timeRange
+        ) {
           t.ok(actualFilter[key].length, `filter.${key} should not be empty`);
         }
       } else if (key !== 'id' || opt.id) {

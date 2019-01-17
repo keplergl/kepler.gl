@@ -231,9 +231,11 @@ function cloneNode(node, filter, root) {
     function cloneChildrenInOrder(parent, arrChildren) {
       let done = Promise.resolve();
       arrChildren.forEach(child => {
-        done = done.then(() => cloneNode(child, flt)).then(childClone => {
-          if (childClone) parent.appendChild(childClone);
-        });
+        done = done
+          .then(() => cloneNode(child, flt))
+          .then(childClone => {
+            if (childClone) parent.appendChild(childClone);
+          });
       });
       return done;
     }
@@ -399,9 +401,9 @@ function newUtil() {
 
   function mimes() {
     /*
-            * Only WOFF and EOT mime types for fonts are 'real'
-            * see http://www.iana.org/assignments/media-types/media-types.xhtml
-            */
+     * Only WOFF and EOT mime types for fonts are 'real'
+     * see http://www.iana.org/assignments/media-types/media-types.xhtml
+     */
     const WOFF = 'application/font-woff';
     const JPEG = 'image/jpeg';
 

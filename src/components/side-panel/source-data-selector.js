@@ -36,12 +36,14 @@ export default class SourceDataSelector extends Component {
   /* selectors */
   /* eslint-disable no-invalid-this */
   datasetsSelector = props => props.datasets;
-  dsOptionsSelector = createSelector(this.datasetsSelector, datasets =>
-    Object.values(datasets).map(ds => ({
-      label: ds.label,
-      value: ds.id,
-      color: ds.color
-    }))
+  dsOptionsSelector = createSelector(
+    this.datasetsSelector,
+    datasets =>
+      Object.values(datasets).map(ds => ({
+        label: ds.label,
+        value: ds.id,
+        color: ds.color
+      }))
   );
 
   render() {

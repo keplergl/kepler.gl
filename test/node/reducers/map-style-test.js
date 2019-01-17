@@ -24,9 +24,7 @@ import reducer from 'reducers/map-style';
 import {INITIAL_MAP_STYLE} from 'reducers/map-style-updaters';
 import {keplerGlInit, receiveMapConfig} from 'actions/actions';
 import SchemaManager from 'schemas';
-import {
-  drainTasksForTesting
-} from 'react-palm/tasks';
+import {drainTasksForTesting} from 'react-palm/tasks';
 
 // helpers
 import {StateWCustomMapStyle} from 'test/helpers/mock-state';
@@ -36,28 +34,42 @@ const InitialMapStyle = reducer(undefined, {});
 test('#mapStyleReducer', t => {
   const newState = reducer(undefined, {});
 
-  t.deepEqual(newState, {
-    ...INITIAL_MAP_STYLE,
-    initialState: {}
-    }, 'should return the initial map style');
+  t.deepEqual(
+    newState,
+    {
+      ...INITIAL_MAP_STYLE,
+      initialState: {}
+    },
+    'should return the initial map style'
+  );
 
   t.end();
 });
 
 test('#mapStyleReducer -> INIT', t => {
-  const newState = reducer(InitialMapStyle, keplerGlInit({mapboxApiAccessToken: 'smoothies_secret_token'}));
+  const newState = reducer(
+    InitialMapStyle,
+    keplerGlInit({mapboxApiAccessToken: 'smoothies_secret_token'})
+  );
 
-  t.deepEqual(newState, {
-    ...INITIAL_MAP_STYLE,
-    initialState: {},
-    mapboxApiAccessToken: 'smoothies_secret_token'
-  }, 'initialie map style with mapboxApiAccessToken');
+  t.deepEqual(
+    newState,
+    {
+      ...INITIAL_MAP_STYLE,
+      initialState: {},
+      mapboxApiAccessToken: 'smoothies_secret_token'
+    },
+    'initialie map style with mapboxApiAccessToken'
+  );
 
   t.end();
 });
 
 test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
-  const stateWithToken = reducer(InitialMapStyle, keplerGlInit({mapboxApiAccessToken: 'smoothies_secret_token'}));
+  const stateWithToken = reducer(
+    InitialMapStyle,
+    keplerGlInit({mapboxApiAccessToken: 'smoothies_secret_token'})
+  );
 
   const stateToSave = StateWCustomMapStyle.toJS();
   // save state
