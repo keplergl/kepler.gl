@@ -60,7 +60,7 @@ test('Components -> Container -> Mount with mint:true', t => {
   );
 
   // mount with kepler.gl state
-  store = mockStore({keplerGl: {}});
+  store = mockStore(initialState);
   let appReducer = combineReducers({
     keplerGl: rootReducer
   });

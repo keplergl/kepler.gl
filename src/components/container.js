@@ -126,7 +126,7 @@ function flattenDeps(allDeps, factory) {
 
 const allDependencies = flattenDeps([], ContainerFactory);
 
-// provide all dependencites to appInjector
+// provide all dependencies to appInjector
 export const appInjector = allDependencies
   .reduce((inj, factory) => inj.provide(factory, factory), injector());
 

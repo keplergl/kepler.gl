@@ -46,7 +46,7 @@ import sampleTripData from './data/sample-trip-data';
 import sampleGeojson from './data/sample-geojson.json';
 import sampleH3Data from './data/sample-hex-id-csv';
 import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
-import {updateVisData, addDataToMap} from 'kepler.gl/actions';
+import {updateVisData, addDataToMap, addNotification} from 'kepler.gl/actions';
 import Processors from 'kepler.gl/processors';
 /* eslint-enable no-unused-vars */
 
@@ -121,6 +121,9 @@ class App extends Component {
 
     // load sample data
     // this._loadSampleData();
+
+    // Notifications
+    // this._loadMockNotifications();
   }
 
   componentWillUnmount() {
@@ -146,6 +149,28 @@ class App extends Component {
     this._hideBanner();
     window.localStorage.setItem(BannerKey, 'true');
   };
+
+  _loadMockNotifications = () => {
+    const notifications = [
+      [{message: 'Welcome to Kepler.gl'}, 3000],
+      [{message: 'Something is wrong', type: 'error'}, 1000],
+      [{message: 'I am getting better', type: 'warning'}, 1000],
+      [{message: 'Everything is fine', type: 'success'}, 1000]
+    ];
+
+    this.__addNotifications(notifications);
+  };
+
+  __addNotifications(notifications) {
+    if (notifications && notifications.length) {
+      const [notification, timeout] = notifications[0];
+
+      window.setTimeout(() => {
+        this.props.dispatch(addNotification(notification));
+        this.__addNotifications(notifications.slice(1));
+      }, timeout);
+    }
+  }
 
   _loadSampleData() {
     this.props.dispatch(
