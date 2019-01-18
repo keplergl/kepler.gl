@@ -49,25 +49,20 @@ export default function NotificationPanelFactory (
 ) {
   return class NotificationPanel extends Component {
     static propTypes = {
-      uiStateActions: PropTypes.shape({
-        removeNotification: PropTypes.func.isRequired
-      }).isRequired,
-      uiState: PropTypes.object.isRequired
+      removeNotification: PropTypes.func.isRequired,
+      notifications: PropTypes.arrayOf(PropTypes.object).isRequired
     };
 
     render() {
-      const {notifications = []} = this.props.uiState;
-      const {removeNotification} = this.props.uiStateActions;
-
       return (
         <NotificationPanelContent className="notification-panel">
-          {notifications
+          {this.props.notifications
             .filter(n => n.topic === DEFAULT_NOTIFICATION_TOPICS.global)
             .map(n => (
               <NotificationItem
                 key={n.id}
                 notification={n}
-                removeNotification={removeNotification}
+                removeNotification={this.props.removeNotification}
               />
             ))
           }

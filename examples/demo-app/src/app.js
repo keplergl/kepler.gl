@@ -150,25 +150,27 @@ class App extends Component {
     window.localStorage.setItem(BannerKey, 'true');
   };
 
-  /* eslint-disable max-nested-callbacks */
   _loadMockNotifications = () => {
-    setTimeout(() => {
-      this.props.dispatch(addNotification({message: 'Welcome to Kepler.gl'}));
+    const notifications = [
+      [{message: 'Welcome to Kepler.gl'}, 3000],
+      [{message: 'Something is wrong', type: 'error'}, 1000],
+      [{message: 'I am getting better', type: 'warning'}, 1000],
+      [{message: 'Everything is fine', type: 'success'}, 1000]
+    ];
 
-      setTimeout(() => {
-        this.props.dispatch(addNotification({message: 'Something is wrong', type: 'error'}));
-
-        setTimeout(() => {
-          this.props.dispatch(addNotification({message: 'I am getting better', type: 'warning'}));
-          setTimeout(() => {
-            this.props.dispatch(addNotification({message: 'Everything is fine', type: 'success'}));
-
-          }, 1000);
-        }, 1000);
-      }, 1000);
-    }, 3000);
+    this.__addNotifications(notifications);
   };
-  /* eslint-enable max-nested-callbacks */
+
+  __addNotifications(notifications) {
+    if (notifications && notifications.length) {
+      const [notification, timeout] = notifications[0];
+
+      window.setTimeout(() => {
+        this.props.dispatch(addNotification(notification));
+        this.__addNotifications(notifications.slice(1));
+      }, timeout);
+    }
+  }
 
   _loadSampleData() {
     this.props.dispatch(

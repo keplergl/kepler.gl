@@ -22,9 +22,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import Delete from '../common/icons/delete';
-import Info from '../common/icons/info';
-import Warning from '../common/icons/warning';
-import Checkmark from '../common/icons/checkmark';
+import {Info, Warning, Checkmark} from 'components/common/icons';
 import ReactMarkdown from 'react-markdown';
 
 const NotificationItemContent = styled.div`
@@ -39,11 +37,7 @@ const NotificationItemContent = styled.div`
   font-size: 10px;
   margin-bottom: 1rem;
   padding: 1em;
-  -webkit-border-radius: 4px;
-  -moz-border-radius: 4px;
   border-radius: 4px;
-  -webkit-box-shadow: ${props => props.theme.boxShadow};
-  -moz-box-shadow: ${props => props.theme.boxShadow};
   box-shadow: ${props => props.theme.boxShadow};
   cursor: pointer;
 `;
@@ -98,12 +92,12 @@ export default function NotificationItemFactory()
       const {notification, removeNotification} = this.props;
       return (
         <NotificationItemContent
-          className={`notification-item`}
+          className="notification-item"
           {...this.props}
           onClick={() => this.setState({isExpanded: !this.state.isExpanded})}
           isExpanded={this.state.isExpanded}>
           <NotificationIcon
-            className={`notification-item--icon`}>
+            className="notification-item--icon">
             {icons[notification.type]}
           </NotificationIcon>
           <NotificationMessage

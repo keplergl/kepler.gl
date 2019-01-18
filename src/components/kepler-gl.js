@@ -208,8 +208,8 @@ function KeplerGlFactory(
       } = visState;
 
       const notificationPanelFields = {
-        uiStateActions,
-        uiState
+        removeNotification: uiStateActions.removeNotification,
+        notifications: uiState.notifications
       };
 
       const sideFields = {
@@ -287,9 +287,7 @@ function KeplerGlFactory(
               this.root = node;
             }}
           >
-            {uiState.notifications.length !== 0 ?
-              (<NotificationPanel {...notificationPanelFields} />) : null
-            }
+            <NotificationPanel {...notificationPanelFields} />
             {!uiState.readOnly && <SidePanel {...sideFields} />}
             <div className="maps" style={{display: 'flex'}}>
               {mapContainers}

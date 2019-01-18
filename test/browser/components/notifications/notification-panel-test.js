@@ -41,10 +41,8 @@ test('Notification Panel - Show notifications', t => {
   const removeNotification = sinon.spy();
   const $ = shallow(
     <NotificationPanel
-      uiState={{notifications}}
-      uiStateActions={{
-        removeNotification
-      }}
+      notifications={notifications}
+      removeNotification={removeNotification}
       theme={theme}
     />
   );
