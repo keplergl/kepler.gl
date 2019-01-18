@@ -30,10 +30,8 @@ import {replaceLoadDataModal} from './factories/load-data-modal';
 import ExportUrlModal from './components/sharing/export-url-modal';
 
 import {
-  exportFileToCloud,
   loadRemoteMap,
-  loadSampleConfigurations,
-  setCloudLoginSuccess
+  loadSampleConfigurations
 } from './actions';
 
 const KeplerGl = require('kepler.gl/components').injectComponents([
@@ -246,22 +244,6 @@ class App extends Component {
     );
   }
 
-  _toggleCloudModal = () => {
-    // TODO: this lives only in the demo hence we use the state for now
-    // REFCOTOR using redux
-    this.setState({
-      cloudModalOpen: !this.state.cloudModalOpen
-    });
-  };
-
-  _onExportToCloud = () => {
-    this.props.dispatch(exportFileToCloud())
-  };
-
-  _onCloudLoginSuccess = () => {
-    this.props.dispatch(setCloudLoginSuccess());
-  };
-
   render() {
     const {showBanner, width, height} = this.state;
     const {sharing} = this.props.demo;
@@ -312,7 +294,6 @@ class App extends Component {
               getState={state => state.demo.keplerGl}
               width={width}
               height={height - (showBanner ? BannerHeight : 0)}
-              onSaveMap={this._toggleCloudModal}
             />
           </div>
         </GlobalStyle>
