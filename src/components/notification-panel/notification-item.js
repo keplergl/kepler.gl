@@ -21,8 +21,7 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import Delete from '../common/icons/delete';
-import {Info, Warning, Checkmark} from 'components/common/icons';
+import {Delete, Info, Warning, Checkmark} from 'components/common/icons';
 import ReactMarkdown from 'react-markdown';
 
 const NotificationItemContent = styled.div`

@@ -156,16 +156,16 @@ class App extends Component {
       [{message: 'Everything is fine', type: 'success'}, 1000]
     ];
 
-    this.__addNotifications(notifications);
+    this._addNotifications(notifications);
   };
 
-  __addNotifications(notifications) {
+  _addNotifications(notifications) {
     if (notifications && notifications.length) {
       const [notification, timeout] = notifications[0];
 
       window.setTimeout(() => {
         this.props.dispatch(addNotification(notification));
-        this.__addNotifications(notifications.slice(1));
+        this._addNotifications(notifications.slice(1));
       }, timeout);
     }
   }
