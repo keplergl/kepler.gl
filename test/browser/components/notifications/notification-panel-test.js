@@ -18,46 +18,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import window from 'global/window';
+import React from 'react';
+import test from 'tape';
+import sinon from 'sinon';
+import {shallow} from 'enzyme';
+import NotificationItemFactory from 'components/notification-panel/notification-item';
+import NotificationPanelFactory from 'components/notification-panel';
+import {createNotification} from 'utils/notifications-utils';
+import {theme} from 'styles/base';
 
-/**
- * Generate a hash string based on number of character
- * @param {number} count
- * @returns {string} hash string
- */
-export function generateHashId(count = 6) {
-  return Math.random()
-    .toString(36)
-    .substr(count);
-}
+const NotificationItem = NotificationItemFactory();
+const NotificationPanel = NotificationPanelFactory(NotificationItem);
 
-/**
- * Detect chrome
- * @returns {boolean} - yes or no
- */
-export function isChrome() {
-  // Chrome 1+
-  return window.chrome && window.chrome.webstore;
-}
+const notifications = [
+  createNotification({message: '1', type: 'success'}),
+  createNotification({message: '2', type: 'error'}),
+  createNotification({message: '3', topic: 'file'}),
+  createNotification({message: '4', type: 'info'})
+];
 
-/**
- * whether is an object
- * @returns {boolean} - yes or no
- */
-export function isPlainObject(obj) {
-  return (
-    obj === Object(obj) && typeof obj !== 'function' && !Array.isArray(obj)
+test('Notification Panel - Show notifications', t => {
+  const removeNotification = sinon.spy();
+  const $ = shallow(
+    <NotificationPanel
+      notifications={notifications}
+      removeNotification={removeNotification}
+      theme={theme}
+    />
   );
-}
 
-/**
- * whether null or undefined
- * @returns {boolean} - yes or no
- */
-export function notNullorUndefined(d) {
-  return d !== undefined && d !== null;
-}
+  // Check notifications
+  t.equal($.find('NotificationItem').length, 3, 'Should display only 3 Notifications');
 
-export function capitalizeFirstLetter(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
+  t.end();
+});
+

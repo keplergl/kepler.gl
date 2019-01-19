@@ -26,3 +26,4 @@ configure({adapter: new Adapter()});
 import './injector-test';
 import './container-test';
 import './data-table-model-test';
+import './notifications';

@@ -205,6 +205,18 @@ export const sliderHandleShadow = '0 2px 4px 0 rgba(0,0,0,0.40)';
 // Plot
 export const rangeBrushBgd = '#3A414C';
 
+// Notification
+export const notificationColors = {
+  info: '#276ef1',
+  error: '#f25138',
+  success: '#47b275',
+  warning: '#ffc043'
+};
+
+export const notificationPanelWidth = 240;
+export const notificationPanelItemWidth = notificationPanelWidth - 60;
+export const notificationPanelItemHeight = 60;
+
 export const textTruncate = {
   maxWidth: '100%',
   overflow: 'hidden',
@@ -888,7 +900,13 @@ export const theme = {
   sliderHandleShadow,
 
   // Plot
-  rangeBrushBgd
+  rangeBrushBgd,
+
+  // Notifications
+  notificationColors,
+  notificationPanelWidth,
+  notificationPanelItemWidth,
+  notificationPanelItemHeight
 };
 
 export const themeLT = {

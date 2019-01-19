@@ -18,46 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import window from 'global/window';
-
-/**
- * Generate a hash string based on number of character
- * @param {number} count
- * @returns {string} hash string
- */
-export function generateHashId(count = 6) {
-  return Math.random()
-    .toString(36)
-    .substr(count);
-}
-
-/**
- * Detect chrome
- * @returns {boolean} - yes or no
- */
-export function isChrome() {
-  // Chrome 1+
-  return window.chrome && window.chrome.webstore;
-}
-
-/**
- * whether is an object
- * @returns {boolean} - yes or no
- */
-export function isPlainObject(obj) {
-  return (
-    obj === Object(obj) && typeof obj !== 'function' && !Array.isArray(obj)
-  );
-}
-
-/**
- * whether null or undefined
- * @returns {boolean} - yes or no
- */
-export function notNullorUndefined(d) {
-  return d !== undefined && d !== null;
-}
-
-export function capitalizeFirstLetter(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
+import './data-utils-test';
+import './data-processor-test';
+import './filter-utils-test';
+import './layer-utils-test';
+import './data-scale-utils-test';
+import './interaction-utils-test';
+import './mapbox-gl-style-editor-test';
+import './notifications-utils-test';
