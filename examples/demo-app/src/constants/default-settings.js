@@ -99,3 +99,7 @@ export const KEPLER_DISCLAIMER = '* Kepler.gl will save your map data to your pe
 export const DEFAULT_LOADING_METHOD = LOADING_METHODS[0];
 
 export const DEFAULT_CLOUD_PROVIDER = 'dropbox';
+
+export const DEFAULT_FEATURE_FLAGS = {
+  cloudStorage: false
+};
