@@ -81,6 +81,8 @@ const ActionTypes = keyMirror({
   HIDE_EXPORT_DROPDOWN: null,
   OPEN_DELETE_MODAL: null,
   TOGGLE_MAP_CONTROL: null,
+  ADD_NOTIFICATION: null,
+  REMOVE_NOTIFICATION: null,
 
   // uiState > export image
   SET_RATIO: null,

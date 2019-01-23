@@ -18,46 +18,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import window from 'global/window';
+import test from 'tape';
+import {errorNotification, successNotification} from 'utils/notifications-utils';
 
-/**
- * Generate a hash string based on number of character
- * @param {number} count
- * @returns {string} hash string
- */
-export function generateHashId(count = 6) {
-  return Math.random()
-    .toString(36)
-    .substr(count);
-}
+test('#notificationsUtils -> errorNotification', t => {
+  const notification = errorNotification({message: 'test', id: 'test-1'});
 
-/**
- * Detect chrome
- * @returns {boolean} - yes or no
- */
-export function isChrome() {
-  // Chrome 1+
-  return window.chrome && window.chrome.webstore;
-}
+  t.deepEqual(notification, {
+    id: 'test-1',
+    message: 'test',
+    type: 'error',
+    topic: 'global'
+  }, 'ErrorNotification creates an error notification');
 
-/**
- * whether is an object
- * @returns {boolean} - yes or no
- */
-export function isPlainObject(obj) {
-  return (
-    obj === Object(obj) && typeof obj !== 'function' && !Array.isArray(obj)
-  );
-}
+  t.end();
+});
 
-/**
- * whether null or undefined
- * @returns {boolean} - yes or no
- */
-export function notNullorUndefined(d) {
-  return d !== undefined && d !== null;
-}
+test('#notificationsUtils -> successNotification', t => {
+  const notification = successNotification({message: 'test', id: 'test-1'});
 
-export function capitalizeFirstLetter(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
+  t.deepEqual(notification, {
+    id: 'test-1',
+    message: 'test',
+    type: 'success',
+    topic: 'global'
+  }, 'SuccessNotification creates an error notification');
+
+  t.end();
+});

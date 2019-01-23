@@ -18,46 +18,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import window from 'global/window';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
+import Base from './base';
 
-/**
- * Generate a hash string based on number of character
- * @param {number} count
- * @returns {string} hash string
- */
-export function generateHashId(count = 6) {
-  return Math.random()
-    .toString(36)
-    .substr(count);
-}
+export default class Warning extends Component {
+  static propTypes = {
+    /** Set the height of the icon, ex. '16px' */
+    height: PropTypes.string
+  };
 
-/**
- * Detect chrome
- * @returns {boolean} - yes or no
- */
-export function isChrome() {
-  // Chrome 1+
-  return window.chrome && window.chrome.webstore;
-}
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-warning',
+    stroke: '#FFF'
+  };
 
-/**
- * whether is an object
- * @returns {boolean} - yes or no
- */
-export function isPlainObject(obj) {
-  return (
-    obj === Object(obj) && typeof obj !== 'function' && !Array.isArray(obj)
-  );
-}
-
-/**
- * whether null or undefined
- * @returns {boolean} - yes or no
- */
-export function notNullorUndefined(d) {
-  return d !== undefined && d !== null;
-}
-
-export function capitalizeFirstLetter(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
+  render() {
+    return (
+      <Base viewBox="0 0 64 64" {...this.props}>
+        <path d="M0.349,49h49.302L25,1.842L0.349,49z M3.651,47L25,6.159L46.349,47H3.651z"/>
+        <rect height="18" width="2" x="24" y="18"/>
+        <rect height="3" width="2" x="24" y="39"/>
+      </Base>
+    );
+  }
 }
