@@ -138,6 +138,8 @@ export default class PointLayer extends Layer {
     return props;
   }
 
+  // TODO: fix complexity
+  /* eslint-disable complexity */
   formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
     const {
       colorScale,
@@ -228,6 +230,7 @@ export default class PointLayer extends Layer {
       getText
     };
   }
+  /* eslint-enable complexity */
 
   updateLayerMeta(allData, getPosition) {
     const bounds = this.getPointsBounds(allData, d => getPosition({data: d}));

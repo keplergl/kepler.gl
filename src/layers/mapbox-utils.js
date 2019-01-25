@@ -87,7 +87,9 @@ export function updateMapboxLayers(map, newLayers = [], oldLayers = null, mapLay
     }
   }
 
-  // insert or update newlayer
+  // insert or update new layer
+  // TODO: fix complexity
+  /* eslint-disable complexity */
   newLayers.forEach(overlay => {
     const {id: layerId, config, data, datasetId} = overlay;
     if (!data && !config) {
@@ -126,6 +128,7 @@ export function updateMapboxLayers(map, newLayers = [], oldLayers = null, mapLay
       }
     }
   });
+  /* eslint-enable complexity */
   // TODO: think about removing sources
 };
 

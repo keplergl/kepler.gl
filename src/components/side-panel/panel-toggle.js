@@ -24,7 +24,7 @@ import styled from 'styled-components';
 import {Tooltip} from 'components/common/styled-components';
 
 const propTypes = {
-  panels: PropTypes.array,
+  panels: PropTypes.arrayOf(PropTypes.object),
   activePanel: PropTypes.string,
   togglePanel: PropTypes.func
 };

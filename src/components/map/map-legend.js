@@ -81,7 +81,7 @@ const LayerSizeLegend = ({label, name}) => (
 );
 
 const propTypes = {
-  layers: PropTypes.array
+  layers: PropTypes.arrayOf(PropTypes.object)
 };
 
 const SingleColorLegend = ({layer, width}) => (

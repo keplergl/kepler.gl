@@ -35,7 +35,7 @@ export function processCsvData(rawData) {
 
   // here we assume the csv file that people uploaded will have first row
   // as name of the column
-  //TODO: add a alert at upload csv to remind define first row
+  // TODO: add a alert at upload csv to remind define first row
   const [headerRow, ...rows] = csvParseRows(rawData);
 
   if (!rows.length || !headerRow) {

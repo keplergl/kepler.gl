@@ -19,8 +19,6 @@
 // THE SOFTWARE.
 
 /* setup.js */
-import 'babel-polyfill';
-
 import {JSDOM} from 'jsdom';
 import global from 'global';
 
@@ -43,5 +41,5 @@ Object.keys(global.window).forEach(property => {
 global.navigator = {
   userAgent: 'node.js',
   platform: 'mac',
-  appName: 'kepler.glsrc/components/modals/export-data-modal.js'
+  appName: 'kepler.gl'
 };
