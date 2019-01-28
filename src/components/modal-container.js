@@ -182,6 +182,7 @@ export default function ModalContainerFactory(
       this._closeModal();
     };
 
+    /* eslint-disable complexity */
     render() {
       const {
         containerW,
@@ -380,6 +381,7 @@ export default function ModalContainerFactory(
         </ModalDialog>
       ) : null;
     }
+    /* eslint-enable complexity */
   }
 
   return ModalWrapper;

@@ -45,7 +45,7 @@ const propTypes = {
   className: PropTypes.string,
   idx: PropTypes.number,
   isConfigActive: PropTypes.bool,
-  labelRCGColorValues: PropTypes.array,
+  labelRCGColorValues: PropTypes.arrayOf(PropTypes.string),
   onUpdateLayerLabel: PropTypes.func,
   onRemoveLayer: PropTypes.func
 };

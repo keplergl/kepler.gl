@@ -28,11 +28,9 @@
 // avoid destructuring for older Node version support
 const resolve = require('path').resolve;
 const webpack = require('webpack');
-
+const path = require('path');
 const LIB_DIR = resolve(__dirname, '..');
 const SRC_DIR = resolve(LIB_DIR, './src');
-const DIST_DIR = resolve(LIB_DIR, './dist');
-const TEST_DIR = resolve(LIB_DIR, './test');
 
 // Support for hot reloading changes to the deck.gl library:
 function makeLocalDevConfig(EXAMPLE_DIR = LIB_DIR) {
@@ -48,14 +46,8 @@ function makeLocalDevConfig(EXAMPLE_DIR = LIB_DIR) {
 
     resolve: {
       alias: {
-        //   // For importing modules that are not exported at root
-        'kepler.gl/dist': DIST_DIR,
-
-        //   // Imports the kepler.gl library from the src directory in this repo
-        'kepler.gl': SRC_DIR,
-        'kepler.gl/test': TEST_DIR,
-        react: resolve(LIB_DIR, './node_modules/react'),
-        'styled-components': resolve(LIB_DIR, './node_modules/styled-components')
+        react: resolve(EXAMPLE_DIR, './node_modules/react'),
+        'styled-components': resolve(EXAMPLE_DIR, './node_modules/styled-components')
       }
     },
     module: {
@@ -67,7 +59,7 @@ function makeLocalDevConfig(EXAMPLE_DIR = LIB_DIR) {
           enforce: 'pre',
           exclude: [
             /node_modules\/react-palm/,
-            /node_modules\/react-data-grid/,
+            /node_modules\/react-data-grid/
           ]
         }
       ]
@@ -79,27 +71,7 @@ function makeLocalDevConfig(EXAMPLE_DIR = LIB_DIR) {
   };
 }
 
-const BABEL_CONFIG = {
-  // use babelrc: false to prevent babel-loader using root .babelrc
-  // https://github.com/babel/babel-preset-env/issues/399
-  // so that we can set modules: false, to avoid tree shaking
-  // https://github.com/webpack/webpack/issues/3974
-  babelrc: false,
-  presets: [
-    ['es2015', {modules: false, loose: true}],
-    'react',
-    'stage-0',
-  ].map(name => Array.isArray(name) ?
-    [require.resolve(`babel-preset-${name[0]}`), name[1]] :
-    require.resolve(`babel-preset-${name}`)),
-  plugins: [
-    'transform-decorators-legacy',
-    'transform-runtime',
-    ['module-resolver', {root: [SRC_DIR]}]
-  ].map(name => Array.isArray(name) ?
-    [require.resolve(`babel-plugin-${name[0]}`), name[1]] :
-    require.resolve(`babel-plugin-${name}`))
-};
+const astResolver = sourcePath => sourcePath.startsWith('kepler.gl') ? path.join(__dirname, `../src`) : sourcePath;
 
 const BABEL_RULE = {
   module: {
@@ -108,9 +80,54 @@ const BABEL_RULE = {
         // Compile source using bable
         test: /\.js$/,
         loader: 'babel-loader',
-        options: BABEL_CONFIG,
         include: [SRC_DIR],
-        exclude: [/node_modules/]
+        exclude: [/node_modules/],
+        options: {
+          presets: [
+            '@babel/preset-env',
+            '@babel/preset-react'
+          ],
+          plugins: [
+            ["@babel/plugin-proposal-decorators", { "legacy": true }],
+            "@babel/plugin-proposal-class-properties",
+            ["@babel/transform-runtime", {
+              "regenerator": true
+            }],
+            "@babel/plugin-syntax-dynamic-import",
+            "@babel/plugin-syntax-import-meta",
+            "@babel/plugin-proposal-json-strings",
+            "@babel/plugin-proposal-function-sent",
+            "@babel/plugin-proposal-export-namespace-from",
+            "@babel/plugin-proposal-numeric-separator",
+            "@babel/plugin-proposal-throw-expressions",
+            "@babel/plugin-proposal-export-default-from",
+            "@babel/plugin-proposal-logical-assignment-operators",
+            "@babel/plugin-proposal-optional-chaining",
+            [
+              "@babel/plugin-proposal-pipeline-operator",
+              {
+                "proposal": "minimal"
+              }
+            ],
+            "@babel/plugin-proposal-nullish-coalescing-operator",
+            "@babel/plugin-proposal-do-expressions",
+            "@babel/plugin-proposal-function-bind",
+            "@babel/plugin-transform-modules-commonjs",
+            ["inline-json-import", {}],
+            [
+              "module-resolver",
+              {
+                "root": [
+                  "../src"
+                ],
+                "alias": {
+                  "test": "../test"
+                },
+                "resolver": astResolver
+              }
+            ]
+          ]
+        }
       }
     ]
   }
@@ -140,10 +157,10 @@ function addBableSettings(config) {
 
 module.exports = (config, exampleDir) => env => {
   // npm run start-local now transpiles the lib
-  //if (env && env.local) {
+  // if (env && env.local) {
   config = addLocalDevSettings(config, exampleDir);
   config = addBableSettings(config);
-  //}
+  // }
 
   // npm run start-es6 does not transpile the lib
   // if (env && env.es6) {

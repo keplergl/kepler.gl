@@ -108,6 +108,8 @@ export default class ArcLayer extends Layer {
     return props;
   }
 
+  // TODO: fix complexity
+  /* eslint-disable complexity */
   formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
     const {
       colorScale,
@@ -187,6 +189,7 @@ export default class ArcLayer extends Layer {
       getStrokeWidth
     };
   }
+  /* eslint-enable complexity */
 
   updateLayerMeta(allData, getPosition) {
     // get bounds from arcs

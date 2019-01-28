@@ -26,7 +26,7 @@ import {generateHashId} from '../../utils/utils';
 
 const propTypes = {
   // Required
-  layers: PropTypes.array.isRequired,
+  layers: PropTypes.arrayOf(PropTypes.object).isRequired,
   onMapToggleLayer: PropTypes.func.isRequired
 };
 

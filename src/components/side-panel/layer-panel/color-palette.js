@@ -23,7 +23,7 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
 const propTypes = {
-  colors: PropTypes.array.isRequired,
+  colors: PropTypes.arrayOf(PropTypes.string).isRequired,
   height: PropTypes.number,
   className: PropTypes.string,
   isSelected: PropTypes.bool,

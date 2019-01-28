@@ -23,7 +23,7 @@ import PropTypes from 'prop-types';
 import TimeWidgetFactory from './filters/time-widget';
 
 const propTypes = {
-  filters: PropTypes.array,
+  filters: PropTypes.arrayOf(PropTypes.object),
   datasets: PropTypes.object,
   uiState: PropTypes.object,
   visStateActions: PropTypes.object,
