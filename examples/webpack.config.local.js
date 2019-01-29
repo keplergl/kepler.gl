@@ -1,7 +1,7 @@
 // Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
+// of this software and associated documentation files (the 'Software'), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
@@ -10,7 +10,7 @@
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
@@ -27,6 +27,7 @@
 
 // avoid destructuring for older Node version support
 const resolve = require('path').resolve;
+const join = require('path').join;
 const webpack = require('webpack');
 const path = require('path');
 const LIB_DIR = resolve(__dirname, '..');
@@ -46,6 +47,8 @@ function makeLocalDevConfig(EXAMPLE_DIR = LIB_DIR) {
 
     resolve: {
       alias: {
+        //   // Imports the kepler.gl library from the src directory in this repo
+        'kepler.gl': SRC_DIR,
         react: resolve(EXAMPLE_DIR, './node_modules/react'),
         'styled-components': resolve(EXAMPLE_DIR, './node_modules/styled-components')
       }
@@ -71,8 +74,6 @@ function makeLocalDevConfig(EXAMPLE_DIR = LIB_DIR) {
   };
 }
 
-const astResolver = sourcePath => sourcePath.startsWith('kepler.gl') ? path.join(__dirname, `../src`) : sourcePath;
-
 const BABEL_RULE = {
   module: {
     rules: [
@@ -88,42 +89,38 @@ const BABEL_RULE = {
             '@babel/preset-react'
           ],
           plugins: [
-            ["@babel/plugin-proposal-decorators", { "legacy": true }],
-            "@babel/plugin-proposal-class-properties",
-            ["@babel/transform-runtime", {
-              "regenerator": true
+            ['@babel/plugin-proposal-decorators', {legacy: true}],
+            '@babel/plugin-proposal-class-properties',
+            ['@babel/transform-runtime', {
+              regenerator: true
             }],
-            "@babel/plugin-syntax-dynamic-import",
-            "@babel/plugin-syntax-import-meta",
-            "@babel/plugin-proposal-json-strings",
-            "@babel/plugin-proposal-function-sent",
-            "@babel/plugin-proposal-export-namespace-from",
-            "@babel/plugin-proposal-numeric-separator",
-            "@babel/plugin-proposal-throw-expressions",
-            "@babel/plugin-proposal-export-default-from",
-            "@babel/plugin-proposal-logical-assignment-operators",
-            "@babel/plugin-proposal-optional-chaining",
+            '@babel/plugin-syntax-dynamic-import',
+            '@babel/plugin-syntax-import-meta',
+            '@babel/plugin-proposal-json-strings',
+            '@babel/plugin-proposal-function-sent',
+            '@babel/plugin-proposal-export-namespace-from',
+            '@babel/plugin-proposal-numeric-separator',
+            '@babel/plugin-proposal-throw-expressions',
+            '@babel/plugin-proposal-export-default-from',
+            '@babel/plugin-proposal-logical-assignment-operators',
+            '@babel/plugin-proposal-optional-chaining',
             [
-              "@babel/plugin-proposal-pipeline-operator",
+              '@babel/plugin-proposal-pipeline-operator',
               {
-                "proposal": "minimal"
+                proposal: 'minimal'
               }
             ],
-            "@babel/plugin-proposal-nullish-coalescing-operator",
-            "@babel/plugin-proposal-do-expressions",
-            "@babel/plugin-proposal-function-bind",
-            "@babel/plugin-transform-modules-commonjs",
-            ["inline-json-import", {}],
+            '@babel/plugin-proposal-nullish-coalescing-operator',
+            '@babel/plugin-proposal-do-expressions',
+            '@babel/plugin-proposal-function-bind',
+            '@babel/plugin-transform-modules-commonjs',
+            ['inline-json-import', {}],
             [
-              "module-resolver",
+              'module-resolver',
               {
-                "root": [
-                  "../src"
-                ],
-                "alias": {
-                  "test": "../test"
-                },
-                "resolver": astResolver
+                root: [
+                  SRC_DIR
+                ]
               }
             ]
           ]
@@ -156,17 +153,9 @@ function addBableSettings(config) {
 }
 
 module.exports = (config, exampleDir) => env => {
-  // npm run start-local now transpiles the lib
-  // if (env && env.local) {
+
   config = addLocalDevSettings(config, exampleDir);
   config = addBableSettings(config);
-  // }
-
-  // npm run start-es6 does not transpile the lib
-  // if (env && env.es6) {
-  //   config = addLocalDevSettings(config, exampleDir);
-  //   console.warn(JSON.stringify(config, null, 2));
-  // }
 
   return config;
 };
