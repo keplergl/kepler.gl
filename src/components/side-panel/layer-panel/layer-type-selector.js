@@ -27,10 +27,7 @@ import {classList} from 'components/common/item-selector/dropdown-list';
 import ItemSelector from 'components/common/item-selector/item-selector';
 import {CLOUDFRONT} from 'constants/default-settings';
 
-import {
-  PanelLabel,
-  SidePanelSection
-} from 'components/common/styled-components';
+import {SidePanelSection} from 'components/common/styled-components';
 
 const ITEM_SIZE = {
   large: 60,
@@ -68,10 +65,10 @@ const StyledListItem = styled.div`
     .layer-type-selector__item__icon {
       color: ${props => props.theme.activeColor};
       background-size: ${ITEM_SIZE.small}px ${ITEM_SIZE.small}px;
-      margin-right: 12px;  
+      margin-right: 12px;
     }
   }
-  
+
   .layer-type-selector__item__icon {
     color: ${props => props.theme.labelColor};
     display: flex;
@@ -148,7 +145,6 @@ const StyledLayerTypeSelector = styled.div`
 const LayerTypeSelector = ({layer, layerTypeOptions, onSelect}) => (
   <SidePanelSection>
     <StyledLayerTypeSelector className="layer-config__type">
-      <PanelLabel>Layer type</PanelLabel>
       <ItemSelector
         selectedItems={layerTypeOptions.find(op => op.id === layer.type)}
         options={layerTypeOptions}

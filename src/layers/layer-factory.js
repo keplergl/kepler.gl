@@ -261,21 +261,21 @@ export const LAYER_VIS_CONFIGS = {
   enable3d: {
     type: 'boolean',
     defaultValue: false,
-    label: 'Enable Height',
+    label: 'Height',
     group: PROPERTY_GROUPS.height,
     property: 'enable3d',
     description: 'Click button at top right of the map to switch to 3d view'
   },
   stroked: {
     type: 'boolean',
-    label: 'Polygon Stroke',
+    label: 'Stroke',
     defaultValue: true,
     group: PROPERTY_GROUPS.display,
     property: 'stroked'
   },
   filled: {
     type: 'boolean',
-    label: 'Polygon Fill',
+    label: 'Fill',
     defaultValue: false,
     group: PROPERTY_GROUPS.display,
     property: 'filled'
