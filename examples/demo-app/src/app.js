@@ -254,17 +254,17 @@ class App extends Component {
   _toggleCloudModal = () => {
     // TODO: this lives only in the demo hence we use the state for now
     // REFCOTOR using redux
-    this._isCloudStorageEnabled() && this.setState({
+    this.setState({
       cloudModalOpen: !this.state.cloudModalOpen
     });
   };
 
   _onExportToCloud = () => {
-    this._isCloudStorageEnabled() && this.props.dispatch(exportFileToCloud());
+    this.props.dispatch(exportFileToCloud());
   };
 
   _onCloudLoginSuccess = () => {
-    this._isCloudStorageEnabled() && this.props.dispatch(setCloudLoginSuccess());
+    this.props.dispatch(setCloudLoginSuccess());
   };
 
   render() {
