@@ -121,7 +121,7 @@ class App extends Component {
     }
 
     // load sample data
-    this._loadSampleData();
+    // this._loadSampleData();
 
     // Notifications
     // this._loadMockNotifications();
@@ -175,9 +175,9 @@ class App extends Component {
 
   _loadSampleData() {
     // this._loadTripData();
-    this._loadGeojsonData();
-    // this._loadIconData();
-    // this._loadH3HexagonData();
+    // this._loadGeojsonData();
+    this._loadIconData();
+    this._loadH3HexagonData();
   }
 
   _loadTripData() {
