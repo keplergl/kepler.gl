@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <title>Kepler.gl embedded map</title>
+</head>
+<body>
+  <!-- We will put our React component inside this div. -->
+  <div id="app">
+    <!-- Kepler.gl map will be placed here-->
+  </div>
+
+  <!-- Load React/Redux -->
+  <script src="https://unpkg.com/react@15.6.2/dist/react.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@15.6.2/dist/react-dom.min.js" crossorigin></script>
+  <script src="https://unpkg.com/redux@3.7.2/dist/redux.js" crossorigin></script>
+  <script src="https://unpkg.com/react-redux@4.4.9/dist/react-redux.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-virtualized@9.21.0/dist/umd/react-virtualized.js" crossorigin></script>
+
+  <!-- Load Kepler.gl -->
+  <script src="../../umd/keplergl.js"></script>
+
+  <!-- Load our React component. -->
+  <script src="app.js"></script>
+</body>
+</html>

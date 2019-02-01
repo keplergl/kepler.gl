@@ -37,10 +37,11 @@
     "start:custom-reducer": "npm run install-and-start -- examples/custom-reducer start-local",
     "start:web": "npm run install-and-start -- website start",
     "build": "rm -fr dist && uber-licence && babel src --out-dir dist --source-maps inline",
+    "build:umd": "webpack --progress --env.prod",
     "lint": "eslint src examples/**/src website/src",
     "check-licence": "uber-licence --dry",
     "add-licence": "uber-licence",
-    "prepublish": "uber-licence && npm run build",
+    "prepublish": "uber-licence && yarn build && yarn build:umd",
     "web": "(yarn && yarn install:web && yarn start:web)",
     "deploy": "yarn clean && yarn && yarn install:web && (cd website && yarn build && git checkout gh-pages && cp dist/* .. && git add .. && git commit -m 'Update website' && git push origin gh-pages && git checkout master)",
     "deploy:test": "yarn clean && yarn && yarn install:web && (cd website && yarn build && git checkout -B gh-pages-test gh-pages && cp dist/* .. && git add .. && git commit -m 'Update website' && git push -f test gh-pages-test:master)",
@@ -56,7 +57,8 @@
     "processors.js",
     "reducers.js",
     "schemas.js",
-    "styles.js"
+    "styles.js",
+    "umd"
   ],
   "dependencies": {
     "@deck.gl/experimental-layers": "6.3.0",
@@ -157,6 +159,7 @@
     "eslint-plugin-babel": "^5.3.0",
     "eslint-plugin-prettier": "^3.0.1",
     "eslint-plugin-react": "~7.12.4",
+    "file-loader": "^3.0.1",
     "jsdom": "^11.1.0",
     "json-loader": "^0.5.4",
     "nyc": "^11.4.1",

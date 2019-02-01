@@ -18,32 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// Reducers
-export * from 'reducers';
+// Extra helpers for redux
+// We are exposing this secause react-palm has no UMD module and
+// users need taskMiddleware to initiate their redux middle ware
+import {taskMiddleware} from 'react-palm/tasks';
 
-// Schemas
-export * from './schemas';
-
-// Actions
-export * from './actions';
-
-// Constants
-export * from './constants';
-
-// Processors
-export * from './processors';
-
-// Components
-export * from './components';
-
-// Layers
-export * from './layers';
-
-// Styles
-export * from './styles';
-
-// Middleware
-export * from './middlware';
-
-// Default export
-export {default} from './components';
+/**
+ * This method is used to enhance redux middleware and provide
+ * functionality to support react-palm
+ * @param middlewares current redux middlewares
+ * @returns {*[]} the original list of middlewares plus the react-palm middleware
+ */
+export function enhanceReduxMiddleware(middlewares = []) {
+  return [
+    ...middlewares,
+    taskMiddleware
+  ];
+}
