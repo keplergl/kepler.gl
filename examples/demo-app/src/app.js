@@ -246,6 +246,11 @@ class App extends Component {
     );
   }
 
+  _isCloudStorageEnabled = () => {
+    const {app} = this.props.demo;
+    return app.featureFlags.cloudStorage;
+  };
+
   _toggleCloudModal = () => {
     // TODO: this lives only in the demo hence we use the state for now
     // REFCOTOR using redux
@@ -255,7 +260,7 @@ class App extends Component {
   };
 
   _onExportToCloud = () => {
-    this.props.dispatch(exportFileToCloud())
+    this.props.dispatch(exportFileToCloud());
   };
 
   _onCloudLoginSuccess = () => {
@@ -282,7 +287,7 @@ class App extends Component {
           >
             <Announcement onDisable={this._disableBanner}/>
           </Banner>
-          {rootNode && (
+          {this._isCloudStorageEnabled() && rootNode && (
             <ExportUrlModal
               sharing={sharing}
               isOpen={Boolean(this.state.cloudModalOpen)}
@@ -312,7 +317,7 @@ class App extends Component {
               getState={state => state.demo.keplerGl}
               width={width}
               height={height - (showBanner ? BannerHeight : 0)}
-              onSaveMap={this._toggleCloudModal}
+              onSaveMap={this._isCloudStorageEnabled() && this._toggleCloudModal}
             />
           </div>
         </GlobalStyle>
