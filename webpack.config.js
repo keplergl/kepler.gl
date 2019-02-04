@@ -70,11 +70,6 @@ const LIBRARY_BUNDLE_CONFIG = env => ({
         test: /\.json$/,
         loader: 'json-loader',
         type: 'javascript/auto'
-      },
-      {
-        test: /\.scss$/,
-        use: ['style-loader', 'css-loader', 'sass-loader'],
-        include: [SRC_DIR]
       }
     ]
   },

@@ -43,7 +43,7 @@ export * from './layers';
 export * from './styles';
 
 // Middleware
-export * from './middlware';
+export * from './middleware';
 
 // Default export
 export {default} from './components';
