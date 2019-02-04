@@ -15,7 +15,6 @@
   <script src="https://unpkg.com/react-dom@15.6.2/dist/react-dom.min.js" crossorigin></script>
   <script src="https://unpkg.com/redux@3.7.2/dist/redux.js" crossorigin></script>
   <script src="https://unpkg.com/react-redux@4.4.9/dist/react-redux.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-virtualized@9.21.0/dist/umd/react-virtualized.js" crossorigin></script>
 
   <!--MapBox token-->
   <script>
@@ -31,7 +30,7 @@
 
   <!-- Load our React component. -->
   <script>
-    const map = (function initKeplerGl(react, reactDOM, redux, reactRedux, reactVirtualized, keplerGl, mapboxToken) {
+    const map = (function initKeplerGl(react, reactDOM, redux, reactRedux, keplerGl, mapboxToken) {
       /** STORE **/
       const reducers = redux.combineReducers({
         // mount keplerGl reducer
@@ -54,26 +53,19 @@
       /** END STORE **/
 
       /** COMPONENTS **/
-      function MapContainer() {
-        return react.createElement(
-          reactVirtualized.AutoSizer,
-          null,
-          function KeplerMap(props) {
-            return react.createElement(keplerGl.KeplerGl, {
-              mapboxApiAccessToken: mapboxToken,
-              id: 'map',
-              width: props.width || 800,
-              height: props.height || 800
-            });
-          }
-        );
-      }
-
-      function App() {
+      function App(props) {
         return react.createElement(
           'div',
           {style: {position: 'absolute', left: 0, width: '100vw', height: '100vh'}},
-          react.createElement(MapContainer)
+          react.createElement(
+            keplerGl.KeplerGl,
+            {
+              mapboxApiAccessToken: mapboxToken,
+              id: 'map',
+              width: props.width || 1200,
+              height: props.height || 800
+            }
+          )
         )
       }
 
@@ -90,7 +82,7 @@
       };
 
       /** END COMPONENTS **/
-    }(React, ReactDOM, Redux, ReactRedux, ReactVirtualized, KeplerGl, MAPBOX_TOKEN));
+    }(React, ReactDOM, Redux, ReactRedux, KeplerGl, MAPBOX_TOKEN));
 
     // Render kepler in the html page
     map.render();
