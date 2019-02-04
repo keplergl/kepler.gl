@@ -17,10 +17,92 @@
   <script src="https://unpkg.com/react-redux@4.4.9/dist/react-redux.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-virtualized@9.21.0/dist/umd/react-virtualized.js" crossorigin></script>
 
+  <!--MapBox token-->
+  <script>
+    /**
+     * Provide your MapBox Token
+     * This will be used in app.js (imported later)
+     * */
+    const MAPBOX_TOKEN = 'PROVIDE_MAPBOX_TOKEN';
+  </script>
+
   <!-- Load Kepler.gl -->
   <script src="../../umd/keplergl.js"></script>
 
   <!-- Load our React component. -->
-  <script src="app.js"></script>
+  <script>
+    const map = (function initKeplerGl(react, reactDOM, redux, reactRedux, reactVirtualized, keplerGl, mapboxToken) {
+      /** STORE **/
+      const reducers = redux.combineReducers({
+        // mount keplerGl reducer
+        keplerGl: keplerGl.keplerGlReducer
+      });
+
+      const middlewares = keplerGl.enhanceReduxMiddleware([
+        // Add other middlewares here
+      ]);
+
+      const enhancers = redux.applyMiddleware(...middlewares);
+
+      const initialState = {};
+
+      const store = redux.createStore(
+        reducers,
+        initialState,
+        redux.compose(enhancers)
+      );
+      /** END STORE **/
+
+      /** COMPONENTS **/
+      function MapContainer() {
+        return react.createElement(
+          reactVirtualized.AutoSizer,
+          null,
+          function KeplerMap(props) {
+            return react.createElement(keplerGl.KeplerGl, {
+              mapboxApiAccessToken: mapboxToken,
+              id: 'map',
+              width: props.width || 800,
+              height: props.height || 800
+            });
+          }
+        );
+      }
+
+      function App() {
+        return react.createElement(
+          'div',
+          {style: {position: 'absolute', left: 0, width: '100vw', height: '100vh'}},
+          react.createElement(MapContainer)
+        )
+      }
+
+      return {
+        render: () => {
+          reactDOM.render(react.createElement(
+            reactRedux.Provider,
+            {store},
+            react.createElement(App, null)
+          ), document.getElementById('app'));
+        },
+        // By returning store we can interact with the map, e.g. add data
+        store
+      };
+
+      /** END COMPONENTS **/
+    }(React, ReactDOM, Redux, ReactRedux, ReactVirtualized, KeplerGl, MAPBOX_TOKEN));
+
+    // Render kepler in the html page
+    map.render();
+  </script>
+  <script>
+    /**
+     * Customize map.
+     * Interact with map store to customize data and behavior
+     */
+    (function customize(keplerGl, map) {
+      // map.store.dispatch(keplerGl.toggleSplitMap());
+    }(KeplerGl, map))
+  </script>
 </body>
 </html>

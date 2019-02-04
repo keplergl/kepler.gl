@@ -23,7 +23,6 @@ const resolve = require('path').resolve;
 const SRC_DIR = resolve('./src');
 
 const LIBRARY_BUNDLE_CONFIG = env => ({
-  // Bundle the source code
   entry: {
     'KeplerGl': SRC_DIR + '/index.js'
   },
@@ -36,7 +35,7 @@ const LIBRARY_BUNDLE_CONFIG = env => ({
   output: {
     // Generate the bundle in dist folder
     path: resolve('./umd'),
-    filename: '[name].js',
+    filename: 'keplergl.js',
     globalObject: 'this',
     library: '[name]',
     libraryTarget: 'umd'
