@@ -162,6 +162,8 @@ export default class GeoJsonLayer extends Layer {
     return allData[object.properties.index];
   }
 
+  // TODO: fix complexity
+  /* eslint-disable complexity */
   formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
     const {
       colorScale,
@@ -289,6 +291,7 @@ export default class GeoJsonLayer extends Layer {
           : d.properties.radius || 1
     };
   }
+  /* eslint-enable complexity */
 
   updateLayerMeta(allData, getFeature) {
     this.dataToFeature = getGeojsonDataMaps(allData, getFeature);

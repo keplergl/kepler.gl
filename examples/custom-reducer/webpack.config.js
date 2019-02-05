@@ -31,6 +31,11 @@ const CONFIG = {
   entry: {
     app: resolve('./src/main.js')
   },
+  output: {
+    path: resolve(__dirname, "build"),
+    filename: "bundle.js",
+    publicPath: "/"
+  },
 
   devtool: 'source-map',
 

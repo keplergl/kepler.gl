@@ -36,7 +36,7 @@ const propTypes = {
   // query options
   loadingMethod: PropTypes.object.isRequired,
   currentOption: PropTypes.object.isRequired,
-  sampleMaps: PropTypes.array.isRequired,
+  sampleMaps: PropTypes.arrayOf(PropTypes.object).isRequired,
 
   // call backs
   onFileUpload: PropTypes.func.isRequired,

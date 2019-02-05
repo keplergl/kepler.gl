@@ -29,8 +29,8 @@ import {Input} from 'components/common/styled-components';
 import {roundValToStep} from 'utils/data-utils';
 
 const SliderInput = Input.extend`
-  height: 24px;
-  width: 40px;
+  height: ${props => props.theme.sliderInputHeight}px;
+  width: ${props => props.theme.sliderInputWidth}px;
   padding: 4px 6px;
   margin-left: ${props => props.flush ? 0 : 24}px;
 `;
@@ -188,7 +188,7 @@ export default class RangeSlider extends Component {
       sliderHandleWidth
     } = this.props;
 
-    const height = this.props.xAxis ? '24px' : '16px';
+    const height = isRanged && showInput ? '16px' : '24px';
     const {width} = this.state;
     const plotWidth =  width - sliderHandleWidth;
 

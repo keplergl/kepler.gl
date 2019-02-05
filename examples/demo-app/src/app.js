@@ -43,10 +43,11 @@ const KeplerGl = require('kepler.gl/components').injectComponents([
 // Sample data
 /* eslint-disable no-unused-vars */
 import sampleTripData from './data/sample-trip-data';
-import sampleGeojson from './data/sample-geojson.json';
+import sampleGeojson from './data/sample-small-geojson.json';
+import sampleGeojsonPoints from './data/sample-geojson-points.json';
 import sampleH3Data from './data/sample-hex-id-csv';
 import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
-import {updateVisData, addDataToMap, addNotification} from 'kepler.gl/actions';
+import {addDataToMap, addNotification} from 'kepler.gl/actions';
 import Processors from 'kepler.gl/processors';
 /* eslint-enable no-unused-vars */
 
@@ -173,36 +174,44 @@ class App extends Component {
   }
 
   _loadSampleData() {
+    // this._loadTripData();
+    // this._loadGeojsonData();
+    this._loadIconData();
+    this._loadH3HexagonData();
+  }
+
+  _loadTripData() {
     this.props.dispatch(
-      updateVisData(
-        // datasets
-        {
+      addDataToMap({
+        datasets: {
           info: {
             label: 'Sample Taxi Trips in New York City',
             id: 'test_trip_data'
           },
           data: sampleTripData
         },
-        // option
-        {
+        option: {
           centerMap: true,
           readOnly: false
         },
-        // config
-        {
-          filters: [
-            {
-              id: 'me',
-              dataId: 'test_trip_data',
-              name: 'tpep_pickup_datetime',
-              type: 'timeRange',
-              enlarged: true
-            }
-          ]
+        config: {
+          visState: {
+            filters: [
+              {
+                id: 'me',
+                dataId: 'test_trip_data',
+                name: 'tpep_pickup_datetime',
+                type: 'timeRange',
+                enlarged: true
+              }
+            ]
+          }
         }
-      )
+      })
     );
+  }
 
+  _loadIconData() {
     // load icon data and config and process csv file
     this.props.dispatch(
       addDataToMap({
@@ -221,15 +230,24 @@ class App extends Component {
         config: savedMapConfig
       })
     );
+  }
 
+  _loadGeojsonData() {
     // load geojson
     this.props.dispatch(
-      updateVisData({
-        info: {label: 'SF Zip Geo'},
-        data: Processors.processGeojson(sampleGeojson)
+      addDataToMap({
+        datasets: [{
+          info: {label: 'Bart Stops Geo'},
+          data: Processors.processGeojson(sampleGeojsonPoints)
+        }, {
+          info: {label: 'SF Zip Geo'},
+          data: Processors.processGeojson(sampleGeojson)
+        }]
       })
     );
+  }
 
+  _loadH3HexagonData() {
     // load h3 hexagon
     this.props.dispatch(
       addDataToMap({
@@ -246,6 +264,11 @@ class App extends Component {
     );
   }
 
+  _isCloudStorageEnabled = () => {
+    const {app} = this.props.demo;
+    return app.featureFlags.cloudStorage;
+  };
+
   _toggleCloudModal = () => {
     // TODO: this lives only in the demo hence we use the state for now
     // REFCOTOR using redux
@@ -255,7 +278,7 @@ class App extends Component {
   };
 
   _onExportToCloud = () => {
-    this.props.dispatch(exportFileToCloud())
+    this.props.dispatch(exportFileToCloud());
   };
 
   _onCloudLoginSuccess = () => {
@@ -282,7 +305,7 @@ class App extends Component {
           >
             <Announcement onDisable={this._disableBanner}/>
           </Banner>
-          {rootNode && (
+          {this._isCloudStorageEnabled() && rootNode && (
             <ExportUrlModal
               sharing={sharing}
               isOpen={Boolean(this.state.cloudModalOpen)}
@@ -312,7 +335,7 @@ class App extends Component {
               getState={state => state.demo.keplerGl}
               width={width}
               height={height - (showBanner ? BannerHeight : 0)}
-              onSaveMap={this._toggleCloudModal}
+              onSaveMap={this._isCloudStorageEnabled() && this._toggleCloudModal}
             />
           </div>
         </GlobalStyle>

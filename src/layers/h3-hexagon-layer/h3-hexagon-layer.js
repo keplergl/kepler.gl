@@ -122,6 +122,8 @@ export default class HexagonIdLayer extends Layer {
     };
   }
 
+  // TODO: fix complexity
+  /* eslint-disable complexity */
   formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
     const {
       colorScale,
@@ -208,6 +210,7 @@ export default class HexagonIdLayer extends Layer {
       hexagonCenter: this.dataToFeature.hexagonCenter
     };
   }
+  /* eslint-enable complexity */
 
   updateLayerMeta(allData, getHexId) {
     let hexagonVertices;

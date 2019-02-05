@@ -18,42 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {Tooltip} from './styled-components';
-import {Docs} from 'components/common/icons';
-import styled from 'styled-components';
+import Base from './base';
 
-const StyledInfoHelper = styled.div`
-  align-items: center;
-  margin-left: 10px;
-  color: ${props => props.theme.labelColor};
-  display: inline-flex;
+export default class VertThreeDots extends Component {
+  static propTypes = {
+    /** Set the height of the icon, ex. '16px' */
+    height: PropTypes.string
+  };
 
-  .info-helper__content {
-    max-width: 100px;
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-vert-three-dots'
+  };
+
+  render() {
+    return (
+      <Base {...this.props}>
+        <rect x="28" y="44" width="8" height="8"/>
+        <rect x="28" y="28" width="8" height="8"/>
+        <rect x="28" y="12" width="8" height="8"/>
+      </Base>
+    );
   }
-
-  :hover {
-    cursor: pointer;
-    color: ${props => props.theme.textColorHl};
-  }
-`;
-
-const propTypes = {
-  description: PropTypes.string.isRequired,
-  containerClass: PropTypes.string
-};
-
-const InfoHelper = ({description, containerClass, id}) => (
-  <StyledInfoHelper className={`info-helper ${containerClass || ''}`} data-tip data-for={id}>
-    <Docs height="16px"/>
-    <Tooltip id={id} effect="solid">
-      <div className="info-helper__content">{description}</div>
-    </Tooltip>
-  </StyledInfoHelper>
-);
-
-InfoHelper.propTypes = propTypes;
-
-export default InfoHelper;
+}

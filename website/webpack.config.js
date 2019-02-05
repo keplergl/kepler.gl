@@ -25,31 +25,60 @@ const rootDir = join(__dirname, '..');
 const libSources = join(rootDir, 'src');
 
 const BABEL_CONFIG = {
-  // use babelrc: false to prevent babel-loader using root .babelrc
-  // https://github.com/babel/babel-preset-env/issues/399
-  // so that we can set modules: false, to avoid tree shaking
-  // https://github.com/webpack/webpack/issues/3974
-  babelrc: false,
-  presets: [['es2015', {modules: false, loose: true}], 'react', 'stage-0'].map(
-    name =>
-      Array.isArray(name)
-        ? [require.resolve(`babel-preset-${name[0]}`), name[1]]
-        : require.resolve(`babel-preset-${name}`)
-  ),
+  presets: [
+    '@babel/preset-env',
+    '@babel/preset-react'
+  ],
   plugins: [
-    'transform-decorators-legacy',
-    'transform-runtime',
-    ['module-resolver', {root: [libSources]}]
-  ].map(
-    name =>
-      Array.isArray(name)
-        ? [require.resolve(`babel-plugin-${name[0]}`), name[1]]
-        : require.resolve(`babel-plugin-${name}`)
-  )
+    ["@babel/plugin-proposal-decorators", { "legacy": true }],
+    "@babel/plugin-proposal-class-properties",
+    ["@babel/transform-runtime", {
+      "regenerator": true
+    }],
+    "@babel/plugin-syntax-dynamic-import",
+    "@babel/plugin-syntax-import-meta",
+    "@babel/plugin-proposal-json-strings",
+    "@babel/plugin-proposal-function-sent",
+    "@babel/plugin-proposal-export-namespace-from",
+    "@babel/plugin-proposal-numeric-separator",
+    "@babel/plugin-proposal-throw-expressions",
+    "@babel/plugin-proposal-export-default-from",
+    "@babel/plugin-proposal-logical-assignment-operators",
+    "@babel/plugin-proposal-optional-chaining",
+    [
+      "@babel/plugin-proposal-pipeline-operator",
+      {
+        "proposal": "minimal"
+      }
+    ],
+    "@babel/plugin-proposal-nullish-coalescing-operator",
+    "@babel/plugin-proposal-do-expressions",
+    "@babel/plugin-proposal-function-bind",
+    "@babel/plugin-transform-modules-commonjs",
+    ["inline-json-import", {}],
+    [
+      "module-resolver",
+      {
+        "root": [
+          "../src"
+        ],
+        "alias": {
+          "test": "../test"
+        }
+      }
+    ]
+  ]
 };
 
 const COMMON_CONFIG = {
-  entry: ['./src/main'],
+  entry: [
+    './src/main'
+  ],
+  output: {
+    path: resolve(__dirname, "build"),
+    filename: "bundle.js",
+    publicPath: "/"
+  },
 
   resolve: {
     alias: {
@@ -69,7 +98,6 @@ const COMMON_CONFIG = {
         test: /\.js$/,
         loader: 'babel-loader',
         options: BABEL_CONFIG,
-        include: [resolve('..'), libSources],
         exclude: [/node_modules/]
       },
       {
