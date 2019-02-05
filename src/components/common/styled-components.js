@@ -274,6 +274,8 @@ export const StyledPanelDropdown = styled.div`
   border-radius: ${props => props.theme.panelBorderRadius};
   margin-top: 2px;
   max-height: 500px;
+  position: relative;
+  z-index: 999;
 `;
 
 export const ButtonGroup = styled.div`

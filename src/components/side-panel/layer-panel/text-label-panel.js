@@ -21,11 +21,11 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 
-import {PanelLabel} from 'components/common/styled-components';
+import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
 import ColorSelector from './color-selector';
 import FieldSelector from 'components/common/field-selector';
 import ItemSelector from 'components/common/item-selector/item-selector';
-import LayerConfigGroup from './layer-config-group';
+import LayerConfigGroup, {ConfigGroupCollapsibleContent} from './layer-config-group';
 import RangeSlider from 'components/common/range-slider';
 
 import {LAYER_TEXT_CONFIGS} from 'layers/layer-factory';
@@ -68,36 +68,45 @@ export default class LayerConfigurator extends Component {
       textLabel
     } = this.props;
     return (
-      <LayerConfigGroup label={'text'}>
-        <PanelLabel>{`Show text label based on`}</PanelLabel>
-          <FieldSelector
-            fields={visConfiguratorProps.fields}
-            value={textLabel.field && textLabel.field.name || 'select a field'}
-            placeholder={'empty'}
-            onSelect={this.onAttributeChange('field')}
-            erasable
-          />
-          <PanelLabel>{`Font size`}</PanelLabel>
-          <RangeSlider
-            {...LAYER_TEXT_CONFIGS.fontSize}
-            value1={textLabel.size}
-            onChange={v => this.onAttributeChange('size')(v[1])}
-          />
-          <PanelLabel>{`Font color`}</PanelLabel>
-          <ColorSelector
-            colorSets={[
-              {
-                selectedColor: textLabel.color,
-                setColor: this.onAttributeChange('color')
-              }
-            ]}
-          />
-          <PanelLabel>{`Text anchor`}</PanelLabel>
-          <ItemSelector
-            {...LAYER_TEXT_CONFIGS.textAnchor}
-            selectedItems={textLabel.anchor}
-            onChange={this.onChangeTextAnchor}
-          />
+      <LayerConfigGroup label={'label'} collapsible>
+          <SidePanelSection>
+            <FieldSelector
+              fields={visConfiguratorProps.fields}
+              value={textLabel.field && textLabel.field.name || 'select a field'}
+              placeholder={'empty'}
+              onSelect={this.onAttributeChange('field')}
+              erasable
+            />
+          </SidePanelSection>
+          <ConfigGroupCollapsibleContent>
+            <SidePanelSection>
+              <PanelLabel>{`Font size`}</PanelLabel>
+              <RangeSlider
+                {...LAYER_TEXT_CONFIGS.fontSize}
+                value1={textLabel.size}
+                onChange={v => this.onAttributeChange('size')(v[1])}
+              />
+            </SidePanelSection>
+            <SidePanelSection>
+            <PanelLabel>{`Font color`}</PanelLabel>
+              <ColorSelector
+                colorSets={[
+                  {
+                    selectedColor: textLabel.color,
+                    setColor: this.onAttributeChange('color')
+                  }
+                ]}
+              />
+            </SidePanelSection>
+            <SidePanelSection>
+              <PanelLabel>{`Text anchor`}</PanelLabel>
+              <ItemSelector
+                {...LAYER_TEXT_CONFIGS.textAnchor}
+                selectedItems={textLabel.anchor}
+                onChange={this.onChangeTextAnchor}
+              />
+            </SidePanelSection>
+          </ConfigGroupCollapsibleContent>
       </LayerConfigGroup>
     );
   }
