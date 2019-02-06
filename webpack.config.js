@@ -35,7 +35,7 @@ const LIBRARY_BUNDLE_CONFIG = env => ({
   output: {
     // Generate the bundle in dist folder
     path: resolve('./umd'),
-    filename: 'keplergl.js',
+    filename: 'keplergl.min.js',
     globalObject: 'this',
     library: '[name]',
     libraryTarget: 'umd'

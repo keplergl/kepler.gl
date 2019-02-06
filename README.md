@@ -59,11 +59,11 @@ kepler.gl is built upon [mapbox][mapbox]. You will need a [Mapbox Access Token][
 If you don't use a module bundler, it's also fine. Kepler.gl npm package includes precompiled production UMD builds in the (umd folder)[https://unpkg.com/kepler.gl/umd].
 You can add the script tag to your html file as it follows:
 ```html
-<script src="https://unpkg.com/kepler.gl/umd/keplergl.js"></script>
+<script src="https://unpkg.com/kepler.gl/umd/keplergl.min.js"></script>
 ```
 or if you would like, you can load a specific version
 ```html
-<script src="https://unpkg.com/kepler.gl@0.2.1/umd/keplergl.js"></script>
+<script src="https://unpkg.com/kepler.gl@0.2.1/umd/keplergl.min.js"></script>
 ```
 
 ## Develop kepler.gl
