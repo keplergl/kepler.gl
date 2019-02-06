@@ -14,6 +14,22 @@ Each version should:
   Security to invite users to upgrade in case of vulnerabilities.
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
+#### [0.2.1] - Feb 6 2019
+- (HEAD -> master, origin/master) [Feature] Collapsible layer group (#350)
+- [Enhancement] Added default feature flags to disable dropbox (#338)
+- [Bug]: fix alias and module resolve in webpack.config.local (#348)
+- [Enhancement] Upgraded Webpack, Babel and Eslint (#342)
+- [Feature] Notification systems with new UI panel and helpers to generate messages (#333)
+- GitHub browser history (#321)
+- [Bug] Fix Maximum call stack size exceeded when double click (#323)
+- [Docs] Export identity actions individually and add JSDocs (#290)
+- [Docs] Edit PR guidance in contribution guidelines (#320)
+- [Docs] Add Contribution Guidelines (#261)
+- (overide-style) [Enhancement] Upgrade type-analyzer to pass 0/1 as integer (#317)
+- [Typo] Misspellings in comments (#314)
+- [Housekeeping] Update Copyright header to 2019, Happy New Year (#316)
+- Feat: Implemented Dropbox integration (#312)
+
 #### [0.2.1-beta.1] - Dec 17 2018
 - [Feature] Added a Tiled 3D Building Deck.gl Layer (#270)
 - [Enhancement] Fossa Integration (#309)
