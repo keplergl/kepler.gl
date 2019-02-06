@@ -24,7 +24,7 @@ const SRC_DIR = resolve('./src');
 
 const LIBRARY_BUNDLE_CONFIG = env => ({
   entry: {
-    'KeplerGl': SRC_DIR + '/index.js'
+    KeplerGl: SRC_DIR + '/index.js'
   },
 
   // Silence warnings about big bundles
@@ -56,6 +56,20 @@ const LIBRARY_BUNDLE_CONFIG = env => ({
       commonjs: 'react-dom',
       amd: 'react-dom',
       umd: 'react-dom'
+    },
+    redux: {
+      root: 'Redux',
+      commonjs2: 'redux',
+      commonjs: 'redux',
+      amd: 'redux',
+      umd: 'redux'
+    },
+    'react-redux': {
+      root: 'ReactRedux',
+      commonjs2: 'react-redux',
+      commonjs: 'react-redux',
+      amd: 'react-redux',
+      umd: 'react-redux'
     }
   },
 
