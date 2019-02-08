@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -45,7 +45,7 @@ const propTypes = {
   className: PropTypes.string,
   idx: PropTypes.number,
   isConfigActive: PropTypes.bool,
-  labelRCGColorValues: PropTypes.array,
+  labelRCGColorValues: PropTypes.arrayOf(PropTypes.number),
   onUpdateLayerLabel: PropTypes.func,
   onRemoveLayer: PropTypes.func
 };
@@ -62,15 +62,15 @@ const StyledLayerPanelHeader = StyledPanelHeader.extend`
   :hover {
     cursor: pointer;
     background-color: ${props => props.theme.panelBackgroundHover};
-    
+
     .layer__drag-handle {
       opacity: 1;
     }
-    
+
     .layer__remove-layer {
-      opacity: 1;  
+      opacity: 1;
     }
-    
+
     .layer__enable-config {
       color: white
     }
@@ -102,7 +102,7 @@ const DragHandle = styled.div`
   display: flex;
   align-items: center;
   opacity: 0;
-  
+
   :hover {
     cursor: move;
     color: ${props => props.theme.textColorHl};

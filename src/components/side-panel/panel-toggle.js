@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@ import styled from 'styled-components';
 import {Tooltip} from 'components/common/styled-components';
 
 const propTypes = {
-  panels: PropTypes.array,
+  panels: PropTypes.arrayOf(PropTypes.object),
   activePanel: PropTypes.string,
   togglePanel: PropTypes.func
 };
@@ -53,37 +53,40 @@ const PanelTab = styled.div.attrs({
   margin-right: 12px;
   padding-bottom: 6px;
   width: 30px;
-  
+
   :hover {
     cursor: pointer;
     color: ${props => props.theme.textColorHl};
   }
 `;
 
-const PanelToggle = ({panels, activePanel, togglePanel}) => (
-  <PanelHeaderBottom>
-    {panels.map(panel => (
-      <PanelTab
-        key={panel.id}
-        data-tip
-        data-for={`${panel.id}-nav`}
-        active={activePanel === panel.id}
-        onClick={() => togglePanel(panel.id)}
-      >
-        <panel.iconComponent height="20px" />
-        <Tooltip
-          id={`${panel.id}-nav`}
-          effect="solid"
-          delayShow={500}
-          place="bottom"
+const PanelToggleFactory = () => {
+  const PanelToggle = ({panels, activePanel, togglePanel}) => (
+    <PanelHeaderBottom>
+      {panels.map(panel => (
+        <PanelTab
+          key={panel.id}
+          data-tip
+          data-for={`${panel.id}-nav`}
+          active={activePanel === panel.id}
+          onClick={() => togglePanel(panel.id)}
         >
-          <span>{panel.label || panel.id}</span>
-        </Tooltip>
-      </PanelTab>
-    ))}
-  </PanelHeaderBottom>
-);
+          <panel.iconComponent height="20px" />
+          <Tooltip
+            id={`${panel.id}-nav`}
+            effect="solid"
+            delayShow={500}
+            place="bottom"
+          >
+            <span>{panel.label || panel.id}</span>
+          </Tooltip>
+        </PanelTab>
+      ))}
+    </PanelHeaderBottom>
+  );
 
-PanelToggle.propTypes = propTypes;
+  PanelToggle.propTypes = propTypes;
+  return PanelToggle;
+}
 
-export default PanelToggle;
+export default PanelToggleFactory;

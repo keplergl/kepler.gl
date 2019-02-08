@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
 const propTypes = {
-  colors: PropTypes.array.isRequired,
+  colors: PropTypes.arrayOf(PropTypes.string).isRequired,
   height: PropTypes.number,
   className: PropTypes.string,
   isSelected: PropTypes.bool,

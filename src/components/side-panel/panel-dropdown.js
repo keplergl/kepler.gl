@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,13 +23,20 @@ import PropTypes from 'prop-types';
 import {StyledPanelDropdown} from 'components/common/styled-components';
 import listensToClickOutside from 'react-onclickoutside';
 
-class PanelDropdown extends Component {
+class ClickOutsideCloseDropdown extends Component {
   static propTypes = {
-    onClose: PropTypes.func
+    onClose: PropTypes.func,
+    show: PropTypes.bool
+  };
+
+  static defaultProps = {
+    show: true
   };
 
   handleClickOutside = (e) => {
-    this.props.onClose(e);
+    if (typeof this.props.onClose === 'function' && this.props.show) {
+      this.props.onClose(e);
+    }
   };
 
   render() {
@@ -41,4 +48,4 @@ class PanelDropdown extends Component {
   }
 };
 
-export default listensToClickOutside(PanelDropdown);
+export default listensToClickOutside(ClickOutsideCloseDropdown);

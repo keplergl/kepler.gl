@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -41,34 +41,38 @@ test('Processor -> getFieldsFromData', t => {
     time_str: 'January 1st 2017 11:00pm ',
     value: '4',
     surge: '1.2',
-    isTrip: 'true'
+    isTrip: 'true',
+    zeroOnes: '0'
   }, {
     time: '2016-09-17 00:30:08',
     trip_epoch: '1472860800000',
     time_str: 'January 1st 2017 11:01pm ',
     value: '3',
     surge: null,
-    isTrip: 'false'
+    isTrip: 'false',
+    zeroOnes: '1'
   }, {
     time: null,
     trip_epoch: null,
     time_str: 'January 1st, 2017 11:02pm ',
     value: '2',
     surge: '1.3',
-    isTrip: null
+    isTrip: null,
+    zeroOnes: '1'
   }, {
     time: null,
     trip_epoch: null,
     time_str: 'January 1st, 2017 11:02pm ',
     value: '0',
     surge: '1.4',
-    isTrip: null
+    isTrip: null,
+    zeroOnes: '0'
   }];
 
   const headerRow = Object.keys(data[0]);
   const fields = getFieldsFromData(data, headerRow);
   const expectedFieldTypes =
-    ['timestamp', 'timestamp', 'timestamp', 'integer', 'real', 'boolean'];
+    ['timestamp', 'timestamp', 'timestamp', 'integer', 'real', 'boolean', 'integer'];
 
   fields.forEach((f, i) =>
     t.equal(f.type, expectedFieldTypes[i],

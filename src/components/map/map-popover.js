@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -272,15 +272,15 @@ const CellInfo = ({data, layer}) => {
 
   return (
     <tbody>
-      <Row name={'total points'} key="count" value={data.points.length} />
-      {colorField ? (
+      <Row name={'total points'} key="count" value={data.points && data.points.length} />
+      {colorField && layer.visualChannels.color ? (
         <Row
           name={layer.getVisualChannelDescription('color').measure}
           key="color"
           value={data.colorValue || 'N/A'}
         />
       ) : null}
-      {sizeField ? (
+      {sizeField && layer.visualChannels.size ? (
         <Row
           name={layer.getVisualChannelDescription('size').measure}
           key="size"

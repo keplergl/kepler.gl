@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +31,11 @@ const CONFIG = {
   entry: {
     app: resolve('./src/main.js')
   },
+  output: {
+    path: resolve(__dirname, "build"),
+    filename: "bundle.js",
+    publicPath: "/"
+  },
 
   devtool: 'source-map',
 
@@ -60,9 +65,14 @@ const CONFIG = {
     fs: 'empty'
   },
 
+  // to support browser history api and remove the '#' sign
+  devServer: {
+    historyApiFallback: true
+  },
+
   // Optional: Enables reading mapbox token from environment variable
   plugins: [
-    new webpack.EnvironmentPlugin(['MapboxAccessToken'])
+    new webpack.EnvironmentPlugin(['MapboxAccessToken', 'DropboxClientId'])
   ]
 };
 

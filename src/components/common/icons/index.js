@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,8 @@ export {default as Add} from './add';
 export {default as ArrowDown} from './arrow-down';
 export {default as ArrowLeft} from './arrow-left';
 export {default as ArrowRight} from './arrow-right';
+export {default as Base} from './base';
+export {default as Checkmark} from './checkmark';
 export {default as Clock} from './clock';
 export {default as Close} from './close';
 export {default as Crosshairs} from './crosshairs';
@@ -39,6 +41,7 @@ export {default as Files} from './files';
 export {default as FileType} from './file-type';
 export {default as FilterFunnel} from './filter-funnel';
 export {default as Histogram} from './histogram';
+export {default as Info} from './info';
 export {default as Layers} from './layers';
 export {default as LeftArrow} from './left-arrow';
 export {default as Legend} from './legend';
@@ -61,5 +64,8 @@ export {default as Table} from './table';
 export {default as Trash} from './trash';
 export {default as Upload} from './upload';
 export {default as VertDots} from './vert-dots';
+export {default as VertThreeDots} from './vert-three-dots';
 export {default as IconWrapper} from './base';
 export {default as CodeAlt} from './code-alt';
+export {default as Warning} from './warning';
+

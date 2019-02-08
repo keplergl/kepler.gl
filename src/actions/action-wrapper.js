@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,7 @@
 export const FORWARD = '@redux-forward/FORWARD';
 export const ADDRESS_PREFIX = '@@KG_';
 
-import curry from 'curry';
+import curry from 'lodash.curry';
 
 /*
  * wrap an action into a forward action

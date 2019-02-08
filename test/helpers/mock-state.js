@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -97,7 +97,7 @@ function mockStateWithFileUpload() {
   // replace layer id and color with controlled value for easy testing
   updatedState.visState.layers.forEach((l, i) => {
     l.id = `${l.type}-${i}`;
-    l.config.color = [i, i, i]
+    l.config.color = [i, i, i];
   });
 
   return Immutable.fromJS(updatedState);
@@ -158,6 +158,22 @@ function mockStateWithLayerDimensions(state) {
     'color'
   ];
 
+  const textLabelField = initialState.visState.datasets['190vdll3di'].fields.find(
+    f => f.name === 'date'
+  );
+
+  const textLabelPayload = [
+    layer0,
+    {
+      textLabel: {
+        field: textLabelField,
+        color: [255, 0, 0],
+        size: 100,
+        offset: [10, 0],
+        anchor: 'start'
+      }
+    }
+  ]
   // layers = [ 'point', 'geojson', 'hexagon' ]
   const reorderPayload = [[2, 0, 1]];
 
@@ -171,8 +187,14 @@ function mockStateWithLayerDimensions(state) {
     // change colorRange
     {action: VisStateActions.layerVisConfigChange, payload: colorRangePayload},
 
+    // change textLabel
+    {action: VisStateActions.layerConfigChange, payload: textLabelPayload},
+
     // add layer
-    {action: VisStateActions.addLayer, payload: [{id: 'hexagon-2', color: [2, 2, 2]}]}
+    {
+      action: VisStateActions.addLayer,
+      payload: [{id: 'hexagon-2', color: [2, 2, 2]}]
+    }
   ]);
 
   const newLayer = prepareState.visState.layers[2];
@@ -216,9 +238,12 @@ function mockStateWithCustomMapStyle(state) {
     isValid: true,
     label: 'Smoothie the Cat',
     icon: 'data:image/png;base64,xyz',
-    style: {version: 'v8', id: 'smoothie_the_cat', layers: [
-      {id: 'background'}, {id: 'road'}, {id: 'label'}
-    ], name: 'Smoothie the Cat'},
+    style: {
+      version: 'v8',
+      id: 'smoothie_the_cat',
+      layers: [{id: 'background'}, {id: 'road'}, {id: 'label'}],
+      name: 'Smoothie the Cat'
+    },
     url: 'mapbox://styles/shanhe/smoothie.the.cat'
   };
 
@@ -230,14 +255,16 @@ function mockStateWithCustomMapStyle(state) {
     },
     {
       action: MapStyleActions.loadCustomMapStyle,
-      payload: [{
-        style: testCustomMapStyle.style
-      }]
+      payload: [
+        {
+          style: testCustomMapStyle.style
+        }
+      ]
     },
     {
       action: MapStyleActions.addCustomMapStyle,
       payload: [{}]
-    },
+    }
   ]);
 
   return Immutable.fromJS(updatedState);
@@ -290,6 +317,13 @@ export const expectedSavedLayer0 = {
       colorAggregation: 'count',
       sizeAggregation: 'count',
       enable3d: false
+    },
+    textLabel: {
+      field: null,
+      color: [255, 255, 255],
+      size: 50,
+      offset: [0, 0],
+      anchor: 'middle'
     }
   },
   visualChannels: {
@@ -297,7 +331,7 @@ export const expectedSavedLayer0 = {
     colorScale: 'quantile',
     sizeField: null,
     sizeScale: 'linear'
-  }
+  },
 };
 
 export const expectedLoadedLayer0 = {
@@ -342,7 +376,14 @@ export const expectedLoadedLayer0 = {
     colorField: null,
     colorScale: 'quantile',
     sizeField: null,
-    sizeScale: 'linear'
+    sizeScale: 'linear',
+    textLabel: {
+      field: null,
+      color: [255, 255, 255],
+      size: 50,
+      offset: [0, 0],
+      anchor: 'middle'
+    }
   }
 };
 
@@ -358,6 +399,16 @@ export const expectedSavedLayer1 = {
       lng: 'gps_data.lng',
       altitude: null
     },
+    textLabel: {
+      field: {
+        name: 'date',
+        type: 'date'
+      },
+      color: [255, 0, 0],
+      size: 100,
+      offset: [10, 0],
+      anchor: 'start'
+    },
     isVisible: true,
     visConfig: {
       radius: 10,
@@ -369,17 +420,9 @@ export const expectedSavedLayer1 = {
         name: 'Uber Viz Sequential 2',
         type: 'sequential',
         category: 'Uber',
-        colors: [
-          '#E6FAFA',
-          '#AAD7DA',
-          '#68B4BB',
-          '#00939C'
-        ]
+        colors: ['#E6FAFA', '#AAD7DA', '#68B4BB', '#00939C']
       },
-      radiusRange: [
-        0,
-        50
-      ],
+      radiusRange: [0, 50],
       'hi-precision': false
     }
   },
@@ -417,12 +460,7 @@ export const expectedLoadedLayer1 = {
         name: 'Uber Viz Sequential 2',
         type: 'sequential',
         category: 'Uber',
-        colors: [
-          '#E6FAFA',
-          '#AAD7DA',
-          '#68B4BB',
-          '#00939C'
-        ]
+        colors: ['#E6FAFA', '#AAD7DA', '#68B4BB', '#00939C']
       },
       radiusRange: [0, 50],
       'hi-precision': false
@@ -433,29 +471,39 @@ export const expectedLoadedLayer1 = {
     },
     colorScale: 'ordinal',
     sizeField: null,
-    sizeScale: 'linear'
+    sizeScale: 'linear',
+    textLabel: {
+      field: {
+        name: 'date',
+        type: 'date'
+      },
+      color: [255, 0, 0],
+      size: 100,
+      offset: [10, 0],
+      anchor: 'start'
+    }
   }
 };
 
 export const expectedSavedLayer2 = {
-  id :'geojson-1',
-  type :'geojson',
-  config :{
-    dataId :'ieukmgne',
-    label :'zip',
-    color :[1, 1, 1],
-    columns :{
-      geojson :'_geojson'
+  id: 'geojson-1',
+  type: 'geojson',
+  config: {
+    dataId: 'ieukmgne',
+    label: 'zip',
+    color: [1, 1, 1],
+    columns: {
+      geojson: '_geojson'
     },
-    isVisible :true,
-    visConfig :{
-      opacity :0.8,
-      thickness :2,
-      colorRange :{
-        name :'Global Warming',
-        type :'sequential',
-        category :'Uber',
-        colors :[
+    isVisible: true,
+    visConfig: {
+      opacity: 0.8,
+      thickness: 0.5,
+      colorRange: {
+        name: 'Global Warming',
+        type: 'sequential',
+        category: 'Uber',
+        colors: [
           '#5A1846',
           '#900C3F',
           '#C70039',
@@ -464,27 +512,34 @@ export const expectedSavedLayer2 = {
           '#FFC300'
         ]
       },
-      radius :10,
-      sizeRange :[0, 10],
-      radiusRange :[0, 50],
-      heightRange :[0, 500],
-      elevationScale :5,
-      'hi-precision' :false,
-      stroked :true,
-      filled :false,
-      enable3d :false,
-      wireframe :false
+      radius: 10,
+      sizeRange: [0, 10],
+      radiusRange: [0, 50],
+      heightRange: [0, 500],
+      elevationScale: 5,
+      'hi-precision': false,
+      stroked: true,
+      filled: false,
+      enable3d: false,
+      wireframe: false
+    },
+    textLabel: {
+      field: null,
+      color: [255, 255, 255],
+      size: 50,
+      offset: [0, 0],
+      anchor: 'middle'
     }
   },
-  visualChannels :{
-    colorField :null,
-    colorScale :'quantile',
-    sizeField :null,
-    sizeScale :'linear',
-    heightField :null,
-    heightScale :'linear',
-    radiusField :null,
-    radiusScale :'linear'
+  visualChannels: {
+    colorField: null,
+    colorScale: 'quantile',
+    sizeField: null,
+    sizeScale: 'linear',
+    heightField: null,
+    heightScale: 'linear',
+    radiusField: null,
+    radiusScale: 'linear'
   }
 };
 
@@ -501,7 +556,7 @@ export const expectedLoadedLayer2 = {
     isVisible: true,
     visConfig: {
       opacity: 0.8,
-      thickness: 2,
+      thickness: 0.5,
       colorRange: {
         name: 'Global Warming',
         type: 'sequential',
@@ -533,6 +588,13 @@ export const expectedLoadedLayer2 = {
     heightField: null,
     heightScale: 'linear',
     radiusField: null,
-    radiusScale: 'linear'
+    radiusScale: 'linear',
+    textLabel: {
+      field: null,
+      color: [255, 255, 255],
+      size: 50,
+      offset: [0, 0],
+      anchor: 'middle'
+    }
   }
 };

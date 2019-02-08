@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@ const StyledLink = styled.a`
   text-decoration: underline !important;
   color: white;
   font-weight: 500;
-  
+
   :hover {
     cursor: pointer;
   }
@@ -39,15 +39,15 @@ const DisableBanner = styled.div`
   display: inline-block;
   margin-left: 20px;
 `;
-const FormLink = 'https://docs.google.com/forms/d/1o2VbSIKiRfoTJLi6nGzxNHgDA1Yu-UnNOHglPJvPWpc/edit';
+const FormLink = 'https://www.informationisbeautifulawards.com/showcase/3082-kepler-gl';
 
 const Announcement = ({onDisable}) => (
   <StyledText>
-    <span>Thanks for your interests in kepler.gl. Please help us make it better by taking </span>
-    <StyledLink target="_blank" href={FormLink}>this survey</StyledLink>.
-    <span> It only takes 5 minutes!</span>
+    <span>Kepler.gl is shortlisted in the Information is Beautiful Award.  </span>
+    <StyledLink target="_blank" href={FormLink}>Vote for us</StyledLink>
+    <span>  before Fri 19th Oct!</span>
     {onDisable ? <DisableBanner>
-      <StyledLink onClick={onDisable}>Already took it</StyledLink>
+      <StyledLink onClick={onDisable}>Already Voted!</StyledLink>
     </DisableBanner> : null}
   </StyledText>
 );

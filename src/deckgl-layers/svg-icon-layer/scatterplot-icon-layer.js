@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,7 +19,8 @@
 // THE SOFTWARE.
 
 import {ScatterplotLayer} from 'deck.gl';
-import {GL, Geometry, Model} from 'luma.gl';
+import {Geometry, Model} from 'luma.gl';
+import GL from 'luma.gl/constants';
 
 export default class ScatterplotIconLayer extends ScatterplotLayer {
   _getModel(gl) {
@@ -31,11 +32,15 @@ export default class ScatterplotIconLayer extends ScatterplotLayer {
     const geometry = iconGeometry
       ? new Geometry({
           drawMode: GL.TRIANGLES,
-          positions: new Float32Array(iconGeometry)
+          attributes: {
+            positions: new Float32Array(iconGeometry)
+          }
         })
       : new Geometry({
           drawMode: GL.TRIANGLE_FAN,
-          positions: new Float32Array(defaultPos)
+          attributes: {
+            positions: new Float32Array(defaultPos)
+          }
         });
 
     return new Model(gl, {

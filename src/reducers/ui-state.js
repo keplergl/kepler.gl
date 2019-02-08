@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +33,8 @@ import {
   hideExportDropdownUpdater,
   toggleSidePanelUpdater,
   toggleMapControlUpdater,
+  addNotificationUpdater,
+  removeNotificationUpdater,
 
   // export image
   cleanupExportImage,
@@ -41,6 +43,7 @@ import {
   setResolutionUpdater,
   startExportingImage,
   toggleLegendUpdater,
+
   // export data
   setExportSelectedDatasetUpdater,
   setExportDataTypeUpdater,
@@ -87,6 +90,8 @@ export const DEFAULT_EXPORT_DATA = {
   data: false // this is used in modal config export
 };
 
+export const DEFAULT_NOTIFICATIONS = [];
+
 export const INITIAL_UI_STATE = {
   readOnly: false,
   activeSidePanel: DEFAULT_ACTIVE_SIDE_PANEL,
@@ -98,7 +103,9 @@ export const INITIAL_UI_STATE = {
   // export data modal ui
   exportData: DEFAULT_EXPORT_DATA,
   // map control panels
-  mapControls: DEFAULT_MAP_CONTROLS
+  mapControls: DEFAULT_MAP_CONTROLS,
+  // ui notifications
+  notifications: DEFAULT_NOTIFICATIONS
 };
 
 const actionHandler = {
@@ -108,6 +115,8 @@ const actionHandler = {
   [ActionTypes.HIDE_EXPORT_DROPDOWN]: hideExportDropdownUpdater,
   [ActionTypes.OPEN_DELETE_MODAL]: openDeleteModalUpdater,
   [ActionTypes.TOGGLE_MAP_CONTROL]: toggleMapControlUpdater,
+  [ActionTypes.ADD_NOTIFICATION]: addNotificationUpdater,
+  [ActionTypes.REMOVE_NOTIFICATION]: removeNotificationUpdater,
 
   [ActionTypes.SET_RATIO]: setRatioUpdater,
   [ActionTypes.SET_RESOLUTION]: setResolutionUpdater,

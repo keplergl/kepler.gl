@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,9 @@ const {
   SHOW_EXPORT_DROPDOWN,
   HIDE_EXPORT_DROPDOWN,
   TOGGLE_SIDE_PANEL,
-  TOGGLE_MAP_CONTROL
+  TOGGLE_MAP_CONTROL,
+  ADD_NOTIFICATION,
+  REMOVE_NOTIFICATION
 } = ActionTypes;
 
 // second argument of createAction is expected to be payloadCreator or undefined
@@ -49,6 +51,8 @@ const [
   hideExportDropdown,
   toggleMapControl,
   openDeleteModal,
+  addNotification,
+  removeNotification,
   // export image
   setRatio,
   setResolution,
@@ -69,6 +73,8 @@ const [
   HIDE_EXPORT_DROPDOWN,
   TOGGLE_MAP_CONTROL,
   OPEN_DELETE_MODAL,
+  ADD_NOTIFICATION,
+  REMOVE_NOTIFICATION,
   SET_RATIO,
   SET_RESOLUTION,
   TOGGLE_LEGEND,
@@ -83,7 +89,9 @@ const [
 ].map(a => createAction(a));
 
 export {
-  toggleSidePanel, toggleModal, showExportDropdown, hideExportDropdown, toggleMapControl, openDeleteModal, setExportConfig, setExportData,
-  setRatio, setResolution, toggleLegend, startExportingImage, setExportImageDataUri, cleanupExportImage,
+  toggleSidePanel, toggleModal, showExportDropdown, hideExportDropdown,
+  toggleMapControl, openDeleteModal, addNotification, removeNotification,
+  setExportConfig, setExportData, setRatio, setResolution, toggleLegend,
+  startExportingImage, setExportImageDataUri, cleanupExportImage,
   setExportSelectedDataset, setExportDataType, setExportFiltered
 };

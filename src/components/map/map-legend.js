@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -45,11 +45,11 @@ const StyledMapControlLegend = styled.div`
     font-size: 11px;
     padding-right: ${props => props.theme.mapControl.padding}px;
   }
-  
-  .legend--layer__title { 
+
+  .legend--layer__title {
     padding-right: ${props => props.theme.mapControl.padding}px;
   }
-  
+
   .legend--layer_by {
     color: ${props => props.theme.subtextColor};
   }
@@ -81,7 +81,7 @@ const LayerSizeLegend = ({label, name}) => (
 );
 
 const propTypes = {
-  layers: PropTypes.array
+  layers: PropTypes.arrayOf(PropTypes.object)
 };
 
 const SingleColorLegend = ({layer, width}) => (
@@ -113,13 +113,13 @@ const MultiColorLegend = ({layer, width}) => {
 const MapLegend = ({layers}) => (
   <div>
     {layers.map((layer, index) => {
-      const colorChannelConfig = layer.getVisualChannelDescription('color');
-      const enableColorBy = colorChannelConfig.measure;
-      const width = DIMENSIONS.mapControl.width - 2 * DIMENSIONS.mapControl.padding;
-
       if (!layer.isValidToSave()) {
         return null;
       }
+
+      const colorChannelConfig = layer.getVisualChannelDescription('color');
+      const enableColorBy = colorChannelConfig.measure;
+      const width = DIMENSIONS.mapControl.width - 2 * DIMENSIONS.mapControl.padding;
 
       return (
         <StyledMapControlLegend

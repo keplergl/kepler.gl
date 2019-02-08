@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,15 +19,46 @@
 // THE SOFTWARE.
 
 import {createAction} from 'redux-actions';
-import {ACTION_PREFIX} from 'constants/default-settings';
+import ActionTypes from 'constants/action-types';
 
-// Actions to add and remove entries
-export const REGISTER_ENTRY = `${ACTION_PREFIX}REGISTER_ENTRY`;
-export const DELETE_ENTRY = `${ACTION_PREFIX}DELETE_ENTRY`;
-export const RENAME_ENTRY = `${ACTION_PREFIX}RENAME_ENTRY`;
+/**
+ *
+ * Add a new kepler.gl instance in `keplerGlReducer`. This action is called under-the-hood when a `KeplerGl` component is **mounted** to the dom.
+ * Note that if you dispatch actions such as adding data to a kepler.gl instance before the React component is mounted, the action will not be
+ * performed. Instance reducer can only handle actions when it is instantiated.
+ * @param {Object} payload
+ * @param {string} payload.id - ***required** The id of the instance
+ * @param {boolean} payload.mint - Whether to use a fresh empty state, when `mint: true` it will *always* load a fresh state when the component is re-mounted.
+ * When `mint: false` it will register with existing instance state under the same `id`, when the component is unmounted then mounted again. Default: `true`
+ * @param {string} payload.mapboxApiAccessToken - mapboxApiAccessToken to be saved in `map-style` reducer.
+ * @public
+ */
+export const registerEntry = createAction(
+  ActionTypes.REGISTER_ENTRY,
+  ({id, mint, mapboxApiAccessToken}) => ({id, mint, mapboxApiAccessToken})
+);
 
-export const [registerEntry, deleteEntry, renameEntry] = [
-  REGISTER_ENTRY,
-  DELETE_ENTRY,
-  RENAME_ENTRY
-].map(a => createAction(a));
+/**
+ *
+ * Delete an instance from `keplerGlReducer`. This action is called under-the-hood when a `KeplerGl` component is **un-mounted** to the dom.
+ * If `mint` is set to be `true` in the component prop, the instance state will be deleted from the root reducer. Otherwise, the root reducer will keep
+ * the instance state and later transfer it to a newly mounted component with the same `id`
+ * @param {string} id - the id of the instance to be deleted
+ * @public
+ */
+export const deleteEntry = createAction(
+  ActionTypes.DELETE_ENTRY,
+  id => id
+);
+
+/**
+ *
+ * Rename an instance in the root reducer, keep its entire state
+ * @param {string} oldId - ***required** old id
+ * @param {string} newId - ***required** new id
+ * @public
+ */
+export const renameEntry = createAction(
+  ActionTypes.RENAME_ENTRY,
+  (oldId, newId) => ({oldId, newId})
+);

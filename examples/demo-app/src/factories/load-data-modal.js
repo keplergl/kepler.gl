@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +23,9 @@ import LoadDataModal from '../components/load-data-modal/load-data-modal';
 import {withState} from 'kepler.gl/components';
 
 import {
-  loadSampleMap,
-  setLoadingMethod
+  loadRemoteMap,
+  loadSample,
+  switchToLoadingMethod
 } from '../actions';
 
 export const CustomLoadDataModalFactory = () =>
@@ -32,8 +33,9 @@ export const CustomLoadDataModalFactory = () =>
     [],
     state => ({...state.demo.app}),
     {
-      onSetLoadingMethod: setLoadingMethod,
-      onLoadSampleData: loadSampleMap
+      onSwitchToLoadingMethod: switchToLoadingMethod,
+      onLoadSample: loadSample,
+      onLoadRemoteMap: loadRemoteMap
     }
   )(LoadDataModal);
 

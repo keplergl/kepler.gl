@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,13 +20,13 @@
 
 import {combineReducers, createStore, applyMiddleware, compose} from 'redux';
 import {routerReducer, routerMiddleware} from 'react-router-redux';
-import {hashHistory} from 'react-router';
+import {browserHistory} from 'react-router';
 
 import thunk from 'redux-thunk';
 import window from 'global/window';
-import {taskMiddleware} from 'react-palm';
+import {taskMiddleware} from 'react-palm/tasks';
 
-import demoReducer from './reducers';
+import demoReducer from './reducers/index';
 
 const reducers = combineReducers({
   demo: demoReducer,
@@ -36,7 +36,7 @@ const reducers = combineReducers({
 export const middlewares = [
   taskMiddleware,
   thunk,
-  routerMiddleware(hashHistory)
+  routerMiddleware(browserHistory)
 ];
 
 export const enhancers = [applyMiddleware(...middlewares)];

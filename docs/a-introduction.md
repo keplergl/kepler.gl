@@ -14,70 +14,41 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 
 ## Table of contents:
 
-### Get Started
+#### [Get Started](./j-get-started.md)
 
-[Get Started](./j-get-started.md)
+#### The kepler.gl workflow
+* [Add data to the map](./b-kepler-gl-workflow/a-add-data-to-the-map.md)
+* [Adding data layers](./b-kepler-gl-workflow/b-add-data-layers/a-adding-data-layers.md)
+* [Create a layer](./b-kepler-gl-workflow/b-add-data-layers/b-create-a-layer.md)
+* [Hide, edit and delete layers](./b-kepler-gl-workflow/b-add-data-layers/c-hide-edit-and-delete-layers.md)
+* [Blend and rearrange layers](./b-kepler-gl-workflow/b-add-data-layers/d-blend-and-rearrange-layers.md)
 
-### The kepler.gl workflow
+#### Types of layers
 
-[Add data to the map](./b-kepler-gl-workflow/a-add-data-to-the-map.md)
+* [Point](./c-types-of-layers/a-point.md)
+* [Arc](./c-types-of-layers/b-arc.md)
+* [Line](./c-types-of-layers/c-line.md)
+* [Grid](./c-types-of-layers/d-grid.md)
+* [GeoJSON](./c-types-of-layers/e-geojson.md)
+* [Cluster](./c-types-of-layers/f-cluster.md)
+* [Icon](./c-types-of-layers/g-icon.md)
 
-#### Add data layers
+#### [Layer attributes](./d-layer-attributes.md)
 
-[Adding data layers](./b-kepler-gl-workflow/b-add-data-layers/a-adding-data-layers.md)
+#### [Filters](./e-filters.md)
 
-[Create a layer](./b-kepler-gl-workflow/b-add-data-layers/b-create-a-layer.md)
+#### Map styles
+* [Base map styles](./f-map-styles/1-base-map-styles.md)
+* [Map layers](./f-map-styles/2-map-layers.md)
+* [Custom styles](./f-map-styles/3-custom-styles.md)
+* [View maps in 3d](./f-map-styles/4-view-maps-in-3d.md)
+* [Display legend](./f-map-styles/5-display-legend.md)
+* [Split maps](./f-map-styles/6-split-maps.md)
 
-[Hide, edit and delete layers](./b-kepler-gl-workflow/b-add-data-layers/c-hide-edit-and-delete-layers.md)
+#### [Map settings](./g-map-settings.md)
 
-[Blend and rearrange layers](./b-kepler-gl-workflow/b-add-data-layers/d-blend-and-rearrange-layers.md)
+#### [Time Playback](./h-playback.md)
 
-### Types of layers
+#### [Save and Export](./k-save-and-export.md)
 
-[Point](./c-types-of-layers/a-point.md)
-
-[Arc](./c-types-of-layers/b-arc.md)
-
-[Line](./c-types-of-layers/c-line.md)
-
-[Grid](./c-types-of-layers/d-grid.md)
-
-[GeoJSON](./c-types-of-layers/e-geojson.md)
-
-[Cluster](./c-types-of-layers/f-cluster.md)
-
-[Icon](./c-types-of-layers/g-icon.md)
-
-### Layer attributes
-
-[Layer attributes](./d-layer-attributes.md)
-
-### Filters
-
-[Filters](./e-filters.md)
-
-### Map styles
-
-[Base map styles](./f-map-styles/1-base-map-styles.md)
-
-[Map layers](./f-map-styles/2-map-layers.md)
-
-[Custom styles](./f-map-styles/3-custom-styles.md)
-
-[View maps in 3d](./f-map-styles/4-view-maps-in-3d.md)
-
-[Display legend](./f-map-styles/5-display-legend.md)
-
-[Split maps](./f-map-styles/6-split-maps.md)
-
-### Map settings
-
-[Map settings](./g-map-settings.md)
-
-### Playback
-
-[Playback](./h-playback.md)
-
-### FAQ
-
-[FAQ](./i-FAQ.md)
+#### [FAQ](./i-FAQ.md)

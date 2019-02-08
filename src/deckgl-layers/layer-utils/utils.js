@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {scaleQuantize, scaleOrdinal, scaleQuantile, scaleSqrt} from 'd3-scale';
-import {unique} from 'utils//data-utils';
+import {unique} from 'utils/data-utils';
 
 import {SCALE_TYPES} from 'constants/default-settings';
 

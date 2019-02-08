@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -290,6 +290,21 @@ class ColumnSchemaV1 extends Schema {
   }
 }
 
+class TextLabelSchemaV1 extends Schema {
+  save(textLabel) {
+    return {
+      [this.key]: {
+        ...textLabel,
+        field: textLabel.field ? pick(textLabel.field, ['name', 'type']) : null
+      }
+    }
+  }
+
+  load(textLabel) {
+    return {textLabel};
+  }
+}
+
 /**
  * V1: save [field]: {name, type}, [scale]: '' for each channel
  */
@@ -337,7 +352,11 @@ export const layerPropsV1 = {
         key: 'columns'
       }),
       isVisible: null,
-      visConfig: null
+      visConfig: null,
+      textLabel: new TextLabelSchemaV1({
+        version: VERSIONS.v1,
+        key: 'textLabel'
+      })
     }
   }),
   visualChannels: new VisualChannelSchemaV1({

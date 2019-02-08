@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -1033,6 +1033,13 @@ mergedLayer0.config = {
   sizeField: null,
   sizeScale: 'linear',
   sizeDomain: [0, 1],
+  textLabel: {
+    field: null,
+    color: [255, 255, 255],
+    size: 50,
+    offset: [0, 0],
+    anchor: 'middle'
+  },
   visConfig: {
     radius: 270.4,
     opacity: 0.8,
@@ -1103,6 +1110,13 @@ mergedLayer1.config = {
   sizeField: null,
   sizeScale: 'linear',
   sizeDomain: [0, 1],
+  textLabel: {
+    field: null,
+    color: [255, 255, 255],
+    size: 50,
+    offset: [0, 0],
+    anchor: 'middle'
+  },
   visConfig: {
     opacity: 0.41,
     thickness: 2,
@@ -1141,7 +1155,7 @@ mergedLayer2.config = {
       optional: true
     }
   },
-  highlightColor: [252, 242, 26],
+  highlightColor: [252, 242, 26, 255],
   isConfigActive: false,
   isVisible: true,
   colorField: {
@@ -1162,6 +1176,13 @@ mergedLayer2.config = {
   },
   sizeDomain: [78, 694],
   sizeScale: 'linear',
+  textLabel: {
+    field: null,
+    color: [255, 255, 255],
+    size: 50,
+    offset: [0, 0],
+    anchor: 'middle'
+  },
   visConfig: {
     radius: 10,
     opacity: 0.8,
@@ -1225,13 +1246,20 @@ mergedLayer3.config = {
     format: '',
     tableFieldIndex: 10
   },
-  highlightColor: [252, 242, 26],
+  highlightColor: [252, 242, 26, 255],
   isConfigActive: false,
   colorScale: 'quantile',
   colorDomain: [0, 1],
   sizeField: null,
   sizeScale: 'linear',
   sizeDomain: [0, 1],
+  textLabel: {
+    field: null,
+    color: [255, 255, 255],
+    size: 50,
+    offset: [0, 0],
+    anchor: 'middle'
+  },
   visConfig: {
     colorAggregation: 'maximum',
     sizeAggregation: 'average',
@@ -1285,7 +1313,7 @@ mergedLayer4.config = {
       fieldIdx: 0
     }
   },
-  highlightColor: [252, 242, 26],
+  highlightColor: [252, 242, 26, 255],
   isConfigActive: false,
   isVisible: true,
   colorField: {
@@ -1300,6 +1328,13 @@ mergedLayer4.config = {
   sizeField: null,
   sizeScale: 'linear',
   sizeDomain: [0, 1],
+  textLabel: {
+    field: null,
+    color: [255, 255, 255],
+    size: 50,
+    offset: [0, 0],
+    anchor: 'middle'
+  },
   heightField: null,
   heightDomain: [0, 1],
   heightScale: 'linear',

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,7 @@ import {Analyzer, DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
 import {ALL_FIELD_TYPES, GEOJSON_FIELDS} from 'constants/default-settings';
 import {notNullorUndefined} from 'utils/data-utils';
+import KeplerGlSchema from 'schemas';
 
 // if any of these value occurs in csv, parse it to null;
 const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN'];
@@ -34,7 +35,7 @@ export function processCsvData(rawData) {
 
   // here we assume the csv file that people uploaded will have first row
   // as name of the column
-  //TODO: add a alert at upload csv to remind define first row
+  // TODO: add a alert at upload csv to remind define first row
   const [headerRow, ...rows] = csvParseRows(rawData);
 
   if (!rows.length || !headerRow) {
@@ -283,6 +284,10 @@ export function processRowObject(rawData) {
   };
 }
 
+/**
+ *
+ * @param {Object} rawData - raw geojson feature collection
+ */
 export function processGeojson(rawData) {
   const normalizedGeojson = normalize(rawData);
 
@@ -398,7 +403,7 @@ export function validateInputData(data) {
       return false;
     }
 
-    return f.type && f.format && f.name;
+    return f.type !== ALL_FIELD_TYPES.timestamp || typeof f.format === 'string';
   });
 
   if (allValid) {
@@ -419,10 +424,21 @@ export function validateInputData(data) {
   return {fields: updatedFields, rows};
 }
 
+/**
+ * Process kepler.gl json to be load by addDataToMap
+ * @param {Object} rawData
+ */
+export function processKeplerglJSON(rawData) {
+  return rawData
+    ? KeplerGlSchema.load(rawData.datasets, rawData.config)
+    : null;
+}
+
 export default {
   processGeojson,
   processCsvData,
   processRowObject,
+  processKeplerglJSON,
   analyzerTypeToFieldType,
   getFieldsFromData,
   parseCsvDataByFieldType

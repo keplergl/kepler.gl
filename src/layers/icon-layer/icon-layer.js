@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,13 +20,14 @@
 
 import Layer from '../base-layer';
 import memoize from 'lodash.memoize';
-import {hexToRgb} from '../../utils/color-utils';
+import {hexToRgb} from 'utils/color-utils';
 import {svgIcons as SvgIcons} from './svg-icons.json';
-import SvgIconLayer from '../../deckgl-layers/svg-icon-layer/svg-icon-layer';
-import ScatterplotIconLayer from '../../deckgl-layers/svg-icon-layer/scatterplot-icon-layer';
+import SvgIconLayer from 'deckgl-layers/svg-icon-layer/svg-icon-layer';
 import IconLayerIcon from './icon-layer-icon';
 import {ICON_FIELDS} from 'constants/default-settings';
+import IconInfoModalFactory from './icon-info-modal';
 
+const IconInfoModal = IconInfoModalFactory();
 const IconIds = SvgIcons.map(d => d.id);
 const SvgIconGeometry = SvgIcons.reduce(
   (accu, curr) => ({
@@ -100,6 +101,16 @@ export default class IconLayer extends Layer {
     };
   }
 
+  get layerInfoModal() {
+    return {
+      id: 'iconInfo',
+      template: IconInfoModal,
+      modalProps: {
+        title: 'How to draw icons'
+      }
+    };
+  }
+
   static findDefaultLayerProps({fieldPairs, fields}) {
     if (!fieldPairs.length) {
       return [];
@@ -136,6 +147,8 @@ export default class IconLayer extends Layer {
     return props;
   }
 
+  // TODO: fix complexity
+  /* eslint-disable complexity */
   formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
     const {
       colorScale,
@@ -199,11 +212,11 @@ export default class IconLayer extends Layer {
       }, []);
     }
 
-    const getRadius = d =>
-      rScale ? this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
+    const getRadius = rScale ? d =>
+      this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
 
-    const getColor = d =>
-      cScale ? this.getEncodedChannelValue(cScale, d.data, colorField) : color;
+    const getColor = cScale ? d =>
+      this.getEncodedChannelValue(cScale, d.data, colorField) : color;
 
     return {
       data,
@@ -213,6 +226,7 @@ export default class IconLayer extends Layer {
       getRadius
     };
   }
+  /* eslint-enable complexity */
 
   updateLayerMeta(allData, getPosition) {
     const bounds = this.getPointsBounds(allData, d => getPosition({data: d}));
@@ -222,7 +236,6 @@ export default class IconLayer extends Layer {
   renderLayer({
     data,
     idx,
-    layerInteraction,
     objectHovered,
     mapState,
     interactionConfig
@@ -237,13 +250,21 @@ export default class IconLayer extends Layer {
     return [
       new SvgIconLayer({
         ...layerProps,
-        ...layerInteraction,
         ...data,
         id: this.id,
         idx,
         opacity: this.config.visConfig.opacity,
         getIconGeometry: id => SvgIconGeometry[id],
+
+        // picking
+        autoHighlight: true,
+        highlightColor: this.config.highlightColor,
         pickable: true,
+
+        // parameters
+        parameters: {depthTest: mapState.dragRotate},
+
+        // update triggers
         updateTriggers: {
           getRadius: {
             sizeField: this.config.colorField,
@@ -257,25 +278,7 @@ export default class IconLayer extends Layer {
             colorScale: this.config.colorScale
           }
         }
-      }),
-      ...(this.isLayerHovered(objectHovered)
-        ? [
-            new ScatterplotIconLayer({
-              ...layerProps,
-              id: `${this.id}-hovered`,
-              data: [
-                {
-                  ...objectHovered.object,
-                  position: data.getPosition(objectHovered.object),
-                  radius: data.getRadius(objectHovered.object),
-                  color: this.config.highlightColor
-                }
-              ],
-              iconGeometry: SvgIconGeometry[objectHovered.object.icon],
-              pickable: false
-            })
-          ]
-        : [])
+      })
     ];
   }
 }

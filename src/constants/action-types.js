@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,11 @@ import keyMirror from 'keymirror';
 import {ACTION_PREFIX} from './default-settings';
 
 const ActionTypes = keyMirror({
+  // identity action
+  REGISTER_ENTRY: null,
+  DELETE_ENTRY: null,
+  RENAME_ENTRY: null,
+
   // visState
   ADD_DATA: null,
   ADD_FILTER: null,
@@ -76,6 +81,8 @@ const ActionTypes = keyMirror({
   HIDE_EXPORT_DROPDOWN: null,
   OPEN_DELETE_MODAL: null,
   TOGGLE_MAP_CONTROL: null,
+  ADD_NOTIFICATION: null,
+  REMOVE_NOTIFICATION: null,
 
   // uiState > export image
   SET_RATIO: null,

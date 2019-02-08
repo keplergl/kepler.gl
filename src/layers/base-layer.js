@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -177,6 +177,21 @@ export default class Layer {
     };
   }
 
+  /**
+   * Return a React component for to render layer instructions in a modal
+   * @returns {object} - an object
+   * @example
+   *  return {
+   *    id: 'iconInfo',
+   *    template: IconInfoModal,
+   *    modalProps: {
+   *      title: 'How to draw icons'
+   *   };
+   * }
+   */
+  get layerInfoModal() {
+    return null;
+  }
   /*
    * Given a dataset, automatically create layers based on it
    * and return the props
@@ -269,7 +284,7 @@ export default class Layer {
       columns: props.columns || null,
       isVisible: props.isVisible || false,
       isConfigActive: props.isConfigActive || false,
-      highlightColor: props.highlightColor || [252, 242, 26],
+      highlightColor: props.highlightColor || [252, 242, 26, 255],
 
       // TODO: refactor this into separate visual Channel config
       // color by field, domain is set by filters, field, scale type
@@ -282,7 +297,15 @@ export default class Layer {
       sizeScale: 'linear',
       sizeField: null,
 
-      visConfig: {}
+      visConfig: {},
+
+      textLabel: {
+        field: null,
+        color: [255, 255, 255],
+        size: 50,
+        offset: [0, 0],
+        anchor: 'middle'
+      }
     };
   }
 

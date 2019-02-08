@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,7 @@
 import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
 import keplerGlReducer from 'kepler.gl/reducers';
 import appReducer from './app-reducer';
-import {taskMiddleware} from 'react-palm';
+import {taskMiddleware} from 'react-palm/tasks';
 import window from 'global/window';
 
 const reducers = combineReducers({

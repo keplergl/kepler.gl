@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import {LAYER_CONFIG_ID, DELETE_DATA_ID} from 'constants/default-settings';
+import {createNotification} from 'utils/notifications-utils';
 
 /* Updaters */
 export const toggleSidePanelUpdater = (state, {payload: id}) => {
@@ -163,4 +164,17 @@ export const setExportDataUpdater = (state, action) => ({
     ...state.exportData,
     data: !state.exportData.data
   }
+});
+
+export const addNotificationUpdater = (state, {payload}) => ({
+  ...state,
+  notifications: [
+    ...state.notifications || [],
+    createNotification(payload)
+  ]
+});
+
+export const removeNotificationUpdater = (state, {payload}) => ({
+  ...state,
+  notifications: state.notifications.filter(n => n.id !== payload)
 });

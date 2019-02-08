@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -60,7 +60,7 @@ test('Components -> Container -> Mount with mint:true', t => {
   );
 
   // mount with kepler.gl state
-  store = mockStore({keplerGl: {}});
+  store = mockStore(initialState);
   let appReducer = combineReducers({
     keplerGl: rootReducer
   });
@@ -227,5 +227,98 @@ test('Components -> Container -> Mount with mint:false', t => {
   t.deepEqual(actions, [], 'should not call unmount');
 
   spy.restore();
+  t.end();
+});
+
+test('Components -> Container -> Mount then rename', t => {
+  const dispatch = sinon.spy();
+
+  // mount with custom state
+  const store = mockStore({smoothie: {}});
+  const appReducer = combineReducers({
+    smoothie: rootReducer
+  });
+
+  let wrapper;
+  const testId = {
+    id: 'milkshake'
+  };
+
+  // mount with mint: false
+  t.doesNotThrow(() => {
+    wrapper = mount(
+      <Container
+        getState={s => s.smoothie}
+        id={testId.id}
+        mapboxApiAccessToken="hello.world"
+        dispatch={dispatch}
+        store={store}
+      />
+    );
+  }, 'Should not throw error when mount');
+
+  const expectedActions0 = {type: '@@kepler.gl/REGISTER_ENTRY', payload: {id: 'milkshake', mint: true, mapboxApiAccessToken: 'hello.world'}};
+
+  t.deepEqual(
+    store.getActions().pop(),
+    expectedActions0,
+    'should register entry'
+  );
+
+  let nextState = appReducer({}, expectedActions0);
+  let expectedState = {
+    smoothie: {
+      milkshake: {
+        ...initialCoreState,
+        mapStyle: {
+          ...initialCoreState.mapStyle,
+          // should replace access token
+          mapboxApiAccessToken: 'hello.world'
+        }
+      }
+    }
+  };
+  t.deepEqual(
+    nextState,
+    expectedState,
+    'should register milkshake to root reducer'
+  );
+
+  wrapper.setProps({id: 'milkshake-2'});
+  // actions = store.getActions();
+  const expectedActions1 = {
+    type: '@@kepler.gl/RENAME_ENTRY',
+    payload: {oldId: 'milkshake', newId: 'milkshake-2'}
+  };
+
+  t.deepEqual(
+    store.getActions().pop(),
+    expectedActions1,
+    'should rename entry'
+  );
+
+  const nextState1 = appReducer(nextState, expectedActions1);
+  const expectedState1 = {
+    smoothie: {
+      'milkshake-2': nextState.smoothie.milkshake
+    }
+  };
+
+  t.deepEqual(
+    nextState1,
+    expectedState1,
+    'should rename milkshake to milkshake-2'
+  );
+  // unmount
+  wrapper.unmount();
+
+  const expectedActions2 = {type: '@@kepler.gl/DELETE_ENTRY', payload: 'milkshake-2'};
+
+  t.deepEqual(
+    store.getActions().pop(),
+    expectedActions2,
+    'should call unmount milkshake-2'
+  );
+
   t.end();
 });

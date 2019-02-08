@@ -3,6 +3,7 @@ node_modules/
 coverage/
 .nyc_output/
 dist/
+*/**/dist/
 
 */**/yarn.lock
 yarn-error.log
@@ -11,6 +12,7 @@ package-lock.json
 
 .DS_Store
 .idea
+.vscode/
 
 /bundle*.js
 /favicon.png

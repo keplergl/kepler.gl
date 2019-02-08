@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,20 +27,22 @@ import {LoadingSpinner} from 'kepler.gl/components';
 import {themeLT} from 'kepler.gl/styles';
 import {Icons} from 'kepler.gl/components/';
 
-import {LOADING_METHODS, QUERY_TYPES, ASSETS_URL} from '../../constants/default-settings';
+import {LOADING_METHODS, ASSETS_URL, LOADING_METHODS_NAMES} from '../../constants/default-settings';
 
 import SampleMapGallery from './sample-data-viewer';
+import LoadRemoteMap from './load-remote-map';
 
 const propTypes = {
   // query options
   loadingMethod: PropTypes.object.isRequired,
   currentOption: PropTypes.object.isRequired,
-  sampleMaps: PropTypes.array.isRequired,
+  sampleMaps: PropTypes.arrayOf(PropTypes.object).isRequired,
 
   // call backs
   onFileUpload: PropTypes.func.isRequired,
-  onLoadSampleData: PropTypes.func.isRequired,
-  onSetLoadingMethod: PropTypes.func.isRequired
+  onLoadRemoteMap: PropTypes.func.isRequired,
+  onLoadSample: PropTypes.func.isRequired,
+  onSwitchToLoadingMethod: PropTypes.func.isRequired
 };
 
 const ModalTab = styled.div`
@@ -134,7 +136,11 @@ const StyledSpinner = styled.div`
 class LoadDataModal extends Component {
 
   render() {
-    const {loadingMethod, currentOption, previousMethod, sampleMaps, isMapLoading} = this.props;
+    const {
+      loadingMethod, currentOption, previousMethod,
+      sampleMaps, isMapLoading, onSwitchToLoadingMethod,
+      error
+    } = this.props;
 
     return (
       <ThemeProvider theme={themeLT}>
@@ -148,18 +154,26 @@ class LoadDataModal extends Component {
                 {loadingMethod.id !== 'sample' ? (
                   <Tabs
                     method={loadingMethod.id}
-                    toggleMethod={this.props.onSetLoadingMethod}
+                    toggleMethod={this.props.onSwitchToLoadingMethod}
                   />
                 ) : null}
                 {loadingMethod.id === 'upload' ? (
                   <FileUpload onFileUpload={this.props.onFileUpload} />
                 ) : null}
+                {loadingMethod.id === 'remote' ? (
+                  <LoadRemoteMap
+                    onLoadRemoteMap={this.props.onLoadRemoteMap}
+                    option={this.props.currentOption}
+                    error={this.props.error}
+                  />
+                ) : null}
                 {loadingMethod.id === 'sample' ? (
                   <SampleMapGallery
                     sampleData={currentOption}
                     sampleMaps={sampleMaps}
-                    back={() => this.props.onSetLoadingMethod(previousMethod.id)}
-                    onLoadSampleData={this.props.onLoadSampleData}/>
+                    back={() => onSwitchToLoadingMethod(previousMethod.id)}
+                    onLoadSample={this.props.onLoadSample}
+                    error={error} />
                 ) : null}
               </div>)
           }
@@ -187,7 +201,7 @@ const Tabs = ({method, toggleMethod}) => (
           ) : null
       )}
     </div>
-    <TrySampleData onClick={() => toggleMethod(QUERY_TYPES.sample)} />
+    <TrySampleData onClick={() => toggleMethod(LOADING_METHODS_NAMES.sample)} />
   </ModalTab>
 );
 

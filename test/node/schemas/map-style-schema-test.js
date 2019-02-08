@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -42,8 +42,14 @@ test('#mapStyleSchema -> v1 -> save load mapStyle', t => {
     mapStyles: {}
   };
 
+  const expectedLoaded = {
+    styleType: 'dark',
+    topLayerGroups: {},
+    visibleLayerGroups: {}
+  }
+
   t.deepEqual(msToSave, expectedSaved, 'saved mapStyle should be current');
-  t.deepEqual(msLoaded, expectedSaved, 'loaded mapStyle should be current');
+  t.deepEqual(msLoaded, expectedLoaded, 'loaded mapStyle should be current');
   t.end();
 });
 

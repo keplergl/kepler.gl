@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,10 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import MapboxGLMap from 'react-map-gl';
 import DeckGL from 'deck.gl';
-import {GL} from 'luma.gl';
+import GL from 'luma.gl/constants';
+import {registerShaderModules, setParameters} from 'luma.gl';
+import pickingModule from 'shaderlib/picking-module';
+import brushingModule from 'shaderlib/brushing-module';
 
 // components
 import MapPopoverFactory from 'components/map/map-popover';
@@ -37,6 +40,7 @@ import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 
 // default-settings
 import {LAYER_BLENDINGS} from 'constants/default-settings';
+import ThreeDBuildingLayer from '../deckgl-layers/3d-building-layer/3d-building-layer';
 
 const MAP_STYLE = {
   container: {
@@ -51,8 +55,11 @@ const MAP_STYLE = {
 const getGlConst = d => GL[d];
 
 const MAPBOXGL_STYLE_UPDATE = 'style.load';
+const TRANSITION_DURATION = 0;
+
 MapContainerFactory.deps = [
-  MapPopoverFactory, MapControlFactory];
+  MapPopoverFactory, MapControlFactory
+];
 
 export default function MapContainerFactory(MapPopover, MapControl) {
   class MapContainer extends Component {
@@ -89,27 +96,11 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     constructor(props) {
       super(props);
       this.state = {
-        reRenderKey: 0,
-        gl: null,
         mousePosition: [0, 0]
       };
       this.previousLayers = {
         // [layers.id]: mapboxLayerConfig
       };
-    }
-
-    componentWillReceiveProps(nextProps) {
-      if (
-        this.props.mapState.dragRotate !== nextProps.mapState.dragRotate ||
-        this.props.layerBlending !== nextProps.layerBlending
-      ) {
-        // increment rerender key to force gl reinitialize when
-        // perspective or layer blending changed
-        // TODO: layer blending can now be implemented per layer base
-        this.setState({
-          reRenderKey: this.state.reRenderKey + 1
-        });
-      }
     }
 
     componentWillUnmount() {
@@ -120,7 +111,6 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     }
 
     /* component private functions */
-
     _onCloseMapPopover = () => {
       this.props.visStateActions.onLayerClick(null);
     };
@@ -132,20 +122,13 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     };
 
     _onWebGLInitialized = gl => {
-      // enable depth test for perspective mode
-      if (this.props.mapState.dragRotate) {
-        gl.enable(gl.DEPTH_TEST);
-        gl.depthFunc(gl.LEQUAL);
-      } else {
-        gl.disable(gl.DEPTH_TEST);
-      }
+      registerShaderModules(
+        [pickingModule, brushingModule], {
+          ignoreMultipleRegistrations: true
+      });
 
       // allow Uint32 indices in building layer
-      gl.getExtension('OES_element_index_uint');
-
-      this._togglelayerBlending(gl);
-
-      this.setState({gl});
+      // gl.getExtension('OES_element_index_uint');
     };
 
     _onMouseMove = evt => {
@@ -191,35 +174,24 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       }
     }
 
-    /* deck.gl doesn't support blendFuncSeparate yet
-     * so we're applying the blending ourselves
-    */
-    _togglelayerBlending = gl => {
-      const blending = LAYER_BLENDINGS[this.props.layerBlending];
-      const {
-        enable,
-        blendFunc,
-        blendEquation,
-        blendFuncSeparate,
-        blendEquationSeparate
-      } = blending;
+    _onBeforeRender = ({gl}) => {
+      this._setlayerBlending(gl);
+    };
 
-      if (enable) {
-        gl.enable(GL.BLEND);
-        if (blendFunc) {
-          gl.blendFunc(...blendFunc.map(getGlConst));
-          gl.blendEquation(GL[blendEquation]);
-        } else {
-          gl.blendFuncSeparate(...blendFuncSeparate.map(getGlConst));
-          gl.blendEquationSeparate(...blendEquationSeparate.map(getGlConst));
-        }
-      } else {
-        gl.disable(GL.BLEND);
-      }
+    _setlayerBlending = gl => {
+      const blending = LAYER_BLENDINGS[this.props.layerBlending];
+      const {blendFunc, blendEquation} = blending;
+
+      setParameters(gl, {
+        [GL.BLEND]: true,
+        ...(blendFunc ? {
+          blendFunc: blendFunc.map(getGlConst),
+          blendEquation: Array.isArray(blendEquation) ? blendEquation.map(getGlConst) : getGlConst(blendEquation)
+        } : {})
+      });
     };
 
     /* component render functions */
-
     /* eslint-disable complexity */
     _renderObjectLayerPopover() {
       // TODO: move this into reducer so it can be tested
@@ -310,7 +282,6 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         clicked,
         mapLayers,
         mapState,
-        visStateActions,
         interactionConfig
       } = this.props;
       const {mousePosition} = this.state;
@@ -318,8 +289,6 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       const data = layerData[idx];
 
       const layerInteraction = {
-        onHover: visStateActions.onLayerHover,
-        onClick: visStateActions.onLayerClick,
         mousePosition
       };
 
@@ -356,8 +325,10 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     _renderOverlay() {
       const {
         mapState,
+        mapStyle,
         layerData,
-        layerOrder
+        layerOrder,
+        visStateActions
       } = this.props;
 
       let deckGlLayers = [];
@@ -370,14 +341,20 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           .reverse()
           .reduce(this._renderLayer, []);
       }
+      const threeDBuildingLayerId = '_keplergl_3d-building';
+      if (mapStyle.visibleLayerGroups['3d building']) {
+        deckGlLayers.push(new ThreeDBuildingLayer({id: threeDBuildingLayerId, threeDBuildingColor: mapStyle.threeDBuildingColor}));
+      }
 
       return (
         <DeckGL
-          {...mapState}
+          viewState={mapState}
           id="default-deckgl-overlay"
           layers={deckGlLayers}
-          key={this.state.reRenderKey}
           onWebGLInitialized={this._onWebGLInitialized}
+          onBeforeRender={this._onBeforeRender}
+          onLayerHover={visStateActions.onLayerHover}
+          onLayerClick={visStateActions.onLayerClick}
         />
       );
     }
@@ -412,16 +389,16 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     }
 
     render() {
-      const {mapState, mapStyle, mapStateActions} = this.props;
+      const {
+        mapState, mapStyle, mapStateActions, mapLayers, layers, MapComponent,
+        datasets, mapboxApiAccessToken, mapControls, toggleMapControl
+      } = this.props;
       const {updateMap, onMapClick} = mapStateActions;
 
       if (!mapStyle.bottomMapStyle) {
         // style not yet loaded
         return <div/>;
       }
-
-      const {mapLayers, layers, datasets, mapboxApiAccessToken,
-        mapControls, toggleMapControl} = this.props;
 
       const mapProps = {
         ...mapState,
@@ -450,19 +427,21 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             onToggleFullScreen={mapStateActions.toggleFullScreen}
             onToggleMapControl={toggleMapControl}
           />
-          <this.props.MapComponent
+          <MapComponent
             {...mapProps}
             key="bottom"
             ref={this._setMapboxMap}
             mapStyle={mapStyle.bottomMapStyle}
             onClick={onMapClick}
+            getCursor={this.props.hoverInfo ? () => 'pointer' : undefined}
+            transitionDuration={TRANSITION_DURATION}
           >
             {this._renderOverlay()}
             {this._renderMapboxOverlays()}
-          </this.props.MapComponent>
+          </MapComponent>
           {mapStyle.topMapStyle && (
             <div style={MAP_STYLE.top}>
-              <this.props.MapComponent
+              <MapComponent
                 {...mapProps}
                 key="top"
                 mapStyle={mapStyle.topMapStyle}

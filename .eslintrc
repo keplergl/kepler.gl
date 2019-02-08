@@ -6,9 +6,10 @@
     "prettier",
     "prettier/react"
   ],
-
   "env": {
-    "es6": true
+    "es6": true,
+    "browser": true,
+    "node": true
   },
   "parser": "babel-eslint",
   "plugins": [
@@ -35,5 +36,10 @@
     "camelcase": 0,
     "consistent-return": 0,
     "comma-dangle": 1
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -33,7 +33,7 @@ import {
   toggleFilterAnimationUpdater,
   updateAnimationSpeedUpdater,
   receiveMapConfigUpdater,
-  resetMapConfigUpdater,
+  resetMapConfigVisStateUpdater,
   loadFilesUpdater,
   loadFilesErrUpdater,
   updateVisDataUpdater,
@@ -92,7 +92,7 @@ const actionHandler = {
 
   [ActionTypes.REORDER_LAYER]: reorderLayerUpdater,
 
-  [ActionTypes.RESET_MAP_CONFIG]: resetMapConfigUpdater,
+  [ActionTypes.RESET_MAP_CONFIG]: resetMapConfigVisStateUpdater,
 
   [ActionTypes.SET_FILTER]: setFilterUpdater,
 

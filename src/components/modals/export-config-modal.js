@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,8 +21,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import AceEditor from 'react-ace';
 import Switch from 'components/common/switch';
+import JSONPretty from 'react-json-pretty';
 
 import {StyledModalContent} from 'components/common/styled-components';
 
@@ -35,10 +35,11 @@ const StyledExportConfigSection = styled.div`
   flex-direction: row;
   margin: 35px 0;
   width: 100%;
+  justify-content: space-between;
 
   .description {
     width: 185px;
-    
+
     .title {
       font-weight: 500;
       color: ${props => props.theme.textColorLT};
@@ -48,65 +49,37 @@ const StyledExportConfigSection = styled.div`
       color: ${props => props.theme.textColor};
       font-size: 11px;
     }
-    
+
     .note {
       color: ${props => props.theme.errorColor};
       font-size: 11px;
     }
   }
-  
-  .selection {
-    display: flex;
-    flex-wrap: wrap;
-    flex: 1;
-    padding-left: 50px;
 
-    select {
+  .selection {
+    padding-left: 50px;
+    flex-grow: 1;
+
+    .viewer {
+      border: 1px solid ${props => props.theme.selectBorderColorLT};
       background-color: white;
-      border-radius: 1px;
+      border-radius: 2px;
       display: inline-block;
       font: inherit;
       line-height: 1.5em;
       padding: 0.5em 3.5em 0.5em 1em;
-      margin: 0;      
+      margin: 0;
       box-sizing: border-box;
       appearance: none;
-      width: 250px;
-      height: 36px;
-
-      background-image:
-        linear-gradient(45deg, transparent 50%, gray 50%),
-        linear-gradient(135deg, gray 50%, transparent 50%),
-        linear-gradient(to right, #ccc, #ccc);
-      background-position:
-        calc(100% - 20px) calc(1em + 2px),
-        calc(100% - 15px) calc(1em + 2px),
-        calc(100% - 2.5em) 4.5em;
-      background-size:
-        5px 5px,
-        5px 5px,
-        1px 1.5em;
-      background-repeat: no-repeat;
-    }
-
-    select:focus {
-      background-image:
-        linear-gradient(45deg, green 50%, transparent 50%),
-        linear-gradient(135deg, transparent 50%, green 50%),
-        linear-gradient(to right, #ccc, #ccc);
-      background-position:
-        calc(100% - 15px) 1em,
-        calc(100% - 20px) 1em,
-        calc(100% - 2.5em) 4.5em;
-      background-size:
-        5px 5px,
-        5px 5px,
-        1px 1.5em;
-      background-repeat: no-repeat;
-      border-color: green;
-      outline: 0;
+      height: 300px;
+      width: 100%;
+      overflow-y: scroll;
     }
   }
+`;
+
+const StyledModalContentInner = styled.div`
+  width: 100%;
 `;
 
 const ExportConfigModal = ({
@@ -117,7 +90,7 @@ const ExportConfigModal = ({
 }) => (
   <div className="export-config-modal">
     <StyledModalContent>
-      <div>
+      <StyledModalContentInner className="export-config-modal__inner">
         <StyledExportConfigSection>
           <div className="description">
             <div className="title">
@@ -134,25 +107,9 @@ const ExportConfigModal = ({
             </div>
           </div>
           <div className="selection">
-            <AceEditor
-              mode="json"
-              theme="monokai"
-              name="kepler.gl-config"
-              fontSize={9}
-              readOnly={true}
-              wrapEnabled={true}
-              height="280px"
-              showPrintMargin={true}
-              showGutter={true}
-              highlightActiveLine={false}
-              value={JSON.stringify(config, null, 2)}
-              setOptions={{
-                enableBasicAutocompletion: false,
-                enableLiveAutocompletion: true,
-                enableSnippets: false,
-                showLineNumbers: true,
-                tabSize: 2
-              }}/>
+            <div className="viewer">
+                <JSONPretty id="json-pretty" json={config}/>
+            </div>
           </div>
         </StyledExportConfigSection>
         <StyledExportConfigSection>
@@ -171,7 +128,7 @@ const ExportConfigModal = ({
                     onChange={onChangeExportData}/>
           </div>
         </StyledExportConfigSection>
-      </div>
+      </StyledModalContentInner>
     </StyledModalContent>
   </div>
 );

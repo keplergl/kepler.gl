@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,19 +19,25 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import InteractionPanel from './interaction-panel/interaction-panel';
+import InteractionPanelFactory from './interaction-panel/interaction-panel';
 
-const InteractionManager = ({interactionConfig, datasets, onConfigChange}) => (
-  <div className="interaction-manager">
-    {Object.keys(interactionConfig).map(key => (
-      <InteractionPanel
-        datasets={datasets}
-        config={interactionConfig[key]}
-        key={key}
-        onConfigChange={onConfigChange}
-      />
-    ))}
-  </div>
-);
+InteractionManagerFactory.deps = [InteractionPanelFactory];
 
-export default InteractionManager;
+function InteractionManagerFactory(InteractionPanel) {
+  const InteractionManager = ({interactionConfig, datasets, onConfigChange}) => (
+    <div className="interaction-manager">
+      {Object.keys(interactionConfig).map(key => (
+        <InteractionPanel
+          datasets={datasets}
+          config={interactionConfig[key]}
+          key={key}
+          onConfigChange={onConfigChange}
+        />
+      ))}
+    </div>
+  );
+
+  return InteractionManager;
+}
+
+export default InteractionManagerFactory;

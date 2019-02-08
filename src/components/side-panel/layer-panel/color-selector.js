@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,10 +25,7 @@ import {rgbToHex} from 'utils/color-utils';
 import SingleColorPalette from 'components/side-panel/layer-panel/single-color-palette';
 import ColorRangeSelector from 'components/side-panel/layer-panel/color-range-selector';
 import ColorPalette from 'components/side-panel/layer-panel/color-palette';
-import {
-  PanelLabel,
-  StyledPanelDropdown
-} from 'components/common/styled-components';
+import {StyledPanelDropdown} from 'components/common/styled-components';
 import onClickOutside from 'react-onclickoutside';
 
 const ColorBlock = styled.div`
@@ -44,6 +41,13 @@ const ColorSelectorInput = styled.div`
       ? props.theme.secondaryInput
       : props.theme.input};
   height: ${props => props.theme.inputBoxHeight};
+
+  .color-selector__selector__label {
+    text-transform: capitalize;
+    font-size: 12px;
+    text-align: center;
+    color: ${props => props.theme.inputPlaceholderColor};
+  }
 `;
 
 const InputBoxContainer = styled.div`
@@ -83,7 +87,8 @@ class ColorSelector extends Component {
   handleClickOutside = e => {
     if (this.state.editing !== false) {
       this.setState({editing: false});
-    }  };
+    }
+  };
 
   _onSelectColor = (color, e) => {
     e.stopPropagation();
@@ -109,7 +114,7 @@ class ColorSelector extends Component {
         <InputBoxContainer>
           {colorSets.map((cSet, i) => (
             <div className="color-select__input-group" key={i}>
-              {cSet.label ? <PanelLabel>{cSet.label}</PanelLabel> : null}
+
               <ColorSelectorInput
                 className="color-selector__selector"
                 active={editing === i}
@@ -125,6 +130,7 @@ class ColorSelector extends Component {
                     color={cSet.selectedColor}
                   />
                 )}
+                {cSet.label ? <div className="color-selector__selector__label">{cSet.label}</div> : null}
               </ColorSelectorInput>
             </div>
           ))}

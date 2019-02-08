@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +24,8 @@ import Sortable from 'react-anything-sortable';
 import styled from 'styled-components';
 import {createSelector} from 'reselect';
 
-import LayerPanel from './layer-panel/layer-panel';
-import SourceDataCatalog from './source-data-catalog';
+import LayerPanelFactory from './layer-panel/layer-panel';
+import SourceDataCatalogFactory from './source-data-catalog';
 import {Add} from 'components/common/icons';
 import ItemSelector from 'components/common/item-selector/item-selector';
 import {
@@ -77,112 +77,6 @@ const StyledSortable = styled.div`
   }
 `;
 
-export default class LayerManager extends Component {
-  static propTypes = {
-    addLayer: PropTypes.func.isRequired,
-    datasets: PropTypes.object.isRequired,
-    layerBlending: PropTypes.string.isRequired,
-    layerClasses: PropTypes.object.isRequired,
-    layers: PropTypes.arrayOf(PropTypes.any).isRequired,
-    layerConfigChange: PropTypes.func.isRequired,
-    layerVisualChannelConfigChange: PropTypes.func.isRequired,
-    layerTypeChange: PropTypes.func.isRequired,
-    layerVisConfigChange: PropTypes.func.isRequired,
-    openModal: PropTypes.func.isRequired,
-    removeLayer: PropTypes.func.isRequired,
-    removeDataset: PropTypes.func.isRequired,
-    showDatasetTable: PropTypes.func.isRequired,
-    updateLayerBlending: PropTypes.func.isRequired,
-    updateLayerOrder: PropTypes.func.isRequired
-  };
-
-  layerClassSelector = props => props.layerClasses;
-  layerTypeOptionsSelector = createSelector(
-    this.layerClassSelector,
-    layerClasses => Object.keys(layerClasses).map(key => {
-      const layer = new layerClasses[key]();
-      return {
-        id: key,
-        label: layer.name,
-        icon: layer.layerIcon
-      };
-  }));
-
-  _addEmptyNewLayer = () => {
-    this.props.addLayer();
-  };
-
-  _handleSort = order => {
-    this.props.updateLayerOrder(order);
-  };
-
-  render() {
-    const {layers, datasets, layerOrder, openModal} = this.props;
-    const defaultDataset = Object.keys(datasets)[0];
-    const layerTypeOptions = this.layerTypeOptionsSelector(this.props);
-
-    const layerActions = {
-      layerConfigChange: this.props.layerConfigChange,
-      layerVisualChannelConfigChange: this.props.layerVisualChannelConfigChange,
-      layerTypeChange: this.props.layerTypeChange,
-      layerVisConfigChange: this.props.layerVisConfigChange,
-      removeLayer: this.props.removeLayer
-    };
-
-    const panelProps = {datasets, openModal, layerTypeOptions};
-
-    return (
-      <StyledSortable className="layer-manager">
-        <SourceDataCatalog
-          datasets={datasets}
-          showDatasetTable={this.props.showDatasetTable}
-          removeDataset={this.props.removeDataset}
-          showDeleteDataset
-        />
-        <Button
-          onClick={this.props.showAddDataModal}
-          isInactive={!defaultDataset}
-          width="105px"
-          secondary
-        >
-          <Add height="12px" />Add Data
-        </Button>
-        <SidePanelDivider />
-        <SidePanelSection>
-          <Sortable
-            onSort={this._handleSort}
-            direction="vertical"
-            sortHandle="sort--handle"
-            dynamic
-          >
-            {layerOrder.map(idx => (
-              <LayerPanel
-                {...panelProps}
-                {...layerActions}
-                sortData={idx}
-                key={layers[idx].id}
-                idx={idx}
-                layer={layers[idx]}
-              />
-            ))}
-          </Sortable>
-        </SidePanelSection>
-        <SidePanelSection>
-          {defaultDataset ? (
-            <Button onClick={this._addEmptyNewLayer} width="105px">
-              <Add height="12px" />Add Layer
-            </Button>
-          ) : null}
-        </SidePanelSection>
-        <LayerBlendingSelector
-          layerBlending={this.props.layerBlending}
-          updateLayerBlending={this.props.updateLayerBlending}
-        />
-      </StyledSortable>
-    );
-  }
-}
-
 const LayerBlendingSelector = ({layerBlending, updateLayerBlending}) => (
   <SidePanelSection>
     <PanelLabel>Layer Blending</PanelLabel>
@@ -195,3 +89,130 @@ const LayerBlendingSelector = ({layerBlending, updateLayerBlending}) => (
     />
   </SidePanelSection>
 );
+
+export function AddDataButtonFactory() {
+  const AddDataButton = ({onClick, isInactive}) => (
+    <Button
+      onClick={onClick}
+      isInactive={!isInactive}
+      width="105px"
+      secondary
+    >
+      <Add height="12px" />Add Data
+    </Button>
+  );
+
+  return AddDataButton;
+}
+
+LayerManagerFactory.deps = [
+  AddDataButtonFactory,
+  LayerPanelFactory,
+  SourceDataCatalogFactory
+];
+
+function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
+  return class LayerManager extends Component {
+    static propTypes = {
+      addLayer: PropTypes.func.isRequired,
+      datasets: PropTypes.object.isRequired,
+      layerBlending: PropTypes.string.isRequired,
+      layerClasses: PropTypes.object.isRequired,
+      layers: PropTypes.arrayOf(PropTypes.any).isRequired,
+      layerConfigChange: PropTypes.func.isRequired,
+      layerVisualChannelConfigChange: PropTypes.func.isRequired,
+      layerTypeChange: PropTypes.func.isRequired,
+      layerVisConfigChange: PropTypes.func.isRequired,
+      openModal: PropTypes.func.isRequired,
+      removeLayer: PropTypes.func.isRequired,
+      removeDataset: PropTypes.func.isRequired,
+      showDatasetTable: PropTypes.func.isRequired,
+      updateLayerBlending: PropTypes.func.isRequired,
+      updateLayerOrder: PropTypes.func.isRequired
+    };
+
+    layerClassSelector = props => props.layerClasses;
+    layerTypeOptionsSelector = createSelector(
+      this.layerClassSelector,
+      layerClasses => Object.keys(layerClasses).map(key => {
+        const layer = new layerClasses[key]();
+        return {
+          id: key,
+          label: layer.name,
+          icon: layer.layerIcon
+        };
+    }));
+
+    _addEmptyNewLayer = () => {
+      this.props.addLayer();
+    };
+
+    _handleSort = order => {
+      this.props.updateLayerOrder(order);
+    };
+
+    render() {
+      const {layers, datasets, layerOrder, openModal} = this.props;
+      const defaultDataset = Object.keys(datasets)[0];
+      const layerTypeOptions = this.layerTypeOptionsSelector(this.props);
+
+      const layerActions = {
+        layerConfigChange: this.props.layerConfigChange,
+        layerVisualChannelConfigChange: this.props.layerVisualChannelConfigChange,
+        layerTypeChange: this.props.layerTypeChange,
+        layerVisConfigChange: this.props.layerVisConfigChange,
+        removeLayer: this.props.removeLayer
+      };
+
+      const panelProps = {datasets, openModal, layerTypeOptions};
+
+      return (
+        <StyledSortable className="layer-manager">
+          <SourceDataCatalog
+            datasets={datasets}
+            showDatasetTable={this.props.showDatasetTable}
+            removeDataset={this.props.removeDataset}
+            showDeleteDataset
+          />
+          <AddDataButton
+            onClick={this.props.showAddDataModal}
+            isInactive={!defaultDataset}
+          />
+          <SidePanelDivider />
+          <SidePanelSection>
+            <Sortable
+              onSort={this._handleSort}
+              direction="vertical"
+              sortHandle="sort--handle"
+              dynamic
+            >
+              {layerOrder.map(idx => (
+                <LayerPanel
+                  {...panelProps}
+                  {...layerActions}
+                  sortData={idx}
+                  key={layers[idx].id}
+                  idx={idx}
+                  layer={layers[idx]}
+                />
+              ))}
+            </Sortable>
+          </SidePanelSection>
+          <SidePanelSection>
+            {defaultDataset ? (
+              <Button onClick={this._addEmptyNewLayer} width="105px">
+                <Add height="12px" />Add Layer
+              </Button>
+            ) : null}
+          </SidePanelSection>
+          <LayerBlendingSelector
+            layerBlending={this.props.layerBlending}
+            updateLayerBlending={this.props.updateLayerBlending}
+          />
+        </StyledSortable>
+      );
+    }
+  }
+}
+
+export default LayerManagerFactory;

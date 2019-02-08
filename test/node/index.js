@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,30 +19,13 @@
 // THE SOFTWARE.
 
 /*eslint-disable */
-import './utils/data-utils-test';
-import './utils/data-processor-test';
-import './utils/filter-utils-test';
-import './utils/layer-utils-test';
-import './utils/data-scale-utils-test';
-import './utils/interaction-utils-test';
-import './utils/mapbox-gl-style-editor-test';
+import './utils';
 
-// test reducer
-import './reducers/map-state-test';
-import './reducers/map-style-test';
-import './reducers/vis-state-test';
-import './reducers/ui-state-test';
-import './reducers/composer-state-test';
+// test reducers
+import './reducers';
 
 // test schemas
-import './schemas/vis-state-schema-test';
-import './schemas/map-state-schema-test';
-import './schemas/map-style-schema-test';
-import './schemas/dataset-schema-test';
-import './schemas/schema-conversion-test';
-
-// test mergers
-import './reducers/vis-state-merger-test';
+import './schemas';
 
 // test layers
-import './layer-tests/index';
+import './layer-tests';

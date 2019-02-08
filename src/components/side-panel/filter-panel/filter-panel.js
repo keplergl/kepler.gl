@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -51,113 +51,117 @@ const StyledFilterContent = styled.div`
   padding: 12px;
 `;
 
-export default class FilterPanel extends Component {
-  static propTypes = {
-    idx: PropTypes.number,
-    filters: PropTypes.arrayOf(PropTypes.any).isRequired,
-    filter: PropTypes.object.isRequired,
-    setFilter: PropTypes.func.isRequired,
-    removeFilter: PropTypes.func.isRequired,
-    enlargeFilter: PropTypes.func.isRequired,
-    toggleAnimation: PropTypes.func.isRequired,
-    datasets: PropTypes.object,
-    showDatasetTable: PropTypes.func,
-    isAnyFilterAnimating: PropTypes.bool
-  };
+function FilterPanelFactory() {
+  return class FilterPanel extends Component {
+    static propTypes = {
+      idx: PropTypes.number,
+      filters: PropTypes.arrayOf(PropTypes.any).isRequired,
+      filter: PropTypes.object.isRequired,
+      setFilter: PropTypes.func.isRequired,
+      removeFilter: PropTypes.func.isRequired,
+      enlargeFilter: PropTypes.func.isRequired,
+      toggleAnimation: PropTypes.func.isRequired,
+      datasets: PropTypes.object,
+      showDatasetTable: PropTypes.func,
+      isAnyFilterAnimating: PropTypes.bool
+    };
 
-  /* selectors */
-  fieldsSelector = props =>
-    (props.filter.dataId && props.datasets[props.filter.dataId].fields) || [];
-  filterSelector = props => props.filters;
-  nameSelector = props => props.filter.name;
-  dataIdSelector = props => props.filter.dataId;
+    /* selectors */
+    fieldsSelector = props =>
+      (props.filter.dataId && props.datasets[props.filter.dataId].fields) || [];
+    filterSelector = props => props.filters;
+    nameSelector = props => props.filter.name;
+    dataIdSelector = props => props.filter.dataId;
 
-  // only show current field and field that's not already been used as a filter
-  availableFieldsSelector = createSelector(
-    this.fieldsSelector,
-    this.filterSelector,
-    this.nameSelector,
-    this.dataIdSelector,
-    (fields, filters, name, dataId) =>
-      fields.filter(
-        f =>
-          f.type &&
-          f.type !== ALL_FIELD_TYPES.geojson &&
-          (f.name === name ||
-            !filters.find(d => d.name === f.name && d.dataId === dataId))
-      )
-  );
+    // only show current field and field that's not already been used as a filter
+    availableFieldsSelector = createSelector(
+      this.fieldsSelector,
+      this.filterSelector,
+      this.nameSelector,
+      this.dataIdSelector,
+      (fields, filters, name, dataId) =>
+        fields.filter(
+          f =>
+            f.type &&
+            f.type !== ALL_FIELD_TYPES.geojson &&
+            (f.name === name ||
+              !filters.find(d => d.name === f.name && d.dataId === dataId))
+        )
+    );
 
-  render() {
-    const {
-      datasets,
-      enlargeFilter,
-      filter,
-      idx,
-      isAnyFilterAnimating,
-      removeFilter,
-      setFilter,
-      toggleAnimation
-    } = this.props;
-    const {name, enlarged, type, dataId} = filter;
-    const FilterComponent = type && Filters[FILTER_COMPONENTS[type]];
-    const allAvailableFields = this.availableFieldsSelector(this.props);
+    render() {
+      const {
+        datasets,
+        enlargeFilter,
+        filter,
+        idx,
+        isAnyFilterAnimating,
+        removeFilter,
+        setFilter,
+        toggleAnimation
+      } = this.props;
+      const {name, enlarged, type, dataId} = filter;
+      const FilterComponent = type && Filters[FILTER_COMPONENTS[type]];
+      const allAvailableFields = this.availableFieldsSelector(this.props);
 
-    return (
-      <StyledFilterPanel className="filter-panel">
-        <StyledFilterHeader className="filter-panel__header"
-          labelRCGColorValues={datasets[dataId].color}>
-          <div style={{flexGrow: 1}}>
-            <FieldSelector
-              inputTheme="secondary"
-              fields={allAvailableFields}
-              value={name}
-              erasable={false}
-              onSelect={value => setFilter(idx, 'name', value.name)}
-            />
-          </div>
-          <PanelHeaderAction
-            id={filter.id}
-            tooltip="delete"
-            tooltipType="error"
-            onClick={removeFilter}
-            hoverColor={'errorColor'}
-            IconComponent={Trash}
-          />
-          {type === FILTER_TYPES.timeRange && (
-            <PanelHeaderAction
-              id={filter.id}
-              onClick={enlargeFilter}
-              tooltip="Time Playback"
-              IconComponent={Clock}
-              active={enlarged}
-            />
-          )}
-        </StyledFilterHeader>
-        <StyledFilterContent className="filter-panel__content">
-          {Object.keys(datasets).length > 1 && (
-            <SourceDataSelector
-              inputTheme="secondary"
-              datasets={datasets}
-              disabled={filter.freeze}
-              dataId={filter.dataId}
-              onSelect={value => setFilter(idx, 'dataId', value)}
-            />
-          )}
-          {type &&
-          !enlarged && (
-            <div className="filter-panel__filter">
-              <FilterComponent
-                filter={filter}
-                idx={idx}
-                isAnyFilterAnimating={isAnyFilterAnimating}
-                toggleAnimation={toggleAnimation}
-                setFilter={value => setFilter(idx, 'value', value)}
+      return (
+        <StyledFilterPanel className="filter-panel">
+          <StyledFilterHeader className="filter-panel__header"
+            labelRCGColorValues={datasets[dataId].color}>
+            <div style={{flexGrow: 1}}>
+              <FieldSelector
+                inputTheme="secondary"
+                fields={allAvailableFields}
+                value={name}
+                erasable={false}
+                onSelect={value => setFilter(idx, 'name', value.name)}
               />
             </div>
-          )}
-        </StyledFilterContent>
-      </StyledFilterPanel>
-    );
+            <PanelHeaderAction
+              id={filter.id}
+              tooltip="delete"
+              tooltipType="error"
+              onClick={removeFilter}
+              hoverColor={'errorColor'}
+              IconComponent={Trash}
+            />
+            {type === FILTER_TYPES.timeRange && (
+              <PanelHeaderAction
+                id={filter.id}
+                onClick={enlargeFilter}
+                tooltip="Time Playback"
+                IconComponent={Clock}
+                active={enlarged}
+              />
+            )}
+          </StyledFilterHeader>
+          <StyledFilterContent className="filter-panel__content">
+            {Object.keys(datasets).length > 1 && (
+              <SourceDataSelector
+                inputTheme="secondary"
+                datasets={datasets}
+                disabled={filter.freeze}
+                dataId={filter.dataId}
+                onSelect={value => setFilter(idx, 'dataId', value)}
+              />
+            )}
+            {type &&
+            !enlarged && (
+              <div className="filter-panel__filter">
+                <FilterComponent
+                  filter={filter}
+                  idx={idx}
+                  isAnyFilterAnimating={isAnyFilterAnimating}
+                  toggleAnimation={toggleAnimation}
+                  setFilter={value => setFilter(idx, 'value', value)}
+                />
+              </div>
+            )}
+          </StyledFilterContent>
+        </StyledFilterPanel>
+      );
+    }
   }
 }
+
+export default FilterPanelFactory;

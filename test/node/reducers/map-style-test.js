@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,13 +20,12 @@
 
 import test from 'tape';
 
-import reducer, {INITIAL_MAP_STYLE} from 'reducers/map-style';
+import reducer from 'reducers/map-style';
+import {INITIAL_MAP_STYLE} from 'reducers/map-style-updaters';
 import {keplerGlInit, receiveMapConfig} from 'actions/actions';
 import SchemaManager from 'schemas';
 import {
-  drainTasksForTesting,
-  succeedTaskInTest,
-  errorTaskInTest
+  drainTasksForTesting
 } from 'react-palm/tasks';
 
 // helpers
@@ -68,7 +67,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
   const stateLoaded = SchemaManager.parseSavedConfig(savedState);
   console.log(stateLoaded);
 
-  const stateWithConfig= reducer(
+  const stateWithConfig = reducer(
     stateWithToken,
     receiveMapConfig(stateLoaded)
   );

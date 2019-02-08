@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,6 @@ import keyMirror from 'keymirror';
 
 export const ACTION_PREFIX = '@@kepler.gl/';
 export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl';
-export const STYLE_PREFIX = `${CLOUDFRONT}/map-styles`;
 export const ICON_PREFIX = `${CLOUDFRONT}/geodude`;
 
 // Modal Ids
@@ -44,6 +43,7 @@ import {
 
 export const KEPLER_GL_NAME = 'kepler.gl';
 export const KEPLER_GL_VERSION = 'v1.0';
+export const KEPLER_GL_WEBSITE = 'http://kepler.gl/';
 
 export const DIMENSIONS = {
   sidePanel: {
@@ -120,6 +120,11 @@ export const DEFAULT_LAYER_GROUPS = [
     slug: 'land',
     filter: ({id}) => id.match(/(?=(parks|landcover|industrial|sand|hillshade))/),
     defaultVisibility: true
+  },
+  {
+    slug: '3d building',
+    filter: () => false,
+    defaultVisibility: false
   }
 ];
 
@@ -127,28 +132,28 @@ export const DEFAULT_MAP_STYLES = [
   {
     id: 'dark',
     label: 'Dark',
-    url: `${STYLE_PREFIX}/dark`,
+    url: 'mapbox://styles/uberdata/cjoqbbf6l9k302sl96tyvka09',
     icon: `${ICON_PREFIX}/UBER_DARK_V2.png`,
     layerGroups: DEFAULT_LAYER_GROUPS
   },
   {
     id: 'light',
     label: 'Light',
-    url: `${STYLE_PREFIX}/light`,
+    url: 'mapbox://styles/uberdata/cjoqb9j339k1f2sl9t5ic5bn4',
     icon: `${ICON_PREFIX}/UBER_LIGHT_V2.png`,
     layerGroups: DEFAULT_LAYER_GROUPS
   },
   {
     id: 'muted',
     label: 'Muted Light',
-    url: `${STYLE_PREFIX}/muted-light`,
+    url: 'mapbox://styles/uberdata/cjfyl03kp1tul2smf5v2tbdd4',
     icon: `${ICON_PREFIX}/UBER_MUTED_LIGHT.png`,
     layerGroups: DEFAULT_LAYER_GROUPS
   },
   {
     id: 'muted_night',
     label: 'Muted Night',
-    url: `${STYLE_PREFIX}/muted-night`,
+    url: 'mapbox://styles/uberdata/cjfxhlikmaj1b2soyzevnywgs',
     icon: `${ICON_PREFIX}/UBER_MUTED_NIGHT.png`,
     layerGroups: DEFAULT_LAYER_GROUPS
   }
@@ -313,13 +318,13 @@ export const linearFieldAggrScaleFunctions = {
   }
 };
 
-export const OrdinalFieldScaleFunctions = {
+export const ordinalFieldScaleFunctions = {
   [CHANNEL_SCALES.color]: [SCALE_TYPES.ordinal],
   [CHANNEL_SCALES.radius]: [SCALE_TYPES.point],
   [CHANNEL_SCALES.size]: [SCALE_TYPES.point]
 };
 
-export const OrdinalFieldAggrScaleFunctions = {
+export const ordinalFieldAggrScaleFunctions = {
   // [CHANNEL_SCALES.colorAggr]: [SCALE_TYPES.ordinal, SCALE_TYPES.linear],
   [CHANNEL_SCALES.colorAggr]: {
     [AGGREGATION_TYPES.mode]: [SCALE_TYPES.ordinal],
@@ -360,8 +365,8 @@ export const FIELD_OPTS = {
   string: {
     type: 'categorical',
     scale: {
-      ...OrdinalFieldScaleFunctions,
-      ...OrdinalFieldAggrScaleFunctions
+      ...ordinalFieldScaleFunctions,
+      ...ordinalFieldAggrScaleFunctions
     },
     format: {
       legend: d => d
@@ -400,8 +405,8 @@ export const FIELD_OPTS = {
   boolean: {
     type: 'boolean',
     scale: {
-      ...OrdinalFieldScaleFunctions,
-      ...OrdinalFieldAggrScaleFunctions
+      ...ordinalFieldScaleFunctions,
+      ...ordinalFieldAggrScaleFunctions
     },
     format: {
       legend: d => d
@@ -409,8 +414,8 @@ export const FIELD_OPTS = {
   },
   date: {
     scale: {
-      ...OrdinalFieldScaleFunctions,
-      ...OrdinalFieldAggrScaleFunctions
+      ...ordinalFieldScaleFunctions,
+      ...ordinalFieldAggrScaleFunctions
     },
     format: {
       legend: d => d
@@ -476,26 +481,23 @@ export const NO_VALUE_COLOR = [147, 147, 147];
 
 export const LAYER_BLENDINGS = {
   additive: {
-    enable: true,
     blendFunc: ['SRC_ALPHA', 'DST_ALPHA'],
     blendEquation: 'FUNC_ADD'
   },
   normal: {
-    enable: true,
     // reference to
     // https://limnu.com/webgl-blending-youre-probably-wrong/
-    blendFuncSeparate: [
+    blendFunc: [
       'SRC_ALPHA',
       'ONE_MINUS_SRC_ALPHA',
       'ONE',
       'ONE_MINUS_SRC_ALPHA'
     ],
-    blendEquationSeparate: ['FUNC_ADD', 'FUNC_ADD']
+    blendEquation: ['FUNC_ADD', 'FUNC_ADD']
   },
   subtractive: {
-    enable: true,
-    blendFuncSeparate: ['ONE', 'ONE_MINUS_DST_COLOR', 'SRC_ALPHA', 'DST_ALPHA'],
-    blendEquationSeparate: ['FUNC_SUBTRACT', 'FUNC_ADD']
+    blendFunc: ['ONE', 'ONE_MINUS_DST_COLOR', 'SRC_ALPHA', 'DST_ALPHA'],
+    blendEquation: ['FUNC_SUBTRACT', 'FUNC_ADD']
   }
 };
 
@@ -585,3 +587,19 @@ export const EXPORT_DATA_TYPE_OPTIONS = [
   //   available: false
   // }
 ];
+
+export const DEFAULT_UUID_COUNT = 6;
+
+export const DEFAULT_NOTIFICATION_MESSAGE = 'MESSAGE_NOT_PROVIDED';
+
+export const DEFAULT_NOTIFICATION_TYPES = keyMirror({
+  info: null,
+  error: null,
+  warning: null,
+  success: null
+});
+
+export const DEFAULT_NOTIFICATION_TOPICS = keyMirror({
+  global: null,
+  file: null
+});

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -30,22 +30,25 @@ import KeplerGlSchema from 'schemas';
 // compose action to apply result multiple reducers, with the output of one
 
 /**
- * Apply map bounds to mapState from received vis data
- * @param state
- * @param action {options, config: {}}
+ * Apply data and config to visState reducer
+ * @param {object} state
+ * @param {object} action
+ * @param {object} action.options
+ * @param {Boolean} action.options.centerMap
+ * @param {Boolean} action.options.readOnly
+ * @param {object} action.config
  * @returns state new reducer state
  */
 export const updateVisDataComposed = (state, action) => {
   // keep a copy of oldLayers
-  const oldLayers = state.visState.layers.map(l => l.id);
+  const oldLayers = state.visState.layers;
 
   const visState = updateVisDataUpdater(state.visState, action);
 
   const defaultOptions = {
-    centerMap: true,
-    // this will hide the left panel completely
-    readOnly: false
+    centerMap: true
   };
+
   const options = {
     ...defaultOptions,
     ...action.options
@@ -54,7 +57,7 @@ export const updateVisDataComposed = (state, action) => {
   let bounds;
   if (options.centerMap) {
     // find map bounds for new layers
-    const newLayers = visState.layers.filter(l => !oldLayers.includes(l.id));
+    const newLayers = visState.layers.filter(nl => !oldLayers.find(ol => ol === nl));
     bounds = findMapBounds(newLayers);
   }
 
@@ -68,7 +71,7 @@ export const updateVisDataComposed = (state, action) => {
       : state.mapState,
     uiState: {
       ...toggleModalUpdater(state.uiState, {payload: null}),
-      readOnly: options.readOnly
+      ...(options.hasOwnProperty('readOnly') ? {readOnly: options.readOnly} : {})
     }
   };
 };

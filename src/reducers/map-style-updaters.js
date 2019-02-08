@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import Immutable from 'immutable';
-import {Task, withTask} from 'react-palm';
+import Task, {withTask} from 'react-palm/tasks';
 
 // Utils
 import {
@@ -30,10 +30,36 @@ import {
   editTopMapStyle,
   editBottomMapStyle
 } from 'utils/map-style-utils/mapbox-gl-style-editor';
-import {DEFAULT_LAYER_GROUPS} from 'constants/default-settings';
+import {DEFAULT_MAP_STYLES, DEFAULT_LAYER_GROUPS} from 'constants/default-settings';
 import {generateHashId} from 'utils/utils';
 import {LOAD_MAP_STYLE_TASK} from 'tasks/tasks';
 import {loadMapStyles, loadMapStyleErr} from 'actions/map-style-actions';
+import {rgb} from 'd3-color';
+import { hexToRgb } from 'utils/color-utils';
+
+const DEFAULT_BLDG_COLOR = '#D1CEC7';
+
+const getDefaultState = () => {
+  const visibleLayerGroups = {};
+  const styleType = 'dark';
+  const topLayerGroups = {};
+
+  return {
+    styleType,
+    visibleLayerGroups,
+    topLayerGroups,
+    mapStyles: DEFAULT_MAP_STYLES.reduce((accu, curr) => ({
+      ...accu,
+      [curr.id]: curr
+    }), {}),
+    // save mapbox access token
+    mapboxApiAccessToken: null,
+    inputStyle: getInitialInputStyle(),
+    threeDBuildingColor: hexToRgb(DEFAULT_BLDG_COLOR)
+  };
+};
+
+export const INITIAL_MAP_STYLE = getDefaultState();
 
 /**
  * Create two map styles from preset map style, one for top map one for bottom
@@ -87,8 +113,19 @@ function getMapStyles({
         visibleLayerGroups: topLayers
       })
     : null;
+  const threeDBuildingColor = get3DBuildingColor(mapStyle);
+  return {bottomMapStyle, topMapStyle, editable, threeDBuildingColor};
+}
 
-  return {bottomMapStyle, topMapStyle, editable};
+function get3DBuildingColor(style) {
+  // set building color to be the same as the background color.
+  const backgroundLayer = (style.style.layers || []).find(({id}) => id === 'background');
+  const buildingColor = backgroundLayer && backgroundLayer.paint && backgroundLayer.paint['background-color'] ?
+                        backgroundLayer.paint['background-color'] : DEFAULT_BLDG_COLOR;
+  // brighten or darken building based on style
+  const operation = style.id.match(/(?=(dark|night))/) ? 'brighter':  'darker';
+  const rgbObj = rgb(buildingColor)[operation]([0.2]);
+  return [rgbObj.r, rgbObj.g, rgbObj.b];
 }
 
 function getLayerGroupsFromStyle(style) {
@@ -112,6 +149,10 @@ export const mapConfigChangeUpdater = (state, action) => ({
 });
 
 export const mapStyleChangeUpdater = (state, {payload: styleType}) => {
+  if (!state.mapStyles[styleType]) {
+    // we might not have received the style yet
+    return state;
+  }
   const defaultLGVisibility = getDefaultLayerGroupVisibility(
     state.mapStyles[styleType]
   );
@@ -187,6 +228,18 @@ export const receiveMapConfigUpdater = (state, {payload: {mapStyle}}) => {
     newState,
     loadMapStyleTasks
   ) : newState;
+};
+
+export const resetMapConfigMapStyleUpdater = (state) => {
+  const emptyConfig = {
+    ...INITIAL_MAP_STYLE,
+    mapboxApiAccessToken: state.mapboxApiAccessToken,
+    ...state.initialState,
+    mapStyles: state.mapStyles,
+    initialState: state.initialState
+  };
+
+  return mapStyleChangeUpdater(emptyConfig, {payload: emptyConfig.styleType});
 };
 
 export const loadCustomMapStyleUpdater = (state, {payload: {icon, style, error}}) => ({

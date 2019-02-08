@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,13 +19,8 @@
 // THE SOFTWARE.
 
 import {LineLayer} from 'deck.gl';
-import {GL} from 'luma.gl';
-
-import isPicked from '../../shaderlib/is-picked';
-import isPtInRange from '../../shaderlib/is-point-in-range';
-import getExtrusion from '../../shaderlib/get-extrusion-offset.glsl';
-import vs from './line-brushing-layer-vertex.glsl';
-import vs64 from './line-brushing-layer-vertex-64.glsl';
+import GL from 'luma.gl/constants';
+import {editShader} from 'deckgl-layers/layer-utils/shader-utils';
 
 const defaultProps = {
   ...LineLayer.defaultProps,
@@ -36,21 +31,48 @@ const defaultProps = {
   enableBrushing: true,
   getStrokeWidth: d => d.strokeWidth,
   getTargetColor: x => x.color || [0, 0, 0, 255],
+  strokeScale: 1,
 
   // brush radius in meters
   brushRadius: 100000,
-  pickedColor: [254, 210, 26, 255],
   mousePosition: [0, 0]
 };
+
+function addBrushingVsShader(vs) {
+  const targetColorVs = editShader(
+    vs,
+    'line target color vs',
+    'attribute vec4 instanceColors;',
+    'attribute vec4 instanceColors; attribute vec4 instanceTargetColors;'
+  );
+
+  const brushingVs = editShader(
+    targetColorVs,
+    'line brushing vs',
+    'vec2 offset = getExtrusionOffset(target.xy - source.xy, positions.y);',
+    'vec2 offset = brushing_getExtrusionOffset(target.xy - source.xy, positions.y, project_uViewportSize, vec4(instanceSourcePositions.xy, instanceTargetPositions.xy), instanceWidths);'
+  );
+
+  return editShader(
+    brushingVs,
+    'line color vs',
+    'vColor = vec4(instanceColors.rgb, instanceColors.a * opacity) / 255.;',
+    `vec4 color = mix(instanceColors, instanceTargetColors, positions.x) / 255.;` +
+    `vColor = vec4(color.rgb, color.a * opacity);`
+  )
+}
 
 export default class LineBrushingLayer extends LineLayer {
   getShaders() {
     const shaders = super.getShaders();
-    const addons = getExtrusion + isPicked + isPtInRange;
+    // const addons = getExtrusion + isPicked + isPtInRange;
 
     return {
-      ...shaders,
-      vs: this.props.fp64 ? addons + vs64 : addons + vs
+      // ...shaders,
+      vs: addBrushingVsShader(shaders.vs),
+      fs: shaders.fs,
+      // vs: this.props.fp64 ? addons + vs64 : addons + vs,
+      modules: shaders.modules.concat(['brushing'])
     };
   }
 
@@ -58,11 +80,6 @@ export default class LineBrushingLayer extends LineLayer {
     super.initializeState();
     const {attributeManager} = this.state;
     attributeManager.addInstanced({
-      instanceStrokeWidth: {
-        size: 1,
-        accessor: ['getStrokeWidth'],
-        update: this.calculateInstanceStrokeWidth
-      },
       instanceTargetColors: {
         size: 4,
         type: GL.UNSIGNED_BYTE,
@@ -78,42 +95,23 @@ export default class LineBrushingLayer extends LineLayer {
       brushTarget,
       brushRadius,
       enableBrushing,
-      pickedColor,
       mousePosition,
       strokeScale
     } = this.props;
 
-    const picked = !Array.isArray(pickedColor)
-      ? defaultProps.pickedColor
-      : pickedColor;
-
     super.draw({
       uniforms: {
         ...uniforms,
-        brushSource,
-        brushTarget,
-        brushRadius,
-        enableBrushing,
-        strokeScale,
-        pickedColor: new Uint8ClampedArray(
-          !Number.isFinite(pickedColor[3]) ? [...picked, 255] : picked
-        ),
-        mousePos: mousePosition
+        brushing_uBrushSource: brushSource ? 1 : 0,
+        brushing_uBrushTarget: brushTarget ? 1 : 0,
+        brushing_uBrushRadius: brushRadius,
+        brushing_uEnableBrushing: enableBrushing ? 1 : 0,
+        brushing_uStrokeScale: strokeScale,
+        brushing_uMousePosition: mousePosition
           ? new Float32Array(this.unproject(mousePosition))
           : defaultProps.mousePosition
       }
     });
-  }
-
-  calculateInstanceStrokeWidth(attribute) {
-    const {data, getStrokeWidth} = this.props;
-    const {value, size} = attribute;
-    let i = 0;
-    for (const object of data) {
-      const width = getStrokeWidth(object);
-      value[i] = Number.isFinite(width) ? width : 1;
-      i += size;
-    }
   }
 
   calculateInstanceTargetColors(attribute) {

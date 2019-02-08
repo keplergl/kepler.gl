@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,14 +23,15 @@ import {console as Console} from 'global/window';
 import {bindActionCreators} from 'redux';
 import {json as requestJson} from 'd3-request';
 import styled, {ThemeProvider}  from 'styled-components';
-import {connect as keplerGlConnect} from '../connect/keplergl-connect';
+import {connect as keplerGlConnect} from 'connect/keplergl-connect';
+import {isValidStyleUrl, getStyleDownloadUrl} from 'utils/map-style-utils/mapbox-gl-style-editor';
 
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
 import * as MapStyleActions from 'actions/map-style-actions';
 import * as UIStateActions from 'actions/ui-state-actions';
 
-import {EXPORT_IMAGE_ID, DIMENSIONS, DEFAULT_MAP_STYLES,
+import {EXPORT_IMAGE_ID, DIMENSIONS,
   KEPLER_GL_NAME, KEPLER_GL_VERSION} from 'constants/default-settings';
 
 import SidePanelFactory from './side-panel';
@@ -38,9 +39,14 @@ import MapContainerFactory from './map-container';
 import BottomWidgetFactory from './bottom-widget';
 import ModalContainerFactory from './modal-container';
 import PlotContainerFactory from './plot-container';
+import NotificationPanelFactory from './notification-panel';
+
+import {generateHashId} from 'utils/utils';
 
 import {theme} from 'styles/base';
 
+// Maybe we should think about exporting this or creating a variable
+// as part of the base.js theme
 const GlobalStyle = styled.div`
   font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
   font-weight: 400;
@@ -70,19 +76,13 @@ const GlobalStyle = styled.div`
   }
 `;
 
-export const keplerGlChildDeps = [
-  ...BottomWidgetFactory.deps,
-  ...SidePanelFactory.deps,
-  ...ModalContainerFactory.deps,
-  ...MapContainerFactory.deps
-];
-
 KeplerGlFactory.deps = [
   BottomWidgetFactory,
   MapContainerFactory,
   ModalContainerFactory,
   SidePanelFactory,
-  PlotContainerFactory
+  PlotContainerFactory,
+  NotificationPanelFactory
 ];
 
 function KeplerGlFactory(
@@ -90,7 +90,8 @@ function KeplerGlFactory(
   MapContainer,
   ModalWrapper,
   SidePanel,
-  PlotContainer
+  PlotContainer,
+  NotificationPanel
 ) {
   class KeplerGL extends Component {
     static defaultProps = {
@@ -131,7 +132,14 @@ function KeplerGlFactory(
     }
 
     _loadMapStyle = () => {
-      [...this.props.mapStyles, ...Object.values(DEFAULT_MAP_STYLES)].forEach(
+      const defaultStyles = Object.values(this.props.mapStyle.mapStyles);
+      // add id to custom map styles if not given
+      const customeStyles = (this.props.mapStyles || []).map(ms => ({
+        ...ms,
+        id: ms.id || generateHashId()
+      }));
+
+      [...customeStyles, ...defaultStyles].forEach(
         style => {
           if (style.style) {
             this.props.mapStyleActions.loadMapStyles({
@@ -146,9 +154,13 @@ function KeplerGlFactory(
 
     _requestMapStyle = (mapStyle) => {
       const {url, id} = mapStyle;
-      requestJson(url, (error, result) => {
+
+      const downloadUrl = isValidStyleUrl(url) ?
+        getStyleDownloadUrl(url, this.props.mapboxApiAccessToken) : url;
+
+      requestJson(downloadUrl, (error, result) => {
         if (error) {
-          Console.warn(`Error loading map style ${mapStyle.url}`);
+          Console.warn(`Error loading map style ${url}`);
         } else {
           this.props.mapStyleActions.loadMapStyles({
             [id]: {...mapStyle, style: result}
@@ -194,6 +206,11 @@ function KeplerGlFactory(
         hoverInfo,
         clicked
       } = visState;
+
+      const notificationPanelFields = {
+        removeNotification: uiStateActions.removeNotification,
+        notifications: uiState.notifications
+      };
 
       const sideFields = {
         appName,
@@ -270,6 +287,7 @@ function KeplerGlFactory(
               this.root = node;
             }}
           >
+            <NotificationPanel {...notificationPanelFields} />
             {!uiState.readOnly && <SidePanel {...sideFields} />}
             <div className="maps" style={{display: 'flex'}}>
               {mapContainers}

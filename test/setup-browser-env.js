@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,12 +19,14 @@
 // THE SOFTWARE.
 
 /* setup.js */
-import 'babel-polyfill';
-
 import {JSDOM} from 'jsdom';
 import global from 'global';
 
-const dom = new JSDOM('<!doctype html><html><body></body></html>');
+const dom = new JSDOM('<!doctype html><html><body></body></html>', {
+  // JSDom 11.12 causes SecurityError: localStorage is not available for opaque origins
+  // https://github.com/jsdom/jsdom/issues/2304
+  url: 'http://localhost'
+});
 const {window} = dom;
 
 global.window = window;
@@ -39,5 +41,5 @@ Object.keys(global.window).forEach(property => {
 global.navigator = {
   userAgent: 'node.js',
   platform: 'mac',
-  appName: 'kepler.glsrc/components/modals/export-data-modal.js'
+  appName: 'kepler.gl'
 };

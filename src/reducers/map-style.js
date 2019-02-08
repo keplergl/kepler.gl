@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@ import {handleActions} from 'redux-actions';
 import ActionTypes from 'constants/action-types';
 
 import {
-  getInitialInputStyle,
+  INITIAL_MAP_STYLE,
   inputMapStyleUpdater,
   initMapStyleUpdater,
   mapConfigChangeUpdater,
@@ -32,29 +32,10 @@ import {
   loadMapStylesUpdater,
   loadMapStyleErrUpdater,
   receiveMapConfigUpdater,
+  resetMapConfigMapStyleUpdater,
   loadCustomMapStyleUpdater,
   addCustomMapStyleUpdater
 } from './map-style-updaters';
-
-// bedrock browserInit flattens our immutable object into a plain object
-// we have to recreate the state after the app is loaded
-const getDefaultState = () => {
-  const visibleLayerGroups = {};
-  const styleType = 'dark';
-  const topLayerGroups = {};
-
-  return {
-    styleType,
-    visibleLayerGroups,
-    topLayerGroups,
-    mapStyles: {},
-    // save mapbox access token
-    mapboxApiAccessToken: null,
-    inputStyle: getInitialInputStyle()
-  };
-};
-
-export const INITIAL_MAP_STYLE = getDefaultState();
 
 const actionHandler = {
   [ActionTypes.INIT]: initMapStyleUpdater,
@@ -65,7 +46,8 @@ const actionHandler = {
   [ActionTypes.LOAD_MAP_STYLE_ERR]: loadMapStyleErrUpdater,
   [ActionTypes.RECEIVE_MAP_CONFIG]: receiveMapConfigUpdater,
   [ActionTypes.LOAD_CUSTOM_MAP_STYLE]: loadCustomMapStyleUpdater,
-  [ActionTypes.ADD_CUSTOM_MAP_STYLE]: addCustomMapStyleUpdater
+  [ActionTypes.ADD_CUSTOM_MAP_STYLE]: addCustomMapStyleUpdater,
+  [ActionTypes.RESET_MAP_CONFIG]: resetMapConfigMapStyleUpdater
 };
 
 export const mapStyleReducerFactory = (initialState = {}) =>

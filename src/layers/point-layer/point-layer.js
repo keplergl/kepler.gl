@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,8 +20,9 @@
 
 import Layer from '../base-layer';
 import memoize from 'lodash.memoize';
-import {ScatterplotLayer} from 'deck.gl';
+import {TextLayer} from 'deck.gl';
 import ScatterplotBrushingLayer from 'deckgl-layers/scatterplot-brushing-layer/scatterplot-brushing-layer';
+import uniq from 'lodash.uniq';
 import {hexToRgb} from 'utils/color-utils';
 import PointLayerIcon from './point-layer-icon';
 import {DEFAULT_LAYER_COLOR} from 'constants/default-settings';
@@ -34,6 +35,10 @@ export const pointPosAccessor = ({lat, lng, altitude}) => d => [
 
 export const pointPosResolver = ({lat, lng, altitude}) =>
   `${lat.fieldIdx}-${lng.fieldIdx}-${altitude ? altitude.fieldIdx : 'z'}`;
+
+export const pointLabelAccessor = textLabel => d => String(d.data[textLabel.field.tableFieldIndex - 1]);
+export const pointLabelResolver = textLabel => textLabel.field && textLabel.field.tableFieldIndex;
+
 export const pointRequiredColumns = ['lat', 'lng'];
 export const pointOptionalColumns = ['altitude'];
 
@@ -54,6 +59,7 @@ export default class PointLayer extends Layer {
 
     this.registerVisConfig(pointVisConfigs);
     this.getPosition = memoize(pointPosAccessor, pointPosResolver);
+    this.getText = memoize(pointLabelAccessor, pointLabelResolver);
   }
 
   get type() {
@@ -132,6 +138,8 @@ export default class PointLayer extends Layer {
     return props;
   }
 
+  // TODO: fix complexity
+  /* eslint-disable complexity */
   formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
     const {
       colorScale,
@@ -142,6 +150,7 @@ export default class PointLayer extends Layer {
       sizeField,
       sizeScale,
       sizeDomain,
+      textLabel,
       visConfig: {radiusRange, fixedRadius, colorRange}
     } = this.config;
 
@@ -191,19 +200,37 @@ export default class PointLayer extends Layer {
       }, []);
     }
 
-    const getRadius = d =>
-      rScale ? this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
+    // get all distinct characters in the text labels
+    const getText = this.getText(textLabel);
+    let labelCharacterSet;
+    if (
+      oldLayerData &&
+      oldLayerData.labelCharacterSet &&
+      opt.sameData &&
+      oldLayerData.getText === getText
+    ) {
+      labelCharacterSet = oldLayerData.labelCharacterSet
+    } else {
+      const textLabels = textLabel.field ? data.map(getText) : [];
+      labelCharacterSet = uniq(textLabels.join(''));
+    }
 
-    const getColor = d =>
-      cScale ? this.getEncodedChannelValue(cScale, d.data, colorField) : color;
+    const getRadius = rScale ? d =>
+      this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
+
+    const getColor = cScale ? d =>
+      this.getEncodedChannelValue(cScale, d.data, colorField) : color;
 
     return {
       data,
+      labelCharacterSet,
       getPosition,
       getColor,
-      getRadius
+      getRadius,
+      getText
     };
   }
+  /* eslint-enable complexity */
 
   updateLayerMeta(allData, getPosition) {
     const bounds = this.getPointsBounds(allData, d => getPosition({data: d}));
@@ -218,6 +245,8 @@ export default class PointLayer extends Layer {
     mapState,
     interactionConfig
   }) {
+    const enableBrushing = interactionConfig.brush.enabled;
+
     const layerProps = {
       outline: this.config.visConfig.outline,
       radiusMinPixels: 1,
@@ -227,57 +256,69 @@ export default class PointLayer extends Layer {
       ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
     };
 
-    const baseLayerProp = {
-      ...layerProps,
-      ...layerInteraction,
-      ...data,
-      idx,
-      opacity: this.config.visConfig.opacity,
-      pickable: true,
-      updateTriggers: {
-        getRadius: {
-          sizeField: this.config.sizeField,
-          radiusRange: this.config.visConfig.radiusRange,
-          fixedRadius: this.config.visConfig.fixedRadius,
-          sizeScale: this.config.sizeScale
-        },
-        getColor: {
-          color: this.config.color,
-          colorField: this.config.colorField,
-          colorRange: this.config.visConfig.colorRange,
-          colorScale: this.config.colorScale
-        }
-      }
+    const interaction = {
+      autoHighlight: !enableBrushing,
+      enableBrushing,
+      brushRadius: interactionConfig.brush.config.size * 1000,
+      highlightColor: this.config.highlightColor
     };
 
     return [
-      // base layer
-      interactionConfig.brush.enabled
-        ? new ScatterplotBrushingLayer({
-            ...baseLayerProp,
-            id: `${this.id}-brush`,
-            enableBrushing: true,
-            brushRadius: interactionConfig.brush.config.size * 1000
-          })
-        : new ScatterplotLayer({
-            id: this.id,
-            ...baseLayerProp
-          }),
+      new ScatterplotBrushingLayer({
+        ...layerProps,
+        ...layerInteraction,
+        ...data,
+        ...interaction,
+        idx,
+        id: this.id,
+        opacity: this.config.visConfig.opacity,
+        pickable: true,
+        parameters: {
+          // circles will be flat on the map when the altitude column is not used
+          depthTest: this.config.columns.altitude.fieldIdx > -1
+        },
 
-      // hover layer
-      ...(this.isLayerHovered(objectHovered)
+        updateTriggers: {
+          getRadius: {
+            sizeField: this.config.sizeField,
+            radiusRange: this.config.visConfig.radiusRange,
+            fixedRadius: this.config.visConfig.fixedRadius,
+            sizeScale: this.config.sizeScale
+          },
+          getColor: {
+            color: this.config.color,
+            colorField: this.config.colorField,
+            colorRange: this.config.visConfig.colorRange,
+            colorScale: this.config.colorScale
+          }
+        }
+      }),
+      // text label layer
+      ...(this.config.textLabel.field
         ? [
-            new ScatterplotLayer({
-              ...layerProps,
-              id: `${this.id}-hovered`,
-              data: [
-                {
-                  color: this.config.highlightColor,
-                  position: data.getPosition(objectHovered.object),
-                  radius: data.getRadius(objectHovered.object)
-                }
-              ],
-              pickable: false
+            new TextLayer({
+              id: `${this.id}-label`,
+              data: data.data,
+              getPosition: data.getPosition,
+              getPixelOffset: this.config.textLabel.offset,
+              getSize: this.config.textLabel.size,
+              getTextAnchor: this.config.textLabel.anchor,
+              getText: data.getText,
+              getColor: d => this.config.textLabel.color,
+              fp64: this.config.visConfig['hi-precision'],
+              parameters: {
+                // text will always show on top of all layers
+                depthTest: false
+              },
+              characterSet: data.labelCharacterSet,
+              updateTriggers: {
+                getPosition: data.getPosition,
+                getPixelOffset: this.config.textLabel.offset,
+                getText: this.config.textLabel.field,
+                getTextAnchor: this.config.textLabel.anchor,
+                getSize: this.config.textLabel.size,
+                getColor: this.config.textLabel.color
+              }
             })
           ]
         : [])

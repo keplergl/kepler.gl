@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -292,6 +292,29 @@ export function validateSavedLayerColumns(fields, savedCols, emptyCols) {
 }
 
 /**
+ * Validate saved text label config with new data
+ * refer to vis-state-schema.js TextLabelSchemaV1
+ *
+ * @param {Object[]} fields
+ * @param {Object} savedTextLabel
+ * @return {Object} - validated textlabel
+ */
+export function validateSavedTextLabel(fields, layerTextLabel, savedTextLabel) {
+
+  // validate field
+  const field = savedTextLabel.field ? fields.find(fd =>
+    Object.keys(savedTextLabel.field).every(
+      key => savedTextLabel.field[key] === fd[key]
+    )
+  ) : null;
+
+  return Object.keys(layerTextLabel).reduce((accu, key) => ({
+    ...accu,
+    [key]: key === 'field' ? field : (savedTextLabel[key] || layerTextLabel[key])
+  }), {});
+}
+
+/**
  * Validate saved visual channels config with new data,
  * refer to vis-state-schema.js VisualChannelSchemaV1
  *
@@ -372,6 +395,12 @@ export function validateLayerWithData({fields, id: dataId}, savedLayer, layerCla
     savedLayer
   );
 
+  const textLabel = savedLayer.config.textLabel && newLayer.config.textLabel ? validateSavedTextLabel(
+    fields,
+    newLayer.config.textLabel,
+    savedLayer.config.textLabel
+  ) : newLayer.config.textLabel;
+
   // copy visConfig over to emptyLayer to make sure it has all the props
   const visConfig = newLayer.copyLayerConfig(
     newLayer.config.visConfig,
@@ -382,6 +411,7 @@ export function validateLayerWithData({fields, id: dataId}, savedLayer, layerCla
   newLayer.updateLayerConfig({
     columns,
     visConfig,
+    textLabel,
     ...foundVisualChannelConfigs
   });
 

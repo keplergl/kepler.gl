@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -383,7 +383,7 @@ mergedLayer0.config = {
     tableFieldIndex: 1
   },
   colorDomain: [1000, 1000, 2000, 2000, 2000, 3000, 3000, 3000, 3000],
-  highlightColor: [252, 242, 26],
+  highlightColor: [252, 242, 26, 255],
   isConfigActive: false,
   colorScale: 'quantile',
   sizeField: {
@@ -395,6 +395,13 @@ mergedLayer0.config = {
   },
   sizeScale: 'sqrt',
   sizeDomain: [1000, 3000],
+  textLabel: {
+    field: null,
+    color: [255, 255, 255],
+    size: 50,
+    offset: [0, 0],
+    anchor: 'middle'
+  },
   visConfig: {
     radius: 10,
     fixedRadius: true,
@@ -441,12 +448,19 @@ mergedLayer1.config = {
   isVisible: true,
   colorField: null,
   colorDomain: [0, 1],
-  highlightColor: [252, 242, 26],
+  highlightColor: [252, 242, 26, 255],
   isConfigActive: false,
   colorScale: 'quantize',
   sizeField: null,
   sizeScale: 'linear',
   sizeDomain: [0, 1],
+  textLabel: {
+    field: null,
+    color: [255, 255, 255],
+    size: 50,
+    offset: [0, 0],
+    anchor: 'middle'
+  },
   visConfig: {
     opacity: 0.8,
     worldUnitSize: 2.73,

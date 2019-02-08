@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,31 +25,60 @@ const rootDir = join(__dirname, '..');
 const libSources = join(rootDir, 'src');
 
 const BABEL_CONFIG = {
-  // use babelrc: false to prevent babel-loader using root .babelrc
-  // https://github.com/babel/babel-preset-env/issues/399
-  // so that we can set modules: false, to avoid tree shaking
-  // https://github.com/webpack/webpack/issues/3974
-  babelrc: false,
-  presets: [['es2015', {modules: false, loose: true}], 'react', 'stage-0'].map(
-    name =>
-      Array.isArray(name)
-        ? [require.resolve(`babel-preset-${name[0]}`), name[1]]
-        : require.resolve(`babel-preset-${name}`)
-  ),
+  presets: [
+    '@babel/preset-env',
+    '@babel/preset-react'
+  ],
   plugins: [
-    'transform-decorators-legacy',
-    'transform-runtime',
-    ['module-resolver', {root: [libSources]}]
-  ].map(
-    name =>
-      Array.isArray(name)
-        ? [require.resolve(`babel-plugin-${name[0]}`), name[1]]
-        : require.resolve(`babel-plugin-${name}`)
-  )
+    ["@babel/plugin-proposal-decorators", { "legacy": true }],
+    "@babel/plugin-proposal-class-properties",
+    ["@babel/transform-runtime", {
+      "regenerator": true
+    }],
+    "@babel/plugin-syntax-dynamic-import",
+    "@babel/plugin-syntax-import-meta",
+    "@babel/plugin-proposal-json-strings",
+    "@babel/plugin-proposal-function-sent",
+    "@babel/plugin-proposal-export-namespace-from",
+    "@babel/plugin-proposal-numeric-separator",
+    "@babel/plugin-proposal-throw-expressions",
+    "@babel/plugin-proposal-export-default-from",
+    "@babel/plugin-proposal-logical-assignment-operators",
+    "@babel/plugin-proposal-optional-chaining",
+    [
+      "@babel/plugin-proposal-pipeline-operator",
+      {
+        "proposal": "minimal"
+      }
+    ],
+    "@babel/plugin-proposal-nullish-coalescing-operator",
+    "@babel/plugin-proposal-do-expressions",
+    "@babel/plugin-proposal-function-bind",
+    "@babel/plugin-transform-modules-commonjs",
+    ["inline-json-import", {}],
+    [
+      "module-resolver",
+      {
+        "root": [
+          "../src"
+        ],
+        "alias": {
+          "test": "../test"
+        }
+      }
+    ]
+  ]
 };
 
 const COMMON_CONFIG = {
-  entry: ['./src/main'],
+  entry: [
+    './src/main'
+  ],
+  output: {
+    path: resolve(__dirname, "build"),
+    filename: "bundle.js",
+    publicPath: "/"
+  },
 
   resolve: {
     alias: {
@@ -69,7 +98,6 @@ const COMMON_CONFIG = {
         test: /\.js$/,
         loader: 'babel-loader',
         options: BABEL_CONFIG,
-        include: [resolve('..'), libSources],
         exclude: [/node_modules/]
       },
       {
@@ -87,9 +115,14 @@ const COMMON_CONFIG = {
     fs: 'empty'
   },
 
+  // to support browser history api and remove the '#' sign
+  devServer: {
+    historyApiFallback: true
+  },
+
   // Optional: Enables reading mapbox token from environment variable
   plugins: [
-    new webpack.EnvironmentPlugin(['MapboxAccessToken'])
+    new webpack.EnvironmentPlugin(['MapboxAccessToken', 'DropboxClientId'])
   ]
 };
 
@@ -142,7 +175,7 @@ module.exports = env => {
     if (!process.env.MapboxAccessToken) {
       logError('Error! MapboxAccessToken is not defined');
       logInstruction(`Make sure to run "export MapboxAccessToken=<token>" before deploy the website`);
-      logInstruction('You can get the token at http://t.uber.com/kepler.gl-token');
+      logInstruction('You can get the token at https://www.mapbox.com/help/how-access-tokens-work/');
       throw new Error('Missing Mapbox Access token');
     }
     config = addProdConfig(config);

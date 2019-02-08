@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,9 @@ import memoize from 'lodash.memoize';
 import uniq from 'lodash.uniq';
 
 import Layer from '../base-layer';
+import HighlightPolygonLayer from 'deckgl-layers/geojson-layer/solid-polygon-layer';
 import {GeoJsonLayer as DeckGLGeoJsonLayer} from 'deck.gl';
+
 import {hexToRgb} from 'utils/color-utils';
 import {
   getGeojsonDataMaps,
@@ -32,9 +34,18 @@ import {
 import GeojsonLayerIcon from './geojson-layer-icon';
 import {GEOJSON_FIELDS} from 'constants/default-settings';
 
-export const pointVisConfigs = {
+export const geojsonVisConfigs = {
   opacity: 'opacity',
-  thickness: 'thickness',
+  thickness: {
+    type: 'number',
+    defaultValue: 0.5,
+    label: 'Stroke Width',
+    isRanged: false,
+    range: [0, 100],
+    step: 0.1,
+    group: 'stroke',
+    property: 'thickness'
+  },
   colorRange: 'colorRange',
   radius: 'radius',
 
@@ -59,7 +70,7 @@ export default class GeoJsonLayer extends Layer {
     super(props);
 
     this.dataToFeature = {};
-    this.registerVisConfig(pointVisConfigs);
+    this.registerVisConfig(geojsonVisConfigs);
     this.getFeature = memoize(featureAccessor, featureResolver);
   }
 
@@ -151,6 +162,8 @@ export default class GeoJsonLayer extends Layer {
     return allData[object.properties.index];
   }
 
+  // TODO: fix complexity
+  /* eslint-disable complexity */
   formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
     const {
       colorScale,
@@ -278,6 +291,7 @@ export default class GeoJsonLayer extends Layer {
           : d.properties.radius || 1
     };
   }
+  /* eslint-enable complexity */
 
   updateLayerMeta(allData, getFeature) {
     this.dataToFeature = getGeojsonDataMaps(allData, getFeature);
@@ -317,7 +331,6 @@ export default class GeoJsonLayer extends Layer {
   renderLayer({
     data,
     idx,
-    layerInteraction,
     objectHovered,
     mapState,
     interactionConfig
@@ -325,50 +338,49 @@ export default class GeoJsonLayer extends Layer {
     const {fp64, lightSettings, fixedRadius} = this.meta;
     const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius);
     const zoomFactor = this.getZoomFactor(mapState);
+    const {visConfig} = this.config;
 
     const layerProps = {
       // multiplier applied just so it being consistent with previously saved maps
-      lineWidthScale: this.config.visConfig.thickness * zoomFactor * 8,
+      lineWidthScale: visConfig.thickness * zoomFactor * 8,
       lineWidthMinPixels: 1,
-      elevationScale: this.config.visConfig.elevationScale,
+      elevationScale: visConfig.elevationScale,
       pointRadiusScale: radiusScale,
-      fp64: fp64 || this.config.visConfig['hi-precision'],
-      lineMiterLimit: 10 * zoomFactor,
-      rounded: true
+      fp64: fp64 || visConfig['hi-precision'],
+      lineMiterLimit: 4
     };
 
     const updateTriggers = {
       getElevation: {
         heightField: this.config.heightField,
         heightScale: this.config.heightScale,
-        heightRange: this.config.visConfig.heightRange
+        heightRange: visConfig.heightRange
       },
       getFillColor: {
         color: this.config.color,
         colorField: this.config.colorField,
-        colorRange: this.config.visConfig.colorRange,
+        colorRange: visConfig.colorRange,
         colorScale: this.config.colorScale
       },
       getLineColor: {
         color: this.config.color,
         colorField: this.config.colorField,
-        colorRange: this.config.visConfig.colorRange,
+        colorRange: visConfig.colorRange,
         colorScale: this.config.colorScale
       },
       getLineWidth: {
         sizeField: this.config.sizeField,
-        sizeRange: this.config.visConfig.sizeRange
+        sizeRange: visConfig.sizeRange
       },
       getRadius: {
         radiusField: this.config.radiusField,
-        radiusRange: this.config.visConfig.radiusRange
+        radiusRange: visConfig.radiusRange
       }
     };
 
     return [
       new DeckGLGeoJsonLayer({
         ...layerProps,
-        ...layerInteraction,
         id: this.id,
         idx,
         data: data.data,
@@ -377,33 +389,36 @@ export default class GeoJsonLayer extends Layer {
         getLineWidth: data.getLineWidth,
         getRadius: data.getRadius,
         getElevation: data.getElevation,
+        // highlight
         pickable: true,
-        opacity: this.config.visConfig.opacity,
-        stroked: this.config.visConfig.stroked,
-        filled: this.config.visConfig.filled,
-        extruded: this.config.visConfig.enable3d,
-        wireframe: this.config.visConfig.wireframe,
+        // highlightColor: this.config.highlightColor,
+        autoHighlight: visConfig.enable3d,
+        // parameters
+        parameters: {depthTest: Boolean(visConfig.enable3d || mapState.dragRotate)},
+        opacity: visConfig.opacity,
+        stroked: visConfig.stroked,
+        filled: visConfig.filled,
+        extruded: visConfig.enable3d,
+        wireframe: visConfig.wireframe,
         lightSettings,
-        updateTriggers
+        updateTriggers,
+
+        subLayers: {
+          ...DeckGLGeoJsonLayer.defaultProps.subLayers,
+          PolygonLayer: HighlightPolygonLayer
+        }
       }),
-      ...(this.isLayerHovered(objectHovered)
+      ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d
         ? [
             new DeckGLGeoJsonLayer({
               ...layerProps,
               id: `${this.id}-hovered`,
-              data: [
-                {
-                  ...objectHovered.object,
-                  properties: {
-                    ...objectHovered.object.properties,
-                    lineColor: this.config.highlightColor,
-                    fillColor: this.config.highlightColor
-                  },
-                  getLineWidth: data.getLineWidth,
-                  getRadius: data.getRadius,
-                  getElevation: data.getElevation
-                }
-              ],
+              data: [objectHovered.object],
+              getLineWidth: data.getLineWidth,
+              getRadius: data.getRadius,
+              getElevation: data.getElevation,
+              getLineColor: this.config.highlightColor,
+              getFillColor: this.config.highlightColor,
               updateTriggers,
               stroked: true,
               pickable: false,

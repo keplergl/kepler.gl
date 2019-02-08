@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,13 +22,31 @@
 export {default as KeplerGl, default, injectComponents} from './container';
 
 // factories
-export {default as SidePanelFactory} from './side-panel';
+export {default as KeplerGlFactory} from './kepler-gl';
+export {default as SidePanelFactory, PanelTitleFactory} from './side-panel';
 export {default as MapContainerFactory} from './map-container';
 export {default as BottomWidgetFactory} from './bottom-widget';
 export {default as ModalContainerFactory} from './modal-container';
+export {default as PlotContainerFactory} from './plot-container';
 
 // // side panel factories
 export {default as PanelHeaderFactory} from './side-panel/panel-header'
+export {CollapseButtonFactory, default as SidebarFactory} from './side-panel/side-bar';
+
+export {AddDataButtonFactory, default as LayerManagerFactory} from './side-panel/layer-manager';
+export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel';
+export {default as SourceDataCatalogFactory} from './side-panel/source-data-catalog';
+
+export {default as FilterManagerFactory} from './side-panel/filter-manager';
+export {default as FilterPanelFactory} from './side-panel/filter-panel/filter-panel';
+
+export {default as InteractionManagerFactory} from './side-panel/interaction-manager';
+export {default as BrushConfigFactory} from './side-panel/interaction-panel/brush-config';
+export {default as TooltipConfigFactory} from './side-panel/interaction-panel/tooltip-config';
+
+export {default as MapManagerFactory} from './side-panel/map-manager';
+export {default as LayerGroupSelectorFactory} from './side-panel/map-style-panel/map-layer-selector';
+export {default as MapStyleSelectorFactory} from './side-panel/map-style-panel/map-style-selector';
 
 // // map container factories
 export {default as MapPopoverFactory} from './map/map-popover';
@@ -36,9 +54,12 @@ export {default as MapControlFactory} from './map/map-control';
 
 // // modal container factories
 export {default as DeleteDatasetModalFactory} from './modals/delete-data-modal';
-export {default as IconInfoModalFactory} from './modals/icon-info-modal';
 export {default as DataTableModalFactory} from './modals/data-table-modal';
 export {default as LoadDataModalFactory} from './modals/load-data-modal';
+export {default as ExportImageModalFactory} from './modals/export-image-modal';
+export {default as ExportDataModalFactory} from './modals/export-data-modal';
+export {default as ExportConfigModalFactory} from './modals/export-config-modal';
+export {default as AddMapStyleModalFactory} from './modals/add-map-style-modal';
 
 // // Bottom widget factory
 export {default as TimeWidgetFactory} from './filters/time-widget';
@@ -61,4 +82,3 @@ export {default as Switch} from './common/switch';
 export {default as LoadingSpinner} from './common/loading-spinner';
 export * from './common/styled-components';
 export * as Icons from './common/icons';
-

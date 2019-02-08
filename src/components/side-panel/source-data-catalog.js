@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,7 @@ import {Table, Trash, ArrowRight} from 'components/common/icons';
 const defaultRemoveDataset = datasetKey => {};
 const numFormat = format(',');
 
-const SourceDataCatelog = styled.div`
+const SourceDataCatelogWrapper = styled.div`
   transition: ${props => props.theme.transition};
 `;
 
@@ -36,7 +36,7 @@ const DatasetTitle = styled.div`
   color: ${props => props.theme.textColor};
   display: flex;
   align-items: flex-start;
-  
+
   .source-data-arrow {
     height: 16px;
   }
@@ -55,14 +55,23 @@ const DatasetTitle = styled.div`
     }
   }
 `;
+
 const DatasetTagWrapper = styled.div`
   display: flex;
   color: ${props => props.theme.textColor};
   font-size: 11px;
   letter-spacing: 0.2px;
-  
+  overflow: auto;
+
   .dataset-color {
+    flex-shrink: 0;
     margin-top: 5px;
+  }
+
+  .dataset-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 `;
 
@@ -83,49 +92,6 @@ export const DatasetTag = ({onClick, dataset}) => (
     <DatasetSquare className="dataset-color" color={dataset.color} />
     <div className="dataset-name">{dataset.label}</div>
   </DatasetTagWrapper>
-);
-
-const SourceDataCatalog = ({
-  datasets,
-  showDatasetTable,
-  removeDataset,
-  showDeleteDataset = false
-}) => (
-  <SourceDataCatelog className="source-data-catalog">
-    {Object.values(datasets).map((dataset, index) => (
-      <SidePanelSection key={dataset.id}>
-        <DatasetTitle className="source-data-title" clickable={Boolean(showDatasetTable)}>
-          <DatasetTag
-            dataset={dataset}
-            onClick={
-              showDatasetTable ? () => showDatasetTable(dataset.id) : null
-            }
-          />
-          {showDatasetTable ?
-            <CenterFlexbox className="source-data-arrow">
-              <ArrowRight height="12px" />
-            </CenterFlexbox> : null}
-          {showDatasetTable ? (
-            <ShowDataTable
-              id={dataset.id}
-              showDatasetTable={showDatasetTable}
-            />
-          ) : null}
-          {showDeleteDataset ? (
-            <RemoveDataset
-              datasetKey={dataset.id}
-              removeDataset={removeDataset}
-            />
-          ) : null}
-        </DatasetTitle>
-        {showDatasetTable ? (
-          <DataRowCount className="source-data-rows">{`${numFormat(
-            dataset.allData.length
-          )} rows`}</DataRowCount>
-        ) : null}
-      </SidePanelSection>
-    ))}
-  </SourceDataCatelog>
 );
 
 const ShowDataTable = ({id, showDatasetTable}) => (
@@ -160,4 +126,51 @@ const RemoveDataset = ({datasetKey, removeDataset = defaultRemoveDataset}) => (
   </DataTagAction>
 );
 
-export default SourceDataCatalog;
+function SourceDataCatalogFactory() {
+  const SourceDataCatalog = ({
+    datasets,
+    showDatasetTable,
+    removeDataset,
+    showDeleteDataset = false
+  }) => (
+    <SourceDataCatelogWrapper className="source-data-catalog">
+      {Object.values(datasets).map((dataset, index) => (
+        <SidePanelSection key={dataset.id}>
+          <DatasetTitle className="source-data-title" clickable={Boolean(showDatasetTable)}>
+            <DatasetTag
+              dataset={dataset}
+              onClick={
+                showDatasetTable ? () => showDatasetTable(dataset.id) : null
+              }
+            />
+            {showDatasetTable ?
+              <CenterFlexbox className="source-data-arrow">
+                <ArrowRight height="12px" />
+              </CenterFlexbox> : null}
+            {showDatasetTable ? (
+              <ShowDataTable
+                id={dataset.id}
+                showDatasetTable={showDatasetTable}
+              />
+            ) : null}
+            {showDeleteDataset ? (
+              <RemoveDataset
+                datasetKey={dataset.id}
+                removeDataset={removeDataset}
+              />
+            ) : null}
+          </DatasetTitle>
+          {showDatasetTable ? (
+            <DataRowCount className="source-data-rows">{`${numFormat(
+              dataset.allData.length
+            )} rows`}</DataRowCount>
+          ) : null}
+        </SidePanelSection>
+      ))}
+    </SourceDataCatelogWrapper>
+  );
+
+  return SourceDataCatalog;
+}
+
+export default SourceDataCatalogFactory;

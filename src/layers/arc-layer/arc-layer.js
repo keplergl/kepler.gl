@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -108,6 +108,8 @@ export default class ArcLayer extends Layer {
     return props;
   }
 
+  // TODO: fix complexity
+  /* eslint-disable complexity */
   formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
     const {
       colorScale,
@@ -169,15 +171,14 @@ export default class ArcLayer extends Layer {
       }, []);
     }
 
-    const getStrokeWidth = d =>
-      sScale ? this.getEncodedChannelValue(sScale, d.data, sizeField) : 1;
+    const getStrokeWidth = sScale ? d =>
+       this.getEncodedChannelValue(sScale, d.data, sizeField, 0) : 1;
 
-    const getColor = d =>
-      cScale ? this.getEncodedChannelValue(cScale, d.data, colorField) : color;
+    const getColor = cScale ? d =>
+       this.getEncodedChannelValue(cScale, d.data, colorField) : color;
 
-    const getTargetColor = d =>
-      cScale
-        ? this.getEncodedChannelValue(cScale, d.data, colorField)
+    const getTargetColor = cScale ? d =>
+       this.getEncodedChannelValue(cScale, d.data, colorField)
         : targetColor || color;
 
     return {
@@ -188,6 +189,7 @@ export default class ArcLayer extends Layer {
       getStrokeWidth
     };
   }
+  /* eslint-enable complexity */
 
   updateLayerMeta(allData, getPosition) {
     // get bounds from arcs
@@ -201,12 +203,15 @@ export default class ArcLayer extends Layer {
       return [pos[3], pos[4]];
     });
 
-    const bounds = [
-      Math.min(sBounds[0], tBounds[0]),
-      Math.min(sBounds[1], tBounds[1]),
-      Math.max(sBounds[2], tBounds[2]),
-      Math.max(sBounds[3], tBounds[3])
-    ];
+    const bounds =
+      tBounds && sBounds
+        ? [
+            Math.min(sBounds[0], tBounds[0]),
+            Math.min(sBounds[1], tBounds[1]),
+            Math.max(sBounds[2], tBounds[2]),
+            Math.max(sBounds[3], tBounds[3])
+          ]
+        : sBounds || tBounds;
 
     this.updateMeta({bounds});
   }
@@ -214,8 +219,8 @@ export default class ArcLayer extends Layer {
   renderLayer({
     data,
     idx,
-    layerInteraction,
     objectHovered,
+    layerInteraction,
     mapState,
     interactionConfig
   }) {
@@ -225,31 +230,43 @@ export default class ArcLayer extends Layer {
       color: this.config.color,
       colorField: this.config.colorField,
       colorRange: this.config.visConfig.colorRange,
-      colorScale: this.config.colorScale
+      colorScale: this.config.colorScale,
+      targetColor: this.config.visConfig.targetColor
+    };
+
+    const interaction = {
+      // auto highlighting
+      pickable: true,
+      autoHighlight: !brush.enabled,
+      highlightColor: this.config.highlightColor,
+
+      // brushing
+      brushRadius: brush.config.size * 1000,
+      brushSource: true,
+      brushTarget: true,
+      enableBrushing: brush.enabled
     };
 
     return [
-      // base layer
       new ArcBrushingLayer({
-        ...layerInteraction,
         ...data,
+        ...interaction,
+        ...layerInteraction,
         id: this.id,
         idx,
-        brushRadius: brush.config.size * 1000,
-        brushSource: true,
-        brushTarget: true,
-        enableBrushing: brush.enabled,
         fp64: this.config.visConfig['hi-precision'],
         opacity: this.config.visConfig.opacity,
-        pickable: true,
         pickedColor: this.config.highlightColor,
         strokeScale: this.config.visConfig.thickness,
+
+        // parameters
+        parameters: {depthTest: mapState.dragRotate},
+
         updateTriggers: {
           getStrokeWidth: {
             sizeField: this.config.sizeField,
             sizeRange: this.config.visConfig.sizeRange
           },
-          getColor: colorUpdateTriggers,
           getSourceColor: colorUpdateTriggers,
           getTargetColor: colorUpdateTriggers
         }

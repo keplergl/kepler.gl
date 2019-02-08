@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,22 +21,23 @@
 import React from 'react';
 import document from 'global/document';
 import {Provider} from 'react-redux';
-import {hashHistory, Router, Route} from 'react-router';
+import {browserHistory, Router, Route} from 'react-router';
 import {syncHistoryWithStore} from 'react-router-redux';
 import {render} from 'react-dom';
 import store from './store';
 import App from './app';
-// import {getAppUrlPrefix} from './constants/default-settings';
+import {buildAppRoutes} from './utils/routes';
 
-const history = syncHistoryWithStore(hashHistory, store);
-// const prefix = getAppUrlPrefix();
-// const path = prefix === '' ? '(:id)' : `${prefix}(/:id)`;
+const history = syncHistoryWithStore(browserHistory, store);
+
+const appRoute = buildAppRoutes(App);
 
 const Root = () => (
   <Provider store={store}>
     <Router history={history}>
-      <Route path="/(:id)" component={App} />
-      <Route path="/demo/(:id)" component={App} />
+      <Route path="/" component={App}>
+        {appRoute}
+      </Route>
     </Router>
   </Provider>
 );

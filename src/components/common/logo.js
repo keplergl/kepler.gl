@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import {KEPLER_GL_NAME, KEPLER_GL_VERSION} from 'constants/default-settings';
+import {KEPLER_GL_NAME, KEPLER_GL_VERSION, KEPLER_GL_WEBSITE} from 'constants/default-settings';
 
 const LogoTitle = styled.div`
   display: inline-block;
@@ -29,10 +29,12 @@ const LogoTitle = styled.div`
 `;
 
 const LogoName = styled.div`
-  color: ${props => props.theme.activeColor};
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 1.17px;
+  .logo__link {
+    color: ${props => props.theme.activeColor};
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1.17px;
+  }
 `;
 const LogoVersion = styled.div`
   font-size: 10px;
@@ -64,13 +66,15 @@ const LogoSvg = () => (
   </svg>
 );
 
-const KeplerGlLogo = ({appName=KEPLER_GL_NAME, version=KEPLER_GL_VERSION}) => (
+const KeplerGlLogo = ({appName = KEPLER_GL_NAME, version = KEPLER_GL_VERSION}) => (
   <LogoWrapper className="side-panel-logo">
     <LogoSvgWrapper>
       <LogoSvg />
     </LogoSvgWrapper>
     <LogoTitle className="logo__title">
-      <LogoName className="logo__name">{appName}</LogoName>
+      <LogoName className="logo__name">
+        <a className="logo__link" target="_blank" rel="noopener noreferrer" href={KEPLER_GL_WEBSITE}>{appName}</a>
+      </LogoName>
       {version ? <LogoVersion className="logo__version">{version}</LogoVersion> : null}
     </LogoTitle>
   </LogoWrapper>

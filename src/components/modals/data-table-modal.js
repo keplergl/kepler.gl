@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -115,6 +115,7 @@ export class DataTableModal extends Component {
     }
 
     const activeDataset = datasets[dataId];
+    // TODO: this should be all data
     const rows = activeDataset.data;
     const columns = activeDataset.fields
       .map((field, i) => ({

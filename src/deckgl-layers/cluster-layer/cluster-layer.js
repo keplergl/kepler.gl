@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -79,7 +79,7 @@ export default class ClusterLayer extends CompositeLayer {
     return changeFlags.somethingChanged;
   }
 
-  updateState({oldContext, context, oldProps, props, changeFlags}) {
+  updateState({context, oldProps, props, changeFlags}) {
     if (changeFlags.dataChanged || this.needsReProjectPoints(oldProps, props)) {
       // project data into clusters, and get clustered data
       this.processGeoJSON();
@@ -87,7 +87,7 @@ export default class ClusterLayer extends CompositeLayer {
 
       // this needs clustered data to be set
       this.getColorValueDomain();
-    } else if (this.needsReclusterPoints(oldContext, context)) {
+    } else if (this.needsReclusterPoints(oldProps, props)) {
       this.getClusters();
       this.getColorValueDomain();
     } else if (this.needsRecalculateScaleFunction(oldProps, props)) {
@@ -102,9 +102,9 @@ export default class ClusterLayer extends CompositeLayer {
     );
   }
 
-  needsReclusterPoints(oldContext, context) {
+  needsReclusterPoints(oldProps, props) {
     return (
-      Math.round(oldContext.viewport.zoom) !== Math.round(context.viewport.zoom)
+      Math.round(oldProps.zoom) !== Math.round(props.zoom)
     );
   }
 
@@ -253,7 +253,7 @@ export default class ClusterLayer extends CompositeLayer {
     const {id, radiusScale, fp64} = this.props;
 
     // base layer props
-    const {opacity, pickable} = this.props;
+    const {opacity, pickable, autoHighlight, highlightColor} = this.props;
 
     // return props to the sublayer constructor
     return new ScatterplotLayer({
@@ -261,10 +261,12 @@ export default class ClusterLayer extends CompositeLayer {
       data: this.state.clusters,
       radiusScale,
       fp64,
-      getPosition: d => d.geometry.coordinates,
-      getRadius: this._onGetSublayerRadius.bind(this),
       opacity,
       pickable,
+      autoHighlight,
+      highlightColor,
+      getPosition: d => d.geometry.coordinates,
+      getRadius: this._onGetSublayerRadius.bind(this),
       getColor: this._onGetSublayerColor.bind(this),
       updateTriggers: this.getUpdateTriggers()
     });

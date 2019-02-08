@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,8 +19,7 @@
 // THE SOFTWARE.
 
 import {console as Console} from 'global/window';
-import {Task, withTask} from 'react-palm';
-import {disableStackCapturing} from 'react-palm/tasks';
+import Task, {disableStackCapturing, withTask} from 'react-palm/tasks';
 
 // Tasks
 import {LOAD_FILE_TASK} from 'tasks/tasks';
@@ -30,9 +29,10 @@ import {loadFilesErr} from 'actions/vis-state-actions';
 import {addDataToMap} from 'actions';
 
 // Utils
-import {getDefaultInteraction} from 'utils/interaction-utils';
-import {generateHashId} from 'utils/utils';
-import {findFieldsToShow} from 'utils/interaction-utils';
+import {
+  getDefaultInteraction,
+  findFieldsToShow
+} from 'utils/interaction-utils';
 import {
   getDefaultFilter,
   getFilterProps,
@@ -47,8 +47,6 @@ import {
   calculateLayerData
 } from 'utils/layer-utils/layer-utils';
 
-import {getFileHandler} from 'processors/file-handler';
-
 import {
   mergeFilters,
   mergeLayers,
@@ -56,10 +54,17 @@ import {
   mergeLayerBlending
 } from './vis-state-merger';
 
-import {LayerClasses, Layer} from 'layers';
+// LayerClasses contain ES6 Class, do not instatiate in iso rendering
+// const {LayerClasses} = isBrowser || isTesting ?
+//   require('layers') : {
+//     LayerClasses: {}
+//   };
+
+import {Layer, LayerClasses} from 'layers';
+import {processFileToLoad} from '/utils/file-utils';
 
 // react-palm
-// disable capture exception for react-palm call to withTasks
+// disable capture exception for react-palm call to withTask
 disableStackCapturing();
 
 export const INITIAL_VIS_STATE = {
@@ -543,7 +548,7 @@ export const showDatasetTableUpdater = (state, action) => {
   };
 };
 
-export const resetMapConfigUpdater = (state, action) => ({
+export const resetMapConfigVisStateUpdater = (state, action) => ({
   ...INITIAL_VIS_STATE,
   ...state.initialState,
   initialState: state.initialState
@@ -569,7 +574,7 @@ export const receiveMapConfigUpdater = (state, action) => {
   } = action.payload.visState;
 
   // always reset config when receive a new config
-  const resetState = resetMapConfigUpdater(state);
+  const resetState = resetMapConfigVisStateUpdater(state);
   let mergedState = {
     ...resetState,
     splitMaps: splitMaps || [] // maps doesn't require any logic
@@ -782,7 +787,7 @@ function generateLayerMetaForSplitViews(layer) {
 }
 
 /**
- * This emthod will compute the default maps custom list
+ * This method will compute the default maps custom list
  * based on the current layers status
  * @param layers
  * @returns {[*,*]}
@@ -806,7 +811,7 @@ function computeSplitMapLayers(layers) {
 }
 
 /**
- * Remove an existing layers from custom map layer objects
+ * Remove an existing layer from custom map layer objects
  * @param state
  * @param layer
  * @returns {[*,*]} Maps of custom layer objects
@@ -926,15 +931,8 @@ function closeSpecificMapAtIndex(state, action) {
 // TODO: redo write handler to not use tasks
 export const loadFilesUpdater = (state, action) => {
   const {files} = action;
-  const filesToLoad = files.map(fileBlob => ({
-    fileBlob,
-    info: {
-      id: generateHashId(4),
-      label: fileBlob.name,
-      size: fileBlob.size
-    },
-    handler: getFileHandler(fileBlob)
-  }));
+
+  const filesToLoad = files.map(fileBlob => processFileToLoad(fileBlob));
 
   // reader -> parser -> augment -> receiveVisData
   const loadFileTasks = [

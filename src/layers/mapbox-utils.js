@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -87,7 +87,9 @@ export function updateMapboxLayers(map, newLayers = [], oldLayers = null, mapLay
     }
   }
 
-  // insert or update newlayer
+  // insert or update new layer
+  // TODO: fix complexity
+  /* eslint-disable complexity */
   newLayers.forEach(overlay => {
     const {id: layerId, config, data, datasetId} = overlay;
     if (!data && !config) {
@@ -126,6 +128,7 @@ export function updateMapboxLayers(map, newLayers = [], oldLayers = null, mapLay
       }
     }
   });
+  /* eslint-enable complexity */
   // TODO: think about removing sources
 };
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -68,7 +68,7 @@ export const secondaryBtnBgdHover = '#A0A7B4';
 export const linkBtnBgd = 'transparent';
 export const linkBtnActBgd = linkBtnBgd;
 export const linkBtnColor = '#A0A7B4';
-export const linkBtnActColor = '#3A414C';
+export const linkBtnActColor = textColorHlLT;
 export const linkBtnActBgdHover = linkBtnBgd;
 
 export const negativeBtnBgd = errorColor;
@@ -201,9 +201,23 @@ export const sliderHandleWidth = '12px';
 export const sliderHandleColor = '#D3D8E0';
 export const sliderHandleHoverColor = '#FFFFFF';
 export const sliderHandleShadow = '0 2px 4px 0 rgba(0,0,0,0.40)';
+export const sliderInputHeight = 24;
+export const sliderInputWidth = 50;
 
 // Plot
 export const rangeBrushBgd = '#3A414C';
+
+// Notification
+export const notificationColors = {
+  info: '#276ef1',
+  error: '#f25138',
+  success: '#47b275',
+  warning: '#ffc043'
+};
+
+export const notificationPanelWidth = 240;
+export const notificationPanelItemWidth = notificationPanelWidth - 60;
+export const notificationPanelItemHeight = 60;
 
 export const textTruncate = {
   maxWidth: '100%',
@@ -277,7 +291,7 @@ const input = css`
 
 const inputLT = css`
   ${input}
-  
+
   background-color: ${props => props.theme.selectBackgroundLT};
   border: 1px solid
   ${props =>
@@ -313,7 +327,7 @@ const inputLT = css`
 `;
 
 const secondaryInput = css`
-  ${props => props.theme.input} 
+  ${props => props.theme.input}
   color: ${props => props.theme.secondaryInputColor};
   background-color: ${props => props.theme.secondaryInputBgd};
   height: ${props => props.theme.secondaryInputHeight};
@@ -336,7 +350,7 @@ const secondaryInput = css`
 `;
 
 const chickletedInput = css`
-  ${props => props.theme.secondaryInput} 
+  ${props => props.theme.secondaryInput}
   cursor: pointer;
   flex-wrap: wrap;
   height: auto;
@@ -397,7 +411,7 @@ const switchButton = css`
   display: block;
   height: ${props => props.theme.switchBtnHeight};
   width: ${props => props.theme.switchBtnWidth};
-  background: ${props => props.checked ? 
+  background: ${props => props.checked ?
   props.theme.switchBtnBgdActive : props.theme.switchBtnBgd};
   box-shadow: ${props => props.theme.switchBtnBoxShadow};
 `;
@@ -468,14 +482,14 @@ const inputCheckbox = css`
   :before {
      ${props => props.theme.checkboxBox};
   }
-  
+
   :after {
     ${props => props.theme.checkboxCheck};
   }
 `;
 
 const secondarySwitch = css`
-  ${props => props.theme.inputSwitch} 
+  ${props => props.theme.inputSwitch}
   :before {
     ${props => props.theme.switchTrack} background: ${props =>
         props.checked
@@ -484,7 +498,7 @@ const secondarySwitch = css`
   }
 
   :after {
-    ${props => props.theme.switchButton} 
+    ${props => props.theme.switchButton}
     background: ${props => props.checked
           ? props.theme.switchBtnBgdActive
           : props.theme.secondarySwitchBtnBgd};
@@ -496,21 +510,21 @@ const dropdownScrollBar = css`
     height: 10px;
     width: 10px;
   }
-  
+
   ::-webkit-scrollbar-corner {
     background: ${props => props.theme.dropdownListBgd};
   }
-  
+
   ::-webkit-scrollbar-track {
     background: ${props => props.theme.dropdownListBgd};
   }
-  
+
   ::-webkit-scrollbar-thumb {
     border-radius: 10px;
     background: ${props => props.theme.labelColor};
     border: 3px solid ${props => props.theme.dropdownListBgd};
   };
-  
+
   :vertical:hover {
     background: ${props => props.theme.textColorHl};
     cursor: pointer;
@@ -579,20 +593,20 @@ const sidePanelScrollBar = css`
     height: 10px;
     width: 10px;
   }
-  
+
   ::-webkit-scrollbar-corner {
     background: ${props => props.theme.sidePanelBg};
   }
-  
+
   ::-webkit-scrollbar-track {
     background: ${props => props.theme.sidePanelBg};
   }
-  
+
   ::-webkit-scrollbar-thumb {
     border-radius: 10px;
     background: ${props => props.theme.panelBackgroundHover};
     border: 3px solid ${props => props.theme.sidePanelBg};
-    
+
     :hover {
       background: ${props => props.theme.labelColor};
       cursor: pointer;
@@ -605,15 +619,15 @@ const panelDropdownScrollBar = css`
     height: 10px;
     width: 10px;
   }
-  
+
   ::-webkit-scrollbar-corner {
     background: ${props => props.theme.panelBackground};
   }
-  
+
   ::-webkit-scrollbar-track {
     background: ${props => props.theme.panelBackground};
   }
-  
+
   ::-webkit-scrollbar-thumb {
     border-radius: 10px;
     background: ${props => props.theme.panelBackgroundHover};
@@ -630,15 +644,15 @@ const scrollBar = css`
     height: 10px;
     width: 10px;
   }
-  
+
   ::-webkit-scrollbar-corner {
     background: ${props => props.theme.panelBackground};
   }
-  
+
   ::-webkit-scrollbar-track {
     background: ${props => props.theme.panelBackground};
   }
-  
+
   ::-webkit-scrollbar-thumb {
     border-radius: 10px;
     background: ${props => props.theme.labelColor};
@@ -648,7 +662,7 @@ const scrollBar = css`
       background: ${props => props.theme.textColorHl};
       cursor: pointer;
     }
-    
+
     :horizontal:hover {
       background: ${props => props.theme.textColorHl};
       cursor: pointer;
@@ -886,9 +900,17 @@ export const theme = {
   sliderHandleColor,
   sliderHandleHoverColor,
   sliderHandleShadow,
+  sliderInputHeight,
+  sliderInputWidth,
 
   // Plot
-  rangeBrushBgd
+  rangeBrushBgd,
+
+  // Notifications
+  notificationColors,
+  notificationPanelWidth,
+  notificationPanelItemWidth,
+  notificationPanelItemHeight
 };
 
 export const themeLT = {
