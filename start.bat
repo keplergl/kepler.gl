@@ -1,0 +1,2 @@
+set MapboxAccessToken=pk.eyJ1IjoiaGtpdHR5bG92ZXIiLCJhIjoiY2pzMzJmOWZiMGJ4cTQzb2VnbTh0djVnZCJ9.YsHzow3Vh5WGQ3JCodJVnw
+npm start
