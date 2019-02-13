@@ -1,6 +1,6 @@
 ## Get Started
 
-### Intallation
+### Installation
 
 Use <b>Node v6</b> and above, older node versions have not been tested
 

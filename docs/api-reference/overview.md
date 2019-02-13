@@ -34,7 +34,7 @@ Kepler.gl is a __Redux-connected__ component. You can embed kepler.gl in your Ap
 - [Redux][redux] state container
 - [React Redux connect][react-redux]
 
-To start out with kepler.gl, you simplly need to add the Kepler.gl UI componentand mount the Kepler.gl reducer. To give the user full access of all the functionalities of kepler.gl, this package also includes actions, schema managers and a set of utilities to load and save map data.
+To start out with kepler.gl, you simply need to add the Kepler.gl UI component and mount the Kepler.gl reducer. To give the user full access of all the functionalities of kepler.gl, this package also includes actions, schema managers and a set of utilities to load and save map data.
 
 [ecosystem]: ./ecosystem.md
 [get-started]: ./get-started.md

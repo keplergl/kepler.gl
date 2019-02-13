@@ -3,44 +3,59 @@
 ### Table of Contents
 
 -   [registerEntry][1]
--   [deleteEntry][2]
--   [renameEntry][3]
+    -   [Parameters][2]
+-   [deleteEntry][3]
+    -   [Parameters][4]
+-   [renameEntry][5]
+    -   [Parameters][6]
 
 ## registerEntry
 
-Add a new entry in the root reducer
+Add a new kepler.gl instance in `keplerGlReducer`. This action is called under-the-hood when a `KeplerGl` component is **mounted** to the dom.
+Note that if you dispatch actions such as adding data to a kepler.gl instance before the React component is mounted, the action will not be
+performed. Instance reducer can only handle actions when it is instantiated.
 
-**Parameters**
+### Parameters
 
--   `payload` **[Object][4]** 
-    -   `payload.id` **[string][5]** 
-    -   `payload.mint` **[Boolean][6]** 
-    -   `payload.mapboxApiAccessToken` **[string][5]** 
+-   `payload` **[Object][7]** 
+    -   `payload.id` **[string][8]** **\*required** The id of the instance
+    -   `payload.mint` **[boolean][9]** Whether to use a fresh empty state, when `mint: true` it will _always_ load a fresh state when the component is re-mounted.
+        When `mint: false` it will register with existing instance state under the same `id`, when the component is unmounted then mounted again. Default: `true`
+    -   `payload.mapboxApiAccessToken` **[string][8]** mapboxApiAccessToken to be saved in `map-style` reducer.
 
 ## deleteEntry
 
-Toggle between 3d and 2d map.
+Delete an instance from `keplerGlReducer`. This action is called under-the-hood when a `KeplerGl` component is **un-mounted** to the dom.
+If `mint` is set to be `true` in the component prop, the instance state will be deleted from the root reducer. Otherwise, the root reducer will keep
+the instance state and later transfer it to a newly mounted component with the same `id`
 
-**Parameters**
+### Parameters
 
--   `id` **[string][5]** 
+-   `id` **[string][8]** the id of the instance to be deleted
 
 ## renameEntry
 
-Toggle between 3d and 2d map.
+Rename an instance in the root reducer, keep its entire state
 
-**Parameters**
+### Parameters
 
--   `void`  
+-   `oldId` **[string][8]** **\*required** old id
+-   `newId` **[string][8]** **\*required** new id
 
 [1]: #registerentry
 
-[2]: #deleteentry
+[2]: #parameters
 
-[3]: #renameentry
+[3]: #deleteentry
 
-[4]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+[4]: #parameters-1
 
-[5]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+[5]: #renameentry
 
-[6]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+[6]: #parameters-2
+
+[7]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+
+[8]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+
+[9]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean

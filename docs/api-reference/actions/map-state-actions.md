@@ -3,63 +3,100 @@
 ### Table of Contents
 
 -   [togglePerspective][1]
--   [fitBounds][2]
--   [updateMap][3]
--   [toggleSplitMap][4]
+    -   [Examples][2]
+-   [fitBounds][3]
+    -   [Parameters][4]
+    -   [Examples][5]
+-   [updateMap][6]
+    -   [Parameters][7]
+    -   [Examples][8]
+-   [toggleSplitMap][9]
+    -   [Examples][10]
 
 ## togglePerspective
 
 Toggle between 3d and 2d map.
-param {void}
+
+### Examples
+
+```javascript
+import {togglePerspective} from 'kepler.gl/actions';
+this.props.dispatch(togglePerspective());
+```
 
 ## fitBounds
 
-Fit current map ti a new bounds
-param {Array} - bounds: `[lngMin, latMin, lngMax, latMax]`
+Fit map viewport to bounds
 
-**Examples**
+### Parameters
+
+-   `null-null` **[Array][11]&lt;[number][12]>** bounds as `[lngMin, latMin, lngMax, latMax]`
+
+### Examples
 
 ```javascript
-this.props.dispatch(fitBounds([-122.23, 37.127, -122.11, 37.456]))
+import {fitBounds} from 'kepler.gl/actions';
+this.props.dispatch(fitBounds([-122.23, 37.127, -122.11, 37.456]));
 ```
 
 ## updateMap
 
 Update map viewport
 
-**Parameters**
+### Parameters
 
--   `viewport` **[Object][5]** viewport object container one or any of these properties `width`, `height`, `latitude` `longitude`, `zoom`, `pitch`, `bearing`, `dragRotate`
-    -   `viewport.width` **[Number][6]** Width of viewport
-    -   `viewport.height` **[Number][6]** Height of viewport
-    -   `viewport.zoom` **[Number][6]** Zoom of viewport
-    -   `viewport.pitch` **[Number][6]** Camera angle in degrees (0 is straight down)
-    -   `viewport.bearing` **[Number][6]** Map rotation in degrees (0 means north is up)
-    -   `viewport.latitude` **[Number][6]** Latitude center of viewport on map in mercator projection
-    -   `viewport.longitude` **[Number][6]** Longitude Center of viewport on map in mercator projection
-    -   `viewport.dragRotate` **[Boolean][7]** Whether to enable drag and rotate map into perspective viewport
+-   `viewport` **[Object][13]** viewport object container one or any of these properties `width`, `height`, `latitude` `longitude`, `zoom`, `pitch`, `bearing`, `dragRotate`
+    -   `viewport.width` **[number][12]?** Width of viewport
+    -   `viewport.height` **[number][12]?** Height of viewport
+    -   `viewport.zoom` **[number][12]?** Zoom of viewport
+    -   `viewport.pitch` **[number][12]?** Camera angle in degrees (0 is straight down)
+    -   `viewport.bearing` **[number][12]?** Map rotation in degrees (0 means north is up)
+    -   `viewport.latitude` **[number][12]?** Latitude center of viewport on map in mercator projection
+    -   `viewport.longitude` **[number][12]?** Longitude Center of viewport on map in mercator projection
+    -   `viewport.dragRotate` **[boolean][14]?** Whether to enable drag and rotate map into perspective viewport
 
-**Examples**
+### Examples
 
 ```javascript
-this.props.dispatch(updateMap({latitude: 37.75043, longitude: -122.34679, width: 800, height: 1200}))
+import {updateMap} from 'kepler.gl/actions';
+this.props.dispatch(updateMap({latitude: 37.75043, longitude: -122.34679, width: 800, height: 1200}));
 ```
 
 ## toggleSplitMap
 
 Toggle between one or split maps
-param {void}
+
+### Examples
+
+```javascript
+import {toggleSplitMap} from 'kepler.gl/actions';
+this.props.dispatch(toggleSplitMap());
+```
 
 [1]: #toggleperspective
 
-[2]: #fitbounds
+[2]: #examples
 
-[3]: #updatemap
+[3]: #fitbounds
 
-[4]: #togglesplitmap
+[4]: #parameters
 
-[5]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+[5]: #examples-1
 
-[6]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
+[6]: #updatemap
 
-[7]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+[7]: #parameters-1
+
+[8]: #examples-2
+
+[9]: #togglesplitmap
+
+[10]: #examples-3
+
+[11]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+
+[12]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
+
+[13]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+
+[14]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean

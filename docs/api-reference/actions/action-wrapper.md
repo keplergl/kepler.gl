@@ -42,14 +42,7 @@ A forward action looks like this
  };
 ```
 
-<<<<<<< HEAD
 ### Parameters
-=======
-**Parameters**
-
--   `id` **[string][5]** The id to forward to
--   `action` **[Object][6]** the action object {type: string, payload: \*}
->>>>>>> add data to map payload fix
 
 -   `id` **[string][11]** The id to forward to
 -   `action` **[Object][12]** the action object {type: string, payload: \*}
@@ -73,15 +66,9 @@ Whether an action is a forward action
 
 ### Parameters
 
-<<<<<<< HEAD
 -   `action` **[Object][12]** the action object
 
 Returns **[boolean][13]** boolean - whether the action is a forward action
-=======
--   `action` **[Object][6]** the action object
-
-Returns **[boolean][7]** boolean - whether the action is a forward action
->>>>>>> add data to map payload fix
 
 ## unwrap
 
@@ -89,15 +76,9 @@ Unwrap an action
 
 ### Parameters
 
-<<<<<<< HEAD
 -   `action` **[Object][12]** the action object
 
 Returns **[Object][12]** unwrapped action
-=======
--   `action` **[Object][6]** the action object
-
-Returns **[Object][6]** unwrapped action
->>>>>>> add data to map payload fix
 
 ## forwardTo
 
@@ -105,13 +86,8 @@ Returns an action dispatcher that wraps and forwards the actions to a specific i
 
 ### Parameters
 
-<<<<<<< HEAD
 -   `id` **[string][11]** instance id
 -   `dispatch` **[Function][14]** action dispatcher
-=======
--   `id` **[string][5]** instance id
--   `dispatch` **[Function][8]** action dispatcher
->>>>>>> add data to map payload fix
 
 ### Examples
 
@@ -122,7 +98,7 @@ import {connect} from 'react-redux';
 
 const MapContainer = props => (
  <div>
-<button onClick={() => props.keplerGlDispatch(toggleSplitMap())}/>
+  <button onClick={() => props.keplerGlDispatch(toggleSplitMap())}/>
  </div>
 )
 
@@ -157,18 +133,10 @@ export default connect(
 
 [10]: #examples-1
 
-<<<<<<< HEAD
 [11]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
 
 [12]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
 
 [13]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
-=======
-[5]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
-
-[6]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
-
-[7]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
->>>>>>> add data to map payload fix
 
 [14]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function

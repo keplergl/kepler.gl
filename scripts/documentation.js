@@ -44,7 +44,6 @@ const TREE = {
     {
       path: 'actions',
       children: [
-        'index',
         'action-wrapper',
         'identity-actions',
         'vis-state-actions',
@@ -56,11 +55,11 @@ const TREE = {
     {
       path: 'reducers',
       children: [
-        ['root.js', 'reducers.md'],
-        ['vis-state-updaters.js', 'vis-state.md'],
-        ['map-state-updaters.js', 'map-state.md'],
-        ['map-style-updaters.js', 'map-style.md'],
-        ['ui-state-updaters.js', 'ui-state.md']
+        ['root', 'reducers'],
+        ['vis-state-updaters', 'vis-state'],
+        ['map-state-updaters', 'map-state'],
+        ['map-style-updaters', 'map-style'],
+        ['ui-state-updaters', 'ui-state']
       ]
     }
   ]
@@ -76,8 +75,8 @@ function buildMdDocs(nodePath, node) {
         const inF  = Array.isArray(child) ? child[0] : child;
         const outF = Array.isArray(child) ? child[1] : child;
 
-        const inputPath = join(PATHS.src, joinPath, inF);
-        const outputPath = join(PATHS.api, joinPath, outF);
+        const inputPath = join(PATHS.src, joinPath, `${outF}.js`);
+        const outputPath = join(PATHS.api, joinPath, `${outF}.md`);
 
         documentation.build([inputPath], INPUT_CONFIG)
           .then(res => {
