@@ -45,5 +45,5 @@ export const LoadDataModal = props => (
 
 LoadDataModal.propTypes = propTypes;
 
-const loadDataModalFactory = () => LoadDataModal;
-export default loadDataModalFactory;
+const LoadDataModalFactory = () => LoadDataModal;
+export default LoadDataModalFactory;

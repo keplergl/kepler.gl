@@ -29,6 +29,7 @@ const entry = join(SRC_DIR, 'components');
 
 const allFiles = walkSync(entry, []);
 const treeMap = {}
+const ROOT = 'ContainerFactory';
 
 allFiles.forEach(file => {
   traverseTree(file, treeMap);
@@ -61,14 +62,23 @@ function findRoot(treeMap) {
   const root = Object.values(treeMap).filter(node => node.isRoot);
   if (root.length !== 1) {
     console.warn('we find 0 or more than 1 roots', root.map(r => r.name).join(', '))
-    return root[0];
+    return treeMap[ROOT];
   }
 
   return root[0];
 }
 
 function makeFactoryNode(name, path) {
-  return {name, path, children: [], isRoot: true};
+  return {name, label: name.replace('Factory', ''), path, children: [], isRoot: true};
+}
+
+function addPathByFactoryDeclaration(path, treeMap, filePath) {
+  const {id, loc} = path.node;
+  if (id.name && id.name.endsWith('Factory')) {
+    // debugger
+    treeMap[id.name] = treeMap[id.name] || makeFactoryNode(id.name, filePath);
+    treeMap[id.name].path = filePath + '#L' + loc.start.line + '-' + 'L' + loc.end.line;
+  }
 }
 
 function traverseTree(filePath, treeMap = {}) {
@@ -77,10 +87,17 @@ function traverseTree(filePath, treeMap = {}) {
     sourceType: 'module',
     plugins: ['jsx', 'classProperties', 'exportNamespaceFrom', 'decorators-legacy']
   });
-
+  // console.log(filePath);
   traverse(ast, {
+    VariableDeclarator(path) {
+      addPathByFactoryDeclaration(path, treeMap, filePath);
+    },
+    FunctionDeclaration(path) {
+      addPathByFactoryDeclaration(path, treeMap, filePath);
+    },
     AssignmentExpression(path) {
-      const {left, right} = path.node;
+
+      const {left, right, loc} = path.node;
 
       if (
         left.type === "MemberExpression" &&
@@ -96,12 +113,12 @@ function traverseTree(filePath, treeMap = {}) {
         const deps = right.elements.map(e => e.name);
 
         treeMap[factory] = treeMap[factory] || makeFactoryNode(factory, filePath);
-        treeMap[factory].path = filePath;
+        treeMap[factory].path = filePath + '#L' + loc.start.line + '-' + 'L' + loc.end.line;
 
         deps.forEach(dep => {
+
           treeMap[dep] = treeMap[dep] || makeFactoryNode(dep, '');
           treeMap[dep].isRoot = false;
-
           treeMap[factory].children.push(treeMap[dep]);
         })
         // console.log(left.object.name, right.elements.map(e => e.name) )

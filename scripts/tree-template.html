@@ -87,14 +87,38 @@ function update(source) {
 
   nodeEnter.append("circle")
       .attr("r", 1e-6)
-      .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
+      .style("fill", function(d) {
+        return d.children ? "lightsteelblue" : "#fff";
+      })
+      .on("mouseover", function(d) {
+        d3.select(this).transition()
+          .duration(100)
+          .style("fill", "orange")
 
-  nodeEnter.append("text")
-      .attr("x", function(d) { return d.children || d._children ? -10 : 10; })
-      .attr("dy", ".35em")
-      .attr("text-anchor", function(d) { return d.children || d._children ? "end" : "start"; })
-      .text(function(d) { return d.name; })
-      .style("fill-opacity", 1e-6);
+          d3.select(this).html(d.path + "<br/>" )
+            .style("left", (d3.event.pageX) + "px")
+            .style("top", (d3.event.pageY - 28) + "px");
+        })
+      .on("mouseout", function(d) {
+        d3.select(this).transition()
+              .duration(100)
+              .style("fill", function(d) {
+                return d.children ? "lightsteelblue" : "#fff";
+              });
+      });
+
+  nodeEnter
+      .append("a")
+        .attr("href", function(d) {
+          return "https://github.com/uber/kepler.gl/blob/master/" + d.path;
+        })
+        .attr("target", "_blank")
+      .append("text")
+        .attr("x", function(d) { return d.children || d._children ? -10 : 10; })
+        .attr("dy", ".35em")
+        .attr("text-anchor", function(d) { return d.children || d._children ? "end" : "start"; })
+        .text(function(d) { return d.label; })
+        .style("fill-opacity", 1e-6);
 
   // Transition nodes to their new position.
   var nodeUpdate = node.transition()
