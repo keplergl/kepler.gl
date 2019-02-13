@@ -19,12 +19,13 @@
 // THE SOFTWARE.
 
 const resolve = require('path').resolve;
+const join = require('path').join;
 
 const SRC_DIR = resolve('./src');
 
 const LIBRARY_BUNDLE_CONFIG = env => ({
   entry: {
-    KeplerGl: SRC_DIR + '/index.js'
+    KeplerGl: join(SRC_DIR, 'index.js')
   },
 
   // Silence warnings about big bundles

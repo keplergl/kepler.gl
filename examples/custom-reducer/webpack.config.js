@@ -26,7 +26,6 @@ const resolve = require('path').resolve;
 const join = require('path').join;
 const webpack = require('webpack');
 
-
 const CONFIG = {
   // bundle app.js and everything it imports, recursively.
   entry: {
