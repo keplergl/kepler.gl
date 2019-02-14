@@ -2,8 +2,8 @@
 
 ### Table of Contents
 
--   [reducer.plugin][1]
--   [reducer.initialState][2]
+-   [reducer.plugin](#reducerplugin)
+-   [reducer.initialState](#reducerinitialstate)
 
 ## reducer.plugin
 
@@ -17,7 +17,7 @@ You should only use this to adding additional actions instead of replacing defau
 
 ### Parameters
 
--   `customReducer` **([Object][3] \| [Function][4])** A reducer map or a reducer
+-   `customReducer` **([Object][7] \| [Function][8])** A reducer map or a reducer
 
 ### Examples
 
@@ -60,7 +60,7 @@ Default subreducer state:
 
 ### Parameters
 
--   `iniSt` **[Object][3]** custom state to be merged with default initial state
+-   `iniSt` **[Object][7]** custom state to be merged with default initial state
 
 ### Examples
 
@@ -73,8 +73,16 @@ const myKeplerGlReducer = keplerGlReducer
 
 [1]: #reducerplugin
 
-[2]: #reducerinitialstate
+[2]: #parameters
 
-[3]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+[3]: #examples
 
-[4]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function
+[4]: #reducerinitialstate
+
+[5]: #parameters-1
+
+[6]: #examples-1
+
+[7]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+
+[8]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function

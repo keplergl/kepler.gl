@@ -2,19 +2,19 @@
 
 ### Table of Contents
 
--   [togglePerspective][1]
--   [fitBounds][2]
--   [updateMap][3]
--   [toggleSplitMap][4]
--   [addCustomMapStyle][5]
--   [inputMapStyle][6]
--   [registerEntry][7]
--   [deleteEntry][8]
--   [renameEntry][9]
--   [wrapTo][10]
--   [isForwardAction][11]
--   [unwrap][12]
--   [forwardTo][13]
+-   [togglePerspective](#toggleperspective)
+-   [fitBounds](#fitbounds)
+-   [updateMap](#updatemap)
+-   [toggleSplitMap](#togglesplitmap)
+-   [addCustomMapStyle](#addcustommapstyle)
+-   [inputMapStyle](#inputmapstyle)
+-   [registerEntry](#registerentry)
+-   [deleteEntry](#deleteentry)
+-   [renameEntry](#renameentry)
+-   [wrapTo](#wrapto)
+-   [isForwardAction](#isforwardaction)
+-   [unwrap](#unwrap)
+-   [forwardTo](#forwardto)
 
 ## togglePerspective
 
@@ -33,7 +33,7 @@ Fit map viewport to bounds
 
 ### Parameters
 
--   `null-null` **[Array][14]&lt;[number][15]>** bounds as `[lngMin, latMin, lngMax, latMax]`
+-   `null-null` **[Array][29]&lt;[number][30]>** bounds as `[lngMin, latMin, lngMax, latMax]`
 
 ### Examples
 
@@ -48,15 +48,15 @@ Update map viewport
 
 ### Parameters
 
--   `viewport` **[Object][16]** viewport object container one or any of these properties `width`, `height`, `latitude` `longitude`, `zoom`, `pitch`, `bearing`, `dragRotate`
-    -   `viewport.width` **[number][15]?** Width of viewport
-    -   `viewport.height` **[number][15]?** Height of viewport
-    -   `viewport.zoom` **[number][15]?** Zoom of viewport
-    -   `viewport.pitch` **[number][15]?** Camera angle in degrees (0 is straight down)
-    -   `viewport.bearing` **[number][15]?** Map rotation in degrees (0 means north is up)
-    -   `viewport.latitude` **[number][15]?** Latitude center of viewport on map in mercator projection
-    -   `viewport.longitude` **[number][15]?** Longitude Center of viewport on map in mercator projection
-    -   `viewport.dragRotate` **[boolean][17]?** Whether to enable drag and rotate map into perspective viewport
+-   `viewport` **[Object][31]** viewport object container one or any of these properties `width`, `height`, `latitude` `longitude`, `zoom`, `pitch`, `bearing`, `dragRotate`
+    -   `viewport.width` **[number][30]?** Width of viewport
+    -   `viewport.height` **[number][30]?** Height of viewport
+    -   `viewport.zoom` **[number][30]?** Zoom of viewport
+    -   `viewport.pitch` **[number][30]?** Camera angle in degrees (0 is straight down)
+    -   `viewport.bearing` **[number][30]?** Map rotation in degrees (0 means north is up)
+    -   `viewport.latitude` **[number][30]?** Latitude center of viewport on map in mercator projection
+    -   `viewport.longitude` **[number][30]?** Longitude Center of viewport on map in mercator projection
+    -   `viewport.dragRotate` **[boolean][32]?** Whether to enable drag and rotate map into perspective viewport
 
 ### Examples
 
@@ -98,11 +98,11 @@ performed. Instance reducer can only handle actions when it is instantiated.
 
 ### Parameters
 
--   `payload` **[Object][16]** 
-    -   `payload.id` **[string][18]** **\*required** The id of the instance
-    -   `payload.mint` **[boolean][17]** Whether to use a fresh empty state, when `mint: true` it will _always_ load a fresh state when the component is re-mounted.
+-   `payload` **[Object][31]** 
+    -   `payload.id` **[string][33]** **\*required** The id of the instance
+    -   `payload.mint` **[boolean][32]** Whether to use a fresh empty state, when `mint: true` it will _always_ load a fresh state when the component is re-mounted.
         When `mint: false` it will register with existing instance state under the same `id`, when the component is unmounted then mounted again. Default: `true`
-    -   `payload.mapboxApiAccessToken` **[string][18]** mapboxApiAccessToken to be saved in `map-style` reducer.
+    -   `payload.mapboxApiAccessToken` **[string][33]** mapboxApiAccessToken to be saved in `map-style` reducer.
 
 ## deleteEntry
 
@@ -112,7 +112,7 @@ the instance state and later transfer it to a newly mounted component with the s
 
 ### Parameters
 
--   `id` **[string][18]** the id of the instance to be deleted
+-   `id` **[string][33]** the id of the instance to be deleted
 
 ## renameEntry
 
@@ -120,8 +120,8 @@ Rename an instance in the root reducer, keep its entire state
 
 ### Parameters
 
--   `oldId` **[string][18]** **\*required** old id
--   `newId` **[string][18]** **\*required** new id
+-   `oldId` **[string][33]** **\*required** old id
+-   `newId` **[string][33]** **\*required** new id
 
 ## wrapTo
 
@@ -154,8 +154,8 @@ A forward action looks like this
 
 ### Parameters
 
--   `id` **[string][18]** The id to forward to
--   `action` **[Object][16]** the action object {type: string, payload: \*}
+-   `id` **[string][33]** The id to forward to
+-   `action` **[Object][31]** the action object {type: string, payload: \*}
 
 ### Examples
 
@@ -176,9 +176,9 @@ Whether an action is a forward action
 
 ### Parameters
 
--   `action` **[Object][16]** the action object
+-   `action` **[Object][31]** the action object
 
-Returns **[boolean][17]** boolean - whether the action is a forward action
+Returns **[boolean][32]** boolean - whether the action is a forward action
 
 ## unwrap
 
@@ -186,9 +186,9 @@ Unwrap an action
 
 ### Parameters
 
--   `action` **[Object][16]** the action object
+-   `action` **[Object][31]** the action object
 
-Returns **[Object][16]** unwrapped action
+Returns **[Object][31]** unwrapped action
 
 ## forwardTo
 
@@ -196,8 +196,8 @@ Returns an action dispatcher that wraps and forwards the actions to a specific i
 
 ### Parameters
 
--   `id` **[string][18]** instance id
--   `dispatch` **[Function][19]** action dispatcher
+-   `id` **[string][33]** instance id
+-   `dispatch` **[Function][34]** action dispatcher
 
 ### Examples
 
@@ -225,38 +225,68 @@ export default connect(
 
 [1]: #toggleperspective
 
-[2]: #fitbounds
+[2]: #examples
 
-[3]: #updatemap
+[3]: #fitbounds
 
-[4]: #togglesplitmap
+[4]: #parameters
 
-[5]: #addcustommapstyle
+[5]: #examples-1
 
-[6]: #inputmapstyle
+[6]: #updatemap
 
-[7]: #registerentry
+[7]: #parameters-1
 
-[8]: #deleteentry
+[8]: #examples-2
 
-[9]: #renameentry
+[9]: #togglesplitmap
 
-[10]: #wrapto
+[10]: #examples-3
 
-[11]: #isforwardaction
+[11]: #addcustommapstyle
 
-[12]: #unwrap
+[12]: #inputmapstyle
 
-[13]: #forwardto
+[13]: #registerentry
 
-[14]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+[14]: #parameters-2
 
-[15]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
+[15]: #deleteentry
 
-[16]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+[16]: #parameters-3
 
-[17]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+[17]: #renameentry
 
-[18]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+[18]: #parameters-4
 
-[19]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function
+[19]: #wrapto
+
+[20]: #parameters-5
+
+[21]: #examples-4
+
+[22]: #isforwardaction
+
+[23]: #parameters-6
+
+[24]: #unwrap
+
+[25]: #parameters-7
+
+[26]: #forwardto
+
+[27]: #parameters-8
+
+[28]: #examples-5
+
+[29]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+
+[30]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
+
+[31]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+
+[32]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+
+[33]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+
+[34]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function

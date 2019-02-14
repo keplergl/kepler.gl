@@ -2,7 +2,7 @@
 
 ### Table of Contents
 
--   [INITIAL_MAP_STYLE][1]
+-   [INITIAL_MAP_STYLE](#initial_map_style)
 
 ## INITIAL_MAP_STYLE
 
@@ -10,18 +10,20 @@ Default initial `mapStyle`
 
 ### Properties
 
--   `styleType` **[string][2]** Default: 'dark'
--   `visibleLayerGroups` **[Object][3]** Default: {}
--   `topLayerGroups` **[Object][3]** Default: {}
--   `mapStyles` **[Object][3]** mapping from style key to style obejct
--   `mapboxApiAccessToken` **[string][2]** Default: null
--   `inputStyle` **[Object][3]** Default: {}
--   `threeDBuildingColor` **[Array][4]** Default: [r, g, b]
+-   `styleType` **[string][3]** Default: 'dark'
+-   `visibleLayerGroups` **[Object][4]** Default: {}
+-   `topLayerGroups` **[Object][4]** Default: {}
+-   `mapStyles` **[Object][4]** mapping from style key to style obejct
+-   `mapboxApiAccessToken` **[string][3]** Default: null
+-   `inputStyle` **[Object][4]** Default: {}
+-   `threeDBuildingColor` **[Array][5]** Default: [r, g, b]
 
 [1]: #initial_map_style
 
-[2]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+[2]: #properties
 
-[3]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+[3]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
 
-[4]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+[4]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+
+[5]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array

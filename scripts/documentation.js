@@ -22,6 +22,8 @@ import documentation from 'documentation';
 import fs from 'fs';
 import {resolve, join} from 'path';
 import {logSuccess, logProgress, logOk} from './log';
+import remark from 'remark';
+import toc from 'remark-toc';
 
 const INPUT_CONFIG = {
   shallow: true,
@@ -80,10 +82,16 @@ function buildMdDocs(nodePath, node) {
             // res is an array of parsed comments with inferred properties
             // and more: everything you need to build documentation or
             // any other kind of code data.
-            return documentation.formats.md(res, OUT_CONFIG)
+            return documentation.formats.remark(res, OUT_CONFIG)
           })
           .then(output => {
-            // output is a string of Markdown data
+            // output is a string of remark json
+            return remark()
+              .use(toc, {maxDepth: 2, tight: true})
+              .run(JSON.parse(output));
+          })
+          .then(ast => {
+            const output = remark().stringify(ast);
             fs.writeFileSync(outputPath, output);
             logOk(`   ✓ build docs ${inputPath} -> ${outputPath}`);
           });

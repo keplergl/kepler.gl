@@ -2,59 +2,59 @@
 
 ### Table of Contents
 
--   [INITIAL_VIS_STATE][1]
--   [layerConfigChangeUpdater][2]
--   [layerTypeChangeUpdater][3]
--   [layerVisualChannelChangeUpdater][4]
--   [layerVisConfigChangeUpdater][5]
--   [interactionConfigChangeUpdater][6]
--   [setFilterUpdater][7]
--   [setFilterPlotUpdater][8]
--   [addFilterUpdater][9]
--   [toggleFilterAnimationUpdater][10]
--   [updateAnimationSpeedUpdater][11]
--   [enlargeFilterUpdater][12]
--   [removeFilterUpdater][13]
--   [addLayerUpdater][14]
--   [removeLayerUpdater][15]
--   [reorderLayerUpdater][16]
--   [removeDatasetUpdater][17]
--   [updateLayerBlendingUpdater][18]
--   [showDatasetTableUpdater][19]
--   [resetMapConfigVisStateUpdater][20]
--   [receiveMapConfigUpdater][21]
--   [layerHoverUpdater][22]
--   [layerClickUpdater][23]
--   [mapClickUpdater][24]
--   [toggleSplitMapUpdater][25]
--   [setVisibleLayersForMapUpdater][26]
--   [updateVisDataUpdater][27]
--   [loadFilesUpdater][28]
+-   [INITIAL_VIS_STATE](#initial_vis_state)
+-   [layerConfigChangeUpdater](#layerconfigchangeupdater)
+-   [layerTypeChangeUpdater](#layertypechangeupdater)
+-   [layerVisualChannelChangeUpdater](#layervisualchannelchangeupdater)
+-   [layerVisConfigChangeUpdater](#layervisconfigchangeupdater)
+-   [interactionConfigChangeUpdater](#interactionconfigchangeupdater)
+-   [setFilterUpdater](#setfilterupdater)
+-   [setFilterPlotUpdater](#setfilterplotupdater)
+-   [addFilterUpdater](#addfilterupdater)
+-   [toggleFilterAnimationUpdater](#togglefilteranimationupdater)
+-   [updateAnimationSpeedUpdater](#updateanimationspeedupdater)
+-   [enlargeFilterUpdater](#enlargefilterupdater)
+-   [removeFilterUpdater](#removefilterupdater)
+-   [addLayerUpdater](#addlayerupdater)
+-   [removeLayerUpdater](#removelayerupdater)
+-   [reorderLayerUpdater](#reorderlayerupdater)
+-   [removeDatasetUpdater](#removedatasetupdater)
+-   [updateLayerBlendingUpdater](#updatelayerblendingupdater)
+-   [showDatasetTableUpdater](#showdatasettableupdater)
+-   [resetMapConfigVisStateUpdater](#resetmapconfigvisstateupdater)
+-   [receiveMapConfigUpdater](#receivemapconfigupdater)
+-   [layerHoverUpdater](#layerhoverupdater)
+-   [layerClickUpdater](#layerclickupdater)
+-   [mapClickUpdater](#mapclickupdater)
+-   [toggleSplitMapUpdater](#togglesplitmapupdater)
+-   [setVisibleLayersForMapUpdater](#setvisiblelayersformapupdater)
+-   [updateVisDataUpdater](#updatevisdataupdater)
+-   [loadFilesUpdater](#loadfilesupdater)
 
 ## INITIAL_VIS_STATE
 
 Default initial `visState`
 
-Type: [Object][29]
+Type: [Object][57]
 
 ### Properties
 
--   `layers` **[Array][30]** 
--   `layerData` **[Array][30]** 
--   `layerToBeMerged` **[Array][30]** 
--   `layerOrder` **[Array][30]** 
--   `filters` **[Array][30]** 
--   `filterToBeMerged` **[Array][30]** 
--   `datasets` **[Array][30]** 
--   `editingDataset` **[string][31]** 
--   `interactionConfig` **[Object][29]** 
--   `interactionToBeMerged` **[Object][29]** 
--   `layerBlending` **[string][31]** 
--   `hoverInfo` **[Object][29]** 
--   `clicked` **[Object][29]** 
--   `fileLoading` **[boolean][32]** 
+-   `layers` **[Array][58]** 
+-   `layerData` **[Array][58]** 
+-   `layerToBeMerged` **[Array][58]** 
+-   `layerOrder` **[Array][58]** 
+-   `filters` **[Array][58]** 
+-   `filterToBeMerged` **[Array][58]** 
+-   `datasets` **[Array][58]** 
+-   `editingDataset` **[string][59]** 
+-   `interactionConfig` **[Object][57]** 
+-   `interactionToBeMerged` **[Object][57]** 
+-   `layerBlending` **[string][59]** 
+-   `hoverInfo` **[Object][57]** 
+-   `clicked` **[Object][57]** 
+-   `fileLoading` **[boolean][60]** 
 -   `fileLoadingErr` **any** 
--   `splitMaps` **[Array][30]** a list of objects of layer availabilities and visibilities for each map
+-   `splitMaps` **[Array][58]** a list of objects of layer availabilities and visibilities for each map
 
 ## layerConfigChangeUpdater
 
@@ -117,7 +117,7 @@ Update filter plot
 ### Parameters
 
 -   `state`  
--   `$1` **[Object][29]** 
+-   `$1` **[Object][57]** 
     -   `$1.idx`  
     -   `$1.newProp`  
 
@@ -182,7 +182,7 @@ remove layer
 ### Parameters
 
 -   `state`  
--   `$1` **[Object][29]** 
+-   `$1` **[Object][57]** 
     -   `$1.idx`  
 
 ## reorderLayerUpdater
@@ -192,7 +192,7 @@ reorder layer, update layerOrder
 ### Parameters
 
 -   `state`  
--   `$1` **[Object][29]** 
+-   `$1` **[Object][57]** 
     -   `$1.order`  
 
 ## removeDatasetUpdater
@@ -309,64 +309,120 @@ Trigger file loading dispatch `addDataToMap` if succeed, or `loadFilesErr` if fa
 
 [1]: #initial_vis_state
 
-[2]: #layerconfigchangeupdater
+[2]: #properties
 
-[3]: #layertypechangeupdater
+[3]: #layerconfigchangeupdater
 
-[4]: #layervisualchannelchangeupdater
+[4]: #parameters
 
-[5]: #layervisconfigchangeupdater
+[5]: #layertypechangeupdater
 
-[6]: #interactionconfigchangeupdater
+[6]: #parameters-1
 
-[7]: #setfilterupdater
+[7]: #layervisualchannelchangeupdater
 
-[8]: #setfilterplotupdater
+[8]: #parameters-2
 
-[9]: #addfilterupdater
+[9]: #layervisconfigchangeupdater
 
-[10]: #togglefilteranimationupdater
+[10]: #parameters-3
 
-[11]: #updateanimationspeedupdater
+[11]: #interactionconfigchangeupdater
 
-[12]: #enlargefilterupdater
+[12]: #parameters-4
 
-[13]: #removefilterupdater
+[13]: #setfilterupdater
 
-[14]: #addlayerupdater
+[14]: #parameters-5
 
-[15]: #removelayerupdater
+[15]: #setfilterplotupdater
 
-[16]: #reorderlayerupdater
+[16]: #parameters-6
 
-[17]: #removedatasetupdater
+[17]: #addfilterupdater
 
-[18]: #updatelayerblendingupdater
+[18]: #parameters-7
 
-[19]: #showdatasettableupdater
+[19]: #togglefilteranimationupdater
 
-[20]: #resetmapconfigvisstateupdater
+[20]: #parameters-8
 
-[21]: #receivemapconfigupdater
+[21]: #updateanimationspeedupdater
 
-[22]: #layerhoverupdater
+[22]: #parameters-9
 
-[23]: #layerclickupdater
+[23]: #enlargefilterupdater
 
-[24]: #mapclickupdater
+[24]: #parameters-10
 
-[25]: #togglesplitmapupdater
+[25]: #removefilterupdater
 
-[26]: #setvisiblelayersformapupdater
+[26]: #parameters-11
 
-[27]: #updatevisdataupdater
+[27]: #addlayerupdater
 
-[28]: #loadfilesupdater
+[28]: #parameters-12
 
-[29]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+[29]: #removelayerupdater
 
-[30]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+[30]: #parameters-13
 
-[31]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+[31]: #reorderlayerupdater
 
-[32]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+[32]: #parameters-14
+
+[33]: #removedatasetupdater
+
+[34]: #parameters-15
+
+[35]: #updatelayerblendingupdater
+
+[36]: #parameters-16
+
+[37]: #showdatasettableupdater
+
+[38]: #parameters-17
+
+[39]: #resetmapconfigvisstateupdater
+
+[40]: #parameters-18
+
+[41]: #receivemapconfigupdater
+
+[42]: #parameters-19
+
+[43]: #layerhoverupdater
+
+[44]: #parameters-20
+
+[45]: #layerclickupdater
+
+[46]: #parameters-21
+
+[47]: #mapclickupdater
+
+[48]: #parameters-22
+
+[49]: #togglesplitmapupdater
+
+[50]: #parameters-23
+
+[51]: #setvisiblelayersformapupdater
+
+[52]: #parameters-24
+
+[53]: #updatevisdataupdater
+
+[54]: #parameters-25
+
+[55]: #loadfilesupdater
+
+[56]: #parameters-26
+
+[57]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+
+[58]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+
+[59]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+
+[60]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
