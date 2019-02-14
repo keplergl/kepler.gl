@@ -110,4 +110,4 @@ export default composedReducer;
 [redux]: https://redux.js.org/
 [react]: https://reactjs.org/
 [react-redux]: https://react-redux.js.org/
-[diagram-1: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/api_reducers_compose-reducers.png
+[diagram-1]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/api_reducers_compose-reducers.png

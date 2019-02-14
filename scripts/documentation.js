@@ -44,22 +44,17 @@ const TREE = {
     {
       path: 'actions',
       children: [
-        'action-wrapper',
-        'identity-actions',
-        'vis-state-actions',
-        'map-state-actions',
-        'map-style-actions',
-        'ui-state-actions'
+        ['index', 'actions', false]
       ]
     },
     {
       path: 'reducers',
       children: [
-        ['root', 'reducers'],
-        ['vis-state-updaters', 'vis-state'],
-        ['map-state-updaters', 'map-state'],
-        ['map-style-updaters', 'map-style'],
-        ['ui-state-updaters', 'ui-state']
+        ['root', 'reducers', true],
+        ['vis-state-updaters', 'vis-state', true],
+        ['map-state-updaters', 'map-state', true],
+        ['map-style-updaters', 'map-style', true],
+        ['ui-state-updaters', 'ui-state', true]
       ]
     }
   ]
@@ -71,14 +66,16 @@ function buildMdDocs(nodePath, node) {
   const joinPath = nodePath ? `${nodePath}/${path}` : path;
 
   children.forEach(child => {
+
     if (typeof child === 'string' || Array.isArray(child)) {
         const inF  = Array.isArray(child) ? child[0] : child;
         const outF = Array.isArray(child) ? child[1] : child;
 
-        const inputPath = join(PATHS.src, joinPath, `${outF}.js`);
+        const inputPath = join(PATHS.src, joinPath, `${inF}.js`);
         const outputPath = join(PATHS.api, joinPath, `${outF}.md`);
+        const shallow = child[2];
 
-        documentation.build([inputPath], INPUT_CONFIG)
+        documentation.build([inputPath], {...INPUT_CONFIG, shallow})
           .then(res => {
             // res is an array of parsed comments with inferred properties
             // and more: everything you need to build documentation or
@@ -98,7 +95,7 @@ function buildMdDocs(nodePath, node) {
 }
 
 function buildDocs() {
-  logProgress('================= Start Building API Documentation =================');
+  logProgress('\n\n================= Start Building API Documentation =================');
 
   // 1. build docs
   buildMdDocs(null, TREE);
