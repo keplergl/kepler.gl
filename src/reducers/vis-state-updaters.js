@@ -67,6 +67,28 @@ import {processFileToLoad} from '/utils/file-utils';
 // disable capture exception for react-palm call to withTask
 disableStackCapturing();
 
+/**
+ * Default initial `visState`
+ * @constant
+ * @type {Object}
+ * @property {Array} layers
+ * @property {Array} layerData
+ * @property {Array} layerToBeMerged
+ * @property {Array} layerOrder
+ * @property {Array} filters
+ * @property {Array} filterToBeMerged
+ * @property {Array} datasets
+ * @property {string} editingDataset
+ * @property {Object} interactionConfig
+ * @property {Object} interactionToBeMerged
+ * @property {string} layerBlending
+ * @property {Object} hoverInfo
+ * @property {Object} clicked
+ * @property {boolean} fileLoading
+ * @property {*} fileLoadingErr
+ * @property {Array} splitMaps - a list of objects of layer availabilities and visibilities for each map
+ * @public
+ */
 export const INITIAL_VIS_STATE = {
   // layers
   layers: [],
@@ -89,6 +111,7 @@ export const INITIAL_VIS_STATE = {
   hoverInfo: undefined,
   clicked: undefined,
 
+  // TODO: not used anywhere, delete it
   fileLoading: false,
   fileLoadingErr: null,
 
@@ -124,7 +147,7 @@ function updateStateWithLayerAndData(state, {layerData, layer, idx}) {
 
 /**
  * Called to update layer base config: dataId, label, column, isVisible
- *
+ * @public
  */
 export function layerConfigChangeUpdater(state, action) {
   const {oldLayer} = action;
@@ -154,6 +177,10 @@ export function layerConfigChangeUpdater(state, action) {
   return updateStateWithLayerAndData(newState, {layer: newLayer, idx});
 }
 
+/**
+ * Update layer type
+ * @public
+ */
 export function layerTypeChangeUpdater(state, action) {
   const {oldLayer, newType} = action;
   const oldId = oldLayer.id;
@@ -200,6 +227,10 @@ export function layerTypeChangeUpdater(state, action) {
   return updateStateWithLayerAndData(newState, {layerData, layer, idx});
 }
 
+/**
+ * Update layer visual channel
+ * @public
+ */
 export function layerVisualChannelChangeUpdater(state, action) {
   const {oldLayer, newConfig, channel} = action;
   const dataset = state.datasets[oldLayer.config.dataId];
@@ -217,6 +248,10 @@ export function layerVisualChannelChangeUpdater(state, action) {
   return updateStateWithLayerAndData(state, {layerData, layer, idx});
 }
 
+/**
+ * Update layer vis config
+ * @public
+ */
 export function layerVisConfigChangeUpdater(state, action) {
   const {oldLayer} = action;
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
@@ -245,6 +280,10 @@ export function layerVisConfigChangeUpdater(state, action) {
 
 /* eslint-enable max-statements */
 
+/**
+ * Update interactionConfig
+ * @public
+ */
 export function interactionConfigChangeUpdater(state, action) {
   const {config} = action;
 
@@ -268,6 +307,10 @@ export function interactionConfigChangeUpdater(state, action) {
   };
 }
 
+/**
+ * Update filter
+ * @public
+ */
 export function setFilterUpdater(state, action) {
   const {idx, prop, value} = action;
   let newState = state;
@@ -355,6 +398,10 @@ export function setFilterUpdater(state, action) {
   return newState;
 }
 
+/**
+ * Update filter plot
+ * @public
+ */
 export const setFilterPlotUpdater = (state, {idx, newProp}) => {
   let newFilter = {...state.filters[idx], ...newProp};
   const prop = Object.keys(newProp)[0];
@@ -379,6 +426,10 @@ export const setFilterPlotUpdater = (state, {idx, newProp}) => {
   };
 };
 
+/**
+ * Add filter
+ * @public
+ */
 export const addFilterUpdater = (state, action) =>
   !action.dataId
     ? state
@@ -387,6 +438,10 @@ export const addFilterUpdater = (state, action) =>
         filters: [...state.filters, getDefaultFilter(action.dataId)]
       };
 
+/**
+ * toggle filter animation
+ * @public
+ */
 export const toggleFilterAnimationUpdater = (state, action) => ({
   ...state,
   filters: state.filters.map(
@@ -394,6 +449,10 @@ export const toggleFilterAnimationUpdater = (state, action) => ({
   )
 });
 
+/**
+ * update filter animation speed
+ * @public
+ */
 export const updateAnimationSpeedUpdater = (state, action) => ({
   ...state,
   filters: state.filters.map(
@@ -401,6 +460,10 @@ export const updateAnimationSpeedUpdater = (state, action) => ({
   )
 });
 
+/**
+ * enlarge filter to time playback (apply to time filter only)
+ * @public
+ */
 export const enlargeFilterUpdater = (state, action) => {
   const isEnlarged = state.filters[action.idx].enlarged;
 
@@ -413,6 +476,10 @@ export const enlargeFilterUpdater = (state, action) => {
   };
 };
 
+/**
+ * remove filter
+ * @public
+ */
 export const removeFilterUpdater = (state, action) => {
   const {idx} = action;
   const {dataId} = state.filters[idx];
@@ -437,6 +504,10 @@ export const removeFilterUpdater = (state, action) => {
   return updateAllLayerDomainData(newState, dataId);
 };
 
+/**
+ * add layer
+ * @public
+ */
 export const addLayerUpdater = (state, action) => {
   const defaultDataset = Object.keys(state.datasets)[0];
   const newLayer = new Layer({
@@ -455,6 +526,10 @@ export const addLayerUpdater = (state, action) => {
   };
 };
 
+/**
+ * remove layer
+ * @public
+ */
 export const removeLayerUpdater = (state, {idx}) => {
   const {layers, layerData, clicked, hoverInfo} = state;
   const layerToRemove = state.layers[idx];
@@ -476,11 +551,19 @@ export const removeLayerUpdater = (state, {idx}) => {
   };
 };
 
+/**
+ * reorder layer, update layerOrder
+ * @public
+ */
 export const reorderLayerUpdater = (state, {order}) => ({
   ...state,
   layerOrder: order
 });
 
+/**
+ * remove a dataset and all layers, filters, tooltip configs that based on it
+ * @public
+ */
 export const removeDatasetUpdater = (state, action) => {
   // extract dataset key
   const {key: datasetKey} = action;
@@ -536,11 +619,19 @@ export const removeDatasetUpdater = (state, action) => {
   return {...newState, filters, interactionConfig};
 };
 
+/**
+ * update layer blending
+ * @public
+ */
 export const updateLayerBlendingUpdater = (state, action) => ({
   ...state,
   layerBlending: action.mode
 });
 
+/**
+ * show dataset table
+ * @public
+ */
 export const showDatasetTableUpdater = (state, action) => {
   return {
     ...state,
@@ -548,6 +639,10 @@ export const showDatasetTableUpdater = (state, action) => {
   };
 };
 
+/**
+ * reset visState to initial State
+ * @public
+ */
 export const resetMapConfigVisStateUpdater = (state, action) => ({
   ...INITIAL_VIS_STATE,
   ...state.initialState,
@@ -559,6 +654,7 @@ export const resetMapConfigVisStateUpdater = (state, action) => ({
  * @param state
  * @param action
  * @returns {*}
+ * @public
  */
 export const receiveMapConfigUpdater = (state, action) => {
   if (!action.payload.visState) {
@@ -588,21 +684,45 @@ export const receiveMapConfigUpdater = (state, action) => {
   return mergedState;
 };
 
+/**
+ * update hovered object
+ * @param {*} state
+ * @param {*} action
+ * @public
+ */
 export const layerHoverUpdater = (state, action) => ({
   ...state,
   hoverInfo: action.info
 });
 
+/**
+ * update clicked object
+ * @param {*} state
+ * @param {*} action
+ * @public
+ */
 export const layerClickUpdater = (state, action) => ({
   ...state,
   clicked: action.info && action.info.picked ? action.info : null
 });
 
+/**
+ * action triggered by clicking on map
+ * @param {*} state
+ * @param {*} action
+ * @public
+ */
 export const mapClickUpdater = (state, action) => ({
   ...state,
   clicked: null
 });
 
+/**
+ * toggle split map
+ * @param {*} state
+ * @param {*} action
+ * @public
+ */
 export const toggleSplitMapUpdater = (state, action) =>
   state.splitMaps && state.splitMaps.length === 0
     ? {
@@ -619,6 +739,7 @@ export const toggleSplitMapUpdater = (state, action) =>
  * the user is interacting wit
  * @param state
  * @param action
+ * @public
  */
 export const setVisibleLayersForMapUpdater = (state, action) => {
   const {mapIndex, layerIds} = action;
@@ -665,6 +786,11 @@ export const setVisibleLayersForMapUpdater = (state, action) => {
   };
 };
 
+/**
+ * Toggle split map layer visibility
+ * @param {*} state
+ * @param {*} action
+ */
 export const toggleLayerForMapUpdater = (state, action) => {
   if (!state.splitMaps[action.mapIndex]) {
     return state;
@@ -701,6 +827,12 @@ export const toggleLayerForMapUpdater = (state, action) => {
   };
 };
 
+/**
+ * Add new datasets
+ * @param {*} state
+ * @param {*} action
+ * @public
+ */
 /* eslint-disable max-statements */
 export const updateVisDataUpdater = (state, action) => {
   // datasets can be a single data entries or an array of multiple data entries
@@ -928,7 +1060,12 @@ function closeSpecificMapAtIndex(state, action) {
   };
 }
 
-// TODO: redo write handler to not use tasks
+/**
+ * Trigger file loading dispatch `addDataToMap` if succeed, or `loadFilesErr` if failed
+ * @param {*} state
+ * @param {*} action
+ * @public
+ */
 export const loadFilesUpdater = (state, action) => {
   const {files} = action;
 

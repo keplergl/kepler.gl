@@ -27,9 +27,7 @@
 
 // avoid destructuring for older Node version support
 const resolve = require('path').resolve;
-const join = require('path').join;
 const webpack = require('webpack');
-const path = require('path');
 const LIB_DIR = resolve(__dirname, '..');
 const SRC_DIR = resolve(LIB_DIR, './src');
 

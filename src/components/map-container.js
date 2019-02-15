@@ -424,7 +424,6 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             onTogglePerspective={mapStateActions.togglePerspective}
             onToggleSplitMap={mapStateActions.toggleSplitMap}
             onMapToggleLayer={this._handleMapToggleLayer}
-            onToggleFullScreen={mapStateActions.toggleFullScreen}
             onToggleMapControl={toggleMapControl}
           />
           <MapComponent

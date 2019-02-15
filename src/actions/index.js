@@ -19,11 +19,18 @@
 // THE SOFTWARE.
 
 // Actions
-export * from 'actions/actions';
+export * from './actions';
+
+// kepler.gl actions accessible outside component
+export * from './vis-state-actions';
+export * from './ui-state-actions';
+export * from './map-state-actions';
+export * from './map-style-actions';
+export * from './identity-actions';
 
 // Dispatch
 export {
-  actionFor,
+  _actionFor,
   forwardTo,
   getActionForwardAddress,
   isForwardAction,
@@ -31,4 +38,4 @@ export {
   wrapTo
 } from './action-wrapper';
 
-export {default as ActionTypes} from 'constants/action-types';
+export {default as ActionTypes} from '../constants/action-types';

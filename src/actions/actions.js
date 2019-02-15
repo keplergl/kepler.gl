@@ -21,13 +21,6 @@
 import ActionTypes from 'constants/action-types';
 import {createAction} from 'redux-actions';
 
-// kepler.gl actions accessible outside component
-export * from './vis-state-actions';
-export * from './ui-state-actions';
-export * from './map-state-actions';
-export * from './map-style-actions';
-export * from './identity-actions';
-
   /**
    * Add data to kepler.gl reducer, prepare map with preset configuration if config is passed.
    * Kepler.gl provides a handy set of utils to parse data from different format to the `data` object required in dataset. You rarely need to manually format the data obejct.
@@ -56,44 +49,52 @@ export * from './identity-actions';
    * @param {Object} config this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
    * @public
    * @example
+   *
+   * // app.js
    * import {addDataToMap} from 'kepler.gl/actions';
    *
+   * const sampleTripData = {
+   *  fields: [
+   *    {name: 'tpep_pickup_datetime', format: 'YYYY-M-D H:m:s', type: 'timestamp'},
+   *    {name: 'pickup_longitude', format: '', type: 'real'},
+   *    {name: 'pickup_latitude', format: '', type: 'real'}
+   *  ],
+   *  rows: [
+   *    ['2015-01-15 19:05:39 +00:00', -73.99389648, 40.75011063],
+   *    ['2015-01-15 19:05:39 +00:00', -73.97642517, 40.73981094],
+   *    ['2015-01-15 19:05:40 +00:00', -73.96870422, 40.75424576],
+   *  ]
+   * };
+   *
+   * const sampleConfig = {
+   *   visState: {
+   *     filters: [
+   *       {
+   *         id: 'me',
+   *         dataId: 'test_trip_data',
+   *         name: 'tpep_pickup_datetime',
+   *         type: 'timeRange',
+   *         enlarged: true
+   *       }
+   *     ]
+   *   }
+   * }
+   *
    * this.props.dispatch(
-   *   addDataToMap(
-   *     // datasets
-   *     {
+   *   addDataToMap({
+   *     datasets: {
    *       info: {
    *         label: 'Sample Taxi Trips in New York City',
    *         id: 'test_trip_data'
    *       },
-   *       data: {
-   *         fields: [{
-   *           name: 'begintrip_lat',
-   *           type: 'real',
-   *           format: ''
-   *         }, {
-   *           name: 'begintrip_lng',
-   *           type: 'real',
-   *           format: ''
-   *         }],
-   *         rows: [
-   *          [37.1234, -121.20292],
-   *          [34.1223, -121.98234]
-   *         ]
-   *       }
+   *       data: sampleTripData
    *     },
-   *     // option
-   *     {
+   *     option: {
    *       centerMap: true,
    *       readOnly: false
    *     },
-   *     // config
-   *     {
-   *       mapStyle: {
-   *        styleType: 'light'
-   *       }
-   *     }
-   *   )
+   *     config: sampleConfig
+   *   })
    * );
    */
 export const addDataToMap = createAction(

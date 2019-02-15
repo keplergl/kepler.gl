@@ -25,13 +25,54 @@ export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl';
 export const ICON_PREFIX = `${CLOUDFRONT}/geodude`;
 
 // Modal Ids
-export const LAYER_CONFIG_ID = 'copyConfig';
+/**
+ * Modal id: data table
+ * @constant
+ * @type {string}
+ * @public
+ */
 export const DATA_TABLE_ID = 'dataTable';
+/**
+ * Modal id: delete dataset confirm dialog
+ * @constant
+ * @type {string}
+ * @public
+ */
 export const DELETE_DATA_ID = 'deleteData';
+/**
+ * Modal id: add data modal
+ * @constant
+ * @type {string}
+ * @public
+ */
 export const ADD_DATA_ID = 'addData';
+/**
+ * Modal id: export image modal
+ * @constant
+ * @type {string}
+ * @public
+ */
 export const EXPORT_IMAGE_ID = 'exportImage';
+/**
+ * Modal id: export data modal
+ * @constant
+ * @type {string}
+ * @public
+ */
 export const EXPORT_DATA_ID = 'exportData';
+/**
+ * Modal id: export configuration modal
+ * @constant
+ * @type {string}
+ * @public
+ */
 export const EXPORT_CONFIG_ID = 'exportConfig';
+/**
+ * Modal id: add custom map style modal
+ * @constant
+ * @type {string}
+ * @public
+ */
 export const ADD_MAP_STYLE_ID = 'addMapStyle';
 
 import {
@@ -77,14 +118,6 @@ export const PANELS = [
     id: 'map',
     label: 'Base map',
     iconComponent: Settings
-  }
-];
-
-export const PANELS_FOOTER = [
-  {
-    id: LAYER_CONFIG_ID,
-    label: 'Copy Config',
-    icon: 'clipboard'
   }
 ];
 

@@ -132,8 +132,7 @@ export function showDatasetTable(dataId) {
  * {info: {id: '', color: hex, label: '']}, data: {fields: [], rows: []}}
  * @param options {centerMap, readOnly}
  * @param config {visState, mapState, mapStyle}
- * @returns {{type: null, datasets: *, options: *}}
- */
+  */
 export function updateVisData(datasets, options, config) {
   return {
     type: ActionTypes.UPDATE_VIS_DATA,

@@ -169,7 +169,6 @@ export class MapControl extends Component {
     layers: PropTypes.arrayOf(PropTypes.object),
     mapIndex: PropTypes.number.isRequired,
     mapControls: PropTypes.object.isRequired,
-    onToggleFullScreen: PropTypes.func.isRequired,
     onTogglePerspective: PropTypes.func.isRequired,
     onToggleSplitMap: PropTypes.func.isRequired,
     onToggleMapControl: PropTypes.func.isRequired,

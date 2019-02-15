@@ -20,12 +20,44 @@
 
 import geoViewport from '@mapbox/geo-viewport';
 
+/**
+ * Default initial `mapState`
+ * @constant
+ * @property {number} pitch - Default: 0
+ * @property {number} bearing - Default: 0
+ * @property {number} latitude - Default: 37.75043
+ * @property {number} longitude - Default: -122.34679
+ * @property {number} zoom - Default: 9
+ * @property {boolean} dragRotate - Default: false
+ * @property {number} width - Default: 800
+ * @property {number} height - Default: 800
+ * @property {boolean} isSplit - Default: false
+ * @public
+ */
+export const INITIAL_MAP_STATE = {
+  pitch: 0,
+  bearing: 0,
+  latitude: 37.75043,
+  longitude: -122.34679,
+  zoom: 9,
+  dragRotate: false,
+  width: 800,
+  height: 800,
+  isSplit: false
+};
+
 /* Updaters */
 export const updateMapUpdater = (state, action) => ({
   ...state,
   ...(action.payload || {})
 });
 
+/**
+ *
+ * @param state
+ * @param action
+ * @returns {{latitude, longitude, zoom}}
+ */
 export const fitBoundsUpdater = (state, action) => {
   const bounds = action.payload;
   const {center, zoom} = geoViewport.viewport(bounds, [

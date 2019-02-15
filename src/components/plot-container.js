@@ -99,7 +99,7 @@ export default function PlotContainerFactory(MapContainer) {
 
         this.props.startExportingImage();
         convertToPng(this.plottingAreaRef).then(dataUri => {
-          this.props.setExportImageDataUri({dataUri});
+          this.props.setExportImageDataUri(dataUri);
           window.devicePixelRatio = savedDevicePixelRatio;
         });
       }

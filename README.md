@@ -21,34 +21,34 @@
 </h1>
 <h3></h3>
 
-[Kepler.gl][web] is a data-agnostic, high-performance web-based application for visual exploration of large-scale geolocation data sets. Built on top of [deck.gl](http://uber.github.io/deck.gl/#/), kepler.gl can render millions of points representing thousands of trips and perform spatial aggregations on the fly.
+[<img width="120" alt="Kepler.gl" src="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/website/icons/kepler.gl-logo.png">](http://www.kepler.gl/)
 
-For what it is capable of, take a look at [kepler.gl demo app][demo-app].
+[<img width="600" alt="Kepler.gl Demo" src="https://eng.uber.com/wp-content/uploads/2018/05/image4-3-768x493.png">](https://uber.github.io/kepler.gl/#/demo)
 
-Kepler.gl is a redux component that uses redux reducer to store and manage state transitions.
-This package consists of a reducer and the UI components to render and customize the map.
+[Kepler.gl][web] is a data-agnostic, high-performance web-based application for visual exploration of large-scale geolocation data sets. Built on top of [Mapbox GL](https://www.mapbox.com) and [deck.gl](http://uber.github.io/deck.gl/#/), kepler.gl can render millions of points representing thousands of trips and perform spatial aggregations on the fly.
 
-For information on how to embed kepler.gl in your app take a look at [this tutorial][vis-academy] on vis.academy.
+Kepler.gl is also a React component that uses [Redux](https://redux.js.org/) to manage its state and data flow. It can be embedded into other React-Redux applications and is highly customizable. For information on how to embed kepler.gl in your app take a look at this step-by-step [tutorial][vis-academy] on vis.academy.
 
 ## Links
 - [Website][web]
 - [Demo][demo-app]
 - [Examples][examples]
-- [App User guide][user-guide]
+- [Get Started][get-started]
+- [App User Guide][user-guide]
 - [Tutorial][vis-academy]
 - [Stack Overflow][stack]
 - [Contribution Guidelines][contributing]
-- API Docs - Coming Soon
+- [Api Reference][api-reference]
+- [Roadmap][roadmap]
 
 ## Env
-Use Node v6 and above, older node versions have not been tested
-
+Use Node v6 and above, older node versions have not been tested.
 For best results, use [nvm](https://github.com/creationix/nvm) `nvm install`.
 
 ## Install kepler.gl
 Install node (`> 6`), yarn, and project dependencies
 
-```
+```sh
 npm install --save kepler.gl
 // or
 yarn add kepler.gl
@@ -74,17 +74,19 @@ Take a look at the [development guide][developers] to develop kepler.gl locally.
 
 Here are the basic steps to import kepler.gl into your app. You also take a look at the examples folder. Each example in the folder can be installed and run locally.
 
-#### 1. Mount kepler.gl reducer in your app reducer.
+### 1. Mount reducer
+
 Kepler.gl uses Redux to manage its internal state, along with [react-palm][react-palm] middleware to handle side effects.
 
-You need to add `taskMiddleware` to your store too. We are actively working on a solution where
-`react-palm` will not be required, however it is still a very nice side effects management tool that works easier for testing than react-thunk.
+You need to add `taskMiddleware` of `react-palm` to your store too. We are actively working on a solution where
+`react-palm` will not be required, however it is still a very lightweight side effects management tool that is easier to test than react-thunk.
 
 ```js
 import keplerGlReducer from 'kepler.gl/reducers';
 import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
 import {taskMiddleware} from 'react-palm/tasks';
 
+const initialState = {};
 const reducers = combineReducers({
   // <-- mount kepler.gl reducer in your app
   keplerGl: keplerGlReducer,
@@ -94,23 +96,30 @@ const reducers = combineReducers({
 });
 
 // using createStore
-const store = createStore(reducer, applyMiddleware(taskMiddleware))
+export default createStore(reducer, initialState, applyMiddleware(taskMiddleware));
 
+```
+
+Or if use enhancer:
+```js
 // using enhancers
-const initialState = {}
-const middlewares = [taskMiddleware]
+const initialState = {};
+const middlewares = [taskMiddleware];
 const enhancers = [
   applyMiddleware(...middlewares)
-]
+];
 
-const store = createStore(reducer, initialState, compose(...enhancers))
+export default createStore(reducer, initialState, compose(...enhancers));
+
 ```
 
 If you mount kepler.gl reducer in another address instead of `keplerGl`, or the kepler.gl reducer is not
 mounted at root of your state, you will need to specify the path to it when you mount the component
 with the `getState` prop.
 
-#### 2. Mount kepler.gl Component
+Read more about [Reducers][reducers].
+
+### 2. Mount Component
 
 ```js
 import KeplerGl from 'kepler.gl';
@@ -124,7 +133,7 @@ const Map = props => (
 );
 ```
 
-##### Component Props
+#### Props
 
 ##### `id` (String, required)
 
@@ -183,7 +192,7 @@ Action called when click Save Map Url in side panel header.
 
 - Default: `{}`
 
-Actions payload creator to replace default kepler.gl action. Only use custom action when you want to modify action payload.
+Actions creators to replace default kepler.gl action creator. Only use custom action when you want to modify action payload.
 
 ##### `mint` (Boolean, optional)
 
@@ -192,7 +201,9 @@ Actions payload creator to replace default kepler.gl action. Only use custom act
 Whether to load a fresh empty state when component is mounted. when parse `mint: true` kepler.gl component will always load a fresh state when re-mount the same component, state inside this component will be destroyed once its unmounted.
 By Parsing `mint: false` kepler.gl will keep the component state in the store even when it is unmounted, and use it as initial state when re-mounted again. This is useful when mounting kepler.gl in a modal, and keep the same map when re-open.
 
-#### 3. Dispatch custom actions to `keplerGl` reducer.
+Read more about [Components][components].
+
+### 3. Dispatch custom actions to `keplerGl` reducer.
 
 One advantage of using the reducer over React component state to handle keplerGl state is the flexibility
 to customize its behavior. If you only have one `KeplerGl` instance in your app or never intend to dispatch actions to KeplerGl from outside the component itself,
@@ -205,6 +216,7 @@ There are multiple ways to dispatch actions to a specific `KeplerGl` instance.
 Each action is mapped to a reducer updater in kepler.gl. You can import the reducer updater corresponding to a specific action, and call it with the previous state and action payload to get the updated state.
 e.g. `updateVisDataUpdater` is the updater for `ActionTypes.UPDATE_VIS_DATA` (take a look at each reducer `reducers/vis-state.js` for action to updater mapping).
 Here is an example how you can listen to an app action `QUERY_SUCCESS` and call `updateVisDataUpdater` to load data into Kepler.Gl.
+
 ```js
 import keplerGlReducer, {visStateUpdaters} from 'kepler.gl/reducers';
 
@@ -237,6 +249,7 @@ const composedReducer = (state, action) => {
 
 export default composedReducer;
 ```
+Read more about [using updaters to modify kepler.gl state][using-updaters]
 
 - Using redux `connect`
 
@@ -295,9 +308,11 @@ const MapContainer = ({dispatch}) => (
 );
 
 ```
+Read more about [forward dispatching actions][forward-actions]
 
-#### 4. Replace default components.
-Everyone wants the flexibility to render custom kepler.gl componenents. Kepler.gl has a dependency injection system that allow you to inject
+
+### 4. Render Custom UI components.
+Everyone wants the flexibility to render custom kepler.gl components. Kepler.gl has a dependency injection system that allow you to inject
 components to KeplerGl replacing existing ones. All you need to do is to create a component factory for the one you want to replace, import the original component factory
 and call `injectComponents` at the root component of your app where `KeplerGl` is mounted.
 Take a look at `examples/demo-app/src/app.js` and see how it renders a custom side panel header in kepler.gl
@@ -351,39 +366,83 @@ const myCustomHeaderFactory = () => withState(
   // actions
   {addTodo}
 )(CustomHeader);
-
 ```
+Read more about [replacing UI component][replace-ui-component]
 
-#### 5. How to add data to map
-In order to interact with a kepler.gl instance and add new data to it the following methods are available:
-- updateVisData
-- addDataToMap
-It is also important to remember that Kepler.gl provides an easy API (```KeplerGlSchema.getConfigToSave```) to generate a dump of the current kepler instance configuration.
+### 5. How to add data to map
+To interact with a kepler.gl instance and add new data to it, you can dispatch __`addDataToMap`__ action from anywhere inside your app. It adds a dataset or multiple datasets to kepler.gl instance and update the full configuration (mapState, mapStyle, visState).
 
-##### addDataToMap
-This method is similar to UpdateVisData but it is able to update the full kepler.gl configuration (mapState, mapStyle, visState).
-This action takes an object as input with the following properties:
-```js
-{
-    datasets | object: same as UpdateVisData
-    options | object: same as UpdateVisData
-    config | object: this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}.
-}
-```
+#### Parameters
+-   `datasets` **([Array][41]&lt;[Object][40]> | [Object][40])** **\*required** datasets can be a dataset or an array of datasets
+    Each dataset object needs to have `info` and `data` property.
+    -   `datasets.info` **[Object][40]** \-info of a dataset
+        -   `datasets.info.id` **[string][42]** id of this dataset. If config is defined, `id` should matches the `dataId` in config.
+        -   `datasets.info.label` **[string][42]** A display name of this dataset
+    -   `datasets.data` **[Object][40]** **\*required** The data object, in a tabular format with 2 properties `fields` and `rows`
+        -   `datasets.data.fields` **[Array][41]&lt;[Object][40]>** **\*required** Array of fields,
+            -   `datasets.data.fields.name` **[string][42]** **\*required** Name of the field,
+        -   `datasets.data.rows` **[Array][41]&lt;[Array][41]>** **\*required** Array of rows, in a tabular format with `fields` and `rows`
+-   `options` **[Object][40]**
+    -   `options.centerMap` **[boolean][43]** `default: true` if `centerMap` is set to `true` kepler.gl will
+        place the map view within the data points boundaries
+    -   `options.readOnly` **[boolean][43]** `default: false` if `readOnly` is set to `true`
+        the left setting panel will be hidden
+-   `config` **[Object][40]** this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
 
-<p id="config-notice"> It is important to notice that the config object value will always have higher precedence than the options properties.
-For instance, if you provide <code>{centerMap: true}</code> as part of the options object and in your config object you pass
-the mapState configuration with latitude and longitude define as it follows:</p>
+Kepler.gl provides an easy API `KeplerGlSchema.getConfigToSave` to generate a json blob of the current kepler instance configuration.
 
-```js
-config: {
-  mapState: {
-    latitude: 33.88608913680742,
-    longitude: -84.43459130456425
+#### Examples
+
+```javascript
+// app.js
+import {addDataToMap} from 'kepler.gl/actions';
+
+const sampleTripData = {
+ fields: [
+   {name: 'tpep_pickup_datetime', format: 'YYYY-M-D H:m:s', type: 'timestamp'},
+   {name: 'pickup_longitude', format: '', type: 'real'},
+   {name: 'pickup_latitude', format: '', type: 'real'}
+ ],
+ rows: [
+   ['2015-01-15 19:05:39 +00:00', -73.99389648, 40.75011063],
+   ['2015-01-15 19:05:39 +00:00', -73.97642517, 40.73981094],
+   ['2015-01-15 19:05:40 +00:00', -73.96870422, 40.75424576],
+ ]
+};
+
+const sampleConfig = {
+  visState: {
+    filters: [
+      {
+        id: 'me',
+        dataId: 'test_trip_data',
+        name: 'tpep_pickup_datetime',
+        type: 'timeRange',
+        enlarged: true
+      }
+    ]
   }
 }
+
+this.props.dispatch(
+  addDataToMap({
+    datasets: {
+      info: {
+        label: 'Sample Taxi Trips in New York City',
+        id: 'test_trip_data'
+      },
+      data: sampleTripData
+    },
+    option: {
+      centerMap: true,
+      readOnly: false
+    },
+    config: sampleConfig
+  })
+);
 ```
-the latter will be applied and the map view will be moved the defined coordinates.
+
+Read more about [addDataToMap](./docs/api-reference/actions/actions.md#adddatatomap) and [Saving and loading maps with schema manager][saving-loading-w-schema].
 
 [contributing]: contributing/CONTRIBUTING.md
 [demo-app]: https://uber.github.io/kepler.gl/#/demo
@@ -393,10 +452,35 @@ the latter will be applied and the map view will be moved the defined coordinate
 [mapbox-token]: https://www.mapbox.com/help/define-access-token/
 [developers]: contributing/DEVELOPERS.md
 [examples]: https://github.com/uber/kepler.gl/tree/master/examples
-[user-guide]: docs/a-introduction.md
-[react-palm]: (https://github.com/btford/react-palm)
+[react-palm]: https://github.com/btford/react-palm
+[roadmap]: https://github.com/uber/kepler.gl/wiki/Kepler.gl-2019-Roadmap
 [stack]: https://stackoverflow.com/questions/tagged/kepler.gl
 [web]: http://www.kepler.gl/
 [vis-academy]: http://vis.academy/#/kepler.gl/
 
+[user-guide]: ./docs/user-guides/a-introduction.md
+[api-reference]: ./docs/api-reference/overview.md
+[get-started]: ./docs/api-reference/get-started.md
 
+[reducers]: ./docs/api-reference/reducers/overview.md
+[components]: ./docs/api-reference/components/overview.md
+[reducers]: ./docs/api-reference/reducers/overview.md
+[actions-updaters]: ./docs/api-reference/actions/overview.md
+[processors]: ./docs/api-reference/processors/overview.md
+[schemas]: ./docs/api-reference/schemas/overview.md
+[using-updaters]: ./docs/api-reference/advanced-usages/using-updaters.md
+[forward-actions]: ./docs/api-reference/advanced-usages/forward-actions.md
+[replace-ui-component]: ./docs/api-reference/advanced-usages/replace-ui-component.md
+[saving-loading-w-schema]: ./docs/api-reference/advanced-usages/saving-loading-w-schema.md
+
+[40]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+
+[41]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+
+[42]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+
+[43]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+
+[44]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
+
+[45]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function

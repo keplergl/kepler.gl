@@ -21,19 +21,8 @@
 import {handleActions} from 'redux-actions';
 import ActionTypes from 'constants/action-types';
 
-export const INITIAL_MAP_STATE = {
-  pitch: 0,
-  bearing: 0,
-  latitude: 37.75043,
-  longitude: -122.34679,
-  zoom: 9,
-  dragRotate: false,
-  width: 800,
-  height: 800,
-  isSplit: false
-};
-
 import {
+  INITIAL_MAP_STATE,
   fitBoundsUpdater,
   receiveMapConfigUpdater,
   togglePerspectiveUpdater,

@@ -21,6 +21,36 @@
 import keyMirror from 'keymirror';
 import {ACTION_PREFIX} from './default-settings';
 
+/**
+ * Kepler.gl action types, can be listened by reducers to perform additional tasks whenever an action is called in kepler.gl
+ * @constant
+ * @type {Object}
+ * @public
+ *
+ * @example
+ * // store.js
+ * import {handleActions} from 'redux-actions';
+ * import {createStore, combineReducers, applyMiddleware} from 'redux';
+ * import {taskMiddleware} from 'react-palm/tasks';
+ *
+ * import keplerGlReducer from 'kepler.gl/reducers';
+ * import {ActionTypes} from 'kepler.gl/actions';
+ *
+ * const appReducer = handleActions({
+ *   // listen on kepler.gl map update action to store a copy of viewport in app state
+ *   [ActionTypes.UPDATE_MAP]: (state, action) => ({
+ *     ...state,
+ *     viewport: action.payload
+ *   }),
+ * }, {});
+ *
+ * const reducers = combineReducers({
+ *   app: appReducer,
+ *   keplerGl: keplerGlReducer
+ * });
+ *
+ * export default createStore(reducers, {}, applyMiddleware(taskMiddleware))
+ */
 const ActionTypes = keyMirror({
   // identity action
   REGISTER_ENTRY: null,
@@ -96,7 +126,6 @@ const ActionTypes = keyMirror({
   SET_EXPORT_SELECTED_DATASET: null,
   SET_EXPORT_DATA_TYPE: null,
   SET_EXPORT_FILTERED: null,
-  SET_EXPORT_CONFIG: null,
   SET_EXPORT_DATA: null,
 
   // all

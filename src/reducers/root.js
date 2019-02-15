@@ -20,15 +20,10 @@
 
 import {handleActions} from 'redux-actions';
 
-import {actionFor, updateProperty} from '../actions/action-wrapper';
+import {_actionFor, _updateProperty} from '../actions/action-wrapper';
+import {keplerGlInit} from '../actions/actions';
 import {coreReducerFactory} from './core';
 import ActionTypes from 'constants/action-types';
-
-import {keplerGlInit} from '../actions/actions';
-/*
- * voyager reducer wrapper,
- * wraps multiple voyager state in one voyager
- */
 
 // INITIAL_STATE
 const initialCoreState = {};
@@ -67,8 +62,8 @@ export function provideInitialState(initialState) {
   return (state = initialCoreState, action) => {
     // update child states
     Object.keys(state).forEach(id => {
-      const updateItemState = coreReducer(state[id], actionFor(id, action));
-      state = updateProperty(state, id, updateItemState);
+      const updateItemState = coreReducer(state[id], _actionFor(id, action));
+      state = _updateProperty(state, id, updateItemState);
     });
 
     // perform additional state reducing (e.g. switch action.type etc...)
@@ -100,7 +95,41 @@ function mergeInitialState(saved = {}, provided = {}) {
 function decorate(target, savedInitialState = {}) {
   const targetInitialState = savedInitialState;
 
-  // plugin to core reducer
+  /**
+   * Returns a kepler.gl reducer that will also pass each action through additional reducers spiecified.
+   * The parameter should be either a reducer map or a reducer function.
+   * The state passed into the additional action handler is the instance state.
+   * It will include all the subreducers `visState`, `uiState`, `mapState` and `mapStyle`.
+   * `.plugin` is only meant to be called once when mounting the keplerGlReducer to the store.
+   * **Note** This is an advanced option to give you more freedom to modify the internal state of the kepler.gl instance.
+   * You should only use this to adding additional actions instead of replacing default actions.
+   *
+   * @mixin reducer.plugin
+   * @param {Object|Function} customReducer - A reducer map or a reducer
+   * @public
+   * @example
+   * const myKeplerGlReducer = keplerGlReducer
+   *  .plugin({
+   *    // 1. as reducer map
+   *    HIDE_AND_SHOW_SIDE_PANEL: (state, action) => ({
+   *      ...state,
+   *      uiState: {
+   *        ...state.uiState,
+   *        readOnly: !state.uiState.readOnly
+   *      }
+   *    })
+   *  })
+   * .plugin(handleActions({
+   *   // 2. as reducer
+   *   'HIDE_MAP_CONTROLS': (state, action) => ({
+   *     ...state,
+   *     uiState: {
+   *       ...state.uiState,
+   *       mapControls: hiddenMapControl
+   *     }
+   *   })
+   * }, {}));
+   */
   target.plugin = function plugin(customReducer) {
     if (typeof customReducer === 'object') {
       // if only provided a reducerMap, wrap it in a reducer
@@ -114,10 +143,10 @@ function decorate(target, savedInitialState = {}) {
       // for each entry in the staten
       Object.keys(nextState).forEach(id => {
         // update child states
-        nextState = updateProperty(
+        nextState = _updateProperty(
           nextState,
           id,
-          customReducer(nextState[id], actionFor(id, action))
+          customReducer(nextState[id], _actionFor(id, action))
         );
       });
 
@@ -125,8 +154,25 @@ function decorate(target, savedInitialState = {}) {
     });
   };
 
-  // pass in initialState for reducer slices
-  // e.g. initialState = {uiState: {currentModal : null}}
+  /**
+   * REturn a reducer that innitiated with custom initial state.
+   * The parameter should be an object mapping from `subreducer` name to custom subreducer state,
+   * which will be shallow **merged** with default initial state.
+   *
+   * Default subreducer state:
+   *  - `[visState](./vis-state.md#INITIAL_VIS_STATE)`
+   *  - `[mapState](./map-state.md#INITIAL_MAP_STATE)`
+   *  - `[mapStyle](./map-style.md#INITIAL_MAP_STYLE)`
+   *  - `[uiState](./ui-state.md#INITIAL_UI_STATE)`
+   * @mixin reducer.initialState
+   * @param {Object} iniSt - custom state to be merged with default initial state
+   * @public
+   * @example
+   * const myKeplerGlReducer = keplerGlReducer
+   *  .initialState({
+   *    uiState: {readOnly: true}
+   *  });
+   */
   target.initialState = function initialState(iniSt) {
     const merged = mergeInitialState(targetInitialState, iniSt);
     const targetReducer = provideInitialState(merged);

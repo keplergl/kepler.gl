@@ -59,6 +59,18 @@ const getDefaultState = () => {
   };
 };
 
+/**
+ * Default initial `mapStyle`
+ * @constant
+ * @property {string} styleType - Default: 'dark'
+ * @property {Object} visibleLayerGroups - Default: {}
+ * @property {Object} topLayerGroups - Default: {}
+ * @property {Object} mapStyles - mapping from style key to style obejct
+ * @property {string} mapboxApiAccessToken - Default: null
+ * @property {Object} inputStyle - Default: {}
+ * @property {Array} threeDBuildingColor - Default: [r, g, b]
+ * @public
+ */
 export const INITIAL_MAP_STYLE = getDefaultState();
 
 /**

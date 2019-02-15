@@ -76,7 +76,7 @@ We write unit and browser tests with [Tape][tape] and [Enzyme][enzyme], and lint
 yarn test
 ```
 
-To run seperately
+To run separately
 ```shell
 # lint
 yarn lint
@@ -139,12 +139,12 @@ being reverted.
 A commit with this format is automatically created by the [`git revert`][git-revert] command.
 
 ### Type
-Must be one of the following, capitalizd.
+Must be one of the following, capitalized.
 
-* **[Feat]]**: A new feature
-* **[Enhancement]]**: An update of a existing feature
-* **[Bug]]**: A bug fix
-* **[Docs]]**: Documentation only changes
+* **[Feat]**: A new feature
+* **[Enhancement]**: An update of a existing feature
+* **[Bug]**: A bug fix
+* **[Docs]**: Documentation only changes
 * **[Style]**: Changes that do not affect the meaning of the code (white-space, formatting, missing
   semi-colons, typos, etc)
 * **[Refactor]**: A code change that neither fixes a bug nor adds a feature
@@ -231,7 +231,7 @@ Publish on github pages __Authorized User Only__.
 ```
 
 ### <a name="gh-pages"></a> Testing environment using GH Pages
-We currently host the demo-app on Github pages. We have provided a way to test github pages before pushing the branch to 
+We currently host the demo-app on Github pages. We have provided a way to test github pages before pushing the branch to
 the actual repo.
 In order to test github pages with your changes, you need to satisfy the following requirements first:
 - Make sure you have your own github pages (username.github.io) repo, [click here](https://pages.github.com/)
@@ -247,7 +247,7 @@ When everything is set up, run the following command:
 
 ```bash
 yarn deploy:test
-``` 
+```
 
 The above command will build the website and push to your gh-pages branch.
 

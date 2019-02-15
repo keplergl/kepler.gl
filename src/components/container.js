@@ -48,6 +48,30 @@ export const errorMsg = {
 ContainerFactory.deps = [KeplerGlFactory];
 
 export function ContainerFactory(KeplerGl) {
+  /** @lends KeplerGl */
+  /**
+    * Main Kepler.gl Component
+    * @param {Object} props
+    *
+    * @param {string} props.id - _required_
+    *
+    * - Default: `map`
+    * The id of this KeplerGl instance. `id` is required if you have multiple
+    * KeplerGl instances in your app. It defines the prop name of the KeplerGl state that is
+    * stored in the KeplerGl reducer. For example, the state of the KeplerGl component with id `foo` is
+    * stored in `state.keplerGl.foo`.
+    *
+    * In case you create multiple kepler.gl instances using the same id, the kepler.gl state defined by the entry will be
+    * overridden by the latest instance and reset to a blank state.
+    * @param {string} props.mapboxApiAccessToken - _required_
+
+    * You can create a free account at [www.mapbox.com](www.mapbox.com) and create a token at
+    * [www.mapbox.com/account/access-tokens](www.mapbox.com/account/access-tokens)
+    *
+    *
+    * @param {Number} props.width - _required_ Width of the KeplerGl UI.
+    * @public
+   */
   class Container extends Component {
     // default id and address if not provided
     static defaultProps = {
