@@ -22,20 +22,16 @@ import Protobuf from 'pbf';
 import {VectorTile, VectorTileFeature} from '@mapbox/vector-tile';
 import {worldToLngLat} from 'viewport-mercator-project';
 
-/* global fetch process */
+/* global fetch */
 const TILE_SIZE = 512;
-const MAPBOX_TOKEN = process.env.MapboxAccessToken;
+const MAP_SOURCE = 'https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7';
 
 export function getTileData(token, {x, y, z}) {
-  const mapSource = `https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7/${z}/${x}/${y}.vector.pbf?access_token=${token}`;
+  const mapSource = `${MAP_SOURCE}/${z}/${x}/${y}.vector.pbf?access_token=${token}`;
+
   return fetch(mapSource)
-    .then(response => {
-      return response.arrayBuffer();
-    })
-    .then(buffer => {
-      const data = decodeTile(x, y, z, buffer);
-      return data;
-    });
+    .then(response => response.arrayBuffer())
+    .then(buffer => decodeTile(x, y, z, buffer));
 }
 
 export function decodeTile(x, y, z, arrayBuffer) {

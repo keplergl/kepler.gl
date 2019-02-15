@@ -342,11 +342,11 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           .reverse()
           .reduce(this._renderLayer, []);
       }
-      const threeDBuildingLayerId = '_keplergl_3d-building';
+
       if (mapStyle.visibleLayerGroups['3d building']) {
         deckGlLayers.push(new ThreeDBuildingLayer({
-          id: threeDBuildingLayerId,
-          mapboxApiAccessToken
+          id: '_keplergl_3d-building',
+          mapboxApiAccessToken,
           threeDBuildingColor: mapStyle.threeDBuildingColor
         }));
       }
