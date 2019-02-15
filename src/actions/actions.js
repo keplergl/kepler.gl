@@ -29,8 +29,9 @@ import {createAction} from 'redux-actions';
    * The config object value will always have higher precedence than the options properties.
    *
    * Kepler.gl uses `dataId` in the config to match with loaded dataset. If you pass a config object, you need
-   * to match the `info.id` of your dataset to the `dataId` in eath `layer`, `filter` and `interactionConfig.tooltips.fieldsToShow`
+   * to match the `info.id` of your dataset to the `dataId` in each `layer`, `filter` and `interactionConfig.tooltips.fieldsToShow`
    *
+   * @memberof main
    * @param {Array<Object>|Object} datasets - ***required** datasets can be a dataset or an array of datasets
    * Each dataset object needs to have `info` and `data` property.
    * @param {Object} datasets.info -info of a dataset
@@ -104,6 +105,7 @@ export const addDataToMap = createAction(
 
 /**
  * Reset all sub-reducers to its initial state. This can be used to clear out all configuration in the reducer.
+ * @memberof main
  * @public
  */
 export const resetMapConfig = createAction(
@@ -116,12 +118,12 @@ export const resetMapConfig = createAction(
  *
  * You can call `receiveMapConfig` before passing in any data. The reducer will store layer and filter config, waiting for
  * data to come in. When data arrives, you can call `addDataToMap` without passing any config, and the reducer will try to match
- * preloaded configs. This behavior is designed to allow asynchronic data loading.
+ * preloaded configs. This behavior is designed to allow asynchronous data loading.
  *
  * It is also useful when you want to prepare the kepler.gl instance with some preset layer and filter settings.
- * **Note** Sequence is important, `receiveMapConfig` needs to be called __before__ data is loaded. Currently kepler.gl doesn't allow callling `receiveMapConfig` after data is loaded.
+ * **Note** Sequence is important, `receiveMapConfig` needs to be called __before__ data is loaded. Currently kepler.gl doesn't allow calling `receiveMapConfig` after data is loaded.
  * It will reset current configuration first then apply config to it.
- *
+ * @memberof main
  * @param {Object} config - ***required** The Config Object
  * @public
  * @example
@@ -138,6 +140,7 @@ export const receiveMapConfig = createAction(
 
 /**
  * Initialize kepler.gl reducer. It is used to pass in `mapboxApiAccessToken` to `mapStyle` reducer.
+ * @memberof main
  * @param {Object} payload
  * @param {string} payload.mapboxApiAccessToken - mapboxApiAccessToken to be saved to mapStyle reducer
  * @public
@@ -146,3 +149,15 @@ export const keplerGlInit =  createAction(
   ActionTypes.INIT,
   ({mapboxApiAccessToken} = {}) => ({mapboxApiAccessToken})
 );
+
+/**
+ * This declaration is needed to group actions in docs
+ */
+/**
+ * Main kepler.gl actions, these actions handles loading data and config into kepler.gl reducer. These actions
+ * is listened by all subreducers,
+ * @public
+ */
+/* eslint-disable no-unused-vars */
+const main = null;
+/* eslint-enable no-unused-vars */

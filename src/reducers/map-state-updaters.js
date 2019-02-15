@@ -23,15 +23,15 @@ import geoViewport from '@mapbox/geo-viewport';
 /**
  * Default initial `mapState`
  * @constant
- * @property {number} pitch - Default: 0
- * @property {number} bearing - Default: 0
- * @property {number} latitude - Default: 37.75043
- * @property {number} longitude - Default: -122.34679
- * @property {number} zoom - Default: 9
- * @property {boolean} dragRotate - Default: false
- * @property {number} width - Default: 800
- * @property {number} height - Default: 800
- * @property {boolean} isSplit - Default: false
+ * @property {number} pitch Default: `0`
+ * @property {number} bearing Default: `0`
+ * @property {number} latitude Default: `37.75043`
+ * @property {number} longitude Default: `-122.34679`
+ * @property {number} zoom Default: `9`
+ * @property {boolean} dragRotate Default: `false`
+ * @property {number} width Default: `800`
+ * @property {number} height Default: `800`
+ * @property {boolean} isSplit Default: `false`
  * @public
  */
 export const INITIAL_MAP_STATE = {
@@ -47,16 +47,26 @@ export const INITIAL_MAP_STATE = {
 };
 
 /* Updaters */
+/**
+ * Update map viewport
+ * @param {Object} state
+ * @param {Object} action
+ * @param {Object} action.payload - viewport
+ * @returns {Object} nextState
+ * @public
+ */
 export const updateMapUpdater = (state, action) => ({
   ...state,
   ...(action.payload || {})
 });
 
 /**
- *
- * @param state
- * @param action
- * @returns {{latitude, longitude, zoom}}
+ * Fit map viewport to bounds
+ * @param {Object} state
+ * @param {Object} action
+ * @param {number[]} action.payload - bounds as `[lngMin, latMin, lngMax, latMax]`
+ * @returns {Object} nextState
+ * @public
  */
 export const fitBoundsUpdater = (state, action) => {
   const bounds = action.payload;
@@ -73,7 +83,13 @@ export const fitBoundsUpdater = (state, action) => {
   };
 };
 
-export const togglePerspectiveUpdater = (state, action) => ({
+/**
+ * Toggle between 3d and 2d map.
+ * @param {Object} state
+ * @returns {Object} nextState
+ * @public
+ */
+export const togglePerspectiveUpdater = (state) => ({
   ...state,
   ...{
     pitch: state.dragRotate ? 0 : 50,
@@ -83,6 +99,14 @@ export const togglePerspectiveUpdater = (state, action) => ({
 });
 
 // consider case where you have a split map and user wants to reset
+/**
+ * Update `mapState` to popagate a new config
+ * @param {Object} state
+ * @param {Object} action
+ * @param {Object} action.payload - saved map config
+ * @returns {Object} nextState
+ * @public
+ */
 export const receiveMapConfigUpdater = (state, action) => {
   const {isSplit = false} = action.payload.mapState || {};
 
@@ -94,7 +118,13 @@ export const receiveMapConfigUpdater = (state, action) => {
   };
 };
 
-export const toggleSplitMapUpdater = (state, action) => ({
+/**
+ * Toggle between one or split maps
+ * @param {Object} state
+ * @returns {Object} nextState
+ * @public
+ */
+export const toggleSplitMapUpdater = (state) => ({
   ...state,
   isSplit: !state.isSplit,
   ...getMapDimForSplitMap(!state.isSplit, state)

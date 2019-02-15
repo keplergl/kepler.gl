@@ -20,58 +20,37 @@
 
 import {handleActions} from 'redux-actions';
 import ActionTypes from 'constants/action-types';
+import * as uiStateUpdaters from './ui-state-updaters';
 
-import {
-  INITIAL_UI_STATE,
-  openDeleteModalUpdater,
-  toggleModalUpdater,
-  showExportDropdownUpdater,
-  hideExportDropdownUpdater,
-  toggleSidePanelUpdater,
-  toggleMapControlUpdater,
-  addNotificationUpdater,
-  removeNotificationUpdater,
-
-  // export image
-  cleanupExportImage,
-  setExportImageDataUri,
-  setRatioUpdater,
-  setResolutionUpdater,
-  startExportingImage,
-  toggleLegendUpdater,
-
-  // export data
-  setExportSelectedDatasetUpdater,
-  setExportDataTypeUpdater,
-  setExportFilteredUpdater,
-  setExportDataUpdater
-} from './ui-state-updaters';
-
+/**
+ * Important: Do not rename `actionHandler` or the assignment pattern of property value.
+ * It is used to generate documentation
+ */
 const actionHandler = {
-  [ActionTypes.TOGGLE_SIDE_PANEL]: toggleSidePanelUpdater,
-  [ActionTypes.TOGGLE_MODAL]: toggleModalUpdater,
-  [ActionTypes.SHOW_EXPORT_DROPDOWN]: showExportDropdownUpdater,
-  [ActionTypes.HIDE_EXPORT_DROPDOWN]: hideExportDropdownUpdater,
-  [ActionTypes.OPEN_DELETE_MODAL]: openDeleteModalUpdater,
-  [ActionTypes.TOGGLE_MAP_CONTROL]: toggleMapControlUpdater,
-  [ActionTypes.ADD_NOTIFICATION]: addNotificationUpdater,
-  [ActionTypes.REMOVE_NOTIFICATION]: removeNotificationUpdater,
+  [ActionTypes.TOGGLE_SIDE_PANEL]: uiStateUpdaters.toggleSidePanelUpdater,
+  [ActionTypes.TOGGLE_MODAL]: uiStateUpdaters.toggleModalUpdater,
+  [ActionTypes.SHOW_EXPORT_DROPDOWN]: uiStateUpdaters.showExportDropdownUpdater,
+  [ActionTypes.HIDE_EXPORT_DROPDOWN]: uiStateUpdaters.hideExportDropdownUpdater,
+  [ActionTypes.OPEN_DELETE_MODAL]: uiStateUpdaters.openDeleteModalUpdater,
+  [ActionTypes.TOGGLE_MAP_CONTROL]: uiStateUpdaters.toggleMapControlUpdater,
+  [ActionTypes.ADD_NOTIFICATION]: uiStateUpdaters.addNotificationUpdater,
+  [ActionTypes.REMOVE_NOTIFICATION]: uiStateUpdaters.removeNotificationUpdater,
 
-  [ActionTypes.SET_RATIO]: setRatioUpdater,
-  [ActionTypes.SET_RESOLUTION]: setResolutionUpdater,
-  [ActionTypes.TOGGLE_LEGEND]: toggleLegendUpdater,
-  [ActionTypes.START_EXPORTING_IMAGE]: startExportingImage,
-  [ActionTypes.SET_EXPORT_IMAGE_DATA_URI]: setExportImageDataUri,
-  [ActionTypes.CLEANUP_EXPORT_IMAGE]: cleanupExportImage,
+  [ActionTypes.SET_RATIO]: uiStateUpdaters.setRatioUpdater,
+  [ActionTypes.SET_RESOLUTION]: uiStateUpdaters.setResolutionUpdater,
+  [ActionTypes.TOGGLE_LEGEND]: uiStateUpdaters.toggleLegendUpdater,
+  [ActionTypes.START_EXPORTING_IMAGE]: uiStateUpdaters.startExportingImage,
+  [ActionTypes.SET_EXPORT_IMAGE_DATA_URI]: uiStateUpdaters.setExportImageDataUri,
+  [ActionTypes.CLEANUP_EXPORT_IMAGE]: uiStateUpdaters.cleanupExportImage,
 
-  [ActionTypes.SET_EXPORT_SELECTED_DATASET]: setExportSelectedDatasetUpdater,
-  [ActionTypes.SET_EXPORT_DATA_TYPE]: setExportDataTypeUpdater,
-  [ActionTypes.SET_EXPORT_FILTERED]: setExportFilteredUpdater,
-  [ActionTypes.SET_EXPORT_DATA]: setExportDataUpdater
+  [ActionTypes.SET_EXPORT_SELECTED_DATASET]: uiStateUpdaters.setExportSelectedDatasetUpdater,
+  [ActionTypes.SET_EXPORT_DATA_TYPE]: uiStateUpdaters.setExportDataTypeUpdater,
+  [ActionTypes.SET_EXPORT_FILTERED]: uiStateUpdaters.setExportFilteredUpdater,
+  [ActionTypes.SET_EXPORT_DATA]: uiStateUpdaters.setExportDataUpdater
 };
 
 /* Reducer */
 export const uiStateReducerFactory = (initialState = {}) =>
-  handleActions(actionHandler, {...INITIAL_UI_STATE, ...initialState, initialState});
+  handleActions(actionHandler, {...uiStateUpdaters.INITIAL_UI_STATE, ...initialState, initialState});
 
 export default uiStateReducerFactory();

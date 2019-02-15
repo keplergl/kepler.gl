@@ -58,3 +58,4 @@ export const logSuccess = log(Colors.FgGreen);
 export const logOk = log(Colors.FgCyan);
 export const logError = log(Colors.FgRed);
 export const logProgress = log(Colors.FgBlue);
+export const logStep = log(Colors.FgMagenta);

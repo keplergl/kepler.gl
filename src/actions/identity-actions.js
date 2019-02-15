@@ -26,6 +26,7 @@ import ActionTypes from 'constants/action-types';
  * Add a new kepler.gl instance in `keplerGlReducer`. This action is called under-the-hood when a `KeplerGl` component is **mounted** to the dom.
  * Note that if you dispatch actions such as adding data to a kepler.gl instance before the React component is mounted, the action will not be
  * performed. Instance reducer can only handle actions when it is instantiated.
+ * @memberof rootActions
  * @param {Object} payload
  * @param {string} payload.id - ***required** The id of the instance
  * @param {boolean} payload.mint - Whether to use a fresh empty state, when `mint: true` it will *always* load a fresh state when the component is re-mounted.
@@ -43,6 +44,7 @@ export const registerEntry = createAction(
  * Delete an instance from `keplerGlReducer`. This action is called under-the-hood when a `KeplerGl` component is **un-mounted** to the dom.
  * If `mint` is set to be `true` in the component prop, the instance state will be deleted from the root reducer. Otherwise, the root reducer will keep
  * the instance state and later transfer it to a newly mounted component with the same `id`
+ * @memberof rootActions
  * @param {string} id - the id of the instance to be deleted
  * @public
  */
@@ -54,6 +56,8 @@ export const deleteEntry = createAction(
 /**
  *
  * Rename an instance in the root reducer, keep its entire state
+ *
+ * @memberof rootActions
  * @param {string} oldId - ***required** old id
  * @param {string} newId - ***required** new id
  * @public
@@ -62,3 +66,19 @@ export const renameEntry = createAction(
   ActionTypes.RENAME_ENTRY,
   (oldId, newId) => ({oldId, newId})
 );
+
+/**
+ * This declaration is needed to group actions in docs
+ */
+/**
+ * Root actions managers adding and removing instances in root reducer.
+ * Under-the-hood, when a `KeplerGl` component is mounted or unmounted,
+ * it will automatically calls these actions to add itself to the root reducer.
+ * However, sometimes the data is ready before the component is registered in the reducer,
+ * in this case, you can manually call these actions or the corresponding updater to add it to the reducer.
+ *
+ * @public
+ */
+/* eslint-disable no-unused-vars */
+const rootActions = null
+/* eslint-enable no-unused-vars */

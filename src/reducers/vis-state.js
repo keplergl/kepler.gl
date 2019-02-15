@@ -20,107 +20,78 @@
 
 import ActionTypes from 'constants/action-types';
 import {handleActions} from 'redux-actions';
+import * as visStateUpdaters from './vis-state-updaters';
 
-// updater functions
-import {
-  INITIAL_VIS_STATE,
-  addFilterUpdater,
-  addLayerUpdater,
-  enlargeFilterUpdater,
-  layerClickUpdater,
-  layerHoverUpdater,
-  mapClickUpdater,
-  toggleFilterAnimationUpdater,
-  updateAnimationSpeedUpdater,
-  receiveMapConfigUpdater,
-  resetMapConfigVisStateUpdater,
-  loadFilesUpdater,
-  loadFilesErrUpdater,
-  updateVisDataUpdater,
-  removeDatasetUpdater,
-  removeFilterUpdater,
-  removeLayerUpdater,
-  reorderLayerUpdater,
-  showDatasetTableUpdater,
-  setFilterUpdater,
-  setFilterPlotUpdater,
-  interactionConfigChangeUpdater,
-  updateLayerBlendingUpdater,
-  layerConfigChangeUpdater,
-  layerTypeChangeUpdater,
-  toggleSplitMapUpdater,
-  setVisibleLayersForMapUpdater,
-  toggleLayerForMapUpdater,
-  layerVisConfigChangeUpdater,
-  layerVisualChannelChangeUpdater
-} from './vis-state-updaters';
-
+/**
+ * Important: Do not rename `actionHandler` or the assignment pattern of property value.
+ * It is used to generate documentation
+ */
 const actionHandler = {
-  [ActionTypes.ADD_FILTER]: addFilterUpdater,
+  [ActionTypes.ADD_FILTER]: visStateUpdaters.addFilterUpdater,
 
-  [ActionTypes.ADD_LAYER]: addLayerUpdater,
+  [ActionTypes.ADD_LAYER]: visStateUpdaters.addLayerUpdater,
 
-  [ActionTypes.ENLARGE_FILTER]: enlargeFilterUpdater,
+  [ActionTypes.ENLARGE_FILTER]: visStateUpdaters.enlargeFilterUpdater,
 
-  [ActionTypes.INTERACTION_CONFIG_CHANGE]: interactionConfigChangeUpdater,
+  [ActionTypes.INTERACTION_CONFIG_CHANGE]: visStateUpdaters.interactionConfigChangeUpdater,
 
-  [ActionTypes.LAYER_CLICK]: layerClickUpdater,
+  [ActionTypes.LAYER_CLICK]: visStateUpdaters.layerClickUpdater,
 
-  [ActionTypes.LAYER_CONFIG_CHANGE]: layerConfigChangeUpdater,
+  [ActionTypes.LAYER_CONFIG_CHANGE]: visStateUpdaters.layerConfigChangeUpdater,
 
-  [ActionTypes.LAYER_HOVER]: layerHoverUpdater,
+  [ActionTypes.LAYER_HOVER]: visStateUpdaters.layerHoverUpdater,
 
-  [ActionTypes.LAYER_TYPE_CHANGE]: layerTypeChangeUpdater,
+  [ActionTypes.LAYER_TYPE_CHANGE]: visStateUpdaters.layerTypeChangeUpdater,
 
-  [ActionTypes.LAYER_VIS_CONFIG_CHANGE]: layerVisConfigChangeUpdater,
+  [ActionTypes.LAYER_VIS_CONFIG_CHANGE]: visStateUpdaters.layerVisConfigChangeUpdater,
 
-  [ActionTypes.LAYER_VISUAL_CHANNEL_CHANGE]: layerVisualChannelChangeUpdater,
+  [ActionTypes.LAYER_VISUAL_CHANNEL_CHANGE]: visStateUpdaters.layerVisualChannelChangeUpdater,
 
-  [ActionTypes.LOAD_FILES]: loadFilesUpdater,
+  [ActionTypes.LOAD_FILES]: visStateUpdaters.loadFilesUpdater,
 
-  [ActionTypes.LOAD_FILES_ERR]: loadFilesErrUpdater,
+  [ActionTypes.LOAD_FILES_ERR]: visStateUpdaters.loadFilesErrUpdater,
 
-  [ActionTypes.MAP_CLICK]: mapClickUpdater,
+  [ActionTypes.MAP_CLICK]: visStateUpdaters.mapClickUpdater,
 
-  [ActionTypes.RECEIVE_MAP_CONFIG]: receiveMapConfigUpdater,
+  [ActionTypes.RECEIVE_MAP_CONFIG]: visStateUpdaters.receiveMapConfigUpdater,
 
-  [ActionTypes.REMOVE_DATASET]: removeDatasetUpdater,
+  [ActionTypes.REMOVE_DATASET]: visStateUpdaters.removeDatasetUpdater,
 
-  [ActionTypes.REMOVE_FILTER]: removeFilterUpdater,
+  [ActionTypes.REMOVE_FILTER]: visStateUpdaters.removeFilterUpdater,
 
-  [ActionTypes.REMOVE_LAYER]: removeLayerUpdater,
+  [ActionTypes.REMOVE_LAYER]: visStateUpdaters.removeLayerUpdater,
 
-  [ActionTypes.REORDER_LAYER]: reorderLayerUpdater,
+  [ActionTypes.REORDER_LAYER]: visStateUpdaters.reorderLayerUpdater,
 
-  [ActionTypes.RESET_MAP_CONFIG]: resetMapConfigVisStateUpdater,
+  [ActionTypes.RESET_MAP_CONFIG]: visStateUpdaters.resetMapConfigVisStateUpdater,
 
-  [ActionTypes.SET_FILTER]: setFilterUpdater,
+  [ActionTypes.SET_FILTER]: visStateUpdaters.setFilterUpdater,
 
-  [ActionTypes.SET_FILTER_PLOT]: setFilterPlotUpdater,
+  [ActionTypes.SET_FILTER_PLOT]: visStateUpdaters.setFilterPlotUpdater,
 
-  [ActionTypes.SET_VISIBLE_LAYERS_FOR_MAP]: setVisibleLayersForMapUpdater,
+  [ActionTypes.SET_VISIBLE_LAYERS_FOR_MAP]: visStateUpdaters.setVisibleLayersForMapUpdater,
 
-  [ActionTypes.SHOW_DATASET_TABLE]: showDatasetTableUpdater,
+  [ActionTypes.SHOW_DATASET_TABLE]: visStateUpdaters.showDatasetTableUpdater,
 
-  [ActionTypes.TOGGLE_FILTER_ANIMATION]: toggleFilterAnimationUpdater,
+  [ActionTypes.TOGGLE_FILTER_ANIMATION]: visStateUpdaters.toggleFilterAnimationUpdater,
 
-  [ActionTypes.UPDATE_FILTER_ANIMATION_SPEED]: updateAnimationSpeedUpdater,
+  [ActionTypes.UPDATE_FILTER_ANIMATION_SPEED]: visStateUpdaters.updateAnimationSpeedUpdater,
 
-  [ActionTypes.TOGGLE_LAYER_FOR_MAP]: toggleLayerForMapUpdater,
+  [ActionTypes.TOGGLE_LAYER_FOR_MAP]: visStateUpdaters.toggleLayerForMapUpdater,
 
-  [ActionTypes.TOGGLE_SPLIT_MAP]: toggleSplitMapUpdater,
+  [ActionTypes.TOGGLE_SPLIT_MAP]: visStateUpdaters.toggleSplitMapUpdater,
 
-  [ActionTypes.UPDATE_LAYER_BLENDING]: updateLayerBlendingUpdater,
+  [ActionTypes.UPDATE_LAYER_BLENDING]: visStateUpdaters.updateLayerBlendingUpdater,
 
   // currently not used
-  // but may be useful if users import vist state reducer
-  [ActionTypes.UPDATE_VIS_DATA]: updateVisDataUpdater
+  // but may be useful if users import vis state reducer
+  [ActionTypes.UPDATE_VIS_DATA]: visStateUpdaters.updateVisDataUpdater
 };
 
 // construct vis-state reducer
 export const visStateReducerFactory = (initialState = {}) =>
   handleActions(actionHandler, {
-    ...INITIAL_VIS_STATE,
+    ...visStateUpdaters.INITIAL_VIS_STATE,
     ...initialState,
     initialState
   });

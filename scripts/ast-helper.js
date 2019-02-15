@@ -18,26 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {handleActions} from 'redux-actions';
-import ActionTypes from 'constants/action-types';
-import * as mapStateUpdaters from './map-state-updaters';
+import fs from 'fs';
+import {join} from 'path';
 
-/**
- * Important: Do not rename `actionHandler` or the assignment pattern of property value.
- * It is used to generate documentation
- */
-const actionHandler = {
-  [ActionTypes.UPDATE_MAP]: mapStateUpdaters.updateMapUpdater,
-  [ActionTypes.FIT_BOUNDS]: mapStateUpdaters.fitBoundsUpdater,
-  [ActionTypes.TOGGLE_PERSPECTIVE]: mapStateUpdaters.togglePerspectiveUpdater,
-  [ActionTypes.RECEIVE_MAP_CONFIG]: mapStateUpdaters.receiveMapConfigUpdater,
-  [ActionTypes.TOGGLE_SPLIT_MAP]: mapStateUpdaters.toggleSplitMapUpdater
+export function walkSync(dir, fileList = []) {
+  dir.forEach(dir => {
+    const files = fs.readdirSync(dir);
+
+    files.forEach((file) => {
+      const path = join(dir, file);
+
+      if (fs.statSync(path).isDirectory()) {
+        fileList = walkSync(path, fileList);
+      } else if (path.endsWith('.js')){
+        fileList.push(path);
+      }
+    });
+  });
+
+  return fileList;
 };
-
-/* Reducer */
-export const mapStateReducerFactory = (initialState = {}) => handleActions(
-  actionHandler,
-  {...mapStateUpdaters.INITIAL_MAP_STATE, ...initialState, initialState}
-);
-
-export default mapStateReducerFactory();

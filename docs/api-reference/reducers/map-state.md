@@ -2,7 +2,27 @@
 
 ### Table of Contents
 
+-   [fitBoundsUpdater](#fitboundsupdater)
 -   [INITIAL_MAP_STATE](#initial_map_state)
+    -   [Properties](#properties)
+-   [receiveMapConfigUpdater](#receivemapconfigupdater)
+-   [togglePerspectiveUpdater](#toggleperspectiveupdater)
+-   [toggleSplitMapUpdater](#togglesplitmapupdater)
+-   [updateMapUpdater](#updatemapupdater)
+
+## fitBoundsUpdater
+
+Fit map viewport to bounds
+
+-   **Action**: [`fitBounds`][13]
+
+**Parameters**
+
+-   `state` **[Object][14]** 
+-   `action` **[Object][14]** 
+    -   `action.payload` **[Array][15]&lt;[number][16]>** bounds as `[lngMin, latMin, lngMax, latMax]`
+
+Returns **[Object][14]** nextState
 
 ## INITIAL_MAP_STATE
 
@@ -10,20 +30,106 @@ Default initial `mapState`
 
 ### Properties
 
--   `pitch` **[number][3]** Default: 0
--   `bearing` **[number][3]** Default: 0
--   `latitude` **[number][3]** Default: 37.75043
--   `longitude` **[number][3]** Default: -122.34679
--   `zoom` **[number][3]** Default: 9
--   `dragRotate` **[boolean][4]** Default: false
--   `width` **[number][3]** Default: 800
--   `height` **[number][3]** Default: 800
--   `isSplit` **[boolean][4]** Default: false
+-   `pitch` **[number][16]** Default: `0`
+-   `bearing` **[number][16]** Default: `0`
+-   `latitude` **[number][16]** Default: `37.75043`
+-   `longitude` **[number][16]** Default: `-122.34679`
+-   `zoom` **[number][16]** Default: `9`
+-   `dragRotate` **[boolean][17]** Default: `false`
+-   `width` **[number][16]** Default: `800`
+-   `height` **[number][16]** Default: `800`
+-   `isSplit` **[boolean][17]** Default: `false`
 
-[1]: #initial_map_state
+## receiveMapConfigUpdater
 
-[2]: #properties
+Update `mapState` to popagate a new config
 
-[3]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
+-   **Action**: [`receiveMapConfig`][18]
 
-[4]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+**Parameters**
+
+-   `state` **[Object][14]** 
+-   `action` **[Object][14]** 
+    -   `action.payload` **[Object][14]** saved map config
+
+Returns **[Object][14]** nextState
+
+## togglePerspectiveUpdater
+
+Toggle between 3d and 2d map.
+
+-   **Action**: [`togglePerspective`][19]
+
+**Parameters**
+
+-   `state` **[Object][14]** 
+
+Returns **[Object][14]** nextState
+
+## toggleSplitMapUpdater
+
+Toggle between one or split maps
+
+-   **Action**: [`toggleSplitMap`][20]
+
+**Parameters**
+
+-   `state` **[Object][14]** 
+
+Returns **[Object][14]** nextState
+
+## updateMapUpdater
+
+Update map viewport
+
+-   **Action**: [`updateMap`][21]
+
+**Parameters**
+
+-   `state` **[Object][14]** 
+-   `action` **[Object][14]** 
+    -   `action.payload` **[Object][14]** viewport
+
+Returns **[Object][14]** nextState
+
+[1]: #fitboundsupdater
+
+[2]: #parameters
+
+[3]: #initial_map_state
+
+[4]: #properties
+
+[5]: #receivemapconfigupdater
+
+[6]: #parameters-1
+
+[7]: #toggleperspectiveupdater
+
+[8]: #parameters-2
+
+[9]: #togglesplitmapupdater
+
+[10]: #parameters-3
+
+[11]: #updatemapupdater
+
+[12]: #parameters-4
+
+[13]: ../actions/actions.md#fitbounds
+
+[14]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+
+[15]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+
+[16]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
+
+[17]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+
+[18]: ../actions/actions.md#receivemapconfig
+
+[19]: ../actions/actions.md#toggleperspective
+
+[20]: ../actions/actions.md#togglesplitmap
+
+[21]: ../actions/actions.md#updatemap

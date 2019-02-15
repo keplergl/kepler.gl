@@ -78,7 +78,7 @@ export function provideInitialState(initialState) {
   };
 }
 
-const keplerGlReducer = provideInitialState();
+const _keplerGlReducer = provideInitialState();
 
 function mergeInitialState(saved = {}, provided = {}) {
   const keys = ['mapState', 'mapStyle', 'visState', 'uiState'];
@@ -104,7 +104,8 @@ function decorate(target, savedInitialState = {}) {
    * **Note** This is an advanced option to give you more freedom to modify the internal state of the kepler.gl instance.
    * You should only use this to adding additional actions instead of replacing default actions.
    *
-   * @mixin reducer.plugin
+   * @mixin keplerGlReducer.plugin
+   * @memberof keplerGlReducer
    * @param {Object|Function} customReducer - A reducer map or a reducer
    * @public
    * @example
@@ -155,16 +156,17 @@ function decorate(target, savedInitialState = {}) {
   };
 
   /**
-   * REturn a reducer that innitiated with custom initial state.
+   * Return a reducer that initiated with custom initial state.
    * The parameter should be an object mapping from `subreducer` name to custom subreducer state,
    * which will be shallow **merged** with default initial state.
    *
    * Default subreducer state:
-   *  - `[visState](./vis-state.md#INITIAL_VIS_STATE)`
-   *  - `[mapState](./map-state.md#INITIAL_MAP_STATE)`
-   *  - `[mapStyle](./map-style.md#INITIAL_MAP_STYLE)`
-   *  - `[uiState](./ui-state.md#INITIAL_UI_STATE)`
-   * @mixin reducer.initialState
+   *  - [`visState`](./vis-state.md#INITIAL_VIS_STATE)
+   *  - [`mapState`](./map-state.md#INITIAL_MAP_STATE)
+   *  - [`mapStyle`](./map-style.md#INITIAL_MAP_STYLE)
+   *  - [`uiState`](./ui-state.md#INITIAL_UI_STATE)
+   * @mixin keplerGlReducer.initialState
+   * @memberof keplerGlReducer
    * @param {Object} iniSt - custom state to be merged with default initial state
    * @public
    * @example
@@ -183,4 +185,26 @@ function decorate(target, savedInitialState = {}) {
   return target;
 }
 
-export default decorate(keplerGlReducer);
+/**
+ * Kepler.gl reducer to be mounted to your store. You can mount `keplerGlReducer` at property `keplerGl`, if you choose
+ * to mount it at another address e.g. `foo` you will need to specify it when you mount `KeplerGl` component in your app with `getState: state => state.foo`
+ * @public
+ * @example
+ * import keplerGlReducer from 'kepler.gl/reducers';
+ * import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
+ * import {taskMiddleware} from 'react-palm/tasks';
+ *
+ * const initialState = {};
+ * const reducers = combineReducers({
+ *   // <-- mount kepler.gl reducer in your app
+ *   keplerGl: keplerGlReducer,
+ *
+ *   // Your other reducers here
+ *   app: appReducer
+ * });
+ *
+ * // using createStore
+ * export default createStore(reducer, initialState, applyMiddleware(taskMiddleware));
+ */
+const keplerGlReducer = decorate(_keplerGlReducer);
+export default keplerGlReducer;
