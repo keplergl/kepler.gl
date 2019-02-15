@@ -16,7 +16,7 @@
     - [Custom reducer initial state][custom-initial-state]
     - [Using updaters to modify kepler.gl state][using-updaters]
     - [Forward actions][forward-actions]
-    - [Saving and loading maps with schema managers][saving-loading-w-schema]
+    - [Saving and loading maps with schema manager][saving-loading-w-schema]
     - [Replace UI component][replace-ui-component]
 
 -  [API]()

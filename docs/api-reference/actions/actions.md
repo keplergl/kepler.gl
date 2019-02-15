@@ -2,19 +2,282 @@
 
 ### Table of Contents
 
--   [togglePerspective](#toggleperspective)
--   [fitBounds](#fitbounds)
--   [updateMap](#updatemap)
--   [toggleSplitMap](#togglesplitmap)
+-   [ActionTypes](#actiontypes)
 -   [addCustomMapStyle](#addcustommapstyle)
--   [inputMapStyle](#inputmapstyle)
--   [registerEntry](#registerentry)
+-   [addDataToMap](#adddatatomap)
 -   [deleteEntry](#deleteentry)
--   [renameEntry](#renameentry)
--   [wrapTo](#wrapto)
--   [isForwardAction](#isforwardaction)
--   [unwrap](#unwrap)
+-   [fitBounds](#fitbounds)
 -   [forwardTo](#forwardto)
+-   [inputMapStyle](#inputmapstyle)
+-   [isForwardAction](#isforwardaction)
+-   [keplerGlInit](#keplerglinit)
+-   [receiveMapConfig](#receivemapconfig)
+-   [registerEntry](#registerentry)
+-   [renameEntry](#renameentry)
+-   [resetMapConfig](#resetmapconfig)
+-   [togglePerspective](#toggleperspective)
+-   [toggleSplitMap](#togglesplitmap)
+-   [unwrap](#unwrap)
+-   [updateMap](#updatemap)
+-   [wrapTo](#wrapto)
+
+## ActionTypes
+
+Kepler.gl action types, can be listened by reducers to perform additional tasks whenever an action is called in kepler.gl
+
+Type: [Object][40]
+
+### Examples
+
+```javascript
+// store.js
+import {handleActions} from 'redux-actions';
+import {createStore, combineReducers, applyMiddleware} from 'redux';
+import {taskMiddleware} from 'react-palm/tasks';
+
+import keplerGlReducer from 'kepler.gl/reducers';
+import {ActionTypes} from 'kepler.gl/actions';
+
+const appReducer = handleActions({
+  // listen on kepler.gl map update action to store a copy of viewport in app state
+  [ActionTypes.UPDATE_MAP]: (state, action) => ({
+    ...state,
+    viewport: action.payload
+  }),
+}, {});
+
+const reducers = combineReducers({
+  app: appReducer,
+  keplerGl: keplerGlReducer
+});
+
+export default createStore(reducers, {}, applyMiddleware(taskMiddleware))
+```
+
+## addCustomMapStyle
+
+Add map style from user input to reducer and set it to current style
+This action is called when user click confirm after putting in a valid style url in the custom map style dialog.
+It should not be called from outside kepler.gl without a valid `inputStyle` in the `mapStyle` reducer.
+param {void}
+
+## addDataToMap
+
+Add data to kepler.gl reducer, prepare map with preset configuration if config is passed.
+Kepler.gl provides a handy set of utils to parse data from different format to the `data` object required in dataset. You rarely need to manually format the data obejct.
+
+Use `KeplerGlSchema.getConfigToSave` to generate a json blob of the currents instance config.
+The config object value will always have higher precedence than the options properties.
+
+Kepler.gl uses `dataId` in the config to match with loaded dataset. If you pass a config object, you need
+to match the `info.id` of your dataset to the `dataId` in eath `layer`, `filter` and `interactionConfig.tooltips.fieldsToShow`
+
+### Parameters
+
+-   `datasets` **([Array][41]&lt;[Object][40]> | [Object][40])** **\*required** datasets can be a dataset or an array of datasets
+    Each dataset object needs to have `info` and `data` property.
+    -   `datasets.info` **[Object][40]** \-info of a dataset
+        -   `datasets.info.id` **[string][42]** id of this dataset. If config is defined, `id` should matches the `dataId` in config.
+        -   `datasets.info.label` **[string][42]** A display name of this dataset
+    -   `datasets.data` **[Object][40]** **\*required** The data object, in a tabular format with 2 properties `fields` and `rows`
+        -   `datasets.data.fields` **[Array][41]&lt;[Object][40]>** **\*required** Array of fields,
+            -   `datasets.data.fields.name` **[string][42]** **\*required** Name of the field,
+        -   `datasets.data.rows` **[Array][41]&lt;[Array][41]>** **\*required** Array of rows, in a tabular format with `fields` and `rows`
+-   `options` **[Object][40]** 
+    -   `options.centerMap` **[boolean][43]** `default: true` if `centerMap` is set to `true` kepler.gl will
+        place the map view within the data points boundaries
+    -   `options.readOnly` **[boolean][43]** `default: false` if `readOnly` is set to `true`
+        the left setting panel will be hidden
+-   `config` **[Object][40]** this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
+
+### Examples
+
+```javascript
+// app.js
+import {addDataToMap} from 'kepler.gl/actions';
+
+const sampleTripData = {
+ fields: [
+   {name: 'tpep_pickup_datetime', format: 'YYYY-M-D H:m:s', type: 'timestamp'},
+   {name: 'pickup_longitude', format: '', type: 'real'},
+   {name: 'pickup_latitude', format: '', type: 'real'}
+ ],
+ rows: [
+   ['2015-01-15 19:05:39 +00:00', -73.99389648, 40.75011063],
+   ['2015-01-15 19:05:39 +00:00', -73.97642517, 40.73981094],
+   ['2015-01-15 19:05:40 +00:00', -73.96870422, 40.75424576],
+ ]
+};
+
+const sampleConfig = {
+  visState: {
+    filters: [
+      {
+        id: 'me',
+        dataId: 'test_trip_data',
+        name: 'tpep_pickup_datetime',
+        type: 'timeRange',
+        enlarged: true
+      }
+    ]
+  }
+}
+
+this.props.dispatch(
+  addDataToMap({
+    datasets: {
+      info: {
+        label: 'Sample Taxi Trips in New York City',
+        id: 'test_trip_data'
+      },
+      data: sampleTripData
+    },
+    option: {
+      centerMap: true,
+      readOnly: false
+    },
+    config: sampleConfig
+  })
+);
+```
+
+## deleteEntry
+
+Delete an instance from `keplerGlReducer`. This action is called under-the-hood when a `KeplerGl` component is **un-mounted** to the dom.
+If `mint` is set to be `true` in the component prop, the instance state will be deleted from the root reducer. Otherwise, the root reducer will keep
+the instance state and later transfer it to a newly mounted component with the same `id`
+
+### Parameters
+
+-   `id` **[string][42]** the id of the instance to be deleted
+
+## fitBounds
+
+Fit map viewport to bounds
+
+### Parameters
+
+-   `null-null` **[Array][41]&lt;[number][44]>** bounds as `[lngMin, latMin, lngMax, latMax]`
+
+### Examples
+
+```javascript
+import {fitBounds} from 'kepler.gl/actions';
+this.props.dispatch(fitBounds([-122.23, 37.127, -122.11, 37.456]));
+```
+
+## forwardTo
+
+Returns an action dispatcher that wraps and forwards the actions to a specific instance
+
+### Parameters
+
+-   `id` **[string][42]** instance id
+-   `dispatch` **[Function][45]** action dispatcher
+
+### Examples
+
+```javascript
+// action and forward dispatcher
+import {toggleSplitMap, forwardTo} from 'kepler.gl/actions';
+import {connect} from 'react-redux';
+
+const MapContainer = props => (
+ <div>
+  <button onClick={() => props.keplerGlDispatch(toggleSplitMap())}/>
+ </div>
+)
+
+const mapDispatchToProps = (dispatch, props) => ({
+ dispatch,
+ keplerGlDispatch: forwardTo(‘foo’, dispatch)
+});
+
+export default connect(
+ state => state,
+ mapDispatchToProps
+)(MapContainer);
+```
+
+## inputMapStyle
+
+Add map style from user input to reducer and set it to current style
+This action is called when user click confirm after putting in a valid style url in the custom map style dialog.
+It should not be called from outside kepler.gl without a valid `inputStyle` in the `mapStyle` reducer.
+param {void}
+
+## isForwardAction
+
+Whether an action is a forward action
+
+### Parameters
+
+-   `action` **[Object][40]** the action object
+
+Returns **[boolean][43]** boolean - whether the action is a forward action
+
+## keplerGlInit
+
+Initialize kepler.gl reducer. It is used to pass in `mapboxApiAccessToken` to `mapStyle` reducer.
+
+### Parameters
+
+-   `payload` **[Object][40]** 
+    -   `payload.mapboxApiAccessToken` **[string][42]** mapboxApiAccessToken to be saved to mapStyle reducer
+
+## receiveMapConfig
+
+Pass config to kepler.gl instance, prepare the state with preset configs.
+Calling `KeplerGlSchema.parseSavedConfig` to convert saved config before passing it in is required.
+
+You can call `receiveMapConfig` before passing in any data. The reducer will store layer and filter config, waiting for
+data to come in. When data arrives, you can call `addDataToMap` without passing any config, and the reducer will try to match
+preloaded configs. This behavior is designed to allow asynchronic data loading.
+
+It is also useful when you want to prepare the kepler.gl instance with some preset layer and filter settings.
+**Note** Sequence is important, `receiveMapConfig` needs to be called **before** data is loaded. Currently kepler.gl doesn't allow callling `receiveMapConfig` after data is loaded.
+It will reset current configuration first then apply config to it.
+
+### Parameters
+
+-   `config` **[Object][40]** **\*required** The Config Object
+
+### Examples
+
+```javascript
+import {receiveMapConfig} from 'kepler.gl/actions';
+import KeplerGlSchema from 'kepler.gl/schemas';
+
+const parsedConfig = KeplerGlSchema.parseSavedConfig(config);
+this.props.dispatch(receiveMapConfig(parsedConfig));
+```
+
+## registerEntry
+
+Add a new kepler.gl instance in `keplerGlReducer`. This action is called under-the-hood when a `KeplerGl` component is **mounted** to the dom.
+Note that if you dispatch actions such as adding data to a kepler.gl instance before the React component is mounted, the action will not be
+performed. Instance reducer can only handle actions when it is instantiated.
+
+### Parameters
+
+-   `payload` **[Object][40]** 
+    -   `payload.id` **[string][42]** **\*required** The id of the instance
+    -   `payload.mint` **[boolean][43]** Whether to use a fresh empty state, when `mint: true` it will _always_ load a fresh state when the component is re-mounted.
+        When `mint: false` it will register with existing instance state under the same `id`, when the component is unmounted then mounted again. Default: `true`
+    -   `payload.mapboxApiAccessToken` **[string][42]** mapboxApiAccessToken to be saved in `map-style` reducer.
+
+## renameEntry
+
+Rename an instance in the root reducer, keep its entire state
+
+### Parameters
+
+-   `oldId` **[string][42]** **\*required** old id
+-   `newId` **[string][42]** **\*required** new id
+
+## resetMapConfig
+
+Reset all sub-reducers to its initial state. This can be used to clear out all configuration in the reducer.
 
 ## togglePerspective
 
@@ -25,44 +288,6 @@ Toggle between 3d and 2d map.
 ```javascript
 import {togglePerspective} from 'kepler.gl/actions';
 this.props.dispatch(togglePerspective());
-```
-
-## fitBounds
-
-Fit map viewport to bounds
-
-### Parameters
-
--   `null-null` **[Array][29]&lt;[number][30]>** bounds as `[lngMin, latMin, lngMax, latMax]`
-
-### Examples
-
-```javascript
-import {fitBounds} from 'kepler.gl/actions';
-this.props.dispatch(fitBounds([-122.23, 37.127, -122.11, 37.456]));
-```
-
-## updateMap
-
-Update map viewport
-
-### Parameters
-
--   `viewport` **[Object][31]** viewport object container one or any of these properties `width`, `height`, `latitude` `longitude`, `zoom`, `pitch`, `bearing`, `dragRotate`
-    -   `viewport.width` **[number][30]?** Width of viewport
-    -   `viewport.height` **[number][30]?** Height of viewport
-    -   `viewport.zoom` **[number][30]?** Zoom of viewport
-    -   `viewport.pitch` **[number][30]?** Camera angle in degrees (0 is straight down)
-    -   `viewport.bearing` **[number][30]?** Map rotation in degrees (0 means north is up)
-    -   `viewport.latitude` **[number][30]?** Latitude center of viewport on map in mercator projection
-    -   `viewport.longitude` **[number][30]?** Longitude Center of viewport on map in mercator projection
-    -   `viewport.dragRotate` **[boolean][32]?** Whether to enable drag and rotate map into perspective viewport
-
-### Examples
-
-```javascript
-import {updateMap} from 'kepler.gl/actions';
-this.props.dispatch(updateMap({latitude: 37.75043, longitude: -122.34679, width: 800, height: 1200}));
 ```
 
 ## toggleSplitMap
@@ -76,52 +301,38 @@ import {toggleSplitMap} from 'kepler.gl/actions';
 this.props.dispatch(toggleSplitMap());
 ```
 
-## addCustomMapStyle
+## unwrap
 
-Add map style from user input to reducer and set it to current style
-This action is called when user click confirm after putting in a valid style url in the custom map style dialog.
-It should not be called from outside kepler.gl without a valid `inputStyle` in the `mapStyle` reducer.
-param {void}
-
-## inputMapStyle
-
-Add map style from user input to reducer and set it to current style
-This action is called when user click confirm after putting in a valid style url in the custom map style dialog.
-It should not be called from outside kepler.gl without a valid `inputStyle` in the `mapStyle` reducer.
-param {void}
-
-## registerEntry
-
-Add a new kepler.gl instance in `keplerGlReducer`. This action is called under-the-hood when a `KeplerGl` component is **mounted** to the dom.
-Note that if you dispatch actions such as adding data to a kepler.gl instance before the React component is mounted, the action will not be
-performed. Instance reducer can only handle actions when it is instantiated.
+Unwrap an action
 
 ### Parameters
 
--   `payload` **[Object][31]** 
-    -   `payload.id` **[string][33]** **\*required** The id of the instance
-    -   `payload.mint` **[boolean][32]** Whether to use a fresh empty state, when `mint: true` it will _always_ load a fresh state when the component is re-mounted.
-        When `mint: false` it will register with existing instance state under the same `id`, when the component is unmounted then mounted again. Default: `true`
-    -   `payload.mapboxApiAccessToken` **[string][33]** mapboxApiAccessToken to be saved in `map-style` reducer.
+-   `action` **[Object][40]** the action object
 
-## deleteEntry
+Returns **[Object][40]** unwrapped action
 
-Delete an instance from `keplerGlReducer`. This action is called under-the-hood when a `KeplerGl` component is **un-mounted** to the dom.
-If `mint` is set to be `true` in the component prop, the instance state will be deleted from the root reducer. Otherwise, the root reducer will keep
-the instance state and later transfer it to a newly mounted component with the same `id`
+## updateMap
+
+Update map viewport
 
 ### Parameters
 
--   `id` **[string][33]** the id of the instance to be deleted
+-   `viewport` **[Object][40]** viewport object container one or any of these properties `width`, `height`, `latitude` `longitude`, `zoom`, `pitch`, `bearing`, `dragRotate`
+    -   `viewport.width` **[number][44]?** Width of viewport
+    -   `viewport.height` **[number][44]?** Height of viewport
+    -   `viewport.zoom` **[number][44]?** Zoom of viewport
+    -   `viewport.pitch` **[number][44]?** Camera angle in degrees (0 is straight down)
+    -   `viewport.bearing` **[number][44]?** Map rotation in degrees (0 means north is up)
+    -   `viewport.latitude` **[number][44]?** Latitude center of viewport on map in mercator projection
+    -   `viewport.longitude` **[number][44]?** Longitude Center of viewport on map in mercator projection
+    -   `viewport.dragRotate` **[boolean][43]?** Whether to enable drag and rotate map into perspective viewport
 
-## renameEntry
+### Examples
 
-Rename an instance in the root reducer, keep its entire state
-
-### Parameters
-
--   `oldId` **[string][33]** **\*required** old id
--   `newId` **[string][33]** **\*required** new id
+```javascript
+import {updateMap} from 'kepler.gl/actions';
+this.props.dispatch(updateMap({latitude: 37.75043, longitude: -122.34679, width: 800, height: 1200}));
+```
 
 ## wrapTo
 
@@ -154,8 +365,8 @@ A forward action looks like this
 
 ### Parameters
 
--   `id` **[string][33]** The id to forward to
--   `action` **[Object][31]** the action object {type: string, payload: \*}
+-   `id` **[string][42]** The id to forward to
+-   `action` **[Object][40]** the action object {type: string, payload: \*}
 
 ### Examples
 
@@ -170,123 +381,92 @@ const wrapToMap1 = wrapTo('map_1');
 this.props.dispatch(wrapToMap1(togglePerspective()));
 ```
 
-## isForwardAction
-
-Whether an action is a forward action
-
-### Parameters
-
--   `action` **[Object][31]** the action object
-
-Returns **[boolean][32]** boolean - whether the action is a forward action
-
-## unwrap
-
-Unwrap an action
-
-### Parameters
-
--   `action` **[Object][31]** the action object
-
-Returns **[Object][31]** unwrapped action
-
-## forwardTo
-
-Returns an action dispatcher that wraps and forwards the actions to a specific instance
-
-### Parameters
-
--   `id` **[string][33]** instance id
--   `dispatch` **[Function][34]** action dispatcher
-
-### Examples
-
-```javascript
-// action and forward dispatcher
-import {toggleSplitMap, forwardTo} from 'kepler.gl/actions';
-import {connect} from 'react-redux';
-
-const MapContainer = props => (
- <div>
-  <button onClick={() => props.keplerGlDispatch(toggleSplitMap())}/>
- </div>
-)
-
-const mapDispatchToProps = (dispatch, props) => ({
- dispatch,
- keplerGlDispatch: forwardTo(‘foo’, dispatch)
-});
-
-export default connect(
- state => state,
- mapDispatchToProps
-)(MapContainer);
-```
-
-[1]: #toggleperspective
+[1]: #actiontypes
 
 [2]: #examples
 
-[3]: #fitbounds
+[3]: #addcustommapstyle
 
-[4]: #parameters
+[4]: #adddatatomap
 
-[5]: #examples-1
+[5]: #parameters
 
-[6]: #updatemap
+[6]: #examples-1
 
-[7]: #parameters-1
+[7]: #deleteentry
 
-[8]: #examples-2
+[8]: #parameters-1
 
-[9]: #togglesplitmap
+[9]: #fitbounds
 
-[10]: #examples-3
+[10]: #parameters-2
 
-[11]: #addcustommapstyle
+[11]: #examples-2
 
-[12]: #inputmapstyle
+[12]: #forwardto
 
-[13]: #registerentry
+[13]: #parameters-3
 
-[14]: #parameters-2
+[14]: #examples-3
 
-[15]: #deleteentry
+[15]: #inputmapstyle
 
-[16]: #parameters-3
+[16]: #isforwardaction
 
-[17]: #renameentry
+[17]: #parameters-4
 
-[18]: #parameters-4
+[18]: #keplerglinit
 
-[19]: #wrapto
+[19]: #parameters-5
 
-[20]: #parameters-5
+[20]: #receivemapconfig
 
-[21]: #examples-4
+[21]: #parameters-6
 
-[22]: #isforwardaction
+[22]: #examples-4
 
-[23]: #parameters-6
+[23]: #registerentry
 
-[24]: #unwrap
+[24]: #parameters-7
 
-[25]: #parameters-7
+[25]: #renameentry
 
-[26]: #forwardto
+[26]: #parameters-8
 
-[27]: #parameters-8
+[27]: #resetmapconfig
 
-[28]: #examples-5
+[28]: #toggleperspective
 
-[29]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+[29]: #examples-5
 
-[30]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
+[30]: #togglesplitmap
 
-[31]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+[31]: #examples-6
 
-[32]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+[32]: #unwrap
 
-[33]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+[33]: #parameters-9
 
-[34]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function
+[34]: #updatemap
+
+[35]: #parameters-10
+
+[36]: #examples-7
+
+[37]: #wrapto
+
+[38]: #parameters-11
+
+[39]: #examples-8
+
+[40]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+
+[41]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+
+[42]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+
+[43]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+
+[44]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
+
+[45]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function

@@ -2,39 +2,38 @@
 
 ### Table of Contents
 
--   [DEFAULT_MAP_CONTROLS](#default_map_controls)
--   [DEFAULT_EXPORT_IMAGE](#default_export_image)
 -   [DEFAULT_EXPORT_DATA](#default_export_data)
+-   [DEFAULT_EXPORT_IMAGE](#default_export_image)
+-   [DEFAULT_MAP_CONTROLS](#default_map_controls)
 -   [INITIAL_UI_STATE](#initial_ui_state)
--   [uiStateUpdaters.toggleSidePanelUpdater](#uistateupdaterstogglesidepanelupdater)
--   [uiStateUpdaters.toggleModalUpdater](#uistateupdaterstogglemodalupdater)
--   [uiStateUpdaters.showExportDropdownUpdater](#uistateupdatersshowexportdropdownupdater)
+-   [uiStateUpdaters.cleanupExportImage](#uistateupdaterscleanupexportimage)
 -   [uiStateUpdaters.hideExportDropdownUpdater](#uistateupdatershideexportdropdownupdater)
--   [uiStateUpdaters.toggleMapControlUpdater](#uistateupdaterstogglemapcontrolupdater)
 -   [uiStateUpdaters.openDeleteModalUpdater](#uistateupdatersopendeletemodalupdater)
--   [uiStateUpdaters.toggleLegendUpdater](#uistateupdaterstogglelegendupdater)
+-   [uiStateUpdaters.setExportConfigUpdater](#uistateupdaterssetexportconfigupdater)
+-   [uiStateUpdaters.setExportDataTypeUpdater](#uistateupdaterssetexportdatatypeupdater)
+-   [uiStateUpdaters.setExportFilteredUpdater](#uistateupdaterssetexportfilteredupdater)
+-   [uiStateUpdaters.setExportSelectedDatasetUpdater](#uistateupdaterssetexportselecteddatasetupdater)
 -   [uiStateUpdaters.setRatioUpdater](#uistateupdaterssetratioupdater)
 -   [uiStateUpdaters.setResolutionUpdater](#uistateupdaterssetresolutionupdater)
 -   [uiStateUpdaters.setResolutionUpdater](#uistateupdaterssetresolutionupdater-1)
 -   [uiStateUpdaters.setResolutionUpdater](#uistateupdaterssetresolutionupdater-2)
--   [uiStateUpdaters.cleanupExportImage](#uistateupdaterscleanupexportimage)
--   [uiStateUpdaters.setExportSelectedDatasetUpdater](#uistateupdaterssetexportselecteddatasetupdater)
--   [uiStateUpdaters.setExportDataTypeUpdater](#uistateupdaterssetexportdatatypeupdater)
--   [uiStateUpdaters.setExportFilteredUpdater](#uistateupdaterssetexportfilteredupdater)
--   [uiStateUpdaters.setExportConfigUpdater](#uistateupdaterssetexportconfigupdater)
+-   [uiStateUpdaters.showExportDropdownUpdater](#uistateupdatersshowexportdropdownupdater)
+-   [uiStateUpdaters.toggleLegendUpdater](#uistateupdaterstogglelegendupdater)
+-   [uiStateUpdaters.toggleMapControlUpdater](#uistateupdaterstogglemapcontrolupdater)
+-   [uiStateUpdaters.toggleModalUpdater](#uistateupdaterstogglemodalupdater)
+-   [uiStateUpdaters.toggleSidePanelUpdater](#uistateupdaterstogglesidepanelupdater)
 
-## DEFAULT_MAP_CONTROLS
-
-A list of map control visibilities and activeness.
+## DEFAULT_EXPORT_DATA
 
 Type: [Object][41]
 
 ### Properties
 
--   `visibleLayers` **[Object][41]** Default: `{show: true, active: false}`
--   `mapLegend` **[Object][41]** Default: `{show: true, active: false}`
--   `toggle3d` **[Object][41]** Default: `{show: true}`
--   `splitMap` **[Object][41]** Default: `{show: true}`
+-   `selectedDataset` **[string][42]** Default: '',
+-   `dataType` **[string][42]** Default: 'csv',
+-   `filtered` **[boolean][43]** Default: true,
+-   `config` **[boolean][43]** deprecated
+-   `data` **[boolean][43]** used in modal config expor. Default: falset
 
 ## DEFAULT_EXPORT_IMAGE
 
@@ -50,17 +49,18 @@ Type: [Object][41]
 -   `imageDataUri` **[string][42]** Default: '',
 -   `exporting` **[boolean][43]** Default: false
 
-## DEFAULT_EXPORT_DATA
+## DEFAULT_MAP_CONTROLS
+
+A list of map control visibilities and activeness.
 
 Type: [Object][41]
 
 ### Properties
 
--   `selectedDataset` **[string][42]** Default: '',
--   `dataType` **[string][42]** Default: 'csv',
--   `filtered` **[boolean][43]** Default: true,
--   `config` **[boolean][43]** deprecated
--   `data` **[boolean][43]** used in modal config expor. Default: falset
+-   `visibleLayers` **[Object][41]** Default: `{show: true, active: false}`
+-   `mapLegend` **[Object][41]** Default: `{show: true, active: false}`
+-   `toggle3d` **[Object][41]** Default: `{show: true}`
+-   `splitMap` **[Object][41]** Default: `{show: true}`
 
 ## INITIAL_UI_STATE
 
@@ -76,44 +76,16 @@ Type: [Object][41]
 -   `datasetKeyToRemove` **([string][42] | null)** Default: null
 -   `visibleDropdown` **([string][42] | null)** Default: null
 -   `exportImage` **[Object][41]** Default: [`DEFAULT_EXPORT_IMAGE`][3]
--   `exportData` **[Object][41]** Default: [`DEFAULT_EXPORT_DATA`][5]
--   `mapControls` **[Object][41]** Default: [`DEFAULT_MAP_CONTROLS`][1]
+-   `exportData` **[Object][41]** Default: [`DEFAULT_EXPORT_DATA`][1]
+-   `mapControls` **[Object][41]** Default: [`DEFAULT_MAP_CONTROLS`][5]
 
-## uiStateUpdaters.toggleSidePanelUpdater
+## uiStateUpdaters.cleanupExportImage
 
-Toggle active side panel
-
-### Parameters
-
--   `state` **[Object][41]** `uiState`
--   `action` **[Object][41]** 
-    -   `action.payload` **[string][42]** id of side panel to be shown, one of `layer`, `filter`, `interaction`, `map`
-
-## uiStateUpdaters.toggleModalUpdater
-
-Show and hide modal dialog
+cleanup export image
 
 ### Parameters
 
 -   `state` **[Object][41]** `uiState`
--   `action` **[Object][41]** 
-    -   `action.payload` **([string][42] | null)** id of modal to be shown, null to hide modals. One of:-   [`DATA_TABLE_ID`][44]
-        -   [`DELETE_DATA_ID`][45]
-        -   [`ADD_DATA_ID`][46]
-        -   [`EXPORT_IMAGE_ID`][47]
-        -   [`EXPORT_DATA_ID`][48]
-        -   [`EXPORT_CONFIG_ID`][49]
-        -   [`ADD_MAP_STYLE_ID`][50]
-
-## uiStateUpdaters.showExportDropdownUpdater
-
-Hide and show side panel header dropdown, activated by clicking the share link on top of the side panel
-
-### Parameters
-
--   `state` **[Object][41]** `uiState`
--   `action` **[Object][41]** 
-    -   `action.payload` **[string][42]** id of the dropdown
 
 ## uiStateUpdaters.hideExportDropdownUpdater
 
@@ -124,16 +96,6 @@ Hide side panel header dropdown, activated by clicking the share link on top of 
 -   `state` **[Object][41]** `uiState`
 -   `action` **any** 
 
-## uiStateUpdaters.toggleMapControlUpdater
-
-Toggle active map control panel
-
-### Parameters
-
--   `state` **[Object][41]** `uiState`
--   `action` **[Object][41]** 
-    -   `action.payload` **[string][42]** map control panel id, one of the keys of: [`DEFAULT_MAP_CONTROLS`][1]
-
 ## uiStateUpdaters.openDeleteModalUpdater
 
 Toggle active map control panel
@@ -142,71 +104,15 @@ Toggle active map control panel
 
 -   `state` **[Object][41]** `uiState`
 -   `action` **[Object][41]** 
-    -   `action.payload` **[string][42]** map control panel id, one of the keys of: [`DEFAULT_MAP_CONTROLS`][1]
+    -   `action.payload` **[string][42]** map control panel id, one of the keys of: [`DEFAULT_MAP_CONTROLS`][5]
 
-## uiStateUpdaters.toggleLegendUpdater
+## uiStateUpdaters.setExportConfigUpdater
 
-set exportImage.legend to true or false
-
-### Parameters
-
--   `state` **[Object][41]** `uiState`
-
-## uiStateUpdaters.setRatioUpdater
-
-set `exportImage.ratio`
+whether to including data data in map config, toggle between `true` or `false`
 
 ### Parameters
 
 -   `state` **[Object][41]** `uiState`
--   `action` **[Object][41]** 
-    -   `action.payload` **[string][42]** one of `'SCREEN'`, `'FOUR_BY_THREE'` and `'SIXTEEN_BY_NINE'`
-
-## uiStateUpdaters.setResolutionUpdater
-
-set `exportImage.resolution`
-
-### Parameters
-
--   `state` **[Object][41]** `uiState`
--   `action` **[Object][41]** 
-    -   `action.payload` **[string][42]** one of `'ONE_X'`, `'TWO_X'`
-
-## uiStateUpdaters.setResolutionUpdater
-
-set `exportImage.exporting` to true
-
-### Parameters
-
--   `state` **[Object][41]** `uiState`
-
-## uiStateUpdaters.setResolutionUpdater
-
-set `exportImage.setExportImageDataUri` to a dataUri
-
-### Parameters
-
--   `state` **[Object][41]** `uiState`
--   `action` **[Object][41]** 
-    -   `action.payload` **[string][42]** export image data uri
-
-## uiStateUpdaters.cleanupExportImage
-
-cleanup export image
-
-### Parameters
-
--   `state` **[Object][41]** `uiState`
-
-## uiStateUpdaters.setExportSelectedDatasetUpdater
-
-set selected dataset to export
-
-### Parameters
-
--   `state` **[Object][41]** `uiState`
--   `action` **[Object][41]** 
-    -   `action.payload` **[string][42]** dataset id
 
 ## uiStateUpdaters.setExportDataTypeUpdater
 
@@ -228,15 +134,109 @@ whether to export filtered data, `true` or `false`
 -   `action` **[Object][41]** 
     -   `action.payload` **bollean** 
 
-## uiStateUpdaters.setExportConfigUpdater
+## uiStateUpdaters.setExportSelectedDatasetUpdater
 
-whether to including data data in map config, toggle between `true` or `false`
+set selected dataset to export
+
+### Parameters
+
+-   `state` **[Object][41]** `uiState`
+-   `action` **[Object][41]** 
+    -   `action.payload` **[string][42]** dataset id
+
+## uiStateUpdaters.setRatioUpdater
+
+set `exportImage.ratio`
+
+### Parameters
+
+-   `state` **[Object][41]** `uiState`
+-   `action` **[Object][41]** 
+    -   `action.payload` **[string][42]** one of `'SCREEN'`, `'FOUR_BY_THREE'` and `'SIXTEEN_BY_NINE'`
+
+## uiStateUpdaters.setResolutionUpdater
+
+set `exportImage.setExportImageDataUri` to a dataUri
+
+### Parameters
+
+-   `state` **[Object][41]** `uiState`
+-   `action` **[Object][41]** 
+    -   `action.payload` **[string][42]** export image data uri
+
+## uiStateUpdaters.setResolutionUpdater
+
+set `exportImage.resolution`
+
+### Parameters
+
+-   `state` **[Object][41]** `uiState`
+-   `action` **[Object][41]** 
+    -   `action.payload` **[string][42]** one of `'ONE_X'`, `'TWO_X'`
+
+## uiStateUpdaters.setResolutionUpdater
+
+set `exportImage.exporting` to true
 
 ### Parameters
 
 -   `state` **[Object][41]** `uiState`
 
-[1]: #default_map_controls
+## uiStateUpdaters.showExportDropdownUpdater
+
+Hide and show side panel header dropdown, activated by clicking the share link on top of the side panel
+
+### Parameters
+
+-   `state` **[Object][41]** `uiState`
+-   `action` **[Object][41]** 
+    -   `action.payload` **[string][42]** id of the dropdown
+
+## uiStateUpdaters.toggleLegendUpdater
+
+set exportImage.legend to true or false
+
+### Parameters
+
+-   `state` **[Object][41]** `uiState`
+
+## uiStateUpdaters.toggleMapControlUpdater
+
+Toggle active map control panel
+
+### Parameters
+
+-   `state` **[Object][41]** `uiState`
+-   `action` **[Object][41]** 
+    -   `action.payload` **[string][42]** map control panel id, one of the keys of: [`DEFAULT_MAP_CONTROLS`][5]
+
+## uiStateUpdaters.toggleModalUpdater
+
+Show and hide modal dialog
+
+### Parameters
+
+-   `state` **[Object][41]** `uiState`
+-   `action` **[Object][41]** 
+    -   `action.payload` **([string][42] | null)** id of modal to be shown, null to hide modals. One of:-   [`DATA_TABLE_ID`][44]
+        -   [`DELETE_DATA_ID`][45]
+        -   [`ADD_DATA_ID`][46]
+        -   [`EXPORT_IMAGE_ID`][47]
+        -   [`EXPORT_DATA_ID`][48]
+        -   [`EXPORT_CONFIG_ID`][49]
+        -   [`ADD_MAP_STYLE_ID`][50]
+
+## uiStateUpdaters.toggleSidePanelUpdater
+
+Toggle active side panel
+
+### Parameters
+
+-   `state` **[Object][41]** `uiState`
+-   `action` **[Object][41]** 
+    -   `action.payload` **[string][42]** id of side panel to be shown, one of `layer`, `filter`, `interaction`, `map`
+
+[1]: #default_export_data
 
 [2]: #properties
 
@@ -244,7 +244,7 @@ whether to including data data in map config, toggle between `true` or `false`
 
 [4]: #properties-1
 
-[5]: #default_export_data
+[5]: #default_map_controls
 
 [6]: #properties-2
 
@@ -252,31 +252,31 @@ whether to including data data in map config, toggle between `true` or `false`
 
 [8]: #properties-3
 
-[9]: #uistateupdaterstogglesidepanelupdater
+[9]: #uistateupdaterscleanupexportimage
 
 [10]: #parameters
 
-[11]: #uistateupdaterstogglemodalupdater
+[11]: #uistateupdatershideexportdropdownupdater
 
 [12]: #parameters-1
 
-[13]: #uistateupdatersshowexportdropdownupdater
+[13]: #uistateupdatersopendeletemodalupdater
 
 [14]: #parameters-2
 
-[15]: #uistateupdatershideexportdropdownupdater
+[15]: #uistateupdaterssetexportconfigupdater
 
 [16]: #parameters-3
 
-[17]: #uistateupdaterstogglemapcontrolupdater
+[17]: #uistateupdaterssetexportdatatypeupdater
 
 [18]: #parameters-4
 
-[19]: #uistateupdatersopendeletemodalupdater
+[19]: #uistateupdaterssetexportfilteredupdater
 
 [20]: #parameters-5
 
-[21]: #uistateupdaterstogglelegendupdater
+[21]: #uistateupdaterssetexportselecteddatasetupdater
 
 [22]: #parameters-6
 
@@ -296,23 +296,23 @@ whether to including data data in map config, toggle between `true` or `false`
 
 [30]: #parameters-10
 
-[31]: #uistateupdaterscleanupexportimage
+[31]: #uistateupdatersshowexportdropdownupdater
 
 [32]: #parameters-11
 
-[33]: #uistateupdaterssetexportselecteddatasetupdater
+[33]: #uistateupdaterstogglelegendupdater
 
 [34]: #parameters-12
 
-[35]: #uistateupdaterssetexportdatatypeupdater
+[35]: #uistateupdaterstogglemapcontrolupdater
 
 [36]: #parameters-13
 
-[37]: #uistateupdaterssetexportfilteredupdater
+[37]: #uistateupdaterstogglemodalupdater
 
 [38]: #parameters-14
 
-[39]: #uistateupdaterssetexportconfigupdater
+[39]: #uistateupdaterstogglesidepanelupdater
 
 [40]: #parameters-15
 

@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 // Actions
-export * from 'actions/actions';
+export * from './actions';
 
 // kepler.gl actions accessible outside component
 export * from './vis-state-actions';
@@ -38,4 +38,4 @@ export {
   wrapTo
 } from './action-wrapper';
 
-export {default as ActionTypes} from 'constants/action-types';
+export {default as ActionTypes} from '../constants/action-types';

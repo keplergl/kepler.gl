@@ -2,34 +2,61 @@
 
 ### Table of Contents
 
--   [INITIAL_VIS_STATE](#initial_vis_state)
--   [layerConfigChangeUpdater](#layerconfigchangeupdater)
--   [layerTypeChangeUpdater](#layertypechangeupdater)
--   [layerVisualChannelChangeUpdater](#layervisualchannelchangeupdater)
--   [layerVisConfigChangeUpdater](#layervisconfigchangeupdater)
--   [interactionConfigChangeUpdater](#interactionconfigchangeupdater)
--   [setFilterUpdater](#setfilterupdater)
--   [setFilterPlotUpdater](#setfilterplotupdater)
 -   [addFilterUpdater](#addfilterupdater)
--   [toggleFilterAnimationUpdater](#togglefilteranimationupdater)
--   [updateAnimationSpeedUpdater](#updateanimationspeedupdater)
--   [enlargeFilterUpdater](#enlargefilterupdater)
--   [removeFilterUpdater](#removefilterupdater)
 -   [addLayerUpdater](#addlayerupdater)
+-   [enlargeFilterUpdater](#enlargefilterupdater)
+-   [INITIAL_VIS_STATE](#initial_vis_state)
+-   [interactionConfigChangeUpdater](#interactionconfigchangeupdater)
+-   [layerClickUpdater](#layerclickupdater)
+-   [layerConfigChangeUpdater](#layerconfigchangeupdater)
+-   [layerHoverUpdater](#layerhoverupdater)
+-   [layerTypeChangeUpdater](#layertypechangeupdater)
+-   [layerVisConfigChangeUpdater](#layervisconfigchangeupdater)
+-   [layerVisualChannelChangeUpdater](#layervisualchannelchangeupdater)
+-   [loadFilesUpdater](#loadfilesupdater)
+-   [mapClickUpdater](#mapclickupdater)
+-   [receiveMapConfigUpdater](#receivemapconfigupdater)
+-   [removeDatasetUpdater](#removedatasetupdater)
+-   [removeFilterUpdater](#removefilterupdater)
 -   [removeLayerUpdater](#removelayerupdater)
 -   [reorderLayerUpdater](#reorderlayerupdater)
--   [removeDatasetUpdater](#removedatasetupdater)
--   [updateLayerBlendingUpdater](#updatelayerblendingupdater)
--   [showDatasetTableUpdater](#showdatasettableupdater)
 -   [resetMapConfigVisStateUpdater](#resetmapconfigvisstateupdater)
--   [receiveMapConfigUpdater](#receivemapconfigupdater)
--   [layerHoverUpdater](#layerhoverupdater)
--   [layerClickUpdater](#layerclickupdater)
--   [mapClickUpdater](#mapclickupdater)
--   [toggleSplitMapUpdater](#togglesplitmapupdater)
+-   [setFilterPlotUpdater](#setfilterplotupdater)
+-   [setFilterUpdater](#setfilterupdater)
 -   [setVisibleLayersForMapUpdater](#setvisiblelayersformapupdater)
+-   [showDatasetTableUpdater](#showdatasettableupdater)
+-   [toggleFilterAnimationUpdater](#togglefilteranimationupdater)
+-   [toggleSplitMapUpdater](#togglesplitmapupdater)
+-   [updateAnimationSpeedUpdater](#updateanimationspeedupdater)
+-   [updateLayerBlendingUpdater](#updatelayerblendingupdater)
 -   [updateVisDataUpdater](#updatevisdataupdater)
--   [loadFilesUpdater](#loadfilesupdater)
+
+## addFilterUpdater
+
+Add filter
+
+### Parameters
+
+-   `state`  
+-   `action`  
+
+## addLayerUpdater
+
+add layer
+
+### Parameters
+
+-   `state`  
+-   `action`  
+
+## enlargeFilterUpdater
+
+enlarge filter to time playback (apply to time filter only)
+
+### Parameters
+
+-   `state`  
+-   `action`  
 
 ## INITIAL_VIS_STATE
 
@@ -56,6 +83,24 @@ Type: [Object][57]
 -   `fileLoadingErr` **any** 
 -   `splitMaps` **[Array][58]** a list of objects of layer availabilities and visibilities for each map
 
+## interactionConfigChangeUpdater
+
+Update interactionConfig
+
+### Parameters
+
+-   `state`  
+-   `action`  
+
+## layerClickUpdater
+
+update clicked object
+
+### Parameters
+
+-   `state` **any** 
+-   `action` **any** 
+
 ## layerConfigChangeUpdater
 
 Called to update layer base config: dataId, label, column, isVisible
@@ -65,18 +110,18 @@ Called to update layer base config: dataId, label, column, isVisible
 -   `state`  
 -   `action`  
 
-## layerTypeChangeUpdater
+## layerHoverUpdater
 
-Update layer type
+update hovered object
 
 ### Parameters
 
--   `state`  
--   `action`  
+-   `state` **any** 
+-   `action` **any** 
 
-## layerVisualChannelChangeUpdater
+## layerTypeChangeUpdater
 
-Update layer visual channel
+Update layer type
 
 ### Parameters
 
@@ -92,65 +137,47 @@ Update layer vis config
 -   `state`  
 -   `action`  
 
-## interactionConfigChangeUpdater
+## layerVisualChannelChangeUpdater
 
-Update interactionConfig
-
-### Parameters
-
--   `state`  
--   `action`  
-
-## setFilterUpdater
-
-Update filter
+Update layer visual channel
 
 ### Parameters
 
 -   `state`  
 -   `action`  
 
-## setFilterPlotUpdater
+## loadFilesUpdater
 
-Update filter plot
-
-### Parameters
-
--   `state`  
--   `$1` **[Object][57]** 
-    -   `$1.idx`  
-    -   `$1.newProp`  
-
-## addFilterUpdater
-
-Add filter
+Trigger file loading dispatch `addDataToMap` if succeed, or `loadFilesErr` if failed
 
 ### Parameters
 
--   `state`  
--   `action`  
+-   `state` **any** 
+-   `action` **any** 
 
-## toggleFilterAnimationUpdater
+## mapClickUpdater
 
-toggle filter animation
+action triggered by clicking on map
 
 ### Parameters
 
--   `state`  
--   `action`  
+-   `state` **any** 
+-   `action` **any** 
 
-## updateAnimationSpeedUpdater
+## receiveMapConfigUpdater
 
-update filter animation speed
+Loads custom configuration into state
 
 ### Parameters
 
 -   `state`  
 -   `action`  
 
-## enlargeFilterUpdater
+Returns **any** 
 
-enlarge filter to time playback (apply to time filter only)
+## removeDatasetUpdater
+
+remove a dataset and all layers, filters, tooltip configs that based on it
 
 ### Parameters
 
@@ -160,15 +187,6 @@ enlarge filter to time playback (apply to time filter only)
 ## removeFilterUpdater
 
 remove filter
-
-### Parameters
-
--   `state`  
--   `action`  
-
-## addLayerUpdater
-
-add layer
 
 ### Parameters
 
@@ -195,18 +213,40 @@ reorder layer, update layerOrder
 -   `$1` **[Object][57]** 
     -   `$1.order`  
 
-## removeDatasetUpdater
+## resetMapConfigVisStateUpdater
 
-remove a dataset and all layers, filters, tooltip configs that based on it
+reset visState to initial State
 
 ### Parameters
 
 -   `state`  
 -   `action`  
 
-## updateLayerBlendingUpdater
+## setFilterPlotUpdater
 
-update layer blending
+Update filter plot
+
+### Parameters
+
+-   `state`  
+-   `$1` **[Object][57]** 
+    -   `$1.idx`  
+    -   `$1.newProp`  
+
+## setFilterUpdater
+
+Update filter
+
+### Parameters
+
+-   `state`  
+-   `action`  
+
+## setVisibleLayersForMapUpdater
+
+This is triggered when view is split into multiple maps.
+It will only update layers that belong to the map layer dropdown
+the user is interacting wit
 
 ### Parameters
 
@@ -222,52 +262,14 @@ show dataset table
 -   `state`  
 -   `action`  
 
-## resetMapConfigVisStateUpdater
+## toggleFilterAnimationUpdater
 
-reset visState to initial State
-
-### Parameters
-
--   `state`  
--   `action`  
-
-## receiveMapConfigUpdater
-
-Loads custom configuration into state
+toggle filter animation
 
 ### Parameters
 
 -   `state`  
 -   `action`  
-
-Returns **any** 
-
-## layerHoverUpdater
-
-update hovered object
-
-### Parameters
-
--   `state` **any** 
--   `action` **any** 
-
-## layerClickUpdater
-
-update clicked object
-
-### Parameters
-
--   `state` **any** 
--   `action` **any** 
-
-## mapClickUpdater
-
-action triggered by clicking on map
-
-### Parameters
-
--   `state` **any** 
--   `action` **any** 
 
 ## toggleSplitMapUpdater
 
@@ -278,11 +280,18 @@ toggle split map
 -   `state` **any** 
 -   `action` **any** 
 
-## setVisibleLayersForMapUpdater
+## updateAnimationSpeedUpdater
 
-This is triggered when view is split into multiple maps.
-It will only update layers that belong to the map layer dropdown
-the user is interacting wit
+update filter animation speed
+
+### Parameters
+
+-   `state`  
+-   `action`  
+
+## updateLayerBlendingUpdater
+
+update layer blending
 
 ### Parameters
 
@@ -298,108 +307,99 @@ Add new datasets
 -   `state` **any** 
 -   `action` **any** 
 
-## loadFilesUpdater
+[1]: #addfilterupdater
 
-Trigger file loading dispatch `addDataToMap` if succeed, or `loadFilesErr` if failed
+[2]: #parameters
 
-### Parameters
+[3]: #addlayerupdater
 
--   `state` **any** 
--   `action` **any** 
+[4]: #parameters-1
 
-[1]: #initial_vis_state
+[5]: #enlargefilterupdater
 
-[2]: #properties
+[6]: #parameters-2
 
-[3]: #layerconfigchangeupdater
+[7]: #initial_vis_state
 
-[4]: #parameters
+[8]: #properties
 
-[5]: #layertypechangeupdater
-
-[6]: #parameters-1
-
-[7]: #layervisualchannelchangeupdater
-
-[8]: #parameters-2
-
-[9]: #layervisconfigchangeupdater
+[9]: #interactionconfigchangeupdater
 
 [10]: #parameters-3
 
-[11]: #interactionconfigchangeupdater
+[11]: #layerclickupdater
 
 [12]: #parameters-4
 
-[13]: #setfilterupdater
+[13]: #layerconfigchangeupdater
 
 [14]: #parameters-5
 
-[15]: #setfilterplotupdater
+[15]: #layerhoverupdater
 
 [16]: #parameters-6
 
-[17]: #addfilterupdater
+[17]: #layertypechangeupdater
 
 [18]: #parameters-7
 
-[19]: #togglefilteranimationupdater
+[19]: #layervisconfigchangeupdater
 
 [20]: #parameters-8
 
-[21]: #updateanimationspeedupdater
+[21]: #layervisualchannelchangeupdater
 
 [22]: #parameters-9
 
-[23]: #enlargefilterupdater
+[23]: #loadfilesupdater
 
 [24]: #parameters-10
 
-[25]: #removefilterupdater
+[25]: #mapclickupdater
 
 [26]: #parameters-11
 
-[27]: #addlayerupdater
+[27]: #receivemapconfigupdater
 
 [28]: #parameters-12
 
-[29]: #removelayerupdater
+[29]: #removedatasetupdater
 
 [30]: #parameters-13
 
-[31]: #reorderlayerupdater
+[31]: #removefilterupdater
 
 [32]: #parameters-14
 
-[33]: #removedatasetupdater
+[33]: #removelayerupdater
 
 [34]: #parameters-15
 
-[35]: #updatelayerblendingupdater
+[35]: #reorderlayerupdater
 
 [36]: #parameters-16
 
-[37]: #showdatasettableupdater
+[37]: #resetmapconfigvisstateupdater
 
 [38]: #parameters-17
 
-[39]: #resetmapconfigvisstateupdater
+[39]: #setfilterplotupdater
 
 [40]: #parameters-18
 
-[41]: #receivemapconfigupdater
+[41]: #setfilterupdater
 
 [42]: #parameters-19
 
-[43]: #layerhoverupdater
+[43]: #setvisiblelayersformapupdater
 
 [44]: #parameters-20
 
-[45]: #layerclickupdater
+[45]: #showdatasettableupdater
 
 [46]: #parameters-21
 
-[47]: #mapclickupdater
+[47]: #togglefilteranimationupdater
 
 [48]: #parameters-22
 
@@ -407,15 +407,15 @@ Trigger file loading dispatch `addDataToMap` if succeed, or `loadFilesErr` if fa
 
 [50]: #parameters-23
 
-[51]: #setvisiblelayersformapupdater
+[51]: #updateanimationspeedupdater
 
 [52]: #parameters-24
 
-[53]: #updatevisdataupdater
+[53]: #updatelayerblendingupdater
 
 [54]: #parameters-25
 
-[55]: #loadfilesupdater
+[55]: #updatevisdataupdater
 
 [56]: #parameters-26
 

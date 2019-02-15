@@ -1,4 +1,4 @@
-# Saving and Loading with Schema
+# Saving and Loading Maps with Schema Manager
 
 ![Processor and Schema][processor-schema]
 

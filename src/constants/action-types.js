@@ -21,11 +21,36 @@
 import keyMirror from 'keymirror';
 import {ACTION_PREFIX} from './default-settings';
 
-// Actions to add and remove entries
-// export const REGISTER_ENTRY = `${ACTION_PREFIX}REGISTER_ENTRY`;
-// export const DELETE_ENTRY = `${ACTION_PREFIX}DELETE_ENTRY`;
-// export const RENAME_ENTRY = `${ACTION_PREFIX}RENAME_ENTRY`;
-
+/**
+ * Kepler.gl action types, can be listened by reducers to perform additional tasks whenever an action is called in kepler.gl
+ * @constant
+ * @type {Object}
+ * @public
+ *
+ * @example
+ * // store.js
+ * import {handleActions} from 'redux-actions';
+ * import {createStore, combineReducers, applyMiddleware} from 'redux';
+ * import {taskMiddleware} from 'react-palm/tasks';
+ *
+ * import keplerGlReducer from 'kepler.gl/reducers';
+ * import {ActionTypes} from 'kepler.gl/actions';
+ *
+ * const appReducer = handleActions({
+ *   // listen on kepler.gl map update action to store a copy of viewport in app state
+ *   [ActionTypes.UPDATE_MAP]: (state, action) => ({
+ *     ...state,
+ *     viewport: action.payload
+ *   }),
+ * }, {});
+ *
+ * const reducers = combineReducers({
+ *   app: appReducer,
+ *   keplerGl: keplerGlReducer
+ * });
+ *
+ * export default createStore(reducers, {}, applyMiddleware(taskMiddleware))
+ */
 const ActionTypes = keyMirror({
   // identity action
   REGISTER_ENTRY: null,

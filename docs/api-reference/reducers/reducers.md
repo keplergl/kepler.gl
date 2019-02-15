@@ -2,8 +2,34 @@
 
 ### Table of Contents
 
--   [reducer.plugin](#reducerplugin)
 -   [reducer.initialState](#reducerinitialstate)
+-   [reducer.plugin](#reducerplugin)
+
+## reducer.initialState
+
+REturn a reducer that innitiated with custom initial state.
+The parameter should be an object mapping from `subreducer` name to custom subreducer state,
+which will be shallow **merged** with default initial state.
+
+Default subreducer state:
+
+-   `[visState](./vis-state.md#INITIAL_VIS_STATE)`
+-   `[mapState](./map-state.md#INITIAL_MAP_STATE)`
+-   `[mapStyle](./map-style.md#INITIAL_MAP_STYLE)`
+-   `[uiState](./ui-state.md#INITIAL_UI_STATE)`
+
+### Parameters
+
+-   `iniSt` **[Object][7]** custom state to be merged with default initial state
+
+### Examples
+
+```javascript
+const myKeplerGlReducer = keplerGlReducer
+ .initialState({
+   uiState: {readOnly: true}
+ });
+```
 
 ## reducer.plugin
 
@@ -45,39 +71,13 @@ const myKeplerGlReducer = keplerGlReducer
 }, {}));
 ```
 
-## reducer.initialState
-
-REturn a reducer that innitiated with custom initial state.
-The parameter should be an object mapping from `subreducer` name to custom subreducer state,
-which will be shallow **merged** with default initial state.
-
-Default subreducer state:
-
--   `[visState](./vis-state.md#INITIAL_VIS_STATE)`
--   `[mapState](./map-state.md#INITIAL_MAP_STATE)`
--   `[mapStyle](./map-style.md#INITIAL_MAP_STYLE)`
--   `[uiState](./ui-state.md#INITIAL_UI_STATE)`
-
-### Parameters
-
--   `iniSt` **[Object][7]** custom state to be merged with default initial state
-
-### Examples
-
-```javascript
-const myKeplerGlReducer = keplerGlReducer
- .initialState({
-   uiState: {readOnly: true}
- });
-```
-
-[1]: #reducerplugin
+[1]: #reducerinitialstate
 
 [2]: #parameters
 
 [3]: #examples
 
-[4]: #reducerinitialstate
+[4]: #reducerplugin
 
 [5]: #parameters-1
 

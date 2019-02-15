@@ -154,6 +154,7 @@ export const toggleSidePanelUpdater = (state, {payload: id}) => {
  * @param {Object} state - `uiState`
  * @param {Object} action
  * @param {string|null} action.payload - id of modal to be shown, null to hide modals. One of:
+ *
  *  - [`DATA_TABLE_ID`](../constants/default-settings.md#data_table_id)
  *  - [`DELETE_DATA_ID`](../constants/default-settings.md#delete_data_id)
  *  - [`ADD_DATA_ID`](../constants/default-settings.md#add_data_id)

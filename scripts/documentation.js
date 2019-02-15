@@ -28,7 +28,8 @@ import toc from 'remark-toc';
 const INPUT_CONFIG = {
   shallow: true,
   access: ['public'],
-  'document-exported': true
+  'document-exported': true,
+  sortOrder: 'alpha'
 };
 
 const OUT_CONFIG = {
@@ -46,69 +47,85 @@ const TREE = {
     {
       path: 'actions',
       children: [
-        ['index', 'actions', false]
+        {
+          input: [
+            'actions.js',
+            'action-wrapper.js',
+            '../constants/action-types.js',
+            'vis-state-actions.js',
+            'ui-state-actions.js',
+            'map-state-actions.js',
+            'map-style-actions.js',
+            'identity-actions.js'
+          ], output: 'actions.md', config: {shallow: true}}
       ]
     },
     {
       path: 'reducers',
       children: [
-        ['root', 'reducers', true],
-        ['vis-state-updaters', 'vis-state', true],
-        ['map-state-updaters', 'map-state', true],
-        ['map-style-updaters', 'map-style', true],
-        ['ui-state-updaters', 'ui-state', true]
+        {input: 'root.js', output: 'reducers.md', config: {shallow: true}},
+        {input: 'vis-state-updaters.js', output: 'vis-state.md', config: {shallow: true}},
+        {input: 'map-state-updaters.js', output: 'map-state.md', config: {shallow: true}},
+        {input: 'map-style-updaters.js', output: 'map-style.md', config: {shallow: true}},
+        {input: 'ui-state-updaters.js', output: 'ui-state.md', config: {shallow: true}}
       ]
     }
   ]
 }
 
-function buildMdDocs(nodePath, node) {
+function buildChildDoc(inputPath, outputPath, config) {
+  return documentation.build(inputPath, {...INPUT_CONFIG, ...config})
+    .then(res => {
+      // res is an array of parsed comments with inferred properties
+      // and more: everything you need to build documentation or
+      // any other kind of code data.
+      return documentation.formats.remark(res, OUT_CONFIG)
+    })
+    .then(output => {
+      // output is a string of remark json
+      return remark()
+        .use(toc, {maxDepth: 2, tight: true})
+        .run(JSON.parse(output));
+    })
+    .then(ast => {
+      const output = remark().stringify(ast);
+      fs.writeFileSync(outputPath, output);
+      logOk(`   ✓ build docs ${inputPath} -> ${outputPath}`);
+    })
+    .catch(err => {
+      throw err;
+    });
+}
+
+function buildMdDocs(nodePath, node, allTasks) {
 
   const {path, children} = node;
   const joinPath = nodePath ? `${nodePath}/${path}` : path;
 
   children.forEach(child => {
 
-    if (typeof child === 'string' || Array.isArray(child)) {
-        const inF  = Array.isArray(child) ? child[0] : child;
-        const outF = Array.isArray(child) ? child[1] : child;
+    if (!child.children) {
 
-        const inputPath = join(PATHS.src, joinPath, `${inF}.js`);
-        const outputPath = join(PATHS.api, joinPath, `${outF}.md`);
-        const shallow = child[2];
-
-        documentation.build([inputPath], {...INPUT_CONFIG, shallow})
-          .then(res => {
-            // res is an array of parsed comments with inferred properties
-            // and more: everything you need to build documentation or
-            // any other kind of code data.
-            return documentation.formats.remark(res, OUT_CONFIG)
-          })
-          .then(output => {
-            // output is a string of remark json
-            return remark()
-              .use(toc, {maxDepth: 2, tight: true})
-              .run(JSON.parse(output));
-          })
-          .then(ast => {
-            const output = remark().stringify(ast);
-            fs.writeFileSync(outputPath, output);
-            logOk(`   ✓ build docs ${inputPath} -> ${outputPath}`);
-          });
+        const {input, output, shallow} = child;
+        const inputPath = (Array.isArray(input) ? input : [input]).map(inp => join(PATHS.src, joinPath, inp));
+        const outputPath = join(PATHS.api, joinPath, output);
+        allTasks.push(buildChildDoc(inputPath, outputPath, shallow));
     } else {
-      buildMdDocs(joinPath, child);
+      buildMdDocs(joinPath, child, allTasks);
     }
   });
 
+  return allTasks;
 }
 
 function buildDocs() {
-  logProgress('\n\n================= Start Building API Documentation =================');
+  logProgress('\n================= Start Building API Documentation =================\n');
 
-  // 1. build docs
-  buildMdDocs(null, TREE);
+  const allTasks = buildMdDocs(null, TREE, []);
 
-  logSuccess('\n\n================= Building API Documentation Success! =================');
+  Promise.all(allTasks).then(() => {
+    logSuccess('\n================= Building API Documentation Success! =================\n');
+  })
 }
 
 buildDocs();
