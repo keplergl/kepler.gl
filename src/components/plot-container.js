@@ -80,7 +80,8 @@ export default function PlotContainerFactory(MapContainer) {
           mapStyle.bottomMapStyle,
           resolution
         ),
-        topMapStyle: scaleMapStyleByResolution(mapStyle.topMapStyle, resolution)
+        topMapStyle: scaleMapStyleByResolution(mapStyle.topMapStyle, resolution),
+        visibleLayerGroups: mapStyle.visibleLayerGroups
       })
     );
 

@@ -24,30 +24,18 @@
  */
 
 import window, {
-  Blob,
-  Image,
   XMLHttpRequest,
   FileReader,
   setTimeout,
-  HTMLInputElement,
-  HTMLTextAreaElement,
-  HTMLCanvasElement,
-  SVGElement,
-  Element,
-  HTMLImageElement,
-  SVGRectElement,
-  document,
-  XMLSerializer,
-  console,
-  CSSRule,
   fetch
 } from 'global/window';
+import document from 'global/document';
+import console from 'global/console';
 
 const util = newUtil();
 const inliner = newInliner();
 const fontFaces = newFontFaces();
 const images = newImages();
-
 // Default impl options
 const defaultOptions = {
   // Default is to fail on error, no placeholder
@@ -210,7 +198,7 @@ function cloneNode(node, filter, root) {
     .then(clone => processClone(node, clone));
 
   function makeNodeCopy(nd) {
-    if (nd instanceof HTMLCanvasElement) {
+    if (nd instanceof window.HTMLCanvasElement) {
       return util.makeImage(nd.toDataURL());
     }
     return nd.cloneNode(false);
@@ -239,7 +227,7 @@ function cloneNode(node, filter, root) {
   }
 
   function processClone(original, clone) {
-    if (!(clone instanceof Element)) {
+    if (!(clone instanceof window.Element)) {
       return clone
     };
 
@@ -321,17 +309,17 @@ function cloneNode(node, filter, root) {
     }
 
     function copyUserInput() {
-      if (original instanceof HTMLTextAreaElement)
+      if (original instanceof window.HTMLTextAreaElement)
         clone.innerHTML = original.value;
-      if (original instanceof HTMLInputElement)
+      if (original instanceof window.HTMLInputElement)
         clone.setAttribute('value', original.value);
     }
 
     function fixSvg() {
-      if (!(clone instanceof SVGElement)) return;
+      if (!(clone instanceof window.SVGElement)) return;
       clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
 
-      if (!(clone instanceof SVGRectElement)) return;
+      if (!(clone instanceof window.SVGRectElement)) return;
       ['width', 'height'].forEach(attribute => {
         const value = clone.getAttribute(attribute);
         if (!value) return;
@@ -359,7 +347,7 @@ function makeSvgDataUri(node, width, height) {
   return Promise.resolve(node)
     .then(nd => {
       nd.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
-      return new XMLSerializer().serializeToString(nd);
+      return new window.XMLSerializer().serializeToString(nd);
     })
     .then(util.escapeXhtml)
     .then(xhtml =>
@@ -445,7 +433,7 @@ function newUtil() {
         binaryArray[i] = binaryString.charCodeAt(i);
 
       resolve(
-        new Blob([binaryArray], {type: 'image/png'})
+        new window.Blob([binaryArray], {type: 'image/png'})
       );
     });
   }
@@ -483,7 +471,7 @@ function newUtil() {
 
   function makeImage(uri) {
     return new Promise((resolve, reject) => {
-      const image = new Image();
+      const image = new window.Image();
       image.onload = () => {
         resolve(image);
       };
@@ -690,7 +678,7 @@ function newFontFaces() {
 
     function selectWebFontRules(cssRules) {
       return cssRules
-        .filter(rule => rule.type === CSSRule.FONT_FACE_RULE)
+        .filter(rule => rule.type === window.CSSRule.FONT_FACE_RULE)
         .filter(rule => inliner.shouldProcess(rule.style.getPropertyValue('src')));
     }
 
@@ -770,21 +758,30 @@ function newFontFaces() {
     function getCssRules(styleSheets) {
       const cssRules = [];
       styleSheets.forEach((sheet) => {
-        if (sheet.cssRules && typeof sheet.cssRules === 'object') {
+        // try...catch because browser may not able to enumerate rules for cross-domain sheets
+        let rules;
+        try {
+          rules = sheet.rules || sheet.cssRules;
+        } catch (e) {
+          console.error(`'Can't read the css rules of: ${sheet.href}`, e);
+          return;
+        }
+
+        if (rules && typeof rules === 'object') {
           try {
             util
-              .asArray(sheet.cssRules || [])
+              .asArray(rules || [])
               .forEach(cssRules.push.bind(cssRules));
           } catch (e) {
-            console.log(
-              `Error while reading CSS rules from ${sheet.href}`,
-              e.toString()
-            );
+            console.error(`Error while reading CSS rules from ${sheet.href}`, e);
+            return;
           }
         } else {
-          console.log('getCssRules can not fint cssRules')
+          console.error('getCssRules can not find cssRules');
+          return;
         }
       });
+
       return cssRules;
     }
 
