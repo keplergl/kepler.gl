@@ -204,7 +204,7 @@ export default function SidePanelFactory(
               onExportConfig={this._onExportConfig}
               onSaveMap={this.props.onSaveMap}
             />
-            <PanelToggle
+            {/* <PanelToggle
               panels={PANELS}
               activePanel={activeSidePanel}
               togglePanel={uiStateActions.toggleSidePanel}
@@ -246,7 +246,7 @@ export default function SidePanelFactory(
                   />
                 )}
               </div>
-            </SidePanelContent>
+            </SidePanelContent> */}
           </Sidebar>
         </div>
       );

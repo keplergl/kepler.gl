@@ -41,7 +41,7 @@ import {
   CursorClick
 } from 'components/common/icons';
 
-export const KEPLER_GL_NAME = 'kepler.gl';
+export const KEPLER_GL_NAME = 'PLEXUS';
 export const KEPLER_GL_VERSION = 'v1.0';
 export const KEPLER_GL_WEBSITE = 'http://kepler.gl/';
 
