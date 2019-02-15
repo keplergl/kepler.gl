@@ -34,11 +34,12 @@ Kepler.gl is also a React component that uses [Redux](https://redux.js.org/) to 
 - [Demo][demo-app]
 - [Examples][examples]
 - [Get Started][get-started]
-- [App User guide][user-guide]
+- [App User Guide][user-guide]
 - [Tutorial][vis-academy]
 - [Stack Overflow][stack]
 - [Contribution Guidelines][contributing]
-- [Api Refernece][api-reference]
+- [Api Reference][api-reference]
+- [Roadmap][roadmap]
 
 ## Env
 Use Node v6 and above, older node versions have not been tested.
@@ -452,6 +453,7 @@ Read more about [addDataToMap](./docs/api-reference/actions/actions.md#adddatato
 [developers]: contributing/DEVELOPERS.md
 [examples]: https://github.com/uber/kepler.gl/tree/master/examples
 [react-palm]: https://github.com/btford/react-palm
+[roadmap]: https://github.com/uber/kepler.gl/wiki/Kepler.gl-2019-Roadmap
 [stack]: https://stackoverflow.com/questions/tagged/kepler.gl
 [web]: http://www.kepler.gl/
 [vis-academy]: http://vis.academy/#/kepler.gl/
