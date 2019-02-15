@@ -76,12 +76,12 @@ export default function PlotContainerFactory(MapContainer) {
       this.mapStyleSelector,
       this.resolutionSelector,
       (mapStyle, resolution) => ({
+        ...mapStyle,
         bottomMapStyle: scaleMapStyleByResolution(
           mapStyle.bottomMapStyle,
           resolution
         ),
-        topMapStyle: scaleMapStyleByResolution(mapStyle.topMapStyle, resolution),
-        visibleLayerGroups: mapStyle.visibleLayerGroups
+        topMapStyle: scaleMapStyleByResolution(mapStyle.topMapStyle, resolution)
       })
     );
 
