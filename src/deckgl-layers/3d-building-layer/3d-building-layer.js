@@ -25,7 +25,7 @@ import {_SolidPolygonLayer as SolidPolygonLayer} from '@deck.gl/layers';
 
 export default class ThreeDBuildingLayer extends CompositeLayer {
   // this layer add its subLayers to the redux store, and push sample data
-  
+
   renderSubLayers(props) {
     return new SolidPolygonLayer({
       ...props,
@@ -51,9 +51,10 @@ export default class ThreeDBuildingLayer extends CompositeLayer {
   }
 
   renderLayers() {
+
     return [
       new DeckGLTileLayer({
-        getTileData,
+        getTileData: (args) => getTileData(this.props.mapboxApiAccessToken, args),
         minZoom: 13,
         renderSubLayers: this.renderSubLayers.bind(this)
       })

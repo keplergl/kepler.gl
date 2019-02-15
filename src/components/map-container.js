@@ -328,7 +328,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         mapStyle,
         layerData,
         layerOrder,
-        visStateActions
+        visStateActions,
+        mapboxApiAccessToken
       } = this.props;
 
       let deckGlLayers = [];
@@ -343,7 +344,11 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       }
       const threeDBuildingLayerId = '_keplergl_3d-building';
       if (mapStyle.visibleLayerGroups['3d building']) {
-        deckGlLayers.push(new ThreeDBuildingLayer({id: threeDBuildingLayerId, threeDBuildingColor: mapStyle.threeDBuildingColor}));
+        deckGlLayers.push(new ThreeDBuildingLayer({
+          id: threeDBuildingLayerId,
+          mapboxApiAccessToken
+          threeDBuildingColor: mapStyle.threeDBuildingColor
+        }));
       }
 
       return (
