@@ -24,7 +24,7 @@ const webpack = require('webpack');
 const rootDir = join(__dirname, '..');
 const libSources = join(rootDir, 'src');
 
-import console from 'global/console';
+const console = require('global/console');
 
 const BABEL_CONFIG = {
   presets: [
