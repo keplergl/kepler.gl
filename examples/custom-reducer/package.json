@@ -7,12 +7,13 @@
   "dependencies": {
     "global": "^4.3.0",
     "kepler.gl": "^0.2.1",
-    "react": "^15.3.1",
-    "react-dom": "^15.6.1",
-    "react-palm": "^1.1.2",
-    "react-redux": "^4.0.0",
-    "react-virtualized": "^9.18.5",
-    "redux-actions": "^2.2.1"
+    "react": "^16.8.2",
+    "react-dom": "^16.8.2",
+    "react-palm": "^2.0.0",
+    "react-redux": "^6.0.0",
+    "react-virtualized": "^9.21.0",
+    "redux": "^4.0.1",
+    "redux-actions": "^2.6.4"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0",

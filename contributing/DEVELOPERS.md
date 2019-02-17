@@ -35,7 +35,6 @@ machine:
 If you plan to contribute code to kepler.gl, you must have a [GitHub account](https://github.com/signup/free) so you can push code and open Pull Requests in the [GitHub Repository][github]. You must [fork](http://help.github.com/forking) the
 [main kepler.gl repository][github] to [create a Pull Request][github-pr].
 
-
 #### Developing kepler.gl
 
 To develop features, debug code, run tests, we use webpack to start a local web server and serve the kepler.gl demo app from the src directory.
@@ -103,7 +102,6 @@ To ensure consistency throughout the source code, keep these rules in mind as yo
 * All features or bug fixes **must be tested** by one or more [specs][unit-testing].
 * All public API methods **must be documented** with using jsdoc. To see how we document our APIs, please check
   out the existing source code and see the section about [writing documentation](#documentation)
-
 
 ## <a name="commits"></a> Git Commit Guidelines
 
@@ -203,7 +201,6 @@ Parameters can be made optional by *either* appending a `=` to the type, e.g. `{
 putting the `[name]` in square brackets.
 Default values are only possible with the second syntax by appending `=<value>` to the parameter
 name, e.g. `@param {boolean} [ownPropsOnly=false]`.
-
 
 ## <a name="website"></a> Develop The kepler.gl Website
 

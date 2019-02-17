@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+// TODO: remove immutable
 import Immutable from 'immutable';
 import Task, {withTask} from 'react-palm/tasks';
 
@@ -97,6 +98,7 @@ function getMapStyles({
 
   const editable = Object.keys(visibleLayerGroups).length;
 
+  // TODO: remove immutable
   const bottomMapStyle = !editable
     ? Immutable.fromJS(mapStyle.style)
     : editBottomMapStyle({
