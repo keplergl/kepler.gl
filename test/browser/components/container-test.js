@@ -247,13 +247,14 @@ test('Components -> Container -> Mount then rename', t => {
   // mount with mint: false
   t.doesNotThrow(() => {
     wrapper = mount(
-      <Container
-        getState={s => s.smoothie}
-        id={testId.id}
-        mapboxApiAccessToken="hello.world"
-        dispatch={dispatch}
-        store={store}
-      />
+      <Provider store={store}>
+        <Container
+          getState={s => s.smoothie}
+          id={testId.id}
+          mapboxApiAccessToken="hello.world"
+          dispatch={dispatch}
+        />
+      </Provider>
     );
   }, 'Should not throw error when mount');
 
@@ -284,8 +285,13 @@ test('Components -> Container -> Mount then rename', t => {
     'should register milkshake to root reducer'
   );
 
-  wrapper.setProps({id: 'milkshake-2'});
-  // actions = store.getActions();
+  // In order to inject new props into container
+  // we have to use the following workaround
+  // because enzyme can only set props at the root level
+  wrapper.setProps({
+    children: React.cloneElement(wrapper.props().children, {id: 'milkshake-2'})
+  });
+  // // actions = store.getActions();
   const expectedActions1 = {
     type: '@@kepler.gl/RENAME_ENTRY',
     payload: {oldId: 'milkshake', newId: 'milkshake-2'}

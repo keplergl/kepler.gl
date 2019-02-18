@@ -20,7 +20,7 @@
 
 // required by enzymev3
 const configure = require('enzyme').configure;
-const Adapter = require('enzyme-adapter-react-15.4');
+const Adapter = require('enzyme-adapter-react-16');
 configure({adapter: new Adapter()});
 
 import './injector-test';

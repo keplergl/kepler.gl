@@ -6917,11 +6917,12 @@ react-dom@^16.4.2, react-dom@^16.8.2:
     prop-types "^15.6.2"
     scheduler "^0.13.2"
 
-react-file-drop@^0.2.7:
-  version "0.2.7"
-  resolved "https://registry.yarnpkg.com/react-file-drop/-/react-file-drop-0.2.7.tgz#9bdfab8aa1bf75990655d953d93c22b5e48a32dd"
+react-file-drop@^0.1.8:
+  version "0.1.9"
+  resolved "https://registry.yarnpkg.com/react-file-drop/-/react-file-drop-0.1.9.tgz#97102ebdfcddafd948bb20c16bfe3f07ddaf7a52"
   dependencies:
-    prop-types "^15.6.1"
+    create-react-class "^15.5.2"
+    prop-types "^15.5.8"
 
 react-hot-loader@^4.6.5:
   version "4.6.5"

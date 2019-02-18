@@ -40,7 +40,7 @@ const IconShape = ({mesh}) => (
   </svg>
 );
 
-const StyledIconItem = CenterFlexbox.extend`
+const StyledIconItem = styled(CenterFlexbox)`
   padding-left: 6px;
   width: 180px;
   height: 48px;

@@ -97,7 +97,7 @@
     "prop-types": "^15.7.2",
     "react-anything-sortable": "^1.7.4",
     "react-data-grid": "2.0.80-am-fix-defaultprops-warnings3337",
-    "react-file-drop": "^0.2.7",
+    "react-file-drop": "^0.1.8",
     "react-json-pretty": "^2.0.0",
     "react-map-gl": "^4.0.10",
     "react-markdown": "^4.0.6",

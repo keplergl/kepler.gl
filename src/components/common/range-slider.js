@@ -28,7 +28,7 @@ import {Input} from 'components/common/styled-components';
 
 import {roundValToStep} from 'utils/data-utils';
 
-const SliderInput = Input.extend`
+const SliderInput = styled(Input)`
   height: ${props => props.theme.sliderInputHeight}px;
   width: ${props => props.theme.sliderInputWidth}px;
   padding: 4px 6px;
