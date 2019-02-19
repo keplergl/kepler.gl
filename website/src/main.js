@@ -26,7 +26,11 @@ import ReactDOM from 'react-dom';
 import {Provider} from 'react-redux';
 import store from './reducers';
 import Routes from './routes';
+import {Router, Route} from 'react-router';
 import document from 'global/document';
+import Map from '../../examples/demo-app/src/app';
+import App from './components/app';
+import Home from './components/home';
 
 require('./static/favicon.png');
 
@@ -35,7 +39,9 @@ document.body.appendChild(el);
 
 ReactDOM.render(
   <Provider store={store}>
-    <Routes />
+    <Router history={history}>
+      <Route path="/" component={Map} />
+    </Router>
   </Provider>,
   el
 );

@@ -44,7 +44,7 @@ mounted at root of your reducer, you will need to specify the path to it when yo
 ```js
 import KeplerGl from 'kepler.gl';
 
-const Map = props => (
+const App = props => (
   <KeplerGl
       id="foo"
       mapboxApiAccessToken={token}

@@ -1,6 +1,6 @@
-# Add Data to the Map
+# Add Data to the App
 
-## Add Data to your Map
+## Add Data to your App
 1. Open Kepler.gl. You should see the following prompt:
 
 ![Add data to the map pop up](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image42.png "Add data to the map pop up")

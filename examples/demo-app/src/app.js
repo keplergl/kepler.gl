@@ -23,6 +23,7 @@ import {findDOMNode} from 'react-dom';
 import styled, {ThemeProvider}  from 'styled-components';
 import window from 'global/window';
 import {connect} from 'react-redux';
+import queryString from 'query-string'
 import {theme} from 'kepler.gl/styles';
 import Banner from './components/banner';
 import Announcement from './components/announcement';
@@ -95,15 +96,14 @@ class App extends Component {
   componentWillMount() {
     // if we pass an id as part of the url
     // we ry to fetch along map configurations
-    const {params: {id} = {}, location: {query = {}}} = this.props;
+    const id = this.props.match.params && this.props.match.params.id;
+    const query = queryString.parse(this.props.location ? this.props.location.search : '')
 
     // Load sample using its id
+    // or else load map through url
     if (id) {
       this.props.dispatch(loadSampleConfigurations(id));
-    }
-
-    // Load map using a custom
-    if (query.mapUrl) {
+    } else if (query.mapUrl) {
       // TODO?: validate map url
       this.props.dispatch(loadRemoteMap({dataUrl: query.mapUrl}));
     }

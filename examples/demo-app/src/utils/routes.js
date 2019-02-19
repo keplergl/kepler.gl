@@ -19,9 +19,8 @@
 // THE SOFTWARE.
 
 import {CLOUD_PROVIDERS} from './cloud-providers';
-import {IndexRoute, Route} from 'react-router';
+import {Route} from 'react-router-dom';
 import React from 'react';
-import Demo from '../app';
 import {DEFAULT_CLOUD_PROVIDER} from '../constants/default-settings';
 
 export function onAuthEnterCallback(nextState, replace, callback) {
@@ -40,13 +39,10 @@ export function onAuthEnterCallback(nextState, replace, callback) {
 
 export function buildAppRoutes(Component) {
   return [
-    (<Route key="auth" path="auth" component={Demo} onEnter={onAuthEnterCallback} />),
-    (
-      <Route key="demo" path="demo">
-        <IndexRoute component={Component} />
-        <Route path="map" component={Component} />
-        <Route path="(:id)" component={Component} />
-      </Route>
-    )
+    <Route exact path="/" component={Component}/>,
+    <Route exact path="/auth" render={() => (<div>Authenticating...</div>)} onEnter={onAuthEnterCallback}/>,
+    <Route exact path="/demo/:id" component={Component}/>,
+    <Route exact path="/map" component={Component}/>,
+    <Route exact path="/:id" component={Component}/>
   ];
 }

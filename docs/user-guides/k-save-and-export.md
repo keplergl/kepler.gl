@@ -23,9 +23,9 @@ You can export the current map as an image. The export window will use the curre
 
 You can export map data as a csv file, with the option to export ONLY the filtered data or the entire dataset.
 
-## <a href="#export-config">Export Map Configuration</a>
+## <a href="#export-config">Export App Configuration</a>
 
-![Export Map Configuration](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/k-save-and-export-4.png "activate interactions")
+![Export App Configuration](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/k-save-and-export-4.png "activate interactions")
 
 #### 1.Export Current Config
 
@@ -33,6 +33,6 @@ You can export the current map configuration as a `json` file. This is useful wh
 
 **Note:** kepler.gl map config is coupled with loaded datasets. The __`dataId`__ key is used to bind layers, filters and tooltip settings to a specific dataset. If you try to upload a configuration with a dataset in your own kepler.gl app, you also need to make sure your dataset __`id`__ matches the __`dataId`__ in the config.
 
-#### 2.Save and Export Current Map
+#### 2.Save and Export Current App
 
 To save and share your current map, click the __Export Current Map__ check box to export current configuration __AND__ uploaded data in a single `json` file.  **You can load this json file back to kepler.gl by simply drag and drop it in the __Add Data to Map__ dialog.**

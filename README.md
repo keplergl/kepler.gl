@@ -124,7 +124,7 @@ Read more about [Reducers][reducers].
 ```js
 import KeplerGl from 'kepler.gl';
 
-const Map = props => (
+const App = props => (
   <KeplerGl
       id="foo"
       width={width}
@@ -186,7 +186,7 @@ version displayed in side panel header
 
 - Default: `() => {}`
 
-Action called when click Save Map Url in side panel header.
+Action called when click Save App Url in side panel header.
 
 ##### `actions` (Object, optional)
 
@@ -394,7 +394,7 @@ Kepler.gl provides an easy API `KeplerGlSchema.getConfigToSave` to generate a js
 #### Examples
 
 ```javascript
-// app.js
+app.js
 import {addDataToMap} from 'kepler.gl/actions';
 
 const sampleTripData = {

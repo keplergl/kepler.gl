@@ -1,10 +1,10 @@
 # Split Maps
 
-You can display a side-by-side comparison of the same map area with different layers with the Split Map functionality. 
+You can display a side-by-side comparison of the same map area with different layers with the Split App functionality. 
 
 ![Split Maps](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image36.png "Split Maps")
 
-1. Enable this by clicking the Split Map icon in the top right corner of your map: 
+1. Enable this by clicking the Split App icon in the top right corner of your map: 
 
 ![Split Maps Icon](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image24.png "Split Maps Icon")
 

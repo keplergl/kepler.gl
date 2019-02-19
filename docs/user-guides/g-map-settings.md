@@ -1,4 +1,4 @@
-# Map Settings
+# App Settings
 
 You can toggle customization options on your map, including tooltips, brush highlighting, map imagery (water, parks, etc.), and more.
 

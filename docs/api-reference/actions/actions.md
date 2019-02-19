@@ -93,8 +93,7 @@ to match the `info.id` of your dataset to the `dataId` in eath `layer`, `filter`
 ### Examples
 
 ```javascript
-// app.js
-import {addDataToMap} from 'kepler.gl/actions';
+mapmap.jsport {addDataToMap} from 'kepler.gl/actions';
 
 const sampleTripData = {
  fields: [
@@ -322,7 +321,7 @@ Update map viewport
     -   `viewport.height` **[number][44]?** Height of viewport
     -   `viewport.zoom` **[number][44]?** Zoom of viewport
     -   `viewport.pitch` **[number][44]?** Camera angle in degrees (0 is straight down)
-    -   `viewport.bearing` **[number][44]?** Map rotation in degrees (0 means north is up)
+    -   `viewport.bearing` **[number][44]?** App rotation in degrees (0 means north is up)
     -   `viewport.latitude` **[number][44]?** Latitude center of viewport on map in mercator projection
     -   `viewport.longitude` **[number][44]?** Longitude Center of viewport on map in mercator projection
     -   `viewport.dragRotate` **[boolean][43]?** Whether to enable drag and rotate map into perspective viewport

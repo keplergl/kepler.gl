@@ -1,6 +1,6 @@
-# Map Layers
+# App Layers
 
-Map Layers
+App Layers
 Toggle water, buildings, roads, and more. Options include: 
 - __Labels__: shows labels for cities, neighborhoods, and so on. 
 - __Roads__: displays a translucent layer of road lines.

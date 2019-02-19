@@ -10,7 +10,7 @@
 ### Feature
 - Re-implement file upload to use event streaming (no react-palm) [shan]
 - Input map style from mapbox style url [shan]
-- Map style API to add custom map style [shan]
+- App style API to add custom map style [shan]
 - Field type editor [shan]
 - Export map [javid, shan]
 

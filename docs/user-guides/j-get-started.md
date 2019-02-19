@@ -3,7 +3,7 @@
 Kepler.gl is a tool designed for geospatial data analysis. This guide will help you get started creating visualizations in kepler.gl.
 
 
-## 1) Add Data to your Map
+## 1) Add Data to your App
 
 ![Add data to the map pop up](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image42.png "Add data to the map pop up")
 
@@ -32,11 +32,11 @@ Add filters to your map to limit the data that is displayed. Filters must be bas
 
 Learn more about [filters](./e-filters.md).
 
-## 4) Customize Map Settings
+## 4) Customize App Settings
 
-![Customize Map Settings](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/interactions.png "Customize Map Settings")
+![Customize App Settings](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/interactions.png "Customize App Settings")
 
-Change the settings on your map in the Interactions and Base Map menus. Customization options include tooltips, brush highlighting, base map style, map imagery toggles (water, parks, satellite image, etc.), and many more.
+Change the settings on your map in the Interactions and Base App menus. Customization options include tooltips, brush highlighting, base map style, map imagery toggles (water, parks, satellite image, etc.), and many more.
 
 Read about [base map styles](./f-map-styles/1-base-map-styles.md) and [map settings](./g-map-settings.md).
 

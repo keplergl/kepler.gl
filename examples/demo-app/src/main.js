@@ -21,23 +21,19 @@
 import React from 'react';
 import document from 'global/document';
 import {Provider} from 'react-redux';
-import {browserHistory, Router, Route} from 'react-router';
-import {syncHistoryWithStore} from 'react-router-redux';
+import {Router} from 'react-router-dom';
+import createBrowserHistory from 'history/createBrowserHistory';
 import {render} from 'react-dom';
 import store from './store';
-import App from './app';
+import Map from './app';
+
 import {buildAppRoutes} from './utils/routes';
-
-const history = syncHistoryWithStore(browserHistory, store);
-
-const appRoute = buildAppRoutes(App);
+const routes = buildAppRoutes(Map);
 
 const Root = () => (
   <Provider store={store}>
-    <Router history={history}>
-      <Route path="/" component={App}>
-        {appRoute}
-      </Route>
+    <Router history={createBrowserHistory()}>
+      {routes}
     </Router>
   </Provider>
 );
