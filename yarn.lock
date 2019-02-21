@@ -1411,8 +1411,8 @@ astral-regex@^1.0.0:
   resolved "https://registry.yarnpkg.com/astral-regex/-/astral-regex-1.0.0.tgz#6c8c3fb827dd43ee3918f27b82782ab7658a6fd9"
 
 async-each@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/async-each/-/async-each-1.0.1.tgz#19d386a1d9edc6e7c1c85d388aedbcc56d33602d"
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/async-each/-/async-each-1.0.2.tgz#8b8a7ca2a658f927e9f307d6d1a42f4199f0f735"
 
 async-limiter@~1.0.0:
   version "1.0.0"
@@ -1992,8 +1992,8 @@ camelize@^1.0.0:
   resolved "https://registry.yarnpkg.com/camelize/-/camelize-1.0.0.tgz#164a5483e630fa4321e5af07020e531831b2609b"
 
 caniuse-lite@^1.0.30000939:
-  version "1.0.30000946"
-  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30000946.tgz#ac50a3331bb805b483478bbc26a0ab71bb6d0509"
+  version "1.0.30000947"
+  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30000947.tgz#c30305e9701449c22e97f4e9837cea3d76aa3273"
 
 capture-stack-trace@^1.0.0:
   version "1.0.1"
@@ -3061,8 +3061,8 @@ ee-first@1.1.1:
   resolved "https://registry.yarnpkg.com/ee-first/-/ee-first-1.1.1.tgz#590c61156b0ae2f4f0255732a158b266bc56b21d"
 
 electron-to-chromium@^1.3.113:
-  version "1.3.115"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.115.tgz#fdaa56c19b9f7386dbf29abc1cc632ff5468ff3b"
+  version "1.3.116"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.116.tgz#1dbfee6a592a0c14ade77dbdfe54fef86387d702"
 
 elliptic@^6.0.0:
   version "6.4.1"
@@ -3117,8 +3117,8 @@ entities@^1.1.1, entities@~1.1.1:
   resolved "https://registry.yarnpkg.com/entities/-/entities-1.1.2.tgz#bdfa735299664dfafd34529ed4f8522a275fea56"
 
 enzyme-adapter-react-16@^1.10.0:
-  version "1.11.0"
-  resolved "https://registry.yarnpkg.com/enzyme-adapter-react-16/-/enzyme-adapter-react-16-1.11.0.tgz#cf9c60ea0d98be713e92cc7100ef99dd29c5f33f"
+  version "1.11.1"
+  resolved "https://registry.yarnpkg.com/enzyme-adapter-react-16/-/enzyme-adapter-react-16-1.11.1.tgz#f4b39595e85701449089f85ad9575ec0fa36f677"
   dependencies:
     enzyme-adapter-utils "^1.10.1"
     object.assign "^4.1.0"
@@ -3352,8 +3352,8 @@ eslint@^5.12.1:
     text-table "^0.2.0"
 
 esm@^3.0.84:
-  version "3.2.16"
-  resolved "https://registry.yarnpkg.com/esm/-/esm-3.2.16.tgz#e48f887c29a4a981a4da0baa2ae2bf20e30b5614"
+  version "3.2.17"
+  resolved "https://registry.yarnpkg.com/esm/-/esm-3.2.17.tgz#ae74c34f502ab2ee8f03c64cc785ebeb1786526a"
 
 espree@^5.0.1:
   version "5.0.1"
@@ -5772,8 +5772,8 @@ mute-stream@0.0.7:
   resolved "https://registry.yarnpkg.com/mute-stream/-/mute-stream-0.0.7.tgz#3075ce93bc21b8fab43e1bc4da7e8115ed1e7bab"
 
 nan@^2.9.2:
-  version "2.12.1"
-  resolved "https://registry.yarnpkg.com/nan/-/nan-2.12.1.tgz#7b1aa193e9aa86057e3c7bbd0ac448e770925552"
+  version "2.13.0"
+  resolved "https://registry.yarnpkg.com/nan/-/nan-2.13.0.tgz#7bdfc27dd3c060c46e60b62c72b74012d1a4cd68"
 
 nanomatch@^1.2.9:
   version "1.2.13"
@@ -6911,8 +6911,8 @@ react-lifecycles-compat@^3.0.0:
   resolved "https://registry.yarnpkg.com/react-lifecycles-compat/-/react-lifecycles-compat-3.0.4.tgz#4f1a273afdfc8f3488a8c516bfda78f872352362"
 
 react-map-gl@^4.0.14:
-  version "4.0.15"
-  resolved "https://registry.yarnpkg.com/react-map-gl/-/react-map-gl-4.0.15.tgz#74afb75e8d7d0d135fa15d688a7c7790c937703c"
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/react-map-gl/-/react-map-gl-4.1.0.tgz#99729e59dcd2fad16c35d8db290adcd72772c864"
   dependencies:
     "@babel/runtime" "^7.0.0"
     mapbox-gl "~0.53.0"

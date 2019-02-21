@@ -19,29 +19,39 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
-import FileUpload from 'components/common/file-uploader/file-upload';
-
-const StyledLoadDataModal = styled.div`
+const StyledExportMapModal = styled.div`
   padding: ${props => props.theme.modalPadding};
+
+  .title {
+    font-weight: 500;
+    color: ${props => props.theme.textColorLT};
+    font-size: 12px;
+  }
+
+  .description {
+    color: ${props => props.theme.textColor};
+    font-size: 11px;
+  }
 `;
 
-const propTypes = {
-  // call backs
-  onFileUpload: PropTypes.func.isRequired
-};
+const propTypes = { /* No required Props for now */};
 
-export const LoadDataModal = props => (
-  <StyledLoadDataModal>
-    <div className="load-data-modal">
-      <FileUpload onFileUpload={props.onFileUpload} />
+export const ExportMapModal = () => (
+  <StyledExportMapModal>
+    <div className="export-map-modal">
+      <div className="title">
+        Export your map into a single html file
+      </div>
+      <div className="subtitle">
+        You will be able to save your configuration and data into a single file and download it on your device.
+      </div>
     </div>
-  </StyledLoadDataModal>
+  </StyledExportMapModal>
 );
 
-LoadDataModal.propTypes = propTypes;
+ExportMapModal.propTypes = propTypes;
 
-const loadDataModalFactory = () => LoadDataModal;
-export default loadDataModalFactory;
+const exportMapModalFactory = () => ExportMapModal;
+export default exportMapModalFactory;

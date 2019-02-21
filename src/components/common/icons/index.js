@@ -46,6 +46,7 @@ export {default as Layers} from './layers';
 export {default as LeftArrow} from './left-arrow';
 export {default as Legend} from './legend';
 export {default as LineChart} from './line-chart';
+export {default as Map} from './map';
 export {default as Minus} from './minus';
 export {default as Messages} from './messages';
 export {default as Pause} from './pause';

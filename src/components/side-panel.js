@@ -39,6 +39,7 @@ import {
   EXPORT_CONFIG_ID,
   PANELS
 } from 'constants/default-settings';
+import {EXPORT_MAP_ID} from '../constants/default-settings';
 
 const SidePanelContent = styled.div`
   ${props => props.theme.sidePanelScrollBar};
@@ -128,6 +129,8 @@ export default function SidePanelFactory(
 
     _onExportConfig = () => this.props.uiStateActions.toggleModal(EXPORT_CONFIG_ID);
 
+    _onExportMap = () => this.props.uiStateActions.toggleModal(EXPORT_MAP_ID);
+
     render() {
       const {
         appName,
@@ -202,6 +205,7 @@ export default function SidePanelFactory(
               showExportDropdown={uiStateActions.showExportDropdown}
               hideExportDropdown={uiStateActions.hideExportDropdown}
               onExportConfig={this._onExportConfig}
+              onExportMap={this._onExportMap}
               onSaveMap={this.props.onSaveMap}
             />
             <PanelToggle
