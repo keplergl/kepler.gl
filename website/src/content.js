@@ -72,9 +72,12 @@ export const HERO_IMAGES_SCALED = [
 export const HEADER_NAVS = [
   {
     text: 'User Guide',
-    link: 'https://github.com/uber/kepler.gl/blob/master/docs/j-get-started.md'
+    link: 'https://github.com/uber/kepler.gl/blob/master/docs/user-guides/j-get-started.md'
   },
-
+  {
+    text: 'Documentation',
+    link: 'https://github.com/uber/kepler.gl/blob/master/docs/api-reference/overview.md'
+  },
   {
     text: 'Github',
     link: 'https://github.com/uber/kepler.gl'
