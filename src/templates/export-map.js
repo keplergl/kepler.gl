@@ -44,6 +44,7 @@ export const exportMapToHTML = options => {
          * This will be used in app.js (imported later)
          * */
         const MAPBOX_TOKEN = '${options.mapboxApiAccessToken || 'PROVIDE_MAPBOX_TOKEN'}';
+        const WARNING_MESSAGE = 'Please Provide a Mapbox Token in order to use Kepler.gl. Edit this file and fill out MAPBOX_TOKEN with your access key';
       </script>
     </head>
     <body>
@@ -54,7 +55,13 @@ export const exportMapToHTML = options => {
     
       <!-- Load our React component. -->
       <script>
-        const map = (function initKeplerGl(react, reactDOM, redux, reactRedux, keplerGl, mapboxToken) {
+        const map = (function initKeplerGl(react, reactDOM, redux, reactRedux, keplerGl, mapboxToken, warningMessage) {
+          
+          /* Validate Mapbox Token */
+          if ((mapboxToken || '') === '' || mapboxToken === 'PROVIDE_MAPBOX_TOKEN') {
+            alert(warningMessage)
+          }
+          
           /** STORE **/
           const reducers = redux.combineReducers({
             // mount keplerGl reducer
@@ -106,7 +113,7 @@ export const exportMapToHTML = options => {
           };
     
           /** END COMPONENTS **/
-        }(React, ReactDOM, Redux, ReactRedux, KeplerGl, MAPBOX_TOKEN));
+        }(React, ReactDOM, Redux, ReactRedux, KeplerGl, MAPBOX_TOKEN, WARNING_MESSAGE));
     
         // Render kepler in the html page
         map.render();
