@@ -72,12 +72,12 @@ const ExportMapModal = ({
         Export your map into a single html file
       </div>
       <div className="subtitle">
-        You will be able to save your configuration and data into a single file and download it on your device.
+        You will be able to save your map into an interactive html file.
       </div>
 
       <StyledSection>
         <div>
-          Please provide your Mapbox access token
+          Please provide your <a style={{textDecorationLine: 'underline'}} href="https://docs.mapbox.com/help/how-mapbox-works/access-tokens/">Mapbox access token</a>
         </div>
         <StyledInput
           onChange={e => onExportMapboxAccessToken(e.target.value)}

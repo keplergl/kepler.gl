@@ -49,9 +49,9 @@ import {
   EXPORT_DATA_TYPE,
   EXPORT_IMAGE_ID,
   EXPORT_CONFIG_ID,
+  EXPORT_MAP_ID,
   ADD_MAP_STYLE_ID
 } from 'constants/default-settings';
-import {EXPORT_MAP_ID} from '../constants/default-settings';
 
 const DataTableModalStyle = css`
   height: 85%;

@@ -37,9 +37,9 @@ import {
   EXPORT_IMAGE_ID,
   EXPORT_DATA_ID,
   EXPORT_CONFIG_ID,
+  EXPORT_MAP_ID,
   PANELS
 } from 'constants/default-settings';
-import {EXPORT_MAP_ID} from '../constants/default-settings';
 
 const SidePanelContent = styled.div`
   ${props => props.theme.sidePanelScrollBar};
