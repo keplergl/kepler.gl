@@ -192,10 +192,15 @@ export default function ModalContainerFactory(
       // we are saving both data and config together
       // TODO: storing a large amount of data in html could be a limitation
       // but it will work for now as first version
-      const dump = KeplerGlSchema.save(this.props);
+      const {uiState} = this.props;
+
+      const data = {
+        ...KeplerGlSchema.save(this.props),
+        mapboxApiAccessToken: uiState.exportHtml.exportMapboxAccessToken
+      };
 
       this._downloadFile(
-        exportMapToHTML(dump),
+        exportMapToHTML(data),
         'text/html',
         'kepler.gl.html'
       );
@@ -382,8 +387,12 @@ export default function ModalContainerFactory(
             break;
 
           case EXPORT_MAP_ID:
+
             template = (
-              <ExportMapModal />
+              <ExportMapModal
+                exportHtml={uiState.exportHtml}
+                onExportMapboxAccessToken={this.props.uiStateActions.setExportMapboxAccessToken}
+              />
             );
             modalProps = {
               close: false,

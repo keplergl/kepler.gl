@@ -36,3 +36,11 @@ You can export the current map configuration as a `json` file. This is useful wh
 #### 2.Save and Export Current Map
 
 To save and share your current map, click the __Export Current Map__ check box to export current configuration __AND__ uploaded data in a single `json` file.  **You can load this json file back to kepler.gl by simply drag and drop it in the __Add Data to Map__ dialog.**
+
+### 2.Export current Map as HTML
+
+![Export Map as HTML](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/k-save-and-export-5.png "activate interactions")
+
+To save and export your current map as HTML file, click on __Export Map__ and subsequently on __Export__. Your browser will download a new kepler.gl.html that contains both data and configuration. Simply click on the file to visualize your map.
+
+

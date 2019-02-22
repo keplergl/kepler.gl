@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
 const StyledExportMapModal = styled.div`
@@ -36,9 +37,35 @@ const StyledExportMapModal = styled.div`
   }
 `;
 
-const propTypes = { /* No required Props for now */};
+const StyledSection = styled.div`
+  margin: 24px 0;
+`;
 
-export const ExportMapModal = () => (
+const StyledInput = styled.input`
+  width: 100%;
+  padding: ${props => props.theme.inputPadding};
+  color: ${props => props.error ? 'red' : props.theme.titleColorLT};
+  height: ${props => props.theme.inputBoxHeight};
+  outline: 0;
+  font-size: ${props => props.theme.inputFontSize};
+  
+  :active,
+  :focus,
+  &.focus,
+  &.active {
+    outline: 0;
+  }
+`;
+
+const propTypes = {
+  exportHtml: PropTypes.object,
+  onExportMapboxAccessToken: PropTypes.func.isRequired
+};
+
+const ExportMapModal = ({
+  exportHtml,
+  onExportMapboxAccessToken
+}) => (
   <StyledExportMapModal>
     <div className="export-map-modal">
       <div className="title">
@@ -47,6 +74,18 @@ export const ExportMapModal = () => (
       <div className="subtitle">
         You will be able to save your configuration and data into a single file and download it on your device.
       </div>
+
+      <StyledSection>
+        <div>
+          Please provide your Mapbox access token
+        </div>
+        <StyledInput
+          onChange={e => onExportMapboxAccessToken(e.target.value)}
+          type="text"
+          placeholder="Mapbox access token"
+          value={exportHtml ? exportHtml.exportMapboxAccessToken : ''}
+        />
+      </StyledSection>
     </div>
   </StyledExportMapModal>
 );

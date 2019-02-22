@@ -43,9 +43,8 @@ export const exportMapToHTML = options => {
          * Provide your MapBox Token
          * This will be used in app.js (imported later)
          * */
-        const MAPBOX_TOKEN = 'PROVIDE_MAPBOX_TOKEN';
+        const MAPBOX_TOKEN = '${options.mapboxApiAccessToken || 'PROVIDE_MAPBOX_TOKEN'}';
       </script>
-    
     </head>
     <body>
       <!-- We will put our React component inside this div. -->
