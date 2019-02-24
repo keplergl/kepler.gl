@@ -24,10 +24,11 @@ import {worldToLngLat} from 'viewport-mercator-project';
 
 /* global fetch */
 const TILE_SIZE = 512;
-const MAP_SOURCE = 'https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7';
+const MAPBOX_HOST = 'https://a.tiles.mapbox.com'
+const MAP_SOURCE = '/v4/mapbox.mapbox-streets-v7';
 
-export function getTileData(token, {x, y, z}) {
-  const mapSource = `${MAP_SOURCE}/${z}/${x}/${y}.vector.pbf?access_token=${token}`;
+export function getTileData(host, token, {x, y, z}) {
+  const mapSource = `${host || MAPBOX_HOST}${MAP_SOURCE}/${z}/${x}/${y}.vector.pbf?access_token=${token}`;
 
   return fetch(mapSource)
     .then(response => response.arrayBuffer())

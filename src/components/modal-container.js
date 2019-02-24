@@ -102,6 +102,7 @@ export default function ModalContainerFactory(
       containerW: PropTypes.number,
       containerH: PropTypes.number,
       mapboxApiAccessToken: PropTypes.string.isRequired,
+      mapboxApiUrl: PropTypes.string,
       mapState: PropTypes.object.isRequired,
       mapStyle: PropTypes.object.isRequired,
       uiState: PropTypes.object.isRequired,
@@ -375,6 +376,7 @@ export default function ModalContainerFactory(
             template = (
               <AddMapStyleModal
                 mapboxApiAccessToken={this.props.mapboxApiAccessToken}
+                mapboxApiUrl={this.props.mapboxApiUrl}
                 mapState={this.props.mapState}
                 inputStyle={mapStyle.inputStyle}
                 inputMapStyle={this.props.mapStyleActions.inputMapStyle}

@@ -32,11 +32,12 @@ import ActionTypes from 'constants/action-types';
  * @param {boolean} payload.mint - Whether to use a fresh empty state, when `mint: true` it will *always* load a fresh state when the component is re-mounted.
  * When `mint: false` it will register with existing instance state under the same `id`, when the component is unmounted then mounted again. Default: `true`
  * @param {string} payload.mapboxApiAccessToken - mapboxApiAccessToken to be saved in `map-style` reducer.
+ * @param {string} payload.mapboxApiUrl - mapboxApiUrl to be saved in `map-style` reducer.
  * @public
  */
 export const registerEntry = createAction(
   ActionTypes.REGISTER_ENTRY,
-  ({id, mint, mapboxApiAccessToken}) => ({id, mint, mapboxApiAccessToken})
+  ({id, mint, mapboxApiAccessToken, mapboxApiUrl}) => ({id, mint, mapboxApiAccessToken, mapboxApiUrl})
 );
 
 /**

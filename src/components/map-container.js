@@ -71,6 +71,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       mapControls: PropTypes.object.isRequired,
       mousePos: PropTypes.object.isRequired,
       mapboxApiAccessToken: PropTypes.string.isRequired,
+      mapboxApiUrl: PropTypes.string,
       toggleMapControl: PropTypes.func.isRequired,
       visStateActions: PropTypes.object.isRequired,
       mapStateActions: PropTypes.object.isRequired,
@@ -318,7 +319,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         layerData,
         layerOrder,
         visStateActions,
-        mapboxApiAccessToken
+        mapboxApiAccessToken,
+        mapboxApiUrl
       } = this.props;
 
       let deckGlLayers = [];
@@ -336,6 +338,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         deckGlLayers.push(new ThreeDBuildingLayer({
           id: '_keplergl_3d-building',
           mapboxApiAccessToken,
+          mapboxApiUrl,
           threeDBuildingColor: mapStyle.threeDBuildingColor
         }));
       }
@@ -392,7 +395,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     render() {
       const {
         mapState, mapStyle, mapStateActions, mapLayers, layers, MapComponent,
-        datasets, mapboxApiAccessToken, mapControls, toggleMapControl
+        datasets, mapboxApiAccessToken, mapboxApiUrl, mapControls, toggleMapControl
       } = this.props;
 
       if (!mapStyle.bottomMapStyle) {
@@ -404,6 +407,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         ...mapState,
         preserveDrawingBuffer: true,
         mapboxApiAccessToken,
+        mapboxApiUrl,
         onViewportChange: this._onViewportChange,
         transformRequest
       };

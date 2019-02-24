@@ -58,11 +58,11 @@ test('#mapStyleReducer -> INIT', t => {
     {
       ...INITIAL_MAP_STYLE,
       initialState: {},
-      mapboxApiAccessToken: 'smoothies_secret_token'
+      mapboxApiAccessToken: 'smoothies_secret_token',
+      mapboxApiUrl: undefined
     },
     'initialie map style with mapboxApiAccessToken'
   );
-
   t.end();
 });
 

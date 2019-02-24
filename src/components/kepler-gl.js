@@ -97,6 +97,7 @@ function KeplerGlFactory(
   class KeplerGL extends Component {
     static defaultProps = {
       mapStyles: [],
+      mapStylesReplaceDefault: false,
       width: 800,
       height: 800,
       appName: KEPLER_GL_NAME,
@@ -153,6 +154,9 @@ function KeplerGlFactory(
     }
 
     _loadMapStyle = () => {
+      if(this.props.mapStylesReplaceDefault) {
+        this.props.mapStyle.mapStyles = [];
+      }
       const defaultStyles = Object.values(this.props.mapStyle.mapStyles);
       // add id to custom map styles if not given
       const customStyles = (this.props.mapStyles || []).map(ms => ({
@@ -163,7 +167,6 @@ function KeplerGlFactory(
       const allStyles = [...customStyles, ...defaultStyles].reduce((accu, style) => {
           const hasStyleObject = style.style && typeof style.style === 'object';
           accu[hasStyleObject ? 'toLoad' : 'toRequest'][style.id] = style;
-
           return accu;
         }, {toLoad: {}, toRequest: {}}
       );
@@ -183,6 +186,7 @@ function KeplerGlFactory(
         width,
         height,
         mapboxApiAccessToken,
+        mapboxApiUrl,
         getMapboxRef,
 
         // redux state
@@ -240,6 +244,7 @@ function KeplerGlFactory(
       const mapFields = {
         datasets,
         mapboxApiAccessToken,
+        mapboxApiUrl,
         mapState,
         mapStyle,
         mapControls: uiState.mapControls,
@@ -332,6 +337,7 @@ function KeplerGlFactory(
               mapState={mapState}
               uiState={uiState}
               mapboxApiAccessToken={mapboxApiAccessToken}
+              mapboxApiUrl={mapboxApiUrl}
               visStateActions={visStateActions}
               uiStateActions={uiStateActions}
               mapStyleActions={mapStyleActions}
