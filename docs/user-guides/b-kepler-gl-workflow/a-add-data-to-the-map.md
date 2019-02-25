@@ -52,6 +52,13 @@ Check out some [sample datasets](https://github.com/uber-web/kepler.gl-data) for
   }]
 }
 ```
+### Load Map Using URL
+
+Based on the feedback that we have received, we make importing data easier by allowing users to load your map through custom URL. It currently supports URLs with file extension of csv, json and kepler.gl. 
+
+In addition, this also by-passes 250mb file upload size limit which allows you to upload larger file to Kepler.
+
+![Load Map Using URL](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/a-load-map-using-url.gif "Load Map Using URL")
 
 ### Use Kepler.gl’s Sample Maps
 
