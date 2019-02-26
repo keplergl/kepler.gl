@@ -152,6 +152,14 @@ function KeplerGlFactory(
       );
     };
 
+    _getMapboxRef = mapbox => {
+      if (this.props.getMapboxRef) {
+        // The parent component can gain access to our MapContainer's
+        // InteractiveMap by providing this callback.
+        this.props.getMapboxRef(mapbox);
+      }
+    };
+
     _requestMapStyle = (mapStyle) => {
       const {url, id} = mapStyle;
 
@@ -260,6 +268,7 @@ function KeplerGlFactory(
               index={0}
               {...mapFields}
               mapLayers={isSplit ? splitMaps[0].layers : null}
+              getMapboxRef={this._getMapboxRef}
             />
           ]
         : splitMaps.map((settings, index) => (
@@ -268,6 +277,7 @@ function KeplerGlFactory(
               index={index}
               {...mapFields}
               mapLayers={splitMaps[index].layers}
+              getMapboxRef={this._getMapboxRef}
             />
           ));
 

@@ -148,6 +148,13 @@ export default function MapContainerFactory(MapPopover, MapControl) {
 
     _setMapboxMap = (mapbox) => {
       if (!this._map && mapbox) {
+
+        if (this.props.getMapboxRef) {
+          // The parent component can gain access to our MapboxGlMap by
+          // providing this callback.
+          this.props.getMapboxRef(mapbox);
+        }
+
         this._map = mapbox.getMap();
         // bind mapboxgl event listener
         this._map.on(MAPBOXGL_STYLE_UPDATE, () => {
