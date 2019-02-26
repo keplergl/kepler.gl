@@ -6,7 +6,7 @@
   },
   "dependencies": {
     "global": "^4.3.0",
-    "kepler.gl": "^0.2.1",
+    "kepler.gl": "^0.2.2",
     "react": "^15.3.1",
     "react-dom": "^15.6.1",
     "react-modal": "^3.1.10",

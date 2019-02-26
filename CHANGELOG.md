@@ -14,6 +14,16 @@ Each version should:
   Security to invite users to upgrade in case of vulnerabilities.
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
+
+#### [0.2.2] - Feb 6 2019
+- (HEAD -> master, origin/master, origin/HEAD) [Bug] Fixed web doc link (#369)
+- [Bug]: Fixed example dependencies (#362)
+- [Bug] Fix missing 3d building layer in image export (#361)
+- [Bug] fix 3d building layer missing mapbox token, fix image export (#360)
+- [Docs] Add API Docs (#279)
+- [Feature] UMD module in unpkg (#349)
+- Disabled banner (#352)
+
 #### [0.2.1] - Feb 6 2019
 - (HEAD -> master, origin/master) [Feature] Collapsible layer group (#350)
 - [Enhancement] Added default feature flags to disable dropbox (#338)
