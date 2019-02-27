@@ -2,691 +2,694 @@
 
 ### Table of Contents
 
--   [addDefaultLayers](#adddefaultlayers)
--   [addDefaultTooltips](#adddefaulttooltips)
--   [addFilterUpdater](#addfilterupdater)
--   [addLayerUpdater](#addlayerupdater)
--   [enlargeFilterUpdater](#enlargefilterupdater)
--   [INITIAL_VIS_STATE](#initial_vis_state)
-    -   [Properties](#properties)
--   [interactionConfigChangeUpdater](#interactionconfigchangeupdater)
--   [layerClickUpdater](#layerclickupdater)
--   [layerHoverUpdater](#layerhoverupdater)
--   [layerTypeChangeUpdater](#layertypechangeupdater)
--   [layerVisConfigChangeUpdater](#layervisconfigchangeupdater)
--   [layerVisualChannelChangeUpdater](#layervisualchannelchangeupdater)
--   [loadFilesErrUpdater](#loadfileserrupdater)
--   [loadFilesUpdater](#loadfilesupdater)
--   [mapClickUpdater](#mapclickupdater)
--   [receiveMapConfigUpdater](#receivemapconfigupdater)
--   [removeDatasetUpdater](#removedatasetupdater)
--   [removeFilterUpdater](#removefilterupdater)
--   [removeLayerUpdater](#removelayerupdater)
--   [reorderLayerUpdater](#reorderlayerupdater)
--   [resetMapConfigVisStateUpdater](#resetmapconfigvisstateupdater)
--   [setFilterPlotUpdater](#setfilterplotupdater)
--   [setFilterUpdater](#setfilterupdater)
--   [setVisibleLayersForMapUpdater](#setvisiblelayersformapupdater)
--   [showDatasetTableUpdater](#showdatasettableupdater)
--   [toggleFilterAnimationUpdater](#togglefilteranimationupdater)
--   [toggleLayerForMapUpdater](#togglelayerformapupdater)
--   [toggleSplitMapUpdater](#togglesplitmapupdater)
--   [updateAllLayerDomainData](#updatealllayerdomaindata)
--   [updateAnimationSpeedUpdater](#updateanimationspeedupdater)
--   [updateLayerBlendingUpdater](#updatelayerblendingupdater)
--   [updateVisDataUpdater](#updatevisdataupdater)
+-   [visStateUpdaters](#visstateupdaters)
+    -   [addFilterUpdater](#addfilterupdater)
+    -   [addLayerUpdater](#addlayerupdater)
+    -   [enlargeFilterUpdater](#enlargefilterupdater)
+    -   [INITIAL_VIS_STATE](#initial_vis_state)
+    -   [interactionConfigChangeUpdater](#interactionconfigchangeupdater)
+    -   [layerClickUpdater](#layerclickupdater)
+    -   [layerHoverUpdater](#layerhoverupdater)
+    -   [layerTypeChangeUpdater](#layertypechangeupdater)
+    -   [layerVisConfigChangeUpdater](#layervisconfigchangeupdater)
+    -   [layerVisualChannelChangeUpdater](#layervisualchannelchangeupdater)
+    -   [loadFilesErrUpdater](#loadfileserrupdater)
+    -   [loadFilesUpdater](#loadfilesupdater)
+    -   [mapClickUpdater](#mapclickupdater)
+    -   [receiveMapConfigUpdater](#receivemapconfigupdater)
+    -   [removeDatasetUpdater](#removedatasetupdater)
+    -   [removeFilterUpdater](#removefilterupdater)
+    -   [removeLayerUpdater](#removelayerupdater)
+    -   [reorderLayerUpdater](#reorderlayerupdater)
+    -   [resetMapConfigVisStateUpdater](#resetmapconfigvisstateupdater)
+    -   [setFilterPlotUpdater](#setfilterplotupdater)
+    -   [setFilterUpdater](#setfilterupdater)
+    -   [setVisibleLayersForMapUpdater](#setvisiblelayersformapupdater)
+    -   [showDatasetTableUpdater](#showdatasettableupdater)
+    -   [toggleFilterAnimationUpdater](#togglefilteranimationupdater)
+    -   [toggleLayerForMapUpdater](#togglelayerformapupdater)
+    -   [toggleSplitMapUpdater](#togglesplitmapupdater)
+    -   [updateAnimationSpeedUpdater](#updateanimationspeedupdater)
+    -   [updateLayerBlendingUpdater](#updatelayerblendingupdater)
+    -   [updateVisDataUpdater](#updatevisdataupdater)
 
-## addDefaultLayers
+## visStateUpdaters
 
-helper function to update All layer domain and layer data of state
+Updaters for `visState` reducer. Can be used in your root reducer to directly modify kepler.gl's state.
+Read more about [Using updaters][61]
 
-**Parameters**
+**Examples**
 
--   `state` **[Object][65]** `visState`
--   `datasets` **[Array][66]&lt;[string][67]>** 
+```javascript
+import keplerGlReducer, {visStateUpdaters} from 'kepler.gl/reducers';
+// Root Reducer
+const reducers = combineReducers({
+ keplerGl: keplerGlReducer,
+ app: appReducer
+});
 
-Returns **[Object][65]** nextState
+const composedReducer = (state, action) => {
+ switch (action.type) {
+   case 'CLICK_BUTTON':
+     return {
+       ...state,
+       keplerGl: {
+         ...state.keplerGl,
+         foo: {
+            ...state.keplerGl.foo,
+            visState: visStateUpdaters.enlargeFilterUpdater(
+              state.keplerGl.foo.visState,
+              {idx: 0}
+            )
+         }
+       }
+     };
+ }
+ return reducers(state, action);
+};
 
-## addDefaultTooltips
+export default composedReducer;
+```
 
-helper function to find default tooltips
-
-**Parameters**
-
--   `state` **[Object][65]** 
--   `dataset` **[Object][65]** 
-
-Returns **[Object][65]** nextState
-
-## addFilterUpdater
+### addFilterUpdater
 
 Add a new filter
 
--   **Action**: [`addFilter`][68]
+-   **Action**: [`addFilter`][62]
 
 **Parameters**
 
--   `state` **[Object][65]** `visState`
--   `action` **[Object][65]** action
-    -   `action.dataId` **[string][67]** dataset `id` this new filter is associated with
+-   `state` **[Object][63]** `visState`
+-   `action` **[Object][63]** action
+    -   `action.dataId` **[string][64]** dataset `id` this new filter is associated with
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## addLayerUpdater
+### addLayerUpdater
 
 Add a new layer
 
--   **Action**: [`addLayer`][69]
+-   **Action**: [`addLayer`][65]
 
 **Parameters**
 
--   `state` **[Object][65]** `visState`
--   `action` **[Object][65]** action
-    -   `action.props` **[Object][65]** new layer props
+-   `state` **[Object][63]** `visState`
+-   `action` **[Object][63]** action
+    -   `action.props` **[Object][63]** new layer props
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## enlargeFilterUpdater
+### enlargeFilterUpdater
 
 Show larger time filter at bottom for time playback (apply to time filter only)
 
--   **Action**: [`enlargeFilter`][70]
+-   **Action**: [`enlargeFilter`][66]
 
 **Parameters**
 
--   `state` **[Object][65]** `visState`
--   `action` **[Object][65]** action
-    -   `action.idx` **[Number][71]** index of filter to enlarge
+-   `state` **[Object][63]** `visState`
+-   `action` **[Object][63]** action
+    -   `action.idx` **[Number][67]** index of filter to enlarge
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## INITIAL_VIS_STATE
+### INITIAL_VIS_STATE
 
 Default initial `visState`
 
-Type: [Object][65]
+Type: [Object][63]
 
-### Properties
+#### Properties
 
--   `layers` **[Array][66]** 
--   `layerData` **[Array][66]** 
--   `layerToBeMerged` **[Array][66]** 
--   `layerOrder` **[Array][66]** 
--   `filters` **[Array][66]** 
--   `filterToBeMerged` **[Array][66]** 
--   `datasets` **[Array][66]** 
--   `editingDataset` **[string][67]** 
--   `interactionConfig` **[Object][65]** 
--   `interactionToBeMerged` **[Object][65]** 
--   `layerBlending` **[string][67]** 
--   `hoverInfo` **[Object][65]** 
--   `clicked` **[Object][65]** 
--   `fileLoading` **[boolean][72]** 
+-   `layers` **[Array][68]** 
+-   `layerData` **[Array][68]** 
+-   `layerToBeMerged` **[Array][68]** 
+-   `layerOrder` **[Array][68]** 
+-   `filters` **[Array][68]** 
+-   `filterToBeMerged` **[Array][68]** 
+-   `datasets` **[Array][68]** 
+-   `editingDataset` **[string][64]** 
+-   `interactionConfig` **[Object][63]** 
+-   `interactionToBeMerged` **[Object][63]** 
+-   `layerBlending` **[string][64]** 
+-   `hoverInfo` **[Object][63]** 
+-   `clicked` **[Object][63]** 
+-   `fileLoading` **[boolean][69]** 
 -   `fileLoadingErr` **any** 
--   `splitMaps` **[Array][66]** a list of objects of layer availabilities and visibilities for each map
+-   `splitMaps` **[Array][68]** a list of objects of layer availabilities and visibilities for each map
 
-## interactionConfigChangeUpdater
+### interactionConfigChangeUpdater
 
 Update `interactionConfig`
 
--   **Action**: [`interactionConfigChange`][73]
+-   **Action**: [`interactionConfigChange`][70]
 
 **Parameters**
 
--   `state` **[Object][65]** `visState`
--   `action` **[Object][65]** action
-    -   `action.config` **[Object][65]** new config as key value map: `{tooltip: {enabled: true}}`
+-   `state` **[Object][63]** `visState`
+-   `action` **[Object][63]** action
+    -   `action.config` **[Object][63]** new config as key value map: `{tooltip: {enabled: true}}`
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## layerClickUpdater
+### layerClickUpdater
 
 Trigger layer click event with clicked object
 
--   **Action**: [`onLayerClick`][74]
+-   **Action**: [`onLayerClick`][71]
 
 **Parameters**
 
--   `state` **[Object][65]** `visState`
--   `action` **[Object][65]** action
-    -   `action.info` **[Object][65]** Object clicked, returned by deck.gl
+-   `state` **[Object][63]** `visState`
+-   `action` **[Object][63]** action
+    -   `action.info` **[Object][63]** Object clicked, returned by deck.gl
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## layerHoverUpdater
+### layerHoverUpdater
 
 Trigger layer hover event with hovered object
 
--   **Action**: [`onLayerHover`][75]
+-   **Action**: [`onLayerHover`][72]
 
 **Parameters**
 
--   `state` **[Object][65]** `visState`
--   `action` **[Object][65]** action
-    -   `action.info` **[Object][65]** Object hovered, returned by deck.gl
+-   `state` **[Object][63]** `visState`
+-   `action` **[Object][63]** action
+    -   `action.info` **[Object][63]** Object hovered, returned by deck.gl
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## layerTypeChangeUpdater
+### layerTypeChangeUpdater
 
 Update layer type. Previews layer config will be copied if applicable.
 
--   **Action**: [`layerTypeChange`][76]
+-   **Action**: [`layerTypeChange`][73]
 
 **Parameters**
 
--   `state` **[Object][65]** `visState`
--   `action` **[Object][65]** action
-    -   `action.oldLayer` **[Object][65]** layer to be updated
-    -   `action.newType` **[string][67]** new type
+-   `state` **[Object][63]** `visState`
+-   `action` **[Object][63]** action
+    -   `action.oldLayer` **[Object][63]** layer to be updated
+    -   `action.newType` **[string][64]** new type
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## layerVisConfigChangeUpdater
+### layerVisConfigChangeUpdater
 
 Update layer `visConfig`
 
--   **Action**: [`layerVisConfigChange`][77]
+-   **Action**: [`layerVisConfigChange`][74]
 
 **Parameters**
 
--   `state` **[Object][65]** `visState`
--   `action` **[Object][65]** action
-    -   `action.oldLayer` **[Object][65]** layer to be updated
-    -   `action.newVisConfig` **[Object][65]** new visConfig as a key value map: e.g. `{opacity: 0.8}`
+-   `state` **[Object][63]** `visState`
+-   `action` **[Object][63]** action
+    -   `action.oldLayer` **[Object][63]** layer to be updated
+    -   `action.newVisConfig` **[Object][63]** new visConfig as a key value map: e.g. `{opacity: 0.8}`
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## layerVisualChannelChangeUpdater
+### layerVisualChannelChangeUpdater
 
 Update layer visual channel
 
--   **Action**: [`layerVisualChannelConfigChange`][78]
+-   **Action**: [`layerVisualChannelConfigChange`][75]
 
 **Parameters**
 
--   `state` **[Object][65]** `visState`
--   `action` **[Object][65]** action
-    -   `action.oldLayer` **[Object][65]** layer to be updated
-    -   `action.newConfig` **[Object][65]** new visual channel config
-    -   `action.channel` **[string][67]** channel to be updated
+-   `state` **[Object][63]** `visState`
+-   `action` **[Object][63]** action
+    -   `action.oldLayer` **[Object][63]** layer to be updated
+    -   `action.newConfig` **[Object][63]** new visual channel config
+    -   `action.channel` **[string][64]** channel to be updated
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## loadFilesErrUpdater
+### loadFilesErrUpdater
 
 Trigger loading file error
 
--   **Action**: [`loadFilesErr`][79]
+-   **Action**: [`loadFilesErr`][76]
 
 **Parameters**
 
--   `state` **[Object][65]** `visState`
--   `action` **[Object][65]** action
+-   `state` **[Object][63]** `visState`
+-   `action` **[Object][63]** action
     -   `action.error` **any** 
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## loadFilesUpdater
+### loadFilesUpdater
 
 Trigger file loading dispatch `addDataToMap` if succeed, or `loadFilesErr` if failed
 
--   **Action**: [`loadFiles`][80]
+-   **Action**: [`loadFiles`][77]
 
 **Parameters**
 
--   `state` **[Object][65]** `visState`
--   `action` **[Object][65]** action
-    -   `action.files` **[Array][66]&lt;[Object][65]>** array of fileblob
+-   `state` **[Object][63]** `visState`
+-   `action` **[Object][63]** action
+    -   `action.files` **[Array][68]&lt;[Object][63]>** array of fileblob
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## mapClickUpdater
+### mapClickUpdater
 
 Trigger map click event, unselect clicked object
 
--   **Action**: [`onMapClick`][81]
+-   **Action**: [`onMapClick`][78]
 
 **Parameters**
 
--   `state` **[Object][65]** `visState`
+-   `state` **[Object][63]** `visState`
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## receiveMapConfigUpdater
+### receiveMapConfigUpdater
 
 Propagate `visState` reducer with a new configuration. Current config will be override.
 
--   **Action**: [`receiveMapConfig`][82]
+-   **Action**: [`receiveMapConfig`][79]
 
 **Parameters**
 
--   `state` **[Object][65]** `visState`
--   `action` **[Object][65]** action
-    -   `action.payload` **[Object][65]** map config to be propagated
+-   `state` **[Object][63]** `visState`
+-   `action` **[Object][63]** action
+    -   `action.payload` **[Object][63]** map config to be propagated
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## removeDatasetUpdater
+### removeDatasetUpdater
 
 Remove a dataset and all layers, filters, tooltip configs that based on it
 
--   **Action**: [`removeDataset`][83]
+-   **Action**: [`removeDataset`][80]
 
 **Parameters**
 
--   `state` **[Object][65]** `visState`
--   `action` **[Object][65]** action
-    -   `action.key` **[string][67]** dataset id
+-   `state` **[Object][63]** `visState`
+-   `action` **[Object][63]** action
+    -   `action.key` **[string][64]** dataset id
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## removeFilterUpdater
+### removeFilterUpdater
 
 Remove a filter
 
--   **Action**: [`removeFilter`][84]
+-   **Action**: [`removeFilter`][81]
 
 **Parameters**
 
--   `state` **[Object][65]** `visState`
--   `action` **[Object][65]** action
-    -   `action.idx` **[Number][71]** index of filter to b e removed
+-   `state` **[Object][63]** `visState`
+-   `action` **[Object][63]** action
+    -   `action.idx` **[Number][67]** index of filter to b e removed
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## removeLayerUpdater
+### removeLayerUpdater
 
 remove layer
 
--   **Action**: [`removeLayer`][85]
+-   **Action**: [`removeLayer`][82]
 
 **Parameters**
 
--   `state` **[Object][65]** `visState`
--   `action` **[Object][65]** action
-    -   `action.idx` **[Number][71]** index of layer to b e removed
+-   `state` **[Object][63]** `visState`
+-   `action` **[Object][63]** action
+    -   `action.idx` **[Number][67]** index of layer to b e removed
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## reorderLayerUpdater
+### reorderLayerUpdater
 
 Reorder layer
 
--   **Action**: [`reorderLayer`][86]
+-   **Action**: [`reorderLayer`][83]
 
 **Parameters**
 
--   `state` **[Object][65]** `visState`
--   `action` **[Object][65]** action
-    -   `action.order` **[Array][66]&lt;[Number][71]>** an array of layer indexes
+-   `state` **[Object][63]** `visState`
+-   `action` **[Object][63]** action
+    -   `action.order` **[Array][68]&lt;[Number][67]>** an array of layer indexes
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## resetMapConfigVisStateUpdater
+### resetMapConfigVisStateUpdater
 
 reset visState to initial State
 
--   **Action**: [`resetMapConfig`][87]
+-   **Action**: [`resetMapConfig`][84]
 
 **Parameters**
 
--   `state` **[Object][65]** `visState`
+-   `state` **[Object][63]** `visState`
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## setFilterPlotUpdater
+### setFilterPlotUpdater
 
 Set the property of a filter plot
 
--   **Action**: [`setFilterPlot`][88]
+-   **Action**: [`setFilterPlot`][85]
 
 **Parameters**
 
--   `state` **[Object][65]** `visState`
--   `action` **[Object][65]** action
-    -   `action.idx` **[Number][71]** 
-    -   `action.newProp` **[Object][65]** key value mapping of new prop `{yAxis: 'histogram'}`
+-   `state` **[Object][63]** `visState`
+-   `action` **[Object][63]** action
+    -   `action.idx` **[Number][67]** 
+    -   `action.newProp` **[Object][63]** key value mapping of new prop `{yAxis: 'histogram'}`
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## setFilterUpdater
+### setFilterUpdater
 
 Update filter property
 
--   **Action**: [`setFilter`][89]
+-   **Action**: [`setFilter`][86]
 
 **Parameters**
 
--   `state` **[Object][65]** `visState`
--   `action` **[Object][65]** action
-    -   `action.idx` **[Number][71]** `idx` of filter to be updated
-    -   `action.prop` **[string][67]** `prop` of filter, e,g, `dataId`, `name`, `value`
+-   `state` **[Object][63]** `visState`
+-   `action` **[Object][63]** action
+    -   `action.idx` **[Number][67]** `idx` of filter to be updated
+    -   `action.prop` **[string][64]** `prop` of filter, e,g, `dataId`, `name`, `value`
     -   `action.value` **any** new value
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## setVisibleLayersForMapUpdater
+### setVisibleLayersForMapUpdater
 
 Set layers to be visible in split map
 
--   **Action**: [`setVisibleLayersForMap`][90]
+-   **Action**: [`setVisibleLayersForMap`][87]
 
 **Parameters**
 
--   `state` **[Object][65]** `visState`
--   `action` **[Object][65]** action
--   `mapIndex` **[Number][71]** index of the split map
--   `layerIds` **[Array][66]&lt;[string][67]>** array of layer ids
+-   `state` **[Object][63]** `visState`
+-   `action` **[Object][63]** action
+-   `mapIndex` **[Number][67]** index of the split map
+-   `layerIds` **[Array][68]&lt;[string][64]>** array of layer ids
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## showDatasetTableUpdater
+### showDatasetTableUpdater
 
 Display dataset table in a modal
 
--   **Action**: [`showDatasetTable`][91]
+-   **Action**: [`showDatasetTable`][88]
 
 **Parameters**
 
--   `state` **[Object][65]** `visState`
--   `action` **[Object][65]** action
-    -   `action.dataId` **[string][67]** dataset id to show in table
+-   `state` **[Object][63]** `visState`
+-   `action` **[Object][63]** action
+    -   `action.dataId` **[string][64]** dataset id to show in table
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## toggleFilterAnimationUpdater
+### toggleFilterAnimationUpdater
 
 Start and end filter animation
 
--   **Action**: [`toggleAnimation`][92]
+-   **Action**: [`toggleAnimation`][89]
 
 **Parameters**
 
--   `state` **[Object][65]** `visState`
--   `action` **[Object][65]** action
-    -   `action.idx` **[Number][71]** idx of filter
+-   `state` **[Object][63]** `visState`
+-   `action` **[Object][63]** action
+    -   `action.idx` **[Number][67]** idx of filter
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## toggleLayerForMapUpdater
+### toggleLayerForMapUpdater
 
 Toggle visibility of a layer in a split map
 
--   **Action**: [`toggleLayerForMap`][93]
+-   **Action**: [`toggleLayerForMap`][90]
 
 **Parameters**
 
--   `state` **[Object][65]** 
--   `action` **[Object][65]** 
-    -   `action.mapIndex` **[Number][71]** index of the split map
-    -   `action.layerId` **[string][67]** id of the layer
+-   `state` **[Object][63]** 
+-   `action` **[Object][63]** 
+    -   `action.mapIndex` **[Number][67]** index of the split map
+    -   `action.layerId` **[string][64]** id of the layer
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## toggleSplitMapUpdater
+### toggleSplitMapUpdater
 
-Toggle visibility of a layer for a splitted map
+Toggle visibility of a layer for a split map
 
--   **Action**: [`toggleSplitMap`][94]
-
-**Parameters**
-
--   `state` **[Object][65]** `visState`
--   `action` **[Object][65]** action
-    -   `action.payload` **([Number][71] \| [undefined][95])** index of the splitted map
-
-Returns **[Object][65]** nextState
-
-## updateAllLayerDomainData
-
-helper function to update layer domains for an array of datsets
+-   **Action**: [`toggleSplitMap`][91]
 
 **Parameters**
 
--   `state` **[Object][65]** 
--   `dataId` **([Array][66] \| [Array][66]&lt;[string][67]>)** dataset id or array of dataset ids
--   `newFilter` **[Object][65]** if is called by setFilter, the filter that has changed
+-   `state` **[Object][63]** `visState`
+-   `action` **[Object][63]** action
+    -   `action.payload` **([Number][67] \| [undefined][92])** index of the split map
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## updateAnimationSpeedUpdater
+### updateAnimationSpeedUpdater
 
 Change filter animation speed
 
--   **Action**: [`updateAnimationSpeed`][96]
+-   **Action**: [`updateAnimationSpeed`][93]
 
 **Parameters**
 
--   `state` **[Object][65]** `visState`
--   `action` **[Object][65]** action
-    -   `action.idx` **[Number][71]** `idx` of filter
-    -   `action.speed` **[Number][71]** `speed` to change it to. `speed` is a multiplier
+-   `state` **[Object][63]** `visState`
+-   `action` **[Object][63]** action
+    -   `action.idx` **[Number][67]** `idx` of filter
+    -   `action.speed` **[Number][67]** `speed` to change it to. `speed` is a multiplier
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## updateLayerBlendingUpdater
+### updateLayerBlendingUpdater
 
 update layer blending mode
 
--   **Action**: [`updateLayerBlending`][97]
+-   **Action**: [`updateLayerBlending`][94]
 
 **Parameters**
 
--   `state` **[Object][65]** `visState`
--   `action` **[Object][65]** action
-    -   `action.mode` **[string][67]** one of `additive`, `normal` and `subtractive`
+-   `state` **[Object][63]** `visState`
+-   `action` **[Object][63]** action
+    -   `action.mode` **[string][64]** one of `additive`, `normal` and `subtractive`
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-## updateVisDataUpdater
+### updateVisDataUpdater
 
 Add new dataset to `visState`, with option to load a map config along with the datasets
 
--   **Action**: [`updateVisData`][98]
+-   **Action**: [`updateVisData`][95]
 
 **Parameters**
 
--   `state` **[Object][65]** `visState`
--   `action` **[Object][65]** action
-    -   `action.datasets` **[Array][66]&lt;[Object][65]>** array of datasets
-    -   `action.options` **[Object][65]** option object `{centerMap: true}`
-    -   `action.config` **[Object][65]** map config
+-   `state` **[Object][63]** `visState`
+-   `action` **[Object][63]** action
+    -   `action.datasets` **([Array][68]&lt;[Object][63]> | [Object][63])** **\*required** datasets can be a dataset or an array of datasets
+        Each dataset object needs to have `info` and `data` property.
+        -   `action.datasets.info` **[Object][63]** \-info of a dataset
+            -   `action.datasets.info.id` **[string][64]** id of this dataset. If config is defined, `id` should matches the `dataId` in config.
+            -   `action.datasets.info.label` **[string][64]** A display name of this dataset
+        -   `action.datasets.data` **[Object][63]** **\*required** The data object, in a tabular format with 2 properties `fields` and `rows`
+            -   `action.datasets.data.fields` **[Array][68]&lt;[Object][63]>** **\*required** Array of fields,
+                -   `action.datasets.data.fields.name` **[string][64]** **\*required** Name of the field,
+            -   `action.datasets.data.rows` **[Array][68]&lt;[Array][68]>** **\*required** Array of rows, in a tabular format with `fields` and `rows`
+    -   `action.options` **[Object][63]** option object `{centerMap: true}`
+    -   `action.config` **[Object][63]** map config
 
-Returns **[Object][65]** nextState
+Returns **[Object][63]** nextState
 
-[1]: #adddefaultlayers
+[1]: #visstateupdaters
 
-[2]: #parameters
+[2]: #examples
 
-[3]: #adddefaulttooltips
+[3]: #addfilterupdater
 
-[4]: #parameters-1
+[4]: #parameters
 
-[5]: #addfilterupdater
+[5]: #addlayerupdater
 
-[6]: #parameters-2
+[6]: #parameters-1
 
-[7]: #addlayerupdater
+[7]: #enlargefilterupdater
 
-[8]: #parameters-3
+[8]: #parameters-2
 
-[9]: #enlargefilterupdater
+[9]: #initial_vis_state
 
-[10]: #parameters-4
+[10]: #properties
 
-[11]: #initial_vis_state
+[11]: #interactionconfigchangeupdater
 
-[12]: #properties
+[12]: #parameters-3
 
-[13]: #interactionconfigchangeupdater
+[13]: #layerclickupdater
 
-[14]: #parameters-5
+[14]: #parameters-4
 
-[15]: #layerclickupdater
+[15]: #layerhoverupdater
 
-[16]: #parameters-6
+[16]: #parameters-5
 
-[17]: #layerhoverupdater
+[17]: #layertypechangeupdater
 
-[18]: #parameters-7
+[18]: #parameters-6
 
-[19]: #layertypechangeupdater
+[19]: #layervisconfigchangeupdater
 
-[20]: #parameters-8
+[20]: #parameters-7
 
-[21]: #layervisconfigchangeupdater
+[21]: #layervisualchannelchangeupdater
 
-[22]: #parameters-9
+[22]: #parameters-8
 
-[23]: #layervisualchannelchangeupdater
+[23]: #loadfileserrupdater
 
-[24]: #parameters-10
+[24]: #parameters-9
 
-[25]: #loadfileserrupdater
+[25]: #loadfilesupdater
 
-[26]: #parameters-11
+[26]: #parameters-10
 
-[27]: #loadfilesupdater
+[27]: #mapclickupdater
 
-[28]: #parameters-12
+[28]: #parameters-11
 
-[29]: #mapclickupdater
+[29]: #receivemapconfigupdater
 
-[30]: #parameters-13
+[30]: #parameters-12
 
-[31]: #receivemapconfigupdater
+[31]: #removedatasetupdater
 
-[32]: #parameters-14
+[32]: #parameters-13
 
-[33]: #removedatasetupdater
+[33]: #removefilterupdater
 
-[34]: #parameters-15
+[34]: #parameters-14
 
-[35]: #removefilterupdater
+[35]: #removelayerupdater
 
-[36]: #parameters-16
+[36]: #parameters-15
 
-[37]: #removelayerupdater
+[37]: #reorderlayerupdater
 
-[38]: #parameters-17
+[38]: #parameters-16
 
-[39]: #reorderlayerupdater
+[39]: #resetmapconfigvisstateupdater
 
-[40]: #parameters-18
+[40]: #parameters-17
 
-[41]: #resetmapconfigvisstateupdater
+[41]: #setfilterplotupdater
 
-[42]: #parameters-19
+[42]: #parameters-18
 
-[43]: #setfilterplotupdater
+[43]: #setfilterupdater
 
-[44]: #parameters-20
+[44]: #parameters-19
 
-[45]: #setfilterupdater
+[45]: #setvisiblelayersformapupdater
 
-[46]: #parameters-21
+[46]: #parameters-20
 
-[47]: #setvisiblelayersformapupdater
+[47]: #showdatasettableupdater
 
-[48]: #parameters-22
+[48]: #parameters-21
 
-[49]: #showdatasettableupdater
+[49]: #togglefilteranimationupdater
 
-[50]: #parameters-23
+[50]: #parameters-22
 
-[51]: #togglefilteranimationupdater
+[51]: #togglelayerformapupdater
 
-[52]: #parameters-24
+[52]: #parameters-23
 
-[53]: #togglelayerformapupdater
+[53]: #togglesplitmapupdater
 
-[54]: #parameters-25
+[54]: #parameters-24
 
-[55]: #togglesplitmapupdater
+[55]: #updateanimationspeedupdater
 
-[56]: #parameters-26
+[56]: #parameters-25
 
-[57]: #updatealllayerdomaindata
+[57]: #updatelayerblendingupdater
 
-[58]: #parameters-27
+[58]: #parameters-26
 
-[59]: #updateanimationspeedupdater
+[59]: #updatevisdataupdater
 
-[60]: #parameters-28
+[60]: #parameters-27
 
-[61]: #updatelayerblendingupdater
+[61]: ../advanced-usage/using-updaters.md
 
-[62]: #parameters-29
+[62]: ../actions/actions.md#addfilter
 
-[63]: #updatevisdataupdater
+[63]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
 
-[64]: #parameters-30
+[64]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
 
-[65]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+[65]: ../actions/actions.md#addlayer
 
-[66]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+[66]: ../actions/actions.md#enlargefilter
 
-[67]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+[67]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
 
-[68]: ../actions/actions.md#addfilter
+[68]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
 
-[69]: ../actions/actions.md#addlayer
+[69]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
 
-[70]: ../actions/actions.md#enlargefilter
+[70]: ../actions/actions.md#interactionconfigchange
 
-[71]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
+[71]: ../actions/actions.md#onlayerclick
 
-[72]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+[72]: ../actions/actions.md#onlayerhover
 
-[73]: ../actions/actions.md#interactionconfigchange
+[73]: ../actions/actions.md#layertypechange
 
-[74]: ../actions/actions.md#onlayerclick
+[74]: ../actions/actions.md#layervisconfigchange
 
-[75]: ../actions/actions.md#onlayerhover
+[75]: ../actions/actions.md#layervisualchannelconfigchange
 
-[76]: ../actions/actions.md#layertypechange
+[76]: ../actions/actions.md#loadfileserr
 
-[77]: ../actions/actions.md#layervisconfigchange
+[77]: ../actions/actions.md#loadfiles
 
-[78]: ../actions/actions.md#layervisualchannelconfigchange
+[78]: ../actions/actions.md#onmapclick
 
-[79]: ../actions/actions.md#loadfileserr
+[79]: ../actions/actions.md#receivemapconfig
 
-[80]: ../actions/actions.md#loadfiles
+[80]: ../actions/actions.md#removedataset
 
-[81]: ../actions/actions.md#onmapclick
+[81]: ../actions/actions.md#removefilter
 
-[82]: ../actions/actions.md#receivemapconfig
+[82]: ../actions/actions.md#removelayer
 
-[83]: ../actions/actions.md#removedataset
+[83]: ../actions/actions.md#reorderlayer
 
-[84]: ../actions/actions.md#removefilter
+[84]: ../actions/actions.md#resetmapconfig
 
-[85]: ../actions/actions.md#removelayer
+[85]: ../actions/actions.md#setfilterplot
 
-[86]: ../actions/actions.md#reorderlayer
+[86]: ../actions/actions.md#setfilter
 
-[87]: ../actions/actions.md#resetmapconfig
+[87]: ../actions/actions.md#setvisiblelayersformap
 
-[88]: ../actions/actions.md#setfilterplot
+[88]: ../actions/actions.md#showdatasettable
 
-[89]: ../actions/actions.md#setfilter
+[89]: ../actions/actions.md#toggleanimation
 
-[90]: ../actions/actions.md#setvisiblelayersformap
+[90]: ../actions/actions.md#togglelayerformap
 
-[91]: ../actions/actions.md#showdatasettable
+[91]: ../actions/actions.md#togglesplitmap
 
-[92]: ../actions/actions.md#toggleanimation
+[92]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/undefined
 
-[93]: ../actions/actions.md#togglelayerformap
+[93]: ../actions/actions.md#updateanimationspeed
 
-[94]: ../actions/actions.md#togglesplitmap
+[94]: ../actions/actions.md#updatelayerblending
 
-[95]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/undefined
-
-[96]: ../actions/actions.md#updateanimationspeed
-
-[97]: ../actions/actions.md#updatelayerblending
-
-[98]: ../actions/actions.md#updatevisdata
+[95]: ../actions/actions.md#updatevisdata

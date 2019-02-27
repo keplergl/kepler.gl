@@ -131,7 +131,7 @@ function traverseTree(filePath, actionMap = {}) {
 
   const ast = parser.parse(content, {
     sourceType: 'module',
-    plugins: ['exportNamespaceFrom']
+    plugins: ['exportNamespaceFrom', 'exportDefaultFrom']
   });
 
   traverse(ast, {

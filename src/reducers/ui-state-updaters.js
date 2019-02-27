@@ -31,7 +31,48 @@ export const DEFAULT_ACTIVE_SIDE_PANEL = 'layer';
 export const DEFAULT_MODAL = ADD_DATA_ID;
 
 /**
+ * Updaters for `uiState` reducer. Can be used in your root reducer to directly modify kepler.gl's state.
+ * Read more about [Using updaters](../advanced-usage/using-updaters.md)
+ *
+ * @public
+ * @example
+ *
+ * import keplerGlReducer, {uiStateUpdaters} from 'kepler.gl/reducers';
+ * // Root Reducer
+ * const reducers = combineReducers({
+ *  keplerGl: keplerGlReducer,
+ *  app: appReducer
+ * });
+ *
+ * const composedReducer = (state, action) => {
+ *  switch (action.type) {
+ *    // click button to close side panel
+ *    case 'CLICK_BUTTON':
+ *      return {
+ *        ...state,
+ *        keplerGl: {
+ *          ...state.keplerGl,
+ *          foo: {
+ *             ...state.keplerGl.foo,
+ *             uiState: uiStateUpdaters.toggleSidePanelUpdater(
+ *               uiState, {payload: null}
+ *             )
+ *          }
+ *        }
+ *      };
+ *  }
+ *  return reducers(state, action);
+ * };
+ *
+ * export default composedReducer;
+ */
+/* eslint-disable no-unused-vars */
+ const uiStateUpdaters = null;
+/* eslint-enable no-unused-vars */
+
+/**
  * A list of map control visibility and whether is it active.
+ * @memberof uiStateUpdaters
  * @constant
  * @type {Object}
  * @property {Object} visibleLayers Default: `{show: true, active: false}`
@@ -59,6 +100,7 @@ export const DEFAULT_MAP_CONTROLS = {
 
 /**
  * Default image export config
+ * @memberof uiStateUpdaters
  * @constant
  * @type {Object}
  * @property {string} ratio Default: `'SCREEN'`,
@@ -79,6 +121,8 @@ export const DEFAULT_EXPORT_IMAGE = {
 };
 
 /**
+ * Default initial `exportData` settings
+ * @memberof uiStateUpdaters
  * @constant
  * @type {Object}
  * @property {string} selectedDataset Default: `''`,
@@ -100,13 +144,14 @@ export const DEFAULT_NOTIFICATIONS = [];
 
 /**
  * Default initial `uiState`
+ * @memberof uiStateUpdaters
  * @constant
  * @type {Object}
- * @property {boolean} readOnly Default: false
- * @property {string} activeSidePanel Default: 'layer'
- * @property {string|null} currentModal Default: 'addData'
- * @property {string|null} datasetKeyToRemove Default: null
- * @property {string|null} visibleDropdown Default: null
+ * @property {boolean} readOnly Default: `false`
+ * @property {string} activeSidePanel Default: `'layer'`
+ * @property {string|null} currentModal Default: `'addData'`
+ * @property {string|null} datasetKeyToRemove Default: `null`
+ * @property {string|null} visibleDropdown Default: `null`
  * @property {Object} exportImage Default: [`DEFAULT_EXPORT_IMAGE`](#default_export_image)
  * @property {Object} exportData Default: [`DEFAULT_EXPORT_DATA`](#default_export_data)
  * @property {Object} mapControls Default: [`DEFAULT_MAP_CONTROLS`](#default_map_controls)
@@ -131,9 +176,10 @@ export const INITIAL_UI_STATE = {
 /* Updaters */
 /**
  * Toggle active side panel
+ * @memberof uiStateUpdaters
  * @param {Object} state `uiState`
  * @param {Object} action
- * @param {string} action.payload id of side panel to be shown, one of `layer`, `filter`, `interaction`, `map`
+ * @param {string|null} action.payload id of side panel to be shown, one of `layer`, `filter`, `interaction`, `map`. close side panel if `null`
  * @returns {Object} nextState
  * @public
  */
@@ -150,6 +196,7 @@ export const toggleSidePanelUpdater = (state, {payload: id}) => {
 
 /**
  * Show and hide modal dialog
+ * @memberof uiStateUpdaters
  * @param {Object} state `uiState`
  * @param {Object} action
  * @param {string|null} action.payload id of modal to be shown, null to hide modals. One of:
@@ -171,6 +218,7 @@ export const toggleModalUpdater = (state, {payload: id}) => ({
 
 /**
  * Hide and show side panel header dropdown, activated by clicking the share link on top of the side panel
+ * @memberof uiStateUpdaters
  * @param {Object} state `uiState`
  * @param {Object} action
  * @param {string} action.payload id of the dropdown
@@ -184,6 +232,7 @@ export const showExportDropdownUpdater = (state, {payload: id}) => ({
 
 /**
  * Hide side panel header dropdown, activated by clicking the share link on top of the side panel
+ * @memberof uiStateUpdaters
  * @param {Object} state `uiState`
  * @returns {Object} nextState
  * @public
@@ -195,6 +244,7 @@ export const hideExportDropdownUpdater = (state) => ({
 
 /**
  * Toggle active map control panel
+ * @memberof uiStateUpdaters
  * @param {Object} state `uiState`
  * @param {Object} action action
  * @param {string} action.payload map control panel id, one of the keys of: [`DEFAULT_MAP_CONTROLS`](#default_map_controls)
@@ -214,6 +264,7 @@ export const toggleMapControlUpdater = (state, {payload: panelId}) => ({
 
 /**
  * Toggle active map control panel
+ * @memberof uiStateUpdaters
  * @param {Object} state `uiState`
  * @param {Object} action
  * @param {string} action.payload dataset id
@@ -230,7 +281,8 @@ export const openDeleteModalUpdater = (
 });
 
 /**
- * Set `exportImage.legend` to true or false
+ * Set `exportImage.legend` to `true` or `false`
+ * @memberof uiStateUpdaters
  * @param {Object} state `uiState`
  * @returns {Object} nextState
  * @public
@@ -245,6 +297,7 @@ export const toggleLegendUpdater = state => ({
 
 /**
  * Set `exportImage.ratio`
+ * @memberof uiStateUpdaters
  * @param {Object} state `uiState`
  * @param {Object} action
  * @param {string} action.payload one of `'SCREEN'`, `'FOUR_BY_THREE'` and `'SIXTEEN_BY_NINE'`
@@ -261,6 +314,7 @@ export const setRatioUpdater = (state, {payload}) => ({
 
 /**
  * Set `exportImage.resolution`
+ * @memberof uiStateUpdaters
  * @param {Object} state `uiState`
  * @param {Object} action
  * @param {string} action.payload one of `'ONE_X'`, `'TWO_X'`
@@ -276,7 +330,8 @@ export const setResolutionUpdater = (state, {payload}) => ({
 });
 
 /**
- * Set `exportImage.exporting` to true
+ * Set `exportImage.exporting` to `true`
+ * @memberof uiStateUpdaters
  * @param {Object} state `uiState`
  * @returns {Object} nextState
  * @public
@@ -291,8 +346,8 @@ export const startExportingImage = state => ({
 });
 
 /**
- * Set `exportImage.setExportImageDataUri` to a dataUri
- * @mixin uiStateUpdaters.setResolutionUpdater
+ * Set `exportImage.setExportImageDataUri` to a image dataUri
+ * @memberof uiStateUpdaters
  * @param {Object} state `uiState`
  * @param {Object} action
  * @param {string} action.payload export image data uri
@@ -310,6 +365,7 @@ export const setExportImageDataUri = (state, {payload: dataUri}) => ({
 
 /**
  * Delete cached export image
+ * @memberof uiStateUpdaters
  * @param {Object} state `uiState`
  * @returns {Object} nextState
  * @public
@@ -325,6 +381,7 @@ export const cleanupExportImage = state => ({
 
 /**
  * Set selected dataset for export
+ * @memberof uiStateUpdaters
  * @param {Object} state `uiState`
  * @param {Object} action
  * @param {string} action.payload dataset id
@@ -341,6 +398,7 @@ export const setExportSelectedDatasetUpdater = (state, {payload: dataset}) => ({
 
 /**
  * Set data format for exporting data
+ * @memberof uiStateUpdaters
  * @param {Object} state `uiState`
  * @param {Object} action
  * @param {string} action.payload one of `'text/csv'`
@@ -357,6 +415,7 @@ export const setExportDataTypeUpdater = (state, {payload: dataType}) => ({
 
 /**
  * Whether to export filtered data, `true` or `false`
+ * @memberof uiStateUpdaters
  * @param {Object} state `uiState`
  * @param {Object} action
  * @param {boolean} action.payload
@@ -373,6 +432,7 @@ export const setExportFilteredUpdater = (state, {payload: filtered}) => ({
 
 /**
  * Whether to including data in map config, toggle between `true` or `false`
+ * @memberof uiStateUpdaters
  * @param {Object} state `uiState`
  * @returns {Object} nextState
  * @public
@@ -387,6 +447,7 @@ export const setExportDataUpdater = (state, action) => ({
 
 /**
  * Add a notification to be displayed
+ * @memberof uiStateUpdaters
  * @param {Object} state `uiState`
  * @param {Object} action
  * @param {Object} action.payload
@@ -403,6 +464,7 @@ export const addNotificationUpdater = (state, {payload}) => ({
 
 /**
  * Remove a notification
+ * @memberof uiStateUpdaters
  * @param {Object} state `uiState`
  * @param {Object} action
  * @param {String} action.payload id of the notification to be removed

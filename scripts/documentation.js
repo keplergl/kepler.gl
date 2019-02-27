@@ -69,7 +69,8 @@ const TREE = {
     {
       path: 'reducers',
       children: [
-        {input: 'root.js', output: 'reducers.md', config: {shallow: true}},
+        {input: ['root.js'], output: 'reducers.md', config: {shallow: true}},
+        {input: 'combine-updaters.js', output: 'combine.md',  config: {shallow: true}},
         {input: 'vis-state-updaters.js', output: 'vis-state.md', config: {shallow: true}},
         {input: 'map-state-updaters.js', output: 'map-state.md', config: {shallow: true}},
         {input: 'map-style-updaters.js', output: 'map-style.md', config: {shallow: true}},
@@ -103,11 +104,17 @@ function _overrideHeading(nodes) {
 
 function _appendActionTypesAndUpdatersToActions(node, actionMap) {
   // __Updaters__: [`visStateUpdaters.loadFilesUpdater`](../reducers/ui-state.md#uistateupdaterssetexportfilteredupdater)
+
+  if (node.members && node.members.static.length) {
+    node.members.static = node.members.static.map(nd => _appendActionTypesAndUpdatersToActions(nd, actionMap));
+  }
+
   const action = node.name;
 
   if (!actionMap[action]) {
     return node;
   }
+
   const {actionType, updaters} = actionMap[action];
   const updaterList = updaters.map(({updater, name, path}) => (
     `[${BT}${updater}.${name}${BT}](../reducers/${path.split('/')[2].replace('.js', '')}.md#${(updater + name).toLowerCase()})`
@@ -128,6 +135,10 @@ function _appendActionTypesAndUpdatersToActions(node, actionMap) {
  * @param {Object} actionMap
  */
 function _appendActionToUpdaters(node, actionMap) {
+  if (node.members && node.members.static.length) {
+    node.members.static = node.members.static.map(nd => _appendActionToUpdaters(nd, actionMap));
+  }
+
   const updater = node.name;
 
   const action = Object.values(actionMap)
@@ -169,7 +180,7 @@ function _isLink(node) {
 }
 
 function _isExampleOrParam(node) {
-  return node.type === 'text' && ['Parameters', 'Examples'].includes(node.value);
+  return node.type === 'text' && ['Parameters', 'Examples', 'Properties'].includes(node.value);
 }
 
 function _isExampleOrParameterLink(node) {
@@ -227,7 +238,7 @@ function buildChildDoc(inputPath, outputPath, actionMap, config) {
     .then(output => {
       // output is a string of remark json
       return remark()
-        .use(toc, {maxDepth: 5, tight: true})
+        .use(toc, {tight: true})
         .run(JSON.parse(output));
     })
     .then(ast => {

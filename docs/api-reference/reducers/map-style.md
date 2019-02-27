@@ -2,209 +2,253 @@
 
 ### Table of Contents
 
--   [INITIAL_MAP_STYLE](#initial_map_style)
-    -   [Properties](#properties)
--   [initMapStyleUpdater](#initmapstyleupdater)
--   [inputMapStyleUpdater](#inputmapstyleupdater)
--   [loadCustomMapStyleUpdater](#loadcustommapstyleupdater)
--   [loadMapStyleErrUpdater](#loadmapstyleerrupdater)
--   [loadMapStylesUpdater](#loadmapstylesupdater)
--   [mapConfigChangeUpdater](#mapconfigchangeupdater)
--   [mapStyleChangeUpdater](#mapstylechangeupdater)
--   [resetMapConfigMapStyleUpdater](#resetmapconfigmapstyleupdater)
+-   [mapStyleUpdaters](#mapstyleupdaters)
+    -   [INITIAL_MAP_STYLE](#initial_map_style)
+    -   [initMapStyleUpdater](#initmapstyleupdater)
+    -   [inputMapStyleUpdater](#inputmapstyleupdater)
+    -   [loadCustomMapStyleUpdater](#loadcustommapstyleupdater)
+    -   [loadMapStyleErrUpdater](#loadmapstyleerrupdater)
+    -   [loadMapStylesUpdater](#loadmapstylesupdater)
+    -   [mapConfigChangeUpdater](#mapconfigchangeupdater)
+    -   [mapStyleChangeUpdater](#mapstylechangeupdater)
+    -   [resetMapConfigMapStyleUpdater](#resetmapconfigmapstyleupdater)
 
-## INITIAL_MAP_STYLE
+## mapStyleUpdaters
+
+Updaters for `mapStyle`. Can be used in your root reducer to directly modify kepler.gl's state.
+Read more about [Using updaters][21]
+
+**Examples**
+
+```javascript
+import keplerGlReducer, {mapStyleUpdaters} from 'kepler.gl/reducers';
+// Root Reducer
+const reducers = combineReducers({
+ keplerGl: keplerGlReducer,
+ app: appReducer
+});
+
+const composedReducer = (state, action) => {
+ switch (action.type) {
+   // click button to hide label from background map
+   case 'CLICK_BUTTON':
+     return {
+       ...state,
+       keplerGl: {
+         ...state.keplerGl,
+         foo: {
+            ...state.keplerGl.foo,
+            mapStyle: mapStyleUpdaters.mapConfigChangeUpdater(
+              mapStyle,
+              {payload: {visibleLayerGroups: {label: false, road: true, background: true}}}
+            )
+         }
+       }
+     };
+ }
+ return reducers(state, action);
+};
+
+export default composedReducer;
+```
+
+### INITIAL_MAP_STYLE
 
 Default initial `mapStyle`
 
-### Properties
+#### Properties
 
--   `styleType` **[string][19]** Default: 'dark'
--   `visibleLayerGroups` **[Object][20]** Default: {}
--   `topLayerGroups` **[Object][20]** Default: {}
--   `mapStyles` **[Object][20]** mapping from style key to style obejct
--   `mapboxApiAccessToken` **[string][19]** Default: null
--   `inputStyle` **[Object][20]** Default: {}
--   `threeDBuildingColor` **[Array][21]** Default: [r, g, b]
+-   `styleType` **[string][22]** Default: `'dark'`
+-   `visibleLayerGroups` **[Object][23]** Default: `{}`
+-   `topLayerGroups` **[Object][23]** Default: `{}`
+-   `mapStyles` **[Object][23]** mapping from style key to style objct
+-   `mapboxApiAccessToken` **[string][22]** Default: `null`
+-   `inputStyle` **[Object][23]** Default: `{}`
+-   `threeDBuildingColor` **[Array][24]** Default: `[r, g, b]`
 
-## initMapStyleUpdater
+### initMapStyleUpdater
 
 Propagate `mapStyle` reducer with `mapboxApiAccessToken`
 
--   **Action**: [`keplerGlInit`][22]
+-   **Action**: [`keplerGlInit`][25]
 
 **Parameters**
 
--   `state` **[Object][20]** 
--   `action` **[Object][20]** 
-    -   `action.payload` **[Object][20]** 
-        -   `action.payload.mapboxApiAccessToken` **[string][19]** 
+-   `state` **[Object][23]** 
+-   `action` **[Object][23]** 
+    -   `action.payload` **[Object][23]** 
+        -   `action.payload.mapboxApiAccessToken` **[string][22]** 
 
-Returns **[Object][20]** nextState
+Returns **[Object][23]** nextState
 
-## inputMapStyleUpdater
+### inputMapStyleUpdater
 
 Input a custom map style object
 
--   **Action**: [`inputMapStyle`][23]
+-   **Action**: [`inputMapStyle`][26]
 
 **Parameters**
 
--   `state`  
--   `$1` **[Object][20]** 
-    -   `$1.payload`  
--   `inputStyle` **[Object][20]** 
-    -   `inputStyle.url` **[string][19]** style url e.g. `'mapbox://styles/heshan/xxxxxyyyyzzz'`
-    -   `inputStyle.id` **[string][19]** style url e.g. `'custom_style_1'`
-    -   `inputStyle.style` **[Object][20]** actual mapbox style json
-    -   `inputStyle.name` **[string][19]** style name
-    -   `inputStyle.layerGroups` **[Object][20]** layer groups that can be used to set map layer visibility
-    -   `inputStyle.icon` **[Object][20]** icon image data url
+-   `state` **[Object][23]** `mapStyle`
+-   `action` **[Object][23]** action object
+    -   `action.payload` **[Object][23]** inputStyle
+        -   `action.payload.url` **[string][22]** style url e.g. `'mapbox://styles/heshan/xxxxxyyyyzzz'`
+        -   `action.payload.id` **[string][22]** style url e.g. `'custom_style_1'`
+        -   `action.payload.style` **[Object][23]** actual mapbox style json
+        -   `action.payload.name` **[string][22]** style name
+        -   `action.payload.layerGroups` **[Object][23]** layer groups that can be used to set map layer visibility
+        -   `action.payload.icon` **[Object][23]** icon image data url
 
-Returns **[Object][20]** nextState
+Returns **[Object][23]** nextState
 
-## loadCustomMapStyleUpdater
+### loadCustomMapStyleUpdater
 
 Callback when a custom map style object is received
 
--   **Action**: [`loadCustomMapStyle`][24]
+-   **Action**: [`loadCustomMapStyle`][27]
 
 **Parameters**
 
--   `state` **[Object][20]** 
--   `action` **[Object][20]** 
-    -   `action.payload` **[Object][20]** 
-        -   `action.payload.icon` **[string][19]** 
-        -   `action.payload.style` **[Object][20]** 
+-   `state` **[Object][23]** `mapStyle`
+-   `action` **[Object][23]** 
+    -   `action.payload` **[Object][23]** 
+        -   `action.payload.icon` **[string][22]** 
+        -   `action.payload.style` **[Object][23]** 
         -   `action.payload.error` **any** 
     -   `action.payload.icon`  
     -   `action.payload.style`  
     -   `action.payload.error`  
 
-Returns **[Object][20]** nextState
+Returns **[Object][23]** nextState
 
-## loadMapStyleErrUpdater
+### loadMapStyleErrUpdater
 
 Callback when load map style error
 
--   **Action**: [`loadMapStyleErr`][25]
+-   **Action**: [`loadMapStyleErr`][28]
 
 **Parameters**
 
--   `state` **[Object][20]** `mapStyle`
--   `action` **[Object][20]** 
+-   `state` **[Object][23]** `mapStyle`
+-   `action` **[Object][23]** 
     -   `action.payload` **any** error
 
-Returns **[Object][20]** nextState
+Returns **[Object][23]** nextState
 
-## loadMapStylesUpdater
+### loadMapStylesUpdater
 
 Callback when load map style success
 
--   **Action**: [`loadMapStyles`][26]
+-   **Action**: [`loadMapStyles`][29]
 
 **Parameters**
 
--   `state` **[Object][20]** 
--   `action` **[Object][20]** 
-    -   `action.payload` **[Object][20]** a `{[id]: style}` mapping
+-   `state` **[Object][23]** `mapStyle`
+-   `action` **[Object][23]** 
+    -   `action.payload` **[Object][23]** a `{[id]: style}` mapping
 
-Returns **[Object][20]** nextState
+Returns **[Object][23]** nextState
 
-## mapConfigChangeUpdater
+### mapConfigChangeUpdater
 
 Update `visibleLayerGroups`to change layer group visibility
 
--   **Action**: [`mapConfigChange`][27]
+-   **Action**: [`mapConfigChange`][30]
 
 **Parameters**
 
--   `state` **[Object][20]** `mapStyle`
--   `action` **[Object][20]** 
-    -   `action.payload` **[Object][20]** new config `{visibleLayerGroups: {label: false, road: true, background: true}}`
+-   `state` **[Object][23]** `mapStyle`
+-   `action` **[Object][23]** 
+    -   `action.payload` **[Object][23]** new config `{visibleLayerGroups: {label: false, road: true, background: true}}`
 
-Returns **[Object][20]** nextState
+Returns **[Object][23]** nextState
 
-## mapStyleChangeUpdater
+### mapStyleChangeUpdater
 
 Change to another map style. The selected style should already been loaded into `mapStyle.mapStyles`
 
--   **Action**: [`mapStyleChange`][28]
+-   **Action**: [`mapStyleChange`][31]
 
 **Parameters**
 
--   `state` **[Object][20]** `mapStyle`
--   `action` **[Object][20]** 
-    -   `action.payload` **[string][19]** 
+-   `state` **[Object][23]** `mapStyle`
+-   `action` **[Object][23]** 
+    -   `action.payload` **[string][22]** 
 
-Returns **[Object][20]** nextState
+Returns **[Object][23]** nextState
 
-## resetMapConfigMapStyleUpdater
+### resetMapConfigMapStyleUpdater
 
 Reset map style config to initial state
 
--   **Action**: [`resetMapConfig`][29]
+-   **Action**: [`resetMapConfig`][32]
 
 **Parameters**
 
--   `state` **[Object][20]** `mapStyle`
+-   `state` **[Object][23]** `mapStyle`
 
-Returns **[Object][20]** nextState
+Returns **[Object][23]** nextState
 
-[1]: #initial_map_style
+[1]: #mapstyleupdaters
 
-[2]: #properties
+[2]: #examples
 
-[3]: #initmapstyleupdater
+[3]: #initial_map_style
 
-[4]: #parameters
+[4]: #properties
 
-[5]: #inputmapstyleupdater
+[5]: #initmapstyleupdater
 
-[6]: #parameters-1
+[6]: #parameters
 
-[7]: #loadcustommapstyleupdater
+[7]: #inputmapstyleupdater
 
-[8]: #parameters-2
+[8]: #parameters-1
 
-[9]: #loadmapstyleerrupdater
+[9]: #loadcustommapstyleupdater
 
-[10]: #parameters-3
+[10]: #parameters-2
 
-[11]: #loadmapstylesupdater
+[11]: #loadmapstyleerrupdater
 
-[12]: #parameters-4
+[12]: #parameters-3
 
-[13]: #mapconfigchangeupdater
+[13]: #loadmapstylesupdater
 
-[14]: #parameters-5
+[14]: #parameters-4
 
-[15]: #mapstylechangeupdater
+[15]: #mapconfigchangeupdater
 
-[16]: #parameters-6
+[16]: #parameters-5
 
-[17]: #resetmapconfigmapstyleupdater
+[17]: #mapstylechangeupdater
 
-[18]: #parameters-7
+[18]: #parameters-6
 
-[19]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+[19]: #resetmapconfigmapstyleupdater
 
-[20]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+[20]: #parameters-7
 
-[21]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+[21]: ../advanced-usage/using-updaters.md
 
-[22]: ../actions/actions.md#keplerglinit
+[22]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
 
-[23]: ../actions/actions.md#inputmapstyle
+[23]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
 
-[24]: ../actions/actions.md#loadcustommapstyle
+[24]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
 
-[25]: ../actions/actions.md#loadmapstyleerr
+[25]: ../actions/actions.md#keplerglinit
 
-[26]: ../actions/actions.md#loadmapstyles
+[26]: ../actions/actions.md#inputmapstyle
 
-[27]: ../actions/actions.md#mapconfigchange
+[27]: ../actions/actions.md#loadcustommapstyle
 
-[28]: ../actions/actions.md#mapstylechange
+[28]: ../actions/actions.md#loadmapstyleerr
 
-[29]: ../actions/actions.md#resetmapconfig
+[29]: ../actions/actions.md#loadmapstyles
+
+[30]: ../actions/actions.md#mapconfigchange
+
+[31]: ../actions/actions.md#mapstylechange
+
+[32]: ../actions/actions.md#resetmapconfig

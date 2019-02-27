@@ -239,9 +239,22 @@ export function showDatasetTable(dataId) {
 /**
  * Add new dataset to `visState`, with option to load a map config along with the datasets
  * @memberof visStateActions
- * @param {Array<Object>} datasets array of datasets
- * @param {Object} options option object `{centerMap: true}`
- * @param {Object} [config] map config
+ * @param {Array<Object>|Object} datasets - ***required** datasets can be a dataset or an array of datasets
+ * Each dataset object needs to have `info` and `data` property.
+ * @param {Object} datasets.info -info of a dataset
+ * @param {string} datasets.info.id - id of this dataset. If config is defined, `id` should matches the `dataId` in config.
+ * @param {string} datasets.info.label - A display name of this dataset
+ * @param {Object} datasets.data - ***required** The data object, in a tabular format with 2 properties `fields` and `rows`
+ * @param {Array<Object>} datasets.data.fields - ***required** Array of fields,
+ * @param {string} datasets.data.fields.name - ***required** Name of the field,
+ * @param {Array<Array>} datasets.data.rows - ***required** Array of rows, in a tabular format with `fields` and `rows`
+
+ * @param {Object} options
+ * @param {boolean} options.centerMap `default: true` if `centerMap` is set to `true` kepler.gl will
+ * place the map view within the data points boundaries
+ * @param {boolean} options.readOnly `default: false` if `readOnly` is set to `true`
+ * the left setting panel will be hidden
+ * @param {Object} config this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
  * @returns {{type: ActionTypes.UPDATE_VIS_DATA, datasets: datasets, options: options, config: config}}
  * @public
  */

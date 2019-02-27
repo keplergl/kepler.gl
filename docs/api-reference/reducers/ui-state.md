@@ -2,453 +2,500 @@
 
 ### Table of Contents
 
--   [addNotificationUpdater](#addnotificationupdater)
--   [cleanupExportImage](#cleanupexportimage)
--   [DEFAULT_EXPORT_DATA](#default_export_data)
-    -   [Properties](#properties)
--   [DEFAULT_EXPORT_IMAGE](#default_export_image)
-    -   [Properties](#properties-1)
--   [DEFAULT_MAP_CONTROLS](#default_map_controls)
-    -   [Properties](#properties-2)
--   [hideExportDropdownUpdater](#hideexportdropdownupdater)
--   [INITIAL_UI_STATE](#initial_ui_state)
-    -   [Properties](#properties-3)
--   [openDeleteModalUpdater](#opendeletemodalupdater)
--   [setExportDataTypeUpdater](#setexportdatatypeupdater)
--   [setExportDataUpdater](#setexportdataupdater)
--   [setExportFilteredUpdater](#setexportfilteredupdater)
--   [setExportSelectedDatasetUpdater](#setexportselecteddatasetupdater)
--   [setRatioUpdater](#setratioupdater)
--   [setResolutionUpdater](#setresolutionupdater)
--   [showExportDropdownUpdater](#showexportdropdownupdater)
--   [startExportingImage](#startexportingimage)
--   [toggleLegendUpdater](#togglelegendupdater)
--   [toggleMapControlUpdater](#togglemapcontrolupdater)
--   [toggleModalUpdater](#togglemodalupdater)
--   [toggleSidePanelUpdater](#togglesidepanelupdater)
--   [uiStateUpdaters.setResolutionUpdater](#uistateupdaterssetresolutionupdater)
+-   [uiStateUpdaters](#uistateupdaters)
+    -   [addNotificationUpdater](#addnotificationupdater)
+    -   [cleanupExportImage](#cleanupexportimage)
+    -   [DEFAULT_EXPORT_DATA](#default_export_data)
+    -   [DEFAULT_EXPORT_IMAGE](#default_export_image)
+    -   [DEFAULT_MAP_CONTROLS](#default_map_controls)
+    -   [hideExportDropdownUpdater](#hideexportdropdownupdater)
+    -   [INITIAL_UI_STATE](#initial_ui_state)
+    -   [openDeleteModalUpdater](#opendeletemodalupdater)
+    -   [setExportDataTypeUpdater](#setexportdatatypeupdater)
+    -   [setExportDataUpdater](#setexportdataupdater)
+    -   [setExportFilteredUpdater](#setexportfilteredupdater)
+    -   [setExportImageDataUri](#setexportimagedatauri)
+    -   [setExportSelectedDatasetUpdater](#setexportselecteddatasetupdater)
+    -   [setRatioUpdater](#setratioupdater)
+    -   [setResolutionUpdater](#setresolutionupdater)
+    -   [showExportDropdownUpdater](#showexportdropdownupdater)
+    -   [startExportingImage](#startexportingimage)
+    -   [toggleLegendUpdater](#togglelegendupdater)
+    -   [toggleMapControlUpdater](#togglemapcontrolupdater)
+    -   [toggleModalUpdater](#togglemodalupdater)
+    -   [toggleSidePanelUpdater](#togglesidepanelupdater)
 
-## addNotificationUpdater
+## uiStateUpdaters
+
+Updaters for `uiState` reducer. Can be used in your root reducer to directly modify kepler.gl's state.
+Read more about [Using updaters][45]
+
+**Examples**
+
+```javascript
+import keplerGlReducer, {uiStateUpdaters} from 'kepler.gl/reducers';
+// Root Reducer
+const reducers = combineReducers({
+ keplerGl: keplerGlReducer,
+ app: appReducer
+});
+
+const composedReducer = (state, action) => {
+ switch (action.type) {
+   // click button to close side panel
+   case 'CLICK_BUTTON':
+     return {
+       ...state,
+       keplerGl: {
+         ...state.keplerGl,
+         foo: {
+            ...state.keplerGl.foo,
+            uiState: uiStateUpdaters.toggleSidePanelUpdater(
+              uiState, {payload: null}
+            )
+         }
+       }
+     };
+ }
+ return reducers(state, action);
+};
+
+export default composedReducer;
+```
+
+### addNotificationUpdater
 
 Add a notification to be displayed
 
--   **Action**: [`addNotification`][43]
+-   **Action**: [`addNotification`][46]
 
 **Parameters**
 
--   `state` **[Object][44]** `uiState`
--   `action` **[Object][44]** 
-    -   `action.payload` **[Object][44]** 
+-   `state` **[Object][47]** `uiState`
+-   `action` **[Object][47]** 
+    -   `action.payload` **[Object][47]** 
 
-Returns **[Object][44]** nextState
+Returns **[Object][47]** nextState
 
-## cleanupExportImage
+### cleanupExportImage
 
 Delete cached export image
 
--   **Action**: [`cleanupExportImage`][45]
+-   **Action**: [`cleanupExportImage`][48]
 
 **Parameters**
 
--   `state` **[Object][44]** `uiState`
+-   `state` **[Object][47]** `uiState`
 
-Returns **[Object][44]** nextState
+Returns **[Object][47]** nextState
 
-## DEFAULT_EXPORT_DATA
+### DEFAULT_EXPORT_DATA
 
-Type: [Object][44]
+Default initial `exportData` settings
 
-### Properties
+Type: [Object][47]
 
--   `selectedDataset` **[string][46]** Default: `''`,
--   `dataType` **[string][46]** Default: `'csv'`,
--   `filtered` **[boolean][47]** Default: `true`,
--   `config` **[boolean][47]** deprecated
--   `data` **[boolean][47]** used in modal config export. Default: `false`
+#### Properties
 
-## DEFAULT_EXPORT_IMAGE
+-   `selectedDataset` **[string][49]** Default: `''`,
+-   `dataType` **[string][49]** Default: `'csv'`,
+-   `filtered` **[boolean][50]** Default: `true`,
+-   `config` **[boolean][50]** deprecated
+-   `data` **[boolean][50]** used in modal config export. Default: `false`
+
+### DEFAULT_EXPORT_IMAGE
 
 Default image export config
 
-Type: [Object][44]
+Type: [Object][47]
 
-### Properties
+#### Properties
 
--   `ratio` **[string][46]** Default: `'SCREEN'`,
--   `resolution` **[string][46]** Default: `'ONE_X'`,
--   `legend` **[boolean][47]** Default: `false`,
--   `imageDataUri` **[string][46]** Default: `''`,
--   `exporting` **[boolean][47]** Default: `false`
+-   `ratio` **[string][49]** Default: `'SCREEN'`,
+-   `resolution` **[string][49]** Default: `'ONE_X'`,
+-   `legend` **[boolean][50]** Default: `false`,
+-   `imageDataUri` **[string][49]** Default: `''`,
+-   `exporting` **[boolean][50]** Default: `false`
 
-## DEFAULT_MAP_CONTROLS
+### DEFAULT_MAP_CONTROLS
 
 A list of map control visibility and whether is it active.
 
-Type: [Object][44]
+Type: [Object][47]
 
-### Properties
+#### Properties
 
--   `visibleLayers` **[Object][44]** Default: `{show: true, active: false}`
--   `mapLegend` **[Object][44]** Default: `{show: true, active: false}`
--   `toggle3d` **[Object][44]** Default: `{show: true}`
--   `splitMap` **[Object][44]** Default: `{show: true}`
+-   `visibleLayers` **[Object][47]** Default: `{show: true, active: false}`
+-   `mapLegend` **[Object][47]** Default: `{show: true, active: false}`
+-   `toggle3d` **[Object][47]** Default: `{show: true}`
+-   `splitMap` **[Object][47]** Default: `{show: true}`
 
-## hideExportDropdownUpdater
+### hideExportDropdownUpdater
 
 Hide side panel header dropdown, activated by clicking the share link on top of the side panel
 
--   **Action**: [`hideExportDropdown`][48]
+-   **Action**: [`hideExportDropdown`][51]
 
 **Parameters**
 
--   `state` **[Object][44]** `uiState`
+-   `state` **[Object][47]** `uiState`
 
-Returns **[Object][44]** nextState
+Returns **[Object][47]** nextState
 
-## INITIAL_UI_STATE
+### INITIAL_UI_STATE
 
 Default initial `uiState`
 
-Type: [Object][44]
+Type: [Object][47]
 
-### Properties
+#### Properties
 
--   `readOnly` **[boolean][47]** Default: false
--   `activeSidePanel` **[string][46]** Default: 'layer'
--   `currentModal` **([string][46] | null)** Default: 'addData'
--   `datasetKeyToRemove` **([string][46] | null)** Default: null
--   `visibleDropdown` **([string][46] | null)** Default: null
--   `exportImage` **[Object][44]** Default: [`DEFAULT_EXPORT_IMAGE`][7]
--   `exportData` **[Object][44]** Default: [`DEFAULT_EXPORT_DATA`][5]
--   `mapControls` **[Object][44]** Default: [`DEFAULT_MAP_CONTROLS`][9]
+-   `readOnly` **[boolean][50]** Default: `false`
+-   `activeSidePanel` **[string][49]** Default: `'layer'`
+-   `currentModal` **([string][49] | null)** Default: `'addData'`
+-   `datasetKeyToRemove` **([string][49] | null)** Default: `null`
+-   `visibleDropdown` **([string][49] | null)** Default: `null`
+-   `exportImage` **[Object][47]** Default: [`DEFAULT_EXPORT_IMAGE`][9]
+-   `exportData` **[Object][47]** Default: [`DEFAULT_EXPORT_DATA`][7]
+-   `mapControls` **[Object][47]** Default: [`DEFAULT_MAP_CONTROLS`][11]
 
-## openDeleteModalUpdater
+### openDeleteModalUpdater
 
 Toggle active map control panel
 
--   **Action**: [`openDeleteModal`][49]
+-   **Action**: [`openDeleteModal`][52]
 
 **Parameters**
 
--   `state` **[Object][44]** `uiState`
--   `action` **[Object][44]** 
-    -   `action.payload` **[string][46]** dataset id
+-   `state` **[Object][47]** `uiState`
+-   `action` **[Object][47]** 
+    -   `action.payload` **[string][49]** dataset id
 
-Returns **[Object][44]** nextState
+Returns **[Object][47]** nextState
 
-## setExportDataTypeUpdater
+### setExportDataTypeUpdater
 
 Set data format for exporting data
 
--   **Action**: [`setExportDataType`][50]
+-   **Action**: [`setExportDataType`][53]
 
 **Parameters**
 
--   `state` **[Object][44]** `uiState`
--   `action` **[Object][44]** 
-    -   `action.payload` **[string][46]** one of `'text/csv'`
+-   `state` **[Object][47]** `uiState`
+-   `action` **[Object][47]** 
+    -   `action.payload` **[string][49]** one of `'text/csv'`
 
-Returns **[Object][44]** nextState
+Returns **[Object][47]** nextState
 
-## setExportDataUpdater
+### setExportDataUpdater
 
 Whether to including data in map config, toggle between `true` or `false`
 
--   **Action**: [`setExportData`][51]
+-   **Action**: [`setExportData`][54]
 
 **Parameters**
 
--   `state` **[Object][44]** `uiState`
+-   `state` **[Object][47]** `uiState`
 -   `action`  
 
-Returns **[Object][44]** nextState
+Returns **[Object][47]** nextState
 
-## setExportFilteredUpdater
+### setExportFilteredUpdater
 
 Whether to export filtered data, `true` or `false`
 
--   **Action**: [`setExportFiltered`][52]
+-   **Action**: [`setExportFiltered`][55]
 
 **Parameters**
 
--   `state` **[Object][44]** `uiState`
--   `action` **[Object][44]** 
-    -   `action.payload` **[boolean][47]** 
+-   `state` **[Object][47]** `uiState`
+-   `action` **[Object][47]** 
+    -   `action.payload` **[boolean][50]** 
 
-Returns **[Object][44]** nextState
+Returns **[Object][47]** nextState
 
-## setExportSelectedDatasetUpdater
+### setExportImageDataUri
+
+Set `exportImage.setExportImageDataUri` to a image dataUri
+
+-   **Action**: [`setExportImageDataUri`][56]
+
+**Parameters**
+
+-   `state` **[Object][47]** `uiState`
+-   `action` **[Object][47]** 
+    -   `action.payload` **[string][49]** export image data uri
+
+Returns **[Object][47]** nextState
+
+### setExportSelectedDatasetUpdater
 
 Set selected dataset for export
 
--   **Action**: [`setExportSelectedDataset`][53]
+-   **Action**: [`setExportSelectedDataset`][57]
 
 **Parameters**
 
--   `state` **[Object][44]** `uiState`
--   `action` **[Object][44]** 
-    -   `action.payload` **[string][46]** dataset id
+-   `state` **[Object][47]** `uiState`
+-   `action` **[Object][47]** 
+    -   `action.payload` **[string][49]** dataset id
 
-Returns **[Object][44]** nextState
+Returns **[Object][47]** nextState
 
-## setRatioUpdater
+### setRatioUpdater
 
 Set `exportImage.ratio`
 
--   **Action**: [`setRatio`][54]
+-   **Action**: [`setRatio`][58]
 
 **Parameters**
 
--   `state` **[Object][44]** `uiState`
--   `action` **[Object][44]** 
-    -   `action.payload` **[string][46]** one of `'SCREEN'`, `'FOUR_BY_THREE'` and `'SIXTEEN_BY_NINE'`
+-   `state` **[Object][47]** `uiState`
+-   `action` **[Object][47]** 
+    -   `action.payload` **[string][49]** one of `'SCREEN'`, `'FOUR_BY_THREE'` and `'SIXTEEN_BY_NINE'`
 
-Returns **[Object][44]** nextState
+Returns **[Object][47]** nextState
 
-## setResolutionUpdater
+### setResolutionUpdater
 
 Set `exportImage.resolution`
 
--   **Action**: [`setResolution`][55]
+-   **Action**: [`setResolution`][59]
 
 **Parameters**
 
--   `state` **[Object][44]** `uiState`
--   `action` **[Object][44]** 
-    -   `action.payload` **[string][46]** one of `'ONE_X'`, `'TWO_X'`
+-   `state` **[Object][47]** `uiState`
+-   `action` **[Object][47]** 
+    -   `action.payload` **[string][49]** one of `'ONE_X'`, `'TWO_X'`
 
-Returns **[Object][44]** nextState
+Returns **[Object][47]** nextState
 
-## showExportDropdownUpdater
+### showExportDropdownUpdater
 
 Hide and show side panel header dropdown, activated by clicking the share link on top of the side panel
 
--   **Action**: [`showExportDropdown`][56]
+-   **Action**: [`showExportDropdown`][60]
 
 **Parameters**
 
--   `state` **[Object][44]** `uiState`
--   `action` **[Object][44]** 
-    -   `action.payload` **[string][46]** id of the dropdown
+-   `state` **[Object][47]** `uiState`
+-   `action` **[Object][47]** 
+    -   `action.payload` **[string][49]** id of the dropdown
 
-Returns **[Object][44]** nextState
+Returns **[Object][47]** nextState
 
-## startExportingImage
+### startExportingImage
 
-Set `exportImage.exporting` to true
+Set `exportImage.exporting` to `true`
 
--   **Action**: [`startExportingImage`][57]
-
-**Parameters**
-
--   `state` **[Object][44]** `uiState`
-
-Returns **[Object][44]** nextState
-
-## toggleLegendUpdater
-
-Set `exportImage.legend` to true or false
-
--   **Action**: [`toggleLegend`][58]
+-   **Action**: [`startExportingImage`][61]
 
 **Parameters**
 
--   `state` **[Object][44]** `uiState`
+-   `state` **[Object][47]** `uiState`
 
-Returns **[Object][44]** nextState
+Returns **[Object][47]** nextState
 
-## toggleMapControlUpdater
+### toggleLegendUpdater
+
+Set `exportImage.legend` to `true` or `false`
+
+-   **Action**: [`toggleLegend`][62]
+
+**Parameters**
+
+-   `state` **[Object][47]** `uiState`
+
+Returns **[Object][47]** nextState
+
+### toggleMapControlUpdater
 
 Toggle active map control panel
 
--   **Action**: [`toggleMapControl`][59]
+-   **Action**: [`toggleMapControl`][63]
 
 **Parameters**
 
--   `state` **[Object][44]** `uiState`
--   `action` **[Object][44]** action
-    -   `action.payload` **[string][46]** map control panel id, one of the keys of: [`DEFAULT_MAP_CONTROLS`][9]
+-   `state` **[Object][47]** `uiState`
+-   `action` **[Object][47]** action
+    -   `action.payload` **[string][49]** map control panel id, one of the keys of: [`DEFAULT_MAP_CONTROLS`][11]
 
-Returns **[Object][44]** nextState
+Returns **[Object][47]** nextState
 
-## toggleModalUpdater
+### toggleModalUpdater
 
 Show and hide modal dialog
 
--   **Action**: [`toggleModal`][60]
+-   **Action**: [`toggleModal`][64]
 
 **Parameters**
 
--   `state` **[Object][44]** `uiState`
--   `action` **[Object][44]** 
-    -   `action.payload` **([string][46] | null)** id of modal to be shown, null to hide modals. One of:-   [`DATA_TABLE_ID`][61]
-        -   [`DELETE_DATA_ID`][62]
-        -   [`ADD_DATA_ID`][63]
-        -   [`EXPORT_IMAGE_ID`][64]
-        -   [`EXPORT_DATA_ID`][65]
-        -   [`EXPORT_CONFIG_ID`][66]
-        -   [`ADD_MAP_STYLE_ID`][67]
+-   `state` **[Object][47]** `uiState`
+-   `action` **[Object][47]** 
+    -   `action.payload` **([string][49] | null)** id of modal to be shown, null to hide modals. One of:-   [`DATA_TABLE_ID`][65]
+        -   [`DELETE_DATA_ID`][66]
+        -   [`ADD_DATA_ID`][67]
+        -   [`EXPORT_IMAGE_ID`][68]
+        -   [`EXPORT_DATA_ID`][69]
+        -   [`EXPORT_CONFIG_ID`][70]
+        -   [`ADD_MAP_STYLE_ID`][71]
 
-Returns **[Object][44]** nextState
+Returns **[Object][47]** nextState
 
-## toggleSidePanelUpdater
+### toggleSidePanelUpdater
 
 Toggle active side panel
 
--   **Action**: [`toggleSidePanel`][68]
+-   **Action**: [`toggleSidePanel`][72]
 
 **Parameters**
 
--   `state` **[Object][44]** `uiState`
--   `action` **[Object][44]** 
-    -   `action.payload` **[string][46]** id of side panel to be shown, one of `layer`, `filter`, `interaction`, `map`
+-   `state` **[Object][47]** `uiState`
+-   `action` **[Object][47]** 
+    -   `action.payload` **([string][49] | null)** id of side panel to be shown, one of `layer`, `filter`, `interaction`, `map`. close side panel if `null`
 
-Returns **[Object][44]** nextState
+Returns **[Object][47]** nextState
 
-## uiStateUpdaters.setResolutionUpdater
+[1]: #uistateupdaters
 
-Set `exportImage.setExportImageDataUri` to a dataUri
+[2]: #examples
 
-**Parameters**
+[3]: #addnotificationupdater
 
--   `state` **[Object][44]** `uiState`
--   `action` **[Object][44]** 
-    -   `action.payload` **[string][46]** export image data uri
+[4]: #parameters
 
-Returns **[Object][44]** nextState
+[5]: #cleanupexportimage
 
-[1]: #addnotificationupdater
+[6]: #parameters-1
 
-[2]: #parameters
+[7]: #default_export_data
 
-[3]: #cleanupexportimage
+[8]: #properties
 
-[4]: #parameters-1
+[9]: #default_export_image
 
-[5]: #default_export_data
+[10]: #properties-1
 
-[6]: #properties
+[11]: #default_map_controls
 
-[7]: #default_export_image
+[12]: #properties-2
 
-[8]: #properties-1
+[13]: #hideexportdropdownupdater
 
-[9]: #default_map_controls
+[14]: #parameters-2
 
-[10]: #properties-2
+[15]: #initial_ui_state
 
-[11]: #hideexportdropdownupdater
+[16]: #properties-3
 
-[12]: #parameters-2
+[17]: #opendeletemodalupdater
 
-[13]: #initial_ui_state
+[18]: #parameters-3
 
-[14]: #properties-3
+[19]: #setexportdatatypeupdater
 
-[15]: #opendeletemodalupdater
+[20]: #parameters-4
 
-[16]: #parameters-3
+[21]: #setexportdataupdater
 
-[17]: #setexportdatatypeupdater
+[22]: #parameters-5
 
-[18]: #parameters-4
+[23]: #setexportfilteredupdater
 
-[19]: #setexportdataupdater
+[24]: #parameters-6
 
-[20]: #parameters-5
+[25]: #setexportimagedatauri
 
-[21]: #setexportfilteredupdater
+[26]: #parameters-7
 
-[22]: #parameters-6
+[27]: #setexportselecteddatasetupdater
 
-[23]: #setexportselecteddatasetupdater
+[28]: #parameters-8
 
-[24]: #parameters-7
+[29]: #setratioupdater
 
-[25]: #setratioupdater
+[30]: #parameters-9
 
-[26]: #parameters-8
+[31]: #setresolutionupdater
 
-[27]: #setresolutionupdater
+[32]: #parameters-10
 
-[28]: #parameters-9
+[33]: #showexportdropdownupdater
 
-[29]: #showexportdropdownupdater
+[34]: #parameters-11
 
-[30]: #parameters-10
+[35]: #startexportingimage
 
-[31]: #startexportingimage
+[36]: #parameters-12
 
-[32]: #parameters-11
+[37]: #togglelegendupdater
 
-[33]: #togglelegendupdater
+[38]: #parameters-13
 
-[34]: #parameters-12
+[39]: #togglemapcontrolupdater
 
-[35]: #togglemapcontrolupdater
+[40]: #parameters-14
 
-[36]: #parameters-13
+[41]: #togglemodalupdater
 
-[37]: #togglemodalupdater
+[42]: #parameters-15
 
-[38]: #parameters-14
+[43]: #togglesidepanelupdater
 
-[39]: #togglesidepanelupdater
+[44]: #parameters-16
 
-[40]: #parameters-15
+[45]: ../advanced-usage/using-updaters.md
 
-[41]: #uistateupdaterssetresolutionupdater
+[46]: ../actions/actions.md#addnotification
 
-[42]: #parameters-16
+[47]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
 
-[43]: ../actions/actions.md#addnotification
+[48]: ../actions/actions.md#cleanupexportimage
 
-[44]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+[49]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
 
-[45]: ../actions/actions.md#cleanupexportimage
+[50]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
 
-[46]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+[51]: ../actions/actions.md#hideexportdropdown
 
-[47]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+[52]: ../actions/actions.md#opendeletemodal
 
-[48]: ../actions/actions.md#hideexportdropdown
+[53]: ../actions/actions.md#setexportdatatype
 
-[49]: ../actions/actions.md#opendeletemodal
+[54]: ../actions/actions.md#setexportdata
 
-[50]: ../actions/actions.md#setexportdatatype
+[55]: ../actions/actions.md#setexportfiltered
 
-[51]: ../actions/actions.md#setexportdata
+[56]: ../actions/actions.md#setexportimagedatauri
 
-[52]: ../actions/actions.md#setexportfiltered
+[57]: ../actions/actions.md#setexportselecteddataset
 
-[53]: ../actions/actions.md#setexportselecteddataset
+[58]: ../actions/actions.md#setratio
 
-[54]: ../actions/actions.md#setratio
+[59]: ../actions/actions.md#setresolution
 
-[55]: ../actions/actions.md#setresolution
+[60]: ../actions/actions.md#showexportdropdown
 
-[56]: ../actions/actions.md#showexportdropdown
+[61]: ../actions/actions.md#startexportingimage
 
-[57]: ../actions/actions.md#startexportingimage
+[62]: ../actions/actions.md#togglelegend
 
-[58]: ../actions/actions.md#togglelegend
+[63]: ../actions/actions.md#togglemapcontrol
 
-[59]: ../actions/actions.md#togglemapcontrol
+[64]: ../actions/actions.md#togglemodal
 
-[60]: ../actions/actions.md#togglemodal
+[65]: ../constants/default-settings.md#data_table_id
 
-[61]: ../constants/default-settings.md#data_table_id
+[66]: ../constants/default-settings.md#delete_data_id
 
-[62]: ../constants/default-settings.md#delete_data_id
+[67]: ../constants/default-settings.md#add_data_id
 
-[63]: ../constants/default-settings.md#add_data_id
+[68]: ../constants/default-settings.md#export_image_id
 
-[64]: ../constants/default-settings.md#export_image_id
+[69]: ../constants/default-settings.md#export_data_id
 
-[65]: ../constants/default-settings.md#export_data_id
+[70]: ../constants/default-settings.md#export_config_id
 
-[66]: ../constants/default-settings.md#export_config_id
+[71]: ../constants/default-settings.md#add_map_style_id
 
-[67]: ../constants/default-settings.md#add_map_style_id
-
-[68]: ../actions/actions.md#togglesidepanel
+[72]: ../actions/actions.md#togglesidepanel

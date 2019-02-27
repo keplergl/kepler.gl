@@ -21,7 +21,47 @@
 import geoViewport from '@mapbox/geo-viewport';
 
 /**
+ * Updaters for `mapState` reducer. Can be used in your root reducer to directly modify kepler.gl's state.
+ * Read more about [Using updaters](../advanced-usage/using-updaters.md)
+ * @public
+ * @example
+ *
+ * import keplerGlReducer, {mapStateUpdaters} from 'kepler.gl/reducers';
+ * // Root Reducer
+ * const reducers = combineReducers({
+ *  keplerGl: keplerGlReducer,
+ *  app: appReducer
+ * });
+ *
+ * const composedReducer = (state, action) => {
+ *  switch (action.type) {
+ *    // click button to close side panel
+ *    case 'CLICK_BUTTON':
+ *      return {
+ *        ...state,
+ *        keplerGl: {
+ *          ...state.keplerGl,
+ *          foo: {
+ *             ...state.keplerGl.foo,
+ *             mapState: mapStateUpdaters.fitBoundsUpdater(
+ *               mapState, {payload: [127.34, 31.09, 127.56, 31.59]]}
+ *             )
+ *          }
+ *        }
+ *      };
+ *  }
+ *  return reducers(state, action);
+ * };
+ *
+ * export default composedReducer;
+ */
+/* eslint-disable no-unused-vars */
+const mapStateUpdaters = null;
+/* eslint-enable no-unused-vars */
+
+/**
  * Default initial `mapState`
+ * @memberof mapStateUpdaters
  * @constant
  * @property {number} pitch Default: `0`
  * @property {number} bearing Default: `0`
@@ -49,6 +89,7 @@ export const INITIAL_MAP_STATE = {
 /* Updaters */
 /**
  * Update map viewport
+ * @memberof mapStateUpdaters
  * @param {Object} state
  * @param {Object} action
  * @param {Object} action.payload - viewport
@@ -62,6 +103,7 @@ export const updateMapUpdater = (state, action) => ({
 
 /**
  * Fit map viewport to bounds
+ * @memberof mapStateUpdaters
  * @param {Object} state
  * @param {Object} action
  * @param {number[]} action.payload - bounds as `[lngMin, latMin, lngMax, latMax]`
@@ -85,6 +127,7 @@ export const fitBoundsUpdater = (state, action) => {
 
 /**
  * Toggle between 3d and 2d map.
+ * @memberof mapStateUpdaters
  * @param {Object} state
  * @returns {Object} nextState
  * @public
@@ -100,7 +143,8 @@ export const togglePerspectiveUpdater = (state) => ({
 
 // consider case where you have a split map and user wants to reset
 /**
- * Update `mapState` to popagate a new config
+ * Update `mapState` to propagate a new config
+ * @memberof mapStateUpdaters
  * @param {Object} state
  * @param {Object} action
  * @param {Object} action.payload - saved map config
@@ -120,6 +164,7 @@ export const receiveMapConfigUpdater = (state, action) => {
 
 /**
  * Toggle between one or split maps
+ * @memberof mapStateUpdaters
  * @param {Object} state
  * @returns {Object} nextState
  * @public

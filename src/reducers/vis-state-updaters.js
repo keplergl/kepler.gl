@@ -62,7 +62,48 @@ import {processFileToLoad} from '/utils/file-utils';
 disableStackCapturing();
 
 /**
+ * Updaters for `visState` reducer. Can be used in your root reducer to directly modify kepler.gl's state.
+ * Read more about [Using updaters](../advanced-usage/using-updaters.md)
+ *
+ * @public
+ * @example
+ *
+ * import keplerGlReducer, {visStateUpdaters} from 'kepler.gl/reducers';
+ * // Root Reducer
+ * const reducers = combineReducers({
+ *  keplerGl: keplerGlReducer,
+ *  app: appReducer
+ * });
+ *
+ * const composedReducer = (state, action) => {
+ *  switch (action.type) {
+ *    case 'CLICK_BUTTON':
+ *      return {
+ *        ...state,
+ *        keplerGl: {
+ *          ...state.keplerGl,
+ *          foo: {
+ *             ...state.keplerGl.foo,
+ *             visState: visStateUpdaters.enlargeFilterUpdater(
+ *               state.keplerGl.foo.visState,
+ *               {idx: 0}
+ *             )
+ *          }
+ *        }
+ *      };
+ *  }
+ *  return reducers(state, action);
+ * };
+ *
+ * export default composedReducer;
+ */
+/* eslint-disable no-unused-vars */
+const visStateUpdaters = null;
+/* eslint-enable no-unused-vars */
+
+/**
  * Default initial `visState`
+ * @memberof visStateUpdaters
  * @constant
  * @type {Object}
  * @property {Array} layers
@@ -141,6 +182,7 @@ function updateStateWithLayerAndData(state, {layerData, layer, idx}) {
 
  /**
   * Update layer base config: dataId, label, column, isVisible
+  * @memberof visStateUpdaters
   * @param {Object} state `visState`
   * @param {Object} action action
   * @param {Object} action.oldLayer layer to be updated
@@ -177,6 +219,7 @@ export function layerConfigChangeUpdater(state, action) {
 
 /**
  * Update layer type. Previews layer config will be copied if applicable.
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {Object} action.oldLayer layer to be updated
@@ -232,6 +275,7 @@ export function layerTypeChangeUpdater(state, action) {
 
 /**
  * Update layer visual channel
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {Object} action.oldLayer layer to be updated
@@ -259,6 +303,7 @@ export function layerVisualChannelChangeUpdater(state, action) {
 
 /**
  * Update layer `visConfig`
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {Object} action.oldLayer layer to be updated
@@ -296,6 +341,7 @@ export function layerVisConfigChangeUpdater(state, action) {
 
 /**
  * Update `interactionConfig`
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {Object} action.config new config as key value map: `{tooltip: {enabled: true}}`
@@ -327,6 +373,7 @@ export function interactionConfigChangeUpdater(state, action) {
 
 /**
  * Update filter property
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {Number} action.idx `idx` of filter to be updated
@@ -424,6 +471,7 @@ export function setFilterUpdater(state, action) {
 
 /**
  * Set the property of a filter plot
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {Number} action.idx
@@ -457,6 +505,7 @@ export const setFilterPlotUpdater = (state, {idx, newProp}) => {
 
 /**
  * Add a new filter
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {string} action.dataId dataset `id` this new filter is associated with
@@ -473,6 +522,7 @@ export const addFilterUpdater = (state, action) =>
 
 /**
  * Start and end filter animation
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {Number} action.idx idx of filter
@@ -488,6 +538,7 @@ export const toggleFilterAnimationUpdater = (state, action) => ({
 
 /**
  * Change filter animation speed
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {Number} action.idx  `idx` of filter
@@ -504,6 +555,7 @@ export const updateAnimationSpeedUpdater = (state, action) => ({
 
 /**
  * Show larger time filter at bottom for time playback (apply to time filter only)
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {Number} action.idx index of filter to enlarge
@@ -524,6 +576,7 @@ export const enlargeFilterUpdater = (state, action) => {
 
 /**
  * Remove a filter
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {Number} action.idx index of filter to b e removed
@@ -556,6 +609,7 @@ export const removeFilterUpdater = (state, action) => {
 
 /**
  * Add a new layer
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {Object} action.props - new layer props
@@ -582,6 +636,7 @@ export const addLayerUpdater = (state, action) => {
 
 /**
  * remove layer
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {Number} action.idx index of layer to b e removed
@@ -611,6 +666,7 @@ export const removeLayerUpdater = (state, {idx}) => {
 
 /**
  * Reorder layer
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {Array<Number>} action.order an array of layer indexes
@@ -624,6 +680,7 @@ export const reorderLayerUpdater = (state, {order}) => ({
 
 /**
  * Remove a dataset and all layers, filters, tooltip configs that based on it
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {string} action.key dataset id
@@ -687,6 +744,7 @@ export const removeDatasetUpdater = (state, action) => {
 
 /**
  * update layer blending mode
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {string} action.mode one of `additive`, `normal` and `subtractive`
@@ -700,6 +758,7 @@ export const updateLayerBlendingUpdater = (state, action) => ({
 
 /**
  * Display dataset table in a modal
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {string} action.dataId dataset id to show in table
@@ -715,6 +774,7 @@ export const showDatasetTableUpdater = (state, action) => {
 
 /**
  * reset visState to initial State
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @returns {Object} nextState
  * @public
@@ -727,6 +787,7 @@ export const resetMapConfigVisStateUpdater = (state) => ({
 
 /**
  * Propagate `visState` reducer with a new configuration. Current config will be override.
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {Object} action.payload map config to be propagated
@@ -763,6 +824,7 @@ export const receiveMapConfigUpdater = (state, action) => {
 
 /**
  * Trigger layer hover event with hovered object
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {Object} action.info Object hovered, returned by deck.gl
@@ -776,6 +838,7 @@ export const layerHoverUpdater = (state, action) => ({
 
 /**
  * Trigger layer click event with clicked object
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {Object} action.info Object clicked, returned by deck.gl
@@ -789,6 +852,7 @@ export const layerClickUpdater = (state, action) => ({
 
 /**
  * Trigger map click event, unselect clicked object
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @returns {Object} nextState
  * @public
@@ -799,10 +863,11 @@ export const mapClickUpdater = (state) => ({
 });
 
 /**
- * Toggle visibility of a layer for a splitted map
+ * Toggle visibility of a layer for a split map
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
- * @param {Number|undefined} action.payload index of the splitted map
+ * @param {Number|undefined} action.payload index of the split map
  * @returns {Object} nextState
  * @public
  */
@@ -818,6 +883,7 @@ export const toggleSplitMapUpdater = (state, action) =>
 
 /**
  * Set layers to be visible in split map
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {Number} mapIndex index of the split map
@@ -872,6 +938,7 @@ export const setVisibleLayersForMapUpdater = (state, action) => {
 
 /**
  * Toggle visibility of a layer in a split map
+ * @memberof visStateUpdaters
  * @param {Object} state
  * @param {Object} action
  * @param {Number} action.mapIndex index of the split map
@@ -916,9 +983,18 @@ export const toggleLayerForMapUpdater = (state, action) => {
 
 /**
  * Add new dataset to `visState`, with option to load a map config along with the datasets
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
- * @param {Array<Object>} action.datasets array of datasets
+ * @param {Array<Object>|Object} action.datasets - ***required** datasets can be a dataset or an array of datasets
+ * Each dataset object needs to have `info` and `data` property.
+ * @param {Object} action.datasets.info -info of a dataset
+ * @param {string} action.datasets.info.id - id of this dataset. If config is defined, `id` should matches the `dataId` in config.
+ * @param {string} action.datasets.info.label - A display name of this dataset
+ * @param {Object} action.datasets.data - ***required** The data object, in a tabular format with 2 properties `fields` and `rows`
+ * @param {Array<Object>} action.datasets.data.fields - ***required** Array of fields,
+ * @param {string} action.datasets.data.fields.name - ***required** Name of the field,
+ * @param {Array<Array>} action.datasets.data.rows - ***required** Array of rows, in a tabular format with `fields` and `rows`
  * @param {Object} action.options option object `{centerMap: true}`
  * @param {Object} action.config map config
  * @returns {Object} nextState
@@ -979,7 +1055,7 @@ export const updateVisDataUpdater = (state, action) => {
     const newLayers = mergedState.layers.filter(
       l => l.config.dataId in newDateEntries
     );
-    // if map is splited, add new layers to splitMaps
+    // if map is split, add new layers to splitMaps
     mergedState = {
       ...mergedState,
       splitMaps: addNewLayersToSplitMap(mergedState.splitMaps, newLayers)
@@ -1153,6 +1229,7 @@ function closeSpecificMapAtIndex(state, action) {
 
 /**
  * Trigger file loading dispatch `addDataToMap` if succeed, or `loadFilesErr` if failed
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {Array<Object>} action.files array of fileblob
@@ -1195,6 +1272,7 @@ export const loadFilesUpdater = (state, action) => {
 
 /**
  * Trigger loading file error
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {*} action.error
@@ -1208,12 +1286,11 @@ export const loadFilesErrUpdater = (state, {error}) => ({
 });
 
 /**
- * helper function to update All layer domain and layer data of state
- *
+ * Helper function to update All layer domain and layer data of state
+ * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Array<string>} datasets
  * @returns {Object} nextState
- * @public
  */
 export function addDefaultLayers(state, datasets) {
   const defaultLayers = Object.values(datasets).reduce(
@@ -1239,7 +1316,6 @@ export function addDefaultLayers(state, datasets) {
  * @param {Object} state
  * @param {Object} dataset
  * @returns {Object} nextState
- * @public
  */
 export function addDefaultTooltips(state, dataset) {
   const tooltipFields = findFieldsToShow(dataset);
@@ -1263,13 +1339,11 @@ export function addDefaultTooltips(state, dataset) {
 }
 
 /**
- * helper function to update layer domains for an array of datsets
- *
+ * Helper function to update layer domains for an array of datsets
  * @param {Object} state
  * @param {Array|Array<string>} dataId dataset id or array of dataset ids
  * @param {Object} newFilter if is called by setFilter, the filter that has changed
  * @returns {Object} nextState
- * @public
  */
 export function updateAllLayerDomainData(state, dataId, newFilter) {
   const dataIds = typeof dataId === 'string' ? [dataId] : dataId;

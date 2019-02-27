@@ -41,6 +41,7 @@ export * as visStateUpdaters from './vis-state-updaters';
 export * as mapStateUpdaters from './map-state-updaters';
 export * as mapStyleUpdaters from './map-style-updaters';
 export * as uiStateUpdaters from './ui-state-updaters';
-export * as combineUpdaters from './composers';
+export * as combineUpdaters from './combine-updaters';
+
 // reducer merges
 export * as visStateMergers from './vis-state-merger';

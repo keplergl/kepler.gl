@@ -2,134 +2,178 @@
 
 ### Table of Contents
 
--   [fitBoundsUpdater](#fitboundsupdater)
--   [INITIAL_MAP_STATE](#initial_map_state)
-    -   [Properties](#properties)
--   [receiveMapConfigUpdater](#receivemapconfigupdater)
--   [togglePerspectiveUpdater](#toggleperspectiveupdater)
--   [toggleSplitMapUpdater](#togglesplitmapupdater)
--   [updateMapUpdater](#updatemapupdater)
+-   [mapStateUpdaters](#mapstateupdaters)
+    -   [fitBoundsUpdater](#fitboundsupdater)
+    -   [INITIAL_MAP_STATE](#initial_map_state)
+    -   [receiveMapConfigUpdater](#receivemapconfigupdater)
+    -   [togglePerspectiveUpdater](#toggleperspectiveupdater)
+    -   [toggleSplitMapUpdater](#togglesplitmapupdater)
+    -   [updateMapUpdater](#updatemapupdater)
 
-## fitBoundsUpdater
+## mapStateUpdaters
+
+Updaters for `mapState` reducer. Can be used in your root reducer to directly modify kepler.gl's state.
+Read more about [Using updaters][15]
+
+**Examples**
+
+```javascript
+import keplerGlReducer, {mapStateUpdaters} from 'kepler.gl/reducers';
+// Root Reducer
+const reducers = combineReducers({
+ keplerGl: keplerGlReducer,
+ app: appReducer
+});
+
+const composedReducer = (state, action) => {
+ switch (action.type) {
+   // click button to close side panel
+   case 'CLICK_BUTTON':
+     return {
+       ...state,
+       keplerGl: {
+         ...state.keplerGl,
+         foo: {
+            ...state.keplerGl.foo,
+            mapState: mapStateUpdaters.fitBoundsUpdater(
+              mapState, {payload: [127.34, 31.09, 127.56, 31.59]]}
+            )
+         }
+       }
+     };
+ }
+ return reducers(state, action);
+};
+
+export default composedReducer;
+```
+
+### fitBoundsUpdater
 
 Fit map viewport to bounds
 
--   **Action**: [`fitBounds`][13]
+-   **Action**: [`fitBounds`][16]
 
 **Parameters**
 
--   `state` **[Object][14]** 
--   `action` **[Object][14]** 
-    -   `action.payload` **[Array][15]&lt;[number][16]>** bounds as `[lngMin, latMin, lngMax, latMax]`
+-   `state` **[Object][17]** 
+-   `action` **[Object][17]** 
+    -   `action.payload` **[Array][18]&lt;[number][19]>** bounds as `[lngMin, latMin, lngMax, latMax]`
 
-Returns **[Object][14]** nextState
+Returns **[Object][17]** nextState
 
-## INITIAL_MAP_STATE
+### INITIAL_MAP_STATE
 
 Default initial `mapState`
 
-### Properties
+#### Properties
 
--   `pitch` **[number][16]** Default: `0`
--   `bearing` **[number][16]** Default: `0`
--   `latitude` **[number][16]** Default: `37.75043`
--   `longitude` **[number][16]** Default: `-122.34679`
--   `zoom` **[number][16]** Default: `9`
--   `dragRotate` **[boolean][17]** Default: `false`
--   `width` **[number][16]** Default: `800`
--   `height` **[number][16]** Default: `800`
--   `isSplit` **[boolean][17]** Default: `false`
+-   `pitch` **[number][19]** Default: `0`
+-   `bearing` **[number][19]** Default: `0`
+-   `latitude` **[number][19]** Default: `37.75043`
+-   `longitude` **[number][19]** Default: `-122.34679`
+-   `zoom` **[number][19]** Default: `9`
+-   `dragRotate` **[boolean][20]** Default: `false`
+-   `width` **[number][19]** Default: `800`
+-   `height` **[number][19]** Default: `800`
+-   `isSplit` **[boolean][20]** Default: `false`
 
-## receiveMapConfigUpdater
+### receiveMapConfigUpdater
 
-Update `mapState` to popagate a new config
+Update `mapState` to propagate a new config
 
--   **Action**: [`receiveMapConfig`][18]
+-   **Action**: [`receiveMapConfig`][21]
 
 **Parameters**
 
--   `state` **[Object][14]** 
--   `action` **[Object][14]** 
-    -   `action.payload` **[Object][14]** saved map config
+-   `state` **[Object][17]** 
+-   `action` **[Object][17]** 
+    -   `action.payload` **[Object][17]** saved map config
 
-Returns **[Object][14]** nextState
+Returns **[Object][17]** nextState
 
-## togglePerspectiveUpdater
+### togglePerspectiveUpdater
 
 Toggle between 3d and 2d map.
 
--   **Action**: [`togglePerspective`][19]
+-   **Action**: [`togglePerspective`][22]
 
 **Parameters**
 
--   `state` **[Object][14]** 
+-   `state` **[Object][17]** 
 
-Returns **[Object][14]** nextState
+Returns **[Object][17]** nextState
 
-## toggleSplitMapUpdater
+### toggleSplitMapUpdater
 
 Toggle between one or split maps
 
--   **Action**: [`toggleSplitMap`][20]
+-   **Action**: [`toggleSplitMap`][23]
 
 **Parameters**
 
--   `state` **[Object][14]** 
+-   `state` **[Object][17]** 
 
-Returns **[Object][14]** nextState
+Returns **[Object][17]** nextState
 
-## updateMapUpdater
+### updateMapUpdater
 
 Update map viewport
 
--   **Action**: [`updateMap`][21]
+-   **Action**: [`updateMap`][24]
 
 **Parameters**
 
--   `state` **[Object][14]** 
--   `action` **[Object][14]** 
-    -   `action.payload` **[Object][14]** viewport
+-   `state` **[Object][17]** 
+-   `action` **[Object][17]** 
+    -   `action.payload` **[Object][17]** viewport
 
-Returns **[Object][14]** nextState
+Returns **[Object][17]** nextState
 
-[1]: #fitboundsupdater
+[1]: #mapstateupdaters
 
-[2]: #parameters
+[2]: #examples
 
-[3]: #initial_map_state
+[3]: #fitboundsupdater
 
-[4]: #properties
+[4]: #parameters
 
-[5]: #receivemapconfigupdater
+[5]: #initial_map_state
 
-[6]: #parameters-1
+[6]: #properties
 
-[7]: #toggleperspectiveupdater
+[7]: #receivemapconfigupdater
 
-[8]: #parameters-2
+[8]: #parameters-1
 
-[9]: #togglesplitmapupdater
+[9]: #toggleperspectiveupdater
 
-[10]: #parameters-3
+[10]: #parameters-2
 
-[11]: #updatemapupdater
+[11]: #togglesplitmapupdater
 
-[12]: #parameters-4
+[12]: #parameters-3
 
-[13]: ../actions/actions.md#fitbounds
+[13]: #updatemapupdater
 
-[14]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+[14]: #parameters-4
 
-[15]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+[15]: ../advanced-usage/using-updaters.md
 
-[16]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
+[16]: ../actions/actions.md#fitbounds
 
-[17]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+[17]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
 
-[18]: ../actions/actions.md#receivemapconfig
+[18]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
 
-[19]: ../actions/actions.md#toggleperspective
+[19]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
 
-[20]: ../actions/actions.md#togglesplitmap
+[20]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
 
-[21]: ../actions/actions.md#updatemap
+[21]: ../actions/actions.md#receivemapconfig
+
+[22]: ../actions/actions.md#toggleperspective
+
+[23]: ../actions/actions.md#togglesplitmap
+
+[24]: ../actions/actions.md#updatemap

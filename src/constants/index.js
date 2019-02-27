@@ -32,7 +32,16 @@ export {
   LAYER_TYPES,
   LAYER_BLENDINGS,
   AGGREGATION_TYPES,
-  MAX_DEFAULT_TOOLTIPS
+  MAX_DEFAULT_TOOLTIPS,
+  DATA_TABLE_ID,
+  DELETE_DATA_ID,
+  ADD_DATA_ID,
+  EXPORT_IMAGE_ID,
+  EXPORT_DATA_ID,
+  EXPORT_CONFIG_ID,
+  ADD_MAP_STYLE_ID,
+  DEFAULT_LAYER_GROUPS,
+  DEFAULT_MAP_STYLES
 } from './default-settings';
 export {VizColorPalette, DataVizColors} from './custom-color-ranges';
 export {COLOR_RANGES, DefaultColorRange} from './color-ranges';
