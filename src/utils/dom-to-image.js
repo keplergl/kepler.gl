@@ -763,7 +763,7 @@ function newFontFaces() {
         try {
           rules = sheet.rules || sheet.cssRules;
         } catch (e) {
-          console.error(`'Can't read the css rules of: ${sheet.href}`, e);
+          console.log(`'Can't read the css rules of: ${sheet.href}`, e);
           return;
         }
 
@@ -773,11 +773,11 @@ function newFontFaces() {
               .asArray(rules || [])
               .forEach(cssRules.push.bind(cssRules));
           } catch (e) {
-            console.error(`Error while reading CSS rules from ${sheet.href}`, e);
+            console.log(`Error while reading CSS rules from ${sheet.href}`, e);
             return;
           }
         } else {
-          console.error('getCssRules can not find cssRules');
+          console.log('getCssRules can not find cssRules');
           return;
         }
       });

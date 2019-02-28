@@ -4,6 +4,12 @@
   <meta charset="UTF-8"/>
   <title>Kepler.gl embedded map</title>
 
+  <!--Uber Font-->
+  <link rel="stylesheet" href="//d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css">
+
+  <!--MapBox css-->
+  <link href="//api.tiles.mapbox.com/mapbox-gl-js/v0.42.0/mapbox-gl.css" rel="stylesheet">
+
   <!-- Load React/Redux -->
   <script src="https://unpkg.com/react@15.6.2/dist/react.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@15.6.2/dist/react-dom.min.js" crossorigin></script>
@@ -14,6 +20,10 @@
   <script src="https://unpkg.com/kepler.gl/umd/keplergl.min.js"></script>
   <!-- You can also specify a specific versions by doing the following -->
   <!--<script src="https://unpkg.com/kepler.gl@0.2.2/umd/keplergl.min.js"></script>-->
+
+  <style type="text/css">
+    body {margin: 0; padding: 0; overflow: hidden;}
+  </style>
 
   <!--MapBox token-->
   <script>
