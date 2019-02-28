@@ -30,12 +30,12 @@ import KeplerGlSchema from 'schemas';
 
 /**
  * Some actions will affect the entire kepler.lg instance state.
- * The updaters for these actions is exported as `combineUpdaters`. These updater take the entire instance state
+ * The updaters for these actions is exported as `combinedUpdaters`. These updater take the entire instance state
  * as the first argument. Read more about [Using updaters](../advanced-usage/using-updaters.md)
  * @public
  * @example
  *
- * import keplerGlReducer, {combineUpdaters} from 'kepler.gl/reducers';
+ * import keplerGlReducer, {combinedUpdaters} from 'kepler.gl/reducers';
  * // Root Reducer
  * const reducers = combineReducers({
  *  keplerGl: keplerGlReducer,
@@ -50,8 +50,8 @@ import KeplerGlSchema from 'schemas';
  *        ...state,
  *        keplerGl: {
  *          ...state.keplerGl,
- *          // pass in kepler.gl instance state to combineUpdaters
- *          map:  combineUpdaters.addDataToMapComposed(
+ *          // pass in kepler.gl instance state to combinedUpdaters
+ *          map:  combinedUpdaters.addDataToMapUpdater(
  *           state.keplerGl.map,
  *           {
  *             payload: {
@@ -70,12 +70,12 @@ import KeplerGlSchema from 'schemas';
  * export default composedReducer;
  */
 /* eslint-disable no-unused-vars */
-const combineUpdaters = null;
+const combinedUpdaters = null;
 /* eslint-enable no-unused-vars */
 
 /**
  * Apply data and config to visState reducer
- * @memberof combineUpdaters
+ * @memberof combinedUpdaters
  * @param {Object} state kepler.gl instance state, containing all subreducer state
  * @param {Object} action
  * @param {Array<Object>|Object} action.datasets - ***required** datasets can be a dataset or an array of datasets
@@ -136,7 +136,7 @@ export const updateVisDataComposed = updateVisDataUpdater;
 /**
  * Combine data and full configuration update in a single action
  *
- * @memberof combineUpdaters
+ * @memberof combinedUpdaters
  * @param {Object} state kepler.gl instance state, containing all subreducer state
  * @param {Object} action
  * @param {Object} action.payload `{datasets, options, config}`

@@ -2,9 +2,13 @@
 
 ### Table of Contents
 
--   [keplerGlReducer](#keplerglreducer)
-    -   [keplerGlReducer.initialState](#keplerglreducerinitialstate)
-    -   [keplerGlReducer.plugin](#keplerglreducerplugin)
+-   [keplerGlReducer][1]
+    -   [keplerGlReducer.initialState][3]
+    -   [keplerGlReducer.plugin][6]
+-   [mapStateLens][9]
+-   [mapStyleLens][11]
+-   [uiStateLens][13]
+-   [visStateLens][15]
 
 ## keplerGlReducer
 
@@ -39,14 +43,14 @@ which will be shallow **merged** with default initial state.
 
 Default subreducer state:
 
--   [`visState`][9]
--   [`mapState`][10]
--   [`mapStyle`][11]
--   [`uiState`][12]
+-   [`visState`][17]
+-   [`mapState`][18]
+-   [`mapStyle`][19]
+-   [`uiState`][20]
 
 **Parameters**
 
--   `iniSt` **[Object][13]** custom state to be merged with default initial state
+-   `iniSt` **[Object][21]** custom state to be merged with default initial state
 
 **Examples**
 
@@ -69,7 +73,7 @@ You should only use this to adding additional actions instead of replacing defau
 
 **Parameters**
 
--   `customReducer` **([Object][13] \| [Function][14])** A reducer map or a reducer
+-   `customReducer` **([Object][21] \| [Function][22])** A reducer map or a reducer
 
 **Examples**
 
@@ -97,6 +101,42 @@ const myKeplerGlReducer = keplerGlReducer
 }, {}));
 ```
 
+## mapStateLens
+
+Connect subreducer `mapState`, used with `injectComponents`. Learn more at
+[Replace UI Component][23]
+
+**Parameters**
+
+-   `reduxState` **any** 
+
+## mapStyleLens
+
+Connect subreducer `mapStyle`, used with `injectComponents`. Learn more at
+[Replace UI Component][23]
+
+**Parameters**
+
+-   `reduxState` **any** 
+
+## uiStateLens
+
+Connect subreducer `uiState`, used with `injectComponents`. Learn more at
+[Replace UI Component][23]
+
+**Parameters**
+
+-   `reduxState` **any** 
+
+## visStateLens
+
+Connect subreducer `visState`, used with `injectComponents`. Learn more at
+[Replace UI Component][23]
+
+**Parameters**
+
+-   `reduxState` **any** 
+
 [1]: #keplerglreducer
 
 [2]: #examples
@@ -113,14 +153,32 @@ const myKeplerGlReducer = keplerGlReducer
 
 [8]: #examples-2
 
-[9]: ./vis-state.md#INITIAL_VIS_STATE
+[9]: #mapstatelens
 
-[10]: ./map-state.md#INITIAL_MAP_STATE
+[10]: #parameters-2
 
-[11]: ./map-style.md#INITIAL_MAP_STYLE
+[11]: #mapstylelens
 
-[12]: ./ui-state.md#INITIAL_UI_STATE
+[12]: #parameters-3
 
-[13]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+[13]: #uistatelens
 
-[14]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function
+[14]: #parameters-4
+
+[15]: #visstatelens
+
+[16]: #parameters-5
+
+[17]: ./vis-state.md#INITIAL_VIS_STATE
+
+[18]: ./map-state.md#INITIAL_MAP_STATE
+
+[19]: ./map-style.md#INITIAL_MAP_STYLE
+
+[20]: ./ui-state.md#INITIAL_UI_STATE
+
+[21]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+
+[22]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function
+
+[23]: ../advanced-usages/replace-ui-component.md#pass-custom-component-props

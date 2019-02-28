@@ -2,28 +2,28 @@
 
 ### Table of Contents
 
--   [uiStateUpdaters](#uistateupdaters)
-    -   [addNotificationUpdater](#addnotificationupdater)
-    -   [cleanupExportImage](#cleanupexportimage)
-    -   [DEFAULT_EXPORT_DATA](#default_export_data)
-    -   [DEFAULT_EXPORT_IMAGE](#default_export_image)
-    -   [DEFAULT_MAP_CONTROLS](#default_map_controls)
-    -   [hideExportDropdownUpdater](#hideexportdropdownupdater)
-    -   [INITIAL_UI_STATE](#initial_ui_state)
-    -   [openDeleteModalUpdater](#opendeletemodalupdater)
-    -   [setExportDataTypeUpdater](#setexportdatatypeupdater)
-    -   [setExportDataUpdater](#setexportdataupdater)
-    -   [setExportFilteredUpdater](#setexportfilteredupdater)
-    -   [setExportImageDataUri](#setexportimagedatauri)
-    -   [setExportSelectedDatasetUpdater](#setexportselecteddatasetupdater)
-    -   [setRatioUpdater](#setratioupdater)
-    -   [setResolutionUpdater](#setresolutionupdater)
-    -   [showExportDropdownUpdater](#showexportdropdownupdater)
-    -   [startExportingImage](#startexportingimage)
-    -   [toggleLegendUpdater](#togglelegendupdater)
-    -   [toggleMapControlUpdater](#togglemapcontrolupdater)
-    -   [toggleModalUpdater](#togglemodalupdater)
-    -   [toggleSidePanelUpdater](#togglesidepanelupdater)
+-   [uiStateUpdaters][1]
+    -   [addNotificationUpdater][3]
+    -   [cleanupExportImage][5]
+    -   [DEFAULT_EXPORT_DATA][7]
+    -   [DEFAULT_EXPORT_IMAGE][9]
+    -   [DEFAULT_MAP_CONTROLS][11]
+    -   [hideExportDropdownUpdater][13]
+    -   [INITIAL_UI_STATE][15]
+    -   [openDeleteModalUpdater][17]
+    -   [setExportDataTypeUpdater][19]
+    -   [setExportDataUpdater][21]
+    -   [setExportFilteredUpdater][23]
+    -   [setExportImageDataUri][25]
+    -   [setExportSelectedDatasetUpdater][27]
+    -   [setRatioUpdater][29]
+    -   [setResolutionUpdater][31]
+    -   [showExportDropdownUpdater][33]
+    -   [startExportingImage][35]
+    -   [toggleLegendUpdater][37]
+    -   [toggleMapControlUpdater][39]
+    -   [toggleModalUpdater][41]
+    -   [toggleSidePanelUpdater][43]
 
 ## uiStateUpdaters
 

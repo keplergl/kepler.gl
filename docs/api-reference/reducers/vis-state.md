@@ -2,36 +2,36 @@
 
 ### Table of Contents
 
--   [visStateUpdaters](#visstateupdaters)
-    -   [addFilterUpdater](#addfilterupdater)
-    -   [addLayerUpdater](#addlayerupdater)
-    -   [enlargeFilterUpdater](#enlargefilterupdater)
-    -   [INITIAL_VIS_STATE](#initial_vis_state)
-    -   [interactionConfigChangeUpdater](#interactionconfigchangeupdater)
-    -   [layerClickUpdater](#layerclickupdater)
-    -   [layerHoverUpdater](#layerhoverupdater)
-    -   [layerTypeChangeUpdater](#layertypechangeupdater)
-    -   [layerVisConfigChangeUpdater](#layervisconfigchangeupdater)
-    -   [layerVisualChannelChangeUpdater](#layervisualchannelchangeupdater)
-    -   [loadFilesErrUpdater](#loadfileserrupdater)
-    -   [loadFilesUpdater](#loadfilesupdater)
-    -   [mapClickUpdater](#mapclickupdater)
-    -   [receiveMapConfigUpdater](#receivemapconfigupdater)
-    -   [removeDatasetUpdater](#removedatasetupdater)
-    -   [removeFilterUpdater](#removefilterupdater)
-    -   [removeLayerUpdater](#removelayerupdater)
-    -   [reorderLayerUpdater](#reorderlayerupdater)
-    -   [resetMapConfigVisStateUpdater](#resetmapconfigvisstateupdater)
-    -   [setFilterPlotUpdater](#setfilterplotupdater)
-    -   [setFilterUpdater](#setfilterupdater)
-    -   [setVisibleLayersForMapUpdater](#setvisiblelayersformapupdater)
-    -   [showDatasetTableUpdater](#showdatasettableupdater)
-    -   [toggleFilterAnimationUpdater](#togglefilteranimationupdater)
-    -   [toggleLayerForMapUpdater](#togglelayerformapupdater)
-    -   [toggleSplitMapUpdater](#togglesplitmapupdater)
-    -   [updateAnimationSpeedUpdater](#updateanimationspeedupdater)
-    -   [updateLayerBlendingUpdater](#updatelayerblendingupdater)
-    -   [updateVisDataUpdater](#updatevisdataupdater)
+-   [visStateUpdaters][1]
+    -   [addFilterUpdater][3]
+    -   [addLayerUpdater][5]
+    -   [enlargeFilterUpdater][7]
+    -   [INITIAL_VIS_STATE][9]
+    -   [interactionConfigChangeUpdater][11]
+    -   [layerClickUpdater][13]
+    -   [layerHoverUpdater][15]
+    -   [layerTypeChangeUpdater][17]
+    -   [layerVisConfigChangeUpdater][19]
+    -   [layerVisualChannelChangeUpdater][21]
+    -   [loadFilesErrUpdater][23]
+    -   [loadFilesUpdater][25]
+    -   [mapClickUpdater][27]
+    -   [receiveMapConfigUpdater][29]
+    -   [removeDatasetUpdater][31]
+    -   [removeFilterUpdater][33]
+    -   [removeLayerUpdater][35]
+    -   [reorderLayerUpdater][37]
+    -   [resetMapConfigVisStateUpdater][39]
+    -   [setFilterPlotUpdater][41]
+    -   [setFilterUpdater][43]
+    -   [setVisibleLayersForMapUpdater][45]
+    -   [showDatasetTableUpdater][47]
+    -   [toggleFilterAnimationUpdater][49]
+    -   [toggleLayerForMapUpdater][51]
+    -   [toggleSplitMapUpdater][53]
+    -   [updateAnimationSpeedUpdater][55]
+    -   [updateLayerBlendingUpdater][57]
+    -   [updateVisDataUpdater][59]
 
 ## visStateUpdaters
 

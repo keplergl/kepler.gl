@@ -32,7 +32,7 @@ const INPUT_CONFIG = {
   shallow: true,
   access: ['public'],
   'document-exported': true,
-  sortOrder: 'alpha',
+  sortOrder: 'alpha'
   // github: true
 };
 
@@ -69,8 +69,8 @@ const TREE = {
     {
       path: 'reducers',
       children: [
-        {input: ['root.js'], output: 'reducers.md', config: {shallow: true}},
-        {input: 'combine-updaters.js', output: 'combine.md',  config: {shallow: true}},
+        {input: ['root.js', 'core.js'], output: 'reducers.md', config: {shallow: true}},
+        {input: 'combined-updaters.js', output: 'combine.md',  config: {shallow: true}},
         {input: 'vis-state-updaters.js', output: 'vis-state.md', config: {shallow: true}},
         {input: 'map-state-updaters.js', output: 'map-state.md', config: {shallow: true}},
         {input: 'map-style-updaters.js', output: 'map-style.md', config: {shallow: true}},
@@ -179,13 +179,16 @@ function _isLink(node) {
   return node.type === 'link' && node.children.length === 1;
 }
 
+function _isLinkReference(node) {
+  return node.type === 'linkReference' && node.children.length === 1;
+}
 function _isExampleOrParam(node) {
   return node.type === 'text' && ['Parameters', 'Examples', 'Properties'].includes(node.value);
 }
 
 function _isExampleOrParameterLink(node) {
   return _isParagraph(node) &&
-    _isLink(node.children[0]) &&
+    _isLinkReference(node.children[0]) &&
     _isExampleOrParam(node.children[0].children[0]);
 }
 
@@ -193,6 +196,7 @@ function _isExampleOrParameterLink(node) {
  * Remove example and parameter link from TOC
  */
 function _cleanUpTOCChildren(node) {
+
   if (!Array.isArray(node.children)) {
     return node;
   }
@@ -229,7 +233,6 @@ function buildChildDoc(inputPath, outputPath, actionMap, config) {
         processed = res.map(node => _appendActionTypesAndUpdatersToActions(node, actionMap));
       } else if (inputPath.some(p => p.includes('reducers'))) {
         // add action type and updater links to action
-
         processed = res.map(node => _appendActionToUpdaters(node, actionMap));
       }
 
@@ -237,23 +240,21 @@ function buildChildDoc(inputPath, outputPath, actionMap, config) {
     })
     .then(output => {
       // output is a string of remark json
-      return remark()
-        .use(toc, {tight: true})
-        .run(JSON.parse(output));
-    })
-    .then(ast => {
+      const ast = JSON.parse(output);
 
       ast.children = _overrideHeading(ast.children);
+      if (ast.children.length < 3) {
+        logError(inputPath, 'has less than 3 children')
+      }
       const tableOfContent = _cleanUpTOCChildren(ast.children[2]);
-
       ast.children[2] = tableOfContent;
 
-      const output = remark().stringify(ast);
-      fs.writeFileSync(outputPath, output);
+      const mdOutput = remark().stringify(ast);
+      fs.writeFileSync(outputPath, mdOutput);
       logOk(`   ✓ build docs ${inputPath} -> ${outputPath}`);
     })
     .catch(err => {
-      throw err;
+      logError(err);
     });
 }
 
@@ -267,10 +268,25 @@ function buildMdDocs(nodePath, node, actionMap, allTasks) {
     if (!child.children) {
 
         const {input, output, config} = child;
-        const inputPath = (Array.isArray(input) ? input : [input]).map(inp => join(PATHS.src, joinPath, inp));
+        const inputPaths = (Array.isArray(input) ? input : [input]).reduce((accu, inp) => {
+          const inputPath = join(PATHS.src, joinPath, inp);
+
+          if (fs.existsSync(inputPath)) {
+            // Do something
+            accu.push(inputPath);
+          } else {
+            logError(`[Error] ${inputPath} doesn't exist!`);
+          }
+
+          return accu;
+        }, []);
+
+        if (!inputPaths.length) {
+          return;
+        }
         const outputPath = join(PATHS.api, joinPath, output);
 
-        allTasks.push(buildChildDoc(inputPath, outputPath, actionMap, config));
+        allTasks.push(buildChildDoc(inputPaths, outputPath, actionMap, config));
     } else {
       buildMdDocs(joinPath, child, actionMap, allTasks);
     }

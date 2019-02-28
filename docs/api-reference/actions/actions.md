@@ -2,80 +2,80 @@
 
 ### Table of Contents
 
--   [forwardActions](#forwardactions)
-    -   [forwardTo](#forwardto)
-    -   [isForwardAction](#isforwardaction)
-    -   [unwrap](#unwrap)
-    -   [wrapTo](#wrapto)
--   [ActionTypes](#actiontypes)
--   [mapStyleActions](#mapstyleactions)
-    -   [addCustomMapStyle](#addcustommapstyle)
-    -   [inputMapStyle](#inputmapstyle)
-    -   [loadCustomMapStyle](#loadcustommapstyle)
-    -   [loadMapStyleErr](#loadmapstyleerr)
-    -   [loadMapStyles](#loadmapstyles)
-    -   [mapConfigChange](#mapconfigchange)
-    -   [mapStyleChange](#mapstylechange)
--   [main](#main)
-    -   [addDataToMap](#adddatatomap)
-    -   [keplerGlInit](#keplerglinit)
-    -   [receiveMapConfig](#receivemapconfig)
-    -   [resetMapConfig](#resetmapconfig)
--   [visStateActions](#visstateactions)
-    -   [addFilter](#addfilter)
-    -   [addLayer](#addlayer)
-    -   [enlargeFilter](#enlargefilter)
-    -   [interactionConfigChange](#interactionconfigchange)
-    -   [layerConfigChange](#layerconfigchange)
-    -   [layerTypeChange](#layertypechange)
-    -   [layerVisConfigChange](#layervisconfigchange)
-    -   [layerVisualChannelConfigChange](#layervisualchannelconfigchange)
-    -   [loadFiles](#loadfiles)
-    -   [loadFilesErr](#loadfileserr)
-    -   [onLayerClick](#onlayerclick)
-    -   [onLayerHover](#onlayerhover)
-    -   [onMapClick](#onmapclick)
-    -   [removeDataset](#removedataset)
-    -   [removeFilter](#removefilter)
-    -   [removeLayer](#removelayer)
-    -   [reorderLayer](#reorderlayer)
-    -   [setFilter](#setfilter)
-    -   [setFilterPlot](#setfilterplot)
-    -   [setVisibleLayersForMap](#setvisiblelayersformap)
-    -   [showDatasetTable](#showdatasettable)
-    -   [toggleAnimation](#toggleanimation)
-    -   [toggleLayerForMap](#togglelayerformap)
-    -   [updateAnimationSpeed](#updateanimationspeed)
-    -   [updateLayerBlending](#updatelayerblending)
-    -   [updateVisData](#updatevisdata)
--   [uiStateActions](#uistateactions)
-    -   [addNotification](#addnotification)
-    -   [cleanupExportImage](#cleanupexportimage)
-    -   [hideExportDropdown](#hideexportdropdown)
-    -   [openDeleteModal](#opendeletemodal)
-    -   [removeNotification](#removenotification)
-    -   [setExportData](#setexportdata)
-    -   [setExportDataType](#setexportdatatype)
-    -   [setExportFiltered](#setexportfiltered)
-    -   [setExportImageDataUri](#setexportimagedatauri)
-    -   [setExportSelectedDataset](#setexportselecteddataset)
-    -   [setRatio](#setratio)
-    -   [setResolution](#setresolution)
-    -   [showExportDropdown](#showexportdropdown)
-    -   [startExportingImage](#startexportingimage)
-    -   [toggleLegend](#togglelegend)
-    -   [toggleMapControl](#togglemapcontrol)
-    -   [toggleModal](#togglemodal)
-    -   [toggleSidePanel](#togglesidepanel)
--   [rootActions](#rootactions)
-    -   [deleteEntry](#deleteentry)
-    -   [registerEntry](#registerentry)
-    -   [renameEntry](#renameentry)
--   [mapStateActions](#mapstateactions)
-    -   [fitBounds](#fitbounds)
-    -   [togglePerspective](#toggleperspective)
-    -   [toggleSplitMap](#togglesplitmap)
-    -   [updateMap](#updatemap)
+-   [forwardActions][1]
+    -   [forwardTo][2]
+    -   [isForwardAction][5]
+    -   [unwrap][7]
+    -   [wrapTo][9]
+-   [ActionTypes][12]
+-   [mapStyleActions][14]
+    -   [addCustomMapStyle][15]
+    -   [inputMapStyle][16]
+    -   [loadCustomMapStyle][18]
+    -   [loadMapStyleErr][20]
+    -   [loadMapStyles][22]
+    -   [mapConfigChange][24]
+    -   [mapStyleChange][26]
+-   [main][28]
+    -   [addDataToMap][29]
+    -   [keplerGlInit][32]
+    -   [receiveMapConfig][34]
+    -   [resetMapConfig][37]
+-   [visStateActions][38]
+    -   [addFilter][39]
+    -   [addLayer][41]
+    -   [enlargeFilter][43]
+    -   [interactionConfigChange][45]
+    -   [layerConfigChange][47]
+    -   [layerTypeChange][49]
+    -   [layerVisConfigChange][51]
+    -   [layerVisualChannelConfigChange][53]
+    -   [loadFiles][55]
+    -   [loadFilesErr][57]
+    -   [onLayerClick][59]
+    -   [onLayerHover][61]
+    -   [onMapClick][63]
+    -   [removeDataset][64]
+    -   [removeFilter][66]
+    -   [removeLayer][68]
+    -   [reorderLayer][70]
+    -   [setFilter][73]
+    -   [setFilterPlot][75]
+    -   [setVisibleLayersForMap][77]
+    -   [showDatasetTable][79]
+    -   [toggleAnimation][81]
+    -   [toggleLayerForMap][83]
+    -   [updateAnimationSpeed][85]
+    -   [updateLayerBlending][87]
+    -   [updateVisData][89]
+-   [uiStateActions][91]
+    -   [addNotification][92]
+    -   [cleanupExportImage][94]
+    -   [hideExportDropdown][95]
+    -   [openDeleteModal][96]
+    -   [removeNotification][98]
+    -   [setExportData][100]
+    -   [setExportDataType][101]
+    -   [setExportFiltered][103]
+    -   [setExportImageDataUri][105]
+    -   [setExportSelectedDataset][107]
+    -   [setRatio][109]
+    -   [setResolution][111]
+    -   [showExportDropdown][113]
+    -   [startExportingImage][115]
+    -   [toggleLegend][116]
+    -   [toggleMapControl][117]
+    -   [toggleModal][119]
+    -   [toggleSidePanel][121]
+-   [rootActions][123]
+    -   [deleteEntry][124]
+    -   [registerEntry][126]
+    -   [renameEntry][128]
+-   [mapStateActions][130]
+    -   [fitBounds][131]
+    -   [togglePerspective][134]
+    -   [toggleSplitMap][136]
+    -   [updateMap][139]
 
 ## forwardActions
 
@@ -322,7 +322,7 @@ Kepler.gl uses `dataId` in the config to match with loaded dataset. If you pass 
 to match the `info.id` of your dataset to the `dataId` in each `layer`, `filter` and `interactionConfig.tooltips.fieldsToShow`
 
 -   **ActionTypes**: [`ActionTypes.ADD_DATA_TO_MAP`][12]
--   **Updaters**: [`combineUpdaters.addDataToMapUpdater`][153]
+-   **Updaters**: [`combinedUpdaters.addDataToMapUpdater`][153]
 
 **Parameters**
 
@@ -794,7 +794,7 @@ Returns **{type: ActionTypes.UPDATE_LAYER_BLENDING, mode: mode}**
 Add new dataset to `visState`, with option to load a map config along with the datasets
 
 -   **ActionTypes**: [`ActionTypes.UPDATE_VIS_DATA`][12]
--   **Updaters**: [`combineUpdaters.updateVisDataUpdater`][187], [`visStateUpdaters.updateVisDataUpdater`][188]
+-   **Updaters**: [`combinedUpdaters.updateVisDataUpdater`][187], [`visStateUpdaters.updateVisDataUpdater`][188]
 
 **Parameters**
 
@@ -1443,7 +1443,7 @@ this.props.dispatch(updateMap({latitude: 37.75043, longitude: -122.34679, width:
 
 [152]: ../reducers/map-style.md#mapstyleupdatersmapstylechangeupdater
 
-[153]: ../reducers/composers.md#combineupdatersadddatatomapupdater
+[153]: ../reducers/composers.md#combinedupdatersadddatatomapupdater
 
 [154]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
 
@@ -1511,7 +1511,7 @@ this.props.dispatch(updateMap({latitude: 37.75043, longitude: -122.34679, width:
 
 [186]: ../reducers/vis-state.md#visstateupdatersupdatelayerblendingupdater
 
-[187]: ../reducers/composers.md#combineupdatersupdatevisdataupdater
+[187]: ../reducers/composers.md#combinedupdatersupdatevisdataupdater
 
 [188]: ../reducers/vis-state.md#visstateupdatersupdatevisdataupdater
 

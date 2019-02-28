@@ -2,13 +2,13 @@
 
 ### Table of Contents
 
--   [mapStateUpdaters](#mapstateupdaters)
-    -   [fitBoundsUpdater](#fitboundsupdater)
-    -   [INITIAL_MAP_STATE](#initial_map_state)
-    -   [receiveMapConfigUpdater](#receivemapconfigupdater)
-    -   [togglePerspectiveUpdater](#toggleperspectiveupdater)
-    -   [toggleSplitMapUpdater](#togglesplitmapupdater)
-    -   [updateMapUpdater](#updatemapupdater)
+-   [mapStateUpdaters][1]
+    -   [fitBoundsUpdater][3]
+    -   [INITIAL_MAP_STATE][5]
+    -   [receiveMapConfigUpdater][7]
+    -   [togglePerspectiveUpdater][9]
+    -   [toggleSplitMapUpdater][11]
+    -   [updateMapUpdater][13]
 
 ## mapStateUpdaters
 

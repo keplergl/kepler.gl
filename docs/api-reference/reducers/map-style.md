@@ -2,16 +2,16 @@
 
 ### Table of Contents
 
--   [mapStyleUpdaters](#mapstyleupdaters)
-    -   [INITIAL_MAP_STYLE](#initial_map_style)
-    -   [initMapStyleUpdater](#initmapstyleupdater)
-    -   [inputMapStyleUpdater](#inputmapstyleupdater)
-    -   [loadCustomMapStyleUpdater](#loadcustommapstyleupdater)
-    -   [loadMapStyleErrUpdater](#loadmapstyleerrupdater)
-    -   [loadMapStylesUpdater](#loadmapstylesupdater)
-    -   [mapConfigChangeUpdater](#mapconfigchangeupdater)
-    -   [mapStyleChangeUpdater](#mapstylechangeupdater)
-    -   [resetMapConfigMapStyleUpdater](#resetmapconfigmapstyleupdater)
+-   [mapStyleUpdaters][1]
+    -   [INITIAL_MAP_STYLE][3]
+    -   [initMapStyleUpdater][5]
+    -   [inputMapStyleUpdater][7]
+    -   [loadCustomMapStyleUpdater][9]
+    -   [loadMapStyleErrUpdater][11]
+    -   [loadMapStylesUpdater][13]
+    -   [mapConfigChangeUpdater][15]
+    -   [mapStyleChangeUpdater][17]
+    -   [resetMapConfigMapStyleUpdater][19]
 
 ## mapStyleUpdaters
 

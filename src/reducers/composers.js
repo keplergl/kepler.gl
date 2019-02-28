@@ -19,15 +19,15 @@
 // THE SOFTWARE.
 
 import ActionTypes from 'constants/action-types';
-import combineUpdaters from './combine-updaters';
+import * as combinedUpdaters from './combined-updaters';
 
 /**
  * Important: Do not rename `actionHandler` or the assignment pattern of property value.
  * It is used to generate documentation
  */
 const actionHandler = {
-  [ActionTypes.UPDATE_VIS_DATA]: combineUpdaters.updateVisDataUpdater,
-  [ActionTypes.ADD_DATA_TO_MAP]: combineUpdaters.addDataToMapUpdater
+  [ActionTypes.UPDATE_VIS_DATA]: combinedUpdaters.updateVisDataUpdater,
+  [ActionTypes.ADD_DATA_TO_MAP]: combinedUpdaters.addDataToMapUpdater
 };
 
 export default actionHandler;

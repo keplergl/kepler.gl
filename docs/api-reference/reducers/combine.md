@@ -2,20 +2,20 @@
 
 ### Table of Contents
 
--   [combineUpdaters](#combineupdaters)
-    -   [addDataToMapUpdater](#adddatatomapupdater)
-    -   [updateVisDataUpdater](#updatevisdataupdater)
+-   [combinedUpdaters][1]
+    -   [addDataToMapUpdater][3]
+    -   [updateVisDataUpdater][5]
 
-## combineUpdaters
+## combinedUpdaters
 
 Some actions will affect the entire kepler.lg instance state.
-The updaters for these actions is exported as `combineUpdaters`. These updater take the entire instance state
+The updaters for these actions is exported as `combinedUpdaters`. These updater take the entire instance state
 as the first argument. Read more about [Using updaters][7]
 
 **Examples**
 
 ```javascript
-import keplerGlReducer, {combineUpdaters} from 'kepler.gl/reducers';
+import keplerGlReducer, {combinedUpdaters} from 'kepler.gl/reducers';
 // Root Reducer
 const reducers = combineReducers({
  keplerGl: keplerGlReducer,
@@ -30,8 +30,8 @@ const composedReducer = (state, action) => {
        ...state,
        keplerGl: {
          ...state.keplerGl,
-         // pass in kepler.gl instance state to combineUpdaters
-         map:  combineUpdaters.addDataToMapComposed(
+         // pass in kepler.gl instance state to combinedUpdaters
+         map:  combinedUpdaters.addDataToMapUpdater(
           state.keplerGl.map,
           {
             payload: {
@@ -101,7 +101,7 @@ Apply data and config to visState reducer
 
 Returns **[Object][9]** nextState
 
-[1]: #combineupdaters
+[1]: #combinedupdaters
 
 [2]: #examples
 
