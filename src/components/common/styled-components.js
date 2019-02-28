@@ -303,6 +303,21 @@ export const DatasetSquare = styled.div`
   margin-right: 12px
 `;
 
+export const SelectionButton = styled.div`
+  border-radius: 2px;
+  border: 1px solid ${props => props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT};
+  color: ${props => props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT};
+  cursor: pointer;
+  font-weight: 500;
+  margin-right: 6px;
+  padding: 6px 10px;
+
+  :hover {
+    color: ${props => props.available && props.theme.primaryBtnBgd};
+    border: 1px solid ${props => props.available && props.theme.primaryBtnBgd};
+  }
+`;
+
 export const Table = styled.table`
   width: 100%;
   border-spacing: 0;

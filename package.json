@@ -44,8 +44,8 @@
     "docs": "babel-node ./scripts/documentation.js",
     "lint": "eslint src webpack.*.js examples/*.js examples/**/src examples/**/*.js website/*.js website/src",
     "web": "(yarn && yarn install:web && yarn start:web)",
-    "deploy": "yarn clean && yarn && yarn install:web && (cd website && yarn build && git checkout gh-pages && cp dist/* .. && git add .. && git commit -m 'Update website' && git push origin gh-pages && git checkout master)",
-    "deploy:test": "yarn clean && yarn && yarn install:web && (cd website && yarn build && git checkout -B gh-pages-test gh-pages && cp dist/* .. && git add .. && git commit -m 'Update website' && git push -f test gh-pages-test:master)",
+    "deploy": "yarn clean && yarn --ignore-engines && yarn install:web && (cd website && yarn build && git checkout gh-pages && cp dist/* .. && git add .. && git commit -m 'Update website' && git push origin gh-pages && git checkout master)",
+    "deploy:test": "yarn clean && yarn --ignore-engines && yarn install:web && (cd website && yarn build && git checkout -B gh-pages-test gh-pages && cp dist/* .. && git add .. && git commit -m 'Update website' && git push -f test gh-pages-test:master && git checkout master)",
     "clean": "rm -rf node_modules examples/**/node_modules website/node_modules"
   },
   "files": [

@@ -22,10 +22,8 @@ import React, {Component} from 'react';
 import classnames from 'classnames';
 import styled, {ThemeProvider} from 'styled-components';
 import PropTypes from 'prop-types';
-import {FileUpload} from 'kepler.gl/components';
-import {LoadingSpinner} from 'kepler.gl/components';
+import {FileUpload, LoadingSpinner, Icons} from 'kepler.gl/components';
 import {themeLT} from 'kepler.gl/styles';
-import {Icons} from 'kepler.gl/components/';
 
 import {LOADING_METHODS, ASSETS_URL, LOADING_METHODS_NAMES} from '../../constants/default-settings';
 
@@ -116,7 +114,7 @@ const StyledTrySampleData = styled.div`
     :hover {
       font-weight: 500;
     }
-  
+
     span {
       white-space: nowrap;
     }
