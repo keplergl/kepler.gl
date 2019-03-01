@@ -28,9 +28,10 @@ import {
   RATIOS,
   RESOLUTION_OPTIONS
 } from 'constants/default-settings';
-import LoadingSpinner from 'components/common/loading-spinner';
-import {StyledModalContent} from 'components/common/styled-components';
+
+import {StyledModalContent, SelectionButton} from 'components/common/styled-components';
 import Switch from 'components/common/switch';
+import LoadingSpinner from 'components/common/loading-spinner';
 
 const ImageOptionList = styled.div`
   display: flex;
@@ -95,20 +96,6 @@ const PreviewImageSection = styled.div`
   }
 `;
 
-const Button = styled.div`
-  border-radius: 2px;
-  border: 1px solid ${props => props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT};
-  color: ${props => props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT};
-  cursor: pointer;
-  font-weight: 500;
-  margin-right: 6px;
-  padding: 6px 10px;
-
-  :hover {
-    color: ${props => props.available && props.theme.primaryBtnBgd};
-    border: 1px solid ${props => props.available && props.theme.primaryBtnBgd};
-  }
-`;
 
 class ExportImageModal extends Component {
 
@@ -150,16 +137,16 @@ class ExportImageModal extends Component {
           <ImageOptionList>
             <div className="image-option-section">
               <div className="image-option-section-title">Ratio</div>
-              Choose the ratio for various usages.
+                Choose the ratio for various usages.
               <div className="button-list">
                 {RATIO_OPTIONS.map(op =>
-                  <Button
+                  <SelectionButton
                     key={op.id}
                     selected={ratio === op.id}
                     onClick={() => onChangeRatio({ratio: op.id})}
                   >
                     {op.label}
-                  </Button>
+                  </SelectionButton>
                 )}
               </div>
             </div>
@@ -167,15 +154,16 @@ class ExportImageModal extends Component {
               <div className="image-option-section-title">Resolution</div>
               High resolution is better for prints.
               <div className="button-list">
-                {RESOLUTION_OPTIONS.map(op =>
-                  <Button
-                    key={op.id}
-                    selected={resolution === op.id}
-                    onClick={() => op.available && onChangeResolution({resolution: op.id})}
-                  >
-                    {op.label}
-                  </Button>
-                )}
+                {
+                  RESOLUTION_OPTIONS.map(op =>
+                    <SelectionButton
+                      key={op.id}
+                      selected={resolution === op.id}
+                      onClick={() => op.available && onChangeResolution({resolution: op.id})}>
+                      {op.label}
+                    </SelectionButton>
+                  )
+                }
               </div>
             </div>
             <div className="image-option-section">
@@ -191,7 +179,9 @@ class ExportImageModal extends Component {
             <div className="dimension">{`${exportImageSize.width} x ${exportImageSize.height}`}</div>
             <div className="preview-image">
               {exporting ?
-                <div className="preview-image-spinner"><LoadingSpinner /></div> :
+                <div className="preview-image-spinner">
+                  <LoadingSpinner />
+                </div> :
                 <img className="preview-image-placeholder" src={imageDataUri} />
               }
             </div>
