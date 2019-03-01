@@ -20,28 +20,24 @@
 
 import {handleActions} from 'redux-actions';
 import ActionTypes from 'constants/action-types';
+import * as mapStateUpdaters from './map-state-updaters';
 
-import {
-  INITIAL_MAP_STATE,
-  fitBoundsUpdater,
-  receiveMapConfigUpdater,
-  togglePerspectiveUpdater,
-  toggleSplitMapUpdater,
-  updateMapUpdater
-} from './map-state-updaters';
-
+/**
+ * Important: Do not rename `actionHandler` or the assignment pattern of property value.
+ * It is used to generate documentation
+ */
 const actionHandler = {
-  [ActionTypes.UPDATE_MAP]: updateMapUpdater,
-  [ActionTypes.FIT_BOUNDS]: fitBoundsUpdater,
-  [ActionTypes.TOGGLE_PERSPECTIVE]: togglePerspectiveUpdater,
-  [ActionTypes.RECEIVE_MAP_CONFIG]: receiveMapConfigUpdater,
-  [ActionTypes.TOGGLE_SPLIT_MAP]: toggleSplitMapUpdater
+  [ActionTypes.UPDATE_MAP]: mapStateUpdaters.updateMapUpdater,
+  [ActionTypes.FIT_BOUNDS]: mapStateUpdaters.fitBoundsUpdater,
+  [ActionTypes.TOGGLE_PERSPECTIVE]: mapStateUpdaters.togglePerspectiveUpdater,
+  [ActionTypes.RECEIVE_MAP_CONFIG]: mapStateUpdaters.receiveMapConfigUpdater,
+  [ActionTypes.TOGGLE_SPLIT_MAP]: mapStateUpdaters.toggleSplitMapUpdater
 };
 
 /* Reducer */
 export const mapStateReducerFactory = (initialState = {}) => handleActions(
   actionHandler,
-  {...INITIAL_MAP_STATE, ...initialState, initialState}
+  {...mapStateUpdaters.INITIAL_MAP_STATE, ...initialState, initialState}
 );
 
 export default mapStateReducerFactory();

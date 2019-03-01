@@ -52,6 +52,8 @@ export const getActionForwardAddress = id =>
  *    }
  *  };
  * ```
+ *
+ * @memberof forwardActions
  * @param {string} id - The id to forward to
  * @param {Object} action - the action object {type: string, payload: *}
  * @returns {{type: string, payload: {type: string: payload: *, meta: {_id_: string}, meta: {_forward_: string, _addr_: string}}}}
@@ -90,6 +92,7 @@ export const wrapTo = curry((id, action) => ({
 
 /**
  * Whether an action is a forward action
+ * @memberof forwardActions
  * @param {Object} action - the action object
  * @returns {boolean} boolean - whether the action is a forward action
  * @public
@@ -100,6 +103,7 @@ export const isForwardAction = action => {
 
 /**
  * Unwrap an action
+ * @memberof forwardActions
  * @param {Object} action - the action object
  * @returns {Object} - unwrapped action
  * @public
@@ -110,7 +114,7 @@ export const unwrap = action =>
 /**
  * Given an id, returns the action for that id.
  * If the action is not a forward action, return the action
- *
+ * @memberof forwardActions
  * @param {String} id
  * @param {Object} action
  * @private
@@ -122,6 +126,7 @@ export const _actionFor = (id, action) =>
 
 /**
  * Returns an action dispatcher that wraps and forwards the actions to a specific instance
+ * @memberof forwardActions
  * @param {string} id - instance id
  * @param {Function} dispatch - action dispatcher
  * @public
@@ -152,6 +157,7 @@ export const forwardTo = (id, dispatch) => action =>
 
 /**
  * Update the state of a kepler.gl instance
+ * @memberof forwardActions
  * @param {Object} state
  * @param {string} id
  * @param {Object} nextState
@@ -164,3 +170,14 @@ export const _updateProperty = (state, id, nextState) =>
         ...state,
         [id]: nextState
       };
+
+/**
+ * This declaration is needed to group actions in docs
+ */
+/**
+ * A set of helpers to forward dispatch actions to a specific instance reducer
+ * @public
+ */
+/* eslint-disable no-unused-vars */
+const forwardActions = null
+/* eslint-enable no-unused-vars */

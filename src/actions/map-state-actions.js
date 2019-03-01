@@ -24,6 +24,7 @@ import ActionTypes from 'constants/action-types';
 /**
  *
  * Toggle between 3d and 2d map.
+ * @memberof mapStateActions
  * @public
  * @example
  * import {togglePerspective} from 'kepler.gl/actions';
@@ -35,7 +36,8 @@ export const togglePerspective = createAction(
 
 /**
  * Fit map viewport to bounds
- * @param {number[]} - bounds as `[lngMin, latMin, lngMax, latMax]`
+ * @memberof mapStateActions
+ * @param {Array<Number>} bounds as `[lngMin, latMin, lngMax, latMax]`
  * @public
  * @example
  * import {fitBounds} from 'kepler.gl/actions';
@@ -48,32 +50,51 @@ export const fitBounds =  createAction(
 
 /**
  * Update map viewport
- * @param {Object} viewport - viewport object container one or any of these properties `width`, `height`, `latitude` `longitude`, `zoom`, `pitch`, `bearing`, `dragRotate`
- * @param {number} [viewport.width] - Width of viewport
- * @param {number} [viewport.height] - Height of viewport
- * @param {number} [viewport.zoom] - Zoom of viewport
- * @param {number} [viewport.pitch] - Camera angle in degrees (0 is straight down)
- * @param {number} [viewport.bearing] - Map rotation in degrees (0 means north is up)
- * @param {number} [viewport.latitude] - Latitude center of viewport on map in mercator projection
- * @param {number} [viewport.longitude] - Longitude Center of viewport on map in mercator projection
- * @param {boolean} [viewport.dragRotate] - Whether to enable drag and rotate map into perspective viewport
+ * @memberof mapStateActions
+ * @param {Object} viewport viewport object container one or any of these properties `width`, `height`, `latitude` `longitude`, `zoom`, `pitch`, `bearing`, `dragRotate`
+ * @param {Number} [viewport.width] Width of viewport
+ * @param {Number} [viewport.height] Height of viewport
+ * @param {Number} [viewport.zoom] Zoom of viewport
+ * @param {Number} [viewport.pitch] Camera angle in degrees (0 is straight down)
+ * @param {Number} [viewport.bearing] Map rotation in degrees (0 means north is up)
+ * @param {Number} [viewport.latitude] Latitude center of viewport on map in mercator projection
+ * @param {Number} [viewport.longitude] Longitude Center of viewport on map in mercator projection
+ * @param {boolean} [viewport.dragRotate] Whether to enable drag and rotate map into perspective viewport
  * @public
  * @example
  * import {updateMap} from 'kepler.gl/actions';
  * this.props.dispatch(updateMap({latitude: 37.75043, longitude: -122.34679, width: 800, height: 1200}));
  */
+
 export const updateMap = createAction(
   ActionTypes.UPDATE_MAP,
   viewport => viewport
 );
 
 /**
- * Toggle between one or split maps
+ * Toggle between single map or split maps
+ * @memberof mapStateActions
+ * @param {Number} [index] index is provided, close split map at index
  * @public
  * @example
  * import {toggleSplitMap} from 'kepler.gl/actions';
  * this.props.dispatch(toggleSplitMap());
  */
 export const toggleSplitMap = createAction(
-  ActionTypes.TOGGLE_SPLIT_MAP
+  ActionTypes.TOGGLE_SPLIT_MAP,
+  index => index
 );
+
+/**
+ * This declaration is needed to group actions in docs
+ */
+/**
+ * Actions handled mostly by  `mapState` reducer.
+ * They manage map viewport update, toggle between 2d and 3d map,
+ * toggle between single and split maps.
+ *
+ * @public
+ */
+/* eslint-disable no-unused-vars */
+const mapStateActions = null
+/* eslint-enable no-unused-vars */

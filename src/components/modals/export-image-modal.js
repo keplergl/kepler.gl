@@ -96,7 +96,6 @@ const PreviewImageSection = styled.div`
   }
 `;
 
-
 class ExportImageModal extends Component {
 
   static propTypes = {

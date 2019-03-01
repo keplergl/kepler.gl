@@ -18,30 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// Constants
-export {
-  DIMENSIONS,
-  ALL_FIELD_TYPES,
-  FIELD_OPTS,
-  FILTER_TYPES,
-  GEOJSON_FIELDS,
-  ICON_FIELDS,
-  TRIP_POINT_FIELDS,
-  TRIP_ARC_FIELDS,
-  SCALE_TYPES,
-  LAYER_TYPES,
-  LAYER_BLENDINGS,
-  AGGREGATION_TYPES,
-  MAX_DEFAULT_TOOLTIPS,
-  DATA_TABLE_ID,
-  DELETE_DATA_ID,
-  ADD_DATA_ID,
-  EXPORT_IMAGE_ID,
-  EXPORT_DATA_ID,
-  EXPORT_CONFIG_ID,
-  ADD_MAP_STYLE_ID,
-  DEFAULT_LAYER_GROUPS,
-  DEFAULT_MAP_STYLES
-} from './default-settings';
-export {VizColorPalette, DataVizColors} from './custom-color-ranges';
-export {COLOR_RANGES, DefaultColorRange} from './color-ranges';
+import fs from 'fs';
+import {join} from 'path';
+
+export function walkSync(dir, fileList = []) {
+  dir.forEach(dir => {
+    const files = fs.readdirSync(dir);
+
+    files.forEach((file) => {
+      const path = join(dir, file);
+
+      if (fs.statSync(path).isDirectory()) {
+        fileList = walkSync(path, fileList);
+      } else if (path.endsWith('.js')){
+        fileList.push(path);
+      }
+    });
+  });
+
+  return fileList;
+};

@@ -44,7 +44,38 @@ export const coreReducerFactory = (initialState = {}) => (state, action) => {
 
 export default coreReducerFactory();
 
+/**
+ * Connect subreducer `mapState`, used with `injectComponents`. Learn more at
+ * [Replace UI Component](../advanced-usages/replace-ui-component.md#pass-custom-component-props)
+ *
+ * @param {*} reduxState
+ * @public
+ */
 export const mapStateLens = reduxState => ({mapState: reduxState.mapState});
+
+/**
+ * Connect subreducer `mapStyle`, used with `injectComponents`. Learn more at
+ * [Replace UI Component](../advanced-usages/replace-ui-component.md#pass-custom-component-props)
+ *
+ * @param {*} reduxState
+ * @public
+ */
 export const mapStyleLens = reduxState => ({mapStyle: reduxState.mapStyle});
+
+/**
+ * Connect subreducer `visState`, used with `injectComponents`. Learn more at
+ * [Replace UI Component](../advanced-usages/replace-ui-component.md#pass-custom-component-props)
+ *
+ * @param {*} reduxState
+ * @public
+ */
 export const visStateLens = reduxState => ({visState: reduxState.visState});
+
+/**
+ * Connect subreducer `uiState`, used with `injectComponents`. Learn more at
+ * [Replace UI Component](../advanced-usages/replace-ui-component.md#pass-custom-component-props)
+ *
+ * @param {*} reduxState
+ * @public
+ */
 export const uiStateLens = reduxState => ({uiState: reduxState.uiState});

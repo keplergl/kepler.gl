@@ -21,7 +21,7 @@
 import {combineReducers} from 'redux';
 import {handleActions} from 'redux-actions';
 
-import keplerGlReducer, {combineUpdaters} from 'kepler.gl/reducers';
+import keplerGlReducer, {combinedUpdaters} from 'kepler.gl/reducers';
 import Processor from 'kepler.gl/processors';
 import KeplerGlSchema from 'kepler.gl/schemas';
 
@@ -114,7 +114,7 @@ export const loadRemoteResourceSuccess = (state, action) => {
   const config = action.config ?
     KeplerGlSchema.parseSavedConfig(action.config) : null;
 
-  const keplerGlInstance = combineUpdaters.addDataToMapComposed(
+  const keplerGlInstance = combinedUpdaters.addDataToMapUpdater(
     state.keplerGl.map, // "map" is the id of your kepler.gl instance
     {
       payload: {

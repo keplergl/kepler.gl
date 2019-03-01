@@ -2,27 +2,57 @@
 
 ### Table of Contents
 
--   [reducer.initialState](#reducerinitialstate)
--   [reducer.plugin](#reducerplugin)
+-   [keplerGlReducer][1]
+    -   [keplerGlReducer.initialState][3]
+    -   [keplerGlReducer.plugin][6]
+-   [mapStateLens][9]
+-   [mapStyleLens][11]
+-   [uiStateLens][13]
+-   [visStateLens][15]
 
-## reducer.initialState
+## keplerGlReducer
 
-REturn a reducer that innitiated with custom initial state.
+Kepler.gl reducer to be mounted to your store. You can mount `keplerGlReducer` at property `keplerGl`, if you choose
+to mount it at another address e.g. `foo` you will need to specify it when you mount `KeplerGl` component in your app with `getState: state => state.foo`
+
+**Examples**
+
+```javascript
+import keplerGlReducer from 'kepler.gl/reducers';
+import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
+import {taskMiddleware} from 'react-palm/tasks';
+
+const initialState = {};
+const reducers = combineReducers({
+  // <-- mount kepler.gl reducer in your app
+  keplerGl: keplerGlReducer,
+
+  // Your other reducers here
+  app: appReducer
+});
+
+// using createStore
+export default createStore(reducer, initialState, applyMiddleware(taskMiddleware));
+```
+
+### keplerGlReducer.initialState
+
+Return a reducer that initiated with custom initial state.
 The parameter should be an object mapping from `subreducer` name to custom subreducer state,
 which will be shallow **merged** with default initial state.
 
 Default subreducer state:
 
--   `[visState](./vis-state.md#INITIAL_VIS_STATE)`
--   `[mapState](./map-state.md#INITIAL_MAP_STATE)`
--   `[mapStyle](./map-style.md#INITIAL_MAP_STYLE)`
--   `[uiState](./ui-state.md#INITIAL_UI_STATE)`
+-   [`visState`][17]
+-   [`mapState`][18]
+-   [`mapStyle`][19]
+-   [`uiState`][20]
 
-### Parameters
+**Parameters**
 
--   `iniSt` **[Object][7]** custom state to be merged with default initial state
+-   `iniSt` **[Object][21]** custom state to be merged with default initial state
 
-### Examples
+**Examples**
 
 ```javascript
 const myKeplerGlReducer = keplerGlReducer
@@ -31,7 +61,7 @@ const myKeplerGlReducer = keplerGlReducer
  });
 ```
 
-## reducer.plugin
+### keplerGlReducer.plugin
 
 Returns a kepler.gl reducer that will also pass each action through additional reducers spiecified.
 The parameter should be either a reducer map or a reducer function.
@@ -41,11 +71,11 @@ It will include all the subreducers `visState`, `uiState`, `mapState` and `mapSt
 **Note** This is an advanced option to give you more freedom to modify the internal state of the kepler.gl instance.
 You should only use this to adding additional actions instead of replacing default actions.
 
-### Parameters
+**Parameters**
 
--   `customReducer` **([Object][7] \| [Function][8])** A reducer map or a reducer
+-   `customReducer` **([Object][21] \| [Function][22])** A reducer map or a reducer
 
-### Examples
+**Examples**
 
 ```javascript
 const myKeplerGlReducer = keplerGlReducer
@@ -71,18 +101,84 @@ const myKeplerGlReducer = keplerGlReducer
 }, {}));
 ```
 
-[1]: #reducerinitialstate
+## mapStateLens
 
-[2]: #parameters
+Connect subreducer `mapState`, used with `injectComponents`. Learn more at
+[Replace UI Component][23]
 
-[3]: #examples
+**Parameters**
 
-[4]: #reducerplugin
+-   `reduxState` **any** 
 
-[5]: #parameters-1
+## mapStyleLens
 
-[6]: #examples-1
+Connect subreducer `mapStyle`, used with `injectComponents`. Learn more at
+[Replace UI Component][23]
 
-[7]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+**Parameters**
 
-[8]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function
+-   `reduxState` **any** 
+
+## uiStateLens
+
+Connect subreducer `uiState`, used with `injectComponents`. Learn more at
+[Replace UI Component][23]
+
+**Parameters**
+
+-   `reduxState` **any** 
+
+## visStateLens
+
+Connect subreducer `visState`, used with `injectComponents`. Learn more at
+[Replace UI Component][23]
+
+**Parameters**
+
+-   `reduxState` **any** 
+
+[1]: #keplerglreducer
+
+[2]: #examples
+
+[3]: #keplerglreducerinitialstate
+
+[4]: #parameters
+
+[5]: #examples-1
+
+[6]: #keplerglreducerplugin
+
+[7]: #parameters-1
+
+[8]: #examples-2
+
+[9]: #mapstatelens
+
+[10]: #parameters-2
+
+[11]: #mapstylelens
+
+[12]: #parameters-3
+
+[13]: #uistatelens
+
+[14]: #parameters-4
+
+[15]: #visstatelens
+
+[16]: #parameters-5
+
+[17]: ./vis-state.md#INITIAL_VIS_STATE
+
+[18]: ./map-state.md#INITIAL_MAP_STATE
+
+[19]: ./map-style.md#INITIAL_MAP_STYLE
+
+[20]: ./ui-state.md#INITIAL_UI_STATE
+
+[21]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+
+[22]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function
+
+[23]: ../advanced-usages/replace-ui-component.md#pass-custom-component-props
