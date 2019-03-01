@@ -20,7 +20,7 @@
 
 import test from 'tape';
 import keplerGlReducer from 'reducers';
-import {addDataToMapComposed} from 'reducers/composers';
+import {addDataToMapUpdater} from 'reducers/combined-updaters';
 import {keplerGlInit} from 'actions/actions';
 import {coreReducerFactory} from 'reducers/core';
 import {registerEntry} from 'actions/identity-actions';
@@ -56,11 +56,11 @@ const mockRawData = {
   ]
 };
 
-test('#composerStateReducer - addDataToMapComposed: mapStyle', t => {
+test('#composerStateReducer - addDataToMapUpdater: mapStyle', t => {
   // init kepler.gl root and instance
   const state = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
 
-  const newState = addDataToMapComposed(state, {
+  const newState = addDataToMapUpdater(state, {
     payload: {
       datasets: {
         data: mockRawData,
@@ -82,14 +82,14 @@ test('#composerStateReducer - addDataToMapComposed: mapStyle', t => {
   t.end();
 });
 
-test('#composerStateReducer - addDataToMapComposed: mapState should not be centered', t => {
+test('#composerStateReducer - addDataToMapUpdater: mapState should not be centered', t => {
   // init kepler.gl root and instance
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
   const mapStateProperties = {
     latitude: 33.88608913680742,
     longitude: -84.43459130456425
   };
-  const newState = addDataToMapComposed(state, {
+  const newState = addDataToMapUpdater(state, {
     payload: {
       datasets: {
         data: mockRawData,
