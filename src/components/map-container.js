@@ -86,7 +86,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       mapLayers: PropTypes.object,
       onMapToggleLayer: PropTypes.func,
       onMapStyleLoaded: PropTypes.func,
-      onMapRender: PropTypes.func
+      onMapRender: PropTypes.func,
+      getMapboxRef: PropTypes.func
     };
 
     static defaultProps = {
@@ -149,12 +150,6 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     _setMapboxMap = (mapbox) => {
       if (!this._map && mapbox) {
 
-        if (this.props.getMapboxRef) {
-          // The parent component can gain access to our MapboxGlMap by
-          // providing this callback.
-          this.props.getMapboxRef(mapbox);
-        }
-
         this._map = mapbox.getMap();
         // bind mapboxgl event listener
         this._map.on(MAPBOXGL_STYLE_UPDATE, () => {
@@ -178,6 +173,13 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             this.props.onMapRender(this._map);
           }
         });
+      }
+
+      if (this.props.getMapboxRef) {
+        // The parent component can gain access to our MapboxGlMap by
+        // providing this callback. Note that 'mapbox' will be null when the
+        // ref is unset (e.g. when a split map is closed).
+        this.props.getMapboxRef(mapbox, this.props.index);
       }
     }
 
