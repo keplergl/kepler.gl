@@ -19,7 +19,15 @@
 // THE SOFTWARE.
 
 // Data Processor
-export {default as default} from './data-processor';
+export {
+  processGeojson,
+  processCsvData,
+  processRowObject,
+  processKeplerglJSON,
+  analyzerTypeToFieldType,
+  getFieldsFromData,
+  parseCsvDataByFieldType
+} from './data-processor';
 
 // File Handlers
 export {getFileHandler, getFileType} from './file-handler';
