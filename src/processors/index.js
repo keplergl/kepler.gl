@@ -26,7 +26,7 @@ export {
   processKeplerglJSON,
   analyzerTypeToFieldType,
   getFieldsFromData,
-  parseCsvDataByFieldType
+  parseCsvRowsByFieldType
 } from './data-processor';
 
 // File Handlers

@@ -25,7 +25,7 @@ import {geojsonData, fields as geojsonFields, rows as geojsonRows} from 'test/fi
 import {
   getFieldsFromData,
   getSampleForTypeAnalyze,
-  parseCsvDataByFieldType,
+  parseCsvRowsByFieldType,
   processCsvData,
   processGeojson
 } from 'processors/data-processor';
@@ -136,7 +136,7 @@ test('Processor => processGeojson', t => {
 });
 
 
-test('Processor -> parseCsvDataByFieldType -> real', t => {
+test('Processor -> parseCsvRowsByFieldType -> real', t => {
 
   const field = {
     type: ALL_FIELD_TYPES.real
@@ -164,12 +164,12 @@ test('Processor -> parseCsvDataByFieldType -> real', t => {
     [1550.0]
   ];
 
-  parseCsvDataByFieldType(rows, field, 0);
+  parseCsvRowsByFieldType(rows, field, 0);
   t.same(rows, expected, 'should parsed reals properly');
   t.end();
 });
 
-test('Processor -> parseCsvDataByFieldType -> integer', t => {
+test('Processor -> parseCsvRowsByFieldType -> integer', t => {
 
   const field = {
     type: ALL_FIELD_TYPES.integer
@@ -193,12 +193,12 @@ test('Processor -> parseCsvDataByFieldType -> integer', t => {
     [155]
   ];
 
-  parseCsvDataByFieldType(rows, field, 0);
+  parseCsvRowsByFieldType(rows, field, 0);
   t.same(rows, expected, 'should parsed ints properly');
   t.end();
 });
 
-test('Processor -> parseCsvDataByFieldType -> boolean', t => {
+test('Processor -> parseCsvRowsByFieldType -> boolean', t => {
 
   const field = {
     type: ALL_FIELD_TYPES.boolean
@@ -227,7 +227,7 @@ test('Processor -> parseCsvDataByFieldType -> boolean', t => {
     [true]
   ];
 
-  parseCsvDataByFieldType(rows, field, 0);
+  parseCsvRowsByFieldType(rows, field, 0);
   t.same(rows, expected, 'should parsed boolean properly');
   t.end();
 });
