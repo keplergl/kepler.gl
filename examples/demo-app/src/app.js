@@ -36,9 +36,11 @@ import {
   setCloudLoginSuccess
 } from './actions';
 
-const KeplerGl = require('kepler.gl/components').injectComponents([
-  replaceLoadDataModal()
-]);
+// const KeplerGl = require('kepler.gl/components').injectComponents([
+//   replaceLoadDataModal()
+// ]);
+
+import KeplerGl from 'kepler.gl';
 
 // Sample data
 /* eslint-disable no-unused-vars */

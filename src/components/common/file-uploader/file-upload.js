@@ -119,7 +119,7 @@ const StyledMessage = styled.div`
   align-items: center;
 `;
 
-const StyledDisclaimer = StyledMessage.extend`
+const StyledDisclaimer = styled(StyledMessage)`
   position: absolute;
   bottom: 0;
   padding: 10px 30px;

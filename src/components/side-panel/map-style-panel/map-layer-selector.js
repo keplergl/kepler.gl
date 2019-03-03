@@ -49,7 +49,7 @@ const StyledLayerGroupItem = styled.div`
   }
 `;
 
-const LayerLabel = PanelLabelBold.extend`
+const LayerLabel = styled(PanelLabelBold)`
   color: ${props =>
     props.active ? props.theme.textColor : props.theme.labelColor};
 `;
