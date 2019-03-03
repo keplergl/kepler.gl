@@ -153,6 +153,12 @@ export default class FileUpload extends Component {
       e.stopPropagation();
     }
 
+    // After upgrading to react 16 this function is being called twice with different types: DragEvent and react class event
+    // TODO: react-file-drop hasn't been updated and may not fully support react 16
+    if (!(e instanceof Event)) {
+      return;
+    }
+
     const nextState = {files: [], errorFiles: [], dragOver: false};
     for (let i = 0; i < files.length; i++) {
       const file = files[i];

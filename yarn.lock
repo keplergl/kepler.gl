@@ -2153,7 +2153,7 @@ class-utils@^0.3.5:
     isobject "^3.0.0"
     static-extend "^0.1.1"
 
-classnames@^2.2.0, classnames@^2.2.1:
+classnames@^2.2.1, classnames@^2.2.5:
   version "2.2.6"
   resolved "https://unpm.uberinternal.com/classnames/-/classnames-2.2.6.tgz#43935bffdd291f326dad0a205309b38d00f650ce"
 
@@ -7186,12 +7186,11 @@ react-dom@^16.4.2, react-dom@^16.8.3:
     prop-types "^15.6.2"
     scheduler "^0.13.3"
 
-react-file-drop@^0.1.8:
-  version "0.1.9"
-  resolved "https://unpm.uberinternal.com/react-file-drop/-/react-file-drop-0.1.9.tgz#97102ebdfcddafd948bb20c16bfe3f07ddaf7a52"
+react-file-drop@^0.2.7:
+  version "0.2.7"
+  resolved "https://unpm.uberinternal.com/react-file-drop/-/react-file-drop-0.2.7.tgz#9bdfab8aa1bf75990655d953d93c22b5e48a32dd"
   dependencies:
-    create-react-class "^15.5.2"
-    prop-types "^15.5.8"
+    prop-types "^15.6.1"
 
 react-hot-loader@^3.0.0-beta.6:
   version "3.1.3"
@@ -7258,9 +7257,9 @@ react-motion@^0.5.2:
     prop-types "^15.5.8"
     raf "^3.1.0"
 
-"react-onclickoutside@https://registry.npmjs.org/react-onclickoutside/-/react-onclickoutside-6.7.1.tgz":
-  version "6.7.1"
-  resolved "https://registry.npmjs.org/react-onclickoutside/-/react-onclickoutside-6.7.1.tgz#6a5b5b8b4eae6b776259712c89c8a2b36b17be93"
+react-onclickoutside@^6.7.1:
+  version "6.8.0"
+  resolved "https://unpm.uberinternal.com/react-onclickoutside/-/react-onclickoutside-6.8.0.tgz#9f91b5b3ed59f4d9e43fd71620dc200773a4d569"
 
 react-palm@^1.1.2:
   version "1.3.1"
@@ -7309,12 +7308,12 @@ react-test-renderer@^16.4.2:
     react-is "^16.8.3"
     scheduler "^0.13.3"
 
-"react-tooltip@https://registry.npmjs.org/react-tooltip/-/react-tooltip-3.3.0.tgz":
-  version "3.3.0"
-  resolved "https://registry.npmjs.org/react-tooltip/-/react-tooltip-3.3.0.tgz#51c08ae0221075e2c43d83cd47fc78466612df7d"
+react-tooltip@^3.3.0:
+  version "3.9.2"
+  resolved "https://unpm.uberinternal.com/react-tooltip/-/react-tooltip-3.9.2.tgz#df74e6f5fd454bb15132d5d2d506895cf505cb5e"
   dependencies:
-    classnames "^2.2.0"
-    prop-types "^15.5.8"
+    classnames "^2.2.5"
+    prop-types "^15.6.0"
 
 react-vis@^1.8.0:
   version "1.11.6"
@@ -8962,9 +8961,9 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   version "0.14.5"
   resolved "https://unpm.uberinternal.com/tweetnacl/-/tweetnacl-0.14.5.tgz#5ae68177f192d4456269d108afa93ff8743f4f64"
 
-"type-analyzer@https://registry.npmjs.org/type-analyzer/-/type-analyzer-0.2.1.tgz":
+type-analyzer@0.2.1:
   version "0.2.1"
-  resolved "https://registry.npmjs.org/type-analyzer/-/type-analyzer-0.2.1.tgz#c3a04552be0114d079a54b5def72a828605f9cf9"
+  resolved "https://unpm.uberinternal.com/type-analyzer/-/type-analyzer-0.2.1.tgz#c3a04552be0114d079a54b5def72a828605f9cf9"
 
 type-check@~0.3.2:
   version "0.3.2"
