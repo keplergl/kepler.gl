@@ -15,7 +15,7 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
-#### [0.2.3] - Feb 6 2019
+#### [0.2.3] - Mar 3 2019
 - [Docs] Export processors and Add Docs (#421)
 - [Docs] Add docs for actions and updaters (#368)
 - [Bug] Fix image export component failed to render (#418)
