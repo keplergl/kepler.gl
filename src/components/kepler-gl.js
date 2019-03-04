@@ -290,7 +290,10 @@ function KeplerGlFactory(
       const theme = this.availableThemeSelector(this.props);
 
       return (
-        <ThemeProvider theme={theme}>
+        <ThemeProvider theme={{
+          ...basicTheme,
+          ...this.props.theme
+        }}>
           <GlobalStyle
             style={{
               position: 'relative',

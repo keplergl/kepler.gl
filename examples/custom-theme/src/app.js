@@ -19,9 +19,8 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import styled, {ThemeProvider}  from 'styled-components';
+import window from 'global/window';
 import {connect} from 'react-redux';
-
 import KeplerGl from 'kepler.gl';
 
 const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
