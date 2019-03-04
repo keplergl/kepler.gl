@@ -46,7 +46,8 @@
     "web": "(yarn && yarn install:web && yarn start:web)",
     "deploy": "yarn clean && yarn --ignore-engines && yarn install:web && (cd website && yarn build && git checkout gh-pages && cp dist/* .. && git add .. && git commit -m 'Update website' && git push origin gh-pages && git checkout master)",
     "deploy:test": "yarn clean && yarn --ignore-engines && yarn install:web && (cd website && yarn build && git checkout -B gh-pages-test gh-pages && cp dist/* .. && git add .. && git commit -m 'Update website' && git push -f test gh-pages-test:master && git checkout master)",
-    "clean": "rm -rf node_modules examples/**/node_modules website/node_modules"
+    "clean": "rm -rf node_modules examples/**/node_modules website/node_modules",
+    "release:patch": "git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && npm version patch && git push origin && git push origin --tags"
   },
   "files": [
     "dist",

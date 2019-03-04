@@ -15,7 +15,12 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
-#### [0.2.2] - Feb 6 2019
+#### [0.2.3] - Feb 6 2019
+- [Docs] Export processors and Add Docs (#421)
+- [Docs] Add docs for actions and updaters (#368)
+- [Bug] Fix image export component failed to render (#418)
+
+#### [0.2.2] - Feb 26 2019
 - (HEAD -> master, origin/master, origin/HEAD) [Bug] Fixed web doc link (#369)
 - [Bug]: Fixed example dependencies (#362)
 - [Bug] Fix missing 3d building layer in image export (#361)
