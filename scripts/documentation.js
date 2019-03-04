@@ -76,6 +76,12 @@ const TREE = {
         {input: 'map-style-updaters.js', output: 'map-style.md', config: {shallow: true}},
         {input: 'ui-state-updaters.js', output: 'ui-state.md', config: {shallow: true}}
       ]
+    },
+    {
+      path: 'processors',
+      children: [
+        {input: 'data-processor.js', output: 'processors.md', config: {shallow: true}}
+      ]
     }
   ]
 }
