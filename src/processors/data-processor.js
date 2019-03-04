@@ -285,7 +285,7 @@ export function renameDuplicateFields(fieldOrder) {
 }
 
 /**
- * Convert type-analyzer output to kepler.fl field types
+ * Convert type-analyzer output to kepler.gl field types
  *
  * @param {string} aType
  * @returns {string} corresponding type in `ALL_FIELD_TYPES`
