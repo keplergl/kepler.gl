@@ -50,7 +50,8 @@ export const QUERY_OPTIONS = keyMirror({
 export const LOADING_METHODS_NAMES = keyMirror({
   upload: null,
   remote: null,
-  sample: null
+  sample: null,
+  select: null
 });
 
 export const LOADING_METHODS = [
@@ -87,6 +88,13 @@ export const LOADING_METHODS = [
     options: [
       // Dynamically populated
     ]
+  },
+  {
+    id: LOADING_METHODS_NAMES.select,
+    label: 'Select City',
+    options: [
+      // Dynamically populated
+    ]
   }
 ];
 
@@ -96,7 +104,7 @@ export const LOADING_URL_MESSAGE = 'You can use the following formats: CSV | JSO
 export const CORS_LINK = 'https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS';
 export const KEPLER_DISCLAIMER = '* Kepler.gl will save your map data to your personal cloud storage, only people with the URL can access your map and data.';
 
-export const DEFAULT_LOADING_METHOD = LOADING_METHODS[0];
+export const DEFAULT_LOADING_METHOD = LOADING_METHODS[3];
 
 export const DEFAULT_CLOUD_PROVIDER = 'dropbox';
 

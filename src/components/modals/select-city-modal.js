@@ -18,28 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {LoadDataModalFactory} from 'kepler.gl/components';
-import LoadDataModal from '../components/load-data-modal/load-data-modal';
-import {withState} from 'kepler.gl/components';
+import React from 'react';
+import PropTypes from 'prop-types';
+import styled from 'styled-components';
 
-import {
-  loadRemoteMap,
-  loadSample,
-  switchToLoadingMethod
-} from '../actions';
+// import FileUpload from 'components/common/file-uploader/file-upload';
 
-export const CustomLoadDataModalFactory = () =>
-  withState(
-    [],
-    state => ({...state.demo.app}),
-    {
-      onSwitchToLoadingMethod: switchToLoadingMethod,
-      onLoadSample: loadSample,
-      onLoadRemoteMap: loadRemoteMap,
-      onSelectCity: loadRemoteMap
-    }
-  )(LoadDataModal);
+const StyledLoadDataModal = styled.div`
+  padding: 10px 0;
+`;
 
-export function replaceLoadDataModal() {
-  return [LoadDataModalFactory, CustomLoadDataModalFactory];
-}
+// const propTypes = {
+//   onClose: PropTypes.func.isRequired,
+
+//   // call backs
+//   onFileUpload: PropTypes.func.isRequired
+// };
+
+export const SelectCityModal = props => (
+  <StyledLoadDataModal>
+    <div className="select-city-modal">
+      {/* <FileUpload onFileUpload={props.onFileUpload} /> */}
+      HELLO THERE!
+    </div>
+  </StyledLoadDataModal>
+);
+
+LoadDataModal.propTypes = propTypes;
+
+const selectCityModalFactory = () => SelectCityModal;
+export default selectCityModalFactory;

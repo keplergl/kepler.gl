@@ -182,8 +182,14 @@ export default function ModalContainerFactory(
       this._closeModal();
     };
 
+    _onSelectCity = () => {
+      // TODO
+      this._closeModal();
+    }
+
     /* eslint-disable complexity */
     render() {
+      console.log("HELLO1");
       const {
         containerW,
         containerH,

@@ -49,7 +49,7 @@ const SideBarInner = styled.div`
   border-radius: 1px;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 85%;
 `;
 
 export const CollapseButtonFactory = () => (

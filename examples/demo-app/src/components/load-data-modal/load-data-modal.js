@@ -23,6 +23,7 @@ import classnames from 'classnames';
 import styled, {ThemeProvider} from 'styled-components';
 import PropTypes from 'prop-types';
 import {FileUpload} from 'kepler.gl/components';
+import {ItemSelector} from 'kepler.gl/components';
 import {LoadingSpinner} from 'kepler.gl/components';
 import {themeLT} from 'kepler.gl/styles';
 import {Icons} from 'kepler.gl/components/';
@@ -31,6 +32,7 @@ import {LOADING_METHODS, ASSETS_URL, LOADING_METHODS_NAMES} from '../../constant
 
 import SampleMapGallery from './sample-data-viewer';
 import LoadRemoteMap from './load-remote-map';
+import SelectCity from './select-city';
 
 const propTypes = {
   // query options
@@ -42,6 +44,7 @@ const propTypes = {
   onFileUpload: PropTypes.func.isRequired,
   onLoadRemoteMap: PropTypes.func.isRequired,
   onLoadSample: PropTypes.func.isRequired,
+  onSelectCity: PropTypes.func.isRequired,
   onSwitchToLoadingMethod: PropTypes.func.isRequired
 };
 
@@ -136,12 +139,13 @@ const StyledSpinner = styled.div`
 class LoadDataModal extends Component {
 
   render() {
+    console.log("HELLO2");
     const {
       loadingMethod, currentOption, previousMethod,
       sampleMaps, isMapLoading, onSwitchToLoadingMethod,
       error
     } = this.props;
-
+    console.log(loadingMethod.id);
     return (
       <ThemeProvider theme={themeLT}>
         <div className="load-data-modal">
@@ -151,7 +155,7 @@ class LoadDataModal extends Component {
             </StyledSpinner>
             ) : (
               <div>
-                {loadingMethod.id !== 'sample' ? (
+                {loadingMethod.id !== 'sample' && loadingMethod.id !== 'select' ? (
                   <Tabs
                     method={loadingMethod.id}
                     toggleMethod={this.props.onSwitchToLoadingMethod}
@@ -175,6 +179,13 @@ class LoadDataModal extends Component {
                     onLoadSample={this.props.onLoadSample}
                     error={error} />
                 ) : null}
+                {loadingMethod.id === 'select' ? (
+                  <SelectCity
+                    onSelectCity={this.props.onSelectCity}
+                    option={this.props.currentOption}
+                    error={this.props.error}
+                  />
+                ) : null}
               </div>)
           }
         </div>
@@ -182,6 +193,10 @@ class LoadDataModal extends Component {
     );
   }
 }
+
+const Selection = () => (
+  <div></div>
+);
 
 const Tabs = ({method, toggleMethod}) => (
   <ModalTab className="load-data-modal__tab">
