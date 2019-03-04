@@ -7,8 +7,8 @@
   "dependencies": {
     "global": "^4.3.0",
     "kepler.gl": "^0.2.4",
-    "react": "^15.3.1",
-    "react-dom": "^15.6.1",
+    "react": "^16.8.3",
+    "react-dom": "^16.8.3",
     "react-modal": "^3.1.10",
     "react-palm": "^1.1.2",
     "react-redux": "^4.0.0",
