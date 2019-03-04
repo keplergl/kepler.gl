@@ -320,8 +320,10 @@ const MapContainer = ({dispatch}) => (
 ```
 Read more about [forward dispatching actions][forward-actions]
 
+### 4. Customize style.
+TBD
 
-### 4. Render Custom UI components.
+### 5. Render Custom UI components.
 Everyone wants the flexibility to render custom kepler.gl components. Kepler.gl has a dependency injection system that allow you to inject
 components to KeplerGl replacing existing ones. All you need to do is to create a component factory for the one you want to replace, import the original component factory
 and call `injectComponents` at the root component of your app where `KeplerGl` is mounted.
@@ -379,7 +381,7 @@ const myCustomHeaderFactory = () => withState(
 ```
 Read more about [replacing UI component][replace-ui-component]
 
-### 5. How to add data to map
+### 6. How to add data to map
 To interact with a kepler.gl instance and add new data to it, you can dispatch __`addDataToMap`__ action from anywhere inside your app. It adds a dataset or multiple datasets to kepler.gl instance and update the full configuration (mapState, mapStyle, visState).
 
 #### Parameters
