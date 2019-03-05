@@ -19,6 +19,10 @@
 // THE SOFTWARE.
 
 import DropboxHandler from './dropbox';
+import {AUTH_TOKENS} from '../../constants/default-settings';
+
+// configure all clients with the right configuration
+DropboxHandler.setAuthToken(AUTH_TOKENS.DROPBOX_CLIEND_ID);
 
 export const CLOUD_PROVIDERS = {
   [DropboxHandler.name]: DropboxHandler

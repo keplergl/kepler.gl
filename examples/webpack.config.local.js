@@ -67,7 +67,11 @@ function makeLocalDevConfig(EXAMPLE_DIR = LIB_DIR) {
     },
     // Optional: Enables reading mapbox token from environment variable
     plugins: [
-      new webpack.EnvironmentPlugin(['MapboxAccessToken', 'DropboxClientId'])
+      new webpack.EnvironmentPlugin([
+        'MapboxAccessToken',
+        'DropboxClientId',
+        'MapboxExportToken'
+      ])
     ]
   };
 }

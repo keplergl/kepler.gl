@@ -58,7 +58,7 @@ export const exportMapToHTML = options => {
         const map = (function initKeplerGl(react, reactDOM, redux, reactRedux, keplerGl, mapboxToken, warningMessage) {
           
           /* Validate Mapbox Token */
-          if ((mapboxToken || '') === '' || mapboxToken === 'PROVIDE_MAPBOX_TOKEN') {
+          if ((mapboxToken || '') === '') {
             alert(warningMessage)
           }
           
