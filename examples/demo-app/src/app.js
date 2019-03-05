@@ -48,7 +48,7 @@ import sampleGeojsonPoints from './data/sample-geojson-points.json';
 import sampleH3Data from './data/sample-hex-id-csv';
 import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
 import {addDataToMap, addNotification} from 'kepler.gl/actions';
-import Processors from 'kepler.gl/processors';
+import {processCsvData, processGeojson} from 'kepler.gl/processors';
 /* eslint-enable no-unused-vars */
 
 const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
@@ -221,7 +221,7 @@ class App extends Component {
               label: 'Icon Data',
               id: 'test_icon_data'
             },
-            data: Processors.processCsvData(sampleIconCsv)
+            data: processCsvData(sampleIconCsv)
           }
         ],
         options: {
@@ -238,10 +238,10 @@ class App extends Component {
       addDataToMap({
         datasets: [{
           info: {label: 'Bart Stops Geo'},
-          data: Processors.processGeojson(sampleGeojsonPoints)
+          data: processGeojson(sampleGeojsonPoints)
         }, {
           info: {label: 'SF Zip Geo'},
-          data: Processors.processGeojson(sampleGeojson)
+          data: processGeojson(sampleGeojson)
         }]
       })
     );
@@ -257,7 +257,7 @@ class App extends Component {
               label: 'H3 Hexagons V2',
               id: 'h3-hex-id'
             },
-            data: Processors.processCsvData(sampleH3Data)
+            data: processCsvData(sampleH3Data)
           }
         ]
       })
