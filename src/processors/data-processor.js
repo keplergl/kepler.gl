@@ -568,3 +568,13 @@ export function processKeplerglJSON(rawData) {
     ? KeplerGlSchema.load(rawData.datasets, rawData.config)
     : null;
 }
+
+export const Processors = {
+  processGeojson,
+  processCsvData,
+  processRowObject,
+  processKeplerglJSON,
+  analyzerTypeToFieldType,
+  getFieldsFromData,
+  parseCsvRowsByFieldType
+}

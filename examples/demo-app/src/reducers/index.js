@@ -22,7 +22,7 @@ import {combineReducers} from 'redux';
 import {handleActions} from 'redux-actions';
 
 import keplerGlReducer, {combinedUpdaters} from 'kepler.gl/reducers';
-import Processor from 'kepler.gl/processors';
+import {processGeojson, processCsvData} from 'kepler.gl/processors';
 import KeplerGlSchema from 'kepler.gl/schemas';
 
 import sharingReducer from './sharing';
@@ -98,10 +98,10 @@ export const loadRemoteResourceSuccess = (state, action) => {
   // TODO: replace generate with a different function
   const datasetId = action.options.id || generateHashId(6);
   const {dataUrl} = action.options;
-  let processorMethod = Processor.processCsvData;
+  let processorMethod = processCsvData;
   // TODO: create helper to determine file ext eligibility
   if (dataUrl.includes('.json') || dataUrl.includes('.geojson')) {
-    processorMethod = Processor.processGeojson;
+    processorMethod = processGeojson;
   }
 
   const datasets = {

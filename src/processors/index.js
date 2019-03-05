@@ -31,3 +31,5 @@ export {
 
 // File Handlers
 export {getFileHandler, getFileType} from './file-handler';
+
+export {Processors as default} from './data-processor';

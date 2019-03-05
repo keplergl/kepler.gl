@@ -54,9 +54,9 @@ Read more about [Actions and Updaters][actions-updaters].
 
 ![Processor and Schema][processor-schema]
 
-Processors and schema manager are useful helpers to get data in and out of kepler.gl. You can use `Processors.processCsvData(csv)` and `Processors.processGeojson(geojson)` to parse csv or geoJson file and pass it to `addDataToMap()` action.
+Processors and schema manager are useful helpers to get data in and out of kepler.gl. You can use `processCsvData(csv)` and `processGeojson(geojson)` to parse csv or geoJson file and pass it to `addDataToMap()` action.
 
-To save and reload the current map, you can call `KeplerGlSchema.save()` and pass it the instant state. It will return a json output containing map data and config. Pass this json file to `Processors.processKeplerglJSON()` and then `addDataToMap()` will reproduce the same map.
+To save and reload the current map, you can call `KeplerGlSchema.save()` and pass it the instant state. It will return a json output containing map data and config. Pass this json file to `processKeplerglJSON()` and then `addDataToMap()` will reproduce the same map.
 
 Read more about [Processors][processors] and [Schema Manager][schemas].
 
