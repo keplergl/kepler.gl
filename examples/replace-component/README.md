@@ -1,6 +1,6 @@
 # Open modal
 
-Example showing how to open kepler.gl in a modal.
+Example showing how to replace kepler.gl default components using `injectComponents` method.
 
 #### 1. Install
 

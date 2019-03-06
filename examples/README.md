@@ -16,8 +16,12 @@ yarn --ignore-engines && yarn start
   Open kepler.gl in a modal.
 
 - ### [custom-reducer][custom-reducer]
+  Customize kepler.gl reducer initial state, adding more actions using plugin.
+
+- ### [umd-client][umd-client]
   Cutomize kepler.gl reducer initial state, adding more actions using plugin.
 
 [custom-reducer]: custom-reducer
 [demo-app]: demo-app
 [open-modal]: open-modal
+[umd-client]: umd-client
