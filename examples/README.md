@@ -19,9 +19,13 @@ yarn --ignore-engines && yarn start
   Customize kepler.gl reducer initial state, adding more actions using plugin.
 
 - ### [umd-client][umd-client]
-  Cutomize kepler.gl reducer initial state, adding more actions using plugin.
+  A single html file loading kepler.gl
+
+- ### [replace-component][replace-component]
+  Example showing how to replace kepler.gl default components using `injectComponents` method.
 
 [custom-reducer]: custom-reducer
 [demo-app]: demo-app
 [open-modal]: open-modal
 [umd-client]: umd-client
+[replace-component]: replace-component
