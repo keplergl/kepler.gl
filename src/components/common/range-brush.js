@@ -74,10 +74,6 @@ export default class RangeBrush extends Component {
       });
 
     this.root.call(this.brush);
-
-    if (val0 === min && val1 === max) {
-      this._reset();
-    }
   }
 
   componentDidUpdate(prevProps) {
@@ -85,6 +81,8 @@ export default class RangeBrush extends Component {
     const [prevVal0, prevVal1] = prevProps.value;
 
     if (prevProps.width !== width) {
+      // width change should not trigger this._brush
+      this.moving = true;
       this.root.call(this.brush);
       this._move(val0, val1);
     }
