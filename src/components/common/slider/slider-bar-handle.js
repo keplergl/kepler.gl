@@ -62,9 +62,10 @@ export default class SliderHandle extends Component {
   state = {mouseOver: false};
   prevX = 0;
 
-  handleMouseDown = () => {
+  handleMouseDown = (e) => {
     document.addEventListener('mouseup', this.mouseup);
     document.addEventListener('mousemove', this.mousemove);
+    this.prevX = e.clientX;
     this.setState({mouseOver: true});
   };
 
@@ -76,7 +77,13 @@ export default class SliderHandle extends Component {
 
   mousemove = e => {
     e.preventDefault();
-    this.props.sliderBarListener(e.movementX);
+    if (e.movementX === 0) {
+      const deltaX = e.clientX - this.prevX;
+      this.props.sliderBarListener(deltaX);
+    } else {
+      this.props.sliderBarListener(e.movementX);
+    }
+    this.prevX = e.clientX;
   };
 
   handleTouchStart = e => {
