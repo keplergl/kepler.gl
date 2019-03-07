@@ -183,7 +183,7 @@ export class MapPopover extends Component {
 
     return (
       <StyledMapPopover
-        innerRef={comp => {
+        ref={comp => {
           this.popover = comp;
         }}
         className={classnames('map-popover', {hidden})}

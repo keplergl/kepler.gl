@@ -443,7 +443,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           <MapComponent
             {...mapProps}
             key="bottom"
-            innerRef={this._setMapboxMap}
+            ref={mapbox => this._setMapboxMap(mapbox)}
             mapStyle={mapStyle.bottomMapStyle}
             onClick={onMapClick}
             getCursor={this.props.hoverInfo ? () => 'pointer' : undefined}

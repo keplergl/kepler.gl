@@ -213,7 +213,7 @@ export default class FileUpload extends Component {
     return (
       <StyledFileUpload
         className="file-uploader"
-        innerRef={cmp => (this.frame = cmp)}
+        ref={cmp => (this.frame = cmp)}
       >
         <input
           className="filter-upload__input"
