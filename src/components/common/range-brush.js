@@ -42,7 +42,6 @@ export default class RangeBrush extends Component {
   };
 
   componentDidMount() {
-    const {range: [min, max], value: [val0, val1]} = this.props;
     // We want the React app to respond to brush state and vice-versa
     // but d3-brush fires the same events for both user-initiated brushing
     // and programmatic brushing (brush.move). We need these flags to
@@ -81,8 +80,6 @@ export default class RangeBrush extends Component {
     const [prevVal0, prevVal1] = prevProps.value;
 
     if (prevProps.width !== width) {
-      // width change should not trigger this._brush
-      this.moving = true;
       this.root.call(this.brush);
       this._move(val0, val1);
     }
