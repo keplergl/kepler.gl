@@ -11,6 +11,7 @@
     "react-dom": "^15.6.1",
     "react-palm": "^1.1.2",
     "react-redux": "^4.0.0",
+    "react-virtualized": "^9.21.0",
     "redux-actions": "^2.2.1"
   },
   "devDependencies": {
