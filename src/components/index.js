@@ -32,6 +32,7 @@ export {default as PlotContainerFactory} from './plot-container';
 // // side panel factories
 export {default as PanelHeaderFactory} from './side-panel/panel-header'
 export {CollapseButtonFactory, default as SidebarFactory} from './side-panel/side-bar';
+export {default as PanelToggleFactory} from './side-panel/panel-toggle';
 
 export {AddDataButtonFactory, default as LayerManagerFactory} from './side-panel/layer-manager';
 export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel';

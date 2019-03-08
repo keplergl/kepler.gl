@@ -52,28 +52,41 @@ const SideBarInner = styled.div`
   height: 100%;
 `;
 
-export const CollapseButtonFactory = () => (
-  styled.div`
-    align-items: center;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-    justify-content: center;
-    background-color: ${props => props.theme.sideBarCloseBtnBgd};
-    border-radius: 1px;
-    color: ${props => props.theme.sideBarCloseBtnColor};
-    display: flex;
-    height: 20px;
-    position: absolute;
-    right: -8px;
-    top: ${props => props.theme.sidePanel.margin.top}px;
-    width: 20px;
+const StyledCollapseButton = styled.div`
+  align-items: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  justify-content: center;
+  background-color: ${props => props.theme.sideBarCloseBtnBgd};
+  border-radius: 1px;
+  color: ${props => props.theme.sideBarCloseBtnColor};
+  display: flex;
+  height: 20px;
+  position: absolute;
+  right: -8px;
+  top: ${props => props.theme.sidePanel.margin.top}px;
+  width: 20px;
 
-    :hover {
-      cursor: pointer;
-      box-shadow: none;
-      background-color: ${props => props.theme.sideBarCloseBtnBgdHover};
-    }
-  `
-);
+  :hover {
+    cursor: pointer;
+    box-shadow: none;
+    background-color: ${props => props.theme.sideBarCloseBtnBgdHover};
+  }
+`
+
+export const CollapseButtonFactory = () => {
+  const CollapseButton = ({onClick, isOpen}) => (
+    <StyledCollapseButton
+      className="side-bar__close"
+      onClick={onClick}
+    >
+      <ArrowRight
+        height="12px"
+        style={{transform: `rotate(${isOpen ? 180 : 0}deg)`}}
+      />
+    </StyledCollapseButton>
+  );
+  return CollapseButton;
+};
 
 SidebarFactory.deps = [CollapseButtonFactory];
 
@@ -114,14 +127,9 @@ function SidebarFactory(CollapseButton) {
               </SideBarInner>
             ) : null}
             <CollapseButton
-              className="side-bar__close"
+              isOpen={isOpen}
               onClick={this._onOpenOrClose}
-            >
-              <ArrowRight
-                height="12px"
-                style={{transform: `rotate(${isOpen ? 180 : 0}deg)`}}
-              />
-            </CollapseButton>
+            />
           </SideBarContainer>
         </StyledSidePanelContainer>
       );

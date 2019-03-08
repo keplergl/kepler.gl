@@ -167,6 +167,13 @@ export function injectComponents(recipes) {
         Console.error(errorMsg.wrongPairType);
         return inj;
       }
+
+      // collect dependencies of custom factories, if there is any.
+      // Add them to the injector
+      const customDependencies = flattenDeps([], recipe[1]);
+      inj = customDependencies
+        .reduce((ij, factory) => ij.provide(factory, factory), inj);
+
       return inj.provide(...recipe);
     }, appInjector)
     .get(ContainerFactory);
