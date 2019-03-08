@@ -188,6 +188,16 @@ version displayed in side panel header
 
 Action called when click Save Map Url in side panel header.
 
+##### `getMapboxRef(mapbox, index)` (Function, optional)
+
+- Default: `undefined`
+
+Function called when `KeplerGL` adds or removes a `MapContainer` component having an inner Mapbox map.
+
+The `mapbox` argument is an [`InteractiveMap`](https://uber.github.io/react-map-gl/#/Documentation/api-reference/interactive-map) when added or `null` when removed.
+
+The `index` argument is 0 for a single map or 1 for an additional map (since `KeplerGL` supports an optional split map view).
+
 ##### `actions` (Object, optional)
 
 - Default: `{}`

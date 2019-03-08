@@ -179,6 +179,7 @@ function KeplerGlFactory(
         width,
         height,
         mapboxApiAccessToken,
+        getMapboxRef,
 
         // redux state
         mapStyle,
@@ -260,6 +261,7 @@ function KeplerGlFactory(
               index={0}
               {...mapFields}
               mapLayers={isSplit ? splitMaps[0].layers : null}
+              getMapboxRef={getMapboxRef}
             />
           ]
         : splitMaps.map((settings, index) => (
@@ -268,6 +270,7 @@ function KeplerGlFactory(
               index={index}
               {...mapFields}
               mapLayers={splitMaps[index].layers}
+              getMapboxRef={getMapboxRef}
             />
           ));
 
