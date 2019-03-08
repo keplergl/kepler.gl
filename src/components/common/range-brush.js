@@ -47,7 +47,8 @@ export default class RangeBrush extends Component {
     // and programmatic brushing (brush.move). We need these flags to
     // distinguish between the uses.
     //
-    // We don't use state because that would trigger another `componentDidUpate`
+    // We don't use state because that would trigger another `componentDidUpdate`
+
     this.brushing = false;
     this.moving = false;
 
@@ -60,7 +61,6 @@ export default class RangeBrush extends Component {
         if (this.moving) {
           return;
         }
-
         event.selection === null ? this._reset() : this._brush(event.selection);
       })
       .on('end', () => {
@@ -76,19 +76,18 @@ export default class RangeBrush extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    const {range: [min, max], value: [val0, val1], width} = this.props;
+    const {value: [val0, val1], width} = this.props;
     const [prevVal0, prevVal1] = prevProps.value;
 
     if (prevProps.width !== width) {
+
+      // width change should not trigger this._brush
+      this.moving = true;
       this.root.call(this.brush);
       this._move(val0, val1);
     }
 
     if (!this.brushing && !this.moving) {
-      if (val0 === min && val1 === max) {
-        this.moving = true;
-        this.brush.move(this.root, null);
-      }
 
       if (prevVal0 !== val0 || prevVal1 !== val1) {
         this.moving = true;
@@ -99,7 +98,7 @@ export default class RangeBrush extends Component {
 
   _reset() {
     const [minValue, maxValue] = this.props.range;
-    this.props.onBrush(minValue, maxValue);
+    this._onBrush(minValue, maxValue);
   }
 
   _move(val0, val1) {
@@ -109,11 +108,20 @@ export default class RangeBrush extends Component {
   }
 
   _brush([sel0, sel1]) {
-    const {domain: [min, max], onBrush, width} = this.props;
+    const {domain: [min, max], width} = this.props;
     const invert = x => x * (max - min) / width + min;
-    onBrush(invert(sel0), invert(sel1));
+    this._onBrush(invert(sel0), invert(sel1));
   }
 
+  _onBrush(val0, val1) {
+    const {value: [currentVal0, currentVal1]} = this.props;
+
+    if (currentVal0 === val0 && currentVal1 === val1) {
+      return;
+    }
+
+    this.props.onBrush(val0, val1);
+  }
   render() {
     return <StyledG className="kg-range-slider__brush"
                     innerRef={comp => {
