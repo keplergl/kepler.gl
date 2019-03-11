@@ -23,6 +23,7 @@ import {console as Console} from 'global/window';
 import {bindActionCreators} from 'redux';
 import {json as requestJson} from 'd3-request';
 import styled, {ThemeProvider, withTheme}  from 'styled-components';
+import {createSelector} from 'reselect';
 import {connect as keplerGlConnect} from 'connect/keplergl-connect';
 import {isValidStyleUrl, getStyleDownloadUrl} from 'utils/map-style-utils/mapbox-gl-style-editor';
 
@@ -101,6 +102,16 @@ function KeplerGlFactory(
       appName: KEPLER_GL_NAME,
       version: KEPLER_GL_VERSION
     };
+
+    /* selector */
+    themeSelector = props => props.theme;
+    availableThemeSelector = createSelector(
+      this.themeSelector,
+      (theme) => ({
+        ...basicTheme,
+        ...theme
+      })
+    );
 
     componentWillMount() {
       this._loadMapStyle(this.props.mapStyles);
@@ -276,11 +287,10 @@ function KeplerGlFactory(
 
       const isExporting = uiState.currentModal === EXPORT_IMAGE_ID;
 
+      const theme = this.availableThemeSelector(this.props);
+
       return (
-        <ThemeProvider theme={{
-          ...basicTheme,
-          ...this.props.theme
-        }}>
+        <ThemeProvider theme={theme}>
           <GlobalStyle
             style={{
               position: 'relative',
