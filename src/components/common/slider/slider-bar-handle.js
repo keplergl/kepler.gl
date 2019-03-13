@@ -23,6 +23,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import styled from 'styled-components';
+import {getMouseDeltaX} from './slider-handle';
 
 const StyledSlider = styled.div`
   position: relative;
@@ -77,13 +78,10 @@ export default class SliderHandle extends Component {
 
   mousemove = e => {
     e.preventDefault();
-    if (e.movementX === 0) {
-      const deltaX = e.clientX - this.prevX;
-      this.props.sliderBarListener(deltaX);
-    } else {
-      this.props.sliderBarListener(e.movementX);
-    }
-    this.prevX = e.clientX;
+
+    const {deltaX, prevX} = getMouseDeltaX(e, this.prevX);
+    this.props.valueListener(deltaX);
+    this.prevX = prevX;
   };
 
   handleTouchStart = e => {

@@ -23,6 +23,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import styled from 'styled-components';
+import {getMouseDeltaX} from './slider-handle';
 
 const StyledSliderHandle = styled.span`
   position: absolute;
@@ -96,15 +97,9 @@ export default class SliderHandle extends Component {
   mousemove = e => {
     e.preventDefault();
 
-    if (e.movementX === 0) {
-      // movementX might not be supported in some browser
-      // https://stackoverflow.com/questions/41774726/mouseevent-movementx-property-apparently-not-supported-in-internet-explorer
-      const deltaX = e.clientX - this.prevX;
-      this.props.valueListener(deltaX);
-    } else {
-      this.props.valueListener(e.movementX);
-    }
-    this.prevX = e.clientX;
+    const {deltaX, prevX} = getMouseDeltaX(e, this.prevX);
+    this.props.valueListener(deltaX);
+    this.prevX = prevX;
   };
 
   handleTouchStart = e => {
