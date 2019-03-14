@@ -23,6 +23,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import styled from 'styled-components';
+import {getMouseDeltaX} from './mouse-event';
 
 const StyledSlider = styled.div`
   position: relative;
@@ -62,9 +63,10 @@ export default class SliderHandle extends Component {
   state = {mouseOver: false};
   prevX = 0;
 
-  handleMouseDown = () => {
+  handleMouseDown = (e) => {
     document.addEventListener('mouseup', this.mouseup);
     document.addEventListener('mousemove', this.mousemove);
+    this.prevX = e.clientX;
     this.setState({mouseOver: true});
   };
 
@@ -76,7 +78,10 @@ export default class SliderHandle extends Component {
 
   mousemove = e => {
     e.preventDefault();
-    this.props.sliderBarListener(e.movementX);
+
+    const {deltaX, prevX} = getMouseDeltaX(e, this.prevX);
+    this.props.sliderBarListener(deltaX);
+    this.prevX = prevX;
   };
 
   handleTouchStart = e => {
