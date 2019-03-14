@@ -162,7 +162,7 @@ export default class Slider extends Component {
     return (
       <SliderWrapper
         className={classnames('kg-slider', {...classSet})}
-        innerRef={this._saveRef}
+        ref={this._saveRef}
         isRanged={isRanged}
       >
         {this.createSlider(width, v0Left)}

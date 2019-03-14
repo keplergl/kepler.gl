@@ -33,7 +33,7 @@ import {
   PanelContent
 } from 'components/common/styled-components';
 
-const StyledPanelContent = PanelContent.extend`
+const StyledPanelContent = styled(PanelContent)`
   border-top: 1px solid ${props => props.theme.panelBorderColor};
 `;
 

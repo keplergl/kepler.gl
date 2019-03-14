@@ -119,7 +119,7 @@ const StyledMessage = styled.div`
   align-items: center;
 `;
 
-const StyledDisclaimer = StyledMessage.extend`
+const StyledDisclaimer = styled(StyledMessage)`
   position: absolute;
   bottom: 0;
   padding: 10px 30px;
@@ -151,6 +151,12 @@ export default class FileUpload extends Component {
   _handleFileDrop = (files, e) => {
     if (e) {
       e.stopPropagation();
+    }
+
+    // After upgrading to react 16 this function is being called twice with different types: DragEvent and react class event
+    // TODO: react-file-drop hasn't been updated and may not fully support react 16
+    if (!(e instanceof Event)) {
+      return;
     }
 
     const nextState = {files: [], errorFiles: [], dragOver: false};
@@ -207,7 +213,7 @@ export default class FileUpload extends Component {
     return (
       <StyledFileUpload
         className="file-uploader"
-        innerRef={cmp => (this.frame = cmp)}
+        ref={cmp => (this.frame = cmp)}
       >
         <input
           className="filter-upload__input"

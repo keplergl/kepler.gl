@@ -71,6 +71,12 @@ const LIBRARY_BUNDLE_CONFIG = env => ({
       commonjs: 'react-redux',
       amd: 'react-redux',
       umd: 'react-redux'
+    },
+    'styled-components': {
+      commonjs: 'styled-components',
+      commonjs2: 'styled-components',
+      amd: 'styled-components',
+      root: 'styled'
     }
   },
 

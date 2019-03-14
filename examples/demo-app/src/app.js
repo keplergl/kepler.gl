@@ -310,7 +310,7 @@ class App extends Component {
           // this is to apply the same modal style as kepler.gl core
           // because styled-components doesn't always return a node
           // https://github.com/styled-components/styled-components/issues/617
-          innerRef={node => {node ? this.root = node : null}}
+          ref={node => {node ? this.root = node : null}}
         >
           <Banner
             show={this.state.showBanner}

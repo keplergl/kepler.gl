@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import React from 'react';
+import styled from "styled-components";
 import classnames from 'classnames';
 import {ArrowDown} from 'components/common/icons';
 import PanelHeaderAction from 'components/side-panel/panel-header-action';
@@ -30,7 +31,7 @@ import {
   StyledPanelHeader
 } from 'components/common/styled-components';
 
-const StyledMapDropdown = StyledPanelHeader.extend`
+const StyledMapDropdown = styled(StyledPanelHeader)`
   height: 48px;
   margin-bottom: 5px;
   opacity: 1;

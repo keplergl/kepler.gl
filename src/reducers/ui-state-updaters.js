@@ -457,7 +457,7 @@ export const setExportDataUpdater = (state, action) => ({
 export const addNotificationUpdater = (state, {payload}) => ({
   ...state,
   notifications: [
-    ...state.notifications || [],
+    ...(state.notifications || []),
     createNotification(payload)
   ]
 });

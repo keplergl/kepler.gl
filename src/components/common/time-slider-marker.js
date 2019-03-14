@@ -115,7 +115,7 @@ export default class TimeSliderMarker extends Component {
         className="time-slider-marker"
         width={this.props.width}
         height={height}
-        innerRef={comp => {
+        ref={comp => {
           this.svgContainer = comp;
         }}
       >

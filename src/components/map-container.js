@@ -55,6 +55,7 @@ const MAP_STYLE = {
 const getGlConst = d => GL[d];
 
 const MAPBOXGL_STYLE_UPDATE = 'style.load';
+const MAPBOXGL_RENDER = 'render';
 const TRANSITION_DURATION = 0;
 
 MapContainerFactory.deps = [
@@ -108,6 +109,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       // unbind mapboxgl event listener
       if (this._map) {
         this._map.off(MAPBOXGL_STYLE_UPDATE);
+        this._map.off(MAPBOXGL_RENDER);
       }
     }
 
@@ -147,28 +149,34 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       visStateActions.toggleLayerForMap(mapIndex, layerId);
     };
 
-    _setMapboxMap = (mapbox) => {
+    _onMapboxStyleUpdate = () => {
+      // force refresh mapboxgl layers
+
+      updateMapboxLayers(
+        this._map,
+        this._renderMapboxLayers(),
+        this.previousLayers,
+        this.props.mapLayers,
+        {force: true}
+      );
+
+      if (typeof this.props.onMapStyleLoaded === 'function') {
+        this.props.onMapStyleLoaded(this._map);
+      }
+    };
+
+    _setMapboxMap = mapbox => {
       if (!this._map && mapbox) {
 
         this._map = mapbox.getMap();
+        // i noticed in certain context we don't access the actual map element
+        if (!this.map) {
+          return;
+        }
         // bind mapboxgl event listener
-        this._map.on(MAPBOXGL_STYLE_UPDATE, () => {
-          // force refresh mapboxgl layers
+        this._map.on(MAPBOXGL_STYLE_UPDATE, this._onMapboxStyleUpdate);
 
-          updateMapboxLayers(
-            this._map,
-            this._renderMapboxLayers(),
-            this.previousLayers,
-            this.props.mapLayers,
-            {force: true}
-          );
-
-          if (typeof this.props.onMapStyleLoaded === 'function') {
-            this.props.onMapStyleLoaded(this._map);
-          }
-        });
-
-        this._map.on('render', () => {
+        this._map.on(MAPBOXGL_RENDER, () => {
           if (typeof this.props.onMapRender === 'function') {
             this.props.onMapRender(this._map);
           }
@@ -181,7 +189,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         // ref is unset (e.g. when a split map is closed).
         this.props.getMapboxRef(mapbox, this.props.index);
       }
-    }
+    };
 
     _onBeforeRender = ({gl}) => {
       this._setlayerBlending(gl);

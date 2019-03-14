@@ -41,7 +41,7 @@ const StyledFilterPanel = styled.div`
   }
 `;
 
-const StyledFilterHeader = StyledPanelHeader.extend`
+const StyledFilterHeader = styled(StyledPanelHeader)`
   cursor: pointer;
   padding: 10px 12px;
 `;

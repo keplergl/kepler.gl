@@ -79,7 +79,7 @@ const StyledPin = styled.div`
   }
 `;
 
-const StyledLayerName = CenterFlexbox.extend`
+const StyledLayerName = styled(CenterFlexbox)`
   color: ${props => props.theme.textColorHl};
   font-size: 12px;
   letter-spacing: 0.43px;
@@ -183,7 +183,7 @@ export class MapPopover extends Component {
 
     return (
       <StyledMapPopover
-        innerRef={comp => {
+        ref={comp => {
           this.popover = comp;
         }}
         className={classnames('map-popover', {hidden})}
