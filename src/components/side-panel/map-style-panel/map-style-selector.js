@@ -18,7 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import styled from "styled-components";import React from 'react';
+import React from 'react';
+import styled from "styled-components";
 import classnames from 'classnames';
 import {ArrowDown} from 'components/common/icons';
 import PanelHeaderAction from 'components/side-panel/panel-header-action';

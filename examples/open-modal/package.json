@@ -7,12 +7,12 @@
   "dependencies": {
     "global": "^4.3.0",
     "kepler.gl": "^0.2.4",
-    "react": "^16.8.3",
-    "react-dom": "^16.8.3",
+    "react": "^16.8.4",
+    "react-dom": "^16.8.4",
     "react-modal": "^3.1.10",
     "react-palm": "^1.1.2",
     "react-redux": "^4.0.0",
-    "react-virtualized": "^9.18.5",
+    "react-virtualized": "^9.21.0",
     "redux-actions": "^2.2.1",
     "styled-components": "^4.1.3"
   },

@@ -49,7 +49,7 @@ export function generateMapboxLayers(layers = [], layerData = [], layerOrder = [
   }
 
   return [];
-};
+}
 
 /**
  * Update mapbox layers on the given map
