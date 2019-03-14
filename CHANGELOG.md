@@ -14,6 +14,13 @@ Each version should:
   Security to invite users to upgrade in case of vulnerabilities.
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
+#### [0.2.4] - Mar 13 2019
+- [Enhancement] Slider: use clientX to calculate delta to support windows IE and Tableau kepler.gl (#431)
+- [Bug] Range slider: correctly setting ranch brush selection when mount (#433)
+- [Feat] Add getMapboxRef prop (#372)
+- [Enhancement] Automatically loading custom dependencies when inject custom component factor (#430)
+- [Bug] Range brush width change should not trigger onBrush callback (#432)
+- [Bug] fix processor export, support previous  (#428)
 
 #### [0.2.3] - Mar 3 2019
 - [Docs] Export processors and Add Docs (#421)
