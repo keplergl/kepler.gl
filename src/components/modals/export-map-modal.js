@@ -21,6 +21,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
+import {GITHUB_EXPORT_HTML_MAP, MAPBOX_ACCESS_TOKEN} from 'constants/user-guides';
 
 const StyledExportMapModal = styled.div`
   padding: ${props => props.theme.modalPadding};
@@ -77,7 +78,7 @@ const ExportMapModal = ({
 
       <StyledSection>
         <div>
-          Please provide your <a style={{textDecorationLine: 'underline'}} href="https://docs.mapbox.com/help/how-mapbox-works/access-tokens/">Mapbox access token</a>
+          Please provide your <a style={{textDecorationLine: 'underline'}} href={MAPBOX_ACCESS_TOKEN}>Mapbox access token</a>
         </div>
         <StyledInput
           onChange={e => onExportMapboxAccessToken(e.target.value)}
@@ -85,7 +86,11 @@ const ExportMapModal = ({
           placeholder="Mapbox access token"
           value={exportHtml ? exportHtml.exportMapboxAccessToken : ''}
         />
+        <div>
+          * <a style={{textDecorationLine: 'underline'}} href={GITHUB_EXPORT_HTML_MAP}>How to update an existing map token</a>
+        </div>
       </StyledSection>
+
     </div>
   </StyledExportMapModal>
 );

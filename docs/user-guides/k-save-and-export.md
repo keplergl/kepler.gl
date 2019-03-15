@@ -42,5 +42,26 @@ To save and share your current map, click the __Export Current Map__ check box t
 ![Export Map as HTML](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/k-save-and-export-5.png "activate interactions")
 
 To save and export your current map as HTML file, click on __Export Map__ and subsequently on __Export__. Your browser will download a new kepler.gl.html that contains both data and configuration. Simply click on the file to visualize your map.
+Kepler.gl is providing with a temporary Mapbox token to use in your html file but we strongly recommend to use your own. The provided token has a limited duration and will be periodically replaced with a new one
+without any notification.
+
+#### How to update an exported map token
+In order to edit the mapbox token in your html file you simply need to perform the following steps:
+- [Create a new mapbox token](https://docs.mapbox.com/help/how-mapbox-works/access-tokens/) or use your existing one.
+- Open the kepler.gl.map file with your favorite text editor.
+- Locate the following line in the exported file __kepler.gl.html__:
+```javascript
+  /**
+   * Provide your MapBox Token
+   **/
+  const MAPBOX_TOKEN = 'CURRENT_TOKEN';
+```
+- Replace the current value a new valid token. The code should now look like the following:
+```javascript
+  /**
+   * Provide your MapBox Token   
+   **/
+  const MAPBOX_TOKEN = 'pk.eyJ1IjoidWJlcmRh...';
+```
 
 

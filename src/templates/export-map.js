@@ -52,8 +52,7 @@ export const exportMapToHTML = options => {
       <script>
         /**
          * Provide your MapBox Token
-         * This will be used in app.js (imported later)
-         * */
+         **/
         const MAPBOX_TOKEN = '${options.mapboxApiAccessToken || 'PROVIDE_MAPBOX_TOKEN'}';
         const WARNING_MESSAGE = 'Please Provide a Mapbox Token in order to use Kepler.gl. Edit this file and fill out MAPBOX_TOKEN with your access key';
       </script>
