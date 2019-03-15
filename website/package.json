@@ -22,6 +22,7 @@
   "dependencies": {
     "classnames": "^2.2.5",
     "global": "^4.3.2",
+    "lodash.get": "^4.4.2",
     "prop-types": "^15.6.1",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
