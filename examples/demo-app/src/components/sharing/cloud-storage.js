@@ -113,6 +113,7 @@ const ExportCloudModal = ({
   onCloudLoginSuccess
 }) => {
   const metaUrl = get(info, ['metadata', 'url']);
+  const error = get(info, ['error']);
   const sharingLink = metaUrl ? getMapPermalink(metaUrl) : null;
   return (
     <div className="export-data-modal">
@@ -155,6 +156,11 @@ const ExportCloudModal = ({
               <div style={{margin: 'auto', width: '100%'}}>
                 {isLoading && (
                   <StatusPanel isLoading={isLoading} {...info} />
+                )}
+                {error && (
+                  <div className="subtitle" style={{color: 'red', fontWeight: 500}}>
+                    {error.error}
+                  </div>
                 )}
                 {metaUrl && [
                   (<SharingUrl key={0} url={sharingLink} message={'Share your map with other users'}/>),
