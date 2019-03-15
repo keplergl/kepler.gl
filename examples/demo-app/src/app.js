@@ -25,7 +25,6 @@ import styled, {ThemeProvider}  from 'styled-components';
 import window from 'global/window';
 import {connect} from 'react-redux';
 import {theme} from 'kepler.gl/styles';
-import {setExportMapboxAccessToken} from 'kepler.gl/actions';
 import Banner from './components/banner';
 import Announcement from './components/announcement';
 import {replaceLoadDataModal} from './factories/load-data-modal';
@@ -110,9 +109,6 @@ class App extends Component {
   }
 
   componentDidMount() {
-    // we set a mapbox token to support export single file functionality
-    this.props.dispatch(setExportMapboxAccessToken(AUTH_TOKENS.EXPORT_MAPBOX_TOKEN));
-
     // delay zs to show the banner
     // if (!window.localStorage.getItem(BannerKey)) {
     //   window.setTimeout(this._showBanner, 3000);

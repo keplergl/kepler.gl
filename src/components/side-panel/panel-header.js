@@ -83,6 +83,7 @@ const StyledPanelDropdown = styled.div`
   font-size: 11px;
   padding: 16px 0;
   position: absolute;
+  left: 64px;
   transition: ${props => props.theme.transitionSlow};
   display: flex;
   margin-top: ${props => props.show ? '6px' : '20px'};
