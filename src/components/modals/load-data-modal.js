@@ -25,12 +25,10 @@ import styled from 'styled-components';
 import FileUpload from 'components/common/file-uploader/file-upload';
 
 const StyledLoadDataModal = styled.div`
-  padding: 10px 0;
+  padding: ${props => props.theme.modalPadding};
 `;
 
 const propTypes = {
-  onClose: PropTypes.func.isRequired,
-
   // call backs
   onFileUpload: PropTypes.func.isRequired
 };

@@ -36,7 +36,10 @@ import ExportImageModalFactory from './modals/export-image-modal';
 import ExportDataModalFactory from './modals/export-data-modal';
 import ExportConfigModalFactory from './modals/export-config-modal';
 import AddMapStyleModalFactory from './modals/add-map-style-modal';
+import ExportMapModalFactory from './modals/export-map-modal';
 
+// Template
+import {exportMapToHTML} from 'templates/export-map';
 import {
   ADD_DATA_ID,
   DATA_TABLE_ID,
@@ -46,6 +49,7 @@ import {
   EXPORT_DATA_TYPE,
   EXPORT_IMAGE_ID,
   EXPORT_CONFIG_ID,
+  EXPORT_MAP_ID,
   ADD_MAP_STYLE_ID
 } from 'constants/default-settings';
 
@@ -73,6 +77,7 @@ ModalContainerFactory.deps = [
   ExportImageModalFactory,
   ExportDataModalFactory,
   ExportConfigModalFactory,
+  ExportMapModalFactory,
   AddMapStyleModalFactory
 ];
 
@@ -83,6 +88,7 @@ export default function ModalContainerFactory(
   ExportImageModal,
   ExportDataModal,
   ExportConfigModal,
+  ExportMapModal,
   AddMapStyleModal
 ) {
   class ModalWrapper extends Component {
@@ -180,6 +186,24 @@ export default function ModalContainerFactory(
       );
 
       this._closeModal();
+    };
+
+    _onExportMap = () => {
+      // we are saving both data and config together
+      // TODO: storing a large amount of data in html could be a limitation
+      // but it will work for now as first version
+      const {uiState} = this.props;
+
+      const data = {
+        ...KeplerGlSchema.save(this.props),
+        mapboxApiAccessToken: uiState.exportHtml.exportMapboxAccessToken
+      };
+
+      this._downloadFile(
+        exportMapToHTML(data),
+        'text/html',
+        'kepler.gl.html'
+      );
     };
 
     /* eslint-disable complexity */
@@ -290,7 +314,6 @@ export default function ModalContainerFactory(
             break;
 
           case EXPORT_DATA_ID:
-
             template = (
               <ExportDataModal
                 {...uiState.exportData}
@@ -359,6 +382,27 @@ export default function ModalContainerFactory(
                 large: true,
                 disabled: !mapStyle.inputStyle.style,
                 children: 'Add Style'
+              }
+            };
+            break;
+
+          case EXPORT_MAP_ID:
+
+            template = (
+              <ExportMapModal
+                exportHtml={uiState.exportHtml}
+                onExportMapboxAccessToken={this.props.uiStateActions.setExportMapboxAccessToken}
+              />
+            );
+            modalProps = {
+              close: false,
+              title: 'Export map',
+              footer: true,
+              onCancel: this._closeModal,
+              onConfirm: this._onExportMap,
+              confirmButton: {
+                large: true,
+                children: 'Export'
               }
             };
             break;

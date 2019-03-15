@@ -359,7 +359,8 @@ export function exportFileToCloud(handlerName = 'dropbox') {
     // extract data from kepler
     const data = KeplerGlSchema.save(getState().demo.keplerGl.map);
     const newBlob = new Blob([JSON.stringify(data)], {type: 'application/json'});
-    const file = new File([newBlob], `kepler.gl/keplergl_${generateHashId(6)}.json`);
+    const file = new File([newBlob], `keplergl_${generateHashId(6)}.json`);
+    // We are gonna pass the correct auth token to init the cloud provider
     dispatch(setPushingFile(true, {filename: file.name, status: 'uploading', metadata: null}));
     authHandler.uploadFile({blob: file, isPublic: true, authHandler})
     // need to perform share as well

@@ -20,6 +20,7 @@
 
 import React, {Component} from 'react';
 import {findDOMNode} from 'react-dom';
+import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer'
 import styled, {ThemeProvider}  from 'styled-components';
 import window from 'global/window';
 import {connect} from 'react-redux';
@@ -28,7 +29,7 @@ import Banner from './components/banner';
 import Announcement from './components/announcement';
 import {replaceLoadDataModal} from './factories/load-data-modal';
 import ExportUrlModal from './components/sharing/export-url-modal';
-
+import {AUTH_TOKENS} from './constants/default-settings';
 import {
   exportFileToCloud,
   loadRemoteMap,
@@ -50,8 +51,6 @@ import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
 import {addDataToMap, addNotification} from 'kepler.gl/actions';
 import {processCsvData, processGeojson} from 'kepler.gl/processors';
 /* eslint-enable no-unused-vars */
-
-const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
 
 const BannerHeight = 30;
 const BannerKey = 'kgHideBanner-iiba';
@@ -107,11 +106,6 @@ class App extends Component {
       // TODO?: validate map url
       this.props.dispatch(loadRemoteMap({dataUrl: query.mapUrl}));
     }
-
-    // event listeners
-    window.addEventListener('resize', this._onResize);
-
-    this._onResize();
   }
 
   componentDidMount() {
@@ -126,17 +120,6 @@ class App extends Component {
     // Notifications
     // this._loadMockNotifications();
   }
-
-  componentWillUnmount() {
-    window.removeEventListener('resize', this._onResize);
-  }
-
-  _onResize = () => {
-    this.setState({
-      width: window.innerWidth,
-      height: window.innerHeight
-    });
-  };
 
   _showBanner = () => {
     this.setState({showBanner: true});
@@ -301,7 +284,7 @@ class App extends Component {
   };
 
   render() {
-    const {showBanner, width, height} = this.state;
+    const {showBanner} = this.state;
     const {sharing} = this.props.demo;
     const rootNode = this.root;
     return (
@@ -341,18 +324,21 @@ class App extends Component {
               marginTop: showBanner ? `${BannerHeight}px` : 0
             }}
           >
-            <KeplerGl
-              mapboxApiAccessToken={MAPBOX_TOKEN}
-              id="map"
-              /*
-               * Specify path to keplerGl state, because it is not mount at the root
-               */
-              getState={state => state.demo.keplerGl}
-              width={width}
-              height={height - (showBanner ? BannerHeight : 0)}
-              onSaveMap={this._isCloudStorageEnabled() && this._toggleCloudModal}
-              getMapboxRef={this._getMapboxRef}
-            />
+            <AutoSizer>
+              {({height, width}) => (
+                <KeplerGl
+                  mapboxApiAccessToken={AUTH_TOKENS.MAPBOX_TOKEN}
+                  id="map"
+                  /*
+                   * Specify path to keplerGl state, because it is not mount at the root
+                   */
+                  getState={state => state.demo.keplerGl}
+                  width={width}
+                  height={height - (showBanner ? BannerHeight : 0)}
+                  onSaveMap={this._isCloudStorageEnabled() && this._toggleCloudModal}
+                />
+              )}
+            </AutoSizer>
           </div>
         </GlobalStyle>
       </ThemeProvider>

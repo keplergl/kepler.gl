@@ -74,6 +74,13 @@ export const EXPORT_CONFIG_ID = 'exportConfig';
  * @public
  */
 export const ADD_MAP_STYLE_ID = 'addMapStyle';
+/**
+ * Modal id: export map modal
+ * @constant
+ * @type {string}
+ * @public
+ */
+export const EXPORT_MAP_ID = 'exportMap';
 
 import {
   Layers,

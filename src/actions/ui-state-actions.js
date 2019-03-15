@@ -200,7 +200,7 @@ export const setExportDataType = createAction(
 /**
  * Whether to export filtered data, `true` or `false`
  * @memberof uiStateActions
- * @param {bollean} payload - set `true` to ony export filtered data
+ * @param {boolean} payload - set `true` to ony export filtered data
  * @public
  */
 export const setExportFiltered = createAction(
@@ -218,6 +218,17 @@ export const setExportData = createAction(
 );
 
 /**
+ * Whether we export a mapbox access token used to create a single map html file
+ * @memberof uiStateActions
+ * @param {string} payload - mapbox access token
+ * @public
+ */
+export const setExportMapboxAccessToken = createAction(
+  ActionTypes.SET_EXPORT_MAPBOX_ACCESS_TOKEN,
+  payload => payload
+);
+
+/**
  * This declaration is needed to group actions in docs
  */
 /**
@@ -229,5 +240,5 @@ export const setExportData = createAction(
  * @public
  */
 /* eslint-disable no-unused-vars */
-const uiStateActions = null
+const uiStateActions = null;
 /* eslint-enable no-unused-vars */

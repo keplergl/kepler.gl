@@ -101,5 +101,11 @@ export const DEFAULT_LOADING_METHOD = LOADING_METHODS[0];
 export const DEFAULT_CLOUD_PROVIDER = 'dropbox';
 
 export const DEFAULT_FEATURE_FLAGS = {
-  cloudStorage: false
+  cloudStorage: true
+};
+
+export const AUTH_TOKENS = {
+  MAPBOX_TOKEN: process.env.MapboxAccessToken, // eslint-disable-line
+  DROPBOX_CLIEND_ID: process.env.DropboxClientId, // eslint-disable-line
+  EXPORT_MAPBOX_TOKEN: process.env.MapboxExportToken, // eslint-disable-line
 };

@@ -35,7 +35,12 @@ import {
   SET_SAMPLE_LOADING_STATUS
 } from '../actions';
 
-import {DEFAULT_FEATURE_FLAGS, DEFAULT_LOADING_METHOD, LOADING_METHODS} from '../constants/default-settings';
+import {
+  AUTH_TOKENS,
+  DEFAULT_FEATURE_FLAGS,
+  DEFAULT_LOADING_METHOD,
+  LOADING_METHODS
+} from '../constants/default-settings';
 import {generateHashId} from '../utils/strings';
 
 // INITIAL_APP_STATE
@@ -82,7 +87,16 @@ export const appReducer = handleActions({
 // to mimic the reducer state of kepler.gl website
 const demoReducer = combineReducers({
   // mount keplerGl reducer
-  keplerGl: keplerGlReducer,
+  keplerGl: keplerGlReducer.initialState({
+    // In order to provide single file export functionality
+    // we are going to set the mapbox access token to be used
+    // in the exported file
+    uiState: {
+      exportHtml: {
+        exportMapboxAccessToken: AUTH_TOKENS.EXPORT_MAPBOX_TOKEN
+      }
+    }
+  }),
   app: appReducer,
   sharing: sharingReducer
 });

@@ -20,15 +20,25 @@
 
 // DROPBOX
 import {Dropbox} from 'dropbox';
+import window from 'global/window';
 import {parseQueryString} from '../url';
-import window from 'global/window'
 import DropboxIcon from '../../components/icons/dropbox-icon';
 
-const DROPBOX_CLIEND_ID = process.env.DropboxClientId;
 const NAME = 'dropbox';
 const DOMAIN = 'www.dropbox.com';
 const CORS_FREE_DOMAIN = 'dl.dropboxusercontent.com';
-const dropbox = new Dropbox({clientId: DROPBOX_CLIEND_ID});
+const dropbox = new Dropbox();
+
+/**
+ * Set the auth toke to be used with dropbox client
+ * @param authToken
+ */
+function setAuthToken(authToken) {
+  if (dropbox.getClientId()) {
+    return;
+  }
+  dropbox.setClientId(authToken);
+}
 
 /**
  * Generate auth link url to open to be used to handle OAuth2
@@ -65,7 +75,7 @@ function getAccessTokenFromLocation(location) {
  */
 function uploadFile({blob, name, isPublic = true}) {
   const promise = dropbox.filesUpload({
-    path: `/keplergl/${blob.name || name}`,
+    path: blob.name || name,
     contents: blob
   });
 
@@ -150,9 +160,10 @@ function getAccessToken() {
 // All cloud-providers providers must implement the following properties
 export default {
   name: NAME,
+  getAccessToken,
   getAccessTokenFromLocation,
   handleLogin,
-  uploadFile,
-  getAccessToken,
-  icon: DropboxIcon
+  icon: DropboxIcon,
+  setAuthToken,
+  uploadFile
 };

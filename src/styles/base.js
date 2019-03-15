@@ -185,6 +185,7 @@ export const modalTitleColor = '#3A414C';
 export const modalTitleFontSize = '24px';
 export const modalFooterBgd = '#F8F8F9';
 export const modalImagePlaceHolder = '#DDDFE3';
+export const modalPadding = '10px 0';
 
 // Modal Dialog (Dark)
 export const modalDialogBgd = '#3A414C';
@@ -849,6 +850,7 @@ export const theme = {
   modalTitleFontSize,
   modalFooterBgd,
   modalImagePlaceHolder,
+  modalPadding,
 
   modalDialogBgd,
   modalDialogColor,
