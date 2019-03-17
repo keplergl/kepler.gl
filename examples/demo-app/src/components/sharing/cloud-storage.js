@@ -114,6 +114,7 @@ const ExportCloudModal = ({
 }) => {
   const metaUrl = get(info, ['metadata', 'url']);
   const error = get(info, ['error']);
+  const folderLink = get(info, ['metadata', 'folder_link']);
   const sharingLink = metaUrl ? getMapPermalink(metaUrl) : null;
   return (
     <div className="export-data-modal">
@@ -161,7 +162,7 @@ const ExportCloudModal = ({
                 )}
                 {metaUrl && [
                   (<SharingUrl key={0} url={sharingLink} message={'Share your map with other users'}/>),
-                  (<SharingUrl key={1} url={metaUrl} message={'Your new saved configuration'}/>)
+                  (<a href={folderLink} target="_blank" style={{textDecoration: 'underline'}}>Go to your Kepler.gl Dropbox folder</a>)
                 ]}
               </div>
             </div>

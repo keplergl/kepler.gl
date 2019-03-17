@@ -26,6 +26,8 @@ import DropboxIcon from '../../components/icons/dropbox-icon';
 
 const NAME = 'dropbox';
 const DOMAIN = 'www.dropbox.com';
+const APP_NAME= 'Kepler.gl%20(managed%20by%20Uber%20Technologies%2C%20Inc.)';
+const KEPLER_DROPBOX_FOLDER_LINK = `//${DOMAIN}/home/Apps/${APP_NAME}`;
 const CORS_FREE_DOMAIN = 'dl.dropboxusercontent.com';
 const dropbox = new Dropbox();
 
@@ -96,6 +98,7 @@ function shareFile(metadata) {
     // can share dropbox urls with users without the dropbox account (publish on twitter, facebook)
     result => ({
       ...result,
+      folder_link: KEPLER_DROPBOX_FOLDER_LINK,
       url: overrideUrl(result.url)
     })
   );
