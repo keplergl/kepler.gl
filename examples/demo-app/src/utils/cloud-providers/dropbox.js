@@ -122,7 +122,7 @@ function overrideUrl(url) {
  */
 function handleLogin(onCloudLoginSuccess) {
   const link = authLink();
-  const authWindow = window.open(link, '_blank', 'width=800,height=600');
+  const authWindow = window.open(link, '_blank', 'width=1024,height=716');
   const handleToken = e => {
     // TODO: add security step to validate which domain the message is coming from
     authWindow.close();
