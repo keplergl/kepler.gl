@@ -377,7 +377,14 @@ export function exportFileToCloud(handlerName = 'dropbox') {
 }
 
 export function setCloudLoginSuccess() {
-  return {
-    type: CLOUD_LOGIN_SUCCESS
+  return dispatch => {
+    dispatch({type: CLOUD_LOGIN_SUCCESS}).then(
+      () => {
+        dispatch(exportFileToCloud());
+      },
+      () => {
+        dispatch(setPushingFile(false, {filename: null, status: 'error', error: 'not able to propagate login successfully'}));
+      }
+    );
   };
 }
