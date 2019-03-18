@@ -101,7 +101,7 @@ class SelectCity extends Component {
     super(props);
 
     this.state = {
-      dataUrl: 'https://raw.githubusercontent.com/hkittylover/Files/master/keplergl%20(2).json',
+      dataUrl: 'https://raw.githubusercontent.com/hkittylover/Files/master/keplergl%20(6).json',
       city: 'Baguio City',
       isInactive: false
     };

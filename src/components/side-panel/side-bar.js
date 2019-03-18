@@ -25,7 +25,7 @@ import {ArrowRight} from 'components/common/icons';
 
 const StyledSidePanelContainer = styled.div`
   z-index: 99;
-  height: 100%;
+  height: 75%;
   width: ${props => props.width + 2 * props.theme.sidePanel.margin.left}px;
   display: flex;
   transition: width 250ms;
@@ -49,7 +49,7 @@ const SideBarInner = styled.div`
   border-radius: 1px;
   display: flex;
   flex-direction: column;
-  height: 85%;
+  height: 100%;
 `;
 
 export const CollapseButtonFactory = () => (

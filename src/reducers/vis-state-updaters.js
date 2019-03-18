@@ -109,7 +109,9 @@ export const INITIAL_VIS_STATE = {
   ],
 
   // defaults layer classes
-  layerClasses: LayerClasses
+  layerClasses: LayerClasses,
+
+  
 };
 
 function updateStateWithLayerAndData(state, {layerData, layer, idx}) {
@@ -1067,3 +1069,4 @@ export function updateAllLayerDomainData(state, dataId, newFilter) {
     layerData: newLayerDatas
   };
 }
+
