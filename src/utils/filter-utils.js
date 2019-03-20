@@ -130,13 +130,13 @@ export function getDefaultFilter(dataId) {
 /**
  * Get default filter prop based on field type
  *
- * @param {Object[]} data
+ * @param {Array<Array>} allData
  * @param {object} field
  * @returns {object} default filter
  */
-export function getFilterProps(data, field) {
+export function getFilterProps(allData, field) {
   const filterProp = {
-    ...getFieldDomain(data, field),
+    ...getFieldDomain(allData, field),
     fieldType: field.type
   };
 
@@ -182,11 +182,11 @@ export function getFilterProps(data, field) {
 /**
  * Calculate field domain based on field type and data
  *
- * @param {Object[]} data
+ * @param {Array<Array>} allData
  * @param {object} field
  * @returns {object} with domain as key
  */
-export function getFieldDomain(data, field) {
+export function getFieldDomain(allData, field) {
   const fieldIdx = field.tableFieldIndex - 1;
   const isTime = field.type === ALL_FIELD_TYPES.timestamp;
   const valueAccessor = maybeToDate.bind(null, isTime, fieldIdx, field.format);
@@ -196,21 +196,21 @@ export function getFieldDomain(data, field) {
     case ALL_FIELD_TYPES.real:
     case ALL_FIELD_TYPES.integer:
       // calculate domain and step
-      return getNumericFieldDomain(data, valueAccessor);
+      return getNumericFieldDomain(allData, valueAccessor);
 
     case ALL_FIELD_TYPES.boolean:
       return {domain: [true, false]};
 
     case ALL_FIELD_TYPES.string:
     case ALL_FIELD_TYPES.date:
-      domain = ScaleUtils.getOrdinalDomain(data, valueAccessor);
+      domain = ScaleUtils.getOrdinalDomain(allData, valueAccessor);
       return {domain};
 
     case ALL_FIELD_TYPES.timestamp:
-      return getTimestampFieldDomain(data, valueAccessor);
+      return getTimestampFieldDomain(allData, valueAccessor);
 
     default:
-      return {domain: ScaleUtils.getOrdinalDomain(data, valueAccessor)};
+      return {domain: ScaleUtils.getOrdinalDomain(allData, valueAccessor)};
   }
 }
 
@@ -220,17 +220,24 @@ export function getFieldDomain(data, field) {
  * @param {Object[]} data
  * @param {string} dataId
  * @param {Object[]} filters
- * @returns {Object[]} data
- * @returns {Number[]} filteredIndex
+ * @returns {Object} filteredData
+ * @returns {Array<Number>} filteredData.filteredIndex
+ * @returns {Array<Number>} filteredData.filteredIndexForDomain
  */
-export function filterData(data, dataId, filters) {
-  if (!data || !dataId) {
+export function filterData(allData, dataId, filters) {
+  if (!allData || !dataId) {
     // why would there not be any data? are we over doing this?
-    return {data: [], filteredIndex: []};
+    return {
+      filteredIndex: [],
+      filteredIndexForDomain: []
+    };
   }
 
+  // if there is no data
   if (!filters.length) {
-    return {data, filteredIndex: data.map((d, i) => i)};
+    return {
+      filteredIndex: allData.map((d, i) => i)
+    };
   }
 
   const appliedFilters = filters.filter(
@@ -246,47 +253,37 @@ export function filterData(data, dataId, filters) {
     },
     [[], []]
   );
-  // console.log(dynamicDomainFilters)
-  // console.log(fixedDomainFilters)
-  // we save a reference of allData index here to access dataToFeature
-  // in geojson and hexgonId layer
-  // console.time('filterData');
 
-  const {filtered, filteredIndex, filteredIndexForDomain} = data.reduce(
-    (accu, d, i) => {
-      // generate 2 sets of
-      // filter data used to calculate layer Domain
-      const matchForDomain = dynamicDomainFilters.every(filter =>
+  // we save a reference of allData index here to access dataToFeature
+  // in GeoJSON and hexagonId layer
+  // const filtered = [];
+  const filteredIndex = [];
+  const filteredIndexForDomain = [];
+
+  for (let i = 0; i < allData.length; i++) {
+    const d = allData[i];
+
+    // generate 2 sets of
+    // filter data used to calculate layer Domain
+    const matchForDomain = dynamicDomainFilters.every(filter =>
+      isDataMatchFilter(d, filter, i)
+    );
+
+    if (matchForDomain) {
+      filteredIndexForDomain.push(i);
+
+      // filter data for render
+      const matchForRender = fixedDomainFilters.every(filter =>
         isDataMatchFilter(d, filter, i)
       );
 
-      if (matchForDomain) {
-        accu.filteredIndexForDomain.push(i);
-
-        // filter data for render
-        const matchForRender = fixedDomainFilters.every(filter =>
-          isDataMatchFilter(d, filter, i)
-        );
-
-        if (matchForRender) {
-          accu.filtered.push(d);
-          accu.filteredIndex.push(i);
-        }
+      if (matchForRender) {
+        filteredIndex.push(i);
       }
+    }
+  }
 
-      return accu;
-    },
-    {filtered: [], filteredIndex: [], filteredIndexForDomain: []}
-  );
-
-  // console.log('data==', data.length)
-  // console.log('filtered==', filtered.length)
-  // console.log('filteredIndex==', filteredIndex.length)
-  // console.log('filteredIndexForDomain==', filteredIndexForDomain.length)
-  //
-  // console.timeEnd('filterData');
-
-  return {data: filtered, filteredIndex, filteredIndexForDomain};
+  return {filteredIndex, filteredIndexForDomain};
 }
 
 /**
@@ -450,9 +447,9 @@ export function histogramConstruct(domain, mappedValue, bins) {
 /**
  * Calculate histogram from domain and array of values
  *
- * @param {number[]} domain
- * @param {Object[]} mappedValue
- * @returns {Array[]} histogram
+ * @param {Array<Number>} domain
+ * @param {Array<Object>} mappedValue
+ * @returns {Array<Number>} histogram
  */
 function getHistogram(domain, mappedValue) {
   const histogram = histogramConstruct(domain, mappedValue, histogramBins);
@@ -468,10 +465,10 @@ function getHistogram(domain, mappedValue) {
 /**
  * round number based on step
  *
- * @param {number} val
- * @param {number} step
+ * @param {Number} val
+ * @param {Number} step
  * @param {string} bound
- * @returns {number} rounded number
+ * @returns {Number} rounded number
  */
 export function formatNumberByStep(val, step, bound) {
   if (bound === 'floor') {

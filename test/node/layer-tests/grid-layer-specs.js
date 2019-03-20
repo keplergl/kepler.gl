@@ -57,9 +57,6 @@ test('#GridLayer -> formatLayerData', t => {
   const {rows} = processCsvData(csvData);
 
   const filteredIndex = [0, 2, 4];
-  const data = [rows[0], rows[2], rows[4]];
-
-  const dataWithNull = [[null, null, '12']].concat(data);
   const allDataWithNull = [[null, null, '12']].concat(rows);
 
   const expectedLayerMeta = {
@@ -97,7 +94,7 @@ test('#GridLayer -> formatLayerData', t => {
           }
         }
       },
-      data: [data, rows, filteredIndex, undefined],
+      data: [rows, filteredIndex, undefined],
       test: result => {
         const {layerData, layer} = result;
         const expectedLayerData = {
@@ -150,10 +147,10 @@ test('#GridLayer -> formatLayerData', t => {
         {method: 'updateLayerConfig', args: [{colorField: testFields[6]}]},
         {
           method: 'updateLayerVisualChannel',
-          args: [{data: dataWithNull, allData: allDataWithNull}, 'color']
+          args: [{allData: allDataWithNull}, 'color']
         }
       ],
-      data: [dataWithNull, allDataWithNull, filteredIndex, undefined],
+      data: [allDataWithNull, filteredIndex, undefined],
       test: result => {
         const {layerData, layer} = result;
 
