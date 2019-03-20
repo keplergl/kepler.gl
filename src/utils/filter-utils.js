@@ -99,28 +99,28 @@ export const TIME_ANIMATION_SPEED = [
   }
 ];
 
-export const ANALYSIS_TABS_DEF = [
-  {
+export const ANALYSIS_TABS_DEF = {
+  "profile" : {
     label: 'Profile',
     value: 'profile'
   },
-  {
+  "transportDesirability" : {
     label: 'Transport Desirability',
     value: 'transportDesirability'
   },
-  {
+  "nonTransportMode" : {
     label: 'Non-transport Mode',
     value: 'nonTransportMode'
   },
-  {
+  "transportMode" : {
     label: 'Transport Mode',
     value: 'transportMode'
   },
-  {
+  "comparison" : {
     label: 'Comparison',
     value: 'comparison'
   },
-];
+};
 
 export const ANALYSIS_TABS_INDICATOR = [
   {
