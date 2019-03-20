@@ -99,7 +99,6 @@ export function ContainerFactory(KeplerGl) {
         // instance state hasn't been mounted yet
         return <div />;
       }
-      console.log(this.props);
       return (
         <KeplerGl
           {...this.props}

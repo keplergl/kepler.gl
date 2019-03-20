@@ -100,6 +100,7 @@ export const LOADING_METHODS = [
 
 export const LOADING_SAMPLE_LIST_ERROR_MESSAGE = 'Not able to load sample gallery';
 export const LOADING_SAMPLE_ERROR_MESSAGE = 'Not able to load sample';
+export const LOADING_CITIES_ERROR_MESSAGE = 'Not able to load cities';
 export const LOADING_URL_MESSAGE = 'You can use the following formats: CSV | JSON | Kepler.gl config json. Make sure the url contains the file extension.';
 export const CORS_LINK = 'https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS';
 export const KEPLER_DISCLAIMER = '* Kepler.gl will save your map data to your personal cloud storage, only people with the URL can access your map and data.';
@@ -109,5 +110,9 @@ export const DEFAULT_LOADING_METHOD = LOADING_METHODS[3];
 export const DEFAULT_CLOUD_PROVIDER = 'dropbox';
 
 export const DEFAULT_FEATURE_FLAGS = {
-  cloudStorage: false
+  cloudStorage: true
 };
+
+// PLEXUS
+export const ACTIVE_CITIES_URL = 'http://127.0.0.1:8000/get_active_cities/';
+// export const ACTIVE_CITIES_URL = 'https://github.com/hkittylover/Files/blob/master/get_active_cities';

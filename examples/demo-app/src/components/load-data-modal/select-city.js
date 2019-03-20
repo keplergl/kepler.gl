@@ -101,65 +101,53 @@ class SelectCity extends Component {
     super(props);
 
     this.state = {
-      dataUrl: 'https://raw.githubusercontent.com/hkittylover/Files/master/keplergl%20(2).json',
-      city: 'Baguio City',
-      isInactive: false
+      dataUrl: null,
+      city: null,
+      isInactive: false,
+      cities: ['Baguio City', 'Dagupan City']
     };
   }
   onCityChange = (e) => {
     // TODO: validate url
+    // this.props.selectedCity = e;
+    // dispatch
+    this.props.onChangeCity(e);
     this.setState({
-      city: e.target.value,
+      city: e,
+      dataUrl: 'http://127.0.0.1:8000/barangays/'+e+'/geo.json',
       isInactive: false
     });
   };
 
   onSelectCity  = () => {
-    const {dataUrl} = this.state;
-    console.log("ano");
-    console.log(dataUrl);
-    if (!dataUrl) {
+    const {selectedCity} = this.props;
+    if (!selectedCity) {
       return;
     }
-
+    // var dataUrl = 'http://127.0.0.1:8000/barangays/'+selectedCity+'/geo.json';
+    var dataUrl = 'http://127.0.0.1:8000/config/'+selectedCity+'/config.json';
     this.props.onSelectCity({dataUrl});
   };
 
   render() {
+    console.log("SELECT CITY");
+    console.log(this.props);
+    const {
+      activeCities, selectedCity, onChangeCity
+    } = this.props;
     return (
       <div>
         <InputForm>
-          {/* <StyledDescription>Load your map using your custom URL</StyledDescription>
-          <StyledInputLabel>
-            {LOADING_URL_MESSAGE}
-          </StyledInputLabel>
-          <StyledInputLabel>
-            Examples:
-            <ul>
-              <li>https://your.map.url/map.json</li>
-              <li>http://your.map.url/data.csv</li>
-            </ul>
-          </StyledInputLabel>
-          <StyledInputLabel>
-            * CORS policy must be defined on your custom url domain in order to be accessible.
-            For more info <a rel="noopener noreferrer" target="_blank" href={`${CORS_LINK}`}>click here</a>
-          </StyledInputLabel> */}
-          Select a City:
           <StyledFromGroup>
-            <ItemSelector
-              selectedItems={this.state.city}
-              options={['Baguio City', 'Dagupan City']}
+          <ItemSelector
+              selectedItems={activeCities.find(op => op.id === selectedCity)}
+              options={activeCities}
               multiSelect={false}
-              onChange={this.onCityChange}
+              searchable={false}
+              onChange={(e) => onChangeCity(e)}
+              getOptionValue={op => op.id}
+              displayOption={op => op.name}
             />
-            {/* <Button
-              onClick={this.onSelectCity}
-              isInactive={!this.state.isInactive}
-              width="105px"
-              secondary
-            >
-              Select
-            </Button> */}
             <StyledBtn type="submit" onClick={this.onSelectCity}>
               Select
             </StyledBtn>

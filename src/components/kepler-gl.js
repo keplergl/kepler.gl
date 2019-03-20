@@ -162,6 +162,10 @@ function KeplerGlFactory(
         if (error) {
           Console.warn(`Error loading map style ${url}`);
         } else {
+          result['center'] = [120.451,12.915];
+          result['bounds'] = [94.395, -0.571, // Southwest coordinates
+            146.514, 25.681]  // Northeast coordinates
+
           this.props.mapStyleActions.loadMapStyles({
             [id]: {...mapStyle, style: result}
           });
@@ -170,6 +174,9 @@ function KeplerGlFactory(
     };
 
     render() {
+      console.log("KEPLER");
+      console.log(this.props);
+
       const {
         // props
         id,
@@ -179,6 +186,8 @@ function KeplerGlFactory(
         width,
         height,
         mapboxApiAccessToken,
+        activeCities,
+        selectedCity,
 
         // redux state
         mapStyle,
@@ -214,6 +223,8 @@ function KeplerGlFactory(
 
       const sideFields = {
         appName,
+        activeCities,
+        selectedCity,
         version,
         datasets,
         filters,

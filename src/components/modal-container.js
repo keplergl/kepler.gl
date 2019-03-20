@@ -115,6 +115,7 @@ export default function ModalContainerFactory(
     };
 
     _onFileUpload = blob => {
+      console.log("1");
       this.props.visStateActions.loadFiles(blob);
     };
 
@@ -189,7 +190,8 @@ export default function ModalContainerFactory(
 
     /* eslint-disable complexity */
     render() {
-      console.log("HELLO1");
+      console.log("MODAL CONTAINER");
+      console.log(this.props);
       const {
         containerW,
         containerH,

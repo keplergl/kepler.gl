@@ -25,7 +25,7 @@ import {loadFiles, toggleModal} from 'kepler.gl/actions';
 import {
   LOADING_SAMPLE_ERROR_MESSAGE,
   LOADING_SAMPLE_LIST_ERROR_MESSAGE,
-  MAP_CONFIG_URL, MAP_URI
+  MAP_CONFIG_URL, MAP_URI, ACTIVE_CITIES_URL
 } from './constants/default-settings';
 import {LOADING_METHODS_NAMES} from './constants/default-settings';
 import {CLOUD_PROVIDERS} from './utils/cloud-providers';
@@ -43,6 +43,10 @@ export const SET_SAMPLE_LOADING_STATUS = 'SET_SAMPLE_LOADING_STATUS';
 // Sharing
 export const PUSHING_FILE = 'PUSHING_FILE';
 export const CLOUD_LOGIN_SUCCESS  = 'CLOUD_LOGIN_SUCCESS';
+
+// PLEXUS
+export const LOAD_ACTIVE_CITIES = 'LOAD_ACTIVE_CITIES';
+export const SET_SELECTED_CITY = 'SET_SELECTED_CITY';
 
 // ACTIONS
 export function initApp() {
@@ -108,6 +112,21 @@ export function setLoadingMapStatus(isMapLoading) {
   };
 }
 
+// PLEXUS
+export function loadActiveCities(cities) {
+  return {
+    type: LOAD_ACTIVE_CITIES,
+    cities
+  };
+}
+
+export function setSelectedCity(selectedCity) {
+  return {
+    type: SET_SELECTED_CITY,
+    selectedCity
+  };
+}
+
 /**
  * this method detects whther the response status is < 200 or > 300 in case the error
  * is not caught by the actualy request framework
@@ -133,6 +152,32 @@ function detectResponseError(response) {
  * @returns {Function}
  */
 export function loadRemoteMap(options) {
+  return dispatch => {
+    dispatch(setLoadingMapStatus(true));
+    loadRemoteRawData(options.dataUrl).then(
+      // In this part we turn the response into a FileBlob
+      // so we can use it to call loadFiles
+      file => {
+        dispatch(loadFiles([
+          /* eslint-disable no-undef */
+          new File([file], options.dataUrl)
+          /* eslint-enable no-undef */
+        ])).then(
+          () => dispatch(setLoadingMapStatus(false))
+        );
+
+      },
+      error => {
+        const {target = {}} = error;
+        const {status, responseText} = target;
+        dispatch(loadRemoteResourceError({status, message: responseText}, options.dataUrl));
+      }
+    );
+  }
+}
+
+// PLEXUS
+export function loadBarangayMap(options) {
   return dispatch => {
     dispatch(setLoadingMapStatus(true));
     loadRemoteRawData(options.dataUrl).then(
@@ -378,5 +423,41 @@ export function exportFileToCloud(handlerName = 'dropbox') {
 export function setCloudLoginSuccess() {
   return {
     type: CLOUD_LOGIN_SUCCESS
+  };
+}
+
+// PLEXUS
+
+export function loadAllActiveCities() {
+  return dispatch => {
+    requestJson(ACTIVE_CITIES_URL, (error, cities) => {
+      if (error) {
+        const {target = {}} = error;
+        const {status, responseText} = target;
+        dispatch(loadRemoteResourceError({status, message: `${responseText} - ${LOADING_SAMPLE_ERROR_MESSAGE}`}, ACTIVE_CITIES_URL));
+      } else {
+        const responseError = detectResponseError(cities);
+        if (responseError) {
+          dispatch(loadRemoteResourceError(responseError, ACTIVE_CITIES_URL));
+          return;
+        }
+
+        dispatch(loadActiveCities(cities));
+        // Load the specified map
+        // const map = sampleMapId && samples.find(s => s.id === sampleMapId);
+        // if (map) {
+        //   dispatch(loadSample(map, false));
+        // }
+      }
+    });
+  }
+}
+
+export function switchToLoadingMethodCity(method) {
+  return (dispatch, getState) => {
+    dispatch(setLoadingMethod(method));
+    if (method === LOADING_METHODS_NAMES.select && getState().demo.app.cities.length === 0) {
+      dispatch(loadAllActiveCities());
+    }
   };
 }

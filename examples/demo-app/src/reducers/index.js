@@ -32,7 +32,10 @@ import {
   SET_LOADING_METHOD,
   LOAD_MAP_SAMPLE_FILE,
   LOAD_REMOTE_RESOURCE_SUCCESS,
-  SET_SAMPLE_LOADING_STATUS
+  SET_SAMPLE_LOADING_STATUS,
+  // PLEXUS
+  LOAD_ACTIVE_CITIES,
+  SET_SELECTED_CITY
 } from '../actions';
 
 import {DEFAULT_FEATURE_FLAGS, DEFAULT_LOADING_METHOD, LOADING_METHODS} from '../constants/default-settings';
@@ -53,14 +56,17 @@ const initialAppState = {
     //   message: null
     // }
   // eventually we may have an async process to fetch these from a remote location
-  featureFlags: DEFAULT_FEATURE_FLAGS
+  featureFlags: DEFAULT_FEATURE_FLAGS,
+  // PLEXUS
+  activeCities: [],
+  selectedCity: null
 };
 
 // App reducer
 export const appReducer = handleActions({
   [INIT]: (state) => ({
     ...state,
-    loaded: true
+    loaded: true,
   }),
   [SET_LOADING_METHOD]: (state, action) => ({
     ...state,
@@ -75,6 +81,14 @@ export const appReducer = handleActions({
   [SET_SAMPLE_LOADING_STATUS]: (state, action) => ({
     ...state,
     isMapLoading: action.isMapLoading
+  }),
+  [LOAD_ACTIVE_CITIES]: (state, action) => ({
+    ...state,
+    activeCities: action.cities
+  }),
+  [SET_SELECTED_CITY]: (state, action) => ({
+    ...state,
+    selectedCity: action.selectedCity
   })
 }, initialAppState);
 

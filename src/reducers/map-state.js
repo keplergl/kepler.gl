@@ -24,13 +24,18 @@ import ActionTypes from 'constants/action-types';
 export const INITIAL_MAP_STATE = {
   pitch: 0,
   bearing: 0,
-  latitude: 37.75043,
-  longitude: -122.34679,
-  zoom: 9,
+  latitude: 12.126616170127194,
+  longitude: 122.12281507358622,
+  zoom: 5.116215330185033,
   dragRotate: false,
   width: 800,
   height: 800,
-  isSplit: false
+  isSplit: false,
+  // minZoom: 5,
+  // bounds:[
+  //   [94.395, -0.571], // Southwest coordinates
+  //   [146.514, 25.681]  // Northeast coordinates
+  //   ]
 };
 
 import {
