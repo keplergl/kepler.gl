@@ -73,11 +73,11 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
 
       return (
         <div className="filter-manager">
-          <SourceDataCatalog
+          {/* <SourceDataCatalog
             datasets={datasets}
             showDatasetTable={this.props.showDatasetTable}
-          />
-          <SidePanelDivider />
+          /> */}
+          {/* <SidePanelDivider /> */}
           <SidePanelSection>
             {filters &&
               filters.map((filter, idx) => (
@@ -95,13 +95,13 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
                 />
               ))}
           </SidePanelSection>
-          <Button
+          {/* <Button
             inactive={hadEmptyFilter || !hadDataset}
             width="105px"
             onClick={this._addFilter}
           >
             <Add height="12px" />Add Filter
-          </Button>
+          </Button> */}
         </div>
       );
     }

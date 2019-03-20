@@ -36,6 +36,8 @@ import {
   resetMapConfigVisStateUpdater,
   loadFilesUpdater,
   loadFilesErrUpdater,
+  // PLEXUS
+  processDataUpdater,
   updateVisDataUpdater,
   removeDatasetUpdater,
   removeFilterUpdater,
@@ -79,6 +81,9 @@ const actionHandler = {
   [ActionTypes.LOAD_FILES]: loadFilesUpdater,
 
   [ActionTypes.LOAD_FILES_ERR]: loadFilesErrUpdater,
+
+  // PLEXUS
+  [ActionTypes.PROCESS_DATA]: processDataUpdater,
 
   [ActionTypes.MAP_CLICK]: mapClickUpdater,
 

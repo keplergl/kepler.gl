@@ -22,6 +22,8 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
+import {Button} from 'components/common/styled-components';
+
 import SidebarFactory from './side-panel/side-bar';
 import PanelHeaderFactory from './side-panel/panel-header';
 import LayerManagerFactory from './side-panel/layer-manager';
@@ -139,6 +141,22 @@ export default function SidePanelFactory(
     _onExportData = () => this.props.uiStateActions.toggleModal(EXPORT_DATA_ID);
 
     _onExportConfig = () => this.props.uiStateActions.toggleModal(EXPORT_CONFIG_ID);
+    
+    getAverage = (arr, col) => arr.reduce((p, c) => p + c[col], 0) / arr.length
+
+    // PLEXUS
+    // TODO: change to action
+    _computeScore = (id) => {
+      if(this.props.datasets && this.props.datasets.barangays) {
+        const {allData, fields} = this.props.datasets.barangays;
+        const field = fields.find(op => op.id === id);
+        const column = field.tableFieldIndex - 1;
+        
+        console.log(this.getAverage(allData, column));
+        return Math.round(this.getAverage(allData, column) * 10000)/100 + "%";
+        // return "50.09%"
+      }
+    }
 
     render() {
       console.log("SIDE PANEL");
@@ -194,7 +212,8 @@ export default function SidePanelFactory(
 
       const indicatorManagerActions = {
         onConfigChange: visStateActions.interactionConfigChange,
-        onChangeCity: this._onChangeCity
+        onChangeCity: this._onChangeCity,
+        computeScore: this._computeScore
       };
 
       const mapManagerActions = {
@@ -228,18 +247,39 @@ export default function SidePanelFactory(
               onExportConfig={this._onExportConfig}
               onSaveMap={this.props.onSaveMap}
             />
-            {/* <PanelToggle
+            <PanelToggle
               panels={PANELS}
               activePanel={activeSidePanel}
               togglePanel={uiStateActions.toggleSidePanel}
-            /> */}
+            />
             <SidePanelContent className="side-panel__content">
             <PanelTitle className="side-panel__content__title">
               {cityName}
+              <Button
+                onClick={this._onChangeCity}
+                width="105px"
+                secondary
+              >
+                Change City
+              </Button>
                 </PanelTitle>
-                <IndicatorManager
-                    {...indicatorManagerActions}
+                
+
+                <PanelTitle className="side-panel__content__title">
+                  {(PANELS.find(({id}) => id === activeSidePanel) || {}).label}
+                </PanelTitle>
+                {activeSidePanel === 'layer' && (
+                  <IndicatorManager
+                  {...indicatorManagerActions}
+                />
+                )}
+                {activeSidePanel === 'filter' && (
+                  <FilterManager
+                    {...filterManagerActions}
+                    datasets={datasets}
+                    filters={filters}
                   />
+                )}
               {/* <div>
                 <PanelTitle className="side-panel__content__title">
                   {(PANELS.find(({id}) => id === activeSidePanel) || {}).label}

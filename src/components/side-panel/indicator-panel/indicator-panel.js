@@ -22,7 +22,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 // import Switch from 'components/common/switch';
-
+import {SidePanelDivider} from 'components/common/styled-components';
 import IndicatorFactory from './indicator';
 
 // import {
@@ -81,55 +81,55 @@ function IndicatorPanelFactory(Indicator) {
             <Row>
                   <Indicator
                   label="Transport Desirability"
-                  score="0.76"
+                  score={this.props.computeScore("desirability")}
                   />
                 </Row>
-                <hr/>
+                <SidePanelDivider/>
                 Non-transport Mode Indicators
                 <Row>
                 <Indicator
                   label="Spatial"
-                  score="0.76"
+                  score={this.props.computeScore("spatial")}
                   />
                   <Indicator
                   label="Temporal"
-                  score="0.76"
+                  score={this.props.computeScore("temporal")}
                   />
                   <Indicator
                   label="Economic"
-                  score="0.76"
+                  score={this.props.computeScore("economic")}
                   />
                 </Row>
                 <Row>
                 <Indicator
                   label="Physical"
-                  score="0.76"
+                  score={this.props.computeScore("physical")}
                   />
                 </Row>
-                <hr/>
+                <SidePanelDivider/>
                 Transport Mode Indicators
                 <Row>
                 <Indicator
                   label="Psychological"
-                  score="0.76"
+                  score={this.props.computeScore("psychological")}
                   />
                   <Indicator
                   label="Physiological"
-                  score="0.76"
+                  score={this.props.computeScore("physiological")}
                   />
                 </Row>
                 <Row>
                 <Indicator
                   label="Sustainability"
-                  score="0.76"
+                  score={this.props.computeScore("sustainability")}
                   />
                   <Indicator
                   label="Performance"
-                  score="0.76"
+                  score={this.props.computeScore("performance")}
                   />
                   <Indicator
                   label="Fairness"
-                  score="0.76"
+                  score={this.props.computeScore("fairness")}
                   />
                 </Row>
           </StyledIndicatorPanel>

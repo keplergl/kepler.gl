@@ -106,7 +106,7 @@ function FilterPanelFactory() {
 
       return (
         <StyledFilterPanel className="filter-panel">
-          <StyledFilterHeader className="filter-panel__header"
+          {/* <StyledFilterHeader className="filter-panel__header"
             labelRCGColorValues={datasets[dataId].color}>
             <div style={{flexGrow: 1}}>
               <FieldSelector
@@ -134,9 +134,9 @@ function FilterPanelFactory() {
                 active={enlarged}
               />
             )}
-          </StyledFilterHeader>
+          </StyledFilterHeader> */}
           <StyledFilterContent className="filter-panel__content">
-            {Object.keys(datasets).length > 1 && (
+            {/* {Object.keys(datasets).length > 1 && (
               <SourceDataSelector
                 inputTheme="secondary"
                 datasets={datasets}
@@ -144,7 +144,8 @@ function FilterPanelFactory() {
                 dataId={filter.dataId}
                 onSelect={value => setFilter(idx, 'dataId', value)}
               />
-            )}
+            )} */}
+            Amenity Types
             {type &&
             !enlarged && (
               <div className="filter-panel__filter">

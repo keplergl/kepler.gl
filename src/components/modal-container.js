@@ -115,7 +115,6 @@ export default function ModalContainerFactory(
     };
 
     _onFileUpload = blob => {
-      console.log("1");
       this.props.visStateActions.loadFiles(blob);
     };
 

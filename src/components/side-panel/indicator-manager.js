@@ -30,29 +30,7 @@ import {Add} from 'components/common/icons';
 import { DEFAULT_LAYER_GROUPS } from 'constants/default-settings';
 import IndicatorPanelFactory from './indicator-panel/indicator-panel';
 
-const Score = styled.div`
-    margin: auto;
-    background-color: #1a1a1a;
-    font-size: 16px;
-    border-radius : 100%;
-    width: 50px;
-    height: 50px;
-    line-height: 50px;
-`;
 
-const Indicator = styled.div`
-  font-size: 10px;
-  display: block;
-  text-align: center;
-  margin: 1px;
-  min-width: 85px;
-`;
-
-const Row = styled.div`
-  display: flex;
-  flex-direction: row;
-  text-align: center;
-`;
 
 export function ChangeCityButtonFactory() {
   const ChangeCityButton = ({onClick}) => (
@@ -105,15 +83,16 @@ function IndicatorManagerFactory(ChangeCityButton, IndicatorPanel) {
     //   const editableLayers = DEFAULT_LAYER_GROUPS.map(lg =>
     //     lg.slug
     //  );
-
+      this.props.computeScore("desirability");
       return (
         <div className="indicator-panel">
         
-           <ChangeCityButton
+           {/* <ChangeCityButton
             onClick={this.props.onChangeCity}
-          />
+          /> */}
           <div style={{padding:'10px'}}></div>
           <IndicatorPanel
+            computeScore={this.props.computeScore}
 
         />
           {/*

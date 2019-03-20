@@ -105,6 +105,7 @@ function KeplerGlFactory(
     componentWillMount() {
       this._loadMapStyle(this.props.mapStyles);
       this._handleResize(this.props);
+      console.log(this.props);
     }
 
     componentWillReceiveProps(nextProps) {
