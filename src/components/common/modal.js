@@ -152,7 +152,7 @@ class ModalDialog extends Component {
         ariaHideApp={false}
         style={{
           overlay: {
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backgroundColor: 'rgba(0, 0, 0, 1)',
             zIndex: 10000,
             overflowY: 'auto',
             position: 'absolute',

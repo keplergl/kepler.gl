@@ -40,13 +40,12 @@ import {
   PANELS
 } from 'constants/default-settings';
 
-const SidePanelContent = styled.div`
-  ${props => props.theme.sidePanelScrollBar};
+const BottomPanelContent = styled.div`
+  ${props => props.theme.bottomPanelScrollBar};
   flex-grow: 1;
   padding: 16px;
   overflow-y: scroll;
   overflow-x: hidden;
-  color: ${props => props.theme.titleTextColor};
 `;
 
 export const PanelTitleFactory = () => styled.div`
@@ -57,31 +56,7 @@ export const PanelTitleFactory = () => styled.div`
   margin-bottom: 14px;
 `;
 
-const Score = styled.div`
-margin: auto;
-background-color: #1a1a1a;
-font-size: 20px;
-border-radius : 100%;
-width: 60px;
-height: 60px;
-line-height: 60px;
-`;
-
-const Indicator = styled.div`
-
-  display: block;
-  text-align: center;
-  margin: 2px;
-  min-width: 85px;
-`;
-
-const Row = styled.div`
-  display: flex;
-  flex-direction: row;
-  text-align: center;
-`;
-
-SidePanelFactory.deps = [
+BottomPanelFactory.deps = [
   SidebarFactory,
   PanelHeaderFactory,
   PanelToggleFactory,
@@ -96,7 +71,7 @@ SidePanelFactory.deps = [
  *
  * Vertical sidebar containing input components for the rendering layers
  */
-export default function SidePanelFactory(
+export default function BottomPanelFactory(
   Sidebar,
   PanelHeader,
   PanelToggle,
@@ -107,7 +82,7 @@ export default function SidePanelFactory(
   MapManager
 ) {
 
-  return class SidePanel extends Component {
+  return class BottomPanel extends Component {
     static propTypes = {
       filters: PropTypes.arrayOf(PropTypes.any).isRequired,
       interactionConfig: PropTypes.object.isRequired,
@@ -123,8 +98,8 @@ export default function SidePanelFactory(
 
     /* component private functions */
     _onOpenOrClose = () => {
-      this.props.uiStateActions.toggleSidePanel(
-        this.props.uiState.activeSidePanel ? null : 'layer'
+      this.props.uiStateActions.toggleBottomPanel(
+        this.props.uiState.activeBottomPanel ? null : 'layer'
       );
     };
 
@@ -170,8 +145,8 @@ export default function SidePanelFactory(
         uiStateActions
       } = this.props;
 
-      const {activeSidePanel} = uiState;
-      const isOpen = Boolean(activeSidePanel);
+      const {activeBottomPanel} = uiState;
+      const isOpen = Boolean(activeBottomPanel);
 
       const layerManagerActions = {
         addLayer: visStateActions.addLayer,
@@ -209,6 +184,7 @@ export default function SidePanelFactory(
         onBuildingChange: mapStyleActions.mapBuildingChange,
         showAddMapStyleModal: this._showAddMapStyleModal
       };
+
       return (
         <div>
           <Sidebar
@@ -228,68 +204,13 @@ export default function SidePanelFactory(
               onExportConfig={this._onExportConfig}
               onSaveMap={this.props.onSaveMap}
             />
-            <PanelToggle
+            {/* <PanelToggle
               panels={PANELS}
               activePanel={activeSidePanel}
               togglePanel={uiStateActions.toggleSidePanel}
             />
             <SidePanelContent className="side-panel__content">
-            <PanelTitle className="side-panel__content__title">
-              Baguio City
-                </PanelTitle>
-                <Row>
-                  <Indicator>
-                    <Score>0.75</Score>
-                    Transport Desirability
-                  </Indicator>
-                </Row>
-                <hr/>
-                Non Government Perspective
-                <Row>
-                  <Indicator>
-                    <Score>0.63</Score>
-                    Spatial
-                  </Indicator>
-                  <Indicator>
-                    <Score>0.59</Score>
-                    Temporal
-                  </Indicator>
-                  <Indicator>
-                    <Score>0.87</Score>
-                    Economic
-                  </Indicator>
-                </Row>
-                <Row>
-                  <Indicator>
-                    <Score>0.67</Score>
-                    Physical
-                  </Indicator>
-                  <Indicator>
-                    <Score>0.78</Score>
-                    Psychological
-                  </Indicator>
-                  <Indicator>
-                    <Score>0.73</Score>
-                    Physiological
-                  </Indicator>
-                </Row>
-                <hr/>
-                Government Perspective
-                <Row>
-                  <Indicator>
-                    <Score>0.69</Score>
-                    Sustainability
-                  </Indicator>
-                  <Indicator>
-                    <Score>0.80</Score>
-                    Performance
-                  </Indicator>
-                  <Indicator>
-                    <Score>0.70</Score>
-                    Accessibility
-                  </Indicator>
-                </Row>
-              {/* <div>
+              <div>
                 <PanelTitle className="side-panel__content__title">
                   {(PANELS.find(({id}) => id === activeSidePanel) || {}).label}
                 </PanelTitle>
@@ -324,8 +245,8 @@ export default function SidePanelFactory(
                     mapStyle={this.props.mapStyle}
                   />
                 )}
-              </div> */}
-            </SidePanelContent>
+              </div>
+            </SidePanelContent> */}
           </Sidebar>
         </div>
       );

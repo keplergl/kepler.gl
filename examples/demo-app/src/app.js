@@ -266,6 +266,8 @@ class App extends Component {
 
   _isCloudStorageEnabled = () => {
     const {app} = this.props.demo;
+    console.log("Helo");
+    console.log(app);
     return app.featureFlags.cloudStorage;
   };
 
@@ -289,6 +291,13 @@ class App extends Component {
     const {showBanner, width, height} = this.state;
     const {sharing} = this.props.demo;
     const rootNode = this.root;
+    console.log("BREAKPOINT");
+    console.log(rootNode);
+    console.log(exportFileToCloud);
+    console.log(loadRemoteMap);
+    console.log(loadSampleConfigurations);
+    console.log(setCloudLoginSuccess);
+    
     return (
       <ThemeProvider theme={theme}>
         <GlobalStyle

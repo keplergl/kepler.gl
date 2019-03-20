@@ -99,6 +99,76 @@ export const TIME_ANIMATION_SPEED = [
   }
 ];
 
+export const ANALYSIS_TABS_DEF = {
+  "profile" : {
+    label: 'Profile',
+    value: 'profile'
+  },
+  "transportDesirability" : {
+    label: 'Transport Desirability',
+    value: 'transportDesirability'
+  },
+  "nonTransportMode" : {
+    label: 'Non-transport Mode',
+    value: 'nonTransportMode'
+  },
+  "transportMode" : {
+    label: 'Transport Mode',
+    value: 'transportMode'
+  },
+  "comparison" : {
+    label: 'Comparison',
+    value: 'comparison'
+  },
+};
+
+export const ANALYSIS_TABS_INDICATOR = [
+  {
+    label: 'Profile',
+    value: 'profile'
+  },
+  {
+    label: 'Transport Desirability',
+    value: 'transportDesirability'
+  },
+  {
+    label: 'Spatial',
+    value: 'spatial'
+  },
+  {
+    label: 'Temporal',
+    value: 'temporal'
+  },
+  {
+    label: 'Economic',
+    value: 'economic'
+  },
+  {
+    label: 'Physical',
+    value: 'physical'
+  },
+  {
+    label: 'Psychological',
+    value: 'psychological'
+  },
+  {
+    label: 'Physiological',
+    value: 'physiological'
+  },
+  {
+    label: 'Performance',
+    value: 'performance'
+  },
+  {
+    label: 'Sustainability',
+    value: 'sustainability'
+  },
+  {
+    label: 'Fairness',
+    value: 'fairness'
+  },
+];
+
 export function getDefaultFilter(dataId) {
   return {
     // link to dataset Id
