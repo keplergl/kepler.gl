@@ -225,7 +225,7 @@ export class MapControl extends Component {
     return (
       <StyledMapControl className="map-control">
         {/* Split Map */}
-        {splitMap.show ? (
+        {/* {splitMap.show ? (
           <ActionPanel key={0}>
             <StyledMapControlButton
               active={isSplit}
@@ -247,10 +247,10 @@ export class MapControl extends Component {
               />
             </StyledMapControlButton>
           </ActionPanel>
-        ) : null}
+        ) : null} */}
 
         {/* Map Layers */}
-        {isSplit && visibleLayers.show ? (
+        {/* {isSplit && visibleLayers.show ? (
           <ActionPanel key={1}>
             <LayerSelectorPanel
               items={items}
@@ -259,10 +259,10 @@ export class MapControl extends Component {
               toggleMenuPanel={() => onToggleMapControl('visibleLayers')}
             />
           </ActionPanel>
-        ) : null}
+        ) : null} */}
 
         {/* 3D Map */}
-        {toggle3d.show ? (
+        {/* {toggle3d.show ? (
           <ActionPanel key={2}>
             <StyledMapControlButton
               onClick={e => {
@@ -274,17 +274,17 @@ export class MapControl extends Component {
               data-for="action-3d"
             >
               <Cube3d height="22px" />
-              {/* No icon since we are injecting through css .threeD-map class*/}
+              {/* No icon since we are injecting through css .threeD-map class*}
               <MapLegendTooltip
                 id="action-3d"
                 message={dragRotate ? 'Disable 3D Map' : '3D Map'}
               />
             </StyledMapControlButton>
           </ActionPanel>
-        ) : null}
+        ) : null} */}
 
         {/* Map Legend */}
-        {mapLegend.show ? (
+        {/* {mapLegend.show ? ( */}
           <ActionPanel key={3}>
             <MapLegendPanel
               items={items}
@@ -295,7 +295,7 @@ export class MapControl extends Component {
               toggleMenuPanel={() => onToggleMapControl('mapLegend')}
             />
           </ActionPanel>
-        ) : null}
+        {/* ) : null} */}
       </StyledMapControl>
     );
   }

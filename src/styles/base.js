@@ -566,7 +566,7 @@ const dropdownListSection = css`
 
 const dropdownList = css`
   overflow-y: auto;
-  max-height: 280px;
+  max-height: 230px;
   box-shadow: ${props => props.theme.dropdownListShadow};
   border-radius: 2px;
 

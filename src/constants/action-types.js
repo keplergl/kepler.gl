@@ -57,6 +57,9 @@ const ActionTypes = keyMirror({
   LOAD_FILES: null,
   LOAD_FILES_ERR: null,
 
+  //PLEXUS
+  PROCESS_DATA: null,
+
   // mapState
   UPDATE_MAP: null,
   FIT_BOUNDS: null,

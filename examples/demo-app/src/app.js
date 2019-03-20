@@ -33,7 +33,11 @@ import {
   exportFileToCloud,
   loadRemoteMap,
   loadSampleConfigurations,
-  setCloudLoginSuccess
+  setCloudLoginSuccess,
+  // PLEXUS
+  loadActiveCities,
+  loadAllActiveCities,
+  switchToLoadingMethodCity
 } from './actions';
 
 const KeplerGl = require('kepler.gl/components').injectComponents([
@@ -97,6 +101,8 @@ class App extends Component {
     // we ry to fetch along map configurations
     const {params: {id} = {}, location: {query = {}}} = this.props;
 
+    // switchToLoadingMethodCity(this.props.demo.app.loadingMethod.id);
+    this.props.dispatch(loadAllActiveCities(id));
     // Load sample using its id
     if (id) {
       this.props.dispatch(loadSampleConfigurations(id));
@@ -266,8 +272,6 @@ class App extends Component {
 
   _isCloudStorageEnabled = () => {
     const {app} = this.props.demo;
-    console.log("Helo");
-    console.log(app);
     return app.featureFlags.cloudStorage;
   };
 
@@ -288,15 +292,11 @@ class App extends Component {
   };
 
   render() {
+    console.log("APP");
+    console.log(this.props);
     const {showBanner, width, height} = this.state;
     const {sharing} = this.props.demo;
     const rootNode = this.root;
-    console.log("BREAKPOINT");
-    console.log(rootNode);
-    console.log(exportFileToCloud);
-    console.log(loadRemoteMap);
-    console.log(loadSampleConfigurations);
-    console.log(setCloudLoginSuccess);
     
     return (
       <ThemeProvider theme={theme}>
@@ -345,6 +345,8 @@ class App extends Component {
               width={width}
               height={height - (showBanner ? BannerHeight : 0)}
               onSaveMap={this._isCloudStorageEnabled() && this._toggleCloudModal}
+              activeCities = {this.props.demo.app.activeCities}
+              selectedCity = {this.props.demo.app.selectedCity}
             />
           </div>
         </GlobalStyle>

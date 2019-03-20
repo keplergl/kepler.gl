@@ -19,32 +19,45 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
-// import FileUpload from 'components/common/file-uploader/file-upload';
-
-const StyledLoadDataModal = styled.div`
-  padding: 10px 0;
+const Score = styled.div`
+/*margin: auto;*/
+/*background-color: #1a1a1a;*/
+font-size: 1.7em;
+border-radius : 100%;
+/*width: 60px;
+height: 60px;*/
+/*line-height: 60px;*/
 `;
 
-// const propTypes = {
-//   onClose: PropTypes.func.isRequired,
+const Style = styled.div`
+  align-content: center;
+  justify-content: center;
+  display: block;
+  text-align: center;
+  margin: 2px;
+  min-width: 85px;
+  font-size: .8em;
+  background-color: #29323C;
+  padding: 10px 5px;
+  border-radius: 10%;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  :hover {
+    color: #000000;
+    background-color: #ffffff;
+  }
+`;
 
-//   // call backs
-//   onFileUpload: PropTypes.func.isRequired
-// };
+function IndicatorFactory() {
+  const Indicator = ({label, score}) => (
+    <Style>
+      <Score>{score}</Score>
+      {label}
+    </Style>
+  );
 
-export const SelectCityModal = props => (
-  <StyledLoadDataModal>
-    <div className="select-city-modal">
-      {/* <FileUpload onFileUpload={props.onFileUpload} /> */}
-      HELLO THERE!
-    </div>
-  </StyledLoadDataModal>
-);
+  return Indicator;
+}
 
-LoadDataModal.propTypes = propTypes;
-
-const selectCityModalFactory = () => SelectCityModal;
-export default selectCityModalFactory;
+export default IndicatorFactory;

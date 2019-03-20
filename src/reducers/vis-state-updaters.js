@@ -111,7 +111,8 @@ export const INITIAL_VIS_STATE = {
   // defaults layer classes
   layerClasses: LayerClasses,
 
-  
+  // PLEXUS
+  scores: []
 };
 
 function updateStateWithLayerAndData(state, {layerData, layer, idx}) {
@@ -963,6 +964,15 @@ export const loadFilesUpdater = (state, action) => {
     },
     loadFileTasks
   );
+};
+
+// PLEXUS
+export const processDataUpdater = (state, action) => {
+  console.error("");
+  console.error(state);
+  return {
+    ...state
+  }
 };
 
 export const loadFilesErrUpdater = (state, {error}) => ({

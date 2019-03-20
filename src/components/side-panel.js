@@ -22,13 +22,17 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
+import {Button} from 'components/common/styled-components';
+
 import SidebarFactory from './side-panel/side-bar';
 import PanelHeaderFactory from './side-panel/panel-header';
 import LayerManagerFactory from './side-panel/layer-manager';
 import FilterManagerFactory from './side-panel/filter-manager';
 import InteractionManagerFactory from './side-panel/interaction-manager';
 import MapManagerFactory from './side-panel/map-manager';
+import IndicatorManagerFactory from './side-panel/indicator-manager';
 import PanelToggleFactory from './side-panel/panel-toggle';
+
 
 import {
   ADD_DATA_ID,
@@ -40,10 +44,11 @@ import {
   PANELS
 } from 'constants/default-settings';
 
+
 const SidePanelContent = styled.div`
   ${props => props.theme.sidePanelScrollBar};
   flex-grow: 1;
-  padding: 16px;
+  padding: 1.3em;
   overflow-y: scroll;
   overflow-x: hidden;
   color: ${props => props.theme.titleTextColor};
@@ -51,34 +56,11 @@ const SidePanelContent = styled.div`
 
 export const PanelTitleFactory = () => styled.div`
   color: ${props => props.theme.titleTextColor};
-  font-size: 20px;
+  font-size: 1.75em;
   font-weight: 400;
   letter-spacing: 1.25px;
-  margin-bottom: 14px;
-`;
-
-const Score = styled.div`
-margin: auto;
-background-color: #1a1a1a;
-font-size: 20px;
-border-radius : 100%;
-width: 60px;
-height: 60px;
-line-height: 60px;
-`;
-
-const Indicator = styled.div`
-
+  margin-bottom: 3vh;
   display: block;
-  text-align: center;
-  margin: 2px;
-  min-width: 85px;
-`;
-
-const Row = styled.div`
-  display: flex;
-  flex-direction: row;
-  text-align: center;
 `;
 
 SidePanelFactory.deps = [
@@ -89,7 +71,8 @@ SidePanelFactory.deps = [
   LayerManagerFactory,
   FilterManagerFactory,
   InteractionManagerFactory,
-  MapManagerFactory
+  MapManagerFactory,
+  IndicatorManagerFactory
 ];
 
 /**
@@ -104,7 +87,8 @@ export default function SidePanelFactory(
   LayerManager,
   FilterManager,
   InteractionManager,
-  MapManager
+  MapManager,
+  IndicatorManager
 ) {
 
   return class SidePanel extends Component {
@@ -138,6 +122,11 @@ export default function SidePanelFactory(
       this.props.uiStateActions.toggleModal(ADD_DATA_ID);
     };
 
+    // PLEXUS
+    _onChangeCity = () => {
+      this.props.uiStateActions.toggleModal(ADD_DATA_ID);
+    };
+
     _showAddMapStyleModal = () => {
       this.props.uiStateActions.toggleModal(ADD_MAP_STYLE_ID);
     };
@@ -152,8 +141,27 @@ export default function SidePanelFactory(
     _onExportData = () => this.props.uiStateActions.toggleModal(EXPORT_DATA_ID);
 
     _onExportConfig = () => this.props.uiStateActions.toggleModal(EXPORT_CONFIG_ID);
+    
+    getAverage = (arr, col) => arr.reduce((p, c) => p + c[col], 0) / arr.length
+
+    // PLEXUS
+    // TODO: change to action
+    _computeScore = (id) => {
+      if(this.props.datasets && this.props.datasets.barangays) {
+        const {allData, fields} = this.props.datasets.barangays;
+        const field = fields.find(op => op.id === id);
+        const column = field.tableFieldIndex - 1;
+        
+        console.log(this.getAverage(allData, column));
+        return Math.round(this.getAverage(allData, column) * 10000)/100 + "%";
+        // return "50.09%"
+      }
+    }
 
     render() {
+      console.log("SIDE PANEL");
+      console.log(this.props);
+
       const {
         appName,
         version,
@@ -199,7 +207,13 @@ export default function SidePanelFactory(
       };
 
       const interactionManagerActions = {
-        onConfigChange: visStateActions.interactionConfigChange
+        // onConfigChange: visStateActions.interactionConfigChange
+      };
+
+      const indicatorManagerActions = {
+        onConfigChange: visStateActions.interactionConfigChange,
+        onChangeCity: this._onChangeCity,
+        computeScore: this._computeScore
       };
 
       const mapManagerActions = {
@@ -209,6 +223,11 @@ export default function SidePanelFactory(
         onBuildingChange: mapStyleActions.mapBuildingChange,
         showAddMapStyleModal: this._showAddMapStyleModal
       };
+
+      var cityName = "";
+      if(this.props.activeCities && this.props.selectedCity)
+        cityName = this.props.activeCities.find(op => op.id == this.props.selectedCity).name;
+        
       return (
         <div>
           <Sidebar
@@ -235,60 +254,32 @@ export default function SidePanelFactory(
             />
             <SidePanelContent className="side-panel__content">
             <PanelTitle className="side-panel__content__title">
-              Baguio City
+              {cityName}
+              <Button
+                onClick={this._onChangeCity}
+                width="105px"
+                secondary
+              >
+                Change City
+              </Button>
                 </PanelTitle>
-                <Row>
-                  <Indicator>
-                    <Score>0.75</Score>
-                    Transport Desirability
-                  </Indicator>
-                </Row>
-                <hr/>
-                Non Government Perspective
-                <Row>
-                  <Indicator>
-                    <Score>0.63</Score>
-                    Spatial
-                  </Indicator>
-                  <Indicator>
-                    <Score>0.59</Score>
-                    Temporal
-                  </Indicator>
-                  <Indicator>
-                    <Score>0.87</Score>
-                    Economic
-                  </Indicator>
-                </Row>
-                <Row>
-                  <Indicator>
-                    <Score>0.67</Score>
-                    Physical
-                  </Indicator>
-                  <Indicator>
-                    <Score>0.78</Score>
-                    Psychological
-                  </Indicator>
-                  <Indicator>
-                    <Score>0.73</Score>
-                    Physiological
-                  </Indicator>
-                </Row>
-                <hr/>
-                Government Perspective
-                <Row>
-                  <Indicator>
-                    <Score>0.69</Score>
-                    Sustainability
-                  </Indicator>
-                  <Indicator>
-                    <Score>0.80</Score>
-                    Performance
-                  </Indicator>
-                  <Indicator>
-                    <Score>0.70</Score>
-                    Accessibility
-                  </Indicator>
-                </Row>
+                
+
+                <PanelTitle className="side-panel__content__title">
+                  {(PANELS.find(({id}) => id === activeSidePanel) || {}).label}
+                </PanelTitle>
+                {activeSidePanel === 'layer' && (
+                  <IndicatorManager
+                  {...indicatorManagerActions}
+                />
+                )}
+                {activeSidePanel === 'filter' && (
+                  <FilterManager
+                    {...filterManagerActions}
+                    datasets={datasets}
+                    filters={filters}
+                  />
+                )}
               {/* <div>
                 <PanelTitle className="side-panel__content__title">
                   {(PANELS.find(({id}) => id === activeSidePanel) || {}).label}

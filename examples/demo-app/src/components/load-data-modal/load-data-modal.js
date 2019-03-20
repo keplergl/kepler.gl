@@ -37,15 +37,19 @@ import SelectCity from './select-city';
 const propTypes = {
   // query options
   loadingMethod: PropTypes.object.isRequired,
-  currentOption: PropTypes.object.isRequired,
+  // currentOption: PropTypes.object.isRequired,
   sampleMaps: PropTypes.arrayOf(PropTypes.object).isRequired,
+  activeCities: PropTypes.arrayOf(PropTypes.object).isRequired,
 
   // call backs
   onFileUpload: PropTypes.func.isRequired,
   onLoadRemoteMap: PropTypes.func.isRequired,
   onLoadSample: PropTypes.func.isRequired,
   onSelectCity: PropTypes.func.isRequired,
-  onSwitchToLoadingMethod: PropTypes.func.isRequired
+  onSwitchToLoadingMethod: PropTypes.func.isRequired,
+
+  // PLEXUS
+  onSwitchToLoadingMethodCity: PropTypes.func.isRequired
 };
 
 const ModalTab = styled.div`
@@ -139,13 +143,13 @@ const StyledSpinner = styled.div`
 class LoadDataModal extends Component {
 
   render() {
-    console.log("HELLO2");
     const {
       loadingMethod, currentOption, previousMethod,
       sampleMaps, isMapLoading, onSwitchToLoadingMethod,
-      error
+      error, activeCities, onSwitchToLoadingMethodCity, selectedCity, onChangeCity
     } = this.props;
-    console.log(loadingMethod.id);
+    console.log("LOAD DATA MODAL");
+    console.log(this.props);
     return (
       <ThemeProvider theme={themeLT}>
         <div className="load-data-modal">
@@ -179,11 +183,14 @@ class LoadDataModal extends Component {
                     onLoadSample={this.props.onLoadSample}
                     error={error} />
                 ) : null}
-                {loadingMethod.id === 'select' ? (
+                {loadingMethod.id === 'select' && activeCities ? (
                   <SelectCity
+                    selectedCity={this.props.selectedCity}
                     onSelectCity={this.props.onSelectCity}
-                    option={this.props.currentOption}
+                    // option={this.props.currentOption}
                     error={this.props.error}
+                    activeCities={activeCities}
+                    onChangeCity={onChangeCity}
                   />
                 ) : null}
               </div>)
