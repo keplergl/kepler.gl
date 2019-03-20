@@ -95,7 +95,7 @@ export const LOADING_SAMPLE_ERROR_MESSAGE = 'Not able to load sample';
 export const LOADING_URL_MESSAGE = 'You can use the following formats: CSV | JSON | Kepler.gl config json. Make sure the url contains the file extension.';
 export const CORS_LINK = 'https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS';
 export const KEPLER_DISCLAIMER = '* Kepler.gl will save your map data to your personal cloud storage, only people with the URL can access your map and data. ' +
-  'You can edit/delete the data file in your Dropbox account anytime. If you do not have a Dropbox account, please signup over here';
+  'You can edit/delete the data file in your Dropbox account anytime.';
 
 export const DEFAULT_LOADING_METHOD = LOADING_METHODS[0];
 

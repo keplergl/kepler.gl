@@ -157,7 +157,7 @@ export const SaveExportDropdown = ({
   onExportConfig,
   onExportMap,
   onSaveMap,
-  onSaveMapLabel,
+  saveMapLabel,
   show,
   onClose
 }) => {
@@ -196,7 +196,7 @@ export const SaveExportDropdown = ({
 
         {onSaveMap ? (
           <PanelItem
-            label={onSaveMapLabel || "Save Map Url"}
+            label={saveMapLabel || "Save Map Url"}
             onClickHandler={onSaveMap}
             onClose={onClose}
             icon={(<Share height="16px" />)}
@@ -239,7 +239,7 @@ function PanelHeaderFactory() {
         version,
         actionItems,
         onSaveMap,
-        onSaveMapLabel,
+        saveMapLabel,
         onExportImage,
         onExportData,
         onExportConfig,
@@ -271,7 +271,7 @@ function PanelHeaderFactory() {
                       onClose={hideExportDropdown}
                       show={visibleDropdown === item.id}
                       onSaveMap={onSaveMap}
-                      onSaveMapLabel={onSaveMapLabel}
+                      saveMapLabel={saveMapLabel}
                       onExportData={onExportData}
                       onExportImage={onExportImage}
                       onExportConfig={onExportConfig}
