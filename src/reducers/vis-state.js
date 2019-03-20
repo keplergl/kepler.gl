@@ -54,7 +54,9 @@ import {
   setVisibleLayersForMapUpdater,
   toggleLayerForMapUpdater,
   layerVisConfigChangeUpdater,
-  layerVisualChannelChangeUpdater
+  layerVisualChannelChangeUpdater,
+  /* PLEXUS-SPECIFIC */
+  // updateActiveAnalysisTabUpdater,
 } from './vis-state-updaters';
 
 const actionHandler = {
@@ -119,7 +121,10 @@ const actionHandler = {
 
   // currently not used
   // but may be useful if users import vist state reducer
-  [ActionTypes.UPDATE_VIS_DATA]: updateVisDataUpdater
+  [ActionTypes.UPDATE_VIS_DATA]: updateVisDataUpdater,
+
+  /* PLEXUS-SPECIFIC */
+  // [ActionTypes.TOGGLE_ACTIVE_ANALYSIS]: updateActiveAnalysisTabUpdater,
 };
 
 // construct vis-state reducer

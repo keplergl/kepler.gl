@@ -1079,3 +1079,4 @@ export function updateAllLayerDomainData(state, dataId, newFilter) {
     layerData: newLayerDatas
   };
 }
+

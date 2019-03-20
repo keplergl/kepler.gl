@@ -86,6 +86,8 @@ const ActionTypes = keyMirror({
   TOGGLE_MAP_CONTROL: null,
   ADD_NOTIFICATION: null,
   REMOVE_NOTIFICATION: null,
+  /* PLEXUS-SPECIFIC */
+  TOGGLE_ACTIVE_ANALYSIS: null,
 
   // uiState > export image
   SET_RATIO: null,

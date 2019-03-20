@@ -65,7 +65,7 @@ export const PANELS = [
   },
   {
     id: 'filter',
-    label: 'Filters',
+    label: 'Filters TEST',
     iconComponent: FilterFunnel
   }/*,
   {

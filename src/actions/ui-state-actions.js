@@ -40,7 +40,10 @@ const {
   TOGGLE_SIDE_PANEL,
   TOGGLE_MAP_CONTROL,
   ADD_NOTIFICATION,
-  REMOVE_NOTIFICATION
+  REMOVE_NOTIFICATION,
+
+  /* PLEXUS-SPECIFIC */
+  TOGGLE_ACTIVE_ANALYSIS,
 } = ActionTypes;
 
 // second argument of createAction is expected to be payloadCreator or undefined
@@ -65,7 +68,10 @@ const [
   setExportDataType,
   setExportFiltered,
   setExportConfig,
-  setExportData
+  setExportData,
+
+  /* PLEXUS-SPECIFIC */
+  toggleActiveAnalysis,
 ] = [
   TOGGLE_SIDE_PANEL,
   TOGGLE_MODAL,
@@ -75,17 +81,22 @@ const [
   OPEN_DELETE_MODAL,
   ADD_NOTIFICATION,
   REMOVE_NOTIFICATION,
+
   SET_RATIO,
   SET_RESOLUTION,
   TOGGLE_LEGEND,
   START_EXPORTING_IMAGE,
   SET_EXPORT_IMAGE_DATA_URI,
   CLEANUP_EXPORT_IMAGE,
+  
   SET_EXPORT_SELECTED_DATASET,
   SET_EXPORT_DATA_TYPE,
   SET_EXPORT_FILTERED,
   SET_EXPORT_CONFIG,
-  SET_EXPORT_DATA
+  SET_EXPORT_DATA,
+
+  /* PLEXUS-SPECIFIC */
+  TOGGLE_ACTIVE_ANALYSIS,
 ].map(a => createAction(a));
 
 export {
@@ -93,5 +104,8 @@ export {
   toggleMapControl, openDeleteModal, addNotification, removeNotification,
   setExportConfig, setExportData, setRatio, setResolution, toggleLegend,
   startExportingImage, setExportImageDataUri, cleanupExportImage,
-  setExportSelectedDataset, setExportDataType, setExportFiltered
+  setExportSelectedDataset, setExportDataType, setExportFiltered, 
+  
+  /* PLEXUS-SPECIFIC */
+  toggleActiveAnalysis
 };

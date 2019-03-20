@@ -319,6 +319,7 @@ function KeplerGlFactory(
               datasets={datasets}
               uiState={uiState}
               visStateActions={visStateActions}
+              uiStateActions={uiStateActions}
               sidePanelWidth={
                 DIMENSIONS.sidePanel.width + DIMENSIONS.sidePanel.margin.left
               }
