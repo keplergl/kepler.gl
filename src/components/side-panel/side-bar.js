@@ -25,7 +25,7 @@ import {ArrowRight} from 'components/common/icons';
 
 const StyledSidePanelContainer = styled.div`
   z-index: 99;
-  height: 75%;
+  height: 70%;
   width: ${props => props.width + 2 * props.theme.sidePanel.margin.left}px;
   display: flex;
   transition: width 250ms;
