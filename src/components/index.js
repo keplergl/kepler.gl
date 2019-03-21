@@ -30,7 +30,14 @@ export {default as ModalContainerFactory} from './modal-container';
 export {default as PlotContainerFactory} from './plot-container';
 
 // // side panel factories
-export {default as PanelHeaderFactory} from './side-panel/panel-header'
+export {default as PanelHeaderFactory,
+  SaveExportDropdownFactory,
+  ExportImageFactory,
+  ExportDataFactory,
+  ExportConfigFactory,
+  ExportMapFactory,
+  SaveMapFactory
+} from './side-panel/panel-header'
 export {CollapseButtonFactory, default as SidebarFactory} from './side-panel/side-bar';
 export {default as PanelToggleFactory} from './side-panel/panel-toggle';
 
@@ -48,6 +55,7 @@ export {default as TooltipConfigFactory} from './side-panel/interaction-panel/to
 export {default as MapManagerFactory} from './side-panel/map-manager';
 export {default as LayerGroupSelectorFactory} from './side-panel/map-style-panel/map-layer-selector';
 export {default as MapStyleSelectorFactory} from './side-panel/map-style-panel/map-style-selector';
+
 
 // // map container factories
 export {default as MapPopoverFactory} from './map/map-popover';
