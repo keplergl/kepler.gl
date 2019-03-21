@@ -59,5 +59,39 @@ export function notNullorUndefined(d) {
 }
 
 export function capitalizeFirstLetter(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
+  return typeof str === 'string' ? str.charAt(0).toUpperCase() + str.slice(1) : str;
 }
+
+/**
+ * immutably insert value to an Array or Object
+ * @param {Array|Object} obj
+ * @param {Number|String} key
+ * @param {*} value
+ * @returns {Array|Object}
+ */
+const insertValue = (obj, key, value) => {
+  if (Array.isArray(obj) && typeof(key) === 'number') {
+  	return [...obj.slice(0, key), value, ...obj.slice(key + 1, obj.length)]
+  }
+
+  return {...obj, [key]: value};
+}
+
+const setPath = ([key, ...next], value, obj) => {
+  if (next.length === 0) {
+    return insertValue(obj, key, value)
+  }
+
+  return insertValue(
+    obj, key, setPath(next, value, obj.hasOwnProperty(key) ? obj[key] : {})
+  );
+};
+
+/**
+ * Immutable version of _.set
+ * @param {Array<String|Number>} path
+ * @param {*} value
+ * @param {Object} obj
+ * @returns {Object}
+ */
+export const set = (path, value, obj) => setPath(path, value, obj);

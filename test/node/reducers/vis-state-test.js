@@ -1137,6 +1137,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
     freeze: true,
     plotType: 'histogram',
     yAxis: null,
+    gpu: true,
     interval: null,
     histogram: [1],
     enlargedHistogram: [1],
@@ -1424,7 +1425,8 @@ test('#visStateReducer -> setFilter', t => {
     plotType: 'histogram',
     yAxis: null,
     speed: 1,
-    interval: null
+    interval: null,
+    gpu: false
   };
 
   cmpFilters(t, expectedFilter, stateWithFilter.filters[0]);
@@ -1452,7 +1454,8 @@ test('#visStateReducer -> setFilter', t => {
     plotType: 'histogram',
     yAxis: null,
     speed: 1,
-    interval: null
+    interval: null,
+    gpu: false
   };
 
   // test filter
@@ -1464,7 +1467,8 @@ test('#visStateReducer -> setFilter', t => {
       type: 'multiSelect',
       value: [],
       fieldType: 'date',
-      domain: ['2016-09-23', '2016-09-24', '2016-10-10']
+      domain: ['2016-09-23', '2016-09-24', '2016-10-10'],
+      gpu: false
     }
   };
 
@@ -1805,7 +1809,8 @@ test('#visStateReducer -> setFilter', t => {
     plotType: 'histogram',
     yAxis: null,
     interval: null,
-    speed: 1
+    speed: 1,
+    gpu: true
   };
 
   // test filter
@@ -1844,7 +1849,8 @@ test('#visStateReducer -> setFilter', t => {
                 step: 0.01,
                 type: 'range',
                 typeOptions: ['range'],
-                value: [4, 20]
+                value: [4, 20],
+                gpu: true
               }
             }
           : {...f, id: f.name}
@@ -1964,7 +1970,8 @@ test('#visStateReducer -> setFilter.fixedDomain', t => {
     enlargedHistogram: [],
     enlarged: true,
     isAnimating: false,
-    fieldType: 'timestamp'
+    fieldType: 'timestamp',
+    gpu: true
   };
 
   cmpFilters(t, expectedFilterTs, stateWidthTsFilter.filters[0]);
@@ -1987,7 +1994,8 @@ test('#visStateReducer -> setFilter.fixedDomain', t => {
                 type: 'timeRange',
                 enlarged: true,
                 fixedDomain: true,
-                value: [1474070995000, 1474072208000]
+                value: [1474070995000, 1474072208000],
+                gpu: true
               }
             }
           : f
@@ -2027,7 +2035,8 @@ test('#visStateReducer -> setFilter.fixedDomain', t => {
               domain: ['2016-09-23', '2016-09-24', '2016-10-10'],
               fieldType: 'date',
               type: 'multiSelect',
-              value: []
+              value: [],
+              gpu: false
             }
           }
           : f
@@ -2155,7 +2164,8 @@ test('#visStateReducer -> setFilterPlot', t => {
     enlargedHistogram: [],
     enlarged: true,
     isAnimating: false,
-    fieldType: 'timestamp'
+    fieldType: 'timestamp',
+    gpu: true
   };
 
   // test filter

@@ -25,7 +25,7 @@ import keyMirror from 'keymirror';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
 import {maybeToDate, notNullorUndefined} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
-import {generateHashId} from './utils';
+import {generateHashId, set} from './utils';
 
 export const TimestampStepMap = [
   {max: 1, step: 0.05},
@@ -58,6 +58,8 @@ export const PLOT_TYPES = keyMirror({
   histogram: null,
   lineChart: null
 });
+
+export const MAX_GPU_FILTERS = 4;
 
 const SupportedPlotType = {
   [FILTER_TYPES.timeRange]: {
@@ -123,7 +125,10 @@ export function getDefaultFilter(dataId) {
     // plot
     plotType: PLOT_TYPES.histogram,
     yAxis: null,
-    interval: null
+    interval: null,
+
+    // mode
+    gpu: false
   };
 }
 
@@ -131,8 +136,8 @@ export function getDefaultFilter(dataId) {
  * Get default filter prop based on field type
  *
  * @param {Array<Array>} allData
- * @param {object} field
- * @returns {object} default filter
+ * @param {Object} field
+ * @returns {Object} default filter
  */
 export function getFilterProps(allData, field) {
   const filterProp = {
@@ -147,14 +152,16 @@ export function getFilterProps(allData, field) {
         ...filterProp,
         value: filterProp.domain,
         type: FILTER_TYPES.range,
-        typeOptions: [FILTER_TYPES.range]
+        typeOptions: [FILTER_TYPES.range],
+        gpu: true
       };
 
     case ALL_FIELD_TYPES.boolean:
       return {
         ...filterProp,
         type: FILTER_TYPES.select,
-        value: true
+        value: true,
+        gpu: false
       };
 
     case ALL_FIELD_TYPES.string:
@@ -162,7 +169,8 @@ export function getFilterProps(allData, field) {
       return {
         ...filterProp,
         type: FILTER_TYPES.multiSelect,
-        value: []
+        value: [],
+        gpu: false
       };
 
     case ALL_FIELD_TYPES.timestamp:
@@ -171,7 +179,8 @@ export function getFilterProps(allData, field) {
         type: FILTER_TYPES.timeRange,
         enlarged: true,
         fixedDomain: true,
-        value: filterProp.domain
+        value: filterProp.domain,
+        gpu: true
       };
 
     default:
@@ -183,8 +192,8 @@ export function getFilterProps(allData, field) {
  * Calculate field domain based on field type and data
  *
  * @param {Array<Array>} allData
- * @param {object} field
- * @returns {object} with domain as key
+ * @param {Object} field
+ * @returns {Object} with domain as key
  */
 export function getFieldDomain(allData, field) {
   const fieldIdx = field.tableFieldIndex - 1;
@@ -214,17 +223,93 @@ export function getFieldDomain(allData, field) {
   }
 }
 
+export function updateFilterDataId(dataId) {
+  return getDefaultFilter(dataId);
+}
+
+/**
+ *
+ * @param {Object} filter
+ * @param {Number} idx
+ * @param {Object} dataset
+ * @param {Array<Object>} filters
+ * @returns {{newField: Object, newFilter: Object}}
+ */
+export function updateFilterField(filter, idx, dataset, filters) {
+  const {name, dataId} = filter;
+  const {fields, allData} = dataset;
+  // find the field
+  const fieldIdx = fields.findIndex(f => f.name === name);
+
+  let newField = fields[fieldIdx];
+
+  if (!newField.filterProp) {
+    // get filter domain from field
+    // save filterProps: {domain, steps, value} to field, avoid recalculate
+    newField = set(['filterProp'], getFilterProps(allData, newField), newField);
+  }
+
+  const newFilter = {
+    ...filter,
+    ...newField.filterProp,
+    name: newField.name,
+    // can't edit dataId once name is selected
+    freeze: true,
+    fieldIdx
+  };
+
+  const enlargedFilterIdx = filters.findIndex(f => f.enlarged);
+
+  if (enlargedFilterIdx > -1 && enlargedFilterIdx !== idx) {
+    // there should be only one enlarged filter
+    newFilter.enlarged = false;
+  }
+
+  // filters of the same datasets
+  const gpuFilters = filters.filter(f => f.dateId === dataId && f.gpu);
+  if (newFilter.gpu && gpuFilters.length === MAX_GPU_FILTERS) {
+    newFilter.gpu = false;
+  }
+
+  return {newField, newFilter};
+}
+
+/**
+ * Edit filter.gpu to ensure that only
+ * X number of gpu filers can coexist.
+ * @param {Array<Object>} filters
+ * @returns {Array<Object>} updated filters
+ */
+export function resetFilterGpuMode(filters) {
+  const gpuPerDataset = {};
+
+  return filters.reduce((accu, f, i) => {
+    if (f.gpu) {
+      const count = gpuPerDataset[f.dataId];
+
+      if (count === MAX_GPU_FILTERS) {
+        return set([i, 'gpu'], false, accu);
+      }
+
+      gpuPerDataset[f.dataId] = count ? count + 1 : 1;
+    }
+
+    return accu;
+  }, filters);
+}
+
 /**
  * Filter data based on an array of filters
  *
- * @param {Object[]} data
+ * @param {Array<Object>} data
  * @param {string} dataId
- * @param {Object[]} filters
+ * @param {Array<Object>} filters
  * @returns {Object} filteredData
  * @returns {Array<Number>} filteredData.filteredIndex
  * @returns {Array<Number>} filteredData.filteredIndexForDomain
  */
 export function filterData(allData, dataId, filters) {
+
   if (!allData || !dataId) {
     // why would there not be any data? are we over doing this?
     return {
@@ -254,17 +339,14 @@ export function filterData(allData, dataId, filters) {
     [[], []]
   );
 
-  // we save a reference of allData index here to access dataToFeature
-  // in GeoJSON and hexagonId layer
-  // const filtered = [];
+  // generate 2 sets of
+  // filtered index used to calculate layer data and layer Domain
   const filteredIndex = [];
   const filteredIndexForDomain = [];
 
   for (let i = 0; i < allData.length; i++) {
     const d = allData[i];
 
-    // generate 2 sets of
-    // filter data used to calculate layer Domain
     const matchForDomain = dynamicDomainFilters.every(filter =>
       isDataMatchFilter(d, filter, i)
     );
@@ -274,6 +356,7 @@ export function filterData(allData, dataId, filters) {
 
       // filter data for render
       const matchForRender = fixedDomainFilters.every(filter =>
+        // if gpu filter, no need to filter data
         isDataMatchFilter(d, filter, i)
       );
 
@@ -289,9 +372,9 @@ export function filterData(allData, dataId, filters) {
 /**
  * Check if value is in range of filter
  *
- * @param {Object[]} data
+ * @param {Array<Array>} data
  * @param {Object} filter
- * @param {number} i
+ * @param {Number} i
  * @returns {Boolean} - whether value falls in the range of the filter
  */
 export function isDataMatchFilter(data, filter, i) {
@@ -326,7 +409,7 @@ export function isDataMatchFilter(data, filter, i) {
  * Check if value of filter within filter domain, if not adjust it to match
  * filter domain
  *
- * @param {string[] | string | number | number[]} value
+ * @param {Array<string> | string | Number | Array<Number>} value
  * @param {Array} filter.domain
  * @param {String} filter.type
  * @returns {*} - adjusted value to match filter or null to remove filter
@@ -411,9 +494,15 @@ function getNumericStepSize(diff) {
 /**
  * Calculate timestamp domain and suitable step
  *
- * @param {Object[]} data
- * @param {function} valueAccessor
- * @returns {object} domain and step
+ * @param {Array<Array>} data
+ * @param {Function} valueAccessor
+ * @returns {{
+ *  domain: Array<Number>,
+ *  step: Number,
+ *  mappedValue: Array<Number>,
+ *  histogram: Array<Object>,
+ *  enlargedHistogram: Array<Object>
+ * }} timestamp field domain
  */
 export function getTimestampFieldDomain(data, valueAccessor) {
   // to avoid converting string format time to epoch
@@ -434,6 +523,13 @@ export function getTimestampFieldDomain(data, valueAccessor) {
   return {domain, step, mappedValue, histogram, enlargedHistogram};
 }
 
+/**
+ *
+ * @param {Array<Number>} domain
+ * @param {Array<Number>} mappedValue
+ * @param {Number} bins
+ * @returns {Array<{count: Number, x0: Number, x1: number}>} histogram
+ */
 export function histogramConstruct(domain, mappedValue, bins) {
   return d3Histogram()
     .thresholds(ticks(domain[0], domain[1], bins))
@@ -449,7 +545,7 @@ export function histogramConstruct(domain, mappedValue, bins) {
  *
  * @param {Array<Number>} domain
  * @param {Array<Object>} mappedValue
- * @returns {Array<Number>} histogram
+ * @returns {{histogram: Array<Object>, enlargedHistogram: Array<Object>}} 2 sets of histogram
  */
 function getHistogram(domain, mappedValue) {
   const histogram = histogramConstruct(domain, mappedValue, histogramBins);

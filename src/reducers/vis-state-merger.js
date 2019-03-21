@@ -26,7 +26,8 @@ import {
   getFilterProps,
   getFilterPlot,
   filterData,
-  adjustValueToFilterDomain
+  adjustValueToFilterDomain,
+  resetFilterGpuMode
 } from 'utils/filter-utils';
 
 import {LAYER_BLENDINGS} from 'constants/default-settings';
@@ -69,7 +70,8 @@ export function mergeFilters(state, filtersToMerge) {
   });
 
   // filter data
-  const updatedFilters = [...(state.filters || []), ...merged];
+  const allFilters = [...(state.filters || []), ...merged];
+  const updatedFilters = resetFilterGpuMode(allFilters);
   const datasetToFilter = uniq(merged.map(d => d.dataId));
 
   const updatedDataset = datasetToFilter.reduce(
