@@ -26,7 +26,7 @@ import {Close, Clock, LineChart} from 'components/common/icons';
 
 import PropTypes from 'prop-types';
 import TimeWidgetFactory from './filters/time-widget';
-import { ANALYSIS_TABS_INDICATOR, ANALYSIS_TABS_DEF } from 'utils/filter-utils';
+import { INDICATORS, ANALYSIS_TABS_DEF } from 'utils/filter-utils';
 
 import {scaleLinear} from 'd3-scale';
 
@@ -242,62 +242,61 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
       'TD in the City',
       'TD in the Province'
     ];
-    const tdScore = {
-      score: 30,
-      total: 100,
-    };
-    const tdCity = {
-      rank: 20,
-      total: 312,
-    };
-    const tdProv = {
-      rank: 60,
-      total: 120,
-    };
-
-    const data = [
-      {y: 'Spatial', x: 0.34},
-      {y: 'Temporal', x: 0.8},
-      {y: 'Economic', x: 0.4},
-      {y: 'Physical', x: 0.0},
-      {y: 'Psychological', x: 1.0},
-      {y: 'Physiological', x: 0.17},
-      {y: 'Sustainability', x: 0.74},
-      {y: 'Performance', x: 0.68},
-      {y: 'Fairness', x: 0.25},
-    ];
-
-    const dataTopTen = [
-      {y: 'Loma', x: 0.84},
-      {y: 'Balibago', x: 0.8},
-      {y: 'Malitlit', x: 0.75},
-      {y: 'Don Jose', x: 0.732},
-      {y: 'Pooc', x: 0.71},
-      {y: 'Pulong Santa Cruz', x: 0.71},
-      {y: 'Santo Domingo', x: 0.69},
-      {y: 'Kanluran', x: 0.68},
-      {y: 'Dila', x: 0.65},
-      {y: 'Dita', x: 0.65},
-    ];
 
     const DEFAULT_LIST = 10;
-    let maxListSize = DEFAULT_LIST;
+
     const tdIndex = 6;
     const bgyNameIndex = 1;
-    let sortedBgys = [];
-    let bgyIncl;
+    const currView = 'desirability';
+    
+    let cityMeans = [];
+    var indicatorValues = [];
+    INDICATORS.forEach(i => indicatorValues.push(i.value));
 
+    let maxListSize = DEFAULT_LIST;
+    let bgyIncl;
 
     console.log("bottom-widget.js: props: dataset");
     if(datasets.barangays) {
       if(datasets.barangays.data) {
         console.log(datasets);
         maxListSize = Math.min(DEFAULT_LIST, datasets.barangays.data.length);
-        sortedBgys = datasets.barangays.data.sort((a, b) => (b[tdIndex]) - (a[tdIndex]));
-        bgyIncl = sortedBgys.map((d, idx) => ({
-          x: d[tdIndex],
-          y: d[bgyNameIndex],
+
+        bgyIncl = datasets.barangays.data.map((d, idx) => ({
+          [datasets.barangays.fields[1].name]: d[datasets.barangays.fields[1].tableFieldIndex - 1],
+          [datasets.barangays.fields[2].name]: d[datasets.barangays.fields[2].tableFieldIndex - 1],
+          [datasets.barangays.fields[3].name]: d[datasets.barangays.fields[3].tableFieldIndex - 1],
+          // LATITUDE [datasets.barangays.fields[4].name]: d[datasets.barangays.fields[4].tableFieldIndex - 1],
+          // LONGITUDE [datasets.barangays.fields[5].name]: d[datasets.barangays.fields[5].tableFieldIndex - 1],
+          [datasets.barangays.fields[6].name]: d[datasets.barangays.fields[6].tableFieldIndex - 1],
+          [datasets.barangays.fields[7].name]: d[datasets.barangays.fields[7].tableFieldIndex - 1],
+          [datasets.barangays.fields[8].name]: d[datasets.barangays.fields[8].tableFieldIndex - 1],
+          [datasets.barangays.fields[9].name]: d[datasets.barangays.fields[9].tableFieldIndex - 1],
+          [datasets.barangays.fields[10].name]: d[datasets.barangays.fields[10].tableFieldIndex - 1],
+          [datasets.barangays.fields[11].name]: d[datasets.barangays.fields[11].tableFieldIndex - 1],
+          [datasets.barangays.fields[12].name]: d[datasets.barangays.fields[12].tableFieldIndex - 1],
+          [datasets.barangays.fields[13].name]: d[datasets.barangays.fields[13].tableFieldIndex - 1],
+          [datasets.barangays.fields[14].name]: d[datasets.barangays.fields[14].tableFieldIndex - 1],
+          [datasets.barangays.fields[15].name]: d[datasets.barangays.fields[15].tableFieldIndex - 1],
         }));
+        bgyIncl = bgyIncl.sort((a, b) => b[currView] - a[currView]);
+        
+
+        datasets.barangays.fields.forEach((e) => {
+          if(indicatorValues.includes(e.name)) {
+            cityMeans.push({
+              value: e.name,
+              y: INDICATORS[INDICATORS.findIndex(i => i.value == e.name)].label,
+              x: (bgyIncl.reduce((total, next)=> total + next[e.name], 0)) / bgyIncl.length,
+            });
+          }
+        });
+        console.log('averages');
+        console.log(cityMeans);
+        console.log(currView)
+        console.log(indicatorValues);
+        console.log(cityMeans.filter((d) => indicatorValues.includes(d.value)));
+        console.log(bgyIncl);
       }
     }
 
@@ -317,67 +316,71 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
             </IconRoundSmall>
           </TopSectionWrapper>
           <AnalysisSectionWrapper> {/* TODO: currently in TD mode, make dynamic according to tabs */}
-            {uiState.activeAnalysisTab == ANALYSIS_TABS_DEF.transportDesirability.value ? 
-              (<RankingAnalysis className="analysis-section"> 
-              <div className="ranking-analysis__section">
-                <RankingWrapper>
-                  <div className="ranking-wrapper__score ranking-wrapper__score--bad">
-                    { tdScore.score }/{ tdScore.total }
+            {uiState.activeAnalysisTab == ANALYSIS_TABS_DEF.transportDesirability.value ?
+              (
+                <RankingAnalysis className="analysis-section">
+                  <div className="ranking-analysis__section">
+                    <RankingWrapper>
+                      <div className="ranking-wrapper__score ranking-wrapper__score--bad">
+                        {(cityMeans[cityMeans.findIndex(d => d.value == currView)].x * 100).toFixed(2)}%
+                      </div>
+                      <div className="ranking-wrapper__label">
+                        {TD_LABELS[0]}
+                      </div>
+                    </RankingWrapper>
                   </div>
-                  <div className="ranking-wrapper__label">
-                    { TD_LABELS[0] }
-                  </div>
-                </RankingWrapper>
-              </div>
-              <div className="ranking-analysis__section">
-                <RankingWrapper>
-                  <div className="ranking-wrapper__score">
-                    { tdCity.rank }/{ tdCity.total }
-                  </div>
-                  <div className="ranking-wrapper__label">
-                    { TD_LABELS[1] }
-                  </div>
-                </RankingWrapper>
-                {tdProv ? (
-                  <RankingWrapper>
-                    <div className="ranking-wrapper__score">
-                      { tdProv.rank }/{ tdProv.total }
-                    </div>
-                    <div className="ranking-wrapper__label">
-                      { TD_LABELS[2] }
-                    </div>
-                  </RankingWrapper>
-                ) : null }
-              </div>              
-            </RankingAnalysis>) : null }
+                  {/* <div className="ranking-analysis__section">
+                    <RankingWrapper>
+                      <div className="ranking-wrapper__score">
+                        {tdCity.rank}/{tdCity.total}
+                      </div>
+                      <div className="ranking-wrapper__label">
+                        {TD_LABELS[1]}
+                      </div>
+                    </RankingWrapper>
+                    {tdProv ? (
+                      <RankingWrapper>
+                        <div className="ranking-wrapper__score">
+                          {tdProv.rank}/{tdProv.total}
+                        </div>
+                        <div className="ranking-wrapper__label">
+                          {TD_LABELS[2]}
+                        </div>
+                      </RankingWrapper>
+                    ) : null}
+                  </div> */}
+                </RankingAnalysis>
+              ) : null}
             <BreakdownAnalysis className="analysis-section">
               {uiState.activeAnalysisTab == ANALYSIS_TABS_DEF.transportDesirability.value ?
                 (<div className="breakdown-analysis__section">
                   <BarChart 
-                    data={data}
+                    data={cityMeans.filter(e => e.value != 'desirability')}
                     title={'TD Breakdown'}/>
                 </div>
               ) : null }
               {uiState.activeAnalysisTab == ANALYSIS_TABS_DEF.transportDesirability.value ?
                 (<div className="breakdown-analysis__section">
                   <ParallelCoordinatesK 
-                    data={pCoordinates}/>
+                    data={bgyIncl}/>
                 </div> ) : null}
-              {uiState.activeAnalysisTab == ANALYSIS_TABS_DEF.profile.value && datasets.barangays && sortedBgys.length > 0 ? (
+              {uiState.activeAnalysisTab == ANALYSIS_TABS_DEF.profile.value && bgyIncl ? (
                 <div className="breakdown-analysis__section">
                   <BarChart 
                     data={bgyIncl.slice(0,maxListSize).reverse()}                                    
                     // data={sortedBgys.slice(0,10)}                  
                     // data={sortedBgys.slice(0,10)}
-                    xIndex={tdIndex}
-                    yIndex={bgyNameIndex}
+                    xKey={currView}
+                    yKey={'name'}
                     title={'Top ' + maxListSize + ' TD Scores'}/>
                 </div>
               ) : null}
-              {uiState.activeAnalysisTab == ANALYSIS_TABS_DEF.profile.value && datasets.barangays && sortedBgys.length > 0 ? (
+              {uiState.activeAnalysisTab == ANALYSIS_TABS_DEF.profile.value && datasets.barangays && bgyIncl ? (
                 <div className="breakdown-analysis__section">
                   <BarChart 
                     data={bgyIncl.slice(bgyIncl.length - maxListSize, bgyIncl.length).reverse()}
+                    xKey={currView}
+                    yKey={'name'}
                     // data={dataBotTen}
                     title={'Bottom ' + maxListSize + ' TD Scores'}/>
                 </div>

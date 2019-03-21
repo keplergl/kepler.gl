@@ -122,14 +122,10 @@ export const ANALYSIS_TABS_DEF = {
   },
 };
 
-export const ANALYSIS_TABS_INDICATOR = [
-  {
-    label: 'Profile',
-    value: 'profile'
-  },
+export const INDICATORS = [
   {
     label: 'Transport Desirability',
-    value: 'transportDesirability'
+    value: 'desirability'
   },
   {
     label: 'Spatial',

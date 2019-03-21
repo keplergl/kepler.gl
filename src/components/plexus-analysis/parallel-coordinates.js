@@ -31,6 +31,7 @@ export class ParallelCoordinatesK extends Component {
     const DEFAULT_DOMAIN = {min: Infinity, max: -Infinity};
 
     const domainStructure = Object.keys(data[0])
+      .filter(d => d != 'name')
       .map(name => ({name, domain: [Infinity, -Infinity]}));
   
     const domains = data.reduce((acc, row) => {
@@ -52,8 +53,8 @@ export class ParallelCoordinatesK extends Component {
           res[key] = {...DEFAULT_DOMAIN};
         }
         res[key] = {
-          min: 0,
-          max: 1.0,
+          min: Math.min(res[key].min, row[key]),
+          max: Math.max(res[key].max, row[key])
         };
       });
       return res;
@@ -78,6 +79,11 @@ export class ParallelCoordinatesK extends Component {
         }));
     });
     const FlexiblePC = makeWidthFlexible(ParallelCoordinates);
+    console.log("Parallel Coordinates");
+    console.log(domainStructure);
+    console.log(domains);
+    console.log(data);
+    console.log(mappedData);
 
     return (
         <ParallelCoordinates
@@ -86,9 +92,15 @@ export class ParallelCoordinatesK extends Component {
             data={data}
             domains={domains}
             tickTotal={5}
-            margin={15}
-            width={450}
-            height={160}
+            // margin={15}
+            // margin={{left: 0, right: 10, top: 25, bottom: 25}}            
+            width={600}
+            height={190}
+            style={{
+              labels:{
+                fill: '#6A7485',
+              },
+            }}
         />
     );
   }
