@@ -33,20 +33,35 @@ export class BarChart extends Component {
 
     const {
       data,
-      title
+      title,
+      xIndex,
+      yIndex,
     } = this.props;
 
     const dataLabels = data.map((d, idx) => ({
       x: d.x,
       y: d.y,
-      label: d.x,
+      label: d.x.toFixed(2),
       xOffset: 20,
       yOffset: 7,
       style: { fill: '#6A7485' }
     })); 
 
     const FlexibleXYPlot = makeWidthFlexible(XYPlot);
-    const width = 400;
+    // const width = 400;
+    // TODO: transfer constant 
+    const width = 350;
+
+    if(data.length > 0) {
+      console.log("BAR CHART: ");
+      console.log(data)
+    }
+    console.log("BAR CHART 2: ");
+    console.log(Object.prototype.toString.call( data[0] ) === '[object Array]');
+    if(xIndex && yIndex) {
+      console.log(xIndex + " " + yIndex);
+      console.log(data[0][yIndex] + " " + data[0][xIndex]);
+    }
 
     return (
       <XYPlot
@@ -74,8 +89,33 @@ export class BarChart extends Component {
             fontWeight: 100
           }}
         />
-        <HorizontalBarSeries data={data} barWidth={0.5} />
+        {/* { data.length > 0 ? (
+          <HorizontalBarSeries 
+             data={data} 
+        barWidth={0.5} />
+        ): null
+        } */}
+        
+        {Object.prototype.toString.call( data[0] ) === '[object Array]'? (
+        <HorizontalBarSeries 
+          data={data} 
+          barWidth={0.5}
+          getX={d=>d[xIndex]}
+          getY={d=>d[yIndex]} />) : 
+          (<HorizontalBarSeries 
+            data={data} 
+            barWidth={0.5} />)
+        }
+        
         {/* TODO: fix offscreen label close to 1.0 */}
+        {/* { data.length > 0 ? (
+          <LabelSeries
+          data={dataLabels}
+          labelAnchorX="middle"
+          labelAnchorY="text-after-edge"
+        />
+        ): null
+        } */}
         <LabelSeries
           data={dataLabels}
           labelAnchorX="middle"
