@@ -29,10 +29,7 @@ import {loadFilesErr} from 'actions/vis-state-actions';
 import {addDataToMap} from 'actions';
 
 // Utils
-import {
-  getDefaultInteraction,
-  findFieldsToShow
-} from 'utils/interaction-utils';
+import {getDefaultInteraction, findFieldsToShow} from 'utils/interaction-utils';
 import {
   getDefaultFilter,
   getFilterProps,
@@ -62,6 +59,8 @@ import {
 
 import {Layer, LayerClasses} from 'layers';
 import {processFileToLoad} from '/utils/file-utils';
+
+import {INDICATORS} from 'constants/default-settings';
 
 // react-palm
 // disable capture exception for react-palm call to withTask
@@ -112,7 +111,11 @@ export const INITIAL_VIS_STATE = {
   layerClasses: LayerClasses,
 
   // PLEXUS
-  scores: []
+  plexus: {
+    scores: undefined,
+    indicatorData: undefined,
+    selectedIndicator: 'desirability'
+  }
 };
 
 function updateStateWithLayerAndData(state, {layerData, layer, idx}) {
@@ -392,15 +395,15 @@ export const addFilterUpdater = (state, action) =>
 
 export const toggleFilterAnimationUpdater = (state, action) => ({
   ...state,
-  filters: state.filters.map(
-    (f, i) => (i === action.idx ? {...f, isAnimating: !f.isAnimating} : f)
+  filters: state.filters.map((f, i) =>
+    i === action.idx ? {...f, isAnimating: !f.isAnimating} : f
   )
 });
 
 export const updateAnimationSpeedUpdater = (state, action) => ({
   ...state,
-  filters: state.filters.map(
-    (f, i) => (i === action.idx ? {...f, speed: action.speed} : f)
+  filters: state.filters.map((f, i) =>
+    i === action.idx ? {...f, speed: action.speed} : f
   )
 });
 
@@ -941,16 +944,19 @@ export const loadFilesUpdater = (state, action) => {
   const loadFileTasks = [
     Task.all(filesToLoad.map(LOAD_FILE_TASK)).bimap(
       results => {
-        const data = results.reduce((f, c) => ({
-          // using concat here because the current datasets could be an array or a single item
-          datasets: f.datasets.concat(c.datasets),
-          // we need to deep merge this thing unless we find a better solution
-          // this case will only happen if we allow to load multiple keplergl json files
-          config: {
-            ...f.config,
-            ...(c.config || {})
-          }
-        }), {datasets: [], config: {}, options: {centerMap: true}});
+        const data = results.reduce(
+          (f, c) => ({
+            // using concat here because the current datasets could be an array or a single item
+            datasets: f.datasets.concat(c.datasets),
+            // we need to deep merge this thing unless we find a better solution
+            // this case will only happen if we allow to load multiple keplergl json files
+            config: {
+              ...f.config,
+              ...(c.config || {})
+            }
+          }),
+          {datasets: [], config: {}, options: {centerMap: true}}
+        );
         return addDataToMap(data);
       },
       error => loadFilesErr(error)
@@ -968,11 +974,88 @@ export const loadFilesUpdater = (state, action) => {
 
 // PLEXUS
 export const processDataUpdater = (state, action) => {
-  console.error("");
-  console.error(state);
+  const {allData, fields} = state.datasets.barangays;
+  var scores = {};
+  var indicatorData = {};
+
+  INDICATORS.map((indicator, i) => {
+    // Compute scores
+    const field = fields.find(op => op.id === indicator.id);
+    const column = field.tableFieldIndex - 1;
+    scores[indicator.id] =
+      allData.reduce((p, c) => p + c[column], 0) / allData.length;
+    scores[indicator.id] = Math.round(scores[indicator.id] * 100) / 100;
+
+    // Get top 10 and bottom 10
+    var arr = allData.sort(function(a, b) {
+      return a[column] - b[column];
+    });
+
+    indicatorData[indicator.id] = {
+      top: arr.slice(0, 10),
+      bottom: arr.slice(arr.length - 10, arr.length)
+    };
+  });
+
   return {
-    ...state
-  }
+    ...state,
+    plexus: {
+      ...state.plexus,
+      scores,
+      indicatorData
+    }
+  };
+};
+
+export const selectedIndicatorUpdater = (state, action) => {
+  const {indicator} = action;
+  const {fields} = state.datasets.barangays;
+  const colorField = fields.find(op => op.id === indicator);
+  console.error(colorField);
+  const oldLayer = state.layers[2];
+  const config = {
+    colorField: colorField
+  };
+  const idx = 2;
+
+  const newLayer = oldLayer.updateLayerConfig(config);
+  // console.error(newLayer);
+  newLayer.updateLayerVisualChannel(state.datasets.barangays, 'color');
+  const oldLayerData = state.layerData[idx];
+  const {layerData, layer} = calculateLayerData(
+    newLayer,
+    state,
+    oldLayerData,
+    {sameData: true}
+  );
+  const newState = updateStateWithLayerAndData(state, {layerData, layer, idx});
+  // const newState = updateStateWithLayerAndData(state, {layer: newLayer, idx});
+  
+  return {
+    ...newState,
+    // layers: [
+    //   state.layers[0],
+    //   state.layers[1],
+    //   newLayer
+    // ],
+    interactionConfig: {
+      ...state.interactionConfig,
+      tooltip: {
+        ...state.interactionConfig.tooltip,
+        config: {
+          ...state.interactionConfig.tooltip.config,
+          fieldsToShow: {
+            ...state.interactionConfig.tooltip.config.fieldsToShow,
+            barangays: ['name', indicator]
+          }
+        }
+      }
+    },
+    plexus: {
+      ...state.plexus,
+      selectedIndicator: indicator
+    }
+  };
 };
 
 export const loadFilesErrUpdater = (state, {error}) => ({
@@ -1079,4 +1162,3 @@ export function updateAllLayerDomainData(state, dataId, newFilter) {
     layerData: newLayerDatas
   };
 }
-

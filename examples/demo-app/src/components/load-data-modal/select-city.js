@@ -147,6 +147,7 @@ class SelectCity extends Component {
               onChange={(e) => onChangeCity(e)}
               getOptionValue={op => op.id}
               displayOption={op => op.name}
+              placeholder="Enter city..."
             />
             <StyledBtn type="submit" onClick={this.onSelectCity}>
               Select

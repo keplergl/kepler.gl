@@ -236,9 +236,15 @@ export function loadFilesErr(error) {
 }
 
 // PLEXUS
-export function processData(scores) {
+export function processData() {
   return {
-    type: ActionTypes.PROCESS_DATA,
-    scores
+    type: ActionTypes.PROCESS_DATA
+  };
+}
+
+export function setSelectedIndicator(indicator) {
+  return {
+    type: ActionTypes.SET_SELECTED_INDICATOR,
+    indicator
   };
 }

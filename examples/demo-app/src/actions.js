@@ -163,9 +163,11 @@ export function loadRemoteMap(options) {
           new File([file], options.dataUrl)
           /* eslint-enable no-undef */
         ])).then(
-          () => dispatch(setLoadingMapStatus(false))
+          () => dispatch(processData()).then(
+            () => dispatch(setLoadingMapStatus(false))
+          )
         );
-        dispatch(processData([]));
+        
       },
       error => {
         const {target = {}} = error;
@@ -189,7 +191,10 @@ export function loadBarangayMap(options) {
           new File([file], options.dataUrl)
           /* eslint-enable no-undef */
         ])).then(
-          () => dispatch(setLoadingMapStatus(false))
+          () => processData([]).then(
+            () => dispatch(setLoadingMapStatus(false))
+          )
+          
         );
 
       },

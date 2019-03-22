@@ -59,6 +59,7 @@ const ActionTypes = keyMirror({
 
   //PLEXUS
   PROCESS_DATA: null,
+  SET_SELECTED_INDICATOR: null,
 
   // mapState
   UPDATE_MAP: null,
