@@ -322,7 +322,8 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
                   <div className="ranking-analysis__section">
                     <RankingWrapper>
                       <div className="ranking-wrapper__score ranking-wrapper__score--bad">
-                        {(cityMeans[cityMeans.findIndex(d => d.value == currView)].x * 100).toFixed(2)}%
+                        {/* {(cityMeans[cityMeans.findIndex(d => d.value == currView)].x * 100).toFixed(2)}% */}
+                        {(cityMeans[cityMeans.findIndex(d => d.value == currView)].x).toFixed(2)}%
                       </div>
                       <div className="ranking-wrapper__label">
                         {TD_LABELS[0]}

@@ -62,13 +62,15 @@ export class BarChart extends Component {
     {xKey && yKey ? (
       scaledData = data.map((d, idx) => ({
         ...d,
-        x: (d[xKey] * 100),
+        x: (d[xKey]),
+        // x: (d[xKey] * 100),
         y: d[yKey]
       })) 
     ) : (
       scaledData = data.map((d, idx) => ({
         ...d,
-        x: (d.x * 100)
+        x: (d.x)
+        // x: (d.x * 100)
       })) 
     )};
     
@@ -99,7 +101,8 @@ export class BarChart extends Component {
 
     return (
       <XYPlot
-        xDomain={[0.0, 1.0].map((x) => x * 100)}
+        xDomain={[0.0, 100]}
+        // xDomain={[0.0, 1.0].map((x) => x * 100)}
         margin={{left: 100, right: 10, top: 25, bottom: 25}}
         height={160}
         width={width}
@@ -107,7 +110,8 @@ export class BarChart extends Component {
       >
         <XAxis
           orientation={'top'}
-          tickValues={[0, 0.5, 1.0].map((x) => x * 100)}
+          // tickValues={[0, 50, 100].map((x) => x * 100)}
+          tickValues={[0, 50, 100]}
           style={{
             ticks: {stroke: '#6A7485'},
             text: {fill: '#6A7485'},
