@@ -73,7 +73,6 @@ function IndicatorManagerFactory(ChangeCityButton, IndicatorPanel) {
       return (
         <div className="indicator-panel">
           <IndicatorPanel
-            computeScore={this.props.computeScore}
             scores={this.props.scores}
             selectedIndicator={this.props.selectedIndicator}
             onConfigChange={this.props.onConfigChange}

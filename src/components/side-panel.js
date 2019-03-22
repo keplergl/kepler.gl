@@ -154,22 +154,6 @@ export default function SidePanelFactory(
     _onExportConfig = () =>
       this.props.uiStateActions.toggleModal(EXPORT_CONFIG_ID);
 
-    getAverage = (arr, col) => arr.reduce((p, c) => p + c[col], 0) / arr.length;
-
-    // PLEXUS
-    // TODO: change to action
-    _computeScore = id => {
-      if (this.props.datasets && this.props.datasets.barangays) {
-        const {allData, fields} = this.props.datasets.barangays;
-        const field = fields.find(op => op.id === id);
-        const column = field.tableFieldIndex - 1;
-
-        console.log(this.getAverage(allData, column));
-        return Math.round(this.getAverage(allData, column) * 10000) / 100 + '%';
-        // return "50.09%"
-      }
-    };
-
     render() {
       console.log('SIDE PANEL');
       console.log(this.props);
@@ -229,8 +213,7 @@ export default function SidePanelFactory(
 
       const indicatorManagerActions = {
         onConfigChange: visStateActions.setSelectedIndicator,
-        onChangeCity: this._onChangeCity,
-        computeScore: this._computeScore
+        onChangeCity: this._onChangeCity
       };
 
       const mapManagerActions = {

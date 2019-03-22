@@ -984,7 +984,7 @@ export const processDataUpdater = (state, action) => {
     const column = field.tableFieldIndex - 1;
     scores[indicator.id] =
       allData.reduce((p, c) => p + c[column], 0) / allData.length;
-    scores[indicator.id] = Math.round(scores[indicator.id] * 10000) / 100;
+    scores[indicator.id] = Math.round(scores[indicator.id] * 100) / 100;
 
     // Get top 10 and bottom 10
     var arr = allData.sort(function(a, b) {
