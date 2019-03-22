@@ -33,24 +33,53 @@ export class BarChart extends Component {
 
     const {
       data,
-      title
+      title,
+      xKey,
+      yKey,
     } = this.props;
 
-    const dataLabels = data.map((d, idx) => ({
+    let scaledData;
+    {xKey && yKey ? (
+      scaledData = data.map((d, idx) => ({
+        ...d,
+        x: (d[xKey] * 100),
+        y: d[yKey]
+      })) 
+    ) : (
+      scaledData = data.map((d, idx) => ({
+        ...d,
+        x: (d.x * 100)
+      })) 
+    )};
+    
+    const dataLabels = scaledData.map((d, idx) => ({
       x: d.x,
       y: d.y,
-      label: d.x,
+      label: d.x.toFixed(2),
       xOffset: 20,
       yOffset: 7,
       style: { fill: '#6A7485' }
     })); 
 
     const FlexibleXYPlot = makeWidthFlexible(XYPlot);
-    const width = 400;
+    // const width = 400;
+    // TODO: transfer constant 
+    const width = 350;
+
+    if(data.length > 0) {
+      console.log("BAR CHART: ");
+      console.log(data)
+    }
+    console.log("BAR CHART 2: ");
+    // console.log(Object.prototype.toString.call( data[0] ) === '[object Array]');
+    if(xKey && yKey) {
+      console.log(xKey + " " + yKey);
+      console.log(data[0][yKey] + " " + data[0][xKey]);
+    }
 
     return (
       <XYPlot
-        xDomain={[0.0, 1.0]}
+        xDomain={[0.0, 1.0].map((x) => x * 100)}
         margin={{left: 100, right: 10, top: 25, bottom: 25}}
         height={160}
         width={width}
@@ -58,7 +87,7 @@ export class BarChart extends Component {
       >
         <XAxis
           orientation={'top'}
-          tickValues={[0, 0.5, 1.0]}
+          tickValues={[0, 0.5, 1.0].map((x) => x * 100)}
           style={{
             ticks: {stroke: '#6A7485'},
             text: {fill: '#6A7485'},
@@ -74,8 +103,38 @@ export class BarChart extends Component {
             fontWeight: 100
           }}
         />
-        <HorizontalBarSeries data={data} barWidth={0.5} />
+        {/* { data.length > 0 ? (
+          <HorizontalBarSeries 
+             data={data} 
+        barWidth={0.5} />
+        ): null
+        } */}
+        
+        <HorizontalBarSeries 
+            data={scaledData}
+            barWidth={0.5} />
+
+        {/* {Object.prototype.toString.call( data[0] ) === '[object Array]'? ( */}
+        {/* {xKey && yKey ? (
+        <HorizontalBarSeries 
+          data={scaledData} 
+          barWidth={0.5}
+          getX={d=>d[xKey]}
+          getY={d=>d[yKey]} />) : 
+          (<HorizontalBarSeries 
+            data={scaledData}
+            barWidth={0.5} />)
+        } */}
+        
         {/* TODO: fix offscreen label close to 1.0 */}
+        {/* { data.length > 0 ? (
+          <LabelSeries
+          data={dataLabels}
+          labelAnchorX="middle"
+          labelAnchorY="text-after-edge"
+        />
+        ): null
+        } */}
         <LabelSeries
           data={dataLabels}
           labelAnchorX="middle"
