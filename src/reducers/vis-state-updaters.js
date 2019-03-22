@@ -37,7 +37,7 @@ import {
   getDefaultFilter,
   getFilterPlot,
   getDefaultFilterPlotType,
-  filterData,
+  filterDataset,
   updateFilterDataId,
   updateFilterField
 } from 'utils/filter-utils';
@@ -420,10 +420,7 @@ export function setFilterUpdater(state, {idx, prop, value}) {
   newState = set(['filters', idx], newFilter, newState);
 
   // filter data
-  const filteredDataset = {
-    ...newState.datasets[dataId],
-    ...filterData(allData, dataId, newState.filters)
-  };
+  const filteredDataset = filterDataset(dataset, newState.filters);
 
   newState = set(['datasets', dataId], filteredDataset, newState);
 
@@ -556,17 +553,23 @@ export const removeFilterUpdater = (state, action) => {
     ...state.filters.slice(idx + 1, state.filters.length)
   ];
 
-  const newState = {
-    ...state,
-    datasets: {
-      ...state.datasets,
-      [dataId]: {
-        ...state.datasets[dataId],
-        ...filterData(state.datasets[dataId].allData, dataId, newFilters)
-      }
-    },
-    filters: newFilters
-  };
+  let newState = set(['filters'], newFilters, state);
+
+  const filteredDataset = filterDataset(state.datasets[dataId], newFilters);
+
+  newState = set(['datasets', dataId], filteredDataset, newState);
+
+  // const newState = {
+  //   ...state,
+  //   datasets: {
+  //     ...state.datasets,
+  //     [dataId]: {
+  //       ...state.datasets[dataId],
+  //       ...filterData(state.datasets[dataId].allData, dataId, newFilters)
+  //     }
+  //   },
+  //   filters: newFilters
+  // };
 
   return updateAllLayerDomainData(newState, dataId);
 };
@@ -1295,29 +1298,31 @@ export function addDefaultTooltips(state, dataset) {
  * Helper function to update layer domains for an array of datsets
  * @param {Object} state
  * @param {Array|Array<string>} dataId dataset id or array of dataset ids
- * @param {Object} newFilter if is called by setFilter, the filter that has changed
+ * @param {Object} updatedFilter if is called by setFilter, the filter that has updated
  * @returns {Object} nextState
  */
-export function updateAllLayerDomainData(state, dataId, newFilter) {
+export function updateAllLayerDomainData(state, dataId, updatedFilter) {
   const dataIds = typeof dataId === 'string' ? [dataId] : dataId;
   const newLayers = [];
   const newLayerDatas = [];
-
+  console.log('updateAllLayerDomainData')
   state.layers.forEach((oldLayer, i) => {
     if (oldLayer.config.dataId && dataIds.includes(oldLayer.config.dataId)) {
+
       // No need to recalculate layer domain if filter has fixed domain
       const newLayer =
-        newFilter && newFilter.fixedDomain
+        updatedFilter && updatedFilter.fixedDomain
           ? oldLayer
           : oldLayer.updateLayerDomain(
               state.datasets[oldLayer.config.dataId],
-              newFilter
+              updatedFilter
             );
 
       const {layerData, layer} = calculateLayerData(
         newLayer,
         state,
-        state.layerData[i]
+        state.layerData[i],
+        // {sameData: updatedFilter && updatedFilter.gpu}
       );
 
       newLayers.push(layer);

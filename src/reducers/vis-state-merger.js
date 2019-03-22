@@ -25,7 +25,7 @@ import {
   getDefaultFilter,
   getFilterProps,
   getFilterPlot,
-  filterData,
+  filterDataset,
   adjustValueToFilterDomain,
   resetFilterGpuMode
 } from 'utils/filter-utils';
@@ -77,10 +77,7 @@ export function mergeFilters(state, filtersToMerge) {
   const updatedDataset = datasetToFilter.reduce(
     (accu, dataId) => ({
       ...accu,
-      [dataId]: {
-        ...datasets[dataId],
-        ...filterData(datasets[dataId].allData, dataId, updatedFilters)
-      }
+      [dataId]: filterDataset(datasets[dataId], updatedFilters)
     }),
     datasets
   );

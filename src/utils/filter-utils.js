@@ -304,27 +304,21 @@ export function resetFilterGpuMode(filters) {
 /**
  * Filter data based on an array of filters
  *
- * @param {Array<Object>} data
- * @param {string} dataId
+ * @param {Object} dataset
  * @param {Array<Object>} filters
  * @returns {Object} filteredData
  * @returns {Array<Number>} filteredData.filteredIndex
  * @returns {Array<Number>} filteredData.filteredIndexForDomain
  */
-export function filterData(allData, dataId, filters) {
+export function filterDataset(dataset, filters) {
+  const {allData, id: dataId} = dataset;
 
-  if (!allData || !dataId) {
-    // why would there not be any data? are we over doing this?
-    return {
-      filteredIndex: [],
-      filteredIndexForDomain: []
-    };
-  }
-
-  // if there is no data
+  // if there is no filters
   if (!filters.length) {
     return {
-      filteredIndex: allData.map((d, i) => i)
+      ...dataset,
+      filteredIndex: dataset.allIndexes,
+      filteredIndexForDomain: dataset.allIndexes
     };
   }
 
@@ -369,7 +363,11 @@ export function filterData(allData, dataId, filters) {
     }
   }
 
-  return {filteredIndex, filteredIndexForDomain};
+  return {
+    ...dataset,
+    filteredIndex,
+    filteredIndexForDomain
+  };
 }
 
 /**

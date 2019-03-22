@@ -54,9 +54,9 @@ export default class ScatterplotBrushingLayer extends ScatterplotLayer {
   initializeState() {
     super.initializeState();
 
-    this.getAttributeManager().addInstanced({
-      instanceFilterValue: {size: MAX_GPU_FILTERS, accessor: 'getFilterValue'}
-    });
+    // this.getAttributeManager().addInstanced({
+    //   instanceFilterValue: {size: MAX_GPU_FILTERS, accessor: 'getFilterValue'}
+    // });
   }
 
   draw(opts) {
