@@ -105,7 +105,6 @@ function KeplerGlFactory(
     componentWillMount() {
       this._loadMapStyle(this.props.mapStyles);
       this._handleResize(this.props);
-      console.log(this.props);
     }
 
     componentWillReceiveProps(nextProps) {
@@ -214,7 +213,9 @@ function KeplerGlFactory(
         datasets,
         layerData,
         hoverInfo,
-        clicked
+        clicked,
+        // PLEXUS
+        plexus
       } = visState;
 
       const notificationPanelFields = {
@@ -240,7 +241,10 @@ function KeplerGlFactory(
         mapStyleActions,
         visStateActions,
         uiStateActions,
-        width: DIMENSIONS.sidePanel.width
+        width: DIMENSIONS.sidePanel.width,
+        // PLEXUS
+        scores: plexus.scores,
+        selectedIndicator: plexus.selectedIndicator
       };
 
       const mapFields = {

@@ -27,28 +27,19 @@ import MapStyleSelectorFactory from 'components/side-panel/map-style-panel/map-s
 import LayerGroupSelectorFactory from 'components/side-panel/map-style-panel/map-layer-selector';
 
 import {Add} from 'components/common/icons';
-import { DEFAULT_LAYER_GROUPS } from 'constants/default-settings';
+import {DEFAULT_LAYER_GROUPS} from 'constants/default-settings';
 import IndicatorPanelFactory from './indicator-panel/indicator-panel';
-
-
 
 export function ChangeCityButtonFactory() {
   const ChangeCityButton = ({onClick}) => (
-    <Button
-      onClick={onClick}
-      width="105px"
-      secondary
-    >
+    <Button onClick={onClick} width="105px" secondary>
       Change City
     </Button>
   );
 
   return ChangeCityButton;
 }
-IndicatorManagerFactory.deps = [
-  ChangeCityButtonFactory,
-  IndicatorPanelFactory
-];
+IndicatorManagerFactory.deps = [ChangeCityButtonFactory, IndicatorPanelFactory];
 // MapManagerFactory.deps = [
 //   MapStyleSelectorFactory,
 //   LayerGroupSelectorFactory
@@ -79,81 +70,18 @@ function IndicatorManagerFactory(ChangeCityButton, IndicatorPanel) {
     // };
 
     render() {
-    //   const {mapStyle} = this.props;
-    //   const editableLayers = DEFAULT_LAYER_GROUPS.map(lg =>
-    //     lg.slug
-    //  );
-      this.props.computeScore("desirability");
       return (
         <div className="indicator-panel">
-        
-           {/* <ChangeCityButton
-            onClick={this.props.onChangeCity}
-          /> */}
-          <div style={{padding:'10px'}}></div>
           <IndicatorPanel
             computeScore={this.props.computeScore}
-
-        />
-          {/*
-          <div>
-          <Row>
-                  <Indicator>
-                    <Score>0.75</Score>
-                    Transport Desirability
-                  </Indicator>
-                </Row>
-                <hr/>
-                Non Government Perspective
-                <Row>
-                  <Indicator>
-                    <Score>0.63</Score>
-                    Spatial
-                  </Indicator>
-                  <Indicator>
-                    <Score>0.59</Score>
-                    Temporal
-                  </Indicator>
-                  <Indicator>
-                    <Score>0.87</Score>
-                    Economic
-                  </Indicator>
-                </Row>
-                <Row>
-                  <Indicator>
-                    <Score>0.67</Score>
-                    Physical
-                  </Indicator>
-                  <Indicator>
-                    <Score>0.78</Score>
-                    Psychological
-                  </Indicator>
-                  <Indicator>
-                    <Score>0.73</Score>
-                    Physiological
-                  </Indicator>
-                </Row>
-                <hr/>
-                Government Perspective
-                <Row>
-                  <Indicator>
-                    <Score>0.69</Score>
-                    Sustainability
-                  </Indicator>
-                  <Indicator>
-                    <Score>0.80</Score>
-                    Performance
-                  </Indicator>
-                  <Indicator>
-                    <Score>0.70</Score>
-                    Accessibility
-                  </Indicator>
-                </Row>
-          </div> */}
+            scores={this.props.scores}
+            selectedIndicator={this.props.selectedIndicator}
+            onConfigChange={this.props.onConfigChange}
+          />
         </div>
       );
     }
-  }
+  };
 }
 
 export default IndicatorManagerFactory;

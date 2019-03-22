@@ -22,117 +22,108 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 // import Switch from 'components/common/switch';
-import {SidePanelDivider} from 'components/common/styled-components';
+import {SidePanelDivider, Tooltip} from 'components/common/styled-components';
 import IndicatorFactory from './indicator';
+import {
+  TRANSPORT_DESIRABILITY,
+  NON_TRANSPORT_MODE,
+  TRANSPORT_MODE
+} from 'constants/default-settings';
 
-// import {
-//   StyledPanelHeader,
-//   PanelHeaderTitle,
-//   PanelHeaderContent,
-//   PanelContent
-// } from 'components/common/styled-components';
-
-// const StyledPanelContent = PanelContent.extend`
-//   border-top: 1px solid ${props => props.theme.panelBorderColor};
-// `;
 const Row = styled.div`
   display: flex;
   flex-direction: row;
   text-align: center;
+  flex-wrap: wrap;
+  width: 100%;
 `;
+
 const StyledIndicatorPanel = styled.div`
   padding-bottom: 6px;
 `;
 
-IndicatorPanelFactory.deps = [
-  IndicatorFactory
-];
+const StyledIndicatorSection = styled.div`
+  // padding-bottom: 6px;
+`;
+
+const StyledIndicatorContent = styled.div`
+  display: flex;
+  flex-direction: row;
+  text-align: center;
+  flex-wrap: wrap;
+  width: 100%;
+`;
+
+IndicatorPanelFactory.deps = [IndicatorFactory];
 
 function IndicatorPanelFactory(Indicator) {
+  
   return class InteractionPanel extends Component {
-    // static propTypes = {
-    //   datasets: PropTypes.object.isRequired,
-    //   config: PropTypes.object.isRequired,
-    //   onConfigChange: PropTypes.func.isRequired
-    // };
-
-    // state = {isConfigActive: false};
-
-    // _updateConfig = newProp => {
-    //   this.props.onConfigChange({
-    //     ...this.props.config,
-    //     ...newProp
-    //   });
-    // };
-
-    // _enableConfig = () => {
-    //   this.setState({isConfigActive: !this.state.isConfigActive});
-    // };
-
+    _onclick = () => {
+      console.error(1234);
+    };
     render() {
-    //   const {config, datasets} = this.props;
-    //   const onChange = newConfig => this._updateConfig({config: newConfig});
-    //   let template = null;
-
       return (
-          <StyledIndicatorPanel className="indicator-panel">
-          Transport Desirability Score
-                <div style={{padding:'5px'}}></div>
-            <Row>
-                  <Indicator
-                  label="Transport Desirability"
-                  score={this.props.computeScore("desirability")}
-                  />
-                </Row>
-                <SidePanelDivider/>
-                Non-transport Mode Indicators
-                <Row>
-                <Indicator
-                  label="Spatial"
-                  score={this.props.computeScore("spatial")}
-                  />
-                  <Indicator
-                  label="Temporal"
-                  score={this.props.computeScore("temporal")}
-                  />
-                  <Indicator
-                  label="Economic"
-                  score={this.props.computeScore("economic")}
-                  />
-                </Row>
-                <Row>
-                <Indicator
-                  label="Physical"
-                  score={this.props.computeScore("physical")}
-                  />
-                </Row>
-                <SidePanelDivider/>
-                Transport Mode Indicators
-                <Row>
-                <Indicator
-                  label="Psychological"
-                  score={this.props.computeScore("psychological")}
-                  />
-                  <Indicator
-                  label="Physiological"
-                  score={this.props.computeScore("physiological")}
-                  />
-                </Row>
-                <Row>
-                <Indicator
-                  label="Sustainability"
-                  score={this.props.computeScore("sustainability")}
-                  />
-                  <Indicator
-                  label="Performance"
-                  score={this.props.computeScore("performance")}
-                  />
-                  <Indicator
-                  label="Fairness"
-                  score={this.props.computeScore("fairness")}
-                  />
-                </Row>
-          </StyledIndicatorPanel>
+        <StyledIndicatorPanel className="indicator-panel">
+          <StyledIndicatorSection className="indicator-panel__section">
+            {TRANSPORT_DESIRABILITY.label}
+          </StyledIndicatorSection>
+          <div style={{padding: '5px'}} />
+          <StyledIndicatorContent className="indicator-panel__content">
+            {TRANSPORT_DESIRABILITY.indicators.map(indicator => (
+              <Indicator
+                id={indicator.id}
+                label={indicator.label}
+                score={
+                  this.props.scores ? this.props.scores[indicator.id] || '' : ''
+                }
+                selected={indicator.id === this.props.selectedIndicator}
+                onConfigChange={this.props.onConfigChange}
+              />
+            ))}
+          </StyledIndicatorContent>
+
+          <SidePanelDivider />
+
+          <StyledIndicatorSection className="indicator-panel__section">
+            {NON_TRANSPORT_MODE.label}
+          </StyledIndicatorSection>
+          <div style={{padding: '5px'}} />
+          <StyledIndicatorContent className="indicator-panel__content">
+            {NON_TRANSPORT_MODE.indicators.map(indicator => (
+              <Indicator
+                id={indicator.id}
+                label={indicator.label}
+                score={
+                  this.props.scores ? this.props.scores[indicator.id] || '' : ''
+                }
+                selected={indicator.id === this.props.selectedIndicator}
+                onConfigChange={this.props.onConfigChange}
+              />
+            ))}
+          </StyledIndicatorContent>
+
+          <SidePanelDivider />
+
+          <StyledIndicatorSection className="indicator-panel__section">
+            {TRANSPORT_MODE.label}
+          </StyledIndicatorSection>
+          <div style={{padding: '5px'}} />
+          <StyledIndicatorContent className="indicator-panel__content">
+            {TRANSPORT_MODE.indicators.map(indicator => (
+              <Indicator
+                id={indicator.id}
+                label={indicator.label}
+                description={indicator.description}
+                score={
+                  this.props.scores ? this.props.scores[indicator.id] || '' : ''
+                }
+                selected={indicator.id === this.props.selectedIndicator}
+                onConfigChange={this.props.onConfigChange}
+              />
+            ))}
+          </StyledIndicatorContent>
+        </StyledIndicatorPanel>
         // <StyledInteractionPanel className="interaction-panel">
         //   <StyledPanelHeader
         //     className="interaction-panel__header"
@@ -163,7 +154,7 @@ function IndicatorPanelFactory(Indicator) {
         // </StyledInteractionPanel>
       );
     }
-  }
+  };
 }
 
 export default IndicatorPanelFactory;

@@ -38,6 +38,8 @@ import {
   loadFilesErrUpdater,
   // PLEXUS
   processDataUpdater,
+  selectedIndicatorUpdater,
+  
   updateVisDataUpdater,
   removeDatasetUpdater,
   removeFilterUpdater,
@@ -86,6 +88,8 @@ const actionHandler = {
 
   // PLEXUS
   [ActionTypes.PROCESS_DATA]: processDataUpdater,
+  
+  [ActionTypes.SET_SELECTED_INDICATOR]: selectedIndicatorUpdater,
 
   [ActionTypes.MAP_CLICK]: mapClickUpdater,
 

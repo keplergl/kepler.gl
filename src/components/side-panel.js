@@ -33,7 +33,6 @@ import MapManagerFactory from './side-panel/map-manager';
 import IndicatorManagerFactory from './side-panel/indicator-manager';
 import PanelToggleFactory from './side-panel/panel-toggle';
 
-
 import {
   ADD_DATA_ID,
   ADD_MAP_STYLE_ID,
@@ -44,17 +43,25 @@ import {
   PANELS
 } from 'constants/default-settings';
 
-
 const SidePanelContent = styled.div`
   ${props => props.theme.sidePanelScrollBar};
   flex-grow: 1;
-  padding: 1.3em;
+  padding: 0.95em;
   overflow-y: scroll;
   overflow-x: hidden;
   color: ${props => props.theme.titleTextColor};
 `;
 
 export const PanelTitleFactory = () => styled.div`
+  color: ${props => props.theme.titleTextColor};
+  font-size: 1.5em;
+  font-weight: 400;
+  letter-spacing: 1.25px;
+  margin-bottom: 3vh;
+  display: block;
+`;
+
+export const PanelHeadingFactory = () => styled.div`
   color: ${props => props.theme.titleTextColor};
   font-size: 1.75em;
   font-weight: 400;
@@ -72,7 +79,10 @@ SidePanelFactory.deps = [
   FilterManagerFactory,
   InteractionManagerFactory,
   MapManagerFactory,
-  IndicatorManagerFactory
+
+  // PLEXUS
+  IndicatorManagerFactory,
+  PanelHeadingFactory
 ];
 
 /**
@@ -88,9 +98,9 @@ export default function SidePanelFactory(
   FilterManager,
   InteractionManager,
   MapManager,
-  IndicatorManager
+  IndicatorManager,
+  PanelHeading
 ) {
-
   return class SidePanel extends Component {
     static propTypes = {
       filters: PropTypes.arrayOf(PropTypes.any).isRequired,
@@ -136,30 +146,32 @@ export default function SidePanelFactory(
       this.props.uiStateActions.openDeleteModal(key);
     };
 
-    _onExportImage = () => this.props.uiStateActions.toggleModal(EXPORT_IMAGE_ID);
+    _onExportImage = () =>
+      this.props.uiStateActions.toggleModal(EXPORT_IMAGE_ID);
 
     _onExportData = () => this.props.uiStateActions.toggleModal(EXPORT_DATA_ID);
 
-    _onExportConfig = () => this.props.uiStateActions.toggleModal(EXPORT_CONFIG_ID);
-    
-    getAverage = (arr, col) => arr.reduce((p, c) => p + c[col], 0) / arr.length
+    _onExportConfig = () =>
+      this.props.uiStateActions.toggleModal(EXPORT_CONFIG_ID);
+
+    getAverage = (arr, col) => arr.reduce((p, c) => p + c[col], 0) / arr.length;
 
     // PLEXUS
     // TODO: change to action
-    _computeScore = (id) => {
-      if(this.props.datasets && this.props.datasets.barangays) {
+    _computeScore = id => {
+      if (this.props.datasets && this.props.datasets.barangays) {
         const {allData, fields} = this.props.datasets.barangays;
         const field = fields.find(op => op.id === id);
         const column = field.tableFieldIndex - 1;
-        
+
         console.log(this.getAverage(allData, column));
-        return Math.round(this.getAverage(allData, column) * 10000)/100 + "%";
+        return Math.round(this.getAverage(allData, column) * 10000) / 100 + '%';
         // return "50.09%"
       }
-    }
+    };
 
     render() {
-      console.log("SIDE PANEL");
+      console.log('SIDE PANEL');
       console.log(this.props);
 
       const {
@@ -175,7 +187,12 @@ export default function SidePanelFactory(
         interactionConfig,
         visStateActions,
         mapStyleActions,
-        uiStateActions
+        uiStateActions,
+        // PLEXUS
+        selectedCity,
+        activeCities,
+        scores,
+        selectedIndicator
       } = this.props;
 
       const {activeSidePanel} = uiState;
@@ -185,7 +202,7 @@ export default function SidePanelFactory(
         addLayer: visStateActions.addLayer,
         layerConfigChange: visStateActions.layerConfigChange,
         layerVisualChannelConfigChange:
-        visStateActions.layerVisualChannelConfigChange,
+          visStateActions.layerVisualChannelConfigChange,
         layerTypeChange: visStateActions.layerTypeChange,
         layerVisConfigChange: visStateActions.layerVisConfigChange,
         updateLayerBlending: visStateActions.updateLayerBlending,
@@ -211,7 +228,7 @@ export default function SidePanelFactory(
       };
 
       const indicatorManagerActions = {
-        onConfigChange: visStateActions.interactionConfigChange,
+        onConfigChange: visStateActions.setSelectedIndicator,
         onChangeCity: this._onChangeCity,
         computeScore: this._computeScore
       };
@@ -224,10 +241,13 @@ export default function SidePanelFactory(
         showAddMapStyleModal: this._showAddMapStyleModal
       };
 
-      var cityName = "";
-      if(this.props.activeCities && this.props.selectedCity)
-        cityName = this.props.activeCities.find(op => op.id == this.props.selectedCity).name;
-        
+      var cityName = '';
+      if (activeCities && selectedCity) {
+        cityName = this.props.activeCities.find(
+          op => op.id == this.props.selectedCity
+        ).name;
+      }
+
       return (
         <div>
           <Sidebar
@@ -253,33 +273,34 @@ export default function SidePanelFactory(
               togglePanel={uiStateActions.toggleSidePanel}
             />
             <SidePanelContent className="side-panel__content">
-            <PanelTitle className="side-panel__content__title">
-              {cityName}
-              <Button
-                onClick={this._onChangeCity}
-                width="105px"
-                secondary
-              >
+              <PanelHeading className="side-panel__heading__title">
+                {cityName}
+              </PanelHeading>
+              <Button onClick={this._onChangeCity} width="105px" secondary>
                 Change City
               </Button>
-                </PanelTitle>
-                
-
-                <PanelTitle className="side-panel__content__title">
-                  {(PANELS.find(({id}) => id === activeSidePanel) || {}).label}
-                </PanelTitle>
-                {activeSidePanel === 'layer' && (
-                  <IndicatorManager
-                  {...indicatorManagerActions}
-                />
-                )}
-                {activeSidePanel === 'filter' && (
-                  <FilterManager
-                    {...filterManagerActions}
-                    datasets={datasets}
-                    filters={filters}
-                  />
-                )}
+              <PanelTitle className="side-panel__content__title">
+                {(PANELS.find(({id}) => id === activeSidePanel) || {}).label}
+              </PanelTitle>
+              {selectedCity ? (
+                <div>
+                  {activeSidePanel === 'layer' && (
+                    <IndicatorManager
+                      {...indicatorManagerActions}
+                      scores={scores}
+                      selectedIndicator={selectedIndicator}
+                    />
+                  )}
+                  {activeSidePanel === 'filter' && (
+                    <FilterManager
+                      {...filterManagerActions}
+                      datasets={datasets}
+                      filters={filters}
+                    />
+                  )}
+                </div>
+              ) : null}
+              {/*  */}
               {/* <div>
                 <PanelTitle className="side-panel__content__title">
                   {(PANELS.find(({id}) => id === activeSidePanel) || {}).label}

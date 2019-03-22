@@ -65,7 +65,7 @@ export const PANELS = [
   },
   {
     id: 'filter',
-    label: 'Filters TEST',
+    label: 'Filters',
     iconComponent: FilterFunnel
   }/*,
   {
@@ -603,3 +603,101 @@ export const DEFAULT_NOTIFICATION_TOPICS = keyMirror({
   global: null,
   file: null
 });
+
+// PLEXUS
+
+export const INDICATORS = [
+  // Desirability
+  {
+    id: 'desirability',
+    label: 'Transport Desirability',
+    description: 'Transport Desirability is a indicator. Transport Desirability is a indicator. Transport Desirability is a indicator. '
+  },
+
+  // Non transport mode
+  {
+    id: 'spatial',
+    label: 'Spatial',
+    description: 'Spatial is a indicator. Transport Desirability is a indicator. Transport Desirability is a indicator. '
+  },
+  {
+    id: 'temporal',
+    label: 'Temporal',
+    description: 'Temporal is a indicator. Transport Desirability is a indicator. Transport Desirability is a indicator. '
+  },
+  {
+    id: 'economic',
+    label: 'Economic',
+    description: 'Economic is a indicator. Transport Desirability is a indicator. Transport Desirability is a indicator. '
+  },
+  {
+    id: 'physical',
+    label: 'Physical',
+    description: 'Physical is a indicator. Transport Desirability is a indicator. Transport Desirability is a indicator. '
+  },
+
+  // Transport indicator
+  {
+    id: 'psychological',
+    label: 'Psychological',
+    description: 'Psychological is a indicator. Transport Desirability is a indicator. Transport Desirability is a indicator. '
+  },
+  {
+    id: 'physiological',
+    label: 'Physiological',
+    description: 'Physiological is a indicator. Transport Desirability is a indicator. Transport Desirability is a indicator. '
+  },
+  {
+    id: 'sustainability',
+    label: 'Sustainability',
+    description: 'Sustainability is a indicator. Transport Desirability is a indicator. Transport Desirability is a indicator. '
+  },
+  {
+    id: 'performance',
+    label: 'Performance',
+    description: 'Performance is a indicator. Transport Desirability is a indicator. Transport Desirability is a indicator. '
+  },
+  {
+    id: 'fairness',
+    label: 'Fairness',
+    description: 'Fairness is a indicator. Transport Desirability is a indicator. Transport Desirability is a indicator. '
+  }
+]
+
+export const TRANSPORT_DESIRABILITY = {
+  label: 'Transport Desirability Score',
+  indicators: [
+    INDICATORS[0]
+  ]
+}
+
+export const NON_TRANSPORT_MODE = {
+  label: 'Non-Transport Mode Indicators',
+  indicators: INDICATORS.slice(1,5)
+}
+
+export const TRANSPORT_MODE = {
+  label: 'Transport Mode Indicators',
+  indicators: INDICATORS.slice(5,10)
+}
+
+export const NON_GOVERNMENT_MODE = {
+  label: 'Non-Government Mode Indicators',
+  indicator: [
+    INDICATORS[1],
+    INDICATORS[2],
+    INDICATORS[3],
+    INDICATORS[4],
+    INDICATORS[5],
+    INDICATORS[6]
+  ]
+}
+
+export const GOVERNMENT_MODE = {
+  label: 'Government Mode Indicators',
+  indicator: [
+    INDICATORS[7],
+    INDICATORS[8],
+    INDICATORS[9]
+  ]
+}

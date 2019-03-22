@@ -20,26 +20,32 @@
 
 import React from 'react';
 import styled from 'styled-components';
+import {Tooltip} from 'components/common/styled-components';
 
 const Score = styled.div`
-/*margin: auto;*/
-/*background-color: #1a1a1a;*/
-font-size: 1.7em;
-border-radius : 100%;
-/*width: 60px;
+  /*margin: auto;*/
+  /*background-color: #1a1a1a;*/
+  font-size: 1.7em;
+  border-radius: 100%;
+  /*width: 60px;
 height: 60px;*/
-/*line-height: 60px;*/
+  /*line-height: 60px;*/
 `;
+const Label = styled.div``;
 
-const Style = styled.div`
+const Style = styled.button`
+  color: #ffffff;
+  border-width: 0;
+  cursor: pointer;
+  outline: 0;
   align-content: center;
   justify-content: center;
   display: block;
   text-align: center;
   margin: 2px;
   min-width: 85px;
-  font-size: .8em;
-  background-color: #29323C;
+  font-size: 0.8em;
+  background-color: #29323c;
   padding: 10px 5px;
   border-radius: 10%;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
@@ -49,12 +55,35 @@ const Style = styled.div`
   }
 `;
 
+const StyleMessage = styled.span`
+  width: 100px;
+  height: auto;
+  display: inline-block;
+`;
+const StyledIndicator=styled.div`
+  .selected {
+    background-color: #000000;
+    color: #ffffff;
+  }
+`;
 function IndicatorFactory() {
-  const Indicator = ({label, score}) => (
-    <Style>
-      <Score>{score}</Score>
-      {label}
-    </Style>
+  const Indicator = ({id, label, description, score, selected, onConfigChange}) => (
+    <StyledIndicator>
+      <Style
+        onClick={() => onConfigChange(id)}
+        data-tip
+        data-for={`${label}_indicator`}
+        className={selected ? "selected" : ""}
+      >
+        <Score>{score}%</Score>
+        <Label>{label}</Label>
+      </Style>
+      {description ? (
+        <Tooltip id={`${label}_indicator`} place="right" effect="solid">
+          <StyleMessage>{description}</StyleMessage>
+        </Tooltip>
+      ) : null}
+    </StyledIndicator>
   );
 
   return Indicator;
