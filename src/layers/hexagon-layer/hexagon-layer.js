@@ -67,7 +67,8 @@ export default class HexagonLayer extends AggregationLayer {
     objectHovered,
     mapState,
     interaction,
-    layerCallbacks
+    layerCallbacks,
+    layerInteraction
   }) {
     const zoomFactor = this.getZoomFactor(mapState);
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
@@ -77,6 +78,7 @@ export default class HexagonLayer extends AggregationLayer {
     return [
       new EnhancedHexagonLayer({
         ...data,
+        ...layerInteraction,
         id: this.id,
         idx,
 
@@ -114,6 +116,7 @@ export default class HexagonLayer extends AggregationLayer {
       ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d
         ? [
             new GeoJsonLayer({
+              ...layerInteraction,
               id: `${this.id}-hovered`,
               data: [
                 hexagonToPolygonGeo(

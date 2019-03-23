@@ -306,7 +306,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       const data = layerData[idx];
 
       const layerInteraction = {
-        mousePosition
+        mousePosition,
+        wrapLongitude: true
       };
 
       const objectHovered = clicked || hoverInfo;

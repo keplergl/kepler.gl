@@ -297,6 +297,7 @@ export default class PointLayer extends Layer {
       ...(this.config.textLabel.field
         ? [
             new TextLayer({
+              ...layerInteraction,
               id: `${this.id}-label`,
               data: data.data,
               getPosition: data.getPosition,

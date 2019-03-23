@@ -85,7 +85,8 @@ export default class GridLayer extends AggregationLayer {
     objectHovered,
     mapState,
     interaction,
-    layerCallbacks
+    layerCallbacks,
+    layerInteraction
   }) {
     const zoomFactor = this.getZoomFactor(mapState);
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
@@ -95,6 +96,7 @@ export default class GridLayer extends AggregationLayer {
     return [
       new EnhancedGridLayer({
         ...data,
+        ...layerInteraction,
         id: this.id,
         idx,
         cellSize,
@@ -130,6 +132,7 @@ export default class GridLayer extends AggregationLayer {
       ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d
         ? [
             new GeoJsonLayer({
+              ...layerInteraction,
               id: `${this.id}-hovered`,
               data: [
                 pointToPolygonGeo({
