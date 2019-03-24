@@ -336,7 +336,6 @@ class App extends Component {
                   width={width}
                   height={height - (showBanner ? BannerHeight : 0)}
                   onSaveMap={this._isCloudStorageEnabled() && this._toggleCloudModal}
-                  saveMapLabel="Share Public URL"
                 />
               )}
             </AutoSizer>

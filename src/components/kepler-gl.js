@@ -175,9 +175,7 @@ function KeplerGlFactory(
         id,
         appName,
         version,
-        // Temporary until we find a better solution to pass labels to override existing ones
         onSaveMap,
-        saveMapLabel,
         width,
         height,
         mapboxApiAccessToken,
@@ -227,7 +225,6 @@ function KeplerGlFactory(
         mapStyle,
         layerBlending,
         onSaveMap,
-        saveMapLabel,
         uiState,
         mapStyleActions,
         visStateActions,
