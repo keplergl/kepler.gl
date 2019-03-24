@@ -28,7 +28,7 @@ import {theme} from 'kepler.gl/styles';
 import Banner from './components/banner';
 import Announcement from './components/announcement';
 import {replaceLoadDataModal} from './factories/load-data-modal';
-import {replaceSaveMap} from './factories/panel-header';
+import {replaceSaveMap} from './factories/save-map';
 import ExportUrlModal from './components/sharing/export-url-modal';
 import {AUTH_TOKENS} from './constants/default-settings';
 import {

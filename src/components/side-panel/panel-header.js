@@ -156,8 +156,8 @@ export const ExportImageFactory = () => {
     <PanelItem {...props}/>
   );
   ExportImage.defaultProps = {
-    label: "Export Image",
-    icon: Picture
+    label: 'Export Image',
+    icon: <Picture />
   };
 
   return ExportImage;
@@ -168,8 +168,8 @@ export const ExportDataFactory = () => {
     <PanelItem {...props}/>
   );
   ExportData.defaultProps = {
-    label: "Export Data",
-    icon: Files
+    label: 'Export Data',
+    icon: <Files />
   };
 
   return ExportData;
@@ -180,8 +180,8 @@ export const ExportConfigFactory = () => {
     <PanelItem {...props}/>
   );
   ExportConfig.defaultProps = {
-    label: "Export Config",
-    icon: CodeAlt
+    label: 'Export Config',
+    icon: <CodeAlt />
   };
 
   return ExportConfig;
@@ -192,8 +192,8 @@ export const ExportMapFactory = () => {
     <PanelItem {...props}/>
   );
   ExportMap.defaultProps = {
-    label: "Export Map",
-    icon: Map
+    label: 'Export Map',
+    icon: <Map />
   };
 
   return ExportMap;
@@ -204,8 +204,8 @@ export const SaveMapFactory = () => {
     <PanelItem {...props}/>
   );
   SaveMap.defaultProps = {
-    label: "Save Map",
-    icon: Share
+    label: 'Save Map',
+    icon: <Share />
   };
 
   return SaveMap;

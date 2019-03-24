@@ -30,7 +30,8 @@ export {default as ModalContainerFactory} from './modal-container';
 export {default as PlotContainerFactory} from './plot-container';
 
 // // side panel factories
-export {default as PanelHeaderFactory,
+export {
+  default as PanelHeaderFactory,
   SaveExportDropdownFactory,
   ExportImageFactory,
   ExportDataFactory,
