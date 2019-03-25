@@ -184,13 +184,13 @@ module.exports = env => {
       logInstruction('You can get the token at https://www.mapbox.com/help/how-access-tokens-work/');
       throw new Error('Missing Mapbox Access token');
     }
-    if (!process.env.MapboxAccessToken) {
+    if (!process.env.DropboxClientId) {
       logError('Error! DropboxClientId is not defined');
       logInstruction(`Make sure to run "export MapboxExportToken=<token>" before deploy the website`);
       logInstruction('You can get the token at https://www.dropbox.com/developers');
       throw new Error('Missing Export DropboxClientId Access token');
     }
-    if (!process.env.MapboxAccessToken) {
+    if (!process.env.MapboxExportToken) {
       logError('Error! MapboxExportToken is not defined');
       logInstruction(`Make sure to run "export MapboxExportToken=<token>" before deploy the website`);
       logInstruction('You can get the token at https://www.mapbox.com/help/how-access-tokens-work/');

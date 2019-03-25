@@ -38,7 +38,8 @@ export const exportMapToHTML = options => {
       <script src="https://unpkg.com/redux@3.7.2/dist/redux.js" crossorigin></script>
       <script src="https://unpkg.com/react-redux@4.4.9/dist/react-redux.min.js" crossorigin></script>
       <script src="https://unpkg.com/styled-components@4.1.3/dist/styled-components.min.js" crossorigin></script>
-    
+      <script src="https://unpkg.com/react-virtualized@9.21.0/dist/umd/react-virtualized.js" crossorigin></script>
+      
       <!-- Load Kepler.gl latest version-->
       <script src="https://unpkg.com/kepler.gl/umd/keplergl.min.js" crossorigin></script>
       <!-- You can also specify a specific versions by doing the following -->
@@ -98,25 +99,24 @@ export const exportMapToHTML = options => {
           );
         }(Redux, enhancers));
         /** END STORE **/
-    
+        
         /** COMPONENTS **/
-        const KeplerElement = (function (react, keplerGl, mapboxToken) {
-          return function(props) {
+        const KeplerElement = (function (react, reactVirtualized, keplerGl, mapboxToken) {
+          return function() {
             return react.createElement(
               'div',
               {style: {position: 'absolute', left: 0, width: '100vw', height: '100vh'}},
-              react.createElement(
-                keplerGl.KeplerGl,
-                {
+              React.createElement(reactVirtualized.AutoSizer, null, function (props) {
+                return React.createElement(keplerGl.KeplerGl, {
                   mapboxApiAccessToken: mapboxToken,
-                  id: 'map',
-                  width: props.width || 1200,
-                  height: props.height || 800
-                }
-              )
+                  id: "map",
+                  width: props.width,
+                  height: props.height
+                });
+              })
             )
           }
-        }(React, KeplerGl, MAPBOX_TOKEN));
+        }(React, ReactVirtualized, KeplerGl, MAPBOX_TOKEN));
     
         const app = (function createReactReduxProvider(react, reactRedux, KeplerElement) {
           return react.createElement(

@@ -113,6 +113,8 @@ const ExportCloudModal = ({
   onCloudLoginSuccess
 }) => {
   const metaUrl = get(info, ['metadata', 'url']);
+  const error = get(info, ['error']);
+  const folderLink = get(info, ['metadata', 'folder_link']);
   const sharingLink = metaUrl ? getMapPermalink(metaUrl) : null;
   return (
     <div className="export-data-modal">
@@ -132,10 +134,7 @@ const ExportCloudModal = ({
           <StyledExportDataSection>
             <div className="description">
               <div className="title">
-                Data Type
-              </div>
-              <div className="subtitle">
-                Choose the type of data you want to export
+                Upload through Dropbox
               </div>
             </div>
             <div className="selection">
@@ -156,9 +155,14 @@ const ExportCloudModal = ({
                 {isLoading && (
                   <StatusPanel isLoading={isLoading} {...info} />
                 )}
+                {error && (
+                  <div className="subtitle" style={{color: 'red', fontWeight: 500}}>
+                    {error.error}
+                  </div>
+                )}
                 {metaUrl && [
                   (<SharingUrl key={0} url={sharingLink} message={'Share your map with other users'}/>),
-                  (<SharingUrl key={1} url={metaUrl} message={'Your new saved configuration'}/>)
+                  (<a href={folderLink} target="_blank" style={{textDecoration: 'underline'}}>Go to your Kepler.gl Dropbox folder</a>)
                 ]}
               </div>
             </div>

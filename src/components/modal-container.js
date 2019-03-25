@@ -34,9 +34,9 @@ import DataTableModalFactory from './modals/data-table-modal';
 import LoadDataModalFactory from './modals/load-data-modal';
 import ExportImageModalFactory from './modals/export-image-modal';
 import ExportDataModalFactory from './modals/export-data-modal';
+import ExportMapModalFactory from './modals/export-map-modal';
 import ExportConfigModalFactory from './modals/export-config-modal';
 import AddMapStyleModalFactory from './modals/add-map-style-modal';
-import ExportMapModalFactory from './modals/export-map-modal';
 
 // Template
 import {exportMapToHTML} from 'templates/export-map';
@@ -76,8 +76,8 @@ ModalContainerFactory.deps = [
   LoadDataModalFactory,
   ExportImageModalFactory,
   ExportDataModalFactory,
-  ExportConfigModalFactory,
   ExportMapModalFactory,
+  ExportConfigModalFactory,
   AddMapStyleModalFactory
 ];
 
@@ -87,8 +87,8 @@ export default function ModalContainerFactory(
   LoadDataModal,
   ExportImageModal,
   ExportDataModal,
-  ExportConfigModal,
   ExportMapModal,
+  ExportConfigModal,
   AddMapStyleModal
 ) {
   class ModalWrapper extends Component {
@@ -282,7 +282,6 @@ export default function ModalContainerFactory(
               onConfirm: this._closeModal
             };
             break;
-
           case EXPORT_IMAGE_ID:
             const { ratio, legend, resolution, exporting, imageDataUri } = uiState.exportImage;
             template = (
@@ -312,7 +311,6 @@ export default function ModalContainerFactory(
               }
             };
             break;
-
           case EXPORT_DATA_ID:
             template = (
               <ExportDataModal
@@ -336,7 +334,6 @@ export default function ModalContainerFactory(
               }
             };
             break;
-
           case EXPORT_CONFIG_ID:
             const keplerGlConfig = KeplerGlSchema.getConfigToSave(
               { mapStyle, visState, mapState, uiState }
@@ -361,7 +358,6 @@ export default function ModalContainerFactory(
               }
             };
             break;
-
           case ADD_MAP_STYLE_ID:
             template = (
               <AddMapStyleModal
@@ -385,9 +381,7 @@ export default function ModalContainerFactory(
               }
             };
             break;
-
           case EXPORT_MAP_ID:
-
             template = (
               <ExportMapModal
                 exportHtml={uiState.exportHtml}
@@ -406,9 +400,6 @@ export default function ModalContainerFactory(
               }
             };
             break;
-
-          // TODO: add this options once we merge dropbox onto kepelr.gl core
-          // case SAVE_TO_CLOUD_ID
           default:
             break;
         }

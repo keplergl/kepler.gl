@@ -10,6 +10,8 @@ However, in the demo app, you can:
 - [Export filtered or unfiltered data as a csv](#export-data).
 - [Export current map configuration as a `json` file](#export-config), this file does not contain any map data.
 - [Export current map configuration __AND__ map data as a `json` file](#export-config), which can be loaded back to kepler.gl to reproduce the current map.
+- [Export current map to html file](#export-map-as-html)
+- [Export current map to Dropbox](#export-dropbox), which can be used to share your maps with other users via permalink
 
 ## <a href="#export-image">Export Image</a>
 
@@ -45,7 +47,7 @@ To save and export your current map as HTML file, click on __Export Map__ and su
 Kepler.gl is providing with a temporary Mapbox token to use in your html file but we strongly recommend to use your own. The provided token has a limited duration and will be periodically replaced with a new one
 without any notification.
 
-#### How to update an exported map token
+### How to update an exported map token
 In order to edit the mapbox token in your html file you simply need to perform the following steps:
 1. [Create a new mapbox token](https://docs.mapbox.com/help/how-mapbox-works/access-tokens/) or use your existing one.
 2. Open the kepler.gl.map file with your favorite text editor.
@@ -64,4 +66,11 @@ In order to edit the mapbox token in your html file you simply need to perform t
   const MAPBOX_TOKEN = 'pk.eyJ1IjoidWJlcmRh...';
 ```
 
+## <a href="#export-dropbox">Export current Map as HTML</a>
+![Export Map to Dropbox](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/k-save-and-export-6.png "activate interactions")
 
+To export the current map into your Dropbox account, click on __Save Map Url__ and select Dropbox as your cloud storage. 
+Perform the authentication against Dropbox using your credentials. Once the authentication process is completed, 
+click on __Upload__ and Kepler.gl will push your current map onto your account.
+
+At the end of the process Kepler.gl will automatically generate a permalink for your work you can share with other users.
