@@ -19,28 +19,50 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import {ThemeProvider}  from 'styled-components';
-import window from 'global/window';
+import styled, {ThemeProvider}  from 'styled-components';
 import {connect} from 'react-redux';
 
 import KeplerGl from 'kepler.gl';
 
 const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
 
-const customTheme = {
-  panelBackground: '#f48f42',
-  tooltipBg: '#f48f42',
-  notificationColors: {
-    info: '#D3D8E0',
-    error: '#f25138',
-    success: '#47b275',
-    warning: '#ffc043'
-  }
+const theme = {
+  sidePanelBg: '#ffffff',
+  titleTextColor: '#000000',
+  sidePanelHeaderBg: '#f7f7F7',
+  subtextColorActive: '#2473bd',
+  tooltipBg: '#1869b5',
+  tooltipColor: '#ffffff',
+  dropdownListBgd: '#ffffff',
+  textColorHl: '#2473bd',
+  inputBgd: '#f7f7f7',
+  inputBgdHover: '#ffffff',
+  inputBgdActive: '#ffffff',
+  dropdownListHighlightBg: '#f0f0f0',
+  panelBackground: '#f7f7F7',
+  panelBackgroundHover: '#f7f7F7',
+  secondaryInputBgd: '#f7f7F7',
+  secondaryInputBgdActive: '#f7f7F7',
+  secondaryInputBgdHover: '#ffffff',
+  panelActiveBg: '#f7f7F7',
 };
+
+const emptyTheme = {};
+
+const StyleSwitch = styled.div`
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  background-color: whitesmoke;
+  padding: 4px;
+  z-index: 1000;
+  border-radius: 3px;
+  border: 1px solid mediumseagreen;
+`;
 
 class App extends Component {
   state = {
-    showBanner: false,
+    customTheme: false,
     width: window.innerWidth,
     height: window.innerHeight
   };
@@ -63,22 +85,34 @@ class App extends Component {
     });
   };
 
-  render() {
-    const {width, height} = this.state;
-    return (
-      <ThemeProvider theme={customTheme}>
-        <KeplerGl
-          mapboxApiAccessToken={MAPBOX_TOKEN}
-          id="map"
-          /*
-           * Specify path to keplerGl state, because it is not mount at the root
-           */
-          getState={state => state.demo.keplerGl}
-          width={width}
-          height={height}
-        />
-      </ThemeProvider>
+  _onToggleTheme = (event) => {
+    const checked = event.target.checked;
+    this.setState({
+      customTheme: checked
+    })
+  };
 
+  render() {
+    const {width, height, customTheme} = this.state;
+    return (
+      <div>
+        <StyleSwitch>
+          <label htmlFor="custom-theme">Custom theme</label>
+          <input type="checkbox" checked={customTheme} id="custom-theme" onChange={this._onToggleTheme}/>
+        </StyleSwitch>
+        <ThemeProvider theme={customTheme ? theme : emptyTheme}>
+          <KeplerGl
+            mapboxApiAccessToken={MAPBOX_TOKEN}
+            id="map"
+            /*
+             * Specify path to keplerGl state, because it is not mount at the root
+             */
+            getState={state => state.demo.keplerGl}
+            width={width}
+            height={height}
+          />
+        </ThemeProvider>
+      </div>
     );
   }
 }

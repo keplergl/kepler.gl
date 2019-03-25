@@ -20,7 +20,6 @@
 
 import {combineReducers, createStore, applyMiddleware, compose} from 'redux';
 
-import thunk from 'redux-thunk';
 import window from 'global/window';
 import {taskMiddleware} from 'react-palm/tasks';
 
@@ -31,8 +30,7 @@ const reducers = combineReducers({
 });
 
 export const middlewares = [
-  taskMiddleware,
-  thunk
+  taskMiddleware
 ];
 
 export const enhancers = [applyMiddleware(...middlewares)];
