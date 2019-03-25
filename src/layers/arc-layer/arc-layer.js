@@ -109,7 +109,7 @@ export default class ArcLayer extends Layer {
 
   // TODO: fix complexity
   /* eslint-disable complexity */
-  formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
+  formatLayerData(allData, filteredIndex, oldLayerData, opt = {}) {
     const {
       colorScale,
       colorDomain,

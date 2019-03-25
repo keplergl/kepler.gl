@@ -36,12 +36,14 @@ import {
 } from 'utils/interaction-utils';
 import {
   getDefaultFilter,
-  getFilterProps,
   getFilterPlot,
   getDefaultFilterPlotType,
-  filterData
+  filterData,
+  updateFilterDataId,
+  updateFilterField
 } from 'utils/filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
+import {set} from 'utils/utils';
 
 import {
   findDefaultLayer,
@@ -452,64 +454,32 @@ export function interactionConfigChangeUpdater(state, action) {
  * @returns {Object} nextState
  * @public
  */
-export function setFilterUpdater(state, action) {
-  const {idx, prop, value} = action;
+export function setFilterUpdater(state, {idx, prop, value}) {
+
+  let newFilter = set([prop], value, state.filters[idx]);
   let newState = state;
-  let newFilter = {
-    ...state.filters[idx],
-    [prop]: value
-  };
 
   const {dataId} = newFilter;
   if (!dataId) {
     return state;
   }
-  const {fields, allData} = state.datasets[dataId];
+  const dataset = state.datasets[dataId];
+  const {fields, allData} = dataset;
 
   switch (prop) {
     case 'dataId':
       // if trying to update filter dataId. create an empty new filter
-      newFilter = getDefaultFilter(dataId);
+      newFilter = updateFilterDataId(dataId);
       break;
 
     case 'name':
-      // find the field
+
+      const {newFilter: nextFilter, newField} = updateFilterField(newFilter, idx, dataset, state.filters);
       const fieldIdx = fields.findIndex(f => f.name === value);
-      let field = fields[fieldIdx];
 
-      if (!field.filterProp) {
-        // get filter domain from field
-        // save filterProps: {domain, steps, value} to field, avoid recalculate
-        field = {
-          ...field,
-          filterProp: getFilterProps(allData, field)
-        };
-      }
+      newFilter = nextFilter;
+      newState = set(['datasets', dataId, 'fields', fieldIdx], newField, state);
 
-      newFilter = {
-        ...newFilter,
-        ...field.filterProp,
-        name: field.name,
-        // can't edit dataId once name is selected
-        freeze: true,
-        fieldIdx
-      };
-      const enlargedFilterIdx = state.filters.findIndex(f => f.enlarged);
-      if (enlargedFilterIdx > -1 && enlargedFilterIdx !== idx) {
-        // there should be only one enlarged filter
-        newFilter.enlarged = false;
-      }
-
-      newState = {
-        ...state,
-        datasets: {
-          ...state.datasets,
-          [dataId]: {
-            ...state.datasets[dataId],
-            fields: fields.map((d, i) => (i === fieldIdx ? field : d))
-          }
-        }
-      };
       break;
     case 'value':
     default:
@@ -517,23 +487,17 @@ export function setFilterUpdater(state, action) {
   }
 
   // save new filters to newState
-  newState = {
-    ...newState,
-    filters: state.filters.map((f, i) => (i === idx ? newFilter : f))
-  };
+  newState = set(['filters', idx], newFilter, newState);
 
   // filter data
-  newState = {
-    ...newState,
-    datasets: {
-      ...newState.datasets,
-      [dataId]: {
-        ...newState.datasets[dataId],
-        ...filterData(allData, dataId, newState.filters)
-      }
-    }
+  const filteredDataset = {
+    ...newState.datasets[dataId],
+    ...filterData(allData, dataId, newState.filters)
   };
 
+  newState = set(['datasets', dataId], filteredDataset, newState);
+
+  // update all layer domain based on filtered data
   newState = updateAllLayerDomainData(newState, dataId, newFilter);
 
   return newState;
@@ -1410,23 +1374,12 @@ export function addDefaultLayers(state, datasets) {
  */
 export function addDefaultTooltips(state, dataset) {
   const tooltipFields = findFieldsToShow(dataset);
-
-  return {
-    ...state,
-    interactionConfig: {
-      ...state.interactionConfig,
-      tooltip: {
-        ...state.interactionConfig.tooltip,
-        config: {
-          // find default fields to show in tooltip
-          fieldsToShow: {
-            ...state.interactionConfig.tooltip.config.fieldsToShow,
-            ...tooltipFields
-          }
-        }
-      }
-    }
+  const merged = {
+    ...state.interactionConfig.tooltip.config.fieldsToShow,
+    ...tooltipFields
   };
+
+  return set(['interactionConfig', 'tooltip', 'config', 'fieldsToShow'], merged, state);
 }
 
 /**

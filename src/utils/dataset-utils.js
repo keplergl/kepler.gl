@@ -99,7 +99,7 @@ export function createNewDataEntry({info = {}, data}, datasets = {}) {
       id: dataId,
       allData,
       // TODO: no need to make a copy anymore, only save fieldedIndex
-      data: allData.slice(),
+      // data: allData.slice(),
       filteredIndex: allData.map((_, i) => i),
       filteredIndexForDomain: allData.map((_, i) => i),
       fieldPairs: findPointFieldPairs(fields),

@@ -63,7 +63,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
         }
       }
     },
-    data: [data, rows, filteredIndex, undefined],
+    data: [rows, filteredIndex, undefined],
     test: result => {
       const {layerData, layer} = result;
       const expectedLayerData = {
@@ -104,7 +104,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
         }
       }
     },
-    data: [data, rows, filteredIndex, undefined],
+    data: [rows, filteredIndex, undefined],
     test: result => {
       const {layerData, layer} = result;
 

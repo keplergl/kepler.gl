@@ -387,7 +387,7 @@ export default class Layer {
     return Math.pow(2, Math.max(8 - zoom + zoomOffset, 0));
   }
 
-  formatLayerData(data, allData, filteredIndex) {
+  formatLayerData(allData, filteredIndex) {
     return {};
   }
 

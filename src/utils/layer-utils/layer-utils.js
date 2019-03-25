@@ -55,24 +55,24 @@ export function findDefaultLayer(dataset, layerClasses) {
 /**
  * calculate layer data based on layer type, col Config,
  * return updated layer if colorDomain, dataMap has changed
- * @param {object} layer
- * @param {object} state
- * @param {object} oldLayerData
- * @param {object} opt
- * @returns {object} {layerData: {}, layer: {} || undefined}
+ * @param {Object} layer
+ * @param {Object} state
+ * @param {Object} oldLayerData
+ * @param {Object} opt
+ * @param {Boolean} opt.sameData
+ * @returns {{layerData: Array<Object>, layer: Object | undefined}}
  */
 export function calculateLayerData(layer, state, oldLayerData, opt = {}) {
   const {type} = layer;
   const {datasets} = state;
 
-  const {data, filteredIndex, allData} = datasets[layer.config.dataId] || {};
+  const {filteredIndex, allData} = datasets[layer.config.dataId] || {};
 
   if (!type || !layer.hasAllColumns()) {
     return {layer, layerData: {}};
   }
 
   const layerData = layer.formatLayerData(
-    data,
     allData,
     filteredIndex,
     oldLayerData,
