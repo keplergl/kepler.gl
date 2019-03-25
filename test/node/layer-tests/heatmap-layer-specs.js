@@ -110,7 +110,7 @@ test('#Heatmaplayer -> formatLayerData', t => {
         isVisible: true,
         columns
       },
-      data: [data, rows, filteredIndex, undefined],
+      data: [rows, filteredIndex, undefined],
       test: result => {
         const {layerData, layer} = result;
 

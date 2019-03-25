@@ -4018,11 +4018,23 @@ export const sampleTripDataConfig = {
       ],
       filters: [
         {
-          id: 'me',
           dataId: 'test_trip_data',
           name: 'tpep_pickup_datetime',
-          type: 'timeRange',
           enlarged: true
+        },
+        {
+          dataId: 'test_trip_data',
+          name: 'passenger_count'
+        },
+        {
+          dataId: 'test_trip_data',
+          name: 'fare_type',
+          value: ['orange peel', 'apple tree']
+        },
+        {
+          dataId: 'test_trip_data',
+          name: 'is_completed',
+          value: true
         }
       ]
     }

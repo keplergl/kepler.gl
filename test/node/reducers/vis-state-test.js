@@ -915,17 +915,11 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
         filteredIndex: [0, 2],
         filteredIndexForDomain: [0, 2]
       },
-      smoothie: {
-        allData: [
-          [12.25, 37.75, 45.21, 100.12],
-          [null, 35.2, 45, 21.3],
-          [12.29, 37.64, 46.21, 99.127],
-          [null, null, 33.1, 29.34]
-        ],
-        data: [[12.25, 37.75, 45.21, 100.12], [12.29, 37.64, 46.21, 99.127]],
-        filteredIndex: [0, 2],
-        filteredIndexForDomain: [0, 2]
-      }
+      // TODO: SHAN enable once merged
+      // smoothie: {
+      //   allData: mockData.data,
+      //   ...filterData(mockData.data, 'smoothie', currentFilters)
+      // }
     },
     layers: [],
     layerData: []
@@ -949,13 +943,11 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
       datasets: {
         milkshake: {
           allData: mockData.data,
-          data: [mockData.data[0], mockData.data[2]],
           filteredIndex: [0, 2],
           filteredIndexForDomain: [0, 2]
         },
         smoothie: {
           allData: mockData.data,
-          data: mockData.data,
           filteredIndex: [0, 1, 2, 3],
           filteredIndexForDomain: [0, 1, 2, 3]
         }
@@ -1085,7 +1077,6 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
       filteredIndex: mockRawData.rows.map((_, i) => i),
       filteredIndexForDomain: mockRawData.rows.map((_, i) => i),
       allData: mockRawData.rows,
-      data: mockRawData.rows,
       color: 'donnot test me',
       id: 'smoothie',
       label: 'exciting dataset',
@@ -1220,8 +1211,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
     datasets: {
       snowflake: {
         fields: [{id: 'a'}, {id: 'b'}],
-        allData: [['something'], ['something_else']],
-        data: [['something']]
+        allData: [['something'], ['something_else']]
       }
     },
     filters: [{name: 'hello'}, {name: 'world'}],
@@ -1243,13 +1233,11 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
   const expectedDatasets = {
     snowflake: {
       fields: [{id: 'a'}, {id: 'b'}],
-      allData: [['something'], ['something_else']],
-      data: [['something']]
+      allData: [['something'], ['something_else']]
     },
     smoothie: {
       fields: expectedFields,
       allData: mockRawData.rows,
-      data: mockRawData.rows,
       color: 'donnot test me',
       filteredIndex: mockRawData.rows.map((_, i) => i),
       filteredIndexForDomain: mockRawData.rows.map((_, i) => i),
@@ -1370,7 +1358,6 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
     label: 'king milkshake',
     color: 'donnot test me',
     allData: rows,
-    data: rows,
     filteredIndex: rows.map((_, i) => i),
     filteredIndexForDomain: rows.map((_, i) => i),
     fields: fields.map(f => ({...f, id: f.name})),
@@ -1555,6 +1542,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
     freeze: true,
     plotType: 'histogram',
     yAxis: null,
+    gpu: true,
     interval: null,
     histogram: [1],
     enlargedHistogram: [1],
@@ -1566,8 +1554,6 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
     typeOptions: ['range'],
     value: mockFilter.value
   };
-
-  const filteredData = [mockData.data[0]];
 
   const newState = reducer(
     oldState,
@@ -1585,7 +1571,6 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
       filteredIndex: [0],
       filteredIndexForDomain: [0],
       allData: mockRawData.rows,
-      data: filteredData,
       color: 'donnot test me',
       id: 'smoothie',
       label: 'smoothie and milkshake',
@@ -1814,7 +1799,8 @@ test('#visStateReducer -> SET_FILTER (processCsvData)', t => {
     plotType: 'histogram',
     yAxis: null,
     speed: 1,
-    interval: null
+    interval: null,
+    gpu: false
   };
 
   cmpFilters(t, expectedFilter, stateWithFilter.filters[0]);
@@ -1842,7 +1828,8 @@ test('#visStateReducer -> SET_FILTER (processCsvData)', t => {
     plotType: 'histogram',
     yAxis: null,
     speed: 1,
-    interval: null
+    interval: null,
+    gpu: false
   };
 
   // test filter
@@ -1854,7 +1841,8 @@ test('#visStateReducer -> SET_FILTER (processCsvData)', t => {
       type: 'multiSelect',
       value: [],
       fieldType: 'date',
-      domain: ['2016-09-23', '2016-09-24', '2016-10-10']
+      domain: ['2016-09-23', '2016-09-24', '2016-10-10'],
+      gpu: false
     }
   };
 
@@ -1865,7 +1853,6 @@ test('#visStateReducer -> SET_FILTER (processCsvData)', t => {
     label: 'queen smoothie',
     color: 'donnot test me',
     allData,
-    data: [],
     fields: [
       ...initialState.datasets.smoothie.fields.slice(0, 10),
       updatedField
@@ -1909,14 +1896,6 @@ test('#visStateReducer -> SET_FILTER (processCsvData)', t => {
   const expectedFilteredDataset = {
     ...expectedDataset,
     allData,
-    data: [
-      allData[17],
-      allData[18],
-      allData[19],
-      allData[20],
-      allData[21],
-      allData[22]
-    ],
     filteredIndex: [17, 18, 19, 20, 21, 22],
     filteredIndexForDomain: [17, 18, 19, 20, 21, 22]
   };
@@ -2242,7 +2221,8 @@ test('#visStateReducer -> SET_FILTER (processGeojson)', t => {
     plotType: 'histogram',
     yAxis: null,
     interval: null,
-    speed: 1
+    speed: 1,
+    gpu: true
   };
 
   // test filter
@@ -2264,77 +2244,6 @@ test('#visStateReducer -> SET_FILTER (processGeojson)', t => {
 
   const expectedFilteredDataset = {
     ...initialState.datasets.milkshake,
-    data: [
-      [
-        {
-          type: 'Feature',
-          properties: {
-            OBJECTID: 1,
-            ZIP_CODE: 94107,
-            ID: 94107,
-            TRIPS: 11,
-            RATE: 'a',
-            index: 0
-          },
-          geometry: {
-            type: 'Polygon',
-            coordinates: [
-              [
-                [-122.401159718585049, 37.782024266952142],
-                [-122.400374366843309, 37.782644515545172],
-                [-122.400019020063766, 37.782925153640136],
-                [-122.399891477967842, 37.783025880124256],
-                [-122.398930331092998, 37.783784933304034],
-                [-122.397811613142864, 37.784666586003652],
-                [-122.396705177550587, 37.785542130425938],
-                [-122.395895701657864, 37.784896929203114],
-                [-122.395160622349934, 37.78431101230386],
-                [-122.394398389309941, 37.783701667981575],
-                [-122.401159718585049, 37.782024266952142]
-              ]
-            ]
-          }
-        },
-        1,
-        94107,
-        94107,
-        11,
-        'a'
-      ],
-      [
-        {
-          type: 'Feature',
-          properties: {
-            OBJECTID: 3,
-            ZIP_CODE: 94109,
-            ID: 94109,
-            TRIPS: 20,
-            index: 2
-          },
-          geometry: {
-            type: 'Polygon',
-            coordinates: [
-              [
-                [-122.39249932896719, 37.793768814133983],
-                [-122.391890260341384, 37.794278544568918],
-                [-122.391788865572423, 37.794170982455135],
-                [-122.39173429034625, 37.79420276052317],
-                [-122.391666728649753, 37.794132425256194],
-                [-122.391723034266192, 37.79410061945832],
-                [-122.391673228351905, 37.794047854124599],
-                [-122.391982015107928, 37.793871906128679],
-                [-122.39249932896719, 37.793768814133983]
-              ]
-            ]
-          }
-        },
-        3,
-        94109,
-        94109,
-        20,
-        null
-      ]
-    ],
 
     // receive Vis Data will add id to fields
     // filter will add filterProps to fields
@@ -2488,7 +2397,8 @@ test('#visStateReducer -> SET_FILTER.fixedDomain', t => {
     enlargedHistogram: [],
     enlarged: true,
     isAnimating: false,
-    fieldType: 'timestamp'
+    fieldType: 'timestamp',
+    gpu: true
   };
 
   cmpFilters(t, expectedFilterTs, stateWidthTsFilter.filters[0]);
@@ -2511,12 +2421,12 @@ test('#visStateReducer -> SET_FILTER.fixedDomain', t => {
               type: 'timeRange',
               enlarged: true,
               fixedDomain: true,
-              value: [1474070995000, 1474072208000]
+              value: [1474070995000, 1474072208000],
+              gpu: true
             }
           }
         : f
     ),
-    data: [7, 8, 9, 10, 11, 12, 13].map(i => datasetSmoothie.allData[i]),
     filteredIndex: [7, 8, 9, 10, 11, 12, 13],
     filteredIndexForDomain: datasetSmoothie.allData.map((d, i) => i)
   };
@@ -2551,12 +2461,12 @@ test('#visStateReducer -> SET_FILTER.fixedDomain', t => {
               domain: ['2016-09-23', '2016-09-24', '2016-10-10'],
               fieldType: 'date',
               type: 'multiSelect',
-              value: []
+              value: [],
+              gpu: false
             }
           }
         : f
     ),
-    data: [7, 8, 9, 10, 11, 12].map(i => datasetSmoothie.allData[i]),
     filteredIndex: [7, 8, 9, 10, 11, 12],
     filteredIndexForDomain: [7, 8, 9, 10, 11, 12, 17, 18, 19, 20, 21, 22]
   };
@@ -2685,7 +2595,8 @@ test('#visStateReducer -> SET_FILTER_PLOT', t => {
     enlargedHistogram: [],
     enlarged: true,
     isAnimating: false,
-    fieldType: 'timestamp'
+    fieldType: 'timestamp',
+    gpu: true
   };
 
   // test filter

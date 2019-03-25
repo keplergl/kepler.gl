@@ -919,7 +919,8 @@ export const mergedFilters = [
     yAxis: null,
     interval: null,
     speed: 1,
-    fixedDomain: false
+    fixedDomain: false,
+    gpu: false
   },
   {
     dataId: ['9h10t7fyb'],
@@ -951,7 +952,8 @@ export const mergedFilters = [
       1453770540000
     ],
     fieldType: 'timestamp',
-    fixedDomain: true
+    fixedDomain: true,
+    gpu: true
   },
   {
     dataId: ['9h10t7fyb'],
@@ -969,7 +971,8 @@ export const mergedFilters = [
     yAxis: null,
     interval: null,
     speed: 1,
-    fixedDomain: false
+    fixedDomain: false,
+    gpu: false
   },
   {
     dataId: ['9h10t7fyb'],
@@ -991,7 +994,8 @@ export const mergedFilters = [
     speed: 1,
     fieldType: 'integer',
     typeOptions: ['range'],
-    fixedDomain: false
+    fixedDomain: false,
+    gpu: true
   },
   {
     dataId: ['v79816te8'],
@@ -1013,7 +1017,8 @@ export const mergedFilters = [
     speed: 1,
     fieldType: 'integer',
     typeOptions: ['range'],
-    fixedDomain: false
+    fixedDomain: false,
+    gpu: true
   }
 ];
 
