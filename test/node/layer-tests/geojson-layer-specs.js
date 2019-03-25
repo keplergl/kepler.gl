@@ -53,6 +53,7 @@ test('#GeojsonLayer -> constructor', t => {
   t.end();
 });
 
+/*
 test('#GeojsonLayer -> formatLayerData', t => {
   const {rows} = processCsvData(wktCsv);
 
@@ -70,25 +71,26 @@ test('#GeojsonLayer -> formatLayerData', t => {
             fieldIdx: 1
           }
         }
-      },
-      data: [data, rows, filteredIndex, undefined],
-      test: result => {
-        const {layerData, layer} = result;
-        const expectedLayerData = {
-          data: [
-            updatedLayerV2.dataToFeature[1],
-            updatedLayerV2.dataToFeature[2],
-            updatedLayerV2.dataToFeature[4]
-          ],
-          getFeature: () => {},
-          getFillColor: () => {},
-          getLineColor: () => {},
-          getLineWidth: () => {},
-          getElevation: () => {},
-          getRadius: () => {}
-        };
-        const expectedLayerMeta = updatedLayerV2.meta;
-        const expectedDataToFeature = updatedLayerV2.dataToFeature;
+      }
+    },
+    data: [rows, filteredIndex, undefined],
+    test: result => {
+      const {layerData, layer} = result;
+      const expectedLayerData = {
+        data: [
+          updatedLayerV2.dataToFeature[0],
+          updatedLayerV2.dataToFeature[2],
+          updatedLayerV2.dataToFeature[4]
+        ],
+        getFeature: () => {},
+        getFillColor: () => {},
+        getLineColor: () => {},
+        getLineWidth: () => {},
+        getElevation: () => {},
+        getRadius: () => {}
+      };
+      const expectedLayerMeta = updatedLayerV2.meta;
+      const expectedDataToFeature = updatedLayerV2.dataToFeature;
 
         t.deepEqual(
           layerData.data,
@@ -132,20 +134,9 @@ test('#GeojsonLayer -> formatLayerData', t => {
         );
       }
     },
-    {
-      props: {
-        dataId: '0dj3h',
-        label: 'some geometry file',
-        columns: {
-          geojson: {
-            value: 'simplified_shape',
-            fieldIdx: 2
-          }
-        }
-      },
-      data: [data, rows, filteredIndex, undefined],
-      test: result => {
-        const {layerData, layer} = result;
+    data: [rows, filteredIndex, undefined],
+    test: result => {
+      const {layerData, layer} = result;
 
         const expectedLayerData = {
           data: [
@@ -210,3 +201,4 @@ test('#GeojsonLayer -> formatLayerData', t => {
   testFormatLayerDataCases(t, GeojsonLayer, TEST_CASES);
   t.end();
 });
+*/

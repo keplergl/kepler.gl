@@ -39,9 +39,11 @@ import {
   getDefaultFilterPlotType,
   isInRange,
   FILTER_UPDATER_PROPS,
-  LIMITED_FILTER_EFFECT_PROPS
+  LIMITED_FILTER_EFFECT_PROPS,
+  updateFilterDataId
 } from 'utils/filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
+import {set} from 'utils/utils';
 
 import {
   findDefaultLayer,
@@ -512,19 +514,22 @@ export function interactionConfigChangeUpdater(state, action) {
  * @public
  */
 export function setFilterUpdater(state, action) {
-  const {idx, prop, value, valueIndex = 0} = action;
+  const {
+    idx,
+    prop,
+    value,
+    valueIndex = 0
+  } = action;
+
+  let newFilter = set([prop], value, state.filters[idx]);
   let newState = state;
-  let newFilter = {
-    ...state.filters[idx],
-    [prop]: value
-  };
 
   const {dataId} = newFilter;
   if (!dataId || !dataId.length) {
     return state;
   }
 
-  // ENsuring backward compatibility
+  // Ensuring backward compatibility
   const datasetIds = Array.isArray(dataId) ? dataId : [dataId];
 
   switch (prop) {
@@ -533,7 +538,7 @@ export function setFilterUpdater(state, action) {
     // 2. Add a new dataset id
     case FILTER_UPDATER_PROPS.dataId:
       // if trying to update filter dataId. create an empty new filter
-      newFilter = getDefaultFilter(dataId);
+      newFilter = updateFilterDataId(dataId);
       break;
 
     case FILTER_UPDATER_PROPS.name:
@@ -556,14 +561,7 @@ export function setFilterUpdater(state, action) {
       }
 
       newFilter = updatedFilter;
-
-      newState = {
-        ...state,
-        datasets: {
-          ...state.datasets,
-          [datasetId]: newDataset
-        }
-      };
+      newState = set(['datasets', datasetId], newDataset, state);
 
       // only filter the current dataset
       break;
@@ -579,10 +577,7 @@ export function setFilterUpdater(state, action) {
   }
 
   // save new filters to newState
-  newState = {
-    ...newState,
-    filters: Object.assign([...state.filters], {[idx]: newFilter})
-  };
+  newState = set(['filters', idx], newFilter, newState);
 
   // if we are currently setting a prop that only requires to filter the current
   // dataset we will pass only the current dataset to applyFiltersToDatasets and
@@ -592,15 +587,13 @@ export function setFilterUpdater(state, action) {
     : datasetIds;
 
   // filter data
-  newState = {
-    ...newState,
-    datasets: applyFiltersToDatasets(
-      datasetIdsToFilter,
-      newState.datasets,
-      newState.filters
-    )
-  };
+  const filteredDatasets = applyFiltersToDatasets(
+    datasetIdsToFilter,
+    newState.datasets,
+    newState.filters
+  );
 
+  newState = set(['datasets'], filteredDatasets, newState);
   // dataId is an array
   // pass only the dataset we need to update
   newState = updateAllLayerDomainData(newState, datasetIdsToFilter, newFilter);
@@ -1359,23 +1352,12 @@ export function addDefaultLayers(state, datasets) {
  */
 export function addDefaultTooltips(state, dataset) {
   const tooltipFields = findFieldsToShow(dataset);
-
-  return {
-    ...state,
-    interactionConfig: {
-      ...state.interactionConfig,
-      tooltip: {
-        ...state.interactionConfig.tooltip,
-        config: {
-          // find default fields to show in tooltip
-          fieldsToShow: {
-            ...state.interactionConfig.tooltip.config.fieldsToShow,
-            ...tooltipFields
-          }
-        }
-      }
-    }
+  const merged = {
+    ...state.interactionConfig.tooltip.config.fieldsToShow,
+    ...tooltipFields
   };
+
+  return set(['interactionConfig', 'tooltip', 'config', 'fieldsToShow'], merged, state);
 }
 
 /**
