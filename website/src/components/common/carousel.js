@@ -21,7 +21,7 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import Waypoint from 'react-waypoint';
+import {Waypoint} from 'react-waypoint';
 
 const Container = styled.div`
   position: relative;

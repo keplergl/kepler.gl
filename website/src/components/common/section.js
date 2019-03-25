@@ -82,7 +82,7 @@ class Section extends PureComponent {
     icon: PropTypes.string.isRequired,
     isDark: PropTypes.bool,
     background: PropTypes.string,
-    children: PropTypes.node.isRequired
+    // children: PropTypes.node.isRequired
   };
 
   static defaultProps = {

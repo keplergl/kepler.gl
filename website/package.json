@@ -31,7 +31,7 @@
     "react-router-redux": "^4.0.8",
     "react-share": "^2.1.1",
     "react-swipeable-views": "^0.12.13",
-    "react-waypoint": "^8.0.1",
+    "react-waypoint": "^9.0.1",
     "redux": "^3.0.4",
     "redux-actions": "^1.2.0",
     "redux-thunk": "^1.0.0",
