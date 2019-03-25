@@ -100,18 +100,17 @@ class App extends Component {
           <label htmlFor="custom-theme">Custom theme</label>
           <input type="checkbox" checked={customTheme} id="custom-theme" onChange={this._onToggleTheme}/>
         </StyleSwitch>
-        <ThemeProvider theme={customTheme ? theme : emptyTheme}>
-          <KeplerGl
-            mapboxApiAccessToken={MAPBOX_TOKEN}
-            id="map"
-            /*
-             * Specify path to keplerGl state, because it is not mount at the root
-             */
-            getState={state => state.demo.keplerGl}
-            width={width}
-            height={height}
-          />
-        </ThemeProvider>
+        <KeplerGl
+          mapboxApiAccessToken={MAPBOX_TOKEN}
+          id="map"
+          /*
+           * Specify path to keplerGl state, because it is not mount at the root
+           */
+          getState={state => state.demo.keplerGl}
+          width={width}
+          height={height}
+          theme={customTheme ? theme : emptyTheme}
+        />
       </div>
     );
   }
