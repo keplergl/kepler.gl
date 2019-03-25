@@ -45,7 +45,7 @@ export function cmpFilters(
     t.deepEqual(
       Object.keys(actualFilter).sort(),
       Object.keys(expectedFilter).sort(),
-      `idx:${idx} | ${actualFilter.type} filter should have same keys`
+      `idx:${idx} | ${actualFilter.type} filter ${actualFilter.name} should have same keys`
     );
 
     Object.keys(actualFilter).forEach(key => {
@@ -58,7 +58,7 @@ export function cmpFilters(
         t.deepEqual(
           actualFilter[key],
           expectedFilter[key],
-          `idx:${idx} |  ${actualFilter.type} filter.${key} should be correct`
+          `idx:${idx} |  ${actualFilter.type} filter ${actualFilter.name} ${key} should be correct`
         );
       }
     });
