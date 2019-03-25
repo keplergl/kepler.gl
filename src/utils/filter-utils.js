@@ -286,18 +286,18 @@ export function updateFilterField(filter, idx, dataset, filters) {
 export function resetFilterGpuMode(filters) {
   const gpuPerDataset = {};
 
-  return filters.reduce((accu, f, i) => {
+  return filters.map(f => {
     if (f.gpu) {
       const count = gpuPerDataset[f.dataId];
 
       if (count === MAX_GPU_FILTERS) {
-        return set([i, 'gpu'], false, accu);
+        return set(['gpu'], false, f);
       }
 
       gpuPerDataset[f.dataId] = count ? count + 1 : 1;
     }
 
-    return accu;
+    return f;
   }, filters);
 }
 

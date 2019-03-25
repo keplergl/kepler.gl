@@ -52,7 +52,8 @@ export function findDefaultLayer(dataset, layerClasses) {
  * @param {Object} state
  * @param {Object} oldLayerData
  * @param {Object} opt
- * @returns {Object} {layerData: {}, layer: {} || undefined}
+ * @param {Boolean} opt.sameData
+ * @returns {{layerData: Array<Object>, layer: Object | undefined}}
  */
 export function calculateLayerData(layer, state, oldLayerData, opt = {}) {
   const {type} = layer;

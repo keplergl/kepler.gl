@@ -56,7 +56,7 @@ test('#HeatmapLayer -> contructor', t => {
 test('#Heatmaplayer -> formatLayerData', t => {
   const {rows} = processCsvData(csvData);
   const filteredIndex = Array(rows.length).fill().map((_, index) => index);
-  // const data = rows;
+
   const columns = {
     lat: {
       name: 'gps_data.lat',
