@@ -157,10 +157,10 @@ class App extends Component {
   }
 
   _loadSampleData() {
-    // this._loadTripData();
+    this._loadTripData();
     // this._loadGeojsonData();
-    this._loadIconData();
-    this._loadH3HexagonData();
+    // this._loadIconData();
+    // this._loadH3HexagonData();
   }
 
   _loadTripData() {
@@ -181,11 +181,23 @@ class App extends Component {
           visState: {
             filters: [
               {
-                id: 'me',
                 dataId: 'test_trip_data',
                 name: 'tpep_pickup_datetime',
-                type: 'timeRange',
                 enlarged: true
+              },
+              {
+                dataId: 'test_trip_data',
+                name: 'passenger_count'
+              },
+              {
+                dataId: 'test_trip_data',
+                name: 'fare_type',
+                value: ['orange peel', 'apple tree']
+              },
+              {
+                dataId: 'test_trip_data',
+                name: 'is_completed',
+                value: true
               }
             ]
           }

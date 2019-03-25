@@ -20,6 +20,7 @@
 
 import {ScatterplotLayer} from 'deck.gl';
 import {editShader} from 'deckgl-layers/layer-utils/shader-utils';
+import {MAX_GPU_FILTERS} from 'utils/filter-utils';
 
 function addBrushingVsShader(vs) {
   return editShader(
@@ -49,6 +50,15 @@ export default class ScatterplotBrushingLayer extends ScatterplotLayer {
       modules: shaders.modules.concat(['brushing'])
     };
   }
+
+  initializeState() {
+    super.initializeState();
+
+    this.getAttributeManager().addInstanced({
+      instanceFilterValue: {size: MAX_GPU_FILTERS, accessor: 'getFilterValue'}
+    });
+  }
+
   draw(opts) {
     const {uniforms} = opts;
     const {

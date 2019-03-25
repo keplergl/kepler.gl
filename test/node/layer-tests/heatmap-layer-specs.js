@@ -50,14 +50,13 @@ test('#HeatmapLayer -> contructor', t => {
   };
 
   testCreateCases(t, HeatmapLayer, TEST_CASES.CREATE);
-  t.end()
+  t.end();
 });
-
 
 test('#Heatmaplayer -> formatLayerData', t => {
   const {rows} = processCsvData(csvData);
   const filteredIndex = Array(rows.length).fill().map((_, index) => index);
-  const data = rows;
+
   const columns = {
     lat: {
       name: 'gps_data.lat',
@@ -76,7 +75,7 @@ test('#Heatmaplayer -> formatLayerData', t => {
         isVisible: true,
         columns
       },
-      data: [data, rows, filteredIndex, undefined],
+      data: [rows, filteredIndex, undefined],
       test: result => {
         const {layerData,  layer} = result;
         // log(layer);
