@@ -238,7 +238,8 @@ export default class IconLayer extends Layer {
     idx,
     objectHovered,
     mapState,
-    interactionConfig
+    interactionConfig,
+    layerInteraction
   }) {
     const layerProps = {
       radiusMinPixels: 1,
@@ -251,6 +252,7 @@ export default class IconLayer extends Layer {
       new SvgIconLayer({
         ...layerProps,
         ...data,
+        ...layerInteraction,
         id: this.id,
         idx,
         opacity: this.config.visConfig.opacity,
