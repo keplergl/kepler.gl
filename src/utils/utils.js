@@ -62,6 +62,10 @@ export function capitalizeFirstLetter(str) {
   return typeof str === 'string' ? str.charAt(0).toUpperCase() + str.slice(1) : str;
 }
 
+export function isObject(value) {
+  return value !== null && (typeof value === 'object' || typeof value === 'function')
+}
+
 /**
  * immutably insert value to an Array or Object
  * @param {Array|Object} obj
@@ -78,6 +82,10 @@ const insertValue = (obj, key, value) => {
 }
 
 const setPath = ([key, ...next], value, obj) => {
+  if (!isObject(obj)) {
+    return obj
+  }
+
   if (next.length === 0) {
     return insertValue(obj, key, value)
   }
@@ -94,4 +102,4 @@ const setPath = ([key, ...next], value, obj) => {
  * @param {Object} obj
  * @returns {Object}
  */
-export const set = (path, value, obj) => setPath(path, value, obj);
+export const set = (path, value, obj) => obj === null ? obj : setPath(path, value, obj);
