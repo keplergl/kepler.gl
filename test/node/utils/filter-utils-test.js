@@ -35,7 +35,8 @@ import {
   filterData,
   generatePolygonFilter,
   isValidFilterValue,
-  isInPolygon
+  isInPolygon,
+  resetFilterGpuMode
 } from 'utils/filter-utils';
 
 import {processCsvData} from 'processors/data-processor';
@@ -1072,3 +1073,32 @@ test('filterUtils -> Polygon getFilterFunction ', t => {
   t.end();
 });
 /* eslint-enable max-statements */
+
+test('filterUtils -> resetFilterGpuMode', t => {
+  const testFilters = [
+    {dataId: 'smoothie', gpu: true},
+    {dataId: 'smoothie', gpu: true},
+    {dataId: 'smoothie', gpu: false},
+    {dataId: 'smoothie', gpu: true},
+    {dataId: 'smoothie', gpu: true},
+    {dataId: 'smoothie', gpu: true},
+    {dataId: 'milkshake', gpu: true},
+    {dataId: 'milkshake', gpu: false}
+  ];
+
+  const expectedFilters = [
+    {dataId: 'smoothie', gpu: true},
+    {dataId: 'smoothie', gpu: true},
+    {dataId: 'smoothie', gpu: false},
+    {dataId: 'smoothie', gpu: true},
+    {dataId: 'smoothie', gpu: true},
+    {dataId: 'smoothie', gpu: false},
+    {dataId: 'milkshake', gpu: true},
+    {dataId: 'milkshake', gpu: false}
+  ];
+
+  const result = resetFilterGpuMode(testFilters);
+  t.deepEqual(result, expectedFilters, 'should reset gpu mode');
+
+  t.end();
+});

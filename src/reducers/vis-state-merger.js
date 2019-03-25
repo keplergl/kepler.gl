@@ -25,7 +25,8 @@ import flattenDeep from 'lodash.flattendeep'
 
 import {
   applyFiltersToDatasets,
-  validateFilterWithData
+  validateFilterWithData,
+  resetFilterGpuMode
 } from 'utils/filter-utils';
 
 import {getInitialMapLayersForSplitMap} from 'utils/split-map-utils';
@@ -106,10 +107,11 @@ export function mergeFilters(state, filtersToMerge) {
     }
   });
 
-  // filter data
-  const updatedFilters = [...(state.filters || []), ...merged];
+  // merge filter with existing
+  const allFilters = [...(state.filters || []), ...merged];
+  const updatedFilters = resetFilterGpuMode(allFilters);
 
-  // flatten all filter dataIds
+  // filter data
   const datasetsToFilter = uniq(flattenDeep(merged.map(f => f.dataId)));
 
   const filtered = applyFiltersToDatasets(datasetsToFilter, updatedDatasets, updatedFilters, state.layers);

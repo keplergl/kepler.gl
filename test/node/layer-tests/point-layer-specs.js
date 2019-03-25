@@ -59,16 +59,12 @@ test('#PointLayer -> formatLayerData', t => {
   const {rows} = processCsvData(csvData);
 
   const filteredIndex = [0, 2, 4];
-  const data = [rows[0], rows[2], rows[4]];
-
-  const dataWithNull = [[null, null, '12']].concat(data);
   const allDataWithNull = [[null, null, '12']].concat(rows);
 
   const expectedLayerMeta = {
     bounds: [31.2148748, 29.9870074, 31.2590542, 30.0614122]
   };
   const dataset = {
-    data: dataWithNull,
     allData: allDataWithNull,
     filteredIndexForDomain: [0, 2, 4, 5, 6, 7, 8, 9, 10]
   };
@@ -89,7 +85,7 @@ test('#PointLayer -> formatLayerData', t => {
           }
         }
       },
-      data: [data, rows, filteredIndex, undefined],
+      data: [rows, filteredIndex, undefined],
       test: result => {
         const {layerData, layer} = result;
         const expectedLayerData = {
@@ -182,7 +178,7 @@ test('#PointLayer -> formatLayerData', t => {
           args: [{fixedRadius: true}]
         }
       ],
-      data: [dataWithNull, allDataWithNull, filteredIndex, undefined],
+      data: [allDataWithNull, filteredIndex, undefined],
       test: result => {
         const {layerData, layer} = result;
 
