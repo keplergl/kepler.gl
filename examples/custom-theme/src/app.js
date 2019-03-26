@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
+import styled from 'styled-components';
 import window from 'global/window';
 import {connect} from 'react-redux';
 import KeplerGl from 'kepler.gl';
@@ -43,7 +44,7 @@ const theme = {
   secondaryInputBgd: '#f7f7F7',
   secondaryInputBgdActive: '#f7f7F7',
   secondaryInputBgdHover: '#ffffff',
-  panelActiveBg: '#f7f7F7',
+  panelActiveBg: '#f7f7F7'
 };
 
 const emptyTheme = {};

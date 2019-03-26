@@ -1,7 +1,6 @@
 {
   "scripts": {
     "start": "webpack-dev-server --progress --hot --open",
-    "start-prod": "webpack-dev-server -p --env.prod --progress --hot --open",
     "start-local": "webpack-dev-server --mode development --env.es6 --progress --hot --open",
     "start-local-es5": "webpack-dev-server --env.local --progress --hot --open"
   },
@@ -11,7 +10,8 @@
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
     "react-palm": "^1.1.2",
-    "react-redux": "^4.4.5",
+    "react-redux": "^4.0.0",
+    "react-virtualized": "^9.21.0",
     "redux-actions": "^2.2.1",
     "styled-components": "^4.1.3"
   },

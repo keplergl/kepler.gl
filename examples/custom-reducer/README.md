@@ -1,4 +1,4 @@
-# Cusomize kepler.gl Reducer
+# Customize kepler.gl Reducer
 
 This example demos how to customize kepler.gl reducer
   1. Customize reducer initialState by `keplerGlReducer.initialState`

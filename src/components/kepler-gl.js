@@ -103,16 +103,6 @@ function KeplerGlFactory(
       version: KEPLER_GL_VERSION
     };
 
-    /* selector */
-    themeSelector = props => props.theme;
-    availableThemeSelector = createSelector(
-      this.themeSelector,
-      (theme) => ({
-        ...basicTheme,
-        ...theme
-      })
-    );
-
     componentWillMount() {
       this._loadMapStyle(this.props.mapStyles);
       this._handleResize(this.props);
@@ -130,6 +120,16 @@ function KeplerGlFactory(
         this._handleResize(nextProps);
       }
     }
+
+    /* selector */
+    themeSelector = props => props.theme;
+    availableThemeSelector = createSelector(
+      this.themeSelector,
+      (theme) => ({
+        ...basicTheme,
+        ...theme
+      })
+    );
 
     _handleResize({width, height}) {
       if (!Number.isFinite(width) || !Number.isFinite(height)) {

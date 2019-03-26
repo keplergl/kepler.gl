@@ -1,6 +1,8 @@
-# Demo App
+# Customize kepler.gl Theme
 
-This is the src code of kepler.gl demo app. You can copy this folder out and run it locally.
+This example show how to customize Kepler.gl theme
+  1. Define an object (theme) to override Kepler.gl style
+  2. Pass the newly created object as prop to KeplerGl react component
 
 #### 1. Install
 
