@@ -306,11 +306,13 @@ export function resetFilterGpuMode(filters) {
  *
  * @param {Object} dataset
  * @param {Array<Object>} filters
- * @returns {Object} filteredData
- * @returns {Array<Number>} filteredData.filteredIndex
- * @returns {Array<Number>} filteredData.filteredIndexForDomain
+ * @param {Object} opt
+ * @param {Object} opt.cpuOnly only allow cpu filtering
+ * @returns {Object} dataset
+ * @returns {Array<Number>} dataset.filteredIndex
+ * @returns {Array<Number>} dataset.filteredIndexForDomain
  */
-export function filterDataset(dataset, filters) {
+export function filterDataset(dataset, filters, opt = {}) {
   const {allData, id: dataId} = dataset;
 
   // if there is no filters
@@ -340,6 +342,7 @@ export function filterDataset(dataset, filters) {
   // filtered index used to calculate layer data and layer Domain
   const filteredIndex = [];
   const filteredIndexForDomain = [];
+  // const oldFilters = dataset.oldFilters || {};
 
   for (let i = 0; i < allData.length; i++) {
     const d = allData[i];
@@ -354,7 +357,7 @@ export function filterDataset(dataset, filters) {
       // filter data for render
       const matchForRender = fixedDomainFilters.every(filter =>
         // if gpu filter, no need to filter data
-        isDataMatchFilter(d, filter, i)
+        (!opt.cpuOnly && filter.gpu) || isDataMatchFilter(d, filter, i)
       );
 
       if (matchForRender) {
@@ -370,6 +373,70 @@ export function filterDataset(dataset, filters) {
   };
 }
 
+export function getFilterRecord(dataId, oldFilters, filters) {
+  const filterRecord = {
+    dynamicDomain: {},
+    fixedDomain: {},
+    cpu: {},
+    gpu: {}
+  };
+
+  for (const f in filters) {
+    if (f.dataId === dataId && f.fieldIdx > -1 && f.value !== null) {
+      (f.fixedDomain ? filterRecord.fixedDomain : filterRecord.dynamicDomain)[f.id] = f;
+      (f.gpu ? filterRecord.gpu : filterRecord.cpu)[f.id] = f;
+    }
+  }
+
+  return filterRecord;
+  // if fixedDomain filters has changed, regenerate filteredIndexForDomain
+
+  // if cpu filters has changed regenerate filteredIndex
+
+}
+
+export function diffFilters(filterRecord, oldFilterRecord = {}) {
+  let filterChanged = {};
+
+  for (const record in filterRecord) {
+    if (filterRecord.hasOwnProperty(record)) {
+      filterChanged[record] = null;
+
+      const ids = Object.keys(filterRecord[record] || {});
+      const oldIds = Object.keys(oldFilterRecord[record]);
+
+      if (!ids.length && oldIds.length) {
+        // if nothing from before or after
+        return;
+      }
+
+      // eslint-disable-next-line no-loop-func
+      ids.forEach(id => {
+        if (!oldIds.includes(id)) {
+          // added
+          filterChanged = set([record, id], 'added', filterChanged);
+        } else {
+          // check  what has changed
+          ['name', 'value'].forEach(prop => {
+            if (filterRecord[record][id][prop] !== oldFilterRecord[record][id][prop]) {
+              filterChanged = set([record, id], `${prop}_changed`, filterChanged);
+            }
+          });
+        }
+      });
+
+      // eslint-disable-next-line no-loop-func
+      oldIds.forEach(id => {
+        if (!ids.includes(id)) {
+          filterChanged = set([record, id], 'deleted', filterChanged);
+        }
+      });
+    }
+  }
+
+  return filterChanged;
+
+}
 /**
  * Check if value is in range of filter
  *
@@ -548,7 +615,7 @@ export function histogramConstruct(domain, mappedValue, bins) {
  * @param {Array<Object>} mappedValue
  * @returns {{histogram: Array<Object>, enlargedHistogram: Array<Object>}} 2 sets of histogram
  */
-function getHistogram(domain, mappedValue) {
+export function getHistogram(domain, mappedValue) {
   const histogram = histogramConstruct(domain, mappedValue, histogramBins);
   const enlargedHistogram = histogramConstruct(
     domain,

@@ -28,7 +28,7 @@ import reducer from 'reducers/vis-state';
 import {INITIAL_VIS_STATE} from 'reducers/vis-state-updaters';
 
 import {getLightSettingsFromBounds} from 'utils/layer-utils/layer-utils';
-import {filterData, getDefaultFilter} from 'utils/filter-utils';
+import {filterDataset, getDefaultFilter, getHistogram} from 'utils/filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
 import {processCsvData, processGeojson} from 'processors/data-processor';
 
@@ -40,7 +40,9 @@ import {
   geojsonData,
   geoBounds,
   geoLghtSettings,
-  fields as geojsonFields
+  fields as geojsonFields,
+  mappedTripValue,
+  tripDomain
 } from 'test/fixtures/geojson';
 
 // test helpers
@@ -576,16 +578,9 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
   const oldState = {
     filters: currentFilters,
     datasets: {
-      milkshake: {
-        allData: mockData.data,
-        ...filterData(mockData.data, 'milkshake', currentFilters)
-      },
-      smoothie: {
-        allData: mockData.data,
-        ...filterData(mockData.data, 'smoothie', currentFilters)
-      }
+      milkshake: filterDataset({allData: mockData.data, id: 'milkshake'}, currentFilters),
+      smoothie: filterDataset({allData: mockData.data, id: 'smoothie'}, currentFilters)
     },
-
     layers: [],
     layerData: []
   };
@@ -607,11 +602,13 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
       ],
       datasets: {
         milkshake: {
+          id: 'milkshake',
           allData: mockData.data,
           filteredIndex: [0, 2],
           filteredIndexForDomain: [0, 2]
         },
         smoothie: {
+          id: 'smoothie',
           allData: mockData.data,
           filteredIndex: [0, 1, 2, 3],
           filteredIndexForDomain: [0, 1, 2, 3]
@@ -752,6 +749,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2', t => {
       fields: expectedFields,
       filteredIndex: mockRawData.rows.map((_, i) => i),
       filteredIndexForDomain: mockRawData.rows.map((_, i) => i),
+      allIndexes: mockRawData.rows.map((_, i) => i),
       allData: mockRawData.rows,
       color: 'donnot test me',
       id: 'smoothie',
@@ -919,6 +917,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3', t => {
       color: 'donnot test me',
       filteredIndex: mockRawData.rows.map((_, i) => i),
       filteredIndexForDomain: mockRawData.rows.map((_, i) => i),
+      allIndexes: mockRawData.rows.map((_, i) => i),
       id: 'smoothie',
       label: 'smoothie and milkshake',
       fieldPairs: [
@@ -1036,6 +1035,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson', t => {
     allData: rows,
     filteredIndex: rows.map((_, i) => i),
     filteredIndexForDomain: rows.map((_, i) => i),
+    allIndexes: rows.map((_, i) => i),
     fields: fields.map(f => ({...f, id: f.name})),
     fieldPairs: []
   };
@@ -1165,6 +1165,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
       fields: expectedFields,
       filteredIndex: [0],
       filteredIndexForDomain: [0],
+      allIndexes: mockRawData.rows.map((_, i) => i),
       allData: mockRawData.rows,
       color: 'donnot test me',
       id: 'smoothie',
@@ -1358,7 +1359,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.SPLIT_MAPS', t => {
   t.end();
 });
 
-test('#visStateReducer -> setFilter', t => {
+test('#visStateReducer -> setFilter.2', t => {
   // get test data
   const {fields, rows} = processCsvData(testData);
   const payload = [
@@ -1485,6 +1486,7 @@ test('#visStateReducer -> setFilter', t => {
     ],
     filteredIndex: [],
     filteredIndexForDomain: [],
+    allIndexes: allData.map((d, i) => i),
     fieldPairs: [
       {
         defaultName: 'gps data',
@@ -1639,7 +1641,7 @@ test('#visStateReducer -> setFilter', t => {
   t.end();
 });
 
-test('#visStateReducer -> setFilter', t => {
+test('#visStateReducer -> setFilter.1', t => {
   const {fields, rows} = processGeojson(CloneDeep(geojsonData));
   const payload = [
     {
@@ -1669,125 +1671,10 @@ test('#visStateReducer -> setFilter', t => {
     VisStateActions.setFilter(0, 'name', 'TRIPS')
   );
 
-  const expectedHistogram = [
-    {count: 1, x0: 4, x1: 4.5},
-    {count: 0, x0: 4.5, x1: 5},
-    {count: 0, x0: 5, x1: 5.5},
-    {count: 0, x0: 5.5, x1: 6},
-    {count: 0, x0: 6, x1: 6.5},
-    {count: 0, x0: 6.5, x1: 7},
-    {count: 0, x0: 7, x1: 7.5},
-    {count: 0, x0: 7.5, x1: 8},
-    {count: 0, x0: 8, x1: 8.5},
-    {count: 0, x0: 8.5, x1: 9},
-    {count: 0, x0: 9, x1: 9.5},
-    {count: 0, x0: 9.5, x1: 10},
-    {count: 0, x0: 10, x1: 10.5},
-    {count: 0, x0: 10.5, x1: 11},
-    {count: 1, x0: 11, x1: 11.5},
-    {count: 0, x0: 11.5, x1: 12},
-    {count: 0, x0: 12, x1: 12.5},
-    {count: 0, x0: 12.5, x1: 13},
-    {count: 0, x0: 13, x1: 13.5},
-    {count: 0, x0: 13.5, x1: 14},
-    {count: 0, x0: 14, x1: 14.5},
-    {count: 0, x0: 14.5, x1: 15},
-    {count: 0, x0: 15, x1: 15.5},
-    {count: 0, x0: 15.5, x1: 16},
-    {count: 0, x0: 16, x1: 16.5},
-    {count: 0, x0: 16.5, x1: 17},
-    {count: 0, x0: 17, x1: 17.5},
-    {count: 0, x0: 17.5, x1: 18},
-    {count: 0, x0: 18, x1: 18.5},
-    {count: 0, x0: 18.5, x1: 19},
-    {count: 0, x0: 19, x1: 19.5},
-    {count: 0, x0: 19.5, x1: 20},
-    {count: 1, x0: 20, x1: 20}
-  ];
-
-  const expectedEnlarged = [
-    {count: 1, x0: 4, x1: 4.2},
-    {count: 0, x0: 4.2, x1: 4.4},
-    {count: 0, x0: 4.4, x1: 4.6},
-    {count: 0, x0: 4.6, x1: 4.8},
-    {count: 0, x0: 4.8, x1: 5},
-    {count: 0, x0: 5, x1: 5.2},
-    {count: 0, x0: 5.2, x1: 5.4},
-    {count: 0, x0: 5.4, x1: 5.6},
-    {count: 0, x0: 5.6, x1: 5.8},
-    {count: 0, x0: 5.8, x1: 6},
-    {count: 0, x0: 6, x1: 6.2},
-    {count: 0, x0: 6.2, x1: 6.4},
-    {count: 0, x0: 6.4, x1: 6.6},
-    {count: 0, x0: 6.6, x1: 6.8},
-    {count: 0, x0: 6.8, x1: 7},
-    {count: 0, x0: 7, x1: 7.2},
-    {count: 0, x0: 7.2, x1: 7.4},
-    {count: 0, x0: 7.4, x1: 7.6},
-    {count: 0, x0: 7.6, x1: 7.8},
-    {count: 0, x0: 7.8, x1: 8},
-    {count: 0, x0: 8, x1: 8.2},
-    {count: 0, x0: 8.2, x1: 8.4},
-    {count: 0, x0: 8.4, x1: 8.6},
-    {count: 0, x0: 8.6, x1: 8.8},
-    {count: 0, x0: 8.8, x1: 9},
-    {count: 0, x0: 9, x1: 9.2},
-    {count: 0, x0: 9.2, x1: 9.4},
-    {count: 0, x0: 9.4, x1: 9.6},
-    {count: 0, x0: 9.6, x1: 9.8},
-    {count: 0, x0: 9.8, x1: 10},
-    {count: 0, x0: 10, x1: 10.2},
-    {count: 0, x0: 10.2, x1: 10.4},
-    {count: 0, x0: 10.4, x1: 10.6},
-    {count: 0, x0: 10.6, x1: 10.8},
-    {count: 0, x0: 10.8, x1: 11},
-    {count: 1, x0: 11, x1: 11.2},
-    {count: 0, x0: 11.2, x1: 11.4},
-    {count: 0, x0: 11.4, x1: 11.6},
-    {count: 0, x0: 11.6, x1: 11.8},
-    {count: 0, x0: 11.8, x1: 12},
-    {count: 0, x0: 12, x1: 12.2},
-    {count: 0, x0: 12.2, x1: 12.4},
-    {count: 0, x0: 12.4, x1: 12.6},
-    {count: 0, x0: 12.6, x1: 12.8},
-    {count: 0, x0: 12.8, x1: 13},
-    {count: 0, x0: 13, x1: 13.2},
-    {count: 0, x0: 13.2, x1: 13.4},
-    {count: 0, x0: 13.4, x1: 13.6},
-    {count: 0, x0: 13.6, x1: 13.8},
-    {count: 0, x0: 13.8, x1: 14},
-    {count: 0, x0: 14, x1: 14.2},
-    {count: 0, x0: 14.2, x1: 14.4},
-    {count: 0, x0: 14.4, x1: 14.6},
-    {count: 0, x0: 14.6, x1: 14.8},
-    {count: 0, x0: 14.8, x1: 15},
-    {count: 0, x0: 15, x1: 15.2},
-    {count: 0, x0: 15.2, x1: 15.4},
-    {count: 0, x0: 15.4, x1: 15.6},
-    {count: 0, x0: 15.6, x1: 15.8},
-    {count: 0, x0: 15.8, x1: 16},
-    {count: 0, x0: 16, x1: 16.2},
-    {count: 0, x0: 16.2, x1: 16.4},
-    {count: 0, x0: 16.4, x1: 16.6},
-    {count: 0, x0: 16.6, x1: 16.8},
-    {count: 0, x0: 16.8, x1: 17},
-    {count: 0, x0: 17, x1: 17.2},
-    {count: 0, x0: 17.2, x1: 17.4},
-    {count: 0, x0: 17.4, x1: 17.6},
-    {count: 0, x0: 17.6, x1: 17.8},
-    {count: 0, x0: 17.8, x1: 18},
-    {count: 0, x0: 18, x1: 18.2},
-    {count: 0, x0: 18.2, x1: 18.4},
-    {count: 0, x0: 18.4, x1: 18.6},
-    {count: 0, x0: 18.6, x1: 18.8},
-    {count: 0, x0: 18.8, x1: 19},
-    {count: 0, x0: 19, x1: 19.2},
-    {count: 0, x0: 19.2, x1: 19.4},
-    {count: 0, x0: 19.4, x1: 19.6},
-    {count: 0, x0: 19.6, x1: 19.8},
-    {count: 0, x0: 19.8, x1: 20},
-    {count: 1, x0: 20, x1: 20}
-  ];
+  const {
+    histogram: expectedHistogram,
+    enlargedHistogram: expectedEnlarged
+  } = getHistogram(tripDomain, mappedTripValue)
 
   const expectedFilterWName = {
     dataId: 'milkshake',
@@ -1856,7 +1743,8 @@ test('#visStateReducer -> setFilter', t => {
           : {...f, id: f.name}
     ),
     filteredIndex: [0, 2],
-    filteredIndexForDomain: [0, 2]
+    filteredIndexForDomain: [0, 2],
+    allIndexes: geojsonData.features.map((_, i) => i)
   };
 
   const actualTripFeild = stateWithFilterValue.datasets.milkshake.fields[4];
@@ -1884,7 +1772,7 @@ test('#visStateReducer -> setFilter', t => {
 });
 /* eslint-enable max-statements */
 
-test('#visStateReducer -> setFilter.fixedDomain', t => {
+test('#visStateReducer -> setFilter.fixedDomain & gpu', t => {
   // get test data
   const {fields, rows} = processCsvData(testData);
   const payload = [
@@ -2000,7 +1888,8 @@ test('#visStateReducer -> setFilter.fixedDomain', t => {
             }
           : f
     ),
-    filteredIndex: [7, 8, 9, 10, 11, 12, 13],
+    // copy everything
+    filteredIndex: datasetSmoothie.allData.map((d, i) => i),
     filteredIndexForDomain: datasetSmoothie.allData.map((d, i) => i)
   };
 
@@ -2008,16 +1897,16 @@ test('#visStateReducer -> setFilter.fixedDomain', t => {
   cmpDataset(t, expectedDatasetSmoothie, stateWidthTsFilter.datasets.smoothie);
 
   const stateWidthTsAndNameFilter = applyActions(reducer, stateWidthTsFilter, [
-    // add ts filter
+    // add ordinal filter
     {action: VisStateActions.addFilter, payload: ['smoothie']},
 
-    // set ts filter name
+    // set ordinal filter name
     {
       action: VisStateActions.setFilter,
       payload: [1, 'name', 'date']
     },
 
-    // set ts filter value
+    // set ordinal filter value
     {
       action: VisStateActions.setFilter,
       payload: [1, 'value', ['2016-09-24', '2016-10-10']]
@@ -2041,7 +1930,7 @@ test('#visStateReducer -> setFilter.fixedDomain', t => {
           }
           : f
     ),
-    filteredIndex: [7, 8, 9, 10, 11, 12],
+    filteredIndex: [7, 8, 9, 10, 11, 12, 17, 18, 19, 20, 21, 22],
     filteredIndexForDomain: [7, 8, 9, 10, 11, 12, 17, 18, 19, 20, 21, 22]
   };
 

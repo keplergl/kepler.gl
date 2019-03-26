@@ -393,8 +393,7 @@ export function setFilterUpdater(state, {idx, prop, value}) {
   if (!dataId) {
     return state;
   }
-  const dataset = state.datasets[dataId];
-  const {fields, allData} = dataset;
+
 
   switch (prop) {
     case 'dataId':
@@ -403,9 +402,9 @@ export function setFilterUpdater(state, {idx, prop, value}) {
       break;
 
     case 'name':
-
+      const dataset = state.datasets[dataId];
       const {newFilter: nextFilter, newField} = updateFilterField(newFilter, idx, dataset, state.filters);
-      const fieldIdx = fields.findIndex(f => f.name === value);
+      const fieldIdx = dataset.fields.findIndex(f => f.name === value);
 
       newFilter = nextFilter;
       newState = set(['datasets', dataId, 'fields', fieldIdx], newField, state);
@@ -420,7 +419,7 @@ export function setFilterUpdater(state, {idx, prop, value}) {
   newState = set(['filters', idx], newFilter, newState);
 
   // filter data
-  const filteredDataset = filterDataset(dataset, newState.filters);
+  const filteredDataset = filterDataset(newState.datasets[dataId], newState.filters);
 
   newState = set(['datasets', dataId], filteredDataset, newState);
 
