@@ -340,27 +340,12 @@ The available properties to customize are listed here [theme](https://github.com
 #### Passing a Theme prop.
 You can customize Kepler.gl theme by passing a __theme__ props to Kepler.gl react component as it follows:
 ```javascript
-// Properties are defined in https://github.com/uber/kepler.gl/blob/master/src/styles/base.js
 const white = '#ffffff';
 const customTheme = {
   sidePanelBg: white,
   titleTextColor: '#000000',
   sidePanelHeaderBg: '#f7f7F7',
-  subtextColorActive: '#2473bd',
-  tooltipBg: '#1869b5',
-  tooltipColor: white,
-  dropdownListBgd: white,
-  textColorHl: '#2473bd',
-  inputBgd: '#f7f7f7',
-  inputBgdHover: white,
-  inputBgdActive: white,
-  dropdownListHighlightBg: '#f0f0f0',
-  panelBackground: '#f7f7F7',
-  panelBackgroundHover: '#f7f7F7',
-  secondaryInputBgd: '#f7f7F7',
-  secondaryInputBgdActive: '#f7f7F7',
-  secondaryInputBgdHover: white,
-  panelActiveBg: '#f7f7F7',
+  subtextColorActive: '#2473bd'
 };
 
 return (
@@ -381,27 +366,12 @@ In order to customize Kepler.gl theme using [ThemeProvider](https://www.styled-c
 ```javascript
 import {ThemeProvider}  from 'styled-components';
 
-// Properties are defined in https://github.com/uber/kepler.gl/blob/master/src/styles/base.js
 const white = '#ffffff';
 const customTheme = {
   sidePanelBg: white,
   titleTextColor: '#000000',
   sidePanelHeaderBg: '#f7f7F7',
-  subtextColorActive: '#2473bd',
-  tooltipBg: '#1869b5',
-  tooltipColor: white,
-  dropdownListBgd: white,
-  textColorHl: '#2473bd',
-  inputBgd: '#f7f7f7',
-  inputBgdHover: white,
-  inputBgdActive: white,
-  dropdownListHighlightBg: '#f0f0f0',
-  panelBackground: '#f7f7F7',
-  panelBackgroundHover: '#f7f7F7',
-  secondaryInputBgd: '#f7f7F7',
-  secondaryInputBgdActive: '#f7f7F7',
-  secondaryInputBgdHover: white,
-  panelActiveBg: '#f7f7F7',
+  subtextColorActive: '#2473bd'
 };
 
 return (
