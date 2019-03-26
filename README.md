@@ -1,4 +1,4 @@
--wa<p align="right">
+<p align="right">
   <a href="https://npmjs.org/package/kepler.gl">
     <img src="https://img.shields.io/npm/v/kepler.gl.svg?style=flat" alt="version" />
   </a>
