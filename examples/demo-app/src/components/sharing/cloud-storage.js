@@ -162,7 +162,7 @@ const ExportCloudModal = ({
                 )}
                 {metaUrl && [
                   (<SharingUrl key={0} url={sharingLink} message={'Share your map with other users'}/>),
-                  (<a href={folderLink} target="_blank" style={{textDecoration: 'underline'}}>Go to your Kepler.gl Dropbox folder</a>)
+                  (<a href={folderLink} target="_blank" rel="noopener noreferrer" style={{textDecoration: 'underline'}}>Go to your Kepler.gl Dropbox folder</a>)
                 ]}
               </div>
             </div>

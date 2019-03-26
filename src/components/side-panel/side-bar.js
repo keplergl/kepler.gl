@@ -71,7 +71,7 @@ const StyledCollapseButton = styled.div`
     box-shadow: none;
     background-color: ${props => props.theme.sideBarCloseBtnBgdHover};
   }
-`
+`;
 
 export const CollapseButtonFactory = () => {
   const CollapseButton = ({onClick, isOpen}) => (

@@ -76,7 +76,6 @@ const DropdownSelectErase = styled.div`
 `;
 
 const DropdownWrapper = styled.div`
-  background: ${props => props.theme.dropdownBgd};
   border: 0;
   width: 100%;
   left: 0;
