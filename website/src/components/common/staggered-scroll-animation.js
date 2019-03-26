@@ -35,7 +35,7 @@ export default class StaggeredScrollAnimation extends PureComponent {
     duration: PropTypes.number,
     delay: PropTypes.number,
     animateOnce: PropTypes.bool,
-    Container: PropTypes.oneOfType([PropTypes.object, PropTypes.func, PropTypes.string]),
+    Container: PropTypes.oneOfType([PropTypes.object, PropTypes.element, PropTypes.func, PropTypes.string]),
     scrollOffsetTop: PropTypes.number
   };
 
