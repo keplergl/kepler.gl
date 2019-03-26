@@ -20,7 +20,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import Waypoint from 'react-waypoint';
+import {Waypoint} from 'react-waypoint';
 import styled from 'styled-components';
 
 const FadeIn = styled.div`
@@ -35,7 +35,7 @@ export default class StaggeredScrollAnimation extends PureComponent {
     duration: PropTypes.number,
     delay: PropTypes.number,
     animateOnce: PropTypes.bool,
-    Container: PropTypes.oneOfType([PropTypes.func, PropTypes.string]),
+    Container: PropTypes.oneOfType([PropTypes.object, PropTypes.element, PropTypes.func, PropTypes.string]),
     scrollOffsetTop: PropTypes.number
   };
 
@@ -72,7 +72,7 @@ export default class StaggeredScrollAnimation extends PureComponent {
         topOffset={scrollOffsetTop}
       >
         <Container>
-          {children.map((item, i) => (
+          {React.Children.map(children, (item, i) => (
             <FadeIn key={i} isVisible={isVisible} delay={delay * i}>
               {item}
             </FadeIn>
