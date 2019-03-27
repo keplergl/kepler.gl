@@ -32,10 +32,11 @@ export const errorMsg = {
   notFunc: '`factory and its replacement should be a function`'
 };
 
-export function injector(map = {}) {
-  const cache = {}; // map<factory, factory -> ?>
+export function injector(map = new Map()) {
+  const cache = new Map(); // map<factory, factory -> ?>
   const get = (fac, parent) => {
-    const factory = map[fac];
+    const factory = map.get(fac);
+
     // factory is not injected
     if (!factory) {
       Console.error(errorMsg.noDep(fac, parent));
@@ -43,12 +44,12 @@ export function injector(map = {}) {
     }
 
     const instances =
-      cache[factory] ||
+      cache.get(factory) ||
       factory(
         ...(factory.deps ? factory.deps.map(dep => get(dep, factory)) : [])
       );
 
-    cache[fac] = instances;
+    cache.set(fac, instances);
     return instances;
   };
 
@@ -66,7 +67,7 @@ export function injector(map = {}) {
         return injector(map);
       }
 
-      return injector({...map, [factory]: replacement});
+      return injector((new Map(map)).set(factory, replacement));
     },
     get
   };

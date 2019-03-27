@@ -136,4 +136,5 @@ const ExportConfigModal = ({
 ExportConfigModal.propTypes = propTypes;
 
 const ExportConfigModalFactory = () => ExportConfigModal;
+
 export default ExportConfigModalFactory;

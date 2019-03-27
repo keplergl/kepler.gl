@@ -97,5 +97,6 @@ const ExportMapModal = ({
 
 ExportMapModal.propTypes = propTypes;
 
-const exportMapModalFactory = () => ExportMapModal;
-export default exportMapModalFactory;
+const ExportMapModalFactory = () => ExportMapModal;
+
+export default ExportMapModalFactory;
