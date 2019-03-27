@@ -31,4 +31,4 @@ export const CustomSaveMapFactory = () => {
 
 export function replaceSaveMap() {
   return [SaveMapFactory, CustomSaveMapFactory]
-};
+}
