@@ -22,7 +22,6 @@ import memoize from 'lodash.memoize';
 import uniq from 'lodash.uniq';
 
 import Layer from '../base-layer';
-import HighlightPolygonLayer from 'deckgl-layers/geojson-layer/solid-polygon-layer';
 import {GeoJsonLayer as DeckGLGeoJsonLayer} from 'deck.gl';
 
 import {hexToRgb} from 'utils/color-utils';
@@ -32,7 +31,13 @@ import {
   featureToDeckGlGeoType
 } from './geojson-utils';
 import GeojsonLayerIcon from './geojson-layer-icon';
-import {GEOJSON_FIELDS} from 'constants/default-settings';
+import {GEOJSON_FIELDS, HIGHLIGH_COLOR_3D} from 'constants/default-settings';
+
+// Disable breaking change from deck.gl 6.3->6.4 (added stroke to point features)
+// Remove when this is user-controlled
+const GEOJSON_SUBLAYER_OVERRIDE = {
+  points: {stroked: false}
+};
 
 export const geojsonVisConfigs = {
   opacity: 'opacity',
@@ -391,7 +396,7 @@ export default class GeoJsonLayer extends Layer {
         getElevation: data.getElevation,
         // highlight
         pickable: true,
-        // highlightColor: this.config.highlightColor,
+        highlightColor: HIGHLIGH_COLOR_3D,
         autoHighlight: visConfig.enable3d,
         // parameters
         parameters: {depthTest: Boolean(visConfig.enable3d || mapState.dragRotate)},
@@ -403,10 +408,7 @@ export default class GeoJsonLayer extends Layer {
         lightSettings,
         updateTriggers,
 
-        subLayers: {
-          ...DeckGLGeoJsonLayer.defaultProps.subLayers,
-          PolygonLayer: HighlightPolygonLayer
-        }
+        _subLayerProps: GEOJSON_SUBLAYER_OVERRIDE
       }),
       ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d
         ? [
@@ -422,7 +424,8 @@ export default class GeoJsonLayer extends Layer {
               updateTriggers,
               stroked: true,
               pickable: false,
-              filled: false
+              filled: false,
+              _subLayerProps: GEOJSON_SUBLAYER_OVERRIDE
             })
           ]
         : [])

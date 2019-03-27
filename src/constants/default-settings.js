@@ -275,6 +275,8 @@ const BLUE3 = '0, 172, 237';
 const GREEN = '106, 160, 56';
 const RED = '237, 88, 106';
 
+export const HIGHLIGH_COLOR_3D = [255, 255, 255, 60];
+
 export const FIELD_COLORS = {
   default: RED
 };

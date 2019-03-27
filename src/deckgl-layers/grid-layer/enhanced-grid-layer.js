@@ -20,7 +20,6 @@
 
 import {GridLayer} from 'deck.gl';
 import {getColorValueDomain, getColorScaleFunction} from '../layer-utils/utils';
-import EnhancedGridCellLayer from './enhanced-grid-cell-layer';
 
 const defaultProps = {
   ...GridLayer.defaultProps,
@@ -47,12 +46,6 @@ export default class EnhancedGridLayer extends GridLayer {
     getColorScaleFunction(this);
   }
 
-  /*
-   * override default getSubLayerClass to return customized cellLayer
-   */
-  getSubLayerClass() {
-    return EnhancedGridCellLayer;
-  }
 }
 
 EnhancedGridLayer.layerName = 'EnhancedGridLayer';

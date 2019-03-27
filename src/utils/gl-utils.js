@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import {registerShaderModules, setParameters} from 'luma.gl';
-import pickingModule from 'shaderlib/picking-module';
 import brushingModule from 'shaderlib/brushing-module';
 import {LAYER_BLENDINGS} from 'constants/default-settings';
 import GL from 'luma.gl/constants';
@@ -27,10 +26,7 @@ import GL from 'luma.gl/constants';
 const getGlConst = d => GL[d];
 
 export function onWebGLInitialized(gl) {
-  registerShaderModules(
-    [pickingModule, brushingModule], {
-      ignoreMultipleRegistrations: true
-  });
+  registerShaderModules([brushingModule]);
 }
 
 export function setLayerBlending(gl, layerBlending) {

@@ -248,10 +248,12 @@ export default class PointLayer extends Layer {
     const enableBrushing = interactionConfig.brush.enabled;
 
     const layerProps = {
-      outline: this.config.visConfig.outline,
+      // TODO: support setting stroke and fill simultaneously
+      stroked: this.config.visConfig.outline,
+      filled: !this.config.visConfig.outline,
       radiusMinPixels: 1,
       fp64: this.config.visConfig['hi-precision'],
-      strokeWidth: this.config.visConfig.thickness,
+      lineWidthMinPixels: this.config.visConfig.thickness,
       radiusScale: this.getRadiusScaleByZoom(mapState),
       ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
     };
@@ -285,7 +287,13 @@ export default class PointLayer extends Layer {
             fixedRadius: this.config.visConfig.fixedRadius,
             sizeScale: this.config.sizeScale
           },
-          getColor: {
+          getFillColor: {
+            color: this.config.color,
+            colorField: this.config.colorField,
+            colorRange: this.config.visConfig.colorRange,
+            colorScale: this.config.colorScale
+          },
+          getLineColor: {
             color: this.config.color,
             colorField: this.config.colorField,
             colorRange: this.config.visConfig.colorRange,
