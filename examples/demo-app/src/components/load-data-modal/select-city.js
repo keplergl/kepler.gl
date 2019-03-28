@@ -21,8 +21,9 @@
 // TODO: this will move onto kepler.gl core
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import styled, {Button} from 'styled-components';
+import styled from 'styled-components';
 import {ItemSelector} from 'kepler.gl/components';
+import {Button} from 'kepler.gl/components/common/styled-components';
 import {CORS_LINK, LOADING_URL_MESSAGE} from '../../constants/default-settings';
 
 const propTypes = {
@@ -38,7 +39,8 @@ const StyledDescription = styled.div`
 
 const InputForm = styled.div`
   flex-grow: 1;
-  padding: 32px;
+  padding-top: 10px;
+  padding-bottom: 40px;
 `;
 
 const StyledInput = styled.input`
@@ -149,9 +151,13 @@ class SelectCity extends Component {
               displayOption={op => op.name}
               placeholder="Select a city..."
             />
-            <StyledBtn type="submit" onClick={this.onSelectCity}>
+            {/* <StyledBtn type="submit" onClick={this.onSelectCity}>
               Select
-            </StyledBtn>
+            </StyledBtn> */}
+            <div style={{padding:'10px'}}></div>
+            <Button onClick={this.onSelectCity} width="70px">
+                Select
+            </Button>
           </StyledFromGroup>
           {this.props.error && (<Error error={this.props.error} url={this.props.option.dataUrl} />)}
         </InputForm>

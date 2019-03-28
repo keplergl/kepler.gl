@@ -241,7 +241,7 @@ function PanelHeaderFactory() {
         <StyledPanelHeader className="side-panel__panel-header">
           <StyledPanelHeaderTop className="side-panel__panel-header__top">
             <this.props.logoComponent appName={appName} version={version}/>
-            <StyledPanelTopActions>
+            {/* <StyledPanelTopActions>
               {actionItems.map(item => (
                 <div className="side-panel__panel-header__right"
                      key={item.id} style={{position: 'relative'}}>
@@ -266,7 +266,7 @@ function PanelHeaderFactory() {
                   ) : null}
                 </div>
               ))}
-            </StyledPanelTopActions>
+            </StyledPanelTopActions> */}
           </StyledPanelHeaderTop>
         </StyledPanelHeader>
       );

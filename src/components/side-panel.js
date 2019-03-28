@@ -57,7 +57,8 @@ export const PanelTitleFactory = () => styled.div`
   font-size: 1.5em;
   font-weight: 400;
   letter-spacing: 1.25px;
-  margin-bottom: 3vh;
+  margin-bottom: 1vh;
+  margin-top: 2vh;
   display: block;
 `;
 
