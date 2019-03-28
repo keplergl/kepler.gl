@@ -173,6 +173,11 @@ export function onLayerHover(info) {
 }
 
 export function onLayerClick(info) {
+  console.log("ONLAYERCLICK");  
+  console.log(info);
+  if(info) {
+    console.log(info.layer.id);
+  }
   return {
     type: ActionTypes.LAYER_CLICK,
     info
@@ -180,6 +185,7 @@ export function onLayerClick(info) {
 }
 
 export function onMapClick() {
+  console.log("ONMAPCLICK");
   return {
     type: ActionTypes.MAP_CLICK
   };
@@ -246,5 +252,22 @@ export function setSelectedIndicator(indicator) {
   return {
     type: ActionTypes.SET_SELECTED_INDICATOR,
     indicator
+  };
+}
+
+export function setActiveBarangay(info) {
+  console.log("SETACTIVEBGY");  
+  console.log(info);
+  return {
+    type: ActionTypes.SET_ACTIVE_BARANGAY,
+    info
+  };
+}
+
+export function toggleActiveAnalysis(info) {
+  console.log("VISSTATEACTIVEANALYSIS")
+  return {
+    type: ActionTypes.TOGGLE_ACTIVE_ANALYSIS,
+    info
   };
 }

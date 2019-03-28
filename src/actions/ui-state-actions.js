@@ -43,7 +43,7 @@ const {
   REMOVE_NOTIFICATION,
 
   /* PLEXUS-SPECIFIC */
-  TOGGLE_ACTIVE_ANALYSIS,
+  // TOGGLE_ACTIVE_ANALYSIS,
 } = ActionTypes;
 
 // second argument of createAction is expected to be payloadCreator or undefined
@@ -71,7 +71,7 @@ const [
   setExportData,
 
   /* PLEXUS-SPECIFIC */
-  toggleActiveAnalysis,
+  // toggleActiveAnalysis,
 ] = [
   TOGGLE_SIDE_PANEL,
   TOGGLE_MODAL,
@@ -96,7 +96,7 @@ const [
   SET_EXPORT_DATA,
 
   /* PLEXUS-SPECIFIC */
-  TOGGLE_ACTIVE_ANALYSIS,
+  // TOGGLE_ACTIVE_ANALYSIS,
 ].map(a => createAction(a));
 
 export {
@@ -107,5 +107,5 @@ export {
   setExportSelectedDataset, setExportDataType, setExportFiltered, 
   
   /* PLEXUS-SPECIFIC */
-  toggleActiveAnalysis
+  // toggleActiveAnalysis
 };

@@ -86,7 +86,10 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       mapLayers: PropTypes.object,
       onMapToggleLayer: PropTypes.func,
       onMapStyleLoaded: PropTypes.func,
-      onMapRender: PropTypes.func
+      onMapRender: PropTypes.func,
+
+      // plexus
+      activeBarangay: PropTypes.array,
     };
 
     static defaultProps = {
@@ -202,7 +205,9 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         datasets,
         interactionConfig,
         layers,
-        mapLayers
+        mapLayers,
+        activeBarangay,
+        visStateActions
       } = this.props;
 
       // if clicked something, ignore hover behavior
