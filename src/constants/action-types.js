@@ -56,6 +56,8 @@ const ActionTypes = keyMirror({
   SET_FILTER_PLOT: null,
   LOAD_FILES: null,
   LOAD_FILES_ERR: null,
+  /* PLEXUS-SPECIFIC */
+  SET_ACTIVE_BARANGAY: null,
 
   //PLEXUS
   PROCESS_DATA: null,

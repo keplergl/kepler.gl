@@ -63,17 +63,23 @@ export class BarChart extends Component {
       scaledData = data.map((d, idx) => ({
         ...d,
         x: (d[xKey]),
-        // x: (d[xKey] * 100),
         y: d[yKey]
       })) 
     ) : (
       scaledData = data.map((d, idx) => ({
         ...d,
         x: (d.x)
-        // x: (d.x * 100)
+
       })) 
     )};
-    
+
+    const MAX_LENGTH = 13;
+
+    scaledData = scaledData.map((d) => ({
+      ...d,
+      y: d.y.length > MAX_LENGTH ? (d.y.slice(0,MAX_LENGTH) + '...') : d.y,
+    }));
+
     const dataLabels = scaledData.map((d, idx) => ({
       x: d.x,
       y: d.y,
@@ -101,9 +107,8 @@ export class BarChart extends Component {
 
     return (
       <XYPlot
-        xDomain={[0.0, 100]}
-        // xDomain={[0.0, 1.0].map((x) => x * 100)}
-        margin={{left: 100, right: 10, top: 25, bottom: 25}}
+        xDomain={[0.0, 1.0].map((x) => x * 100)}
+        margin={{left: 100, right: 30, top: 25, bottom: 25}}
         height={160}
         width={width}
         yType="ordinal"
@@ -116,11 +121,11 @@ export class BarChart extends Component {
             ticks: {stroke: '#6A7485'},
             text: {fill: '#6A7485'},
             fontWeight: 100,
-            marginBottom: 50,
           }}
         />
         {/* TODO: use props */}
         <YAxis
+          // getY={d=>(d.y.length > 12 ? (d.y.slice(0,12) + '...') : d.y )}
           style={{
             ticks: {stroke: '#6A7485'},
             color: '#6A7485',
@@ -137,35 +142,16 @@ export class BarChart extends Component {
         <HorizontalBarSeries 
             data={scaledData}
             barWidth={0.5} />
-
-        {/* {Object.prototype.toString.call( data[0] ) === '[object Array]'? ( */}
-        {/* {xKey && yKey ? (
-        <HorizontalBarSeries 
-          data={scaledData} 
-          barWidth={0.5}
-          getX={d=>d[xKey]}
-          getY={d=>d[yKey]} />) : 
-          (<HorizontalBarSeries 
-            data={scaledData}
-            barWidth={0.5} />)
-        } */}
-        
-        {/* TODO: fix offscreen label close to 1.0 */}
-        {/* { data.length > 0 ? (
-          <LabelSeries
-          data={dataLabels}
-          labelAnchorX="middle"
-          labelAnchorY="text-after-edge"
-        />
-        ): null
-        } */}
         <LabelSeries
           data={dataLabels}
           labelAnchorX="middle"
           labelAnchorY="text-after-edge"
         />
         {/* TODO: fix off-center bug */}
-        {title ? (<ChartLabel text={title} xPercent={0.5} yPercent={0.32}/>) : null }
+        {title ? (<ChartLabel includeMargin={false} text={title} xPercent={0.5} yPercent={1.4} style={{
+          // transform: 'rotate(-90)',
+          textAnchor: 'middle'
+        }}/>) : null }
         
       </XYPlot>
     );

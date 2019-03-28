@@ -108,17 +108,24 @@ export const ANALYSIS_TABS_DEF = {
     label: 'Transport Desirability',
     value: 'transportDesirability'
   },
-  "nonTransportMode" : {
-    label: 'Non-transport Mode',
-    value: 'nonTransportMode'
-  },
-  "transportMode" : {
-    label: 'Transport Mode',
-    value: 'transportMode'
-  },
-  "comparison" : {
-    label: 'Comparison',
-    value: 'comparison'
+  // "nonTransportMode" : {
+  //   label: 'Non-transport Mode',
+  //   value: 'nonTransportMode'
+  // },
+  // "transportMode" : {
+  //   label: 'Transport Mode',
+  //   value: 'transportMode'
+  // },
+  // "comparison" : {
+  //   label: 'Comparison',
+  //   value: 'comparison'
+  // },
+};
+
+export const ANALYSIS_TABS_BGY = {
+  "profile" : {
+    label: 'Barangay Profile',
+    value: 'profile'
   },
 };
 
