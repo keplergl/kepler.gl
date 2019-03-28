@@ -215,7 +215,8 @@ function KeplerGlFactory(
         hoverInfo,
         clicked,
         // PLEXUS
-        plexus
+        plexus,
+        activeBarangay
       } = visState;
 
       const notificationPanelFields = {
@@ -263,7 +264,9 @@ function KeplerGlFactory(
         toggleMapControl: uiStateActions.toggleMapControl,
         uiStateActions,
         visStateActions,
-        mapStateActions
+        mapStateActions,
+        // plexus
+        activeBarangay
       };
 
       const isSplit = splitMaps && splitMaps.length > 1;
@@ -320,7 +323,9 @@ function KeplerGlFactory(
             }
             <BottomWidget
               filters={filters}
+              selected={plexus.selectedIndicator}
               datasets={datasets}
+              visState={visState}
               uiState={uiState}
               visStateActions={visStateActions}
               uiStateActions={uiStateActions}

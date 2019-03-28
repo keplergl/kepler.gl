@@ -95,7 +95,7 @@ export const DEFAULT_EXPORT_DATA = {
 
 export const DEFAULT_NOTIFICATIONS = [];
 
-export const DEFAULT_ACTIVE_ANALYSIS = 'profile';
+// export const DEFAULT_ACTIVE_ANALYSIS = 'profile';
 
 export const INITIAL_UI_STATE = {
   readOnly: false,
@@ -113,7 +113,7 @@ export const INITIAL_UI_STATE = {
   notifications: DEFAULT_NOTIFICATIONS,
 
   /* PLEXUS-SPECIFIC */
-  activeAnalysisTab: DEFAULT_ACTIVE_ANALYSIS,
+  // activeAnalysisTab: DEFAULT_ACTIVE_ANALYSIS,
 };
 
 const actionHandler = {
@@ -140,7 +140,7 @@ const actionHandler = {
   [ActionTypes.SET_EXPORT_DATA]: setExportDataUpdater,
 
   /* PLEXUS-SPECIFIC */
-  [ActionTypes.TOGGLE_ACTIVE_ANALYSIS]: updateActiveAnalysisTabUpdater,
+  // [ActionTypes.TOGGLE_ACTIVE_ANALYSIS]: updateActiveAnalysisTabUpdater,
 };
 
 /* Reducer */

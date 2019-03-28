@@ -58,7 +58,8 @@ import {
   layerVisConfigChangeUpdater,
   layerVisualChannelChangeUpdater,
   /* PLEXUS-SPECIFIC */
-  // updateActiveAnalysisTabUpdater,
+  setActiveBarangay,
+  updateActiveAnalysisTabUpdater,
 } from './vis-state-updaters';
 
 const actionHandler = {
@@ -128,7 +129,8 @@ const actionHandler = {
   [ActionTypes.UPDATE_VIS_DATA]: updateVisDataUpdater,
 
   /* PLEXUS-SPECIFIC */
-  // [ActionTypes.TOGGLE_ACTIVE_ANALYSIS]: updateActiveAnalysisTabUpdater,
+  [ActionTypes.SET_ACTIVE_BARANGAY]: setActiveBarangay,  
+  [ActionTypes.TOGGLE_ACTIVE_ANALYSIS]: updateActiveAnalysisTabUpdater,
 };
 
 // construct vis-state reducer

@@ -66,6 +66,7 @@ import {INDICATORS} from 'constants/default-settings';
 // disable capture exception for react-palm call to withTask
 disableStackCapturing();
 
+const DEFAULT_ACTIVE_ANALYSIS = 'profile';
 export const INITIAL_VIS_STATE = {
   // layers
   layers: [],
@@ -115,7 +116,9 @@ export const INITIAL_VIS_STATE = {
     scores: undefined,
     indicatorData: undefined,
     selectedIndicator: 'desirability'
-  }
+  },
+  activeBarangay: null,
+  activeAnalysisTab: DEFAULT_ACTIVE_ANALYSIS,
 };
 
 function updateStateWithLayerAndData(state, {layerData, layer, idx}) {
@@ -462,7 +465,7 @@ export const addLayerUpdater = (state, action) => {
 };
 
 export const removeLayerUpdater = (state, {idx}) => {
-  const {layers, layerData, clicked, hoverInfo} = state;
+  const {layers, layerData, clicked, hoverInfo, activeBarangay} = state;
   const layerToRemove = state.layers[idx];
   const newMaps = removeLayerFromSplitMaps(state, layerToRemove);
 
@@ -478,7 +481,9 @@ export const removeLayerUpdater = (state, {idx}) => {
       .map(pid => (pid > idx ? pid - 1 : pid)),
     clicked: layerToRemove.isLayerHovered(clicked) ? undefined : clicked,
     hoverInfo: layerToRemove.isLayerHovered(hoverInfo) ? undefined : hoverInfo,
-    splitMaps: newMaps
+    splitMaps: newMaps,
+
+    activeBarangay: layerToRemove.isLayerHovered(clicked) ? null : activeBarangay,
   };
 };
 
@@ -599,10 +604,35 @@ export const layerHoverUpdater = (state, action) => ({
   hoverInfo: action.info
 });
 
-export const layerClickUpdater = (state, action) => ({
-  ...state,
-  clicked: action.info && action.info.picked ? action.info : null
-});
+export const layerClickUpdater = (state, action) => {
+
+  if(!action.info) {
+    return {
+      ...state,
+      clicked: action.info && action.info.picked ? action.info : null,
+      activeBarangay: null,
+    }
+  }
+  const layer = state.layers[action.info.layer.props.idx];
+  
+  if(layer) {
+    const {config: {dataId}} = layer;  
+    const {allData, fields} = state.datasets[dataId];
+    const data = action.info && action.info.picked ? layer.getHoverData(action.info.object, allData) : null;
+
+    return {
+      ...state,
+      clicked: action.info && action.info.picked ? action.info : null,
+      activeBarangay: data.length == 16 ? data : null,
+      activeAnalysisTab: DEFAULT_ACTIVE_ANALYSIS,
+    }
+  }
+ 
+  return {
+    ...state,
+    clicked: action.info && action.info.picked ? action.info : null,
+  }
+};
 
 export const mapClickUpdater = (state, action) => ({
   ...state,
@@ -1162,3 +1192,15 @@ export function updateAllLayerDomainData(state, dataId, newFilter) {
     layerData: newLayerDatas
   };
 }
+
+/* PLEXUS-SPECIFIC UPDATERS */
+export const updateActiveAnalysisTabUpdater = (state, action) => {
+  console.log("**************" + action);
+  console.log(action);
+  console.log(action.info);
+  return {
+    ...state,
+    activeAnalysisTab: action.info,
+  };
+  
+};
