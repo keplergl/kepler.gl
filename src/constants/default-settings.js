@@ -611,56 +611,56 @@ export const INDICATORS = [
   {
     id: 'desirability',
     label: 'Transport Desirability',
-    description: 'Transport Desirability is a indicator. Transport Desirability is a indicator. Transport Desirability is a indicator. '
+    description: 'Transport Desirability indicator assesses how desirable transportation is in an area.'
   },
 
   // Non transport mode
   {
     id: 'spatial',
     label: 'Spatial',
-    description: 'Spatial is a indicator. Transport Desirability is a indicator. Transport Desirability is a indicator. '
+    description: 'Spatial indicator refers to the level of accessibility for different types of amenities per area.'
   },
   {
     id: 'temporal',
     label: 'Temporal',
-    description: 'Temporal is a indicator. Transport Desirability is a indicator. Transport Desirability is a indicator. '
+    description: 'Temporal indicator considers the time that is being used when going from an origin to a destination.'
   },
   {
     id: 'economic',
     label: 'Economic',
-    description: 'Economic is a indicator. Transport Desirability is a indicator. Transport Desirability is a indicator. '
+    description: 'Economic indicator considers the monetary cost that is spent when traveling from an origin to a destination.'
   },
   {
     id: 'physical',
     label: 'Physical',
-    description: 'Physical is a indicator. Transport Desirability is a indicator. Transport Desirability is a indicator. '
+    description: 'Physical indicator evaluates how desirable transportation is even if it is affected by external factors, particularly by flooding.'
   },
 
   // Transport indicator
   {
     id: 'psychological',
     label: 'Psychological',
-    description: 'Psychological is a indicator. Transport Desirability is a indicator. Transport Desirability is a indicator. '
+    description: 'Psychological indicator evaluates the security of the transportation used.'
   },
   {
     id: 'physiological',
     label: 'Physiological',
-    description: 'Physiological is a indicator. Transport Desirability is a indicator. Transport Desirability is a indicator. '
+    description: 'Physiological indicator checks the comfort and convenience of a transport mode.'
   },
   {
     id: 'sustainability',
     label: 'Sustainability',
-    description: 'Sustainability is a indicator. Transport Desirability is a indicator. Transport Desirability is a indicator. '
+    description: 'Sustainability indicator consists of energy use, health cost, and green house gas social cost.'
   },
   {
     id: 'performance',
     label: 'Performance',
-    description: 'Performance is a indicator. Transport Desirability is a indicator. Transport Desirability is a indicator. '
+    description: 'Performance indicator considers the efficiency, resilience, connectivity, orderliness, and service reliability of the transport mode.'
   },
   {
     id: 'fairness',
     label: 'Fairness',
-    description: 'Fairness is a indicator. Transport Desirability is a indicator. Transport Desirability is a indicator. '
+    description: 'Fairness indicator assesses the accessibility, social equity, and the inclusiveness of a tranport mode'
   }
 ]
 
