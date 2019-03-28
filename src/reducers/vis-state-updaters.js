@@ -1015,9 +1015,9 @@ export const processDataUpdater = (state, action) => {
     scores[indicator.id] =
       allData.reduce((p, c) => p + c[column], 0) / allData.length;
     scores[indicator.id] = Math.round(scores[indicator.id] * 100) / 100;
-
+    const data = [...allData];
     // Get top 10 and bottom 10
-    var arr = allData.sort(function(a, b) {
+    var arr = data.sort(function(a, b) {
       return a[column] - b[column];
     });
 
@@ -1026,9 +1026,29 @@ export const processDataUpdater = (state, action) => {
       bottom: arr.slice(arr.length - 10, arr.length)
     };
   });
+  // const idx = 3;
+  // const oldLayerData = state.layerData[idx];
+  // const {layerData, layer} = calculateLayerData(
+  //   state.layers[2],
+  //   state,
+  //   oldLayerData,
+  //   {sameData: true}
+  // );
+  // const newState = updateStateWithLayerAndData(state, {layerData, layer, idx});
+  const layerData = allData.map(x => x[0]);
 
   return {
     ...state,
+    datasets: {
+      ...state.datasets,
+      outline: {
+        ...state.datasets.outline,
+        allData: layerData
+      }
+    },
+    layerData: layerData
+      ? state.layerData.map((d, i) => (i === 3 ? {...state.layerData[3], data:layerData} : d))
+      : state.layerData,
     plexus: {
       ...state.plexus,
       scores,
@@ -1039,12 +1059,12 @@ export const processDataUpdater = (state, action) => {
 
 export const selectedIndicatorUpdater = (state, action) => {
   const {indicator} = action;
-  const {fields} = state.datasets.barangays;
-  const colorField = fields.find(op => op.id === indicator);
-  console.error(colorField);
+  const {fields, allData} = state.datasets.barangays;
+  let field = fields.find(op => op.id === indicator);
+  console.error(field);
   const oldLayer = state.layers[2];
   const config = {
-    colorField: colorField
+    colorField: field
   };
   const idx = 2;
 
@@ -1058,8 +1078,72 @@ export const selectedIndicatorUpdater = (state, action) => {
     oldLayerData,
     {sameData: true}
   );
-  const newState = updateStateWithLayerAndData(state, {layerData, layer, idx});
+  let newState = updateStateWithLayerAndData(state, {layerData, layer, idx});
   // const newState = updateStateWithLayerAndData(state, {layer: newLayer, idx});
+
+  // filter
+  let newFilter = {
+    ...state.filters[0],
+    name: indicator
+  };
+
+  // find the field
+  const fieldIdx = fields.findIndex(op => op.id === indicator);
+  // let field = fields[fieldIdx];
+
+  if (!field.filterProp) {
+    // get filter domain from field
+    // save filterProps: {domain, steps, value} to field, avoid recalculate
+    field = {
+      ...field,
+      filterProp: getFilterProps(allData, field)
+    };
+  }
+
+  newFilter = {
+    ...newFilter,
+    ...field.filterProp,
+    name: field.name,
+    // can't edit dataId once name is selected
+    freeze: true,
+    fieldIdx
+  };
+  const enlargedFilterIdx = state.filters.findIndex(f => f.enlarged);
+  if (enlargedFilterIdx > -1 && enlargedFilterIdx !== idx) {
+    // there should be only one enlarged filter
+    newFilter.enlarged = false;
+  }
+
+  newState = {
+    ...newState,
+    datasets: {
+      ...newState.datasets,
+      barangays: {
+        ...newState.datasets.barangays,
+        fields: fields.map((d, i) => (i === fieldIdx ? field : d))
+      }
+    }
+  };
+
+  // save new filters to newState
+  newState = {
+    ...newState,
+    filters: state.filters.map((f, i) => (i === 0 ? newFilter : f))
+  };
+
+  // filter data
+  newState = {
+    ...newState,
+    datasets: {
+      ...newState.datasets,
+      barangays: {
+        ...newState.datasets.barangays,
+        ...filterData(allData, "barangays", newState.filters)
+      }
+    }
+  };
+
+  newState = updateAllLayerDomainData(newState, "barangays", newFilter);
   
   return {
     ...newState,
@@ -1069,20 +1153,27 @@ export const selectedIndicatorUpdater = (state, action) => {
     //   newLayer
     // ],
     interactionConfig: {
-      ...state.interactionConfig,
+      ...newState.interactionConfig,
       tooltip: {
-        ...state.interactionConfig.tooltip,
+        ...newState.interactionConfig.tooltip,
         config: {
-          ...state.interactionConfig.tooltip.config,
+          ...newState.interactionConfig.tooltip.config,
           fieldsToShow: {
-            ...state.interactionConfig.tooltip.config.fieldsToShow,
+            ...newState.interactionConfig.tooltip.config.fieldsToShow,
             barangays: ['name', indicator]
           }
         }
       }
     },
+    // datasets: {
+    //   ...newState.datasets,
+    //   barangays: {
+    //     ...newState.datasets.barangays,
+    //     ...filterData(allData, "barangays", newState.filters)
+    //   }
+    // },
     plexus: {
-      ...state.plexus,
+      ...newState.plexus,
       selectedIndicator: indicator
     }
   };

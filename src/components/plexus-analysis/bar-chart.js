@@ -69,6 +69,7 @@ export class BarChart extends Component {
       scaledData = data.map((d, idx) => ({
         ...d,
         x: (d.x)
+
       })) 
     )};
 
@@ -114,7 +115,8 @@ export class BarChart extends Component {
       >
         <XAxis
           orientation={'top'}
-          tickValues={[0, 0.5, 1.0].map((x) => x * 100)}
+          // tickValues={[0, 50, 100].map((x) => x * 100)}
+          tickValues={[0, 50, 100]}
           style={{
             ticks: {stroke: '#6A7485'},
             text: {fill: '#6A7485'},

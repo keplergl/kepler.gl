@@ -74,6 +74,7 @@ function IndicatorPanelFactory(Indicator) {
               <Indicator
                 id={indicator.id}
                 label={indicator.label}
+                description={indicator.description}
                 score={
                   this.props.scores ? this.props.scores[indicator.id] || '' : ''
                 }
@@ -94,6 +95,7 @@ function IndicatorPanelFactory(Indicator) {
               <Indicator
                 id={indicator.id}
                 label={indicator.label}
+                description={indicator.description}
                 score={
                   this.props.scores ? this.props.scores[indicator.id] || '' : ''
                 }

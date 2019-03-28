@@ -145,7 +145,7 @@ function FilterPanelFactory() {
                 onSelect={value => setFilter(idx, 'dataId', value)}
               />
             )} */}
-            Amenity Types
+            {dataId + ' - ' + name}
             {type &&
             !enlarged && (
               <div className="filter-panel__filter">
