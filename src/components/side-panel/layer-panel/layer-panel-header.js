@@ -22,6 +22,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import styled from 'styled-components';
+import {sortableHandle} from 'react-sortable-hoc';
 import PanelHeaderAction from 'components/side-panel/panel-header-action';
 import {
   EyeSeen,
@@ -98,16 +99,24 @@ const LayerTitleSection = styled.div`
   }
 `;
 
-const DragHandle = styled.div`
+const StyledDragHandle = styled.div`
   display: flex;
   align-items: center;
   opacity: 0;
+  z-index: 1000;
 
   :hover {
     cursor: move;
+    opacity: 1;
     color: ${props => props.theme.textColorHl};
   }
 `;
+
+const DragHandle = sortableHandle(({className, children}) =>
+  <StyledDragHandle classname={className}>
+    {children}
+  </StyledDragHandle>
+);
 
 const LayerPanelHeader = ({
   className,
