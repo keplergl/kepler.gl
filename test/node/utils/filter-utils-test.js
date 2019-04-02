@@ -30,7 +30,6 @@ import {
   getHistogram,
   getTimestampFieldDomain,
   getDefaultFilter,
-  resetFilterGpuMode,
   diffFilters
 } from 'utils/filter-utils';
 
@@ -337,7 +336,10 @@ test('filterUtils -> getTimestampFieldDomain', t => {
       expect: {
         domain: [1475315139001, 1475315139003],
         mappedValue: [1475315139001, 1475315139002, 1475315139003],
-        ...getHistogram([1475315139001, 1475315139003], [1475315139001, 1475315139002, 1475315139003]),
+        ...getHistogram(
+          [1475315139001, 1475315139003],
+          [1475315139001, 1475315139002, 1475315139003]
+        ),
         step: 0.1
       }
     },
@@ -393,13 +395,9 @@ test('filterUtils -> getTimestampFieldDomain', t => {
     );
 
     Object.keys(timeData[key].expect).forEach(k => {
-
       // histogram is created by d3, only need to test they exist
       if (k === 'histogram' || k === 'enlargedHistogram') {
-        t.ok(
-          tsFieldDomain[k].length,
-          `should create ${k}`
-        );
+        t.ok(tsFieldDomain[k].length, `should create ${k}`);
       } else {
         t.deepEqual(
           tsFieldDomain[k],
@@ -414,107 +412,78 @@ test('filterUtils -> getTimestampFieldDomain', t => {
 });
 /* eslint-enable max-statements */
 
-test('filterUtils -> resetFilterGpuMode', t => {
-  const testFilters = [
-    {dataId: 'smoothie', gpu: true},
-    {dataId: 'smoothie', gpu: true},
-    {dataId: 'smoothie', gpu: false},
-    {dataId: 'smoothie', gpu: true},
-    {dataId: 'smoothie', gpu: true},
-    {dataId: 'smoothie', gpu: true},
-    {dataId: 'milkshake', gpu: true},
-    {dataId: 'milkshake', gpu: false}
+test('filterUtils -> diffFilters', t => {
+  const testCases = [
+    {
+      filterRecord: {
+        dynamicDomain: [],
+        fixedDomain: [],
+        cpu: [],
+        gpu: []
+      },
+      oldFilterRecord: undefined,
+      result: {
+        dynamicDomain: null,
+        fixedDomain: null,
+        cpu: null,
+        gpu: null
+      }
+    },
+    {
+      filterRecord: {
+        dynamicDomain: [],
+        fixedDomain: [],
+        cpu: [],
+        gpu: []
+      },
+      oldFilterRecord: {
+        dynamicDomain: [],
+        fixedDomain: [],
+        cpu: [],
+        gpu: []
+      },
+      result: {
+        dynamicDomain: null,
+        fixedDomain: null,
+        cpu: null,
+        gpu: null
+      }
+    },
+    {
+      filterRecord: {
+        dynamicDomain: [{id: 'aa', name: 'hello', value: 'bb'}],
+        fixedDomain: [{id: 'bb', name: 'ab', value: 'ab'}],
+        cpu: [
+          {id: 'dd', name: 'hey', value: 'ee'},
+          {id: 'ee', name: 'ee', value: 'ff'}
+        ],
+        gpu: []
+      },
+      oldFilterRecord: {
+        dynamicDomain: [{id: 'aa', name: 'hello', value: 'bb'}],
+        fixedDomain: [
+          {id: 'bb', name: 'cd', value: 'ab'},
+          {id: 'cc', name: 'world', value: 'dd'}
+        ],
+        cpu: [{id: 'ee', name: 'ee', value: 'gg'}],
+        gpu: []
+      },
+      result: {
+        dynamicDomain: null,
+        fixedDomain: {bb: 'name_changed', cc: 'deleted'},
+        cpu: {dd: 'added', ee: 'value_changed'},
+        gpu: null
+      }
+    }
   ];
-
-  const expectedFilters = [
-    {dataId: 'smoothie', gpu: true},
-    {dataId: 'smoothie', gpu: true},
-    {dataId: 'smoothie', gpu: false},
-    {dataId: 'smoothie', gpu: true},
-    {dataId: 'smoothie', gpu: true},
-    {dataId: 'smoothie', gpu: false},
-    {dataId: 'milkshake', gpu: true},
-    {dataId: 'milkshake', gpu: false}
-  ];
-
-  const result = resetFilterGpuMode(testFilters);
-  t.deepEqual(result, expectedFilters, 'should reset gpu mode');
-
-  t.end();
-});
-
-test.only('filterUtils -> diffFilters', t => {
-  const testCases = [{
-    filterRecord: {
-      dynamicDomain: {},
-      fixedDomain: {},
-      cpu: {},
-      gpu: {}
-    },
-    oldFilterRecord: undefined,
-    result: {
-      dynamicDomain: null,
-      fixedDomain: null,
-      cpu: null,
-      gpu: null
-    }
-  }, {
-    filterRecord: {
-      dynamicDomain: {},
-      fixedDomain: {},
-      cpu: {},
-      gpu: {}
-    },
-    oldFilterRecord: {
-      dynamicDomain: {},
-      fixedDomain: {},
-      cpu: {},
-      gpu: {}
-    },
-    result: {
-      dynamicDomain: null,
-      fixedDomain: null,
-      cpu: null,
-      gpu: null
-    }
-  }, {
-    filterRecord: {
-      dynamicDomain: {
-        aa: {name: 'aa', value: 'bb'}
-      },
-      fixedDomain: {
-        bb: {name: 'ab', value: 'ab'}
-      },
-      cpu: {
-        dd: {name: 'dd', value: 'ee'},
-        ee: {name: 'ee', value: 'ff'}
-      },
-      gpu: {}
-    },
-    oldFilterRecord: {
-      dynamicDomain: {
-        aa: {name: 'aa', value: 'bb'}
-      },
-      fixedDomain: {
-        bb: {name: 'cd', value: 'ab'},
-        cc: {name: 'cc', value: 'dd'}
-      },
-      cpu: {
-        ee: {name: 'ee', value: 'gg'}
-      },
-      gpu: {}
-    },
-    result: {
-      dynamicDomain: null,
-      fixedDomain: {bb: 'name_changed', cc: 'deleted'},
-      cpu: {dd: 'added', ee: 'value_changed'},
-      gpu: null
-    }
-  }];
 
   testCases.forEach(({filterRecord, oldFilterRecord, result}) => {
-    t.deepEqual(diffFilters(filterRecord, oldFilterRecord), result, 'diff filters should be correct');
+    t.deepEqual(
+      diffFilters(filterRecord, oldFilterRecord),
+      result,
+      'diff filters should be correct'
+    );
   });
 
-  t.end()
+  t.end();
 });

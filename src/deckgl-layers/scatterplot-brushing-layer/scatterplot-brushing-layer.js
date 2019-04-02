@@ -20,7 +20,6 @@
 
 import {ScatterplotLayer} from 'deck.gl';
 import {editShader} from 'deckgl-layers/layer-utils/shader-utils';
-import {MAX_GPU_FILTERS} from 'utils/filter-utils';
 
 function addBrushingVsShader(vs) {
   return editShader(

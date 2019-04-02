@@ -394,7 +394,6 @@ export function setFilterUpdater(state, {idx, prop, value}) {
     return state;
   }
 
-
   switch (prop) {
     case 'dataId':
       // if trying to update filter dataId. create an empty new filter
@@ -557,18 +556,6 @@ export const removeFilterUpdater = (state, action) => {
   const filteredDataset = filterDataset(state.datasets[dataId], newFilters);
 
   newState = set(['datasets', dataId], filteredDataset, newState);
-
-  // const newState = {
-  //   ...state,
-  //   datasets: {
-  //     ...state.datasets,
-  //     [dataId]: {
-  //       ...state.datasets[dataId],
-  //       ...filterData(state.datasets[dataId].allData, dataId, newFilters)
-  //     }
-  //   },
-  //   filters: newFilters
-  // };
 
   return updateAllLayerDomainData(newState, dataId);
 };
@@ -1304,7 +1291,7 @@ export function updateAllLayerDomainData(state, dataId, updatedFilter) {
   const dataIds = typeof dataId === 'string' ? [dataId] : dataId;
   const newLayers = [];
   const newLayerDatas = [];
-  console.log('updateAllLayerDomainData')
+
   state.layers.forEach((oldLayer, i) => {
     if (oldLayer.config.dataId && dataIds.includes(oldLayer.config.dataId)) {
 

@@ -655,7 +655,6 @@ export default class Layer {
       // ordinal domain is based on allData, if only filter changed
       // no need to update ordinal domain
       if (!newFilter || scaleType !== SCALE_TYPES.ordinal) {
-        console.log(channel.key, 'updateLayerDomain');
         const {domain} = channel;
         const updatedDomain = this.calculateLayerDomain(dataset, channel);
 

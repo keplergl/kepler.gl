@@ -19,6 +19,15 @@
 // THE SOFTWARE.
 
 import {FILTER_TYPES} from 'utils/filter-utils';
+
+export function cmpObjectKeys(t, expectedObj, actualObj, name) {
+  t.deepEqual(
+    Object.keys(actualObj).sort(),
+    Object.keys(expectedObj).sort(),
+    `${name} should have same keys`
+  );
+}
+
 export function cmpFilters(
   t,
   expectedFilter,
@@ -42,11 +51,7 @@ export function cmpFilters(
       cmpFilters(t, expectedFilter[i], actualFilter[i], opt, i);
     });
   } else {
-    t.deepEqual(
-      Object.keys(actualFilter).sort(),
-      Object.keys(expectedFilter).sort(),
-      `idx:${idx} | ${actualFilter.type} filter ${actualFilter.name} should have same keys`
-    );
+    cmpObjectKeys(t,  expectedFilter, actualFilter, `idx:${idx} | ${actualFilter.type} filter ${actualFilter.name}`);
 
     Object.keys(actualFilter).forEach(key => {
       if (key === 'histogram' || key === 'enlargedHistogram') {
@@ -82,11 +87,8 @@ export function cmpLayers(t, expectedLayer, actualLayer, opt = {}) {
       cmpLayers(t, expectedLayer[i], actualLayer[i]);
     });
   } else {
-    t.deepEqual(
-      Object.keys(actualLayer.config).sort(),
-      Object.keys(expectedLayer.config).sort(),
-      `layer.${actualLayer.id} should have same keys`
-    );
+
+    cmpObjectKeys(t, expectedLayer.config, actualLayer.config, `layer.${actualLayer.id}`);
 
     Object.keys(expectedLayer.config).forEach(key => {
       // test everything except color and id, which is auto generated
@@ -124,11 +126,7 @@ export function cmpSavedLayers(
       cmpSavedLayers(t, expectedLayer[i], actualLayer[i], opt, i);
     });
   } else {
-    t.deepEqual(
-      Object.keys(actualLayer).sort(),
-      Object.keys(expectedLayer).sort(),
-      `idx:${idx} | layer.${actualLayer.type} should have same keys`
-    );
+    cmpObjectKeys(t, expectedLayer, actualLayer, `idx:${idx} | layer.${actualLayer.type}`);
 
     t.deepEqual(
       actualLayer,
@@ -144,11 +142,7 @@ export function cmpSavedLayers(
       );
 
       if (key === 'config') {
-        t.deepEqual(
-          Object.keys(actualLayer.config).sort(),
-          Object.keys(expectedLayer.config).sort(),
-          `idx:${idx} | layer.${actualLayer.type} config should have same keys`
-        );
+        cmpObjectKeys(t, expectedLayer.config, actualLayer.config, `idx:${idx} | layer.${actualLayer.type}`);
 
         Object.keys(actualLayer.config).forEach(ck => {
           t.deepEqual(
@@ -165,11 +159,8 @@ export function cmpSavedLayers(
 }
 
 export function cmpDatasets(t, expectedDatasets, actualDatasets) {
-  t.deepEqual(
-    Object.keys(actualDatasets).sort(),
-    Object.keys(expectedDatasets).sort(),
-    'datasets should have same keys'
-  );
+
+  cmpObjectKeys(t, expectedDatasets, actualDatasets, 'datasets');
 
   Object.keys(actualDatasets).forEach(dataId => {
     cmpDataset(t, expectedDatasets[dataId], actualDatasets[dataId]);
@@ -177,13 +168,10 @@ export function cmpDatasets(t, expectedDatasets, actualDatasets) {
 }
 
 export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {
-  t.deepEqual(
-    Object.keys(actualDataset).sort(),
-    Object.keys(expectedDataset).sort(),
-    'dataset should have same keys'
-  );
 
-  // test everything except color, which is auto generated
+  cmpObjectKeys(t, expectedDataset, actualDataset, `dataset:${expectedDataset.id}`);
+
+  // test everything except auto generated color
   Object.keys(actualDataset).forEach(key => {
     if (key === 'fields') {
       t.equal(
@@ -198,6 +186,9 @@ export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {
           `dataset.${key} fields ${actualField.name} should be the same`
         );
       });
+    } else if (key === 'gpuFilter') {
+      // test gpuFilter props
+      cmpGpuFilterProp(t, expectedDataset.gpuFilter, actualDataset.gpuFilter);
     } else if (key !== 'color' || opt.color) {
       t.deepEqual(
         actualDataset[key],
@@ -208,13 +199,25 @@ export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {
   });
 }
 
-export function cmpInteraction(t, expectedInt, actualInt) {
-  t.deepEqual(
-    Object.keys(actualInt).sort(),
-    Object.keys(expectedInt).sort(),
-    'interaction should have same keys'
-  );
+export function cmpGpuFilterProp(t, expectedGpuFilter, actualGpuFilter) {
+  cmpObjectKeys(t, expectedGpuFilter, actualGpuFilter, 'gpu filter');
 
+  Object.keys(expectedGpuFilter).forEach(key => {
+    if (key === 'getFilterValue' && expectedGpuFilter.getFilterValue !== 'skip') {
+      const {inputs, result} = expectedGpuFilter.getFilterValue;
+      t.deepEqual(actualGpuFilter.getFilterValue(...inputs), result, 'getFilterValue should be correct');
+    } else {
+      t.deepEqual(
+        actualGpuFilter[key],
+        expectedGpuFilter[key],
+        `getFilterValue.${key} should be correct`
+      );
+    }
+  });
+}
+
+export function cmpInteraction(t, expectedInt, actualInt) {
+  cmpObjectKeys(t, expectedInt, actualInt, 'interaction');
   Object.keys(actualInt).forEach(key => {
     t.equal(
       typeof actualInt[key],
@@ -244,11 +247,7 @@ export function cmpParsedAppConfigs(
 
   Object.keys(actualConfig).forEach(key => {
     if (key === 'visState') {
-      t.deepEqual(
-        Object.keys(actualConfig[key]).sort(),
-        Object.keys(expectedConfig[key]).sort(),
-        'visState should have same keys'
-      );
+      cmpObjectKeys(t, expectedConfig.visState, actualConfig.visState, 'visState');
       // for visConfig go through each entry
       cmpParsedAppConfigs(t, expectedConfig[key], actualConfig[key], {
         name: key
@@ -259,11 +258,7 @@ export function cmpParsedAppConfigs(
       cmpFilters(t, expectedConfig[key], actualConfig[key], {id: true});
     } else {
       // for each reducer entry
-      t.deepEqual(
-        actualConfig[key],
-        expectedConfig[key],
-        `${key} should be correct`
-      );
+      t.deepEqual(actualConfig[key], expectedConfig[key], `${key} should be correct`);
     }
   });
 }
