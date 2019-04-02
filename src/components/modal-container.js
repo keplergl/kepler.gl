@@ -193,10 +193,11 @@ export default function ModalContainerFactory(
       // TODO: storing a large amount of data in html could be a limitation
       // but it will work for now as first version
       const {uiState} = this.props;
+      const {userMapboxToken, exportMapboxAccessToken} = uiState.exportHtml;
 
       const data = {
         ...KeplerGlSchema.save(this.props),
-        mapboxApiAccessToken: uiState.exportHtml.exportMapboxAccessToken
+        mapboxApiAccessToken: (userMapboxToken || '') !== '' ? userMapboxToken : exportMapboxAccessToken
       };
 
       this._downloadFile(
@@ -385,7 +386,7 @@ export default function ModalContainerFactory(
             template = (
               <ExportMapModal
                 exportHtml={uiState.exportHtml}
-                onExportMapboxAccessToken={this.props.uiStateActions.setExportMapboxAccessToken}
+                onEditUserMapboxAccessToken={this.props.uiStateActions.setUserMapboxAccessToken}
               />
             );
             modalProps = {

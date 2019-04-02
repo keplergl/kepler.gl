@@ -93,7 +93,8 @@ const demoReducer = combineReducers({
     // in the exported file
     uiState: {
       exportHtml: {
-        exportMapboxAccessToken: AUTH_TOKENS.EXPORT_MAPBOX_TOKEN
+        exportMapboxAccessToken: AUTH_TOKENS.EXPORT_MAPBOX_TOKEN,
+        userMapboxToken: ''
       }
     }
   }),

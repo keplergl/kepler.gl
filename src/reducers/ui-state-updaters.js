@@ -149,15 +149,13 @@ export const DEFAULT_NOTIFICATIONS = [];
 /**
  * @constant
  * @type {Object}
- * @property {string} exportMapboxAccessToken - Default: null,
- * @property {string} dataType - Default: 'csv',
- * @property {boolean} filtered - Default: true,
- * @property {boolean} config - deprecated
- * @property {boolean} data - used in modal config expor. Default: falset
+ * @property {string} exportMapboxAccessToken - Default: null, this is used when we provide a default mapbox token for users to take advantage of
+ * @property {string} userMapboxToken - Default: '', mapbox token provided by user through input field
  * @public
  */
 export const DEFAULT_EXPORT_HTML = {
-  exportMapboxAccessToken: ''
+  exportMapboxAccessToken: null,
+  userMapboxToken: ''
 };
 
 /**
@@ -473,11 +471,11 @@ export const setExportDataUpdater = state => ({
  * @returns {Object} nextState
  * @public
  */
-export const setExportMapboxAccessTokenUpdater = (state, {payload: exportMapboxAccessToken}) => ({
+export const setUserMapboxAccessTokenUpdater = (state, {payload: userMapboxToken}) => ({
   ...state,
   exportHtml: {
     ...state.exportHtml,
-    exportMapboxAccessToken
+    userMapboxToken
   }
 });
 

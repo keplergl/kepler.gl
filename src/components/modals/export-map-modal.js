@@ -60,12 +60,12 @@ const StyledInput = styled.input`
 
 const propTypes = {
   exportHtml: PropTypes.object,
-  onExportMapboxAccessToken: PropTypes.func.isRequired
+  onEditUserMapboxAccessToken: PropTypes.func.isRequired
 };
 
 const ExportMapModal = ({
   exportHtml,
-  onExportMapboxAccessToken
+  onEditUserMapboxAccessToken
 }) => (
   <StyledExportMapModal>
     <div className="export-map-modal">
@@ -81,10 +81,10 @@ const ExportMapModal = ({
           Please provide your <a style={{textDecorationLine: 'underline'}} href={MAPBOX_ACCESS_TOKEN}>Mapbox access token</a>
         </div>
         <StyledInput
-          onChange={e => onExportMapboxAccessToken(e.target.value)}
+          onChange={e => onEditUserMapboxAccessToken(e.target.value)}
           type="text"
           placeholder="Mapbox access token"
-          value={exportHtml ? exportHtml.exportMapboxAccessToken : ''}
+          value={exportHtml ? exportHtml.userMapboxToken : ''}
         />
         <div>
           * <a style={{textDecorationLine: 'underline'}} href={GITHUB_EXPORT_HTML_MAP}>How to update an existing map token</a>

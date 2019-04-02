@@ -223,8 +223,8 @@ export const setExportData = createAction(
  * @param {string} payload - mapbox access token
  * @public
  */
-export const setExportMapboxAccessToken = createAction(
-  ActionTypes.SET_EXPORT_MAPBOX_ACCESS_TOKEN,
+export const setUserMapboxAccessToken = createAction(
+  ActionTypes.SET_USER_MAPBOX_ACCESS_TOKEN,
   payload => payload
 );
 
