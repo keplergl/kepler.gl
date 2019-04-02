@@ -324,7 +324,7 @@ function KeplerGlFactory(
               uiState={uiState}
               visStateActions={visStateActions}
               sidePanelWidth={
-                DIMENSIONS.sidePanel.width + DIMENSIONS.sidePanel.margin.left
+                uiState.readOnly ? 0 : DIMENSIONS.sidePanel.width + DIMENSIONS.sidePanel.margin.left
               }
               containerW={containerW}
             />
