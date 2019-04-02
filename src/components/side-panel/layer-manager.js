@@ -20,9 +20,10 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import Sortable from 'react-anything-sortable';
+import {sortableContainer, sortableElement} from 'react-sortable-hoc';
 import styled from 'styled-components';
 import {createSelector} from 'reselect';
+import arrayMove from 'array-move';
 
 import LayerPanelFactory from './layer-panel/layer-panel';
 import SourceDataCatalogFactory from './source-data-catalog';
@@ -90,6 +91,11 @@ const LayerBlendingSelector = ({layerBlending, updateLayerBlending}) => (
   </SidePanelSection>
 );
 
+// make sure the element is always visible while is being dragged
+const SortableStyledItem = styled.div`
+  z-index: 100;
+`;
+
 export function AddDataButtonFactory() {
   const AddDataButton = ({onClick, isInactive}) => (
     <Button
@@ -112,6 +118,20 @@ LayerManagerFactory.deps = [
 ];
 
 function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
+  // By wrapping layer panel using a sortable element we don't have to implement the drag and drop logic into the panel itself;
+  // Developers can provide any layer panel implementation and it will still be sortable
+  const SortableItem = sortableElement(({layer}) => {
+    return (
+      <SortableStyledItem>
+        <LayerPanel {...layer} />
+      </SortableStyledItem>
+    );
+  });
+
+  const SortableContainer = sortableContainer(({children}) => {
+    return <div>{children}</div>;
+  });
+
   return class LayerManager extends Component {
     static propTypes = {
       addLayer: PropTypes.func.isRequired,
@@ -147,8 +167,8 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
       this.props.addLayer();
     };
 
-    _handleSort = order => {
-      this.props.updateLayerOrder(order);
+    _handleSort = ({oldIndex, newIndex}) => {
+      this.props.updateLayerOrder(arrayMove(this.props.layerOrder, oldIndex, newIndex));
     };
 
     render() {
@@ -180,23 +200,23 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
           />
           <SidePanelDivider />
           <SidePanelSection>
-            <Sortable
-              onSort={this._handleSort}
-              direction="vertical"
-              sortHandle="sort--handle"
-              dynamic
+            <SortableContainer
+              onSortEnd={this._handleSort}
+              lockAxis="y"
+              useDragHandle={true}
             >
-              {layerOrder.map(idx => (
-                <LayerPanel
-                  {...panelProps}
-                  {...layerActions}
-                  sortData={idx}
-                  key={layers[idx].id}
-                  idx={idx}
-                  layer={layers[idx]}
-                />
-              ))}
-            </Sortable>
+              {layerOrder.map(idx => {
+                const layer = {
+                  ...panelProps,
+                  ...layerActions,
+                  sortData: idx,
+                  key: layers[idx].id,
+                  idx,
+                  layer: layers[idx]
+                };
+                return <SortableItem key={`layer-${idx}`} index={idx} layer={layer} />
+              })}
+            </SortableContainer>
           </SidePanelSection>
           <SidePanelSection>
             {defaultDataset ? (

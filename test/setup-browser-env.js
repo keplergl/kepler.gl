@@ -31,6 +31,7 @@ const {window} = dom;
 
 global.window = window;
 global.document = window.document;
+global.HTMLElement = window.HTMLElement;
 
 Object.keys(global.window).forEach(property => {
   if (typeof global[property] === 'undefined') {

@@ -21,7 +21,6 @@
 import React, {Component} from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
-import {sortable} from 'react-anything-sortable';
 
 import LayerConfigurator from './layer-configurator';
 import LayerPanelHeader from './layer-panel-header';
@@ -30,6 +29,7 @@ const PanelWrapper = styled.div`
   font-size: 12px;
   border-radius: 1px;
   margin-bottom: 8px;
+  z-index: 1000;
 
   &.dragging {
     cursor: move;
@@ -37,7 +37,7 @@ const PanelWrapper = styled.div`
 `;
 
 function LayerPanelFactory() {
-  @sortable
+
   class LayerPanel extends Component {
     static propTypes = {
       layer: PropTypes.object.isRequired,
