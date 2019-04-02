@@ -14,6 +14,23 @@ Each version should:
   Security to invite users to upgrade in case of vulnerabilities.
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
+#### [1.0.0-0] - Apr 2 2019
+[Enhancement] Replace react anything sortable with React-Sortable-Hoc
+[Enhancement] Replaced DI object storage with an actual Map
+[Feat] Able to overwrite custom theme 
+[Chore] Upgraded waypoint library to support react16
+[Chore] Dropbox UI enhancements 
+[Bug] Fix points disappear while panning across 180th meridian
+[Chore] Tweak save and export documentation
+[Chore] Add oss header and middleware.js
+[Chore] Added file header for user-guide.js
+[Feat] Single map page export
+[Chore] Upgraded libraries: react, styled-components
+
+##### BREAKING CHANGES
+- React 15 is no longer supported
+- Style components v4+ is now required because is now a peer dependency
+ 
 #### [0.2.4] - Mar 13 2019
 - [Enhancement] Slider: use clientX to calculate delta to support windows IE and Tableau kepler.gl (#431)
 - [Bug] Range slider: correctly setting ranch brush selection when mount (#433)
