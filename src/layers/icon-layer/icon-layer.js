@@ -147,8 +147,30 @@ export default class IconLayer extends Layer {
     return props;
   }
 
-  // TODO: fix complexity
-  /* eslint-disable complexity */
+  calculateDataAttribute(allData, filteredIndex, getPosition) {
+    const getIcon = this.getIcon(this.config.columns);
+    const data = [];
+
+    for (let i = 0; i < filteredIndex.length; i++) {
+      const index = filteredIndex[i];
+      const pos = getPosition({data: allData[index]});
+      const icon = getIcon({data: allData[index]});
+
+      // if doesn't have point lat or lng, do not add the point
+      // deck.gl can't handle position = null
+      if (pos.every(Number.isFinite) && icon && IconIds.includes(icon)) {
+        data.push({
+          index,
+          icon,
+          position: pos,
+          data: allData[index]
+        });
+      }
+    }
+
+    return data;
+  }
+
   formatLayerData(allData, filteredIndex, oldLayerData, opt = {}) {
     const {
       colorScale,
@@ -161,6 +183,8 @@ export default class IconLayer extends Layer {
       sizeDomain,
       visConfig: {radiusRange, colorRange}
     } = this.config;
+
+    const {data} = this.updateData(allData, filteredIndex, oldLayerData);
 
     // point color
     const cScale =
@@ -175,43 +199,6 @@ export default class IconLayer extends Layer {
     const rScale =
       sizeField && this.getVisChannelScale(sizeScale, sizeDomain, radiusRange);
 
-    const getPosition = this.getPosition(columns);
-    const getIcon = this.getIcon(columns);
-
-    if (!oldLayerData || oldLayerData.getPosition !== getPosition) {
-      this.updateLayerMeta(allData, getPosition);
-    }
-
-    let data;
-    if (
-      oldLayerData &&
-      oldLayerData.data &&
-      opt.sameData &&
-      oldLayerData.getPosition === getPosition &&
-      oldLayerData.getIcon === getIcon
-    ) {
-      data = oldLayerData.data;
-    } else {
-      data = filteredIndex.reduce((accu, index) => {
-        const pos = getPosition({data: allData[index]});
-        const icon = getIcon({data: allData[index]});
-
-        // if doesn't have point lat or lng, do not add the point
-        // deck.gl can't handle position = null
-        if (!pos.every(Number.isFinite) || !icon || !IconIds.includes(icon)) {
-          return accu;
-        }
-
-        accu.push({
-          index,
-          icon,
-          data: allData[index]
-        });
-
-        return accu;
-      }, []);
-    }
-
     const getRadius = rScale ? d =>
       this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
 
@@ -220,13 +207,10 @@ export default class IconLayer extends Layer {
 
     return {
       data,
-      getPosition,
-      getIcon,
       getColor,
       getRadius
     };
   }
-  /* eslint-enable complexity */
 
   updateLayerMeta(allData, getPosition) {
     const bounds = this.getPointsBounds(allData, d => getPosition({data: d}));
@@ -236,27 +220,28 @@ export default class IconLayer extends Layer {
   renderLayer({
     data,
     idx,
+    gpuFilter,
     objectHovered,
     mapState,
     interactionConfig,
     layerInteraction
   }) {
-    const layerProps = {
-      radiusMinPixels: 1,
-      fp64: this.config.visConfig['hi-precision'],
-      radiusScale: this.getRadiusScaleByZoom(mapState),
-      ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
-    };
 
     return [
       new SvgIconLayer({
-        ...layerProps,
+        // ...layerProps,
         ...data,
+        ...gpuFilter,
         ...layerInteraction,
         id: this.id,
         idx,
         opacity: this.config.visConfig.opacity,
         getIconGeometry: id => SvgIconGeometry[id],
+
+        radiusMinPixels: 1,
+        fp64: this.config.visConfig['hi-precision'],
+        radiusScale: this.getRadiusScaleByZoom(mapState),
+        ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500}),
 
         // picking
         autoHighlight: true,
@@ -268,6 +253,7 @@ export default class IconLayer extends Layer {
 
         // update triggers
         updateTriggers: {
+          getFilterValue: gpuFilter.filterValueUpdateTriggers,
           getRadius: {
             sizeField: this.config.colorField,
             radiusRange: this.config.visConfig.radiusRange,

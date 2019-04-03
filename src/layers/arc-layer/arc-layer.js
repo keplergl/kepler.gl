@@ -108,6 +108,28 @@ export default class ArcLayer extends Layer {
     return props;
   }
 
+  calculateDataAttribute(allData, filteredIndex, getPosition) {
+    const data = [];
+    for (let i = 0; i < filteredIndex.length; i++) {
+      // data = filteredIndex.reduce((accu, index) => {
+      const index = filteredIndex[i];
+      const pos = getPosition({data: allData[index]});
+
+      // if doesn't have point lat or lng, do not add the point
+      // deck.gl can't handle position = null
+      if (pos.every(Number.isFinite)) {
+        data.push({
+          index,
+          sourcePosition: [pos[0], pos[1], pos[2]],
+          targetPosition: [pos[3], pos[4], pos[5]],
+          data: allData[index]
+        });
+      }
+    }
+
+    return data;
+  }
+
   // TODO: fix complexity
   /* eslint-disable complexity */
   formatLayerData(allData, filteredIndex, oldLayerData, opt = {}) {
@@ -116,12 +138,13 @@ export default class ArcLayer extends Layer {
       colorDomain,
       colorField,
       color,
-      columns,
       sizeField,
       sizeScale,
       sizeDomain,
       visConfig: {sizeRange, colorRange, targetColor}
     } = this.config;
+
+    const {data} = this.updateData(allData, filteredIndex, oldLayerData);
 
     // arc color
     const cScale =
@@ -135,41 +158,6 @@ export default class ArcLayer extends Layer {
     // arc thickness
     const sScale =
       sizeField && this.getVisChannelScale(sizeScale, sizeDomain, sizeRange);
-
-    const getPosition = this.getPosition(columns);
-
-    if (!oldLayerData || oldLayerData.getPosition !== getPosition) {
-      this.updateLayerMeta(allData, getPosition);
-    }
-
-    let data;
-    if (
-      oldLayerData &&
-      oldLayerData.data &&
-      opt.sameData &&
-      oldLayerData.getPosition === getPosition
-    ) {
-      data = oldLayerData.data;
-    } else {
-      data = filteredIndex.reduce((accu, index) => {
-        const pos = getPosition({data: allData[index]});
-
-        // if doesn't have point lat or lng, do not add the arc
-        // deck.gl can't handle position == null
-        if (!pos.every(Number.isFinite)) {
-          return accu;
-        }
-
-        accu.push({
-          index,
-          sourcePosition: [pos[0], pos[1], pos[2]],
-          targetPosition: [pos[3], pos[4], pos[5]],
-          data: allData[index]
-        });
-
-        return accu;
-      }, []);
-    }
 
     const getStrokeWidth = sScale ? d =>
        this.getEncodedChannelValue(sScale, d.data, sizeField, 0) : 1;
@@ -219,6 +207,7 @@ export default class ArcLayer extends Layer {
   renderLayer({
     data,
     idx,
+    gpuFilter,
     objectHovered,
     layerInteraction,
     mapState,
@@ -250,6 +239,7 @@ export default class ArcLayer extends Layer {
     return [
       new ArcBrushingLayer({
         ...data,
+        ...gpuFilter,
         ...interaction,
         ...layerInteraction,
         id: this.id,
@@ -263,6 +253,8 @@ export default class ArcLayer extends Layer {
         parameters: {depthTest: mapState.dragRotate},
 
         updateTriggers: {
+          getFilterValue: gpuFilter.filterValueUpdateTriggers,
+
           getStrokeWidth: {
             sizeField: this.config.sizeField,
             sizeRange: this.config.visConfig.sizeRange

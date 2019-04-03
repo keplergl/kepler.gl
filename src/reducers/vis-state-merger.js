@@ -44,6 +44,7 @@ import {LAYER_BLENDINGS} from 'constants/default-settings';
  * @return {Object} updatedState
  */
 export function mergeFilters(state, filtersToMerge) {
+
   const merged = [];
   const unmerged = [];
   const {datasets} = state;

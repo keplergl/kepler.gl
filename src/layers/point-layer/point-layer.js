@@ -26,7 +26,6 @@ import uniq from 'lodash.uniq';
 import {hexToRgb} from 'utils/color-utils';
 import PointLayerIcon from './point-layer-icon';
 import {DEFAULT_LAYER_COLOR} from 'constants/default-settings';
-import {diffUpdateTriggers} from '../layer-update';
 
 export const pointPosAccessor = ({lat, lng, altitude}) => d => [
   d.data[lng.fieldIdx],
@@ -140,17 +139,10 @@ export default class PointLayer extends Layer {
     return props;
   }
 
-  getChangedTriggers(dataUpdateTriggers) {
-    const triggerChanged = diffUpdateTriggers(dataUpdateTriggers, this._oldDataUpdateTriggers);
-    this._oldDataUpdateTriggers = dataUpdateTriggers;
-
-    return triggerChanged;
-  }
-
   calculateDataAttribute(allData, filteredIndex, getPosition) {
     const data = [];
+
     for (let i = 0; i < filteredIndex.length; i++) {
-      // data = filteredIndex.reduce((accu, index) => {
       const index = filteredIndex[i];
       const pos = getPosition({data: allData[index]});
 
@@ -159,6 +151,7 @@ export default class PointLayer extends Layer {
       if (pos.every(Number.isFinite)) {
         data.push({
           data: allData[index],
+          position: pos,
           // index is important for filter
           index
         });
@@ -167,19 +160,27 @@ export default class PointLayer extends Layer {
     return data;
   }
 
+  getDataUpdateTriggers({filteredIndex}) {
+    return {
+      ...super.getDataUpdateTriggers({filteredIndex}),
+      getLabelCharacterSet: {textLabel: this.config.textLabel}
+    };
+  }
+
   formatLayerData(allData, filteredIndex, oldLayerData) {
     const {
       colorScale,
       colorDomain,
       colorField,
       color,
-      columns,
       sizeField,
       sizeScale,
       sizeDomain,
       textLabel,
       visConfig: {radiusRange, fixedRadius, colorRange}
     } = this.config;
+
+    const {data, triggerChanged} = this.updateData(allData, filteredIndex, oldLayerData);
 
     // point color
     const cScale =
@@ -194,27 +195,6 @@ export default class PointLayer extends Layer {
     const rScale =
       sizeField &&
       this.getVisChannelScale(sizeScale, sizeDomain, radiusRange, fixedRadius);
-
-    const getPosition = this.getPosition(columns);
-
-    const dataUpdateTriggers = {
-      getData: {columns, filteredIndex},
-      getLabelCharacterSet: {textLabel},
-      getMeta: {columns}
-    };
-
-    const triggerChanged = this.getChangedTriggers(dataUpdateTriggers);
-
-    if (triggerChanged.getMeta) {
-      this.updateLayerMeta(allData, getPosition);
-    }
-
-    let data = [];
-    if (!triggerChanged.getData) {
-      data = oldLayerData.data;
-    } else {
-      data = this.calculateDataAttribute(allData, filteredIndex, getPosition);
-    }
 
     // get all distinct characters in the text labels
     const getText = this.getText(textLabel);
@@ -235,7 +215,6 @@ export default class PointLayer extends Layer {
     return {
       data,
       labelCharacterSet,
-      getPosition,
       getColor,
       getRadius,
       getText
@@ -251,6 +230,7 @@ export default class PointLayer extends Layer {
   renderLayer({
     data,
     idx,
+    gpuFilter,
     layerInteraction,
     objectHovered,
     mapState,
@@ -259,6 +239,7 @@ export default class PointLayer extends Layer {
     const enableBrushing = interactionConfig.brush.enabled;
 
     const layerProps = {
+      ...gpuFilter,
       outline: this.config.visConfig.outline,
       radiusMinPixels: 1,
       fp64: this.config.visConfig['hi-precision'],
@@ -288,8 +269,8 @@ export default class PointLayer extends Layer {
           // circles will be flat on the map when the altitude column is not used
           depthTest: this.config.columns.altitude.fieldIdx > -1
         },
-
         updateTriggers: {
+          getFilterValue: gpuFilter.filterValueUpdateTriggers,
           getRadius: {
             sizeField: this.config.sizeField,
             radiusRange: this.config.visConfig.radiusRange,
