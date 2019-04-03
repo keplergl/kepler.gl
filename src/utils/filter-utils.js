@@ -407,44 +407,43 @@ export function getFilterRecord(dataId, filters) {
 export function diffFilters(filterRecord, oldFilterRecord = {}) {
   let filterChanged = {};
 
-  /* eslint-disable no-loop-func */
-  for (const record in filterRecord) {
-    if (filterRecord.hasOwnProperty(record)) {
+  Object.entries(filterRecord).forEach(([record, items]) => {
 
-      filterRecord[record].forEach(filter => {
-        const oldFilter = (oldFilterRecord[record] || []).find(
-          f => f.id === filter.id
-        );
-        if (!oldFilter) {
-          // added
-          filterChanged = set([record, filter.id], 'added', filterChanged);
-        } else {
-          // check  what has changed
-          ['name', 'value'].forEach(prop => {
-            if (filter[prop] !== oldFilter[prop]) {
-              filterChanged = set(
-                [record, filter.id],
-                `${prop}_changed`,
-                filterChanged
-              );
-            }
-          });
-        }
-      });
+    items.forEach(filter => {
 
-      (oldFilterRecord[record] || []).forEach(oldFilter => {
-        // deleted
-        if (!filterRecord[record].find(f => f.id === oldFilter.id)) {
-          filterChanged = set([record, oldFilter.id], 'deleted', filterChanged);
-        }
-      });
+      const oldFilter = (oldFilterRecord[record] || []).find(
+        f => f.id === filter.id
+      );
 
-      if (!filterChanged[record]) {
-        filterChanged[record] = null;
+      if (!oldFilter) {
+        // added
+        filterChanged = set([record, filter.id], 'added', filterChanged);
+      } else {
+        // check  what has changed
+        ['name', 'value'].forEach(prop => {
+          if (filter[prop] !== oldFilter[prop]) {
+            filterChanged = set(
+              [record, filter.id],
+              `${prop}_changed`,
+              filterChanged
+            );
+          }
+        });
       }
+    });
+
+    (oldFilterRecord[record] || []).forEach(oldFilter => {
+      // deleted
+      if (!items.find(f => f.id === oldFilter.id)) {
+        filterChanged = set([record, oldFilter.id], 'deleted', filterChanged);
+      }
+    });
+
+    if (!filterChanged[record]) {
+      filterChanged[record] = null;
     }
-  }
-  /* eslint-enable no-loop-func */
+  });
+
   return filterChanged;
 }
 /**

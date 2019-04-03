@@ -239,7 +239,6 @@ export default class PointLayer extends Layer {
       getColor,
       getRadius,
       getText
-      // getFilterValue
     };
   }
   /* eslint-enable complexity */

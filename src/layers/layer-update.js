@@ -4,7 +4,7 @@
  *
  * @param {Object} updateTriggers {getPosition: {column}, getData: {filteredIndex}}
  * @param {Object} oldUpdateTriggers
- * @returns {}
+ * @returns {Boolean|Object} `false` if nothing changed, or `triggerChanged` as an object
  */
 export function diffUpdateTriggers(updateTriggers, oldUpdateTriggers = {}) {
   const triggerChanged = {};
