@@ -58,6 +58,9 @@ const StyledInput = styled.input`
   }
 `;
 
+const DISCLAIMER = "* We will provide a temporary token. If you don't provide your own token, " +
+  "map will break. You can later follow this instruction to edit html and input token.";
+
 const propTypes = {
   exportHtml: PropTypes.object,
   onEditUserMapboxAccessToken: PropTypes.func.isRequired
@@ -87,10 +90,10 @@ const ExportMapModal = ({
           value={exportHtml ? exportHtml.userMapboxToken : ''}
         />
         <div>
-          * <a style={{textDecorationLine: 'underline'}}
-               href={GITHUB_EXPORT_HTML_MAP}
-               target="_blank"
-               rel="noopener noreferrer">How to update an existing map token</a>
+          {DISCLAIMER} <a style={{textDecorationLine: 'underline'}}
+             href={GITHUB_EXPORT_HTML_MAP}
+             target="_blank"
+             rel="noopener noreferrer">How to update an existing map token.</a>
         </div>
       </StyledSection>
 
