@@ -41,7 +41,7 @@ export const exportMapToHTML = options => {
       <script src="https://unpkg.com/react-virtualized@9.21.0/dist/umd/react-virtualized.js" crossorigin></script>
       
       <!-- Load Kepler.gl latest version-->
-      <script src="https://unpkg.com/kepler.gl/umd/keplergl.min.js" crossorigin></script>
+      <script src="https://unpkg.com/kepler.gl@0.2.4/umd/keplergl.min.js" crossorigin></script>
       <!-- You can also specify a specific versions by doing the following -->
       <!--<script src="https://unpkg.com/kepler.gl@0.2.2/umd/keplergl.min.js"></script>-->
     
