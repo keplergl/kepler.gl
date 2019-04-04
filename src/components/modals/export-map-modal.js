@@ -58,8 +58,8 @@ const StyledInput = styled.input`
   }
 `;
 
-const DISCLAIMER = "* We will provide a temporary token. If you don't provide your own token, " +
-  "map will break. You can later follow this instruction to edit html and input token.";
+const DISCLAIMER = "* If you don't provide your own token, the map may fail to display at any time as we rotate ours to avoid misuse." +
+  " You can change the Mapbox token later using the following instructions: ";
 
 const propTypes = {
   exportHtml: PropTypes.object,
