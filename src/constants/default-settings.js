@@ -643,3 +643,8 @@ export const DEFAULT_NOTIFICATION_TOPICS = keyMirror({
   global: null,
   file: null
 });
+
+/**
+ * Max number of filter value buffers that deck.gl provides
+ */
+export const MAX_GPU_FILTERS = 4;

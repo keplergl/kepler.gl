@@ -26,6 +26,7 @@ import uniq from 'lodash.uniq';
 import {hexToRgb} from 'utils/color-utils';
 import PointLayerIcon from './point-layer-icon';
 import {DEFAULT_LAYER_COLOR} from 'constants/default-settings';
+import {diffUpdateTriggers} from '../layer-update';
 
 export const pointPosAccessor = ({lat, lng, altitude}) => d => [
   d.data[lng.fieldIdx],
@@ -60,6 +61,8 @@ export default class PointLayer extends Layer {
     this.registerVisConfig(pointVisConfigs);
     this.getPosition = memoize(pointPosAccessor, pointPosResolver);
     this.getText = memoize(pointLabelAccessor, pointLabelResolver);
+    // this._oldLayerData = null;
+    this._oldDataUpdateTriggers = undefined;
   }
 
   get type() {
@@ -125,7 +128,6 @@ export default class PointLayer extends Layer {
         prop.isVisible = true;
       }
 
-      // const newLayer = new KeplerGlLayers.PointLayer(prop);
       prop.columns = {
         lat: latField,
         lng: lngField,
@@ -138,9 +140,34 @@ export default class PointLayer extends Layer {
     return props;
   }
 
-  // TODO: fix complexity
-  /* eslint-disable complexity */
-  formatLayerData(allData, filteredIndex, oldLayerData, opt = {}) {
+  getChangedTriggers(dataUpdateTriggers) {
+    const triggerChanged = diffUpdateTriggers(dataUpdateTriggers, this._oldDataUpdateTriggers);
+    this._oldDataUpdateTriggers = dataUpdateTriggers;
+
+    return triggerChanged;
+  }
+
+  calculateDataAttribute(allData, filteredIndex, getPosition) {
+    const data = [];
+    for (let i = 0; i < filteredIndex.length; i++) {
+      // data = filteredIndex.reduce((accu, index) => {
+      const index = filteredIndex[i];
+      const pos = getPosition({data: allData[index]});
+
+      // if doesn't have point lat or lng, do not add the point
+      // deck.gl can't handle position = null
+      if (pos.every(Number.isFinite)) {
+        data.push({
+          data: allData[index],
+          // index is important for filter
+          index
+        });
+      }
+    }
+    return data;
+  }
+
+  formatLayerData(allData, filteredIndex, oldLayerData) {
     const {
       colorScale,
       colorDomain,
@@ -170,45 +197,29 @@ export default class PointLayer extends Layer {
 
     const getPosition = this.getPosition(columns);
 
-    if (!oldLayerData || oldLayerData.getPosition !== getPosition) {
+    const dataUpdateTriggers = {
+      getData: {columns, filteredIndex},
+      getLabelCharacterSet: {textLabel},
+      getMeta: {columns}
+    };
+
+    const triggerChanged = this.getChangedTriggers(dataUpdateTriggers);
+
+    if (triggerChanged.getMeta) {
       this.updateLayerMeta(allData, getPosition);
     }
 
-    let data;
-    if (
-      oldLayerData &&
-      oldLayerData.data &&
-      opt.sameData &&
-      oldLayerData.getPosition === getPosition
-    ) {
+    let data = [];
+    if (!triggerChanged.getData) {
       data = oldLayerData.data;
     } else {
-      data = filteredIndex.reduce((accu, index) => {
-        const pos = getPosition({data: allData[index]});
-
-        // if doesn't have point lat or lng, do not add the point
-        // deck.gl can't handle position = null
-        if (!pos.every(Number.isFinite)) {
-          return accu;
-        }
-
-        accu.push({
-          data: allData[index]
-        });
-
-        return accu;
-      }, []);
+      data = this.calculateDataAttribute(allData, filteredIndex, getPosition);
     }
 
     // get all distinct characters in the text labels
     const getText = this.getText(textLabel);
     let labelCharacterSet;
-    if (
-      oldLayerData &&
-      oldLayerData.labelCharacterSet &&
-      opt.sameData &&
-      oldLayerData.getText === getText
-    ) {
+    if (!triggerChanged.getLabelCharacterSet) {
       labelCharacterSet = oldLayerData.labelCharacterSet
     } else {
       const textLabels = textLabel.field ? data.map(getText) : [];

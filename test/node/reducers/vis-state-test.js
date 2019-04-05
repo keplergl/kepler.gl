@@ -28,7 +28,11 @@ import reducer from 'reducers/vis-state';
 import {INITIAL_VIS_STATE} from 'reducers/vis-state-updaters';
 
 import {getLightSettingsFromBounds} from 'utils/layer-utils/layer-utils';
-import {filterData, getDefaultFilter} from 'utils/filter-utils';
+import {
+  filterDataset,
+  getDefaultFilter,
+  getHistogram
+} from 'utils/filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
 import {processCsvData, processGeojson} from 'processors/data-processor';
 
@@ -40,7 +44,9 @@ import {
   geojsonData,
   geoBounds,
   geoLghtSettings,
-  fields as geojsonFields
+  fields as geojsonFields,
+  mappedTripValue,
+  tripDomain
 } from 'test/fixtures/geojson';
 
 // test helpers
@@ -452,11 +458,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
 
   const newLayer3 = nextState3.layers[0];
   t.equal(newLayer3.type, 'hexagon', 'should change type to hexagon');
-  t.equal(
-    newLayer3.config.colorField,
-    stringField,
-    'should keep colorField'
-  );
+  t.equal(newLayer3.config.colorField, stringField, 'should keep colorField');
   t.deepEqual(
     newLayer3.config.colorDomain,
     [0, 1],
@@ -556,74 +558,166 @@ test('#visStateReducer -> UPDATE_LAYER_BLENDING', t => {
 });
 
 test('#visStateReducer -> REMOVE_FILTER', t => {
-  const currentFilters = [
-    {
-      fieldIdx: 0,
-      dataId: 'smoothie',
-      name: mockData.fields[0].name,
-      type: 'range',
-      value: [12.25, 12.29]
-    },
-    {
-      fieldIdx: 1,
-      dataId: 'milkshake',
-      name: mockData.fields[1].name,
-      type: 'range',
-      value: [35.3, 37.75]
-    }
-  ];
+  const filter1 = {
+    fieldIdx: 0,
+    dataId: 'smoothie',
+    name: 'start_point_lat',
+    type: 'range',
+    value: [12.25, 12.29],
+    gpu: true,
+    fixedDomain: false,
+    gpuChannel: 0
+  };
+  const filter2 = {
+    fieldIdx: 1,
+    dataId: 'milkshake',
+    name: 'start_point_lng',
+    type: 'range',
+    value: [35.3, 37.75],
+    gpu: true,
+    fixedDomain: false,
+    gpuChannel: 0
+  };
+  const currentFilters = [filter1, filter2];
+  const allIndexes = mockData.data.map((_, i) => i);
+  const milkshake = {
+    allData: mockData.data,
+    id: 'milkshake',
+    allIndexes,
+    filteredIndexForDomain: allIndexes,
+    filteredIndex: allIndexes
+  };
+
+  const smoothie = {
+    allData: mockData.data,
+    id: 'smoothie',
+    allIndexes,
+    filteredIndexForDomain: allIndexes,
+    filteredIndex: allIndexes
+  };
 
   const oldState = {
     filters: currentFilters,
     datasets: {
-      milkshake: {
-        allData: mockData.data,
-        ...filterData(mockData.data, 'milkshake', currentFilters)
-      },
-      smoothie: {
-        allData: mockData.data,
-        ...filterData(mockData.data, 'smoothie', currentFilters)
-      }
+      milkshake: filterDataset(milkshake, currentFilters),
+      smoothie: filterDataset(smoothie, currentFilters)
     },
-
     layers: [],
     layerData: []
   };
 
-  // remove smoothie filter
+  // remove smoothie filter - gpu: true, fixedDomain: false
   const newReducer = reducer(oldState, VisStateActions.removeFilter(0));
-
-  t.deepEqual(
-    newReducer,
-    {
-      filters: [
-        {
-          fieldIdx: 1,
-          dataId: 'milkshake',
-          name: mockData.fields[1].name,
-          type: 'range',
-          value: [35.3, 37.75]
-        }
-      ],
-      datasets: {
-        milkshake: {
-          allData: mockData.data,
-          filteredIndex: [0, 2],
-          filteredIndexForDomain: [0, 2]
+  const expectedState = {
+    filters: [filter2],
+    datasets: {
+      milkshake: {
+        id: 'milkshake',
+        allData: mockData.data,
+        // filteredIndex and filteredIndexForDomain shouldn't changed
+        filteredIndex: oldState.datasets.milkshake.filteredIndex,
+        filteredIndexForDomain:
+          oldState.datasets.milkshake.filteredIndexForDomain,
+        allIndexes: milkshake.allIndexes,
+        filterRecord: {
+          dynamicDomain: [filter2],
+          fixedDomain: [],
+          cpu: [],
+          gpu: [filter2]
         },
-        smoothie: {
-          allData: mockData.data,
-          filteredIndex: [0, 1, 2, 3],
-          filteredIndexForDomain: [0, 1, 2, 3]
+        gpuFilter: {
+          filterUniform: {
+            filter_min: [35.3, 0, 0, 0],
+            filter_max: [37.75, 0, 0, 0]
+          },
+          filterValueUpdateTriggers: {
+            0: 'start_point_lng',
+            1: null,
+            2: null,
+            3: null
+          },
+          getFilterValue: {
+            inputs: [
+              {data: mockData.data[0], index: 0}
+            ],
+            result: [37.75, 0, 0, 0]
+          }
         }
       },
-
-      layers: [],
-      layerData: []
+      smoothie: {
+        id: 'smoothie',
+        allData: mockData.data,
+        allIndexes: smoothie.allIndexes,
+        // filteredIndex shouldn't changed
+        filteredIndex: oldState.datasets.smoothie.filteredIndex,
+        // filteredIndexForDomain should changed
+        filteredIndexForDomain: [0, 1, 2, 3],
+        filterRecord: {
+          dynamicDomain: [],
+          fixedDomain: [],
+          cpu: [],
+          gpu: []
+        },
+        gpuFilter: {
+          filterUniform: {
+            filter_min: [0, 0, 0, 0],
+            filter_max: [0, 0, 0, 0]
+          },
+          filterValueUpdateTriggers: {
+            0: null,
+            1: null,
+            2: null,
+            3: null
+          },
+          getFilterValue: {
+            inputs: [
+              {data: mockData.data[0], index: 0}
+            ],
+            result: [0, 0, 0, 0]
+          }
+        }
+      }
     },
-    'should remove filter and recalculate data only for associated dataset'
+    layers: [],
+    layerData: []
+  };
+
+  t.deepEqual(
+    Object.keys(newReducer),
+    ['filters', 'datasets', 'layers', 'layerData'],
+    'new reducer should have these keys'
   );
 
+  t.deepEqual(
+    newReducer.filters,
+    expectedState.filters,
+    `should remove filter and recalculate data only for associated dataset`
+  );
+
+  // Test filter dataset result
+  cmpDatasets(t, expectedState.datasets, newReducer.datasets, 'should update datasets');
+
+  // check if `filteredIndex`, `filteredIndexForDomain` is shallow equal
+  t.equal(
+    newReducer.datasets.milkshake.filteredIndex,
+    oldState.datasets.milkshake.filteredIndex,
+    'milkeshake filterIndex should be shallow equal'
+  );
+  t.equal(
+    newReducer.datasets.milkshake.filteredIndexForDomain,
+    oldState.datasets.milkshake.filteredIndexForDomain,
+    'milkeshake filteredIndexForDomain should be shallow equal'
+  );
+  t.equal(
+    newReducer.datasets.smoothie.filteredIndex,
+    oldState.datasets.smoothie.filteredIndex,
+    'smoothie filterIndex should be shallow equal'
+  );
+  t.notEqual(
+    newReducer.datasets.smoothie.filteredIndexForDomain,
+    oldState.datasets.smoothie.filteredIndex,
+    'smoothie filteredIndexForDomain should be updated'
+  );
   t.end();
 });
 
@@ -752,6 +846,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2', t => {
       fields: expectedFields,
       filteredIndex: mockRawData.rows.map((_, i) => i),
       filteredIndexForDomain: mockRawData.rows.map((_, i) => i),
+      allIndexes: mockRawData.rows.map((_, i) => i),
       allData: mockRawData.rows,
       color: 'donnot test me',
       id: 'smoothie',
@@ -919,6 +1014,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3', t => {
       color: 'donnot test me',
       filteredIndex: mockRawData.rows.map((_, i) => i),
       filteredIndexForDomain: mockRawData.rows.map((_, i) => i),
+      allIndexes: mockRawData.rows.map((_, i) => i),
       id: 'smoothie',
       label: 'smoothie and milkshake',
       fieldPairs: [
@@ -1036,6 +1132,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson', t => {
     allData: rows,
     filteredIndex: rows.map((_, i) => i),
     filteredIndexForDomain: rows.map((_, i) => i),
+    allIndexes: rows.map((_, i) => i),
     fields: fields.map(f => ({...f, id: f.name})),
     fieldPairs: []
   };
@@ -1138,9 +1235,10 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
     plotType: 'histogram',
     yAxis: null,
     gpu: true,
+    gpuChannel: 0,
     interval: null,
-    histogram: [1],
-    enlargedHistogram: [1],
+    histogram: [],
+    enlargedHistogram: [],
     isAnimating: false,
     name: mockFilter.name,
     speed: 1,
@@ -1160,13 +1258,38 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
     ])
   );
 
+  const allIndexes = mockRawData.rows.map((_, i) => i);
   const expectedDatasets = {
     smoothie: {
       fields: expectedFields,
-      filteredIndex: [0],
+      // gpu filter in place, filteredIndex should not be updated
+      filteredIndex: allIndexes,
       filteredIndexForDomain: [0],
+      filterRecord: {
+        dynamicDomain: [newState.filters.find(f => f.id === '38chejr')],
+        fixedDomain: [],
+        cpu: [],
+        gpu: [newState.filters.find(f => f.id === '38chejr')]
+      },
+      gpuFilter: {
+        filterUniform: {
+          filter_min: [mockFilter.value[0], 0, 0, 0],
+          filter_max: [mockFilter.value[1], 0, 0, 0]
+        },
+        filterValueUpdateTriggers: {
+          0: mockFilter.name,
+          1: null,
+          2: null,
+          3: null
+        },
+        getFilterValue: {
+          inputs: [{data: mockRawData.rows[0], index: 1}],
+          result: [12.25, 0, 0, 0]
+        }
+      },
+      allIndexes,
       allData: mockRawData.rows,
-      color: 'donnot test me',
+      color: 'donot test me',
       id: 'smoothie',
       label: 'smoothie and milkshake',
       fieldPairs: [
@@ -1227,6 +1350,12 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
 
   cmpDatasets(t, expectedState.datasets, newState.datasets);
 
+  // filteredIndex should be shallow equal
+  t.equal(
+    newState.datasets.smoothie.filteredIndex,
+    newState.datasets.smoothie.allIndexes,
+    'filteredIndex should be shallow equal'
+  );
   t.end();
 });
 
@@ -1358,7 +1487,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.SPLIT_MAPS', t => {
   t.end();
 });
 
-test('#visStateReducer -> setFilter', t => {
+test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
   // get test data
   const {fields, rows} = processCsvData(testData);
   const payload = [
@@ -1473,6 +1602,8 @@ test('#visStateReducer -> setFilter', t => {
   };
 
   const {allData} = initialState.datasets.smoothie;
+
+  const updatedFilter = stateWithFilterName.filters[0];
   // test dataset
   const expectedDataset = {
     id: 'smoothie',
@@ -1485,6 +1616,31 @@ test('#visStateReducer -> setFilter', t => {
     ],
     filteredIndex: [],
     filteredIndexForDomain: [],
+    allIndexes: allData.map((d, i) => i),
+    filterRecord: {
+      dynamicDomain: [updatedFilter],
+      fixedDomain: [],
+      cpu: [updatedFilter],
+      gpu: []
+    },
+    gpuFilter: {
+      filterUniform: {
+        filter_min: [0, 0, 0, 0],
+        filter_max: [0, 0, 0, 0]
+      },
+      filterValueUpdateTriggers: {
+        0: null,
+        1: null,
+        2: null,
+        3: null
+      },
+      getFilterValue: {
+        inputs: [
+          {data: allData[0], index: 0}
+        ],
+        result: [0, 0, 0, 0]
+      }
+    },
     fieldPairs: [
       {
         defaultName: 'gps data',
@@ -1519,8 +1675,16 @@ test('#visStateReducer -> setFilter', t => {
   // test filter
   cmpFilters(t, expectedFilterWValue, stateWithFilterValue.filters[0]);
 
+  const updatedFilterWValue = stateWithFilterValue.filters[0];
+
   const expectedFilteredDataset = {
     ...expectedDataset,
+    filterRecord: {
+      dynamicDomain: [updatedFilterWValue],
+      fixedDomain: [],
+      cpu: [updatedFilterWValue],
+      gpu: []
+    },
     allData,
     filteredIndex: [17, 18, 19, 20, 21, 22],
     filteredIndexForDomain: [17, 18, 19, 20, 21, 22]
@@ -1528,96 +1692,12 @@ test('#visStateReducer -> setFilter', t => {
 
   const expectedLayerData1 = {
     data: [
-      {
-        data: [
-          '2016-09-17 00:26:29',
-          30.0538936,
-          31.2165983,
-          'driver_analytics',
-          1472774400000,
-          null,
-          43,
-          '2016-09-23T07:00:00.000Z',
-          '2016-10-01 09:59:53+00:00',
-          '2016-10-01 16:59:53+00:00',
-          '2016-10-10'
-        ]
-      },
-      {
-        data: [
-          '2016-09-17 00:27:31',
-          30.060911,
-          31.2148748,
-          'driver_analytics',
-          1472774400000,
-          null,
-          4,
-          '2016-09-23T07:00:00.000Z',
-          '2016-10-01 09:57:11+00:00',
-          '2016-10-01 16:57:11+00:00',
-          '2016-10-10'
-        ]
-      },
-      {
-        data: [
-          '2016-09-17 00:28:35',
-          30.060334,
-          31.2212278,
-          'driver_analytics',
-          1472774400000,
-          null,
-          5,
-          '2016-09-23T07:00:00.000Z',
-          '2016-10-01 09:59:27+00:00',
-          '2016-10-01 16:59:27+00:00',
-          '2016-10-10'
-        ]
-      },
-      {
-        data: [
-          '2016-09-17 00:29:40',
-          30.0554663,
-          31.2288985,
-          'driver_analytics',
-          1472774400000,
-          true,
-          null,
-          '2016-09-23T07:00:00.000Z',
-          '2016-10-01 09:46:36+00:00',
-          '2016-10-01 16:46:36+00:00',
-          '2016-10-10'
-        ]
-      },
-      {
-        data: [
-          '2016-09-17 00:30:03',
-          30.0614122,
-          31.2187021,
-          'driver_gps',
-          1472774400000,
-          true,
-          6,
-          '2016-09-23T08:00:00.000Z',
-          '2016-10-01 09:54:31+00:00',
-          '2016-10-01 16:54:31+00:00',
-          '2016-10-10'
-        ]
-      },
-      {
-        data: [
-          '2016-09-17 00:30:03',
-          30.0612697,
-          31.2191059,
-          'driver_gps',
-          1472774400000,
-          true,
-          7,
-          '2016-09-23T08:00:00.000Z',
-          '2016-10-01 09:53:35+00:00',
-          '2016-10-01 16:53:35+00:00',
-          '2016-10-10'
-        ]
-      }
+      {data: allData[17], index: 17},
+      {data: allData[18], index: 18},
+      {data: allData[19], index: 19},
+      {data: allData[20], index: 20},
+      {data: allData[21], index: 21},
+      {data: allData[22], index: 22}
     ],
     getPosition: () => {},
     getColor: () => {},
@@ -1639,7 +1719,7 @@ test('#visStateReducer -> setFilter', t => {
   t.end();
 });
 
-test('#visStateReducer -> setFilter', t => {
+test('#visStateReducer -> setFilter.dynamicDomain & gpu', t => {
   const {fields, rows} = processGeojson(CloneDeep(geojsonData));
   const payload = [
     {
@@ -1669,125 +1749,10 @@ test('#visStateReducer -> setFilter', t => {
     VisStateActions.setFilter(0, 'name', 'TRIPS')
   );
 
-  const expectedHistogram = [
-    {count: 1, x0: 4, x1: 4.5},
-    {count: 0, x0: 4.5, x1: 5},
-    {count: 0, x0: 5, x1: 5.5},
-    {count: 0, x0: 5.5, x1: 6},
-    {count: 0, x0: 6, x1: 6.5},
-    {count: 0, x0: 6.5, x1: 7},
-    {count: 0, x0: 7, x1: 7.5},
-    {count: 0, x0: 7.5, x1: 8},
-    {count: 0, x0: 8, x1: 8.5},
-    {count: 0, x0: 8.5, x1: 9},
-    {count: 0, x0: 9, x1: 9.5},
-    {count: 0, x0: 9.5, x1: 10},
-    {count: 0, x0: 10, x1: 10.5},
-    {count: 0, x0: 10.5, x1: 11},
-    {count: 1, x0: 11, x1: 11.5},
-    {count: 0, x0: 11.5, x1: 12},
-    {count: 0, x0: 12, x1: 12.5},
-    {count: 0, x0: 12.5, x1: 13},
-    {count: 0, x0: 13, x1: 13.5},
-    {count: 0, x0: 13.5, x1: 14},
-    {count: 0, x0: 14, x1: 14.5},
-    {count: 0, x0: 14.5, x1: 15},
-    {count: 0, x0: 15, x1: 15.5},
-    {count: 0, x0: 15.5, x1: 16},
-    {count: 0, x0: 16, x1: 16.5},
-    {count: 0, x0: 16.5, x1: 17},
-    {count: 0, x0: 17, x1: 17.5},
-    {count: 0, x0: 17.5, x1: 18},
-    {count: 0, x0: 18, x1: 18.5},
-    {count: 0, x0: 18.5, x1: 19},
-    {count: 0, x0: 19, x1: 19.5},
-    {count: 0, x0: 19.5, x1: 20},
-    {count: 1, x0: 20, x1: 20}
-  ];
-
-  const expectedEnlarged = [
-    {count: 1, x0: 4, x1: 4.2},
-    {count: 0, x0: 4.2, x1: 4.4},
-    {count: 0, x0: 4.4, x1: 4.6},
-    {count: 0, x0: 4.6, x1: 4.8},
-    {count: 0, x0: 4.8, x1: 5},
-    {count: 0, x0: 5, x1: 5.2},
-    {count: 0, x0: 5.2, x1: 5.4},
-    {count: 0, x0: 5.4, x1: 5.6},
-    {count: 0, x0: 5.6, x1: 5.8},
-    {count: 0, x0: 5.8, x1: 6},
-    {count: 0, x0: 6, x1: 6.2},
-    {count: 0, x0: 6.2, x1: 6.4},
-    {count: 0, x0: 6.4, x1: 6.6},
-    {count: 0, x0: 6.6, x1: 6.8},
-    {count: 0, x0: 6.8, x1: 7},
-    {count: 0, x0: 7, x1: 7.2},
-    {count: 0, x0: 7.2, x1: 7.4},
-    {count: 0, x0: 7.4, x1: 7.6},
-    {count: 0, x0: 7.6, x1: 7.8},
-    {count: 0, x0: 7.8, x1: 8},
-    {count: 0, x0: 8, x1: 8.2},
-    {count: 0, x0: 8.2, x1: 8.4},
-    {count: 0, x0: 8.4, x1: 8.6},
-    {count: 0, x0: 8.6, x1: 8.8},
-    {count: 0, x0: 8.8, x1: 9},
-    {count: 0, x0: 9, x1: 9.2},
-    {count: 0, x0: 9.2, x1: 9.4},
-    {count: 0, x0: 9.4, x1: 9.6},
-    {count: 0, x0: 9.6, x1: 9.8},
-    {count: 0, x0: 9.8, x1: 10},
-    {count: 0, x0: 10, x1: 10.2},
-    {count: 0, x0: 10.2, x1: 10.4},
-    {count: 0, x0: 10.4, x1: 10.6},
-    {count: 0, x0: 10.6, x1: 10.8},
-    {count: 0, x0: 10.8, x1: 11},
-    {count: 1, x0: 11, x1: 11.2},
-    {count: 0, x0: 11.2, x1: 11.4},
-    {count: 0, x0: 11.4, x1: 11.6},
-    {count: 0, x0: 11.6, x1: 11.8},
-    {count: 0, x0: 11.8, x1: 12},
-    {count: 0, x0: 12, x1: 12.2},
-    {count: 0, x0: 12.2, x1: 12.4},
-    {count: 0, x0: 12.4, x1: 12.6},
-    {count: 0, x0: 12.6, x1: 12.8},
-    {count: 0, x0: 12.8, x1: 13},
-    {count: 0, x0: 13, x1: 13.2},
-    {count: 0, x0: 13.2, x1: 13.4},
-    {count: 0, x0: 13.4, x1: 13.6},
-    {count: 0, x0: 13.6, x1: 13.8},
-    {count: 0, x0: 13.8, x1: 14},
-    {count: 0, x0: 14, x1: 14.2},
-    {count: 0, x0: 14.2, x1: 14.4},
-    {count: 0, x0: 14.4, x1: 14.6},
-    {count: 0, x0: 14.6, x1: 14.8},
-    {count: 0, x0: 14.8, x1: 15},
-    {count: 0, x0: 15, x1: 15.2},
-    {count: 0, x0: 15.2, x1: 15.4},
-    {count: 0, x0: 15.4, x1: 15.6},
-    {count: 0, x0: 15.6, x1: 15.8},
-    {count: 0, x0: 15.8, x1: 16},
-    {count: 0, x0: 16, x1: 16.2},
-    {count: 0, x0: 16.2, x1: 16.4},
-    {count: 0, x0: 16.4, x1: 16.6},
-    {count: 0, x0: 16.6, x1: 16.8},
-    {count: 0, x0: 16.8, x1: 17},
-    {count: 0, x0: 17, x1: 17.2},
-    {count: 0, x0: 17.2, x1: 17.4},
-    {count: 0, x0: 17.4, x1: 17.6},
-    {count: 0, x0: 17.6, x1: 17.8},
-    {count: 0, x0: 17.8, x1: 18},
-    {count: 0, x0: 18, x1: 18.2},
-    {count: 0, x0: 18.2, x1: 18.4},
-    {count: 0, x0: 18.4, x1: 18.6},
-    {count: 0, x0: 18.6, x1: 18.8},
-    {count: 0, x0: 18.8, x1: 19},
-    {count: 0, x0: 19, x1: 19.2},
-    {count: 0, x0: 19.2, x1: 19.4},
-    {count: 0, x0: 19.4, x1: 19.6},
-    {count: 0, x0: 19.6, x1: 19.8},
-    {count: 0, x0: 19.8, x1: 20},
-    {count: 1, x0: 20, x1: 20}
-  ];
+  const {
+    histogram: expectedHistogram,
+    enlargedHistogram: expectedEnlarged
+  } = getHistogram(tripDomain, mappedTripValue);
 
   const expectedFilterWName = {
     dataId: 'milkshake',
@@ -1810,7 +1775,8 @@ test('#visStateReducer -> setFilter', t => {
     yAxis: null,
     interval: null,
     speed: 1,
-    gpu: true
+    gpu: true,
+    gpuChannel: 0
   };
 
   // test filter
@@ -1835,42 +1801,66 @@ test('#visStateReducer -> setFilter', t => {
 
     // receive Vis Data will add id to fields
     // filter will add filterProps to fields
-    fields: geojsonFields.map(
-      f =>
-        f.name === 'TRIPS'
-          ? {
-              ...f,
-              id: f.name,
-              filterProp: {
-                domain: [4, 20],
-                fieldType: 'integer',
-                histogram: expectedHistogram,
-                enlargedHistogram: expectedEnlarged,
-                step: 0.01,
-                type: 'range',
-                typeOptions: ['range'],
-                value: [4, 20],
-                gpu: true
-              }
+    fields: geojsonFields.map(f =>
+      f.name === 'TRIPS'
+        ? {
+            ...f,
+            id: f.name,
+            filterProp: {
+              domain: [4, 20],
+              fieldType: 'integer',
+              histogram: expectedHistogram,
+              enlargedHistogram: expectedEnlarged,
+              step: 0.01,
+              type: 'range',
+              typeOptions: ['range'],
+              value: [4, 20],
+              gpu: true
             }
-          : {...f, id: f.name}
+          }
+        : {...f, id: f.name}
     ),
-    filteredIndex: [0, 2],
-    filteredIndexForDomain: [0, 2]
+    gpuFilter: {
+      filterUniform: {
+        filter_min: [8, 0, 0, 0],
+        filter_max: [20, 0, 0, 0]
+      },
+      filterValueUpdateTriggers: {
+        0: 'TRIPS',
+        1: null,
+        2: null,
+        3: null
+      },
+      getFilterValue: {
+        inputs: [
+          {data: initialState.datasets.milkshake.allData[0], index: 0}
+        ],
+        result: [11, 0, 0, 0]
+      }
+    },
+    filterRecord: {
+      dynamicDomain: [stateWithFilterValue.filters[0]],
+      fixedDomain: [],
+      cpu: [],
+      gpu: [stateWithFilterValue.filters[0]]
+    },
+    filteredIndex: geojsonData.features.map((_, i) => i),
+    filteredIndexForDomain: [0, 2],
+    allIndexes: geojsonData.features.map((_, i) => i)
   };
 
-  const actualTripFeild = stateWithFilterValue.datasets.milkshake.fields[4];
-  const expectetField = expectedFilteredDataset.fields[4];
+  const actualTripField = stateWithFilterValue.datasets.milkshake.fields[4];
+  const expectedField = expectedFilteredDataset.fields[4];
 
   t.deepEqual(
-    Object.keys(actualTripFeild).sort(),
-    Object.keys(expectetField).sort(),
+    Object.keys(actualTripField).sort(),
+    Object.keys(expectedField).sort(),
     'trip field keys should be same'
   );
-  Object.keys(actualTripFeild).forEach(k => {
+  Object.keys(actualTripField).forEach(k => {
     t.deepEqual(
-      actualTripFeild[k],
-      expectetField[k],
+      actualTripField[k],
+      expectedField[k],
       `trip field ${k} should be same`
     );
   });
@@ -1884,7 +1874,7 @@ test('#visStateReducer -> setFilter', t => {
 });
 /* eslint-enable max-statements */
 
-test('#visStateReducer -> setFilter.fixedDomain', t => {
+test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t => {
   // get test data
   const {fields, rows} = processCsvData(testData);
   const payload = [
@@ -1905,6 +1895,7 @@ test('#visStateReducer -> setFilter.fixedDomain', t => {
     }
   }).smoothie;
 
+  // add fixedDomain & gpu filter
   const stateWidthTsFilter = applyActions(reducer, INITIAL_VIS_STATE, [
     // receive data
     {action: VisStateActions.updateVisData, payload: [payload]},
@@ -1971,7 +1962,8 @@ test('#visStateReducer -> setFilter.fixedDomain', t => {
     enlarged: true,
     isAnimating: false,
     fieldType: 'timestamp',
-    gpu: true
+    gpu: true,
+    gpuChannel: 0
   };
 
   cmpFilters(t, expectedFilterTs, stateWidthTsFilter.filters[0]);
@@ -1979,28 +1971,53 @@ test('#visStateReducer -> setFilter.fixedDomain', t => {
   const expectedDatasetSmoothie = {
     ...datasetSmoothie,
     // add filter prop to fields
-    fields: datasetSmoothie.fields.map(
-      f =>
-        f.name === 'gps_data.utc_timestamp'
-          ? {
-              ...f,
-              filterProp: {
-                domain: [1474070995000, 1474072208000],
-                step: 1000,
-                mappedValue: expectedFilterTs.mappedValue,
-                histogram: stateWidthTsFilter.filters[0].histogram,
-                enlargedHistogram: stateWidthTsFilter.filters[0].enlargedHistogram,
-                fieldType: 'timestamp',
-                type: 'timeRange',
-                enlarged: true,
-                fixedDomain: true,
-                value: [1474070995000, 1474072208000],
-                gpu: true
-              }
+    fields: datasetSmoothie.fields.map(f =>
+      f.name === 'gps_data.utc_timestamp'
+        ? {
+            ...f,
+            filterProp: {
+              domain: [1474070995000, 1474072208000],
+              step: 1000,
+              mappedValue: expectedFilterTs.mappedValue,
+              histogram: stateWidthTsFilter.filters[0].histogram,
+              enlargedHistogram:
+                stateWidthTsFilter.filters[0].enlargedHistogram,
+              fieldType: 'timestamp',
+              type: 'timeRange',
+              enlarged: true,
+              fixedDomain: true,
+              value: [1474070995000, 1474072208000],
+              gpu: true
             }
-          : f
+          }
+        : f
     ),
-    filteredIndex: [7, 8, 9, 10, 11, 12, 13],
+    filterRecord: {
+      dynamicDomain: [],
+      fixedDomain: [stateWidthTsFilter.filters[0]],
+      cpu: [],
+      gpu: [stateWidthTsFilter.filters[0]]
+    },
+    gpuFilter: {
+      filterUniform: {
+        filter_min: [1474071425000, 0, 0, 0],
+        filter_max: [1474071740000, 0, 0, 0]
+      },
+      filterValueUpdateTriggers: {
+        0: 'gps_data.utc_timestamp',
+        1: null,
+        2: null,
+        3: null
+      },
+      getFilterValue: {
+        inputs: [
+          {data: datasetSmoothie.allData[0], index: 0}
+        ],
+        result: [1474070995000, 0, 0, 0]
+      }
+    },
+    // copy everything
+    filteredIndex: datasetSmoothie.allData.map((d, i) => i),
     filteredIndexForDomain: datasetSmoothie.allData.map((d, i) => i)
   };
 
@@ -2008,16 +2025,16 @@ test('#visStateReducer -> setFilter.fixedDomain', t => {
   cmpDataset(t, expectedDatasetSmoothie, stateWidthTsFilter.datasets.smoothie);
 
   const stateWidthTsAndNameFilter = applyActions(reducer, stateWidthTsFilter, [
-    // add ts filter
+    // add ordinal filter
     {action: VisStateActions.addFilter, payload: ['smoothie']},
 
-    // set ts filter name
+    // set ordinal filter name
     {
       action: VisStateActions.setFilter,
       payload: [1, 'name', 'date']
     },
 
-    // set ts filter value
+    // set ordinal filter value
     {
       action: VisStateActions.setFilter,
       payload: [1, 'value', ['2016-09-24', '2016-10-10']]
@@ -2026,10 +2043,9 @@ test('#visStateReducer -> setFilter.fixedDomain', t => {
 
   const expectedFilteredDataset = {
     ...stateWidthTsFilter.datasets.smoothie,
-    fields: stateWidthTsFilter.datasets.smoothie.fields.map(
-      f =>
-        f.name === 'date'
-          ? {
+    fields: stateWidthTsFilter.datasets.smoothie.fields.map(f =>
+      f.name === 'date'
+        ? {
             ...f,
             filterProp: {
               domain: ['2016-09-23', '2016-09-24', '2016-10-10'],
@@ -2039,13 +2055,41 @@ test('#visStateReducer -> setFilter.fixedDomain', t => {
               gpu: false
             }
           }
-          : f
+        : f
     ),
-    filteredIndex: [7, 8, 9, 10, 11, 12],
+    gpuFilter: {
+      filterUniform: {
+        filter_min: [1474071425000, 0, 0, 0],
+        filter_max: [1474071740000, 0, 0, 0]
+      },
+      filterValueUpdateTriggers: {
+        0: 'gps_data.utc_timestamp',
+        1: null,
+        2: null,
+        3: null
+      },
+      getFilterValue: {
+        inputs: [
+          {data: datasetSmoothie.allData[0], index: 0}
+        ],
+        result: [1474070995000, 0, 0, 0]
+      }
+    },
+    filterRecord: {
+      dynamicDomain: [stateWidthTsAndNameFilter.filters[1]],
+      fixedDomain: [stateWidthTsAndNameFilter.filters[0]],
+      cpu: [stateWidthTsAndNameFilter.filters[1]],
+      gpu: [stateWidthTsAndNameFilter.filters[0]]
+    },
+    filteredIndex: [7, 8, 9, 10, 11, 12, 17, 18, 19, 20, 21, 22],
     filteredIndexForDomain: [7, 8, 9, 10, 11, 12, 17, 18, 19, 20, 21, 22]
   };
 
-  cmpDataset(t, expectedFilteredDataset, stateWidthTsAndNameFilter.datasets.smoothie);
+  cmpDataset(
+    t,
+    expectedFilteredDataset,
+    stateWidthTsAndNameFilter.datasets.smoothie
+  );
 
   t.end();
 });
@@ -2165,7 +2209,8 @@ test('#visStateReducer -> setFilterPlot', t => {
     enlarged: true,
     isAnimating: false,
     fieldType: 'timestamp',
-    gpu: true
+    gpu: true,
+    gpuChannel: 0
   };
 
   // test filter

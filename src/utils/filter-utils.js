@@ -26,6 +26,11 @@ import {ALL_FIELD_TYPES} from 'constants/default-settings';
 import {maybeToDate, notNullorUndefined} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
 import {generateHashId, set} from './utils';
+import {
+  setFilterGpuMode,
+  assignGpuChannel,
+  getGpuFilterProps
+} from './gpu-filter-utils';
 
 export const TimestampStepMap = [
   {max: 1, step: 0.05},
@@ -62,7 +67,6 @@ export const PLOT_TYPES = keyMirror({
 /**
  * Max number of filter value buffers that deck.gl provides
  */
-export const MAX_GPU_FILTERS = 4;
 
 const SupportedPlotType = {
   [FILTER_TYPES.timeRange]: {
@@ -239,7 +243,7 @@ export function updateFilterDataId(dataId) {
  * @returns {{newField: Object, newFilter: Object}}
  */
 export function updateFilterField(filter, idx, dataset, filters) {
-  const {name, dataId} = filter;
+  const {name} = filter;
   const {fields, allData} = dataset;
   // find the field
   const fieldIdx = fields.findIndex(f => f.name === name);
@@ -252,7 +256,7 @@ export function updateFilterField(filter, idx, dataset, filters) {
     newField = set(['filterProp'], getFilterProps(allData, newField), newField);
   }
 
-  const newFilter = {
+  let newFilter = {
     ...filter,
     ...newField.filterProp,
     name: newField.name,
@@ -268,110 +272,180 @@ export function updateFilterField(filter, idx, dataset, filters) {
     newFilter.enlarged = false;
   }
 
-  // filters of the same datasets
-  const gpuFilters = filters.filter(f => f.dateId === dataId && f.gpu);
-  if (newFilter.gpu && gpuFilters.length === MAX_GPU_FILTERS) {
-    newFilter.gpu = false;
+  if (newFilter.gpu) {
+    newFilter = setFilterGpuMode(newFilter, filters);
+    newFilter = assignGpuChannel(newFilter, filters);
   }
 
   return {newField, newFilter};
 }
-
-/**
- * Edit filter.gpu to ensure that only
- * X number of gpu filers can coexist.
- * @param {Array<Object>} filters
- * @returns {Array<Object>} updated filters
- */
-export function resetFilterGpuMode(filters) {
-  const gpuPerDataset = {};
-
-  return filters.map(f => {
-    if (f.gpu) {
-      const count = gpuPerDataset[f.dataId];
-
-      if (count === MAX_GPU_FILTERS) {
-        return set(['gpu'], false, f);
-      }
-
-      gpuPerDataset[f.dataId] = count ? count + 1 : 1;
-    }
-
-    return f;
-  }, filters);
-}
-
 /**
  * Filter data based on an array of filters
  *
- * @param {Array<Object>} data
- * @param {string} dataId
+ * @param {Object} dataset
  * @param {Array<Object>} filters
- * @returns {Object} filteredData
- * @returns {Array<Number>} filteredData.filteredIndex
- * @returns {Array<Number>} filteredData.filteredIndexForDomain
+ * @param {Object} opt
+ * @param {Object} opt.cpuOnly only allow cpu filtering
+ * @returns {Object} dataset
+ * @returns {Array<Number>} dataset.filteredIndex
+ * @returns {Array<Number>} dataset.filteredIndexForDomain
  */
-export function filterData(allData, dataId, filters) {
+export function filterDataset(dataset, filters, opt = {}) {
+  const {allData, id: dataId, filterRecord: oldFilterRecord} = dataset;
 
-  if (!allData || !dataId) {
-    // why would there not be any data? are we over doing this?
-    return {
-      filteredIndex: [],
-      filteredIndexForDomain: []
-    };
-  }
+  // if there is no filters
+  const filterRecord = getFilterRecord(dataId, filters);
 
-  // if there is no data
+  const newDataset = set(['filterRecord'], filterRecord, dataset);
   if (!filters.length) {
     return {
-      filteredIndex: allData.map((d, i) => i)
+      ...newDataset,
+      filteredIndex: dataset.allIndexes,
+      filteredIndexForDomain: dataset.allIndexes
     };
   }
 
-  const appliedFilters = filters.filter(
-    d => d.dataId === dataId && d.fieldIdx > -1 && d.value !== null
-  );
+  const changedFilters = diffFilters(filterRecord, oldFilterRecord);
 
-  const [dynamicDomainFilters, fixedDomainFilters] = appliedFilters.reduce(
-    (accu, f) => {
-      if (f.dataId === dataId && f.fieldIdx > -1 && f.value !== null) {
-        (f.fixedDomain ? accu[1] : accu[0]).push(f);
-      }
-      return accu;
-    },
-    [[], []]
-  );
+  // generate 2 sets of filter result
+  // filteredIndex used to calculate layer data
+  // filteredIndexForDomain used to calculate layer Domain
+  const shouldCalDomain = Boolean(changedFilters.dynamicDomain);
+  const shouldCalIndex = Boolean(changedFilters.cpu) || opt.cpuOnly;
 
-  // generate 2 sets of
-  // filtered index used to calculate layer data and layer Domain
-  const filteredIndex = [];
-  const filteredIndexForDomain = [];
+  let filterResult = {};
+  if (shouldCalDomain || shouldCalIndex) {
+
+    const dynamicDomainFilters = shouldCalDomain ? filterRecord.dynamicDomain : null;
+    const cpuFilters = shouldCalIndex ? (opt.cpuOnly ? filters : filterRecord.cpu) : null;
+    filterResult = filterDataByFilterTypes(
+      {dynamicDomainFilters, cpuFilters},
+      allData
+    );
+  }
+
+  return {
+    ...newDataset,
+    ...filterResult,
+    gpuFilter: getGpuFilterProps(filters, dataId)
+  };
+}
+
+/**
+ *
+ * @param {Object} filters
+ * @param {Array|null} filters.dynamicDomainFilters
+ * @param {Array|null} filters.cpuFilters
+ * @returns {{filteredIndex: Array, filteredIndexForDomain: Array}} filteredIndex and filteredIndexForDomain
+ */
+function filterDataByFilterTypes({dynamicDomainFilters, cpuFilters}, allData) {
+  // const filteredIndexForDomain = [];
+  // const filteredIndex = [];
+  const result = {
+    ...(dynamicDomainFilters ? {filteredIndexForDomain: []} : {}),
+    ...(cpuFilters ? {filteredIndex: []} : {})
+  };
 
   for (let i = 0; i < allData.length; i++) {
-    const d = allData[i];
-
-    const matchForDomain = dynamicDomainFilters.every(filter =>
-      isDataMatchFilter(d, filter, i)
-    );
-
-    if (matchForDomain) {
-      filteredIndexForDomain.push(i);
-
-      // filter data for render
-      const matchForRender = fixedDomainFilters.every(filter =>
-        // if gpu filter, no need to filter data
-        isDataMatchFilter(d, filter, i)
+    const matchForDomain =
+      dynamicDomainFilters &&
+      dynamicDomainFilters.every(filter =>
+        isDataMatchFilter(allData[i], filter, i)
       );
 
-      if (matchForRender) {
-        filteredIndex.push(i);
-      }
+    if (matchForDomain) {
+      result.filteredIndexForDomain.push(i);
+    }
+
+    const matchForRender =
+      cpuFilters &&
+      cpuFilters.every(filter =>
+        isDataMatchFilter(allData[i], filter, i)
+      );
+
+    if (matchForRender) {
+      result.filteredIndex.push(i);
     }
   }
 
-  return {filteredIndex, filteredIndexForDomain};
+  return result;
 }
 
+/**
+ * Get a record of filters based on domain type and gpu / cpu
+ * @param {string} dataId
+ * @param {Array<Object>} filters
+ * @returns {{dynamicDomain: Array, fixedDomain: Array, cpu: Array, gpu: Array}} filterRecord
+ */
+export function getFilterRecord(dataId, filters) {
+  const filterRecord = {
+    dynamicDomain: [],
+    fixedDomain: [],
+    cpu: [],
+    gpu: []
+  };
+
+  filters.forEach(f => {
+    if (f.dataId === dataId && f.fieldIdx > -1 && f.value !== null) {
+      (f.fixedDomain
+        ? filterRecord.fixedDomain
+        : filterRecord.dynamicDomain
+      ).push(f);
+      (f.gpu ? filterRecord.gpu : filterRecord.cpu).push(f);
+    }
+  });
+
+  return filterRecord;
+}
+
+/**
+ * Compare filter records to get what has changed
+ * @param {Object} filterRecord
+ * @param {Object} oldFilterRecord
+ * @returns {{dynamicDomain: Object, fixedDomain: Object, cpu: Object, gpu: Object}} changed filters based on type
+ */
+export function diffFilters(filterRecord, oldFilterRecord = {}) {
+  let filterChanged = {};
+
+  Object.entries(filterRecord).forEach(([record, items]) => {
+
+    items.forEach(filter => {
+
+      const oldFilter = (oldFilterRecord[record] || []).find(
+        f => f.id === filter.id
+      );
+
+      if (!oldFilter) {
+        // added
+        filterChanged = set([record, filter.id], 'added', filterChanged);
+      } else {
+        // check  what has changed
+        ['name', 'value'].forEach(prop => {
+          if (filter[prop] !== oldFilter[prop]) {
+            filterChanged = set(
+              [record, filter.id],
+              `${prop}_changed`,
+              filterChanged
+            );
+          }
+        });
+      }
+    });
+
+    (oldFilterRecord[record] || []).forEach(oldFilter => {
+      // deleted
+      if (!items.find(f => f.id === oldFilter.id)) {
+        filterChanged = set([record, oldFilter.id], 'deleted', filterChanged);
+      }
+    });
+
+    if (!filterChanged[record]) {
+      filterChanged[record] = null;
+    }
+  });
+
+  return filterChanged;
+}
 /**
  * Check if value is in range of filter
  *
@@ -431,9 +505,8 @@ export function adjustValueToFilterDomain(value, {domain, type}) {
         return domain.map(d => d);
       }
 
-      return value.map(
-        (d, i) =>
-          notNullorUndefined(d) && isInRange(d, domain) ? d : domain[i]
+      return value.map((d, i) =>
+        notNullorUndefined(d) && isInRange(d, domain) ? d : domain[i]
       );
 
     case FILTER_TYPES.multiSelect:
@@ -550,7 +623,7 @@ export function histogramConstruct(domain, mappedValue, bins) {
  * @param {Array<Object>} mappedValue
  * @returns {{histogram: Array<Object>, enlargedHistogram: Array<Object>}} 2 sets of histogram
  */
-function getHistogram(domain, mappedValue) {
+export function getHistogram(domain, mappedValue) {
   const histogram = histogramConstruct(domain, mappedValue, histogramBins);
   const enlargedHistogram = histogramConstruct(
     domain,
@@ -594,8 +667,8 @@ export function getTimeWidgetTitleFormatter(domain) {
   return diff > durationYear
     ? 'MM/DD/YY'
     : diff > durationDay
-      ? 'MM/DD hha'
-      : 'MM/DD hh:mma';
+    ? 'MM/DD hha'
+    : 'MM/DD hh:mma';
 }
 
 export function getTimeWidgetHintFormatter(domain) {
@@ -607,12 +680,12 @@ export function getTimeWidgetHintFormatter(domain) {
   return diff > durationYear
     ? 'MM/DD/YY'
     : diff > durationWeek
-      ? 'MM/DD'
-      : diff > durationDay
-        ? 'MM/DD hha'
-        : diff > durationHour
-          ? 'hh:mma'
-          : 'hh:mm:ssa';
+    ? 'MM/DD'
+    : diff > durationDay
+    ? 'MM/DD hha'
+    : diff > durationHour
+    ? 'hh:mma'
+    : 'hh:mm:ssa';
 }
 
 /**
