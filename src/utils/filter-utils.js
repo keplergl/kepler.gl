@@ -25,6 +25,11 @@ import {ALL_FIELD_TYPES} from 'constants/default-settings';
 import {maybeToDate, notNullorUndefined, unique} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
 import {generateHashId, set} from './utils';
+import {
+  setFilterGpuMode,
+  assignGpuChannel,
+  getGpuFilterProps
+} from './gpu-filter-utils';
 
 export const TimestampStepMap = [
   {max: 1, step: 0.05},
@@ -69,7 +74,6 @@ export const LIMITED_FILTER_EFFECT_PROPS = keyMirror({
 /**
  * Max number of filter value buffers that deck.gl provides
  */
-export const MAX_GPU_FILTERS = 4;
 
 const SupportedPlotType = {
   [FILTER_TYPES.timeRange]: {
@@ -328,7 +332,7 @@ export function updateFilterDataId(dataId) {
  * @returns {{newField: Object, newFilter: Object}}
  */
 export function updateFilterField(filter, idx, dataset, filters) {
-  const {name, dataId} = filter;
+  const {name} = filter;
   const {fields, allData} = dataset;
   // find the field
   const fieldIdx = fields.findIndex(f => f.name === name);
@@ -341,7 +345,7 @@ export function updateFilterField(filter, idx, dataset, filters) {
     newField = set(['filterProp'], getFilterProps(allData, newField), newField);
   }
 
-  const newFilter = {
+  let newFilter = {
     ...filter,
     ...newField.filterProp,
     name: newField.name,
@@ -357,132 +361,192 @@ export function updateFilterField(filter, idx, dataset, filters) {
     newFilter.enlarged = false;
   }
 
-  // filters of the same datasets
-  const gpuFilters = filters.filter(f => f.dateId === dataId && f.gpu);
-  if (newFilter.gpu && gpuFilters.length === MAX_GPU_FILTERS) {
-    newFilter.gpu = false;
+  if (newFilter.gpu) {
+    newFilter = setFilterGpuMode(newFilter, filters);
+    newFilter = assignGpuChannel(newFilter, filters);
   }
 
   return {newField, newFilter};
 }
-
-/**
- * Edit filter.gpu to ensure that only
- * X number of gpu filers can coexist.
- * @param {Array<Object>} filters
- * @returns {Array<Object>} updated filters
- */
-export function resetFilterGpuMode(filters) {
-  const gpuPerDataset = {};
-
-  return filters.map(f => {
-    if (f.gpu) {
-      const count = gpuPerDataset[f.dataId];
-
-      if (count === MAX_GPU_FILTERS) {
-        return set(['gpu'], false, f);
-      }
-
-      gpuPerDataset[f.dataId] = count ? count + 1 : 1;
-    }
-
-    return f;
-  }, filters);
-}
-
 /**
  * Filter data based on an array of filters
  *
  * @param {Object} dataset
  * @param {Array<Object>} filters
- * @returns {Object} filteredData
- * @returns {Array<Number>} filteredData.filteredIndex
- * @returns {Array<Number>} filteredData.filteredIndexForDomain
+ * @param {Object} opt
+ * @param {Object} opt.cpuOnly only allow cpu filtering
+ * @returns {Object} dataset
+ * @returns {Array<Number>} dataset.filteredIndex
+ * @returns {Array<Number>} dataset.filteredIndexForDomain
  */
-export function filterData(dataset, filters) {
-  const {allData, dataId, fields} = dataset;
+export function filterDataset(dataset, filters, opt = {}) {
+  const {allData, id: dataId, filterRecord: oldFilterRecord, fields} = dataset;
 
-  if (!allData || !dataId) {
-    // why would there not be any data? are we over doing this?
-    return {
-      filteredIndex: [],
-      filteredIndexForDomain: []
-    };
-  }
+  // if there is no filters
+  const filterRecord = getFilterRecord(dataId, filters);
 
-  // if there is no data
+  const newDataset = set(['filterRecord'], filterRecord, dataset);
   if (!filters.length) {
-    const defaultValues = allData.map((d, i) => i);
     return {
-      filteredIndex: defaultValues,
-      filteredIndexForDomain: defaultValues
+      ...newDataset,
+      filteredIndex: dataset.allIndexes,
+      filteredIndexForDomain: dataset.allIndexes
     };
   }
 
-  const appliedFilters = filters.filter(d => shouldApplyFilter(d, dataset.id));
+  const changedFilters = diffFilters(filterRecord, oldFilterRecord);
 
-  // Map filter against current dataset field
-  const filtersToFields = filters.reduce((acc, filter) => {
-    const fieldIndex = getDatasetFieldIndexForFilter(dataset, filter);
+  // generate 2 sets of filter result
+  // filteredIndex used to calculate layer data
+  // filteredIndexForDomain used to calculate layer Domain
+  const shouldCalDomain = Boolean(changedFilters.dynamicDomain);
+  const shouldCalIndex = Boolean(changedFilters.cpu) || opt.cpuOnly;
 
-    return {
-      ...acc,
-      ...(fieldIndex !== -1 ? {[filter.id]: fields[fieldIndex]} : {})
-    }
-  }, {
-    // [filterId]: field
-  });
+  let filterResult = {};
+  if (shouldCalDomain || shouldCalIndex) {
 
-  const [dynamicDomainFilters, fixedDomainFilters] = appliedFilters.reduce(
-    (accu, f) => {
-      (f.fixedDomain ? accu[1] : accu[0]).push(f);
-      return accu;
-    },
-    [[], []]
-  );
- /*
-  const {filtered, filteredIndex, filteredIndexForDomain} = data.reduce(
-    (accu, d, i) => {
-      // generate 2 sets of
-      // filter data used to calculate layer Domain
-      const matchForDomain = dynamicDomainFilters.every(filter => {
-        return isDataMatchFilter(d, filter, i, filtersToFields[filter.id]);
-      });
-*/
-  // generate 2 sets of
-  // filtered index used to calculate layer data and layer Domain
-  const filteredIndex = [];
-  const filteredIndexForDomain = [];
+    const dynamicDomainFilters = shouldCalDomain ? filterRecord.dynamicDomain : null;
+    const cpuFilters = shouldCalIndex ? (opt.cpuOnly ? filters : filterRecord.cpu) : null;
+    const filtersToFields = filters.reduce((acc, filter) => {
+      const fieldIndex = getDatasetFieldIndexForFilter(dataset, filter);
 
-        // filter data for render
-        // const matchForRender = fixedDomainFilters.every(filter =>
-        //   isDataMatchFilter(d, filter, i, filtersToFields[filter.id])
-        // );
-  for (let i = 0; i < allData.length; i++) {
-    const d = allData[i];
-
-    const matchForDomain = dynamicDomainFilters.every(filter =>
-      isDataMatchFilter(d, filter, i, filtersToFields[filter.id])
-    );
-
-    if (matchForDomain) {
-      filteredIndexForDomain.push(i);
-
-      // filter data for render
-      const matchForRender = fixedDomainFilters.every(filter =>
-        // if gpu filter, no need to filter data
-        isDataMatchFilter(d, filter, i)
-      );
-
-      if (matchForRender) {
-        filteredIndex.push(i);
+      return {
+        ...acc,
+        ...(fieldIndex !== -1 ? {[filter.id]: fields[fieldIndex]} : {})
       }
-    }
+    }, {
+      // [filterId]: field
+    });
+
+    filterResult = filterDataByFilterTypes(
+      {dynamicDomainFilters, cpuFilters, filtersToFields},
+      allData
+    );
   }
 
-  return {filteredIndex, filteredIndexForDomain};
+  return {
+    ...newDataset,
+    ...filterResult,
+    gpuFilter: getGpuFilterProps(filters, dataId)
+  };
 }
 
+/**
+ *
+ * @param {Object} filters
+ * @param {Array|null} filters.dynamicDomainFilters
+ * @param {Array|null} filters.cpuFilters
+ * @returns {{filteredIndex: Array, filteredIndexForDomain: Array}} filteredIndex and filteredIndexForDomain
+ */
+function filterDataByFilterTypes({dynamicDomainFilters, cpuFilters, filtersToFields}, allData) {
+  // const filteredIndexForDomain = [];
+  // const filteredIndex = [];
+  const result = {
+    ...(dynamicDomainFilters ? {filteredIndexForDomain: []} : {}),
+    ...(cpuFilters ? {filteredIndex: []} : {})
+  };
+
+  // const appliedFilters = filters.filter(d => shouldApplyFilter(d, dataset.id));
+  for (let i = 0; i < allData.length; i++) {
+    const matchForDomain =
+      dynamicDomainFilters &&
+      dynamicDomainFilters.every(filter =>
+        isDataMatchFilter(allData[i], filter, i, filtersToFields[filter.id])
+      );
+
+    if (matchForDomain) {
+      result.filteredIndexForDomain.push(i);
+    }
+
+    const matchForRender =
+      cpuFilters &&
+      cpuFilters.every(filter =>
+        isDataMatchFilter(allData[i], filter, i)
+      );
+
+    if (matchForRender) {
+      result.filteredIndex.push(i);
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Get a record of filters based on domain type and gpu / cpu
+ * @param {string} dataId
+ * @param {Array<Object>} filters
+ * @returns {{dynamicDomain: Array, fixedDomain: Array, cpu: Array, gpu: Array}} filterRecord
+ */
+export function getFilterRecord(dataId, filters) {
+  const filterRecord = {
+    dynamicDomain: [],
+    fixedDomain: [],
+    cpu: [],
+    gpu: []
+  };
+
+  filters.forEach(f => {
+    if (f.dataId === dataId && f.fieldIdx > -1 && f.value !== null) {
+      (f.fixedDomain
+        ? filterRecord.fixedDomain
+        : filterRecord.dynamicDomain
+      ).push(f);
+      (f.gpu ? filterRecord.gpu : filterRecord.cpu).push(f);
+    }
+  });
+
+  return filterRecord;
+}
+
+/**
+ * Compare filter records to get what has changed
+ * @param {Object} filterRecord
+ * @param {Object} oldFilterRecord
+ * @returns {{dynamicDomain: Object, fixedDomain: Object, cpu: Object, gpu: Object}} changed filters based on type
+ */
+export function diffFilters(filterRecord, oldFilterRecord = {}) {
+  let filterChanged = {};
+
+  Object.entries(filterRecord).forEach(([record, items]) => {
+
+    items.forEach(filter => {
+
+      const oldFilter = (oldFilterRecord[record] || []).find(
+        f => f.id === filter.id
+      );
+
+      if (!oldFilter) {
+        // added
+        filterChanged = set([record, filter.id], 'added', filterChanged);
+      } else {
+        // check  what has changed
+        ['name', 'value'].forEach(prop => {
+          if (filter[prop] !== oldFilter[prop]) {
+            filterChanged = set(
+              [record, filter.id],
+              `${prop}_changed`,
+              filterChanged
+            );
+          }
+        });
+      }
+    });
+
+    (oldFilterRecord[record] || []).forEach(oldFilter => {
+      // deleted
+      if (!items.find(f => f.id === oldFilter.id)) {
+        filterChanged = set([record, oldFilter.id], 'deleted', filterChanged);
+      }
+    });
+
+    if (!filterChanged[record]) {
+      filterChanged[record] = null;
+    }
+  });
+
+  return filterChanged;
+}
 /**
  * Check if value is in range of filter
  *
@@ -662,7 +726,7 @@ export function histogramConstruct(domain, mappedValue, bins) {
  * @param {Array<Object>} mappedValue
  * @returns {{histogram: Array<Object>, enlargedHistogram: Array<Object>}} 2 sets of histogram
  */
-function getHistogram(domain, mappedValue) {
+export function getHistogram(domain, mappedValue) {
   const histogram = histogramConstruct(domain, mappedValue, histogramBins);
   const enlargedHistogram = histogramConstruct(
     domain,
@@ -793,18 +857,18 @@ export function getDefaultFilterPlotType(filter) {
   return filterPlotTypes[filter.yAxis.type] || null;
 }
 
-/**
- * Apply a list of filters to a given dataset
- * @param dataset
- * @param filters
- * @return {Object} filtered dataset
- */
-export function applyFilterToDataset(dataset, filters) {
-  return {
-    ...dataset,
-    ...filterData(dataset, filters)
-  };
-}
+// /**
+//  * Apply a list of filters to a given dataset
+//  * @param dataset
+//  * @param filters
+//  * @return {Object} filtered dataset
+//  */
+// export function applyFilterToDataset(dataset, filters) {
+//   return {
+//     ...dataset,
+//     ...filterDataByFilterTypes(dataset, filters)
+//   };
+// }
 
 /**
  *
@@ -817,7 +881,7 @@ export function applyFiltersToDatasets(datasetIds, datasets, filters) {
   const dataIds = Array.isArray(datasetIds) ? datasetIds : [datasetIds];
   return dataIds.reduce((acc, dataIdentifier) => ({
     ...acc,
-    [dataIdentifier]: applyFilterToDataset(datasets[dataIdentifier], filters)
+    [dataIdentifier]: filterDataset(datasets[dataIdentifier], filters)
   }), datasets);
 }
 
