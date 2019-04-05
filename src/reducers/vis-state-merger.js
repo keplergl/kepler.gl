@@ -25,10 +25,13 @@ import {
   getDefaultFilter,
   getFilterProps,
   getFilterPlot,
-  filterData,
-  adjustValueToFilterDomain,
-  resetFilterGpuMode
+  filterDataset,
+  adjustValueToFilterDomain
 } from 'utils/filter-utils';
+
+import {
+  resetFilterGpuMode, assignGpuChannels
+} from 'utils/gpu-filter-utils';
 
 import {LAYER_BLENDINGS} from 'constants/default-settings';
 
@@ -70,24 +73,22 @@ export function mergeFilters(state, filtersToMerge) {
   });
 
   // filter data
-  const allFilters = [...(state.filters || []), ...merged];
-  const updatedFilters = resetFilterGpuMode(allFilters);
+  let allFilters = [...(state.filters || []), ...merged];
+  allFilters = resetFilterGpuMode(allFilters);
+  allFilters = assignGpuChannels(allFilters);
   const datasetToFilter = uniq(merged.map(d => d.dataId));
 
   const updatedDataset = datasetToFilter.reduce(
     (accu, dataId) => ({
       ...accu,
-      [dataId]: {
-        ...datasets[dataId],
-        ...filterData(datasets[dataId].allData, dataId, updatedFilters)
-      }
+      [dataId]: filterDataset(datasets[dataId], allFilters)
     }),
     datasets
   );
 
   return {
     ...state,
-    filters: updatedFilters,
+    filters: allFilters,
     datasets: updatedDataset,
     filterToBeMerged: unmerged
   };

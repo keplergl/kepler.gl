@@ -938,7 +938,8 @@ export const mergedFilters = [
     ],
     fieldType: 'timestamp',
     fixedDomain: true,
-    gpu: true
+    gpu: true,
+    gpuChannel: 0
   },
   {
     dataId: '9h10t7fyb',
@@ -980,7 +981,8 @@ export const mergedFilters = [
     fieldType: 'integer',
     typeOptions: ['range'],
     fixedDomain: false,
-    gpu: true
+    gpu: true,
+    gpuChannel: 1
   },
   {
     dataId: 'v79816te8',
@@ -1003,7 +1005,8 @@ export const mergedFilters = [
     fieldType: 'integer',
     typeOptions: ['range'],
     fixedDomain: false,
-    gpu: true
+    gpu: true,
+    gpuChannel: 0
   }
 ];
 

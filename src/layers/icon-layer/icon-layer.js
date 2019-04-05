@@ -314,6 +314,6 @@ export default class IconLayer extends Layer {
           })
         ]
       : [])
-    ];
+    ] : [];
   }
 }

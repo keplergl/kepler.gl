@@ -95,13 +95,16 @@ test('#PointLayer -> formatLayerData', t => {
           },
           data: [
             {
-              data: rows[0]
+              data: rows[0],
+              index: 0
             },
             {
-              data: rows[2]
+              data: rows[2],
+              index: 2
             },
             {
-              data: rows[4]
+              data: rows[4],
+              index: 4
             }
           ],
           getPosition: () => {},
@@ -185,10 +188,12 @@ test('#PointLayer -> formatLayerData', t => {
         const expectedLayerData = {
           data: [
             {
-              data: rows[1]
+              data: rows[1],
+              index: 2
             },
             {
-              data: rows[3]
+              data: rows[3],
+              index: 4
             }
           ],
           getPosition: () => {},

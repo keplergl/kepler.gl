@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import {extent} from 'd3-array';
+
 export const geojsonData = {
   type: 'FeatureCollection',
   features: [
@@ -323,3 +325,6 @@ export const geoLightSettings = {
   lightsStrength: [0.9, 0, 0.8, 0],
   numberOfLights: 2
 };
+
+export const mappedTripValue = geojsonData.features.map(f => f.properties.TRIPS);
+export const tripDomain = extent(mappedTripValue);

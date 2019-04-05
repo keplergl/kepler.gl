@@ -92,16 +92,16 @@ export function createNewDataEntry({info = {}, data}, datasets = {}) {
     tableFieldIndex: i + 1
   }));
 
+  const allIndexes = allData.map((_, i) => i);
   return {
     [dataId]: {
       ...datasetInfo,
       color: datasetInfo.color || getNewDatasetColor(datasets),
       id: dataId,
       allData,
-      // TODO: no need to make a copy anymore, only save fieldedIndex
-      // data: allData.slice(),
-      filteredIndex: allData.map((_, i) => i),
-      filteredIndexForDomain: allData.map((_, i) => i),
+      allIndexes,
+      filteredIndex: allIndexes,
+      filteredIndexForDomain: allIndexes,
       fieldPairs: findPointFieldPairs(fields),
       fields
     }
