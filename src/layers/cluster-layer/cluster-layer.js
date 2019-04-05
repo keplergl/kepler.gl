@@ -69,6 +69,7 @@ export default class ClusterLayer extends AggregationLayer {
     objectHovered,
     mapState,
     interaction,
+    layerInteraction,
     layerCallbacks
   }) {
     const {visConfig} = this.config;
@@ -76,6 +77,7 @@ export default class ClusterLayer extends AggregationLayer {
     return [
       new DeckGLClusterLayer({
         ...data,
+        ...layerInteraction,
         id: this.id,
         idx,
         radiusScale: 1,
