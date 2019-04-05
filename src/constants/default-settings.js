@@ -694,3 +694,9 @@ export const MAP_CONFIG_DESCRIPTION = 'Map config will be included in the Json f
 export const BASE_SPEED = 600;
 export const DEFAULT_TIME_FORMAT = 'MM/DD/YY HH:mm:ssa';
 export const SPEED_CONTROL_RANGE = [0, 10];
+
+// GPU Filtering
+/**
+ * Max number of filter value buffers that deck.gl provides
+ */
+export const MAX_GPU_FILTERS = 4;
