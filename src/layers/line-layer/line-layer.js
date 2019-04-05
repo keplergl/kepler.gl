@@ -24,7 +24,6 @@ import LineLayerIcon from './line-layer-icon';
 import DataFilterExtension from 'shaderlib/gpu-filtering-module';
 import {extendLayer} from 'deckgl-layers/layer-utils/layer-extension';
 
-
 const ExtendedLineLayer = extendLayer(
   DeckGLLineLayer,
   new DataFilterExtension()

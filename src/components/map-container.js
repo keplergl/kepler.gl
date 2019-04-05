@@ -103,6 +103,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       this.previousLayers = {
         // [layers.id]: mapboxLayerConfig
       };
+
+      this._deck = null;
     }
 
     componentWillUnmount() {
@@ -381,6 +383,11 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           onBeforeRender={this._onBeforeRender}
           onLayerHover={visStateActions.onLayerHover}
           onLayerClick={visStateActions.onLayerClick}
+          ref={comp => {
+            if (comp && comp.deck && !this._deck) {
+              this._deck = comp.deck;
+            }
+          }}
         />
       );
     }
