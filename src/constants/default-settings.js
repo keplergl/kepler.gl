@@ -712,3 +712,8 @@ export const EDITOR_AVAILABLE_LAYERS = [
   LAYER_TYPES.arc,
   LAYER_TYPES.line
 ];
+// GPU Filtering
+/**
+ * Max number of filter value buffers that deck.gl provides
+ */
+export const MAX_GPU_FILTERS = 4;
