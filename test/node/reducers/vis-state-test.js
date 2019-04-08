@@ -1739,12 +1739,12 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
 
   const expectedLayerData1 = {
     data: [
-      {data: allData[17], index: 17},
-      {data: allData[18], index: 18},
-      {data: allData[19], index: 19},
-      {data: allData[20], index: 20},
-      {data: allData[21], index: 21},
-      {data: allData[22], index: 22}
+      {data: allData[17], index: 17, position: [31.2165983, 30.0538936, 0]},
+      {data: allData[18], index: 18, position: [31.2148748, 30.060911, 0]},
+      {data: allData[19], index: 19, position: [31.2212278, 30.060334, 0]},
+      {data: allData[20], index: 20, position: [31.2288985, 30.0554663, 0]},
+      {data: allData[21], index: 21, position: [31.2187021, 30.0614122, 0]},
+      {data: allData[22], index: 22, position: [31.2191059, 30.0612697, 0]}
     ],
     getPosition: () => {},
     getColor: () => {},

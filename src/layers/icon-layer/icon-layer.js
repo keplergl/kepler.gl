@@ -177,7 +177,6 @@ export default class IconLayer extends Layer {
       colorDomain,
       colorField,
       color,
-      columns,
       sizeField,
       sizeScale,
       sizeDomain,
