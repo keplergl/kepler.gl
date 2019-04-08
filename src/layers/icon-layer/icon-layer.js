@@ -20,27 +20,15 @@
 
 import Layer from '../base-layer';
 import memoize from 'lodash.memoize';
+import window from 'global/window';
+
 import {hexToRgb} from 'utils/color-utils';
-import {svgIcons as SvgIcons} from './svg-icons.json';
 import SvgIconLayer from 'deckgl-layers/svg-icon-layer/svg-icon-layer';
 import IconLayerIcon from './icon-layer-icon';
-import {ICON_FIELDS} from 'constants/default-settings';
+import {ICON_FIELDS, CLOUDFRONT} from 'constants/default-settings';
 import IconInfoModalFactory from './icon-info-modal';
 
-const IconInfoModal = IconInfoModalFactory();
-const IconIds = SvgIcons.map(d => d.id);
-const SvgIconGeometry = SvgIcons.reduce(
-  (accu, curr) => ({
-    ...accu,
-    [curr.id]: curr.mesh.cells.reduce((prev, cell) => {
-      cell.forEach(p => {
-        Array.prototype.push.apply(prev, curr.mesh.positions[p]);
-      });
-      return prev;
-    }, [])
-  }),
-  {}
-);
+export const SVG_ICON_URL = `${CLOUDFRONT}/icons/svg-icons.json`;
 
 export const iconPosAccessor = ({lat, lng}) => d => [
   d.data[lng.fieldIdx],
@@ -71,6 +59,10 @@ export default class IconLayer extends Layer {
     this.registerVisConfig(pointVisConfigs);
     this.getPosition = memoize(iconPosAccessor, iconPosResolver);
     this.getIcon = memoize(iconAccessor, iconResolver);
+
+    // prepare layer info modal
+    this._layerInfoModal = IconInfoModalFactory();
+    this.getSvgIcons();
   }
 
   get type() {
@@ -104,11 +96,38 @@ export default class IconLayer extends Layer {
   get layerInfoModal() {
     return {
       id: 'iconInfo',
-      template: IconInfoModal,
+      template: this._layerInfoModal,
       modalProps: {
         title: 'How to draw icons'
       }
     };
+  }
+
+  async getSvgIcons(callback) {
+    const fetchConfig = {
+      method: 'GET',
+      mode: 'cors',
+      cache: 'no-cache'
+    };
+
+    if (window.fetch) {
+      const response = await window.fetch(SVG_ICON_URL, fetchConfig);
+      const {svgIcons} = await response.json();
+
+      this.iconGeometry = svgIcons.reduce(
+        (accu, curr) => ({
+          ...accu,
+          [curr.id]: curr.mesh.cells.reduce((prev, cell) => {
+            cell.forEach(p => {
+              Array.prototype.push.apply(prev, curr.mesh.positions[p]);
+            });
+            return prev;
+          }, [])
+        }),
+        {}
+      );
+      this._layerInfoModal = IconInfoModalFactory(svgIcons);
+    }
   }
 
   static findDefaultLayerProps({fieldPairs, fields}) {
@@ -198,7 +217,7 @@ export default class IconLayer extends Layer {
 
         // if doesn't have point lat or lng, do not add the point
         // deck.gl can't handle position = null
-        if (!pos.every(Number.isFinite) || !icon || !IconIds.includes(icon)) {
+        if (!pos.every(Number.isFinite) || typeof icon !== 'string') {
           return accu;
         }
 
@@ -212,11 +231,13 @@ export default class IconLayer extends Layer {
       }, []);
     }
 
-    const getRadius = rScale ? d =>
-      this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
+    const getRadius = rScale
+      ? d => this.getEncodedChannelValue(rScale, d.data, sizeField)
+      : 1;
 
-    const getColor = cScale ? d =>
-      this.getEncodedChannelValue(cScale, d.data, colorField) : color;
+    const getColor = cScale
+      ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
+      : color;
 
     return {
       data,
@@ -256,7 +277,7 @@ export default class IconLayer extends Layer {
         id: this.id,
         idx,
         opacity: this.config.visConfig.opacity,
-        getIconGeometry: id => SvgIconGeometry[id],
+        getIconGeometry: id => this.iconGeometry[id],
 
         // picking
         autoHighlight: true,

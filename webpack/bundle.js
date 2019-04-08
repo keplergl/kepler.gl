@@ -20,8 +20,11 @@
 
 const resolve = require('path').resolve;
 const join = require('path').join;
+const webpack = require('webpack');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
-const SRC_DIR = resolve('./src');
+const SRC_DIR = resolve(__dirname, '../src');
+const OUTPUT_DIR = resolve(__dirname, '../build');
 
 const LIBRARY_BUNDLE_CONFIG = env => ({
   entry: {
@@ -35,51 +38,12 @@ const LIBRARY_BUNDLE_CONFIG = env => ({
 
   output: {
     // Generate the bundle in dist folder
-    path: resolve('./umd'),
-    filename: 'keplergl.min.js',
-    globalObject: 'this',
-    library: '[name]',
-    libraryTarget: 'umd'
+    path: OUTPUT_DIR,
+    filename: 'bundle.js',
+    publicPath: '/'
   },
 
   // let's put everything in
-  externals: {
-    react: {
-      root: 'React',
-      commonjs2: 'react',
-      commonjs: 'react',
-      amd: 'react',
-      umd: 'react'
-    },
-    'react-dom': {
-      root: 'ReactDOM',
-      commonjs2: 'react-dom',
-      commonjs: 'react-dom',
-      amd: 'react-dom',
-      umd: 'react-dom'
-    },
-    redux: {
-      root: 'Redux',
-      commonjs2: 'redux',
-      commonjs: 'redux',
-      amd: 'redux',
-      umd: 'redux'
-    },
-    'react-redux': {
-      root: 'ReactRedux',
-      commonjs2: 'react-redux',
-      commonjs: 'react-redux',
-      amd: 'react-redux',
-      umd: 'react-redux'
-    },
-    'styled-components': {
-      commonjs: 'styled-components',
-      commonjs2: 'styled-components',
-      amd: 'styled-components',
-      root: 'styled'
-    }
-  },
-
   module: {
     rules: [
       {
@@ -99,7 +63,10 @@ const LIBRARY_BUNDLE_CONFIG = env => ({
     fs: 'empty'
   },
 
-  plugins: []
+  plugins: [
+    new webpack.EnvironmentPlugin(['MapboxAccessToken']),
+    new BundleAnalyzerPlugin()
+  ]
 });
 
 module.exports = env => LIBRARY_BUNDLE_CONFIG(env);

@@ -162,7 +162,7 @@ class App extends Component {
     // this._loadTripData();
     this._loadGeojsonData();
     // this._loadIconData();
-    this._loadH3HexagonData();
+    // this._loadH3HexagonData();
   }
 
   _loadTripData() {
@@ -208,11 +208,7 @@ class App extends Component {
             },
             data: processCsvData(sampleIconCsv)
           }
-        ],
-        options: {
-          centerMap: false
-        },
-        config: savedMapConfig
+        ]
       })
     );
   }
