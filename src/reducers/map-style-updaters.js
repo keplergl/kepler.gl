@@ -30,12 +30,15 @@ import {
   editTopMapStyle,
   editBottomMapStyle
 } from 'utils/map-style-utils/mapbox-gl-style-editor';
-import {DEFAULT_MAP_STYLES, DEFAULT_LAYER_GROUPS} from 'constants/default-settings';
+import {
+  DEFAULT_MAP_STYLES,
+  DEFAULT_LAYER_GROUPS
+} from 'constants/default-settings';
 import {generateHashId} from 'utils/utils';
 import {LOAD_MAP_STYLE_TASK} from 'tasks/tasks';
 import {loadMapStyles, loadMapStyleErr} from 'actions/map-style-actions';
 import {rgb} from 'd3-color';
-import { hexToRgb } from 'utils/color-utils';
+import {hexToRgb} from 'utils/color-utils';
 
 const DEFAULT_BLDG_COLOR = '#D1CEC7';
 
@@ -48,10 +51,13 @@ const getDefaultState = () => {
     styleType,
     visibleLayerGroups,
     topLayerGroups,
-    mapStyles: DEFAULT_MAP_STYLES.reduce((accu, curr) => ({
-      ...accu,
-      [curr.id]: curr
-    }), {}),
+    mapStyles: DEFAULT_MAP_STYLES.reduce(
+      (accu, curr) => ({
+        ...accu,
+        [curr.id]: curr
+      }),
+      {}
+    ),
     // save mapbox access token
     mapboxApiAccessToken: null,
     inputStyle: getInitialInputStyle(),
@@ -171,17 +177,25 @@ function getMapStyles({
 
 function get3DBuildingColor(style) {
   // set building color to be the same as the background color.
-  const backgroundLayer = (style.style.layers || []).find(({id}) => id === 'background');
-  const buildingColor = backgroundLayer && backgroundLayer.paint && backgroundLayer.paint['background-color'] ?
-                        backgroundLayer.paint['background-color'] : DEFAULT_BLDG_COLOR;
+  const backgroundLayer = (style.style.layers || []).find(
+    ({id}) => id === 'background'
+  );
+  const buildingColor =
+    backgroundLayer &&
+    backgroundLayer.paint &&
+    backgroundLayer.paint['background-color']
+      ? backgroundLayer.paint['background-color']
+      : DEFAULT_BLDG_COLOR;
   // brighten or darken building based on style
-  const operation = style.id.match(/(?=(dark|night))/) ? 'brighter':  'darker';
+  const operation = style.id.match(/(?=(dark|night))/) ? 'brighter' : 'darker';
   const rgbObj = rgb(buildingColor)[operation]([0.2]);
   return [rgbObj.r, rgbObj.g, rgbObj.b];
 }
 
 function getLayerGroupsFromStyle(style) {
-  return DEFAULT_LAYER_GROUPS.filter(lg => style.layers.filter(lg.filter).length);
+  return Array.isArray(style.layers) ? DEFAULT_LAYER_GROUPS.filter(
+    lg => style.layers.filter(lg.filter).length
+  ) : [];
 }
 
 // Updaters
@@ -237,7 +251,10 @@ export const mapStyleChangeUpdater = (state, {payload: styleType}) => {
     state.mapStyles[styleType]
   );
 
-  const visibleLayerGroups = mergeLayerGroupVisibility(defaultLGVisibility, state.visibleLayerGroups);
+  const visibleLayerGroups = mergeLayerGroupVisibility(
+    defaultLGVisibility,
+    state.visibleLayerGroups
+  );
 
   return {
     ...state,
@@ -261,14 +278,22 @@ export const mapStyleChangeUpdater = (state, {payload: styleType}) => {
  * @public
  */
 export const loadMapStylesUpdater = (state, action) => {
-  const newStyles = action.payload;
+  const newStyles = action.payload || {};
+  const addLayerGroups = Object.keys(newStyles).reduce((accu, id) => ({
+    ...accu,
+    [id]: {
+      ...newStyles[id],
+      layerGroups:
+        newStyles[id].layerGroups || getLayerGroupsFromStyle(newStyles[id].style)
+    }
+  }), {});
 
   // add new styles to state
   const newState = {
     ...state,
     mapStyles: {
       ...state.mapStyles,
-      ...newStyles
+      ...addLayerGroups
     }
   };
 
@@ -289,6 +314,11 @@ export const loadMapStylesUpdater = (state, action) => {
 // do nothing for now, if didn't load, skip it
 export const loadMapStyleErrUpdater = (state, action) => state;
 
+export const requestMapStylesUpdater = (state, {payload: mapStyles}) => {
+  const loadMapStyleTasks = getLoadMapStyleTasks(mapStyles, state.mapboxApiAccessToken);
+  return withTask(state, loadMapStyleTasks);
+};
+
 /**
  * Load map style object when pass in saved map config
  * @memberof mapStyleUpdaters
@@ -303,40 +333,44 @@ export const receiveMapConfigUpdater = (state, {payload: {mapStyle}}) => {
   }
 
   // if saved custom mapStyles load the style object
-  const loadMapStyleTasks = mapStyle.mapStyles ? [
-    Task.all(
-      Object.values(mapStyle.mapStyles)
-      .map(({id, url, accessToken}) => ({
-        id, url: getStyleDownloadUrl(url, accessToken || state.mapboxApiAccessToken)
-      }))
-      .map(LOAD_MAP_STYLE_TASK))
-      .bimap(
-        // success
-        results => (
-          loadMapStyles(
-            results.reduce((accu, {id, style}) => ({
-              ...accu,
-              [id]: {
-                ...mapStyle.mapStyles[id],
-                layerGroups: getLayerGroupsFromStyle(style),
-                style
-              }
-            }), {})
-          )
-        ),
-        // error
-        error => loadMapStyleErr(error)
-      )
-  ] : null;
+  const loadMapStyleTasks = mapStyle.mapStyles
+    ? getLoadMapStyleTasks(mapStyle.mapStyles, state.mapboxApiAccessToken)
+    : null;
 
   const newState = mapConfigChangeUpdater(state, {payload: mapStyle});
 
-  return loadMapStyleTasks ? withTask(
-    newState,
-    loadMapStyleTasks
-  ) : newState;
+  return loadMapStyleTasks ? withTask(newState, loadMapStyleTasks) : newState;
 };
 
+function getLoadMapStyleTasks(mapStyles, mapboxApiAccessToken) {
+  return [
+    Task.all(
+      Object.values(mapStyles)
+        .map(({id, url, accessToken}) => ({
+          id,
+          url: isValidStyleUrl(url) ? getStyleDownloadUrl(url, accessToken || mapboxApiAccessToken) : url
+        }))
+        .map(LOAD_MAP_STYLE_TASK)
+    ).bimap(
+      // success
+      results =>
+        loadMapStyles(
+          results.reduce(
+            (accu, {id, style}) => ({
+              ...accu,
+              [id]: {
+                ...mapStyles[id],
+                style
+              }
+            }),
+            {}
+          )
+        ),
+      // error
+      error => loadMapStyleErr(error)
+    )
+  ];
+}
 /**
  * Reset map style config to initial state
  * @memberof mapStyleUpdaters
@@ -344,7 +378,7 @@ export const receiveMapConfigUpdater = (state, {payload: {mapStyle}}) => {
  * @returns {Object} nextState
  * @public
  */
-export const resetMapConfigMapStyleUpdater = (state) => {
+export const resetMapConfigMapStyleUpdater = state => {
   const emptyConfig = {
     ...INITIAL_MAP_STYLE,
     mapboxApiAccessToken: state.mapboxApiAccessToken,
@@ -368,19 +402,24 @@ export const resetMapConfigMapStyleUpdater = (state) => {
  * @returns {Object} nextState
  * @public
  */
-export const loadCustomMapStyleUpdater = (state, {payload: {icon, style, error}}) => ({
+export const loadCustomMapStyleUpdater = (
+  state,
+  {payload: {icon, style, error}}
+) => ({
   ...state,
   inputStyle: {
     ...state.inputStyle,
     // style json and icon will load asynchronously
-    ...(style ? {
-      id: style.id || generateHashId(),
-      // make a copy of the style object
-      style: JSON.parse(JSON.stringify(style)),
-      label: style.name,
-      // gathering layer group info from style json
-      layerGroups: getLayerGroupsFromStyle(style)
-    } : {}),
+    ...(style
+      ? {
+          id: style.id || generateHashId(),
+          // make a copy of the style object
+          style: JSON.parse(JSON.stringify(style)),
+          label: style.name,
+          // gathering layer group info from style json
+          layerGroups: getLayerGroupsFromStyle(style)
+        }
+      : {}),
     ...(icon ? {icon} : {}),
     ...(error !== undefined ? {error} : {})
   }
@@ -417,7 +456,7 @@ export const inputMapStyleUpdater = (state, {payload: inputStyle}) => ({
  * @param {Object} state `mapStyle`
  * @returns {Object} nextState
  */
-export const addCustomMapStyleUpdater = (state) => {
+export const addCustomMapStyleUpdater = state => {
   const styleId = state.inputStyle.id;
   const newState = {
     ...state,

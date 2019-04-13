@@ -27,7 +27,7 @@ import JSONPretty from 'react-json-pretty';
 import {StyledModalContent} from 'components/common/styled-components';
 
 const propTypes = {
-  config: PropTypes.object.required
+  config: PropTypes.object
 };
 
 const StyledExportConfigSection = styled.div`

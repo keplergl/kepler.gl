@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+/* eslint-disable max-statements */
 import React from 'react';
 import test from 'tape';
 import {mount} from 'enzyme';
@@ -322,3 +323,4 @@ test('Components -> Container -> Mount then rename', t => {
 
   t.end();
 });
+/* eslint-enable max-statements */

@@ -21,11 +21,9 @@
 import React, {Component} from 'react';
 import {console as Console} from 'global/window';
 import {bindActionCreators} from 'redux';
-import {json as requestJson} from 'd3-request';
 import styled, {ThemeProvider, withTheme}  from 'styled-components';
 import {createSelector} from 'reselect';
 import {connect as keplerGlConnect} from 'connect/keplergl-connect';
-import {isValidStyleUrl, getStyleDownloadUrl} from 'utils/map-style-utils/mapbox-gl-style-editor';
 
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
@@ -100,7 +98,8 @@ function KeplerGlFactory(
       width: 800,
       height: 800,
       appName: KEPLER_GL_NAME,
-      version: KEPLER_GL_VERSION
+      version: KEPLER_GL_VERSION,
+      theme: {}
     };
 
     componentWillMount() {
@@ -125,7 +124,7 @@ function KeplerGlFactory(
     themeSelector = props => props.theme;
     availableThemeSelector = createSelector(
       this.themeSelector,
-      (theme) => ({
+      theme => ({
         ...basicTheme,
         ...theme
       })
@@ -145,39 +144,21 @@ function KeplerGlFactory(
     _loadMapStyle = () => {
       const defaultStyles = Object.values(this.props.mapStyle.mapStyles);
       // add id to custom map styles if not given
-      const customeStyles = (this.props.mapStyles || []).map(ms => ({
+      const customStyles = (this.props.mapStyles || []).map(ms => ({
         ...ms,
         id: ms.id || generateHashId()
       }));
 
-      [...customeStyles, ...defaultStyles].forEach(
-        style => {
-          if (style.style) {
-            this.props.mapStyleActions.loadMapStyles({
-              [style.id]: style
-            })
-          } else {
-            this._requestMapStyle(style);
-          }
-        }
+      const allStyles = [...customStyles, ...defaultStyles].reduce((accu, style) => {
+          const hasStyleObject = style.style && typeof style.style === 'object';
+          accu[hasStyleObject ? 'toLoad' : 'toRequest'][style.id] = style;
+
+          return accu;
+        }, {toLoad: {}, toRequest: {}}
       );
-    };
 
-    _requestMapStyle = (mapStyle) => {
-      const {url, id} = mapStyle;
-
-      const downloadUrl = isValidStyleUrl(url) ?
-        getStyleDownloadUrl(url, this.props.mapboxApiAccessToken) : url;
-
-      requestJson(downloadUrl, (error, result) => {
-        if (error) {
-          Console.warn(`Error loading map style ${url}`);
-        } else {
-          this.props.mapStyleActions.loadMapStyles({
-            [id]: {...mapStyle, style: result}
-          });
-        }
-      });
+      this.props.mapStyleActions.loadMapStyles(allStyles.toLoad);
+      this.props.mapStyleActions.requestMapStyles(allStyles.toRequest);
     };
 
     render() {

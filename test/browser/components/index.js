@@ -27,3 +27,4 @@ import './injector-test';
 import './container-test';
 import './data-table-model-test';
 import './notifications';
+import './kepler-gl-test';

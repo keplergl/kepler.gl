@@ -31,6 +31,7 @@ const actionHandler = {
   [ActionTypes.INPUT_MAP_STYLE]: mapStyleUpdaters.inputMapStyleUpdater,
   [ActionTypes.MAP_CONFIG_CHANGE]: mapStyleUpdaters.mapConfigChangeUpdater,
   [ActionTypes.MAP_STYLE_CHANGE]: mapStyleUpdaters.mapStyleChangeUpdater,
+  [ActionTypes.REQUEST_MAP_STYLES]: mapStyleUpdaters.requestMapStylesUpdater,
   [ActionTypes.LOAD_MAP_STYLES]: mapStyleUpdaters.loadMapStylesUpdater,
   [ActionTypes.LOAD_MAP_STYLE_ERR]: mapStyleUpdaters.loadMapStyleErrUpdater,
   [ActionTypes.RECEIVE_MAP_CONFIG]: mapStyleUpdaters.receiveMapConfigUpdater,

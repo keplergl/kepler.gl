@@ -62,6 +62,16 @@ export const mapConfigChange = createAction(
 );
 
 /**
+ * Request map style style object based on style.url.
+ * @memberof mapStyleActions
+ * @param {Array<Object>} mapStyles
+ * @public
+ */
+export const requestMapStyles = createAction(
+  ActionTypes.REQUEST_MAP_STYLES,
+  mapStyles => mapStyles
+);
+/**
  * Callback when load map style success
  * @memberof mapStyleActions
  * @param {Object} newStyles a `{[id]: style}` mapping
