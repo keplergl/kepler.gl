@@ -28,16 +28,6 @@ This is a simple jupyter widget for kepler.gl, an advanced geospatial visualizat
 To install use pip:
 
     $ pip install keplergl_jupyter
-    $ jupyter nbextension enable --py --sys-prefix keplergl_jupyter
-
-To install in jupyter-notebook:
-
-    # python 2
-    $ !install_package_python2.sh keplergl_jupyter
-
-    # python 3
-    $ !install_package_python3.sh keplergl_jupyter
-
 
 ## Quick Start
 
