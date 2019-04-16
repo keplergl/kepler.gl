@@ -91,12 +91,12 @@ export function resetFilterGpuMode(filters) {
 
 /**
  * Initial filter uniform
- * @returns {{filter_min: Array<Number>,filter_max: Array<Number>}}
+ * @returns {{filterMin: Array<Number>,filterMax: Array<Number>}}
  */
-function getEmptyFilterUniform() {
+function getEmptyFilterRange() {
   return {
-    filter_min: new Array(MAX_GPU_FILTERS).fill(0),
-    filter_max: new Array(MAX_GPU_FILTERS).fill(0)
+    filterMin: new Array(MAX_GPU_FILTERS).fill(0),
+    filterMax: new Array(MAX_GPU_FILTERS).fill(0)
   };
 }
 
@@ -121,10 +121,10 @@ function getFilterValueAccessor(channels) {
  * Get filter properties for gpu filtering
  * @param {Array<Object>} filters
  * @param {string} dataId
- * @returns {{filterUniform: {Object}, filterValueUpdateTriggers: Object, getFilterValue: Function}}
+ * @returns {{filterRange: {Object}, filterValueUpdateTriggers: Object, getFilterValue: Function}}
  */
 export function getGpuFilterProps(filters, dataId) {
-  const filterUniform = getEmptyFilterUniform();
+  const filterRange = getEmptyFilterRange();
   const triggers = {};
 
   // array of filter for each channel, undefined, if no filter is assigned to that channel
@@ -134,8 +134,8 @@ export function getGpuFilterProps(filters, dataId) {
     const filter = filters.find(
       f => f.dataId === dataId && f.gpu && f.gpuChannel === i
     );
-    filterUniform.filter_min[i] = filter ? filter.value[0] : 0;
-    filterUniform.filter_max[i] = filter ? filter.value[1] : 0;
+    filterRange.filterMin[i] = filter ? filter.value[0] : 0;
+    filterRange.filterMax[i] = filter ? filter.value[1] : 0;
 
     triggers[i] = filter ? filter.name : null;
     channels.push(filter);
@@ -143,5 +143,5 @@ export function getGpuFilterProps(filters, dataId) {
 
   const getFilterValue = getFilterValueAccessor(channels);
 
-  return {filterUniform, filterValueUpdateTriggers: triggers, getFilterValue};
+  return {filterRange, filterValueUpdateTriggers: triggers, getFilterValue};
 }
