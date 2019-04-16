@@ -20,6 +20,8 @@
 
 import {ArcLayer} from 'deck.gl';
 import {editShader} from 'deckgl-layers/layer-utils/shader-utils';
+import DataFilterExtension from 'shaderlib/gpu-filtering-module';
+import {extendLayer} from 'deckgl-layers/layer-utils/layer-extension';
 
 const defaultProps = {
   ...ArcLayer.defaultProps,
@@ -53,7 +55,7 @@ function addBrushingVs64Shader(vs) {
   );
 }
 
-export default class ArcBrushingLayer extends ArcLayer {
+class ArcBrushingLayer extends ArcLayer {
   getShaders() {
     const shaders = super.getShaders();
     return {
@@ -96,3 +98,8 @@ export default class ArcBrushingLayer extends ArcLayer {
 
 ArcBrushingLayer.layerName = 'ArcBrushingLayer';
 ArcBrushingLayer.defaultProps = defaultProps;
+
+export default extendLayer(
+  ArcBrushingLayer,
+  new DataFilterExtension()
+);
