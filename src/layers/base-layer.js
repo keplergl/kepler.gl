@@ -21,6 +21,7 @@
 import {console as Console} from 'global/window';
 import keymirror from 'keymirror';
 import DefaultLayerIcon from './default-layer-icon';
+import {diffUpdateTriggers} from './layer-update';
 
 import {
   ALL_FIELD_TYPES,
@@ -765,6 +766,13 @@ export default class Layer {
     return [lngBounds[0], latBounds[0], lngBounds[1], latBounds[1]];
   }
 
+  getChangedTriggers(dataUpdateTriggers) {
+    const triggerChanged = diffUpdateTriggers(dataUpdateTriggers, this._oldDataUpdateTriggers);
+    this._oldDataUpdateTriggers = dataUpdateTriggers;
+
+    return triggerChanged;
+  }
+
   getEncodedChannelValue(
     scale,
     data,
@@ -799,6 +807,35 @@ export default class Layer {
     this.meta = {...this.meta, ...meta};
   }
 
+  getDataUpdateTriggers({filteredIndex}) {
+    const {columns} = this.config;
+
+    return {
+      getData: {columns, filteredIndex},
+      getMeta: {columns}
+    }
+  }
+
+  updateData(allData, filteredIndex, oldLayerData) {
+    const {columns} = this.config;
+
+    const getPosition = this.getPosition(columns);
+    const dataUpdateTriggers = this.getDataUpdateTriggers({filteredIndex});
+    const triggerChanged = this.getChangedTriggers(dataUpdateTriggers);
+
+    if (triggerChanged.getMeta) {
+      this.updateLayerMeta(allData, getPosition);
+    }
+
+    let data = [];
+    if (!triggerChanged.getData) {
+      data = oldLayerData.data;
+    } else {
+      data = this.calculateDataAttribute(allData, filteredIndex, getPosition);
+    }
+
+    return {data, triggerChanged};
+  }
   /**
    * helper function to update one layer domain when state.data changed
    * if state.data change is due ot update filter, newFiler will be passed

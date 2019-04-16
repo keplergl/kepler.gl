@@ -42,6 +42,7 @@ const DEFAULT_ICON_GEOMETRY = [
   1,
   0
 ];
+
 const defaultProps = {
   getIconGeometry: iconId => DEFAULT_ICON_GEOMETRY,
   getIcon: d => d.icon

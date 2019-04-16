@@ -45,6 +45,7 @@ import {mergeFilterDomainStep} from '../utils/filter-utils';
  * @return {Object} updatedState
  */
 export function mergeFilters(state, filtersToMerge) {
+
   const merged = [];
   const unmerged = [];
   const {datasets} = state;
