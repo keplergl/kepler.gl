@@ -963,9 +963,9 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
           gpu: [filter2]
         },
         gpuFilter: {
-          filterUniform: {
-            filter_min: [35.3, 0, 0, 0],
-            filter_max: [37.75, 0, 0, 0]
+          filterRange: {
+            filterMin: [35.3, 0, 0, 0],
+            filterMax: [37.75, 0, 0, 0]
           },
           filterValueUpdateTriggers: {
             0: 'start_point_lng',
@@ -996,9 +996,9 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
           gpu: []
         },
         gpuFilter: {
-          filterUniform: {
-            filter_min: [0, 0, 0, 0],
-            filter_max: [0, 0, 0, 0]
+          filterRange: {
+            filterMin: [0, 0, 0, 0],
+            filterMax: [0, 0, 0, 0]
           },
           filterValueUpdateTriggers: {
             0: null,
@@ -1175,6 +1175,17 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
       filteredIndexForDomain: mockRawData.rows.map((_, i) => i),
       allIndexes: mockRawData.rows.map((_, i) => i),
       allData: mockRawData.rows,
+      gpuFilter: {
+        filterRange: {
+          filterMin: [0, 0, 0, 0],
+          filterMax: [0, 0, 0, 0]
+        },
+        filterValueUpdateTriggers: {0: null, 1: null, 2: null, 3: null},
+        getFilterValue: {
+          inputs: ['a', 'b', 'c', 'd', 'e'],
+          result: [0, 0, 0, 0]
+        }
+      },
       color: 'donnot test me',
       id: 'smoothie',
       label: 'exciting dataset',
@@ -1340,6 +1351,24 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
       filteredIndex: mockRawData.rows.map((_, i) => i),
       filteredIndexForDomain: mockRawData.rows.map((_, i) => i),
       allIndexes: mockRawData.rows.map((_, i) => i),
+      gpuFilter: {
+        filterRange: {
+          filterMin: [0, 0, 0, 0],
+          filterMax: [0, 0, 0, 0]
+        },
+        filterValueUpdateTriggers: {
+          0: null,
+          1: null,
+          2: null,
+          3: null
+        },
+        getFilterValue: {
+          inputs: [
+            {data: mockData.data[0], index: 0}
+          ],
+          result: [0, 0, 0, 0]
+        }
+      },
       id: 'smoothie',
       label: 'smoothie and milkshake',
       fieldPairs: [
@@ -1461,7 +1490,25 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
     filteredIndexForDomain: rows.map((_, i) => i),
     allIndexes: rows.map((_, i) => i),
     fields: fields.map(f => ({...f, id: f.name})),
-    fieldPairs: []
+    fieldPairs: [],
+    gpuFilter: {
+      filterRange: {
+        filterMin: [0, 0, 0, 0],
+        filterMax: [0, 0, 0, 0]
+      },
+      filterValueUpdateTriggers: {
+        0: null,
+        1: null,
+        2: null,
+        3: null
+      },
+      getFilterValue: {
+        inputs: [
+          {data: mockData.data[0], index: 0}
+        ],
+        result: [0, 0, 0, 0]
+      }
+    }
   };
 
   const dataToFeature = geojsonData.features.reduce(
@@ -1680,9 +1727,9 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
         gpu: [newState.filters.find(f => f.id === '38chejr')]
       },
       gpuFilter: {
-        filterUniform: {
-          filter_min: [mockFilter.value[0], 0, 0, 0],
-          filter_max: [mockFilter.value[1], 0, 0, 0]
+        filterRange: {
+          filterMin: [mockFilter.value[0], 0, 0, 0],
+          filterMax: [mockFilter.value[1], 0, 0, 0]
         },
         filterValueUpdateTriggers: {
           0: mockFilter.name,
@@ -2001,9 +2048,9 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
       gpu: []
     },
     gpuFilter: {
-      filterUniform: {
-        filter_min: [0, 0, 0, 0],
-        filter_max: [0, 0, 0, 0]
+      filterRange: {
+        filterMin: [0, 0, 0, 0],
+        filterMax: [0, 0, 0, 0]
       },
       filterValueUpdateTriggers: {
         0: null,
@@ -2075,12 +2122,12 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
 
   const expectedLayerData1 = {
     data: [
-      {data: allData[17], index: 17},
-      {data: allData[18], index: 18},
-      {data: allData[19], index: 19},
-      {data: allData[20], index: 20},
-      {data: allData[21], index: 21},
-      {data: allData[22], index: 22}
+      {data: allData[17], index: 17, position: [31.2165983, 30.0538936, 0]},
+      {data: allData[18], index: 18, position: [31.2148748, 30.060911, 0]},
+      {data: allData[19], index: 19, position: [31.2212278, 30.060334, 0]},
+      {data: allData[20], index: 20, position: [31.2288985, 30.0554663, 0]},
+      {data: allData[21], index: 21, position: [31.2187021, 30.0614122, 0]},
+      {data: allData[22], index: 22, position: [31.2191059, 30.0612697, 0]}
     ],
     getPosition: () => {},
     getColor: () => {},
@@ -2221,9 +2268,9 @@ test('#visStateReducer -> setFilter.dynamicDomain & gpu', t => {
         : {...f, id: f.name}
     ),
     gpuFilter: {
-      filterUniform: {
-        filter_min: [8, 0, 0, 0],
-        filter_max: [20, 0, 0, 0]
+      filterRange: {
+        filterMin: [8, 0, 0, 0],
+        filterMax: [20, 0, 0, 0]
       },
       filterValueUpdateTriggers: {
         0: 'TRIPS',
@@ -2416,9 +2463,9 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
       gpu: [stateWidthTsFilter.filters[0]]
     },
     gpuFilter: {
-      filterUniform: {
-        filter_min: [1474071425000, 0, 0, 0],
-        filter_max: [1474071740000, 0, 0, 0]
+      filterRange: {
+        filterMin: [1474071425000, 0, 0, 0],
+        filterMax: [1474071740000, 0, 0, 0]
       },
       filterValueUpdateTriggers: {
         0: 'gps_data.utc_timestamp',
@@ -2475,9 +2522,9 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
         : f
     ),
     gpuFilter: {
-      filterUniform: {
-        filter_min: [1474071425000, 0, 0, 0],
-        filter_max: [1474071740000, 0, 0, 0]
+      filterRange: {
+        filterMin: [1474071425000, 0, 0, 0],
+        filterMax: [1474071740000, 0, 0, 0]
       },
       filterValueUpdateTriggers: {
         0: 'gps_data.utc_timestamp',

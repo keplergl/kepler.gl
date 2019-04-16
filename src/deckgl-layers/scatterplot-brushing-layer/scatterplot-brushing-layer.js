@@ -20,6 +20,8 @@
 
 import {ScatterplotLayer} from 'deck.gl';
 import {editShader} from 'deckgl-layers/layer-utils/shader-utils';
+import DataFilterExtension from 'shaderlib/gpu-filtering-module';
+import {extendLayer} from 'deckgl-layers/layer-utils/layer-extension';
 
 function addBrushingVsShader(vs) {
   return editShader(
@@ -39,7 +41,7 @@ const defaultProps = {
   outsideBrushRadius: 0
 };
 
-export default class ScatterplotBrushingLayer extends ScatterplotLayer {
+class ScatterplotBrushingLayer extends ScatterplotLayer {
 
   getShaders() {
     const shaders = super.getShaders();
@@ -48,14 +50,6 @@ export default class ScatterplotBrushingLayer extends ScatterplotLayer {
       fs: shaders.fs,
       modules: shaders.modules.concat(['brushing'])
     };
-  }
-
-  initializeState() {
-    super.initializeState();
-
-    // this.getAttributeManager().addInstanced({
-    //   instanceFilterValue: {size: MAX_GPU_FILTERS, accessor: 'getFilterValue'}
-    // });
   }
 
   draw(opts) {
@@ -85,3 +79,8 @@ export default class ScatterplotBrushingLayer extends ScatterplotLayer {
 
 ScatterplotBrushingLayer.layerName = 'ScatterplotBrushingLayer';
 ScatterplotBrushingLayer.defaultProps = defaultProps;
+
+export default extendLayer(
+  ScatterplotBrushingLayer,
+  new DataFilterExtension()
+);
