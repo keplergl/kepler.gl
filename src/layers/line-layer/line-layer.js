@@ -21,6 +21,13 @@
 import ArcLayer from '../arc-layer/arc-layer';
 import DeckGLLineLayer from 'deckgl-layers/line-layer/line-layer';
 import LineLayerIcon from './line-layer-icon';
+import DataFilterExtension from 'shaderlib/gpu-filtering-module';
+import {extendLayer} from 'deckgl-layers/layer-utils/layer-extension';
+
+const ExtendedLineLayer = extendLayer(
+  DeckGLLineLayer,
+  new DataFilterExtension()
+);
 
 export default class LineLayer extends ArcLayer {
   get type() {
@@ -54,6 +61,7 @@ export default class LineLayer extends ArcLayer {
   renderLayer({
     data,
     idx,
+    gpuFilter,
     layerInteraction,
     objectHovered,
     mapState,
@@ -84,10 +92,11 @@ export default class LineLayer extends ArcLayer {
 
     return [
       // base layer
-      new DeckGLLineLayer({
-        ...layerInteraction,
+      new ExtendedLineLayer({
         ...data,
+        ...gpuFilter,
         ...interaction,
+        ...layerInteraction,
         getColor: data.getSourceColor,
         id: this.id,
         idx,
@@ -96,6 +105,7 @@ export default class LineLayer extends ArcLayer {
         // parameters
         parameters: {depthTest: mapState.dragRotate},
         updateTriggers: {
+          getFilterValue: gpuFilter.filterValueUpdateTriggers,
           getWidth: {
             sizeField: this.config.sizeField,
             sizeRange: this.config.visConfig.sizeRange

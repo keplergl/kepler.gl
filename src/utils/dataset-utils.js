@@ -23,6 +23,8 @@ import uniq from 'lodash.uniq';
 import {TRIP_POINT_FIELDS} from 'constants/default-settings';
 import {generateHashId} from './utils';
 import {validateInputData} from 'processors/data-processor';
+import {getGpuFilterProps} from 'utils/gpu-filter-utils';
+
 // apply a color for each dataset
 // to use as label colors
 const datasetColors = [
@@ -103,7 +105,8 @@ export function createNewDataEntry({info = {}, data}, datasets = {}) {
       filteredIndex: allIndexes,
       filteredIndexForDomain: allIndexes,
       fieldPairs: findPointFieldPairs(fields),
-      fields
+      fields,
+      gpuFilter: getGpuFilterProps([], dataId)
     }
   };
 }
