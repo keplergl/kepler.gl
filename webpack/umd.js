@@ -87,11 +87,6 @@ const LIBRARY_BUNDLE_CONFIG = env => ({
         test: /\.js$/,
         loader: 'babel-loader',
         include: [SRC_DIR]
-      },
-      {
-        test: /\.json$/,
-        loader: 'json-loader',
-        type: 'javascript/auto'
       }
     ]
   },
