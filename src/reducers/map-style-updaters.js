@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import Immutable from 'immutable';
 import Task, {withTask} from 'react-palm/tasks';
 import cloneDeep from 'lodash.clonedeep';
 
@@ -144,7 +145,7 @@ function getMapStyles({
   const editable = Object.keys(visibleLayerGroups).length;
 
   const bottomMapStyle = !editable
-    ? mapStyle.style
+    ? Immutable.fromJS(mapStyle.style)
     : editBottomMapStyle({
         id: styleType,
         mapStyle,

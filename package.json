@@ -172,7 +172,6 @@
     "eslint-plugin-react": "~7.12.4",
     "gl": "^4.2.2",
     "jsdom": "^11.1.0",
-    "jshint": "^2.10.2",
     "json-loader": "^0.5.4",
     "nyc": "^11.4.1",
     "prettier": "^1.7.0",

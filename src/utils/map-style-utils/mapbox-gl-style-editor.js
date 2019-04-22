@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import Immutable from 'immutable';
 import memoize from 'lodash.memoize';
 import {
   DEFAULT_LAYER_GROUPS,
@@ -46,7 +47,7 @@ const resolver = ({id, mapStyle, visibleLayerGroups = {}}) =>
  *
  * @param {object} mapStyle - preset map style
  * @param {object} visibleLayerGroups - visible layers of top map
- * @returns {object} top map style
+ * @returns {Immutable.Map} top map style
  */
 export const editTopMapStyle = memoize(({id, mapStyle, visibleLayerGroups}) => {
   const visibleFilters = (mapStyle.layerGroups || [])
@@ -59,10 +60,10 @@ export const editTopMapStyle = memoize(({id, mapStyle, visibleLayerGroups}) => {
     visibleFilters.some(match => match(layer))
   );
 
-  return {
+  return Immutable.fromJS({
     ...mapStyle.style,
     layers: filteredLayers
-  };
+  });
 }, resolver);
 
 /**
@@ -70,7 +71,7 @@ export const editTopMapStyle = memoize(({id, mapStyle, visibleLayerGroups}) => {
  *
  * @param {object} mapStyle - preset map style
  * @param {object} visibleLayerGroups - visible layers of bottom map
- * @returns {object} bottom map style
+ * @returns {Immutable.Map} bottom map style
  */
 export const editBottomMapStyle = memoize(
   ({id, mapStyle, visibleLayerGroups}) => {
@@ -84,10 +85,11 @@ export const editBottomMapStyle = memoize(
       invisibleFilters.every(match => !match(layer))
     );
 
-    return {
+    // console.log(filteredLayers)
+    return Immutable.fromJS({
       ...mapStyle.style,
       layers: filteredLayers
-    };
+    });
   },
   resolver
 );
@@ -156,7 +158,7 @@ export function scaleMapStyleByResolution(mapboxStyle, resolution) {
       }
     });
 
-    return copyStyle;
+    return Immutable.fromJS(copyStyle);
   }
 
   return mapboxStyle;
