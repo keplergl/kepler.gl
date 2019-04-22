@@ -148,7 +148,7 @@ export default class FileUpload extends Component {
     return Boolean(fileExt);
   };
 
-  _handleFileDrop = (files, e) => {
+  _handleFileInput = (files, e) => {
     if (e) {
       e.stopPropagation();
     }
@@ -220,7 +220,7 @@ export default class FileUpload extends Component {
             targetAlwaysVisible
             onDragOver={() => this._toggleDragState(true)}
             onDragLeave={() => this._toggleDragState(false)}
-            onDrop={this._handleFileDrop}
+            onDrop={this._handleFileInput}
           >
             <div className="file-upload__message">{CONFIG_UPLOAD_MESSAGE}</div>
             <StyledFileDrop dragOver={dragOver}>
@@ -238,7 +238,7 @@ export default class FileUpload extends Component {
               {!files.length ? <div>
                 <MsgWrapper>{MESSAGE}</MsgWrapper>
                 <span className="file-upload-or">or</span>
-                <UploadButton onUpload={this._handleFileDrop}>
+                <UploadButton onUpload={this._handleFileInput}>
                   browse your files
                 </UploadButton>
               </div> : null}
