@@ -20,6 +20,7 @@
 
 import Immutable from 'immutable';
 import Task, {withTask} from 'react-palm/tasks';
+import cloneDeep from 'lodash.clonedeep';
 
 // Utils
 import {
@@ -188,7 +189,8 @@ function get3DBuildingColor(style) {
       : DEFAULT_BLDG_COLOR;
   // brighten or darken building based on style
   const operation = style.id.match(/(?=(dark|night))/) ? 'brighter' : 'darker';
-  const rgbObj = rgb(buildingColor)[operation]([0.2]);
+  const alpha = 0.2;
+  const rgbObj = rgb(buildingColor)[operation]([alpha]);
   return [rgbObj.r, rgbObj.g, rgbObj.b];
 }
 
@@ -312,7 +314,7 @@ export const loadMapStylesUpdater = (state, action) => {
  * @public
  */
 // do nothing for now, if didn't load, skip it
-export const loadMapStyleErrUpdater = (state, action) => state;
+export const loadMapStyleErrUpdater = (state) => state;
 
 export const requestMapStylesUpdater = (state, {payload: mapStyles}) => {
   const loadMapStyleTasks = getLoadMapStyleTasks(mapStyles, state.mapboxApiAccessToken);
@@ -367,7 +369,7 @@ function getLoadMapStyleTasks(mapStyles, mapboxApiAccessToken) {
           )
         ),
       // error
-      error => loadMapStyleErr(error)
+      loadMapStyleErr
     )
   ];
 }
@@ -414,7 +416,7 @@ export const loadCustomMapStyleUpdater = (
       ? {
           id: style.id || generateHashId(),
           // make a copy of the style object
-          style: JSON.parse(JSON.stringify(style)),
+          style: cloneDeep(style),
           label: style.name,
           // gathering layer group info from style json
           layerGroups: getLayerGroupsFromStyle(style)
