@@ -23,23 +23,18 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import MapboxGLMap from 'react-map-gl';
 import DeckGL from 'deck.gl';
-import GL from 'luma.gl/constants';
-import {registerShaderModules, setParameters} from 'luma.gl';
-import pickingModule from 'shaderlib/picking-module';
-import brushingModule from 'shaderlib/brushing-module';
 
 // components
 import MapPopoverFactory from 'components/map/map-popover';
 import MapControlFactory from 'components/map/map-control';
 import {StyledMapContainer} from 'components/common/styled-components';
 
-// Overlay type
+// utils
 import {generateMapboxLayers, updateMapboxLayers} from '../layers/mapbox-utils';
-
+import {onWebGLInitialized, setLayerBlending} from 'utils/gl-utils';
 import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 
 // default-settings
-import {LAYER_BLENDINGS} from 'constants/default-settings';
 import ThreeDBuildingLayer from '../deckgl-layers/3d-building-layer/3d-building-layer';
 
 const MAP_STYLE = {
@@ -51,8 +46,6 @@ const MAP_STYLE = {
     position: 'absolute', top: '0px', pointerEvents: 'none'
   }
 };
-
-const getGlConst = d => GL[d];
 
 const MAPBOXGL_STYLE_UPDATE = 'style.load';
 const MAPBOXGL_RENDER = 'render';
@@ -125,11 +118,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     };
 
     _onWebGLInitialized = gl => {
-      registerShaderModules(
-        [pickingModule, brushingModule], {
-          ignoreMultipleRegistrations: true
-      });
-
+      onWebGLInitialized(gl);
       // allow Uint32 indices in building layer
       // gl.getExtension('OES_element_index_uint');
     };
@@ -192,20 +181,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     };
 
     _onBeforeRender = ({gl}) => {
-      this._setlayerBlending(gl);
-    };
-
-    _setlayerBlending = gl => {
-      const blending = LAYER_BLENDINGS[this.props.layerBlending];
-      const {blendFunc, blendEquation} = blending;
-
-      setParameters(gl, {
-        [GL.BLEND]: true,
-        ...(blendFunc ? {
-          blendFunc: blendFunc.map(getGlConst),
-          blendEquation: Array.isArray(blendEquation) ? blendEquation.map(getGlConst) : getGlConst(blendEquation)
-        } : {})
-      });
+      setLayerBlending(gl, this.props.layerBlending);
     };
 
     /* component render functions */

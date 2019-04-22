@@ -18,71 +18,124 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-export function testCreateLayer(t, LayerClass, props = {}) {
-  let layer;
+// import {LayerManager} from 'deck.gl';
+// import {gl} from '@deck.gl/test-utils';
+// import {INITIAL_MAP_STATE} from 'reducers/map-state-updaters';
+// import {INITIAL_VIS_STATE} from 'reducers/vis-state-updaters';
 
-  t.doesNotThrow(() => {
-    layer = new LayerClass(props);
-    t.ok(layer instanceof LayerClass, `${layer.type} layer created`);
-  }, `creating layer should not fail`);
+// export function testCreateLayer(t, LayerClass, props = {}) {
+//   let layer;
 
-  return layer;
-}
+//   t.doesNotThrow(() => {
+//     layer = new LayerClass(props);
+//     t.ok(layer instanceof LayerClass, `${layer.type} layer created`);
+//   }, `creating layer should not fail`);
 
-export function testFormatLayerData(t, layer, dataArgs) {
-  let result;
+//   return layer;
+// }
 
-  t.doesNotThrow(() => {
-    result = layer.formatLayerData(...dataArgs);
-    t.ok(result, 'has layer data');
-    t.ok(layer, 'has updated layer');
+// export function testFormatLayerData(t, layer, dataArgs) {
+//   let result;
 
-  }, `format ${layer.type} layerData should not fail`);
+//   t.doesNotThrow(() => {
+//     result = layer.formatLayerData(...dataArgs);
+//     t.ok(result, 'has layer data');
+//     t.ok(layer, 'has updated layer');
 
-  return result;
-}
+//   }, `format ${layer.type} layerData should not fail`);
 
-export function testCreateCases(t, LayerClass, testCases) {
-  testCases.forEach(tc => {
-    const layer = testCreateLayer(t, LayerClass, tc.props);
-    if (layer && tc.test) {
-      tc.test(layer);
-    }
-  });
-}
+//   return result;
+// }
 
-export function testUpdateLayer(t, layer, updateMethod, updateArgs) {
-  let result;
+// export function testCreateCases(t, LayerClass, testCases) {
+//   testCases.forEach(tc => {
+//     const layer = testCreateLayer(t, LayerClass, tc.props);
+//     if (layer && tc.test) {
+//       tc.test(layer);
+//     }
+//   });
+// }
 
-  t.doesNotThrow(() => {
-    result = layer[updateMethod](...updateArgs);
-    t.ok(layer, `layer ${updateMethod} called`);
-  }, 'update layer should not fail');
+// export function testUpdateLayer(t, layer, updateMethod, updateArgs) {
+//   let result;
 
-  return {result, layer};
-}
+//   t.doesNotThrow(() => {
+//     result = layer[updateMethod](...updateArgs);
+//     t.ok(layer, `layer ${updateMethod} called`);
+//   }, 'update layer should not fail');
 
-export function testFormatLayerDataCases(t, LayerClass, testCases) {
-  testCases.forEach(tc => {
-    const layer = testCreateLayer(t, LayerClass, tc.props);
-    let updatedLayer = layer;
+//   return {result, layer};
+// }
 
-    // if provided updates
-    if (layer && tc.updates) {
-      const applyUpdates = Array.isArray(tc.updates) ? tc.updates : [tc.updates];
+// export function testFormatLayerDataCases(t, LayerClass, testCases) {
+//   testCases.forEach(tc => {
+//     const layer = testCreateLayer(t, LayerClass, tc.props);
+//     let updatedLayer = layer;
 
-      // apply 1 or multiple updates
-      applyUpdates.forEach(update => {
-        const updated = testUpdateLayer(t, updatedLayer, update.method, update.args);
-        updatedLayer = updated.layer;
-      });
-    }
+//     // if provided updates
+//     if (layer && tc.updates) {
+//       const applyUpdates = Array.isArray(tc.updates) ? tc.updates : [tc.updates];
 
-    if (updatedLayer) {
-      const result = testFormatLayerData(t, updatedLayer, tc.data);
-      if (result && tc.test) {
-        tc.test({layerData: result, layer: updatedLayer});
-      }
-    }
-  });
-}
+//       // apply 1 or multiple updates
+//       applyUpdates.forEach(update => {
+//         const updated = testUpdateLayer(t, updatedLayer, update.method, update.args);
+//         updatedLayer = updated.layer;
+//       });
+//     }
+
+//     if (updatedLayer) {
+//       const result = testFormatLayerData(t, updatedLayer, tc.data);
+//       if (result && tc.test) {
+//         tc.test({layerData: result, layer: updatedLayer});
+//       }
+//     }
+//   });
+// }
+
+// export function testRenderLayerCases(t, LayerClass, testCases) {
+//   testCases.forEach(tc => {
+//     const layer = testCreateLayer(t, LayerClass, tc.props);
+
+//     if (layer) {
+//       const result = testFormatLayerData(t, layer, tc.data);
+
+//       if (result) {
+//         // result.updated.
+//       //   tc.test({layerData: result, layer: updatedLayer});
+//         let deckLayers;
+
+//         t.doesNotThrow(() => {
+//           deckLayers = layer.renderLayer({
+//             data: result,
+//             idx: 0,
+//             layerInteraction: {},
+//             mapState: INITIAL_MAP_STATE,
+//             interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+//             ...(tc.renderArgs || {})
+//           });
+//         }, `${layer.type}.renderLayer should not fail`);
+//         console.log(deckLayers)
+//         if (deckLayers) {
+//           testInitializeDeckLayer(t, layer.type, deckLayers);
+//         }
+//       }
+//     }
+//   });
+// }
+
+// export function testInitializeDeckLayer(t, layerType, layers) {
+//   const layerManager = new LayerManager(gl);
+
+//   // try {
+//   //   layerManager.setLayers(Array.isArray(layers) ? layers : [layers]);
+//   // } catch (error) {
+//   //   return error;
+//   // }
+
+//   t.doesNotThrow(
+//     () => layerManager.setLayers(Array.isArray(layers) ? layers : [layers]),
+//     `initialization of ${layerType} layer render should not fail`
+//   );
+
+//   return null;
+// }
