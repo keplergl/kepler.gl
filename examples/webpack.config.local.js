@@ -116,7 +116,6 @@ const BABEL_RULE = {
             '@babel/plugin-proposal-do-expressions',
             '@babel/plugin-proposal-function-bind',
             '@babel/plugin-transform-modules-commonjs',
-            ['inline-json-import', {}],
             [
               'module-resolver',
               {

@@ -21,7 +21,6 @@
 import React from 'react';
 import styled from 'styled-components';
 import {line} from 'd3-shape'
-import {svgIcons as SvgIcons} from 'layers/icon-layer/svg-icons.json';
 import {Table, CenterFlexbox} from 'components/common/styled-components';
 
 const lineFunction = line()
@@ -45,7 +44,7 @@ const StyledIconItem = styled(CenterFlexbox)`
   width: 180px;
   height: 48px;
   margin-right: 12px;
-  
+
   .icon-table_item__name {
     margin-left: 12px;
   }
@@ -117,31 +116,34 @@ const IconTable = styled.div`
   flex-wrap: wrap;
 `;
 
-export const IconInfoModal = () => (
-  <div className="icon-info-modal">
-    <div className="icon-info-modal__description">
-      <span>
-        In your csv, create a column, put the name of the icon you want to
-        draw in it. You can leave the cell empty if you do not want the icon
-        to show for some points. When the column is named{' '}
-      </span>
-      <code>icon</code>
-      <span> Voyager will automatically create a icon layer for you.</span>
+const IconInfoModalFactory = (svgIcons = []) => {
+  const IconInfoModal = () => (
+    <div className="icon-info-modal">
+      <div className="icon-info-modal__description">
+        <span>
+          In your csv, create a column, put the name of the icon you want to
+          draw in it. You can leave the cell empty if you do not want the icon
+          to show for some points. When the column is named{' '}
+        </span>
+        <code>icon</code>
+        <span> kepler.gl will automatically create a icon layer for you.</span>
+      </div>
+      <div className="icon-info-modal__example">
+        <StyledTitle>Example:</StyledTitle>
+        <ExampleTable/>
+      </div>
+      <div className="icon-info-modal__icons">
+        <StyledTitle>Icons</StyledTitle>
+        <IconTable className="icon-info-modal__icons__table">
+          {svgIcons.map(icon => (
+            <IconItem key={icon.id} icon={icon}/>
+          ))}
+        </IconTable>
+      </div>
     </div>
-    <div className="icon-info-modal__example">
-      <StyledTitle>Example:</StyledTitle>
-      <ExampleTable/>
-    </div>
-    <div className="icon-info-modal__icons">
-      <StyledTitle>Icons</StyledTitle>
-      <IconTable className="icon-info-modal__icons__table">
-        {SvgIcons.map(icon => (
-          <IconItem key={icon.id} icon={icon}/>
-        ))}
-      </IconTable>
-    </div>
-  </div>
-);
+  );
 
-const IconInfoModalFactory = () => IconInfoModal;
+  return IconInfoModal;
+}
+
 export default IconInfoModalFactory;

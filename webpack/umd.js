@@ -21,7 +21,8 @@
 const resolve = require('path').resolve;
 const join = require('path').join;
 
-const SRC_DIR = resolve('./src');
+const SRC_DIR = resolve(__dirname, '../src');
+const OUTPUT_DIR = resolve(__dirname, '../umd');
 
 const LIBRARY_BUNDLE_CONFIG = env => ({
   entry: {
@@ -35,7 +36,7 @@ const LIBRARY_BUNDLE_CONFIG = env => ({
 
   output: {
     // Generate the bundle in dist folder
-    path: resolve('./umd'),
+    path: OUTPUT_DIR,
     filename: 'keplergl.min.js',
     globalObject: 'this',
     library: '[name]',
@@ -86,11 +87,6 @@ const LIBRARY_BUNDLE_CONFIG = env => ({
         test: /\.js$/,
         loader: 'babel-loader',
         include: [SRC_DIR]
-      },
-      {
-        test: /\.json$/,
-        loader: 'json-loader',
-        type: 'javascript/auto'
       }
     ]
   },
