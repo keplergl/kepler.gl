@@ -103,7 +103,7 @@ export default class IconLayer extends Layer {
     };
   }
 
-  async getSvgIcons(callback) {
+  async getSvgIcons() {
     const fetchConfig = {
       method: 'GET',
       mode: 'cors',

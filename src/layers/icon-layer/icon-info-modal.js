@@ -126,7 +126,7 @@ const IconInfoModalFactory = (svgIcons = []) => {
           to show for some points. When the column is named{' '}
         </span>
         <code>icon</code>
-        <span> Voyager will automatically create a icon layer for you.</span>
+        <span> kepler.gl will automatically create a icon layer for you.</span>
       </div>
       <div className="icon-info-modal__example">
         <StyledTitle>Example:</StyledTitle>
