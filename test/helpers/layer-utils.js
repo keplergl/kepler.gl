@@ -136,6 +136,8 @@ export function testInitializeDeckLayer(t, layerType, layers) {
     () => layerManager.setLayers(Array.isArray(layers) ? layers : [layers]),
     `initialization of ${layerType} layer render should not fail`
   );
+
+  // listen on console.error in editShader, fail the test if any error is logged
   t.deepEqual(spy.args, [], 'should not call console.error during layer initialization');
 
   spy.restore();

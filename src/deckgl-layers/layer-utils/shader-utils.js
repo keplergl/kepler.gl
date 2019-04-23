@@ -32,6 +32,8 @@ import {console as Console} from 'global/window';
 export function editShader(vs, type, originalText, testToReplace) {
 
   if (!vs.includes(originalText)) {
+    // Here we call Console.error when we fail to edit deck.gl shader
+    // This should be caught by layer test
     Console.error(`Cannot edit ${type} layer shader`);
     return vs;
   }
