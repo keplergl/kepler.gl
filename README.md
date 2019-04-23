@@ -214,11 +214,11 @@ By Parsing `mint: false` kepler.gl will keep the component state in the store ev
 
 Read more about [Components][components].
 
-##### `theme` (Object, optional)
+##### `theme` (Object | String, optional)
 
 - default: `null`
 
-Object used to customize Kepler.gl style. Kepler.gl will use the value passed as input to override values from [theme](https://github.com/uber/kepler.gl/blob/master/src/styles/base.js).
+You can pass theme name or object used to customize Kepler.gl style. Kepler.gl provide an `'light'` theme besides the default 'dark' theme. When pass in a theme object Kepler.gl will use the value passed as input to override values from [theme](https://github.com/uber/kepler.gl/blob/master/src/styles/base.js).
 
 ### 3. Dispatch custom actions to `keplerGl` reducer.
 
@@ -358,7 +358,7 @@ return (
   />
 );
 
-``` 
+```
 As you can see the customTheme object defines certain properties which will override Kepler.gl default style rules.
 
 #### Styled-Components Theme Provider.
@@ -382,9 +382,9 @@ return (
       width={800}
       height={800}
     />
-  </ThemeProvider>  
+  </ThemeProvider>
 );
-``` 
+```
 
 ### 5. Render Custom UI components.
 Everyone wants the flexibility to render custom kepler.gl components. Kepler.gl has a dependency injection system that allow you to inject

@@ -31,7 +31,7 @@ import * as MapStyleActions from 'actions/map-style-actions';
 import * as UIStateActions from 'actions/ui-state-actions';
 
 import {EXPORT_IMAGE_ID, DIMENSIONS,
-  KEPLER_GL_NAME, KEPLER_GL_VERSION} from 'constants/default-settings';
+  KEPLER_GL_NAME, KEPLER_GL_VERSION, THEME} from 'constants/default-settings';
 
 import SidePanelFactory from './side-panel';
 import MapContainerFactory from './map-container';
@@ -42,7 +42,7 @@ import NotificationPanelFactory from './notification-panel';
 
 import {generateHashId} from 'utils/utils';
 
-import {theme as basicTheme} from 'styles/base';
+import {theme as basicTheme, themeLT} from 'styles/base';
 
 // Maybe we should think about exporting this or creating a variable
 // as part of the base.js theme
@@ -124,10 +124,10 @@ function KeplerGlFactory(
     themeSelector = props => props.theme;
     availableThemeSelector = createSelector(
       this.themeSelector,
-      theme => ({
+      theme => typeof theme === 'object' ? ({
         ...basicTheme,
         ...theme
-      })
+      }) : theme === THEME.light ? themeLT : theme
     );
 
     _handleResize({width, height}) {

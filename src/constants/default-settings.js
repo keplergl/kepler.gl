@@ -105,6 +105,11 @@ export const DIMENSIONS = {
   }
 };
 
+export const THEME = keyMirror({
+  light: null,
+  dark: null
+});
+
 export const PANELS = [
   {
     id: 'layer',
