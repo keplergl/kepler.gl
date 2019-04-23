@@ -14,18 +14,29 @@ Each version should:
   Security to invite users to upgrade in case of vulnerabilities.
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
+
+#### [1.0.0-1] - Apr 23 2019
+- [Bug] Fix point layer brushing and highlight (#487)
+- [Feat] Add a light theme to KeplerGl Prop (#489)
+- [Bug] Fix browse for file upload (#486)
+- [Enhancement] Cleanup load map style tasks (#472)
+- [Enhancement] load svg icons from aws, add bundle analyzer, reduce bundle size -1mb (#479)
+- [Bug] upgrade kepler.gl version in examples
+- [Docs] Fixed link to addDataToMap (#459)
+- [Enhancement] expand bottom widget to full length if in read only mode(#465)
+
 #### [1.0.0-0] - Apr 2 2019
-[Enhancement] Replace react anything sortable with React-Sortable-Hoc
-[Enhancement] Replaced DI object storage with an actual Map
-[Feat] Able to overwrite custom theme 
-[Chore] Upgraded waypoint library to support react16
-[Chore] Dropbox UI enhancements 
-[Bug] Fix points disappear while panning across 180th meridian
-[Chore] Tweak save and export documentation
-[Chore] Add oss header and middleware.js
-[Chore] Added file header for user-guide.js
-[Feat] Single map page export
-[Chore] Upgraded libraries: react, styled-components
+- [Enhancement] Replace react anything sortable with React-Sortable-Hoc
+- [Enhancement] Replaced DI object storage with an actual Map
+- [Feat] Able to overwrite custom theme 
+- [Chore] Upgraded waypoint library to support react16
+- [Chore] Dropbox UI enhancements 
+- [Bug] Fix points disappear while panning across 180th meridian
+- [Chore] Tweak save and export documentation
+- [Chore] Add oss header and middleware.js
+- [Chore] Added file header for user-guide.js
+- [Feat] Single map page export
+- [Chore] Upgraded libraries: react, styled-components
 
 ##### BREAKING CHANGES
 - React 15 is no longer supported
