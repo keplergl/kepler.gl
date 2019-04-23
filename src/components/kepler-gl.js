@@ -99,6 +99,7 @@ function KeplerGlFactory(
       height: 800,
       appName: KEPLER_GL_NAME,
       version: KEPLER_GL_VERSION,
+      sidePanelWidth: DIMENSIONS.sidePanel.width,
       theme: {}
     };
 
@@ -221,7 +222,7 @@ function KeplerGlFactory(
         mapStyleActions,
         visStateActions,
         uiStateActions,
-        width: DIMENSIONS.sidePanel.width
+        width: this.props.sidePanelWidth
       };
 
       const mapFields = {
@@ -305,7 +306,7 @@ function KeplerGlFactory(
               uiState={uiState}
               visStateActions={visStateActions}
               sidePanelWidth={
-                uiState.readOnly ? 0 : DIMENSIONS.sidePanel.width + DIMENSIONS.sidePanel.margin.left
+                uiState.readOnly ? 0 : this.props.sidePanelWidth + DIMENSIONS.sidePanel.margin.left
               }
               containerW={containerW}
             />
