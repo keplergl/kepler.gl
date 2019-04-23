@@ -366,7 +366,7 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
               activeTab={visState.activeAnalysisTab} 
               barangay={visState.activeBarangay} />
             <IconRoundSmall>
-              <Close height="12px" onClick={() => {console.log("close button click!")}} />
+              <Close height="12px" onClick={() => { visStateActions.toggleActiveAnalysis(''); }} />
             </IconRoundSmall>
           </TopSectionWrapper>
           <AnalysisSectionWrapper> {/* TODO: currently in TD mode, make dynamic according to tabs */}
@@ -451,6 +451,7 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
                     data={bgyIncl.slice(0,maxListSize).reverse()}       
                     xKey={currView}
                     yKey={'name'}
+                    width={420}
                     title={'Top ' + maxListSize + ' ' + ACTIVE_INDICATOR_LABEL + ' Scores'}/>
                 </div>
               ) : null}
@@ -460,6 +461,7 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
                     data={bgyIncl.slice(bgyIncl.length - maxListSize, bgyIncl.length).reverse()}
                     xKey={currView}
                     yKey={'name'}
+                    width={420}                    
                     title={'Bottom ' + maxListSize + ' ' + ACTIVE_INDICATOR_LABEL  + ' Scores'}/>
                 </div>
               ) : null}

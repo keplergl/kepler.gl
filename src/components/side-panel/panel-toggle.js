@@ -52,7 +52,9 @@ const PanelTab = styled.div.attrs({
   justify-content: center;
   margin-right: 12px;
   padding-bottom: 6px;
-  width: 30px;
+  padding-left: 3px;
+  padding-right: 3px;
+  // width: 30px;
 
   :hover {
     cursor: pointer;
@@ -71,15 +73,16 @@ const PanelToggleFactory = () => {
           active={activePanel === panel.id}
           onClick={() => togglePanel(panel.id)}
         >
-          <panel.iconComponent height="20px" />
-          <Tooltip
+        {panel.label || panel.id}
+          {/* <panel.iconComponent height="20px" /> */}
+          {/* <Tooltip
             id={`${panel.id}-nav`}
             effect="solid"
             delayShow={500}
             place="bottom"
           >
             <span>{panel.label || panel.id}</span>
-          </Tooltip>
+          </Tooltip> */}
         </PanelTab>
       ))}
     </PanelHeaderBottom>

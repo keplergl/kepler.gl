@@ -46,13 +46,13 @@ const InputForm = styled.div`
 const StyledInput = styled.input`
   width: 100%;
   padding: ${props => props.theme.inputPadding};
-  color: ${props => props.error ? 'red' : props.theme.titleColorLT};
+  color: ${props => (props.error ? 'red' : props.theme.titleColorLT)};
   background-color: ${props => props.theme.panelBackgroundLT};
   height: ${props => props.theme.inputBoxHeight};
   border: 0;
   outline: 0;
   font-size: ${props => props.theme.inputFontSize};
-  
+
   :active,
   :focus,
   &.focus,
@@ -82,6 +82,34 @@ export const StyledBtn = styled.button`
   text-align: right;
 `;
 
+export const StyledCityButton = styled.button`
+  background-color: inherit;
+  // color: ${props => props.theme.primaryBtnActColor};
+  margin: 10px;
+  padding: 10px;
+  text-align: left;
+  width: 90%;
+  height: 80px;
+  display: block;
+  // display: flex;
+  // align-items: flex-start;
+  // box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  border-radius:10px;
+  cursor: pointer;
+  :hover {
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  }
+`;
+
+export const StyledCityName = styled.div`
+  font-size: 1.5em;
+`;
+
+export const StyledCityDetails = styled.div`
+  font-size: 1em;
+  color: darkgrey;
+`;
+
 export const StyledError = styled.div`
   color: red;
 `;
@@ -98,7 +126,6 @@ const Error = ({error, url}) => (
 );
 
 class SelectCity extends Component {
-
   constructor(props) {
     super(props);
 
@@ -109,57 +136,74 @@ class SelectCity extends Component {
       cities: ['Baguio City', 'Dagupan City']
     };
   }
-  onCityChange = (e) => {
+  onCityChange = e => {
     // TODO: validate url
     // this.props.selectedCity = e;
     // dispatch
     this.props.onChangeCity(e);
     this.setState({
       city: e,
-      dataUrl: 'http://127.0.0.1:8000/barangays/'+e+'/geo.json',
+      dataUrl: 'http://127.0.0.1:8000/barangays/' + e + '/geo.json',
       isInactive: false
     });
   };
 
-  onSelectCity  = () => {
+  onSelectCity = () => {
     const {selectedCity} = this.props;
     if (!selectedCity) {
       return;
     }
     // var dataUrl = 'http://127.0.0.1:8000/barangays/'+selectedCity+'/geo.json';
-    var dataUrl = 'http://127.0.0.1:8000/config/'+selectedCity+'/config.json';
+    var dataUrl =
+      'http://127.0.0.1:8000/config/' + selectedCity + '/config.json';
+    this.props.onSelectCity({dataUrl});
+  };
+
+  onSelect = (e) => {
+    this.props.onChangeCity(e);
+    const {selectedCity} = this.props;
+    if (!selectedCity) {
+      return;
+    }
+    // var dataUrl = 'http://127.0.0.1:8000/barangays/'+selectedCity+'/geo.json';
+    var dataUrl =
+      'http://127.0.0.1:8000/config/' + selectedCity + '/config.json';
     this.props.onSelectCity({dataUrl});
   };
 
   render() {
-    console.log("SELECT CITY");
+    console.log('SELECT CITY');
     console.log(this.props);
-    const {
-      activeCities, selectedCity, onChangeCity
-    } = this.props;
+    const {activeCities, selectedCity, onChangeCity} = this.props;
     return (
       <div>
         <InputForm>
           <StyledFromGroup>
-          <ItemSelector
+            {activeCities.map(city => (
+              <StyledCityButton onClick={() => this.onSelect(city.id)}>
+              <StyledCityName>{city.name}</StyledCityName>
+              <StyledCityDetails>as of March 18, 2019</StyledCityDetails>
+              </StyledCityButton>
+            ))}
+            {/* <ItemSelector
               selectedItems={activeCities.find(op => op.id === selectedCity)}
               options={activeCities}
               multiSelect={false}
               searchable={false}
-              onChange={(e) => onChangeCity(e)}
+              onChange={e => onChangeCity(e)}
               getOptionValue={op => op.id}
               displayOption={op => op.name}
               placeholder="Select a city..."
             />
-            {/* <StyledBtn type="submit" onClick={this.onSelectCity}>
-              Select
-            </StyledBtn> */}
-            <div style={{padding:'10px'}}></div>
+            
+            <div style={{padding: '10px'}} />
             <Button onClick={this.onSelectCity} width="70px">
-                Select
-            </Button>
+              Select
+            </Button> */}
           </StyledFromGroup>
-          {this.props.error && (<Error error={this.props.error} url={this.props.option.dataUrl} />)}
+          {this.props.error && (
+            <Error error={this.props.error} url={this.props.option.dataUrl} />
+          )}
         </InputForm>
       </div>
     );

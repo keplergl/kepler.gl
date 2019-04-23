@@ -59,13 +59,18 @@ export const DIMENSIONS = {
 
 export const PANELS = [
   {
-    id: 'layer',
-    label: 'Scores',
+    id: 'overview',
+    label: 'Overview',
     iconComponent: Layers
   },
   {
-    id: 'filter',
-    label: 'Filters',
+    id: 'indicators',
+    label: 'Indicators',
+    iconComponent: Layers
+  },
+  {
+    id: 'qualities',
+    label: 'Qualities',
     iconComponent: FilterFunnel
   }/*,
   {

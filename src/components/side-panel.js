@@ -26,6 +26,7 @@ import {Button} from 'components/common/styled-components';
 
 import SidebarFactory from './side-panel/side-bar';
 import PanelHeaderFactory from './side-panel/panel-header';
+import PanelHeadingFactory from './side-panel/panel-heading';
 import LayerManagerFactory from './side-panel/layer-manager';
 import FilterManagerFactory from './side-panel/filter-manager';
 import InteractionManagerFactory from './side-panel/interaction-manager';
@@ -62,14 +63,14 @@ export const PanelTitleFactory = () => styled.div`
   display: block;
 `;
 
-export const PanelHeadingFactory = () => styled.div`
-  color: ${props => props.theme.titleTextColor};
-  font-size: 1.75em;
-  font-weight: 400;
-  letter-spacing: 1.25px;
-  margin-bottom: 3vh;
-  display: block;
-`;
+// export const PanelHeadingFactory = () => styled.div`
+//   color: ${props => props.theme.titleTextColor};
+//   font-size: 1.75em;
+//   font-weight: 400;
+//   letter-spacing: 1.25px;
+//   margin-bottom: 3vh;
+//   display: block;
+// `;
 
 SidePanelFactory.deps = [
   SidebarFactory,
@@ -119,7 +120,7 @@ export default function SidePanelFactory(
     /* component private functions */
     _onOpenOrClose = () => {
       this.props.uiStateActions.toggleSidePanel(
-        this.props.uiState.activeSidePanel ? null : 'layer'
+        this.props.uiState.activeSidePanel ? null : 'overview'
       );
     };
 
@@ -251,31 +252,31 @@ export default function SidePanelFactory(
               onExportConfig={this._onExportConfig}
               onSaveMap={this.props.onSaveMap}
             />
+
+            <PanelHeading
+              cityName={cityName}
+              onChangeCity={this._onChangeCity}
+              />
+            
             <PanelToggle
               panels={PANELS}
               activePanel={activeSidePanel}
               togglePanel={uiStateActions.toggleSidePanel}
             />
             <SidePanelContent className="side-panel__content">
-              <PanelHeading className="side-panel__heading__title">
-                {cityName}
-              </PanelHeading>
-              <Button onClick={this._onChangeCity} width="105px" secondary>
-                Change City
-              </Button>
-              <PanelTitle className="side-panel__content__title">
+              {/* <PanelTitle className="side-panel__content__title">
                 {(PANELS.find(({id}) => id === activeSidePanel) || {}).label}
-              </PanelTitle>
+              </PanelTitle> */}
               {selectedCity ? (
                 <div>
-                  {activeSidePanel === 'layer' && (
+                  {activeSidePanel === 'indicators' && (
                     <IndicatorManager
                       {...indicatorManagerActions}
                       scores={scores}
                       selectedIndicator={selectedIndicator}
                     />
                   )}
-                  {activeSidePanel === 'filter' && (
+                  {activeSidePanel === 'qualities' && (
                     <FilterManager
                       {...filterManagerActions}
                       datasets={datasets}

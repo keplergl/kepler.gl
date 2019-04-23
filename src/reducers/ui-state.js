@@ -55,7 +55,7 @@ import {
   updateActiveAnalysisTabUpdater, 
 } from './ui-state-updaters';
 
-export const DEFAULT_ACTIVE_SIDE_PANEL = 'layer';
+export const DEFAULT_ACTIVE_SIDE_PANEL = 'overview';
 export const DEFAULT_MODAL = ADD_DATA_ID;
 
 export const DEFAULT_MAP_CONTROLS = {
@@ -65,7 +65,7 @@ export const DEFAULT_MAP_CONTROLS = {
   },
   mapLegend: {
     show: true,
-    active: false
+    active: true
   },
   toggle3d: {
     show: true

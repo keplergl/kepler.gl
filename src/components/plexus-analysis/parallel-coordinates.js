@@ -45,12 +45,12 @@ export class ParallelCoordinatesK extends Component {
       .map(name => ({name, domain: [Infinity, -Infinity]}));
   
     const domains = data.reduce((acc, row) => {
-      return acc.map(d => {
+      return acc.map((d,i) => {
         return {
           name: d.name,
           domain: [
-            Math.min(d.domain[0], row[d.name]),
-            Math.max(d.domain[1], row[d.name])
+            i < 2 ? Math.min(d.domain[0], row[d.name]) : 0,
+            i < 2 ? Math.max(d.domain[1], row[d.name]) : 100
           ]
         };
       });

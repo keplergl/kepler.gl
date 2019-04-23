@@ -259,7 +259,7 @@ export default function ModalContainerFactory(
               />
             );
             modalProps = {
-              title: 'Add Data To Map',
+              title: 'What city do you want to explore?',
               cssStyle: LoadDataModalStyle,
               footer: false,
               onConfirm: this._closeModal

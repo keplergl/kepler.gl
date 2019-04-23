@@ -56,6 +56,7 @@ export class BarChart extends Component {
       title,
       xKey,
       yKey,
+      width
     } = this.props;
 
     let scaledData;
@@ -73,7 +74,7 @@ export class BarChart extends Component {
       })) 
     )};
 
-    const MAX_LENGTH = 13;
+    const MAX_LENGTH = 20;
 
     scaledData = scaledData.map((d) => ({
       ...d,
@@ -92,7 +93,6 @@ export class BarChart extends Component {
     const FlexibleXYPlot = makeWidthFlexible(XYPlot);
     // const width = 400;
     // TODO: transfer constant 
-    const width = 350;
 
     if(data.length > 0) {
       console.log("BAR CHART: ");
@@ -105,12 +105,16 @@ export class BarChart extends Component {
       console.log(data[0][yKey] + " " + data[0][xKey]);
     }
 
+    console.log(title);
+    console.log(scaledData);
+    console.error(dataLabels);
+
     return (
       <XYPlot
         xDomain={[0.0, 1.0].map((x) => x * 100)}
-        margin={{left: 100, right: 30, top: 25, bottom: 25}}
+        margin={{left: 150, right: 30, top: 25, bottom: 25}}
         height={160}
-        width={width}
+        width={width ? width : 350}
         yType="ordinal"
       >
         <XAxis
@@ -125,7 +129,7 @@ export class BarChart extends Component {
         />
         {/* TODO: use props */}
         <YAxis
-          // getY={d=>(d.y.length > 12 ? (d.y.slice(0,12) + '...') : d.y )}
+          // getY={d=> d.y.length > 12 ? d.y.slice(0,12) + '...' : d.y }
           style={{
             ticks: {stroke: '#6A7485'},
             color: '#6A7485',
@@ -140,9 +144,11 @@ export class BarChart extends Component {
         } */}
         
         <HorizontalBarSeries 
+            stack={false}
             data={scaledData}
             barWidth={0.5} />
         <LabelSeries
+          stack={false}        
           data={dataLabels}
           labelAnchorX="middle"
           labelAnchorY="text-after-edge"
