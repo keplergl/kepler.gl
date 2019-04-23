@@ -270,7 +270,21 @@ export default class ArcLayer extends Layer {
           getSourceColor: colorUpdateTriggers,
           getTargetColor: colorUpdateTriggers
         }
-      })
+      }),
+      // hover layer
+      ...(this.isLayerHovered(objectHovered)
+      ? [
+          new ArcBrushingLayer({
+            id: `${this.id}-hovered`,
+            data: [objectHovered.object],
+            strokeScale: this.config.visConfig.thickness,
+            getSourceColor: this.config.highlightColor,
+            getTargetColor: this.config.highlightColor,
+            getStrokeWidth: data.getStrokeWidth,
+            pickable: false
+          })
+        ]
+      : [])
     ];
   }
 }

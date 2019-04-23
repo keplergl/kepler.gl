@@ -18,25 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {console as Console} from 'global/window';
+import {registerShaderModules, setParameters} from 'luma.gl';
+import pickingModule from 'shaderlib/picking-module';
+import brushingModule from 'shaderlib/brushing-module';
+import {LAYER_BLENDINGS} from 'constants/default-settings';
+import GL from 'luma.gl/constants';
 
-/*
- * Amendment to default layer vertex shader
- * @param {string} vs
- * @param {string} type
- * @param {string} originalText
- * @param {string} testToReplace
- * @return {string} output shader
- *
- */
-export function editShader(vs, type, originalText, testToReplace) {
+const getGlConst = d => GL[d];
 
-  if (!vs.includes(originalText)) {
-    // Here we call Console.error when we fail to edit deck.gl shader
-    // This should be caught by layer test
-    Console.error(`Cannot edit ${type} layer shader`);
-    return vs;
-  }
-
-  return vs.replace(originalText, testToReplace);
+export function onWebGLInitialized(gl) {
+  registerShaderModules(
+    [pickingModule, brushingModule], {
+      ignoreMultipleRegistrations: true
+  });
 }
+
+export function setLayerBlending(gl, layerBlending) {
+  const blending = LAYER_BLENDINGS[layerBlending];
+  const {blendFunc, blendEquation} = blending;
+
+  setParameters(gl, {
+    [GL.BLEND]: true,
+    ...(blendFunc ? {
+      blendFunc: blendFunc.map(getGlConst),
+      blendEquation: Array.isArray(blendEquation) ? blendEquation.map(getGlConst) : getGlConst(blendEquation)
+    } : {})
+  });
+};

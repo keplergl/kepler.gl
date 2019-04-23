@@ -293,6 +293,20 @@ export default class PointLayer extends Layer {
           }
         }
       }),
+      // hover layer
+      ...(this.isLayerHovered(objectHovered)
+      ? [
+          new ScatterplotBrushingLayer({
+            ...layerProps,
+            id: `${this.id}-hovered`,
+            data: [objectHovered.object],
+            getColor: this.config.highlightColor,
+            getRadius: data.getRadius,
+            getPosition: data.getPosition,
+            pickable: false
+          })
+        ]
+      : []),
       // text label layer
       ...(this.config.textLabel.field
         ? [

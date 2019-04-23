@@ -18,6 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import {LayerManager} from 'deck.gl';
+import {gl} from '@deck.gl/test-utils';
+import {INITIAL_MAP_STATE} from 'reducers/map-state-updaters';
+import {INITIAL_VIS_STATE} from 'reducers/vis-state-updaters';
+import sinon from 'sinon';
+import {console as Console} from 'global/window';
+import {onWebGLInitialized} from 'utils/gl-utils';
+
+// Initialize gl once
+onWebGLInitialized(gl);
+
 export function testCreateLayer(t, LayerClass, props = {}) {
   let layer;
 
@@ -85,4 +96,50 @@ export function testFormatLayerDataCases(t, LayerClass, testCases) {
       }
     }
   });
+}
+
+export function testRenderLayerCases(t, LayerClass, testCases) {
+  testCases.forEach(tc => {
+    const layer = testCreateLayer(t, LayerClass, tc.props);
+
+    if (layer) {
+      const result = testFormatLayerData(t, layer, tc.data);
+
+      if (result) {
+        let deckLayers;
+
+        t.doesNotThrow(() => {
+          deckLayers = layer.renderLayer({
+            data: result,
+            idx: 0,
+            layerInteraction: {},
+            mapState: INITIAL_MAP_STATE,
+            interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+            ...(tc.renderArgs || {})
+          });
+        }, `${layer.type}.renderLayer should not fail`);
+
+        if (deckLayers) {
+          testInitializeDeckLayer(t, layer.type, deckLayers);
+        }
+      }
+    }
+  });
+}
+
+export function testInitializeDeckLayer(t, layerType, layers) {
+  const layerManager = new LayerManager(gl);
+
+  const spy = sinon.spy(Console, 'error');
+
+  t.doesNotThrow(
+    () => layerManager.setLayers(Array.isArray(layers) ? layers : [layers]),
+    `initialization of ${layerType} layer render should not fail`
+  );
+
+  // listen on console.error in editShader, fail the test if any error is logged
+  t.deepEqual(spy.args, [], 'should not call console.error during layer initialization');
+
+  spy.restore();
+  return null;
 }
