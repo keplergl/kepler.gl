@@ -107,7 +107,7 @@ const StyledMapControlPanelHeader = styled.div`
   height: 32px;
   padding: 6px 12px;
   font-size: 11px;
-  color: ${props => props.theme.secondaryBtnColor};
+  color: ${props => props.theme.titleTextColor};
 
   button {
     width: 18px;

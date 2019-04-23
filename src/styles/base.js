@@ -920,7 +920,29 @@ export const themeLT = {
 
   // template
   input: inputLT,
-  panelActiveBg: panelActiveBgLT,
   textColor: textColorLT,
-  textColorHl: textColorHlLT
+  sidePanelBg: '#ffffff',
+  titleTextColor: '#000000',
+  sidePanelHeaderBg: '#f7f7F7',
+  subtextColorActive: '#2473bd',
+  tooltipBg: '#1869b5',
+  tooltipColor: '#ffffff',
+  dropdownListBgd: '#ffffff',
+  textColorHl: '#2473bd',
+  inputBgd: '#f7f7f7',
+  inputBgdHover: '#ffffff',
+  inputBgdActive: '#ffffff',
+  dropdownListHighlightBg: '#f0f0f0',
+  panelBackground: '#f7f7F7',
+  panelBackgroundHover: '#f7f7F7',
+  panelBorderColor: '#D3D8E0',
+  secondaryInputBgd: '#f7f7F7',
+  secondaryInputBgdActive: '#f7f7F7',
+  secondaryInputBgdHover: '#ffffff',
+  panelActiveBg: '#f7f7F7',
+  mapPanelBackgroundColor: '#ffffff',
+  mapPanelHeaderBackgroundColor: '#f7f7F7',
+  sliderBarBgd: '#D3D8E0',
+  secondarySwitchBtnBgd: '#D3D8E0',
+  switchTrackBgd: '#D3D8E0'
 };

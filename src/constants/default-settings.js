@@ -105,6 +105,22 @@ export const DIMENSIONS = {
   }
 };
 
+/**
+ * Theme name that can be passed to `KeplerGl` `prop.theme`.
+ * Available themes are `Theme.light` and `Theme.dark`. Default theme is `Theme.dark`
+ * @constant
+ * @type {string}
+ * @public
+ * @example
+ * ```js
+ * const Map = () => <KeplerGl theme={THEME.light} id="map"/>
+ * ```
+ */
+export const THEME = keyMirror({
+  light: null,
+  dark: null
+});
+
 export const PANELS = [
   {
     id: 'layer',
