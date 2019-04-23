@@ -301,7 +301,21 @@ export default class IconLayer extends Layer {
             colorScale: this.config.colorScale
           }
         }
-      })
+      }),
+      ...(this.isLayerHovered(objectHovered)
+      ? [
+          new SvgIconLayer({
+            ...layerProps,
+            id: `${this.id}-hovered`,
+            data: [objectHovered.object],
+            getPosition: data.getPosition,
+            getRadius: data.getRadius,
+            getColor: this.config.highlightColor,
+            getIconGeometry: id => this.iconGeometry[id],
+            pickable: false
+          })
+        ]
+      : [])
     ];
   }
 }

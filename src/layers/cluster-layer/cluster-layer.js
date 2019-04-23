@@ -19,6 +19,8 @@
 // THE SOFTWARE.
 
 import AggregationLayer from '../aggregation-layer';
+import {ScatterplotLayer} from 'deck.gl';
+
 import DeckGLClusterLayer from 'deckgl-layers/cluster-layer/cluster-layer';
 import {CHANNEL_SCALES} from 'constants/default-settings';
 import ClusterLayerIcon from './cluster-layer-icon';
@@ -95,7 +97,20 @@ export default class ClusterLayer extends AggregationLayer {
 
         // call back from layer after calculate clusters
         onSetColorDomain: layerCallbacks.onSetLayerDomain
-      })
+      }),
+      // hover layer
+      ...(this.isLayerHovered(objectHovered)
+      ? [
+          new ScatterplotLayer({
+            id: `${this.id}-hovered`,
+            data: [objectHovered.object],
+            getFillColor: this.config.highlightColor,
+            getRadius: d => d.radius,
+            radiusScale: 1,
+            pickable: false
+          })
+        ]
+      : [])
     ];
   }
 }

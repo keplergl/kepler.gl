@@ -104,7 +104,21 @@ export default class LineLayer extends ArcLayer {
           getColor: colorUpdateTriggers,
           getTargetColor: colorUpdateTriggers
         }
-      })
+      }),
+      // hover layer
+      ...(this.isLayerHovered(objectHovered)
+      ? [
+          new DeckGLLineLayer({
+            id: `${this.id}-hovered`,
+            data: [objectHovered.object],
+            strokeScale: this.config.visConfig.thickness,
+            getColor: this.config.highlightColor,
+            getTargetColor: this.config.highlightColor,
+            getStrokeWidth: data.getStrokeWidth,
+            pickable: false
+          })
+        ]
+      : [])
     ];
   }
 }

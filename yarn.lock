@@ -875,7 +875,7 @@
     lodash "^4.17.11"
     to-fast-properties "^2.0.0"
 
-"@deck.gl/core@^6.3.0", "@deck.gl/core@^6.4.10", "@deck.gl/core@^6.4.9":
+"@deck.gl/core@^6.3.0", "@deck.gl/core@^6.4.10":
   version "6.4.10"
   resolved "https://registry.yarnpkg.com/@deck.gl/core/-/core-6.4.10.tgz#4941ef853275d25d8fc25c53a180826a4b5db46a"
   dependencies:
@@ -894,7 +894,7 @@
     "@deck.gl/core" "^6.3.0"
     "@deck.gl/layers" "^6.3.0"
 
-"@deck.gl/layers@^6.3.0", "@deck.gl/layers@^6.4.9":
+"@deck.gl/layers@^6.3.0", "@deck.gl/layers@^6.4.10":
   version "6.4.10"
   resolved "https://registry.yarnpkg.com/@deck.gl/layers/-/layers-6.4.10.tgz#b617207f89f479970c5650f478c1aad29b805def"
   dependencies:
@@ -903,7 +903,7 @@
     d3-hexbin "^0.2.1"
     earcut "^2.0.6"
 
-"@deck.gl/react@^6.3.0", "@deck.gl/react@^6.4.9":
+"@deck.gl/react@^6.3.0", "@deck.gl/react@^6.4.10":
   version "6.4.10"
   resolved "https://registry.yarnpkg.com/@deck.gl/react/-/react-6.4.10.tgz#33ba6183c70f0060986a03e40e3ffa6ce653e041"
   dependencies:
@@ -1541,8 +1541,8 @@ babel-messages@^6.23.0:
     babel-runtime "^6.22.0"
 
 babel-plugin-istanbul@^5.1.1:
-  version "5.1.2"
-  resolved "https://registry.yarnpkg.com/babel-plugin-istanbul/-/babel-plugin-istanbul-5.1.2.tgz#d8c2e2e83f72695d6bfdcd297719c66161d5f0f9"
+  version "5.1.3"
+  resolved "https://registry.yarnpkg.com/babel-plugin-istanbul/-/babel-plugin-istanbul-5.1.3.tgz#202d20ffc96a821c68a3964412de75b9bdeb48c7"
   dependencies:
     find-up "^3.0.0"
     istanbul-lib-instrument "^3.2.0"
@@ -2786,12 +2786,12 @@ deck.gl@6.3.0:
     "@deck.gl/react" "^6.3.0"
 
 deck.gl@^6.3.0:
-  version "6.4.9"
-  resolved "https://registry.yarnpkg.com/deck.gl/-/deck.gl-6.4.9.tgz#b6b1624eb9b9d88b2e8cf4a8830aae8e2c7a4e27"
+  version "6.4.10"
+  resolved "https://registry.yarnpkg.com/deck.gl/-/deck.gl-6.4.10.tgz#0977502cede1ec0658ca75264c6297fcd16e6953"
   dependencies:
-    "@deck.gl/core" "^6.4.9"
-    "@deck.gl/layers" "^6.4.9"
-    "@deck.gl/react" "^6.4.9"
+    "@deck.gl/core" "^6.4.10"
+    "@deck.gl/layers" "^6.4.10"
+    "@deck.gl/react" "^6.4.10"
 
 decode-uri-component@^0.2.0:
   version "0.2.0"
@@ -6060,8 +6060,8 @@ node-pre-gyp@^0.12.0:
     tar "^4"
 
 node-releases@^1.1.14:
-  version "1.1.15"
-  resolved "https://registry.yarnpkg.com/node-releases/-/node-releases-1.1.15.tgz#9e76a73b0eca3bf7801addaa0e6ce90c795f2b9a"
+  version "1.1.16"
+  resolved "https://registry.yarnpkg.com/node-releases/-/node-releases-1.1.16.tgz#efcb6615b0e8dc454bfb03bc025aad406ea6dddf"
   dependencies:
     semver "^5.3.0"
 
@@ -7212,8 +7212,8 @@ react-redux@^4.0.0:
     prop-types "^15.7.2"
 
 react-sortable-hoc@^1.8.3:
-  version "1.8.3"
-  resolved "https://registry.yarnpkg.com/react-sortable-hoc/-/react-sortable-hoc-1.8.3.tgz#0c80cda29f305038f985cbdb34d3030220e1ab5d"
+  version "1.9.0"
+  resolved "https://registry.yarnpkg.com/react-sortable-hoc/-/react-sortable-hoc-1.9.0.tgz#ca09607d6ea717ebda899abad72cb2df9e0c20db"
   dependencies:
     "@babel/runtime" "^7.2.0"
     invariant "^2.2.4"
@@ -7795,8 +7795,8 @@ rw@~0.1.4:
   resolved "https://registry.yarnpkg.com/rw/-/rw-0.1.4.tgz#4903cbd80248ae0ede685bf58fd236a7a9b29a3e"
 
 rxjs@^6.4.0:
-  version "6.4.0"
-  resolved "https://registry.yarnpkg.com/rxjs/-/rxjs-6.4.0.tgz#f3bb0fe7bda7fb69deac0c16f17b50b0b8790504"
+  version "6.5.1"
+  resolved "https://registry.yarnpkg.com/rxjs/-/rxjs-6.5.1.tgz#f7a005a9386361921b8524f38f54cbf80e5d08f4"
   dependencies:
     tslib "^1.9.0"
 
