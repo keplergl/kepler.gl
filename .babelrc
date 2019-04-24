@@ -21,7 +21,8 @@
           "test": "./test"
         }
       }
-    ]
+    ],
+    "version-transform"
   ],
   "env": {
     "test": {

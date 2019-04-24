@@ -24,6 +24,7 @@ import {handleActions} from 'redux-actions';
 import keplerGlReducer, {combinedUpdaters} from 'kepler.gl/reducers';
 import {processGeojson, processCsvData} from 'kepler.gl/processors';
 import KeplerGlSchema from 'kepler.gl/schemas';
+import {EXPORT_MAP_FORMAT} from 'kepler.gl/constants';
 
 import sharingReducer from './sharing';
 
@@ -92,8 +93,15 @@ const demoReducer = combineReducers({
     // we are going to set the mapbox access token to be used
     // in the exported file
     uiState: {
-      exportHtml: {
-        exportMapboxAccessToken: AUTH_TOKENS.EXPORT_MAPBOX_TOKEN
+      exportMap: {
+        format: EXPORT_MAP_FORMAT.HTML,
+        [EXPORT_MAP_FORMAT.JSON]: {
+          hasData: true
+        },
+        [EXPORT_MAP_FORMAT.HTML]: {
+          exportMapboxAccessToken: AUTH_TOKENS.EXPORT_MAPBOX_TOKEN,
+          userMapboxToken: ''
+        }
       }
     }
   }),

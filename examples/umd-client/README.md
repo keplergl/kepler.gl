@@ -4,7 +4,7 @@ A single html file loading kepler.gl. This html is loading kepler.gl and its dep
 
 
 ### Usage
-Add your own Mapbox access token to line 34:
+Add your own Mapbox access token to line 32:
 ```js
  const MAPBOX_TOKEN = 'PROVIDE_MAPBOX_TOKEN';
 ```

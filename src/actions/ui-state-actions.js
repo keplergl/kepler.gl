@@ -42,7 +42,6 @@ export const toggleSidePanel = createAction(
  *  - [`ADD_DATA_ID`](../constants/default-settings.md#add_data_id)
  *  - [`EXPORT_IMAGE_ID`](../constants/default-settings.md#export_image_id)
  *  - [`EXPORT_DATA_ID`](../constants/default-settings.md#export_data_id)
- *  - [`EXPORT_CONFIG_ID`](../constants/default-settings.md#export_config_id)
  *  - [`ADD_MAP_STYLE_ID`](../constants/default-settings.md#add_map_style_id)
  * @public
  */
@@ -223,8 +222,19 @@ export const setExportData = createAction(
  * @param {string} payload - mapbox access token
  * @public
  */
-export const setExportMapboxAccessToken = createAction(
-  ActionTypes.SET_EXPORT_MAPBOX_ACCESS_TOKEN,
+export const setUserMapboxAccessToken = createAction(
+  ActionTypes.SET_USER_MAPBOX_ACCESS_TOKEN,
+  payload => payload
+);
+
+/**
+ * Set the expor tmap format (html, json)
+ * @memberOf uiStateActions
+ * @param {string} payload - map format
+ * @public
+ */
+export const setExportMapFormat = createAction(
+  ActionTypes.SET_EXPORT_MAP_FORMAT,
   payload => payload
 );
 

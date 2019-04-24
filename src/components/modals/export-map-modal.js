@@ -21,26 +21,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import {GITHUB_EXPORT_HTML_MAP, MAPBOX_ACCESS_TOKEN} from 'constants/user-guides';
-
-const StyledExportMapModal = styled.div`
-  padding: ${props => props.theme.modalPadding};
-
-  .title {
-    font-weight: 500;
-    color: ${props => props.theme.textColorLT};
-    font-size: 12px;
-  }
-
-  .description {
-    color: ${props => props.theme.textColor};
-    font-size: 11px;
-  }
-`;
-
-const StyledSection = styled.div`
-  margin: 24px 0;
-`;
+import JSONPretty from 'react-json-pretty';
+import {GITHUB_EXPORT_HTML_MAP} from 'constants/user-guides';
+import {FileType} from 'components/common/icons';
+import {
+  StyledModalContent,
+  StyledExportSection,
+  StyledType
+} from 'components/common/styled-components';
+import {EXPORT_MAP_FORMAT, EXPORT_MAP_FORMAT_OPTIONS} from 'constants/default-settings';
 
 const StyledInput = styled.input`
   width: 100%;
@@ -58,41 +47,162 @@ const StyledInput = styled.input`
   }
 `;
 
+const DISCLAIMER = "* If you don't provide your own token, the map may fail to display at any time as we rotate ours to avoid misuse." +
+  " You can change the Mapbox token later using the following instructions: ";
+
+const exportHtmlPropTypes = {
+  options: PropTypes.object,
+  onEditUserMapboxAccessToken: PropTypes.func.isRequired
+};
+
+const ExportHtmlMap = ({
+  options = {},
+  onEditUserMapboxAccessToken = () => {}
+}) => (
+  <div>
+    <StyledExportSection className="export-map-modal__html-options">
+      <div className="description">
+        <div className="title">
+          Please provide your Mapbox access token
+        </div>
+        <div className="subtitle">
+          Export your map into a single html file
+        </div>
+      </div>
+      <div className="selection">
+        <StyledInput
+          onChange={e => onEditUserMapboxAccessToken(e.target.value)}
+          type="text"
+          placeholder="Mapbox access token"
+          value={options ? options.userMapboxToken : ''}
+        />
+      </div>
+    </StyledExportSection>
+    <StyledExportSection>
+      <div>
+        {DISCLAIMER} <a style={{textDecorationLine: 'underline'}}
+                        href={GITHUB_EXPORT_HTML_MAP}
+                        target="_blank"
+                        rel="noopener noreferrer">How to update an existing map token.</a>
+      </div>
+    </StyledExportSection>
+  </div>
+);
+
+ExportHtmlMap.propTypes = exportHtmlPropTypes;
+
+const StyledJsonExportSection = styled(StyledExportSection)`
+  .note {
+    color: ${props => props.theme.errorColor};
+    font-size: 11px;
+  }
+  
+  .viewer {
+    border: 1px solid ${props => props.theme.selectBorderColorLT};
+    background-color: white;
+    border-radius: 2px;
+    display: inline-block;
+    font: inherit;
+    line-height: 1.5em;
+    padding: 0.5em 3.5em 0.5em 1em;
+    margin: 0;
+    box-sizing: border-box;
+    height: 300px;
+    width: 100%;
+    overflow-y: scroll;
+  }
+`;
+
+const exportJsonPropTypes = {
+  options: PropTypes.object
+};
+
+const ExportJsonMap = ({
+  config = {}
+}) => (
+  <div>
+    <StyledJsonExportSection className="export-map-modal__json-options">
+      <div className="description">
+        <div className="title">
+          Current Config
+        </div>
+        <div className="subtitle">
+          You can copy or export the current Kepler.gl configuration.
+        </div>
+        <div className="note">
+          * kepler.gl map config is coupled with loaded datasets.
+          dataId key is used to bind layers and filters to a specific dataset.
+          If you try to upload a configuration with a specific dataId you also need to make sure
+          you existing dataset id match the dataId/s in the config.
+        </div>
+      </div>
+      <div className="selection">
+        <div className="viewer">
+          <JSONPretty id="json-pretty" json={config}/>
+        </div>
+      </div>
+    </StyledJsonExportSection>
+  </div>
+);
+
+ExportJsonMap.propTypes = exportJsonPropTypes;
+
 const propTypes = {
-  exportHtml: PropTypes.object,
-  onExportMapboxAccessToken: PropTypes.func.isRequired
+  options: PropTypes.object,
+  onEditUserMapboxAccessToken: PropTypes.func.isRequired,
+  onChangeExportData: PropTypes.func,
+  onChangeExportMapType: PropTypes.func,
+  mapFormat: PropTypes.string
 };
 
 const ExportMapModal = ({
-  exportHtml,
-  onExportMapboxAccessToken
+  config = {},
+  onChangeExportData = () => {},
+  onChangeExportMapFormat  = () => {},
+  onEditUserMapboxAccessToken = () => {},
+  options = {}
 }) => (
-  <StyledExportMapModal>
-    <div className="export-map-modal">
-      <div className="title">
-        Export your map into a single html file
-      </div>
-      <div className="subtitle">
-        You will be able to save your map into an interactive html file.
-      </div>
-
-      <StyledSection>
-        <div>
-          Please provide your <a style={{textDecorationLine: 'underline'}} href={MAPBOX_ACCESS_TOKEN}>Mapbox access token</a>
+  <StyledModalContent className="export-map-modal">
+    <div style={{width: '100%'}}>
+      <StyledExportSection>
+        <div className="description">
+          <div className="title">
+            Map format
+          </div>
+          <div className="subtitle">
+            Choose the format to export your map to
+          </div>
         </div>
-        <StyledInput
-          onChange={e => onExportMapboxAccessToken(e.target.value)}
-          type="text"
-          placeholder="Mapbox access token"
-          value={exportHtml ? exportHtml.exportMapboxAccessToken : ''}
-        />
-        <div>
-          * <a style={{textDecorationLine: 'underline'}} href={GITHUB_EXPORT_HTML_MAP}>How to update an existing map token</a>
+        <div className="selection">
+          {EXPORT_MAP_FORMAT_OPTIONS.map(op =>
+            <StyledType
+              key={op.id}
+              selected={options.format === op.id}
+              available={op.available}
+              onClick={() => op.available && onChangeExportMapFormat(op.id)}
+            >
+              <FileType ext={op.label} height="80px" fontSize="11px" />
+            </StyledType>
+          )}
         </div>
-      </StyledSection>
-
+      </StyledExportSection>
+      {{
+        [EXPORT_MAP_FORMAT.HTML]:  (
+          <ExportHtmlMap
+            options={options[options.format]}
+            onEditUserMapboxAccessToken={onEditUserMapboxAccessToken}
+          />
+        ),
+        [EXPORT_MAP_FORMAT.JSON]: (
+          <ExportJsonMap
+            config={config}
+            onChangeExportData={onChangeExportData}
+            options={options[options.format]}
+          />
+        )
+      }[options.format]}
     </div>
-  </StyledExportMapModal>
+  </StyledModalContent>
 );
 
 ExportMapModal.propTypes = propTypes;

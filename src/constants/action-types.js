@@ -129,8 +129,9 @@ const ActionTypes = keyMirror({
   SET_EXPORT_FILTERED: null,
   SET_EXPORT_DATA: null,
 
-  // uiState > export html
-  SET_EXPORT_MAPBOX_ACCESS_TOKEN: null,
+  // uiState > export map
+  SET_EXPORT_MAP_FORMAT: null,
+  SET_USER_MAPBOX_ACCESS_TOKEN: null,
 
   // all
   INIT: null,

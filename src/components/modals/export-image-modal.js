@@ -131,62 +131,60 @@ class ExportImageModal extends Component {
     });
 
     return (
-      <div className="export-image-modal">
-        <StyledModalContent>
-          <ImageOptionList>
-            <div className="image-option-section">
-              <div className="image-option-section-title">Ratio</div>
-                Choose the ratio for various usages.
-              <div className="button-list">
-                {RATIO_OPTIONS.map(op =>
+      <StyledModalContent className="export-image-modal">
+        <ImageOptionList>
+          <div className="image-option-section">
+            <div className="image-option-section-title">Ratio</div>
+              Choose the ratio for various usages.
+            <div className="button-list">
+              {RATIO_OPTIONS.map(op =>
+                <SelectionButton
+                  key={op.id}
+                  selected={ratio === op.id}
+                  onClick={() => onChangeRatio({ratio: op.id})}
+                >
+                  {op.label}
+                </SelectionButton>
+              )}
+            </div>
+          </div>
+          <div className="image-option-section">
+            <div className="image-option-section-title">Resolution</div>
+            High resolution is better for prints.
+            <div className="button-list">
+              {
+                RESOLUTION_OPTIONS.map(op =>
                   <SelectionButton
                     key={op.id}
-                    selected={ratio === op.id}
-                    onClick={() => onChangeRatio({ratio: op.id})}
-                  >
+                    selected={resolution === op.id}
+                    onClick={() => op.available && onChangeResolution({resolution: op.id})}>
                     {op.label}
                   </SelectionButton>
-                )}
-              </div>
-            </div>
-            <div className="image-option-section">
-              <div className="image-option-section-title">Resolution</div>
-              High resolution is better for prints.
-              <div className="button-list">
-                {
-                  RESOLUTION_OPTIONS.map(op =>
-                    <SelectionButton
-                      key={op.id}
-                      selected={resolution === op.id}
-                      onClick={() => op.available && onChangeResolution({resolution: op.id})}>
-                      {op.label}
-                    </SelectionButton>
-                  )
-                }
-              </div>
-            </div>
-            <div className="image-option-section">
-              <div className="image-option-section-title">Map Legend</div>
-              <Switch type="checkbox"
-                      id="add-map-legend"
-                      checked={legend}
-                      label="Add legend on map"
-                      onChange={onToggleLegend}/>
-            </div>
-          </ImageOptionList>
-          <PreviewImageSection ratio={ratio} width={width} height={height}>
-            <div className="dimension">{`${exportImageSize.width} x ${exportImageSize.height}`}</div>
-            <div className="preview-image">
-              {exporting ?
-                <div className="preview-image-spinner">
-                  <LoadingSpinner />
-                </div> :
-                <img className="preview-image-placeholder" src={imageDataUri} />
+                )
               }
             </div>
-          </PreviewImageSection>
-        </StyledModalContent>
-      </div>
+          </div>
+          <div className="image-option-section">
+            <div className="image-option-section-title">Map Legend</div>
+            <Switch type="checkbox"
+                    id="add-map-legend"
+                    checked={legend}
+                    label="Add legend on map"
+                    onChange={onToggleLegend}/>
+          </div>
+        </ImageOptionList>
+        <PreviewImageSection ratio={ratio} width={width} height={height}>
+          <div className="dimension">{`${exportImageSize.width} x ${exportImageSize.height}`}</div>
+          <div className="preview-image">
+            {exporting ?
+              <div className="preview-image-spinner">
+                <LoadingSpinner />
+              </div> :
+              <img className="preview-image-placeholder" src={imageDataUri} />
+            }
+          </div>
+        </PreviewImageSection>
+      </StyledModalContent>
     );
   }
 }

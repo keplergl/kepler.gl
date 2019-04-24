@@ -157,6 +157,7 @@
     "babel-plugin-istanbul": "^5.1.1",
     "babel-plugin-module-resolver": "^3.0.0",
     "babel-plugin-transform-builtin-extend": "^1.1.0",
+    "babel-plugin-version-transform": "^1.0.0",
     "babel-tape-runner": "^3.0.0",
     "babelify": "^10.0.0",
     "documentation": "^9.1.1",

@@ -2,23 +2,23 @@
 
 ### Table of Contents
 
--   [getFieldsFromData](#getfieldsfromdata)
--   [processCsvData](#processcsvdata)
--   [processGeojson](#processgeojson)
--   [processKeplerglJSON](#processkeplergljson)
--   [processRowObject](#processrowobject)
+-   [getFieldsFromData][1]
+-   [processCsvData][4]
+-   [processGeojson][7]
+-   [processKeplerglJSON][10]
+-   [processRowObject][13]
 
 ## getFieldsFromData
 
 Analyze field types from data in `string` format, e.g. uploaded csv.
 Assign `type`, `tableFieldIndex` and `format` (timestamp only) to each field
 
-### Parameters
+**Parameters**
 
 -   `data` **[Array][16]&lt;[Object][17]>** array of row object
 -   `fieldOrder` **[Array][16]** array of field names as string
 
-### Examples
+**Examples**
 
 ```javascript
 import {getFieldsFromData} from 'kepler.gl/processors';
@@ -59,11 +59,11 @@ Returns **[Array][16]&lt;[Object][17]>** formatted fields
 Process csv data, output a data object with `{fields: [], rows: []}`.
 The data object can be wrapped in a `dataset` and pass to [`addDataToMap`][18]
 
-### Parameters
+**Parameters**
 
 -   `rawData` **[string][19]** raw csv string
 
-### Examples
+**Examples**
 
 ```javascript
 import {processCsvData} from 'kepler.gl/processors';
@@ -93,11 +93,11 @@ Process GeoJSON [`FeatureCollection`][20],
 output a data object with `{fields: [], rows: []}`.
 The data object can be wrapped in a `dataset` and pass to [`addDataToMap`][18]
 
-### Parameters
+**Parameters**
 
 -   `rawData` **[Object][17]** raw geojson feature collection
 
-### Examples
+**Examples**
 
 ```javascript
 import {addDataToMap} from 'kepler.gl/actions';
@@ -136,13 +136,13 @@ Returns **[Object][17]** dataset containing `fields` and `rows`
 Process saved kepler.gl json to be pass to [`addDataToMap`][18].
 The json object should contain `datasets` and `config`.
 
-### Parameters
+**Parameters**
 
 -   `rawData` **[Object][17]** 
     -   `rawData.datasets` **[Array][16]** 
     -   `rawData.config` **[Object][17]** 
 
-### Examples
+**Examples**
 
 ```javascript
 import {addDataToMap} from 'kepler.gl/actions';
@@ -157,11 +157,11 @@ Returns **[Object][17]** datasets and config `{datasets: {}, config: {}}`
 
 Process data where each row is an object, output can be passed to [`addDataToMap`][18]
 
-### Parameters
+**Parameters**
 
 -   `rawData` **[Object][17]** an array of object
 
-### Examples
+**Examples**
 
 ```javascript
 import {addDataToMap} from 'kepler.gl/actions';

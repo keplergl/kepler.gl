@@ -360,3 +360,122 @@ export const StyledMapContainer = styled.div`
     display: none;
   }
 `;
+
+export const StyledExportSection = styled.div`
+  display: flex;
+  flex-direction: row;
+  margin: 35px 0;
+  width: 100%;
+
+  .description {
+    width: 185px;
+
+    .title {
+      font-weight: 500;
+      color: ${props => props.theme.textColorLT};
+      font-size: 12px;
+    }
+    .subtitle {
+      color: ${props => props.theme.textColor};
+      font-size: 11px;
+    }
+  }
+
+  .selection {
+    display: flex;
+    flex-wrap: wrap;
+    flex: 1;
+    padding-left: 50px;
+
+    select {
+      background-color: white;
+      border-radius: 1px;
+      display: inline-block;
+      font: inherit;
+      line-height: 1.5em;
+      padding: 0.5em 3.5em 0.5em 1em;
+      margin: 0;
+      box-sizing: border-box;
+      appearance: none;
+      width: 250px;
+      height: 36px;
+
+      background-image:
+        linear-gradient(45deg, transparent 50%, gray 50%),
+        linear-gradient(135deg, gray 50%, transparent 50%),
+        linear-gradient(to right, #ccc, #ccc);
+      background-position:
+        calc(100% - 20px) calc(1em + 2px),
+        calc(100% - 15px) calc(1em + 2px),
+        calc(100% - 2.5em) 4.5em;
+      background-size:
+        5px 5px,
+        5px 5px,
+        1px 1.5em;
+      background-repeat: no-repeat;
+    }
+
+    select:focus {
+      background-image:
+        linear-gradient(45deg, green 50%, transparent 50%),
+        linear-gradient(135deg, transparent 50%, green 50%),
+        linear-gradient(to right, #ccc, #ccc);
+      background-position:
+        calc(100% - 15px) 1em,
+        calc(100% - 20px) 1em,
+        calc(100% - 2.5em) 4.5em;
+      background-size:
+        5px 5px,
+        5px 5px,
+        1px 1.5em;
+      background-repeat: no-repeat;
+      border-color: green;
+      outline: 0;
+    }
+  }
+`;
+
+export const StyledFilteredOption = styled.div`
+  align-items: center;
+  border-radius: 2px;
+  border: 1px solid ${props => props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT};
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  height: 60px;
+  justify-content: center;
+  margin: 4px;
+  padding: 8px 12px;
+  width: 140px;
+
+  :hover {
+    border: 1px solid ${props => props.theme.primaryBtnBgd};
+  }
+
+  .filtered-title {
+    color: ${props => props.theme.textColorLT};
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .filtered-subtitle {
+    color: ${props => props.theme.textColor};
+    font-size: 11px;
+  }
+`;
+
+export const StyledType = styled.div`
+  border-radius: 2px;
+  border: 1px solid ${props => props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT};
+  color: ${props => props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT};
+  cursor: pointer;
+  font-weight: 500;
+  height: 100px;
+  margin: 4px;
+  padding: 6px 10px;
+  width: 100px;
+
+  :hover {
+    color: ${props => props.available && props.theme.primaryBtnBgd};
+    border: 1px solid ${props => props.available && props.theme.primaryBtnBgd};
+  }
+`;

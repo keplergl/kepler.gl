@@ -61,13 +61,6 @@ export const EXPORT_IMAGE_ID = 'exportImage';
  */
 export const EXPORT_DATA_ID = 'exportData';
 /**
- * Modal id: export configuration modal
- * @constant
- * @type {string}
- * @public
- */
-export const EXPORT_CONFIG_ID = 'exportConfig';
-/**
  * Modal id: add custom map style modal
  * @constant
  * @type {string}
@@ -619,7 +612,7 @@ export const EXPORT_DATA_TYPE = keyMirror({
 export const EXPORT_DATA_TYPE_OPTIONS = [
   {
     id: EXPORT_DATA_TYPE.CSV,
-    label: 'csv',
+    label: EXPORT_DATA_TYPE.CSV.toLowerCase(),
     available: true
   }
   // {
@@ -643,6 +636,20 @@ export const EXPORT_DATA_TYPE_OPTIONS = [
   //   available: false
   // }
 ];
+
+// Export map types
+export const EXPORT_MAP_FORMAT = keyMirror({
+  HTML: null,
+  JSON: null
+});
+
+// Export map options
+export const EXPORT_MAP_FORMAT_OPTIONS = Object.entries(EXPORT_MAP_FORMAT)
+  .map(entry => ({
+    id: entry[0],
+    label: entry[1].toLowerCase(),
+    available: true
+  }));
 
 export const DEFAULT_UUID_COUNT = 6;
 

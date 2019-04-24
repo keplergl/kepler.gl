@@ -67,7 +67,6 @@ export {default as DataTableModalFactory} from './modals/data-table-modal';
 export {default as LoadDataModalFactory} from './modals/load-data-modal';
 export {default as ExportImageModalFactory} from './modals/export-image-modal';
 export {default as ExportDataModalFactory} from './modals/export-data-modal';
-export {default as ExportConfigModalFactory} from './modals/export-config-modal';
 export {default as AddMapStyleModalFactory} from './modals/add-map-style-modal';
 
 // // Bottom widget factory
