@@ -170,6 +170,7 @@
     "eslint-plugin-prettier": "^3.0.1",
     "eslint-plugin-react": "~7.12.4",
     "gl": "^4.2.2",
+    "immutable": "^4.0.0-rc.12",
     "jsdom": "^11.1.0",
     "json-loader": "^0.5.4",
     "nyc": "^11.4.1",
