@@ -39,7 +39,6 @@ import VisConfigSwitch from './vis-config-switch';
 import VisConfigSlider from './vis-config-slider';
 import LayerConfigGroup, {ConfigGroupCollapsibleContent} from './layer-config-group';
 import TextLabelPanel from './text-label-panel';
-import Switch from 'components/common/switch';
 
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
 
