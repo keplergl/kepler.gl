@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import Immutable from 'immutable';
 import Task, {withTask} from 'react-palm/tasks';
 import cloneDeep from 'lodash.clonedeep';
 
@@ -129,7 +128,7 @@ export const INITIAL_MAP_STYLE = getDefaultState();
  * @param {Object} mapStyles - a dictionary of all map styles
  * @returns {Object} bottomMapStyle | topMapStyle | isRaster
  */
-function getMapStyles({
+export function getMapStyles({
   styleType,
   visibleLayerGroups,
   topLayerGroups,
@@ -145,7 +144,7 @@ function getMapStyles({
   const editable = Object.keys(visibleLayerGroups).length;
 
   const bottomMapStyle = !editable
-    ? Immutable.fromJS(mapStyle.style)
+    ? mapStyle.style
     : editBottomMapStyle({
         id: styleType,
         mapStyle,
@@ -339,7 +338,16 @@ export const receiveMapConfigUpdater = (state, {payload: {mapStyle}}) => {
     ? getLoadMapStyleTasks(mapStyle.mapStyles, state.mapboxApiAccessToken)
     : null;
 
-  const newState = mapConfigChangeUpdater(state, {payload: mapStyle});
+  // merge default mapStyles
+  const merged = mapStyle.mapStyles ? {
+    ...mapStyle,
+    mapStyles: {
+      ...mapStyle.mapStyles,
+      ...state.mapStyles
+    }
+  } : mapStyle;
+
+  const newState = mapConfigChangeUpdater(state, {payload: merged});
 
   return loadMapStyleTasks ? withTask(newState, loadMapStyleTasks) : newState;
 };
