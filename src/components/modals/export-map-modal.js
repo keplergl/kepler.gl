@@ -45,10 +45,6 @@ const StyledInput = styled.input`
   outline: 0;
   font-size: ${props => props.theme.inputFontSize};
   
-  &::placeholder {
-    color: #4E94B4;
-  }
-  
   :active,
   :focus,
   &.focus,

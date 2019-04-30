@@ -18,40 +18,58 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// Constants
-export {
-  KEPLER_GL_VERSION,
-  KEPLER_GL_WEBSITE,
-  KEPLER_GL_NAME,
-  DIMENSIONS,
-  ALL_FIELD_TYPES,
-  FIELD_OPTS,
-  FILTER_TYPES,
-  GEOJSON_FIELDS,
-  ICON_FIELDS,
-  TRIP_POINT_FIELDS,
-  TRIP_ARC_FIELDS,
-  SCALE_TYPES,
-  LAYER_TYPES,
-  LAYER_BLENDINGS,
-  AGGREGATION_TYPES,
-  MAX_DEFAULT_TOOLTIPS,
-  DATA_TABLE_ID,
-  DELETE_DATA_ID,
-  ADD_DATA_ID,
-  EXPORT_IMAGE_ID,
-  EXPORT_DATA_ID,
-  EXPORT_MAP_ID,
-  ADD_MAP_STYLE_ID,
-  DEFAULT_LAYER_GROUPS,
-  DEFAULT_MAP_STYLES,
-  THEME,
-  EXPORT_MAP_FORMAT,
-  EXPORT_MAP_FORMAT_OPTIONS,
-  EXPORT_DATA_TYPE_OPTIONS,
-  DEFAULT_NOTIFICATION_TYPES,
-  DEFAULT_NOTIFICATION_TOPICS,
-  PANELS
-} from './default-settings';
-export {VizColorPalette, DataVizColors} from './custom-color-ranges';
-export {COLOR_RANGES, DefaultColorRange} from './color-ranges';
+const KeplerPackage = require('./package');
+
+module.exports = function babel(api) {
+  api.cache(true);
+
+  const presets = [
+    '@babel/preset-env',
+    '@babel/preset-react'
+  ];
+  const plugins = [
+    '@babel/plugin-transform-modules-commonjs',
+    ['@babel/plugin-proposal-decorators', { legacy: true }],
+    '@babel/plugin-proposal-class-properties',
+    '@babel/plugin-proposal-export-namespace-from',
+    ['@babel/transform-runtime', {
+      regenerator: true
+    }],
+    [
+      'module-resolver',
+      {
+        root: [
+          './src'
+        ],
+        alias: {
+          test: './test'
+        }
+      }
+    ],
+    ['search-and-replace', {
+      rules: [
+        {
+          search: '__PACKAGE_VERSION__',
+          replace: KeplerPackage.version
+        }
+      ]
+    }]
+  ];
+  const env = {
+    test: {
+      plugins: [
+        'istanbul'
+      ]
+    },
+    debug: {
+      sourceMaps: 'inline',
+      retainLines: true
+    }
+  };
+
+  return {
+    presets,
+    plugins,
+    env
+  };
+};

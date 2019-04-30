@@ -1558,6 +1558,10 @@ babel-plugin-module-resolver@^3.0.0:
     reselect "^3.0.1"
     resolve "^1.4.0"
 
+babel-plugin-search-and-replace@^1.0.0:
+  version "1.0.0"
+  resolved "https://unpm.uberinternal.com/babel-plugin-search-and-replace/-/babel-plugin-search-and-replace-1.0.0.tgz#94467aadb484cebb897645ee7f201bc290378fac"
+
 "babel-plugin-styled-components@>= 1":
   version "1.10.0"
   resolved "https://registry.yarnpkg.com/babel-plugin-styled-components/-/babel-plugin-styled-components-1.10.0.tgz#ff1f42ad2cc78c21f26b62266b8f564dbc862939"
@@ -1588,13 +1592,6 @@ babel-plugin-transform-object-rest-spread@^6.26.0:
   dependencies:
     babel-plugin-syntax-object-rest-spread "^6.8.0"
     babel-runtime "^6.26.0"
-
-babel-plugin-version-transform@macrigiuseppe/babel-plugin-version-transform#lib:
-  version "2.0.0"
-  resolved "https://codeload.github.com/macrigiuseppe/babel-plugin-version-transform/tar.gz/c1d7c16558071b92cdf1678da79be8eb90b1b4b6"
-  dependencies:
-    "@babel/preset-env" "^7.0.0"
-    rimraf "^2.5.2"
 
 babel-runtime@^6.2.0, babel-runtime@^6.22.0, babel-runtime@^6.26.0:
   version "6.26.0"
@@ -7761,7 +7758,7 @@ ret@~0.1.10:
   version "0.1.15"
   resolved "https://registry.yarnpkg.com/ret/-/ret-0.1.15.tgz#b8a4825d5bdb1fc3f6f53c2bc33f81388681c7bc"
 
-rimraf@2, rimraf@2.6.3, rimraf@^2.5.2, rimraf@^2.5.4, rimraf@^2.6.1, rimraf@^2.6.2, rimraf@^2.6.3:
+rimraf@2, rimraf@2.6.3, rimraf@^2.5.4, rimraf@^2.6.1, rimraf@^2.6.2, rimraf@^2.6.3:
   version "2.6.3"
   resolved "https://registry.yarnpkg.com/rimraf/-/rimraf-2.6.3.tgz#b2d104fe0d8fb27cf9e0a1cda8262dd3833c6cab"
   dependencies:

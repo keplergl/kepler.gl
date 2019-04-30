@@ -20,6 +20,10 @@
 
 const resolve = require('path').resolve;
 const join = require('path').join;
+const webpack = require('webpack');
+
+// Import package.json to read version
+const KeplerPackage = require('../package');
 
 const SRC_DIR = resolve(__dirname, '../src');
 const OUTPUT_DIR = resolve(__dirname, '../umd');
@@ -95,7 +99,12 @@ const LIBRARY_BUNDLE_CONFIG = env => ({
     fs: 'empty'
   },
 
-  plugins: []
+  plugins: [
+    // Inject Current package version
+    new webpack.DefinePlugin({
+      __PACKAGE_VERSION__: JSON.stringify(KeplerPackage.version)
+    })
+  ]
 });
 
 module.exports = env => LIBRARY_BUNDLE_CONFIG(env);

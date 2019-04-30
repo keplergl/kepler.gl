@@ -18,20 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// VERSION is automatically injected by Babel during the building process
-// Since we are injecting this during the build process with babel
-// while developing VERSION is not defined, we capture the exception and return
-// an empty string which will allow us to retrieve the latest umd version
-const defaultVersion = (() => {
-  try {
-    // eslint-disable-next-line
-    return VERSION;
-  }
-  catch (e) {
-    // if no version is not provided (Development), fallback to the latest one
-    return '';
-  }
-})();
+import {KEPLER_GL_VERSION} from '../constants/default-settings';
 
 /**
  * This method is used to create an html file which will inlcude kepler and map data
@@ -41,7 +28,7 @@ const defaultVersion = (() => {
  * @param {Object} options.config this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
  * @param {string} version which version of Kepler.gl to load.
  */
-export const exportMapToHTML = (options, version = defaultVersion) => {
+export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
   return `
     <!DOCTYPE html>
     <html>
