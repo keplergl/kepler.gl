@@ -22,14 +22,20 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import JSONPretty from 'react-json-pretty';
-import {GITHUB_EXPORT_HTML_MAP} from 'constants/user-guides';
+import {GITHUB_EXPORT_HTML_MAP, GITHUB_ADD_DATA_TO_MAP} from 'constants/user-guides';
 import {FileType} from 'components/common/icons';
 import {
   StyledModalContent,
   StyledExportSection,
   StyledType
 } from 'components/common/styled-components';
-import {EXPORT_MAP_FORMAT, EXPORT_MAP_FORMAT_OPTIONS} from 'constants/default-settings';
+import {
+  DISCLAIMER,
+  EXPORT_MAP_FORMAT,
+  EXPORT_MAP_FORMAT_OPTIONS,
+  MAP_CONFIG_DESCRIPTION,
+  TOKEN_MISUSE_WARNING
+} from 'constants/default-settings';
 
 const StyledInput = styled.input`
   width: 100%;
@@ -39,6 +45,10 @@ const StyledInput = styled.input`
   outline: 0;
   font-size: ${props => props.theme.inputFontSize};
   
+  &::placeholder {
+    color: #4E94B4;
+  }
+  
   :active,
   :focus,
   &.focus,
@@ -47,8 +57,31 @@ const StyledInput = styled.input`
   }
 `;
 
-const DISCLAIMER = "* If you don't provide your own token, the map may fail to display at any time as we rotate ours to avoid misuse." +
-  " You can change the Mapbox token later using the following instructions: ";
+const StyledWarning = styled.span`
+  color: ${props => props.theme.errorColor};
+  font-weight: ${props => props.theme.selectFontWeightBold};
+`;
+
+const StyledLink = styled.a`
+  text-decoration-line: underline !important;
+`;
+
+const INTRA_SECTION_MARGING = '8px';
+
+const ExportMapStyledExportSection = styled(StyledExportSection)`
+  .disclaimer {
+    font-size: ${props => props.theme.inputFontSize};
+    color: ${props => props.theme.inputColor};
+    margin-top: 12px;
+  }
+`;
+
+const Link = ({children, ...props}) => (
+  <StyledLink target="_blank"
+              rel="noopener noreferrer" {...props}>
+    {children}
+  </StyledLink>
+);
 
 const exportHtmlPropTypes = {
   options: PropTypes.object,
@@ -60,7 +93,13 @@ const ExportHtmlMap = ({
   onEditUserMapboxAccessToken = () => {}
 }) => (
   <div>
-    <StyledExportSection className="export-map-modal__html-options">
+    <StyledExportSection style={{marginTop: INTRA_SECTION_MARGING}}>
+      <div className="description" />
+      <div className="selection">
+        Export your map into an interactive html file.
+      </div>
+    </StyledExportSection>
+    <ExportMapStyledExportSection className="export-map-modal__html-options">
       <div className="description">
         <div className="title">
           Please provide your Mapbox access token
@@ -73,25 +112,24 @@ const ExportHtmlMap = ({
         <StyledInput
           onChange={e => onEditUserMapboxAccessToken(e.target.value)}
           type="text"
-          placeholder="Mapbox access token"
+          placeholder="Paste your Mapbox access token"
           value={options ? options.userMapboxToken : ''}
         />
+        <div className="disclaimer">
+          <StyledWarning>{TOKEN_MISUSE_WARNING}</StyledWarning>
+          <span>{DISCLAIMER}</span>
+          <Link href={GITHUB_EXPORT_HTML_MAP}>
+            How to update an existing map token.
+          </Link>
+        </div>
       </div>
-    </StyledExportSection>
-    <StyledExportSection>
-      <div>
-        {DISCLAIMER} <a style={{textDecorationLine: 'underline'}}
-                        href={GITHUB_EXPORT_HTML_MAP}
-                        target="_blank"
-                        rel="noopener noreferrer">How to update an existing map token.</a>
-      </div>
-    </StyledExportSection>
+    </ExportMapStyledExportSection>
   </div>
 );
 
 ExportHtmlMap.propTypes = exportHtmlPropTypes;
 
-const StyledJsonExportSection = styled(StyledExportSection)`
+const StyledJsonExportSection = styled(ExportMapStyledExportSection)`
   .note {
     color: ${props => props.theme.errorColor};
     font-size: 11px;
@@ -107,7 +145,7 @@ const StyledJsonExportSection = styled(StyledExportSection)`
     padding: 0.5em 3.5em 0.5em 1em;
     margin: 0;
     box-sizing: border-box;
-    height: 300px;
+    height: 180px;
     width: 100%;
     overflow-y: scroll;
   }
@@ -121,24 +159,32 @@ const ExportJsonMap = ({
   config = {}
 }) => (
   <div>
+    <StyledExportSection style={{marginTop: INTRA_SECTION_MARGING}}>
+      <div className="description" />
+      <div className="selection">
+        Export current map data and config into a single Json file. You can later open the same map by uploading this file to kepler.gl.
+      </div>
+    </StyledExportSection>
     <StyledJsonExportSection className="export-map-modal__json-options">
       <div className="description">
         <div className="title">
-          Current Config
+          Map Config
         </div>
         <div className="subtitle">
-          You can copy or export the current Kepler.gl configuration.
-        </div>
-        <div className="note">
-          * kepler.gl map config is coupled with loaded datasets.
-          dataId key is used to bind layers and filters to a specific dataset.
-          If you try to upload a configuration with a specific dataId you also need to make sure
-          you existing dataset id match the dataId/s in the config.
+          {MAP_CONFIG_DESCRIPTION}
+          <Link href={GITHUB_ADD_DATA_TO_MAP}>
+            addDataToMap
+          </Link>.
         </div>
       </div>
       <div className="selection">
         <div className="viewer">
           <JSONPretty id="json-pretty" json={config}/>
+        </div>
+        <div className="disclaimer">
+          <StyledWarning>
+            * Map config is coupled with loaded datasets. ‘dataId’ is used to bind layers, filters, and tooltips to a specific dataset. When passing this config to addDataToMap, make sure the dataset id matches the dataId/s in this config.
+          </StyledWarning>
         </div>
       </div>
     </StyledJsonExportSection>
@@ -164,7 +210,7 @@ const ExportMapModal = ({
 }) => (
   <StyledModalContent className="export-map-modal">
     <div style={{width: '100%'}}>
-      <StyledExportSection>
+      <StyledExportSection style={{marginBottom: INTRA_SECTION_MARGING}}>
         <div className="description">
           <div className="title">
             Map format

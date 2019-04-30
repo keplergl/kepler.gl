@@ -358,7 +358,7 @@ export default function ModalContainerFactory(
             );
             modalProps = {
               close: false,
-              title: 'Export map',
+              title: 'Export Map',
               footer: true,
               onCancel: this._closeModal,
               onConfirm: this._onExportMap,

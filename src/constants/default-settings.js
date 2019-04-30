@@ -666,3 +666,7 @@ export const DEFAULT_NOTIFICATION_TOPICS = keyMirror({
   global: null,
   file: null
 });
+
+export const TOKEN_MISUSE_WARNING = '* If you do not provide your own token, the map may fail to display at any time when we replace ours to avoid misuse. ';
+export const DISCLAIMER = 'You can change the Mapbox token later using the following instructions: ';
+export const MAP_CONFIG_DESCRIPTION = 'Map config will be included in the Json file. If you are using kepler.gl in your own app. You can copy this config and pass it to ';
