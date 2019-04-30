@@ -21,6 +21,8 @@
 const {resolve, join} = require('path');
 const webpack = require('webpack');
 
+const KeplerPackage = require('../package');
+
 const rootDir = join(__dirname, '..');
 const libSources = join(rootDir, 'src');
 
@@ -128,7 +130,11 @@ const COMMON_CONFIG = {
       'MapboxAccessToken',
       'DropboxClientId',
       'MapboxExportToken'
-    ])
+    ]),
+    // Inject Current package version
+    new webpack.DefinePlugin({
+      __PACKAGE_VERSION__: JSON.stringify(KeplerPackage.version)
+    })
   ]
 };
 

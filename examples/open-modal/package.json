@@ -39,6 +39,7 @@
     "@babel/preset-env": "^7.0.0",
     "@babel/preset-react": "^7.0.0",
     "babel-loader": "^8.0.0",
+    "babel-plugin-inline-json-import": "^0.2.1",
     "babel-plugin-module-resolver": "^3.0.0",
     "babel-plugin-transform-builtin-extend": "^1.1.0",
     "webpack": "^4.29.0",

@@ -95,7 +95,7 @@ export const KEPLER_GL_VERSION = (() => {
   }
   catch (e) {
     // if no version is not provided (Development), fallback to the latest one
-    return '';
+    return 'latest';
   }
 })();
 export const KEPLER_GL_WEBSITE = 'http://kepler.gl/';
