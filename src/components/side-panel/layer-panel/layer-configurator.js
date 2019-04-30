@@ -137,7 +137,6 @@ export default class LayerConfigurator extends Component {
               <VisConfigSwitch
                 {...LAYER_VIS_CONFIGS.fixedRadius}
                 {...visConfiguratorProps}
-                disabled={!layer.config.sizeField}
               />
             ) : null}
           </ConfigGroupCollapsibleContent>

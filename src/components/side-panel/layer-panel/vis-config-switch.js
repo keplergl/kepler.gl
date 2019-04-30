@@ -42,7 +42,7 @@ const propTypes = {
 const StyledVisConfigSwitch = styled.div`
   display: flex;
   justify-content: space-between;
-  
+
   .vis-config-switch__title {
     display: flex;
   }
@@ -62,14 +62,14 @@ const VisConfigSwitch = ({
         {label ? <PanelLabel>{label || capitalizeFirstLetter(property)}</PanelLabel> : null}
         {description ? (
           <div>
-            <InfoHelper description={description} id={`${id}-${property}`} />
+            <InfoHelper description={description} id={`${id}-${property}-description`} />
           </div>
         ) : null}
       </div>
       <div className="vis-config-switch__switch">
         <Switch
           checked={config.visConfig[property]}
-          id={`${id}-${property}`}
+          id={`${id}-${property}-switch`}
           onChange={() => onChange({[property]: !config.visConfig[property]})}
         />
       </div>
