@@ -98,10 +98,10 @@ const ExportHtmlMap = ({
     <ExportMapStyledExportSection className="export-map-modal__html-options">
       <div className="description">
         <div className="title">
-          Please provide your Mapbox access token
+          Mapbox access token
         </div>
         <div className="subtitle">
-          Export your map into a single html file
+          Use your own Mapbox access token in the html (optional)
         </div>
       </div>
       <div className="selection">
