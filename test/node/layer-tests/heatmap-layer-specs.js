@@ -75,7 +75,7 @@ test('#Heatmaplayer -> formatLayerData', t => {
         isVisible: true,
         columns
       },
-      data: [rows, filteredIndex, undefined],
+      data: [{heatmap: {allData: rows, filteredIndex}}, undefined],
       test: result => {
         const {layerData,  layer} = result;
         // log(layer);

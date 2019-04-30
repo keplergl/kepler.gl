@@ -26,9 +26,10 @@ import {
 } from 'test/helpers/layer-utils';
 import csvData, {testFields} from 'test/fixtures/test-csv-data';
 import {KeplerGlLayers} from 'layers';
-const {PointLayer} = KeplerGlLayers;
-
+import {getGpuFilterProps} from 'utils/gpu-filter-utils';
 import {processCsvData} from 'processors/data-processor';
+
+const {PointLayer} = KeplerGlLayers;
 
 test('#PointLayer -> constructor', t => {
   const TEST_CASES = {
@@ -55,7 +56,7 @@ test('#PointLayer -> constructor', t => {
   t.end();
 });
 
-test('#PointLayer -> formatLayerData', t => {
+test.only('#PointLayer -> formatLayerData', t => {
   const {rows} = processCsvData(csvData);
 
   const filteredIndex = [0, 2, 4];
@@ -85,7 +86,11 @@ test('#PointLayer -> formatLayerData', t => {
           }
         }
       },
-      data: [rows, filteredIndex, undefined],
+      data: [{'0dj3h': {
+        allData: rows,
+        filteredIndex,
+        gpuFilter: getGpuFilterProps([], '0dj3h')
+      }}, undefined],
       test: result => {
         const {layerData, layer} = result;
         const expectedLayerData = {
@@ -110,9 +115,11 @@ test('#PointLayer -> formatLayerData', t => {
               position: [rows[4][2], rows[4][1], 0]
             }
           ],
+          getFilterValue: () => {},
           getFillColor: () => {},
           getLineColor: () => {},
-          getRadius: () => {}
+          getRadius: () => {},
+          getPosition: () => {}
         };
 
         t.deepEqual(
@@ -174,7 +181,11 @@ test('#PointLayer -> formatLayerData', t => {
           args: [{fixedRadius: true}]
         }
       ],
-      data: [allDataWithNull, filteredIndex, undefined],
+      data: [{'0dj3h': {
+        allData: allDataWithNull,
+        filteredIndex,
+        gpuFilter: getGpuFilterProps([], '0dj3h')
+      }}, undefined],
       test: result => {
         const {layerData, layer} = result;
 
@@ -191,10 +202,12 @@ test('#PointLayer -> formatLayerData', t => {
               position: [31.2175827, 29.9870074, 0]
             }
           ],
+          getFilterValue: () => {},
           getLineColor: () => {},
           getFillColor: () => {},
           getRadius: () => {},
-          getText: () => {}
+          getText: () => {},
+          getPosition: () => {}
         };
         t.deepEqual(
           layer.config.colorDomain,
@@ -212,7 +225,7 @@ test('#PointLayer -> formatLayerData', t => {
           'should filter out nulls, format correct point layerData'
         );
         t.ok(
-          ['getFillColor', 'getRadius'].every(
+          ['getFillColor', 'getRadius', 'getFilterValue'].every(
             k => typeof layerData[k] === 'function'
           ),
           'should have getFillColor, getRadius accessor as function'
@@ -249,7 +262,6 @@ test('#PointLayer -> renderLayer', t => {
   const {rows} = processCsvData(csvData);
 
   const filteredIndex = [0, 2, 4];
-  const data = [rows[0], rows[2], rows[4]];
 
   const TEST_CASES = [{
     props: {
@@ -271,7 +283,7 @@ test('#PointLayer -> renderLayer', t => {
         }
       }
     },
-    data: [data, rows, filteredIndex, undefined]
+    data: [rows, filteredIndex, undefined]
   }];
 
   testRenderLayerCases(t, PointLayer, TEST_CASES);

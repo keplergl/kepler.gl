@@ -26,6 +26,7 @@ import sinon from 'sinon';
 import {console as Console} from 'global/window';
 import {onWebGLInitialized} from 'utils/gl-utils';
 import {colorMaker, layerColors} from 'layers/base-layer';
+import {getGpuFilterProps} from 'utils/gpu-filter-utils';
 
 // Initialize gl once
 onWebGLInitialized(gl);
@@ -121,6 +122,7 @@ export function testRenderLayerCases(t, LayerClass, testCases) {
             idx: 0,
             layerInteraction: {},
             mapState: INITIAL_MAP_STATE,
+            gpuFilter: getGpuFilterProps([], 'test_data_idtest'),
             interactionConfig: INITIAL_VIS_STATE.interactionConfig,
             ...(tc.renderArgs || {})
           });

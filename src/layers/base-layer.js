@@ -388,7 +388,7 @@ export default class Layer {
     return Math.pow(2, Math.max(8 - zoom + zoomOffset, 0));
   }
 
-  formatLayerData(allData, filteredIndex) {
+  formatLayerData(datasets, filteredIndex) {
     return {};
   }
 
@@ -658,9 +658,9 @@ export default class Layer {
   }
 
   updateData(allData, filteredIndex, oldLayerData) {
-    const {columns} = this.config;
+    // const {columns} = this.config;
 
-    const getPosition = this.getPosition(columns);
+    const getPosition = this.getPositionAccessor();
     const dataUpdateTriggers = this.getDataUpdateTriggers({filteredIndex});
     const triggerChanged = this.getChangedTriggers(dataUpdateTriggers);
 

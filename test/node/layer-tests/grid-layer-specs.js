@@ -94,7 +94,7 @@ test('#GridLayer -> formatLayerData', t => {
           }
         }
       },
-      data: [rows, filteredIndex, undefined],
+      data: [{'0dj3h': {allData: rows, filteredIndex}}, undefined],
       test: result => {
         const {layerData, layer} = result;
         const expectedLayerData = {
@@ -150,7 +150,7 @@ test('#GridLayer -> formatLayerData', t => {
           args: [{allData: allDataWithNull}, 'color']
         }
       ],
-      data: [allDataWithNull, filteredIndex, undefined],
+      data: [{'0dj3h': {allData: allDataWithNull, filteredIndex}}, undefined],
       test: result => {
         const {layerData, layer} = result;
 

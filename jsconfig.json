@@ -1,5 +1,12 @@
 {
   "compilerOptions": {
     "baseUrl": "./src"
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    "bindings",
+    "umd"
+  ]
 }

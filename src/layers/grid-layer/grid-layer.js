@@ -55,10 +55,9 @@ export default class GridLayer extends AggregationLayer {
     return GridLayerIcon;
   }
 
-  formatLayerData(allData, filteredIndex, oldLayerData, opt = {}) {
+  formatLayerData(dataets, oldLayerData, opt = {}) {
     const formattedData = super.formatLayerData(
-      allData,
-      filteredIndex,
+      dataets,
       oldLayerData,
       opt
     );
