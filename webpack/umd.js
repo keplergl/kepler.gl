@@ -20,7 +20,6 @@
 
 const resolve = require('path').resolve;
 const join = require('path').join;
-const webpack = require('webpack');
 
 // Import package.json to read version
 const KeplerPackage = require('../package');
@@ -90,21 +89,26 @@ const LIBRARY_BUNDLE_CONFIG = env => ({
       {
         test: /\.js$/,
         loader: 'babel-loader',
-        include: [SRC_DIR]
+        include: [SRC_DIR],
+        options: {
+          plugins: [
+            ['search-and-replace', {
+              rules: [
+                {
+                  search: '__PACKAGE_VERSION__',
+                  replace: KeplerPackage.version
+                }
+              ]
+            }]
+          ]
+        }
       }
     ]
   },
 
   node: {
     fs: 'empty'
-  },
-
-  plugins: [
-    // Inject Current package version
-    new webpack.DefinePlugin({
-      __PACKAGE_VERSION__: JSON.stringify(KeplerPackage.version)
-    })
-  ]
+  }
 });
 
 module.exports = env => LIBRARY_BUNDLE_CONFIG(env);

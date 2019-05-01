@@ -125,7 +125,15 @@ const BABEL_RULE = {
                   SRC_DIR
                 ]
               }
-            ]
+            ],
+            ['search-and-replace', {
+              rules: [
+                {
+                  search: '__PACKAGE_VERSION__',
+                  replace: KeplerPackage.version
+                }
+              ]
+            }]
           ]
         }
       }
@@ -153,14 +161,6 @@ function addLocalDevSettings(sourceConfig, exampleDir) {
       ...LOCAL_DEV_CONFIG.module.rules
     ]
   };
-
-  config.plugins = [
-    ...config.plugins,
-    // Inject Current package version
-    new webpack.DefinePlugin({
-      __PACKAGE_VERSION__: JSON.stringify(KeplerPackage.version)
-    })
-  ];
 
   return config;
 }

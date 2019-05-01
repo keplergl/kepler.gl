@@ -88,16 +88,7 @@ export const KEPLER_GL_NAME = 'kepler.gl';
 // Since we are injecting this during the build process with babel
 // while developing VERSION is not defined, we capture the exception and return
 // an empty string which will allow us to retrieve the latest umd version
-export const KEPLER_GL_VERSION = (() => {
-  try {
-    // eslint-disable-next-line
-    return __PACKAGE_VERSION__;
-  }
-  catch (e) {
-    // if no version is not provided (Development), fallback to the latest one
-    return 'latest';
-  }
-})();
+export const KEPLER_GL_VERSION = "__PACKAGE_VERSION__";
 export const KEPLER_GL_WEBSITE = 'http://kepler.gl/';
 
 export const DIMENSIONS = {

@@ -24,7 +24,7 @@ import {addDataToMap, wrapTo} from 'kepler.gl/actions';
 import KeplerGl from 'kepler.gl';
 
 import sampleData from '../data/sample-data';
-import config from '../configurations/config.json';
+import config from '../configurations/config';
 
 export default class FreshMap extends Component {
   componentDidMount() {

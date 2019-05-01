@@ -70,7 +70,15 @@ const BABEL_CONFIG = {
           test: '../test'
         }
       }
-    ]
+    ],
+    ['search-and-replace', {
+      rules: [
+        {
+          search: '__PACKAGE_VERSION__',
+          replace: KeplerPackage.version
+        }
+      ]
+    }]
   ]
 };
 
@@ -130,11 +138,7 @@ const COMMON_CONFIG = {
       'MapboxAccessToken',
       'DropboxClientId',
       'MapboxExportToken'
-    ]),
-    // Inject Current package version
-    new webpack.DefinePlugin({
-      __PACKAGE_VERSION__: JSON.stringify(KeplerPackage.version)
-    })
+    ])
   ]
 };
 
