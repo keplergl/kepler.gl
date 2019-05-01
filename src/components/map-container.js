@@ -159,13 +159,14 @@ export default function MapContainerFactory(MapPopover, MapControl) {
 
         this._map = mapbox.getMap();
         // i noticed in certain context we don't access the actual map element
-        if (!this.map) {
+        if (!this._map) {
           return;
         }
         // bind mapboxgl event listener
         this._map.on(MAPBOXGL_STYLE_UPDATE, this._onMapboxStyleUpdate);
 
         this._map.on(MAPBOXGL_RENDER, () => {
+
           if (typeof this.props.onMapRender === 'function') {
             this.props.onMapRender(this._map);
           }

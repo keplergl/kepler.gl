@@ -23,12 +23,7 @@
  * Modified by heshan0131 to allow loading external stylesheets and inline webfonts
  */
 
-import window, {
-  XMLHttpRequest,
-  FileReader,
-  setTimeout,
-  fetch
-} from 'global/window';
+import window from 'global/window';
 import document from 'global/document';
 import console from 'global/console';
 
@@ -489,7 +484,7 @@ function newUtil() {
     }
 
     return new Promise(resolve => {
-      const request = new XMLHttpRequest();
+      const request = new window.XMLHttpRequest();
 
       request.onreadystatechange = done;
       request.ontimeout = timeout;
@@ -519,7 +514,7 @@ function newUtil() {
           return;
         }
 
-        const encoder = new FileReader();
+        const encoder = new window.FileReader();
         encoder.onloadend = () => {
           const content = encoder.result.split(/,/)[1];
           resolve(content);
@@ -555,7 +550,7 @@ function newUtil() {
   function delay(ms) {
     return arg => {
       return new Promise((resolve) => {
-        setTimeout(() => {
+        window.setTimeout(() => {
           resolve(arg);
         }, ms);
       });
@@ -686,7 +681,7 @@ function newFontFaces() {
       return Promise.all(
         styleSheets.map(sheet => {
           if (sheet.href) {
-            return fetch(sheet.href, {credentials: 'omit'})
+            return window.fetch(sheet.href, {credentials: 'omit'})
               .then(toText)
               .then(setBaseHref(sheet.href))
               .then(toStyleSheet)
