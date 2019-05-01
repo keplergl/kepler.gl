@@ -29,7 +29,7 @@ import sampleData from './data/sample-data';
 import config from './configurations/config';
 import {Button} from 'kepler.gl/components';
 import {theme} from 'kepler.gl/styles';
-import {ThemeProvider}  from 'styled-components';
+import {ThemeProvider} from 'styled-components';
 
 const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
 
@@ -74,36 +74,38 @@ class App extends Component {
   }
 
   _goToNextView = () => {
-    this.props.dispatch(wrapTo('map1', updateMap(
-      {
-        ...VIEW_STATES[this.counter],
-        transitionDuration: 1000,
-        transitionInterpolator: new FlyToInterpolator()
-      }
-    )));
-    this.counter = this.counter === VIEW_STATES.length - 1 ? 0 : this.counter + 1;
+    this.props.dispatch(
+      wrapTo(
+        'map1',
+        updateMap({
+          ...VIEW_STATES[this.counter],
+          transitionDuration: 1000,
+          transitionInterpolator: new FlyToInterpolator()
+        })
+      )
+    );
+    this.counter =
+      this.counter === VIEW_STATES.length - 1 ? 0 : this.counter + 1;
   };
 
   render() {
     return (
       <ThemeProvider theme={theme}>
-      <div style={{position: 'absolute', width: '100%', height: '100%'}}>
-        <div style={{position: 'absolute', zIndex: 999, margin: '50px'}}>
-          <Button onClick={this._goToNextView}>
-            Fly To Next Story
-          </Button>
+        <div style={{position: 'absolute', width: '100%', height: '100%'}}>
+          <div style={{position: 'absolute', zIndex: 999, margin: '50px'}}>
+            <Button onClick={this._goToNextView}>Fly To Next Story</Button>
+          </div>
+          <AutoSizer>
+            {({height, width}) => (
+              <KeplerGl
+                mapboxApiAccessToken={MAPBOX_TOKEN}
+                id="map1"
+                width={width}
+                height={height}
+              />
+            )}
+          </AutoSizer>
         </div>
-        <AutoSizer>
-          {({height, width}) => (
-            <KeplerGl
-              mapboxApiAccessToken={MAPBOX_TOKEN}
-              id="map1"
-              width={width}
-              height={height}
-            />
-          )}
-        </AutoSizer>
-      </div>
       </ThemeProvider>
     );
   }
