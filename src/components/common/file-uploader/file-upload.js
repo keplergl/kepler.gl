@@ -69,10 +69,9 @@ const StyledFileDrop = styled.div`
   border-style: dashed;
   border-width: 1px;
   border-color: ${props => props.theme.subtextColorLT};
-  height: 414px;
-  padding-top: 60px;
   text-align: center;
   width: 100%;
+  padding-top: 48px;
 
   .file-upload-or {
     color: ${props => props.theme.linkBtnColor};
@@ -88,7 +87,7 @@ const MsgWrapper = styled.div`
 
 const StyledDragNDropIcon = styled.div`
   color: ${fileIconColor};
-  margin-bottom: 60px;
+  margin-bottom: 48px;
 
   .file-type-row {
     margin-bottom: 26px;
@@ -119,10 +118,12 @@ const StyledMessage = styled.div`
   align-items: center;
 `;
 
+const StyledDragFileWrapper = styled.div`
+  margin-bottom: 32px;
+`;
+
 const StyledDisclaimer = styled(StyledMessage)`
-  position: absolute;
-  bottom: 0;
-  padding: 10px 30px;
+  margin: 0 auto;
 `;
 
 export default class FileUpload extends Component {
@@ -235,13 +236,15 @@ export default class FileUpload extends Component {
                 </StyledDragNDropIcon>
                 <div>{this._renderMessage()}</div>
               </div>
-              {!files.length ? <div>
-                <MsgWrapper>{MESSAGE}</MsgWrapper>
-                <span className="file-upload-or">or</span>
-                <UploadButton onUpload={this._handleFileInput}>
-                  browse your files
-                </UploadButton>
-              </div> : null}
+              {!files.length && (
+                  <StyledDragFileWrapper>
+                    <MsgWrapper>{MESSAGE}</MsgWrapper>
+                    <span className="file-upload-or">or</span>
+                    <UploadButton onUpload={this._handleFileInput}>
+                      browse your files
+                    </UploadButton>
+                  </StyledDragFileWrapper>
+              )}
               <StyledDisclaimer>{DISCLAIMER}</StyledDisclaimer>
             </StyledFileDrop>
           </FileDrop>

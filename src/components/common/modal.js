@@ -27,7 +27,9 @@ import {Delete} from 'components/common/icons';
 import {Button} from 'components/common/styled-components';
 
 const ModalContentWrapper = styled.div`
-  width: 60%;
+  width: 60vw;
+  height: 70vh;
+  overflow-y: scroll;
   max-width: 960px;
   padding: 24px 24px 40px;
   position: absolute;
@@ -39,7 +41,6 @@ const ModalContentWrapper = styled.div`
   border-radius: 4px;
   transition: ${props => props.theme.transition};
   min-width: 600px;
-  overflow: hidden;
   box-sizing: border-box;
   margin-right: auto;
   font-size: 12px;
@@ -148,6 +149,7 @@ class ModalDialog extends Component {
     const {props} = this;
     return (
       <Modal
+        className={this.props.className}
         {...props}
         ariaHideApp={false}
         style={{
@@ -193,8 +195,6 @@ class ModalDialog extends Component {
 }
 
 const StyledModal = styled(ModalDialog)`
-  width: 100%;
-  height: 100%;
   top: 0;
   left: 0;
   z-index: 10000;
@@ -202,6 +202,12 @@ const StyledModal = styled(ModalDialog)`
 
   :focus {
     outline: 0
+  }
+  
+  .modal--content {
+    overflow-y: scroll;
+    max-width: 50vw;
+    max-height: 70vh;
   }
 `;
 
