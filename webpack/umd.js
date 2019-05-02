@@ -21,6 +21,9 @@
 const resolve = require('path').resolve;
 const join = require('path').join;
 
+// Import package.json to read version
+const KeplerPackage = require('../package');
+
 const SRC_DIR = resolve(__dirname, '../src');
 const OUTPUT_DIR = resolve(__dirname, '../umd');
 
@@ -86,16 +89,26 @@ const LIBRARY_BUNDLE_CONFIG = env => ({
       {
         test: /\.js$/,
         loader: 'babel-loader',
-        include: [SRC_DIR]
+        include: [SRC_DIR],
+        options: {
+          plugins: [
+            ['search-and-replace', {
+              rules: [
+                {
+                  search: '__PACKAGE_VERSION__',
+                  replace: KeplerPackage.version
+                }
+              ]
+            }]
+          ]
+        }
       }
     ]
   },
 
   node: {
     fs: 'empty'
-  },
-
-  plugins: []
+  }
 });
 
 module.exports = env => LIBRARY_BUNDLE_CONFIG(env);

@@ -21,6 +21,8 @@
 const {resolve, join} = require('path');
 const webpack = require('webpack');
 
+const KeplerPackage = require('../package');
+
 const rootDir = join(__dirname, '..');
 const libSources = join(rootDir, 'src');
 
@@ -68,7 +70,15 @@ const BABEL_CONFIG = {
           test: '../test'
         }
       }
-    ]
+    ],
+    ['search-and-replace', {
+      rules: [
+        {
+          search: '__PACKAGE_VERSION__',
+          replace: KeplerPackage.version
+        }
+      ]
+    }]
   ]
 };
 

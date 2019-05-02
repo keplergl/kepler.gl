@@ -18,43 +18,58 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
-import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer'
-import {addDataToMap, wrapTo} from 'kepler.gl/actions';
-import KeplerGl from 'kepler.gl';
+const KeplerPackage = require('./package');
 
-import sampleData from '../data/sample-data';
-import config from '../configurations/config';
+module.exports = function babel(api) {
+  api.cache(true);
 
-export default class FreshMap extends Component {
-  componentDidMount() {
-    this.props.dispatch(
-      wrapTo(this.props.id, addDataToMap(
+  const presets = [
+    '@babel/preset-env',
+    '@babel/preset-react'
+  ];
+  const plugins = [
+    '@babel/plugin-transform-modules-commonjs',
+    ['@babel/plugin-proposal-decorators', { legacy: true }],
+    '@babel/plugin-proposal-class-properties',
+    '@babel/plugin-proposal-export-namespace-from',
+    ['@babel/transform-runtime', {
+      regenerator: true
+    }],
+    [
+      'module-resolver',
+      {
+        root: [
+          './src'
+        ],
+        alias: {
+          test: './test'
+        }
+      }
+    ],
+    ['search-and-replace', {
+      rules: [
         {
-          datasets: sampleData,
-          options: {
-            centerMap: true
-          },
-          config
-        })
-      )
-    );
-  }
+          search: '__PACKAGE_VERSION__',
+          replace: KeplerPackage.version
+        }
+      ]
+    }]
+  ];
+  const env = {
+    test: {
+      plugins: [
+        'istanbul'
+      ]
+    },
+    debug: {
+      sourceMaps: 'inline',
+      retainLines: true
+    }
+  };
 
-  render() {
-    const {mapboxApiAccessToken, id} = this.props;
-
-    return (
-      <AutoSizer>
-        {({height, width}) => (
-          <KeplerGl
-            mapboxApiAccessToken={mapboxApiAccessToken}
-            id={id}
-            width={width}
-            height={height}
-          />
-        )}
-      </AutoSizer>
-    )
-  }
-}
+  return {
+    presets,
+    plugins,
+    env
+  };
+};

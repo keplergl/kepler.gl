@@ -26,7 +26,7 @@ import {createAction} from 'redux-actions';
 
 import {addDataToMap, wrapTo} from 'kepler.gl/actions';
 import sampleData from './data/sample-data';
-import config from './configurations/config.json';
+import config from './configurations/config';
 
 const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
 

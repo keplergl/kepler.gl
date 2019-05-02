@@ -46,8 +46,8 @@ const KeplerGl = require('kepler.gl/components').injectComponents([
 // Sample data
 /* eslint-disable no-unused-vars */
 import sampleTripData from './data/sample-trip-data';
-import sampleGeojson from './data/sample-small-geojson.json';
-import sampleGeojsonPoints from './data/sample-geojson-points.json';
+import sampleGeojson from './data/sample-small-geojson';
+import sampleGeojsonPoints from './data/sample-geojson-points';
 import sampleH3Data from './data/sample-hex-id-csv';
 import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
 import {addDataToMap, addNotification} from 'kepler.gl/actions';

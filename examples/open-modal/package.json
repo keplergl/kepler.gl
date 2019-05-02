@@ -1,12 +1,11 @@
 {
   "scripts": {
     "start": "webpack-dev-server --progress --hot --open",
-    "start-local": "webpack-dev-server --env.es6 --progress --hot --open",
-    "start-local-es5": "webpack-dev-server --env.local --progress --hot --open"
+    "start-local": "webpack-dev-server --env.es6 --progress --hot --open"
   },
   "dependencies": {
     "global": "^4.3.0",
-    "kepler.gl": "^1.0.0-0",
+    "kepler.gl": "^1.0.0-1",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
     "react-modal": "^3.1.10",

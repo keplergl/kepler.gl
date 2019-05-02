@@ -768,6 +768,7 @@ export const theme = {
   selectFontSize,
   selectFontWeight,
   selectColorLT,
+  selectFontWeightBold,
 
   // Input
   inputBgd,

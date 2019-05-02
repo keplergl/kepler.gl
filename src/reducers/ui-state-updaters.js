@@ -23,7 +23,8 @@ import {
   ADD_DATA_ID,
   EXPORT_DATA_TYPE,
   RATIOS,
-  RESOLUTIONS
+  RESOLUTIONS,
+  EXPORT_MAP_FORMAT
 } from 'constants/default-settings';
 import {createNotification} from 'utils/notifications-utils';
 
@@ -135,9 +136,7 @@ export const DEFAULT_EXPORT_IMAGE = {
 export const DEFAULT_EXPORT_DATA = {
   selectedDataset: '',
   dataType: EXPORT_DATA_TYPE.CSV,
-  filtered: true,
-  config: false, // no longer used, since we removed the option to export config from modal data export
-  data: false // this is used in modal config export
+  filtered: true
 };
 
 /**
@@ -149,15 +148,23 @@ export const DEFAULT_NOTIFICATIONS = [];
 /**
  * @constant
  * @type {Object}
- * @property {string} exportMapboxAccessToken - Default: null,
- * @property {string} dataType - Default: 'csv',
- * @property {boolean} filtered - Default: true,
- * @property {boolean} config - deprecated
- * @property {boolean} data - used in modal config expor. Default: falset
+ * @property {string} exportMapboxAccessToken - Default: null, this is used when we provide a default mapbox token for users to take advantage of
+ * @property {string} userMapboxToken - Default: '', mapbox token provided by user through input field
  * @public
  */
 export const DEFAULT_EXPORT_HTML = {
-  exportMapboxAccessToken: ''
+  exportMapboxAccessToken: null,
+  userMapboxToken: ''
+};
+
+export const DEFAULT_EXPORT_JSON = {
+  hasData: true
+};
+
+export const DEFAULT_EXPORT_MAP = {
+  [EXPORT_MAP_FORMAT.HTML]: DEFAULT_EXPORT_HTML,
+  [EXPORT_MAP_FORMAT.JSON]: DEFAULT_EXPORT_JSON,
+  format: EXPORT_MAP_FORMAT.HTML
 };
 
 /**
@@ -186,7 +193,7 @@ export const INITIAL_UI_STATE = {
   // export data modal ui
   exportData: DEFAULT_EXPORT_DATA,
   // html export
-  exportHtml: DEFAULT_EXPORT_HTML,
+  exportMap: DEFAULT_EXPORT_MAP,
   // map control panels
   mapControls: DEFAULT_MAP_CONTROLS,
   // ui notifications
@@ -226,7 +233,6 @@ export const toggleSidePanelUpdater = (state, {payload: id}) => {
  *  - [`ADD_DATA_ID`](../constants/default-settings.md#add_data_id)
  *  - [`EXPORT_IMAGE_ID`](../constants/default-settings.md#export_image_id)
  *  - [`EXPORT_DATA_ID`](../constants/default-settings.md#export_data_id)
- *  - [`EXPORT_CONFIG_ID`](../constants/default-settings.md#export_config_id)
  *  - [`ADD_MAP_STYLE_ID`](../constants/default-settings.md#add_map_style_id)
  * @returns {Object} nextState
  * @public
@@ -459,9 +465,12 @@ export const setExportFilteredUpdater = (state, {payload: filtered}) => ({
  */
 export const setExportDataUpdater = state => ({
   ...state,
-  exportData: {
-    ...state.exportData,
-    data: !state.exportData.data
+  exportMap: {
+    ...state.exportMap,
+    [EXPORT_MAP_FORMAT.JSON]: {
+      ...state.exportMap[EXPORT_MAP_FORMAT.JSON],
+      hasData: !state.exportMap[EXPORT_MAP_FORMAT.JSON].hasData
+    }
   }
 });
 
@@ -473,11 +482,22 @@ export const setExportDataUpdater = state => ({
  * @returns {Object} nextState
  * @public
  */
-export const setExportMapboxAccessTokenUpdater = (state, {payload: exportMapboxAccessToken}) => ({
+export const setUserMapboxAccessTokenUpdater = (state, {payload: userMapboxToken}) => ({
   ...state,
-  exportHtml: {
-    ...state.exportHtml,
-    exportMapboxAccessToken
+  exportMap: {
+    ...state.exportMap,
+    [EXPORT_MAP_FORMAT.HTML]: {
+      ...state.exportMap[EXPORT_MAP_FORMAT.HTML],
+      userMapboxToken
+    }
+  }
+});
+
+export const setExportMapFormat = (state, {payload: format}) => ({
+  ...state,
+  exportMap: {
+    ...state.exportMap,
+    format
   }
 });
 

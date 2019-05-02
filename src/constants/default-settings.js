@@ -61,13 +61,6 @@ export const EXPORT_IMAGE_ID = 'exportImage';
  */
 export const EXPORT_DATA_ID = 'exportData';
 /**
- * Modal id: export configuration modal
- * @constant
- * @type {string}
- * @public
- */
-export const EXPORT_CONFIG_ID = 'exportConfig';
-/**
  * Modal id: add custom map style modal
  * @constant
  * @type {string}
@@ -90,7 +83,12 @@ import {
 } from 'components/common/icons';
 
 export const KEPLER_GL_NAME = 'kepler.gl';
-export const KEPLER_GL_VERSION = 'v1.0';
+
+// __PACKAGE_VERSION__ is automatically injected by Babel/Webpack during the building process
+// Since we are injecting this during the build process with babel
+// while developing VERSION is not defined, we capture the exception and return
+// an empty string which will allow us to retrieve the latest umd version
+export const KEPLER_GL_VERSION = "__PACKAGE_VERSION__";
 export const KEPLER_GL_WEBSITE = 'http://kepler.gl/';
 
 export const DIMENSIONS = {
@@ -619,7 +617,7 @@ export const EXPORT_DATA_TYPE = keyMirror({
 export const EXPORT_DATA_TYPE_OPTIONS = [
   {
     id: EXPORT_DATA_TYPE.CSV,
-    label: 'csv',
+    label: EXPORT_DATA_TYPE.CSV.toLowerCase(),
     available: true
   }
   // {
@@ -644,6 +642,20 @@ export const EXPORT_DATA_TYPE_OPTIONS = [
   // }
 ];
 
+// Export map types
+export const EXPORT_MAP_FORMAT = keyMirror({
+  HTML: null,
+  JSON: null
+});
+
+// Export map options
+export const EXPORT_MAP_FORMAT_OPTIONS = Object.entries(EXPORT_MAP_FORMAT)
+  .map(entry => ({
+    id: entry[0],
+    label: entry[1].toLowerCase(),
+    available: true
+  }));
+
 export const DEFAULT_UUID_COUNT = 6;
 
 export const DEFAULT_NOTIFICATION_MESSAGE = 'MESSAGE_NOT_PROVIDED';
@@ -659,3 +671,7 @@ export const DEFAULT_NOTIFICATION_TOPICS = keyMirror({
   global: null,
   file: null
 });
+
+export const TOKEN_MISUSE_WARNING = '* If you do not provide your own token, the map may fail to display at any time when we replace ours to avoid misuse. ';
+export const DISCLAIMER = 'You can change the Mapbox token later using the following instructions: ';
+export const MAP_CONFIG_DESCRIPTION = 'Map config will be included in the Json file. If you are using kepler.gl in your own app. You can copy this config and pass it to ';

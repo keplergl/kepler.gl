@@ -35,7 +35,6 @@ import LoadDataModalFactory from './modals/load-data-modal';
 import ExportImageModalFactory from './modals/export-image-modal';
 import ExportDataModalFactory from './modals/export-data-modal';
 import ExportMapModalFactory from './modals/export-map-modal';
-import ExportConfigModalFactory from './modals/export-config-modal';
 import AddMapStyleModalFactory from './modals/add-map-style-modal';
 
 // Template
@@ -48,10 +47,10 @@ import {
   EXPORT_DATA_ID,
   EXPORT_DATA_TYPE,
   EXPORT_IMAGE_ID,
-  EXPORT_CONFIG_ID,
   EXPORT_MAP_ID,
   ADD_MAP_STYLE_ID
 } from 'constants/default-settings';
+import {EXPORT_MAP_FORMAT} from '../constants/default-settings';
 
 const DataTableModalStyle = css`
   height: 85%;
@@ -77,7 +76,6 @@ ModalContainerFactory.deps = [
   ExportImageModalFactory,
   ExportDataModalFactory,
   ExportMapModalFactory,
-  ExportConfigModalFactory,
   AddMapStyleModalFactory
 ];
 
@@ -88,7 +86,6 @@ export default function ModalContainerFactory(
   ExportImageModal,
   ExportDataModal,
   ExportMapModal,
-  ExportConfigModal,
   AddMapStyleModal
 ) {
   class ModalWrapper extends Component {
@@ -172,15 +169,16 @@ export default function ModalContainerFactory(
       this._closeModal();
     };
 
-    _onExportConfig = () => {
-      const {data} = this.props.uiState.exportData;
+    _onExportJSONMap = () => {
+      const {uiState} = this.props;
+      const {hasData} = uiState.exportMap[EXPORT_MAP_FORMAT.JSON];
 
       // we pass all props because we avoid to create new variables
-      const dump = data ? KeplerGlSchema.save(this.props)
+      const data = hasData ? KeplerGlSchema.save(this.props)
         : KeplerGlSchema.getConfigToSave(this.props);
 
       this._downloadFile(
-        JSON.stringify(dump, null, 2),
+        JSON.stringify(data, null, 2),
         'application/json',
         'keplergl.json'
       );
@@ -188,15 +186,13 @@ export default function ModalContainerFactory(
       this._closeModal();
     };
 
-    _onExportMap = () => {
-      // we are saving both data and config together
-      // TODO: storing a large amount of data in html could be a limitation
-      // but it will work for now as first version
+    _onExportHTMLMap = () => {
       const {uiState} = this.props;
+      const {userMapboxToken, exportMapboxAccessToken} = uiState.exportMap[EXPORT_MAP_FORMAT.HTML];
 
       const data = {
         ...KeplerGlSchema.save(this.props),
-        mapboxApiAccessToken: uiState.exportHtml.exportMapboxAccessToken
+        mapboxApiAccessToken: (userMapboxToken || '') !== '' ? userMapboxToken : exportMapboxAccessToken
       };
 
       this._downloadFile(
@@ -204,6 +200,20 @@ export default function ModalContainerFactory(
         'text/html',
         'kepler.gl.html'
       );
+
+      this._closeModal();
+    };
+
+    _onExportMap = () => {
+      const {uiState} = this.props;
+      const {format} = uiState.exportMap;
+
+      const downloader = {
+        [EXPORT_MAP_FORMAT.HTML]: this._onExportHTMLMap,
+        [EXPORT_MAP_FORMAT.JSON]: this._onExportJSONMap
+      }[format];
+
+      downloader && downloader();
     };
 
     /* eslint-disable complexity */
@@ -334,24 +344,24 @@ export default function ModalContainerFactory(
               }
             };
             break;
-          case EXPORT_CONFIG_ID:
+          case EXPORT_MAP_ID:
             const keplerGlConfig = KeplerGlSchema.getConfigToSave(
               { mapStyle, visState, mapState, uiState }
             );
             template = (
-              <ExportConfigModal
+              <ExportMapModal
                 config={keplerGlConfig}
-                data={uiState.exportData.data}
-                onClose={this._closeModal}
-                onChangeExportData={this.props.uiStateActions.setExportData}
+                options={uiState.exportMap}
+                onChangeExportMapFormat={this.props.uiStateActions.setExportMapFormat}
+                onEditUserMapboxAccessToken={this.props.uiStateActions.setUserMapboxAccessToken}
               />
             );
             modalProps = {
               close: false,
-              title: 'Export Config',
+              title: 'Export Map',
               footer: true,
               onCancel: this._closeModal,
-              onConfirm: this._onExportConfig,
+              onConfirm: this._onExportMap,
               confirmButton: {
                 large: true,
                 children: 'Export'
@@ -381,25 +391,7 @@ export default function ModalContainerFactory(
               }
             };
             break;
-          case EXPORT_MAP_ID:
-            template = (
-              <ExportMapModal
-                exportHtml={uiState.exportHtml}
-                onExportMapboxAccessToken={this.props.uiStateActions.setExportMapboxAccessToken}
-              />
-            );
-            modalProps = {
-              close: false,
-              title: 'Export map',
-              footer: true,
-              onCancel: this._closeModal,
-              onConfirm: this._onExportMap,
-              confirmButton: {
-                large: true,
-                children: 'Export'
-              }
-            };
-            break;
+
           default:
             break;
         }

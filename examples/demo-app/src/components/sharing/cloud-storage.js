@@ -117,39 +117,38 @@ const ExportCloudModal = ({
   const folderLink = get(info, ['metadata', 'folder_link']);
   const sharingLink = metaUrl ? getMapPermalink(metaUrl) : null;
   return (
-    <div className="export-data-modal">
-      <StyledModalContent>
-        <div style={{width: '100%'}}>
-          <StyledExportDataSection>
-            <div className="description">
-              <div className="title">
-                Save and share current map via URL
-              </div>
-              <div className="subtitle" style={{color: 'red', fontWeight: 500}}>
-                {KEPLER_DISCLAIMER}
-              </div>
-            </div>
-          </StyledExportDataSection>
 
-          <StyledExportDataSection>
-            <div className="description">
-              <div className="title">
-                Upload through Dropbox
-              </div>
+    <StyledModalContent className="export-cloud-modal">
+      <div style={{width: '100%'}}>
+        <StyledExportDataSection>
+          <div className="description">
+            <div className="title">
+              Save and share current map via URL
             </div>
-            <div className="selection">
-              {Object.keys(CLOUD_PROVIDERS).map((name, index) => (
-                <CloudTile
-                  key={index}
-                  token={CLOUD_PROVIDERS[name].getAccessToken()}
-                  onExport={onExport}
-                  onLogin={() => CLOUD_PROVIDERS[name].handleLogin(onCloudLoginSuccess)}
-                  Icon={CLOUD_PROVIDERS[name].icon}
-                />
-              ))}
+            <div className="subtitle" style={{color: 'red', fontWeight: 500}}>
+              {KEPLER_DISCLAIMER}
             </div>
-          </StyledExportDataSection>
-          <StyledExportDataSection>
+          </div>
+        </StyledExportDataSection>
+        <StyledExportDataSection>
+          <div className="description">
+            <div className="title">
+              Upload through Dropbox
+            </div>
+          </div>
+          <div className="selection">
+            {Object.keys(CLOUD_PROVIDERS).map((name, index) => (
+              <CloudTile
+                key={index}
+                token={CLOUD_PROVIDERS[name].getAccessToken()}
+                onExport={onExport}
+                onLogin={() => CLOUD_PROVIDERS[name].handleLogin(onCloudLoginSuccess)}
+                Icon={CLOUD_PROVIDERS[name].icon}
+              />
+            ))}
+          </div>
+        </StyledExportDataSection>
+        <StyledExportDataSection>
             <div className="selection">
               <div style={{margin: 'auto', width: '100%'}}>
                 {isLoading && (
@@ -167,9 +166,9 @@ const ExportCloudModal = ({
               </div>
             </div>
           </StyledExportDataSection>
-        </div>
-      </StyledModalContent>
-    </div>
+      </div>
+    </StyledModalContent>
+
   )
 };
 

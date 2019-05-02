@@ -36,7 +36,6 @@ import {
   DATA_TABLE_ID,
   EXPORT_IMAGE_ID,
   EXPORT_DATA_ID,
-  EXPORT_CONFIG_ID,
   EXPORT_MAP_ID,
   PANELS
 } from 'constants/default-settings';
@@ -127,8 +126,6 @@ export default function SidePanelFactory(
 
     _onExportData = () => this.props.uiStateActions.toggleModal(EXPORT_DATA_ID);
 
-    _onExportConfig = () => this.props.uiStateActions.toggleModal(EXPORT_CONFIG_ID);
-
     _onExportMap = () => this.props.uiStateActions.toggleModal(EXPORT_MAP_ID);
 
     render() {
@@ -204,7 +201,6 @@ export default function SidePanelFactory(
               visibleDropdown={uiState.visibleDropdown}
               showExportDropdown={uiStateActions.showExportDropdown}
               hideExportDropdown={uiStateActions.hideExportDropdown}
-              onExportConfig={this._onExportConfig}
               onExportMap={this._onExportMap}
               onSaveMap={this.props.onSaveMap}
             />

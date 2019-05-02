@@ -20,6 +20,9 @@
 
 // Constants
 export {
+  KEPLER_GL_VERSION,
+  KEPLER_GL_WEBSITE,
+  KEPLER_GL_NAME,
   DIMENSIONS,
   ALL_FIELD_TYPES,
   FIELD_OPTS,
@@ -38,11 +41,17 @@ export {
   ADD_DATA_ID,
   EXPORT_IMAGE_ID,
   EXPORT_DATA_ID,
-  EXPORT_CONFIG_ID,
+  EXPORT_MAP_ID,
   ADD_MAP_STYLE_ID,
   DEFAULT_LAYER_GROUPS,
   DEFAULT_MAP_STYLES,
-  THEME
+  THEME,
+  EXPORT_MAP_FORMAT,
+  EXPORT_MAP_FORMAT_OPTIONS,
+  EXPORT_DATA_TYPE_OPTIONS,
+  DEFAULT_NOTIFICATION_TYPES,
+  DEFAULT_NOTIFICATION_TOPICS,
+  PANELS
 } from './default-settings';
 export {VizColorPalette, DataVizColors} from './custom-color-ranges';
 export {COLOR_RANGES, DefaultColorRange} from './color-ranges';

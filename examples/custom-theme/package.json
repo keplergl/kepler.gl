@@ -1,12 +1,11 @@
 {
   "scripts": {
     "start": "webpack-dev-server --progress --hot --open",
-    "start-local": "webpack-dev-server --mode development --env.es6 --progress --hot --open",
-    "start-local-es5": "webpack-dev-server --env.local --progress --hot --open"
+    "start-local": "webpack-dev-server --mode development --env.es6 --progress --hot --open"
   },
   "dependencies": {
     "global": "^4.3.0",
-    "kepler.gl": "^1.0.0-0",
+    "kepler.gl": "^1.0.0-1",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
     "react-palm": "^1.1.2",
@@ -38,6 +37,7 @@
     "@babel/preset-env": "^7.0.0",
     "@babel/preset-react": "^7.0.0",
     "babel-loader": "^8.0.0",
+    "babel-plugin-inline-json-import": "^0.2.1",
     "babel-plugin-module-resolver": "^3.0.0",
     "babel-plugin-transform-builtin-extend": "^1.1.0",
     "webpack": "^4.29.0",

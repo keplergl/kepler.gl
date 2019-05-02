@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import {Tooltip} from 'components/common/styled-components';
 import KeplerGlLogo from 'components/common/logo';
-import {CodeAlt, Save, Files, Share, Picture, Map} from 'components/common/icons';
+import {Save, Files, Share, Picture, Map} from 'components/common/icons';
 import ClickOutsideCloseDropdown from 'components/side-panel/panel-dropdown';
 
 const StyledPanelHeader = styled.div.attrs({
@@ -175,18 +175,6 @@ export const ExportDataFactory = () => {
   return ExportData;
 };
 
-export const ExportConfigFactory = () => {
-  const ExportConfig = (props) => (
-    <PanelItem {...props}/>
-  );
-  ExportConfig.defaultProps = {
-    label: 'Export Config',
-    icon: <CodeAlt />
-  };
-
-  return ExportConfig;
-};
-
 export const ExportMapFactory = () => {
   const ExportMap = (props) => (
     <PanelItem {...props}/>
@@ -214,7 +202,6 @@ export const SaveMapFactory = () => {
 export const SaveExportDropdownFactory = (
   ExportImage,
   ExportData,
-  ExportConfig,
   ExportMap,
   SaveMap) => {
   const SaveExportDropdown = ({
@@ -239,10 +226,6 @@ export const SaveExportDropdownFactory = (
             onClickHandler={onExportData}
             onClose={onClose}
           />
-          <ExportConfig
-            onClickHandler={onExportConfig}
-            onClose={onClose}
-          />
           <ExportMap
             onClickHandler={onExportMap}
             onClose={onClose}
@@ -264,7 +247,6 @@ export const SaveExportDropdownFactory = (
 SaveExportDropdownFactory.deps = [
   ExportImageFactory,
   ExportDataFactory,
-  ExportConfigFactory,
   ExportMapFactory,
   SaveMapFactory
 ];
