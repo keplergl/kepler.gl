@@ -15,6 +15,12 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+#### [1.0.0-2] - May 2 2019
+- [Bug] Fix missing default map styles after loading custom map style from saved json (#490)
+- [Bug] Fix `fix radius` in point layer unclickable (#491)
+- [Bug] fix image export doesnt get called when map rendered (#494)
+- [Enhancement] Merge export config and map into one interaction (#488)
+
 #### [1.0.0-1] - Apr 23 2019
 - [Bug] Fix point layer brushing and highlight (#487)
 - [Feat] Add a light theme to KeplerGl Prop (#489)
