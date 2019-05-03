@@ -90,6 +90,8 @@ export default class SliderHandle extends Component {
     const style = {[this.props.vertical ? 'bottom' : 'left']: this.props.left};
 
     return (
+      <div>
+      {Number.isFinite(this.props.value) ? this.props.value : null}
       <StyledSliderHandle
         className={classnames('kg-range-slider__handle', {
           'kg-range-slider__handle--active': this.state.mouseOver
@@ -102,6 +104,7 @@ export default class SliderHandle extends Component {
         onMouseDown={this.mouseEvent.handleMouseDown}
         onTouchStart={this.mouseEvent.handleTouchStart}
       />
+      </div>
     );
   }
 }
