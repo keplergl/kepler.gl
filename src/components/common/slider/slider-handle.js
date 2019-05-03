@@ -27,7 +27,6 @@ import MouseEventHandler from './mouse-event';
 const StyledSliderHandle = styled.span`
   position: absolute;
   z-index: 10;
-  display: ${props => (props.hidden ? 'none' : 'block')};
   margin-${props => (props.vertical ? 'left' : 'top')}: -${props =>
   (props.sliderHandleWidth - props.theme.sliderBarHeight) / 2}px;
   height: ${props =>
@@ -53,6 +52,62 @@ const StyledSliderHandle = styled.span`
   }
 `;
 
+const StyledSliderTooltip = styled.div`
+  position: absolute;
+  border-radius: 3px;
+  display: inline-block;
+  pointer-events: none;
+  transition: opacity 0.3s ease-out;
+  z-index: 999;
+  margin-left: ${props => props.sliderHandleWidth + 12}px;
+  font-size: 9.5px;
+  font-weight: 500;
+  padding: 7px 10px;
+  background-color: ${props => props.theme.tooltipBg};
+  color: ${props => props.theme.tooltipColor};
+  margin-bottom: -6px;
+  width: 50px;
+
+  :before,:after {
+    content: '';
+    width: 0;
+    height: 0;
+    position: absolute;
+  }
+
+  :before {
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    left: -8px;
+    top: 50%;
+  }
+
+  :after {
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    left: -6px;
+    top: 50%;
+    margin-top: -4px;
+    border-right-color: ${props => props.theme.tooltipBg};
+    border-right-style: solid;
+    border-right-width: 6px;
+  }
+`;
+
+const SliderTooltip = ({
+  value,
+  format = val => val,
+  style,
+  sliderHandleWidth
+}) => {
+  return (
+    <StyledSliderTooltip
+      sliderHandleWidth={sliderHandleWidth}
+      style={style}>{format(value)}
+    </StyledSliderTooltip>
+  )
+}
+
 export default class SliderHandle extends Component {
   static propTypes = {
     sliderHandleWidth: PropTypes.number,
@@ -67,7 +122,8 @@ export default class SliderHandle extends Component {
     left: '50%',
     display: true,
     vertical: false,
-    valueListener: function valueListenerFn() {}
+    valueListener: function valueListenerFn() {},
+    showTooltip: false
   };
 
   constructor(props) {
@@ -90,20 +146,23 @@ export default class SliderHandle extends Component {
     const style = {[this.props.vertical ? 'bottom' : 'left']: this.props.left};
 
     return (
-      <div>
-      {Number.isFinite(this.props.value) ? this.props.value : null}
-      <StyledSliderHandle
-        className={classnames('kg-range-slider__handle', {
-          'kg-range-slider__handle--active': this.state.mouseOver
-        })}
-        sliderHandleWidth={this.props.sliderHandleWidth}
-        active={this.state.mouseOver}
-        hidden={!this.props.display}
-        vertical={this.props.vertical}
-        style={style}
-        onMouseDown={this.mouseEvent.handleMouseDown}
-        onTouchStart={this.mouseEvent.handleTouchStart}
-      />
+      <div style={{display: this.props.display ? 'block' : 'none'}}>
+        {this.props.showTooltip && this.state.mouseOver ? <SliderTooltip
+          style={style}
+          sliderHandleWidth={this.props.sliderHandleWidth}
+          value={Number.isFinite(this.props.value) ? this.props.value : null}
+        /> : null}
+        <StyledSliderHandle
+          className={classnames('kg-range-slider__handle', {
+            'kg-range-slider__handle--active': this.state.mouseOver
+          })}
+          sliderHandleWidth={this.props.sliderHandleWidth}
+          active={this.state.mouseOver}
+          vertical={this.props.vertical}
+          style={style}
+          onMouseDown={this.mouseEvent.handleMouseDown}
+          onTouchStart={this.mouseEvent.handleTouchStart}
+        />
       </div>
     );
   }
