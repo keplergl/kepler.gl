@@ -105,10 +105,10 @@
     "react-json-pretty": "^1.7.9",
     "react-map-gl": "^4.0.14",
     "react-markdown": "^4.0.6",
-    "react-modal": "^3.1.10",
+    "react-modal": "^3.8.1",
     "react-onclickoutside": "^6.7.1",
-    "react-palm": "^1.1.2",
-    "react-redux": "^4.0.0",
+    "react-palm": "^2.0.0",
+    "react-redux": "^5.1.1",
     "react-sortable-hoc": "^1.8.3",
     "react-tooltip": "^3.10.0",
     "react-vis": "^1.8.0",
@@ -171,7 +171,6 @@
     "eslint-plugin-prettier": "^3.0.1",
     "eslint-plugin-react": "~7.12.4",
     "gl": "^4.2.2",
-    "immutable": "^4.0.0-rc.12",
     "jsdom": "^11.1.0",
     "json-loader": "^0.5.4",
     "nyc": "^11.4.1",
@@ -200,7 +199,8 @@
   "peerDependencies": {
     "react": "16.x",
     "react-dom": "16.x",
-    "styled-components": "^4.x"
+    "styled-components": "^4.x",
+    "react-redux": "^5.X"
   },
   "nyc": {
     "sourceMap": false,

@@ -27,7 +27,6 @@ import {Delete} from 'components/common/icons';
 import {Button} from 'components/common/styled-components';
 
 const ModalContentWrapper = styled.div`
-  width: 60vw;
   height: 70vh;
   overflow-y: scroll;
   max-width: 960px;
@@ -36,13 +35,12 @@ const ModalContentWrapper = styled.div`
   top: 92px;
   left: 0;
   right: 0;
-  margin-left: auto;
+  margin: 0 auto;
   background-color: #ffffff;
   border-radius: 4px;
   transition: ${props => props.theme.transition};
   min-width: 600px;
   box-sizing: border-box;
-  margin-right: auto;
   font-size: 12px;
   color: ${props => props.theme.labelColorLT};
   ${props => props.cssStyle || ''};
@@ -156,8 +154,8 @@ class ModalDialog extends Component {
           overlay: {
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
             zIndex: 10000,
-            overflowY: 'auto',
-            position: 'absolute',
+            // overflowY: 'auto',
+            // position: 'absolute',
             // in case we want to override the modal dialog style
             ...props.style
           }

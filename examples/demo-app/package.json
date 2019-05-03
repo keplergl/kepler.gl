@@ -15,7 +15,7 @@
     "react-copy-to-clipboard": "^5.0.1",
     "react-dom": "^16.8.4",
     "react-palm": "^1.1.2",
-    "react-redux": "^4.4.5",
+    "react-redux": "^5.1.1",
     "react-router": "^3.0.5",
     "react-router-redux": "^4.0.8",
     "react-virtualized": "^9.21.0",
