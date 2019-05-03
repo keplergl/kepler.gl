@@ -172,7 +172,7 @@ export default class Footer extends PureComponent {
             <LinkButton
               large
               outlineDark
-              href="https://github.com/uber/kepler.gl"
+              href="https://github.com/keplergl/kepler.gl"
               style={{marginLeft: '5px'}}
             >
               <img src={cdnUrl('icons/github.svg')} /> Github

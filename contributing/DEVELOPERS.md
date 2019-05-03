@@ -48,7 +48,7 @@ git clone git@github.com:<github username>/kepler.gl.git
 cd kepler.gl
 
 # Add the main kepler.gl repository as an upstream remote to your repository:
-git remote add upstream "git@github.com:uber/kepler.gl.git"
+git remote add upstream "git@github.com:keplergl/kepler.gl.git"
 
 # Install JavaScript dependencies:
 yarn --ignore-engines
@@ -257,7 +257,7 @@ The above command will build the website and push to your gh-pages branch.
 [enzyme]: https://airbnb.io/enzyme/
 [git-revert]: https://git-scm.com/docs/git-revert
 [git-setup]: https://help.github.com/articles/set-up-git
-[github]: https://github.com/uber/kepler.gl
+[github]: https://github.com/keplergl/kepler.gl
 [github-pr]: https://help.github.com/articles/creating-a-pull-request/
 [jsDoc]: http://usejsdoc.org/
 [tape]: https://github.com/substack/tape
