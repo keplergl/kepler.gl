@@ -18,26 +18,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import document from 'global/document';
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import styled from 'styled-components';
-import {getMouseDeltaX} from './mouse-event';
+import MouseEventHandler from './mouse-event';
 
 const StyledSliderHandle = styled.span`
   position: absolute;
   z-index: 10;
   display: ${props => (props.hidden ? 'none' : 'block')};
-  margin-top: -4px;
+  margin-${props => (props.vertical ? 'left' : 'top')}: -${props =>
+  (props.sliderHandleWidth - props.theme.sliderBarHeight) / 2}px;
   height: ${props =>
     Number.isFinite(props.sliderHandleWidth)
-      ? `${props.sliderHandleWidth}px`
-      : props.theme.sliderHandleHeight};
+      ? props.sliderHandleWidth
+      : props.theme.sliderHandleHeight}px;
   width: ${props =>
     Number.isFinite(props.sliderHandleWidth)
-      ? `${props.sliderHandleWidth}px`
-      : props.theme.sliderHandleHeight};
+      ? props.sliderHandleWidth
+      : props.theme.sliderHandleHeight}px;
   box-shadow: ${props => props.theme.sliderHandleShadow};
   background-color: ${props => props.theme.sliderHandleColor};
   border-width: 1px;
@@ -53,75 +53,42 @@ const StyledSliderHandle = styled.span`
   }
 `;
 
-/**
- *
- * props:
- *  width : default 23
- *  height : default 23
- *  display
- *  left
- *  onMove
- *  valueListener
- */
 export default class SliderHandle extends Component {
   static propTypes = {
-    width: PropTypes.number,
-    height: PropTypes.number,
+    sliderHandleWidth: PropTypes.number,
     left: PropTypes.string,
     display: PropTypes.bool,
-    valueListener: PropTypes.func
+    valueListener: PropTypes.func,
+    vertical: PropTypes.bool
   };
 
   static defaultProps = {
+    sliderHandleWidth: 12,
     left: '50%',
     display: true,
+    vertical: false,
     valueListener: function valueListenerFn() {}
   };
 
+  constructor(props) {
+    super(props);
+
+    this.mouseEvent = new MouseEventHandler({
+      vertical: props.vertical,
+      valueListener: props.valueListener,
+      toggleMouseOver: this.toggleMouseOver
+    });
+  }
+
   state = {mouseOver: false};
-  prevX = 0;
 
-  handleMouseDown = (e) => {
-    document.addEventListener('mouseup', this.mouseup);
-    document.addEventListener('mousemove', this.mousemove);
-    this.prevX = e.clientX;
-    this.setState({mouseOver: true});
-  };
-
-  mouseup = () => {
-    document.removeEventListener('mouseup', this.mouseup);
-    document.removeEventListener('mousemove', this.mousemove);
-    this.setState({mouseOver: false});
-  };
-
-  mousemove = e => {
-    e.preventDefault();
-
-    const {deltaX, prevX} = getMouseDeltaX(e, this.prevX);
-    this.props.valueListener(deltaX);
-    this.prevX = prevX;
-  };
-
-  handleTouchStart = e => {
-    document.addEventListener('touchend', this.touchend);
-    document.addEventListener('touchmove', this.touchmove);
-    this.prevX = e.touches[0].clientX;
-    this.setState({mouseOver: true});
-  };
-
-  touchmove = e => {
-    const deltaX = e.touches[0].clientX - this.prevX;
-    this.prevX = e.touches[0].clientX;
-    this.props.valueListener(deltaX);
-  };
-
-  touchend = () => {
-    document.removeEventListener('touchend', this.touchend);
-    document.removeEventListener('touchmove', this.touchmove);
-    this.setState({mouseOver: false});
+  toggleMouseOver = () => {
+    this.setState({mouseOver: !this.state.mouseOver});
   };
 
   render() {
+    const style = {[this.props.vertical ? 'bottom' : 'left']: this.props.left};
+
     return (
       <StyledSliderHandle
         className={classnames('kg-range-slider__handle', {
@@ -130,10 +97,11 @@ export default class SliderHandle extends Component {
         sliderHandleWidth={this.props.sliderHandleWidth}
         active={this.state.mouseOver}
         hidden={!this.props.display}
-        style={{left: this.props.left}}
-        onMouseDown={this.handleMouseDown}
-        onTouchStart={this.handleTouchStart}
+        vertical={this.props.vertical}
+        style={style}
+        onMouseDown={this.mouseEvent.handleMouseDown}
+        onTouchStart={this.mouseEvent.handleTouchStart}
       />
     );
   }
-};
+}

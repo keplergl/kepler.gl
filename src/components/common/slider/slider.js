@@ -32,7 +32,8 @@ const StyledRangeSlider = styled.div`
   position: relative;
   margin-bottom: 12px;
   background-color: ${props => props.theme.sliderBarBgd};
-  height: ${props => props.theme.sliderBarHeight};
+  ${props => `${props.vertical ? 'width' : 'height'}: ${props.theme.sliderBarHeight}px`};
+  ${props => `${props.vertical ? 'height' : 'width'}: 100%`};
 `;
 
 const SliderWrapper = styled.div`
@@ -73,7 +74,8 @@ export default class Slider extends Component {
     onSlider1Change: noop,
     onInput1Change: noop,
     onSliderBarChange: noop,
-    disabled: false
+    disabled: false,
+    vertical: false
   };
 
   ref = undefined;
@@ -82,27 +84,35 @@ export default class Slider extends Component {
     this.ref = ref;
   };
 
-  slide0Listener = x => {
-    const xPercent = x / this.ref.offsetWidth;
+  _getBaseDistance() {
+    return this.props.vertical ? this.ref.offsetHeight : this.ref.offsetWidth;
+  }
+
+  _getValDelta(x) {
+    const percent = x / this._getBaseDistance();
     const maxDelta = this.props.maxValue - this.props.minValue;
-    const val = xPercent * maxDelta;
-    this.props.onSlider0Change.call(this, val + this.props.value0);
+    return percent * maxDelta;
+  }
+
+  _getValue(val, offset) {
+    const delta = this._getValDelta(offset);
+
+    return this.props.vertical ? val - delta : val + delta;
+  }
+
+  slide0Listener = x => {
+    this.props.onSlider0Change(this._getValue(this.props.value0, x));
   };
 
   slide1Listener = x => {
-    const xPercent = x / this.ref.offsetWidth;
-    const maxDelta = this.props.maxValue - this.props.minValue;
-    const val = xPercent * maxDelta;
-    this.props.onSlider1Change(val + this.props.value1);
+    this.props.onSlider1Change(this._getValue(this.props.value1, x));
   };
 
   sliderBarListener = x => {
-    const xPercent = x / this.ref.offsetWidth;
-    const maxDelta = this.props.maxValue - this.props.minValue;
-    const val = xPercent * maxDelta;
-    const val0 = val + this.props.value0;
-    const val1 = val + this.props.value1;
-    this.props.onSliderBarChange(val0, val1);
+    this.props.onSliderBarChange(
+      this._getValue(this.props.value0, x),
+      this._getValue(this.props.value1, x)
+    );
   };
 
   calcHandleLeft0 = (w, l, num) => {
@@ -116,47 +126,20 @@ export default class Slider extends Component {
       : `calc(${l + w}% - ${this.props.sliderHandleWidth / 2}px)`;
   };
 
-  createSlider = (width, v0Left) => {
-    return (
-      <div>
-        <StyledRangeSlider className="kg-range-slider">
-          <SliderHandle
-            className="kg-range-slider__handle"
-            left={this.calcHandleLeft0(width, v0Left)}
-            valueListener={this.slide0Listener}
-            sliderHandleWidth={this.props.sliderHandleWidth}
-            display={this.props.isRanged}
-          />
-          <SliderHandle
-            className="kg-range-slider__handle"
-            left={this.calcHandleLeft1(width, v0Left)}
-            valueListener={this.slide1Listener}
-            sliderHandleWidth={this.props.sliderHandleWidth}
-          />
-          <SliderBarHandle
-            width={width}
-            v0Left={v0Left}
-            enableBarDrag={this.props.enableBarDrag}
-            sliderBarListener={this.sliderBarListener}
-          />
-        </StyledRangeSlider>
-      </div>
-    );
-  };
-
   render() {
     const {
       classSet,
       isRanged,
       maxValue,
       minValue,
-      value1
+      value1,
+      vertical,
+      sliderHandleWidth
     } = this.props;
     const value0 = !isRanged && minValue > 0 ? minValue : this.props.value0;
     const currValDelta = value1 - value0;
     const maxDelta = maxValue - minValue;
     const width = currValDelta / maxDelta * 100;
-
     const v0Left = (value0 - minValue) / maxDelta * 100;
 
     return (
@@ -164,8 +147,33 @@ export default class Slider extends Component {
         className={classnames('kg-slider', {...classSet})}
         ref={this._saveRef}
         isRanged={isRanged}
+        vertical={vertical}
       >
-        {this.createSlider(width, v0Left)}
+        <StyledRangeSlider className="kg-range-slider" vertical={vertical}>
+          <SliderHandle
+            className="kg-range-slider__handle"
+            left={this.calcHandleLeft0(width, v0Left)}
+            valueListener={this.slide0Listener}
+            sliderHandleWidth={sliderHandleWidth}
+            display={isRanged}
+            vertical={vertical}
+          />
+          <SliderHandle
+            className="kg-range-slider__handle"
+            left={this.calcHandleLeft1(width, v0Left)}
+            valueListener={this.slide1Listener}
+            sliderHandleWidth={sliderHandleWidth}
+            vertical={vertical}
+            value={value1}
+          />
+          <SliderBarHandle
+            width={width}
+            v0Left={v0Left}
+            enableBarDrag={this.props.enableBarDrag}
+            sliderBarListener={this.sliderBarListener}
+            vertical={vertical}
+          />
+        </StyledRangeSlider>
       </SliderWrapper>
     );
   }

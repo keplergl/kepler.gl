@@ -26,7 +26,8 @@ import FieldSelector from 'components/common/field-selector';
 import {SelectTextBold, IconRoundSmall, CenterFlexbox} from 'components/common/styled-components';
 import TimeRangeFilter from 'components/filters/time-range-filter';
 import {Close, Clock, LineChart} from 'components/common/icons';
-import {TIME_ANIMATION_SPEED} from 'utils/filter-utils';
+import AnimationSpeedToggle from './animation-speed-toggle';
+
 const innerPdSide = 32;
 
 const WidgetContainer = styled.div`
@@ -34,7 +35,7 @@ const WidgetContainer = styled.div`
   padding-top: ${props => props.theme.sidePanel.margin.top}px;
   padding-right: ${props => props.theme.sidePanel.margin.right}px;
   padding-bottom: ${props => props.theme.sidePanel.margin.bottom}px;
-  padding-left: ${props => props.theme.sidePanel.margin.left}px;  
+  padding-left: ${props => props.theme.sidePanel.margin.left}px;
   bottom: 0;
   right: 0;
   z-index: 1;
@@ -54,12 +55,12 @@ const TopSectionWrapper = styled.div`
   width: 100%;
   padding-right: ${innerPdSide * 2}px;
   color: ${props => props.theme.labelColor};
-  
+
   .bottom-widget__y-axis {
     flex-grow: 1;
     margin-left: 20px;
   }
-  
+
   .bottom-widget__field-select {
     width: 160px;
     display: inline-block;
@@ -83,7 +84,7 @@ const Tab = styled.div`
   text-align: center;
   width: 24px;
   line-height: 24px;
-  
+
   :hover {
     cursor: pointer;
   }
@@ -98,15 +99,6 @@ const StyledTitle = styled(CenterFlexbox)`
     margin-right: 6px;
   }
 `;
-
-const AnimationSpeedToggle = ({updateAnimationSpeed, speed}) => (
-  <Tabs>
-    {TIME_ANIMATION_SPEED.map(({label, value}) => (
-      <Tab key={value} active={value === speed}
-        onClick={() => updateAnimationSpeed(value)}>{label}</Tab>
-    ))}
-  </Tabs>
-);
 
 export class TimeWidget extends Component {
   fieldSelector = props => props.fields;
