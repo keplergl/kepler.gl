@@ -11,8 +11,8 @@
   <a href='https://opensource.org/licenses/MIT'>
     <img src='https://img.shields.io/badge/License-MIT-blue.svg' alt='MIT License' />
   </a>
-  <a href='https://app.fossa.io/projects/custom%2B4458%2Fgithub.com%keplergl%2Fkepler.gl?ref=badge_shield'>
-    <img src='https://app.fossa.io/api/projects/custom%2B4458%2Fgithub.com%keplergl%2Fkepler.gl.svg?type=shield' alt='Fossa' />
+  <a href='https://app.fossa.com/projects/custom%2B4458%2Fgithub.com%2Fkeplergl%2Fkepler.gl?ref=badge_shield'>
+    <img src='https://app.fossa.com/api/projects/custom%2B4458%2Fgithub.com%2Fkeplergl%2Fkepler.gl.svg?type=shield' alt='Fossa' />
   </a>
 </p>
 
@@ -218,7 +218,7 @@ Read more about [Components][components].
 
 - default: `null`
 
-You can pass theme name or object used to customize Kepler.gl style. Kepler.gl provide an `'light'` theme besides the default 'dark' theme. When pass in a theme object Kepler.gl will use the value passed as input to override values from [theme](https://github.com/uber/kepler.gl/blob/master/src/styles/base.js).
+You can pass theme name or object used to customize Kepler.gl style. Kepler.gl provide an `'light'` theme besides the default 'dark' theme. When pass in a theme object Kepler.gl will use the value passed as input to override values from [theme](https://github.com/keplergl/kepler.gl/blob/master/src/styles/base.js).
 
 ### 3. Dispatch custom actions to `keplerGl` reducer.
 

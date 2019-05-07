@@ -63,17 +63,17 @@ Questions about kepler.gl? you can checkout the examples and medium articles on 
 * Commit your changes using a descriptive commit message that follows our
   [commit message conventions][developers.commits]. Adherence to the conventions is required, because release notes are automatically generated from these messages.
 
-[cla]: https://cla-assistant.io/uber/kepler.gl
-[github]: https://github.com/uber/kepler.gl
-[git-iss]: https://github.com/uber/kepler.gl/issues
-[git-pr]: https://github.com/uber/kepler.gl/pulls
-[git-feature]: https://github.com/uber/kepler.gl/issues/new?template=feature_request.md
-[git-bug]: https://github.com/uber/kepler.gl/issues/new?template=bug_report.md
+[cla]: https://cla-assistant.io/keplergl/kepler.gl
+[github]: https://github.com/keplergl/kepler.gl
+[git-iss]: https://github.com/keplergl/kepler.gl/issues
+[git-pr]: https://github.com/keplergl/kepler.gl/pulls
+[git-feature]: https://github.com/keplergl/kepler.gl/issues/new?template=feature_request.md
+[git-bug]: https://github.com/keplergl/kepler.gl/issues/new?template=bug_report.md
 [stack]: https://stackoverflow.com/questions/tagged/kepler.gl
-[api-docs]: https://github.com/uber/kepler.gl/tree/master/docs
-[website]: https://uber.github.io/kepler.gl/#/
-[user-guide]: https://github.com/uber/kepler.gl/blob/master/docs/a-introduction.md
-[roadmap]: https://github.com/uber/kepler.gl/wiki/Roadmap
+[api-docs]: https://github.com/keplergl/kepler.gl/tree/master/docs
+[website]: https://keplergl.github.io/kepler.gl
+[user-guide]: https://github.com/keplergl/kepler.gl/blob/master/docs/a-introduction.md
+[roadmap]: https://github.com/keplergl/kepler.gl/wiki/Roadmap
 [developers]: DEVELOPERS.md
 [developers.commits]: DEVELOPERS.md#commits
 [developers.documentation]: DEVELOPERS.md#documentation
