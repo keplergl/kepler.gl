@@ -18,10 +18,80 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-export function getMouseDeltaX(e, prevX) {
+import document from 'global/document';
 
-  // movementX might not be supported in some browser
-  // https://stackoverflow.com/questions/41774726/mouseevent-movementx-property-apparently-not-supported-in-internet-explorer
-  const deltaX = e.movementX === 0 ? e.clientX - prevX : e.movementX;
-  return {deltaX, prevX: e.clientX};
+function nope() {}
+
+export default class MouseEventHandler {
+  constructor({
+    vertical = false,
+    valueListener = nope,
+    toggleMouseOver = nope
+  }) {
+    this._vertical = vertical;
+    this._valueListener = valueListener;
+    this._toggleMouseOver = toggleMouseOver;
+
+    this._prev = 0;
+  }
+
+  handleMouseDown = (e) => {
+    document.addEventListener('mouseup', this._mouseup);
+    document.addEventListener('mousemove', this._mousemove);
+    this._prev = this._getMousePos(e);
+    this._toggleMouseOver();
+  };
+
+  _getMousePos(e) {
+    return this._vertical ? e.clientY : e.pageX;
+  }
+  _getTouchPosition(e) {
+    return this._vertical ? e.touches[0].clientY : e.touches[0].pageX;
+  }
+
+  _getMouseDelta(e) {
+
+    // movementX might not be supported in some browser
+    // https://stackoverflow.com/questions/41774726/mouseevent-movementx-property-apparently-not-supported-in-internet-explorer
+    const mouseCoord = this._vertical ? e.movementY : e.movementX;
+    const clientCoord = this._getMousePos(e)
+
+    const delta = mouseCoord === 0 ? clientCoord - this._prev : mouseCoord;
+
+    return delta;
+  };
+
+  _mouseup = () => {
+    document.removeEventListener('mouseup', this._mouseup);
+    document.removeEventListener('mousemove', this._mousemove);
+    this._toggleMouseOver();
+  };
+
+  _mousemove = e => {
+    e.preventDefault();
+
+    const delta = this._getMouseDelta(e);
+    this._prev = this._getMousePos(e);
+
+    this._valueListener(delta);
+  };
+
+  handleTouchStart = e => {
+    document.addEventListener('touchend', this._touchend);
+    document.addEventListener('touchmove', this._touchmove);
+    this._prev = this._getTouchPosition(e);
+    this._toggleMouseOver();
+  };
+
+  _touchmove = e => {
+    const delta = this._getTouchPosition(e) - this._prev;
+    this._prev = this._getTouchPosition(e);
+    this.props._valueListener(delta);
+  };
+
+  _touchend = () => {
+    document.removeEventListener('touchend', this._touchend);
+    document.removeEventListener('touchmove', this._touchmove);
+    this._toggleMouseOver();
+  };
 }

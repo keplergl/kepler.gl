@@ -230,12 +230,7 @@ export default class RangeSlider extends Component {
             onSlider0Change={this._setRangeVal0}
             onSlider1Change={this._setRangeVal1}
             onSliderBarChange={(val0, val1) => {
-              if (this._isVal1InRange(val1) && this._isVal0InRange(val0)) {
-                onChange([
-                  this._roundValToStep(val0),
-                  this._roundValToStep(val1)
-                ]);
-              }
+              onChange([val0, val1]);
             }}
             enableBarDrag
           />

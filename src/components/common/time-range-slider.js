@@ -163,11 +163,11 @@ export default class TimeRangeSlider extends Component {
 
 const TimeValueWrapper = styled.div`
   display: flex;
-  height: ${props => props.theme.secondaryInputHeight};
+  height: 32px;
   align-items: center;
   font-size: 11px;
   justify-content: ${props => props.isEnlarged ? 'center' : 'space-between'};
-  color: ${props => props.theme.labelColor};
+  color: ${props => props.theme.textColorHl};
 
   .horizontal-bar {
     padding: 0 12px;
