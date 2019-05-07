@@ -16,14 +16,14 @@
   </a>
 </p>
 
-<h1 align="center">Kepler.gl | <a href="https://uber.github.io/kepler.gl">Website</a> |
-<a href="https://uber.github.io/kepler.gl/#/demo">Demo App</a>
+<h1 align="center">Kepler.gl | <a href="http://kepler.gl">Website</a> |
+<a href="http://kepler.gl/#/demo">Demo App</a>
 </h1>
 <h3></h3>
 
-[<img width="120" alt="Kepler.gl" src="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/website/icons/kepler.gl-logo.png">](http://www.kepler.gl/)
+[<img width="120" alt="Kepler.gl" src="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/website/icons/kepler.gl-logo.png">](http://kepler.gl)
 
-[<img width="600" alt="Kepler.gl Demo" src="https://eng.uber.com/wp-content/uploads/2018/05/image4-3-768x493.png">](https://uber.github.io/kepler.gl/#/demo)
+[<img width="600" alt="Kepler.gl Demo" src="https://eng.uber.com/wp-content/uploads/2018/05/image4-3-768x493.png">](http://kepler.gl/#/demo)
 
 [Kepler.gl][web] is a data-agnostic, high-performance web-based application for visual exploration of large-scale geolocation data sets. Built on top of [Mapbox GL](https://www.mapbox.com) and [deck.gl](http://uber.github.io/deck.gl/#/), kepler.gl can render millions of points representing thousands of trips and perform spatial aggregations on the fly.
 
@@ -520,7 +520,7 @@ this.props.dispatch(
 Read more about [addDataToMap](./docs/api-reference/actions/actions.md#adddatatomap) and [Saving and loading maps with schema manager][saving-loading-w-schema].
 
 [contributing]: contributing/CONTRIBUTING.md
-[demo-app]: https://keplergl.github.io/kepler.gl/#/demo
+[demo-app]: http://kepler.gl/#/demo
 [github]: https://github.com/keplergl/kepler.gl
 [github-pr]: https://help.github.com/articles/creating-a-pull-request/
 [mapbox]: https://www.mapbox.com
