@@ -40,13 +40,9 @@ const NotificationPanelContent = styled.div`
   box-sizing: border-box;
 `;
 
-NotificationPanelFactory.deps = [
-  NotificationItemFactory
-];
+NotificationPanelFactory.deps = [NotificationItemFactory];
 
-export default function NotificationPanelFactory (
-  NotificationItem
-) {
+export default function NotificationPanelFactory(NotificationItem) {
   return class NotificationPanel extends Component {
     static propTypes = {
       removeNotification: PropTypes.func.isRequired,
@@ -54,21 +50,23 @@ export default function NotificationPanelFactory (
     };
 
     render() {
+      const globalNotifications = this.props.notifications.filter(
+        n => n.topic === DEFAULT_NOTIFICATION_TOPICS.global
+      );
       return (
-        <NotificationPanelContent className="notification-panel">
-          {this.props.notifications
-            .filter(n => n.topic === DEFAULT_NOTIFICATION_TOPICS.global)
-            .map(n => (
-              <NotificationItem
-                key={n.id}
-                notification={n}
-                removeNotification={this.props.removeNotification}
-              />
-            ))
-          }
+        <NotificationPanelContent
+          className="notification-panel"
+          style={{display: globalNotifications.length ? 'block' : 'none'}}
+        >
+          {globalNotifications.map(n => (
+            <NotificationItem
+              key={n.id}
+              notification={n}
+              removeNotification={this.props.removeNotification}
+            />
+          ))}
         </NotificationPanelContent>
       );
     }
-  }
+  };
 }
-
