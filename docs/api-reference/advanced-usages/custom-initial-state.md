@@ -41,5 +41,5 @@ const reducers = combineReducers({
 
 For full implementation, take a look at the [custom reducer example][custom-reducer-example]
 
-[custom-reducer-example]: https://github.com/uber/kepler.gl/tree/master/examples/custom-reducer
+[custom-reducer-example]: https://github.com/keplergl/kepler.gl/tree/master/examples/custom-reducer
 

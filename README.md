@@ -2,28 +2,28 @@
   <a href="https://npmjs.org/package/kepler.gl">
     <img src="https://img.shields.io/npm/v/kepler.gl.svg?style=flat" alt="version" />
   </a>
-  <a href="https://travis-ci.com/uber/kepler.gl">
-    <img src="https://api.travis-ci.com/uber/kepler.gl.svg?branch=master" alt="build" />
+  <a href="https://travis-ci.com/keplergl/kepler.gl">
+    <img src="https://api.travis-ci.com/keplergl/kepler.gl.svg?branch=master" alt="build" />
   </a>
-  <a href="https://github.com/uber/kepler.gl">
-    <img src="https://githubbadges.com/star.svg?user=uber&repo=kepler.gl&style=flat" alt="stars" />
+  <a href="https://github.com/keplergl/kepler.gl">
+    <img src="https://githubbadges.com/star.svg?user=keplergl&repo=kepler.gl&style=flat" alt="stars" />
   </a>
   <a href='https://opensource.org/licenses/MIT'>
     <img src='https://img.shields.io/badge/License-MIT-blue.svg' alt='MIT License' />
   </a>
-  <a href='https://app.fossa.io/projects/custom%2B4458%2Fgithub.com%2Fuber%2Fkepler.gl?ref=badge_shield'>
-    <img src='https://app.fossa.io/api/projects/custom%2B4458%2Fgithub.com%2Fuber%2Fkepler.gl.svg?type=shield' alt='Fossa' />
+  <a href='https://app.fossa.io/projects/custom%2B4458%2Fgithub.com%keplergl%2Fkepler.gl?ref=badge_shield'>
+    <img src='https://app.fossa.io/api/projects/custom%2B4458%2Fgithub.com%keplergl%2Fkepler.gl.svg?type=shield' alt='Fossa' />
   </a>
 </p>
 
-<h1 align="center">Kepler.gl | <a href="https://uber.github.io/kepler.gl">Website</a> |
-<a href="https://uber.github.io/kepler.gl/#/demo">Demo App</a>
+<h1 align="center">Kepler.gl | <a href="http://kepler.gl">Website</a> |
+<a href="http://kepler.gl/#/demo">Demo App</a>
 </h1>
 <h3></h3>
 
-[<img width="120" alt="Kepler.gl" src="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/website/icons/kepler.gl-logo.png">](http://www.kepler.gl/)
+[<img width="120" alt="Kepler.gl" src="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/website/icons/kepler.gl-logo.png">](http://kepler.gl)
 
-[<img width="600" alt="Kepler.gl Demo" src="https://eng.uber.com/wp-content/uploads/2018/05/image4-3-768x493.png">](https://uber.github.io/kepler.gl/#/demo)
+[<img width="600" alt="Kepler.gl Demo" src="https://eng.uber.com/wp-content/uploads/2018/05/image4-3-768x493.png">](http://kepler.gl/#/demo)
 
 [Kepler.gl][web] is a data-agnostic, high-performance web-based application for visual exploration of large-scale geolocation data sets. Built on top of [Mapbox GL](https://www.mapbox.com) and [deck.gl](http://uber.github.io/deck.gl/#/), kepler.gl can render millions of points representing thousands of trips and perform spatial aggregations on the fly.
 
@@ -333,9 +333,9 @@ Kepler.gl implements css styling using [Styled-Components](https://www.styled-co
 - Styled-Components ThemeProvider
 
 
-The available properties to customize are listed here [theme](https://github.com/uber/kepler.gl/blob/master/src/styles/base.js).
+The available properties to customize are listed here [theme](https://github.com/keplergl/kepler.gl/blob/master/src/styles/base.js).
 
-[Custom theme example](https://github.com/uber/kepler.gl/tree/master/examples/custom-theme).
+[Custom theme example](https://github.com/keplergl/kepler.gl/tree/master/examples/custom-theme).
 
 #### Passing a Theme prop.
 You can customize Kepler.gl theme by passing a __theme__ props to Kepler.gl react component as it follows:
@@ -520,15 +520,15 @@ this.props.dispatch(
 Read more about [addDataToMap](./docs/api-reference/actions/actions.md#adddatatomap) and [Saving and loading maps with schema manager][saving-loading-w-schema].
 
 [contributing]: contributing/CONTRIBUTING.md
-[demo-app]: https://uber.github.io/kepler.gl/#/demo
-[github]: https://github.com/uber/kepler.gl
+[demo-app]: http://kepler.gl/#/demo
+[github]: https://github.com/keplergl/kepler.gl
 [github-pr]: https://help.github.com/articles/creating-a-pull-request/
 [mapbox]: https://www.mapbox.com
 [mapbox-token]: https://www.mapbox.com/help/define-access-token/
 [developers]: contributing/DEVELOPERS.md
-[examples]: https://github.com/uber/kepler.gl/tree/master/examples
+[examples]: https://github.com/keplergl/kepler.gl/tree/master/examples
 [react-palm]: https://github.com/btford/react-palm
-[roadmap]: https://github.com/uber/kepler.gl/wiki/Kepler.gl-2019-Roadmap
+[roadmap]: https://github.com/keplergl/kepler.gl/wiki/Kepler.gl-2019-Roadmap
 [stack]: https://stackoverflow.com/questions/tagged/kepler.gl
 [web]: http://www.kepler.gl/
 [vis-academy]: http://vis.academy/#/kepler.gl/
