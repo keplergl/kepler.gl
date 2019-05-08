@@ -334,9 +334,6 @@ class App extends Component {
                   width={width}
                   height={height - (showBanner ? BannerHeight : 0)}
                   onSaveMap={this._isCloudStorageEnabled() && this._toggleCloudModal}
-                  onUpdateViewport={(viewState) => {
-                    console.log(viewState);
-                  }}
                 />
               )}
             </AutoSizer>

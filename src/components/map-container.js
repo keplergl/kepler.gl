@@ -389,8 +389,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     }
 
     _onViewportChange = (viewState) => {
-      if (typeof this.props.onUpdateViewport === 'function' && this.props.index === 0) {
-        this.props.onUpdateViewport(viewState);
+      if (typeof this.props.onViewStateChange === 'function' && this.props.index === 0) {
+        this.props.onViewStateChange(viewState);
       }
       this.props.mapStateActions.updateMap(viewState);
     }

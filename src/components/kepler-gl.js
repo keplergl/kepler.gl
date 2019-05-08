@@ -169,7 +169,7 @@ function KeplerGlFactory(
         appName,
         version,
         onSaveMap,
-        onUpdateViewport,
+        onViewStateChange,
         width,
         height,
         mapboxApiAccessToken,
@@ -240,7 +240,7 @@ function KeplerGlFactory(
         hoverInfo,
         clicked,
         toggleMapControl: uiStateActions.toggleMapControl,
-        onUpdateViewport,
+        onViewStateChange,
         uiStateActions,
         visStateActions,
         mapStateActions
