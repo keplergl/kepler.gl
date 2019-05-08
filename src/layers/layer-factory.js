@@ -124,10 +124,11 @@ export const LAYER_VIS_CONFIGS = {
     group: PROPERTY_GROUPS.cell,
     property: 'coverage'
   },
+  // used in point layer
   outline: {
     type: 'boolean',
     defaultValue: false,
-    label: 'Draw outline',
+    label: 'Outline',
     group: PROPERTY_GROUPS.display,
     property: 'outline'
   },

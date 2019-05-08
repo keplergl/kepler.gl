@@ -36,7 +36,7 @@ import {GEOJSON_FIELDS, HIGHLIGH_COLOR_3D} from 'constants/default-settings';
 // Disable breaking change from deck.gl 6.3->6.4 (added stroke to point features)
 // Remove when this is user-controlled
 const GEOJSON_SUBLAYER_OVERRIDE = {
-  points: {stroked: false}
+  //  points: {stroked: false, filled: true}
 };
 
 export const geojsonVisConfigs = {

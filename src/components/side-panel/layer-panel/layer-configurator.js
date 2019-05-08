@@ -91,7 +91,10 @@ export default class LayerConfigurator extends Component {
     return (
       <StyledLayerVisualConfigurator>
         {/* Color */}
-        <LayerConfigGroup label={'color'} collapsible>
+        <LayerConfigGroup
+          {...layer.visConfigSettings.filled}
+          {...visConfiguratorProps}
+          collapsible>
           {layer.config.colorField ? (
             <ColorRangeConfig {...visConfiguratorProps} />
           ) : (
@@ -162,11 +165,6 @@ export default class LayerConfigurator extends Component {
           visConfiguratorProps={visConfiguratorProps}
           layerConfiguratorProps={layerConfiguratorProps}
           textLabel={layer.config.textLabel}
-        />
-        {/* high precision */}
-        <LayerConfigGroup
-          {...LAYER_VIS_CONFIGS['hi-precision']}
-          {...visConfiguratorProps}
         />
       </StyledLayerVisualConfigurator>
     );
@@ -360,12 +358,6 @@ export default class LayerConfigurator extends Component {
               ) : null}
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup> : null}
-
-        {/* High Precision */}
-        <LayerConfigGroup
-          {...layer.visConfigSettings['hi-precision']}
-          {...visConfiguratorProps}
-        />
       </StyledLayerVisualConfigurator>
     );
   }
@@ -439,11 +431,6 @@ export default class LayerConfigurator extends Component {
             />
           </ConfigGroupCollapsibleContent>
         </LayerConfigGroup>
-        {/* high precision */}
-        <LayerConfigGroup
-          {...LAYER_VIS_CONFIGS['hi-precision']}
-          {...visConfiguratorProps}
-        />
       </StyledLayerVisualConfigurator>
     );
   }
@@ -506,12 +493,6 @@ export default class LayerConfigurator extends Component {
             />
           </ConfigGroupCollapsibleContent>
         </LayerConfigGroup>
-
-        {/* high precision */}
-        <LayerConfigGroup
-          {...LAYER_VIS_CONFIGS['hi-precision']}
-          {...visConfiguratorProps}
-        />
       </StyledLayerVisualConfigurator>
     );
   }
@@ -636,12 +617,6 @@ export default class LayerConfigurator extends Component {
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
         ) : null}
-
-        {/* high precision */}
-        <LayerConfigGroup
-          {...LAYER_VIS_CONFIGS['hi-precision']}
-          {...visConfiguratorProps}
-        />
       </StyledLayerVisualConfigurator>
     );
   }

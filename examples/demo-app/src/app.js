@@ -117,7 +117,7 @@ class App extends Component {
     // }
 
     // load sample data
-    // this._loadSampleData();
+    this._loadSampleData();
 
     // Notifications
     // this._loadMockNotifications();
@@ -220,10 +220,12 @@ class App extends Component {
         datasets: [{
           info: {label: 'Bart Stops Geo'},
           data: processGeojson(sampleGeojsonPoints)
-        }, {
+        },
+        {
           info: {label: 'SF Zip Geo'},
           data: processGeojson(sampleGeojson)
-        }]
+        }
+      ]
       })
     );
   }

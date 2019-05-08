@@ -50,7 +50,12 @@ export const pointVisConfigs = {
   thickness: 'thickness',
   colorRange: 'colorRange',
   radiusRange: 'radiusRange',
-  'hi-precision': 'hi-precision'
+  filled: {
+    type: 'boolean',
+    label: 'Fill Color',
+    defaultValue: true,
+    property: 'filled'
+  }
 };
 
 export default class PointLayer extends Layer {
@@ -225,7 +230,9 @@ export default class PointLayer extends Layer {
       data,
       labelCharacterSet,
       getPosition,
-      getColor,
+      getFillColor: getColor,
+      getLineColor: getColor,
+      // [this.config.visConfig.outline ? 'getLineColor' : 'getFillColor']: getColor,
       getRadius,
       getText
     };
@@ -250,9 +257,9 @@ export default class PointLayer extends Layer {
     const layerProps = {
       // TODO: support setting stroke and fill simultaneously
       stroked: this.config.visConfig.outline,
-      filled: !this.config.visConfig.outline,
+      filled: this.config.visConfig.filled,
       radiusMinPixels: 1,
-      fp64: this.config.visConfig['hi-precision'],
+      // fp64: this.config.visConfig['hi-precision'],
       lineWidthMinPixels: this.config.visConfig.thickness,
       radiusScale: this.getRadiusScaleByZoom(mapState),
       ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
@@ -271,6 +278,11 @@ export default class PointLayer extends Layer {
         ...layerInteraction,
         ...data,
         ...interaction,
+        // stroked: false,
+        // filled: true,
+        // getLineColor: [255, 255, 255, 0],
+        // getFillColor: [123, 212, 419, 0],
+
         idx,
         id: this.id,
         opacity: this.config.visConfig.opacity,
@@ -308,7 +320,8 @@ export default class PointLayer extends Layer {
             ...layerProps,
             id: `${this.id}-hovered`,
             data: [objectHovered.object],
-            getColor: this.config.highlightColor,
+            getLineColor: this.config.highlightColor,
+            getFillColor: this.config.highlightColor,
             getRadius: data.getRadius,
             getPosition: data.getPosition,
             pickable: false
@@ -328,7 +341,7 @@ export default class PointLayer extends Layer {
               getTextAnchor: this.config.textLabel.anchor,
               getText: data.getText,
               getColor: d => this.config.textLabel.color,
-              fp64: this.config.visConfig['hi-precision'],
+              // fp64: this.config.visConfig['hi-precision'],
               parameters: {
                 // text will always show on top of all layers
                 depthTest: false
