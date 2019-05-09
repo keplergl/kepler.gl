@@ -388,12 +388,19 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       }
     }
 
+    _onViewportChange = (viewState) => {
+      if (typeof this.props.onViewStateChange === 'function') {
+        this.props.onViewStateChange(viewState);
+      }
+      this.props.mapStateActions.updateMap(viewState);
+    }
+
     render() {
       const {
         mapState, mapStyle, mapStateActions, mapLayers, layers, MapComponent,
         datasets, mapboxApiAccessToken, mapControls, toggleMapControl
       } = this.props;
-      const {updateMap, onMapClick} = mapStateActions;
+      const {onMapClick} = mapStateActions;
 
       if (!mapStyle.bottomMapStyle) {
         // style not yet loaded
@@ -404,7 +411,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         ...mapState,
         preserveDrawingBuffer: true,
         mapboxApiAccessToken,
-        onViewportChange: updateMap,
+        onViewportChange: this._onViewportChange,
         transformRequest
       };
 

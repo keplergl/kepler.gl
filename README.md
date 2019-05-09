@@ -185,9 +185,16 @@ version displayed in side panel header
 
 ##### `onSaveMap` (Function, optional)
 
-- Default: `() => {}`
+- Default: `undefined`
 
 Action called when click Save Map Url in side panel header.
+
+##### `onViewStateChange` (Function, optional)
+
+- Default: `undefined`
+- Parameter: `viewState` - An updated view state object containing parameters such as longitude, latitude, zoom etc
+
+Action triggered when map viewport is updated.
 
 ##### `getMapboxRef(mapbox, index)` (Function, optional)
 
