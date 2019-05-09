@@ -139,12 +139,26 @@ export const LAYER_VIS_CONFIGS = {
     group: PROPERTY_GROUPS.color,
     property: 'colorRange'
   },
+  strokeColorRange: {
+    type: 'color-range-select',
+    defaultValue: DefaultColorRange,
+    label: 'Stroke Color range',
+    group: PROPERTY_GROUPS.color,
+    property: 'strokeColorRange'
+  },
   targetColor: {
     type: 'color-select',
     label: 'Target Color',
     defaultValue: null,
     group: PROPERTY_GROUPS.color,
     property: 'targetColor'
+  },
+  strokeColor: {
+    type: 'color-select',
+    label: 'Stroke Color',
+    defaultValue: null,
+    group: PROPERTY_GROUPS.color,
+    property: 'strokeColor'
   },
   aggregation: {
     type: 'select',

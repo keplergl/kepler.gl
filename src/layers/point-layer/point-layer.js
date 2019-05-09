@@ -25,7 +25,7 @@ import ScatterplotBrushingLayer from 'deckgl-layers/scatterplot-brushing-layer/s
 import uniq from 'lodash.uniq';
 import {hexToRgb} from 'utils/color-utils';
 import PointLayerIcon from './point-layer-icon';
-import {DEFAULT_LAYER_COLOR} from 'constants/default-settings';
+import {DEFAULT_LAYER_COLOR, CHANNEL_SCALES} from 'constants/default-settings';
 
 export const pointPosAccessor = ({lat, lng, altitude}) => d => [
   d.data[lng.fieldIdx],
@@ -48,7 +48,9 @@ export const pointVisConfigs = {
   opacity: 'opacity',
   outline: 'outline',
   thickness: 'thickness',
+  strokeColor: 'strokeColor',
   colorRange: 'colorRange',
+  strokeColorRange: 'strokeColorRange',
   radiusRange: 'radiusRange',
   filled: {
     type: 'boolean',
@@ -97,12 +99,22 @@ export default class PointLayer extends Layer {
   get visualChannels() {
     return {
       ...super.visualChannels,
+      strokeColor: {
+        property: 'strokeColor',
+        field: 'strokeColorField',
+        scale: 'strokeColorScale',
+        domain: 'strokeColorDomain',
+        range: 'strokeColorRange',
+        key: 'strokeColor',
+        channelScaleType: CHANNEL_SCALES.color
+      },
       size: {
         ...super.visualChannels.size,
         range: 'radiusRange',
         property: 'radius',
         channelScaleType: 'radius'
-      }
+      },
+
     };
   }
 
@@ -143,6 +155,17 @@ export default class PointLayer extends Layer {
     return props;
   }
 
+  getDefaultLayerConfig(props = {}) {
+    return {
+      ...super.getDefaultLayerConfig(props),
+
+      // add stroke color visual channel
+      strokeColorField: null,
+      strokeColorDomain: [0, 1],
+      strokeColorScale: 'quantile'
+    };
+  }
+
   // TODO: fix complexity
   /* eslint-disable complexity */
   formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
@@ -150,22 +173,34 @@ export default class PointLayer extends Layer {
       colorScale,
       colorDomain,
       colorField,
+      strokeColorField,
+      strokeColorScale,
+      strokeColorDomain,
       color,
       columns,
       sizeField,
       sizeScale,
       sizeDomain,
       textLabel,
-      visConfig: {radiusRange, fixedRadius, colorRange}
+      visConfig: {radiusRange, fixedRadius, colorRange, strokeColorRange, strokeColor}
     } = this.config;
 
-    // point color
+    // fill color
     const cScale =
       colorField &&
       this.getVisChannelScale(
         colorScale,
         colorDomain,
         colorRange.colors.map(hexToRgb)
+      );
+
+    // stroke color
+    const scScale =
+      strokeColorField &&
+      this.getVisChannelScale(
+        strokeColorScale,
+        strokeColorDomain,
+        strokeColorRange.colors.map(hexToRgb)
       );
 
     // point radius
@@ -223,16 +258,17 @@ export default class PointLayer extends Layer {
     const getRadius = rScale ? d =>
       this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
 
-    const getColor = cScale ? d =>
+    const getFillColor = cScale ? d =>
       this.getEncodedChannelValue(cScale, d.data, colorField) : color;
 
+    const getLineColor = scScale ? d =>
+      this.getEncodedChannelValue(scScale, d.data, strokeColorField) : strokeColor;
     return {
       data,
       labelCharacterSet,
       getPosition,
-      getFillColor: getColor,
-      getLineColor: getColor,
-      // [this.config.visConfig.outline ? 'getLineColor' : 'getFillColor']: getColor,
+      getFillColor,
+      getLineColor,
       getRadius,
       getText
     };
@@ -278,10 +314,6 @@ export default class PointLayer extends Layer {
         ...layerInteraction,
         ...data,
         ...interaction,
-        // stroked: false,
-        // filled: true,
-        // getLineColor: [255, 255, 255, 0],
-        // getFillColor: [123, 212, 419, 0],
 
         idx,
         id: this.id,
@@ -306,10 +338,10 @@ export default class PointLayer extends Layer {
             colorScale: this.config.colorScale
           },
           getLineColor: {
-            color: this.config.color,
-            colorField: this.config.colorField,
-            colorRange: this.config.visConfig.colorRange,
-            colorScale: this.config.colorScale
+            color: this.config.visConfig.strokeColor,
+            colorField: this.config.strokeColorField,
+            colorRange: this.config.visConfig.strokeColorRange,
+            colorScale: this.config.strokeColorScale
           }
         }
       }),

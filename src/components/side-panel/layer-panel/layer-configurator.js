@@ -90,7 +90,7 @@ export default class LayerConfigurator extends Component {
   }) {
     return (
       <StyledLayerVisualConfigurator>
-        {/* Color */}
+        {/* Fill Color */}
         <LayerConfigGroup
           {...layer.visConfigSettings.filled}
           {...visConfiguratorProps}
@@ -111,6 +111,36 @@ export default class LayerConfigurator extends Component {
             />
           </ConfigGroupCollapsibleContent>
         </LayerConfigGroup>
+
+        {/* outline color */}
+          {layer.type === LAYER_TYPES.point ? (
+          <LayerConfigGroup
+            {...layer.visConfigSettings.outline}
+            {...visConfiguratorProps}
+            collapsible>
+            {layer.config.strokeColorField ? (
+              <ColorRangeConfig {...visConfiguratorProps} property="strokeColorRange"/>
+            ) : (
+              <LayerColorSelector
+                {...visConfiguratorProps}
+                selectedColor={layer.config.visConfig.strokeColor}
+                property="strokeColor"
+              />
+            )}
+            <ConfigGroupCollapsibleContent>
+              <ChannelByValueSelector
+                channel={layer.visualChannels.strokeColor}
+                {...layerChannelConfigProps}
+              />
+              <VisConfigSlider
+                {...layer.visConfigSettings.thickness}
+                {...visConfiguratorProps}
+                label={false}
+                disabled={!layer.config.visConfig.outline}
+              />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+        ) : null}
 
         {/* Radius */}
         <LayerConfigGroup label={'radius'} collapsible>
@@ -144,21 +174,6 @@ export default class LayerConfigurator extends Component {
             ) : null}
           </ConfigGroupCollapsibleContent>
         </LayerConfigGroup>
-
-        {/* outline */}
-        {layer.type === LAYER_TYPES.point ? (
-          <LayerConfigGroup
-            {...LAYER_VIS_CONFIGS.outline}
-            {...visConfiguratorProps}
-          >
-            <VisConfigSlider
-              {...LAYER_VIS_CONFIGS.thickness}
-              {...visConfiguratorProps}
-              label={false}
-              disabled={!layer.config.visConfig.outline}
-            />
-          </LayerConfigGroup>
-        ) : null}
 
         {/* text label */}
         <TextLabelPanel
@@ -713,13 +728,13 @@ export const HowToButton = ({onClick}) => (
   </StyledHowToButton>
 );
 
-export const LayerColorSelector = ({layer, onChange, label}) => (
+export const LayerColorSelector = ({layer, onChange, label, selectedColor, property = 'color'}) => (
   <SidePanelSection disabled={layer.config.colorField}>
     <ColorSelector
       colorSets={[
         {
-          selectedColor: layer.config.color,
-          setColor: rgbValue => onChange({color: rgbValue})
+          selectedColor: selectedColor || layer.config.color,
+          setColor: rgbValue => onChange({[property]: rgbValue})
         }
       ]}
     />
@@ -750,14 +765,14 @@ export const ArcLayerColorSelector = ({
   </SidePanelSection>
 );
 
-export const ColorRangeConfig = ({layer, onChange}) => (
+export const ColorRangeConfig = ({layer, onChange, property = "colorRange"}) => (
   <SidePanelSection>
     <ColorSelector
       colorSets={[
         {
-          selectedColor: layer.config.visConfig.colorRange,
+          selectedColor: layer.config.visConfig[property],
           isRange: true,
-          setColor: colorRange => onChange({colorRange})
+          setColor: colorRange => onChange({[property]: colorRange})
         }
       ]}
     />

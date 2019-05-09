@@ -76,7 +76,7 @@ class DimensionFieldSchemaV0 extends Schema {
     };
   }
 
-  load(field, config, accumulated) {
+  load(field, [...p, config], accumulated) {
     let fieldName = this.key;
     if (config.type === 'geojson' && this.key === 'sizeField' && field) {
       fieldName = geojsonSizeFieldV0ToV1(config);
@@ -96,7 +96,7 @@ class DimensionScaleSchemaV0 extends Schema {
   save(scale) {
     return {[this.key]: scale};
   }
-  load(scale, config, accumulated) {
+  load(scale, [...p, config], accumulated) {
     // fold into visualChannels to be load by VisualChannelSchemaV1
     if (this.key === 'sizeScale' && config.type === 'geojson') {
       // sizeScale now split into radiusScale, heightScale
@@ -116,7 +116,7 @@ class DimensionScaleSchemaV0 extends Schema {
 // used to convert v0 to v1 layer config
 class LayerConfigSchemaV0 extends Schema {
   version = VERSIONS.v0;
-  load(saved, layer, accumulated) {
+  load(saved, parents, accumulated) {
     // fold v0 layer property into config.key
     return {
       config: {
@@ -131,7 +131,7 @@ class LayerConfigSchemaV0 extends Schema {
 // only return column value for each column
 class LayerColumnsSchemaV0 extends Schema {
   version = VERSIONS.v0;
-  load(saved, layer, accumulated) {
+  load(saved, parent, accumulated) {
     // fold v0 layer property into config.key, flatten columns
     return {
       config: {
@@ -151,7 +151,7 @@ class LayerColumnsSchemaV0 extends Schema {
 // used to convert v0 to v1 layer config.visConfig
 class LayerConfigToVisConfigSchemaV0 extends Schema {
   version = VERSIONS.v0;
-  load(saved, layer, accumulated) {
+  load(saved, parents, accumulated) {
     // fold v0 layer property into config.visConfig
     const accumulatedConfig = accumulated.config || {};
     return {
@@ -309,8 +309,9 @@ class TextLabelSchemaV1 extends Schema {
  * V1: save [field]: {name, type}, [scale]: '' for each channel
  */
 class VisualChannelSchemaV1 extends Schema {
-  save(visualChannels, layer) {
+  save(visualChannels, parents) {
     // only save field and scale of each channel
+    const [layer] = parents.slice(-1);
     return {
       [this.key]: Object.keys(visualChannels).reduce(
         //  save channel to null if didn't select any field
@@ -337,6 +338,32 @@ class VisualChannelSchemaV1 extends Schema {
   }
 }
 
+class VisConfigSchemaV1 extends Schema {
+  key = 'visConfig'
+
+  // save(visConfig) {
+  //   return {[this.key]: visConfig};
+  // }
+
+  load(visConfig, config, accumulated) {
+    console.log(this.key);
+    // fold into visualChannels to be load by VisualChannelSchemaV1
+    if (config.type === 'point') {
+      // sizeScale now split into radiusScale, heightScale
+      // no user customization, just use default
+      console.log(visConfig)
+      console.log(config)
+      console.log('accumulated', accumulated)
+      // return {};
+    }
+
+    return {
+      visConfig: visConfig
+    };
+  }
+
+}
+
 export const layerPropsV1 = {
   id: null,
   type: null,
@@ -352,7 +379,9 @@ export const layerPropsV1 = {
         key: 'columns'
       }),
       isVisible: null,
-      visConfig: null,
+      visConfig: new VisConfigSchemaV1({
+        version: VERSIONS.v1
+      }),
       textLabel: new TextLabelSchemaV1({
         version: VERSIONS.v1,
         key: 'textLabel'
@@ -368,7 +397,9 @@ export const layerPropsV1 = {
 class LayerSchemaV0 extends Schema {
   key = 'layers';
 
-  save(layers, visState) {
+  save(layers, parents) {
+    const [visState] = parents.slice(-1);
+
     return {
       [this.key]: visState.layerOrder.reduce((saved, index) => {
         // save layers according to their rendering order
@@ -381,7 +412,7 @@ class LayerSchemaV0 extends Schema {
     };
   }
 
-  load(layers, visState) {
+  load(layers) {
     return {
       [this.key]: layers.map(
         layer => this.loadPropertiesOrApplySchema(layer, layers).layers

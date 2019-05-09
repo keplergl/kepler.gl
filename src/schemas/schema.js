@@ -29,15 +29,15 @@ export default class Schema {
     this.key = key;
   }
 
-  loadPropertiesOrApplySchema(node, parent, accumulator) {
-    return this._getPropertyValueFromSchema('load', node, parent, accumulator);
+  loadPropertiesOrApplySchema(node, parents, accumulator) {
+    return this._getPropertyValueFromSchema('load', node, parents, accumulator);
   }
 
-  savePropertiesOrApplySchema(node, parent, accumulator) {
-    return this._getPropertyValueFromSchema('save', node, parent, accumulator);
+  savePropertiesOrApplySchema(node, parents, accumulator) {
+    return this._getPropertyValueFromSchema('save', node, parents, accumulator);
   }
 
-  _getPropertyValueFromSchema(operation, node, parent, accumulator) {
+  _getPropertyValueFromSchema(operation, node, parents, accumulator) {
     const internal = `_${operation}`;
     return {
       [this.key]: this.properties
@@ -49,7 +49,7 @@ export default class Schema {
                   ? // if it's another schema
                     this.properties[key][operation]
                     ? // call save or load
-                      this.properties[key][internal](node[key], node, accu)
+                      this.properties[key][internal](node[key], [...parents, node], accu)
                     : {}
                   : {[key]: node[key]}
                 : {})
@@ -79,15 +79,15 @@ export default class Schema {
     return this.save(...args);
   }
 
-  save(node, parent, accumulator = {}) {
-    return this.savePropertiesOrApplySchema(node, parent, accumulator);
+  save(node, parents, accumulator = {}) {
+    return this.savePropertiesOrApplySchema(node, parents, accumulator);
   }
 
   _load(...args) {
     return this.load(...args);
   }
 
-  load(node, parent, accumulator = {}) {
-    return this.loadPropertiesOrApplySchema(node, parent, accumulator);
+  load(node, parents, accumulator = {}) {
+    return this.loadPropertiesOrApplySchema(node, parents, accumulator);
   }
 }
