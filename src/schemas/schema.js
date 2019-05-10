@@ -29,15 +29,15 @@ export default class Schema {
     this.key = key;
   }
 
-  loadPropertiesOrApplySchema(node, parents, accumulator) {
+  loadPropertiesOrApplySchema(node, parents = [], accumulator) {
     return this._getPropertyValueFromSchema('load', node, parents, accumulator);
   }
 
-  savePropertiesOrApplySchema(node, parents, accumulator) {
+  savePropertiesOrApplySchema(node, parents = [], accumulator) {
     return this._getPropertyValueFromSchema('save', node, parents, accumulator);
   }
 
-  _getPropertyValueFromSchema(operation, node, parents, accumulator) {
+  _getPropertyValueFromSchema(operation, node, parents = [], accumulator) {
     const internal = `_${operation}`;
     return {
       [this.key]: this.properties
@@ -79,7 +79,7 @@ export default class Schema {
     return this.save(...args);
   }
 
-  save(node, parents, accumulator = {}) {
+  save(node, parents = [], accumulator = {}) {
     return this.savePropertiesOrApplySchema(node, parents, accumulator);
   }
 
@@ -87,7 +87,7 @@ export default class Schema {
     return this.load(...args);
   }
 
-  load(node, parents, accumulator = {}) {
+  load(node, parents = [], accumulator = {}) {
     return this.loadPropertiesOrApplySchema(node, parents, accumulator);
   }
 }

@@ -108,6 +108,9 @@ export default class AggregationLayer extends Layer {
     };
   }
 
+  get featureGeometry() {
+    return this.getPosition;
+  }
   /**
    * Get the description of a visualChannel config
    * @param key

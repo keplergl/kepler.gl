@@ -39,8 +39,8 @@ const CustomMapStyleSchema = new Schema({
 class MapStyleSchemaV1 extends Schema {
   version = VERSIONS.v1;
   key = 'mapStyles';
-  save(mapStyles, mapStyle) {
-
+  save(mapStyles, parents) {
+    const [mapStyle] = parents.slice(-1)
     // save all custom styles
     const saveCustomStyle = Object.keys(mapStyles).reduce((accu, key) => ({
       ...(mapStyles[key].custom ?

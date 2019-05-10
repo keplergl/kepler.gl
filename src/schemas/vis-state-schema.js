@@ -66,7 +66,7 @@ function geojsonSizeFieldV0ToV1(config) {
 // convert v0 to v1 layer config
 class DimensionFieldSchemaV0 extends Schema {
   version = VERSIONS.v0;
-  save(field, config) {
+  save(field) {
     // should not be called anymore
     return {
       [this.key]:
@@ -76,7 +76,8 @@ class DimensionFieldSchemaV0 extends Schema {
     };
   }
 
-  load(field, [...p, config], accumulated) {
+  load(field, parents, accumulated) {
+    const [config] = parents.slice(-1);
     let fieldName = this.key;
     if (config.type === 'geojson' && this.key === 'sizeField' && field) {
       fieldName = geojsonSizeFieldV0ToV1(config);
@@ -96,7 +97,7 @@ class DimensionScaleSchemaV0 extends Schema {
   save(scale) {
     return {[this.key]: scale};
   }
-  load(scale, [...p, config], accumulated) {
+  load(scale, parents, accumulated) {
     // fold into visualChannels to be load by VisualChannelSchemaV1
     if (this.key === 'sizeScale' && config.type === 'geojson') {
       // sizeScale now split into radiusScale, heightScale
@@ -131,7 +132,7 @@ class LayerConfigSchemaV0 extends Schema {
 // only return column value for each column
 class LayerColumnsSchemaV0 extends Schema {
   version = VERSIONS.v0;
-  load(saved, parent, accumulated) {
+  load(saved, parents, accumulated) {
     // fold v0 layer property into config.key, flatten columns
     return {
       config: {
@@ -170,7 +171,8 @@ class LayerVisConfigSchemaV0 extends Schema {
   version = VERSIONS.v0;
   key = 'visConfig';
 
-  load(visConfig, config, accumulator) {
+  load(visConfig, parents, accumulator) {
+    const [config] = parents.slice(-1);
     const rename = {
       geojson: {
         extruded: 'enable3d',
@@ -326,42 +328,59 @@ class VisualChannelSchemaV1 extends Schema {
       )
     };
   }
-  load(vc, layer, accumulator) {
+  load(vc, parents, accumulator) {
     // fold channels into config
+    const [layer] = parents.slice(-1);
+    let modify = {};
+    if (layer.type === 'point' && layer.config.visConfig.outline && vc.colorField
+    && !vc.hasOwnProperty('strokeColorField')
+    ) {
+      // point layer now supports both outline and fill
+      // for older schema where filled has not been added to point layer
+      // copy colorField, colorScale to strokeColorField, and strokeColorScale
+      modify = {
+        strokeColorField: vc.colorField,
+        strokeColorScale: vc.colorScale,
+        colorField: null,
+        colorScale: 'quantile'
+      };
+    }
     return {
       ...accumulator,
       config: {
         ...(accumulator.config || {}),
-        ...vc
+        ...vc,
+        ...modify
       }
     };
   }
 }
 
 class VisConfigSchemaV1 extends Schema {
-  key = 'visConfig'
+  key = 'visConfig';
 
-  // save(visConfig) {
-  //   return {[this.key]: visConfig};
-  // }
-
-  load(visConfig, config, accumulated) {
+  load(visConfig, parents, accumulated) {
+    const [layer] = parents.slice(-2, -1);
     console.log(this.key);
     // fold into visualChannels to be load by VisualChannelSchemaV1
-    if (config.type === 'point') {
-      // sizeScale now split into radiusScale, heightScale
-      // no user customization, just use default
-      console.log(visConfig)
-      console.log(config)
-      console.log('accumulated', accumulated)
-      // return {};
+    const modify = {};
+    if (layer.type === 'point' &&
+      visConfig.outline &&
+      !visConfig.hasOwnProperty('filled')
+    ) {
+      // point layer now supports both outline and fill
+      // for older schema where filled has not been added to point layer
+      // set it to false
+      modify.filled = false;
     }
 
     return {
-      visConfig: visConfig
+      visConfig: {
+        ...visConfig,
+        ...modify
+      }
     };
   }
-
 }
 
 export const layerPropsV1 = {
@@ -429,7 +448,7 @@ class FilterSchemaV0 extends Schema {
         .filter(isValidFilterValue)
         .map(
           filter =>
-            this.savePropertiesOrApplySchema(filter, this.properties).filters
+            this.savePropertiesOrApplySchema(filter).filters
         )
     };
   }

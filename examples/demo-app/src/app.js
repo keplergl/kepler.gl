@@ -159,8 +159,8 @@ class App extends Component {
   }
 
   _loadSampleData() {
-    this._loadTripData();
-    // this._loadGeojsonData();
+    // this._loadTripData();
+    this._loadGeojsonData();
     // this._loadIconData();
     // this._loadH3HexagonData();
   }
@@ -215,6 +215,7 @@ class App extends Component {
 
   _loadGeojsonData() {
     // load geojson
+    console.log(JSON.stringify(sampleGeojsonPoints, null, 1))
     this.props.dispatch(
       addDataToMap({
         datasets: [{

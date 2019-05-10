@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 // Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -525,8 +526,12 @@ export default class LayerConfigurator extends Component {
 
     return (
       <StyledLayerVisualConfigurator>
-        {/* Color By */}
-        <LayerConfigGroup label={'color'} collapsible>
+        {/* Fill Color */}
+        {featureTypes.polygon || featureTypes.point? (<LayerConfigGroup
+          {...layer.visConfigSettings.filled}
+          {...visConfiguratorProps}
+          label="Fill Color"
+        collapsible>
           {layer.config.colorField ? (
             <ColorRangeConfig {...visConfiguratorProps} />
           ) : (
@@ -542,45 +547,58 @@ export default class LayerConfigurator extends Component {
               {...visConfiguratorProps}
             />
           </ConfigGroupCollapsibleContent>
+        </LayerConfigGroup>) : null}
+
+        {/* stroke color */}
+        <LayerConfigGroup
+          {...layer.visConfigSettings.stroked}
+          {...visConfiguratorProps}
+          label="Stroke Color"
+          collapsible>
+          {layer.config.strokeColorField ? (
+            <ColorRangeConfig {...visConfiguratorProps} property="strokeColorRange"/>
+          ) : (
+            <LayerColorSelector
+              {...visConfiguratorProps}
+              selectedColor={layer.config.visConfig.strokeColor}
+              property="strokeColor"
+            />
+          )}
+          <ConfigGroupCollapsibleContent>
+            <ChannelByValueSelector
+              channel={layer.visualChannels.strokeColor}
+              {...layerChannelConfigProps}
+            />
+          </ConfigGroupCollapsibleContent>
         </LayerConfigGroup>
 
-        {/* Fill */}
-        {featureTypes.polygon ? (
-          <LayerConfigGroup label={'fill'}
-            {...visConfiguratorProps}
-            {...LAYER_VIS_CONFIGS.filled}
-          />
-        ) : null}
-
         {/* Stroke Width */}
-        {featureTypes.line || featureTypes.polygon ? (
-          <LayerConfigGroup
-            label="stroke"
-            {...visConfiguratorProps}
-            {...(featureTypes.polygon ? LAYER_VIS_CONFIGS.stroked : {})}
-            collapsible
-          >
-            {layer.config.sizeField ? (
-                <VisConfigSlider
-                {...LAYER_VIS_CONFIGS.strokeWidthRange}
-                {...visConfiguratorProps}
-                label={false}
-              />
-            ) : (
+        <LayerConfigGroup
+          {...visConfiguratorProps}
+          {...(featureTypes.polygon ? LAYER_VIS_CONFIGS.stroked : {})}
+          label="Stroke Width"
+          collapsible
+        >
+          {layer.config.sizeField ? (
               <VisConfigSlider
-                {...LAYER_VIS_CONFIGS.thickness}
-                {...visConfiguratorProps}
-                label={false}
-              />
-            )}
-            <ConfigGroupCollapsibleContent>
-              <ChannelByValueSelector
-                channel={layer.visualChannels.size}
-                {...layerChannelConfigProps}
-              />
-            </ConfigGroupCollapsibleContent>
-          </LayerConfigGroup>
-        ) : null}
+              {...LAYER_VIS_CONFIGS.strokeWidthRange}
+              {...visConfiguratorProps}
+              label={false}
+            />
+          ) : (
+            <VisConfigSlider
+              {...LAYER_VIS_CONFIGS.thickness}
+              {...visConfiguratorProps}
+              label={false}
+            />
+          )}
+          <ConfigGroupCollapsibleContent>
+            <ChannelByValueSelector
+              channel={layer.visualChannels.size}
+              {...layerChannelConfigProps}
+            />
+          </ConfigGroupCollapsibleContent>
+        </LayerConfigGroup>
 
         {/* Elevation */}
         {featureTypes.polygon && visConfig.filled ? (

@@ -26,7 +26,7 @@ import GL from 'luma.gl/constants';
 const getGlConst = d => GL[d];
 
 export function onWebGLInitialized(gl) {
-  registerShaderModules([brushingModule]);
+  registerShaderModules([brushingModule], {ignoreMultipleRegistrations: true});
 }
 
 export function setLayerBlending(gl, layerBlending) {

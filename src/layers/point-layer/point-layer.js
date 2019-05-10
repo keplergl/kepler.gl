@@ -118,6 +118,10 @@ export default class PointLayer extends Layer {
     };
   }
 
+  get positionAccessor() {
+    return this.getPosition(this.config.columns);
+  }
+
   static findDefaultLayerProps({fieldPairs = []}) {
     const props = [];
 
@@ -208,7 +212,7 @@ export default class PointLayer extends Layer {
       sizeField &&
       this.getVisChannelScale(sizeScale, sizeDomain, radiusRange, fixedRadius);
 
-    const getPosition = this.getPosition(columns);
+    const getPosition = this.positionAccessor;
 
     if (!oldLayerData || oldLayerData.getPosition !== getPosition) {
       this.updateLayerMeta(allData, getPosition);
@@ -262,7 +266,7 @@ export default class PointLayer extends Layer {
       this.getEncodedChannelValue(cScale, d.data, colorField) : color;
 
     const getLineColor = scScale ? d =>
-      this.getEncodedChannelValue(scScale, d.data, strokeColorField) : strokeColor;
+      this.getEncodedChannelValue(scScale, d.data, strokeColorField) : strokeColor || color;
     return {
       data,
       labelCharacterSet,
@@ -275,7 +279,8 @@ export default class PointLayer extends Layer {
   }
   /* eslint-enable complexity */
 
-  updateLayerMeta(allData, getPosition) {
+  updateLayerMeta(allData) {
+    const getPosition = this.positionAccessor;
     const bounds = this.getPointsBounds(allData, d => getPosition({data: d}));
     this.updateMeta({bounds});
   }

@@ -73,7 +73,7 @@ function* generateColor() {
   }
 }
 
-const colorMaker = generateColor();
+export const colorMaker = generateColor();
 const defaultGetFieldValue = (field, d) => d[field.tableFieldIndex - 1];
 
 export default class Layer {
