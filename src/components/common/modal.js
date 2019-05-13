@@ -25,13 +25,14 @@ import styled from 'styled-components';
 import Modal from 'react-modal';
 import {Delete} from 'components/common/icons';
 import {Button} from 'components/common/styled-components';
+import {media} from 'styles/media-breakpoints';
 
 const ModalContentWrapper = styled.div`
-  height: 70vh;
   overflow-y: scroll;
   max-width: 960px;
-  padding: 24px 24px 40px;
-  position: absolute;
+  max-height: 70vh;
+  padding: 24px 72px 40px;
+  position: relative;
   top: 92px;
   left: 0;
   right: 0;
@@ -39,22 +40,18 @@ const ModalContentWrapper = styled.div`
   background-color: #ffffff;
   border-radius: 4px;
   transition: ${props => props.theme.transition};
-  min-width: 600px;
   box-sizing: border-box;
   font-size: 12px;
   color: ${props => props.theme.labelColorLT};
   ${props => props.cssStyle || ''};
+  ${media.portable`
+    padding: 12px 36px 24px;
+  `}
 `;
 
-const CloseButton = styled.div`
-  color: ${props => props.theme.titleColorLT};
-  display: flex;
-  justify-content: flex-end;
-  z-index: 10005;
-
-  :hover {
-    cursor: pointer;
-  }
+const ModalContent = styled.div`
+  position: relative;
+  z-index: 10002;
 `;
 
 export const ModalTitle = styled.div`
@@ -72,13 +69,29 @@ const StyledModalFooter = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding-top: 36px;
+  padding-top: 24px;
+  ${media.portable`
+    padding-top: 24px;  
+  `};
+  
+  ${media.palm`
+    padding-top: 16px;
+  `};
   z-index: 10001;
 `;
 
-const ModalContent = styled.div`
-  position: relative;
-  z-index: 10002;
+const CloseButton = styled.div`
+  color: ${props => props.theme.titleColorLT};
+  display: flex;
+  justify-content: flex-end;
+  z-index: 10005;
+  position: absolute;
+  top: 24px;
+  right: 24px;
+
+  :hover {
+    cursor: pointer;
+  }
 `;
 
 const FooterActionWrapper = styled.div`
@@ -154,15 +167,13 @@ class ModalDialog extends Component {
           overlay: {
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
             zIndex: 10000,
-            // overflowY: 'auto',
-            // position: 'absolute',
             // in case we want to override the modal dialog style
             ...props.style
           }
         }}
       >
         <ModalContentWrapper
-          className="modal--content"
+          className="modal--wrapper"
           cssStyle={props.cssStyle}
           footer={props.footer}
         >
@@ -171,11 +182,11 @@ class ModalDialog extends Component {
               <Delete height="14px" />
             </CloseButton>
           )}
-          <div style={{padding: '0px 72px'}}>
+          <div>
             {props.title && (
               <ModalTitle className="modal--title">{props.title}</ModalTitle>
             )}
-            <ModalContent className="content">{props.children}</ModalContent>
+            <ModalContent className="modal--body">{props.children}</ModalContent>
             {props.footer && (
               <ModalFooter
                 cancel={props.close}
@@ -197,15 +208,21 @@ const StyledModal = styled(ModalDialog)`
   left: 0;
   z-index: 10000;
   transition: ${props => props.theme.transition};
+  padding-left: 40px;
+  padding-right: 40px; 
+
+  ${media.portable`
+    padding-left: 24px;
+    padding-right: 24px; 
+  `};
+  
+  ${media.palm`
+    padding-left: 0;
+    padding-right: 0;
+  `};
 
   :focus {
     outline: 0
-  }
-  
-  .modal--content {
-    overflow-y: scroll;
-    max-width: 50vw;
-    max-height: 70vh;
   }
 `;
 

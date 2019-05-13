@@ -20,6 +20,7 @@
 
 import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
+import {media} from 'styles/media-breakpoints';
 
 export const SelectText = styled.span`
   color: ${props => props.theme.labelColor};
@@ -345,9 +346,14 @@ export const StyledModalContent = styled.div`
   display: flex;
   flex-direction: row;
   font-size: 10px;
-  margin: 0 -96px;
-  padding: 30px 96px;
+  padding: 24px ${props => props.theme.modalLateralPadding};
+  margin: 0 -${props => props.theme.modalLateralPadding};
   justify-content: space-between;
+  ${media.portable`
+    flex-direction: column;
+    padding: 16px ${props => props.theme.modalPortableLateralPadding};
+    margin: 0 -${props => props.theme.modalPortableLateralPadding};
+  `};
 `;
 
 /**
