@@ -34,7 +34,6 @@ export const gridVisConfigs = {
   percentile: 'percentile',
   elevationPercentile: 'elevationPercentile',
   elevationScale: 'elevationScale',
-  'hi-precision': 'hi-precision',
   colorAggregation: 'aggregation',
   sizeAggregation: 'sizeAggregation',
   enable3d: 'enable3d'
@@ -122,7 +121,6 @@ export default class GridLayer extends AggregationLayer {
         parameters: {depthTest: Boolean(visConfig.enable3d || mapState.dragRotate)},
 
         // render
-        fp64: visConfig['hi-precision'],
         pickable: true,
         lightSettings: this.meta && this.meta.lightSettings,
 

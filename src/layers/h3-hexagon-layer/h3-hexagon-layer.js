@@ -41,8 +41,7 @@ export const HexagonIdVisConfigs = {
   coverage: 'coverage',
   sizeRange: 'elevationRange',
   coverageRange: 'coverageRange',
-  elevationScale: 'elevationScale',
-  'hi-precision': 'hi-precision'
+  elevationScale: 'elevationScale'
 };
 
 function hexToRgb(hex) {

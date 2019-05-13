@@ -27,7 +27,6 @@ import Slider from 'components/common/slider/slider';
 import {Input} from 'components/common/styled-components';
 
 import {roundValToStep} from 'utils/data-utils';
-import {generateHashId} from 'utils/utils';
 
 const SliderInput = styled(Input)`
   height: ${props => props.theme.sliderInputHeight}px;
@@ -156,8 +155,8 @@ export default class RangeSlider extends Component {
         ref={comp => {
           this[`input-${key}`] = comp;
         }}
+        id={`slider-input-${key}`}
         key={key}
-        id={`slider-${generateHashId()}-${key}`}
         value={this.state[key]}
         onChange={e => {
           this.setState({[key]: e.target.value});

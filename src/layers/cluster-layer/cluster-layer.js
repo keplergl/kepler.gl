@@ -30,7 +30,6 @@ export const clusterVisConfigs = {
   clusterRadius: 'clusterRadius',
   colorRange: 'colorRange',
   radiusRange: 'clusterRadiusRange',
-  'hi-precision': 'hi-precision',
   colorAggregation: 'aggregation'
 };
 
@@ -88,7 +87,6 @@ export default class ClusterLayer extends AggregationLayer {
         autoHighlight: true,
         highlightColor: this.config.highlightColor,
         opacity: visConfig.opacity,
-        fp64: visConfig['hi-precision'],
         lightSettings: this.meta.lightSettings,
         zoom: mapState.zoom,
 

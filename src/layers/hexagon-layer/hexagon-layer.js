@@ -36,7 +36,6 @@ export const hexagonVisConfigs = {
   percentile: 'percentile',
   elevationPercentile: 'elevationPercentile',
   elevationScale: 'elevationScale',
-  'hi-precision': 'hi-precision',
   colorAggregation: 'aggregation',
   sizeAggregation: 'sizeAggregation',
   enable3d: 'enable3d'
@@ -107,7 +106,6 @@ export default class HexagonLayer extends AggregationLayer {
         elevationUpperPercentile: visConfig.elevationPercentile[1],
 
         // render
-        fp64: visConfig['hi-precision'],
         pickable: true,
         lightSettings: this.meta.lightSettings,
         // callbacks

@@ -91,7 +91,6 @@ export default class LineLayer extends ArcLayer {
         getColor: data.getSourceColor,
         id: this.id,
         idx,
-        fp64: this.config.visConfig['hi-precision'],
         opacity: this.config.visConfig.opacity,
         strokeScale: this.config.visConfig.thickness,
         // parameters

@@ -265,6 +265,7 @@ export const LAYER_VIS_CONFIGS = {
     group: PROPERTY_GROUPS.radius,
     property: 'coverageRange'
   },
+  // hi precision is deprecated by deck.gl
   'hi-precision': {
     type: 'boolean',
     defaultValue: false,
