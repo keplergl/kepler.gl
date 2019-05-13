@@ -199,8 +199,7 @@
   "peerDependencies": {
     "react": "16.x",
     "react-dom": "16.x",
-    "styled-components": "^4.x",
-    "react-redux": "^5.X"
+    "styled-components": "^4.x"
   },
   "nyc": {
     "sourceMap": false,
