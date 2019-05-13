@@ -21,8 +21,9 @@
 import pick from 'lodash.pick';
 import {VERSIONS} from './versions';
 import {isValidFilterValue} from 'utils/filter-utils';
-
+import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
 import Schema from './schema';
+import cloneDeep from 'lodash.clonedeep';
 
 /**
  * V0 Schema
@@ -98,6 +99,7 @@ class DimensionScaleSchemaV0 extends Schema {
     return {[this.key]: scale};
   }
   load(scale, parents, accumulated) {
+    const [config] = parents.slice(-1);
     // fold into visualChannels to be load by VisualChannelSchemaV1
     if (this.key === 'sizeScale' && config.type === 'geojson') {
       // sizeScale now split into radiusScale, heightScale
@@ -299,7 +301,7 @@ class TextLabelSchemaV1 extends Schema {
         ...textLabel,
         field: textLabel.field ? pick(textLabel.field, ['name', 'type']) : null
       }
-    }
+    };
   }
 
   load(textLabel) {
@@ -307,6 +309,45 @@ class TextLabelSchemaV1 extends Schema {
   }
 }
 
+const visualChannelModificationV1 = {
+  point: (vc, parents, accumulator) => {
+    const [layer] = parents.slice(-1);
+
+    if (
+      layer.config.visConfig.outline &&
+      vc.colorField &&
+      !vc.hasOwnProperty('strokeColorField')
+    ) {
+      // point layer now supports both outline and fill
+      // for older schema where filled has not been added to point layer
+      // copy colorField, colorScale to strokeColorField, and strokeColorScale
+      return {
+        strokeColorField: vc.colorField,
+        strokeColorScale: vc.colorScale,
+        colorField: null,
+        colorScale: 'quantile'
+      };
+    }
+    return {};
+  },
+  geojson: (vc, parents, accumulator) => {
+    const [layer] = parents.slice(-1);
+    const isOld = !vc.hasOwnProperty('strokeColorField');
+    // make our best guess if this geojson layer contains point
+    const isPoint =
+      vc.radiusField ||
+      layer.config.visConfig.radius !== LAYER_VIS_CONFIGS.radius.defaultValue;
+
+    if (isOld && !isPoint && layer.config.visConfig.stroked) {
+      // if stroked is true, copy color config to stroke color config
+      return {
+        strokeColorField: vc.colorField,
+        strokeColorScale: vc.colorScale
+      };
+    }
+    return {};
+  }
+};
 /**
  * V1: save [field]: {name, type}, [scale]: '' for each channel
  */
@@ -331,53 +372,79 @@ class VisualChannelSchemaV1 extends Schema {
   load(vc, parents, accumulator) {
     // fold channels into config
     const [layer] = parents.slice(-1);
-    let modify = {};
-    if (layer.type === 'point' && layer.config.visConfig.outline && vc.colorField
-    && !vc.hasOwnProperty('strokeColorField')
-    ) {
-      // point layer now supports both outline and fill
-      // for older schema where filled has not been added to point layer
-      // copy colorField, colorScale to strokeColorField, and strokeColorScale
-      modify = {
-        strokeColorField: vc.colorField,
-        strokeColorScale: vc.colorScale,
-        colorField: null,
-        colorScale: 'quantile'
-      };
-    }
+    const modified = visualChannelModificationV1[layer.type]
+      ? visualChannelModificationV1[layer.type](vc, parents, accumulator)
+      : {};
+
     return {
       ...accumulator,
       config: {
         ...(accumulator.config || {}),
         ...vc,
-        ...modify
+        ...modified
       }
     };
   }
 }
+const visConfigModificationV1 = {
+  point: (visConfig, parents, accumulated) => {
+    const modified = {};
+    const [layer] = parents.slice(-2, -1);
+    const isOld = !visConfig.hasOwnProperty('filled') &&
+    !visConfig.strokeColor && !visConfig.strokeColorRange;
+    if (isOld) {
+      // color color & color range to stroke color
+      modified.strokeColor = layer.config.color;
+      modified.strokeColorRange = cloneDeep(visConfig.colorRange);
+      if (visConfig.outline) {
+        // point layer now supports both outline and fill
+        // for older schema where filled has not been added to point layer
+        // set it to false
+        modified.filled = false;
+      }
+    }
+
+    return modified;
+  },
+  geojson: (visConfig, parents, accumulated) => {
+    // is points?
+    const modified = {};
+    const [layer] = parents.slice(-2, -1);
+    const isOld = !layer.visualChannels.hasOwnProperty('strokeColorField') &&
+      !visConfig.strokeColor && !visConfig.strokeColorRange;
+    // make our best guess if this geojson layer contains point
+    const isPoint =
+      layer.visualChannels.radiusField ||
+      visConfig.radius !== LAYER_VIS_CONFIGS.radius.defaultValue;
+
+    if (isOld) {
+      // color color & color range to stroke color
+      modified.strokeColor = layer.config.color;
+      modified.strokeColorRange = cloneDeep(visConfig.colorRange);
+      if (isPoint) {
+        // if is point, set stroke to false
+        modified.filled = true;
+        modified.stroked = false;
+      }
+    }
+
+    return modified;
+  }
+};
 
 class VisConfigSchemaV1 extends Schema {
   key = 'visConfig';
 
   load(visConfig, parents, accumulated) {
     const [layer] = parents.slice(-2, -1);
-    console.log(this.key);
-    // fold into visualChannels to be load by VisualChannelSchemaV1
-    const modify = {};
-    if (layer.type === 'point' &&
-      visConfig.outline &&
-      !visConfig.hasOwnProperty('filled')
-    ) {
-      // point layer now supports both outline and fill
-      // for older schema where filled has not been added to point layer
-      // set it to false
-      modify.filled = false;
-    }
+    const modified = visConfigModificationV1[layer.type]
+      ? visConfigModificationV1[layer.type](visConfig, parents, accumulated)
+      : {};
 
     return {
       visConfig: {
         ...visConfig,
-        ...modify
+        ...modified
       }
     };
   }
@@ -446,10 +513,7 @@ class FilterSchemaV0 extends Schema {
     return {
       filters: filters
         .filter(isValidFilterValue)
-        .map(
-          filter =>
-            this.savePropertiesOrApplySchema(filter).filters
-        )
+        .map(filter => this.savePropertiesOrApplySchema(filter).filters)
     };
   }
   load(filters) {

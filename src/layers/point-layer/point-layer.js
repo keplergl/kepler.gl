@@ -18,18 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import Layer from '../base-layer';
 import memoize from 'lodash.memoize';
-import {TextLayer} from 'deck.gl';
-import ScatterplotBrushingLayer from 'deckgl-layers/scatterplot-brushing-layer/scatterplot-brushing-layer';
 import uniq from 'lodash.uniq';
+import {TextLayer} from 'deck.gl';
+
+import Layer from '../base-layer';
+import ScatterplotBrushingLayer from 'deckgl-layers/scatterplot-brushing-layer/scatterplot-brushing-layer';
 import {hexToRgb} from 'utils/color-utils';
 import PointLayerIcon from './point-layer-icon';
 import {DEFAULT_LAYER_COLOR, CHANNEL_SCALES} from 'constants/default-settings';
 
 export const pointPosAccessor = ({lat, lng, altitude}) => d => [
+  // lng
   d.data[lng.fieldIdx],
+  // lat
   d.data[lat.fieldIdx],
+  // altitude
   altitude && altitude.fieldIdx > -1 ? d.data[altitude.fieldIdx] : 0
 ];
 
@@ -113,12 +117,12 @@ export default class PointLayer extends Layer {
         range: 'radiusRange',
         property: 'radius',
         channelScaleType: 'radius'
-      },
+      }
 
     };
   }
 
-  get positionAccessor() {
+  getPositionAccessor() {
     return this.getPosition(this.config.columns);
   }
 
@@ -146,7 +150,6 @@ export default class PointLayer extends Layer {
         prop.isVisible = true;
       }
 
-      // const newLayer = new KeplerGlLayers.PointLayer(prop);
       prop.columns = {
         lat: latField,
         lng: lngField,
@@ -181,7 +184,6 @@ export default class PointLayer extends Layer {
       strokeColorScale,
       strokeColorDomain,
       color,
-      columns,
       sizeField,
       sizeScale,
       sizeDomain,
@@ -212,7 +214,7 @@ export default class PointLayer extends Layer {
       sizeField &&
       this.getVisChannelScale(sizeScale, sizeDomain, radiusRange, fixedRadius);
 
-    const getPosition = this.positionAccessor;
+    const getPosition = this.getPositionAccessor();
 
     if (!oldLayerData || oldLayerData.getPosition !== getPosition) {
       this.updateLayerMeta(allData, getPosition);
@@ -280,7 +282,7 @@ export default class PointLayer extends Layer {
   /* eslint-enable complexity */
 
   updateLayerMeta(allData) {
-    const getPosition = this.positionAccessor;
+    const getPosition = this.getPositionAccessor();
     const bounds = this.getPointsBounds(allData, d => getPosition({data: d}));
     this.updateMeta({bounds});
   }
@@ -330,6 +332,9 @@ export default class PointLayer extends Layer {
         },
 
         updateTriggers: {
+          getPosition: {
+            columns: this.config.columns
+          },
           getRadius: {
             sizeField: this.config.sizeField,
             radiusRange: this.config.visConfig.radiusRange,
@@ -347,6 +352,9 @@ export default class PointLayer extends Layer {
             colorField: this.config.strokeColorField,
             colorRange: this.config.visConfig.strokeColorRange,
             colorScale: this.config.strokeColorScale
+          },
+          getText: {
+            textLabel: this.config.textLabel
           }
         }
       }),

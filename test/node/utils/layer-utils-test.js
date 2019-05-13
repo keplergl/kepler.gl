@@ -25,10 +25,17 @@ import {findPointFieldPairs} from 'utils/dataset-utils';
 import {processCsvData} from 'processors/data-processor';
 import {GEOJSON_FIELDS} from 'constants/default-settings';
 import {KeplerGlLayers} from 'layers';
-const {PointLayer, ArcLayer, GeojsonLayer, GridLayer, LineLayer} = KeplerGlLayers;
+
+const {
+  PointLayer,
+  ArcLayer,
+  GeojsonLayer,
+  LineLayer
+} = KeplerGlLayers;
 
 import {wktCsv} from 'test/fixtures/test-csv-data';
 import {cmpLayers} from 'test/helpers/comparison-utils';
+import {getNextColorMakerValue} from 'test/helpers/layer-utils';
 
 test('layerUtils -> findDefaultLayer.1', t => {
   const inputFields = [
@@ -235,7 +242,10 @@ test('layerUtils -> findDefaultLayer.1', t => {
   ];
 
   const fieldPairs = findPointFieldPairs(inputFields);
-  const layers = findDefaultLayer({fields: inputFields, fieldPairs, id: dataId}, KeplerGlLayers);
+  const layers = findDefaultLayer(
+    {fields: inputFields, fieldPairs, id: dataId},
+    KeplerGlLayers
+  );
 
   t.equal(layers.length, outputLayers.length, 'number of layers found');
 
@@ -245,7 +255,6 @@ test('layerUtils -> findDefaultLayer.1', t => {
 });
 
 test('layerUtils -> findDefaultLayer.2', t => {
-
   const inputFields = [
     // layer 1
     {
@@ -260,27 +269,43 @@ test('layerUtils -> findDefaultLayer.2', t => {
     id: dataId,
     fields: inputFields,
     fieldPairs,
-    label: 'sf_zip_geo'
+    label: 'sf_zip_geo',
+    allData: [
+      [
+        {
+          type: 'Feature',
+          properties: {index: 0},
+          geometry: {type: 'Point', coordinates: []}
+        }
+      ],
+      [
+        {
+          type: 'Feature',
+          properties: {index: 1},
+          geometry: {type: 'Point', coordinates: []}
+        }
+      ]
+    ]
   };
 
-  const outputLayers = [
-    new GeojsonLayer({
-      label: 'sf_zip_geo',
-      isVisible: true,
-      dataId,
-      columns: {
-        geojson: {
-          value: 'all_points',
-          fieldIdx: 0
-        }
+  const expected = new GeojsonLayer({
+    label: 'sf_zip_geo',
+    isVisible: true,
+    dataId,
+    columns: {
+      geojson: {
+        value: 'all_points',
+        fieldIdx: 0
       }
-    })
-  ];
+    }
+  });
+
+  expected.updateLayerVisConfig({filled: true, stroked: false});
 
   const layers = findDefaultLayer(dataset, KeplerGlLayers);
 
   t.equal(layers.length, 1, 'number of layers found');
-  cmpLayers(t, outputLayers[0], layers[0]);
+  cmpLayers(t, expected, layers[0]);
 
   t.end();
 });
@@ -324,7 +349,10 @@ test('layerUtils -> findDefaultLayer.3', t => {
   ];
 
   const fieldPairs = findPointFieldPairs(inputFields);
-  const layers = findDefaultLayer({fields: inputFields, fieldPairs, id: dataId}, KeplerGlLayers);
+  const layers = findDefaultLayer(
+    {fields: inputFields, fieldPairs, id: dataId},
+    KeplerGlLayers
+  );
 
   t.equal(layers.length, 1, 'number of layers found');
   layers.forEach((l, i) => cmpLayers(t, outputLayers[i], l));
@@ -333,7 +361,6 @@ test('layerUtils -> findDefaultLayer.3', t => {
 });
 
 test('layerUtils -> findDefaultLayer.4', t => {
-
   // Since all defaults layers are scanned and they
   // share field names or patterns.  This set produces
   // multiple layers.
@@ -448,7 +475,10 @@ test('layerUtils -> findDefaultLayer.4', t => {
   ];
 
   const fieldPairs = findPointFieldPairs(inputFields);
-  const layers = findDefaultLayer({fields: inputFields, fieldPairs, id: dataId}, KeplerGlLayers);
+  const layers = findDefaultLayer(
+    {fields: inputFields, fieldPairs, id: dataId},
+    KeplerGlLayers
+  );
 
   t.equal(layers.length, outputLayers.length, 'number of layers found');
   layers.forEach((l, i) => cmpLayers(t, outputLayers[i], l));
@@ -457,7 +487,6 @@ test('layerUtils -> findDefaultLayer.4', t => {
 });
 
 test('layerUtils -> findDefaultLayer.5', t => {
-
   const inputFields = [
     // layer 1
     {
@@ -471,7 +500,10 @@ test('layerUtils -> findDefaultLayer.5', t => {
   ];
 
   const fieldPairs = findPointFieldPairs(inputFields);
-  const layers = findDefaultLayer({fields: inputFields, fieldPairs, id: 'yo'}, KeplerGlLayers);
+  const layers = findDefaultLayer(
+    {fields: inputFields, fieldPairs, id: 'yo'},
+    KeplerGlLayers
+  );
 
   t.equal(layers.length, 0, 'number of layers found');
 
@@ -479,120 +511,167 @@ test('layerUtils -> findDefaultLayer.5', t => {
 });
 
 test('layerUtils -> findDefaultLayer:GeojsonLayer', t => {
-  const fields = [{
-    name: 'random',
-    tableFieldIndex: 1
-  }, {
-    name: 'begintrip_lng',
-    tableFieldIndex: 2
-  }, {
-    name: 'cool',
-    tableFieldIndex: 3
-  }, {
-    name: 'dropoff_lng',
-    tableFieldIndex: 4
-  }, {
-    name: GEOJSON_FIELDS.geojson[0],
-    tableFieldIndex: 5
-  }, {
-    name: GEOJSON_FIELDS.geojson[1],
-    tableFieldIndex: 6
-  }];
-
-  const geojsonLayers = findDefaultLayer({
-    fields,
-    label: 'what',
-    id: 'smoothie',
-    fieldPairs: []
-  }, KeplerGlLayers);
-
-  const expectedGeojsonLayers = [
-    new GeojsonLayer({
-      label: 'what',
-      dataId: 'smoothie',
-      isVisible: true,
-      columns: {
-        geojson: {value: GEOJSON_FIELDS.geojson[0], fieldIdx: 4}
-      }
-    }),
-    new GeojsonLayer({
-      label: 'what',
-      dataId: 'smoothie',
-      isVisible: true,
-      columns: {
-        geojson: {value: GEOJSON_FIELDS.geojson[1], fieldIdx: 5}
-      }
-    })
+  const fields = [
+    {
+      name: 'random',
+      tableFieldIndex: 1
+    },
+    {
+      name: 'begintrip_lng',
+      tableFieldIndex: 2
+    },
+    {
+      name: 'cool',
+      tableFieldIndex: 3
+    },
+    {
+      name: 'dropoff_lng',
+      tableFieldIndex: 4
+    },
+    {
+      name: GEOJSON_FIELDS.geojson[0],
+      tableFieldIndex: 5
+    },
+    {
+      name: GEOJSON_FIELDS.geojson[1],
+      tableFieldIndex: 6
+    }
   ];
+  const expected1 = new GeojsonLayer({
+    label: 'what',
+    dataId: 'smoothie',
+    isVisible: true,
+    columns: {
+      geojson: {value: GEOJSON_FIELDS.geojson[0], fieldIdx: 4}
+    }
+  });
+  const expected2 = new GeojsonLayer({
+    label: 'what',
+    dataId: 'smoothie',
+    isVisible: true,
+    columns: {
+      geojson: {value: GEOJSON_FIELDS.geojson[1], fieldIdx: 5}
+    }
+  });
 
-  cmpLayers(t, expectedGeojsonLayers, geojsonLayers);
+  const [layer1Color, layer2Color, layer2Stroke] = getNextColorMakerValue(3);
+  expected1.updateLayerVisConfig({filled: true, stroked: false});
+  expected2.updateLayerVisConfig({filled: true, stroked: true, strokeColor: layer2Stroke});
+
+  const geojsonLayers = findDefaultLayer(
+    {
+      fields,
+      label: 'what',
+      id: 'smoothie',
+      fieldPairs: [],
+      allData: [
+        [
+          0,
+          1,
+          2,
+          3,
+          {
+            type: 'Feature',
+            properties: {index: 0},
+            geometry: {type: 'Point', coordinates: []}
+          },
+          {
+            type: 'Feature',
+            properties: {index: 0},
+            geometry: {type: 'Polygon', coordinates: []}
+          }
+        ]
+      ]
+    },
+    KeplerGlLayers
+  );
+
+  cmpLayers(t, [expected1, expected2], geojsonLayers);
   t.end();
 });
 
 test('layerUtils -> findDefaultLayer:GeojsonLayer.wkt', t => {
-  const {fields} = processCsvData(wktCsv);
+  const {fields, rows} = processCsvData(wktCsv);
   const dataId = '0dj3h';
   const label = 'some geometry file';
 
-  const geojsonLayers = findDefaultLayer({fields, id: dataId, label, fieldPairs: []}, KeplerGlLayers);
+  const expected1 = new GeojsonLayer({
+    dataId: '0dj3h',
+    label: 'some geometry file',
+    isVisible: true,
+    columns: {
+      geojson: {value: 'simplified_shape_v2', fieldIdx: 1}
+    }
+  });
+  const expected2 = new GeojsonLayer({
+    dataId: '0dj3h',
+    label: 'some geometry file',
+    isVisible: true,
+    columns: {
+      geojson: {value: 'simplified_shape', fieldIdx: 2}
+    }
+  });
+  const [layer1Color, strokeColor1, layer2Color, strokeColor2] = getNextColorMakerValue(4);
+  expected1.updateLayerVisConfig({filled: true, stroked: true, strokeColor: strokeColor1});
+  expected2.updateLayerVisConfig({filled: true, stroked: true, strokeColor: strokeColor2});
 
-  const expectedLayers = [
-    new GeojsonLayer({
-      dataId: '0dj3h',
-      label: 'some geometry file',
-      isVisible: true,
-      columns: {
-        geojson: {value: 'simplified_shape_v2', fieldIdx: 1}
-      }
-    }),
-    new GeojsonLayer({
-      dataId: '0dj3h',
-      label: 'some geometry file',
-      isVisible: true,
-      columns: {
-        geojson: {value: 'simplified_shape', fieldIdx: 2}
-      }
-    })
-  ];
+  const geojsonLayers = findDefaultLayer(
+    {fields, id: dataId, label, fieldPairs: [], allData: rows},
+    KeplerGlLayers
+  );
 
-  cmpLayers(t, expectedLayers, geojsonLayers);
+  cmpLayers(t, [expected1, expected2], geojsonLayers);
   t.end();
 });
 
 test('layerUtils -> findDefaultLayer:IconLayer', t => {
-
-  const inputFields = [{
-    name: 'begintrip_lat',
-    tableFieldIndex: 1
-  }, {
-    name: 'begintrip_lng',
-    tableFieldIndex: 2
-  }, {
-    name: 'dropoff_lat',
-    tableFieldIndex: 3
-  }, {
-    name: 'dropoff_lng',
-    tableFieldIndex: 4
-  }];
+  const inputFields = [
+    {
+      name: 'begintrip_lat',
+      tableFieldIndex: 1
+    },
+    {
+      name: 'begintrip_lng',
+      tableFieldIndex: 2
+    },
+    {
+      name: 'dropoff_lat',
+      tableFieldIndex: 3
+    },
+    {
+      name: 'dropoff_lng',
+      tableFieldIndex: 4
+    }
+  ];
   const fieldPairs = findPointFieldPairs(inputFields);
 
   const eventIcon = [{name: 'event_icon', tableFieldIndex: 5}];
   const nameIcon = [{name: 'name.icon', tableFieldIndex: 5}];
 
-  t.equal(findDefaultLayer({
-      fields: inputFields,
-      fieldPairs,
-      id: 'meow'}, KeplerGlLayers
-    ).filter(l => l.type === 'icon').length, 0,
-    'should find no icon layer');
+  t.equal(
+    findDefaultLayer(
+      {
+        fields: inputFields,
+        fieldPairs,
+        id: 'meow',
+        allData: []
+      },
+      KeplerGlLayers
+    ).filter(l => l.type === 'icon').length,
+    0,
+    'should find no icon layer'
+  );
 
   const fieldsWithIcon = [...inputFields, ...eventIcon];
   const fieldPairsWIcon = findPointFieldPairs(fieldsWithIcon);
 
-  let iconLayers = findDefaultLayer({
-    fields: fieldsWithIcon,
-    fieldPairs: fieldPairsWIcon,
-    id: 'meow'}, KeplerGlLayers
+  let iconLayers = findDefaultLayer(
+    {
+      fields: fieldsWithIcon,
+      fieldPairs: fieldPairsWIcon,
+      id: 'meow'
+    },
+    KeplerGlLayers
   ).filter(l => l.type === 'icon');
 
   t.equal(iconLayers.length, 1, 'should find 1 icon layer');
@@ -601,10 +680,13 @@ test('layerUtils -> findDefaultLayer:IconLayer', t => {
   const fieldsWith2Icon = [...inputFields, ...nameIcon, ...eventIcon];
   const fieldPairsW2Icon = findPointFieldPairs(fieldsWith2Icon);
 
-  iconLayers = findDefaultLayer({
-    fields: fieldsWith2Icon,
-    fieldPairs: fieldPairsW2Icon,
-    id: 'meow'}, KeplerGlLayers
+  iconLayers = findDefaultLayer(
+    {
+      fields: fieldsWith2Icon,
+      fieldPairs: fieldPairsW2Icon,
+      id: 'meow'
+    },
+    KeplerGlLayers
   ).filter(l => l.type === 'icon');
 
   t.equal(iconLayers.length, 2, 'should find 2 icon layers');

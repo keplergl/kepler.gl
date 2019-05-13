@@ -117,7 +117,7 @@ class App extends Component {
     // }
 
     // load sample data
-    this._loadSampleData();
+    // this._loadSampleData();
 
     // Notifications
     // this._loadMockNotifications();
@@ -215,7 +215,6 @@ class App extends Component {
 
   _loadGeojsonData() {
     // load geojson
-    console.log(JSON.stringify(sampleGeojsonPoints, null, 1))
     this.props.dispatch(
       addDataToMap({
         datasets: [{

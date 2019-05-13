@@ -33,12 +33,6 @@ import {
 import GeojsonLayerIcon from './geojson-layer-icon';
 import {GEOJSON_FIELDS, HIGHLIGH_COLOR_3D, CHANNEL_SCALES} from 'constants/default-settings';
 
-// Disable breaking change from deck.gl 6.3->6.4 (added stroke to point features)
-// Remove when this is user-controlled
-const GEOJSON_SUBLAYER_OVERRIDE = {
-  //  points: {stroked: false, filled: true}
-};
-
 export const geojsonVisConfigs = {
   opacity: 'opacity',
   thickness: {
@@ -60,8 +54,6 @@ export const geojsonVisConfigs = {
   radiusRange: 'radiusRange',
   heightRange: 'elevationRange',
   elevationScale: 'elevationScale',
-
-  'hi-precision': 'hi-precision',
   stroked: 'stroked',
   filled: 'filled',
   enable3d: 'enable3d',
@@ -136,7 +128,7 @@ export default class GeoJsonLayer extends Layer {
     };
   }
 
-  get positionAccessor() {
+  getPositionAccessor() {
     return this.getFeature(this.config.columns);
   }
 
@@ -221,7 +213,7 @@ export default class GeoJsonLayer extends Layer {
       strokeColor
     } = visConfig;
 
-    const getFeature = this.featureAccessor;
+    const getFeature = this.getPositionAccessor(this.config.column);
 
     // geojson feature are object, if doesn't exists
     // create it and save to layer
@@ -332,8 +324,7 @@ export default class GeoJsonLayer extends Layer {
   /* eslint-enable complexity */
 
   updateLayerMeta(allData) {
-    console.log(this.id, 'updateLayerMeta')
-    const getFeature = this.positionAccessor;
+    const getFeature = this.getPositionAccessor();
     this.dataToFeature = getGeojsonDataMaps(allData, getFeature);
 
     // calculate layer meta
@@ -345,7 +336,7 @@ export default class GeoJsonLayer extends Layer {
     // get lightSettings from points
     const lightSettings = this.getLightSettingsFromBounds(bounds);
 
-    // if any of the feature has properties.hi-precision set to be true
+    // if any of the feature has properties.radius set to be true
     const fixedRadius = Boolean(
       allFeatures.find(d => d && d.properties && d.properties.radius)
     );
@@ -441,7 +432,6 @@ export default class GeoJsonLayer extends Layer {
         data: data.data,
         getFillColor: data.getFillColor,
         getLineColor: data.getLineColor,
-        // getLineColor: [255, 255, 0, 255],
         getLineWidth: data.getLineWidth,
         getRadius: data.getRadius,
         getElevation: data.getElevation,
@@ -459,9 +449,7 @@ export default class GeoJsonLayer extends Layer {
         lineMiterLimit: 2,
         rounded: true,
         lightSettings,
-        updateTriggers,
-
-        _subLayerProps: GEOJSON_SUBLAYER_OVERRIDE
+        updateTriggers
       }),
       ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d
         ? [
@@ -477,8 +465,7 @@ export default class GeoJsonLayer extends Layer {
               updateTriggers,
               stroked: true,
               pickable: false,
-              filled: false,
-              _subLayerProps: GEOJSON_SUBLAYER_OVERRIDE
+              filled: false
             })
           ]
         : [])

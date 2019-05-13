@@ -1,4 +1,3 @@
-/* eslint-disable complexity */
 // Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+/* eslint-disable complexity */import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
@@ -747,7 +746,7 @@ export const HowToButton = ({onClick}) => (
 );
 
 export const LayerColorSelector = ({layer, onChange, label, selectedColor, property = 'color'}) => (
-  <SidePanelSection disabled={layer.config.colorField}>
+  <SidePanelSection>
     <ColorSelector
       colorSets={[
         {

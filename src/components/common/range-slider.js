@@ -187,7 +187,8 @@ export default class RangeSlider extends Component {
       onChange,
       value0,
       value1,
-      sliderHandleWidth
+      sliderHandleWidth,
+      step
     } = this.props;
 
     const height = isRanged && showInput ? '16px' : '24px';
@@ -228,6 +229,7 @@ export default class RangeSlider extends Component {
             maxValue={range[1]}
             value0={value0}
             value1={value1}
+            step={step}
             handleWidth={sliderHandleWidth}
             onSlider0Change={this._setRangeVal0}
             onSlider1Change={this._setRangeVal1}

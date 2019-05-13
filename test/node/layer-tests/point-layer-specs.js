@@ -93,6 +93,7 @@ test('#PointLayer -> formatLayerData', t => {
       test: result => {
         const {layerData, layer} = result;
         const expectedLayerData = {
+          labelCharacterSet: [],
           data: [
             {
               data: rows[0]
@@ -105,13 +106,15 @@ test('#PointLayer -> formatLayerData', t => {
             }
           ],
           getPosition: () => {},
-          getColor: () => {},
-          getRadius: () => {}
+          getFillColor: () => {},
+          getLineColor: () => {},
+          getRadius: () => {},
+          getText: () => {}
         };
 
         t.deepEqual(
-          Object.keys(layerData),
-          ['data', 'labelCharacterSet', 'getPosition', 'getColor', 'getRadius', 'getText'],
+          Object.keys(layerData).sort(),
+          Object.keys(expectedLayerData).sort(),
           'layerData should have 6 keys'
         );
         t.deepEqual(
@@ -124,9 +127,9 @@ test('#PointLayer -> formatLayerData', t => {
           'should have getPosition accessor as function'
         );
         t.deepEqual(
-          layerData.getColor,
+          layerData.getFillColor,
           layer.config.color,
-          'getColor should be a constant'
+          'getFillColor should be a constant'
         );
         t.deepEqual(
           layerData.getRadius,
@@ -191,8 +194,10 @@ test('#PointLayer -> formatLayerData', t => {
             }
           ],
           getPosition: () => {},
-          getColor: () => {},
-          getRadius: () => {}
+          getLineColor: () => {},
+          getFillColor: () => {},
+          getRadius: () => {},
+          getText: () => {}
         };
         t.deepEqual(
           layer.config.colorDomain,
@@ -200,8 +205,8 @@ test('#PointLayer -> formatLayerData', t => {
           'should update layer color domain'
         );
         t.deepEqual(
-          Object.keys(layerData),
-          ['data', 'labelCharacterSet', 'getPosition', 'getColor', 'getRadius', 'getText'],
+          Object.keys(layerData).sort,
+          Object.keys(expectedLayerData).sort,
           'layerData should have 6 keys'
         );
         t.deepEqual(
@@ -210,10 +215,10 @@ test('#PointLayer -> formatLayerData', t => {
           'should filter out nulls, format correct point layerData'
         );
         t.ok(
-          ['getPosition', 'getColor', 'getRadius'].every(
+          ['getPosition', 'getFillColor', 'getRadius'].every(
             k => typeof layerData[k] === 'function'
           ),
-          'should have getPosition, getColor, getRadius accessor as function'
+          'should have getPosition, getFillColor, getRadius accessor as function'
         );
         t.deepEqual(
           layerData.getPosition(layerData.data[0]),
@@ -226,9 +231,9 @@ test('#PointLayer -> formatLayerData', t => {
           'should format correct grid layerData'
         );
         t.deepEqual(
-          layerData.getColor(layerData.data[0]),
+          layerData.getFillColor(layerData.data[0]),
           [90, 24, 70],
-          'getColor should return correct lat lng'
+          'getColor should return correct color'
         );
         t.equal(
           layerData.getRadius(layerData.data[0]),

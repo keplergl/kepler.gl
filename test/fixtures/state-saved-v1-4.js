@@ -221,10 +221,13 @@ mergedLayer0.config = {
   },
   isVisible: true,
   colorField: null,
+  colorScale: 'quantile',
   colorDomain: [0, 1],
+  strokeColorField: null,
+  strokeColorScale: 'quantile',
+  strokeColorDomain: [0, 1],
   highlightColor: [252, 242, 26, 255],
   isConfigActive: false,
-  colorScale: 'quantile',
   sizeField: null,
   sizeDomain: [0, 1],
   sizeScale: 'linear',
@@ -260,9 +263,23 @@ mergedLayer0.config = {
         '#FFC300'
       ]
     },
-    radiusRange: [0, 50],
-    'hi-precision': false
-  },
+    filled: true,
+    strokeColorRange: {
+      name: 'Global Warming',
+      type: 'sequential',
+      category: 'Uber',
+      colors: [
+        '#5A1846',
+        '#900C3F',
+        '#C70039',
+        '#E3611C',
+        '#F1920E',
+        '#FFC300'
+      ]
+    },
+    strokeColor: [23, 184, 190, 255],
+    radiusRange: [0, 50]
+  }
 };
 
 export const mergedLayers = [mergedLayer0];

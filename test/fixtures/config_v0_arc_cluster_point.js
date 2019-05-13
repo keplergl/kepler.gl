@@ -433,6 +433,20 @@ export const parsedConfigV0 = {
                 '#FFC300'
               ]
             },
+            strokeColorRange: {
+              name: 'Global Warming',
+              type: 'sequential',
+              category: 'Uber',
+              colors: [
+                '#5A1846',
+                '#900C3F',
+                '#C70039',
+                '#E3611C',
+                '#F1920E',
+                '#FFC300'
+              ]
+            },
+            strokeColor: [218, 112, 191],
             radiusRange: [0, 50],
             'hi-precision': false
           }
@@ -474,6 +488,20 @@ export const parsedConfigV0 = {
                 '#FFC300'
               ]
             },
+            strokeColor: [255, 153, 31],
+            strokeColorRange: {
+              name: 'Global Warming',
+              type: 'sequential',
+              category: 'Uber',
+              colors: [
+                '#5A1846',
+                '#900C3F',
+                '#C70039',
+                '#E3611C',
+                '#F1920E',
+                '#FFC300'
+              ]
+            },
             radiusRange: [0, 50],
             'hi-precision': false
           }
@@ -503,6 +531,20 @@ export const parsedConfigV0 = {
             outline: false,
             thickness: 2,
             colorRange: {
+              name: 'Global Warming',
+              type: 'sequential',
+              category: 'Uber',
+              colors: [
+                '#5A1846',
+                '#900C3F',
+                '#C70039',
+                '#E3611C',
+                '#F1920E',
+                '#FFC300'
+              ]
+            },
+            strokeColor: [130, 154, 227],
+            strokeColorRange: {
               name: 'Global Warming',
               type: 'sequential',
               category: 'Uber',

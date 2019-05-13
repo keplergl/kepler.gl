@@ -335,7 +335,7 @@ test('VisStateMerger.v1 -> mergeLayers -> toEmptyState', t => {
   const stateWData = visStateReducer(mergedState, updateVisData(parsedData));
 
   // test parsed layers
-  cmpLayers(t, mergedLayersV1, stateWData.layers, {id: true});
+  cmpLayers(t, mergedLayersV1, stateWData.layers, {id: true, color: true});
   t.end();
 });
 

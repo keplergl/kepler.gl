@@ -113,7 +113,7 @@ export const savedConfigV0 = {
   }
 };
 
-export const parsecConfigV0 = {
+export const parsedConfigV0 = {
   visState: {
     filters: [],
     layers: [
@@ -149,6 +149,21 @@ export const parsecConfigV0 = {
               ],
               reversed: false
             },
+            strokeColorRange: {
+              name: 'ColorBrewer Dark2-6',
+              type: 'qualitative',
+              category: 'ColorBrewer',
+              colors: [
+                '#1b9e77',
+                '#d95f02',
+                '#7570b3',
+                '#e7298a',
+                '#66a61e',
+                '#e6ab02'
+              ],
+              reversed: false
+            },
+            strokeColor: [174, 14, 127],
             opacity: 0.8,
             thickness: 2,
             radius: 15.8,

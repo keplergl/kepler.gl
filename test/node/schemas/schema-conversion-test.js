@@ -35,7 +35,7 @@ import {
 
 import {
   savedConfigV0 as savedConfig2,
-  parsecConfigV0 as parsedConfig2
+  parsedConfigV0 as parsedConfig2
 } from 'test/fixtures/config_v0_geojson_point';
 
 import {

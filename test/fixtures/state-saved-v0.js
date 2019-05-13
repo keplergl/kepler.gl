@@ -1030,6 +1030,9 @@ mergedLayer0.config = {
   colorField: null,
   colorScale: 'quantile',
   colorDomain: [0, 1],
+  strokeColorField: null,
+  strokeColorScale: 'quantile',
+  strokeColorDomain: [0, 1],
   sizeField: null,
   sizeScale: 'linear',
   sizeDomain: [0, 1],
@@ -1044,6 +1047,7 @@ mergedLayer0.config = {
     radius: 270.4,
     opacity: 0.8,
     outline: false,
+    filled: true,
     thickness: 2,
     fixedRadius: false,
     colorRange: {
@@ -1052,8 +1056,14 @@ mergedLayer0.config = {
       category: 'Uber',
       colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
     },
-    radiusRange: [1, 100],
-    'hi-precision': false
+    strokeColorRange: {
+      name: 'Global Warming',
+      type: 'sequential',
+      category: 'Uber',
+      colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
+    },
+    strokeColor: [76, 154, 78],
+    radiusRange: [1, 100]
   }
 };
 
@@ -1167,6 +1177,9 @@ mergedLayer2.config = {
   },
   colorScale: 'ordinal',
   colorDomain: ['2.103.2', '2.107.3', '2.116.2', '2.117.1', '3.68.4'],
+  strokeColorField: null,
+  strokeColorScale: 'quantile',
+  strokeColorDomain: [0, 1],
   sizeField: {
     name: 'int_range',
     format: '',
@@ -1187,6 +1200,7 @@ mergedLayer2.config = {
     radius: 10,
     opacity: 0.8,
     outline: false,
+    filled: true,
     thickness: 2,
     colorRange: {
       name: 'Sunrise',
@@ -1195,9 +1209,16 @@ mergedLayer2.config = {
       colors: ['#355C7D', '#6C5B7B', '#C06C84', '#F67280', '#F8B195'],
       reversed: false
     },
+    strokeColorRange: {
+      name: 'Sunrise',
+      type: 'sequential',
+      category: 'Uber',
+      colors: ['#355C7D', '#6C5B7B', '#C06C84', '#F67280', '#F8B195'],
+      reversed: false
+    },
+    strokeColor: [218, 112, 191],
     fixedRadius: false,
-    radiusRange: [1, 854.16],
-    'hi-precision': false
+    radiusRange: [1, 854.16]
   }
 };
 
@@ -1325,6 +1346,9 @@ mergedLayer4.config = {
   },
   colorScale: 'quantize',
   colorDomain: [94107, 94132],
+  strokeColorField: null,
+  strokeColorScale: 'quantile',
+  strokeColorDomain: [0, 1],
   sizeField: null,
   sizeScale: 'linear',
   sizeDomain: [0, 1],
@@ -1367,6 +1391,30 @@ mergedLayer4.config = {
       ],
       reversed: false
     },
+    strokeColorRange: {
+      name: 'Uber Viz Qualitative 3',
+      type: 'qualitative',
+      category: 'Uber',
+      colors: [
+        '#12939A',
+        '#DDB27C',
+        '#88572C',
+        '#FF991F',
+        '#F15C17',
+        '#223F9A',
+        '#DA70BF',
+        '#125C77',
+        '#4DC19C',
+        '#776E57',
+        '#17B8BE',
+        '#F6D18A',
+        '#B7885E',
+        '#FFCB99',
+        '#F89570'
+      ],
+      reversed: false
+    },
+    strokeColor: [255, 153, 31, 255],
     opacity: 0.8,
     thickness: 2,
     radius: 10,
@@ -1377,8 +1425,7 @@ mergedLayer4.config = {
     stroked: false,
     filled: true,
     enable3d: false,
-    wireframe: false,
-    'hi-precision': false
+    wireframe: false
   }
 };
 
