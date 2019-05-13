@@ -316,7 +316,6 @@ export const expectedSavedLayer0 = {
       percentile: [0, 100],
       elevationPercentile: [0, 100],
       elevationScale: 5,
-      'hi-precision': false,
       colorAggregation: 'count',
       sizeAggregation: 'count',
       enable3d: false
@@ -371,7 +370,6 @@ export const expectedLoadedLayer0 = {
       percentile: [0, 100],
       elevationPercentile: [0, 100],
       elevationScale: 5,
-      'hi-precision': false,
       colorAggregation: 'count',
       sizeAggregation: 'count',
       enable3d: false

@@ -379,6 +379,7 @@ test('VisStateMerger.v1.label -> mergeLayers -> toEmptyState', t => {
 test('VisStateMerger.v1.split -> mergeLayers -> toEmptyState', t => {
   const savedConfig = cloneDeep(savedStateV1Split);
   const parsedConfig = SchemaManager.parseSavedConfig(savedConfig.config);
+  const expectedConfig = mergedSplitMapsV1;
   const oldState = InitialState.toJS();
   const oldVisState = oldState.visState;
 
@@ -399,7 +400,7 @@ test('VisStateMerger.v1.split -> mergeLayers -> toEmptyState', t => {
     } else if (key === 'splitMaps') {
       t.deepEqual(
         mergedState.splitMaps,
-        mergedSplitMapsV1,
+        expectedConfig,
         'Should merge splitMaps'
       );
     } else if (key === 'interactionToBeMerged') {
@@ -425,7 +426,7 @@ test('VisStateMerger.v1.split -> mergeLayers -> toEmptyState', t => {
   // test split Maps
   t.deepEqual(
     stateWData.splitMaps,
-    mergedSplitMapsV1,
+    expectedConfig,
     'should merge splitMaps'
   );
 

@@ -1137,8 +1137,7 @@ mergedLayer1.config = {
       category: 'Uber',
       colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
     },
-    sizeRange: [0, 10],
-    'hi-precision': false
+    sizeRange: [0, 10]
   }
 };
 
@@ -1298,8 +1297,7 @@ mergedLayer3.config = {
     sizeRange: [0, 50],
     percentile: [0, 100],
     elevationPercentile: [0, 100],
-    elevationScale: 10,
-    'hi-precision': false
+    elevationScale: 10
   }
 };
 

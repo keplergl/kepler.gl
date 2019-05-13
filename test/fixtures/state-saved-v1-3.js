@@ -233,8 +233,7 @@ export const savedStateV1 = {
                   ],
                   reversed: true
                 },
-                radiusRange: [0, 50],
-                'hi-precision': false
+                radiusRange: [0, 50]
               }
             },
             visualChannels: {
@@ -275,7 +274,6 @@ export const savedStateV1 = {
                 percentile: [0, 96.54],
                 elevationPercentile: [0, 100],
                 elevationScale: 5,
-                'hi-precision': false,
                 colorAggregation: 'average',
                 sizeAggregation: 'average',
                 enable3d: false
@@ -495,7 +493,6 @@ mergedLayer1.config = {
     percentile: [0, 96.54],
     elevationPercentile: [0, 100],
     elevationScale: 5,
-    'hi-precision': false,
     colorAggregation: 'average',
     sizeAggregation: 'average',
     enable3d: false
