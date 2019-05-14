@@ -72,7 +72,7 @@ export default class PointLayer extends Layer {
 
     this.registerVisConfig(pointVisConfigs);
     this.getPosition = memoize(pointPosAccessor, pointPosResolver);
-    this.getText = memoize(pointLabelAccessor, pointLabelResolver);
+    this.getText = [memoize(pointLabelAccessor, pointLabelResolver)];
   }
 
   get type() {
@@ -254,20 +254,6 @@ export default class PointLayer extends Layer {
     }
 
     // get all distinct characters in the text labels
-    const getText = this.getText(textLabel);
-    let labelCharacterSet;
-    if (
-      oldLayerData &&
-      oldLayerData.labelCharacterSet &&
-      opt.sameData &&
-      oldLayerData.getText === getText
-    ) {
-      labelCharacterSet = oldLayerData.labelCharacterSet;
-    } else {
-      const textLabels = textLabel.field ? data.map(getText) : [];
-      labelCharacterSet = uniq(textLabels.join(''));
-    }
-
     const getRadius = rScale
       ? d => this.getEncodedChannelValue(rScale, d.data, sizeField)
       : 1;
@@ -279,14 +265,55 @@ export default class PointLayer extends Layer {
     const getLineColor = scScale
       ? d => this.getEncodedChannelValue(scScale, d.data, strokeColorField)
       : strokeColor || color;
+
+    // TODO: this should be cleaned up in the gpu-data-filter branch
+    const textLabels = textLabel.map((tl, i) => {
+      if (!tl.field) {
+        // if no field selected,
+        return {
+          getText: null,
+          characterSet: []
+        };
+      }
+      if (!this.getText[i]) {
+        this.getText[i] = memoize(pointLabelAccessor, pointLabelResolver);
+      }
+
+      const getText = this.getText[i](tl);
+      let characterSet;
+
+      if (
+        oldLayerData &&
+        Array.isArray(oldLayerData.textLabels) &&
+        oldLayerData.textLabels[i] &&
+        opt.sameData &&
+        oldLayerData.textLabels[i].getText === getText
+      ) {
+        characterSet = oldLayerData.textLabels[i].characterSet;
+      } else {
+        console.log('recalculate characterSet, ', i);
+        const allLabels = tl.field ? data.map(getText) : [];
+        characterSet = uniq(allLabels.join(''));
+      }
+
+      return {
+        characterSet,
+        // field: tl.field.name,
+        getText
+        // getPixelOffset: tl.offset,
+        // getSize: tl.size,
+        // getTextAnchor: tl.anchor,
+        // getColor: tl.color
+      };
+    });
+    console.log(textLabels);
     return {
       data,
-      labelCharacterSet,
       getPosition,
       getFillColor,
       getLineColor,
       getRadius,
-      getText
+      textLabels
     };
   }
   /* eslint-enable complexity */
@@ -323,6 +350,8 @@ export default class PointLayer extends Layer {
       brushRadius: interactionConfig.brush.config.size * 1000,
       highlightColor: this.config.highlightColor
     };
+
+    const {textLabel} = this.config;
 
     return [
       new ScatterplotBrushingLayer({
@@ -361,9 +390,6 @@ export default class PointLayer extends Layer {
             colorField: this.config.strokeColorField,
             colorRange: this.config.visConfig.strokeColorRange,
             colorScale: this.config.strokeColorScale
-          },
-          getText: {
-            textLabel: this.config.textLabel
           }
         }
       }),
@@ -383,34 +409,39 @@ export default class PointLayer extends Layer {
           ]
         : []),
       // text label layer
-      ...(this.config.textLabel.field
-        ? [
+      ...data.textLabels.reduce((accu, d, idx) => {
+        if (d.getText) {
+          accu.push(
             new TextLayer({
               ...layerInteraction,
-              id: `${this.id}-label`,
+              id: `${this.id}-label-${textLabel[idx].field.name}`,
               data: data.data,
               getPosition: data.getPosition,
-              getPixelOffset: this.config.textLabel.offset,
-              getSize: this.config.textLabel.size,
-              getTextAnchor: this.config.textLabel.anchor,
-              getText: data.getText,
-              getColor: d => this.config.textLabel.color,
+              getText: d.getText,
+              characterSet: d.characterSet,
+              getPixelOffset: textLabel[idx].offset,
+              getSize: textLabel[idx].size,
+              getTextAnchor: textLabel[idx].anchor,
+              getAlignmentBaseline: textLabel[idx].alignment,
+              getColor: textLabel[idx].color,
               parameters: {
                 // text will always show on top of all layers
                 depthTest: false
               },
-              characterSet: data.labelCharacterSet,
               updateTriggers: {
-                getPosition: data.getPosition,
-                getPixelOffset: this.config.textLabel.offset,
-                getText: this.config.textLabel.field,
-                getTextAnchor: this.config.textLabel.anchor,
-                getSize: this.config.textLabel.size,
-                getColor: this.config.textLabel.color
+                getPosition: this.config.columns,
+                getText: textLabel[idx].field.name,
+                getPixelOffset: textLabel[idx].offset,
+                getTextAnchor: textLabel[idx].anchor,
+                getAlignmentBaseline: textLabel[idx].alignment,
+                getSize: textLabel[idx].size,
+                getColor: textLabel[idx].color
               }
             })
-          ]
-        : [])
+          );
+        }
+        return accu;
+      }, [])
     ];
   }
 }

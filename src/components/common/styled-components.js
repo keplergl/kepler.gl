@@ -59,6 +59,16 @@ export const CenterFlexbox = styled.div`
   align-items: center;
 `;
 
+export const SpaceBetweenFlexbox = styled.div`
+  display: flex;
+  align-items: space-between;
+  margin-left: -16px;
+`
+export const SBFlexboxItem = styled.div`
+  flex-grow: 1;
+  margin-left: 16px;
+`
+
 export const PanelLabel = styled.label.attrs({
   className: 'side-panel-panel__label'
 })`

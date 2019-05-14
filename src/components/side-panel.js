@@ -95,7 +95,6 @@ export default function SidePanelFactory(
       visStateActions: PropTypes.object.isRequired,
       mapStyleActions: PropTypes.object.isRequired
     };
-
     /* component private functions */
     _onOpenOrClose = () => {
       this.props.uiStateActions.toggleSidePanel(
