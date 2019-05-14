@@ -205,16 +205,22 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
               lockAxis="y"
               useDragHandle={true}
             >
-              {layerOrder.map(idx => {
+              {layerOrder.map((layerIdx, index) => {
                 const layer = {
                   ...panelProps,
                   ...layerActions,
-                  sortData: idx,
-                  key: layers[idx].id,
-                  idx,
-                  layer: layers[idx]
+                  sortData: layerIdx,
+                  key: layers[layerIdx].id,
+                  idx: layerIdx,
+                  layer: layers[layerIdx]
                 };
-                return <SortableItem key={`layer-${idx}`} index={idx} layer={layer} />
+                return (
+                  <SortableItem
+                    key={`layer-${layerIdx}`}
+                    index={index}
+                    layer={layer}
+                  />
+                );
               })}
             </SortableContainer>
           </SidePanelSection>
