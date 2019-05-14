@@ -265,7 +265,7 @@ export default class FileUpload extends Component {
                 </StyledDragNDropIcon>
                 <div>{this._renderMessage()}</div>
               </div>
-              {!files.length && (
+              {!files.length ? (
                   <StyledDragFileWrapper>
                     <MsgWrapper>{MESSAGE}</MsgWrapper>
                     <span className="file-upload-or">or</span>
@@ -273,7 +273,7 @@ export default class FileUpload extends Component {
                       browse your files
                     </UploadButton>
                   </StyledDragFileWrapper>
-              )}
+              ) : null}
               <StyledDisclaimer>{DISCLAIMER}</StyledDisclaimer>
             </StyledFileDrop>
           </FileDrop>
