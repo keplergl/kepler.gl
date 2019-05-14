@@ -40,8 +40,10 @@ export const pointPosAccessor = ({lat, lng, altitude}) => d => [
 export const pointPosResolver = ({lat, lng, altitude}) =>
   `${lat.fieldIdx}-${lng.fieldIdx}-${altitude ? altitude.fieldIdx : 'z'}`;
 
-export const pointLabelAccessor = textLabel => d => String(d.data[textLabel.field.tableFieldIndex - 1]);
-export const pointLabelResolver = textLabel => textLabel.field && textLabel.field.tableFieldIndex;
+export const pointLabelAccessor = textLabel => d =>
+  String(d.data[textLabel.field.tableFieldIndex - 1]);
+export const pointLabelResolver = textLabel =>
+  textLabel.field && textLabel.field.tableFieldIndex;
 
 export const pointRequiredColumns = ['lat', 'lng'];
 export const pointOptionalColumns = ['altitude'];
@@ -118,7 +120,6 @@ export default class PointLayer extends Layer {
         property: 'radius',
         channelScaleType: 'radius'
       }
-
     };
   }
 
@@ -188,7 +189,13 @@ export default class PointLayer extends Layer {
       sizeScale,
       sizeDomain,
       textLabel,
-      visConfig: {radiusRange, fixedRadius, colorRange, strokeColorRange, strokeColor}
+      visConfig: {
+        radiusRange,
+        fixedRadius,
+        colorRange,
+        strokeColorRange,
+        strokeColor
+      }
     } = this.config;
 
     // fill color
@@ -255,20 +262,23 @@ export default class PointLayer extends Layer {
       opt.sameData &&
       oldLayerData.getText === getText
     ) {
-      labelCharacterSet = oldLayerData.labelCharacterSet
+      labelCharacterSet = oldLayerData.labelCharacterSet;
     } else {
       const textLabels = textLabel.field ? data.map(getText) : [];
       labelCharacterSet = uniq(textLabels.join(''));
     }
 
-    const getRadius = rScale ? d =>
-      this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
+    const getRadius = rScale
+      ? d => this.getEncodedChannelValue(rScale, d.data, sizeField)
+      : 1;
 
-    const getFillColor = cScale ? d =>
-      this.getEncodedChannelValue(cScale, d.data, colorField) : color;
+    const getFillColor = cScale
+      ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
+      : color;
 
-    const getLineColor = scScale ? d =>
-      this.getEncodedChannelValue(scScale, d.data, strokeColorField) : strokeColor || color;
+    const getLineColor = scScale
+      ? d => this.getEncodedChannelValue(scScale, d.data, strokeColorField)
+      : strokeColor || color;
     return {
       data,
       labelCharacterSet,
@@ -359,19 +369,19 @@ export default class PointLayer extends Layer {
       }),
       // hover layer
       ...(this.isLayerHovered(objectHovered)
-      ? [
-          new ScatterplotBrushingLayer({
-            ...layerProps,
-            id: `${this.id}-hovered`,
-            data: [objectHovered.object],
-            getLineColor: this.config.highlightColor,
-            getFillColor: this.config.highlightColor,
-            getRadius: data.getRadius,
-            getPosition: data.getPosition,
-            pickable: false
-          })
-        ]
-      : []),
+        ? [
+            new ScatterplotBrushingLayer({
+              ...layerProps,
+              id: `${this.id}-hovered`,
+              data: [objectHovered.object],
+              getLineColor: this.config.highlightColor,
+              getFillColor: this.config.highlightColor,
+              getRadius: data.getRadius,
+              getPosition: data.getPosition,
+              pickable: false
+            })
+          ]
+        : []),
       // text label layer
       ...(this.config.textLabel.field
         ? [

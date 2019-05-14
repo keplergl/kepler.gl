@@ -37,7 +37,9 @@ import ColorSelector from './color-selector';
 import SourceDataSelector from 'components/side-panel/source-data-selector';
 import VisConfigSwitch from './vis-config-switch';
 import VisConfigSlider from './vis-config-slider';
-import LayerConfigGroup, {ConfigGroupCollapsibleContent} from './layer-config-group';
+import LayerConfigGroup, {
+  ConfigGroupCollapsibleContent
+} from './layer-config-group';
 import TextLabelPanel from './text-label-panel';
 
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
@@ -94,7 +96,8 @@ export default class LayerConfigurator extends Component {
         <LayerConfigGroup
           {...layer.visConfigSettings.filled}
           {...visConfiguratorProps}
-          collapsible>
+          collapsible
+        >
           {layer.config.colorField ? (
             <ColorRangeConfig {...visConfiguratorProps} />
           ) : (
@@ -113,13 +116,17 @@ export default class LayerConfigurator extends Component {
         </LayerConfigGroup>
 
         {/* outline color */}
-          {layer.type === LAYER_TYPES.point ? (
+        {layer.type === LAYER_TYPES.point ? (
           <LayerConfigGroup
             {...layer.visConfigSettings.outline}
             {...visConfiguratorProps}
-            collapsible>
+            collapsible
+          >
             {layer.config.strokeColorField ? (
-              <ColorRangeConfig {...visConfiguratorProps} property="strokeColorRange"/>
+              <ColorRangeConfig
+                {...visConfiguratorProps}
+                property="strokeColorRange"
+              />
             ) : (
               <LayerColorSelector
                 {...visConfiguratorProps}
@@ -202,13 +209,15 @@ export default class LayerConfigurator extends Component {
               channel={layer.visualChannels.color}
               {...layerChannelConfigProps}
             />
-            {layer.visConfigSettings.colorAggregation.condition(layer.config) ?
+            {layer.visConfigSettings.colorAggregation.condition(
+              layer.config
+            ) ? (
               <AggregationTypeSelector
                 {...layer.visConfigSettings.colorAggregation}
                 {...layerChannelConfigProps}
                 channel={layer.visualChannels.color}
               />
-              : null}
+            ) : null}
             <VisConfigSlider
               {...layer.visConfigSettings.opacity}
               {...visConfiguratorProps}
@@ -303,7 +312,9 @@ export default class LayerConfigurator extends Component {
               channel={layer.visualChannels.color}
               {...layerChannelConfigProps}
             />
-            {layer.visConfigSettings.colorAggregation.condition(layer.config) ? (
+            {layer.visConfigSettings.colorAggregation.condition(
+              layer.config
+            ) ? (
               <AggregationTypeSelector
                 {...layer.visConfigSettings.colorAggregation}
                 {...layerChannelConfigProps}
@@ -311,7 +322,8 @@ export default class LayerConfigurator extends Component {
                 channel={layer.visualChannels.color}
               />
             ) : null}
-            {layer.visConfigSettings.percentile && layer.visConfigSettings.percentile.condition(layer.config) ? (
+            {layer.visConfigSettings.percentile &&
+            layer.visConfigSettings.percentile.condition(layer.config) ? (
               <VisConfigSlider
                 {...layer.visConfigSettings.percentile}
                 {...visConfiguratorProps}
@@ -339,7 +351,7 @@ export default class LayerConfigurator extends Component {
         </LayerConfigGroup>
 
         {/* Elevation */}
-        {layer.visConfigSettings.enable3d ?
+        {layer.visConfigSettings.enable3d ? (
           <LayerConfigGroup
             {...layer.visConfigSettings.enable3d}
             {...visConfiguratorProps}
@@ -356,7 +368,9 @@ export default class LayerConfigurator extends Component {
                 description={elevationByDescription}
                 disabled={!enable3d}
               />
-              {layer.visConfigSettings.sizeAggregation.condition(layer.config) ? (
+              {layer.visConfigSettings.sizeAggregation.condition(
+                layer.config
+              ) ? (
                 <AggregationTypeSelector
                   {...layer.visConfigSettings.sizeAggregation}
                   {...layerChannelConfigProps}
@@ -372,7 +386,8 @@ export default class LayerConfigurator extends Component {
                 />
               ) : null}
             </ConfigGroupCollapsibleContent>
-          </LayerConfigGroup> : null}
+          </LayerConfigGroup>
+        ) : null}
       </StyledLayerVisualConfigurator>
     );
   }
@@ -526,36 +541,43 @@ export default class LayerConfigurator extends Component {
     return (
       <StyledLayerVisualConfigurator>
         {/* Fill Color */}
-        {featureTypes.polygon || featureTypes.point? (<LayerConfigGroup
-          {...layer.visConfigSettings.filled}
-          {...visConfiguratorProps}
-          label="Fill Color"
-        collapsible>
-          {layer.config.colorField ? (
-            <ColorRangeConfig {...visConfiguratorProps} />
-          ) : (
-            <LayerColorSelector {...layerConfiguratorProps} />
-          )}
-          <ConfigGroupCollapsibleContent>
-            <ChannelByValueSelector
-              channel={layer.visualChannels.color}
-              {...layerChannelConfigProps}
-            />
-            <VisConfigSlider
-              {...LAYER_VIS_CONFIGS.opacity}
-              {...visConfiguratorProps}
-            />
-          </ConfigGroupCollapsibleContent>
-        </LayerConfigGroup>) : null}
+        {featureTypes.polygon || featureTypes.point ? (
+          <LayerConfigGroup
+            {...layer.visConfigSettings.filled}
+            {...visConfiguratorProps}
+            label="Fill Color"
+            collapsible
+          >
+            {layer.config.colorField ? (
+              <ColorRangeConfig {...visConfiguratorProps} />
+            ) : (
+              <LayerColorSelector {...layerConfiguratorProps} />
+            )}
+            <ConfigGroupCollapsibleContent>
+              <ChannelByValueSelector
+                channel={layer.visualChannels.color}
+                {...layerChannelConfigProps}
+              />
+              <VisConfigSlider
+                {...LAYER_VIS_CONFIGS.opacity}
+                {...visConfiguratorProps}
+              />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+        ) : null}
 
         {/* stroke color */}
         <LayerConfigGroup
           {...layer.visConfigSettings.stroked}
           {...visConfiguratorProps}
           label="Stroke Color"
-          collapsible>
+          collapsible
+        >
           {layer.config.strokeColorField ? (
-            <ColorRangeConfig {...visConfiguratorProps} property="strokeColorRange"/>
+            <ColorRangeConfig
+              {...visConfiguratorProps}
+              property="strokeColorRange"
+            />
           ) : (
             <LayerColorSelector
               {...visConfiguratorProps}
@@ -579,7 +601,7 @@ export default class LayerConfigurator extends Component {
           collapsible
         >
           {layer.config.sizeField ? (
-              <VisConfigSlider
+            <VisConfigSlider
               {...LAYER_VIS_CONFIGS.strokeWidthRange}
               {...visConfiguratorProps}
               label={false}
@@ -627,13 +649,14 @@ export default class LayerConfigurator extends Component {
         {/* Radius */}
         {featureTypes.point ? (
           <LayerConfigGroup label={'radius'} collapsible>
-             {!layer.config.radiusField ? (<VisConfigSlider
+            {!layer.config.radiusField ? (
+              <VisConfigSlider
                 {...LAYER_VIS_CONFIGS.radius}
                 {...visConfiguratorProps}
                 label={false}
                 disabled={Boolean(layer.config.radiusField)}
               />
-             ) : (
+            ) : (
               <VisConfigSlider
                 {...LAYER_VIS_CONFIGS.radiusRange}
                 {...visConfiguratorProps}
@@ -691,8 +714,16 @@ export default class LayerConfigurator extends Component {
 
     return (
       <StyledLayerConfigurator>
-        {layer.layerInfoModal ? <HowToButton onClick={() => this.props.openModal(layer.layerInfoModal)}/> : null}
-        <LayerConfigGroup label={'basic'} collapsible expanded={!layer.hasAllColumns()}>
+        {layer.layerInfoModal ? (
+          <HowToButton
+            onClick={() => this.props.openModal(layer.layerInfoModal)}
+          />
+        ) : null}
+        <LayerConfigGroup
+          label={'basic'}
+          collapsible
+          expanded={!layer.hasAllColumns()}
+        >
           <LayerTypeSelector
             layer={layer}
             layerTypeOptions={layerTypeOptions}
@@ -741,11 +772,19 @@ const StyledHowToButton = styled.div`
 
 export const HowToButton = ({onClick}) => (
   <StyledHowToButton>
-    <Button link small onClick={onClick}>How to</Button>
+    <Button link small onClick={onClick}>
+      How to
+    </Button>
   </StyledHowToButton>
 );
 
-export const LayerColorSelector = ({layer, onChange, label, selectedColor, property = 'color'}) => (
+export const LayerColorSelector = ({
+  layer,
+  onChange,
+  label,
+  selectedColor,
+  property = 'color'
+}) => (
   <SidePanelSection>
     <ColorSelector
       colorSets={[
@@ -782,7 +821,11 @@ export const ArcLayerColorSelector = ({
   </SidePanelSection>
 );
 
-export const ColorRangeConfig = ({layer, onChange, property = "colorRange"}) => (
+export const ColorRangeConfig = ({
+  layer,
+  onChange,
+  property = 'colorRange'
+}) => (
   <SidePanelSection>
     <ColorSelector
       colorSets={[
@@ -814,12 +857,14 @@ export const ChannelByValueSelector = ({
     defaultMeasure,
     supportedFieldTypes
   } = channel;
-  const channelSupportedFieldTypes = supportedFieldTypes || CHANNEL_SCALE_SUPPORTED_FIELDS[channelScaleType];
+  const channelSupportedFieldTypes =
+    supportedFieldTypes || CHANNEL_SCALE_SUPPORTED_FIELDS[channelScaleType];
   const supportedFields = fields.filter(({type}) =>
     channelSupportedFieldTypes.includes(type)
   );
   const scaleOptions = layer.getScaleOptions(channel.key);
-  const showScale = !layer.isAggregated && layer.config[scale] && scaleOptions.length > 1;
+  const showScale =
+    !layer.isAggregated && layer.config[scale] && scaleOptions.length > 1;
   const defaultDescription = `Calculate ${property} based on selected field`;
 
   return (
@@ -845,15 +890,14 @@ export const ChannelByValueSelector = ({
 
 export const AggrColorScaleSelector = ({layer, onChange}) => {
   const scaleOptions = layer.getScaleOptions('color');
-  return (
-    Array.isArray(scaleOptions) && scaleOptions.length > 1 ?
-      <DimensionScaleSelector
-        label="Color Scale"
-        options={scaleOptions}
-        scaleType={layer.config.colorScale}
-        onSelect={val => onChange({colorScale: val}, 'color')}
-      /> : null
-  );
+  return Array.isArray(scaleOptions) && scaleOptions.length > 1 ? (
+    <DimensionScaleSelector
+      label="Color Scale"
+      options={scaleOptions}
+      scaleType={layer.config.colorScale}
+      onSelect={val => onChange({colorScale: val}, 'color')}
+    />
+  ) : null;
 };
 
 export const AggregationTypeSelector = ({layer, channel, onChange}) => {
