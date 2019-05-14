@@ -37,6 +37,9 @@ import ExportDataModalFactory from './modals/export-data-modal';
 import ExportMapModalFactory from './modals/export-map-modal';
 import AddMapStyleModalFactory from './modals/add-map-style-modal';
 
+// Breakpoints
+import {media} from 'styles/media-breakpoints';
+
 // Template
 import {exportMapToHTML} from 'templates/export-map';
 import {
@@ -58,6 +61,11 @@ const DataTableModalStyle = css`
   top: 80px;
   padding: 32px 0 0 0;
   max-width: unset;
+  ${media.palm`
+    width: 100vw;
+    padding: 0;
+    margin: 0;
+  `}
 `;
 
 const DeleteDatasetModalStyled = css`

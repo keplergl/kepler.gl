@@ -26,6 +26,7 @@ import UploadButton from './upload-button';
 import {FileType, DragNDrop} from 'components/common/icons';
 import LoadingSpinner from 'components/common/loading-spinner';
 import {isChrome} from 'utils/utils';
+// Breakpoints
 import {media} from 'styles/media-breakpoints';
 
 const FileDrop =
