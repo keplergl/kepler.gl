@@ -231,6 +231,12 @@ export const textTruncate = {
   wordWrap: 'normal'
 };
 
+// This breakpoints are used for responsive design
+export const breakPoints = {
+  palm: 588,
+  desk: 768
+};
+
 // theme is passed to kepler.gl when it's mounted,
 // it is used by styled-components to pass along to
 // all child components
@@ -920,7 +926,10 @@ export const theme = {
   notificationColors,
   notificationPanelWidth,
   notificationPanelItemWidth,
-  notificationPanelItemHeight
+  notificationPanelItemHeight,
+
+  // Breakpoints
+  breakPoints
 };
 
 export const themeLT = {

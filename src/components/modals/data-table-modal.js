@@ -88,6 +88,12 @@ const DataGridWrapper = styled.div`
 const BooleanFormatter = ({value}) => <span>{String(value)}</span>;
 
 export class DataTableModal extends Component {
+
+  constructor(props) {
+    super(props);
+    this._root = React.createRef();
+  }
+
   _onMouseWheel = e => {
     // Prevent futile scroll, which would trigger the Back/Next page event
     // https://github.com/micho/jQuery.preventMacBackScroll
@@ -129,7 +135,7 @@ export class DataTableModal extends Component {
       .filter(({name}) => name !== '_geojson');
 
     return (
-      <div ref={ref => {this._root = ref}} className="dataset-modal" style={{overflow: 'scroll'}}>
+      <div ref={this._root} className="dataset-modal" style={{overflow: 'scroll'}}>
         <DatasetTabs
           activeDataset={activeDataset}
           datasets={datasets}
