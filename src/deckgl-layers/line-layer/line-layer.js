@@ -29,7 +29,7 @@ const defaultProps = {
   // show arc if target is in brush
   brushTarget: true,
   enableBrushing: true,
-  getStrokeWidth: d => d.strokeWidth,
+  getWidth: d => d.strokeWidth,
   getTargetColor: x => x.color || [0, 0, 0, 255],
   strokeScale: 1,
 

@@ -96,7 +96,7 @@ export default class LineLayer extends ArcLayer {
         // parameters
         parameters: {depthTest: mapState.dragRotate},
         updateTriggers: {
-          getStrokeWidth: {
+          getWidth: {
             sizeField: this.config.sizeField,
             sizeRange: this.config.visConfig.sizeRange
           },
@@ -113,7 +113,7 @@ export default class LineLayer extends ArcLayer {
             strokeScale: this.config.visConfig.thickness,
             getColor: this.config.highlightColor,
             getTargetColor: this.config.highlightColor,
-            getStrokeWidth: data.getStrokeWidth,
+            getWidth: data.getStrokeWidth,
             pickable: false
           })
         ]

@@ -28,7 +28,7 @@ const defaultProps = {
   // show arc if target is in brush
   brushTarget: true,
   enableBrushing: true,
-  getStrokeWidth: d => d.strokeWidth,
+  getWidth: d => d.strokeWidth,
   strokeScale: 1,
   // brush radius in meters
   brushRadius: 100000,
