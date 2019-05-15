@@ -96,6 +96,24 @@ export default function SidePanelFactory(
       mapStyleActions: PropTypes.object.isRequired
     };
 
+    componentWillReceiveProps(nextProps) {
+      Object.keys(nextProps).forEach(key => {
+        if (!this.props.hasOwnProperty(key)) {
+          console.log(key, ' has been added')
+        } else if (this.props[key] !== nextProps[key]) {
+          console.log(key, ' has changed')
+        }
+      })
+
+      Object.keys(this.props).forEach(key => {
+        if (!nextProps.hasOwnProperty(key)) {
+          console.log(key, ' has been deleted')
+        }
+      })
+
+      console.log('prop is the same', this.props === nextProps)
+    }
+
     /* component private functions */
     _onOpenOrClose = () => {
       this.props.uiStateActions.toggleSidePanel(
@@ -129,6 +147,7 @@ export default function SidePanelFactory(
     _onExportMap = () => this.props.uiStateActions.toggleModal(EXPORT_MAP_ID);
 
     render() {
+      console.log('sidepanel render')
       const {
         appName,
         version,

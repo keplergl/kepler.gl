@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {Component, PureComponent} from 'react';
 import {console as Console} from 'global/window';
 import {bindActionCreators} from 'redux';
 import styled, {ThemeProvider, withTheme}  from 'styled-components';
@@ -347,6 +347,7 @@ const getDispatch = (dispatch, props) => dispatch
 const getUserActions = (dispatch, props) => props.actions || defaultUserActions;
 
 function makeGetActionCreators() {
+  console.log('makeGetActionCreators')
   return createSelector(
     [getDispatch, getUserActions],
     (dispatch, userActions) => {
@@ -404,3 +405,16 @@ function mergeActions(actions, userActions) {
 }
 
 export default KeplerGlFactory;
+
+
+// const PureComponetForTesting = (props) => {
+//   console.log('pure component for render')
+//   return <div/>
+// }
+
+// class TestingComponent extends Component {
+//   render() {
+//     console.log('pure component for render')
+//     return <div/>
+//   }
+// }
