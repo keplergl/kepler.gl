@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, PureComponent} from 'react';
+import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
@@ -29,7 +29,6 @@ import FilterManagerFactory from './side-panel/filter-manager';
 import InteractionManagerFactory from './side-panel/interaction-manager';
 import MapManagerFactory from './side-panel/map-manager';
 import PanelToggleFactory from './side-panel/panel-toggle';
-import shallowCompare from 'react-addons-shallow-compare'; // ES6
 
 import {
   ADD_DATA_ID,
@@ -130,7 +129,6 @@ export default function SidePanelFactory(
     _onExportMap = () => this.props.uiStateActions.toggleModal(EXPORT_MAP_ID);
 
     render() {
-      console.log('sidepanel render')
       const {
         appName,
         version,
