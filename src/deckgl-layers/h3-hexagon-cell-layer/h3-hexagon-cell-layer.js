@@ -125,4 +125,4 @@ export default class H3HexagonCellLayer extends ColumnLayer {
 
 H3HexagonCellLayer.layerName = 'H3HexagonCellLayer';
 // Set base class diskResolution prop to 6 for hexagons.
-H3HexagonCellLayer.defaultProps = Object.assign(ColumnLayer.defaultprops, {diskResolution: 6});
+H3HexagonCellLayer.defaultProps = Object.assign({}, ColumnLayer.defaultProps, {diskResolution: {type: 'number', min: 4, value: 6}});
