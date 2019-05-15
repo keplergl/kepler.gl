@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {Component, PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
@@ -29,6 +29,7 @@ import FilterManagerFactory from './side-panel/filter-manager';
 import InteractionManagerFactory from './side-panel/interaction-manager';
 import MapManagerFactory from './side-panel/map-manager';
 import PanelToggleFactory from './side-panel/panel-toggle';
+import shallowCompare from 'react-addons-shallow-compare'; // ES6
 
 import {
   ADD_DATA_ID,
@@ -82,7 +83,7 @@ export default function SidePanelFactory(
   MapManager
 ) {
 
-  return class SidePanel extends Component {
+  return class SidePanel extends PureComponent {
     static propTypes = {
       filters: PropTypes.arrayOf(PropTypes.any).isRequired,
       interactionConfig: PropTypes.object.isRequired,
@@ -95,24 +96,6 @@ export default function SidePanelFactory(
       visStateActions: PropTypes.object.isRequired,
       mapStyleActions: PropTypes.object.isRequired
     };
-
-    componentWillReceiveProps(nextProps) {
-      Object.keys(nextProps).forEach(key => {
-        if (!this.props.hasOwnProperty(key)) {
-          console.log(key, ' has been added')
-        } else if (this.props[key] !== nextProps[key]) {
-          console.log(key, ' has changed')
-        }
-      })
-
-      Object.keys(this.props).forEach(key => {
-        if (!nextProps.hasOwnProperty(key)) {
-          console.log(key, ' has been deleted')
-        }
-      })
-
-      console.log('prop is the same', this.props === nextProps)
-    }
 
     /* component private functions */
     _onOpenOrClose = () => {
