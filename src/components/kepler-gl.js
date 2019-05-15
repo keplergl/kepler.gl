@@ -329,7 +329,7 @@ function KeplerGlFactory(
     }
   }
 
-  return keplerGlConnect(mapStateToProps, mapDispatchToProps)(withTheme(KeplerGL));
+  return keplerGlConnect(mapStateToProps, makeMapDispatchToProps)(withTheme(KeplerGL));
 }
 
 function mapStateToProps(state, props) {
@@ -342,34 +342,55 @@ function mapStateToProps(state, props) {
   };
 }
 
-function mapDispatchToProps(dispatch, ownProps) {
-  const userActions = ownProps.actions || {};
+const defaultUserActions = {};
+const getDispatch = (dispatch, props) => dispatch
+const getUserActions = (dispatch, props) => props.actions || defaultUserActions;
 
-  const [
-    visStateActions,
-    mapStateActions,
-    mapStyleActions,
-    uiStateActions
-  ] = [
-    VisStateActions,
-    MapStateActions,
-    MapStyleActions,
-    UIStateActions
-  ].map(actions =>
-    bindActionCreators(mergeActions(actions, userActions), dispatch)
+function makeGetActionCreators() {
+  return createSelector(
+    [getDispatch, getUserActions],
+    (dispatch, userActions) => {
+      const [
+        visStateActions,
+        mapStateActions,
+        mapStyleActions,
+        uiStateActions
+      ] = [
+        VisStateActions,
+        MapStateActions,
+        MapStyleActions,
+        UIStateActions
+      ].map(actions =>
+        bindActionCreators(mergeActions(actions, userActions), dispatch)
+      );
+
+      return {
+        visStateActions,
+        mapStateActions,
+        mapStyleActions,
+        uiStateActions,
+        dispatch
+      };
+    }
   );
+}
 
-  return {
-    visStateActions,
-    mapStateActions,
-    mapStyleActions,
-    uiStateActions,
-    dispatch
-  };
+function makeMapDispatchToProps() {
+  const getActionCreators = makeGetActionCreators();
+  const mapDispatchToProps = (dispatch, ownProps) => {
+    const groupedActionCreators = getActionCreators(dispatch, ownProps);
+
+    return {
+      ...groupedActionCreators,
+      dispatch
+    };
+  }
+
+  return mapDispatchToProps;
 }
 
 /**
- * Override default maps-gl actions with user defined actions using the same key
+ * Override default kepler.gl actions with user defined actions using the same key
  */
 function mergeActions(actions, userActions) {
   const overrides = {};
