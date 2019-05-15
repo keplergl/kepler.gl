@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {HexagonCellLayer} from 'deck.gl';
+import {ColumnLayer} from 'deck.gl';
 import {CylinderGeometry} from 'luma.gl';
 import {getAngle, getRadius, getH3VerticeTransform, distortCylinderPositions} from 'layers/h3-hexagon-layer/h3-utils';
 import {editShader} from 'deckgl-layers/layer-utils/shader-utils';
@@ -41,7 +41,7 @@ function addInstanceCoverage(vs) {
 }
 
 // TODO: export all dekc.gl layers from kepler.gl
-export default class H3HexagonCellLayer extends HexagonCellLayer {
+export default class H3HexagonCellLayer extends ColumnLayer {
 
   getShaders() {
     const shaders = super.getShaders();
@@ -124,3 +124,5 @@ export default class H3HexagonCellLayer extends HexagonCellLayer {
 }
 
 H3HexagonCellLayer.layerName = 'H3HexagonCellLayer';
+// Set base class diskResolution prop to 6 for hexagons.
+H3HexagonCellLayer.defaultProps = Object.assign(ColumnLayer.defaultprops, {diskResolution: 6});
