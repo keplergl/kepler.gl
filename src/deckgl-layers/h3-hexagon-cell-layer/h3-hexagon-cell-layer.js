@@ -35,8 +35,8 @@ function addInstanceCoverage(vs) {
   return editShader(
     addDecl,
     'hexagon cell vs add instance',
-    'float dotRadius = project_scale(radius) * mix(coverage, 0.0, noRender);',
-    'float dotRadius = project_scale(radius) * mix(coverage * instanceCoverage, 0.0, noRender);'
+    'float dotRadius = project_size(radius) * mix(coverage, 0.0, noRender);',
+    'float dotRadius = project_size(radius) * mix(coverage * instanceCoverage, 0.0, noRender);'
   );
 }
 
