@@ -776,7 +776,6 @@ export const updatedLayerV2 = {
       ],
       numberOfLights: 2
     },
-    fp64: false,
     fixedRadius: false
   }
 };
@@ -955,7 +954,6 @@ export const updatedLayerSimplifiedShape = {
       ],
       numberOfLights: 2
     },
-    fp64: false,
     fixedRadius: false
   }
 };

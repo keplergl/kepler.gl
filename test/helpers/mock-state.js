@@ -94,10 +94,13 @@ function mockStateWithFileUpload() {
     }
   ]);
 
-  // replace layer id and color with controlled value for easy testing
+  // replace layer id and color with controlled value for testing
   updatedState.visState.layers.forEach((l, i) => {
     l.id = `${l.type}-${i}`;
     l.config.color = [i, i, i];
+    if (l.config.visConfig.strokeColor) {
+      l.config.visConfig.strokeColor = [i + 10, i + 10, i + 10];
+    }
   });
 
   return Immutable.fromJS(updatedState);
@@ -150,7 +153,7 @@ function mockStateWithLayerDimensions(state) {
     f => f.name === 'gps_data.types'
   );
 
-  const colorFieldpayload = [layer0, {colorField}, 'color'];
+  const colorFieldPayload = [layer0, {colorField}, 'color'];
 
   const colorRangePayload = [
     layer0,
@@ -181,7 +184,7 @@ function mockStateWithLayerDimensions(state) {
     // change colorField
     {
       action: VisStateActions.layerVisualChannelConfigChange,
-      payload: colorFieldpayload
+      payload: colorFieldPayload
     },
 
     // change colorRange
@@ -313,7 +316,6 @@ export const expectedSavedLayer0 = {
       percentile: [0, 100],
       elevationPercentile: [0, 100],
       elevationScale: 5,
-      'hi-precision': false,
       colorAggregation: 'count',
       sizeAggregation: 'count',
       enable3d: false
@@ -368,7 +370,6 @@ export const expectedLoadedLayer0 = {
       percentile: [0, 100],
       elevationPercentile: [0, 100],
       elevationScale: 5,
-      'hi-precision': false,
       colorAggregation: 'count',
       sizeAggregation: 'count',
       enable3d: false
@@ -415,6 +416,7 @@ export const expectedSavedLayer1 = {
       fixedRadius: false,
       opacity: 0.8,
       outline: false,
+      filled: true,
       thickness: 2,
       colorRange: {
         name: 'Uber Viz Sequential 2',
@@ -422,8 +424,14 @@ export const expectedSavedLayer1 = {
         category: 'Uber',
         colors: ['#E6FAFA', '#AAD7DA', '#68B4BB', '#00939C']
       },
-      radiusRange: [0, 50],
-      'hi-precision': false
+      strokeColorRange: {
+        name: 'Global Warming',
+        type: 'sequential',
+        category: 'Uber',
+        colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
+      },
+      strokeColor: null,
+      radiusRange: [0, 50]
     }
   },
   visualChannels: {
@@ -433,7 +441,9 @@ export const expectedSavedLayer1 = {
     },
     colorScale: 'ordinal',
     sizeField: null,
-    sizeScale: 'linear'
+    sizeScale: 'linear',
+    strokeColorField: null,
+    strokeColorScale: 'quantile'
   }
 };
 
@@ -462,14 +472,23 @@ export const expectedLoadedLayer1 = {
         category: 'Uber',
         colors: ['#E6FAFA', '#AAD7DA', '#68B4BB', '#00939C']
       },
-      radiusRange: [0, 50],
-      'hi-precision': false
+      strokeColorRange: {
+        name: 'Global Warming',
+        type: 'sequential',
+        category: 'Uber',
+        colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
+      },
+      filled: true,
+      strokeColor: null,
+      radiusRange: [0, 50]
     },
     colorField: {
       name: 'gps_data.types',
       type: 'string'
     },
     colorScale: 'ordinal',
+    strokeColorField: null,
+    strokeColorScale: 'quantile',
     sizeField: null,
     sizeScale: 'linear',
     textLabel: {
@@ -512,14 +531,20 @@ export const expectedSavedLayer2 = {
           '#FFC300'
         ]
       },
+      strokeColorRange: {
+        name: 'Global Warming',
+        type: 'sequential',
+        category: 'Uber',
+        colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
+      },
+      strokeColor: [11, 11, 11],
       radius: 10,
       sizeRange: [0, 10],
       radiusRange: [0, 50],
       heightRange: [0, 500],
       elevationScale: 5,
-      'hi-precision': false,
       stroked: true,
-      filled: false,
+      filled: true,
       enable3d: false,
       wireframe: false
     },
@@ -534,6 +559,8 @@ export const expectedSavedLayer2 = {
   visualChannels: {
     colorField: null,
     colorScale: 'quantile',
+    strokeColorField: null,
+    strokeColorScale: 'quantile',
     sizeField: null,
     sizeScale: 'linear',
     heightField: null,
@@ -570,19 +597,27 @@ export const expectedLoadedLayer2 = {
           '#FFC300'
         ]
       },
+      strokeColorRange: {
+        name: 'Global Warming',
+        type: 'sequential',
+        category: 'Uber',
+        colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
+      },
+      strokeColor: [11, 11, 11],
       radius: 10,
       sizeRange: [0, 10],
       radiusRange: [0, 50],
       heightRange: [0, 500],
       elevationScale: 5,
-      'hi-precision': false,
       stroked: true,
-      filled: false,
+      filled: true,
       enable3d: false,
       wireframe: false
     },
     colorField: null,
     colorScale: 'quantile',
+    strokeColorField: null,
+    strokeColorScale: 'quantile',
     sizeField: null,
     sizeScale: 'linear',
     heightField: null,

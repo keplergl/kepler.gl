@@ -114,18 +114,6 @@ export default class H3HexagonCellLayer extends HexagonCellLayer {
     this.setState({angle, radius});
   }
 
-  draw(opts) {
-    const {uniforms} = opts;
-
-    super.draw({
-      ...opts,
-      uniforms: {
-        ...uniforms,
-        picking_uHighlightScale: this.props.extruded ? 1.4 : 0.0
-      }
-    })
-  }
-
   initializeState() {
     super.initializeState();
 

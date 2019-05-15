@@ -167,8 +167,7 @@ class KeplerGLSchema {
           ...accu,
           ...(key in this._reducerSchemas
             ? this._reducerSchemas[key][validVersion].load(
-                config[key],
-                state[key]
+                config[key]
               )
             : {})
         }),

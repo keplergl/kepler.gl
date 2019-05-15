@@ -36,9 +36,16 @@ export function findDefaultLayer(dataset, layerClasses) {
   Object.keys(layerClasses).forEach(lc => {
     const layerProps = layerClasses[lc].findDefaultLayerProps(dataset);
     if (layerProps) {
-      const found = (Array.isArray(layerProps) ? layerProps : [layerProps])
-        .map(props => new layerClasses[lc]({...props, dataId: dataset.id}));
-      layers = layers.concat(found);
+      const newLayers = (Array.isArray(layerProps) ? layerProps : [layerProps])
+        .map(props => {
+          const layer = new layerClasses[lc]({...props, dataId: dataset.id});
+
+          return typeof layer.setInitialLayerConfig === 'function'
+          ? layer.setInitialLayerConfig(dataset.allData)
+          : layer
+        });
+
+      layers = layers.concat(newLayers);
     }
   });
 

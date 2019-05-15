@@ -25,6 +25,7 @@ import {INITIAL_VIS_STATE} from 'reducers/vis-state-updaters';
 import sinon from 'sinon';
 import {console as Console} from 'global/window';
 import {onWebGLInitialized} from 'utils/gl-utils';
+import {colorMaker, layerColors} from 'layers/base-layer';
 
 // Initialize gl once
 onWebGLInitialized(gl);
@@ -47,7 +48,6 @@ export function testFormatLayerData(t, layer, dataArgs) {
     result = layer.formatLayerData(...dataArgs);
     t.ok(result, 'has layer data');
     t.ok(layer, 'has updated layer');
-
   }, `format ${layer.type} layerData should not fail`);
 
   return result;
@@ -80,11 +80,18 @@ export function testFormatLayerDataCases(t, LayerClass, testCases) {
 
     // if provided updates
     if (layer && tc.updates) {
-      const applyUpdates = Array.isArray(tc.updates) ? tc.updates : [tc.updates];
+      const applyUpdates = Array.isArray(tc.updates)
+        ? tc.updates
+        : [tc.updates];
 
       // apply 1 or multiple updates
       applyUpdates.forEach(update => {
-        const updated = testUpdateLayer(t, updatedLayer, update.method, update.args);
+        const updated = testUpdateLayer(
+          t,
+          updatedLayer,
+          update.method,
+          update.args
+        );
         updatedLayer = updated.layer;
       });
     }
@@ -138,8 +145,32 @@ export function testInitializeDeckLayer(t, layerType, layers) {
   );
 
   // listen on console.error in editShader, fail the test if any error is logged
-  t.deepEqual(spy.args, [], 'should not call console.error during layer initialization');
+  t.deepEqual(
+    spy.args,
+    [],
+    'should not call console.error during layer initialization'
+  );
 
   spy.restore();
   return null;
+}
+
+/**
+ * Predict which color maker value would be next, allow skip couple
+ * Should be used right before calling function to be tested
+ * @param {Number} skip
+ */
+export function getNextColorMakerValue(num = 1) {
+  const results = [];
+  const colorNow = colorMaker.next().value;
+  const index = layerColors.findIndex(c => c === colorNow);
+
+  for (let n = 0; n < num; n++) {
+    const next = index + n  + 1;
+    const nextIndex =
+      next < layerColors.length ? next : next - layerColors.length;
+    results.push(layerColors[nextIndex]);
+  }
+
+  return results;
 }

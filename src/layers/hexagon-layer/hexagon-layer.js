@@ -24,6 +24,7 @@ import EnhancedHexagonLayer from 'deckgl-layers/hexagon-layer/enhanced-hexagon-l
 import {hexagonToPolygonGeo} from './hexagon-utils';
 import HexagonLayerIcon from './hexagon-layer-icon';
 import {clamp} from 'utils/data-utils';
+import {HIGHLIGH_COLOR_3D} from 'constants/default-settings';
 
 export const hexagonVisConfigs = {
   opacity: 'opacity',
@@ -35,7 +36,6 @@ export const hexagonVisConfigs = {
   percentile: 'percentile',
   elevationPercentile: 'elevationPercentile',
   elevationScale: 'elevationScale',
-  'hi-precision': 'hi-precision',
   colorAggregation: 'aggregation',
   sizeAggregation: 'sizeAggregation',
   enable3d: 'enable3d'
@@ -84,6 +84,7 @@ export default class HexagonLayer extends AggregationLayer {
 
         // highlight
         autoHighlight: visConfig.enable3d,
+        highlightColor: HIGHLIGH_COLOR_3D,
 
         radius,
         coverage: visConfig.coverage,
@@ -105,7 +106,6 @@ export default class HexagonLayer extends AggregationLayer {
         elevationUpperPercentile: visConfig.elevationPercentile[1],
 
         // render
-        fp64: visConfig['hi-precision'],
         pickable: true,
         lightSettings: this.meta.lightSettings,
         // callbacks

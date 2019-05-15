@@ -25,7 +25,7 @@ import {GeoJsonLayer} from 'deck.gl';
 import H3HexagonCellLayer from 'deckgl-layers/h3-hexagon-cell-layer/h3-hexagon-cell-layer';
 import {getVertices, getCentroid, idToPolygonGeo} from './h3-utils';
 import H3HexagonLayerIcon from './h3-hexagon-layer-icon';
-import {CHANNEL_SCALES} from 'constants/default-settings';
+import {CHANNEL_SCALES, HIGHLIGH_COLOR_3D} from 'constants/default-settings';
 
 export const HEXAGON_ID_FIELDS = {
   hex_id: ['hex_id', 'hexagon_id', 'h3_id']
@@ -41,8 +41,7 @@ export const HexagonIdVisConfigs = {
   coverage: 'coverage',
   sizeRange: 'elevationRange',
   coverageRange: 'coverageRange',
-  elevationScale: 'elevationScale',
-  'hi-precision': 'hi-precision'
+  elevationScale: 'elevationScale'
 };
 
 function hexToRgb(hex) {
@@ -287,6 +286,7 @@ export default class HexagonIdLayer extends Layer {
 
         // highlight
         autoHighlight: Boolean(config.sizeField),
+        highlightColor: HIGHLIGH_COLOR_3D,
 
         // elevation
         extruded: Boolean(config.sizeField),

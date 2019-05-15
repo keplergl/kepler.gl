@@ -22,7 +22,6 @@ import {HexagonLayer} from 'deck.gl';
 import {pointToHexbin} from './hexagon-aggregator';
 
 import {getColorValueDomain, getColorScaleFunction} from '../layer-utils/utils';
-import EnhancedHexagonCellLayer from './enhanced-hexagon-cell-layer';
 
 const defaultProps = {
   ...HexagonLayer.defaultProps,
@@ -48,13 +47,6 @@ export default class EnhancedHexagonLayer extends HexagonLayer {
 
   getColorScale() {
     getColorScaleFunction(this);
-  }
-
-  /*
-   * override default getSubLayerClass to return customized cellLayer
-   */
-  getSubLayerClass() {
-    return EnhancedHexagonCellLayer;
   }
 }
 

@@ -155,7 +155,8 @@ export default class RangeSlider extends Component {
         ref={comp => {
           this[`input-${key}`] = comp;
         }}
-        id={`filter-${key}`}
+        id={`slider-input-${key}`}
+        key={key}
         value={this.state[key]}
         onChange={e => {
           this.setState({[key]: e.target.value});
@@ -185,7 +186,8 @@ export default class RangeSlider extends Component {
       onChange,
       value0,
       value1,
-      sliderHandleWidth
+      sliderHandleWidth,
+      step
     } = this.props;
 
     const height = isRanged && showInput ? '16px' : '24px';
@@ -226,6 +228,7 @@ export default class RangeSlider extends Component {
             maxValue={range[1]}
             value0={value0}
             value1={value1}
+            step={step}
             handleWidth={sliderHandleWidth}
             onSlider0Change={this._setRangeVal0}
             onSlider1Change={this._setRangeVal1}

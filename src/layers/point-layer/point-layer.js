@@ -18,26 +18,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import Layer from '../base-layer';
 import memoize from 'lodash.memoize';
-import {TextLayer} from 'deck.gl';
-import ScatterplotBrushingLayer from 'deckgl-layers/scatterplot-brushing-layer/scatterplot-brushing-layer';
 import uniq from 'lodash.uniq';
+import {TextLayer} from 'deck.gl';
+
+import Layer from '../base-layer';
+import ScatterplotBrushingLayer from 'deckgl-layers/scatterplot-brushing-layer/scatterplot-brushing-layer';
 import {hexToRgb} from 'utils/color-utils';
 import PointLayerIcon from './point-layer-icon';
-import {DEFAULT_LAYER_COLOR} from 'constants/default-settings';
+import {DEFAULT_LAYER_COLOR, CHANNEL_SCALES} from 'constants/default-settings';
 
 export const pointPosAccessor = ({lat, lng, altitude}) => d => [
+  // lng
   d.data[lng.fieldIdx],
+  // lat
   d.data[lat.fieldIdx],
+  // altitude
   altitude && altitude.fieldIdx > -1 ? d.data[altitude.fieldIdx] : 0
 ];
 
 export const pointPosResolver = ({lat, lng, altitude}) =>
   `${lat.fieldIdx}-${lng.fieldIdx}-${altitude ? altitude.fieldIdx : 'z'}`;
 
-export const pointLabelAccessor = textLabel => d => String(d.data[textLabel.field.tableFieldIndex - 1]);
-export const pointLabelResolver = textLabel => textLabel.field && textLabel.field.tableFieldIndex;
+export const pointLabelAccessor = textLabel => d =>
+  String(d.data[textLabel.field.tableFieldIndex - 1]);
+export const pointLabelResolver = textLabel =>
+  textLabel.field && textLabel.field.tableFieldIndex;
 
 export const pointRequiredColumns = ['lat', 'lng'];
 export const pointOptionalColumns = ['altitude'];
@@ -48,9 +54,16 @@ export const pointVisConfigs = {
   opacity: 'opacity',
   outline: 'outline',
   thickness: 'thickness',
+  strokeColor: 'strokeColor',
   colorRange: 'colorRange',
+  strokeColorRange: 'strokeColorRange',
   radiusRange: 'radiusRange',
-  'hi-precision': 'hi-precision'
+  filled: {
+    type: 'boolean',
+    label: 'Fill Color',
+    defaultValue: true,
+    property: 'filled'
+  }
 };
 
 export default class PointLayer extends Layer {
@@ -92,6 +105,15 @@ export default class PointLayer extends Layer {
   get visualChannels() {
     return {
       ...super.visualChannels,
+      strokeColor: {
+        property: 'strokeColor',
+        field: 'strokeColorField',
+        scale: 'strokeColorScale',
+        domain: 'strokeColorDomain',
+        range: 'strokeColorRange',
+        key: 'strokeColor',
+        channelScaleType: CHANNEL_SCALES.color
+      },
       size: {
         ...super.visualChannels.size,
         range: 'radiusRange',
@@ -99,6 +121,10 @@ export default class PointLayer extends Layer {
         channelScaleType: 'radius'
       }
     };
+  }
+
+  getPositionAccessor() {
+    return this.getPosition(this.config.columns);
   }
 
   static findDefaultLayerProps({fieldPairs = []}) {
@@ -125,7 +151,6 @@ export default class PointLayer extends Layer {
         prop.isVisible = true;
       }
 
-      // const newLayer = new KeplerGlLayers.PointLayer(prop);
       prop.columns = {
         lat: latField,
         lng: lngField,
@@ -138,6 +163,17 @@ export default class PointLayer extends Layer {
     return props;
   }
 
+  getDefaultLayerConfig(props = {}) {
+    return {
+      ...super.getDefaultLayerConfig(props),
+
+      // add stroke color visual channel
+      strokeColorField: null,
+      strokeColorDomain: [0, 1],
+      strokeColorScale: 'quantile'
+    };
+  }
+
   // TODO: fix complexity
   /* eslint-disable complexity */
   formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
@@ -145,16 +181,24 @@ export default class PointLayer extends Layer {
       colorScale,
       colorDomain,
       colorField,
+      strokeColorField,
+      strokeColorScale,
+      strokeColorDomain,
       color,
-      columns,
       sizeField,
       sizeScale,
       sizeDomain,
       textLabel,
-      visConfig: {radiusRange, fixedRadius, colorRange}
+      visConfig: {
+        radiusRange,
+        fixedRadius,
+        colorRange,
+        strokeColorRange,
+        strokeColor
+      }
     } = this.config;
 
-    // point color
+    // fill color
     const cScale =
       colorField &&
       this.getVisChannelScale(
@@ -163,12 +207,21 @@ export default class PointLayer extends Layer {
         colorRange.colors.map(hexToRgb)
       );
 
+    // stroke color
+    const scScale =
+      strokeColorField &&
+      this.getVisChannelScale(
+        strokeColorScale,
+        strokeColorDomain,
+        strokeColorRange.colors.map(hexToRgb)
+      );
+
     // point radius
     const rScale =
       sizeField &&
       this.getVisChannelScale(sizeScale, sizeDomain, radiusRange, fixedRadius);
 
-    const getPosition = this.getPosition(columns);
+    const getPosition = this.getPositionAccessor();
 
     if (!oldLayerData || oldLayerData.getPosition !== getPosition) {
       this.updateLayerMeta(allData, getPosition);
@@ -209,30 +262,37 @@ export default class PointLayer extends Layer {
       opt.sameData &&
       oldLayerData.getText === getText
     ) {
-      labelCharacterSet = oldLayerData.labelCharacterSet
+      labelCharacterSet = oldLayerData.labelCharacterSet;
     } else {
       const textLabels = textLabel.field ? data.map(getText) : [];
       labelCharacterSet = uniq(textLabels.join(''));
     }
 
-    const getRadius = rScale ? d =>
-      this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
+    const getRadius = rScale
+      ? d => this.getEncodedChannelValue(rScale, d.data, sizeField)
+      : 1;
 
-    const getColor = cScale ? d =>
-      this.getEncodedChannelValue(cScale, d.data, colorField) : color;
+    const getFillColor = cScale
+      ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
+      : color;
 
+    const getLineColor = scScale
+      ? d => this.getEncodedChannelValue(scScale, d.data, strokeColorField)
+      : strokeColor || color;
     return {
       data,
       labelCharacterSet,
       getPosition,
-      getColor,
+      getFillColor,
+      getLineColor,
       getRadius,
       getText
     };
   }
   /* eslint-enable complexity */
 
-  updateLayerMeta(allData, getPosition) {
+  updateLayerMeta(allData) {
+    const getPosition = this.getPositionAccessor();
     const bounds = this.getPointsBounds(allData, d => getPosition({data: d}));
     this.updateMeta({bounds});
   }
@@ -248,10 +308,11 @@ export default class PointLayer extends Layer {
     const enableBrushing = interactionConfig.brush.enabled;
 
     const layerProps = {
-      outline: this.config.visConfig.outline,
+      // TODO: support setting stroke and fill simultaneously
+      stroked: this.config.visConfig.outline,
+      filled: this.config.visConfig.filled,
       radiusMinPixels: 1,
-      fp64: this.config.visConfig['hi-precision'],
-      strokeWidth: this.config.visConfig.thickness,
+      lineWidthMinPixels: this.config.visConfig.thickness,
       radiusScale: this.getRadiusScaleByZoom(mapState),
       ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
     };
@@ -269,6 +330,7 @@ export default class PointLayer extends Layer {
         ...layerInteraction,
         ...data,
         ...interaction,
+
         idx,
         id: this.id,
         opacity: this.config.visConfig.opacity,
@@ -279,34 +341,47 @@ export default class PointLayer extends Layer {
         },
 
         updateTriggers: {
+          getPosition: {
+            columns: this.config.columns
+          },
           getRadius: {
             sizeField: this.config.sizeField,
             radiusRange: this.config.visConfig.radiusRange,
             fixedRadius: this.config.visConfig.fixedRadius,
             sizeScale: this.config.sizeScale
           },
-          getColor: {
+          getFillColor: {
             color: this.config.color,
             colorField: this.config.colorField,
             colorRange: this.config.visConfig.colorRange,
             colorScale: this.config.colorScale
+          },
+          getLineColor: {
+            color: this.config.visConfig.strokeColor,
+            colorField: this.config.strokeColorField,
+            colorRange: this.config.visConfig.strokeColorRange,
+            colorScale: this.config.strokeColorScale
+          },
+          getText: {
+            textLabel: this.config.textLabel
           }
         }
       }),
       // hover layer
       ...(this.isLayerHovered(objectHovered)
-      ? [
-          new ScatterplotBrushingLayer({
-            ...layerProps,
-            id: `${this.id}-hovered`,
-            data: [objectHovered.object],
-            getColor: this.config.highlightColor,
-            getRadius: data.getRadius,
-            getPosition: data.getPosition,
-            pickable: false
-          })
-        ]
-      : []),
+        ? [
+            new ScatterplotBrushingLayer({
+              ...layerProps,
+              id: `${this.id}-hovered`,
+              data: [objectHovered.object],
+              getLineColor: this.config.highlightColor,
+              getFillColor: this.config.highlightColor,
+              getRadius: data.getRadius,
+              getPosition: data.getPosition,
+              pickable: false
+            })
+          ]
+        : []),
       // text label layer
       ...(this.config.textLabel.field
         ? [
@@ -320,7 +395,6 @@ export default class PointLayer extends Layer {
               getTextAnchor: this.config.textLabel.anchor,
               getText: data.getText,
               getColor: d => this.config.textLabel.color,
-              fp64: this.config.visConfig['hi-precision'],
               parameters: {
                 // text will always show on top of all layers
                 depthTest: false

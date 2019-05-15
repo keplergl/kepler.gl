@@ -48,8 +48,7 @@ export const pointVisConfigs = {
   fixedRadius: 'fixedRadius',
   opacity: 'opacity',
   colorRange: 'colorRange',
-  radiusRange: 'radiusRange',
-  'hi-precision': 'hi-precision'
+  radiusRange: 'radiusRange'
 };
 
 export default class IconLayer extends Layer {
@@ -264,7 +263,6 @@ export default class IconLayer extends Layer {
   }) {
     const layerProps = {
       radiusMinPixels: 1,
-      fp64: this.config.visConfig['hi-precision'],
       radiusScale: this.getRadiusScaleByZoom(mapState),
       ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
     };

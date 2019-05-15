@@ -45,8 +45,7 @@ export const arctVisConfigs = {
   thickness: 'thickness',
   colorRange: 'colorRange',
   sizeRange: 'strokeWidthRange',
-  targetColor: 'targetColor',
-  'hi-precision': 'hi-precision'
+  targetColor: 'targetColor'
 };
 
 export default class ArcLayer extends Layer {
@@ -254,7 +253,6 @@ export default class ArcLayer extends Layer {
         ...layerInteraction,
         id: this.id,
         idx,
-        fp64: this.config.visConfig['hi-precision'],
         opacity: this.config.visConfig.opacity,
         pickedColor: this.config.highlightColor,
         strokeScale: this.config.visConfig.thickness,

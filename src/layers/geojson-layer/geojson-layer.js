@@ -21,8 +21,7 @@
 import memoize from 'lodash.memoize';
 import uniq from 'lodash.uniq';
 
-import Layer from '../base-layer';
-import HighlightPolygonLayer from 'deckgl-layers/geojson-layer/solid-polygon-layer';
+import Layer, {colorMaker} from '../base-layer';
 import {GeoJsonLayer as DeckGLGeoJsonLayer} from 'deck.gl';
 
 import {hexToRgb} from 'utils/color-utils';
@@ -32,7 +31,7 @@ import {
   featureToDeckGlGeoType
 } from './geojson-utils';
 import GeojsonLayerIcon from './geojson-layer-icon';
-import {GEOJSON_FIELDS} from 'constants/default-settings';
+import {GEOJSON_FIELDS, HIGHLIGH_COLOR_3D, CHANNEL_SCALES} from 'constants/default-settings';
 
 export const geojsonVisConfigs = {
   opacity: 'opacity',
@@ -46,15 +45,15 @@ export const geojsonVisConfigs = {
     group: 'stroke',
     property: 'thickness'
   },
+  strokeColor: 'strokeColor',
   colorRange: 'colorRange',
+  strokeColorRange: 'strokeColorRange',
   radius: 'radius',
 
   sizeRange: 'strokeWidthRange',
   radiusRange: 'radiusRange',
   heightRange: 'elevationRange',
   elevationScale: 'elevationScale',
-
-  'hi-precision': 'hi-precision',
   stroked: 'stroked',
   filled: 'filled',
   enable3d: 'enable3d',
@@ -93,6 +92,15 @@ export default class GeoJsonLayer extends Layer {
   get visualChannels() {
     return {
       ...super.visualChannels,
+      strokeColor: {
+        property: 'strokeColor',
+        field: 'strokeColorField',
+        scale: 'strokeColorScale',
+        domain: 'strokeColorDomain',
+        range: 'strokeColorRange',
+        key: 'strokeColor',
+        channelScaleType: CHANNEL_SCALES.color
+      },
       size: {
         ...super.visualChannels.size,
         property: 'stroke',
@@ -118,6 +126,10 @@ export default class GeoJsonLayer extends Layer {
         channelScaleType: 'radius'
       }
     };
+  }
+
+  getPositionAccessor() {
+    return this.getFeature(this.config.columns);
   }
 
   static findDefaultLayerProps({label, fields}) {
@@ -153,7 +165,12 @@ export default class GeoJsonLayer extends Layer {
       // add radius visual channel
       radiusField: null,
       radiusDomain: [0, 1],
-      radiusScale: 'linear'
+      radiusScale: 'linear',
+
+      // add stroke color visual channel
+      strokeColorField: null,
+      strokeColorDomain: [0, 1],
+      strokeColorScale: 'quantile'
     };
   }
 
@@ -169,6 +186,9 @@ export default class GeoJsonLayer extends Layer {
       colorScale,
       colorField,
       colorDomain,
+      strokeColorField,
+      strokeColorScale,
+      strokeColorDomain,
       color,
       sizeScale,
       sizeDomain,
@@ -179,8 +199,7 @@ export default class GeoJsonLayer extends Layer {
       radiusField,
       radiusDomain,
       radiusScale,
-      visConfig,
-      columns
+      visConfig
     } = this.config;
 
     const {
@@ -189,10 +208,12 @@ export default class GeoJsonLayer extends Layer {
       colorRange,
       heightRange,
       sizeRange,
-      radiusRange
+      radiusRange,
+      strokeColorRange,
+      strokeColor
     } = visConfig;
 
-    const getFeature = this.getFeature(columns);
+    const getFeature = this.getPositionAccessor(this.config.column);
 
     // geojson feature are object, if doesn't exists
     // create it and save to layer
@@ -218,6 +239,7 @@ export default class GeoJsonLayer extends Layer {
         .filter(d => d);
     }
 
+    // fill color
     const cScale =
       colorField &&
       this.getVisChannelScale(
@@ -226,6 +248,14 @@ export default class GeoJsonLayer extends Layer {
         colorRange.colors.map(hexToRgb)
       );
 
+    // stroke color
+    const scScale =
+      strokeColorField &&
+      this.getVisChannelScale(
+        strokeColorScale,
+        strokeColorDomain,
+        strokeColorRange.colors.map(hexToRgb)
+      );
     // calculate stroke scale - if stroked = true
     const sScale =
       sizeField &&
@@ -255,13 +285,13 @@ export default class GeoJsonLayer extends Layer {
             )
           : d.properties.fillColor || color,
       getLineColor: d =>
-        cScale
+        scScale
           ? this.getEncodedChannelValue(
-              cScale,
+              scScale,
               allData[d.properties.index],
-              colorField
+              strokeColorField
             )
-          : d.properties.lineColor || color,
+          : d.properties.lineColor || strokeColor || color,
       getLineWidth: d =>
         sScale
           ? this.getEncodedChannelValue(
@@ -293,7 +323,8 @@ export default class GeoJsonLayer extends Layer {
   }
   /* eslint-enable complexity */
 
-  updateLayerMeta(allData, getFeature) {
+  updateLayerMeta(allData) {
+    const getFeature = this.getPositionAccessor();
     this.dataToFeature = getGeojsonDataMaps(allData, getFeature);
 
     // calculate layer meta
@@ -305,10 +336,7 @@ export default class GeoJsonLayer extends Layer {
     // get lightSettings from points
     const lightSettings = this.getLightSettingsFromBounds(bounds);
 
-    // if any of the feature has properties.hi-precision set to be true
-    const fp64 = Boolean(
-      allFeatures.find(d => d && d.properties && d.properties['hi-precision'])
-    );
+    // if any of the feature has properties.radius set to be true
     const fixedRadius = Boolean(
       allFeatures.find(d => d && d.properties && d.properties.radius)
     );
@@ -325,7 +353,26 @@ export default class GeoJsonLayer extends Layer {
       return accu;
     }, {});
 
-    this.updateMeta({bounds, lightSettings, fp64, fixedRadius, featureTypes});
+    this.updateMeta({bounds, lightSettings, fixedRadius, featureTypes});
+  }
+
+  setInitialLayerConfig(allData) {
+    this.updateLayerMeta(allData);
+    const {featureTypes} = this.meta;
+    // default settings is stroke: true, filled: false
+    if (featureTypes && featureTypes.polygon) {
+      // set both fill and stroke to true
+      return this.updateLayerVisConfig({
+        filled: true,
+        stroked: true,
+        strokeColor: colorMaker.next().value
+      });
+    } else if (featureTypes && featureTypes.point) {
+      // set fill to true if detect point
+      return this.updateLayerVisConfig({filled: true, stroked: false});
+    }
+
+    return this;
   }
 
   renderLayer({
@@ -335,7 +382,7 @@ export default class GeoJsonLayer extends Layer {
     mapState,
     interactionConfig
   }) {
-    const {fp64, lightSettings, fixedRadius} = this.meta;
+    const {lightSettings, fixedRadius} = this.meta;
     const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius);
     const zoomFactor = this.getZoomFactor(mapState);
     const {visConfig} = this.config;
@@ -346,7 +393,6 @@ export default class GeoJsonLayer extends Layer {
       lineWidthMinPixels: 1,
       elevationScale: visConfig.elevationScale,
       pointRadiusScale: radiusScale,
-      fp64: fp64 || visConfig['hi-precision'],
       lineMiterLimit: 4
     };
 
@@ -363,10 +409,10 @@ export default class GeoJsonLayer extends Layer {
         colorScale: this.config.colorScale
       },
       getLineColor: {
-        color: this.config.color,
-        colorField: this.config.colorField,
-        colorRange: visConfig.colorRange,
-        colorScale: this.config.colorScale
+        color: visConfig.strokeColor,
+        colorField: this.config.strokeColorField,
+        colorRange: visConfig.strokeColorRange,
+        colorScale: this.config.strokeColorScale
       },
       getLineWidth: {
         sizeField: this.config.sizeField,
@@ -391,7 +437,7 @@ export default class GeoJsonLayer extends Layer {
         getElevation: data.getElevation,
         // highlight
         pickable: true,
-        // highlightColor: this.config.highlightColor,
+        highlightColor: HIGHLIGH_COLOR_3D,
         autoHighlight: visConfig.enable3d,
         // parameters
         parameters: {depthTest: Boolean(visConfig.enable3d || mapState.dragRotate)},
@@ -400,13 +446,10 @@ export default class GeoJsonLayer extends Layer {
         filled: visConfig.filled,
         extruded: visConfig.enable3d,
         wireframe: visConfig.wireframe,
+        lineMiterLimit: 2,
+        rounded: true,
         lightSettings,
-        updateTriggers,
-
-        subLayers: {
-          ...DeckGLGeoJsonLayer.defaultProps.subLayers,
-          PolygonLayer: HighlightPolygonLayer
-        }
+        updateTriggers
       }),
       ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d
         ? [

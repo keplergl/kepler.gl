@@ -46,8 +46,8 @@ test('#GeojsonLayer -> constructor', t => {
   t.end();
 });
 
-test('#GeojsonLayer -> formatLayerData', async t => {
-  const {rows} = await processCsvData(wktCsv);
+test('#GeojsonLayer -> formatLayerData', t => {
+  const {rows} = processCsvData(wktCsv);
 
   const filteredIndex = [0, 2, 4];
   const data = [rows[0], rows[2], rows[4]];

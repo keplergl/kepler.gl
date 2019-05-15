@@ -62,7 +62,7 @@ export const OVERLAY_TYPE = keymirror({
   mapboxgl: null
 });
 
-const layerColors = Object.values(DataVizColors).map(hexToRgb);
+export const layerColors = Object.values(DataVizColors).map(hexToRgb);
 function* generateColor() {
   let index = 0;
   while (index < layerColors.length + 1) {
@@ -73,7 +73,7 @@ function* generateColor() {
   }
 }
 
-const colorMaker = generateColor();
+export const colorMaker = generateColor();
 const defaultGetFieldValue = (field, d) => d[field.tableFieldIndex - 1];
 
 export default class Layer {
@@ -420,7 +420,7 @@ export default class Layer {
     const notToDeepMerge = Object.values(this.visualChannels).map(v => v.field);
 
     // don't deep merge color range, reversed: is not a key by default
-    notToDeepMerge.push('colorRange');
+    notToDeepMerge.push('colorRange', 'strokeColorRange');
 
     // don't copy over domain
     const notToCopy = Object.values(this.visualChannels).map(v => v.domain);

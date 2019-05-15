@@ -21,7 +21,7 @@
 import React, {Component} from 'react';
 import {findDOMNode} from 'react-dom';
 import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
-import styled, {ThemeProvider}  from 'styled-components';
+import styled, {ThemeProvider} from 'styled-components';
 import window from 'global/window';
 import {connect} from 'react-redux';
 import {theme} from 'kepler.gl/styles';
@@ -96,7 +96,10 @@ class App extends Component {
   componentWillMount() {
     // if we pass an id as part of the url
     // we ry to fetch along map configurations
-    const {params: {id} = {}, location: {query = {}}} = this.props;
+    const {
+      params: {id} = {},
+      location: {query = {}}
+    } = this.props;
 
     // Load sample using its id
     if (id) {
@@ -115,10 +118,8 @@ class App extends Component {
     // if (!window.localStorage.getItem(BannerKey)) {
     //   window.setTimeout(this._showBanner, 3000);
     // }
-
     // load sample data
     // this._loadSampleData();
-
     // Notifications
     // this._loadMockNotifications();
   }
@@ -159,8 +160,8 @@ class App extends Component {
   }
 
   _loadSampleData() {
-    this._loadTripData();
-    // this._loadGeojsonData();
+    // this._loadTripData();
+    this._loadGeojsonData();
     // this._loadIconData();
     // this._loadH3HexagonData();
   }
@@ -217,13 +218,16 @@ class App extends Component {
     // load geojson
     this.props.dispatch(
       addDataToMap({
-        datasets: [{
-          info: {label: 'Bart Stops Geo'},
-          data: processGeojson(sampleGeojsonPoints)
-        }, {
-          info: {label: 'SF Zip Geo'},
-          data: processGeojson(sampleGeojson)
-        }]
+        datasets: [
+          {
+            info: {label: 'Bart Stops Geo'},
+            data: processGeojson(sampleGeojsonPoints)
+          },
+          {
+            info: {label: 'SF Zip Geo'},
+            data: processGeojson(sampleGeojson)
+          }
+        ]
       })
     );
   }
@@ -291,7 +295,9 @@ class App extends Component {
           // this is to apply the same modal style as kepler.gl core
           // because styled-components doesn't always return a node
           // https://github.com/styled-components/styled-components/issues/617
-          ref={node => {node ? this.root = node : null}}
+          ref={node => {
+            node ? (this.root = node) : null;
+          }}
         >
           <Banner
             show={this.state.showBanner}
@@ -299,7 +305,7 @@ class App extends Component {
             bgColor="#82368c"
             onClose={this._hideBanner}
           >
-            <Announcement onDisable={this._disableBanner}/>
+            <Announcement onDisable={this._disableBanner} />
           </Banner>
           {this._isCloudStorageEnabled() && rootNode && (
             <ExportUrlModal
@@ -333,14 +339,15 @@ class App extends Component {
                   getState={state => state.demo.keplerGl}
                   width={width}
                   height={height - (showBanner ? BannerHeight : 0)}
-                  onSaveMap={this._isCloudStorageEnabled() && this._toggleCloudModal}
+                  onSaveMap={
+                    this._isCloudStorageEnabled() && this._toggleCloudModal
+                  }
                 />
               )}
             </AutoSizer>
           </div>
         </GlobalStyle>
       </ThemeProvider>
-
     );
   }
 }

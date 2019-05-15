@@ -52,6 +52,7 @@ import {
 } from 'test/helpers/comparison-utils';
 import {applyActions} from 'test/helpers/mock-state';
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
+import {getNextColorMakerValue} from 'test/helpers/layer-utils';
 
 const mockData = {
   fields: [
@@ -1030,6 +1031,8 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson', t => {
     }
   ];
 
+  const [layer1Color, layer1StrokeColor] = getNextColorMakerValue(2);
+
   // receive data
   const initialState = reducer(
     initialVisState,
@@ -1063,14 +1066,15 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson', t => {
     label: 'king milkshake',
     dataId: 'milkshake',
     columns: {geojson: {fieldIdx: 0, value: '_geojson'}},
-    isVisible: true
+    isVisible: true,
+    color: layer1Color
   });
 
+  expectedLayer.updateLayerVisConfig({stroked: true, filled: true, strokeColor: layer1StrokeColor});
   expectedLayer.dataToFeature = dataToFeature;
   expectedLayer.meta = {
     bounds: geoBounds,
     lightSettings: geoLghtSettings,
-    fp64: false,
     fixedRadius: false,
     featureTypes: {
       polygon: true

@@ -23,6 +23,7 @@ import AggregationLayer from '../aggregation-layer';
 import EnhancedGridLayer from 'deckgl-layers/grid-layer/enhanced-grid-layer';
 import {pointToPolygonGeo} from './grid-utils';
 import GridLayerIcon from './grid-layer-icon';
+import {HIGHLIGH_COLOR_3D} from 'constants/default-settings';
 
 export const gridVisConfigs = {
   opacity: 'opacity',
@@ -33,7 +34,6 @@ export const gridVisConfigs = {
   percentile: 'percentile',
   elevationPercentile: 'elevationPercentile',
   elevationScale: 'elevationScale',
-  'hi-precision': 'hi-precision',
   colorAggregation: 'aggregation',
   sizeAggregation: 'sizeAggregation',
   enable3d: 'enable3d'
@@ -103,6 +103,7 @@ export default class GridLayer extends AggregationLayer {
         coverage: visConfig.coverage,
         // highlight
         autoHighlight: visConfig.enable3d,
+        highlightColor: HIGHLIGH_COLOR_3D,
 
         // color
         colorRange: this.getColorRange(visConfig.colorRange),
@@ -120,7 +121,6 @@ export default class GridLayer extends AggregationLayer {
         parameters: {depthTest: Boolean(visConfig.enable3d || mapState.dragRotate)},
 
         // render
-        fp64: visConfig['hi-precision'],
         pickable: true,
         lightSettings: this.meta && this.meta.lightSettings,
 
