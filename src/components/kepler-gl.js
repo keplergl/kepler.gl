@@ -29,6 +29,7 @@ import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
 import * as MapStyleActions from 'actions/map-style-actions';
 import * as UIStateActions from 'actions/ui-state-actions';
+import * as CompositeActions from 'actions/actions';
 
 import {EXPORT_IMAGE_ID, DIMENSIONS,
   KEPLER_GL_NAME, KEPLER_GL_VERSION, THEME} from 'constants/default-settings';
@@ -87,7 +88,7 @@ KeplerGlFactory.deps = [
 function KeplerGlFactory(
   BottomWidget,
   MapContainer,
-  ModalWrapper,
+  ModalContainer,
   SidePanel,
   PlotContainer,
   NotificationPanel
@@ -185,7 +186,8 @@ function KeplerGlFactory(
         visStateActions,
         mapStateActions,
         mapStyleActions,
-        uiStateActions
+        uiStateActions,
+        compositeActions
       } = this.props;
 
       const {
@@ -312,7 +314,7 @@ function KeplerGlFactory(
               }
               containerW={containerW}
             />
-            <ModalWrapper
+            <ModalContainer
               mapStyle={mapStyle}
               visState={visState}
               mapState={mapState}
@@ -321,6 +323,7 @@ function KeplerGlFactory(
               visStateActions={visStateActions}
               uiStateActions={uiStateActions}
               mapStyleActions={mapStyleActions}
+              compositeActions={compositeActions}
               rootNode={this.root}
               containerW={containerW}
               containerH={mapState.height}
@@ -345,7 +348,7 @@ function mapStateToProps(state, props) {
 }
 
 const defaultUserActions = {};
-const getDispatch = (dispatch) => dispatch
+const getDispatch = (dispatch) => dispatch;
 const getUserActions = (dispatch, props) => props.actions || defaultUserActions;
 
 function makeGetActionCreators() {
@@ -356,12 +359,14 @@ function makeGetActionCreators() {
         visStateActions,
         mapStateActions,
         mapStyleActions,
-        uiStateActions
+        uiStateActions,
+        compositeActions
       ] = [
         VisStateActions,
         MapStateActions,
         MapStyleActions,
-        UIStateActions
+        UIStateActions,
+        CompositeActions
       ].map(actions =>
         bindActionCreators(mergeActions(actions, userActions), dispatch)
       );
@@ -371,6 +376,7 @@ function makeGetActionCreators() {
         mapStateActions,
         mapStyleActions,
         uiStateActions,
+        compositeActions,
         dispatch
       };
     }

@@ -108,7 +108,8 @@ export default function ModalContainerFactory(
       visState: PropTypes.object.isRequired,
       visStateActions: PropTypes.object.isRequired,
       uiStateActions: PropTypes.object.isRequired,
-      mapStyleActions: PropTypes.object.isRequired
+      mapStyleActions: PropTypes.object.isRequired,
+      compositeActions: PropTypes.object.isRequired
     };
 
     _closeModal = () => {
@@ -126,7 +127,7 @@ export default function ModalContainerFactory(
     };
 
     _onFileUpload = blob => {
-      this.props.visStateActions.loadFiles(blob);
+      this.props.compositeActions.loadFiles(blob);
     };
 
     _onExportImage = () => {

@@ -152,6 +152,34 @@ export const keplerGlInit =  createAction(
 );
 
 /**
+ * Trigger file loading dispatch `addDataToMap` if succeed, or `loadFilesErr` if failed
+ * @memberof main
+ * @param {Array<Object>} files array of fileblob
+ * @returns {{type: ActionTypes.LOAD_FILES, files: *}}
+ * @public
+ */
+export function loadFiles(files) {
+  return {
+    type: ActionTypes.LOAD_FILES,
+    files
+  };
+}
+
+/**
+ * Trigger loading file error
+ * @memberof main
+ * @param {*} error
+ * @returns {{type: ActionTypes.LOAD_FILES_ERR, error: *}}
+ * @public
+ */
+export function loadFilesErr(error) {
+  return {
+    type: ActionTypes.LOAD_FILES_ERR,
+    error
+  };
+}
+
+/**
  * This declaration is needed to group actions in docs
  */
 /**

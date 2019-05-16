@@ -49,10 +49,6 @@ const actionHandler = {
 
   [ActionTypes.LAYER_VISUAL_CHANNEL_CHANGE]: visStateUpdaters.layerVisualChannelChangeUpdater,
 
-  [ActionTypes.LOAD_FILES]: visStateUpdaters.loadFilesUpdater,
-
-  [ActionTypes.LOAD_FILES_ERR]: visStateUpdaters.loadFilesErrUpdater,
-
   [ActionTypes.MAP_CLICK]: visStateUpdaters.mapClickUpdater,
 
   [ActionTypes.RECEIVE_MAP_CONFIG]: visStateUpdaters.receiveMapConfigUpdater,
