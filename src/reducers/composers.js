@@ -29,6 +29,7 @@ const actionHandler = {
   [ActionTypes.UPDATE_VIS_DATA]: combinedUpdaters.updateVisDataUpdater,
   [ActionTypes.ADD_DATA_TO_MAP]: combinedUpdaters.addDataToMapUpdater,
   [ActionTypes.LOAD_FILES]: combinedUpdaters.loadFilesUpdater,
+  [ActionTypes.LOAD_FILES_SUCCESS]: combinedUpdaters.loadFilesSuccessUpdater,
   [ActionTypes.LOAD_FILES_ERR]: combinedUpdaters.loadFilesErrUpdater
 };
 

@@ -166,18 +166,30 @@ export function loadFiles(files) {
 }
 
 /**
+ * Trigger loading file success
+ * @memberof main
+ * @param {Object} payload
+ * @param {Object} payload.data data to load
+ * @param {Object} payload.info meta information about data
+ * @returns {{type: ActionTypes.LOAD_FILES_SUCCESS, payload: *}}
+ * @public
+ */
+export const loadFilesSuccess = createAction(
+  ActionTypes.LOAD_FILES_SUCCESS,
+  payload => payload
+);
+
+/**
  * Trigger loading file error
  * @memberof main
  * @param {*} error
  * @returns {{type: ActionTypes.LOAD_FILES_ERR, error: *}}
  * @public
  */
-export function loadFilesErr(error) {
-  return {
-    type: ActionTypes.LOAD_FILES_ERR,
-    error
-  };
-}
+export const loadFilesErr = createAction(
+  ActionTypes.LOAD_FILES_SUCCESS,
+  error => error
+);
 
 /**
  * This declaration is needed to group actions in docs

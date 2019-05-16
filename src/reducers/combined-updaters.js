@@ -26,7 +26,7 @@ import {receiveMapConfigUpdater as styleMapConfigUpdater} from './map-style-upda
 import {findMapBounds} from 'utils/data-utils';
 import KeplerGlSchema from 'schemas';
 import Task, {withTask} from 'react-palm/tasks';
-import {addDataToMap, loadFilesErr} from 'actions';
+import {loadFilesSuccess, loadFilesErr} from 'actions';
 import {processFileToLoad} from 'utils/file-utils';
 import {LOAD_FILE_TASK} from 'tasks/tasks';
 
@@ -215,7 +215,7 @@ export const loadFilesUpdater = (state, action) => {
             ...(c.config || {})
           }
         }), {datasets: [], config: {}, options: {centerMap: true}});
-        return addDataToMap(data);
+        return loadFilesSuccess(data);
       },
       error => loadFilesErr(error)
     )
@@ -233,6 +233,29 @@ export const loadFilesUpdater = (state, action) => {
   );
 };
 
+export const loadFilesComposed = loadFilesUpdater;
+
+/**
+ * Trigger loading file error
+ * @memberof combinedUpdaters
+ * @param {Object} state kepler.gl instance state, containing all subreducer state
+ * @param {Object} action action
+ * @param {*} action.error
+ * @returns {Object} nextState
+ * @public
+ */
+export const loadFilesSuccessUpdater = (state, action) => {
+  const newState = addDataToMapComposed(state, action);
+  return {
+    ...newState,
+    uiState: {
+      ...newState.uiState
+    }
+  }
+};
+
+export const loadFilesSuccessComposed = loadFilesSuccessUpdater;
+
 /**
  * Trigger loading file error
  * @memberof combinedUpdaters
@@ -246,3 +269,5 @@ export const loadFilesErrUpdater = (state, action) => ({
   ...state,
   visState: loadFilesErrVisUpdater(state.visState, action)
 });
+
+export const loadFilesErrComposed = loadFilesErrUpdater;
