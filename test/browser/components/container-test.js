@@ -22,6 +22,9 @@
 import React from 'react';
 import test from 'tape';
 import {mount} from 'enzyme';
+import get from 'lodash.get';
+import set from 'lodash.set';
+import {combineReducers} from 'redux';
 import configureStore from 'redux-mock-store';
 import {Provider} from 'react-redux';
 import sinon from 'sinon';
@@ -30,16 +33,12 @@ import rootReducer from 'reducers/root';
 import coreReducer from 'reducers/core';
 import {keplerGlInit} from 'actions/actions';
 
-import {combineReducers} from 'redux';
-
+import Container, {errorMsg} from 'components/container';
 const initialCoreState = coreReducer(undefined, keplerGlInit());
-
 const initialState = {
   keplerGl: {}
 };
 const mockStore = configureStore();
-
-import Container, {errorMsg} from 'components/container';
 
 test('Components -> Container -> Mount with mint:true', t => {
   // mount with empty store
@@ -91,10 +90,25 @@ test('Components -> Container -> Mount with mint:true', t => {
     }
   };
 
+  const notificationPath = "keplerGl.map.uiState.notifications";
+
+  // these next steps are required because every time a new notification is created Kepler will
+  // generate a new ID which will not match the mocked data
+  const nextNotifications = get(nextState, notificationPath);
+  const expectedNotifications = get(expectedState, notificationPath);
+  set(nextState, notificationPath, []);
+  set(expectedState, notificationPath, []);
+
   t.deepEqual(
     nextState,
     expectedState,
     'should register map to root reducer by default'
+  );
+
+  t.deepEqual(
+    nextNotifications.message,
+    expectedNotifications.message,
+    'should register notifications'
   );
 
   // mount with custom state
@@ -134,6 +148,10 @@ test('Components -> Container -> Mount with mint:true', t => {
     smoothie: {
       milkshake: {
         ...initialCoreState,
+        uiState: {
+          ...initialCoreState.uiState,
+          currentModal: 'addData'
+        },
         mapStyle: {
           ...initialCoreState.mapStyle,
           mapboxApiAccessToken: 'pk.smoothie'
@@ -141,12 +159,13 @@ test('Components -> Container -> Mount with mint:true', t => {
       }
     }
   };
+
   t.deepEqual(
     nextState,
     expectedState,
     'should register milkshake to root reducer'
   );
-
+  //
   // unmount
   wrapper.unmount();
   expectedActions0 = {type: '@@kepler.gl/DELETE_ENTRY', payload: 'milkshake'};
@@ -193,7 +212,7 @@ test('Components -> Container -> Mount with mint:false', t => {
 
   let actions = store.getActions();
 
-  let expectedActions0 = {type: '@@kepler.gl/REGISTER_ENTRY', payload: {id: 'milkshake', mint: false, mapboxApiAccessToken: 'hello.world'}};
+  const expectedActions0 = {type: '@@kepler.gl/REGISTER_ENTRY', payload: {id: 'milkshake', mint: false, mapboxApiAccessToken: 'hello.world'}};
 
   t.deepEqual(
     actions,
@@ -202,11 +221,15 @@ test('Components -> Container -> Mount with mint:false', t => {
   );
   actions.splice(0, 2);
 
-  let nextState = appReducer({}, expectedActions0);
-  let expectedState = {
+  const nextState = appReducer({}, expectedActions0);
+  const expectedState = {
     smoothie: {
       milkshake: {
         ...initialCoreState,
+        uiState: {
+          ...initialCoreState.uiState,
+          currentModal: 'addData'
+        },
         mapStyle: {
           ...initialCoreState.mapStyle,
           // should replace access token
@@ -215,6 +238,20 @@ test('Components -> Container -> Mount with mint:false', t => {
       }
     }
   };
+
+  // these next steps are required because every time a new notification is created Kepler will
+  // generate a new ID which will not match the mocked data
+  const notificationPath = "smoothie.milkshake.uiState.notifications";
+  const nextNotifications = get(nextState, notificationPath);
+  const expectedNotifications = get(expectedState, notificationPath);
+  set(nextState, notificationPath, []);
+  set(expectedState, notificationPath, []);
+
+  // console.log('Actual');
+  // console.log(JSON.stringify(nextState, null, 2));
+  // console.log('Expected');
+  // console.log(JSON.stringify(expectedState, null, 2));
+
   t.deepEqual(
     nextState,
     expectedState,
@@ -266,11 +303,15 @@ test('Components -> Container -> Mount then rename', t => {
     'should register entry'
   );
 
-  let nextState = appReducer({}, expectedActions0);
-  let expectedState = {
+  const nextState = appReducer({}, expectedActions0);
+  const expectedState = {
     smoothie: {
       milkshake: {
         ...initialCoreState,
+        uiState: {
+          ...initialCoreState.uiState,
+          currentModal: 'addData'
+        },
         mapStyle: {
           ...initialCoreState.mapStyle,
           // should replace access token

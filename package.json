@@ -172,6 +172,8 @@
     "gl": "^4.2.2",
     "jsdom": "^11.1.0",
     "json-loader": "^0.5.4",
+    "lodash.get": "^4.4.2",
+    "lodash.set": "^4.3.2",
     "nyc": "^11.4.1",
     "prettier": "^1.7.0",
     "progress-bar-webpack-plugin": "^1.9.3",

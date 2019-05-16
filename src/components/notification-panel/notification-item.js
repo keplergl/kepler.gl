@@ -103,7 +103,7 @@ export default function NotificationItemFactory()
             className="notification-item--message"
             expanded={this.state.isExpanded}
             theme={this.props.theme}>
-            <ReactMarkdown source={notification.message} />
+            <ReactMarkdown linkTarget="_blank" source={notification.message} />
           </NotificationMessage>
           <div
             className="notification-item--action">
