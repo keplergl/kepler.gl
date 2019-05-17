@@ -25,8 +25,8 @@ function addBrushingVsShader(vs) {
   return editShader(
     vs,
     'scatterplot brushing vs',
-    'outerRadiusPixels += stroked * lineWidth / 2.0;',
-    'outerRadiusPixels = brushing_getRadius(instancePositions, outerRadiusPixels + stroked * lineWidth / 2.0);'
+    'outerRadiusPixels += stroked * lineWidthPixels / 2.0;',
+    'outerRadiusPixels = brushing_getRadius(instancePositions, outerRadiusPixels + stroked * lineWidthPixels / 2.0);'
   );
 }
 

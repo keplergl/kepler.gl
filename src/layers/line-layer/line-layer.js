@@ -113,7 +113,7 @@ export default class LineLayer extends ArcLayer {
             strokeScale: this.config.visConfig.thickness,
             getColor: this.config.highlightColor,
             getTargetColor: this.config.highlightColor,
-            getWidth: data.getStrokeWidth,
+            getWidth: data.getWidth,
             pickable: false
           })
         ]

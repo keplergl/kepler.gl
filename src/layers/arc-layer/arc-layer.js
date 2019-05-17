@@ -278,7 +278,7 @@ export default class ArcLayer extends Layer {
             strokeScale: this.config.visConfig.thickness,
             getSourceColor: this.config.highlightColor,
             getTargetColor: this.config.highlightColor,
-            getWidth: data.getStrokeWidth,
+            getWidth: data.getWidth,
             pickable: false
           })
         ]
