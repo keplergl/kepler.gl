@@ -39,8 +39,8 @@ import {
 } from './actions';
 
 const KeplerGl = require('kepler.gl/components').injectComponents([
-  // replaceLoadDataModal(),
-  // replaceSaveMap()
+  replaceLoadDataModal(),
+  replaceSaveMap()
 ]);
 
 // Sample data

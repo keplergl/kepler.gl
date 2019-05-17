@@ -19,14 +19,7 @@
 // THE SOFTWARE.
 
 import {console as Console} from 'global/window';
-import Task, {disableStackCapturing, withTask} from 'react-palm/tasks';
-
-// Tasks
-import {LOAD_FILE_TASK} from 'tasks/tasks';
-
-// Actions
-import {loadFilesErr} from 'actions/vis-state-actions';
-import {addDataToMap} from 'actions';
+import {disableStackCapturing} from 'react-palm/tasks';
 
 // Utils
 import {
@@ -55,8 +48,6 @@ import {
 } from './vis-state-merger';
 
 import {Layer, LayerClasses} from 'layers';
-import {processFileToLoad} from '/utils/file-utils';
-import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
 
 // react-palm
 // disable capture exception for react-palm call to withTask
@@ -1290,7 +1281,6 @@ function closeSpecificMapAtIndex(state, action) {
     splitMaps: []
   };
 }
-
 
 /**
  * Update state with file loading error

@@ -187,7 +187,7 @@ export const loadFilesSuccess = createAction(
  * @public
  */
 export const loadFilesErr = createAction(
-  ActionTypes.LOAD_FILES_SUCCESS,
+  ActionTypes.LOAD_FILES_ERR,
   error => error
 );
 

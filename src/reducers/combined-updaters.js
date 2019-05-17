@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {fitBoundsUpdater} from './map-state-updaters';
-import {toggleModalUpdater} from './ui-state-updaters';
+import {addNotificationUpdater, toggleModalUpdater} from './ui-state-updaters';
 import {loadFilesErrUpdater as loadFilesErrVisUpdater, updateVisDataUpdater as visStateUpdateVisDataUpdater} from './vis-state-updaters';
 import {receiveMapConfigUpdater as stateMapConfigUpdater} from './map-state-updaters';
 import {receiveMapConfigUpdater as styleMapConfigUpdater} from './map-style-updaters';
@@ -29,6 +29,8 @@ import Task, {withTask} from 'react-palm/tasks';
 import {loadFilesSuccess, loadFilesErr} from 'actions';
 import {processFileToLoad} from 'utils/file-utils';
 import {LOAD_FILE_TASK} from 'tasks/tasks';
+import {successNotification, errorNotification} from 'utils/notifications-utils';
+import {DEFAULT_NOTIFICATION_TYPES} from 'constants';
 
 // compose action to apply result multiple reducers, with the output of one
 
@@ -246,11 +248,14 @@ export const loadFilesComposed = loadFilesUpdater;
  */
 export const loadFilesSuccessUpdater = (state, action) => {
   const newState = addDataToMapComposed(state, action);
+  const {datasets: loadedFiles} = action.payload;
+  const notification = successNotification({
+    message: `Loaded Files: ${loadedFiles.length}`,
+    topic: DEFAULT_NOTIFICATION_TYPES.file
+  });
   return {
     ...newState,
-    uiState: {
-      ...newState.uiState
-    }
+    uiState: addNotificationUpdater(newState.uiState, {payload: notification})
   }
 };
 
@@ -265,9 +270,20 @@ export const loadFilesSuccessComposed = loadFilesSuccessUpdater;
  * @returns {Object} nextState
  * @public
  */
-export const loadFilesErrUpdater = (state, action) => ({
-  ...state,
-  visState: loadFilesErrVisUpdater(state.visState, action)
-});
+export const loadFilesErrUpdater = (state, action) => {
+  const notification = errorNotification({
+    message: `Error loading files`,
+    topic: DEFAULT_NOTIFICATION_TYPES.file
+  });
+  const newUIState = toggleModalUpdater(
+    addNotificationUpdater(state.uiState, {payload: notification}),
+    {payload: null}
+  );
+  return {
+    ...state,
+    visState: loadFilesErrVisUpdater(state.visState, action),
+    uiState: newUIState
+  }
+};
 
 export const loadFilesErrComposed = loadFilesErrUpdater;
