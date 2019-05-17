@@ -185,8 +185,8 @@ export default class LayerConfigurator extends Component {
 
         {/* text label */}
         <TextLabelPanel
-          visConfiguratorProps={visConfiguratorProps}
-          layerConfiguratorProps={layerConfiguratorProps}
+          fields={visConfiguratorProps.fields}
+          updateLayerTextLabel={this.props.updateLayerTextLabel}
           textLabel={layer.config.textLabel}
         />
       </StyledLayerVisualConfigurator>

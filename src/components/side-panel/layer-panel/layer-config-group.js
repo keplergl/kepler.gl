@@ -51,16 +51,26 @@ export const ConfigGroupCollapsibleContent = styled.div.attrs({
   max-height: 600px;
 `;
 
+export const ConfigGroupCollapsibleHeader = styled.div.attrs({
+  className: 'layer-config-group__header__collapsible'
+})`
+  overflow: visible;
+  overflow: hidden;
+  max-height: 0;
+`
+
 export const StyledLayerConfigGroup = styled.div`
   padding-left: 18px;
   margin-bottom: 12px;
 
   &.collapsed {
+    .layer-config-group__header__collapsible {
+      overflow: visible;
+      max-height: 600px;
+    }
     .layer-config-group__content {
 
       .layer-config-group__content__collapsible {
-        /* display: none; */
-        /* flex: 0; */
         overflow: hidden;
         max-height: 0;
       }

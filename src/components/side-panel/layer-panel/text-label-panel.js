@@ -33,92 +33,53 @@ import ColorSelector from './color-selector';
 import FieldSelector from 'components/common/field-selector';
 import ItemSelector from 'components/common/item-selector/item-selector';
 import LayerConfigGroup, {
-  ConfigGroupCollapsibleContent
+  ConfigGroupCollapsibleContent,
+  ConfigGroupCollapsibleHeader
 } from './layer-config-group';
 import RangeSlider from 'components/common/range-slider';
 
-import {LAYER_TEXT_CONFIGS, DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
+import {LAYER_TEXT_CONFIGS} from 'layers/layer-factory';
 
 export default class TextLabelPanel extends Component {
   static propTypes = {
-    layerConfiguratorProps: PropTypes.object.isRequired,
-    textLabel: PropTypes.array,
-    visConfiguratorProps: PropTypes.object.isRequired
+    fields: PropTypes.arrayOf(PropTypes.object),
+    textLabel: PropTypes.arrayOf(PropTypes.object),
+    updateLayerTextLabel: PropTypes.func.isRequired
   };
-
-  onAttributeChange = (idx, attribute) => {
-    const {layerConfiguratorProps, textLabel} = this.props;
-
-    return v =>
-      layerConfiguratorProps.onChange({
-        textLabel: textLabel.map((tl, i) =>
-          i === idx
-            ? {
-                ...tl,
-                [attribute]: v
-              }
-            : tl
-        )
-      });
-  };
-
-  onChangeTextAnchor = (idx, anchor) => {
-    const {layerConfiguratorProps, textLabel} = this.props;
-
-    // TODO: we can be smarter on determining the offset of the text
-    layerConfiguratorProps.onChange({
-      textLabel: textLabel.map((tl, i) =>
-        i === idx
-          ? {
-              ...tl,
-              anchor,
-              // offset: [
-              //   anchor === 'start' ? 10 : anchor === 'end' ? -10 : 0,
-              //   anchor === 'middle' ? 10 : 0
-              // ]
-            }
-          : tl
-      )
-    });
-  };
-
-  onClickAdd = () => {
-    const {layerConfiguratorProps, textLabel} = this.props;
-
-    layerConfiguratorProps.onChange({
-      textLabel: [
-        ...textLabel,
-        DEFAULT_TEXT_LABEL
-      ]
-    });
-  }
 
   render() {
-    const {visConfiguratorProps, textLabel} = this.props;
-    const textLabels = Array.isArray(textLabel) ? textLabel : [textLabel];
+    const {updateLayerTextLabel, textLabel, fields} = this.props;
+    const currentFields = textLabel.map(tl => tl.field && tl.field.name).filter(d => d);
     return (
       <LayerConfigGroup label={'label'} collapsible>
-        <SidePanelSection>
-          {textLabels.map((tl, idx) => (
-            <FieldSelector
-              key={tl.field ? tl.field.name : 'null'}
-              fields={visConfiguratorProps.fields}
-              value={(tl.field && tl.field.name) || 'select a field'}
-              placeholder={'empty'}
-              onSelect={this.onAttributeChange(idx, 'field')}
-              erasable
-            />
-          ))}
-        </SidePanelSection>
+        <ConfigGroupCollapsibleHeader>
+          <FieldSelector
+            fields={fields}
+            value={currentFields}
+            onSelect={selected => updateLayerTextLabel('all', 'fields', selected)}
+            multiSelect
+          />
+        </ConfigGroupCollapsibleHeader>
         <ConfigGroupCollapsibleContent>
-          {textLabels.map((tl, idx) => (
+          {textLabel.map((tl, idx) => (
             <div key={tl.field ? tl.field.name : 'null'}>
+              <PanelLabel>{`Label ${idx + 1}`}</PanelLabel>
+              <SidePanelSection>
+                <FieldSelector
+                  fields={fields}
+                  value={(tl.field && tl.field.name) || 'Select a field'}
+                  placeholder={'empty'}
+                  onSelect={v => updateLayerTextLabel(idx, 'field', v)}
+                  erasable
+                />
+              </SidePanelSection>
               <SidePanelSection>
                 <PanelLabel>{`Font size`}</PanelLabel>
                 <RangeSlider
                   {...LAYER_TEXT_CONFIGS.fontSize}
                   value1={tl.size}
-                  onChange={v => this.onAttributeChange(idx, 'size')(v[1])}
+                  isRange={false}
+                  onChange={v => updateLayerTextLabel(idx, 'size', v[1])}
                 />
               </SidePanelSection>
               <SidePanelSection>
@@ -127,7 +88,7 @@ export default class TextLabelPanel extends Component {
                   colorSets={[
                     {
                       selectedColor: tl.color,
-                      setColor: this.onAttributeChange(idx, 'color')
+                      setColor: v => updateLayerTextLabel(idx, 'color', v)
                     }
                   ]}
                 />
@@ -139,7 +100,7 @@ export default class TextLabelPanel extends Component {
                     <ItemSelector
                       {...LAYER_TEXT_CONFIGS.textAnchor}
                       selectedItems={tl.anchor}
-                      onChange={val => this.onChangeTextAnchor(idx, val)}
+                      onChange={val => updateLayerTextLabel(idx, 'anchor', val)}
                     />
                   </SBFlexboxItem>
                   <SBFlexboxItem>
@@ -147,7 +108,7 @@ export default class TextLabelPanel extends Component {
                     <ItemSelector
                       {...LAYER_TEXT_CONFIGS.textAlignment}
                       selectedItems={tl.alignment}
-                      onChange={this.onAttributeChange(idx, 'alignment')}
+                      onChange={val => updateLayerTextLabel(idx, 'alignment', val)}
                     />
                   </SBFlexboxItem>
                 </SpaceBetweenFlexbox>
@@ -155,7 +116,7 @@ export default class TextLabelPanel extends Component {
             </div>
           ))}
           <SidePanelSection>
-            <Button link onClick={this.onClickAdd}>
+            <Button link onClick={val => updateLayerTextLabel(textLabel.length)}>
               <Add height="12px" />
               Add More Label
             </Button>

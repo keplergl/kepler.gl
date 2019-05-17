@@ -56,6 +56,7 @@ import {
 
 import {Layer, LayerClasses} from 'layers';
 import {processFileToLoad} from '/utils/file-utils';
+import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
 
 // react-palm
 // disable capture exception for react-palm call to withTask
@@ -215,6 +216,70 @@ export function layerConfigChangeUpdater(state, action) {
   };
 
   return updateStateWithLayerAndData(newState, {layer: newLayer, idx});
+}
+
+function addOrRemoveTextLabels(newFields, textLabel) {
+  let newTextLabel = textLabel.slice();
+
+  const currentFields = textLabel.map(tl => tl.field && tl.field.name).filter(d => d);
+
+  const addFields = newFields.filter(f => !currentFields.includes(f.name));
+  const deleteFields = currentFields
+    .filter(f => !newFields.find(fd => fd.name === f));
+
+  // delete
+  newTextLabel = newTextLabel.filter(tl => tl.field && !deleteFields.includes(tl.field.name));
+  newTextLabel = !newTextLabel.length ? [DEFAULT_TEXT_LABEL] : newTextLabel;
+
+  // add
+  newTextLabel = [
+    ...(newTextLabel.filter(tl => tl.field)),
+    ...addFields.map(af => ({
+      ...DEFAULT_TEXT_LABEL,
+      field: af
+    }))
+  ];
+
+  return newTextLabel;
+}
+
+function updateTextLabelPropAndValue(idx, prop, value, textLabel) {
+  let newTextLabel = textLabel.slice();
+
+  if (prop && (value || textLabel.length === 1)) {
+    newTextLabel = textLabel.map((tl, i) =>
+      i === idx ? {...tl, [prop]: value} : tl);
+  } else if (prop === 'field' && value === null && textLabel.length > 1) {
+
+    // remove label when field value is set to null
+    newTextLabel.splice(idx, 1);
+  }
+
+  return newTextLabel;
+}
+
+export function layerTextLabelChangeUpdater(state, action) {
+  const {oldLayer, idx, prop, value} = action;
+  const {textLabel} = oldLayer.config;
+
+  let newTextLabel = textLabel.slice();
+
+  if (idx === 'all' && prop === 'fields') {
+    newTextLabel = addOrRemoveTextLabels(value, textLabel);
+  }
+
+  // if idx is set to length, add empty text label
+  if (!textLabel[idx] && idx === textLabel.length) {
+    newTextLabel = [
+      ...textLabel,
+      DEFAULT_TEXT_LABEL
+    ];
+  }
+
+  // update text label prop and value
+  newTextLabel = updateTextLabelPropAndValue(idx, prop, value, newTextLabel);
+
+  return layerConfigChangeUpdater(state, {oldLayer, newConfig: {textLabel: newTextLabel}});
 }
 
 /**

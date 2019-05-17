@@ -45,6 +45,7 @@ function TooltipConfigFactory() {
             }}
             closeOnSelect={false}
             multiSelect
+            inputTheme="secondary"
           />
         </SidePanelSection>
       ))}

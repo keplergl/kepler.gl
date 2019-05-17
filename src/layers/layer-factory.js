@@ -361,8 +361,8 @@ export const LAYER_TEXT_CONFIGS = {
 export const DEFAULT_TEXT_LABEL = {
   field: null,
   color: [255, 255, 255],
-  size: 50,
+  size: 18,
   offset: [0, 0],
-  anchor: 'middle',
+  anchor: 'start',
   alignment: 'center'
 };

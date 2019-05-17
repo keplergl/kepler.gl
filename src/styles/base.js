@@ -350,15 +350,29 @@ const secondaryInput = css`
   }
 `;
 
-const chickletedInput = css`
-  ${props => props.theme.secondaryInput}
+const chickletedInputContainer = css`
   cursor: pointer;
   flex-wrap: wrap;
   height: auto;
   justify-content: start;
   margin-bottom: 2px;
-  padding: 4px 7px 4px 4px;
+  padding: 0px 7px 0px 4px;
   white-space: normal;
+
+  .chickleted-input__placeholder {
+    line-height: 24px;
+    margin: 4px;
+  }
+`;
+
+const chickletedInput = css`
+  ${props => props.theme.input}
+  ${props => props.theme.chickletedInputContainer}
+`;
+
+const secondaryChickletedInput = css`
+  ${props => props.theme.secondaryInput}
+  ${props => props.theme.chickletedInputContainer}
 `;
 
 const inlineInput = css`
@@ -713,6 +727,9 @@ export const theme = {
   inputLT,
   inlineInput,
   chickletedInput,
+  chickletedInputContainer,
+  secondaryChickletedInput,
+
   secondaryInput,
   dropdownScrollBar,
   dropdownList,
