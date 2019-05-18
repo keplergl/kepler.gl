@@ -6,9 +6,9 @@
   "main": "dist/index.js",
   "version": "0.0.1",
   "engines": {
-    "node": ">=8.0.0",
-    "npm": ">=5.4.2",
-    "yarn": ">=0.27.5"
+    "node": ">=8.1.0",
+    "npm": ">=6.1.0",
+    "yarn": ">=1.6.0"
   },
   "scripts": {
     "start": "webpack-dev-server --mode development --env.prod --content-base ./src/static --progress --open",
