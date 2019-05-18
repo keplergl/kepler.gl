@@ -22,7 +22,7 @@ import test from 'tape';
 import {drainTasksForTesting, succeedTaskWithValues} from 'react-palm/tasks';
 
 import reducer from 'reducers/map-style';
-import {INITIAL_MAP_STYLE, getMapStyles} from 'reducers/map-style-updaters';
+import {INITIAL_MAP_STYLE} from 'reducers/map-style-updaters';
 import {keplerGlInit, receiveMapConfig} from 'actions/actions';
 import SchemaManager from 'schemas';
 import {DEFAULT_MAP_STYLES} from 'constants/default-settings';
@@ -72,7 +72,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
     keplerGlInit({mapboxApiAccessToken: 'smoothies_secret_token'})
   );
 
-  const stateToSave = StateWCustomMapStyle.toJS();
+  const stateToSave = StateWCustomMapStyle;
   // save state
   const savedState = SchemaManager.getConfigToSave(stateToSave);
 

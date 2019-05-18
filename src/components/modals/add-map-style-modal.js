@@ -25,6 +25,7 @@ import styled from 'styled-components';
 import MapboxGLMap from 'react-map-gl';
 import {findDOMNode} from 'react-dom';
 import {StyledModalContent, InputLight, StyledMapContainer} from 'components/common/styled-components';
+import {media} from 'styles/media-breakpoints';
 
 // Utils
 import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
@@ -40,29 +41,39 @@ const InstructionPanel = styled.div`
   flex-direction: column;
   justify-content: space-around;
   font-size: 12px;
-  .modal-section {
-    margin-bottom: 32px;
-  }
+  
   .modal-section:first-child {
     margin-top: 24px;
+    ${media.palm`
+      margin-top: 0;
+    `};
   }
   
-  .modal-section {
-    .modal-section-title {
-      font-weight: 500;
-    }
-    .modal-section-subtitle {
-      color: ${props => props.theme.subtextColorLT};
-    }
-    
-    input {
-      margin-top: 8px;
-    }
-  }
-
   input {
     margin-right: 8px;
   }
+`;
+
+const StyledModalSection = styled.div`
+  margin-bottom: 32px;
+
+  .modal-section-title {
+    font-weight: 500;
+  }
+  .modal-section-subtitle {
+    color: ${props => props.theme.subtextColorLT};
+  }
+  
+  input {
+    margin-top: 8px;
+  }
+  
+  ${media.portable`
+    margin-bottom: 24px;
+  `};
+  ${media.palm`
+    margin-bottom: 16px;
+  `};
 `;
 
 const PreviewMap = styled.div`
@@ -72,7 +83,6 @@ const PreviewMap = styled.div`
   justify-content: center;
   margin-left: 116px;
   flex-shrink: 0;
-  width: ${MapW}px;
 
   .preview-title {
     font-weight: 500;
@@ -83,16 +93,27 @@ const PreviewMap = styled.div`
   .preview-title.error {
     color: ${props => props.theme.errorColor};
   }
+  
+  ${media.portable`
+    margin-left: 32px;
+  `};
+  
+  ${media.palm`
+    margin-left: unset;
+    .preview-title {
+      margin-top: 0px;
+    }
+  `};
+`;
 
-  .preview-image {
-    background: ${props => props.theme.modalImagePlaceHolder};
-    border-radius: 4px;
-    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.18);
-    width: ${MapW}px;
-    height: ${MapH}px;
-    position: relative;
-  }
-
+const StyledPreviewImage = styled.div`
+  background: ${props => props.theme.modalImagePlaceHolder};
+  border-radius: 4px;
+  box-shadow: 0 8px 16px 0 rgba(0,0,0,0.18);
+  width: ${MapW}px;
+  height: ${MapH}px;
+  position: relative;
+  
   .preview-image-placeholder {
     position: absolute;
     top: 0;
@@ -191,7 +212,7 @@ class AddMapStyleModal extends Component {
       <div className="add-map-style-modal">
         <StyledModalContent>
           <InstructionPanel>
-            <div className="modal-section">
+            <StyledModalSection className="modal-section">
               <div className="modal-section-title">1. Publish your style at mapbox or provide access token</div>
               <div className="modal-section-subtitle">
                 You can create your own map style at
@@ -208,8 +229,8 @@ class AddMapStyleModal extends Component {
                 onChange={({target: {value}}) => this.props.inputMapStyle({...inputStyle, accessToken: value})}
                 placeholder="e.g. pk.abcdefg.xxxxxx"
               />
-            </div>
-            <div className="modal-section">
+            </StyledModalSection>
+            <StyledModalSection className="modal-section">
               <div className="modal-section-title">2. Paste style url</div>
               <div className="modal-section-subtitle">
                 What is a
@@ -221,21 +242,21 @@ class AddMapStyleModal extends Component {
                 onChange={({target: {value}}) => this.props.inputMapStyle({...inputStyle, url: value})}
                 placeholder="e.g. mapbox://styles/uberdataviz/abcdefghijklmnopq"
               />
-            </div>
-            <div className="modal-section">
+            </StyledModalSection>
+            <StyledModalSection className="modal-section">
               <div className="modal-section-title">3. Name your style</div>
               <InputLight
                 type="text"
                 value={inputStyle.label || ''}
                 onChange={({target: {value}}) => this.props.inputMapStyle({...inputStyle, label: value})}
               />
-            </div>
+            </StyledModalSection>
           </InstructionPanel>
           <PreviewMap>
             <div className={classnames('preview-title', {error: inputStyle.error})}>
               {inputStyle.error ? ErrorMsg.styleError :
                 (inputStyle.style && inputStyle.style.name) || ''}</div>
-            <div className="preview-image">
+            <StyledPreviewImage className="preview-image">
               {!inputStyle.isValid ?
                 <div className="preview-image-spinner"/> :
                 <StyledMapContainer>
@@ -250,7 +271,7 @@ class AddMapStyleModal extends Component {
                     mapStyle={inputStyle.url}/>
                 </StyledMapContainer>
               }
-            </div>
+            </StyledPreviewImage>
           </PreviewMap>
         </StyledModalContent>
       </div>

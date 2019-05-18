@@ -82,9 +82,10 @@ You need to add `taskMiddleware` of `react-palm` to your store too. We are activ
 `react-palm` will not be required, however it is still a very lightweight side effects management tool that is easier to test than react-thunk.
 
 ```js
-import keplerGlReducer from 'kepler.gl/reducers';
 import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
-import {taskMiddleware} from 'react-palm/tasks';
+import keplerGlReducer from 'kepler.gl/reducers';
+import {enhanceReduxMiddleware} from 'kepler.gl/middleware';
+
 
 const initialState = {};
 const reducers = combineReducers({
@@ -96,7 +97,7 @@ const reducers = combineReducers({
 });
 
 // using createStore
-export default createStore(reducer, initialState, applyMiddleware(taskMiddleware));
+export default createStore(reducer, initialState, applyMiddleware(enhanceReduxMiddleware([/* Add other middlewares here */])));
 
 ```
 
@@ -104,7 +105,9 @@ Or if use enhancer:
 ```js
 // using enhancers
 const initialState = {};
-const middlewares = [taskMiddleware];
+const middlewares = enhanceReduxMiddleware([
+  // Add other middlewares here
+]);
 const enhancers = [
   applyMiddleware(...middlewares)
 ];

@@ -56,7 +56,7 @@ In order to edit the mapbox token in your html file you simply need to perform t
 ```
 
 ### <a href="#export-json-map">Export Map as JSON</a>
-![Export Map Configuration](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/k-save-and-export-4.png "activate interactions")
+![Export Map as JSON](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/k-save-and-export-5.png "activate interactions")
 
 You can export the current map as a `json` file. This is useful when you are running your own kepler.gl application and want to load your map programmatticaly.
 The JSON file includes:

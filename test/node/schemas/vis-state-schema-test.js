@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-
+import cloneDeep from 'lodash.clonedeep';
 import {cmpFilters, cmpSavedLayers} from 'test/helpers/comparison-utils';
 import SchemaManager from 'schemas';
 
@@ -33,7 +33,7 @@ import {StateWFilesFiltersLayerColor,
 } from 'test/helpers/mock-state';
 
 test('#visStateSchema -> v1 -> save layers', t => {
-  const initialState = StateWFilesFiltersLayerColor.toJS();
+  const initialState = cloneDeep(StateWFilesFiltersLayerColor);
 
   // save state
   const vsToSave = SchemaManager.getConfigToSave(initialState).config.visState;
@@ -55,7 +55,7 @@ test('#visStateSchema -> v1 -> save layers', t => {
 });
 
 test('#visStateSchema -> v1 -> load layers', t => {
-  const initialState = StateWFilesFiltersLayerColor.toJS();
+  const initialState = cloneDeep(StateWFilesFiltersLayerColor);
 
   // save state
   const savedState = SchemaManager.getConfigToSave(initialState);
@@ -78,7 +78,7 @@ test('#visStateSchema -> v1 -> load layers', t => {
 });
 
 test('#visStateSchema -> v1 -> save load filters', t => {
-  const initialState = StateWFilesFiltersLayerColor.toJS();
+  const initialState = cloneDeep(StateWFilesFiltersLayerColor);
   const savedState = SchemaManager.getConfigToSave(initialState);
 
   // save state
@@ -116,7 +116,7 @@ test('#visStateSchema -> v1 -> save load filters', t => {
 });
 
 test('#visStateSchema -> v1 -> save load interaction', t => {
-  const initialState = StateWFilesFiltersLayerColor.toJS();
+  const initialState = cloneDeep(StateWFilesFiltersLayerColor);
   const savedState = SchemaManager.getConfigToSave(initialState);
 
   // save state
@@ -150,7 +150,7 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
 });
 
 test('#visStateSchema -> v1 -> save load layerBlending', t => {
-  const initialState = StateWFilesFiltersLayerColor.toJS();
+  const initialState = cloneDeep(StateWFilesFiltersLayerColor);
   const savedState = SchemaManager.getConfigToSave(initialState);
 
   // save state

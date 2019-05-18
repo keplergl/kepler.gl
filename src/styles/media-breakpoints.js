@@ -18,31 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
-import keplerGlReducer from 'kepler.gl/reducers';
-import {enhanceReduxMiddleware} from 'kepler.gl/middleware';
-import appReducer from './app-reducer';
+import {css} from 'styled-components';
 
-const customizedKeplerGlReducer = keplerGlReducer
-  .initialState({
-    uiState: {
-      // hide side panel when mounted
-      activeSidePanel: null,
-      // hide all modals whtn mounted
-      currentModal: null
+// These are useful for test or when theme doesn't define them
+const breakPoints = {
+  palm: 588,
+  desk: 768
+};
+
+export const media = {
+  palm: (...args) => css`
+    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).palm}px) {
+      ${css(...args)};
     }
-  });
+  `,
 
-const reducers = combineReducers({
-  keplerGl: customizedKeplerGlReducer,
-  app: appReducer
-});
+  portable: (...args) => css`
+    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).desk}px) {
+      ${css(...args)};
+    }
+  `,
 
-const middlewares = enhanceReduxMiddleware([]);
-const enhancers = [applyMiddleware(...middlewares)];
-
-export default createStore(
-  reducers,
-  {},
-  compose(...enhancers)
-);
+  desk: (...args) => css`
+    @media (min-width: ${props => (props.theme.breakPoints || breakPoints).desk + 1}px) {
+      ${css(...args)};
+    }
+  `
+};

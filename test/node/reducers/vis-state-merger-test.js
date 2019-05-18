@@ -87,7 +87,7 @@ import {
 
 test('VisStateMerger.v0 -> mergeFilters -> toEmptyState', t => {
   const savedConfig = cloneDeep(savedStateV0);
-  const oldState = InitialState.toJS();
+  const oldState = cloneDeep(InitialState);
   const oldVisState = oldState.visState;
 
   const parsedConfig = SchemaManager.parseSavedConfig(
@@ -126,7 +126,7 @@ test('VisStateMerger.v0 -> mergeFilters -> toEmptyState', t => {
 
 test('VisStateMerger.v1 -> mergeFilters -> toEmptyState', t => {
   const savedConfig = cloneDeep(savedStateV1);
-  const oldState = InitialState.toJS();
+  const oldState = cloneDeep(InitialState);
   const oldVisState = oldState.visState;
 
   const parsedConfig = SchemaManager.parseSavedConfig(
@@ -165,7 +165,7 @@ test('VisStateMerger.v1 -> mergeFilters -> toEmptyState', t => {
 
 test('VisStateMerger.v0 -> mergeFilters -> toWorkingState', t => {
   const savedConfig = cloneDeep(savedStateV0);
-  const oldState = StateWFilters.toJS();
+  const oldState = cloneDeep(StateWFilters);
 
   const oldVisState = oldState.visState;
   const oldFilters = [...oldState.visState.filters];
@@ -213,7 +213,7 @@ test('VisStateMerger.v0 -> mergeFilters -> toWorkingState', t => {
 
 test('VisStateMerger.v1 -> mergeFilters -> toWorkingState', t => {
   const savedConfig = cloneDeep(savedStateV1);
-  const oldState = StateWFilters.toJS();
+  const oldState = cloneDeep(StateWFilters);
 
   const oldVisState = oldState.visState;
   const oldFilters = [...oldState.visState.filters];
@@ -260,12 +260,12 @@ test('VisStateMerger.v1 -> mergeFilters -> toWorkingState', t => {
 });
 
 test('VisStateMerger.current -> mergeLayers -> toEmptyState', t => {
-  const stateToSave = StateWFilesFiltersLayerColor.toJS();
+  const stateToSave = cloneDeep(StateWFilesFiltersLayerColor);
   const appStateToSave = SchemaManager.save(stateToSave);
   const configToSave = appStateToSave.config;
   const configParsed = SchemaManager.parseSavedConfig(configToSave);
 
-  const oldState = InitialState.toJS();
+  const oldState = cloneDeep(InitialState);
   const oldVisState = oldState.visState;
 
   const parsedLayers = configParsed.visState.layers;
@@ -306,7 +306,7 @@ test('VisStateMerger.v1 -> mergeLayers -> toEmptyState', t => {
   const savedConfig = cloneDeep(savedStateV1);
   const parsedConfig = SchemaManager.parseSavedConfig(savedConfig.config);
 
-  const oldState = InitialState.toJS();
+  const oldState = cloneDeep(InitialState);
   const oldVisState = oldState.visState;
 
   const parsedLayers = parsedConfig.visState.layers;
@@ -343,7 +343,7 @@ test('VisStateMerger.v1.label -> mergeLayers -> toEmptyState', t => {
   const savedConfig = cloneDeep(savedStateV1Label);
   const parsedConfig = SchemaManager.parseSavedConfig(savedConfig.config);
 
-  const oldState = InitialState.toJS();
+  const oldState = cloneDeep(InitialState);
   const oldVisState = oldState.visState;
 
   const parsedLayers = parsedConfig.visState.layers;
@@ -380,7 +380,8 @@ test('VisStateMerger.v1.split -> mergeLayers -> toEmptyState', t => {
   const savedConfig = cloneDeep(savedStateV1Split);
   const parsedConfig = SchemaManager.parseSavedConfig(savedConfig.config);
   const expectedConfig = mergedSplitMapsV1;
-  const oldState = InitialState.toJS();
+  const oldState = cloneDeep(InitialState);
+
   const oldVisState = oldState.visState;
 
   const parsedLayers = parsedConfig.visState.layers;
@@ -441,7 +442,7 @@ test('VisStateMerger.v0 -> mergeLayers -> toWorkingState', t => {
     savedConfig.config
   );
 
-  const oldState = StateWFilesFiltersLayerColor.toJS();
+  const oldState = cloneDeep(StateWFilesFiltersLayerColor);
   const oldVisState = oldState.visState;
   const oldLayers = [...oldVisState.layers];
 
@@ -495,7 +496,7 @@ test('VisStateMerger.v1 -> mergeLayers -> toWorkingState', t => {
     savedConfig.config
   );
 
-  const oldState = StateWFilesFiltersLayerColor.toJS();
+  const oldState = cloneDeep(StateWFilesFiltersLayerColor);
   const oldVisState = oldState.visState;
   const oldLayers = [...oldVisState.layers];
 
@@ -545,7 +546,7 @@ test('VisStateMerger.v1 -> mergeLayers -> toWorkingState', t => {
 
 test('VisStateMerger.v0 -> mergeInteractions -> toEmptyState', t => {
   const savedConfig = cloneDeep(savedStateV0);
-  const oldState = InitialState.toJS();
+  const oldState = cloneDeep(InitialState);
   const oldVisState = oldState.visState;
 
   const parsedConfig = SchemaManager.parseSavedConfig(
@@ -623,7 +624,7 @@ test('VisStateMerger.v0 -> mergeInteractions -> toEmptyState', t => {
 
 test('VisStateMerger.v0 -> mergeInteractions -> toWorkingState', t => {
   const savedConfig = cloneDeep(savedStateV0);
-  const oldState = StateWFilesFiltersLayerColor.toJS();
+  const oldState = cloneDeep(StateWFilesFiltersLayerColor);
   const oldVisState = oldState.visState;
 
   // add random items to interactionToBeMerged
@@ -718,7 +719,7 @@ test('VisStateMerger.v0 -> mergeInteractions -> toWorkingState', t => {
 
 test('VisStateMerger.v1 -> mergeInteractions -> toEmptyState', t => {
   const savedConfig = cloneDeep(savedStateV1);
-  const oldState = InitialState.toJS();
+  const oldState = cloneDeep(InitialState);
   const oldVisState = oldState.visState;
 
   const parsedConfig = SchemaManager.parseSavedConfig(
@@ -795,7 +796,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toEmptyState', t => {
 
 test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
   const savedConfig = cloneDeep(savedStateV1);
-  const oldState = StateWFilesFiltersLayerColor.toJS();
+  const oldState = cloneDeep(StateWFilesFiltersLayerColor);
   const oldVisState = oldState.visState;
 
   // add random items to interactionToBeMerged

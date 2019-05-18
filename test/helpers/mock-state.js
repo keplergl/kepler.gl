@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import Immutable from 'immutable';
 import cloneDeep from 'lodash.clonedeep';
 import {VizColorPalette} from 'constants/custom-color-ranges';
 import {getInitialInputStyle} from 'reducers/map-style-updaters';
@@ -60,23 +59,14 @@ export function applyActions(reducer, initialState, actions) {
   );
 }
 
-/**
- * Mock Initial App Sate
- * @returns {Immutable} appState
- */
-export function mockInitialState() {
-  const initialState = keplerGlReducer(undefined, {});
-  return Immutable.fromJS(initialState);
-}
-
-export const InitialState = mockInitialState();
+export const InitialState = keplerGlReducer(undefined, {});
 
 /**
  * Mock app state with uploaded geojson and csv file
  * @returns {Immutable} appState
  */
 function mockStateWithFileUpload() {
-  const initialState = InitialState.toJS();
+  const initialState = cloneDeep(InitialState);
 
   // load csv and geojson
   const updatedState = applyActions(keplerGlReducer, initialState, [
@@ -103,12 +93,11 @@ function mockStateWithFileUpload() {
     }
   });
 
-  return Immutable.fromJS(updatedState);
+  return updatedState;
 }
 
 function mockStateWithFilters(state) {
-  const initialState =
-    (state && state.toJS()) || mockStateWithFileUpload().toJS();
+  const initialState = state || mockStateWithFileUpload();
 
   const prepareState = applyActions(keplerGlReducer, initialState, [
     // add filter
@@ -138,12 +127,11 @@ function mockStateWithFilters(state) {
     f.id = `${f.name}-${i}`;
   });
 
-  return Immutable.fromJS(prepareState);
+  return prepareState;
 }
 
 function mockStateWithLayerDimensions(state) {
-  const initialState =
-    (state && state.toJS()) || mockStateWithFileUpload().toJS();
+  const initialState = state || mockStateWithFileUpload();
 
   const layer0 = initialState.visState.layers.find(
     l => l.config.dataId === '190vdll3di' && l.type === 'point'
@@ -176,7 +164,8 @@ function mockStateWithLayerDimensions(state) {
         anchor: 'start'
       }
     }
-  ]
+  ];
+
   // layers = [ 'point', 'geojson', 'hexagon' ]
   const reorderPayload = [[2, 0, 1]];
 
@@ -230,11 +219,11 @@ function mockStateWithLayerDimensions(state) {
     {action: VisStateActions.reorderLayer, payload: reorderPayload}
   ]);
 
-  return Immutable.fromJS(resultState);
+  return resultState;
 }
 
-function mockStateWithCustomMapStyle(state) {
-  const initialState = InitialState.toJS();
+function mockStateWithCustomMapStyle() {
+  const initialState = cloneDeep(InitialState);
   const testCustomMapStyle = {
     ...getInitialInputStyle(),
     accessToken: 'secret_token',
@@ -270,7 +259,7 @@ function mockStateWithCustomMapStyle(state) {
     }
   ]);
 
-  return Immutable.fromJS(updatedState);
+  return updatedState;
 }
 
 export const StateWFiles = mockStateWithFileUpload();

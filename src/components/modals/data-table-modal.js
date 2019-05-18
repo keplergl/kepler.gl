@@ -26,6 +26,10 @@ import {ALL_FIELD_TYPES} from 'constants/default-settings';
 import FieldToken from 'components/common/field-token';
 import DatasetLabel from 'components/common/dataset-label';
 import {Clock} from 'components/common/icons/index';
+
+// Breakpoints
+import {media} from 'styles/media-breakpoints';
+
 const ReactDataGrid = window.navigator ? require('react-data-grid/dist/react-data-grid.min') : null;
 
 let shouldPreventScrollBack = false;
@@ -83,11 +87,30 @@ const DataGridWrapper = styled.div`
   .react-grid-Canvas {
     ${props => props.theme.modalScrollBar};
   }
+  
+  ${media.palm`
+    .react-grid-Container {
+      /* TODO: replace data-grid component with react-window */
+      /* We need to use important in this case to override data-grid styling */
+      width: 100vw !important;
+    }
+  `};
+  
 `;
-
+const StyledModal = styled.div`
+  ${media.palm`
+    margin: 0 -36px;
+  `}
+`;
 const BooleanFormatter = ({value}) => <span>{String(value)}</span>;
 
 export class DataTableModal extends Component {
+
+  constructor(props) {
+    super(props);
+    this._root = React.createRef();
+  }
+
   _onMouseWheel = e => {
     // Prevent futile scroll, which would trigger the Back/Next page event
     // https://github.com/micho/jQuery.preventMacBackScroll
@@ -129,7 +152,7 @@ export class DataTableModal extends Component {
       .filter(({name}) => name !== '_geojson');
 
     return (
-      <div ref={ref => {this._root = ref}} className="dataset-modal" style={{overflow: 'scroll'}}>
+      <StyledModal ref={this._root} className="dataset-modal" style={{overflow: 'scroll'}}>
         <DatasetTabs
           activeDataset={activeDataset}
           datasets={datasets}
@@ -138,7 +161,7 @@ export class DataTableModal extends Component {
         <DataGridWrapper
           onWheel={shouldPreventScrollBack ? this._onMouseWheel : null}
         >
-          {ReactDataGrid ? (
+          {ReactDataGrid && (
             <ReactDataGrid
               headerRowHeight={72}
               columns={columns}
@@ -149,9 +172,9 @@ export class DataTableModal extends Component {
               rowHeight={48}
               rowsCount={rows.length}
             />
-          ) : null}
+          )}
         </DataGridWrapper>
-      </div>
+      </StyledModal>
     );
   }
 }

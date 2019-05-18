@@ -19,12 +19,12 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-
+import cloneDeep from 'lodash.clonedeep';
 import SchemaManager from 'schemas';
 import {InitialState, StateWCustomMapStyle} from 'test/helpers/mock-state';
 
 test('#mapStyleSchema -> v1 -> save load mapStyle', t => {
-  const initialState = InitialState.toJS();
+  const initialState = cloneDeep(InitialState);
   const savedState = SchemaManager.getConfigToSave(initialState);
 
   // save state
@@ -46,7 +46,7 @@ test('#mapStyleSchema -> v1 -> save load mapStyle', t => {
     styleType: 'dark',
     topLayerGroups: {},
     visibleLayerGroups: {}
-  }
+  };
 
   t.deepEqual(msToSave, expectedSaved, 'saved mapStyle should be current');
   t.deepEqual(msLoaded, expectedLoaded, 'loaded mapStyle should be current');
@@ -54,7 +54,7 @@ test('#mapStyleSchema -> v1 -> save load mapStyle', t => {
 });
 
 test('#mapStyleSchema -> v1 -> save load mapStyle with custom style', t => {
-  const initialState = StateWCustomMapStyle.toJS();
+  const initialState = cloneDeep(StateWCustomMapStyle);
   const savedState = SchemaManager.getConfigToSave(initialState);
 
   // save state
