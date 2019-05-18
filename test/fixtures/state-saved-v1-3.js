@@ -20,6 +20,8 @@
 
 import {KeplerGlLayers} from 'layers';
 const {PointLayer, HexagonLayer} = KeplerGlLayers;
+import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
+
 // saved state v1 with split maps
 export const savedStateV1 = {
   datasets: [
@@ -396,13 +398,7 @@ mergedLayer0.config = {
   },
   sizeScale: 'sqrt',
   sizeDomain: [1000, 3000],
-  textLabel: {
-    field: null,
-    color: [255, 255, 255],
-    size: 50,
-    offset: [0, 0],
-    anchor: 'middle'
-  },
+  textLabel: [DEFAULT_TEXT_LABEL],
   visConfig: {
     radius: 10,
     fixedRadius: true,
@@ -470,13 +466,7 @@ mergedLayer1.config = {
   sizeField: null,
   sizeScale: 'linear',
   sizeDomain: [0, 1],
-  textLabel: {
-    field: null,
-    color: [255, 255, 255],
-    size: 50,
-    offset: [0, 0],
-    anchor: 'middle'
-  },
+  textLabel: [DEFAULT_TEXT_LABEL],
   visConfig: {
     opacity: 0.8,
     worldUnitSize: 2.73,

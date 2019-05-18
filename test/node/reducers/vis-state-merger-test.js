@@ -292,12 +292,13 @@ test('VisStateMerger.current -> mergeLayers -> toEmptyState', t => {
 
   // load data into reducer
   const stateWData = visStateReducer(mergedState, updateVisData(parsedData));
+  // console.log(stateWData.layers[1].config.textLabel)
 
   // test parsed layers
   const genericLayersByOrder = stateToSave.visState.layerOrder.map(
     idx => stateToSave.visState.layers[idx]
   );
-
+  console.log(genericLayersByOrder[1].config.textLabel)
   cmpLayers(t, genericLayersByOrder, stateWData.layers, {id: true});
   t.end();
 });

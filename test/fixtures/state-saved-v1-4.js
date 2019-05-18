@@ -231,7 +231,7 @@ mergedLayer0.config = {
   sizeField: null,
   sizeDomain: [0, 1],
   sizeScale: 'linear',
-  textLabel: {
+  textLabel: [{
     field: {
       name: 'name',
       type: 'string',
@@ -242,8 +242,9 @@ mergedLayer0.config = {
     color: [184, 15, 135, 255],
     size: 27,
     offset: [-10, 0],
-    anchor: 'end'
-  },
+    anchor: 'end',
+    alignment: 'center'
+  }],
   visConfig: {
     radius: 12.5,
     fixedRadius: false,
