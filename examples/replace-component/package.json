@@ -8,8 +8,7 @@
     "kepler.gl": "^1.0.0-2",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
-    "react-palm": "^1.1.2",
-    "react-redux": "^4.4.5",
+    "react-redux": "^5.1.1",
     "react-virtualized": "^9.21.0",
     "redux-actions": "^2.2.1",
     "styled-components": "^4.1.3"
@@ -45,5 +44,9 @@
     "webpack-dev-server": "^3.1.14",
     "webpack-hot-middleware": "^2.24.3",
     "webpack-stats-plugin": "^0.2.1"
+  },
+  "_commnet": "this is temporary until we release the next version with react-palm-3.1.2",
+  "resolutions": {
+    "react-palm": "3.1.2"
   }
 }

@@ -27,10 +27,11 @@ import {findMapBounds} from 'utils/data-utils';
 import KeplerGlSchema from 'schemas';
 import Task, {withTask} from 'react-palm/tasks';
 import {loadFilesSuccess, loadFilesErr} from 'actions';
-import {processFileToLoad} from 'utils/file-utils';
+import {processFileToLoad, printFileInfo} from 'utils/file-utils';
 import {LOAD_FILE_TASK} from 'tasks/tasks';
-import {successNotification, errorNotification} from 'utils/notifications-utils';
+import {successNotification, errorNotification, formatMessageInNotification} from 'utils/notifications-utils';
 import {DEFAULT_NOTIFICATION_TYPES} from 'constants';
+import {HOW_TO_LOAD_DATA} from 'constants/user-guides';
 
 // compose action to apply result multiple reducers, with the output of one
 
@@ -207,17 +208,32 @@ export const loadFilesUpdater = (state, action) => {
   const loadFileTasks = [
     Task.all(filesToLoad.map(LOAD_FILE_TASK)).bimap(
       results => {
-        const data = results.reduce((f, c) => ({
-          // using concat here because the current datasets could be an array or a single item
-          datasets: f.datasets.concat(c.datasets),
-          // we need to deep merge this thing unless we find a better solution
-          // this case will only happen if we allow to load multiple keplergl json files
-          config: {
-            ...f.config,
-            ...(c.config || {})
+        const resources = results.reduce((f, c) => {
+          const {item, info} = c;
+          const {data, meta} = f;
+          return {
+            data: {
+              ...data, // make sure options property is propagated
+
+              // using concat here because the current datasets could be an array or a single item
+              datasets: data.datasets.concat(item.datasets),
+              // we need to deep merge this thing unless we find a better solution
+              // this case will only happen if we allow to load multiple keplergl json files
+              config: {
+                ...data.config,
+                ...(item.config || {})
+              }
+            },
+            meta: [
+              ...meta,
+              info
+            ]
           }
-        }), {datasets: [], config: {}, options: {centerMap: true}});
-        return loadFilesSuccess(data);
+        }, {
+          data: {datasets: [], config: {}, options: {centerMap: true}},
+          meta: []
+        });
+        return loadFilesSuccess(resources);
       },
       error => loadFilesErr(error)
     )
@@ -242,15 +258,22 @@ export const loadFilesComposed = loadFilesUpdater;
  * @memberof combinedUpdaters
  * @param {Object} state kepler.gl instance state, containing all subreducer state
  * @param {Object} action action
- * @param {*} action.error
+ * @param {Object} action.payload
+ * @param {Object} action.payload.data loaded datasets
+ * @param {Object} action.payload.info loaded file info
  * @returns {Object} nextState
  * @public
  */
-export const loadFilesSuccessUpdater = (state, action) => {
-  const newState = addDataToMapComposed(state, action);
-  const {datasets: loadedFiles} = action.payload;
+export const loadFilesSuccessUpdater = (state, {payload}) => {
+  const newState = addDataToMapComposed(state, {payload: payload.data});
+  const {meta} = payload;
+  const message = formatMessageInNotification({
+    title: 'Loaded Files',
+    body: meta.reduce((f,c) => `${f}\n\n${printFileInfo(c)}`, '')
+  });
+
   const notification = successNotification({
-    message: `Loaded Files: ${loadedFiles.length}`,
+    message,
     topic: DEFAULT_NOTIFICATION_TYPES.file
   });
   return {
@@ -264,15 +287,23 @@ export const loadFilesSuccessComposed = loadFilesSuccessUpdater;
 /**
  * Trigger loading file error
  * @memberof combinedUpdaters
- * @param {Object} state `visState`
+ * @param {Object} state kepler.gl instance state, containing all subreducer state
  * @param {Object} action action
- * @param {*} action.error
+ * @param {Object} action.payload
+ * @param {Error} action.payload.error
+ * @param {Object} action.payload.info
  * @returns {Object} nextState
  * @public
  */
-export const loadFilesErrUpdater = (state, action) => {
+export const loadFilesErrUpdater = (state, {payload}) => {
+  const message = formatMessageInNotification({
+    title: 'Error loading files',
+    body: `${printFileInfo(payload.info)} - ${payload.error}`,
+    footer: HOW_TO_LOAD_DATA
+  });
+
   const notification = errorNotification({
-    message: `Error loading files`,
+    message,
     topic: DEFAULT_NOTIFICATION_TYPES.file
   });
   const newUIState = toggleModalUpdater(
@@ -281,7 +312,7 @@ export const loadFilesErrUpdater = (state, action) => {
   );
   return {
     ...state,
-    visState: loadFilesErrVisUpdater(state.visState, action),
+    visState: loadFilesErrVisUpdater(state.visState, payload.error),
     uiState: newUIState
   }
 };

@@ -65,3 +65,23 @@ export const errorNotification = options =>
  */
 export const successNotification = options =>
   ({...createNotification(options), type: DEFAULT_NOTIFICATION_TYPES.success});
+
+/**
+ * Return a formatted message using Markdown to be displayed in a notification
+ * @param title
+ * @param body
+ * @param footer
+ * @return {string}
+ */
+export const formatMessageInNotification = ({
+  title = 'ALWAYS PROVIDE TITLE',
+  body = '',
+  footer = ''
+}) =>
+  `#### ${title}
+  
+  ${body}
+  
+  ${footer}
+  `;
+

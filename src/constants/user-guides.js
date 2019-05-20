@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-export const GITHUB_EXPORT_HTML_MAP = 'https://github.com/keplergl/kepler.gl/blob/master/docs/user-guides/k-save-and-export.md#2save-and-export-current-map';
-export const GITHUB_ADD_DATA_TO_MAP = 'https://github.com/keplergl/kepler.gl/blob/master/docs/api-reference/actions/actions.md#adddatatomap';
+export const EXPORT_HTML_MAP_LINK = 'https://github.com/keplergl/kepler.gl/blob/master/docs/user-guides/k-save-and-export.md#2save-and-export-current-map';
+export const ADD_DATA_TO_MAP_LINK = 'https://github.com/keplergl/kepler.gl/blob/master/docs/api-reference/actions/actions.md#adddatatomap';
 export const MAPBOX_ACCESS_TOKEN = 'https://docs.mapbox.com/help/how-mapbox-works/access-tokens/';
+export const UPLOAD_DATA_LINK = 'https://github.com/keplergl/kepler.gl/blob/master/docs/user-guides/b-kepler-gl-workflow/a-add-data-to-the-map.md';
+export const HOW_TO_LOAD_DATA = `[More info on how to load data in Kepler](${UPLOAD_DATA_LINK})`;

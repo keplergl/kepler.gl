@@ -32,3 +32,26 @@ export const processFileToLoad = (file) => {
     handler: getFileHandler(file)
   }
 };
+
+/**
+ * Print human readable file size
+ * @param bytes number of bytes
+ * @return {string} human readable version of file size
+ */
+export const sizeOf = bytes => {
+  if (bytes === 0) {
+    return '0.00 B';
+  }
+  const e = Math.floor(Math.log(bytes) / Math.log(1024));
+  return `${(bytes/Math.pow(1024, e)).toFixed(2)} ${' KMGTP'.charAt(e)}B`;
+};
+
+/**
+ * Return a string representation of fileinfo
+ * @param {Object} fileInfo
+ * @param {string} fileInfo.id
+ * @param {string} fileInfo.label
+ * @param {string} fileInfo.size
+ * @return {string} representation of file info
+ */
+export const printFileInfo = fileInfo =>  `${fileInfo.label}: ${sizeOf(fileInfo.size)}`;

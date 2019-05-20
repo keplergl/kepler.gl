@@ -46,5 +46,9 @@
     "webpack-dev-server": "^3.1.14",
     "webpack-hot-middleware": "^2.24.3",
     "webpack-stats-plugin": "^0.2.1"
+  },
+  "_commnet": "this is temporary until we release the next version with react-palm-3.1.2",
+  "resolutions": {
+    "react-palm": "3.1.2"
   }
 }

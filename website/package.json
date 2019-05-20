@@ -26,7 +26,6 @@
     "prop-types": "^15.6.1",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
-    "react-palm": "^1.1.2",
     "react-redux": "^4.4.5",
     "react-router": "^3.0.5",
     "react-router-redux": "^4.0.8",
@@ -87,5 +86,9 @@
   "peerDependencies": {
     "react": "0.14.x - 16.x",
     "react-dom": "0.14.x - 16.x"
+  },
+  "_commnet": "this is temporary until we release the next version with react-palm-3.1.2",
+  "resolutions": {
+    "react-palm": "3.1.2"
   }
 }

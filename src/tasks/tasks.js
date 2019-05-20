@@ -26,14 +26,12 @@ export const LOAD_FILE_TASK = taskCreator(
     handler(fileBlob, processor)
       .then(result => {
         !result ?
-          // error(new Error('Result is empty'))
-          error(null)
+          error({error: new Error('File is empty'), info})
           : result.datasets ?
-            success(result)
-            : success({datasets: {data: result, info}});
+            success({item: result, info})
+            : success({item: {datasets: {data: result, info}}, info});
       })
-      .catch(() => error()),
-      // .catch(err => error(err)),
+      .catch(err => error({error: err, info})),
   'LOAD_FILE_TASK'
 );
 

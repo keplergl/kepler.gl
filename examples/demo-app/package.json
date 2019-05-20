@@ -14,7 +14,6 @@
     "react": "^16.8.4",
     "react-copy-to-clipboard": "^5.0.1",
     "react-dom": "^16.8.4",
-    "react-palm": "^1.1.2",
     "react-redux": "^5.1.1",
     "react-router": "^3.0.5",
     "react-router-redux": "^4.0.8",
@@ -54,5 +53,9 @@
     "webpack-dev-server": "^3.1.14",
     "webpack-hot-middleware": "^2.24.3",
     "webpack-stats-plugin": "^0.2.1"
+  },
+  "_commnet": "this is temporary until we release the next version with react-palm-3.1.2",
+  "resolutions": {
+    "react-palm": "3.1.2"
   }
 }

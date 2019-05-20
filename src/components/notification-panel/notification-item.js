@@ -54,6 +54,11 @@ const NotificationMessage = styled.div`
   p {
     margin-top: 0;
   }
+  a {
+    color: white !important;
+    font-weight: bold;
+    text-decoration: underline !important;
+  }
 `;
 
 const NotificationIcon = styled.div`

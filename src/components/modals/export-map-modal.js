@@ -22,7 +22,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import JSONPretty from 'react-json-pretty';
-import {GITHUB_EXPORT_HTML_MAP, GITHUB_ADD_DATA_TO_MAP} from 'constants/user-guides';
+import {EXPORT_HTML_MAP_LINK, ADD_DATA_TO_MAP_LINK} from 'constants/user-guides';
 import {FileType} from 'components/common/icons';
 import {
   StyledModalContent,
@@ -114,7 +114,7 @@ const ExportHtmlMap = ({
         <div className="disclaimer">
           <StyledWarning>{TOKEN_MISUSE_WARNING}</StyledWarning>
           <span>{DISCLAIMER}</span>
-          <Link href={GITHUB_EXPORT_HTML_MAP}>
+          <Link href={EXPORT_HTML_MAP_LINK}>
             How to update an existing map token.
           </Link>
         </div>
@@ -168,7 +168,7 @@ const ExportJsonMap = ({
         </div>
         <div className="subtitle">
           {MAP_CONFIG_DESCRIPTION}
-          <Link href={GITHUB_ADD_DATA_TO_MAP}>
+          <Link href={ADD_DATA_TO_MAP_LINK}>
             addDataToMap
           </Link>.
         </div>
