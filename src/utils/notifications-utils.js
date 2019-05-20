@@ -83,5 +83,5 @@ export const formatMessageInNotification = ({
   ${body}
   
   ${footer}
-  `;
+`;
 
