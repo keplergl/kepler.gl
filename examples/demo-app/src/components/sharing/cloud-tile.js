@@ -65,10 +65,10 @@ const TileButton = styled.button`
 
 const CloudTile = ({token, onExport, onLogin, Icon}) => {
   return (
-    <StyledTileWrapper>
+    <StyledTileWrapper onClick={token ? onExport : onLogin}>
       <StyledTile>
         <div>
-          <TileButton onClick={token ? onExport : onLogin}>
+          <TileButton>
             <Icon height="64px" />
             <StyledLabel>{token ? 'Upload' : 'Login'}</StyledLabel>
           </TileButton>

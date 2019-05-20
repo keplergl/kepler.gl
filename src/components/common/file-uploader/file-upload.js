@@ -26,6 +26,8 @@ import UploadButton from './upload-button';
 import {FileType, DragNDrop} from 'components/common/icons';
 import LoadingSpinner from 'components/common/loading-spinner';
 import {isChrome} from 'utils/utils';
+// Breakpoints
+import {media} from 'styles/media-breakpoints';
 
 const FileDrop =
   typeof document !== 'undefined' ? require('react-file-drop') : null;
@@ -54,6 +56,16 @@ const CONFIG_UPLOAD_MESSAGE = 'Upload data files or upload a saved map via previ
 
 const fileIconColor = '#D3D8E0';
 
+const StyledUploadMessage = styled.div`
+  color: ${props => props.theme.textColorLT};
+  font-size: 14px;
+  margin-bottom: 12px;
+  
+  ${media.portable`
+    font-size: 12px;
+  `}
+`;
+
 const WarningMsg = styled.span`
   margin-top: 10px;
   color: ${props => props.theme.errorColor};
@@ -69,15 +81,18 @@ const StyledFileDrop = styled.div`
   border-style: dashed;
   border-width: 1px;
   border-color: ${props => props.theme.subtextColorLT};
-  height: 414px;
-  padding-top: 60px;
   text-align: center;
   width: 100%;
+  padding: 48px 8px 0;
 
   .file-upload-or {
     color: ${props => props.theme.linkBtnColor};
     padding-right: 4px;
   }
+  
+  ${media.portable`
+    padding: 16px 4px 0;
+  `};
 `;
 
 const MsgWrapper = styled.div`
@@ -88,11 +103,24 @@ const MsgWrapper = styled.div`
 
 const StyledDragNDropIcon = styled.div`
   color: ${fileIconColor};
-  margin-bottom: 60px;
+  margin-bottom: 48px;
+  
+  ${media.portable`
+    margin-bottom: 16px;
+  `};
+  ${media.palm`
+    margin-bottom: 8px;
+  `};
+`;
 
-  .file-type-row {
-    margin-bottom: 26px;
-  }
+const StyledFileTypeFow = styled.div`
+  margin-bottom: 24px;
+  ${media.portable`
+    margin-bottom: 16px;
+  `};
+  ${media.palm`
+    margin-bottom: 8px;
+  `};
 `;
 
 const StyledFileUpload = styled.div`
@@ -105,12 +133,6 @@ const StyledFileUpload = styled.div`
   .file-drop {
     position: relative;
   }
-
-  .file-upload__message {
-    color: ${props => props.theme.textColorLT};
-    font-size: 14px;
-    margin-bottom: 12px;
-  }
 `;
 
 const StyledMessage = styled.div`
@@ -119,10 +141,18 @@ const StyledMessage = styled.div`
   align-items: center;
 `;
 
+const StyledDragFileWrapper = styled.div`
+  margin-bottom: 32px;
+  ${media.portable`
+    margin-bottom: 24px;
+  `};
+  ${media.portable`
+    margin-bottom: 16px;
+  `}
+`;
+
 const StyledDisclaimer = styled(StyledMessage)`
-  position: absolute;
-  bottom: 0;
-  padding: 10px 30px;
+  margin: 0 auto;
 `;
 
 export default class FileUpload extends Component {
@@ -222,26 +252,28 @@ export default class FileUpload extends Component {
             onDragLeave={() => this._toggleDragState(false)}
             onDrop={this._handleFileInput}
           >
-            <div className="file-upload__message">{CONFIG_UPLOAD_MESSAGE}</div>
+            <StyledUploadMessage className="file-upload__message">{CONFIG_UPLOAD_MESSAGE}</StyledUploadMessage>
             <StyledFileDrop dragOver={dragOver}>
               <div style={{opacity: dragOver ? 0.5 : 1}}>
                 <StyledDragNDropIcon>
-                  <div className="file-type-row">
+                  <StyledFileTypeFow className="file-type-row">
                     {validFileExt.map(ext => (
                       <FileType key={ext} ext={ext} height="50px" fontSize="9px"/>
                     ))}
-                  </div>
+                  </StyledFileTypeFow>
                   <DragNDrop height="44px" />
                 </StyledDragNDropIcon>
                 <div>{this._renderMessage()}</div>
               </div>
-              {!files.length ? <div>
-                <MsgWrapper>{MESSAGE}</MsgWrapper>
-                <span className="file-upload-or">or</span>
-                <UploadButton onUpload={this._handleFileInput}>
-                  browse your files
-                </UploadButton>
-              </div> : null}
+              {!files.length ? (
+                  <StyledDragFileWrapper>
+                    <MsgWrapper>{MESSAGE}</MsgWrapper>
+                    <span className="file-upload-or">or</span>
+                    <UploadButton onUpload={this._handleFileInput}>
+                      browse your files
+                    </UploadButton>
+                  </StyledDragFileWrapper>
+              ) : null}
               <StyledDisclaimer>{DISCLAIMER}</StyledDisclaimer>
             </StyledFileDrop>
           </FileDrop>

@@ -18,10 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {combineReducers, createStore, applyMiddleware, compose} from 'redux';
-
 import window from 'global/window';
-import {taskMiddleware} from 'react-palm/tasks';
+import {combineReducers, createStore, applyMiddleware, compose} from 'redux';
+import {enhanceReduxMiddleware} from 'kepler.gl/middleware';
 
 import demoReducer from './reducers/index';
 
@@ -29,9 +28,7 @@ const reducers = combineReducers({
   demo: demoReducer
 });
 
-export const middlewares = [
-  taskMiddleware
-];
+const middlewares = enhanceReduxMiddleware([]);
 
 export const enhancers = [applyMiddleware(...middlewares)];
 

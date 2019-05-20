@@ -46,7 +46,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
         <script src="https://unpkg.com/react@16.8.4/umd/react.production.min.js" crossorigin></script>
         <script src="https://unpkg.com/react-dom@16.8.4/umd/react-dom.production.min.js" crossorigin></script>
         <script src="https://unpkg.com/redux@3.7.2/dist/redux.js" crossorigin></script>
-        <script src="https://unpkg.com/react-redux@4.4.9/dist/react-redux.min.js" crossorigin></script>
+        <script src="https://unpkg.com/react-redux@5.1.1/dist/react-redux.min.js" crossorigin></script>
         <script src="https://unpkg.com/styled-components@4.1.3/dist/styled-components.min.js" crossorigin></script>
         <script src="https://unpkg.com/react-virtualized@9.21.0/dist/umd/react-virtualized.js" crossorigin></script>
         

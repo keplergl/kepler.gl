@@ -72,7 +72,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
     keplerGlInit({mapboxApiAccessToken: 'smoothies_secret_token'})
   );
 
-  const stateToSave = StateWCustomMapStyle.toJS();
+  const stateToSave = StateWCustomMapStyle;
   // save state
   const savedState = SchemaManager.getConfigToSave(stateToSave);
 

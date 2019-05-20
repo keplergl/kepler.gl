@@ -20,8 +20,9 @@
 
 import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
 import keplerGlReducer from 'kepler.gl/reducers';
+import {enhanceReduxMiddleware} from 'kepler.gl/middleware';
+
 import appReducer from './app-reducer';
-import {taskMiddleware} from 'react-palm/tasks';
 import window from 'global/window';
 
 const reducers = combineReducers({
@@ -29,7 +30,7 @@ const reducers = combineReducers({
   app: appReducer
 });
 
-const middlewares = [taskMiddleware];
+const middlewares = enhanceReduxMiddleware([]);
 const enhancers = [applyMiddleware(...middlewares)];
 
 const initialState = {};

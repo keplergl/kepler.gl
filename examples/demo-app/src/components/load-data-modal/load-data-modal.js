@@ -23,7 +23,7 @@ import classnames from 'classnames';
 import styled, {ThemeProvider} from 'styled-components';
 import PropTypes from 'prop-types';
 import {FileUpload, LoadingSpinner, Icons} from 'kepler.gl/components';
-import {themeLT} from 'kepler.gl/styles';
+import {media, themeLT} from 'kepler.gl/styles';
 
 import {LOADING_METHODS, ASSETS_URL, LOADING_METHODS_NAMES} from '../../constants/default-settings';
 
@@ -53,29 +53,39 @@ const ModalTab = styled.div`
   .load-data-modal__tab__inner {
     display: flex;
   }
-  .load-data-modal__tab__item {
-    border-bottom: 3px solid transparent;
-    cursor: pointer;
-    margin-left: 32px;
-    padding: 16px 0;
-    font-size: 14px;
-    font-weight: 400;
-    color: ${props => props.theme.subtextColorLT};
-
-    :first-child {
-      margin-left: 0;
-      padding-left: 0;
-    }
-
-    :hover {
-      color: ${props => props.theme.textColorLT};
-    }
-  }
 
   .load-data-modal__tab__item.active {
     color: ${props => props.theme.textColorLT};
     border-bottom: 3px solid ${props => props.theme.textColorLT};
     font-weight: 500;
+  }
+  
+  ${media.portable`
+    font-size: 12px;
+  `};
+`;
+
+const StyledLoadDataModalTabItem = styled.div`
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  margin-left: 32px;
+  padding: 16px 0;
+  font-size: 14px;
+  font-weight: 400;
+  color: ${props => props.theme.subtextColorLT};
+  
+  ${media.portable`
+    margin-left: 16px;
+    font-size: 12px;
+  `};
+  
+  :first-child {
+    margin-left: 0;
+    padding-left: 0;
+  }
+
+  :hover {
+    color: ${props => props.theme.textColorLT};
   }
 `;
 
@@ -86,6 +96,11 @@ const StyledMapIcon = styled.div`
   width: 64px;
   height: 48px;
   border-radius: 2px;
+  
+  ${media.portable`
+    width: 48px;
+    height: 32px;
+  `};
 `;
 
 const StyledTrySampleData = styled.div`
@@ -102,6 +117,10 @@ const StyledTrySampleData = styled.div`
   .demo-map-label {
     font-size: 11px;
     color: ${props => props.theme.labelColorLT};
+    
+    ${media.portable`
+      font-size: 10px;
+    `};
   }
 
   .demo-map-action {
@@ -111,6 +130,10 @@ const StyledTrySampleData = styled.div`
     color: ${props => props.theme.titleColorLT};
     cursor: pointer;
 
+    ${media.portable`
+      font-size: 12px;
+    `};
+      
     :hover {
       font-weight: 500;
     }
@@ -187,7 +210,7 @@ const Tabs = ({method, toggleMethod}) => (
       {LOADING_METHODS.map(
         ({id, label}) =>
           id !== 'sample' ? (
-            <div
+            <StyledLoadDataModalTabItem
               className={classnames('load-data-modal__tab__item', {
                 active: method && id === method
               })}
@@ -195,7 +218,7 @@ const Tabs = ({method, toggleMethod}) => (
               onClick={() => toggleMethod(id)}
             >
               <div>{label}</div>
-            </div>
+            </StyledLoadDataModalTabItem>
           ) : null
       )}
     </div>

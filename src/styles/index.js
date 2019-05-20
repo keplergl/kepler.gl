@@ -19,3 +19,4 @@
 // THE SOFTWARE.
 
 export * from './base';
+export * from './media-breakpoints';
