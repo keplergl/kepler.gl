@@ -452,7 +452,8 @@ export default class PointLayer extends Layer {
                 data.getRadius,
                 mapState
               ),
-              getSize: textLabel[i].size,
+              getSize: 1,
+              sizeScale: textLabel[i].size,
               getTextAnchor: textLabel[i].anchor,
               getAlignmentBaseline: textLabel[i].alignment,
               getColor: textLabel[i].color,
@@ -471,7 +472,6 @@ export default class PointLayer extends Layer {
                 },
                 getTextAnchor: textLabel[i].anchor,
                 getAlignmentBaseline: textLabel[i].alignment,
-                getSize: textLabel[i].size,
                 getColor: textLabel[i].color
               }
             })
