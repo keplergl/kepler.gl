@@ -26,12 +26,7 @@ import {
   RESOLUTIONS,
   EXPORT_MAP_FORMAT
 } from 'constants/default-settings';
-import {createNotification, errorNotification} from 'utils/notifications-utils';
-import {
-  MISSING_MAPBOX_TOKEN
-} from 'constants/user-feedbacks';
-
-import {validateToken} from 'utils/mapbox-utils';
+import {createNotification} from 'utils/notifications-utils';
 
 export const DEFAULT_ACTIVE_SIDE_PANEL = 'layer';
 export const DEFAULT_MODAL = ADD_DATA_ID;
@@ -206,20 +201,6 @@ export const INITIAL_UI_STATE = {
 };
 
 /* Updaters */
-
-export const initUIStateUpdater = (state, action) => {
-  const isTokenValid = validateToken((action.payload || {}).mapboxApiAccessToken);
-
-  return {
-    ...state,
-    notifications: [
-      ...state.notifications,
-      ...(!isTokenValid ? [errorNotification({message: MISSING_MAPBOX_TOKEN})] : [])
-    ],
-    currentModal: isTokenValid ? DEFAULT_MODAL : null
-  }
-};
-
 /**
  * Toggle active side panel
  * @memberof uiStateUpdaters

@@ -27,7 +27,6 @@ import * as uiStateUpdaters from './ui-state-updaters';
  * It is used to generate documentation
  */
 const actionHandler = {
-  [ActionTypes.INIT]: uiStateUpdaters.initUIStateUpdater,
   [ActionTypes.TOGGLE_SIDE_PANEL]: uiStateUpdaters.toggleSidePanelUpdater,
   [ActionTypes.TOGGLE_MODAL]: uiStateUpdaters.toggleModalUpdater,
   [ActionTypes.SHOW_EXPORT_DROPDOWN]: uiStateUpdaters.showExportDropdownUpdater,

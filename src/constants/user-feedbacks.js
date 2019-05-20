@@ -18,5 +18,5 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-export const MISSING_MAPBOX_TOKEN = `Mapbox Token not valid.
-                    [Click here](https://github.com/keplergl/kepler.gl#mapboxapiaccesstoken-string-required)`;
+export const MISSING_MAPBOX_TOKEN = "Mapbox Token not valid. " +
+  "[Click here](https://github.com/keplergl/kepler.gl#mapboxapiaccesstoken-string-required)";

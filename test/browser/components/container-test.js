@@ -22,8 +22,6 @@
 import React from 'react';
 import test from 'tape';
 import {mount} from 'enzyme';
-import get from 'lodash.get';
-import set from 'lodash.set';
 import {combineReducers} from 'redux';
 import configureStore from 'redux-mock-store';
 import {Provider} from 'react-redux';
@@ -90,25 +88,10 @@ test('Components -> Container -> Mount with mint:true', t => {
     }
   };
 
-  const notificationPath = "keplerGl.map.uiState.notifications";
-
-  // these next steps are required because every time a new notification is created Kepler will
-  // generate a new ID which will not match the mocked data
-  const nextNotifications = get(nextState, notificationPath);
-  const expectedNotifications = get(expectedState, notificationPath);
-  set(nextState, notificationPath, []);
-  set(expectedState, notificationPath, []);
-
   t.deepEqual(
     nextState,
     expectedState,
     'should register map to root reducer by default'
-  );
-
-  t.deepEqual(
-    nextNotifications.message,
-    expectedNotifications.message,
-    'should register notifications'
   );
 
   // mount with custom state
@@ -148,10 +131,6 @@ test('Components -> Container -> Mount with mint:true', t => {
     smoothie: {
       milkshake: {
         ...initialCoreState,
-        uiState: {
-          ...initialCoreState.uiState,
-          currentModal: 'addData'
-        },
         mapStyle: {
           ...initialCoreState.mapStyle,
           mapboxApiAccessToken: 'pk.smoothie'
@@ -165,7 +144,7 @@ test('Components -> Container -> Mount with mint:true', t => {
     expectedState,
     'should register milkshake to root reducer'
   );
-  //
+
   // unmount
   wrapper.unmount();
   expectedActions0 = {type: '@@kepler.gl/DELETE_ENTRY', payload: 'milkshake'};
@@ -212,7 +191,7 @@ test('Components -> Container -> Mount with mint:false', t => {
 
   let actions = store.getActions();
 
-  const expectedActions0 = {type: '@@kepler.gl/REGISTER_ENTRY', payload: {id: 'milkshake', mint: false, mapboxApiAccessToken: 'hello.world'}};
+  let expectedActions0 = {type: '@@kepler.gl/REGISTER_ENTRY', payload: {id: 'milkshake', mint: false, mapboxApiAccessToken: 'hello.world'}};
 
   t.deepEqual(
     actions,
@@ -226,10 +205,6 @@ test('Components -> Container -> Mount with mint:false', t => {
     smoothie: {
       milkshake: {
         ...initialCoreState,
-        uiState: {
-          ...initialCoreState.uiState,
-          currentModal: 'addData'
-        },
         mapStyle: {
           ...initialCoreState.mapStyle,
           // should replace access token
@@ -238,20 +213,6 @@ test('Components -> Container -> Mount with mint:false', t => {
       }
     }
   };
-
-  // these next steps are required because every time a new notification is created Kepler will
-  // generate a new ID which will not match the mocked data
-  const notificationPath = "smoothie.milkshake.uiState.notifications";
-  const nextNotifications = get(nextState, notificationPath);
-  const expectedNotifications = get(expectedState, notificationPath);
-  set(nextState, notificationPath, []);
-  set(expectedState, notificationPath, []);
-
-  // console.log('Actual');
-  // console.log(JSON.stringify(nextState, null, 2));
-  // console.log('Expected');
-  // console.log(JSON.stringify(expectedState, null, 2));
-
   t.deepEqual(
     nextState,
     expectedState,
@@ -308,10 +269,6 @@ test('Components -> Container -> Mount then rename', t => {
     smoothie: {
       milkshake: {
         ...initialCoreState,
-        uiState: {
-          ...initialCoreState.uiState,
-          currentModal: 'addData'
-        },
         mapStyle: {
           ...initialCoreState.mapStyle,
           // should replace access token
