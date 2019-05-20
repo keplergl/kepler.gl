@@ -321,23 +321,34 @@ export default class PointLayer extends Layer {
 
   getTextOffset(config, radiusScale, getRadius, mapState) {
     const distanceScale = getDistanceScales(mapState);
-    const xMult = config.anchor === 'middle' ? 0 :
-      config.anchor === 'start' ? 1 : -1;
-    const yMult = config.alignment === 'center' ? 0 :
-      config.alignment === 'bottom' ?  1 : -1;
+    const xMult =
+      config.anchor === 'middle' ? 0 : config.anchor === 'start' ? 1 : -1;
+    const yMult =
+      config.alignment === 'center'
+        ? 0
+        : config.alignment === 'bottom'
+        ? 1
+        : -1;
 
-    const sizeOffset = config.alignment === 'center' ? 0 :
-    config.alignment === 'bottom' ?  config.size : config.size;
+    const sizeOffset =
+      config.alignment === 'center'
+        ? 0
+        : config.alignment === 'bottom'
+        ? config.size
+        : config.size;
 
     const pixelRadius = radiusScale * distanceScale.pixelsPerMeter[0];
+    const padding = 20;
 
-    return typeof getRadius === 'function' ? d => [
-      xMult * (getRadius(d) * pixelRadius + 20),
-      yMult * (getRadius(d) * pixelRadius + 20 + sizeOffset)
-    ] : [
-      xMult * (getRadius * pixelRadius + 20),
-      yMult * (getRadius * pixelRadius + 20 + sizeOffset)
-    ];
+    return typeof getRadius === 'function'
+      ? d => [
+          xMult * (getRadius(d) * pixelRadius + padding),
+          yMult * (getRadius(d) * pixelRadius + padding + sizeOffset)
+        ]
+      : [
+          xMult * (getRadius * pixelRadius + padding),
+          yMult * (getRadius * pixelRadius + padding + sizeOffset)
+        ];
   }
 
   renderLayer({
@@ -391,7 +402,8 @@ export default class PointLayer extends Layer {
         colorRange: this.config.visConfig.strokeColorRange,
         colorScale: this.config.strokeColorScale
       }
-    }
+    };
+
     return [
       new ScatterplotBrushingLayer({
         ...layerProps,
@@ -434,7 +446,12 @@ export default class PointLayer extends Layer {
               getPosition: data.getPosition,
               getText: d.getText,
               characterSet: d.characterSet,
-              getPixelOffset: this.getTextOffset(textLabel[i], radiusScale, data.getRadius, mapState),
+              getPixelOffset: this.getTextOffset(
+                textLabel[i],
+                radiusScale,
+                data.getRadius,
+                mapState
+              ),
               getSize: textLabel[i].size,
               getTextAnchor: textLabel[i].anchor,
               getAlignmentBaseline: textLabel[i].alignment,
