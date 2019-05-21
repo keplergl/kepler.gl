@@ -27,6 +27,7 @@ import ScatterplotBrushingLayer from 'deckgl-layers/scatterplot-brushing-layer/s
 import {hexToRgb} from 'utils/color-utils';
 import PointLayerIcon from './point-layer-icon';
 import {DEFAULT_LAYER_COLOR, CHANNEL_SCALES} from 'constants/default-settings';
+import {getDistanceScales} from 'viewport-mercator-project';
 
 export const pointPosAccessor = ({lat, lng, altitude}) => d => [
   // lng
@@ -72,7 +73,7 @@ export default class PointLayer extends Layer {
 
     this.registerVisConfig(pointVisConfigs);
     this.getPosition = memoize(pointPosAccessor, pointPosResolver);
-    this.getText = memoize(pointLabelAccessor, pointLabelResolver);
+    this.getText = [memoize(pointLabelAccessor, pointLabelResolver)];
   }
 
   get type() {
@@ -254,20 +255,6 @@ export default class PointLayer extends Layer {
     }
 
     // get all distinct characters in the text labels
-    const getText = this.getText(textLabel);
-    let labelCharacterSet;
-    if (
-      oldLayerData &&
-      oldLayerData.labelCharacterSet &&
-      opt.sameData &&
-      oldLayerData.getText === getText
-    ) {
-      labelCharacterSet = oldLayerData.labelCharacterSet;
-    } else {
-      const textLabels = textLabel.field ? data.map(getText) : [];
-      labelCharacterSet = uniq(textLabels.join(''));
-    }
-
     const getRadius = rScale
       ? d => this.getEncodedChannelValue(rScale, d.data, sizeField)
       : 1;
@@ -279,14 +266,49 @@ export default class PointLayer extends Layer {
     const getLineColor = scScale
       ? d => this.getEncodedChannelValue(scScale, d.data, strokeColorField)
       : strokeColor || color;
+
+    // TODO: this should be cleaned up in the gpu-data-filter branch
+    const textLabels = textLabel.map((tl, i) => {
+      if (!tl.field) {
+        // if no field selected,
+        return {
+          getText: null,
+          characterSet: []
+        };
+      }
+      if (!this.getText[i]) {
+        this.getText[i] = memoize(pointLabelAccessor, pointLabelResolver);
+      }
+
+      const getText = this.getText[i](tl);
+      let characterSet;
+
+      if (
+        oldLayerData &&
+        Array.isArray(oldLayerData.textLabels) &&
+        oldLayerData.textLabels[i] &&
+        opt.sameData &&
+        oldLayerData.textLabels[i].getText === getText
+      ) {
+        characterSet = oldLayerData.textLabels[i].characterSet;
+      } else {
+        const allLabels = tl.field ? data.map(getText) : [];
+        characterSet = uniq(allLabels.join(''));
+      }
+
+      return {
+        characterSet,
+        getText
+      };
+    });
+
     return {
       data,
-      labelCharacterSet,
       getPosition,
       getFillColor,
       getLineColor,
       getRadius,
-      getText
+      textLabels
     };
   }
   /* eslint-enable complexity */
@@ -295,6 +317,38 @@ export default class PointLayer extends Layer {
     const getPosition = this.getPositionAccessor();
     const bounds = this.getPointsBounds(allData, d => getPosition({data: d}));
     this.updateMeta({bounds});
+  }
+
+  getTextOffset(config, radiusScale, getRadius, mapState) {
+    const distanceScale = getDistanceScales(mapState);
+    const xMult =
+      config.anchor === 'middle' ? 0 : config.anchor === 'start' ? 1 : -1;
+    const yMult =
+      config.alignment === 'center'
+        ? 0
+        : config.alignment === 'bottom'
+        ? 1
+        : -1;
+
+    const sizeOffset =
+      config.alignment === 'center'
+        ? 0
+        : config.alignment === 'bottom'
+        ? config.size
+        : config.size;
+
+    const pixelRadius = radiusScale * distanceScale.pixelsPerMeter[0];
+    const padding = 20;
+
+    return typeof getRadius === 'function'
+      ? d => [
+          xMult * (getRadius(d) * pixelRadius + padding),
+          yMult * (getRadius(d) * pixelRadius + padding + sizeOffset)
+        ]
+      : [
+          xMult * (getRadius * pixelRadius + padding),
+          yMult * (getRadius * pixelRadius + padding + sizeOffset)
+        ];
   }
 
   renderLayer({
@@ -306,6 +360,7 @@ export default class PointLayer extends Layer {
     interactionConfig
   }) {
     const enableBrushing = interactionConfig.brush.enabled;
+    const radiusScale = this.getRadiusScaleByZoom(mapState);
 
     const layerProps = {
       // TODO: support setting stroke and fill simultaneously
@@ -313,7 +368,7 @@ export default class PointLayer extends Layer {
       filled: this.config.visConfig.filled,
       radiusMinPixels: 1,
       lineWidthMinPixels: this.config.visConfig.thickness,
-      radiusScale: this.getRadiusScaleByZoom(mapState),
+      radiusScale,
       ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
     };
 
@@ -324,13 +379,37 @@ export default class PointLayer extends Layer {
       highlightColor: this.config.highlightColor
     };
 
+    const {textLabel} = this.config;
+    const updateTriggers = {
+      getPosition: {
+        columns: this.config.columns
+      },
+      getRadius: {
+        sizeField: this.config.sizeField,
+        radiusRange: this.config.visConfig.radiusRange,
+        fixedRadius: this.config.visConfig.fixedRadius,
+        sizeScale: this.config.sizeScale
+      },
+      getFillColor: {
+        color: this.config.color,
+        colorField: this.config.colorField,
+        colorRange: this.config.visConfig.colorRange,
+        colorScale: this.config.colorScale
+      },
+      getLineColor: {
+        color: this.config.visConfig.strokeColor,
+        colorField: this.config.strokeColorField,
+        colorRange: this.config.visConfig.strokeColorRange,
+        colorScale: this.config.strokeColorScale
+      }
+    };
+
     return [
       new ScatterplotBrushingLayer({
         ...layerProps,
         ...layerInteraction,
         ...data,
         ...interaction,
-
         idx,
         id: this.id,
         opacity: this.config.visConfig.opacity,
@@ -339,33 +418,7 @@ export default class PointLayer extends Layer {
           // circles will be flat on the map when the altitude column is not used
           depthTest: this.config.columns.altitude.fieldIdx > -1
         },
-
-        updateTriggers: {
-          getPosition: {
-            columns: this.config.columns
-          },
-          getRadius: {
-            sizeField: this.config.sizeField,
-            radiusRange: this.config.visConfig.radiusRange,
-            fixedRadius: this.config.visConfig.fixedRadius,
-            sizeScale: this.config.sizeScale
-          },
-          getFillColor: {
-            color: this.config.color,
-            colorField: this.config.colorField,
-            colorRange: this.config.visConfig.colorRange,
-            colorScale: this.config.colorScale
-          },
-          getLineColor: {
-            color: this.config.visConfig.strokeColor,
-            colorField: this.config.strokeColorField,
-            colorRange: this.config.visConfig.strokeColorRange,
-            colorScale: this.config.strokeColorScale
-          },
-          getText: {
-            textLabel: this.config.textLabel
-          }
-        }
+        updateTriggers
       }),
       // hover layer
       ...(this.isLayerHovered(objectHovered)
@@ -383,34 +436,49 @@ export default class PointLayer extends Layer {
           ]
         : []),
       // text label layer
-      ...(this.config.textLabel.field
-        ? [
+      ...data.textLabels.reduce((accu, d, i) => {
+        if (d.getText) {
+          accu.push(
             new TextLayer({
               ...layerInteraction,
-              id: `${this.id}-label`,
+              id: `${this.id}-label-${textLabel[i].field.name}`,
               data: data.data,
               getPosition: data.getPosition,
-              getPixelOffset: this.config.textLabel.offset,
-              getSize: this.config.textLabel.size,
-              getTextAnchor: this.config.textLabel.anchor,
-              getText: data.getText,
-              getColor: d => this.config.textLabel.color,
+              getText: d.getText,
+              characterSet: d.characterSet,
+              getPixelOffset: this.getTextOffset(
+                textLabel[i],
+                radiusScale,
+                data.getRadius,
+                mapState
+              ),
+              getSize: 1,
+              sizeScale: textLabel[i].size,
+              getTextAnchor: textLabel[i].anchor,
+              getAlignmentBaseline: textLabel[i].alignment,
+              getColor: textLabel[i].color,
               parameters: {
                 // text will always show on top of all layers
                 depthTest: false
               },
-              characterSet: data.labelCharacterSet,
               updateTriggers: {
-                getPosition: data.getPosition,
-                getPixelOffset: this.config.textLabel.offset,
-                getText: this.config.textLabel.field,
-                getTextAnchor: this.config.textLabel.anchor,
-                getSize: this.config.textLabel.size,
-                getColor: this.config.textLabel.color
+                getPosition: this.config.columns,
+                getText: textLabel[i].field.name,
+                getPixelOffset: {
+                  ...updateTriggers.getRadius,
+                  mapState,
+                  anchor: textLabel[i].anchor,
+                  alignment: textLabel[i].alignment
+                },
+                getTextAnchor: textLabel[i].anchor,
+                getAlignmentBaseline: textLabel[i].alignment,
+                getColor: textLabel[i].color
               }
             })
-          ]
-        : [])
+          );
+        }
+        return accu;
+      }, [])
     ];
   }
 }

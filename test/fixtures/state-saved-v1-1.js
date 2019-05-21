@@ -20,6 +20,7 @@
 
 import GeojsonLayer from 'layers/geojson-layer/geojson-layer';
 import {Messages, Crosshairs} from 'components/common/icons';
+import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
 
 export const savedStateV1 = {
   datasets: [
@@ -896,13 +897,7 @@ mergedLayer0.config = {
   sizeField: null,
   sizeScale: 'linear',
   sizeDomain: [0, 1],
-  textLabel: {
-    field: null,
-    color: [255, 255, 255],
-    size: 50,
-    offset: [0, 0],
-    anchor: 'middle'
-  },
+  textLabel: [DEFAULT_TEXT_LABEL],
   heightField: {
     name: 'c_a_v',
     type: 'real',
@@ -2714,13 +2709,7 @@ mergedLayer1.config = {
   },
   sizeScale: 'linear',
   sizeDomain: [0.970877074, 1],
-  textLabel: {
-    field: null,
-    color: [255, 255, 255],
-    size: 50,
-    offset: [0, 0],
-    anchor: 'middle'
-  },
+  textLabel: [DEFAULT_TEXT_LABEL],
   heightField: null,
   heightScale: 'linear',
   heightDomain: [0, 1],

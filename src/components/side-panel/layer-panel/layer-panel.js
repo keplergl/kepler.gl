@@ -66,6 +66,10 @@ function LayerPanelFactory() {
       this.props.layerVisConfigChange(this.props.layer, newVisConfig);
     };
 
+    updateLayerTextLabel = (...args) => {
+      this.props.layerTextLabelChange(this.props.layer, ...args);
+    };
+
     updateLayerVisualChannelConfig = (newConfig, channel, scaleKey) => {
       this.props.layerVisualChannelConfigChange(
         this.props.layer,
@@ -95,6 +99,7 @@ function LayerPanelFactory() {
       e.stopPropagation();
       this.props.removeLayer(this.props.idx);
     };
+
     render() {
       const {layer, idx, datasets, layerTypeOptions} = this.props;
       const {config} = layer;
@@ -130,6 +135,7 @@ function LayerPanelFactory() {
               updateLayerConfig={this.updateLayerConfig}
               updateLayerVisualChannelConfig={this.updateLayerVisualChannelConfig}
               updateLayerType={this.updateLayerType}
+              updateLayerTextLabel={this.updateLayerTextLabel}
               updateLayerVisConfig={this.updateLayerVisConfig}
             />
           )}

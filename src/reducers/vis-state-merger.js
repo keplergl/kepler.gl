@@ -299,19 +299,23 @@ export function validateSavedLayerColumns(fields, savedCols, emptyCols) {
  * @param {Object} savedTextLabel
  * @return {Object} - validated textlabel
  */
-export function validateSavedTextLabel(fields, layerTextLabel, savedTextLabel) {
+export function validateSavedTextLabel(fields, [layerTextLabel], savedTextLabel) {
+  const savedTextLabels = Array.isArray(savedTextLabel) ?
+    savedTextLabel : [savedTextLabel];
 
   // validate field
-  const field = savedTextLabel.field ? fields.find(fd =>
-    Object.keys(savedTextLabel.field).every(
-      key => savedTextLabel.field[key] === fd[key]
-    )
-  ) : null;
+  return savedTextLabels.map(textLabel => {
+    const field = textLabel.field ? fields.find(fd =>
+      Object.keys(textLabel.field).every(
+        key => textLabel.field[key] === fd[key]
+      )
+    ) : null;
 
-  return Object.keys(layerTextLabel).reduce((accu, key) => ({
-    ...accu,
-    [key]: key === 'field' ? field : (savedTextLabel[key] || layerTextLabel[key])
-  }), {});
+    return Object.keys(layerTextLabel).reduce((accu, key) => ({
+      ...accu,
+      [key]: key === 'field' ? field : (textLabel[key] || layerTextLabel[key])
+    }), {});
+  });
 }
 
 /**

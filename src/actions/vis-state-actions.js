@@ -38,6 +38,26 @@ export function layerConfigChange(oldLayer, newConfig) {
 }
 
 /**
+ * Update layer text label
+ * @memberof visStateActions
+ * @param {Object} oldLayer - layer to be updated
+ * @param {Number} idx -`idx` of text label to be updated
+ * @param {string} prop - `prop` of text label, e,g, `anchor`, `alignment`, `color`, `size`, `field`
+ * @param {*} value - new value
+ * @returns {{type: ActionTypes.LAYER_TEXT_LABEL_CHANGE, oldLayer: oldLayer, idx: idx, prop: prop, value:}}
+ * @public
+ */
+export function layerTextLabelChange(oldLayer, idx, prop, value) {
+  return {
+    type: ActionTypes.LAYER_TEXT_LABEL_CHANGE,
+    oldLayer,
+    idx,
+    prop,
+    value
+  };
+}
+
+/**
  * Update layer type. Previews layer config will be copied if applicable.
  * @memberof visStateActions
  * @param {Object} oldLayer - layer to be updated

@@ -21,92 +21,107 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 
-import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
+import {
+  PanelLabel,
+  SidePanelSection,
+  SpaceBetweenFlexbox,
+  SBFlexboxItem,
+  Button
+} from 'components/common/styled-components';
+import {Add} from 'components/common/icons';
 import ColorSelector from './color-selector';
 import FieldSelector from 'components/common/field-selector';
 import ItemSelector from 'components/common/item-selector/item-selector';
-import LayerConfigGroup, {ConfigGroupCollapsibleContent} from './layer-config-group';
+import LayerConfigGroup, {
+  ConfigGroupCollapsibleContent,
+  ConfigGroupCollapsibleHeader
+} from './layer-config-group';
 import RangeSlider from 'components/common/range-slider';
 
 import {LAYER_TEXT_CONFIGS} from 'layers/layer-factory';
 
-export default class LayerConfigurator extends Component {
+export default class TextLabelPanel extends Component {
   static propTypes = {
-    layerConfiguratorProps: PropTypes.object.isRequired,
-    textLabel: PropTypes.object.isRequired,
-    visConfiguratorProps: PropTypes.object.isRequired
-  };
-
-  onAttributeChange = attribute => {
-    const {layerConfiguratorProps, textLabel} = this.props;
-    return v => layerConfiguratorProps.onChange({
-      textLabel: {
-        ...textLabel,
-        [attribute]: v
-      }
-    });
-  };
-
-  onChangeTextAnchor = anchor => {
-    const {layerConfiguratorProps, textLabel} = this.props;
-    // TODO: we can be smarter on determining the offset of the text
-    layerConfiguratorProps.onChange({
-      textLabel: {
-        ...textLabel,
-        anchor,
-        offset: [
-          anchor === 'start' ? 10 : anchor === 'end' ? -10 : 0,
-          anchor === 'middle' ? 10 : 0
-        ]
-      }
-    });
+    fields: PropTypes.arrayOf(PropTypes.object),
+    textLabel: PropTypes.arrayOf(PropTypes.object),
+    updateLayerTextLabel: PropTypes.func.isRequired
   };
 
   render() {
-    const {
-      visConfiguratorProps,
-      textLabel
-    } = this.props;
+    const {updateLayerTextLabel, textLabel, fields} = this.props;
+    const currentFields = textLabel.map(tl => tl.field && tl.field.name).filter(d => d);
     return (
       <LayerConfigGroup label={'label'} collapsible>
+        <ConfigGroupCollapsibleHeader>
+          <FieldSelector
+            fields={fields}
+            value={currentFields}
+            onSelect={selected => updateLayerTextLabel('all', 'fields', selected)}
+            multiSelect
+          />
+        </ConfigGroupCollapsibleHeader>
+        <ConfigGroupCollapsibleContent>
+          {textLabel.map((tl, idx) => (
+            <div key={tl.field ? tl.field.name : 'null'}>
+              <PanelLabel>{`Label ${idx + 1}`}</PanelLabel>
+              <SidePanelSection>
+                <FieldSelector
+                  fields={fields}
+                  value={(tl.field && tl.field.name) || 'Select a field'}
+                  placeholder={'empty'}
+                  onSelect={v => updateLayerTextLabel(idx, 'field', v)}
+                  erasable
+                />
+              </SidePanelSection>
+              <SidePanelSection>
+                <PanelLabel>{`Font size`}</PanelLabel>
+                <RangeSlider
+                  {...LAYER_TEXT_CONFIGS.fontSize}
+                  value1={tl.size}
+                  isRange={false}
+                  onChange={v => updateLayerTextLabel(idx, 'size', v[1])}
+                />
+              </SidePanelSection>
+              <SidePanelSection>
+                <PanelLabel>{`Font color`}</PanelLabel>
+                <ColorSelector
+                  colorSets={[
+                    {
+                      selectedColor: tl.color,
+                      setColor: v => updateLayerTextLabel(idx, 'color', v)
+                    }
+                  ]}
+                />
+              </SidePanelSection>
+              <SidePanelSection>
+                <SpaceBetweenFlexbox>
+                  <SBFlexboxItem>
+                    <PanelLabel>{`Text anchor`}</PanelLabel>
+                    <ItemSelector
+                      {...LAYER_TEXT_CONFIGS.textAnchor}
+                      selectedItems={tl.anchor}
+                      onChange={val => updateLayerTextLabel(idx, 'anchor', val)}
+                    />
+                  </SBFlexboxItem>
+                  <SBFlexboxItem>
+                    <PanelLabel>{`Alignment`}</PanelLabel>
+                    <ItemSelector
+                      {...LAYER_TEXT_CONFIGS.textAlignment}
+                      selectedItems={tl.alignment}
+                      onChange={val => updateLayerTextLabel(idx, 'alignment', val)}
+                    />
+                  </SBFlexboxItem>
+                </SpaceBetweenFlexbox>
+              </SidePanelSection>
+            </div>
+          ))}
           <SidePanelSection>
-            <FieldSelector
-              fields={visConfiguratorProps.fields}
-              value={textLabel.field && textLabel.field.name || 'select a field'}
-              placeholder={'empty'}
-              onSelect={this.onAttributeChange('field')}
-              erasable
-            />
+            <Button link onClick={val => updateLayerTextLabel(textLabel.length)}>
+              <Add height="12px" />
+              Add More Label
+            </Button>
           </SidePanelSection>
-          <ConfigGroupCollapsibleContent>
-            <SidePanelSection>
-              <PanelLabel>{`Font size`}</PanelLabel>
-              <RangeSlider
-                {...LAYER_TEXT_CONFIGS.fontSize}
-                value1={textLabel.size}
-                onChange={v => this.onAttributeChange('size')(v[1])}
-              />
-            </SidePanelSection>
-            <SidePanelSection>
-            <PanelLabel>{`Font color`}</PanelLabel>
-              <ColorSelector
-                colorSets={[
-                  {
-                    selectedColor: textLabel.color,
-                    setColor: this.onAttributeChange('color')
-                  }
-                ]}
-              />
-            </SidePanelSection>
-            <SidePanelSection>
-              <PanelLabel>{`Text anchor`}</PanelLabel>
-              <ItemSelector
-                {...LAYER_TEXT_CONFIGS.textAnchor}
-                selectedItems={textLabel.anchor}
-                onChange={this.onChangeTextAnchor}
-              />
-            </SidePanelSection>
-          </ConfigGroupCollapsibleContent>
+        </ConfigGroupCollapsibleContent>
       </LayerConfigGroup>
     );
   }

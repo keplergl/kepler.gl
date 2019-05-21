@@ -349,5 +349,20 @@ export const LAYER_TEXT_CONFIGS = {
     options: ['start', 'middle', 'end'],
     multiSelect: false,
     searchable: false
+  },
+  textAlignment: {
+    type: 'select',
+    options: ['top', 'center', 'bottom'],
+    multiSelect: false,
+    searchable: false
   }
+};
+
+export const DEFAULT_TEXT_LABEL = {
+  field: null,
+  color: [255, 255, 255],
+  size: 18,
+  offset: [0, 0],
+  anchor: 'start',
+  alignment: 'center'
 };

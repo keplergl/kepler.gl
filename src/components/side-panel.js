@@ -95,7 +95,6 @@ export default function SidePanelFactory(
       visStateActions: PropTypes.object.isRequired,
       mapStyleActions: PropTypes.object.isRequired
     };
-
     /* component private functions */
     _onOpenOrClose = () => {
       this.props.uiStateActions.toggleSidePanel(
@@ -151,6 +150,7 @@ export default function SidePanelFactory(
       const layerManagerActions = {
         addLayer: visStateActions.addLayer,
         layerConfigChange: visStateActions.layerConfigChange,
+        layerTextLabelChange: visStateActions.layerTextLabelChange,
         layerVisualChannelConfigChange:
         visStateActions.layerVisualChannelConfigChange,
         layerTypeChange: visStateActions.layerTypeChange,

@@ -34,7 +34,7 @@ import {
   CHANNEL_SCALE_SUPPORTED_FIELDS
 } from 'constants/default-settings';
 import {DataVizColors} from 'constants/custom-color-ranges';
-import {LAYER_VIS_CONFIGS} from './layer-factory';
+import {LAYER_VIS_CONFIGS, DEFAULT_TEXT_LABEL} from './layer-factory';
 
 import {generateHashId, notNullorUndefined, isPlainObject} from 'utils/utils';
 
@@ -299,13 +299,7 @@ export default class Layer {
 
       visConfig: {},
 
-      textLabel: {
-        field: null,
-        color: [255, 255, 255],
-        size: 50,
-        offset: [0, 0],
-        anchor: 'middle'
-      }
+      textLabel: [DEFAULT_TEXT_LABEL]
     };
   }
 

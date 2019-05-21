@@ -93,7 +93,10 @@ test('#PointLayer -> formatLayerData', t => {
       test: result => {
         const {layerData, layer} = result;
         const expectedLayerData = {
-          labelCharacterSet: [],
+          textLabels: {
+            characterSet: [],
+            getText: () => {}
+          },
           data: [
             {
               data: rows[0]
@@ -108,8 +111,7 @@ test('#PointLayer -> formatLayerData', t => {
           getPosition: () => {},
           getFillColor: () => {},
           getLineColor: () => {},
-          getRadius: () => {},
-          getText: () => {}
+          getRadius: () => {}
         };
 
         t.deepEqual(

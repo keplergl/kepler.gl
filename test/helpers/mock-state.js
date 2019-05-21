@@ -25,6 +25,7 @@ import {getInitialInputStyle} from 'reducers/map-style-updaters';
 import keplerGlReducer from 'reducers/core';
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStyleActions from 'actions/map-style-actions';
+import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
 
 // fixtures
 import {testFields, testAllData} from 'test/fixtures/test-csv-data';
@@ -153,17 +154,17 @@ function mockStateWithLayerDimensions(state) {
     f => f.name === 'date'
   );
 
-  const textLabelPayload = [
+  const textLabelPayload1 = [
     layer0,
-    {
-      textLabel: {
-        field: textLabelField,
-        color: [255, 0, 0],
-        size: 100,
-        offset: [10, 0],
-        anchor: 'start'
-      }
-    }
+    0,
+    'field',
+    textLabelField
+  ];
+  const textLabelPayload2 = [
+    layer0,
+    0,
+    'color',
+    [255, 0, 0]
   ];
 
   // layers = [ 'point', 'geojson', 'hexagon' ]
@@ -180,7 +181,8 @@ function mockStateWithLayerDimensions(state) {
     {action: VisStateActions.layerVisConfigChange, payload: colorRangePayload},
 
     // change textLabel
-    {action: VisStateActions.layerConfigChange, payload: textLabelPayload},
+    {action: VisStateActions.layerTextLabelChange, payload: textLabelPayload1},
+    {action: VisStateActions.layerTextLabelChange, payload: textLabelPayload2},
 
     // add layer
     {
@@ -309,13 +311,7 @@ export const expectedSavedLayer0 = {
       sizeAggregation: 'count',
       enable3d: false
     },
-    textLabel: {
-      field: null,
-      color: [255, 255, 255],
-      size: 50,
-      offset: [0, 0],
-      anchor: 'middle'
-    }
+    textLabel: [DEFAULT_TEXT_LABEL]
   },
   visualChannels: {
     colorField: null,
@@ -367,13 +363,7 @@ export const expectedLoadedLayer0 = {
     colorScale: 'quantile',
     sizeField: null,
     sizeScale: 'linear',
-    textLabel: {
-      field: null,
-      color: [255, 255, 255],
-      size: 50,
-      offset: [0, 0],
-      anchor: 'middle'
-    }
+    textLabel: [DEFAULT_TEXT_LABEL]
   }
 };
 
@@ -389,16 +379,14 @@ export const expectedSavedLayer1 = {
       lng: 'gps_data.lng',
       altitude: null
     },
-    textLabel: {
+    textLabel: [{
+      ...DEFAULT_TEXT_LABEL,
       field: {
         name: 'date',
         type: 'date'
       },
-      color: [255, 0, 0],
-      size: 100,
-      offset: [10, 0],
-      anchor: 'start'
-    },
+      color: [255, 0, 0]
+    }],
     isVisible: true,
     visConfig: {
       radius: 10,
@@ -480,16 +468,14 @@ export const expectedLoadedLayer1 = {
     strokeColorScale: 'quantile',
     sizeField: null,
     sizeScale: 'linear',
-    textLabel: {
+    textLabel: [{
+      ...DEFAULT_TEXT_LABEL,
       field: {
         name: 'date',
         type: 'date'
       },
-      color: [255, 0, 0],
-      size: 100,
-      offset: [10, 0],
-      anchor: 'start'
-    }
+      color: [255, 0, 0]
+    }]
   }
 };
 
@@ -537,13 +523,7 @@ export const expectedSavedLayer2 = {
       enable3d: false,
       wireframe: false
     },
-    textLabel: {
-      field: null,
-      color: [255, 255, 255],
-      size: 50,
-      offset: [0, 0],
-      anchor: 'middle'
-    }
+    textLabel: [DEFAULT_TEXT_LABEL]
   },
   visualChannels: {
     colorField: null,
@@ -613,12 +593,6 @@ export const expectedLoadedLayer2 = {
     heightScale: 'linear',
     radiusField: null,
     radiusScale: 'linear',
-    textLabel: {
-      field: null,
-      color: [255, 255, 255],
-      size: 50,
-      offset: [0, 0],
-      anchor: 'middle'
-    }
+    textLabel: [DEFAULT_TEXT_LABEL]
   }
 };

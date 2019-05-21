@@ -297,15 +297,15 @@ class ColumnSchemaV1 extends Schema {
 class TextLabelSchemaV1 extends Schema {
   save(textLabel) {
     return {
-      [this.key]: {
-        ...textLabel,
-        field: textLabel.field ? pick(textLabel.field, ['name', 'type']) : null
-      }
+      [this.key]: textLabel.map(tl => ({
+        ...tl,
+        field: tl.field ? pick(tl.field, ['name', 'type']) : null
+      }))
     };
   }
 
   load(textLabel) {
-    return {textLabel};
+    return {textLabel: Array.isArray(textLabel) ? textLabel : [textLabel]};
   }
 }
 

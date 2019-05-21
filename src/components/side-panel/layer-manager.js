@@ -140,6 +140,7 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
       layerClasses: PropTypes.object.isRequired,
       layers: PropTypes.arrayOf(PropTypes.any).isRequired,
       layerConfigChange: PropTypes.func.isRequired,
+      layerTextLabelChange: PropTypes.func.isRequired,
       layerVisualChannelConfigChange: PropTypes.func.isRequired,
       layerTypeChange: PropTypes.func.isRequired,
       layerVisConfigChange: PropTypes.func.isRequired,
@@ -181,6 +182,7 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
         layerVisualChannelConfigChange: this.props.layerVisualChannelConfigChange,
         layerTypeChange: this.props.layerTypeChange,
         layerVisConfigChange: this.props.layerVisConfigChange,
+        layerTextLabelChange: this.props.layerTextLabelChange,
         removeLayer: this.props.removeLayer
       };
 
