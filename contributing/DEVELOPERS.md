@@ -1,11 +1,11 @@
 # Developing Kepler.gl
 
-* [Development Setup](#setup)
-* [Running Tests](#tests)
-* [Coding Rules](#rules)
-* [Commit Message Guidelines](#commits)
-* [Writing Documentation](#documentation)
-* [Developing kepler.gl Website](#website)
+- [Development Setup](#setup)
+- [Running Tests](#tests)
+- [Coding Rules](#rules)
+- [Commit Message Guidelines](#commits)
+- [Writing Documentation](#documentation)
+- [Developing kepler.gl Website](#website)
 
 ## <a name="setup"> Development Setup
 
@@ -17,10 +17,10 @@ explains the basic mechanics of using `git`, `node`, `yarn`.
 Before you can build Kepler.gl, you must install and configure the following dependencies on your
 machine:
 
-* [Git](http://git-scm.com/): The [Github Guide to
+- [Git](http://git-scm.com/): The [Github Guide to
   Installing Git][git-setup] is a good source of information.
 
-* [Node.js ^6.x](http://nodejs.org): We use Node to generate the documentation, run a
+- [Node.js ^6.x](http://nodejs.org): We use Node to generate the documentation, run a
   development web server, run tests, and generate distributable files. Depending on your system,
   you can install Node either from source or as a pre-packaged bundle.
 
@@ -28,13 +28,13 @@ machine:
   [nvm-windows](https://github.com/coreybutler/nvm-windows))
   to manage and install Node.js, which makes it easy to change the version of Node.js per project.
 
-* [Yarn](https://yarnpkg.com): We use Yarn to install our Node.js module dependencies
+- [Yarn](https://yarnpkg.com): We use Yarn to install our Node.js module dependencies
   (rather than using npm). See the detailed [installation instructions][yarn-install].
 
 #### Fork Kepler.gl Repo
+
 If you plan to contribute code to kepler.gl, you must have a [GitHub account](https://github.com/signup/free) so you can push code and open Pull Requests in the [GitHub Repository][github]. You must [fork](http://help.github.com/forking) the
 [main kepler.gl repository][github] to [create a Pull Request][github-pr].
-
 
 #### Developing kepler.gl
 
@@ -77,6 +77,7 @@ yarn test
 ```
 
 To run separately
+
 ```shell
 # lint
 yarn lint
@@ -92,6 +93,7 @@ yarn fast-test
 ```
 
 To generate a coverage report
+
 ```shell
 yarn cover
 ```
@@ -100,18 +102,18 @@ yarn cover
 
 To ensure consistency throughout the source code, keep these rules in mind as you are working:
 
-* All features or bug fixes **must be tested** by one or more [specs][unit-testing].
-* All public API methods **must be documented** with using jsdoc. To see how we document our APIs, please check
+- All features or bug fixes **must be tested** by one or more [specs][unit-testing].
+- All public API methods **must be documented** with using jsdoc. To see how we document our APIs, please check
   out the existing source code and see the section about [writing documentation](#documentation)
-
 
 ## <a name="commits"></a> Git Commit Guidelines
 
-To commit your changes, please follow our rules over how our git commit messages can be formatted.  This leads to **more readable and unified messages** that are easy to follow.  But also,
+To commit your changes, please follow our rules over how our git commit messages can be formatted. This leads to **more readable and unified messages** that are easy to follow. But also,
 we use the git commit messages to **generate the kepler.gl change log**.
 
 ### Commit Message Format
-Each commit message consists of a **header** and a **body**.  The header has a special
+
+Each commit message consists of a **header** and a **body**. The header has a special
 format that includes a **type** and a **subject**. The **PR** # will be auto-generated once the PR is merged.
 
 ```shell
@@ -132,35 +134,39 @@ Any line of the commit message cannot be longer 100 characters! This allows the 
 to read on GitHub as well as in various git tools.
 
 ### Revert
-If the commit reverts a previous commit, it should begin with `revert: `, followed by the header
+
+If the commit reverts a previous commit, it should begin with `revert:`, followed by the header
 of the reverted commit.
 In the body it should say: `This reverts commit <hash>.`, where the hash is the SHA of the commit
 being reverted.
 A commit with this format is automatically created by the [`git revert`][git-revert] command.
 
 ### Type
+
 Must be one of the following, capitalized.
 
-* **[Feat]**: A new feature
-* **[Enhancement]**: An update of a existing feature
-* **[Bug]**: A bug fix
-* **[Docs]**: Documentation only changes
-* **[Style]**: Changes that do not affect the meaning of the code (white-space, formatting, missing
+- **[Feat]**: A new feature
+- **[Enhancement]**: An update of a existing feature
+- **[Bug]**: A bug fix
+- **[Docs]**: Documentation only changes
+- **[Style]**: Changes that do not affect the meaning of the code (white-space, formatting, missing
   semi-colons, typos, etc)
-* **[Refactor]**: A code change that neither fixes a bug nor adds a feature
-* **[Perf]**: A code change that improves performance
-* **[Test]**: Adding missing or correcting existing tests
-* **[Chore]**: Changes to the build process or auxiliary tools and libraries such as documentation
+- **[Refactor]**: A code change that neither fixes a bug nor adds a feature
+- **[Perf]**: A code change that improves performance
+- **[Test]**: Adding missing or correcting existing tests
+- **[Chore]**: Changes to the build process or auxiliary tools and libraries such as documentation
   generation
 
 ### Subject
+
 The subject contains succinct description of the change:
 
-* use the imperative, present tense: "change" not "changed" nor "changes"
-* don't capitalize first letter
-* no dot (.) at the end
+- use the imperative, present tense: "change" not "changed" nor "changes"
+- don't capitalize first letter
+- no dot (.) at the end
 
 ### Body
+
 Just as in the **subject**, use the imperative, present tense: "change" not "changed" nor "changes".
 The body should include the motivation for the change and contrast this with previous behavior.
 
@@ -181,6 +187,7 @@ This means that since we generate the documentation from the source code, we can
 version-specific documentation by simply checking out a version of Kepler.gl and running the build.
 
 ### Building and viewing the docs locally
+
 We build Api docs from scratch using [documentation.js][documentationjs]. It generates docs from jsdoc:
 
 ```shell
@@ -188,68 +195,42 @@ yarn docs
 ```
 
 ### Writing jsdoc
-You can find JSDoc instructions [here][jsDoc]. Documentation.js is interested in the following block tags:
 
-* `@param {type} name description` - describes a parameter of a function
-* `@returns {type} description` - describes what a function returns
-* `@property` - describes a property of an object
-* `@description` - used to provide a description of a component in markdown
+You can find JSDoc instructions [here][jsdoc]. Documentation.js is interested in the following block tags:
 
-* `@example` - specifies an example.
-* `@public` - Only methods with @public tag will be included in the docs
+- `@param {type} name description` - describes a parameter of a function
+- `@returns {type} description` - describes what a function returns
+- `@property` - describes a property of an object
+- `@description` - used to provide a description of a component in markdown
+
+- `@example` - specifies an example.
+- `@public` - Only methods with @public tag will be included in the docs
 
 The `type` in `@param` and `@returns` must be wrapped in `{}` curly braces, e.g. `{Object|Array}`.
-Parameters can be made optional by *either* appending a `=` to the type, e.g. `{Object=}`, *or* by
+Parameters can be made optional by _either_ appending a `=` to the type, e.g. `{Object=}`, _or_ by
 putting the `[name]` in square brackets.
 Default values are only possible with the second syntax by appending `=<value>` to the parameter
 name, e.g. `@param {boolean} [ownPropsOnly=false]`.
 
-
 ## <a name="website"></a> Develop The kepler.gl Website
 
 Make sure to export mapbox token in the same terminal before start the server.
+
 ```sh
     export MapboxAccessToken=<insert_your_token>
 ```
 
 In order to start
+
 ```
     yarn web
 ```
 
 To checkout the build
+
 ```
     cd website && yarn build
 ```
-
-Publish on github pages __Authorized User Only__.
-
-<b>important* Before publish. Copy the mapbox token at [this link](http://t.uber.com/kepler.gl-token). (Only accessible by Uber developer). Deploy will fail if token is missing</b>
-```
-    export MapboxAccessToken=<insert_your_token>
-    yarn deploy
-```
-
-### <a name="gh-pages"></a> Testing environment using GH Pages
-We currently host the demo-app on Github pages. We have provided a way to test github pages before pushing the branch to
-the actual repo.
-In order to test github pages with your changes, you need to satisfy the following requirements first:
-- Make sure you have your own github pages (username.github.io) repo, [click here](https://pages.github.com/)
-- In your local fork of kepler.gl, add your github pages repo to the list of git remotes by doing:
-
-```bash
-git remote add test git@github.com:<username>/<username>.github.io.git
-```
-
-With the above command, A new origin __test__ will be created, and your own testing copy of gh pages will be push to it.
-
-When everything is set up, run the following command:
-
-```bash
-yarn deploy:test
-```
-
-The above command will build the website and push to your gh-pages branch.
 
 [demo-app]: http://kepler.gl/#/demo
 [documentationjs]: https://documentation.js.org/
@@ -259,6 +240,6 @@ The above command will build the website and push to your gh-pages branch.
 [git-setup]: https://help.github.com/articles/set-up-git
 [github]: https://github.com/keplergl/kepler.gl
 [github-pr]: https://help.github.com/articles/creating-a-pull-request/
-[jsDoc]: http://usejsdoc.org/
+[jsdoc]: http://usejsdoc.org/
 [tape]: https://github.com/substack/tape
 [yarn-install]: https://yarnpkg.com/en/docs/install
