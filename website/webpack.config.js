@@ -139,7 +139,10 @@ const COMMON_CONFIG = {
       'DropboxClientId',
       'MapboxExportToken'
     ])
-  ]
+  ],
+
+  // Required to avoid deck.gl undefined module when code is minified
+  optimization: { concatenateModules: false, providedExports: false, usedExports: false }
 };
 
 const addDevConfig = config => {
