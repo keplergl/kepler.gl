@@ -142,7 +142,11 @@ const COMMON_CONFIG = {
   ],
 
   // Required to avoid deck.gl undefined module when code is minified
-  optimization: { concatenateModules: false, providedExports: false, usedExports: false }
+  optimization: {
+    concatenateModules: false,
+    providedExports: false,
+    usedExports: false
+  }
 };
 
 const addDevConfig = config => {
