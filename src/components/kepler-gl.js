@@ -32,6 +32,7 @@ import * as UIStateActions from 'actions/ui-state-actions';
 
 import {EXPORT_IMAGE_ID, DIMENSIONS,
   KEPLER_GL_NAME, KEPLER_GL_VERSION, THEME} from 'constants/default-settings';
+import {MISSING_MAPBOX_TOKEN} from 'constants/user-feedbacks';
 
 import SidePanelFactory from './side-panel';
 import MapContainerFactory from './map-container';
@@ -41,6 +42,7 @@ import PlotContainerFactory from './plot-container';
 import NotificationPanelFactory from './notification-panel';
 
 import {generateHashId} from 'utils/utils';
+import {validateToken} from 'utils/mapbox-utils';
 
 import {theme as basicTheme, themeLT} from 'styles/base';
 
@@ -104,6 +106,7 @@ function KeplerGlFactory(
     };
 
     componentWillMount() {
+      this._validateMapboxToken();
       this._loadMapStyle(this.props.mapStyles);
       this._handleResize(this.props);
     }
@@ -130,6 +133,13 @@ function KeplerGlFactory(
         ...theme
       }) : theme === THEME.light ? themeLT : theme
     );
+
+    _validateMapboxToken() {
+      const {mapboxApiAccessToken} = this.props;
+      if (!validateToken(mapboxApiAccessToken)) {
+        Console.warn(MISSING_MAPBOX_TOKEN);
+      }
+    }
 
     _handleResize({width, height}) {
       if (!Number.isFinite(width) || !Number.isFinite(height)) {

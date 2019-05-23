@@ -420,6 +420,7 @@ test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
     'Should load map style into reducer and create layer groups'
   );
 
+  // Do not remove this. Necessary for testing flow
   const resultState2 = coreReducer(resultState1, actions[1]);
   const [task1, ...rest] = drainTasksForTesting();
   t.equal(rest.length, 0, 'should dispatch 1 tasks');

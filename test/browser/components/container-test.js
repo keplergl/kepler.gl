@@ -22,6 +22,7 @@
 import React from 'react';
 import test from 'tape';
 import {mount} from 'enzyme';
+import {combineReducers} from 'redux';
 import configureStore from 'redux-mock-store';
 import {Provider} from 'react-redux';
 import sinon from 'sinon';
@@ -30,16 +31,12 @@ import rootReducer from 'reducers/root';
 import coreReducer from 'reducers/core';
 import {keplerGlInit} from 'actions/actions';
 
-import {combineReducers} from 'redux';
-
+import Container, {errorMsg} from 'components/container';
 const initialCoreState = coreReducer(undefined, keplerGlInit());
-
 const initialState = {
   keplerGl: {}
 };
 const mockStore = configureStore();
-
-import Container, {errorMsg} from 'components/container';
 
 test('Components -> Container -> Mount with mint:true', t => {
   // mount with empty store
@@ -141,6 +138,7 @@ test('Components -> Container -> Mount with mint:true', t => {
       }
     }
   };
+
   t.deepEqual(
     nextState,
     expectedState,
@@ -202,8 +200,8 @@ test('Components -> Container -> Mount with mint:false', t => {
   );
   actions.splice(0, 2);
 
-  let nextState = appReducer({}, expectedActions0);
-  let expectedState = {
+  const nextState = appReducer({}, expectedActions0);
+  const expectedState = {
     smoothie: {
       milkshake: {
         ...initialCoreState,
@@ -266,8 +264,8 @@ test('Components -> Container -> Mount then rename', t => {
     'should register entry'
   );
 
-  let nextState = appReducer({}, expectedActions0);
-  let expectedState = {
+  const nextState = appReducer({}, expectedActions0);
+  const expectedState = {
     smoothie: {
       milkshake: {
         ...initialCoreState,
