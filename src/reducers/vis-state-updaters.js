@@ -48,6 +48,7 @@ import {
 } from './vis-state-merger';
 
 import {Layer, LayerClasses} from 'layers';
+import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
 
 // react-palm
 // disable capture exception for react-palm call to withTask

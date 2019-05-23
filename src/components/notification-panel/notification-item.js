@@ -54,10 +54,11 @@ const NotificationMessage = styled.div`
   p {
     margin-top: 0;
   }
-  a {
-    color: white !important;
+  
+  .notification-item--link a {
+    color: white;
     font-weight: bold;
-    text-decoration: underline !important;
+    text-decoration: underline;
   }
 `;
 
@@ -109,8 +110,10 @@ export default function NotificationItemFactory()
             expanded={this.state.isExpanded}
             theme={this.props.theme}>
             <ReactMarkdown
+              className="notification-item--link"
               linkTarget="_blank"
-              source={notification.message} />
+              source={notification.message}
+            />
           </NotificationMessage>
           <div
             className="notification-item--action">
