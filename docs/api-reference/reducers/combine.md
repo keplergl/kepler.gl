@@ -4,13 +4,16 @@
 
 -   [combinedUpdaters][1]
     -   [addDataToMapUpdater][3]
-    -   [updateVisDataUpdater][5]
+    -   [loadFilesErrUpdater][5]
+    -   [loadFilesSuccessUpdater][7]
+    -   [loadFilesUpdater][9]
+    -   [updateVisDataUpdater][11]
 
 ## combinedUpdaters
 
 Some actions will affect the entire kepler.lg instance state.
 The updaters for these actions is exported as `combinedUpdaters`. These updater take the entire instance state
-as the first argument. Read more about [Using updaters][7]
+as the first argument. Read more about [Using updaters][13]
 
 **Examples**
 
@@ -54,52 +57,98 @@ export default composedReducer;
 
 Combine data and full configuration update in a single action
 
--   **Action**: [`addDataToMap`][8]
+-   **Action**: [`addDataToMap`][14]
 
 **Parameters**
 
--   `state` **[Object][9]** kepler.gl instance state, containing all subreducer state
--   `action` **[Object][9]** 
-    -   `action.payload` **[Object][9]** `{datasets, options, config}`
-        -   `action.payload.datasets` **([Array][10]&lt;[Object][9]> | [Object][9])** **\*required** datasets can be a dataset or an array of datasets
+-   `state` **[Object][15]** kepler.gl instance state, containing all subreducer state
+-   `action` **[Object][15]** 
+    -   `action.payload` **[Object][15]** `{datasets, options, config}`
+        -   `action.payload.datasets` **([Array][16]&lt;[Object][15]> | [Object][15])** **\*required** datasets can be a dataset or an array of datasets
             Each dataset object needs to have `info` and `data` property.
-            -   `action.payload.datasets.info` **[Object][9]** \-info of a dataset
-                -   `action.payload.datasets.info.id` **[string][11]** id of this dataset. If config is defined, `id` should matches the `dataId` in config.
-                -   `action.payload.datasets.info.label` **[string][11]** A display name of this dataset
-            -   `action.payload.datasets.data` **[Object][9]** **\*required** The data object, in a tabular format with 2 properties `fields` and `rows`
-                -   `action.payload.datasets.data.fields` **[Array][10]&lt;[Object][9]>** **\*required** Array of fields,
-                    -   `action.payload.datasets.data.fields.name` **[string][11]** **\*required** Name of the field,
-                -   `action.payload.datasets.data.rows` **[Array][10]&lt;[Array][10]>** **\*required** Array of rows, in a tabular format with `fields` and `rows`
-        -   `action.payload.options` **[Object][9]** option object `{centerMap: true}`
-        -   `action.payload.config` **[Object][9]** map config
+            -   `action.payload.datasets.info` **[Object][15]** \-info of a dataset
+                -   `action.payload.datasets.info.id` **[string][17]** id of this dataset. If config is defined, `id` should matches the `dataId` in config.
+                -   `action.payload.datasets.info.label` **[string][17]** A display name of this dataset
+            -   `action.payload.datasets.data` **[Object][15]** **\*required** The data object, in a tabular format with 2 properties `fields` and `rows`
+                -   `action.payload.datasets.data.fields` **[Array][16]&lt;[Object][15]>** **\*required** Array of fields,
+                    -   `action.payload.datasets.data.fields.name` **[string][17]** **\*required** Name of the field,
+                -   `action.payload.datasets.data.rows` **[Array][16]&lt;[Array][16]>** **\*required** Array of rows, in a tabular format with `fields` and `rows`
+        -   `action.payload.options` **[Object][15]** option object `{centerMap: true}`
+        -   `action.payload.config` **[Object][15]** map config
 
-Returns **[Object][9]** nextState
+Returns **[Object][15]** nextState
+
+### loadFilesErrUpdater
+
+Trigger loading file error
+
+-   **Action**: [`loadFilesErr`][18]
+
+**Parameters**
+
+-   `state` **[Object][15]** kepler.gl instance state, containing all subreducer state
+-   `action` **[Object][15]** action
+    -   `action.payload` **[Object][15]** 
+        -   `action.payload.error` **[Error][19]** 
+        -   `action.payload.info` **[Object][15]** 
+
+Returns **[Object][15]** nextState
+
+### loadFilesSuccessUpdater
+
+Trigger loading file error
+
+-   **Action**: [`loadFilesSuccess`][20]
+
+**Parameters**
+
+-   `state` **[Object][15]** kepler.gl instance state, containing all subreducer state
+-   `action` **[Object][15]** action
+    -   `action.payload` **[Object][15]** 
+        -   `action.payload.data` **[Object][15]** loaded datasets
+        -   `action.payload.info` **[Object][15]** loaded file info
+
+Returns **[Object][15]** nextState
+
+### loadFilesUpdater
+
+Trigger file loading dispatch `addDataToMap` if succeed, or `loadFilesErr` if failed
+
+-   **Action**: [`loadFiles`][21]
+
+**Parameters**
+
+-   `state` **[Object][15]** kepler.gl instance state, containing all subreducer state
+-   `action` **[Object][15]** action
+    -   `action.files` **[Array][16]&lt;[Object][15]>** array of fileblob
+
+Returns **[Object][15]** nextState
 
 ### updateVisDataUpdater
 
 Apply data and config to visState reducer
 
--   **Action**: [`updateVisData`][12]
+-   **Action**: [`updateVisData`][22]
 
 **Parameters**
 
--   `state` **[Object][9]** kepler.gl instance state, containing all subreducer state
--   `action` **[Object][9]** 
-    -   `action.datasets` **([Array][10]&lt;[Object][9]> | [Object][9])** **\*required** datasets can be a dataset or an array of datasets
+-   `state` **[Object][15]** kepler.gl instance state, containing all subreducer state
+-   `action` **[Object][15]** 
+    -   `action.datasets` **([Array][16]&lt;[Object][15]> | [Object][15])** **\*required** datasets can be a dataset or an array of datasets
         Each dataset object needs to have `info` and `data` property.
-        -   `action.datasets.info` **[Object][9]** \-info of a dataset
-            -   `action.datasets.info.id` **[string][11]** id of this dataset. If config is defined, `id` should matches the `dataId` in config.
-            -   `action.datasets.info.label` **[string][11]** A display name of this dataset
-        -   `action.datasets.data` **[Object][9]** **\*required** The data object, in a tabular format with 2 properties `fields` and `rows`
-            -   `action.datasets.data.fields` **[Array][10]&lt;[Object][9]>** **\*required** Array of fields,
-                -   `action.datasets.data.fields.name` **[string][11]** **\*required** Name of the field,
-            -   `action.datasets.data.rows` **[Array][10]&lt;[Array][10]>** **\*required** Array of rows, in a tabular format with `fields` and `rows`
-    -   `action.options` **[Object][9]** 
-        -   `action.options.centerMap` **[Boolean][13]** 
-        -   `action.options.readOnly` **[Boolean][13]** 
-    -   `action.config` **[Object][9]** 
+        -   `action.datasets.info` **[Object][15]** \-info of a dataset
+            -   `action.datasets.info.id` **[string][17]** id of this dataset. If config is defined, `id` should matches the `dataId` in config.
+            -   `action.datasets.info.label` **[string][17]** A display name of this dataset
+        -   `action.datasets.data` **[Object][15]** **\*required** The data object, in a tabular format with 2 properties `fields` and `rows`
+            -   `action.datasets.data.fields` **[Array][16]&lt;[Object][15]>** **\*required** Array of fields,
+                -   `action.datasets.data.fields.name` **[string][17]** **\*required** Name of the field,
+            -   `action.datasets.data.rows` **[Array][16]&lt;[Array][16]>** **\*required** Array of rows, in a tabular format with `fields` and `rows`
+    -   `action.options` **[Object][15]** 
+        -   `action.options.centerMap` **[Boolean][23]** 
+        -   `action.options.readOnly` **[Boolean][23]** 
+    -   `action.config` **[Object][15]** 
 
-Returns **[Object][9]** nextState
+Returns **[Object][15]** nextState
 
 [1]: #combinedupdaters
 
@@ -109,20 +158,40 @@ Returns **[Object][9]** nextState
 
 [4]: #parameters
 
-[5]: #updatevisdataupdater
+[5]: #loadfileserrupdater
 
 [6]: #parameters-1
 
-[7]: ../advanced-usage/using-updaters.md
+[7]: #loadfilessuccessupdater
 
-[8]: ../actions/actions.md#adddatatomap
+[8]: #parameters-2
 
-[9]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+[9]: #loadfilesupdater
 
-[10]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+[10]: #parameters-3
 
-[11]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+[11]: #updatevisdataupdater
 
-[12]: ../actions/actions.md#updatevisdata
+[12]: #parameters-4
 
-[13]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+[13]: ../advanced-usage/using-updaters.md
+
+[14]: ../actions/actions.md#adddatatomap
+
+[15]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+
+[16]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+
+[17]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+
+[18]: ../actions/actions.md#loadfileserr
+
+[19]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Error
+
+[20]: ../actions/actions.md#loadfilessuccess
+
+[21]: ../actions/actions.md#loadfiles
+
+[22]: ../actions/actions.md#updatevisdata
+
+[23]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean

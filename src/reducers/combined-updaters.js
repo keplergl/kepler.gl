@@ -196,7 +196,7 @@ export const addDataToMapComposed = addDataToMapUpdater;
  * @param {Object} state kepler.gl instance state, containing all subreducer state
  * @param {Object} action action
  * @param {Array<Object>} action.files array of fileblob
- * @returns {Object} nextState
+ * @returns {Object} newState computed with withTasks(nextState, loadFileTasks)
  * @public
  */
 export const loadFilesUpdater = (state, action) => {

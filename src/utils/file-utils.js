@@ -39,7 +39,7 @@ export const processFileToLoad = (file) => {
  * @return {string} human readable version of file size
  */
 export const sizeOf = bytes => {
-  if (bytes === 0) {
+  if (!bytes || bytes === 0) {
     return '0.00 B';
   }
   const e = Math.floor(Math.log(bytes) / Math.log(1024));
