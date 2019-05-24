@@ -15,6 +15,19 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+#### [1.0.0] - May 23 2019
+- [Enhancement] Detecting mapbox token validity (#513)
+- [Enhancement] Netlify webpack optimization (#525)
+- [Feat] More control over point label (#515)
+- [Enhancement] Applied changes for enable netlify deployment (#516)
+- [Enhancement] Refactored modal dialog to be more responsive (#501)
+- [Bug] fix side panel unnecessary rerender (#512)
+- [Feat] Upgrade deck.gl to 6.4 (#456)
+- [BUG] Fixed layer list sorting dnd effect (#509)
+- [Feat] add onViewStateChange callback to KeplerGl (#506)
+- [Enhancement] More granular speed control (#500)
+- [Docs] update all uber links to keplergl org (#502)
+
 #### [1.0.0-2] - May 2 2019
 - [Bug] Fix missing default map styles after loading custom map style from saved json (#490)
 - [Bug] Fix `fix radius` in point layer unclickable (#491)
@@ -34,9 +47,9 @@ Ref: http://keepachangelog.com/en/0.3.0/
 #### [1.0.0-0] - Apr 2 2019
 - [Enhancement] Replace react anything sortable with React-Sortable-Hoc
 - [Enhancement] Replaced DI object storage with an actual Map
-- [Feat] Able to overwrite custom theme 
+- [Feat] Able to overwrite custom theme
 - [Chore] Upgraded waypoint library to support react16
-- [Chore] Dropbox UI enhancements 
+- [Chore] Dropbox UI enhancements
 - [Bug] Fix points disappear while panning across 180th meridian
 - [Chore] Tweak save and export documentation
 - [Chore] Add oss header and middleware.js
@@ -47,7 +60,7 @@ Ref: http://keepachangelog.com/en/0.3.0/
 ##### BREAKING CHANGES
 - React 15 is no longer supported
 - Style components v4+ is now required because is now a peer dependency
- 
+
 #### [0.2.4] - Mar 13 2019
 - [Enhancement] Slider: use clientX to calculate delta to support windows IE and Tableau kepler.gl (#431)
 - [Bug] Range slider: correctly setting ranch brush selection when mount (#433)
