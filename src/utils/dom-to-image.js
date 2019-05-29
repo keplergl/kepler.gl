@@ -26,6 +26,7 @@
 import window from 'global/window';
 import document from 'global/document';
 import console from 'global/console';
+import svgToMiniDataURI from 'mini-svg-data-uri';
 
 const util = newUtil();
 const inliner = newInliner();
@@ -194,6 +195,7 @@ function cloneNode(node, filter, root) {
 
   function makeNodeCopy(nd) {
     if (nd instanceof window.HTMLCanvasElement) {
+      console.log('window HTMLCanvasElement')
       return util.makeImage(nd.toDataURL());
     }
     return nd.cloneNode(false);
@@ -342,16 +344,20 @@ function makeSvgDataUri(node, width, height) {
   return Promise.resolve(node)
     .then(nd => {
       nd.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
-      return new window.XMLSerializer().serializeToString(nd);
-    })
-    .then(util.escapeXhtml)
-    .then(xhtml =>
-      `<foreignObject x="0" y="0" width="100%" height="100%">${xhtml}</foreignObject>`
-    )
-    .then(foreignObject =>
-      `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">${foreignObject}</svg>`
-    )
-    .then(svg => `data:image/svg+xml;charset=utf-8,${svg}`);
+      const serializedString =  new window.XMLSerializer().serializeToString(nd);
+
+      const xhtml = util.escapeXhtml(serializedString);
+      const foreignObject = `<foreignObject x="0" y="0" width="100%" height="100%">${xhtml}</foreignObject>`;
+      const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">${foreignObject}</svg>`;
+
+      // Optimizing SVGs in data URIs
+      // see https://codepen.io/tigt/post/optimizing-svgs-in-data-uris
+      // the best way of encoding SVG in a data: URI is data:image/svg+xml,[actual data].
+      // We don’t need the ;charset=utf-8 parameter because the given SVG is ASCII.
+      const dataUri = svgToMiniDataURI(svgStr);
+
+      return dataUri;
+    });
 }
 
 function newUtil() {
@@ -376,9 +382,9 @@ function newUtil() {
 
   function mimes() {
     /*
-            * Only WOFF and EOT mime types for fonts are 'real'
-            * see http://www.iana.org/assignments/media-types/media-types.xhtml
-            */
+    * Only WOFF and EOT mime types for fonts are 'real'
+    * see http://www.iana.org/assignments/media-types/media-types.xhtml
+    */
     const WOFF = 'application/font-woff';
     const JPEG = 'image/jpeg';
 
@@ -470,7 +476,11 @@ function newUtil() {
       image.onload = () => {
         resolve(image);
       };
-      image.onerror = reject;
+      image.onerror = (err) => {
+        console.warn('[kepler.gl] Failed to create image from data uri. Copy the uri below when reporting this bug', err);
+        console.log(uri);
+        reject(err);
+      };
       image.src = uri;
     });
   }
@@ -688,8 +698,8 @@ function newFontFaces() {
               .catch(err => {
                 // Handle any error that occurred in any of the previous
                 // promises in the chain.
-                console.log(err)
-                return sheet;
+                console.warn(`[kepler.gl] Failed to fetch stylesheet ${sheet.href} when exporting image. This probably will not affect the map. It might affect the legend.`, err);
+                return;
               });
           }
           return Promise.resolve(sheet);
@@ -754,6 +764,9 @@ function newFontFaces() {
       const cssRules = [];
       styleSheets.forEach((sheet) => {
         // try...catch because browser may not able to enumerate rules for cross-domain sheets
+        if (!sheet) {
+          return;
+        }
         let rules;
         try {
           rules = sheet.rules || sheet.cssRules;

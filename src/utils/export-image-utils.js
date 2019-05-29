@@ -47,8 +47,8 @@ export function calculateExportImageSize({width, height, ratio, resolution}) {
   };
 }
 
-export function convertToPng(sourceElem) {
-  return domtoimage.toPng(sourceElem);
+export function convertToPng(sourceElem, options) {
+  return domtoimage.toPng(sourceElem, options);
 }
 
 export function dataURItoBlob(dataURI) {

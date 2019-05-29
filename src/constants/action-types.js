@@ -122,6 +122,7 @@ const ActionTypes = keyMirror({
   TOGGLE_LEGEND: null,
   START_EXPORTING_IMAGE: null,
   SET_EXPORT_IMAGE_DATA_URI: null,
+  EXPORT_IMAGE_ERROR: null,
   CLEANUP_EXPORT_IMAGE: null,
 
   // uiState > export data

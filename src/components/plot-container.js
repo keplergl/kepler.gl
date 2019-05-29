@@ -91,7 +91,12 @@ export default function PlotContainerFactory(MapContainer) {
       }
     };
 
+    _onRetrievingFinish = (devicePixelRatio) => {
+      window.devicePixelRatio = devicePixelRatio;
+    };
+
     _retrieveNewScreenshot = () => {
+
       if (this.plottingAreaRef) {
       // setting windowDevicePixelRatio to 1
       // so that large mapbox base map will load in full
@@ -99,9 +104,16 @@ export default function PlotContainerFactory(MapContainer) {
         window.devicePixelRatio = 1;
 
         this.props.startExportingImage();
-        convertToPng(this.plottingAreaRef).then(dataUri => {
+        const filter = node => node.className !== 'mapboxgl-control-container';
+
+        convertToPng(this.plottingAreaRef, {filter}).then(dataUri => {
           this.props.setExportImageDataUri(dataUri);
-          window.devicePixelRatio = savedDevicePixelRatio;
+          this._onRetrievingFinish(savedDevicePixelRatio);
+        })
+        .catch(err => {
+          console.error(err);
+          this.props.exportImageError(err);
+          this._onRetrievingFinish(savedDevicePixelRatio);
         });
       }
     };

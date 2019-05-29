@@ -105,6 +105,7 @@ class ExportImageModal extends Component {
     width: PropTypes.number.isRequired,
     exporting: PropTypes.bool.isRequired,
     imageDataUri: PropTypes.string,
+    error: PropTypes.any,
     // callbacks
     onChangeRatio: PropTypes.func.isRequired,
     onChangeResolution: PropTypes.func.isRequired,
@@ -116,6 +117,7 @@ class ExportImageModal extends Component {
       height,
       legend,
       ratio,
+      error,
       resolution,
       width,
       exporting,
@@ -180,6 +182,7 @@ class ExportImageModal extends Component {
               <div className="preview-image-spinner">
                 <LoadingSpinner />
               </div> :
+              error ? <span> {error.message || 'Generate map image failed'}</span> :
               <img className="preview-image-placeholder" src={imageDataUri} />
             }
           </div>

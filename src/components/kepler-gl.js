@@ -310,6 +310,7 @@ function KeplerGlFactory(
                 mapFields={mapFields}
                 startExportingImage={uiStateActions.startExportingImage}
                 setExportImageDataUri={uiStateActions.setExportImageDataUri}
+                exportImageError={uiStateActions.exportImageError}
               />
             }
             <BottomWidget
