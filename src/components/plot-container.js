@@ -26,14 +26,16 @@ import styled from 'styled-components';
 import {StaticMap} from 'react-map-gl';
 import debounce from 'lodash.debounce';
 import window from 'global/window';
-
+import {exportImageError} from 'utils/notifications-utils';
 import MapContainerFactory from './map-container';
 import {calculateExportImageSize, convertToPng} from 'utils/export-image-utils';
 import {scaleMapStyleByResolution} from 'utils/map-style-utils/mapbox-gl-style-editor';
+
 const propTypes = {
   width: PropTypes.number.isRequired,
   height: PropTypes.number.isRequired,
   exportImageSetting: PropTypes.object.isRequired,
+  addNotification: PropTypes.func.isRequired,
   mapFields: PropTypes.object.isRequired
 };
 
@@ -111,8 +113,8 @@ export default function PlotContainerFactory(MapContainer) {
           this._onRetrievingFinish(savedDevicePixelRatio);
         })
         .catch(err => {
-          console.error(err);
-          this.props.exportImageError(err);
+          this.props.setExportImageError(err);
+          this.props.addNotification(exportImageError({err}));
           this._onRetrievingFinish(savedDevicePixelRatio);
         });
       }

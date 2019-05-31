@@ -21,9 +21,13 @@
 import {generateHashId} from './utils';
 
 import {
-  DEFAULT_NOTIFICATION_MESSAGE, DEFAULT_NOTIFICATION_TOPICS,
-  DEFAULT_NOTIFICATION_TYPES, DEFAULT_UUID_COUNT
+  DEFAULT_NOTIFICATION_MESSAGE,
+  DEFAULT_NOTIFICATION_TOPICS,
+  DEFAULT_NOTIFICATION_TYPES,
+  DEFAULT_UUID_COUNT
 } from 'constants/default-settings';
+
+import {GITHUB_BUG_REPORT} from 'constants/user-guides';
 
 /**
  * Creates a notofication
@@ -55,13 +59,24 @@ export function createNotification({
  * @param options
  * @returns {{topic, id, message, type: (null|number)}}
  */
-export const errorNotification = options =>
-  ({...createNotification(options), type: DEFAULT_NOTIFICATION_TYPES.error});
+export const errorNotification = options => ({
+  ...createNotification(options),
+  type: DEFAULT_NOTIFICATION_TYPES.error
+});
 
 /**
  * Creates a success notification
  * @param options
  * @returns {{topic, id, message, type: null}}
  */
-export const successNotification = options =>
-  ({...createNotification(options), type: DEFAULT_NOTIFICATION_TYPES.success});
+export const successNotification = options => ({
+  ...createNotification(options),
+  type: DEFAULT_NOTIFICATION_TYPES.success
+});
+
+export const exportImageError = options =>
+  errorNotification({
+    ...options,
+    topic: DEFAULT_NOTIFICATION_TOPICS.global,
+    message: `Failed to export image, please take a screenshot of the javascript console, report the with [this link](${GITHUB_BUG_REPORT}) `
+  });

@@ -390,7 +390,7 @@ export const setExportImageDataUri = (state, {payload: dataUri}) => ({
   }
 });
 
-export const exportImageError = (state, {payload: error}) => ({
+export const setExportImageError = (state, {payload: error}) => ({
   ...state,
   exportImage: {
     ...state.exportImage,

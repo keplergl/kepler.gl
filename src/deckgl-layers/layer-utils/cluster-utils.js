@@ -60,14 +60,8 @@ const getClusterer = memoize(({clusterRadius, geoJSON}) => {
 }, clusterResolver);
 
 export function clustersAtZoom({bbox, clusterRadius, geoJSON, zoom}) {
-  console.log(zoom)
-  console.log(clusterRadius)
   const clusterer = getClusterer({clusterRadius, geoJSON});
-
-  const clusters = clusterer.getClusters(bbox, zoom);
-  console.log(clusters)
-
-  return clusters;
+  return clusterer.getClusters(bbox, zoom);
 }
 
 export function clearClustererCache() {

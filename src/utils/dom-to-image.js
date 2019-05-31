@@ -477,9 +477,14 @@ function newUtil() {
         resolve(image);
       };
       image.onerror = (err) => {
-        console.warn('[kepler.gl] Failed to create image from data uri. Copy the uri below when reporting this bug', err);
+        const message = `[kepler.gl] Failed to create image from data uri.
+        Copy the uri in the javascript console when reporting this bug.
+        The uri is the string starts with "data:image/png"`;
+        console.warn(message, err);
         console.log(uri);
-        reject(err);
+        // error is an Event Object
+        // https://www.w3schools.com/jsref/obj_event.asp
+        reject({event: err, message});
       };
       image.src = uri;
     });
@@ -698,7 +703,8 @@ function newFontFaces() {
               .catch(err => {
                 // Handle any error that occurred in any of the previous
                 // promises in the chain.
-                console.warn(`[kepler.gl] Failed to fetch stylesheet ${sheet.href} when exporting image. This probably will not affect the map. It might affect the legend.`, err);
+                console.warn(`[kepler.gl] Failed to fetch stylesheet ${sheet.href} when exporting image. This probably will not affect the map. It might affect the legend.`);
+                console.log(err);
                 return;
               });
           }

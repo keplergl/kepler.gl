@@ -25,15 +25,16 @@ import {Delete, Info, Warning, Checkmark} from 'components/common/icons';
 import ReactMarkdown from 'react-markdown';
 
 const NotificationItemContent = styled.div`
-  background-color: ${props => props.theme.notificationColors[props.notification.type] || '#000'};
+  background-color: ${props =>
+    props.theme.notificationColors[props.type] || '#000'};
   color: #fff;
   display: flex;
   flex-direction: row;
-  width: ${props => props.theme.notificationPanelItemWidth * (1 + Number(props.isExpanded))}px;
-  height: ${props => 
-    props.theme.notificationPanelItemHeight * (1 + Number(props.isExpanded)) 
-  }px;
-  font-size: 10px;
+  width: ${props =>
+    props.theme.notificationPanelItemWidth * (1 + Number(props.isExpanded))}px;
+  height: ${props =>
+    props.theme.notificationPanelItemHeight * (1 + Number(props.isExpanded))}px;
+  font-size: 11px;
   margin-bottom: 1rem;
   padding: 1em;
   border-radius: 4px;
@@ -49,10 +50,15 @@ const NotificationMessage = styled.div`
   flex-grow: 2;
   width: ${props => props.theme.notificationPanelItemWidth}px;
   margin: 0 1em;
-  overflow: ${props => props.isExpanded ? 'auto' : 'hidden'};
-  padding-right: ${props => props.isExpanded ? '1em' : 0};
+  overflow: ${props => (props.isExpanded ? 'auto' : 'hidden')};
+  padding-right: ${props => (props.isExpanded ? '1em' : 0)};
+
   p {
     margin-top: 0;
+    a {
+      color: #fff;
+      text-decoration: underline;
+    }
   }
 `;
 
@@ -69,8 +75,15 @@ const icons = {
   success: <Checkmark />
 };
 
-export default function NotificationItemFactory()
-{
+const LinkRenderer = props => {
+  return (
+    <a href={props.href} target="_blank" rel="noopener noreferrer">
+      {props.children}
+    </a>
+  );
+};
+
+export default function NotificationItemFactory() {
   return class NotificationItem extends Component {
     static propTypes = {
       notification: PropTypes.shape({
@@ -88,29 +101,36 @@ export default function NotificationItemFactory()
     }
 
     render() {
-      const {notification, removeNotification} = this.props;
+      const {notification, removeNotification, isExpanded} = this.props;
       return (
         <NotificationItemContent
           className="notification-item"
-          {...this.props}
+          type={notification.type}
+          isExpanded={isExpanded}
           onClick={() => this.setState({isExpanded: !this.state.isExpanded})}
-          isExpanded={this.state.isExpanded}>
-          <NotificationIcon
-            className="notification-item--icon">
+          isExpanded={this.state.isExpanded}
+        >
+          <NotificationIcon className="notification-item--icon">
             {icons[notification.type]}
           </NotificationIcon>
           <NotificationMessage
             className="notification-item--message"
             expanded={this.state.isExpanded}
-            theme={this.props.theme}>
-            <ReactMarkdown source={notification.message} />
+            theme={this.props.theme}
+          >
+            <ReactMarkdown
+              source={notification.message}
+              renderers={{link: LinkRenderer}}
+            />
           </NotificationMessage>
-          <div
-            className="notification-item--action">
-            <DeleteIcon height="10px" onClick={() => removeNotification(notification.id)} />
+          <div className="notification-item--action">
+            <DeleteIcon
+              height="10px"
+              onClick={() => removeNotification(notification.id)}
+            />
           </div>
         </NotificationItemContent>
       );
     }
-  }
+  };
 }
