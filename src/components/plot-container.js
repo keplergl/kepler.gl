@@ -41,6 +41,7 @@ const propTypes = {
 
 PlotContainerFactory.deps = [MapContainerFactory];
 
+// Remove mapbox logo in exported map, because it contains non-ascii characters
 const StyledPlotContainer = styled.div`
   .mapboxgl-ctrl-bottom-left,
   .mapboxgl-ctrl-bottom-right {

@@ -117,10 +117,6 @@ class ExportImageModal extends Component {
     width: PropTypes.number.isRequired,
     exporting: PropTypes.bool.isRequired,
     imageDataUri: PropTypes.string,
-    error: PropTypes.oneOfType([
-      PropTypes.string,
-      PropTypes.object
-    ]),
     // callbacks
     onChangeRatio: PropTypes.func.isRequired,
     onChangeResolution: PropTypes.func.isRequired,
