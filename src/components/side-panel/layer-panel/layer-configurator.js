@@ -19,14 +19,15 @@
 // THE SOFTWARE.
 
 /* eslint-disable complexity */
-import React, {Component} from 'react';
+import React, {Component, Fragment} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
 import {
   Button,
   PanelLabel,
-  SidePanelSection
+  SidePanelSection,
+  Input
 } from 'components/common/styled-components';
 import ItemSelector from 'components/common/item-selector/item-selector';
 
@@ -674,6 +675,58 @@ export default class LayerConfigurator extends Component {
           </LayerConfigGroup>
         ) : null}
       </StyledLayerVisualConfigurator>
+    );
+  }
+
+  _render3DLayerConfig({
+    layer,
+    visConfiguratorProps,
+    layerConfiguratorProps,
+    layerChannelConfigProps
+  }) {
+    return (
+      <Fragment>
+        <LayerConfigGroup label={'3D Model'} collapsible>
+          <Input
+            type="file"
+            accept=".glb,.gltf"
+            onChange={e => {
+              if (e.target.files && e.target.files[0]) {
+                const url = URL.createObjectURL(e.target.files[0]);
+                visConfiguratorProps.onChange({scenegraph: url});
+              }
+            }}
+          />
+        </LayerConfigGroup>
+        <LayerConfigGroup label={'3D Model Options'} collapsible>
+          <VisConfigSlider
+            {...LAYER_VIS_CONFIGS.sizeScale}
+            {...visConfiguratorProps}
+            disabled={false}
+          />
+          <VisConfigSlider
+            {...LAYER_VIS_CONFIGS.angle}
+            {...visConfiguratorProps}
+            label="Angle X"
+            property="angleX"
+            disabled={false}
+          />
+          <VisConfigSlider
+            {...LAYER_VIS_CONFIGS.angle}
+            {...visConfiguratorProps}
+            label="Angle Y"
+            property="angleY"
+            disabled={false}
+          />
+          <VisConfigSlider
+            {...LAYER_VIS_CONFIGS.angle}
+            {...visConfiguratorProps}
+            label="Angle Z"
+            property="angleZ"
+            disabled={false}
+          />
+        </LayerConfigGroup>
+      </Fragment>
     );
   }
 
