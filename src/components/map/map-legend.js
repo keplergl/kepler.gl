@@ -23,8 +23,8 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {rgb} from 'd3-color';
 import ColorLegend from 'components/common/color-legend';
-import {DIMENSIONS} from 'constants/default-settings';
-import {capitalizeFirstLetter} from 'utils/utils';
+import {DIMENSIONS, CHANNEL_SCALES} from 'constants/default-settings';
+import {camelToTitle} from 'utils/utils';
 
 const StyledMapControlLegend = styled.div`
   padding: 10px 0 10px ${props => props.theme.mapControl.padding}px;
@@ -84,19 +84,18 @@ const propTypes = {
   layers: PropTypes.arrayOf(PropTypes.object)
 };
 
-const SingleColorLegend = ({layer, width}) => (
+const SingleColorLegend = ({width, color}) => (
   <ColorLegend
     scaleType="ordinal"
     displayLabel={false}
     domain={['']}
     fieldType={null}
-    range={[rgb(...layer.config.color).toString()]}
+    range={[rgb(...color).toString()]}
     width={width}
   />
 );
 
-const MultiColorLegend = ({layer, width}) => {
-  const {visConfig, colorField, colorScale, colorDomain} = layer.config;
+const MultiColorLegend = ({colorRange, colorScale, colorDomain, colorField, width}) => {
 
   return (
     <ColorLegend
@@ -104,11 +103,45 @@ const MultiColorLegend = ({layer, width}) => {
       displayLabel
       domain={colorDomain}
       fieldType={(colorField && colorField.type) || 'real'}
-      range={visConfig.colorRange.colors}
+      range={colorRange.colors}
       width={width}
     />
   );
 };
+
+const LayerColorLegend = ({description, config, width, colorChannel}) => {
+  const enableColorBy = description.measure;
+  const {scale, field, domain, range, property, key} = colorChannel;
+  const [colorScale, colorField, colorDomain] = [scale, field, domain].map(k => config[k]);
+  const colorRange = config.visConfig[range];
+
+  return (
+    <div>
+      <div className="legend--layer_type">{camelToTitle(key)}</div>
+      <div className="legend--layer_color-schema">
+        <div>
+          {enableColorBy ? (
+            <VisualChannelMetric name={enableColorBy} />
+          ) : null}
+          <div className="legend--layer_color-legend">
+            {enableColorBy ?
+              <MultiColorLegend
+                colorScale={colorScale}
+                colorField={colorField}
+                colorDomain={colorDomain}
+                colorRange={colorRange}
+                width={width} /> :
+              <SingleColorLegend
+                color={config.visConfig[property] || config[property] || config.color}
+                width={width}
+              />
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const MapLegend = ({layers}) => (
   <div>
@@ -116,10 +149,11 @@ const MapLegend = ({layers}) => (
       if (!layer.isValidToSave()) {
         return null;
       }
-
-      const colorChannelConfig = layer.getVisualChannelDescription('color');
-      const enableColorBy = colorChannelConfig.measure;
       const width = DIMENSIONS.mapControl.width - 2 * DIMENSIONS.mapControl.padding;
+      const colorChannels = Object.values(layer.visualChannels)
+        .filter(vc => vc.channelScaleType === CHANNEL_SCALES.color);
+      const nonColorChannels = Object.values(layer.visualChannels)
+      .filter(vc => vc.channelScaleType !== CHANNEL_SCALES.color);
 
       return (
         <StyledMapControlLegend
@@ -128,39 +162,32 @@ const MapLegend = ({layers}) => (
           key={index}
         >
           <div className="legend--layer_name">{layer.config.label}</div>
-          <div className="legend--layer_type">{`${capitalizeFirstLetter(
-            layer.name
-          )} color`}</div>
-          <div className="legend--layer_color-schema">
-            <div>
-              {enableColorBy ? (
-                <VisualChannelMetric name={enableColorBy} />
-              ) : null}
-              <div className="legend--layer_color-legend">
-                {enableColorBy ?
-                  <MultiColorLegend layer={layer} width={width}/> :
-                  <SingleColorLegend layer={layer} width={width}/>
-                }
-              </div>
-            </div>
-          </div>
-          {Object.keys(layer.visualChannels)
-            .filter(k => k !== 'color')
-            .map(key => {
+          {colorChannels.map(colorChannel =>
+              !colorChannel.condition || colorChannel.condition(layer.config) ?
+              <LayerColorLegend
+                key={colorChannel.key}
+                description={layer.getVisualChannelDescription(colorChannel.key)}
+                config={layer.config}
+                width={width}
+                colorChannel={colorChannel}
+              /> : null
+            )}
+          {nonColorChannels
+            .map(visualChannel => {
               const matchCondition =
-                !layer.visualChannels[key].condition ||
-                layer.visualChannels[key].condition(layer.config);
+                !visualChannel.condition ||
+                visualChannel.condition(layer.config);
               const enabled =
-                layer.config[layer.visualChannels[key].field] ||
-                layer.visualChannels[key].defaultMeasure;
+                layer.config[visualChannel.field] ||
+                visualChannel.defaultMeasure;
 
-              const visualChannelDescription = layer.getVisualChannelDescription(key);
+              const description = layer.getVisualChannelDescription(visualChannel.key);
               if (matchCondition && enabled) {
                 return (
                   <LayerSizeLegend
-                    key={key}
-                    label={visualChannelDescription.label}
-                    name={visualChannelDescription.measure}
+                    key={visualChannel.key}
+                    label={description.label}
+                    name={description.measure}
                   />
                 );
               }
