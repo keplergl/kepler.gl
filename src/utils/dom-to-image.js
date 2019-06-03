@@ -27,6 +27,7 @@ import window from 'global/window';
 import document from 'global/document';
 import console from 'global/console';
 import svgToMiniDataURI from 'mini-svg-data-uri';
+import {IMAGE_EXPORT_ERRORS} from 'constants/user-feedbacks';
 
 const util = newUtil();
 const inliner = newInliner();
@@ -195,7 +196,6 @@ function cloneNode(node, filter, root) {
 
   function makeNodeCopy(nd) {
     if (nd instanceof window.HTMLCanvasElement) {
-      console.log('window HTMLCanvasElement')
       return util.makeImage(nd.toDataURL());
     }
     return nd.cloneNode(false);
@@ -354,9 +354,7 @@ function makeSvgDataUri(node, width, height) {
       // see https://codepen.io/tigt/post/optimizing-svgs-in-data-uris
       // the best way of encoding SVG in a data: URI is data:image/svg+xml,[actual data].
       // We don’t need the ;charset=utf-8 parameter because the given SVG is ASCII.
-      const dataUri = svgToMiniDataURI(svgStr);
-
-      return dataUri;
+      return svgToMiniDataURI(svgStr);
     });
 }
 
@@ -477,10 +475,7 @@ function newUtil() {
         resolve(image);
       };
       image.onerror = (err) => {
-        const message = `[kepler.gl] Failed to create image from data uri.
-        Copy the uri in the javascript console when reporting this bug.
-        The uri is the string starts with "data:image/png"`;
-        console.warn(message, err);
+        const message = IMAGE_EXPORT_ERRORS.dataUri;
         console.log(uri);
         // error is an Event Object
         // https://www.w3schools.com/jsref/obj_event.asp
@@ -542,7 +537,7 @@ function newUtil() {
           resolve(placeholder);
         } else {
           fail(
-            `timeout of ${TIMEOUT}ms occured while fetching resource: ${url}`
+            `timeout of ${TIMEOUT}ms occurred while fetching resource: ${url}`
           );
         }
       }
@@ -696,14 +691,18 @@ function newFontFaces() {
       return Promise.all(
         styleSheets.map(sheet => {
           if (sheet.href) {
-            return window.fetch(sheet.href, {credentials: 'omit'})
+            // cloudfont doesn't have allow origin header properly set
+            // error response will remain in cache
+            const cache = sheet.href.includes('uber-fonts') ? 'no-cache' : 'default';
+            return window.fetch(sheet.href, {credentials: 'omit', cache})
               .then(toText)
               .then(setBaseHref(sheet.href))
               .then(toStyleSheet)
               .catch(err => {
                 // Handle any error that occurred in any of the previous
-                // promises in the chain.
-                console.warn(`[kepler.gl] Failed to fetch stylesheet ${sheet.href} when exporting image. This probably will not affect the map. It might affect the legend.`);
+                // promises in the chain. stylesheet failed to load should not stop
+                // the process, hence result in only a warning, instead of reject
+                console.warn(IMAGE_EXPORT_ERRORS.styleSheet, sheet.href);
                 console.log(err);
                 return;
               });

@@ -101,21 +101,22 @@ export default function NotificationItemFactory() {
     }
 
     render() {
-      const {notification, removeNotification, isExpanded} = this.props;
+      const {notification, removeNotification} = this.props;
+      const {isExpanded} = this.state;
+
       return (
         <NotificationItemContent
           className="notification-item"
           type={notification.type}
           isExpanded={isExpanded}
-          onClick={() => this.setState({isExpanded: !this.state.isExpanded})}
-          isExpanded={this.state.isExpanded}
+          onClick={() => this.setState({isExpanded: !isExpanded})}
         >
           <NotificationIcon className="notification-item--icon">
             {icons[notification.type]}
           </NotificationIcon>
           <NotificationMessage
             className="notification-item--message"
-            expanded={this.state.isExpanded}
+            isExpanded={isExpanded}
             theme={this.props.theme}
           >
             <ReactMarkdown

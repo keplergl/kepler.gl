@@ -303,7 +303,7 @@ export default function ModalContainerFactory(
           case EXPORT_IMAGE_ID:
             template = (
               <ExportImageModal
-                {... uiState.exportImage}
+                {...uiState.exportImage}
                 width={containerW}
                 height={containerH}
                 onChangeRatio={this.props.uiStateActions.setRatio}
