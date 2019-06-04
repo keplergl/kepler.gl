@@ -277,6 +277,7 @@ export default class HexagonIdLayer extends Layer {
         id: this.id,
         idx,
         pickable: true,
+        getPosition: x => x.centroid,
 
         // coverage
         coverage: config.coverageField ? 1 : visConfig.coverage,
