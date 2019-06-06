@@ -49,7 +49,7 @@ const CONFIG = {
       {
         test: /\.js$/,
         loader: 'babel-loader',
-        include: join(__dirname, 'src'),
+        include: [join(__dirname, 'src')],
         exclude: [/node_modules/]
       },
       {
@@ -73,9 +73,7 @@ const CONFIG = {
   // Optional: Enables reading mapbox and dropbox client token from environment variable
   plugins: [
     new webpack.EnvironmentPlugin([
-      'MapboxAccessToken',
-      'DropboxClientId',
-      'MapboxExportToken'
+      'MapboxAccessToken'
     ])
   ]
 };

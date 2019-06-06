@@ -32,6 +32,7 @@
     "test": "npm run lint && npm run test-node && npm run test-browser",
     "cover": "nyc --reporter html --reporter cobertura --reporter json-summary npm test && nyc report",
     "start": "npm run install-and-start -- examples/demo-app start-local",
+    "start:deck": "npm run install-and-start -- examples/demo-app start-local-deck",
     "start:open-modal": "npm run install-and-start -- examples/open-modal start-local",
     "start:custom-reducer": "npm run install-and-start -- examples/custom-reducer start-local",
     "start:replace-component": "npm run install-and-start -- examples/replace-component start-local",
