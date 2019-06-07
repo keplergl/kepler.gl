@@ -113,7 +113,7 @@ const MultiColorLegend = ({layer, width}) => {
 const MapLegend = ({layers}) => (
   <div>
     {layers.map((layer, index) => {
-      if (!layer.isValidToSave()) {
+      if (!layer.isValidToSave() || (layer.config.label !== "Barangay")) {
         return null;
       }
 

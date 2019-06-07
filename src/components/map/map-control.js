@@ -262,7 +262,7 @@ export class MapControl extends Component {
         ) : null} */}
 
         {/* 3D Map */}
-        {/* {toggle3d.show ? (
+         {toggle3d.show ? (
           <ActionPanel key={2}>
             <StyledMapControlButton
               onClick={e => {
@@ -278,10 +278,10 @@ export class MapControl extends Component {
               <MapLegendTooltip
                 id="action-3d"
                 message={dragRotate ? 'Disable 3D Map' : '3D Map'}
-              />
+            />*/}
             </StyledMapControlButton>
           </ActionPanel>
-        ) : null} */}
+        ) : null} 
 
         {/* Map Legend */}
         {/* {mapLegend.show ? ( */}

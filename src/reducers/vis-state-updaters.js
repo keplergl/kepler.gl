@@ -469,6 +469,9 @@ export const removeLayerUpdater = (state, {idx}) => {
   const layerToRemove = state.layers[idx];
   const newMaps = removeLayerFromSplitMaps(state, layerToRemove);
 
+  if (layerToRemove.isLayerHovered(clicked)) {
+    console.error('HI');
+  }
   return {
     ...state,
     layers: [...layers.slice(0, idx), ...layers.slice(idx + 1, layers.length)],
@@ -483,7 +486,9 @@ export const removeLayerUpdater = (state, {idx}) => {
     hoverInfo: layerToRemove.isLayerHovered(hoverInfo) ? undefined : hoverInfo,
     splitMaps: newMaps,
 
-    activeBarangay: layerToRemove.isLayerHovered(clicked) ? null : activeBarangay,
+    activeBarangay: layerToRemove.isLayerHovered(clicked)
+      ? null
+      : activeBarangay
   };
 };
 
@@ -605,33 +610,84 @@ export const layerHoverUpdater = (state, action) => ({
 });
 
 export const layerClickUpdater = (state, action) => {
+  // if(!action.info) {
+  //   return {
+  //     ...state,
+  //     clicked: action.info && action.info.picked ? action.info : null,
+  //     activeBarangay: null,
+  //   }
+  // }
+  // const layer = state.layers[action.info.layer.props.idx];
+  
+  // if(layer) {
+  //   const {config: {dataId}} = layer;  
+  //   const {allData, fields} = state.datasets[dataId];
+  //   const data = action.info && action.info.picked ? layer.getHoverData(action.info.object, allData) : null;
 
-  if(!action.info) {
+  //   return {
+  //     ...state,
+  //     clicked: action.info && action.info.picked ? action.info : null,
+  //     activeBarangay: data.length == 16 ? data : null,
+  //     activeAnalysisTab: DEFAULT_ACTIVE_ANALYSIS,
+  //   }
+  // }
+ 
+  // return {
+  //   ...state,
+  //   clicked: action.info && action.info.picked ? action.info : null,
+  // }
+  if (!action.info) {
+    let idx = 0;
+    if (state.layers[idx].config.isVisible) {
+      const isVisible = false;
+      // layerConfigChangeUpdater(state.layers[idx], {isVisible});
+      state.layers[idx].updateLayerConfig({isVisible});
+      // idx = 3;
+      // state.layers[idx].updateLayerConfig({isVisible : true});
+    }
     return {
       ...state,
       clicked: action.info && action.info.picked ? action.info : null,
-      activeBarangay: null,
-    }
+      activeBarangay: null
+    };
   }
   const layer = state.layers[action.info.layer.props.idx];
-  
-  if(layer) {
-    const {config: {dataId}} = layer;  
-    const {allData, fields} = state.datasets[dataId];
-    const data = action.info && action.info.picked ? layer.getHoverData(action.info.object, allData) : null;
+  if (layer) {
+    const {
+      config: {dataId}
+    } = layer;
+    let {allData, fields} = state.datasets[dataId];
+    const data =
+      action.info && action.info.picked
+        ? layer.getHoverData(action.info.object, allData)
+        : null;
+    console.error('ITS HERE');
+    console.error(data);
+    const idx = 2;
+    const value = [data[16], data[16]];
+    const prop = 'value';
+    let newState = setFilterUpdater(state, {idx, prop, value});
 
-    return {
-      ...state,
-      clicked: action.info && action.info.picked ? action.info : null,
-      activeBarangay: data.length == 16 ? data : null,
-      activeAnalysisTab: DEFAULT_ACTIVE_ANALYSIS,
+    let layerIdx = 0;
+    if (!newState.layers[layerIdx].config.isVisible) {
+      const isVisible = true;
+      
+      newState.layers[layerIdx].updateLayerConfig({isVisible});
+      // layerIdx = 3;
+      // newState.layers[layerIdx].updateLayerConfig({isVisible: false});
     }
+    return {
+      ...newState,
+      clicked: action.info && action.info.picked ? action.info : null,
+      activeBarangay: data.length == 17 ? data : null,
+      activeAnalysisTab: DEFAULT_ACTIVE_ANALYSIS
+    };
   }
- 
+
   return {
     ...state,
-    clicked: action.info && action.info.picked ? action.info : null,
-  }
+    clicked: action.info && action.info.picked ? action.info : null
+  };
 };
 
 export const mapClickUpdater = (state, action) => ({
@@ -1047,7 +1103,9 @@ export const processDataUpdater = (state, action) => {
       }
     },
     layerData: layerData
-      ? state.layerData.map((d, i) => (i === 3 ? {...state.layerData[3], data:layerData} : d))
+      ? state.layerData.map((d, i) =>
+          i === 4 ? {...state.layerData[4], data: layerData} : d
+        )
       : state.layerData,
     plexus: {
       ...state.plexus,
@@ -1061,23 +1119,22 @@ export const selectedIndicatorUpdater = (state, action) => {
   const {indicator} = action;
   const {fields, allData} = state.datasets.barangays;
   let field = fields.find(op => op.id === indicator);
-  console.error(field);
-  const oldLayer = state.layers[2];
+  //console.error(field);
+  // const idx = state.layers.findIndex(op => op.config.dataId === 'barangays');
+  const idx = 3;
+  const oldLayer = state.layers[idx];
   const config = {
     colorField: field
   };
-  const idx = 2;
+  
 
   const newLayer = oldLayer.updateLayerConfig(config);
   // console.error(newLayer);
   newLayer.updateLayerVisualChannel(state.datasets.barangays, 'color');
   const oldLayerData = state.layerData[idx];
-  const {layerData, layer} = calculateLayerData(
-    newLayer,
-    state,
-    oldLayerData,
-    {sameData: true}
-  );
+  const {layerData, layer} = calculateLayerData(newLayer, state, oldLayerData, {
+    sameData: true
+  });
   let newState = updateStateWithLayerAndData(state, {layerData, layer, idx});
   // const newState = updateStateWithLayerAndData(state, {layer: newLayer, idx});
 
@@ -1138,13 +1195,13 @@ export const selectedIndicatorUpdater = (state, action) => {
       ...newState.datasets,
       barangays: {
         ...newState.datasets.barangays,
-        ...filterData(allData, "barangays", newState.filters)
+        ...filterData(allData, 'barangays', newState.filters)
       }
     }
   };
 
-  newState = updateAllLayerDomainData(newState, "barangays", newFilter);
-  
+  newState = updateAllLayerDomainData(newState, 'barangays', newFilter);
+
   return {
     ...newState,
     // layers: [
@@ -1286,12 +1343,11 @@ export function updateAllLayerDomainData(state, dataId, newFilter) {
 
 /* PLEXUS-SPECIFIC UPDATERS */
 export const updateActiveAnalysisTabUpdater = (state, action) => {
-  console.log("**************" + action);
+  console.log('**************' + action);
   console.log(action);
   console.log(action.info);
   return {
     ...state,
     activeAnalysisTab: action.info,
   };
-  
 };

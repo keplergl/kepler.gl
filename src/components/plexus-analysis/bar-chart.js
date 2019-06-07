@@ -107,7 +107,7 @@ export class BarChart extends Component {
 
     console.log(title);
     console.log(scaledData);
-    console.error(dataLabels);
+    //console.error(dataLabels);
 
     return (
       <XYPlot

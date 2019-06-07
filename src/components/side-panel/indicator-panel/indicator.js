@@ -31,28 +31,55 @@ const Score = styled.div`
 height: 60px;*/
   /*line-height: 60px;*/
 `;
+const StyledScore = styled.div`
+  display:table-cell;
+  width: 25%;
+  font-style: bold;
+`;
 const Label = styled.div``;
+const StyledCheckboxContainer = styled.div`
+  display:table-cell;
+  width: 10%;
+  .selected {
+    background-color: #ffffff;
+  }
+`;
+const StyledCheckbox = styled.div`
+  height: 80%;
+  width: 80%;
+  border: 1px solid #ffffff;
+`;
+const StyledLabel = styled.div`
+display:table-cell;
+  width: 65%;
+`;
 
-const Style = styled.button`
+const StyledIndicator = styled.button`
   color: #ffffff;
   border-width: 0;
   cursor: pointer;
   outline: 0;
-  align-content: center;
-  justify-content: center;
+  // align-content: center;
+  // justify-content: center;
   display: block;
-  text-align: center;
-  margin: 2px;
-  min-width: 85px;
-  font-size: 0.8em;
+  text-align: left;
+  // margin: 2px;
+  width: 100%;
+  font-size: 1.2em;
   background-color: #29323c;
   padding: 10px 5px;
-  border-radius: 10%;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
   :hover {
-    color: #000000;
-    background-color: #ffffff;
+    // color: #000000;
+    // background-color: #ffffff;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.3), 0 6px 20px 0 rgba(0, 0, 0, 0.3);
   }
+`;
+
+const StyledIndicatorContent = styled.div`
+  height: 100%;
+  width: 100%;
+  display: table;
 `;
 
 const StyleMessage = styled.span`
@@ -60,30 +87,38 @@ const StyleMessage = styled.span`
   height: auto;
   display: inline-block;
 `;
-const StyledIndicator=styled.div`
-  .selected {
-    background-color: #000000;
-    color: #ffffff;
-  }
+const StyledIndicatorContainer=styled.div`
+  padding: 5px 0px;
+  // .selected {
+  //   background-color: #000000;
+  //   color: #ffffff;
+  // }
 `;
 function IndicatorFactory() {
   const Indicator = ({id, label, description, score, selected, onConfigChange}) => (
-    <StyledIndicator>
-      <Style
+    <StyledIndicatorContainer>
+      <StyledIndicator
         onClick={() => onConfigChange(id)}
         data-tip
         data-for={`${label}_indicator`}
         className={selected ? "selected" : ""}
       >
-        <Score>{score}%</Score>
-        <Label>{label}</Label>
-      </Style>
+        <StyledIndicatorContent>
+        <StyledCheckboxContainer>
+          <StyledCheckbox className={selected ? "selected" : ""}></StyledCheckbox>
+        </StyledCheckboxContainer>
+        <StyledLabel>{label}</StyledLabel>
+        <StyledScore>{score}%</StyledScore>
+        {/* <Score>{score}%</Score>
+        <Label>{label}</Label> */}
+        </StyledIndicatorContent>
+      </StyledIndicator>
       {description ? (
         <Tooltip id={`${label}_indicator`} place="right" effect="solid">
           <StyleMessage>{description}</StyleMessage>
         </Tooltip>
       ) : null}
-    </StyledIndicator>
+    </StyledIndicatorContainer>
   );
 
   return Indicator;
