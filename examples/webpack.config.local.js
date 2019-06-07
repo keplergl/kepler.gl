@@ -33,7 +33,6 @@ const webpack = require('webpack');
 const LIB_DIR = resolve(__dirname, '..');
 const SRC_DIR = resolve(LIB_DIR, './src');
 
-const ROOT_DIR = resolve(__dirname, '../..');
 const NODE_MODULES_DIR = resolve(__dirname, '../node_modules');
 
 const KeplerPackage = require('../package');
