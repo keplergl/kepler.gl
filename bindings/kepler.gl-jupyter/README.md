@@ -78,11 +78,11 @@ map_1.save_to_html(file_name='keplergl_map.html')
 ```
 <br></br>
 # Demo Notebooks
-- [Load kepler.gl](https://github.com/keplergl/kepler.gl/blob/master/packages/kepler.gl-jupyter/notebooks/Load%20kepler.gl.ipynb): Load kepler.gl widget, add data and config
-- [Geometry as String](https://github.com/keplergl/kepler.gl/blob/master/packages/kepler.gl-jupyter/notebooks/Geometry%20as%20String.ipynb): Embed Polygon geometries as `GeoJson` and `WKT` inside a `CSV`
-- [GeoJSON](https://github.com/keplergl/kepler.gl/blob/master/packages/kepler.gl-jupyter/notebooks/GeoJSON.ipynb): Load GeoJSON to kepler.gl
-- [DataFrame](https://github.com/keplergl/kepler.gl/blob/master/packages/kepler.gl-jupyter/notebooks/DataFrame.ipynb): Load DataFrame to kepler.gl
-- [GeoDataFrame](https://github.com/keplergl/kepler.gl/blob/master/packages/kepler.gl-jupyter/notebooks/GeoDataFrame.ipynb): Load GeoDataFrame to kepler.gl
+- [Load kepler.gl](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/Load%20kepler.gl.ipynb): Load kepler.gl widget, add data and config
+- [Geometry as String](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/Geometry%20as%20String.ipynb): Embed Polygon geometries as `GeoJson` and `WKT` inside a `CSV`
+- [GeoJSON](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/GeoJSON.ipynb): Load GeoJSON to kepler.gl
+- [DataFrame](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/DataFrame.ipynb): Load DataFrame to kepler.gl
+- [GeoDataFrame](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/GeoDataFrame.ipynb): Load GeoDataFrame to kepler.gl
 
 <br></br>
 # Usage
@@ -398,7 +398,6 @@ Python 2
 ```sh
     $ cd kepler.gl-jupyter
     $ cd js
-    # install js dependencies
     $ yarn --ignore-engines
 ```
 

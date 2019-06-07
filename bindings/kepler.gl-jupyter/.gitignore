@@ -5,7 +5,6 @@ build/
 *.py[cod]
 node_modules/
 
-
 # OS X
 .DS_Store
 .vs_code/
@@ -30,6 +29,7 @@ setup.orig2.py
 notebooks/*.html
 notebooks/*.sh
 notebooks/*.js
+notebooks/scratch_paper.ipynb
 
 */*.tgz
 package/
