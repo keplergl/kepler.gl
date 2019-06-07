@@ -60,11 +60,11 @@ const StyledCollapseButton = styled.div`
   border-radius: 1px;
   color: ${props => props.theme.sideBarCloseBtnColor};
   display: flex;
-  height: 20px;
+  height: ${props => props.theme.sideBarCloseBtnWidth}px;
   position: absolute;
-  right: -8px;
+  right: -${props => props.theme.sideBarCloseBtnGap}px;
   top: ${props => props.theme.sidePanel.margin.top}px;
-  width: 20px;
+  width: ${props => props.theme.sideBarCloseBtnWidth}px;
 
   :hover {
     cursor: pointer;

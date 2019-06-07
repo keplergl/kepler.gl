@@ -257,8 +257,12 @@ function KeplerGlFactory(
       };
 
       const isSplit = splitMaps && splitMaps.length > 1;
+      const isSidePanelOpen = Boolean(uiState && uiState.activeSidePanel);
       const containerW = mapState.width * (Number(isSplit) + 1);
+      const sidePanelWidth = uiState.readOnly || !isSidePanelOpen ? 0 : this.props.sidePanelWidth + DIMENSIONS.sidePanel.margin.left;
+      const isExporting = uiState.currentModal === EXPORT_IMAGE_ID;
 
+      const theme = this.availableThemeSelector(this.props);
       const mapContainers = !isSplit
         ? [
             <MapContainer
@@ -267,6 +271,7 @@ function KeplerGlFactory(
               {...mapFields}
               mapLayers={isSplit ? splitMaps[0].layers : null}
               getMapboxRef={getMapboxRef}
+              sidePanelWidth={sidePanelWidth}
             />
           ]
         : splitMaps.map((settings, index) => (
@@ -276,12 +281,11 @@ function KeplerGlFactory(
               {...mapFields}
               mapLayers={splitMaps[index].layers}
               getMapboxRef={getMapboxRef}
+              sidePanelWidth={sidePanelWidth * (1 - index)}
             />
           ));
 
-      const isExporting = uiState.currentModal === EXPORT_IMAGE_ID;
 
-      const theme = this.availableThemeSelector(this.props);
 
       return (
         <ThemeProvider theme={theme}>
@@ -315,11 +319,9 @@ function KeplerGlFactory(
             <BottomWidget
               filters={filters}
               datasets={datasets}
-              uiState={uiState}
+              // uiState={uiState}
               visStateActions={visStateActions}
-              sidePanelWidth={
-                uiState.readOnly ? 0 : this.props.sidePanelWidth + DIMENSIONS.sidePanel.margin.left
-              }
+              sidePanelWidth={sidePanelWidth}
               containerW={containerW}
             />
             <ModalWrapper

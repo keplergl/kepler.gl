@@ -54,9 +54,19 @@ const TRANSITION_DURATION = 0;
 
 const StyledMapControlContainer = styled.div`
   position: absolute;
-  left: 340px;
-  top: 60px;
+  left: ${props => props.left}px;
+  top: ${props => props.theme.sidePanel.margin.top +
+    props.theme.sideBarCloseBtnWidth +
+    props.theme.sideBarCloseBtnGap}px;
   transform: scale(0.8);
+
+  .mapboxgl-ctrl.mapboxgl-ctrl-group {
+    background: ${props => props.theme.sideBarCloseBtnBgd};
+
+    > button {
+      border-bottom: 1px solid ${props => props.theme.panelBorderColor};
+    }
+  }
 `
 
 MapContainerFactory.deps = [
@@ -83,6 +93,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
 
       // optional
       isExport: PropTypes.bool,
+      sidePanelWidth: PropTypes.number,
       clicked: PropTypes.object,
       hoverInfo: PropTypes.object,
       mapLayers: PropTypes.object,
@@ -406,7 +417,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     render() {
       const {
         mapState, mapStyle, mapStateActions, mapLayers, layers, MapComponent,
-        datasets, mapboxApiAccessToken, mapControls, toggleMapControl
+        datasets, mapboxApiAccessToken, mapControls, toggleMapControl, isExport
       } = this.props;
       const {onMapClick} = mapStateActions;
 
@@ -420,7 +431,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         preserveDrawingBuffer: true,
         mapboxApiAccessToken,
         onViewportChange: this._onViewportChange,
-        transformRequest
+        transformRequest,
+        transitionDuration: 1000
       };
 
       return (
@@ -429,7 +441,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             datasets={datasets}
             dragRotate={mapState.dragRotate}
             isSplit={mapState.isSplit}
-            isExport={this.props.isExport}
+            isExport={isExport}
             layers={layers}
             mapIndex={this.props.index}
             mapLayers={mapLayers}
@@ -452,12 +464,16 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           >
             {this._renderOverlay()}
             {this._renderMapboxOverlays()}
-            <StyledMapControlContainer>
-              <NavigationControl
-                onViewportChange={this._onViewportChange}
-                showZoom
-              />
-            </StyledMapControlContainer>
+            {!isExport &&
+              <StyledMapControlContainer
+                left={this.props.sidePanelWidth + 8}
+              >
+                <NavigationControl
+                  onViewportChange={this._onViewportChange}
+                  showZoom
+                />
+              </StyledMapControlContainer>
+            }
           </MapComponent>
           {mapStyle.topMapStyle && (
             <div style={MAP_STYLE.top}>
