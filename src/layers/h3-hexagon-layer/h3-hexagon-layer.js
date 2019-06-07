@@ -21,8 +21,8 @@
 import memoize from 'lodash.memoize';
 
 import Layer from '../base-layer';
-import {GeoJsonLayer} from 'deck.gl';
-import H3HexagonCellLayer from 'deckgl-layers/h3-hexagon-cell-layer/h3-hexagon-cell-layer';
+import {GeoJsonLayer, H3HexagonLayer} from 'deck.gl';
+import EnhancedColumnLayer from 'deckgl-layers/column-layer/enhanced-column-layer';
 import {getVertices, getCentroid, idToPolygonGeo} from './h3-utils';
 import H3HexagonLayerIcon from './h3-hexagon-layer-icon';
 import {CHANNEL_SCALES, HIGHLIGH_COLOR_3D} from 'constants/default-settings';
@@ -271,13 +271,13 @@ export default class HexagonIdLayer extends Layer {
     };
 
     return [
-      new H3HexagonCellLayer({
+      new H3HexagonLayer({
         ...layerInteraction,
         ...data,
         id: this.id,
         idx,
         pickable: true,
-        getPosition: x => x.centroid,
+        getHexagon: x => x.id,
 
         // coverage
         coverage: config.coverageField ? 1 : visConfig.coverage,
@@ -298,7 +298,13 @@ export default class HexagonIdLayer extends Layer {
 
         // render
         lightSettings: meta.lightSettings,
-        updateTriggers
+        updateTriggers,
+        _subLayerProps: {
+          'hexagon-cell': {
+            type: EnhancedColumnLayer,
+            getCoverage: data.getCoverage
+          }
+        }
       }),
       ...(this.isLayerHovered(objectHovered) && !config.sizeField
         ? [
