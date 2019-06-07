@@ -1,5 +1,8 @@
 *.egg-info/
+*.py[cod]
+*/__pycache__/
 .ipynb_checkpoints/
+
 dist/
 build/
 *.py[cod]
@@ -9,19 +12,13 @@ env/
 .DS_Store
 .vs_code/
 
-
-*.py[cod]
-*/__pycache__/
-*.ipynb_checkpoints/
-*.egg-info/
-
-*/yarn.lock
-*/yarn-error.log
-*/package-lock.json
+# */yarn.lock
+# */yarn-error.log
+# */package-lock.json
 
 # Compiled javascript
-*/static/
-js/dist/
+keplergl_jupyter/static/*
+# js/dist/
 
 setup.orig.py
 setup.orig2.py

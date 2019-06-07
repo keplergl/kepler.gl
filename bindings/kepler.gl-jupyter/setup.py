@@ -140,9 +140,9 @@ setup_args = {
     ],
     'install_requires': [
         'ipywidgets>=7.0.0,<8',
-        'traittypes>=0.2.1,<3',
+        'traittypes>=0.2.1',
         'geopandas>=0.5.0',
-        'pandas>=0.23.4',
+        'pandas>=0.23.0',
         'Shapely>=1.6.4.post2'
     ],
     'packages': find_packages(),
@@ -156,7 +156,7 @@ setup_args = {
 
     'author': 'Shan He',
     'author_email': 'shan@uber.com',
-    'url': 'https://github.com/uber/kepler.gl-jupyter',
+    'url': 'https://github.com/keplergl/kepler.gl/bindings/kepler.gl-jupyter',
     'keywords': [
         'ipython',
         'jupyter',
