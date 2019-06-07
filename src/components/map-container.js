@@ -21,9 +21,10 @@
 // libraries
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import MapboxGLMap from 'react-map-gl';
+import MapboxGLMap, {NavigationControl} from 'react-map-gl';
 import DeckGL from 'deck.gl';
 import WebMercatorViewport from 'viewport-mercator-project';
+import styled from 'styled-components';
 
 // components
 import MapPopoverFactory from 'components/map/map-popover';
@@ -51,6 +52,13 @@ const MAP_STYLE = {
 const MAPBOXGL_STYLE_UPDATE = 'style.load';
 const MAPBOXGL_RENDER = 'render';
 const TRANSITION_DURATION = 0;
+
+const StyledMapControlContainer = styled.div`
+  position: absolute;
+  left: 340px;
+  top: 60px;
+  transform: scale(0.8);
+`
 
 MapContainerFactory.deps = [
   MapPopoverFactory, MapControlFactory
@@ -437,6 +445,12 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           >
             {this._renderOverlay()}
             {this._renderMapboxOverlays()}
+            <StyledMapControlContainer>
+              <NavigationControl
+                onViewportChange={this._onViewportChange}
+                showZoom
+              />
+            </StyledMapControlContainer>
           </MapComponent>
           {mapStyle.topMapStyle && (
             <div style={MAP_STYLE.top}>
