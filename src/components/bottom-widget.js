@@ -25,7 +25,7 @@ import TimeWidgetFactory from './filters/time-widget';
 const propTypes = {
   filters: PropTypes.arrayOf(PropTypes.object),
   datasets: PropTypes.object,
-  uiState: PropTypes.object,
+  // uiState: PropTypes.object,
   visStateActions: PropTypes.object,
   sidePanelWidth: PropTypes.number,
   containerW: PropTypes.number
@@ -43,15 +43,16 @@ export default function BottomWidgetFactory(TimeWidget) {
       filters,
       visStateActions,
       containerW,
-      uiState,
+      // uiState,
       sidePanelWidth
     } = props;
-    const {activeSidePanel} = uiState;
-    const isOpen = Boolean(activeSidePanel);
+    // const {activeSidePanel} = uiState;
+    // const isOpen = Boolean(activeSidePanel);
 
     const enlargedFilterIdx = filters.findIndex(f => f.enlarged);
     const isAnyFilterAnimating = filters.some(f => f.isAnimating);
-    const enlargedFilterWidth = isOpen ? containerW - sidePanelWidth : containerW;
+    // const enlargedFilterWidth = isOpen ? containerW - sidePanelWidth : containerW;
+    const enlargedFilterWidth = containerW - sidePanelWidth;
 
     if (enlargedFilterIdx < 0) {
       return null;
