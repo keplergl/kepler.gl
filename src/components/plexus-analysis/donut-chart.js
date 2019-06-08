@@ -21,35 +21,16 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
+
 import {createSelector} from 'reselect';
 import {format} from 'd3-format';
-import moment from 'moment';
+
 import {
   SCALE_TYPES,
   SCALE_FUNC,
   ALL_FIELD_TYPES
 } from 'constants/default-settings';
-import {getTimeWidgetHintFormatter} from 'utils/filter-utils';
-
-const ROW_H = 10;
-const GAP = 4;
-const RECT_W = 20;
-
-const StyledLegend = styled.div`
-  ${props => props.theme.sidePanelScrollBar};
-
-  max-height: 150px;
-  overflow-y: auto;
-
-  svg {
-    text {
-      font-size: 9px;
-      fill: ${props => props.theme.textColor};
-    }
-  }
-`;
-
-const defaultFormat = d => d;
+import {RadialChart} from 'react-vis';
 
 const getTimeLabelFormat = domain => {
   const formatter = getTimeWidgetHintFormatter(domain);
@@ -70,21 +51,19 @@ const getQuantLabelFormat = (domain, fieldType) => {
   // quant scale can only be assigned to linear Fields: real, timestamp, integer
   return fieldType === ALL_FIELD_TYPES.timestamp
     ? getTimeLabelFormat(domain)
-    : !fieldType ? defaultFormat : getNumericLabelFormat(domain);
-};
-
-const getOrdinalLegends = scale => {
-  const domain = scale.domain();
-  return {
-    data: domain.map(scale),
-    labels: domain
-  };
+    : !fieldType
+    ? defaultFormat
+    : getNumericLabelFormat(domain);
 };
 
 const getQuantLegends = (scale, labelFormat) => {
   const labels = scale.range().map(d => {
     const invert = scale.invertExtent(d);
-    return `${labelFormat(invert[0])} to ${labelFormat(invert[1])}`;
+    return {
+        low: invert[0],
+        high: invert[1],
+    }
+    // return `${labelFormat(invert[0])} to ${labelFormat(invert[1])}`;
   });
 
   return {
@@ -93,15 +72,39 @@ const getQuantLegends = (scale, labelFormat) => {
   };
 };
 
-export default class ColorLegend extends Component {
-  static propTypes = {
-    width: PropTypes.number.isRequired,
-    scaleType: PropTypes.string,
-    domain: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
-    fieldType: PropTypes.string,
-    range: PropTypes.arrayOf(PropTypes.string),
-    labelFormat: PropTypes.func
-  };
+const DonutPanel = styled.div `
+  display: flex;
+  flex-direction: column;
+`;
+
+const ControlPanel = styled.div`
+  display: flex;
+  justify-content: space-between;
+
+  .control-panel-item {
+    margin-top: 12px 0 8px 0;
+  }
+
+  .control-panel-item:nth-child(2) {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  p {
+    color: ${props => props.theme.labelColor};
+    margin: 0;
+  }
+
+  .control-panel__title{
+    font-weight: 500;
+    color: ${props => props.theme.textColorHl};    
+  }
+`;
+
+export class DonutChart extends Component {
+  constructor(props) {
+    super(props);
+  }
 
   domainSelector = props => props.domain;
   rangeSelector = props => props.range;
@@ -121,6 +124,8 @@ export default class ColorLegend extends Component {
       const scale = scaleFunction()
         .domain(domain)
         .range(range);
+      console.log(scaleType);
+      // console.log('ordinal');
       if (scaleType === SCALE_TYPES.ordinal) {
         return getOrdinalLegends(scale);
       }
@@ -128,44 +133,72 @@ export default class ColorLegend extends Component {
       const formatLabel =
         labelFormat || getQuantLabelFormat(scale.domain(), fieldType);
 
+      // console.log('quant');
       return getQuantLegends(scale, formatLabel);
     }
   );
 
   render() {
-    const {width, scaleType, domain, range, displayLabel = true} = this.props;
-
-    if (!domain || !range || !scaleType) {
-      return null;
-    }
+    const {
+      data, 
+      activeIndicator,
+      title
+    } = this.props;
 
     const legends = this.legendsSelector(this.props);
-    const height = legends.data.length * (ROW_H + GAP);
-    console.log('legends');
-    console.log(legends);
+
+    let pData;
+    let aData = [0,0,0,0,0,0];
+    
+    console.log('donut-chart data ' + activeIndicator);
+    console.log(pData);
+    console.log(aData);
+    console.log(data);
+    console.log(activeIndicator);
+    
+    pData = legends.data.map((d, idx) => ({
+      angle: 0,
+      color: d,
+    })) ;
+
+    console.log('donut-chart data 2 ' + activeIndicator);
+    console.log(pData);
+    console.log(aData);
+
+    for(var i=0; i<data.length; i++) {
+        for(var j=0; j<legends.data.length; j++) {
+            if(data[i][activeIndicator] >= legends.labels[j].low && data[i][activeIndicator] <= legends.labels[j].high) {
+                pData[j].angle = pData[j].angle+1;
+                aData[j]++;
+                break;
+            }
+        }
+    }
+
+    console.log('donut-chart data 3 ' + activeIndicator);
+    console.log(pData);
+    console.log(aData);
+
     return (
-      <StyledLegend>
-        <svg width={width - 24} height={height}>
-          {legends.data.map((color, idx) => (
-            <LegendRow
-              key={idx}
-              label={legends.labels[idx]}
-              displayLabel={displayLabel}
-              color={color}
-              idx={idx}
-            />
-          ))}
-        </svg>
-      </StyledLegend>
+      <DonutPanel>
+        <ControlPanel>
+          <div className="control-panel-item">
+            <p className="control-panel__title">{title}</p>            
+          </div>
+        </ControlPanel>
+        <RadialChart 
+          animation
+          data={pData} 
+          innerRadius={50}
+          radius={70}
+          width={280} 
+          height={170} 
+          colorType="literal"
+          />
+      </DonutPanel>
     );
   }
 }
 
-const LegendRow = ({label = '', displayLabel, color, idx}) => (
-  <g transform={`translate(0, ${idx * (ROW_H + GAP)})`}>
-    <rect width={RECT_W} height={ROW_H} style={{fill: color}} />
-    <text x={RECT_W + 8} y={ROW_H - 1}>
-      {displayLabel ? label.toString() : ''}
-    </text>
-  </g>
-);
+const DonutChartFactory = () => DonutChart;
+export default DonutChartFactory;

@@ -195,7 +195,10 @@ export class MapControl extends Component {
     layerSelector
   );
 
+
   render() {
+
+    
     const items = this.initialDataSelector(this.props);
 
     if (!items) {

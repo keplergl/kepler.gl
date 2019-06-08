@@ -37,6 +37,7 @@ import {EXPORT_IMAGE_ID, DIMENSIONS,
 import SidePanelFactory from './side-panel';
 import MapContainerFactory from './map-container';
 import BottomWidgetFactory from './bottom-widget';
+import VisWidgetFactory from './vis-widget';
 import ModalContainerFactory from './modal-container';
 import PlotContainerFactory from './plot-container';
 import NotificationPanelFactory from './notification-panel';
@@ -78,6 +79,7 @@ const GlobalStyle = styled.div`
 
 KeplerGlFactory.deps = [
   BottomWidgetFactory,
+  VisWidgetFactory,
   MapContainerFactory,
   ModalContainerFactory,
   SidePanelFactory,
@@ -87,6 +89,7 @@ KeplerGlFactory.deps = [
 
 function KeplerGlFactory(
   BottomWidget,
+  VisWidget,
   MapContainer,
   ModalWrapper,
   SidePanel,
@@ -333,6 +336,20 @@ function KeplerGlFactory(
                 DIMENSIONS.sidePanel.width + DIMENSIONS.sidePanel.margin.left
               }
               containerW={containerW}
+              layers={mapFields.layers}
+              mapLayers={isSplit ? splitMaps[0].layers : null}
+            />
+            <VisWidget
+              filters={filters}
+              selected={plexus.selectedIndicator}
+              datasets={datasets}
+              visState={visState}
+              uiState={uiState}
+              visStateActions={visStateActions}
+              uiStateActions={uiStateActions}
+              // containerW={containerW}
+              // layers={mapFields.layers}
+              // mapLayers={isSplit ? splitMaps[0].layers : null}
             />
             <ModalWrapper
               mapStyle={mapStyle}

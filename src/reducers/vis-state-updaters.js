@@ -67,6 +67,8 @@ import {INDICATORS} from 'constants/default-settings';
 disableStackCapturing();
 
 const DEFAULT_ACTIVE_ANALYSIS = 'profile';
+const DEFAULT_ANALYSIS_RANKING_PAGE = 1;
+
 export const INITIAL_VIS_STATE = {
   // layers
   layers: [],
@@ -119,6 +121,8 @@ export const INITIAL_VIS_STATE = {
   },
   activeBarangay: null,
   activeAnalysisTab: DEFAULT_ACTIVE_ANALYSIS,
+  analysisRankingPage: DEFAULT_ANALYSIS_RANKING_PAGE,
+  analysisRankingReverse: false,
 };
 
 function updateStateWithLayerAndData(state, {layerData, layer, idx}) {
@@ -606,6 +610,9 @@ export const layerHoverUpdater = (state, action) => ({
 
 export const layerClickUpdater = (state, action) => {
 
+  console.log("LAYERCLICKUPDATER");
+  console.log(state);
+  console.log(action);
   if(!action.info) {
     return {
       ...state,
@@ -620,6 +627,9 @@ export const layerClickUpdater = (state, action) => {
     const {allData, fields} = state.datasets[dataId];
     const data = action.info && action.info.picked ? layer.getHoverData(action.info.object, allData) : null;
 
+    console.log("LYU: ");
+    console.log(data);
+    console.log(action.info);
     return {
       ...state,
       clicked: action.info && action.info.picked ? action.info : null,
@@ -1203,4 +1213,36 @@ export const updateActiveAnalysisTabUpdater = (state, action) => {
     activeAnalysisTab: action.info,
   };
   
+};
+
+// export const setActiveBarangay = (state, action) => {
+//   console.log("**************" + action);
+//   console.log(action);
+//   console.log(action.info);
+//   return {
+//     ...state,
+//     activeAnalysisTab: action.info,
+//   };
+  
+// };
+
+export const changeAnalysisRankPage = (state, action) => {
+  console.log("**************" + action);
+  console.log(action);
+  console.log(action.info);
+  return {
+    ...state,
+    analysisRankingPage: action.info,
+  };
+  
+};
+
+export const setAnalysisReverse = (state, action) => {
+  console.log("**************" + action);
+  console.log(action);
+  console.log(action.info);
+  return {
+    ...state,
+    analysisRankingReverse: action.info,
+  };
 };
