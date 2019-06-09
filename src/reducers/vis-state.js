@@ -60,6 +60,8 @@ import {
   /* PLEXUS-SPECIFIC */
   setActiveBarangay,
   updateActiveAnalysisTabUpdater,
+  changeAnalysisRankPage,
+  setAnalysisReverse
 } from './vis-state-updaters';
 
 const actionHandler = {
@@ -131,6 +133,8 @@ const actionHandler = {
   /* PLEXUS-SPECIFIC */
   [ActionTypes.SET_ACTIVE_BARANGAY]: setActiveBarangay,  
   [ActionTypes.TOGGLE_ACTIVE_ANALYSIS]: updateActiveAnalysisTabUpdater,
+  [ActionTypes.CHANGE_ANALYSIS_RANK_PAGE]: changeAnalysisRankPage,
+  [ActionTypes.SORT_ANALYSIS_REVERSE]: setAnalysisReverse,
 };
 
 // construct vis-state reducer
