@@ -47,8 +47,9 @@ import {theme} from 'styles/base';
 
 // Maybe we should think about exporting this or creating a variable
 // as part of the base.js theme
+//ff-clan-web-pro
 const GlobalStyle = styled.div`
-  font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
+  font-family: 'Helvetica Neue', Helvetica, sans-serif;
   font-weight: 400;
   font-size: 0.875em;
   line-height: 1.71429;

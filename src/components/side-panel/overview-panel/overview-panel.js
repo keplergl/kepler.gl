@@ -34,20 +34,17 @@ const StyledOverviewPanel = styled.div`
   padding-bottom: 6px;
 `;
 
-const StyledOverviewHeading = styled.div`
-  font-size: 1.5em;
-  margin-bottom: 2px;
-`;
-
-const StyledOverviewSection = styled.div`
-  font-size: 1em;
-  // padding-bottom: 6px;
+const StyledOverviewHeader = styled.div`
+  font-size:1.5em;
 `;
 
 const StyledOverviewContent = styled.div`
   display: block;
-  text-align: center;
   width: 100%;
+`;
+
+const StyledOverviewInfo = styled.div`
+    margin: 10px;
 `;
 
 OverviewPanelFactory.deps = [];
@@ -57,11 +54,14 @@ function OverviewPanelFactory() {
   return class InteractionPanel extends Component {
     render() {
       return (
-        <StyledOverviewPanel>
-            <StyledOverviewHeading>Overview</StyledOverviewHeading>
-            <StyledOverviewSection>Actual Population: 30, 234</StyledOverviewSection>
-            <StyledOverviewSection>Sample Population: 1, 303</StyledOverviewSection>
-            <StyledOverviewSection>Collected as of March 18, 2019</StyledOverviewSection>
+        <StyledOverviewPanel className="overview-panel">
+          <StyledOverviewHeader className="overview-panel__section">
+            Overview
+          </StyledOverviewHeader>
+          <StyledOverviewContent className="overview-panel__content">
+            <StyledOverviewInfo>Actual Population: 30210</StyledOverviewInfo> 
+            <StyledOverviewInfo>Sample Size: 1021</StyledOverviewInfo> 
+          </StyledOverviewContent>
         </StyledOverviewPanel>
       );
     }

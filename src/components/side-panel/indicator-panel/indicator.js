@@ -23,63 +23,51 @@ import styled from 'styled-components';
 import {Tooltip} from 'components/common/styled-components';
 
 const Score = styled.div`
+  font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
+  margin-right:10px;
   /*margin: auto;*/
   /*background-color: #1a1a1a;*/
-  font-size: 1.7em;
-  border-radius: 100%;
+  font-size: 1.3em;
   /*width: 60px;
-height: 60px;*/
+  height: 100px;
   /*line-height: 60px;*/
-`;
-const StyledScore = styled.div`
-  display:table-cell;
-  width: 25%;
-  font-style: bold;
-`;
-const Label = styled.div``;
-const StyledCheckboxContainer = styled.div`
-  display:table-cell;
-  width: 10%;
-  .selected {
-    background-color: #ffffff;
-  }
-`;
-const StyledCheckbox = styled.div`
-  height: 80%;
-  width: 80%;
-  border: 1px solid #ffffff;
-`;
-const StyledLabel = styled.div`
-display:table-cell;
-  width: 65%;
+  flex:20%;
+  text-align:center;
+  background-color:#23282E;
+  padding:5px;
 `;
 
-const StyledIndicator = styled.button`
+const Label = styled.div`
+  font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
+  font-size: 1.3em;
+  margin: 0 10px 0 10px;
+  flex:80%;
+  padding:5px;
+`;
+
+const Style = styled.button`
+  font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
   color: #ffffff;
   border-width: 0;
   cursor: pointer;
   outline: 0;
   // align-content: center;
   // justify-content: center;
-  display: block;
+  display: flex;
+  flex-direction:row;
   text-align: left;
-  // margin: 2px;
-  width: 100%;
-  font-size: 1.2em;
+  margin: 10px;
+  //min-width: 85px;
+  width:95%;
+  font-size: 0.8em;
   background-color: #29323c;
   padding: 10px 5px;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  //border-radius: 10%;
+  //box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
   :hover {
     // color: #000000;
-    // background-color: #ffffff;
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.3), 0 6px 20px 0 rgba(0, 0, 0, 0.3);
+    background-color: #3a4b5e;
   }
-`;
-
-const StyledIndicatorContent = styled.div`
-  height: 100%;
-  width: 100%;
-  display: table;
 `;
 
 const StyleMessage = styled.span`
@@ -87,38 +75,30 @@ const StyleMessage = styled.span`
   height: auto;
   display: inline-block;
 `;
-const StyledIndicatorContainer=styled.div`
-  padding: 5px 0px;
-  // .selected {
-  //   background-color: #000000;
-  //   color: #ffffff;
-  // }
+const StyledIndicator=styled.div`
+  .selected {
+    background-color: #476587;
+    color: #ffffff;
+  }
 `;
 function IndicatorFactory() {
   const Indicator = ({id, label, description, score, selected, onConfigChange}) => (
-    <StyledIndicatorContainer>
-      <StyledIndicator
+    <StyledIndicator>
+      <Style
         onClick={() => onConfigChange(id)}
         data-tip
         data-for={`${label}_indicator`}
         className={selected ? "selected" : ""}
       >
-        <StyledIndicatorContent>
-        <StyledCheckboxContainer>
-          <StyledCheckbox className={selected ? "selected" : ""}></StyledCheckbox>
-        </StyledCheckboxContainer>
-        <StyledLabel>{label}</StyledLabel>
-        <StyledScore>{score}%</StyledScore>
-        {/* <Score>{score}%</Score>
-        <Label>{label}</Label> */}
-        </StyledIndicatorContent>
-      </StyledIndicator>
+        <Label>{label}</Label>
+        <Score>{score}%</Score>
+      </Style>
       {description ? (
         <Tooltip id={`${label}_indicator`} place="right" effect="solid">
           <StyleMessage>{description}</StyleMessage>
         </Tooltip>
       ) : null}
-    </StyledIndicatorContainer>
+    </StyledIndicator>
   );
 
   return Indicator;

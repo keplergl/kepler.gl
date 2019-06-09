@@ -50,6 +50,7 @@ const ModalContentWrapper = styled.div`
 const CloseButton = styled.div`
   color: ${props => props.theme.titleColorLT};
   display: flex;
+  // display: none;
   justify-content: flex-end;
   z-index: 10005;
 
@@ -60,7 +61,8 @@ const CloseButton = styled.div`
 
 export const ModalTitle = styled.div`
   font-size: ${props => props.theme.modalTitleFontSize};
-  color: ${props => props.theme.modalTitleColor};
+  // color: ${props => props.theme.modalTitleColor};
+  color: #FEFEFE;
   margin-bottom: 10px;
   position: relative;
   z-index: 10003;
@@ -99,12 +101,7 @@ const defaultConfirmButton = {
   children: 'Confirm'
 };
 
-export const ModalFooter = ({
-  cancel,
-  confirm,
-  cancelButton,
-  confirmButton
-}) => {
+export const ModalFooter = ({cancel, confirm, cancelButton, confirmButton}) => {
   const cancelButtonProps = {...defaultCancelButton, ...cancelButton};
   const confirmButtonProps = {...defaultConfirmButton, ...confirmButton};
   return (
@@ -152,7 +149,7 @@ class ModalDialog extends Component {
         ariaHideApp={false}
         style={{
           overlay: {
-            backgroundColor: 'rgba(0, 0, 0, 1)',
+            backgroundColor: '#161616',
             zIndex: 10000,
             overflowY: 'auto',
             position: 'absolute',
@@ -185,7 +182,6 @@ class ModalDialog extends Component {
               />
             )}
           </div>
-
         </ModalContentWrapper>
       </Modal>
     );
@@ -201,7 +197,7 @@ const StyledModal = styled(ModalDialog)`
   transition: ${props => props.theme.transition};
 
   :focus {
-    outline: 0
+    outline: 0;
   }
 `;
 

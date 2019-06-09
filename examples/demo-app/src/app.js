@@ -59,9 +59,9 @@ const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
 
 const BannerHeight = 30;
 const BannerKey = 'kgHideBanner-iiba';
-
+// ff-clan-web-pro, 
 const GlobalStyle = styled.div`
-  font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
+  font-family: 'Helvetica Neue', Helvetica, sans-serif;
   font-weight: 400;
   font-size: 0.875em;
   line-height: 1.71429;

@@ -203,6 +203,7 @@ export class MapControl extends Component {
     }
 
     const {
+      datasets,
       dragRotate,
       isSplit,
       isExport,
@@ -221,7 +222,6 @@ export class MapControl extends Component {
       toggle3d = {},
       splitMap = {}
     } = mapControls;
-
     return (
       <StyledMapControl className="map-control">
         {/* Split Map */}
@@ -293,6 +293,7 @@ export class MapControl extends Component {
               onMapToggleLayer={onMapToggleLayer}
               isActive={mapLegend.active}
               toggleMenuPanel={() => onToggleMapControl('mapLegend')}
+              datasets={datasets}
             />
           </ActionPanel>
         {/* ) : null} */}
@@ -324,7 +325,7 @@ const MapControlPanel = ({children, header, onClick, scale = 1, isExport}) => (
   </StyledMapControlPanel>
 );
 
-const MapLegendPanel = ({items, isActive, scale, toggleMenuPanel, isExport}) =>
+const MapLegendPanel = ({items, isActive, scale, toggleMenuPanel, isExport, datasets}) =>
   !isActive ? (
     <StyledMapControlButton
       key={2}
@@ -348,6 +349,7 @@ const MapLegendPanel = ({items, isActive, scale, toggleMenuPanel, isExport}) =>
     >
       <MapLegend
         layers={items.filter(item => item.isVisible).map(item => item.layer)}
+        datasets={datasets}
       />
     </MapControlPanel>
   );

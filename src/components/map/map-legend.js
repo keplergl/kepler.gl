@@ -95,14 +95,18 @@ const SingleColorLegend = ({layer, width}) => (
   />
 );
 
-const MultiColorLegend = ({layer, width}) => {
+const MultiColorLegend = ({layer, dataset, width}) => {
   const {visConfig, colorField, colorScale, colorDomain} = layer.config;
-
+  // console.error(colorDomain);
+  // console.error(dataset.allData.map(x => x[colorField.tableFieldIndex - 1]));
+  // console.error("--");
+  // colorDomain = dataset.allData.map(x => x[colorField.tableFieldIndex - 1]);
   return (
     <ColorLegend
       scaleType={colorScale}
       displayLabel
       domain={colorDomain}
+      data={dataset}
       fieldType={(colorField && colorField.type) || 'real'}
       range={visConfig.colorRange.colors}
       width={width}
@@ -110,7 +114,7 @@ const MultiColorLegend = ({layer, width}) => {
   );
 };
 
-const MapLegend = ({layers}) => (
+const MapLegend = ({layers, datasets}) => (
   <div>
     {layers.map((layer, index) => {
       if (!layer.isValidToSave() || (layer.config.label !== "Barangay")) {
@@ -138,7 +142,7 @@ const MapLegend = ({layers}) => (
               ) : null}
               <div className="legend--layer_color-legend">
                 {enableColorBy ?
-                  <MultiColorLegend layer={layer} width={width}/> :
+                  <MultiColorLegend layer={layer} dataset={Object.values(datasets).find(data => data.id === layer.config.dataId)} width={width}/> :
                   <SingleColorLegend layer={layer} width={width}/>
                 }
               </div>

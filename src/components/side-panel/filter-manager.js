@@ -81,6 +81,7 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
           <SidePanelSection>
             {filters &&
               filters.map((filter, idx) => (
+                filter.id != "pairs_filter" ?
                 <FilterPanel
                   key={`${filter.id}-${idx}`}
                   idx={idx}
@@ -92,7 +93,7 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
                   enlargeFilter={() => this.props.enlargeFilter(idx)}
                   toggleAnimation={() => this.props.toggleAnimation(idx)}
                   setFilter={this.props.setFilter}
-                />
+                /> : null
               ))}
           </SidePanelSection>
           {/* <Button

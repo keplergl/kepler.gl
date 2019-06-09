@@ -233,10 +233,16 @@ export default function SidePanelFactory(
       };
 
       var cityName = '';
+      var regionName = '';
+      var str = '';
       if (activeCities && selectedCity) {
-        cityName = this.props.activeCities.find(
+        str = this.props.activeCities.find(
           op => op.id == this.props.selectedCity
         ).name;
+        
+        str = str.split(', ');
+        cityName = str[1];
+        regionName = str[0];
       }
 
       return (
@@ -261,6 +267,7 @@ export default function SidePanelFactory(
 
             <PanelHeading
               cityName={cityName}
+              regionName={regionName}
               onChangeCity={this._onChangeCity}
               />
             
