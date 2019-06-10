@@ -36,27 +36,57 @@ const StyledPanelHeading = styled.div.attrs({
 const StyledHeadingTitle = styled.button.attrs({
     className: 'side-side-panel__heading-title'
 })`
-  color: ${props => props.theme.titleTextColor};
-  font-size: 1.5em;
+background-color: #23282E;
   font-weight: 400;
-  display: block;
-  color: #ffffff;
+  font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
+  display: flex;
+  flex-direction:row;
+  color: #ededed;
   border-width: 0;
   cursor: pointer;
   outline: 0;
   text-align: left;
   margin-bottom: 5px;
-  background-color: #29323c;
+  //background-color: #29323c;
   padding: 20px 10px;
-  border-radius: 10px;
+  //border-radius: 10px;
   width: 95%;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  //box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
   overflow: hidden;
   :hover {
-    color: #000000;
-    background-color: #ffffff;
+    //color: #000000;
+    //background-color: #ffffff;
+    border: 1px solid #3ba7ef;
   }
 `;
+
+export const StyledCityTitle = styled.div`
+  font-size: 1.5em;
+`;
+
+export const StyledRegionTitle = styled.div`
+  font-size: 1.0em;
+  color:#a3a3a3;
+`;
+
+export const StyledTitleContainer = styled.div`
+  display:flex;
+  flex-direction:column;
+`;
+
+const ArrowSvg = () => (
+  <svg
+    className="side-panel-logo__logo"
+    width="30px"
+    height="30px"
+    viewBox="0 0 22 15"
+  >
+    <g transform="translate(11, -3) rotate(45.000000)">
+      <rect fill="#1FBAD6" x="2" y="5" width="10" height="10" />
+      <rect fill="#25282F" x="5" y="2" width="10" height="10" />
+    </g>
+  </svg>
+);
 
 // const StyledPanelHeaderTop = styled.div.attrs({
 //   className: 'side-panel__header__top'
@@ -251,6 +281,7 @@ function PanelHeadingFactory() {
     render() {
       const {
         cityName,
+        regionName,
         onChangeCity
         // appName,
         // version,
@@ -267,7 +298,11 @@ function PanelHeadingFactory() {
       return (
         <StyledPanelHeading className="side-panel__panel-heading">
             <StyledHeadingTitle onClick={onChangeCity} className="side-panel__heading__title">
-              {cityName}
+            <ArrowSvg/>
+              <StyledTitleContainer>
+                <StyledCityTitle>{cityName}</StyledCityTitle>
+                <StyledRegionTitle>{regionName}</StyledRegionTitle>
+              </StyledTitleContainer>
             </StyledHeadingTitle>
             {/* <Button onClick={this._onChangeCity} width="105px" secondary>
               Change City

@@ -614,51 +614,28 @@ export const layerHoverUpdater = (state, action) => ({
 });
 
 export const layerClickUpdater = (state, action) => {
-  console.log("LAYERCLICKUPDATER");
-  console.log(state);
-  console.log(action);
-  // if(!action.info) {
-  //   return {
-  //     ...state,
-  //     clicked: action.info && action.info.picked ? action.info : null,
-  //     activeBarangay: null,
-  //   }
-  // }
-  // const layer = state.layers[action.info.layer.props.idx];
-  
-  // if(layer) {
-  //   const {config: {dataId}} = layer;  
-  //   const {allData, fields} = state.datasets[dataId];
-  //   const data = action.info && action.info.picked ? layer.getHoverData(action.info.object, allData) : null;
-
-  //   return {
-  //     ...state,
-  //     clicked: action.info && action.info.picked ? action.info : null,
-  //     activeBarangay: data.length == 16 ? data : null,
-  //     activeAnalysisTab: DEFAULT_ACTIVE_ANALYSIS,
-  //   }
-  // }
- 
-  // return {
-  //   ...state,
-  //   clicked: action.info && action.info.picked ? action.info : null,
-  // }
-  if (!action.info) {
+  console.error(action.info);
+  if(!action.info) {
     let idx = 0;
     if (state.layers[idx].config.isVisible) {
       const isVisible = false;
-      // layerConfigChangeUpdater(state.layers[idx], {isVisible});
       state.layers[idx].updateLayerConfig({isVisible});
-      // idx = 3;
-      // state.layers[idx].updateLayerConfig({isVisible : true});
     }
     console.log("LYU: ");
     console.log(data);
     console.log(action.info);
     return {
       ...state,
-      clicked: action.info && action.info.picked ? action.info : null,
+      clicked: null,
       activeBarangay: null
+    };
+  }
+  if (action.info.layer.id != 'barangays_layer') {
+    
+    return {
+      ...state//,
+      // clicked: null,
+      // activeBarangay: null
     };
   }
   const layer = state.layers[action.info.layer.props.idx];
@@ -671,25 +648,23 @@ export const layerClickUpdater = (state, action) => {
       action.info && action.info.picked
         ? layer.getHoverData(action.info.object, allData)
         : null;
-    console.error('ITS HERE');
-    console.error(data);
     const idx = 2;
-    const value = [data[16], data[16]];
+    const value = [data[16]];
     const prop = 'value';
     let newState = setFilterUpdater(state, {idx, prop, value});
-
     let layerIdx = 0;
     if (!newState.layers[layerIdx].config.isVisible) {
       const isVisible = true;
       
       newState.layers[layerIdx].updateLayerConfig({isVisible});
-      // layerIdx = 3;
-      // newState.layers[layerIdx].updateLayerConfig({isVisible: false});
+    }
+    else {
+      console.error("WTF ARE U DOING HERE");
     }
     return {
       ...newState,
-      clicked: action.info && action.info.picked ? action.info : null,
-      activeBarangay: data.length == 17 ? data : null,
+      clicked: action.info,
+      activeBarangay: data,
       activeAnalysisTab: DEFAULT_ACTIVE_ANALYSIS
     };
   }

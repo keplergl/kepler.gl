@@ -65,6 +65,20 @@ const StyledFromGroup = styled.div`
   margin-top: 30px;
 `;
 
+const ArrowSvg = () => (
+  <svg
+    className="side-panel-logo__logo"
+    width="30px"
+    height="30px"
+    viewBox="0 0 22 15"
+  >
+    <g transform="translate(11, -3) rotate(45.000000)">
+      <rect fill="#1FBAD6" x="5" y="0" width="10" height="10" />
+      <rect fill="#25282F" x="2" y="3" width="10" height="10" />
+    </g>
+  </svg>
+);
+
 export const StyledInputLabel = styled.div`
   font-size: 11px;
   color: ${props => props.theme.textColorLT};
@@ -83,22 +97,40 @@ export const StyledBtn = styled.button`
 `;
 
 export const StyledCityButton = styled.button`
-  background-color: inherit;
+  font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
+  font-weight: 400;
+  font-size: 0.875em;
+  background-color: #25282F;
   // color: ${props => props.theme.primaryBtnActColor};
-  margin: 10px;
-  padding: 10px;
+  color: #bababa;
+  margin: 20px;
+  padding: 20px;
   text-align: left;
-  width: 90%;
+  width: 70%;
   height: 80px;
-  display: block;
-  // display: flex;
-  // align-items: flex-start;
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  border:none;
+  border-left: 7px solid #D0CFCE;
+  // box-shadow: 0px 6px 8px 0px rgba(0,0,0,0.2);
   // box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-  border-radius:10px;
+  border-radius:0 5px 5px 0;
   cursor: pointer;
   :hover {
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    //box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    border: 1px solid #3ba7ef;
   }
+  `;
+
+export const StyledCityText = styled.div`
+  display: block;
+  flex: 90%;
+`;
+
+export const StyledCityArrow = styled.div`
+  flex: 10%;
+  align-items: right;
 `;
 
 export const StyledCityName = styled.div`
@@ -159,16 +191,18 @@ class SelectCity extends Component {
     this.props.onSelectCity({dataUrl});
   };
 
-  onSelect = (e) => {
+  onSelect = e => {
+    console.log(e);
+    console.log('HERE');
     this.props.onChangeCity(e);
-    const {selectedCity} = this.props;
-    if (!selectedCity) {
-      return;
-    }
+    // const {selectedCity} = this.props;
+    // if (!selectedCity) {
+    //   return;
+    // }
     // var dataUrl = 'http://127.0.0.1:8000/barangays/'+selectedCity+'/geo.json';
-    var dataUrl =
-      'http://127.0.0.1:8000/config/' + selectedCity + '/config.json';
+    var dataUrl = 'http://127.0.0.1:8000/config/' + e + '/config.json';
     this.props.onSelectCity({dataUrl});
+    console.log('HEKE');
   };
 
   render() {
@@ -181,8 +215,13 @@ class SelectCity extends Component {
           <StyledFromGroup>
             {activeCities.map(city => (
               <StyledCityButton onClick={() => this.onSelect(city.id)}>
-              <StyledCityName>{city.name}</StyledCityName>
-              <StyledCityDetails>as of March 18, 2019</StyledCityDetails>
+                <StyledCityText>
+                  <StyledCityName>{city.name}</StyledCityName>
+                  <StyledCityDetails>as of March 18, 2019</StyledCityDetails>
+                </StyledCityText>
+                <StyledCityArrow>
+                  <ArrowSvg />
+                </StyledCityArrow>
               </StyledCityButton>
             ))}
             {/* <ItemSelector

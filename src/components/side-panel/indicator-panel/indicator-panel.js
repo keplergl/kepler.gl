@@ -48,7 +48,9 @@ const StyledIndicatorSection = styled.div`
 
 const StyledIndicatorContent = styled.div`
   display: block;
-  text-align: center;
+  // flex-direction: row;
+  // text-align: center;
+  // flex-wrap: wrap;
   width: 100%;
 `;
 

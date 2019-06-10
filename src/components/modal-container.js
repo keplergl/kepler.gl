@@ -54,7 +54,7 @@ const DataTableModalStyle = css`
   width: 90%;
   top: 80px;
   padding: 32px 0 0 0;
-  max-width: unset;
+  // max-width: unset;
 `;
 
 const DeleteDatasetModalStyled = css`
@@ -63,7 +63,13 @@ const DeleteDatasetModalStyled = css`
 `;
 
 const LoadDataModalStyle = css`
-  top: 60px;
+  top: 30px;
+  // width: 1000px;
+  //max-height: 500px;
+  margin: 10px;
+  overflow: visible;
+  color: #ffffff;
+  background-color: #161616;
 `;
 
 ModalContainerFactory.deps = [
@@ -139,7 +145,9 @@ export default function ModalContainerFactory(
       const {selectedDataset, dataType, filtered} = uiState.exportData;
       // get the selected data
       const filename = 'kepler-gl';
-      const selectedDatasets = datasets[selectedDataset] ? [datasets[selectedDataset]] : Object.values(datasets);
+      const selectedDatasets = datasets[selectedDataset]
+        ? [datasets[selectedDataset]]
+        : Object.values(datasets);
       if (!selectedDatasets.length) {
         // error: selected dataset not found.
         this._closeModal();
@@ -160,7 +168,6 @@ export default function ModalContainerFactory(
           default:
             break;
         }
-
       });
 
       this._closeModal();
@@ -170,7 +177,8 @@ export default function ModalContainerFactory(
       const {data} = this.props.uiState.exportData;
 
       // we pass all props because we avoid to create new variables
-      const dump = data ? KeplerGlSchema.save(this.props)
+      const dump = data
+        ? KeplerGlSchema.save(this.props)
         : KeplerGlSchema.getConfigToSave(this.props);
 
       this._downloadFile(
@@ -185,11 +193,11 @@ export default function ModalContainerFactory(
     _onSelectCity = () => {
       // TODO
       this._closeModal();
-    }
+    };
 
     /* eslint-disable complexity */
     render() {
-      console.log("MODAL CONTAINER");
+      console.log('MODAL CONTAINER');
       console.log(this.props);
       const {
         containerW,
@@ -207,11 +215,10 @@ export default function ModalContainerFactory(
       let template = null;
       let modalProps = {};
 
-      if (currentModal && currentModal.id &&
-        currentModal.template) {
+      if (currentModal && currentModal.id && currentModal.template) {
         // if currentMdoal template is already provided
         // TODO: need to check whether template is valid
-        template = (<currentModal.template/>);
+        template = <currentModal.template />;
         modalProps = currentModal.modalProps;
       } else {
         switch (currentModal) {
@@ -229,7 +236,11 @@ export default function ModalContainerFactory(
             break;
           case DELETE_DATA_ID:
             // validate options
-            if (datasetKeyToRemove && datasets && datasets[datasetKeyToRemove]) {
+            if (
+              datasetKeyToRemove &&
+              datasets &&
+              datasets[datasetKeyToRemove]
+            ) {
               template = (
                 <DeleteDatasetModal
                   dataset={datasets[datasetKeyToRemove]}
@@ -259,7 +270,7 @@ export default function ModalContainerFactory(
               />
             );
             modalProps = {
-              title: 'What city do you want to explore?',
+              title: 'Hi! What city do you want to explore?',
               cssStyle: LoadDataModalStyle,
               footer: false,
               onConfirm: this._closeModal
@@ -267,7 +278,13 @@ export default function ModalContainerFactory(
             break;
 
           case EXPORT_IMAGE_ID:
-            const { ratio, legend, resolution, exporting, imageDataUri } = uiState.exportImage;
+            const {
+              ratio,
+              legend,
+              resolution,
+              exporting,
+              imageDataUri
+            } = uiState.exportImage;
             template = (
               <ExportImageModal
                 width={containerW}
@@ -297,15 +314,20 @@ export default function ModalContainerFactory(
             break;
 
           case EXPORT_DATA_ID:
-
             template = (
               <ExportDataModal
                 {...uiState.exportData}
                 datasets={datasets}
                 onClose={this._closeModal}
-                onChangeExportDataType={this.props.uiStateActions.setExportDataType}
-                onChangeExportSelectedDataset={this.props.uiStateActions.setExportSelectedDataset}
-                onChangeExportFiltered={this.props.uiStateActions.setExportFiltered}
+                onChangeExportDataType={
+                  this.props.uiStateActions.setExportDataType
+                }
+                onChangeExportSelectedDataset={
+                  this.props.uiStateActions.setExportSelectedDataset
+                }
+                onChangeExportFiltered={
+                  this.props.uiStateActions.setExportFiltered
+                }
               />
             );
             modalProps = {
@@ -322,9 +344,12 @@ export default function ModalContainerFactory(
             break;
 
           case EXPORT_CONFIG_ID:
-            const keplerGlConfig = KeplerGlSchema.getConfigToSave(
-              { mapStyle, visState, mapState, uiState }
-            );
+            const keplerGlConfig = KeplerGlSchema.getConfigToSave({
+              mapStyle,
+              visState,
+              mapState,
+              uiState
+            });
             template = (
               <ExportConfigModal
                 config={keplerGlConfig}
@@ -353,7 +378,9 @@ export default function ModalContainerFactory(
                 mapState={this.props.mapState}
                 inputStyle={mapStyle.inputStyle}
                 inputMapStyle={this.props.mapStyleActions.inputMapStyle}
-                loadCustomMapStyle={this.props.mapStyleActions.loadCustomMapStyle}
+                loadCustomMapStyle={
+                  this.props.mapStyleActions.loadCustomMapStyle
+                }
               />
             );
             modalProps = {
