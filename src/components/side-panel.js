@@ -218,7 +218,8 @@ export default function SidePanelFactory(
 
       const indicatorManagerActions = {
         onConfigChange: visStateActions.setSelectedIndicator,
-        onChangeCity: this._onChangeCity
+        onChangeCity: this._onChangeCity,
+        setFilter: visStateActions.setFilter,
       };
 
       const overviewManagerActions = {
@@ -241,8 +242,8 @@ export default function SidePanelFactory(
         ).name;
         
         str = str.split(', ');
-        cityName = str[1];
-        regionName = str[0];
+        cityName = str[0];
+        regionName = str[1];
       }
 
       return (
@@ -292,6 +293,7 @@ export default function SidePanelFactory(
                       {...indicatorManagerActions}
                       scores={scores}
                       selectedIndicator={selectedIndicator}
+                      filters={filters}
                     />
                   )}
                   {activeSidePanel === 'qualities' && (

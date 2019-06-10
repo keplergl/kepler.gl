@@ -76,6 +76,8 @@ function IndicatorManagerFactory(ChangeCityButton, IndicatorPanel) {
             scores={this.props.scores}
             selectedIndicator={this.props.selectedIndicator}
             onConfigChange={this.props.onConfigChange}
+            filters={this.props.filters}
+            setFilter={this.props.setFilter}
           />
         </div>
       );

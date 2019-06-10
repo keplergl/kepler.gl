@@ -211,7 +211,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       } = this.props;
 
       // if clicked something, ignore hover behavior
-      const objectInfo = clicked || hoverInfo;
+      // const objectInfo = clicked || hoverInfo;
+      const objectInfo = hoverInfo;
       if (
         !interactionConfig.tooltip.enabled ||
         !objectInfo ||
@@ -253,7 +254,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         isVisible: true,
         x,
         y,
-        freezed: Boolean(clicked),
+        // freezed: Boolean(clicked),
+        freezed: false,
         onClose: this._onCloseMapPopover,
         mapState
       };
@@ -297,6 +299,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         mousePosition
       };
 
+      // const objectHovered = hoverInfo;
       const objectHovered = clicked || hoverInfo;
       const layerCallbacks = {
         onSetLayerDomain: val => this._onLayerSetDomain(idx, val)

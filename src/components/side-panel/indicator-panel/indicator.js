@@ -21,6 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import {Tooltip} from 'components/common/styled-components';
+import { RangeFilter } from '../../filters';
 
 const Score = styled.div`
   font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
@@ -82,7 +83,7 @@ const StyledIndicator=styled.div`
   }
 `;
 function IndicatorFactory() {
-  const Indicator = ({id, label, description, score, selected, onConfigChange}) => (
+  const Indicator = ({id, label, description, score, selected, onConfigChange, filter, setFilter}) => (
     <StyledIndicator>
       <Style
         onClick={() => onConfigChange(id)}
@@ -98,6 +99,10 @@ function IndicatorFactory() {
           <StyleMessage>{description}</StyleMessage>
         </Tooltip>
       ) : null}
+      {selected?<RangeFilter
+                filter={filter}
+                setFilter={setFilter}
+                />:null}
     </StyledIndicator>
   );
 
