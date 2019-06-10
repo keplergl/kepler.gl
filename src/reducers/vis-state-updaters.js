@@ -622,7 +622,7 @@ export const layerClickUpdater = (state, action) => {
       state.layers[idx].updateLayerConfig({isVisible});
     }
     console.log("LYU: ");
-    console.log(data);
+    // console.log(data);
     console.log(action.info);
     return {
       ...state,
@@ -1345,7 +1345,6 @@ export const changeAnalysisRankPage = (state, action) => {
     ...state,
     analysisRankingPage: action.info,
   };
-
 };
 
 export const setAnalysisReverse = (state, action) => {

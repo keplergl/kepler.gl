@@ -37,7 +37,7 @@ import {
 } from 'components/common/icons';
 
 const StyledMapControl = styled.div`
-  right: 0;
+  right: 320px;
   width: ${props => props.theme.mapControl.width}px;
   padding: ${props => props.theme.mapControl.padding}px;
   z-index: 1;
@@ -195,7 +195,10 @@ export class MapControl extends Component {
     layerSelector
   );
 
+
   render() {
+
+    
     const items = this.initialDataSelector(this.props);
 
     if (!items) {

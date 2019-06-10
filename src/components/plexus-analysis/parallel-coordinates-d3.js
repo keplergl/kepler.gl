@@ -21,6 +21,9 @@
 import React, {Component} from 'react';
 import styled from 'styled-components';
 
+import {IconRoundSmall} from 'components/common/styled-components';
+import {Close} from 'components/common/icons';
+
 import {format} from 'd3-format';
 import {scaleLinear} from 'd3-scale';
 import {divgrid} from './divgrid';
@@ -33,8 +36,10 @@ import * as d3 from 'd3';
 // import './../bottom-widget.scss';
 const ControlPanel = styled.div`
   display: flex;
+  background-color: ${props => props.theme.sidePanelHeaderBg};
   justify-content: space-between;
-  width: 1106px;
+  width: 100%;
+  padding: 6px 12px;
 
   .control-panel-item {
     margin-top: 12px 0 8px 0;
@@ -50,9 +55,9 @@ const ControlPanel = styled.div`
     margin: 0;
   }
 
-  .control-panel__title{
+  .control-panel__title {
     font-weight: 500;
-    color: ${props => props.theme.textColorHl};    
+    color: ${props => props.theme.textColorHl};
   }
 `;
 const ControlBtn = styled.button`
@@ -70,11 +75,6 @@ export class ParallelCoordinatesD3 extends Component {
     this.state = {
       visible: true,
       data: data,
-      colorScale: d3
-        .scaleLinear()
-        .domain([0, 100])
-        .range(['rgba(255,255,255,0.4)', 'rgb(255,255,255,1)'])
-        .interpolate(d3.interpolateLab),
       pc: null,
       table: null
     };
@@ -132,13 +132,15 @@ export class ParallelCoordinatesD3 extends Component {
         };
       } else {
         dimensions[d.name] = {
-              yscale: d3.scaleLinear()
-              .domain(d3.extent(this.state.data, function(a) {
-                      return +a[d.name];
-                    })
-              )
-              .range([220, 0]),
-              ticks: 6,
+          yscale: d3
+            .scaleLinear()
+            .domain(
+              d3.extent(this.state.data, function(a) {
+                return +a[d.name];
+              })
+            )
+            .range([220, 0]),
+          ticks: 6
         };
       }
     });
@@ -148,18 +150,18 @@ export class ParallelCoordinatesD3 extends Component {
 
     // linear color scale
     var colorScale = d3
-    .scaleLinear()
-    .domain([0, 100])
-    .range(['rgba(255,255,255,0.1)', 'rgb(255,255,255,1)'])
-    .interpolate(d3.interpolateLab);
-
-
+      .scaleLinear()
+      .domain([0, 100])
+      .range(['rgba(255,255,255,0.1)', 'rgb(255,255,255,1)'])
+      .interpolate(d3.interpolateLab);
 
     let chart = ParCoords()('#example')
+      .alpha(0.4)
+      .mode('queue')
       .data(this.state.data)
-      .color(d => {
-        return colorScale(d['spatial']);
-      })
+      // .color(d => {
+      //   return colorScale(d['spatial']);
+      // })
       .dimensions(dimensions)
       .width(1106)
       .hideAxis(['name'])
@@ -171,9 +173,9 @@ export class ParallelCoordinatesD3 extends Component {
       })
       // .composite("darken")
       // .color(function(d) { return state.colorScale(d[selected]); })
-      .render()
+      // .render()
       .createAxes()
-      .brushMode('1D-axes-multi') // enable brushing
+      .brushMode('1D-axes') // enable brushing
       .interactive(); // command line mode;
 
     // create data table, row hover highlighting
@@ -183,18 +185,9 @@ export class ParallelCoordinatesD3 extends Component {
       .datum(this.state.data)
       .call(grid);
 
-    var rows = d3.select('#grid').selectAll('.row');
-    rows.on('mouseover', function(d) {
-      chart.highlight([d]);
-    });
-    rows.on('mouseout', function(d) {
-      chart.unhighlight();
-    });
-
-    // update data table on brush event
+    // // update data table on brush event
     chart.on('brush', function(d) {
       d3.select('#grid')
-        // .datum(d.slice(0, 10))
         .datum(d)
         .call(grid)
         .selectAll('.row')
@@ -204,6 +197,14 @@ export class ParallelCoordinatesD3 extends Component {
           },
           mouseout: chart.unhighlight
         });
+      
+      var rows = d3.select('#grid').selectAll('.row');
+      rows.on('mouseover', function(d) {
+        chart.highlight([d]);
+      });
+      rows.on('mouseout', function(d) {
+        chart.unhighlight();
+      });
     });
 
     this.setState({
@@ -220,53 +221,40 @@ export class ParallelCoordinatesD3 extends Component {
       var colorScale = d3
         .scaleLinear()
         .domain([0, 100])
-        // .range(['red', 'blue'])
-        // .range(['rgba(255,255,255,0.1)', 'rgb(255,255,255,1)'])
-        .range(['black', 'white'])
+        // .range(['red', 'yellow'])
+        .range(["#bd0026", "#ffffb2"]) // TODO: get colors from legend
+        // .range(["#bd0026", "#f03b20","#fd8d3c","#feb24c","#fed976","#ffffb2"]) // TODO: get colors from legend
+        // .range(['rgba(255,255,255,0.1)', 'rgb(255,255,255,1)']) "#f03b20""#fd8d3c""#feb24c""#fed976""#ffffb2"
+        // .range(['black', 'white'])
         .interpolate(d3.interpolateLab);
 
       console.log('refresh pc ' + selected);
       console.log(this.state);
       // let chart = this.state.pc;
 
-      this.state.pc
+      // update color on indicator change
+      let chart = this.state.pc;
+      chart
         .data(data)
         .color(d => {
           return colorScale(d[selected]);
         })
+        .alpha(0.4)
+        .shadows()
         .render();
+
+       
+    
+      // add mouse events on grid rows
+      // var rows = d3.select('#grid').selectAll('.row');
+      // rows.on('mouseover', function(d) {
+      //   chart.highlight([d]);
+      // });
+      // rows.on('mouseout', function(d) {
+      //   chart.unhighlight();
+      // });
     }
   }
-
-  // updateTable(data, selected) {
-  //   // create data table, row hover highlighting
-  //   // var grid = this.state.
-  //   d3.select('#grid')
-  //     .datum(this.state.data.slice(0, 10))
-  //     .call(grid);
-
-  //   var rows = d3.select('#grid').selectAll('.row');
-  //   rows.on('mouseover', function(d) {
-  //     chart.highlight([d]);
-  //   });
-  //   rows.on('mouseout', function(d) {
-  //     chart.unhighlight();
-  //   });
-
-  //   // update data table on brush event
-  //   chart.on('brush', function(d) {
-  //     d3.select('#grid')
-  //       .datum(d.slice(0, 10))
-  //       .call(grid)
-  //       .selectAll('.row')
-  //       .on({
-  //         mouseover: function(d) {
-  //           chart.highlight([d]);
-  //         },
-  //         mouseout: chart.unhighlight
-  //       });
-  //   });
-  // }
 
   render() {
     let {data, selected} = this.props;
@@ -288,19 +276,34 @@ export class ParallelCoordinatesD3 extends Component {
         style={{
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'flex-start'
+          justifyContent: 'flex-start',
+          alignItems: 'center',
+          width: '100%',
         }}
       >
-      {/* TODO move to parent */}
+        {/* TODO move to parent */}
         <ControlPanel>
           <div className="control-panel-item">
-            <p className="control-panel__title">Parallel Coordinates</p>            
+            <p className="control-panel__title">Parallel Coordinates</p>
           </div>
           <div className="control-panel-item">
-            <ControlBtn onClick={ ()=> {console.log('close');this.setState({visible: !this.state.visible});}}>
+            <IconRoundSmall onClick={() => {
+                console.log('close');
+                this.setState({visible: !this.state.visible});
+              }} >
+              <Close height="12px" onClick={() => {
+                console.log('close');
+                this.setState({visible: !this.state.visible});
+              }} />
+            </IconRoundSmall>
+            {/* <ControlBtn
+              onClick={() => {
+                console.log('close');
+                this.setState({visible: !this.state.visible});
+              }}
+            >
               {this.state.visible ? 'Hide' : 'Show'}
-            </ControlBtn>     
+            </ControlBtn> */}
           </div>
         </ControlPanel>
         {/* <div style={{width: '1106px', display: 'flex', justifyContent: 'space-between'}}>  
@@ -313,9 +316,17 @@ export class ParallelCoordinatesD3 extends Component {
         <div
           id="example"
           className="parcoords ex"
-          style={{width: '1106px', height: '280px', display: this.state.visible? 'block':'none'}}
+          style={{
+            width: '1106px',
+            height: '280px',
+            display: this.state.visible ? 'block' : 'none'
+          }}
         />
-        <div id="grid" className="parcoords ex" style={{display: this.state.visible? 'block':'none'}}/>
+        <div
+          id="grid"
+          className="parcoords ex"
+          style={{display: this.state.visible ? 'block' : 'none'}}
+        />
       </div>
       // <div id="chart">
       //   <canvas id="background" />

@@ -61,7 +61,7 @@ VisWidgetFactory.deps = [
 
 const WidgetContainer = styled.div`
   position: absolute;
-  padding-top: ${props => props.theme.sidePanel.margin.top}px;
+  // padding-top: ${props => props.theme.sidePanel.margin.top}px;
   padding-right: ${props => props.theme.sidePanel.margin.right}px;
   padding-bottom: ${props => props.theme.sidePanel.margin.bottom}px;
   padding-left: ${props => props.theme.sidePanel.margin.left}px;
@@ -76,7 +76,7 @@ const WidgetContainer = styled.div`
 
   .bottom-widget--inner {
     background-color: ${props => props.theme.sidePanelBg};
-    padding: 10px ${innerPdSide}px;
+    // padding: 10px ${innerPdSide}px;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -167,7 +167,7 @@ export default function VisWidgetFactory(
     }
 
     return (
-      <WidgetContainer width={1000}>
+      <WidgetContainer width={'100vw'}>
         <div className="bottom-widget--inner">
           {bgyIncl ? <ParallelCoordinatesD3 data={bgyIncl} selected={selected} /> : null}
           {/* {bgyIncl ? <ParallelCoordinatesK data={bgyIncl} /> : null} */}

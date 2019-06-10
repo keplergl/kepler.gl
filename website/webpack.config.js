@@ -109,47 +109,47 @@ const COMMON_CONFIG = {
         loader: 'file-loader?name=[name].[ext]'
       },
       // Add the above block to below
-      {
-        test: /\.scss$/, // Change .css to .scss
-        use: [
-          require.resolve('style-loader'),
-          {
-            loader: require.resolve('css-loader'),
-            options: {
-              importLoaders: 1,
-              modules: true, // Add this option 
-              localIdentName: '[name]__[local]__[hash:base64:5]' // Add this option
-            },
-          },
-          {
-            loader: require.resolve('postcss-loader'),
-            options: {
-              // Necessary for external CSS imports to work
-              // https://github.com/facebookincubator/create-react-app/issues/2677
-              ident: 'postcss',
-              plugins: () => [
-                require('postcss-flexbugs-fixes'),
-                autoprefixer({
-                  browsers: [
-                    '>1%',
-                    'last 4 versions',
-                    'Firefox ESR',
-                    'not ie < 9', // React doesn't support IE8 anyway
-                  ],
-                  flexbox: 'no-2009',
-                }),
-              ],
-            },
-          },
-          // Add 'sass-loader' with includePaths
-          { 
-            loader: require.resolve('sass-loader'),
-            options: {
-              includePaths: [path.styles]
-            }
-          }
-        ],
-      },
+      // {
+      //   test: /\.scss$/, // Change .css to .scss
+      //   use: [
+      //     require.resolve('style-loader'),
+      //     {
+      //       loader: require.resolve('css-loader'),
+      //       options: {
+      //         importLoaders: 1,
+      //         modules: true, // Add this option 
+      //         localIdentName: '[name]__[local]__[hash:base64:5]' // Add this option
+      //       },
+      //     },
+      //     {
+      //       loader: require.resolve('postcss-loader'),
+      //       options: {
+      //         // Necessary for external CSS imports to work
+      //         // https://github.com/facebookincubator/create-react-app/issues/2677
+      //         ident: 'postcss',
+      //         plugins: () => [
+      //           require('postcss-flexbugs-fixes'),
+      //           autoprefixer({
+      //             browsers: [
+      //               '>1%',
+      //               'last 4 versions',
+      //               'Firefox ESR',
+      //               'not ie < 9', // React doesn't support IE8 anyway
+      //             ],
+      //             flexbox: 'no-2009',
+      //           }),
+      //         ],
+      //       },
+      //     },
+      //     // Add 'sass-loader' with includePaths
+      //     { 
+      //       loader: require.resolve('sass-loader'),
+      //       options: {
+      //         includePaths: [path.styles]
+      //       }
+      //     }
+      //   ],
+      // },
       {
         test: /\.css$/,
         use: [
@@ -162,6 +162,12 @@ const COMMON_CONFIG = {
           },
           { loader: ['sass-loader'](/loaders/sass-loader) }
         ]
+      },
+      {
+        // Preprocess your css files
+        // you can add additional loaders here (e.g. sass/less etc.)
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader'],
       }
     ]
   },
@@ -187,7 +193,8 @@ const addDevConfig = config => {
     test: /\.js$/,
     use: ['source-map-loader'],
     enforce: 'pre',
-    exclude: [/node_modules\/react-palm/, /node_modules\/react-data-grid/,/\.sass$/,/\.scss$/,]
+    exclude: [/node_modules\/react-palm/, /node_modules\/react-data-grid/,]
+    // exclude: [/node_modules\/react-palm/, /node_modules\/react-data-grid/,/\.sass$/,/\.scss$/,]
   });
 
   return Object.assign(config, {
