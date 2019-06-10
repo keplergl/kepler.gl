@@ -29,6 +29,7 @@ import {
   NON_TRANSPORT_MODE,
   TRANSPORT_MODE
 } from 'constants/default-settings';
+import { RangeFilter } from '../../filters';
 
 const Row = styled.div`
   display: flex;
@@ -59,10 +60,12 @@ IndicatorPanelFactory.deps = [IndicatorFactory];
 function IndicatorPanelFactory(Indicator) {
   
   return class InteractionPanel extends Component {
-    _onclick = () => {
-      console.error(1234);
-    };
+    // _onclick = () => {
+    //   console.error(1234);
+    // };
+    
     render() {
+      let idx = 0;
       return (
         <StyledIndicatorPanel className="indicator-panel">
           <StyledIndicatorSection className="indicator-panel__section">
@@ -71,6 +74,7 @@ function IndicatorPanelFactory(Indicator) {
           <div style={{padding: '5px'}} />
           <StyledIndicatorContent className="indicator-panel__content">
             {TRANSPORT_DESIRABILITY.indicators.map(indicator => (
+              <div>
               <Indicator
                 id={indicator.id}
                 label={indicator.label}
@@ -80,7 +84,17 @@ function IndicatorPanelFactory(Indicator) {
                 }
                 selected={indicator.id === this.props.selectedIndicator}
                 onConfigChange={this.props.onConfigChange}
+                filter={this.props.filters[idx]}
+                setFilter={value => this.props.setFilter(idx, 'value', value)}
               />
+              {/* {indicator.id === this.props.selectedIndicator? 
+              <RangeFilter
+                filter={this.props.filters[idx]}
+                setFilter={value => this.props.setFilter(idx, 'value', value)}
+                />
+                 : null
+              } */}
+              </div>
             ))}
           </StyledIndicatorContent>
 
@@ -92,6 +106,7 @@ function IndicatorPanelFactory(Indicator) {
           <div style={{padding: '5px'}} />
           <StyledIndicatorContent className="indicator-panel__content">
             {NON_TRANSPORT_MODE.indicators.map(indicator => (
+              <div>
               <Indicator
                 id={indicator.id}
                 label={indicator.label}
@@ -101,7 +116,17 @@ function IndicatorPanelFactory(Indicator) {
                 }
                 selected={indicator.id === this.props.selectedIndicator}
                 onConfigChange={this.props.onConfigChange}
+                filter={this.props.filters[idx]}
+                setFilter={value => this.props.setFilter(idx, 'value', value)}
               />
+              {/* {indicator.id === this.props.selectedIndicator? 
+              <RangeFilter
+                filter={this.props.filters[idx]}
+                setFilter={value => this.props.setFilter(idx, 'value', value)}
+                />
+                 : null
+              } */}
+              </div>
             ))}
           </StyledIndicatorContent>
 
@@ -113,6 +138,7 @@ function IndicatorPanelFactory(Indicator) {
           <div style={{padding: '5px'}} />
           <StyledIndicatorContent className="indicator-panel__content">
             {TRANSPORT_MODE.indicators.map(indicator => (
+              <div>
               <Indicator
                 id={indicator.id}
                 label={indicator.label}
@@ -122,7 +148,17 @@ function IndicatorPanelFactory(Indicator) {
                 }
                 selected={indicator.id === this.props.selectedIndicator}
                 onConfigChange={this.props.onConfigChange}
+                filter={this.props.filters[idx]}
+                setFilter={value => this.props.setFilter(idx, 'value', value)}
               />
+              {/* {indicator.id === this.props.selectedIndicator? 
+              <RangeFilter
+                filter={this.props.filters[idx]}
+                setFilter={value => this.props.setFilter(idx, 'value', value)}
+                />
+                 : null
+              } */}
+              </div>
             ))}
           </StyledIndicatorContent>
         </StyledIndicatorPanel>

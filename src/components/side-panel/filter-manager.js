@@ -81,7 +81,7 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
           <SidePanelSection>
             {filters &&
               filters.map((filter, idx) => (
-                filter.id != "pairs_filter" ?
+                filter.id == "amenities_filter" ?
                 <FilterPanel
                   key={`${filter.id}-${idx}`}
                   idx={idx}

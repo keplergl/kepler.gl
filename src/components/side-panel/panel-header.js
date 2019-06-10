@@ -38,7 +38,7 @@ const StyledPanelHeaderTop = styled.div.attrs({
 })`
   display: flex;
   justify-content: space-between;
-  margin-bottom: 16px;
+  // margin-bottom: 16px;
   width: 100%;
 `;
 
@@ -240,7 +240,7 @@ function PanelHeaderFactory() {
       return (
         <StyledPanelHeader className="side-panel__panel-header">
           <StyledPanelHeaderTop className="side-panel__panel-header__top">
-            <this.props.logoComponent appName={appName} version={version}/>
+            <this.props.logoComponent appName={appName}/>
             {/* <StyledPanelTopActions>
               {actionItems.map(item => (
                 <div className="side-panel__panel-header__right"
