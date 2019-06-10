@@ -653,7 +653,7 @@ export const layerClickUpdater = (state, action) => {
       // state.layers[idx].updateLayerConfig({isVisible : true});
     }
     console.log("LYU: ");
-    console.log(data);
+    // console.log(data);
     console.log(action.info);
     return {
       ...state,

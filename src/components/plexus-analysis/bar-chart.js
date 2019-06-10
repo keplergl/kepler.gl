@@ -93,7 +93,7 @@ export class BarChart extends Component {
     } = this.props;
     // const width = 400;
     // TODO: transfer constant
-    const width = 280;
+    const width = 270;
 
 
 

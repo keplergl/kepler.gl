@@ -83,6 +83,7 @@ const AnalysisSectionWrapper = styled.div`
   justify-content: flex-start;
   align-items: flex-start;
   margin-top: 32px;
+  // margin-top: 32px;
 `;
 
 const RankingAnalysis = styled.div`
@@ -204,6 +205,7 @@ const RankingWrapper = styled.div`
   }
 `;
 
+// TODO: set width to side-bar width val in props
 const WidgetContainer = styled.div`
   position: absolute;
   padding-top: ${props => props.theme.sidePanel.margin.top}px;
@@ -213,13 +215,15 @@ const WidgetContainer = styled.div`
   top: 0;
   right: 0;
   z-index: 5;
-  maxWidth: ${props => props.width}px;
+  width: 340px;
+  // maxWidth: ${props => props.width}px;
   // width: 35vw;
-  width: 380px;
+  width: 340px;
 
   .bottom-widget--inner {
     background-color: ${props => props.theme.sidePanelBg};
-    padding: 10px ${innerPdSide}px;
+    // padding: 10px ${innerPdSide}px;
+    padding: 0.95em;
     position: relative;
     // height: 220px; 
     height: 80vh;   
@@ -227,12 +231,17 @@ const WidgetContainer = styled.div`
 `;
 
 const TopSectionWrapper = styled.div`
+
   position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0 12px;
+  background-color: ${props => props.theme.sidePanelHeaderBg};
   display: flex;
   justify-content: space-between;
   width: 100%;
-  padding-right: ${innerPdSide * 2}px;
-  color: ${props => props.theme.labelColor};
+  // padding-right: ${innerPdSide * 2}px;
+  color: ${props => props.theme.textColorHl};
   
   .bottom-widget__y-axis {
     flex-grow: 1;
@@ -474,15 +483,16 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
       <WidgetContainer width={0}>
       {/* <WidgetContainer width={width}> */}
         <div className="bottom-widget--inner">
-          {/* <TopSectionWrapper>
-            <AnalysisSectionToggle
+          <TopSectionWrapper>
+            <p>{!visState.activeBarangay ? 'City ' : 'Barangay ' }Overview</p>
+            {/* <AnalysisSectionToggle
               update={(activeAnalysisTab) => { visStateActions.toggleActiveAnalysis(activeAnalysisTab); } } 
               activeTab={visState.activeAnalysisTab} 
-              barangay={visState.activeBarangay} />
-            <IconRoundSmall>
+              barangay={visState.activeBarangay} /> */}
+            {/* <IconRoundSmall>
               <Close height="12px" onClick={() => {console.log("close button click!")}} />
-            </IconRoundSmall>
-          </TopSectionWrapper> */}
+            </IconRoundSmall> */}
+          </TopSectionWrapper>
           <AnalysisSectionWrapper> {/* TODO: currently in TD mode, make dynamic according to tabs */}
             
             {visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_DEF.profile.value && bgyIncl ?

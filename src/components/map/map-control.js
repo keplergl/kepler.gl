@@ -37,7 +37,7 @@ import {
 } from 'components/common/icons';
 
 const StyledMapControl = styled.div`
-  right: 0;
+  right: 320px;
   width: ${props => props.theme.mapControl.width}px;
   padding: ${props => props.theme.mapControl.padding}px;
   z-index: 1;
