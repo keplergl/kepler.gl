@@ -91,7 +91,9 @@ const ActionTypes = keyMirror({
   REMOVE_NOTIFICATION: null,
   /* PLEXUS-SPECIFIC */
   TOGGLE_ACTIVE_ANALYSIS: null,
-
+  CHANGE_ANALYSIS_RANK_PAGE: null,
+  SORT_ANALYSIS_REVERSE: null,
+  
   // uiState > export image
   SET_RATIO: null,
   SET_RESOLUTION: null,

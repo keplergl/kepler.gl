@@ -67,6 +67,8 @@ import {INDICATORS} from 'constants/default-settings';
 disableStackCapturing();
 
 const DEFAULT_ACTIVE_ANALYSIS = 'profile';
+const DEFAULT_ANALYSIS_RANKING_PAGE = 1;
+
 export const INITIAL_VIS_STATE = {
   // layers
   layers: [],
@@ -119,6 +121,8 @@ export const INITIAL_VIS_STATE = {
   },
   activeBarangay: null,
   activeAnalysisTab: DEFAULT_ACTIVE_ANALYSIS,
+  analysisRankingPage: DEFAULT_ANALYSIS_RANKING_PAGE,
+  analysisRankingReverse: false,
 };
 
 function updateStateWithLayerAndData(state, {layerData, layer, idx}) {
@@ -617,6 +621,9 @@ export const layerClickUpdater = (state, action) => {
       const isVisible = false;
       state.layers[idx].updateLayerConfig({isVisible});
     }
+    console.log("LYU: ");
+    console.log(data);
+    console.log(action.info);
     return {
       ...state,
       clicked: null,
@@ -1329,3 +1336,24 @@ export const updateActiveAnalysisTabUpdater = (state, action) => {
     activeAnalysisTab: action.info,
   };
 };
+
+export const changeAnalysisRankPage = (state, action) => {
+  console.log("**************" + action);
+  console.log(action);
+  console.log(action.info);
+  return {
+    ...state,
+    analysisRankingPage: action.info,
+  };
+
+};
+
+export const setAnalysisReverse = (state, action) => {
+  console.log("**************" + action);
+  console.log(action);
+  console.log(action.info);
+  return {
+    ...state,
+    analysisRankingReverse: action.info,
+  };
+}; 

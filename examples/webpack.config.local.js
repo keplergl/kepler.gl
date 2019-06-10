@@ -72,7 +72,14 @@ function makeLocalDevConfig(EXAMPLE_DIR = LIB_DIR) {
               "css-loader", // translates CSS into CommonJS
               "sass-loader" // compiles Sass to CSS, using Node Sass by default
           ]
+        },
+        {
+          // Preprocess your css files
+          // you can add additional loaders here (e.g. sass/less etc.)
+          test: /\.css$/,
+          use: ['style-loader', 'css-loader'],
         }
+        
       ]
     },
     // Optional: Enables reading mapbox token from environment variable

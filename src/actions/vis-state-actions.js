@@ -271,3 +271,21 @@ export function toggleActiveAnalysis(info) {
     info
   };
 }
+
+export function changeAnalysisRankPage(info) {
+  console.log("CHANGEANARANKPAGE");
+  console.log(info);
+  return {
+    type: ActionTypes.CHANGE_ANALYSIS_RANK_PAGE,
+    info
+  };
+}
+
+export function sortAnalysisReverse(info) {
+  console.log("SORTANALYSISREVERSE");
+  console.log(info);
+  return {
+    type: ActionTypes.SORT_ANALYSIS_REVERSE,
+    info
+  };
+} 
