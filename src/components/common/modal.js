@@ -27,8 +27,9 @@ import {Delete} from 'components/common/icons';
 import {Button} from 'components/common/styled-components';
 
 const ModalContentWrapper = styled.div`
-  width: 60%;
-  max-width: 960px;
+  width: auto;
+  // width: 60%;
+  // max-width: 960px;
   padding: 24px 24px 40px;
   position: absolute;
   top: 92px;
@@ -38,7 +39,7 @@ const ModalContentWrapper = styled.div`
   background-color: #ffffff;
   border-radius: 4px;
   transition: ${props => props.theme.transition};
-  min-width: 600px;
+  // min-width: 600px;
   overflow: hidden;
   box-sizing: border-box;
   margin-right: auto;
@@ -48,7 +49,8 @@ const ModalContentWrapper = styled.div`
 `;
 
 const CloseButton = styled.div`
-  color: ${props => props.theme.titleColorLT};
+  // color: ${props => props.theme.titleColorLT};
+  color: #FFFFFF;
   display: flex;
   // display: none;
   justify-content: flex-end;

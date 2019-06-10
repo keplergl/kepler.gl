@@ -21,9 +21,9 @@
 import React, {Component} from 'react';
 import styled from 'styled-components';
 import {connect} from 'react-redux';
-// ff-clan-web-pro
+
 const GlobalStyleDiv = styled.div`
-  font-family: 'Helvetica Neue', Helvetica, sans-serif;
+  font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
   font-weight: 400;
   font-size: 0.875em;
   line-height: 1.71429;

@@ -64,7 +64,7 @@ const DeleteDatasetModalStyled = css`
 
 const LoadDataModalStyle = css`
   top: 30px;
-  width: 1000px;
+  // width: 1000px;
   //max-height: 500px;
   margin: 10px;
   overflow: visible;
