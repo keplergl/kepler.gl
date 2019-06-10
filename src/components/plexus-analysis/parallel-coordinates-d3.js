@@ -207,6 +207,14 @@ export class ParallelCoordinatesD3 extends Component {
       });
     });
 
+    var rows = d3.select('#grid').selectAll('.row');
+      rows.on('mouseover', function(d) {
+        chart.highlight([d]);
+      });
+      rows.on('mouseout', function(d) {
+        chart.unhighlight();
+      });
+
     this.setState({
       pc: chart,
       table: grid,
