@@ -256,7 +256,7 @@ export default class PointLayer extends Layer {
 
     // get all distinct characters in the text labels
     const getRadius = rScale
-      ? d => this.getEncodedChannelValue(rScale, d.data, sizeField)
+      ? d => this.getEncodedChannelValue(rScale, d.data, sizeField, 0)
       : 1;
 
     const getFillColor = cScale
@@ -366,7 +366,7 @@ export default class PointLayer extends Layer {
       // TODO: support setting stroke and fill simultaneously
       stroked: this.config.visConfig.outline,
       filled: this.config.visConfig.filled,
-      radiusMinPixels: 1,
+      radiusMinPixels: 0,
       lineWidthMinPixels: this.config.visConfig.thickness,
       radiusScale,
       ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})

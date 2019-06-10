@@ -70,6 +70,7 @@ const ActionTypes = keyMirror({
   LAYER_HOVER: null,
   LAYER_CLICK: null,
   MAP_CLICK: null,
+  MOUSE_MOVE: null,
   REMOVE_FILTER: null,
   REMOVE_LAYER: null,
   REMOVE_DATASET: null,

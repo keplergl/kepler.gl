@@ -24,7 +24,7 @@ import {
   ALL_FIELD_TYPES,
   TRIP_POINT_FIELDS
 } from 'constants/default-settings';
-import {Messages, Crosshairs} from 'components/common/icons/index';
+import {Messages, Crosshairs, CursorClick} from 'components/common/icons/index';
 
 export function getDefaultInteraction() {
   return {
@@ -44,6 +44,12 @@ export function getDefaultInteraction() {
         // size is in km
         size: 0.5
       }
+    },
+    coordinate: {
+      id: 'coordinate',
+      enabled: false,
+      iconComponent: CursorClick,
+      position: null
     }
   };
 }

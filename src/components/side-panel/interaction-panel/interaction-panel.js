@@ -114,7 +114,7 @@ function InteractionPanelFactory(TooltipConfig, BrushConfig) {
               />
             </div>
           </StyledPanelHeader>
-          {config.enabled && (
+          {(config.enabled && template) &&  (
             <StyledPanelContent className="interaction-panel__content">
               {template}
             </StyledPanelContent>
