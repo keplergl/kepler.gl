@@ -336,7 +336,6 @@ function KeplerGlFactory(
                 DIMENSIONS.sidePanel.width + DIMENSIONS.sidePanel.margin.left
               }
               containerW={containerW}
-              containerW={containerW}
               layers={mapFields.layers}
               mapLayers={isSplit ? splitMaps[0].layers : null}
             />

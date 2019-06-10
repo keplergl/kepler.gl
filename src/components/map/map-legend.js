@@ -120,7 +120,7 @@ const MapLegend = ({layers}) => (
       const colorChannelConfig = layer.getVisualChannelDescription('color');
       const enableColorBy = colorChannelConfig.measure;
       const width = DIMENSIONS.mapControl.width - 2 * DIMENSIONS.mapControl.padding;
-
+      
       return (
         <StyledMapControlLegend
           className="legend--layer"

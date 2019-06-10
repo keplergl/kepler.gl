@@ -413,6 +413,9 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         transformRequest
       };
 
+      console.log('mcontain layers');
+      console.log(layers);
+      console.log(mapLayers);
       return (
         <StyledMapContainer style={MAP_STYLE.container} onMouseMove={this._onMouseMove}>
           <MapControl

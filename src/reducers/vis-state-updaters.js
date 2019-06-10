@@ -1370,7 +1370,6 @@ export const changeAnalysisRankPage = (state, action) => {
     ...state,
     analysisRankingPage: action.info,
   };
-
 };
 
 export const setAnalysisReverse = (state, action) => {
