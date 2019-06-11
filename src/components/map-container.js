@@ -183,7 +183,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         interactionConfig,
         layers,
         mapLayers,
-        mousePos: {mousePosition, coordinate, pinned},
+        mousePos: {mousePosition, coordinate, pinned}
       } = this.props;
 
       if (!mousePosition) {
@@ -200,7 +200,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         objectInfo.picked
       ) {
         // if anything hovered
-        const {lngLat, object, layer: overlay} = objectInfo;
+        const {object, layer: overlay} = objectInfo;
 
         // deckgl layer to kepler-gl layer
         const layer = layers[overlay.props.idx];
