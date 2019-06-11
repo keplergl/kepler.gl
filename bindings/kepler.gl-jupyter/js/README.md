@@ -4,8 +4,8 @@ Package Install
 ---------------
 
 **Prerequisites**
-- [node](http://nodejs.org/)
-- [yarn]((https://yarnpkg.com/en/docs/install#mac-stable)
+- [node](http://nodejs.org/) >=8.1.0
+- [yarn](https://yarnpkg.com/en/docs/install#mac-stable) >=1.6.0
 
 **More links**
 - [Jupyter Widget](https://ipywidgets.readthedocs.io/en/stable/examples/Widget%20Custom.html)
