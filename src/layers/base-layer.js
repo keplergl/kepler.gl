@@ -310,7 +310,6 @@ export default class Layer {
    */
   getVisualChannelDescription(key) {
     // e.g. label: Color, measure: Vehicle Type
-    console.log(key)
     return {
       label: this.visConfigSettings[this.visualChannels[key].range].label,
       measure: this.config[this.visualChannels[key].field]
