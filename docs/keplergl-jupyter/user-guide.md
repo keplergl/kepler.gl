@@ -1,6 +1,7 @@
   <h1>kepler.gl for Jupyter User Guide</h1>
-    
-  - [1. Load kepler.gl](#1-load-keplergl)
+
+  - [Install](#install)   
+  - [1. Load kepler.gl Map](#1-load-keplergl-map)
     - [`KeplerGl()`](#keplergl)
   - [2. Add Data](#2-add-data)
     - [`.add_data()`](#add_data)
@@ -25,7 +26,7 @@
 pip install keplergl
 ```
 
-## 1. Load kepler.gl
+## 1. Load keplergl map
 ### `KeplerGl()`
 
 - Input:
