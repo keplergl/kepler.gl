@@ -150,11 +150,11 @@ export default class HexagonIdLayer extends Layer {
 
     // height
     const sScale =
-      sizeField && this.getVisChannelScale(sizeScale, sizeDomain, sizeRange);
+      sizeField && this.getVisChannelScale(sizeScale, sizeDomain, sizeRange, 0);
 
     // coverage
     const coScale =
-      coverageField && this.getVisChannelScale(coverageScale, coverageDomain, coverageRange);
+      coverageField && this.getVisChannelScale(coverageScale, coverageDomain, coverageRange, 0);
 
     const getHexId = this.getHexId(columns);
 

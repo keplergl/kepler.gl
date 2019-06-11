@@ -36,13 +36,14 @@ import {
 import {DataVizColors} from 'constants/custom-color-ranges';
 import {LAYER_VIS_CONFIGS, DEFAULT_TEXT_LABEL} from './layer-factory';
 
-import {generateHashId, notNullorUndefined, isPlainObject} from 'utils/utils';
+import {generateHashId, isPlainObject} from 'utils/utils';
 
 import {
   getSampleData,
   getLatLngBounds,
   maybeToDate,
-  getSortingFunction
+  getSortingFunction,
+  notNullorUndefined
 } from 'utils/data-utils';
 
 import {
@@ -609,7 +610,7 @@ export default class Layer {
     scale,
     data,
     field,
-    defaultValue = NO_VALUE_COLOR,
+    nullValue = NO_VALUE_COLOR,
     getValue = defaultGetFieldValue
   ) {
     const {type} = field;
@@ -623,8 +624,8 @@ export default class Layer {
       attributeValue = scale(value);
     }
 
-    if (!attributeValue) {
-      attributeValue = defaultValue;
+    if (!notNullorUndefined(attributeValue)) {
+      attributeValue = nullValue;
     }
 
     return attributeValue;
