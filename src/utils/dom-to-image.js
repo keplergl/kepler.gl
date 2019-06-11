@@ -26,6 +26,8 @@
 import window from 'global/window';
 import document from 'global/document';
 import console from 'global/console';
+import svgToMiniDataURI from 'mini-svg-data-uri';
+import {IMAGE_EXPORT_ERRORS} from 'constants/user-feedbacks';
 
 const util = newUtil();
 const inliner = newInliner();
@@ -342,16 +344,18 @@ function makeSvgDataUri(node, width, height) {
   return Promise.resolve(node)
     .then(nd => {
       nd.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
-      return new window.XMLSerializer().serializeToString(nd);
-    })
-    .then(util.escapeXhtml)
-    .then(xhtml =>
-      `<foreignObject x="0" y="0" width="100%" height="100%">${xhtml}</foreignObject>`
-    )
-    .then(foreignObject =>
-      `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">${foreignObject}</svg>`
-    )
-    .then(svg => `data:image/svg+xml;charset=utf-8,${svg}`);
+      const serializedString =  new window.XMLSerializer().serializeToString(nd);
+
+      const xhtml = util.escapeXhtml(serializedString);
+      const foreignObject = `<foreignObject x="0" y="0" width="100%" height="100%">${xhtml}</foreignObject>`;
+      const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">${foreignObject}</svg>`;
+
+      // Optimizing SVGs in data URIs
+      // see https://codepen.io/tigt/post/optimizing-svgs-in-data-uris
+      // the best way of encoding SVG in a data: URI is data:image/svg+xml,[actual data].
+      // We don’t need the ;charset=utf-8 parameter because the given SVG is ASCII.
+      return svgToMiniDataURI(svgStr);
+    });
 }
 
 function newUtil() {
@@ -376,9 +380,9 @@ function newUtil() {
 
   function mimes() {
     /*
-            * Only WOFF and EOT mime types for fonts are 'real'
-            * see http://www.iana.org/assignments/media-types/media-types.xhtml
-            */
+    * Only WOFF and EOT mime types for fonts are 'real'
+    * see http://www.iana.org/assignments/media-types/media-types.xhtml
+    */
     const WOFF = 'application/font-woff';
     const JPEG = 'image/jpeg';
 
@@ -470,7 +474,13 @@ function newUtil() {
       image.onload = () => {
         resolve(image);
       };
-      image.onerror = reject;
+      image.onerror = (err) => {
+        const message = IMAGE_EXPORT_ERRORS.dataUri;
+        console.log(uri);
+        // error is an Event Object
+        // https://www.w3schools.com/jsref/obj_event.asp
+        reject({event: err, message});
+      };
       image.src = uri;
     });
   }
@@ -527,7 +537,7 @@ function newUtil() {
           resolve(placeholder);
         } else {
           fail(
-            `timeout of ${TIMEOUT}ms occured while fetching resource: ${url}`
+            `timeout of ${TIMEOUT}ms occurred while fetching resource: ${url}`
           );
         }
       }
@@ -681,15 +691,20 @@ function newFontFaces() {
       return Promise.all(
         styleSheets.map(sheet => {
           if (sheet.href) {
-            return window.fetch(sheet.href, {credentials: 'omit'})
+            // cloudfont doesn't have allow origin header properly set
+            // error response will remain in cache
+            const cache = sheet.href.includes('uber-fonts') ? 'no-cache' : 'default';
+            return window.fetch(sheet.href, {credentials: 'omit', cache})
               .then(toText)
               .then(setBaseHref(sheet.href))
               .then(toStyleSheet)
               .catch(err => {
                 // Handle any error that occurred in any of the previous
-                // promises in the chain.
-                console.log(err)
-                return sheet;
+                // promises in the chain. stylesheet failed to load should not stop
+                // the process, hence result in only a warning, instead of reject
+                console.warn(IMAGE_EXPORT_ERRORS.styleSheet, sheet.href);
+                console.log(err);
+                return;
               });
           }
           return Promise.resolve(sheet);
@@ -754,6 +769,9 @@ function newFontFaces() {
       const cssRules = [];
       styleSheets.forEach((sheet) => {
         // try...catch because browser may not able to enumerate rules for cross-domain sheets
+        if (!sheet) {
+          return;
+        }
         let rules;
         try {
           rules = sheet.rules || sheet.cssRules;

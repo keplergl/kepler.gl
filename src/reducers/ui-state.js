@@ -41,6 +41,7 @@ const actionHandler = {
   [ActionTypes.TOGGLE_LEGEND]: uiStateUpdaters.toggleLegendUpdater,
   [ActionTypes.START_EXPORTING_IMAGE]: uiStateUpdaters.startExportingImage,
   [ActionTypes.SET_EXPORT_IMAGE_DATA_URI]: uiStateUpdaters.setExportImageDataUri,
+  [ActionTypes.SET_EXPORT_IMAGE_ERROR]: uiStateUpdaters.setExportImageError,
   [ActionTypes.CLEANUP_EXPORT_IMAGE]: uiStateUpdaters.cleanupExportImage,
 
   [ActionTypes.SET_EXPORT_SELECTED_DATASET]: uiStateUpdaters.setExportSelectedDatasetUpdater,

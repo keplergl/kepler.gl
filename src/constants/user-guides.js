@@ -21,3 +21,4 @@
 export const GITHUB_EXPORT_HTML_MAP = 'https://github.com/keplergl/kepler.gl/blob/master/docs/user-guides/k-save-and-export.md#2save-and-export-current-map';
 export const GITHUB_ADD_DATA_TO_MAP = 'https://github.com/keplergl/kepler.gl/blob/master/docs/api-reference/actions/actions.md#adddatatomap';
 export const MAPBOX_ACCESS_TOKEN = 'https://docs.mapbox.com/help/how-mapbox-works/access-tokens/';
+export const GITHUB_BUG_REPORT = 'https://github.com/keplergl/kepler.gl/issues/new?template=bug_report.md';
