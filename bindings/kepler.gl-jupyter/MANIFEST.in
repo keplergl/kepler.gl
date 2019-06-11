@@ -1,2 +1,2 @@
-recursive-include keplergl_jupyter/static *.*
+recursive-include keplergl/static *.*
 include keplergl-jupyter.json

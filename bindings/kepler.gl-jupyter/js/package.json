@@ -21,7 +21,7 @@
   ],
   "scripts": {
     "start": "NODE_ENV=development webpack --config ./webpack/dev.js --mode development --watch --progress",
-    "clean": "rimraf dist/ && rimraf ../keplergl_jupyter/static/",
+    "clean": "rimraf dist/ && rimraf ../keplergl/static/",
     "cleanall": "npm run clean && rimraf node_modules/",
     "check-licence": "uber-licence --dry",
     "add-licence": "uber-licence",

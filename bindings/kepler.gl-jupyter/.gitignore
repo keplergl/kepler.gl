@@ -12,13 +12,8 @@ env/
 .DS_Store
 .vs_code/
 
-# */yarn.lock
-# */yarn-error.log
-# */package-lock.json
-
 # Compiled javascript
-keplergl_jupyter/static/*
-# js/dist/
+keplergl/static/*
 
 setup.orig.py
 setup.orig2.py

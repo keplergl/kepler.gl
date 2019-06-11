@@ -66,8 +66,8 @@ class NPM(Command):
     node_modules = os.path.join(node_root, 'node_modules')
 
     targets = [
-        os.path.join(here, 'keplergl_jupyter', 'static', 'extension.js'),
-        os.path.join(here, 'keplergl_jupyter', 'static', 'index.js')
+        os.path.join(here, 'keplergl', 'static', 'extension.js'),
+        os.path.join(here, 'keplergl', 'static', 'index.js')
     ]
 
     def initialize_options(self):
@@ -121,20 +121,20 @@ class NPM(Command):
         update_package_data(self.distribution)
 
 version_ns = {}
-with open(os.path.join(here, 'keplergl_jupyter', '_version.py')) as f:
+with open(os.path.join(here, 'keplergl', '_version.py')) as f:
     exec(f.read(), {}, version_ns)
 
 setup_args = {
-    'name': 'keplergl_jupyter',
+    'name': 'keplergl',
     'version': version_ns['__version__'],
     'description': 'This is a simple jupyter widget for kepler.gl, an advanced geospatial visualization tool, to render large-scale interactive maps.',
     'long_description': LONG_DESCRIPTION,
     'include_package_data': True,
     'data_files': [
         ('share/jupyter/nbextensions/keplergl-jupyter', [
-            'keplergl_jupyter/static/extension.js',
-            'keplergl_jupyter/static/index.js',
-            'keplergl_jupyter/static/index.js.map',
+            'keplergl/static/extension.js',
+            'keplergl/static/index.js',
+            'keplergl/static/index.js.map',
         ],),
         ('etc/jupyter/nbconfig/notebook.d/' ,['keplergl-jupyter.json'])
     ],

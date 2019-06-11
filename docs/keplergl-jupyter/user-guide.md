@@ -1,7 +1,7 @@
   <h1>kepler.gl for Jupyter User Guide</h1>
-
+    
   - [1. Load kepler.gl](#1-load-keplergl)
-    - [`keplergl.KeplerGl()`](#keplerglkeplergl)
+    - [`KeplerGl()`](#keplergl)
   - [2. Add Data](#2-add-data)
     - [`.add_data()`](#add_data)
     - [`.data`](#data)
@@ -20,8 +20,13 @@
   - [Demo Notebooks](#demo-notebooks)
 
 <br></br>
+## Install
+```python
+pip install keplergl
+```
+
 ## 1. Load kepler.gl
-### `keplergl.KeplerGl()`
+### `KeplerGl()`
 
 - Input:
     - __`height`__  _optional_ default: `400`
@@ -41,8 +46,8 @@ The following command will load kepler.gl widget below a cell.
 
 ```python
 # Load an empty map
-import keplergl_jupyter as keplergl
-map_1 = keplergl.KeplerGl()
+from keplergl import KeplerGl
+map_1 = KeplerGl()
 map_1
 ```
 
@@ -52,7 +57,8 @@ You can also create the map and pass in the data or data and config at the same 
 
 ```python
 # Load a map with data and config and height
-map_2 = keplergl.KeplerGl(height=400, data={"data_1": my_df}, config=config)
+from keplergl import KeplerGl
+map_2 = KeplerGl(height=400, data={"data_1": my_df}, config=config)
 map_2
 ```
 
@@ -243,7 +249,7 @@ map_1.config = config
 ```
  2. Load it when creating the map
 ```python
-map_1 = keplergl.KeplerGl(height=400, data={'data_1': my_df}, config=config)
+map_1 = KeplerGl(height=400, data={'data_1': my_df}, config=config)
 ```
 
 If want to load the map next time with this saved config, the easiest way to do is to save the it to a file and use the magic command **%run** to load it w/o cluttering up your notebook.

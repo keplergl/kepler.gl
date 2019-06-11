@@ -72,7 +72,7 @@ module.exports = (rules, plugins) => ({
   entry,
 
   output: {
-    path: path.resolve(__dirname, '../..', 'keplergl_jupyter', 'static'),
+    path: path.resolve(__dirname, '../..', 'keplergl', 'static'),
     libraryTarget: 'umd'
   },
 

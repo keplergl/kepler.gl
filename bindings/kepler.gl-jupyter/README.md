@@ -19,19 +19,19 @@ This is the [kepler.gl](http://kepler.gl) jupyter widget, an advanced geospatial
 
 To install use pip:
 
-    $ pip install keplergl_jupyter
+    $ pip install keplergl
 
 <br></br>
 # Quick Start
 
 ```python
 # Load kepler.gl with an empty map
-import keplergl_jupyter as keplergl
-map_1 = keplergl.KeplerGl(height=400)
+from keplergl import KeplerGl
+map_1 = KeplerGl(height=400)
 map_1
 
 # Load kepler.gl with map data and config
-map_2 = keplergl.KeplerGl(height=400, data={'data_1': df}, config=config)
+map_2 = KeplerGl(height=400, data={'data_1': df}, config=config)
 map_2
 
 # Add data to map
@@ -96,15 +96,15 @@ Python 2
     $ python -m pip install --upgrade pip
     $ python -m pip install jupyter
 
-## Download and run kepler.gl-jupyter in your local Jupyter Notebook
+## Download and run keplergl in your local Jupyter Notebook
 
 ### Clone Repo
-    $ git clone https://github.com/uber/kepler.gl-jupyter.git
+    $ git clone https://github.com/keplergl/kepler.gl.git
 
 ### Setup JS
 #### 1. Install Js module
 ```sh
-    $ cd kepler.gl-jupyter
+    $ cd bindings/kepler.gl-jupyter
     $ cd js
     $ yarn --ignore-engines
 ```
@@ -131,10 +131,10 @@ This command must be run **AFTER** the `js` setup, and folder `static/` was crea
     $ pip install -e .
 
     # only needed in dev mode, not in normal mode.
-    $ jupyter nbextension install --py --symlink --sys-prefix keplergl_jupyter
+    $ jupyter nbextension install --py --symlink --sys-prefix keplergl
 
     # only needed in dev mode, not in normal mode.
-    $ jupyter nbextension enable --py --sys-prefix keplergl_jupyter
+    $ jupyter nbextension enable --py --sys-prefix keplergl
 ```
 
 #### 2. Start jupyter notebook
@@ -143,7 +143,7 @@ This command must be run **AFTER** the `js` setup, and folder `static/` was crea
 
 ### Have fun!
 
-You can now start editing the .js and .py files to see changes reflected in your local notebook. After changing files in the js folder, the local start script will recompile the js files and put them in to `keplergl_jupyter/static` folder. You need to reload the jupyter notebook page to reload the files.
+You can now start editing the .js and .py files to see changes reflected in your local notebook. After changing files in the js folder, the local start script will recompile the js files and put them in to `keplergl/static` folder. You need to reload the jupyter notebook page to reload the files.
 
 
 [jupyter_widget]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/jupyter_widget.png

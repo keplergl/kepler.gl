@@ -318,7 +318,7 @@ export const expectedSavedLayer0 = {
     colorScale: 'quantile',
     sizeField: null,
     sizeScale: 'linear'
-  },
+  }
 };
 
 export const expectedLoadedLayer0 = {

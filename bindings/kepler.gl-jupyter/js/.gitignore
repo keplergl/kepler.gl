@@ -1,7 +1,7 @@
 node_modules/
 dist/
 temp.*
-keplergl_jupyter/
+keplergl/
 
 yarn.lock
 yarn-error.log

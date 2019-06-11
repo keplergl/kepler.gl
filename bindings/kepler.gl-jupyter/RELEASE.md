@@ -1,4 +1,4 @@
-- To release a new version of keplergl_jupyter on PyPI:
+- To release a new version of keplergl on PyPI:
 
 Update _version.py (set release version, remove 'dev')
 git add the _version.py file and git commit

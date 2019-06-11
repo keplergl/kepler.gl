@@ -55,7 +55,7 @@ module.exports = {
     entry: path.resolve(__dirname, '../lib/extension.js'),
     output: {
       filename: 'extension.js',
-      path: path.resolve(__dirname, '../..', 'keplergl_jupyter', 'static'),
+      path: path.resolve(__dirname, '../..', 'keplergl', 'static'),
       libraryTarget: 'amd'
     },
     node: {
@@ -78,7 +78,7 @@ module.exports = {
     },
     output: {
       filename: 'index.js',
-      path: path.resolve(__dirname, '../..', 'keplergl_jupyter', 'static'),
+      path: path.resolve(__dirname, '../..', 'keplergl', 'static'),
       libraryTarget: 'amd'
     },
     // adding source map significantly slows down the

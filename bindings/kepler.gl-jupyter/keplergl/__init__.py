@@ -1,6 +1,6 @@
 from ._version import version_info, __version__
 
-from .keplergl_jupyter import *
+from .keplergl import *
 
 def _jupyter_nbextension_paths():
     return [{
