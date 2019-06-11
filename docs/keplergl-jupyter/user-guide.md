@@ -1,6 +1,6 @@
   <h1>kepler.gl for Jupyter User Guide</h1>
 
-  - [Install](#install)   
+  - [Install](#install)
   - [1. Load kepler.gl Map](#1-load-keplergl-map)
     - [`KeplerGl()`](#keplergl)
   - [2. Add Data](#2-add-data)
@@ -313,7 +313,7 @@ map_1.save_to_html(file_name='first_map.html' read_only=True)
 [empty_map]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/jupyter_empty_map.png
 [geodataframe_map]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/jupyter_geodataframe.png
 [map_interaction]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/jupyter_custom_map.gif
-[load_map_w_data]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/jupyter_load_map_w_data.gif
+[load_map_w_data]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/jupyter_widget.png
 [map_add_data]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/jupyter_add_data.png
 [connect_data_config]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/jupyter_connect_data_w_config.png
 [save_widget_state]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/jupyter_save_state.png

@@ -1,4 +1,4 @@
-<h1>kepler.gl-jupyter</h1>
+<h1>kepler.gl for Jupyter</h1>
 
 This is the [kepler.gl](http://kepler.gl) jupyter widget, an advanced geospatial visualization tool, to render large-scale interactive maps in Jupyter Notebook.
 

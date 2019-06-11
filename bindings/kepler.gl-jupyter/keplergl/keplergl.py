@@ -95,7 +95,7 @@ class KeplerGl(widgets.DOMWidget):
 
     def __init__(self, **kwargs):
         super(KeplerGl, self).__init__(**kwargs)
-        print('Documentation: {}'.format(documentation))
+        print('User Guide: {}'.format(documentation))
 
     @validate('data')
     def _validate_data(self, proposal):
