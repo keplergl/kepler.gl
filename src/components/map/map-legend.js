@@ -26,7 +26,7 @@ import ColorLegend from 'components/common/color-legend';
 import {DIMENSIONS, CHANNEL_SCALES} from 'constants/default-settings';
 import {camelToTitle} from 'utils/utils';
 
-const StyledMapControlLegend = styled.div`
+export const StyledMapControlLegend = styled.div`
   padding: 10px 0 10px ${props => props.theme.mapControl.padding}px;
   font-size: 11px;
   border-bottom-color: ${props => props.theme.panelBorderColor};
@@ -64,14 +64,14 @@ const StyledMapControlLegend = styled.div`
   }
 `;
 
-const VisualChannelMetric = ({name}) => (
+export const VisualChannelMetric = ({name}) => (
   <div className="legend--layer__title">
     <span className="legend--layer_by">by </span>
     <span className="legend--layer_color_field">{name}</span>
   </div>
 );
 
-const LayerSizeLegend = ({label, name}) => (
+export const LayerSizeLegend = ({label, name}) => (
   <div className="legend--layer_size-schema">
     <p>
       <span className="legend--layer_by">{label}</span>
@@ -84,18 +84,19 @@ const propTypes = {
   layers: PropTypes.arrayOf(PropTypes.object)
 };
 
-const SingleColorLegend = ({width, color}) => (
+const SingleColorDomain = [''];
+export const SingleColorLegend = ({width, color}) => (
   <ColorLegend
     scaleType="ordinal"
     displayLabel={false}
-    domain={['']}
+    domain={SingleColorDomain}
     fieldType={null}
     range={[rgb(...color).toString()]}
     width={width}
   />
 );
 
-const MultiColorLegend = ({colorRange, colorScale, colorDomain, colorField, width}) => {
+export const MultiColorLegend = ({colorRange, colorScale, colorDomain, colorField, width}) => {
 
   return (
     <ColorLegend
@@ -109,7 +110,7 @@ const MultiColorLegend = ({colorRange, colorScale, colorDomain, colorField, widt
   );
 };
 
-const LayerColorLegend = ({description, config, width, colorChannel}) => {
+export const LayerColorLegend = ({description, config, width, colorChannel}) => {
   const enableColorBy = description.measure;
   const {scale, field, domain, range, property, key} = colorChannel;
   const [colorScale, colorField, colorDomain] = [scale, field, domain].map(k => config[k]);
@@ -143,17 +144,21 @@ const LayerColorLegend = ({description, config, width, colorChannel}) => {
   )
 }
 
-const MapLegend = ({layers}) => (
+const isColorChannel = (visualChannel) =>
+  [CHANNEL_SCALES.color, CHANNEL_SCALES.colorAggr].includes(visualChannel.channelScaleType);
+
+const MapLegend = ({layers = []}) => (
   <div>
     {layers.map((layer, index) => {
       if (!layer.isValidToSave()) {
         return null;
       }
+
       const width = DIMENSIONS.mapControl.width - 2 * DIMENSIONS.mapControl.padding;
       const colorChannels = Object.values(layer.visualChannels)
-        .filter(vc => vc.channelScaleType === CHANNEL_SCALES.color);
+        .filter(isColorChannel);
       const nonColorChannels = Object.values(layer.visualChannels)
-      .filter(vc => vc.channelScaleType !== CHANNEL_SCALES.color);
+      .filter(vc => !isColorChannel(vc));
 
       return (
         <StyledMapControlLegend

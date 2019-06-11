@@ -18,14 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// required by enzymev3
-const configure = require('enzyme').configure;
-const Adapter = require('enzyme-adapter-react-16');
-configure({adapter: new Adapter()});
+import {mount} from 'enzyme';
+import {theme} from 'styles/base';
+import {ThemeProvider} from 'styled-components';
 
-import './injector-test';
-import './container-test';
-import './data-table-model-test';
-import './notifications';
-import './kepler-gl-test';
-import './map';
+export function mountWithTheme(node) {
+  return mount(node, {
+    wrappingComponent: ThemeProvider,
+    wrappingComponentProps: {theme}
+  });
+}
