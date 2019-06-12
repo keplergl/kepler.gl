@@ -105,7 +105,10 @@ export default class PointLayer extends Layer {
 
   get visualChannels() {
     return {
-      ...super.visualChannels,
+      color: {
+        ...super.visualChannels.color,
+        condition: config => config.visConfig.filled
+      },
       strokeColor: {
         property: 'strokeColor',
         field: 'strokeColorField',
@@ -113,7 +116,8 @@ export default class PointLayer extends Layer {
         domain: 'strokeColorDomain',
         range: 'strokeColorRange',
         key: 'strokeColor',
-        channelScaleType: CHANNEL_SCALES.color
+        channelScaleType: CHANNEL_SCALES.color,
+        condition: config => config.visConfig.outline
       },
       size: {
         ...super.visualChannels.size,

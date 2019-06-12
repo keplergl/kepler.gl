@@ -58,6 +58,22 @@ export function notNullorUndefined(d) {
   return d !== undefined && d !== null;
 }
 
+/**
+ * Capitalize first letter of a string
+ * @param {string} str
+ * @returns {string}
+ */
 export function capitalizeFirstLetter(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/**
+ * Convert camel style names to title
+ * strokeColor -> Stroke Color
+ * @param {string} str
+ * @returns {string}
+ */
+export function camelToTitle(str){
+  const breakWord = str.replace( /([A-Z])/g, " $1" );
+  return capitalizeFirstLetter(breakWord);
 }
