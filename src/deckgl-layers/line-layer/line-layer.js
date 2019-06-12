@@ -49,7 +49,7 @@ function addBrushingVsShader(vs) {
   const brushingVs = editShader(
     targetColorVs,
     'line brushing vs',
-    'vec2 offset = getExtrusionOffset(target.xy - source.xy, positions.y);',
+    'vec2 offset = getExtrusionOffset(target.xy - source.xy, positions.y, widthPixels);',
     'vec2 offset = brushing_getExtrusionOffset(target.xy - source.xy, positions.y, project_uViewportSize, vec4(instanceSourcePositions.xy, instanceTargetPositions.xy), instanceWidths);'
   );
 
