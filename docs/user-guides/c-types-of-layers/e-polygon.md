@@ -1,6 +1,12 @@
 # Polygon
 
-Polygon layers can display either paths or polygons in 2D or 3D with geoJSON inputs.
+Polygon layer can display [GeoJSON](https://tools.ietf.org/html/rfc7946) features. GeoJSON supports the following geometry types: `Point`, `LineString`, `Polygon`, `MultiPoint`, `MultiLineString`, `MultiPolygon`.
+
+kepler.gl supports all the GeoJSON types above. You can pass in either a single [`Feature`][features] or a [`FeatureCollection`][feature_collection]
+
+[feature_collection]: https://tools.ietf.org/html/rfc7946#section-3.3
+[features]: https://tools.ietf.org/html/rfc7946#section-3.2
+
 
 ![GeoJSON layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image20.png "GeoJSON layer")
 
