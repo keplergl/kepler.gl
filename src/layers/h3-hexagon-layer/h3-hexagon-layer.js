@@ -250,7 +250,7 @@ export default class HexagonIdLayer extends Layer {
   }) {
     const zoomFactor = this.getZoomFactor(mapState);
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
-    const {config, meta} = this;
+    const {config} = this;
     const {visConfig} = config;
 
     const updateTriggers = {
@@ -297,7 +297,6 @@ export default class HexagonIdLayer extends Layer {
         opacity: visConfig.opacity,
 
         // render
-        lightSettings: meta.lightSettings,
         updateTriggers,
         _subLayerProps: {
           'hexagon-cell': {
