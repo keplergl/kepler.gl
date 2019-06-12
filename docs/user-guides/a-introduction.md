@@ -33,6 +33,7 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 * [Cluster](./c-types-of-layers/f-cluster.md)
 * [Icon](./c-types-of-layers/g-icon.md)
 * [Hexbin](./c-types-of-layers/h-hexbin.md)
+* [Heatmap](./c-types-of-layers/i-heatmap.md)
 
 #### [Layer attributes](./d-layer-attributes.md)
 
