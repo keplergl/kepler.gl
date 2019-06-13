@@ -87,7 +87,6 @@ export default class ClusterLayer extends AggregationLayer {
         autoHighlight: true,
         highlightColor: this.config.highlightColor,
         opacity: visConfig.opacity,
-        lightSettings: this.meta.lightSettings,
         zoom: mapState.zoom,
 
         // parameters

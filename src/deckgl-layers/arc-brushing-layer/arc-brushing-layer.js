@@ -28,7 +28,7 @@ const defaultProps = {
   // show arc if target is in brush
   brushTarget: true,
   enableBrushing: true,
-  getStrokeWidth: d => d.strokeWidth,
+  getWidth: d => d.strokeWidth,
   strokeScale: 1,
   // brush radius in meters
   brushRadius: 100000,
@@ -39,7 +39,7 @@ function addBrushingVsShader(vs) {
   return editShader(
     vs,
     'arc brushing vs',
-    'vec2 offset = getExtrusionOffset((next.xy - curr.xy) * indexDir, positions.y);',
+    'vec2 offset = getExtrusionOffset((next.xy - curr.xy) * indexDir, positions.y, widthPixels);',
     'vec2 offset = brushing_getExtrusionOffset((next.xy - curr.xy) * indexDir, positions.y, project_uViewportSize, instancePositions, instanceWidths);'
   );
 }
@@ -48,7 +48,7 @@ function addBrushingVs64Shader(vs) {
   return editShader(
     vs,
     'arc brushing vs64',
-    'vec2 offset = getExtrusionOffset(next_pos_clipspace.xy - curr_pos_clipspace.xy, positions.y);',
+    'vec2 offset = getExtrusionOffset(next_pos_clipspace.xy - curr_pos_clipspace.xy, positions.y, widthPixels);',
     'vec2 offset = brushing_getExtrusionOffset(next_pos_clipspace.xy - curr_pos_clipspace.xy, positions.y, project_uViewportSize, instancePositions, instanceWidths);'
   );
 }

@@ -23,7 +23,7 @@ import {WebMercatorViewport} from 'deck.gl';
 export function hexagonToPolygonGeo({object}, properties, radius, mapState) {
   const viewport = new WebMercatorViewport(mapState);
 
-  const screenCenter = viewport.projectFlat(object.centroid);
+  const screenCenter = viewport.projectFlat(object.position);
   const {pixelsPerMeter} = viewport.getDistanceScales();
   const pixRadius = radius * pixelsPerMeter[0];
 

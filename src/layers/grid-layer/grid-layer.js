@@ -122,7 +122,6 @@ export default class GridLayer extends AggregationLayer {
 
         // render
         pickable: true,
-        lightSettings: this.meta && this.meta.lightSettings,
 
         // callbacks
         onSetColorDomain: layerCallbacks.onSetLayerDomain

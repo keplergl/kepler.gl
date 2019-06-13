@@ -18,39 +18,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {ScatterplotLayer} from 'deck.gl';
-import {Geometry, Model} from 'luma.gl';
-import GL from '@luma.gl/constants';
+import {ColumnLayer} from 'deck.gl';
+import {editShader} from 'deckgl-layers/layer-utils/shader-utils';
 
-export default class ScatterplotIconLayer extends ScatterplotLayer {
-  _getModel(gl) {
-    // use default scatterplot shaders
-    const shaders = this.getShaders();
-    const defaultPos = [-1, -1, 0, -1, 1, 0, 1, 1, 0, 1, -1, 0];
-    const {iconGeometry} = this.props;
+function addInstanceCoverage(vs) {
+  const addDecl = editShader(
+    vs,
+    'hexagon cell vs add instance',
+    'attribute vec3 instancePickingColors;',
+    `attribute vec3 instancePickingColors;
+     attribute float instanceCoverage;`
+  );
 
-    const geometry = iconGeometry
-      ? new Geometry({
-          drawMode: GL.TRIANGLES,
-          attributes: {
-            positions: new Float32Array(iconGeometry)
-          }
-        })
-      : new Geometry({
-          drawMode: GL.TRIANGLE_FAN,
-          attributes: {
-            positions: new Float32Array(defaultPos)
-          }
-        });
+  return editShader(
+    addDecl,
+    'hexagon cell vs add instance',
+    'float dotRadius = radius * coverage * shouldRender;',
+    'float dotRadius = radius * coverage * instanceCoverage * shouldRender;'
+  );
+}
 
-    return new Model(gl, {
+// TODO: export all dekc.gl layers from kepler.gl
+export default class EnhancedColumnLayer extends ColumnLayer {
+
+  getShaders() {
+    const shaders = super.getShaders();
+
+    return {
       ...shaders,
-      id: this.props.id,
-      geometry,
-      isInstanced: true,
-      shaderCache: this.context.shaderCache
+      vs: addInstanceCoverage(shaders.vs)
+    };
+  }
+
+  initializeState() {
+    super.initializeState();
+
+    this.getAttributeManager().addInstanced({
+      instanceCoverage: {size: 1, accessor: 'getCoverage'}
     });
   }
 }
 
-ScatterplotIconLayer.layerName = 'ScatterplotIconLayer';
+EnhancedColumnLayer.layerName = 'EnhancedColumnLayer';
