@@ -253,7 +253,7 @@ export default class HexagonIdLayer extends Layer {
     const {config} = this;
     const {visConfig} = config;
 
-    const updateTriggers = {
+    const h3HexagonLayerTriggers = {
       getColor: {
         color: config.color,
         colorField: config.colorField,
@@ -263,7 +263,10 @@ export default class HexagonIdLayer extends Layer {
       getElevation: {
         sizeField: config.sizeField,
         sizeRange: config.visConfig.sizeRange
-      },
+      }
+    };
+
+    const columnLayerTriggers = {
       getCoverage: {
         coverageField: config.coverageField,
         coverageRange: config.visConfig.coverageRange
@@ -297,11 +300,12 @@ export default class HexagonIdLayer extends Layer {
         opacity: visConfig.opacity,
 
         // render
-        updateTriggers,
+        updateTriggers: h3HexagonLayerTriggers,
         _subLayerProps: {
           'hexagon-cell': {
             type: EnhancedColumnLayer,
-            getCoverage: data.getCoverage
+            getCoverage: data.getCoverage,
+            updateTriggers: columnLayerTriggers
           }
         }
       }),
