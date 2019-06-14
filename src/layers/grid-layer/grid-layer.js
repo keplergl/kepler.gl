@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {GeoJsonLayer} from 'deck.gl';
+import {GeoJsonLayer, GridLayer as DeckGLGridLayer} from 'deck.gl';
 import AggregationLayer from '../aggregation-layer';
-import EnhancedGridLayer from 'deckgl-layers/grid-layer/enhanced-grid-layer';
+import EnhancedCPUGridLayer from 'deckgl-layers/grid-layer/enhanced-cpu-grid-layer';
 import {pointToPolygonGeo} from './grid-utils';
 import GridLayerIcon from './grid-layer-icon';
 import {HIGHLIGH_COLOR_3D} from 'constants/default-settings';
@@ -94,7 +94,7 @@ export default class GridLayer extends AggregationLayer {
     const cellSize = visConfig.worldUnitSize * 1000;
 
     return [
-      new EnhancedGridLayer({
+      new DeckGLGridLayer({
         ...data,
         ...layerInteraction,
         id: this.id,
@@ -124,7 +124,13 @@ export default class GridLayer extends AggregationLayer {
         pickable: true,
 
         // callbacks
-        onSetColorDomain: layerCallbacks.onSetLayerDomain
+        onSetColorDomain: layerCallbacks.onSetLayerDomain,
+
+        _subLayerProps: {
+          CPU: {
+            type: EnhancedCPUGridLayer
+          }
+        }
       }),
 
       // render an outline of each cell if not extruded

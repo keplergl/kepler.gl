@@ -18,19 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {GridLayer} from 'deck.gl';
+import {CPUGridLayer} from 'deck.gl';
 import {getColorValueDomain, getColorScaleFunction} from '../layer-utils/utils';
 
 const defaultProps = {
-  ...GridLayer.defaultProps,
+  ...CPUGridLayer.defaultProps,
   colorScale: 'quantile'
 };
 
-export default class EnhancedGridLayer extends GridLayer {
+export default class EnhancedCPUGridLayer extends CPUGridLayer {
   getDimensionUpdaters() {
     const dimensionUpdaters = super.getDimensionUpdaters();
     // add colorScale to dimension updates
-    dimensionUpdaters.getColor[1].triggers.push('colorScale');
+    dimensionUpdaters.getFillColor[1].triggers.push('colorScale');
     return dimensionUpdaters;
   }
 
@@ -48,5 +48,5 @@ export default class EnhancedGridLayer extends GridLayer {
 
 }
 
-EnhancedGridLayer.layerName = 'EnhancedGridLayer';
-EnhancedGridLayer.defaultProps = defaultProps;
+EnhancedCPUGridLayer.layerName = 'EnhancedGridLayer';
+EnhancedCPUGridLayer.defaultProps = defaultProps;
