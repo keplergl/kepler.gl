@@ -71,9 +71,9 @@ const StyledModalFooter = styled.div`
   justify-content: flex-end;
   padding-top: 24px;
   ${media.portable`
-    padding-top: 24px;  
+    padding-top: 24px;
   `};
-  
+
   ${media.palm`
     padding-top: 16px;
   `};
@@ -166,7 +166,7 @@ class ModalDialog extends Component {
         style={{
           overlay: {
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            zIndex: 10000,
+            zIndex: 1000,
             // in case we want to override the modal dialog style
             ...props.style
           }
@@ -206,16 +206,15 @@ class ModalDialog extends Component {
 const StyledModal = styled(ModalDialog)`
   top: 0;
   left: 0;
-  z-index: 10000;
   transition: ${props => props.theme.transition};
   padding-left: 40px;
-  padding-right: 40px; 
+  padding-right: 40px;
 
   ${media.portable`
     padding-left: 24px;
-    padding-right: 24px; 
+    padding-right: 24px;
   `};
-  
+
   ${media.palm`
     padding-left: 0;
     padding-right: 0;

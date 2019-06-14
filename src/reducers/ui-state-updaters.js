@@ -118,7 +118,8 @@ export const DEFAULT_EXPORT_IMAGE = {
   legend: false,
   // exporting state
   imageDataUri: '',
-  exporting: false
+  exporting: false,
+  error: false
 };
 
 /**
@@ -389,6 +390,15 @@ export const setExportImageDataUri = (state, {payload: dataUri}) => ({
   }
 });
 
+export const setExportImageError = (state, {payload: error}) => ({
+  ...state,
+  exportImage: {
+    ...state.exportImage,
+    exporting: false,
+    error
+  }
+});
+
 /**
  * Delete cached export image
  * @memberof uiStateUpdaters
@@ -401,7 +411,8 @@ export const cleanupExportImage = state => ({
   exportImage: {
     ...state.exportImage,
     exporting: false,
-    imageDataUri: ''
+    imageDataUri: '',
+    error: false
   }
 });
 

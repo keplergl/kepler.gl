@@ -267,7 +267,7 @@ export default class IconLayer extends Layer {
       ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
     };
 
-    return [
+    return !this.iconGeometry ? [] : [
       new SvgIconLayer({
         ...layerProps,
         ...data,

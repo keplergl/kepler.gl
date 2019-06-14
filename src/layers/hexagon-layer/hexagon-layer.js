@@ -107,7 +107,7 @@ export default class HexagonLayer extends AggregationLayer {
 
         // render
         pickable: true,
-        lightSettings: this.meta.lightSettings,
+
         // callbacks
         onSetColorDomain: layerCallbacks.onSetLayerDomain
       }),

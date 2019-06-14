@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {LineLayer} from 'deck.gl';
-import GL from 'luma.gl/constants';
+import GL from '@luma.gl/constants';
 import {editShader} from 'deckgl-layers/layer-utils/shader-utils';
 
 const defaultProps = {
@@ -29,7 +29,7 @@ const defaultProps = {
   // show arc if target is in brush
   brushTarget: true,
   enableBrushing: true,
-  getStrokeWidth: d => d.strokeWidth,
+  getWidth: d => d.strokeWidth,
   getTargetColor: x => x.color || [0, 0, 0, 255],
   strokeScale: 1,
 
@@ -49,7 +49,7 @@ function addBrushingVsShader(vs) {
   const brushingVs = editShader(
     targetColorVs,
     'line brushing vs',
-    'vec2 offset = getExtrusionOffset(target.xy - source.xy, positions.y);',
+    'vec2 offset = getExtrusionOffset(target.xy - source.xy, positions.y, widthPixels);',
     'vec2 offset = brushing_getExtrusionOffset(target.xy - source.xy, positions.y, project_uViewportSize, vec4(instanceSourcePositions.xy, instanceTargetPositions.xy), instanceWidths);'
   );
 

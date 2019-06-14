@@ -185,7 +185,7 @@ export default class ArcLayer extends Layer {
       getColor,
       getSourceColor: getColor,
       getTargetColor,
-      getStrokeWidth
+      getWidth: getStrokeWidth
     };
   }
   /* eslint-enable complexity */
@@ -261,7 +261,7 @@ export default class ArcLayer extends Layer {
         parameters: {depthTest: mapState.dragRotate},
 
         updateTriggers: {
-          getStrokeWidth: {
+          getWidth: {
             sizeField: this.config.sizeField,
             sizeRange: this.config.visConfig.sizeRange
           },
@@ -278,7 +278,7 @@ export default class ArcLayer extends Layer {
             strokeScale: this.config.visConfig.thickness,
             getSourceColor: this.config.highlightColor,
             getTargetColor: this.config.highlightColor,
-            getStrokeWidth: data.getStrokeWidth,
+            getWidth: data.getWidth,
             pickable: false
           })
         ]

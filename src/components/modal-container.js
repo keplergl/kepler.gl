@@ -301,16 +301,11 @@ export default function ModalContainerFactory(
             };
             break;
           case EXPORT_IMAGE_ID:
-            const { ratio, legend, resolution, exporting, imageDataUri } = uiState.exportImage;
             template = (
               <ExportImageModal
+                {...uiState.exportImage}
                 width={containerW}
                 height={containerH}
-                legend={legend}
-                ratio={ratio}
-                resolution={resolution}
-                exporting={exporting}
-                imageDataUri={imageDataUri}
                 onChangeRatio={this.props.uiStateActions.setRatio}
                 onChangeResolution={this.props.uiStateActions.setResolution}
                 onToggleLegend={this.props.uiStateActions.toggleLegend}
@@ -324,7 +319,7 @@ export default function ModalContainerFactory(
               onConfirm: this._onExportImage,
               confirmButton: {
                 large: true,
-                disabled: exporting,
+                disabled: uiState.exportImage.exporting,
                 children: 'Download'
               }
             };

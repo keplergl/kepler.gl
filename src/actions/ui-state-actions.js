@@ -165,6 +165,11 @@ export const setExportImageDataUri = createAction(
   dataUri => dataUri
 );
 
+export const setExportImageError = createAction(
+  ActionTypes.SET_EXPORT_IMAGE_ERROR,
+  error => error
+);
+
 /**
  * Delete cached export image
  * @memberof uiStateActions

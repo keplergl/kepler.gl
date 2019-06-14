@@ -347,8 +347,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           layers={deckGlLayers}
           onWebGLInitialized={this._onWebGLInitialized}
           onBeforeRender={this._onBeforeRender}
-          onLayerHover={visStateActions.onLayerHover}
-          onLayerClick={visStateActions.onLayerClick}
+          onHover={visStateActions.onLayerHover}
+          onClick={visStateActions.onLayerClick}
         />
       );
     }

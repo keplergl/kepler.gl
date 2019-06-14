@@ -99,7 +99,8 @@ export default class GeoJsonLayer extends Layer {
         domain: 'strokeColorDomain',
         range: 'strokeColorRange',
         key: 'strokeColor',
-        channelScaleType: CHANNEL_SCALES.color
+        channelScaleType: CHANNEL_SCALES.color,
+        condition: config => config.visConfig.stroked
       },
       size: {
         ...super.visualChannels.size,

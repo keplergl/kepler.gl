@@ -735,7 +735,7 @@ export default class LayerConfigurator extends Component {
               <SourceDataSelector
                 datasets={datasets}
                 id={layer.id}
-                disabled={layer.tyep && config.columns}
+                disabled={layer.type && config.columns}
                 dataId={config.dataId}
                 onSelect={value => updateLayerConfig({dataId: value})}
               />

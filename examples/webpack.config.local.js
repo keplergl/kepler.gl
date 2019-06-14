@@ -27,17 +27,22 @@
 
 // avoid destructuring for older Node version support
 const resolve = require('path').resolve;
+const join = require('path').join;
 const webpack = require('webpack');
+
 const LIB_DIR = resolve(__dirname, '..');
 const SRC_DIR = resolve(LIB_DIR, './src');
+
+const NODE_MODULES_DIR = resolve(__dirname, '../node_modules');
 
 const KeplerPackage = require('../package');
 
 // Support for hot reloading changes to the deck.gl library:
-function makeLocalDevConfig(EXAMPLE_DIR = LIB_DIR) {
+function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR) {
   return {
     // suppress warnings about bundle size
     devServer: {
+      historyApiFallback: true,
       stats: {
         warnings: false
       }
@@ -50,7 +55,34 @@ function makeLocalDevConfig(EXAMPLE_DIR = LIB_DIR) {
         // Imports kepler.gl library from the src directory in this repo
         'kepler.gl': SRC_DIR,
         react: resolve(EXAMPLE_DIR, './node_modules/react'),
-        'styled-components': resolve(EXAMPLE_DIR, './node_modules/styled-components')
+        'styled-components': resolve(
+          EXAMPLE_DIR,
+          './node_modules/styled-components'
+        ),
+        ...(env.deck
+          ? {
+              'luma.gl': `${NODE_MODULES_DIR}/luma.gl/src`,
+              '@luma.gl/constants': `${NODE_MODULES_DIR}/@luma.gl/constants/src`,
+              '@luma.gl/core': `${NODE_MODULES_DIR}/@luma.gl/core/src`,
+              '@luma.gl/debug': `${NODE_MODULES_DIR}/@luma.gl/debug/src`,
+              '@luma.gl/webgl': `${NODE_MODULES_DIR}/@luma.gl/webgl/src`,
+              '@luma.gl/webgl-state-tracker': `${NODE_MODULES_DIR}/@luma.gl/webgl-state-tracker/src`,
+              '@luma.gl/webgl2-polyfill': `${NODE_MODULES_DIR}/@luma.gl/webgl2-polyfill/src`,
+              '@luma.gl/shadertools': `${NODE_MODULES_DIR}/@luma.gl/shadertools/src`,
+              '@luma.gl/addons': `${NODE_MODULES_DIR}/@luma.gl/addons/src`,
+
+              'deck.gl': `${NODE_MODULES_DIR}/deck.gl/src`,
+              '@deck.gl/core': `${NODE_MODULES_DIR}/@deck.gl/core/src`,
+              '@deck.gl/layers': `${NODE_MODULES_DIR}/@deck.gl/layers/src`,
+              '@deck.gl/react': `${NODE_MODULES_DIR}/@deck.gl/react/src`,
+              '@deck.gl/mesh-layers': `${NODE_MODULES_DIR}/@deck.gl/mesh-layers/src`,
+
+              'probe.gl': `${NODE_MODULES_DIR}/probe.gl/src`,
+
+              '@loaders.gl/core': `${NODE_MODULES_DIR}/@loaders.gl/core/src`,
+              '@loaders.gl/gltf': `${NODE_MODULES_DIR}/@loaders.gl/gltf/src`
+            }
+          : {})
       }
     },
     module: {
@@ -60,10 +92,7 @@ function makeLocalDevConfig(EXAMPLE_DIR = LIB_DIR) {
           test: /\.js$/,
           use: ['source-map-loader'],
           enforce: 'pre',
-          exclude: [
-            /node_modules\/react-palm/,
-            /node_modules\/react-data-grid/
-          ]
+          exclude: [/node_modules\/react-palm/, /node_modules\/react-data-grid/]
         }
       ]
     },
@@ -78,108 +107,127 @@ function makeLocalDevConfig(EXAMPLE_DIR = LIB_DIR) {
   };
 }
 
-const BABEL_RULE = {
-  module: {
-    rules: [
-      {
-        // Compile source using bable
-        test: /\.js$/,
-        loader: 'babel-loader',
-        include: [SRC_DIR],
-        exclude: [/node_modules/],
-        options: {
-          presets: [
-            '@babel/preset-env',
-            '@babel/preset-react'
-          ],
-          plugins: [
-            ['@babel/plugin-proposal-decorators', {legacy: true}],
-            '@babel/plugin-proposal-class-properties',
-            ['@babel/transform-runtime', {
-              regenerator: true
-            }],
-            '@babel/plugin-syntax-dynamic-import',
-            '@babel/plugin-syntax-import-meta',
-            '@babel/plugin-proposal-json-strings',
-            '@babel/plugin-proposal-function-sent',
-            '@babel/plugin-proposal-export-namespace-from',
-            '@babel/plugin-proposal-numeric-separator',
-            '@babel/plugin-proposal-throw-expressions',
-            '@babel/plugin-proposal-export-default-from',
-            '@babel/plugin-proposal-logical-assignment-operators',
-            '@babel/plugin-proposal-optional-chaining',
-            [
-              '@babel/plugin-proposal-pipeline-operator',
-              {
-                proposal: 'minimal'
-              }
-            ],
-            '@babel/plugin-proposal-nullish-coalescing-operator',
-            '@babel/plugin-proposal-do-expressions',
-            '@babel/plugin-proposal-function-bind',
-            '@babel/plugin-transform-modules-commonjs',
-            [
-              'module-resolver',
-              {
-                root: [
-                  SRC_DIR
-                ]
-              }
-            ],
-            ['search-and-replace', {
-              rules: [
-                {
-                  search: '__PACKAGE_VERSION__',
-                  replace: KeplerPackage.version
-                }
-              ]
-            }]
+function makeBabelRule(env, exampleDir) {
+  return {
+    // Compile source using bable
+    test: /\.js$/,
+    loader: 'babel-loader',
+    include: [
+      ...(env.deck
+        ? [
+            `${NODE_MODULES_DIR}/@deck.gl`,
+            `${NODE_MODULES_DIR}/@luma.gl`,
+            `${NODE_MODULES_DIR}/@probe.gl`,
+            `${NODE_MODULES_DIR}/@loaders.gl`
           ]
-        }
-      }
-    ]
-  }
-};
+        : []),
+      join(exampleDir, 'src'),
+      SRC_DIR
+    ],
+    // do not exclude deck.gl and luma.gl when loading from root/node_modules
+    exclude: env.deck
+      ? [/node_modules\/(?!(@deck\.gl|@luma\.gl|@probe\.gl|@loaders\.gl)\/).*/]
+      : [/node_modules/],
+    options: {
+      presets: ['@babel/preset-env', '@babel/preset-react'],
+      plugins: [
+        ['@babel/plugin-proposal-decorators', {legacy: true}],
+        '@babel/plugin-proposal-class-properties',
+        [
+          '@babel/transform-runtime',
+          {
+            regenerator: true
+          }
+        ],
+        '@babel/plugin-syntax-dynamic-import',
+        '@babel/plugin-syntax-import-meta',
+        '@babel/plugin-proposal-json-strings',
+        '@babel/plugin-proposal-function-sent',
+        '@babel/plugin-proposal-export-namespace-from',
+        '@babel/plugin-proposal-numeric-separator',
+        '@babel/plugin-proposal-throw-expressions',
+        '@babel/plugin-proposal-export-default-from',
+        '@babel/plugin-proposal-logical-assignment-operators',
+        '@babel/plugin-proposal-optional-chaining',
+        [
+          '@babel/plugin-proposal-pipeline-operator',
+          {
+            proposal: 'minimal'
+          }
+        ],
+        '@babel/plugin-proposal-nullish-coalescing-operator',
+        '@babel/plugin-proposal-do-expressions',
+        '@babel/plugin-proposal-function-bind',
+        '@babel/plugin-transform-modules-commonjs',
+        [
+          'module-resolver',
+          {
+            root: [SRC_DIR]
+          }
+        ],
+        [
+          'search-and-replace',
+          {
+            rules: [
+              {
+                search: '__PACKAGE_VERSION__',
+                replace: KeplerPackage.version
+              }
+            ]
+          }
+        ]
+      ]
+    }
+  };
+}
 
-function addLocalDevSettings(sourceConfig, exampleDir) {
-  const LOCAL_DEV_CONFIG = makeLocalDevConfig(exampleDir);
-  const config = {...LOCAL_DEV_CONFIG, ...sourceConfig};
+/**
+ * Add local settings to load kepler/deck/luma from root node_modules
+ * Add source map loader
+ * Add Environment plugins
+ * @param {*} exampleConfig
+ * @param {*} exampleDir
+ */
+function addLocalDevSettings(env, exampleConfig, exampleDir) {
+  const localDevConfig = makeLocalDevConfig(env, exampleDir);
+  const config = {...exampleConfig, ...localDevConfig};
 
   config.resolve = config.resolve || {};
   config.resolve = {
     ...config.resolve,
     alias: {
-      ...(config.resolve ? config.resolve.alias : null),
-      ...LOCAL_DEV_CONFIG.resolve.alias
+      ...(config.resolve ? config.resolve.alias : {}),
+      ...localDevConfig.resolve.alias
     }
   };
 
   config.module = {
     ...config.module,
     rules: [
-      ...(config.module ? config.module.rules : null),
-      ...LOCAL_DEV_CONFIG.module.rules
+      ...(config.module ? config.module.rules : []),
+      ...localDevConfig.module.rules
     ]
   };
 
   return config;
 }
 
-function addBableSettings(config) {
+function addBableSettings(env, config, exampleDir) {
   return {
     ...config,
     module: {
       ...config.module,
       rules: [
-        ...config.module.rules,
-        ...BABEL_RULE.module.rules
+        ...config.module.rules.filter(r => r.loader !== 'babel-loader'),
+        makeBabelRule(env, exampleDir)
       ]
     }
   };
 }
 
-module.exports = (config, exampleDir) => env => {
-  config = addLocalDevSettings(config, exampleDir);
-  config = addBableSettings(config);
+module.exports = (exampleConfig, exampleDir) => env => {
+  let config = addLocalDevSettings(env, exampleConfig, exampleDir);
+  config = addBableSettings(env, config, exampleDir);
+
   return config;
 };

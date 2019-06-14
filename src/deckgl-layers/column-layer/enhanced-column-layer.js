@@ -18,7 +18,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-export const GITHUB_EXPORT_HTML_MAP = 'https://github.com/keplergl/kepler.gl/blob/master/docs/user-guides/k-save-and-export.md#2save-and-export-current-map';
-export const GITHUB_ADD_DATA_TO_MAP = 'https://github.com/keplergl/kepler.gl/blob/master/docs/api-reference/actions/actions.md#adddatatomap';
-export const MAPBOX_ACCESS_TOKEN = 'https://docs.mapbox.com/help/how-mapbox-works/access-tokens/';
-export const GITHUB_BUG_REPORT = 'https://github.com/keplergl/kepler.gl/issues/new?template=bug_report.md';
+import {ColumnLayer} from 'deck.gl';
+import {editShader} from 'deckgl-layers/layer-utils/shader-utils';
+
+function addInstanceCoverage(vs) {
+  const addDecl = editShader(
+    vs,
+    'hexagon cell vs add instance',
+    'attribute vec3 instancePickingColors;',
+    `attribute vec3 instancePickingColors;
+     attribute float instanceCoverage;`
+  );
+
+  return editShader(
+    addDecl,
+    'hexagon cell vs add instance',
+    'float dotRadius = radius * coverage * shouldRender;',
+    'float dotRadius = radius * coverage * instanceCoverage * shouldRender;'
+  );
+}
+
+// TODO: export all dekc.gl layers from kepler.gl
+export default class EnhancedColumnLayer extends ColumnLayer {
+
+  getShaders() {
+    const shaders = super.getShaders();
+
+    return {
+      ...shaders,
+      vs: addInstanceCoverage(shaders.vs)
+    };
+  }
+
+  initializeState() {
+    super.initializeState();
+
+    this.getAttributeManager().addInstanced({
+      instanceCoverage: {size: 1, accessor: 'getCoverage'}
+    });
+  }
+}
+
+EnhancedColumnLayer.layerName = 'EnhancedColumnLayer';
