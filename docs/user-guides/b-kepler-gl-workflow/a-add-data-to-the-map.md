@@ -7,7 +7,7 @@
 
 2. Choose one of two ways to add data to your map: upload a CSV/GeoJSON file or use one of Kepler.gl’s sample datasets. The sample datasets include California earthquakes, New York City taxi rides, and San Francisco elevation contour lines.
 
-3. Kepler.gl is a pure client side app. Data lives only on your machine/browser.  No information or maps is sent back up to our server.  
+3. Kepler.gl is a pure client side app. Data lives only on your machine/browser.  No information or maps is sent back up to our server.
 
 ## Upload CSV or GEOJSON Files
 
@@ -54,7 +54,7 @@ Check out some [sample datasets](https://github.com/uber-web/kepler.gl-data) for
 ```
 ### Load Map Using URL
 
-Based on the feedback that we have received, we make importing data easier by allowing users to load your map through custom URL. It currently supports URLs with file extension of csv, json and kepler.gl. 
+Based on the feedback that we have received, we make importing data easier by allowing users to load your map through custom URL. It currently supports URLs with file extension of `csv`, `json` and `kepler.gl.json`
 
 In addition, this also by-passes 250mb file upload size limit which allows you to upload larger file to Kepler.
 
@@ -62,7 +62,7 @@ In addition, this also by-passes 250mb file upload size limit which allows you t
 
 ### Use Kepler.gl’s Sample Maps
 
-The sample maps are a great option for new users to explore Kepler.gl and get a feel for how it works. 
+The sample maps are a great option for new users to explore Kepler.gl and get a feel for how it works.
 
 1. At the initial load prompt select “Try sample data” in the top right corner.
 

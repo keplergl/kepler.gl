@@ -45,3 +45,5 @@ Read about [base map styles](./f-map-styles/1-base-map-styles.md) and [map setti
 Save your map as an image, export current map data, export current map as a json file to be load back into kepler.gl.
 
 Read about [Save and export](./k-save-and-export.md).
+
+[Back to table of contents](./a-introduction.md)

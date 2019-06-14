@@ -1,22 +1,16 @@
 # Types of Layers
 
+## Single Feature Layers
+Single feature layers renders 1 feature
 ## Point
 
-![Point layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/c-point-layer.png "Point layer")
+![Point layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image34.png "Point layer")
 
-Point layers draw points for a given event or object.
-
-Layer Attributes: Color/ Color Based On, Opacity, Radius/ Radius Based On, Draw Outline, Text, Font Size, Font Color, Text Anchor, High Precision Rendering
-
-## Polygon
-
-![Polygon layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/c-polygon-layer.png "Polygon layer")
-
-Layer Attributes: Color, Fill, Stroke, Height, High Precision Rendering
+Point layers draw points for a given event or object based on its location - latitude and longitude.
 
 ## Arc
 
-![Arc layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/c-polygon-layer.png "Arc layer")
+![Arc layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/c-arc-layer.png "Arc layer")
 
 Arc layers draw an arc between two points. They’re useful for visualizing the distance between two points as well as comparing distances in 3D. Note that arc layers don’t show routes between points, but simply the distance between the two points. The tallest arc represents the greatest distance.
 
@@ -24,17 +18,25 @@ To draw arcs, your dataset must contain the latitude and longitude of two differ
 
 Layer Attributes: Color/ Color Based On, Opacity, Stroke Width/ Stroke Based On, High Precision Rendering
 
+## Line
+
+![Line layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/c-line-layer.png "Line layer")
+
+Line layers are the 2D version of arc layers. Both draw a line between two points to represent distance, but in a line layer, the drawing lies flat on the map.
+
+Layer Attributes: Color, Stroke, High Precision Rendering
+
 ## Hexbin
 
 ![Hexbin layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/c-hexbin-layer.png "Hexbin layer")
 
 Hexbin aggregates points into hexagons. The counts can be represented through color and/or height.
 
-Layer Attributes: Color/ Color Based On, Filter by Count Percentile, Opacity, Hexagon Radius (km), Coverage (Radius), Enable Height, Elevation Scale/ Height Based On, High Precision Rendering 
+Layer Attributes: Color/ Color Based On, Filter by Count Percentile, Opacity, Hexagon Radius (km), Coverage (Radius), Enable Height, Elevation Scale/ Height Based On, High Precision Rendering
 
 ## Heatmap
 
-![Heatmap layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/c-hexbin-layer.png "Heatmap layer")
+![Heatmap layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/c-heat-map.png "Heatmap layer")
 
 Heatmap is a graphical representation of data in which data values are represented as colors.
 
@@ -47,14 +49,6 @@ Layer Attributes: Color, Opacity, Radius, Weight
 Cluster layers visualize aggregated data based on a geospatial radius.
 
 Layer Attributes: Color, Cluster Size
-
-## Line
-
-![Line layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/c-line-layer.png "Line layer")
-
-Line layers are the 2D version of arc layers. Both draw a line between two points to represent distance, but in a line layer, the drawing lies flat on the map.
-
-Layer Attributes: Color, Stroke, High Precision Rendering
 
 ## Icon
 
@@ -82,6 +76,12 @@ Layer Attributes: Color, Radius, Height, High Precision Rendering
 ![GeoJSON layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image20.png "GeoJSON layer")
 ![Polygon geoJSON layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image7.png "Polygon geoJSON layer")
 
-GeoJSON layers can display either paths or polygons. For example, a path GeoJSON layer can display data like trip routes. A polygon GeoJSON layer is essentially a [choropleth](https://en.wikipedia.org/wiki/Choropleth_map) layer and works best for rendering geofences. To add a GeoJSON layer, your dataset must contain geometry data. 
+GeoJSON layers can display either paths, polygons or points. For example, a path GeoJSON layer can display data like trip routes. A polygon GeoJSON layer is essentially a [choropleth](https://en.wikipedia.org/wiki/Choropleth_map) layer and works best for rendering geofences. To add a GeoJSON layer, your dataset must contain geometry data.
 
+# H3
 
+![H3 layer - contour](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/c-h3-layer.png "H3 layer")
+
+H3 layers visualize spatial data using [H3 Hexagonal Hierarchical Spatial Index](https://eng.uber.com/h3/).
+
+To use H3 layer, you need a `hex_id` in your dataset, which can be generated using [h3-js](https://github.com/uber/h3-js) from latitude, longitude and resolution.
