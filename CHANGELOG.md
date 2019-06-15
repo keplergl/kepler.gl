@@ -14,6 +14,13 @@ Each version should:
   Security to invite users to upgrade in case of vulnerabilities.
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
+#### [1.1.0] - Jun 15 2019
+- Upgrade to deck.gl 7.1 (#559)
+- [Docs] update user documentation with newer layers and features (#552)
+- Upgrade to  deck.gl 7 and luma.gl 7 (#544)
+- [Bug] Display color legend for stroke color scale (#546)
+- [Enhancement] Image export error handling (#538)
+- [Bug] Fix typo on layer-configurator.js (#549)
 
 #### [1.0.0] - May 23 2019
 - [Enhancement] Detecting mapbox token validity (#513)
