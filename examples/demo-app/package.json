@@ -49,6 +49,8 @@
     "babel-loader": "^8.0.0",
     "babel-plugin-module-resolver": "^3.0.0",
     "babel-plugin-transform-builtin-extend": "^1.1.0",
+    "csv-loader": "^3.0.2",
+    "papaparse": "^5.0.0",
     "webpack": "^4.29.0",
     "webpack-cli": "^3.2.1",
     "webpack-dev-middleware": "^3.5.1",

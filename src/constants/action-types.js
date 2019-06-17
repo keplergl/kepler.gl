@@ -108,6 +108,7 @@ const ActionTypes = keyMirror({
 
   // uiState
   TOGGLE_SIDE_PANEL: null,
+  TOGGLE_FLOATING_PANEL: null,
   TOGGLE_MODAL: null,
   SHOW_EXPORT_DROPDOWN: null,
   HIDE_EXPORT_DROPDOWN: null,
@@ -134,6 +135,12 @@ const ActionTypes = keyMirror({
   // uiState > export map
   SET_EXPORT_MAP_FORMAT: null,
   SET_USER_MAPBOX_ACCESS_TOKEN: null,
+
+  // uistate > link data
+  SET_JOIN_DATASET: null,
+  START_JOIN_DATASET: null,
+  JOIN_DATASET_SUCCESS: null,
+  JOIN_DATASET_ERROR: null,
 
   // all
   INIT: null,

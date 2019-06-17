@@ -48,7 +48,7 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR) {
       }
     },
 
-    devtool: 'source-map',
+    devtool: 'inline-source-map',
 
     resolve: {
       alias: {
@@ -228,6 +228,6 @@ function addBableSettings(env, config, exampleDir) {
 module.exports = (exampleConfig, exampleDir) => env => {
   let config = addLocalDevSettings(env, exampleConfig, exampleDir);
   config = addBableSettings(env, config, exampleDir);
-
+  console.log(config);
   return config;
 };

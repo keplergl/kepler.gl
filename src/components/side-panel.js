@@ -29,6 +29,8 @@ import FilterManagerFactory from './side-panel/filter-manager';
 import InteractionManagerFactory from './side-panel/interaction-manager';
 import MapManagerFactory from './side-panel/map-manager';
 import PanelToggleFactory from './side-panel/panel-toggle';
+import FloatingPanelContainerFactory from './side-panel/floating-panel-container';
+import PanelTitleFactory from './side-panel/panel-title';
 
 import {
   ADD_DATA_ID,
@@ -43,17 +45,9 @@ import {
 const SidePanelContent = styled.div`
   ${props => props.theme.sidePanelScrollBar};
   flex-grow: 1;
-  padding: 16px;
+  padding: ${props => props.theme.sidePanelPadding}px;
   overflow-y: scroll;
   overflow-x: hidden;
-`;
-
-export const PanelTitleFactory = () => styled.div`
-  color: ${props => props.theme.titleTextColor};
-  font-size: 20px;
-  font-weight: 400;
-  letter-spacing: 1.25px;
-  margin-bottom: 14px;
 `;
 
 SidePanelFactory.deps = [
@@ -64,7 +58,8 @@ SidePanelFactory.deps = [
   LayerManagerFactory,
   FilterManagerFactory,
   InteractionManagerFactory,
-  MapManagerFactory
+  MapManagerFactory,
+  FloatingPanelContainerFactory
 ];
 
 /**
@@ -79,7 +74,8 @@ export default function SidePanelFactory(
   LayerManager,
   FilterManager,
   InteractionManager,
-  MapManager
+  MapManager,
+  FloatingPanelContainer
 ) {
 
   return class SidePanel extends PureComponent {
@@ -120,6 +116,7 @@ export default function SidePanelFactory(
       // this will show the modal dialog to confirm deletion
       this.props.uiStateActions.openDeleteModal(key);
     };
+    _onCloseFloatingPanel = () => this.props.uiStateActions.toggleFloatingPanel(null);
 
     _onExportImage = () => this.props.uiStateActions.toggleModal(EXPORT_IMAGE_ID);
 
@@ -211,9 +208,9 @@ export default function SidePanelFactory(
             />
             <SidePanelContent className="side-panel__content">
               <div>
-                <PanelTitle className="side-panel__content__title">
+                {activeSidePanel !== 'layer' && <PanelTitle className="side-panel__content__title">
                   {(PANELS.find(({id}) => id === activeSidePanel) || {}).label}
-                </PanelTitle>
+                </PanelTitle>}
                 {activeSidePanel === 'layer' && (
                   <LayerManager
                     {...layerManagerActions}
@@ -223,6 +220,7 @@ export default function SidePanelFactory(
                     layerOrder={layerOrder}
                     layerBlending={layerBlending}
                     openModal={uiStateActions.toggleModal}
+                    toggleFloatingPanel={uiStateActions.toggleFloatingPanel}
                   />
                 )}
                 {activeSidePanel === 'filter' && (
@@ -248,6 +246,15 @@ export default function SidePanelFactory(
               </div>
             </SidePanelContent>
           </Sidebar>
+          <FloatingPanelContainer
+            left={this.props.width}
+            datasets={datasets}
+            joinData={this.props.joinData}
+            setJoinDataset={visStateActions.setJoinDataset}
+            startJoinDataset={visStateActions.startJoinDataset}
+            activePanel={uiState.activeFloatingPanel}
+            onClose={this._onCloseFloatingPanel}
+          />
         </div>
       );
     }

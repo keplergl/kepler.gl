@@ -20,9 +20,12 @@
 
 import {hexToRgb} from './color-utils';
 import uniq from 'lodash.uniq';
-import {TRIP_POINT_FIELDS} from 'constants/default-settings';
+import {TRIP_POINT_FIELDS, ALL_FIELD_TYPES} from 'constants/default-settings';
 import {generateHashId} from './utils';
 import {validateInputData} from 'processors/data-processor';
+import {maybeToDate} from './data-utils';
+import keyBy from 'lodash.keyby';
+
 // apply a color for each dataset
 // to use as label colors
 const datasetColors = [
@@ -92,6 +95,7 @@ export function createNewDataEntry({info = {}, data}, datasets = {}) {
     tableFieldIndex: i + 1
   }));
 
+  const allIndexes = allData.map((_, i) => i);
   return {
     [dataId]: {
       ...datasetInfo,
@@ -100,8 +104,9 @@ export function createNewDataEntry({info = {}, data}, datasets = {}) {
       allData,
       // TODO: no need to make a copy anymore, only save fieldedIndex
       data: allData.slice(),
-      filteredIndex: allData.map((_, i) => i),
-      filteredIndexForDomain: allData.map((_, i) => i),
+      allIndexes,
+      filteredIndex: allIndexes,
+      filteredIndexForDomain: allIndexes,
       fieldPairs: findPointFieldPairs(fields),
       fields
     }
@@ -162,3 +167,115 @@ export function findPointFieldPairs(fields) {
     return carry;
   }, []);
 }
+
+export const readyToJoin = ({source, target}) =>
+  Boolean(source.id && source.field && target.id && target.field);
+
+export const joinTableLeft = (
+  sourceData,
+  targetData,
+  sourceField,
+  targetField,
+  indexBy
+) => {
+  console.time('join')
+  const [sourceFIdx, targetFIdx] = [
+    sourceField.tableFieldIndex - 1,
+    targetField.tableFieldIndex - 1
+  ];
+
+  let mappedValue = targetField.mappedValue;
+  let newMappedValue;
+  if (indexBy) {
+    const fieldIdx = indexBy.tableFieldIndex - 1;
+    const isTime = indexBy.type === ALL_FIELD_TYPES.timestamp;
+    const valueAccessor = maybeToDate.bind(
+      null,
+      isTime,
+      fieldIdx,
+      indexBy.format
+    );
+
+    if (!mappedValue) {
+      newMappedValue = mappedValue = targetData.allData.map(valueAccessor);
+    }
+  }
+
+  // hash map of source data
+  const sourceHashMap = keyBy(sourceData.allIndexes, si => sourceData.allData[si][sourceFIdx]);
+  const indexMap = new Array(sourceData.allData.length);
+  // iterate through targetData
+  for (let i = 0; i < targetData.allData.length; i++) {
+    const targetValue = targetData.allData[i][targetFIdx];
+    // find match in source table
+    const joinIdx = sourceHashMap[targetValue];
+    // if find match
+    if (joinIdx > -1) {
+      if (!indexBy) {
+        indexMap[joinIdx] = i;
+      } else {
+        indexMap[joinIdx] = indexMap[joinIdx] || {};
+        indexMap[joinIdx][mappedValue[i]] = i;
+      }
+    }
+  }
+
+  // console.timeEnd('join')
+  return {indexMap, mappedValue: newMappedValue};
+};
+
+export const joinTable = (state, joinData) => {
+  const {source, target, joinType} = joinData;
+  const {datasets} = state;
+  if (!readyToJoin({source, target})) {
+    // still not ready yet
+    return state;
+  }
+
+  const [sourceData, targetData] = [datasets[source.id], datasets[target.id]];
+  // indexMap: [sourceIdx -> targetIdx]
+  const {indexMap, mappedValue} = joinTableLeft(
+    sourceData,
+    targetData,
+    source.field,
+    target.field,
+    target.indexBy
+  );
+
+  let saveLinkToTarget = {
+    ...targetData,
+    joinSource: joinData.source
+  };
+
+  if (mappedValue) {
+    saveLinkToTarget = {
+      ...saveLinkToTarget,
+      fields: targetData.fields.map((f, i) => i === target.indexBy.tableFieldIndex - 1 ? {
+        ...f,
+        mappedValue
+      } : f)
+    }
+  }
+
+  const targetFieldsToAppend = targetData.fields
+    .filter(f => f.name !== target.field.name && f.name !== target.indexBy.name)
+    .map(f => ({...f, joinedFrom: targetData, indexBy: target.indexBy}));
+  // append targetFields
+  const saveFieldsToSource = {
+    ...sourceData,
+    fields: sourceData.fields.concat(targetFieldsToAppend)
+  }
+  const savedLinkToSource = {
+    ...saveFieldsToSource,
+    joinData: {
+      ...joinData,
+      indexMap
+    }
+  };
+
+  return {
+    ...state.datasets,
+    [source.id]: savedLinkToSource,
+    [target.id]: saveLinkToTarget
+  }
+};

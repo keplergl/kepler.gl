@@ -62,7 +62,7 @@ export const CenterFlexbox = styled.div`
 
 export const SpaceBetweenFlexbox = styled.div`
   display: flex;
-  align-items: space-between;
+  justify-content: space-between;
   margin-left: -16px;
 `
 export const SBFlexboxItem = styled.div`
@@ -79,6 +79,15 @@ export const PanelLabel = styled.label.attrs({
   font-weight: 400;
   margin-bottom: 4px;
   text-transform: capitalize;
+`;
+
+export const PanelSectionTitle = styled.div`
+  color: ${props => props.theme.textColor};
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 12px;
+  text-transform: capitalize;
+  letter-spacing: 0.2px;
 `;
 
 export const PanelLabelWrapper = styled.div.attrs({
@@ -263,12 +272,10 @@ export const StyledPanelHeader = styled.div`
       ? props.theme.panelBackgroundHover
       : props.theme.panelBackground};
   border-left: 3px solid
-    rgb(
       ${props =>
-        props.labelRCGColorValues
-          ? props.labelRCGColorValues.join(',')
-          : 'transparent'}
-    );
+        props.labelRBGColorValues
+          ? `rgb(${props.labelRBGColorValues.join(',')})`
+          : 'transparent'};
   padding: 0 10px 0 0;
   height: ${props => props.theme.panelHeaderHeight}px;
   display: flex;

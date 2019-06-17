@@ -46,7 +46,7 @@ const propTypes = {
   className: PropTypes.string,
   idx: PropTypes.number,
   isConfigActive: PropTypes.bool,
-  labelRCGColorValues: PropTypes.arrayOf(PropTypes.number),
+  labelRBGColorValues: PropTypes.arrayOf(PropTypes.number),
   onUpdateLayerLabel: PropTypes.func,
   onRemoveLayer: PropTypes.func
 };
@@ -127,7 +127,7 @@ const LayerPanelHeader = ({
   label,
   layerId,
   layerType,
-  labelRCGColorValues,
+  labelRBGColorValues,
   onToggleVisibility,
   onUpdateLayerLabel,
   onToggleEnableConfig,
@@ -139,7 +139,7 @@ const LayerPanelHeader = ({
       'sort--handle': !isConfigActive
     })}
     active={isConfigActive}
-    labelRCGColorValues={labelRCGColorValues}
+    labelRBGColorValues={labelRBGColorValues}
     onClick={onToggleEnableConfig}
   >
     <HeaderLabelSection className="layer-panel__header__content">

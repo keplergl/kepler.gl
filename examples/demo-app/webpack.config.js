@@ -57,6 +57,14 @@ const CONFIG = {
         test: /\.json$/,
         loader: 'json-loader',
         exclude: [/node_modules/]
+      },
+      {
+        test: /\.csv$/,
+        loader: 'csv-loader',
+        options: {
+          dynamicTyping: true,
+          header: true
+        }
       }
     ]
   },

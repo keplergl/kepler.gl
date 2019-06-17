@@ -28,6 +28,7 @@ import * as uiStateUpdaters from './ui-state-updaters';
  */
 const actionHandler = {
   [ActionTypes.TOGGLE_SIDE_PANEL]: uiStateUpdaters.toggleSidePanelUpdater,
+  [ActionTypes.TOGGLE_FLOATING_PANEL]: uiStateUpdaters.toggleFloatingPanelUpdater,
   [ActionTypes.TOGGLE_MODAL]: uiStateUpdaters.toggleModalUpdater,
   [ActionTypes.SHOW_EXPORT_DROPDOWN]: uiStateUpdaters.showExportDropdownUpdater,
   [ActionTypes.HIDE_EXPORT_DROPDOWN]: uiStateUpdaters.hideExportDropdownUpdater,
@@ -49,7 +50,9 @@ const actionHandler = {
   [ActionTypes.SET_EXPORT_FILTERED]: uiStateUpdaters.setExportFilteredUpdater,
   [ActionTypes.SET_EXPORT_DATA]: uiStateUpdaters.setExportDataUpdater,
   [ActionTypes.SET_USER_MAPBOX_ACCESS_TOKEN]: uiStateUpdaters.setUserMapboxAccessTokenUpdater,
-  [ActionTypes.SET_EXPORT_MAP_FORMAT]: uiStateUpdaters.setExportMapFormat
+  [ActionTypes.SET_EXPORT_MAP_FORMAT]: uiStateUpdaters.setExportMapFormat,
+
+  [ActionTypes.JOIN_DATASET_SUCCESS]: uiStateUpdaters.joinDatasetSuccessUpdater
 };
 
 /* Reducer */

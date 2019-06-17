@@ -85,6 +85,12 @@ const actionHandler = {
 
   [ActionTypes.UPDATE_LAYER_BLENDING]: visStateUpdaters.updateLayerBlendingUpdater,
 
+  // join data
+  [ActionTypes.SET_JOIN_DATASET]: visStateUpdaters.setJoinDatasetUpdater,
+  [ActionTypes.START_JOIN_DATASET]: visStateUpdaters.startJoinDatasetUpdater,
+  [ActionTypes.JOIN_DATASET_SUCCESS]: visStateUpdaters.joinDatasetSuccessUpdater,
+  [ActionTypes.JOIN_DATASET_ERROR]: visStateUpdaters.joinDatasetErrorUpdater,
+
   // currently not used
   // but may be useful if users import vis state reducer
   [ActionTypes.UPDATE_VIS_DATA]: visStateUpdaters.updateVisDataUpdater

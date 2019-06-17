@@ -20,6 +20,7 @@
 
 import {taskCreator} from 'react-palm/tasks';
 import {json as requestJson} from 'd3-request';
+import {joinTable} from 'utils/dataset-utils';
 
 export const LOAD_FILE_TASK = taskCreator(
   ({fileBlob, info, handler, processor}, success, error) =>
@@ -40,7 +41,7 @@ export const LOAD_FILE_TASK = taskCreator(
           success({datasets: {data: result, info}});
         }
       })
-      .catch(err => error(err)),
+      .catch(error),
 
   'LOAD_FILE_TASK'
 );
@@ -59,4 +60,16 @@ export const LOAD_MAP_STYLE_TASK = taskCreator(
     }),
 
   'LOAD_MAP_STYLE_TASK'
+);
+
+export const JOIN_DATA_TASK = taskCreator(
+  ({state, joinData}, success, error) =>
+  new Promise((resolve, reject) => {
+    console.log('in promise')
+    resolve(joinTable(state, joinData));
+  })
+    .then(success)
+    .catch(error),
+
+  'JOIN_DATA_TASK'
 );

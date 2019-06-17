@@ -21,24 +21,37 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
+import styled from 'styled-components';
 
 import ItemSelector from './item-selector/item-selector';
 import FieldToken from '../common/field-token';
 import {classList} from './item-selector/dropdown-list';
+import {DatasetSquare} from 'components/common/styled-components';
 
 const defaultDisplayOption = d => d.name;
+const StyledFieldListItem = styled.div`
+  display: flexbox;
+  justify-content: space-between;
+`;
 
 // custom list Item
 const FieldListItemFactory = showToken => {
   const FieldListItem = ({value, displayOption = defaultDisplayOption}) => (
-    <div>
+    <StyledFieldListItem>
+      <div className="field-list-item__content">
       {showToken ? (
         <div style={{display: 'inline-block', margin: '0 4px 0 0'}}>
+          {value.indexBy && <FieldToken type={value.indexBy.type} />}
+          {value.indexBy && <span className={classList.listItemAnchor}>x</span>}
           <FieldToken type={value.type} />
         </div>
       ) : null}
       <span className={classList.listItemAnchor}>{displayOption(value)}</span>
-    </div>
+      </div>
+      {value.joinedFrom && <div className="field-list-item__dataset">
+        <DatasetSquare className="dataset-color" color={value.joinedFrom.color} />
+      </div>}
+    </StyledFieldListItem>
   );
 
   return FieldListItem;

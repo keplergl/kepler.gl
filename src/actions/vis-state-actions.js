@@ -448,6 +448,47 @@ export function loadFilesErr(error) {
 }
 
 /**
+ * Set link dataset field, id, and indexBy
+ * @memberof visStateActions
+ * @public
+ */
+export function setJoinDataset(key, prop, value) {
+  return {
+    type: ActionTypes.SET_JOIN_DATASET,
+    key, prop, value
+  };
+};
+
+/**
+ *
+ */
+export function startJoinDataset() {
+  return {
+    type: ActionTypes.START_JOIN_DATASET
+  };
+};
+
+/**
+ *
+ */
+export function joinDatasetSuccess(datasets) {
+  return {
+    type: ActionTypes.JOIN_DATASET_SUCCESS,
+    datasets
+  };
+};
+
+/**
+ *
+ */
+export function joinDatasetError(err) {
+  return {
+    type: ActionTypes.JOIN_DATASET_ERROR,
+    err
+  };
+};
+
+/**
  * This declaration is needed to group actions in docs
  */
 /**

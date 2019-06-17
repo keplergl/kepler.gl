@@ -33,6 +33,14 @@ export const toggleSidePanel = createAction(
 );
 
 /**
+ *
+ */
+export const toggleFloatingPanel = createAction(
+  ActionTypes.TOGGLE_FLOATING_PANEL,
+  id => id
+);
+
+/**
  * Show and hide modal dialog
  * @memberof uiStateActions
  * @param {string|null} id - id of modal to be shown, null to hide modals. One of:

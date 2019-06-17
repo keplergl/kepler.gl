@@ -23,17 +23,12 @@ import styled from 'styled-components';
 import classnames from 'classnames';
 import Switch from 'components/common/switch';
 import {VertThreeDots} from 'components/common/icons';
+import {PanelSectionTitle} from 'components/common/styled-components';
 
-export const StyledLayerConfigGroupLabel = styled.div`
+export const StyledLayerConfigGroupLabel = styled(PanelSectionTitle)`
   border-left: 2px solid ${props => props.theme.labelColor};
-  color: ${props => props.theme.textColor};
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 12px;
   margin-left: -12px;
   padding-left: 10px;
-  text-transform: capitalize;
-  letter-spacing: 0.2px;
 `;
 
 export const StyledLayerConfigGroupAction = styled.div`

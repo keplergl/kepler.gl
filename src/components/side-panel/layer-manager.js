@@ -26,17 +26,19 @@ import {createSelector} from 'reselect';
 import arrayMove from 'array-move';
 
 import LayerPanelFactory from './layer-panel/layer-panel';
+import PanelTitleFactory from './panel-title';
 import SourceDataCatalogFactory from './source-data-catalog';
-import {Add} from 'components/common/icons';
+import {Add, Link} from 'components/common/icons';
 import ItemSelector from 'components/common/item-selector/item-selector';
 import {
   PanelLabel,
   SidePanelDivider,
   SidePanelSection,
-  Button
+  Button,
+  CenterFlexbox
 } from 'components/common/styled-components';
 
-import {LAYER_BLENDINGS} from 'constants/default-settings';
+import {LAYER_BLENDINGS, FLOATING_PANELS} from 'constants/default-settings';
 
 const StyledSortable = styled.div`
   .ui-sortable {
@@ -111,13 +113,32 @@ export function AddDataButtonFactory() {
   return AddDataButton;
 }
 
+export function JoinTableButtonFactory() {
+  const JoinTableButton = ({onClick, isInactive}) => (
+    <div style={{marginLeft: '12px'}}>
+    <Button
+      onClick={onClick}
+      isInactive={!isInactive}
+      width="105px"
+      secondary
+    >
+      <Link height="12px" />Link Data
+    </Button>
+    </div>
+  );
+
+  return JoinTableButton;
+}
+
 LayerManagerFactory.deps = [
   AddDataButtonFactory,
   LayerPanelFactory,
-  SourceDataCatalogFactory
+  SourceDataCatalogFactory,
+  JoinTableButtonFactory,
+  PanelTitleFactory
 ];
 
-function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
+function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog, JoinTableButton, PanelTitle) {
   // By wrapping layer panel using a sortable element we don't have to implement the drag and drop logic into the panel itself;
   // Developers can provide any layer panel implementation and it will still be sortable
   const SortableItem = sortableElement(({layer}) => {
@@ -149,7 +170,8 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
       removeDataset: PropTypes.func.isRequired,
       showDatasetTable: PropTypes.func.isRequired,
       updateLayerBlending: PropTypes.func.isRequired,
-      updateLayerOrder: PropTypes.func.isRequired
+      updateLayerOrder: PropTypes.func.isRequired,
+      toggleFloatingPanel: PropTypes.func.isRequired
     };
 
     layerClassSelector = props => props.layerClasses;
@@ -172,6 +194,9 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
       this.props.updateLayerOrder(arrayMove(this.props.layerOrder, oldIndex, newIndex));
     };
 
+    _onOpenJoinTablePanel = () => {
+      this.props.toggleFloatingPanel(FLOATING_PANELS.joinData);
+    };
     render() {
       const {layers, datasets, layerOrder, openModal} = this.props;
       const defaultDataset = Object.keys(datasets)[0];
@@ -190,17 +215,25 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
 
       return (
         <StyledSortable className="layer-manager">
+          <PanelTitle>Datasets</PanelTitle>
           <SourceDataCatalog
             datasets={datasets}
             showDatasetTable={this.props.showDatasetTable}
             removeDataset={this.props.removeDataset}
             showDeleteDataset
           />
-          <AddDataButton
-            onClick={this.props.showAddDataModal}
-            isInactive={!defaultDataset}
-          />
+          <CenterFlexbox>
+            <AddDataButton
+              onClick={this.props.showAddDataModal}
+              isInactive={!defaultDataset}
+            />
+            <JoinTableButton
+              onClick={this._onOpenJoinTablePanel}
+              isInactive={!defaultDataset}
+            />
+          </CenterFlexbox>
           <SidePanelDivider />
+          <PanelTitle>Layers</PanelTitle>
           <SidePanelSection>
             <SortableContainer
               onSortEnd={this._handleSort}

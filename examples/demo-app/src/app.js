@@ -52,6 +52,11 @@ import sampleH3Data from './data/sample-hex-id-csv';
 import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
 import {addDataToMap, addNotification} from 'kepler.gl/actions';
 import {processCsvData, processGeojson} from 'kepler.gl/processors';
+
+import timeTable from './data/pool_time_table';
+import roadJson from './data/sf_road_segments';
+// console.log(timeTable)
+// console.log(roadJson)
 /* eslint-enable no-unused-vars */
 
 const BannerHeight = 30;
@@ -119,7 +124,7 @@ class App extends Component {
     //   window.setTimeout(this._showBanner, 3000);
     // }
     // load sample data
-    // this._loadSampleData();
+    this._loadSampleData();
     // Notifications
     // this._loadMockNotifications();
   }
@@ -161,9 +166,31 @@ class App extends Component {
 
   _loadSampleData() {
     // this._loadTripData();
-    this._loadGeojsonData();
-    this._loadIconData();
+    // this._loadGeojsonData();
+    // this._loadIconData();
     // this._loadH3HexagonData();
+    this._loadTimeTable();
+  }
+
+  _loadTimeTable() {
+    this.props.dispatch(
+      addDataToMap({
+        datasets: [{
+          info: {
+            label: 'SF Road Segments',
+            id: 'sf_road_segments'
+          },
+          data: processGeojson(roadJson)
+        }, {
+          info: {
+            label: 'Speed Time Table',
+            id: 'speed_time_table'
+          },
+          data: processCsvData(timeTable)
+        }]
+
+      })
+    );
   }
 
   _loadTripData() {

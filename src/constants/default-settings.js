@@ -75,6 +75,10 @@ export const ADD_MAP_STYLE_ID = 'addMapStyle';
  */
 export const EXPORT_MAP_ID = 'exportMap';
 
+export const FLOATING_PANELS = keyMirror({
+  joinData: null
+});
+
 import {
   Layers,
   FilterFunnel,

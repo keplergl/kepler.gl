@@ -21,6 +21,7 @@
 import moment from 'moment';
 import assert from 'assert';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
+import {format} from 'd3-format';
 
 const MAX_LATITUDE = 90;
 const MIN_LATITUDE = -90;
@@ -108,6 +109,13 @@ export function getSampleData(data, sampleSize = 500) {
   return output;
 }
 
+/**
+ * Return
+ * @param {Boolean} isTime
+ * @param {Number} fieldIdx
+ * @param {string} format
+ * @param {Array} d
+ */
 export function maybeToDate(isTime, fieldIdx, format, d) {
   if (isTime) {
     if (notNullorUndefined(d[fieldIdx])) {
@@ -135,6 +143,8 @@ export function isPlainObject(obj) {
 export function numberSort(a, b) {
   return a - b;
 }
+
+export const numFormat = format(',');
 
 export function getSortingFunction(fieldType) {
   switch (fieldType) {

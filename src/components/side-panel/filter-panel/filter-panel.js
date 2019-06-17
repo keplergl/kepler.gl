@@ -107,7 +107,7 @@ function FilterPanelFactory() {
       return (
         <StyledFilterPanel className="filter-panel">
           <StyledFilterHeader className="filter-panel__header"
-            labelRCGColorValues={datasets[dataId].color}>
+            labelRBGColorValues={datasets[dataId].color}>
             <div style={{flexGrow: 1}}>
               <FieldSelector
                 inputTheme="secondary"

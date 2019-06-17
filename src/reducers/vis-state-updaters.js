@@ -22,11 +22,12 @@ import {console as Console} from 'global/window';
 import Task, {disableStackCapturing, withTask} from 'react-palm/tasks';
 
 // Tasks
-import {LOAD_FILE_TASK} from 'tasks/tasks';
+import {LOAD_FILE_TASK, JOIN_DATA_TASK} from 'tasks/tasks';
 
 // Actions
 import {loadFilesErr} from 'actions/vis-state-actions';
 import {addDataToMap} from 'actions';
+import {joinDatasetSuccess, joinDatasetError} from 'actions/vis-state-actions';
 
 // Utils
 import {
@@ -40,7 +41,7 @@ import {
   getDefaultFilterPlotType,
   filterData
 } from 'utils/filter-utils';
-import {createNewDataEntry} from 'utils/dataset-utils';
+import {createNewDataEntry, readyToJoin} from 'utils/dataset-utils';
 
 import {
   findDefaultLayer,
@@ -57,6 +58,22 @@ import {
 import {Layer, LayerClasses} from 'layers';
 import {processFileToLoad} from '/utils/file-utils';
 import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
+import {ALL_FIELD_TYPES} from 'constants/default-settings';
+
+export const DEFAULT_JOIN_DATA = {
+  source: {
+    id: null,
+    field: null
+  },
+  target: {
+    id: null,
+    field: null,
+    indexBy: null
+  },
+  join: 'left',
+  ready: false,
+  joining: false
+};
 
 // react-palm
 // disable capture exception for react-palm call to withTask
@@ -168,7 +185,9 @@ export const INITIAL_VIS_STATE = {
   ],
 
   // defaults layer classes
-  layerClasses: LayerClasses
+  layerClasses: LayerClasses,
+  // link data modal ui
+  joinData: DEFAULT_JOIN_DATA
 };
 
 function updateStateWithLayerAndData(state, {layerData, layer, idx}) {
@@ -944,6 +963,81 @@ export const toggleSplitMapUpdater = (state, action) =>
         splitMaps: computeSplitMapLayers(state.layers)
       }
     : closeSpecificMapAtIndex(state, action);
+
+export const startJoinDatasetUpdater = (state) => {
+  // const taskExecutor = () => joinTable(state, action.payload);
+  const {joinData} = state;
+  return withTask(
+    {
+      ...state,
+      joinData: {
+        ...joinData,
+        joining: true
+      }
+    },
+    JOIN_DATA_TASK({state, joinData}).
+    bimap(
+      joinDatasetSuccess,
+      joinDatasetError
+    )
+  );
+}
+
+/**
+ *
+ * @param {*} state
+ * @param {*} param1
+ */
+export const setJoinDatasetUpdater = (state, {key, prop, value}) => {
+  const updated = {
+    ...state.joinData,
+    [key]: {
+      ...state.joinData[key],
+      [prop]: value
+    }
+  };
+
+  if (prop === 'id') {
+    // auto detect field and ts
+    const {fields} = state.datasets[value];
+    const possibleFields = fields.find(f => ['id', 'uuid', 'name'].includes(f.name));
+    if (possibleFields) {
+      updated[key].field = possibleFields;
+    }
+  }
+  if (prop === 'id' && key === 'target') {
+    const {fields} = state.datasets[value];
+    const possibleTsField = fields.find(f => f.type === ALL_FIELD_TYPES.timestamp);
+    if (possibleTsField) {
+      updated[key].indexBy = possibleTsField;
+    }
+  }
+
+  return {
+    ...state,
+    joinData: {
+      ...updated,
+      ready: readyToJoin(updated)
+    }
+  };
+};
+
+export const joinDatasetSuccessUpdater = (state, {datasets}) => {
+  console.log('joinDatasetSuccessUpdater');
+  console.log(datasets);
+  return {
+    ...state,
+    datasets
+  }
+};
+
+export const joinDatasetErrorUpdater = (state, {err}) => {
+  console.warn(err);
+  return {
+    ...state,
+    joinData: DEFAULT_JOIN_DATA
+  }
+};
 
 /**
  * Set layers to be visible in split map

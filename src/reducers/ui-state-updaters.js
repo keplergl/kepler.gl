@@ -186,9 +186,11 @@ export const DEFAULT_EXPORT_MAP = {
 export const INITIAL_UI_STATE = {
   readOnly: false,
   activeSidePanel: DEFAULT_ACTIVE_SIDE_PANEL,
+  activeFloatingPanel: null,
   currentModal: DEFAULT_MODAL,
   datasetKeyToRemove: null,
   visibleDropdown: null,
+
   // export image modal ui
   exportImage: DEFAULT_EXPORT_IMAGE,
   // export data modal ui
@@ -219,6 +221,19 @@ export const toggleSidePanelUpdater = (state, {payload: id}) => {
   return {
     ...state,
     activeSidePanel: id
+  };
+};
+
+/**
+ *
+ * @param {*} state
+ * @param {*} param1
+ */
+export const toggleFloatingPanelUpdater = (state, {payload: id}) => {
+
+  return {
+    ...state,
+    activeFloatingPanel: id
   };
 };
 
@@ -416,6 +431,7 @@ export const cleanupExportImage = state => ({
   }
 });
 
+
 /**
  * Set selected dataset for export
  * @memberof uiStateUpdaters
@@ -541,3 +557,10 @@ export const removeNotificationUpdater = (state, {payload: id}) => ({
   ...state,
   notifications: state.notifications.filter(n => n.id !== id)
 });
+
+export const joinDatasetSuccessUpdater = (state) => {
+  return {
+    ...state,
+    activeFloatingPanel: null
+  };
+}
