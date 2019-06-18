@@ -23,9 +23,10 @@ import {ascending, extent, histogram as d3Histogram, ticks} from 'd3-array';
 import keyMirror from 'keymirror';
 
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
-import {maybeToDate, notNullorUndefined} from './data-utils';
+import {maybeToDate, notNullorUndefined, unique, clamp} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
 import {generateHashId} from './utils';
+import { getMode } from './aggregate-utils';
 
 export const TimestampStepMap = [
   {max: 1, step: 0.05},
@@ -139,6 +140,7 @@ export function getFilterProps(data, field) {
     ...getFieldDomain(data, field),
     fieldType: field.type
   };
+  console.log(filterProp)
 
   switch (field.type) {
     case ALL_FIELD_TYPES.real:
@@ -213,6 +215,29 @@ export function getFieldDomain(data, field) {
     default:
       return {domain: ScaleUtils.getOrdinalDomain(data, valueAccessor)};
   }
+}
+
+export function getTimeAnimationDomain(data, field) {
+  const {valueAccessor} = field;
+  let mappedValue = field.mappedValue;
+  let newMappedValue;
+  if (!mappedValue) {
+    newMappedValue = mappedValue = data.map(valueAccessor);
+  }
+  const timeSteps = unique(mappedValue).sort(ascending).filter(notNullorUndefined);
+  const step = getCommenStep(timeSteps);
+  const domain = [timeSteps[0], timeSteps[timeSteps.length - 1]];
+
+  // if taks 10 * 1000 ms to finish the entire animation
+  const duration = 10000 / timeSteps.length;
+  const clamped = clamp([100, 2000], duration);
+
+  return {domain, step, timeSteps, duration: clamped, newMappedValue};
+}
+
+export function getCommenStep(domain) {
+  const steps = domain.map((d, i) => i === 0 ? 0 : domain[i] - domain[i - 1]);
+  return Number(getMode(steps));
 }
 
 /**

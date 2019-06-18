@@ -276,29 +276,53 @@ export default class GeoJsonLayer extends Layer {
       this.getVisChannelScale(radiusScale, radiusDomain, radiusRange);
 
     // let sourceData = datasets[this.config.dataId];
-    const fieldValueAccessor = this.accessVSFieldValue(datasets, strokeColorField, 1481826206000);
+    const indexKey = this.config.animation ? this.config.animation.currentTime : null;
     const identity =  d => ({data: allData[d.properties.index], index: d.properties.index});
+    const duration = this.config.animation ? this.config.animation.duration : 500;
+
+    const strokeFieldColorValueAccessor = this.accessVSFieldValue(datasets, strokeColorField, indexKey);
     const getLineColor = scScale ?
       this.encodeChannelValue(
         scScale,
-        fieldValueAccessor,
+        strokeFieldColorValueAccessor,
         identity
-        // [0, 0, 0, 0],
-        // allData[d.properties.index],
-        // strokeColorField
       ) : d => d.properties.lineColor || strokeColor || color;
 
+    const fillColorFieldValueAccessor = this.accessVSFieldValue(datasets, colorField, indexKey);
+    const getFillColor = cScale ?
+      this.encodeChannelValue(
+        cScale,
+        fillColorFieldValueAccessor,
+        identity
+      ) : d => d.properties.fillColor || color;
+
+    const elevationFieldValueAccessor = this.accessVSFieldValue(datasets, heightField, indexKey);
+    const getElevation =  eScale ?
+      this.encodeChannelValue(
+        eScale,
+        elevationFieldValueAccessor,
+        identity,
+        0
+      ): d => d.properties.elevation || 500;
+
+    const transitions = {
+      getLineColor: {
+        duration
+        // easing: d3.easeCubicInOut,
+        // enter: value => [value[0], value[1], value[2], 0] // fade in
+      },
+      getFillColor: {
+        duration
+      },
+      getElevation: {
+        duration
+      }
+    }
     return {
       data: geojsonData,
       getFeature,
-      getFillColor: d =>
-        cScale
-          ? this.getEncodedChannelValue(
-              cScale,
-              allData[d.properties.index],
-              colorField
-            )
-          : d.properties.fillColor || color,
+      transitions,
+      getFillColor,
       getLineColor,
       getLineWidth: d =>
         sScale
@@ -309,15 +333,7 @@ export default class GeoJsonLayer extends Layer {
               0
             )
           : d.properties.lineWidth || 1,
-      getElevation: d =>
-        eScale
-          ? this.getEncodedChannelValue(
-              eScale,
-              allData[d.properties.index],
-              heightField,
-              0
-            )
-          : d.properties.elevation || 500,
+      getElevation,
       getRadius: d =>
         rScale
           ? this.getEncodedChannelValue(
@@ -408,19 +424,22 @@ export default class GeoJsonLayer extends Layer {
       getElevation: {
         heightField: this.config.heightField,
         heightScale: this.config.heightScale,
-        heightRange: visConfig.heightRange
+        heightRange: visConfig.heightRange,
+        currentTime: this.config.animation && this.config.animation.currentTime
       },
       getFillColor: {
         color: this.config.color,
         colorField: this.config.colorField,
         colorRange: visConfig.colorRange,
-        colorScale: this.config.colorScale
+        colorScale: this.config.colorScale,
+        currentTime: this.config.animation && this.config.animation.currentTime
       },
       getLineColor: {
         color: visConfig.strokeColor,
         colorField: this.config.strokeColorField,
         colorRange: visConfig.strokeColorRange,
-        colorScale: this.config.strokeColorScale
+        colorScale: this.config.strokeColorScale,
+        currentTime: this.config.animation && this.config.animation.currentTime
       },
       getLineWidth: {
         sizeField: this.config.sizeField,
@@ -438,6 +457,7 @@ export default class GeoJsonLayer extends Layer {
         id: this.id,
         idx,
         data: data.data,
+        transitions: data.transitions,
         getFillColor: data.getFillColor,
         getLineColor: data.getLineColor,
         getLineWidth: data.getLineWidth,

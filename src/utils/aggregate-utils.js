@@ -26,7 +26,7 @@ const getFrenquency = data => data.reduce((uniques, val) => {
   return uniques;
 }, {});
 
-function getMode(data) {
+export function getMode(data) {
   const occur = getFrenquency(data);
   return Object.keys(occur).reduce((prev, key) =>
     occur[prev] >= occur[key] ? prev : key, Object.keys(occur)[0]);

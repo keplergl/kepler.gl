@@ -169,7 +169,7 @@ class App extends Component {
     // this._loadGeojsonData();
     // this._loadIconData();
     // this._loadH3HexagonData();
-    this._loadTimeTable();
+    // this._loadTimeTable();
   }
 
   _loadTimeTable() {

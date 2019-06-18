@@ -269,7 +269,7 @@ export const joinTable = (state, joinData) => {
   }
   const savedLinkToSource = {
     ...saveFieldsToSource,
-    joinedWith: pick(sourceData, ['id', 'label', 'color']),
+    joinTarget: pick(targetData, ['id', 'label', 'color']),
     joinData: {
       ...joinData,
       indexMap

@@ -18,8 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {Component} from 'react';
 import styled from 'styled-components';
+import {createSelector} from 'reselect';
 
 import {
   SidePanelSection,
@@ -140,7 +141,8 @@ const StyledDatasetItem = styled(SidePanelSection)`
 
   :after {
     content: '';
-    border-left: 1px solid ${props => props.isSource ? 'white' : 'transparent'};
+    border-left: 1px solid
+      ${props => (props.isSource ? 'white' : 'transparent')};
     height: 22px;
     left: 3px;
     top: 22px;
@@ -149,59 +151,83 @@ const StyledDatasetItem = styled(SidePanelSection)`
 `;
 
 function SourceDataCatalogFactory() {
-  const SourceDataCatalog = ({
-    datasets,
-    showDatasetTable,
-    removeDataset,
-    showDeleteDataset = false
-  }) => (
-    <SourceDataCatelogWrapper className="source-data-catalog">
-      {Object.values(datasets).map((dataset, index) => (
-        <StyledDatasetItem key={dataset.id} isSource={dataset.joinData}>
-          {dataset.joinSource && (
-            <StyledLinkIcon>
-              <Link height="18px" />
-            </StyledLinkIcon>
-          )}
-          <div>
-            <DatasetTitle
-              className="source-data-title"
-              clickable={Boolean(showDatasetTable)}
-            >
-              <DatasetTag
-                dataset={dataset}
-                onClick={
-                  showDatasetTable ? () => showDatasetTable(dataset.id) : null
-                }
-              />
-              {showDatasetTable ? (
-                <CenterFlexbox className="source-data-arrow">
-                  <ArrowRight height="12px" />
-                </CenterFlexbox>
-              ) : null}
-              {showDatasetTable ? (
-                <ShowDataTable
-                  id={dataset.id}
-                  showDatasetTable={showDatasetTable}
-                />
-              ) : null}
-              {showDeleteDataset ? (
-                <RemoveDataset
-                  datasetKey={dataset.id}
-                  removeDataset={removeDataset}
-                />
-              ) : null}
-            </DatasetTitle>
-            {showDatasetTable ? (
-              <DataRowCount className="source-data-rows">{`${numFormat(
-                dataset.allData.length
-              )} rows`}</DataRowCount>
-            ) : null}
-          </div>
-        </StyledDatasetItem>
-      ))}
-    </SourceDataCatelogWrapper>
-  );
+  class SourceDataCatalog extends Component {
+    datasetsSelector = props => props.datasets;
+    selectedDatasets = createSelector(
+      this.datasetsSelector,
+      datasets => {
+        const ordered = [];
+        Object.values(datasets).forEach(dataset => {
+          const isSource = dataset.joinData || !dataset.joinSource;
+          if (isSource) {
+            ordered.push(dataset)
+          }
+          if (dataset.joinData) {
+            ordered.push(datasets[dataset.joinTarget.id])
+          }
+        });
+        return ordered;
+      }
+    )
+    render() {
+      const {
+        showDatasetTable,
+        removeDataset,
+        showDeleteDataset = false
+      } = this.props;
+      const ordered = this.selectedDatasets(this.props);
+      return (
+        <SourceDataCatelogWrapper className="source-data-catalog">
+          {ordered.map((dataset, index) => (
+            <StyledDatasetItem key={dataset.id} isSource={dataset.joinData}>
+              {dataset.joinSource && (
+                <StyledLinkIcon>
+                  <Link height="18px" />
+                </StyledLinkIcon>
+              )}
+              <div>
+                <DatasetTitle
+                  className="source-data-title"
+                  clickable={Boolean(showDatasetTable)}
+                >
+                  <DatasetTag
+                    dataset={dataset}
+                    onClick={
+                      showDatasetTable
+                        ? () => showDatasetTable(dataset.id)
+                        : null
+                    }
+                  />
+                  {showDatasetTable ? (
+                    <CenterFlexbox className="source-data-arrow">
+                      <ArrowRight height="12px" />
+                    </CenterFlexbox>
+                  ) : null}
+                  {showDatasetTable ? (
+                    <ShowDataTable
+                      id={dataset.id}
+                      showDatasetTable={showDatasetTable}
+                    />
+                  ) : null}
+                  {showDeleteDataset ? (
+                    <RemoveDataset
+                      datasetKey={dataset.id}
+                      removeDataset={removeDataset}
+                    />
+                  ) : null}
+                </DatasetTitle>
+                {showDatasetTable ? (
+                  <DataRowCount className="source-data-rows">{`${numFormat(
+                    dataset.allData.length
+                  )} rows`}</DataRowCount>
+                ) : null}
+              </div>
+            </StyledDatasetItem>
+          ))}
+        </SourceDataCatelogWrapper>
+      );
+    }
+  }
 
   return SourceDataCatalog;
 }

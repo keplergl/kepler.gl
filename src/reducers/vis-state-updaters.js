@@ -236,6 +236,27 @@ export function layerConfigChangeUpdater(state, action) {
   return updateStateWithLayerAndData(newState, {layer: newLayer, idx});
 }
 
+export function layerAnimationChangeUpdater(state, action) {
+  const {oldLayer, prop, value} = action;
+  const idx = state.layers.findIndex(l => l.id === oldLayer.id);
+
+  const newLayer = oldLayer.updateLayerConfig({
+    animation: {
+      ...oldLayer.config.animation,
+      [prop]: value
+    }
+  });
+
+  const {layerData, layer} = calculateLayerData(
+    newLayer,
+    state,
+    state.layerData[idx],
+    {sameData: true}
+  );
+
+  return updateStateWithLayerAndData(state, {layerData, layer, idx});
+}
+
 function addOrRemoveTextLabels(newFields, textLabel) {
   let newTextLabel = textLabel.slice();
 

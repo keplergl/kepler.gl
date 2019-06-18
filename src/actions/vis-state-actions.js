@@ -37,6 +37,14 @@ export function layerConfigChange(oldLayer, newConfig) {
   };
 }
 
+export function layerAnimationChange(oldLayer, prop, value) {
+  return {
+    type: ActionTypes.LAYER_ANIMATION_CHANGE,
+    oldLayer,
+    prop,
+    value
+  };
+}
 /**
  * Update layer text label
  * @memberof visStateActions

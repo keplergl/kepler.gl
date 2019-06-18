@@ -94,13 +94,72 @@ const TimeDisplay = styled.div`
     font-weight: 400;
   }
 `
+// const speed = 100;
 
 const AnimationControlFactory = () => {
   class AnimationControl extends Component{
+    constructor(props) {
+      super(props);
+      this.state = {
+        isAnimating: false,
+        width: 288
+      };
+      this._animation = null;
+      this._currentStep = 0;
+      this._isAnimating = false;
+    }
+
     domainSelector = props => props.animation.domain.domain;
     titleFormatter = createSelector(this.domainSelector, domain =>
       getTimeWidgetTitleFormatter(domain)
     );
+
+    onSlider1Change = (val) => {
+      this.props.layerAnimationChange(this.props.layer, 'currentTime', val);
+    };
+
+    onSlider0Change = (val) => {
+      return;
+    };
+
+    _resetAnimation = () => {
+      // const {domain, value} = this.props;
+      // const value0 = domain[0];
+      // const value1 = value0 + value[1] - value[0];
+      // this.props.onChange([value0, value1]);
+      
+      this._currentStep = -1;
+      this._startAnimation();
+    };
+
+    _startAnimation = () => {
+      const {duration} = this.props.animation;
+      this._pauseAnimation();
+      // this.props.toggleAnimation();
+      this.setState({isAnimating: true});
+      this._isAnimating = true;
+      this._animation = window.setInterval(this._nextFrame.bind(this), duration);
+    };
+
+    _nextFrame = () => {
+      const {timeSteps} = this.props.animation.domain;
+      this._currentStep += 1;
+      this._currentStep = this._currentStep > timeSteps.length - 1 ? 0 :  this._currentStep;
+      const nextTimeStep = timeSteps[this._currentStep];
+      // console.log(nextTimeStep)
+      this.onSlider1Change(nextTimeStep);
+    }
+
+    _pauseAnimation = () => {
+      if (this._animation) {
+        // cancelAnimationFrame(this._animation);
+        // this.props.toggleAnimation();
+        window.clearInterval(this._animation);
+        this._animation = null;
+        this._isAnimating = false;
+      }
+      this.setState({isAnimating: false});
+    };
 
     render() {
       const {animation, width, sliderHandleWidth, onChange} = this.props;
@@ -111,7 +170,12 @@ const AnimationControlFactory = () => {
       return (
         <WidgetContainer width={width}>
           <AnimationWidgetInner className="animation-widget--inner">
-            <AnimationControls/>
+            <AnimationControls
+              startAnimation={this._startAnimation}
+              isAnimating={this.state.isAnimating}
+              pauseAnimation={this._pauseAnimation}
+              resetAnimation={this._resetAnimation}
+            />
             <SliderWrapper
               className="kg-animation-control__slider">
               {/*<TimeSliderMarker width={plotWidth - 64} top={8} domain={domain.domain}/>*/}
@@ -123,8 +187,8 @@ const AnimationControlFactory = () => {
                 value0={domain.domain[0]}
                 value1={currentTime}
                 step={domain.step}
-                onSlider0Change={() => {}}
-                onSlider1Change={this.props.onChange}
+                onSlider0Change={this.onSlider0Change}
+                onSlider1Change={this.onSlider1Change}
               />
             </SliderWrapper>
             <TimeDisplay>

@@ -50,7 +50,7 @@ import {
   getOrdinalDomain,
   getLinearDomain
 } from 'utils/data-scale-utils';
-import { getFieldDomain } from 'utils/filter-utils';
+import { getFieldDomain, getTimeAnimationDomain } from 'utils/filter-utils';
 
 /**
  * Approx. number of points to sample in a large data set
@@ -629,19 +629,6 @@ export default class Layer {
       const dataRow = getDataRow(d);
       return dataRow ? field.valueAccessor(dataRow) : null;
     }
-      // const {data, index} = d;
-      // return field.valueAccessor(getDataRow(d));
-      // if (field.joinedFrom) {
-
-      //   const targetRowIdx =  field.indexBy ?
-      //     sourceData.indexMap[index][indexKey] : sourceData.indexMap[index];
-      //   const targetRow = targetData[targetRowIdx];
-
-      //   return field.valueAccessor(targetRow);
-      // }
-
-      // return field.valueAccessor(data);
-    // }
   }
 
   encodeChannelValue(
@@ -787,15 +774,15 @@ export default class Layer {
     const field = this.config[this.visualChannels[channel].field];
     if (field && field.indexBy && field.indexBy.type === ALL_FIELD_TYPES.timestamp) {
       const datasetId = field.joinedFrom ? field.joinedFrom.id : this.config.dataId;
-
-      const timeDomain = getFieldDomain(
-        datasets[datasetId].allData, field.indexBy
-      )
+      const timeDomain = getTimeAnimationDomain(datasets[datasetId].allData, field.indexBy)
       console.log(timeDomain)
       this.updateLayerConfig({
         animation: {
           domain: timeDomain,
-          currentTime: timeDomain[0]
+          // duration: timeDomain.duration,
+          duration: 1000,
+          // speed: 1000,
+          currentTime: timeDomain.domain[0]
         }
       });
 

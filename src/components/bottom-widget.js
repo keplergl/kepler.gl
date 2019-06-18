@@ -55,28 +55,30 @@ export default function BottomWidgetFactory(TimeWidget, AnimationControl) {
     const isAnyFilterAnimating = filters.some(f => f.isAnimating);
     const enlargedFilterWidth = isOpen ? containerW - sidePanelWidth : containerW;
 
-    // const animatedLayer = layers.find(l => l.config.animation);
-    // if (enlargedFilterIdx < 0 && !animatedLayer) {
-    //   return null;
+    const animatedLayer = layers.find(l => l.config.animation);
+    if (enlargedFilterIdx < 0 && !animatedLayer) {
+      return null;
+    }
+
+    // const animatedLayer = {
+    //   config: {
+    //     animation: {
+    //       domain: {
+    //         domain: [1481817725000, 1481833378000],
+    //         step: 1000
+    //       },
+    //       currentTime: 1481817725000
+    //     }
+    //   }
     // }
 
-    const animatedLayer = {
-      config: {
-        animation: {
-          domain: {
-            domain: [1481817725000, 1481833378000],
-            step: 1000
-          },
-          currentTime: 1481817725000
-        }
-      }
-    }
     return (
       animatedLayer ?
       <AnimationControl
         animation={animatedLayer.config.animation}
         width={Math.min(maxWidth, enlargedFilterWidth)}
-        onChange={() => {}}
+        layer={animatedLayer}
+        layerAnimationChange={visStateActions.layerAnimationChange}
       /> :
       <TimeWidget
         fields={datasets[filters[enlargedFilterIdx].dataId].fields}

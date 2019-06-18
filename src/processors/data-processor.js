@@ -368,9 +368,11 @@ export function processRowObject(rawData) {
   const rows = rawData.map(d => keys.map(key => d[key]));
   const fields = getFieldsFromData(rawData, keys);
 
+  const parsedRows = parseCsvByFields(rows, fields);
+
   return {
     fields,
-    rows
+    rows: parsedRows
   };
 }
 

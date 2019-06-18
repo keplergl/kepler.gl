@@ -39,6 +39,8 @@ const actionHandler = {
 
   [ActionTypes.LAYER_CONFIG_CHANGE]: visStateUpdaters.layerConfigChangeUpdater,
 
+  [ActionTypes.LAYER_ANIMATION_CHANGE]: visStateUpdaters.layerAnimationChangeUpdater,
+
   [ActionTypes.LAYER_HOVER]: visStateUpdaters.layerHoverUpdater,
 
   [ActionTypes.LAYER_TYPE_CHANGE]: visStateUpdaters.layerTypeChangeUpdater,

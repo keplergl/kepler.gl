@@ -181,7 +181,8 @@ export default class PointLayer extends Layer {
 
   // TODO: fix complexity
   /* eslint-disable complexity */
-  formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
+  formatLayerData(datasets, oldLayerData, opt = {}) {
+
     const {
       colorScale,
       colorDomain,
@@ -202,6 +203,7 @@ export default class PointLayer extends Layer {
         strokeColor
       }
     } = this.config;
+    const {allData, filteredIndex} = datasets[this.config.dataId];
 
     // fill color
     const cScale =
