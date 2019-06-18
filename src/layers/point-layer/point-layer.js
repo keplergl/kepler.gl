@@ -251,7 +251,8 @@ export default class PointLayer extends Layer {
         }
 
         accu.push({
-          data: allData[index]
+          data: allData[index],
+          index
         });
 
         return accu;

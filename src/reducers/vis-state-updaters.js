@@ -369,12 +369,12 @@ export function layerTypeChangeUpdater(state, action) {
  */
 export function layerVisualChannelChangeUpdater(state, action) {
   const {oldLayer, newConfig, channel} = action;
-  const dataset = state.datasets[oldLayer.config.dataId];
-
+  // const dataset = state.datasets[oldLayer.config.dataId];
+  console.log(newConfig)
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
   const newLayer = oldLayer.updateLayerConfig(newConfig);
 
-  newLayer.updateLayerVisualChannel(dataset, channel);
+  newLayer.updateLayerVisualChannel(state.datasets, channel, newConfig);
 
   const oldLayerData = state.layerData[idx];
   const {layerData, layer} = calculateLayerData(newLayer, state, oldLayerData, {

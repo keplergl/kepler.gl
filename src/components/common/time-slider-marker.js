@@ -29,7 +29,7 @@ import styled from 'styled-components';
 const TimeSliderContainer = styled.svg`
   pointer-events: none;
   position: absolute;
-  top: 0;
+  /* top: 0; */
   .axis text {
     font-size: 9px;
     fill: ${props => props.theme.textColor};
@@ -114,6 +114,7 @@ export default class TimeSliderMarker extends Component {
       <TimeSliderContainer
         className="time-slider-marker"
         width={this.props.width}
+        style={{top: `${this.props.top || 0}px`}}
         height={height}
         ref={comp => {
           this.svgContainer = comp;

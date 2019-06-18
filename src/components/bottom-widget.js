@@ -21,6 +21,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import TimeWidgetFactory from './filters/time-widget';
+import AnimationControlFactory from 'components/common/animation-control/animation-slider';
 
 const propTypes = {
   filters: PropTypes.arrayOf(PropTypes.object),
@@ -33,14 +34,15 @@ const propTypes = {
 
 const maxWidth = 1080;
 
-BottomWidgetFactory.deps = [TimeWidgetFactory];
+BottomWidgetFactory.deps = [TimeWidgetFactory, AnimationControlFactory];
 
-export default function BottomWidgetFactory(TimeWidget) {
+export default function BottomWidgetFactory(TimeWidget, AnimationControl) {
 
   const BottomWidget = (props) => {
     const {
       datasets,
       filters,
+      layers,
       visStateActions,
       containerW,
       uiState,
@@ -53,11 +55,29 @@ export default function BottomWidgetFactory(TimeWidget) {
     const isAnyFilterAnimating = filters.some(f => f.isAnimating);
     const enlargedFilterWidth = isOpen ? containerW - sidePanelWidth : containerW;
 
-    if (enlargedFilterIdx < 0) {
-      return null;
-    }
+    // const animatedLayer = layers.find(l => l.config.animation);
+    // if (enlargedFilterIdx < 0 && !animatedLayer) {
+    //   return null;
+    // }
 
+    const animatedLayer = {
+      config: {
+        animation: {
+          domain: {
+            domain: [1481817725000, 1481833378000],
+            step: 1000
+          },
+          currentTime: 1481817725000
+        }
+      }
+    }
     return (
+      animatedLayer ?
+      <AnimationControl
+        animation={animatedLayer.config.animation}
+        width={Math.min(maxWidth, enlargedFilterWidth)}
+        onChange={() => {}}
+      /> :
       <TimeWidget
         fields={datasets[filters[enlargedFilterIdx].dataId].fields}
         setFilterPlot={visStateActions.setFilterPlot}
@@ -70,6 +90,7 @@ export default function BottomWidgetFactory(TimeWidget) {
         enlargedIdx={enlargedFilterIdx}
         filter={filters[enlargedFilterIdx]}
       />
+
     );
   }
 

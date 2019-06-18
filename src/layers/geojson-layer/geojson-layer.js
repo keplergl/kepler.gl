@@ -182,7 +182,7 @@ export default class GeoJsonLayer extends Layer {
 
   // TODO: fix complexity
   /* eslint-disable complexity */
-  formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
+  formatLayerData(datasets, oldLayerData, opt = {}) {
     const {
       colorScale,
       colorField,
@@ -214,6 +214,7 @@ export default class GeoJsonLayer extends Layer {
       strokeColor
     } = visConfig;
 
+    const {allData, filteredIndex} = datasets[this.config.dataId];
     const getFeature = this.getPositionAccessor(this.config.column);
 
     // geojson feature are object, if doesn't exists
@@ -274,6 +275,19 @@ export default class GeoJsonLayer extends Layer {
       radiusField &&
       this.getVisChannelScale(radiusScale, radiusDomain, radiusRange);
 
+    // let sourceData = datasets[this.config.dataId];
+    const fieldValueAccessor = this.accessVSFieldValue(datasets, strokeColorField, 1481826206000);
+    const identity =  d => ({data: allData[d.properties.index], index: d.properties.index});
+    const getLineColor = scScale ?
+      this.encodeChannelValue(
+        scScale,
+        fieldValueAccessor,
+        identity
+        // [0, 0, 0, 0],
+        // allData[d.properties.index],
+        // strokeColorField
+      ) : d => d.properties.lineColor || strokeColor || color;
+
     return {
       data: geojsonData,
       getFeature,
@@ -285,14 +299,7 @@ export default class GeoJsonLayer extends Layer {
               colorField
             )
           : d.properties.fillColor || color,
-      getLineColor: d =>
-        scScale
-          ? this.getEncodedChannelValue(
-              scScale,
-              allData[d.properties.index],
-              strokeColorField
-            )
-          : d.properties.lineColor || strokeColor || color,
+      getLineColor,
       getLineWidth: d =>
         sScale
           ? this.getEncodedChannelValue(

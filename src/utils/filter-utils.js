@@ -187,9 +187,10 @@ export function getFilterProps(data, field) {
  * @returns {object} with domain as key
  */
 export function getFieldDomain(data, field) {
-  const fieldIdx = field.tableFieldIndex - 1;
-  const isTime = field.type === ALL_FIELD_TYPES.timestamp;
-  const valueAccessor = maybeToDate.bind(null, isTime, fieldIdx, field.format);
+  // const fieldIdx = field.tableFieldIndex - 1;
+  // const isTime = field.type === ALL_FIELD_TYPES.timestamp;
+  // const valueAccessor = maybeToDate.bind(null, isTime, fieldIdx, field.format);
+  const {valueAccessor} = field;
   let domain;
 
   switch (field.type) {

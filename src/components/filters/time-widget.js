@@ -27,27 +27,17 @@ import {Button, SelectTextBold, IconRoundSmall, CenterFlexbox} from 'components/
 import TimeRangeFilter from 'components/filters/time-range-filter';
 import {Close, Clock, LineChart, Rocket} from 'components/common/icons';
 import AnimationSpeedToggle from './animation-speed-toggle';
+import {WidgetContainer} from 'components/common/styled-components';
 
 const innerPdSide = 32;
 
-const WidgetContainer = styled.div`
-  position: absolute;
-  padding-top: ${props => props.theme.sidePanel.margin.top}px;
-  padding-right: ${props => props.theme.sidePanel.margin.right}px;
-  padding-bottom: ${props => props.theme.sidePanel.margin.bottom}px;
-  padding-left: ${props => props.theme.sidePanel.margin.left}px;
-  bottom: 0;
-  right: 0;
-  z-index: 1;
-  width: ${props => props.width}px;
-
-  .bottom-widget--inner {
-    background-color: ${props => props.theme.sidePanelBg};
-    padding: 6px ${innerPdSide}px 10px ${innerPdSide}px;
-    position: relative;
-  }
+const TimeWidgetInner = styled.div.attrs({
+  className: 'bottom-widget--inner'
+})`
+  background-color: ${props => props.theme.sidePanelBg};
+  padding: 6px ${innerPdSide}px 10px ${innerPdSide}px;
+  position: relative;
 `;
-
 const TopSectionWrapper = styled.div`
   position: absolute;
   display: flex;
@@ -160,7 +150,7 @@ export class TimeWidget extends Component {
     const {showSpeedControl} = this.state;
     return (
       <WidgetContainer width={width}>
-        <div className="bottom-widget--inner">
+        <TimeWidgetInner>
           <TopSectionWrapper>
             <StyledTitle className="bottom-widget__field">
               <CenterFlexbox className="bottom-widget__icon">
@@ -215,7 +205,7 @@ export class TimeWidget extends Component {
             updateAnimationSpeed={(speed) => updateAnimationSpeed(enlargedIdx, speed)}
             toggleAnimation={() => toggleAnimation(enlargedIdx)}
           />
-        </div>
+        </TimeWidgetInner>
       </WidgetContainer>
     );
   }

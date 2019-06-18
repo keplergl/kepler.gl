@@ -72,9 +72,10 @@ export function calculateLayerData(layer, state, oldLayerData, opt = {}) {
   }
 
   const layerData = layer.formatLayerData(
-    data,
-    allData,
-    filteredIndex,
+    // data,
+    // allData,
+    // filteredIndex,
+    datasets,
     oldLayerData,
     opt
   );

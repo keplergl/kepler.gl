@@ -537,7 +537,7 @@ export const DEFAULT_LIGHT_SETTINGS = {
   numberOfLights: 2
 };
 
-export const NO_VALUE_COLOR = [147, 147, 147];
+export const NO_VALUE_COLOR = [0, 0, 0, 0];
 
 export const LAYER_BLENDINGS = {
   additive: {

@@ -318,7 +318,7 @@ export const DatasetSquare = styled.div`
   width: 8px;
   height: 8px;
   background-color: rgb(${props => props.color.join(',')});
-  margin-right: 12px
+  margin-right: 12px;
 `;
 
 export const SelectionButton = styled.div`
@@ -501,4 +501,16 @@ export const StyledType = styled.div`
     color: ${props => props.available && props.theme.primaryBtnBgd};
     border: 1px solid ${props => props.available && props.theme.primaryBtnBgd};
   }
+`;
+
+export const WidgetContainer = styled.div`
+  position: absolute;
+  padding-top: ${props => props.theme.sidePanel.margin.top}px;
+  padding-right: ${props => props.theme.sidePanel.margin.right}px;
+  padding-bottom: ${props => props.theme.sidePanel.margin.bottom}px;
+  padding-left: ${props => props.theme.sidePanel.margin.left}px;
+  bottom: 0;
+  right: 0;
+  z-index: 1;
+  width: ${props => props.width}px;
 `;

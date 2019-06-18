@@ -110,7 +110,7 @@ export function getSampleData(data, sampleSize = 500) {
 }
 
 /**
- * Return
+ * Takes the row based data, return the value of a field
  * @param {Boolean} isTime
  * @param {Number} fieldIdx
  * @param {string} format

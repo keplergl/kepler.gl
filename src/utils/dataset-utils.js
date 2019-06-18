@@ -25,6 +25,7 @@ import {generateHashId} from './utils';
 import {validateInputData} from 'processors/data-processor';
 import {maybeToDate} from './data-utils';
 import keyBy from 'lodash.keyby';
+import pick from 'lodash.pick';
 
 // apply a color for each dataset
 // to use as label colors
@@ -92,7 +93,14 @@ export function createNewDataEntry({info = {}, data}, datasets = {}) {
   const fields = validatedData.fields.map((f, i) => ({
     ...f,
     id: f.name,
-    tableFieldIndex: i + 1
+    tableFieldIndex: i + 1,
+    valueAccessor: maybeToDate.bind(
+      null,
+      // is time
+      f.type === ALL_FIELD_TYPES.timestamp,
+      i,
+      f.format
+    )
   }));
 
   const allIndexes = allData.map((_, i) => i);
@@ -186,19 +194,8 @@ export const joinTableLeft = (
 
   let mappedValue = targetField.mappedValue;
   let newMappedValue;
-  if (indexBy) {
-    const fieldIdx = indexBy.tableFieldIndex - 1;
-    const isTime = indexBy.type === ALL_FIELD_TYPES.timestamp;
-    const valueAccessor = maybeToDate.bind(
-      null,
-      isTime,
-      fieldIdx,
-      indexBy.format
-    );
-
-    if (!mappedValue) {
-      newMappedValue = mappedValue = targetData.allData.map(valueAccessor);
-    }
+  if (indexBy && !mappedValue) {
+    newMappedValue = mappedValue = targetData.allData.map(indexBy.valueAccessor);
   }
 
   // hash map of source data
@@ -233,7 +230,7 @@ export const joinTable = (state, joinData) => {
   }
 
   const [sourceData, targetData] = [datasets[source.id], datasets[target.id]];
-  // indexMap: [sourceIdx -> targetIdx]
+  // indexMap: indexBy? [sourceIdx -> ts -> targetIdx] : [sourceIdx -> targetIdx]
   const {indexMap, mappedValue} = joinTableLeft(
     sourceData,
     targetData,
@@ -241,7 +238,7 @@ export const joinTable = (state, joinData) => {
     target.field,
     target.indexBy
   );
-
+  console.log(indexMap);
   let saveLinkToTarget = {
     ...targetData,
     joinSource: joinData.source
@@ -259,7 +256,12 @@ export const joinTable = (state, joinData) => {
 
   const targetFieldsToAppend = targetData.fields
     .filter(f => f.name !== target.field.name && f.name !== target.indexBy.name)
-    .map(f => ({...f, joinedFrom: targetData, indexBy: target.indexBy}));
+    .map(f => ({
+      ...f,
+      joinedFrom: pick(targetData, ['id', 'label', 'color']),
+      indexBy: target.indexBy,
+    }));
+
   // append targetFields
   const saveFieldsToSource = {
     ...sourceData,
@@ -267,6 +269,7 @@ export const joinTable = (state, joinData) => {
   }
   const savedLinkToSource = {
     ...saveFieldsToSource,
+    joinedWith: pick(sourceData, ['id', 'label', 'color']),
     joinData: {
       ...joinData,
       indexMap
