@@ -1,0 +1,5 @@
+{
+  "load_extensions": {
+    "keplergl-jupyter/extension": true
+  }
+}
