@@ -422,11 +422,14 @@ export function processGeojson(rawData) {
   // getting all feature fields
   const allData = normalizedGeojson.features.reduce((accu, f, i) => {
     if (f.geometry) {
-      Object.keys(f.properties).forEach(key => {
-        if(typeof f.properties[key] === "object"){
-          f.properties[key] = JSON.stringify(f.properties[key]);
-        }
-      });
+      // check if properties contains object and stringfy this
+      if(typeof f.properties === 'object' && f.properties !== null){
+        Object.keys(f.properties).forEach(key => {
+          if(typeof f.properties[key] === 'object'){
+            f.properties[key] = JSON.stringify(f.properties[key]);
+          }
+        });
+      }
       accu.push({
         // add feature to _geojson field
         _geojson: f,
