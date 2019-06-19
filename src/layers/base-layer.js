@@ -331,7 +331,11 @@ export default class Layer {
     const update = field
       ? {
           value: field.name,
-          fieldIdx: field.tableFieldIndex - 1
+          fieldIdx: field.tableFieldIndex - 1,
+          ...(field.joinedFrom ? {
+            joinedFrom: field.joinedFrom,
+            indexBy:  field.indexBy
+          } : {})
         }
       : {value: null, fieldIdx: -1};
 
@@ -764,6 +768,25 @@ export default class Layer {
       [this.getDefaultLayerConfig()[scale]];
   }
 
+  shouldAnimate(datasets, field) {
+    if (field && field.indexBy && field.indexBy.type === ALL_FIELD_TYPES.timestamp) {
+      const datasetId = field.joinedFrom ? field.joinedFrom.id : this.config.dataId;
+      const timeDomain = getTimeAnimationDomain(datasets[datasetId].allData, field.indexBy)
+      // console.log(timeDomain)
+      this.updateLayerConfig({
+        animation: {
+          domain: timeDomain,
+          // duration: timeDomain.duration,
+          duration: 500,
+          // speed: 1000,
+          currentTime: timeDomain.domain[0]
+        }
+      });
+
+      console.log('find indexby field')
+    }
+  }
+
   updateLayerVisualChannel(datasets, channel, newConfig) {
     const visualChannel = this.visualChannels[channel];
 
@@ -772,22 +795,23 @@ export default class Layer {
     const updatedDomain = this.calculateLayerDomain(datasets, visualChannel);
     // create animation if field is indexby time
     const field = this.config[this.visualChannels[channel].field];
-    if (field && field.indexBy && field.indexBy.type === ALL_FIELD_TYPES.timestamp) {
-      const datasetId = field.joinedFrom ? field.joinedFrom.id : this.config.dataId;
-      const timeDomain = getTimeAnimationDomain(datasets[datasetId].allData, field.indexBy)
-      console.log(timeDomain)
-      this.updateLayerConfig({
-        animation: {
-          domain: timeDomain,
-          // duration: timeDomain.duration,
-          duration: 1000,
-          // speed: 1000,
-          currentTime: timeDomain.domain[0]
-        }
-      });
+    this.shouldAnimate(datasets, field);
+    // if (field && field.indexBy && field.indexBy.type === ALL_FIELD_TYPES.timestamp) {
+    //   const datasetId = field.joinedFrom ? field.joinedFrom.id : this.config.dataId;
+    //   const timeDomain = getTimeAnimationDomain(datasets[datasetId].allData, field.indexBy)
+    //   console.log(timeDomain)
+    //   this.updateLayerConfig({
+    //     animation: {
+    //       domain: timeDomain,
+    //       // duration: timeDomain.duration,
+    //       duration: 1000,
+    //       // speed: 1000,
+    //       currentTime: timeDomain.domain[0]
+    //     }
+    //   });
 
-      console.log('find indexby field')
-    }
+    //   console.log('find indexby field')
+    // }
     this.updateLayerConfig({[visualChannel.domain]: updatedDomain});
   }
 

@@ -213,7 +213,17 @@ export function layerConfigChangeUpdater(state, action) {
   const {oldLayer} = action;
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
   const props = Object.keys(action.newConfig);
+
+  if (props.includes('columns')) {
+    const {columns} = action.newConfig;
+    const joinedColumn = Object.values(columns).find(c => c.joinedFrom);
+    if (joinedColumn) {
+      console.log('animate joined column')
+      oldLayer.shouldAnimate(state.datasets, joinedColumn);
+    }
+  }
   const newLayer = oldLayer.updateLayerConfig(action.newConfig);
+
   if (newLayer.shouldCalculateLayerData(props)) {
     const oldLayerData = state.layerData[idx];
     const {layerData, layer} = calculateLayerData(
@@ -391,7 +401,6 @@ export function layerTypeChangeUpdater(state, action) {
 export function layerVisualChannelChangeUpdater(state, action) {
   const {oldLayer, newConfig, channel} = action;
   // const dataset = state.datasets[oldLayer.config.dataId];
-  console.log(newConfig)
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
   const newLayer = oldLayer.updateLayerConfig(newConfig);
 

@@ -182,6 +182,7 @@ export default class GeoJsonLayer extends Layer {
 
   // TODO: fix complexity
   /* eslint-disable complexity */
+  /* eslint-disable max-statements */
   formatLayerData(datasets, oldLayerData, opt = {}) {
     const {
       colorScale,

@@ -45,16 +45,18 @@ const KeplerGl = require('kepler.gl/components').injectComponents([
 
 // Sample data
 /* eslint-disable no-unused-vars */
-import sampleTripData from './data/sample-trip-data';
-import sampleGeojson from './data/sample-small-geojson';
-import sampleGeojsonPoints from './data/sample-geojson-points';
-import sampleH3Data from './data/sample-hex-id-csv';
-import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
+// import sampleTripData from './data/sample-trip-data';
+// import sampleGeojson from './data/sample-small-geojson';
+// import sampleGeojsonPoints from './data/sample-geojson-points';
+// import sampleH3Data from './data/sample-hex-id-csv';
+// import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
 import {addDataToMap, addNotification} from 'kepler.gl/actions';
 import {processCsvData, processGeojson} from 'kepler.gl/processors';
 
-import timeTable from './data/pool_time_table';
-import roadJson from './data/sf_road_segments';
+// import timeTable from './data/pool_time_table';
+// import roadJson from './data/sf_road_segments';
+import birdIdData from './data/bird-id';
+import birdTimeTable from './data/obis_seamap_705_points';
 // console.log(timeTable)
 // console.log(roadJson)
 /* eslint-enable no-unused-vars */
@@ -124,7 +126,7 @@ class App extends Component {
     //   window.setTimeout(this._showBanner, 3000);
     // }
     // load sample data
-    this._loadSampleData();
+    // this._loadSampleData();
     // Notifications
     // this._loadMockNotifications();
   }
@@ -170,6 +172,27 @@ class App extends Component {
     // this._loadIconData();
     // this._loadH3HexagonData();
     // this._loadTimeTable();
+    this._loadBirdData();
+  }
+
+  _loadBirdData() {
+    this.props.dispatch(
+      addDataToMap({
+        datasets: [{
+          info: {
+            label: 'Bird id',
+            id: 'bird_id'
+          },
+          data: processCsvData(birdIdData)
+        }, {
+          info: {
+            label: 'Time Table',
+            id: 'bird_time_table'
+          },
+          data: processCsvData(birdTimeTable)
+        }]
+      })
+    );
   }
 
   _loadTimeTable() {

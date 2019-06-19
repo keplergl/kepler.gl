@@ -128,8 +128,37 @@ export default class PointLayer extends Layer {
     };
   }
 
-  getPositionAccessor() {
-    return this.getPosition(this.config.columns);
+  getPositionAccessor(datasets, indexKey) {
+    // return this.getPosition(this.config.columns);
+    // const {}
+    const {lat, lng, altitude} = this.config.columns;
+    const getDataRow = ({data, index}) => {
+      // cheat here to only check lat
+      if (lat.joinedFrom) {
+        const targetData = datasets[lat.joinedFrom.id];
+        const sourceData = datasets[this.config.dataId];
+        const targetRowIdx =  lat.indexBy ?
+          sourceData.joinData.indexMap[index] ?
+          sourceData.joinData.indexMap[index][indexKey] : -1
+          : sourceData.indexMap[index];
+        const targetRow = targetRowIdx > -1 ? targetData.allData[targetRowIdx] : null;
+
+        return targetRow;
+      }
+      return data
+    }
+
+    return d => {
+      const dataRow = getDataRow(d);
+      return dataRow ? [
+        // lng
+        dataRow[lng.fieldIdx],
+        // lat
+        dataRow[lat.fieldIdx],
+        // altitude
+        altitude && altitude.fieldIdx > -1 ? dataRow[altitude.fieldIdx] : 0
+      ] : [0, 0, 0];
+    }
   }
 
   static findDefaultLayerProps({fieldPairs = []}) {
@@ -227,28 +256,37 @@ export default class PointLayer extends Layer {
     const rScale =
       sizeField &&
       this.getVisChannelScale(sizeScale, sizeDomain, radiusRange, fixedRadius);
+    const indexKey = this.config.animation ? this.config.animation.currentTime : null;
+    const getPosition = this.getPositionAccessor(datasets, indexKey);
+    const duration = this.config.animation ? this.config.animation.duration : 500;
+    const transitions = this.config.animation ? {
+      getPosition: {
+        duration
+        // easing: d3.easeCubicInOut,
+        // enter: value => [value[0], value[1], value[2], 0] // fade in
+      }
+    } : {};
 
-    const getPosition = this.getPositionAccessor();
-
-    if (!oldLayerData || oldLayerData.getPosition !== getPosition) {
-      this.updateLayerMeta(allData, getPosition);
-    }
+    console.log(duration)
+    // if (!oldLayerData || oldLayerData.getPosition !== getPosition) {
+    //   this.updateLayerMeta(allData, getPosition);
+    // }
 
     let data;
     if (
       oldLayerData &&
       oldLayerData.data &&
-      opt.sameData &&
-      oldLayerData.getPosition === getPosition
+      opt.sameData
+      // oldLayerData.getPosition === getPosition
     ) {
       data = oldLayerData.data;
     } else {
       data = filteredIndex.reduce((accu, index) => {
-        const pos = getPosition({data: allData[index]});
+        const pos = getPosition({data: allData[index], index});
 
         // if doesn't have point lat or lng, do not add the point
         // deck.gl can't handle position = null
-        if (!pos.every(Number.isFinite)) {
+        if (!pos || !pos.every(Number.isFinite)) {
           return accu;
         }
 
@@ -315,15 +353,16 @@ export default class PointLayer extends Layer {
       getFillColor,
       getLineColor,
       getRadius,
-      textLabels
+      textLabels,
+      transitions
     };
   }
   /* eslint-enable complexity */
 
   updateLayerMeta(allData) {
-    const getPosition = this.getPositionAccessor();
-    const bounds = this.getPointsBounds(allData, d => getPosition({data: d}));
-    this.updateMeta({bounds});
+    // const getPosition = this.getPositionAccessor();
+    // const bounds = this.getPointsBounds(allData, d => getPosition({data: d}));
+    // this.updateMeta({bounds});
   }
 
   getTextOffset(config, radiusScale, getRadius, mapState) {
@@ -389,7 +428,8 @@ export default class PointLayer extends Layer {
     const {textLabel} = this.config;
     const updateTriggers = {
       getPosition: {
-        columns: this.config.columns
+        columns: this.config.columns,
+        currentTime: this.config.animation && this.config.animation.currentTime
       },
       getRadius: {
         sizeField: this.config.sizeField,
@@ -428,20 +468,20 @@ export default class PointLayer extends Layer {
         updateTriggers
       }),
       // hover layer
-      ...(this.isLayerHovered(objectHovered)
-        ? [
-            new ScatterplotBrushingLayer({
-              ...layerProps,
-              id: `${this.id}-hovered`,
-              data: [objectHovered.object],
-              getLineColor: this.config.highlightColor,
-              getFillColor: this.config.highlightColor,
-              getRadius: data.getRadius,
-              getPosition: data.getPosition,
-              pickable: false
-            })
-          ]
-        : []),
+      // ...(this.isLayerHovered(objectHovered)
+      //   ? [
+      //       new ScatterplotBrushingLayer({
+      //         ...layerProps,
+      //         id: `${this.id}-hovered`,
+      //         data: [objectHovered.object],
+      //         getLineColor: this.config.highlightColor,
+      //         getFillColor: this.config.highlightColor,
+      //         getRadius: data.getRadius,
+      //         getPosition: data.getPosition,
+      //         pickable: false
+      //       })
+      //     ]
+      //   : []),
       // text label layer
       ...data.textLabels.reduce((accu, d, i) => {
         if (d.getText) {
