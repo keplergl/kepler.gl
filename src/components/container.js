@@ -65,6 +65,7 @@ export function ContainerFactory(KeplerGl) {
     * overridden by the latest instance and reset to a blank state.
     * @param {string} props.mapboxApiAccessToken - _required_
     * @param {string} props.mapboxApiUrl - _optional_
+    * @param {Boolean} props.mapStylesReplaceDefault - _optional_
 
     * You can create a free account at [www.mapbox.com](www.mapbox.com) and create a token at
     * [www.mapbox.com/account/access-tokens](www.mapbox.com/account/access-tokens)
@@ -97,9 +98,9 @@ export function ContainerFactory(KeplerGl) {
     }
 
     componentWillMount() {
-      const {id, mint, mapboxApiAccessToken, mapboxApiUrl} = this.props;
+      const {id, mint, mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault} = this.props;
       // add a new entry to reducer
-      this.props.dispatch(registerEntry({id, mint, mapboxApiAccessToken, mapboxApiUrl}));
+      this.props.dispatch(registerEntry({id, mint, mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault}));
     }
 
     componentWillReceiveProps(nextProps) {

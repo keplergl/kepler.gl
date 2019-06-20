@@ -61,6 +61,7 @@ const getDefaultState = () => {
     // save mapbox access token
     mapboxApiAccessToken: null,
     mapboxApiUrl: null,
+    mapStylesReplaceDefault: false,
     inputStyle: getInitialInputStyle(),
     threeDBuildingColor: hexToRgb(DEFAULT_BLDG_COLOR)
   };
@@ -112,9 +113,10 @@ const mapStyleUpdaters = null;
  * @property {string} styleType - Default: `'dark'`
  * @property {Object} visibleLayerGroups - Default: `{}`
  * @property {Object} topLayerGroups - Default: `{}`
- * @property {Object} mapStyles - mapping from style key to style objct
+ * @property {Object} mapStyles - mapping from style key to style object
  * @property {string} mapboxApiAccessToken - Default: `null`
  * @Property {string} mapboxApiUrl - Default null
+ * @Property {Boolean} mapStylesReplaceDefault - Default: `false`
  * @property {Object} inputStyle - Default: `{}`
  * @property {Array} threeDBuildingColor - Default: `[r, g, b]`
  * @public
@@ -203,7 +205,9 @@ function getLayerGroupsFromStyle(style) {
 
 // Updaters
 /**
- * Propagate `mapStyle` reducer with `mapboxApiAccessToken`
+ * Propagate `mapStyle` reducer with `mapboxApiAccessToken` & empty
+ * mapStyles if !!mapStylesReplaceDefault
+ *
  * @memberof mapStyleUpdaters
  * @param {Object} state
  * @param {Object} action
@@ -216,7 +220,8 @@ export const initMapStyleUpdater = (state, action) => ({
   ...state,
   // save mapbox access token to map style state
   mapboxApiAccessToken: (action.payload || {}).mapboxApiAccessToken,
-  mapboxApiUrl: (action.payload || {}).mapboxApiUrl
+  mapboxApiUrl: (action.payload || {}).mapboxApiUrl,
+  mapStyles: action.payload && !action.payload.mapStylesReplaceDefault ? state.mapStyles : {}
 });
 
 /**

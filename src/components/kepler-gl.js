@@ -154,9 +154,6 @@ function KeplerGlFactory(
     }
 
     _loadMapStyle = () => {
-      if(this.props.mapStylesReplaceDefault) {
-        this.props.mapStyle.mapStyles = [];
-      }
       const defaultStyles = Object.values(this.props.mapStyle.mapStyles);
       // add id to custom map styles if not given
       const customStyles = (this.props.mapStyles || []).map(ms => ({

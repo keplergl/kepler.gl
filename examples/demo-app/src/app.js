@@ -30,7 +30,7 @@ import Announcement from './components/announcement';
 import {replaceLoadDataModal} from './factories/load-data-modal';
 import {replaceSaveMap} from './factories/save-map';
 import ExportUrlModal from './components/sharing/export-url-modal';
-import {AUTH_TOKENS} from './constants/default-settings';
+import {AUTH_TOKENS, DEFAULT_LAYER_GROUPS} from './constants/default-settings';
 import {
   exportFileToCloud,
   loadRemoteMap,
@@ -56,6 +56,7 @@ import {processCsvData, processGeojson} from 'kepler.gl/processors';
 
 const BannerHeight = 30;
 const BannerKey = 'kgHideBanner-iiba';
+const ATLAS_HOST = 'http://localhost:2999';
 
 const GlobalStyle = styled.div`
   font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
@@ -332,6 +333,24 @@ class App extends Component {
               {({height, width}) => (
                 <KeplerGl
                   mapboxApiAccessToken={AUTH_TOKENS.MAPBOX_TOKEN}
+                  mapboxApiUrl={ATLAS_HOST}
+                  mapStylesReplaceDefault={true}
+                  mapStyles={[
+                    {
+                      id: 'default dark v9',
+                      label: 'default dark v9',
+                      url: 'mapbox://styles/mapbox/dark-v9',
+                      icon: `${ATLAS_HOST}/styles/v1/mapbox/dark-v9/static/-122.3391,37.7922,9.19,0,0/400x300?access_token=${AUTH_TOKENS.MAPBOX_TOKEN}&logo=false&attribution=false&fresh=true`,
+                      layerGroups: DEFAULT_LAYER_GROUPS
+                    },
+                    {
+                      id: 'default light v9',
+                      label: 'default light v9',
+                      url: 'mapbox://styles/mapbox/light-v9',
+                      icon: `${ATLAS_HOST}/styles/v1/mapbox/light-v9/static/-122.3391,37.7922,9.19,0,0/400x300?access_token=${AUTH_TOKENS.MAPBOX_TOKEN}&logo=false&attribution=false&fresh=true`,
+                      layerGroups: DEFAULT_LAYER_GROUPS
+                    }
+                  ]}
                   id="map"
                   /*
                    * Specify path to keplerGl state, because it is not mount at the root

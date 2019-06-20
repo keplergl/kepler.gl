@@ -108,6 +108,8 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
       ...defaultMapStyles
     },
     mapboxApiAccessToken: 'smoothies_secret_token',
+    mapboxApiUrl: undefined,
+    mapStylesReplaceDefault: false,
     inputStyle: {
       accessToken: null,
       error: false,
@@ -174,6 +176,8 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
     topLayerGroups: {},
     mapStyles: expectedMapStyles,
     mapboxApiAccessToken: 'smoothies_secret_token',
+    mapboxApiUrl: undefined,
+    mapStylesReplaceDefault: false,
     inputStyle: {
       accessToken: null,
       error: false,

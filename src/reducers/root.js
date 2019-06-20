@@ -31,13 +31,13 @@ const initialCoreState = {};
 export function provideInitialState(initialState) {
   const coreReducer = coreReducerFactory(initialState);
 
-  const handleRegisterEntry = (state, {payload: {id, mint, mapboxApiAccessToken, mapboxApiUrl}}) => ({
+  const handleRegisterEntry = (state, {payload: {id, mint, mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault}}) => ({
     // register a new entry to voyager reducer
     // by default, always create a mint state even if the same id already exist
     // if state.id exist and mint=false, keep the existing state
     ...state,
     [id]: state[id] && mint === false ? state[id] : {
-      ...coreReducer(undefined, keplerGlInit({mapboxApiAccessToken, mapboxApiUrl}))
+      ...coreReducer(undefined, keplerGlInit({mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault}))
     }
   });
 
