@@ -205,8 +205,9 @@ function getLayerGroupsFromStyle(style) {
 
 // Updaters
 /**
- * Propagate `mapStyle` reducer with `mapboxApiAccessToken` & empty
- * mapStyles if !!mapStylesReplaceDefault
+ * Propagate `mapStyle` reducer with `mapboxApiAccessToken` and `mapStylesReplaceDefault`.
+ * if mapStylesReplaceDefault is true mapStyles is emptied; loadMapStylesUpdater() will
+ * populate mapStyles.
  *
  * @memberof mapStyleUpdaters
  * @param {Object} state
@@ -221,8 +222,10 @@ export const initMapStyleUpdater = (state, action) => ({
   // save mapbox access token to map style state
   mapboxApiAccessToken: (action.payload || {}).mapboxApiAccessToken,
   mapboxApiUrl: (action.payload || {}).mapboxApiUrl,
-  mapStyles: action.payload && !action.payload.mapStylesReplaceDefault ? state.mapStyles : {}
+  mapStyles: action.payload && !action.payload.mapStylesReplaceDefault ? state.mapStyles : {},
+  mapStylesReplaceDefault: action.payload.mapStylesReplaceDefault || false
 });
+// });
 
 /**
  * Update `visibleLayerGroups`to change layer group visibility
