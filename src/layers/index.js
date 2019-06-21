@@ -28,6 +28,7 @@ import {default as ClusterLayer} from './cluster-layer/cluster-layer';
 import {default as IconLayer} from './icon-layer/icon-layer';
 import {default as HeatmapLayer} from './heatmap-layer/heatmap-layer';
 import {default as H3Layer} from './h3-hexagon-layer/h3-hexagon-layer';
+import {default as ScenegraphLayer} from './scenegraph-layer/scenegraph-layer';
 
 // base layer
 export {default as Layer} from './base-layer';
@@ -43,7 +44,8 @@ export const KeplerGlLayers = {
   ClusterLayer,
   IconLayer,
   HeatmapLayer,
-  H3Layer
+  H3Layer,
+  ScenegraphLayer
 };
 
 export const LayerClasses = {
@@ -56,5 +58,6 @@ export const LayerClasses = {
   cluster: ClusterLayer,
   icon: IconLayer,
   heatmap: HeatmapLayer,
-  hexagonId: H3Layer
+  hexagonId: H3Layer,
+  '3D': ScenegraphLayer
 };

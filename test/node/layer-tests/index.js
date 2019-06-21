@@ -24,3 +24,4 @@ import './grid-layer-specs';
 import './point-layer-specs';
 import './hexagon-layer-specs';
 import './heatmap-layer-specs';
+import './scenegraph-layer-specs';
