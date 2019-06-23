@@ -615,9 +615,11 @@ export default class Layer {
   ) {
     const {type} = field;
     const value = getValue(field, data);
+
     if (!notNullorUndefined(value)) {
       return nullValue;
     }
+
     let attributeValue;
     if (type === ALL_FIELD_TYPES.timestamp) {
       // shouldn't need to convert here
