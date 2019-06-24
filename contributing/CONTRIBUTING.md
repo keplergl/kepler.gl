@@ -2,10 +2,7 @@
 
 Great to have you here. Here are a few ways you can help make kepler.gl even better!
 
-Note that you'll need to sign [Uber's Contributor License Agreement][cla]
-before we can accept any of your contributions. If necessary, a bot will remind
-you to accept the CLA when you open your pull request.
-
+* [Developer Certification of Origin (DCO)](#dco)
 * [Code of Conduct](#coc)
 * [Questions and Problems](#question)
 * [Issues and Bugs](#issue)
@@ -13,6 +10,32 @@ you to accept the CLA when you open your pull request.
 * [Improving Documentation](#docs)
 * [Submitting Pull Request](#submit-pr)
 * [Development Documentation][developers]
+
+## <a name="dco"></a> Developer Certification of Origin (DCO)
+
+When commiting code, kepler.gl requires [Developer Certificate of Origin (DCO)][dco] process to be followed.
+
+The DCO is a lightweight way for contributors to certify that they wrote or otherwise have the right to submit the code they are contributing to the project. Here is the full text of the DCO, reformatted for readability:
+```
+By making a contribution to this project, I certify that:
+
+(a) The contribution was created in whole or in part by me and I have the right to submit it under the open source license indicated in the file; or
+
+(b) The contribution is based upon previous work that, to the best of my knowledge, is covered under an appropriate open source license and I have the right under that license to submit that work with modifications, whether created in whole or in part by me, under the same open source license (unless I am permitted to submit under a different license), as indicated in the file; or
+
+(c) The contribution was provided directly to me by some other person who certified (a), (b) or (c) and I have not modified it.
+
+(d) I understand and agree that this project and the contribution are public and that a record of the contribution (including all personal information I submit with it, including my sign-off) is maintained indefinitely and may be redistributed consistent with this project or the open source license(s) involved.
+```
+### DCO Sign-Off Methods
+Contributors sign-off that they adhere to these requirements by adding a Signed-off-by line to commit messages.
+```
+Signed-off-by: Shan He <heshan0131@gmail.com>
+```
+Use the `-s` or `--signoff` command line to append this automatically to your commit message:
+```
+$ git commit -s -m 'This is my commit message'
+```
 
 ## <a name="coc"></a> Code of Conduct
 Help us keep kepler.gl open and inclusive. Please read and follow our [Code of Conduct](./CODE_OF_CONDUCT.md).
@@ -80,3 +103,4 @@ Questions about kepler.gl? you can checkout the examples and medium articles on 
 [developers.rules]: DEVELOPERS.md#rules
 [developers.setup]: DEVELOPERS.md#setup
 [developers.tests]: DEVELOPERS.md#tests
+[dco]: https://probot.github.io/apps/dco/
