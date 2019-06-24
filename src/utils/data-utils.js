@@ -36,7 +36,7 @@ const MIN_LONGITUDE = -180;
 export function unique(values) {
   const results = [];
   values.forEach(v => {
-    if (!results.includes(v) && v !== null && v !== undefined) {
+    if (!results.includes(v) && notNullorUndefined(v)) {
       results.push(v);
     }
   });
@@ -122,6 +122,10 @@ export function maybeToDate(isTime, fieldIdx, format, d) {
   return d[fieldIdx];
 }
 
+/**
+ * whether null or undefined
+ * @returns {boolean} - yes or no
+ */
 export function notNullorUndefined(d) {
   return d !== undefined && d !== null;
 }
