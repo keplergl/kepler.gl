@@ -55,6 +55,8 @@ const actionHandler = {
 
   [ActionTypes.MAP_CLICK]: visStateUpdaters.mapClickUpdater,
 
+  [ActionTypes.MOUSE_MOVE]: visStateUpdaters.mouseMoveUpdater,
+
   [ActionTypes.RECEIVE_MAP_CONFIG]: visStateUpdaters.receiveMapConfigUpdater,
 
   [ActionTypes.REMOVE_DATASET]: visStateUpdaters.removeDatasetUpdater,

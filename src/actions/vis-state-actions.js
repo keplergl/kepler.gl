@@ -372,6 +372,23 @@ export function onMapClick() {
 }
 
 /**
+ * Trigger map mouse moveevent, payload would be
+ * React-map-gl PointerEvent
+ * https://uber.github.io/react-map-gl/#/documentation/api-reference/pointer-event
+ *
+ * @memberof visStateActions
+ * @param {Object} evt - PointerEvent
+ * @returns {{type: ActionTypes.MAP_CLICK}}
+ * @public
+ */
+export function onMouseMove(evt) {
+  return {
+    type: ActionTypes.MOUSE_MOVE,
+    evt
+  };
+}
+
+/**
  * Toggle visibility of a layer in a split map
  * @memberof visStateActions
  * @param {Number} mapIndex - index of the split map

@@ -21,6 +21,7 @@
 import GeojsonLayer from 'layers/geojson-layer/geojson-layer';
 import {Messages, Crosshairs} from 'components/common/icons';
 import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
+import {getDefaultInteraction} from 'utils/interaction-utils';
 
 export const savedStateV1 = {
   datasets: [
@@ -2764,10 +2765,11 @@ mergedLayer1.dataToFeature = mergedLayer0.dataToFeature;
 
 export const mergedLayers = [mergedLayer0, mergedLayer1];
 
+const defaultInteraction = getDefaultInteraction();
 export const mergedInteraction = {
+  ...defaultInteraction,
   tooltip: {
-    id: 'tooltip',
-    iconComponent: Messages,
+    ...defaultInteraction.tooltip,
     enabled: false,
     config: {
       fieldsToShow: {
@@ -2776,9 +2778,8 @@ export const mergedInteraction = {
     }
   },
   brush: {
-    id: 'brush',
+    ...defaultInteraction.brush,
     enabled: false,
-    iconComponent: Crosshairs,
     config: {
       size: 1
     }

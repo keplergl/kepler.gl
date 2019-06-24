@@ -20,8 +20,7 @@
 
 import {KeplerGlLayers} from 'layers';
 const {PointLayer, ArcLayer, HexagonLayer, GeojsonLayer} = KeplerGlLayers;
-
-import {Messages, Crosshairs} from 'components/common/icons';
+import {getDefaultInteraction} from 'utils/interaction-utils';
 import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
 
 export const savedStateV0 = {
@@ -1502,22 +1501,17 @@ export const mergedLayers = [
   mergedLayer4
 ];
 
+const defaultInteraction = getDefaultInteraction();
 export const mergedInteractions = {
+  ...defaultInteraction,
   tooltip: {
-    id: 'tooltip',
+    ...defaultInteraction.tooltip,
     enabled: true,
     config: {
       fieldsToShow: {
         '9h10t7fyb': ['int_range', 'detail', 'type_boolean'],
         v79816te8: ['ID', 'ZIP_CODE']
       }
-    },
-    iconComponent: Messages
-  },
-  brush: {
-    id: 'brush',
-    enabled: false,
-    config: {size: 0.5},
-    iconComponent: Crosshairs
+    }
   }
 };
