@@ -231,7 +231,7 @@ export default class IconLayer extends Layer {
     }
 
     const getRadius = rScale
-      ? d => this.getEncodedChannelValue(rScale, d.data, sizeField)
+      ? d => this.getEncodedChannelValue(rScale, d.data, sizeField, 0)
       : 1;
 
     const getColor = cScale
