@@ -20,6 +20,7 @@
 
 import {console as Console} from 'global/window';
 import Task, {disableStackCapturing, withTask} from 'react-palm/tasks';
+import cloneDeep from 'lodash.clonedeep';
 
 // Tasks
 import {LOAD_FILE_TASK} from 'tasks/tasks';
@@ -146,6 +147,7 @@ export const INITIAL_VIS_STATE = {
   layerBlending: 'normal',
   hoverInfo: undefined,
   clicked: undefined,
+  mousePos: {},
 
   // TODO: not used anywhere, delete it
   fileLoading: false,
@@ -420,9 +422,13 @@ export function interactionConfigChangeUpdater(state, action) {
     ...{[config.id]: config}
   };
 
-  if (config.enabled && !state.interactionConfig[config.id].enabled) {
+  // Don't enable tooltip and brush at the same time
+  // but coordinates can be shown at all time
+  const contradict = ['brush', 'tooltip'];
+
+  if (contradict.includes(config.id) && config.enabled && !state.interactionConfig[config.id].enabled) {
     // only enable one interaction at a time
-    Object.keys(interactionConfig).forEach(k => {
+    contradict.forEach(k => {
       if (k !== config.id) {
         interactionConfig[k] = {...interactionConfig[k], enabled: false};
       }
@@ -911,6 +917,10 @@ export const layerHoverUpdater = (state, action) => ({
  */
 export const layerClickUpdater = (state, action) => ({
   ...state,
+  mousePos: state.interactionConfig.coordinate.enabled ? {
+    ...state.mousePos,
+    pinned: state.mousePos.pinned ? null : cloneDeep(state.mousePos)
+  } : state.mousePos,
   clicked: action.info && action.info.picked ? action.info : null
 });
 
@@ -921,11 +931,28 @@ export const layerClickUpdater = (state, action) => ({
  * @returns {Object} nextState
  * @public
  */
-export const mapClickUpdater = (state) => ({
+export const mapClickUpdater = (state) => {
+  return {
   ...state,
   clicked: null
-});
+}
+};
 
+export const mouseMoveUpdater = (state, {evt}) => {
+
+  if (Object.values(state.interactionConfig).some(config => config.enabled)) {
+    return {
+      ...state,
+      mousePos: {
+        ...state.mousePos,
+        mousePosition: [...evt.point],
+        coordinate: [...evt.lngLat]
+      }
+    };
+  }
+
+  return state;
+}
 /**
  * Toggle visibility of a layer for a split map
  * @memberof visStateUpdaters

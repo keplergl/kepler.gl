@@ -33,6 +33,7 @@ import SchemaManager from 'schemas';
 import visStateReducer from 'reducers/vis-state';
 import {updateVisData} from 'actions/vis-state-actions';
 import {receiveMapConfig} from 'actions/actions';
+import {getDefaultInteraction} from 'utils/interaction-utils';
 
 // fixtures
 import {
@@ -577,25 +578,7 @@ test('VisStateMerger.v0 -> mergeInteractions -> toEmptyState', t => {
     } else if (key === 'interactionConfig') {
       t.deepEqual(
         mergedState.interactionConfig,
-        {
-          tooltip: {
-            id: 'tooltip',
-            enabled: true,
-            config: {
-              fieldsToShow: {}
-            },
-            iconComponent: Messages
-          },
-          brush: {
-            id: 'brush',
-            enabled: false,
-            config: {
-              size: 0.5
-            },
-            iconComponent: Crosshairs
-          }
-        },
-
+        oldState.visState.interactionConfig,
         'Should disable interaction: null'
       );
     } else {
@@ -678,12 +661,13 @@ test('VisStateMerger.v0 -> mergeInteractions -> toWorkingState', t => {
 
   // load data into reducer
   const stateWData = visStateReducer(mergedState, updateVisData(parsedData));
+  const defaultInteraction = getDefaultInteraction();
 
   const expectedInteractions = {
+    ...defaultInteraction,
     tooltip: {
-      id: 'tooltip',
+      ...defaultInteraction.tooltip,
       enabled: true,
-      iconComponent: Messages,
       config: {
         fieldsToShow: {
           '190vdll3di': [
@@ -698,12 +682,6 @@ test('VisStateMerger.v0 -> mergeInteractions -> toWorkingState', t => {
           v79816te8: ['ID', 'ZIP_CODE']
         }
       }
-    },
-    brush: {
-      id: 'brush',
-      enabled: false,
-      iconComponent: Crosshairs,
-      config: {size: 0.5}
     }
   };
 
@@ -731,6 +709,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toEmptyState', t => {
 
   // merge interactions
   const mergedState = mergeInteractions(oldState.visState, parsedInteraction);
+  const defaultInteraction = getDefaultInteraction();
 
   Object.keys(oldVisState).forEach(key => {
     if (key === 'interactionToBeMerged') {
@@ -750,25 +729,24 @@ test('VisStateMerger.v1 -> mergeInteractions -> toEmptyState', t => {
       t.deepEqual(
         mergedState.interactionConfig,
         {
+          ...defaultInteraction,
           tooltip: {
-            id: 'tooltip',
+            ...defaultInteraction.tooltip,
             enabled: false,
             config: {
               fieldsToShow: {}
-            },
-            iconComponent: Messages
+            }
           },
           brush: {
-            id: 'brush',
+            ...defaultInteraction.brush,
             enabled: false,
             config: {
               size: 1
-            },
-            iconComponent: Crosshairs
+            }
           }
         },
 
-        'Should disable interaction: null'
+        'Should disable tooltip'
       );
     } else {
       t.deepEqual(
@@ -819,6 +797,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
 
   // merge interactions
   const mergedState = mergeInteractions(oldState.visState, parsedInteraction);
+  const defaultInteraction = getDefaultInteraction();
 
   const expectedInteractionToBeMerged = {
     tooltip: {
@@ -840,9 +819,9 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
       t.deepEqual(
         mergedState.interactionConfig,
         {
+          ...defaultInteraction,
           tooltip: {
-            id: 'tooltip',
-            iconComponent: Messages,
+            ...defaultInteraction.tooltip,
             enabled: false,
             config: {
               fieldsToShow: {
@@ -857,10 +836,10 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
               }
             }
           },
+
           brush: {
-            id: 'brush',
+            ...defaultInteraction.brush,
             enabled: false,
-            iconComponent: Crosshairs,
             config: {
               size: 1
             }
@@ -884,10 +863,10 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
   const stateWData = visStateReducer(mergedState, updateVisData(parsedData));
 
   const expectedInteractions = {
+    ...defaultInteraction,
     tooltip: {
-      id: 'tooltip',
+      ...defaultInteraction.tooltip,
       enabled: false,
-      iconComponent: Messages,
       config: {
         fieldsToShow: {
           '190vdll3di': [
@@ -903,9 +882,8 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
       }
     },
     brush: {
-      id: 'brush',
+      ...defaultInteraction.brush,
       enabled: false,
-      iconComponent: Crosshairs,
       config: {size: 1}
     }
   };
@@ -914,7 +892,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
   t.deepEqual(
     stateWData.interactionConfig,
     expectedInteractions,
-    'should merge interactionconfig'
+    'should merge interactionConfig'
   );
   t.deepEqual(stateWData.interactionToBeMerged, {}, 'should clear interaction');
 
