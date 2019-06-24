@@ -36,7 +36,7 @@ Kepler.gl is also a React component that uses [Redux](https://redux.js.org/) to 
 - [Examples][examples]
 - [Get Started][get-started]
 - [App User Guide][user-guide]
-- [Jupyter Widget User Guide]][user-guide-jupyter]
+- [Jupyter Widget User Guide][user-guide-jupyter]
 - [Tutorial][vis-academy]
 - [Stack Overflow][stack]
 - [Contribution Guidelines][contributing]
