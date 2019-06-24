@@ -14,6 +14,18 @@ Each version should:
   Security to invite users to upgrade in case of vulnerabilities.
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
+#### [1.1.1] - Jun 24 2019
+- [Bug] Fix radius rendering when value = 0 (#551)
+- [Docs] Updating Layer User Guides (#373)
+- [Feat] Display mouse coordinate (#550)
+- [Docs] Replace CLA with DCO (162a9f7)
+- [Style] fix README typo (c1fafbf)
+- [Docs] Add jupyter widget user guide link o README (17d3ec8)
+- [Chore] Add jupyter widget issue templates (a40c1fe)
+- [Feat] Bump deck.gl to v7.1.5 (#568)
+- [Feat] Add ScenegraphLayer (#540)
+- [Feat] Add kepler.gl-jupyter python package (#543)
+
 #### [1.1.0] - Jun 15 2019
 - Upgrade to deck.gl 7.1 (#559)
 - [Docs] update user documentation with newer layers and features (#552)
