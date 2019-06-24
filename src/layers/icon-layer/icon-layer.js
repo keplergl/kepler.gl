@@ -191,7 +191,7 @@ export default class IconLayer extends Layer {
 
     // point radius
     const rScale =
-      sizeField && this.getVisChannelScale(sizeScale, sizeDomain, radiusRange);
+      sizeField && this.getVisChannelScale(sizeScale, sizeDomain, radiusRange, 0);
 
     const getPosition = this.getPosition(columns);
     const getIcon = this.getIcon(columns);
@@ -231,7 +231,7 @@ export default class IconLayer extends Layer {
     }
 
     const getRadius = rScale
-      ? d => this.getEncodedChannelValue(rScale, d.data, sizeField)
+      ? d => this.getEncodedChannelValue(rScale, d.data, sizeField, 0)
       : 1;
 
     const getColor = cScale
