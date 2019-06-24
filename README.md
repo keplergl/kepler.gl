@@ -16,7 +16,7 @@
   </a>
 </p>
 
-<h1 align="center">Kepler.gl | <a href="http://kepler.gl">Website</a> |
+<h1 align="center">kepler.gl | <a href="http://kepler.gl">Website</a> |
 <a href="http://kepler.gl/#/demo">Demo App</a>
 </h1>
 <h3></h3>
@@ -36,6 +36,7 @@ Kepler.gl is also a React component that uses [Redux](https://redux.js.org/) to 
 - [Examples][examples]
 - [Get Started][get-started]
 - [App User Guide][user-guide]
+- [Jupyter Widget User Guide]][user-guide-jupyter]
 - [Tutorial][vis-academy]
 - [Stack Overflow][stack]
 - [Contribution Guidelines][contributing]
@@ -570,6 +571,7 @@ Read more about [addDataToMap](./docs/api-reference/actions/actions.md#adddatato
 [web]: http://www.kepler.gl/
 [vis-academy]: http://vis.academy/#/kepler.gl/
 [user-guide]: ./docs/user-guides/a-introduction.md
+[user-guide-jupyter]: ./docs/keplergl-jupyter/user-guide.md
 [api-reference]: ./docs/api-reference/overview.md
 [get-started]: ./docs/api-reference/get-started.md
 [reducers]: ./docs/api-reference/reducers/overview.md
