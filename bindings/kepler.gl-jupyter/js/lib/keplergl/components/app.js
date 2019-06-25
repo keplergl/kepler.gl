@@ -84,7 +84,7 @@ class App extends React.Component {
                 width={width || 1200}
                 height={height || 800}
                 appName="Kepler.gl Jupyter"
-                version="0.0.1"
+                version="0.1.0"
               />
             )}
           </AutoSizer>
