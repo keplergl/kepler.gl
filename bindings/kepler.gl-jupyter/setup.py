@@ -136,7 +136,7 @@ setup_args = {
             'keplergl/static/index.js',
             'keplergl/static/index.js.map',
         ],),
-        ('etc/jupyter/nbconfig/notebook.d/' ,['keplergl-jupyter.json'])
+        ('etc/jupyter/nbconfig/notebook.d' ,['keplergl-jupyter.json'])
     ],
     'install_requires': [
         'ipywidgets>=7.0.0,<8',

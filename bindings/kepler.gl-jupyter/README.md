@@ -113,7 +113,7 @@ Python 2
 Add [Mapbox access token](https://docs.mapbox.com/help/how-mapbox-works/access-tokens/) to Node env.
 
 ```sh
-export MapboxAccessToken=<your_mapbox_token>
+export MapboxAccessTokenJupyter=<your_mapbox_token>
 ```
 
 #### 3. Build js module, start a local server to watch for changes

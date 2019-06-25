@@ -21,7 +21,7 @@
 import {PanelHeaderFactory, Icons} from 'kepler.gl/components';
 
 // TODO: Move the doc to public repo
-const KEPLER_DOC = 'https://github.com/uber/kepler.gl-jupyter/blob/master/README.md';
+const KEPLER_DOC = 'https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md';
 
 export function CustomPanelHeaderFactory() {
   const PanelHeader = PanelHeaderFactory();

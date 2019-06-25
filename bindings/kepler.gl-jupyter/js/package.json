@@ -81,7 +81,7 @@
   "dependencies": {
     "@jupyter-widgets/base": "^1.0.0",
     "global": "^4.3.0",
-    "kepler.gl": "^1.0.0",
+    "kepler.gl": "^1.1.1",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
     "react-helmet": "^5.2.0",
