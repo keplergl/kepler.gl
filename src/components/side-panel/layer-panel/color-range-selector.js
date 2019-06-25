@@ -27,6 +27,7 @@ import {PanelLabel} from 'components/common/styled-components';
 import RangeSlider from 'components/common/range-slider';
 import Switch from 'components/common/switch';
 import ColorPalette from './color-palette';
+import ColorPickerPane from './color-picker-pane';
 
 import {COLOR_RANGES} from 'constants/color-ranges';
 import {numberSort} from 'utils/data-utils';
@@ -66,6 +67,11 @@ export default class ColorRangeSelect extends Component {
         options: ALL_STEPS
       },
       reversed: {
+        type: 'switch',
+        value: false,
+        options: [true, false]
+      },
+      customization: {
         type: 'switch',
         value: false,
         options: [true, false]
@@ -203,6 +209,8 @@ const ColorPaletteGroup = ({config = {}, onSelect, selected, colorRanges}) => {
 
   return (
     <div className="color-palette__group">
+
+      <ColorPickerPane />
       {filtered.map(colorRange => (
         <StyledColorRange
           className="color-ranges"
@@ -228,6 +236,7 @@ const ColorPaletteGroup = ({config = {}, onSelect, selected, colorRanges}) => {
               isReversed === Boolean(selected.reversed)
             }
           />
+
         </StyledColorRange>
       ))}
     </div>

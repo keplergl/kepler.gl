@@ -186,6 +186,8 @@ export const DEFAULT_EXPORT_MAP = {
 export const INITIAL_UI_STATE = {
   readOnly: false,
   activeSidePanel: DEFAULT_ACTIVE_SIDE_PANEL,
+  // render color picker
+  activeSidePanelDropdown: null,
   currentModal: DEFAULT_MODAL,
   datasetKeyToRemove: null,
   visibleDropdown: null,
