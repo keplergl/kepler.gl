@@ -39,7 +39,7 @@ const rules = [
 ];
 
 const plugins = [
-  new webpack.EnvironmentPlugin(['MapboxAccessToken'])
+  new webpack.EnvironmentPlugin(['MapboxAccessTokenJupyter'])
 ];
 
 module.exports = {

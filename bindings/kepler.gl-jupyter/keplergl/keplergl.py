@@ -53,7 +53,8 @@ def data_to_json(data, manager):
         return None
     else:
         if type(data) is not dict:
-            raise DataError('data type incorrect expecting a dictionary mapping from data id to value, but got {}'.format(type(data)))
+            print data
+            raise Exception('data type incorrect expecting a dictionary mapping from data id to value, but got {}'.format(type(data)))
             return None
         else:
             dataset = {}
@@ -166,7 +167,7 @@ class KeplerGl(widgets.DOMWidget):
         cmd = """window.__keplerglDataConfig = {};""".format(keplergl_data)
         frame_txt = keplergl_html[:k] + "<body><script>" + cmd + "</script>" + keplergl_html[k+6:]
 
-        with open(file_name,'w') as f:
+        with open(file_name,'wb') as f:
             f.write(frame_txt.encode('utf-8'))
 
         print("Map saved to {}!".format(file_name))

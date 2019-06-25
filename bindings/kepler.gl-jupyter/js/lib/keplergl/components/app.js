@@ -47,7 +47,7 @@ const KeplerGl = injectComponents([
   [PanelHeaderFactory, CustomPanelHeaderFactory]
 ]);
 
-const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
+const MAPBOX_TOKEN = process.env.MapboxAccessTokenJupyter; // eslint-disable-line
 
 class App extends React.Component {
   render() {

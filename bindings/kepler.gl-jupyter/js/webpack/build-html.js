@@ -43,7 +43,7 @@ const VERSIONS = {
   keplergl: clearCarats(dependencies['kepler.gl'])
 }
 
-const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
+const MAPBOX_TOKEN = process.env.MapboxAccessTokenJupyter; // eslint-disable-line
 
 const externals = [
   {react: 'React'},
