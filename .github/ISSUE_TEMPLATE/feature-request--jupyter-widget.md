@@ -1,8 +1,8 @@
 ---
-name: Feature request
-about: Suggest an idea for kepler.gl
+name: 'Feature request: Jupyter widget'
+about: Suggest an idea for kepler.gl Jupyter Widget
 title: ''
-labels: ''
+labels: jupyter
 assignees: heshan0131
 
 ---
