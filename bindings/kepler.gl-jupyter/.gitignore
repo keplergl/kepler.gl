@@ -21,7 +21,6 @@ setup.orig2.py
 notebooks/*.html
 notebooks/*.sh
 notebooks/*.js
-notebooks/scratch_paper.ipynb
 notebooks/ignore_*
 
 */*.tgz
