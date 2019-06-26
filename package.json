@@ -48,7 +48,7 @@
     "docs": "babel-node ./scripts/documentation.js",
     "lint": "eslint src webpack/*.js examples/*.js examples/**/src examples/**/*.js website/*.js website/src --fix",
     "web": "(yarn && yarn install:web && yarn start:web)",
-    "deploy": "yarn && yarn install:web && (cd website && yarn build)",
+    "deploy": "yarn install:web && (cd website && yarn build)",
     "clean": "rm -rf node_modules examples/**/node_modules website/node_modules",
     "release:patch": "git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && npm version patch && git push origin && git push origin --tags"
   },
