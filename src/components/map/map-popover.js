@@ -21,10 +21,9 @@
 import React, {PureComponent} from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
-import classnames from 'classnames';
-import {Pin} from 'components/common/icons';
 import LayerHoverInfoFactory from './layer-hover-info';
 import CoordinateInfoFactory from './coordinate-info';
+import {Pin} from 'components/common/icons';
 
 const MAX_WIDTH = 500;
 const MAX_HEIGHT = 600;
@@ -97,7 +96,6 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
     constructor(props) {
       super(props);
       this.state = {
-        isMouseOver: false,
         width: 380,
         height: 160
       };
@@ -148,7 +146,6 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
 
     render() {
       const {x, y, freezed, coordinate, layerHoverProp} = this.props;
-      const hidden = !this.state.isMouseOver;
 
       const style =
         Number.isFinite(x) && Number.isFinite(y) ? this._getPosition(x, y) : {};
@@ -158,16 +155,10 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
           ref={comp => {
             this.popover = comp;
           }}
-          className={classnames('map-popover', {hidden})}
+          className="map-popover"
           style={{
             ...style,
             maxWidth: MAX_WIDTH
-          }}
-          onMouseEnter={() => {
-            this.setState({isMouseOver: true});
-          }}
-          onMouseLeave={() => {
-            this.setState({isMouseOver: false});
           }}
         >
           {freezed ? (
