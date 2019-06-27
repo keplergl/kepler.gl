@@ -78,7 +78,7 @@ export default class GeoJsonLayer extends Layer {
   }
 
   get name() {
-    return 'Polygon';
+    return 'DrawPolygon';
   }
 
   get layerIcon() {

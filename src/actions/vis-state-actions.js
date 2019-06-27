@@ -448,6 +448,13 @@ export function loadFilesErr(error) {
   };
 }
 
+export function setFeatures(features) {
+  return {
+    type: ActionTypes.SET_FEATURES,
+    features
+  }
+}
+
 /**
  * This declaration is needed to group actions in docs
  */

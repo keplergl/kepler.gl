@@ -32,7 +32,8 @@ import {
 } from 'utils/map-style-utils/mapbox-gl-style-editor';
 import {
   DEFAULT_MAP_STYLES,
-  DEFAULT_LAYER_GROUPS
+  DEFAULT_LAYER_GROUPS,
+  MAP_MODES
 } from 'constants/default-settings';
 import {generateHashId} from 'utils/utils';
 import {LOAD_MAP_STYLE_TASK} from 'tasks/tasks';
@@ -535,12 +536,33 @@ export const addCustomMapStyleUpdater = state => {
   return mapStyleChangeUpdater(newState, {payload: styleId});
 };
 
+/**
+ * Updates 3d building color
+ * @memberof mapStyleUpdaters
+ * @param state
+ * @param color
+ * @return {{[p: string]: *}}
+ */
 export const set3dBuildingColorUpdater = (state, {payload: color}) => ({
   ...state,
   threeDBuildingColor: color,
   custom3DBuildingColor: true
 });
 
+export const setMapMode = (state, {payload: mode}) => ({
+  ...state,
+  // Update top map style
+  topMapStyle: mode !== MAP_MODES.READ_ONLY ? editTopMapStyle({
+    id: state.styleType,
+    mapStyle: state.mapStyles[state.styleType],
+    visibleLayerGroups: (state.topMapStyle || {} ).visibleLayerGroups || []
+  }) : null
+});
+
+/**
+ * Return the initial input style
+ * @return Object
+ */
 export function getInitialInputStyle() {
   return {
     accessToken: null,

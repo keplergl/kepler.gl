@@ -31,7 +31,7 @@ export const geojsonData = {
         RATE: 'a'
       },
       geometry: {
-        type: 'Polygon',
+        type: 'DrawPolygon',
         coordinates: [
           [
             [-122.401159718585049, 37.782024266952142],
@@ -59,7 +59,7 @@ export const geojsonData = {
         RATE: 'b'
       },
       geometry: {
-        type: 'Polygon',
+        type: 'DrawPolygon',
         coordinates: [
           [
             [-122.39249932896719, 37.793768814133983],
@@ -84,7 +84,7 @@ export const geojsonData = {
         TRIPS: 20
       },
       geometry: {
-        type: 'Polygon',
+        type: 'DrawPolygon',
         coordinates: [
           [
             [-122.39249932896719, 37.793768814133983],
@@ -109,7 +109,7 @@ export const geojsonData = {
         RATE: 'c'
       },
       geometry: {
-        type: 'Polygon',
+        type: 'DrawPolygon',
         coordinates: [
           [
             [-122.39249932896719, 37.793768814133983],
@@ -179,7 +179,7 @@ export const rows = [
         RATE: 'a'
       },
       geometry: {
-        type: 'Polygon',
+        type: 'DrawPolygon',
         coordinates: [
           [
             [-122.401159718585049, 37.782024266952142],
@@ -214,7 +214,7 @@ export const rows = [
         RATE: 'b'
       },
       geometry: {
-        type: 'Polygon',
+        type: 'DrawPolygon',
         coordinates: [
           [
             [-122.39249932896719, 37.793768814133983],
@@ -246,7 +246,7 @@ export const rows = [
         TRIPS: 20
       },
       geometry: {
-        type: 'Polygon',
+        type: 'DrawPolygon',
         coordinates: [
           [
             [-122.39249932896719, 37.793768814133983],
@@ -278,7 +278,7 @@ export const rows = [
         RATE: 'c'
       },
       geometry: {
-        type: 'Polygon',
+        type: 'DrawPolygon',
         coordinates: [
           [
             [-122.39249932896719, 37.793768814133983],

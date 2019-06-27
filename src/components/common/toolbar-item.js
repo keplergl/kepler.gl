@@ -18,41 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// Constants
-export {
-  KEPLER_GL_VERSION,
-  KEPLER_GL_WEBSITE,
-  KEPLER_GL_NAME,
-  DIMENSIONS,
-  ALL_FIELD_TYPES,
-  FIELD_OPTS,
-  FILTER_TYPES,
-  GEOJSON_FIELDS,
-  ICON_FIELDS,
-  TRIP_POINT_FIELDS,
-  TRIP_ARC_FIELDS,
-  SCALE_TYPES,
-  LAYER_TYPES,
-  LAYER_BLENDINGS,
-  AGGREGATION_TYPES,
-  MAX_DEFAULT_TOOLTIPS,
-  DATA_TABLE_ID,
-  DELETE_DATA_ID,
-  ADD_DATA_ID,
-  EXPORT_IMAGE_ID,
-  EXPORT_DATA_ID,
-  EXPORT_MAP_ID,
-  ADD_MAP_STYLE_ID,
-  DEFAULT_LAYER_GROUPS,
-  DEFAULT_MAP_STYLES,
-  THEME,
-  EXPORT_MAP_FORMAT,
-  EXPORT_MAP_FORMAT_OPTIONS,
-  EXPORT_DATA_TYPE_OPTIONS,
-  DEFAULT_NOTIFICATION_TYPES,
-  DEFAULT_NOTIFICATION_TOPICS,
-  PANELS,
-  MAP_MODES
-} from './default-settings';
-export {VizColorPalette, DataVizColors} from './custom-color-ranges';
-export {COLOR_RANGES, DefaultColorRange} from './color-ranges';
+import React from 'react';
+
+const ToolbarItem = ({onClose, onClick, label, icon}) => (
+  <div className="save-export-dropdown__item" onClick={(e) => {
+    e.stopPropagation();
+    onClick();
+  }}>
+    {icon}
+    <div className="save-export-dropdown__title">{label}</div>
+  </div>
+);
+
+export default ToolbarItem;

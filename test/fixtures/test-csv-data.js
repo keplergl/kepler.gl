@@ -614,7 +614,7 @@ export const updatedLayerV2 = {
         index: 0
       },
       geometry: {
-        type: 'Polygon',
+        type: 'DrawPolygon',
         coordinates: [
           [
             [
@@ -639,7 +639,7 @@ export const updatedLayerV2 = {
         index: 1
       },
       geometry: {
-        type: 'Polygon',
+        type: 'DrawPolygon',
         coordinates: [
           [
             [
@@ -664,7 +664,7 @@ export const updatedLayerV2 = {
         index: 2
       },
       geometry: {
-        type: 'Polygon',
+        type: 'DrawPolygon',
         coordinates: [
           [
             [
@@ -685,7 +685,7 @@ export const updatedLayerV2 = {
         index: 3
       },
       geometry: {
-        type: 'Polygon',
+        type: 'DrawPolygon',
         coordinates: [
           [
             [
@@ -788,7 +788,7 @@ export const updatedLayerSimplifiedShape = {
         index: 0
       },
       geometry: {
-        type: 'Polygon',
+        type: 'DrawPolygon',
         coordinates: [
           [
             [
@@ -809,7 +809,7 @@ export const updatedLayerSimplifiedShape = {
         index: 1
       },
       geometry: {
-        type: 'Polygon',
+        type: 'DrawPolygon',
         coordinates: [
           [
             [
@@ -834,7 +834,7 @@ export const updatedLayerSimplifiedShape = {
         index: 2
       },
       geometry: {
-        type: 'Polygon',
+        type: 'DrawPolygon',
         coordinates: [
           [
             [
@@ -863,7 +863,7 @@ export const updatedLayerSimplifiedShape = {
         index: 3
       },
       geometry: {
-        type: 'Polygon',
+        type: 'DrawPolygon',
         coordinates: [
           [
             [

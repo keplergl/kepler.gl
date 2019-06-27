@@ -31,6 +31,8 @@ import MapPopoverFactory from 'components/map/map-popover';
 import MapControlFactory from 'components/map/map-control';
 import {StyledMapContainer} from 'components/common/styled-components';
 
+import Draw from './draw';
+
 // utils
 import {generateMapboxLayers, updateMapboxLayers} from 'layers/mapbox-utils';
 import {OVERLAY_TYPE} from 'layers/base-layer';
@@ -39,14 +41,25 @@ import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 
 // default-settings
 import ThreeDBuildingLayer from 'deckgl-layers/3d-building-layer/3d-building-layer';
+import {MAP_MODES} from 'constants/default-settings';
 
-const MAP_STYLE = {
-  container: {
-    display: 'inline-block',
-    position: 'relative'
-  },
-  top: {
-    position: 'absolute', top: '0px', pointerEvents: 'none'
+const MAP_STYLE_CONTAINER = {
+  display: 'inline-block',
+  position: 'relative'
+};
+
+const getMapStyle = mapMode => {
+  const isEdit = mapMode !== MAP_MODES.READ_ONLY;
+  return{
+    top: {
+      position: 'absolute',
+      top: '0px',
+      pointerEvents: isEdit ? 'auto' : 'none',
+      zIndex: 1
+    },
+    bottom: {
+      pointerEvents: isEdit ? 'none' : 'auto'
+    }
   }
 };
 
@@ -55,10 +68,12 @@ const MAPBOXGL_RENDER = 'render';
 const TRANSITION_DURATION = 0;
 
 MapContainerFactory.deps = [
-  MapPopoverFactory, MapControlFactory
+  MapPopoverFactory,
+  MapControlFactory
 ];
 
 export default function MapContainerFactory(MapPopover, MapControl) {
+
   class MapContainer extends Component {
     static propTypes = {
       // required
@@ -69,6 +84,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       layerData: PropTypes.arrayOf(PropTypes.any).isRequired,
       layers: PropTypes.arrayOf(PropTypes.any).isRequired,
       mapState: PropTypes.object.isRequired,
+      uiState: PropTypes.object.isRequired,
       mapStyle: PropTypes.object.isRequired,
       mapControls: PropTypes.object.isRequired,
       mousePos: PropTypes.object.isRequired,
@@ -77,6 +93,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       toggleMapControl: PropTypes.func.isRequired,
       visStateActions: PropTypes.object.isRequired,
       mapStateActions: PropTypes.object.isRequired,
+      uiStateActions: PropTypes.object.isRequired,
 
       // optional
       isExport: PropTypes.bool,
@@ -93,6 +110,12 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       MapComponent: MapboxGLMap,
       deckGlProps: {}
     };
+
+    // mapModeSelector = props => this.props.uiState.mode;
+    // mapContainerStylesSelector = createSelector(
+    //   this.mapModeSelector,
+    //   mode => getMapStyle(mode !== MAP_MODES.READ_ONLY)
+    // );
 
     constructor(props) {
       super(props);
@@ -391,12 +414,13 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         this.props.onViewStateChange(viewState);
       }
       this.props.mapStateActions.updateMap(viewState);
-    }
+    };
 
     render() {
       const {
         mapState, mapStyle, mapStateActions, mapLayers, layers, MapComponent,
-        datasets, mapboxApiAccessToken, mapboxApiUrl, mapControls, toggleMapControl
+        datasets, mapboxApiAccessToken, mapboxApiUrl, mapControls, toggleMapControl,
+        uiState, uiStateActions, visState, visStateActions
       } = this.props;
       const layersToRender = this.layersToRenderSelector(this.props);
       if (!mapStyle.bottomMapStyle) {
@@ -413,8 +437,10 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         transformRequest
       };
 
+      const mapContainerStyles = getMapStyle(uiState.mode);
+
       return (
-        <StyledMapContainer style={MAP_STYLE.container}>
+        <StyledMapContainer style={MAP_STYLE_CONTAINER}>
           <MapControl
             datasets={datasets}
             dragRotate={mapState.dragRotate}
@@ -429,27 +455,41 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             onTogglePerspective={mapStateActions.togglePerspective}
             onToggleSplitMap={mapStateActions.toggleSplitMap}
             onMapToggleLayer={this._handleMapToggleLayer}
-            onToggleMapControl={toggleMapControl}
+            onToggleMapControl={uiStateActions.toggleMapControl}
+            onSetMapMode={uiStateActions.setMapMode}
           />
-          <MapComponent
-            {...mapProps}
-            key="bottom"
-            ref={this._setMapboxMap}
-            mapStyle={mapStyle.bottomMapStyle}
-            getCursor={this.props.hoverInfo ? () => 'pointer' : undefined}
-            transitionDuration={TRANSITION_DURATION}
-            onMouseMove={this.props.visStateActions.onMouseMove}
-          >
-            {this._renderDeckOverlay(layersToRender)}
-            {this._renderMapboxOverlays(layersToRender)}
-          </MapComponent>
+          <div style={mapContainerStyles.bottom}>
+            <MapComponent
+              {...mapProps}
+              key="bottom"
+              ref={this._setMapboxMap}
+              mapStyle={mapStyle.bottomMapStyle}
+              getCursor={this.props.hoverInfo ? () => 'pointer' : undefined}
+              transitionDuration={TRANSITION_DURATION}
+              onMouseMove={this.props.visStateActions.onMouseMove}
+            >
+              {this._renderDeckOverlay(layersToRender)}
+              {this._renderMapboxOverlays(layersToRender)}
+            </MapComponent>
+          </div>
           {mapStyle.topMapStyle && (
-            <div style={MAP_STYLE.top}>
+            <div style={mapContainerStyles.top}>
               <MapComponent
                 {...mapProps}
                 key="top"
                 mapStyle={mapStyle.topMapStyle}
-              />
+              >
+                {uiState.mode !== MAP_MODES.READ_ONLY  ?
+                  (
+                    <Draw
+                      mode={uiState.mode}
+                      onUpdate={visStateActions.setFeatures}
+                      editor={visState.editor}
+                    />
+                    )
+                  : null
+                }
+              </MapComponent>
             </div>
           )}
           {this._renderMapPopover(layersToRender)}

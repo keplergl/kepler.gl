@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import keyMirror from 'keymirror';
+import {EditorModes} from 'react-map-gl-draw';
 
 export const ACTION_PREFIX = '@@kepler.gl/';
 export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl';
@@ -677,3 +678,13 @@ export const DEFAULT_NOTIFICATION_TOPICS = keyMirror({
 export const TOKEN_MISUSE_WARNING = '* If you do not provide your own token, the map may fail to display at any time when we replace ours to avoid misuse. ';
 export const DISCLAIMER = 'You can change the Mapbox token later using the following instructions: ';
 export const MAP_CONFIG_DESCRIPTION = 'Map config will be included in the Json file. If you are using kepler.gl in your own app. You can copy this config and pass it to ';
+
+// We could use direcctly react-map-gl-draw EditorMode but this would
+// create a direct dependency with react-map-gl-draw
+// Created this map to be independent from react-map-gl-draw
+export const MAP_MODES = {
+  READ_ONLY: EditorModes.READ_ONLY,
+  DRAW_POLYGON: EditorModes.DRAW_POLYGON,
+  DRAW_RECTANGLE: EditorModes.DRAW_RECTANGLE,
+  EDIT_VERTEX: EditorModes.EDIT_VERTEX
+};
