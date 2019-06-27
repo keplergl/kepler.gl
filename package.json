@@ -97,7 +97,6 @@
     "lodash.pick": "^4.4.0",
     "lodash.throttle": "^4.1.1",
     "lodash.uniq": "^4.0.1",
-    "luma.gl": "^7.1.1",
     "mini-svg-data-uri": "^1.0.3",
     "moment": "^2.10.6",
     "pbf": "^3.1.0",

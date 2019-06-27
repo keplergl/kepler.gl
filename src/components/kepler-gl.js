@@ -164,6 +164,7 @@ function KeplerGlFactory(
       const allStyles = [...customStyles, ...defaultStyles].reduce((accu, style) => {
           const hasStyleObject = style.style && typeof style.style === 'object';
           accu[hasStyleObject ? 'toLoad' : 'toRequest'][style.id] = style;
+
           return accu;
         }, {toLoad: {}, toRequest: {}}
       );

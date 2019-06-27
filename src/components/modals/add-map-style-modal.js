@@ -41,14 +41,14 @@ const InstructionPanel = styled.div`
   flex-direction: column;
   justify-content: space-around;
   font-size: 12px;
-
+  
   .modal-section:first-child {
     margin-top: 24px;
     ${media.palm`
       margin-top: 0;
     `};
   }
-
+  
   input {
     margin-right: 8px;
   }
@@ -63,11 +63,11 @@ const StyledModalSection = styled.div`
   .modal-section-subtitle {
     color: ${props => props.theme.subtextColorLT};
   }
-
+  
   input {
     margin-top: 8px;
   }
-
+  
   ${media.portable`
     margin-bottom: 24px;
   `};
@@ -89,15 +89,15 @@ const PreviewMap = styled.div`
     font-size: 10px;
     padding: 8px 0px;
   }
-
+  
   .preview-title.error {
     color: ${props => props.theme.errorColor};
   }
-
+  
   ${media.portable`
     margin-left: 32px;
   `};
-
+  
   ${media.palm`
     margin-left: unset;
     .preview-title {
@@ -113,7 +113,7 @@ const StyledPreviewImage = styled.div`
   width: ${MapW}px;
   height: ${MapH}px;
   position: relative;
-
+  
   .preview-image-placeholder {
     position: absolute;
     top: 0;
@@ -129,7 +129,7 @@ const StyledPreviewImage = styled.div`
 
 const InlineLink = styled.a`
   font-weight: 500;
-
+  
   :hover {
     cursor: pointer;
   }
