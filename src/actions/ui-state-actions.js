@@ -244,6 +244,22 @@ export const setExportMapFormat = createAction(
 );
 
 /**
+ * Set the map mode
+ * @memberof main
+ * @param {string} mode one of MAP_MODES
+ * @public
+ * @example
+ * import {setMapMode} from 'kepler.gl/actions';
+ * import {MAP_MODES} from 'kepler.gl/constants';
+ *
+ * this.props.dispatch(setMapMode(MAP_MODES.DRAW_POLYGON));
+ */
+export const setMapMode = createAction(
+  ActionTypes.SET_MAP_MODE,
+  mode => mode
+);
+
+/**
  * This declaration is needed to group actions in docs
  */
 /**

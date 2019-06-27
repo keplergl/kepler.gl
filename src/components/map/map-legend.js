@@ -85,7 +85,7 @@ const propTypes = {
 };
 
 const SingleColorDomain = [''];
-export const SingleColorLegend = ({width, color}) => (
+export const SingleColorLegend = React.memo(({width, color}) => (
   <ColorLegend
     scaleType="ordinal"
     displayLabel={false}
@@ -94,23 +94,20 @@ export const SingleColorLegend = ({width, color}) => (
     range={[rgb(...color).toString()]}
     width={width}
   />
-);
+));
 
-export const MultiColorLegend = ({colorRange, colorScale, colorDomain, colorField, width}) => {
+export const MultiColorLegend = React.memo(({colorRange, colorScale, colorDomain, colorField, width}) => (
+  <ColorLegend
+    scaleType={colorScale}
+    displayLabel
+    domain={colorDomain}
+    fieldType={(colorField && colorField.type) || 'real'}
+    range={colorRange.colors}
+    width={width}
+  />
+));
 
-  return (
-    <ColorLegend
-      scaleType={colorScale}
-      displayLabel
-      domain={colorDomain}
-      fieldType={(colorField && colorField.type) || 'real'}
-      range={colorRange.colors}
-      width={width}
-    />
-  );
-};
-
-export const LayerColorLegend = ({description, config, width, colorChannel}) => {
+export const LayerColorLegend = React.memo(({description, config, width, colorChannel}) => {
   const enableColorBy = description.measure;
   const {scale, field, domain, range, property, key} = colorChannel;
   const [colorScale, colorField, colorDomain] = [scale, field, domain].map(k => config[k]);
@@ -142,10 +139,12 @@ export const LayerColorLegend = ({description, config, width, colorChannel}) => 
       </div>
     </div>
   )
-}
+});
 
 const isColorChannel = (visualChannel) =>
   [CHANNEL_SCALES.color, CHANNEL_SCALES.colorAggr].includes(visualChannel.channelScaleType);
+
+const MAP_LEGEND_WIDTH = DIMENSIONS.mapControl.width - 2 * DIMENSIONS.mapControl.padding;
 
 const MapLegend = ({layers = []}) => (
   <div>
@@ -154,7 +153,6 @@ const MapLegend = ({layers = []}) => (
         return null;
       }
 
-      const width = DIMENSIONS.mapControl.width - 2 * DIMENSIONS.mapControl.padding;
       const colorChannels = Object.values(layer.visualChannels)
         .filter(isColorChannel);
       const nonColorChannels = Object.values(layer.visualChannels)
@@ -169,13 +167,15 @@ const MapLegend = ({layers = []}) => (
           <div className="legend--layer_name">{layer.config.label}</div>
           {colorChannels.map(colorChannel =>
               !colorChannel.condition || colorChannel.condition(layer.config) ?
-              <LayerColorLegend
-                key={colorChannel.key}
-                description={layer.getVisualChannelDescription(colorChannel.key)}
-                config={layer.config}
-                width={width}
-                colorChannel={colorChannel}
-              /> : null
+                (
+                  <LayerColorLegend
+                    key={colorChannel.key}
+                    description={layer.getVisualChannelDescription(colorChannel.key)}
+                    config={layer.config}
+                    width={MAP_LEGEND_WIDTH}
+                    colorChannel={colorChannel}
+                  />
+                ) : null
             )}
           {nonColorChannels
             .map(visualChannel => {
@@ -187,16 +187,15 @@ const MapLegend = ({layers = []}) => (
                 visualChannel.defaultMeasure;
 
               const description = layer.getVisualChannelDescription(visualChannel.key);
-              if (matchCondition && enabled) {
-                return (
+
+              return matchCondition && enabled ?
+                (
                   <LayerSizeLegend
                     key={visualChannel.key}
                     label={description.label}
                     name={description.measure}
                   />
-                );
-              }
-              return null;
+                ) : null;
             })}
         </StyledMapControlLegend>
       );

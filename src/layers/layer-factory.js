@@ -319,7 +319,7 @@ export const LAYER_VIS_CONFIGS = {
   extruded: {
     type: 'boolean',
     defaultValue: false,
-    label: 'Enable Polygon Height',
+    label: 'Enable DrawPolygon Height',
     group: PROPERTY_GROUPS.display,
     property: 'extruded'
   },

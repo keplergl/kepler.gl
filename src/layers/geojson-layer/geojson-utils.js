@@ -36,7 +36,7 @@ export function getGeojsonDataMaps(allData, getFeature) {
     'MultiPoint',
     'LineString',
     'MultiLineString',
-    'Polygon',
+    'DrawPolygon',
     'MultiPolygon',
     'GeometryCollection'
   ];
@@ -101,7 +101,7 @@ export function parseGeometryFromString(geoString) {
   let parsedGeo;
 
   // try parse as geojson string
-  // {"type":"Polygon","coordinates":[[[-74.158491,40.83594]]]}
+  // {"type":"DrawPolygon","coordinates":[[[-74.158491,40.83594]]]}
   try {
     parsedGeo = JSON.parse(geoString);
   } catch (e) {
@@ -162,7 +162,7 @@ export function featureToDeckGlGeoType(type) {
     case 'MultiLineString':
       return 'line';
 
-    case 'Polygon':
+    case 'DrawPolygon':
     case 'MultiPolygon':
       return 'polygon';
 
