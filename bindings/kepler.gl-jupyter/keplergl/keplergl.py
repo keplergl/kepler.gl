@@ -53,7 +53,7 @@ def data_to_json(data, manager):
         return None
     else:
         if type(data) is not dict:
-            print data
+            print(data)
             raise Exception('data type incorrect expecting a dictionary mapping from data id to value, but got {}'.format(type(data)))
             return None
         else:
@@ -107,7 +107,7 @@ class KeplerGl(widgets.DOMWidget):
         '''
 
         if type(proposal.value) is not dict:
-            raise DataException('[data type error]: Expecting a dictionary mapping from id to value, but got {}'.format(type(data)))
+            raise DataException('[data type error]: Expecting a dictionary mapping from id to value, but got {}'.format(type(proposal.value)))
 
         else:
             for key, value in proposal.value.items():
