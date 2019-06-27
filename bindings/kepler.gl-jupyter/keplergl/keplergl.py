@@ -53,7 +53,7 @@ def data_to_json(data, manager):
         return None
     else:
         if type(data) is not dict:
-            print data
+            print(data)
             raise Exception('data type incorrect expecting a dictionary mapping from data id to value, but got {}'.format(type(data)))
             return None
         else:
