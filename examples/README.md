@@ -23,7 +23,7 @@ yarn --ignore-engines && yarn start
 
 - ### [replace-component][replace-component]
   Example showing how to replace kepler.gl default components using `injectComponents` method.
-  
+
 - ### [custom-theme][custom-theme]
   Customize kepler.gl theme by override current style properties.
 
@@ -33,4 +33,4 @@ yarn --ignore-engines && yarn start
 [open-modal]: open-modal
 [umd-client]: umd-client
 [replace-component]: replace-component
-[custom-reducer]: custom-theme
+[custom-theme]: custom-theme
