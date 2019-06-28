@@ -143,7 +143,7 @@ const ActionTypes = keyMirror({
   ADD_DATA_TO_MAP: null,
   RECEIVE_MAP_CONFIG: null,
   RESET_MAP_CONFIG: null,
-  SET_MAP_MODE: null
+  SET_EDITOR_MODE: null
 });
 
 const addPrefix = actions =>

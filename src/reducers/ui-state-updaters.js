@@ -25,7 +25,8 @@ import {
   RATIOS,
   RESOLUTIONS,
   EXPORT_MAP_FORMAT,
-  MAP_MODES
+  // MAP_MODES,
+  EDITOR_MODES
 } from 'constants/default-settings';
 import {createNotification} from 'utils/notifications-utils';
 
@@ -168,6 +169,10 @@ export const DEFAULT_EXPORT_MAP = {
   format: EXPORT_MAP_FORMAT.HTML
 };
 
+export const DEFAULT_EDITOR = {
+  mode: EDITOR_MODES.READ_ONLY
+};
+
 /**
  * Default initial `uiState`
  * @memberof uiStateUpdaters
@@ -199,8 +204,8 @@ export const INITIAL_UI_STATE = {
   mapControls: DEFAULT_MAP_CONTROLS,
   // ui notifications
   notifications: DEFAULT_NOTIFICATIONS,
-  // map mode
-  mode: MAP_MODES.READ_ONLY
+  // editor mode
+  editor: DEFAULT_EDITOR
 };
 
 /* Updaters */
@@ -544,26 +549,10 @@ export const removeNotificationUpdater = (state, {payload: id}) => ({
   notifications: state.notifications.filter(n => n.id !== id)
 });
 
-/**
- * Set map mode. If the new map mode is equal to the current one
- * The function will revert to READ_ONLY mode
- * @param {Object} state `uiState`
- * @param {Object} action
- * @param {String} action.payload mode to be applied to current kepler.gl instance
- * @return {Object} nextState
- */
-export const setMapModeUpdater = (state, {payload: mode}) => ({
+export const setEditorModeUpdater = (state, {payload: mode}) => ({
   ...state,
-  mode: mode === state.mode ? MAP_MODES.READ_ONLY : mode
+  editor: {
+    ...state.editor,
+    mode
+  }
 });
-
-export const setFeaturesUpdater = (state, {features = []}) => {
-  // if (features.length && features[features.length - 1].properties.isClosed) {
-  //   return {
-  //     ...state,
-  //     mode: MAP_MODES.READ_ONLY
-  //   };
-  // }
-
-  return state;
-};

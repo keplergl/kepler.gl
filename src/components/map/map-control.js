@@ -40,7 +40,7 @@ import {
 } from 'components/common/icons';
 import Toolbar from 'components/common/toolbar';
 import ToolbarItem from 'components/common/toolbar-item';
-import {MAP_MODES} from 'constants/default-settings';
+import {EDITOR_MODES} from 'constants/default-settings';
 
 const StyledMapControl = styled.div`
   right: 0;
@@ -253,7 +253,7 @@ const Toggle3dButton = React.memo(({dragRotate, onTogglePerspective}) => (
 
 const StyledToolBar = styled(Toolbar)`
   position: absolute;
-  right: 0;
+  right: 32px;
 `;
 
 const MapDrawPanel = React.memo(({isActive, onToggleMenuPanel, onSetMapMode}) => {
@@ -278,19 +278,17 @@ const MapDrawPanel = React.memo(({isActive, onToggleMenuPanel, onSetMapMode}) =>
 
   return !isActive ? toggleMapDrawButton : (
       <div style={{position: 'relative'}}>
-        <StyledToolBar show={isActive} onClose={onToggleMenuPanel}>
+        <StyledToolBar show={isActive} direction="column">
           <ToolbarItem
             onClick={() => {
-              onSetMapMode(MAP_MODES.DRAW_POLYGON);
-              onToggleMenuPanel();
+              onSetMapMode(EDITOR_MODES.DRAW_POLYGON);
             }}
             label="polygon"
             icon={(<Polygon height="22px"/>)}
           />
           <ToolbarItem
             onClick={() => {
-              onSetMapMode(MAP_MODES.DRAW_RECTANGLE);
-              onToggleMenuPanel();
+              onSetMapMode(EDITOR_MODES.DRAW_RECTANGLE);
             }}
             label="rectangle"
             icon={(<Rectangle height="22px"/>)}
@@ -315,7 +313,7 @@ const MapControlFactory = () => {
       onTogglePerspective: PropTypes.func.isRequired,
       onToggleSplitMap: PropTypes.func.isRequired,
       onToggleMapControl: PropTypes.func.isRequired,
-      onMapToggleLayer: PropTypes.func.isRequired,
+      onSetEditorMode: PropTypes.func.isRequired,
       top: PropTypes.number.isRequired,
 
       // optional
@@ -357,7 +355,6 @@ const MapControlFactory = () => {
         onToggleSplitMap,
         onMapToggleLayer,
         onToggleMapControl,
-        onSetMapMode,
         scale
       } = this.props;
 
@@ -424,8 +421,8 @@ const MapControlFactory = () => {
             <ActionPanel key={4}>
               <MapDrawPanel
                 isActive={mapDraw.active}
-                onSetMapMode={onSetMapMode}
                 onToggleMenuPanel={() => onToggleMapControl('mapDraw')}
+                onSetEditorMode={this.props.onSetEditorMode}
               />
             </ActionPanel>
           ) : null}
