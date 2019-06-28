@@ -20,15 +20,15 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import ClickOutsideCloseDropdown from 'components/side-panel/panel-dropdown';
 
 const StyledPanelDropdown = styled.div`
+  display: flex;
+  flex-direction: ${props => props.direction};
   background-color: ${props => props.theme.dropdownListBgd};
   box-shadow: ${props => props.theme.dropdownListShadow};
   font-size: 11px;
-  padding: 16px 0;
+  padding: ${props => props.direction === 'row' ? '16px 0;' : '0;'};
   transition: ${props => props.theme.transitionSlow};
-  display: flex;
   margin-top: ${props => props.show ? '6px' : '20px'};
   opacity: ${props => props.show ? 1 : 0};
   transform: translateX(calc(-50% + 20px));
@@ -44,10 +44,11 @@ const StyledPanelDropdown = styled.div`
   .save-export-dropdown__item {
     align-items: center;
     border-right: 1px solid ${props => props.theme.panelHeaderIcon};
+    padding: 0 22px;
     color: ${props => props.theme.textColor};
     display: flex;
     flex-direction: column;
-    padding: 0 22px;
+
 
     :hover {
       cursor: pointer;
@@ -57,6 +58,15 @@ const StyledPanelDropdown = styled.div`
     &:last-child {
       border-right: 0;
     }
+    
+    ${props => props.direction === 'column' ? `
+      border-bottom: 1px solid ${props.theme.panelHeaderIcon};
+      padding: 8px 22px;
+      &:last-child {
+        border-bottom: 0;
+      }
+      ` : null
+    };
   }
 
   .save-export-dropdown__title {
@@ -65,13 +75,9 @@ const StyledPanelDropdown = styled.div`
   }
 `;
 
-const Toolbar = ({children, className, show, onClose}) => (
-  <StyledPanelDropdown className={`${className || ''} save-export-dropdown`} show={show}>
-    <ClickOutsideCloseDropdown className="save-export-dropdown__inner"
-                               show={show}
-                               onClose={onClose}>
-      {children}
-    </ClickOutsideCloseDropdown>
+const Toolbar = ({children, className, show, direction = 'row'}) => (
+  <StyledPanelDropdown className={`${className || ''} save-export-dropdown`} show={show} direction={direction}>
+    {children}
   </StyledPanelDropdown>
 );
 

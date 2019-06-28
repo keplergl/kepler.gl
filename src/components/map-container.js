@@ -21,6 +21,7 @@
 // libraries
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
+import styled from 'styled-components';
 import MapboxGLMap from 'react-map-gl';
 import DeckGL from 'deck.gl';
 import WebMercatorViewport from 'viewport-mercator-project';
@@ -39,15 +40,17 @@ import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 
 // default-settings
 import ThreeDBuildingLayer from '../deckgl-layers/3d-building-layer/3d-building-layer';
-import {MAP_MODES} from 'constants/default-settings';
 
 const MAP_STYLE_CONTAINER = {
   display: 'inline-block',
   position: 'relative'
 };
 
-const getMapStyle = mapMode => {
-  const isEdit = mapMode !== MAP_MODES.READ_ONLY;
+const StyledDraw = styled(Draw)`
+  display: ${props => props.visible ? 'default' : 'none'};
+`;
+
+const getMapStyle = isEdit => {
   return{
     top: {
       position: 'absolute',
@@ -83,6 +86,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       layers: PropTypes.arrayOf(PropTypes.any).isRequired,
       mapState: PropTypes.object.isRequired,
       uiState: PropTypes.object.isRequired,
+      visState: PropTypes.object.isRequired,
       mapStyle: PropTypes.object.isRequired,
       mapControls: PropTypes.object.isRequired,
       mousePos: PropTypes.object.isRequired,
@@ -112,7 +116,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     // mapModeSelector = props => this.props.uiState.mode;
     // mapContainerStylesSelector = createSelector(
     //   this.mapModeSelector,
-    //   mode => getMapStyle(mode !== MAP_MODES.READ_ONLY)
+    //   mode => getMapStyle(mode !== EDITOR_MODES.READ_ONLY)
     // );
 
     constructor(props) {
@@ -457,7 +461,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             onToggleSplitMap={mapStateActions.toggleSplitMap}
             onMapToggleLayer={this._handleMapToggleLayer}
             onToggleMapControl={uiStateActions.toggleMapControl}
-            onSetMapMode={uiStateActions.setMapMode}
+            onSetEditorMode={uiStateActions.setEditorMode}
           />
           <div style={mapContainerStyles.bottom}>
             <MapComponent
@@ -479,16 +483,11 @@ export default function MapContainerFactory(MapPopover, MapControl) {
                 key="top"
                 mapStyle={mapStyle.topMapStyle}
               >
-                {uiState.mode !== MAP_MODES.READ_ONLY  ?
-                  (
-                    <Draw
-                      mode={uiState.mode}
-                      onUpdate={visStateActions.setFeatures}
-                      editor={visState.editor}
-                    />
-                    )
-                  : null
-                }
+                <StyledDraw
+                  mode={uiState.mapControls.mapDraw.active}
+                  onUpdate={visStateActions.setFeatures}
+                  editor={visState.editor}
+                />
               </MapComponent>
             </div>
           )}

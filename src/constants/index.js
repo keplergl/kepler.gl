@@ -52,7 +52,7 @@ export {
   DEFAULT_NOTIFICATION_TYPES,
   DEFAULT_NOTIFICATION_TOPICS,
   PANELS,
-  MAP_MODES
+  EDITOR_MODES
 } from './default-settings';
 export {VizColorPalette, DataVizColors} from './custom-color-ranges';
 export {COLOR_RANGES, DefaultColorRange} from './color-ranges';

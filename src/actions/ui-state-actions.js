@@ -246,16 +246,16 @@ export const setExportMapFormat = createAction(
 /**
  * Set the map mode
  * @memberof main
- * @param {string} mode one of MAP_MODES
+ * @param {string} mode one of EDITOR_MODES
  * @public
  * @example
  * import {setMapMode} from 'kepler.gl/actions';
- * import {MAP_MODES} from 'kepler.gl/constants';
+ * import {EDITOR_MODES} from 'kepler.gl/constants';
  *
- * this.props.dispatch(setMapMode(MAP_MODES.DRAW_POLYGON));
+ * this.props.dispatch(setMapMode(EDITOR_MODES.DRAW_POLYGON));
  */
-export const setMapMode = createAction(
-  ActionTypes.SET_MAP_MODE,
+export const setEditorMode = createAction(
+  ActionTypes.SET_EDITOR_MODE,
   mode => mode
 );
 

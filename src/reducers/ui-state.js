@@ -51,8 +51,7 @@ const actionHandler = {
   [ActionTypes.SET_USER_MAPBOX_ACCESS_TOKEN]: uiStateUpdaters.setUserMapboxAccessTokenUpdater,
   [ActionTypes.SET_EXPORT_MAP_FORMAT]: uiStateUpdaters.setExportMapFormatUpdater,
 
-  [ActionTypes.SET_MAP_MODE]: uiStateUpdaters.setMapModeUpdater,
-  [ActionTypes.SET_FEATURES]: uiStateUpdaters.setFeaturesUpdater
+  [ActionTypes.SET_EDITOR_MODE]: uiStateUpdaters.setEditorModeUpdater
 };
 
 /* Reducer */
