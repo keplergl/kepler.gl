@@ -107,7 +107,7 @@ class KeplerGl(widgets.DOMWidget):
         '''
 
         if type(proposal.value) is not dict:
-            raise DataException('[data type error]: Expecting a dictionary mapping from id to value, but got {}'.format(type(data)))
+            raise DataException('[data type error]: Expecting a dictionary mapping from id to value, but got {}'.format(type(proposal.value)))
 
         else:
             for key, value in proposal.value.items():
