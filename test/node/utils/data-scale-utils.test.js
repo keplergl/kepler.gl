@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import test from 'tape';
 import {
   getOrdinalDomain,
   getQuantileDomain,
@@ -29,8 +28,7 @@ function numberSort(a, b) {
   return a - b;
 }
 
-test('DataScaleUtils -> getOrdinalDomain', t => {
-
+it('DataScaleUtils -> getOrdinalDomain', () => {
   const data = ['a', 'a', 'b', undefined, null, 0];
   function valueAccessor(d) {
     return d.value;
@@ -38,17 +36,12 @@ test('DataScaleUtils -> getOrdinalDomain', t => {
 
   const values = [{value: 'a'}, {value: 'b'}, {value: 'b'}];
 
-  t.deepEqual(getOrdinalDomain(data), [0, 'a', 'b'],
-    'should get correct ordinal domain');
+  expect(getOrdinalDomain(data)).toEqual([0, 'a', 'b']);
 
-  t.deepEqual(getOrdinalDomain(values, valueAccessor), ['a', 'b'],
-    'should get correct ordinal domain');
-
-  t.end();
+  expect(getOrdinalDomain(values, valueAccessor)).toEqual(['a', 'b']);
 });
 
-test('DataScaleUtils -> getQuantileDomain', t => {
-
+it('DataScaleUtils -> getQuantileDomain', () => {
   const data = ['a', 'b', 'c', 'b', undefined, null];
   const quanData = [1, 4, 2, 3, 1, undefined, null, 0];
   function valueAccessor(d) {
@@ -57,20 +50,14 @@ test('DataScaleUtils -> getQuantileDomain', t => {
 
   const values = [{value: 'a'}, {value: 'b'}, {value: 'b'}];
 
-  t.deepEqual(getQuantileDomain(data, undefined, undefined),
-    ['a', 'b', 'b', 'c'], 'should get correct quantile domain');
+  expect(getQuantileDomain(data, undefined, undefined)).toEqual(['a', 'b', 'b', 'c'])
 
-  t.deepEqual(getQuantileDomain(quanData, undefined, numberSort),
-    [0, 1, 1, 2, 3, 4], 'should get correct quantile domain');
+  expect(getQuantileDomain(quanData, undefined, numberSort)).toEqual([0, 1, 1, 2, 3, 4])
 
-  t.deepEqual(getQuantileDomain(values, valueAccessor), ['a', 'b', 'b'],
-    'should get correct quantile domain');
-
-  t.end();
+  expect(getQuantileDomain(values, valueAccessor)).toEqual(['a', 'b', 'b'])
 });
 
-test('DataScaleUtils -> getLinearDomain', t => {
-
+it('DataScaleUtils -> getLinearDomain', () => {
   const quanData = [1, 4, 2, 3, 1, undefined, null, 0];
   function valueAccessor(d) {
     return d.value;
@@ -78,20 +65,13 @@ test('DataScaleUtils -> getLinearDomain', t => {
 
   const values = [{value: 1}, {value: 0}, {value: -3}];
 
-  t.deepEqual(getLinearDomain(quanData, undefined),
-    [0, 4], 'should get correct Linear domain');
+  expect(getLinearDomain(quanData, undefined)).toEqual([0, 4]);
 
-  t.deepEqual(getLinearDomain([10, 10]),
-    [10, 10], 'should get correct Linear domain');
+  expect(getLinearDomain([10, 10])).toEqual([10, 10]);
 
-  t.deepEqual(getLinearDomain([10, undefined]),
-    [10, 10], 'should get correct Linear domain');
+  expect(getLinearDomain([10, undefined])).toEqual([10, 10]);
 
-  t.deepEqual(getLinearDomain([undefined, undefined, null]),
-    [0, 1], 'should get correct Linear domain');
+  expect(getLinearDomain([undefined, undefined, null])).toEqual([0, 1]);
 
-  t.deepEqual(getLinearDomain(values, valueAccessor), [-3, 1],
-    'should get correct Linear domain');
-
-  t.end();
+  expect(getLinearDomain(values, valueAccessor)).toEqual([-3, 1]);
 });

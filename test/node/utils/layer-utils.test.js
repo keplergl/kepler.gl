@@ -18,9 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import test from 'tape';
 import {findDefaultLayer} from 'utils/layer-utils/layer-utils';
-
 import {findPointFieldPairs} from 'utils/dataset-utils';
 import {processCsvData} from 'processors/data-processor';
 import {GEOJSON_FIELDS} from 'constants/default-settings';
@@ -37,7 +35,7 @@ import {wktCsv} from 'test/fixtures/test-csv-data';
 import {cmpLayers} from 'test/helpers/comparison-utils';
 import {getNextColorMakerValue} from 'test/helpers/layer-utils';
 
-test('layerUtils -> findDefaultLayer.1', t => {
+it('layerUtils -> findDefaultLayer.1', () => {
   const inputFields = [
     // layer 1
     {
@@ -247,14 +245,12 @@ test('layerUtils -> findDefaultLayer.1', t => {
     KeplerGlLayers
   );
 
-  t.equal(layers.length, outputLayers.length, 'number of layers found');
+  expect(layers.length).toEqual(outputLayers.length);
 
-  layers.forEach((l, i) => cmpLayers(t, outputLayers[i], l));
-
-  t.end();
+  layers.forEach((l, i) => cmpLayers(outputLayers[i], l));
 });
 
-test('layerUtils -> findDefaultLayer.2', t => {
+it('layerUtils -> findDefaultLayer.2', () => {
   const inputFields = [
     // layer 1
     {
@@ -304,13 +300,11 @@ test('layerUtils -> findDefaultLayer.2', t => {
 
   const layers = findDefaultLayer(dataset, KeplerGlLayers);
 
-  t.equal(layers.length, 1, 'number of layers found');
-  cmpLayers(t, expected, layers[0]);
-
-  t.end();
+  expect(layers.length).toEqual(1);
+  cmpLayers(expected, layers[0]);
 });
 
-test('layerUtils -> findDefaultLayer.3', t => {
+it('layerUtils -> findDefaultLayer.3', () => {
   const dataId = 'cool';
 
   const inputFields = [
@@ -354,13 +348,11 @@ test('layerUtils -> findDefaultLayer.3', t => {
     KeplerGlLayers
   );
 
-  t.equal(layers.length, 1, 'number of layers found');
-  layers.forEach((l, i) => cmpLayers(t, outputLayers[i], l));
-
-  t.end();
+  expect(layers.length).toEqual(1);
+  layers.forEach((l, i) => cmpLayers(outputLayers[i], l));
 });
 
-test('layerUtils -> findDefaultLayer.4', t => {
+it('layerUtils -> findDefaultLayer.4', () => {
   // Since all defaults layers are scanned and they
   // share field names or patterns.  This set produces
   // multiple layers.
@@ -479,14 +471,11 @@ test('layerUtils -> findDefaultLayer.4', t => {
     {fields: inputFields, fieldPairs, id: dataId},
     KeplerGlLayers
   );
-
-  t.equal(layers.length, outputLayers.length, 'number of layers found');
-  layers.forEach((l, i) => cmpLayers(t, outputLayers[i], l));
-
-  t.end();
+  expect(layers.length).toEqual(outputLayers.length);
+  layers.forEach((l, i) => cmpLayers(outputLayers[i], l));
 });
 
-test('layerUtils -> findDefaultLayer.5', t => {
+it('layerUtils -> findDefaultLayer.5', () => {
   const inputFields = [
     // layer 1
     {
@@ -505,12 +494,10 @@ test('layerUtils -> findDefaultLayer.5', t => {
     KeplerGlLayers
   );
 
-  t.equal(layers.length, 0, 'number of layers found');
-
-  t.end();
+  expect(layers.length).toEqual(0);
 });
 
-test('layerUtils -> findDefaultLayer:GeojsonLayer', t => {
+it('layerUtils -> findDefaultLayer:GeojsonLayer', () => {
   const fields = [
     {
       name: 'random',
@@ -586,11 +573,10 @@ test('layerUtils -> findDefaultLayer:GeojsonLayer', t => {
     KeplerGlLayers
   );
 
-  cmpLayers(t, [expected1, expected2], geojsonLayers);
-  t.end();
+  cmpLayers([expected1, expected2], geojsonLayers);
 });
 
-test('layerUtils -> findDefaultLayer:GeojsonLayer.wkt', t => {
+it('layerUtils -> findDefaultLayer:GeojsonLayer.wkt', () => {
   const {fields, rows} = processCsvData(wktCsv);
   const dataId = '0dj3h';
   const label = 'some geometry file';
@@ -620,11 +606,10 @@ test('layerUtils -> findDefaultLayer:GeojsonLayer.wkt', t => {
     KeplerGlLayers
   );
 
-  cmpLayers(t, [expected1, expected2], geojsonLayers);
-  t.end();
+  cmpLayers([expected1, expected2], geojsonLayers);
 });
 
-test('layerUtils -> findDefaultLayer:IconLayer', t => {
+it('layerUtils -> findDefaultLayer:IconLayer', () => {
   const inputFields = [
     {
       name: 'begintrip_lat',
@@ -648,7 +633,7 @@ test('layerUtils -> findDefaultLayer:IconLayer', t => {
   const eventIcon = [{name: 'event_icon', tableFieldIndex: 5}];
   const nameIcon = [{name: 'name.icon', tableFieldIndex: 5}];
 
-  t.equal(
+  expect(
     findDefaultLayer(
       {
         fields: inputFields,
@@ -657,10 +642,7 @@ test('layerUtils -> findDefaultLayer:IconLayer', t => {
         allData: []
       },
       KeplerGlLayers
-    ).filter(l => l.type === 'icon').length,
-    0,
-    'should find no icon layer'
-  );
+    ).filter(l => l.type === 'icon').length).toEqual(0);
 
   const fieldsWithIcon = [...inputFields, ...eventIcon];
   const fieldPairsWIcon = findPointFieldPairs(fieldsWithIcon);
@@ -674,8 +656,8 @@ test('layerUtils -> findDefaultLayer:IconLayer', t => {
     KeplerGlLayers
   ).filter(l => l.type === 'icon');
 
-  t.equal(iconLayers.length, 1, 'should find 1 icon layer');
-  t.equal(iconLayers[0].config.label, 'event icon', 'should find 1 icon layer');
+  expect(iconLayers.length).toEqual(1);
+  expect(iconLayers[0].config.label).toEqual('event icon');
 
   const fieldsWith2Icon = [...inputFields, ...nameIcon, ...eventIcon];
   const fieldPairsW2Icon = findPointFieldPairs(fieldsWith2Icon);
@@ -689,8 +671,6 @@ test('layerUtils -> findDefaultLayer:IconLayer', t => {
     KeplerGlLayers
   ).filter(l => l.type === 'icon');
 
-  t.equal(iconLayers.length, 2, 'should find 2 icon layers');
-  t.equal(iconLayers[0].config.label, 'name icon', 'should find 2 icon layer');
-
-  t.end();
+  expect(iconLayers.length).toEqual(2);
+  expect(iconLayers[0].config.label).toEqual('name icon');
 });

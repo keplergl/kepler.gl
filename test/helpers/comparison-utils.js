@@ -65,28 +65,19 @@ export function cmpFilters(
   }
 }
 
-export function cmpLayers(t, expectedLayer, actualLayer, opt = {}) {
-  t.ok(
-    actualLayer.constructor === expectedLayer.constructor,
-    'layer should be same class'
-  );
-
+export function cmpLayers(expectedLayer, actualLayer, opt = {}) {
+  expect(actualLayer.constructor).toEqual(expectedLayer.constructor);
+  
   // if is array of layers
   if (Array.isArray(expectedLayer) && Array.isArray(actualLayer)) {
-    t.equal(
-      actualLayer.length,
-      expectedLayer.length,
-      'should have same number of layers'
-    );
+    expect(actualLayer.length).toEqual(expectedLayer.length);
+
     expectedLayer.forEach((_, i) => {
-      cmpLayers(t, expectedLayer[i], actualLayer[i]);
+      cmpLayers(expectedLayer[i], actualLayer[i]);
     });
   } else {
-    t.deepEqual(
-      Object.keys(actualLayer.config).sort(),
-      Object.keys(expectedLayer.config).sort(),
-      `layer.${actualLayer.id} should have same keys`
-    );
+    expect(Object.keys(actualLayer.config).sort())
+      .toEqual(Object.keys(expectedLayer.config).sort());
 
     Object.keys(expectedLayer.config).forEach(key => {
       // test everything except color and id, which is auto generated
@@ -96,11 +87,7 @@ export function cmpLayers(t, expectedLayer, actualLayer, opt = {}) {
         (key !== 'color' || opt.color) &&
         typeof expectedLayer.config[key] !== 'function'
       ) {
-        t.deepEqual(
-          actualLayer.config[key],
-          expectedLayer.config[key],
-          `${actualLayer.type} layer ${key} should be correct`
-        );
+        expect(actualLayer.config[key]).toEqual(expectedLayer.config[key]);
       }
     });
   }

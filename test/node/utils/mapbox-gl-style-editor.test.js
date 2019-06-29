@@ -18,11 +18,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './data-utils-test';
-import './data-processor-test';
-import './filter-utils-test';
-import './layer-utils-test';
-import './data-scale-utils-test';
-import './interaction-utils-test';
-import './mapbox-gl-style-editor-test';
-import './notifications-utils-test';
+import {mergeLayerGroupVisibility} from 'utils/map-style-utils/mapbox-gl-style-editor';
+
+it('mapbox.gl Style Editor -> mergeLayerGroupVisibility', () => {
+  const defaultLG = {
+    label: true,
+    road: true,
+    border: false,
+    building: true,
+    water: true,
+    land: true
+  };
+
+  const currentLG = {
+    label: false,
+    road: false,
+    border: true
+  };
+
+  const expected = {
+    label: false,
+    road: false,
+    border: true,
+    building: true,
+    water: true,
+    land: true
+  };
+
+  expect(mergeLayerGroupVisibility(defaultLG, currentLG)).toEqual(expected);
+});

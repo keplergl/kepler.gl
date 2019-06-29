@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import test from 'tape';
 import testData, {dataWithNulls, parsedDataWithNulls, testFields, testAllData, wktCsv, wktCsvFields} from 'test/fixtures/test-csv-data';
 import {geojsonData, fields as geojsonFields, rows as geojsonRows} from 'test/fixtures/geojson';
 
@@ -34,7 +33,7 @@ import {
   ALL_FIELD_TYPES
 } from 'constants/default-settings';
 
-test('Processor -> getFieldsFromData', t => {
+it('Processor -> getFieldsFromData', () => {
   const data = [{
     time: '2016-09-17 00:09:55',
     trip_epoch: '1472688000000',
@@ -75,69 +74,56 @@ test('Processor -> getFieldsFromData', t => {
     ['timestamp', 'timestamp', 'timestamp', 'integer', 'real', 'boolean', 'integer'];
 
   fields.forEach((f, i) =>
-    t.equal(f.type, expectedFieldTypes[i],
-      `should find field type as ${expectedFieldTypes[i]}`)
+    expect(f.type).toEqual(expectedFieldTypes[i])
   );
-  t.end();
 });
 
-test('Processor -> processCsvData', t => {
-
+it('Processor -> processCsvData', () => {
   // load sample dataset csv as text
   const {fields, rows} = processCsvData(testData);
 
-  t.equal(rows.length, testAllData.length, `should return ${testAllData.length} rows`);
+  expect(rows.length).toEqual(testAllData.length);
 
-  t.deepEqual(fields, testFields, 'should parse fields correctly');
-  t.deepEqual(rows, testAllData, 'should parse rows correctly');
+  expect(fields).toEqual(testFields);
+  expect(rows).toEqual(testAllData);
 
   fields.forEach((f, i) => {
-    t.deepEqual(f, testFields[i], `should parse correct field ${testFields[i].name}`);
+    expect(f).toEqual(testFields[i]);
   });
 
   rows.forEach((r, i) => {
-    t.deepEqual(r, testAllData[i], `should parse row ${i} correctly`);
+    expect(r).toEqual(testAllData[i]);
   });
-
-  t.end();
 });
 
-test('Processor -> processCsvData -> with nulls', t => {
+it('Processor -> processCsvData -> with nulls', () => {
   const {fields, rows} = processCsvData(dataWithNulls);
-  t.deepEqual(fields, testFields, 'should parse fields correctly');
+  expect(fields).toEqual(testFields);
 
   fields.forEach((f, i) => {
-    t.deepEqual(f, testFields[i], `should parse correct field ${testFields[i].name}`);
+    expect(f).toEqual(testFields[i]);
   });
 
-  t.deepEqual(rows, parsedDataWithNulls, 'should parse rows correctly');
+  expect(rows).toEqual(parsedDataWithNulls);
   rows.forEach((r, i) => {
-    t.deepEqual(r, parsedDataWithNulls[i], `should parse row ${i} correctly`);
-  });
-  t.end();
+    expect(r).toEqual(parsedDataWithNulls[i]);
+  });  
 });
 
-test('Processor -> processCsv.wkt', t => {
+it('Processor -> processCsv.wkt', () => {
   const {fields} = processCsvData(wktCsv);
-
-  t.deepEqual(fields, wktCsvFields, 'should find geometry fields as type:geojson');
-
-  t.end();
+  expect(fields).toEqual(wktCsvFields);
 });
 
-test('Processor => processGeojson', t => {
+it('Processor => processGeojson', () => {
 
   const {fields, rows} = processGeojson(geojsonData);
 
-  t.deepEqual(fields, geojsonFields, 'should format geojson fields');
-  t.deepEqual(rows, geojsonRows, 'should format geojson rows');
-
-  t.end();
+  expect(fields).toEqual(geojsonFields);
+  expect(rows).toEqual(geojsonRows);
 });
 
-
-test('Processor -> parseCsvRowsByFieldType -> real', t => {
-
+it('Processor -> parseCsvRowsByFieldType -> real', () => {
   const field = {
     type: ALL_FIELD_TYPES.real
   };
@@ -165,11 +151,10 @@ test('Processor -> parseCsvRowsByFieldType -> real', t => {
   ];
 
   parseCsvRowsByFieldType(rows, field, 0);
-  t.same(rows, expected, 'should parsed reals properly');
-  t.end();
+  expect(rows).toEqual(expected);
 });
 
-test('Processor -> parseCsvRowsByFieldType -> integer', t => {
+it('Processor -> parseCsvRowsByFieldType -> integer', () => {
 
   const field = {
     type: ALL_FIELD_TYPES.integer
@@ -194,12 +179,10 @@ test('Processor -> parseCsvRowsByFieldType -> integer', t => {
   ];
 
   parseCsvRowsByFieldType(rows, field, 0);
-  t.same(rows, expected, 'should parsed ints properly');
-  t.end();
+  expect(rows).toEqual(expected);
 });
 
-test('Processor -> parseCsvRowsByFieldType -> boolean', t => {
-
+it('Processor -> parseCsvRowsByFieldType -> boolean', () => {
   const field = {
     type: ALL_FIELD_TYPES.boolean
   };
@@ -228,11 +211,10 @@ test('Processor -> parseCsvRowsByFieldType -> boolean', t => {
   ];
 
   parseCsvRowsByFieldType(rows, field, 0);
-  t.same(rows, expected, 'should parsed boolean properly');
-  t.end();
+  expect(rows).toEqual(expected);
 });
 
-test('dataUtils -> getSampleForTypeAnalyze', t => {
+it('dataUtils -> getSampleForTypeAnalyze', () => {
   const fields =['string','int','bool','time'];
 
   const allData = [
@@ -275,6 +257,6 @@ test('dataUtils -> getSampleForTypeAnalyze', t => {
     time: null
   }];
 
-  t.deepEqual(sample, expected, 'Should find correct sample for type analyzer');
-  t.end();
+  expect(sample).toEqual(expected);
+  
 });

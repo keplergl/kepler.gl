@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import test from 'tape';
 import moment from 'moment';
 import testData, {testFields} from 'test/fixtures/test-csv-data';
 
@@ -34,123 +33,63 @@ import {
 import {processCsvData} from 'processors/data-processor';
 
 /* eslint-disable max-statements */
-test('filterUtils -> adjustValueToFilterDomain', t => {
+it('filterUtils -> adjustValueToFilterDomain', () => {
   // TODO: needs id
   const rangeFilter = getDefaultFilter();
   rangeFilter.type = FILTER_TYPES.range;
   rangeFilter.domain = [0, 1];
 
-  t.deepEqual(
-    adjustValueToFilterDomain([0, 0.5], rangeFilter),
-    [0, 0.5],
-    'should return value matched to range filter'
-  );
+  expect(adjustValueToFilterDomain([0, 0.5], rangeFilter)).toEqual([0, 0.5]);
 
-  t.deepEqual(
-    adjustValueToFilterDomain([-1, 0.5], rangeFilter),
-    [0, 0.5],
-    'should return value adjust to range filter'
-  );
+  expect(adjustValueToFilterDomain([-1, 0.5], rangeFilter)).toEqual([0, 0.5]);
 
-  t.deepEqual(
-    adjustValueToFilterDomain([0.1, 1.5], rangeFilter),
-    [0.1, 1],
-    'should return value adjust to range filter'
-  );
+  expect(adjustValueToFilterDomain([0.1, 1.5], rangeFilter)).toEqual([0.1, 1]);
 
-  t.deepEqual(
-    adjustValueToFilterDomain([1.1, 2], rangeFilter),
-    [0, 1],
-    'should return value adjust to range filter'
-  );
+  expect(adjustValueToFilterDomain([1.1, 2], rangeFilter)).toEqual([0, 1]);
 
-  t.deepEqual(
-    adjustValueToFilterDomain(null, rangeFilter),
-    [0, 1],
-    'should return value adjust to range filter'
-  );
+  expect(adjustValueToFilterDomain(null, rangeFilter)).toEqual([0, 1]);
 
-  t.deepEqual(
-    adjustValueToFilterDomain([undefined, 0.5], rangeFilter),
-    [0, 0.5],
-    'should return value adjust to range filter'
-  );
+  expect(adjustValueToFilterDomain([undefined, 0.5], rangeFilter)).toEqual([0, 0.5]);
 
   // TODO needs id
   const multiSelectFilter = getDefaultFilter();
   multiSelectFilter.type = FILTER_TYPES.multiSelect;
   multiSelectFilter.domain = ['a', 'b', 'c'];
 
-  t.deepEqual(
-    adjustValueToFilterDomain(['a', 'b'], multiSelectFilter),
-    ['a', 'b'],
-    'should return value matched to multiSelect filter'
-  );
+  expect(adjustValueToFilterDomain(['a', 'b'], multiSelectFilter)).toEqual(['a', 'b']);
 
-  t.deepEqual(
-    adjustValueToFilterDomain(['a', 'b', 'd'], multiSelectFilter),
-    ['a', 'b'],
-    'should return value matched to multiSelect filter'
-  );
+  expect(adjustValueToFilterDomain(['a', 'b', 'd'], multiSelectFilter)).toEqual(['a', 'b']);
 
-  t.deepEqual(
-    adjustValueToFilterDomain(['a', 'b', null], multiSelectFilter),
-    ['a', 'b'],
-    'should return value matched to multiSelect filter'
-  );
+  expect(adjustValueToFilterDomain(['a', 'b', null], multiSelectFilter)).toEqual(['a', 'b']);
 
-  t.deepEqual(
-    adjustValueToFilterDomain(null, multiSelectFilter),
-    [],
-    'should return [] if nothing matched to multiSelect filter'
-  );
+  expect(adjustValueToFilterDomain(null, multiSelectFilter)).toEqual([]);
 
-  t.deepEqual(
-    adjustValueToFilterDomain([1, 2], multiSelectFilter),
-    [],
-    'should return [] if nothing matched to multiSelect filter'
-  );
+  expect(adjustValueToFilterDomain([1, 2], multiSelectFilter)).toEqual([]);
 
   // TODO needs id
   const selectFilter = getDefaultFilter();
   selectFilter.type = FILTER_TYPES.select;
   selectFilter.domain = ['a', 'b', 'c'];
 
-  t.equal(
-    adjustValueToFilterDomain('a', selectFilter),
-    'a',
-    'should return value matched to select filter'
-  );
+  expect(adjustValueToFilterDomain('a', selectFilter)).toEqual('a');
 
-  t.equal(
-    adjustValueToFilterDomain(['a', 'b'], selectFilter),
-    true,
-    'should return true if nothing matched to select filter'
-  );
+  expect(adjustValueToFilterDomain(['a', 'b'], selectFilter)).toBe(true);
 
-  t.equal(
-    adjustValueToFilterDomain(null, selectFilter),
-    true,
-    'should return true if nothing matched to select filter'
-  );
-
-  t.end();
+  expect(adjustValueToFilterDomain(null, selectFilter)).toBe(true);
 });
 
-test('filterUtils -> getFieldDomain.time', async t => {
+it('filterUtils -> getFieldDomain.time', async () => {
   const data = testData;
   const expectedFields = testFields;
 
   const {fields, rows} = await processCsvData(data);
 
-  t.deepEqual(fields, expectedFields, 'should get corrent field type');
-  testGetTimeFieldDomain(rows, fields, t);
-  testIsTimeDataMatchFilter(rows, t);
-
-  t.end();
+  expect(fields).toEqual(expectedFields)
+  testGetTimeFieldDomain(rows, fields);
+  testIsTimeDataMatchFilter(rows);
 });
 
-function testGetTimeFieldDomain(rows, allFields, t) {
+function testGetTimeFieldDomain(rows, allFields) {
   const test_cases = [
     {
       name: 'default',
@@ -200,15 +139,11 @@ function testGetTimeFieldDomain(rows, allFields, t) {
   ];
 
   test_cases.forEach(tc =>
-    t.deepEqual(
-      tc.input,
-      tc.output,
-      `should process correct domian for timestamp ${tc.msg}`
-    )
+    expect(tc.input).toEqual(tc.output)    
   );
 }
 
-function testIsTimeDataMatchFilter(rows, t) {
+function testIsTimeDataMatchFilter(rows) {
   const timeStringFilter = {
     fieldIdx: 0,
     type: FILTER_TYPES.timeRange,
@@ -218,17 +153,9 @@ function testIsTimeDataMatchFilter(rows, t) {
     ]
   };
 
-  t.equal(
-    isDataMatchFilter(rows[10], timeStringFilter),
-    true,
-    `${rows[10][0]} should be inside the range`
-  );
+  expect(isDataMatchFilter(rows[10], timeStringFilter)).toBe(true);
 
-  t.equal(
-    isDataMatchFilter(rows[15], timeStringFilter),
-    false,
-    `${rows[15][0]} should be outside the range`
-  );
+  expect(isDataMatchFilter(rows[15], timeStringFilter)).toBe(false);
 
   const epochFilter = {
     fieldIdx: 4,
@@ -239,17 +166,9 @@ function testIsTimeDataMatchFilter(rows, t) {
     ]
   };
 
-  t.equal(
-    isDataMatchFilter(rows[10], epochFilter),
-    true,
-    `${rows[10][1]} should be inside the range`
-  );
+  expect(isDataMatchFilter(rows[10], epochFilter)).toBe(true);
 
-  t.equal(
-    isDataMatchFilter(rows[15], epochFilter),
-    false,
-    `${rows[15][1]} should be outside the range`
-  );
+  expect(isDataMatchFilter(rows[15], epochFilter)).toBe(false);
 
   const tzFilter = {
     fieldIdx: 7,
@@ -260,17 +179,9 @@ function testIsTimeDataMatchFilter(rows, t) {
     ]
   };
 
-  t.equal(
-    isDataMatchFilter(rows[10], tzFilter),
-    true,
-    `${rows[10][7]} should be inside the range`
-  );
+  expect(isDataMatchFilter(rows[10], tzFilter)).toBe(true);
 
-  t.equal(
-    isDataMatchFilter(rows[23], tzFilter),
-    false,
-    `${rows[23][7]} should be outside the range`
-  );
+  expect(isDataMatchFilter(rows[23], tzFilter)).toBe(false);
 
   const utcFilter = {
     fieldIdx: 8,
@@ -281,26 +192,14 @@ function testIsTimeDataMatchFilter(rows, t) {
     ]
   };
 
-  t.equal(
-    isDataMatchFilter(rows[6], utcFilter),
-    false,
-    `${rows[0][8]} should be outside the range`
-  );
+  expect(isDataMatchFilter(rows[6], utcFilter)).toBe(false);
 
-  t.equal(
-    isDataMatchFilter(rows[4], utcFilter),
-    true,
-    `${rows[4][8]} should be inside the range`
-  );
+  expect(isDataMatchFilter(rows[4], utcFilter)).toBe(true);
 
-  t.equal(
-    isDataMatchFilter(rows[23], utcFilter),
-    false,
-    `${rows[23][8]} should be outside the range`
-  );
+  expect(isDataMatchFilter(rows[23], utcFilter)).toBe(false);
 }
 
-test('filterUtils -> getTimestampFieldDomain', t => {
+it('filterUtils -> getTimestampFieldDomain', () => {
   /* eslint-disable func-style */
   const valueAccessor = d => moment.utc(d).valueOf();
   /* eslint-enable func-style */
@@ -643,30 +542,17 @@ test('filterUtils -> getTimestampFieldDomain', t => {
       timeData[key].input,
       valueAccessor
     );
-    t.deepEqual(
-      Object.keys(tsFieldDomain).sort(),
-      Object.keys(timeData[key].expect).sort(),
-      'Should domain should have same keys'
-    );
+    expect(Object.keys(tsFieldDomain).sort()).toEqual(Object.keys(timeData[key].expect).sort());
 
     Object.keys(timeData[key].expect).forEach(k => {
 
       // histogram is created by d3, only need to test they exist
       if (k === 'histogram' || k === 'enlargedHistogram') {
-        t.ok(
-          tsFieldDomain[k].length,
-          `should create ${k}`
-        );
+        expect(tsFieldDomain[k].length).not.toEqual(0);
       } else {
-        t.deepEqual(
-          tsFieldDomain[k],
-          timeData[key].expect[k],
-          `time domain ${k} should be the same`
-        );
+        expect(tsFieldDomain[k]).toEqual(timeData[key].expect[k]);
       }
     });
   });
-
-  t.end();
 });
 /* eslint-enable max-statements */

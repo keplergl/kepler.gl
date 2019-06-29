@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import test from 'tape';
 import {findFieldsToShow} from 'utils/interaction-utils';
 import {DEFAULT_TOOLTIP_FIELDS} from 'constants/default-settings';
 
@@ -62,7 +61,7 @@ const fields = [
   }
 ];
 
-test('interactionUtil -> findFieldsToShow', t => {
+it('interactionUtil -> findFieldsToShow', () => {
   const dataId = 'random_stuff';
 
   const someFields = [
@@ -79,23 +78,11 @@ test('interactionUtil -> findFieldsToShow', t => {
 
   const expectedFields = ['random', 'something_else'];
 
-  t.deepEqual(
-    findFieldsToShow({fields: someFields, id: dataId}),
-    {random_stuff: expectedFields},
-    'should find 2 default trip layers'
-  );
-
-  t.end();
+  expect(findFieldsToShow({fields: someFields, id: dataId})).toEqual({random_stuff: expectedFields});
 });
 
-test('interactionUtil -> autoFindTooltipFields', t => {
+it('interactionUtil -> autoFindTooltipFields', () => {
   const expectedFields = {test: ['hex_id', 'a', 'b', 'c', 'd']};
 
-  t.deepEqual(
-    findFieldsToShow({fields, id: 'test'}),
-    expectedFields,
-    'should filter out all default geometry fields and return first 5'
-  );
-
-  t.end();
+  expect(findFieldsToShow({fields, id: 'test'})).toEqual(expectedFields);
 });
