@@ -495,16 +495,6 @@ export const addCustomMapStyleUpdater = state => {
   return mapStyleChangeUpdater(newState, {payload: styleId});
 };
 
-export const setMapMode = (state, {payload: mode}) => ({
-  ...state,
-  // Update top map style
-  topMapStyle: mode !== MAP_MODES.READ_ONLY ? editTopMapStyle({
-    id: state.styleType,
-    mapStyle: state.mapStyles[state.styleType],
-    visibleLayerGroups: (state.topMapStyle || {} ).visibleLayerGroups || []
-  }) : null
-});
-
 /**
  * Return the initial input style
  * @return Object
