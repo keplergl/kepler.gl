@@ -480,9 +480,11 @@ export default function MapContainerFactory(MapPopover, MapControl) {
                 mapStyle={mapStyle.topMapStyle}
               >
                 <StyledDraw
+                  editor={uiState.editor}
+                  onSelect={uiStateActions.setSelectedFeature}
                   onUpdate={visStateActions.setFeatures}
                   features={visState.editor.features}
-                  editor={uiState.editor}
+
                 />
               </MapComponent>
             </div>

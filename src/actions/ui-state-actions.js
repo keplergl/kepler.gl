@@ -259,6 +259,11 @@ export const setEditorMode = createAction(
   mode => mode
 );
 
+export const setSelectedFeature = createAction(
+  ActionTypes.SET_SELECTED_FEATURE,
+  selectedFeature => selectedFeature
+);
+
 /**
  * This declaration is needed to group actions in docs
  */

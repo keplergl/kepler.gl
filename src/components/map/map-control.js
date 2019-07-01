@@ -36,7 +36,8 @@ import {
   Layers,
   DrawPolygon,
   Polygon,
-  Rectangle
+  Rectangle,
+  CursorClick
 } from 'components/common/icons';
 import Toolbar from 'components/common/toolbar';
 import ToolbarItem from 'components/common/toolbar-item';
@@ -279,6 +280,13 @@ const MapDrawPanel = React.memo(({isActive, onToggleMenuPanel, onSetEditorMode})
   return !isActive ? toggleMapDrawButton : (
       <div style={{position: 'relative'}}>
         <StyledToolBar show={isActive} direction="column">
+          <ToolbarItem
+            onClick={() => {
+              onSetEditorMode(EDITOR_MODES.EDIT_VERTEX);
+            }}
+            label="select"
+            icon={(<CursorClick height="22px"/>)}
+          />
           <ToolbarItem
             onClick={() => {
               onSetEditorMode(EDITOR_MODES.DRAW_POLYGON);

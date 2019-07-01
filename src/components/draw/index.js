@@ -21,7 +21,6 @@
 import React, {Component} from 'react';
 import {Editor} from 'react-map-gl-draw';
 import keymirror from 'keymirror';
-import {EditorModes} from 'react-map-gl-draw';
 
 const HANDLE_SHAPES = keymirror({
   circle: null,
@@ -30,21 +29,7 @@ const HANDLE_SHAPES = keymirror({
 
 class Draw extends Component {
   static defaultProps = {
-    clickRadius: 12,
-    mode: EditorModes.READ_ONLY
-  };
-
-  constructor(props) {
-    super(props);
-  }
-
-  // TODO: replace with redux actions
-  _onSelect = selectedFeatureId => {
-    console.log('OnSelect:', selectedFeatureId);
-  };
-
-  _onUpdate = features => {
-    this.props.onUpdate(features);
+    clickRadius: 6
   };
 
   _getEditHandleShape = ({feature}) => {
@@ -54,18 +39,19 @@ class Draw extends Component {
 
   render() {
     const {clickRadius, editor, features} = this.props;
+    const {selectedFeature = {}} = editor;
 
     return (
       <Editor
         clickRadius={clickRadius}
         mode={editor.mode}
         features={features}
-        selectedFeatureId={editor.selectedFeatureId}
-        onSelect={this._onSelect}
-        onUpdate={this._onUpdate}
+        selectedFeatureId={(selectedFeature || {}).selectedFeatureId}
+        onSelect={this.props.onSelect}
+        onUpdate={this.props.onUpdate}
         getEditHandleShape={this._getEditHandleShape}
       />
-    )
+    );
   }
 }
 
