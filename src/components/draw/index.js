@@ -53,13 +53,13 @@ class Draw extends Component {
   };
 
   render() {
-    const {clickRadius, editor, mode} = this.props;
+    const {clickRadius, editor, features} = this.props;
 
     return (
       <Editor
         clickRadius={clickRadius}
-        mode={mode}
-        features={editor.features}
+        mode={editor.mode}
+        features={features}
         selectedFeatureId={editor.selectedFeatureId}
         onSelect={this._onSelect}
         onUpdate={this._onUpdate}

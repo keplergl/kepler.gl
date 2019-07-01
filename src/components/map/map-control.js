@@ -256,7 +256,7 @@ const StyledToolBar = styled(Toolbar)`
   right: 32px;
 `;
 
-const MapDrawPanel = React.memo(({isActive, onToggleMenuPanel, onSetMapMode}) => {
+const MapDrawPanel = React.memo(({isActive, onToggleMenuPanel, onSetEditorMode}) => {
   const toggleMapDrawButton = (
     <StyledMapControlButton
       onClick={e => {
@@ -281,14 +281,14 @@ const MapDrawPanel = React.memo(({isActive, onToggleMenuPanel, onSetMapMode}) =>
         <StyledToolBar show={isActive} direction="column">
           <ToolbarItem
             onClick={() => {
-              onSetMapMode(EDITOR_MODES.DRAW_POLYGON);
+              onSetEditorMode(EDITOR_MODES.DRAW_POLYGON);
             }}
             label="polygon"
             icon={(<Polygon height="22px"/>)}
           />
           <ToolbarItem
             onClick={() => {
-              onSetMapMode(EDITOR_MODES.DRAW_RECTANGLE);
+              onSetEditorMode(EDITOR_MODES.DRAW_RECTANGLE);
             }}
             label="rectangle"
             icon={(<Rectangle height="22px"/>)}
