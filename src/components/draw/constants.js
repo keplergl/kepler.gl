@@ -18,45 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
-import {Editor} from 'react-map-gl-draw';
-import {
-  DEFAULT_RADIUS,
-  getStyle as getFeatureStyle
-} from './feature-styles';
-import {
-  getStyle as getEditHandleStyle
-} from './handle-style';
+// Copied from react-map-gl-draw until it gets exported
+export const RENDER_STATE = {
+  INACTIVE: 'INACTIVE',
+  UNCOMMITTED: 'UNCOMMITTED',
+  SELECTED: 'SELECTED',
+  HOVERED: 'HOVERED'
+};
+export const RENDER_TYPE = {
+  POINT: 'Point',
+  LINE_STRING: 'LineString',
+  POLYGON: 'Polygon',
+  RECTANGLE: 'Rectangle'
+};
 
-const DEFAULT_EDIT_HANDLE_SHAPE = 'circle';
+export const COLORS = {
+  PRIMARY: '#26B5F2',
+  SECONDARY: '#ffff00'
+};
 
-class Draw extends Component {
-  static defaultProps = {
-    clickRadius: DEFAULT_RADIUS
-  };
-
-  _getEditHandleShape = () => {
-    return DEFAULT_EDIT_HANDLE_SHAPE;
-  };
-
-  render() {
-    const {clickRadius, editor, features} = this.props;
-    const {selectedFeature = {}} = editor;
-
-    return (
-      <Editor
-        clickRadius={clickRadius}
-        mode={editor.mode}
-        features={features}
-        selectedFeatureId={(selectedFeature || {}).selectedFeatureId}
-        onSelect={this.props.onSelect}
-        onUpdate={this.props.onUpdate}
-        getEditHandleShape={this._getEditHandleShape}
-        getFeatureStyle={getFeatureStyle}
-        getEditHandleStyle={getEditHandleStyle}
-      />
-    );
-  }
-}
-
-export default Draw;
