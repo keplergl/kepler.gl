@@ -470,9 +470,11 @@ export default function MapContainerFactory(MapPopover, MapControl) {
               {this._renderMapboxOverlays()}
               <StyledDraw
                 editor={uiState.editor}
+                features={visState.editor.features}
+                isEnabled={isEdit}
+                onDeleteFeature={uiStateActions.deleteFeature}
                 onSelect={uiStateActions.setSelectedFeature}
                 onUpdate={visStateActions.setFeatures}
-                features={visState.editor.features}
                 style={{zIndex: isEdit ? 0 : -1}}
               />
             </MapComponent>

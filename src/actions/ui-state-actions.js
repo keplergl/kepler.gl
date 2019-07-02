@@ -264,6 +264,11 @@ export const setSelectedFeature = createAction(
   selectedFeature => selectedFeature
 );
 
+export const deleteFeature = createAction(
+  ActionTypes.DELETE_FEATURE,
+  featureId => featureId
+);
+
 /**
  * This declaration is needed to group actions in docs
  */
