@@ -168,6 +168,10 @@ export const DEFAULT_EXPORT_MAP = {
   format: EXPORT_MAP_FORMAT.HTML
 };
 
+export const DEFAULT_CUSTOM_PALETTE = {
+
+}
+
 /**
  * Default initial `uiState`
  * @memberof uiStateUpdaters
@@ -200,7 +204,9 @@ export const INITIAL_UI_STATE = {
   // map control panels
   mapControls: DEFAULT_MAP_CONTROLS,
   // ui notifications
-  notifications: DEFAULT_NOTIFICATIONS
+  notifications: DEFAULT_NOTIFICATIONS,
+  // Custom palette
+  customPalette: null
 };
 
 /* Updaters */
@@ -543,3 +549,10 @@ export const removeNotificationUpdater = (state, {payload: id}) => ({
   ...state,
   notifications: state.notifications.filter(n => n.id !== id)
 });
+
+
+export const setCustomPaletteUpdater = (state, { payload: customPalette }) => ({
+  ...state,
+  customPalette
+});
+

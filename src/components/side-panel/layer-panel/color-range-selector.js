@@ -31,6 +31,7 @@ import CustomPalette from './custom-palette';
 
 import {COLOR_RANGES} from 'constants/color-ranges';
 import {numberSort} from 'utils/data-utils';
+import uiState from 'reducers/ui-state';
 
 const ALL_TYPES = uniq(COLOR_RANGES.map(c => c.type).concat(['all']));
 const ALL_STEPS = uniq(COLOR_RANGES.map(d => d.colors.length)).sort(numberSort);
@@ -73,7 +74,7 @@ export default class ColorRangeSelect extends Component {
       },
       custom: {
         type: 'switch',
-        value: false,
+        value: true,
         options: [true, false]
       }
     }
@@ -130,7 +131,9 @@ export default class ColorRangeSelect extends Component {
 
         {config.custom.value ?
           <CustomPalette
-            colors={['#F0F0F0', '#CCCCCC', '#B3B3B3', '#999999', '#666666']}
+            // colors={uiState.customPalette.colors}
+            customPalette={uiState.customPalette}
+            // colors={['#F0F0F0', '#CCCCCC', '#B3B3B3', '#999999', '#666666']}
             onApply={this.props.onSelectColorRange}
             onCancel = {this._onCustomPaletteCancel}
           /> :

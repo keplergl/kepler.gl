@@ -233,13 +233,24 @@ export const setUserMapboxAccessToken = createAction(
 );
 
 /**
- * Set the expor tmap format (html, json)
+ * Set the export map format (html, json)
  * @memberOf uiStateActions
  * @param {string} payload - map format
  * @public
  */
 export const setExportMapFormat = createAction(
   ActionTypes.SET_EXPORT_MAP_FORMAT,
+  payload => payload
+);
+
+/**
+ * Set the custom palette for layer
+ * @memberOf uiStateActions
+ * @param {object} payload - custom palette
+ * @public
+ */
+export const setCustomPalette = createAction(
+  ActionTypes.SET_CUSTOM_PALETTE,
   payload => payload
 );
 
