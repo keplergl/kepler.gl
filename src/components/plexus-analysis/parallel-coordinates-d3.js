@@ -56,8 +56,9 @@ const ControlPanel = styled.div`
   }
 
   .control-panel__title {
-    font-weight: 500;
-    color: ${props => props.theme.textColorHl};
+    font-size: 1.2em;
+    font-weight: 400;
+    color: ${props => props.theme.labelColor};
   }
 `;
 const ControlBtn = styled.button`

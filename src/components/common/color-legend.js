@@ -43,8 +43,8 @@ const StyledLegend = styled.div`
 
   svg {
     text {
-      font-size: 9px;
-      fill: ${props => props.theme.textColor};
+      font-size: 12px;
+      fill: ${props => props.theme.labelColor};
     }
   }
 `;

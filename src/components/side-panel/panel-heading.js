@@ -29,19 +29,19 @@ import {Button} from 'components/common/styled-components';
 const StyledPanelHeading = styled.div.attrs({
   className: 'side-side-panel__heading'
 })`
-  background-color: ${props => props.theme.sidePanelHeaderBg};
+  background-color: #18273e;
   padding: 10px;
 `;
 
 const StyledHeadingTitle = styled.button.attrs({
     className: 'side-side-panel__heading-title'
 })`
-background-color: #23282E;
+background-color: #2C3C54;
   font-weight: 400;
   font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
   display: flex;
   flex-direction:row;
-  color: #ededed;
+  color: ${props => props.theme.labelColor};
   border-width: 0;
   cursor: pointer;
   outline: 0;
@@ -62,11 +62,13 @@ background-color: #23282E;
 
 export const StyledCityTitle = styled.div`
   font-size: 1.5em;
+  font-weight: 400;
 `;
 
 export const StyledRegionTitle = styled.div`
   font-size: 1.0em;
-  color:#a3a3a3;
+  font-weight: 200;
+  color: ${props => props.theme.labelColor};
 `;
 
 export const StyledTitleContainer = styled.div`
@@ -83,7 +85,7 @@ const ArrowSvg = () => (
   >
     <g transform="translate(11, -3) rotate(45.000000)">
       <rect fill="#1FBAD6" x="2" y="5" width="10" height="10" />
-      <rect fill="#25282F" x="5" y="2" width="10" height="10" />
+      <rect fill="#2C3C54" x="5" y="2" width="10" height="10" />
     </g>
   </svg>
 );

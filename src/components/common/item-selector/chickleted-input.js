@@ -39,9 +39,9 @@ const propTypes = {
 };
 
 const ChickletButton = styled.div`
-  background: ${props => props.theme.panelActiveBg};
+  background: ${props => props.theme.panelBackground};
   border-radius: 1px;
-  color: ${props => props.theme.textColor};
+  color: ${props => props.theme.labelColor};
   font-size: 11px;
   line-height: 20px;
   margin: 3px 10px 3px 3px;

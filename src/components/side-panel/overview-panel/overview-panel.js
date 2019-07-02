@@ -44,7 +44,10 @@ const StyledOverviewContent = styled.div`
 `;
 
 const StyledOverviewInfo = styled.div`
-    margin: 10px;
+    margin-right: 10px;
+    margin-left: 10px;
+    font-size: 1.2em;
+    font-weight: 500;
 `;
 
 OverviewPanelFactory.deps = [];
@@ -55,9 +58,6 @@ function OverviewPanelFactory() {
     render() {
       return (
         <StyledOverviewPanel className="overview-panel">
-          <StyledOverviewHeader className="overview-panel__section">
-            Overview
-          </StyledOverviewHeader>
           <StyledOverviewContent className="overview-panel__content">
             <StyledOverviewInfo>Actual Population: 30210</StyledOverviewInfo> 
             <StyledOverviewInfo>Sample Size: 1021</StyledOverviewInfo> 
