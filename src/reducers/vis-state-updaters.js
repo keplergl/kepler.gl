@@ -1279,6 +1279,16 @@ export function setFeaturesUpdater(state, {features = []}) {
   }
 }
 
+export const deleteFeatureUpdater = (state, {payload: selectedFeatureId}) => {
+  return selectedFeatureId ? {
+    ...state,
+    editor: {
+      ...state.editor,
+      features: state.editor.features.filter(f => f.id !== selectedFeatureId)
+    }
+  } : state;
+};
+
 /**
  * Helper function to update All layer domain and layer data of state
  * @memberof visStateUpdaters

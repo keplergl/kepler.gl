@@ -565,3 +565,13 @@ export const setSelectedFeatureUpdater = (state, {payload: selectedFeature}) => 
     selectedFeature
   }
 });
+
+export const deleteFeatureUpdater = (state, {payload: selectedFeatureId}) => {
+  return selectedFeatureId ? {
+    ...state,
+    editor: {
+      ...state.editor,
+      selectedFeature: null
+    }
+  } : state;
+};

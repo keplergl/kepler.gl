@@ -52,7 +52,8 @@ const actionHandler = {
   [ActionTypes.SET_EXPORT_MAP_FORMAT]: uiStateUpdaters.setExportMapFormatUpdater,
 
   [ActionTypes.SET_EDITOR_MODE]: uiStateUpdaters.setEditorModeUpdater,
-  [ActionTypes.SET_SELECTED_FEATURE]: uiStateUpdaters.setSelectedFeatureUpdater
+  [ActionTypes.SET_SELECTED_FEATURE]: uiStateUpdaters.setSelectedFeatureUpdater,
+  [ActionTypes.DELETE_FEATURE]: uiStateUpdaters.deleteFeatureUpdater
 };
 
 /* Reducer */

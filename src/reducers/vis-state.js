@@ -21,6 +21,7 @@
 import ActionTypes from 'constants/action-types';
 import {handleActions} from 'redux-actions';
 import * as visStateUpdaters from './vis-state-updaters';
+import * as uiStateUpdaters from './ui-state-updaters';
 
 /**
  * Important: Do not rename `actionHandler` or the assignment pattern of property value.
@@ -89,7 +90,9 @@ const actionHandler = {
   // but may be useful if users import vis state reducer
   [ActionTypes.UPDATE_VIS_DATA]: visStateUpdaters.updateVisDataUpdater,
 
-  [ActionTypes.SET_FEATURES]: visStateUpdaters.setFeaturesUpdater
+  [ActionTypes.SET_FEATURES]: visStateUpdaters.setFeaturesUpdater,
+
+  [ActionTypes.DELETE_FEATURE]: visStateUpdaters.deleteFeatureUpdater
 };
 
 // construct vis-state reducer

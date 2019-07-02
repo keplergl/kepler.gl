@@ -19,7 +19,10 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import {Editor} from 'react-map-gl-draw';
+import window from 'global/window';
+
 import {
   DEFAULT_RADIUS,
   getStyle as getFeatureStyle
@@ -30,9 +33,41 @@ import {
 
 const DEFAULT_EDIT_HANDLE_SHAPE = 'circle';
 
+const DELETE_KEY_EVENT_CODE = 8;
+
 class Draw extends Component {
+  static propTypes = {
+    clickRadius: PropTypes.number,
+    editor: PropTypes.object.isRequired,
+    features: PropTypes.arrayOf(PropTypes.object).isRequired,
+    onSelect: PropTypes.func.isRequired,
+    onUpdate: PropTypes.func.isRequired,
+    onDeleteFeature: PropTypes.func
+  };
+
   static defaultProps = {
     clickRadius: DEFAULT_RADIUS
+  };
+
+  componentDidMount() {
+    window.addEventListener('keydown', this._onKeyPressed);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('keydown');
+  }
+
+  _onKeyPressed = event => {
+    const {editor, isEnabled} = this.props;
+    const {selectedFeature = {}} = editor;
+
+    if (
+      event.which === DELETE_KEY_EVENT_CODE &&
+      isEnabled &&
+      selectedFeature
+    ) {
+      this.props.onDeleteFeature((selectedFeature || {}).selectedFeatureId)
+    }
   };
 
   _getEditHandleShape = () => {
