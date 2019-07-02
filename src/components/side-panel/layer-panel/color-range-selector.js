@@ -101,7 +101,7 @@ export default class ColorRangeSelect extends Component {
     this.setState({
       config: {
         ...this.state.config,
-        ['custom']: {
+        custom: {
           ...this.state.config.custom,
           value: false
         }
@@ -227,6 +227,10 @@ const StyledColorRange = styled.div`
     cursor: pointer;
   }
 `;
+
+
+
+
 
 const ColorPaletteGroup = ({config = {}, onSelect, selected, colorRanges}) => {
   const {steps, reversed, type} = config;

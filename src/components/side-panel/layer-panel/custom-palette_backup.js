@@ -43,7 +43,6 @@ const StyledSortableItem = styled.div`
   }
 `
 
-
 const StyledDragHandle = styled.div`
   display: flex;
   align-items: center;
@@ -58,11 +57,6 @@ const StyledDragHandle = styled.div`
 `;
 
 const StyledTrash = styled.div`
-  .trashbin {
-    color: #fff;
-    font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
-  }
-
   height: 12px;
   margin-left: auto;
   :hover {
@@ -290,7 +284,7 @@ class CustomPalette extends Component {
 
               <StyledTrash
                 onClick={() => this._onColorDelete(index)}>
-                <Trash className='trashbin'/>
+                <Trash/>
               </StyledTrash>
 
             </SortableItem>
