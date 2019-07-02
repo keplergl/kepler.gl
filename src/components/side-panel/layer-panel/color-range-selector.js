@@ -27,7 +27,7 @@ import {PanelLabel} from 'components/common/styled-components';
 import RangeSlider from 'components/common/range-slider';
 import Switch from 'components/common/switch';
 import ColorPalette from './color-palette';
-import ColorPickerPane from './color-picker-pane';
+import CustomPalette from './custom-palette';
 
 import {COLOR_RANGES} from 'constants/color-ranges';
 import {numberSort} from 'utils/data-utils';
@@ -71,7 +71,7 @@ export default class ColorRangeSelect extends Component {
         value: false,
         options: [true, false]
       },
-      customization: {
+      custom: {
         type: 'switch',
         value: false,
         options: [true, false]
@@ -94,12 +94,30 @@ export default class ColorRangeSelect extends Component {
     }
   };
 
+  _onCustomPaletteCancel = () => {
+    this.setState({
+      config: {
+        ...this.state.config,
+        ['custom']: {
+          ...this.state.config['custom'],
+          value: false
+        }
+      }
+    });
+  }
+
+
   render() {
-    const {config} = this.state;
+    const { config } = this.state;
     return (
       <ColorRangeSelector className="color-range-selector">
         <StyledColorConfig>
-          {Object.keys(config).map(key => (
+          {(
+            config['custom'].value ?
+                ['custom'] :
+                Object.keys(config)
+            )
+            .map(key => (
             <PaletteConfig
               key={key}
               label={key}
@@ -108,12 +126,20 @@ export default class ColorRangeSelect extends Component {
             />
           ))}
         </StyledColorConfig>
-        <ColorPaletteGroup
-          config={config}
-          colorRanges={this.props.colorRanges}
-          onSelect={this.props.onSelectColorRange}
-          selected={this.props.selectedColorRange}
-        />
+        {/* <ColorPickerPanel onChange={colors => calling action with new colors}/> */}
+
+        {config.custom.value ?
+          <CustomPalette
+            colors={['#F0F0F0', '#CCCCCC', '#B3B3B3', '#999999', '#666666']}
+            onApply={this.props.onSelectColorRange}
+            onCancel = {this._onCustomPaletteCancel}
+          /> :
+          <ColorPaletteGroup
+            config={config}
+            colorRanges={this.props.colorRanges}
+            onSelect={this.props.onSelectColorRange}
+            selected={this.props.selectedColorRange}
+          />}
       </ColorRangeSelector>
     );
   }
@@ -194,6 +220,10 @@ const StyledColorRange = styled.div`
   }
 `;
 
+
+
+
+
 const ColorPaletteGroup = ({config = {}, onSelect, selected, colorRanges}) => {
   const {steps, reversed, type} = config;
 
@@ -210,7 +240,8 @@ const ColorPaletteGroup = ({config = {}, onSelect, selected, colorRanges}) => {
   return (
     <div className="color-palette__group">
 
-      <ColorPickerPane />
+
+
       {filtered.map(colorRange => (
         <StyledColorRange
           className="color-ranges"
