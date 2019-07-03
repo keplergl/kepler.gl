@@ -120,10 +120,14 @@ LayerManagerFactory.deps = [
 function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
   // By wrapping layer panel using a sortable element we don't have to implement the drag and drop logic into the panel itself;
   // Developers can provide any layer panel implementation and it will still be sortable
-  const SortableItem = sortableElement(({layer}) => {
+  const SortableItem = sortableElement(({layer, customPalette, setCustomPalette}) => {
     return (
       <SortableStyledItem>
-        <LayerPanel {...layer} />
+        <LayerPanel
+          {...layer}
+          customPalette={customPalette}
+          setCustomPalette={setCustomPalette}
+        />
       </SortableStyledItem>
     );
   });
@@ -149,7 +153,9 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
       removeDataset: PropTypes.func.isRequired,
       showDatasetTable: PropTypes.func.isRequired,
       updateLayerBlending: PropTypes.func.isRequired,
-      updateLayerOrder: PropTypes.func.isRequired
+      updateLayerOrder: PropTypes.func.isRequired,
+      uiState: PropTypes.object.isRequired,
+      uiStateActions: PropTypes.object.isRequired
     };
 
     layerClassSelector = props => props.layerClasses;
@@ -221,6 +227,8 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
                     key={`layer-${layerIdx}`}
                     index={index}
                     layer={layer}
+                    customPalette={uiState.customPalette}
+                    setCustomPalette={uiStateActions.setCustomPalette}
                   />
                 );
               })}

@@ -74,7 +74,7 @@ export const StyledLayerConfigGroup = styled.div`
         overflow: hidden;
         max-height: 0;
       }
-    }
+
   }
 `;
 
@@ -141,7 +141,9 @@ export default class LayerConfigGroup extends Component {
       property,
       layer,
       onChange,
-      collapsible
+      collapsible,
+      customPalette,
+      setCustomPalette
     } = this.props;
 
     const {collapsed} = this.state;

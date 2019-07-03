@@ -224,7 +224,7 @@ export default function SidePanelFactory(
                     layerBlending={layerBlending}
                     openModal={uiStateActions.toggleModal}
                     uiState={uiState}
-                    uiStateActions={uiStateActions.setCustomPalette}
+                    uiStateActions={uiStateActions}
                   />
                 )}
                 {activeSidePanel === 'filter' && (

@@ -48,7 +48,9 @@ export default class ColorRangeSelect extends Component {
   static propTypes = {
     colorRanges: PropTypes.arrayOf(PropTypes.any),
     selectedColorRange: PropTypes.object,
-    onSelectColorRange: PropTypes.func.isRequired
+    onSelectColorRange: PropTypes.func.isRequired,
+    customPalette: PropTypes.object,
+    setCustomPalette: PropTypes.func
   };
 
   static defaultProps = {
@@ -75,7 +77,7 @@ export default class ColorRangeSelect extends Component {
       },
       custom: {
         type: 'switch',
-        value: true,
+        value: false,
         options: [true, false]
       }
     }
@@ -111,6 +113,7 @@ export default class ColorRangeSelect extends Component {
 
   render() {
     const { config } = this.state;
+    const {customPalette, setCustomPalette} = this.props;
     return (
       <ColorRangeSelector className="color-range-selector">
         <StyledColorConfig>
@@ -132,14 +135,10 @@ export default class ColorRangeSelect extends Component {
 
         {config.custom.value ?
           <CustomPalette
-            customPalette= {{
-                name: 'Custom Palette',
-                type: null,
-                category: 'Uber',
-                colors: ['#F0F0F0', '#CCCCCC', '#B3B3B3', '#999999', '#666666']
-              }}
-            //{this.props.uiState.customPalette}
-            onUpdateCustomPalette={UIStateActions.setCustomPalette}
+            customPalette={customPalette}
+            setCustomPalette={setCustomPalette}
+            onSelect={this.props.onSelectColorRange}
+            selected={this.props.selectedColorRange}
             // {{
             //   name: 'Custom Palette',
             //   type: null,

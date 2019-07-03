@@ -75,7 +75,9 @@ export default class LayerConfigurator extends Component {
     updateLayerConfig: PropTypes.func.isRequired,
     updateLayerType: PropTypes.func.isRequired,
     updateLayerVisConfig: PropTypes.func.isRequired,
-    updateLayerVisualChannelConfig: PropTypes.func.isRequired
+    updateLayerVisualChannelConfig: PropTypes.func.isRequired,
+    customPalette: PropTypes.object.isRequired,
+    setCustomPalette: PropTypes.func.isRequired
   };
 
   _renderPointLayerConfig(props) {
@@ -101,9 +103,13 @@ export default class LayerConfigurator extends Component {
           collapsible
         >
           {layer.config.colorField ? (
-            <ColorRangeConfig {...visConfiguratorProps} />
+            <ColorRangeConfig
+              {...visConfiguratorProps}
+            customPalette = {this.props.customPalette }
+            setCustomPalette = {this.props.setCustomPalette } />
           ) : (
-            <LayerColorSelector {...layerConfiguratorProps} />
+              <LayerColorSelector
+                {...layerConfiguratorProps}/>
           )}
           <ConfigGroupCollapsibleContent>
             <ChannelByValueSelector
@@ -131,7 +137,9 @@ export default class LayerConfigurator extends Component {
               />
             ) : (
               <LayerColorSelector
-                {...visConfiguratorProps}
+                  {...visConfiguratorProps}
+                  customPalette = { this.props.customPalette }
+                  setCustomPalette = { this.props.setCustomPalette }
                 selectedColor={layer.config.visConfig.strokeColor}
                 property="strokeColor"
               />
@@ -408,8 +416,12 @@ export default class LayerConfigurator extends Component {
           {layer.config.colorField ? (
             <ColorRangeConfig {...visConfiguratorProps} />
           ) : (
-            <LayerColorSelector {...layerConfiguratorProps} />
-          )}
+              <LayerColorSelector
+                {...layerConfiguratorProps}
+                customPalette = {this.props.customPalette }
+                setCustomPalette={this.props.setCustomPalette}
+              />
+   )}
           <ConfigGroupCollapsibleContent>
             <ChannelByValueSelector
               channel={layer.visualChannels.color}
@@ -553,7 +565,9 @@ export default class LayerConfigurator extends Component {
             {layer.config.colorField ? (
               <ColorRangeConfig {...visConfiguratorProps} />
             ) : (
-              <LayerColorSelector {...layerConfiguratorProps} />
+                <LayerColorSelector {...layerConfiguratorProps}
+                  customPalette = { this.props.customPalette }
+                  setCustomPalette = { this.props.setCustomPalette } />
             )}
             <ConfigGroupCollapsibleContent>
               <ChannelByValueSelector
@@ -582,7 +596,9 @@ export default class LayerConfigurator extends Component {
             />
           ) : (
             <LayerColorSelector
-              {...visConfiguratorProps}
+                {...visConfiguratorProps}
+                customPalette = { this.props.customPalette }
+                setCustomPalette = { this.props.setCustomPalette }
               selectedColor={layer.config.visConfig.strokeColor}
               property="strokeColor"
             />
@@ -755,7 +771,9 @@ export default class LayerConfigurator extends Component {
 
     const layerConfiguratorProps = {
       ...commonConfigProp,
-      onChange: updateLayerConfig
+      onChange: updateLayerConfig,
+      customPalette: this.props.customPalette ,
+      setCustomPalette: this.props.setCustomPalette
     };
 
     const layerChannelConfigProps = {
@@ -878,7 +896,9 @@ export const ArcLayerColorSelector = ({
 export const ColorRangeConfig = ({
   layer,
   onChange,
-  property = 'colorRange'
+  property = 'colorRange',
+  customPalette,
+  setCustomPalette
 }) => (
   <SidePanelSection>
     <ColorSelector
@@ -886,9 +906,11 @@ export const ColorRangeConfig = ({
         {
           selectedColor: layer.config.visConfig[property],
           isRange: true,
-          setColor: colorRange => onChange({[property]: colorRange})
+          setColor: colorRange => onChange({ [property]: colorRange })
         }
-      ]}
+        ]}
+        customPalette={customPalette}
+        setCustomPalette={setCustomPalette}
     />
   </SidePanelSection>
 );
