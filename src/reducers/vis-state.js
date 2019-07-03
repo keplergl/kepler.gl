@@ -90,8 +90,6 @@ const actionHandler = {
   // but may be useful if users import vis state reducer
   [ActionTypes.UPDATE_VIS_DATA]: visStateUpdaters.updateVisDataUpdater,
 
-  [ActionTypes.SET_FEATURES]: visStateUpdaters.setFeaturesUpdater,
-
   [ActionTypes.DELETE_FEATURE]: visStateUpdaters.deleteFeatureUpdater
 };
 

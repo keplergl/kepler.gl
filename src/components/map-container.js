@@ -451,6 +451,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             mapControls={mapControls}
             scale={mapState.scale || 1}
             top={0}
+            editor={uiState.editor}
             onTogglePerspective={mapStateActions.togglePerspective}
             onToggleSplitMap={mapStateActions.toggleSplitMap}
             onMapToggleLayer={this._handleMapToggleLayer}
@@ -469,10 +470,13 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             >
               {this._renderDeckOverlay(layersToRender)}
               {this._renderMapboxOverlays(layersToRender)}
+              {/*
+                By placing the editor in this map we have to perform fewer checks for css zIndex
+                and fewer updates when we switch from edit to read mode
+              */}
               <StyledDraw
                 editor={uiState.editor}
                 features={visState.editor.features}
-                isEnabled={isEdit}
                 onDeleteFeature={uiStateActions.deleteFeature}
                 onSelect={uiStateActions.setSelectedFeature}
                 onUpdate={visStateActions.setFeatures}

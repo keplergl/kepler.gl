@@ -115,6 +115,7 @@ const StyledMapControlPanelHeader = styled.div`
   padding: 6px 12px;
   font-size: 11px;
   color: ${props => props.theme.titleTextColor};
+  position: relative;
 
   button {
     width: 18px;
@@ -169,7 +170,7 @@ const MapControlPanel = React.memo(({children, header, onClick, scale = 1, isExp
         scale}px), calc(${25 * (scale - 1)}% + ${10 * scale}px))`
     }}
   >
-    <StyledMapControlPanelHeader style={{position: 'relative'}}>
+    <StyledMapControlPanelHeader>
       {isExport ? (
         <KeplerGlLogo version={false} appName="kepler.gl" />
       ) : (
@@ -244,7 +245,6 @@ const Toggle3dButton = React.memo(({dragRotate, onTogglePerspective}) => (
     data-for="action-3d"
   >
     <Cube3d height="22px" />
-    {/* No icon since we are injecting through css .threeD-map class*/}
     <MaControlTooltip
       id="action-3d"
       message={dragRotate ? 'Disable 3D Map' : '3D Map'}
@@ -257,28 +257,10 @@ const StyledToolBar = styled(Toolbar)`
   right: 32px;
 `;
 
-const MapDrawPanel = React.memo(({isActive, onToggleMenuPanel, onSetEditorMode}) => {
-  const toggleMapDrawButton = (
-    <StyledMapControlButton
-      onClick={e => {
-        e.preventDefault();
-        onToggleMenuPanel();
-      }}
-      active={isActive}
-      data-tip
-      data-for="map-draw"
-    >
-      <DrawPolygon height="22px" />
-      {/* No icon since we are injecting through css .threeD-map class*/}
-      <MaControlTooltip
-        id="map-draw"
-        message="Draw on map"
-      />
-    </StyledMapControlButton>
-  );
-
-  return !isActive ? toggleMapDrawButton : (
-      <div style={{position: 'relative'}}>
+const MapDrawPanel = React.memo(({editor, isActive, onToggleMenuPanel, onSetEditorMode}) => {
+  return (
+    <div style={{position: 'relative'}}>
+      {isActive ? (
         <StyledToolBar show={isActive} direction="column">
           <ToolbarItem
             onClick={() => {
@@ -286,6 +268,7 @@ const MapDrawPanel = React.memo(({isActive, onToggleMenuPanel, onSetEditorMode})
             }}
             label="select"
             icon={(<CursorClick height="22px"/>)}
+            active={editor.mode === EDITOR_MODES.EDIT_VERTEX}
           />
           <ToolbarItem
             onClick={() => {
@@ -293,6 +276,7 @@ const MapDrawPanel = React.memo(({isActive, onToggleMenuPanel, onSetEditorMode})
             }}
             label="polygon"
             icon={(<Polygon height="22px"/>)}
+            active={editor.mode === EDITOR_MODES.DRAW_POLYGON}
           />
           <ToolbarItem
             onClick={() => {
@@ -300,13 +284,28 @@ const MapDrawPanel = React.memo(({isActive, onToggleMenuPanel, onSetEditorMode})
             }}
             label="rectangle"
             icon={(<Rectangle height="22px"/>)}
+            active={editor.mode === EDITOR_MODES.DRAW_RECTANGLE}
           />
         </StyledToolBar>
-        {toggleMapDrawButton}
-      </div>
-    )
-  }
-);
+      ) : null}
+      <StyledMapControlButton
+        onClick={e => {
+          e.preventDefault();
+          onToggleMenuPanel();
+        }}
+        active={isActive}
+        data-tip
+        data-for="map-draw"
+      >
+        <DrawPolygon height="22px"/>
+        <MaControlTooltip
+          id="map-draw"
+          message="Draw on map"
+        />
+      </StyledMapControlButton>
+    </div>
+  );
+});
 
 const MapControlFactory = () => {
   class MapControl extends Component {
@@ -325,7 +324,9 @@ const MapControlFactory = () => {
       top: PropTypes.number.isRequired,
 
       // optional
-      scale: PropTypes.number
+      scale: PropTypes.number,
+      mapLayers: PropTypes.object,
+      editor: PropTypes.object
     };
 
     static defaultProps = {
@@ -363,7 +364,8 @@ const MapControlFactory = () => {
         onToggleSplitMap,
         onMapToggleLayer,
         onToggleMapControl,
-        scale
+        scale,
+        editor
       } = this.props;
 
       const {
@@ -429,6 +431,7 @@ const MapControlFactory = () => {
             <ActionPanel key={4}>
               <MapDrawPanel
                 isActive={mapDraw.active}
+                editor={editor}
                 onToggleMenuPanel={() => onToggleMapControl('mapDraw')}
                 onSetEditorMode={this.props.onSetEditorMode}
               />

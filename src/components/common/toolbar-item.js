@@ -19,9 +19,10 @@
 // THE SOFTWARE.
 
 import React from 'react';
+import styled from 'styled-components';
 
-const ToolbarItem = ({onClose, onClick, label, icon}) => (
-  <div className="save-export-dropdown__item" onClick={(e) => {
+const ToolbarItem = ({active, className, icon, label, onClick}) => (
+  <div className={`${className} save-export-dropdown__item`} onClick={(e) => {
     e.stopPropagation();
     onClick();
   }}>
@@ -30,4 +31,10 @@ const ToolbarItem = ({onClose, onClick, label, icon}) => (
   </div>
 );
 
-export default ToolbarItem;
+const StyledToolbarItem = styled(ToolbarItem)`
+  color: ${props => props.active ? 
+    'white' : props.theme.textColor
+  };
+`;
+
+export default StyledToolbarItem;
