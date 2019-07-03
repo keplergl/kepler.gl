@@ -261,7 +261,7 @@ export const setEditorMode = createAction(
 
 export const setSelectedFeature = createAction(
   ActionTypes.SET_SELECTED_FEATURE,
-  selectedFeature => selectedFeature
+  ({selectedFeatureId}) => selectedFeatureId
 );
 
 export const deleteFeature = createAction(

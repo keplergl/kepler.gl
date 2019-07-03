@@ -41,12 +41,7 @@ import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 // default-settings
 import ThreeDBuildingLayer from '../deckgl-layers/3d-building-layer/3d-building-layer';
 
-const MAP_STYLE_CONTAINER = {
-  display: 'inline-block',
-  position: 'relative'
-};
-
-const StyledDraw = styled(Draw)`
+const Editor = styled(Draw)`
   display: ${props => props.visible ? 'default' : 'none'};
 `;
 
@@ -70,6 +65,79 @@ MapContainerFactory.deps = [
 ];
 
 export default function MapContainerFactory(MapPopover, MapControl) {
+  /* eslint-disable complexity */
+  const MapTooltip = React.memo(({
+                                   mapState,
+                                   hoverInfo,
+                                   clicked,
+                                   datasets,
+                                   interactionConfig,
+                                   layers,
+                                   mapLayers,
+                                   mousePos: {mousePosition, coordinate, pinned}
+                                 }) => {
+    if (!mousePosition) {
+      return null;
+    }
+
+    // if clicked something, ignore hover behavior
+    const objectInfo = clicked || hoverInfo;
+    let layerHoverProp = null;
+    let position = {x: mousePosition[0], y: mousePosition[1]};
+
+    if (
+      interactionConfig.tooltip.enabled &&
+      objectInfo &&
+      objectInfo.picked
+    ) {
+      // if anything hovered
+      const {object, layer: overlay} = objectInfo;
+
+      // deckgl layer to kepler-gl layer
+      const layer = layers[overlay.props.idx];
+
+      if (
+        layer.config.isVisible &&
+        layer.getHoverData &&
+        (!mapLayers || mapLayers[layer.id].isVisible)
+      ) {
+
+        // if layer is visible and have hovered data
+        const {config: {dataId}} = layer;
+        const {allData, fields} = datasets[dataId];
+        const data = layer.getHoverData(object, allData);
+        const fieldsToShow = interactionConfig.tooltip.config.fieldsToShow[dataId];
+
+        layerHoverProp = {
+          data,
+          fields,
+          fieldsToShow,
+          layer
+        }
+      }
+    }
+
+    if (pinned || clicked) {
+      // project lnglat to screen so that tooltip follows the object on zoom
+      const viewport = new WebMercatorViewport(mapState);
+      const lngLat = clicked ? clicked.lngLat : pinned.coordinate;
+      position = this._getHoverXY(viewport, lngLat);
+    }
+    return (
+      <div>
+        <MapPopover
+          {...position}
+          layerHoverProp={layerHoverProp}
+          coordinate={interactionConfig.coordinate.enabled && ((pinned || {}).coordinate || coordinate)}
+          freezed={Boolean(clicked || pinned)}
+          onClose={this._onCloseMapPopover}
+          mapW={mapState.width}
+          mapH={mapState.height}
+        />
+      </div>
+    );
+  });
+  /* eslint-enable complexity */
 
   class MapContainer extends Component {
     static propTypes = {
@@ -191,86 +259,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     };
 
     /* component render functions */
-    /* eslint-disable complexity */
-    _renderMapPopover() {
-      // TODO: move this into reducer so it can be tested
-      const {
-        mapState,
-        hoverInfo,
-        clicked,
-        datasets,
-        interactionConfig,
-        layers,
-        mapLayers,
-        mousePos: {mousePosition, coordinate, pinned}
-      } = this.props;
-
-      if (!mousePosition) {
-        return null;
-      }
-      // if clicked something, ignore hover behavior
-      const objectInfo = clicked || hoverInfo;
-      let layerHoverProp = null;
-      let position = {x: mousePosition[0], y: mousePosition[1]};
-
-      if (
-        interactionConfig.tooltip.enabled &&
-        objectInfo &&
-        objectInfo.picked
-      ) {
-        // if anything hovered
-        const {object, layer: overlay} = objectInfo;
-
-        // deckgl layer to kepler-gl layer
-        const layer = layers[overlay.props.idx];
-
-        if (
-          layer.config.isVisible &&
-          layer.getHoverData &&
-          (!mapLayers || mapLayers[layer.id].isVisible)
-        ) {
-
-          // if layer is visible and have hovered data
-          const {config: {dataId}} = layer;
-          const {allData, fields} = datasets[dataId];
-          const data = layer.getHoverData(object, allData);
-          const fieldsToShow = interactionConfig.tooltip.config.fieldsToShow[dataId];
-
-          layerHoverProp = {
-            data,
-            fields,
-            fieldsToShow,
-            layer
-          }
-        }
-      }
-
-      if (pinned || clicked) {
-        // project lnglat to screen so that tooltip follows the object on zoom
-        const viewport = new WebMercatorViewport(mapState);
-        const lngLat = clicked ? clicked.lngLat : pinned.coordinate;
-        position = this._getHoverXY(viewport, lngLat);
-      }
-      return (
-        <div>
-          <MapPopover
-            {...position}
-            layerHoverProp={layerHoverProp}
-            coordinate={interactionConfig.coordinate.enabled && ((pinned || {}).coordinate || coordinate)}
-            freezed={Boolean(clicked || pinned)}
-            onClose={this._onCloseMapPopover}
-            mapW={mapState.width}
-            mapH={mapState.height}
-          />
-        </div>
-      );
-    }
-
-    /* eslint-enable complexity */
-
     _getHoverXY(viewport, lngLat) {
       const screenCoord = !viewport || !lngLat ? null : viewport.project(lngLat);
-
       return screenCoord && {x: screenCoord[0], y: screenCoord[1]};
     }
 
@@ -418,8 +408,10 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     render() {
       const {
         mapState, mapStyle, mapStateActions, mapLayers, layers, MapComponent,
-        datasets, mapboxApiAccessToken, mapboxApiUrl, mapControls, toggleMapControl,
-        uiState, uiStateActions, visState, visStateActions
+        datasets, mapboxApiAccessToken, mapboxApiUrl, mapControls,
+        uiState, uiStateActions, visState, visStateActions,
+        hoverInfo, clicked, interactionConfig,
+        mousePos
       } = this.props;
 
       if (!mapStyle.bottomMapStyle) {
@@ -473,7 +465,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
                 By placing the editor in this map we have to perform fewer checks for css zIndex
                 and fewer updates when we switch from edit to read mode
               */}
-              <StyledDraw
+              <Editor
                 editor={uiState.editor}
                 features={visState.editor.features}
                 onDeleteFeature={uiStateActions.deleteFeature}
@@ -492,7 +484,16 @@ export default function MapContainerFactory(MapPopover, MapControl) {
               />
             </div>
           )}
-          {this._renderMapPopover()}
+          <MapTooltip
+            mapState={mapState}
+            hoverInfo={hoverInfo}
+            clicked={clicked}
+            datasets={datasets}
+            interactionConfig={interactionConfig}
+            layers={layers}
+            mapLayers={mapLayers}
+            mousePos={mousePos}
+          />
         </StyledMapContainer>
       );
     }

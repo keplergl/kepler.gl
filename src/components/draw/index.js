@@ -61,12 +61,15 @@ class Draw extends Component {
     const {editor, isEnabled} = this.props;
     const {selectedFeature = {}} = editor;
 
+    if (!isEnabled) {
+      return;
+    }
+
     if (
       event.which === DELETE_KEY_EVENT_CODE &&
-      isEnabled &&
       selectedFeature
     ) {
-      this.props.onDeleteFeature((selectedFeature || {}).selectedFeatureId)
+      this.props.onDeleteFeature((selectedFeature || {}).id)
     }
   };
 
@@ -79,17 +82,19 @@ class Draw extends Component {
     const {selectedFeature = {}} = editor;
 
     return (
-      <Editor
-        clickRadius={clickRadius}
-        mode={editor.mode}
-        features={features}
-        selectedFeatureId={(selectedFeature || {}).selectedFeatureId}
-        onSelect={this.props.onSelect}
-        onUpdate={this.props.onUpdate}
-        getEditHandleShape={this._getEditHandleShape}
-        getFeatureStyle={getFeatureStyle}
-        getEditHandleStyle={getEditHandleStyle}
-      />
+      <div>
+        <Editor
+          clickRadius={clickRadius}
+          mode={editor.mode}
+          features={features}
+          selectedFeatureId={(selectedFeature || {}).id}
+          onSelect={this.props.onSelect}
+          onUpdate={this.props.onUpdate}
+          getEditHandleShape={this._getEditHandleShape}
+          getFeatureStyle={getFeatureStyle}
+          getEditHandleStyle={getEditHandleStyle}
+        />
+      </div>
     );
   }
 }

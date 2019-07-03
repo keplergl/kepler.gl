@@ -29,7 +29,7 @@ const MAX_WIDTH = 500;
 const MAX_HEIGHT = 600;
 
 const StyledMapPopover = styled.div`
-  ${props => props.theme.scrollBar}
+  ${props => props.theme.scrollBar};
   font-size: 11px;
   font-weight: 500;
   background-color: ${props => props.theme.panelBackground};
