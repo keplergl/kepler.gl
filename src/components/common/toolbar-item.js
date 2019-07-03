@@ -21,20 +21,21 @@
 import React from 'react';
 import styled from 'styled-components';
 
-const ToolbarItem = ({active, className, icon, label, onClick}) => (
-  <div className={`${className} save-export-dropdown__item`} onClick={(e) => {
+const StyledDiv = styled.div`
+  color: ${props => props.active ?
+  'white' : props.theme.textColor
+  };
+`;
+
+const ToolbarItem = React.memo(({className, icon, label, onClick}) => (
+  <StyledDiv className="save-export-dropdown__item" onClick={(e) => {
     e.stopPropagation();
     onClick();
   }}>
     {icon}
     <div className="save-export-dropdown__title">{label}</div>
-  </div>
-);
+  </StyledDiv>
+));
 
-const StyledToolbarItem = styled(ToolbarItem)`
-  color: ${props => props.active ? 
-    'white' : props.theme.textColor
-  };
-`;
 
-export default StyledToolbarItem;
+export default ToolbarItem;

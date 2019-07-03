@@ -167,7 +167,8 @@ const MapControlPanel = React.memo(({children, header, onClick, scale = 1, isExp
   <StyledMapControlPanel
     style={{
       transform: `scale(${scale}) translate(calc(-${25 * (scale - 1)}% - ${10 *
-        scale}px), calc(${25 * (scale - 1)}% + ${10 * scale}px))`
+        scale}px), calc(${25 * (scale - 1)}% + ${10 * scale}px))`,
+      marginBottom: '8px'
     }}
   >
     <StyledMapControlPanelHeader>

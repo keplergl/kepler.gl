@@ -74,10 +74,10 @@ const StyledPanelDropdown = styled.div`
   }
 `;
 
-const Toolbar = ({children, className, show, direction = 'row'}) => (
+const Toolbar = React.memo(({children, className, show, direction = 'row'}) => (
   <StyledPanelDropdown className={`${className || ''} save-export-dropdown`} show={show} direction={direction}>
     {children}
   </StyledPanelDropdown>
-);
+));
 
 export default Toolbar;
