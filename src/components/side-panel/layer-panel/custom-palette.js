@@ -19,7 +19,7 @@ class CustomPalette extends React.Component {
         colors: PropTypes.arrayOf(PropTypes.string)
       })
     ,
-    onUpdateCustomPalette: PropTypes.func
+    setCustomPalette: PropTypes.func
   };
 
   constructor(props) {
@@ -36,7 +36,7 @@ class CustomPalette extends React.Component {
     const { colors } = this.props.customPalette;
     const newColors = [...colors];
     newColors[this.state.currentSwatchIndex] = color.hex;
-    this.props.onUpdateCustomPalette({
+    this.props.setCustomPalette({
       name: 'Custom Palette',
       type: null,
       category: 'Uber',
@@ -48,7 +48,7 @@ class CustomPalette extends React.Component {
     const { colors } = this.props.customPalette;
     const newColors = [...colors];
     newColors.splice(index, 1);
-    this.props.onUpdateCustomPalette({
+    this.props.setCustomPalette({
       name: 'Custom Palette',
       type: null,
       category: 'Uber',
@@ -60,7 +60,7 @@ class CustomPalette extends React.Component {
     const { colors } = this.props.customPalette;
     const newColors = [...colors];
     newColors.push('#F0F0F0');
-    this.props.onUpdateCustomPalette({
+    this.props.setCustomPalette({
       name: 'Custom Palette',
       type: null,
       category: 'Uber',
@@ -103,7 +103,7 @@ class CustomPalette extends React.Component {
   _onSortEnd = ({ oldIndex, newIndex }) => {
     const { colors } = this.props.customPalette;
     const newColors = arrayMove(colors, oldIndex, newIndex);
-    this.props.onUpdateCustomPalette({
+    this.props.setCustomPalette({
       name: 'Custom Palette',
       type: null,
       category: 'Uber',
