@@ -45,7 +45,6 @@ const StyledPanelDropdown = styled.div`
     align-items: center;
     border-right: 1px solid ${props => props.theme.panelHeaderIcon};
     padding: 0 22px;
-    color: ${props => props.theme.textColor};
     display: flex;
     flex-direction: column;
 

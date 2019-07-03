@@ -54,7 +54,7 @@ class Draw extends Component {
   }
 
   componentWillUnmount() {
-    window.removeEventListener('keydown');
+    window.removeEventListener('keydown', this._onKeyPressed);
   }
 
   _onKeyPressed = event => {
