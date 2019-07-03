@@ -155,7 +155,7 @@ function FilterPanelFactory() {
                   isAnyFilterAnimating={isAnyFilterAnimating}
                   toggleAnimation={toggleAnimation}
                   setFilter={value => setFilter(idx, 'value', value)}
-                />
+                /> 
               </div>
             )}
           </StyledFilterContent>

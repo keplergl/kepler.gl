@@ -25,22 +25,33 @@ import { RangeFilter } from '../../filters';
 
 const Score = styled.div`
   font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
-  margin-right:10px;
-  font-size: 1.5em;
+  font-size: 1.2em;
   width: 100%;
-  min-height: 100%;
   /*line-height: 60px;*/
   flex:20%;
   text-align:center;
-  padding:5px;
+  padding:12px;
+  background-color: ${props => props.theme.panelBackground};
+  color: ${props => props.theme.labelColor};
 `;
 
 const Label = styled.div`
   font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
   font-size: 1.2em;
-  margin: 3px 10px 0 10px;
   flex:80%;
-  padding:5px;
+  padding:12px;
+  background-color: #C3C9C5;
+`;
+
+const Triangle = styled.div`
+  content: " ";
+  display: inline-block;
+  float: right;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 19px 0 19px 10px;
+  border-color: #18273e #2c3c54 #18273e #c3c9c5;
 `;
 
 const Style = styled.button`
@@ -49,23 +60,19 @@ const Style = styled.button`
   border-width: 0;
   cursor: pointer;
   outline: 0;
-  // align-content: center;
-  // justify-content: center;
+  align-items: center;
+  justify-content: center;
   display: flex;
   flex-direction:row;
   text-align: left;
-  margin: 10px;
-  //min-width: 85px;
-  width:95%;
+  margin: 10px 10px 10px 0px;
+  width:100%;
   font-size: 0.8em;
   font-weight:600;
-  background-color: #C3C9C5;
-  border-left: 8px #bd0026 solid;
-  padding: 10px 5px;
-  //border-radius: 10%;
-  //box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  background-color: ${props => props.theme.sidePanelBg}; 
+  padding: 5px; 
   :hover {
-    color: #C3C9C5;
+    //color: #C3C9C5;
     background-color: #3a4b5e;
   }
 `;
@@ -77,8 +84,7 @@ const StyleMessage = styled.span`
 `;
 const StyledIndicator=styled.div`
   .selected {
-    background-color: #476587;
-    color: #ffffff;
+    background-color: #1fbad6;
   }
 `;
 function IndicatorFactory() {
@@ -91,6 +97,7 @@ function IndicatorFactory() {
         className={selected ? "selected" : ""}
       >
         <Label>{label}</Label>
+        <Triangle></Triangle>
         <Score>{score}%</Score>
       </Style>
       {description ? (
