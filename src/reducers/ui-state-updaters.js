@@ -169,7 +169,10 @@ export const DEFAULT_EXPORT_MAP = {
 };
 
 export const DEFAULT_CUSTOM_PALETTE = {
-
+  name: 'Custom Palette',
+  type: null,
+  category: 'Uber',
+  colors: ['#F0F0F0', '#CCCCCC', '#B3B3B3', '#999999', '#666666']
 }
 
 /**
@@ -206,7 +209,7 @@ export const INITIAL_UI_STATE = {
   // ui notifications
   notifications: DEFAULT_NOTIFICATIONS,
   // Custom palette
-  customPalette: null
+  customPalette: DEFAULT_CUSTOM_PALETTE
 };
 
 /* Updaters */

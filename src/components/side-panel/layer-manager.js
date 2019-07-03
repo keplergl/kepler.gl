@@ -173,7 +173,7 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
     };
 
     render() {
-      const {layers, datasets, layerOrder, openModal} = this.props;
+      const {layers, datasets, layerOrder, openModal, uiState, uiStateActions} = this.props;
       const defaultDataset = Object.keys(datasets)[0];
       const layerTypeOptions = this.layerTypeOptionsSelector(this.props);
 

@@ -28,10 +28,11 @@ import RangeSlider from 'components/common/range-slider';
 import Switch from 'components/common/switch';
 import ColorPalette from './color-palette';
 import CustomPalette from './custom-palette';
-
 import {COLOR_RANGES} from 'constants/color-ranges';
 import {numberSort} from 'utils/data-utils';
 import uiState from 'reducers/ui-state';
+import {INITIAL_UI_STATE} from 'reducers/ui-state-updaters';
+import * as UIStateActions from 'actions/ui-state-actions';
 
 const ALL_TYPES = uniq(COLOR_RANGES.map(c => c.type).concat(['all']));
 const ALL_STEPS = uniq(COLOR_RANGES.map(d => d.colors.length)).sort(numberSort);
@@ -131,8 +132,21 @@ export default class ColorRangeSelect extends Component {
 
         {config.custom.value ?
           <CustomPalette
-            // colors={uiState.customPalette.colors}
-            customPalette={uiState.customPalette}
+            customPalette= {{
+                name: 'Custom Palette',
+                type: null,
+                category: 'Uber',
+                colors: ['#F0F0F0', '#CCCCCC', '#B3B3B3', '#999999', '#666666']
+              }}
+            //{this.props.uiState.customPalette}
+            onUpdateCustomPalette={UIStateActions.setCustomPalette}
+            // {{
+            //   name: 'Custom Palette',
+            //   type: null,
+            //   category: 'Uber',
+            //   colors: ['#F0F0F0', '#CCCCCC', '#B3B3B3', '#999999', '#666666']
+            // }}
+            //{uiState.customPalette}
             // colors={['#F0F0F0', '#CCCCCC', '#B3B3B3', '#999999', '#666666']}
             onApply={this.props.onSelectColorRange}
             onCancel = {this._onCustomPaletteCancel}

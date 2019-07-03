@@ -1,29 +1,24 @@
 import React, {Component}  from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import { SketchPicker } from 'react-color';
-import { Button } from 'components/common/styled-components';
-import {VertDots, Delete} from 'components/common/icons';
+import { SketchPicker, CustomPicker} from 'react-color';
+import { Button, SidePanelDivider} from 'components/common/styled-components';
+import {VertDots, Delete, Trash} from 'components/common/icons';
 import {sortableContainer, sortableElement, sortableHandle} from 'react-sortable-hoc';
 import arrayMove from 'array-move';
 import onClickOutside from 'react-onclickoutside';
 import ColorPalette from './color-palette';
-import ColorModal from './modal'
 
-const TransparentButton = styled(Button)`
-  background-color: transparent;
-`;
 
 class CustomPalette extends React.Component {
   static propTypes = {
-    colors: PropTypes.arrayOf(
-      PropTypes.shape({
-        selectedColor: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.any), PropTypes.object]),
-        setColor: PropTypes.func.isRequired,
-        isRange: PropTypes.bool,
-        label: PropTypes.string
+    customPalette: PropTypes.shape({
+        name: PropTypes.string,
+        type: PropTypes.string,
+        category: PropTypes.string,
+        colors: PropTypes.arrayOf(PropTypes.string)
       })
-    ),
+    ,
     onUpdateCustomPalette: PropTypes.func
   };
 
@@ -41,14 +36,11 @@ class CustomPalette extends React.Component {
     const { colors } = this.props.customPalette;
     const newColors = [...colors];
     newColors[this.state.currentSwatchIndex] = color.hex;
-    // this.setState({
-    //   colors: newColors
-    // });
     this.props.onUpdateCustomPalette({
       name: 'Custom Palette',
       type: null,
       category: 'Uber',
-      colors: this.state.colors
+      colors: newColors
     });
   }
 
@@ -56,15 +48,22 @@ class CustomPalette extends React.Component {
     const { colors } = this.props.customPalette;
     const newColors = [...colors];
     newColors.splice(index, 1);
-    this.setState({
+    this.props.onUpdateCustomPalette({
+      name: 'Custom Palette',
+      type: null,
+      category: 'Uber',
       colors: newColors
     });
   }
 
   _onColorAdd = () => {
-    const newColors = [...this.state.colors];
+    const { colors } = this.props.customPalette;
+    const newColors = [...colors];
     newColors.push('#F0F0F0');
-    this.setState({
+    this.props.onUpdateCustomPalette({
+      name: 'Custom Palette',
+      type: null,
+      category: 'Uber',
       colors: newColors
     });
   }
@@ -89,24 +88,32 @@ class CustomPalette extends React.Component {
   };
 
   _onApply = (event) => {
+    const { colors } = this.props.customPalette['colors'];
+    const newColors = [...colors];
     event.stopPropagation();
     event.preventDefault();
     this.props.onApply({
       name: 'Custom Palette',
       type: null,
       category: 'Uber',
-      colors: this.state.colors
+      colors: newColors
     }, event)
   }
 
   _onSortEnd = ({ oldIndex, newIndex }) => {
-    this.setState(({ colors }) => ({
-      colors: arrayMove(colors, oldIndex, newIndex)
-    }));
+    const { colors } = this.props.customPalette;
+    const newColors = arrayMove(colors, oldIndex, newIndex);
+    this.props.onUpdateCustomPalette({
+      name: 'Custom Palette',
+      type: null,
+      category: 'Uber',
+      colors: newColors
+    });
   };
 
 
   render() {
+
     const { colors } = this.props.customPalette;
     return (
       <StyledWrapper>
@@ -140,27 +147,25 @@ class CustomPalette extends React.Component {
               {this.state.showSketcher && this.state.currentSwatchIndex === index ?
               (
                   <div style={{
-                    position: "absolute",
-                    top: "19px",
-                    left: "38px",
+                    position: "relative",
                     overflow: "visible",
                     zIndex: "1000"
                   }}>
-                    <div style={{
-                        position: "fixed",
-                        top: "0px",
-                        right: "0px",
-                        bottom: "0px",
-                        left: "0px"
+                    <StyledCover onClick={this._onSwatchClose}/>
+                    <div
+                      style={{
+                        float: "left",
+                        position: "absolute",
+                        top: "10px",
+                        left: "2px"
                       }}
-                      onClick={this._onSwatchClose}
-                  />
-
+                    >
                     <SketchPicker
-                      color={this.state.colors[this.state.currentSwatchIndex]}
+                      color={this.props.customPalette['colors'][this.state.currentSwatchIndex]}
                       presetColors={[]}
                       onChangeComplete={this._onColorUpdate}
-                    />
+                      />
+                      </div>
                   </div>
                 ) : null
               }
@@ -169,9 +174,9 @@ class CustomPalette extends React.Component {
                 {color.toUpperCase()}
               </StyledHex>
 
-              <StyledDelete onClick={() => this._onColorDelete(index)}>
-                <Delete/>
-              </StyledDelete>
+              <StyledTrash onClick={() => this._onColorDelete(index)}>
+                <Trash/>
+              </StyledTrash>
 
             </SortableItem>
             )
@@ -190,22 +195,14 @@ class CustomPalette extends React.Component {
 
         <StyledLine />
 
-        <div
-          style={{
-            marginTop: "11px"
-          }}>
-
+        <StyledButtonContainer>
           <TransparentButton
-            style={{float: "right"}}
-              onClick={this._onApply}>Apply
+              onClick={this._onApply}>Confirm
           </TransparentButton>
           <TransparentButton
-            style={{float: "right"}}
               onClick={this.props.onCancel} > Cancel
           </TransparentButton>
-
-
-        </div>
+        </StyledButtonContainer>
 
       </StyledWrapper>
     );
@@ -213,8 +210,6 @@ class CustomPalette extends React.Component {
 }
 
 export default CustomPalette;
-
-// const NewPIcker = listenOnClick(SketchPicker);
 
 const StyledSortableItem = styled.div`
   display: flex;
@@ -262,7 +257,7 @@ const DragHandle = sortableHandle(({className, children}) =>
 );
 
 const StyledWrapper = styled.div`
-  color: #F0F0F0;
+  color: #A0A7B4;
 `
 
 const StyledHex = styled.div`
@@ -271,21 +266,11 @@ const StyledHex = styled.div`
   padding-left: 10px;
 `
 
-const StyledDelete = styled.div`
+const StyledTrash = styled.div`
+  height: 12px;
   margin-left: auto;
   order: 2;
-
-  :hover {
-    cursor: pointer;
-  }
-`
-
-const StyledButton = styled.button`
-  background-color: transparent;
-  border-color: transparent;
-  color: #fff;
-  padding-top: 15px;
-`
+  `
 
 const StyledLine = styled.div`
   width: 220px;
@@ -294,6 +279,7 @@ const StyledLine = styled.div`
   margin-top: 30px;
   margin-left: 12px;
 `
+
 
 const StyledSwatch = styled.div`
   background-color: ${props => props.color};
@@ -310,4 +296,35 @@ const StyledColorRange = styled.div`
     cursor: pointer;
   }
 `
-const Sketcher = onClickOutside(SketchPicker)
+
+const TransparentButton = styled(Button)`
+  background-color: transparent;
+`;
+
+const StyledSketcher = styled(SketchPicker)`
+  background-color: black;
+  fill: black;
+  color: black;
+`;
+
+const StyledCover = styled.div`
+  position: fixed;
+  top: 0px;
+  right: 0px;
+  bottom: 0px;
+  left: 0px;
+`
+
+const StyledButtonContainer = styled.div`
+  margin-top: 11px;
+  display: flex;
+  direction: rtl;
+`
+// const Sketcher = onClickOutside(SketchPicker)
+
+// class MyColorPicker extends React.Component {
+//   render() {
+//     return <div>MyColorPicker</div>;
+//   }
+// }
+// const NewPIcker = listenOnClick(SketchPicker);
