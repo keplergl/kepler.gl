@@ -566,7 +566,7 @@ export function setFeaturesUpdater(state, {features = []}) {
   if (!features.length) {
     return state;
   }
-  const lastFeature = features[0];
+  const lastFeature = features[features.length - 1];
 
   return !lastFeature.properties.isClosed ?
     state : {
@@ -578,11 +578,11 @@ export function setFeaturesUpdater(state, {features = []}) {
     };
 }
 
-export const setSelectedFeatureUpdater = (state, {payload: selectedFeature}) => ({
+export const setSelectedFeatureUpdater = (state, {payload: selectedFeatureId}) => ({
   ...state,
   editor: {
     ...state.editor,
-    selectedFeature
+    selectedFeature: {id: selectedFeatureId}
   }
 });
 

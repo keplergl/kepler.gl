@@ -27,8 +27,8 @@ const StyledDiv = styled.div`
   };
 `;
 
-const ToolbarItem = React.memo(({className, icon, label, onClick}) => (
-  <StyledDiv className="save-export-dropdown__item" onClick={(e) => {
+const ToolbarItem = React.memo(({active, className, icon, label, onClick}) => (
+  <StyledDiv active={active} className="save-export-dropdown__item" onClick={(e) => {
     e.stopPropagation();
     onClick();
   }}>
@@ -36,6 +36,5 @@ const ToolbarItem = React.memo(({className, icon, label, onClick}) => (
     <div className="save-export-dropdown__title">{label}</div>
   </StyledDiv>
 ));
-
 
 export default ToolbarItem;
