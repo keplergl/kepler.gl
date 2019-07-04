@@ -77,7 +77,7 @@ export default class ColorRangeSelect extends Component {
       },
       custom: {
         type: 'switch',
-        value: false,
+        value: true,
         options: [true, false]
       }
     }
@@ -137,7 +137,6 @@ export default class ColorRangeSelect extends Component {
           <CustomPalette
             customPalette={customPalette}
             setCustomPalette={setCustomPalette}
-            onSelect={this.props.onSelectColorRange}
             selected={this.props.selectedColorRange}
             // {{
             //   name: 'Custom Palette',
