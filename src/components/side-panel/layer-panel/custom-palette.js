@@ -263,7 +263,6 @@ class CustomPalette extends React.Component {
           helperClass=""
         >
 
-          {/* working block */}
           {colors.map((color, index) =>
             <SortableItem
               key={index}
@@ -302,8 +301,8 @@ class CustomPalette extends React.Component {
             </SortableItem>
           )
         }
-          {/* working block */}
-
+{/* to-do: fix on drag color change bug */}
+{/* to-do: fix on modal close dropdown bug */}
 
 
 
@@ -400,13 +399,14 @@ const MyPicker = ({color, onChange}) => (
     onChange={onChange}
      passedStyles={{
       picker: {
-        background: "CDCDCD",
-        borderRadius: '4px',
-        boxShadow: '0 0 0 1px rgba(0,0,0,.15), 0 8px 16px rgba(0,0,0,.15)',
+        background: "#CDCDCD",
+        backgroundColor: "#CDCDCD",
       }
     }}
     disableAlpha={true}
     presetColors={[]}
   />
 )
+
+
 
