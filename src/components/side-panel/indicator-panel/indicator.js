@@ -40,7 +40,17 @@ const Label = styled.div`
   font-size: 1.2em;
   flex:80%;
   padding:12px;
-  background-color: #C3C9C5;
+  background-color: ${props => props.theme.labelColor};
+  :before {
+    content: " ";
+    display: inline-block;
+    border-radius: 100%;
+    width: 10px;
+    height: 10px;
+    border: 2px #767b78 solid;
+    margin-right: 10px;
+    background-color: white;
+  }
 `;
 
 const Triangle = styled.div`
@@ -84,7 +94,16 @@ const StyleMessage = styled.span`
 `;
 const StyledIndicator=styled.div`
   .selected {
-    background-color: #1fbad6;
+    :before {
+      content: " ";
+      display: inline-block;
+      border-radius: 100%;
+      width: 10px;
+      height: 10px;
+      margin-right: 5px;
+      border: 2px #767b78 solid;
+      background-color: #1fbad6;
+    }
   }
 `;
 function IndicatorFactory() {
@@ -94,9 +113,9 @@ function IndicatorFactory() {
         onClick={() => onConfigChange(id)}
         data-tip
         data-for={`${label}_indicator`}
-        className={selected ? "selected" : ""}
+        // className={selected ? "selected" : ""}
       >
-        <Label>{label}</Label>
+        <Label className={selected ? "selected" : ""}>{label}</Label>
         <Triangle></Triangle>
         <Score>{score}%</Score>
       </Style>

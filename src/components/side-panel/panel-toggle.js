@@ -47,7 +47,7 @@ const PanelTab = styled.div.attrs({
   // border-bottom-color: ${props =>props.active ? props.theme.subtextColorActive : 'transparent'};
   // color: ${props =>props.active ? props.theme.subtextColorActive : props.theme.subtextColor};
   border-bottom-color: ${props =>props.active ? props.theme.activeColor : 'transparent'};
-  color: ${props => props.theme.labelColor};
+  color: ${props =>props.active ? props.theme.activeColor : props.theme.labelColor};
   display: flex;
   justify-content: center;
   margin-right: 12px;
