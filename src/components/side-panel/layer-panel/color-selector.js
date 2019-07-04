@@ -138,7 +138,10 @@ class ColorSelector extends Component {
           ))}
         </InputBoxContainer>
         {currentEditing ? (
-          <StyledPanelDropdown className="color-selector__dropdown">
+          <StyledPanelDropdown
+            className="color-selector__dropdown"
+            style={{overflow: 'visible'}}
+          >
             {colorSets[editing].isRange ? (
               <ColorRangeSelector
                 selectedColorRange={colorSets[editing].selectedColor}
