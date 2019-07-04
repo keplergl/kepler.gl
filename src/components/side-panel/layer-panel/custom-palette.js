@@ -1,14 +1,145 @@
 import React, {Component}  from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import { SketchPicker, CustomPicker} from 'react-color';
+import { SketchPicker} from 'react-color';
 import { Button, SidePanelDivider} from 'components/common/styled-components';
 import {VertDots, Delete, Trash} from 'components/common/icons';
 import {sortableContainer, sortableElement, sortableHandle} from 'react-sortable-hoc';
 import arrayMove from 'array-move';
 import onClickOutside from 'react-onclickoutside';
 import ColorPalette from './color-palette';
+import SketcherModal from './modal'
+import ModalDialog from 'components/common/modal'
+import Modal from "react-modal";
 
+const StyledSortableItem = styled.div`
+  display: flex;
+  align-items: center;
+  margin-right: 12px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  z-index: 100;
+  :hover {
+    background-color: #3A4552;
+
+    .layer__drag-handle {
+      opacity: 1;
+    }
+  }
+`
+
+const StyledWrapper = styled.div`
+  color: #A0A7B4;
+`
+
+const StyledHex = styled.div`
+  color: #F0F0F0;
+  font-size: 10px;
+  padding-left: 10px;
+`
+
+const StyledTrash = styled.div`
+  height: 12px;
+  margin-left: auto;
+  order: 2;
+  `
+
+const StyledLine = styled.div`
+  width: 220px;
+  height: 1px;
+  background-color: #6A7485;
+  margin-top: 30px;
+  margin-left: 12px;
+`
+
+const StyledSwatch = styled.div`
+  background-color: ${props => props.color};
+  width: 32px;
+  height: 18px;
+  display: inline-block;
+  cursor: pointer;
+`
+
+const StyledColorRange = styled.div`
+  padding: 0 8px;
+  :hover {
+    background-color: ${props => props.theme.panelBackgroundHover};
+    cursor: pointer;
+  }
+`
+
+const TransparentButton = styled(Button)`
+  background-color: transparent;
+`;
+
+const StyledSketcher = styled.div`
+  .div {
+    background-color: black;
+  }
+`;
+
+const StyledCover = styled.div`
+  position: fixed;
+  top: 0px;
+  right: 0px;
+  bottom: 0px;
+  left: 0px;
+`
+
+const StyledButtonContainer = styled.div`
+  margin-top: 11px;
+  display: flex;
+  direction: rtl;
+`
+const StyledDragHandle = styled.div`
+/*   display: flex;
+  align-items: center;
+  opacity: 0;
+  z-index: 1000;
+
+:hover {
+  cursor: move;
+  opacity: 1;
+  color: ${props => props.theme.textColorHl};
+} */
+`;
+
+const customStyles = {
+  content: {
+    top: "50%",
+    left: "40%",
+    right: "auto",
+    bottom: "auto",
+    transform: "translate(-60%, -45%)",
+    padding: "0px 0px 0px 0px",
+    zIndex: 9999
+  }
+};
+
+// const StyledModal = styled.div`
+//     top: "50%",
+//     left: "40%",
+//     right: "auto",
+//     bottom: "auto",
+//     transform: "translate(-60%, -45%)",
+//     padding: "0px 0px 0px 0px"
+// `
+
+const SortableItem = sortableElement(({children}) =>
+<StyledSortableItem>
+  {children}
+</StyledSortableItem>
+);
+
+const SortableContainer = sortableContainer(({ children }) =>
+(<div>{children}</div>)
+);
+
+const DragHandle = sortableHandle(({className, children}) =>
+<StyledDragHandle className={className}>
+{children}
+</StyledDragHandle>
+);
 
 class CustomPalette extends React.Component {
   static propTypes = {
@@ -28,7 +159,7 @@ class CustomPalette extends React.Component {
       showSketcher: false,
       currentSwatchIndex: null,
       showSwatches: true,
-      modalIsOpen: false
+
     }
   }
 
@@ -88,7 +219,7 @@ class CustomPalette extends React.Component {
   };
 
   _onApply = (event) => {
-    const { colors } = this.props.customPalette['colors'];
+    const { colors } = this.props.customPalette;
     const newColors = [...colors];
     event.stopPropagation();
     event.preventDefault();
@@ -124,12 +255,15 @@ class CustomPalette extends React.Component {
           />
         </StyledColorRange>
 
+
         <SortableContainer className="custom-palette-container"
           onSortEnd={this._onSortEnd}
           lockAxis="y"
           useDragHandle={true}
           helperClass=""
-          >
+        >
+
+          {/* working block */}
           {colors.map((color, index) =>
             <SortableItem
               key={index}
@@ -138,6 +272,50 @@ class CustomPalette extends React.Component {
               <DragHandle className="layer__drag-handle">
                 <VertDots height="20px" />
               </DragHandle>
+              <StyledSwatch
+                color={color}
+                onClick={() => this._onSwatchClick(index)} >
+              </StyledSwatch>
+
+              {this.state.showSketcher && this.state.currentSwatchIndex === index ?
+                <div>
+                  <Modal
+                    isOpen={this.state.showSketcher}
+                    style={customStyles}
+                    ariaHideApp={false}
+                  >
+                    <MyPicker
+                      color={color}
+                      onChange={this._onColorUpdate} />
+                  </Modal>
+                </div>
+                : null}
+
+              <StyledHex>
+                {color.toUpperCase()}
+              </StyledHex>
+
+              <StyledTrash onClick={() => this._onColorDelete(index)}>
+                <Trash/>
+              </StyledTrash>
+
+            </SortableItem>
+          )
+        }
+          {/* working block */}
+
+
+
+
+{/*           {colors.map((color, index) =>
+            <SortableItem
+              key={index}
+              index={index}>
+
+              <DragHandle className="layer__drag-handle">
+                <VertDots height="20px" />
+              </DragHandle>
+
 
               <StyledSwatch
                 color ={color}
@@ -146,25 +324,22 @@ class CustomPalette extends React.Component {
 
               {this.state.showSketcher && this.state.currentSwatchIndex === index ?
               (
-                  <div style={{
-                    position: "relative",
-                    overflow: "visible",
-                    zIndex: "1000"
-                  }}>
-                    <StyledCover onClick={this._onSwatchClose}/>
-                    <div
-                      style={{
-                        float: "left",
-                        position: "absolute",
-                        top: "10px",
-                        left: "2px"
-                      }}
-                    >
-                    <SketchPicker
-                      color={this.props.customPalette['colors'][this.state.currentSwatchIndex]}
-                      presetColors={[]}
-                      onChangeComplete={this._onColorUpdate}
-                      />
+                  <div >
+
+                    <StyledCover onClick={this._onSwatchClose} />
+                      <div
+                        style={{
+                          float: "left",
+                          position: "absolute",
+                          top: "10px",
+                          left: "2px"
+                        }}
+                      >
+                        <MyPicker
+                          color={this.props.customPalette['colors'][this.state.currentSwatchIndex]}
+                          presetColors={[]}
+                          onChangeComplete={this._onColorUpdate}
+                          />
                       </div>
                   </div>
                 ) : null
@@ -180,7 +355,8 @@ class CustomPalette extends React.Component {
 
             </SortableItem>
             )
-          }
+          } */}
+
         </SortableContainer>
 
         <Button
@@ -211,120 +387,26 @@ class CustomPalette extends React.Component {
 
 export default CustomPalette;
 
-const StyledSortableItem = styled.div`
-  display: flex;
-  align-items: center;
-  margin-right: 12px;
-  padding-top: 6px;
-  padding-bottom: 6px;
-  z-index: 100;
-  :hover {
-    background-color: #3A4552;
-
-    .layer__drag-handle {
-      opacity: 1;
-    }
-  }
-`
-
- const SortableItem = sortableElement(({children}) =>
-    <StyledSortableItem>
-      {children}
-    </StyledSortableItem>
-);
-
-const SortableContainer = sortableContainer(({ children }) =>
-  (<div>{children}</div>)
-);
-
-const StyledDragHandle = styled.div`
-  display: flex;
-  align-items: center;
-  opacity: 0;
-  z-index: 1000;
-
-  :hover {
-    cursor: move;
-    opacity: 1;
-    color: ${props => props.theme.textColorHl};
-  }
-`;
-
-const DragHandle = sortableHandle(({className, children}) =>
-  <StyledDragHandle className={className}>
-    {children}
-  </StyledDragHandle>
-);
-
-const StyledWrapper = styled.div`
-  color: #A0A7B4;
-`
-
-const StyledHex = styled.div`
-  color: #F0F0F0;
-  font-size: 10px;
-  padding-left: 10px;
-`
-
-const StyledTrash = styled.div`
-  height: 12px;
-  margin-left: auto;
-  order: 2;
-  `
-
-const StyledLine = styled.div`
-  width: 220px;
-  height: 1px;
-  background-color: #6A7485;
-  margin-top: 30px;
-  margin-left: 12px;
-`
 
 
-const StyledSwatch = styled.div`
-  background-color: ${props => props.color};
-  width: 32px;
-  height: 18px;
-  display: inline-block;
-  cursor: pointer;
-`
 
-const StyledColorRange = styled.div`
-  padding: 0 8px;
-  :hover {
-    background-color: ${props => props.theme.panelBackgroundHover};
-    cursor: pointer;
-  }
-`
 
-const TransparentButton = styled(Button)`
-  background-color: transparent;
-`;
 
-const StyledSketcher = styled(SketchPicker)`
-  background-color: black;
-  fill: black;
-  color: black;
-`;
 
-const StyledCover = styled.div`
-  position: fixed;
-  top: 0px;
-  right: 0px;
-  bottom: 0px;
-  left: 0px;
-`
+const MyPicker = ({color, onChange}) => (
 
-const StyledButtonContainer = styled.div`
-  margin-top: 11px;
-  display: flex;
-  direction: rtl;
-`
-// const Sketcher = onClickOutside(SketchPicker)
+  <SketchPicker
+    color={color}
+    onChange={onChange}
+     passedStyles={{
+      picker: {
+        background: "CDCDCD",
+        borderRadius: '4px',
+        boxShadow: '0 0 0 1px rgba(0,0,0,.15), 0 8px 16px rgba(0,0,0,.15)',
+      }
+    }}
+    disableAlpha={true}
+    presetColors={[]}
+  />
+)
 
-// class MyColorPicker extends React.Component {
-//   render() {
-//     return <div>MyColorPicker</div>;
-//   }
-// }
-// const NewPIcker = listenOnClick(SketchPicker);

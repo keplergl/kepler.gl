@@ -77,7 +77,7 @@ export default class ColorRangeSelect extends Component {
       },
       custom: {
         type: 'switch',
-        value: false,
+        value: true,
         options: [true, false]
       }
     }
