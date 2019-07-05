@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import test from 'tape';
 import cloneDeep from 'lodash.clonedeep';
 import {cmpFilters, cmpSavedLayers} from 'test/helpers/comparison-utils';
 import SchemaManager from 'schemas';
@@ -32,15 +31,13 @@ import {StateWFilesFiltersLayerColor,
   expectedLoadedLayer2
 } from 'test/helpers/mock-state';
 
-test('#visStateSchema -> v1 -> save layers', t => {
+it('#visStateSchema -> v1 -> save layers', () => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
 
   // save state
   const vsToSave = SchemaManager.getConfigToSave(initialState).config.visState;
 
-  t.deepEqual(Object.keys(vsToSave),
-    ['filters', 'layers', 'interactionConfig', 'layerBlending', 'splitMaps'],
-    'visState should have all 5 entries');
+  expect(Object.keys(vsToSave)).toEqual(['filters', 'layers', 'interactionConfig', 'layerBlending', 'splitMaps']);
 
   const exptectedSavedLayers = [
     expectedSavedLayer0,
@@ -50,20 +47,17 @@ test('#visStateSchema -> v1 -> save layers', t => {
 
   const layersToSave = vsToSave.layers;
 
-  cmpSavedLayers(t, exptectedSavedLayers, layersToSave);
-  t.end();
+  cmpSavedLayers(exptectedSavedLayers, layersToSave);
 });
 
-test('#visStateSchema -> v1 -> load layers', t => {
+it('#visStateSchema -> v1 -> load layers', () => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
 
   // save state
   const savedState = SchemaManager.getConfigToSave(initialState);
   const vsLoaded = SchemaManager.parseSavedConfig(savedState).visState;
 
-  t.deepEqual(Object.keys(vsLoaded),
-    ['filters', 'layers', 'interactionConfig', 'layerBlending', 'splitMaps'],
-    'visState should have all 5 entries');
+  expect(Object.keys(vsLoaded)).toEqual(['filters', 'layers', 'interactionConfig', 'layerBlending', 'splitMaps']);
 
   const loadedLayers = vsLoaded.layers;
 
@@ -73,11 +67,11 @@ test('#visStateSchema -> v1 -> load layers', t => {
     expectedLoadedLayer2
   ];
 
-  cmpSavedLayers(t, expectedLoadedLayers, loadedLayers, {id: true});
-  t.end();
+  cmpSavedLayers(expectedLoadedLayers, loadedLayers, {id: true});
+
 });
 
-test('#visStateSchema -> v1 -> save load filters', t => {
+it('#visStateSchema -> v1 -> save load filters', () => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
   const savedState = SchemaManager.getConfigToSave(initialState);
 
@@ -109,13 +103,11 @@ test('#visStateSchema -> v1 -> save load filters', t => {
     yAxis: null
   }];
 
-  cmpFilters(t, expectedSavedFilters, filtersToSave);
-  cmpFilters(t, expectedSavedFilters, loadedFilters);
-
-  t.end();
+  cmpFilters(expectedSavedFilters, filtersToSave);
+  cmpFilters(expectedSavedFilters, loadedFilters);
 });
 
-test('#visStateSchema -> v1 -> save load interaction', t => {
+it('#visStateSchema -> v1 -> save load interaction', () => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
   const savedState = SchemaManager.getConfigToSave(initialState);
 
@@ -143,13 +135,11 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
     }
   };
 
-  t.deepEqual(interactionToSave, expectedSaved);
-  t.deepEqual(interactionLoaded, expectedSaved);
-
-  t.end();
+  expect(interactionToSave).toEqual(expectedSaved);
+  expect(interactionLoaded).toEqual(expectedSaved);
 });
 
-test('#visStateSchema -> v1 -> save load layerBlending', t => {
+it('#visStateSchema -> v1 -> save load layerBlending', () => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
   const savedState = SchemaManager.getConfigToSave(initialState);
 
@@ -159,8 +149,6 @@ test('#visStateSchema -> v1 -> save load layerBlending', t => {
 
   const expectedSaved = 'normal';
 
-  t.deepEqual(layerBlendingToSave, expectedSaved);
-  t.deepEqual(layerBlendingLoaded, expectedSaved);
-
-  t.end();
+  expect(layerBlendingToSave).toEqual(expectedSaved);
+  expect(layerBlendingLoaded).toEqual(expectedSaved);
 });

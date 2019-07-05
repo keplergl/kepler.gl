@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import test from 'tape';
-
 import SchemaManager from 'schemas';
 import {cmpParsedAppConfigs} from 'test/helpers/comparison-utils';
 import {console as Console} from 'global/window';
@@ -71,7 +69,7 @@ const TEST_CASES = [
   }
 ];
 
-test('#appSchema -> Convert Saved Configs', t => {
+it('#appSchema -> Convert Saved Configs', () => {
   TEST_CASES.forEach(({name, cases}) => {
     Console.log(`---> test: ${name}`);
 
@@ -79,9 +77,7 @@ test('#appSchema -> Convert Saved Configs', t => {
       Console.log(`------> test: ${cs.name}`);
 
       const parsed = SchemaManager.parseSavedConfig(cs.saved);
-      cmpParsedAppConfigs(t, cs.parsed, parsed, {name: cs.name});
+      cmpParsedAppConfigs(cs.parsed, parsed, {name: cs.name});
     });
   });
-
-  t.end();
 });

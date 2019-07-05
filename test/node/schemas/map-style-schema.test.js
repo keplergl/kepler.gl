@@ -18,22 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import test from 'tape';
 import cloneDeep from 'lodash.clonedeep';
 import SchemaManager from 'schemas';
 import {InitialState, StateWCustomMapStyle} from 'test/helpers/mock-state';
 
-test('#mapStyleSchema -> v1 -> save load mapStyle', t => {
+it('#mapStyleSchema -> v1 -> save load mapStyle', () => {
   const initialState = cloneDeep(InitialState);
   const savedState = SchemaManager.getConfigToSave(initialState);
 
   // save state
   const msToSave = savedState.config.mapStyle;
   const msLoaded = SchemaManager.parseSavedConfig(savedState).mapStyle;
+  
+  expect(Object.keys(msToSave))
+    .toEqual(
+      ['styleType', 'topLayerGroups', 'visibleLayerGroups', 'threeDBuildingColor', 'mapStyles']
+    );
 
-  t.deepEqual(Object.keys(msToSave),
-    ['styleType', 'topLayerGroups', 'visibleLayerGroups', 'threeDBuildingColor', 'mapStyles'],
-    'mapStyle should have all 4 entries');
 
   const expectedSaved = {
     styleType: 'dark',
@@ -50,12 +51,11 @@ test('#mapStyleSchema -> v1 -> save load mapStyle', t => {
     threeDBuildingColor: [209, 206, 199]
   };
 
-  t.deepEqual(msToSave, expectedSaved, 'saved mapStyle should be current');
-  t.deepEqual(msLoaded, expectedLoaded, 'loaded mapStyle should be current');
-  t.end();
+  expect(msToSave).toEqual(expectedSaved);
+  expect(msLoaded).toEqual(expectedLoaded);
 });
 
-test('#mapStyleSchema -> v1 -> save load mapStyle with custom style', t => {
+it('#mapStyleSchema -> v1 -> save load mapStyle with custom style', () => {
   const initialState = cloneDeep(StateWCustomMapStyle);
   const savedState = SchemaManager.getConfigToSave(initialState);
 
@@ -83,7 +83,7 @@ test('#mapStyleSchema -> v1 -> save load mapStyle with custom style', t => {
     }
   };
 
-  t.deepEqual(msToSave, expectedSaved, 'saved mapStyle should be current');
-  t.deepEqual(msLoaded, expectedSaved, 'loaded mapStyle should be current');
-  t.end();
+  expect(msToSave).toEqual(expectedSaved);
+  expect(msLoaded).toEqual(expectedSaved);
+
 });

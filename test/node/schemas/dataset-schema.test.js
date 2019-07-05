@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import test from 'tape';
 import cloneDeep from 'lodash.clonedeep';
 import SchemaManager from 'schemas';
 
@@ -43,7 +42,7 @@ import {
 } from "test/fixtures/state-saved-v1-2";
 
 /* eslint-disable max-statements */
-test('#DatasetSchema -> SchemaManager.parseSavedData', t => {
+it('#DatasetSchema -> SchemaManager.parseSavedData', () => {
   const dataSaved = cloneDeep(savedStateV0).datasets;
   const parsedValid = SchemaManager.parseSavedData(dataSaved);
 
@@ -67,54 +66,19 @@ test('#DatasetSchema -> SchemaManager.parseSavedData', t => {
     }
   };
 
-  t.equal(parsedValid.length, 2, 'should have 2 datasets');
-  t.deepEqual(
-    parsedValid[0],
-    expectedDataset0,
-    'should parse dataset correctly'
-  );
-  t.deepEqual(
-    parsedValid[0].info,
-    expectedInfo0,
-    'should parse info correctly'
-  );
-  t.deepEqual(
-    parsedValid[0].data.fields,
-    expectedFields0,
-    'should parse fields correctly'
-  );
-  t.deepEqual(
-    parsedValid[0].data.rows,
-    expectedRows0,
-    'should parse fields correctly'
-  );
-
-  t.deepEqual(
-    parsedValid[1],
-    expectedDataset1,
-    'should parse dataset correctly'
-  );
-  t.deepEqual(
-    parsedValid[1].info,
-    expectedInfo1,
-    'should parse info correctly'
-  );
-  t.deepEqual(
-    parsedValid[1].data.fields,
-    expectedFields1,
-    'should parse fields correctly'
-  );
-  t.deepEqual(
-    parsedValid[1].data.rows,
-    expectedRows1,
-    'should parse fields correctly'
-  );
-
-  t.end();
+  expect(parsedValid.length).toEqual(2);
+  expect(parsedValid[0]).toEqual(expectedDataset0);  
+  expect(parsedValid[0].info).toEqual(expectedInfo0);
+  expect(parsedValid[0].data.fields).toEqual(expectedFields0);
+  expect(parsedValid[0].data.rows).toEqual(expectedRows0);
+  expect(parsedValid[1]).toEqual(expectedDataset1);
+  expect(parsedValid[1].info).toEqual(expectedInfo1);
+  expect(parsedValid[1].data.fields).toEqual(expectedFields1);
+  expect(parsedValid[1].data.rows).toEqual(expectedRows1);
 });
 /* eslint-enable max-statements */
 
-test('#DatasetSchema -> SchemaManager.parseSavedData.v1', t => {
+it('#DatasetSchema -> SchemaManager.parseSavedData.v1', () => {
   const dataSaved = cloneDeep(savedStateV1).datasets;
   const parsedValid = SchemaManager.parseSavedData(dataSaved);
 
@@ -128,29 +92,14 @@ test('#DatasetSchema -> SchemaManager.parseSavedData.v1', t => {
     }
   };
 
-  t.equal(parsedValid.length, 1, 'should have 1 dataset');
-
-  t.deepEqual(
-    parsedValid[0],
-    expectedDataset,
-    'should parse dataset correctly'
-  );
-  t.deepEqual(parsedValid[0].info, v0ExpectedInfo, 'should parse info correctly');
-  t.deepEqual(
-    parsedValid[0].data.fields,
-    v0ExpectedFields,
-    'should parse fields correctly'
-  );
-  t.deepEqual(
-    parsedValid[0].data.rows,
-    expectedRows,
-    'should parse fields correctly'
-  );
-
-  t.end();
+  expect(parsedValid.length).toEqual(1);
+  expect(parsedValid[0]).toEqual(expectedDataset);
+  expect(parsedValid[0].info).toEqual(v0ExpectedInfo);
+  expect(parsedValid[0].data.fields).toEqual(v0ExpectedFields);
+  expect(parsedValid[0].data.rows).toEqual(expectedRows);
 });
 
-test('#DatasetSchema -> SchemaManager.parseSavedData.v1 with ts', t => {
+it('#DatasetSchema -> SchemaManager.parseSavedData.v1 with ts', () => {
   const dataSaved = cloneDeep(stateSavedV1_2).datasets;
   const parsedValid = SchemaManager.parseSavedData(dataSaved);
 
@@ -163,24 +112,11 @@ test('#DatasetSchema -> SchemaManager.parseSavedData.v1 with ts', t => {
     }
   };
 
-  t.equal(parsedValid.length, 1, 'should have 1 dataset');
+  expect(parsedValid.length).toEqual(1);
 
-  t.deepEqual(
-    parsedValid[0],
-    expectedDataset,
-    'should parse dataset correctly'
-  );
-  t.deepEqual(parsedValid[0].info, v1expectedInfo_2, 'should parse info correctly');
-  t.deepEqual(
-    parsedValid[0].data.fields,
-    v1expectedFields_2,
-    'should parse fields correctly'
-  );
-  t.deepEqual(
-    parsedValid[0].data.rows,
-    expectedRows,
-    'should parse fields correctly'
-  );
-
-  t.end();
+  expect(parsedValid[0]).toEqual(expectedDataset);
+    
+  expect(parsedValid[0].info).toEqual(v1expectedInfo_2);
+  expect(parsedValid[0].data.fields).toEqual(v1expectedFields_2);
+  expect(parsedValid[0].data.rows).toEqual(expectedRows);
 });

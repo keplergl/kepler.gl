@@ -20,46 +20,30 @@
 
 import {FILTER_TYPES} from 'utils/filter-utils';
 export function cmpFilters(
-  t,
   expectedFilter,
   actualFilter,
   opt = {},
   idx = ''
 ) {
-  t.equal(
-    typeof actualFilter,
-    typeof expectedFilter,
-    'filters should be same type'
-  );
+  expect(typeof actualFilter).toEqual(typeof expectedFilter);
 
   if (Array.isArray(expectedFilter) && Array.isArray(actualFilter)) {
-    t.equal(
-      actualFilter.length,
-      expectedFilter.length,
-      'should have same number of filters'
-    );
+    expect(actualFilter.length).toEqual(expectedFilter.length);
+
     expectedFilter.forEach((f, i) => {
-      cmpFilters(t, expectedFilter[i], actualFilter[i], opt, i);
+      cmpFilters(expectedFilter[i], actualFilter[i], opt, i);
     });
   } else {
-    t.deepEqual(
-      Object.keys(actualFilter).sort(),
-      Object.keys(expectedFilter).sort(),
-      `idx:${idx} | ${actualFilter.type} filter should have same keys`
-    );
+    expect(Object.keys(actualFilter).sort()).toEqual(Object.keys(expectedFilter).sort());
 
     Object.keys(actualFilter).forEach(key => {
       if (key === 'histogram' || key === 'enlargedHistogram') {
         if (actualFilter.type === FILTER_TYPES.range || FILTER_TYPES.timeRange) {
-          t.ok(actualFilter[key].length, `filter.${key} should not be empty`);
+          expect(actualFilter[key].length).not.toBe(0);
         }
       } else if (key !== 'id' || opt.id) {
         // test everything except id, which is auto generated
-        t.deepEqual(
-          actualFilter[key],
-          expectedFilter[key],
-          `idx:${idx} |  ${actualFilter.type} filter.${key} should be correct`
-        );
+        expect(actualFilter[key]).toEqual(expectedFilter[key]);
       }
     });
   }
@@ -67,7 +51,7 @@ export function cmpFilters(
 
 export function cmpLayers(expectedLayer, actualLayer, opt = {}) {
   expect(actualLayer.constructor).toEqual(expectedLayer.constructor);
-  
+
   // if is array of layers
   if (Array.isArray(expectedLayer) && Array.isArray(actualLayer)) {
     expect(actualLayer.length).toEqual(expectedLayer.length);
@@ -94,7 +78,6 @@ export function cmpLayers(expectedLayer, actualLayer, opt = {}) {
 }
 
 export function cmpSavedLayers(
-  t,
   expectedLayer,
   actualLayer,
   opt = {},
@@ -102,49 +85,24 @@ export function cmpSavedLayers(
 ) {
   // if is array of layers
   if (Array.isArray(expectedLayer) && Array.isArray(actualLayer)) {
-    t.equal(
-      actualLayer.length,
-      expectedLayer.length,
-      'should have same number of layers'
-    );
+    expect(actualLayer.length).toEqual(expectedLayer.length);
+
     expectedLayer.forEach((_, i) => {
-      cmpSavedLayers(t, expectedLayer[i], actualLayer[i], opt, i);
+      cmpSavedLayers(expectedLayer[i], actualLayer[i], opt, i);
     });
   } else {
-    t.deepEqual(
-      Object.keys(actualLayer).sort(),
-      Object.keys(expectedLayer).sort(),
-      `idx:${idx} | layer.${actualLayer.type} should have same keys`
-    );
+    expect(Object.keys(actualLayer).sort()).toEqual(Object.keys(expectedLayer).sort());
 
-    t.deepEqual(
-      actualLayer,
-      expectedLayer,
-      `idx:${idx} | layer.${actualLayer.type} should be saved correctly`
-    );
+    expect(actualLayer).toEqual(expectedLayer);
 
     Object.keys(expectedLayer).forEach(key => {
-      t.deepEqual(
-        actualLayer[key],
-        expectedLayer[key],
-        `idx:${idx} | ${actualLayer.type} layer ${key} should be correct`
-      );
+      expect(actualLayer[key]).toEqual(expectedLayer[key]);
 
       if (key === 'config') {
-        t.deepEqual(
-          Object.keys(actualLayer.config).sort(),
-          Object.keys(expectedLayer.config).sort(),
-          `idx:${idx} | layer.${actualLayer.type} config should have same keys`
-        );
+        expect(Object.keys(actualLayer.config).sort()).toEqual(Object.keys(expectedLayer.config).sort());
 
         Object.keys(actualLayer.config).forEach(ck => {
-          t.deepEqual(
-            actualLayer.config[ck],
-            expectedLayer.config[ck],
-            `idx:${idx} | ${
-              actualLayer.type
-            } layer.config ${ck} should be correct`
-          );
+          expect(actualLayer.config[ck]).toEqual(expectedLayer.config[ck]);
         });
       }
     });
@@ -152,11 +110,8 @@ export function cmpSavedLayers(
 }
 
 export function cmpDatasets(t, expectedDatasets, actualDatasets) {
-  t.deepEqual(
-    Object.keys(actualDatasets).sort(),
-    Object.keys(expectedDatasets).sort(),
-    'datasets should have same keys'
-  );
+  expect(Object.keys(actualDatasets).sort())
+    .toEqual(Object.keys(expectedDatasets).sort());
 
   Object.keys(actualDatasets).forEach(dataId => {
     cmpDataset(t, expectedDatasets[dataId], actualDatasets[dataId]);
@@ -164,96 +119,63 @@ export function cmpDatasets(t, expectedDatasets, actualDatasets) {
 }
 
 export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {
-  t.deepEqual(
-    Object.keys(actualDataset).sort(),
-    Object.keys(expectedDataset).sort(),
-    'dataset should have same keys'
-  );
+  expect(Object.keys(actualDataset).sort())
+    .toEqual(Object.keys(expectedDataset).sort());
 
   // test everything except color, which is auto generated
   Object.keys(actualDataset).forEach(key => {
     if (key === 'fields') {
-      t.equal(
-        actualDataset.fields.length,
-        expectedDataset.fields.length,
-        `dataset.${key} should have same number of fields`
-      );
+      expect(actualDataset.fields.length)
+        .toEqual(expectedDataset.fields.length);
+
       actualDataset.fields.forEach((actualField, i) => {
-        t.deepEqual(
-          actualField,
-          expectedDataset.fields[i],
-          `dataset.${key} fields ${actualField.name} should be the same`
-        );
+        expect(actualField).toEqual(expectedDataset.fields[i]);
       });
     } else if (key !== 'color' || opt.color) {
-      t.deepEqual(
-        actualDataset[key],
-        expectedDataset[key],
-        `dataset.${key} should be correct`
-      );
+      expect(actualDataset[key]).toEqual(expectedDataset[key]);
     }
   });
 }
 
 export function cmpInteraction(t, expectedInt, actualInt) {
-  t.ok(typeof expectedInt === 'object', 'expected interaction should be an object');
-  t.ok(typeof actualInt === 'object', 'actual interaction should be an object');
+  expect(typeof expectedInt).toBe('object');
+  expect(typeof actualInt).toBe('object');
 
-  t.deepEqual(
-    Object.keys(actualInt).sort(),
-    Object.keys(expectedInt).sort(),
-    'interaction should have same keys'
-  );
+  expect(Object.keys(actualInt).sort())
+    .toEqual(Object.keys(expectedInt).sort());
 
   Object.keys(actualInt).forEach(key => {
-    t.equal(
-      typeof actualInt[key],
-      typeof expectedInt[key],
-      `interaction.${key} should be same type`
-    );
+    expect(typeof actualInt[key]).toEqual(typeof expectedInt[key]);
 
     if (typeof actualInt[key] === 'object' && actualInt[key] !== null && !Array.isArray(actualInt[key])) {
-      cmpInteraction(t, expectedInt[key], actualInt[key]);
+      cmpInteraction(expectedInt[key], actualInt[key]);
     } else {
-      t.deepEqual(
-        actualInt[key],
-        expectedInt[key],
-        `interaction.${key} should be correct`
-      );
+      expect(actualInt[key]).toEqual(expectedInt[key]);
     }
   });
 }
 
 export function cmpParsedAppConfigs(
-  t,
   expectedConfig,
   actualConfig,
   {name} = {}
 ) {
-  t.deepEqual(actualConfig, expectedConfig, `${name} should be expected`);
+  expect(actualConfig).toEqual(expectedConfig);
 
   Object.keys(actualConfig).forEach(key => {
     if (key === 'visState') {
-      t.deepEqual(
-        Object.keys(actualConfig[key]).sort(),
-        Object.keys(expectedConfig[key]).sort(),
-        'visState should have same keys'
-      );
+      expect(Object.keys(actualConfig[key]).sort()).toEqual(Object.keys(expectedConfig[key]).sort());
       // for visConfig go through each entry
-      cmpParsedAppConfigs(t, expectedConfig[key], actualConfig[key], {
+      cmpParsedAppConfigs(expectedConfig[key], actualConfig[key], {
         name: key
       });
     } else if (key === 'layers') {
-      cmpSavedLayers(t, expectedConfig[key], actualConfig[key], {id: true});
+      cmpSavedLayers(expectedConfig[key], actualConfig[key], {id: true});
     } else if (key === 'filters') {
-      cmpFilters(t, expectedConfig[key], actualConfig[key], {id: true});
+      cmpFilters(expectedConfig[key], actualConfig[key], {id: true});
     } else {
       // for each reducer entry
-      t.deepEqual(
-        actualConfig[key],
-        expectedConfig[key],
-        `${key} should be correct`
-      );
+      expect(actualConfig[key]).toEqual(expectedConfig[key]);
     }
   });
 }

@@ -1000,10 +1000,10 @@
   dependencies:
     prop-types "^15.6.0"
 
-"@deck.gl/test-utils@^7.1.5":
-  version "7.1.5"
-  resolved "https://registry.yarnpkg.com/@deck.gl/test-utils/-/test-utils-7.1.5.tgz#52a6ec18d2e80e0c5192d6c1e5256e6c8efbe098"
-  integrity sha512-Bm8cnR69J3lbNq55zt+CcMHsVavh1JbBGV79ZM0IhldEoHk0Y9NvruUhtViC7wu/T1EQWP7dVdxPgdxelIVV9g==
+"@deck.gl/test-utils@^7.1.7":
+  version "7.1.7"
+  resolved "https://registry.yarnpkg.com/@deck.gl/test-utils/-/test-utils-7.1.7.tgz#86cb814a9ea9717cb512d3582ee200056e18eeb5"
+  integrity sha512-Zyks3mPPQqOkEh5OtfF7Gg1fdLj+uDl2S1Wuq4I1F5JWEgIUlx+3P3QH4UW7mkz8v5WSvdOW6YZ4lYAIBJvlHg==
 
 "@emotion/is-prop-valid@^0.7.3":
   version "0.7.3"

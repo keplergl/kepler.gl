@@ -18,9 +18,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// test schemas
-import './vis-state-schema-test';
-import './map-state-schema-test';
-import './map-style-schema-test';
-import './dataset-schema-test';
-import './schema-conversion-test';
+import cloneDeep from 'lodash.clonedeep';
+import SchemaManager from 'schemas';
+import {InitialState} from 'test/helpers/mock-state';
+import { italic } from 'ansi-colors';
+
+it('#mapStateSchema -> v1 -> save load mapState', () => {
+  const initialState = cloneDeep(InitialState);
+  const savedState = SchemaManager.getConfigToSave(initialState);
+
+  // save state
+  const msToSave = savedState.config.mapState;
+  const msLoaded = SchemaManager.parseSavedConfig(savedState).mapState;
+
+  expect(Object.keys(msToSave)).toEqual(['bearing', 'dragRotate', 'latitude', 'longitude', 'pitch', 'zoom', 'isSplit']);
+
+  const expected = {
+    pitch: 0,
+    bearing: 0,
+    latitude: 37.75043,
+    longitude: -122.34679,
+    zoom: 9,
+    dragRotate: false,
+    isSplit: false
+  };
+
+  expect(msToSave).toEqual(expected);
+  expect(msLoaded).toEqual(expected);
+});

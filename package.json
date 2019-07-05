@@ -152,7 +152,7 @@
     "@babel/register": "^7.0.0",
     "@babel/runtime": "^7.0.0",
     "@babel/traverse": "^7.2.3",
-    "@deck.gl/test-utils": "^7.1.5",
+    "@deck.gl/test-utils": "^7.1.7",
     "@probe.gl/test-utils": "^3.0.1",
     "babel-eslint": "^9.0.0",
     "babel-loader": "^8.0.0",
