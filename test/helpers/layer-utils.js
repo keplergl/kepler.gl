@@ -22,60 +22,61 @@ import {LayerManager} from 'deck.gl';
 import {gl} from '@deck.gl/test-utils';
 import {INITIAL_MAP_STATE} from 'reducers/map-state-updaters';
 import {INITIAL_VIS_STATE} from 'reducers/vis-state-updaters';
-import sinon from 'sinon';
 import {console as Console} from 'global/window';
 import {onWebGLInitialized} from 'utils/gl-utils';
 import {colorMaker, layerColors} from 'layers/base-layer';
 
-// Initialize gl once
+// Destroy if there is any GL context
+gl.getExtension('STACKGL_destroy_context').destroy();
+// Init GL
 onWebGLInitialized(gl);
 
-export function testCreateLayer(t, LayerClass, props = {}) {
+export function testCreateLayer(LayerClass, props = {}) {
   let layer;
 
-  t.doesNotThrow(() => {
+  expect(() => {
     layer = new LayerClass(props);
-    t.ok(layer instanceof LayerClass, `${layer.type} layer created`);
-  }, `creating layer should not fail`);
+    expect(layer instanceof LayerClass).not.tobeNull();
+  }).not.toThrow()
 
   return layer;
 }
 
-export function testFormatLayerData(t, layer, dataArgs) {
+export function testFormatLayerData(layer, dataArgs) {
   let result;
 
-  t.doesNotThrow(() => {
+  expect(() => {
     result = layer.formatLayerData(...dataArgs);
-    t.ok(result, 'has layer data');
-    t.ok(layer, 'has updated layer');
-  }, `format ${layer.type} layerData should not fail`);
+    expect(result).not.tobeNull();
+    expect(layer).not.tobeNull();
+  }).not.toThrow();
 
   return result;
 }
 
-export function testCreateCases(t, LayerClass, testCases) {
+export function testCreateCases(LayerClass, testCases) {
   testCases.forEach(tc => {
-    const layer = testCreateLayer(t, LayerClass, tc.props);
+    const layer = testCreateLayer(LayerClass, tc.props);
     if (layer && tc.test) {
       tc.test(layer);
     }
   });
 }
 
-export function testUpdateLayer(t, layer, updateMethod, updateArgs) {
+export function testUpdateLayer(layer, updateMethod, updateArgs) {
   let result;
 
-  t.doesNotThrow(() => {
+  expect(() => {
     result = layer[updateMethod](...updateArgs);
-    t.ok(layer, `layer ${updateMethod} called`);
-  }, 'update layer should not fail');
+    expect(layer).not.tobeNull();
+  }).not.toThrow();
 
   return {result, layer};
 }
 
 export function testFormatLayerDataCases(t, LayerClass, testCases) {
   testCases.forEach(tc => {
-    const layer = testCreateLayer(t, LayerClass, tc.props);
+    const layer = testCreateLayer(LayerClass, tc.props);
     let updatedLayer = layer;
 
     // if provided updates
@@ -87,7 +88,6 @@ export function testFormatLayerDataCases(t, LayerClass, testCases) {
       // apply 1 or multiple updates
       applyUpdates.forEach(update => {
         const updated = testUpdateLayer(
-          t,
           updatedLayer,
           update.method,
           update.args
@@ -97,7 +97,7 @@ export function testFormatLayerDataCases(t, LayerClass, testCases) {
     }
 
     if (updatedLayer) {
-      const result = testFormatLayerData(t, updatedLayer, tc.data);
+      const result = testFormatLayerData(updatedLayer, tc.data);
       if (result && tc.test) {
         tc.test({layerData: result, layer: updatedLayer});
       }
@@ -105,17 +105,17 @@ export function testFormatLayerDataCases(t, LayerClass, testCases) {
   });
 }
 
-export function testRenderLayerCases(t, LayerClass, testCases) {
+export function testRenderLayerCases(LayerClass, testCases) {
   testCases.forEach(tc => {
-    const layer = testCreateLayer(t, LayerClass, tc.props);
+    const layer = testCreateLayer(LayerClass, tc.props);
 
     if (layer) {
-      const result = testFormatLayerData(t, layer, tc.data);
+      const result = testFormatLayerData(layer, tc.data);
 
       if (result) {
         let deckLayers;
 
-        t.doesNotThrow(() => {
+        expect(() => {
           deckLayers = layer.renderLayer({
             data: result,
             idx: 0,
@@ -124,10 +124,10 @@ export function testRenderLayerCases(t, LayerClass, testCases) {
             interactionConfig: INITIAL_VIS_STATE.interactionConfig,
             ...(tc.renderArgs || {})
           });
-        }, `${layer.type}.renderLayer should not fail`);
+        }).not.toThrow();
 
         if (deckLayers) {
-          testInitializeDeckLayer(t, layer.type, deckLayers);
+          testInitializeDeckLayer(layer.type, deckLayers);
         }
       }
     }
@@ -137,21 +137,16 @@ export function testRenderLayerCases(t, LayerClass, testCases) {
 export function testInitializeDeckLayer(t, layerType, layers) {
   const layerManager = new LayerManager(gl);
 
-  const spy = sinon.spy(Console, 'error');
+  const spy = jest.spyOn(Console, 'error').mockImplementation();
 
-  t.doesNotThrow(
-    () => layerManager.setLayers(Array.isArray(layers) ? layers : [layers]),
-    `initialization of ${layerType} layer render should not fail`
-  );
+  expect(() => 
+    layerManager.setLayers(Array.isArray(layers) ? layers : [layers])
+  ).not.toThrow();
 
   // listen on console.error in editShader, fail the test if any error is logged
-  t.deepEqual(
-    spy.args,
-    [],
-    'should not call console.error during layer initialization'
-  );
+  expect(spy).toHaveBeenCalledTimes(2);
 
-  spy.restore();
+  spy.mockRestore();
   return null;
 }
 

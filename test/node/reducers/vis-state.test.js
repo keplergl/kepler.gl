@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import test from 'tape-catch';
 import CloneDeep from 'lodash.clonedeep';
 
 import * as VisStateActions from 'actions/vis-state-actions';
@@ -33,7 +32,7 @@ import {createNewDataEntry} from 'utils/dataset-utils';
 import {processCsvData, processGeojson} from 'processors/data-processor';
 
 import {Layer, KeplerGlLayers} from 'layers';
-const {ArcLayer, PointLayer, GeojsonLayer, LineLayer} = KeplerGlLayers;
+
 // fixtures
 import testData, {testFields, testAllData} from 'test/fixtures/test-csv-data';
 import {
@@ -53,6 +52,8 @@ import {
 import {applyActions} from 'test/helpers/mock-state';
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
 import {getNextColorMakerValue} from 'test/helpers/layer-utils';
+
+const {ArcLayer, PointLayer, GeojsonLayer, LineLayer} = KeplerGlLayers;
 
 const mockData = {
   fields: [
@@ -148,19 +149,15 @@ const mockRawData = {
 };
 
 const InitialVisState = reducer(undefined, {});
-test('#visStateReducer', t => {
+
+it('#visStateReducer', () => {
   reducer(undefined, {});
 
-  t.deepEqual(
-    reducer(undefined, {}),
-    {...INITIAL_VIS_STATE, initialState: {}},
-    'should return the initial state'
-  );
-
-  t.end();
+  expect(reducer(undefined, {}))
+    .toEqual({...INITIAL_VIS_STATE, initialState: {}});
 });
 
-test('#visStateReducer -> ADD_FILTER', t => {
+it('#visStateReducer -> ADD_FILTER', () => {
   const dataId = 'kitten';
   const newFilter = getDefaultFilter(dataId);
   const newReducer = reducer(
@@ -170,23 +167,16 @@ test('#visStateReducer -> ADD_FILTER', t => {
 
   const expectedReducer = {filters: [mockFilter, newFilter]};
 
-  t.equal(
-    newReducer.filters.length,
-    expectedReducer.filters.length,
-    'should add a default filter'
-  );
+  expect(newReducer.filters.length)
+    .toBe(expectedReducer.filters.length);
 
-  t.deepEqual(
-    newReducer.filters[0],
-    expectedReducer.filters[0],
-    'should add a default filter'
-  );
+  expect(newReducer.filters[0])
+    .toBe(expectedReducer.filters[0]);
 
-  cmpFilters(t, newReducer.filters[1], expectedReducer.filters[1]);
-  t.end();
+  cmpFilters(newReducer.filters[1], expectedReducer.filters[1]);
 });
 
-test('#visStateReducer -> ADD_LAYER.1', t => {
+it('#visStateReducer -> ADD_LAYER.1', () => {
   const oldState = {
     ...InitialVisState,
     datasets: {
@@ -222,38 +212,22 @@ test('#visStateReducer -> ADD_LAYER.1', t => {
     }
   ];
 
-  t.equal(newReducer.layers.length, 2, 'should have 2 layers');
-  t.equal(
-    newReducer.layers[1].config.isVisible,
-    true,
-    'newLayer visibility should be set to true'
-  );
-  t.equal(
-    newReducer.layers[1].config.isConfigActive,
-    true,
-    'newLayer isConfigActive should be set to true'
-  );
-  t.equal(
-    newReducer.layers[1].config.dataId,
-    'puppy',
-    'newLayer dataId should be set to default'
-  );
-  t.deepEqual(
-    newReducer.layerData,
-    [oldState.layerData[0], {}],
-    'newState should have empty layer datat'
-  );
-  t.deepEqual(newReducer.layerOrder, [0, 1], 'should add to layerOrder');
-  t.deepEqual(
-    newReducer.splitMaps,
-    expectedSplitMaps,
-    'should add to SplitMaps'
-  );
+  expect(newReducer.layers.length).toBe(2);
+  expect(newReducer.layers[1].config.isVisible).toBeTruthy();
+  expect(newReducer.layers[1].config.isConfigActive).toBeTruthy();
 
-  t.end();
+  expect(newReducer.layers[1].config.dataId)
+    .toEqual('puppy');
+
+  expect(newReducer.layerData)
+    .toEqual([oldState.layerData[0], {}]);
+
+  expect(newReducer.layerOrder).toEqual([0, 1]);
+
+  expect(newReducer.splitMaps).toEqual(expectedSplitMaps);
 });
 
-test('#visStateReducer -> LAYER_TYPE_CHANGE.1', t => {
+it('#visStateReducer -> LAYER_TYPE_CHANGE.1', () => {
   const layer = new Layer({id: 'more_layer'});
   const oldState = {
     ...InitialVisState,
@@ -302,20 +276,15 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.1', t => {
     }
   ];
 
-  t.ok(nextState.layers[1].id !== 'more_layer', 'should update layer id');
+  expect(nextState.layers[1].id).not.toEqual('more_layer');
 
-  t.equal(nextState.layers[1].type, 'point', 'should update type to point');
+  expect(nextState.layers[1].type).toEqual('point');
 
-  t.deepEqual(
-    nextState.splitMaps,
-    expectedSplitMaps,
-    'should add newId to SplitMaps, and replace old id'
-  );
-
-  t.end();
+  expect(nextState.splitMaps).toEqual(expectedSplitMaps);
 });
 
-test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
+// eslint-disable-next-line max-statements
+it('#visStateReducer -> LAYER_TYPE_CHANGE.2', () => {
   const pointLayer = new PointLayer({id: 'a', dataId: 'smoothie'});
   const mockColorRange = {
     name: 'abc',
@@ -353,18 +322,12 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
     })
   );
   const newLayer = nextState.layers[0];
-  t.equal(newLayer.config.colorField, stringField, 'should update colorField');
-  t.equal(newLayer.config.colorScale, 'ordinal', 'should scale to ordinal');
-  t.deepEqual(
-    newLayer.config.colorDomain,
-    ['driver_analytics', 'driver_gps'],
-    'should calculate color domain'
-  );
-  t.equal(
-    newLayer.config.visConfig.colorRange,
-    mockColorRange,
-    'should update color range'
-  );
+  expect(newLayer.config.colorField).toEqual(stringField);
+  expect(newLayer.config.colorScale).toEqual('ordinal');
+  expect(newLayer.config.colorDomain)
+    .toEqual(['driver_analytics', 'driver_gps']);
+  expect(newLayer.config.visConfig.colorRange)
+    .toEqual(mockColorRange);
 
   // set point layer sizeField to a int field
   const intField = testFields.find(f => f.type === 'integer');
@@ -383,18 +346,10 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
     })
   );
   const newLayer2 = nextState2.layers[0];
-  t.equal(newLayer2.config.sizeField, intField, 'should update sizeField');
-  t.equal(newLayer2.config.sizeScale, 'sqrt', 'should scale to linear');
-  t.deepEqual(
-    newLayer2.config.sizeDomain,
-    [1, 12124],
-    'should calculate size domain'
-  );
-  t.deepEqual(
-    newLayer2.config.visConfig.radiusRange,
-    [5, 10],
-    'should update size range'
-  );
+  expect(newLayer2.config.sizeField).toEqual(intField);
+  expect(newLayer2.config.sizeScale).toEqual('sqrt');
+  expect(newLayer2.config.sizeDomain).toEqual([1, 12124]);
+  expect(newLayer2.config.visConfig.radiusRange).toEqual([5, 10]);
 
   // change point layer type to hexagon
   const nextState3 = reducer(
@@ -403,44 +358,17 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
   );
 
   const newLayer3 = nextState3.layers[0];
-  t.equal(newLayer3.type, 'hexagon', 'should change type to hexagon');
-  t.equal(
-    newLayer3.config.colorField,
-    stringField,
-    'should keep colorField'
-  );
-  t.deepEqual(
-    newLayer3.config.colorDomain,
-    [0, 1],
-    'should set colorDomain to default, it is calculated inside deck.gl layer'
-  );
-  t.equal(
-    newLayer3.config.colorScale,
-    'ordinal',
-    'should set colorScale to ordinal'
-  );
-  t.equal(
-    newLayer3.config.sizeScale,
-    'linear',
-    'should set sizeScale to default'
-  );
-  t.deepEqual(
-    newLayer3.config.sizeDomain,
-    [0, 1],
-    'should set sizeDomain to default'
-  );
-  t.equal(newLayer3.config.sizeField, intField, 'should keep sizeField');
-  t.notEqual(newLayer3.id, newLayer2.id, 'should change id');
-  t.equal(
-    newLayer3.config.visConfig.colorRange,
-    mockColorRange,
-    'should not deep copy colorRange'
-  );
-  t.equal(
-    newLayer3.config.visConfig.sizeRange,
-    LAYER_VIS_CONFIGS.elevationRange.defaultValue,
-    'should set sizeRange back to default'
-  );
+  expect(newLayer3.type).toEqual('hexagon');
+  expect(newLayer3.config.colorField).toEqual(stringField);
+  expect(newLayer3.config.colorDomain).toEqual([0, 1]);
+  expect(newLayer3.config.colorScale).toEqual('ordinal');
+  expect(newLayer3.config.sizeScale).toEqual('linear');
+  expect(newLayer3.config.sizeDomain).toEqual([0, 1]);
+  expect(newLayer3.config.sizeField).toEqual(intField);
+  expect(newLayer3.id).not.toEqual(newLayer2.id);
+  expect(newLayer3.config.visConfig.colorRange).toEqual(mockColorRange);
+  expect(newLayer3.config.visConfig.sizeRange)
+    .toEqual(LAYER_VIS_CONFIGS.elevationRange.defaultValue);
 
   // change point layer type to icon
   const nextState4 = reducer(
@@ -448,66 +376,38 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
     VisStateActions.layerTypeChange(newLayer2, 'icon')
   );
   const newLayer4 = nextState4.layers[0];
-  t.equal(newLayer4.type, 'icon', 'should change type to icon');
-  t.notEqual(newLayer4.id, newLayer2.id, 'should change id');
-  t.equal(newLayer4.config.colorField, stringField, 'should keep colorField');
-  t.deepEqual(
-    newLayer4.config.colorDomain,
-    ['driver_analytics', 'driver_gps'],
-    'should calculate color domain'
-  );
-  t.equal(newLayer4.config.colorScale, 'ordinal', 'should keep color scale');
-  t.equal(newLayer4.config.sizeField, intField, 'should keep sizeField');
-  t.equal(newLayer4.config.sizeScale, 'sqrt', 'should scale to linear');
-  t.deepEqual(
-    newLayer4.config.sizeDomain,
-    [1, 12124],
-    'should keep size domain'
-  );
-  t.deepEqual(
-    newLayer4.config.visConfig.radiusRange,
-    [5, 10],
-    'should keep size range'
-  );
-  t.equal(
-    newLayer4.config.visConfig.colorRange,
-    mockColorRange,
-    'should not deep copy colorRange'
-  );
-  t.end();
+  expect(newLayer4.type).toEqual('icon');
+  expect(newLayer4.id).not.toEqual(newLayer2.id);
+  expect(newLayer4.config.colorField).toEqual(stringField);
+  expect(newLayer4.config.colorDomain)
+    .toEqual(['driver_analytics', 'driver_gps']);
+  expect(newLayer4.config.colorScale).toEqual( 'ordinal', 'should keep color scale');
+  expect(newLayer4.config.sizeField).toEqual( intField, 'should keep sizeField');
+  expect(newLayer4.config.sizeScale).toEqual( 'sqrt', 'should scale to linear');
+  expect(newLayer4.config.sizeDomain).toEqual([1, 12124]);
+  expect(newLayer4.config.visConfig.radiusRange).toEqual([5, 10]);
+  expect(newLayer4.config.visConfig.colorRange).toEqual(mockColorRange);
 });
 
-test('#visStateReducer -> REORDER_LAYER', t => {
+it('#visStateReducer -> REORDER_LAYER', () => {
   const newReducer = reducer(
     {layers: [], layerOrder: [0, 1, 2]},
     VisStateActions.reorderLayer([0, 2, 1])
   );
 
-  t.deepEqual(
-    newReducer,
-    {layers: [], layerOrder: [0, 2, 1]},
-    'should re order layers'
-  );
-
-  t.end();
+  expect(newReducer).toEqual({layers: [], layerOrder: [0, 2, 1]});
 });
 
-test('#visStateReducer -> UPDATE_LAYER_BLENDING', t => {
+it('#visStateReducer -> UPDATE_LAYER_BLENDING', () => {
   const newReducer = reducer(
     {layerBlending: 'none'},
     VisStateActions.updateLayerBlending('additive')
   );
 
-  t.deepEqual(
-    newReducer,
-    {layerBlending: 'additive'},
-    'should update layerBlending'
-  );
-
-  t.end();
+  expect(newReducer).toEqual({layerBlending: 'additive'});
 });
 
-test('#visStateReducer -> REMOVE_FILTER', t => {
+it('#visStateReducer -> REMOVE_FILTER', () => {
   const currentFilters = [
     {
       fieldIdx: 0,
@@ -546,8 +446,7 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
   // remove smoothie filter
   const newReducer = reducer(oldState, VisStateActions.removeFilter(0));
 
-  t.deepEqual(
-    newReducer,
+  expect(newReducer).toEqual(
     {
       filters: [
         {
@@ -575,14 +474,10 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
 
       layers: [],
       layerData: []
-    },
-    'should remove filter and recalculate data only for associated dataset'
-  );
-
-  t.end();
+    });
 });
 
-test('#visStateReducer -> REMOVE_LAYER', t => {
+it('#visStateReducer -> REMOVE_LAYER', () => {
   const layer1 = new PointLayer({id: 'a'});
   const layer2 = new PointLayer({id: 'b'});
   const oldState = {
@@ -602,8 +497,7 @@ test('#visStateReducer -> REMOVE_LAYER', t => {
 
   const newReducer = reducer(oldState, VisStateActions.removeLayer(1));
 
-  t.deepEqual(
-    newReducer,
+  expect(newReducer).toEqual(
     {
       layers: [layer1],
       layerData: [{data: 1}],
@@ -614,30 +508,23 @@ test('#visStateReducer -> REMOVE_LAYER', t => {
         picked: true
       },
       splitMaps: []
-    },
-    'should remove layer and layerData'
-  );
-
-  t.end();
+    });
 });
 
-test('#visStateReducer -> UPDATE_VIS_DATA.1', t => {
+it('#visStateReducer -> UPDATE_VIS_DATA.1', () => {
   const oldState = {
     datasets: {},
     layers: [{name: 'a'}, {name: 'b'}],
     layerData: [{data: 1}, {data: 2}]
   };
 
-  t.deepEqual(
+  expect(
     reducer(
       oldState,
       VisStateActions.updateVisData([{info: null, data: null}])
-    ),
-    oldState,
-    'should return current state if no data'
-  );
+    )).toEqual(oldState);
 
-  t.deepEqual(
+  expect(
     reducer(
       oldState,
       VisStateActions.updateVisData([
@@ -648,12 +535,9 @@ test('#visStateReducer -> UPDATE_VIS_DATA.1', t => {
           }
         }
       ])
-    ),
-    oldState,
-    'should return current state if no fields'
-  );
+    )).toEqual(oldState);
 
-  t.deepEqual(
+  expect(
     reducer(
       oldState,
       VisStateActions.updateVisData([
@@ -664,16 +548,10 @@ test('#visStateReducer -> UPDATE_VIS_DATA.1', t => {
           }
         }
       ])
-    ),
-    oldState,
-    'should return current state if no rows'
-  );
-
-  t.end();
+    )).toEqual(oldState);
 });
 
-/* eslint-disable max-statements */
-test('#visStateReducer -> UPDATE_VIS_DATA.2', t => {
+it('#visStateReducer -> UPDATE_VIS_DATA.2', () => {
   const oldState = InitialVisState;
 
   const testState1 = reducer(
@@ -684,11 +562,8 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2', t => {
     })
   );
 
-  t.deepEqual(
-    Object.keys(testState1.datasets),
-    ['smoothie'],
-    'should save data to smoothie'
-  );
+  expect(Object.keys(testState1.datasets))
+    .toEqual(['smoothie']);
 
   const newState = reducer(
     oldState,
@@ -804,26 +679,16 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2', t => {
     expectedArcLayer,
     expectedLineLayer
   ];
-  t.deepEqual(
-    Object.keys(newState.datasets),
-    ['smoothie'],
-    'should save data to smoothie'
-  );
+  expect(Object.keys(newState.datasets)).toEqual(['smoothie']);
 
-  cmpDatasets(t, expectedDatasets, newState.datasets);
-  cmpLayers(t, expectedLayers, newStateLayers);
+  cmpDatasets(expectedDatasets, newState.datasets);
+  cmpLayers(expectedLayers, newStateLayers);
 
-  t.equal(
-    newState.layerData.length,
-    expectedLayers.length,
-    'should calculate layerdata'
-  );
-  t.deepEqual(newState.layerOrder, [0, 1, 2, 3], 'should calculate layerOrder');
-
-  t.end();
+  expect(newState.layerData.length).toBe(expectedLayers.length);
+  expect(newState.layerOrder).toEqual([0, 1, 2, 3]);
 });
 
-test('#visStateReducer -> UPDATE_VIS_DATA.3', t => {
+it('#visStateReducer -> UPDATE_VIS_DATA.3', () => {
   const mockLayer = new PointLayer({
     dataId: 'snowflake',
     columns: {
@@ -928,46 +793,27 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3', t => {
   );
 
   Object.keys(expectedDatasets).forEach(key =>
-    cmpDataset(t, expectedDatasets[key], newState.datasets[key])
+    cmpDataset(expectedDatasets[key], newState.datasets[key])
   );
-  t.equal(
-    newState.layers.length,
-    5,
-    'should find 1 arc aline and 2 point layers'
-  );
-  t.deepEqual(
-    newState.layerOrder,
-    [1, 2, 3, 4, 0],
-    'should add new layer index to layer order, put them on top'
-  );
-  t.equal(
-    newState.layers[1].config.dataId,
-    'smoothie',
-    'should save dataId to layer'
-  );
-  t.equal(
-    newState.layers[2].config.dataId,
-    'smoothie',
-    'should save dataId to layer'
-  );
-  t.equal(
-    newState.layers[3].config.dataId,
-    'smoothie',
-    'should save dataId to layer'
-  );
-  t.equal(newState.layerData.length, 5, 'should calculate layerData');
-  t.equal(newState.filters.length, 2, 'should keep original filters');
-  t.deepEqual(
-    newState.interactionConfig.tooltip.config,
-    expectedInteractionTooltip,
-    'should set interaction config back to default'
-  );
-  t.equal(newState.layerBlending, 'additive', 'should keep layerBlending');
+  expect(newState.layers.length).toBe(5);
 
-  t.end();
+  expect(newState.layerOrder).toEqual([1, 2, 3, 4, 0]);
+
+  expect(newState.layers[1].config.dataId).toEqual('smoothie');
+
+  expect(newState.layers[2].config.dataId).toEqual('smoothie');
+
+  expect(newState.layers[3].config.dataId).toEqual('smoothie');
+
+  expect(newState.layerData.length).toBe(5);
+  expect(newState.filters.length).toBe(2);
+  expect(newState.interactionConfig.tooltip.config)
+    .toEqual(expectedInteractionTooltip);
+
+  expect(newState.layerBlending).toEqual('additive');
 });
 
-test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson', t => {
+it('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson', () => {
   const initialVisState = CloneDeep(INITIAL_VIS_STATE);
 
   const {fields, rows} = processGeojson(CloneDeep(geojsonData));
@@ -1039,36 +885,25 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson', t => {
     }))
   };
 
-  t.deepEqual(
-    Object.keys(initialState.datasets),
-    ['milkshake'],
-    'should save geojson to datasets'
-  );
+  expect(Object.keys(initialState.datasets)).toEqual(['milkshake']);
+
   cmpDataset(
-    t,
     expectedDatasets,
     initialState.datasets.milkshake,
     'should save correct geojson to datasets'
   );
 
-  t.equal(initialState.layers.length, 1, 'should find 1 geojson layer');
+  expect(initialState.layers.length).toBe(1);
   cmpLayers(
-    t,
     expectedLayer,
     initialState.layers[0],
     'should save dataFeature to geojson layer'
   );
 
-  t.deepEqual(
-    initialState.layerData[0].data,
-    expectedLayerData.data,
-    'should save geojson to datasets'
-  );
-
-  t.end();
+  expect(initialState.layerData[0].data).toEqual(expectedLayerData.data);
 });
 
-test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
+it('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', () => {
   const oldState = CloneDeep(INITIAL_VIS_STATE);
   oldState.filterToBeMerged = [
     {
@@ -1182,20 +1017,14 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
     datasets: expectedDatasets
   };
 
-  cmpFilters(t, expectedState.filters, newState.filters);
+  cmpFilters(expectedState.filters, newState.filters);
 
-  t.deepEqual(
-    newState.filterToBeMerged,
-    expectedState.filterToBeMerged,
-    'should saved unmerged filter to filterToBeMerged'
-  );
+  expect(newState.filterToBeMerged).toEqual(expectedState.filterToBeMerged);
 
-  cmpDatasets(t, expectedState.datasets, newState.datasets);
-
-  t.end();
+  cmpDatasets(expectedState.datasets, newState.datasets);
 });
 
-test('#visStateReducer -> UPDATE_VIS_DATA.SPLIT_MAPS', t => {
+it('#visStateReducer -> UPDATE_VIS_DATA.SPLIT_MAPS', () => {
   const layer0 = new PointLayer({
     dataId: 'snowflake',
     id: 'a',
@@ -1273,26 +1102,13 @@ test('#visStateReducer -> UPDATE_VIS_DATA.SPLIT_MAPS', t => {
     }
   ];
 
-  t.equal(
-    newState.layers.length,
-    7,
-    'should create 1 arc 1 line and 2 point layers'
-  );
-  t.deepEqual(
-    newState.layerOrder,
-    [3, 4, 5, 6, 2, 1, 0],
-    'should move new layers to front'
-  );
-  t.deepEqual(
-    newState.splitMaps,
-    expectedSplitMaps,
-    'should add new layers to splitmaps'
-  );
-
-  t.end();
+  expect(newState.layers.length).toBe(7);
+  expect(newState.layerOrder).toEqual([3, 4, 5, 6, 2, 1, 0]);
+  expect(newState.splitMaps).toEqual(expectedSplitMaps);
 });
 
-test('#visStateReducer -> setFilter', t => {
+// eslint-disable-next-line max-statements
+it('#visStateReducer -> setFilter', () => {
   // get test data
   const {fields, rows} = processCsvData(testData);
   const payload = [
@@ -1334,9 +1150,9 @@ test('#visStateReducer -> setFilter', t => {
 
   const expectedLayers = [expectedLayer1];
   // test default layer
-  t.equal(initialState.layers.length, 1, 'should find two layers');
+  expect(initialState.layers.length).toBe(1);
 
-  cmpLayers(t, expectedLayers, initialState.layers);
+  cmpLayers(expectedLayers, initialState.layers);
 
   // add filter
   const stateWithFilter = reducer(
@@ -1362,7 +1178,7 @@ test('#visStateReducer -> setFilter', t => {
     interval: null
   };
 
-  cmpFilters(t, expectedFilter, stateWithFilter.filters[0]);
+  cmpFilters(expectedFilter, stateWithFilter.filters[0]);
   const filterId = stateWithFilter.filters[0].id;
 
   // set filter 'name'
@@ -1391,7 +1207,7 @@ test('#visStateReducer -> setFilter', t => {
   };
 
   // test filter
-  cmpFilters(t, expectedFilterWName, stateWithFilterName.filters[0]);
+  cmpFilters(expectedFilterWName, stateWithFilterName.filters[0]);
 
   const updatedField = {
     ...initialState.datasets.smoothie.fields[10],
@@ -1435,7 +1251,7 @@ test('#visStateReducer -> setFilter', t => {
     ]
   };
 
-  cmpDataset(t, expectedDataset, stateWithFilterName.datasets.smoothie);
+  cmpDataset(expectedDataset, stateWithFilterName.datasets.smoothie);
 
   // set filter value
   const stateWithFilterValue = reducer(
@@ -1449,7 +1265,7 @@ test('#visStateReducer -> setFilter', t => {
   };
 
   // test filter
-  cmpFilters(t, expectedFilterWValue, stateWithFilterValue.filters[0]);
+  cmpFilters(expectedFilterWValue, stateWithFilterValue.filters[0]);
 
   const expectedFilteredDataset = {
     ...expectedDataset,
@@ -1565,21 +1381,15 @@ test('#visStateReducer -> setFilter', t => {
   };
 
   cmpDataset(
-    t,
     expectedFilteredDataset,
     stateWithFilterValue.datasets.smoothie
   );
 
-  t.deepEqual(
-    stateWithFilterValue.layerData[0].data,
-    expectedLayerData1.data,
-    'should format layer data correctly'
-  );
-
-  t.end();
+  expect(stateWithFilterValue.layerData[0].data)
+    .toEqual(expectedLayerData1.data);
 });
 
-test('#visStateReducer -> setFilter', t => {
+it('#visStateReducer -> setFilter', () => {
   const {fields, rows} = processGeojson(CloneDeep(geojsonData));
   const payload = [
     {
@@ -1753,7 +1563,7 @@ test('#visStateReducer -> setFilter', t => {
   };
 
   // test filter
-  cmpFilters(t, expectedFilterWName, stateWithFilterName.filters[0]);
+  cmpFilters(expectedFilterWName, stateWithFilterName.filters[0]);
 
   // set filter value
   const stateWithFilterValue = reducer(
@@ -1767,7 +1577,7 @@ test('#visStateReducer -> setFilter', t => {
   };
 
   // test filter
-  cmpFilters(t, expectedFilterWValue, stateWithFilterValue.filters[0]);
+  cmpFilters(expectedFilterWValue, stateWithFilterValue.filters[0]);
 
   const expectedFilteredDataset = {
     ...initialState.datasets.milkshake,
@@ -1871,29 +1681,19 @@ test('#visStateReducer -> setFilter', t => {
   const actualTripFeild = stateWithFilterValue.datasets.milkshake.fields[4];
   const expectetField = expectedFilteredDataset.fields[4];
 
-  t.deepEqual(
-    Object.keys(actualTripFeild).sort(),
-    Object.keys(expectetField).sort(),
-    'trip field keys should be same'
-  );
+  expect(Object.keys(actualTripFeild).sort())
+    .toEqual(Object.keys(expectetField).sort());
+
   Object.keys(actualTripFeild).forEach(k => {
-    t.deepEqual(
-      actualTripFeild[k],
-      expectetField[k],
-      `trip field ${k} should be same`
-    );
+    expect(actualTripFeild[k]).toEqual(expectetField[k]);
   });
   cmpDataset(
-    t,
     expectedFilteredDataset,
     stateWithFilterValue.datasets.milkshake
   );
-
-  t.end();
 });
-/* eslint-enable max-statements */
 
-test('#visStateReducer -> setFilter.fixedDomain', t => {
+it('#visStateReducer -> setFilter.fixedDomain', () => {
   // get test data
   const {fields, rows} = processCsvData(testData);
   const payload = [
@@ -1982,7 +1782,7 @@ test('#visStateReducer -> setFilter.fixedDomain', t => {
     fieldType: 'timestamp'
   };
 
-  cmpFilters(t, expectedFilterTs, stateWidthTsFilter.filters[0]);
+  cmpFilters(expectedFilterTs, stateWidthTsFilter.filters[0]);
 
   const expectedDatasetSmoothie = {
     ...datasetSmoothie,
@@ -2013,7 +1813,7 @@ test('#visStateReducer -> setFilter.fixedDomain', t => {
   };
 
   // check filter by ts
-  cmpDataset(t, expectedDatasetSmoothie, stateWidthTsFilter.datasets.smoothie);
+  cmpDataset(expectedDatasetSmoothie, stateWidthTsFilter.datasets.smoothie);
 
   const stateWidthTsAndNameFilter = applyActions(reducer, stateWidthTsFilter, [
     // add ts filter
@@ -2053,12 +1853,10 @@ test('#visStateReducer -> setFilter.fixedDomain', t => {
     filteredIndexForDomain: [7, 8, 9, 10, 11, 12, 17, 18, 19, 20, 21, 22]
   };
 
-  cmpDataset(t, expectedFilteredDataset, stateWidthTsAndNameFilter.datasets.smoothie);
-
-  t.end();
+  cmpDataset(expectedFilteredDataset, stateWidthTsAndNameFilter.datasets.smoothie);
 });
 
-test('#visStateReducer -> setFilterPlot', t => {
+it('#visStateReducer -> setFilterPlot', () => {
   // get test data
   const {fields, rows} = processCsvData(testData);
   const payload = [
@@ -2176,11 +1974,10 @@ test('#visStateReducer -> setFilterPlot', t => {
   };
 
   // test filter
-  cmpFilters(t, expectedFilterWName, stateWithFilterPlot.filters[0]);
-  t.end();
+  cmpFilters(expectedFilterWName, stateWithFilterPlot.filters[0]);
 });
 
-test('#visStateReducer -> REMOVE_DATASET', t => {
+it('#visStateReducer -> REMOVE_DATASET', () => {
   const layer0 = new ArcLayer({id: 'a', dataId: 'puppy_0'});
   const layer1 = new PointLayer({id: 'b', dataId: 'puppy_0'});
   const layer2 = new GeojsonLayer({id: 'c', dataId: 'puppy_1'});
@@ -2217,8 +2014,7 @@ test('#visStateReducer -> REMOVE_DATASET', t => {
     VisStateActions.removeDataset('puppy_1')
   );
 
-  t.deepEqual(
-    newReducer,
+  expect(newReducer).toEqual(
     {
       datasets: {
         puppy_0: {},
@@ -2241,14 +2037,10 @@ test('#visStateReducer -> REMOVE_DATASET', t => {
       hoverInfo: undefined,
       clicked: undefined,
       splitMaps: []
-    },
-    'should remove dataset, layer and layerData'
-  );
-
-  t.end();
+    });
 });
 
-test('#visStateReducer -> SPLIT_MAP: TOGGLE', t => {
+it('#visStateReducer -> SPLIT_MAP: TOGGLE', () => {
   const layer0 = new ArcLayer({id: 'a', dataId: 'puppy_0', isVisible: true});
   const layer1 = new ArcLayer({id: 'b', dataId: 'puppy_0', isVisible: false});
 
@@ -2259,8 +2051,7 @@ test('#visStateReducer -> SPLIT_MAP: TOGGLE', t => {
 
   const newReducer = reducer(oldState, MapStateActions.toggleSplitMap());
 
-  t.deepEqual(
-    newReducer.splitMaps,
+  expect(newReducer.splitMaps).toEqual(
     [
       {
         layers: {
@@ -2272,14 +2063,11 @@ test('#visStateReducer -> SPLIT_MAP: TOGGLE', t => {
           a: true
         }
       }
-    ],
-    'should split map'
+    ]
   );
-
-  t.end();
 });
 
-test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER', t => {
+it('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER', () => {
   const layer1 = new PointLayer({id: 'a'});
   const layer2 = new PointLayer({id: 'b'});
   const oldState = {
@@ -2312,8 +2100,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER', t => {
 
   const newReducer = reducer(oldState, VisStateActions.removeLayer(1));
 
-  t.deepEqual(
-    newReducer,
+  expect(newReducer).toEqual(
     {
       layers: [layer1],
       layerData: [{data: 1}],
@@ -2335,14 +2122,10 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER', t => {
           }
         }
       ]
-    },
-    'should remove layer and layerData in split mode'
-  );
-
-  t.end();
+    });
 });
 
-test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
+it('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', () => {
   const layer0 = new ArcLayer({id: 'a', dataId: 'puppy_0'});
   const layer1 = new PointLayer({id: 'b', dataId: 'puppy_0'});
   const layer2 = new GeojsonLayer({id: 'c', dataId: 'puppy_1'});
@@ -2435,16 +2218,10 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
     ]
   };
 
-  t.deepEqual(
-    newReducer,
-    expectedState,
-    'should remove dataset, layer and layerData in split mode'
-  );
-
-  t.end();
+  expect(newReducer).toEqual(expectedState);
 });
 
-test('#visStateReducer -> SPLIT_MAP: ADD_LAYER', t => {
+it('#visStateReducer -> SPLIT_MAP: ADD_LAYER', () => {
   const oldState = {
     datasets: {
       puppy: {
@@ -2471,51 +2248,26 @@ test('#visStateReducer -> SPLIT_MAP: ADD_LAYER', t => {
 
   const newReducer = reducer(oldState, VisStateActions.addLayer());
 
-  t.equal(
-    newReducer.layers[1].config.isVisible,
-    true,
-    'newLayer visibility should be set to true'
-  );
-  t.equal(
-    newReducer.layers[1].config.isConfigActive,
-    true,
-    'newLayer isConfigActive should be set to true'
-  );
-  t.equal(
-    newReducer.layers[1].config.dataId,
-    'puppy',
-    'newLayer dataId should be set to default'
-  );
-  t.equal(
-    newReducer.splitMaps.length,
-    2,
-    'newLayer was added into splitMaps layers'
-  );
-  t.deepEqual(
-    newReducer.splitMaps[0],
-    {
-      layers: {
-        existing_layer: true,
-        [newReducer.layers[1].id]: true
-      }
-    },
-    'newLayer map meta data settings are correct'
-  );
-  t.deepEqual(
-    newReducer.splitMaps[1],
-    {
-      layers: {
-        existing_layer: true,
-        [newReducer.layers[1].id]: true
-      }
-    },
-    'newLayer map meta data settings are correct'
-  );
+  expect(newReducer.layers[1].config.isVisible).toBe(true);
+  expect(newReducer.layers[1].config.isConfigActive).toBe(true);
+  expect(newReducer.layers[1].config.dataId).toEqual('puppy');
+  expect(newReducer.splitMaps.length).toBe(2);
+  expect(newReducer.splitMaps[0]).toEqual({
+    layers: {
+      existing_layer: true,
+      [newReducer.layers[1].id]: true
+    }
+  });
+  expect(newReducer.splitMaps[1]).toEqual({
+    layers: {
+      existing_layer: true,
+      [newReducer.layers[1].id]: true
+    }
+  });
 
-  t.end();
 });
 
-test('#visStateReducer -> SPLIT_MAP: TOGGLE_SPLIT_MAP', t => {
+it('#visStateReducer -> SPLIT_MAP: TOGGLE_SPLIT_MAP', () => {
   const layer0 = new ArcLayer({id: 'a', dataId: 'puppy_0', isVisible: true});
   const layer1 = new PointLayer({id: 'b', dataId: 'puppy_0', isVisible: true});
 
@@ -2539,22 +2291,12 @@ test('#visStateReducer -> SPLIT_MAP: TOGGLE_SPLIT_MAP', t => {
 
   const newReducer = reducer(oldState, MapStateActions.toggleSplitMap(0));
 
-  t.equal(newReducer.layers.length, 2, 'should have 2 global layers');
-  t.equal(
-    newReducer.layers[0].config.isVisible,
-    true,
-    'global layer should have changed to reflect specific map meta info'
-  );
-  t.equal(
-    newReducer.layers[1].config.isVisible,
-    false,
-    'global layer should have changed to reflect specific map meta info'
-  );
-  t.end();
+  expect(newReducer.layers.length).toBe(2);
+  expect(newReducer.layers[0].config.isVisible).toBeTruthy();
+  expect(newReducer.layers[1].config.isVisible).not.toBeTruthy();
 });
 
-test('#visStateReducer -> SPLIT_MAP: HIDE LAYER', t => {
-
+it('#visStateReducer -> SPLIT_MAP: HIDE LAYER', () => {
   const oldState = {
     splitMaps: [
       {
@@ -2591,7 +2333,5 @@ test('#visStateReducer -> SPLIT_MAP: HIDE LAYER', t => {
     ]
   };
 
-  t.deepEqual(newState.splitMaps, expectedState.splitMaps, 'should hide layer B in split map');
-
-  t.end();
+  expect(newState.splitMaps).toEqual(expectedState.splitMaps);
 });

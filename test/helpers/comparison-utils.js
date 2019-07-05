@@ -109,16 +109,16 @@ export function cmpSavedLayers(
   }
 }
 
-export function cmpDatasets(t, expectedDatasets, actualDatasets) {
+export function cmpDatasets(expectedDatasets, actualDatasets) {
   expect(Object.keys(actualDatasets).sort())
     .toEqual(Object.keys(expectedDatasets).sort());
 
   Object.keys(actualDatasets).forEach(dataId => {
-    cmpDataset(t, expectedDatasets[dataId], actualDatasets[dataId]);
+    cmpDataset(expectedDatasets[dataId], actualDatasets[dataId]);
   });
 }
 
-export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {
+export function cmpDataset(expectedDataset, actualDataset, opt = {}) {
   expect(Object.keys(actualDataset).sort())
     .toEqual(Object.keys(expectedDataset).sort());
 
@@ -137,10 +137,9 @@ export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {
   });
 }
 
-export function cmpInteraction(t, expectedInt, actualInt) {
+export function cmpInteraction(expectedInt, actualInt) {
   expect(typeof expectedInt).toBe('object');
   expect(typeof actualInt).toBe('object');
-
   expect(Object.keys(actualInt).sort())
     .toEqual(Object.keys(expectedInt).sort());
 
