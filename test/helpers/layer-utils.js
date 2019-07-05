@@ -19,15 +19,13 @@
 // THE SOFTWARE.
 
 import {LayerManager} from 'deck.gl';
-import {gl} from '@deck.gl/test-utils';
+// import {gl} from '@deck.gl/test-utils';
 import {INITIAL_MAP_STATE} from 'reducers/map-state-updaters';
 import {INITIAL_VIS_STATE} from 'reducers/vis-state-updaters';
 import {console as Console} from 'global/window';
 import {onWebGLInitialized} from 'utils/gl-utils';
 import {colorMaker, layerColors} from 'layers/base-layer';
 
-// Destroy if there is any GL context
-// gl.getExtension('STACKGL_destroy_context').destroy();
 // Init GL
 // onWebGLInitialized(gl);
 
@@ -134,21 +132,21 @@ export function testRenderLayerCases(LayerClass, testCases) {
   });
 }
 
-export function testInitializeDeckLayer(t, layerType, layers) {
-  const layerManager = new LayerManager(gl);
+// export function testInitializeDeckLayer(t, layerType, layers) {
+//   const layerManager = new LayerManager(gl);
 
-  const spy = jest.spyOn(Console, 'error').mockImplementation();
+//   const spy = jest.spyOn(Console, 'error').mockImplementation();
 
-  expect(() => 
-    layerManager.setLayers(Array.isArray(layers) ? layers : [layers])
-  ).not.toThrow();
+//   expect(() => 
+//     layerManager.setLayers(Array.isArray(layers) ? layers : [layers])
+//   ).not.toThrow();
 
-  // listen on console.error in editShader, fail the test if any error is logged
-  expect(spy).toHaveBeenCalledTimes(2);
+//   // listen on console.error in editShader, fail the test if any error is logged
+//   expect(spy).toHaveBeenCalledTimes(2);
 
-  spy.mockRestore();
-  return null;
-}
+//   spy.mockRestore();
+//   return null;
+// }
 
 /**
  * Predict which color maker value would be next, allow skip couple
