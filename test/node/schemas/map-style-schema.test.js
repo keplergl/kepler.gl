@@ -29,7 +29,7 @@ it('#mapStyleSchema -> v1 -> save load mapStyle', () => {
   // save state
   const msToSave = savedState.config.mapStyle;
   const msLoaded = SchemaManager.parseSavedConfig(savedState).mapStyle;
-  
+
   expect(Object.keys(msToSave))
     .toEqual(
       ['styleType', 'topLayerGroups', 'visibleLayerGroups', 'threeDBuildingColor', 'mapStyles']
