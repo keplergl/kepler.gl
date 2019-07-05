@@ -27,9 +27,9 @@ import {onWebGLInitialized} from 'utils/gl-utils';
 import {colorMaker, layerColors} from 'layers/base-layer';
 
 // Destroy if there is any GL context
-gl.getExtension('STACKGL_destroy_context').destroy();
+// gl.getExtension('STACKGL_destroy_context').destroy();
 // Init GL
-onWebGLInitialized(gl);
+// onWebGLInitialized(gl);
 
 export function testCreateLayer(LayerClass, props = {}) {
   let layer;
