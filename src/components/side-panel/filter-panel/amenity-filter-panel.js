@@ -63,6 +63,21 @@ const CheckboxContainer = styled.div`
   margin-bottom: 10px;
 `;
 
+const StyledResetButton = styled.div`
+  background-color: ${props => props.theme.labelColor};
+  color: ${props => props.theme.panelBackground};
+  font-weight: 400;
+  margin-top: 15px;
+  padding: 5px;
+  width: 30%;
+  text-align: center;
+  cursor: pointer;
+
+  :hover {
+    opacity: 0.7;
+  }
+`;
+
 function AmenityFilterPanelFactory() {
   return class AmenityFilterPanel extends Component {
     static propTypes = {
@@ -123,10 +138,23 @@ function AmenityFilterPanelFactory() {
       setFilter(idx, 'value', filter.value);
     }
 
-    // state = { checked: false }
+    onResetClicked(option) {
+      const {
+        datasets,
+        enlargeFilter,
+        filter,
+        filters,
+        idx,
+        isAnyFilterAnimating,
+        removeFilter,
+        setFilter,
+        toggleAnimation
+      } = this.props;
 
-    // handleCheckboxChange = event =>
-    //   this.setState({ checked: event.target.checked })
+      filter.value = [];
+      
+      setFilter(idx, 'value', filter.value);
+    }
 
     render() {
       const {
@@ -163,7 +191,7 @@ function AmenityFilterPanelFactory() {
                   />
                 </CheckboxContainer>
               ))}
-
+              <StyledResetButton onClick={() => this.onResetClicked('Others')}>Clear All</StyledResetButton>
             </StyledFilterContent>
           </StyledFilterPanel></div>
       );
