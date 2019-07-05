@@ -29,7 +29,7 @@
     "fast-test": "npm run test-node && npm run test-browser",
     "test-browser": "NODE_ENV=test babel-tape-runner -r ./test/setup-browser-env.js ./test/browser.js | tap-spec",
     "test-node": "NODE_ENV=test babel-tape-runner ./test/node.js | tap-spec",
-    "test": "jest  --no-cache",
+    "test": "jest",
     "cover": "nyc --reporter html --reporter cobertura --reporter json-summary npm test && nyc report",
     "start": "npm run install-and-start -- examples/demo-app start-local",
     "start:deck": "npm run install-and-start -- examples/demo-app start-local-deck",
