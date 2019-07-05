@@ -23,7 +23,7 @@ import RangeSlider from 'components/common/range-slider';
 
 const RangeFilter = ({filter, setFilter}) => (
   <div>
-    {console.error(filter)}
+    {/* {console.error(filter)} */}
     <RangeSlider
       range={filter.domain}
       value0={filter.value[0]}

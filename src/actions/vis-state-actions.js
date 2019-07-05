@@ -289,3 +289,19 @@ export function sortAnalysisReverse(info) {
     info
   };
 } 
+
+export function changeTDRankPage(info) {
+  console.log(info);
+  return {
+    type: ActionTypes.CHANGE_TD_RANK_PAGE,
+    info
+  };
+}
+
+export function sortTDReverse(info) {
+  console.log(info);
+  return {
+    type: ActionTypes.SORT_TD_REVERSE,
+    info
+  };
+} 

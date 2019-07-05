@@ -67,8 +67,9 @@ function IndicatorPanelFactory(Indicator) {
     render() {
       let idx = 0;
       return (
+        
         <StyledIndicatorPanel className="indicator-panel">
-          <StyledIndicatorSection className="indicator-panel__section">
+          {/* <StyledIndicatorSection className="indicator-panel__section">
             {TRANSPORT_DESIRABILITY.label}
           </StyledIndicatorSection>
           <div style={{padding: '5px'}} />
@@ -87,19 +88,12 @@ function IndicatorPanelFactory(Indicator) {
                 filter={this.props.filters[idx]}
                 setFilter={value => this.props.setFilter(idx, 'value', value)}
               />
-              {/* {indicator.id === this.props.selectedIndicator? 
-              <RangeFilter
-                filter={this.props.filters[idx]}
-                setFilter={value => this.props.setFilter(idx, 'value', value)}
-                />
-                 : null
-              } */}
               </div>
             ))}
           </StyledIndicatorContent>
 
-          <SidePanelDivider />
-
+          <SidePanelDivider /> */}
+          {      console.error('INDICATOR MANAGER START')}
           <StyledIndicatorSection className="indicator-panel__section">
             {NON_TRANSPORT_MODE.label}
           </StyledIndicatorSection>
@@ -161,6 +155,8 @@ function IndicatorPanelFactory(Indicator) {
               </div>
             ))}
           </StyledIndicatorContent>
+          {      console.error('INDICATOR MANAGER END')}
+          
         </StyledIndicatorPanel>
         // <StyledInteractionPanel className="interaction-panel">
         //   <StyledPanelHeader

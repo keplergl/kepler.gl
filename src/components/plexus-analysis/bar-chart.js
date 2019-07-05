@@ -26,8 +26,13 @@ import {scaleLinear} from 'd3-scale';
 import {IconRoundSmall} from 'components/common/styled-components';
 import {ArrowLeft, ArrowRight} from 'components/common/icons';
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faAngleLeft, faAngleRight, faSortAmountDown, faSortAmountDownAlt } from '@fortawesome/free-solid-svg-icons'
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {
+  faAngleLeft,
+  faAngleRight,
+  faSortAmountDown,
+  faSortAmountDownAlt
+} from '@fortawesome/free-solid-svg-icons';
 
 import {
   XYPlot,
@@ -61,9 +66,9 @@ const ControlPanel = styled.div`
     margin: 0;
   }
 
-  .control-panel__title{
+  .control-panel__title {
     font-weight: 500;
-    color: ${props => props.theme.textColorHl};    
+    color: ${props => props.theme.textColorHl};
   }
 `;
 const ControlBtn = styled.button`
@@ -82,86 +87,171 @@ export class BarChart extends Component {
     const {
       data,
       title,
+      xDom,
       xKey,
       yKey,
       paginationFunc,
       reverseFunc,
       maxBar,
       listSize,
-      visState,
+      analysisRankingReverse,
+      analysisRankingPage,
       height
     } = this.props;
-    // const width = 400;
-    // TODO: transfer constant
+
+    // TODO: make responsive
     const width = 270;
 
+    console.log('bar chart');
+    console.log(data);
+    // format data
+    // let formattedData = data;
+    // {
+    //   xKey && yKey && !Array.isArray(xKey)
+    //     ? (formattedData = data.map((d, idx) => ({
+    //         ...d,
+    //         x: d[xKey],
+    //         y: d[yKey]
+    //       })))
+    //     : (formattedData = data.map((d, idx) => ({
+    //         ...d,
+    //         x: d.x
+    //       })));
+    // }
+    let formattedData = data;
+    // if(xKey && yKey && !Array.isArray(xKey)) {
+    //     formattedData = data.map((d, idx) => ({
+    //       ...d,
+    //       x: d[xKey],
+    //       y: d[yKey]
+    //     }));
+    // } else {
+    //   formattedData = data.map((d, idx) => ({
+    //     ...d,
+    //     x: d.x
+    //   }))
+    // }
 
+    let dataSorted = formattedData;
+    let dataSliced = formattedData;
+    let max;
+    let dataLabels;
+    let bars;
 
-    let dataSorted = data;
-    // slice data for paginated bar chart
-    if (paginationFunc && reverseFunc) {
-      dataSorted = visState.analysisRankingReverse ? data.reverse() : data;
-      dataSorted = dataSorted.slice(
-        (visState.analysisRankingPage - 1) * maxBar,
-        Math.min(
-          maxBar + (visState.analysisRankingPage - 1) * maxBar,
-          dataSorted.length
-        )
+    if (false) {
+      console.error('xKey is array');
+      console.error(xKey);
+
+      xKey.forEach(x => {
+        dataSorted = data.map((d, idx) => ({
+          ...d,
+          x: d[x],
+          y: d[yKey]
+        }));
+
+        bars.push(
+          <HorizontalBarSeries
+            animation
+            data={dataSorted.filter(d =>
+              !d.hasOwnProperty('display') ? true : d.display
+            )}
+            barWidth={0.5}
+          />
+        );
+      });
+
+      // get largest value in data
+      max = dataSorted.reduce((prev, current) =>
+        prev.count > current.count ? prev : current
+      ).count;
+
+      // generate labels
+      dataLabels = dataSliced
+        .filter(d => (!d.hasOwnProperty('display') ? true : d.display))
+        .map((d, idx) => ({
+          x: d.count,
+          y: d.y,
+          label: d.count,
+          xOffset: 20,
+          yOffset: 7,
+          style: {fill: '#6A7485'}
+        }));
+    } else {
+      console.error('xKey is not array');
+      console.error(xKey);
+      if (xKey && yKey) {
+        formattedData = data.map((d, idx) => ({
+          ...d,
+          x: d[xKey],
+          y: d[yKey]
+        }));
+      } else {
+        formattedData = data.map((d, idx) => ({
+          ...d,
+          x: d.x
+        }));
+      }
+
+      // slice data for paginated bar chart
+      if (paginationFunc && reverseFunc) {
+        dataSorted = analysisRankingReverse
+          ? formattedData.reverse()
+          : formattedData;
+        dataSliced = dataSorted.slice(
+          (analysisRankingPage - 1) * maxBar,
+          Math.min(
+            maxBar + (analysisRankingPage - 1) * maxBar,
+            dataSorted.length
+          )
+        );
+        dataSliced = dataSliced.reverse();
+      }
+
+      // get largest value in data
+      max = dataSorted.reduce((prev, current) =>
+        prev.x > current.x ? prev : current
+      ).x;
+
+      // generate labels
+      dataLabels = dataSliced
+        .filter(d => (!d.hasOwnProperty('display') ? true : d.display))
+        .map((d, idx) => ({
+          x: d.x,
+          y: d.y,
+          label: d.x.toFixed(2),
+          xOffset: 20,
+          yOffset: 7,
+          style: {fill: '#6A7485'}
+        }));
+
+      //
+      bars.push(
+        <HorizontalBarSeries
+          animation
+          data={dataSliced.filter(d =>
+            !d.hasOwnProperty('display') ? true : d.display
+          )}
+          barWidth={0.5}
+        />
       );
-      dataSorted = dataSorted.reverse();
     }
 
-    // format data
-    let scaledData;
-    {
-      xKey && yKey
-        ? (scaledData = dataSorted.map((d, idx) => ({
-            ...d,
-            x: d[xKey],
-            y: d[yKey]
-          })))
-        : (scaledData = dataSorted.map((d, idx) => ({
-            ...d,
-            x: d.x
-          })));
+    // get bar chart labels
+    let maxDom = 0;
+    while (maxDom < max) {
+      maxDom += 50;
     }
 
     // truncate long y-axis labels
     const MAX_LENGTH = 13;
-    scaledData = scaledData.map(d => ({
-      ...d,
-      // barangay: d.y,
-      y: d.y.length > MAX_LENGTH ? d.y.slice(0, MAX_LENGTH) + '...' : d.y
-    }));
+    // dataSliced = dataSliced.map(d => ({
+    //   ...d,
+    //   y: d.y.length > MAX_LENGTH ? d.y.slice(0, MAX_LENGTH) + '...' : d.y
+    // }));
 
     // labels right of bar
-    const dataLabels = scaledData.filter((d)=>(!d.hasOwnProperty('display')?true:(d.display))).map((d, idx) => ({
-      x: d.x,
-      y: d.y,
-      label: d.x.toFixed(2),
-      xOffset: 20,
-      yOffset: 7,
-      style: {fill: '#6A7485'}
-    }));
-
-    const YLabel = props => (
-      <foreignObject>
-        <div
-          xmlns="http://www.w3.org/1999/xhtml"
-          style={{
-            width: props.containerWidth / props.tickCount,
-            overflow: 'hidden',
-            whiteSpace: 'nowrap'
-          }}
-        >
-          {props.children}
-        </div>
-      </foreignObject>
-    );
 
     function myFormatter(value) {
-      //console.log(value);
-      //console.log('MYFORMATTER');
       return (
         <foreignObject
           x="-90"
@@ -180,59 +270,66 @@ export class BarChart extends Component {
     const FlexibleXYPlot = makeWidthFlexible(XYPlot);
     let maxPage;
 
-    if(paginationFunc && reverseFunc)
-     maxPage = listSize%maxBar==0?Math.floor(listSize/maxBar):Math.floor(listSize/maxBar)+1;
+    if (paginationFunc && reverseFunc)
+      maxPage =
+        listSize % maxBar == 0
+          ? Math.floor(listSize / maxBar)
+          : Math.floor(listSize / maxBar) + 1;
 
-     console.log('bar chart data');
-     console.log(scaledData);
-     console.log(scaledData.filter((d)=>(!d.hasOwnProperty('display')?true:(d.display))));
-     console.log(scaledData.filter((d)=>((d.display))));
-     console.log(dataLabels);
-     
-     
     return (
       <div>
         {title || (paginationFunc && reverseFunc) ? (
           <ControlPanel>
             <div className="control-panel-item">
-              <p className="control-panel__title">{title}</p>            
+              <p className="control-panel__title">{title}</p>
             </div>
-            { paginationFunc && reverseFunc ? (
+            {paginationFunc && reverseFunc ? (
               <div className="control-panel-item">
-              <ControlBtn
-                onClick={() => {
-                  reverseFunc(!visState.analysisRankingReverse);
-                  paginationFunc(1);
-                }}
-              >
-                {visState.analysisRankingReverse ? 
-                <FontAwesomeIcon icon={faSortAmountDown} />              
-                :
-                <FontAwesomeIcon icon={faSortAmountDownAlt} />              
-                }
-              </ControlBtn>
-              <ControlBtn onClick={ ()=> {console.log("button prv " + visState.analysisRankingPage + " " + Math.max(1,visState.analysisRankingPage - 1)); paginationFunc(Math.max(1,visState.analysisRankingPage - 1))}}>
-                <FontAwesomeIcon icon={faAngleLeft} />
-              </ControlBtn>
-              <p>Page {visState.analysisRankingPage} of {maxPage}</p>
-              <ControlBtn onClick={ ()=> {console.log("button nxt " + visState.analysisRankingPage + " " + Math.min(maxPage,visState.analysisRankingPage + 1)); paginationFunc(Math.min(maxPage,visState.analysisRankingPage + 1))}}>
-                <FontAwesomeIcon icon={faAngleRight} />              
-              </ControlBtn>           
-            </div>
-            ) : null }
+                <ControlBtn
+                  onClick={() => {
+                    reverseFunc(!analysisRankingReverse);
+                    paginationFunc(1);
+                  }}
+                >
+                  {analysisRankingReverse ? (
+                    <FontAwesomeIcon icon={faSortAmountDown} />
+                  ) : (
+                    <FontAwesomeIcon icon={faSortAmountDownAlt} />
+                  )}
+                </ControlBtn>
+                <ControlBtn
+                  onClick={() => {
+                    paginationFunc(Math.max(1, analysisRankingPage - 1));
+                  }}
+                >
+                  <FontAwesomeIcon icon={faAngleLeft} />
+                </ControlBtn>
+                <p>
+                  Page {analysisRankingPage} of {maxPage}
+                </p>
+                <ControlBtn
+                  onClick={() => {
+                    paginationFunc(Math.min(maxPage, analysisRankingPage + 1));
+                  }}
+                >
+                  <FontAwesomeIcon icon={faAngleRight} />
+                </ControlBtn>
+              </div>
+            ) : null}
           </ControlPanel>
         ) : null}
 
         <XYPlot
-          xDomain={[0.0, 1.0].map(x => x * 100)}
+          // xDomain={[0.0, 1.0].map(x => x * 100)}
+          xDomain={[0, maxDom]}
           margin={{left: 100, right: 30, top: 25, bottom: 25}}
-          height={height?height:160}
+          height={height ? height : 160}
           width={width}
           yType="ordinal"
         >
           <XAxis
             orientation={'top'}
-            tickValues={[0, 0.5, 1.0].map(x => x * 100)}
+            tickValues={[0, maxDom / 2, maxDom]}
             style={{
               ticks: {stroke: '#6A7485'},
               text: {fill: '#6A7485'},
@@ -256,7 +353,15 @@ export class BarChart extends Component {
         ): null
         } */}
 
-          <HorizontalBarSeries animation data={scaledData.filter((d)=>(!d.hasOwnProperty('display')?true:(d.display)))} barWidth={0.5} />
+          {/* <HorizontalBarSeries
+            animation
+            data={dataSliced.filter(d =>
+              !d.hasOwnProperty('display') ? true : d.display
+            )}
+            barWidth={0.5}
+          /> */}
+          {/* { bars } */}
+
           <LabelSeries
             data={dataLabels}
             labelAnchorX="middle"

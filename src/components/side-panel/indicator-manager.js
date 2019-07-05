@@ -69,9 +69,12 @@ function IndicatorManagerFactory(ChangeCityButton, IndicatorPanel) {
     //   this._toggleSelecting();
     // };
 
+
     render() {
+      
       return (
         <div className="indicator-panel">
+{      console.error('INDICATOR MANAGER!')}
           <IndicatorPanel
             scores={this.props.scores}
             selectedIndicator={this.props.selectedIndicator}

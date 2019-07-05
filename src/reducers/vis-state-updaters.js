@@ -121,8 +121,9 @@ export const INITIAL_VIS_STATE = {
   },
   activeBarangay: null,
   activeAnalysisTab: DEFAULT_ACTIVE_ANALYSIS,
-  analysisRankingPage: DEFAULT_ANALYSIS_RANKING_PAGE,
-  analysisRankingReverse: false,
+  analysisRankingPage: DEFAULT_ANALYSIS_RANKING_PAGE,  
+  tdRankingPage: DEFAULT_ANALYSIS_RANKING_PAGE,
+  tdRankingReverse: false,
 };
 
 function updateStateWithLayerAndData(state, {layerData, layer, idx}) {
@@ -1354,5 +1355,25 @@ export const setAnalysisReverse = (state, action) => {
   return {
     ...state,
     analysisRankingReverse: action.info,
+  };
+}; 
+
+export const changeTDRankPage = (state, action) => {
+  console.log("**************" + action);
+  console.log(action);
+  console.log(action.info);
+  return {
+    ...state,
+    tdRankingPage: action.info,
+  };
+};
+
+export const setTDReverse = (state, action) => {
+  console.log("**************" + action);
+  console.log(action);
+  console.log(action.info);
+  return {
+    ...state,
+    tdRankingReverse: action.info,
   };
 }; 

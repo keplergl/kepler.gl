@@ -25,15 +25,16 @@ import {ArrowRight} from 'components/common/icons';
 
 const StyledSidePanelContainer = styled.div`
   z-index: 99;
-  height: 70%;
+  // height: 70%;
+  height: 100vh;
   width: ${props => props.width + 2 * props.theme.sidePanel.margin.left}px;
   display: flex;
   transition: width 250ms;
   position: absolute;
-  padding-top: ${props => props.theme.sidePanel.margin.top}px;
-  padding-right: ${props => props.theme.sidePanel.margin.right}px;
-  padding-bottom: ${props => props.theme.sidePanel.margin.bottom}px;
-  padding-left: ${props => props.theme.sidePanel.margin.left}px;
+  // padding-top: ${props => props.theme.sidePanel.margin.top}px;
+  // padding-right: ${props => props.theme.sidePanel.margin.right}px;
+  // padding-bottom: ${props => props.theme.sidePanel.margin.bottom}px;
+  // padding-left: ${props => props.theme.sidePanel.margin.left}px;
 `;
 
 const SideBarContainer = styled.div`

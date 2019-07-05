@@ -83,6 +83,8 @@ const StyledIndicator=styled.div`
   }
 `;
 function IndicatorFactory() {
+
+  console.error('INDICATOR FACTORY');
   const Indicator = ({id, label, description, score, selected, onConfigChange, filter, setFilter}) => (
     <StyledIndicator>
       <Style

@@ -61,7 +61,9 @@ import {
   setActiveBarangay,
   updateActiveAnalysisTabUpdater,
   changeAnalysisRankPage,
-  setAnalysisReverse
+  setAnalysisReverse,
+  changeTDRankPage,
+  setTDReverse,
 } from './vis-state-updaters';
 
 const actionHandler = {
@@ -135,6 +137,8 @@ const actionHandler = {
   [ActionTypes.TOGGLE_ACTIVE_ANALYSIS]: updateActiveAnalysisTabUpdater,
   [ActionTypes.CHANGE_ANALYSIS_RANK_PAGE]: changeAnalysisRankPage,
   [ActionTypes.SORT_ANALYSIS_REVERSE]: setAnalysisReverse,
+  [ActionTypes.CHANGE_TD_RANK_PAGE]: changeTDRankPage,
+  [ActionTypes.SORT_TD_REVERSE]: setTDReverse,
 };
 
 // construct vis-state reducer

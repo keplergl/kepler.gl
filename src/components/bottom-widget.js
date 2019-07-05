@@ -27,18 +27,20 @@ import {Close, Clock, LineChart} from 'components/common/icons';
 
 import PropTypes from 'prop-types';
 import TimeWidgetFactory from './filters/time-widget';
-import { INDICATORS, ANALYSIS_TABS_DEF, ANALYSIS_TABS_BGY } from 'utils/filter-utils';
+import { INDICATORS, ANALYSIS_TABS_DEF, AMENITY_DATA_INDICES, OD_DATA_INDICES, ANALYSIS_TABS_BGY, BGY_DATA_DISPLAY } from 'utils/filter-utils';
 
 import {scaleLinear} from 'd3-scale';
 
 import BarChartFactory from './plexus-analysis/bar-chart';
 import ParallelCoordinatesKFactory from './plexus-analysis/parallel-coordinates';
 import DonutChartFactory from './plexus-analysis/donut-chart';
+import StackedBarChartFactory from './plexus-analysis/stacked-bar';
 
 import {
   RadialChart
 } from 'react-vis';
 import { SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER } from 'constants';
+// import { StackedBarChart } from './plexus-analysis/stacked-bar';
 
 
 const innerPdSide = 32;
@@ -59,7 +61,7 @@ const propTypes = {
 const maxWidth = 1080;
 const modMaxWidth = 1400;
 
-BottomWidgetFactory.deps = [TimeWidgetFactory, BarChartFactory, ParallelCoordinatesKFactory, DonutChartFactory];
+BottomWidgetFactory.deps = [TimeWidgetFactory, BarChartFactory, ParallelCoordinatesKFactory, DonutChartFactory, StackedBarChartFactory];
 
 const AnalysisSectionToggle = ({activeTab, update, barangay}) => (
   <Tabs>
@@ -288,56 +290,7 @@ const StyledTitle = CenterFlexbox.extend`
   }
 `;
 
-
-
-/**
- * Generates all layers available for the current map
- * TODO: this may be moved into map-container or map-control or even at the reducer level
- * @param layers
- * @param mapLayers
- * @returns {[id, label, isVisible]}
- */
-const layerSelector = (layers, mapLayers) => {
-  const availableItems = Object.keys(layers).reduce(
-    (availableLayers, currentLayerId) => {
-      // is available ? if yes add to available list
-      const currentLayer = layers[currentLayerId];
-      // if maplayers exists we need to make sure currentlayer
-      // is contained in mapLayers in order to add onto availableLayers
-      // otherwise we add all layers
-
-      const layerConfig = mapLayers
-        ? mapLayers[currentLayer.id]
-        : currentLayer.config;
-
-      const mustBeAdded =
-        mapLayers && mapLayers[currentLayer.id]
-          ? mapLayers[currentLayer.id].isAvailable
-          : layerConfig.isVisible;
-
-      return mustBeAdded
-        ? [
-            ...availableLayers,
-            {
-              id: currentLayer.id,
-              name: currentLayer.config.label,
-              isVisible:
-                mapLayers && mapLayers[currentLayer.id]
-                  ? mapLayers[currentLayer.id].isVisible
-                  : layerConfig.isVisible,
-              layer: currentLayer
-            }
-          ]
-        : availableLayers;
-    },
-    []
-  );
-
-  return availableItems;
-};
-
-
-export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordinatesK, DonutChart) {
+export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordinatesK, DonutChart, StackedBarChart) {
 
   const BottomWidget = (props) => {
     const {
@@ -350,8 +303,9 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
       sidePanelWidth,
       selected,
       visState,
-      layers,
-      mapLayers
+      layers, // for domain+colors / TODO: move somewhere else
+      mapLayers, // for domain+colors / TODO: move somewhere else
+      legends
     } = props;
     const {activeSidePanel} = uiState;
     const isOpen = Boolean(activeSidePanel);
@@ -359,10 +313,6 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
 
     const DEFAULT_LIST = 5;
     const SCALE = 1;
-
-    const tdIndex = 6;
-    const bgyNameIndex = 1;
-    const currView = selected;
     
     let cityMeans = [];
     var indicatorValues = [];
@@ -370,77 +320,30 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
 
     let maxListSize = DEFAULT_LIST;
     let bgyIncl;
+    let amtyCnt;
+    let destCnt;
     let bgy;    
     let ranking;
-
-    // DONUT STUFF 
-
-
-    let myData = [{angle: 1, radius: 1}, {angle: 3, radius: 1}, {angle: 2, radius: 1}];
-    let donutLayer;
-    
-    if(layers !== undefined && layers.length > 0) {
-
-      let layerSelector2 = (state) => layers;
-      let mapLayersSelector = (state) => mapLayers;
-      
-      //console.log('donutdatatest');
-      let initialDataSelector = createSelector(
-        layerSelector2,
-        mapLayersSelector,
-        layerSelector
-      );
-
-      let pLayers=initialDataSelector(layers, mapLayers);
-      //console.log(pLayers);
-      if(pLayers) {
-        let items = pLayers.filter(item => item.isVisible).map(item => item.layer);
-        //console.log(items);
-        items.map((layer, index) => {
-          
-          if (!layer.isValidToSave()) {
-            //console.log('ngek');
-          } else {
-            if(layer.config.label=='Barangay') {
-              //console.log('THIS IS THE BGY LAYER (MULTI)');
-              //console.log(layer);
-              donutLayer = layer;
-            } else console.log(layer.name);
-          }
-        });
-      }
-    }
-
-    // END DONUT STUFF
-    
-    //console.log("bottom-widget.js: active bgy:");
-    //console.log(visState.activeBarangay);
-    //console.log("bottom-widget.js: active bgy:");
+    let bgyRef = {};
+   
 
     if(datasets.barangays) {
       if(datasets.barangays.data) {
-        console.log('bw datasets');
+        console.log('Check barangay dataset json format');
         console.log(datasets);
         maxListSize = Math.min(DEFAULT_LIST, datasets.barangays.data.length);
 
-        bgyIncl = datasets.barangays.data.map((d, idx) => ({
-          [datasets.barangays.fields[1].name]: d[datasets.barangays.fields[1].tableFieldIndex - 1],
-          [datasets.barangays.fields[2].name]: d[datasets.barangays.fields[2].tableFieldIndex - 1],
-          [datasets.barangays.fields[3].name]: d[datasets.barangays.fields[3].tableFieldIndex - 1],
-          // LATITUDE [datasets.barangays.fields[4].name]: d[datasets.barangays.fields[4].tableFieldIndex - 1],
-          // LONGITUDE [datasets.barangays.fields[5].name]: d[datasets.barangays.fields[5].tableFieldIndex - 1],
-          [datasets.barangays.fields[6].name]: d[datasets.barangays.fields[6].tableFieldIndex - 1],
-          [datasets.barangays.fields[7].name]: d[datasets.barangays.fields[7].tableFieldIndex - 1],
-          [datasets.barangays.fields[8].name]: d[datasets.barangays.fields[8].tableFieldIndex - 1],
-          [datasets.barangays.fields[9].name]: d[datasets.barangays.fields[9].tableFieldIndex - 1],
-          [datasets.barangays.fields[10].name]: d[datasets.barangays.fields[10].tableFieldIndex - 1],
-          [datasets.barangays.fields[11].name]: d[datasets.barangays.fields[11].tableFieldIndex - 1],
-          [datasets.barangays.fields[12].name]: d[datasets.barangays.fields[12].tableFieldIndex - 1],
-          [datasets.barangays.fields[13].name]: d[datasets.barangays.fields[13].tableFieldIndex - 1],
-          [datasets.barangays.fields[14].name]: d[datasets.barangays.fields[14].tableFieldIndex - 1],
-          [datasets.barangays.fields[15].name]: d[datasets.barangays.fields[15].tableFieldIndex - 1],
-        }));
-        bgyIncl = bgyIncl.sort((a, b) => b[currView] - a[currView]);
+        // formatted barangay data
+        bgyIncl = [];
+        datasets.barangays.data.forEach((d) => {
+          let obj = {}
+          BGY_DATA_DISPLAY.forEach((b) => {
+            obj[b.id] = d[b.idx];
+          });
+          bgyRef[obj['id']] = obj['name'];          
+          bgyIncl.push(obj);
+        });
+        bgyIncl = bgyIncl.sort((a, b) => b[selected] - a[selected]);
         
 
         datasets.barangays.fields.forEach((e) => {
@@ -460,7 +363,6 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
           label: datasets.barangays.fields[idx].name,
           display: datasets.barangays.fields[idx].name != '_geojson' && datasets.barangays.fields[idx].name != 'latitude' && datasets.barangays.fields[idx].name != 'longitude' && datasets.barangays.fields[idx].name != 'id',
         }));
-        // bgy = bgy.filter(e => e.label != '_geojson' && e.label != 'latitude' && e.label != 'longitude');
 
         bgy = bgy.map((d, idx) => ({
           ...d,
@@ -472,12 +374,50 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
         ranking = bgyIncl.findIndex(b => b['name'] == visState.activeBarangay[1]) + 1;
         console.log('rank ' + ranking); 
         console.log(bgy);       
+
+        // amenities
+        let inserted = {};
+        amtyCnt = [];
+        datasets.amenities.allData.forEach(d => {
+          let key = d[AMENITY_DATA_INDICES['class']];
+          if(d[AMENITY_DATA_INDICES['barangay']] == bgy.filter(b => b['label'] == 'name')[0].x) {
+            if(key in inserted) {
+              amtyCnt.filter(a=>a.name==key)[0].count += 1;
+            } else {
+              inserted[key] = 0;
+              amtyCnt.push({
+                name: key,
+                count: 1,
+              });
+            }
+          }
+        });
+
+        // destinations
+        inserted = {};
+        destCnt = [];
+        datasets.pairs.allData.forEach(d => {
+          let key = d[OD_DATA_INDICES['d_id']];
+          if(key == bgy.filter(b => b['label'] == 'id')[0].x) {
+            if(key in inserted) {
+              destCnt.filter(d=>d.id==key)[0].count += d[OD_DATA_INDICES['count']];
+            } else {
+              inserted[key] = 0;
+              destCnt.push({
+                name: bgyRef[key],
+                id: key,
+                count: d[OD_DATA_INDICES['count']],
+              });
+            }
+          }
+          
+        });
       } else {
         console.log('no active bgy');
       }
     }
 
-    const ACTIVE_INDICATOR_LABEL = INDICATORS[INDICATORS.findIndex(d => d.value == currView)].label;
+    const ACTIVE_INDICATOR_LABEL = INDICATORS[INDICATORS.findIndex(d => d.value == selected)].label;
 
     return (
       <WidgetContainer width={0}>
@@ -493,7 +433,7 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
               <Close height="12px" onClick={() => {console.log("close button click!")}} />
             </IconRoundSmall> */}
           </TopSectionWrapper>
-          <AnalysisSectionWrapper> {/* TODO: currently in TD mode, make dynamic according to tabs */}
+          <AnalysisSectionWrapper>
             
             {visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_DEF.profile.value && bgyIncl ?
               (
@@ -538,9 +478,9 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
               ) : null}
             <BreakdownAnalysis>
 
-              {/* baranggay PROFILE TAB */}
+              {/* barangay selected*/}
               
-              {visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_BGY.profile.value ?
+              {/* {visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_BGY.profile.value ?
                 (<div className="breakdown-analysis__section">
                   <BarChart 
                     height={300}
@@ -548,83 +488,77 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
                     data={bgy.filter(e => typeof e.x == 'number' && e.label != 'population' && e.label !='income')}/>
                 </div>
               ) : null }
+
+              {visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_BGY.profile.value ?
+                (<div className="breakdown-analysis__section">
+                  <BarChart 
+                    data={amtyCnt}       
+                    xKey={'count'}
+                    yKey={'name'}
+                    title={'City Amenities'}
+                    height={250}
+                    />
+                </div>
+              ) : null } */}
+
+              {/* {visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_BGY.profile.value ? */}
+                {/* (<div className="breakdown-analysis__section">
+                  <BarChart 
+                    data={destCnt.sort((a, b) => b['count'] - a['count']).slice(0,10).reverse()}       
+                    xKey={'count'}
+                    yKey={'name'}
+                    title={'Frequently Visited Destinations'}
+                    height={250}
+                    />
+                </div>
+              ) : null } */}
               
 
-              {/* general PROFILE TAB */}
-
-              {false && !visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_DEF.profile.value && bgyIncl ?
-                (
-                  <BarangayInfo>
-                    <div className="barangay-info__section">
-                      <BarangayInfoWrapper>
-                        <div className="barangay-info__wrapper__label">
-                          Average Population:
-                        </div>
-                        <div className="barangay-info__wrapper__value">
-                          3892083
-                        </div>
-                      </BarangayInfoWrapper>
-                      <BarangayInfoWrapper>
-                        <div className="barangay-info__wrapper__label">
-                          Average Income:
-                        </div>
-                        <div className="barangay-info__wrapper__value">
-                          203003
-                        </div>
-                      </BarangayInfoWrapper>
-                    
-                    </div>
-                    <div className="barangay-info__section">
-                      <BarangayInfoWrapper>
-                        <div className="barangay-info__wrapper__label">
-                          {ACTIVE_INDICATOR_LABEL} Ranking:
-                        </div>
-                        <div className="barangay-info__wrapper__value">
-                          {ranking}/{bgyIncl.length}
-                        </div>
-                      </BarangayInfoWrapper>
-                    </div>
-                  </BarangayInfo>
-                ) : null}
-
-              {!visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_DEF.profile.value && bgyIncl && donutLayer ? (
+              {/* indicator overview */}
+              {/* {!visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_DEF.profile.value && bgyIncl ? (
                 <div className="breakdown-analysis__section">
-                  <DonutChart
-                    title={ACTIVE_INDICATOR_LABEL + ' Proportion'}
-                    scaleType={donutLayer.config.colorScale}
-                    displayLabel
-                    domain={donutLayer.config.colorDomain}
-                    fieldType={(donutLayer.config.colorField && donutLayer.config.colorField.type) || 'real'}
-                    range={donutLayer.config.visConfig.colorRange.colors}
-                    activeIndicator={currView} 
-                    data={bgyIncl}
+                  <StackedBarChart
+                    title={'Survey Sample'}
+                    values={[1021,30210 - 1021]}
                      />
+                </div>
+              ) : null} */}
+
+              {!visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_DEF.profile.value && bgyIncl ? (
+                <div className="breakdown-analysis__section">
+                  <StackedBarChart
+                    title={ACTIVE_INDICATOR_LABEL + ' Proportion'}
+                    activeIndicator={selected} 
+                    data={bgyIncl}
+                    legends={legends}                    
+                    // values={[1021,30210 - 1021]}
+                     />
+                  {/* <DonutChart
+                    title={ACTIVE_INDICATOR_LABEL + ' Proportion'}
+                    displayLabel
+                    activeIndicator={selected} 
+                    data={bgyIncl}
+                    legends={legends}
+                     /> */}
                 </div>
               ) : null}
 
-              {!visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_DEF.profile.value && bgyIncl ? (
+              {/* {!visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_DEF.profile.value && bgyIncl ? (
                 <div className="breakdown-analysis__section">
                   <BarChart 
                     listSize={bgyIncl.length}
                     maxBar={maxListSize}
                     data={bgyIncl}       
-                    xKey={currView}
+                    xKey={selected}
                     yKey={'name'}
                     title={ACTIVE_INDICATOR_LABEL + ' Scores'}
                     paginationFunc={visStateActions.changeAnalysisRankPage}
                     reverseFunc={visStateActions.sortAnalysisReverse}
-                    visState={visState}
-                    
+                    analysisRankingReverse={visState.analysisRankingReverse}
+                    analysisRankingPage={visState.analysisRankingPage}
                     />
                 </div>
-              ) : null}
-
-              {/* {!visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_DEF.profile.value && bgyIncl ?
-                (<div className="breakdown-analysis__section">
-                  <ParallelCoordinatesK 
-                    data={bgyIncl}/>
-                </div> ) : null} */}
-
+              ) : null} */}
 
               {/* general TRANSPORT DESIRABILITY TAB */}
 
@@ -637,16 +571,17 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
                 </div>
               ) : null } */}
 
+              {/* CURRENTLY UNUSED */}
               {!visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_DEF.transportDesirability.value ?
               (
                 <RankingAnalysis>
                   <div className="ranking-analysis__section">
                     <RankingWrapper>
                       <div className="ranking-wrapper__score ranking-wrapper__score--bad">
-                        {(cityMeans[cityMeans.findIndex(d => d.value == currView)].x * SCALE).toFixed(2)}%
+                        {(cityMeans[cityMeans.findIndex(d => d.value == selected)].x * SCALE).toFixed(2)}%
                       </div>
                       <div className="ranking-wrapper__label">
-                        {INDICATORS[INDICATORS.findIndex(d => d.value == currView)].label} {currView != 'desirability' ? 'Indicator' : ''} Score
+                        {INDICATORS[INDICATORS.findIndex(d => d.value == selected)].label} {selected != 'desirability' ? 'Indicator' : ''} Score
                       </div>
                     </RankingWrapper>
                   </div>
@@ -662,7 +597,7 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
                 <div className="breakdown-analysis__section">
                   <BarChart 
                     data={bgyIncl.slice(bgyIncl.length - maxListSize, bgyIncl.length).reverse()}
-                    xKey={currView}
+                    xKey={selected}
                     yKey={'name'}
                     title={'Bottom ' + maxListSize + ' ' + ACTIVE_INDICATOR_LABEL  + ' Scores'}/>
                 </div>

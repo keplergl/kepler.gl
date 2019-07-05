@@ -118,8 +118,8 @@ export default class ColorLegend extends Component {
     (domain, range, scaleType, labelFormat, fieldType) => {
       const scaleFunction = SCALE_FUNC[scaleType];
       // color scale can only be quantize, quantile or ordinal
-      console.error(domain);
-      console.error(range);
+      // console.error(domain);
+      // console.error(range);
       const scale = scaleFunction()
         .domain(domain)
         .range(range);

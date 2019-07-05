@@ -39,6 +39,17 @@ function OverviewManagerFactory(OverviewPanel) {
       return (
         <div className="overview-panel">
           <OverviewPanel
+            scores={this.props.scores}
+            selectedIndicator={this.props.selectedIndicator}
+            onConfigChange={this.props.onConfigChange}
+            filters={this.props.filters}
+            datasets={this.props.datasets}            
+            setFilter={this.props.setFilter}
+            paginationFunc={this.props.paginationFunc}
+            reverseFunc={this.props.reverseFunc}
+            rankingReverse={this.props.rankingReverse}
+            rankingPage={this.props.rankingPage}
+            legends={this.props.legends}
           />
         </div>
       );
