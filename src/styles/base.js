@@ -165,6 +165,7 @@ export const sidePanelDarkBg = '#18273e';
 export const sideBarCloseBtnBgd = secondaryBtnBgd;
 export const sideBarCloseBtnColor = '#29323C';
 export const sideBarCloseBtnBgdHover = secondaryBtnActBgd;
+export const sideBarScrollBg = '#4e6e9e';
 
 // export const panelBackground = '#29323C';
 export const panelBackground = '#18273E';
@@ -609,12 +610,12 @@ const sidePanelScrollBar = css`
   }
 
   ::-webkit-scrollbar-track {
-    background: ${props => props.theme.sidePanelBg};
+    background: ${props => props.theme.sideBarScrollBg};
   }
 
   ::-webkit-scrollbar-thumb {
     border-radius: 10px;
-    background: ${props => props.theme.panelBackgroundHover};
+    background: ${props => props.theme.labelColor};
     border: 3px solid ${props => props.theme.sidePanelBg};
 
     :hover {

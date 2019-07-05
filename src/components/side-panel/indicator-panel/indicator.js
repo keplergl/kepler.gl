@@ -75,15 +75,15 @@ const Style = styled.button`
   display: flex;
   flex-direction:row;
   text-align: left;
-  margin: 10px 10px 10px 0px;
+  margin: 10px 10px 1px 0px;
   width:100%;
   font-size: 0.8em;
   font-weight:600;
-  background-color: ${props => props.theme.sidePanelBg}; 
-  padding: 5px; 
+  background-color: ${props => props.theme.sidePanelBg};
   :hover {
     //color: #C3C9C5;
-    background-color: #3a4b5e;
+    //background-color: #3a4b5e;
+    opacity:0.7;
   }
 `;
 
@@ -100,12 +100,19 @@ const StyledIndicator=styled.div`
       border-radius: 100%;
       width: 10px;
       height: 10px;
-      margin-right: 5px;
+      margin-right: 10px;
       border: 2px #767b78 solid;
       background-color: #1fbad6;
     }
   }
 `;
+
+const StyledRangeFilterContainer = styled.div`
+  background-color: #395379;
+  padding:10px;
+  margin: 0px 6px 0px 6px;
+`;
+
 function IndicatorFactory() {
   const Indicator = ({id, label, description, score, selected, onConfigChange, filter, setFilter}) => (
     <StyledIndicator>
@@ -124,10 +131,10 @@ function IndicatorFactory() {
           <StyleMessage>{description}</StyleMessage>
         </Tooltip>
       ) : null}
-      {selected?<RangeFilter
+      {selected?<StyledRangeFilterContainer><RangeFilter
                 filter={filter}
                 setFilter={setFilter}
-                />:null}
+                /></StyledRangeFilterContainer>:null}
     </StyledIndicator>
   );
 

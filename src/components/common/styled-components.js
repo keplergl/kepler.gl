@@ -122,7 +122,7 @@ export const SidePanelSection = styled.div.attrs({
 export const SidePanelDivider = styled.div.attrs({
   className: 'side-panel-divider'
 })`
-  border-bottom: 1px solid ${props => props.theme.panelBorderColor};
+  border-bottom: 1px solid #69778c;
   height: 12px;
   margin-bottom: 12px;
 `;
