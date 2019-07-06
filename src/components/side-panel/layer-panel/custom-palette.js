@@ -11,6 +11,7 @@ import ColorPalette from './color-palette';
 import SketcherModal from './modal'
 import ModalDialog from 'components/common/modal'
 import Modal from "react-modal";
+import CustomPicker from './customPicker'
 
 const StyledSortableItem = styled.div`
   display: flex;
@@ -201,7 +202,7 @@ class CustomPalette extends React.Component {
 
   _onSwatchClick = (index) => {
     this.setState({
-      showSketcher: !this.state.showSketcher,
+      showSketcher: true,
       currentSwatchIndex: index
     })
   }
@@ -212,11 +213,11 @@ class CustomPalette extends React.Component {
     });
   };
 
-  handleClickOutside = e => {
-    this.setState({
-      showSketcher: false
-    });
-  };
+  // handleClickOutside = e => {
+  //   this.setState({
+  //     showSketcher: false
+  //   });
+  // };
 
   _onApply = (event) => {
     const { colors } = this.props.customPalette;
@@ -256,6 +257,8 @@ class CustomPalette extends React.Component {
         </StyledColorRange>
 
 
+
+
         <SortableContainer className="custom-palette-container"
           onSortEnd={this._onSortEnd}
           lockAxis="y"
@@ -271,6 +274,7 @@ class CustomPalette extends React.Component {
               <DragHandle className="layer__drag-handle">
                 <VertDots height="20px" />
               </DragHandle>
+
               <StyledSwatch
                 color={color}
                 onClick={() => this._onSwatchClick(index)} >
@@ -278,15 +282,19 @@ class CustomPalette extends React.Component {
 
               {this.state.showSketcher && this.state.currentSwatchIndex === index ?
                 <div>
-                  <Modal
+                  {/* <Modal
                     isOpen={this.state.showSketcher}
                     style={customStyles}
                     ariaHideApp={false}
-                  >
-                    <MyPicker
+                  > */}
+                    <CustomPicker
+                     color={color}
+                      onChange={this._onColorUpdate}
+                      onSwatchClose={this._onSwatchClose} />
+                    {/* <MyPicker
                       color={color}
-                      onChange={this._onColorUpdate} />
-                  </Modal>
+                      onChange={this._onColorUpdate} /> */}
+                  {/* </Modal> */}
                 </div>
                 : null}
 
