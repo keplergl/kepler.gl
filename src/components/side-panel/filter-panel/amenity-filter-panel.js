@@ -18,23 +18,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {createSelector} from 'reselect';
+import { createSelector } from 'reselect';
 import styled from 'styled-components';
 import PanelHeaderAction from 'components/side-panel/panel-header-action';
 import FieldSelector from 'components/common/field-selector';
-import {Trash, Clock} from 'components/common/icons';
+import { Trash, Clock } from 'components/common/icons';
 import SourceDataSelector from 'components/side-panel/source-data-selector';
-import {StyledPanelHeader} from 'components/common/styled-components';
+import { StyledPanelHeader } from 'components/common/styled-components';
 import * as Filters from 'components/filters';
+import Checkbox from 'components/common/checkbox';
 
-import {FILTER_TYPES, FILTER_COMPONENTS} from 'utils/filter-utils';
-import {ALL_FIELD_TYPES} from 'constants/default-settings';
+import { FILTER_TYPES, FILTER_COMPONENTS } from 'utils/filter-utils';
+import { ALL_FIELD_TYPES } from 'constants/default-settings';
+
+const StyledLabel = styled.div`
+  font-size: 1.2em;
+  font-weight:400;
+  margin-bottom:10px;
+`;
 
 const StyledFilterPanel = styled.div`
   margin-bottom: 12px;
   border-radius: 1px;
+  background-color: white;
 
   .filter-panel__filter {
     margin-top: 24px;
@@ -51,8 +59,27 @@ const StyledFilterContent = styled.div`
   padding: 12px;
 `;
 
-function FilterPanelFactory() {
-  return class FilterPanel extends Component {
+const CheckboxContainer = styled.div`
+  margin-bottom: 10px;
+`;
+
+const StyledResetButton = styled.div`
+  background-color: ${props => props.theme.labelColor};
+  color: ${props => props.theme.panelBackground};
+  font-weight: 400;
+  margin-top: 15px;
+  padding: 5px;
+  width: 30%;
+  text-align: center;
+  cursor: pointer;
+
+  :hover {
+    opacity: 0.7;
+  }
+`;
+
+function AmenityFilterPanelFactory() {
+  return class AmenityFilterPanel extends Component {
     static propTypes = {
       idx: PropTypes.number,
       filters: PropTypes.arrayOf(PropTypes.any).isRequired,
@@ -65,6 +92,7 @@ function FilterPanelFactory() {
       showDatasetTable: PropTypes.func,
       isAnyFilterAnimating: PropTypes.bool
     };
+
 
     /* selectors */
     fieldsSelector = props =>
@@ -89,80 +117,86 @@ function FilterPanelFactory() {
         )
     );
 
-    render() {
+    onCheckedOption(checked, option) {
       const {
         datasets,
         enlargeFilter,
         filter,
+        filters,
         idx,
         isAnyFilterAnimating,
         removeFilter,
         setFilter,
         toggleAnimation
       } = this.props;
-      const {name, enlarged, type, dataId} = filter;
-      const FilterComponent = type && Filters[FILTER_COMPONENTS[type]];
+
+      if (checked) {
+        filter.value.pop(option);
+      } else {
+        filter.value.push(option);
+      }
+      setFilter(idx, 'value', filter.value);
+    }
+
+    onResetClicked(option) {
+      const {
+        datasets,
+        enlargeFilter,
+        filter,
+        filters,
+        idx,
+        isAnyFilterAnimating,
+        removeFilter,
+        setFilter,
+        toggleAnimation
+      } = this.props;
+
+      filter.value = [];
+      
+      setFilter(idx, 'value', filter.value);
+    }
+
+    render() {
+      const {
+        datasets,
+        enlargeFilter,
+        filter,
+        filters,
+        idx,
+        isAnyFilterAnimating,
+        removeFilter,
+        setFilter,
+        toggleAnimation,
+        label
+      } = this.props;
+      const { name, enlarged, type, dataId } = filter;
+      const AmenityFilterPanel = type && Filters[FILTER_COMPONENTS[type]];
       const allAvailableFields = this.availableFieldsSelector(this.props);
 
+      var categories = filter.domain;
+
       return (
-        <StyledFilterPanel className="filter-panel">
-          {/* <StyledFilterHeader className="filter-panel__header"
-            labelRCGColorValues={datasets[dataId].color}>
-            <div style={{flexGrow: 1}}>
-              <FieldSelector
-                inputTheme="secondary"
-                fields={allAvailableFields}
-                value={name}
-                erasable={false}
-                onSelect={value => setFilter(idx, 'name', value.name)}
-              />
-            </div>
-            <PanelHeaderAction
-              id={filter.id}
-              tooltip="delete"
-              tooltipType="error"
-              onClick={removeFilter}
-              hoverColor={'errorColor'}
-              IconComponent={Trash}
-            />
-            {type === FILTER_TYPES.timeRange && (
-              <PanelHeaderAction
-                id={filter.id}
-                onClick={enlargeFilter}
-                tooltip="Time Playback"
-                IconComponent={Clock}
-                active={enlarged}
-              />
-            )}
-          </StyledFilterHeader> */}
-          <StyledFilterContent className="filter-panel__content">
-            {/* {Object.keys(datasets).length > 1 && (
-              <SourceDataSelector
-                inputTheme="secondary"
-                datasets={datasets}
-                disabled={filter.freeze}
-                dataId={filter.dataId}
-                onSelect={value => setFilter(idx, 'dataId', value)}
-              />
-            )} */}
-            {dataId + ' - ' + name}
-            {type &&
-            !enlarged && (
-              <div className="filter-panel__filter">
-                <FilterComponent
-                  filter={filter}
-                  idx={idx}
-                  isAnyFilterAnimating={isAnyFilterAnimating}
-                  toggleAnimation={toggleAnimation}
-                  setFilter={value => setFilter(idx, 'value', value)}
-                /> 
-              </div>
-            )}
-          </StyledFilterContent>
-        </StyledFilterPanel>
+        <div>
+          <StyledLabel>{label}</StyledLabel>
+          <StyledFilterPanel className="filter-panel">
+            <StyledFilterContent className="filter-panel__content"> 
+              {categories.map(category => (
+                <CheckboxContainer>
+                  <Checkbox
+                    id={category}
+                    label={category}
+                    value={category}
+                    checked={filter.value.indexOf(category) >= 0}
+                    onChange={() => this.onCheckedOption(filter.value.indexOf(category) >= 0, category)}
+                  />
+                </CheckboxContainer>
+              ))}
+              <StyledResetButton onClick={() => this.onResetClicked('Others')}>Clear All</StyledResetButton>
+            </StyledFilterContent>
+          </StyledFilterPanel></div>
       );
     }
   }
 }
 
-export default FilterPanelFactory;
+export default AmenityFilterPanelFactory;

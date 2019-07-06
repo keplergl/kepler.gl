@@ -32,7 +32,9 @@ export const borderColor = '#3A414C';
 export const borderColorLight = '#F1F1F1';
 
 // TEXT
-export const labelColor = '#6A7485';
+// export const labelColor = '#6A7485';
+// export const  labelColor = '#242730';
+export const labelColor = '#C3C9C5';
 export const labelHoverColor = '#C6C6C6';
 export const labelColorLT = '#6A7485';
 
@@ -44,7 +46,8 @@ export const subtextColor = '#6A7485';
 export const subtextColorLT = '#A0A7B4';
 export const subtextColorActive = '#FFFFFF';
 
-export const titleTextColor = '#FFFFFF';
+// export const titleTextColor = '#FFFFFF';
+export const titleTextColor = '#C3C9C5';
 export const textColorHl = '#D3D8E0';
 export const textColorHlLT = '#F1F1F1';
 export const activeColor = '#1FBAD6';
@@ -154,13 +157,18 @@ export const checkboxBoxBgd = 'white';
 export const checkboxBoxBgdChecked = primaryBtnBgd;
 
 // Side Panel
-export const sidePanelHeaderBg = '#29323C';
-export const sidePanelBg = '#242730';
+export const sidePanelHeaderBg = '#18273e';
+// export const sidePanelBg = '#242730'
+// export const sidePanelBg = '#EBF5EE';
+export const sidePanelBg = '#2C3C54';
+export const sidePanelDarkBg = '#18273e';
 export const sideBarCloseBtnBgd = secondaryBtnBgd;
 export const sideBarCloseBtnColor = '#29323C';
 export const sideBarCloseBtnBgdHover = secondaryBtnActBgd;
+export const sideBarScrollBg = '#4e6e9e';
 
-export const panelBackground = '#29323C';
+// export const panelBackground = '#29323C';
+export const panelBackground = '#18273E';
 export const panelBackgroundHover = '#3A4552';
 export const panelActiveBg = '#3A4552';
 export const panelActiveBgLT = '#6A7485';
@@ -358,6 +366,9 @@ const chickletedInput = css`
   margin-bottom: 2px;
   padding: 4px 7px 4px 4px;
   white-space: normal;
+  color: ${props => props.theme.panelBackground};
+  background-color: ${props => props.theme.labelColor};
+  border:none;
 `;
 
 const inlineInput = css`
@@ -599,12 +610,12 @@ const sidePanelScrollBar = css`
   }
 
   ::-webkit-scrollbar-track {
-    background: ${props => props.theme.sidePanelBg};
+    background: ${props => props.theme.sideBarScrollBg};
   }
 
   ::-webkit-scrollbar-thumb {
     border-radius: 10px;
-    background: ${props => props.theme.panelBackgroundHover};
+    background: ${props => props.theme.labelColor};
     border: 3px solid ${props => props.theme.sidePanelBg};
 
     :hover {

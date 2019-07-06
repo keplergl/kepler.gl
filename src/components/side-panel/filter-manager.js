@@ -29,13 +29,14 @@ import {
 import {Add} from 'components/common/icons';
 import SourceDataCatalogFactory from './source-data-catalog';
 import FilterPanelFactory from './filter-panel/filter-panel';
+import AmenityFilterPanelFactory from './filter-panel/amenity-filter-panel';
 
 FilterManagerFactory.deps = [
   SourceDataCatalogFactory,
-  FilterPanelFactory
+  AmenityFilterPanelFactory
 ];
 
-function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
+function FilterManagerFactory(SourceDataCatalog, AmenityFilterPanel) {
   return class FilterManager extends Component {
     static propTypes = {
       datasets: PropTypes.object,
@@ -82,9 +83,10 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
             {filters &&
               filters.map((filter, idx) => (
                 filter.id == "amenities_filter" ?
-                <FilterPanel
+                <AmenityFilterPanel
                   key={`${filter.id}-${idx}`}
                   idx={idx}
+                  label='Spatial Amenities'
                   filters={filters}
                   filter={filter}
                   datasets={datasets}
@@ -93,7 +95,8 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
                   enlargeFilter={() => this.props.enlargeFilter(idx)}
                   toggleAnimation={() => this.props.toggleAnimation(idx)}
                   setFilter={this.props.setFilter}
-                /> : null
+                /> 
+                : null
               ))}
           </SidePanelSection>
           {/* <Button

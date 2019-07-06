@@ -44,10 +44,10 @@ const PanelTab = styled.div.attrs({
   align-items: flex-end;
   border-bottom-style: solid;
   border-bottom-width: 2px;
-  border-bottom-color: ${props =>
-  props.active ? props.theme.subtextColorActive : 'transparent'};
-  color: ${props =>
-  props.active ? props.theme.subtextColorActive : props.theme.subtextColor};
+  // border-bottom-color: ${props =>props.active ? props.theme.subtextColorActive : 'transparent'};
+  // color: ${props =>props.active ? props.theme.subtextColorActive : props.theme.subtextColor};
+  border-bottom-color: ${props =>props.active ? props.theme.activeColor : 'transparent'};
+  color: ${props =>props.active ? props.theme.activeColor : props.theme.labelColor};
   display: flex;
   justify-content: center;
   margin-right: 12px;
@@ -55,10 +55,12 @@ const PanelTab = styled.div.attrs({
   padding-left: 3px;
   padding-right: 3px;
   // width: 30px;
+  font-size: 1.1em;
+  font-weight: 400;
 
   :hover {
     cursor: pointer;
-    color: ${props => props.theme.textColorHl};
+    color: ${props => props.theme.activeColor};
   }
 `;
 

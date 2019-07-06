@@ -62,6 +62,7 @@ export const PanelTitleFactory = () => styled.div`
   margin-bottom: 1vh;
   margin-top: 2vh;
   display: block;
+  background-color: #18273e;
 `;
 
 // export const PanelHeadingFactory = () => styled.div`
