@@ -11,7 +11,7 @@ import ColorPalette from './color-palette';
 import SketcherModal from './modal'
 import ModalDialog from 'components/common/modal'
 import Modal from "react-modal";
-import CustomPicker from './customPicker'
+import CustomPicker from './custom-picker'
 
 const StyledSortableItem = styled.div`
   display: flex;
@@ -282,11 +282,11 @@ class CustomPalette extends React.Component {
 
               {this.state.showSketcher && this.state.currentSwatchIndex === index ?
                 <div>
-                  {/* <Modal
+                  <Modal
                     isOpen={this.state.showSketcher}
                     style={customStyles}
                     ariaHideApp={false}
-                  > */}
+                  >
                     <CustomPicker
                      color={color}
                       onChange={this._onColorUpdate}
@@ -294,7 +294,7 @@ class CustomPalette extends React.Component {
                     {/* <MyPicker
                       color={color}
                       onChange={this._onColorUpdate} /> */}
-                  {/* </Modal> */}
+                  </Modal>
                 </div>
                 : null}
 
