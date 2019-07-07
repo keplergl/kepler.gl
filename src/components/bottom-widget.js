@@ -164,7 +164,8 @@ const BarangayInfoWrapper = styled.div`
     font-weight: 900;
     font-size: 2em;
     line-height: 1;
-    color: ${props => props.theme.textColorHl};
+    margin-top:15px;
+    color: ${props => props.theme.labelColor};
   }
 
   .barangay-info__wrapper__value {
@@ -175,7 +176,7 @@ const BarangayInfoWrapper = styled.div`
 
   .barangay-info__wrapper__label {
     font-size: 1.2em;
-    font-weight: 100;
+    font-weight: 400;
   }
 `;
 
@@ -240,12 +241,15 @@ const TopSectionWrapper = styled.div`
   top: 0;
   left: 0;
   padding: 0 12px;
-  background-color: ${props => props.theme.sidePanelHeaderBg};
+  // background-color: ${props => props.theme.sidePanelHeaderBg};
+  background-color: #18273e;
   display: flex;
   justify-content: space-between;
   width: 100%;
   // padding-right: ${innerPdSide * 2}px;
-  color: ${props => props.theme.textColorHl};
+  color: ${props => props.theme.labelColor};
+  font-size: 1.2em;
+  font-weight: 400;
   
   .bottom-widget__y-axis {
     flex-grow: 1;

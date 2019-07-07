@@ -36,11 +36,11 @@ const StyledMapControlLegend = styled.div`
   .legend--layer_name {
     font-size: 12px;
     padding-right: ${props => props.theme.mapControl.padding}px;
-    color: ${props => props.theme.textColorHl};
+    color: ${props => props.theme.labelColor};
     font-weight: 500;
   }
   .legend--layer_type {
-    color: ${props => props.theme.subtextColor};
+    color: ${props => props.theme.labelColor};
     font-weight: 500;
     font-size: 11px;
     padding-right: ${props => props.theme.mapControl.padding}px;
@@ -51,11 +51,12 @@ const StyledMapControlLegend = styled.div`
   }
 
   .legend--layer_by {
-    color: ${props => props.theme.subtextColor};
+    color: ${props => props.theme.labelColor};
+    font-weight:400;
   }
 
   .legend--layer_color_field {
-    color: ${props => props.theme.textColor};
+    color: ${props => props.theme.labelColor};
     font-weight: 500;
   }
 

@@ -69,7 +69,7 @@ const ControlPanel = styled.div`
 
   .control-panel__title {
     font-weight: 500;
-    color: ${props => props.theme.textColorHl};
+    color: ${props => props.theme.labelColor};    
   }
 `;
 const ControlBtn = styled.button`
@@ -344,9 +344,9 @@ export class BarChart extends Component {
             orientation={'top'}
             tickValues={[0, maxDom / 2, maxDom]}
             style={{
-              ticks: {stroke: '#6A7485'},
-              text: {fill: '#6A7485'},
-              fontWeight: 100
+              ticks: {stroke: '#C3C9C5'},
+              text: {fill: '#C3C9C5'},
+              fontWeight: 200
             }}
           />
           {/* TODO: use props */}
@@ -354,9 +354,9 @@ export class BarChart extends Component {
             // getY={d=>(d.y.length > 12 ? (d.y.slice(0,12) + '...') : d.y )}
             tickFormat={myFormatter}
             style={{
-              ticks: {stroke: '#6A7485'},
-              color: '#6A7485',
-              fontWeight: 100
+              ticks: {stroke: '#C3C9C5'},
+              color: '#C3C9C5',
+              fontWeight: 200
             }}
           />
           {/* { dataSorted.length > 0 ? (

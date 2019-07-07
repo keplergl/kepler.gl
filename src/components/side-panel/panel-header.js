@@ -29,7 +29,7 @@ import ClickOutsideCloseDropdown from 'components/side-panel/panel-dropdown';
 const StyledPanelHeader = styled.div.attrs({
   className: 'side-side-panel__header'
 })`
-  background-color: ${props => props.theme.sidePanelHeaderBg};
+  background-color: #18273e;
   padding: 12px 16px 0 16px;
 `;
 
