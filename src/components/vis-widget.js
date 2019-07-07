@@ -27,7 +27,7 @@ import {Close} from 'components/common/icons';
 import PropTypes from 'prop-types';
 import {INDICATORS, BGY_DATA_DISPLAY, AMENITY_DATA_INDICES, OD_DATA_INDICES, SAMPLE_DATA_AMENITIES, SAMPLE_DEMOGRAPHICS_SEX, SAMPLE_DEMOGRAPHICS_AGE} from 'utils/filter-utils';
 // import {subDivideDestinationData} from 'utils/plexus-utils/sample-data-utils';
-// import {TRANSPORT_MODES, SEGMENTED_DESTINATIONS} from 'utils/plexus-utils/sample-data-utils';
+import {TRANSPORT_MODES, SEGMENTED_DESTINATIONS, BGY_DEMOGRAPHICS, M_SEX, M_INCOME, M_AGE} from 'utils/plexus-utils/sample-data-utils';
 
 import {scaleLinear} from 'd3-scale';
 
@@ -53,13 +53,6 @@ const propTypes = {
   mapLayers: PropTypes.object
 };
 
-VisWidgetFactory.deps = [
-  BarChartFactory,
-  ParallelCoordinatesKFactory,
-  ParallelCoordinatesD3Factory,
-  DonutChartFactory,
-  ScatterPlotFactory
-];
 
 const ControlPanel = styled.div`
   display: flex;
@@ -109,25 +102,19 @@ const WidgetContainer = styled.div`
   // maxwidth: ${props => props.width}px;
   // maxwidth: 1200px;
   // width: 35vw;
-  width: 1080px;
+  // width: 1080px;
+  // width: 75vw;
+  width: ${props => props.width}px;
   // padding: 20px 0;
 
   .bottom-widget--inner {
     background-color: ${props => props.theme.sidePanelBg};
-    padding-top: ${props => props.theme.sidePanel.margin.top}px;
-    padding-right: ${props => props.theme.sidePanel.margin.right}px;
-    padding-bottom: ${props => props.theme.sidePanel.margin.bottom}px;
-    padding-left: ${props => props.theme.sidePanel.margin.left}px;
-    // padding: 10px ${innerPdSide}px;
     position: relative;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     align-items: flex-start;
-    // height: 330px;
-    // height: 660px;
-    // height: 220px;
-    height: 95vh;   
+    height: 100vh;   
     overflow: scroll;     
   }
 
@@ -150,6 +137,15 @@ const VisRow = styled.div`
   margin-bottom: 15px;
 `;
 
+
+VisWidgetFactory.deps = [
+  BarChartFactory,
+  ParallelCoordinatesKFactory,
+  ParallelCoordinatesD3Factory,
+  DonutChartFactory,
+  ScatterPlotFactory
+];
+
 export default function VisWidgetFactory(
   BarChart,
   ParallelCoordinatesK,
@@ -163,40 +159,60 @@ export default function VisWidgetFactory(
       filters,
       visStateActions,
       uiStateActions,
-      containerW,
+      // containerW,
       uiState,
       sidePanelWidth,
       selected,
       visState,
       layers,
-      mapLayers
+      mapLayers,
+      containerW,
     } = props;
 
     let bgyIncl;
     let amtyCnt;
-    let destCnt
-    // const currView = selected;
+    let destCnt;
+    let oriCnt;
+    let destMax;
 
+    // const enlargedFilterWidth = isOpen ? containerW - sidePanelWidth : containerW;
+    // const currView = selected;
+    const maxWidth = 1080;
+    const widgetWidth = Math.min(maxWidth, containerW);
     // const DEFAULT_LIST = 5;
 
     if (datasets.barangays) {
       if (datasets.barangays.data) {
-        console.error(datasets);
+        // console.error(datasets);
         // formatted barangay data
         bgyIncl = [];
         let bgyRef = {};
+
+        // OPTION A: map bgy names to id for reference (filtered bgys)
+        datasets.barangays.allData.forEach(d => {
+          let obj = {};
+          BGY_DATA_DISPLAY.forEach(b => {
+            obj[b.id] = d[b.idx];
+          });
+          
+          bgyRef[obj['id']] = obj['name'];
+        });
+
+        // format filtered barangays
         datasets.barangays.data.forEach(d => {
           let obj = {};
           BGY_DATA_DISPLAY.forEach(b => {
             obj[b.id] = d[b.idx];
           });
-          bgyRef[obj['id']] = obj['name'],
+        
+          // OPTION B: map bgy names to id for reference (ALL bgys)
+          // bgyRef[obj['id']] = obj['name'];        
           
           bgyIncl.push(obj);
         });
         bgyIncl = bgyIncl.sort((a, b) => b[selected] - a[selected]);
 
-        // amenities
+        // format amenities
         let inserted = {};
         amtyCnt = [];
         datasets.amenities.allData.forEach(d => {
@@ -213,11 +229,15 @@ export default function VisWidgetFactory(
           }
         });
 
-        // origins and destinations
+        // format origins and destinations
         inserted = {};
+        let oInserted = {};
         destCnt = [];
+        oriCnt = [];
+
         datasets.pairs.allData.forEach(d => {
           let key = d[OD_DATA_INDICES['d_id']];
+          let oKey = d[OD_DATA_INDICES['o_id']]; 
 
           if(key in inserted) {
             destCnt.filter(d=>d.id==key)[0].count += d[OD_DATA_INDICES['count']];
@@ -229,19 +249,48 @@ export default function VisWidgetFactory(
               count: d[OD_DATA_INDICES['count']],
             });
           }
+
+          if(oKey in oInserted) {
+            oriCnt.filter(d=>d.id==oKey)[0].count += d[OD_DATA_INDICES['count']];
+          } else {
+            oInserted[oKey] = 0;
+            oriCnt.push({
+              name: bgyRef[oKey],
+              id: oKey,
+              count: d[OD_DATA_INDICES['count']],
+            });
+          }
         });
 
+        // get maximum
+        destMax = destCnt.reduce((prev, current) =>
+          prev.count > current.count ? prev : current
+        ).count;
+
+        // filters undefined barangays
+        destCnt = destCnt.filter(d=>d.name);
+
+        
         // console.error('amenity count ' + datasets.amenities.allData[0][AMENITY_DATA_INDICES['class']]);
         // console.error(amtyCnt);
         // console.error(bgyRef);
-        console.error(destCnt);
+        // console.error(destCnt);
+        // console.error("ORIGINS");
+        // console.error(oriCnt);
+        // console.error(destCnt.filter(d=>d.name));
         // subDivideDestinationData();
         // console.error(bgyIncl);
       }
     }
 
+    // let demo = generateDemographics();
+    // console.error(demo);
+
+    // const destinations = subDivideDestinationData();
+    // console.error(destinations);
+
     return (
-      <WidgetContainer width={'100vw'}>
+      <WidgetContainer width={widgetWidth}>
         <div className="bottom-widget--inner">
           {/* TODO move to parent */}
           <ControlPanel>
@@ -267,7 +316,7 @@ export default function VisWidgetFactory(
           </ControlPanel>
           <div className="bottom-widget--content">
             {bgyIncl ? (
-              <ParallelCoordinatesD3 data={bgyIncl} selected={selected} />
+              <ParallelCoordinatesD3 data={bgyIncl} selected={selected} width={widgetWidth}/>
             ) : null}
             { bgyIncl?<VisRow>
               <ScatterPlot
@@ -353,47 +402,57 @@ export default function VisWidgetFactory(
             {/* TODO: change to TOP destinations  */}
             {bgyIncl ? (
               <VisRow>
-              {/* <BarChart 
-                data={bgyIncl.sort((a, b) => b['spatial'] - a['spatial']).slice(0,10).reverse()}       
-                xKey={'spatial'}
-                yKey={'name'}
-                title={'Frequently Visited Destinations'}
-                height={250}
-                /> */}
-              {/* <BarChart 
-                data={destCnt.sort((a, b) => b['count'] - a['count']).slice(0,10).reverse()}       
-                xKey={'count'}
-                yKey={'name'}
-                title={'Frequently Visited Destinations'}
-                height={250}
-                />
-              <BarChart 
+                <BarChart 
                 data={amtyCnt}       
                 xKey={'count'}
                 yKey={'name'}
                 title={'City Amenities'}
                 height={250}
-                /> */}
+                />
               
               {/* <BarChart 
-                height={250}
-                title={'Amenities'}
-                data={SAMPLE_DATA_AMENITIES}
+                data={oriCnt.sort((a, b) => b['count'] - a['count']).slice(0,10).reverse()}       
                 xKey={'count'}
-                yKey={'label'}
-                />
-                 */}
+                yKey={'name'}
+                title={'Most Frequent Origins'}
+                domainMax={destMax}
+                height={250}
+                /> */}
+                {/* <BarChart 
+                data={destCnt.sort((a, b) => b['count'] - a['count']).slice(0,10).reverse()}       
+                xKey={'count'}
+                yKey={'name'}
+                title={'Frequently Visited Destinations'}
+                domainMax={destMax}
+                height={250}
+                /> */}
+              {/* <BarChart 
+                data={BGY_DEMOGRAPHICS.filter(d=>d.name).sort((a, b) => b['count'] - a['count']).slice(0,10).reverse()}       
+                xKeyArr={TRANSPORT_MODES}
+                  yKey={'name'}
+                title={'Most Frequent Origins'}
+                domainMax={destMax}
+                height={250}
+                /> */}
+              <BarChart 
+                  data={SEGMENTED_DESTINATIONS.filter(d=>d.name).sort((a, b) => b['count'] - a['count']).slice(0,10).reverse()}       
+                  xKeyArr={TRANSPORT_MODES}
+                  yKey={'name'}
+                  title={'Frequent destinations'}
+                  height={250}
+                  domainMax={destMax}
+                  />
               </VisRow>
             ):null}
 
             {/* {bgyIncl ? (
               <VisRow>
                 <BarChart 
-                  data={amtyCnt}       
-                  xKey={TRANSPORT_MODES}
+                  data={SEGMENTED_DESTINATIONS.filter(d=>d.name).sort((a, b) => b['count'] - a['count']).slice(0,10).reverse()}       
+                  xKeyArr={TRANSPORT_MODES}
                   yKey={'name'}
                   title={'Frequent destinations'}
-                  height={250}
+                  height={500}
                   />
               </VisRow>
             ):null} */}
@@ -403,21 +462,60 @@ export default function VisWidgetFactory(
               <VisRow>
                 <DonutChart
                   title={'By Sex'}
-                  values={SAMPLE_DEMOGRAPHICS_SEX}
-                  xLabel={'count'}
+                  values={BGY_DEMOGRAPHICS}
+                  xKeyArr={M_SEX}
                     />
-                <DonutChart
-                  title={'By Age Group'}
-                  values={SAMPLE_DEMOGRAPHICS_AGE}
-                  xLabel={'count'}
-                    />
+                <BarChart 
+                  data={BGY_DEMOGRAPHICS.filter(d=>d.name).sort((a, b) => b['count'] - a['count']).slice(0,10).reverse()}       
+                  xKeyArr={M_SEX}
+                  xKey={'name'}
+                  yKey={'name'}
+                  categoryLabel={'Sex'}                  
+                  title={'Frequency per area'}
+                  height={250}
+                  />
+              </VisRow>
+            ):null}
 
-                {/* income */}
+            {bgyIncl ? (
+              <VisRow>
+                <DonutChart
+                  title={'By Income Level'}
+                  values={BGY_DEMOGRAPHICS}
+                  xKeyArr={M_INCOME}
+                    />
+                <BarChart 
+                  data={BGY_DEMOGRAPHICS.filter(d=>d.name).sort((a, b) => b['count'] - a['count']).slice(0,10).reverse()}       
+                  xKeyArr={M_INCOME}
+                  xKey={'name'}
+                  yKey={'name'}
+                  categoryLabel={'Income Range'}                                    
+                  title={'Frequency per area'}
+                  height={250}
+                  />
+                
+              </VisRow>
+            ):null}
+
+            {bgyIncl ? (
+              <VisRow>
+                <DonutChart
+                  title={'By Age'}
+                  values={BGY_DEMOGRAPHICS}
+                  xKeyArr={M_AGE}
+                    />
+                <BarChart 
+                  data={BGY_DEMOGRAPHICS.filter(d=>d.name).sort((a, b) => b['count'] - a['count']).slice(0,10).reverse()}       
+                  xKeyArr={M_AGE}
+                  xKey={'name'}
+                  yKey={'name'}
+                  categoryLabel={'Age Group'}                                    
+                  title={'Frequency per area'}
+                  height={250}
+                  />
               </VisRow>
             ):null}
             
-
-            {/* {bgyIncl ? <ParallelCoordinatesK data={bgyIncl} /> : null} */}
           </div>
         </div>
       </WidgetContainer>

@@ -55,11 +55,9 @@ export class DonutChart extends Component {
       title,
       legends,
       values,
-      xLabel
+      xLabel,
+      xKeyArr
     } = this.props;
-
-    // const legends = this.legendsSelector(this.props);
-    // const legends = this.legendsSelector(this.props.scaleType, this.props.domain, this.props.fieldType, this.props.range);
 
     let pData;
     let aData = [0,0,0,0,0,0];
@@ -94,10 +92,33 @@ export class DonutChart extends Component {
       // console.log(pData);
       // console.log(aData);
     } else if(values && xLabel) {
+      
       pData = values.map((d) => ({
         angle: d[xLabel]
       }));
       // console.error('donut');
+      // console.error(pData);
+    } else if(values && xKeyArr) {
+      pData = [];
+      let inserted = {};
+      xKeyArr.forEach((x) => {
+        // console.error(x);
+        // console.error(values);
+        values.forEach(d => {
+          // let key = x
+          // console.error(d);
+          if(x.name in inserted) {
+            pData.filter(a=>a.label==x.name)[0].angle += d[x.name];
+          } else {
+            inserted[x.name] = 0;
+            pData.push({
+              label: x.name,
+              angle: d[x.name],
+            });
+          }
+        });
+      });
+      // console.error(values);
       // console.error(pData);
     }
     

@@ -28,7 +28,7 @@ import {Close, Clock, LineChart} from 'components/common/icons';
 import PropTypes from 'prop-types';
 import TimeWidgetFactory from './filters/time-widget';
 import { INDICATORS, ANALYSIS_TABS_DEF, AMENITY_DATA_INDICES, OD_DATA_INDICES, ANALYSIS_TABS_BGY, BGY_DATA_DISPLAY } from 'utils/filter-utils';
-
+import {SEGMENTED_DESTINATIONS, TRANSPORT_MODES} from 'utils/plexus-utils/sample-data-utils';
 import {scaleLinear} from 'd3-scale';
 
 import BarChartFactory from './plexus-analysis/bar-chart';
@@ -80,6 +80,7 @@ const AnalysisSectionToggle = ({activeTab, update, barangay}) => (
 );
 
 const AnalysisSectionWrapper = styled.div`
+${props => props.theme.sidePanelScrollBar};
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -210,9 +211,9 @@ const RankingWrapper = styled.div`
 // TODO: set width to side-bar width val in props
 const WidgetContainer = styled.div`
   position: absolute;
-  padding-top: ${props => props.theme.sidePanel.margin.top}px;
-  padding-right: ${props => props.theme.sidePanel.margin.right}px;
-  padding-bottom: ${props => props.theme.sidePanel.margin.bottom}px;
+  // padding-top: ${props => props.theme.sidePanel.margin.top}px;
+  // padding-right: ${props => props.theme.sidePanel.margin.right}px;
+  // padding-bottom: ${props => props.theme.sidePanel.margin.bottom}px;
   padding-left: ${props => props.theme.sidePanel.margin.left}px;  
   top: 0;
   right: 0;
@@ -228,7 +229,8 @@ const WidgetContainer = styled.div`
     padding: 0.95em;
     position: relative;
     // height: 220px; 
-    height: 80vh;   
+    height: 100vh;   
+    overflow-x: hidden;
   }
 `;
 
@@ -321,7 +323,7 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
     let maxListSize = DEFAULT_LIST;
     let bgyIncl;
     let amtyCnt;
-    let destCnt;
+    let destCnt, oriCnt;
     let bgy;    
     let ranking;
     let bgyRef = {};
@@ -393,28 +395,63 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
           }
         });
 
-        // destinations
+        // // destinations
         inserted = {};
+        let oInserted = {};
         destCnt = [];
+        oriCnt = [];
         datasets.pairs.allData.forEach(d => {
-          let key = d[OD_DATA_INDICES['d_id']];
-          if(key == bgy.filter(b => b['label'] == 'id')[0].x) {
-            if(key in inserted) {
-              destCnt.filter(d=>d.id==key)[0].count += d[OD_DATA_INDICES['count']];
+          let oId = d[OD_DATA_INDICES['o_id']];
+          let dId = d[OD_DATA_INDICES['d_id']];
+          if(dId  == bgy.filter(b => b['label'] == 'id')[0].x) {
+            if(oId in inserted) {
+              destCnt.filter(d=>d.id==oId)[0].count += d[OD_DATA_INDICES['count']];
             } else {
-              inserted[key] = 0;
+              inserted[oId] = 0;
               destCnt.push({
-                name: bgyRef[key],
-                id: key,
-                count: d[OD_DATA_INDICES['count']],
-              });
+                name: bgyRef[oId],
+                id: oId,
+                count: d[OD_DATA_INDICES['count']]
+              })
             }
           }
+
+          if(oId  == bgy.filter(b => b['label'] == 'id')[0].x) {
+            if(dId in oInserted) {
+              oriCnt.filter(d=>d.id==dId)[0].count += d[OD_DATA_INDICES['count']];
+            } else {
+              oInserted[dId] = 0;
+              oriCnt.push({
+                name: bgyRef[dId],
+                id: dId,
+                count: d[OD_DATA_INDICES['count']]
+              })
+            }
+          }
+          // if(key == bgy.filter(b => b['label'] == 'id')[0].x) {
+          //   if(key in inserted) {
+          //     destCnt.filter(d=>d.id==key)[0].count += d[OD_DATA_INDICES['count']];
+          //   } else {
+          //     inserted[key] = 0;
+          //     destCnt.push({
+          //       name: bgyRef[key],
+          //       id: key,
+          //       count: d[OD_DATA_INDICES['count']],
+          //     });
+          //   }
+          // }
           
         });
+
+        console.error(destCnt);
+        console.error(oriCnt);
+        // console.error(bgy);
+        // console.error(SEGMENTED_DESTINATIONS);
+        // console.error(SEGMENTED_DESTINATIONS.filter(d=>d.name && d.id==bgy.filter(e=>e.label=='id')[0].x));
       } else {
         console.log('no active bgy');
       }
+      
     }
 
     const ACTIVE_INDICATOR_LABEL = INDICATORS[INDICATORS.findIndex(d => d.value == selected)].label;
@@ -480,7 +517,7 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
 
               {/* barangay selected*/}
               
-              {/* {visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_BGY.profile.value ?
+              {visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_BGY.profile.value ?
                 (<div className="breakdown-analysis__section">
                   <BarChart 
                     height={300}
@@ -495,23 +532,35 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
                     data={amtyCnt}       
                     xKey={'count'}
                     yKey={'name'}
-                    title={'City Amenities'}
-                    height={250}
+                    title={'Barangay Amenities'}
+                    height={50 + amtyCnt.length * 22}
                     />
                 </div>
-              ) : null } */}
+              ) : null }
 
-              {/* {visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_BGY.profile.value ? */}
-                {/* (<div className="breakdown-analysis__section">
+              {visState.activeBarangay && destCnt.length > 0?
+              (<div className="breakdown-analysis__section">
                   <BarChart 
-                    data={destCnt.sort((a, b) => b['count'] - a['count']).slice(0,10).reverse()}       
+                    data={destCnt.filter(d=>d.name).sort((a, b) => b['count'] - a['count']).reverse()}       
                     xKey={'count'}
                     yKey={'name'}
-                    title={'Frequently Visited Destinations'}
-                    height={250}
+                    title={'Frequently Occuring Origins'}
+                    height={50 + destCnt.length * 22}
                     />
                 </div>
-              ) : null } */}
+              ) : null } 
+
+              {visState.activeBarangay && oriCnt.length > 0 ?
+              (<div className="breakdown-analysis__section">
+                  <BarChart 
+                    data={oriCnt.filter(d=>d.name).sort((a, b) => b['count'] - a['count']).reverse()}       
+                    xKey={'count'}
+                    yKey={'name'}
+                    title={'Most Common Destinations'}
+                    height={50 + oriCnt.length * 22}
+                    />
+                </div>
+              ) : null } 
               
 
               {/* indicator overview */}
@@ -543,7 +592,7 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
                 </div>
               ) : null}
 
-              {/* {!visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_DEF.profile.value && bgyIncl ? (
+              {!visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_DEF.profile.value && bgyIncl ? (
                 <div className="breakdown-analysis__section">
                   <BarChart 
                     listSize={bgyIncl.length}
@@ -558,7 +607,7 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
                     analysisRankingPage={visState.analysisRankingPage}
                     />
                 </div>
-              ) : null} */}
+              ) : null}
 
               {/* general TRANSPORT DESIRABILITY TAB */}
 

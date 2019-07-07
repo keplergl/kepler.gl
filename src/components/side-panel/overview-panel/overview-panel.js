@@ -150,7 +150,7 @@ function OverviewPanelFactory(Indicator, BarChart, StackedBarChart) {
               legends={this.props.legends} 
               />       
             : null}
-          {/* {bgyIncl? <BarChart 
+          {bgyIncl? <BarChart 
             listSize={bgyIncl.length}
             maxBar={maxListSize}
             data={bgyIncl}       
@@ -161,8 +161,8 @@ function OverviewPanelFactory(Indicator, BarChart, StackedBarChart) {
             reverseFunc={this.props.reverseFunc}
             analysisRankingReverse={this.props.rankingReverse}
             analysisRankingPage={this.props.rankingPage}
-            /> : null } */}
-            {/* {console.error('END OVERVIEW PANEL')} */}
+            /> : null } 
+            {/* {/* {console.error('END OVERVIEW PANEL')} */}
         </StyledOverviewPanel>
       );
     }

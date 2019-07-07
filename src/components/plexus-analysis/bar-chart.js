@@ -43,7 +43,8 @@ import {
   HorizontalBarSeries,
   makeWidthFlexible,
   LabelSeries,
-  ChartLabel
+  ChartLabel,
+  Hint
 } from 'react-vis';
 
 // import './../bottom-widget.scss';
@@ -81,18 +82,24 @@ const ControlBtn = styled.button`
 export class BarChart extends Component {
   constructor(props) {
     super(props);
+
+    this.state = {
+      hovered: null,
+    }
   }
 
   render() {
     const {
       data,
       title,
-      xDom,
+      xKeyArr,
       xKey,
       yKey,
+      categoryLabel,
       paginationFunc,
       reverseFunc,
       maxBar,
+      domainMax,
       listSize,
       analysisRankingReverse,
       analysisRankingPage,
@@ -102,8 +109,8 @@ export class BarChart extends Component {
     // TODO: make responsive
     const width = 270;
 
-    console.log('bar chart');
-    console.log(data);
+    // console.log('bar chart');
+    // console.log(data);
     // format data
     // let formattedData = data;
     // {
@@ -119,36 +126,22 @@ export class BarChart extends Component {
     //       })));
     // }
     let formattedData = data;
-    // if(xKey && yKey && !Array.isArray(xKey)) {
-    //     formattedData = data.map((d, idx) => ({
-    //       ...d,
-    //       x: d[xKey],
-    //       y: d[yKey]
-    //     }));
-    // } else {
-    //   formattedData = data.map((d, idx) => ({
-    //     ...d,
-    //     x: d.x
-    //   }))
-    // }
-
-    let dataSorted = formattedData;
-    let dataSliced = formattedData;
+    let dataSorted = data;
+    let dataSliced = data;
     let max;
     let dataLabels;
-    let bars;
+    let bars = [];
 
-    if (false) {
-      console.error('xKey is array');
-      console.error(xKey);
+    if (xKeyArr && data) {
 
-      xKey.forEach(x => {
-        dataSorted = data.map((d, idx) => ({
+      xKeyArr.forEach(x => {
+        dataSorted = dataSorted.map((d, idx) => ({
           ...d,
-          x: d[x],
-          y: d[yKey]
+          x: xKey ? d[x[xKey]] : d[x],
+          y: d[yKey],
+          valueLabel: xKey ? x[xKey] : x,
+          actualValue: xKey ? d[x[xKey]] : d[x],
         }));
-
         bars.push(
           <HorizontalBarSeries
             animation
@@ -156,6 +149,15 @@ export class BarChart extends Component {
               !d.hasOwnProperty('display') ? true : d.display
             )}
             barWidth={0.5}
+            onValueMouseOver={(datapoint, event)=>{
+              // does something on click
+              // you can access the value of the event
+              console.error('bar chart hover');
+              console.error(datapoint);
+              console.error(event);
+              this.setState({hovered: datapoint});
+              // console.error(event);
+            }}
           />
         );
       });
@@ -170,27 +172,31 @@ export class BarChart extends Component {
         .filter(d => (!d.hasOwnProperty('display') ? true : d.display))
         .map((d, idx) => ({
           x: d.count,
-          y: d.y,
+          y: d.name,
           label: d.count,
-          xOffset: 20,
-          yOffset: 7,
+          // xOffset: 20,
+          // yOffset: 7,
           style: {fill: '#6A7485'}
         }));
+      
     } else {
-      console.error('xKey is not array');
-      console.error(xKey);
       if (xKey && yKey) {
-        formattedData = data.map((d, idx) => ({
+        formattedData = data.filter(d => typeof d[yKey] !== undefined);
+        formattedData = formattedData.map((d, idx) => ({
           ...d,
           x: d[xKey],
           y: d[yKey]
         }));
       } else {
+        formattedData = data.filter(d => typeof d['y'] !== undefined);
         formattedData = data.map((d, idx) => ({
           ...d,
           x: d.x
         }));
       }
+
+      dataSorted = formattedData;
+      dataSliced = formattedData;
 
       // slice data for paginated bar chart
       if (paginationFunc && reverseFunc) {
@@ -207,10 +213,15 @@ export class BarChart extends Component {
         dataSliced = dataSliced.reverse();
       }
 
+      console.error(data);
+      console.error(dataSliced);
+      console.error(dataSorted);
       // get largest value in data
-      max = dataSorted.reduce((prev, current) =>
-        prev.x > current.x ? prev : current
-      ).x;
+      max = domainMax
+        ? domainMax
+        : dataSorted.reduce((prev, current) =>
+            prev.x > current.x ? prev : current
+          ).x;
 
       // generate labels
       dataLabels = dataSliced
@@ -224,7 +235,6 @@ export class BarChart extends Component {
           style: {fill: '#6A7485'}
         }));
 
-      //
       bars.push(
         <HorizontalBarSeries
           animation
@@ -234,6 +244,7 @@ export class BarChart extends Component {
           barWidth={0.5}
         />
       );
+      // console.error('non stacked bar chart DONE');
     }
 
     // get bar chart labels
@@ -325,6 +336,8 @@ export class BarChart extends Component {
           margin={{left: 100, right: 30, top: 25, bottom: 25}}
           height={height ? height : 160}
           width={width}
+          onMouseLeave={() => this.setState({hovered: null})}
+          stackBy={xKeyArr ? 'x' : ''}
           yType="ordinal"
         >
           <XAxis
@@ -360,13 +373,26 @@ export class BarChart extends Component {
             )}
             barWidth={0.5}
           /> */}
-          {/* { bars } */}
+          {bars}
 
           <LabelSeries
             data={dataLabels}
             labelAnchorX="middle"
             labelAnchorY="text-after-edge"
           />
+          {this.state.hovered && (
+            <Hint
+              xType="literal"
+              yType="literal"
+              getX={d => d.x}
+              getY={d => d.y}
+              value={{
+                Barangay: this.state.hovered.y,
+                [categoryLabel ? categoryLabel : 'Category']: this.state.hovered.valueLabel,
+                Count: this.state.hovered.actualValue,
+              }}
+            />
+          )}
           {/* TODO: fix off-center bug */}
           {/* {title ? (
             <ChartLabel

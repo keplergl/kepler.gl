@@ -34,6 +34,21 @@ import ParCoords from 'parcoord-es';
 import * as d3 from 'd3';
 
 // import './../bottom-widget.scss';
+
+const PCWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  width: ${props => props.width - 50}px;
+`;
+
+const PCVisWrapper = styled.div`
+  width: ${props => props.width - 50}px;
+  height: 280px;
+  display: ${props => props.display};
+`;
+
 const ControlPanel = styled.div`
   display: flex;
   background-color: ${props => props.theme.sidePanelHeaderBg};
@@ -74,7 +89,7 @@ export class ParallelCoordinatesD3 extends Component {
 
     this.state = {
       visible: true,
-      data: data,
+      data: data.sort((a, b) => b['name'] - a['name']),
       pc: null,
       table: null
     };
@@ -103,6 +118,7 @@ export class ParallelCoordinatesD3 extends Component {
       });
     }, domainStructure);
 
+    let pData = this.state.data.sort((a, b) => b['name'] - a['name']);
     let dimensions = {};
     domains.forEach(d => {
       if (
@@ -151,7 +167,7 @@ export class ParallelCoordinatesD3 extends Component {
     let chart = ParCoords()('#example')
       .alpha(0.4)
       .mode('queue')
-      .data(this.state.data)
+      .data(pData)
       // .color(d => {
       //   return colorScale(d['spatial']);
       // })
@@ -175,7 +191,7 @@ export class ParallelCoordinatesD3 extends Component {
     var grid = divgrid();
     d3.select('#grid')
       // .datum(this.state.data.slice(0, 10))
-      .datum(this.state.data)
+      .datum(pData)
       .call(grid);
 
     // update data table on brush event
@@ -278,14 +294,14 @@ export class ParallelCoordinatesD3 extends Component {
     );
 
     return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'flex-start',
-          alignItems: 'center',
-          width: '100%',
-        }}
+      <PCWrapper width={this.props.width}
+        // style={{
+        //   display: 'flex',
+        //   flexDirection: 'column',
+        //   justifyContent: 'flex-start',
+        //   alignItems: 'center',
+        //   width: '100%',
+        // }}
       >
         {/* TODO move to parent */}
         {/* <ControlPanel>
@@ -304,7 +320,7 @@ export class ParallelCoordinatesD3 extends Component {
             </IconRoundSmall>
           </div>
         </ControlPanel> */}
-        <div
+        {/* <div
           id="example"
           className="parcoords ex"
           style={{
@@ -312,19 +328,14 @@ export class ParallelCoordinatesD3 extends Component {
             height: '280px',
             display: this.state.visible ? 'block' : 'none'
           }}
-        />
+        /> */}
+        <PCVisWrapper id="example" className="parcoords ex" width={this.props.width} visible={this.state.visible ? 'block' : 'none'}/>
         <div
           id="grid"
           className="parcoords ex"
           style={{display: this.state.visible ? 'block' : 'none'}}
         />
-      </div>
-      // <div id="chart">
-      //   <canvas id="background" />
-      //   <canvas id="foreground" />
-      //   <canvas id="highlight" />
-      //   <svg />
-      // </div>
+      </PCWrapper>
     );
   }
 }

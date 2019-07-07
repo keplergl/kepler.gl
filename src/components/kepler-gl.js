@@ -357,7 +357,11 @@ function KeplerGlFactory(
               uiState={uiState}
               visStateActions={visStateActions}
               uiStateActions={uiStateActions}
-              // containerW={containerW}
+              width={containerW}
+              containerW={containerW}
+              sidePanelWidth={
+                uiState.readOnly ? 0 : this.props.sidePanelWidth + DIMENSIONS.sidePanel.margin.left
+              }
               // layers={mapFields.layers}
               // mapLayers={isSplit ? splitMaps[0].layers : null}
             />
