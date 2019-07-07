@@ -525,6 +525,7 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
                 (<div className="breakdown-analysis__section">
                   <BarChart 
                     height={300}
+                    floatFormat={true}
                     title={'Barangay Breakdown'}
                     data={bgy.filter(e => typeof e.x == 'number' && e.label != 'population' && e.label !='income')}/>
                 </div>
@@ -599,6 +600,7 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
               {!visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_DEF.profile.value && bgyIncl ? (
                 <div className="breakdown-analysis__section">
                   <BarChart 
+                    floatFormat
                     listSize={bgyIncl.length}
                     maxBar={maxListSize}
                     data={bgyIncl}       

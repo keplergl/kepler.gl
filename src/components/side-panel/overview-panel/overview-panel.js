@@ -151,6 +151,7 @@ function OverviewPanelFactory(Indicator, BarChart, StackedBarChart) {
               />       
             : null}
           {bgyIncl? <BarChart 
+            floatFormat
             listSize={bgyIncl.length}
             maxBar={maxListSize}
             data={bgyIncl}       

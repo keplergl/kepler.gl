@@ -93,6 +93,7 @@ export class BarChart extends Component {
       data,
       title,
       xKeyArr,
+      floatFormat,
       xKey,
       yKey,
       categoryLabel,
@@ -229,7 +230,7 @@ export class BarChart extends Component {
         .map((d, idx) => ({
           x: d.x,
           y: d.y,
-          label: d.x.toFixed(2),
+          label: floatFormat ? d.x.toFixed(2) : d.x,
           xOffset: 20,
           yOffset: 7,
           style: {fill: '#6A7485'}
