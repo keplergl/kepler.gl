@@ -1,12 +1,10 @@
 import React, {Component}  from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import { SketchPicker} from 'react-color';
-import { Button, SidePanelDivider} from 'components/common/styled-components';
+import { Button} from 'components/common/styled-components';
 import {VertDots, Trash} from 'components/common/icons';
 import {sortableContainer, sortableElement, sortableHandle} from 'react-sortable-hoc';
 import arrayMove from 'array-move';
-import ModalDialog from 'components/common/modal'
 import Modal from "react-modal";
 import ColorPalette from './color-palette';
 import CustomPicker from './custom-picker'
@@ -115,27 +113,21 @@ const StyledCover = styled.div`
   left: 0px;
 `
 
+const sortableColors = {
+  color: "#fff"
+}
+
 const customStyles = {
   content: {
     top: "30%",
-    //left: "40%",
     left: "340px",
     right: "auto",
     bottom: "auto",
-    //transform: "translate(-60%, -45%)",
     padding: "0px 0px 0px 0px",
     zIndex: 9999
   }
 };
 
-// const StyledModal = styled.div`
-//     top: "50%",
-//     left: 400px,
-//     // right: "auto",
-//     bottom: "auto",
-//     // transform: "translate(-60%, -45%)",
-//     padding: "0px 0px 0px 0px"
-// `
 
 const SortableItem = sortableElement(({children}) =>
 <StyledSortableItem>
@@ -160,8 +152,7 @@ class CustomPalette extends Component {
         type: PropTypes.string,
         category: PropTypes.string,
         colors: PropTypes.arrayOf(PropTypes.string)
-      })
-    ,
+      }),
     setCustomPalette: PropTypes.func,
     showSketcher: PropTypes.bool,
     onToggleSketcherUpdater: PropTypes.func
@@ -221,12 +212,6 @@ class CustomPalette extends Component {
     this.props.onToggleSketcherUpdater();
   };
 
-  // handleClickOutside = e => {
-  //   this.setState({
-  //     showSketcher: false
-  //   });
-  // };
-
   _onApply = (event) => {
     const { colors } = this.props.customPalette;
     const newColors = [...colors];
@@ -264,12 +249,11 @@ class CustomPalette extends Component {
           />
         </StyledColorRange>
 
-
         <SortableContainer className="custom-palette-container"
           onSortEnd={this._onSortEnd}
           lockAxis="y"
           useDragHandle={true}
-          helperClass="sortable-"
+          helperClass="sortableColors"
         >
 
           {colors.map((color, index) =>
@@ -314,64 +298,11 @@ class CustomPalette extends Component {
 
             </SortableItem>
           )
-        }
-{/* to-do: fix on drag color change bug */}
-{/* to-do: fix on modal close dropdown bug */}
-{/* to-do: dark palette */}
-
-
-
-{/*           {colors.map((color, index) =>
-            <SortableItem
-              key={index}
-              index={index}>
-
-              <DragHandle className="layer__drag-handle">
-                <VertDots height="20px" />
-              </DragHandle>
-
-
-              <StyledSwatch
-                color ={color}
-                onClick={() => this._onSwatchClick(index)} >
-              </StyledSwatch>
-
-              {this.state.showSketcher && this.state.currentSwatchIndex === index ?
-              (
-                  <div >
-
-                    <StyledCover onClick={this._onSwatchClose} />
-                      <div
-                        style={{
-                          float: "left",
-                          position: "absolute",
-                          top: "10px",
-                          left: "2px"
-                        }}
-                      >
-                        <MyPicker
-                          color={this.props.customPalette['colors'][this.state.currentSwatchIndex]}
-                          presetColors={[]}
-                          onChangeComplete={this._onColorUpdate}
-                          />
-                      </div>
-                  </div>
-                ) : null
-              }
-
-              <StyledHex>
-                {color.toUpperCase()}
-              </StyledHex>
-
-              <StyledTrash onClick={() => this._onColorDelete(index)}>
-                <Trash/>
-              </StyledTrash>
-
-            </SortableItem>
-            )
-          } */}
-
+          }
         </SortableContainer>
+
+{/* to-do: fix on drag color change bug */}
+{/* to-do: dark palette */}
 
         <Button
           style={{
@@ -400,21 +331,4 @@ class CustomPalette extends Component {
 }
 
 export default CustomPalette;
-
-
-const MyPicker = ({color, onChange}) => (
-  <SketchPicker
-    color={color}
-    onChange={onChange}
-    styles={{
-      picker: {
-        background: "#CDCDCD",
-      }
-    }}
-    disableAlpha={true}
-    presetColors={[]}
-  />
-)
-
-
 
