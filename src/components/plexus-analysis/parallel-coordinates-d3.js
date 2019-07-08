@@ -185,7 +185,7 @@ export class ParallelCoordinatesD3 extends Component {
       // .color(function(d) { return state.colorScale(d[selected]); })
       // .render()
       .createAxes()
-      .brushMode('1D-axes') // enable brushing
+      // .brushMode('1D-axes') // enable brushing
       .interactive(); // command line mode;
 
     // create data table, row hover highlighting
@@ -196,26 +196,26 @@ export class ParallelCoordinatesD3 extends Component {
       .call(grid);
 
     // update data table on brush event
-    chart.on('brush', function(d) {
-      d3.select('#grid')
-        .datum(d)
-        .call(grid)
-        .selectAll('.row')
-        .on({
-          mouseover: function(d) {
-            chart.highlight([d]);
-          },
-          mouseout: chart.unhighlight
-        });
+    // chart.on('brush', function(d) {
+    //   d3.select('#grid')
+    //     .datum(d)
+    //     .call(grid)
+    //     .selectAll('.row')
+    //     .on({
+    //       mouseover: function(d) {
+    //         chart.highlight([d]);
+    //       },
+    //       mouseout: chart.unhighlight
+    //     });
       
-      var rows = d3.select('#grid').selectAll('.row');
-      rows.on('mouseover', function(d) {
-        chart.highlight([d]);
-      });
-      rows.on('mouseout', function(d) {
-        chart.unhighlight();
-      });
-    });
+    //   var rows = d3.select('#grid').selectAll('.row');
+    //   rows.on('mouseover', function(d) {
+    //     chart.highlight([d]);
+    //   });
+    //   rows.on('mouseout', function(d) {
+    //     chart.unhighlight();
+    //   });
+    // });
 
     // add highlight line on row hover
     var rows = d3.select('#grid').selectAll('.row');
@@ -246,10 +246,11 @@ export class ParallelCoordinatesD3 extends Component {
         // .range(['black', 'white'])
         .interpolate(d3.interpolateLab);
 
-      console.log('refresh pc ' + selected);
-      console.log(this.state);
       // let chart = this.state.pc;
 
+      console.error(data);
+      let dataNew = data.forEach(d=>delete d.id);
+      console.error(dataNew);
       // update color on indicator change
       let chart = this.state.pc;
       chart

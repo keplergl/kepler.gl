@@ -74,6 +74,7 @@
 /* data table styles */
 #grid {
   height: 200px;
+  width: 100%;
   color: rgb(106, 116, 133);
   overflow-x: hidden;
   overflow-y: scroll;
@@ -95,9 +96,13 @@
   float: left;
   overflow: hidden;
   white-space: nowrap;
-  width: 80px;
+  width: 7.5%;
   height: 20px;
+  text-transform: capitalize;
 }
 .col-0 {
-  width: 120px;
+  width: 80px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow:ellipsis; 
 }

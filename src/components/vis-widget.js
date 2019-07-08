@@ -25,9 +25,24 @@ import {IconRoundSmall} from 'components/common/styled-components';
 import {Close} from 'components/common/icons';
 
 import PropTypes from 'prop-types';
-import {INDICATORS, BGY_DATA_DISPLAY, AMENITY_DATA_INDICES, OD_DATA_INDICES, SAMPLE_DATA_AMENITIES, SAMPLE_DEMOGRAPHICS_SEX, SAMPLE_DEMOGRAPHICS_AGE} from 'utils/filter-utils';
+import {
+  INDICATORS,
+  BGY_DATA_DISPLAY,
+  AMENITY_DATA_INDICES,
+  OD_DATA_INDICES,
+  SAMPLE_DATA_AMENITIES,
+  SAMPLE_DEMOGRAPHICS_SEX,
+  SAMPLE_DEMOGRAPHICS_AGE
+} from 'utils/filter-utils';
 // import {subDivideDestinationData} from 'utils/plexus-utils/sample-data-utils';
-import {TRANSPORT_MODES, SEGMENTED_DESTINATIONS, BGY_DEMOGRAPHICS, M_SEX, M_INCOME, M_AGE} from 'utils/plexus-utils/sample-data-utils';
+import {
+  TRANSPORT_MODES,
+  SEGMENTED_DESTINATIONS,
+  BGY_DEMOGRAPHICS,
+  M_SEX,
+  M_INCOME,
+  M_AGE
+} from 'utils/plexus-utils/sample-data-utils';
 
 import {scaleLinear} from 'd3-scale';
 
@@ -52,7 +67,6 @@ const propTypes = {
   layers: PropTypes.arrayOf(PropTypes.any),
   mapLayers: PropTypes.object
 };
-
 
 const ControlPanel = styled.div`
   display: flex;
@@ -137,7 +151,6 @@ const VisRow = styled.div`
   margin-bottom: 15px;
 `;
 
-
 VisWidgetFactory.deps = [
   BarChartFactory,
   ParallelCoordinatesKFactory,
@@ -166,7 +179,7 @@ export default function VisWidgetFactory(
       visState,
       layers,
       mapLayers,
-      containerW,
+      containerW
     } = props;
 
     let bgyIncl;
@@ -178,12 +191,13 @@ export default function VisWidgetFactory(
     // const enlargedFilterWidth = isOpen ? containerW - sidePanelWidth : containerW;
     // const currView = selected;
     const maxWidth = 1080;
-    const widgetWidth = Math.min(maxWidth, containerW);
+    // const widgetWidth = Math.min(maxWidth, containerW + 200);
+    const widgetWidth = Math.min(containerW-340);
     // const DEFAULT_LIST = 5;
 
     if (datasets.barangays) {
       if (datasets.barangays.data) {
-        // console.error(datasets);
+        console.error(datasets);
         // formatted barangay data
         bgyIncl = [];
         let bgyRef = {};
@@ -194,7 +208,7 @@ export default function VisWidgetFactory(
           BGY_DATA_DISPLAY.forEach(b => {
             obj[b.id] = d[b.idx];
           });
-          
+
           bgyRef[obj['id']] = obj['name'];
         });
 
@@ -204,10 +218,10 @@ export default function VisWidgetFactory(
           BGY_DATA_DISPLAY.forEach(b => {
             obj[b.id] = d[b.idx];
           });
-        
+
           // OPTION B: map bgy names to id for reference (ALL bgys)
-          // bgyRef[obj['id']] = obj['name'];        
-          
+          // bgyRef[obj['id']] = obj['name'];
+
           bgyIncl.push(obj);
         });
         bgyIncl = bgyIncl.sort((a, b) => b[selected] - a[selected]);
@@ -218,13 +232,13 @@ export default function VisWidgetFactory(
         datasets.amenities.allData.forEach(d => {
           let key = d[AMENITY_DATA_INDICES['class']];
 
-          if(key in inserted) {
-            amtyCnt.filter(a=>a.name==key)[0].count += 1;
+          if (key in inserted) {
+            amtyCnt.filter(a => a.name == key)[0].count += 1;
           } else {
             inserted[key] = 0;
             amtyCnt.push({
               name: key,
-              count: 1,
+              count: 1
             });
           }
         });
@@ -237,49 +251,51 @@ export default function VisWidgetFactory(
 
         datasets.pairs.allData.forEach(d => {
           let key = d[OD_DATA_INDICES['d_id']];
-          let oKey = d[OD_DATA_INDICES['o_id']]; 
+          let oKey = d[OD_DATA_INDICES['o_id']];
 
-          if(key in inserted) {
-            destCnt.filter(d=>d.id==key)[0].count += d[OD_DATA_INDICES['count']];
+          if (key in inserted) {
+            destCnt.filter(d => d.id == key)[0].count +=
+              d[OD_DATA_INDICES['count']];
           } else {
             inserted[key] = 0;
             destCnt.push({
               name: bgyRef[key],
               id: key,
-              count: d[OD_DATA_INDICES['count']],
+              count: d[OD_DATA_INDICES['count']]
             });
           }
 
-          if(oKey in oInserted) {
-            oriCnt.filter(d=>d.id==oKey)[0].count += d[OD_DATA_INDICES['count']];
+          if (oKey in oInserted) {
+            oriCnt.filter(d => d.id == oKey)[0].count +=
+              d[OD_DATA_INDICES['count']];
           } else {
             oInserted[oKey] = 0;
             oriCnt.push({
               name: bgyRef[oKey],
               id: oKey,
-              count: d[OD_DATA_INDICES['count']],
+              count: d[OD_DATA_INDICES['count']]
             });
           }
         });
-
+        console.error(bgyIncl);
         // get maximum
         destMax = destCnt.reduce((prev, current) =>
           prev.count > current.count ? prev : current
         ).count;
 
         // filters undefined barangays
-        destCnt = destCnt.filter(d=>d.name);
+        destCnt = destCnt.filter(d => d.name);
       }
     }
 
-    const changeBarangay = (id) => { 
+    const changeBarangay = id => {
       console.error('set bgy');
-      let idIndex = BGY_DATA_DISPLAY.filter(bdd=>bdd.id=='id')[0].idx;
-      let newBgy = datasets.barangays.data.filter(b=>b[idIndex]==id)[0];
+      let idIndex = BGY_DATA_DISPLAY.filter(bdd => bdd.id == 'id')[0].idx;
+      let newBgy = datasets.barangays.data.filter(b => b[idIndex] == id)[0];
       console.error(newBgy);
       visStateActions.setActiveBarangay(newBgy);
-    }
-    
+    };
+
     // let demo = generateDemographics();
     // console.error(demo);
 
@@ -313,85 +329,96 @@ export default function VisWidgetFactory(
           </ControlPanel>
           <div className="bottom-widget--content">
             {bgyIncl ? (
-              <ParallelCoordinatesD3 data={bgyIncl} selected={selected} width={widgetWidth}/>
+              <ParallelCoordinatesD3
+                // data={bgyIncl.forEach(d => {
+                //   delete d.id;
+                // })}
+                data={bgyIncl}
+                selected={selected}
+                width={widgetWidth}
+              />
             ) : null}
-            { bgyIncl?<VisRow>
-              <ScatterPlot
-                title={'Spatial X Desirability'}
-                data={bgyIncl}
-                xKey={'desirability'}
-                yKey={'spatial'}
-                xLabel={'Transport Desirability'}
-                yLabel={'Spatial'}
-              />
-              <ScatterPlot
-                title={'Temporal X Desirability'}
-                data={bgyIncl}
-                xKey={'desirability'}
-                yKey={'temporal'}
-                xLabel={'Transport Desirability'}
-                yLabel={'Temporal'}
-              />
-              <ScatterPlot
-                title={'Economic X Desirability'}
-                data={bgyIncl}
-                xKey={'desirability'}
-                yKey={'economic'}
-                xLabel={'Transport Desirability'}
-                yLabel={'Economic'}
-              />
-            </VisRow>: null }
-            { bgyIncl?<VisRow>
-              <ScatterPlot
-                title={'Physical X Desirability'}
-                data={bgyIncl}
-                xKey={'desirability'}
-                yKey={'physical'}
-                xLabel={'Transport Desirability'}
-                yLabel={'Physical'}
-              />
-              <ScatterPlot
-                title={'Psychological X Desirability'}
-                data={bgyIncl}
-                xKey={'desirability'}
-                yKey={'psychological'}
-                xLabel={'Transport Desirability'}
-                yLabel={'Psychological'}
-              />
-              <ScatterPlot
-                title={'Physiological X Desirability'}
-                data={bgyIncl}
-                xKey={'desirability'}
-                yKey={'physiological'}
-                xLabel={'Transport Desirability'}
-                yLabel={'Physiological'}
-              />
-              
-            </VisRow>: null }
             {bgyIncl ? (
               <VisRow>
-              <ScatterPlot
-                title={'Sustainability X Desirability'}
-                data={bgyIncl}
-                xKey={'desirability'}
-                yKey={'sustainability'}
-                xLabel={'Transport Desirability'}
-                yLabel={'Sustainability'}
-              /> 
-              <ScatterPlot
-                title={'Performance X Desirability'}
-                data={bgyIncl}
-                xKey={'desirability'}
-                yKey={'performance'}
-                xLabel={'Transport Desirability'}
-                yLabel={'Performance'}
-              />   <ScatterPlot
-                title={'Fairness X Desirability'}
-                data={bgyIncl}
-                xKey={'desirability'}
-                yKey={'fairness'}
-                xLabel={'Transport Desirability'}
-                yLabel={'Fairness'}
+                <ScatterPlot
+                  title={'Spatial X Desirability'}
+                  data={bgyIncl}
+                  xKey={'desirability'}
+                  yKey={'spatial'}
+                  xLabel={'Transport Desirability'}
+                  yLabel={'Spatial'}
+                />
+                <ScatterPlot
+                  title={'Temporal X Desirability'}
+                  data={bgyIncl}
+                  xKey={'desirability'}
+                  yKey={'temporal'}
+                  xLabel={'Transport Desirability'}
+                  yLabel={'Temporal'}
+                />
+                <ScatterPlot
+                  title={'Economic X Desirability'}
+                  data={bgyIncl}
+                  xKey={'desirability'}
+                  yKey={'economic'}
+                  xLabel={'Transport Desirability'}
+                  yLabel={'Economic'}
+                />
+              </VisRow>
+            ) : null}
+            {bgyIncl ? (
+              <VisRow>
+                <ScatterPlot
+                  title={'Physical X Desirability'}
+                  data={bgyIncl}
+                  xKey={'desirability'}
+                  yKey={'physical'}
+                  xLabel={'Transport Desirability'}
+                  yLabel={'Physical'}
+                />
+                <ScatterPlot
+                  title={'Psychological X Desirability'}
+                  data={bgyIncl}
+                  xKey={'desirability'}
+                  yKey={'psychological'}
+                  xLabel={'Transport Desirability'}
+                  yLabel={'Psychological'}
+                />
+                <ScatterPlot
+                  title={'Physiological X Desirability'}
+                  data={bgyIncl}
+                  xKey={'desirability'}
+                  yKey={'physiological'}
+                  xLabel={'Transport Desirability'}
+                  yLabel={'Physiological'}
+                />
+              </VisRow>
+            ) : null}
+            {bgyIncl ? (
+              <VisRow>
+                <ScatterPlot
+                  title={'Sustainability X Desirability'}
+                  data={bgyIncl}
+                  xKey={'desirability'}
+                  yKey={'sustainability'}
+                  xLabel={'Transport Desirability'}
+                  yLabel={'Sustainability'}
+                />
+                <ScatterPlot
+                  title={'Performance X Desirability'}
+                  data={bgyIncl}
+                  xKey={'desirability'}
+                  yKey={'performance'}
+                  xLabel={'Transport Desirability'}
+                  yLabel={'Performance'}
+                />{' '}
+                <ScatterPlot
+                  title={'Fairness X Desirability'}
+                  data={bgyIncl}
+                  xKey={'desirability'}
+                  yKey={'fairness'}
+                  xLabel={'Transport Desirability'}
+                  yLabel={'Fairness'}
                 />
               </VisRow>
             ) : null}
@@ -399,15 +426,15 @@ export default function VisWidgetFactory(
             {/* TODO: change to TOP destinations  */}
             {bgyIncl ? (
               <VisRow>
-                <BarChart 
-                data={amtyCnt}       
-                xKey={'count'}
-                yKey={'name'}
-                title={'City Amenities'}
-                height={250}
+                <BarChart
+                  data={amtyCnt}
+                  xKey={'count'}
+                  yKey={'name'}
+                  title={'City Amenities'}
+                  height={250}
                 />
-              
-              {/* <BarChart 
+
+                {/* <BarChart 
                 data={oriCnt.sort((a, b) => b['count'] - a['count']).slice(0,10).reverse()}       
                 xKey={'count'}
                 yKey={'name'}
@@ -423,7 +450,7 @@ export default function VisWidgetFactory(
                 domainMax={destMax}
                 height={250}
                 /> */}
-              {/* <BarChart 
+                {/* <BarChart 
                 data={BGY_DEMOGRAPHICS.filter(d=>d.name).sort((a, b) => b['count'] - a['count']).slice(0,10).reverse()}       
                 xKeyArr={TRANSPORT_MODES}
                   yKey={'name'}
@@ -431,17 +458,20 @@ export default function VisWidgetFactory(
                 domainMax={destMax}
                 height={250}
                 /> */}
-              <BarChart 
-                  data={SEGMENTED_DESTINATIONS.filter(d=>d.name).sort((a, b) => b['count'] - a['count']).slice(0,10).reverse()}       
+                <BarChart
+                  data={SEGMENTED_DESTINATIONS.filter(d => d.name)
+                    .sort((a, b) => b['count'] - a['count'])
+                    .slice(0, 10)
+                    .reverse()}
                   xKeyArr={TRANSPORT_MODES}
-                  onLabelClick={changeBarangay}                  
+                  onLabelClick={changeBarangay}
                   yKey={'name'}
                   title={'Frequent destinations'}
                   height={250}
                   domainMax={destMax}
-                  />
+                />
               </VisRow>
-            ):null}
+            ) : null}
 
             {/* {bgyIncl ? (
               <VisRow>
@@ -462,19 +492,22 @@ export default function VisWidgetFactory(
                   title={'By Sex'}
                   values={BGY_DEMOGRAPHICS}
                   xKeyArr={M_SEX}
-                    />
-                <BarChart 
-                  data={BGY_DEMOGRAPHICS.filter(d=>d.name).sort((a, b) => b['count'] - a['count']).slice(0,10).reverse()}       
+                />
+                <BarChart
+                  data={BGY_DEMOGRAPHICS.filter(d => d.name)
+                    .sort((a, b) => b['count'] - a['count'])
+                    .slice(0, 10)
+                    .reverse()}
                   xKeyArr={M_SEX}
                   xKey={'name'}
                   yKey={'name'}
-                  onLabelClick={changeBarangay}                  
-                  categoryLabel={'Sex'}                  
+                  onLabelClick={changeBarangay}
+                  categoryLabel={'Sex'}
                   title={'Frequency per area'}
                   height={250}
-                  />
+                />
               </VisRow>
-            ):null}
+            ) : null}
 
             {bgyIncl ? (
               <VisRow>
@@ -482,20 +515,22 @@ export default function VisWidgetFactory(
                   title={'By Income Level'}
                   values={BGY_DEMOGRAPHICS}
                   xKeyArr={M_INCOME}
-                    />
-                <BarChart 
-                  data={BGY_DEMOGRAPHICS.filter(d=>d.name).sort((a, b) => b['count'] - a['count']).slice(0,10).reverse()}       
+                />
+                <BarChart
+                  data={BGY_DEMOGRAPHICS.filter(d => d.name)
+                    .sort((a, b) => b['count'] - a['count'])
+                    .slice(0, 10)
+                    .reverse()}
                   xKeyArr={M_INCOME}
                   xKey={'name'}
                   yKey={'name'}
-                  onLabelClick={changeBarangay}                  
-                  categoryLabel={'Income Range'}                                    
+                  onLabelClick={changeBarangay}
+                  categoryLabel={'Income Range'}
                   title={'Frequency per area'}
                   height={250}
-                  />
-                
+                />
               </VisRow>
-            ):null}
+            ) : null}
 
             {bgyIncl ? (
               <VisRow>
@@ -503,20 +538,22 @@ export default function VisWidgetFactory(
                   title={'By Age'}
                   values={BGY_DEMOGRAPHICS}
                   xKeyArr={M_AGE}
-                    />
-                <BarChart 
-                  data={BGY_DEMOGRAPHICS.filter(d=>d.name).sort((a, b) => b['count'] - a['count']).slice(0,10).reverse()}       
+                />
+                <BarChart
+                  data={BGY_DEMOGRAPHICS.filter(d => d.name)
+                    .sort((a, b) => b['count'] - a['count'])
+                    .slice(0, 10)
+                    .reverse()}
                   xKeyArr={M_AGE}
                   xKey={'name'}
                   yKey={'name'}
-                  onLabelClick={changeBarangay}                  
-                  categoryLabel={'Age Group'}                                    
+                  onLabelClick={changeBarangay}
+                  categoryLabel={'Age Group'}
                   title={'Frequency per area'}
                   height={250}
-                  />
+                />
               </VisRow>
-            ):null}
-            
+            ) : null}
           </div>
         </div>
       </WidgetContainer>

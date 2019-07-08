@@ -1348,6 +1348,8 @@ export const setActiveBarangay = (state, action) => {
   return {
     ...state,
     activeBarangay: action.info,
+    clicked: null,
+      // activeBarangay: null
   };
 };
 

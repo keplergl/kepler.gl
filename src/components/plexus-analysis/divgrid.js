@@ -53,7 +53,12 @@ export function divgrid(config) {
       .selectAll('.cell')
       .data(function(d) {
         return columns.map(function(col) {
-          return d[col];
+          // console.error('divgrid');
+          // console.error(d[col]);
+          // console.error(typeof d[col]);
+          if (typeof d[col] == 'string') 
+            return d[col]; 
+          else return d[col].toFixed(2).toLocaleString();
         });
       });
 
