@@ -3,14 +3,12 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import { SketchPicker} from 'react-color';
 import { Button, SidePanelDivider} from 'components/common/styled-components';
-import {VertDots, Delete, Trash} from 'components/common/icons';
+import {VertDots, Trash} from 'components/common/icons';
 import {sortableContainer, sortableElement, sortableHandle} from 'react-sortable-hoc';
 import arrayMove from 'array-move';
-import onClickOutside from 'react-onclickoutside';
-import ColorPalette from './color-palette';
-import SketcherModal from './modal'
 import ModalDialog from 'components/common/modal'
 import Modal from "react-modal";
+import ColorPalette from './color-palette';
 import CustomPicker from './custom-picker'
 
 const StyledSortableItem = styled.div`
@@ -25,6 +23,7 @@ const StyledSortableItem = styled.div`
 
     .layer__drag-handle {
       opacity: 1;
+      cursor: move;
     }
   }
 `
@@ -37,12 +36,18 @@ const StyledHex = styled.div`
   color: #F0F0F0;
   font-size: 10px;
   padding-left: 10px;
+  :hover {
+      cursor: default;
+    }
 `
 
 const StyledTrash = styled.div`
   height: 12px;
   margin-left: auto;
   order: 2;
+  :hover {
+    cursor: pointer;
+  }
   `
 
 const StyledLine = styled.div`
@@ -69,8 +74,19 @@ const StyledColorRange = styled.div`
   }
 `
 
+const StyledButtonContainer = styled.div`
+  margin-top: 11px;
+  display: flex;
+  direction: rtl;
+`
+
 const TransparentButton = styled(Button)`
   background-color: transparent;
+  color: #A0A7B4
+  :hover {
+    background-color: transparent;
+    color: #fff;
+  }
 `;
 
 const StyledSketcher = styled.div`
@@ -87,22 +103,18 @@ const StyledCover = styled.div`
   left: 0px;
 `
 
-const StyledButtonContainer = styled.div`
-  margin-top: 11px;
-  display: flex;
-  direction: rtl;
-`
 const StyledDragHandle = styled.div`
-/*   display: flex;
+  display: flex;
   align-items: center;
   opacity: 0;
   z-index: 1000;
+  color: #fff
 
 :hover {
   cursor: move;
   opacity: 1;
   color: ${props => props.theme.textColorHl};
-} */
+}
 `;
 
 const customStyles = {
@@ -142,7 +154,7 @@ const DragHandle = sortableHandle(({className, children}) =>
 </StyledDragHandle>
 );
 
-class CustomPalette extends React.Component {
+class CustomPalette extends Component {
   static propTypes = {
     customPalette: PropTypes.shape({
         name: PropTypes.string,
@@ -302,7 +314,8 @@ class CustomPalette extends React.Component {
                 {color.toUpperCase()}
               </StyledHex>
 
-              <StyledTrash onClick={() => this._onColorDelete(index)}>
+              <StyledTrash
+                onClick={() => this._onColorDelete(index)}>
                 <Trash/>
               </StyledTrash>
 
@@ -311,6 +324,7 @@ class CustomPalette extends React.Component {
         }
 {/* to-do: fix on drag color change bug */}
 {/* to-do: fix on modal close dropdown bug */}
+{/* to-do: dark palette */}
 
 
 
