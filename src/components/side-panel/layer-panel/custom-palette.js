@@ -117,11 +117,12 @@ const StyledCover = styled.div`
 
 const customStyles = {
   content: {
-    top: "50%",
-    left: "40%",
+    top: "30%",
+    //left: "40%",
+    left: "340px",
     right: "auto",
     bottom: "auto",
-    transform: "translate(-60%, -45%)",
+    //transform: "translate(-60%, -45%)",
     padding: "0px 0px 0px 0px",
     zIndex: 9999
   }
