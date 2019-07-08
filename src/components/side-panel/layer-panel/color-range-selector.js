@@ -76,7 +76,7 @@ export default class ColorRangeSelect extends Component {
       },
       custom: {
         type: 'switch',
-        value: true,
+        value: false,
         options: [true, false]
       }
     }
@@ -129,7 +129,7 @@ export default class ColorRangeSelect extends Component {
             />
           ))}
         </StyledColorConfig>
-        {/* <ColorPickerPanel onChange={colors => calling action with new colors}/> */}
+
 
         {config.custom.value ?
           <CustomPalette
