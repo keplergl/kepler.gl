@@ -145,7 +145,7 @@ class ColorSelector extends Component {
         {currentEditing ? (
           <StyledPanelDropdown
             className="color-selector__dropdown"
-            style={{overflow: 'visible'}}
+            style={{overflow: 'auto'}}
           >
             {colorSets[editing].isRange ? (
               <ColorRangeSelector
