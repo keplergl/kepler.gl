@@ -20,6 +20,7 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
+import styled from 'styled-components';
 import {Editor} from 'react-map-gl-draw';
 import window from 'global/window';
 
@@ -34,6 +35,7 @@ import {
 const DEFAULT_EDIT_HANDLE_SHAPE = 'circle';
 
 const DELETE_KEY_EVENT_CODE = 8;
+const ESCAPE_KEY_EVENT_CODE = 27;
 
 class Draw extends Component {
   static propTypes = {
@@ -47,6 +49,10 @@ class Draw extends Component {
 
   static defaultProps = {
     clickRadius: DEFAULT_RADIUS
+  };
+
+  state = {
+    showActions: false
   };
 
   componentDidMount() {
@@ -65,11 +71,11 @@ class Draw extends Component {
       return;
     }
 
-    if (
-      event.which === DELETE_KEY_EVENT_CODE &&
-      selectedFeature
-    ) {
-      this.props.onDeleteFeature((selectedFeature || {}).id)
+    switch (event.which) {
+      case DELETE_KEY_EVENT_CODE:
+        this.props.onDeleteFeature((selectedFeature || {}).id);
+        break;
+      default: break;
     }
   };
 
@@ -77,22 +83,27 @@ class Draw extends Component {
     return DEFAULT_EDIT_HANDLE_SHAPE;
   };
 
+  _onSelect = feature => {
+    this.props.onSelect(feature);
+  };
+
   render() {
     const {clickRadius, editor, features} = this.props;
     const {selectedFeature = {}} = editor;
 
     return (
-      <div>
+      <div className="editor">
         <Editor
           clickRadius={clickRadius}
           mode={editor.mode}
           features={features}
           selectedFeatureId={(selectedFeature || {}).id}
-          onSelect={this.props.onSelect}
+          onSelect={this._onSelect}
           onUpdate={this.props.onUpdate}
           getEditHandleShape={this._getEditHandleShape}
           getFeatureStyle={getFeatureStyle}
           getEditHandleStyle={getEditHandleStyle}
+          style={{zIndex: 1}}
         />
       </div>
     );

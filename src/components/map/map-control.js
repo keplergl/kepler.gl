@@ -264,25 +264,19 @@ const MapDrawPanel = React.memo(({editor, isActive, onToggleMenuPanel, onSetEdit
       {isActive ? (
         <StyledToolBar show={isActive} direction="column">
           <ToolbarItem
-            onClick={() => {
-              onSetEditorMode(EDITOR_MODES.EDIT_VERTEX);
-            }}
+            onClick={() => onSetEditorMode(EDITOR_MODES.EDIT_VERTEX)}
             label="select"
             icon={(<CursorClick height="22px"/>)}
             active={editor.mode === EDITOR_MODES.EDIT_VERTEX}
           />
           <ToolbarItem
-            onClick={() => {
-              onSetEditorMode(EDITOR_MODES.DRAW_POLYGON);
-            }}
+            onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_POLYGON)}
             label="polygon"
             icon={(<Polygon height="22px"/>)}
             active={editor.mode === EDITOR_MODES.DRAW_POLYGON}
           />
           <ToolbarItem
-            onClick={() => {
-              onSetEditorMode(EDITOR_MODES.DRAW_RECTANGLE);
-            }}
+            onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_RECTANGLE)}
             label="rectangle"
             icon={(<Rectangle height="22px"/>)}
             active={editor.mode === EDITOR_MODES.DRAW_RECTANGLE}

@@ -472,6 +472,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
               <Editor
                 editor={uiState.editor}
                 features={visState.editor.features}
+                isEnabled={isEdit}
                 onDeleteFeature={uiStateActions.deleteFeature}
                 onSelect={uiStateActions.setSelectedFeature}
                 onUpdate={visStateActions.setFeatures}
