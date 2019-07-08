@@ -138,7 +138,7 @@ function AmenityFilterPanelFactory() {
       setFilter(idx, 'value', filter.value);
     }
 
-    onResetClicked(option) {
+    onResetClicked() {
       const {
         datasets,
         enlargeFilter,
@@ -152,7 +152,7 @@ function AmenityFilterPanelFactory() {
       } = this.props;
 
       filter.value = [];
-      
+
       setFilter(idx, 'value', filter.value);
     }
 
@@ -179,7 +179,7 @@ function AmenityFilterPanelFactory() {
         <div>
           <StyledLabel>{label}</StyledLabel>
           <StyledFilterPanel className="filter-panel">
-            <StyledFilterContent className="filter-panel__content"> 
+            <StyledFilterContent className="filter-panel__content">
               {categories.map(category => (
                 <CheckboxContainer>
                   <Checkbox
@@ -191,7 +191,7 @@ function AmenityFilterPanelFactory() {
                   />
                 </CheckboxContainer>
               ))}
-              <StyledResetButton onClick={() => this.onResetClicked('Others')}>Clear All</StyledResetButton>
+              <StyledResetButton onClick={() => this.onResetClicked()}>Clear All</StyledResetButton>
             </StyledFilterContent>
           </StyledFilterPanel></div>
       );
