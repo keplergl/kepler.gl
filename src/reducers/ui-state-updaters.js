@@ -175,6 +175,8 @@ export const DEFAULT_CUSTOM_PALETTE = {
   colors: ['#F0F0F0', '#CCCCCC', '#B3B3B3', '#999999', '#666666']
 }
 
+export const DEFAULT_SHOW_SKETCHER = false;
+
 /**
  * Default initial `uiState`
  * @memberof uiStateUpdaters
@@ -209,7 +211,9 @@ export const INITIAL_UI_STATE = {
   // ui notifications
   notifications: DEFAULT_NOTIFICATIONS,
   // Custom palette
-  customPalette: DEFAULT_CUSTOM_PALETTE
+  customPalette: DEFAULT_CUSTOM_PALETTE,
+  // sketcher modal
+  showSketcher: DEFAULT_SHOW_SKETCHER
 };
 
 /* Updaters */
@@ -559,3 +563,7 @@ export const setCustomPaletteUpdater = (state, { payload: customPalette }) => ({
   customPalette
 });
 
+export const onToggleSketcherUpdater = (state) => ({
+  ...state,
+  showSketcher: !state.showSketcher
+});

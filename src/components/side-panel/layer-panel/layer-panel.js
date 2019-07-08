@@ -53,7 +53,9 @@ function LayerPanelFactory() {
       layerVisConfigChange: PropTypes.func,
       layerVisualChannelConfigChange: PropTypes.func,
       customPalette: PropTypes.object.isRequired,
-      setCustomPalette: PropTypes.func.isRequired
+      setCustomPalette: PropTypes.func.isRequired,
+      showSketcher: PropTypes.bool.isRequired,
+      onToggleSketcherUpdater: PropTypes.func.isRequired
     };
 
     updateLayerConfig = newProp => {
@@ -103,7 +105,7 @@ function LayerPanelFactory() {
     };
 
     render() {
-      const {layer, idx, datasets, layerTypeOptions, customPalette, setCustomPalette} = this.props;
+      const {layer, idx, datasets, layerTypeOptions, customPalette, setCustomPalette, showSketcher, onToggleSketcherUpdater} = this.props;
       const {config} = layer;
       const {isConfigActive} = config;
 
@@ -141,6 +143,8 @@ function LayerPanelFactory() {
               updateLayerVisConfig={this.updateLayerVisConfig}
               customPalette={customPalette}
               setCustomPalette={setCustomPalette}
+              showSketcher={showSketcher}
+              onToggleSketcherUpdater={onToggleSketcherUpdater}
             />
           )}
         </PanelWrapper>

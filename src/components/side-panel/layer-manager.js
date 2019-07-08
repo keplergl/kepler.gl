@@ -120,13 +120,15 @@ LayerManagerFactory.deps = [
 function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
   // By wrapping layer panel using a sortable element we don't have to implement the drag and drop logic into the panel itself;
   // Developers can provide any layer panel implementation and it will still be sortable
-  const SortableItem = sortableElement(({layer, customPalette, setCustomPalette}) => {
+  const SortableItem = sortableElement(({layer, customPalette, setCustomPalette, showSketcher, onToggleSketcherUpdater}) => {
     return (
       <SortableStyledItem>
         <LayerPanel
           {...layer}
           customPalette={customPalette}
           setCustomPalette={setCustomPalette}
+          showSketcher={showSketcher}
+          onToggleSketcherUpdater={onToggleSketcherUpdater}
         />
       </SortableStyledItem>
     );
@@ -229,6 +231,9 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
                     layer={layer}
                     customPalette={uiState.customPalette}
                     setCustomPalette={uiStateActions.setCustomPalette}
+                    showSketcher={uiState.showSketcher}
+                    onToggleSketcherUpdater={uiStateActions.onToggleSketcherUpdater}
+
                   />
                 );
               })}

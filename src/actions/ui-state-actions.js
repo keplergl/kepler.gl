@@ -255,6 +255,15 @@ export const setCustomPalette = createAction(
 );
 
 /**
+ * Set the custom palette for layer
+ * @memberOf uiStateActions
+ * @public
+ */
+export const onToggleSketcherUpdater = createAction(
+  ActionTypes.TOGGLE_SKETCHER
+);
+
+/**
  * This declaration is needed to group actions in docs
  */
 /**

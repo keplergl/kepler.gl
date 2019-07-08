@@ -11,6 +11,19 @@ import Modal from "react-modal";
 import ColorPalette from './color-palette';
 import CustomPicker from './custom-picker'
 
+const StyledWrapper = styled.div`
+  color: #A0A7B4;
+`
+
+const StyledHex = styled.div`
+  color: #F0F0F0;
+  font-size: 10px;
+  padding-left: 10px;
+  :hover {
+      cursor: default;
+    }
+`
+
 const StyledSortableItem = styled.div`
   display: flex;
   align-items: center;
@@ -28,23 +41,22 @@ const StyledSortableItem = styled.div`
   }
 `
 
-const StyledWrapper = styled.div`
-  color: #A0A7B4;
-`
-
-const StyledHex = styled.div`
-  color: #F0F0F0;
-  font-size: 10px;
-  padding-left: 10px;
+const StyledDragHandle = styled.div`
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  z-index: 1000;
+  color: #fff
   :hover {
-      cursor: default;
-    }
-`
+    cursor: move;
+    opacity: 1;
+    color: ${props => props.theme.textColorHl};
+  }
+`;
 
 const StyledTrash = styled.div`
   height: 12px;
   margin-left: auto;
-  order: 2;
   :hover {
     cursor: pointer;
   }
@@ -103,20 +115,6 @@ const StyledCover = styled.div`
   left: 0px;
 `
 
-const StyledDragHandle = styled.div`
-  display: flex;
-  align-items: center;
-  opacity: 0;
-  z-index: 1000;
-  color: #fff
-
-:hover {
-  cursor: move;
-  opacity: 1;
-  color: ${props => props.theme.textColorHl};
-}
-`;
-
 const customStyles = {
   content: {
     top: "50%",
@@ -131,10 +129,10 @@ const customStyles = {
 
 // const StyledModal = styled.div`
 //     top: "50%",
-//     left: "40%",
-//     right: "auto",
+//     left: 400px,
+//     // right: "auto",
 //     bottom: "auto",
-//     transform: "translate(-60%, -45%)",
+//     // transform: "translate(-60%, -45%)",
 //     padding: "0px 0px 0px 0px"
 // `
 
@@ -163,16 +161,15 @@ class CustomPalette extends Component {
         colors: PropTypes.arrayOf(PropTypes.string)
       })
     ,
-    setCustomPalette: PropTypes.func
+    setCustomPalette: PropTypes.func,
+    showSketcher: PropTypes.bool,
+    onToggleSketcherUpdater: PropTypes.func
   };
 
   constructor(props) {
     super(props)
     this.state = {
-      showSketcher: false,
-      currentSwatchIndex: null,
-      showSwatches: true,
-
+      currentSwatchIndex: null
     }
   }
 
@@ -214,15 +211,13 @@ class CustomPalette extends Component {
 
   _onSwatchClick = (index) => {
     this.setState({
-      showSketcher: true,
       currentSwatchIndex: index
     })
+    this.props.onToggleSketcherUpdater();
   }
 
   _onSwatchClose = (index) => {
-    this.setState({
-      showSketcher: false
-    });
+    this.props.onToggleSketcherUpdater();
   };
 
   // handleClickOutside = e => {
@@ -269,13 +264,11 @@ class CustomPalette extends Component {
         </StyledColorRange>
 
 
-
-
         <SortableContainer className="custom-palette-container"
           onSortEnd={this._onSortEnd}
           lockAxis="y"
           useDragHandle={true}
-          helperClass=""
+          helperClass="sortable-"
         >
 
           {colors.map((color, index) =>
@@ -292,21 +285,20 @@ class CustomPalette extends Component {
                 onClick={() => this._onSwatchClick(index)} >
               </StyledSwatch>
 
-              {this.state.showSketcher && this.state.currentSwatchIndex === index ?
+              {this.props.showSketcher && this.state.currentSwatchIndex === index ?
                 <div>
-                  <Modal
-                    isOpen={this.state.showSketcher}
-                    style={customStyles}
-                    ariaHideApp={false}
-                  >
-                    <CustomPicker
-                     color={color}
-                      onChange={this._onColorUpdate}
-                      onSwatchClose={this._onSwatchClose} />
-                    {/* <MyPicker
+
+                    <Modal
+                      isOpen={this.props.showSketcher}
+                      style={customStyles}
+                      ariaHideApp={false}
+                    >
+                      <CustomPicker
                       color={color}
-                      onChange={this._onColorUpdate} /> */}
-                  </Modal>
+                        onChange={this._onColorUpdate}
+                        onSwatchClose={this._onSwatchClose} />
+                      </Modal>
+
                 </div>
                 : null}
 
@@ -409,20 +401,13 @@ class CustomPalette extends Component {
 export default CustomPalette;
 
 
-
-
-
-
-
 const MyPicker = ({color, onChange}) => (
-
   <SketchPicker
     color={color}
     onChange={onChange}
-     passedStyles={{
+    styles={{
       picker: {
         background: "#CDCDCD",
-        backgroundColor: "#CDCDCD",
       }
     }}
     disableAlpha={true}

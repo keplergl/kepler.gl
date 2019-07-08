@@ -116,6 +116,7 @@ const ActionTypes = keyMirror({
   ADD_NOTIFICATION: null,
   REMOVE_NOTIFICATION: null,
   SET_CUSTOM_PALETTE: null,
+  TOGGLE_SKETCHER: null,
 
   // uiState > export image
   SET_RATIO: null,

@@ -50,7 +50,9 @@ export default class ColorRangeSelect extends Component {
     selectedColorRange: PropTypes.object,
     onSelectColorRange: PropTypes.func.isRequired,
     customPalette: PropTypes.object,
-    setCustomPalette: PropTypes.func
+    setCustomPalette: PropTypes.func,
+    showSketcher: PropTypes.bool,
+    onToggleSketcherUpdater: PropTypes.func
   };
 
   static defaultProps = {
@@ -113,7 +115,7 @@ export default class ColorRangeSelect extends Component {
 
   render() {
     const { config } = this.state;
-    const {customPalette, setCustomPalette} = this.props;
+    const {customPalette, setCustomPalette, showSketcher,onToggleSketcherUpdater} = this.props;
     return (
       <ColorRangeSelector className="color-range-selector">
         <StyledColorConfig>
@@ -137,16 +139,10 @@ export default class ColorRangeSelect extends Component {
           <CustomPalette
             customPalette={customPalette}
             setCustomPalette={setCustomPalette}
+            showSketcher={showSketcher}
+            onToggleSketcherUpdater={onToggleSketcherUpdater}
             onSelect={this.props.onSelectColorRange}
             selected={this.props.selectedColorRange}
-            // {{
-            //   name: 'Custom Palette',
-            //   type: null,
-            //   category: 'Uber',
-            //   colors: ['#F0F0F0', '#CCCCCC', '#B3B3B3', '#999999', '#666666']
-            // }}
-            //{uiState.customPalette}
-            // colors={['#F0F0F0', '#CCCCCC', '#B3B3B3', '#999999', '#666666']}
             onApply={this.props.onSelectColorRange}
             onCancel = {this._onCustomPaletteCancel}
           /> :

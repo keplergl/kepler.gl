@@ -77,7 +77,8 @@ export default class LayerConfigurator extends Component {
     updateLayerVisConfig: PropTypes.func.isRequired,
     updateLayerVisualChannelConfig: PropTypes.func.isRequired,
     customPalette: PropTypes.object.isRequired,
-    setCustomPalette: PropTypes.func.isRequired
+    setCustomPalette: PropTypes.func.isRequired,
+    showSketcher: PropTypes.bool.isRequired
   };
 
   _renderPointLayerConfig(props) {
@@ -105,8 +106,11 @@ export default class LayerConfigurator extends Component {
           {layer.config.colorField ? (
             <ColorRangeConfig
               {...visConfiguratorProps}
-            customPalette = {this.props.customPalette }
-            setCustomPalette = {this.props.setCustomPalette } />
+              customPalette={this.props.customPalette}
+              setCustomPalette={this.props.setCustomPalette}
+              showSketcher={this.props.showSketcher}
+              onToggleSketcherUpdater={this.props.onToggleSketcherUpdater}
+            />
           ) : (
               <LayerColorSelector
                 {...layerConfiguratorProps}/>
@@ -139,7 +143,9 @@ export default class LayerConfigurator extends Component {
               <LayerColorSelector
                   {...visConfiguratorProps}
                   customPalette = { this.props.customPalette }
-                  setCustomPalette = { this.props.setCustomPalette }
+                  setCustomPalette={this.props.setCustomPalette}
+                  showSketcher={this.props.showSketcher}
+                  onToggleSketcherUpdater={this.props.onToggleSketcherUpdater}
                 selectedColor={layer.config.visConfig.strokeColor}
                 property="strokeColor"
               />
@@ -420,6 +426,8 @@ export default class LayerConfigurator extends Component {
                 {...layerConfiguratorProps}
                 customPalette = {this.props.customPalette }
                 setCustomPalette={this.props.setCustomPalette}
+                showSketcher={this.props.showSketcher}
+                onToggleSketcherUpdater={this.props.onToggleSketcherUpdater}
               />
    )}
           <ConfigGroupCollapsibleContent>
@@ -566,8 +574,11 @@ export default class LayerConfigurator extends Component {
               <ColorRangeConfig {...visConfiguratorProps} />
             ) : (
                 <LayerColorSelector {...layerConfiguratorProps}
-                  customPalette = { this.props.customPalette }
-                  setCustomPalette = { this.props.setCustomPalette } />
+                  customPalette={this.props.customPalette}
+                  setCustomPalette={this.props.setCustomPalette}
+                  showSketcher={this.props.showSketcher}
+                  onToggleSketcherUpdater={this.props.onToggleSketcherUpdater}
+                  />
             )}
             <ConfigGroupCollapsibleContent>
               <ChannelByValueSelector
@@ -598,7 +609,9 @@ export default class LayerConfigurator extends Component {
             <LayerColorSelector
                 {...visConfiguratorProps}
                 customPalette = { this.props.customPalette }
-                setCustomPalette = { this.props.setCustomPalette }
+                setCustomPalette={this.props.setCustomPalette}
+                showSketcher={this.props.showSketcher}
+                onToggleSketcherUpdater={this.props.onToggleSketcherUpdater}
               selectedColor={layer.config.visConfig.strokeColor}
               property="strokeColor"
             />
@@ -773,7 +786,9 @@ export default class LayerConfigurator extends Component {
       ...commonConfigProp,
       onChange: updateLayerConfig,
       customPalette: this.props.customPalette ,
-      setCustomPalette: this.props.setCustomPalette
+      setCustomPalette: this.props.setCustomPalette,
+      showSketcher: this.props.showSketcher,
+      onToggleSketcherUpdater: this.props.onToggleSketcherUpdater
     };
 
     const layerChannelConfigProps = {
@@ -898,7 +913,9 @@ export const ColorRangeConfig = ({
   onChange,
   property = 'colorRange',
   customPalette,
-  setCustomPalette
+  setCustomPalette,
+  showSketcher,
+  onToggleSketcherUpdater
 }) => (
   <SidePanelSection>
     <ColorSelector
@@ -911,6 +928,9 @@ export const ColorRangeConfig = ({
         ]}
         customPalette={customPalette}
         setCustomPalette={setCustomPalette}
+        showSketcher={showSketcher}
+        onToggleSketcherUpdater={onToggleSketcherUpdater}
+
     />
   </SidePanelSection>
 );
