@@ -73,16 +73,16 @@ OverviewPanelFactory.deps = [IndicatorFactory, BarChartFactory, StackedBarChartF
 function OverviewPanelFactory(Indicator, BarChart, StackedBarChart) {
   
   return class InteractionPanel extends Component {
-    
+
     render() {
-      const DEFAULT_LIST = 5;      
+      const DEFAULT_LIST = 5;
       let bgyIncl;
       let maxListSize = DEFAULT_LIST;
 
       if(this.props.datasets && !(Object.entries(this.props.datasets).length === 0 && this.props.datasets.constructor === Object)) {
         if(this.props.datasets.barangays) {
           maxListSize = Math.min(DEFAULT_LIST, this.props.datasets.barangays.allData.length);
-  
+
           // formatted barangay data
           bgyIncl = []
           this.props.datasets.barangays.allData.forEach((d) => {
@@ -132,8 +132,9 @@ function OverviewPanelFactory(Indicator, BarChart, StackedBarChart) {
                   onConfigChange={this.props.onConfigChange}
                   filter={this.props.filters[idx]}
                   setFilter={value => this.props.setFilter(idx, 'value', value)}
+                  reset={value => this.props.setFilter(idx, 'value', this.props.filters[idx].domain)}
                 />
-                {/* {indicator.id === this.props.selectedIndicator? 
+                {/* {indicator.id === this.props.selectedIndicator?
               <RangeFilter
                 filter={this.props.filters[idx]}
                 setFilter={value => this.props.setFilter(idx, 'value', value)}
@@ -143,19 +144,19 @@ function OverviewPanelFactory(Indicator, BarChart, StackedBarChart) {
               </div>
             ))}
           </StyledIndicatorContent>
-          {bgyIncl ? 
+          {bgyIncl ?
             <StackedBarChart
               title={'Transport Desirability Proportion'}
-              activeIndicator={'desirability'} 
+              activeIndicator={'desirability'}
               data={bgyIncl}
-              legends={this.props.legends} 
-              />       
+              legends={this.props.legends}
+              />
             : null}
-          {bgyIncl? <BarChart 
+          {bgyIncl? <BarChart
             floatFormat
             listSize={bgyIncl.length}
             maxBar={maxListSize}
-            data={bgyIncl}       
+            data={bgyIncl}
             xKey={'desirability'}
             yKey={'name'}
             title={'Transport Desirability Rankings'}
@@ -168,7 +169,7 @@ function OverviewPanelFactory(Indicator, BarChart, StackedBarChart) {
             reverseFunc={this.props.reverseFunc}
             analysisRankingReverse={this.props.rankingReverse}
             analysisRankingPage={this.props.rankingPage}
-            /> : null } 
+            /> : null }
             {/* {/* {console.error('END OVERVIEW PANEL')} */}
         </StyledOverviewPanel>
       );
