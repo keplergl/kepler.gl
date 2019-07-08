@@ -173,7 +173,7 @@ export class ParallelCoordinatesD3 extends Component {
       //   return colorScale(d['spatial']);
       // })
       .dimensions(dimensions)
-      .width(1106)
+      .width(this.props.width - 50)
       .hideAxis(['name', 'population', 'income', 'desirability', 'id'])
       .margin({
         top: 40,
@@ -255,6 +255,7 @@ export class ParallelCoordinatesD3 extends Component {
       let chart = this.state.pc;
       chart
         .data(data)
+        .width(this.props.width - 50)
         .color(d => {
           return colorScale(d[selected]);
         })
@@ -331,7 +332,7 @@ export class ParallelCoordinatesD3 extends Component {
             display: this.state.visible ? 'block' : 'none'
           }}
         /> */}
-        <PCVisWrapper id="example" className="parcoords ex" width={this.props.width} visible={this.state.visible ? 'block' : 'none'}/>
+        <PCVisWrapper id="example" className="parcoords ex" width={this.props.width - 50} visible={this.state.visible ? 'block' : 'none'}/>
         <div
           id="grid"
           className="parcoords ex"

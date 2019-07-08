@@ -177,7 +177,7 @@ export class BarChart extends Component {
           y: d.name,
           label: d.count,
           // xOffset: 20,
-          // yOffset: 7,
+          yOffset: 5,
           style: {fill: '#6A7485'}
         }));
       

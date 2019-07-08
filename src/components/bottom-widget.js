@@ -477,7 +477,8 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
     const ACTIVE_INDICATOR_LABEL = INDICATORS[INDICATORS.findIndex(d => d.value == selected)].label;
 
     return (
-      <WidgetContainer display={selected!='desirability' || visState.activeBarangay}>
+      // <WidgetContainer display={selected!='desirability' || visState.activeBarangay}>
+      <WidgetContainer display={true}>
       {/* <WidgetContainer width={width}> */}
         <div className="bottom-widget--inner">
           <TopSectionWrapper>
@@ -592,7 +593,7 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
               {!visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_DEF.profile.value && bgyIncl ? (
                 <div className="breakdown-analysis__section">
                   <StackedBarChart
-                    title={ACTIVE_INDICATOR_LABEL + ' Proportion'}
+                    title={ACTIVE_INDICATOR_LABEL + ' Distribution'}
                     activeIndicator={selected} 
                     data={bgyIncl}
                     legends={legends}                    

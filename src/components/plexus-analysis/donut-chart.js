@@ -47,6 +47,10 @@ const ControlPanel = styled.div`
 export class DonutChart extends Component {
   constructor(props) {
     super(props);
+
+    this.state = {
+      hovered: null,
+    }
   }
 
 
@@ -96,7 +100,8 @@ export class DonutChart extends Component {
     } else if(values && xLabel) {
       
       pData = values.map((d) => ({
-        angle: d[xLabel]
+        angle: d[xLabel],
+        value: d[xLabel],
       }));
       // console.error('donut');
       // console.error(pData);
@@ -115,6 +120,7 @@ export class DonutChart extends Component {
             inserted[x.name] = 0;
             pData.push({
               label: x.name,
+              value: d[x.name],
               angle: d[x.name],
             });
           }
@@ -140,8 +146,23 @@ export class DonutChart extends Component {
           width={280} 
           height={170} 
           colorType={legends?"literal":"category"}
+          onValueMouseOver={v => {console.error('radial over');console.error(v);this.setState({hovered: v})}}
+          onSeriesMouseOut={v => this.setState({hovered: null})}
           >
-
+            {this.state.hovered && (
+              <Hint
+                // xType="literal"
+                // yType="literal"
+                // getX={d => d.x}
+                // getY={d => d.y}
+                value={(legends) ? {Count: this.state.hovered.value} : {
+                  // Barangay: this.state.hovered.y,
+                  // [categoryLabel ? categoryLabel : 'Category']: this.state.hovered.valueLabel,
+                  Category: this.state.hovered.label,
+                  Count: this.state.hovered.value,
+                }}
+              />
+            )}
           </RadialChart>
       </DonutPanel>
     );

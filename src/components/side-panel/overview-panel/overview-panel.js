@@ -145,7 +145,7 @@ function OverviewPanelFactory(Indicator, BarChart, StackedBarChart) {
           </StyledIndicatorContent>
           {bgyIncl ? 
             <StackedBarChart
-              title={'Transport Desirability Proportion'}
+              title={'Transport Desirability Distribution'}
               activeIndicator={'desirability'} 
               data={bgyIncl}
               legends={this.props.legends} 
