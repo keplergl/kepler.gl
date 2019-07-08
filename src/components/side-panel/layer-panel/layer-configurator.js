@@ -113,7 +113,9 @@ export default class LayerConfigurator extends Component {
             />
           ) : (
               <LayerColorSelector
-                {...layerConfiguratorProps}/>
+                {...layerConfiguratorProps}
+                customPalette = { this.props.customPalette }
+                setCustomPalette={this.props.setCustomPalette}/>
           )}
           <ConfigGroupCollapsibleContent>
             <ChannelByValueSelector
@@ -138,6 +140,10 @@ export default class LayerConfigurator extends Component {
               <ColorRangeConfig
                 {...visConfiguratorProps}
                 property="strokeColorRange"
+                customPalette={this.props.customPalette}
+                setCustomPalette={this.props.setCustomPalette}
+                showSketcher={this.props.showSketcher}
+                onToggleSketcherUpdater={this.props.onToggleSketcherUpdater}
               />
             ) : (
               <LayerColorSelector
@@ -604,6 +610,10 @@ export default class LayerConfigurator extends Component {
             <ColorRangeConfig
               {...visConfiguratorProps}
               property="strokeColorRange"
+              customPalette={this.props.customPalette}
+              setCustomPalette={this.props.setCustomPalette}
+              showSketcher={this.props.showSketcher}
+              onToggleSketcherUpdater={this.props.onToggleSketcherUpdater}
             />
           ) : (
             <LayerColorSelector
