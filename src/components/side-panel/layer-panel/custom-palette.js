@@ -1,7 +1,7 @@
 import React, {Component}  from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import { Button} from 'components/common/styled-components';
+import {Button} from 'components/common/styled-components';
 import {VertDots, Trash} from 'components/common/icons';
 import {sortableContainer, sortableElement, sortableHandle} from 'react-sortable-hoc';
 import arrayMove from 'array-move';
@@ -35,6 +35,10 @@ const StyledSortableItem = styled.div`
     .layer__drag-handle {
       opacity: 1;
       cursor: move;
+    }
+
+    .sortableColors{
+      color: #FFF;
     }
   }
 `
@@ -90,7 +94,7 @@ const StyledButtonContainer = styled.div`
   direction: rtl;
 `
 
-const TransparentButton = styled(Button)`
+const StyledButton = styled(Button)`
   background-color: transparent;
   color: #A0A7B4
   :hover {
@@ -99,23 +103,11 @@ const TransparentButton = styled(Button)`
   }
 `;
 
-const StyledSketcher = styled.div`
-  .div {
-    background-color: black;
-  }
+const StyledAddStep = styled(Button)`
+  float: left;
+  background-color: transparent;
+  margin-bottom: 5px;
 `;
-
-const StyledCover = styled.div`
-  position: fixed;
-  top: 0px;
-  right: 0px;
-  bottom: 0px;
-  left: 0px;
-`
-
-const sortableColors = {
-  color: "#fff"
-}
 
 const customStyles = {
   content: {
@@ -128,14 +120,13 @@ const customStyles = {
   }
 };
 
-
 const SortableItem = sortableElement(({children}) =>
 <StyledSortableItem>
   {children}
 </StyledSortableItem>
 );
 
-const SortableContainer = sortableContainer(({ children }) =>
+const SortableContainer = sortableContainer(({children}) =>
 (<div>{children}</div>)
 );
 
@@ -166,7 +157,7 @@ class CustomPalette extends Component {
   }
 
   _onColorUpdate = (color) => {
-    const { colors } = this.props.customPalette;
+    const {colors} = this.props.customPalette;
     const newColors = [...colors];
     newColors[this.state.currentSwatchIndex] = color.hex;
     this.props.setCustomPalette({
@@ -178,7 +169,7 @@ class CustomPalette extends Component {
   }
 
   _onColorDelete = (index) => {
-    const { colors } = this.props.customPalette;
+    const {colors} = this.props.customPalette;
     const newColors = [...colors];
     newColors.splice(index, 1);
     this.props.setCustomPalette({
@@ -190,7 +181,7 @@ class CustomPalette extends Component {
   }
 
   _onColorAdd = () => {
-    const { colors } = this.props.customPalette;
+    const {colors} = this.props.customPalette;
     const newColors = [...colors];
     newColors.push('#F0F0F0');
     this.props.setCustomPalette({
@@ -213,7 +204,7 @@ class CustomPalette extends Component {
   };
 
   _onApply = (event) => {
-    const { colors } = this.props.customPalette;
+    const {colors} = this.props.customPalette;
     const newColors = [...colors];
     event.stopPropagation();
     event.preventDefault();
@@ -225,8 +216,8 @@ class CustomPalette extends Component {
     }, event)
   }
 
-  _onSortEnd = ({ oldIndex, newIndex }) => {
-    const { colors } = this.props.customPalette;
+  _onSortEnd = ({oldIndex, newIndex}) => {
+    const {colors} = this.props.customPalette;
     const newColors = arrayMove(colors, oldIndex, newIndex);
     this.props.setCustomPalette({
       name: 'Custom Palette',
@@ -236,10 +227,9 @@ class CustomPalette extends Component {
     });
   };
 
-
   render() {
 
-    const { colors } = this.props.customPalette;
+    const {colors} = this.props.customPalette;
     return (
       <StyledWrapper>
 
@@ -281,8 +271,9 @@ class CustomPalette extends Component {
                       <CustomPicker
                       color={color}
                         onChange={this._onColorUpdate}
-                        onSwatchClose={this._onSwatchClose} />
-                      </Modal>
+                      onSwatchClose={this._onSwatchClose}
+                      />
+                    </Modal>
 
                 </div>
                 : null}
@@ -301,28 +292,20 @@ class CustomPalette extends Component {
           }
         </SortableContainer>
 
-{/* to-do: fix on drag color change bug */}
-{/* to-do: dark palette */}
-
-        <Button
-          style={{
-            float: "left",
-            backgroundColor: "transparent",
-            marginBottom: "5px"
-          }}
+        <StyledAddStep
           onClick={this._onColorAdd}>
           + Add New Step
-        </Button>
+        </StyledAddStep>
 
         <StyledLine />
 
         <StyledButtonContainer>
-          <TransparentButton
+          <StyledButton
               onClick={this._onApply}>Confirm
-          </TransparentButton>
-          <TransparentButton
-              onClick={this.props.onCancel} > Cancel
-          </TransparentButton>
+          </StyledButton>
+          <StyledButton
+              onClick={this.props.onCancel}> Cancel
+          </StyledButton>
         </StyledButtonContainer>
 
       </StyledWrapper>

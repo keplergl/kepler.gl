@@ -30,9 +30,6 @@ import ColorPalette from './color-palette';
 import CustomPalette from './custom-palette';
 import {COLOR_RANGES} from 'constants/color-ranges';
 import {numberSort} from 'utils/data-utils';
-import uiState from 'reducers/ui-state';
-import {INITIAL_UI_STATE} from 'reducers/ui-state-updaters';
-import * as UIStateActions from 'actions/ui-state-actions';
 
 const ALL_TYPES = uniq(COLOR_RANGES.map(c => c.type).concat(['all']));
 const ALL_STEPS = uniq(COLOR_RANGES.map(d => d.colors.length)).sort(numberSort);
@@ -105,13 +102,12 @@ export default class ColorRangeSelect extends Component {
       config: {
         ...this.state.config,
         ['custom']: {
-          ...this.state.config['custom'],
+          ...this.state.config.custom,
           value: false
         }
       }
     });
   }
-
 
   render() {
     const { config } = this.state;
@@ -120,7 +116,7 @@ export default class ColorRangeSelect extends Component {
       <ColorRangeSelector className="color-range-selector">
         <StyledColorConfig>
           {(
-            config['custom'].value ?
+            config.custom.value ?
                 ['custom'] :
                 Object.keys(config)
             )
@@ -232,10 +228,6 @@ const StyledColorRange = styled.div`
   }
 `;
 
-
-
-
-
 const ColorPaletteGroup = ({config = {}, onSelect, selected, colorRanges}) => {
   const {steps, reversed, type} = config;
 
@@ -251,8 +243,6 @@ const ColorPaletteGroup = ({config = {}, onSelect, selected, colorRanges}) => {
 
   return (
     <div className="color-palette__group">
-
-
 
       {filtered.map(colorRange => (
         <StyledColorRange

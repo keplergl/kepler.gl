@@ -110,9 +110,6 @@ class ColorSelector extends Component {
 
     const {colorSets, disabled, inputTheme, customPalette, setCustomPalette, showSketcher,onToggleSketcherUpdater} = this.props;
     const { editing } = this.state;
-
-    console.log(showSketcher)
-
     const currentEditing =
       colorSets[editing] && typeof colorSets[editing] === 'object';
 

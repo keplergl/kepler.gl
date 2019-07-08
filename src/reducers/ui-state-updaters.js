@@ -557,7 +557,6 @@ export const removeNotificationUpdater = (state, {payload: id}) => ({
   notifications: state.notifications.filter(n => n.id !== id)
 });
 
-
 export const setCustomPaletteUpdater = (state, { payload: customPalette }) => ({
   ...state,
   customPalette

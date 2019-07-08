@@ -36,7 +36,6 @@ export default class SketcherModal extends React.Component {
     this.setState({ modalIsOpen: true });
   }
 
-
   closeModal=() => {
     this.setState({ modalIsOpen: false });
   }

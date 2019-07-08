@@ -141,11 +141,7 @@ export default class LayerConfigGroup extends Component {
       property,
       layer,
       onChange,
-      collapsible,
-      customPalette,
-      setCustomPalette,
-      showSketcher,
-      onToggleSketcherUpdater
+      collapsible
     } = this.props;
 
     const {collapsed} = this.state;
