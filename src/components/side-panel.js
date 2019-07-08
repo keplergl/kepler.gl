@@ -152,6 +152,10 @@ export default function SidePanelFactory(
       this.props.uiStateActions.openDeleteModal(key);
     };
 
+    _changeBarangay = bgy => {
+      this.props.visStateActions.setActiveBarangay(bgy);
+    }
+
     _onExportImage = () =>
       this.props.uiStateActions.toggleModal(EXPORT_IMAGE_ID);
 
@@ -303,6 +307,7 @@ export default function SidePanelFactory(
                       rankingReverse={visState.tdRankingReverse}
                       rankingPage={visState.tdRankingPage}
                       legends={legends}
+                      changeBarangay={this._changeBarangay}
                     />
                     // <div/>
                   )}

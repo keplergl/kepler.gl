@@ -50,6 +50,7 @@ function OverviewManagerFactory(OverviewPanel) {
             rankingReverse={this.props.rankingReverse}
             rankingPage={this.props.rankingPage}
             legends={this.props.legends}
+            changeBarangay={this.props.changeBarangay}
           />
         </div>
       );

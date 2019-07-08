@@ -104,6 +104,7 @@ export class BarChart extends Component {
       listSize,
       analysisRankingReverse,
       analysisRankingPage,
+      onLabelClick,
       height
     } = this.props;
 
@@ -136,7 +137,7 @@ export class BarChart extends Component {
     if (xKeyArr && data) {
 
       xKeyArr.forEach(x => {
-        dataSorted = dataSorted.map((d, idx) => ({
+        dataSliced = dataSliced.map((d, idx) => ({
           ...d,
           x: xKey ? d[x[xKey]] : d[x],
           y: d[yKey],
@@ -146,7 +147,7 @@ export class BarChart extends Component {
         bars.push(
           <HorizontalBarSeries
             animation
-            data={dataSorted.filter(d =>
+            data={dataSliced.filter(d =>
               !d.hasOwnProperty('display') ? true : d.display
             )}
             barWidth={0.5}
@@ -164,7 +165,7 @@ export class BarChart extends Component {
       });
 
       // get largest value in data
-      max = dataSorted.reduce((prev, current) =>
+      max = dataSliced.reduce((prev, current) =>
         prev.count > current.count ? prev : current
       ).count;
 
@@ -214,9 +215,6 @@ export class BarChart extends Component {
         dataSliced = dataSliced.reverse();
       }
 
-      console.error(data);
-      console.error(dataSliced);
-      console.error(dataSorted);
       // get largest value in data
       max = domainMax
         ? domainMax
@@ -263,7 +261,7 @@ export class BarChart extends Component {
 
     // labels right of bar
 
-    function myFormatter(value) {
+    function myFormatter(value, index, scale, tickTotal) {
       return (
         <foreignObject
           x="-90"
@@ -272,9 +270,30 @@ export class BarChart extends Component {
           height="20"
           onClick={() => {
             console.log('BARCHART CLICK ' + value);
+            console.log('BARCHART CLICK ' + index);
+            console.log(dataSliced[index]);
+            if(onLabelClick) onLabelClick(dataSliced[index].id);
           }}
         >
-          <text>{value}</text>
+        <div
+          xmlns="http://www.w3.org/1999/xhtml"
+          style={{
+            width: 80, 
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            display: 'block',
+            textAlign: 'end',
+            cursor: 'pointer',
+            ":hover": {
+              textDecoration: 'underline',
+              color: 'white',
+            }
+          }}
+        >
+          {/* <text>{value}</text> */}
+          {value}
+          </div>
         </foreignObject>
       );
     }
@@ -360,20 +379,7 @@ export class BarChart extends Component {
               fontWeight: 200
             }}
           />
-          {/* { dataSorted.length > 0 ? (
-          <HorizontalBarSeries 
-             dataSorted={dataSorted} 
-        barWidth={0.5} />
-        ): null
-        } */}
 
-          {/* <HorizontalBarSeries
-            animation
-            data={dataSliced.filter(d =>
-              !d.hasOwnProperty('display') ? true : d.display
-            )}
-            barWidth={0.5}
-          /> */}
           {bars}
 
           <LabelSeries

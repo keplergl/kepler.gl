@@ -71,6 +71,7 @@ const StyledIndicatorContent = styled.div`
 OverviewPanelFactory.deps = [IndicatorFactory, BarChartFactory, StackedBarChartFactory];
 
 function OverviewPanelFactory(Indicator, BarChart, StackedBarChart) {
+  
   return class InteractionPanel extends Component {
     
     render() {
@@ -158,6 +159,11 @@ function OverviewPanelFactory(Indicator, BarChart, StackedBarChart) {
             xKey={'desirability'}
             yKey={'name'}
             title={'Transport Desirability Rankings'}
+            onLabelClick={(id) => { 
+              let idIndex = BGY_DATA_DISPLAY.filter(bdd=>bdd.id=='id')[0].idx;
+              let newBgy = this.props.datasets.barangays.data.filter(b=>b[idIndex]==id)[0];
+              this.props.changeBarangay(newBgy);
+            }}                                
             paginationFunc={this.props.paginationFunc}
             reverseFunc={this.props.reverseFunc}
             analysisRankingReverse={this.props.rankingReverse}

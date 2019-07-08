@@ -97,7 +97,7 @@ const WidgetContainer = styled.div`
   bottom: 0;
   right: 0;
   z-index: 5;
-  display:none;
+  // display:none;
  
   // maxwidth: ${props => props.width}px;
   // maxwidth: 1200px;
@@ -269,20 +269,17 @@ export default function VisWidgetFactory(
 
         // filters undefined barangays
         destCnt = destCnt.filter(d=>d.name);
-
-        
-        // console.error('amenity count ' + datasets.amenities.allData[0][AMENITY_DATA_INDICES['class']]);
-        // console.error(amtyCnt);
-        // console.error(bgyRef);
-        // console.error(destCnt);
-        // console.error("ORIGINS");
-        // console.error(oriCnt);
-        // console.error(destCnt.filter(d=>d.name));
-        // subDivideDestinationData();
-        // console.error(bgyIncl);
       }
     }
 
+    const changeBarangay = (id) => { 
+      console.error('set bgy');
+      let idIndex = BGY_DATA_DISPLAY.filter(bdd=>bdd.id=='id')[0].idx;
+      let newBgy = datasets.barangays.data.filter(b=>b[idIndex]==id)[0];
+      console.error(newBgy);
+      visStateActions.setActiveBarangay(newBgy);
+    }
+    
     // let demo = generateDemographics();
     // console.error(demo);
 
@@ -437,6 +434,7 @@ export default function VisWidgetFactory(
               <BarChart 
                   data={SEGMENTED_DESTINATIONS.filter(d=>d.name).sort((a, b) => b['count'] - a['count']).slice(0,10).reverse()}       
                   xKeyArr={TRANSPORT_MODES}
+                  onLabelClick={changeBarangay}                  
                   yKey={'name'}
                   title={'Frequent destinations'}
                   height={250}
@@ -470,6 +468,7 @@ export default function VisWidgetFactory(
                   xKeyArr={M_SEX}
                   xKey={'name'}
                   yKey={'name'}
+                  onLabelClick={changeBarangay}                  
                   categoryLabel={'Sex'}                  
                   title={'Frequency per area'}
                   height={250}
@@ -489,6 +488,7 @@ export default function VisWidgetFactory(
                   xKeyArr={M_INCOME}
                   xKey={'name'}
                   yKey={'name'}
+                  onLabelClick={changeBarangay}                  
                   categoryLabel={'Income Range'}                                    
                   title={'Frequency per area'}
                   height={250}
@@ -509,6 +509,7 @@ export default function VisWidgetFactory(
                   xKeyArr={M_AGE}
                   xKey={'name'}
                   yKey={'name'}
+                  onLabelClick={changeBarangay}                  
                   categoryLabel={'Age Group'}                                    
                   title={'Frequency per area'}
                   height={250}

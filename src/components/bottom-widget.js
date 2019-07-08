@@ -82,6 +82,9 @@ const AnalysisSectionToggle = ({activeTab, update, barangay}) => (
 const AnalysisSectionWrapper = styled.div`
 ${props => props.theme.sidePanelScrollBar};
   display: flex;
+  flex-grow: 1;
+  // padding: 0.95em;
+  overflow-y: scroll;
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
@@ -223,6 +226,11 @@ const WidgetContainer = styled.div`
   // maxWidth: ${props => props.width}px;
   // width: 35vw;
   width: 340px;
+  // ${props => props.theme.sidePanelScrollBar};
+  display: ${props => props.display ? 'flex' : 'none'};
+   
+  overflow-y: scroll;
+  overflow-x: hidden;
 
   .bottom-widget--inner {
     background-color: ${props => props.theme.sidePanelBg};
@@ -458,21 +466,22 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
       
     }
 
+    const changeBarangay = (id) => { 
+      console.error('set bgy');
+      let idIndex = BGY_DATA_DISPLAY.filter(bdd=>bdd.id=='id')[0].idx;
+      let newBgy = datasets.barangays.data.filter(b=>b[idIndex]==id)[0];
+      console.error(newBgy);
+      visStateActions.setActiveBarangay(newBgy);
+    }
+
     const ACTIVE_INDICATOR_LABEL = INDICATORS[INDICATORS.findIndex(d => d.value == selected)].label;
 
     return (
-      <WidgetContainer width={0}>
+      <WidgetContainer display={selected!='desirability' || visState.activeBarangay}>
       {/* <WidgetContainer width={width}> */}
         <div className="bottom-widget--inner">
           <TopSectionWrapper>
             <p>{!visState.activeBarangay ? 'City ' : 'Barangay ' }Overview</p>
-            {/* <AnalysisSectionToggle
-              update={(activeAnalysisTab) => { visStateActions.toggleActiveAnalysis(activeAnalysisTab); } } 
-              activeTab={visState.activeAnalysisTab} 
-              barangay={visState.activeBarangay} /> */}
-            {/* <IconRoundSmall>
-              <Close height="12px" onClick={() => {console.log("close button click!")}} />
-            </IconRoundSmall> */}
           </TopSectionWrapper>
           <AnalysisSectionWrapper>
             
@@ -526,8 +535,8 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
                   <BarChart 
                     height={300}
                     floatFormat={true}
-                    title={'Barangay Breakdown'}
-                    data={bgy.filter(e => typeof e.x == 'number' && e.label != 'population' && e.label !='income')}/>
+                    title={'Indicator Breakdown'}
+                    data={bgy.filter(e => typeof e.x == 'number' && e.label != 'population' && e.label !='income').reverse()}/>
                 </div>
               ) : null }
 
@@ -550,6 +559,7 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
                     xKey={'count'}
                     yKey={'name'}
                     title={'Frequently Occuring Origins'}
+                    onLabelClick={changeBarangay}
                     height={50 + destCnt.length * 22}
                     />
                 </div>
@@ -562,6 +572,7 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
                     xKey={'count'}
                     yKey={'name'}
                     title={'Most Common Destinations'}
+                    onLabelClick={changeBarangay}                    
                     height={50 + oriCnt.length * 22}
                     />
                 </div>
@@ -607,6 +618,7 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
                     xKey={selected}
                     yKey={'name'}
                     title={ACTIVE_INDICATOR_LABEL + ' Scores'}
+                    onLabelClick={changeBarangay}                                        
                     paginationFunc={visStateActions.changeAnalysisRankPage}
                     reverseFunc={visStateActions.sortAnalysisReverse}
                     analysisRankingReverse={visState.analysisRankingReverse}
@@ -614,49 +626,7 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
                     />
                 </div>
               ) : null}
-
-              {/* general TRANSPORT DESIRABILITY TAB */}
-
               
-              {/* {!visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_DEF.transportDesirability.value ?
-                (<div className="breakdown-analysis__section">
-                  <BarChart 
-                    data={cityMeans.filter(e => e.value != 'desirability')}
-                    title={ACTIVE_INDICATOR_LABEL  + ' Breakdown'}/>
-                </div>
-              ) : null } */}
-
-              {/* CURRENTLY UNUSED */}
-              {!visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_DEF.transportDesirability.value ?
-              (
-                <RankingAnalysis>
-                  <div className="ranking-analysis__section">
-                    <RankingWrapper>
-                      <div className="ranking-wrapper__score ranking-wrapper__score--bad">
-                        {(cityMeans[cityMeans.findIndex(d => d.value == selected)].x * SCALE).toFixed(2)}%
-                      </div>
-                      <div className="ranking-wrapper__label">
-                        {INDICATORS[INDICATORS.findIndex(d => d.value == selected)].label} {selected != 'desirability' ? 'Indicator' : ''} Score
-                      </div>
-                    </RankingWrapper>
-                  </div>
-                </RankingAnalysis>
-              ) : null}
-              {!visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_DEF.transportDesirability.value ?
-                (<div className="breakdown-analysis__section">
-                  <ParallelCoordinatesK 
-                    data={bgyIncl}/>
-                </div> ) : null}
-              
-              {/* {!visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_DEF.profile.value && datasets.barangays && bgyIncl ? (
-                <div className="breakdown-analysis__section">
-                  <BarChart 
-                    data={bgyIncl.slice(bgyIncl.length - maxListSize, bgyIncl.length).reverse()}
-                    xKey={selected}
-                    yKey={'name'}
-                    title={'Bottom ' + maxListSize + ' ' + ACTIVE_INDICATOR_LABEL  + ' Scores'}/>
-                </div>
-              ) : null} */}
             </BreakdownAnalysis>
           </AnalysisSectionWrapper>
            

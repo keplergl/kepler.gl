@@ -662,6 +662,9 @@ export const layerClickUpdater = (state, action) => {
     else {
       console.error("WTF ARE U DOING HERE");
     }
+
+    console.error('NEW BGY');
+    console.error(data);
     return {
       ...newState,
       clicked: action.info,
@@ -1335,6 +1338,16 @@ export const updateActiveAnalysisTabUpdater = (state, action) => {
   return {
     ...state,
     activeAnalysisTab: action.info,
+  };
+};
+
+export const setActiveBarangay = (state, action) => {
+  console.error('**************' + action);
+  console.error(action);
+  console.error(action.info);
+  return {
+    ...state,
+    activeBarangay: action.info,
   };
 };
 
