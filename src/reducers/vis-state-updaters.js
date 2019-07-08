@@ -124,6 +124,7 @@ const visStateUpdaters = null;
  * @property {boolean} fileLoading
  * @property {*} fileLoadingErr
  * @property {Array} splitMaps - a list of objects of layer availabilities and visibilities for each map
+ * @property {Object} editor
  * @public
  */
 export const INITIAL_VIS_STATE = {
@@ -945,7 +946,6 @@ export const mapClickUpdater = (state) => {
 };
 
 export const mouseMoveUpdater = (state, {evt}) => {
-
   if (Object.values(state.interactionConfig).some(config => config.enabled)) {
     return {
       ...state,

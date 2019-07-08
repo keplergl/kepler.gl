@@ -30,7 +30,8 @@ const StyledDiv = styled.div`
 const ToolbarItem = React.memo(({active, className, icon, label, onClick}) => (
   <StyledDiv active={active} className="save-export-dropdown__item" onClick={(e) => {
     e.stopPropagation();
-    onClick();
+    e.preventDefault();
+    onClick(e);
   }}>
     {icon}
     <div className="save-export-dropdown__title">{label}</div>

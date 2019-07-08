@@ -34,6 +34,7 @@ export const RENDER_TYPE = {
 
 export const COLORS = {
   PRIMARY: '#26B5F2',
-  SECONDARY: '#ffff00'
+  SECONDARY: '#ffff00',
+  TERTIARY: '#6c6c6c'
 };
 

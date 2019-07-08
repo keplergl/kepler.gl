@@ -67,15 +67,15 @@ MapContainerFactory.deps = [
 export default function MapContainerFactory(MapPopover, MapControl) {
   /* eslint-disable complexity */
   const MapTooltip = React.memo(({
-                                   mapState,
-                                   hoverInfo,
-                                   clicked,
-                                   datasets,
-                                   interactionConfig,
-                                   layers,
-                                   mapLayers,
-                                   mousePos: {mousePosition, coordinate, pinned}
-                                 }) => {
+                             mapState,
+                             hoverInfo,
+                             clicked,
+                             datasets,
+                             interactionConfig,
+                             layers,
+                             mapLayers,
+                             mousePos: {mousePosition, coordinate, pinned}
+                           }) => {
     if (!mousePosition) {
       return null;
     }
@@ -468,6 +468,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
               <Editor
                 editor={uiState.editor}
                 features={visState.editor.features}
+                isEnabled={isEdit}
                 onDeleteFeature={uiStateActions.deleteFeature}
                 onSelect={uiStateActions.setSelectedFeature}
                 onUpdate={visStateActions.setFeatures}
