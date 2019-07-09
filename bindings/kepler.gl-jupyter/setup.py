@@ -156,7 +156,7 @@ setup_args = {
 
     'author': 'Shan He',
     'author_email': 'shan@uber.com',
-    'url': 'https://github.com/keplergl/kepler.gl/bindings/kepler.gl-jupyter',
+    'url': 'https://github.com/keplergl/kepler.gl/tree/master/bindings/kepler.gl-jupyter',
     'keywords': [
         'ipython',
         'jupyter',
