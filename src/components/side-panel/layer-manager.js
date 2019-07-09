@@ -120,10 +120,16 @@ LayerManagerFactory.deps = [
 function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
   // By wrapping layer panel using a sortable element we don't have to implement the drag and drop logic into the panel itself;
   // Developers can provide any layer panel implementation and it will still be sortable
-  const SortableItem = sortableElement(({layer}) => {
+  const SortableItem = sortableElement(({layer, customPalette, setCustomPalette, showSketcher, onToggleSketcherUpdater}) => {
     return (
       <SortableStyledItem>
-        <LayerPanel {...layer} />
+        <LayerPanel
+          {...layer}
+          customPalette={customPalette}
+          setCustomPalette={setCustomPalette}
+          showSketcher={showSketcher}
+          onToggleSketcherUpdater={onToggleSketcherUpdater}
+        />
       </SortableStyledItem>
     );
   });
@@ -149,7 +155,9 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
       removeDataset: PropTypes.func.isRequired,
       showDatasetTable: PropTypes.func.isRequired,
       updateLayerBlending: PropTypes.func.isRequired,
-      updateLayerOrder: PropTypes.func.isRequired
+      updateLayerOrder: PropTypes.func.isRequired,
+      uiState: PropTypes.object.isRequired,
+      uiStateActions: PropTypes.object.isRequired
     };
 
     layerClassSelector = props => props.layerClasses;
@@ -173,7 +181,7 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
     };
 
     render() {
-      const {layers, datasets, layerOrder, openModal} = this.props;
+      const {layers, datasets, layerOrder, openModal, uiState, uiStateActions} = this.props;
       const defaultDataset = Object.keys(datasets)[0];
       const layerTypeOptions = this.layerTypeOptionsSelector(this.props);
 
@@ -221,6 +229,11 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
                     key={`layer-${layerIdx}`}
                     index={index}
                     layer={layer}
+                    customPalette={uiState.customPalette}
+                    setCustomPalette={uiStateActions.setCustomPalette}
+                    showSketcher={uiState.showSketcher}
+                    onToggleSketcherUpdater={uiStateActions.onToggleSketcherUpdater}
+
                   />
                 );
               })}

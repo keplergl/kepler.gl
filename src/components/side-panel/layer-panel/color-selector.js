@@ -66,14 +66,20 @@ class ColorSelector extends Component {
   static propTypes = {
     colorSets: PropTypes.arrayOf(
       PropTypes.shape({
-        selectedColor: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.any), PropTypes.object]),
+        selectedColor: PropTypes.oneOfType([
+          PropTypes.arrayOf(PropTypes.any),
+          PropTypes.object
+        ]),
         setColor: PropTypes.func.isRequired,
         isRange: PropTypes.bool,
         label: PropTypes.string
       })
     ),
     inputTheme: PropTypes.string,
-    disabled: PropTypes.bool
+    disabled: PropTypes.bool,
+    customPalette: PropTypes.object,
+    setCustomPalette: PropTypes.func,
+    showSketcher: PropTypes.bool
   };
 
   static defaultProps = {
@@ -85,7 +91,7 @@ class ColorSelector extends Component {
   };
 
   handleClickOutside = e => {
-    if (this.state.editing !== false) {
+    if (this.state.editing !== false && !this.props.showSketcher) {
       this.setState({editing: false});
     }
   };
@@ -104,7 +110,15 @@ class ColorSelector extends Component {
   };
 
   render() {
-    const {colorSets, disabled, inputTheme} = this.props;
+    const {
+      colorSets,
+      disabled,
+      inputTheme,
+      customPalette,
+      setCustomPalette,
+      showSketcher,
+      onToggleSketcherUpdater
+    } = this.props;
     const {editing} = this.state;
     const currentEditing =
       colorSets[editing] && typeof colorSets[editing] === 'object';
@@ -114,7 +128,6 @@ class ColorSelector extends Component {
         <InputBoxContainer>
           {colorSets.map((cSet, i) => (
             <div className="color-select__input-group" key={i}>
-
               <ColorSelectorInput
                 className="color-selector__selector"
                 active={editing === i}
@@ -130,7 +143,11 @@ class ColorSelector extends Component {
                     color={cSet.selectedColor}
                   />
                 )}
-                {cSet.label ? <div className="color-selector__selector__label">{cSet.label}</div> : null}
+                {cSet.label ? (
+                  <div className="color-selector__selector__label">
+                    {cSet.label}
+                  </div>
+                ) : null}
               </ColorSelectorInput>
             </div>
           ))}
@@ -141,6 +158,10 @@ class ColorSelector extends Component {
               <ColorRangeSelector
                 selectedColorRange={colorSets[editing].selectedColor}
                 onSelectColorRange={this._onSelectColor}
+                customPalette={customPalette}
+                setCustomPalette={setCustomPalette}
+                showSketcher={showSketcher}
+                onToggleSketcherUpdater={onToggleSketcherUpdater}
               />
             ) : (
               <SingleColorPalette
@@ -153,6 +174,6 @@ class ColorSelector extends Component {
       </div>
     );
   }
-};
+}
 
 export default onClickOutside(ColorSelector);

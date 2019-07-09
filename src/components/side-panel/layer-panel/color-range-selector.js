@@ -27,11 +27,15 @@ import {PanelLabel} from 'components/common/styled-components';
 import RangeSlider from 'components/common/range-slider';
 import Switch from 'components/common/switch';
 import ColorPalette from './color-palette';
-
+import CustomPalette from './custom-palette';
 import {COLOR_RANGES} from 'constants/color-ranges';
 import {numberSort} from 'utils/data-utils';
 
-const ALL_TYPES = uniq(COLOR_RANGES.map(c => c.type).concat(['all']));
+const ALL_TYPES = uniq(
+  COLOR_RANGES.map(c => c.type)
+    .filter(ctype => ctype)
+    .concat(['all'])
+);
 const ALL_STEPS = uniq(COLOR_RANGES.map(d => d.colors.length)).sort(numberSort);
 
 const StyledColorConfig = styled.div`
@@ -41,11 +45,16 @@ const StyledColorConfig = styled.div`
 const ColorRangeSelector = styled.div`
   padding-bottom: 12px;
 `;
+
 export default class ColorRangeSelect extends Component {
   static propTypes = {
     colorRanges: PropTypes.arrayOf(PropTypes.any),
     selectedColorRange: PropTypes.object,
-    onSelectColorRange: PropTypes.func.isRequired
+    onSelectColorRange: PropTypes.func.isRequired,
+    customPalette: PropTypes.object,
+    setCustomPalette: PropTypes.func,
+    showSketcher: PropTypes.bool,
+    onToggleSketcherUpdater: PropTypes.func
   };
 
   static defaultProps = {
@@ -69,12 +78,27 @@ export default class ColorRangeSelect extends Component {
         type: 'switch',
         value: false,
         options: [true, false]
+      },
+      custom: {
+        type: 'switch',
+        value: false,
+        options: [true, false]
       }
     }
   };
 
   _updateConfig = ({key, value}) => {
     const currentValue = this.state.config[key].value;
+    // change default custom palette to selected color range
+    if (key === 'custom' && value !== currentValue) {
+      this.props.setCustomPalette({
+        name: 'Custom Palette',
+        type: null,
+        category: 'Uber',
+        colors: this.props.selectedColorRange.colors
+      });
+    }
+
     if (value !== currentValue) {
       this.setState({
         config: {
@@ -88,12 +112,31 @@ export default class ColorRangeSelect extends Component {
     }
   };
 
+  _onCustomPaletteCancel = () => {
+    this.setState({
+      config: {
+        ...this.state.config,
+        custom: {
+          ...this.state.config.custom,
+          value: false
+        }
+      }
+    });
+  };
+
   render() {
     const {config} = this.state;
+    const {
+      customPalette,
+      setCustomPalette,
+      showSketcher,
+      onToggleSketcherUpdater
+    } = this.props;
+
     return (
       <ColorRangeSelector className="color-range-selector">
         <StyledColorConfig>
-          {Object.keys(config).map(key => (
+          {(config.custom.value ? ['custom'] : Object.keys(config)).map(key => (
             <PaletteConfig
               key={key}
               label={key}
@@ -102,12 +145,26 @@ export default class ColorRangeSelect extends Component {
             />
           ))}
         </StyledColorConfig>
-        <ColorPaletteGroup
-          config={config}
-          colorRanges={this.props.colorRanges}
-          onSelect={this.props.onSelectColorRange}
-          selected={this.props.selectedColorRange}
-        />
+
+        {config.custom.value ? (
+          <CustomPalette
+            customPalette={customPalette}
+            setCustomPalette={setCustomPalette}
+            showSketcher={showSketcher}
+            onToggleSketcherUpdater={onToggleSketcherUpdater}
+            onSelect={this.props.onSelectColorRange}
+            selected={this.props.selectedColorRange}
+            onApply={this.props.onSelectColorRange}
+            onCancel={this._onCustomPaletteCancel}
+          />
+        ) : (
+          <ColorPaletteGroup
+            config={config}
+            colorRanges={this.props.colorRanges}
+            onSelect={this.props.onSelectColorRange}
+            selected={this.props.selectedColorRange}
+          />
+        )}
       </ColorRangeSelector>
     );
   }

@@ -53,7 +53,11 @@ function LayerPanelFactory(LayerConfigurator) {
 
       layerTypeOptions: PropTypes.arrayOf(PropTypes.any),
       layerVisConfigChange: PropTypes.func,
-      layerVisualChannelConfigChange: PropTypes.func
+      layerVisualChannelConfigChange: PropTypes.func,
+      customPalette: PropTypes.object.isRequired,
+      setCustomPalette: PropTypes.func.isRequired,
+      showSketcher: PropTypes.bool.isRequired,
+      onToggleSketcherUpdater: PropTypes.func.isRequired
     };
 
     updateLayerConfig = newProp => {
@@ -83,7 +87,7 @@ function LayerPanelFactory(LayerConfigurator) {
 
     _updateLayerLabel = ({target: {value}}) => {
       this.updateLayerConfig({label: value});
-    };
+    }
 
     _toggleVisibility = e => {
       e.stopPropagation();
@@ -103,7 +107,7 @@ function LayerPanelFactory(LayerConfigurator) {
     };
 
     render() {
-      const {layer, idx, datasets, layerTypeOptions} = this.props;
+      const {layer, idx, datasets, layerTypeOptions, customPalette, setCustomPalette, showSketcher, onToggleSketcherUpdater} = this.props;
       const {config} = layer;
       const {isConfigActive} = config;
 
@@ -139,6 +143,10 @@ function LayerPanelFactory(LayerConfigurator) {
               updateLayerType={this.updateLayerType}
               updateLayerTextLabel={this.updateLayerTextLabel}
               updateLayerVisConfig={this.updateLayerVisConfig}
+              customPalette={customPalette}
+              setCustomPalette={setCustomPalette}
+              showSketcher={showSketcher}
+              onToggleSketcherUpdater={onToggleSketcherUpdater}
             />
           )}
         </PanelWrapper>

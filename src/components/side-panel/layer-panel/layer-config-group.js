@@ -74,7 +74,6 @@ export const StyledLayerConfigGroup = styled.div`
         overflow: hidden;
         max-height: 0;
       }
-    }
   }
 `;
 

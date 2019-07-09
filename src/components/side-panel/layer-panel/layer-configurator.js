@@ -77,7 +77,10 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
       updateLayerConfig: PropTypes.func.isRequired,
       updateLayerType: PropTypes.func.isRequired,
       updateLayerVisConfig: PropTypes.func.isRequired,
-      updateLayerVisualChannelConfig: PropTypes.func.isRequired
+      updateLayerVisualChannelConfig: PropTypes.func.isRequired,
+      customPalette: PropTypes.object.isRequired,
+      setCustomPalette: PropTypes.func.isRequired,
+      showSketcher: PropTypes.bool.isRequired
     };
 
     _renderPointLayerConfig(props) {
@@ -763,15 +766,22 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
         layer,
         fields
       };
-
       const visConfiguratorProps = {
         ...commonConfigProp,
-        onChange: this.props.updateLayerVisConfig
+        onChange: this.props.updateLayerVisConfig,
+        customPalette: this.props.customPalette,
+        setCustomPalette: this.props.setCustomPalette,
+        showSketcher: this.props.showSketcher,
+        onToggleSketcherUpdater: this.props.onToggleSketcherUpdater
       };
 
       const layerConfiguratorProps = {
         ...commonConfigProp,
-        onChange: updateLayerConfig
+        onChange: updateLayerConfig,
+        customPalette: this.props.customPalette,
+        setCustomPalette: this.props.setCustomPalette,
+        showSketcher: this.props.showSketcher,
+        onToggleSketcherUpdater: this.props.onToggleSketcherUpdater
       };
 
       const layerChannelConfigProps = {
@@ -896,7 +906,11 @@ export const ArcLayerColorSelector = ({
 export const ColorRangeConfig = ({
   layer,
   onChange,
-  property = 'colorRange'
+  property = 'colorRange',
+  customPalette,
+  setCustomPalette,
+  showSketcher,
+  onToggleSketcherUpdater
 }) => (
   <SidePanelSection>
     <ColorSelector
@@ -907,6 +921,10 @@ export const ColorRangeConfig = ({
           setColor: colorRange => onChange({[property]: colorRange})
         }
       ]}
+      customPalette={customPalette}
+      setCustomPalette={setCustomPalette}
+      showSketcher={showSketcher}
+      onToggleSketcherUpdater={onToggleSketcherUpdater}
     />
   </SidePanelSection>
 );
