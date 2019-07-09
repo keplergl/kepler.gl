@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import supercluster from 'supercluster';
+import Supercluster from 'supercluster';
 import memoize from 'lodash.memoize';
 
 export function getGeoJSON(data, getPosition) {
@@ -41,11 +41,9 @@ export function getGeoJSON(data, getPosition) {
 const clusterResolver = ({clusterRadius}) => `${clusterRadius}`;
 
 const getClusterer = memoize(({clusterRadius, geoJSON}) => {
-  return supercluster({
+  return new Supercluster({
     maxZoom: 20,
     radius: clusterRadius,
-    initial: () => ({points: []}),
-    map: props => props.data,
     reduce: (accumulated, props) => {
       if (props.points) {
         // avoid using spread to prevent max call stack exceeded error
