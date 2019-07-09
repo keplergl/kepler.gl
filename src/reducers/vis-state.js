@@ -60,6 +60,7 @@ import {
   /* PLEXUS-SPECIFIC */
   setActiveBarangay,
   updateActiveAnalysisTabUpdater,
+  updateActiveBottomPanelUpdater,
   changeAnalysisRankPage,
   setAnalysisReverse,
   changeTDRankPage,
@@ -135,6 +136,7 @@ const actionHandler = {
   /* PLEXUS-SPECIFIC */
   [ActionTypes.SET_ACTIVE_BARANGAY]: setActiveBarangay,  
   [ActionTypes.TOGGLE_ACTIVE_ANALYSIS]: updateActiveAnalysisTabUpdater,
+  [ActionTypes.TOGGLE_ACTIVE_BOTTOM]: updateActiveBottomPanelUpdater,
   [ActionTypes.CHANGE_ANALYSIS_RANK_PAGE]: changeAnalysisRankPage,
   [ActionTypes.SORT_ANALYSIS_REVERSE]: setAnalysisReverse,
   [ActionTypes.CHANGE_TD_RANK_PAGE]: changeTDRankPage,

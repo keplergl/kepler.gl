@@ -124,6 +124,7 @@ export const INITIAL_VIS_STATE = {
   analysisRankingPage: DEFAULT_ANALYSIS_RANKING_PAGE,
   tdRankingPage: DEFAULT_ANALYSIS_RANKING_PAGE,
   tdRankingReverse: false,
+  activeBottomPanel: false
 };
 
 function updateStateWithLayerAndData(state, {layerData, layer, idx}) {
@@ -1354,6 +1355,14 @@ export const updateActiveAnalysisTabUpdater = (state, action) => {
   return {
     ...state,
     activeAnalysisTab: action.info,
+  };
+};
+
+export const updateActiveBottomPanelUpdater = (state, action) => {
+  console.log(state.activeBottomPanel);
+  return {
+    ...state,
+    activeBottomPanel: action.info,
   };
 };
 

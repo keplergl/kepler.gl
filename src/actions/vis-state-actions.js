@@ -272,6 +272,14 @@ export function toggleActiveAnalysis(info) {
   };
 }
 
+export function toggleActiveBottom(info) {
+  console.log("VISSTATEACTIVEBOTTOM")
+  return {
+    type: ActionTypes.TOGGLE_ACTIVE_BOTTOM,
+    info
+  };
+}
+
 export function changeAnalysisRankPage(info) {
   console.log("CHANGEANARANKPAGE");
   console.log(info);

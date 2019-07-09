@@ -177,6 +177,8 @@ function KeplerGlFactory(
       });
     };
 
+    // let isOpen = false;
+
     render() {
       console.log("KEPLER");
       console.log(this.props);
@@ -220,7 +222,8 @@ function KeplerGlFactory(
         clicked,
         // PLEXUS
         plexus,
-        activeBarangay
+        activeBarangay,
+        activeBottomPanel
       } = visState;
 
       const notificationPanelFields = {
@@ -362,6 +365,8 @@ function KeplerGlFactory(
               sidePanelWidth={
                 uiState.readOnly ? 0 : this.props.sidePanelWidth + DIMENSIONS.sidePanel.margin.left
               }
+              isOpen={activeBottomPanel}
+              toggleOpen={visStateActions.toggleActiveBottom}
               // layers={mapFields.layers}
               // mapLayers={isSplit ? splitMaps[0].layers : null}
             />
