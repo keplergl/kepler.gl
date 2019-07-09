@@ -96,7 +96,7 @@ export const editBottomMapStyle = memoize(
 
 const mapUrlRg = /^mapbox:\/\/styles\/[-a-z0-9]{2,256}\/[-a-z0-9]{2,256}/;
 const httpRg = /^(?=(http:|https:))/;
-const mapboxStyleApiUrl = 'https://api.mapbox.com/styles/v1/';
+const defaultMapboxApiUrl = 'https://api.mapbox.com';
 
 // valid style url
 // mapbox://styles/uberdata/cjfyl03kp1tul2smf5v2tbdd4
@@ -105,7 +105,7 @@ export function isValidStyleUrl(url) {
   return typeof url === 'string' && Boolean(url.match(mapUrlRg) || url.match(httpRg));
 }
 
-export function getStyleDownloadUrl(styleUrl, accessToken) {
+export function getStyleDownloadUrl(styleUrl, accessToken, mapboxApiUrl) {
   if (styleUrl.startsWith('http')) {
     return styleUrl;
   }
@@ -115,7 +115,7 @@ export function getStyleDownloadUrl(styleUrl, accessToken) {
     const styleId = styleUrl.replace('mapbox://styles/', '');
 
     // https://api.mapbox.com/styles/v1/heshan0131/cjg1bfumo1cwm2rlrjxkinfgw?pluginName=Keplergl&access_token=<token>
-    return `${mapboxStyleApiUrl}${styleId}?pluginName=Keplergl&access_token=${accessToken}`
+    return `${mapboxApiUrl || defaultMapboxApiUrl}/styles/v1/${styleId}?pluginName=Keplergl&access_token=${accessToken}`
   }
 
   // style url not recognized

@@ -54,7 +54,7 @@ export default class ThreeDBuildingLayer extends CompositeLayer {
 
     return [
       new DeckGLTileLayer({
-        getTileData: (args) => getTileData(this.props.mapboxApiAccessToken, args),
+        getTileData: (args) => getTileData(this.props.mapboxApiUrl, this.props.mapboxApiAccessToken, args),
         minZoom: 13,
         renderSubLayers: this.renderSubLayers.bind(this)
       })

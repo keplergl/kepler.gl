@@ -72,7 +72,7 @@ test('Components -> Container -> Mount with mint:true', t => {
 
   let actions = store.getActions();
 
-  let expectedActions0 = {type: '@@kepler.gl/REGISTER_ENTRY', payload: {id: 'map', mint: true, mapboxApiAccessToken: undefined}};
+  let expectedActions0 = {type: '@@kepler.gl/REGISTER_ENTRY', payload: {id: 'map', mint: true, mapboxApiAccessToken: undefined, mapboxApiUrl: undefined, mapStylesReplaceDefault: undefined}};
 
   t.deepEqual(
     actions,
@@ -117,7 +117,7 @@ test('Components -> Container -> Mount with mint:true', t => {
 
   actions = store.getActions();
 
-  expectedActions0 = {type: '@@kepler.gl/REGISTER_ENTRY', payload: {id: 'milkshake', mint: true, mapboxApiAccessToken: 'pk.smoothie'}};
+  expectedActions0 = {type: '@@kepler.gl/REGISTER_ENTRY', payload: {id: 'milkshake', mint: true, mapboxApiAccessToken: 'pk.smoothie', mapboxApiUrl: undefined, mapStylesReplaceDefault: undefined}};
 
   t.deepEqual(
     actions,
@@ -191,7 +191,7 @@ test('Components -> Container -> Mount with mint:false', t => {
 
   let actions = store.getActions();
 
-  let expectedActions0 = {type: '@@kepler.gl/REGISTER_ENTRY', payload: {id: 'milkshake', mint: false, mapboxApiAccessToken: 'hello.world'}};
+  let expectedActions0 = {type: '@@kepler.gl/REGISTER_ENTRY', payload: {id: 'milkshake', mint: false, mapboxApiAccessToken: 'hello.world', mapboxApiUrl: undefined, mapStylesReplaceDefault: undefined}};
 
   t.deepEqual(
     actions,
@@ -208,7 +208,8 @@ test('Components -> Container -> Mount with mint:false', t => {
         mapStyle: {
           ...initialCoreState.mapStyle,
           // should replace access token
-          mapboxApiAccessToken: 'hello.world'
+          mapboxApiAccessToken: 'hello.world',
+          mapboxApiUrl: undefined
         }
       }
     }
@@ -256,7 +257,7 @@ test('Components -> Container -> Mount then rename', t => {
     );
   }, 'Should not throw error when mount');
 
-  const expectedActions0 = {type: '@@kepler.gl/REGISTER_ENTRY', payload: {id: 'milkshake', mint: true, mapboxApiAccessToken: 'hello.world'}};
+  const expectedActions0 = {type: '@@kepler.gl/REGISTER_ENTRY', payload: {id: 'milkshake', mint: true, mapboxApiAccessToken: 'hello.world', mapboxApiUrl: undefined, mapStylesReplaceDefault: undefined}};
 
   t.deepEqual(
     store.getActions().pop(),

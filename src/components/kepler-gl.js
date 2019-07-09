@@ -97,6 +97,7 @@ function KeplerGlFactory(
   class KeplerGL extends Component {
     static defaultProps = {
       mapStyles: [],
+      mapStylesReplaceDefault: false,
       width: 800,
       height: 800,
       appName: KEPLER_GL_NAME,
@@ -183,6 +184,7 @@ function KeplerGlFactory(
         width,
         height,
         mapboxApiAccessToken,
+        mapboxApiUrl,
         getMapboxRef,
 
         // redux state
@@ -240,6 +242,7 @@ function KeplerGlFactory(
       const mapFields = {
         datasets,
         mapboxApiAccessToken,
+        mapboxApiUrl,
         mapState,
         mapStyle,
         mapControls: uiState.mapControls,
@@ -332,6 +335,7 @@ function KeplerGlFactory(
               mapState={mapState}
               uiState={uiState}
               mapboxApiAccessToken={mapboxApiAccessToken}
+              mapboxApiUrl={mapboxApiUrl}
               visStateActions={visStateActions}
               uiStateActions={uiStateActions}
               mapStyleActions={mapStyleActions}

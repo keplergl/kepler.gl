@@ -60,6 +60,8 @@ const getDefaultState = () => {
     ),
     // save mapbox access token
     mapboxApiAccessToken: null,
+    mapboxApiUrl: null,
+    mapStylesReplaceDefault: false,
     inputStyle: getInitialInputStyle(),
     threeDBuildingColor: hexToRgb(DEFAULT_BLDG_COLOR)
   };
@@ -111,8 +113,10 @@ const mapStyleUpdaters = null;
  * @property {string} styleType - Default: `'dark'`
  * @property {Object} visibleLayerGroups - Default: `{}`
  * @property {Object} topLayerGroups - Default: `{}`
- * @property {Object} mapStyles - mapping from style key to style objct
+ * @property {Object} mapStyles - mapping from style key to style object
  * @property {string} mapboxApiAccessToken - Default: `null`
+ * @Property {string} mapboxApiUrl - Default null
+ * @Property {Boolean} mapStylesReplaceDefault - Default: `false`
  * @property {Object} inputStyle - Default: `{}`
  * @property {Array} threeDBuildingColor - Default: `[r, g, b]`
  * @public
@@ -201,7 +205,10 @@ function getLayerGroupsFromStyle(style) {
 
 // Updaters
 /**
- * Propagate `mapStyle` reducer with `mapboxApiAccessToken`
+ * Propagate `mapStyle` reducer with `mapboxApiAccessToken` and `mapStylesReplaceDefault`.
+ * if mapStylesReplaceDefault is true mapStyles is emptied; loadMapStylesUpdater() will
+ * populate mapStyles.
+ *
  * @memberof mapStyleUpdaters
  * @param {Object} state
  * @param {Object} action
@@ -213,8 +220,12 @@ function getLayerGroupsFromStyle(style) {
 export const initMapStyleUpdater = (state, action) => ({
   ...state,
   // save mapbox access token to map style state
-  mapboxApiAccessToken: (action.payload || {}).mapboxApiAccessToken
+  mapboxApiAccessToken: (action.payload || {}).mapboxApiAccessToken,
+  mapboxApiUrl: (action.payload || {}).mapboxApiUrl,
+  mapStyles: action.payload && !action.payload.mapStylesReplaceDefault ? state.mapStyles : {},
+  mapStylesReplaceDefault: action.payload.mapStylesReplaceDefault || false
 });
+// });
 
 /**
  * Update `visibleLayerGroups`to change layer group visibility
@@ -316,7 +327,7 @@ export const loadMapStylesUpdater = (state, action) => {
 export const loadMapStyleErrUpdater = (state) => state;
 
 export const requestMapStylesUpdater = (state, {payload: mapStyles}) => {
-  const loadMapStyleTasks = getLoadMapStyleTasks(mapStyles, state.mapboxApiAccessToken);
+  const loadMapStyleTasks = getLoadMapStyleTasks(mapStyles, state.mapboxApiAccessToken, state.mapboxApiUrl);
   return withTask(state, loadMapStyleTasks);
 };
 
@@ -335,7 +346,7 @@ export const receiveMapConfigUpdater = (state, {payload: {mapStyle}}) => {
 
   // if saved custom mapStyles load the style object
   const loadMapStyleTasks = mapStyle.mapStyles
-    ? getLoadMapStyleTasks(mapStyle.mapStyles, state.mapboxApiAccessToken)
+    ? getLoadMapStyleTasks(mapStyle.mapStyles, state.mapboxApiAccessToken, state.mapboxApiUrl)
     : null;
 
   // merge default mapStyles
@@ -352,13 +363,13 @@ export const receiveMapConfigUpdater = (state, {payload: {mapStyle}}) => {
   return loadMapStyleTasks ? withTask(newState, loadMapStyleTasks) : newState;
 };
 
-function getLoadMapStyleTasks(mapStyles, mapboxApiAccessToken) {
+function getLoadMapStyleTasks(mapStyles, mapboxApiAccessToken, mapboxApiUrl) {
   return [
     Task.all(
       Object.values(mapStyles)
         .map(({id, url, accessToken}) => ({
           id,
-          url: isValidStyleUrl(url) ? getStyleDownloadUrl(url, accessToken || mapboxApiAccessToken) : url
+          url: isValidStyleUrl(url) ? getStyleDownloadUrl(url, accessToken || mapboxApiAccessToken, mapboxApiUrl) : url
         }))
         .map(LOAD_MAP_STYLE_TASK)
     ).bimap(
@@ -392,6 +403,7 @@ export const resetMapConfigMapStyleUpdater = state => {
   const emptyConfig = {
     ...INITIAL_MAP_STYLE,
     mapboxApiAccessToken: state.mapboxApiAccessToken,
+    mapboxApiUrl: state.mapboxApiUrl,
     ...state.initialState,
     mapStyles: state.mapStyles,
     initialState: state.initialState
