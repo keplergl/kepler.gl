@@ -229,7 +229,7 @@ const WidgetContainer = styled.div`
   // ${props => props.theme.sidePanelScrollBar};
   display: ${props => props.display ? 'flex' : 'none'};
    
-  overflow-y: scroll;
+  // overflow-y: scroll;
   overflow-x: hidden;
 
   .bottom-widget--inner {
@@ -258,6 +258,10 @@ const TopSectionWrapper = styled.div`
   color: ${props => props.theme.labelColor};
   font-size: 1.2em;
   font-weight: 400;
+
+  .bottom-widget--close {
+    display: none;
+  }
   
   .bottom-widget__y-axis {
     flex-grow: 1;
@@ -480,9 +484,10 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
       // <WidgetContainer display={selected!='desirability' || visState.activeBarangay}>
       <WidgetContainer display={true}>
       {/* <WidgetContainer width={width}> */}
-        <div className="bottom-widget--inner">
-          <TopSectionWrapper>
-            <p>{!visState.activeBarangay ? 'City ' : 'Barangay ' }Overview</p>
+        {/* <div className="bottom-widget--inner"> */}
+        <div className={visState.activeBarangay ? "bottom-widget--inner": "bottom-widget--close"}>
+          <TopSectionWrapper style={{display: visState.activeBarangay ? 'block' : 'none'}}>
+            <p>{!visState.activeBarangay ? 'Barangay ' : 'Barangay ' }Overview</p>
           </TopSectionWrapper>
           <AnalysisSectionWrapper>
             
@@ -590,7 +595,7 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
                 </div>
               ) : null} */}
 
-              {!visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_DEF.profile.value && bgyIncl ? (
+              {/* {!visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_DEF.profile.value && bgyIncl ? (
                 <div className="breakdown-analysis__section">
                   <StackedBarChart
                     title={ACTIVE_INDICATOR_LABEL + ' Distribution'}
@@ -606,7 +611,7 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
                     data={bgyIncl}
                     legends={legends}
                      /> */}
-                </div>
+                {/* </div>
               ) : null}
 
               {!visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_DEF.profile.value && bgyIncl ? (
@@ -626,7 +631,7 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
                     analysisRankingPage={visState.analysisRankingPage}
                     />
                 </div>
-              ) : null}
+              ) : null}  */}
               
             </BreakdownAnalysis>
           </AnalysisSectionWrapper>

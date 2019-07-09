@@ -44,6 +44,8 @@ const StyledIndicatorPanel = styled.div`
 `;
 
 const StyledIndicatorSection = styled.div`
+  font-size: 1.1em;
+  font-weight: 500;
   // padding-bottom: 6px;
 `;
 
@@ -125,6 +127,7 @@ function IndicatorPanelFactory(Indicator) {
             ))}
           </StyledIndicatorContent>
 
+          <div style={{marginTop: '10px'}} />
           <SidePanelDivider />
 
           <StyledIndicatorSection className="indicator-panel__section">

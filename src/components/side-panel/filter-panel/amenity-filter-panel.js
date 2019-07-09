@@ -34,8 +34,8 @@ import { FILTER_TYPES, FILTER_COMPONENTS } from 'utils/filter-utils';
 import { ALL_FIELD_TYPES } from 'constants/default-settings';
 
 const StyledLabel = styled.div`
-  font-size: 1.2em;
-  font-weight:400;
+  font-size: 1.1em;
+  font-weight:500;
   margin-bottom:10px;
 `;
 

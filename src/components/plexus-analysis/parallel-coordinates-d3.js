@@ -41,6 +41,14 @@ const PCWrapper = styled.div`
   justify-content: flex-start;
   align-items: center;
   width: ${props => props.width - 50}px;
+  background-color: ${props => props.theme.sidePanelBg};
+
+  #grid {
+    ${props => props.theme.sidePanelScrollBar};
+    // background-color: ${props => props.theme.titleTextColor};
+    // color: ${props => props.theme.sidePanelBg};
+    // padding: 10px;
+  }
 `;
 
 const PCVisWrapper = styled.div`

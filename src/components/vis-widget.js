@@ -103,6 +103,7 @@ const ControlBtn = styled.button`
 `;
 
 const WidgetContainer = styled.div`
+  ${props => props.theme.sidePanelScrollBar};
   position: absolute;
   // padding-top: ${props => props.theme.sidePanel.margin.top}px;
   // padding-right: ${props => props.theme.sidePanel.margin.right}px;
@@ -129,7 +130,8 @@ const WidgetContainer = styled.div`
     justify-content: flex-start;
     align-items: flex-start;
     height: 100vh;   
-    overflow: scroll;     
+    // overflow-y: scroll;  
+    overflow-x:hidden;   
   }
 
   // .bottom-widget--inner {
@@ -349,7 +351,7 @@ export default function VisWidgetFactory(
           {/* TODO move to parent */}
           <ControlPanel>
             <div className="control-panel-item">
-              <p className="control-panel__title">Parallel Coordinates</p>
+              <p className="control-panel__title">Data Summary</p>
             </div>
             <div className="control-panel-item">
               <IconRoundSmall

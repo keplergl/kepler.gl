@@ -616,7 +616,7 @@ const sidePanelScrollBar = css`
   ::-webkit-scrollbar-thumb {
     border-radius: 10px;
     background: ${props => props.theme.labelColor};
-    border: 3px solid ${props => props.theme.sidePanelBg};
+    border: 1px solid ${props => props.theme.sidePanelBg};
 
     :hover {
       background: ${props => props.theme.labelColor};

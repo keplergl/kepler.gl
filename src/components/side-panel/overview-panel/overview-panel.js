@@ -36,6 +36,11 @@ import StackedBarChartFactory from './../../plexus-analysis/stacked-bar';
 //   TRANSPORT_MODE
 // } from 'constants/default-settings';
 
+const StyledTDLabel = styled.div`
+  font-size: 1.1em;
+  font-weight:500;
+`;
+
 const StyledOverviewPanel = styled.div`
   padding-bottom: 6px;
 `;
@@ -112,10 +117,11 @@ function OverviewPanelFactory(Indicator, BarChart, StackedBarChart) {
                 {/* </div> */}
               {/* ) : null} */}
           </StyledOverviewContent>
+          <SidePanelDivider/>
+          <div style={{marginBottom: '10px'}} />
           <StyledIndicatorSection className="indicator-panel__section">
-            {TRANSPORT_DESIRABILITY.label}
+            <StyledTDLabel>Transport Desirability</StyledTDLabel>
           </StyledIndicatorSection>
-          <div style={{padding: '5px'}} />
           <StyledIndicatorContent className="indicator-panel__content">
             {TRANSPORT_DESIRABILITY.indicators.map(indicator => (
               <div>
@@ -144,14 +150,16 @@ function OverviewPanelFactory(Indicator, BarChart, StackedBarChart) {
               </div>
             ))}
           </StyledIndicatorContent>
+          <div style={{marginBottom: '15px'}} />
           {bgyIncl ?
             <StackedBarChart
-              title={'Transport Desirability Distribution'}
+              title={'Distribution'}
               activeIndicator={'desirability'} 
               data={bgyIncl}
               legends={this.props.legends}
               />
             : null}
+          <div style={{marginBottom: '5px'}} />
           {bgyIncl? <BarChart
             floatFormat
             listSize={bgyIncl.length}
@@ -159,7 +167,7 @@ function OverviewPanelFactory(Indicator, BarChart, StackedBarChart) {
             data={bgyIncl}
             xKey={'desirability'}
             yKey={'name'}
-            title={'Transport Desirability Rankings'}
+            title={'Rankings'}
             onLabelClick={(id) => { 
               let idIndex = BGY_DATA_DISPLAY.filter(bdd=>bdd.id=='id')[0].idx;
               let newBgy = this.props.datasets.barangays.data.filter(b=>b[idIndex]==id)[0];
