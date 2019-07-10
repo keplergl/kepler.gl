@@ -35,8 +35,7 @@ export const iconPosAccessor = ({lat, lng}) => d => [
   d.data[lat.fieldIdx]
 ];
 
-export const iconPosResolver = ({lat, lng}) =>
-  `${lat.fieldIdx}-${lng.fieldIdx}`;
+export const iconPosResolver = ({lat, lng}) => `${lat.fieldIdx}-${lng.fieldIdx}`;
 
 export const iconAccessor = ({icon}) => d => d.data[icon.fieldIdx];
 export const iconResolver = ({icon}) => icon.fieldIdx;
@@ -129,7 +128,7 @@ export default class IconLayer extends Layer {
     }
   }
 
-  static findDefaultLayerProps({fieldPairs, fields}) {
+  static findDefaultLayerProps({fieldPairs, fields}, foundLayers) {
     if (!fieldPairs.length) {
       return [];
     }
@@ -162,7 +161,7 @@ export default class IconLayer extends Layer {
       isVisible: true
     }));
 
-    return props;
+    return {props, foundLayers};
   }
 
   // TODO: fix complexity
@@ -267,53 +266,55 @@ export default class IconLayer extends Layer {
       ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
     };
 
-    return !this.iconGeometry ? [] : [
-      new SvgIconLayer({
-        ...layerProps,
-        ...data,
-        ...layerInteraction,
-        id: this.id,
-        idx,
-        opacity: this.config.visConfig.opacity,
-        getIconGeometry: id => this.iconGeometry[id],
-
-        // picking
-        autoHighlight: true,
-        highlightColor: this.config.highlightColor,
-        pickable: true,
-
-        // parameters
-        parameters: {depthTest: mapState.dragRotate},
-
-        // update triggers
-        updateTriggers: {
-          getRadius: {
-            sizeField: this.config.colorField,
-            radiusRange: this.config.visConfig.radiusRange,
-            sizeScale: this.config.sizeScale
-          },
-          getColor: {
-            color: this.config.color,
-            colorField: this.config.colorField,
-            colorRange: this.config.visConfig.colorRange,
-            colorScale: this.config.colorScale
-          }
-        }
-      }),
-      ...(this.isLayerHovered(objectHovered)
-      ? [
+    return !this.iconGeometry
+      ? []
+      : [
           new SvgIconLayer({
             ...layerProps,
-            id: `${this.id}-hovered`,
-            data: [objectHovered.object],
-            getPosition: data.getPosition,
-            getRadius: data.getRadius,
-            getColor: this.config.highlightColor,
+            ...data,
+            ...layerInteraction,
+            id: this.id,
+            idx,
+            opacity: this.config.visConfig.opacity,
             getIconGeometry: id => this.iconGeometry[id],
-            pickable: false
-          })
-        ]
-      : [])
-    ];
+
+            // picking
+            autoHighlight: true,
+            highlightColor: this.config.highlightColor,
+            pickable: true,
+
+            // parameters
+            parameters: {depthTest: mapState.dragRotate},
+
+            // update triggers
+            updateTriggers: {
+              getRadius: {
+                sizeField: this.config.colorField,
+                radiusRange: this.config.visConfig.radiusRange,
+                sizeScale: this.config.sizeScale
+              },
+              getColor: {
+                color: this.config.color,
+                colorField: this.config.colorField,
+                colorRange: this.config.visConfig.colorRange,
+                colorScale: this.config.colorScale
+              }
+            }
+          }),
+          ...(this.isLayerHovered(objectHovered)
+            ? [
+                new SvgIconLayer({
+                  ...layerProps,
+                  id: `${this.id}-hovered`,
+                  data: [objectHovered.object],
+                  getPosition: data.getPosition,
+                  getRadius: data.getRadius,
+                  getColor: this.config.highlightColor,
+                  getIconGeometry: id => this.iconGeometry[id],
+                  pickable: false
+                })
+              ]
+            : [])
+        ];
   }
 }

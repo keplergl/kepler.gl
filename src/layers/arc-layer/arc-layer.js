@@ -85,7 +85,7 @@ export default class ArcLayer extends Layer {
     };
   }
 
-  static findDefaultLayerProps({fieldPairs = []}) {
+  static findDefaultLayerProps({fieldPairs = []}, foundLayers) {
     if (fieldPairs.length < 2) {
       return [];
     }
@@ -100,11 +100,9 @@ export default class ArcLayer extends Layer {
       lat1: fieldPairs[1].pair.lat,
       lng1: fieldPairs[1].pair.lng
     };
-    props.label = `${fieldPairs[0].defaultName} -> ${
-      fieldPairs[1].defaultName
-    } arc`;
+    props.label = `${fieldPairs[0].defaultName} -> ${fieldPairs[1].defaultName} arc`;
 
-    return props;
+    return {props, foundLayers};
   }
 
   // TODO: fix complexity
@@ -170,15 +168,17 @@ export default class ArcLayer extends Layer {
       }, []);
     }
 
-    const getStrokeWidth = sScale ? d =>
-       this.getEncodedChannelValue(sScale, d.data, sizeField, 0) : 1;
+    const getStrokeWidth = sScale
+      ? d => this.getEncodedChannelValue(sScale, d.data, sizeField, 0)
+      : 1;
 
-    const getColor = cScale ? d =>
-       this.getEncodedChannelValue(cScale, d.data, colorField) : color;
+    const getColor = cScale
+      ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
+      : color;
 
-    const getTargetColor = cScale ? d =>
-       this.getEncodedChannelValue(cScale, d.data, colorField)
-        : targetColor || color;
+    const getTargetColor = cScale
+      ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
+      : targetColor || color;
 
     return {
       data,
@@ -271,18 +271,18 @@ export default class ArcLayer extends Layer {
       }),
       // hover layer
       ...(this.isLayerHovered(objectHovered)
-      ? [
-          new ArcBrushingLayer({
-            id: `${this.id}-hovered`,
-            data: [objectHovered.object],
-            strokeScale: this.config.visConfig.thickness,
-            getSourceColor: this.config.highlightColor,
-            getTargetColor: this.config.highlightColor,
-            getWidth: data.getWidth,
-            pickable: false
-          })
-        ]
-      : [])
+        ? [
+            new ArcBrushingLayer({
+              id: `${this.id}-hovered`,
+              data: [objectHovered.object],
+              strokeScale: this.config.visConfig.thickness,
+              getSourceColor: this.config.highlightColor,
+              getTargetColor: this.config.highlightColor,
+              getWidth: data.getWidth,
+              pickable: false
+            })
+          ]
+        : [])
     ];
   }
 }

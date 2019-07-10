@@ -62,6 +62,6 @@ class ArcLayerIcon extends Component {
       </Base>
     );
   }
-};
+}
 
 export default ArcLayerIcon;
