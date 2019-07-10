@@ -44,7 +44,9 @@ const MAP_STYLE = {
     position: 'relative'
   },
   top: {
-    position: 'absolute', top: '0px', pointerEvents: 'none'
+    position: 'absolute',
+    top: '0px',
+    pointerEvents: 'none'
   }
 };
 
@@ -52,9 +54,7 @@ const MAPBOXGL_STYLE_UPDATE = 'style.load';
 const MAPBOXGL_RENDER = 'render';
 const TRANSITION_DURATION = 0;
 
-MapContainerFactory.deps = [
-  MapPopoverFactory, MapControlFactory
-];
+MapContainerFactory.deps = [MapPopoverFactory, MapControlFactory];
 
 export default function MapContainerFactory(MapPopover, MapControl) {
   class MapContainer extends Component {
@@ -144,7 +144,6 @@ export default function MapContainerFactory(MapPopover, MapControl) {
 
     _setMapboxMap = mapbox => {
       if (!this._map && mapbox) {
-
         this._map = mapbox.getMap();
         // i noticed in certain context we don't access the actual map element
         if (!this._map) {
@@ -154,7 +153,6 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         this._map.on(MAPBOXGL_STYLE_UPDATE, this._onMapboxStyleUpdate);
 
         this._map.on(MAPBOXGL_RENDER, () => {
-
           if (typeof this.props.onMapRender === 'function') {
             this.props.onMapRender(this._map);
           }
@@ -212,19 +210,21 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           layer.getHoverData &&
           (!mapLayers || mapLayers[layer.id].isVisible)
         ) {
-
           // if layer is visible and have hovered data
-          const {config: {dataId}} = layer;
+          const {
+            config: {dataId}
+          } = layer;
           const {allData, fields} = datasets[dataId];
           const data = layer.getHoverData(object, allData);
-          const fieldsToShow = interactionConfig.tooltip.config.fieldsToShow[dataId];
+          const fieldsToShow =
+            interactionConfig.tooltip.config.fieldsToShow[dataId];
 
           layerHoverProp = {
             data,
             fields,
             fieldsToShow,
             layer
-          }
+          };
         }
       }
 
@@ -239,7 +239,10 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           <MapPopover
             {...position}
             layerHoverProp={layerHoverProp}
-            coordinate={interactionConfig.coordinate.enabled && ((pinned || {}).coordinate || coordinate)}
+            coordinate={
+              interactionConfig.coordinate.enabled &&
+              ((pinned || {}).coordinate || coordinate)
+            }
             freezed={Boolean(clicked || pinned)}
             onClose={this._onCloseMapPopover}
             mapW={mapState.width}
@@ -252,7 +255,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     /* eslint-enable complexity */
 
     _getHoverXY(viewport, lngLat) {
-      const screenCoord = !viewport || !lngLat ? null : viewport.project(lngLat);
+      const screenCoord =
+        !viewport || !lngLat ? null : viewport.project(lngLat);
 
       return screenCoord && {x: screenCoord[0], y: screenCoord[1]};
     }
@@ -272,7 +276,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         mapLayers,
         mapState,
         interactionConfig,
-        mousePos
+        mousePos,
+        animationConfig
       } = this.props;
       const {mousePosition} = mousePos;
       const layer = layers[idx];
@@ -303,7 +308,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           objectHovered,
           mapState,
           interactionConfig,
-          layerCallbacks
+          layerCallbacks,
+          animationConfig
         });
       }
 
@@ -336,12 +342,14 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       }
 
       if (mapStyle.visibleLayerGroups['3d building']) {
-        deckGlLayers.push(new ThreeDBuildingLayer({
-          id: '_keplergl_3d-building',
-          mapboxApiAccessToken,
-          mapboxApiUrl,
-          threeDBuildingColor: mapStyle.threeDBuildingColor
-        }));
+        deckGlLayers.push(
+          new ThreeDBuildingLayer({
+            id: '_keplergl_3d-building',
+            mapboxApiAccessToken,
+            mapboxApiUrl,
+            threeDBuildingColor: mapStyle.threeDBuildingColor
+          })
+        );
       }
 
       return (
@@ -359,18 +367,13 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     }
 
     _renderMapboxLayers() {
-      const {
-        layers,
-        layerData,
-        layerOrder
-      } = this.props;
+      const {layers, layerData, layerOrder} = this.props;
 
       return generateMapboxLayers(layers, layerData, layerOrder);
     }
 
     _renderMapboxOverlays() {
       if (this._map && this._map.isStyleLoaded()) {
-
         const mapboxLayers = this._renderMapboxLayers();
 
         updateMapboxLayers(
@@ -380,29 +383,41 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           this.props.mapLayers
         );
 
-        this.previousLayers = mapboxLayers.reduce((final, layer) => ({
-          ...final,
-          [layer.id]: layer.config
-        }), {})
+        this.previousLayers = mapboxLayers.reduce(
+          (final, layer) => ({
+            ...final,
+            [layer.id]: layer.config
+          }),
+          {}
+        );
       }
     }
 
-    _onViewportChange = (viewState) => {
+    _onViewportChange = viewState => {
       if (typeof this.props.onViewStateChange === 'function') {
         this.props.onViewStateChange(viewState);
       }
       this.props.mapStateActions.updateMap(viewState);
-    }
+    };
 
     render() {
       const {
-        mapState, mapStyle, mapStateActions, mapLayers, layers, MapComponent,
-        datasets, mapboxApiAccessToken, mapboxApiUrl, mapControls, toggleMapControl
+        mapState,
+        mapStyle,
+        mapStateActions,
+        mapLayers,
+        layers,
+        MapComponent,
+        datasets,
+        mapboxApiAccessToken,
+        mapboxApiUrl,
+        mapControls,
+        toggleMapControl
       } = this.props;
 
       if (!mapStyle.bottomMapStyle) {
         // style not yet loaded
-        return <div/>;
+        return <div />;
       }
 
       const mapProps = {

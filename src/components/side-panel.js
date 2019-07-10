@@ -81,7 +81,6 @@ export default function SidePanelFactory(
   InteractionManager,
   MapManager
 ) {
-
   return class SidePanel extends PureComponent {
     static propTypes = {
       filters: PropTypes.arrayOf(PropTypes.any).isRequired,
@@ -121,7 +120,8 @@ export default function SidePanelFactory(
       this.props.uiStateActions.openDeleteModal(key);
     };
 
-    _onExportImage = () => this.props.uiStateActions.toggleModal(EXPORT_IMAGE_ID);
+    _onExportImage = () =>
+      this.props.uiStateActions.toggleModal(EXPORT_IMAGE_ID);
 
     _onExportData = () => this.props.uiStateActions.toggleModal(EXPORT_DATA_ID);
 
@@ -152,7 +152,7 @@ export default function SidePanelFactory(
         layerConfigChange: visStateActions.layerConfigChange,
         layerTextLabelChange: visStateActions.layerTextLabelChange,
         layerVisualChannelConfigChange:
-        visStateActions.layerVisualChannelConfigChange,
+          visStateActions.layerVisualChannelConfigChange,
         layerTypeChange: visStateActions.layerTypeChange,
         layerVisConfigChange: visStateActions.layerVisConfigChange,
         updateLayerBlending: visStateActions.updateLayerBlending,
@@ -160,7 +160,9 @@ export default function SidePanelFactory(
         showDatasetTable: this._showDatasetTable,
         showAddDataModal: this._showAddDataModal,
         removeLayer: visStateActions.removeLayer,
-        removeDataset: this._removeDataset
+        removeDataset: this._removeDataset,
+        enlargeFilter: visStateActions.enlargeFilter,
+        enableLayerAnimation: visStateActions.enableLayerAnimation
       };
 
       const filterManagerActions = {

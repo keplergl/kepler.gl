@@ -71,7 +71,7 @@ export const pointVisConfigs = {
   }
 };
 
-export default class PointLayer extends Layer {
+export default class getLineColorPointLayer extends Layer {
   constructor(props) {
     super(props);
 

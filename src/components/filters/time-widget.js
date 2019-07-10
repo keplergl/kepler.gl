@@ -21,9 +21,15 @@
 import React, {Component} from 'react';
 import styled from 'styled-components';
 import {createSelector} from 'reselect';
+import Slider from 'components/common/slider/slider';
 
 import FieldSelector from 'components/common/field-selector';
-import {Button, SelectTextBold, IconRoundSmall, CenterFlexbox} from 'components/common/styled-components';
+import {
+  Button,
+  SelectTextBold,
+  IconRoundSmall,
+  CenterFlexbox
+} from 'components/common/styled-components';
 import TimeRangeFilter from 'components/filters/time-range-filter';
 import {Close, Clock, LineChart, Rocket} from 'components/common/icons';
 import AnimationSpeedToggle from './animation-speed-toggle';
@@ -85,9 +91,9 @@ const TopSectionWrapper = styled.div`
 
       .item-selector__dropdown__value {
         color: ${props =>
-        props.hoverColor
-          ? props.theme[props.hoverColor]
-          : props.theme.textColorHl};
+          props.hoverColor
+            ? props.theme[props.hoverColor]
+            : props.theme.textColorHl};
       }
     }
   }
@@ -102,7 +108,7 @@ const Tab = styled.div`
   border-bottom: 1px solid
     ${props => (props.active ? props.theme.textColorHl : 'transparent')};
   color: ${props =>
-  props.active ? props.theme.textColorHl : props.theme.labelColor};
+    props.active ? props.theme.textColorHl : props.theme.labelColor};
   display: inline-block;
   font-size: 12px;
   height: 24px;
@@ -136,26 +142,39 @@ export class TimeWidget extends Component {
   };
 
   _toggleSpeedControl = () => {
-    this.setState({showSpeedControl: !this.state.showSpeedControl})
+    this.setState({showSpeedControl: !this.state.showSpeedControl});
   };
 
-  fieldSelector = props => props.fields;
-  yAxisFieldsSelector = createSelector(this.fieldSelector, fields =>
-    fields.filter(f => f.type === 'integer' || f.type === 'real')
-  );
+  //fields = { datasets[filters[enlargedFilterIdx].dataId].fields }
+
+  //TODO:(H) make this proper: purpose is to shoe only numerical fields from dataset
+  // fieldSelector = props => props.fields;
+  // yAxisFieldsSelector = createSelector(
+  //   this.fieldSelector,
+  //   fields => fields.filter(f => f.type === 'integer' || f.type === 'real')
+  // );
 
   render() {
+    console.log('this.fieldSelector', this.props.fields);
+
     const {
-      enlargedIdx,
       enlargeFilter,
-      filter,
-      isAnyFilterAnimating,
+      filters,
       setFilter,
       setFilterPlot,
       toggleAnimation,
       updateAnimationSpeed,
-      width
+      width,
+      layers
     } = this.props;
+
+    const enlargedIdx = filters.findIndex(f => f.enlarged);
+    const isAnyFilterAnimating = filters.some(f => f.isAnimating);
+    const filter = filters[enlargedIdx];
+
+    if (enlargedIdx < 0) {
+      return null;
+    }
 
     const {showSpeedControl} = this.state;
     return (
@@ -164,55 +183,70 @@ export class TimeWidget extends Component {
           <TopSectionWrapper>
             <StyledTitle className="bottom-widget__field">
               <CenterFlexbox className="bottom-widget__icon">
-                <Clock height="15px"/>
+                <Clock height="15px" />
               </CenterFlexbox>
               <SelectTextBold>{filter.name}</SelectTextBold>
             </StyledTitle>
             <StyledTitle className="bottom-widget__y-axis">
               <CenterFlexbox className="bottom-widget__icon">
-                <LineChart height="15px"/>
+                <LineChart height="15px" />
               </CenterFlexbox>
-              <div className="bottom-widget__field-select">
-                <FieldSelector
-                  fields={this.yAxisFieldsSelector(this.props)}
-                  placement="top"
-                  id="selected-time-widget-field"
-                  value={filter.yAxis ? filter.yAxis.name : null}
-                  onSelect={value => setFilterPlot(enlargedIdx, {yAxis: value})}
-                  inputTheme="secondary"
-                  placeholder="Y Axis"
-                  erasable
-                  showToken={false}
-                />
-              </div>
+              {/* <div className="bottom-widget__field-select">
+              <FieldSelector
+                fields={this.yAxisFieldsSelector(this.props)}
+                placement="top"
+                id="selected-time-widget-field"
+                value={filter.yAxis ? filter.yAxis.name : null}
+                onSelect={value => setFilterPlot(enlargedIdx, {yAxis: value})}
+                inputTheme="secondary"
+                placeholder="Y Axis"
+                erasable
+                showToken={false}
+              />
+            </div> */}
             </StyledTitle>
             <StyledTitle className="bottom-widget__speed">
               <Button link width="80px" onClick={this._toggleSpeedControl}>
                 <CenterFlexbox className="bottom-widget__icon speed">
-                  <Rocket height="15px"/>
+                  <Rocket height="15px" />
                 </CenterFlexbox>
-                <div style={{
-                  visibility: !showSpeedControl ? 'visible' : 'hidden',
-                  display: 'inline-block',
-                  width: '27px'
-                }}>{filter.speed}x</div>
+                <div
+                  style={{
+                    visibility: !showSpeedControl ? 'visible' : 'hidden',
+                    display: 'inline-block',
+                    width: '27px'
+                  }}
+                >
+                  {filter.speed}x
+                </div>
               </Button>
-              {showSpeedControl ? <AnimationSpeedToggle
-                onHide={this._toggleSpeedControl}
-                updateAnimationSpeed={(speed) => updateAnimationSpeed(enlargedIdx, speed)}
-                speed={filter.speed}/> : null}
+              {showSpeedControl ? (
+                <AnimationSpeedToggle
+                  onHide={this._toggleSpeedControl}
+                  updateAnimationSpeed={speed =>
+                    updateAnimationSpeed(enlargedIdx, speed)
+                  }
+                  speed={filter.speed}
+                />
+              ) : null}
             </StyledTitle>
             <CenterFlexbox>
               <IconRoundSmall>
-                <Close height="12px" onClick={() => enlargeFilter(enlargedIdx)} />
+                <Close
+                  height="12px"
+                  onClick={() => enlargeFilter(enlargedIdx)}
+                />
               </IconRoundSmall>
             </CenterFlexbox>
           </TopSectionWrapper>
+
           <TimeRangeFilter
             filter={filter}
             setFilter={value => setFilter(enlargedIdx, 'value', value)}
             isAnyFilterAnimating={isAnyFilterAnimating}
-            updateAnimationSpeed={(speed) => updateAnimationSpeed(enlargedIdx, speed)}
+            updateAnimationSpeed={speed =>
+              updateAnimationSpeed(enlargedIdx, speed)
+            }
             toggleAnimation={() => toggleAnimation(enlargedIdx)}
           />
         </div>
