@@ -73,11 +73,17 @@ const actionHandler = {
 
   [ActionTypes.SET_FILTER_PLOT]: visStateUpdaters.setFilterPlotUpdater,
 
+  [ActionTypes.SET_VISIBLE_LAYERS_FOR_MAP]: visStateUpdaters.setVisibleLayersForMapUpdater,
+
   [ActionTypes.SHOW_DATASET_TABLE]: visStateUpdaters.showDatasetTableUpdater,
 
   [ActionTypes.TOGGLE_FILTER_ANIMATION]: visStateUpdaters.toggleFilterAnimationUpdater,
 
   [ActionTypes.UPDATE_FILTER_ANIMATION_SPEED]: visStateUpdaters.updateAnimationSpeedUpdater,
+
+  [ActionTypes.PLAY_ANIMATION]: visStateUpdaters.playAnimationUpdater,
+
+  [ActionTypes.ENABLE_LAYER_ANIMATION]: visStateUpdaters.enableLayerAnimationUpdater,
 
   [ActionTypes.TOGGLE_LAYER_FOR_MAP]: visStateUpdaters.toggleLayerForMapUpdater,
 

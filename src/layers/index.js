@@ -29,12 +29,14 @@ import {default as IconLayer} from './icon-layer/icon-layer';
 import {default as HeatmapLayer} from './heatmap-layer/heatmap-layer';
 import {default as H3Layer} from './h3-hexagon-layer/h3-hexagon-layer';
 import {default as ScenegraphLayer} from './scenegraph-layer/scenegraph-layer';
+import {default as TripLayer} from './trip-layer/trip-layer';
 
 // base layer
 export {default as Layer} from './base-layer';
 
 // individual layers
 export const KeplerGlLayers = {
+  TripLayer,
   PointLayer,
   ArcLayer,
   LineLayer,
@@ -59,5 +61,6 @@ export const LayerClasses = {
   icon: IconLayer,
   heatmap: HeatmapLayer,
   hexagonId: H3Layer,
-  '3D': ScenegraphLayer
+  '3D': ScenegraphLayer,
+  trip: TripLayer
 };

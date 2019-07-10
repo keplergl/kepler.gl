@@ -21,7 +21,6 @@
 import React, {Component} from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
-
 import LayerConfigurator from './layer-configurator';
 import LayerPanelHeader from './layer-panel-header';
 
@@ -37,7 +36,6 @@ const PanelWrapper = styled.div`
 `;
 
 function LayerPanelFactory() {
-
   class LayerPanel extends Component {
     static propTypes = {
       layer: PropTypes.object.isRequired,
@@ -48,10 +46,11 @@ function LayerPanelFactory() {
       openModal: PropTypes.func.isRequired,
       removeLayer: PropTypes.func.isRequired,
       onCloseConfig: PropTypes.func,
-
       layerTypeOptions: PropTypes.arrayOf(PropTypes.any),
       layerVisConfigChange: PropTypes.func,
-      layerVisualChannelConfigChange: PropTypes.func
+      layerVisualChannelConfigChange: PropTypes.func,
+      playAnimation: PropTypes.func,
+      enableLayerAnimation: PropTypes.func
     };
 
     updateLayerConfig = newProp => {
@@ -91,7 +90,11 @@ function LayerPanelFactory() {
 
     _toggleEnableConfig = e => {
       e.stopPropagation();
-      const {layer: {config: {isConfigActive}}} = this.props;
+      const {
+        layer: {
+          config: {isConfigActive}
+        }
+      } = this.props;
       this.updateLayerConfig({isConfigActive: !isConfigActive});
     };
 

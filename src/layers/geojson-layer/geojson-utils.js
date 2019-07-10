@@ -134,12 +134,10 @@ export function parseGeometryFromString(geoString) {
 export function getGeojsonBounds(features = []) {
   // calculate feature bounds is computation heavy
   // here we only pick couple
-  const samples =
-    features.length > 500 ? getSampleData(features, 500) : features;
+  const samples = features.length > 500 ? getSampleData(features, 500) : features;
 
   const nonEmpty = samples.filter(
-    d =>
-      d && d.geometry && d.geometry.coordinates && d.geometry.coordinates.length
+    d => d && d.geometry && d.geometry.coordinates && d.geometry.coordinates.length
   );
 
   try {
@@ -169,4 +167,21 @@ export function featureToDeckGlGeoType(type) {
     default:
       return null;
   }
+}
+
+/**
+ * Parse geojson from string
+ * @param {array} geoJson object values
+ * @returns {Object} mapping of feature type existence
+ */
+export function getGeojsonFeatureTypes(allFeatures) {
+  const featureTypes = allFeatures.reduce((accu, f) => {
+    const geoType = featureToDeckGlGeoType(f && f.geometry && f.geometry.type);
+
+    if (geoType) {
+      accu[geoType] = true;
+    }
+    return accu;
+  }, {});
+  return featureTypes;
 }
