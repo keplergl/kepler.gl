@@ -249,7 +249,8 @@ function KeplerGlFactory(
         visStateActions,
         mapStateActions,
         // plexus
-        activeBarangay
+        activeBarangay,
+        selected: plexus.selectedIndicator
       };
 
       const isSplit = splitMaps && splitMaps.length > 1;

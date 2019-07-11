@@ -185,7 +185,7 @@ export class ParallelCoordinatesD3 extends Component {
       .hideAxis(['name', 'population', 'income', 'desirability', 'id'])
       .margin({
         top: 40,
-        right: 0,
+        right: 60,
         bottom: 30,
         left: 20
       })

@@ -220,7 +220,8 @@ export class MapControl extends Component {
       onMapToggleLayer,
       onToggleMapControl,
       scale,
-      activeBarangay
+      activeBarangay,
+      selected
     } = this.props;
 
     const {
@@ -230,7 +231,8 @@ export class MapControl extends Component {
       splitMap = {}
     } = mapControls;
     return (
-      <StyledMapControl className="map-control" style={{right: activeBarangay ? '320px' : '0px'}}>
+      <StyledMapControl className="map-control" style={{right: activeBarangay || selected != 'desirability' ? '320px' : '0px'}}>
+      {/* <StyledMapControl className="map-control">       */}
         {/* Split Map */}
         {/* {splitMap.show ? (
           <ActionPanel key={0}>

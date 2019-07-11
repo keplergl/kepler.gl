@@ -481,13 +481,14 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
     const ACTIVE_INDICATOR_LABEL = INDICATORS[INDICATORS.findIndex(d => d.value == selected)].label;
 
     return (
-      // <WidgetContainer display={selected!='desirability' || visState.activeBarangay}>
-      <WidgetContainer display={true}>
+      <WidgetContainer display={selected!='desirability' || visState.activeBarangay}>
+      {/* <WidgetContainer display={true}> */}
       {/* <WidgetContainer width={width}> */}
         {/* <div className="bottom-widget--inner"> */}
-        <div className={visState.activeBarangay ? "bottom-widget--inner": "bottom-widget--close"}>
-          <TopSectionWrapper style={{display: visState.activeBarangay ? 'block' : 'none'}}>
-            <p>{!visState.activeBarangay ? 'Barangay ' : 'Barangay ' }Overview</p>
+        <div className={visState.activeBarangay || selected != 'desirability' ? "bottom-widget--inner": "bottom-widget--close"}>
+          <TopSectionWrapper style={{display: visState.activeBarangay || selected != 'desirability' ? 'block' : 'none'}}>
+          {/* <TopSectionWrapper> */}
+            <p>{!visState.activeBarangay ? 'City ' : 'Barangay ' }Overview</p>
           </TopSectionWrapper>
           <AnalysisSectionWrapper>
             
@@ -546,7 +547,7 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
                 </div>
               ) : null }
 
-              {visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_BGY.profile.value ?
+              {visState.activeBarangay && amtyCnt.length > 0 && visState.activeAnalysisTab == ANALYSIS_TABS_BGY.profile.value ?
                 (<div className="breakdown-analysis__section">
                   <BarChart 
                     data={amtyCnt}       
@@ -595,7 +596,7 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
                 </div>
               ) : null} */}
 
-              {/* {!visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_DEF.profile.value && bgyIncl ? (
+              {!visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_DEF.profile.value && bgyIncl ? (
                 <div className="breakdown-analysis__section">
                   <StackedBarChart
                     title={ACTIVE_INDICATOR_LABEL + ' Distribution'}
@@ -611,7 +612,7 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
                     data={bgyIncl}
                     legends={legends}
                      /> */}
-                {/* </div>
+                </div>
               ) : null}
 
               {!visState.activeBarangay && visState.activeAnalysisTab == ANALYSIS_TABS_DEF.profile.value && bgyIncl ? (
@@ -631,7 +632,7 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
                     analysisRankingPage={visState.analysisRankingPage}
                     />
                 </div>
-              ) : null}  */}
+              ) : null} 
               
             </BreakdownAnalysis>
           </AnalysisSectionWrapper>
