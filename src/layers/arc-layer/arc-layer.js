@@ -33,9 +33,6 @@ export const arcPosAccessor = ({lat0, lng0, lat1, lng1}) => d => [
   0
 ];
 
-export const arcPosResolver = ({lat0, lng0, lat1, lng1}) =>
-  `${lat0.fieldIdx}-${lng0.fieldIdx}-${lat1.fieldIdx}-${lat1.fieldIdx}}`;
-
 export const arcRequiredColumns = ['lat0', 'lng0', 'lat1', 'lng1'];
 
 export const arctVisConfigs = {
@@ -83,10 +80,6 @@ export default class ArcLayer extends Layer {
       }
     };
   }
-
-  // getPositionAccessor() {
-  //   return this.getPosition(this.config.columns);
-  // }
 
   static findDefaultLayerProps({fieldPairs = []}) {
     if (fieldPairs.length < 2) {

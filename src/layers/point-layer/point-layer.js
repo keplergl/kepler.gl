@@ -41,8 +41,6 @@ export const pointPosAccessor = ({lat, lng, altitude}) => d => [
 
 export const pointLabelAccessor = textLabel => d =>
   String(d.data[textLabel.field.tableFieldIndex - 1]);
-// export const pointLabelResolver = textLabel =>
-//   textLabel.field && textLabel.field.tableFieldIndex;
 
 export const pointRequiredColumns = ['lat', 'lng'];
 export const pointOptionalColumns = ['altitude'];
@@ -440,11 +438,9 @@ export default class PointLayer extends Layer {
           accu.push(
             new TextLayer({
               ...layerInteraction,
-              // ...gpuFilter,
               id: `${this.id}-label-${textLabel[i].field.name}`,
               data: data.data,
               getPosition: data.getPosition,
-              // getFilterValue: data.getFilterValue,
               getText: d.getText,
               characterSet: d.characterSet,
               getPixelOffset: this.getTextOffset(
@@ -467,7 +463,6 @@ export default class PointLayer extends Layer {
                 characters: {
                   type: MultiIconLayer,
                   filterRange: gpuFilter.filterRange,
-                  // ...gpuFilter,
                   // data is transformed in text sublayer
                   getFilterValue: datum =>
                     data.getFilterValue(data.data[datum.objectIndex]),
@@ -488,7 +483,6 @@ export default class PointLayer extends Layer {
                 getTextAnchor: textLabel[i].anchor,
                 getAlignmentBaseline: textLabel[i].alignment,
                 getColor: textLabel[i].color
-                // getFilterValue: gpuFilter.filterValueUpdateTriggers
               }
             })
           );

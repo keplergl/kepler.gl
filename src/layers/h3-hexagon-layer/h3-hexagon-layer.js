@@ -31,7 +31,6 @@ export const HEXAGON_ID_FIELDS = {
 
 export const hexIdRequiredColumns = ['hex_id'];
 export const hexIdAccessor = ({hex_id}) => d => d[hex_id.fieldIdx];
-export const hexIdResolver = ({hex_id}) => hex_id.fieldIdx;
 
 export const HexagonIdVisConfigs = {
   opacity: 'opacity',

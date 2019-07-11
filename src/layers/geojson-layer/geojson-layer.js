@@ -61,7 +61,6 @@ export const geojsonVisConfigs = {
 
 export const geoJsonRequiredColumns = ['geojson'];
 export const featureAccessor = ({geojson}) => d => d[geojson.fieldIdx];
-export const featureResolver = ({geojson}) => geojson.fieldIdx;
 
 /**
  * From Deck.gl geojson layer
@@ -76,7 +75,6 @@ export default class GeoJsonLayer extends Layer {
 
     this.dataToFeature = {};
     this.registerVisConfig(geojsonVisConfigs);
-    // this.getFeature = memoize(featureAccessor, featureResolver);
     this.getPositionAccessor = () => featureAccessor(this.config.columns);
   }
 
@@ -229,30 +227,6 @@ export default class GeoJsonLayer extends Layer {
     const {filteredIndex, allData, gpuFilter} = datasets[this.config.dataId];
     const {data} = this.updateData(allData, filteredIndex, oldLayerData);
     const getFeature = this.getPositionAccessor();
-
-    // geojson feature are object, if doesn't exists
-    // create it and save to layer
-    // if (!oldLayerData || oldLayerData.getFeature !== getFeature) {
-    //   this.updateLayerMeta(allData, getFeature);
-    // }
-
-    // let geojsonData;
-
-    // if (
-    //   oldLayerData &&
-    //   oldLayerData.data &&
-    //   opt.sameData &&
-    //   oldLayerData.getFeature === getFeature
-    // ) {
-    //   // no need to create a new array of data
-    //   // use updateTriggers to selectively re-calculate attributes
-    //   geojsonData = oldLayerData.data;
-    // } else {
-    //   // filteredIndex is a reference of index in allData which can map to feature
-    //   geojsonData = filteredIndex
-    //     .map(i => this.dataToFeature[i])
-    //     .filter(d => d);
-    // }
 
     // fill color
     const cScale =

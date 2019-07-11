@@ -33,12 +33,7 @@ export const iconPosAccessor = ({lat, lng}) => d => [
   d.data[lng.fieldIdx],
   d.data[lat.fieldIdx]
 ];
-
-export const iconPosResolver = ({lat, lng}) =>
-  `${lat.fieldIdx}-${lng.fieldIdx}`;
-
 export const iconAccessor = ({icon}) => d => d.data[icon.fieldIdx];
-export const iconResolver = ({icon}) => icon.fieldIdx;
 
 export const iconRequiredColumns = ['lat', 'lng', 'icon'];
 
@@ -56,9 +51,6 @@ export default class IconLayer extends Layer {
 
     this.registerVisConfig(pointVisConfigs);
     this.getPositionAccessor = () => iconPosAccessor(this.config.columns);
-
-    // this.getPosition = memoize(iconPosAccessor, iconPosResolver);
-    // this.getIcon = memoize(iconAccessor, iconResolver);
     this.getIconAccessor = () => iconAccessor(this.config.columns);
 
     // prepare layer info modal

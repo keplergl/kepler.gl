@@ -65,8 +65,6 @@ export function findDefaultLayer(dataset, layerClasses) {
 export function calculateLayerData(layer, state, oldLayerData, opt = {}) {
   const {type} = layer;
 
-  // const {filteredIndex, allData} = datasets[layer.config.dataId] || {};
-
   if (!type || !layer.hasAllColumns() || !layer.config.dataId) {
     return {layer, layerData: {}};
   }

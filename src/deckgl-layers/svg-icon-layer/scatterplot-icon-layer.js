@@ -62,8 +62,3 @@ export default class ScatterplotIconLayer extends ExtendedScatterplotLayer {
 }
 
 ScatterplotIconLayer.layerName = 'ScatterplotIconLayer';
-
-// export default extendLayer(
-//   ScatterplotIconLayer,
-//   new DataFilterExtension()
-// );

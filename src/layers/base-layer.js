@@ -658,8 +658,6 @@ export default class Layer {
   }
 
   updateData(allData, filteredIndex, oldLayerData) {
-    // const {columns} = this.config;
-
     const getPosition = this.getPositionAccessor();
     const dataUpdateTriggers = this.getDataUpdateTriggers({filteredIndex});
     const triggerChanged = this.getChangedTriggers(dataUpdateTriggers);
