@@ -352,13 +352,22 @@ export default function BottomWidgetFactory(TimeWidget, BarChart, ParallelCoordi
         maxListSize = Math.min(DEFAULT_LIST, datasets.barangays.data.length);
 
         // formatted barangay data
+        datasets.barangays.allData.forEach((d) => {
+          let obj = {}
+          BGY_DATA_DISPLAY.forEach((b) => {
+            obj[b.id] = d[b.idx];
+          });
+          bgyRef[obj['id']] = obj['name'];          
+          // bgyIncl.push(obj);
+        });
+
         bgyIncl = [];
         datasets.barangays.data.forEach((d) => {
           let obj = {}
           BGY_DATA_DISPLAY.forEach((b) => {
             obj[b.id] = d[b.idx];
           });
-          bgyRef[obj['id']] = obj['name'];          
+          // bgyRef[obj['id']] = obj['name'];          
           bgyIncl.push(obj);
         });
         bgyIncl = bgyIncl.sort((a, b) => b[selected] - a[selected]);
