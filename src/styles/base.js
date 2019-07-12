@@ -210,6 +210,8 @@ export const sliderInputWidth = 50;
 
 // Plot
 export const rangeBrushBgd = '#3A414C';
+export const histogramFillInRange = activeColor;
+export const histogramFillOutRange = sliderBarColor;
 
 // Notification
 export const notificationColors = {
@@ -938,6 +940,8 @@ export const theme = {
 
   // Plot
   rangeBrushBgd,
+  histogramFillInRange,
+  histogramFillOutRange,
 
   // Notifications
   notificationColors,
