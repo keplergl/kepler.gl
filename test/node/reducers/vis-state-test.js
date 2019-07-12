@@ -1,3 +1,4 @@
+/* eslint-disable max-statements */
 // Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -42,8 +43,8 @@ const {ArcLayer, PointLayer, GeojsonLayer, LineLayer} = KeplerGlLayers;
 import testData, {testFields, testAllData} from 'test/fixtures/test-csv-data';
 import {
   geojsonData,
-  geoBounds,
-  geoLghtSettings,
+  expectedDataToFeature,
+  updatedGeoJsonLayer,
   fields as geojsonFields,
   mappedTripValue,
   tripDomain
@@ -412,7 +413,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
   t.equal(newLayer.config.colorScale, 'ordinal', 'should scale to ordinal');
   t.deepEqual(
     newLayer.config.colorDomain,
-    ['driver_analytics', 'driver_gps'],
+    ['driver_analytics', 'driver_analytics_0', 'driver_gps'],
     'should calculate color domain'
   );
   t.equal(
@@ -504,7 +505,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
   t.equal(newLayer4.config.colorField, stringField, 'should keep colorField');
   t.deepEqual(
     newLayer4.config.colorDomain,
-    ['driver_analytics', 'driver_gps'],
+    ['driver_analytics', 'driver_analytics_0', 'driver_gps'],
     'should calculate color domain'
   );
   t.equal(newLayer4.config.colorScale, 'ordinal', 'should keep color scale');
@@ -1188,17 +1189,6 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson', t => {
     }
   };
 
-  const dataToFeature = geojsonData.features.reduce(
-    (accu, f, i) => ({
-      ...accu,
-      [i]: {
-        ...f,
-        properties: {...f.properties, index: i}
-      }
-    }),
-    {}
-  );
-
   const expectedLayer = new GeojsonLayer({
     label: 'king milkshake',
     dataId: 'milkshake',
@@ -1208,15 +1198,8 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson', t => {
   });
 
   expectedLayer.updateLayerVisConfig({stroked: true, filled: true, strokeColor: layer1StrokeColor});
-  expectedLayer.dataToFeature = dataToFeature;
-  expectedLayer.meta = {
-    bounds: geoBounds,
-    lightSettings: geoLghtSettings,
-    fixedRadius: false,
-    featureTypes: {
-      polygon: true
-    }
-  };
+  expectedLayer.dataToFeature = expectedDataToFeature;
+  expectedLayer.meta = updatedGeoJsonLayer.meta
 
   const expectedLayerData = {
     data: geojsonData.features.map((f, i) => ({
@@ -2825,7 +2808,7 @@ test('#visStateReducer -> SPLIT_MAP: SET VISIBLE LAYERS IN MAP', t => {
 
 test('#visStateReducer -> SPLIT_MAP: HIDE LAYER', t => {
   const layer1 = new PointLayer({id: 'a'});
-  // const layer2 = new PointLayer({id: 'b'});
+
   const oldState = {
     layers: [layer1],
     splitMaps: [

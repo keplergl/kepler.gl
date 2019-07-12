@@ -68,7 +68,7 @@ test('Components -> DataTableModal.render', t => {
     '2016-09-17 00:09:55',
     '29.9900937',
     '31.2590542',
-    'driver_analytics',
+    'driver_analytics_0',
     '1472688000000',
     'false',
     '1',

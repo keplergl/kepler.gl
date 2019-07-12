@@ -1183,7 +1183,7 @@ mergedLayer2.config = {
     tableFieldIndex: 10
   },
   sizeDomain: [78, 694],
-  sizeScale: 'linear',
+  sizeScale: 'sqrt',
   textLabel: [DEFAULT_TEXT_LABEL],
   visConfig: {
     radius: 10,

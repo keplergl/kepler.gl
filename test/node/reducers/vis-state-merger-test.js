@@ -27,7 +27,6 @@ import {
   mergeInteractions,
   mergeLayerBlending
 } from 'reducers/vis-state-merger';
-import {Messages, Crosshairs} from 'components/common/icons';
 
 import SchemaManager from 'schemas';
 import visStateReducer from 'reducers/vis-state';

@@ -21,12 +21,16 @@
 import test from 'tape';
 import {
   testCreateCases,
-  testFormatLayerDataCases
+  testFormatLayerDataCases,
+  preparedDataset,
+  preparedDatasetWithNull,
+  dataId,
+  rows,
+  rowsWithNull,
+  fieldsWithNull
 } from 'test/helpers/layer-utils';
-import csvData, {testFields} from 'test/fixtures/test-csv-data';
 
 import GridLayer from 'layers/grid-layer/grid-layer';
-import {processCsvData} from 'processors/data-processor';
 
 test('#GridLayer -> constructor', t => {
   const TEST_CASES = {
@@ -54,11 +58,13 @@ test('#GridLayer -> constructor', t => {
 });
 
 test('#GridLayer -> formatLayerData', t => {
-  const {rows} = processCsvData(csvData);
-
   const filteredIndex = [0, 2, 4];
-  const allDataWithNull = [[null, null, '12']].concat(rows);
 
+  const datasetWithNull = {
+    ...preparedDatasetWithNull,
+    filteredIndex,
+    filteredIndexForDomain: [0, 2, 4, 5, 6, 7, 8, 9, 10]
+  };
   const expectedLayerMeta = {
     bounds: [31.2148748, 29.9870074, 31.2590542, 30.0614122],
     lightSettings: {
@@ -77,85 +83,100 @@ test('#GridLayer -> formatLayerData', t => {
       numberOfLights: 2
     }
   };
+  const expectedLayerMetaNull = {
+    bounds: [31.2149361, 29.9870074, 31.2590542, 30.0292134],
+    lightSettings: {
+      lightsPosition: [
+        31.2149361,
+        29.9870074,
+        8000,
+        31.2590542,
+        30.0292134,
+        8000
+      ],
+      ambientRatio: 0.4,
+      diffuseRatio: 0.6,
+      specularRatio: 0.3,
+      lightsStrength: [0.9, 0, 0.8, 0],
+      numberOfLights: 2
+    }
+  };
 
   const TEST_CASES = [
     {
-      props: {
-        dataId: '0dj3h',
-        label: 'some geometry file',
-        columns: {
-          lat: {
-            value: 'gps_data.lat',
-            fieldIdx: 1
+      name: 'Grid gps point.1',
+      layer: {
+        type: 'grid',
+        id: 'test_layer_1',
+        config: {
+          dataId,
+          label: 'some geometry file',
+          columns: {
+            lat: 'gps_data.lat',
+            lng: 'gps_data.lng'
           },
-          lng: {
-            value: 'gps_data.lng',
-            fieldIdx: 2
-          }
+          color: [1, 2, 3]
         }
       },
-      data: [{'0dj3h': {allData: rows, filteredIndex}}, undefined],
-      test: result => {
+      datasets: {
+        [dataId]: {
+          ...preparedDataset,
+          filteredIndex
+        }
+      },
+      assert: result => {
         const {layerData, layer} = result;
         const expectedLayerData = {
-          data: [rows[0], rows[2], rows[4]],
-          getPosition: () => {}
+          data: [rows[0], rows[2], rows[4]]
         };
-
+        const expectedDataKeys = ['data', 'getPosition'];
         t.deepEqual(
-          Object.keys(layerData),
-          ['data', 'getPosition'],
-          'layerData should have 2 keys'
+          Object.keys(layerData).sort(),
+          expectedDataKeys,
+          'layerData should have 6 keys'
         );
+
         t.deepEqual(
           layerData.data,
           expectedLayerData.data,
           'should format correct grid layerData'
         );
-        t.ok(
-          typeof layerData.getPosition === 'function',
-          'should have getPosition'
-        );
         t.deepEqual(
           layerData.getPosition(layerData.data[0]),
-          [31.2590542, 29.9900937],
-          'getPosition should return correct lat lng'
+          [rows[0][2], rows[0][1]],
+          'getPosition should return correct position'
         );
         t.deepEqual(
           layer.meta,
           expectedLayerMeta,
-          'should format correct grid layerData'
+          'should format correct grid layer meta'
         );
       }
     },
     {
-      props: {
-        dataId: '0dj3h',
-        label: 'some geometry file',
-        columns: {
-          lat: {
-            value: 'gps_data.lat',
-            fieldIdx: 1
+      name: 'Test Grid gps point.2 Data With Nulls',
+      layer: {
+        type: 'grid',
+        id: 'test_layer_1',
+        config: {
+          dataId,
+          label: 'some geometry file',
+          columns: {
+            lat: 'gps_data.lat',
+            lng: 'gps_data.lng'
           },
-          lng: {
-            value: 'gps_data.lng',
-            fieldIdx: 2
-          }
+          // color by id(int)
+          colorField: fieldsWithNull[6]
         }
       },
-      updates: [
-        {method: 'updateLayerConfig', args: [{colorField: testFields[6]}]},
-        {
-          method: 'updateLayerVisualChannel',
-          args: [{allData: allDataWithNull}, 'color']
-        }
-      ],
-      data: [{'0dj3h': {allData: allDataWithNull, filteredIndex}}, undefined],
-      test: result => {
+      datasets: {
+        [dataId]: datasetWithNull
+      },
+      assert: result => {
         const {layerData, layer} = result;
 
         const expectedLayerData = {
-          data: [rows[1], rows[3]],
+          data: [rowsWithNull[0], rowsWithNull[4]],
           getPosition: () => {},
           getColorValue: () => {}
         };
@@ -163,30 +184,26 @@ test('#GridLayer -> formatLayerData', t => {
         t.deepEqual(
           Object.keys(layerData),
           ['data', 'getPosition', 'getColorValue'],
-          'layerData should have 2 keys'
+          'layerData should have 3 keys'
         );
         t.deepEqual(
           layerData.data,
           expectedLayerData.data,
           'should filter out nulls, format correct grid layerData'
         );
-        t.ok(
-          typeof layerData.getPosition === 'function',
-          'should have getPosition'
+        t.deepEqual(
+          layerData.getPosition(layerData.data[0]),
+          [rowsWithNull[0][2], rowsWithNull[0][1]],
+          'getPosition should return correct position'
         );
         t.ok(
           typeof layerData.getColorValue === 'function',
           'should have getColorValue'
         );
         t.deepEqual(
-          layerData.getPosition(layerData.data[0]),
-          [31.2461142, 29.9927699],
-          'getPosition should return correct lat lng'
-        );
-        t.deepEqual(
           layer.meta,
-          expectedLayerMeta,
-          'should format correct grid layerData'
+          expectedLayerMetaNull,
+          'should format correct grid layer meta'
         );
       }
     }

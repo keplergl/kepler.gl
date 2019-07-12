@@ -199,7 +199,7 @@ export default class AggregationLayer extends Layer {
   /**
    * Aggregation layer handles visual channel aggregation inside deck.gl layer
    */
-  updateLayerDomain(dataset, newFilter) {
+  updateLayerDomain(datasets, newFilter) {
     return this;
   }
 

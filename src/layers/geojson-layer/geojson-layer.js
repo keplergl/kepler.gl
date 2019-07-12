@@ -61,7 +61,7 @@ export const geojsonVisConfigs = {
 
 export const geoJsonRequiredColumns = ['geojson'];
 export const featureAccessor = ({geojson}) => d => d[geojson.fieldIdx];
-
+export const defaultElevation = 500;
 /**
  * From Deck.gl geojson layer
  * Returns the source feature that was passed to `separateGeojsonFeatures`
@@ -226,7 +226,6 @@ export default class GeoJsonLayer extends Layer {
 
     const {filteredIndex, allData, gpuFilter} = datasets[this.config.dataId];
     const {data} = this.updateData(allData, filteredIndex, oldLayerData);
-    const getFeature = this.getPositionAccessor();
 
     // fill color
     const cScale =
@@ -268,7 +267,6 @@ export default class GeoJsonLayer extends Layer {
 
     return {
       data,
-      getFeature,
       getFilterValue: gpuFilter.filterValueAccessor(
         getIndexForGpuFilter,
         getDataForGpuFilter
@@ -306,7 +304,7 @@ export default class GeoJsonLayer extends Layer {
               heightField,
               0
             )
-          : d.properties.elevation || 500,
+          : d.properties.elevation || defaultElevation,
       getRadius: d =>
         rScale
           ? this.getEncodedChannelValue(
