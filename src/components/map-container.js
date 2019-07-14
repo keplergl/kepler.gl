@@ -31,7 +31,7 @@ import MapPopoverFactory from 'components/map/map-popover';
 import MapControlFactory from 'components/map/map-control';
 import {StyledMapContainer} from 'components/common/styled-components';
 
-import Draw from './draw';
+import Draw from './editor';
 
 // utils
 import {generateMapboxLayers, updateMapboxLayers} from '../layers/mapbox-utils';
