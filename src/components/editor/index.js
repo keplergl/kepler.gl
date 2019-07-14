@@ -20,9 +20,15 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import styled from 'styled-components';
 import {Editor} from 'react-map-gl-draw';
 import window from 'global/window';
+
+import ActionPanel, {ActionPanelItem} from './action-panel';
+
+import {
+  Trash,
+  Layers
+} from 'components/common/icons';
 
 import {
   DEFAULT_RADIUS,
@@ -31,6 +37,7 @@ import {
 import {
   getStyle as getEditHandleStyle
 } from './handle-style';
+import styled from 'styled-components';
 
 const DEFAULT_EDIT_HANDLE_SHAPE = 'circle';
 
@@ -44,6 +51,7 @@ const StyledActionsLayer = styled.div`
 `;
 
 class Draw extends Component {
+
   static propTypes = {
     clickRadius: PropTypes.number,
     editor: PropTypes.object.isRequired,
@@ -71,8 +79,7 @@ class Draw extends Component {
   }
 
   _onKeyPressed = event => {
-    const {editor, isEnabled} = this.props;
-    const {selectedFeature = {}} = editor;
+    const {isEnabled} = this.props;
 
     if (!isEnabled) {
       return;
@@ -80,7 +87,7 @@ class Draw extends Component {
 
     switch (event.which) {
       case DELETE_KEY_EVENT_CODE:
-        this.props.onDeleteFeature((selectedFeature || {}).id);
+        this._onDeleteSelectedFeature();
         break;
       case ESCAPE_KEY_EVENT_CODE:
         // TODO: handle escape button for operations
@@ -108,6 +115,16 @@ class Draw extends Component {
     });
   };
 
+  _onDeleteSelectedFeature = () => {
+    if (this.state.showActions) {
+      this.setState({showActions: false});
+    }
+
+    const {editor} = this.props;
+    const {selectedFeature = {}} = editor;
+    this.props.onDeleteFeature((selectedFeature || {}).id);
+  };
+
   render() {
     const {clickRadius, editor, features} = this.props;
     const {selectedFeature = {}} = editor;
@@ -128,7 +145,14 @@ class Draw extends Component {
         />
         {this.state.showActions ? (
           <StyledActionsLayer position={this.state.lastPosition}>
-            <h2>layers</h2>
+            <ActionPanel onClick={index => alert(`No Action provided for index: ${index}`)}>
+              <ActionPanelItem
+                label="layer"
+                Icon={Layers}
+                nested
+              />
+              <ActionPanelItem label="delete" Icon={Trash} onClick={this._onDeleteSelectedFeature}/>
+            </ActionPanel>
           </StyledActionsLayer>
         ) : null}
       </div>
