@@ -37,6 +37,12 @@ const DEFAULT_EDIT_HANDLE_SHAPE = 'circle';
 const DELETE_KEY_EVENT_CODE = 8;
 const ESCAPE_KEY_EVENT_CODE = 27;
 
+const StyledActionsLayer = styled.div`
+  position: absolute;
+  top: ${props => props.position.y}px;
+  left: ${props => props.position.x}px;
+`;
+
 class Draw extends Component {
   static propTypes = {
     clickRadius: PropTypes.number,
@@ -52,7 +58,8 @@ class Draw extends Component {
   };
 
   state = {
-    showActions: false
+    showActions: false,
+    lastPosition: null
   };
 
   componentDidMount() {
@@ -75,6 +82,9 @@ class Draw extends Component {
       case DELETE_KEY_EVENT_CODE:
         this.props.onDeleteFeature((selectedFeature || {}).id);
         break;
+      case ESCAPE_KEY_EVENT_CODE:
+        // TODO: handle escape button for operations
+        break;
       default: break;
     }
   };
@@ -83,8 +93,19 @@ class Draw extends Component {
     return DEFAULT_EDIT_HANDLE_SHAPE;
   };
 
-  _onSelect = feature => {
-    this.props.onSelect(feature);
+  _onSelect = ({selectedFeatureId, sourceEvent}) => {
+    // we don't need to mouse position in redux state
+    this.setState({
+      ...(sourceEvent.rightButton ? {
+        showActions: true,
+        lastPosition: {
+          x: sourceEvent.changedPointers[0].clientX,
+          y: sourceEvent.changedPointers[0].clientY
+        }
+      } : null)
+    }, () => {
+      this.props.onSelect({selectedFeatureId});
+    });
   };
 
   render() {
@@ -105,6 +126,11 @@ class Draw extends Component {
           getEditHandleStyle={getEditHandleStyle}
           style={{zIndex: 1}}
         />
+        {this.state.showActions ? (
+          <StyledActionsLayer position={this.state.lastPosition}>
+            <h2>layers</h2>
+          </StyledActionsLayer>
+        ) : null}
       </div>
     );
   }
