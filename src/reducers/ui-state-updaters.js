@@ -25,7 +25,6 @@ import {
   RATIOS,
   RESOLUTIONS,
   EXPORT_MAP_FORMAT,
-  // MAP_MODES,
   EDITOR_MODES
 } from 'constants/default-settings';
 import {createNotification} from 'utils/notifications-utils';

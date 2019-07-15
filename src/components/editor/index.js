@@ -145,7 +145,7 @@ class Draw extends Component {
         />
         {this.state.showActions ? (
           <StyledActionsLayer position={this.state.lastPosition}>
-            <ActionPanel onClick={index => alert(`No Action provided for index: ${index}`)}>
+            <ActionPanel onClick={() => {}}>
               <ActionPanelItem
                 label="layer"
                 Icon={Layers}

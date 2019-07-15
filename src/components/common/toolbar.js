@@ -80,4 +80,6 @@ const Toolbar = React.memo(({children, className, show, direction = 'row'}) => (
   </StyledPanelDropdown>
 ));
 
+Toolbar.displayName = 'Toolbar';
+
 export default Toolbar;

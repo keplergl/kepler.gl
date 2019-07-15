@@ -40,6 +40,8 @@ export const ActionPanelItem = React.memo(({
   </StyledItem>
 ));
 
+ActionPanelItem.displayName = 'ActionPanelItem';
+
 const StyledActionPanel = styled.div`
   width: 110px;
   display: flex;
@@ -86,5 +88,7 @@ const ActionPanel = ({children, className, direction = 'column', onClick}) => (
     }))}
   </StyledActionPanel>
 );
+
+ActionPanel.displayName = 'ActionPanel';
 
 export default ActionPanel;

@@ -127,11 +127,15 @@ const ActionPanel = ({children}) => (
   <StyledMapControlAction>{children}</StyledMapControlAction>
 );
 
+ActionPanel.displayName = 'ActionPanel';
+
 const MaControlTooltip = React.memo(({id, message}) => (
   <Tooltip id={id} place="left" effect="solid">
     <span>{message}</span>
   </Tooltip>
 ));
+
+MaControlTooltip.displayName = 'MaControlTooltip';
 
 const LayerSelectorPanel = React.memo(({
   items,
@@ -163,6 +167,8 @@ const LayerSelectorPanel = React.memo(({
   )
 );
 
+LayerSelectorPanel.displayName = 'LayerSelectorPanel';
+
 const MapControlPanel = React.memo(({children, header, onClick, scale = 1, isExport}) => (
   <StyledMapControlPanel
     style={{
@@ -186,6 +192,8 @@ const MapControlPanel = React.memo(({children, header, onClick, scale = 1, isExp
     <StyledMapControlPanelContent>{children}</StyledMapControlPanelContent>
   </StyledMapControlPanel>
 ));
+
+MapControlPanel.displayName = 'MapControlPanel';
 
 const MapLegendPanel = ({layers, isActive, scale, onToggleMenuPanel, isExport}) =>
   !isActive ? (
@@ -213,6 +221,8 @@ const MapLegendPanel = ({layers, isActive, scale, onToggleMenuPanel, isExport}) 
     </MapControlPanel>
 );
 
+MapLegendPanel.displayName = 'MapControlPanel';
+
 const SplitMapButton = React.memo(({isSplit, mapIndex, onToggleSplitMap}) => (
   <StyledMapControlButton
     active={isSplit}
@@ -235,6 +245,8 @@ const SplitMapButton = React.memo(({isSplit, mapIndex, onToggleSplitMap}) => (
   </StyledMapControlButton>
 ));
 
+SplitMapButton.displayName = 'SplitMapButton';
+
 const Toggle3dButton = React.memo(({dragRotate, onTogglePerspective}) => (
   <StyledMapControlButton
     onClick={e => {
@@ -252,6 +264,8 @@ const Toggle3dButton = React.memo(({dragRotate, onTogglePerspective}) => (
     />
   </StyledMapControlButton>
 ));
+
+Toggle3dButton.displayName = 'Toggle3dButton';
 
 const StyledToolBar = styled(Toolbar)`
   position: absolute;
@@ -301,6 +315,8 @@ const MapDrawPanel = React.memo(({editor, isActive, onToggleMenuPanel, onSetEdit
     </div>
   );
 });
+
+MapDrawPanel.displayName = 'MapDrawPanel';
 
 const MapControlFactory = () => {
   class MapControl extends Component {
@@ -436,6 +452,8 @@ const MapControlFactory = () => {
       );
     }
   }
+
+  MapControl.displayName = 'MapControl';
 
   return MapControl;
 };

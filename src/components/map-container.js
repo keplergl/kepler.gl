@@ -141,6 +141,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       </div>
     );
   });
+  MapTooltip.displayName = 'MapTooltip';
   /* eslint-enable complexity */
 
   class MapContainer extends Component {
@@ -506,6 +507,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       );
     }
   }
+
+  MapContainer.displayName = 'MapContainer';
 
   return MapContainer;
 }
