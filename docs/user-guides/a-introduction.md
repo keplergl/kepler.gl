@@ -29,7 +29,7 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 * [Arc](./c-types-of-layers/b-arc.md)
 * [Line](./c-types-of-layers/c-line.md)
 * [Grid](./c-types-of-layers/d-grid.md)
-* [DrawPolygon](./c-types-of-layers/e-polygon.md)
+* [Polygon](./c-types-of-layers/e-polygon.md)
 * [Cluster](./c-types-of-layers/f-cluster.md)
 * [Icon](./c-types-of-layers/g-icon.md)
 * [Hexbin](./c-types-of-layers/h-hexbin.md)

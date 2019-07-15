@@ -578,7 +578,7 @@ test('layerUtils -> findDefaultLayer:GeojsonLayer', t => {
           {
             type: 'Feature',
             properties: {index: 0},
-            geometry: {type: 'DrawPolygon', coordinates: []}
+            geometry: {type: 'Polygon', coordinates: []}
           }
         ]
       ]

@@ -28,7 +28,7 @@ Check out some [sample datasets](https://github.com/uber-web/kepler.gl-data) for
 
 - Kepler.gl accepts GeoJSON formatted JSON that contains a single [Feature](https://tools.ietf.org/html/rfc7946#section-3.2) object or a [FeatureCollection](https://tools.ietf.org/html/rfc7946#section-3.3) object. Kepler.gl creates one layer per file.
 
-- If a FeatureCollection contains different type of Features, Kepler.gl will render all features in one layer. Acceptable Feature types are [Point](https://tools.ietf.org/html/rfc7946#section-3.1.2), [MultiPoint](https://tools.ietf.org/html/rfc7946#section-3.1.3), [LineString](https://tools.ietf.org/html/rfc7946#section-3.1.4), [MultiLineString](https://tools.ietf.org/html/rfc7946#section-3.1.5), [DrawPolygon](https://tools.ietf.org/html/rfc7946#section-3.1.6) and [MultiPolygon]((https://tools.ietf.org/html/rfc7946#section-3.1.7).
+- If a FeatureCollection contains different type of Features, Kepler.gl will render all features in one layer. Acceptable Feature types are [Point](https://tools.ietf.org/html/rfc7946#section-3.1.2), [MultiPoint](https://tools.ietf.org/html/rfc7946#section-3.1.3), [LineString](https://tools.ietf.org/html/rfc7946#section-3.1.4), [MultiLineString](https://tools.ietf.org/html/rfc7946#section-3.1.5), [Polygon](https://tools.ietf.org/html/rfc7946#section-3.1.6) and [MultiPolygon]((https://tools.ietf.org/html/rfc7946#section-3.1.7).
 
 - Kepler.gl will read styles from GeoJSON files. If you are a GeoJSON expert, you can add style declarations to feature properties. Kepler.gl will use the declarations to automatically style your feature. The acceptable style properties are: `lineColor: [130, 154, 227]`, `lineWidth: 0.5`, `fillColor: [255, 0, 0]`, `radius: 1`, `hi-precision: true`.
 
