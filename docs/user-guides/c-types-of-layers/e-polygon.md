@@ -1,6 +1,6 @@
-# DrawPolygon
+# Polygon
 
-DrawPolygon layer can display [GeoJSON](https://tools.ietf.org/html/rfc7946) features. GeoJSON supports the following geometry types: `Point`, `LineString`, `DrawPolygon`, `MultiPoint`, `MultiLineString`, `MultiPolygon`.
+Polygon layer can display [GeoJSON](https://tools.ietf.org/html/rfc7946) features. GeoJSON supports the following geometry types: `Point`, `LineString`, `Polygon`, `MultiPoint`, `MultiLineString`, `MultiPolygon`.
 
 kepler.gl supports all the GeoJSON types above. You can pass in either a single [`Feature`][features] or a [`FeatureCollection`][feature_collection]
 
@@ -10,11 +10,11 @@ kepler.gl supports all the GeoJSON types above. You can pass in either a single 
 
 ![GeoJSON layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image20.png "GeoJSON layer")
 
-![DrawPolygon layer - contour](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/layers-polygon-contour.png "DrawPolygon layer")
+![Polygon layer - contour](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/layers-polygon-contour.png "Polygon layer")
 
-![DrawPolygon geoJSON layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image7.png "DrawPolygon geoJSON layer")
+![Polygon geoJSON layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image7.png "Polygon geoJSON layer")
 
-![DrawPolygon layer - buildings](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/layers-polygon-buildings.png "Grid layer")
+![Polygon layer - buildings](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/layers-polygon-buildings.png "Grid layer")
 
 A path GeoJSON layer can display data like trip routes or contours. Stroke color can be set with a numerical field.
 
