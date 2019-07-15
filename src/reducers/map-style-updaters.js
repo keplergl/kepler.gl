@@ -32,8 +32,7 @@ import {
 } from 'utils/map-style-utils/mapbox-gl-style-editor';
 import {
   DEFAULT_MAP_STYLES,
-  DEFAULT_LAYER_GROUPS,
-  MAP_MODES
+  DEFAULT_LAYER_GROUPS
 } from 'constants/default-settings';
 import {generateHashId} from 'utils/utils';
 import {LOAD_MAP_STYLE_TASK} from 'tasks/tasks';

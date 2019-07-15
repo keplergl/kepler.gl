@@ -168,9 +168,10 @@ export const SaveExportDropdownFactory = (
   }) => {
     return (
       <StyledToolbar show={show} onClose={onClose} className="save-export-dropdown">
-        <ClickOutsideCloseDropdown className="save-export-dropdown__inner"
-                                   show={show}
-                                   onClose={onClose}>
+        <ClickOutsideCloseDropdown
+          className="save-export-dropdown__inner"
+          show={show}
+          onClose={onClose}>
         <ExportImage
           onClick={() => {
             onExportImage();

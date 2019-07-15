@@ -96,6 +96,8 @@ export const SingleColorLegend = React.memo(({width, color}) => (
   />
 ));
 
+SingleColorLegend.displayName = 'SingleColorLegend';
+
 export const MultiColorLegend = React.memo(({colorRange, colorScale, colorDomain, colorField, width}) => (
   <ColorLegend
     scaleType={colorScale}
@@ -106,6 +108,8 @@ export const MultiColorLegend = React.memo(({colorRange, colorScale, colorDomain
     width={width}
   />
 ));
+
+MultiColorLegend.displayName = 'MultiColorLegend';
 
 export const LayerColorLegend = React.memo(({description, config, width, colorChannel}) => {
   const enableColorBy = description.measure;
@@ -140,6 +144,8 @@ export const LayerColorLegend = React.memo(({description, config, width, colorCh
     </div>
   )
 });
+
+LayerColorLegend.displayName = 'LayerColorLegend';
 
 const isColorChannel = (visualChannel) =>
   [CHANNEL_SCALES.color, CHANNEL_SCALES.colorAggr].includes(visualChannel.channelScaleType);

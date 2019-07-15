@@ -54,8 +54,3 @@ export default class DrawPolygon extends Component {
   }
 }
 
-
-
-
-
-

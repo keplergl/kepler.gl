@@ -38,4 +38,6 @@ const ToolbarItem = React.memo(({active, className, icon, label, onClick}) => (
   </StyledDiv>
 ));
 
+ToolbarItem.displayName = 'ToolbarItem';
+
 export default ToolbarItem;

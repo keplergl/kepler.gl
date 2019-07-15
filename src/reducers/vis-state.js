@@ -21,7 +21,6 @@
 import ActionTypes from 'constants/action-types';
 import {handleActions} from 'redux-actions';
 import * as visStateUpdaters from './vis-state-updaters';
-import * as uiStateUpdaters from './ui-state-updaters';
 
 /**
  * Important: Do not rename `actionHandler` or the assignment pattern of property value.
