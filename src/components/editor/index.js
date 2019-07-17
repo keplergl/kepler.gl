@@ -44,18 +44,21 @@ const DEFAULT_EDIT_HANDLE_SHAPE = 'circle';
 const DELETE_KEY_EVENT_CODE = 8;
 const ESCAPE_KEY_EVENT_CODE = 27;
 
+const LAYOVER_OFFSET = 4;
 const StyledActionsLayer = styled.div`
   position: absolute;
-  top: ${props => props.position.y}px;
-  left: ${props => props.position.x}px;
+  top: ${props => props.position.y + LAYOVER_OFFSET}px;
+  left: ${props => props.position.x + LAYOVER_OFFSET}px;
 `;
 
 class Draw extends Component {
-
   static propTypes = {
     clickRadius: PropTypes.number,
+    datasets: PropTypes.object.isRequired,
     editor: PropTypes.object.isRequired,
     features: PropTypes.arrayOf(PropTypes.object).isRequired,
+    isEnabled: PropTypes.bool,
+    layers: PropTypes.arrayOf(PropTypes.object).isRequired,
     onSelect: PropTypes.func.isRequired,
     onUpdate: PropTypes.func.isRequired,
     onDeleteFeature: PropTypes.func
@@ -126,7 +129,7 @@ class Draw extends Component {
   };
 
   render() {
-    const {clickRadius, editor, features} = this.props;
+    const {clickRadius, datasets, editor, features, layers} = this.props;
     const {selectedFeature = {}} = editor;
 
     return (
@@ -145,13 +148,23 @@ class Draw extends Component {
         />
         {this.state.showActions ? (
           <StyledActionsLayer position={this.state.lastPosition}>
-            <ActionPanel onClick={() => {}}>
+            <ActionPanel>
+              <ActionPanelItem label="layer" Icon={Layers}>
+                {layers.map((layer, index) => (
+                  <ActionPanelItem
+                    key={index}
+                    label={layer.name}
+                    color={datasets[layer.config.dataId].color}
+                    isSelection
+                    onClick={() => {}}
+                  />
+                ))}
+              </ActionPanelItem>
               <ActionPanelItem
-                label="layer"
-                Icon={Layers}
-                nested
+                label="delete"
+                Icon={Trash}
+                onClick={this._onDeleteSelectedFeature}
               />
-              <ActionPanelItem label="delete" Icon={Trash} onClick={this._onDeleteSelectedFeature}/>
             </ActionPanel>
           </StyledActionsLayer>
         ) : null}

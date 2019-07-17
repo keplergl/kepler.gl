@@ -471,9 +471,11 @@ export default function MapContainerFactory(MapPopover, MapControl) {
                 and fewer updates when we switch from edit to read mode
               */}
               <Editor
+                datasets={datasets}
                 editor={uiState.editor}
                 features={visState.editor.features}
                 isEnabled={isEdit}
+                layers={layers}
                 onDeleteFeature={uiStateActions.deleteFeature}
                 onSelect={uiStateActions.setSelectedFeature}
                 onUpdate={visStateActions.setFeatures}
