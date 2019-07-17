@@ -26,18 +26,17 @@ import {max} from 'd3-array';
 import {createSelector} from 'reselect';
 import {LineSeries, XYPlot, CustomSVGSeries, Hint, MarkSeries} from 'react-vis';
 import styled from 'styled-components';
+import classnames from 'classnames';
+
 import RangeBrush from './range-brush';
 import {getTimeWidgetHintFormatter} from 'utils/filter-utils';
-import {theme} from 'styles/base';
 
 const chartMargin = {top: 18, bottom: 0, left: 0, right: 0};
 const chartH = 52;
 const containerH = 78;
 const histogramStyle = {
   highlightW: 0.7,
-  unHighlightedW: 0.4,
-  highlightedColor: theme.activeColor,
-  unHighlightedColor: theme.sliderBarColor
+  unHighlightedW: 0.4
 };
 
 export default class RangePlot extends Component {
@@ -145,17 +144,16 @@ const Histogram = ({
     .range([0, height]);
 
   return (
-    <svg width={width} height={height} style={{marginTop: `${margin.top}px`}}>
+    <HistogramWrapper width={width} height={height} style={{marginTop: `${margin.top}px`}}>
       <g className="histogram-bars">
         {histogram.map(bar => {
           const inRange = bar.x0 >= value[0] && bar.x1 <= value[1];
-          const fill = inRange ? histogramStyle.highlightedColor : histogramStyle.unHighlightedColor;
           const wRatio = inRange ? histogramStyle.highlightW : histogramStyle.unHighlightedW;
 
           return (
             <rect
+              className={classnames({'in-range': inRange})}
               key={bar.x0}
-              fill={fill}
               height={y(bar.count)}
               width={barWidth * wRatio}
               x={x(bar.x0) + barWidth * (1 - wRatio) / 2}
@@ -167,7 +165,7 @@ const Histogram = ({
         })}
       </g>
       {brushComponent}
-    </svg>
+    </HistogramWrapper>
   );
 };
 
@@ -178,6 +176,16 @@ const LineChartWrapper = styled.div`
   }
 `;
 
+const HistogramWrapper = styled.svg`
+  .histogram-bars {
+    rect {
+      fill: ${props => props.theme.histogramFillOutRange}
+    }
+    rect.in-range {
+      fill: ${props => props.theme.histogramFillInRange}
+    }
+  }
+`
 const LineChart = ({
   width,
   height,
