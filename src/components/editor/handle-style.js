@@ -21,6 +21,8 @@
 import {RenderStates, RenderTypes} from 'react-map-gl-draw';
 import {COLORS} from './constants';
 
+const DEFAULT_EDIT_HANDLE_SHAPE = 'circle';
+
 const rectStyle = {
   x: -6,
   y: -6,
@@ -44,7 +46,7 @@ export const STATE_STYLES_FILL = {
   [RenderStates.UNCOMMITTED]: COLORS.PRIMARY
 };
 
-const STATE_STYLES_STROKE_WIDTH = 2;
+const STATE_STYLES_STROKE_WIDTH = 3;
 
 export const RENDER_TYPE_STYLES = {
   [RenderTypes.POINT]: state => ({
@@ -60,7 +62,7 @@ export const RENDER_TYPE_STYLES = {
 
 export const DEFAULT_STATE_STYLE_OPACITY = 0;
 
-export const DEFAULT_RADIUS = 4;
+export const DEFAULT_RADIUS = 6;
 
 function noOp() {}
 
@@ -79,4 +81,8 @@ export function getStyle({feature, state}) {
     ...style,
     ...(RENDER_TYPE_STYLES[renderType] || noOp)(state)
   };
+}
+
+export function getEditHandleShape({feature}) {
+  return 'circle';
 }

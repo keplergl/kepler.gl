@@ -30,10 +30,9 @@ import {
   getStyle as getFeatureStyle
 } from './feature-styles';
 import {
-  getStyle as getEditHandleStyle
+  getStyle as getEditHandleStyle,
+  getEditHandleShape
 } from './handle-style';
-
-const DEFAULT_EDIT_HANDLE_SHAPE = 'circle';
 
 const DELETE_KEY_EVENT_CODE = 8;
 const ESCAPE_KEY_EVENT_CODE = 27;
@@ -87,10 +86,6 @@ class Draw extends Component {
     }
   };
 
-  _getEditHandleShape = () => {
-    return DEFAULT_EDIT_HANDLE_SHAPE;
-  };
-
   _onSelect = ({selectedFeatureId, sourceEvent}) => {
     // we don't need to mouse position in redux state
     this.setState({
@@ -139,7 +134,7 @@ class Draw extends Component {
           selectedFeatureId={(selectedFeature || {}).id}
           onSelect={this._onSelect}
           onUpdate={this.props.onUpdate}
-          getEditHandleShape={this._getEditHandleShape}
+          getEditHandleShape={getEditHandleShape}
           getFeatureStyle={getFeatureStyle}
           getEditHandleStyle={getEditHandleStyle}
           style={{zIndex: 1}}
