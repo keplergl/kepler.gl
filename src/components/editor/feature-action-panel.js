@@ -50,7 +50,7 @@ class FeatureActionPanel extends PureComponent {
             {layers.map((layer, index) => (
               <ActionPanelItem
                 key={index}
-                label={layer.name}
+                label={layer.config.label}
                 color={datasets[layer.config.dataId].color}
                 isSelection
                 onClick={() => onToggleLayer(layer)}

@@ -25,19 +25,21 @@ export const DEFAULT_RADIUS = 4;
 export const DEFAULT_STATE_STYLE_STROKE = COLORS.PRIMARY;
 
 export const STATE_STYLES_STROKE = {
-  [RenderStates.INACTIVE]: COLORS.PRIMARY,
-  [RenderStates.UNCOMMITTED]: COLORS.TERTIARY,
-  [RenderStates.SELECTED]: COLORS.PRIMARY,
-  [RenderStates.HOVERED]: COLORS.PRIMARY
+  [RenderStates.INACTIVE]: '#26B5F2',
+  [RenderStates.UNCOMMITTED]: '#a9a9a9',
+  [RenderStates.CLOSING]: '#a9a9a9',
+  [RenderStates.SELECTED]: '#26B5F2',
+  [RenderStates.HOVERED]: '#26B5F2'
 };
 
 export const DEFAULT_STATE_STYLE_FILL = '#000';
 
 export const STATE_STYLES_FILL = {
-  [RenderStates.INACTIVE]: COLORS.TERTIARY,
-  [RenderStates.UNCOMMITTED]: COLORS.PRIMARY,
-  [RenderStates.SELECTED]: COLORS.PRIMARY,
-  [RenderStates.HOVERED]: COLORS.PRIMARY
+  [RenderStates.INACTIVE]: '#333333',
+  [RenderStates.HOVERED]: '#7ac943',
+  [RenderStates.SELECTED]: '#ffff00',
+  [RenderStates.UNCOMMITTED]: '#a9a9a9',
+  [RenderStates.CLOSING]: '#a9a9a9'
 };
 
 export const DEFAULT_STATE_STYLE_OPACITY = 0.1;
