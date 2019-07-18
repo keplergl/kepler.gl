@@ -287,7 +287,6 @@ export default class IconLayer extends Layer {
             ...layerProps,
             id: `${this.id}-hovered`,
             data: [objectHovered.object],
-            // getPosition: data.getPosition,
             getRadius: data.getRadius,
             getColor: this.config.highlightColor,
             getIconGeometry: id => this.iconGeometry[id],

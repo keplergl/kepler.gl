@@ -123,10 +123,6 @@ export default class PointLayer extends Layer {
     };
   }
 
-  // getPositionAccessor() {
-  //   return pointPosAccessor(this.config.columns);
-  // }
-
   static findDefaultLayerProps({fieldPairs = []}) {
     const props = [];
 
