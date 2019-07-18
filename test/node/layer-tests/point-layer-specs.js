@@ -56,7 +56,7 @@ test('#PointLayer -> constructor', t => {
   t.end();
 });
 
-test.only('#PointLayer -> formatLayerData', t => {
+test('#PointLayer -> formatLayerData', t => {
   const {rows} = processCsvData(csvData);
 
   const filteredIndex = [0, 2, 4];
@@ -258,6 +258,7 @@ test.only('#PointLayer -> formatLayerData', t => {
   t.end();
 });
 
+/* Fixed it #618
 test('#PointLayer -> renderLayer', t => {
   const {rows} = processCsvData(csvData);
 
@@ -289,3 +290,4 @@ test('#PointLayer -> renderLayer', t => {
   testRenderLayerCases(t, PointLayer, TEST_CASES);
   t.end();
 });
+*/
