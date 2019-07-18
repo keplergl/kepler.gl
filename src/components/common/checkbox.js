@@ -93,6 +93,8 @@ export default class Checkbox extends Component {
       onBlur: this.handleBlur
     };
 
+    const {className = ''} = this.props;
+
     const labelProps = {
       ...pick(this.props, ['checked', 'disabled', 'secondary']),
       htmlFor: this.props.id
@@ -100,7 +102,7 @@ export default class Checkbox extends Component {
 
     const LabelElement = this.props.type === 'checkbox' ? StyledCheckboxInput : StyledSwitchInput;
     return (
-      <StyledCheckbox className="kg-checkbox">
+      <StyledCheckbox className={`kg-checkbox ${className}`}>
         <HiddenInput {...inputProps} />
         <LabelElement className="kg-checkbox__label" {...labelProps}>
           {this.props.label}

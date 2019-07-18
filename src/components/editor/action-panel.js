@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import {
   ArrowRight
 } from 'components/common/icons';
-import Switch from 'components/common/switch';
+import Checkbox from 'components/common/switch';
 
 const StyledItem = styled.div`
   display: flex;
@@ -66,6 +66,23 @@ const StyledItem = styled.div`
   }
 `;
 
+const StyledCheckedbox = styled(Checkbox)`
+  label {
+    margin-bottom: 0;
+    color: ${props => props.theme.textColor};
+    padding-left: 20px;
+    line-height: 12px;
+    &:before {
+      width:  12px;
+      height: 12px;
+      background-color: ${props => props.theme.dropdownListBgd};
+    }
+    &:hover {
+      color: ${props => props.theme.textColorHl};
+    }
+  }
+`;
+
 const renderChildren = (child, index) => React.cloneElement(child, {
   onClick: () => {
     if (React.isValidElement(child)) {
@@ -93,13 +110,17 @@ export const ActionPanelItem = React.memo(({
       </div>
       ) : null}
     {isSelection ? (
-      <Switch
+      <StyledCheckedbox
+        type="checkbox"
         checked={false}
-        onChange={onClick}
         id={`switch-${label}`}
+        onChange={onClick}
+        secondary
+        label={label}
       />
-    ) : null}
-    <span className="label">{label}</span>
+    ) : (
+      <span className="label">{label}</span>
+    )}
     {children && children.length ? ( <div className="label-icon">
       <ArrowRight height="16px" />
     </div>) : null}
