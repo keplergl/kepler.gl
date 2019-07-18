@@ -23,12 +23,7 @@ import PropTypes from 'prop-types';
 import {Editor} from 'react-map-gl-draw';
 import window from 'global/window';
 
-import ActionPanel, {ActionPanelItem} from './action-panel';
-
-import {
-  Trash,
-  Layers
-} from 'components/common/icons';
+import FeatureActionPanel from './feature-action-panel';
 
 import {
   DEFAULT_RADIUS,
@@ -37,19 +32,11 @@ import {
 import {
   getStyle as getEditHandleStyle
 } from './handle-style';
-import styled from 'styled-components';
 
 const DEFAULT_EDIT_HANDLE_SHAPE = 'circle';
 
 const DELETE_KEY_EVENT_CODE = 8;
 const ESCAPE_KEY_EVENT_CODE = 27;
-
-const LAYOVER_OFFSET = 4;
-const StyledActionsLayer = styled.div`
-  position: absolute;
-  top: ${props => props.position.y + LAYOVER_OFFSET}px;
-  left: ${props => props.position.x + LAYOVER_OFFSET}px;
-`;
 
 class Draw extends Component {
   static propTypes = {
@@ -61,7 +48,8 @@ class Draw extends Component {
     layers: PropTypes.arrayOf(PropTypes.object).isRequired,
     onSelect: PropTypes.func.isRequired,
     onUpdate: PropTypes.func.isRequired,
-    onDeleteFeature: PropTypes.func
+    onDeleteFeature: PropTypes.func.isRequired,
+    onToggleFeatureLayer: PropTypes.func.isRequired
   };
 
   static defaultProps = {
@@ -128,8 +116,18 @@ class Draw extends Component {
     this.props.onDeleteFeature((selectedFeature || {}).id);
   };
 
+  _closeFeatureAction = () => {
+    this.setState({showActions: false});
+  };
+
   render() {
-    const {clickRadius, datasets, editor, features, layers} = this.props;
+    const {
+      clickRadius,
+      datasets,
+      editor,
+      features,
+      layers
+    } = this.props;
     const {selectedFeature = {}} = editor;
 
     return (
@@ -147,26 +145,14 @@ class Draw extends Component {
           style={{zIndex: 1}}
         />
         {this.state.showActions ? (
-          <StyledActionsLayer position={this.state.lastPosition}>
-            <ActionPanel>
-              <ActionPanelItem label="layer" Icon={Layers}>
-                {layers.map((layer, index) => (
-                  <ActionPanelItem
-                    key={index}
-                    label={layer.name}
-                    color={datasets[layer.config.dataId].color}
-                    isSelection
-                    onClick={() => {}}
-                  />
-                ))}
-              </ActionPanelItem>
-              <ActionPanelItem
-                label="delete"
-                Icon={Trash}
-                onClick={this._onDeleteSelectedFeature}
-              />
-            </ActionPanel>
-          </StyledActionsLayer>
+          <FeatureActionPanel
+            datasets={datasets}
+            layers={layers}
+            onClose={this._closeFeatureAction}
+            onDeleteSelectedFeature={this._onDeleteSelectedFeature}
+            onToggleLayer={this.props.onToggleFeatureLayer}
+            position={this.state.lastPosition}
+          />
         ) : null}
       </div>
     );
