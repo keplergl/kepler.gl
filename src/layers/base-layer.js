@@ -683,7 +683,12 @@ export default class Layer {
    * @param {Object} newFilter
    * @returns {object} layer
    */
-  updateLayerDomain(dataset, newFilter) {
+  updateLayerDomain(datasets, newFilter) {
+    const dataset = this.getDataset(datasets);
+    if (!dataset) {
+      return this;
+    }
+
     Object.values(this.visualChannels).forEach(channel => {
       const {scale} = channel;
       const scaleType = this.config[scale];
@@ -698,6 +703,10 @@ export default class Layer {
     });
 
     return this;
+  }
+
+  getDataset(datasets) {
+    return datasets[this.config.dataId];
   }
 
   /**

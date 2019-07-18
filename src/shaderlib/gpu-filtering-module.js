@@ -83,7 +83,7 @@ export default class DataFilterExtension extends LayerExtension {
 
     if (attributeManager) {
       attributeManager.add({
-        filterValues: {
+        instanceFilterValues: {
           size: this.opts.filterSize,
           accessor: 'getFilterValue',
           shaderAttributes: {

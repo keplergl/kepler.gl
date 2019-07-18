@@ -461,6 +461,9 @@ export function diffFilters(filterRecord, oldFilterRecord = {}) {
  */
 export function isDataMatchFilter(data, filter, i) {
   const val = data[filter.fieldIdx];
+  if (!notNullorUndefined(val)) {
+    return false;
+  }
   if (!filter.type) {
     return true;
   }

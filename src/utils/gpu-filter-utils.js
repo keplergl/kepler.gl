@@ -20,6 +20,7 @@
 
 import {set} from './utils';
 import {MAX_GPU_FILTERS} from 'constants/default-settings';
+import {notNullorUndefined} from './data-utils';
 /**
  * Set gpu mode based on current number of gpu filters exists
  * @param {Object} gpuFilter
@@ -115,13 +116,16 @@ const getFilterValueAccessor = channels => (
   getData = defaultGetData
 ) => d =>
   // for empty channel, value is 0 and min max would be [0, 0]
-  channels.map(filter =>
-    filter
-      ? filter.mappedValue
-        ? filter.mappedValue[getIndex(d)]
-        : getData(d)[filter.fieldIdx]
-      : 0
-  );
+  channels.map(filter => {
+    if (!filter) {
+      return 0;
+    }
+    const value = filter.mappedValue ?
+      filter.mappedValue[getIndex(d)] :
+      getData(d)[filter.fieldIdx];
+
+    return notNullorUndefined(value) ? value : Number.MIN_SAFE_INTEGER;
+  });
 
 /**
  * Get filter properties for gpu filtering
