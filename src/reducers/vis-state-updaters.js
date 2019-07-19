@@ -52,7 +52,8 @@ import {
   mergeFilters,
   mergeLayers,
   mergeInteractions,
-  mergeLayerBlending
+  mergeLayerBlending,
+  mergeSplitMaps
 } from './vis-state-merger';
 
 import {Layer, LayerClasses} from 'layers';
@@ -846,7 +847,7 @@ export const showDatasetTableUpdater = (state, action) => {
  * @returns {Object} nextState
  * @public
  */
-export const resetMapConfigVisStateUpdater = (state) => ({
+export const resetMapConfigUpdater = (state) => ({
   ...INITIAL_VIS_STATE,
   ...state.initialState,
   initialState: state.initialState
@@ -858,11 +859,13 @@ export const resetMapConfigVisStateUpdater = (state) => ({
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {Object} action.payload map config to be propagated
+ * @param {Object} action.payload.visState visState config to be propagated
+ * @param {Object} action.payload.option {keepExistingConfig: true | false}
  * @returns {Object} nextState
  * @public
  */
-export const receiveMapConfigUpdater = (state, action) => {
-  if (!action.payload.visState) {
+export const receiveMapConfigUpdater = (state, {payload: {visState, options = {}}}) => {
+  if (!visState) {
     return state;
   }
 
@@ -872,19 +875,19 @@ export const receiveMapConfigUpdater = (state, action) => {
     interactionConfig,
     layerBlending,
     splitMaps
-  } = action.payload.visState;
+  } = visState;
 
-  // always reset config when receive a new config
-  const resetState = resetMapConfigVisStateUpdater(state);
-  let mergedState = {
-    ...resetState,
-    splitMaps: splitMaps || [] // maps doesn't require any logic
-  };
+  const {keepExistingConfig} = options;
+
+  // reset config if keepExistingConfig is falsy
+  let mergedState = !keepExistingConfig ? resetMapConfigUpdater(state) : state;
 
   mergedState = mergeFilters(mergedState, filters);
   mergedState = mergeLayers(mergedState, layers);
   mergedState = mergeInteractions(mergedState, interactionConfig);
   mergedState = mergeLayerBlending(mergedState, layerBlending);
+  mergedState = mergeSplitMaps(mergedState, splitMaps);
+  console.log(mergedState.splitMaps)
 
   return mergedState;
 };
@@ -1009,7 +1012,7 @@ export const toggleLayerForMapUpdater = (state, {mapIndex, layerId}) => {
  * @param {Array<Object>} action.datasets.data.fields - ***required** Array of fields,
  * @param {string} action.datasets.data.fields.name - ***required** Name of the field,
  * @param {Array<Array>} action.datasets.data.rows - ***required** Array of rows, in a tabular format with `fields` and `rows`
- * @param {Object} action.options option object `{centerMap: true}`
+ * @param {Object} action.options option object `{centerMap: true, keepExistingConfig: false}`
  * @param {Object} action.config map config
  * @returns {Object} nextState
  * @public
@@ -1017,14 +1020,15 @@ export const toggleLayerForMapUpdater = (state, {mapIndex, layerId}) => {
 /* eslint-disable max-statements */
 export const updateVisDataUpdater = (state, action) => {
   // datasets can be a single data entries or an array of multiple data entries
+  const {config, options} = action;
   const datasets = Array.isArray(action.datasets)
     ? action.datasets
     : [action.datasets];
 
-  if (action.config) {
+  if (config) {
     // apply config if passed from action
     state = receiveMapConfigUpdater(state, {
-      payload: {visState: action.config}
+      payload: {visState: config, options}
     });
   }
 
@@ -1052,13 +1056,15 @@ export const updateVisDataUpdater = (state, action) => {
   const {
     filterToBeMerged = [],
     layerToBeMerged = [],
-    interactionToBeMerged = {}
+    interactionToBeMerged = {},
+    splitMapsToBeMerged = []
   } = stateWithNewData;
 
   // merge state with saved filters
   let mergedState = mergeFilters(stateWithNewData, filterToBeMerged);
   // merge state with saved layers
   mergedState = mergeLayers(mergedState, layerToBeMerged);
+  mergedState = mergeSplitMaps(mergedState, splitMapsToBeMerged);
 
   if (mergedState.layers.length === state.layers.length) {
     // no layer merged, find defaults
@@ -1075,7 +1081,7 @@ export const updateVisDataUpdater = (state, action) => {
       splitMaps: addNewLayersToSplitMap(mergedState.splitMaps, newLayers)
     };
   }
-
+  console.log(mergedState.splitMaps)
   // merge state with saved interactions
   mergedState = mergeInteractions(mergedState, interactionToBeMerged);
 

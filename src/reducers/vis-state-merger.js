@@ -204,6 +204,32 @@ export function mergeInteractions(state, interactionToBeMerged) {
   };
 }
 
+export function mergeSplitMaps(state, splitMaps = []) {
+  if (splitMaps.length < 2) {
+    return state;
+  }
+
+  const merged = [...state.splitMaps];
+  const unmerged = [];
+  splitMaps.forEach((sm, i) => {
+    Object.entries(sm.layers).forEach(([id, value]) => {
+      const pushTo = state.layers.find(l => l.id === id) ? merged : unmerged;
+
+      pushTo[i] = pushTo[i] || {layers: {}};
+      pushTo[i].layers = {
+        ...pushTo[i].layers,
+        [id]: value
+      };
+    })
+  })
+
+  return {
+    ...state,
+    splitMaps: merged,
+    splitMapsToBeMerged: unmerged
+  };
+}
+
 /**
  * Merge interactionConfig.tooltip with saved config,
  * validate fieldsToShow

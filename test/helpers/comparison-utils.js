@@ -209,6 +209,9 @@ export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {
 }
 
 export function cmpInteraction(t, expectedInt, actualInt) {
+  t.ok(typeof expectedInt === 'object', 'expected interaction should be an object');
+  t.ok(typeof actualInt === 'object', 'actual interaction should be an object');
+
   t.deepEqual(
     Object.keys(actualInt).sort(),
     Object.keys(expectedInt).sort(),
@@ -222,7 +225,7 @@ export function cmpInteraction(t, expectedInt, actualInt) {
       `interaction.${key} should be same type`
     );
 
-    if (typeof actualInt[key] === 'object' && !Array.isArray(actualInt[key])) {
+    if (typeof actualInt[key] === 'object' && actualInt[key] !== null && !Array.isArray(actualInt[key])) {
       cmpInteraction(t, expectedInt[key], actualInt[key]);
     } else {
       t.deepEqual(

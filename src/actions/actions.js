@@ -48,6 +48,7 @@ import {createAction} from 'redux-actions';
    * place the map view within the data points boundaries
    * @param {boolean} data.options.readOnly `default: false` if `readOnly` is set to `true`
    * the left setting panel will be hidden
+   * @param {boolean} data.options.keepExistingConfig whether to keep exiting layer filter and interaction config `default: false`.
    * @param {Object} data.config this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
    * @public
    * @example
@@ -93,7 +94,8 @@ import {createAction} from 'redux-actions';
    *     },
    *     option: {
    *       centerMap: true,
-   *       readOnly: false
+   *       readOnly: false,
+   *       keepExistingConfig: false
    *     },
    *     config: sampleConfig
    *   })

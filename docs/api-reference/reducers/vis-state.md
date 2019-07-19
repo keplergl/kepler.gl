@@ -277,6 +277,10 @@ Propagate `visState` reducer with a new configuration. Current config will be ov
 -   `state` **[Object][63]** `visState`
 -   `action` **[Object][63]** action
     -   `action.payload` **[Object][63]** map config to be propagated
+        -   `action.payload.visState` **[Object][63]** visState config to be propagated
+        -   `action.payload.option` **[Object][63]** {keepExistingConfig: true | false}
+    -   `action.payload.visState`  
+    -   `action.payload.options`   (optional, default `{}`)
 
 Returns **[Object][63]** nextState
 
@@ -499,7 +503,7 @@ Add new dataset to `visState`, with option to load a map config along with the d
             -   `action.datasets.data.fields` **[Array][68]&lt;[Object][63]>** **\*required** Array of fields,
                 -   `action.datasets.data.fields.name` **[string][64]** **\*required** Name of the field,
             -   `action.datasets.data.rows` **[Array][68]&lt;[Array][68]>** **\*required** Array of rows, in a tabular format with `fields` and `rows`
-    -   `action.options` **[Object][63]** option object `{centerMap: true}`
+    -   `action.options` **[Object][63]** option object `{centerMap: true, keepExistingConfig: false}`
     -   `action.config` **[Object][63]** map config
 
 Returns **[Object][63]** nextState

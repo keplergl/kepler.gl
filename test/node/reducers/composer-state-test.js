@@ -21,9 +21,12 @@
 import test from 'tape';
 import keplerGlReducer from 'reducers';
 import {addDataToMapUpdater} from 'reducers/combined-updaters';
-import {keplerGlInit} from 'actions/actions';
-import {coreReducerFactory} from 'reducers/core';
 import {registerEntry} from 'actions/identity-actions';
+import {processCsvData} from 'processors/data-processor';
+
+import testCsvData, {sampleConfig} from 'test/fixtures/test-csv-data';
+import testHexIdData, {hexIdDataConfig, mergedH3Layer, mergedFilters} from 'test/fixtures/test-hex-id-data';
+import {cmpLayers, cmpFilters, cmpDatasets, cmpInteraction} from 'test/helpers/comparison-utils';
 
 const mockRawData = {
   fields: [
@@ -106,8 +109,132 @@ test('#composerStateReducer - addDataToMapUpdater: mapState should not be center
     }
   });
 
-  t.equal(newState.mapState.latitude, mapStateProperties.latitude, 'mapstate latitude is set correctly');
-  t.equal(newState.mapState.longitude, mapStateProperties.longitude, 'mapstate longitude is set correctly');
+  t.equal(
+    newState.mapState.latitude,
+    mapStateProperties.latitude,
+    'mapstate latitude is set correctly'
+  );
+  t.equal(
+    newState.mapState.longitude,
+    mapStateProperties.longitude,
+    'mapstate longitude is set correctly'
+  );
 
-  t.end()
+  t.end();
+});
+
+test.only('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
+  const data = processCsvData(testCsvData);
+
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+  const oldState = addDataToMapUpdater(state, {
+    payload: {
+      datasets: {
+        data,
+        info: {
+          id: sampleConfig.dataId
+        }
+      },
+      config: sampleConfig.config
+    }
+  });
+  console.log(oldState.visState.splitMaps)
+
+  const {
+    layers: oldLayers,
+    filters: oldFilters,
+    datasets: oldDatasets,
+    interactionConfig: oldInteractionConfig,
+    splitMaps: oldSplitMaps
+  } = oldState.visState;
+
+  const hexData = processCsvData(testHexIdData);
+  const hexDataId = hexIdDataConfig.dataId;
+
+  const nextState1 = addDataToMapUpdater(oldState, {
+    payload: {
+      datasets: {
+        data: hexData,
+        info: {
+          id: hexDataId
+        }
+      },
+      config: hexIdDataConfig.config
+    }
+  });
+
+  const hexDataset = nextState1.visState.datasets[hexDataId];
+
+  t.equal(hexDataset.allData.length, hexData.rows.length, 'should have same length of allData');
+  t.equal(hexDataset.fields.length, hexData.fields.length, 'should have same length of fields');
+  t.equal(hexDataset.id, hexDataId, 'should have the id');
+
+  cmpLayers(t, [mergedH3Layer], nextState1.visState.layers);
+  cmpFilters(t, mergedFilters, nextState1.visState.filters);
+
+  const nextState2 = addDataToMapUpdater(oldState, {
+    payload: {
+      datasets: {
+        data: hexData,
+        info: {
+          id: hexDataId
+        }
+      },
+      config: hexIdDataConfig.config,
+      options: {
+        keepExistingConfig: true
+      }
+    }
+  });
+
+  const actualVisState = nextState2.visState;
+
+  const expectedVisState = {
+    layers: [...oldLayers, mergedH3Layer],
+    filters: [...oldFilters, ...mergedFilters],
+    datasets: {
+      ...oldDatasets,
+      [hexDataId]: hexDataset
+    },
+    interactionConfig: {
+      ...oldInteractionConfig,
+      tooltip: {
+        ...oldInteractionConfig.tooltip,
+        config: {
+          fieldsToShow: {
+            ...oldInteractionConfig.tooltip.config.fieldsToShow,
+            [hexDataId]: ['hex_id', 'value']
+          }
+        }
+      }
+    },
+    splitMaps: [
+      {layers: {
+        ...oldSplitMaps[0].layers,
+        avlgol: {
+          isAvailable: true,
+          isVisible: true
+        }
+      }},
+      {layers: {
+        ...oldSplitMaps[0].layers,
+        avlgol: {
+          isAvailable: true,
+          isVisible: true
+        }
+      }}
+    ],
+    layerOrder: [2, 0, 1]
+  };
+
+  cmpLayers(t, expectedVisState.layers, actualVisState.layers);
+  cmpFilters(t, expectedVisState.filters, actualVisState.filters);
+  cmpDatasets(t, expectedVisState.datasets, actualVisState.datasets);
+  cmpInteraction(t, expectedVisState.interactionConfig, actualVisState.interactionConfig);
+  t.deepEqual(expectedVisState.layerOrder, actualVisState.layerOrder, 'Should create new layer, move it to the top');
+  t.deepEqual(expectedVisState.splitMaps, actualVisState.splitMaps, 'Should merge splitMaps');
+  // const expectedState = {
+  //   layerOrder: [1, 0]
+  // };
+  t.end();
 });

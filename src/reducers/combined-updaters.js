@@ -90,6 +90,7 @@ const combinedUpdaters = null;
  * @param {Object} action.options
  * @param {Boolean} action.options.centerMap
  * @param {Boolean} action.options.readOnly
+ * @param {Boolean} action.options.keepExistingConfig
  * @param {Object} action.config
  * @returns {Object} nextState
  * @public
@@ -101,7 +102,9 @@ export const updateVisDataUpdater = (state, action) => {
   const visState = visStateUpdateVisDataUpdater(state.visState, action);
 
   const defaultOptions = {
-    centerMap: true
+    readOnly: false,
+    centerMap: true,
+    keepExistingConfig: false
   };
 
   const options = {
@@ -126,7 +129,7 @@ export const updateVisDataUpdater = (state, action) => {
       : state.mapState,
     uiState: {
       ...toggleModalUpdater(state.uiState, {payload: null}),
-      ...(options.hasOwnProperty('readOnly') ? {readOnly: options.readOnly} : {})
+      readOnly: options.readOnly
     }
   };
 };
@@ -169,13 +172,13 @@ export const addDataToMapUpdater = (state, {payload}) => {
   // Update mapState store
   mergedState = {
     ...mergedState,
-    mapState: stateMapConfigUpdater(mergedState.mapState, {payload: {mapState: parsedConfig && parsedConfig.mapState}})
+    mapState: stateMapConfigUpdater(mergedState.mapState, {payload: {mapState: parsedConfig && parsedConfig.mapState, options}})
   };
 
   // Update mapStyle store
   mergedState = {
     ...mergedState,
-    mapStyle: styleMapConfigUpdater(mergedState.mapStyle, {payload: {mapStyle: parsedConfig && parsedConfig.mapStyle}})
+    mapStyle: styleMapConfigUpdater(mergedState.mapStyle, {payload: {mapStyle: parsedConfig && parsedConfig.mapStyle, options}})
   };
 
   return mergedState

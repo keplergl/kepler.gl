@@ -97,6 +97,7 @@ Apply data and config to visState reducer
     -   `action.options` **[Object][9]** 
         -   `action.options.centerMap` **[Boolean][13]** 
         -   `action.options.readOnly` **[Boolean][13]** 
+        -   `action.options.keepExistingConfig` **[Boolean][13]** 
     -   `action.config` **[Object][9]** 
 
 Returns **[Object][9]** nextState

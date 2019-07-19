@@ -67,7 +67,7 @@ const actionHandler = {
 
   [ActionTypes.REORDER_LAYER]: visStateUpdaters.reorderLayerUpdater,
 
-  [ActionTypes.RESET_MAP_CONFIG]: visStateUpdaters.resetMapConfigVisStateUpdater,
+  [ActionTypes.RESET_MAP_CONFIG]: visStateUpdaters.resetMapConfigUpdater,
 
   [ActionTypes.SET_FILTER]: visStateUpdaters.setFilterUpdater,
 

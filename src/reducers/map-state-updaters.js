@@ -132,13 +132,26 @@ export const fitBoundsUpdater = (state, action) => {
  * @returns {Object} nextState
  * @public
  */
-export const togglePerspectiveUpdater = (state) => ({
+export const togglePerspectiveUpdater = state => ({
   ...state,
   ...{
     pitch: state.dragRotate ? 0 : 50,
     bearing: state.dragRotate ? 0 : 24
   },
   dragRotate: !state.dragRotate
+});
+
+/**
+ * reset mapState to initial State
+ * @memberof mapStateUpdaters
+ * @param {Object} state `mapState`
+ * @returns {Object} nextState
+ * @public
+ */
+export const resetMapConfigUpdater = state => ({
+  ...INITIAL_MAP_STATE,
+  ...state.initialState,
+  initialState: state.initialState
 });
 
 // consider case where you have a split map and user wants to reset
@@ -151,14 +164,24 @@ export const togglePerspectiveUpdater = (state) => ({
  * @returns {Object} nextState
  * @public
  */
-export const receiveMapConfigUpdater = (state, action) => {
-  const {isSplit = false} = action.payload.mapState || {};
+export const receiveMapConfigUpdater = (
+  state,
+  {payload: {mapState, options = {}}}
+) => {
 
+  // reset config if keepExistingConfig is falsy
+  const {keepExistingConfig} = options;
+
+  const resetState = !keepExistingConfig
+    ? resetMapConfigUpdater(state)
+    : state;
+
+  const mergedState = {...resetState, ...mapState};
+  console.log(mergedState)
   return {
-    ...state,
-    ...(action.payload.mapState || {}),
-    isSplit,
-    ...getMapDimForSplitMap(isSplit, state)
+    ...mergedState,
+    // update width if `isSplit` has changed
+    ...getMapDimForSplitMap(mergedState.isSplit, state)
   };
 };
 
@@ -169,14 +192,14 @@ export const receiveMapConfigUpdater = (state, action) => {
  * @returns {Object} nextState
  * @public
  */
-export const toggleSplitMapUpdater = (state) => ({
+export const toggleSplitMapUpdater = state => ({
   ...state,
   isSplit: !state.isSplit,
   ...getMapDimForSplitMap(!state.isSplit, state)
 });
 
 // Helpers
-function getMapDimForSplitMap(isSplit, state) {
+export function getMapDimForSplitMap(isSplit, state) {
   // cases:
   // 1. state split: true - isSplit: true
   // do nothing
@@ -186,13 +209,14 @@ function getMapDimForSplitMap(isSplit, state) {
     return {};
   }
 
-  const width = state.isSplit && !isSplit ?
-    // 3. state split: true - isSplit: false
-    // double width
-    state.width * 2
-    // 4. state split: false - isSplit: true
-    // split width
-    : state.width / 2;
+  const width =
+    state.isSplit && !isSplit
+      ? // 3. state split: true - isSplit: false
+        // double width
+        state.width * 2
+      : // 4. state split: false - isSplit: true
+        // split width
+        state.width / 2;
 
   return {
     width

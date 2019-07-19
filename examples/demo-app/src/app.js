@@ -45,10 +45,11 @@ const KeplerGl = require('kepler.gl/components').injectComponents([
 
 // Sample data
 /* eslint-disable no-unused-vars */
-import sampleTripData from './data/sample-trip-data';
+import sampleTripData, {testCsvData} from './data/sample-trip-data';
 import sampleGeojson from './data/sample-small-geojson';
 import sampleGeojsonPoints from './data/sample-geojson-points';
-import sampleH3Data from './data/sample-hex-id-csv';
+import sampleGeojsonConfig from './data/sample-geojson-config';
+import sampleH3Data, {config as h3MapConfig} from './data/sample-hex-id-csv';
 import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
 import {addDataToMap, addNotification} from 'kepler.gl/actions';
 import {processCsvData, processGeojson} from 'kepler.gl/processors';
@@ -119,7 +120,7 @@ class App extends Component {
     //   window.setTimeout(this._showBanner, 3000);
     // }
     // load sample data
-    // this._loadSampleData();
+    this._loadSampleData();
     // Notifications
     // this._loadMockNotifications();
   }
@@ -160,10 +161,10 @@ class App extends Component {
   }
 
   _loadSampleData() {
-    this._loadTripData();
-    // this._loadGeojsonData();
+    // this._loadTripData();
+    this._loadGeojsonData();
     // this._loadIconData();
-    // this._loadH3HexagonData();
+    this._loadH3HexagonData();
   }
 
   _loadTripData() {
@@ -174,7 +175,8 @@ class App extends Component {
             label: 'Sample Taxi Trips in New York City',
             id: 'test_trip_data'
           },
-          data: sampleTripData
+          // data: sampleTripData
+          data: processCsvData(testCsvData)
         },
         options: {
           centerMap: true,
@@ -220,14 +222,15 @@ class App extends Component {
       addDataToMap({
         datasets: [
           {
-            info: {label: 'Bart Stops Geo'},
+            info: {label: 'Bart Stops Geo', id: 'bart-stops-geo'},
             data: processGeojson(sampleGeojsonPoints)
           },
           {
-            info: {label: 'SF Zip Geo'},
+            info: {label: 'SF Zip Geo', id: 'sf-zip-geo'},
             data: processGeojson(sampleGeojson)
           }
-        ]
+        ],
+        config: sampleGeojsonConfig
       })
     );
   }
@@ -244,7 +247,11 @@ class App extends Component {
             },
             data: processCsvData(sampleH3Data)
           }
-        ]
+        ],
+        config: h3MapConfig,
+        options: {
+          keepExistingConfig: true
+        }
       })
     );
   }
