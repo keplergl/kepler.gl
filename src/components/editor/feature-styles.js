@@ -21,7 +21,7 @@
 import {RenderStates, RenderTypes} from 'react-map-gl-draw';
 import {COLORS} from './constants';
 
-export const DEFAULT_RADIUS = 4;
+export const DEFAULT_RADIUS = 5;
 export const DEFAULT_STATE_STYLE_STROKE = COLORS.PRIMARY;
 
 export const STATE_STYLES_STROKE = {
