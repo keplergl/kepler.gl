@@ -89,6 +89,7 @@ const ActionTypes = keyMirror({
   LOAD_FILES: null,
   LOAD_FILES_ERR: null,
   SET_FEATURES: null,
+  TOGGLE_FEATURE_LAYER: null,
 
   // mapState
   UPDATE_MAP: null,

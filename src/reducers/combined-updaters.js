@@ -22,11 +22,15 @@ import {fitBoundsUpdater} from './map-state-updaters';
 import {toggleModalUpdater} from './ui-state-updaters';
 import {
   updateVisDataUpdater as visStateUpdateVisDataUpdater,
-  setFeaturesUpdater as visStateFeaturesUpdater
+  setFeaturesUpdater as visStateFeaturesUpdater,
+  deleteFeatureUpdater as visDeleteFeatureUpdater
 } from './vis-state-updaters';
 import {receiveMapConfigUpdater as stateMapConfigUpdater} from './map-state-updaters';
 import {receiveMapConfigUpdater as styleMapConfigUpdater} from './map-style-updaters';
-import {setFeaturesUpdater as uiStateFeaturesUpdater} from './ui-state-updaters';
+import {
+  setFeaturesUpdater as uiStateFeaturesUpdater,
+  deleteFeatureUpdater as uiDeleteFeatureUpdater
+} from './ui-state-updaters';
 import {findMapBounds} from 'utils/data-utils';
 import KeplerGlSchema from 'schemas';
 
@@ -194,3 +198,11 @@ export const setFeaturesUpdater = (state, payload) => ({
 });
 
 export const setFeaturesComposed = setFeaturesUpdater;
+
+export const deleteFeatureUpdater = (state, payload) => ({
+  ...state,
+  visState: visDeleteFeatureUpdater(state.visState, payload),
+  uiState: uiDeleteFeatureUpdater(state.uiState, payload)
+});
+
+export const deleteFeatureComposed = deleteFeatureUpdater;

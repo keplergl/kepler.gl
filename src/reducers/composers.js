@@ -28,7 +28,8 @@ import * as combinedUpdaters from './combined-updaters';
 const actionHandler = {
   [ActionTypes.UPDATE_VIS_DATA]: combinedUpdaters.updateVisDataUpdater,
   [ActionTypes.ADD_DATA_TO_MAP]: combinedUpdaters.addDataToMapUpdater,
-  [ActionTypes.SET_FEATURES]: combinedUpdaters.setFeaturesUpdater
+  [ActionTypes.SET_FEATURES]: combinedUpdaters.setFeaturesUpdater,
+  [ActionTypes.DELETE_FEATURE]: combinedUpdaters.deleteFeatureUpdater
 };
 
 export default actionHandler;

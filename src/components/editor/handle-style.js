@@ -46,7 +46,7 @@ export const STATE_STYLES_FILL = {
   [RenderStates.UNCOMMITTED]: COLORS.PRIMARY
 };
 
-const STATE_STYLES_STROKE_WIDTH = 3;
+const STATE_STYLES_STROKE_WIDTH = 1;
 
 export const RENDER_TYPE_STYLES = {
   [RenderTypes.POINT]: state => ({
@@ -62,7 +62,7 @@ export const RENDER_TYPE_STYLES = {
 
 export const DEFAULT_STATE_STYLE_OPACITY = 0;
 
-export const DEFAULT_RADIUS = 6;
+export const DEFAULT_RADIUS = 5;
 
 function noOp() {}
 

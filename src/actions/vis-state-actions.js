@@ -438,7 +438,7 @@ export function loadFiles(files) {
  * Trigger loading file error
  * @memberof visStateActions
  * @param {*} error
- * @returns {{type: ActionTypes.LOAD_FILES_ERR, error: *}}
+ * @returns {{type: ActionTypes.LOAD_FILES_ERR, error: Object}}
  * @public
  */
 export function loadFilesErr(error) {
@@ -448,10 +448,32 @@ export function loadFilesErr(error) {
   };
 }
 
+/**
+ * Store features to state
+ * @memberof visStateActions
+ * @param {Array<Object>} features
+ * @returns {{type: ActionTypes.SET_FEATURES, features: Object}}
+ */
 export function setFeatures(features) {
   return {
     type: ActionTypes.SET_FEATURES,
     features
+  }
+}
+
+/**
+ * It will apply the provide feature as filter to the given layer.
+ * If the given feature is already applied as filter to the layer it  will remove it from  the filter list
+ * @memberof visStateActions
+ * @param {Object} feature
+ * @param {Object} layer
+ * @return {{feature: *, type: null, layer: *}}
+ */
+export function toggleFeatureLayer(feature, layer) {
+  return {
+    type: ActionTypes.TOGGLE_FEATURE_LAYER,
+    feature,
+    layer
   }
 }
 
