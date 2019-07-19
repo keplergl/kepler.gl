@@ -24,6 +24,8 @@ export const ACTION_PREFIX = '@@kepler.gl/';
 export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl';
 export const ICON_PREFIX = `${CLOUDFRONT}/geodude`;
 
+const CARTOCDN_KEPLER = 'https://libs.cartocdn.com/kepler-demo';
+
 // Modal Ids
 /**
  * Modal id: data table
@@ -137,7 +139,7 @@ export const PANELS = [
   },
   {
     id: 'map',
-    label: 'Base map',
+    label: 'Basemap',
     iconComponent: Settings
   }
 ];
@@ -209,6 +211,25 @@ export const DEFAULT_MAP_STYLES = [
     label: 'Muted Night',
     url: 'mapbox://styles/uberdata/cjfxhlikmaj1b2soyzevnywgs',
     icon: `${ICON_PREFIX}/UBER_MUTED_NIGHT.png`,
+    layerGroups: DEFAULT_LAYER_GROUPS
+  },
+  {
+    id: 'carto/dark_matter',
+    label: 'CARTO Dark Matter',
+    url: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+    icon: `${CARTOCDN_KEPLER}/dark_matter.png`,
+    layerGroups: DEFAULT_LAYER_GROUPS
+  },{
+    id: 'carto/positron',
+    label: 'CARTO Positron',
+    url: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+    icon: `${CARTOCDN_KEPLER}/positron.png`,
+    layerGroups: DEFAULT_LAYER_GROUPS
+  },{
+    id: 'carto/voyager',
+    label: 'CARTO Voyager',
+    url: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
+    icon: `${CARTOCDN_KEPLER}/voyager.png`,
     layerGroups: DEFAULT_LAYER_GROUPS
   }
 ];
