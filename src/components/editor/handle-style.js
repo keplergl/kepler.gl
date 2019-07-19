@@ -83,6 +83,6 @@ export function getStyle({feature, state}) {
   };
 }
 
-export function getEditHandleShape({feature}) {
-  return 'circle';
+export function getEditHandleShape() {
+  return DEFAULT_EDIT_HANDLE_SHAPE;
 }
