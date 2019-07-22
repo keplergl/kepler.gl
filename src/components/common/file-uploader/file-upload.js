@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {Component, createRef} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
@@ -60,7 +60,7 @@ const StyledUploadMessage = styled.div`
   color: ${props => props.theme.textColorLT};
   font-size: 14px;
   margin-bottom: 12px;
-  
+
   ${media.portable`
     font-size: 12px;
   `}
@@ -89,7 +89,7 @@ const StyledFileDrop = styled.div`
     color: ${props => props.theme.linkBtnColor};
     padding-right: 4px;
   }
-  
+
   ${media.portable`
     padding: 16px 4px 0;
   `};
@@ -104,7 +104,7 @@ const MsgWrapper = styled.div`
 const StyledDragNDropIcon = styled.div`
   color: ${fileIconColor};
   margin-bottom: 48px;
-  
+
   ${media.portable`
     margin-bottom: 16px;
   `};
@@ -170,6 +170,8 @@ export default class FileUpload extends Component {
     files: [],
     errorFiles: []
   };
+
+  frame = createRef();
 
   _isValidFileType = filename => {
     const {validFileExt} = this.props;
@@ -237,7 +239,7 @@ export default class FileUpload extends Component {
     return (
       <StyledFileUpload
         className="file-uploader"
-        ref={cmp => (this.frame = cmp)}
+        ref={this.frame}
       >
         <input
           className="filter-upload__input"
@@ -246,7 +248,7 @@ export default class FileUpload extends Component {
         />
         {FileDrop ? (
           <FileDrop
-            frame={this.frame}
+            frame={this.frame.current}
             targetAlwaysVisible
             onDragOver={() => this._toggleDragState(true)}
             onDragLeave={() => this._toggleDragState(false)}

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {Component, createRef} from 'react';
 import PropTypes from 'prop-types';
 import {scaleUtc} from 'd3-scale';
 import {select} from 'd3-selection';
@@ -79,6 +79,8 @@ export default class TimeSliderMarker extends Component {
     }
   }
 
+  xAxis = createRef();
+
   domainSelector = props => props.domain;
   widthSelector = props => props.width;
   scaleSelector = createSelector(
@@ -101,12 +103,8 @@ export default class TimeSliderMarker extends Component {
       .tickSize(8)
       .tickPadding(6);
 
-    const svg = select(this.svgContainer);
-
-    svg
-      .select('.x.axis')
-      .call(xAxis)
-      .selectAll('text');
+    select(this.xAxis.current)
+      .call(xAxis);
   }
 
   render() {
@@ -115,11 +113,8 @@ export default class TimeSliderMarker extends Component {
         className="time-slider-marker"
         width={this.props.width}
         height={height}
-        ref={comp => {
-          this.svgContainer = comp;
-        }}
       >
-        <g className="x axis" transform="translate(0, 0)" />
+        <g ref={this.xAxis} transform="translate(0, 0)" />
       </TimeSliderContainer>
     );
   }

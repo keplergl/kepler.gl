@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {Component, createRef} from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import styled from 'styled-components';
@@ -82,14 +82,10 @@ export default class Slider extends Component {
     showTooltip: false
   };
 
-  ref = undefined;
-
-  _saveRef = ref => {
-    this.ref = ref;
-  };
+  ref = createRef();
 
   _getBaseDistance() {
-    return this.props.vertical ? this.ref.offsetHeight : this.ref.offsetWidth;
+    return this.props.vertical ? this.ref.current.offsetHeight : this.ref.current.offsetWidth;
   }
 
   _getValDelta(x) {
@@ -174,7 +170,7 @@ export default class Slider extends Component {
     return (
       <SliderWrapper
         className={classnames('kg-slider', {...classSet})}
-        ref={this._saveRef}
+        ref={this.ref}
         isRanged={isRanged}
         vertical={vertical}
       >

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {Component, createRef} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
@@ -41,9 +41,11 @@ export default class UploadButton extends Component {
     onUpload: PropTypes.func.isRequired
   };
 
+  _fileInput = createRef();
+
   _onClick = () => {
-    this._fileInput.value = null;
-    this._fileInput.click();
+    this._fileInput.current.value = null;
+    this._fileInput.current.click();
   };
 
   _onChange = ({target: {files}}) => {
@@ -59,7 +61,7 @@ export default class UploadButton extends Component {
       <Wrapper>
         <input
           type="file"
-          ref={ref => {this._fileInput = ref}}
+          ref={this._fileInput}
           style={{display: 'none'}}
           onChange={this._onChange}
         />
