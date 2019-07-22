@@ -70,4 +70,5 @@ export {default as VertThreeDots} from './vert-three-dots';
 export {default as IconWrapper} from './base';
 export {default as CodeAlt} from './code-alt';
 export {default as Warning} from './warning';
+export {default as Carto} from './carto';
 

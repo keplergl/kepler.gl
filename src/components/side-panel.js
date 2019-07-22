@@ -29,6 +29,7 @@ import FilterManagerFactory from './side-panel/filter-manager';
 import InteractionManagerFactory from './side-panel/interaction-manager';
 import MapManagerFactory from './side-panel/map-manager';
 import PanelToggleFactory from './side-panel/panel-toggle';
+import CartoManager from './side-panel/carto-manager';
 
 import {
   ADD_DATA_ID,
@@ -244,6 +245,9 @@ export default function SidePanelFactory(
                     {...mapManagerActions}
                     mapStyle={this.props.mapStyle}
                   />
+                )}
+                {activeSidePanel === 'carto' && (
+                  <CartoManager />
                 )}
               </div>
             </SidePanelContent>

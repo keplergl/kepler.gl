@@ -81,6 +81,7 @@ import {
   Layers,
   FilterFunnel,
   Settings,
+  Carto,
   CursorClick
 } from 'components/common/icons';
 
@@ -141,6 +142,11 @@ export const PANELS = [
     id: 'map',
     label: 'Basemap',
     iconComponent: Settings
+  },
+  {
+    id: 'carto',
+    label: 'CARTO',
+    iconComponent: Carto
   }
 ];
 
