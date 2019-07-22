@@ -41,13 +41,17 @@ const StyledPanelDropdown = styled.div`
     display: flex;
   }
 
-  .save-export-dropdown__item {
+  .toolbar-item {
     align-items: center;
     border-right: 1px solid ${props => props.theme.panelHeaderIcon};
     padding: 0 22px;
     display: flex;
     flex-direction: column;
-
+    
+    .toolbar-item__title {
+      white-space: nowrap;
+      margin-top: 4px;
+    }
 
     :hover {
       cursor: pointer;
@@ -66,11 +70,6 @@ const StyledPanelDropdown = styled.div`
       }
       ` : null
     };
-  }
-
-  .save-export-dropdown__title {
-    white-space: nowrap;
-    margin-top: 4px;
   }
 `;
 

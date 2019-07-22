@@ -117,16 +117,18 @@ class Draw extends Component {
 
   render() {
     const {
+      className,
       clickRadius,
       datasets,
       editor,
       features,
-      layers
+      layers,
+      style
     } = this.props;
     const {selectedFeature = {}} = editor;
 
     return (
-      <div className="editor">
+      <div className={`${className} editor`} style={style}>
         <Editor
           clickRadius={clickRadius}
           mode={editor.mode}
