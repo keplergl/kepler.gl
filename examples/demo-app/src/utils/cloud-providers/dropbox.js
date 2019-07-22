@@ -29,7 +29,7 @@ const DOMAIN = 'www.dropbox.com';
 const APP_NAME= 'Kepler.gl%20(managed%20by%20Uber%20Technologies%2C%20Inc.)';
 const KEPLER_DROPBOX_FOLDER_LINK = `//${DOMAIN}/home/Apps/${APP_NAME}`;
 const CORS_FREE_DOMAIN = 'dl.dropboxusercontent.com';
-const dropbox = new Dropbox();
+const dropbox = new Dropbox({fetch: window.fetch});
 
 /**
  * Set the auth toke to be used with dropbox client
