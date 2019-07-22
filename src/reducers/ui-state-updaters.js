@@ -546,6 +546,13 @@ export const removeNotificationUpdater = (state, {payload: id}) => ({
   notifications: state.notifications.filter(n => n.id !== id)
 });
 
+/**
+ * Update the status of the editor
+ * @memberof uiStateUpdaters
+ * @param {Object} state `uiState`
+ * @param {string} mode to set to editor to
+ * @return {Object} nextState
+ */
 export const setEditorModeUpdater = (state, {payload: mode}) => ({
   ...state,
   editor: {
@@ -556,8 +563,8 @@ export const setEditorModeUpdater = (state, {payload: mode}) => ({
 
 /**
  * Update editor mode once feature is closed
- * @memberof visStateUpdaters
- * @param {Object} state `visState`
+ * @memberof uiStateUpdaters
+ * @param {Object} state `uiState`
  * @param {[Object]} features to store
  * @return {Object} nextState
  */
@@ -577,6 +584,13 @@ export function setFeaturesUpdater(state, {features = []}) {
     };
 }
 
+/**
+ * Set the current selected feature
+ * @memberof uiStateUpdaters
+ * @param {Object} state `uiState`
+ * @param {[Object]} features to store
+ * @return {Object} nextState
+ */
 export const setSelectedFeatureUpdater = (state, {payload: selectedFeatureId}) => ({
   ...state,
   editor: {
@@ -585,6 +599,12 @@ export const setSelectedFeatureUpdater = (state, {payload: selectedFeatureId}) =
   }
 });
 
+/**
+ * @memberof uiStateUpdaters
+ * @param {Object} state `uiState`
+ * @param {string} selectedFeatureId feature to delete
+ * @return {Object} nextState
+ */
 export const deleteFeatureUpdater = (state, {payload: selectedFeatureId}) => {
   return selectedFeatureId ? {
     ...state,

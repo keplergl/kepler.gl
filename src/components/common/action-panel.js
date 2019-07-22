@@ -32,10 +32,10 @@ const StyledItem = styled.div`
   font-size: 12px;
   line-height: 14px;
   padding: 8px;
-  height: 32px;
+  height: ${props => props.theme.actionPanelHeight}px;
   text-transform: capitalize;
   background-color: ${props => props.theme.dropdownListBgd};
-  width: 110px;
+  width: ${props => props.theme.actionPanelWidth}px;
   position: relative;
   ${props => props.color ? `border-left: 3px solid rgb(${props.color});` : ''}
   
