@@ -59,7 +59,7 @@ const DataTableModalStyle = css`
   height: 85%;
   width: 90%;
   top: 80px;
-  padding: 32px 0 0 0;
+  padding: 0;
   max-width: unset;
   ${media.palm`
     width: 100vw;

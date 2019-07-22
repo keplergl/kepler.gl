@@ -5684,7 +5684,7 @@ lru-cache@^5.1.1:
   dependencies:
     yallist "^3.0.2"
 
-luma.gl@^7.1.1:
+luma.gl@^7.0.1:
   version "7.1.1"
   resolved "https://registry.yarnpkg.com/luma.gl/-/luma.gl-7.1.1.tgz#e70afa5767ab33ed7b804ff8f9648d39d324d05b"
   integrity sha512-WPknedrcIBT2vh7mk/U5kGzWrXsRFXj+tZWffLW8eAEqDtyazNbcvoqExJqMfmdQtb6eWGPHHAMp+4uQx+1VcQ==
@@ -5862,7 +5862,7 @@ mem@^4.0.0:
     mimic-fn "^2.0.0"
     p-is-promise "^2.0.0"
 
-memoize-one@^5.0.0:
+"memoize-one@>=3.1.1 <6", memoize-one@^5.0.0:
   version "5.0.4"
   resolved "https://registry.yarnpkg.com/memoize-one/-/memoize-one-5.0.4.tgz#005928aced5c43d890a4dfab18ca908b0ec92cbc"
 
@@ -7324,10 +7324,6 @@ re-emitter@^1.0.0:
   version "1.1.3"
   resolved "https://registry.yarnpkg.com/re-emitter/-/re-emitter-1.1.3.tgz#fa9e319ffdeeeb35b27296ef0f3d374dac2f52a7"
 
-react-data-grid@2.0.80-am-fix-defaultprops-warnings3337:
-  version "2.0.80-am-fix-defaultprops-warnings3337"
-  resolved "https://registry.yarnpkg.com/react-data-grid/-/react-data-grid-2.0.80-am-fix-defaultprops-warnings3337.tgz#a822e6266f828e66946827e69ee7ea5ba8db4bf2"
-
 react-deep-force-update@^2.1.1:
   version "2.1.3"
   resolved "https://registry.yarnpkg.com/react-deep-force-update/-/react-deep-force-update-2.1.3.tgz#740612322e617bcced38f61794a4af75dc3d98e7"
@@ -7481,6 +7477,7 @@ react-tooltip@^3.10.0:
 react-virtualized-auto-sizer@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/react-virtualized-auto-sizer/-/react-virtualized-auto-sizer-1.0.2.tgz#a61dd4f756458bbf63bd895a92379f9b70f803bd"
+  integrity sha512-MYXhTY1BZpdJFjUovvYHVBmkq79szK/k7V3MO+36gJkWGkrXKtyr4vCPtpphaTLRAdDNoYEYFZWE8LjN+PIHNg==
 
 react-vis@^1.8.0:
   version "1.11.7"
@@ -7504,6 +7501,14 @@ react-vis@^1.8.0:
     hoek "4.2.1"
     prop-types "^15.5.8"
     react-motion "^0.5.2"
+
+react-window@^1.8.2:
+  version "1.8.2"
+  resolved "https://registry.yarnpkg.com/react-window/-/react-window-1.8.2.tgz#edd0effe302196263ac3eac20a14c041acd4c17d"
+  integrity sha512-Qo9Z5qYvigRbSlCaWTor53G3EWVtHxXXny86EYsMG57H+4LJEEyh22PuWW6ECCkOh7sY6wWF78+wNGwPnMBCAg==
+  dependencies:
+    "@babel/runtime" "^7.0.0"
+    memoize-one ">=3.1.1 <6"
 
 react@^16.8.4:
   version "16.8.6"
