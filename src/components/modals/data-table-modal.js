@@ -19,8 +19,10 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
+import {createSelector} from 'reselect';
 import styled from 'styled-components';
-import window from 'global/window';
+import {VariableSizeGrid as Grid} from 'react-window';
+import Autosizer from 'react-virtualized-auto-sizer';
 
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
 import FieldToken from 'components/common/field-token';
@@ -30,183 +32,179 @@ import {Clock} from 'components/common/icons/index';
 // Breakpoints
 import {media} from 'styles/media-breakpoints';
 
-const ReactDataGrid = window.navigator ? require('react-data-grid/dist/react-data-grid.min') : null;
-
-let shouldPreventScrollBack = false;
-
-if (window.navigator && window.navigator.userAgent) {
-  const {navigator} = window;
-  // Detect browsers
-  // http://stackoverflow.com/questions/5899783/detect-safari-using-jquery
-  const isMac = navigator.userAgent.match(/Macintosh/);
-  const is_chrome = navigator.userAgent.indexOf('Chrome') > -1;
-  const is_safari = navigator.userAgent.indexOf('Safari') > -1;
-  const is_firefox = navigator.userAgent.indexOf('Firefox') > -1;
-
-  // prevent chrome scroll back
-  shouldPreventScrollBack = isMac && (is_chrome || is_safari || is_firefox);
-}
-
-const dgSettings = {
-  sidePadding: '38px'
+const COLUMN_SIZE = {
+  [ALL_FIELD_TYPES.timestamp]: 200,
+  [ALL_FIELD_TYPES.date]: 150,
+  [ALL_FIELD_TYPES.point]: 150,
+  [ALL_FIELD_TYPES.string]: 150
 };
 
-const DataGridWrapper = styled.div`
-  .react-grid-Main {
-    outline: 0;
-  }
+const DEFAULT_COLUMN_WIDTH = 100;
+const HEADER_HEIGHT = 72;
 
-  .react-grid-Grid {
-    border: 0;
-  }
+const dgSettings = {
+  sidePadding: 36,
+  verticalPadding: 16,
+  height: 36
+};
 
-  .react-grid-Cell {
-    border-right: 0;
-    border-bottom: ${props => props.theme.panelBorderLT};
-    padding-left: 16px;
-  }
-
-  .react-grid-HeaderCell {
+const StyledModal = styled.div`
+  height: 70vh;
+  overflow: hidden;
+  ${media.palm`
+    margin: 0 -36px;
+  `}
+  
+  .header {
     border-right: 0;
     border-bottom: 0;
     background: ${props => props.theme.panelBackgroundLT};
     color: ${props => props.theme.titleColorLT};
     padding: 14px 8px 14px 0;
   }
-  .react-grid-Cell:first-child,
-  .react-grid-HeaderCell:first-child {
-    padding-left: ${dgSettings.sidePadding};
+  .cell {
+    padding: 14px 8px;
+    border-right: 0;
+    border-bottom: ${props => props.theme.panelBorderLT};
   }
-  .react-grid-Cell:last-child,
-  .react-grid-HeaderCell:last-child {
-    padding-right: ${dgSettings.sidePadding};
-  }
-  .react-grid-Cell__value {
-    color: ${props => props.theme.labelColorLT};
-  }
-  .react-grid-Canvas {
-    ${props => props.theme.modalScrollBar};
-  }
-  
-  ${media.palm`
-    .react-grid-Container {
-      /* TODO: replace data-grid component with react-window */
-      /* We need to use important in this case to override data-grid styling */
-      width: 100vw !important;
-    }
-  `};
-  
+ 
 `;
-const StyledModal = styled.div`
-  ${media.palm`
-    margin: 0 -36px;
-  `}
-`;
-const BooleanFormatter = ({value}) => <span>{String(value)}</span>;
+
+const tagContainerStyle = {
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'space-between',
+  alignItems: 'center'
+};
+
+const HeaderRenderer = React.memo(({columnIndex, data, rowIndex, style}) => {
+  const item = data[columnIndex];
+
+  return (
+    <div className="header" style={{...style, ...tagContainerStyle}}>
+      <div style={{display: 'flex', alignItems: 'center'}}>
+        <div>
+          {item.type === 'timestamp' ? <Clock height="16px" /> : null}
+        </div>
+        {item.name}
+      </div>
+      <div>
+        <FieldToken type={item.type} />
+      </div>
+    </div>
+  );
+});
+
+const CellRenderer = React.memo(({columnIndex, data, rowIndex, style}) => {
+  const item = data[rowIndex][columnIndex];
+
+  return (
+    <div
+      className="cell"
+      style={style}
+      key={`${rowIndex}-${columnIndex}`}>
+      {item}
+    </div>
+  );
+});
 
 export class DataTableModal extends Component {
 
-  constructor(props) {
-    super(props);
-    this._root = React.createRef();
-  }
+  headerGrid = React.createRef();
 
-  _onMouseWheel = e => {
-    // Prevent futile scroll, which would trigger the Back/Next page event
-    // https://github.com/micho/jQuery.preventMacBackScroll
-    // This prevents scroll when reaching the topmost or leftmost
-    // positions of a container.
+  datasetsSelector = props => props.datasets;
+  dataIdSelector = props => props.dataId;
+  activeDatasetSelector = createSelector(
+    this.datasetsSelector,
+    this.dataIdSelector,
+    (datasets, dataId) => datasets[dataId]
+  );
+  columnsSelector = createSelector(
+    this.activeDatasetSelector,
+    dataset => dataset.fields.filter(({name}) => name !== '_geojson')
+  );
+  rowsSelector = createSelector(
+    this.activeDatasetSelector,
+    dataset => dataset.data
+  );
 
-    // react-data-grid canvas element can be scrolled
-    const canvas = this._root.querySelector('.react-grid-Canvas');
-
-    // If canvas can not be scrolled left anymore when we try to scroll left
-    const prevent_left = e.deltaX < 0 && canvas.scrollLeft <= 0;
-    // If canvas can not be scrolled up when we try to scroll up
-    const prevent_up = e.deltaY < 0 && canvas.scrollTop <= 0;
-
-    if (prevent_left || prevent_up) {
-      e.preventDefault();
-    }
-  };
+  headerRowHeight = () => 72;
+  cellRowHeight = () => 48;
+  columnWidth = index => COLUMN_SIZE[this.columnsSelector(this.props)[index].type] || DEFAULT_COLUMN_WIDTH;
+  onRowScrolling = ({scrollLeft}) => this.headerGrid.current.scrollTo({scrollLeft});
 
   render() {
-    const {datasets, dataId, showDatasetTable} = this.props;
+    const {showDatasetTable} = this.props;
+
+    const datasets = this.datasetsSelector(this.props);
+    const dataId = this.dataIdSelector(this.props);
 
     if (!datasets || !dataId) {
       return null;
     }
 
-    const activeDataset = datasets[dataId];
-    // TODO: this should be all data
-    const rows = activeDataset.data;
-    const columns = activeDataset.fields
-      .map((field, i) => ({
-        ...field,
-        key: i,
-        headerRenderer: <FieldHeader {...field} />,
-        resizable: true,
-        formatter:
-          field.type === ALL_FIELD_TYPES.boolean ? BooleanFormatter : undefined
-      }))
-      .filter(({name}) => name !== '_geojson');
+    const activeDataset = this.activeDatasetSelector(this.props);
+    const columns = this.columnsSelector(this.props);
+    const rows = this.rowsSelector(this.props);
 
     return (
-      <StyledModal ref={this._root} className="dataset-modal" style={{overflow: 'scroll'}}>
+      <StyledModal className="dataset-modal" >
         <DatasetTabs
           activeDataset={activeDataset}
           datasets={datasets}
           showDatasetTable={showDatasetTable}
         />
-        <DataGridWrapper
-          onWheel={shouldPreventScrollBack ? this._onMouseWheel : null}
-        >
-          {ReactDataGrid && (
-            <ReactDataGrid
-              headerRowHeight={72}
-              columns={columns}
-              minColumnWidth={172}
-              minWidth={this.props.width}
-              minHeight={this.props.height - 65}
-              rowGetter={i => rows[i]}
-              rowHeight={48}
-              rowsCount={rows.length}
-            />
+        <Autosizer>
+          {({height, width}) => (
+            [
+              <Grid
+                className="headers"
+                columnCount={columns.length}
+                columnWidth={this.columnWidth}
+                height={HEADER_HEIGHT}
+                rowCount={1}
+                rowHeight={this.headerRowHeight}
+                width={width}
+                itemData={columns}
+                // hold onto a reference to the header grid component
+                // so we can set the scroll position later
+                ref={this.headerGrid}
+                // hide the overflow so the scroll bar never shows
+                // in the header grid
+                style={{
+                  // disable scrolling in the header
+                  overflowX: 'hidden',
+                  overflowY: 'hidden'
+                }}
+              >
+                {HeaderRenderer}
+              </Grid>,
+              <Grid
+                className="rows"
+                columnCount={columns.length}
+                columnWidth={this.columnWidth}
+                height={height - dgSettings.height - dgSettings.verticalPadding - HEADER_HEIGHT}
+                rowCount={rows.length}
+                rowHeight={this.cellRowHeight}
+                width={width}
+                itemData={rows}
+                // When a scroll occurs in the body grid,
+                // synchronize the scroll position of the header grid
+                onScroll={this.onRowScrolling}
+              >
+                {CellRenderer}
+              </Grid>
+            ]
           )}
-        </DataGridWrapper>
+        </Autosizer>
       </StyledModal>
     );
   }
 }
 
-const tagContainerStyle = {
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'space-between'
-};
-
-const FieldHeader = ({name, type}) => (
-  <div style={tagContainerStyle}>
-    <div style={{display: 'flex', alignItems: 'center'}}>
-      <div
-        style={{
-          marginRight: type === 'timestamp' ? '2px' : '18px',
-          height: '16px'
-        }}
-      >
-        {type === 'timestamp' ? <Clock height="16px" /> : null}
-      </div>
-      {name}
-    </div>
-    <div style={{marginLeft: '18px'}}>
-      <FieldToken type={type} />
-    </div>
-  </div>
-);
-
 const DatasetCatalog = styled.div`
   display: flex;
-  padding: 0 ${dgSettings.sidePadding};
+  padding: ${dgSettings.verticalPadding}px ${dgSettings.sidePadding}px 0;
 `;
 
 export const DatasetModalTab = styled.div`
@@ -224,7 +222,7 @@ export const DatasetModalTab = styled.div`
   }
 `;
 
-export const DatasetTabs = ({activeDataset, datasets, showDatasetTable}) => (
+export const DatasetTabs = React.memo(({activeDataset, datasets, showDatasetTable}) => (
   <DatasetCatalog className="dataset-modal-catalog">
     {Object.values(datasets).map(dataset => (
       <DatasetModalTab
@@ -237,7 +235,7 @@ export const DatasetTabs = ({activeDataset, datasets, showDatasetTable}) => (
       </DatasetModalTab>
     ))}
   </DatasetCatalog>
-);
+));
 
 const DataTableModalFactory = () => DataTableModal;
 export default DataTableModalFactory;
