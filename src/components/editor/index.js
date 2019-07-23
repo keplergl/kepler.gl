@@ -20,6 +20,7 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
+import styled from 'styled-components';
 import {Editor} from 'react-map-gl-draw';
 import window from 'global/window';
 
@@ -33,9 +34,14 @@ import {
   getStyle as getEditHandleStyle,
   getEditHandleShape
 } from './handle-style';
+import {EDITOR_MODES} from 'constants';
 
 const DELETE_KEY_EVENT_CODE = 8;
 const ESCAPE_KEY_EVENT_CODE = 27;
+
+const StyledWrapper = styled.div`
+  cursor: ${props => props.editor.mode === EDITOR_MODES.EDIT_VERTEX ? 'pointer' : 'crosshair'};
+`;
 
 class Draw extends Component {
   static propTypes = {
@@ -128,7 +134,7 @@ class Draw extends Component {
     const {selectedFeature = {}} = editor;
 
     return (
-      <div className={`${className} editor`} style={style}>
+      <StyledWrapper editor={editor} className={`${className || ''} editor`} style={style}>
         <Editor
           clickRadius={clickRadius}
           mode={editor.mode}
@@ -151,7 +157,7 @@ class Draw extends Component {
             position={this.state.lastPosition}
           />
         ) : null}
-      </div>
+      </StyledWrapper>
     );
   }
 }

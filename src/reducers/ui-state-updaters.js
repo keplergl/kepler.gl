@@ -169,7 +169,7 @@ export const DEFAULT_EXPORT_MAP = {
 };
 
 export const DEFAULT_EDITOR = {
-  mode: EDITOR_MODES.EDIT_VERTEX,
+  mode: EDITOR_MODES.DRAW_POLYGON,
   selectedFeature: null
 };
 
