@@ -61,7 +61,7 @@ export function getStyle({feature, state}) {
     strokeWidth: STATE_STYLES_STROKE_WIDTH,
     fill: STATE_STYLES_FILL[state] || DEFAULT_STATE_STYLE_FILL,
     fillOpacity: DEFAULT_STATE_STYLE_OPACITY,
-    strokeDasharray: DEFAULT_STROKE_DASH_ARRAY
+    ...(state !== RenderStates.SELECTED ? {strokeDasharray: DEFAULT_STROKE_DASH_ARRAY} : null)
   };
 
   const renderType = feature.properties ? feature.properties.renderType : feature.renderType;
