@@ -236,6 +236,7 @@ function KeplerGlFactory(
         mapStyleActions,
         visStateActions,
         uiStateActions,
+        mapStateActions,
         width: this.props.sidePanelWidth
       };
 

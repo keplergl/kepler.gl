@@ -158,6 +158,9 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             this.props.onMapRender(this._map);
           }
         });
+
+        // Oh lord forgive me for I have sinned
+        window._map = this._map;
       }
 
       if (this.props.getMapboxRef) {

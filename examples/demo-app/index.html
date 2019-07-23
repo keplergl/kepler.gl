@@ -5,11 +5,33 @@
     <title>kepler.gl demo</title>
     <link rel="stylesheet" href="//d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css">
     <link href="//api.tiles.mapbox.com/mapbox-gl-js/v0.42.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://libs.cartocdn.com/carto-vl/v1.4/carto-vl.min.js"></script>
     <style type="text/css">
        body {margin: 0; padding: 0; overflow: hidden;}
     </style>
   </head>
   <body>
     <script src="/bundle.js"></script>
+    <script>
+      carto.setDefaultAuth({
+        username: 'cartovl',
+        apiKey: 'default_public'
+      });
+
+      window.loadCartoVLMap = function (config) {
+        if (_map.getLayer('vl_layer')) {
+          _map.removeLayer('vl_layer');
+        }
+
+        console.log(config);
+        const source = new carto.source.SQL(
+          config.query ? config.query : `select * from ${config.dataset}`
+        );
+        const viz = new carto.Viz(config.viz);
+
+        const layer = new carto.Layer('vl_layer', source, viz);
+        layer.addTo(_map);
+      }
+    </script>
   </body>
 </html>

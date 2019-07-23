@@ -142,6 +142,7 @@ export default function SidePanelFactory(
         interactionConfig,
         visStateActions,
         mapStyleActions,
+        mapStateActions,
         uiStateActions
       } = this.props;
 
@@ -184,6 +185,10 @@ export default function SidePanelFactory(
         onStyleChange: mapStyleActions.mapStyleChange,
         onBuildingChange: mapStyleActions.mapBuildingChange,
         showAddMapStyleModal: this._showAddMapStyleModal
+      };
+
+      const cartoManagerActions = {
+        updateMap: mapStateActions.updateMap
       };
 
       return (
@@ -247,7 +252,7 @@ export default function SidePanelFactory(
                   />
                 )}
                 {activeSidePanel === 'carto' && (
-                  <CartoManager />
+                  <CartoManager {...cartoManagerActions} />
                 )}
               </div>
             </SidePanelContent>
