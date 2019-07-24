@@ -28,6 +28,7 @@ import {hexToRgb} from 'utils/color-utils';
 import PointLayerIcon from './point-layer-icon';
 import {DEFAULT_LAYER_COLOR, CHANNEL_SCALES} from 'constants/default-settings';
 import {getDistanceScales} from 'viewport-mercator-project';
+import {notNullorUndefined} from 'utils/data-utils';
 
 export const pointPosAccessor = ({lat, lng, altitude}) => d => [
   // lng
@@ -41,8 +42,11 @@ export const pointPosAccessor = ({lat, lng, altitude}) => d => [
 export const pointPosResolver = ({lat, lng, altitude}) =>
   `${lat.fieldIdx}-${lng.fieldIdx}-${altitude ? altitude.fieldIdx : 'z'}`;
 
-export const pointLabelAccessor = textLabel => d =>
-  String(d.data[textLabel.field.tableFieldIndex - 1]);
+export const pointLabelAccessor = textLabel => d => {
+  const val = d.data[textLabel.field.tableFieldIndex - 1];
+  return notNullorUndefined(val) ? String(val) : '';
+};
+
 export const pointLabelResolver = textLabel =>
   textLabel.field && textLabel.field.tableFieldIndex;
 
