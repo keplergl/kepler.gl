@@ -37,7 +37,6 @@ import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 
 // default-settings
 import ThreeDBuildingLayer from '../deckgl-layers/3d-building-layer/3d-building-layer';
-import thirdPersonView from '@deck.gl/core/dist/es5/views/third-person-view';
 
 const MAP_STYLE = {
   container: {
