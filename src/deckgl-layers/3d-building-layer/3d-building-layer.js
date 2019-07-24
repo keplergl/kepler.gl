@@ -21,7 +21,7 @@
 import {CompositeLayer} from '@deck.gl/core';
 import {TileLayer as DeckGLTileLayer} from '@deck.gl/geo-layers';
 import {getTileData} from './3d-building-utils';
-import {_SolidPolygonLayer as SolidPolygonLayer} from '@deck.gl/layers';
+import {SolidPolygonLayer} from '@deck.gl/layers';
 
 export default class ThreeDBuildingLayer extends CompositeLayer {
   // this layer add its subLayers to the redux store, and push sample data
