@@ -49,6 +49,12 @@ const StyledPlotContainer = styled.div`
   }
 `;
 
+const deckGlProps = {
+  glOptions: {
+    preserveDrawingBuffer: true
+  }
+};
+
 export default function PlotContainerFactory(MapContainer) {
   class PlotContainer extends Component {
     constructor(props) {
@@ -168,6 +174,7 @@ export default function PlotContainerFactory(MapContainer) {
               index={0}
               onMapRender={this._onMapRender}
               isExport
+              deckGlProps={deckGlProps}
               {...mapProps}
             />
           </div>

@@ -88,7 +88,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     };
 
     static defaultProps = {
-      MapComponent: MapboxGLMap
+      MapComponent: MapboxGLMap,
+      deckGlProps: {}
     };
 
     constructor(props) {
@@ -345,6 +346,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
 
       return (
         <DeckGL
+          {...this.props.deckGlProps}
           viewState={mapState}
           id="default-deckgl-overlay"
           layers={deckGlLayers}
