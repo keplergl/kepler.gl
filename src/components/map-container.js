@@ -88,7 +88,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     };
 
     static defaultProps = {
-      MapComponent: MapboxGLMap
+      MapComponent: MapboxGLMap,
+      deckGlProps: {}
     };
 
     constructor(props) {
@@ -349,6 +350,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
 
       return (
         <DeckGL
+          {...this.props.deckGlProps}
           viewState={mapState}
           id="default-deckgl-overlay"
           layers={deckGlLayers}
@@ -438,9 +440,6 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             {...mapProps}
             key="bottom"
             ref={this._setMapboxMap}
-            onHover={(e) => {
-
-            }}
             mapStyle={mapStyle.bottomMapStyle}
             getCursor={this.props.hoverInfo ? () => 'pointer' : undefined}
             transitionDuration={TRANSITION_DURATION}
