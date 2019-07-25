@@ -46,12 +46,12 @@ export default class ThreeDBuildingLayer extends CompositeLayer {
       getFillColor: this.props.threeDBuildingColor,
       lightSetting: {
         ambientRatio: 0.2
-      }
+      },
+      updateTriggers: this.props.updateTriggers
     });
   }
 
   renderLayers() {
-
     return [
       new DeckGLTileLayer({
         getTileData: (args) => getTileData(this.props.mapboxApiUrl, this.props.mapboxApiAccessToken, args),

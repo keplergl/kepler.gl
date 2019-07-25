@@ -88,8 +88,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     };
 
     static defaultProps = {
-      MapComponent: MapboxGLMap,
-      deckGlProps: {}
+      MapComponent: MapboxGLMap
     };
 
     constructor(props) {
@@ -325,7 +324,6 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       } = this.props;
 
       let deckGlLayers = [];
-
       // wait until data is ready before render data layers
       if (layerData && layerData.length) {
         // last layer render first
@@ -340,13 +338,17 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           id: '_keplergl_3d-building',
           mapboxApiAccessToken,
           mapboxApiUrl,
-          threeDBuildingColor: mapStyle.threeDBuildingColor
+          threeDBuildingColor: mapStyle.threeDBuildingColor,
+          updateTriggers: {
+            getFillColor: {
+              buildingColor: mapStyle.threeDBuildingColor
+            }
+          }
         }));
       }
 
       return (
         <DeckGL
-          {...this.props.deckGlProps}
           viewState={mapState}
           id="default-deckgl-overlay"
           layers={deckGlLayers}
@@ -436,6 +438,9 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             {...mapProps}
             key="bottom"
             ref={this._setMapboxMap}
+            onHover={(e) => {
+
+            }}
             mapStyle={mapStyle.bottomMapStyle}
             getCursor={this.props.hoverInfo ? () => 'pointer' : undefined}
             transitionDuration={TRANSITION_DURATION}

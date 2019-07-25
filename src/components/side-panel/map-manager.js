@@ -21,17 +21,15 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 
-import {Button} from 'components/common/styled-components';
+import {Button, SidePanelSection} from 'components/common/styled-components';
 import MapStyleSelectorFactory from 'components/side-panel/map-style-panel/map-style-selector';
 import LayerGroupSelectorFactory from 'components/side-panel/map-style-panel/map-layer-selector';
 
 import {Add} from 'components/common/icons';
-import { DEFAULT_LAYER_GROUPS } from 'constants/default-settings';
+import {DEFAULT_LAYER_GROUPS} from 'constants/default-settings';
+import ColorSelector from './layer-panel/color-selector';
 
-MapManagerFactory.deps = [
-  MapStyleSelectorFactory,
-  LayerGroupSelectorFactory
-];
+MapManagerFactory.deps = [MapStyleSelectorFactory, LayerGroupSelectorFactory];
 
 function MapManagerFactory(MapStyleSelector, LayerGroupSelector) {
   return class MapManager extends Component {
@@ -62,9 +60,8 @@ function MapManagerFactory(MapStyleSelector, LayerGroupSelector) {
 
     render() {
       const {mapStyle} = this.props;
-      const editableLayers = DEFAULT_LAYER_GROUPS.map(lg =>
-        lg.slug
-     );
+      const editableLayers = DEFAULT_LAYER_GROUPS.map(lg => lg.slug);
+      const hasBuildingLayer = mapStyle.visibleLayerGroups['3d building'];
 
       return (
         <div className="map-style-panel">
@@ -83,16 +80,28 @@ function MapManagerFactory(MapStyleSelector, LayerGroupSelector) {
                 onChange={this._updateConfig}
               />
             ) : null}
-            <Button
-              onClick={this.props.showAddMapStyleModal}
-              secondary>
-              <Add height="12px" />Add Map Style
+            <SidePanelSection>
+              <ColorSelector
+                colorSets={[
+                  {
+                    selectedColor: mapStyle.threeDBuildingColor,
+                    setColor: this.props.set3dBuildingColor,
+                    isRange: false,
+                    label: '3D Building Color'
+                  }
+                ]}
+                disabled={!hasBuildingLayer}
+              />
+            </SidePanelSection>
+            <Button onClick={this.props.showAddMapStyleModal} secondary>
+              <Add height="12px" />
+              Add Map Style
             </Button>
           </div>
         </div>
       );
     }
-  }
+  };
 }
 
 export default MapManagerFactory;
