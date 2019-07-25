@@ -100,7 +100,7 @@ export default class Slider extends Component {
 
   _getValue(val, offset) {
     const delta = this._getValDelta(offset);
-    const rawValue = this.props.vertical ? val - delta : val + delta;
+    const rawValue =  this.props.vertical ? val - delta : val + delta;
 
     return this._roundValToStep(rawValue);
   }

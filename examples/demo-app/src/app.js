@@ -48,7 +48,6 @@ const KeplerGl = require('kepler.gl/components').injectComponents([
 import sampleTripData from './data/sample-trip-data';
 import sampleGeojson from './data/sample-small-geojson';
 import sampleGeojsonPoints from './data/sample-geojson-points';
-import sampleanimate from './data/sample-animate';
 import sampleH3Data from './data/sample-hex-id-csv';
 import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
 import {addDataToMap, addNotification} from 'kepler.gl/actions';
@@ -120,7 +119,7 @@ class App extends Component {
     //   window.setTimeout(this._showBanner, 3000);
     // }
     // load sample data
-    this._loadSampleData();
+    // this._loadSampleData();
     // Notifications
     // this._loadMockNotifications();
   }
@@ -161,8 +160,8 @@ class App extends Component {
   }
 
   _loadSampleData() {
-    //this._loadTripData();
-    this._loadGeojsonData();
+    this._loadTripData();
+    // this._loadGeojsonData();
     // this._loadIconData();
     // this._loadH3HexagonData();
   }
@@ -221,14 +220,13 @@ class App extends Component {
       addDataToMap({
         datasets: [
           {
-            info: {label: 'Trip animation'},
-            //data: processGeojson(sampleGeojsonPoints)
-            data: processGeojson(sampleanimate)
-          } /* ,
+            info: {label: 'Bart Stops Geo'},
+            data: processGeojson(sampleGeojsonPoints)
+          },
           {
             info: {label: 'SF Zip Geo'},
             data: processGeojson(sampleGeojson)
-          } */
+          }
         ]
       })
     );

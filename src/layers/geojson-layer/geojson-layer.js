@@ -31,11 +31,7 @@ import {
   featureToDeckGlGeoType
 } from './geojson-utils';
 import GeojsonLayerIcon from './geojson-layer-icon';
-import {
-  GEOJSON_FIELDS,
-  HIGHLIGH_COLOR_3D,
-  CHANNEL_SCALES
-} from 'constants/default-settings';
+import {GEOJSON_FIELDS, HIGHLIGH_COLOR_3D, CHANNEL_SCALES} from 'constants/default-settings';
 
 export const geojsonVisConfigs = {
   opacity: 'opacity',
@@ -152,9 +148,7 @@ export default class GeoJsonLayer extends Layer {
     }
 
     return foundColumns.map(columns => ({
-      label:
-        (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) ||
-        this.type,
+      label: typeof label === 'string' && label.replace(/\.[^/.]+$/, '') || this.type,
       columns,
       isVisible: true
     }));
@@ -382,7 +376,13 @@ export default class GeoJsonLayer extends Layer {
     return this;
   }
 
-  renderLayer({data, idx, objectHovered, mapState, interactionConfig}) {
+  renderLayer({
+    data,
+    idx,
+    objectHovered,
+    mapState,
+    interactionConfig
+  }) {
     const {lightSettings, fixedRadius} = this.meta;
     const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius);
     const zoomFactor = this.getZoomFactor(mapState);
@@ -441,9 +441,7 @@ export default class GeoJsonLayer extends Layer {
         highlightColor: HIGHLIGH_COLOR_3D,
         autoHighlight: visConfig.enable3d,
         // parameters
-        parameters: {
-          depthTest: Boolean(visConfig.enable3d || mapState.dragRotate)
-        },
+        parameters: {depthTest: Boolean(visConfig.enable3d || mapState.dragRotate)},
         opacity: visConfig.opacity,
         stroked: visConfig.stroked,
         filled: visConfig.filled,

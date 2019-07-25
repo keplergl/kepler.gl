@@ -398,7 +398,7 @@ export function processRowObject(rawData) {
  * 			"type" : "Point",
  * 			"coordinates" : [ -71.073283, 42.417500 ]
  * 		}
- * 	}]same
+ * 	}]
  * };
  *
  * dispatch(addDataToMap({
@@ -423,9 +423,9 @@ export function processGeojson(rawData) {
   const allData = normalizedGeojson.features.reduce((accu, f, i) => {
     if (f.geometry) {
       // check if properties contains object and stringfy this
-      if (typeof f.properties === 'object' && f.properties !== null) {
+      if(typeof f.properties === 'object' && f.properties !== null){
         Object.keys(f.properties).forEach(key => {
-          if (typeof f.properties[key] === 'object') {
+          if(typeof f.properties[key] === 'object'){
             f.properties[key] = JSON.stringify(f.properties[key]);
           }
         });
@@ -474,12 +474,11 @@ export function formatCsv(data, fields) {
   // parse geojson object as string
   data.forEach(row => {
     formattedData.push(
-      row.map((d, i) =>
-        d && GEOJSON_FIELDS.geojson.includes(fields[i].name)
-          ? JSON.stringify(d)
-          : d
+      row.map(
+        (d, i) => d && GEOJSON_FIELDS.geojson.includes(fields[i].name) ?
+          JSON.stringify(d) : d
       )
-    );
+    )
   });
 
   return csvFormatRows(formattedData);
@@ -546,10 +545,7 @@ export function validateInputData(data) {
 
   // if any field has missing type, recalculate it for everyone
   // because we simply lost faith in humanity
-  const sampleData = getSampleForTypeAnalyze({
-    fields: fields.map(f => f.name),
-    allData: rows
-  });
+  const sampleData = getSampleForTypeAnalyze({fields: fields.map(f => f.name), allData: rows});
   const fieldOrder = fields.map(f => f.name);
   const meta = getFieldsFromData(sampleData, fieldOrder);
   const updatedFields = fields.map((f, i) => ({
@@ -576,7 +572,9 @@ export function validateInputData(data) {
  * dispatch(addDataToMap(processKeplerglJSON(keplerGlJson)));
  */
 export function processKeplerglJSON(rawData) {
-  return rawData ? KeplerGlSchema.load(rawData.datasets, rawData.config) : null;
+  return rawData
+    ? KeplerGlSchema.load(rawData.datasets, rawData.config)
+    : null;
 }
 
 export const Processors = {
@@ -587,4 +585,4 @@ export const Processors = {
   analyzerTypeToFieldType,
   getFieldsFromData,
   parseCsvRowsByFieldType
-};
+}
