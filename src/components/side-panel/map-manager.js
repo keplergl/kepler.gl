@@ -28,6 +28,7 @@ import LayerGroupSelectorFactory from 'components/side-panel/map-style-panel/map
 import {Add} from 'components/common/icons';
 import {DEFAULT_LAYER_GROUPS} from 'constants/default-settings';
 import ColorSelector from './layer-panel/color-selector';
+import {createSelector} from 'reselect';
 
 MapManagerFactory.deps = [MapStyleSelectorFactory, LayerGroupSelectorFactory];
 
@@ -43,6 +44,19 @@ function MapManagerFactory(MapStyleSelector, LayerGroupSelector) {
     state = {
       isSelecting: false
     };
+
+    buildingColorSelector = props => props.mapStyle.threeDBuildingColor;
+    setColorSelector = props => props.set3dBuildingColor;
+    colorSetSelector = createSelector(
+      this.buildingColorSelector,
+      this.setColorSelector,
+      (selectedColor, setColor) => ([{
+        selectedColor,
+        setColor,
+        isRange: false,
+        label: '3D Building Color'
+      }])
+    );
 
     _updateConfig = newProp => {
       const newConfig = {...this.props.mapStyle, ...newProp};
@@ -62,6 +76,7 @@ function MapManagerFactory(MapStyleSelector, LayerGroupSelector) {
       const {mapStyle} = this.props;
       const editableLayers = DEFAULT_LAYER_GROUPS.map(lg => lg.slug);
       const hasBuildingLayer = mapStyle.visibleLayerGroups['3d building'];
+      const colorSets = this.colorSetSelector(this.props);
 
       return (
         <div className="map-style-panel">
@@ -82,14 +97,7 @@ function MapManagerFactory(MapStyleSelector, LayerGroupSelector) {
             ) : null}
             <SidePanelSection>
               <ColorSelector
-                colorSets={[
-                  {
-                    selectedColor: mapStyle.threeDBuildingColor,
-                    setColor: this.props.set3dBuildingColor,
-                    isRange: false,
-                    label: '3D Building Color'
-                  }
-                ]}
+                colorSets={colorSets}
                 disabled={!hasBuildingLayer}
               />
             </SidePanelSection>
