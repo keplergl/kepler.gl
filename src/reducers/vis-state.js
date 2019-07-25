@@ -33,7 +33,8 @@ const actionHandler = {
 
   [ActionTypes.ENLARGE_FILTER]: visStateUpdaters.enlargeFilterUpdater,
 
-  [ActionTypes.INTERACTION_CONFIG_CHANGE]: visStateUpdaters.interactionConfigChangeUpdater,
+  [ActionTypes.INTERACTION_CONFIG_CHANGE]:
+    visStateUpdaters.interactionConfigChangeUpdater,
 
   [ActionTypes.LAYER_CLICK]: visStateUpdaters.layerClickUpdater,
 
@@ -43,11 +44,14 @@ const actionHandler = {
 
   [ActionTypes.LAYER_TYPE_CHANGE]: visStateUpdaters.layerTypeChangeUpdater,
 
-  [ActionTypes.LAYER_VIS_CONFIG_CHANGE]: visStateUpdaters.layerVisConfigChangeUpdater,
+  [ActionTypes.LAYER_VIS_CONFIG_CHANGE]:
+    visStateUpdaters.layerVisConfigChangeUpdater,
 
-  [ActionTypes.LAYER_TEXT_LABEL_CHANGE]: visStateUpdaters.layerTextLabelChangeUpdater,
+  [ActionTypes.LAYER_TEXT_LABEL_CHANGE]:
+    visStateUpdaters.layerTextLabelChangeUpdater,
 
-  [ActionTypes.LAYER_VISUAL_CHANNEL_CHANGE]: visStateUpdaters.layerVisualChannelChangeUpdater,
+  [ActionTypes.LAYER_VISUAL_CHANNEL_CHANGE]:
+    visStateUpdaters.layerVisualChannelChangeUpdater,
 
   [ActionTypes.LOAD_FILES]: visStateUpdaters.loadFilesUpdater,
 
@@ -67,25 +71,35 @@ const actionHandler = {
 
   [ActionTypes.REORDER_LAYER]: visStateUpdaters.reorderLayerUpdater,
 
-  [ActionTypes.RESET_MAP_CONFIG]: visStateUpdaters.resetMapConfigVisStateUpdater,
+  [ActionTypes.RESET_MAP_CONFIG]:
+    visStateUpdaters.resetMapConfigVisStateUpdater,
 
   [ActionTypes.SET_FILTER]: visStateUpdaters.setFilterUpdater,
 
   [ActionTypes.SET_FILTER_PLOT]: visStateUpdaters.setFilterPlotUpdater,
 
-  [ActionTypes.SET_VISIBLE_LAYERS_FOR_MAP]: visStateUpdaters.setVisibleLayersForMapUpdater,
+  [ActionTypes.SET_VISIBLE_LAYERS_FOR_MAP]:
+    visStateUpdaters.setVisibleLayersForMapUpdater,
 
   [ActionTypes.SHOW_DATASET_TABLE]: visStateUpdaters.showDatasetTableUpdater,
 
-  [ActionTypes.TOGGLE_FILTER_ANIMATION]: visStateUpdaters.toggleFilterAnimationUpdater,
+  [ActionTypes.TOGGLE_FILTER_ANIMATION]:
+    visStateUpdaters.toggleFilterAnimationUpdater,
 
-  [ActionTypes.UPDATE_FILTER_ANIMATION_SPEED]: visStateUpdaters.updateAnimationSpeedUpdater,
+  [ActionTypes.UPDATE_FILTER_ANIMATION_SPEED]:
+    visStateUpdaters.updateAnimationSpeedUpdater,
+
+  [ActionTypes.PLAY_ANIMATION]: visStateUpdaters.playAnimationUpdater,
+
+  [ActionTypes.ENABLE_LAYER_ANIMATION]:
+    visStateUpdaters.enableLayerAnimationUpdater,
 
   [ActionTypes.TOGGLE_LAYER_FOR_MAP]: visStateUpdaters.toggleLayerForMapUpdater,
 
   [ActionTypes.TOGGLE_SPLIT_MAP]: visStateUpdaters.toggleSplitMapUpdater,
 
-  [ActionTypes.UPDATE_LAYER_BLENDING]: visStateUpdaters.updateLayerBlendingUpdater,
+  [ActionTypes.UPDATE_LAYER_BLENDING]:
+    visStateUpdaters.updateLayerBlendingUpdater,
 
   // currently not used
   // but may be useful if users import vis state reducer

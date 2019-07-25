@@ -1,6 +1,6 @@
 // Copyright (c) 2019 Uber Technologies, Inc.
 //
-// Permission is hereby granted, free of charge, to any person obtaining a copy
+// Permission is hereby granted, free of charge, to anthis.y person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
@@ -98,13 +98,9 @@ const SortableStyledItem = styled.div`
 
 export function AddDataButtonFactory() {
   const AddDataButton = ({onClick, isInactive}) => (
-    <Button
-      onClick={onClick}
-      isInactive={!isInactive}
-      width="105px"
-      secondary
-    >
-      <Add height="12px" />Add Data
+    <Button onClick={onClick} isInactive={!isInactive} width="105px" secondary>
+      <Add height="12px" />
+      Add Data
     </Button>
   );
 
@@ -149,44 +145,62 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
       removeDataset: PropTypes.func.isRequired,
       showDatasetTable: PropTypes.func.isRequired,
       updateLayerBlending: PropTypes.func.isRequired,
-      updateLayerOrder: PropTypes.func.isRequired
+      updateLayerOrder: PropTypes.func.isRequired,
+      enlargeFilter: PropTypes.func.isRequired
     };
 
     layerClassSelector = props => props.layerClasses;
     layerTypeOptionsSelector = createSelector(
       this.layerClassSelector,
-      layerClasses => Object.keys(layerClasses).map(key => {
-        const layer = new layerClasses[key]();
-        return {
-          id: key,
-          label: layer.name,
-          icon: layer.layerIcon
-        };
-    }));
+      layerClasses =>
+        Object.keys(layerClasses).map(key => {
+          const layer = new layerClasses[key]();
+          return {
+            id: key,
+            label: layer.name,
+            icon: layer.layerIcon
+          };
+        })
+    );
 
     _addEmptyNewLayer = () => {
       this.props.addLayer();
     };
 
     _handleSort = ({oldIndex, newIndex}) => {
-      this.props.updateLayerOrder(arrayMove(this.props.layerOrder, oldIndex, newIndex));
+      this.props.updateLayerOrder(
+        arrayMove(this.props.layerOrder, oldIndex, newIndex)
+      );
     };
 
     render() {
-      const {layers, datasets, layerOrder, openModal} = this.props;
+      const {
+        layers,
+        datasets,
+        layerOrder,
+        openModal,
+        enlargeFilter,
+        enableLayerAnimation
+      } = this.props;
       const defaultDataset = Object.keys(datasets)[0];
       const layerTypeOptions = this.layerTypeOptionsSelector(this.props);
 
       const layerActions = {
         layerConfigChange: this.props.layerConfigChange,
-        layerVisualChannelConfigChange: this.props.layerVisualChannelConfigChange,
+        layerVisualChannelConfigChange: this.props
+          .layerVisualChannelConfigChange,
         layerTypeChange: this.props.layerTypeChange,
         layerVisConfigChange: this.props.layerVisConfigChange,
         layerTextLabelChange: this.props.layerTextLabelChange,
         removeLayer: this.props.removeLayer
       };
 
-      const panelProps = {datasets, openModal, layerTypeOptions};
+      const panelProps = {
+        datasets,
+        openModal,
+        layerTypeOptions,
+        enableLayerAnimation
+      };
 
       return (
         <StyledSortable className="layer-manager">
@@ -229,7 +243,8 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
           <SidePanelSection>
             {defaultDataset ? (
               <Button onClick={this._addEmptyNewLayer} width="105px">
-                <Add height="12px" />Add Layer
+                <Add height="12px" />
+                Add Layer
               </Button>
             ) : null}
           </SidePanelSection>
@@ -240,7 +255,7 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
         </StyledSortable>
       );
     }
-  }
+  };
 }
 
 export default LayerManagerFactory;

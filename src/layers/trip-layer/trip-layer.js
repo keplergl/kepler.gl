@@ -22,6 +22,7 @@ import memoize from 'lodash.memoize';
 import uniq from 'lodash.uniq';
 
 import Layer, {colorMaker} from '../base-layer';
+import {TripsLayer as DeckGLTripsLayer} from 'deck.gl';
 import {GeoJsonLayer as DeckGLGeoJsonLayer} from 'deck.gl';
 
 import {hexToRgb} from 'utils/color-utils';
@@ -30,14 +31,14 @@ import {
   getGeojsonBounds,
   featureToDeckGlGeoType
 } from './geojson-utils';
-import GeojsonLayerIcon from './geojson-layer-icon';
+import TripLayerIcon from './trip-layer-icon';
 import {
   GEOJSON_FIELDS,
   HIGHLIGH_COLOR_3D,
   CHANNEL_SCALES
 } from 'constants/default-settings';
 
-export const geojsonVisConfigs = {
+export const tripVisConfigs = {
   opacity: 'opacity',
   thickness: {
     type: 'number',
@@ -53,6 +54,7 @@ export const geojsonVisConfigs = {
   colorRange: 'colorRange',
   strokeColorRange: 'strokeColorRange',
   radius: 'radius',
+  trailLength: 'trailLength',
 
   sizeRange: 'strokeWidthRange',
   radiusRange: 'radiusRange',
@@ -68,25 +70,25 @@ export const geoJsonRequiredColumns = ['geojson'];
 export const featureAccessor = ({geojson}) => d => d[geojson.fieldIdx];
 export const featureResolver = ({geojson}) => geojson.fieldIdx;
 
-export default class GeoJsonLayer extends Layer {
+export default class TripLayer extends Layer {
   constructor(props) {
     super(props);
 
     this.dataToFeature = {};
-    this.registerVisConfig(geojsonVisConfigs);
+    this.registerVisConfig(tripVisConfigs);
     this.getFeature = memoize(featureAccessor, featureResolver);
   }
 
   get type() {
-    return 'geojson';
+    return 'trip';
   }
 
   get name() {
-    return 'Polygon';
+    return 'Trip';
   }
 
   get layerIcon() {
-    return GeojsonLayerIcon;
+    return TripLayerIcon;
   }
 
   get requiredLayerColumns() {
@@ -189,6 +191,7 @@ export default class GeoJsonLayer extends Layer {
   // TODO: fix complexity
   /* eslint-disable complexity */
   formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
+    //to-do: parse segment from allData
     const {
       colorScale,
       colorField,
@@ -206,7 +209,8 @@ export default class GeoJsonLayer extends Layer {
       radiusField,
       radiusDomain,
       radiusScale,
-      visConfig
+      visConfig,
+      animationConfig
     } = this.config;
 
     const {
@@ -283,15 +287,7 @@ export default class GeoJsonLayer extends Layer {
     return {
       data: geojsonData,
       getFeature,
-      getFillColor: d =>
-        cScale
-          ? this.getEncodedChannelValue(
-              cScale,
-              allData[d.properties.index],
-              colorField
-            )
-          : d.properties.fillColor || color,
-      getLineColor: d =>
+      getColor: d =>
         scScale
           ? this.getEncodedChannelValue(
               scScale,
@@ -339,7 +335,6 @@ export default class GeoJsonLayer extends Layer {
 
     // get bounds from features
     const bounds = getGeojsonBounds(allFeatures);
-
     // get lightSettings from points
     const lightSettings = this.getLightSettingsFromBounds(bounds);
 
@@ -382,7 +377,15 @@ export default class GeoJsonLayer extends Layer {
     return this;
   }
 
-  renderLayer({data, idx, objectHovered, mapState, interactionConfig}) {
+  renderLayer({
+    data,
+    idx,
+    objectHovered,
+    mapState,
+    interactionConfig,
+    visStateActions,
+    animationConfig
+  }) {
     const {lightSettings, fixedRadius} = this.meta;
     const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius);
     const zoomFactor = this.getZoomFactor(mapState);
@@ -403,17 +406,14 @@ export default class GeoJsonLayer extends Layer {
         heightScale: this.config.heightScale,
         heightRange: visConfig.heightRange
       },
-      getFillColor: {
-        color: this.config.color,
-        colorField: this.config.colorField,
-        colorRange: visConfig.colorRange,
-        colorScale: this.config.colorScale
-      },
-      getLineColor: {
+      getColor: {
         color: visConfig.strokeColor,
         colorField: this.config.strokeColorField,
         colorRange: visConfig.strokeColorRange,
         colorScale: this.config.strokeColorScale
+      },
+      getTrailLength: {
+        trailLength: visConfig.trailLength
       },
       getLineWidth: {
         sizeField: this.config.sizeField,
@@ -425,53 +425,25 @@ export default class GeoJsonLayer extends Layer {
       }
     };
 
+    console.log('trip visConfig', visConfig);
+
     return [
-      new DeckGLGeoJsonLayer({
+      new DeckGLTripsLayer({
         ...layerProps,
         id: this.id,
         idx,
         data: data.data,
-        getFillColor: data.getFillColor,
-        getLineColor: data.getLineColor,
-        getLineWidth: data.getLineWidth,
-        getRadius: data.getRadius,
-        getElevation: data.getElevation,
-        // highlight
-        pickable: true,
-        highlightColor: HIGHLIGH_COLOR_3D,
-        autoHighlight: visConfig.enable3d,
-        // parameters
-        parameters: {
-          depthTest: Boolean(visConfig.enable3d || mapState.dragRotate)
-        },
-        opacity: visConfig.opacity,
-        stroked: visConfig.stroked,
-        filled: visConfig.filled,
-        extruded: visConfig.enable3d,
-        wireframe: visConfig.wireframe,
-        lineMiterLimit: 2,
+        getPath: d => d.geometry.coordinates.map(coord => coord.slice(0, 2)),
+        getTimestamps: d => d.geometry.coordinates.map(coord => coord[3]),
+        getColor: data.getColor, //d =>
+        //d.Properties.vendor === 0 ? [253, 128, 93] : [23, 184, 190], //to change
+        opacity: 0.3,
+        widthMinPixels: 2,
         rounded: true,
-        lightSettings,
+        trailLength: visConfig.trailLength,
+        currentTime: animationConfig.currentTime,
         updateTriggers
-      }),
-      ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d
-        ? [
-            new DeckGLGeoJsonLayer({
-              ...layerProps,
-              id: `${this.id}-hovered`,
-              data: [objectHovered.object],
-              getLineWidth: data.getLineWidth,
-              getRadius: data.getRadius,
-              getElevation: data.getElevation,
-              getLineColor: this.config.highlightColor,
-              getFillColor: this.config.highlightColor,
-              updateTriggers,
-              stroked: true,
-              pickable: false,
-              filled: false
-            })
-          ]
-        : [])
+      })
     ];
   }
 }

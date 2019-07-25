@@ -21,9 +21,10 @@
 import React, {Component} from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
-
+import {Button} from 'components/common/styled-components';
 import LayerConfigurator from './layer-configurator';
 import LayerPanelHeader from './layer-panel-header';
+import Modal from 'react-modal';
 
 const PanelWrapper = styled.div`
   font-size: 12px;
@@ -36,8 +37,16 @@ const PanelWrapper = styled.div`
   }
 `;
 
-function LayerPanelFactory() {
+const StyledButton = styled(Button)`
+  background-color: transparent;
+  color: #A0A7B4
+  :hover {
+    background-color: transparent;
+    color: #fff;
+  }
+`;
 
+function LayerPanelFactory() {
   class LayerPanel extends Component {
     static propTypes = {
       layer: PropTypes.object.isRequired,
@@ -48,10 +57,12 @@ function LayerPanelFactory() {
       openModal: PropTypes.func.isRequired,
       removeLayer: PropTypes.func.isRequired,
       onCloseConfig: PropTypes.func,
-
       layerTypeOptions: PropTypes.arrayOf(PropTypes.any),
       layerVisConfigChange: PropTypes.func,
-      layerVisualChannelConfigChange: PropTypes.func
+      layerVisualChannelConfigChange: PropTypes.func,
+      playAnimation: PropTypes.func,
+      enableLayerAnimation: PropTypes.func,
+      enlargeFilter: PropTypes.func
     };
 
     updateLayerConfig = newProp => {
@@ -91,7 +102,11 @@ function LayerPanelFactory() {
 
     _toggleEnableConfig = e => {
       e.stopPropagation();
-      const {layer: {config: {isConfigActive}}} = this.props;
+      const {
+        layer: {
+          config: {isConfigActive}
+        }
+      } = this.props;
       this.updateLayerConfig({isConfigActive: !isConfigActive});
     };
 
@@ -100,8 +115,21 @@ function LayerPanelFactory() {
       this.props.removeLayer(this.props.idx);
     };
 
+    _initiatePlayback = () => {
+      console.log('enablePlayback from layer panel');
+      this.props.enableLayerAnimation(this.props.layer, this.props.datasets);
+    };
+
     render() {
-      const {layer, idx, datasets, layerTypeOptions} = this.props;
+      const {
+        layer,
+        idx,
+        datasets,
+        layerTypeOptions,
+        playAnimation,
+        enableLayerAnimation,
+        enlargeFilter
+      } = this.props;
       const {config} = layer;
       const {isConfigActive} = config;
 
@@ -127,17 +155,22 @@ function LayerPanelFactory() {
             onRemoveLayer={this._removeLayer}
           />
           {isConfigActive && (
-            <LayerConfigurator
-              layer={layer}
-              datasets={datasets}
-              layerTypeOptions={layerTypeOptions}
-              openModal={this.props.openModal}
-              updateLayerConfig={this.updateLayerConfig}
-              updateLayerVisualChannelConfig={this.updateLayerVisualChannelConfig}
-              updateLayerType={this.updateLayerType}
-              updateLayerTextLabel={this.updateLayerTextLabel}
-              updateLayerVisConfig={this.updateLayerVisConfig}
-            />
+            <div>
+              <LayerConfigurator
+                layer={layer}
+                datasets={datasets}
+                layerTypeOptions={layerTypeOptions}
+                openModal={this.props.openModal}
+                updateLayerConfig={this.updateLayerConfig}
+                updateLayerVisualChannelConfig={
+                  this.updateLayerVisualChannelConfig
+                }
+                updateLayerType={this.updateLayerType}
+                updateLayerTextLabel={this.updateLayerTextLabel}
+                updateLayerVisConfig={this.updateLayerVisConfig}
+              />
+              {/* TODO fix this modal */}
+            </div>
           )}
         </PanelWrapper>
       );
