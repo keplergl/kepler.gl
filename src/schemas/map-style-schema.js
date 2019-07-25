@@ -65,6 +65,14 @@ export const propertiesV0 = {
   mapStyles: new MapStyleSchemaV1()
 };
 
+export const propertiesV1 = {
+  styleType: null,
+  topLayerGroups: null,
+  visibleLayerGroups: null,
+  threeDBuildingColor: null,
+  mapStyles: new MapStyleSchemaV1()
+};
+
 const mapStyleSchema = {
   [VERSIONS.v0]: new Schema({
     version: VERSIONS.v0,
@@ -73,7 +81,7 @@ const mapStyleSchema = {
   }),
   [VERSIONS.v1]: new Schema({
     version: VERSIONS.v1,
-    properties: propertiesV0,
+    properties: propertiesV1,
     key: 'mapStyle'
   })
 };
