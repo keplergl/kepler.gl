@@ -21,3 +21,5 @@ package-lock.json
 /index.html
 
 npm-debug.log
+
+example/demo-app/src/data/sample-animate.js
