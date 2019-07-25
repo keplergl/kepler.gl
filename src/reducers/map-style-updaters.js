@@ -182,6 +182,7 @@ export function getMapStyles({
 function findLayerFillColor(layer) {
   return layer && layer.paint && layer.paint['background-color'];
 }
+
 function get3DBuildingColor(style) {
   // set building color to be the same as the background color.
   const backgroundLayer = (style.style.layers || []).find(
