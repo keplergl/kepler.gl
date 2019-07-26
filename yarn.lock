@@ -8587,10 +8587,10 @@ react-lifecycles-compat@^3.0.0, react-lifecycles-compat@^3.0.4:
   resolved "https://registry.yarnpkg.com/react-lifecycles-compat/-/react-lifecycles-compat-3.0.4.tgz#4f1a273afdfc8f3488a8c516bfda78f872352362"
   integrity sha512-fBASbA6LnOU9dOU2eW7aQ8xmYBSXUIWr+UmF9b1efZBazGNO+rcXT/icdKnYm2pTwcRylVUYwW7H1PHfLekVzA==
 
-react-map-gl-draw@0.14.7:
-  version "0.14.7"
-  resolved "https://registry.yarnpkg.com/react-map-gl-draw/-/react-map-gl-draw-0.14.7.tgz#1c1cf5a3f94f71d54c38da7d7647b6033dd7d34a"
-  integrity sha512-5zzCXL+BdcAzdDNDCgC/37WWpwMFMabkv2DGrlXY0rQ35r64IUbUQAU9yq/TO6cB1J/zoHcIO2COKPqn8AdcXg==
+react-map-gl-draw@0.14.8:
+  version "0.14.8"
+  resolved "https://registry.yarnpkg.com/react-map-gl-draw/-/react-map-gl-draw-0.14.8.tgz#43657ebbe13f39865f4d86e0dab07587040ee4da"
+  integrity sha512-16BW510XbinBTKO5W51RxEnIu6TiRZbxxulJN2HX1l++UWuyiTvf7o0/oboCtjCWSbwNRsHh6GQ+9HDebt2yhQ==
   dependencies:
     "@nebula.gl/edit-modes" "0.14.0"
     "@turf/helpers" "^6.1.4"
