@@ -18,47 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {ScatterplotLayer} from 'deck.gl';
-import {Geometry, Model} from 'luma.gl';
-import GL from '@luma.gl/constants';
+import {SolidPolygonLayer, PathLayer, ScatterplotLayer} from '@deck.gl/layers';
 import {extendLayer} from 'deckgl-layers/layer-utils/layer-extension';
 import DataFilterExtension from 'shaderlib/gpu-filtering-module';
 
-const ExtendedScatterplotLayer = extendLayer(
-  ScatterplotLayer,
-  new DataFilterExtension()
-);
-
-const DEFAULT_POS = [-1, -1, 0, -1, 1, 0, 1, 1, 0, 1, -1, 0];
-export default class ScatterplotIconLayer extends ExtendedScatterplotLayer {
-  _getModel(gl) {
-    // use default scatterplot shaders
-    const shaders = this.getShaders();
-
-    const {iconGeometry} = this.props;
-
-    const geometry = iconGeometry
-      ? new Geometry({
-          drawMode: GL.TRIANGLES,
-          attributes: {
-            positions: new Float32Array(iconGeometry)
-          }
-        })
-      : new Geometry({
-          drawMode: GL.TRIANGLE_FAN,
-          attributes: {
-            positions: new Float32Array(DEFAULT_POS)
-          }
-        });
-
-    return new Model(gl, {
-      ...shaders,
-      id: this.props.id,
-      geometry,
-      isInstanced: true,
-      shaderCache: this.context.shaderCache
-    });
+export default {
+  'polygons-fill': {
+    type: extendLayer(
+      SolidPolygonLayer,
+      new DataFilterExtension()
+    )
+  },
+  'polygons-stroke': {
+    type: extendLayer(
+      PathLayer,
+      new DataFilterExtension()
+    )
+  },
+  'line-strings': {
+    type: extendLayer(
+      PathLayer,
+      new DataFilterExtension()
+    )
+  },
+  points: {
+    type: extendLayer(
+      ScatterplotLayer,
+      new DataFilterExtension()
+    )
   }
-}
-
-ScatterplotIconLayer.layerName = 'ScatterplotIconLayer';
+};

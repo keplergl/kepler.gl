@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import memoize from 'lodash.memoize';
-
 import Layer from '../base-layer';
 import ArcBrushingLayer from 'deckgl-layers/arc-brushing-layer/arc-brushing-layer';
 import {hexToRgb} from 'utils/color-utils';
@@ -35,9 +33,6 @@ export const arcPosAccessor = ({lat0, lng0, lat1, lng1}) => d => [
   0
 ];
 
-export const arcPosResolver = ({lat0, lng0, lat1, lng1}) =>
-  `${lat0.fieldIdx}-${lng0.fieldIdx}-${lat1.fieldIdx}-${lat1.fieldIdx}}`;
-
 export const arcRequiredColumns = ['lat0', 'lng0', 'lat1', 'lng1'];
 
 export const arcVisConfigs = {
@@ -51,8 +46,9 @@ export const arcVisConfigs = {
 export default class ArcLayer extends Layer {
   constructor(props) {
     super(props);
+
     this.registerVisConfig(arcVisConfigs);
-    this.getPosition = memoize(arcPosAccessor, arcPosResolver);
+    this.getPositionAccessor = () => arcPosAccessor(this.config.columns);
   }
 
   get type() {
@@ -134,7 +130,7 @@ export default class ArcLayer extends Layer {
 
   // TODO: fix complexity
   /* eslint-disable complexity */
-  formatLayerData(allData, filteredIndex, oldLayerData, opt = {}) {
+  formatLayerData(datasets, oldLayerData, opt = {}) {
     const {
       colorScale,
       colorDomain,
@@ -146,6 +142,7 @@ export default class ArcLayer extends Layer {
       visConfig: {sizeRange, colorRange, targetColor}
     } = this.config;
 
+    const {filteredIndex, allData, gpuFilter} = datasets[this.config.dataId];
     const {data} = this.updateData(allData, filteredIndex, oldLayerData);
 
     // arc color
@@ -177,7 +174,8 @@ export default class ArcLayer extends Layer {
       getColor,
       getSourceColor: getColor,
       getTargetColor,
-      getWidth: getStrokeWidth
+      getWidth: getStrokeWidth,
+      getFilterValue: gpuFilter.filterValueAccessor()
     };
   }
   /* eslint-enable complexity */
@@ -244,7 +242,6 @@ export default class ArcLayer extends Layer {
     return [
       new ArcBrushingLayer({
         ...data,
-        ...gpuFilter,
         ...interaction,
         ...layerInteraction,
         id: this.id,
@@ -255,7 +252,7 @@ export default class ArcLayer extends Layer {
 
         // parameters
         parameters: {depthTest: mapState.dragRotate},
-
+        filterRange: gpuFilter.filterRange,
         updateTriggers: {
           getFilterValue: gpuFilter.filterValueUpdateTriggers,
           getWidth: {

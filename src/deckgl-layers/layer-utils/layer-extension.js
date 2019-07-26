@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -38,8 +38,8 @@ export class LayerExtension {
 
 export function extendLayer(Layer, ...extensions) {
   class NewLayer extends Layer {
-    getShaders() {
-      const shaders = super.getShaders();
+    getShaders(...args) {
+      const shaders = super.getShaders(...args);
       shaders.modules = shaders.modules || [];
       shaders.inject = shaders.inject || {};
       shaders.defines = shaders.defines || {};

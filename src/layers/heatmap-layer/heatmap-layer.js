@@ -240,7 +240,9 @@ class HeatmapLayer extends MapboxGLLayer {
     }
   );
 
-  formatLayerData(allData, filteredIndex, oldLayerData, opt = {}) {
+  formatLayerData(datasets, oldLayerData, opt = {}) {
+
+    const {filteredIndex, allData} = datasets[this.config.dataId];
     const options = {
       allData,
       filteredIndex,
@@ -248,7 +250,6 @@ class HeatmapLayer extends MapboxGLLayer {
       opt,
       config: this.config
     };
-
     const {weightField} = this.config;
     const isSameData = this.isSameData(options, this.config);
     const isSameConfig = this.isSameConfig(options);

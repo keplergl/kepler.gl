@@ -203,17 +203,9 @@ test('Processor -> processCsv.wkt', t => {
   t.end();
 });
 
-test('Processor => processGeojson', t => {
-  const {fields, rows} = processGeojson(geojsonData);
-
-  t.deepEqual(fields, geojsonFields, 'should format geojson fields');
-  t.deepEqual(rows, geojsonRows, 'should format geojson rows');
-
-  t.end();
-});
-
 test('Processor => processGeojson: with style property', t => {
   const {fields, rows} = processGeojson(geoJsonWithStyle);
+
 
   t.deepEqual(fields, geoStyleFields, 'should preserve objects in geojson properties');
   t.deepEqual(rows, geoStyleRows, 'should preserve objects in geojson properties');

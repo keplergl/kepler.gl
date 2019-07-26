@@ -29,11 +29,7 @@ import * as ScaleUtils from './data-scale-utils';
 import {toArray} from 'utils/utils';
 import {LAYER_TYPES} from '../constants';
 import {generateHashId, set} from './utils';
-import {
-  setFilterGpuMode,
-  assignGpuChannel,
-  getGpuFilterProps
-} from './gpu-filter-utils';
+import {getGpuFilterProps} from './gpu-filter-utils';
 
 export const TimestampStepMap = [
   {max: 1, step: 0.05},
@@ -230,7 +226,13 @@ export function validateFilter(dataset, filter) {
 
   const fieldName = initializeFilter.name[filterDatasetIndex];
   const {filter: updatedFilter, dataset: updatedDataset} =
-    applyFilterFieldName(initializeFilter, dataset, fieldName, filterDatasetIndex, {mergeDomain: true});
+    applyFilterFieldName(
+      initializeFilter,
+      dataset,
+      fieldName,
+      filterDatasetIndex,
+      {mergeDomain: true}
+    );
 
   if (!updatedFilter) {
     return failed;
@@ -299,7 +301,7 @@ function validateFilterYAxis(filter, dataset) {
  * @returns {Object} default filter
  */
 export function getFilterProps(allData, field) {
-  const filterProp = {
+  const filterProps = {
     ...getFieldDomain(allData, field),
     fieldType: field.type
   };
@@ -407,40 +409,6 @@ export const getPolygonFilterFunctor = (layer, filter) => {
 }
 
 /**
- *
- * @param {Object} filter
- * @param {Number} idx
- * @param {Object} dataset
- * @param {Array<Object>} filters
- * @returns {{newField: Object, newFilter: Object}}
- */
-export function updateFilterField(filter, idx, dataset, filters) {
-  const {name} = filter;
-  const {fields, allData} = dataset;
-  // find the field
-  const fieldIdx = fields.findIndex(f => f.name === name);
-
-  let newField = fields[fieldIdx];
-
-  if (!newField.filterProp) {
-    // get filter domain from field
-    // save filterProps: {domain, steps, value} to field, avoid recalculate
-    newField = set(['filterProp'], getFilterProps(allData, newField), newField);
-  }
-  let newFilter = {
-    ...filter,
-    ...newField.filterProp,
-    name: newField.name,
-    // can't edit dataId once name is selected
-    freeze: true,
-    fieldIdx
-  };
-  if (newFilter.gpu) {
-    newFilter = setFilterGpuMode(newFilter, filters);
-    newFilter = assignGpuChannel(newFilter, filters);
-}
-
-/**
  * @param field dataset Field
  * @param dataId Dataset id
  * @param filter Filter object
@@ -484,53 +452,6 @@ export function updateFilterDataId(dataId) {
   return getDefaultFilter(dataId);
 }
 
-// /**
-//  *
-//  * @param {Object} filter
-//  * @param {Number} idx
-//  * @param {Object} dataset
-//  * @param {Array<Object>} filters
-//  * @returns {{newField: Object, newFilter: Object}}
-//  */
-// export function updateFilterField(filter, idx, dataset, filters) {
-//   const {name, dataId} = filter;
-//   const {fields, allData} = dataset;
-//   // find the field
-//   const fieldIdx = fields.findIndex(f => f.name === name);
-
-//   let newField = fields[fieldIdx];
-
-//   if (!newField.filterProp) {
-//     // get filter domain from field
-//     // save filterProps: {domain, steps, value} to field, avoid recalculate
-//     newField = set(['filterProp'], getFilterProps(allData, newField), newField);
-//   }
-
-//   const newFilter = {
-//     ...filter,
-//     ...newField.filterProp,
-//     name: newField.name,
-//     // can't edit dataId once name is selected
-//     freeze: true,
-//     fieldIdx
-//   };
-
-//   const enlargedFilterIdx = filters.findIndex(f => f.enlarged);
-
-//   if (enlargedFilterIdx > -1 && enlargedFilterIdx !== idx) {
-//     // there should be only one enlarged filter
-//     newFilter.enlarged = false;
-//   }
-
-//   // filters of the same datasets
-//   const gpuFilters = filters.filter(f => f.dateId === dataId && f.gpu);
-//   if (newFilter.gpu && gpuFilters.length === MAX_GPU_FILTERS) {
-//     newFilter.gpu = false;
-//   }
-
-//   return {newField, newFilter};
-// }
-
 /**
  * Filter data based on an array of filters
  *
@@ -547,8 +468,8 @@ export function filterDataset(dataset, filters, layers, opt = {}) {
 
   // if there is no filters
   const filterRecord = getFilterRecord(dataId, filters);
-
   const newDataset = set(['filterRecord'], filterRecord, dataset);
+
   if (!filters.length) {
     return {
       ...newDataset,
@@ -570,7 +491,7 @@ export function filterDataset(dataset, filters, layers, opt = {}) {
 
     const dynamicDomainFilters = shouldCalDomain ? filterRecord.dynamicDomain : null;
     const cpuFilters = shouldCalIndex ? (opt.cpuOnly ? filters : filterRecord.cpu) : null;
-    const filterFuncs = appliedFilters.reduce((acc, filter) => {
+    const filterFuncs = filters.reduce((acc, filter) => {
       const fieldIndex = getDatasetFieldIndexForFilter(dataset, filter);
       const field = fieldIndex !== -1 ? fields[fieldIndex] : null;
 
@@ -607,11 +528,11 @@ function filterDataByFilterTypes({dynamicDomainFilters, cpuFilters, filterFuncs}
   };
 
   for (let i = 0; i < allData.length; i++) {
+    const d = allData[i];
+
     const matchForDomain =
       dynamicDomainFilters &&
-      dynamicDomainFilters.every(filter =>
-        filterFuncs[filter.id](d, i))
-      );
+      dynamicDomainFilters.every(filter => filterFuncs[filter.id](d, i));
 
     if (matchForDomain) {
       result.filteredIndexForDomain.push(i);
@@ -619,9 +540,7 @@ function filterDataByFilterTypes({dynamicDomainFilters, cpuFilters, filterFuncs}
 
     const matchForRender =
       cpuFilters &&
-      cpuFilters.every(filter =>
-        filterFuncs[filter.id](d, i))
-      );
+      cpuFilters.every(filter => filterFuncs[filter.id](d, i));
 
     if (matchForRender) {
       result.filteredIndex.push(i);
@@ -995,19 +914,6 @@ export function getDefaultFilterPlotType(filter) {
 }
 
 /**
- * Apply a list of filters to a given dataset
- * @param dataset
- * @param filters
- * @return {Object} filtered dataset
- */
-export function applyFilterToDataset(dataset, filters, layers) {
-  return {
-    ...dataset,
-    ...filterData(dataset, filters, layers)
-  };
-}
-
-/**
  *
  * @param datasetIds list of dataset ids to be filtered
  * @param datasets all datasets
@@ -1016,11 +922,13 @@ export function applyFilterToDataset(dataset, filters, layers) {
  */
 export function applyFiltersToDatasets(datasetIds, datasets, filters, layers) {
   const dataIds = Array.isArray(datasetIds) ? datasetIds : [datasetIds];
-  return dataIds.reduce((acc, dataIdentifier) => {
-    const layersToFilter = (layers || []).filter(l => l.config.dataId === dataIdentifier);
+  return dataIds.reduce((acc, dataId) => {
+    const layersToFilter = (layers || []).filter(l => l.config.dataId === dataId);
+    const appliedFilters = filters.filter(d => shouldApplyFilter(d, dataId));
+
     return {
       ...acc,
-      [dataIdentifier]: filterDataset(datasets[dataIdentifier], filters, layersToFilter)
+      [dataId]: filterDataset(datasets[dataId], appliedFilters, layersToFilter)
     }
   }, datasets);
 }
@@ -1052,7 +960,7 @@ export function applyFilterFieldName(
     return {filter: null, dataset};
   }
 
-  const newFilter = {
+  let newFilter = {
     ...filter,
     // TODO, since we allow to add multiple fields to a filter we can no longer freeze the filter
     freeze: true
@@ -1060,9 +968,10 @@ export function applyFilterFieldName(
 
   // TODO: validate field type
   const field = fields[fieldIndex];
-  const filterProps = field.hasOwnProperty('filterProps') ? field.filterProps : getFilterProps(allData, field);
+  const filterProps = field.hasOwnProperty('filterProps') ?
+    field.filterProps : getFilterProps(allData, field);
 
-  const filterWithProps = {
+  newFilter = {
     ...(mergeDomain ? mergeFilterDomainStep(newFilter, filterProps) : {...newFilter, ...filterProps}),
     name: Object.assign([].concat(filter.name), {[filterDatasetIndex]: field.name}),
     fieldIdx: Object.assign([].concat(filter.fieldIdx), {[filterDatasetIndex]: field.tableFieldIndex - 1})
@@ -1076,7 +985,7 @@ export function applyFilterFieldName(
   const newFields = Object.assign([].concat(fields), {[fieldIndex]: fieldWithFilterProps});
 
   return {
-    filter: filterWithProps,
+    filter: newFilter,
     dataset: {
       ...dataset,
       fields: newFields
