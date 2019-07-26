@@ -20,6 +20,7 @@
 
 import {set} from './utils';
 import {MAX_GPU_FILTERS} from 'constants/default-settings';
+import {notNullorUndefined} from './data-utils';
 /**
  * Set gpu mode based on current number of gpu filters exists
  * @param {Object} gpuFilter
@@ -100,22 +101,31 @@ function getEmptyFilterRange() {
   };
 }
 
+// By default filterValueAccessor expect each datum to be formated as {index, data}
+// data is the row in allData, and index is its index in allData
+const defaultGetIndex = d => d.index;
+const defaultGetData = d => d.data;
+
 /**
  *
  * @param {Array<Object>} channels
  * @return {Function} getFilterValue
  */
-function getFilterValueAccessor(channels) {
+const getFilterValueAccessor = channels => (
+  getIndex = defaultGetIndex,
+  getData = defaultGetData
+) => d =>
   // for empty channel, value is 0 and min max would be [0, 0]
-  return d =>
-    channels.map(filter =>
-      filter
-        ? filter.mappedValue
-          ? filter.mappedValue[d.index]
-          : d.data[filter.fieldIdx]
-        : 0
-    );
-}
+  channels.map(filter => {
+    if (!filter) {
+      return 0;
+    }
+    const value = filter.mappedValue ?
+      filter.mappedValue[getIndex(d)] :
+      getData(d)[filter.fieldIdx];
+
+    return notNullorUndefined(value) ? value : Number.MIN_SAFE_INTEGER;
+  });
 
 /**
  * Get filter properties for gpu filtering
@@ -141,7 +151,11 @@ export function getGpuFilterProps(filters, dataId) {
     channels.push(filter);
   }
 
-  const getFilterValue = getFilterValueAccessor(channels);
+  const filterValueAccessor = getFilterValueAccessor(channels);
 
-  return {filterRange, filterValueUpdateTriggers: triggers, getFilterValue};
+  return {
+    filterRange,
+    filterValueUpdateTriggers: triggers,
+    filterValueAccessor
+  };
 }

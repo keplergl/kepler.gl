@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import memoize from 'lodash.memoize';
-
 import Layer from '../base-layer';
 import {GeoJsonLayer, H3HexagonLayer} from 'deck.gl';
 import EnhancedColumnLayer from 'deckgl-layers/column-layer/enhanced-column-layer';
@@ -33,7 +31,6 @@ export const HEXAGON_ID_FIELDS = {
 
 export const hexIdRequiredColumns = ['hex_id'];
 export const hexIdAccessor = ({hex_id}) => d => d[hex_id.fieldIdx];
-export const hexIdResolver = ({hex_id}) => hex_id.fieldIdx;
 
 export const HexagonIdVisConfigs = {
   opacity: 'opacity',
@@ -58,7 +55,7 @@ export default class HexagonIdLayer extends Layer {
   constructor(props) {
     super(props);
     this.registerVisConfig(HexagonIdVisConfigs);
-    this.getHexId = memoize(hexIdAccessor, hexIdResolver);
+    this.getPositionAccessor = () => hexIdAccessor(this.config.columns);
   }
 
   get type() {
@@ -121,15 +118,35 @@ export default class HexagonIdLayer extends Layer {
     };
   }
 
+  calculateDataAttribute(allData, filteredIndex, getHexId) {
+    const data = [];
+
+    for (let i = 0; i < filteredIndex.length; i++) {
+      const index = filteredIndex[i];
+      const id = getHexId(allData[index]);
+      const centroid = this.dataToFeature.centroids[index];
+
+      if (centroid) {
+        data.push({
+          // keep a reference to the original data index
+          index,
+          data: allData[index],
+          id,
+          centroid
+        });
+      }
+    }
+    return data;
+  }
+
   // TODO: fix complexity
   /* eslint-disable complexity */
-  formatLayerData(allData, filteredIndex, oldLayerData, opt = {}) {
+  formatLayerData(datasets, oldLayerData, opt = {}) {
     const {
       colorScale,
       colorDomain,
       colorField,
       color,
-      columns,
       sizeField,
       sizeScale,
       sizeDomain,
@@ -138,6 +155,8 @@ export default class HexagonIdLayer extends Layer {
       coverageDomain,
       visConfig: {sizeRange, colorRange, coverageRange}
     } = this.config;
+
+    const {filteredIndex, allData, gpuFilter} = datasets[this.config.dataId];
 
     // color
     const cScale =
@@ -154,57 +173,31 @@ export default class HexagonIdLayer extends Layer {
 
     // coverage
     const coScale =
-      coverageField && this.getVisChannelScale(coverageScale, coverageDomain, coverageRange, 0);
+      coverageField &&
+      this.getVisChannelScale(coverageScale, coverageDomain, coverageRange, 0);
 
-    const getHexId = this.getHexId(columns);
+    const getHexId = this.getPositionAccessor();
+    const {data} = this.updateData(allData, filteredIndex, oldLayerData);
 
-    if (!oldLayerData || oldLayerData.getHexId !== getHexId) {
-      this.updateLayerMeta(allData, getHexId);
-    }
+    const getElevation = sScale
+      ? d => this.getEncodedChannelValue(sScale, d.data, sizeField, 0)
+      : 0;
 
-    let data;
-    if (
-      oldLayerData &&
-      oldLayerData.data &&
-      opt.sameData &&
-      oldLayerData.getHexId === getHexId
-    ) {
-      data = oldLayerData.data;
-    } else {
-      data = filteredIndex.reduce((accu, index, i) => {
-        const id = getHexId(allData[index]);
-        const centroid = this.dataToFeature.centroids[index];
+    const getColor = cScale
+      ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
+      : color;
 
-        if (centroid) {
-          accu.push({
-            // keep a reference to the original data index
-            index: i,
-            data: allData[index],
-            id,
-            centroid
-          });
-        }
+    const getCoverage = coScale
+      ? d => this.getEncodedChannelValue(coScale, d.data, coverageField, 0)
+      : 1;
 
-        return accu;
-      }, []);
-    }
-
-    const getElevation = sScale ? d =>
-      this.getEncodedChannelValue(sScale, d.data, sizeField, 0) : 0;
-
-    const getColor = cScale ? d =>
-      this.getEncodedChannelValue(cScale, d.data, colorField) : color;
-
-    const getCoverage = coScale ? d =>
-      this.getEncodedChannelValue(coScale, d.data, coverageField, 0) : 1;
-
-    // const layerData = {
     return {
       data,
       getElevation,
       getColor,
       getHexId,
       getCoverage,
+      getFilterValue: gpuFilter.filterValueAccessor(),
       hexagonVertices: this.dataToFeature.hexagonVertices,
       hexagonCenter: this.dataToFeature.hexagonCenter
     };
@@ -225,7 +218,7 @@ export default class HexagonIdLayer extends Layer {
       // only need 1 instance of hexagonVertices
       if (!hexagonVertices) {
         hexagonVertices = id && getVertices({id});
-        hexagonCenter = id && getCentroid({id})
+        hexagonCenter = id && getCentroid({id});
       }
 
       // save a reference of centroids to dataToFeature
@@ -243,6 +236,7 @@ export default class HexagonIdLayer extends Layer {
   renderLayer({
     data,
     idx,
+    gpuFilter,
     layerInteraction,
     objectHovered,
     mapState,
@@ -270,7 +264,8 @@ export default class HexagonIdLayer extends Layer {
       getCoverage: {
         coverageField: config.coverageField,
         coverageRange: config.visConfig.coverageRange
-      }
+      },
+      getFilterValue: gpuFilter.filterValueUpdateTriggers
     };
 
     return [
@@ -286,7 +281,9 @@ export default class HexagonIdLayer extends Layer {
         coverage: config.coverageField ? 1 : visConfig.coverage,
 
         // parameters
-        parameters: {depthTest: Boolean(config.sizeField || mapState.dragRotate)},
+        parameters: {
+          depthTest: Boolean(config.sizeField || mapState.dragRotate)
+        },
 
         // highlight
         autoHighlight: Boolean(config.sizeField),
@@ -305,7 +302,9 @@ export default class HexagonIdLayer extends Layer {
           'hexagon-cell': {
             type: EnhancedColumnLayer,
             getCoverage: data.getCoverage,
-            updateTriggers: columnLayerTriggers
+            getFilterValue: data.getFilterValue,
+            updateTriggers: columnLayerTriggers,
+            filterRange: gpuFilter.filterRange
           }
         }
       }),
@@ -313,9 +312,7 @@ export default class HexagonIdLayer extends Layer {
         ? [
             new GeoJsonLayer({
               id: `${this.id}-hovered`,
-              data: [
-                idToPolygonGeo(objectHovered)
-              ],
+              data: [idToPolygonGeo(objectHovered)],
               getLineColor: config.highlightColor,
               lineWidthScale: 8 * zoomFactor
             })

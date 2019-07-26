@@ -18,16 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import memoize from 'lodash.memoize';
 import uniq from 'lodash.uniq';
 import {TextLayer} from 'deck.gl';
+import MultiIconLayer from 'deckgl-layers/text-layer/multi-icon-layer';
+import {getDistanceScales} from 'viewport-mercator-project';
 
 import Layer from '../base-layer';
 import ScatterplotBrushingLayer from 'deckgl-layers/scatterplot-brushing-layer/scatterplot-brushing-layer';
+
 import {hexToRgb} from 'utils/color-utils';
 import PointLayerIcon from './point-layer-icon';
 import {DEFAULT_LAYER_COLOR, CHANNEL_SCALES} from 'constants/default-settings';
-import {getDistanceScales} from 'viewport-mercator-project';
 
 export const pointPosAccessor = ({lat, lng, altitude}) => d => [
   // lng
@@ -38,13 +39,8 @@ export const pointPosAccessor = ({lat, lng, altitude}) => d => [
   altitude && altitude.fieldIdx > -1 ? d.data[altitude.fieldIdx] : 0
 ];
 
-export const pointPosResolver = ({lat, lng, altitude}) =>
-  `${lat.fieldIdx}-${lng.fieldIdx}-${altitude ? altitude.fieldIdx : 'z'}`;
-
 export const pointLabelAccessor = textLabel => d =>
   String(d.data[textLabel.field.tableFieldIndex - 1]);
-export const pointLabelResolver = textLabel =>
-  textLabel.field && textLabel.field.tableFieldIndex;
 
 export const pointRequiredColumns = ['lat', 'lng'];
 export const pointOptionalColumns = ['altitude'];
@@ -72,10 +68,7 @@ export default class PointLayer extends Layer {
     super(props);
 
     this.registerVisConfig(pointVisConfigs);
-    this.getPosition = memoize(pointPosAccessor, pointPosResolver);
-    this.getText = [memoize(pointLabelAccessor, pointLabelResolver)];
-
-    this._oldDataUpdateTriggers = undefined;
+    this.getPositionAccessor = () => pointPosAccessor(this.config.columns);
   }
 
   get type() {
@@ -128,10 +121,6 @@ export default class PointLayer extends Layer {
         channelScaleType: 'radius'
       }
     };
-  }
-
-  getPositionAccessor() {
-    return this.getPosition(this.config.columns);
   }
 
   static findDefaultLayerProps({fieldPairs = []}) {
@@ -205,14 +194,17 @@ export default class PointLayer extends Layer {
   getDataUpdateTriggers({filteredIndex}) {
     return {
       ...super.getDataUpdateTriggers({filteredIndex}),
-      ...this.config.textLabel.reduce((accu, tl, i) => ({
-        ...accu,
-        [`getLabelCharacterSet-${i}`]: tl.field ? tl.field.name : null
-      }), {}),
+      ...this.config.textLabel.reduce(
+        (accu, tl, i) => ({
+          ...accu,
+          [`getLabelCharacterSet-${i}`]: tl.field ? tl.field.name : null
+        }),
+        {}
+      )
     };
   }
 
-  formatLayerData(allData, filteredIndex, oldLayerData) {
+  formatLayerData(datasets, oldLayerData) {
     const {
       colorScale,
       colorDomain,
@@ -234,8 +226,13 @@ export default class PointLayer extends Layer {
       }
     } = this.config;
 
-    const {data, triggerChanged} = this.updateData(allData, filteredIndex, oldLayerData);
-
+    const {filteredIndex, allData, gpuFilter} = datasets[this.config.dataId];
+    const {data, triggerChanged} = this.updateData(
+      allData,
+      filteredIndex,
+      oldLayerData
+    );
+    const getPosition = this.getPositionAccessor();
     // point color
     const cScale =
       colorField &&
@@ -280,11 +277,8 @@ export default class PointLayer extends Layer {
           characterSet: []
         };
       }
-      if (!this.getText[i]) {
-        this.getText[i] = memoize(pointLabelAccessor, pointLabelResolver);
-      }
 
-      const getText = this.getText[i](tl);
+      const getText = pointLabelAccessor(tl);
       let characterSet;
 
       if (!triggerChanged[`getLabelCharacterSet-${i}`]) {
@@ -302,8 +296,10 @@ export default class PointLayer extends Layer {
 
     return {
       data,
+      getPosition,
       getFillColor,
       getLineColor,
+      getFilterValue: gpuFilter.filterValueAccessor(),
       getRadius,
       textLabels
     };
@@ -363,7 +359,7 @@ export default class PointLayer extends Layer {
     const layerProps = {
       stroked: this.config.visConfig.outline,
       filled: this.config.visConfig.filled,
-      ...gpuFilter,
+      filterRange: gpuFilter.filterRange,
       radiusMinPixels: 0,
       lineWidthMinPixels: this.config.visConfig.thickness,
       radiusScale,
@@ -379,6 +375,7 @@ export default class PointLayer extends Layer {
 
     const {textLabel} = this.config;
     const updateTriggers = {
+      getPosition: this.config.columns,
       getRadius: {
         sizeField: this.config.sizeField,
         radiusRange: this.config.visConfig.radiusRange,
@@ -397,7 +394,7 @@ export default class PointLayer extends Layer {
         colorRange: this.config.visConfig.strokeColorRange,
         colorScale: this.config.strokeColorScale
       },
-      getFilterValue: gpuFilter.filterValueUpdateTriggers,
+      getFilterValue: gpuFilter.filterValueUpdateTriggers
     };
 
     return [
@@ -456,6 +453,19 @@ export default class PointLayer extends Layer {
               parameters: {
                 // text will always show on top of all layers
                 depthTest: false
+              },
+              _subLayerProps: {
+                // overide default sublayer to add gpu filter extension
+                characters: {
+                  type: MultiIconLayer,
+                  filterRange: gpuFilter.filterRange,
+                  // data is transformed in text sublayer
+                  getFilterValue: datum =>
+                    data.getFilterValue(data.data[datum.objectIndex]),
+                  updateTriggers: {
+                    getFilterValue: gpuFilter.filterValueUpdateTriggers
+                  }
+                }
               },
               updateTriggers: {
                 getPosition: this.config.columns,

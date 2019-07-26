@@ -65,23 +65,16 @@ export default class SvgIconLayer extends CompositeLayer {
   _extractSublayers() {
     const {data, getIconGeometry, getIcon} = this.props;
 
-    const iconLayers = data.reduce((accu, d) => {
-      const iconId = getIcon(d);
-
-      if (iconId in accu) {
-        accu[iconId].data.push(d);
-      } else {
-        const geometry = getIconGeometry(iconId) || DEFAULT_ICON_GEOMETRY;
-        accu[iconId] = {
-          id: iconId,
-          geometry,
-          data: [d]
-        };
+    const iconLayers = {};
+    for (let i = 0; i < data.length; i++) {
+      const iconId = getIcon(data[i]);
+      iconLayers[iconId] = iconLayers[iconId] || {
+        id: iconId,
+        geometry: getIconGeometry(iconId) || DEFAULT_ICON_GEOMETRY,
+        data: []
       }
-
-      return accu;
-    }, {});
-
+      iconLayers[iconId].data.push(data[i]);
+    }
     this.setState({
       data: Object.values(iconLayers)
     });

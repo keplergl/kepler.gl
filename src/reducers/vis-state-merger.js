@@ -327,31 +327,35 @@ export function validateSavedTextLabel(fields, [layerTextLabel], savedTextLabel)
  * refer to vis-state-schema.js VisualChannelSchemaV1
  *
  * @param {Array<Object>} fields
- * @param {Object} visualChannels
+ * @param {Object} newLayer
  * @param {Object} savedLayer
- * @return {Object} - validated visual channel in config or {}
+ * @return {Object} - newLayer
  */
 export function validateSavedVisualChannels(
   fields,
-  visualChannels,
+  newLayer,
   savedLayer
 ) {
-  return Object.values(visualChannels).reduce((found, {field, scale}) => {
+  Object.values(newLayer.visualChannels).forEach(({field, scale, key}) => {
     let foundField;
     if (savedLayer.config[field]) {
       foundField = fields.find(fd =>
         Object.keys(savedLayer.config[field]).every(
-          key => savedLayer.config[field][key] === fd[key]
+          prop => savedLayer.config[field][prop] === fd[prop]
         )
       );
     }
 
-    return {
-      ...found,
+    const foundChannel = {
       ...(foundField ? {[field]: foundField} : {}),
       ...(savedLayer.config[scale] ? {[scale]: savedLayer.config[scale]} : {})
     };
-  }, {});
+    if (Object.keys(foundChannel).length) {
+      newLayer.updateLayerConfig(foundChannel);
+      newLayer.validateVisualChannel(key);
+    }
+  });
+  return newLayer;
 }
 
 /**
@@ -375,7 +379,7 @@ export function validateLayerWithData({fields, id: dataId}, savedLayer, layerCla
     return null;
   }
 
-  const newLayer = new layerClasses[type]({
+  let newLayer = new layerClasses[type]({
     id: savedLayer.id,
     dataId,
     label: savedLayer.config.label,
@@ -397,9 +401,9 @@ export function validateLayerWithData({fields, id: dataId}, savedLayer, layerCla
   // visual channel field is saved to be {name, type}
   // find visual channel field by matching both name and type
   // refer to vis-state-schema.js VisualChannelSchemaV1
-  const foundVisualChannelConfigs = validateSavedVisualChannels(
+  newLayer = validateSavedVisualChannels(
     fields,
-    newLayer.visualChannels,
+    newLayer,
     savedLayer
   );
 
@@ -419,8 +423,7 @@ export function validateLayerWithData({fields, id: dataId}, savedLayer, layerCla
   newLayer.updateLayerConfig({
     columns,
     visConfig,
-    textLabel,
-    ...foundVisualChannelConfigs
+    textLabel
   });
 
   return newLayer;

@@ -18,52 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {ColumnLayer} from 'deck.gl';
-import {editShader} from 'deckgl-layers/layer-utils/shader-utils';
+import {_MultiIconLayer} from '@deck.gl/layers';
 import {extendLayer} from 'deckgl-layers/layer-utils/layer-extension';
 import DataFilterExtension from 'shaderlib/gpu-filtering-module';
 
-function addInstanceCoverage(vs) {
-  const addDecl = editShader(
-    vs,
-    'hexagon cell vs add instance',
-    'attribute vec3 instancePickingColors;',
-    `attribute vec3 instancePickingColors;
-     attribute float instanceCoverage;`
-  );
-
-  return editShader(
-    addDecl,
-    'hexagon cell vs add instance',
-    'float dotRadius = radius * coverage * shouldRender;',
-    'float dotRadius = radius * coverage * instanceCoverage * shouldRender;'
-  );
-}
-
-// TODO: export all dekc.gl layers from kepler.gl
-class EnhancedColumnLayer extends ColumnLayer {
-
-  getShaders() {
-    const shaders = super.getShaders();
-
-    return {
-      ...shaders,
-      vs: addInstanceCoverage(shaders.vs)
-    };
-  }
-
-  initializeState() {
-    super.initializeState();
-
-    this.getAttributeManager().addInstanced({
-      instanceCoverage: {size: 1, accessor: 'getCoverage'}
-    });
-  }
-}
-
-EnhancedColumnLayer.layerName = 'EnhancedColumnLayer';
-
 export default extendLayer(
-  EnhancedColumnLayer,
+  _MultiIconLayer,
   new DataFilterExtension()
 );

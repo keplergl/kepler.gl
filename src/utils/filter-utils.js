@@ -339,8 +339,13 @@ export function filterDataset(dataset, filters, opt = {}) {
  * @returns {{filteredIndex: Array, filteredIndexForDomain: Array}} filteredIndex and filteredIndexForDomain
  */
 function filterDataByFilterTypes({dynamicDomainFilters, cpuFilters}, allData) {
-  // const filteredIndexForDomain = [];
-  // const filteredIndex = [];
+  // if (dynamicDomainFilters) {
+  //   console.log('%c dynamicDomainFilters changed, recalculate filteredIndexForDomain', 'color: purple')
+  // }
+
+  // if (cpuFilters) {
+  //   console.log('%c cpuFilters changed, recalculate filteredIndex', 'color: orange')
+  // }
   const result = {
     ...(dynamicDomainFilters ? {filteredIndexForDomain: []} : {}),
     ...(cpuFilters ? {filteredIndex: []} : {})
@@ -456,6 +461,9 @@ export function diffFilters(filterRecord, oldFilterRecord = {}) {
  */
 export function isDataMatchFilter(data, filter, i) {
   const val = data[filter.fieldIdx];
+  if (!notNullorUndefined(val)) {
+    return false;
+  }
   if (!filter.type) {
     return true;
   }

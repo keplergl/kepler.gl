@@ -64,17 +64,13 @@ export function findDefaultLayer(dataset, layerClasses) {
  */
 export function calculateLayerData(layer, state, oldLayerData, opt = {}) {
   const {type} = layer;
-  const {datasets} = state;
 
-  const {filteredIndex, allData} = datasets[layer.config.dataId] || {};
-
-  if (!type || !layer.hasAllColumns()) {
+  if (!type || !layer.hasAllColumns() || !layer.config.dataId) {
     return {layer, layerData: {}};
   }
 
   const layerData = layer.formatLayerData(
-    allData,
-    filteredIndex,
+    state.datasets,
     oldLayerData,
     opt
   );

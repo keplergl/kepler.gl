@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import Layer from '../base-layer';
-import memoize from 'lodash.memoize';
 import window from 'global/window';
 
 import {hexToRgb} from 'utils/color-utils';
@@ -34,12 +33,7 @@ export const iconPosAccessor = ({lat, lng}) => d => [
   d.data[lng.fieldIdx],
   d.data[lat.fieldIdx]
 ];
-
-export const iconPosResolver = ({lat, lng}) =>
-  `${lat.fieldIdx}-${lng.fieldIdx}`;
-
 export const iconAccessor = ({icon}) => d => d.data[icon.fieldIdx];
-export const iconResolver = ({icon}) => icon.fieldIdx;
 
 export const iconRequiredColumns = ['lat', 'lng', 'icon'];
 
@@ -56,8 +50,8 @@ export default class IconLayer extends Layer {
     super(props);
 
     this.registerVisConfig(pointVisConfigs);
-    this.getPosition = memoize(iconPosAccessor, iconPosResolver);
-    this.getIcon = memoize(iconAccessor, iconResolver);
+    this.getPositionAccessor = () => iconPosAccessor(this.config.columns);
+    this.getIconAccessor = () => iconAccessor(this.config.columns);
 
     // prepare layer info modal
     this._layerInfoModal = IconInfoModalFactory();
@@ -166,7 +160,7 @@ export default class IconLayer extends Layer {
   }
 
   calculateDataAttribute(allData, filteredIndex, getPosition) {
-    const getIcon = this.getIcon(this.config.columns);
+    const getIcon = this.getIconAccessor();
     const data = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {
@@ -189,7 +183,7 @@ export default class IconLayer extends Layer {
     return data;
   }
 
-  formatLayerData(allData, filteredIndex, oldLayerData, opt = {}) {
+  formatLayerData(datasets, oldLayerData, opt = {}) {
     const {
       colorScale,
       colorDomain,
@@ -201,6 +195,7 @@ export default class IconLayer extends Layer {
       visConfig: {radiusRange, colorRange}
     } = this.config;
 
+    const {filteredIndex, allData, gpuFilter} = datasets[this.config.dataId];
     const {data} = this.updateData(allData, filteredIndex, oldLayerData);
 
     // point color
@@ -219,13 +214,14 @@ export default class IconLayer extends Layer {
     const getRadius = rScale ? d =>
       this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
 
-    const getColor = cScale
+    const getFillColor = cScale
       ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
       : color;
 
     return {
       data,
-      getColor,
+      getFillColor,
+      getFilterValue: gpuFilter.filterValueAccessor(),
       getRadius
     };
   }
@@ -244,22 +240,21 @@ export default class IconLayer extends Layer {
     interactionConfig,
     layerInteraction
   }) {
+    const layerProps = {
+      radiusMinPixels: 1,
+      radiusScale: this.getRadiusScaleByZoom(mapState),
+      ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
+    };
 
     return !this.iconGeometry ? [] : [
       new SvgIconLayer({
-        // ...layerProps,
+        ...layerProps,
         ...data,
-        ...gpuFilter,
         ...layerInteraction,
         id: this.id,
         idx,
         opacity: this.config.visConfig.opacity,
         getIconGeometry: id => this.iconGeometry[id],
-
-        radiusMinPixels: 1,
-        fp64: this.config.visConfig['hi-precision'],
-        radiusScale: this.getRadiusScaleByZoom(mapState),
-        ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500}),
 
         // picking
         autoHighlight: true,
@@ -268,6 +263,7 @@ export default class IconLayer extends Layer {
 
         // parameters
         parameters: {depthTest: mapState.dragRotate},
+        filterRange: gpuFilter.filterRange,
 
         // update triggers
         updateTriggers: {
@@ -277,7 +273,7 @@ export default class IconLayer extends Layer {
             radiusRange: this.config.visConfig.radiusRange,
             sizeScale: this.config.sizeScale
           },
-          getColor: {
+          getFillColor: {
             color: this.config.color,
             colorField: this.config.colorField,
             colorRange: this.config.visConfig.colorRange,
@@ -291,7 +287,6 @@ export default class IconLayer extends Layer {
             ...layerProps,
             id: `${this.id}-hovered`,
             data: [objectHovered.object],
-            getPosition: data.getPosition,
             getRadius: data.getRadius,
             getColor: this.config.highlightColor,
             getIconGeometry: id => this.iconGeometry[id],
@@ -299,6 +294,6 @@ export default class IconLayer extends Layer {
           })
         ]
       : [])
-    ] : [];
+    ];
   }
 }

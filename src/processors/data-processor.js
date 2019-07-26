@@ -27,9 +27,10 @@ import normalize from '@mapbox/geojson-normalize';
 import {ALL_FIELD_TYPES, GEOJSON_FIELDS} from 'constants/default-settings';
 import {notNullorUndefined} from 'utils/data-utils';
 import KeplerGlSchema from 'schemas';
-
+import {USER_GUIDE_GEOJSON} from 'constants/user-guides';
+import {isObject} from 'utils/utils';
 // if any of these value occurs in csv, parse it to null;
-const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN'];
+const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN', '/N'];
 
 /**
  * Process csv data, output a data object with `{fields: [], rows: []}`.
@@ -416,31 +417,33 @@ export function processGeojson(rawData) {
 
   if (!normalizedGeojson || !Array.isArray(normalizedGeojson.features)) {
     // fail to normalize geojson
+    globalConsole.error(`Failed to normalize Geojson. Read more on valid Geojson format at ${USER_GUIDE_GEOJSON}`);
+
     return null;
   }
 
   // getting all feature fields
-  const allData = normalizedGeojson.features.reduce((accu, f, i) => {
+  const allDataRows = [];
+  for (let i = 0; i < normalizedGeojson.features.length; i++) {
+    const f = normalizedGeojson.features[i];
     if (f.geometry) {
       // check if properties contains object and stringfy this
-      if(typeof f.properties === 'object' && f.properties !== null){
+      if (isObject(f.properties)) {
         Object.keys(f.properties).forEach(key => {
-          if(typeof f.properties[key] === 'object'){
+          if (isObject(f.properties[key])) {
             f.properties[key] = JSON.stringify(f.properties[key]);
           }
         });
       }
-      accu.push({
+      allDataRows.push({
         // add feature to _geojson field
         _geojson: f,
         ...(f.properties || {})
       });
     }
-    return accu;
-  }, []);
-
+  }
   // get all the field
-  const fields = allData.reduce((prev, curr) => {
+  const fields = allDataRows.reduce((prev, curr) => {
     Object.keys(curr).forEach(key => {
       if (!prev.includes(key)) {
         prev.push(key);
@@ -450,15 +453,16 @@ export function processGeojson(rawData) {
   }, []);
 
   // make sure each feature has exact same fields
-  allData.forEach(d => {
+  allDataRows.forEach(d => {
     fields.forEach(f => {
       if (!(f in d)) {
         d[f] = null;
+        d._geojson.properties[f] = null;
       }
     });
   });
 
-  return processRowObject(allData);
+  return processRowObject(allDataRows);
 }
 
 /**
