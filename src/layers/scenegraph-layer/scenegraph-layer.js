@@ -107,8 +107,9 @@ export default class ScenegraphLayer extends Layer {
     };
   }
 
-  formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
+  formatLayerData(datasets, oldLayerData, opt = {}) {
     const {columns} = this.config;
+    const {filteredIndex, allData} = datasets[this.config.dataId];
 
     const getPosition = this.getPosition(columns);
 

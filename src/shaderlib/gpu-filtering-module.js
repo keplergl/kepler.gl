@@ -58,10 +58,18 @@ export default class DataFilterExtension extends LayerExtension {
       modules: [getDataFilterShaderModule(filterSize)],
       inject: {
         'vs:#decl': `
-  attribute ${dataType} instanceFilterValue;
+  #ifdef NON_INSTANCED_MODEL
+  attribute ${dataType} filterValues;
+  #else
+  attribute ${dataType} instanceFilterValues;
+  #endif
   `,
-        'vs:#main-end': `
-  filter_setValue(instanceFilterValue);
+        'vs:#main-start': `
+  #ifdef NON_INSTANCED_MODEL
+  filter_setValue(filterValues);
+  #else
+  filter_setValue(instanceFilterValues);
+  #endif
   `,
         'fs:#main-end': `
   gl_FragColor = filter_filterColor(gl_FragColor);
@@ -71,12 +79,24 @@ export default class DataFilterExtension extends LayerExtension {
   }
 
   initializeState(layer) {
-    layer.getAttributeManager().addInstanced({
-      instanceFilterValue: {
-        size: this.opts.filterSize,
-        accessor: 'getFilterValue'
-      }
-    });
+    const attributeManager = layer.getAttributeManager();
+
+    if (attributeManager) {
+      attributeManager.add({
+        instanceFilterValues: {
+          size: this.opts.filterSize,
+          accessor: 'getFilterValue',
+          shaderAttributes: {
+            filterValues: {
+              divisor: 0
+            },
+            instanceFilterValues: {
+              divisor: 1
+            }
+          }
+        }
+      });
+    }
   }
 }
 
@@ -93,12 +113,13 @@ function getDataFilterShaderModule(filterSize) {
   const vs = `
   uniform ${dataType} filtering_uFilterMin;
   uniform ${dataType} filtering_uFilterMax;
+
   varying float filter_isVisible;
-  void filter_setValue(bool visible) {
+  void filter_setVisibility(bool visible) {
     filter_isVisible = float(visible);
   }
   void filter_setValue(${dataType} value) {
-    filter_setValue(${
+    filter_setVisibility(${
       filterSize === 1
         ? 'value <= filtering_uFilterMax && value >= filtering_uFilterMin'
         : 'all(lessThanEqual(value, filtering_uFilterMax)) && all(greaterThanEqual(value, filtering_uFilterMin))'
