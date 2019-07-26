@@ -404,7 +404,7 @@ export default class Layer {
     return Math.pow(2, Math.max(8 - zoom + zoomOffset, 0));
   }
 
-  formatLayerData(allData, filteredIndex) {
+  formatLayerData(datasets, filteredIndex) {
     return {};
   }
 
@@ -817,9 +817,7 @@ export default class Layer {
   }
 
   updateData(allData, filteredIndex, oldLayerData) {
-    const {columns} = this.config;
-
-    const getPosition = this.getPosition(columns);
+    const getPosition = this.getPositionAccessor();
     const dataUpdateTriggers = this.getDataUpdateTriggers({filteredIndex});
     const triggerChanged = this.getChangedTriggers(dataUpdateTriggers);
 
@@ -844,7 +842,12 @@ export default class Layer {
    * @param {Object} newFilter
    * @returns {object} layer
    */
-  updateLayerDomain(dataset, newFilter) {
+  updateLayerDomain(datasets, newFilter) {
+    const dataset = this.getDataset(datasets);
+    if (!dataset) {
+      return this;
+    }
+
     Object.values(this.visualChannels).forEach(channel => {
       const {scale} = channel;
       const scaleType = this.config[scale];
@@ -859,6 +862,10 @@ export default class Layer {
     });
 
     return this;
+  }
+
+  getDataset(datasets) {
+    return datasets[this.config.dataId];
   }
 
   /**

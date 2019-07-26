@@ -971,7 +971,7 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
             2: null,
             3: null
           },
-          getFilterValue: {
+          filterValueAccessor: {
             inputs: [
               {data: mockData.data[0], index: 0}
             ],
@@ -1004,7 +1004,7 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
             2: null,
             3: null
           },
-          getFilterValue: {
+          filterValueAccessor: {
             inputs: [
               {data: mockData.data[0], index: 0}
             ],
@@ -1178,7 +1178,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
           filterMax: [0, 0, 0, 0]
         },
         filterValueUpdateTriggers: {0: null, 1: null, 2: null, 3: null},
-        getFilterValue: {
+        filterValueAccessor: {
           inputs: ['a', 'b', 'c', 'd', 'e'],
           result: [0, 0, 0, 0]
         }
@@ -1359,7 +1359,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
           2: null,
           3: null
         },
-        getFilterValue: {
+        filterValueAccessor: {
           inputs: [
             {data: mockData.data[0], index: 0}
           ],
@@ -1499,7 +1499,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
         2: null,
         3: null
       },
-      getFilterValue: {
+      filterValueAccessor: {
         inputs: [
           {data: mockData.data[0], index: 0}
         ],
@@ -1576,6 +1576,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
 
   t.end();
 });
+*/
 
 test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> with config', t => {
   const initialVisState = CloneDeep(INITIAL_VIS_STATE);
@@ -1734,7 +1735,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
           2: null,
           3: null
         },
-        getFilterValue: {
+        filterValueAccessor: {
           inputs: [{data: mockRawData.rows[0], index: 1}],
           result: [12.25, 0, 0, 0]
         }
@@ -2055,7 +2056,7 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
         2: null,
         3: null
       },
-      getFilterValue: {
+      filterValueAccessor: {
         inputs: [
           {data: allData[0], index: 0}
         ],
@@ -2283,7 +2284,7 @@ test('#visStateReducer -> setFilter.dynamicDomain & gpu', t => {
         2: null,
         3: null
       },
-      getFilterValue: {
+      filterValueAccessor: {
         inputs: [
           {data: initialState.datasets.milkshake.allData[0], index: 0}
         ],
@@ -2478,7 +2479,7 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
         2: null,
         3: null
       },
-      getFilterValue: {
+      filterValueAccessor: {
         inputs: [
           {data: datasetSmoothie.allData[0], index: 0}
         ],
@@ -2537,7 +2538,7 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
         2: null,
         3: null
       },
-      getFilterValue: {
+      filterValueAccessor: {
         inputs: [
           {data: datasetSmoothie.allData[0], index: 0}
         ],
