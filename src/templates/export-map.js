@@ -35,13 +35,13 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
       <head>
         <meta charset="UTF-8"/>
         <title>Kepler.gl embedded map</title>
-      
+
         <!--Uber Font-->
         <link rel="stylesheet" href="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css">
-      
+
         <!--MapBox css-->
-        <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v0.42.0/mapbox-gl.css" rel="stylesheet">
-      
+        <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css" rel="stylesheet">
+
         <!-- Load React/Redux -->
         <script src="https://unpkg.com/react@16.8.4/umd/react.production.min.js" crossorigin></script>
         <script src="https://unpkg.com/react-dom@16.8.4/umd/react-dom.production.min.js" crossorigin></script>
@@ -49,14 +49,14 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
         <script src="https://unpkg.com/react-redux@5.1.1/dist/react-redux.min.js" crossorigin></script>
         <script src="https://unpkg.com/styled-components@4.1.3/dist/styled-components.min.js" crossorigin></script>
         <script src="https://unpkg.com/react-virtualized@9.21.0/dist/umd/react-virtualized.js" crossorigin></script>
-        
+
         <!-- Load Kepler.gl -->
         <script src="https://unpkg.com/kepler.gl@${version}/umd/keplergl.min.js" crossorigin></script>
-      
+
         <style type="text/css">
           body {margin: 0; padding: 0; overflow: hidden;}
         </style>
-      
+
         <!--MapBox token-->
         <script>
           /**
@@ -71,14 +71,14 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
         <div id="app">
           <!-- Kepler.gl map will be placed here-->
         </div>
-      
+
         <!-- Load our React component. -->
         <script>
           /* Validate Mapbox Token */
           if ((MAPBOX_TOKEN || '') === '' || MAPBOX_TOKEN === 'PROVIDE_MAPBOX_TOKEN') {
             alert(WARNING_MESSAGE);
           }
-      
+
           /** STORE **/
           const reducers = (function createReducers(redux, keplerGl) {
             return redux.combineReducers({
@@ -86,20 +86,20 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
               keplerGl: keplerGl.keplerGlReducer
             });
           }(Redux, KeplerGl));
-      
+
           const middleWares = (function createMiddlewares(keplerGl) {
             return keplerGl.enhanceReduxMiddleware([
               // Add other middlewares here
             ]);
           }(KeplerGl));
-      
+
           const enhancers = (function craeteEnhancers(redux, middles) {
             return redux.applyMiddleware(...middles);
           }(Redux, middleWares));
-      
+
           const store = (function createStore(redux, enhancers) {
             const initialState = {};
-      
+
             return redux.createStore(
               reducers,
               initialState,
@@ -107,7 +107,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
             );
           }(Redux, enhancers));
           /** END STORE **/
-          
+
           /** COMPONENTS **/
           const KeplerElement = (function (react, reactVirtualized, keplerGl, mapboxToken) {
             return function() {
@@ -125,7 +125,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
               )
             }
           }(React, ReactVirtualized, KeplerGl, MAPBOX_TOKEN));
-      
+
           const app = (function createReactReduxProvider(react, reactRedux, KeplerElement) {
             return react.createElement(
               reactRedux.Provider,
@@ -134,7 +134,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
             )
           }(React, ReactRedux, KeplerElement));
           /** END COMPONENTS **/
-      
+
           /** Render **/
           (function render(react, reactDOM, app) {
             reactDOM.render(app, document.getElementById('app'));
@@ -150,12 +150,12 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           (function customize(keplerGl, store) {
             const datasets = ${JSON.stringify(options.datasets)};
             const config = ${JSON.stringify(options.config)};
-            
+
             const loadedData = keplerGl.KeplerGlSchema.load(
               datasets,
               config
             );
-            
+
             store.dispatch(keplerGl.addDataToMap(loadedData));
           }(KeplerGl, store))
         </script>
