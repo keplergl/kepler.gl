@@ -258,6 +258,10 @@ function mockStateWithCustomMapStyle() {
     {
       action: MapStyleActions.addCustomMapStyle,
       payload: [{}]
+    },
+    {
+      action: MapStyleActions.set3dBuildingColor,
+      payload: [[1, 2, 3]]
     }
   ]);
 

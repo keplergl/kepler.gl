@@ -70,7 +70,7 @@ test('#mapStyleSchema -> v1 -> save load mapStyle with custom style', t => {
       label: true,
       road: true
     },
-    threeDBuildingColor: [194.6103322548211, 191.81688250953655, 185.2988331038727],
+    threeDBuildingColor: [1, 2, 3],
     mapStyles: {
       'smoothie_the_cat': {
         id: 'smoothie_the_cat',

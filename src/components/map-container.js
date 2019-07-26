@@ -341,9 +341,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           mapboxApiUrl,
           threeDBuildingColor: mapStyle.threeDBuildingColor,
           updateTriggers: {
-            getFillColor: {
-              buildingColor: mapStyle.threeDBuildingColor
-            }
+            getFillColor:  mapStyle.threeDBuildingColor
           }
         }));
       }

@@ -164,7 +164,8 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
       url: null,
       custom: true
     },
-    threeDBuildingColor: [194.6103322548211, 191.81688250953655, 185.2988331038727],
+    threeDBuildingColor: [1, 2, 3],
+    custom3DBuildingColor: true,
     initialState: {}
   };
 
@@ -232,11 +233,8 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
       url: null,
       custom: true
     },
-    threeDBuildingColor: [
-      194.6103322548211,
-      191.81688250953655,
-      185.2988331038727
-    ],
+    threeDBuildingColor: [1, 2, 3],
+    custom3DBuildingColor: true,
     initialState: {},
     bottomMapStyle: {layers: [], name: 'smoothie_the_cat'},
     topMapStyle: null,

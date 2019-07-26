@@ -63,7 +63,8 @@ const getDefaultState = () => {
     mapboxApiUrl: null,
     mapStylesReplaceDefault: false,
     inputStyle: getInitialInputStyle(),
-    threeDBuildingColor: hexToRgb(DEFAULT_BLDG_COLOR)
+    threeDBuildingColor: hexToRgb(DEFAULT_BLDG_COLOR),
+    custom3DBuildingColor: false
   };
 };
 
@@ -175,8 +176,8 @@ export function getMapStyles({
         visibleLayerGroups: topLayers
       })
     : null;
-  const threeDBuildingColor = get3DBuildingColor(mapStyle);
-  return {bottomMapStyle, topMapStyle, editable, threeDBuildingColor};
+
+  return {bottomMapStyle, topMapStyle, editable};
 }
 
 function findLayerFillColor(layer) {
@@ -185,6 +186,10 @@ function findLayerFillColor(layer) {
 
 function get3DBuildingColor(style) {
   // set building color to be the same as the background color.
+  if (!style.style) {
+    return DEFAULT_BLDG_COLOR;
+  }
+
   const backgroundLayer = (style.style.layers || []).find(
     ({id}) => id === 'background'
   );
@@ -280,10 +285,13 @@ export const mapStyleChangeUpdater = (state, {payload: styleType}) => {
     state.visibleLayerGroups
   );
 
+  const threeDBuildingColor = state.custom3DBuildingColor ? state.threeDBuildingColor :
+  get3DBuildingColor(state.mapStyles[styleType]);
   return {
     ...state,
     styleType,
     visibleLayerGroups,
+    threeDBuildingColor,
     ...getMapStyles({
       ...state,
       visibleLayerGroups,
@@ -384,6 +392,8 @@ export const receiveMapConfigUpdater = (state, {payload: {mapStyle}}) => {
       }
     : mapStyle;
 
+  // set custom3DBuildingColor: true if mapStyle contains threeDBuildingColor
+  merged.custom3DBuildingColor = Boolean(mapStyle.threeDBuildingColor) || merged.custom3DBuildingColor;
   const newState = mapConfigChangeUpdater(state, {payload: merged});
 
   return loadMapStyleTasks ? withTask(newState, loadMapStyleTasks) : newState;
@@ -527,7 +537,8 @@ export const addCustomMapStyleUpdater = state => {
 
 export const set3dBuildingColorUpdater = (state, {payload: color}) => ({
   ...state,
-  threeDBuildingColor: color
+  threeDBuildingColor: color,
+  custom3DBuildingColor: true
 });
 
 export function getInitialInputStyle() {
