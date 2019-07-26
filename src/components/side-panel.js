@@ -182,6 +182,7 @@ export default function SidePanelFactory(
         onConfigChange: mapStyleActions.mapConfigChange,
         onStyleChange: mapStyleActions.mapStyleChange,
         onBuildingChange: mapStyleActions.mapBuildingChange,
+        set3dBuildingColor: mapStyleActions.set3dBuildingColor,
         showAddMapStyleModal: this._showAddMapStyleModal
       };
 

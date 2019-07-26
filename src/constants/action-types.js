@@ -106,6 +106,7 @@ const ActionTypes = keyMirror({
   LOAD_CUSTOM_MAP_STYLE: null,
   ADD_CUSTOM_MAP_STYLE: null,
   REQUEST_MAP_STYLES: null,
+  SET_3D_BUILDING_COLOR: null,
 
   // uiState
   TOGGLE_SIDE_PANEL: null,

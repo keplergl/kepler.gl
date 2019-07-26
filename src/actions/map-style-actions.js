@@ -118,6 +118,18 @@ export const loadCustomMapStyle = createAction(
   customMapStyle => customMapStyle
 );
 
+// SET_3D_BUILDING_COLOR
+/**
+ * Set 3d building layer group color
+ * @memberof mapStyleActions
+ * @param {Array} color - [r, g, b]
+ * @public
+ */
+export const set3dBuildingColor = createAction(
+  ActionTypes.SET_3D_BUILDING_COLOR,
+  color => color
+);
+
 /**
  * Actions handled mostly by  `mapStyle` reducer.
  * They manage the display of base map, such as loading and receiving base map styles,

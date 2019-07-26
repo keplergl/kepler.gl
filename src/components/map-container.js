@@ -325,7 +325,6 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       } = this.props;
 
       let deckGlLayers = [];
-
       // wait until data is ready before render data layers
       if (layerData && layerData.length) {
         // last layer render first
@@ -340,7 +339,10 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           id: '_keplergl_3d-building',
           mapboxApiAccessToken,
           mapboxApiUrl,
-          threeDBuildingColor: mapStyle.threeDBuildingColor
+          threeDBuildingColor: mapStyle.threeDBuildingColor,
+          updateTriggers: {
+            getFillColor:  mapStyle.threeDBuildingColor
+          }
         }));
       }
 

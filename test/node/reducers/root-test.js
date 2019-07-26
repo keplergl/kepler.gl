@@ -36,8 +36,8 @@ test('keplerGlReducer.initialState', t => {
     });
 
   const test1ReducerInitialState = test1Reducer(undefined, registerEntry({id: 'test'}));
-  t.deepEqual(test1ReducerInitialState.test.visState.layerClasses, [], 'should overide initialState');
-  t.equal(test1ReducerInitialState.test.mapStyle.styleType, 'light', 'should overide initialState');
+  t.deepEqual(test1ReducerInitialState.test.visState.layerClasses, [], 'should override initialState');
+  t.equal(test1ReducerInitialState.test.mapStyle.styleType, 'light', 'should override initialState');
   t.deepEqual(test1ReducerInitialState.test.visState.initialState, {layerClasses: []}, 'should save initialState');
   t.deepEqual(test1ReducerInitialState.test.mapStyle.initialState, {styleType: 'light'}, 'should save initialState');
 
@@ -54,8 +54,8 @@ test('keplerGlReducer.initialState', t => {
 
   // reset reducer
   const restTestReducer = test1Reducer(modifiedReducer, resetMapConfig());
-  t.deepEqual(restTestReducer.test.visState.layerClasses, [], 'should overide initialState');
-  t.equal(restTestReducer.test.mapStyle.styleType, 'light', 'should overide initialState');
+  t.deepEqual(restTestReducer.test.visState.layerClasses, [], 'should override initialState');
+  t.equal(restTestReducer.test.mapStyle.styleType, 'light', 'should override initialState');
   t.deepEqual(restTestReducer.test.visState.initialState, {layerClasses: []}, 'should save initialState');
   t.deepEqual(restTestReducer.test.mapStyle.initialState, {styleType: 'light'}, 'should save initialState');
 

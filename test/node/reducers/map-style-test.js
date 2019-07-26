@@ -103,7 +103,7 @@ test('#mapStyleReducer -> INIT & LOAD_MAP_STYLES', t => {
 
   t.deepEqual(
     finalState,
-    { ...newState, mapStyles: mapStyles },
+    {...newState, mapStyles},
     'user provided mapStyles are populated, defaults ignored'
   );
 
@@ -117,6 +117,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
   );
 
   const stateToSave = StateWCustomMapStyle;
+
   // save state
   const savedState = SchemaManager.getConfigToSave(stateToSave);
 
@@ -163,7 +164,8 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
       url: null,
       custom: true
     },
-    threeDBuildingColor: [209, 206, 199],
+    threeDBuildingColor: [1, 2, 3],
+    custom3DBuildingColor: true,
     initialState: {}
   };
 
@@ -231,11 +233,8 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
       url: null,
       custom: true
     },
-    threeDBuildingColor: [
-      194.6103322548211,
-      191.81688250953655,
-      185.2988331038727
-    ],
+    threeDBuildingColor: [1, 2, 3],
+    custom3DBuildingColor: true,
     initialState: {},
     bottomMapStyle: {layers: [], name: 'smoothie_the_cat'},
     topMapStyle: null,
