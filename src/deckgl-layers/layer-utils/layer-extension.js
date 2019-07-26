@@ -38,8 +38,8 @@ export class LayerExtension {
 
 export function extendLayer(Layer, ...extensions) {
   class NewLayer extends Layer {
-    getShaders() {
-      const shaders = super.getShaders();
+    getShaders(...args) {
+      const shaders = super.getShaders(...args);
       shaders.modules = shaders.modules || [];
       shaders.inject = shaders.inject || {};
       shaders.defines = shaders.defines || {};

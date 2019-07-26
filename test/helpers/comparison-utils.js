@@ -203,9 +203,9 @@ export function cmpGpuFilterProp(t, expectedGpuFilter, actualGpuFilter) {
   cmpObjectKeys(t, expectedGpuFilter, actualGpuFilter, 'gpu filter');
 
   Object.keys(expectedGpuFilter).forEach(key => {
-    if (key === 'getFilterValue' && expectedGpuFilter.getFilterValue !== 'skip') {
-      const {inputs, result} = expectedGpuFilter.getFilterValue;
-      t.deepEqual(actualGpuFilter.getFilterValue(...inputs), result, 'getFilterValue should be correct');
+    if (key === 'filterValueAccessor' && expectedGpuFilter.filterValueAccessor !== 'skip') {
+      const {inputs, result} = expectedGpuFilter.filterValueAccessor;
+      t.deepEqual(actualGpuFilter.filterValueAccessor()(...inputs), result, 'getFilterValue should be correct');
     } else {
       t.deepEqual(
         actualGpuFilter[key],

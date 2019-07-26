@@ -22,11 +22,10 @@ import test from 'tape';
 import GeojsonLayer from 'layers/geojson-layer/geojson-layer';
 import {processCsvData} from 'processors/data-processor';
 
-import {wktCsv, updatedLayerV2} from 'test/fixtures/test-csv-data';
-import {
-  testCreateCases,
-  testFormatLayerDataCases
-} from 'test/helpers/layer-utils';
+import {wktCsv, updatedLayerSimplifiedShape, updatedLayerV2}
+from 'test/fixtures/test-csv-data';
+import {testCreateCases, testFormatLayerDataCases} from 'test/helpers/layer-utils';
+import {getGpuFilterProps} from 'utils/gpu-filter-utils';
 
 test('#GeojsonLayer -> constructor', t => {
   const TEST_CASES = {
@@ -57,8 +56,7 @@ test('#GeojsonLayer -> constructor', t => {
 test('#GeojsonLayer -> formatLayerData', t => {
   const {rows} = processCsvData(wktCsv);
 
-  const filteredIndex = [0, 1, 2, 4];
-  const data = [rows[0], rows[1], rows[2], rows[4]];
+  const filteredIndex = [0, 2, 4];
 
   const TEST_CASES = [
     {
@@ -73,7 +71,11 @@ test('#GeojsonLayer -> formatLayerData', t => {
         }
       }
     },
-    data: [rows, filteredIndex, undefined],
+    data: [{'0dj3h': {
+      allData: rows,
+      filteredIndex,
+      gpuFilter: getGpuFilterProps([], '0dj3h')
+    }}, undefined],
     test: result => {
       const {layerData, layer} = result;
       const expectedLayerData = {
@@ -82,6 +84,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
           updatedLayerV2.dataToFeature[2],
           updatedLayerV2.dataToFeature[4]
         ],
+        getFilterValue: () => {},
         getFeature: () => {},
         getFillColor: () => {},
         getLineColor: () => {},
@@ -92,35 +95,14 @@ test('#GeojsonLayer -> formatLayerData', t => {
       const expectedLayerMeta = updatedLayerV2.meta;
       const expectedDataToFeature = updatedLayerV2.dataToFeature;
 
-        t.deepEqual(
-          layerData.data,
-          expectedLayerData.data,
-          'should format correct geojson layerData'
-        );
-        t.ok(
-          typeof layerData.getFeature === 'function',
-          'should have getFeature'
-        );
-        t.ok(
-          typeof layerData.getFillColor === 'function',
-          'should have getFillColor'
-        );
-        t.ok(
-          typeof layerData.getLineColor === 'function',
-          'should have getLineColor'
-        );
-        t.ok(
-          typeof layerData.getLineWidth === 'function',
-          'should have getSize'
-        );
-        t.ok(
-          typeof layerData.getElevation === 'function',
-          'should have getRadius'
-        );
-        t.ok(
-          typeof layerData.getRadius === 'function',
-          'should have getRadius'
-        );
+      t.deepEqual(layerData.data, expectedLayerData.data, 'should format correct geojson layerData');
+      t.ok(typeof layerData.getFeature === 'function', 'should have getFeature');
+      t.ok(typeof layerData.getFillColor === 'function', 'should have getFillColor');
+      t.ok(typeof layerData.getLineColor === 'function', 'should have getLineColor');
+      t.ok(typeof layerData.getLineWidth === 'function', 'should have getSize');
+      t.ok(typeof layerData.getElevation === 'function', 'should have getRadius');
+      t.ok(typeof layerData.getRadius === 'function', 'should have getRadius');
+      t.ok(typeof layerData.getFilterValue === 'function', 'should have getFilterValue');
 
         t.deepEqual(
           layer.meta,
@@ -134,55 +116,39 @@ test('#GeojsonLayer -> formatLayerData', t => {
         );
       }
     },
-    data: [rows, filteredIndex, undefined],
+    data: [{'0dj3h': {
+      allData: rows,
+      filteredIndex,
+      gpuFilter: getGpuFilterProps([], '0dj3h')
+    }}, undefined],
     test: result => {
       const {layerData, layer} = result;
 
-        const expectedLayerData = {
-          data: [
-            updatedLayerV2.dataToFeature[1],
-            updatedLayerV2.dataToFeature[2],
-            updatedLayerV2.dataToFeature[4]
-          ],
-          getFeature: () => {},
-          getFillColor: () => {},
-          getLineColor: () => {},
-          getLineWidth: () => {},
-          getElevation: () => {},
-          getRadius: () => {}
-        };
-        const expectedLayerMeta = updatedLayerV2.meta;
-        const expectedDataToFeature = updatedLayerV2.dataToFeature;
+      const expectedLayerData = {
+        data: [
+          updatedLayerSimplifiedShape.dataToFeature[0],
+          updatedLayerSimplifiedShape.dataToFeature[2],
+          updatedLayerSimplifiedShape.dataToFeature[4]
+        ],
+        getFeature: () => {},
+        getFillColor: () => {},
+        getLineColor: () => {},
+        getLineWidth: () => {},
+        getElevation: () => {},
+        getRadius: () => {},
+        getFilterValue: () => {}
+      };
+      const expectedLayerMeta = updatedLayerSimplifiedShape.meta;
+      const expectedDataToFeature = updatedLayerSimplifiedShape.dataToFeature;
 
-        t.deepEqual(
-          layerData.data,
-          expectedLayerData.data,
-          'should format correct geojson layerData'
-        );
-        t.ok(
-          typeof layerData.getFeature === 'function',
-          'should have getFeature'
-        );
-        t.ok(
-          typeof layerData.getFillColor === 'function',
-          'should have getFillColor'
-        );
-        t.ok(
-          typeof layerData.getLineColor === 'function',
-          'should have getLineColor'
-        );
-        t.ok(
-          typeof layerData.getLineWidth === 'function',
-          'should have getSize'
-        );
-        t.ok(
-          typeof layerData.getElevation === 'function',
-          'should have getRadius'
-        );
-        t.ok(
-          typeof layerData.getRadius === 'function',
-          'should have getRadius'
-        );
+      t.deepEqual(layerData.data, expectedLayerData.data, 'should format correct geojson layerData');
+      t.ok(typeof layerData.getFeature === 'function', 'should have getFeature');
+      t.ok(typeof layerData.getFillColor === 'function', 'should have getFillColor');
+      t.ok(typeof layerData.getLineColor === 'function', 'should have getLineColor');
+      t.ok(typeof layerData.getLineWidth === 'function', 'should have getSize');
+      t.ok(typeof layerData.getElevation === 'function', 'should have getRadius');
+      t.ok(typeof layerData.getRadius === 'function', 'should have getRadius');
+      t.ok(typeof layerData.getFilterValue === 'function', 'should have getFilterValue');
 
         t.deepEqual(
           layer.meta,

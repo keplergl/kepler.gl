@@ -91,7 +91,7 @@ test('#ScenegraphLayer -> formatLayerData', t => {
           }
         }
       },
-      data: [data, rows, filteredIndex, undefined],
+      data: [{'0dj3h': {allData: rows, filteredIndex}}, undefined],
       test: result => {
         const {layerData, layer} = result;
         const expectedLayerData = {
@@ -162,7 +162,7 @@ test('#ScenegraphLayer -> formatLayerData', t => {
           args: [{fixedRadius: true}]
         }
       ],
-      data: [dataWithNull, allDataWithNull, filteredIndex, undefined],
+      data: [{'0dj3h': {allData: allDataWithNull, filteredIndex}}, undefined],
       test: result => {
         const {layerData, layer} = result;
 

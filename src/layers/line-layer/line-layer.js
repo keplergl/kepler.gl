@@ -94,7 +94,6 @@ export default class LineLayer extends ArcLayer {
       // base layer
       new ExtendedLineLayer({
         ...data,
-        ...gpuFilter,
         ...interaction,
         ...layerInteraction,
         getColor: data.getSourceColor,
@@ -104,6 +103,7 @@ export default class LineLayer extends ArcLayer {
         strokeScale: this.config.visConfig.thickness,
         // parameters
         parameters: {depthTest: mapState.dragRotate},
+        filterRange: gpuFilter.filterRange,
         updateTriggers: {
           getFilterValue: gpuFilter.filterValueUpdateTriggers,
           getWidth: {

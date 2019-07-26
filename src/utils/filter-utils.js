@@ -558,9 +558,13 @@ export function diffFilters(filterRecord, oldFilterRecord = {}) {
  * @returns {Boolean} - whether value falls in the range of the filter
  */
 export function isDataMatchFilter(data, filter, i, field) {
-  const val = data[field.tableFieldIndex - 1];
   if (!filter.type) {
     return true;
+  }
+
+  const val = data[filter.fieldIdx];
+  if (!notNullorUndefined(val)) {
+    return false;
   }
 
   switch (filter.type) {

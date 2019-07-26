@@ -210,8 +210,9 @@ export default class AggregationLayer extends Layer {
     this.updateMeta({bounds});
   }
 
-  formatLayerData(allData, filteredIndex, oldLayerData, opt = {}) {
+  formatLayerData(datasets, oldLayerData, opt = {}) {
     const getPosition = this.getPosition(this.config.columns);
+    const {filteredIndex, allData} = datasets[this.config.dataId];
 
     if (!oldLayerData || oldLayerData.getPosition !== getPosition) {
       this.updateLayerMeta(allData, getPosition);

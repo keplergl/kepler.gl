@@ -363,11 +363,11 @@ export function layerTypeChangeUpdater(state, action) {
 
   newLayer.assignConfigToLayer(oldLayer.config, oldLayer.visConfigSettings);
 
-  if (newLayer.config.dataId) {
-    const dataset = state.datasets[newLayer.config.dataId];
-    newLayer.updateLayerDomain(dataset);
-  }
-
+  // if (newLayer.config.dataId) {
+  //   const dataset = state.datasets[newLayer.config.dataId];
+  //   newLayer.updateLayerDomain(dataset);
+  // }
+  newLayer.updateLayerDomain(state.datasets);
   const {layerData, layer} = calculateLayerData(newLayer, state);
   let newState = updateStateWithLayerAndData(state, {layerData, layer, idx});
 
@@ -1387,15 +1387,14 @@ export function updateAllLayerDomainData(state, dataId, updatedFilter) {
         updatedFilter && updatedFilter.fixedDomain
           ? oldLayer
           : oldLayer.updateLayerDomain(
-              state.datasets[oldLayer.config.dataId],
+              state.datasets,
               updatedFilter
             );
 
       const {layerData, layer} = calculateLayerData(
         newLayer,
         state,
-        state.layerData[i],
-        // {sameData: updatedFilter && updatedFilter.gpu}
+        state.layerData[i]
       );
 
       newLayers.push(layer);
