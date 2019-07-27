@@ -561,9 +561,10 @@ export default class Layer {
   shouldRenderLayer(data) {
     return (
       this.type &&
-      this.hasAllColumns() &&
       this.config.isVisible &&
-      this.hasLayerData(data)
+      this.hasAllColumns() &&
+      this.hasLayerData(data) &&
+      typeof this.renderLayer === 'function'
     );
   }
 

@@ -23,6 +23,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import MapboxGLMap from 'react-map-gl';
 import DeckGL from 'deck.gl';
+import {createSelector} from 'reselect';
 import WebMercatorViewport from 'viewport-mercator-project';
 
 // components
@@ -31,12 +32,13 @@ import MapControlFactory from 'components/map/map-control';
 import {StyledMapContainer} from 'components/common/styled-components';
 
 // utils
-import {generateMapboxLayers, updateMapboxLayers} from '../layers/mapbox-utils';
+import {generateMapboxLayers, updateMapboxLayers} from 'layers/mapbox-utils';
+import {OVERLAY_TYPE} from 'layers/base-layer';
 import {onWebGLInitialized, setLayerBlending} from 'utils/gl-utils';
 import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 
 // default-settings
-import ThreeDBuildingLayer from '../deckgl-layers/3d-building-layer/3d-building-layer';
+import ThreeDBuildingLayer from 'deckgl-layers/3d-building-layer/3d-building-layer';
 
 const MAP_STYLE = {
   container: {
@@ -108,7 +110,27 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       }
     }
 
+    layersSelector = props => props.layers;
+    layerDataSelector = props => props.layerData;
+    mapLayersSelector = props => props.mapLayers;
+    layersToRenderSelector = createSelector(
+      this.layersSelector,
+      this.layerDataSelector,
+      this.mapLayersSelector,
+      // {[id]: true \ false}
+      (layers, layerData, mapLayers) => layers.reduce((accu, layer, idx) => ({
+        ...accu,
+        [layer.id]: layer.shouldRenderLayer(layerData[idx]) &&
+          this._isVisibleMapLayer(layer, mapLayers)
+      }), {})
+    );
+
     /* component private functions */
+    _isVisibleMapLayer(layer, mapLayers) {
+      // if layer.id is not in mapLayers, don't render it
+      return !mapLayers || (mapLayers[layer.id] && mapLayers[layer.id].isVisible);
+    }
+
     _onCloseMapPopover = () => {
       this.props.visStateActions.onLayerClick(null);
     };
@@ -128,7 +150,6 @@ export default function MapContainerFactory(MapPopover, MapControl) {
 
     _onMapboxStyleUpdate = () => {
       // force refresh mapboxgl layers
-
       updateMapboxLayers(
         this._map,
         this._renderMapboxLayers(),
@@ -175,7 +196,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
 
     /* component render functions */
     /* eslint-disable complexity */
-    _renderMapPopover() {
+    _renderMapPopover(layersToRender) {
       // TODO: move this into reducer so it can be tested
       const {
         mapState,
@@ -208,9 +229,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         const layer = layers[overlay.props.idx];
 
         if (
-          layer.config.isVisible &&
           layer.getHoverData &&
-          (!mapLayers || mapLayers[layer.id].isVisible)
+          layersToRender[layer.id]
         ) {
 
           // if layer is visible and have hovered data
@@ -257,29 +277,21 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       return screenCoord && {x: screenCoord[0], y: screenCoord[1]};
     }
 
-    _shouldRenderLayer(layer, data, mapLayers) {
-      const isAvailableAndVisible =
-        !(mapLayers && mapLayers[layer.id]) || mapLayers[layer.id].isVisible;
-      return layer.shouldRenderLayer(data) && isAvailableAndVisible;
-    }
-
     _renderLayer = (overlays, idx) => {
       const {
         layers,
         layerData,
         hoverInfo,
         clicked,
-        mapLayers,
         mapState,
         interactionConfig,
         mousePos
       } = this.props;
-      const {mousePosition} = mousePos;
       const layer = layers[idx];
       const data = layerData[idx];
 
       const layerInteraction = {
-        mousePosition,
+        mousePosition: mousePos.mousePosition,
         wrapLongitude: true
       };
 
@@ -288,37 +300,27 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         onSetLayerDomain: val => this._onLayerSetDomain(idx, val)
       };
 
-      if (!this._shouldRenderLayer(layer, data, mapLayers)) {
-        return overlays;
-      }
-
-      let layerOverlay = [];
-
       // Layer is Layer class
-      if (typeof layer.renderLayer === 'function') {
-        layerOverlay = layer.renderLayer({
-          data,
-          idx,
-          layerInteraction,
-          objectHovered,
-          mapState,
-          interactionConfig,
-          layerCallbacks
-        });
-      }
+      const layerOverlay = layer.renderLayer({
+        data,
+        idx,
+        layerInteraction,
+        objectHovered,
+        mapState,
+        interactionConfig,
+        layerCallbacks
+      });
 
-      if (layerOverlay.length) {
-        overlays = overlays.concat(layerOverlay);
-      }
-      return overlays;
+      return overlays.concat(layerOverlay || []);
     };
 
-    _renderOverlay() {
+    _renderDeckOverlay(layersToRender) {
       const {
         mapState,
         mapStyle,
         layerData,
         layerOrder,
+        layers,
         visStateActions,
         mapboxApiAccessToken,
         mapboxApiUrl
@@ -331,6 +333,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         deckGlLayers = layerOrder
           .slice()
           .reverse()
+          .filter(idx => layers[idx].overlayType === OVERLAY_TYPE.deckgl && layersToRender[layers[idx].id])
           .reduce(this._renderLayer, []);
       }
 
@@ -360,20 +363,20 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       );
     }
 
-    _renderMapboxLayers() {
+    _renderMapboxLayers(layersToRender) {
       const {
         layers,
         layerData,
         layerOrder
       } = this.props;
 
-      return generateMapboxLayers(layers, layerData, layerOrder);
+      return generateMapboxLayers(layers, layerData, layerOrder, layersToRender);
     }
 
-    _renderMapboxOverlays() {
+    _renderMapboxOverlays(layersToRender) {
       if (this._map && this._map.isStyleLoaded()) {
 
-        const mapboxLayers = this._renderMapboxLayers();
+        const mapboxLayers = this._renderMapboxLayers(layersToRender);
 
         updateMapboxLayers(
           this._map,
@@ -401,7 +404,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         mapState, mapStyle, mapStateActions, mapLayers, layers, MapComponent,
         datasets, mapboxApiAccessToken, mapboxApiUrl, mapControls, toggleMapControl
       } = this.props;
-
+      const layersToRender = this.layersToRenderSelector(this.props);
       if (!mapStyle.bottomMapStyle) {
         // style not yet loaded
         return <div/>;
@@ -421,11 +424,11 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           <MapControl
             datasets={datasets}
             dragRotate={mapState.dragRotate}
-            isSplit={mapState.isSplit}
+            isSplit={Boolean(mapLayers)}
             isExport={this.props.isExport}
             layers={layers}
+            layersToRender={layersToRender}
             mapIndex={this.props.index}
-            mapLayers={mapLayers}
             mapControls={mapControls}
             scale={mapState.scale || 1}
             top={0}
@@ -443,8 +446,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             transitionDuration={TRANSITION_DURATION}
             onMouseMove={this.props.visStateActions.onMouseMove}
           >
-            {this._renderOverlay()}
-            {this._renderMapboxOverlays()}
+            {this._renderDeckOverlay(layersToRender)}
+            {/*this._renderMapboxOverlays(layersToRender)*/}
           </MapComponent>
           {mapStyle.topMapStyle && (
             <div style={MAP_STYLE.top}>
@@ -455,7 +458,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
               />
             </div>
           )}
-          {this._renderMapPopover()}
+          {this._renderMapPopover(layersToRender)}
         </StyledMapContainer>
       );
     }

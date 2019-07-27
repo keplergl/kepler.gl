@@ -108,7 +108,7 @@ export const updateVisDataUpdater = (state, action) => {
     ...defaultOptions,
     ...action.options
   };
-
+  console.log(options)
   let bounds;
   if (options.centerMap) {
     // find map bounds for new layers

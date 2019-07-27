@@ -150,27 +150,27 @@ class HeatmapLayer extends MapboxGLLayer {
   };
 
   datasetSelector = config => config.dataId;
-  isVisibleSelector = config => config.isVisible;
+  // isVisibleSelector = config => config.isVisible;
   visConfigSelector = config => config.visConfig;
   weightFieldSelector = config => config.weightField ? config.weightField.name : null;
   weightDomainSelector = config => config.weightDomain;
 
   computeHeatmapConfiguration = createSelector(
     this.datasetSelector,
-    this.isVisibleSelector,
+    // this.isVisibleSelector,
     this.visConfigSelector,
     this.weightFieldSelector,
     this.weightDomainSelector,
 
-    (datasetId, isVisible, visConfig, weightField, weightDomain) => {
+    (datasetId, visConfig, weightField, weightDomain) => {
 
-      const layer = {
+      return {
         type: 'heatmap',
         id: this.id,
         source: datasetId,
-        layout: {
-          visibility: isVisible ? 'visible' : 'none'
-        },
+        // layout: {
+        //   visibility: 'visible'
+        // },
         maxzoom: MAX_ZOOM_LEVEL,
         paint: {
           'heatmap-weight': weightField ? [
@@ -203,8 +203,6 @@ class HeatmapLayer extends MapboxGLLayer {
           'heatmap-opacity': visConfig.opacity
         }
       };
-
-      return layer;
     }
   );
 

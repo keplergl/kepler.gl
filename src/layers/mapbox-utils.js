@@ -27,25 +27,31 @@ import {OVERLAY_TYPE} from './base-layer';
  * @param layerOrder the order by which we should convert layers
  * @returns {*}
  */
-export function generateMapboxLayers(layers = [], layerData = [], layerOrder = []) {
+export function generateMapboxLayers(
+  layers = [],
+  layerData = [],
+  layerOrder = [],
+  layersToRender = {}
+) {
   if (layerData.length > 0) {
-    return layerOrder.slice()
+    return layerOrder
+      .slice()
       .reverse()
-      .reduce((overlays, idx) => {
+      .filter(
+        idx =>
+          layers[idx].overlayType === OVERLAY_TYPE.mapboxgl &&
+          layersToRender[layers[idx].id]
+      )
+      .map(idx => {
         const layer = layers[idx];
-
-        return layer.overlayType !== OVERLAY_TYPE.mapboxgl ?
-          overlays
-          : [
-            ...overlays,
-            {
-              id: layer.id,
-              data: layerData[idx].data,
-              config: layerData[idx].config,
-              datasetId: layer.config.dataId
-            }
-          ]
-      }, []);
+        return {
+          id: layer.id,
+          data: layerData[idx].data,
+          isVisible: layer.config.isVisible,
+          config: layerData[idx].config,
+          datasetId: layer.config.dataId
+        };
+      });
   }
 
   return [];
@@ -59,79 +65,76 @@ export function generateMapboxLayers(layers = [], layerData = [], layerOrder = [
  *                  {layerId: datasetId}
  * @param mapLayers carries information about split map view
  */
-export function updateMapboxLayers(map, newLayers = [], oldLayers = null, mapLayers = null, opt = {force: true}) {
-  // delete non existing layers
-
+export function updateMapboxLayers(
+  map,
+  newLayers = [],
+  oldLayers = null,
+  mapLayers = null,
+  opt = {force: true}
+) {
+  // delete no longer existed old layers
   if (oldLayers) {
-    const oldLayersKeys = Object.keys(oldLayers);
-    if (newLayers.length === 0 && oldLayersKeys.length > 0) {
-      oldLayersKeys.forEach(layerId => map.removeLayer(layerId));
-    } else {
-      // remove layers
-      const currentLayersIds = newLayers.reduce((final, layer) => ({
-        ...final,
-        [layer.id]: true
-      }), {});
+    const newLayerIds = newLayers.reduce(
+      (accu, l) => ({
+        ...accu,
+        [l.id]: true
+      }),
+      {}
+    );
 
-      const layersToDelete = oldLayersKeys.reduce((final, layerId) => {
-        // if layer doesn't exists anymore
-        if (!currentLayersIds[layerId]) {
-          return {
-            ...final,
-            [layerId]: oldLayers[layerId]
-          };
-        }
-        return final;
-      }, []);
-      Object.keys(layersToDelete).forEach(layerId => map.removeLayer(layerId));
-    }
+    Object.keys(oldLayers).forEach(layerId => {
+      if (!newLayerIds[layerId]) {
+        map.removeLayer(layerId);
+      }
+    });
   }
 
   // insert or update new layer
-  // TODO: fix complexity
-  /* eslint-disable complexity */
   newLayers.forEach(overlay => {
-    const {id: layerId, config, data, datasetId} = overlay;
+    const {id: layerId, config, data, datasetId, isVisible} = overlay;
     if (!data && !config) {
       return;
     }
-    const isAvailableAndVisible =
-      !(mapLayers && mapLayers[layerId]) || mapLayers[layerId].isVisible;
-    // checking if source already exists
 
-    if (data && isAvailableAndVisible) {
-      const source = map.getSource(datasetId);
-      if (!source) {
-        map.addSource(datasetId, {
-          type: 'geojson',
-          data
-        });
-      }
-      else {
-        source.setData(data);
-      }
+    if (data) {
+      updateSourceData(map, datasetId, data);
     }
 
     const oldConfig = oldLayers[layerId];
     const mapboxLayer = map.getLayer(layerId);
-    // compare with previous configs
 
+    // compare with previous configs
     if (!oldConfig || oldConfig !== config || !mapboxLayer || opt.force) {
-      // check if layer already is set
-      // remove it if exists
+
       if (mapboxLayer) {
+        // check if layer already is set
+        // remove it if exists
         map.removeLayer(layerId);
       }
+
+      map.addLayer(config);
+      map.setLayoutProperty(layerId, 'visibility', isVisible ? 'visible' : 'none');
       // add if visible and available
-      if (isAvailableAndVisible) {
-        map.addLayer(config);
-      }
+      // if (isAvailableAndVisible) {
+      //   map.addLayer(config);
+      // }
     }
   });
-  /* eslint-enable complexity */
-  // TODO: think about removing sources
-};
+}
 
+function updateSourceData(map, datasetId, data) {
+  console.log('mapbox updateSourceData')
+  const source = map.getSource(datasetId);
+
+  if (!source) {
+    map.addSource(datasetId, {
+      type: 'geojson',
+      data
+    });
+  } else {
+    source.setData(data);
+  }
+}
 /**
  *
  * @param points
@@ -143,23 +146,38 @@ export function updateMapboxLayers(map, newLayers = [], oldLayers = null, mapLay
  * @param properties [{label: {fieldIdx}]
  * @returns {{type: string, properties: {}, features: {type: string, properties: {}, geometry: {type: string, coordinates: *[]}}[]}}
  */
-export function geojsonFromPoints(allData = [], filteredIndex = [], columns = {}, properties = []) {
-  return {
+export function geojsonFromPoints(
+  allData = [],
+  filteredIndex = [],
+  columns = {},
+  properties = []
+) {
+  const geojson = {
     type: 'FeatureCollection',
-    features: filteredIndex.map(index => allData[index]).map(point => ({
+    features: []
+  };
+
+  for (let i = 0; i < filteredIndex.length; i++) {
+    const point = allData[filteredIndex[i]];
+    geojson.features.push({
       type: 'Feature',
-      properties: properties.reduce((final, property) => ({
-        ...final,
-        [property.name]: point[property.tableFieldIndex - 1]
-      }), {}),
+      properties: properties.reduce(
+        (final, property) => ({
+          ...final,
+          [property.name]: point[property.tableFieldIndex - 1]
+        }),
+        {}
+      ),
       geometry: {
         type: 'Point',
         coordinates: [
           columns.lng ? point[columns.lng.fieldIdx] : null, // lng
-          columns.lat ? point[columns.lat.fieldIdx] : null, // lat
-          columns.altitude ? point[columns.altitude.fieldIdx] : 0 // altitude
+          columns.lat ? point[columns.lat.fieldIdx] : null // lat
+          // columns.altitude ? point[columns.altitude.fieldIdx] : 0 // altitude
         ]
       }
-    }))
-  };
+    });
+  }
+
+  return geojson;
 }
