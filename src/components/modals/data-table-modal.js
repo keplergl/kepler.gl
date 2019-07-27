@@ -18,134 +18,155 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
-import {createSelector} from 'reselect';
+import React, {PureComponent} from 'react';
 import styled from 'styled-components';
-import {VariableSizeGrid as Grid} from 'react-window';
-import Autosizer from 'react-virtualized-auto-sizer';
+import {MultiGrid} from 'react-virtualized';
 
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
 import FieldToken from 'components/common/field-token';
 import DatasetLabel from 'components/common/dataset-label';
 import {Clock} from 'components/common/icons/index';
 
-// Breakpoints
-import {media} from 'styles/media-breakpoints';
+const COLUMN_WIDTH = 200;
 
-const COLUMN_SIZE = {
-  [ALL_FIELD_TYPES.timestamp]: 200,
-  [ALL_FIELD_TYPES.date]: 150,
-  [ALL_FIELD_TYPES.point]: 150,
-  [ALL_FIELD_TYPES.string]: 150
-};
-
-const DEFAULT_COLUMN_WIDTH = 100;
-const HEADER_HEIGHT = 72;
+const CELL_HEADER_HEIGHT = 72;
+const CELL_HEIGHT = 48;
+const DEFAULT_WIDTH = 800;
+const DEFAULT_HEIGHT = 600;
 
 const dgSettings = {
-  sidePadding: 36,
-  verticalPadding: 16,
-  height: 36
+  sidePadding: '36px',
+  verticalPadding: '16px',
+  height: '36px'
 };
 
 const StyledModal = styled.div`
-  height: 70vh;
+  min-height: 70vh;
   overflow: hidden;
-  ${media.palm`
-    margin: 0 -36px;
-  `}
-  
-  .header {
+`;
+
+const DataGridWrapper = styled.div`
+  .cell {
+    border-right: 0;
+    padding: 14px 8px;
+    border-bottom: ${props => props.theme.panelBorderLT};
+    color: ${props => props.theme.labelColorLT};
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    text-overflow: ellipsis;
+    white-space: pre-wrap;
+    word-wrap: break-spaces;
+  }
+
+  .header-cell {
     border-right: 0;
     border-bottom: 0;
     background: ${props => props.theme.panelBackgroundLT};
     color: ${props => props.theme.titleColorLT};
-    padding: 14px 8px 14px 0;
+    padding: 14px 0;
   }
-  .cell {
-    padding: 14px 8px;
-    border-right: 0;
-    border-bottom: ${props => props.theme.panelBorderLT};
+
+  .header-cell:first-child {
+    padding-left: ${dgSettings.sidePadding};
   }
- 
+
+  .ReactVirtualized__Grid__innerScrollContainer {
+    ${props => props.theme.modalScrollBar};
+  }
 `;
 
 const tagContainerStyle = {
   display: 'flex',
   flexDirection: 'column',
-  justifyContent: 'space-between',
-  alignItems: 'center'
+  justifyContent: 'space-between'
 };
 
-const HeaderRenderer = React.memo(({columnIndex, data, rowIndex, style}) => {
-  const item = data[columnIndex];
-
-  return (
-    <div className="header" style={{...style, ...tagContainerStyle}}>
-      <div style={{display: 'flex', alignItems: 'center'}}>
-        <div>
-          {item.type === 'timestamp' ? <Clock height="16px" /> : null}
-        </div>
-        {item.name}
+const FieldHeader = ({name, type}) => (
+  <div className="header-cell" style={tagContainerStyle}>
+    <div style={{display: 'flex', alignItems: 'center'}}>
+      <div
+        style={{
+          marginRight: type === 'timestamp' ? '2px' : '18px',
+          height: '16px'
+        }}
+      >
+        {type === 'timestamp' ? <Clock height="16px" /> : null}
       </div>
-      <div>
-        <FieldToken type={item.type} />
+      {name}
+    </div>
+    <div style={{marginLeft: '18px'}}>
+      <FieldToken type={type} />
+    </div>
+  </div>
+);
+
+const Cell = ({name, type}) => {
+  const value = type === ALL_FIELD_TYPES.boolean ? String(name) : name;
+  return (<div className={`cell ${type}`} title={value}><span>{value}</span></div>);
+};
+
+export class Datagrid extends PureComponent {
+  _cellRenderer = ({columnIndex, key, rowIndex, style}) => {
+    const {columns, rows} = this.props;
+
+    // rowIndex -1 because data rows start rendering at index 1 and we normalize back using the -1 param
+    const className = `${rowIndex === 0 ? 'header' : `row-${rowIndex-1}`} column-${columnIndex}`;
+
+    return (
+      <div key={key} style={style} className={className}>
+        {rowIndex === 0
+          ? (<FieldHeader name={columns[columnIndex].name} type={columns[columnIndex].type} />)
+          : (<Cell name={rows[rowIndex - 1][columnIndex]} type={columns[columnIndex].type} />)
+        }
       </div>
-    </div>
-  );
-});
+    );
+  };
 
-const CellRenderer = React.memo(({columnIndex, data, rowIndex, style}) => {
-  const item = data[rowIndex][columnIndex];
+  _rowHeight = ({index}) => {
+    const {columns} = this.props;
 
-  return (
-    <div
-      className="cell"
-      style={style}
-      key={`${rowIndex}-${columnIndex}`}>
-      {item}
-    </div>
-  );
-});
-
-export class DataTableModal extends Component {
-
-  headerGrid = React.createRef();
-
-  datasetsSelector = props => props.datasets;
-  dataIdSelector = props => props.dataId;
-  activeDatasetSelector = createSelector(
-    this.datasetsSelector,
-    this.dataIdSelector,
-    (datasets, dataId) => datasets[dataId]
-  );
-  columnsSelector = createSelector(
-    this.activeDatasetSelector,
-    dataset => dataset.fields.filter(({name}) => name !== '_geojson')
-  );
-  rowsSelector = createSelector(
-    this.activeDatasetSelector,
-    dataset => dataset.data
-  );
-
-  headerRowHeight = () => 72;
-  cellRowHeight = () => 48;
-  columnWidth = index => COLUMN_SIZE[this.columnsSelector(this.props)[index].type] || DEFAULT_COLUMN_WIDTH;
-  onRowScrolling = ({scrollLeft}) => this.headerGrid.current.scrollTo({scrollLeft});
+    return index < columns.length ? CELL_HEADER_HEIGHT : CELL_HEIGHT;
+  };
 
   render() {
-    const {showDatasetTable} = this.props;
+    const {columns, height, rows, width} = this.props;
 
-    const datasets = this.datasetsSelector(this.props);
-    const dataId = this.dataIdSelector(this.props);
+    return (
+      <DataGridWrapper>
+        <MultiGrid
+          cellRenderer={this._cellRenderer}
+          columnWidth={COLUMN_WIDTH}
+          columnCount={columns.length}
+          fixedRowCount={1}
+          enableFixedRowScroll={true}
+          width={width || DEFAULT_WIDTH}
+          height={height || DEFAULT_HEIGHT}
+          rowHeight={this._rowHeight}
+          rowCount={rows.length + 1}
+          hideTopRightGridScrollbar={true}
+          hideBottomLeftGridScrollbar={true}
+        />
+      </DataGridWrapper>
+    );
+  }
+}
+
+export class DataTableModal extends PureComponent {
+  render() {
+    const {showDatasetTable, width, height} = this.props;
+    const datasets = this.props.datasets;
+    const dataId = this.props.dataId;
 
     if (!datasets || !dataId) {
       return null;
     }
 
-    const activeDataset = this.activeDatasetSelector(this.props);
-    const columns = this.columnsSelector(this.props);
-    const rows = this.rowsSelector(this.props);
+    const activeDataset = datasets[dataId];
+    const rows = activeDataset.data;
+
+    const columns = activeDataset.fields
+      .filter(({name}) => name !== '_geojson');
 
     return (
       <StyledModal className="dataset-modal" >
@@ -154,49 +175,12 @@ export class DataTableModal extends Component {
           datasets={datasets}
           showDatasetTable={showDatasetTable}
         />
-        <Autosizer>
-          {({height, width}) => (
-            [
-              <Grid
-                className="headers"
-                columnCount={columns.length}
-                columnWidth={this.columnWidth}
-                height={HEADER_HEIGHT}
-                rowCount={1}
-                rowHeight={this.headerRowHeight}
-                width={width}
-                itemData={columns}
-                // hold onto a reference to the header grid component
-                // so we can set the scroll position later
-                ref={this.headerGrid}
-                // hide the overflow so the scroll bar never shows
-                // in the header grid
-                style={{
-                  // disable scrolling in the header
-                  overflowX: 'hidden',
-                  overflowY: 'hidden'
-                }}
-              >
-                {HeaderRenderer}
-              </Grid>,
-              <Grid
-                className="rows"
-                columnCount={columns.length}
-                columnWidth={this.columnWidth}
-                height={height - dgSettings.height - dgSettings.verticalPadding - HEADER_HEIGHT}
-                rowCount={rows.length}
-                rowHeight={this.cellRowHeight}
-                width={width}
-                itemData={rows}
-                // When a scroll occurs in the body grid,
-                // synchronize the scroll position of the header grid
-                onScroll={this.onRowScrolling}
-              >
-                {CellRenderer}
-              </Grid>
-            ]
-          )}
-        </Autosizer>
+        <Datagrid
+          width={width}
+          height={height}
+          rows={rows}
+          columns={columns}
+        />
       </StyledModal>
     );
   }
@@ -204,7 +188,7 @@ export class DataTableModal extends Component {
 
 const DatasetCatalog = styled.div`
   display: flex;
-  padding: ${dgSettings.verticalPadding}px ${dgSettings.sidePadding}px 0;
+  padding: ${dgSettings.verticalPadding} ${dgSettings.sidePadding} 0;
 `;
 
 export const DatasetModalTab = styled.div`
@@ -236,6 +220,8 @@ export const DatasetTabs = React.memo(({activeDataset, datasets, showDatasetTabl
     ))}
   </DatasetCatalog>
 ));
+
+DatasetTabs.displayName = 'DatasetTabs';
 
 const DataTableModalFactory = () => DataTableModal;
 export default DataTableModalFactory;

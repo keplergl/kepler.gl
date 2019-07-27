@@ -22,13 +22,15 @@ import React from 'react';
 import test from 'tape';
 import {mount} from 'enzyme';
 
-import Autosizer from 'react-virtualized-auto-sizer';
-
 import DataTableModalFactory, {DatasetTabs, DatasetModalTab} from
   'components/modals/data-table-modal';
 
 const DataTableModal = DataTableModalFactory();
 import {testFields, testAllData} from 'test/fixtures/test-csv-data';
+
+// This makes sure react0virtualized renders the full grid
+const WIDTH = 1400;
+const HEIGHT = 600;
 
 /* eslint-disable max-statements */
 test('Components -> DataTableModal.render', t => {
@@ -36,16 +38,16 @@ test('Components -> DataTableModal.render', t => {
   t.doesNotThrow(() => {
     mount(
       <DataTableModal
-        width={400}
-        height={400}
+        width={WIDTH}
+        height={HEIGHT}
       />
     );
   }, 'Show not fail without data');
 
   const wrapper = mount(
     <DataTableModal
-      width={800}
-      height={400}
+      width={WIDTH}
+      height={HEIGHT}
       datasets={{
         smoothie: {
           id: 'smoothie',
@@ -60,9 +62,52 @@ test('Components -> DataTableModal.render', t => {
   );
 
   t.equal(wrapper.find(DataTableModal).length, 1, 'should render DataTableModal data');
-  t.equal(wrapper.find(Autosizer).length, 1, 'should render Autosizer');
   t.equal(wrapper.find(DatasetTabs).length, 1, 'should render DatasetTabs');
   t.equal(wrapper.find(DatasetModalTab).length, 1, 'should render 1 dataset-modal-catalog');
+  t.equal(wrapper.find('.header-cell').length, testFields.length, `should render 4 headers because of ${HEIGHT}`);
+  t.equal(wrapper.find('.cell').length, 110, 'should render 40 cells');
+  t.equal(wrapper.find('.cell.boolean').length, 10, 'should render 10 cells');
+
+  const expectedRows = {
+    0: [
+      '2016-09-17 00:09:55',
+      '29.9900937',
+      '31.2590542',
+      'driver_analytics',
+      '1472688000000',
+      'false',
+      '1',
+      '2016-09-23T00:00:00.000Z',
+      '2016-10-01 09:41:39+00:00',
+      '2016-10-01 09:41:39+00:00',
+      '2016-09-23'
+    ],
+    2: [
+      '2016-09-17 00:11:56',
+      '29.9907261',
+      '31.2312742',
+      'driver_analytics',
+      '1472688000000',
+      'false',
+      '3',
+      '2016-09-23T00:00:00.000Z',
+      '',
+      '',
+      '2016-09-23'
+    ]
+  };
+
+  Object.entries(expectedRows).forEach(keyAndRow => {
+    const [index, expectedRow] = keyAndRow;
+
+    const cells = wrapper.find(`.row-${index}`);
+    t.equal(cells.length, 11, 'should render 11 cells');
+
+    for (let c = 0; c < cells.length; c++) {
+      const cellText = cells.at(c).find('span').text();
+      t.equal(cellText, expectedRow[c], `should render cell ${expectedRow[c]} correctly`);
+    }
+  });
 
   t.end();
 });

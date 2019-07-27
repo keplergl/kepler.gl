@@ -29,7 +29,7 @@ import {media} from 'styles/media-breakpoints';
 
 const ModalContentWrapper = styled.div`
   overflow-y: scroll;
-  max-width: 960px;
+  max-width: 70vw;
   max-height: 70vh;
   padding: 24px 72px 40px;
   position: relative;
@@ -43,10 +43,17 @@ const ModalContentWrapper = styled.div`
   box-sizing: border-box;
   font-size: 12px;
   color: ${props => props.theme.labelColorLT};
-  ${props => props.cssStyle || ''};
+  
   ${media.portable`
     padding: 12px 36px 24px;
+    max-width: 80vw;
   `}
+  
+  ${media.palm`
+    max-width: 100vw;
+  `}
+  
+  ${props => props.cssStyle || ''};
 `;
 
 const ModalContent = styled.div`

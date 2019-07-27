@@ -25,7 +25,7 @@ configure({adapter: new Adapter()});
 
 import './injector-test';
 import './container-test';
-import './data-table-model-test';
+import './data-table-modal-test';
 import './notifications';
 import './kepler-gl-test';
 import './map';
