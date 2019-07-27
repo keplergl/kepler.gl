@@ -21,7 +21,14 @@
 import test from 'tape';
 import {
   testCreateCases,
-  testFormatLayerDataCases
+  testFormatLayerDataCases,
+  testRenderLayerCases,
+  preparedDataset,
+  preparedDatasetWithNull,
+  dataId,
+  rows,
+  rowsWithNull,
+  fieldsWithNull
 } from 'test/helpers/layer-utils';
 import {processCsvData} from 'processors/data-processor';
 import csvData from 'test/fixtures/test-csv-data';
@@ -54,20 +61,11 @@ test('#HeatmapLayer -> contructor', t => {
 });
 
 test('#Heatmaplayer -> formatLayerData', t => {
-  const {rows} = processCsvData(csvData);
-  const filteredIndex = Array(rows.length)
-    .fill()
-    .map((_, index) => index);
-  const data = rows;
+  // const {rows} = processCsvData(csvData);
+  const filteredIndex = [0, 2, 4];
   const columns = {
-    lat: {
-      name: 'gps_data.lat',
-      fieldIdx: 1
-    },
-    lng: {
-      name: 'gps_data.lng',
-      fieldIdx: 2
-    }
+    lat: 'gps_data.lat',
+    lng: 'gps_data.lng'
   };
   const expectedConfig = {
     type: 'heatmap',
@@ -104,13 +102,23 @@ test('#Heatmaplayer -> formatLayerData', t => {
 
   const TEST_CASES = [
     {
-      props: {
-        dataId: 'heatmap',
-        label: 'mapbox heatmap',
-        isVisible: true,
-        columns
+      name: 'Heatmap gps point.1',
+      layer: {
+        type: 'heatmap',
+        id: 'test_layer_1',
+        config: {
+          dataId,
+          label: 'mapbox heatmap',
+          isVisible: true,
+          columns
+        }
       },
-      data: [{heatmap: {allData: rows, filteredIndex}}, undefined],
+      datasets: {
+        [dataId]: {
+          ...preparedDataset,
+          filteredIndex
+        }
+      },
       test: result => {
         const {layerData, layer} = result;
 

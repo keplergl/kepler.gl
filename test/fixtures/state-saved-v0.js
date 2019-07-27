@@ -1190,7 +1190,7 @@ mergedLayer2.config = {
     analyzerType: 'INT'
   },
   sizeDomain: [78, 694],
-  sizeScale: 'linear',
+  sizeScale: 'sqrt',
   textLabel: [DEFAULT_TEXT_LABEL],
   colorUI: {
     color: DEFAULT_COLOR_UI,
