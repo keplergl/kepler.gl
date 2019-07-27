@@ -30,7 +30,6 @@ import {hexToRgb} from 'utils/color-utils';
 import PointLayerIcon from './point-layer-icon';
 import {DEFAULT_LAYER_COLOR, CHANNEL_SCALES} from 'constants/default-settings';
 import {notNullorUndefined} from 'utils/data-utils';
-import {diffUpdateTriggers} from '../layer-update';
 
 export const pointPosAccessor = ({lat, lng, altitude}) => d => [
   // lng
