@@ -52,7 +52,8 @@ const {
 import testData, {testFields, testAllData} from 'test/fixtures/test-csv-data';
 import {
   geojsonData,
-  geoBounds,
+  expectedDataToFeature,
+  updatedGeoJsonLayer,
   fields as geojsonFields,
   mappedTripValue,
   tripDomain
@@ -420,7 +421,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
   t.equal(newLayer.config.colorScale, 'ordinal', 'should scale to ordinal');
   t.deepEqual(
     newLayer.config.colorDomain,
-    ['driver_analytics', 'driver_gps'],
+    ['driver_analytics', 'driver_analytics_0', 'driver_gps'],
     'should calculate color domain'
   );
   t.equal(
@@ -512,7 +513,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
   t.equal(newLayer4.config.colorField, stringField, 'should keep colorField');
   t.deepEqual(
     newLayer4.config.colorDomain,
-    ['driver_analytics', 'driver_gps'],
+    ['driver_analytics', 'driver_analytics_0', 'driver_gps'],
     'should calculate color domain'
   );
   t.equal(newLayer4.config.colorScale, 'ordinal', 'should keep color scale');
@@ -1505,17 +1506,6 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
     }
   };
 
-  const dataToFeature = geojsonData.features.reduce(
-    (accu, f, i) => ({
-      ...accu,
-      [i]: {
-        ...f,
-        properties: {...f.properties, index: i}
-      }
-    }),
-    {}
-  );
-
   const expectedLayer = new GeojsonLayer({
     label: 'king milkshake',
     dataId: 'milkshake',
@@ -1529,14 +1519,8 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
     filled: true,
     strokeColor: layer1StrokeColor
   });
-  expectedLayer.dataToFeature = dataToFeature;
-  expectedLayer.meta = {
-    bounds: geoBounds,
-    fixedRadius: false,
-    featureTypes: {
-      polygon: true
-    }
-  };
+  expectedLayer.dataToFeature = expectedDataToFeature;
+  expectedLayer.meta = updatedGeoJsonLayer.meta
 
   const expectedLayerData = {
     data: geojsonData.features.map((f, i) => ({

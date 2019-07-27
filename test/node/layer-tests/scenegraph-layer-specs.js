@@ -21,9 +21,15 @@
 import test from 'tape';
 import {
   testCreateCases,
-  testFormatLayerDataCases
+  testFormatLayerDataCases,
+  testRenderLayerCases,
+  preparedDataset,
+  preparedDatasetWithNull,
+  dataId,
+  rows,
+  rowsWithNull,
+  fieldsWithNull
 } from 'test/helpers/layer-utils';
-import csvData, {testFields} from 'test/fixtures/test-csv-data';
 import {KeplerGlLayers} from 'layers';
 const {ScenegraphLayer} = KeplerGlLayers;
 
@@ -58,41 +64,40 @@ test('#ScenegraphLayer -> constructor', t => {
 });
 
 test('#ScenegraphLayer -> formatLayerData', t => {
-  const {rows} = processCsvData(csvData);
-
   const filteredIndex = [0, 2, 4];
-  const data = [rows[0], rows[2], rows[4]];
 
-  const dataWithNull = [[null, null, '12']].concat(data);
-  const allDataWithNull = [[null, null, '12']].concat(rows);
+  const datasetWithNull = {
+    ...preparedDatasetWithNull,
+    filteredIndex,
+    filteredIndexForDomain: [0, 2, 4, 5, 6, 7, 8, 9, 10]
+  };
 
   const expectedLayerMeta = {
     bounds: [31.2148748, 29.9870074, 31.2590542, 30.0614122]
   };
-  const dataset = {
-    data: dataWithNull,
-    allData: allDataWithNull,
-    filteredIndexForDomain: [0, 2, 4, 5, 6, 7, 8, 9, 10]
-  };
 
   const TEST_CASES = [
     {
-      props: {
-        dataId: '0dj3h',
-        label: 'gps 3d',
-        columns: {
-          lat: {
-            value: 'gps_data.lat',
-            fieldIdx: 1
-          },
-          lng: {
-            value: 'gps_data.lng',
-            fieldIdx: 2
+      name: 'Scenegraph gps point.1',
+      layer: {
+        type: '3D',
+        id: 'test_layer_1',
+        config: {
+          dataId,
+          label: 'gps 3d',
+          columns: {
+            lat: 'gps_data.lat',
+            lng: 'gps_data.lng'
           }
         }
       },
-      data: [{'0dj3h': {allData: rows, filteredIndex}}, undefined],
-      test: result => {
+      datasets: {
+        [dataId]: {
+          ...preparedDataset,
+          filteredIndex
+        }
+      },
+      assert: result => {
         const {layerData, layer} = result;
         const expectedLayerData = {
           data: [
@@ -131,57 +136,36 @@ test('#ScenegraphLayer -> formatLayerData', t => {
       }
     },
     {
-      props: {
-        dataId: '0dj3h',
-        label: 'some 3d file',
-        columns: {
-          lat: {
-            value: 'gps_data.lat',
-            fieldIdx: 1
-          },
-          lng: {
-            value: 'gps_data.lng',
-            fieldIdx: 2
+      name: 'Scenegraph gps point.2 Data With Nulls',
+      layer: {
+        type: '3D',
+        id: 'test_layer_2',
+        config: {
+          dataId,
+          label: 'some 3d file',
+          columns: {
+            lat: 'gps_data.lat',
+            lng: 'gps_data.lng'
           }
         }
       },
-      updates: [
-        // update layer config to an integer field
-        {method: 'updateLayerConfig', args: [{colorField: testFields[6]}]},
-        {
-          method: 'updateLayerVisualChannel',
-          args: [dataset, 'color']
-        },
-        {method: 'updateLayerConfig', args: [{sizeField: testFields[6]}]},
-        {
-          method: 'updateLayerVisualChannel',
-          args: [dataset, 'size']
-        },
-        {
-          method: 'updateLayerVisConfig',
-          args: [{fixedRadius: true}]
-        }
-      ],
-      data: [{'0dj3h': {allData: allDataWithNull, filteredIndex}}, undefined],
-      test: result => {
-        const {layerData, layer} = result;
+      datasets: {
+        [dataId]: datasetWithNull
+      },
+      assert: result => {
+        const {layerData} = result;
 
         const expectedLayerData = {
           data: [
             {
-              data: rows[1]
+              data: rowsWithNull[0]
             },
             {
-              data: rows[3]
+              data: rowsWithNull[4]
             }
           ],
           getPosition: () => {}
         };
-        t.deepEqual(
-          layer.config.colorDomain,
-          [2, 4, 5, 222, 345, 12124],
-          'should update layer color domain'
-        );
         t.deepEqual(
           Object.keys(layerData).sort(),
           Object.keys(expectedLayerData).sort(),
@@ -193,7 +177,7 @@ test('#ScenegraphLayer -> formatLayerData', t => {
         );
         t.deepEqual(
           layerData.getPosition(layerData.data[0]),
-          [31.2461142, 29.9927699, 0],
+          [31.2590542, 29.9900937, 0],
           'getPosition should return correct lat lng'
         );
       }
