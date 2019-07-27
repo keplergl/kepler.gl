@@ -19,15 +19,21 @@
 // THE SOFTWARE.
 
 import test from 'tape';
+import moment from 'moment';
+
 import {
   testCreateCases,
   testFormatLayerDataCases,
-  testRenderLayerCases
+  testRenderLayerCases,
+  preparedDataset,
+  preparedDatasetWithNull,
+  dataId,
+  rows,
+  rowsWithNull,
+  fieldsWithNull
 } from 'test/helpers/layer-utils';
-import csvData, {testFields} from 'test/fixtures/test-csv-data';
 import {KeplerGlLayers} from 'layers';
-import {getGpuFilterProps} from 'utils/gpu-filter-utils';
-import {processCsvData} from 'processors/data-processor';
+import {COLOR_RANGES} from 'constants/color-ranges';
 
 const {PointLayer} = KeplerGlLayers;
 
@@ -57,47 +63,66 @@ test('#PointLayer -> constructor', t => {
 });
 
 test('#PointLayer -> formatLayerData', t => {
-  const {rows} = processCsvData(csvData);
-
   const filteredIndex = [0, 2, 4];
-  const allDataWithNull = [[null, null, '12']].concat(rows);
 
-  const expectedLayerMeta = {
-    bounds: [31.2148748, 29.9870074, 31.2590542, 30.0614122]
-  };
-  const dataset = {
-    allData: allDataWithNull,
+  const datasetWithNull = {
+    ...preparedDatasetWithNull,
+    filteredIndex,
     filteredIndexForDomain: [0, 2, 4, 5, 6, 7, 8, 9, 10]
   };
 
   const TEST_CASES = [
     {
-      props: {
-        dataId: '0dj3h',
-        label: 'gps point',
-        columns: {
-          lat: {
-            value: 'gps_data.lat',
-            fieldIdx: 1
+      name: 'Point gps point.1',
+      layer: {
+        config: {
+          dataId,
+          label: 'gps point',
+          columns: {
+            lat: 'gps_data.lat',
+            lng: 'gps_data.lng'
           },
-          lng: {
-            value: 'gps_data.lng',
-            fieldIdx: 2
+          textLabel: [
+            {
+              field: {
+                name: 'gps_data.types',
+                type: 'string'
+              }
+            },
+            {
+              field: {
+                name: 'has_result',
+                type: 'boolean'
+              }
+            }
+          ],
+          visConfig: {
+            strokeColor: [1, 2, 3]
           }
+        },
+        type: 'point',
+        id: 'test_layer_1'
+      },
+      datasets: {
+        [dataId]: {
+          ...preparedDataset,
+          filteredIndex
         }
       },
-      data: [{'0dj3h': {
-        allData: rows,
-        filteredIndex,
-        gpuFilter: getGpuFilterProps([], '0dj3h')
-      }}, undefined],
-      test: result => {
+      assert: result => {
         const {layerData, layer} = result;
+
         const expectedLayerData = {
-          textLabels: {
-            characterSet: [],
-            getText: () => {}
-          },
+          textLabels: [
+            {
+              characterSet: [],
+              getText: () => {}
+            },
+            {
+              characterSet: [],
+              getText: () => {}
+            }
+          ],
           data: [
             {
               data: rows[0],
@@ -121,85 +146,132 @@ test('#PointLayer -> formatLayerData', t => {
           getRadius: () => {},
           getPosition: () => {}
         };
+        const expectedDataKeys = [
+          'data',
+          'getFillColor',
+          'getFilterValue',
+          'getLineColor',
+          'getPosition',
+          'getRadius',
+          'textLabels'
+        ];
 
         t.deepEqual(
           Object.keys(layerData).sort(),
-          Object.keys(expectedLayerData).sort(),
+          expectedDataKeys,
           'layerData should have 6 keys'
         );
         t.deepEqual(
           layerData.data,
           expectedLayerData.data,
-          'should format correct grid layerData'
+          'should format correct point layerData data'
         );
+        // getPosition
+        t.deepEqual(
+          layerData.getPosition(layerData.data[0]),
+          [rows[0][2], rows[0][1], 0],
+          'getPosition should return correct position'
+        );
+        // getFillColor
         t.deepEqual(
           layerData.getFillColor,
           layer.config.color,
           'getFillColor should be a constant'
         );
+        // getLineColor
         t.deepEqual(
-          layerData.getRadius,
-          1,
-          'getRadius should be a constant'
+          layerData.getLineColor,
+          [1, 2, 3],
+          'getLineColor should be a constant'
+        );
+        // getRadius
+        t.equal(layerData.getRadius, 1, 'getRadius should be a constant');
+        // getFilterValue
+        t.deepEqual(
+          layerData.getFilterValue(layerData.data[0]),
+          [moment.utc(rows[0][0]).valueOf(), 0, 0, 0],
+          'getFilterValue should return [0, 0, 0, 0]'
+        );
+        // textLabels
+        t.deepEqual(
+          layerData.textLabels.length,
+          expectedLayerData.textLabels.length,
+          'textLabels should have 2 items'
         );
         t.deepEqual(
+          layerData.textLabels[0].characterSet,
+          [
+            'd',
+            'r',
+            'i',
+            'v',
+            'e',
+            '_',
+            'a',
+            'n',
+            'l',
+            'y',
+            't',
+            'c',
+            's',
+            '0'
+          ],
+          'textLabels should have correct characterSet'
+        );
+        t.deepEqual(
+          layerData.textLabels[0].getText(layerData.data[0]),
+          'driver_analytics_0',
+          'textLabels getText should have correct text'
+        );
+        // layerMeta
+        t.deepEqual(
           layer.meta,
-          expectedLayerMeta,
+          {
+            bounds: [31.2148748, 29.9870074, 31.2590542, 30.0614122]
+          },
           'should format correct point layer meta'
         );
       }
     },
     {
-      props: {
-        dataId: '0dj3h',
-        label: 'some point file',
-        columns: {
-          lat: {
-            value: 'gps_data.lat',
-            fieldIdx: 1
+      name: 'Test gps point.2 Data With Nulls',
+      layer: {
+        type: 'point',
+        id: 'test_layer_2',
+        config: {
+          dataId,
+          label: 'some point file',
+          columns: {
+            lat: 'gps_data.lat',
+            lng: 'gps_data.lng'
           },
-          lng: {
-            value: 'gps_data.lng',
-            fieldIdx: 2
-          }
+          visConfig: {
+            outline: true,
+            fixedRadius: true
+          },
+          // color by id(int)
+          colorField: fieldsWithNull[6],
+          // size by id(int)
+          sizeField: fieldsWithNull[6]
         }
       },
-      updates: [
-        // update layer config to an integer field
-        {method: 'updateLayerConfig', args: [{colorField: testFields[6]}]},
-        {
-          method: 'updateLayerVisualChannel',
-          args: [dataset, 'color']
-        },
-        {method: 'updateLayerConfig', args: [{sizeField: testFields[6]}]},
-        {
-          method: 'updateLayerVisualChannel',
-          args: [dataset, 'size']
-        },
-        {
-          method: 'updateLayerVisConfig',
-          args: [{fixedRadius: true}]
-        }
-      ],
-      data: [{'0dj3h': {
-        allData: allDataWithNull,
-        filteredIndex,
-        gpuFilter: getGpuFilterProps([], '0dj3h')
-      }}, undefined],
-      test: result => {
+      datasets: {
+        [dataId]: datasetWithNull
+      },
+      assert: result => {
         const {layerData, layer} = result;
 
         const expectedLayerData = {
           data: [
             {
-              data: rows[1],
-              index: 2,
-              position: [31.2461142, 29.9927699, 0]
+              data: rowsWithNull[0],
+              index: 0,
+              position: [31.2590542, 29.9900937, 0]
             },
             {
-              data: rows[3],
+              data: rowsWithNull[4],
               index: 4,
-              position: [31.2175827, 29.9870074, 0]
+              position: [31.2154899, 29.9923041, 0]
             }
           ],
           getFilterValue: () => {},
@@ -211,7 +283,7 @@ test('#PointLayer -> formatLayerData', t => {
         };
         t.deepEqual(
           layer.config.colorDomain,
-          [2, 4, 5, 222, 345, 12124],
+          [1, 3, 5, 222, 345, 12124],
           'should update layer color domain'
         );
         t.deepEqual(
@@ -230,25 +302,37 @@ test('#PointLayer -> formatLayerData', t => {
           ),
           'should have getFillColor, getRadius accessor as function'
         );
+        t.ok(layerData.getLineColor, 'should have getLineColor');
+        // getPosition
         t.deepEqual(
           layerData.getPosition(layerData.data[0]),
-          [31.2461142, 29.9927699, 0],
+          [31.2590542, 29.9900937, 0],
           'getPosition should return correct lat lng'
         );
+        // layerMeta
         t.deepEqual(
           layer.meta,
-          expectedLayerMeta,
-          'should format correct grid layerData'
+          {bounds: [31.2149361, 29.9870074, 31.2590542, 30.0292134]},
+          'should format correct layerMeta'
         );
+        // getFillColor
         t.deepEqual(
           layerData.getFillColor(layerData.data[0]),
           [90, 24, 70],
-          'getColor should return correct color'
+          'getFillColor should return correct color'
         );
+        // getRadius
+        // domain [1, 12124]
         t.equal(
           layerData.getRadius(layerData.data[0]),
-          2,
+          1,
           'getRadius should return fixed radius'
+        );
+        // getFilterValue
+        t.deepEqual(
+          layerData.getFilterValue(layerData.data[0]),
+          [Number.MIN_SAFE_INTEGER, 0, 0, 0],
+          'getFilterValue should return correct value'
         );
       }
     }
@@ -258,36 +342,275 @@ test('#PointLayer -> formatLayerData', t => {
   t.end();
 });
 
-/* Fixed it #618
 test('#PointLayer -> renderLayer', t => {
-  const {rows} = processCsvData(csvData);
-
   const filteredIndex = [0, 2, 4];
 
-  const TEST_CASES = [{
-    props: {
-      dataId: '0dj3h',
-      label: 'gps point',
-      columns: {
-        lat: {
-          value: 'gps_data.lat',
-          fieldIdx: 1
-        },
-        lng: {
-          value: 'gps_data.lng',
-          fieldIdx: 2
-        },
-        altitude: {
-          value: null,
-          fieldIdx: -1,
-          optional: true
+  const TEST_CASES = [
+    {
+      name: 'Test render point.1',
+      layer: {
+        id: 'test_layer_1',
+        type: 'point',
+        config: {
+          dataId,
+          label: 'gps point',
+          columns: {
+            lat: 'gps_data.lat',
+            lng: 'gps_data.lng',
+            altitude: null
+          },
+          strokeColorField: {
+            type: 'string',
+            name: 'gps_data.types'
+          },
+          color: [1, 2, 3],
+          visConfig: {
+            strokeColorRange: COLOR_RANGES.find(
+              ({name}) => name === 'Ice And Fire 4'
+            ),
+            thickness: 3
+          }
         }
+      },
+      datasets: {
+        [dataId]: {
+          ...preparedDataset,
+          filteredIndex
+        }
+      },
+
+      assert: deckLayers => {
+        // test instanceAttributes
+        t.equal(deckLayers.length, 1, 'Should create 1 deck.gl layer');
+        const {attributes} = deckLayers[0].state.attributeManager;
+
+        t.deepEqual(
+          Object.keys(attributes).sort(),
+          [
+            'instanceFillColors',
+            'instanceFilterValues',
+            'instanceLineColors',
+            'instanceLineWidths',
+            'instancePickingColors',
+            'instancePositions',
+            'instancePositions64xyLow',
+            'instanceRadius'
+          ],
+          'Should create 8 instance attributes'
+        );
+        // test instancePositions
+        t.deepEqual(
+          attributes.instancePositions.value,
+          new Float32Array([
+            31.2590542,
+            29.9900937,
+            0,
+            31.2312742,
+            29.9907261,
+            0,
+            31.2154899,
+            29.9923041,
+            0
+          ]),
+          'Should calculate correct instancePosition'
+        );
+        // test instanceFillColors
+        t.deepEqual(
+          attributes.instanceFillColors.value,
+          new Float32Array([1, 2, 3, 255]),
+          'Should calculate correct instanceFillColor'
+        );
+        // test instanceFilterValues
+        t.deepEqual(
+          attributes.instanceFilterValues.value,
+          new Float32Array([
+            moment.utc(rows[0][0]).valueOf(),
+            0,
+            0,
+            0,
+            moment.utc(rows[2][0]).valueOf(),
+            0,
+            0,
+            0,
+            moment.utc(rows[4][0]).valueOf(),
+            0,
+            0,
+            0
+          ]),
+          'Should calculate correct instanceFilterValues'
+        );
+        // test instanceLineColors
+        // range:[[1, 152, 189], [232, 254, 181], [254, 173, 84], [213, 2, 85]]
+        // domain: ['driver_analytics', 'driver_analytics_0', 'driver_gps']
+        t.deepEqual(
+          attributes.instanceLineColors.value,
+          new Float32Array([
+            232,
+            254,
+            181,
+            255,
+            1,
+            152,
+            189,
+            255,
+            1,
+            152,
+            189,
+            255
+          ]),
+          'Should calculate correct instanceLineColors'
+        );
+        // test instanceLineWidths
+        t.deepEqual(
+          attributes.instanceLineWidths.value,
+          [1],
+          'Should calculate correct instanceLineWidths'
+        );
+        // test instanceRadius
+        t.deepEqual(
+          attributes.instanceRadius.value,
+          [1],
+          'Should calculate correct instanceRadius'
+        );
       }
     },
-    data: [rows, filteredIndex, undefined]
-  }];
+    {
+      name: 'Test render point.2.Null values',
+      layer: {
+        id: 'test_layer_2',
+        type: 'point',
+        config: {
+          dataId,
+          label: 'gps point',
+          columns: {
+            lat: 'gps_data.lat',
+            lng: 'gps_data.lng',
+            altitude: null
+          },
+          // color by id contain null
+          strokeColorField: {
+            type: 'string',
+            name: 'gps_data.types'
+          },
+          // color by id contain null
+          colorField: {
+            name: 'id',
+            type: 'integer'
+          },
+          // size by id contain null
+          sizeField: {
+            name: 'id',
+            type: 'integer'
+          },
+          color: [1, 2, 3],
+          visConfig: {
+            strokeColorRange: {
+              colors: ['#010101', '#020202', '#030303', '#040404']
+            },
+            colorRange: {
+              colors: ['#050505', '#060606', '#070707', '#080808']
+            }
+          }
+        }
+      },
+      datasets: {
+        [dataId]: {
+          ...preparedDatasetWithNull,
+          filteredIndex: [0, 1, 2, 4],
+          filteredIndexForDomain: [0, 1, 2, 4, 5, 6, 7]
+        }
+      },
+
+      assert: (deckLayers, layer) => {
+        // test instanceAttributes
+        t.equal(deckLayers.length, 1, 'Should create 1 deck.gl layer');
+        const {attributes} = deckLayers[0].state.attributeManager;
+
+        t.deepEqual(
+          Object.keys(attributes).sort(),
+          [
+            'instanceFillColors',
+            'instanceFilterValues',
+            'instanceLineColors',
+            'instanceLineWidths',
+            'instancePickingColors',
+            'instancePositions',
+            'instancePositions64xyLow',
+            'instanceRadius'
+          ],
+          'Should create 8 instance attributes'
+        );
+        // test instancePositions
+        // 0, 1, 4
+        t.deepEqual(
+          attributes.instancePositions.value,
+          new Float32Array([
+            31.2590542,
+            29.9900937,
+            0,
+            31.2461142,
+            29.9927699,
+            0,
+            31.2154899,
+            29.9923041,
+            0
+          ]),
+          'Should filter out null values in instancePosition'
+        );
+        // test instanceFillColors
+        t.deepEqual(
+          attributes.instanceFillColors.value,
+          // i: 0, 1, 4,
+          // 1, null, 5
+          new Float32Array([5, 5, 5, 255, 0, 0, 0, 0, 6, 6, 6, 255]),
+          'Should use default null color in instanceFillColor'
+        );
+        // test instanceFilterValues
+        // i: 0, 1, 4,
+        t.deepEqual(
+          attributes.instanceFilterValues.value,
+          new Float32Array([
+            Number.MIN_SAFE_INTEGER,
+            0,
+            0,
+            0,
+            moment.utc(rows[1][0]).valueOf(),
+            0,
+            0,
+            0,
+            moment.utc(rows[4][0]).valueOf(),
+            0,
+            0,
+            0
+          ]),
+          'Should calculate correct instanceFilterValues'
+        );
+        // test instanceLineColors
+        // i: 0, 1, 4,
+        // domain: ['driver_analytics', 'driver_analytics_0', 'driver_gps']
+        t.deepEqual(
+          attributes.instanceLineColors.value,
+          new Float32Array([2, 2, 2, 255, 0, 0, 0, 0, 1, 1, 1, 255]),
+          'Should calculate correct instanceLineColors'
+        );
+        // test instanceLineWidths
+        t.deepEqual(
+          attributes.instanceLineWidths.value,
+          [1],
+          'Should calculate correct instanceLineWidths'
+        );
+        // test instanceRadius
+        // domain: [1, 12124] range: [0, 500] scale: sqrt
+        t.deepEqual(
+          attributes.instanceRadius.value,
+          [0, 0, 0.5664370059967041],
+          'Should calculate correct instanceRadius'
+        );
+      }
+    }
+  ];
 
   testRenderLayerCases(t, PointLayer, TEST_CASES);
   t.end();
 });
-*/
+
