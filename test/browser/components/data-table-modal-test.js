@@ -24,11 +24,15 @@ import {mount} from 'enzyme';
 
 import DataTableModalFactory, {DatasetTabs, DatasetModalTab} from
   'components/modals/data-table-modal';
+import DataGridFactory, {FieldHeaderFactory, CellFactory} from 'components/common/datagrid';
 
-const DataTableModal = DataTableModalFactory();
+const FieldHeader = FieldHeaderFactory();
+const Cell = CellFactory();
+const DataGrid = DataGridFactory(FieldHeader, Cell);
+const DataTableModal = DataTableModalFactory(DataGrid);
 import {testFields, testAllData} from 'test/fixtures/test-csv-data';
 
-// This makes sure react0virtualized renders the full grid
+// This makes sure react-virtualized renders the full grid
 const WIDTH = 1400;
 const HEIGHT = 800;
 const rows = 10;
