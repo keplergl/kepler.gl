@@ -128,7 +128,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     /* component private functions */
     _isVisibleMapLayer(layer, mapLayers) {
       // if layer.id is not in mapLayers, don't render it
-      return !mapLayers || (mapLayers[layer.id] && mapLayers[layer.id].isVisible);
+      return !mapLayers || mapLayers[layer.id];
     }
 
     _onCloseMapPopover = () => {

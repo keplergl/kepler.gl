@@ -159,12 +159,7 @@ export const INITIAL_VIS_STATE = {
     // describe the state of layer availability and visibility for each map
     // [
     //   {
-    //     layers: {
-    //       layer_id: {
-    //         isAvailable: true|false # this is driven by the left hand panel
-    //         isVisible: true|false
-    //       }
-    //     }
+    //      layer_id: true | false
     //   }
     // ]
   ],
@@ -208,13 +203,15 @@ export function layerConfigChangeUpdater(state, action) {
     return updateStateWithLayerAndData(state, {layerData, layer, idx});
   }
 
-  const newState = {
-    ...state,
-    splitMaps:
-      'isVisible' in action.newConfig
-        ? toggleLayerFromSplitMaps(state, newLayer)
-        : state.splitMaps
-  };
+  let newState = state;
+  if ('isVisible' in action.newConfig && state.splitMaps.length) {
+    newState = {
+      ...state,
+      splitMaps: action.newConfig.isVisible ?
+        addNewLayersToSplitMap(state.splitMaps, newLayer) :
+        removeLayerFromSplitMaps(state.splitMaps, newLayer)
+    };
+  }
 
   return updateStateWithLayerAndData(newState, {layer: newLayer, idx});
 }
@@ -988,13 +985,9 @@ export const toggleLayerForMapUpdater = (state, {mapIndex, layerId}) => {
   return {
     ...state,
     splitMaps: splitMaps.map((sm, i) => i === mapIndex ? {
-      layers: {
-        ...splitMaps[i].layers,
-        [layerId]: {
-          // if layerId not in layers, set it to visible
-          isVisible: !splitMaps[i].layers[layerId] || !splitMaps[i].layers[layerId].isVisible
-        }
-      }
+      ...splitMaps[i],
+        // if layerId not in layers, set it to visible
+      [layerId]: !splitMaps[i][layerId]
     } : sm)
   };
 };
@@ -1096,55 +1089,37 @@ export const updateVisDataUpdater = (state, action) => {
 };
 /* eslint-enable max-statements */
 
-function generateLayerMetaForSplitViews(layer) {
-  return {
-    // isAvailable: layer.config.isVisible,
-    isVisible: layer.config.isVisible
-  };
-}
-
 /**
- * This method will compute the default maps custom list
- * based on the current layers status
+ * This method will compute the default maps layer settings
+ * based on the current layers visibility
  * @param {Array<Object>} layers
  * @returns {Array<Object>} split map settings
  */
 function computeSplitMapLayers(layers) {
-  const mapLayers = layers.reduce(
-    (newLayers, currentLayer) => ({
-      ...newLayers,
-      [currentLayer.id]: generateLayerMetaForSplitViews(currentLayer)
-    }),
-    {}
-  );
+  const mapLayers = layers
+    .filter(layer => layer.config.isVisible)
+    .reduce(
+      (newLayers, currentLayer) => ({
+        ...newLayers,
+        [currentLayer.id]: currentLayer.config.isVisible
+      }),
+      {}
+    );
 
   return [
-    {
-      layers: mapLayers
-    },
-    {
-      layers: cloneDeep(mapLayers)
-    }
+    mapLayers,
+    cloneDeep(mapLayers)
   ];
 }
 
 /**
  * Remove an existing layer from split map settings
- * @param {Object} state `visState`
+ * @param {Object} splitMaps
  * @param {Object} layer
  * @returns {Object} Maps of custom layer objects
  */
-function removeLayerFromSplitMaps(state, layer) {
-  return state.splitMaps.map(settings => {
-    const {layers} = settings;
-    /* eslint-disable no-unused-vars */
-    const {[layer.id]: _, ...newLayers} = layers;
-    /* eslint-enable no-unused-vars */
-    return {
-      ...settings,
-      layers: newLayers
-    };
-  });
+function removeLayerFromSplitMaps(splitMaps, layer) {
+  return splitMaps.map(({[layer.id]: _, ...newLayers} = {}) => newLayers);
 }
 
 /**
@@ -1161,47 +1136,42 @@ function addNewLayersToSplitMap(splitMaps, layers) {
   }
 
   // add new layer to both maps,
-  //  don't override, if layer.id is already in splitMaps.settings.layers
-  return splitMaps.map(settings => ({
+  // don't override, if layer.id is already in splitMaps.settings.layers
+  const returnv = splitMaps.map(settings => ({
     ...settings,
-    layers: {
-      ...settings.layers,
-      ...newLayers.reduce(
-        (accu, newLayer) =>
-          newLayer.config.isVisible
-            ? {
-                ...accu,
-                [newLayer.id]: settings.layers[newLayer.id]
-                  ? settings.layers[newLayer.id]
-                  : generateLayerMetaForSplitViews(newLayer)
-              }
-            : accu,
-        {}
-      )
-    }
+    ...newLayers.reduce(
+      (accu, newLayer) =>
+        [newLayer.id] in settings ? accu : {
+          ...accu,
+          [newLayer.id]: newLayer.config.isVisible
+        },
+        // newLayer.config.isVisible
+        //   ? {
+        //       ...accu,
+        //       [newLayer.id]: settings.layers[newLayer.id]
+        //         ? settings.layers[newLayer.id]
+        //         : newLayer.config.isVisible
+        //     }
+        // : accu,
+      {}
+    )
   }));
+  console.log(returnv)
+  return returnv;
 }
 
-/**
- * Hide an existing layers from custom map layer objects
- * @param {Object} state
- * @param {Object} layer
- * @returns {Object} Maps of custom layer objects
- */
-function toggleLayerFromSplitMaps(state, layer) {
-  return state.splitMaps.map(settings => {
-    const {layers} = settings;
-    const newLayers = {
-      ...layers,
-      [layer.id]: generateLayerMetaForSplitViews(layer)
-    };
-
-    return {
-      ...settings,
-      layers: newLayers
-    };
-  });
-}
+// /**
+//  * Hide an existing layers from custom map layer objects
+//  * @param {Object} state
+//  * @param {Object} layer
+//  * @returns {Object} Maps of custom layer objects
+//  */
+// function toggleLayerFromSplitMaps(state, layer) {
+//   return state.splitMaps.map(settings => ({
+//     ...settings,
+//     [layer.id]: layer.config.isVisible
+//   }))
+// }
 
 /**
  * When a user clicks on the specific map closing icon
@@ -1215,15 +1185,14 @@ function toggleLayerFromSplitMaps(state, layer) {
 function closeSpecificMapAtIndex(state, action) {
   // retrieve layers meta data from the remaining map that we need to keep
   const indexToRetrieve = 1 - action.payload;
-  const metaSettings = state.splitMaps[indexToRetrieve];
+  const mapLayers = state.splitMaps[indexToRetrieve];
   const {layers} = state;
 
   // update layer visibility
   const newLayers = layers.map(layer =>
     layer.updateLayerConfig({
       // if layer.id is not in mapLayers, is should be inVisible
-      isVisible: metaSettings.layers[layer.id]
-        && metaSettings.layers[layer.id].isVisible
+      isVisible: mapLayers[layer.id]
     })
   );
 

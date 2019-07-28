@@ -123,7 +123,6 @@ export function updateMapboxLayers(
 }
 
 function updateSourceData(map, datasetId, data) {
-  console.log('mapbox updateSourceData')
   const source = map.getSource(datasetId);
 
   if (!source) {
