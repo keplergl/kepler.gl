@@ -59,8 +59,6 @@ class MapboxLayerGL extends Layer {
       this.type &&
       this.config.isVisible &&
       this.hasAllColumns()
-      // this.hasLayerData(data) &&
-      // typeof this.renderLayer === 'function'
     );
   }
 
