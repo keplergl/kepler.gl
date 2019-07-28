@@ -198,24 +198,11 @@ test('#visStateReducer -> ADD_LAYER.1', t => {
     layers: [{id: 'existing_layer'}],
     layerData: [[{data: [1, 2, 3]}, {data: [4, 5, 6]}]],
     layerOrder: [0],
-    splitMaps: [
-      {
-        layers: {
-          existing_layer: {
-            isAvailable: true,
-            isVisible: false
-          }
-        }
-      },
-      {
-        layers: {
-          existing_layer: {
-            isAvailable: true,
-            isVisible: false
-          }
-        }
-      }
-    ]
+    splitMaps: [{
+      layers: {existing_layer: false}
+    },{
+      layers: {existing_layer: false}
+    }]
   };
 
   const newReducer = reducer(oldState, VisStateActions.addLayer());
@@ -223,26 +210,14 @@ test('#visStateReducer -> ADD_LAYER.1', t => {
   const expectedSplitMaps = [
     {
       layers: {
-        existing_layer: {
-          isAvailable: true,
-          isVisible: false
-        },
-        [newId]: {
-          isAvailable: true,
-          isVisible: true
-        }
+        existing_layer:false,
+        [newId]: true
       }
     },
     {
       layers: {
-        existing_layer: {
-          isAvailable: true,
-          isVisible: false
-        },
-        [newId]: {
-          isAvailable: true,
-          isVisible: true
-        }
+        existing_layer: false,
+        [newId]: true
       }
     }
   ];
@@ -294,26 +269,14 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.1', t => {
     splitMaps: [
       {
         layers: {
-          existing_layer: {
-            isAvailable: true,
-            isVisible: false
-          },
-          more_layer: {
-            isAvailable: true,
-            isVisible: true
-          }
+          existing_layer: false,
+          more_layer: true
         }
       },
       {
         layers: {
-          existing_layer: {
-            isAvailable: true,
-            isVisible: false
-          },
-          more_layer: {
-            isAvailable: true,
-            isVisible: false
-          }
+          existing_layer: false,
+          more_layer: false
         }
       }
     ]
@@ -327,26 +290,14 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.1', t => {
   const expectedSplitMaps = [
     {
       layers: {
-        existing_layer: {
-          isAvailable: true,
-          isVisible: false
-        },
-        [newId]: {
-          isAvailable: true,
-          isVisible: true
-        }
+        existing_layer: false,
+        [newId]: true
       }
     },
     {
       layers: {
-        existing_layer: {
-          isAvailable: true,
-          isVisible: false
-        },
-        [newId]: {
-          isAvailable: true,
-          isVisible: false
-        }
+        existing_layer: false,
+        [newId]: false
       }
     }
   ];
@@ -1269,26 +1220,14 @@ test('#visStateReducer -> UPDATE_VIS_DATA.SPLIT_MAPS', t => {
     splitMaps: [
       {
         layers: {
-          a: {
-            isAvailable: true,
-            isVisible: true
-          },
-          b: {
-            isAvailable: true,
-            isVisible: false
-          }
+          a: true,
+          b: false
         }
       },
       {
         layers: {
-          a: {
-            isAvailable: true,
-            isVisible: false
-          },
-          b: {
-            isAvailable: true,
-            isVisible: true
-          }
+          a: false,
+          b: true
         }
       }
     ],
@@ -1317,38 +1256,19 @@ test('#visStateReducer -> UPDATE_VIS_DATA.SPLIT_MAPS', t => {
 
   // first visible layer should be point
   const id1 = newState.layers[3].id;
-
   const expectedSplitMaps = [
     {
       layers: {
-        a: {
-          isAvailable: true,
-          isVisible: true
-        },
-        b: {
-          isAvailable: true,
-          isVisible: false
-        },
-        [id1]: {
-          isAvailable: true,
-          isVisible: true
-        }
+        a: true,
+        b: false,
+        [id1]: true
       }
     },
     {
       layers: {
-        a: {
-          isAvailable: true,
-          isVisible: false
-        },
-        b: {
-          isAvailable: true,
-          isVisible: true
-        },
-        [id1]: {
-          isAvailable: true,
-          isVisible: true
-        }
+        a: false,
+        b: true,
+        [id1]: true
       }
     }
   ];
@@ -2330,37 +2250,29 @@ test('#visStateReducer -> REMOVE_DATASET', t => {
 
 test('#visStateReducer -> SPLIT_MAP: TOGGLE', t => {
   const layer0 = new ArcLayer({id: 'a', dataId: 'puppy_0', isVisible: true});
+  const layer1 = new ArcLayer({id: 'b', dataId: 'puppy_0', isVisible: false});
 
   const oldState = {
-    layers: [layer0],
+    layers: [layer0, layer1],
     splitMaps: []
   };
 
   const newReducer = reducer(oldState, MapStateActions.toggleSplitMap());
 
   t.deepEqual(
-    newReducer,
-    {
-      layers: [layer0],
-      splitMaps: [
-        {
-          layers: {
-            a: {
-              isAvailable: true,
-              isVisible: true
-            }
-          }
-        },
-        {
-          layers: {
-            a: {
-              isAvailable: true,
-              isVisible: true
-            }
-          }
+    newReducer.splitMaps,
+    [
+      {
+        layers: {
+          a: true
         }
-      ]
-    },
+      },
+      {
+        layers: {
+          a: true
+        }
+      }
+    ],
     'should split map'
   );
 
@@ -2385,26 +2297,14 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER', t => {
     splitMaps: [
       {
         layers: {
-          a: {
-            isVisible: true,
-            isAvailable: true
-          },
-          b: {
-            isVisible: true,
-            isAvailable: true
-          }
+          a: true,
+          b: true
         }
       },
       {
         layers: {
-          a: {
-            isVisible: true,
-            isAvailable: true
-          },
-          b: {
-            isVisible: true,
-            isAvailable: true
-          }
+          a: true,
+          b: true
         }
       }
     ]
@@ -2426,18 +2326,12 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER', t => {
       splitMaps: [
         {
           layers: {
-            a: {
-              isVisible: true,
-              isAvailable: true
-            }
+            a: true
           }
         },
         {
           layers: {
-            a: {
-              isVisible: true,
-              isAvailable: true
-            }
+            a: true
           }
         }
       ]
@@ -2480,42 +2374,18 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
     splitMaps: [
       {
         layers: {
-          a: {
-            isVisible: true,
-            isAvailable: true
-          },
-          b: {
-            isVisible: true,
-            isAvailable: true
-          },
-          c: {
-            isVisible: true,
-            isAvailable: true
-          },
-          d: {
-            isVisible: true,
-            isAvailable: true
-          }
+          a: true,
+          b: true,
+          c: true,
+          d: true
         }
       },
       {
         layers: {
-          a: {
-            isVisible: true,
-            isAvailable: true
-          },
-          b: {
-            isVisible: true,
-            isAvailable: true
-          },
-          c: {
-            isVisible: true,
-            isAvailable: true
-          },
-          d: {
-            isVisible: true,
-            isAvailable: true
-          }
+          a: true,
+          b: true,
+          c: true,
+          d: true
         }
       }
     ]
@@ -2550,34 +2420,16 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
     splitMaps: [
       {
         layers: {
-          a: {
-            isVisible: true,
-            isAvailable: true
-          },
-          b: {
-            isVisible: true,
-            isAvailable: true
-          },
-          d: {
-            isVisible: true,
-            isAvailable: true
-          }
+          a: true,
+          b: true,
+          d: true
         }
       },
       {
         layers: {
-          a: {
-            isVisible: true,
-            isAvailable: true
-          },
-          b: {
-            isVisible: true,
-            isAvailable: true
-          },
-          d: {
-            isVisible: true,
-            isAvailable: true
-          }
+          a: true,
+          b: true,
+          d: true
         }
       }
     ]
@@ -2606,18 +2458,12 @@ test('#visStateReducer -> SPLIT_MAP: ADD_LAYER', t => {
     splitMaps: [
       {
         layers: {
-          existing_layer: {
-            isAvailable: true,
-            isVisible: true
-          }
+          existing_layer: true
         }
       },
       {
         layers: {
-          existing_layer: {
-            isAvailable: true,
-            isVisible: true
-          }
+          existing_layer: true
         }
       }
     ]
@@ -2646,18 +2492,22 @@ test('#visStateReducer -> SPLIT_MAP: ADD_LAYER', t => {
     'newLayer was added into splitMaps layers'
   );
   t.deepEqual(
-    newReducer.splitMaps[0].layers[newReducer.layers[1].id],
+    newReducer.splitMaps[0],
     {
-      isAvailable: true,
-      isVisible: true
+      layers: {
+        existing_layer: true,
+        [newReducer.layers[1].id]: true
+      }
     },
     'newLayer map meta data settings are correct'
   );
   t.deepEqual(
-    newReducer.splitMaps[1].layers[newReducer.layers[1].id],
+    newReducer.splitMaps[1],
     {
-      isAvailable: true,
-      isVisible: true
+      layers: {
+        existing_layer: true,
+        [newReducer.layers[1].id]: true
+      }
     },
     'newLayer map meta data settings are correct'
   );
@@ -2674,26 +2524,14 @@ test('#visStateReducer -> SPLIT_MAP: TOGGLE_SPLIT_MAP', t => {
     splitMaps: [
       {
         layers: {
-          a: {
-            isAvailable: true,
-            isVisible: false
-          },
-          b: {
-            isAvailable: true,
-            isVisible: true
-          }
+          a: true,
+          b: true
         }
       },
       {
         layers: {
-          a: {
-            isAvailable: true,
-            isVisible: true
-          },
-          b: {
-            isAvailable: true,
-            isVisible: false
-          }
+          a: true,
+          b: false
         }
       }
     ]
@@ -2716,25 +2554,19 @@ test('#visStateReducer -> SPLIT_MAP: TOGGLE_SPLIT_MAP', t => {
 });
 
 test('#visStateReducer -> SPLIT_MAP: HIDE LAYER', t => {
-  const layer1 = new PointLayer({id: 'a'});
-  // const layer2 = new PointLayer({id: 'b'});
+
   const oldState = {
-    layers: [layer1],
     splitMaps: [
       {
         layers: {
-          a: {
-            isVisible: true,
-            isAvailable: true
-          }
+          a: true,
+          b: true
         }
       },
       {
         layers: {
-          a: {
-            isVisible: true,
-            isAvailable: true
-          }
+          a: true,
+          b: false
         }
       }
     ]
@@ -2743,28 +2575,23 @@ test('#visStateReducer -> SPLIT_MAP: HIDE LAYER', t => {
   const newState = reducer(oldState, VisStateActions.toggleLayerForMap(1, 'a'));
 
   const expectedState = {
-    layers: [layer1],
     splitMaps: [
       {
         layers: {
-          a: {
-            isVisible: true,
-            isAvailable: true
-          }
+          a: true,
+          b: true
         }
       },
       {
         layers: {
-          a: {
-            isVisible: false,
-            isAvailable: true
-          }
+          a: false,
+          b: false
         }
       }
     ]
   };
 
-  t.deepEqual(newState, expectedState, 'should hide layer B in split map');
+  t.deepEqual(newState.splitMaps, expectedState.splitMaps, 'should hide layer B in split map');
 
   t.end();
 });

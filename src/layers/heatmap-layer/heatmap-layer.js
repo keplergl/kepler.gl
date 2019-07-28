@@ -26,6 +26,8 @@ import MapboxGLLayer from '../mapboxgl-layer';
 import HeatmapLayerIcon from './heatmap-layer-icon';
 
 const MAX_ZOOM_LEVEL = 18;
+export const pointColResolver = ({lat, lng, altitude}) =>
+  `${lat.fieldIdx}-${lng.fieldIdx}`;
 
 export const heatmapVisConfigs = {
   opacity: 'opacity',
@@ -150,27 +152,27 @@ class HeatmapLayer extends MapboxGLLayer {
   };
 
   datasetSelector = config => config.dataId;
-  // isVisibleSelector = config => config.isVisible;
+  columnsSelector = config => pointColResolver(config.columns);
   visConfigSelector = config => config.visConfig;
   weightFieldSelector = config => config.weightField ? config.weightField.name : null;
   weightDomainSelector = config => config.weightDomain;
 
   computeHeatmapConfiguration = createSelector(
     this.datasetSelector,
-    // this.isVisibleSelector,
+    this.columnsSelector,
     this.visConfigSelector,
     this.weightFieldSelector,
     this.weightDomainSelector,
 
-    (datasetId, visConfig, weightField, weightDomain) => {
+    (datasetId, columns, visConfig, weightField, weightDomain) => {
 
       return {
         type: 'heatmap',
         id: this.id,
-        source: datasetId,
-        // layout: {
-        //   visibility: 'visible'
-        // },
+        source: `${datasetId}-${columns}`,
+        layout: {
+          visibility: 'visible'
+        },
         maxzoom: MAX_ZOOM_LEVEL,
         paint: {
           'heatmap-weight': weightField ? [
@@ -220,7 +222,7 @@ class HeatmapLayer extends MapboxGLLayer {
     const isSameConfig = this.isSameConfig(options);
 
     const data = !shouldRebuild(isSameData, isSameConfig) ?
-      null :
+      oldLayerData.data :
       geojsonFromPoints(
         allData,
         filteredIndex,

@@ -271,7 +271,7 @@ function KeplerGlFactory(
               key={0}
               index={0}
               {...mapFields}
-              mapLayers={isSplit ? splitMaps[0] : null}
+              mapLayers={isSplit ? splitMaps[0].layers : null}
             />
           ]
         : splitMaps.map((settings, index) => (
@@ -279,7 +279,7 @@ function KeplerGlFactory(
               key={index}
               index={index}
               {...mapFields}
-              mapLayers={splitMaps[index]}
+              mapLayers={splitMaps[index].layers}
             />
           ));
 

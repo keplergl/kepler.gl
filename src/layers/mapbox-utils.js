@@ -22,10 +22,11 @@ import {OVERLAY_TYPE} from './base-layer';
 
 /**
  * This function will convert layers to mapbox layers
- * @param layers the layers to be converted
- * @param layerData extra layer information
- * @param layerOrder the order by which we should convert layers
- * @returns {*}
+ * @param {Array<Object>} layers the layers to be converted
+ * @param {Array<Object>} layerData extra layer information
+ * @param {Array<Number>} layerOrder the order by which we should convert layers
+ * @param {Object} layersToRender {[id]: true | false} object whether each layer should be rendered
+ * @returns {Object} {[id]: layer}
  */
 export function generateMapboxLayers(
   layers = [],
@@ -42,91 +43,88 @@ export function generateMapboxLayers(
           layers[idx].overlayType === OVERLAY_TYPE.mapboxgl &&
           layersToRender[layers[idx].id]
       )
-      .map(idx => {
-        const layer = layers[idx];
+      .reduce((accu, index) => {
+        const layer = layers[index];
         return {
-          id: layer.id,
-          data: layerData[idx].data,
-          isVisible: layer.config.isVisible,
-          config: layerData[idx].config,
-          datasetId: layer.config.dataId
+          ...accu,
+          [layer.id]: {
+            id: layer.id,
+            data: layerData[index].data,
+            isVisible: layer.config.isVisible,
+            config: layerData[index].config,
+            sourceId: layerData[index].config.source
+          }
         };
-      });
+      }, {});
   }
 
-  return [];
+  return {};
 }
 
 /**
  * Update mapbox layers on the given map
- * @param map
- * @param newLayers Array of new mapbox layers to be displayed
- * @param oldLayers Map of the old layers to be compare with the current ones to detect deleted layers
- *                  {layerId: datasetId}
- * @param mapLayers carries information about split map view
+ * @param {Object} map
+ * @param {Object} newLayers Map of new mapbox layers to be displayed
+ * @param {Object} oldLayers Map of the old layers to be compare with the current ones to detect deleted layers
+ *                  {layerId: sourceId}
  */
 export function updateMapboxLayers(
   map,
-  newLayers = [],
-  oldLayers = null,
-  mapLayers = null,
-  opt = {force: true}
+  newLayers = {},
+  oldLayers = null
 ) {
   // delete no longer existed old layers
   if (oldLayers) {
-    const newLayerIds = newLayers.reduce(
-      (accu, l) => ({
-        ...accu,
-        [l.id]: true
-      }),
-      {}
-    );
-
-    Object.keys(oldLayers).forEach(layerId => {
-      if (!newLayerIds[layerId]) {
-        map.removeLayer(layerId);
-      }
-    });
+    checkAndRemoveOldLayers(map, oldLayers, newLayers);
   }
 
   // insert or update new layer
-  newLayers.forEach(overlay => {
-    const {id: layerId, config, data, datasetId, isVisible} = overlay;
+  Object.values(newLayers).forEach(overlay => {
+    const {id: layerId, config, data, sourceId, isVisible} = overlay;
     if (!data && !config) {
       return;
     }
 
-    if (data) {
-      updateSourceData(map, datasetId, data);
+    const {data: oldData, config: oldConfig} = (oldLayers && oldLayers[layerId]) || {};
+
+    if (data && data !== oldData) {
+      updateSourceData(map, sourceId, data);
     }
 
-    const oldConfig = oldLayers[layerId];
-    const mapboxLayer = map.getLayer(layerId);
-
     // compare with previous configs
-    if (!oldConfig || oldConfig !== config || !mapboxLayer || opt.force) {
-
-      if (mapboxLayer) {
-        // check if layer already is set
-        // remove it if exists
-        map.removeLayer(layerId);
-      }
-
-      map.addLayer(config);
-      map.setLayoutProperty(layerId, 'visibility', isVisible ? 'visible' : 'none');
-      // add if visible and available
-      // if (isAvailableAndVisible) {
-      //   map.addLayer(config);
-      // }
+    if (oldConfig !== config) {
+      updateLayerConfig(map, layerId, config, isVisible);
     }
   });
 }
 
-function updateSourceData(map, datasetId, data) {
-  const source = map.getSource(datasetId);
+function checkAndRemoveOldLayers(map, oldLayers, newLayers) {
+  Object.keys(oldLayers).forEach(layerId => {
+    if (!newLayers[layerId]) {
+      map.removeLayer(layerId);
+    }
+  });
+}
+
+function updateLayerConfig(map, layerId, config, isVisible) {
+  const mapboxLayer = map.getLayer(layerId);
+
+  if (mapboxLayer) {
+    // check if layer already is set
+    // remove it if exists
+    map.removeLayer(layerId);
+  }
+
+  map.addLayer(config);
+  map.setLayoutProperty(layerId, 'visibility', isVisible ? 'visible' : 'none');
+}
+
+function updateSourceData(map, sourceId, data) {
+
+  const source = map.getSource(sourceId);
 
   if (!source) {
-    map.addSource(datasetId, {
+    map.addSource(sourceId, {
       type: 'geojson',
       data
     });
