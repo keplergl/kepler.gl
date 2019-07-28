@@ -14,6 +14,8 @@
   <a href='https://app.fossa.com/projects/custom%2B4458%2Fgithub.com%2Fkeplergl%2Fkepler.gl?ref=badge_shield'>
     <img src='https://app.fossa.com/api/projects/custom%2B4458%2Fgithub.com%2Fkeplergl%2Fkepler.gl.svg?type=shield' alt='Fossa' />
   </a>
+  [Netlify Status](https://api.netlify.com/api/v1/badges/0c9b895c-acd0-43fd-8af7-fe960181b686/deploy-status)
+  [![Netlify Status](https://api.netlify.com/api/v1/badges/0c9b895c-acd0-43fd-8af7-fe960181b686/deploy-status)](https://app.netlify.com/sites/keplergl/deploys)
 </p>
 
 <h1 align="center">kepler.gl | <a href="http://kepler.gl">Website</a> |
