@@ -53,7 +53,6 @@ test('#HeatmapLayer -> contructor', t => {
   t.end()
 });
 
-
 test('#Heatmaplayer -> formatLayerData', t => {
   const {rows} = processCsvData(csvData);
   const filteredIndex = Array(rows.length).fill().map((_, index) => index);
@@ -79,14 +78,12 @@ test('#Heatmaplayer -> formatLayerData', t => {
       data: [data, rows, filteredIndex, undefined],
       test: result => {
         const {layerData,  layer} = result;
-        // log(layer);
-        // log(layerData);
 
         const expectedLayerData = {
           columns,
           config:  {
             type: 'heatmap',
-            source: 'heatmap',
+            source: 'heatmap-1-2',
             layout: {
               visibility: 'visible'
             },
@@ -118,30 +115,30 @@ test('#Heatmaplayer -> formatLayerData', t => {
           data: {
             type: 'FeatureCollection',
             features: [
-              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2590542, 29.9900937, 0 ] } },
-              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2461142, 29.9927699, 0 ] } },
-              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2312742, 29.9907261, 0 ] } },
-              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2175827, 29.9870074, 0 ] } },
-              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2154899, 29.9923041, 0 ] } },
-              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2149361, 29.9968249, 0 ] } },
-              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2164035, 30.0037217, 0 ] } },
-              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2179346, 30.0116207, 0 ] } },
-              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2179556, 30.0208925, 0 ] } },
-              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2178842, 30.0218999, 0 ] } },
-              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2179138, 30.0229344, 0 ] } },
-              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2179415, 30.0264237, 0 ] } },
-              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2181809, 30.0292134, 0 ] } },
-              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2193991, 30.034391, 0 ] } },
-              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2181803, 30.0352752, 0 ] } },
-              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2195902, 30.0395918, 0 ] } },
-              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2174421, 30.0497387, 0 ] } },
-              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2165983, 30.0538936, 0 ] } },
-              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2148748, 30.060911, 0 ] } },
-              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2212278, 30.060334, 0 ] } },
-              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2288985, 30.0554663, 0 ] } },
-              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2187021, 30.0614122, 0 ] } },
-              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2191059, 30.0612697, 0 ] } },
-              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2194728, 30.0610977, 0 ] } }
+              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2590542, 29.9900937] } },
+              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2461142, 29.9927699] } },
+              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2312742, 29.9907261] } },
+              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2175827, 29.9870074] } },
+              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2154899, 29.9923041] } },
+              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2149361, 29.9968249] } },
+              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2164035, 30.0037217] } },
+              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2179346, 30.0116207] } },
+              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2179556, 30.0208925] } },
+              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2178842, 30.0218999] } },
+              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2179138, 30.0229344] } },
+              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2179415, 30.0264237] } },
+              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2181809, 30.0292134] } },
+              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2193991, 30.034391] } },
+              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2181803, 30.0352752] } },
+              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2195902, 30.0395918] } },
+              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2174421, 30.0497387] } },
+              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2165983, 30.0538936] } },
+              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2148748, 30.060911] } },
+              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2212278, 30.060334] } },
+              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2288985, 30.0554663] } },
+              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2187021, 30.0614122] } },
+              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2191059, 30.0612697] } },
+              { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [ 31.2194728, 30.0610977] } }
             ]
           },
           weightField: null

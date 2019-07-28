@@ -68,11 +68,7 @@ export function generateMapboxLayers(
  * @param {Object} oldLayers Map of the old layers to be compare with the current ones to detect deleted layers
  *                  {layerId: sourceId}
  */
-export function updateMapboxLayers(
-  map,
-  newLayers = {},
-  oldLayers = null
-) {
+export function updateMapboxLayers(map, newLayers = {}, oldLayers = null) {
   // delete no longer existed old layers
   if (oldLayers) {
     checkAndRemoveOldLayers(map, oldLayers, newLayers);
@@ -85,7 +81,8 @@ export function updateMapboxLayers(
       return;
     }
 
-    const {data: oldData, config: oldConfig} = (oldLayers && oldLayers[layerId]) || {};
+    const {data: oldData, config: oldConfig} =
+      (oldLayers && oldLayers[layerId]) || {};
 
     if (data && data !== oldData) {
       updateSourceData(map, sourceId, data);
@@ -120,7 +117,6 @@ function updateLayerConfig(map, layerId, config, isVisible) {
 }
 
 function updateSourceData(map, sourceId, data) {
-
   const source = map.getSource(sourceId);
 
   if (!source) {
