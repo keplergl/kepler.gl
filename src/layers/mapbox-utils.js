@@ -166,7 +166,6 @@ export function geojsonFromPoints(
         coordinates: [
           columns.lng ? point[columns.lng.fieldIdx] : null, // lng
           columns.lat ? point[columns.lat.fieldIdx] : null // lat
-          // columns.altitude ? point[columns.altitude.fieldIdx] : 0 // altitude
         ]
       }
     });
