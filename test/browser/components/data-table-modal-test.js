@@ -30,11 +30,11 @@ import {testFields, testAllData} from 'test/fixtures/test-csv-data';
 
 // This makes sure react0virtualized renders the full grid
 const WIDTH = 1400;
-const HEIGHT = 600;
+const HEIGHT = 800;
+const rows = 10;
 
 /* eslint-disable max-statements */
 test('Components -> DataTableModal.render', t => {
-
   t.doesNotThrow(() => {
     mount(
       <DataTableModal
@@ -54,7 +54,7 @@ test('Components -> DataTableModal.render', t => {
           allData: testAllData,
           fields: testFields,
           color: [113, 113, 113],
-          data: testAllData.slice(0, 10)
+          data: testAllData.slice(0, rows)
         }
       }}
       dataId="smoothie"
@@ -64,8 +64,8 @@ test('Components -> DataTableModal.render', t => {
   t.equal(wrapper.find(DataTableModal).length, 1, 'should render DataTableModal data');
   t.equal(wrapper.find(DatasetTabs).length, 1, 'should render DatasetTabs');
   t.equal(wrapper.find(DatasetModalTab).length, 1, 'should render 1 dataset-modal-catalog');
-  t.equal(wrapper.find('.header-cell').length, testFields.length, `should render 4 headers because of ${HEIGHT}`);
-  t.equal(wrapper.find('.cell').length, 110, 'should render 40 cells');
+  t.equal(wrapper.find('.header-cell').length, testFields.length, `should render ${testFields.length} headers`);
+  t.equal(wrapper.find('.cell').length, testFields.length * rows, `should render ${testFields.length * rows} cells`);
   t.equal(wrapper.find('.cell.boolean').length, 10, 'should render 10 cells');
 
   const expectedRows = {

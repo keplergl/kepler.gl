@@ -28,7 +28,6 @@ import DatasetLabel from 'components/common/dataset-label';
 import {Clock} from 'components/common/icons/index';
 
 const COLUMN_WIDTH = 200;
-
 const CELL_HEADER_HEIGHT = 72;
 const CELL_HEIGHT = 48;
 const DEFAULT_WIDTH = 800;
@@ -46,88 +45,90 @@ const StyledModal = styled.div`
 `;
 
 const DataGridWrapper = styled.div`
-  .cell {
-    border-right: 0;
-    padding: 14px 8px;
-    border-bottom: ${props => props.theme.panelBorderLT};
-    color: ${props => props.theme.labelColorLT};
-    align-items: center;
-    justify-content: center;
-    display: flex;
-    text-overflow: ellipsis;
-    white-space: pre-wrap;
-    word-wrap: break-spaces;
-  }
-
-  .header-cell {
-    border-right: 0;
-    border-bottom: 0;
-    background: ${props => props.theme.panelBackgroundLT};
-    color: ${props => props.theme.titleColorLT};
-    padding: 14px 0;
-  }
-
-  .header-cell:first-child {
-    padding-left: ${dgSettings.sidePadding};
-  }
-
   .ReactVirtualized__Grid__innerScrollContainer {
     ${props => props.theme.modalScrollBar};
   }
 `;
 
-const tagContainerStyle = {
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'space-between'
-};
+const StyledFieldHeader = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-right: 0;
+  border-bottom: 0;
+  background: ${props => props.theme.panelBackgroundLT};
+  color: ${props => props.theme.titleColorLT};
+  height: 100%;
+  
+  .label-wrapper {
+    display: flex;
+    align-items: center;
+  }
+  
+  .icon-wrapper {
+    marginRight: ${props => props.type === 'timestamp' ? '2px' : '0'};
+    height: 16px;
+  }
+`;
 
 const FieldHeader = ({name, type}) => (
-  <div className="header-cell" style={tagContainerStyle}>
-    <div style={{display: 'flex', alignItems: 'center'}}>
-      <div
-        style={{
-          marginRight: type === 'timestamp' ? '2px' : '18px',
-          height: '16px'
-        }}
-      >
+  <StyledFieldHeader type={type}>
+    <div className="label-wrapper">
+      <div className="icon-wrapper">
         {type === 'timestamp' ? <Clock height="16px" /> : null}
       </div>
-      {name}
+      <span>{name}</span>
     </div>
-    <div style={{marginLeft: '18px'}}>
+    <div className="field-wrapper">
       <FieldToken type={type} />
     </div>
-  </div>
+  </StyledFieldHeader>
 );
+
+const StyledCell = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-right: 0;
+  border-bottom: ${props => props.theme.panelBorderLT};
+  color: ${props => props.theme.labelColorLT};
+  text-overflow: ellipsis;
+  white-space: pre-wrap;
+  word-wrap: break-spaces;
+  height: 100%;
+`;
 
 const Cell = ({name, type}) => {
   const value = type === ALL_FIELD_TYPES.boolean ? String(name) : name;
-  return (<div className={`cell ${type}`} title={value}><span>{value}</span></div>);
+  return (<StyledCell title={value}><span>{value}</span></StyledCell>);
 };
 
-export class Datagrid extends PureComponent {
+export class DataGrid extends PureComponent {
   _cellRenderer = ({columnIndex, key, rowIndex, style}) => {
     const {columns, rows} = this.props;
 
     // rowIndex -1 because data rows start rendering at index 1 and we normalize back using the -1 param
-    const className = `${rowIndex === 0 ? 'header' : `row-${rowIndex-1}`} column-${columnIndex}`;
+    const className = `${rowIndex === 0 
+      ? `header-${columnIndex}` 
+      : `row-${rowIndex-1}`} column-${columnIndex}`;
+
+    const type = columns[columnIndex].type;
 
     return (
       <div key={key} style={style} className={className}>
         {rowIndex === 0
-          ? (<FieldHeader name={columns[columnIndex].name} type={columns[columnIndex].type} />)
-          : (<Cell name={rows[rowIndex - 1][columnIndex]} type={columns[columnIndex].type} />)
+          ? (<FieldHeader className={`header-cell ${type}`} name={columns[columnIndex].name} type={type} />)
+          : (<Cell className={`cell ${type}`} name={rows[rowIndex - 1][columnIndex]} type={type} />)
         }
       </div>
     );
   };
 
-  _rowHeight = ({index}) => {
-    const {columns} = this.props;
-
-    return index < columns.length ? CELL_HEADER_HEIGHT : CELL_HEIGHT;
-  };
+  _rowHeight = ({index}) => index === 0 ? CELL_HEADER_HEIGHT : CELL_HEIGHT;
 
   render() {
     const {columns, height, rows, width} = this.props;
@@ -175,7 +176,7 @@ export class DataTableModal extends PureComponent {
           datasets={datasets}
           showDatasetTable={showDatasetTable}
         />
-        <Datagrid
+        <DataGrid
           width={width}
           height={height}
           rows={rows}
