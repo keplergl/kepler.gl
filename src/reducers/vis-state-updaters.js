@@ -317,18 +317,15 @@ export function layerTypeChangeUpdater(state, action) {
   let newState = state;
 
   // update splitMap layer id
-  if (state.splitMaps) {
+  if (state.splitMaps.length) {
     newState = {
       ...state,
       splitMaps: state.splitMaps.map(settings => {
-        const {[oldId]: oldLayerMap, ...otherLayers} = settings.layers;
-        return {
-          ...settings,
-          layers: {
-            ...otherLayers,
-            [layer.id]: oldLayerMap
-          }
-        };
+        const {[oldId]: oldLayerMap, ...otherLayers} = settings;
+        return oldId in settings ? {
+          ...otherLayers,
+          [layer.id]: oldLayerMap
+        } : settings;
       })
     };
   }
@@ -1136,8 +1133,8 @@ function addNewLayersToSplitMap(splitMaps, layers) {
   }
 
   // add new layer to both maps,
-  // don't override, if layer.id is already in splitMaps.settings.layers
-  const returnv = splitMaps.map(settings => ({
+  // don't override, if layer.id is already in splitMaps
+  return splitMaps.map(settings => ({
     ...settings,
     ...newLayers.reduce(
       (accu, newLayer) =>
@@ -1145,33 +1142,10 @@ function addNewLayersToSplitMap(splitMaps, layers) {
           ...accu,
           [newLayer.id]: newLayer.config.isVisible
         },
-        // newLayer.config.isVisible
-        //   ? {
-        //       ...accu,
-        //       [newLayer.id]: settings.layers[newLayer.id]
-        //         ? settings.layers[newLayer.id]
-        //         : newLayer.config.isVisible
-        //     }
-        // : accu,
       {}
     )
   }));
-  console.log(returnv)
-  return returnv;
 }
-
-// /**
-//  * Hide an existing layers from custom map layer objects
-//  * @param {Object} state
-//  * @param {Object} layer
-//  * @returns {Object} Maps of custom layer objects
-//  */
-// function toggleLayerFromSplitMaps(state, layer) {
-//   return state.splitMaps.map(settings => ({
-//     ...settings,
-//     [layer.id]: layer.config.isVisible
-//   }))
-// }
 
 /**
  * When a user clicks on the specific map closing icon
@@ -1190,10 +1164,11 @@ function closeSpecificMapAtIndex(state, action) {
 
   // update layer visibility
   const newLayers = layers.map(layer =>
-    layer.updateLayerConfig({
-      // if layer.id is not in mapLayers, is should be inVisible
-      isVisible: mapLayers[layer.id]
-    })
+    !mapLayers[layer.id] && layer.config.isVisible ?
+      layer.updateLayerConfig({
+        // if layer.id is not in mapLayers, it should be inVisible
+        isVisible: false
+      }) : layer
   );
 
   // delete map
