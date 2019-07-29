@@ -6,7 +6,7 @@
     <img src="https://api.travis-ci.com/keplergl/kepler.gl.svg?branch=master" alt="build" />
   </a>
   <a href="https://github.com/keplergl/kepler.gl">
-    <img src="https://githubbadges.com/star.svg?user=keplergl&repo=kepler.gl&style=flat" alt="stars" />
+    <img src="https://img.shields.io/github/stars/keplergl/kepler.gl.svg?style=flat" alt="stars" />
   </a>
   <a href='https://opensource.org/licenses/MIT'>
     <img src='https://img.shields.io/badge/License-MIT-blue.svg' alt='MIT License' />
