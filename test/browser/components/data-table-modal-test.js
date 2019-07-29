@@ -21,6 +21,7 @@
 import React from 'react';
 import test from 'tape';
 import {mount} from 'enzyme';
+import {mountWithTheme} from 'test/helpers/component-utils';
 
 import DataTableModalFactory, {DatasetTabs, DatasetModalTab} from
   'components/modals/data-table-modal';
@@ -40,7 +41,7 @@ const rows = 10;
 /* eslint-disable max-statements */
 test('Components -> DataTableModal.render', t => {
   t.doesNotThrow(() => {
-    mount(
+    mountWithTheme(
       <DataTableModal
         width={WIDTH}
         height={HEIGHT}
@@ -48,7 +49,7 @@ test('Components -> DataTableModal.render', t => {
     );
   }, 'Show not fail without data');
 
-  const wrapper = mount(
+  const wrapper = mountWithTheme(
     <DataTableModal
       width={WIDTH}
       height={HEIGHT}
