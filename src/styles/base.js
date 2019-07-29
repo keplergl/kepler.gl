@@ -225,6 +225,13 @@ export const notificationPanelWidth = 240;
 export const notificationPanelItemWidth = notificationPanelWidth - 60;
 export const notificationPanelItemHeight = 60;
 
+// Datagrid
+const columnWidth = 200;
+const cellHeaderHeight = 72;
+const cellHeight = 48;
+const gridDefaultWidth = 800;
+const gridDefaultHeight = 600;
+
 export const textTruncate = {
   maxWidth: '100%',
   overflow: 'hidden',
@@ -948,6 +955,13 @@ export const theme = {
   notificationPanelWidth,
   notificationPanelItemWidth,
   notificationPanelItemHeight,
+
+  // datagrid
+  columnWidth,
+  cellHeaderHeight,
+  cellHeight,
+  gridDefaultWidth,
+  gridDefaultHeight,
 
   // Breakpoints
   breakPoints

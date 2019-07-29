@@ -19,19 +19,18 @@
 // THE SOFTWARE.
 
 import React, {PureComponent} from 'react';
+import PropTypes from 'prop-types';
 import {MultiGrid} from 'react-virtualized';
-import styled from 'styled-components';
+import styled, {withTheme}from 'styled-components';
 import FieldToken from 'components/common/field-token';
 import {Clock} from 'components/common/icons/index';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
 
-const COLUMN_WIDTH = 200;
-const CELL_HEADER_HEIGHT = 72;
-const CELL_HEIGHT = 48;
-const DEFAULT_WIDTH = 800;
-const DEFAULT_HEIGHT = 600;
-
 const DataGridWrapper = styled.div`
+  .ReactVirtualized__Grid:focus,
+  .ReactVirtualized__Grid:active {
+    outline: 0;
+  }
   .ReactVirtualized__Grid__innerScrollContainer {
     ${props => props.theme.modalScrollBar};
   }
@@ -108,6 +107,14 @@ function DataGridFactory(
   Cell
 ) {
   class DataGrid extends PureComponent {
+    static propTypes = {
+      theme: PropTypes.object,
+      columns: PropTypes.arrayOf(PropTypes.object).isRequired,
+      height: PropTypes.number.isRequired,
+      rows: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.any)).isRequired,
+      width: PropTypes.number.isRequired
+    };
+
     _cellRenderer = ({columnIndex, key, rowIndex, style}) => {
       const {columns, rows} = this.props;
 
@@ -128,21 +135,23 @@ function DataGridFactory(
       );
     };
 
-    _rowHeight = ({index}) => index === 0 ? CELL_HEADER_HEIGHT : CELL_HEIGHT;
+    _rowHeight = ({index}) => index === 0
+      ? this.props.theme.cellHeaderHeight
+      : this.props.theme.cellHeight;
 
     render() {
-      const {columns, height, rows, width} = this.props;
+      const {columns, height, rows, theme, width} = this.props;
 
       return (
         <DataGridWrapper className="datagrid-wrapper">
           <MultiGrid
             cellRenderer={this._cellRenderer}
-            columnWidth={COLUMN_WIDTH}
+            columnWidth={theme.columnWidth}
             columnCount={columns.length}
             fixedRowCount={1}
             enableFixedRowScroll={true}
-            width={width || DEFAULT_WIDTH}
-            height={height || DEFAULT_HEIGHT}
+            width={width || theme.gridDefaultWidth}
+            height={height || theme.gridDefaultHeight}
             rowHeight={this._rowHeight}
             rowCount={rows.length + 1}
             hideTopRightGridScrollbar={true}
@@ -155,7 +164,9 @@ function DataGridFactory(
 
   DataGrid.displayName = 'DataGrid';
 
-  return DataGrid;
+  // Wrapping the component using withTheme because we need to
+  // access variables outside sytled-components context
+  return withTheme(DataGrid);
 }
 
 export default DataGridFactory;
