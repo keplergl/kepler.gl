@@ -15,7 +15,7 @@
     <img src='https://app.fossa.com/api/projects/custom%2B4458%2Fgithub.com%2Fkeplergl%2Fkepler.gl.svg?type=shield' alt='Fossa' />
   </a>
   <a href="https://app.netlify.com/sites/keplergl/deploys" alt="Netlify Status">
-    <img src="https://api.netlify.com/api/v1/badges/0c9b895c-acd0-43fd-8af7-fe960181b686/deploy-status" />
+    <img src="https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fdeveloper.oswaldlabs.com%2Fnetlify-status%2F0c9b895c-acd0-43fd-8af7-fe960181b686?style=flat" />
   </a>
 </p>
 
