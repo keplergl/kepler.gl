@@ -50,7 +50,8 @@ export const QUERY_OPTIONS = keyMirror({
 export const LOADING_METHODS_NAMES = keyMirror({
   upload: null,
   remote: null,
-  sample: null
+  sample: null,
+  carto: null
 });
 
 export const LOADING_METHODS = [
@@ -73,9 +74,14 @@ export const LOADING_METHODS = [
         label: 'Geojson',
         icon: 'note',
         description:
-          'Upload a gpx, kml, or zipped Shapefile and we will convert each layer to GeoJSON.'
+        'Upload a gpx, kml, or zipped Shapefile and we will convert each layer to GeoJSON.'
       }
     ]
+  },
+  {
+    id: LOADING_METHODS_NAMES.carto,
+    label: 'Load via CARTO',
+    options: []
   },
   {
     id: LOADING_METHODS_NAMES.remote,
