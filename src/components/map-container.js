@@ -73,7 +73,6 @@ export default function MapContainerFactory(MapTooltip, MapControl) {
       layers: PropTypes.arrayOf(PropTypes.any).isRequired,
       mapState: PropTypes.object.isRequired,
       uiState: PropTypes.object.isRequired,
-      visState: PropTypes.object.isRequired,
       mapStyle: PropTypes.object.isRequired,
       mapControls: PropTypes.object.isRequired,
       mousePos: PropTypes.object.isRequired,
