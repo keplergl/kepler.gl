@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {DEFAULT_LIGHT_SETTINGS} from 'constants/default-settings';
-import {extent} from 'd3-array';
+import {dataToTimeStamp} from 'layers/geojson-layer/geojson-utils';
 /**
  * Find default layers from fields
  *
@@ -100,20 +100,25 @@ export function getLightSettingsFromBounds(bounds) {
     : DEFAULT_LIGHT_SETTINGS;
 }
 
-export function getTimeAnimationDomainFoTripLayer(layer, datasets) {
+export function getTimeAnimationDomainForTripLayer(layer, datasets) {
   const {columns, dataId} = layer.config;
   const dataContent = datasets[dataId].allData;
   const geojsonFieldIdx = columns.geojson.fieldIdx;
+  const features = dataContent.map(d => d[geojsonFieldIdx]);
+  const unixTimestamps = dataToTimeStamp(features);
 
-  // TODO: H factor in more input format beyond 3rd coord as ts
-  const timeField = dataContent
-    .map(d => d[geojsonFieldIdx].geometry.coordinates.map(coord => coord[3]))
-    .flat();
+  const findMin = timestamps =>
+    timestamps.reduce((accu, ts) => (accu < ts ? accu : ts));
+  const findMax = timestamps =>
+    timestamps.reduce((accu, ts) => (accu > ts ? accu : ts));
 
-  return extent(timeField);
-}
+  const domain = unixTimestamps.reduce(
+    (accu, ts) => [
+      Math.min(accu[0], findMin(ts)),
+      Math.max(accu[1], findMax(ts))
+    ],
+    [Number(Infinity), -Infinity]
+  );
 
-export function getTimeAnimationDomain(layer, datasets) {
-  // TODO: H factor in multiple layers
-  return getTimeAnimationDomainFoTripLayer(layer, datasets);
+  return domain;
 }

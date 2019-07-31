@@ -318,15 +318,29 @@ export function updateAnimationSpeed(idx, speed) {
 }
 
 /**
- * Change filter animation speed
+ * Change animation control speed
  * @memberof visStateActions
- * @param {Number} value -  Current value of the slider
+ * @param {Number} speed -  Current value of the slider
  * @returns {{type: ActionTypes.PLAY_ANIMATION, value: value}}
  * @public
  */
-export function playAnimation(value) {
+export function playAnimation(speed) {
   return {
     type: ActionTypes.PLAY_ANIMATION,
+    speed
+  };
+}
+
+/**
+ * Reset animation
+ * @memberof visStateActions
+ * @param {Number} value -  Current value of the slider
+ * @returns {{type: ActionTypes.RESET_ANIMATION, value: value}}
+ * @public
+ */
+export function updateAnimationTime(value) {
+  return {
+    type: ActionTypes.UPDATE_ANIMATION_TIME,
     value
   };
 }
@@ -342,6 +356,20 @@ export function enableLayerAnimation(oldLayer) {
   return {
     type: ActionTypes.ENABLE_LAYER_ANIMATION,
     oldLayer
+  };
+}
+
+/**
+ * update trip layer animation speed
+ * @memberof visStateActions
+ * @param {Number} value -  updated speed of the slider
+ * @returns {{type: ActionTypes.UPDATE_ANIMATION_SPEED, speed: speed}}
+ * @public
+ */
+export function updateSpeed(speed) {
+  return {
+    type: ActionTypes.UPDATE_ANIMATION_SPEED,
+    speed
   };
 }
 

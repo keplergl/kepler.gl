@@ -33,10 +33,9 @@ const SliderWrapper = styled.div`
 
 const VerticalSliderContainer = styled.div`
   position: absolute;
-  right: 96px;
   bottom: 10px;
   width: 40px;
-  padding-left: 18px;
+  padding-left: 50px;
 `;
 
 class AnimationSpeedToggle extends Component {
