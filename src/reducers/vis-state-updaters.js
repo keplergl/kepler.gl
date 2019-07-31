@@ -43,7 +43,7 @@ import {createNewDataEntry} from 'utils/dataset-utils';
 import {
   findDefaultLayer,
   calculateLayerData,
-  getTimeAnimationDomain
+  getTimeAnimationDomainForTripLayer
 } from 'utils/layer-utils/layer-utils';
 
 import {
@@ -161,19 +161,17 @@ export const INITIAL_VIS_STATE = {
     //   }
     // ]
   ],
-
+  //
   // defaults layer classes
   layerClasses: LayerClasses,
 
   // default animation
   animationConfig: {
-    domain: [0, 2000],
+    domain: [null, null],
     currentTime: 0,
-    duration: 10
+    duration: 10,
+    speed: 1
   }
-  // layers: {
-  //   [layer.id]: {enabled: true, speed: 1000, currentTime: null}
-  // }
 };
 
 function updateStateWithLayerAndData(state, {layerData, layer, idx}) {
@@ -634,17 +632,40 @@ export const updateAnimationSpeedUpdater = (state, action) => ({
 });
 
 /**
- * Update animation current time
+ * Update animation config current time
  * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
- * @param {Number} action.value current time value of action
+ * @param {Number} action.speed current speed of animation
  * @returns {Object} nextState
  * @public
  *
  */
 
-export const playAnimationUpdater = (state, {value}) => ({
+export const playAnimationUpdater = (state, { speed }) => {
+  const timeRange = state.animationConfig.domain[1] - state.animationConfig.domain[0]
+  const baseSpeed = Math.floor(timeRange / 500)
+  return {
+    ...state,
+    animationConfig: {
+      ...state.animationConfig,
+      currentTime: state.animationConfig.currentTime + speed * baseSpeed
+    }
+  }
+}
+
+/**
+ * Reset animation config current time to a specified value
+ * @memberof visStateUpdaters
+ * @param {Object} state `visState`
+ * @param {Object} action action
+ * @param {Number} action.value the value current time will be set to
+ * @returns {Object} nextState
+ * @public
+ *
+ */
+
+export const resetAnimationUpdater = (state, {value}) => ({
   ...state,
   animationConfig: {
     ...state.animationConfig,
@@ -652,25 +673,86 @@ export const playAnimationUpdater = (state, {value}) => ({
   }
 });
 
+function updateAnimationDomain(state) {
+  // merge all animatable layer domain calculate the union
+  // state.layers.config.animation.domain
+  // take state.layer
+  const animatableLayers = state.layers.filter(l => l.config.animation.enabled);
+
+  const mergedDomain = animatableLayers.reduce((accu, layer) => (
+    [
+      Math.min(accu[0], layer.config.animation.domain[0]),
+      Math.max(accu[1], layer.config.animation.domain[1])
+    ]
+  ), [Number(Infinity), -Infinity]);
+
+  return {
+    ...state,
+    animationConfig: {
+      ...state.animationConfig,
+      currentTime: mergedDomain[0],
+      domain: mergedDomain
+    }
+  };
+}
+
 /**
- * Enable animation domain with the min and max of timestamps from geojson
+ * Set animation domain with the min and max of timestamps from geojson
+ * Enable multi-layer domain range
  * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
+ *  @param {Object} action.oldLayer the layer object to be updated
  * @returns {Object} nextState
  * @public
  *
  */
 
-export const enableLayerAnimationUpdater = (state, action) => {
-  const {oldLayer} = action;
-  const [minTs, maxTs] = getTimeAnimationDomain(oldLayer, state.datasets);
+export const enableLayerAnimationUpdater = (state, oldLayer) => {
+  // calculate animation domain for the layer enabled
+  // layer.config.animation.domain
+  // update newLayer into the state.layers
+  // merge all animatable layer domain calculate the union
+  const domain = getTimeAnimationDomainForTripLayer(
+    oldLayer[0],
+    state.datasets
+  );
+
+  const newLayer = oldLayer[0].updateLayerConfig({
+    animation: {
+      ...oldLayer[0].config.animation,
+      domain
+    }
+  });
+
+  const idx = state.layers.findIndex(l => l.id === oldLayer.id);
+  const oldLayerData = state.layerData[idx];
+  const {layerData, layer} = calculateLayerData(newLayer, state, oldLayerData, {
+    sameData: true
+  });
+
+  const newState = updateStateWithLayerAndData(state, {layerData, layer, idx});
+
+  return updateAnimationDomain(newState);
+};
+
+/**
+ * Update animation speed with the vertical speed slider
+ * @memberof visStateUpdaters
+ * @param {Object} state `visState`
+ * @param {Object} action action
+ * @param {Number} action.value the speed of the animation
+ * @returns {Object} nextState
+ * @public
+ *
+ */
+
+export const updateSpeedUpdater = (state, {speed}) => {
   return {
     ...state,
     animationConfig: {
       ...state.animationConfig,
-      currentTime: minTs,
-      domain: [minTs, maxTs]
+      speed
     }
   };
 };
@@ -770,7 +852,7 @@ export const removeLayerUpdater = (state, {idx}) => {
   const layerToRemove = state.layers[idx];
   const newMaps = removeLayerFromSplitMaps(state.splitMaps, layerToRemove);
 
-  return {
+  const newState = {
     ...state,
     layers: [...layers.slice(0, idx), ...layers.slice(idx + 1, layers.length)],
     layerData: [
@@ -784,6 +866,8 @@ export const removeLayerUpdater = (state, {idx}) => {
     hoverInfo: layerToRemove.isLayerHovered(hoverInfo) ? undefined : hoverInfo,
     splitMaps: newMaps
   };
+
+  return updateAnimationDomain(newState);
 };
 
 /**
@@ -1123,10 +1207,17 @@ export const updateVisDataUpdater = (state, action) => {
     mergedState = addDefaultLayers(mergedState, newDateEntries);
   }
 
+  const newLayers = mergedState.layers.filter(
+    l => l.config.dataId in newDateEntries
+  );
+
+  newLayers.forEach(l => {
+    if (l.config.animation.enabled) {
+      mergedState = enableLayerAnimationUpdater(mergedState, [l]);
+    }
+  });
+
   if (mergedState.splitMaps.length) {
-    const newLayers = mergedState.layers.filter(
-      l => l.config.dataId in newDateEntries
-    );
     // if map is split, add new layers to splitMaps
     mergedState = {
       ...mergedState,
@@ -1408,9 +1499,12 @@ export function updateAllLayerDomainData(state, dataId, newFilter) {
     }
   });
 
-  return {
+  const newState = {
     ...state,
     layers: newLayers,
     layerData: newLayerDatas
   };
+
+  return newState;
+
 }

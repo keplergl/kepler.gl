@@ -83,6 +83,10 @@ const actionHandler = {
 
   [ActionTypes.PLAY_ANIMATION]: visStateUpdaters.playAnimationUpdater,
 
+  [ActionTypes.RESET_ANIMATION]: visStateUpdaters.resetAnimationUpdater,
+
+  [ActionTypes.UPDATE_ANIMATION_SPEED]: visStateUpdaters.updateSpeedUpdater,
+
   [ActionTypes.ENABLE_LAYER_ANIMATION]: visStateUpdaters.enableLayerAnimationUpdater,
 
   [ActionTypes.TOGGLE_LAYER_FOR_MAP]: visStateUpdaters.toggleLayerForMapUpdater,

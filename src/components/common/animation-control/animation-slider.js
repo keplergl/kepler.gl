@@ -1,6 +1,5 @@
 import React, {Component} from 'react';
 import styled from 'styled-components';
-import {createSelector} from 'reselect';
 import moment from 'moment';
 
 import Slider from 'components/common/slider/slider';
@@ -10,9 +9,7 @@ import {
   ButtonGroup
 } from 'components/common/styled-components';
 import {Play, Reset, Pause} from 'components/common/icons';
-import {getTimeWidgetTitleFormatter} from 'utils/filter-utils';
-
-// import getTimeAnimationDomain from 'utils/layer-utils/layer-utils';
+import SpeedControl from './speed-control';
 
 const SliderWrapper = styled.div`
   display: flex;
@@ -57,9 +54,7 @@ const TimeDisplay = styled.div`
   }
 `;
 
-const defaultTimeFormat = 'MM/DD/YY hh:mma';
-
-const isUnixTs = false;
+const defaultTimeFormat = 'MM/DD/YY hh:mm:ss';
 
 const buttonHeight = '16px';
 const AnimationControls = ({
@@ -90,31 +85,23 @@ const AnimationControlFactory = () => {
       super(props);
       this.state = {
         isAnimating: false,
-        width: 288
+        width: 288,
+        showSpeedControl: false
       };
       this._animation = null;
-      this._currentStep = 0;
       this._isAnimating = false;
     }
 
-    componentDidMount() {
-      this.props.enableLayerAnimation(this.props.layer);
-    }
-
-    domainSelector = props => props.animation.domain.domain;
-    titleFormatter = createSelector(
-      this.domainSelector,
-      domain => getTimeWidgetTitleFormatter(domain)
-    );
-
     onSlider1Change = val => {
-      const {animation} = this.props;
-      const {domain} = animation;
-      this.props.playAnimation(val + domain[0]);
+      const {domain} = this.props.animation;
+      if (val >= domain[0]) {
+        this.props.resetAnimation(val);
+      }
     };
 
     _resetAnimation = () => {
-      this._currentStep = -1;
+      const {domain} = this.props.animation;
+      this.props.resetAnimation(domain[0]);
       this._startAnimation();
     };
 
@@ -127,9 +114,17 @@ const AnimationControlFactory = () => {
     };
 
     _nextFrame = () => {
-      const {domain} = this.props.animation;
-      this._currentStep > domain[1] - domain[0] - 1 ? 0 : (this._currentStep += 3);
-      this.onSlider1Change(this._currentStep);
+      const {currentTime, domain, speed} = this.props.animation;
+      if (currentTime <= domain[1] - speed) {
+        this.props.playAnimation(speed);
+      } else if (
+        currentTime > domain[1] - speed &&
+        currentTime <= domain[1] + speed
+      ) {
+        this.props.playAnimation(domain[1] - currentTime);
+      } else {
+        this._pauseAnimation();
+      }
     };
 
     _pauseAnimation = () => {
@@ -141,9 +136,22 @@ const AnimationControlFactory = () => {
       this.setState({isAnimating: false});
     };
 
+    toggleSpeedControl = () => {
+      this.setState({showSpeedControl: !this.state.showSpeedControl});
+    };
+
+    _updateSpeed = speed => {
+      this.props.updateSpeed(speed);
+    };
+
+    onChange = () => {
+      this.toggleSpeedControl();
+    };
+
     render() {
       const {animation, width} = this.props;
-      const {currentTime, domain} = animation;
+      const {currentTime, domain, speed} = animation;
+      const { showSpeedControl } = this.state;
 
       return (
         <WidgetContainer width={width}>
@@ -166,12 +174,16 @@ const AnimationControlFactory = () => {
                 enableBarDrag={true}
               />
             </SliderWrapper>
+
+            <SpeedControl
+              onClick={this.toggleSpeedControl}
+              showSpeedControl={showSpeedControl}
+              updateAnimationSpeed={this._updateSpeed}
+              speed={speed}
+            />
+
             <TimeDisplay>
-              {isUnixTs ? (
-                <span>{moment(currentTime, 'X').format(defaultTimeFormat)}</span>
-              ) : (
-                <span>{moment.utc(currentTime).format(defaultTimeFormat)}</span>
-              )}
+              <span>{moment(currentTime, 'X').format(defaultTimeFormat)}</span>
             </TimeDisplay>
           </AnimationWidgetInner>
         </WidgetContainer>
