@@ -105,13 +105,14 @@ export const KEPLER_DISCLAIMER = '* Kepler.gl will save your map data to your pe
 
 export const DEFAULT_LOADING_METHOD = LOADING_METHODS[0];
 
-export const DEFAULT_CLOUD_PROVIDER = 'dropbox';
+export const DEFAULT_CLOUD_PROVIDER = 'carto';
 
 export const DEFAULT_FEATURE_FLAGS = {
   cloudStorage: true
 };
 
 export const AUTH_TOKENS = {
+  CARTO_CLIENT_ID: 'Q0G-LSJBLYWk',
   MAPBOX_TOKEN: process.env.MapboxAccessToken, // eslint-disable-line
   DROPBOX_CLIEND_ID: process.env.DropboxClientId, // eslint-disable-line
   EXPORT_MAPBOX_TOKEN: process.env.MapboxExportToken, // eslint-disable-line

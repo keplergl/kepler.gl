@@ -29,6 +29,7 @@ import {LOADING_METHODS, ASSETS_URL, LOADING_METHODS_NAMES} from '../../constant
 
 import SampleMapGallery from './sample-data-viewer';
 import LoadRemoteMap from './load-remote-map';
+import CartoDatasets from './carto-datasets';
 
 const propTypes = {
   // query options
@@ -189,7 +190,7 @@ class LoadDataModal extends Component {
                   />
                 ) : null}
                 {loadingMethod.id === 'carto' ? (
-                  <p>Ohai!</p>
+                  <CartoDatasets />
                 ) : null}
                 {loadingMethod.id === 'sample' ? (
                   <SampleMapGallery

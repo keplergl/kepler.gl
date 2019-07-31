@@ -32,7 +32,7 @@ export function onAuthEnterCallback(nextState, replace, callback) {
   if (window.opener) {
     const {location} = nextState;
     const token = authProvider.getAccessTokenFromLocation(location);
-    window.opener.postMessage({token}, location.origin);
+    window.opener.postMessage(token, location.origin);
   }
 
   callback();
