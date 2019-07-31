@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 import CartoHandler from '../../utils/cloud-providers/carto';
+import CartoDataset from './carto-dataset';
 
 export default class CartoDatasets extends Component {
 
@@ -8,15 +9,20 @@ export default class CartoDatasets extends Component {
 
     this.state = {
       authToken: localStorage.getItem('carto.token'),
-      userInfo: localStorage.getItem('carto.user_info_url'),
-      datasets: null
+      userInfoUrl: localStorage.getItem('carto.user_info_url'),
+      userInfo: null,
+      datasets: [{
+        name: 'world_borders'
+      },{
+        name: 'ne_50m_rivers_lake_centerlines'
+      },{
+        name: 'ne_10m_airports'
+      }]
     };
   }
 
   componentWillMount() {
-    if (this.state.authToken) {
-      // Fetch carto datasets
-    }
+    this.fetchUserInfo();
   }
 
   componentDidUpdate() {
@@ -38,8 +44,30 @@ export default class CartoDatasets extends Component {
           this.setState({
             userInfo
           });
+
+          this.fetchUserInfo();
         })
     });
+  }
+
+  selectDataset = e => {
+    console.log('Load dataset', e);
+  }
+
+  fetchUserInfo() {
+    if (!this.state.authToken || !this.state.userInfoUrl) {
+      return;
+    }
+
+    const { authToken, userInfoUrl } = this.state;
+
+    fetch(`${userInfoUrl}?api_key=${authToken}`)
+      .then(response => response.json())
+      .then(userInfo => {
+        this.setState({
+          userInfo
+        });
+      });
   }
 
   render() {
@@ -48,7 +76,9 @@ export default class CartoDatasets extends Component {
     }
 
     if (this.state.datasets) {
-      return this.datasets.map((dataset) => <span>{dataset.name}</span>);
+      return this.state.datasets.map(
+        (dataset) => <CartoDataset key={dataset.name} id={dataset.name} onClick={this.selectDataset} />
+      );
     }
 
     if (this.state.userInfo) {
