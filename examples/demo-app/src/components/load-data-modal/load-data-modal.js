@@ -190,7 +190,9 @@ class LoadDataModal extends Component {
                   />
                 ) : null}
                 {loadingMethod.id === 'carto' ? (
-                  <CartoDatasets />
+                  <CartoDatasets 
+                    onLoadRemoteMap={this.props.onLoadRemoteMap}
+                  />
                 ) : null}
                 {loadingMethod.id === 'sample' ? (
                   <SampleMapGallery

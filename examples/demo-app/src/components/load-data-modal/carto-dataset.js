@@ -8,7 +8,9 @@ const StyledDataset = styled.div`
 export default class Dataset extends Component {
 
   _onClick = () => {
-    this.props.onClick(this.props.id);
+    this.props.onClick(
+      `https://roman-carto.carto.com:443/api/v2/sql?q=select * from "roman-carto".${this.props.id}&format=geojson`
+    );
   }
 
   render() {

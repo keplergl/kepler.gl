@@ -50,8 +50,10 @@ export default class CartoDatasets extends Component {
     });
   }
 
-  selectDataset = e => {
-    console.log('Load dataset', e);
+  selectDataset = dataUrl => {
+    this.props.onLoadRemoteMap({
+      dataUrl
+    });
   }
 
   fetchUserInfo() {
