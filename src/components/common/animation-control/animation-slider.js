@@ -1,6 +1,5 @@
 import React, {Component} from 'react';
 import styled from 'styled-components';
-import {createSelector} from 'reselect';
 import moment from 'moment';
 
 import Slider from 'components/common/slider/slider';
@@ -10,9 +9,7 @@ import {
   ButtonGroup
 } from 'components/common/styled-components';
 import {Play, Reset, Pause} from 'components/common/icons';
-import {getTimeWidgetTitleFormatter} from 'utils/filter-utils';
-
-// import getTimeAnimationDomain from 'utils/layer-utils/layer-utils';
+import SpeedControl from './speed-control';
 
 const SliderWrapper = styled.div`
   display: flex;
@@ -57,20 +54,18 @@ const TimeDisplay = styled.div`
   }
 `;
 
-const defaultTimeFormat = 'MM/DD/YY hh:mma';
-
-const isUnixTs = false;
+const defaultTimeFormat = 'MM/DD/YY hh:mm:ss';
 
 const buttonHeight = '16px';
 const AnimationControls = ({
   isAnimating,
   pauseAnimation = () => {},
-  resetAnimation = () => {},
+  updateAnimationTime = () => {},
   startAnimation = () => {}
 }) => (
   <StyledAnimationControls>
     <ButtonGroup>
-      <IconButton onClick={resetAnimation} link>
+      <IconButton onClick={updateAnimationTime} link>
         <Reset height={buttonHeight} />
       </IconButton>
       <IconButton onClick={isAnimating ? pauseAnimation : startAnimation} link>
@@ -90,31 +85,29 @@ const AnimationControlFactory = () => {
       super(props);
       this.state = {
         isAnimating: false,
-        width: 288
+        width: 288,
+        showSpeedControl: false
       };
       this._animation = null;
-      this._currentStep = 0;
       this._isAnimating = false;
     }
 
-    componentDidMount() {
-      this.props.enableLayerAnimation(this.props.layer);
+    componentDidUpdate() {
+      if (!this._animation && this.state.isAnimating) {
+        this._animation = requestAnimationFrame(this._nextFrame);
+      }
     }
 
-    domainSelector = props => props.animation.domain.domain;
-    titleFormatter = createSelector(
-      this.domainSelector,
-      domain => getTimeWidgetTitleFormatter(domain)
-    );
-
     onSlider1Change = val => {
-      const {animation} = this.props;
-      const {domain} = animation;
-      this.props.playAnimation(val + domain[0]);
+      const {domain} = this.props.animation;
+      if (val >= domain[0] && val <=domain[1]) {
+        this.props.updateAnimationTime(val);
+      }
     };
 
-    _resetAnimation = () => {
-      this._currentStep = -1;
+    _updateAnimationTime = () => {
+      const {domain} = this.props.animation;
+      this.props.updateAnimationTime(domain[0]);
       this._startAnimation();
     };
 
@@ -127,9 +120,19 @@ const AnimationControlFactory = () => {
     };
 
     _nextFrame = () => {
-      const {domain} = this.props.animation;
-      this._currentStep > domain[1] - domain[0] - 1 ? 0 : (this._currentStep += 3);
-      this.onSlider1Change(this._currentStep);
+      const {currentTime, domain, speed} = this.props.animation;
+      if (currentTime <= domain[1] - speed) {
+        this.props.playAnimation(speed);
+      } else if (
+        currentTime > domain[1] - speed &&
+        currentTime <= domain[1] + speed
+      ) {
+        this.props.playAnimation(domain[1] - currentTime);
+      } else {
+        this._pauseAnimation();
+      }
+      // const nextTime = currentTime + speed > domain[1] ? domain[0] : currentTime + speed;
+      // this.props.playAnimation(nextTime);
     };
 
     _pauseAnimation = () => {
@@ -141,10 +144,20 @@ const AnimationControlFactory = () => {
       this.setState({isAnimating: false});
     };
 
+    toggleSpeedControl = () => {
+      this.setState({showSpeedControl: !this.state.showSpeedControl});
+    };
+
+    onChange = () => {
+      this.toggleSpeedControl();
+    };
+
     render() {
       const {animation, width} = this.props;
-      const {currentTime, domain} = animation;
+      const {currentTime, domain, speed} = animation;
+      const {showSpeedControl} = this.state;
 
+      //console.log('currentTime',currentTime, 'domain',domain)
       return (
         <WidgetContainer width={width}>
           <AnimationWidgetInner className="animation-widget--inner">
@@ -153,7 +166,7 @@ const AnimationControlFactory = () => {
               startAnimation={this._startAnimation}
               isAnimating={this.state.isAnimating}
               pauseAnimation={this._pauseAnimation}
-              resetAnimation={this._resetAnimation}
+              updateAnimationTime={this._updateAnimationTime}
             />
             <SliderWrapper className="kg-animation-control__slider">
               <Slider
@@ -166,12 +179,16 @@ const AnimationControlFactory = () => {
                 enableBarDrag={true}
               />
             </SliderWrapper>
+
+            <SpeedControl
+              onClick={this.toggleSpeedControl}
+              showSpeedControl={showSpeedControl}
+              updateAnimationSpeed={this.props.updateSpeed}
+              speed={speed}
+            />
+
             <TimeDisplay>
-              {isUnixTs ? (
-                <span>{moment(currentTime, 'X').format(defaultTimeFormat)}</span>
-              ) : (
-                <span>{moment.utc(currentTime).format(defaultTimeFormat)}</span>
-              )}
+              <span>{moment(currentTime, 'X').format(defaultTimeFormat)}</span>
             </TimeDisplay>
           </AnimationWidgetInner>
         </WidgetContainer>

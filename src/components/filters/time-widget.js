@@ -24,14 +24,13 @@ import {createSelector} from 'reselect';
 
 import FieldSelector from 'components/common/field-selector';
 import {
-  Button,
   SelectTextBold,
   IconRoundSmall,
   CenterFlexbox
 } from 'components/common/styled-components';
 import TimeRangeFilter from 'components/filters/time-range-filter';
-import {Close, Clock, LineChart, Rocket} from 'components/common/icons';
-import AnimationSpeedToggle from './animation-speed-toggle';
+import {Close, Clock, LineChart} from 'components/common/icons';
+import SpeedControl from '../common/animation-control/speed-control';
 
 const innerPdSide = 32;
 
@@ -176,29 +175,14 @@ export class TimeWidget extends Component {
               </div>
             </StyledTitle>
             <StyledTitle className="bottom-widget__speed">
-              <Button link width="80px" onClick={this._toggleSpeedControl}>
-                <CenterFlexbox className="bottom-widget__icon speed">
-                  <Rocket height="15px" />
-                </CenterFlexbox>
-                <div
-                  style={{
-                    visibility: !showSpeedControl ? 'visible' : 'hidden',
-                    display: 'inline-block',
-                    width: '27px'
-                  }}
-                >
-                  {filter.speed}x
-                </div>
-              </Button>
-              {showSpeedControl ? (
-                <AnimationSpeedToggle
-                  onHide={this._toggleSpeedControl}
-                  updateAnimationSpeed={speed =>
-                    updateAnimationSpeed(enlargedIdx, speed)
-                  }
-                  speed={filter.speed}
-                />
-              ) : null}
+            <SpeedControl
+              onClick={this._toggleSpeedControl}
+              showSpeedControl={showSpeedControl}
+              updateAnimationSpeed={speed =>
+                updateAnimationSpeed(enlargedIdx, speed)
+              }
+              speed={filter.speed}
+            />
             </StyledTitle>
             <CenterFlexbox>
               <IconRoundSmall>
