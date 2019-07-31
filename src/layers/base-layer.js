@@ -485,7 +485,7 @@ export default class Layer {
           LAYER_VIS_CONFIGS[layerVisConfigs[item]].defaultValue;
         this.visConfigSettings[item] = LAYER_VIS_CONFIGS[layerVisConfigs[item]];
       } else if (
-        ['type', 'defaultValue'].every(p => layerVisConfigs[item][p])
+        ['type', 'defaultValue'].every(p => layerVisConfigs[item].hasOwnProperty(p))
       ) {
         // if provided customized visConfig, and has type && defaultValue
         // TODO: further check if customized visConfig is valid
