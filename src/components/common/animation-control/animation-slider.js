@@ -16,18 +16,22 @@ const SliderWrapper = styled.div`
   display: flex;
   position: relative;
   flex-grow: 1;
-  margin-top: 5px;
+  margin-top: 6px;
+  margin-right: 5px;
+`;
+
+const StyledControl = styled.div`
+  background-color: ${props => props.theme.panelBackground};
+  // height: 60px;
 `;
 
 const AnimationWidgetInner = styled.div`
-  background-color: ${props => props.theme.panelBackground};
-  padding: 7px 12px;
+  padding: 10px 12px 2px 12px;
   position: relative;
   display: flex;
 `;
 
 const StyledAnimationControls = styled.div`
-  margin-right: 20px;
   display: flex;
 `;
 
@@ -36,6 +40,16 @@ const IconButton = styled(Button)`
   svg {
     margin: 0 6px;
   }
+`;
+
+const StyledDomain = styled.div`
+  color: ${props => props.theme.textColor};
+  margin: 0px 20px 8px 160px
+  display: flex;
+  flex-grow: 1;
+  justify-content: space-between;
+  font-size: 9px;
+  font-weight: 400;
 `;
 
 const TimeDisplay = styled.div`
@@ -149,25 +163,15 @@ const AnimationControlFactory = () => {
 
       return (
         <WidgetContainer width={width}>
-          <AnimationWidgetInner className="animation-widget--inner">
-            <AnimationControls
-              className="animation-control-playpause"
-              startAnimation={this._startAnimation}
-              isAnimating={this.state.isAnimating}
-              pauseAnimation={this._pauseAnimation}
-              updateAnimationTime={this._updateAnimationTime}
-            />
-            <SliderWrapper className="kg-animation-control__slider">
-              <Slider
-                showValues={false}
-                isRanged={false}
-                minValue={domain[0]}
-                maxValue={domain[1]}
-                value1={currentTime}
-                onSlider1Change={this.onSlider1Change}
-                enableBarDrag={true}
+          <StyledControl>
+            <AnimationWidgetInner className="animation-widget--inner">
+              <AnimationControls
+                className="animation-control-playpause"
+                startAnimation={this._startAnimation}
+                isAnimating={this.state.isAnimating}
+                pauseAnimation={this._pauseAnimation}
+                resetAnimation={this._resetAnimation}
               />
-            </SliderWrapper>
 
             <SpeedControl
               onClick={this.toggleSpeedControl}
@@ -176,10 +180,34 @@ const AnimationControlFactory = () => {
               speed={speed}
             />
 
-            <TimeDisplay>
-              <span>{moment(currentTime, 'X').format(defaultTimeFormat)}</span>
-            </TimeDisplay>
-          </AnimationWidgetInner>
+              <SliderWrapper className="kg-animation-control__slider">
+                <Slider
+                  showValues={false}
+                  isRanged={false}
+                  minValue={domain[0]}
+                  maxValue={domain[1]}
+                  value1={currentTime}
+                  onSlider1Change={this.onSlider1Change}
+                  enableBarDrag={true}
+                />
+              </SliderWrapper>
+            </AnimationWidgetInner>
+
+            <StyledDomain>
+              <span>{moment.unix(domain[0]).format(defaultTimeFormat)}</span>
+              <span>{moment.unix(domain[1]).format(defaultTimeFormat)}</span>
+            </StyledDomain>
+          </StyledControl>
+
+          <TimeDisplay
+            style={{
+              position: 'absolute',
+              bottom: '110px',
+              right: '20px'
+            }}
+          >
+            <span>{moment.unix(currentTime).format(defaultTimeFormat)}</span>
+          </TimeDisplay>
         </WidgetContainer>
       );
     }

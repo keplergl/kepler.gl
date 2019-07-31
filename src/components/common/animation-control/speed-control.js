@@ -10,7 +10,7 @@ const StyledSpeedToggle = styled.div`
   flex-grow: 0;
   color: ${props => props.theme.textColor};
   position: relative;
-  margin-left: 8px;
+  margin-right: 8px;
 
   .bottom-widget__icon {
     margin-right: 6px;
