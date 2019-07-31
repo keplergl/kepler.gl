@@ -485,11 +485,11 @@ export function setFeatures(features) {
  * @param {Object} layer
  * @return {{feature: *, type: null, layer: *}}
  */
-export function toggleFeatureLayer(feature, layer) {
+export function toggleLayerFeature(layer, featureId) {
   return {
-    type: ActionTypes.TOGGLE_FEATURE_LAYER,
-    feature,
-    layer
+    type: ActionTypes.TOGGLE_LAYER_FEATURE,
+    layer,
+    featureId
   }
 }
 

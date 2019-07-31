@@ -133,6 +133,11 @@ export const INITIAL_VIS_STATE = {
   layerData: [],
   layerToBeMerged: [],
   layerOrder: [],
+  layerFeatures: {
+    // [layer.id]: {
+    //   [feature.id]: feature
+    // }
+  },
 
   // filters
   filters: [],
@@ -1383,39 +1388,6 @@ export const loadFilesErrUpdater = (state, {error}) => ({
 });
 
 /**
- * Update editor features
- * @memberof visStateUpdaters
- * @param {Object} state `visState`
- * @param {[Object]} features to store
- * @return {Object} nextState
- */
-export function setFeaturesUpdater(state, {features = []}) {
-  return {
-    ...state,
-    editor: {
-      ...state.editor,
-      features
-    }
-  }
-}
-
-/**
- * @memberof visStateUpdaters
- * @param {Object} state `visState`
- * @param {string} selectedFeatureId feature to delete
- * @return {Object} nextState
- */
-export const deleteFeatureUpdater = (state, {payload: selectedFeatureId}) => {
-  return selectedFeatureId ? {
-    ...state,
-    editor: {
-      ...state.editor,
-      features: state.editor.features.filter(f => f.id !== selectedFeatureId)
-    }
-  } : state;
-};
-
-/**
  * Helper function to update All layer domain and layer data of state
  * @memberof visStateUpdaters
  * @param {Object} state `visState`
@@ -1509,5 +1481,99 @@ export function updateAllLayerDomainData(state, dataId, newFilter) {
     ...state,
     layers: newLayers,
     layerData: newLayerDatas
+  };
+}
+
+/**
+ * Update editor features
+ * @memberof visStateUpdaters
+ * @param {Object} state `visState`
+ * @param {[Object]} features to store
+ * @return {Object} nextState
+ */
+export function setFeaturesUpdater(state, {features = []}) {
+  return {
+    ...state,
+    editor: {
+      ...state.editor,
+      features
+    }
+  }
+}
+
+/**
+ * Delete existing feature from editor.features. The feature will also be removed from
+ * layerFeatures if present
+ * @memberof visStateUpdaters
+ * @param {Object} state `visState`
+ * @param {string} selectedFeatureId feature to delete
+ * @return {Object} nextState
+ */
+export function deleteFeatureUpdater(state, {payload: selectedFeatureId}) {
+  if (!selectedFeatureId) {
+    return state;
+  }
+  const {editor, layerFeatures} = state;
+
+  // modify editor object
+  const newEditor = {
+    ...editor,
+    features: editor.features.filter(f => f.id !== selectedFeatureId)
+  };
+
+  const newLayerFeatures = Object.entries(layerFeatures).reduce((final, pair) => {
+    const layerId = pair[0];
+    const features = pair[1];
+    // eslint-disable-next-line no-unused-vars
+    const {[selectedFeatureId]: _, ...remainingFeatures} = features;
+    return {
+      ...final,
+      [layerId]: remainingFeatures
+    }
+  }, {});
+
+  return {
+    ...state,
+    editor: newEditor,
+    layerFeatures: newLayerFeatures
+  };
+}
+
+/**
+ * Toggle feature as layer filter
+ * @memberof visStateUpdaters
+ * @param state
+ * @param {Object} payload
+ * @param {Object} payload.feature
+ * @param {Object} payload.layer
+ * @return {Object} nextState
+ */
+export function toggleLayerFeatureUpdater(state, payload) {
+  const {layer, featureId} = payload;
+  const features = (state.layerFeatures[layer.id] || {});
+
+  if (!features[featureId]) {
+    const {features: editorFeatures} = state.editor;
+    const currentFeature = editorFeatures.find(feat => feat.id === featureId);
+    return {
+      ...state,
+      layerFeatures: {
+        ...state.layerFeatures,
+        [layer.id]: {
+          ...state.layerFeatures[layer.id],
+          [featureId]: currentFeature
+        }
+      }
+    }
+  }
+
+  // eslint-disable-next-line no-unused-vars
+  const {[featureId]: _, ...remainingFeatures} = features;
+  return {
+    ...state,
+    layerFeatures: {
+      ...state.layerFeatures,
+      [layer.id]: remainingFeatures
+    }
   };
 }

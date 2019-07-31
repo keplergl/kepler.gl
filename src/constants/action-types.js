@@ -88,8 +88,6 @@ const ActionTypes = keyMirror({
   SET_FILTER_PLOT: null,
   LOAD_FILES: null,
   LOAD_FILES_ERR: null,
-  SET_FEATURES: null,
-  TOGGLE_FEATURE_LAYER: null,
 
   // mapState
   UPDATE_MAP: null,
@@ -148,7 +146,9 @@ const ActionTypes = keyMirror({
   RECEIVE_MAP_CONFIG: null,
   RESET_MAP_CONFIG: null,
 
-  // geolocations
+  // geo-operations
+  SET_FEATURES: null,
+  TOGGLE_LAYER_FEATURE: null,
   DELETE_FEATURE: null
 
 });

@@ -321,7 +321,7 @@ export default function MapContainerFactory(MapTooltip, MapControl) {
     render() {
       const {
         mapState, mapStyle, mapStateActions, mapLayers, layers, MapComponent,
-        datasets, mapboxApiAccessToken, mapboxApiUrl, mapControls,
+        datasets, mapboxApiAccessToken, mapboxApiUrl, mapControls, layerFeatures,
         uiState, uiStateActions, editor, visStateActions,
         hoverInfo, clicked, interactionConfig,
         mousePos
@@ -385,11 +385,12 @@ export default function MapContainerFactory(MapTooltip, MapControl) {
                 features={editor.features}
                 isEnabled={isEdit}
                 layers={layers}
+                layerFeatures={layerFeatures}
                 onDeleteFeature={uiStateActions.deleteFeature}
                 onSelect={uiStateActions.setSelectedFeature}
                 onUpdate={visStateActions.setFeatures}
                 style={{zIndex: isEdit ? 0 : -1}}
-                onToggleFeatureLayer={visStateActions.toggleFeatureLayer}
+                onToggleLayerFeature={visStateActions.toggleLayerFeature}
               />
             </MapComponent>
           </div>

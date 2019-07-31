@@ -93,7 +93,9 @@ const actionHandler = {
 
   [ActionTypes.SET_FEATURES]: visStateUpdaters.setFeaturesUpdater,
 
-  [ActionTypes.DELETE_FEATURE]: visStateUpdaters.deleteFeatureUpdater
+  [ActionTypes.DELETE_FEATURE]: visStateUpdaters.deleteFeatureUpdater,
+
+  [ActionTypes.TOGGLE_LAYER_FEATURE]: visStateUpdaters.toggleLayerFeatureUpdater
 };
 
 // construct vis-state reducer
