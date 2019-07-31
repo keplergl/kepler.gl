@@ -170,18 +170,6 @@ export default class Slider extends Component {
     const currValDelta = value1 - value0;
     const maxDelta = maxValue - minValue;
     const width = (currValDelta / maxDelta) * 100;
-    console.log(
-      'currValDelta',
-      currValDelta,
-      'maxDelta',
-      maxDelta,
-      'value1',
-      value1,
-      'value0',
-      value0,
-      'width',
-      width
-    );
     const v0Left = ((value0 - minValue) / maxDelta) * 100;
 
     return (
