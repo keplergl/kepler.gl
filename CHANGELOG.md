@@ -14,6 +14,31 @@ Each version should:
   Security to invite users to upgrade in case of vulnerabilities.
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
+
+#### [1.1.2] - Aug 1 2019
+- [Bug] Fix issue in Layer.registerVisConfig preventing custom boolean properties
+- [Enhancement] Simplify map layer visible logic in splitMaps and deck, mapbox overlay renders (#642)
+- Netlify badge (#641)
+- [Enhancement] Add 3d building color editor (#633)
+- [Enhancement] Update mapbox-gl css version (#634)
+- [Bug] fix SolidPolygonLayer import causing 3d building layer crash (#625)
+- [Bug] Don't show null for labels if there is no data (#626)
+- [Bug] add deckGlProps to pass preserveDrawingBuffer to plot container (#624)
+- [Enhancement] DemoApp: explicitly pass window.fetch to Dropbox to suppress warning (#621)
+- [Enhancement] Use theme in histogram plot color (#607)
+- [Enhancement] Bump supercluster version (#590)
+- [Feat] Add mapboxApiUrl to `KeplerGL` (#554)
+- [Docs] Update link to the GitHub repo (#589)
+- Fixed python3 compatiability and wrong variable in string format (#587)
+- [Bug] Remove isMouseOver state from MapPopover (#577)
+- [Docs] fix: Correct Custom Theme Example Link (#578)
+- [Bug] [Jupyter] Replacing print statement with () to make it Python 3 compatible (#582)
+- Update build command: remove yarn since netlify runs yarn by default (#585)
+- [Jupyter] cleanup examples (#574)
+- [Feat] Publish keplergl jupyter 0.1.0a5 (#572)
+- [Chore] Add issue template for kepler.gl Jupyter
+- [Bug] Solve issue #547 avoid crash application (#564)
+
 #### [1.1.1] - Jun 24 2019
 - [Bug] Fix radius rendering when value = 0 (#551)
 - [Docs] Updating Layer User Guides (#373)
