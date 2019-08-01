@@ -22,116 +22,112 @@ import {OVERLAY_TYPE} from './base-layer';
 
 /**
  * This function will convert layers to mapbox layers
- * @param layers the layers to be converted
- * @param layerData extra layer information
- * @param layerOrder the order by which we should convert layers
- * @returns {*}
+ * @param {Array<Object>} layers the layers to be converted
+ * @param {Array<Object>} layerData extra layer information
+ * @param {Array<Number>} layerOrder the order by which we should convert layers
+ * @param {Object} layersToRender {[id]: true | false} object whether each layer should be rendered
+ * @returns {Object} {[id]: layer}
  */
-export function generateMapboxLayers(layers = [], layerData = [], layerOrder = []) {
+export function generateMapboxLayers(
+  layers = [],
+  layerData = [],
+  layerOrder = [],
+  layersToRender = {}
+) {
   if (layerData.length > 0) {
-    return layerOrder.slice()
+    return layerOrder
+      .slice()
       .reverse()
-      .reduce((overlays, idx) => {
-        const layer = layers[idx];
-
-        return layer.overlayType !== OVERLAY_TYPE.mapboxgl ?
-          overlays
-          : [
-            ...overlays,
-            {
-              id: layer.id,
-              data: layerData[idx].data,
-              config: layerData[idx].config,
-              datasetId: layer.config.dataId
-            }
-          ]
-      }, []);
+      .filter(
+        idx =>
+          layers[idx].overlayType === OVERLAY_TYPE.mapboxgl &&
+          layersToRender[layers[idx].id]
+      )
+      .reduce((accu, index) => {
+        const layer = layers[index];
+        return {
+          ...accu,
+          [layer.id]: {
+            id: layer.id,
+            data: layerData[index].data,
+            isVisible: layer.config.isVisible,
+            config: layerData[index].config,
+            sourceId: layerData[index].config.source
+          }
+        };
+      }, {});
   }
 
-  return [];
+  return {};
 }
 
 /**
  * Update mapbox layers on the given map
- * @param map
- * @param newLayers Array of new mapbox layers to be displayed
- * @param oldLayers Map of the old layers to be compare with the current ones to detect deleted layers
- *                  {layerId: datasetId}
- * @param mapLayers carries information about split map view
+ * @param {Object} map
+ * @param {Object} newLayers Map of new mapbox layers to be displayed
+ * @param {Object} oldLayers Map of the old layers to be compare with the current ones to detect deleted layers
+ *                  {layerId: sourceId}
  */
-export function updateMapboxLayers(map, newLayers = [], oldLayers = null, mapLayers = null, opt = {force: true}) {
-  // delete non existing layers
-
+export function updateMapboxLayers(map, newLayers = {}, oldLayers = null) {
+  // delete no longer existed old layers
   if (oldLayers) {
-    const oldLayersKeys = Object.keys(oldLayers);
-    if (newLayers.length === 0 && oldLayersKeys.length > 0) {
-      oldLayersKeys.forEach(layerId => map.removeLayer(layerId));
-    } else {
-      // remove layers
-      const currentLayersIds = newLayers.reduce((final, layer) => ({
-        ...final,
-        [layer.id]: true
-      }), {});
-
-      const layersToDelete = oldLayersKeys.reduce((final, layerId) => {
-        // if layer doesn't exists anymore
-        if (!currentLayersIds[layerId]) {
-          return {
-            ...final,
-            [layerId]: oldLayers[layerId]
-          };
-        }
-        return final;
-      }, []);
-      Object.keys(layersToDelete).forEach(layerId => map.removeLayer(layerId));
-    }
+    checkAndRemoveOldLayers(map, oldLayers, newLayers);
   }
 
   // insert or update new layer
-  // TODO: fix complexity
-  /* eslint-disable complexity */
-  newLayers.forEach(overlay => {
-    const {id: layerId, config, data, datasetId} = overlay;
+  Object.values(newLayers).forEach(overlay => {
+    const {id: layerId, config, data, sourceId, isVisible} = overlay;
     if (!data && !config) {
       return;
     }
-    const isAvailableAndVisible =
-      !(mapLayers && mapLayers[layerId]) || mapLayers[layerId].isVisible;
-    // checking if source already exists
 
-    if (data && isAvailableAndVisible) {
-      const source = map.getSource(datasetId);
-      if (!source) {
-        map.addSource(datasetId, {
-          type: 'geojson',
-          data
-        });
-      }
-      else {
-        source.setData(data);
-      }
+    const {data: oldData, config: oldConfig} =
+      (oldLayers && oldLayers[layerId]) || {};
+
+    if (data && data !== oldData) {
+      updateSourceData(map, sourceId, data);
     }
 
-    const oldConfig = oldLayers[layerId];
-    const mapboxLayer = map.getLayer(layerId);
     // compare with previous configs
-
-    if (!oldConfig || oldConfig !== config || !mapboxLayer || opt.force) {
-      // check if layer already is set
-      // remove it if exists
-      if (mapboxLayer) {
-        map.removeLayer(layerId);
-      }
-      // add if visible and available
-      if (isAvailableAndVisible) {
-        map.addLayer(config);
-      }
+    if (oldConfig !== config) {
+      updateLayerConfig(map, layerId, config, isVisible);
     }
   });
-  /* eslint-enable complexity */
-  // TODO: think about removing sources
-};
+}
 
+function checkAndRemoveOldLayers(map, oldLayers, newLayers) {
+  Object.keys(oldLayers).forEach(layerId => {
+    if (!newLayers[layerId]) {
+      map.removeLayer(layerId);
+    }
+  });
+}
+
+function updateLayerConfig(map, layerId, config, isVisible) {
+  const mapboxLayer = map.getLayer(layerId);
+
+  if (mapboxLayer) {
+    // check if layer already is set
+    // remove it if exists
+    map.removeLayer(layerId);
+  }
+
+  map.addLayer(config);
+  map.setLayoutProperty(layerId, 'visibility', isVisible ? 'visible' : 'none');
+}
+
+function updateSourceData(map, sourceId, data) {
+  const source = map.getSource(sourceId);
+
+  if (!source) {
+    map.addSource(sourceId, {
+      type: 'geojson',
+      data
+    });
+  } else {
+    source.setData(data);
+  }
+}
 /**
  *
  * @param points
@@ -143,23 +139,37 @@ export function updateMapboxLayers(map, newLayers = [], oldLayers = null, mapLay
  * @param properties [{label: {fieldIdx}]
  * @returns {{type: string, properties: {}, features: {type: string, properties: {}, geometry: {type: string, coordinates: *[]}}[]}}
  */
-export function geojsonFromPoints(allData = [], filteredIndex = [], columns = {}, properties = []) {
-  return {
+export function geojsonFromPoints(
+  allData = [],
+  filteredIndex = [],
+  columns = {},
+  properties = []
+) {
+  const geojson = {
     type: 'FeatureCollection',
-    features: filteredIndex.map(index => allData[index]).map(point => ({
+    features: []
+  };
+
+  for (let i = 0; i < filteredIndex.length; i++) {
+    const point = allData[filteredIndex[i]];
+    geojson.features.push({
       type: 'Feature',
-      properties: properties.reduce((final, property) => ({
-        ...final,
-        [property.name]: point[property.tableFieldIndex - 1]
-      }), {}),
+      properties: properties.reduce(
+        (final, property) => ({
+          ...final,
+          [property.name]: point[property.tableFieldIndex - 1]
+        }),
+        {}
+      ),
       geometry: {
         type: 'Point',
         coordinates: [
           columns.lng ? point[columns.lng.fieldIdx] : null, // lng
-          columns.lat ? point[columns.lat.fieldIdx] : null, // lat
-          columns.altitude ? point[columns.altitude.fieldIdx] : 0 // altitude
+          columns.lat ? point[columns.lat.fieldIdx] : null // lat
         ]
       }
-    }))
-  };
+    });
+  }
+
+  return geojson;
 }

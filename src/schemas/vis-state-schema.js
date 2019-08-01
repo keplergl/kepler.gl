@@ -605,6 +605,39 @@ export class DimensionFieldSchema extends Schema {
   }
 }
 
+export class SplitMapsSchema extends Schema {
+  convertLayerSettings(accu, [key, value]) {
+    if (typeof value === 'boolean') {
+      return {
+        ...accu,
+        [key]: value
+      };
+    } else if (value && typeof value === 'object' && value.isAvailable) {
+      return {
+        ...accu,
+        [key]: Boolean(value.isVisible)
+      };
+    }
+    return accu;
+  }
+
+  load(splitMaps) {
+    // previous splitMaps Schema {layers: {layerId: {isVisible, isAvailable}}}
+
+    if (!Array.isArray(splitMaps) || !splitMaps.length) {
+      return {splitMaps: []};
+    }
+
+    return {
+      splitMaps: splitMaps.map(settings => ({
+        ...settings,
+        layers: Object.entries(settings.layers || {})
+          .reduce(this.convertLayerSettings, {})
+      }))
+    }
+  }
+}
+
 export const filterPropsV1 = {
   ...filterPropsV0,
   plotType: null,
@@ -648,7 +681,10 @@ export const propertiesV1 = {
     properties: interactionPropsV0
   }),
   layerBlending: null,
-  splitMaps: null
+  splitMaps: new SplitMapsSchema({
+    key: 'splitMaps',
+    version: VERSIONS.v1
+  })
 };
 
 export const visStateSchemaV0 = new Schema({

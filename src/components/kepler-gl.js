@@ -241,6 +241,7 @@ function KeplerGlFactory(
 
       const mapFields = {
         datasets,
+        getMapboxRef,
         mapboxApiAccessToken,
         mapboxApiUrl,
         mapState,
@@ -271,7 +272,6 @@ function KeplerGlFactory(
               index={0}
               {...mapFields}
               mapLayers={isSplit ? splitMaps[0].layers : null}
-              getMapboxRef={getMapboxRef}
             />
           ]
         : splitMaps.map((settings, index) => (
@@ -280,7 +280,6 @@ function KeplerGlFactory(
               index={index}
               {...mapFields}
               mapLayers={splitMaps[index].layers}
-              getMapboxRef={getMapboxRef}
             />
           ));
 

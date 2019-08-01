@@ -115,52 +115,6 @@ const StyledMapControlPanelHeader = styled.div`
   }
 `;
 
-/**
- * Generates all layers available for the current map
- * TODO: this may be moved into map-container or map-control or even at the reducer level
- * @param layers
- * @param mapLayers
- * @returns {[id, label, isVisible]}
- */
-const layerSelector = (layers, mapLayers) => {
-  const availableItems = Object.keys(layers).reduce(
-    (availableLayers, currentLayerId) => {
-      // is available ? if yes add to available list
-      const currentLayer = layers[currentLayerId];
-      // if maplayers exists we need to make sure currentlayer
-      // is contained in mapLayers in order to add onto availableLayers
-      // otherwise we add all layers
-
-      const layerConfig = mapLayers
-        ? mapLayers[currentLayer.id]
-        : currentLayer.config;
-
-      const mustBeAdded =
-        mapLayers && mapLayers[currentLayer.id]
-          ? mapLayers[currentLayer.id].isAvailable
-          : layerConfig.isVisible;
-
-      return mustBeAdded
-        ? [
-            ...availableLayers,
-            {
-              id: currentLayer.id,
-              name: currentLayer.config.label,
-              isVisible:
-                mapLayers && mapLayers[currentLayer.id]
-                  ? mapLayers[currentLayer.id].isVisible
-                  : layerConfig.isVisible,
-              layer: currentLayer
-            }
-          ]
-        : availableLayers;
-    },
-    []
-  );
-
-  return availableItems;
-};
-
 const ActionPanel = ({children}) => (
   <StyledMapControlAction>{children}</StyledMapControlAction>
 );
@@ -223,7 +177,7 @@ const MapControlPanel = ({children, header, onClick, scale = 1, isExport}) => (
   </StyledMapControlPanel>
 );
 
-const MapLegendPanel = ({items, isActive, scale, toggleMenuPanel, isExport}) =>
+const MapLegendPanel = ({layers, isActive, scale, toggleMenuPanel, isExport}) =>
   !isActive ? (
     <StyledMapControlButton
       key={2}
@@ -245,9 +199,7 @@ const MapLegendPanel = ({items, isActive, scale, toggleMenuPanel, isExport}) =>
       onClick={toggleMenuPanel}
       isExport={isExport}
     >
-      <MapLegend
-        layers={items.filter(item => item.isVisible).map(item => item.layer)}
-      />
+      <MapLegend layers={layers}/>
     </MapControlPanel>
   );
 
@@ -258,6 +210,7 @@ const MapControlFactory = () => {
       dragRotate: PropTypes.bool.isRequired,
       isSplit: PropTypes.bool.isRequired,
       layers: PropTypes.arrayOf(PropTypes.object),
+      layersToRender: PropTypes.object.isRequired,
       mapIndex: PropTypes.number.isRequired,
       mapControls: PropTypes.object.isRequired,
       onTogglePerspective: PropTypes.func.isRequired,
@@ -267,8 +220,7 @@ const MapControlFactory = () => {
       top: PropTypes.number.isRequired,
 
       // optional
-      scale: PropTypes.number,
-      mapLayers: PropTypes.object
+      scale: PropTypes.number
     };
 
     static defaultProps = {
@@ -276,24 +228,28 @@ const MapControlFactory = () => {
       top: 0
     };
 
-    layerSelector = state => state.layers;
-    mapLayersSelector = state => state.mapLayers;
-
-    initialDataSelector = createSelector(
+    layerSelector = props => props.layers;
+    layersToRenderSelector = props => props.layersToRender;
+    layerPanelItemsSelector = createSelector(
       this.layerSelector,
-      this.mapLayersSelector,
-      layerSelector
+      this.layersToRenderSelector,
+      (layers, layersToRender) =>
+         layers
+          .filter(l => l.config.isVisible)
+          .map(layer => ({
+            id: layer.id,
+            name: layer.config.label,
+            // layer
+            isVisible: layersToRender[layer.id]
+          }))
     );
 
     render() {
-      const items = this.initialDataSelector(this.props);
-
-      if (!items) {
-        return null;
-      }
 
       const {
         dragRotate,
+        layers,
+        layersToRender,
         isSplit,
         isExport,
         mapIndex,
@@ -311,6 +267,8 @@ const MapControlFactory = () => {
         toggle3d = {},
         splitMap = {}
       } = mapControls;
+
+      // const items = this.initialDataSelector(this.props);
 
       return (
         <StyledMapControl className="map-control">
@@ -343,7 +301,7 @@ const MapControlFactory = () => {
           {isSplit && visibleLayers.show ? (
             <ActionPanel key={1}>
               <LayerSelectorPanel
-                items={items}
+                items={this.layerPanelItemsSelector(this.props)}
                 onMapToggleLayer={onMapToggleLayer}
                 isActive={visibleLayers.active}
                 toggleMenuPanel={() => onToggleMapControl('visibleLayers')}
@@ -377,7 +335,7 @@ const MapControlFactory = () => {
           {mapLegend.show ? (
             <ActionPanel key={3}>
               <MapLegendPanel
-                items={items}
+                layers={layers.filter(l => layersToRender[l.id])}
                 scale={scale}
                 isExport={isExport}
                 onMapToggleLayer={onMapToggleLayer}

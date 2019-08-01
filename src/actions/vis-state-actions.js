@@ -405,22 +405,6 @@ export function toggleLayerForMap(mapIndex, layerId) {
 }
 
 /**
- * Set layers to be visible in split map
- * @memberof visStateActions
- * @param {Number} mapIndex - index of the split map
- * @param {Array<string>} layerIds - array of layer ids
- * @returns {{type: ActionTypes.SET_VISIBLE_LAYERS_FOR_MAP, layerIndex: *, mapIndex: *}}
- * @public
- */
-export function setVisibleLayersForMap(mapIndex, layerIds) {
-  return {
-    type: ActionTypes.SET_VISIBLE_LAYERS_FOR_MAP,
-    mapIndex,
-    layerIds
-  };
-}
-
-/**
  * Set the property of a filter plot
  * @memberof visStateActions
  * @param {Number} idx

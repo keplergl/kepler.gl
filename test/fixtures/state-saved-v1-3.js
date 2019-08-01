@@ -494,14 +494,14 @@ export const mergedLayers = [mergedLayer0, mergedLayer1];
 export const mergedSplitMaps = [
   {
     layers: {
-      f24uw1: {isAvailable: true, isVisible: false},
-      '9x77w7h': {isAvailable: true, isVisible: true}
+      f24uw1: false,
+      '9x77w7h': true
     }
   },
   {
     layers: {
-      f24uw1: {isAvailable: true, isVisible: true},
-      '9x77w7h': {isAvailable: true, isVisible: false}
+      f24uw1: true,
+      '9x77w7h': false
     }
   }
 ];

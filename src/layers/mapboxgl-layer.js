@@ -55,7 +55,11 @@ class MapboxLayerGL extends Layer {
   // this layer is rendered at mapbox level
   // todo: maybe need to find a better solution for this one
   shouldRenderLayer() {
-    return false;
+    return (
+      this.type &&
+      this.config.isVisible &&
+      this.hasAllColumns()
+    );
   }
 
 }

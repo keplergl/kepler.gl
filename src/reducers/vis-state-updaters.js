@@ -159,12 +159,7 @@ export const INITIAL_VIS_STATE = {
     // describe the state of layer availability and visibility for each map
     // [
     //   {
-    //     layers: {
-    //       layer_id: {
-    //         isAvailable: true|false # this is driven by the left hand panel
-    //         isVisible: true|false
-    //       }
-    //     }
+    //      layers: {layer_id: true | false}
     //   }
     // ]
   ],
@@ -208,13 +203,15 @@ export function layerConfigChangeUpdater(state, action) {
     return updateStateWithLayerAndData(state, {layerData, layer, idx});
   }
 
-  const newState = {
-    ...state,
-    splitMaps:
-      'isVisible' in action.newConfig
-        ? toggleLayerFromSplitMaps(state, newLayer)
-        : state.splitMaps
-  };
+  let newState = state;
+  if ('isVisible' in action.newConfig && state.splitMaps.length) {
+    newState = {
+      ...state,
+      splitMaps: action.newConfig.isVisible ?
+        addNewLayersToSplitMap(state.splitMaps, newLayer) :
+        removeLayerFromSplitMaps(state.splitMaps, newLayer)
+    };
+  }
 
   return updateStateWithLayerAndData(newState, {layer: newLayer, idx});
 }
@@ -320,18 +317,18 @@ export function layerTypeChangeUpdater(state, action) {
   let newState = state;
 
   // update splitMap layer id
-  if (state.splitMaps) {
+  if (state.splitMaps.length) {
     newState = {
       ...state,
       splitMaps: state.splitMaps.map(settings => {
         const {[oldId]: oldLayerMap, ...otherLayers} = settings.layers;
-        return {
+        return oldId in settings.layers ? {
           ...settings,
           layers: {
             ...otherLayers,
             [layer.id]: oldLayerMap
           }
-        };
+        } : settings;
       })
     };
   }
@@ -716,7 +713,7 @@ export const addLayerUpdater = (state, action) => {
 export const removeLayerUpdater = (state, {idx}) => {
   const {layers, layerData, clicked, hoverInfo} = state;
   const layerToRemove = state.layers[idx];
-  const newMaps = removeLayerFromSplitMaps(state, layerToRemove);
+  const newMaps = removeLayerFromSplitMaps(state.splitMaps, layerToRemove);
 
   return {
     ...state,
@@ -973,61 +970,6 @@ export const toggleSplitMapUpdater = (state, action) =>
     : closeSpecificMapAtIndex(state, action);
 
 /**
- * Set layers to be visible in split map
- * @memberof visStateUpdaters
- * @param {Object} state `visState`
- * @param {Object} action action
- * @param {Number} mapIndex index of the split map
- * @param {Array<string>} layerIds array of layer ids
- * @returns {Object} nextState
- * @public
- */
-export const setVisibleLayersForMapUpdater = (state, action) => {
-  const {mapIndex, layerIds} = action;
-  if (!layerIds) {
-    return state;
-  }
-
-  const {splitMaps = []} = state;
-
-  if (splitMaps.length === 0) {
-    // we should never get into this state
-    // because this action should only be triggered
-    // when map view is split
-    // but something may have happened
-    return state;
-  }
-
-  // need to check if maps is populated otherwise will create
-  const {[mapIndex]: map = {}} = splitMaps;
-
-  const layers = map.layers || [];
-
-  // we set visibility to true for all layers included in our input list
-  const newLayers = (Object.keys(layers) || []).reduce((currentLayers, idx) => {
-    return {
-      ...currentLayers,
-      [idx]: {
-        ...layers[idx],
-        isVisible: layerIds.includes(idx)
-      }
-    };
-  }, {});
-
-  const newMaps = [...splitMaps];
-
-  newMaps[mapIndex] = {
-    ...splitMaps[mapIndex],
-    layers: newLayers
-  };
-
-  return {
-    ...state,
-    splitMaps: newMaps
-  };
-};
-
-/**
  * Toggle visibility of a layer in a split map
  * @memberof visStateUpdaters
  * @param {Object} state
@@ -1037,38 +979,19 @@ export const setVisibleLayersForMapUpdater = (state, action) => {
  * @returns {Object} nextState
  * @public
  */
-export const toggleLayerForMapUpdater = (state, action) => {
-  if (!state.splitMaps[action.mapIndex]) {
-    return state;
-  }
-
-  const mapSettings = state.splitMaps[action.mapIndex];
-  const {layers} = mapSettings;
-  if (!layers || !layers[action.layerId]) {
-    return state;
-  }
-
-  const layer = layers[action.layerId];
-
-  const newLayer = {
-    ...layer,
-    isVisible: !layer.isVisible
-  };
-
-  const newLayers = {
-    ...layers,
-    [action.layerId]: newLayer
-  };
-
-  const newSplitMaps = [...state.splitMaps];
-  newSplitMaps[action.mapIndex] = {
-    ...mapSettings,
-    layers: newLayers
-  };
+export const toggleLayerForMapUpdater = (state, {mapIndex, layerId}) => {
+  const {splitMaps} = state;
 
   return {
     ...state,
-    splitMaps: newSplitMaps
+    splitMaps: splitMaps.map((sm, i) => i === mapIndex ? {
+      ...splitMaps[i],
+      layers: {
+        ...splitMaps[i].layers,
+        // if layerId not in layers, set it to visible
+        [layerId]: !splitMaps[i].layers[layerId]
+      }
+    } : sm)
   };
 };
 
@@ -1169,54 +1092,47 @@ export const updateVisDataUpdater = (state, action) => {
 };
 /* eslint-enable max-statements */
 
-function generateLayerMetaForSplitViews(layer) {
-  return {
-    isAvailable: layer.config.isVisible,
-    isVisible: layer.config.isVisible
-  };
-}
-
 /**
- * This method will compute the default maps custom list
- * based on the current layers status
+ * This method will compute the default maps layer settings
+ * based on the current layers visibility
  * @param {Array<Object>} layers
  * @returns {Array<Object>} split map settings
  */
 function computeSplitMapLayers(layers) {
-  const mapLayers = layers.reduce(
-    (newLayers, currentLayer) => ({
-      ...newLayers,
-      [currentLayer.id]: generateLayerMetaForSplitViews(currentLayer)
-    }),
-    {}
-  );
+  const mapLayers = layers
+    .filter(layer => layer.config.isVisible)
+    .reduce(
+      (newLayers, currentLayer) => ({
+        ...newLayers,
+        [currentLayer.id]: currentLayer.config.isVisible
+      }),
+      {}
+    );
+
   return [
-    {
-      layers: mapLayers
-    },
-    {
-      layers: mapLayers
-    }
+    {layers: mapLayers},
+    {layers: cloneDeep(mapLayers)}
   ];
 }
 
 /**
  * Remove an existing layer from split map settings
- * @param {Object} state `visState`
+ * @param {Object} splitMaps
  * @param {Object} layer
  * @returns {Object} Maps of custom layer objects
  */
-function removeLayerFromSplitMaps(state, layer) {
-  return state.splitMaps.map(settings => {
-    const {layers} = settings;
-    /* eslint-disable no-unused-vars */
-    const {[layer.id]: _, ...newLayers} = layers;
-    /* eslint-enable no-unused-vars */
+function removeLayerFromSplitMaps(splitMaps, layer) {
+  if (!splitMaps.length) {
+    return splitMaps;
+  }
+  return splitMaps.map(settings => {
+    // eslint-disable-next-line no-unused-vars
+    const {[layer.id]: _, ...newLayers} = settings.layers;
     return {
       ...settings,
       layers: newLayers
     };
-  });
+  })
 }
 
 /**
@@ -1228,51 +1144,26 @@ function removeLayerFromSplitMaps(state, layer) {
 function addNewLayersToSplitMap(splitMaps, layers) {
   const newLayers = Array.isArray(layers) ? layers : [layers];
 
-  if (!splitMaps || !splitMaps.length || !newLayers.length) {
+  if (!splitMaps.length || !newLayers.length) {
     return splitMaps;
   }
 
   // add new layer to both maps,
-  //  don't override, if layer.id is already in splitMaps.settings.layers
+  // don't override, if layer.id is already in splitMaps
   return splitMaps.map(settings => ({
     ...settings,
     layers: {
       ...settings.layers,
       ...newLayers.reduce(
         (accu, newLayer) =>
-          newLayer.config.isVisible
-            ? {
-                ...accu,
-                [newLayer.id]: settings.layers[newLayer.id]
-                  ? settings.layers[newLayer.id]
-                  : generateLayerMetaForSplitViews(newLayer)
-              }
-            : accu,
+          [newLayer.id] in settings.layers || !newLayer.config.isVisible ? accu : {
+            ...accu,
+            [newLayer.id]: newLayer.config.isVisible
+          },
         {}
       )
     }
   }));
-}
-
-/**
- * Hide an existing layers from custom map layer objects
- * @param {Object} state
- * @param {Object} layer
- * @returns {Object} Maps of custom layer objects
- */
-function toggleLayerFromSplitMaps(state, layer) {
-  return state.splitMaps.map(settings => {
-    const {layers} = settings;
-    const newLayers = {
-      ...layers,
-      [layer.id]: generateLayerMetaForSplitViews(layer)
-    };
-
-    return {
-      ...settings,
-      layers: newLayers
-    };
-  });
 }
 
 /**
@@ -1287,27 +1178,16 @@ function toggleLayerFromSplitMaps(state, layer) {
 function closeSpecificMapAtIndex(state, action) {
   // retrieve layers meta data from the remaining map that we need to keep
   const indexToRetrieve = 1 - action.payload;
-
-  const metaSettings = state.splitMaps[indexToRetrieve];
-  if (!metaSettings || !metaSettings.layers) {
-    // if we can't find the meta settings we simply clean up splitMaps and
-    // keep global state as it is
-    // but why does this ever happen?
-    return {
-      ...state,
-      splitMaps: []
-    };
-  }
-
+  const mapLayers = state.splitMaps[indexToRetrieve].layers;
   const {layers} = state;
 
   // update layer visibility
   const newLayers = layers.map(layer =>
-    layer.updateLayerConfig({
-      isVisible: metaSettings.layers[layer.id]
-        ? metaSettings.layers[layer.id].isVisible
-        : layer.config.isVisible
-    })
+    !mapLayers[layer.id] && layer.config.isVisible ?
+      layer.updateLayerConfig({
+        // if layer.id is not in mapLayers, it should be inVisible
+        isVisible: false
+      }) : layer
   );
 
   // delete map
