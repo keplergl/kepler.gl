@@ -56,15 +56,16 @@ import {
 import {EXPORT_MAP_FORMAT} from '../constants/default-settings';
 
 const DataTableModalStyle = css`
-  height: 85%;
-  width: 90%;
   top: 80px;
   padding: 32px 0 0 0;
-  max-width: unset;
-  ${media.palm`
-    width: 100vw;
+  
+  ${media.portable`
     padding: 0;
-    margin: 0;
+  `}
+  
+  ${media.palm`
+    padding: 0;
+    margin: 0 auto;
   `}
 `;
 
@@ -252,6 +253,7 @@ export default function ModalContainerFactory(
       } else {
         switch (currentModal) {
           case DATA_TABLE_ID:
+            const width = containerW * 0.9;
             template = (
               <DataTableModal
                 width={containerW * 0.9}
@@ -261,7 +263,14 @@ export default function ModalContainerFactory(
                 showDatasetTable={visStateActions.showDatasetTable}
               />
             );
-            modalProps.cssStyle = DataTableModalStyle;
+
+            // TODO: we need to make this width consistent with the css rule defined modal.js:32 max-width: 70vw
+            modalProps.cssStyle = css`
+              ${DataTableModalStyle};
+              ${media.palm`
+                width: ${width}px; 
+              `}
+            `;
             break;
           case DELETE_DATA_ID:
             // validate options

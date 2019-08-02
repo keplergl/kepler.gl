@@ -21,37 +21,45 @@
 import React from 'react';
 import test from 'tape';
 import {mount} from 'enzyme';
+import {mountWithTheme} from 'test/helpers/component-utils';
 
 import DataTableModalFactory, {DatasetTabs, DatasetModalTab} from
   'components/modals/data-table-modal';
-import ReactDataGrid from 'react-data-grid/dist/react-data-grid.min';
+import DataGridFactory, {FieldHeaderFactory, CellFactory} from 'components/common/datagrid';
 
-const DataTableModal = DataTableModalFactory();
+const FieldHeader = FieldHeaderFactory();
+const Cell = CellFactory();
+const DataGrid = DataGridFactory(FieldHeader, Cell);
+const DataTableModal = DataTableModalFactory(DataGrid);
 import {testFields, testAllData} from 'test/fixtures/test-csv-data';
+
+// This makes sure react-virtualized renders the full grid
+const WIDTH = 1400;
+const HEIGHT = 800;
+const rows = 10;
 
 /* eslint-disable max-statements */
 test('Components -> DataTableModal.render', t => {
-
   t.doesNotThrow(() => {
-    mount(
+    mountWithTheme(
       <DataTableModal
-        width={400}
-        height={400}
+        width={WIDTH}
+        height={HEIGHT}
       />
     );
   }, 'Show not fail without data');
 
-  const wrapper = mount(
+  const wrapper = mountWithTheme(
     <DataTableModal
-      width={800}
-      height={400}
+      width={WIDTH}
+      height={HEIGHT}
       datasets={{
         smoothie: {
           id: 'smoothie',
           allData: testAllData,
           fields: testFields,
           color: [113, 113, 113],
-          data: testAllData.slice(0, 10)
+          data: testAllData.slice(0, rows)
         }
       }}
       dataId="smoothie"
@@ -59,60 +67,52 @@ test('Components -> DataTableModal.render', t => {
   );
 
   t.equal(wrapper.find(DataTableModal).length, 1, 'should render DataTableModal data');
-  t.equal(wrapper.find(ReactDataGrid).length, 1, 'should render ReactDataGrid data');
   t.equal(wrapper.find(DatasetTabs).length, 1, 'should render DatasetTabs');
   t.equal(wrapper.find(DatasetModalTab).length, 1, 'should render 1 dataset-modal-catalog');
-  t.equal(wrapper.find('.react-grid-Row').length, 10, 'should render 10 rows');
+  t.equal(wrapper.find('.header-cell').length, testFields.length, `should render ${testFields.length} headers`);
+  t.equal(wrapper.find('.cell').length, testFields.length * rows, `should render ${testFields.length * rows} cells`);
+  t.equal(wrapper.find('.cell.boolean').length, 10, 'should render 10 cells');
 
-  const expectedRow0 = [
-    '2016-09-17 00:09:55',
-    '29.9900937',
-    '31.2590542',
-    'driver_analytics',
-    '1472688000000',
-    'false',
-    '1',
-    '2016-09-23T00:00:00.000Z',
-    '2016-10-01 09:41:39+00:00',
-    '2016-10-01 09:41:39+00:00',
-    '2016-09-23'
-  ];
+  const expectedRows = {
+    0: [
+      '2016-09-17 00:09:55',
+      '29.9900937',
+      '31.2590542',
+      'driver_analytics',
+      '1472688000000',
+      'false',
+      '1',
+      '2016-09-23T00:00:00.000Z',
+      '2016-10-01 09:41:39+00:00',
+      '2016-10-01 09:41:39+00:00',
+      '2016-09-23'
+    ],
+    2: [
+      '2016-09-17 00:11:56',
+      '29.9907261',
+      '31.2312742',
+      'driver_analytics',
+      '1472688000000',
+      'false',
+      '3',
+      '2016-09-23T00:00:00.000Z',
+      '',
+      '',
+      '2016-09-23'
+    ]
+  };
 
-  const expectedRow2 = [
-    '2016-09-17 00:11:56',
-    '29.9907261',
-    '31.2312742',
-    'driver_analytics',
-    '1472688000000',
-    'false',
-    '3',
-    '2016-09-23T00:00:00.000Z',
-    '',
-    '',
-    '2016-09-23'
-  ];
-  const row0 = wrapper.find('.react-grid-Row').at(0);
-  const row2 = wrapper.find('.react-grid-Row').at(2);
+  Object.entries(expectedRows).forEach(keyAndRow => {
+    const [index, expectedRow] = keyAndRow;
 
-  const cells = row0.find('.react-grid-Cell');
-  t.equal(cells.length, 11, 'should render 11 cells');
+    const cells = wrapper.find(`.row-${index}`);
+    t.equal(cells.length, 11, 'should render 11 cells');
 
-  for (let c = 0; c < cells.length; c++) {
-    const cell = row0.find('.react-grid-Cell').at(c).find('span');
-    const cellText = cell.length > 1 ? cell.at(1).text() : cell.text();
-
-    t.equal(cellText, expectedRow0[c], `should render cell ${expectedRow0[c]} correctly`);
-  }
-
-  const cells2 = row2.find('.react-grid-Cell');
-  t.equal(cells2.length, 11, 'should render 11 cells');
-
-  for (let c = 0; c < cells2.length; c++) {
-    const cell = row2.find('.react-grid-Cell').at(c).find('span');
-    const cellText = cell.length > 1 ? cell.at(1).text() : cell.text();
-
-    t.equal(cellText, expectedRow2[c], `should render cell ${expectedRow2[c]} correctly`);
-  }
+    for (let c = 0; c < cells.length; c++) {
+      const cellText = cells.at(c).find('span').text();
+      t.equal(cellText, expectedRow[c], `should render cell ${expectedRow[c]} correctly`);
+    }
+  });
 
   t.end();
 });
