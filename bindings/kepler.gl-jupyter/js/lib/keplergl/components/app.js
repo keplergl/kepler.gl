@@ -57,7 +57,7 @@ class App extends React.Component {
           <meta charSet="utf-8" />
           <title>Kepler.gl Jupyter</title>
           <link rel="stylesheet" href="http://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css"/>
-          <link rel="stylesheet" href="http://api.tiles.mapbox.com/mapbox-gl-js/v0.42.0/mapbox-gl.css"/>
+          <link rel="stylesheet" href="http://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css"/>
           <style type="text/css">{
               `font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
               font-weight: 400;
@@ -72,7 +72,11 @@ class App extends React.Component {
               }
               body {
                 margin: 0; padding: 0;
-              }`
+              }
+              .kepler-gl .ReactModal__Overlay.ReactModal__Overlay--after-open {
+                position: absolute !important;
+              }
+              `
             }
           </style>
         </Helmet> : null}
