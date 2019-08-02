@@ -254,7 +254,6 @@ export const SCALE_FUNC = {
   sqrt: require('d3-scale').scaleSqrt,
   point: require('d3-scale').scalePoint
 };
-
 export const ALL_FIELD_TYPES = keyMirror({
   boolean: null,
   date: null,
