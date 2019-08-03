@@ -212,9 +212,9 @@ export function layerConfigChangeUpdater(state, action) {
   if ('isVisible' in action.newConfig && state.splitMaps.length) {
     newState = {
       ...state,
-      splitMaps: action.newConfig.isVisible ?
-        addNewLayersToSplitMap(state.splitMaps, newLayer) :
-        removeLayerFromSplitMaps(state.splitMaps, newLayer)
+      splitMaps: action.newConfig.isVisible
+        ? addNewLayersToSplitMap(state.splitMaps, newLayer)
+        : removeLayerFromSplitMaps(state.splitMaps, newLayer)
     };
   }
 
@@ -332,13 +332,15 @@ export function layerTypeChangeUpdater(state, action) {
       ...state,
       splitMaps: state.splitMaps.map(settings => {
         const {[oldId]: oldLayerMap, ...otherLayers} = settings.layers;
-        return oldId in settings.layers ? {
-          ...settings,
-          layers: {
-            ...otherLayers,
-            [layer.id]: oldLayerMap
-          }
-        } : settings;
+        return oldId in settings.layers
+          ? {
+              ...settings,
+              layers: {
+                ...otherLayers,
+                [layer.id]: oldLayerMap
+              }
+            }
+          : settings;
       })
     };
   }
@@ -661,8 +663,8 @@ export const playAnimationUpdater = (state, {value}) => ({
  */
 
 export const enableLayerAnimationUpdater = (state, action) => {
-  const {oldLayer, datasets} = action;
-  const [minTs, maxTs] = getTimeAnimationDomain(oldLayer, datasets);
+  const {oldLayer} = action;
+  const [minTs, maxTs] = getTimeAnimationDomain(oldLayer, state.datasets);
   return {
     ...state,
     animationConfig: {
@@ -1038,14 +1040,18 @@ export const toggleLayerForMapUpdater = (state, {mapIndex, layerId}) => {
 
   return {
     ...state,
-    splitMaps: splitMaps.map((sm, i) => i === mapIndex ? {
-      ...splitMaps[i],
-      layers: {
-        ...splitMaps[i].layers,
-        // if layerId not in layers, set it to visible
-        [layerId]: !splitMaps[i].layers[layerId]
-      }
-    } : sm)
+    splitMaps: splitMaps.map((sm, i) =>
+      i === mapIndex
+        ? {
+            ...splitMaps[i],
+            layers: {
+              ...splitMaps[i].layers,
+              // if layerId not in layers, set it to visible
+              [layerId]: !splitMaps[i].layers[layerId]
+            }
+          }
+        : sm
+    )
   };
 };
 
@@ -1161,10 +1167,7 @@ function computeSplitMapLayers(layers) {
       {}
     );
 
-  return [
-    {layers: mapLayers},
-    {layers: cloneDeep(mapLayers)}
-  ];
+  return [{layers: mapLayers}, {layers: cloneDeep(mapLayers)}];
 }
 
 /**
@@ -1184,7 +1187,7 @@ function removeLayerFromSplitMaps(splitMaps, layer) {
       ...settings,
       layers: newLayers
     };
-  })
+  });
 }
 
 /**
@@ -1208,10 +1211,12 @@ function addNewLayersToSplitMap(splitMaps, layers) {
       ...settings.layers,
       ...newLayers.reduce(
         (accu, newLayer) =>
-          [newLayer.id] in settings.layers || !newLayer.config.isVisible ? accu : {
-            ...accu,
-            [newLayer.id]: newLayer.config.isVisible
-          },
+          [newLayer.id] in settings.layers || !newLayer.config.isVisible
+            ? accu
+            : {
+                ...accu,
+                [newLayer.id]: newLayer.config.isVisible
+              },
         {}
       )
     }
@@ -1235,11 +1240,12 @@ function closeSpecificMapAtIndex(state, action) {
 
   // update layer visibility
   const newLayers = layers.map(layer =>
-    !mapLayers[layer.id] && layer.config.isVisible ?
-      layer.updateLayerConfig({
-        // if layer.id is not in mapLayers, it should be inVisible
-        isVisible: false
-      }) : layer
+    !mapLayers[layer.id] && layer.config.isVisible
+      ? layer.updateLayerConfig({
+          // if layer.id is not in mapLayers, it should be inVisible
+          isVisible: false
+        })
+      : layer
   );
 
   // delete map
@@ -1326,7 +1332,7 @@ export function addDefaultLayers(state, datasets) {
     ],
     []
   );
-  console.log(defaultLayers);
+
   return {
     ...state,
     layers: [...state.layers, ...defaultLayers],

@@ -301,8 +301,8 @@ export default class Layer {
       visConfig: {},
 
       textLabel: [DEFAULT_TEXT_LABEL],
-      //TODO: H make enabled false by default
-      //animation: {enabled: false}
+      // TODO: H make enabled false by default
+      // animation: {enabled: false}
       animation: {enabled: false}
     };
   }
@@ -638,8 +638,6 @@ export default class Layer {
       attributeValue = scale(new Date(value));
     } else {
       attributeValue = scale(value);
-
-      console.log('attributeValue', attributeValue);
     }
 
     if (!notNullorUndefined(attributeValue)) {

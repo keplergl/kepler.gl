@@ -338,11 +338,10 @@ export function playAnimation(value) {
  * @returns {{type: ActionTypes.ENABLE_LAYER_ANIMATION, layer: oldLayer}}
  * @public
  */
-export function enableLayerAnimation(oldLayer, datasets) {
+export function enableLayerAnimation(oldLayer) {
   return {
     type: ActionTypes.ENABLE_LAYER_ANIMATION,
-    oldLayer,
-    datasets
+    oldLayer
   };
 }
 
