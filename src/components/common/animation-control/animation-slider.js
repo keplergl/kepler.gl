@@ -11,7 +11,7 @@ import {
 } from 'components/common/styled-components';
 import {Play, Reset, Pause} from 'components/common/icons';
 import {getTimeWidgetTitleFormatter} from 'utils/filter-utils';
-import {getTimeAnimationDomainFoTripLayer} from 'utils/layer-utils/layer-utils';
+
 const SliderWrapper = styled.div`
   display: flex;
   position: relative;

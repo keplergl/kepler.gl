@@ -28,7 +28,6 @@ import {hexToRgb} from 'utils/color-utils';
 import {
   getGeojsonDataMaps,
   getGeojsonBounds,
-  featureToDeckGlGeoType,
   getGeojsonFeatureTypes
 } from './geojson-utils';
 import GeojsonLayerIcon from './geojson-layer-icon';

@@ -20,10 +20,10 @@
 
 import memoize from 'lodash.memoize';
 import uniq from 'lodash.uniq';
-import Layer, {colorMaker} from '../base-layer';
+import Layer from '../base-layer';
 import {TripsLayer as DeckGLTripsLayer} from 'deck.gl';
 
-import {GEOJSON_FIELDS, CHANNEL_SCALES} from 'constants/default-settings';
+import {GEOJSON_FIELDS} from 'constants/default-settings';
 
 import {hexToRgb} from 'utils/color-utils';
 import {
@@ -52,7 +52,6 @@ export const tripVisConfigs = {
   sizeRange: 'strokeWidthRange',
   stroked: 'stroked',
   filled: 'filled',
-  enable3d: 'enable3d',
   wireframe: 'wireframe'
 };
 
@@ -112,10 +111,10 @@ export default class TripLayer extends Layer {
     const features = data.map(d => d[geojsonField]);
     const featureTypes = getGeojsonFeatureTypes(features);
 
-    //check if geojson has linestring features which trip layer uses
+    // check if geojson has linestring features which trip layer uses
     const hasLineString = Boolean(featureTypes.line);
 
-    //check if a sample of 500 features has 4 elements in all coordinates
+    // check if a sample of 500 features has 4 elements in all coordinates
     const samples = features.length > 500 ? getSampleData(features, 500) : features;
     let coordHasLength4 = true;
     for (let i = 0; i < 2; i += 1) {
@@ -173,7 +172,7 @@ export default class TripLayer extends Layer {
       visConfig
     } = this.config;
 
-    const {enable3d, stroked, colorRange, sizeRange} = visConfig;
+    const {stroked, colorRange, sizeRange} = visConfig;
 
     const getFeature = this.getPositionAccessor(this.config.column);
 
@@ -233,7 +232,7 @@ export default class TripLayer extends Layer {
               sizeField,
               0
             )
-          : 1 //d.properties.width || 1
+          : 1 // d.properties.width || 1
     };
   }
   /* eslint-enable complexity */
@@ -258,13 +257,10 @@ export default class TripLayer extends Layer {
 
   setInitialLayerConfig(allData) {
     this.updateLayerMeta(allData);
-    const {featureTypes} = this.meta;
     return this;
   }
 
   renderLayer({data, idx, mapState, animationConfig}) {
-    console.log('data', data);
-
     const {lightSettings} = this.meta;
     const zoomFactor = this.getZoomFactor(mapState);
     const {visConfig} = this.config;
@@ -300,14 +296,14 @@ export default class TripLayer extends Layer {
         data: data.data,
         getPath: d => d.geometry.coordinates.map(coord => coord.slice(0, 2)),
         getTimestamps: d =>
-          d.geometry.coordinates.map(coord => (coord.length == 4 ? coord[3] : 0)),
+          d.geometry.coordinates.map(coord => (coord.length === 4 ? coord[3] : 0)),
         getColor: data.getColor,
         opacity: 0.3,
-        //widthScale: 20,
-        //getWidth: 20,
-        //d => d.geometry.coordinates.map(coord => coord[2]) * 10, //data.getWidth, //10,
-        widthMinPixels: data.getWidth,
-        //d => d.properties.vol / 10, //2, //data.getWidth,
+        // widthScale: 20,
+        getWidth: 2,
+        // d => d.geometry.coordinates.map(coord => coord[2]) * 10, //data.getWidth, //10,
+        widthMinPixels: 2,
+        // d => d.properties.vol / 10, //2, //data.getWidth,
         rounded: true,
         trailLength: visConfig.trailLength,
         currentTime: animationConfig.currentTime,

@@ -161,7 +161,7 @@ class App extends Component {
   }
 
   _loadSampleData() {
-    //this._loadTripData();
+    // this._loadTripData();
     this._loadGeojsonData();
     // this._loadIconData();
     // this._loadH3HexagonData();
@@ -222,7 +222,7 @@ class App extends Component {
         datasets: [
           {
             info: {label: 'Trip animation'},
-            //data: processGeojson(sampleGeojsonPoints)
+            // data: processGeojson(sampleGeojsonPoints)
             data: processGeojson(sampleanimatesmall)
           } /* ,
           {
