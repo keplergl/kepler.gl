@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import test from 'tape';
-
 import {
   toggleSidePanel,
   toggleModal,
@@ -39,28 +37,18 @@ import {RATIOS, RESOLUTIONS, EXPORT_DATA_TYPE} from 'constants/default-settings'
 import {DEFAULT_NOTIFICATION_TOPICS, DEFAULT_NOTIFICATION_TYPES} from 'constants/default-settings';
 import {removeNotification} from 'actions/ui-state-actions';
 
-test('#uiStateReducer', t => {
-
-  t.deepEqual(
-    reducer(undefined, {}),
-    {...INITIAL_UI_STATE, initialState: {}},
-    'should return the initial state'
-  );
-  t.end();
+it('#uiStateReducer', () => {
+  expect(reducer(undefined, {})).toEqual({...INITIAL_UI_STATE, initialState: {}});
 });
 
-test('#uiStateReducerFactory', t => {
+it('#uiStateReducerFactory', () => {
   const uiStateReducer = uiStateReducerFactory({readOnly: true});
 
-  t.deepEqual(
-    uiStateReducer(undefined, {}),
-    {...INITIAL_UI_STATE, readOnly: true, initialState: {readOnly: true}},
-    'should return the initial state'
-  );
-  t.end();
+  expect(uiStateReducer(undefined, {}))
+    .toEqual({...INITIAL_UI_STATE, readOnly: true, initialState: {readOnly: true}});
 });
 
-test('#uiStateReducer -> TOGGLE_SIDE_PANEL', t => {
+it('#uiStateReducer -> TOGGLE_SIDE_PANEL', () => {
 
   const newReducer = reducer(INITIAL_UI_STATE, toggleSidePanel('foo'));
 
@@ -69,7 +57,7 @@ test('#uiStateReducer -> TOGGLE_SIDE_PANEL', t => {
     activeSidePanel: 'foo'
   };
 
-  t.deepEqual(newReducer, expectedState, 'should update side panel');
+  expect(newReducer).toEqual(expectedState);
 
   const nextState2 = reducer(expectedState, toggleModal(null));
 
@@ -78,7 +66,7 @@ test('#uiStateReducer -> TOGGLE_SIDE_PANEL', t => {
     currentModal: null
   };
 
-  t.deepEqual(nextState2, expectedNextState2, 'should close modal');
+  expect(nextState2).toEqual(expectedNextState2);
 
   const nextState3 = reducer(expectedState, toggleSidePanel(null));
 
@@ -87,12 +75,10 @@ test('#uiStateReducer -> TOGGLE_SIDE_PANEL', t => {
     activeSidePanel: null
   };
 
-  t.deepEqual(nextState3, expectedNextState3, 'should close panel');
-
-  t.end();
+  expect(nextState3).toEqual(expectedNextState3);
 });
 
-test('#uiStateReducer -> OPEN_DELETE_MODAL', t => {
+it('#uiStateReducer -> OPEN_DELETE_MODAL', () => {
 
   const newReducer = reducer(INITIAL_UI_STATE, openDeleteModal('chai'));
 
@@ -102,12 +88,10 @@ test('#uiStateReducer -> OPEN_DELETE_MODAL', t => {
     datasetKeyToRemove: 'chai'
   };
 
-  t.deepEqual(newReducer, expectedState, 'should open delete data modal and save key to remove');
-
-  t.end();
+  expect(newReducer).toEqual(expectedState);
 });
 
-test('#uiStateReducer -> SET_RATIO', t => {
+it('#uiStateReducer -> SET_RATIO', () => {
 
   const newReducer = reducer(INITIAL_UI_STATE, setRatio({ratio: RATIOS.SIXTEEN_BY_NINE}));
 
@@ -119,12 +103,10 @@ test('#uiStateReducer -> SET_RATIO', t => {
     }
   };
 
-  t.deepEqual(newReducer, expectedState, 'should set the ratio to SIXTEEN_BY_NINE');
-
-  t.end();
+  expect(newReducer).toEqual(expectedState);
 });
 
-test('#uiStateReducer -> SET_RESOLUTION', t => {
+it('#uiStateReducer -> SET_RESOLUTION', () => {
 
   const newReducer = reducer(INITIAL_UI_STATE, setResolution({resolution: RESOLUTIONS.TWO_X}));
 
@@ -136,12 +118,10 @@ test('#uiStateReducer -> SET_RESOLUTION', t => {
     }
   };
 
-  t.deepEqual(newReducer, expectedState, 'should set the resolution to TWO_X');
-
-  t.end();
+  expect(newReducer).toEqual(expectedState);
 });
 
-test('#uiStateReducer -> TOGGLE_LEGEND', t => {
+it('#uiStateReducer -> TOGGLE_LEGEND', () => {
 
   const newReducer = reducer(INITIAL_UI_STATE, toggleLegend());
 
@@ -153,12 +133,10 @@ test('#uiStateReducer -> TOGGLE_LEGEND', t => {
     }
   };
 
-  t.deepEqual(newReducer, expectedState, 'should set the legend to true');
-
-  t.end();
+  expect(newReducer).toEqual(expectedState);
 });
 
-test('#uiStateReducer -> TOGGLE_MAP_CONTROL', t => {
+it('#uiStateReducer -> TOGGLE_MAP_CONTROL', () => {
 
 	const newReducer = reducer(INITIAL_UI_STATE, toggleMapControl('mapLegend'));
 
@@ -173,12 +151,10 @@ test('#uiStateReducer -> TOGGLE_MAP_CONTROL', t => {
 		}
 	};
 
-	t.deepEqual(newReducer, expectedState, 'should set map legend to be seen');
-
-	t.end();
+	expect(newReducer).toEqual(expectedState);
 });
 
-test('#uiStateReducer -> SET_EXPORT_SELECTED_DATASET', t => {
+it('#uiStateReducer -> SET_EXPORT_SELECTED_DATASET', () => {
 
   const newReducer = reducer(INITIAL_UI_STATE, setExportSelectedDataset('a'));
 
@@ -190,12 +166,10 @@ test('#uiStateReducer -> SET_EXPORT_SELECTED_DATASET', t => {
     }
   };
 
-  t.deepEqual(newReducer, expectedState, 'should set the selectedDataset to a');
-
-  t.end();
+  expect(newReducer).toEqual(expectedState);
 });
 
-test('#uiStateReducer -> SET_EXPORT_DATA_TYPE', t => {
+it('#uiStateReducer -> SET_EXPORT_DATA_TYPE', () => {
 
   const newReducer = reducer(INITIAL_UI_STATE, setExportDataType(EXPORT_DATA_TYPE.JSON));
 
@@ -207,12 +181,10 @@ test('#uiStateReducer -> SET_EXPORT_DATA_TYPE', t => {
     }
   };
 
-  t.deepEqual(newReducer, expectedState, 'should set the dataType to json');
-
-  t.end();
+  expect(newReducer).toEqual(expectedState);
 });
 
-test('#uiStateReducer -> SET_EXPORT_FILTERED', t => {
+it('#uiStateReducer -> SET_EXPORT_FILTERED', () => {
 
   const newReducer = reducer(INITIAL_UI_STATE, setExportFiltered(false));
 
@@ -224,12 +196,10 @@ test('#uiStateReducer -> SET_EXPORT_FILTERED', t => {
     }
   };
 
-  t.deepEqual(newReducer, expectedState, 'should set the filtered to false');
-
-  t.end();
+  expect(newReducer).toEqual(expectedState);
 });
 
-test('#uiStateReducer -> ADD_NOTIFICATION', t => {
+it('#uiStateReducer -> ADD_NOTIFICATION', () => {
   const newState = reducer(INITIAL_UI_STATE, addNotification({
     type: DEFAULT_NOTIFICATION_TYPES.error,
     message: 'TEST',
@@ -237,18 +207,16 @@ test('#uiStateReducer -> ADD_NOTIFICATION', t => {
     id: 'test-1'
   }));
 
-  t.equal(newState.notifications.length, 1, 'AddNotification should add one new notification');
-  t.deepEqual(newState.notifications[0], {
+  expect(newState.notifications.length).toBe(1);
+  expect(newState.notifications[0]).toEqual({
     type: DEFAULT_NOTIFICATION_TYPES.error,
     message: 'TEST',
     topic: DEFAULT_NOTIFICATION_TOPICS.global,
     id: 'test-1'
-  }, 'AddNotification should have propagated data correctly ');
-
-  t.end();
+  });
 });
 
-test('#uiStateReducer -> REMOVE_NOTIFICATION', t => {
+it('#uiStateReducer -> REMOVE_NOTIFICATION', () => {
   const newState = reducer(INITIAL_UI_STATE, addNotification({
     type: DEFAULT_NOTIFICATION_TYPES.error,
     message: 'TEST',
@@ -256,17 +224,15 @@ test('#uiStateReducer -> REMOVE_NOTIFICATION', t => {
     id: 'test-1'
   }));
 
-  t.equal(newState.notifications.length, 1, 'AddNotification should add one new notification');
-  t.deepEqual(newState.notifications[0], {
+  expect(newState.notifications.length).toBe(1);
+  expect(newState.notifications[0]).toEqual({
     type: DEFAULT_NOTIFICATION_TYPES.error,
     message: 'TEST',
     topic: DEFAULT_NOTIFICATION_TOPICS.global,
     id: 'test-1'
-  }, 'AddNotification should have propagated data correctly ');
+  });
 
   const nextState = reducer(newState, removeNotification('test-1'));
 
-  t.equal(nextState.notifications.length, 0, 'RemoveNotification removed one notification');
-
-  t.end();
+  expect(nextState.notifications.length).toBe(0);
 });
