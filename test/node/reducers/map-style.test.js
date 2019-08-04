@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import test from 'tape';
 import {drainTasksForTesting, succeedTaskWithValues} from 'react-palm/tasks';
 
 import reducer from 'reducers/map-style';
@@ -32,41 +31,30 @@ import {StateWCustomMapStyle} from 'test/helpers/mock-state';
 
 const InitialMapStyle = reducer(undefined, {});
 
-test('#mapStyleReducer', t => {
+it('#mapStyleReducer', () => {
   const newState = reducer(undefined, {});
 
-  t.deepEqual(
-    newState,
-    {
+  expect(newState).toEqual({
       ...INITIAL_MAP_STYLE,
       initialState: {}
-    },
-    'should return the initial map style'
-  );
-
-  t.end();
+    });
 });
 
-test('#mapStyleReducer -> INIT', t => {
+it('#mapStyleReducer -> INIT', () => {
   const newState = reducer(
     InitialMapStyle,
     keplerGlInit({mapboxApiAccessToken: 'smoothies_secret_token'})
   );
 
-  t.deepEqual(
-    newState,
-    {
-      ...INITIAL_MAP_STYLE,
-      initialState: {},
-      mapboxApiAccessToken: 'smoothies_secret_token',
-      mapboxApiUrl: undefined
-    },
-    'initialize map style with mapboxApiAccessToken'
-  );
-  t.end();
+  expect(newState).toEqual({
+    ...INITIAL_MAP_STYLE,
+    initialState: {},
+    mapboxApiAccessToken: 'smoothies_secret_token',
+    mapboxApiUrl: undefined
+  });
 });
 
-test('#mapStyleReducer -> INIT & LOAD_MAP_STYLES', t => {
+it('#mapStyleReducer -> INIT & LOAD_MAP_STYLES', () => {
   const myMapStyle = {
     id    : 'default dark v9',
     label : 'default dark v9',
@@ -74,6 +62,7 @@ test('#mapStyleReducer -> INIT & LOAD_MAP_STYLES', t => {
     icon  : `images/light.png`,
     layerGroups: []
   };
+
   const newState = reducer(
     InitialMapStyle,
     keplerGlInit({
@@ -82,18 +71,14 @@ test('#mapStyleReducer -> INIT & LOAD_MAP_STYLES', t => {
     })
   );
 
-  t.deepEqual(
-    newState,
-    {
-      ...INITIAL_MAP_STYLE,
-      mapStyles: {},
-      initialState: {},
-      mapboxApiAccessToken: 'smoothies_secret_token',
-      mapboxApiUrl: undefined,
-      mapStylesReplaceDefault: true
-    },
-    'initialize map style with mapboxApiAccessToken and mapStylesReplaceDefault; mapStyles empty'
-  );
+  expect(newState).toEqual({
+    ...INITIAL_MAP_STYLE,
+    mapStyles: {},
+    initialState: {},
+    mapboxApiAccessToken: 'smoothies_secret_token',
+    mapboxApiUrl: undefined,
+    mapStylesReplaceDefault: true
+  });
 
   const mapStyles = {
     [myMapStyle.id]: myMapStyle
@@ -101,16 +86,10 @@ test('#mapStyleReducer -> INIT & LOAD_MAP_STYLES', t => {
 
   const finalState = loadMapStylesUpdater(newState, { payload: mapStyles });
 
-  t.deepEqual(
-    finalState,
-    {...newState, mapStyles},
-    'user provided mapStyles are populated, defaults ignored'
-  );
-
-  t.end();
+  expect(finalState).toEqual({...newState, mapStyles});
 });
 
-test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
+it('#mapStyleReducer -> RECEIVE_MAP_CONFIG', () => {
   const stateWithToken = reducer(
     InitialMapStyle,
     keplerGlInit({mapboxApiAccessToken: 'smoothies_secret_token'})
@@ -169,15 +148,11 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
     initialState: {}
   };
 
-  t.deepEqual(
-    stateWithConfig,
-    expectedStateWithConfig,
-    'should load saved map style config'
-  );
+  expect(stateWithConfig).toEqual(expectedStateWithConfig);
 
   const [task1, ...more] = drainTasksForTesting();
 
-  t.equal(more.length, 0, 'should return 1 task');
+  expect(more.length).toBe(0);
 
   const expectedTask = {
     payload: [
@@ -189,11 +164,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
     ]
   };
 
-  t.deepEqual(
-    task1.payload,
-    expectedTask.payload,
-    'should create task to load map styles'
-  );
+  expect(task1.payload).toEqual(expectedTask.payload);
 
   const resultState1 = reducer(
     stateWithConfig,
@@ -241,19 +212,9 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
     editable: 0
   };
 
-  t.deepEqual(
-    Object.keys(resultState1).sort(),
-    Object.keys(expectedMapStyleState).sort(),
-    'mapStyle state should have same keys'
-  );
+  expect(Object.keys(resultState1).sort()).toEqual(Object.keys(expectedMapStyleState).sort());
 
   Object.keys(resultState1).forEach(key => {
-    t.deepEqual(
-      resultState1[key],
-      expectedMapStyleState[key],
-      `should update state,${key} with loaded map styles`
-    );
+    expect(resultState1[key]).toEqual(expectedMapStyleState[key]);
   });
-
-  t.end();
 });

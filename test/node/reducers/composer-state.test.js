@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import test from 'tape';
 import keplerGlReducer from 'reducers';
 import {addDataToMapUpdater} from 'reducers/combined-updaters';
 import {registerEntry} from 'actions/identity-actions';
@@ -59,7 +58,7 @@ const mockRawData = {
   ]
 };
 
-test('#composerStateReducer - addDataToMapUpdater: mapStyle', t => {
+it('#composerStateReducer - addDataToMapUpdater: mapStyle', () => {
   // init kepler.gl root and instance
   const state = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
 
@@ -80,18 +79,17 @@ test('#composerStateReducer - addDataToMapUpdater: mapStyle', t => {
     }
   });
 
-  t.equal(newState.mapStyle.styleType, 'light', 'Map style is set correctly');
-
-  t.end();
+  expect(newState.mapStyle.styleType).toBe('light');
 });
 
-test('#composerStateReducer - addDataToMapUpdater: mapState should be centered', t => {
+it('#composerStateReducer - addDataToMapUpdater: mapState should not be centered', () => {
   // init kepler.gl root and instance
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
   const mapStateProperties = {
     latitude: 33.88608913680742,
     longitude: -84.43459130456425
   };
+
   const newState = addDataToMapUpdater(state, {
     payload: {
       datasets: {
@@ -109,21 +107,11 @@ test('#composerStateReducer - addDataToMapUpdater: mapState should be centered',
     }
   });
 
-  t.equal(
-    newState.mapState.latitude,
-    29.23,
-    'centerMap: true should override mapState config'
-  );
-  t.equal(
-    newState.mapState.longitude,
-    60.71,
-    'centerMap: true should override mapState config'
-  );
-
-  t.end();
+  expect(newState.mapState.latitude).toBe(29.23);
+  expect(newState.mapState.longitude).toBe(60.71);
 });
 
-test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
+it('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', () => {
   const data = processCsvData(testCsvData);
 
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
@@ -167,14 +155,14 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
 
   const hexDataset = nextState1.visState.datasets[hexDataId];
 
-  t.equal(hexDataset.allData.length, hexData.rows.length, 'should only have new data');
-  t.equal(hexDataset.fields.length, hexData.fields.length, 'should have same length of fields');
-  t.equal(hexDataset.id, hexDataId, 'should have the id');
-  t.deepEqual(nextState1.visState.splitMaps, [], 'should clear out splitMaps');
+  expect(hexDataset.allData.length).toBe(hexData.rows.length);
+  expect(hexDataset.fields.length).toBe(hexData.fields.length);
+  expect(hexDataset.id).toBe(hexDataId);
+  expect(nextState1.visState.splitMaps).toEqual([]);
 
   // should only create 1 layer and clear out others
-  cmpLayers(t, [mergedH3Layer], nextState1.visState.layers);
-  cmpFilters(t, mergedFilters, nextState1.visState.filters);
+  cmpLayers([mergedH3Layer], nextState1.visState.layers);
+  cmpFilters(mergedFilters, nextState1.visState.filters);
 
   // add data and config keep existing data and config
   const nextState2 = addDataToMapUpdater(oldState, {
@@ -226,12 +214,10 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
     layerOrder: [2, 0, 1]
   };
 
-  cmpLayers(t, expectedVisState.layers, actualVisState.layers);
-  cmpFilters(t, expectedVisState.filters, actualVisState.filters);
-  cmpDatasets(t, expectedVisState.datasets, actualVisState.datasets);
-  cmpInteraction(t, expectedVisState.interactionConfig, actualVisState.interactionConfig);
-  t.deepEqual(expectedVisState.layerOrder, actualVisState.layerOrder, 'Should create new layer, move it to the top');
-  t.deepEqual(expectedVisState.splitMaps, actualVisState.splitMaps, 'Should keep existing splitMaps, add new layres to splitMaps');
-
-  t.end();
+  cmpLayers(expectedVisState.layers, actualVisState.layers);
+  cmpFilters(expectedVisState.filters, actualVisState.filters);
+  cmpDatasets(expectedVisState.datasets, actualVisState.datasets);
+  cmpInteraction(expectedVisState.interactionConfig, actualVisState.interactionConfig);
+  expect(expectedVisState.layerOrder).toEqual(actualVisState.layerOrder);
+  expect(expectedVisState.splitMaps).toEqual(actualVisState.splitMaps);
 });

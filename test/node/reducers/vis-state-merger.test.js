@@ -302,7 +302,7 @@ it('VisStateMerger.v1.label -> mergeLayers -> toEmptyState', () => {
   cmpLayers(mergedLayersV1Label, stateWData.layers, {id: true});
 });
 
-it('VisStateMerger.v1.split -> mergeLayers -> toEmptyState', () => {
+it.only('VisStateMerger.v1.split -> mergeLayers -> toEmptyState', () => {
   const savedConfig = cloneDeep(savedStateV1Split);
   const parsedConfig = SchemaManager.parseSavedConfig(savedConfig.config);
   const expectedConfig = mergedSplitMapsV1;
@@ -317,11 +317,12 @@ it('VisStateMerger.v1.split -> mergeLayers -> toEmptyState', () => {
     oldVisState,
     receiveMapConfig(parsedConfig)
   );
+
   Object.keys(oldVisState).forEach(key => {
     if (key === 'layerToBeMerged') {
       expect(mergedState.layerToBeMerged).toEqual(parsedLayers);
     } else if (key === 'splitMaps') {
-      expect(mergedState.splitMaps).toEqual(expectedConfig);
+      expect(mergedState.splitMapsToBeMerged).toEqual(expectedConfig);
     } else if (key === 'interactionToBeMerged') {
       expect(mergedState.interactionToBeMerged).toEqual({tooltip: parsedConfig.visState.interactionConfig.tooltip});
     } else {
