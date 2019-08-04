@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import test from 'tape';
+
 import {
   testCreateCases,
   testFormatLayerDataCases
@@ -29,7 +29,7 @@ const {ScenegraphLayer} = KeplerGlLayers;
 
 import {processCsvData} from 'processors/data-processor';
 
-test('#ScenegraphLayer -> constructor', t => {
+it('#ScenegraphLayer -> constructor', () => {
   const TEST_CASES = {
     CREATE: [
       {
@@ -39,25 +39,18 @@ test('#ScenegraphLayer -> constructor', t => {
           label: 'test 3d layer'
         },
         test: layer => {
-          t.ok(
-            layer.config.dataId === 'smoothie',
-            'ScenegraphLayer dataId should be correct'
-          );
-          t.ok(layer.type === '3D', 'type should be 3D');
-          t.ok(
-            layer.isAggregated === false,
-            'ScenegraphLayer is not aggregated'
-          );
+          expect(layer.config.dataId).toBe('smoothie');
+          expect(layer.type).toBe('3D');
+          expect(layer.isAggregated).toBe(false);
         }
       }
     ]
   };
 
-  testCreateCases(t, ScenegraphLayer, TEST_CASES.CREATE);
-  t.end();
+  testCreateCases(ScenegraphLayer, TEST_CASES.CREATE);
 });
 
-test('#ScenegraphLayer -> formatLayerData', t => {
+it('#ScenegraphLayer -> formatLayerData', () => {
   const {rows} = processCsvData(csvData);
 
   const filteredIndex = [0, 2, 4];
@@ -109,25 +102,12 @@ test('#ScenegraphLayer -> formatLayerData', t => {
           getPosition: () => {}
         };
 
-        t.deepEqual(
-          Object.keys(layerData).sort(),
-          Object.keys(expectedLayerData).sort(),
-          'layerData should have 2 keys'
-        );
-        t.ok(
-          typeof layerData.getPosition === 'function',
-          'should have getPosition accessor as function'
-        );
-        t.deepEqual(
-          layerData.getPosition(layerData.data[0]),
-          [31.2590542, 29.9900937, 0],
-          'getPosition should return correct lat lng'
-        );
-        t.deepEqual(
-          layer.meta,
-          expectedLayerMeta,
-          'should format correct 3d layer meta'
-        );
+        expect(Object.keys(layerData).sort()).toEqual(Object.keys(expectedLayerData).sort());
+
+        expect(typeof layerData.getPosition).toBe('function');
+
+        expect(layerData.getPosition(layerData.data[0])).toEqual([31.2590542, 29.9900937, 0]);
+        expect(layer.meta).toEqual(expectedLayerMeta);
       }
     },
     {
@@ -177,29 +157,15 @@ test('#ScenegraphLayer -> formatLayerData', t => {
           ],
           getPosition: () => {}
         };
-        t.deepEqual(
-          layer.config.colorDomain,
-          [2, 4, 5, 222, 345, 12124],
-          'should update layer color domain'
-        );
-        t.deepEqual(
-          Object.keys(layerData).sort(),
-          Object.keys(expectedLayerData).sort(),
-          'layerData should have 2 keys'
-        );
-        t.ok(
-          ['getPosition'].every(k => typeof layerData[k] === 'function'),
-          'should have getPosition accessor as function'
-        );
-        t.deepEqual(
-          layerData.getPosition(layerData.data[0]),
-          [31.2461142, 29.9927699, 0],
-          'getPosition should return correct lat lng'
-        );
+        expect(layer.config.colorDomain).toEqual([2, 4, 5, 222, 345, 12124]);
+        expect(Object.keys(layerData).sort()).toEqual(Object.keys(expectedLayerData).sort());
+
+        ['getPosition'].every(k => expect(typeof layerData[k]).toBe('function'));
+
+        expect(layerData.getPosition(layerData.data[0])).toEqual([31.2461142, 29.9927699, 0]);
       }
     }
   ];
 
-  testFormatLayerDataCases(t, ScenegraphLayer, TEST_CASES);
-  t.end();
+  testFormatLayerDataCases(ScenegraphLayer, TEST_CASES);
 });
