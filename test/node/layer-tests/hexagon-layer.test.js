@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import test from 'tape';
 import {
   testCreateCases,
   testFormatLayerDataCases
@@ -28,7 +27,7 @@ import csvData, {testFields} from 'test/fixtures/test-csv-data';
 import HexagonLayer from 'layers/hexagon-layer/hexagon-layer';
 import {processCsvData} from 'processors/data-processor';
 
-test('#HexagonLayer -> constructor', t => {
+it('#HexagonLayer -> constructor', () => {
   const TEST_CASES = {
     CREATE: [
       {
@@ -38,22 +37,18 @@ test('#HexagonLayer -> constructor', t => {
           label: 'test hexagon layer'
         },
         test: layer => {
-          t.ok(
-            layer.config.dataId === 'smoothie',
-            'HexagonLayer dataId should be correct'
-          );
-          t.ok(layer.type === 'hexagon', 'type should be hexagon');
-          t.ok(layer.isAggregated === true, 'HexagonLayer is aggregated');
+          expect(layer.config.dataId ).toBe('smoothie');
+          expect(layer.type).toBe('hexagon');
+          expect(layer.isAggregated).toBe(true);
         }
       }
     ]
   };
 
-  testCreateCases(t, HexagonLayer, TEST_CASES.CREATE);
-  t.end();
+  testCreateCases(HexagonLayer, TEST_CASES.CREATE);
 });
 
-test('#HexagonLayer -> formatLayerData', async t => {
+it('#HexagonLayer -> formatLayerData', async () => {
   const {rows} = await processCsvData(csvData);
 
   const filteredIndex = [0, 2, 4];
@@ -105,30 +100,11 @@ test('#HexagonLayer -> formatLayerData', async t => {
           getPosition: () => {}
         };
 
-        t.deepEqual(
-          Object.keys(layerData),
-          ['data', 'getPosition'],
-          'layerData should have 2 keys'
-        );
-        t.deepEqual(
-          layerData.data,
-          expectedLayerData.data,
-          'should format correct hexagon layerData'
-        );
-        t.ok(
-          typeof layerData.getPosition === 'function',
-          'should have getPosition'
-        );
-        t.deepEqual(
-          layerData.getPosition(layerData.data[0]),
-          [31.2590542, 29.9900937],
-          'getPosition should return correct lat lng'
-        );
-        t.deepEqual(
-          layer.meta,
-          expectedLayerMeta,
-          'should format correct grid layerData'
-        );
+        expect(Object.keys(layerData)).toEqual(['data', 'getPosition']);
+        expect(layerData.data).toEqual(expectedLayerData.data);
+        expect(typeof layerData.getPosition).toBe('function');
+        expect(layerData.getPosition(layerData.data[0])).toEqual([31.2590542, 29.9900937]);
+        expect(layer.meta).toEqual(expectedLayerMeta);
       }
     },
     {
@@ -163,38 +139,15 @@ test('#HexagonLayer -> formatLayerData', async t => {
           getColorValue: () => {}
         };
 
-        t.deepEqual(
-          Object.keys(layerData),
-          ['data', 'getPosition', 'getColorValue'],
-          'layerData should have 2 keys'
-        );
-        t.deepEqual(
-          layerData.data,
-          expectedLayerData.data,
-          'should not filter out nulls, format correct hexagon layerData'
-        );
-        t.ok(
-          typeof layerData.getPosition === 'function',
-          'should have getPosition'
-        );
-        t.ok(
-          typeof layerData.getColorValue === 'function',
-          'should have getColorValue'
-        );
-        t.deepEqual(
-          layerData.getPosition(layerData.data[0]),
-          ['12', null],
-          'getPosition should return correct lat lng'
-        );
-        t.deepEqual(
-          layer.meta,
-          expectedLayerMeta,
-          'should format correct grid layerData'
-        );
+        expect(Object.keys(layerData)).toEqual(['data', 'getPosition', 'getColorValue']);
+        expect(layerData.data).toEqual(expectedLayerData.data);
+        expect(typeof layerData.getPosition).toBe('function');
+        expect(typeof layerData.getColorValue).toBe('function');
+        expect(layerData.getPosition(layerData.data[0])).toEqual(['12', null]);
+        expect(layer.meta).toEqual(expectedLayerMeta);
       }
     }
   ];
 
-  testFormatLayerDataCases(t, HexagonLayer, TEST_CASES);
-  t.end();
+  testFormatLayerDataCases(HexagonLayer, TEST_CASES);
 });
