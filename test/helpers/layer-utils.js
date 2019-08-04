@@ -142,7 +142,7 @@ export function testInitializeDeckLayer(t, layerType, layers) {
   ).not.toThrow();
 
   // listen on console.error in editShader, fail the test if any error is logged
-  expect(spy).toHaveBeenCalledTimes(2);
+  expect(spy).not.toHaveBeenCalled();
 
   spy.mockRestore();
   return null;

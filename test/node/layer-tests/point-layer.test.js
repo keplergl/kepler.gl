@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import test from 'tape';
 import {
   testCreateCases,
   testFormatLayerDataCases,
@@ -30,7 +29,7 @@ const {PointLayer} = KeplerGlLayers;
 
 import {processCsvData} from 'processors/data-processor';
 
-test('#PointLayer -> constructor', t => {
+it('#PointLayer -> constructor', () => {
   const TEST_CASES = {
     CREATE: [
       {
@@ -40,22 +39,18 @@ test('#PointLayer -> constructor', t => {
           label: 'test point layer'
         },
         test: layer => {
-          t.ok(
-            layer.config.dataId === 'smoothie',
-            'PointLayer dataId should be correct'
-          );
-          t.ok(layer.type === 'point', 'type should be grid');
-          t.ok(layer.isAggregated === false, 'PointLayer is not aggregated');
+          expect(layer.config.dataId).toBe('smoothie');
+          expect(layer.type).toBe('point');
+          expect(layer.isAggregated).toBe(false);
         }
       }
     ]
   };
 
-  testCreateCases(t, PointLayer, TEST_CASES.CREATE);
-  t.end();
+  testCreateCases(PointLayer, TEST_CASES.CREATE);
 });
 
-test('#PointLayer -> formatLayerData', t => {
+it('#PointLayer -> formatLayerData', () => {
   const {rows} = processCsvData(csvData);
 
   const filteredIndex = [0, 2, 4];
@@ -114,40 +109,13 @@ test('#PointLayer -> formatLayerData', t => {
           getRadius: () => {}
         };
 
-        t.deepEqual(
-          Object.keys(layerData).sort(),
-          Object.keys(expectedLayerData).sort(),
-          'layerData should have 6 keys'
-        );
-        t.deepEqual(
-          layerData.data,
-          expectedLayerData.data,
-          'should format correct grid layerData'
-        );
-        t.ok(
-          typeof layerData.getPosition === 'function',
-          'should have getPosition accessor as function'
-        );
-        t.deepEqual(
-          layerData.getFillColor,
-          layer.config.color,
-          'getFillColor should be a constant'
-        );
-        t.deepEqual(
-          layerData.getRadius,
-          1,
-          'getRadius should be a constant'
-        );
-        t.deepEqual(
-          layerData.getPosition(layerData.data[0]),
-          [31.2590542, 29.9900937, 0],
-          'getPosition should return correct lat lng'
-        );
-        t.deepEqual(
-          layer.meta,
-          expectedLayerMeta,
-          'should format correct point layer meta'
-        );
+        expect(Object.keys(layerData).sort()).toEqual(Object.keys(expectedLayerData).sort());
+        expect(layerData.data).toEqual(expectedLayerData.data);
+        expect(typeof layerData.getPosition).toBe('function');
+        expect(layerData.getFillColor).toBe(layer.config.color);
+        expect(layerData.getRadius).toBe(1);
+        expect(layerData.getPosition(layerData.data[0])).toEqual([31.2590542, 29.9900937, 0]);
+        expect(layer.meta).toEqual(expectedLayerMeta);
       }
     },
     {
@@ -201,56 +169,24 @@ test('#PointLayer -> formatLayerData', t => {
           getRadius: () => {},
           getText: () => {}
         };
-        t.deepEqual(
-          layer.config.colorDomain,
-          [2, 4, 5, 222, 345, 12124],
-          'should update layer color domain'
+        expect(layer.config.colorDomain).toEqual([2, 4, 5, 222, 345, 12124]);
+        expect(Object.keys(layerData).sort).toEqual(Object.keys(expectedLayerData).sort);
+        expect(layerData.data).toEqual(expectedLayerData.data);
+        ['getPosition', 'getFillColor', 'getRadius'].every(
+          k => expect(typeof layerData[k]).toBe('function')
         );
-        t.deepEqual(
-          Object.keys(layerData).sort,
-          Object.keys(expectedLayerData).sort,
-          'layerData should have 6 keys'
-        );
-        t.deepEqual(
-          layerData.data,
-          expectedLayerData.data,
-          'should filter out nulls, format correct point layerData'
-        );
-        t.ok(
-          ['getPosition', 'getFillColor', 'getRadius'].every(
-            k => typeof layerData[k] === 'function'
-          ),
-          'should have getPosition, getFillColor, getRadius accessor as function'
-        );
-        t.deepEqual(
-          layerData.getPosition(layerData.data[0]),
-          [31.2461142, 29.9927699, 0],
-          'getPosition should return correct lat lng'
-        );
-        t.deepEqual(
-          layer.meta,
-          expectedLayerMeta,
-          'should format correct grid layerData'
-        );
-        t.deepEqual(
-          layerData.getFillColor(layerData.data[0]),
-          [90, 24, 70],
-          'getColor should return correct color'
-        );
-        t.equal(
-          layerData.getRadius(layerData.data[0]),
-          2,
-          'getRadius should return fixed radius'
-        );
+        expect(layerData.getPosition(layerData.data[0])).toEqual([31.2461142, 29.9927699, 0]);
+        expect(layer.meta).toEqual(expectedLayerMeta);
+        expect(layerData.getFillColor(layerData.data[0])).toEqual([90, 24, 70]);
+        expect(layerData.getRadius(layerData.data[0])).toBe(2);
       }
     }
   ];
 
-  testFormatLayerDataCases(t, PointLayer, TEST_CASES);
-  t.end();
+  testFormatLayerDataCases(PointLayer, TEST_CASES);
 });
 
-test('#PointLayer -> renderLayer', t => {
+it('#PointLayer -> renderLayer', () => {
   const {rows} = processCsvData(csvData);
 
   const filteredIndex = [0, 2, 4];
@@ -279,6 +215,5 @@ test('#PointLayer -> renderLayer', t => {
     data: [data, rows, filteredIndex, undefined]
   }];
 
-  testRenderLayerCases(t, PointLayer, TEST_CASES);
-  t.end();
+  testRenderLayerCases(PointLayer, TEST_CASES);
 });
