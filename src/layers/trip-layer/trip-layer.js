@@ -24,15 +24,15 @@ import Layer from '../base-layer';
 import {TripsLayer as DeckGLTripsLayer} from 'deck.gl';
 
 import {GEOJSON_FIELDS} from 'constants/default-settings';
+import TripLayerIcon from './trip-layer-icon';
 
-import {hexToRgb} from 'utils/color-utils';
 import {
   getGeojsonDataMaps,
   getGeojsonBounds,
   getGeojsonFeatureTypes
 } from '../geojson-layer/geojson-utils';
-import TripLayerIcon from './trip-layer-icon';
 import {getSampleData} from 'utils/data-utils';
+import {hexToRgb} from 'utils/color-utils';
 
 export const tripVisConfigs = {
   opacity: 'opacity',
@@ -117,7 +117,7 @@ export default class TripLayer extends Layer {
     // check if a sample of 500 features has 4 elements in all coordinates
     const samples = features.length > 500 ? getSampleData(features, 500) : features;
     let coordHasLength4 = true;
-    for (let i = 0; i < 2; i += 1) {
+    for (let i = 0; i < samples.length; i += 1) {
       coordHasLength4 = !samples[i].geometry.coordinates.find(c => c.length < 4);
       if (samples[i].geometry.coordinates.find(c => c.length < 4)) {
         break;
@@ -232,7 +232,7 @@ export default class TripLayer extends Layer {
               sizeField,
               0
             )
-          : 1 // d.properties.width || 1
+          : d.properties.lineWidth || 1
     };
   }
   /* eslint-enable complexity */
@@ -299,11 +299,8 @@ export default class TripLayer extends Layer {
           d.geometry.coordinates.map(coord => (coord.length === 4 ? coord[3] : 0)),
         getColor: data.getColor,
         opacity: 0.3,
-        // widthScale: 20,
         getWidth: 2,
-        // d => d.geometry.coordinates.map(coord => coord[2]) * 10, //data.getWidth, //10,
         widthMinPixels: 2,
-        // d => d.properties.vol / 10, //2, //data.getWidth,
         rounded: true,
         trailLength: visConfig.trailLength,
         currentTime: animationConfig.currentTime,

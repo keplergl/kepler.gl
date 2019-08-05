@@ -301,8 +301,7 @@ export default class Layer {
       visConfig: {},
 
       textLabel: [DEFAULT_TEXT_LABEL],
-      // TODO: H make enabled false by default
-      // animation: {enabled: false}
+
       animation: {enabled: false}
     };
   }

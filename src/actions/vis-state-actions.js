@@ -334,7 +334,7 @@ export function playAnimation(value) {
 /**
  * Change filter animation speed
  * @memberof visStateActions
- * @param {Object} layer -  Current layer
+ * @param {Object} layer -  layer to be updated
  * @returns {{type: ActionTypes.ENABLE_LAYER_ANIMATION, layer: oldLayer}}
  * @public
  */
