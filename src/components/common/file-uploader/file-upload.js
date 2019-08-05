@@ -246,7 +246,7 @@ export default class FileUpload extends Component {
           type="file"
           onChange={this._onChange}
         />
-        {FileDrop ? (
+        {FileDrop && this.frame.current ? (
           <FileDrop
             frame={this.frame.current}
             targetAlwaysVisible
