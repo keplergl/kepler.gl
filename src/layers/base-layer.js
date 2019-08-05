@@ -37,6 +37,7 @@ import {DataVizColors} from 'constants/custom-color-ranges';
 import {LAYER_VIS_CONFIGS, DEFAULT_TEXT_LABEL} from './layer-factory';
 
 import {generateHashId, isPlainObject} from 'utils/utils';
+import jenks from 'utils/jenks';
 
 import {
   getSampleData,
@@ -49,6 +50,7 @@ import {
 import {
   getQuantileDomain,
   getOrdinalDomain,
+  getLogDomain,
   getLinearDomain
 } from 'utils/data-scale-utils';
 
@@ -291,11 +293,11 @@ export default class Layer {
       // color by field, domain is set by filters, field, scale type
       colorField: null,
       colorDomain: [0, 1],
-      colorScale: 'quantile',
+      colorScale: SCALE_TYPES.quantile,
 
       // color by size, domain is set by filters, field, scale type
       sizeDomain: [0, 1],
-      sizeScale: 'linear',
+      sizeScale: SCALE_TYPES.linear,
       sizeField: null,
 
       visConfig: {},
@@ -775,6 +777,13 @@ export default class Layer {
 
       case SCALE_TYPES.quantile:
         return getQuantileDomain(filteredIndexForDomain, indexValueAccessor, sortFunction);
+
+      case SCALE_TYPES.jenks:
+        const nClasses = 8; // how to compute? Do we add a slider?
+        return jenks(allData.map(valueAccessor), nClasses);
+
+      case SCALE_TYPES.log:
+        return getLogDomain(filteredIndexForDomain, indexValueAccessor);
 
       case SCALE_TYPES.quantize:
       case SCALE_TYPES.linear:

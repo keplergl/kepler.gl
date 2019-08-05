@@ -20,6 +20,17 @@
 
 import keyMirror from 'keymirror';
 
+import {
+  scaleLinear,
+  scaleQuantize,
+  scaleQuantile,
+  scaleOrdinal,
+  scaleSqrt,
+  scaleLog,
+  scaleThreshold,
+  scalePoint
+} from 'd3-scale';
+
 export const ACTION_PREFIX = '@@kepler.gl/';
 export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl';
 export const ICON_PREFIX = `${CLOUDFRONT}/geodude`;
@@ -239,20 +250,25 @@ export const SCALE_TYPES = keyMirror({
   quantile: null,
   quantize: null,
   linear: null,
-
-  // for radius
   sqrt: null,
+  log: null,
+
   // ordinal domain to linear range
-  point: null
+  point: null,
+
+  // Jenks Natural Breaks
+  jenks: null,
 });
 
 export const SCALE_FUNC = {
-  linear: require('d3-scale').scaleLinear,
-  quantize: require('d3-scale').scaleQuantize,
-  quantile: require('d3-scale').scaleQuantile,
-  ordinal: require('d3-scale').scaleOrdinal,
-  sqrt: require('d3-scale').scaleSqrt,
-  point: require('d3-scale').scalePoint
+  [SCALE_TYPES.linear]: scaleLinear,
+  [SCALE_TYPES.quantize]: scaleQuantize,
+  [SCALE_TYPES.quantile]: scaleQuantile,
+  [SCALE_TYPES.ordinal]: scaleOrdinal,
+  [SCALE_TYPES.sqrt]: scaleSqrt,
+  [SCALE_TYPES.log]: scaleLog,
+  [SCALE_TYPES.point]: scalePoint,
+  [SCALE_TYPES.jenks]: scaleThreshold
 };
 
 export const ALL_FIELD_TYPES = keyMirror({
@@ -351,26 +367,26 @@ export const AGGREGATION_TYPES = {
 };
 
 export const linearFieldScaleFunctions = {
-  [CHANNEL_SCALES.color]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
-  [CHANNEL_SCALES.radius]: [SCALE_TYPES.sqrt],
-  [CHANNEL_SCALES.size]: [SCALE_TYPES.linear]
+  [CHANNEL_SCALES.color]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile, SCALE_TYPES.jenks],
+  [CHANNEL_SCALES.radius]: [SCALE_TYPES.sqrt, SCALE_TYPES.log],
+  [CHANNEL_SCALES.size]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log]
 };
 
 export const linearFieldAggrScaleFunctions = {
   [CHANNEL_SCALES.colorAggr]: {
-    [AGGREGATION_TYPES.average]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
-    [AGGREGATION_TYPES.maximum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
-    [AGGREGATION_TYPES.minimum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
-    [AGGREGATION_TYPES.median]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
-    [AGGREGATION_TYPES.sum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile]
+    [AGGREGATION_TYPES.average]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile, SCALE_TYPES.jenks],
+    [AGGREGATION_TYPES.maximum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile, SCALE_TYPES.jenks],
+    [AGGREGATION_TYPES.minimum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile, SCALE_TYPES.jenks],
+    [AGGREGATION_TYPES.median]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile, SCALE_TYPES.jenks],
+    [AGGREGATION_TYPES.sum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile, SCALE_TYPES.jenks]
   },
 
   [CHANNEL_SCALES.sizeAggr]: {
-    [AGGREGATION_TYPES.average]: [SCALE_TYPES.linear],
-    [AGGREGATION_TYPES.maximum]: [SCALE_TYPES.linear],
-    [AGGREGATION_TYPES.minimum]: [SCALE_TYPES.linear],
-    [AGGREGATION_TYPES.median]: [SCALE_TYPES.linear],
-    [AGGREGATION_TYPES.sum]: [SCALE_TYPES.linear]
+    [AGGREGATION_TYPES.average]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log],
+    [AGGREGATION_TYPES.maximum]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log],
+    [AGGREGATION_TYPES.minimum]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log],
+    [AGGREGATION_TYPES.median]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log],
+    [AGGREGATION_TYPES.sum]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log]
   }
 };
 
@@ -407,10 +423,10 @@ export const  notSupportAggrOpts = {
  */
 export const DEFAULT_AGGREGATION = {
   [CHANNEL_SCALES.colorAggr]: {
-    [AGGREGATION_TYPES.count]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile]
+    [AGGREGATION_TYPES.count]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile, SCALE_TYPES.sqrt, SCALE_TYPES.log]
   },
   [CHANNEL_SCALES.sizeAggr]: {
-    [AGGREGATION_TYPES.count]: [SCALE_TYPES.linear]
+    [AGGREGATION_TYPES.count]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log]
   }
 };
 

@@ -22,7 +22,8 @@ import test from 'tape';
 import {
   getOrdinalDomain,
   getQuantileDomain,
-  getLinearDomain
+  getLinearDomain,
+  getLogDomain
 } from 'utils/data-scale-utils';
 
 function numberSort(a, b) {
@@ -95,3 +96,20 @@ test('DataScaleUtils -> getLinearDomain', t => {
 
   t.end();
 });
+
+test('DataScaleUtils -> getLogDomain', t => {
+  function valueAccessor(d) {
+    return d.value;
+  }
+
+  t.deepEqual(getLogDomain([{value: 1}, {value: 0}, {value: -3}], valueAccessor), [-3, 1],
+    'should get correct Log domain with negative numbers');
+
+  t.deepEqual(getLogDomain([{value: 1}, {value: 0}, {value: 3}], valueAccessor), [0.001, 3],
+    'should not contain a 0 in domain');
+
+  t.deepEqual(getLogDomain([], valueAccessor), [0.001, 1],
+    'should have undefined domain for empty set');
+
+  t.end();
+})

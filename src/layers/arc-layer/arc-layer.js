@@ -40,7 +40,7 @@ export const arcPosResolver = ({lat0, lng0, lat1, lng1}) =>
 
 export const arcRequiredColumns = ['lat0', 'lng0', 'lat1', 'lng1'];
 
-export const arctVisConfigs = {
+export const arcVisConfigs = {
   opacity: 'opacity',
   thickness: 'thickness',
   colorRange: 'colorRange',
@@ -51,7 +51,7 @@ export const arctVisConfigs = {
 export default class ArcLayer extends Layer {
   constructor(props) {
     super(props);
-    this.registerVisConfig(arctVisConfigs);
+    this.registerVisConfig(arcVisConfigs);
     this.getPosition = memoize(arcPosAccessor, arcPosResolver);
   }
 

@@ -384,7 +384,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
   );
   const newLayer2 = nextState2.layers[0];
   t.equal(newLayer2.config.sizeField, intField, 'should update sizeField');
-  t.equal(newLayer2.config.sizeScale, 'sqrt', 'should scale to linear');
+  t.equal(newLayer2.config.sizeScale, 'sqrt', 'should scale to sqrt');
   t.deepEqual(
     newLayer2.config.sizeDomain,
     [1, 12124],

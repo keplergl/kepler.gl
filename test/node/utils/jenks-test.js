@@ -18,12 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './data-utils-test';
-import './data-processor-test';
-import './filter-utils-test';
-import './layer-utils-test';
-import './data-scale-utils-test';
-import './interaction-utils-test';
-import './mapbox-gl-style-editor-test';
-import './notifications-utils-test';
-import './jenks-test';
+import test from 'tape';
+
+import jenks from 'utils/jenks';
+
+test('jenks -> basic', t => {
+  const ordered = Array.from({length: 30}, (_, i) => i);
+
+  t.deepEqual(jenks(ordered), [0, 2, 5, 8, 12, 16, 20, 24, 29],
+    'creates thresholds, 8 by default');
+
+  t.deepEqual(jenks(ordered, 6), [0, 3, 8, 13, 18, 23, 29],
+    'can change number of classes');
+
+  t.equal(jenks([1, 2]), null,
+    'returns null when fewer than nClasses items');
+
+  t.end();
+});

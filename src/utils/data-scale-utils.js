@@ -62,3 +62,15 @@ export function getLinearDomain(data, valueAccessor) {
 
   return range.map((d, i) => (d === undefined ? i : d));
 }
+
+/**
+ * return linear domain for an array of data. A log scale domain cannot contain 0
+ * @param {Array} data
+ * @param {function} valueAccessor
+ * @returns {Array} domain
+ */
+export function getLogDomain(data, valueAccessor) {
+  const [d0, d1] = getLinearDomain(data, valueAccessor);
+
+  return [d0 === 0 ? .001 : d0, d1];
+}
