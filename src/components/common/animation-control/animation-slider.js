@@ -96,7 +96,7 @@ const AnimationControlFactory = () => {
     }
 
     componentDidMount() {
-      this.props.enableLayerAnimation(this.props.layer, this.props.datasets);
+      this.props.enableLayerAnimation(this.props.layer);
     }
 
     domainSelector = props => props.animation.domain.domain;
@@ -155,12 +155,13 @@ const AnimationControlFactory = () => {
             />
             <SliderWrapper className="kg-animation-control__slider">
               <Slider
-                showValues={true}
+                showValues={false}
                 isRanged={false}
                 minValue={domain[0]}
                 maxValue={domain[1]}
                 value1={currentTime}
                 onSlider1Change={this.onSlider1Change}
+                enableBarDrag={true}
               />
             </SliderWrapper>
             <TimeDisplay>

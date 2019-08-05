@@ -677,8 +677,7 @@ export default class LayerConfigurator extends Component {
     layerChannelConfigProps
   }) {
     const {
-      meta: {featureTypes = {}},
-      config: {visConfig}
+      meta: {featureTypes = {}}
     } = layer;
 
     return (
@@ -698,34 +697,6 @@ export default class LayerConfigurator extends Component {
             <VisConfigSlider
               {...LAYER_VIS_CONFIGS.opacity}
               {...visConfiguratorProps}
-            />
-          </ConfigGroupCollapsibleContent>
-        </LayerConfigGroup>
-
-        {/* Stroke Width */}
-        <LayerConfigGroup
-          {...visConfiguratorProps}
-          {...(featureTypes.polygon ? LAYER_VIS_CONFIGS.stroked : {})}
-          label="Stroke Width"
-          collapsible
-        >
-          {layer.config.sizeField ? (
-            <VisConfigSlider
-              {...LAYER_VIS_CONFIGS.strokeWidthRange}
-              {...visConfiguratorProps}
-              label={false}
-            />
-          ) : (
-            <VisConfigSlider
-              {...LAYER_VIS_CONFIGS.thickness}
-              {...visConfiguratorProps}
-              label={false}
-            />
-          )}
-          <ConfigGroupCollapsibleContent>
-            <ChannelByValueSelector
-              channel={layer.visualChannels.size}
-              {...layerChannelConfigProps}
             />
           </ConfigGroupCollapsibleContent>
         </LayerConfigGroup>

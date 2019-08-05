@@ -158,9 +158,7 @@ export default function SidePanelFactory(
         updateLayerOrder: visStateActions.reorderLayer,
         showDatasetTable: this._showDatasetTable,
         showAddDataModal: this._showAddDataModal,
-        removeLayer: visStateActions.removeLayer,
-        removeDataset: this._removeDataset,
-        enlargeFilter: visStateActions.enlargeFilter
+        removeLayer: visStateActions.removeLayer
       };
 
       const filterManagerActions = {

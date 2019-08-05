@@ -128,6 +128,7 @@ export default class Slider extends Component {
   };
 
   slide1Listener = x => {
+    console.log('this.props.value1, x', this.props.value1, 'x', x);
     const val = this._getValue(this.props.value1, x);
     if (this._isVal1InRange(val)) {
       this.props.onSlider1Change(val);
@@ -169,6 +170,7 @@ export default class Slider extends Component {
     const currValDelta = value1 - value0;
     const maxDelta = maxValue - minValue;
     const width = (currValDelta / maxDelta) * 100;
+
     const v0Left = ((value0 - minValue) / maxDelta) * 100;
 
     return (
