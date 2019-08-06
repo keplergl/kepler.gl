@@ -42,6 +42,7 @@ class FeatureActionPanel extends PureComponent {
     datasets: PropTypes.object.isRequired,
     position: PropTypes.object.isRequired,
     layers: PropTypes.arrayOf(PropTypes.object).isRequired,
+    filters: PropTypes.arrayOf(PropTypes.object).isRequired,
     onClose: PropTypes.func.isRequired,
     onDeleteFeature: PropTypes.func.isRequired,
     onToggleLayer: PropTypes.func.isRequired
@@ -59,6 +60,8 @@ class FeatureActionPanel extends PureComponent {
       datasets,
       position,
       layers,
+      filters,
+      currentFeature,
       onToggleLayer,
       onDeleteFeature
     } = this.props;
@@ -72,7 +75,10 @@ class FeatureActionPanel extends PureComponent {
                 key={index}
                 label={layer.config.label}
                 color={datasets[layer.config.dataId].color}
-                isSelection
+                isSelection={true}
+                isActive={Boolean(filters.find(f =>
+                  f.layerId === layer.id && f.value.id === currentFeature.id
+                ))}
                 onClick={() => onToggleLayer(layer)}
               />
             ))}

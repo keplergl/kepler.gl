@@ -469,11 +469,11 @@ export function setFeatures(features) {
  * @param {Object} layer
  * @return {{feature: *, type: null, layer: *}}
  */
-export function toggleFeatureLayer(feature, layer) {
+export function togglePolygonFilter(layer, featureId) {
   return {
-    type: ActionTypes.TOGGLE_FEATURE_LAYER,
-    feature,
-    layer
+    type: ActionTypes.TOGGLE_POLYGON_FILTER,
+    layer,
+    featureId
   }
 }
 

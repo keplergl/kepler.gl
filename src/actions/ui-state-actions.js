@@ -259,6 +259,7 @@ export const setEditorMode = createAction(
   mode => mode
 );
 
+// TODO: move the following actions to visStateActions
 export const setSelectedFeature = createAction(
   ActionTypes.SET_SELECTED_FEATURE,
   ({selectedFeatureId}) => selectedFeatureId

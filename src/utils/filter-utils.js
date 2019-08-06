@@ -51,7 +51,8 @@ export const FILTER_TYPES = keyMirror({
   range: null,
   select: null,
   timeRange: null,
-  multiSelect: null
+  multiSelect: null,
+  polygon: null
 });
 
 export const PLOT_TYPES = keyMirror({
@@ -99,6 +100,25 @@ export const TIME_ANIMATION_SPEED = [
   }
 ];
 
+export function generatePolygonFilter(layer, feature) {
+  return generateFilter({
+    dataId: layer.config.dataId,
+    layerId: layer.id,
+    // We store the geo-json into value field
+    value: feature,
+    type: FILTER_TYPES.polygon
+  });
+}
+
+export function generateFilter(options) {
+  const filter = getDefaultFilter(options.dataId);
+
+  return {
+    ...filter,
+    ...options
+  };
+}
+
 export function getDefaultFilter(dataId) {
   return {
     // link to dataset Id
@@ -123,7 +143,10 @@ export function getDefaultFilter(dataId) {
     // plot
     plotType: PLOT_TYPES.histogram,
     yAxis: null,
-    interval: null
+    interval: null,
+
+    // polygon:
+    layerId: null
   };
 }
 

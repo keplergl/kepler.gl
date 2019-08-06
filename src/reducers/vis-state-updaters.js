@@ -35,6 +35,8 @@ import {
   findFieldsToShow
 } from 'utils/interaction-utils';
 import {
+  FILTER_TYPES,
+  generatePolygonFilter,
   getDefaultFilter,
   getFilterProps,
   getFilterPlot,
@@ -591,7 +593,10 @@ export const addFilterUpdater = (state, action) =>
     ? state
     : {
         ...state,
-        filters: [...state.filters, getDefaultFilter(action.dataId)]
+        filters: [
+          ...state.filters,
+          getDefaultFilter(action.dataId)
+        ]
       };
 
 /**
@@ -1263,39 +1268,6 @@ export const loadFilesErrUpdater = (state, {error}) => ({
 });
 
 /**
- * Update editor features
- * @memberof visStateUpdaters
- * @param {Object} state `visState`
- * @param {[Object]} features to store
- * @return {Object} nextState
- */
-export function setFeaturesUpdater(state, {features = []}) {
-  return {
-    ...state,
-    editor: {
-      ...state.editor,
-      features
-    }
-  }
-}
-
-/**
- * @memberof visStateUpdaters
- * @param {Object} state `visState`
- * @param {string} selectedFeatureId feature to delete
- * @return {Object} nextState
- */
-export const deleteFeatureUpdater = (state, {payload: selectedFeatureId}) => {
-  return selectedFeatureId ? {
-    ...state,
-    editor: {
-      ...state.editor,
-      features: state.editor.features.filter(f => f.id !== selectedFeatureId)
-    }
-  } : state;
-};
-
-/**
  * Helper function to update All layer domain and layer data of state
  * @memberof visStateUpdaters
  * @param {Object} state `visState`
@@ -1389,5 +1361,97 @@ export function updateAllLayerDomainData(state, dataId, newFilter) {
     ...state,
     layers: newLayers,
     layerData: newLayerDatas
+  };
+}
+
+/**
+ * Update editor features
+ * @memberof visStateUpdaters
+ * @param {Object} state `visState`
+ * @param {[Object]} features to store
+ * @return {Object} nextState
+ */
+export function setFeaturesUpdater(state, {features = []}) {
+  return {
+    ...state,
+    editor: {
+      ...state.editor,
+      features
+    }
+  }
+}
+
+/**
+ * Delete existing feature from filters
+ * @memberof visStateUpdaters
+ * @param {Object} state `visState`
+ * @param {string} selectedFeatureId feature to delete
+ * @return {Object} nextState
+ */
+export function deleteFeatureUpdater(state, {payload: featureId}) {
+  if (!featureId) {
+    return state;
+  }
+
+  const {editor} = state;
+
+  // modify editor object
+  const newEditor = {
+    ...editor,
+    features: editor.features.filter(f => f.id !== featureId)
+  };
+
+  // delete existing polygon filter
+  const filters = state.filters.filter(filter =>
+    !(filter.type === FILTER_TYPES.polygon && filter.value.id === featureId)
+  );
+
+  return {
+    ...state,
+    editor: newEditor,
+    filters
+  };
+}
+
+/**
+ * Toggle feature as layer filter
+ * @memberof visStateUpdaters
+ * @param state
+ * @param {Object} payload
+ * @param {Object} payload.feature
+ * @param {Object} payload.layer
+ * @return {Object} nextState
+ */
+export function togglePolygonFilterUpdater(state, payload) {
+  const {layer, featureId} = payload;
+
+  const isAlreadyFilter = state.filters.find(filter =>
+    filter.type === FILTER_TYPES.polygon && filter.value.id === featureId
+  );
+
+  // create a new filter
+  if (!isAlreadyFilter) {
+    const {features: editorFeatures} = state.editor;
+    const currentFeature = editorFeatures.find(feat => feat.id === featureId);
+
+    const polygonFilter = generatePolygonFilter(layer, currentFeature);
+
+    return {
+      ...state,
+      filters: [
+        ...state.filters,
+        polygonFilter
+      ]
+    };
+  }
+
+  // delete existing polygon filter
+  const filters = state.filters.filter(filter =>
+    !(filter.type === FILTER_TYPES.polygon && filter.value.id === featureId)
+  );
+
+  return {
+    ...state,
+    filters
   };
 }

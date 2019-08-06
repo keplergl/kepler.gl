@@ -102,8 +102,18 @@ export const ActionPanelItem = React.memo(({
   label,
   onClick,
   isSelection,
+  isActive,
   style}) => (
-  <StyledItem style={style} className={className} onClick={!isSelection ? onClick : null} color={color}>
+  <StyledItem
+    className={className}
+    onClick={event => {
+      event.preventDefault();
+      event.stopPropagation();
+      onClick();
+    }}
+    color={color}
+    style={style}
+  >
     {Icon ? (
       <div className="icon">
         <Icon height="16px"/>
@@ -112,9 +122,8 @@ export const ActionPanelItem = React.memo(({
     {isSelection ? (
       <StyledCheckedbox
         type="checkbox"
-        checked={false}
+        checked={Boolean(isActive)}
         id={`switch-${label}`}
-        onChange={onClick}
         secondary
         label={label}
       />
