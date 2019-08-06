@@ -246,6 +246,8 @@ export function getFieldDomain(data, field) {
  * @returns {Object[]} data
  * @returns {Number[]} filteredIndex
  */
+
+// TODO: update filterData to apply polygons
 export function filterData(data, dataId, filters) {
   if (!data || !dataId) {
     // why would there not be any data? are we over doing this?

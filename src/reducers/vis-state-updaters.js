@@ -1435,13 +1435,26 @@ export function togglePolygonFilterUpdater(state, payload) {
     const currentFeature = editorFeatures.find(feat => feat.id === featureId);
 
     const polygonFilter = generatePolygonFilter(layer, currentFeature);
+    const newFilters = [
+      ...state.filters,
+      polygonFilter
+    ];
+
+    // TODO: combine dataset update logic into a helper
+    const {allData} = state.datasets[polygonFilter.dataId];
 
     return {
       ...state,
-      filters: [
-        ...state.filters,
-        polygonFilter
-      ]
+      // setting fitlers
+      filters: newFilters,
+      // updating datasets
+      datasets: {
+        ...state.datasets,
+        [polygonFilter.dataId]: {
+          ...state.datasets[polygonFilter.dataId],
+          ...filterData(allData, polygonFilter.dataId, newFilters)
+        }
+      }
     };
   }
 
