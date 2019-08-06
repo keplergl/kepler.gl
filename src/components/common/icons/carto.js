@@ -19,8 +19,13 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
+import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import Base from './base';
+
+const StyledG = styled.g`
+  transform: scale(2) translate(-16px,-16px)
+`;
 
 export default class Carto extends Component {
   static propTypes = {
@@ -36,10 +41,10 @@ export default class Carto extends Component {
   render() {
     return (
       <Base {...this.props}>
-        <g transform="scale(2)" transform-origin="center" xmlns="http://www.w3.org/2000/svg" fillRule="evenodd">
+        <StyledG xmlns="http://www.w3.org/2000/svg" fillRule="evenodd">
           <circle opacity=".1" cx="32" cy="32" r="13.5"/>
           <circle cx="32" cy="32" r="4.5"/>
-        </g>
+        </StyledG>
       </Base>
     );
   }
