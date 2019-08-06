@@ -779,7 +779,8 @@ export default class Layer {
         return getQuantileDomain(filteredIndexForDomain, indexValueAccessor, sortFunction);
 
       case SCALE_TYPES.jenks:
-        const nClasses = 8; // how to compute? Do we add a slider?
+        // TODO: Is this right? Do we need to be more generic?
+        const nClasses = this.config.visConfig[visualChannel.range].colors.length;
         return jenks(allData.map(valueAccessor), nClasses);
 
       case SCALE_TYPES.log:
