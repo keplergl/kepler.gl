@@ -30,6 +30,8 @@ export default function jenks(data, nClasses = 8) {
     }
 
     for (let i = 1; i < nClasses + 1; i++) {
+      // @akrebs note: tmcw uses arr[1][i], geostats uses arr[0][i].
+      // Not sure why the change or what this does to impl
       lowerClassLimits[1][i] = 1;
       varianceCombinations[1][i] = 0;
       // in the original implementation, 9999999 is used but
@@ -126,6 +128,9 @@ export default function jenks(data, nClasses = 8) {
     while (countNum > 1) {
       kclass[countNum - 1] = data[lowerClassLimits[k][countNum] - 2];
       k = lowerClassLimits[k][countNum] - 1;
+      // @akrebs: it's possible for k to equal -1 which causes an undefined TypeError.
+      // Could be caused by the [0] => [1] change above
+      k = Math.max(0, k);
       countNum--;
     }
 
