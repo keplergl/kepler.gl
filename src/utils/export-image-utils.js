@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import domtoimage from 'utils/dom-to-image';
+import domtoimage from 'dom-to-image';
 import {
   Blob,
   URL,

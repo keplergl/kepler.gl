@@ -12,7 +12,7 @@
   },
   "scripts": {
     "start": "webpack-dev-server --mode development --env.prod --content-base ./src/static --progress --open",
-    "start-prod": "webpack-dev-server -p --env.prod --content-base ./src/static --progress --open",
+    "start-prod": "webpack-dev-server -p --env.prod --content-base ./src/static --progress --open --devtool source-map",
     "build-clean": "rm -rf ./dist && mkdir dist",
     "build-static": "cp -r ./src/static/* dist",
     "build-script": "webpack -p --env.prod --devtool source-map",

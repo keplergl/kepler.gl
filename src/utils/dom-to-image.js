@@ -208,7 +208,7 @@ function cloneNode(node, filter, root) {
     }
 
     return cloneChildrenInOrder(clone, util.asArray(children))
-    .then(() => clone);
+      .then(() => clone);
 
     function cloneChildrenInOrder(parent, arrChildren) {
       let done = Promise.resolve();
@@ -422,6 +422,7 @@ function newUtil() {
 
     return text.search(DATA_URL_REGEX) !== -1;
   }
+
   function cvToBlob(canvas) {
     return new Promise(resolve => {
       const binaryString = window.atob(canvas.toDataURL().split(',')[1]);
