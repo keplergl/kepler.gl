@@ -206,7 +206,10 @@ export default class LayerConfigurator extends Component {
         <LayerConfigGroup label={'color'} collapsible>
           <ColorRangeConfig {...visConfiguratorProps} />
           <ConfigGroupCollapsibleContent>
-            <AggrColorScaleSelector {...layerConfiguratorProps} />
+            <AggrScaleSelector
+              {...layerConfiguratorProps}
+              channel={layer.visualChannels.color}
+            />
             <ChannelByValueSelector
               channel={layer.visualChannels.color}
               {...layerChannelConfigProps}
@@ -309,7 +312,10 @@ export default class LayerConfigurator extends Component {
         <LayerConfigGroup label={'color'} collapsible>
           <ColorRangeConfig {...visConfiguratorProps} />
           <ConfigGroupCollapsibleContent>
-            <AggrColorScaleSelector {...layerConfiguratorProps} />
+            <AggrScaleSelector
+              {...layerConfiguratorProps}
+              channel={layer.visualChannels.color}
+            />
             <ChannelByValueSelector
               channel={layer.visualChannels.color}
               {...layerChannelConfigProps}
@@ -364,6 +370,10 @@ export default class LayerConfigurator extends Component {
               {...visConfiguratorProps}
             />
             <ConfigGroupCollapsibleContent>
+              <AggrScaleSelector
+                {...layerConfiguratorProps}
+                channel={layer.visualChannels.size}
+              />
               <ChannelByValueSelector
                 {...layerChannelConfigProps}
                 channel={layer.visualChannels.size}
@@ -942,14 +952,15 @@ export const ChannelByValueSelector = ({
   );
 };
 
-export const AggrColorScaleSelector = ({layer, onChange}) => {
-  const scaleOptions = layer.getScaleOptions('color');
+export const AggrScaleSelector = ({channel, layer, onChange}) => {
+  const {scale, key} = channel;
+  const scaleOptions = layer.getScaleOptions(key);
   return Array.isArray(scaleOptions) && scaleOptions.length > 1 ? (
     <DimensionScaleSelector
-      label="Color Scale"
+      label={`${key} Scale`}
       options={scaleOptions}
-      scaleType={layer.config.colorScale}
-      onSelect={val => onChange({colorScale: val}, 'color')}
+      scaleType={layer.config[scale]}
+      onSelect={val => onChange({[scale]: val}, key)}
     />
   ) : null;
 };

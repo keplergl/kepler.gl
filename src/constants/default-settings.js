@@ -368,7 +368,7 @@ export const AGGREGATION_TYPES = {
 
 export const linearFieldScaleFunctions = {
   [CHANNEL_SCALES.color]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile, SCALE_TYPES.jenks],
-  [CHANNEL_SCALES.radius]: [SCALE_TYPES.sqrt, SCALE_TYPES.log],
+  [CHANNEL_SCALES.radius]: [SCALE_TYPES.sqrt],
   [CHANNEL_SCALES.size]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log]
 };
 

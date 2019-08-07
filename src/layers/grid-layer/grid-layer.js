@@ -108,6 +108,7 @@ export default class GridLayer extends AggregationLayer {
         // color
         colorRange: this.getColorRange(visConfig.colorRange),
         colorScale: this.config.colorScale,
+        sizeScale: this.config.sizeScale,
         opacity: visConfig.opacity,
         upperPercentile: visConfig.percentile[1],
         lowerPercentile: visConfig.percentile[0],

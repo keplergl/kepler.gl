@@ -82,6 +82,15 @@ export function getColorScaleFunction(layer) {
     .range(layer.props.colorRange);
 }
 
+export function getElevationScaleFunction(layer) {
+  const elevationRange = layer.props.elevationRange;
+  const elevationDomain = layer.props.elevationDomain || layer.state.elevationValueDomain;
+
+  layer.state.sizeScaleFunc = getScaleFunctor(layer.props.sizeScale)()
+    .domain(elevationDomain)
+    .range(elevationRange);
+}
+
 export function getRadiusScaleFunction(layer) {
   const {viewport} = layer.context;
   layer.state.radiusScaleFunc = SCALE_FUNC.sqrt()

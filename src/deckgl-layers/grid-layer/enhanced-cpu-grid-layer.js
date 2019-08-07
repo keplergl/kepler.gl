@@ -19,18 +19,20 @@
 // THE SOFTWARE.
 
 import {CPUGridLayer} from 'deck.gl';
-import {getColorValueDomain, getColorScaleFunction} from '../layer-utils/utils';
+import {getColorValueDomain, getColorScaleFunction, getElevationScaleFunction} from '../layer-utils/utils';
 
 const defaultProps = {
   ...CPUGridLayer.defaultProps,
+  sizeScale: 'linear',
   colorScale: 'quantile'
 };
 
 export default class EnhancedCPUGridLayer extends CPUGridLayer {
   getDimensionUpdaters() {
     const dimensionUpdaters = super.getDimensionUpdaters();
-    // add colorScale to dimension updates
+    // add colorScale and sizeScale to dimension updates
     dimensionUpdaters.getFillColor[1].triggers.push('colorScale');
+    dimensionUpdaters.getElevation[1].triggers.push('sizeScale');
     return dimensionUpdaters;
   }
 
@@ -44,6 +46,10 @@ export default class EnhancedCPUGridLayer extends CPUGridLayer {
 
   getColorScale() {
     getColorScaleFunction(this);
+  }
+
+  getElevationScale() {
+    getElevationScaleFunction(this);
   }
 
 }

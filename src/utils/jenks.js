@@ -16,8 +16,8 @@ export default function jenks(data, nClasses = 8) {
     //
     // * lowerClassLimits (LC): optimal lower class limits
     // * varianceCombinations (OP): optimal variance combinations for all classes
-    const lowerClassLimits = [];
-    const varianceCombinations = [];
+    const lowerClassLimits = new Array(data.length);
+    const varianceCombinations = new Array(data.length);
     // the variance, as computed at each step in the calculation
     let variance = 0;
 
