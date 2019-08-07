@@ -39,9 +39,7 @@ import ColorSelector from './color-selector';
 import SourceDataSelector from 'components/side-panel/source-data-selector';
 import VisConfigSwitch from './vis-config-switch';
 import VisConfigSlider from './vis-config-slider';
-import LayerConfigGroup, {
-  ConfigGroupCollapsibleContent
-} from './layer-config-group';
+import LayerConfigGroup, {ConfigGroupCollapsibleContent} from './layer-config-group';
 import TextLabelPanel from './text-label-panel';
 
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
@@ -211,9 +209,7 @@ export default class LayerConfigurator extends Component {
               channel={layer.visualChannels.color}
               {...layerChannelConfigProps}
             />
-            {layer.visConfigSettings.colorAggregation.condition(
-              layer.config
-            ) ? (
+            {layer.visConfigSettings.colorAggregation.condition(layer.config) ? (
               <AggregationTypeSelector
                 {...layer.visConfigSettings.colorAggregation}
                 {...layerChannelConfigProps}
@@ -299,8 +295,7 @@ export default class LayerConfigurator extends Component {
     const {
       visConfig: {enable3d}
     } = config;
-    const elevationByDescription =
-      'When off, height is based on count of points';
+    const elevationByDescription = 'When off, height is based on count of points';
     const colorByDescription = 'When off, color is based on count of points';
 
     return (
@@ -314,9 +309,7 @@ export default class LayerConfigurator extends Component {
               channel={layer.visualChannels.color}
               {...layerChannelConfigProps}
             />
-            {layer.visConfigSettings.colorAggregation.condition(
-              layer.config
-            ) ? (
+            {layer.visConfigSettings.colorAggregation.condition(layer.config) ? (
               <AggregationTypeSelector
                 {...layer.visConfigSettings.colorAggregation}
                 {...layerChannelConfigProps}
@@ -370,9 +363,7 @@ export default class LayerConfigurator extends Component {
                 description={elevationByDescription}
                 disabled={!enable3d}
               />
-              {layer.visConfigSettings.sizeAggregation.condition(
-                layer.config
-              ) ? (
+              {layer.visConfigSettings.sizeAggregation.condition(layer.config) ? (
                 <AggregationTypeSelector
                   {...layer.visConfigSettings.sizeAggregation}
                   {...layerChannelConfigProps}
@@ -615,6 +606,7 @@ export default class LayerConfigurator extends Component {
               label={false}
             />
           )}
+
           <ConfigGroupCollapsibleContent>
             <ChannelByValueSelector
               channel={layer.visualChannels.size}
@@ -674,6 +666,55 @@ export default class LayerConfigurator extends Component {
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
         ) : null}
+      </StyledLayerVisualConfigurator>
+    );
+  }
+
+  _renderTripLayerConfig({
+    layer,
+    visConfiguratorProps,
+    layerConfiguratorProps,
+    layerChannelConfigProps
+  }) {
+    const {
+      meta: {featureTypes = {}}
+    } = layer;
+
+    return (
+      <StyledLayerVisualConfigurator>
+        {/* Color */}
+        <LayerConfigGroup label={'color'} collapsible>
+          {layer.config.colorField ? (
+            <ColorRangeConfig {...visConfiguratorProps} />
+          ) : (
+            <LayerColorSelector {...layerConfiguratorProps} />
+          )}
+          <ConfigGroupCollapsibleContent>
+            <ChannelByValueSelector
+              channel={layer.visualChannels.color}
+              {...layerChannelConfigProps}
+            />
+            <VisConfigSlider
+              {...LAYER_VIS_CONFIGS.opacity}
+              {...visConfiguratorProps}
+            />
+          </ConfigGroupCollapsibleContent>
+        </LayerConfigGroup>
+
+        {/* Trail Length*/}
+        <LayerConfigGroup
+          {...visConfiguratorProps}
+          {...(featureTypes.polygon ? LAYER_VIS_CONFIGS.stroked : {})}
+          label="Trail Length"
+          collapsible
+        >
+          <VisConfigSlider
+            {...LAYER_VIS_CONFIGS.trailLength}
+            {...visConfiguratorProps}
+            label={false}
+          />
+          )
+        </LayerConfigGroup>
       </StyledLayerVisualConfigurator>
     );
   }
@@ -769,9 +810,7 @@ export default class LayerConfigurator extends Component {
     return (
       <StyledLayerConfigurator>
         {layer.layerInfoModal ? (
-          <HowToButton
-            onClick={() => this.props.openModal(layer.layerInfoModal)}
-          />
+          <HowToButton onClick={() => this.props.openModal(layer.layerInfoModal)} />
         ) : null}
         <LayerConfigGroup
           label={'basic'}
@@ -865,8 +904,7 @@ export const ArcLayerColorSelector = ({
           label: 'Source'
         },
         {
-          selectedColor:
-            layer.config.visConfig.targetColor || layer.config.color,
+          selectedColor: layer.config.visConfig.targetColor || layer.config.color,
           setColor: rgbValue => onChangeVisConfig({targetColor: rgbValue}),
           label: 'Target'
         }
@@ -875,11 +913,7 @@ export const ArcLayerColorSelector = ({
   </SidePanelSection>
 );
 
-export const ColorRangeConfig = ({
-  layer,
-  onChange,
-  property = 'colorRange'
-}) => (
+export const ColorRangeConfig = ({layer, onChange, property = 'colorRange'}) => (
   <SidePanelSection>
     <ColorSelector
       colorSets={[

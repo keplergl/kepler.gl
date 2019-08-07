@@ -318,6 +318,34 @@ export function updateAnimationSpeed(idx, speed) {
 }
 
 /**
+ * Change filter animation speed
+ * @memberof visStateActions
+ * @param {Number} value -  Current value of the slider
+ * @returns {{type: ActionTypes.PLAY_ANIMATION, value: value}}
+ * @public
+ */
+export function playAnimation(value) {
+  return {
+    type: ActionTypes.PLAY_ANIMATION,
+    value
+  };
+}
+
+/**
+ * Change filter animation speed
+ * @memberof visStateActions
+ * @param {Object} layer -  layer to be updated
+ * @returns {{type: ActionTypes.ENABLE_LAYER_ANIMATION, layer: oldLayer}}
+ * @public
+ */
+export function enableLayerAnimation(oldLayer) {
+  return {
+    type: ActionTypes.ENABLE_LAYER_ANIMATION,
+    oldLayer
+  };
+}
+
+/**
  * Show larger time filter at bottom for time playback (apply to time filter only)
  * @memberof visStateActions
  * @param {Number} idx - index of filter to enlarge

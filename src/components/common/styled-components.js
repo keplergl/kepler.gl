@@ -64,11 +64,11 @@ export const SpaceBetweenFlexbox = styled.div`
   display: flex;
   align-items: space-between;
   margin-left: -16px;
-`
+`;
 export const SBFlexboxItem = styled.div`
   flex-grow: 1;
   margin-left: 16px;
-`
+`;
 
 export const PanelLabel = styled.label.attrs({
   className: 'side-panel-panel__label'
@@ -182,34 +182,29 @@ export const Button = styled.div.attrs({
     props.negative
       ? props.theme.negativeBtnBgd
       : props.secondary
-        ? props.theme.secondaryBtnBgd
-        : props.link ? props.theme.linkBtnBgd : props.theme.primaryBtnBgd};
+      ? props.theme.secondaryBtnBgd
+      : props.link
+      ? props.theme.linkBtnBgd
+      : props.theme.primaryBtnBgd};
   border-radius: ${props => props.theme.primaryBtnRadius};
   color: ${props =>
     props.negative
       ? props.theme.negativeBtnColor
       : props.secondary
-        ? props.theme.secondaryBtnColor
-        : props.link ? props.theme.linkBtnColor : props.theme.primaryBtnColor};
+      ? props.theme.secondaryBtnColor
+      : props.link
+      ? props.theme.linkBtnColor
+      : props.theme.primaryBtnColor};
   cursor: pointer;
   display: inline-flex;
-  font-size: ${props =>
-    props.large ?
-      '14px'
-      : props.small
-        ? '10px'
-        : '11px'};
+  font-size: ${props => (props.large ? '14px' : props.small ? '10px' : '11px')};
   font-weight: 500;
   justify-content: center;
   letter-spacing: 0.3px;
   line-height: 14px;
   outline: 0;
   padding: ${props =>
-    props.large ?
-      '14px 32px'
-      : props.small
-        ? '6px 9px'
-        : '9px 12px'};
+    props.large ? '14px 32px' : props.small ? '6px 9px' : '9px 12px'};
   text-align: center;
   transition: ${props => props.theme.transition};
   vertical-align: middle;
@@ -225,18 +220,18 @@ export const Button = styled.div.attrs({
       props.negative
         ? props.theme.negativeBtnBgdHover
         : props.secondary
-          ? props.theme.secondaryBtnBgdHover
-          : props.link
-            ? props.theme.linkBtnActBgdHover
-            : props.theme.primaryBtnBgdHover};
+        ? props.theme.secondaryBtnBgdHover
+        : props.link
+        ? props.theme.linkBtnActBgdHover
+        : props.theme.primaryBtnBgdHover};
     color: ${props =>
       props.negative
         ? props.theme.negativeBtnActColor
         : props.secondary
-          ? props.theme.secondaryBtnActColor
-          : props.link
-            ? props.theme.linkBtnActColor
-            : props.theme.primaryBtnActColor};
+        ? props.theme.secondaryBtnActColor
+        : props.link
+        ? props.theme.linkBtnActColor
+        : props.theme.primaryBtnActColor};
   }
 
   svg {
@@ -311,13 +306,20 @@ export const DatasetSquare = styled.div`
   width: 8px;
   height: 8px;
   background-color: rgb(${props => props.color.join(',')});
-  margin-right: 12px
+  margin-right: 12px;
 `;
 
 export const SelectionButton = styled.div`
   border-radius: 2px;
-  border: 1px solid ${props => props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT};
-  color: ${props => props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT};
+  border: 1px solid
+    ${props =>
+      props.selected
+        ? props.theme.primaryBtnBgd
+        : props.theme.selectBorderColorLT};
+  color: ${props =>
+    props.selected
+      ? props.theme.primaryBtnBgd
+      : props.theme.selectBorderColorLT};
   cursor: pointer;
   font-weight: 500;
   margin-right: 6px;
@@ -343,10 +345,10 @@ export const Table = styled.table`
   }
 
   tbody {
-   tr td {
-     border-bottom: ${props => props.theme.panelBorderLT};
-     padding: 12px;
-   }
+    tr td {
+      border-bottom: ${props => props.theme.panelBorderLT};
+      padding: 12px;
+    }
   }
 `;
 
@@ -416,34 +418,22 @@ export const StyledExportSection = styled.div`
       width: 250px;
       height: 36px;
 
-      background-image:
-        linear-gradient(45deg, transparent 50%, gray 50%),
+      background-image: linear-gradient(45deg, transparent 50%, gray 50%),
         linear-gradient(135deg, gray 50%, transparent 50%),
         linear-gradient(to right, #ccc, #ccc);
-      background-position:
-        calc(100% - 20px) calc(1em + 2px),
-        calc(100% - 15px) calc(1em + 2px),
-        calc(100% - 2.5em) 4.5em;
-      background-size:
-        5px 5px,
-        5px 5px,
-        1px 1.5em;
+      background-position: calc(100% - 20px) calc(1em + 2px),
+        calc(100% - 15px) calc(1em + 2px), calc(100% - 2.5em) 4.5em;
+      background-size: 5px 5px, 5px 5px, 1px 1.5em;
       background-repeat: no-repeat;
     }
 
     select:focus {
-      background-image:
-        linear-gradient(45deg, green 50%, transparent 50%),
+      background-image: linear-gradient(45deg, green 50%, transparent 50%),
         linear-gradient(135deg, transparent 50%, green 50%),
         linear-gradient(to right, #ccc, #ccc);
-      background-position:
-        calc(100% - 15px) 1em,
-        calc(100% - 20px) 1em,
+      background-position: calc(100% - 15px) 1em, calc(100% - 20px) 1em,
         calc(100% - 2.5em) 4.5em;
-      background-size:
-        5px 5px,
-        5px 5px,
-        1px 1.5em;
+      background-size: 5px 5px, 5px 5px, 1px 1.5em;
       background-repeat: no-repeat;
       border-color: green;
       outline: 0;
@@ -454,7 +444,11 @@ export const StyledExportSection = styled.div`
 export const StyledFilteredOption = styled.div`
   align-items: center;
   border-radius: 2px;
-  border: 1px solid ${props => props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT};
+  border: 1px solid
+    ${props =>
+      props.selected
+        ? props.theme.primaryBtnBgd
+        : props.theme.selectBorderColorLT};
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -481,8 +475,15 @@ export const StyledFilteredOption = styled.div`
 
 export const StyledType = styled.div`
   border-radius: 2px;
-  border: 1px solid ${props => props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT};
-  color: ${props => props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT};
+  border: 1px solid
+    ${props =>
+      props.selected
+        ? props.theme.primaryBtnBgd
+        : props.theme.selectBorderColorLT};
+  color: ${props =>
+    props.selected
+      ? props.theme.primaryBtnBgd
+      : props.theme.selectBorderColorLT};
   cursor: pointer;
   font-weight: 500;
   height: 100px;
@@ -494,4 +495,16 @@ export const StyledType = styled.div`
     color: ${props => props.available && props.theme.primaryBtnBgd};
     border: 1px solid ${props => props.available && props.theme.primaryBtnBgd};
   }
+`;
+
+export const WidgetContainer = styled.div`
+  position: absolute;
+  padding-top: ${props => props.theme.sidePanel.margin.top}px;
+  padding-right: ${props => props.theme.sidePanel.margin.right}px;
+  padding-bottom: ${props => props.theme.sidePanel.margin.bottom}px;
+  padding-left: ${props => props.theme.sidePanel.margin.left}px;
+  bottom: 0;
+  right: 0;
+  z-index: 1;
+  width: ${props => props.width}px;
 `;

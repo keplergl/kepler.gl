@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {DEFAULT_LIGHT_SETTINGS} from 'constants/default-settings';
-
+import {extent} from 'd3-array';
 /**
  * Find default layers from fields
  *
@@ -34,18 +34,23 @@ export function findDefaultLayer(dataset, layerClasses) {
 
   let layers = [];
   Object.keys(layerClasses).forEach(lc => {
-    const layerProps = layerClasses[lc].findDefaultLayerProps(dataset);
+    const {props: layerProps, foundLayers} = layerClasses[lc].findDefaultLayerProps(
+      dataset,
+      layers
+    );
+
     if (layerProps) {
-      const newLayers = (Array.isArray(layerProps) ? layerProps : [layerProps])
-        .map(props => {
+      const newLayers = (Array.isArray(layerProps) ? layerProps : [layerProps]).map(
+        props => {
           const layer = new layerClasses[lc]({...props, dataId: dataset.id});
 
           return typeof layer.setInitialLayerConfig === 'function'
-          ? layer.setInitialLayerConfig(dataset.allData)
-          : layer
-        });
+            ? layer.setInitialLayerConfig(dataset.allData)
+            : layer;
+        }
+      );
 
-      layers = layers.concat(newLayers);
+      layers = foundLayers.concat(newLayers);
     }
   });
 
@@ -93,4 +98,22 @@ export function getLightSettingsFromBounds(bounds) {
         ]
       }
     : DEFAULT_LIGHT_SETTINGS;
+}
+
+export function getTimeAnimationDomainFoTripLayer(layer, datasets) {
+  const {columns, dataId} = layer.config;
+  const dataContent = datasets[dataId].allData;
+  const geojsonFieldIdx = columns.geojson.fieldIdx;
+
+  // TODO: H factor in more input format beyond 3rd coord as ts
+  const timeField = dataContent
+    .map(d => d[geojsonFieldIdx].geometry.coordinates.map(coord => coord[3]))
+    .flat();
+
+  return extent(timeField);
+}
+
+export function getTimeAnimationDomain(layer, datasets) {
+  // TODO: H factor in multiple layers
+  return getTimeAnimationDomainFoTripLayer(layer, datasets);
 }

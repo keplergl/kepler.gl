@@ -22,7 +22,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base from 'components/common/icons/base';
 
-export default class LineLayerIcon extends Component {
+export default class TripLayerIcon extends Component {
   static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string,
@@ -30,39 +30,32 @@ export default class LineLayerIcon extends Component {
   };
 
   static defaultProps = {
+    size: 'tiny',
     height: '16px',
-    predefinedClassName: 'line-layer-icon',
-    totalColor: 5
+    predefinedClassName: 'trip-layer-icon'
   };
 
   render() {
     return (
       <Base {...this.props}>
+        <g clipPath="url(#clip0)" className="cr1">
+          <path d="M53.025 4.85005C50.25 2.07505 45.75 2.07505 42.975 4.85005C40.2 7.62505 40.2 12.2 42.975 14.975L48 20L53.025 14.9C55.8 12.2 55.8 7.62505 53.025 4.85005ZM48 11.375C47.175 11.375 46.5 10.7 46.5 9.87505C46.5 9.05005 47.175 8.37505 48 8.37505C48.825 8.37505 49.5 9.05005 49.5 9.87505C49.5 10.7 48.825 11.375 48 11.375Z" />
+        </g>
+        <g clipPath="url(#clip1)" className="cr2">
+          <path d="M20.025 36.85C17.25 34.075 12.75 34.075 9.97502 36.85C7.20002 39.625 7.20002 44.2 9.97502 46.975L15 52L20.025 46.9C22.8 44.2 22.8 39.625 20.025 36.85ZM15 43.375C14.175 43.375 13.5 42.7 13.5 41.875C13.5 41.05 14.175 40.375 15 40.375C15.825 40.375 16.5 41.05 16.5 41.875C16.5 42.7 15.825 43.375 15 43.375Z" />
+        </g>
         <path
-          d="M57.8,58.3c-0.4,0-0.8-0.2-1.1-0.5L33.1,32.1c-0.6-0.6-0.5-1.6,0.1-2.1c0.6-0.6,1.6-0.5,2.1,0.1l23.7,25.8
-          c0.6,0.6,0.5,1.6-0.1,2.1C58.5,58.2,58.2,58.3,57.8,58.3z"
-          className="cr1"
-        />
-        <path
-          d="M34.2,33.6c-0.6,0-1.2-0.2-1.7-0.6c-1-0.9-1.1-2.5-0.2-3.5l18.5-21c0.9-1,2.5-1.1,3.5-0.2c1,0.9,1.1,2.5,0.2,3.5L36,32.7
-          C35.5,33.3,34.9,33.6,34.2,33.6z"
-          className="cr2"
-        />
-        <path
-          d="M34.2,32.6c-0.5,0-1-0.3-1.3-0.8L20.7,10.2c-0.4-0.7-0.1-1.6,0.6-2c0.7-0.4,1.6-0.1,2,0.6l12.1,21.6c0.4,0.7,0.1,1.6-0.6,2
-          C34.7,32.5,34.4,32.6,34.2,32.6z"
           className="cr3"
+          d="M45.9943 19.8697C46.0661 20.6951 45.4552 21.4223 44.6299 21.4941L34.782 22.3504L38.1515 40.1604L17.8748 54.7185C17.2019 55.2016 16.2647 55.0478 15.7815 54.3748C15.2984 53.7019 15.4522 52.7647 16.1252 52.2815L34.8483 38.8389L31.2177 19.6491L44.37 18.5053C45.1953 18.4336 45.9225 19.0444 45.9943 19.8697Z"
         />
-        <path
-          d="M15.8,58.4c-0.3,0-0.6-0.1-0.9-0.3c-0.7-0.5-0.8-1.4-0.4-2.1l18.3-25.8c0.5-0.7,1.4-0.8,2.1-0.4s0.8,1.4,0.4,2.1L17.1,57.7
-          C16.8,58.2,16.3,58.4,15.8,58.4z"
-          className="cr4"
-        />
-        <path
-          d="M34.2,32.1c-0.1,0-0.3,0-0.4-0.1l-28.5-14c-0.5-0.2-0.7-0.8-0.5-1.3c0.2-0.5,0.8-0.7,1.3-0.5l28.5,14
-          c0.5,0.2,0.7,0.8,0.5,1.3C34.9,31.9,34.5,32.1,34.2,32.1z"
-          className="cr5"
-        />
+        <defs>
+          <clipPath id="clip0">
+            <rect width="18" height="18" transform="translate(39 2)" />
+          </clipPath>
+          <clipPath id="clip1">
+            <rect width="18" height="18" transform="translate(6 34)" />
+          </clipPath>
+        </defs>
       </Base>
     );
   }
