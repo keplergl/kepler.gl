@@ -31,18 +31,15 @@ const initialCoreState = {};
 export function provideInitialState(initialState) {
   const coreReducer = coreReducerFactory(initialState);
 
-  const handleRegisterEntry = (state, {payload: {id, mint, mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault}}) => {
-
+  const handleRegisterEntry = (state, {payload: {id, mint, mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault}}) => ({
+    // register a new entry to voyager reducer
     // by default, always create a mint state even if the same id already exist
     // if state.id exist and mint=false, keep the existing state
-    const previousState = state[id] && mint === false ? state[id] : undefined;
-
-    return {
-      // register entry to kepler.gl passing in mapbox config to mapStyle
-      ...state,
-      [id]: coreReducer(previousState, keplerGlInit({mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault}))
+    ...state,
+    [id]: state[id] && mint === false ? state[id] : {
+      ...coreReducer(undefined, keplerGlInit({mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault}))
     }
-  };
+  });
 
   const handleDeleteEntry = (state, {payload: id}) =>
     Object.keys(state).reduce(
