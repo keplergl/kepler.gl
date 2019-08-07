@@ -208,8 +208,8 @@ export default class Layer {
    * and return the props
    * By default, no layers will be found
    */
-  static findDefaultLayerProps(fieldPairs, dataId) {
-    return null;
+  static findDefaultLayerProps(dataset, layers) {
+    return {props: null, foundLayers: layers};
   }
 
   /**
@@ -316,7 +316,8 @@ export default class Layer {
       colorUI: {
         color: DEFAULT_COLOR_UI,
         colorRange: DEFAULT_COLOR_UI
-      }
+      },
+      animation: {enabled: false}
     };
   }
 
@@ -507,10 +508,7 @@ export default class Layer {
 
   registerVisConfig(layerVisConfigs) {
     Object.keys(layerVisConfigs).forEach(item => {
-      if (
-        typeof item === 'string' &&
-        LAYER_VIS_CONFIGS[layerVisConfigs[item]]
-      ) {
+      if (typeof item === 'string' && LAYER_VIS_CONFIGS[layerVisConfigs[item]]) {
         // if assigned one of default LAYER_CONFIGS
         this.config.visConfig[item] =
           LAYER_VIS_CONFIGS[layerVisConfigs[item]].defaultValue;
@@ -897,11 +895,9 @@ export default class Layer {
 
   updateLayerVisualChannel(dataset, channel) {
     const visualChannel = this.visualChannels[channel];
-
     this.validateVisualChannel(channel);
     // calculate layer channel domain
     const updatedDomain = this.calculateLayerDomain(dataset, visualChannel);
-
     this.updateLayerConfig({[visualChannel.domain]: updatedDomain});
   }
 
@@ -925,12 +921,7 @@ export default class Layer {
     // TODO: refactor to add valueAccessor to field
     const fieldIdx = field.tableFieldIndex - 1;
     const isTime = field.type === ALL_FIELD_TYPES.timestamp;
-    const valueAccessor = maybeToDate.bind(
-      null,
-      isTime,
-      fieldIdx,
-      field.format
-    );
+    const valueAccessor = maybeToDate.bind(null, isTime, fieldIdx, field.format);
     const indexValueAccessor = i => valueAccessor(allData[i]);
 
     const sortFunction = getSortingFunction(field.type);
@@ -980,9 +971,7 @@ export default class Layer {
 
     const field = radiusChannel.field;
     const fixed =
-      fixedRadius === undefined
-        ? this.config.visConfig.fixedRadius
-        : fixedRadius;
+      fixedRadius === undefined ? this.config.visConfig.fixedRadius : fixedRadius;
     const {radius} = this.config.visConfig;
 
     return fixed

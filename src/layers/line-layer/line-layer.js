@@ -31,7 +31,7 @@ export default class LineLayer extends ArcLayer {
     return LineLayerIcon;
   }
 
-  static findDefaultLayerProps({fieldPairs}) {
+  static findDefaultLayerProps({fieldPairs}, foundLayers) {
     if (fieldPairs.length < 2) {
       return [];
     }
@@ -46,9 +46,9 @@ export default class LineLayer extends ArcLayer {
     };
     props.label = `${fieldPairs[0].defaultName} -> ${
       fieldPairs[1].defaultName
-      } line`;
+    } line`;
 
-    return props;
+    return {props, foundLayers};
   }
 
   renderLayer({
@@ -106,18 +106,18 @@ export default class LineLayer extends ArcLayer {
       }),
       // hover layer
       ...(this.isLayerHovered(objectHovered)
-      ? [
-          new DeckGLLineLayer({
-            id: `${this.id}-hovered`,
-            data: [objectHovered.object],
-            strokeScale: this.config.visConfig.thickness,
-            getColor: this.config.highlightColor,
-            getTargetColor: this.config.highlightColor,
-            getWidth: data.getWidth,
-            pickable: false
-          })
-        ]
-      : [])
+        ? [
+            new DeckGLLineLayer({
+              id: `${this.id}-hovered`,
+              data: [objectHovered.object],
+              strokeScale: this.config.visConfig.thickness,
+              getColor: this.config.highlightColor,
+              getTargetColor: this.config.highlightColor,
+              getWidth: data.getWidth,
+              pickable: false
+            })
+          ]
+        : [])
     ];
   }
 }

@@ -28,10 +28,14 @@ import {hexToRgb} from 'utils/color-utils';
 import {
   getGeojsonDataMaps,
   getGeojsonBounds,
-  featureToDeckGlGeoType
+  getGeojsonFeatureTypes
 } from './geojson-utils';
 import GeojsonLayerIcon from './geojson-layer-icon';
-import {GEOJSON_FIELDS, HIGHLIGH_COLOR_3D, CHANNEL_SCALES} from 'constants/default-settings';
+import {
+  GEOJSON_FIELDS,
+  HIGHLIGH_COLOR_3D,
+  CHANNEL_SCALES
+} from 'constants/default-settings';
 
 export const geojsonVisConfigs = {
   opacity: 'opacity',
@@ -133,10 +137,8 @@ export default class GeoJsonLayer extends Layer {
     return this.getFeature(this.config.columns);
   }
 
-  static findDefaultLayerProps({label, fields}) {
-    const geojsonColumns = fields
-      .filter(f => f.type === 'geojson')
-      .map(f => f.name);
+  static findDefaultLayerProps({label, fields}, foundLayers) {
+    const geojsonColumns = fields.filter(f => f.type === 'geojson').map(f => f.name);
 
     const defaultColumns = {
       geojson: uniq([...GEOJSON_FIELDS.geojson, ...geojsonColumns])
@@ -147,11 +149,15 @@ export default class GeoJsonLayer extends Layer {
       return [];
     }
 
-    return foundColumns.map(columns => ({
-      label: typeof label === 'string' && label.replace(/\.[^/.]+$/, '') || this.type,
-      columns,
-      isVisible: true
-    }));
+    return {
+      props: foundColumns.map(columns => ({
+        label:
+          (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || this.type,
+        columns,
+        isVisible: true
+      })),
+      foundLayers: foundLayers.filter(l => l.type !== 'trip')
+    };
   }
 
   getDefaultLayerConfig(props = {}) {
@@ -235,9 +241,7 @@ export default class GeoJsonLayer extends Layer {
       geojsonData = oldLayerData.data;
     } else {
       // filteredIndex is a reference of index in allData which can map to feature
-      geojsonData = filteredIndex
-        .map(i => this.dataToFeature[i])
-        .filter(d => d);
+      geojsonData = filteredIndex.map(i => this.dataToFeature[i]).filter(d => d);
     }
 
     // fill color
@@ -271,8 +275,7 @@ export default class GeoJsonLayer extends Layer {
 
     // point radius
     const rScale =
-      radiusField &&
-      this.getVisChannelScale(radiusScale, radiusDomain, radiusRange);
+      radiusField && this.getVisChannelScale(radiusScale, radiusDomain, radiusRange);
 
     return {
       data: geojsonData,
@@ -343,16 +346,7 @@ export default class GeoJsonLayer extends Layer {
     );
 
     // keep a record of what type of geometry the collection has
-    const featureTypes = allFeatures.reduce((accu, f) => {
-      const geoType = featureToDeckGlGeoType(
-        f && f.geometry && f.geometry.type
-      );
-
-      if (geoType) {
-        accu[geoType] = true;
-      }
-      return accu;
-    }, {});
+    const featureTypes = getGeojsonFeatureTypes(allFeatures);
 
     this.updateMeta({bounds, lightSettings, fixedRadius, featureTypes});
   }
@@ -376,13 +370,7 @@ export default class GeoJsonLayer extends Layer {
     return this;
   }
 
-  renderLayer({
-    data,
-    idx,
-    objectHovered,
-    mapState,
-    interactionConfig
-  }) {
+  renderLayer({data, idx, objectHovered, mapState, interactionConfig}) {
     const {lightSettings, fixedRadius} = this.meta;
     const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius);
     const zoomFactor = this.getZoomFactor(mapState);
@@ -441,7 +429,9 @@ export default class GeoJsonLayer extends Layer {
         highlightColor: HIGHLIGH_COLOR_3D,
         autoHighlight: visConfig.enable3d,
         // parameters
-        parameters: {depthTest: Boolean(visConfig.enable3d || mapState.dragRotate)},
+        parameters: {
+          depthTest: Boolean(visConfig.enable3d || mapState.dragRotate)
+        },
         opacity: visConfig.opacity,
         stroked: visConfig.stroked,
         filled: visConfig.filled,

@@ -21,7 +21,7 @@
 import React, {Component, createRef} from 'react';
 import {console as Console} from 'global/window';
 import {bindActionCreators} from 'redux';
-import styled, {ThemeProvider, withTheme}  from 'styled-components';
+import styled, {ThemeProvider, withTheme} from 'styled-components';
 import {createSelector} from 'reselect';
 import {connect as keplerGlConnect} from 'connect/keplergl-connect';
 
@@ -30,8 +30,13 @@ import * as MapStateActions from 'actions/map-state-actions';
 import * as MapStyleActions from 'actions/map-style-actions';
 import * as UIStateActions from 'actions/ui-state-actions';
 
-import {EXPORT_IMAGE_ID, DIMENSIONS,
-  KEPLER_GL_NAME, KEPLER_GL_VERSION, THEME} from 'constants/default-settings';
+import {
+  EXPORT_IMAGE_ID,
+  DIMENSIONS,
+  KEPLER_GL_NAME,
+  KEPLER_GL_VERSION,
+  THEME
+} from 'constants/default-settings';
 import {MISSING_MAPBOX_TOKEN} from 'constants/user-feedbacks';
 
 import SidePanelFactory from './side-panel';
@@ -131,10 +136,15 @@ function KeplerGlFactory(
     themeSelector = props => props.theme;
     availableThemeSelector = createSelector(
       this.themeSelector,
-      theme => typeof theme === 'object' ? ({
-        ...basicTheme,
-        ...theme
-      }) : theme === THEME.light ? themeLT : theme
+      theme =>
+        typeof theme === 'object'
+          ? {
+              ...basicTheme,
+              ...theme
+            }
+          : theme === THEME.light
+          ? themeLT
+          : theme
     );
 
     _validateMapboxToken() {
@@ -163,12 +173,14 @@ function KeplerGlFactory(
         id: ms.id || generateHashId()
       }));
 
-      const allStyles = [...customStyles, ...defaultStyles].reduce((accu, style) => {
+      const allStyles = [...customStyles, ...defaultStyles].reduce(
+        (accu, style) => {
           const hasStyleObject = style.style && typeof style.style === 'object';
           accu[hasStyleObject ? 'toLoad' : 'toRequest'][style.id] = style;
 
           return accu;
-        }, {toLoad: {}, toRequest: {}}
+        },
+        {toLoad: {}, toRequest: {}}
       );
 
       this.props.mapStyleActions.loadMapStyles(allStyles.toLoad);
@@ -214,7 +226,8 @@ function KeplerGlFactory(
         layerData,
         hoverInfo,
         clicked,
-        mousePos
+        mousePos,
+        animationConfig
       } = visState;
 
       const notificationPanelFields = {
@@ -261,7 +274,8 @@ function KeplerGlFactory(
         onViewStateChange,
         uiStateActions,
         visStateActions,
-        mapStateActions
+        mapStateActions,
+        animationConfig
       };
 
       const isSplit = splitMaps && splitMaps.length > 1;
@@ -286,7 +300,6 @@ function KeplerGlFactory(
           ));
 
       const isExporting = uiState.currentModal === EXPORT_IMAGE_ID;
-
       const theme = this.availableThemeSelector(this.props);
 
       return (
@@ -306,7 +319,7 @@ function KeplerGlFactory(
             <div className="maps" style={{display: 'flex'}}>
               {mapContainers}
             </div>
-            {isExporting &&
+            {isExporting && (
               <PlotContainer
                 width={width}
                 height={height}
@@ -317,17 +330,22 @@ function KeplerGlFactory(
                 setExportImageDataUri={uiStateActions.setExportImageDataUri}
                 setExportImageError={uiStateActions.setExportImageError}
               />
-            }
+            )}
             <BottomWidget
               filters={filters}
               datasets={datasets}
               uiState={uiState}
+              layers={layers}
+              animationConfig={animationConfig}
               visStateActions={visStateActions}
               sidePanelWidth={
-                uiState.readOnly ? 0 : this.props.sidePanelWidth + DIMENSIONS.sidePanel.margin.left
+                uiState.readOnly
+                  ? 0
+                  : this.props.sidePanelWidth + DIMENSIONS.sidePanel.margin.left
               }
               containerW={containerW}
             />
+
             <ModalWrapper
               mapStyle={mapStyle}
               visState={visState}
@@ -348,7 +366,9 @@ function KeplerGlFactory(
     }
   }
 
-  return keplerGlConnect(mapStateToProps, makeMapDispatchToProps)(withTheme(KeplerGL));
+  return keplerGlConnect(mapStateToProps, makeMapDispatchToProps)(
+    withTheme(KeplerGL)
+  );
 }
 
 function mapStateToProps(state, props) {
@@ -362,19 +382,14 @@ function mapStateToProps(state, props) {
 }
 
 const defaultUserActions = {};
-const getDispatch = (dispatch) => dispatch
+const getDispatch = dispatch => dispatch;
 const getUserActions = (dispatch, props) => props.actions || defaultUserActions;
 
 function makeGetActionCreators() {
   return createSelector(
     [getDispatch, getUserActions],
     (dispatch, userActions) => {
-      const [
-        visStateActions,
-        mapStateActions,
-        mapStyleActions,
-        uiStateActions
-      ] = [
+      const [visStateActions, mapStateActions, mapStyleActions, uiStateActions] = [
         VisStateActions,
         MapStateActions,
         MapStyleActions,
@@ -403,7 +418,7 @@ function makeMapDispatchToProps() {
       ...groupedActionCreators,
       dispatch
     };
-  }
+  };
 
   return mapDispatchToProps;
 }

@@ -81,7 +81,6 @@ export default function SidePanelFactory(
   InteractionManager,
   MapManager
 ) {
-
   return class SidePanel extends PureComponent {
     static propTypes = {
       filters: PropTypes.arrayOf(PropTypes.any).isRequired,
@@ -153,7 +152,7 @@ export default function SidePanelFactory(
         layerColorUIChange: visStateActions.layerColorUIChange,
         layerTextLabelChange: visStateActions.layerTextLabelChange,
         layerVisualChannelConfigChange:
-        visStateActions.layerVisualChannelConfigChange,
+          visStateActions.layerVisualChannelConfigChange,
         layerTypeChange: visStateActions.layerTypeChange,
         layerVisConfigChange: visStateActions.layerVisConfigChange,
         updateLayerBlending: visStateActions.updateLayerBlending,
