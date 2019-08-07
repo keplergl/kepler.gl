@@ -207,9 +207,6 @@ function cloneNode(node, filter, root) {
       return Promise.resolve(clone);
     }
 
-    return cloneChildrenInOrder(clone, util.asArray(children))
-    .then(() => clone);
-
     function cloneChildrenInOrder(parent, arrChildren) {
       let done = Promise.resolve();
       arrChildren.forEach(child => {
@@ -221,6 +218,9 @@ function cloneNode(node, filter, root) {
       });
       return done;
     }
+
+    return cloneChildrenInOrder(clone, util.asArray(children))
+    .then(() => clone);
   }
 
   function processClone(original, clone) {
