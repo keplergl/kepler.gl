@@ -25,7 +25,6 @@ import {createSelector} from 'reselect';
 import styled from 'styled-components';
 import {StaticMap} from 'react-map-gl';
 import debounce from 'lodash.debounce';
-import window from 'global/window';
 import {exportImageError} from 'utils/notifications-utils';
 import MapContainerFactory from './map-container';
 import {calculateExportImageSize, convertToPng} from 'utils/export-image-utils';
@@ -51,7 +50,8 @@ const StyledPlotContainer = styled.div`
 
 const deckGlProps = {
   glOptions: {
-    preserveDrawingBuffer: true
+    preserveDrawingBuffer: true,
+    useDevicePixels: false
   }
 };
 
@@ -100,29 +100,19 @@ export default function PlotContainerFactory(MapContainer) {
       }
     };
 
-    _onRetrievingFinish = (devicePixelRatio) => {
-      window.devicePixelRatio = devicePixelRatio;
-    };
-
     _retrieveNewScreenshot = () => {
 
       if (this.plottingAreaRef) {
-      // setting windowDevicePixelRatio to 1
-      // so that large mapbox base map will load in full
-        const savedDevicePixelRatio = window.devicePixelRatio;
-        window.devicePixelRatio = 1;
 
         this.props.startExportingImage();
         const filter = node => node.className !== 'mapboxgl-control-container';
 
         convertToPng(this.plottingAreaRef, {filter}).then(dataUri => {
           this.props.setExportImageDataUri(dataUri);
-          this._onRetrievingFinish(savedDevicePixelRatio);
         })
         .catch(err => {
           this.props.setExportImageError(err);
           this.props.addNotification(exportImageError({err}));
-          this._onRetrievingFinish(savedDevicePixelRatio);
         });
       }
     };
