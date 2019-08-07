@@ -43,6 +43,9 @@ PlotContainerFactory.deps = [MapContainerFactory];
 
 // Remove mapbox logo in exported map, because it contains non-ascii characters
 const StyledPlotContainer = styled.div`
+  position: absolute;
+  top: -9999; 
+  left: -9999;
   .mapboxgl-ctrl-bottom-left,
   .mapboxgl-ctrl-bottom-right {
     display: none;
@@ -159,7 +162,7 @@ export default function PlotContainerFactory(MapContainer) {
 
       return (
         <StyledPlotContainer
-          style={{position: 'absolute', top: -9999, left: -9999}}
+          className="plot-container"
         >
           <div
             ref={element => {
