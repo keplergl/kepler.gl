@@ -15,7 +15,7 @@
     "start-prod": "webpack-dev-server -p --env.prod --content-base ./src/static --progress --open",
     "build-clean": "rm -rf ./dist && mkdir dist",
     "build-static": "cp -r ./src/static/* dist",
-    "build-script": "webpack -p --env.prod",
+    "build-script": "webpack -p --env.prod --devtool source-map",
     "build": "npm run build-clean && npm run build-static && npm run build-script",
     "lint": "eslint src"
   },
