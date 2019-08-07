@@ -16,8 +16,9 @@ install:
 node_js:
   - 8
   - 10
+services:
+  - xvfb
 before_script:
-  - export DISPLAY=:99.0; xvfb-run
   - "curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | sudo bash"
 script:
   - npm run lint
