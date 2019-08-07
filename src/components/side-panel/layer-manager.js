@@ -98,13 +98,9 @@ const SortableStyledItem = styled.div`
 
 export function AddDataButtonFactory() {
   const AddDataButton = ({onClick, isInactive}) => (
-    <Button
-      onClick={onClick}
-      isInactive={!isInactive}
-      width="105px"
-      secondary
-    >
-      <Add height="12px" />Add Data
+    <Button onClick={onClick} isInactive={!isInactive} width="105px" secondary>
+      <Add height="12px" />
+      Add Data
     </Button>
   );
 
@@ -155,25 +151,36 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
     layerClassSelector = props => props.layerClasses;
     layerTypeOptionsSelector = createSelector(
       this.layerClassSelector,
-      layerClasses => Object.keys(layerClasses).map(key => {
-        const layer = new layerClasses[key]();
-        return {
-          id: key,
-          label: layer.name,
-          icon: layer.layerIcon
-        };
-    }));
+      layerClasses =>
+        Object.keys(layerClasses).map(key => {
+          const layer = new layerClasses[key]();
+          return {
+            id: key,
+            label: layer.name,
+            icon: layer.layerIcon
+          };
+        })
+    );
 
     _addEmptyNewLayer = () => {
       this.props.addLayer();
     };
 
     _handleSort = ({oldIndex, newIndex}) => {
-      this.props.updateLayerOrder(arrayMove(this.props.layerOrder, oldIndex, newIndex));
+      this.props.updateLayerOrder(
+        arrayMove(this.props.layerOrder, oldIndex, newIndex)
+      );
     };
 
     render() {
-      const {layers, datasets, layerOrder, openModal} = this.props;
+      const {
+        layers,
+        datasets,
+        layerOrder,
+        openModal,
+        // enlargeFilter,
+        enableLayerAnimation
+      } = this.props;
       const defaultDataset = Object.keys(datasets)[0];
       const layerTypeOptions = this.layerTypeOptionsSelector(this.props);
 
@@ -186,7 +193,12 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
         removeLayer: this.props.removeLayer
       };
 
-      const panelProps = {datasets, openModal, layerTypeOptions};
+      const panelProps = {
+        datasets,
+        openModal,
+        layerTypeOptions,
+        enableLayerAnimation
+      };
 
       return (
         <StyledSortable className="layer-manager">
@@ -229,7 +241,8 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
           <SidePanelSection>
             {defaultDataset ? (
               <Button onClick={this._addEmptyNewLayer} width="105px">
-                <Add height="12px" />Add Layer
+                <Add height="12px" />
+                Add Layer
               </Button>
             ) : null}
           </SidePanelSection>
@@ -240,7 +253,7 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
         </StyledSortable>
       );
     }
-  }
+  };
 }
 
 export default LayerManagerFactory;

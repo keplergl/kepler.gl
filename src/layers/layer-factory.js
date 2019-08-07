@@ -55,6 +55,16 @@ export const LAYER_VIS_CONFIGS = {
     group: PROPERTY_GROUPS.stroke,
     property: 'sizeRange'
   },
+  trailLength: {
+    type: 'number',
+    defaultValue: 180,
+    label: 'Stroke Width',
+    isRanged: false,
+    range: [0, 220],
+    step: 20,
+    group: PROPERTY_GROUPS.stroke,
+    property: 'trailLength'
+  },
   // radius is actually radiusScale in deck.gl
   radius: {
     type: 'number',
@@ -213,7 +223,8 @@ export const LAYER_VIS_CONFIGS = {
     group: PROPERTY_GROUPS.height,
     property: 'elevationPercentile',
     // percentile filter only makes sense with linear aggregation
-    condition: config => config.visConfig.enable3d && (config.colorField || config.sizeField)
+    condition: config =>
+      config.visConfig.enable3d && (config.colorField || config.sizeField)
   },
   resolution: {
     type: 'number',

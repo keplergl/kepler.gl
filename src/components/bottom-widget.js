@@ -21,11 +21,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import TimeWidgetFactory from './filters/time-widget';
+import AnimationControlFactory from './common/animation-control/animation-slider';
+import {WidgetContainer} from './common/styled-components';
 
 const propTypes = {
   filters: PropTypes.arrayOf(PropTypes.object),
   datasets: PropTypes.object,
   uiState: PropTypes.object,
+  layers: PropTypes.arrayOf(PropTypes.object),
+  animationConfig: PropTypes.object,
   visStateActions: PropTypes.object,
   sidePanelWidth: PropTypes.number,
   containerW: PropTypes.number
@@ -33,45 +37,58 @@ const propTypes = {
 
 const maxWidth = 1080;
 
-BottomWidgetFactory.deps = [TimeWidgetFactory];
+BottomWidgetFactory.deps = [TimeWidgetFactory, AnimationControlFactory];
 
-export default function BottomWidgetFactory(TimeWidget) {
-
-  const BottomWidget = (props) => {
+export default function BottomWidgetFactory(TimeWidget, AnimationControl) {
+  const BottomWidget = props => {
     const {
       datasets,
       filters,
+      animationConfig,
       visStateActions,
       containerW,
       uiState,
-      sidePanelWidth
+      sidePanelWidth,
+      layers
     } = props;
+
     const {activeSidePanel} = uiState;
     const isOpen = Boolean(activeSidePanel);
 
-    const enlargedFilterIdx = filters.findIndex(f => f.enlarged);
-    const isAnyFilterAnimating = filters.some(f => f.isAnimating);
     const enlargedFilterWidth = isOpen ? containerW - sidePanelWidth : containerW;
 
-    if (enlargedFilterIdx < 0) {
-      return null;
-    }
+    // TODO: H factor in multi-layers. Handle 1 layer for now
+    const animatedLayer = layers.filter(
+      l => l.config.animation.enabled && l.config.isVisible
+    )[0];
 
+    // show playback control if layers contain trip layer & at least one trip layer is visible
     return (
-      <TimeWidget
-        fields={datasets[filters[enlargedFilterIdx].dataId].fields}
-        setFilterPlot={visStateActions.setFilterPlot}
-        setFilter={visStateActions.setFilter}
-        toggleAnimation={visStateActions.toggleAnimation}
-        updateAnimationSpeed={visStateActions.updateAnimationSpeed}
-        enlargeFilter={visStateActions.enlargeFilter}
-        width={Math.min(maxWidth, enlargedFilterWidth)}
-        isAnyFilterAnimating={isAnyFilterAnimating}
-        enlargedIdx={enlargedFilterIdx}
-        filter={filters[enlargedFilterIdx]}
-      />
+      <WidgetContainer>
+        {animatedLayer ? (
+          <AnimationControl
+            animation={animationConfig}
+            width={Math.min(maxWidth, enlargedFilterWidth)}
+            layer={animatedLayer}
+            playAnimation={visStateActions.playAnimation}
+            enableLayerAnimation={visStateActions.enableLayerAnimation}
+            datasets={datasets}
+          />
+        ) : (
+          <TimeWidget
+            filters={filters}
+            setFilterPlot={visStateActions.setFilterPlot}
+            setFilter={visStateActions.setFilter}
+            toggleAnimation={visStateActions.toggleAnimation}
+            updateAnimationSpeed={visStateActions.updateAnimationSpeed}
+            enlargeFilter={visStateActions.enlargeFilter}
+            width={Math.min(maxWidth, enlargedFilterWidth)}
+            datasets={datasets}
+          />
+        )}
+      </WidgetContainer>
     );
-  }
+  };
 
   BottomWidget.propTypes = propTypes;
 

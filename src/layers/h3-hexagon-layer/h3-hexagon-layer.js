@@ -97,17 +97,20 @@ export default class HexagonIdLayer extends Layer {
     };
   }
 
-  static findDefaultLayerProps({fields}) {
+  static findDefaultLayerProps({fields}, foundLayers) {
     const foundColumns = this.findDefaultColumnField(HEXAGON_ID_FIELDS, fields);
     if (!foundColumns || !foundColumns.length) {
-      return null;
+      return {props: null, foundLayers};
     }
 
-    return foundColumns.map(columns => ({
-      isVisible: true,
-      label: 'H3 Hexagon',
-      columns
-    }));
+    return {
+      props: foundColumns.map(columns => ({
+        isVisible: true,
+        label: 'H3 Hexagon',
+        columns
+      })),
+      foundLayers
+    };
   }
 
   getDefaultLayerConfig(props = {}) {
@@ -154,7 +157,8 @@ export default class HexagonIdLayer extends Layer {
 
     // coverage
     const coScale =
-      coverageField && this.getVisChannelScale(coverageScale, coverageDomain, coverageRange, 0);
+      coverageField &&
+      this.getVisChannelScale(coverageScale, coverageDomain, coverageRange, 0);
 
     const getHexId = this.getHexId(columns);
 
@@ -189,14 +193,17 @@ export default class HexagonIdLayer extends Layer {
       }, []);
     }
 
-    const getElevation = sScale ? d =>
-      this.getEncodedChannelValue(sScale, d.data, sizeField, 0) : 0;
+    const getElevation = sScale
+      ? d => this.getEncodedChannelValue(sScale, d.data, sizeField, 0)
+      : 0;
 
-    const getColor = cScale ? d =>
-      this.getEncodedChannelValue(cScale, d.data, colorField) : color;
+    const getColor = cScale
+      ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
+      : color;
 
-    const getCoverage = coScale ? d =>
-      this.getEncodedChannelValue(coScale, d.data, coverageField, 0) : 1;
+    const getCoverage = coScale
+      ? d => this.getEncodedChannelValue(coScale, d.data, coverageField, 0)
+      : 1;
 
     // const layerData = {
     return {
@@ -225,7 +232,7 @@ export default class HexagonIdLayer extends Layer {
       // only need 1 instance of hexagonVertices
       if (!hexagonVertices) {
         hexagonVertices = id && getVertices({id});
-        hexagonCenter = id && getCentroid({id})
+        hexagonCenter = id && getCentroid({id});
       }
 
       // save a reference of centroids to dataToFeature
@@ -313,9 +320,7 @@ export default class HexagonIdLayer extends Layer {
         ? [
             new GeoJsonLayer({
               id: `${this.id}-hovered`,
-              data: [
-                idToPolygonGeo(objectHovered)
-              ],
+              data: [idToPolygonGeo(objectHovered)],
               getLineColor: config.highlightColor,
               lineWidthScale: 8 * zoomFactor
             })
