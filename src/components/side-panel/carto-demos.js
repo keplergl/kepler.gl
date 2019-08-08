@@ -20,18 +20,70 @@
 
 const demos = [
   {
-    id: 'seattle_coll_animation',
-    name: 'Seattle Collisions animation',
+    id: 'basic_style_props',
+    name: 'Basic styling properties',
     username: 'cartovl',
-    dataset: 'seattle_collisions',
-    viz: `strokeWidth: 0
-color: ramp($addrtype, Bold)
-filter: animation($incdate, 30, fade(1, 1))
+    dataset: 'sf_crime_2019',
+    viz: `width: 3
+color: hsv(0.7, 0.7, 1)
+strokeColor: rgba(255, 255, 255, 0.5)
+strokeWidth: 0.5
 `,
     mapState: {
-      longitude: -122.39,
-      latitude: 47.59,
-      zoom: 10
+      longitude: -122.425611, 
+      latitude: 37.756926,
+      zoom: 11
+    }
+  },
+  {
+    id: 'expressions',
+    name: 'Style with expressions',
+    username: 'cartovl',
+    dataset: 'sf_crime_2019',
+    viz: `width: sqrt(10) * 0.5
+color: #FF0000 + rgb(0, 0, 255)
+strokeColor: opacity(#000,0.5)
+strokeWidth: 0.5 + 0.2
+`,
+    mapState: {
+      longitude: -122.425611, 
+      latitude: 37.756926,
+      zoom: 11
+    }
+  },
+  {
+    id: 'ramps_and_variables',
+    name: 'Ramps and variables',
+    username: 'cartovl',
+    dataset: 'sf_crime_2019',
+    viz: `@day: ramp($incident_day_of_week,bold)
+
+width: 3
+color: @day
+strokeColor: @day
+strokeWidth: 0.5
+`,
+    mapState: {
+      longitude: -122.425611, 
+      latitude: 37.756926,
+      zoom: 11
+    }
+  },
+  {
+    id: 'color_buckets',
+    name: 'Assign categories to colors',
+    username: 'cartovl',
+    dataset: 'sf_crime_2019',
+    viz: `@buckets: ramp(buckets($incident_day_of_week,["Monday","Tuesday","Wednesday"]),[cyan,deeppink,yellow])
+
+width: 3
+color: @buckets
+strokeWidth: 0
+`,
+    mapState: {
+      longitude: -122.425611, 
+      latitude: 37.756926,
+      zoom: 11
     }
   },
   {
@@ -56,9 +108,9 @@ filter: animation($year, 20, fade(0.1, hold))
     username: 'cartovl',
     dataset: 'traffic_accidents',
     viz: `width: $count/2
-color: opacity(ramp(linear($count, 0,120), RedOr), $count/20)
-strokeWidth: 0
-`,
+  color: opacity(ramp(linear($count, 0,120), RedOr), $count/20)
+  strokeWidth: 0
+  `,
     mapState: {
       latitude: 39.74961937824622,
       longitude: -104.96505621566746,
