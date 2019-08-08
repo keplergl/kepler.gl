@@ -1064,6 +1064,7 @@ export const updateVisDataUpdater = (state, action) => {
   let mergedState = mergeFilters(stateWithNewData, filterToBeMerged);
   // merge state with saved layers
   mergedState = mergeLayers(mergedState, layerToBeMerged);
+  // merge state with saved splitMaps
   mergedState = mergeSplitMaps(mergedState, splitMapsToBeMerged);
 
   if (mergedState.layers.length === state.layers.length) {

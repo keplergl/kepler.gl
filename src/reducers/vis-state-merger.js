@@ -204,6 +204,13 @@ export function mergeInteractions(state, interactionToBeMerged) {
   };
 }
 
+/**
+ * Merge splitMaps config with current visStete.
+ * 1. if current map is split, but splitMap DOESNOT contain maps
+ *    : don't merge anything
+ * 2. if current map is NOT split, but splitMaps contain maps
+ *    : add to splitMaps, and keep current layers inVisible
+ */
 export function mergeSplitMaps(state, splitMaps = []) {
   if (splitMaps.length < 2) {
     return state;
@@ -213,8 +220,10 @@ export function mergeSplitMaps(state, splitMaps = []) {
   const unmerged = [];
   splitMaps.forEach((sm, i) => {
     Object.entries(sm.layers).forEach(([id, value]) => {
+      // check if layer exists
       const pushTo = state.layers.find(l => l.id === id) ? merged : unmerged;
 
+      // create map panel if current map is not split
       pushTo[i] = pushTo[i] || {layers: {}};
       pushTo[i].layers = {
         ...pushTo[i].layers,
