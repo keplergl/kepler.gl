@@ -15,18 +15,22 @@ const SliderWrapper = styled.div`
   display: flex;
   position: relative;
   flex-grow: 1;
-  margin-top: 5px;
+  margin-top: 7px;
+  margin-right: 5px;
+`;
+
+const StyledControl = styled.div`
+  background-color: ${props => props.theme.panelBackground};
+  // height: 60px;
 `;
 
 const AnimationWidgetInner = styled.div`
-  background-color: ${props => props.theme.panelBackground};
-  padding: 7px 12px;
+  padding: 10px 12px 2px 12px;
   position: relative;
   display: flex;
 `;
 
 const StyledAnimationControls = styled.div`
-  margin-right: 20px;
   display: flex;
 `;
 
