@@ -201,25 +201,27 @@ function cloneNode(node, filter, root) {
     return nd.cloneNode(false);
   }
 
+  function cloneChildrenInOrder(parent, arrChildren, flt) {
+    let done = Promise.resolve();
+    arrChildren.forEach(child => {
+      done = done
+        .then(() => cloneNode(child, flt))
+        .then(childClone => {
+          if (childClone) {
+            parent.appendChild(childClone);
+          }
+        });
+    });
+    return done;
+  }
+
   function cloneChildren(original, clone, flt) {
     const children = original.childNodes;
     if (children.length === 0) {
       return Promise.resolve(clone);
     }
 
-    function cloneChildrenInOrder(parent, arrChildren) {
-      let done = Promise.resolve();
-      arrChildren.forEach(child => {
-        done = done
-          .then(() => cloneNode(child, flt))
-          .then(childClone => {
-            if (childClone) parent.appendChild(childClone);
-          });
-      });
-      return done;
-    }
-
-    return cloneChildrenInOrder(clone, util.asArray(children))
+    return cloneChildrenInOrder(clone, util.asArray(children), flt)
     .then(() => clone);
   }
 
