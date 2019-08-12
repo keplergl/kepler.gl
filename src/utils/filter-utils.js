@@ -21,7 +21,7 @@
 import moment from 'moment';
 import {ascending, extent, histogram as d3Histogram, ticks} from 'd3-array';
 import keyMirror from 'keymirror';
-import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
+import booleanWithin from '@turf/boolean-within';
 import {point as turfPoint, polygon as turfPolygon} from '@turf/helpers';
 
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
@@ -341,8 +341,8 @@ export function isDataMatchFilter(data, filter, i, layer = null) {
 
     case FILTER_TYPES.polygon:
       const {lat, lng} = layer.config.columns;
-      const point = [data[lng.fieldIdx], data[lat.fieldIdx]];
-      return isInPolygon(point, filter.value);
+      const feature = [data[lng.fieldIdx], data[lat.fieldIdx]];
+      return isInPolygon(feature, filter.value);
     default:
       return true;
   }
@@ -523,7 +523,7 @@ export function isInRange(val, domain) {
 export function isInPolygon(point, polygon) {
   const convertedPoint = turfPoint(point);
   const convertedPolygon = turfPolygon(polygon.geometry.coordinates);
-  const present = booleanPointInPolygon(convertedPoint, convertedPolygon);
+  const present = booleanWithin(convertedPoint, convertedPolygon);
   return present;
 }
 
@@ -567,6 +567,7 @@ export function isValidFilterValue({type, value}) {
   if (!type) {
     return false;
   }
+
   switch (type) {
     case FILTER_TYPES.select:
       return value === true || value === false;
@@ -580,6 +581,9 @@ export function isValidFilterValue({type, value}) {
 
     case FILTER_TYPES.input:
       return Boolean(value.length);
+
+    case FILTER_TYPES.polygon:
+      return value && value.geometry && value.geometry.coordinates;
 
     default:
       return true;

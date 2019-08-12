@@ -71,7 +71,7 @@
     "@mapbox/geojson-extent": "^0.3.2",
     "@mapbox/geojson-normalize": "0.0.1",
     "@mapbox/vector-tile": "^1.3.1",
-    "@turf/boolean-point-in-polygon": "^6.0.1",
+    "@turf/boolean-within": "^6.0.1",
     "@turf/helpers": "^6.1.4",
     "array-move": "^2.0.0",
     "classnames": "^2.2.1",
