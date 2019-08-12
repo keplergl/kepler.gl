@@ -56,6 +56,12 @@ import {
   mergeSplitMaps
 } from './vis-state-merger';
 
+import {
+  addNewLayersToSplitMap,
+  removeLayerFromSplitMaps,
+  computeSplitMapLayers
+} from 'utils/split-map-utils';
+
 import {Layer, LayerClasses} from 'layers';
 import {processFileToLoad} from '/utils/file-utils';
 import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
@@ -1081,7 +1087,7 @@ export const updateVisDataUpdater = (state, action) => {
       splitMaps: addNewLayersToSplitMap(mergedState.splitMaps, newLayers)
     };
   }
-  console.log(mergedState.splitMaps)
+
   // merge state with saved interactions
   mergedState = mergeInteractions(mergedState, interactionToBeMerged);
 
@@ -1097,80 +1103,6 @@ export const updateVisDataUpdater = (state, action) => {
   return updateAllLayerDomainData(mergedState, Object.keys(newDateEntries));
 };
 /* eslint-enable max-statements */
-
-/**
- * This method will compute the default maps layer settings
- * based on the current layers visibility
- * @param {Array<Object>} layers
- * @returns {Array<Object>} split map settings
- */
-function computeSplitMapLayers(layers) {
-  const mapLayers = layers
-    .filter(layer => layer.config.isVisible)
-    .reduce(
-      (newLayers, currentLayer) => ({
-        ...newLayers,
-        [currentLayer.id]: currentLayer.config.isVisible
-      }),
-      {}
-    );
-
-  return [
-    {layers: mapLayers},
-    {layers: cloneDeep(mapLayers)}
-  ];
-}
-
-/**
- * Remove an existing layer from split map settings
- * @param {Object} splitMaps
- * @param {Object} layer
- * @returns {Object} Maps of custom layer objects
- */
-function removeLayerFromSplitMaps(splitMaps, layer) {
-  if (!splitMaps.length) {
-    return splitMaps;
-  }
-  return splitMaps.map(settings => {
-    // eslint-disable-next-line no-unused-vars
-    const {[layer.id]: _, ...newLayers} = settings.layers;
-    return {
-      ...settings,
-      layers: newLayers
-    };
-  })
-}
-
-/**
- * Add new layers to both existing maps
- * @param {Object} splitMaps
- * @param {Object|Array<Object>} layers
- * @returns {Array<Object>} new splitMaps
- */
-function addNewLayersToSplitMap(splitMaps, layers) {
-  const newLayers = Array.isArray(layers) ? layers : [layers];
-
-  if (!splitMaps.length || !newLayers.length) {
-    return splitMaps;
-  }
-
-  // add new layer to both maps,
-  // don't override, if layer.id is already in splitMaps
-  return splitMaps.map(settings => ({
-    ...settings,
-    layers: {
-      ...settings.layers,
-      ...newLayers.reduce(
-        (accu, newLayer) =>
-          [newLayer.id] in settings.layers || !newLayer.config.isVisible ? accu : {
-            ...accu,
-            [newLayer.id]: newLayer.config.isVisible
-          },
-        {}
-      )
-    }
-  }));
-}
 
 /**
  * When a user clicks on the specific map closing icon

@@ -1000,3 +1000,69 @@ test('VisStateMerger - mergeSplitMaps -> split to split', t => {
 
   t.end();
 });
+
+test('VisStateMerger - mergeSplitMaps', t => {
+  const testState1 = {
+    layers: [],
+    splitMaps: [{layers: {a: true}}, {layers: {a: false}}]
+  };
+
+  t.deepEqual(
+    mergeSplitMaps(testState1, []),
+    {...testState1, splitMapsToBeMerged: []},
+    'should return empty'
+  );
+
+  const testSM = [{layers: {c: true}}, {layers: {c: false}}];
+
+  t.deepEqual(
+    mergeSplitMaps(testState1, testSM),
+    {...testState1, splitMapsToBeMerged: testSM},
+    'should save non-exist layers to splitMapsToBeMerged'
+  );
+
+  const testState2 = {
+    layers: [{id: 'c', config: {isVisible: true}}],
+    splitMaps: [{layers: {a: true}}, {layers: {a: false}}]
+  };
+
+  t.deepEqual(
+    mergeSplitMaps(testState2, testSM),
+    {
+      ...testState2,
+      splitMaps: [{layers: {a: true, c: true}}, {layers: {a: false, c: false}}],
+      splitMapsToBeMerged: []
+    },
+    'should merge split maps'
+  );
+
+  const testState3 = {
+    layers: [{id: 'c', config: {isVisible: true}}],
+    splitMaps: []
+  };
+  t.deepEqual(
+    mergeSplitMaps(testState3, testSM),
+    {
+      ...testState3,
+      splitMaps: [{layers: {c: true}}, {layers: {c: false}}],
+      splitMapsToBeMerged: []
+    },
+    'should create split maps panel and merge split maps'
+  );
+
+  const testState4 = {
+    layers: [{id: 'a', config: {isVisible: true}}, {id: 'b', config: {isVisible: false}}, {id: 'c', config: {isVisible: true}}],
+    splitMaps: []
+  };
+  t.deepEqual(
+    mergeSplitMaps(testState4, testSM),
+    {
+      ...testState4,
+      splitMaps: [{layers: {a: true, c: true}}, {layers: {a: true, c: false}}],
+      splitMapsToBeMerged: []
+    },
+    'should create split maps panel, add current layer to splitMaps and merge split maps'
+  );
+
+  t.end();
+});
