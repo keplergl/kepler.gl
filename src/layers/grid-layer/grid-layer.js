@@ -116,6 +116,7 @@ export default class GridLayer extends AggregationLayer {
         // elevation
         extruded: visConfig.enable3d,
         elevationScale: visConfig.elevationScale * eleZoomFactor,
+        elevationRange: visConfig.sizeRange,
         elevationLowerPercentile: visConfig.elevationPercentile[0],
         elevationUpperPercentile: visConfig.elevationPercentile[1],
         // parameters

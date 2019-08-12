@@ -374,6 +374,10 @@ export default class LayerConfigurator extends Component {
                 {...layerConfiguratorProps}
                 channel={layer.visualChannels.size}
               />
+              <VisConfigSlider
+                {...layer.visConfigSettings.sizeRange}
+                {...visConfiguratorProps}
+              />
               <ChannelByValueSelector
                 {...layerChannelConfigProps}
                 channel={layer.visualChannels.size}

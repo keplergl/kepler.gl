@@ -38,16 +38,7 @@ export function getBinColorDomain(scaleType, bins, [lowerIdx, upperIdx]) {
 }
 
 export function getScaleFunctor(scaleType) {
-  switch (scaleType) {
-    case SCALE_TYPES.quantize:
-      return SCALE_FUNC.quantize;
-    case SCALE_TYPES.quantile:
-      return SCALE_FUNC.quantile;
-    case SCALE_TYPES.ordinal:
-      return SCALE_FUNC.ordinal;
-    default:
-      return SCALE_FUNC.quantile;
-  }
+  return SCALE_FUNC[scaleType] || SCALE_FUNC.quantile;
 }
 
 export function getColorValueDomain(layer) {
@@ -86,7 +77,7 @@ export function getElevationScaleFunction(layer) {
   const elevationRange = layer.props.elevationRange;
   const elevationDomain = layer.props.elevationDomain || layer.state.elevationValueDomain;
 
-  layer.state.sizeScaleFunc = getScaleFunctor(layer.props.sizeScale)()
+  layer.state.elevationScaleFunc = getScaleFunctor(layer.props.sizeScale)()
     .domain(elevationDomain)
     .range(elevationRange);
 }
