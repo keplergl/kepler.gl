@@ -128,6 +128,12 @@ export const resetMapConfig = createAction(
  * It will reset current configuration first then apply config to it.
  * @memberof main
  * @param {Object} config - ***required** The Config Object
+ * @param {Object} options - ***optional** The Option object
+ * @param {boolean} options.centerMap `default: true` if `centerMap` is set to `true` kepler.gl will
+ * place the map view within the data points boundaries
+ * @param {boolean} options.readOnly `default: false` if `readOnly` is set to `true`
+ * the left setting panel will be hidden
+ * @param {boolean} options.keepExistingConfig whether to keep exiting layer filter and interaction config `default: false`.
  * @public
  * @example
  * import {receiveMapConfig} from 'kepler.gl/actions';
@@ -138,7 +144,7 @@ export const resetMapConfig = createAction(
  */
 export const receiveMapConfig = createAction(
   ActionTypes.RECEIVE_MAP_CONFIG,
-  config => config
+  (config, options) => ({config, options})
 );
 
 /**

@@ -25,9 +25,9 @@ import {
   mergeFilters,
   mergeLayers,
   mergeInteractions,
-  mergeLayerBlending
+  mergeLayerBlending,
+  mergeSplitMaps
 } from 'reducers/vis-state-merger';
-import {Messages, Crosshairs} from 'components/common/icons';
 
 import SchemaManager from 'schemas';
 import visStateReducer from 'reducers/vis-state';
@@ -83,7 +83,8 @@ import {cmpFilters, cmpLayers} from 'test/helpers/comparison-utils';
 import {
   InitialState,
   StateWFilters,
-  StateWFilesFiltersLayerColor
+  StateWFilesFiltersLayerColor,
+  StateWSplitMaps
 } from 'test/helpers/mock-state';
 
 test('VisStateMerger.v0 -> mergeFilters -> toEmptyState', t => {
@@ -299,7 +300,7 @@ test('VisStateMerger.current -> mergeLayers -> toEmptyState', t => {
   const genericLayersByOrder = stateToSave.visState.layerOrder.map(
     idx => stateToSave.visState.layers[idx]
   );
-  console.log(genericLayersByOrder[1].config.textLabel)
+  console.log(genericLayersByOrder[1].config.textLabel);
   cmpLayers(t, genericLayersByOrder, stateWData.layers, {id: true});
   t.end();
 });
@@ -427,11 +428,7 @@ test('VisStateMerger.v1.split -> mergeLayers -> toEmptyState', t => {
   const stateWData = visStateReducer(mergedState, updateVisData(parsedData));
 
   // test split Maps
-  t.deepEqual(
-    stateWData.splitMaps,
-    expectedConfig,
-    'should merge splitMaps'
-  );
+  t.deepEqual(stateWData.splitMaps, expectedConfig, 'should merge splitMaps');
 
   // test parsed layers
   cmpLayers(t, mergedLayersV1Split, stateWData.layers, {id: true});
@@ -440,9 +437,7 @@ test('VisStateMerger.v1.split -> mergeLayers -> toEmptyState', t => {
 
 test('VisStateMerger.v0 -> mergeLayers -> toWorkingState', t => {
   const savedConfig = cloneDeep(savedStateV0);
-  const parsedConfig = SchemaManager.parseSavedConfig(
-    savedConfig.config
-  );
+  const parsedConfig = SchemaManager.parseSavedConfig(savedConfig.config);
 
   const oldState = cloneDeep(StateWFilesFiltersLayerColor);
   const oldVisState = oldState.visState;
@@ -494,9 +489,7 @@ test('VisStateMerger.v0 -> mergeLayers -> toWorkingState', t => {
 
 test('VisStateMerger.v1 -> mergeLayers -> toWorkingState', t => {
   const savedConfig = cloneDeep(savedStateV1);
-  const parsedConfig = SchemaManager.parseSavedConfig(
-    savedConfig.config
-  );
+  const parsedConfig = SchemaManager.parseSavedConfig(savedConfig.config);
 
   const oldState = cloneDeep(StateWFilesFiltersLayerColor);
   const oldVisState = oldState.visState;
@@ -923,6 +916,86 @@ test('VisStateMerger - mergeLayerBlending', t => {
     mergeLayerBlending(preState, null),
     {layerBlending: 'additive'},
     'should merge layerBlending'
+  );
+
+  t.end();
+});
+
+test('VisStateMerger - mergeSplitMaps -> split to split', t => {
+  // state with splitMaps
+  const oldState = cloneDeep(StateWSplitMaps).visState;
+  // saved config with splitMaps
+  const savedConfig = cloneDeep(savedStateV1Split);
+  const parsedConfig = SchemaManager.parseSavedConfig(savedConfig.config);
+
+  // 1. merge State reset current splitMaps
+  const mergedState = visStateReducer(oldState, receiveMapConfig(parsedConfig));
+
+  const expectedToMerge = [
+    {
+      layers: {
+        f24uw1: false,
+        '9x77w7h': true
+      }
+    },
+    {
+      layers: {
+        f24uw1: true,
+        '9x77w7h': false
+      }
+    }
+  ];
+
+  const expectedToMergeAll = [
+    {
+      layers: {
+        f24uw1: false,
+        '9x77w7h': true,
+        'point-0': false,
+        'geojson-1': true
+      }
+    },
+    {
+      layers: {
+        f24uw1: true,
+        '9x77w7h': false,
+        'point-0': true,
+        'geojson-1': true
+      }
+    }
+  ];
+  t.deepEqual(mergedState.splitMaps, [], 'Should reset splitMaps');
+  t.deepEqual(mergedState.splitMapsToBeMerged, expectedToMerge);
+
+  // 2. merge State keep current splitMaps
+  const mergedState2 = visStateReducer(
+    oldState,
+    receiveMapConfig(parsedConfig, {keepExistingConfig: true})
+  );
+  t.deepEqual(
+    mergedState2.splitMaps,
+    oldState.splitMaps,
+    'Should keep current splitMaps'
+  );
+  t.deepEqual(
+    mergedState2.splitMapsToBeMerged,
+    expectedToMerge,
+    'Should save unmerged to splitMapsToBeMerged'
+  );
+
+  const parsedData = SchemaManager.parseSavedData(savedConfig.datasets);
+  // 3. load data into reducer
+  const mergedState3 = visStateReducer(mergedState2, updateVisData(parsedData));
+
+  t.deepEqual(
+    mergedState3.splitMaps,
+    expectedToMergeAll,
+    'Should merge all splitMaps'
+  );
+  t.deepEqual(
+    mergedState3.splitMapsToBeMerged,
+    [],
+    'Should empty splitMapsToBeMerged'
   );
 
   t.end();

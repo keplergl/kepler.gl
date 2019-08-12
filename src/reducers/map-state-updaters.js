@@ -166,18 +166,27 @@ export const resetMapConfigUpdater = state => ({
  */
 export const receiveMapConfigUpdater = (
   state,
-  {payload: {mapState, options = {}}}
+  {payload: {config = {}, options = {}, bounds = null}}
 ) => {
-
+  const {mapState} = config;
   // reset config if keepExistingConfig is falsy
   const {keepExistingConfig} = options;
 
-  const resetState = !keepExistingConfig
+  const previousState = !keepExistingConfig
     ? resetMapConfigUpdater(state)
     : state;
 
-  const mergedState = {...resetState, ...mapState};
-  console.log(mergedState)
+  // merged received mapstate with previous state
+  let mergedState = {...previousState, ...mapState};
+
+  // if center map
+  // center map will override mapState config
+  if (options.centerMap && bounds) {
+    mergedState = fitBoundsUpdater(mergedState, {
+      payload: bounds
+    })
+  }
+
   return {
     ...mergedState,
     // update width if `isSplit` has changed

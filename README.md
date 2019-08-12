@@ -499,10 +499,11 @@ To interact with a kepler.gl instance and add new data to it, you can dispatch *
       - `datasets.data.fields.name` **[string][42]** **\*required** Name of the field,
     - `datasets.data.rows` **[Array][41]&lt;[Array][41]>** **\*required** Array of rows, in a tabular format with `fields` and `rows`
 - `options` **[Object][40]**
-  - `options.centerMap` **[boolean][43]** `default: true` if `centerMap` is set to `true` kepler.gl will
-    place the map view within the data points boundaries
+  - `options.centerMap` **[boolean][43]** `default: true` if `centerMap` is set to `true` kepler.gl will place the map view within the data points boundaries
   - `options.readOnly` **[boolean][43]** `default: false` if `readOnly` is set to `true`
     the left setting panel will be hidden
+  - `options.keepExistingConfig` **[boolean][43]** `default: false`  whether to keep exiting map config, including layers, filters and splitMaps.
+
 - `config` **[Object][40]** this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
 
 Kepler.gl provides an easy API `KeplerGlSchema.getConfigToSave` to generate a json blob of the current kepler instance configuration.

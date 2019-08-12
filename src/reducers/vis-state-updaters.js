@@ -859,13 +859,13 @@ export const resetMapConfigUpdater = (state) => ({
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {Object} action.payload map config to be propagated
- * @param {Object} action.payload.visState visState config to be propagated
+ * @param {Object} action.payload.config map config to be propagated
  * @param {Object} action.payload.option {keepExistingConfig: true | false}
  * @returns {Object} nextState
  * @public
  */
-export const receiveMapConfigUpdater = (state, {payload: {visState, options = {}}}) => {
-  if (!visState) {
+export const receiveMapConfigUpdater = (state, {payload: {config = {}, options = {}}}) => {
+  if (!config.visState) {
     return state;
   }
 
@@ -875,19 +875,18 @@ export const receiveMapConfigUpdater = (state, {payload: {visState, options = {}
     interactionConfig,
     layerBlending,
     splitMaps
-  } = visState;
+  } = config.visState;
 
   const {keepExistingConfig} = options;
 
   // reset config if keepExistingConfig is falsy
   let mergedState = !keepExistingConfig ? resetMapConfigUpdater(state) : state;
-
+  console.log(mergedState.splitMaps)
   mergedState = mergeFilters(mergedState, filters);
   mergedState = mergeLayers(mergedState, layers);
   mergedState = mergeInteractions(mergedState, interactionConfig);
   mergedState = mergeLayerBlending(mergedState, layerBlending);
   mergedState = mergeSplitMaps(mergedState, splitMaps);
-  console.log(mergedState.splitMaps)
 
   return mergedState;
 };
@@ -1028,7 +1027,7 @@ export const updateVisDataUpdater = (state, action) => {
   if (config) {
     // apply config if passed from action
     state = receiveMapConfigUpdater(state, {
-      payload: {visState: config, options}
+      payload: {config, options}
     });
   }
 

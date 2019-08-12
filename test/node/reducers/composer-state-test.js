@@ -123,7 +123,7 @@ test('#composerStateReducer - addDataToMapUpdater: mapState should not be center
   t.end();
 });
 
-test.only('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
+test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
   const data = processCsvData(testCsvData);
 
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;

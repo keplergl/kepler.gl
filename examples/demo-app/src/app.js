@@ -162,9 +162,9 @@ class App extends Component {
 
   _loadSampleData() {
     // this._loadTripData();
-    this._loadGeojsonData();
     // this._loadIconData();
     this._loadH3HexagonData();
+    this._loadGeojsonData();
   }
 
   _loadTripData() {
@@ -230,6 +230,9 @@ class App extends Component {
             data: processGeojson(sampleGeojson)
           }
         ],
+        options: {
+          keepExistingConfig: true
+        },
         config: sampleGeojsonConfig
       })
     );

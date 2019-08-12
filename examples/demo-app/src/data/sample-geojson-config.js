@@ -221,7 +221,7 @@ const config = {
       //     }
       //   }
       // ]
-    },
+    }
     // mapState: {
     //   isSplit: true
     // }
