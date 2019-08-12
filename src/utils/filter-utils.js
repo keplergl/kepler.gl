@@ -21,6 +21,8 @@
 import moment from 'moment';
 import {ascending, extent, histogram as d3Histogram, ticks} from 'd3-array';
 import keyMirror from 'keymirror';
+import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
+import {point as turfPoint, polygon as turfPolygon} from '@turf/helpers';
 
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
 import {maybeToDate, notNullorUndefined} from './data-utils';
@@ -104,6 +106,7 @@ export function generatePolygonFilter(layer, feature) {
   return generateFilter({
     dataId: layer.config.dataId,
     layerId: layer.id,
+    fixedDomain: false,
     // We store the geo-json into value field
     value: feature,
     type: FILTER_TYPES.polygon
@@ -237,6 +240,10 @@ export function getFieldDomain(data, field) {
   }
 }
 
+export function validateFilter(filter, dataId) {
+  return filter.dataId === dataId && (filter.fieldIdx > -1 || filter.layerId) && filter.value !== null
+}
+
 /**
  * Filter data based on an array of filters
  *
@@ -248,7 +255,7 @@ export function getFieldDomain(data, field) {
  */
 
 // TODO: update filterData to apply polygons
-export function filterData(data, dataId, filters) {
+export function filterData(data, dataId, filters, layers = []) {
   if (!data || !dataId) {
     // why would there not be any data? are we over doing this?
     return {data: [], filteredIndex: []};
@@ -259,30 +266,25 @@ export function filterData(data, dataId, filters) {
   }
 
   const appliedFilters = filters.filter(
-    d => d.dataId === dataId && d.fieldIdx > -1 && d.value !== null
+    d => validateFilter(d, dataId)
   );
 
   const [dynamicDomainFilters, fixedDomainFilters] = appliedFilters.reduce(
     (accu, f) => {
-      if (f.dataId === dataId && f.fieldIdx > -1 && f.value !== null) {
-        (f.fixedDomain ? accu[1] : accu[0]).push(f);
-      }
+      (f.fixedDomain ? accu[1] : accu[0]).push(f);
       return accu;
     },
     [[], []]
   );
-  // console.log(dynamicDomainFilters)
-  // console.log(fixedDomainFilters)
-  // we save a reference of allData index here to access dataToFeature
-  // in geojson and hexgonId layer
-  // console.time('filterData');
 
+  // we save a reference of allData index here to access dataToFeature
+  // in geojson and hexagonId layer
   const {filtered, filteredIndex, filteredIndexForDomain} = data.reduce(
     (accu, d, i) => {
       // generate 2 sets of
       // filter data used to calculate layer Domain
       const matchForDomain = dynamicDomainFilters.every(filter =>
-        isDataMatchFilter(d, filter, i)
+        isDataMatchFilter(d, filter, i, layers.find(l => l.id === filter.layerId))
       );
 
       if (matchForDomain) {
@@ -304,13 +306,6 @@ export function filterData(data, dataId, filters) {
     {filtered: [], filteredIndex: [], filteredIndexForDomain: []}
   );
 
-  // console.log('data==', data.length)
-  // console.log('filtered==', filtered.length)
-  // console.log('filteredIndex==', filteredIndex.length)
-  // console.log('filteredIndexForDomain==', filteredIndexForDomain.length)
-  //
-  // console.timeEnd('filterData');
-
   return {data: filtered, filteredIndex, filteredIndexForDomain};
 }
 
@@ -322,7 +317,7 @@ export function filterData(data, dataId, filters) {
  * @param {number} i
  * @returns {Boolean} - whether value falls in the range of the filter
  */
-export function isDataMatchFilter(data, filter, i) {
+export function isDataMatchFilter(data, filter, i, layer = null) {
   const val = data[filter.fieldIdx];
   if (!filter.type) {
     return true;
@@ -344,6 +339,10 @@ export function isDataMatchFilter(data, filter, i) {
     case FILTER_TYPES.select:
       return filter.value === val;
 
+    case FILTER_TYPES.polygon:
+      const {lat, lng} = layer.config.columns;
+      const point = [data[lng.fieldIdx], data[lat.fieldIdx]];
+      return isInPolygon(point, filter.value);
     default:
       return true;
   }
@@ -512,6 +511,20 @@ export function isInRange(val, domain) {
   }
 
   return val >= domain[0] && val <= domain[1];
+}
+
+/**
+ * Determines whether a point is within the provided polygon
+ *
+ * @param point as input search [lat, lng]
+ * @param polygon Points must be within these (Multi)Polygon(s)
+ * @return {boolean}
+ */
+export function isInPolygon(point, polygon) {
+  const convertedPoint = turfPoint(point);
+  const convertedPolygon = turfPolygon(polygon.geometry.coordinates);
+  const present = booleanPointInPolygon(convertedPoint, convertedPolygon);
+  return present;
 }
 
 export function getTimeWidgetTitleFormatter(domain) {

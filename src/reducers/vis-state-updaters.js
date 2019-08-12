@@ -535,7 +535,7 @@ export function setFilterUpdater(state, action) {
       ...newState.datasets,
       [dataId]: {
         ...newState.datasets[dataId],
-        ...filterData(allData, dataId, newState.filters)
+        ...filterData(allData, dataId, newState.filters, newState.layers)
       }
     }
   };
@@ -1424,7 +1424,7 @@ export function deleteFeatureUpdater(state, {payload: featureId}) {
  */
 export function togglePolygonFilterUpdater(state, payload) {
   const {layer, featureId} = payload;
-
+  const {dataId} = layer.config;
   const isAlreadyFilter = state.filters.find(filter =>
     filter.type === FILTER_TYPES.polygon && filter.value.id === featureId
   );
@@ -1442,20 +1442,23 @@ export function togglePolygonFilterUpdater(state, payload) {
 
     // TODO: combine dataset update logic into a helper
     const {allData} = state.datasets[polygonFilter.dataId];
-
-    return {
+    let newState = {
       ...state,
       // setting fitlers
       filters: newFilters,
       // updating datasets
       datasets: {
         ...state.datasets,
-        [polygonFilter.dataId]: {
-          ...state.datasets[polygonFilter.dataId],
-          ...filterData(allData, polygonFilter.dataId, newFilters)
+        [dataId]: {
+          ...state.datasets[dataId],
+          ...filterData(allData, dataId, newFilters, state.layers)
         }
       }
     };
+
+    newState = updateAllLayerDomainData(newState, dataId, polygonFilter);
+
+    return newState;
   }
 
   // delete existing polygon filter
@@ -1463,8 +1466,17 @@ export function togglePolygonFilterUpdater(state, payload) {
     !(filter.type === FILTER_TYPES.polygon && filter.value.id === featureId)
   );
 
-  return {
+  const newState = {
     ...state,
+    datasets: {
+      ...state.datasets,
+      [layer.config.dataId]: {
+        ...state.datasets[dataId],
+        ...filterData(state.datasets[dataId].allData, dataId, filters, state.layers)
+      }
+    },
     filters
   };
+
+  return updateAllLayerDomainData(newState, dataId);
 }
