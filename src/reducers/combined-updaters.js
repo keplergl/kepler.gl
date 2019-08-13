@@ -24,7 +24,7 @@ import {receiveMapConfigUpdater as stateMapConfigUpdater} from './map-state-upda
 import {receiveMapConfigUpdater as styleMapConfigUpdater} from './map-style-updaters';
 import {findMapBounds} from 'utils/data-utils';
 import KeplerGlSchema from 'schemas';
-import { isObject } from 'util';
+import {isObject} from 'util';
 
 // compose action to apply result multiple reducers, with the output of one
 
