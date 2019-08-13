@@ -7,7 +7,7 @@ build/
 umd/
 */**/dist/
 
-examples/**/yarn.lock
+*/**/yarn.lock
 yarn-error.log
 */**/package-lock.json
 package-lock.json
