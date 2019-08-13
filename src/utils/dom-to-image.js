@@ -257,48 +257,49 @@ function cloneNode(node, filter, root) {
       copyStyle(originalStyle, clone.style);
     }
 
+    function formatPseudoElementStyle(cln, elm, stl) {
+      const formatCssText = (stl1) => {
+        const cnt = stl1.getPropertyValue('content');
+        return `${stl.cssText} content: ${cnt};`;
+      }
+
+      const formatProperty = (name) => {
+        return (
+          `${name}:${stl.getPropertyValue(name)}${stl.getPropertyPriority(name) ? ' !important' : ''}`
+        );
+      }
+
+      const formatCssProperties = (stl2) => {
+        return `${util.asArray(stl2).map(formatProperty).join('; ')};`;
+      }
+
+      const selector = `.${cln}:${elm}`;
+      const cssText = stl.cssText
+        ? formatCssText(stl)
+        : formatCssProperties(stl);
+
+      return document.createTextNode(`${selector}{${cssText}}`);
+    }
+
+    function clonePseudoElement(element) {
+      const style = window.getComputedStyle(original, element);
+      const content = style.getPropertyValue('content');
+
+      if (content === '' || content === 'none') {
+        return;
+      }
+
+      const className = util.uid();
+      clone.className = `${clone.className} ${className}`;
+      const styleElement = document.createElement('style');
+      styleElement.appendChild(
+        formatPseudoElementStyle(className, element, style)
+      );
+      clone.appendChild(styleElement);
+    }
+
     function clonePseudoElements() {
       [':before', ':after'].forEach(element => clonePseudoElement(element));
-
-      function clonePseudoElement(element) {
-        const style = window.getComputedStyle(original, element);
-        const content = style.getPropertyValue('content');
-
-        if (content === '' || content === 'none') {
-          return;
-        }
-
-        const className = util.uid();
-        clone.className = `${clone.className} ${className}`;
-        const styleElement = document.createElement('style');
-        styleElement.appendChild(
-          formatPseudoElementStyle(className, element, style)
-        );
-        clone.appendChild(styleElement);
-
-        function formatPseudoElementStyle(cln, elm, stl) {
-          const selector = `.${cln}:${elm}`;
-          const cssText = stl.cssText
-            ? formatCssText(stl)
-            : formatCssProperties(stl);
-          return document.createTextNode(`${selector}{${cssText}}`);
-
-          function formatCssText(stl1) {
-            const cnt = stl1.getPropertyValue('content');
-            return `${stl.cssText} content: ${cnt};`;
-          }
-
-          function formatCssProperties(stl2) {
-            return `${util.asArray(stl2).map(formatProperty).join('; ')};`;
-
-            function formatProperty(name) {
-              return (
-                `${name}:${stl.getPropertyValue(name)}${stl.getPropertyPriority(name) ? ' !important' : ''}`
-              );
-            }
-          }
-        }
-      }
     }
 
     function copyUserInput() {
