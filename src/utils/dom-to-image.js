@@ -226,6 +226,7 @@ function cloneNode(node, filter, root) {
   }
 
   function processClone(original, clone) {
+
     if (!(clone instanceof window.Element)) {
       return clone
     };
@@ -252,9 +253,10 @@ function cloneNode(node, filter, root) {
         copyProperties(source, target);
       }
     }
-    function cloneStyle() {
-      const originalStyle = window.getComputedStyle(original);
-      copyStyle(originalStyle, clone.style);
+
+    const cloneStyle = (og, cln) => {
+      const originalStyle = window.getComputedStyle(og);
+      copyStyle(originalStyle, cln.style);
     }
 
     function formatPseudoElementStyle(cln, elm, stl) {
@@ -281,7 +283,7 @@ function cloneNode(node, filter, root) {
       return document.createTextNode(`${selector}{${cssText}}`);
     }
 
-    function clonePseudoElement(org, element) {
+    function clonePseudoElement(org, cln, element) {
       const style = window.getComputedStyle(org, element);
       const content = style.getPropertyValue('content');
 
@@ -290,44 +292,56 @@ function cloneNode(node, filter, root) {
       }
 
       const className = util.uid();
-      clone.className = `${clone.className} ${className}`;
+      cln.className = `${cln.className} ${className}`;
       const styleElement = document.createElement('style');
       styleElement.appendChild(
         formatPseudoElementStyle(className, element, style)
       );
-      clone.appendChild(styleElement);
+      cln.appendChild(styleElement);
     }
 
-    function clonePseudoElements() {
-      [':before', ':after'].forEach(element => clonePseudoElement(original, element));
+    function clonePseudoElements([og, cln]) {
+      [':before', ':after'].forEach(element => clonePseudoElement(og, cln, element));
     }
 
-    function copyUserInput() {
-      if (original instanceof window.HTMLTextAreaElement)
-        clone.innerHTML = original.value;
-      if (original instanceof window.HTMLInputElement)
-        clone.setAttribute('value', original.value);
+    function copyUserInput([og, cln]) {
+      if (og instanceof window.HTMLTextAreaElement)
+        cln.innerHTML = og.value;
+      if (og instanceof window.HTMLInputElement)
+        cln.setAttribute('value', og.value);
     }
 
-    function fixSvg() {
-      if (!(clone instanceof window.SVGElement)) return;
-      clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    function fixSvg(cln) {
+      if (!(cln instanceof window.SVGElement)) return;
+      cln.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
 
-      if (!(clone instanceof window.SVGRectElement)) return;
+      if (!(cln instanceof window.SVGRectElement)) return;
       ['width', 'height'].forEach(attribute => {
-        const value = clone.getAttribute(attribute);
+        const value = cln.getAttribute(attribute);
         if (!value) return;
 
-        clone.style.setProperty(attribute, value);
+        cln.style.setProperty(attribute, value);
       });
     }
 
-    return Promise.resolve()
-      .then(cloneStyle)
-      .then(clonePseudoElements)
-      .then(copyUserInput)
-      .then(fixSvg)
-      .then(() => clone);
+    return Promise.resolve([original, clone])
+      .then(([og, cln]) => {
+        cloneStyle(og, cln)
+        return [og, cln];
+      })
+      .then(([og, cln]) => {
+        clonePseudoElements([og, cln])
+        return [og, cln];
+      })
+      .then(([og, cln]) => {
+        copyUserInput([og, cln])
+        return [og, cln];
+      })
+      .then(([og, cln]) => {
+        fixSvg(cln);
+        return [og, cln];
+      })
+      .then(([og, cln]) => cln);
   }
 }
 
