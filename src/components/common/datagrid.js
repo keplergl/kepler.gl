@@ -59,13 +59,13 @@ const StyledFieldHeader = styled.div`
   }
 `;
 
-const FieldHeaderTemplate = ({name, type}) => (
-  <StyledFieldHeader type={type}>
+const FieldHeaderTemplate = ({value, type}) => (
+  <StyledFieldHeader type={type} title={value}>
     <div className="label-wrapper">
       <div className="icon-wrapper">
         {type === 'timestamp' ? <Clock height="16px" /> : null}
       </div>
-      <span>{name}</span>
+      <span>{value}</span>
     </div>
     <div className="field-wrapper">
       <FieldToken type={type} />
@@ -90,9 +90,13 @@ const StyledCell = styled.div`
   height: 100%;
 `;
 
-const CellTemplate = ({name, type}) => {
-  const value = type === ALL_FIELD_TYPES.boolean ? String(name) : name;
-  return (<StyledCell title={value}><span>{value}</span></StyledCell>);
+const CellTemplate = ({value, type}) => {
+  const content = type === ALL_FIELD_TYPES.boolean ? String(value) : value;
+  return (
+    <StyledCell title={content}>
+      <span>{content}</span>
+    </StyledCell>
+  );
 };
 
 export const CellFactory = () => CellTemplate;
@@ -125,12 +129,19 @@ function DataGridFactory(
 
       const type = columns[columnIndex].type;
 
+      let content = null;
+      if (rowIndex) {
+        const {dataColumnMap = {}} = this.props;
+        const dataIndex = dataColumnMap[columnIndex] !== null || dataColumnMap[columnIndex] !== undefined
+          ? dataColumnMap[columnIndex] : columnIndex;
+        content = (<Cell className={`cell ${type}`} value={rows[rowIndex - 1][dataIndex]} type={type} />);
+      } else {
+        content = (<FieldHeader className={`header-cell ${type}`} value={columns[columnIndex].name} type={type} />);
+      }
+
       return (
         <div key={key} style={style} className={className}>
-          {rowIndex === 0
-            ? (<FieldHeader className={`header-cell ${type}`} name={columns[columnIndex].name} type={type} />)
-            : (<Cell className={`cell ${type}`} name={rows[rowIndex - 1][columnIndex]} type={type} />)
-          }
+          {content}
         </div>
       );
     };
