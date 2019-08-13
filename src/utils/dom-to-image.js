@@ -627,23 +627,23 @@ function newInliner() {
     });
   }
 
+  function urlAsRegex(url0) {
+    return new RegExp(
+      `(url\\([\'"]?)(${util.escape(url0)})([\'"]?\\))`,
+      'g'
+    );
+  }
+
   function inline(string, url, baseUrl, get) {
     return Promise.resolve(url)
       .then(ul => baseUrl ? util.resolveUrl(ul, baseUrl) : ul)
       .then(get || util.getAndEncode)
       .then(data => util.dataAsUrl(data, util.mimeType(url)))
       .then(dataUrl => string.replace(urlAsRegex(url), `$1${dataUrl}$3`));
-
-    function urlAsRegex(url0) {
-      return new RegExp(
-        `(url\\([\'"]?)(${util.escape(url0)})([\'"]?\\))`,
-        'g'
-      );
-    }
   }
 
   function inlineAll(string, baseUrl, get) {
-    if (nothingToInline() || util.isSrcAsDataUrl(string)) {
+    if (!shouldProcess(string) || util.isSrcAsDataUrl(string)) {
       return Promise.resolve(string);
     }
     return Promise.resolve(string)
@@ -655,10 +655,6 @@ function newInliner() {
         });
         return done;
       });
-
-    function nothingToInline() {
-      return !shouldProcess(string);
-    }
   }
 }
 
@@ -699,7 +695,7 @@ function newFontFaces() {
             // error response will remain in cache
             const cache = sheet.href.includes('uber-fonts') ? 'no-cache' : 'default';
             return window.fetch(sheet.href, {credentials: 'omit', cache})
-              .then(toText)
+              .then(response => response.text())
               .then(setBaseHref(sheet.href))
               .then(toStyleSheet)
               .catch(err => {
@@ -715,20 +711,10 @@ function newFontFaces() {
         })
       );
 
-      function toText(response) {
-        return response.text();
-      }
-
       function setBaseHref(base) {
         base = base.split('/');
         base.pop();
         base = base.join('/');
-
-        return text => {
-          return util.isSrcAsDataUrl(text)
-            ? text
-            : text.replace(/url\(['"]?([^'"]+?)['"]?\)/g, addBaseHrefToUrl);
-        };
 
         function addBaseHrefToUrl(match, p1) {
           const url = /^http/i.test(p1) ? p1 : concatAndResolveUrl(base, p1);
@@ -756,6 +742,12 @@ function newFontFaces() {
           }
           return url3.join('/');
         }
+
+        return text => {
+          return util.isSrcAsDataUrl(text)
+            ? text
+            : text.replace(/url\(['"]?([^'"]+?)['"]?\)/g, addBaseHrefToUrl);
+        };
       }
 
       function toStyleSheet(text) {
@@ -823,9 +815,6 @@ function newImages() {
   };
 
   function newImage(element) {
-    return {
-      inline
-    };
 
     function inline(get) {
       if (util.isDataUrl(element.src)) {
@@ -842,6 +831,10 @@ function newImages() {
           })
         );
     }
+
+    return {
+      inline
+    };
   }
 
   function inlineAll(node) {
