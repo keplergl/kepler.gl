@@ -110,10 +110,10 @@ export default function PlotContainerFactory(MapContainer) {
         convertToPng(this.plottingAreaRef, {filter}).then(dataUri => {
           this.props.setExportImageDataUri(dataUri);
         })
-        .catch(err => {
-          this.props.setExportImageError(err);
-          this.props.addNotification(exportImageError({err}));
-        });
+        // .catch(err => {
+        //   this.props.setExportImageError(err);
+        //   this.props.addNotification(exportImageError({err}));
+        // });
       }
     };
 
