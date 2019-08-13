@@ -105,10 +105,10 @@ test('DataScaleUtils -> getLogDomain', t => {
   t.deepEqual(getLogDomain([{value: 1}, {value: 0}, {value: -3}], valueAccessor), [-3, 1],
     'should get correct Log domain with negative numbers');
 
-  t.deepEqual(getLogDomain([{value: 1}, {value: 0}, {value: 3}], valueAccessor), [0.001, 3],
+  t.deepEqual(getLogDomain([{value: 1}, {value: 0}, {value: 3}], valueAccessor), [0.00001, 3],
     'should not contain a 0 in domain');
 
-  t.deepEqual(getLogDomain([], valueAccessor), [0.001, 1],
+  t.deepEqual(getLogDomain([], valueAccessor), [0.00001, 1],
     'should have undefined domain for empty set');
 
   t.end();

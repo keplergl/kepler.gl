@@ -72,5 +72,5 @@ export function getLinearDomain(data, valueAccessor) {
 export function getLogDomain(data, valueAccessor) {
   const [d0, d1] = getLinearDomain(data, valueAccessor);
 
-  return [d0 === 0 ? .001 : d0, d1];
+  return [d0 === 0 ? 1e-5 : d0, d1];
 }

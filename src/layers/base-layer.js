@@ -37,7 +37,6 @@ import {DataVizColors} from 'constants/custom-color-ranges';
 import {LAYER_VIS_CONFIGS, DEFAULT_TEXT_LABEL} from './layer-factory';
 
 import {generateHashId, isPlainObject} from 'utils/utils';
-import jenks from 'utils/jenks';
 
 import {
   getSampleData,
@@ -777,11 +776,6 @@ export default class Layer {
 
       case SCALE_TYPES.quantile:
         return getQuantileDomain(filteredIndexForDomain, indexValueAccessor, sortFunction);
-
-      case SCALE_TYPES.jenks:
-        // TODO: Is this right? Do we need to be more generic?
-        const nClasses = this.config.visConfig[visualChannel.range].colors.length;
-        return jenks(allData.map(valueAccessor), nClasses);
 
       case SCALE_TYPES.log:
         return getLogDomain(filteredIndexForDomain, indexValueAccessor);

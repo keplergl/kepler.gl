@@ -34,6 +34,7 @@ export default class EnhancedHexagonLayer extends HexagonLayer {
     const dimensionUpdaters = super.getDimensionUpdaters();
     // add colorScale to dimension updates
     dimensionUpdaters.getFillColor[1].triggers.push('colorScale');
+    dimensionUpdaters.getElevation[1].triggers.push('sizeScale');
     return dimensionUpdaters;
   }
 

@@ -421,7 +421,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
   );
   t.equal(
     newLayer3.config.sizeScale,
-    'linear',
+    'sqrt',
     'should set sizeScale to default'
   );
   t.deepEqual(

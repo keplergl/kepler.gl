@@ -27,7 +27,6 @@ import {
   scaleOrdinal,
   scaleSqrt,
   scaleLog,
-  scaleThreshold,
   scalePoint
 } from 'd3-scale';
 
@@ -254,10 +253,7 @@ export const SCALE_TYPES = keyMirror({
   log: null,
 
   // ordinal domain to linear range
-  point: null,
-
-  // Jenks Natural Breaks
-  jenks: null,
+  point: null
 });
 
 export const SCALE_FUNC = {
@@ -267,8 +263,7 @@ export const SCALE_FUNC = {
   [SCALE_TYPES.ordinal]: scaleOrdinal,
   [SCALE_TYPES.sqrt]: scaleSqrt,
   [SCALE_TYPES.log]: scaleLog,
-  [SCALE_TYPES.point]: scalePoint,
-  [SCALE_TYPES.jenks]: scaleThreshold
+  [SCALE_TYPES.point]: scalePoint
 };
 
 export const ALL_FIELD_TYPES = keyMirror({
@@ -367,18 +362,18 @@ export const AGGREGATION_TYPES = {
 };
 
 export const linearFieldScaleFunctions = {
-  [CHANNEL_SCALES.color]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile, SCALE_TYPES.jenks],
+  [CHANNEL_SCALES.color]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
   [CHANNEL_SCALES.radius]: [SCALE_TYPES.sqrt],
   [CHANNEL_SCALES.size]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log]
 };
 
 export const linearFieldAggrScaleFunctions = {
   [CHANNEL_SCALES.colorAggr]: {
-    [AGGREGATION_TYPES.average]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile, SCALE_TYPES.jenks],
-    [AGGREGATION_TYPES.maximum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile, SCALE_TYPES.jenks],
-    [AGGREGATION_TYPES.minimum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile, SCALE_TYPES.jenks],
-    [AGGREGATION_TYPES.median]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile, SCALE_TYPES.jenks],
-    [AGGREGATION_TYPES.sum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile, SCALE_TYPES.jenks]
+    [AGGREGATION_TYPES.average]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
+    [AGGREGATION_TYPES.maximum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
+    [AGGREGATION_TYPES.minimum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
+    [AGGREGATION_TYPES.median]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
+    [AGGREGATION_TYPES.sum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile]
   },
 
   [CHANNEL_SCALES.sizeAggr]: {

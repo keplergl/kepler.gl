@@ -26,4 +26,3 @@ import './data-scale-utils-test';
 import './interaction-utils-test';
 import './mapbox-gl-style-editor-test';
 import './notifications-utils-test';
-import './jenks-test';
