@@ -299,9 +299,9 @@ export function resolveUrl(url, baseUrl) {
   return a.href;
 }
 
-export function getAndEncode(url) {
+export function getAndEncode(url, options) {
   const TIMEOUT = 30000;
-  if (domtoimage.impl.options.cacheBust) {
+  if (options.cacheBust) {
     // Cache bypass so we dont have CORS issues with cached images
     // Source: https://developer.mozilla.org/en/docs/Web/API/XMLHttpRequest/Using_XMLHttpRequest#Bypassing_the_cache
     url += (/\?/.test(url) ? '&' : '?') + new Date().getTime();
@@ -318,8 +318,8 @@ export function getAndEncode(url) {
     request.send();
 
     let placeholder;
-    if (domtoimage.impl.options.imagePlaceholder) {
-      const split = domtoimage.impl.options.imagePlaceholder.split(/,/);
+    if (options.imagePlaceholder) {
+      const split = options.imagePlaceholder.split(/,/);
       if (split && split[1]) {
         placeholder = split[1];
       }

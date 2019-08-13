@@ -42,10 +42,10 @@ import {
   isSrcAsDataUrl,
   resolveUrl,
   getWidth,
-  getHeight
+  getHeight,
+  getAndEncode
 } from './dom-utils';
 
-const util = newUtil();
 const inliner = newInliner();
 const fontFaces = newFontFaces();
 const images = newImages();
@@ -66,7 +66,6 @@ const domtoimage = {
   impl: {
     fontFaces,
     images,
-    util,
     inliner,
     options: {}
   }
@@ -273,76 +272,6 @@ function makeSvgDataUri(node, width, height) {
     });
 }
 
-function newUtil() {
-  return {
-    getAndEncode
-  };
-
-  function getAndEncode(url) {
-    const TIMEOUT = 30000;
-    if (domtoimage.impl.options.cacheBust) {
-      // Cache bypass so we dont have CORS issues with cached images
-      // Source: https://developer.mozilla.org/en/docs/Web/API/XMLHttpRequest/Using_XMLHttpRequest#Bypassing_the_cache
-      url += (/\?/.test(url) ? '&' : '?') + new Date().getTime();
-    }
-
-    return new Promise(resolve => {
-      const request = new window.XMLHttpRequest();
-
-      request.onreadystatechange = done;
-      request.ontimeout = timeout;
-      request.responseType = 'blob';
-      request.timeout = TIMEOUT;
-      request.open('GET', url, true);
-      request.send();
-
-      let placeholder;
-      if (domtoimage.impl.options.imagePlaceholder) {
-        const split = domtoimage.impl.options.imagePlaceholder.split(/,/);
-        if (split && split[1]) {
-          placeholder = split[1];
-        }
-      }
-
-      function done() {
-        if (request.readyState !== 4) return;
-
-        if (request.status !== 200) {
-          if (placeholder) {
-            resolve(placeholder);
-          } else {
-            fail(`cannot fetch resource: ${url}, status: ${request.status}`);
-          }
-
-          return;
-        }
-
-        const encoder = new window.FileReader();
-        encoder.onloadend = () => {
-          const content = encoder.result.split(/,/)[1];
-          resolve(content);
-        };
-        encoder.readAsDataURL(request.response);
-      }
-
-      function timeout() {
-        if (placeholder) {
-          resolve(placeholder);
-        } else {
-          fail(
-            `timeout of ${TIMEOUT}ms occurred while fetching resource: ${url}`
-          );
-        }
-      }
-
-      function fail(message) {
-        console.error(message);
-        resolve('');
-      }
-    });
-  }
-}
-
 function newInliner() {
   const URL_REGEX = /url\(['"]?([^'"]+?)['"]?\)/g;
 
@@ -380,7 +309,7 @@ function newInliner() {
   function inline(string, url, baseUrl, get) {
     return Promise.resolve(url)
       .then(ul => baseUrl ? resolveUrl(ul, baseUrl) : ul)
-      .then(get || util.getAndEncode)
+      .then(ul => typeof get === 'function' ? get(ul) : getAndEncode(ul, domtoimage.impl.options))
       .then(data => dataAsUrl(data, mimeType(url)))
       .then(dataUrl => string.replace(urlAsRegex(url), `$1${dataUrl}$3`));
   }
@@ -562,7 +491,7 @@ function newImages() {
         return Promise.resolve();
       }
       return Promise.resolve(element.src)
-        .then(get || util.getAndEncode)
+        .then(ul => typeof get === 'function' ? get(ul) : getAndEncode(ul, domtoimage.impl.options))
         .then(data => dataAsUrl(data, mimeType(element.src)))
         .then(dataUrl =>
           new Promise((resolve, reject) => {
