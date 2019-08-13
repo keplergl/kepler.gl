@@ -887,7 +887,7 @@ export const receiveMapConfigUpdater = (state, {payload: {config = {}, options =
 
   // reset config if keepExistingConfig is falsy
   let mergedState = !keepExistingConfig ? resetMapConfigUpdater(state) : state;
-  console.log(mergedState.splitMaps)
+
   mergedState = mergeFilters(mergedState, filters);
   mergedState = mergeLayers(mergedState, layers);
   mergedState = mergeInteractions(mergedState, interactionConfig);
@@ -1026,16 +1026,10 @@ export const toggleLayerForMapUpdater = (state, {mapIndex, layerId}) => {
 export const updateVisDataUpdater = (state, action) => {
   // datasets can be a single data entries or an array of multiple data entries
   const {config, options} = action;
+
   const datasets = Array.isArray(action.datasets)
     ? action.datasets
     : [action.datasets];
-
-  if (config) {
-    // apply config if passed from action
-    state = receiveMapConfigUpdater(state, {
-      payload: {config, options}
-    });
-  }
 
   const newDateEntries = datasets.reduce(
     (accu, {info = {}, data}) => ({
@@ -1049,10 +1043,15 @@ export const updateVisDataUpdater = (state, action) => {
     return state;
   }
 
+  // apply config if passed from action
+  const previousState = config ? receiveMapConfigUpdater(state, {
+    payload: {config, options}
+  }) : state;
+
   const stateWithNewData = {
-    ...state,
+    ...previousState,
     datasets: {
-      ...state.datasets,
+      ...previousState.datasets,
       ...newDateEntries
     }
   };

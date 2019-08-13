@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {fitBoundsUpdater} from './map-state-updaters';
 import {toggleModalUpdater} from './ui-state-updaters';
 import {updateVisDataUpdater as visStateUpdateVisDataUpdater} from './vis-state-updaters';
 import {receiveMapConfigUpdater as stateMapConfigUpdater} from './map-state-updaters';
@@ -74,71 +73,7 @@ import { isObject } from 'util';
 const combinedUpdaters = null;
 /* eslint-enable no-unused-vars */
 
-/**
- * Apply data and config to visState reducer
- * @memberof combinedUpdaters
- * @param {Object} state kepler.gl instance state, containing all subreducer state
- * @param {Object} action
- * @param {Array<Object>|Object} action.datasets - ***required** datasets can be a dataset or an array of datasets
- * Each dataset object needs to have `info` and `data` property.
- * @param {Object} action.datasets.info -info of a dataset
- * @param {string} action.datasets.info.id - id of this dataset. If config is defined, `id` should matches the `dataId` in config.
- * @param {string} action.datasets.info.label - A display name of this dataset
- * @param {Object} action.datasets.data - ***required** The data object, in a tabular format with 2 properties `fields` and `rows`
- * @param {Array<Object>} action.datasets.data.fields - ***required** Array of fields,
- * @param {string} action.datasets.data.fields.name - ***required** Name of the field,
- * @param {Array<Array>} action.datasets.data.rows - ***required** Array of rows, in a tabular format with `fields` and `rows`
- * @param {Object} action.options
- * @param {Boolean} action.options.centerMap
- * @param {Boolean} action.options.readOnly
- * @param {Boolean} action.options.keepExistingConfig
- * @param {Object} action.config
- * @returns {Object} nextState
- * @public
- */
-export const updateVisDataUpdater = (state, action) => {
-  // keep a copy of oldLayers
-  const oldLayers = state.visState.layers;
-
-  const visState = visStateUpdateVisDataUpdater(state.visState, action);
-
-  const defaultOptions = {
-    readOnly: false,
-    centerMap: true,
-    keepExistingConfig: false
-  };
-
-  const options = {
-    ...defaultOptions,
-    ...action.options
-  };
-
-  let bounds;
-  if (options.centerMap) {
-    // find map bounds for new layers
-    const newLayers = visState.layers.filter(
-      nl => !oldLayers.find(ol => ol === nl)
-    );
-    bounds = findMapBounds(newLayers);
-  }
-
-  return {
-    ...state,
-    visState,
-    mapState: bounds
-      ? fitBoundsUpdater(state.mapState, {
-          payload: bounds
-        })
-      : state.mapState,
-    uiState: {
-      ...toggleModalUpdater(state.uiState, {payload: null}),
-      readOnly: options.readOnly
-    }
-  };
-};
-
 export const isValidConfig = config => isObject(config) && isObject(config.config) && config.version;
-export const updateVisDataComposed = updateVisDataUpdater;
 export const defaultAddDataToMapOptions = {
   readOnly: false,
   centerMap: true,
@@ -173,19 +108,21 @@ export const addDataToMapUpdater = (state, {payload}) => {
     ...payload.options
   };
 
-  const oldLayers = state.visState.layers;
-  console.log(config)
+  let parsedConfig = config;
 
-  // if passed in saved config, parse it
-  const parsedConfig = isValidConfig(config) ? KeplerGlSchema.parseSavedConfig(config) : {};
-  console.log(parsedConfig)
+  if (isValidConfig(config)) {
+    // if passed in saved config
+    parsedConfig = KeplerGlSchema.parseSavedConfig(config)
+  }
+  const oldLayers = state.visState.layers;
+
   // Update visState store
   let mergedState = {
     ...state,
     visState: visStateUpdateVisDataUpdater(state.visState, {
       datasets,
       options,
-      config: parsedConfig.visState
+      config: parsedConfig
     })
   }
 

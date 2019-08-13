@@ -59,7 +59,7 @@ const mockRawData = {
   ]
 };
 
-test.only('#composerStateReducer - addDataToMapUpdater: mapStyle', t => {
+test('#composerStateReducer - addDataToMapUpdater: mapStyle', t => {
   // init kepler.gl root and instance
   const state = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
 
@@ -85,7 +85,7 @@ test.only('#composerStateReducer - addDataToMapUpdater: mapStyle', t => {
   t.end();
 });
 
-test('#composerStateReducer - addDataToMapUpdater: mapState should not be centered', t => {
+test('#composerStateReducer - addDataToMapUpdater: mapState should be centered', t => {
   // init kepler.gl root and instance
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
   const mapStateProperties = {
@@ -111,13 +111,13 @@ test('#composerStateReducer - addDataToMapUpdater: mapState should not be center
 
   t.equal(
     newState.mapState.latitude,
-    mapStateProperties.latitude,
-    'mapstate latitude is set correctly'
+    29.23,
+    'centerMap: true should override mapState config'
   );
   t.equal(
     newState.mapState.longitude,
-    mapStateProperties.longitude,
-    'mapstate longitude is set correctly'
+    60.71,
+    'centerMap: true should override mapState config'
   );
 
   t.end();
@@ -127,6 +127,8 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
   const data = processCsvData(testCsvData);
 
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+
+  // old state contain splitMaps
   const oldState = addDataToMapUpdater(state, {
     payload: {
       datasets: {
@@ -138,7 +140,6 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
       config: sampleConfig.config
     }
   });
-  console.log(oldState.visState.splitMaps)
 
   const {
     layers: oldLayers,
@@ -151,6 +152,7 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
   const hexData = processCsvData(testHexIdData);
   const hexDataId = hexIdDataConfig.dataId;
 
+  // keepExistingConfig is not defined, default to false
   const nextState1 = addDataToMapUpdater(oldState, {
     payload: {
       datasets: {
@@ -165,13 +167,16 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
 
   const hexDataset = nextState1.visState.datasets[hexDataId];
 
-  t.equal(hexDataset.allData.length, hexData.rows.length, 'should have same length of allData');
+  t.equal(hexDataset.allData.length, hexData.rows.length, 'should only have new data');
   t.equal(hexDataset.fields.length, hexData.fields.length, 'should have same length of fields');
   t.equal(hexDataset.id, hexDataId, 'should have the id');
+  t.deepEqual(nextState1.visState.splitMaps, [], 'should clear out splitMaps');
 
+  // should only create 1 layer and clear out others
   cmpLayers(t, [mergedH3Layer], nextState1.visState.layers);
   cmpFilters(t, mergedFilters, nextState1.visState.filters);
 
+  // add data and config keep existing data and config
   const nextState2 = addDataToMapUpdater(oldState, {
     payload: {
       datasets: {
@@ -211,17 +216,11 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
     splitMaps: [
       {layers: {
         ...oldSplitMaps[0].layers,
-        avlgol: {
-          isAvailable: true,
-          isVisible: true
-        }
+        avlgol: true
       }},
       {layers: {
-        ...oldSplitMaps[0].layers,
-        avlgol: {
-          isAvailable: true,
-          isVisible: true
-        }
+        ...oldSplitMaps[1].layers,
+        avlgol: true
       }}
     ],
     layerOrder: [2, 0, 1]
@@ -232,9 +231,7 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
   cmpDatasets(t, expectedVisState.datasets, actualVisState.datasets);
   cmpInteraction(t, expectedVisState.interactionConfig, actualVisState.interactionConfig);
   t.deepEqual(expectedVisState.layerOrder, actualVisState.layerOrder, 'Should create new layer, move it to the top');
-  t.deepEqual(expectedVisState.splitMaps, actualVisState.splitMaps, 'Should merge splitMaps');
-  // const expectedState = {
-  //   layerOrder: [1, 0]
-  // };
+  t.deepEqual(expectedVisState.splitMaps, actualVisState.splitMaps, 'Should keep existing splitMaps, add new layres to splitMaps');
+
   t.end();
 });
