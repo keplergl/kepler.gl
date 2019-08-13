@@ -28,6 +28,22 @@ import document from 'global/document';
 import console from 'global/console';
 import svgToMiniDataURI from 'mini-svg-data-uri';
 import {IMAGE_EXPORT_ERRORS} from 'constants/user-feedbacks';
+import {
+  canvasToBlob,
+  escape,
+  escapeXhtml,
+  delay,
+  processClone,
+  asArray,
+  makeImage,
+  mimeType,
+  dataAsUrl,
+  isDataUrl,
+  isSrcAsDataUrl,
+  resolveUrl,
+  getWidth,
+  getHeight
+} from './dom-utils';
 
 const util = newUtil();
 const inliner = newInliner();
@@ -82,8 +98,8 @@ function toSvg(node, options) {
     .then(clone =>
       makeSvgDataUri(
         clone,
-        options.width || util.width(node),
-        options.height || util.height(node)
+        options.width || getWidth(node),
+        options.height || getHeight(node)
       )
     );
 
@@ -111,7 +127,7 @@ function toPixelData(node, options) {
   return draw(node, options || {}).then(canvas =>
     canvas
       .getContext('2d')
-      .getImageData(0, 0, util.width(node), util.height(node)).data
+      .getImageData(0, 0, getWidth(node), getHeight(node)).data
   );
 }
 
@@ -140,7 +156,7 @@ function toJpeg(node, options) {
  * @return {Promise} - A promise that is fulfilled with a PNG image blob
  * */
 function toBlob(node, options) {
-  return draw(node, options || {}).then(util.canvasToBlob);
+  return draw(node, options || {}).then(canvasToBlob);
 }
 
 function copyOptions(options) {
@@ -161,8 +177,8 @@ function copyOptions(options) {
 
 function draw(domNode, options) {
   return toSvg(domNode, options)
-    .then(util.makeImage)
-    .then(util.delay(100))
+    .then(makeImage)
+    .then(delay(100))
     .then(image => {
       const canvas = newCanvas(domNode);
       canvas.getContext('2d').drawImage(image, 0, 0);
@@ -171,8 +187,8 @@ function draw(domNode, options) {
 
   function newCanvas(dNode) {
     const canvas = document.createElement('canvas');
-    canvas.width = options.width || util.width(dNode);
-    canvas.height = options.height || util.height(dNode);
+    canvas.width = options.width || getWidth(dNode);
+    canvas.height = options.height || getHeight(dNode);
 
     if (options.bgcolor) {
       const ctx = canvas.getContext('2d');
@@ -196,7 +212,7 @@ function cloneNode(node, filter, root) {
 
   function makeNodeCopy(nd) {
     if (nd instanceof window.HTMLCanvasElement) {
-      return util.makeImage(nd.toDataURL());
+      return makeImage(nd.toDataURL());
     }
     return nd.cloneNode(false);
   }
@@ -221,127 +237,8 @@ function cloneNode(node, filter, root) {
       return Promise.resolve(clone);
     }
 
-    return cloneChildrenInOrder(clone, util.asArray(children), flt)
+    return cloneChildrenInOrder(clone, asArray(children), flt)
     .then(() => clone);
-  }
-
-  function processClone(original, clone) {
-
-    if (!(clone instanceof window.Element)) {
-      return clone
-    };
-
-    function copyProperties(sourceStyle, targetStyle) {
-      const propertyKeys = util.asArray(sourceStyle);
-      propertyKeys.forEach(name => {
-        targetStyle.setProperty(
-          name,
-          sourceStyle.getPropertyValue(name),
-          sourceStyle.getPropertyPriority(name)
-        );
-      });
-    }
-
-    function copyStyle(source, target) {
-      if (source.cssText) {
-        target.cssText = source.cssText;
-        // add additional copy of composite styles
-        if (source.font) {
-          target.font = source.font;
-        }
-      } else {
-        copyProperties(source, target);
-      }
-    }
-
-    const cloneStyle = (og, cln) => {
-      const originalStyle = window.getComputedStyle(og);
-      copyStyle(originalStyle, cln.style);
-    }
-
-    function formatPseudoElementStyle(cln, elm, stl) {
-      const formatCssText = (stl1) => {
-        const cnt = stl1.getPropertyValue('content');
-        return `${stl.cssText} content: ${cnt};`;
-      }
-
-      const formatProperty = (name) => {
-        return (
-          `${name}:${stl.getPropertyValue(name)}${stl.getPropertyPriority(name) ? ' !important' : ''}`
-        );
-      }
-
-      const formatCssProperties = (stl2) => {
-        return `${util.asArray(stl2).map(formatProperty).join('; ')};`;
-      }
-
-      const selector = `.${cln}:${elm}`;
-      const cssText = stl.cssText
-        ? formatCssText(stl)
-        : formatCssProperties(stl);
-
-      return document.createTextNode(`${selector}{${cssText}}`);
-    }
-
-    function clonePseudoElement(org, cln, element) {
-      const style = window.getComputedStyle(org, element);
-      const content = style.getPropertyValue('content');
-
-      if (content === '' || content === 'none') {
-        return;
-      }
-
-      const className = util.uid();
-      cln.className = `${cln.className} ${className}`;
-      const styleElement = document.createElement('style');
-      styleElement.appendChild(
-        formatPseudoElementStyle(className, element, style)
-      );
-      cln.appendChild(styleElement);
-    }
-
-    function clonePseudoElements([og, cln]) {
-      [':before', ':after'].forEach(element => clonePseudoElement(og, cln, element));
-    }
-
-    function copyUserInput([og, cln]) {
-      if (og instanceof window.HTMLTextAreaElement)
-        cln.innerHTML = og.value;
-      if (og instanceof window.HTMLInputElement)
-        cln.setAttribute('value', og.value);
-    }
-
-    function fixSvg(cln) {
-      if (!(cln instanceof window.SVGElement)) return;
-      cln.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-
-      if (!(cln instanceof window.SVGRectElement)) return;
-      ['width', 'height'].forEach(attribute => {
-        const value = cln.getAttribute(attribute);
-        if (!value) return;
-
-        cln.style.setProperty(attribute, value);
-      });
-    }
-
-    return Promise.resolve([original, clone])
-      .then(([og, cln]) => {
-        cloneStyle(og, cln)
-        return [og, cln];
-      })
-      .then(([og, cln]) => {
-        clonePseudoElements([og, cln])
-        return [og, cln];
-      })
-      .then(([og, cln]) => {
-        copyUserInput([og, cln])
-        return [og, cln];
-      })
-      .then(([og, cln]) => {
-        fixSvg(cln);
-        return [og, cln];
-      })
-      .then(([og, cln]) => cln);
   }
 }
 
@@ -364,7 +261,7 @@ function makeSvgDataUri(node, width, height) {
       nd.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
       const serializedString =  new window.XMLSerializer().serializeToString(nd);
 
-      const xhtml = util.escapeXhtml(serializedString);
+      const xhtml = escapeXhtml(serializedString);
       const foreignObject = `<foreignObject x="0" y="0" width="100%" height="100%">${xhtml}</foreignObject>`;
       const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">${foreignObject}</svg>`;
 
@@ -378,130 +275,8 @@ function makeSvgDataUri(node, width, height) {
 
 function newUtil() {
   return {
-    escape,
-    parseExtension,
-    mimeType,
-    dataAsUrl,
-    isDataUrl,
-    isSrcAsDataUrl,
-    canvasToBlob,
-    resolveUrl,
-    getAndEncode,
-    uid: uid(),
-    delay,
-    asArray,
-    escapeXhtml,
-    makeImage,
-    width,
-    height
+    getAndEncode
   };
-
-  function mimes() {
-    /*
-    * Only WOFF and EOT mime types for fonts are 'real'
-    * see http://www.iana.org/assignments/media-types/media-types.xhtml
-    */
-    const WOFF = 'application/font-woff';
-    const JPEG = 'image/jpeg';
-
-    return {
-      woff: WOFF,
-      woff2: WOFF,
-      ttf: 'application/font-truetype',
-      eot: 'application/vnd.ms-fontobject',
-      png: 'image/png',
-      jpg: JPEG,
-      jpeg: JPEG,
-      gif: 'image/gif',
-      tiff: 'image/tiff',
-      svg: 'image/svg+xml'
-    };
-  }
-
-  function parseExtension(url) {
-    const match = /\.([^\.\/]*?)$/g.exec(url);
-    if (match) {
-      return match[1];
-    }
-    return '';
-  }
-
-  function mimeType(url) {
-    const extension = parseExtension(url).toLowerCase();
-    return mimes()[extension] || '';
-  }
-
-  function isDataUrl(url) {
-    return url.search(/^(data:)/) !== -1;
-  }
-
-  function isSrcAsDataUrl(text) {
-    const DATA_URL_REGEX = /url\(['"]?(data:)([^'"]+?)['"]?\)/;
-
-    return text.search(DATA_URL_REGEX) !== -1;
-  }
-  function cvToBlob(canvas) {
-    return new Promise(resolve => {
-      const binaryString = window.atob(canvas.toDataURL().split(',')[1]);
-      const length = binaryString.length;
-      const binaryArray = new Uint8Array(length);
-
-      for (let i = 0; i < length; i++)
-        binaryArray[i] = binaryString.charCodeAt(i);
-
-      resolve(
-        new window.Blob([binaryArray], {type: 'image/png'})
-      );
-    });
-  }
-
-  function canvasToBlob(canvas) {
-    if (canvas.toBlob)
-      return new Promise(resolve => {
-        canvas.toBlob(resolve);
-      });
-
-    return cvToBlob(canvas);
-  }
-
-  function resolveUrl(url, baseUrl) {
-    const doc = document.implementation.createHTMLDocument();
-    const base = doc.createElement('base');
-    doc.head.appendChild(base);
-    const a = doc.createElement('a');
-    doc.body.appendChild(a);
-    base.href = baseUrl;
-    a.href = url;
-    return a.href;
-  }
-
-  function fourRandomChars() {
-    /* see http://stackoverflow.com/a/6248722/2519373 */
-    return `0000${((Math.random() * Math.pow(36, 4)) << 0).toString(36)}`.slice(-4);
-  }
-
-  function uid() {
-    let index = 0;
-
-    return () => `u${fourRandomChars()}${index++}`;
-  }
-
-  function makeImage(uri) {
-    return new Promise((resolve, reject) => {
-      const image = new window.Image();
-      image.onload = () => {
-        resolve(image);
-      };
-      image.onerror = (err) => {
-        const message = IMAGE_EXPORT_ERRORS.dataUri;
-        console.log(uri);
-        // error is an Event Object
-        // https://www.w3schools.com/jsref/obj_event.asp
-        reject({event: err, message});
-      };
-      image.src = uri;
-    });
-  }
 
   function getAndEncode(url) {
     const TIMEOUT = 30000;
@@ -566,52 +341,6 @@ function newUtil() {
       }
     });
   }
-
-  function dataAsUrl(content, type) {
-    return `data:${type};base64,${content}`;
-  }
-
-  function escape(string) {
-    return string.replace(/([.*+?^${}()|\[\]\/\\])/g, '\\$1');
-  }
-
-  function delay(ms) {
-    return arg => {
-      return new Promise((resolve) => {
-        window.setTimeout(() => {
-          resolve(arg);
-        }, ms);
-      });
-    };
-  }
-
-  function asArray(arrayLike) {
-    const array = [];
-    const length = arrayLike.length;
-    for (let i = 0; i < length; i++) array.push(arrayLike[i]);
-    return array;
-  }
-
-  function escapeXhtml(string) {
-    return string.replace(/#/g, '%23').replace(/\n/g, '%0A');
-  }
-
-  function width(node) {
-    const leftBorder = px(node, 'border-left-width');
-    const rightBorder = px(node, 'border-right-width');
-    return node.scrollWidth + leftBorder + rightBorder;
-  }
-
-  function height(node) {
-    const topBorder = px(node, 'border-top-width');
-    const bottomBorder = px(node, 'border-bottom-width');
-    return node.scrollHeight + topBorder + bottomBorder;
-  }
-
-  function px(node, styleProperty) {
-    const value = window.getComputedStyle(node).getPropertyValue(styleProperty);
-    return parseFloat(value.replace('px', ''));
-  }
 }
 
 function newInliner() {
@@ -637,27 +366,27 @@ function newInliner() {
       result.push(match[1]);
     }
     return result.filter((url) => {
-      return !util.isDataUrl(url);
+      return !isDataUrl(url);
     });
   }
 
   function urlAsRegex(url0) {
     return new RegExp(
-      `(url\\([\'"]?)(${util.escape(url0)})([\'"]?\\))`,
+      `(url\\([\'"]?)(${escape(url0)})([\'"]?\\))`,
       'g'
     );
   }
 
   function inline(string, url, baseUrl, get) {
     return Promise.resolve(url)
-      .then(ul => baseUrl ? util.resolveUrl(ul, baseUrl) : ul)
+      .then(ul => baseUrl ? resolveUrl(ul, baseUrl) : ul)
       .then(get || util.getAndEncode)
-      .then(data => util.dataAsUrl(data, util.mimeType(url)))
+      .then(data => dataAsUrl(data, mimeType(url)))
       .then(dataUrl => string.replace(urlAsRegex(url), `$1${dataUrl}$3`));
   }
 
   function inlineAll(string, baseUrl, get) {
-    if (!shouldProcess(string) || util.isSrcAsDataUrl(string)) {
+    if (!shouldProcess(string) || isSrcAsDataUrl(string)) {
       return Promise.resolve(string);
     }
     return Promise.resolve(string)
@@ -689,7 +418,7 @@ function newFontFaces() {
   }
 
   function readAll() {
-    return Promise.resolve(util.asArray(document.styleSheets))
+    return Promise.resolve(asArray(document.styleSheets))
       .then(loadExternalStyleSheets)
       .then(getCssRules)
       .then(selectWebFontRules)
@@ -758,7 +487,7 @@ function newFontFaces() {
         }
 
         return text => {
-          return util.isSrcAsDataUrl(text)
+          return isSrcAsDataUrl(text)
             ? text
             : text.replace(/url\(['"]?([^'"]+?)['"]?\)/g, addBaseHrefToUrl);
         };
@@ -792,9 +521,7 @@ function newFontFaces() {
 
         if (rules && typeof rules === 'object') {
           try {
-            util
-              .asArray(rules || [])
-              .forEach(cssRules.push.bind(cssRules));
+            asArray(rules || []).forEach(cssRules.push.bind(cssRules));
           } catch (e) {
             console.log(`Error while reading CSS rules from ${sheet.href}`, e);
             return;
@@ -831,12 +558,12 @@ function newImages() {
   function newImage(element) {
 
     function inline(get) {
-      if (util.isDataUrl(element.src)) {
+      if (element.src) {
         return Promise.resolve();
       }
       return Promise.resolve(element.src)
         .then(get || util.getAndEncode)
-        .then(data => util.dataAsUrl(data, util.mimeType(element.src)))
+        .then(data => dataAsUrl(data, mimeType(element.src)))
         .then(dataUrl =>
           new Promise((resolve, reject) => {
             element.onload = resolve;
@@ -861,7 +588,7 @@ function newImages() {
         return newImage(node).inline();
       }
       return Promise.all(
-        util.asArray(node.childNodes).map(child => inlineAll(child))
+        asArray(node.childNodes).map(child => inlineAll(child))
       );
     });
 
