@@ -281,8 +281,8 @@ function cloneNode(node, filter, root) {
       return document.createTextNode(`${selector}{${cssText}}`);
     }
 
-    function clonePseudoElement(element) {
-      const style = window.getComputedStyle(original, element);
+    function clonePseudoElement(org, element) {
+      const style = window.getComputedStyle(org, element);
       const content = style.getPropertyValue('content');
 
       if (content === '' || content === 'none') {
@@ -299,7 +299,7 @@ function cloneNode(node, filter, root) {
     }
 
     function clonePseudoElements() {
-      [':before', ':after'].forEach(element => clonePseudoElement(element));
+      [':before', ':after'].forEach(element => clonePseudoElement(original, element));
     }
 
     function copyUserInput() {
