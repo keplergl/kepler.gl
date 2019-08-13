@@ -230,37 +230,31 @@ function cloneNode(node, filter, root) {
       return clone
     };
 
-    return Promise.resolve()
-      .then(cloneStyle)
-      .then(clonePseudoElements)
-      .then(copyUserInput)
-      .then(fixSvg)
-      .then(() => clone);
+    function copyProperties(sourceStyle, targetStyle) {
+      const propertyKeys = util.asArray(sourceStyle);
+      propertyKeys.forEach(name => {
+        targetStyle.setProperty(
+          name,
+          sourceStyle.getPropertyValue(name),
+          sourceStyle.getPropertyPriority(name)
+        );
+      });
+    }
 
+    function copyStyle(source, target) {
+      if (source.cssText) {
+        target.cssText = source.cssText;
+        // add additional copy of composite styles
+        if (source.font) {
+          target.font = source.font;
+        }
+      } else {
+        copyProperties(source, target);
+      }
+    }
     function cloneStyle() {
       const originalStyle = window.getComputedStyle(original);
       copyStyle(originalStyle, clone.style);
-      function copyStyle(source, target) {
-        if (source.cssText) {
-          target.cssText = source.cssText;
-          // add additional copy of composite styles
-          if (source.font) {
-            target.font = source.font;
-          }
-        } else {
-          copyProperties(source, target);
-        }
-        function copyProperties(sourceStyle, targetStyle) {
-          const propertyKeys = util.asArray(sourceStyle);
-          propertyKeys.forEach(name => {
-            targetStyle.setProperty(
-              name,
-              sourceStyle.getPropertyValue(name),
-              sourceStyle.getPropertyPriority(name)
-            );
-          });
-        }
-      }
     }
 
     function clonePseudoElements() {
@@ -326,6 +320,13 @@ function cloneNode(node, filter, root) {
         clone.style.setProperty(attribute, value);
       });
     }
+
+    return Promise.resolve()
+      .then(cloneStyle)
+      .then(clonePseudoElements)
+      .then(copyUserInput)
+      .then(fixSvg)
+      .then(() => clone);
   }
 }
 
