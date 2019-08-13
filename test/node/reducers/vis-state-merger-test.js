@@ -404,8 +404,14 @@ test('VisStateMerger.v1.split -> mergeLayers -> toEmptyState', t => {
     } else if (key === 'splitMaps') {
       t.deepEqual(
         mergedState.splitMaps,
+        [],
+        'Should wait to merge splitMaps'
+      );
+    } else if (key === 'splitMaps') {
+      t.deepEqual(
+        mergedState.splitMapsToBeMerged,
         expectedConfig,
-        'Should merge splitMaps'
+        'Should save to splitMapsToBeMerged'
       );
     } else if (key === 'interactionToBeMerged') {
       t.deepEqual(

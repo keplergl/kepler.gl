@@ -174,10 +174,11 @@ export const addDataToMapUpdater = (state, {payload}) => {
   };
 
   const oldLayers = state.visState.layers;
+  console.log(config)
 
   // if passed in saved config, parse it
   const parsedConfig = isValidConfig(config) ? KeplerGlSchema.parseSavedConfig(config) : {};
-
+  console.log(parsedConfig)
   // Update visState store
   let mergedState = {
     ...state,

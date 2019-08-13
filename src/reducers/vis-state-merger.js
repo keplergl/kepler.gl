@@ -223,7 +223,7 @@ export function mergeSplitMaps(state, splitMaps = []) {
 
       // create map panel if current map is not split
       pushTo[i] = pushTo[i] || {
-        layers: getInitialMapLayersForSplitMap(state.layers)
+        layers: pushTo === merged ? getInitialMapLayersForSplitMap(state.layers) : []
       };
       pushTo[i].layers = {
         ...pushTo[i].layers,

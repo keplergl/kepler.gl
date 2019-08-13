@@ -369,6 +369,7 @@ export const requestMapStylesUpdater = (state, {payload: mapStyles}) => {
  */
 export const receiveMapConfigUpdater = (state, {payload: {config = {}}}) => {
   const {mapStyle} = config;
+  console.log(config)
   if (!mapStyle) {
     return state;
   }

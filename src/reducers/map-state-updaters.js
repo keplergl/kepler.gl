@@ -169,15 +169,9 @@ export const receiveMapConfigUpdater = (
   {payload: {config = {}, options = {}, bounds = null}}
 ) => {
   const {mapState} = config;
-  // reset config if keepExistingConfig is falsy
-  const {keepExistingConfig} = options;
-
-  const previousState = !keepExistingConfig
-    ? resetMapConfigUpdater(state)
-    : state;
 
   // merged received mapstate with previous state
-  let mergedState = {...previousState, ...mapState};
+  let mergedState = {...state, ...mapState};
 
   // if center map
   // center map will override mapState config
