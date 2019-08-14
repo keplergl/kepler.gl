@@ -17,34 +17,34 @@
     -   [mapConfigChange][24]
     -   [mapStyleChange][26]
     -   [requestMapStyles][28]
--   [main][30]
-    -   [addDataToMap][31]
-    -   [keplerGlInit][34]
-    -   [receiveMapConfig][36]
-    -   [resetMapConfig][39]
--   [visStateActions][40]
-    -   [addFilter][41]
-    -   [addLayer][43]
-    -   [enlargeFilter][45]
-    -   [interactionConfigChange][47]
-    -   [layerConfigChange][49]
-    -   [layerTextLabelChange][51]
-    -   [layerTypeChange][53]
-    -   [layerVisConfigChange][55]
-    -   [layerVisualChannelConfigChange][57]
-    -   [loadFiles][59]
-    -   [loadFilesErr][61]
-    -   [onLayerClick][63]
-    -   [onLayerHover][65]
-    -   [onMapClick][67]
-    -   [onMouseMove][68]
-    -   [removeDataset][70]
-    -   [removeFilter][72]
-    -   [removeLayer][74]
-    -   [reorderLayer][76]
-    -   [setFilter][79]
-    -   [setFilterPlot][81]
-    -   [setVisibleLayersForMap][83]
+    -   [set3dBuildingColor][30]
+-   [main][32]
+    -   [addDataToMap][33]
+    -   [keplerGlInit][36]
+    -   [receiveMapConfig][38]
+    -   [resetMapConfig][41]
+-   [visStateActions][42]
+    -   [addFilter][43]
+    -   [addLayer][45]
+    -   [enlargeFilter][47]
+    -   [interactionConfigChange][49]
+    -   [layerConfigChange][51]
+    -   [layerTextLabelChange][53]
+    -   [layerTypeChange][55]
+    -   [layerVisConfigChange][57]
+    -   [layerVisualChannelConfigChange][59]
+    -   [loadFiles][61]
+    -   [loadFilesErr][63]
+    -   [onLayerClick][65]
+    -   [onLayerHover][67]
+    -   [onMapClick][69]
+    -   [onMouseMove][70]
+    -   [removeDataset][72]
+    -   [removeFilter][74]
+    -   [removeLayer][76]
+    -   [reorderLayer][78]
+    -   [setFilter][81]
+    -   [setFilterPlot][83]
     -   [showDatasetTable][85]
     -   [toggleAnimation][87]
     -   [toggleLayerForMap][89]
@@ -321,6 +321,17 @@ Request map style style object based on style.url.
 
 -   `mapStyles` **[Array][164]&lt;[Object][154]>** 
 
+### set3dBuildingColor
+
+Set 3d building layer group color
+
+-   **ActionTypes**: [`ActionTypes.SET_3D_BUILDING_COLOR`][12]
+-   **Updaters**: [`mapStyleUpdaters.set3dBuildingColorUpdater`][165]
+
+**Parameters**
+
+-   `color` **[Array][164]** [r, g, b]
+
 ## main
 
 Main kepler.gl actions, these actions handles loading data and config into kepler.gl reducer. These actions
@@ -338,7 +349,7 @@ Kepler.gl uses `dataId` in the config to match with loaded dataset. If you pass 
 to match the `info.id` of your dataset to the `dataId` in each `layer`, `filter` and `interactionConfig.tooltips.fieldsToShow`
 
 -   **ActionTypes**: [`ActionTypes.ADD_DATA_TO_MAP`][12]
--   **Updaters**: [`combinedUpdaters.addDataToMapUpdater`][165]
+-   **Updaters**: [`combinedUpdaters.addDataToMapUpdater`][166]
 
 **Parameters**
 
@@ -354,10 +365,10 @@ to match the `info.id` of your dataset to the `dataId` in each `layer`, `filter`
             -   `data.datasets.data.rows` **[Array][164]&lt;[Array][164]>** **\*required** Array of rows, in a tabular format with `fields` and `rows`
     -   `data.options` **[Object][154]** 
         -   `data.options.centerMap` **[boolean][155]** `default: true` if `centerMap` is set to `true` kepler.gl will
-            place the map view within the data points boundaries
+            place the map view within the data points boundaries.  `options.centerMap` will override `config.mapState` if passed in.
         -   `data.options.readOnly` **[boolean][155]** `default: false` if `readOnly` is set to `true`
             the left setting panel will be hidden
-        -   `data.options.keepExistingConfig` **[boolean][155]** whether to keep exiting layer filter and interaction config `default: false`.
+        -   `data.options.keepExistingConfig` **[boolean][155]** whether to keep exiting map data and associated layer filter  interaction config `default: false`.
     -   `data.config` **[Object][154]** this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
 
 **Examples**
@@ -417,7 +428,7 @@ this.props.dispatch(
 Initialize kepler.gl reducer. It is used to pass in `mapboxApiAccessToken` to `mapStyle` reducer.
 
 -   **ActionTypes**: [`ActionTypes.INIT`][12]
--   **Updaters**: [`mapStyleUpdaters.initMapStyleUpdater`][166]
+-   **Updaters**: [`mapStyleUpdaters.initMapStyleUpdater`][167]
 
 **Parameters**
 
@@ -440,11 +451,17 @@ It is also useful when you want to prepare the kepler.gl instance with some pres
 It will reset current configuration first then apply config to it.
 
 -   **ActionTypes**: [`ActionTypes.RECEIVE_MAP_CONFIG`][12]
--   **Updaters**: [`mapStateUpdaters.receiveMapConfigUpdater`][167], [`mapStyleUpdaters.receiveMapConfigUpdater`][168], [`visStateUpdaters.receiveMapConfigUpdater`][169]
+-   **Updaters**: [`mapStateUpdaters.receiveMapConfigUpdater`][168], [`mapStyleUpdaters.receiveMapConfigUpdater`][169], [`visStateUpdaters.receiveMapConfigUpdater`][170]
 
 **Parameters**
 
 -   `config` **[Object][154]** **\*required** The Config Object
+-   `options` **[Object][154]** **\*optional** The Option object
+    -   `options.centerMap` **[boolean][155]** `default: true` if `centerMap` is set to `true` kepler.gl will
+        place the map view within the data points boundaries
+    -   `options.readOnly` **[boolean][155]** `default: false` if `readOnly` is set to `true`
+        the left setting panel will be hidden
+    -   `options.keepExistingConfig` **[boolean][155]** whether to keep exiting layer filter and interaction config `default: false`.
 
 **Examples**
 
@@ -461,7 +478,7 @@ this.props.dispatch(receiveMapConfig(parsedConfig));
 Reset all sub-reducers to its initial state. This can be used to clear out all configuration in the reducer.
 
 -   **ActionTypes**: [`ActionTypes.RESET_MAP_CONFIG`][12]
--   **Updaters**: [`mapStyleUpdaters.resetMapConfigMapStyleUpdater`][170], [`visStateUpdaters.resetMapConfigVisStateUpdater`][171]
+-   **Updaters**: [`mapStateUpdaters.resetMapConfigUpdater`][171], [`mapStyleUpdaters.resetMapConfigMapStyleUpdater`][172], [`visStateUpdaters.resetMapConfigUpdater`][173]
 
 ## visStateActions
 
@@ -474,7 +491,7 @@ filters and interaction settings.
 Add a new filter
 
 -   **ActionTypes**: [`ActionTypes.ADD_FILTER`][12]
--   **Updaters**: [`visStateUpdaters.addFilterUpdater`][172]
+-   **Updaters**: [`visStateUpdaters.addFilterUpdater`][174]
 
 **Parameters**
 
@@ -487,7 +504,7 @@ Returns **{type: ActionTypes.ADD_FILTER, dataId: dataId}**
 Add a new layer
 
 -   **ActionTypes**: [`ActionTypes.ADD_LAYER`][12]
--   **Updaters**: [`visStateUpdaters.addLayerUpdater`][173]
+-   **Updaters**: [`visStateUpdaters.addLayerUpdater`][175]
 
 **Parameters**
 
@@ -500,11 +517,11 @@ Returns **{type: ActionTypes.ADD_LAYER, props: props}**
 Show larger time filter at bottom for time playback (apply to time filter only)
 
 -   **ActionTypes**: [`ActionTypes.ENLARGE_FILTER`][12]
--   **Updaters**: [`visStateUpdaters.enlargeFilterUpdater`][174]
+-   **Updaters**: [`visStateUpdaters.enlargeFilterUpdater`][176]
 
 **Parameters**
 
--   `idx` **[Number][175]** index of filter to enlarge
+-   `idx` **[Number][177]** index of filter to enlarge
 
 Returns **{type: ActionTypes.ENLARGE_FILTER, idx: idx}** 
 
@@ -513,7 +530,7 @@ Returns **{type: ActionTypes.ENLARGE_FILTER, idx: idx}**
 Update `interactionConfig`
 
 -   **ActionTypes**: [`ActionTypes.INTERACTION_CONFIG_CHANGE`][12]
--   **Updaters**: [`visStateUpdaters.interactionConfigChangeUpdater`][176]
+-   **Updaters**: [`visStateUpdaters.interactionConfigChangeUpdater`][178]
 
 **Parameters**
 
@@ -526,7 +543,7 @@ Returns **{type: ActionTypes.INTERACTION_CONFIG_CHANGE, config: config}**
 Update layer base config: dataId, label, column, isVisible
 
 -   **ActionTypes**: [`ActionTypes.LAYER_CONFIG_CHANGE`][12]
--   **Updaters**: [`visStateUpdaters.layerConfigChangeUpdater`][177]
+-   **Updaters**: [`visStateUpdaters.layerConfigChangeUpdater`][179]
 
 **Parameters**
 
@@ -540,12 +557,12 @@ Returns **{type: ActionTypes.LAYER_CONFIG_CHANGE, oldLayer: oldLayer, newConfig:
 Update layer text label
 
 -   **ActionTypes**: [`ActionTypes.LAYER_TEXT_LABEL_CHANGE`][12]
--   **Updaters**: [`visStateUpdaters.layerTextLabelChangeUpdater`][178]
+-   **Updaters**: [`visStateUpdaters.layerTextLabelChangeUpdater`][180]
 
 **Parameters**
 
 -   `oldLayer` **[Object][154]** layer to be updated
--   `idx` **[Number][175]** \-`idx` of text label to be updated
+-   `idx` **[Number][177]** \-`idx` of text label to be updated
 -   `prop` **[string][152]** `prop` of text label, e,g, `anchor`, `alignment`, `color`, `size`, `field`
 -   `value` **any** new value
 
@@ -554,7 +571,7 @@ Update layer text label
 Update layer type. Previews layer config will be copied if applicable.
 
 -   **ActionTypes**: [`ActionTypes.LAYER_TYPE_CHANGE`][12]
--   **Updaters**: [`visStateUpdaters.layerTypeChangeUpdater`][179]
+-   **Updaters**: [`visStateUpdaters.layerTypeChangeUpdater`][181]
 
 **Parameters**
 
@@ -568,7 +585,7 @@ Returns **{type: ActionTypes.LAYER_TYPE_CHANGE, oldLayer: oldLayer, newType: new
 Update layer `visConfig`
 
 -   **ActionTypes**: [`ActionTypes.LAYER_VIS_CONFIG_CHANGE`][12]
--   **Updaters**: [`visStateUpdaters.layerVisConfigChangeUpdater`][180]
+-   **Updaters**: [`visStateUpdaters.layerVisConfigChangeUpdater`][182]
 
 **Parameters**
 
@@ -582,7 +599,7 @@ Returns **{type: ActionTypes.LAYER_VIS_CONFIG_CHANGE, oldLayer: oldLayer, newVis
 Update layer visual channel
 
 -   **ActionTypes**: [`ActionTypes.LAYER_VISUAL_CHANNEL_CHANGE`][12]
--   **Updaters**: [`visStateUpdaters.layerVisualChannelChangeUpdater`][181]
+-   **Updaters**: [`visStateUpdaters.layerVisualChannelChangeUpdater`][183]
 
 **Parameters**
 
@@ -597,7 +614,7 @@ Returns **{type: ActionTypes.LAYER_VISUAL_CHANNEL_CHANGE, oldLayer: oldLayer, ne
 Trigger file loading dispatch `addDataToMap` if succeed, or `loadFilesErr` if failed
 
 -   **ActionTypes**: [`ActionTypes.LOAD_FILES`][12]
--   **Updaters**: [`visStateUpdaters.loadFilesUpdater`][182]
+-   **Updaters**: [`visStateUpdaters.loadFilesUpdater`][184]
 
 **Parameters**
 
@@ -610,7 +627,7 @@ Returns **{type: ActionTypes.LOAD_FILES, files: any}**
 Trigger loading file error
 
 -   **ActionTypes**: [`ActionTypes.LOAD_FILES_ERR`][12]
--   **Updaters**: [`visStateUpdaters.loadFilesErrUpdater`][183]
+-   **Updaters**: [`visStateUpdaters.loadFilesErrUpdater`][185]
 
 **Parameters**
 
@@ -623,7 +640,7 @@ Returns **{type: ActionTypes.LOAD_FILES_ERR, error: any}**
 Trigger layer click event with clicked object
 
 -   **ActionTypes**: [`ActionTypes.LAYER_CLICK`][12]
--   **Updaters**: [`visStateUpdaters.layerClickUpdater`][184]
+-   **Updaters**: [`visStateUpdaters.layerClickUpdater`][186]
 
 **Parameters**
 
@@ -636,7 +653,7 @@ Returns **{type: ActionTypes.LAYER_CLICK, info: info}**
 Trigger layer hover event with hovered object
 
 -   **ActionTypes**: [`ActionTypes.LAYER_HOVER`][12]
--   **Updaters**: [`visStateUpdaters.layerHoverUpdater`][185]
+-   **Updaters**: [`visStateUpdaters.layerHoverUpdater`][187]
 
 **Parameters**
 
@@ -649,7 +666,7 @@ Returns **{type: ActionTypes.LAYER_HOVER, info: info}**
 Trigger map click event, unselect clicked object
 
 -   **ActionTypes**: [`ActionTypes.MAP_CLICK`][12]
--   **Updaters**: [`visStateUpdaters.mapClickUpdater`][186]
+-   **Updaters**: [`visStateUpdaters.mapClickUpdater`][188]
 
 Returns **{type: ActionTypes.MAP_CLICK}** 
 
@@ -657,10 +674,10 @@ Returns **{type: ActionTypes.MAP_CLICK}**
 
 Trigger map mouse moveevent, payload would be
 React-map-gl PointerEvent
-[https://uber.github.io/react-map-gl/#/documentation/api-reference/pointer-event][187]
+[https://uber.github.io/react-map-gl/#/documentation/api-reference/pointer-event][189]
 
 -   **ActionTypes**: [`ActionTypes.MOUSE_MOVE`][12]
--   **Updaters**: [`visStateUpdaters.mouseMoveUpdater`][188]
+-   **Updaters**: [`visStateUpdaters.mouseMoveUpdater`][190]
 
 **Parameters**
 
@@ -673,7 +690,7 @@ Returns **{type: ActionTypes.MAP_CLICK}**
 Remove a dataset and all layers, filters, tooltip configs that based on it
 
 -   **ActionTypes**: [`ActionTypes.REMOVE_DATASET`][12]
--   **Updaters**: [`visStateUpdaters.removeDatasetUpdater`][189]
+-   **Updaters**: [`visStateUpdaters.removeDatasetUpdater`][191]
 
 **Parameters**
 
@@ -686,11 +703,11 @@ Returns **{type: ActionTypes.REMOVE_DATASET, key: key}**
 Remove a filter from `visState.filters`, once a filter is removed, data will be re-filtered and layer will be updated
 
 -   **ActionTypes**: [`ActionTypes.REMOVE_FILTER`][12]
--   **Updaters**: [`visStateUpdaters.removeFilterUpdater`][190]
+-   **Updaters**: [`visStateUpdaters.removeFilterUpdater`][192]
 
 **Parameters**
 
--   `idx` **[Number][175]** idx of filter to be removed
+-   `idx` **[Number][177]** idx of filter to be removed
 
 Returns **{type: ActionTypes.REMOVE_FILTER, idx: idx}** 
 
@@ -699,11 +716,11 @@ Returns **{type: ActionTypes.REMOVE_FILTER, idx: idx}**
 Remove a layer
 
 -   **ActionTypes**: [`ActionTypes.REMOVE_LAYER`][12]
--   **Updaters**: [`visStateUpdaters.removeLayerUpdater`][191]
+-   **Updaters**: [`visStateUpdaters.removeLayerUpdater`][193]
 
 **Parameters**
 
--   `idx` **[Number][175]** idx of layer to be removed
+-   `idx` **[Number][177]** idx of layer to be removed
 
 Returns **{type: ActionTypes.REMOVE_LAYER, idx: idx}** 
 
@@ -712,11 +729,11 @@ Returns **{type: ActionTypes.REMOVE_LAYER, idx: idx}**
 Reorder layer, order is an array of layer indexes, index 0 will be the one at the bottom
 
 -   **ActionTypes**: [`ActionTypes.REORDER_LAYER`][12]
--   **Updaters**: [`visStateUpdaters.reorderLayerUpdater`][192]
+-   **Updaters**: [`visStateUpdaters.reorderLayerUpdater`][194]
 
 **Parameters**
 
--   `order` **[Array][164]&lt;[Number][175]>** an array of layer indexes
+-   `order` **[Array][164]&lt;[Number][177]>** an array of layer indexes
 
 **Examples**
 
@@ -733,11 +750,11 @@ Returns **{type: ActionTypes.REORDER_LAYER, order: order}**
 Update filter property
 
 -   **ActionTypes**: [`ActionTypes.SET_FILTER`][12]
--   **Updaters**: [`visStateUpdaters.setFilterUpdater`][193]
+-   **Updaters**: [`visStateUpdaters.setFilterUpdater`][195]
 
 **Parameters**
 
--   `idx` **[Number][175]** \-`idx` of filter to be updated
+-   `idx` **[Number][177]** \-`idx` of filter to be updated
 -   `prop` **[string][152]** `prop` of filter, e,g, `dataId`, `name`, `value`
 -   `value` **any** new value
 
@@ -748,35 +765,21 @@ Returns **{type: ActionTypes.SET_FILTER, idx: idx, prop: prop, value: value}**
 Set the property of a filter plot
 
 -   **ActionTypes**: [`ActionTypes.SET_FILTER_PLOT`][12]
--   **Updaters**: [`visStateUpdaters.setFilterPlotUpdater`][194]
+-   **Updaters**: [`visStateUpdaters.setFilterPlotUpdater`][196]
 
 **Parameters**
 
--   `idx` **[Number][175]** 
+-   `idx` **[Number][177]** 
 -   `newProp` **[Object][154]** key value mapping of new prop `{yAxis: 'histogram'}`
 
 Returns **{type: ActionTypes.SET_FILTER_PLOT, idx: any, newProp: any}** 
-
-### setVisibleLayersForMap
-
-Set layers to be visible in split map
-
--   **ActionTypes**: [`ActionTypes.SET_VISIBLE_LAYERS_FOR_MAP`][12]
--   **Updaters**: [`visStateUpdaters.setVisibleLayersForMapUpdater`][195]
-
-**Parameters**
-
--   `mapIndex` **[Number][175]** index of the split map
--   `layerIds` **[Array][164]&lt;[string][152]>** array of layer ids
-
-Returns **{type: ActionTypes.SET_VISIBLE_LAYERS_FOR_MAP, layerIndex: any, mapIndex: any}** 
 
 ### showDatasetTable
 
 Display dataset table in a modal
 
 -   **ActionTypes**: [`ActionTypes.SHOW_DATASET_TABLE`][12]
--   **Updaters**: [`visStateUpdaters.showDatasetTableUpdater`][196]
+-   **Updaters**: [`visStateUpdaters.showDatasetTableUpdater`][197]
 
 **Parameters**
 
@@ -789,11 +792,11 @@ Returns **{type: ActionTypes.SHOW_DATASET_TABLE, dataId: dataId}**
 Start and end filter animation
 
 -   **ActionTypes**: [`ActionTypes.TOGGLE_FILTER_ANIMATION`][12]
--   **Updaters**: [`visStateUpdaters.toggleFilterAnimationUpdater`][197]
+-   **Updaters**: [`visStateUpdaters.toggleFilterAnimationUpdater`][198]
 
 **Parameters**
 
--   `idx` **[Number][175]** idx of filter
+-   `idx` **[Number][177]** idx of filter
 
 Returns **{type: ActionTypes.TOGGLE_FILTER_ANIMATION, idx: idx}** 
 
@@ -802,11 +805,11 @@ Returns **{type: ActionTypes.TOGGLE_FILTER_ANIMATION, idx: idx}**
 Toggle visibility of a layer in a split map
 
 -   **ActionTypes**: [`ActionTypes.TOGGLE_LAYER_FOR_MAP`][12]
--   **Updaters**: [`visStateUpdaters.toggleLayerForMapUpdater`][198]
+-   **Updaters**: [`visStateUpdaters.toggleLayerForMapUpdater`][199]
 
 **Parameters**
 
--   `mapIndex` **[Number][175]** index of the split map
+-   `mapIndex` **[Number][177]** index of the split map
 -   `layerId` **[string][152]** id of the layer
 
 Returns **{type: ActionTypes.TOGGLE_LAYER_FOR_MAP, mapIndex: any, layerId: any}** 
@@ -816,12 +819,12 @@ Returns **{type: ActionTypes.TOGGLE_LAYER_FOR_MAP, mapIndex: any, layerId: any}*
 Change filter animation speed
 
 -   **ActionTypes**: [`ActionTypes.UPDATE_FILTER_ANIMATION_SPEED`][12]
--   **Updaters**: [`visStateUpdaters.updateAnimationSpeedUpdater`][199]
+-   **Updaters**: [`visStateUpdaters.updateAnimationSpeedUpdater`][200]
 
 **Parameters**
 
--   `idx` **[Number][175]**  `idx` of filter
--   `speed` **[Number][175]** `speed` to change it to. `speed` is a multiplier
+-   `idx` **[Number][177]**  `idx` of filter
+-   `speed` **[Number][177]** `speed` to change it to. `speed` is a multiplier
 
 Returns **{type: ActionTypes.UPDATE_FILTER_ANIMATION_SPEED, idx: idx, speed: speed}** 
 
@@ -830,7 +833,7 @@ Returns **{type: ActionTypes.UPDATE_FILTER_ANIMATION_SPEED, idx: idx, speed: spe
 Update layer blending mode
 
 -   **ActionTypes**: [`ActionTypes.UPDATE_LAYER_BLENDING`][12]
--   **Updaters**: [`visStateUpdaters.updateLayerBlendingUpdater`][200]
+-   **Updaters**: [`visStateUpdaters.updateLayerBlendingUpdater`][201]
 
 **Parameters**
 
@@ -843,7 +846,7 @@ Returns **{type: ActionTypes.UPDATE_LAYER_BLENDING, mode: mode}**
 Add new dataset to `visState`, with option to load a map config along with the datasets
 
 -   **ActionTypes**: [`ActionTypes.UPDATE_VIS_DATA`][12]
--   **Updaters**: [`combinedUpdaters.updateVisDataUpdater`][201], [`visStateUpdaters.updateVisDataUpdater`][202]
+-   **Updaters**: [`combinedUpdaters.updateVisDataUpdater`][202], [`visStateUpdaters.updateVisDataUpdater`][203]
 
 **Parameters**
 
@@ -877,7 +880,7 @@ It also manges which settings are selected during image and map export
 Add a notification to be displayed
 
 -   **ActionTypes**: [`ActionTypes.ADD_NOTIFICATION`][12]
--   **Updaters**: [`uiStateUpdaters.addNotificationUpdater`][203]
+-   **Updaters**: [`uiStateUpdaters.addNotificationUpdater`][204]
 
 **Parameters**
 
@@ -888,21 +891,21 @@ Add a notification to be displayed
 Delete cached export image
 
 -   **ActionTypes**: [`ActionTypes.CLEANUP_EXPORT_IMAGE`][12]
--   **Updaters**: [`uiStateUpdaters.cleanupExportImage`][204]
+-   **Updaters**: [`uiStateUpdaters.cleanupExportImage`][205]
 
 ### hideExportDropdown
 
 Hide side panel header dropdown, activated by clicking the share link on top of the side panel
 
 -   **ActionTypes**: [`ActionTypes.HIDE_EXPORT_DROPDOWN`][12]
--   **Updaters**: [`uiStateUpdaters.hideExportDropdownUpdater`][205]
+-   **Updaters**: [`uiStateUpdaters.hideExportDropdownUpdater`][206]
 
 ### openDeleteModal
 
 Toggle active map control panel
 
 -   **ActionTypes**: [`ActionTypes.OPEN_DELETE_MODAL`][12]
--   **Updaters**: [`uiStateUpdaters.openDeleteModalUpdater`][206]
+-   **Updaters**: [`uiStateUpdaters.openDeleteModalUpdater`][207]
 
 **Parameters**
 
@@ -913,7 +916,7 @@ Toggle active map control panel
 Remove a notification
 
 -   **ActionTypes**: [`ActionTypes.REMOVE_NOTIFICATION`][12]
--   **Updaters**: [`uiStateUpdaters.removeNotificationUpdater`][207]
+-   **Updaters**: [`uiStateUpdaters.removeNotificationUpdater`][208]
 
 **Parameters**
 
@@ -924,14 +927,14 @@ Remove a notification
 Whether to including data in map config, toggle between `true` or `false`
 
 -   **ActionTypes**: [`ActionTypes.SET_EXPORT_DATA`][12]
--   **Updaters**: [`uiStateUpdaters.setExportDataUpdater`][208]
+-   **Updaters**: [`uiStateUpdaters.setExportDataUpdater`][209]
 
 ### setExportDataType
 
 Set data format for exporting data
 
 -   **ActionTypes**: [`ActionTypes.SET_EXPORT_DATA_TYPE`][12]
--   **Updaters**: [`uiStateUpdaters.setExportDataTypeUpdater`][209]
+-   **Updaters**: [`uiStateUpdaters.setExportDataTypeUpdater`][210]
 
 **Parameters**
 
@@ -942,7 +945,7 @@ Set data format for exporting data
 Whether to export filtered data, `true` or `false`
 
 -   **ActionTypes**: [`ActionTypes.SET_EXPORT_FILTERED`][12]
--   **Updaters**: [`uiStateUpdaters.setExportFilteredUpdater`][210]
+-   **Updaters**: [`uiStateUpdaters.setExportFilteredUpdater`][211]
 
 **Parameters**
 
@@ -953,7 +956,7 @@ Whether to export filtered data, `true` or `false`
 Set `exportImage.setExportImageDataUri` to a dataUri
 
 -   **ActionTypes**: [`ActionTypes.SET_EXPORT_IMAGE_DATA_URI`][12]
--   **Updaters**: [`uiStateUpdaters.setExportImageDataUri`][211]
+-   **Updaters**: [`uiStateUpdaters.setExportImageDataUri`][212]
 
 **Parameters**
 
@@ -964,7 +967,7 @@ Set `exportImage.setExportImageDataUri` to a dataUri
 Set selected dataset for export
 
 -   **ActionTypes**: [`ActionTypes.SET_EXPORT_SELECTED_DATASET`][12]
--   **Updaters**: [`uiStateUpdaters.setExportSelectedDatasetUpdater`][212]
+-   **Updaters**: [`uiStateUpdaters.setExportSelectedDatasetUpdater`][213]
 
 **Parameters**
 
@@ -975,7 +978,7 @@ Set selected dataset for export
 Set `exportImage.ratio`
 
 -   **ActionTypes**: [`ActionTypes.SET_RATIO`][12]
--   **Updaters**: [`uiStateUpdaters.setRatioUpdater`][213]
+-   **Updaters**: [`uiStateUpdaters.setRatioUpdater`][214]
 
 **Parameters**
 
@@ -986,7 +989,7 @@ Set `exportImage.ratio`
 Set `exportImage.resolution`
 
 -   **ActionTypes**: [`ActionTypes.SET_RESOLUTION`][12]
--   **Updaters**: [`uiStateUpdaters.setResolutionUpdater`][214]
+-   **Updaters**: [`uiStateUpdaters.setResolutionUpdater`][215]
 
 **Parameters**
 
@@ -997,7 +1000,7 @@ Set `exportImage.resolution`
 Whether we export a mapbox access token used to create a single map html file
 
 -   **ActionTypes**: [`ActionTypes.SET_USER_MAPBOX_ACCESS_TOKEN`][12]
--   **Updaters**: [`uiStateUpdaters.setUserMapboxAccessTokenUpdater`][215]
+-   **Updaters**: [`uiStateUpdaters.setUserMapboxAccessTokenUpdater`][216]
 
 **Parameters**
 
@@ -1008,7 +1011,7 @@ Whether we export a mapbox access token used to create a single map html file
 Hide and show side panel header dropdown, activated by clicking the share link on top of the side panel
 
 -   **ActionTypes**: [`ActionTypes.SHOW_EXPORT_DROPDOWN`][12]
--   **Updaters**: [`uiStateUpdaters.showExportDropdownUpdater`][216]
+-   **Updaters**: [`uiStateUpdaters.showExportDropdownUpdater`][217]
 
 **Parameters**
 
@@ -1019,48 +1022,48 @@ Hide and show side panel header dropdown, activated by clicking the share link o
 Set `exportImage.exporting` to true
 
 -   **ActionTypes**: [`ActionTypes.START_EXPORTING_IMAGE`][12]
--   **Updaters**: [`uiStateUpdaters.startExportingImage`][217]
+-   **Updaters**: [`uiStateUpdaters.startExportingImage`][218]
 
 ### toggleLegend
 
 Set `exportImage.legend` to true or false
 
 -   **ActionTypes**: [`ActionTypes.TOGGLE_LEGEND`][12]
--   **Updaters**: [`uiStateUpdaters.toggleLegendUpdater`][218]
+-   **Updaters**: [`uiStateUpdaters.toggleLegendUpdater`][219]
 
 ### toggleMapControl
 
 Toggle active map control panel
 
 -   **ActionTypes**: [`ActionTypes.TOGGLE_MAP_CONTROL`][12]
--   **Updaters**: [`uiStateUpdaters.toggleMapControlUpdater`][219]
+-   **Updaters**: [`uiStateUpdaters.toggleMapControlUpdater`][220]
 
 **Parameters**
 
--   `panelId` **[string][152]** map control panel id, one of the keys of: [`DEFAULT_MAP_CONTROLS`][220]
+-   `panelId` **[string][152]** map control panel id, one of the keys of: [`DEFAULT_MAP_CONTROLS`][221]
 
 ### toggleModal
 
 Show and hide modal dialog
 
 -   **ActionTypes**: [`ActionTypes.TOGGLE_MODAL`][12]
--   **Updaters**: [`uiStateUpdaters.toggleModalUpdater`][221]
+-   **Updaters**: [`uiStateUpdaters.toggleModalUpdater`][222]
 
 **Parameters**
 
--   `id` **([string][152] | null)** id of modal to be shown, null to hide modals. One of:-   [`DATA_TABLE_ID`][222]
-    -   [`DELETE_DATA_ID`][223]
-    -   [`ADD_DATA_ID`][224]
-    -   [`EXPORT_IMAGE_ID`][225]
-    -   [`EXPORT_DATA_ID`][226]
-    -   [`ADD_MAP_STYLE_ID`][227]
+-   `id` **([string][152] | null)** id of modal to be shown, null to hide modals. One of:-   [`DATA_TABLE_ID`][223]
+    -   [`DELETE_DATA_ID`][224]
+    -   [`ADD_DATA_ID`][225]
+    -   [`EXPORT_IMAGE_ID`][226]
+    -   [`EXPORT_DATA_ID`][227]
+    -   [`ADD_MAP_STYLE_ID`][228]
 
 ### toggleSidePanel
 
 Toggle active side panel
 
 -   **ActionTypes**: [`ActionTypes.TOGGLE_SIDE_PANEL`][12]
--   **Updaters**: [`uiStateUpdaters.toggleSidePanelUpdater`][228]
+-   **Updaters**: [`uiStateUpdaters.toggleSidePanelUpdater`][229]
 
 **Parameters**
 
@@ -1129,11 +1132,11 @@ toggle between single and split maps.
 Fit map viewport to bounds
 
 -   **ActionTypes**: [`ActionTypes.FIT_BOUNDS`][12]
--   **Updaters**: [`mapStateUpdaters.fitBoundsUpdater`][229]
+-   **Updaters**: [`mapStateUpdaters.fitBoundsUpdater`][230]
 
 **Parameters**
 
--   `bounds` **[Array][164]&lt;[Number][175]>** as `[lngMin, latMin, lngMax, latMax]`
+-   `bounds` **[Array][164]&lt;[Number][177]>** as `[lngMin, latMin, lngMax, latMax]`
 
 **Examples**
 
@@ -1147,7 +1150,7 @@ this.props.dispatch(fitBounds([-122.23, 37.127, -122.11, 37.456]));
 Toggle between 3d and 2d map.
 
 -   **ActionTypes**: [`ActionTypes.TOGGLE_PERSPECTIVE`][12]
--   **Updaters**: [`mapStateUpdaters.togglePerspectiveUpdater`][230]
+-   **Updaters**: [`mapStateUpdaters.togglePerspectiveUpdater`][231]
 
 **Examples**
 
@@ -1161,11 +1164,11 @@ this.props.dispatch(togglePerspective());
 Toggle between single map or split maps
 
 -   **ActionTypes**: [`ActionTypes.TOGGLE_SPLIT_MAP`][12]
--   **Updaters**: [`mapStateUpdaters.toggleSplitMapUpdater`][231], [`visStateUpdaters.toggleSplitMapUpdater`][232]
+-   **Updaters**: [`mapStateUpdaters.toggleSplitMapUpdater`][232], [`visStateUpdaters.toggleSplitMapUpdater`][233]
 
 **Parameters**
 
--   `index` **[Number][175]?** index is provided, close split map at index
+-   `index` **[Number][177]?** index is provided, close split map at index
 
 **Examples**
 
@@ -1179,18 +1182,18 @@ this.props.dispatch(toggleSplitMap());
 Update map viewport
 
 -   **ActionTypes**: [`ActionTypes.UPDATE_MAP`][12]
--   **Updaters**: [`mapStateUpdaters.updateMapUpdater`][233]
+-   **Updaters**: [`mapStateUpdaters.updateMapUpdater`][234]
 
 **Parameters**
 
 -   `viewport` **[Object][154]** viewport object container one or any of these properties `width`, `height`, `latitude` `longitude`, `zoom`, `pitch`, `bearing`, `dragRotate`
-    -   `viewport.width` **[Number][175]?** Width of viewport
-    -   `viewport.height` **[Number][175]?** Height of viewport
-    -   `viewport.zoom` **[Number][175]?** Zoom of viewport
-    -   `viewport.pitch` **[Number][175]?** Camera angle in degrees (0 is straight down)
-    -   `viewport.bearing` **[Number][175]?** Map rotation in degrees (0 means north is up)
-    -   `viewport.latitude` **[Number][175]?** Latitude center of viewport on map in mercator projection
-    -   `viewport.longitude` **[Number][175]?** Longitude Center of viewport on map in mercator projection
+    -   `viewport.width` **[Number][177]?** Width of viewport
+    -   `viewport.height` **[Number][177]?** Height of viewport
+    -   `viewport.zoom` **[Number][177]?** Zoom of viewport
+    -   `viewport.pitch` **[Number][177]?** Camera angle in degrees (0 is straight down)
+    -   `viewport.bearing` **[Number][177]?** Map rotation in degrees (0 means north is up)
+    -   `viewport.latitude` **[Number][177]?** Latitude center of viewport on map in mercator projection
+    -   `viewport.longitude` **[Number][177]?** Longitude Center of viewport on map in mercator projection
     -   `viewport.dragRotate` **[boolean][155]?** Whether to enable drag and rotate map into perspective viewport
 
 **Examples**
@@ -1205,7 +1208,7 @@ this.props.dispatch(updateMap({latitude: 37.75043, longitude: -122.34679, width:
 Set the expor tmap format (html, json)
 
 -   **ActionTypes**: [`ActionTypes.SET_EXPORT_MAP_FORMAT`][12]
--   **Updaters**: [`uiStateUpdaters.setExportMapFormat`][234]
+-   **Updaters**: [`uiStateUpdaters.setExportMapFormat`][235]
 
 **Parameters**
 
@@ -1269,113 +1272,113 @@ Set the expor tmap format (html, json)
 
 [29]: #parameters-10
 
-[30]: #main
+[30]: #set3dbuildingcolor
 
-[31]: #adddatatomap
+[31]: #parameters-11
 
-[32]: #parameters-11
+[32]: #main
 
-[33]: #examples-3
+[33]: #adddatatomap
 
-[34]: #keplerglinit
+[34]: #parameters-12
 
-[35]: #parameters-12
+[35]: #examples-3
 
-[36]: #receivemapconfig
+[36]: #keplerglinit
 
 [37]: #parameters-13
 
-[38]: #examples-4
+[38]: #receivemapconfig
 
-[39]: #resetmapconfig
+[39]: #parameters-14
 
-[40]: #visstateactions
+[40]: #examples-4
 
-[41]: #addfilter
+[41]: #resetmapconfig
 
-[42]: #parameters-14
+[42]: #visstateactions
 
-[43]: #addlayer
+[43]: #addfilter
 
 [44]: #parameters-15
 
-[45]: #enlargefilter
+[45]: #addlayer
 
 [46]: #parameters-16
 
-[47]: #interactionconfigchange
+[47]: #enlargefilter
 
 [48]: #parameters-17
 
-[49]: #layerconfigchange
+[49]: #interactionconfigchange
 
 [50]: #parameters-18
 
-[51]: #layertextlabelchange
+[51]: #layerconfigchange
 
 [52]: #parameters-19
 
-[53]: #layertypechange
+[53]: #layertextlabelchange
 
 [54]: #parameters-20
 
-[55]: #layervisconfigchange
+[55]: #layertypechange
 
 [56]: #parameters-21
 
-[57]: #layervisualchannelconfigchange
+[57]: #layervisconfigchange
 
 [58]: #parameters-22
 
-[59]: #loadfiles
+[59]: #layervisualchannelconfigchange
 
 [60]: #parameters-23
 
-[61]: #loadfileserr
+[61]: #loadfiles
 
 [62]: #parameters-24
 
-[63]: #onlayerclick
+[63]: #loadfileserr
 
 [64]: #parameters-25
 
-[65]: #onlayerhover
+[65]: #onlayerclick
 
 [66]: #parameters-26
 
-[67]: #onmapclick
+[67]: #onlayerhover
 
-[68]: #onmousemove
+[68]: #parameters-27
 
-[69]: #parameters-27
+[69]: #onmapclick
 
-[70]: #removedataset
+[70]: #onmousemove
 
 [71]: #parameters-28
 
-[72]: #removefilter
+[72]: #removedataset
 
 [73]: #parameters-29
 
-[74]: #removelayer
+[74]: #removefilter
 
 [75]: #parameters-30
 
-[76]: #reorderlayer
+[76]: #removelayer
 
 [77]: #parameters-31
 
-[78]: #examples-5
+[78]: #reorderlayer
 
-[79]: #setfilter
+[79]: #parameters-32
 
-[80]: #parameters-32
+[80]: #examples-5
 
-[81]: #setfilterplot
+[81]: #setfilter
 
 [82]: #parameters-33
 
-[83]: #setvisiblelayersformap
+[83]: #setfilterplot
 
 [84]: #parameters-34
 
@@ -1539,142 +1542,144 @@ Set the expor tmap format (html, json)
 
 [164]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
 
-[165]: ../reducers/composers.md#combinedupdatersadddatatomapupdater
+[165]: ../reducers/map-style.md#mapstyleupdatersset3dbuildingcolorupdater
 
-[166]: ../reducers/map-style.md#mapstyleupdatersinitmapstyleupdater
+[166]: ../reducers/composers.md#combinedupdatersadddatatomapupdater
 
-[167]: ../reducers/map-state.md#mapstateupdatersreceivemapconfigupdater
+[167]: ../reducers/map-style.md#mapstyleupdatersinitmapstyleupdater
 
-[168]: ../reducers/map-style.md#mapstyleupdatersreceivemapconfigupdater
+[168]: ../reducers/map-state.md#mapstateupdatersreceivemapconfigupdater
 
-[169]: ../reducers/vis-state.md#visstateupdatersreceivemapconfigupdater
+[169]: ../reducers/map-style.md#mapstyleupdatersreceivemapconfigupdater
 
-[170]: ../reducers/map-style.md#mapstyleupdatersresetmapconfigmapstyleupdater
+[170]: ../reducers/vis-state.md#visstateupdatersreceivemapconfigupdater
 
-[171]: ../reducers/vis-state.md#visstateupdatersresetmapconfigvisstateupdater
+[171]: ../reducers/map-state.md#mapstateupdatersresetmapconfigupdater
 
-[172]: ../reducers/vis-state.md#visstateupdatersaddfilterupdater
+[172]: ../reducers/map-style.md#mapstyleupdatersresetmapconfigmapstyleupdater
 
-[173]: ../reducers/vis-state.md#visstateupdatersaddlayerupdater
+[173]: ../reducers/vis-state.md#visstateupdatersresetmapconfigupdater
 
-[174]: ../reducers/vis-state.md#visstateupdatersenlargefilterupdater
+[174]: ../reducers/vis-state.md#visstateupdatersaddfilterupdater
 
-[175]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
+[175]: ../reducers/vis-state.md#visstateupdatersaddlayerupdater
 
-[176]: ../reducers/vis-state.md#visstateupdatersinteractionconfigchangeupdater
+[176]: ../reducers/vis-state.md#visstateupdatersenlargefilterupdater
 
-[177]: ../reducers/vis-state.md#visstateupdaterslayerconfigchangeupdater
+[177]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
 
-[178]: ../reducers/vis-state.md#visstateupdaterslayertextlabelchangeupdater
+[178]: ../reducers/vis-state.md#visstateupdatersinteractionconfigchangeupdater
 
-[179]: ../reducers/vis-state.md#visstateupdaterslayertypechangeupdater
+[179]: ../reducers/vis-state.md#visstateupdaterslayerconfigchangeupdater
 
-[180]: ../reducers/vis-state.md#visstateupdaterslayervisconfigchangeupdater
+[180]: ../reducers/vis-state.md#visstateupdaterslayertextlabelchangeupdater
 
-[181]: ../reducers/vis-state.md#visstateupdaterslayervisualchannelchangeupdater
+[181]: ../reducers/vis-state.md#visstateupdaterslayertypechangeupdater
 
-[182]: ../reducers/vis-state.md#visstateupdatersloadfilesupdater
+[182]: ../reducers/vis-state.md#visstateupdaterslayervisconfigchangeupdater
 
-[183]: ../reducers/vis-state.md#visstateupdatersloadfileserrupdater
+[183]: ../reducers/vis-state.md#visstateupdaterslayervisualchannelchangeupdater
 
-[184]: ../reducers/vis-state.md#visstateupdaterslayerclickupdater
+[184]: ../reducers/vis-state.md#visstateupdatersloadfilesupdater
 
-[185]: ../reducers/vis-state.md#visstateupdaterslayerhoverupdater
+[185]: ../reducers/vis-state.md#visstateupdatersloadfileserrupdater
 
-[186]: ../reducers/vis-state.md#visstateupdatersmapclickupdater
+[186]: ../reducers/vis-state.md#visstateupdaterslayerclickupdater
 
-[187]: https://uber.github.io/react-map-gl/#/documentation/api-reference/pointer-event
+[187]: ../reducers/vis-state.md#visstateupdaterslayerhoverupdater
 
-[188]: ../reducers/vis-state.md#visstateupdatersmousemoveupdater
+[188]: ../reducers/vis-state.md#visstateupdatersmapclickupdater
 
-[189]: ../reducers/vis-state.md#visstateupdatersremovedatasetupdater
+[189]: https://uber.github.io/react-map-gl/#/documentation/api-reference/pointer-event
 
-[190]: ../reducers/vis-state.md#visstateupdatersremovefilterupdater
+[190]: ../reducers/vis-state.md#visstateupdatersmousemoveupdater
 
-[191]: ../reducers/vis-state.md#visstateupdatersremovelayerupdater
+[191]: ../reducers/vis-state.md#visstateupdatersremovedatasetupdater
 
-[192]: ../reducers/vis-state.md#visstateupdatersreorderlayerupdater
+[192]: ../reducers/vis-state.md#visstateupdatersremovefilterupdater
 
-[193]: ../reducers/vis-state.md#visstateupdaterssetfilterupdater
+[193]: ../reducers/vis-state.md#visstateupdatersremovelayerupdater
 
-[194]: ../reducers/vis-state.md#visstateupdaterssetfilterplotupdater
+[194]: ../reducers/vis-state.md#visstateupdatersreorderlayerupdater
 
-[195]: ../reducers/vis-state.md#visstateupdaterssetvisiblelayersformapupdater
+[195]: ../reducers/vis-state.md#visstateupdaterssetfilterupdater
 
-[196]: ../reducers/vis-state.md#visstateupdatersshowdatasettableupdater
+[196]: ../reducers/vis-state.md#visstateupdaterssetfilterplotupdater
 
-[197]: ../reducers/vis-state.md#visstateupdaterstogglefilteranimationupdater
+[197]: ../reducers/vis-state.md#visstateupdatersshowdatasettableupdater
 
-[198]: ../reducers/vis-state.md#visstateupdaterstogglelayerformapupdater
+[198]: ../reducers/vis-state.md#visstateupdaterstogglefilteranimationupdater
 
-[199]: ../reducers/vis-state.md#visstateupdatersupdateanimationspeedupdater
+[199]: ../reducers/vis-state.md#visstateupdaterstogglelayerformapupdater
 
-[200]: ../reducers/vis-state.md#visstateupdatersupdatelayerblendingupdater
+[200]: ../reducers/vis-state.md#visstateupdatersupdateanimationspeedupdater
 
-[201]: ../reducers/composers.md#combinedupdatersupdatevisdataupdater
+[201]: ../reducers/vis-state.md#visstateupdatersupdatelayerblendingupdater
 
-[202]: ../reducers/vis-state.md#visstateupdatersupdatevisdataupdater
+[202]: ../reducers/composers.md#combinedupdatersupdatevisdataupdater
 
-[203]: ../reducers/ui-state.md#uistateupdatersaddnotificationupdater
+[203]: ../reducers/vis-state.md#visstateupdatersupdatevisdataupdater
 
-[204]: ../reducers/ui-state.md#uistateupdaterscleanupexportimage
+[204]: ../reducers/ui-state.md#uistateupdatersaddnotificationupdater
 
-[205]: ../reducers/ui-state.md#uistateupdatershideexportdropdownupdater
+[205]: ../reducers/ui-state.md#uistateupdaterscleanupexportimage
 
-[206]: ../reducers/ui-state.md#uistateupdatersopendeletemodalupdater
+[206]: ../reducers/ui-state.md#uistateupdatershideexportdropdownupdater
 
-[207]: ../reducers/ui-state.md#uistateupdatersremovenotificationupdater
+[207]: ../reducers/ui-state.md#uistateupdatersopendeletemodalupdater
 
-[208]: ../reducers/ui-state.md#uistateupdaterssetexportdataupdater
+[208]: ../reducers/ui-state.md#uistateupdatersremovenotificationupdater
 
-[209]: ../reducers/ui-state.md#uistateupdaterssetexportdatatypeupdater
+[209]: ../reducers/ui-state.md#uistateupdaterssetexportdataupdater
 
-[210]: ../reducers/ui-state.md#uistateupdaterssetexportfilteredupdater
+[210]: ../reducers/ui-state.md#uistateupdaterssetexportdatatypeupdater
 
-[211]: ../reducers/ui-state.md#uistateupdaterssetexportimagedatauri
+[211]: ../reducers/ui-state.md#uistateupdaterssetexportfilteredupdater
 
-[212]: ../reducers/ui-state.md#uistateupdaterssetexportselecteddatasetupdater
+[212]: ../reducers/ui-state.md#uistateupdaterssetexportimagedatauri
 
-[213]: ../reducers/ui-state.md#uistateupdaterssetratioupdater
+[213]: ../reducers/ui-state.md#uistateupdaterssetexportselecteddatasetupdater
 
-[214]: ../reducers/ui-state.md#uistateupdaterssetresolutionupdater
+[214]: ../reducers/ui-state.md#uistateupdaterssetratioupdater
 
-[215]: ../reducers/ui-state.md#uistateupdaterssetusermapboxaccesstokenupdater
+[215]: ../reducers/ui-state.md#uistateupdaterssetresolutionupdater
 
-[216]: ../reducers/ui-state.md#uistateupdatersshowexportdropdownupdater
+[216]: ../reducers/ui-state.md#uistateupdaterssetusermapboxaccesstokenupdater
 
-[217]: ../reducers/ui-state.md#uistateupdatersstartexportingimage
+[217]: ../reducers/ui-state.md#uistateupdatersshowexportdropdownupdater
 
-[218]: ../reducers/ui-state.md#uistateupdaterstogglelegendupdater
+[218]: ../reducers/ui-state.md#uistateupdatersstartexportingimage
 
-[219]: ../reducers/ui-state.md#uistateupdaterstogglemapcontrolupdater
+[219]: ../reducers/ui-state.md#uistateupdaterstogglelegendupdater
 
-[220]: #default_map_controls
+[220]: ../reducers/ui-state.md#uistateupdaterstogglemapcontrolupdater
 
-[221]: ../reducers/ui-state.md#uistateupdaterstogglemodalupdater
+[221]: #default_map_controls
 
-[222]: ../constants/default-settings.md#data_table_id
+[222]: ../reducers/ui-state.md#uistateupdaterstogglemodalupdater
 
-[223]: ../constants/default-settings.md#delete_data_id
+[223]: ../constants/default-settings.md#data_table_id
 
-[224]: ../constants/default-settings.md#add_data_id
+[224]: ../constants/default-settings.md#delete_data_id
 
-[225]: ../constants/default-settings.md#export_image_id
+[225]: ../constants/default-settings.md#add_data_id
 
-[226]: ../constants/default-settings.md#export_data_id
+[226]: ../constants/default-settings.md#export_image_id
 
-[227]: ../constants/default-settings.md#add_map_style_id
+[227]: ../constants/default-settings.md#export_data_id
 
-[228]: ../reducers/ui-state.md#uistateupdaterstogglesidepanelupdater
+[228]: ../constants/default-settings.md#add_map_style_id
 
-[229]: ../reducers/map-state.md#mapstateupdatersfitboundsupdater
+[229]: ../reducers/ui-state.md#uistateupdaterstogglesidepanelupdater
 
-[230]: ../reducers/map-state.md#mapstateupdaterstoggleperspectiveupdater
+[230]: ../reducers/map-state.md#mapstateupdatersfitboundsupdater
 
-[231]: ../reducers/map-state.md#mapstateupdaterstogglesplitmapupdater
+[231]: ../reducers/map-state.md#mapstateupdaterstoggleperspectiveupdater
 
-[232]: ../reducers/vis-state.md#visstateupdaterstogglesplitmapupdater
+[232]: ../reducers/map-state.md#mapstateupdaterstogglesplitmapupdater
 
-[233]: ../reducers/map-state.md#mapstateupdatersupdatemapupdater
+[233]: ../reducers/vis-state.md#visstateupdaterstogglesplitmapupdater
 
-[234]: ../reducers/ui-state.md#uistateupdaterssetexportmapformat
+[234]: ../reducers/map-state.md#mapstateupdatersupdatemapupdater
+
+[235]: ../reducers/ui-state.md#uistateupdaterssetexportmapformat
