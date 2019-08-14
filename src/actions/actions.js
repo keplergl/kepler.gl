@@ -45,10 +45,10 @@ import {createAction} from 'redux-actions';
    *
    * @param {Object} data.options
    * @param {boolean} data.options.centerMap `default: true` if `centerMap` is set to `true` kepler.gl will
-   * place the map view within the data points boundaries
+   * place the map view within the data points boundaries.  `options.centerMap` will override `config.mapState` if passed in.
    * @param {boolean} data.options.readOnly `default: false` if `readOnly` is set to `true`
    * the left setting panel will be hidden
-   * @param {boolean} data.options.keepExistingConfig whether to keep exiting layer filter and interaction config `default: false`.
+   * @param {boolean} data.options.keepExistingConfig whether to keep exiting map data and associated layer filter  interaction config `default: false`.
    * @param {Object} data.config this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
    * @public
    * @example
