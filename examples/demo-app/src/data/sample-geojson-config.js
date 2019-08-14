@@ -195,36 +195,7 @@ const config = {
         }
       },
       layerBlending: 'normal'
-      // splitMaps: [
-      //   {
-      //     layers: {
-      //       ze2p6id: {
-      //         isAvailable: true,
-      //         isVisible: true
-      //       },
-      //       ho3fgt9: {
-      //         isAvailable: true,
-      //         isVisible: false
-      //       }
-      //     }
-      //   },
-      //   {
-      //     layers: {
-      //       ze2p6id: {
-      //         isAvailable: true,
-      //         isVisible: false
-      //       },
-      //       ho3fgt9: {
-      //         isAvailable: true,
-      //         isVisible: true
-      //       }
-      //     }
-      //   }
-      // ]
     }
-    // mapState: {
-    //   isSplit: true
-    // }
   }
 };
 

@@ -120,7 +120,7 @@ class App extends Component {
     //   window.setTimeout(this._showBanner, 3000);
     // }
     // load sample data
-    this._loadSampleData();
+    // this._loadSampleData();
     // Notifications
     // this._loadMockNotifications();
   }
@@ -161,10 +161,10 @@ class App extends Component {
   }
 
   _loadSampleData() {
-    // this._loadTripData();
+    this._loadTripData();
     // this._loadIconData();
-    this._loadH3HexagonData();
-    this._loadGeojsonData();
+    // this._loadGeojsonData();
+    // this._loadH3HexagonData();
   }
 
   _loadTripData() {
@@ -175,8 +175,7 @@ class App extends Component {
             label: 'Sample Taxi Trips in New York City',
             id: 'test_trip_data'
           },
-          // data: sampleTripData
-          data: processCsvData(testCsvData)
+          data: sampleTripData
         },
         options: {
           centerMap: true,

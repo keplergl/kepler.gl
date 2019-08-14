@@ -50,29 +50,26 @@ export default {
     {
       name: 'tpep_pickup_datetime',
       format: 'YYYY-M-D H:m:s',
-      tableFieldIndex: 1,
       type: 'timestamp'
     },
     {
       name: 'tpep_dropoff_datetime',
       format: 'YYYY-M-D H:m:s',
-      tableFieldIndex: 2,
       type: 'timestamp'
     },
     {
       name: 'passenger_count',
       format: '',
-      tableFieldIndex: 3,
       type: 'integer'
     },
-    {name: 'trip_distance', format: '', tableFieldIndex: 4, type: 'real'},
-    {name: 'pickup_longitude', format: '', tableFieldIndex: 5, type: 'real'},
-    {name: 'pickup_latitude', format: '', tableFieldIndex: 6, type: 'real'},
-    {name: 'dropoff_longitude', format: '', tableFieldIndex: 7, type: 'real'},
-    {name: 'dropoff_latitude', format: '', tableFieldIndex: 8, type: 'real'},
-    {name: 'fare_amount', format: '', tableFieldIndex: 9, type: 'real'},
-    {name: 'is_completed', format: '', tableFieldIndex: 10, type: 'boolean'},
-    {name: 'fare_type', format: '', tableFieldIndex: 11, type: 'string'}
+    {name: 'trip_distance', format: '', type: 'real'},
+    {name: 'pickup_longitude', format: '', type: 'real'},
+    {name: 'pickup_latitude', format: '', type: 'real'},
+    {name: 'dropoff_longitude', format: '', type: 'real'},
+    {name: 'dropoff_latitude', format: '', type: 'real'},
+    {name: 'fare_amount', format: '', type: 'real'},
+    {name: 'is_completed', format: '', type: 'boolean'},
+    {name: 'fare_type', format: '', type: 'string'}
   ],
   rows: [
     [
