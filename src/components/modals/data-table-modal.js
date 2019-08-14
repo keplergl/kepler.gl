@@ -90,20 +90,6 @@ function DataTableModalFactory(DataGrid) {
     const activeDataset = datasets[dataId];
     const rows = activeDataset.data;
 
-    const {columns, dataColumnMap} = activeDataset.fields.reduce((acc, field, index) => {
-      const valid = field.name !== '_geojson';
-      return {
-        columns:[
-          ...acc.columns,
-          ...(valid ? [field] : [])
-        ],
-        dataColumnMap: {
-          ...acc.dataColumnMap,
-          ...(valid ? {[(acc.columns.length)]: index} : {})
-        }
-      }
-    }, {columns: [], dataColumnMap: {}});
-
     return (
       <StyledModal className="dataset-modal" >
         <DatasetTabs
@@ -112,11 +98,10 @@ function DataTableModalFactory(DataGrid) {
           showDatasetTable={showDatasetTable}
         />
         <DataGrid
-          dataColumnMap={dataColumnMap}
           width={width}
           height={height}
           rows={rows}
-          columns={columns}
+          columns={activeDataset.fields}
         />
       </StyledModal>
     );

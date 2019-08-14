@@ -24,7 +24,7 @@ import {MultiGrid} from 'react-virtualized';
 import styled, {withTheme}from 'styled-components';
 import FieldToken from 'components/common/field-token';
 import {Clock} from 'components/common/icons/index';
-import {ALL_FIELD_TYPES} from 'constants/default-settings';
+import {parseFieldValue} from '../../utils/data-utils';
 
 const DataGridWrapper = styled.div`
   .ReactVirtualized__Grid:focus,
@@ -33,6 +33,21 @@ const DataGridWrapper = styled.div`
   }
   .ReactVirtualized__Grid__innerScrollContainer {
     ${props => props.theme.modalScrollBar};
+  }
+  
+  .ReactVirtualized__Grid {
+    .column-0 .cell {
+      padding-left: 24px;
+    }
+    
+    .cell {
+      overflow-y: scroll;
+      overflow-x: hidden;
+    }
+
+    .last .cell {
+      padding-right: 24px;
+    }
   }
 `;
 
@@ -54,26 +69,30 @@ const StyledFieldHeader = styled.div`
   }
   
   .icon-wrapper {
-    marginRight: ${props => props.type === 'timestamp' ? '2px' : '0'};
+    margin-right: ${props => props.type === 'timestamp' ? '2px' : '0'};
     height: 16px;
   }
 `;
 
-const FieldHeaderTemplate = ({value, type}) => (
-  <StyledFieldHeader type={type} title={value}>
-    <div className="label-wrapper">
-      <div className="icon-wrapper">
-        {type === 'timestamp' ? <Clock height="16px" /> : null}
+export const FieldHeaderFactory = () => {
+  const Header = ({className, value, type}) => (
+    <StyledFieldHeader className={className || ''} type={type} title={value}>
+      <div className="label-wrapper">
+        <div className="icon-wrapper">
+          {type === 'timestamp' ? <Clock height="16px" /> : null}
+        </div>
+        <span>{value}</span>
       </div>
-      <span>{value}</span>
-    </div>
-    <div className="field-wrapper">
-      <FieldToken type={type} />
-    </div>
-  </StyledFieldHeader>
-);
+      <div className="field-wrapper">
+        <FieldToken type={type} />
+      </div>
+    </StyledFieldHeader>
+  );
 
-export const FieldHeaderFactory = () => FieldHeaderTemplate;
+  Header.displayName = 'Header';
+
+  return Header;
+};
 
 const StyledCell = styled.div`
   display: flex;
@@ -85,21 +104,31 @@ const StyledCell = styled.div`
   border-bottom: ${props => props.theme.panelBorderLT};
   color: ${props => props.theme.labelColorLT};
   text-overflow: ellipsis;
-  white-space: pre-wrap;
-  word-wrap: break-spaces;
   height: 100%;
+  width: 100%;
+  
+  span {
+    overflow: scroll;
+    text-overflow: ellipsis;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    width: 100%;
+  }
 `;
 
-const CellTemplate = ({value, type}) => {
-  const content = type === ALL_FIELD_TYPES.boolean ? String(value) : value;
-  return (
-    <StyledCell title={content}>
-      <span>{content}</span>
-    </StyledCell>
-  );
-};
+export const CellFactory = () => {
+  const Cell = ({className, value}) => {
+    return (
+      <StyledCell className={className || ''} title={value}>
+        <span>{value}</span>
+      </StyledCell>
+    );
+  };
 
-export const CellFactory = () => CellTemplate;
+  Cell.displayName = 'Cell';
+
+  return Cell;
+};
 
 DataGridFactory.deps = [
   FieldHeaderFactory,
@@ -122,26 +151,21 @@ function DataGridFactory(
     _cellRenderer = ({columnIndex, key, rowIndex, style}) => {
       const {columns, rows} = this.props;
 
+      const isLast = columnIndex === columns.length - 1;
+
       // rowIndex -1 because data rows start rendering at index 1 and we normalize back using the -1 param
       const className = `${rowIndex === 0
-        ? `header-${columnIndex}`
-        : `row-${rowIndex-1}`} column-${columnIndex}`;
+        ? `${isLast ? 'last' : ''} header-${columnIndex}`
+        : `${isLast ? 'last' : ''} row-${rowIndex-1}`} column-${columnIndex}`;
 
       const type = columns[columnIndex].type;
 
-      let content = null;
-      if (rowIndex) {
-        const {dataColumnMap = {}} = this.props;
-        const dataIndex = dataColumnMap[columnIndex] !== null || dataColumnMap[columnIndex] !== undefined
-          ? dataColumnMap[columnIndex] : columnIndex;
-        content = (<Cell className={`cell ${type}`} value={rows[rowIndex - 1][dataIndex]} type={type} />);
-      } else {
-        content = (<FieldHeader className={`header-cell ${type}`} value={columns[columnIndex].name} type={type} />);
-      }
-
       return (
         <div key={key} style={style} className={className}>
-          {content}
+          {rowIndex === 0
+            ? (<FieldHeader className={`header-cell ${type}`} value={columns[columnIndex].name} type={type} />)
+            : (<Cell className={`cell ${type}`} value={parseFieldValue(rows[rowIndex - 1][columnIndex], type)} type={type} />)
+          }
         </div>
       );
     };
