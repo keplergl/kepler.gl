@@ -69,9 +69,9 @@ test('Components -> DataTableModal.render', t => {
   t.equal(wrapper.find(DataTableModal).length, 1, 'should render DataTableModal data');
   t.equal(wrapper.find(DatasetTabs).length, 1, 'should render DatasetTabs');
   t.equal(wrapper.find(DatasetModalTab).length, 1, 'should render 1 dataset-modal-catalog');
-  t.equal(wrapper.find('.header-cell').length, testFields.length, `should render ${testFields.length} headers`);
-  t.equal(wrapper.find('.cell').length, testFields.length * rows, `should render ${testFields.length * rows} cells`);
-  t.equal(wrapper.find('.cell.boolean').length, 10, 'should render 10 cells');
+  t.equal(wrapper.find('Header').length, testFields.length, `should render ${testFields.length} headers`);
+  t.equal(wrapper.find('Cell').length, testFields.length * rows, `should render ${testFields.length * rows} cells`);
+  t.equal(wrapper.find('StyledComponent.cell.boolean').length, 10, 'should render 10 cells');
 
   const expectedRows = {
     0: [

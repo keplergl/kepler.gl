@@ -229,6 +229,8 @@ export const notificationPanelItemHeight = 60;
 const columnWidth = 200;
 const cellHeaderHeight = 72;
 const cellHeight = 48;
+const extendCellHeight = 2 * cellHeight;
+const extendColumnWidth = 2 * columnWidth;
 const gridDefaultWidth = 800;
 const gridDefaultHeight = 600;
 
@@ -958,8 +960,10 @@ export const theme = {
 
   // datagrid
   columnWidth,
+  extendColumnWidth,
   cellHeaderHeight,
   cellHeight,
+  extendCellHeight,
   gridDefaultWidth,
   gridDefaultHeight,
 

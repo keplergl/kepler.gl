@@ -22,9 +22,11 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {MultiGrid} from 'react-virtualized';
 import styled, {withTheme}from 'styled-components';
+import {createSelector} from 'reselect';
 import FieldToken from 'components/common/field-token';
 import {Clock} from 'components/common/icons/index';
-import {parseFieldValue} from '../../utils/data-utils';
+import {parseFieldValue} from 'utils/data-utils';
+import {ALL_FIELD_TYPES} from 'constants';
 
 const DataGridWrapper = styled.div`
   .ReactVirtualized__Grid:focus,
@@ -117,13 +119,11 @@ const StyledCell = styled.div`
 `;
 
 export const CellFactory = () => {
-  const Cell = ({className, value}) => {
-    return (
-      <StyledCell className={className || ''} title={value}>
-        <span>{value}</span>
-      </StyledCell>
-    );
-  };
+  const Cell = ({className, value}) => (
+    <StyledCell className={className || ''} title={value}>
+      <span>{value}</span>
+    </StyledCell>
+  );
 
   Cell.displayName = 'Cell';
 
@@ -148,6 +148,11 @@ function DataGridFactory(
       width: PropTypes.number.isRequired
     };
 
+    columnsSelector = props => props.columns;
+    hasGeojson = createSelector(this.columnsSelector, columns =>
+      columns.some(c => c.type === ALL_FIELD_TYPES.geojson)
+    );
+
     _cellRenderer = ({columnIndex, key, rowIndex, style}) => {
       const {columns, rows} = this.props;
 
@@ -160,6 +165,7 @@ function DataGridFactory(
 
       const type = columns[columnIndex].type;
 
+      // console.error(className);
       return (
         <div key={key} style={style} className={className}>
           {rowIndex === 0
@@ -172,7 +178,12 @@ function DataGridFactory(
 
     _rowHeight = ({index}) => index === 0
       ? this.props.theme.cellHeaderHeight
-      : this.props.theme.cellHeight;
+      : this.hasGeojson(this.props) ? this.props.theme.extendCellHeight : this.props.theme.cellHeight;
+
+    _columnWidth = ({index}) => {
+      const isGeojsonField = this.props.columns[index].type === ALL_FIELD_TYPES.geojson;
+      return isGeojsonField ? this.props.theme.extendColumnWidth : this.props.theme.columnWidth;
+    };
 
     render() {
       const {columns, height, rows, theme, width} = this.props;
@@ -181,7 +192,7 @@ function DataGridFactory(
         <DataGridWrapper className="datagrid-wrapper">
           <MultiGrid
             cellRenderer={this._cellRenderer}
-            columnWidth={theme.columnWidth}
+            columnWidth={this._columnWidth}
             columnCount={columns.length}
             fixedRowCount={1}
             enableFixedRowScroll={true}
