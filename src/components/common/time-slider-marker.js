@@ -114,7 +114,7 @@ export default class TimeSliderMarker extends Component {
         width={this.props.width}
         height={height}
       >
-        <g ref={this.xAxis} transform="translate(0, 0)" />
+        <g className="x axis" ref={this.xAxis} transform="translate(0, 0)" />
       </TimeSliderContainer>
     );
   }

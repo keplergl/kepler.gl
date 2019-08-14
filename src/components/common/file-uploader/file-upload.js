@@ -246,9 +246,9 @@ export default class FileUpload extends Component {
           type="file"
           onChange={this._onChange}
         />
-        {FileDrop && this.frame.current ? (
+        {FileDrop ? (
           <FileDrop
-            frame={this.frame.current}
+            frame={this.frame.current || document}
             targetAlwaysVisible
             onDragOver={() => this._toggleDragState(true)}
             onDragLeave={() => this._toggleDragState(false)}
