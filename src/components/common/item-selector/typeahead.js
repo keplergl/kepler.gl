@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {Component, createRef} from 'react';
 import PropTypes from 'prop-types';
 import fuzzy from 'fuzzy';
 import classNames from 'classnames';
@@ -168,10 +168,10 @@ export default class Typeahead extends Component {
     });
 
     // call focus on entry or div to trigger key events listener
-    if (this.entry) {
-      this.entry.focus();
+    if (this.entry.current) {
+      this.entry.current.focus();
     } else {
-      this.root.focus();
+      this.root.current.focus();
     }
   }
 
@@ -183,6 +183,9 @@ export default class Typeahead extends Component {
 
     this.setState({searchResults});
   }
+
+  root = createRef();
+  entry = createRef();
 
   _shouldSkipSearch(input) {
     const emptyValue = !input || input.trim().length === 0;
@@ -207,8 +210,8 @@ export default class Typeahead extends Component {
   }
 
   focus() {
-    if (this.entry) {
-      this.entry.focus();
+    if (this.entry.current) {
+      this.entry.current.focus();
     }
   }
 
@@ -285,7 +288,7 @@ export default class Typeahead extends Component {
   // use () => {} to avoid binding 'this'
   _onTextEntryUpdated = () => {
     if (this.props.searchable) {
-      const value = this.entry.value;
+      const value = this.entry.current.value;
 
       this.setState({
         searchResults: this.getOptionsForValue(value, this.props.options),
@@ -480,9 +483,7 @@ export default class Typeahead extends Component {
     return (
       <TypeaheadWrapper
         className={classList}
-        ref={comp => {
-          this.root = comp;
-        }}
+        ref={this.root}
         tabIndex="0"
         onKeyDown={this._onKeyDown}
         onKeyPress={this.props.onKeyPress}
@@ -493,9 +494,7 @@ export default class Typeahead extends Component {
         {this.props.searchable ? (
         <InputBox>
           <TypeaheadInput
-            ref={comp => {
-              this.entry = comp;
-            }}
+            ref={this.entry}
             type="text"
             disabled={this.props.disabled}
             {...this.props.inputProps}

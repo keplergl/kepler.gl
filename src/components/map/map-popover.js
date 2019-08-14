@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {PureComponent} from 'react';
+import React, {PureComponent, createRef} from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import LayerHoverInfoFactory from './layer-hover-info';
@@ -109,8 +109,10 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
       this._setContainerSize();
     }
 
+    popover = createRef();
+
     _setContainerSize() {
-      const node = this.popover;
+      const node = this.popover.current;
       if (!node) {
         return;
       }
@@ -152,9 +154,7 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
 
       return (
         <StyledMapPopover
-          ref={comp => {
-            this.popover = comp;
-          }}
+          ref={this.popover}
           className="map-popover"
           style={{
             ...style,

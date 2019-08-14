@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {Component, createRef} from 'react';
 import {console as Console} from 'global/window';
 import {bindActionCreators} from 'redux';
 import styled, {ThemeProvider, withTheme}  from 'styled-components';
@@ -124,6 +124,8 @@ function KeplerGlFactory(
         this._handleResize(nextProps);
       }
     }
+
+    root = createRef();
 
     /* selector */
     themeSelector = props => props.theme;
@@ -297,9 +299,7 @@ function KeplerGlFactory(
             }}
             className="kepler-gl"
             id={`kepler-gl__${id}`}
-            ref={node => {
-              this.root = node;
-            }}
+            ref={this.root}
           >
             <NotificationPanel {...notificationPanelFields} />
             {!uiState.readOnly && <SidePanel {...sideFields} />}
@@ -338,7 +338,7 @@ function KeplerGlFactory(
               visStateActions={visStateActions}
               uiStateActions={uiStateActions}
               mapStyleActions={mapStyleActions}
-              rootNode={this.root}
+              rootNode={this.root.current}
               containerW={containerW}
               containerH={mapState.height}
             />

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {Component, createRef} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
@@ -40,7 +40,7 @@ const SliderWrapper = styled.div`
   position: relative;
 `;
 
-const RangeInputWrapper =styled.div`
+const RangeInputWrapper = styled.div`
   margin-top: 6px;
   display: flex;
   justify-content: space-between;
@@ -84,6 +84,10 @@ export default class RangeSlider extends Component {
   componentDidUpdate() {
     this._resize();
   }
+
+  sliderContainer = createRef();
+  inputValue0 = createRef();
+  inputValue1 = createRef();
 
   _setValueFromProps = props => {
     const {value0, value1} = props;
@@ -134,7 +138,7 @@ export default class RangeSlider extends Component {
   };
 
   _resize() {
-    const width = this.sliderContainer.offsetWidth;
+    const width = this.sliderContainer.current.offsetWidth;
     if (width !== this.state.width) {
       this.setState({width});
     }
@@ -142,6 +146,7 @@ export default class RangeSlider extends Component {
 
   _renderInput(key) {
     const setRange = key === 'value0' ? this._setRangeVal0 : this._setRangeVal1;
+    const ref = key === 'value0' ? this.inputValue0 : this.inputValue1;
     const update = e => {
       if (!setRange(e.target.value)) {
         this.setState({[key]: this.state[key]});
@@ -152,9 +157,7 @@ export default class RangeSlider extends Component {
       <SliderInput
         className="kg-range-slider__input"
         type="number"
-        ref={comp => {
-          this[`input-${key}`] = comp;
-        }}
+        ref={ref}
         id={`slider-input-${key}`}
         key={key}
         value={this.state[key]}
@@ -164,7 +167,7 @@ export default class RangeSlider extends Component {
         onKeyPress={e => {
           if (e.key === 'Enter') {
             update(e);
-            this[`input-${key}`].blur();
+            ref.current.blur();
           }
         }}
         onBlur={update}
@@ -197,9 +200,8 @@ export default class RangeSlider extends Component {
     return (
       <div
         className="kg-range-slider" style={{width: '100%', padding: `0 ${sliderHandleWidth / 2}px`}}
-        ref={comp => {
-          this.sliderContainer = comp;
-        }}>
+        ref={this.sliderContainer}
+      >
         {histogram && histogram.length ? (
           <RangePlot
             histogram={histogram}

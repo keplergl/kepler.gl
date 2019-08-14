@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {Component, createRef} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {event, select} from 'd3-selection';
@@ -52,7 +52,7 @@ export default class RangeBrush extends Component {
     this.brushing = false;
     this.moving = false;
 
-    this.root = select(this.rootContainer);
+    this.root = select(this.rootContainer.current);
     this.brush = brushX()
       .on('start', () => {
         this.brushing = true;
@@ -96,6 +96,8 @@ export default class RangeBrush extends Component {
     }
   }
 
+  rootContainer = createRef();
+
   _reset() {
     const [minValue, maxValue] = this.props.range;
     this._onBrush(minValue, maxValue);
@@ -126,9 +128,8 @@ export default class RangeBrush extends Component {
     return (
       <StyledG
         className="kg-range-slider__brush"
-        ref={comp => {
-          this.rootContainer = comp;
-      }}/>
+        ref={this.rootContainer}
+      />
     );
   }
 };
