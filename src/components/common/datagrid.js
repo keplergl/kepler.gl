@@ -23,6 +23,7 @@ import PropTypes from 'prop-types';
 import {MultiGrid} from 'react-virtualized';
 import styled, {withTheme}from 'styled-components';
 import {createSelector} from 'reselect';
+import classnames from 'classnames';
 import FieldToken from 'components/common/field-token';
 import {Clock} from 'components/common/icons/index';
 import {parseFieldValue} from 'utils/data-utils';
@@ -156,16 +157,17 @@ function DataGridFactory(
     _cellRenderer = ({columnIndex, key, rowIndex, style}) => {
       const {columns, rows} = this.props;
 
-      const isLast = columnIndex === columns.length - 1;
-
-      // rowIndex -1 because data rows start rendering at index 1 and we normalize back using the -1 param
-      const className = `${rowIndex === 0
-        ? `${isLast ? 'last' : ''} header-${columnIndex}`
-        : `${isLast ? 'last' : ''} row-${rowIndex-1}`} column-${columnIndex}`;
+      const isLast = columnIndex === columns.length - 1
 
       const type = columns[columnIndex].type;
+      
+      // rowIndex -1 because data rows start rendering at index 1 and we normalize back using the -1 param
+      const className = classnames({
+        last: isLast,
+        [`header-${columnIndex}`]: rowIndex === 0,
+        [`row-${rowIndex-1}} column-${columnIndex}`]: rowIndex > 0
+      });
 
-      // console.error(className);
       return (
         <div key={key} style={style} className={className}>
           {rowIndex === 0
