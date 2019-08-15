@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 /* eslint-disable max-statements */
-
 import test from 'tape-catch';
 import CloneDeep from 'lodash.clonedeep';
 
@@ -53,8 +52,9 @@ import {
   cmpDataset
 } from 'test/helpers/comparison-utils';
 import {applyActions} from 'test/helpers/mock-state';
-import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
+import {LAYER_VIS_CONFIGS, DEFAULT_COLOR_UI} from 'layers/layer-factory';
 import {getNextColorMakerValue} from 'test/helpers/layer-utils';
+import {StateWFilesFiltersLayerColor} from 'test/helpers/mock-state';
 
 const mockData = {
   fields: [
@@ -200,11 +200,14 @@ test('#visStateReducer -> ADD_LAYER.1', t => {
     layers: [{id: 'existing_layer'}],
     layerData: [[{data: [1, 2, 3]}, {data: [4, 5, 6]}]],
     layerOrder: [0],
-    splitMaps: [{
-      layers: {existing_layer: false}
-    },{
-      layers: {existing_layer: false}
-    }]
+    splitMaps: [
+      {
+        layers: {existing_layer: false}
+      },
+      {
+        layers: {existing_layer: false}
+      }
+    ]
   };
 
   const newReducer = reducer(oldState, VisStateActions.addLayer());
@@ -212,7 +215,7 @@ test('#visStateReducer -> ADD_LAYER.1', t => {
   const expectedSplitMaps = [
     {
       layers: {
-        existing_layer:false,
+        existing_layer: false,
         [newId]: true
       }
     },
@@ -406,11 +409,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
 
   const newLayer3 = nextState3.layers[0];
   t.equal(newLayer3.type, 'hexagon', 'should change type to hexagon');
-  t.equal(
-    newLayer3.config.colorField,
-    stringField,
-    'should keep colorField'
-  );
+  t.equal(newLayer3.config.colorField, stringField, 'should keep colorField');
   t.deepEqual(
     newLayer3.config.colorDomain,
     [0, 1],
@@ -1009,7 +1008,11 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
     color: layer1Color
   });
 
-  expectedLayer.updateLayerVisConfig({stroked: true, filled: true, strokeColor: layer1StrokeColor});
+  expectedLayer.updateLayerVisConfig({
+    stroked: true,
+    filled: true,
+    strokeColor: layer1StrokeColor
+  });
   expectedLayer.dataToFeature = dataToFeature;
   expectedLayer.meta = {
     bounds: geoBounds,
@@ -1081,14 +1084,16 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> with config', t => {
 
   // add data and config again
 
-    // data
-  const datasets = [{
-    info: {
-      id: 'milkshake2',
-      label: 'king milkshake'
-    },
-    data: {fields, rows}
-  }];
+  // data
+  const datasets = [
+    {
+      info: {
+        id: 'milkshake2',
+        label: 'king milkshake'
+      },
+      data: {fields, rows}
+    }
+  ];
 
   const config = {
     visState: {
@@ -1105,16 +1110,24 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> with config', t => {
         }
       ]
     }
-  }
+  };
 
   const testState = reducer(
     initialState,
     VisStateActions.updateVisData(datasets, {}, config)
   );
 
-  t.deepEqual(Object.keys(testState.datasets), ['milkshake2'], 'should reset state, and load dataset');
+  t.deepEqual(
+    Object.keys(testState.datasets),
+    ['milkshake2'],
+    'should reset state, and load dataset'
+  );
   t.equal(testState.layers.length, 1, 'should create 1 layer');
-  t.equal(testState.layers[0].id, 'test_layer_2', 'should merge 1 layer from config');
+  t.equal(
+    testState.layers[0].id,
+    'test_layer_2',
+    'should merge 1 layer from config'
+  );
 
   t.end();
 });
@@ -1902,24 +1915,23 @@ test('#visStateReducer -> setFilter', t => {
 
     // receive Vis Data will add id to fields
     // filter will add filterProps to fields
-    fields: geojsonFields.map(
-      f =>
-        f.name === 'TRIPS'
-          ? {
-              ...f,
-              id: f.name,
-              filterProp: {
-                domain: [4, 20],
-                fieldType: 'integer',
-                histogram: expectedHistogram,
-                enlargedHistogram: expectedEnlarged,
-                step: 0.01,
-                type: 'range',
-                typeOptions: ['range'],
-                value: [4, 20]
-              }
+    fields: geojsonFields.map(f =>
+      f.name === 'TRIPS'
+        ? {
+            ...f,
+            id: f.name,
+            filterProp: {
+              domain: [4, 20],
+              fieldType: 'integer',
+              histogram: expectedHistogram,
+              enlargedHistogram: expectedEnlarged,
+              step: 0.01,
+              type: 'range',
+              typeOptions: ['range'],
+              value: [4, 20]
             }
-          : {...f, id: f.name}
+          }
+        : {...f, id: f.name}
     ),
     filteredIndex: [0, 2],
     filteredIndexForDomain: [0, 2]
@@ -2044,25 +2056,25 @@ test('#visStateReducer -> setFilter.fixedDomain', t => {
   const expectedDatasetSmoothie = {
     ...datasetSmoothie,
     // add filter prop to fields
-    fields: datasetSmoothie.fields.map(
-      f =>
-        f.name === 'gps_data.utc_timestamp'
-          ? {
-              ...f,
-              filterProp: {
-                domain: [1474070995000, 1474072208000],
-                step: 1000,
-                mappedValue: expectedFilterTs.mappedValue,
-                histogram: stateWidthTsFilter.filters[0].histogram,
-                enlargedHistogram: stateWidthTsFilter.filters[0].enlargedHistogram,
-                fieldType: 'timestamp',
-                type: 'timeRange',
-                enlarged: true,
-                fixedDomain: true,
-                value: [1474070995000, 1474072208000]
-              }
+    fields: datasetSmoothie.fields.map(f =>
+      f.name === 'gps_data.utc_timestamp'
+        ? {
+            ...f,
+            filterProp: {
+              domain: [1474070995000, 1474072208000],
+              step: 1000,
+              mappedValue: expectedFilterTs.mappedValue,
+              histogram: stateWidthTsFilter.filters[0].histogram,
+              enlargedHistogram:
+                stateWidthTsFilter.filters[0].enlargedHistogram,
+              fieldType: 'timestamp',
+              type: 'timeRange',
+              enlarged: true,
+              fixedDomain: true,
+              value: [1474070995000, 1474072208000]
             }
-          : f
+          }
+        : f
     ),
     data: [7, 8, 9, 10, 11, 12, 13].map(i => datasetSmoothie.allData[i]),
     filteredIndex: [7, 8, 9, 10, 11, 12, 13],
@@ -2091,10 +2103,9 @@ test('#visStateReducer -> setFilter.fixedDomain', t => {
 
   const expectedFilteredDataset = {
     ...stateWidthTsFilter.datasets.smoothie,
-    fields: stateWidthTsFilter.datasets.smoothie.fields.map(
-      f =>
-        f.name === 'date'
-          ? {
+    fields: stateWidthTsFilter.datasets.smoothie.fields.map(f =>
+      f.name === 'date'
+        ? {
             ...f,
             filterProp: {
               domain: ['2016-09-23', '2016-09-24', '2016-10-10'],
@@ -2103,14 +2114,18 @@ test('#visStateReducer -> setFilter.fixedDomain', t => {
               value: []
             }
           }
-          : f
+        : f
     ),
     data: [7, 8, 9, 10, 11, 12].map(i => datasetSmoothie.allData[i]),
     filteredIndex: [7, 8, 9, 10, 11, 12],
     filteredIndexForDomain: [7, 8, 9, 10, 11, 12, 17, 18, 19, 20, 21, 22]
   };
 
-  cmpDataset(t, expectedFilteredDataset, stateWidthTsAndNameFilter.datasets.smoothie);
+  cmpDataset(
+    t,
+    expectedFilteredDataset,
+    stateWidthTsAndNameFilter.datasets.smoothie
+  );
 
   t.end();
 });
@@ -2611,7 +2626,6 @@ test('#visStateReducer -> SPLIT_MAP: TOGGLE_SPLIT_MAP', t => {
 });
 
 test('#visStateReducer -> SPLIT_MAP: HIDE LAYER', t => {
-
   const oldState = {
     splitMaps: [
       {
@@ -2648,7 +2662,305 @@ test('#visStateReducer -> SPLIT_MAP: HIDE LAYER', t => {
     ]
   };
 
-  t.deepEqual(newState.splitMaps, expectedState.splitMaps, 'should hide layer B in split map');
+  t.deepEqual(
+    newState.splitMaps,
+    expectedState.splitMaps,
+    'should hide layer B in split map'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. show dropdown', t => {
+  const initialState = CloneDeep(StateWFilesFiltersLayerColor.visState);
+  const pointLayer = initialState.layers[0];
+
+  const oldColorRange = CloneDeep(pointLayer.config.visConfig.colorRange);
+
+  // show dropdown
+  const nextState = reducer(
+    initialState,
+    VisStateActions.layerColorUIChange(pointLayer, 'color', {
+      showDropdown: 0
+    })
+  );
+
+  const expectedColorUI = {
+    color: {
+      ...DEFAULT_COLOR_UI,
+      showDropdown: 0
+    },
+    colorRange: DEFAULT_COLOR_UI
+  };
+
+  t.deepEqual(
+    nextState.layers[0].config.colorUI,
+    expectedColorUI,
+    'should update colorUI.showDropdown'
+  );
+  t.deepEqual(
+    nextState.layers[0].config.visConfig.colorRange,
+    oldColorRange,
+    'should not change colorRange'
+  );
+
+  const nextState1 = reducer(
+    nextState,
+    VisStateActions.layerColorUIChange(pointLayer, 'color', {
+      showDropdown: false
+    })
+  );
+  t.deepEqual(
+    nextState1.layers[0].config.colorUI,
+    {color: DEFAULT_COLOR_UI, colorRange: DEFAULT_COLOR_UI},
+    'should update colorUI.showDropdown'
+  );
+
+  const nextState2 = reducer(
+    nextState1,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
+      showDropdown: 0
+    })
+  );
+
+  const expectedColorUI2 = {
+    color: DEFAULT_COLOR_UI,
+    colorRange: {
+      ...DEFAULT_COLOR_UI,
+      showDropdown: 0,
+      colorRangeConfig: {
+        type: 'all',
+        steps: 4,
+        reversed: false,
+        custom: false
+      }
+    }
+  };
+  t.deepEqual(
+    nextState2.layers[0].config.colorUI,
+    expectedColorUI2,
+    'should update colorUI.showDropdown, set colorRangeConfig step and reversed'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
+  const initialState = CloneDeep(StateWFilesFiltersLayerColor.visState);
+  const pointLayer = initialState.layers[0];
+
+  const oldColorRange = CloneDeep(pointLayer.config.visConfig.colorRange);
+
+  t.equal(
+    oldColorRange.colors.length,
+    4,
+    'old color range should have 4 colors'
+  );
+  // show dropdown
+  const prepareState = reducer(
+    initialState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
+      showDropdown: true
+    })
+  );
+
+  const {colorRangeConfig} = prepareState.layers[0].config.colorUI.colorRange;
+
+  // set color range steps
+  const nextState = reducer(
+    prepareState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
+      colorRangeConfig: {steps: 6}
+    })
+  );
+
+  const expectedColorUI = {
+    color: DEFAULT_COLOR_UI,
+    colorRange: {
+      ...DEFAULT_COLOR_UI,
+      showDropdown: true,
+      colorRangeConfig: {
+        type: 'all',
+        steps: 6,
+        reversed: false,
+        custom: false
+      }
+    }
+  };
+
+  const expectedColorRange = {
+    name: 'Uber Viz Sequential 4',
+    type: 'sequential',
+    category: 'Uber',
+    colors: ['#E6FAFA', '#C1E5E6', '#9DD0D4', '#75BBC1', '#4BA7AF', '#00939C']
+  };
+  t.deepEqual(
+    nextState.layers[0].config.colorUI,
+    expectedColorUI,
+    'should update colorUI.colorRangeConfig.steps'
+  );
+  t.deepEqual(
+    nextState.layers[0].config.visConfig.colorRange,
+    expectedColorRange,
+    'should update visConfig.colorRange based on step'
+  );
+
+  // set color range reverse
+  const nextState2 = reducer(
+    nextState,
+    VisStateActions.layerColorUIChange(nextState.layers[0], 'colorRange', {
+      colorRangeConfig: {reversed: true}
+    })
+  );
+
+  const expectedColorUI2 = {
+    color: DEFAULT_COLOR_UI,
+    colorRange: {
+      ...DEFAULT_COLOR_UI,
+      showDropdown: true,
+      colorRangeConfig: {
+        type: 'all',
+        steps: 6,
+        reversed: true,
+        custom: false
+      }
+    }
+  };
+
+  const expectedColorRange2 = {
+    name: 'Uber Viz Sequential 4',
+    type: 'sequential',
+    category: 'Uber',
+    colors: ['#00939C', '#4BA7AF', '#75BBC1', '#9DD0D4', '#C1E5E6', '#E6FAFA'],
+    reversed: true
+  };
+
+  t.deepEqual(
+    nextState2.layers[0].config.colorUI,
+    expectedColorUI2,
+    'should update colorUI.colorRangeConfig.steps'
+  );
+  t.deepEqual(
+    nextState2.layers[0].config.visConfig.colorRange,
+    expectedColorRange2,
+    'should update visConfig.colorRange based on step'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
+  const initialState = CloneDeep(StateWFilesFiltersLayerColor.visState);
+  const pointLayer = initialState.layers[0];
+
+  const oldColorRange = CloneDeep(pointLayer.config.visConfig.colorRange);
+  // show dropdown
+  const prepareState = reducer(
+    initialState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
+      showDropdown: 0
+    })
+  );
+
+  // enable custom
+  const nextState = reducer(
+    prepareState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
+      colorRangeConfig: {custom: true}
+    })
+  );
+
+  const expectedColorUI = {
+    color: DEFAULT_COLOR_UI,
+    colorRange: {
+      ...DEFAULT_COLOR_UI,
+      customPalette: {
+        name: 'Custom Palette Uber Viz Sequential 2',
+        type: 'custom',
+        category: 'Custom',
+        colors: oldColorRange.colors
+      },
+      showDropdown: 0,
+      colorRangeConfig: {
+        type: 'all',
+        steps: 4,
+        reversed: false,
+        custom: true
+      }
+    }
+  };
+
+  t.deepEqual(
+    nextState.layers[0].config.colorUI,
+    expectedColorUI,
+    'should update colorUI.customPalette'
+  );
+  const nextState2 = reducer(
+    prepareState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
+      customPalette: {colors: ['aaa', 'bbb', 'ccc']}
+    })
+  );
+
+  const expectedColorUI2 = {
+    color: DEFAULT_COLOR_UI,
+    colorRange: {
+      ...DEFAULT_COLOR_UI,
+      customPalette: {
+        name: 'Custom Palette Uber Viz Sequential 2',
+        type: 'custom',
+        category: 'Custom',
+        colors: ['aaa', 'bbb', 'ccc']
+      },
+      showDropdown: 0,
+      colorRangeConfig: {
+        type: 'all',
+        steps: 4,
+        reversed: false,
+        custom: true
+      }
+    }
+  };
+
+  t.deepEqual(
+    nextState2.layers[0].config.colorUI,
+    expectedColorUI2,
+    'should update colorUI.customPalette'
+  );
+
+  // show sketcher
+  const nextState3 = reducer(
+    prepareState,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
+      showSketcher: 1
+    })
+  );
+
+  const expectedColorUI3 = {
+    color: DEFAULT_COLOR_UI,
+    colorRange: {
+      showSketcher: 1,
+      customPalette: {
+        name: 'Custom Palette Uber Viz Sequential 2',
+        type: 'custom',
+        category: 'Custom',
+        colors: ['aaa', 'bbb', 'ccc']
+      },
+      showDropdown: 0,
+      colorRangeConfig: {
+        type: 'all',
+        steps: 4,
+        reversed: false,
+        custom: true
+      }
+    }
+  };
+
+  t.deepEqual(
+    nextState3.layers[0].config.colorUI,
+    expectedColorUI3,
+    'should update colorUI.customPalette'
+  );
 
   t.end();
 });

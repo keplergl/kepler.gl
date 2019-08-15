@@ -113,7 +113,7 @@ const StyledDragHandle = styled.div`
 `;
 
 const DragHandle = sortableHandle(({className, children}) =>
-  <StyledDragHandle classname={className}>
+  <StyledDragHandle className={className}>
     {children}
   </StyledDragHandle>
 );

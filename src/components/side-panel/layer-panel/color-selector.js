@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {Component, createRef} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {rgbToHex} from 'utils/color-utils';
@@ -28,14 +28,14 @@ import ColorPalette from 'components/side-panel/layer-panel/color-palette';
 import {StyledPanelDropdown} from 'components/common/styled-components';
 import onClickOutside from 'react-onclickoutside';
 
-const ColorBlock = styled.div`
+export const ColorBlock = styled.div`
   width: 32px;
   height: 18px;
   border-radius: 1px;
   background-color: ${props => `rgb(${props.color.slice(0, 3).join(',')})`};
 `;
 
-const ColorSelectorInput = styled.div`
+export const ColorSelectorInput = styled.div`
   ${props =>
     props.inputTheme === 'secondary'
       ? props.theme.secondaryInput
@@ -50,7 +50,7 @@ const ColorSelectorInput = styled.div`
   }
 `;
 
-const InputBoxContainer = styled.div`
+export const InputBoxContainer = styled.div`
   display: flex;
   justify-content: space-between;
 
@@ -75,11 +75,15 @@ class ColorSelector extends Component {
         label: PropTypes.string
       })
     ),
+    colorUI: PropTypes.shape({
+      customPalette: PropTypes.object,
+      showSketcher: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]),
+      showDropdown: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]),
+      colorRangeConfig: PropTypes.object
+    }),
     inputTheme: PropTypes.string,
     disabled: PropTypes.bool,
-    customPalette: PropTypes.object,
-    setCustomPalette: PropTypes.func,
-    showSketcher: PropTypes.bool
+    setColorUI: PropTypes.func
   };
 
   static defaultProps = {
@@ -87,26 +91,50 @@ class ColorSelector extends Component {
   };
 
   state = {
-    editing: false
+    showDropdown: false
   };
 
+  node = createRef();
+
   handleClickOutside = e => {
-    if (this.state.editing !== false && !this.props.showSketcher) {
-      this.setState({editing: false});
+    if (this.props.colorUI && this.props.colorUI.showSketcher) {
+      // if sketcher is open, let sketch to close itself first
+      return;
+    }
+    this._closePanelDropdown();
+  };
+
+  _getEditing = () => {
+    return this.props.colorUI ? this.props.colorUI.showDropdown : this.state.showDropdown;
+  }
+
+  _closePanelDropdown = () => {
+    if (this._getEditing() === false) {
+      return;
+    }
+    if (this.props.setColorUI) {
+      this.props.setColorUI({showDropdown: false, showSketcher: false});
+    } else {
+      this.setState({showDropdown: false});
     }
   };
 
   _onSelectColor = (color, e) => {
     e.stopPropagation();
-    if (this.props.colorSets[this.state.editing]) {
-      this.props.colorSets[this.state.editing].setColor(color);
+    const editing = this._getEditing();
+    if (this.props.colorSets[editing]) {
+      this.props.colorSets[editing].setColor(color);
     }
   };
 
   _showDropdown = (e, i) => {
     e.stopPropagation();
     e.preventDefault();
-    this.setState({editing: i});
+    if (this.props.setColorUI) {
+      this.props.setColorUI({showDropdown: i});
+    } else {
+      this.setState({showDropdown: i});
+    }
   };
 
   render() {
@@ -114,17 +142,15 @@ class ColorSelector extends Component {
       colorSets,
       disabled,
       inputTheme,
-      customPalette,
-      setCustomPalette,
-      showSketcher,
-      onToggleSketcherUpdater
+      colorUI
     } = this.props;
-    const {editing} = this.state;
+
+    const editing = this._getEditing();
     const currentEditing =
       colorSets[editing] && typeof colorSets[editing] === 'object';
 
     return (
-      <div className="color-selector">
+      <div className="color-selector" ref={this.node}>
         <InputBoxContainer>
           {colorSets.map((cSet, i) => (
             <div className="color-select__input-group" key={i}>
@@ -158,10 +184,8 @@ class ColorSelector extends Component {
               <ColorRangeSelector
                 selectedColorRange={colorSets[editing].selectedColor}
                 onSelectColorRange={this._onSelectColor}
-                customPalette={customPalette}
-                setCustomPalette={setCustomPalette}
-                showSketcher={showSketcher}
-                onToggleSketcherUpdater={onToggleSketcherUpdater}
+                setColorPaletteUI={this.props.setColorUI}
+                colorPaletteUI={colorUI}
               />
             ) : (
               <SingleColorPalette

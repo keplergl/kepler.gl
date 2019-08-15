@@ -57,7 +57,7 @@ export const ConfigGroupCollapsibleHeader = styled.div.attrs({
   overflow: visible;
   overflow: hidden;
   max-height: 0;
-`
+`;
 
 export const StyledLayerConfigGroup = styled.div`
   padding-left: 18px;
@@ -74,6 +74,7 @@ export const StyledLayerConfigGroup = styled.div`
         overflow: hidden;
         max-height: 0;
       }
+    }
   }
 `;
 
@@ -91,7 +92,7 @@ export const StyledConfigGroupHeader = styled.div`
     }
 
     .layer-config-group__action {
-      color:  ${props => props.theme.textColorHl};
+      color: ${props => props.theme.textColorHl};
     }
   }
 `;
@@ -107,7 +108,6 @@ const ConfigGroupContent = styled.div`
 `;
 
 export default class LayerConfigGroup extends Component {
-
   static defaultProps = {
     collapsible: false,
     expanded: false,
@@ -146,8 +146,11 @@ export default class LayerConfigGroup extends Component {
     const {collapsed} = this.state;
 
     return (
-      <StyledLayerConfigGroup className={classnames('layer-config-group', {collapsed})}>
-        <StyledConfigGroupHeader className="layer-config-group__header"
+      <StyledLayerConfigGroup
+        className={classnames('layer-config-group', {collapsed})}
+      >
+        <StyledConfigGroupHeader
+          className="layer-config-group__header"
           onClick={() => this.setState({collapsed: !this.state.collapsed})}
         >
           <StyledLayerConfigGroupLabel className="layer-config-group__label">
@@ -163,7 +166,7 @@ export default class LayerConfigGroup extends Component {
                 }
               />
             ) : null}
-            {collapsible ? <VertThreeDots height="18px"/> : null}
+            {collapsible ? <VertThreeDots height="18px" /> : null}
           </StyledLayerConfigGroupAction>
         </StyledConfigGroupHeader>
         <ConfigGroupContent
@@ -177,4 +180,3 @@ export default class LayerConfigGroup extends Component {
     );
   }
 }
-

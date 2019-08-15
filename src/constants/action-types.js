@@ -88,6 +88,7 @@ const ActionTypes = keyMirror({
   SET_FILTER_PLOT: null,
   LOAD_FILES: null,
   LOAD_FILES_ERR: null,
+  LAYER_COLOR_UI_CHANGE: null,
 
   // mapState
   UPDATE_MAP: null,
@@ -117,8 +118,6 @@ const ActionTypes = keyMirror({
   TOGGLE_MAP_CONTROL: null,
   ADD_NOTIFICATION: null,
   REMOVE_NOTIFICATION: null,
-  SET_CUSTOM_PALETTE: null,
-  TOGGLE_SKETCHER: null,
 
   // uiState > export image
   SET_RATIO: null,

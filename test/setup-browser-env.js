@@ -19,15 +19,57 @@
 // THE SOFTWARE.
 
 /* setup.js */
-import {JSDOM} from 'jsdom';
+import {JSDOM, VirtualConsole} from 'jsdom';
 import global from 'global';
+
+const virtualConsole = new VirtualConsole();
+virtualConsole.sendTo(console);
 
 const dom = new JSDOM('<!doctype html><html><body></body></html>', {
   // JSDom 11.12 causes SecurityError: localStorage is not available for opaque origins
   // https://github.com/jsdom/jsdom/issues/2304
-  url: 'http://localhost'
+  url: 'http://localhost',
+  virtualConsole
 });
 const {window} = dom;
+mockCanvas(window);
+
+const nop = () => {};
+
+function mockCanvas(globalWindow) {
+  globalWindow.HTMLCanvasElement.prototype.getContext = function mockGetContext() {
+    return {
+      fillRect: nop,
+      clearRect: nop,
+      getImageData: (x, y, w, h) => ({
+        data: new Array(w * h * 4)
+      }),
+      putImageData: nop,
+      createImageData: () => [],
+      setTransform: nop,
+      drawImage: nop,
+      save: nop,
+      fillText: nop,
+      restore: nop,
+      beginPath: nop,
+      moveTo: nop,
+      lineTo: nop,
+      closePath: nop,
+      stroke: nop,
+      translate: nop,
+      scale: nop,
+      rotate: nop,
+      arc: nop,
+      fill: nop,
+      measureText: () => ({width: 0}),
+      transform: nop,
+      rect: nop,
+      clip: nop
+    };
+  };
+
+  globalWindow.HTMLCanvasElement.prototype.toDataURL = () => '';
+}
 
 global.window = window;
 global.document = window.document;

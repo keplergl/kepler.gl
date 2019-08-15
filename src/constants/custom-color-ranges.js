@@ -25,6 +25,7 @@
  */
 
 export const SEQ = 'sequential';
+export const SIN = 'singlehue';
 export const QUA = 'qualitative';
 export const DIV = 'diverging';
 

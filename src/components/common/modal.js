@@ -43,22 +43,22 @@ const ModalContentWrapper = styled.div`
   box-sizing: border-box;
   font-size: 12px;
   color: ${props => props.theme.labelColorLT};
-  
+
   ${media.portable`
     padding: 12px 36px 24px;
     max-width: 80vw;
   `}
-  
+
   ${media.palm`
     max-width: 100vw;
   `}
-  
+
   ${props => props.cssStyle || ''};
 `;
 
 const ModalContent = styled.div`
   position: relative;
-  z-index: 10002;
+  z-index: ${props => props.theme.modalContentZ};
 `;
 
 export const ModalTitle = styled.div`
@@ -66,7 +66,7 @@ export const ModalTitle = styled.div`
   color: ${props => props.theme.modalTitleColor};
   margin-bottom: 10px;
   position: relative;
-  z-index: 10003;
+  z-index: ${props => props.theme.modalTitleZ};
 `;
 
 const StyledModalFooter = styled.div`
@@ -84,14 +84,14 @@ const StyledModalFooter = styled.div`
   ${media.palm`
     padding-top: 16px;
   `};
-  z-index: 10001;
+  z-index: ${props => props.theme.modalFooterZ};
 `;
 
 const CloseButton = styled.div`
   color: ${props => props.theme.titleColorLT};
   display: flex;
   justify-content: flex-end;
-  z-index: 10005;
+  z-index: ${props => props.theme.modalButtonZ};
   position: absolute;
   top: 24px;
   right: 24px;
@@ -172,8 +172,8 @@ class ModalDialog extends Component {
         ariaHideApp={false}
         style={{
           overlay: {
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            zIndex: 1000,
+            backgroundColor: (props.theme && props.theme.modalOverlayBgd) || 'rgba(0, 0, 0, 0.5)',
+            zIndex: (props.theme && props.theme.modalOverLayZ) || 1000,
             // in case we want to override the modal dialog style
             ...props.style
           }

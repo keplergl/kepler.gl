@@ -66,6 +66,31 @@ const StyledLayerVisualConfigurator = styled.div.attrs({
   margin-top: 12px;
 `;
 
+export const getLayerFields = (datasets, layer) =>
+  datasets[layer.config.dataId] ?
+  datasets[layer.config.dataId].fields
+  : [];
+
+export const getLayerConfiguratorProps = props => ({
+  layer: props.layer,
+  fields: getLayerFields(props.datasets, props.layer),
+  onChange: props.updateLayerConfig,
+  setColorUI: props.updateLayerColorUI
+});
+
+export const getVisConfiguratorProps = props => ({
+  layer: props.layer,
+  fields: getLayerFields(props.datasets, props.layer),
+  onChange: props.updateLayerVisConfig,
+  setColorUI: props.updateLayerColorUI
+});
+
+export const getLayerChannelConfigProps = props => ({
+  layer: props.layer,
+  fields: getLayerFields(props.datasets, props.layer),
+  onChange: props.updateLayerVisualChannelConfig
+})
+
 LayerConfiguratorFactory.deps = [SourceDataSelectorFactory];
 export default function LayerConfiguratorFactory(SourceDataSelector) {
   class LayerConfigurator extends Component {
@@ -78,9 +103,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
       updateLayerType: PropTypes.func.isRequired,
       updateLayerVisConfig: PropTypes.func.isRequired,
       updateLayerVisualChannelConfig: PropTypes.func.isRequired,
-      customPalette: PropTypes.object.isRequired,
-      setCustomPalette: PropTypes.func.isRequired,
-      showSketcher: PropTypes.bool.isRequired
+      updateLayerColorUI: PropTypes.func.isRequired
     };
 
     _renderPointLayerConfig(props) {
@@ -106,7 +129,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
             collapsible
           >
             {layer.config.colorField ? (
-              <ColorRangeConfig {...visConfiguratorProps} />
+              <LayerColorRangeSelector {...visConfiguratorProps} />
             ) : (
               <LayerColorSelector {...layerConfiguratorProps} />
             )}
@@ -130,7 +153,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
               collapsible
             >
               {layer.config.strokeColorField ? (
-                <ColorRangeConfig
+                <LayerColorRangeSelector
                   {...visConfiguratorProps}
                   property="strokeColorRange"
                 />
@@ -194,6 +217,8 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
             fields={visConfiguratorProps.fields}
             updateLayerTextLabel={this.props.updateLayerTextLabel}
             textLabel={layer.config.textLabel}
+            colorPalette={visConfiguratorProps.colorPalette}
+            setColorPaletteUI={visConfiguratorProps.setColorPaletteUI}
           />
         </StyledLayerVisualConfigurator>
       );
@@ -209,7 +234,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
         <StyledLayerVisualConfigurator>
           {/* Color */}
           <LayerConfigGroup label={'color'} collapsible>
-            <ColorRangeConfig {...visConfiguratorProps} />
+            <LayerColorRangeSelector {...visConfiguratorProps} />
             <ConfigGroupCollapsibleContent>
               <AggrScaleSelector
                 {...layerConfiguratorProps}
@@ -262,7 +287,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
         <StyledLayerVisualConfigurator>
           {/* Color */}
           <LayerConfigGroup label={'color'} collapsible>
-            <ColorRangeConfig {...visConfiguratorProps} />
+            <LayerColorRangeSelector {...visConfiguratorProps} />
             <ConfigGroupCollapsibleContent>
               <VisConfigSlider
                 {...layer.visConfigSettings.opacity}
@@ -315,7 +340,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
         <StyledLayerVisualConfigurator>
           {/* Color */}
           <LayerConfigGroup label={'color'} collapsible>
-            <ColorRangeConfig {...visConfiguratorProps} />
+            <LayerColorRangeSelector {...visConfiguratorProps} />
             <ConfigGroupCollapsibleContent>
               <AggrScaleSelector
                 {...layerConfiguratorProps}
@@ -425,7 +450,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
           {/* Color */}
           <LayerConfigGroup label={'color'} collapsible>
             {layer.config.colorField ? (
-              <ColorRangeConfig {...visConfiguratorProps} />
+              <LayerColorRangeSelector {...visConfiguratorProps} />
             ) : (
               <LayerColorSelector {...layerConfiguratorProps} />
             )}
@@ -501,10 +526,11 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
           {/* Color */}
           <LayerConfigGroup label={'color'} collapsible>
             {layer.config.colorField ? (
-              <ColorRangeConfig {...visConfiguratorProps} />
+              <LayerColorRangeSelector {...visConfiguratorProps} />
             ) : (
               <ArcLayerColorSelector
                 layer={layer}
+                setColorUI={layerConfiguratorProps.setColorUI}
                 onChangeConfig={layerConfiguratorProps.onChange}
                 onChangeVisConfig={visConfiguratorProps.onChange}
               />
@@ -570,7 +596,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
               collapsible
             >
               {layer.config.colorField ? (
-                <ColorRangeConfig {...visConfiguratorProps} />
+                <LayerColorRangeSelector {...visConfiguratorProps} />
               ) : (
                 <LayerColorSelector {...layerConfiguratorProps} />
               )}
@@ -595,7 +621,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
             collapsible
           >
             {layer.config.strokeColorField ? (
-              <ColorRangeConfig
+              <LayerColorRangeSelector
                 {...visConfiguratorProps}
                 property="strokeColorRange"
               />
@@ -762,32 +788,9 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
         : {};
       const {config} = layer;
 
-      const commonConfigProp = {
-        layer,
-        fields
-      };
-      const visConfiguratorProps = {
-        ...commonConfigProp,
-        onChange: this.props.updateLayerVisConfig,
-        customPalette: this.props.customPalette,
-        setCustomPalette: this.props.setCustomPalette,
-        showSketcher: this.props.showSketcher,
-        onToggleSketcherUpdater: this.props.onToggleSketcherUpdater
-      };
-
-      const layerConfiguratorProps = {
-        ...commonConfigProp,
-        onChange: updateLayerConfig,
-        customPalette: this.props.customPalette,
-        setCustomPalette: this.props.setCustomPalette,
-        showSketcher: this.props.showSketcher,
-        onToggleSketcherUpdater: this.props.onToggleSketcherUpdater
-      };
-
-      const layerChannelConfigProps = {
-        ...commonConfigProp,
-        onChange: this.props.updateLayerVisualChannelConfig
-      };
+      const visConfiguratorProps = getVisConfiguratorProps(this.props);
+      const layerConfiguratorProps = getLayerConfiguratorProps(this.props);
+      const layerChannelConfigProps = getLayerChannelConfigProps(this.props);
 
       const renderTemplate =
         layer.type && `_render${capitalizeFirstLetter(layer.type)}LayerConfig`;
@@ -865,7 +868,8 @@ export const LayerColorSelector = ({
   onChange,
   label,
   selectedColor,
-  property = 'color'
+  property = 'color',
+  setColorUI
 }) => (
   <SidePanelSection>
     <ColorSelector
@@ -875,6 +879,8 @@ export const LayerColorSelector = ({
           setColor: rgbValue => onChange({[property]: rgbValue})
         }
       ]}
+      colorUI={layer.config.colorUI[property]}
+      setColorUI={newConfig => setColorUI(property, newConfig)}
     />
   </SidePanelSection>
 );
@@ -882,7 +888,9 @@ export const LayerColorSelector = ({
 export const ArcLayerColorSelector = ({
   layer,
   onChangeConfig,
-  onChangeVisConfig
+  onChangeVisConfig,
+  property = 'color',
+  setColorUI
 }) => (
   <SidePanelSection>
     <ColorSelector
@@ -899,18 +907,17 @@ export const ArcLayerColorSelector = ({
           label: 'Target'
         }
       ]}
+      colorUI={layer.config.colorUI[property]}
+      setColorUI={newConfig => setColorUI(property, newConfig)}
     />
   </SidePanelSection>
 );
 
-export const ColorRangeConfig = ({
+export const LayerColorRangeSelector = ({
   layer,
   onChange,
   property = 'colorRange',
-  customPalette,
-  setCustomPalette,
-  showSketcher,
-  onToggleSketcherUpdater
+  setColorUI
 }) => (
   <SidePanelSection>
     <ColorSelector
@@ -921,10 +928,8 @@ export const ColorRangeConfig = ({
           setColor: colorRange => onChange({[property]: colorRange})
         }
       ]}
-      customPalette={customPalette}
-      setCustomPalette={setCustomPalette}
-      showSketcher={showSketcher}
-      onToggleSketcherUpdater={onToggleSketcherUpdater}
+      colorUI={layer.config.colorUI[property]}
+      setColorUI={newConfig => setColorUI(property, newConfig)}
     />
   </SidePanelSection>
 );

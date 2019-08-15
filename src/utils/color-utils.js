@@ -25,13 +25,23 @@
  * @returns {array} array of r g bs
  */
 export function hexToRgb(hex) {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  const result = isHexColor(hex);
+
+  if (!result) {
+    return [0, 0, 0];
+  }
 
   const r = parseInt(result[1], 16);
   const g = parseInt(result[2], 16);
   const b = parseInt(result[3], 16);
 
   return [r, g, b];
+}
+
+export function isHexColor(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+
+  return result;
 }
 
 function PadNum(c) {
@@ -47,4 +57,34 @@ function PadNum(c) {
  */
 export function rgbToHex([r, g, b]) {
   return `#${[r, g, b].map(n => PadNum(n)).join('')}`.toUpperCase();
+}
+
+/**
+ * Get color group name by parsing name, discard step in the name
+ * e.g. Global Warming 6 -> Global Warming
+ *
+ * @param {Object} colorRange
+ * @return {string}
+ */
+export function getColorGroupByName(colorRange) {
+  if (!colorRange || typeof colorRange.name !== 'string') {
+    return null;
+  }
+
+  return colorRange.name.replace(/\W+\d+$/, '');
+}
+
+/**
+ * Get a reversed colorRange
+ * @param {Object} colorRange
+ * @param {Object} colorRange
+ */
+export function reverseColorRange(colorRange) {
+  if (!colorRange) return null;
+  if (colorRange.reversed) return colorRange;
+  return {
+    ...colorRange,
+    reversed: true,
+    colors: colorRange.colors.slice().reverse()
+  };
 }

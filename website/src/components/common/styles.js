@@ -116,6 +116,7 @@ export const Logo = styled.img`
   `};
 `;
 
+/* eslint-disable react/display-name */
 export const HeroImage = React.forwardRef((props, ref) => (
   <BackgroundImage {...props} ref={ref} src={cdnUrl('hero/kepler.gl-background.png')}/>
 ));
@@ -123,4 +124,4 @@ export const HeroImage = React.forwardRef((props, ref) => (
 export const LogoImage = React.forwardRef((props, ref) => (
   <Logo {...props} src={cdnUrl('icons/kepler.gl-logo.png')} />
 ));
-
+/* eslint-enable react/display-name */

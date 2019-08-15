@@ -252,26 +252,6 @@ export const setExportHTMLMapMode = createAction(
   payload => payload
 );
 
-/*
- * Set the custom palette for layer
- * @memberOf uiStateActions
- * @param {object} payload - custom palette
- * @public
- */
-export const setCustomPalette = createAction(
-  ActionTypes.SET_CUSTOM_PALETTE,
-  payload => payload
-);
-
-/**
- * Set the custom palette for layer
- * @memberOf uiStateActions
- * @public
- */
-export const onToggleSketcherUpdater = createAction(
-  ActionTypes.TOGGLE_SKETCHER
-);
-
 /**
  * This declaration is needed to group actions in docs
  */

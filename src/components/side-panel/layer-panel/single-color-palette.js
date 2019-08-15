@@ -33,7 +33,7 @@ const propTypes = {
 };
 
 const PALETTE_HEIGHT = '8px';
-const ROWS = 16;
+const ROWS = 22;
 
 const StyledColorPalette = styled.div`
   display: flex;
@@ -63,23 +63,24 @@ const StyledColorBlock = styled.div`
 const SingleColorPalette = ({selectedColor, onSelectColor}) => (
   <StyledColorPalette className="single-color-palette">
     {Themes.map((theme, col) => (
-      <StyledColorColumn key={theme}>
+      <StyledColorColumn key={theme} className="single-color-palette__column">
         {range(1, ROWS + 1, 1).map((key, i) => (
           <StyledColorBlock
+            className="single-color-palette__block"
             style={{
-              backgroundColor: ColorsByTheme[theme][String(key)],
+              backgroundColor: ColorsByTheme[theme][key],
               borderColor:
                 selectedColor ===
-                ColorsByTheme[theme][String(key)].toUpperCase()
+                ColorsByTheme[theme][key].toUpperCase()
                   ? 'white'
-                  : ColorsByTheme[theme][String(key)]
+                  : ColorsByTheme[theme][key]
             }}
             key={`${theme}_${key}`}
             selected={
-              selectedColor === ColorsByTheme[theme][String(key)].toUpperCase()
+              selectedColor === ColorsByTheme[theme][key].toUpperCase()
             }
             onClick={e =>
-              onSelectColor(hexToRgb(ColorsByTheme[theme][String(key)]), e)
+              onSelectColor(hexToRgb(ColorsByTheme[theme][key]), e)
             }
           />
         ))}

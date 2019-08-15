@@ -20,6 +20,7 @@
 
 import {KeplerGlLayers} from 'layers';
 const {PointLayer} = KeplerGlLayers;
+import {DEFAULT_COLOR_UI} from 'layers/layer-factory';
 
 export const stateSavedV1 = {
   datasets: [
@@ -245,6 +246,10 @@ mergedLayer0.config = {
     anchor: 'end',
     alignment: 'center'
   }],
+  colorUI: {
+    color: DEFAULT_COLOR_UI,
+    colorRange: DEFAULT_COLOR_UI
+  },
   visConfig: {
     radius: 12.5,
     fixedRadius: false,

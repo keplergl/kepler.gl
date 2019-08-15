@@ -38,7 +38,9 @@ const defaultProps = {
   isReversed: false
 };
 
-const PaletteWrapper = styled.div`
+const PaletteWrapper = styled.div.attrs({
+  className: 'color-range-palette__inner'
+})`
   border-radius: 2px;
   display: flex;
   flex-direction: row;
@@ -47,7 +49,9 @@ const PaletteWrapper = styled.div`
   overflow: hidden;
 `;
 
-const PaletteContainer = styled.div`
+const PaletteContainer = styled.div.attrs({
+  className: 'color-range-palette'
+})`
   display: flex;
   flex-grow: 1;
   border-width: 1px;
@@ -57,21 +61,21 @@ const PaletteContainer = styled.div`
   border-radius: 4px;
 `;
 
-const ColorBlock = styled.div`
+const StyledColorBlock = styled.div.attrs({
+  className: 'color-range-palette__block'
+})`
   flex-grow: 1;
 `;
 
 const ColorPalette = ({colors, height, className, isSelected, isReversed}) => (
   <PaletteContainer
-    className={`color-range-palette ${className}`}
+    className={className}
     isSelected={isSelected}
   >
-    <PaletteWrapper className="color-range-palette__inner"
-                    style={{height, transform: `scale(${isReversed ? -1 : 1}, 1)`}}>
-      {colors.map(color => (
-        <ColorBlock
-          className="color-range-palette__block"
-          key={color}
+    <PaletteWrapper style={{height, transform: `scale(${isReversed ? -1 : 1}, 1)`}}>
+      {colors.map((color, index) => (
+        <StyledColorBlock
+          key={`${color}-${index}`}
           style={{backgroundColor: color}}
         />
       ))}

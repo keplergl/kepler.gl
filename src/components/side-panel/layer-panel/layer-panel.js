@@ -52,12 +52,9 @@ function LayerPanelFactory(LayerConfigurator) {
       onCloseConfig: PropTypes.func,
 
       layerTypeOptions: PropTypes.arrayOf(PropTypes.any),
-      layerVisConfigChange: PropTypes.func,
-      layerVisualChannelConfigChange: PropTypes.func,
-      customPalette: PropTypes.object.isRequired,
-      setCustomPalette: PropTypes.func.isRequired,
-      showSketcher: PropTypes.bool.isRequired,
-      onToggleSketcherUpdater: PropTypes.func.isRequired
+      layerVisConfigChange: PropTypes.func.isRequired,
+      layerVisualChannelConfigChange: PropTypes.func.isRequired,
+      layerColorUIChange: PropTypes.func.isRequired
     };
 
     updateLayerConfig = newProp => {
@@ -70,6 +67,10 @@ function LayerPanelFactory(LayerConfigurator) {
 
     updateLayerVisConfig = newVisConfig => {
       this.props.layerVisConfigChange(this.props.layer, newVisConfig);
+    };
+
+    updateLayerColorUI = (...args) => {
+      this.props.layerColorUIChange(this.props.layer, ...args);
     };
 
     updateLayerTextLabel = (...args) => {
@@ -107,7 +108,7 @@ function LayerPanelFactory(LayerConfigurator) {
     };
 
     render() {
-      const {layer, idx, datasets, layerTypeOptions, customPalette, setCustomPalette, showSketcher, onToggleSketcherUpdater} = this.props;
+      const {layer, idx, datasets, layerTypeOptions} = this.props;
       const {config} = layer;
       const {isConfigActive} = config;
 
@@ -138,15 +139,12 @@ function LayerPanelFactory(LayerConfigurator) {
               datasets={datasets}
               layerTypeOptions={layerTypeOptions}
               openModal={this.props.openModal}
+              updateLayerColorUI={this.updateLayerColorUI}
               updateLayerConfig={this.updateLayerConfig}
               updateLayerVisualChannelConfig={this.updateLayerVisualChannelConfig}
               updateLayerType={this.updateLayerType}
               updateLayerTextLabel={this.updateLayerTextLabel}
               updateLayerVisConfig={this.updateLayerVisConfig}
-              customPalette={customPalette}
-              setCustomPalette={setCustomPalette}
-              showSketcher={showSketcher}
-              onToggleSketcherUpdater={onToggleSketcherUpdater}
             />
           )}
         </PanelWrapper>
