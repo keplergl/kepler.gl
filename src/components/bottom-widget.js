@@ -68,9 +68,8 @@ export default function BottomWidgetFactory(TimeWidget, AnimationControl) {
           <AnimationControl
             animation={animationConfig}
             width={Math.min(maxWidth, enlargedFilterWidth)}
-            playAnimation={visStateActions.playAnimation}
             updateAnimationTime={visStateActions.updateAnimationTime}
-            updateSpeed={visStateActions.updateSpeed}
+            updateAnimationSpeed={visStateActions.updateLayerAnimationSpeed}
           />
         ) : (
           <TimeWidget

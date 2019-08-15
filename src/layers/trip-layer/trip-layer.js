@@ -109,7 +109,7 @@ export default class TripLayer extends Layer {
     };
 
     const geojsonField = fields.findIndex(f => f.type === 'geojson');
-    //TODO: H
+
     let isTrip = false;
     if (geojsonField > -1) {
       const features = data.map(d => d[geojsonField]);
@@ -118,7 +118,7 @@ export default class TripLayer extends Layer {
 
     const foundColumns = this.findDefaultColumnField(defaultColumns, fields);
 
-    if (!foundColumns || !foundColumns.length //|| !isTrip
+    if (!foundColumns || !foundColumns.length || !isTrip
     ) {
       return [];
     }
@@ -207,7 +207,7 @@ export default class TripLayer extends Layer {
 
     return {
       data: geojsonData,
-      getPath: d => d.geometry.coordinates, //.map(coord => coord.slice(0, 2)),
+      getPath: d => d.geometry.coordinates, // .map(coord => coord.slice(0, 2)),
       getTimestamps: d => this.dataToTimeStamp[d.properties.index],
       getColor: d =>
         cScale
