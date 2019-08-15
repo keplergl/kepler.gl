@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import AnimationSpeedToggle from 'components/filters/animation-speed-toggle';
 import {Button, CenterFlexbox} from 'components/common/styled-components';

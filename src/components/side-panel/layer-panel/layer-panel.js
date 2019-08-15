@@ -49,9 +49,8 @@ function LayerPanelFactory() {
       layerTypeOptions: PropTypes.arrayOf(PropTypes.any),
       layerVisConfigChange: PropTypes.func,
       layerVisualChannelConfigChange: PropTypes.func,
-      playAnimation: PropTypes.func,
       updateAnimationTime: PropTypes.func,
-      updateSpeed: PropTypes.func,
+      updateLayerAnimationSpeed: PropTypes.func,
       enableLayerAnimation: PropTypes.func
     };
 

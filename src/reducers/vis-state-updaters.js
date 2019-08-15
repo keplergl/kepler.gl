@@ -632,30 +632,6 @@ export const updateAnimationSpeedUpdater = (state, action) => ({
 });
 
 /**
- * Update animation config current time
- * @memberof visStateUpdaters
- * @param {Object} state `visState`
- * @param {Object} action action
- * @param {Number} action.speed current speed of animation
- * @returns {Object} nextState
- * @public
- *
- */
-
-export const playAnimationUpdater = (state) => {
-  const timeRange = state.animationConfig.domain[1] - state.animationConfig.domain[0]
-  //min base speed of 1 but scale down the range is time range is big to cap at reasonable animation duration
-  const baseSpeed = Math.max(Math.floor(timeRange / 500),1)
-  return {
-    ...state,
-    animationConfig: {
-      ...state.animationConfig,
-      currentTime: state.animationConfig.currentTime + state.animationConfig.speed * baseSpeed
-    }
-  };
-};
-
-/**
  * Reset animation config current time to a specified value
  * @memberof visStateUpdaters
  * @param {Object} state `visState`
@@ -743,7 +719,7 @@ export const enableLayerAnimationUpdater = (state, oldLayer) => {
  *
  */
 
-export const updateSpeedUpdater = (state, {speed}) => {
+export const updateLayerAnimationSpeedUpdater = (state, {speed}) => {
   return {
     ...state,
     animationConfig: {

@@ -10,6 +10,7 @@ import {
 } from 'components/common/styled-components';
 import {Play, Reset, Pause} from 'components/common/icons';
 import SpeedControl from './speed-control';
+import {requestAnimationFrame, cancelAnimationFrame} from 'global/window';
 
 const SliderWrapper = styled.div`
   display: flex;
@@ -89,7 +90,6 @@ const AnimationControlFactory = () => {
         showSpeedControl: false
       };
       this._animation = null;
-      this._isAnimating = false;
     }
 
     componentDidUpdate() {
@@ -100,7 +100,7 @@ const AnimationControlFactory = () => {
 
     onSlider1Change = val => {
       const {domain} = this.props.animation;
-      if (val >= domain[0] && val <=domain[1]) {
+      if (val >= domain[0] && val <= domain[1]) {
         this.props.updateAnimationTime(val);
       }
     };
@@ -112,34 +112,24 @@ const AnimationControlFactory = () => {
     };
 
     _startAnimation = () => {
-      const {duration} = this.props.animation;
       this._pauseAnimation();
       this.setState({isAnimating: true});
-      this._isAnimating = true;
-      this._animation = window.setInterval(this._nextFrame.bind(this), duration);
     };
 
     _nextFrame = () => {
+      this._animation = null;
       const {currentTime, domain, speed} = this.props.animation;
-      if (currentTime <= domain[1] - speed) {
-        this.props.playAnimation(speed);
-      } else if (
-        currentTime > domain[1] - speed &&
-        currentTime <= domain[1] + speed
-      ) {
-        this.props.playAnimation(domain[1] - currentTime);
-      } else {
-        this._pauseAnimation();
-      }
-      // const nextTime = currentTime + speed > domain[1] ? domain[0] : currentTime + speed;
-      // this.props.playAnimation(nextTime);
+      const BASE_SPEED = 600;
+      const adjustedSpeed = ((domain[1] - domain[0]) / BASE_SPEED) * speed;
+      const nextTime =
+        currentTime + speed > domain[1] ? domain[0] : currentTime + adjustedSpeed;
+      this.props.updateAnimationTime(nextTime);
     };
 
     _pauseAnimation = () => {
       if (this._animation) {
-        window.clearInterval(this._animation);
+        cancelAnimationFrame(this._animation);
         this._animation = null;
-        this._isAnimating = false;
       }
       this.setState({isAnimating: false});
     };
@@ -157,7 +147,6 @@ const AnimationControlFactory = () => {
       const {currentTime, domain, speed} = animation;
       const {showSpeedControl} = this.state;
 
-      //console.log('currentTime',currentTime, 'domain',domain)
       return (
         <WidgetContainer width={width}>
           <AnimationWidgetInner className="animation-widget--inner">
@@ -183,7 +172,7 @@ const AnimationControlFactory = () => {
             <SpeedControl
               onClick={this.toggleSpeedControl}
               showSpeedControl={showSpeedControl}
-              updateAnimationSpeed={this.props.updateSpeed}
+              updateAnimationSpeed={speedMultiplier=>this.props.updateAnimationSpeed(speedMultiplier)}
               speed={speed}
             />
 
