@@ -46,7 +46,14 @@ const DataGridWrapper = styled.div`
     .cell {
       overflow-y: scroll;
       overflow-x: hidden;
+      
+      &.geojson {
+        span {
+          text-align: left;
+        } 
+      }
     }
+    
 
     .last .cell {
       padding-right: 24px;
@@ -160,12 +167,12 @@ function DataGridFactory(
       const isLast = columnIndex === columns.length - 1
 
       const type = columns[columnIndex].type;
-      
+
       // rowIndex -1 because data rows start rendering at index 1 and we normalize back using the -1 param
       const className = classnames({
         last: isLast,
         [`header-${columnIndex}`]: rowIndex === 0,
-        [`row-${rowIndex-1}} column-${columnIndex}`]: rowIndex > 0
+        [`row-${rowIndex-1} column-${columnIndex}`]: rowIndex > 0
       });
 
       return (
