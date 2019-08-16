@@ -22,9 +22,12 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {MultiGrid} from 'react-virtualized';
 import styled, {withTheme}from 'styled-components';
+import {createSelector} from 'reselect';
+import classnames from 'classnames';
 import FieldToken from 'components/common/field-token';
 import {Clock} from 'components/common/icons/index';
-import {ALL_FIELD_TYPES} from 'constants/default-settings';
+import {parseFieldValue} from 'utils/data-utils';
+import {ALL_FIELD_TYPES} from 'constants';
 
 const DataGridWrapper = styled.div`
   .ReactVirtualized__Grid:focus,
@@ -33,6 +36,28 @@ const DataGridWrapper = styled.div`
   }
   .ReactVirtualized__Grid__innerScrollContainer {
     ${props => props.theme.modalScrollBar};
+  }
+  
+  .ReactVirtualized__Grid {
+    .column-0 .cell {
+      padding-left: 24px;
+    }
+    
+    .cell {
+      overflow-y: scroll;
+      overflow-x: hidden;
+      
+      &.geojson {
+        span {
+          text-align: left;
+        } 
+      }
+    }
+    
+
+    .last .cell {
+      padding-right: 24px;
+    }
   }
 `;
 
@@ -54,26 +79,30 @@ const StyledFieldHeader = styled.div`
   }
   
   .icon-wrapper {
-    marginRight: ${props => props.type === 'timestamp' ? '2px' : '0'};
+    margin-right: ${props => props.type === 'timestamp' ? '2px' : '0'};
     height: 16px;
   }
 `;
 
-const FieldHeaderTemplate = ({name, type}) => (
-  <StyledFieldHeader type={type}>
-    <div className="label-wrapper">
-      <div className="icon-wrapper">
-        {type === 'timestamp' ? <Clock height="16px" /> : null}
+export const FieldHeaderFactory = () => {
+  const Header = ({className, value, type}) => (
+    <StyledFieldHeader className={className || ''} type={type} title={value}>
+      <div className="label-wrapper">
+        <div className="icon-wrapper">
+          {type === 'timestamp' ? <Clock height="16px" /> : null}
+        </div>
+        <span>{value}</span>
       </div>
-      <span>{name}</span>
-    </div>
-    <div className="field-wrapper">
-      <FieldToken type={type} />
-    </div>
-  </StyledFieldHeader>
-);
+      <div className="field-wrapper">
+        <FieldToken type={type} />
+      </div>
+    </StyledFieldHeader>
+  );
 
-export const FieldHeaderFactory = () => FieldHeaderTemplate;
+  Header.displayName = 'Header';
+
+  return Header;
+};
 
 const StyledCell = styled.div`
   display: flex;
@@ -85,17 +114,29 @@ const StyledCell = styled.div`
   border-bottom: ${props => props.theme.panelBorderLT};
   color: ${props => props.theme.labelColorLT};
   text-overflow: ellipsis;
-  white-space: pre-wrap;
-  word-wrap: break-spaces;
   height: 100%;
+  width: 100%;
+  
+  span {
+    overflow: scroll;
+    text-overflow: ellipsis;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    width: 100%;
+  }
 `;
 
-const CellTemplate = ({name, type}) => {
-  const value = type === ALL_FIELD_TYPES.boolean ? String(name) : name;
-  return (<StyledCell title={value}><span>{value}</span></StyledCell>);
-};
+export const CellFactory = () => {
+  const Cell = ({className, value}) => (
+    <StyledCell className={className || ''} title={value}>
+      <span>{value}</span>
+    </StyledCell>
+  );
 
-export const CellFactory = () => CellTemplate;
+  Cell.displayName = 'Cell';
+
+  return Cell;
+};
 
 DataGridFactory.deps = [
   FieldHeaderFactory,
@@ -115,21 +156,30 @@ function DataGridFactory(
       width: PropTypes.number.isRequired
     };
 
+    columnsSelector = props => props.columns;
+    hasGeojson = createSelector(this.columnsSelector, columns =>
+      columns.some(c => c.type === ALL_FIELD_TYPES.geojson)
+    );
+
     _cellRenderer = ({columnIndex, key, rowIndex, style}) => {
       const {columns, rows} = this.props;
 
-      // rowIndex -1 because data rows start rendering at index 1 and we normalize back using the -1 param
-      const className = `${rowIndex === 0
-        ? `header-${columnIndex}`
-        : `row-${rowIndex-1}`} column-${columnIndex}`;
+      const isLast = columnIndex === columns.length - 1
 
       const type = columns[columnIndex].type;
+
+      // rowIndex -1 because data rows start rendering at index 1 and we normalize back using the -1 param
+      const className = classnames({
+        last: isLast,
+        [`header-${columnIndex}`]: rowIndex === 0,
+        [`row-${rowIndex-1} column-${columnIndex}`]: rowIndex > 0
+      });
 
       return (
         <div key={key} style={style} className={className}>
           {rowIndex === 0
-            ? (<FieldHeader className={`header-cell ${type}`} name={columns[columnIndex].name} type={type} />)
-            : (<Cell className={`cell ${type}`} name={rows[rowIndex - 1][columnIndex]} type={type} />)
+            ? (<FieldHeader className={`header-cell ${type}`} value={columns[columnIndex].name} type={type} />)
+            : (<Cell className={`cell ${type}`} value={parseFieldValue(rows[rowIndex - 1][columnIndex], type)} type={type} />)
           }
         </div>
       );
@@ -137,7 +187,12 @@ function DataGridFactory(
 
     _rowHeight = ({index}) => index === 0
       ? this.props.theme.cellHeaderHeight
-      : this.props.theme.cellHeight;
+      : this.hasGeojson(this.props) ? this.props.theme.extendCellHeight : this.props.theme.cellHeight;
+
+    _columnWidth = ({index}) => {
+      const isGeojsonField = this.props.columns[index].type === ALL_FIELD_TYPES.geojson;
+      return isGeojsonField ? this.props.theme.extendColumnWidth : this.props.theme.columnWidth;
+    };
 
     render() {
       const {columns, height, rows, theme, width} = this.props;
@@ -146,7 +201,7 @@ function DataGridFactory(
         <DataGridWrapper className="datagrid-wrapper">
           <MultiGrid
             cellRenderer={this._cellRenderer}
-            columnWidth={theme.columnWidth}
+            columnWidth={this._columnWidth}
             columnCount={columns.length}
             fixedRowCount={1}
             enableFixedRowScroll={true}

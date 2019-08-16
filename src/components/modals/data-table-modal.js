@@ -76,7 +76,7 @@ DataTableModalFactory.deps = [
 ];
 
 function DataTableModalFactory(DataGrid) {
-  const DataTableModal = ({
+  const DataTableModal = React.memo(({
     datasets,
     dataId,
     height,
@@ -90,9 +90,6 @@ function DataTableModalFactory(DataGrid) {
     const activeDataset = datasets[dataId];
     const rows = activeDataset.data;
 
-    const columns = activeDataset.fields
-      .filter(({name}) => name !== '_geojson');
-
     return (
       <StyledModal className="dataset-modal" >
         <DatasetTabs
@@ -104,12 +101,13 @@ function DataTableModalFactory(DataGrid) {
           width={width}
           height={height}
           rows={rows}
-          columns={columns}
+          columns={activeDataset.fields}
         />
       </StyledModal>
     );
-  };
+  });
 
+  DataTableModal.displayName = 'DataTableModal';
   return DataTableModal;
 }
 

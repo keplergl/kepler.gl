@@ -220,3 +220,26 @@ export function roundValToStep(minValue, step, val) {
 
   return Number(rounded);
 }
+
+/**
+ * Parse field value and type and return a string representation
+ * @param {string} value the field value
+ * @param {string} type the field type
+ * @return {*}
+ */
+export const parseFieldValue = (value, type) => {
+  if (!notNullorUndefined(value)) {
+    return '';
+  }
+
+  switch (type) {
+    case ALL_FIELD_TYPES.boolean:
+      return String(value);
+    case ALL_FIELD_TYPES.geojson:
+      return typeof value === 'string' ? value :
+        isPlainObject(value) ? JSON.stringify(value) :
+          Array.isArray(value) ? `[${String(value)}]` : '';
+    default:
+      return value;
+  }
+};
