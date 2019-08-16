@@ -29,9 +29,10 @@ import TripLayerIcon from './trip-layer-icon';
 import {
   getGeojsonDataMaps,
   getGeojsonBounds,
-  getGeojsonFeatureTypes
+  getGeojsonFeatureTypes,
+  isTripAnimatable,
+  dataToTimeStamp
 } from '../geojson-layer/geojson-utils';
-import {getSampleData} from 'utils/data-utils';
 import {hexToRgb} from 'utils/color-utils';
 
 export const tripVisConfigs = {
@@ -108,28 +109,16 @@ export default class TripLayer extends Layer {
     };
 
     const geojsonField = fields.findIndex(f => f.type === 'geojson');
-    const features = data.map(d => d[geojsonField]);
-    const featureTypes = getGeojsonFeatureTypes(features);
 
-    // check if geojson has linestring features which trip layer uses
-    const hasLineString = Boolean(featureTypes.line);
-
-    // check if a sample of 500 features has 4 elements in all coordinates
-    const samples = features.length > 500 ? getSampleData(features, 500) : features;
-    let coordHasLength4 = true;
-    for (let i = 0; i < samples.length; i += 1) {
-      coordHasLength4 = !samples[i].geometry.coordinates.find(c => c.length < 4);
-      if (samples[i].geometry.coordinates.find(c => c.length < 4)) {
-        break;
-      }
+    let isTrip = false;
+    if (geojsonField > -1) {
+      const features = data.map(d => d[geojsonField]);
+      isTrip = isTripAnimatable(features)
     }
 
     const foundColumns = this.findDefaultColumnField(defaultColumns, fields);
-    if (
-      !foundColumns ||
-      !foundColumns.length ||
-      !coordHasLength4 ||
-      !hasLineString
+
+    if (!foundColumns || !foundColumns.length || !isTrip
     ) {
       return [];
     }
@@ -148,7 +137,10 @@ export default class TripLayer extends Layer {
   getDefaultLayerConfig(props) {
     return {
       ...super.getDefaultLayerConfig(props),
-      animation: {enabled: true}
+      animation: {
+        enabled: true,
+        domain: [0, 1000]
+      }
     };
   }
 
@@ -215,7 +207,8 @@ export default class TripLayer extends Layer {
 
     return {
       data: geojsonData,
-      getFeature,
+      getPath: d => d.geometry.coordinates, // .map(coord => coord.slice(0, 2)),
+      getTimestamps: d => this.dataToTimeStamp[d.properties.index],
       getColor: d =>
         cScale
           ? this.getEncodedChannelValue(
@@ -243,6 +236,8 @@ export default class TripLayer extends Layer {
 
     // calculate layer meta
     const allFeatures = Object.values(this.dataToFeature);
+
+    this.dataToTimeStamp = dataToTimeStamp(allFeatures);
 
     // get bounds from features
     const bounds = getGeojsonBounds(allFeatures);
@@ -294,9 +289,8 @@ export default class TripLayer extends Layer {
         id: this.id,
         idx,
         data: data.data,
-        getPath: d => d.geometry.coordinates.map(coord => coord.slice(0, 2)),
-        getTimestamps: d =>
-          d.geometry.coordinates.map(coord => (coord.length === 4 ? coord[3] : 0)),
+        getPath: data.getPath,
+        getTimestamps: data.getTimestamps,
         getColor: data.getColor,
         opacity: 0.3,
         getWidth: 2,

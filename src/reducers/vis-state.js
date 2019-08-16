@@ -81,7 +81,9 @@ const actionHandler = {
 
   [ActionTypes.UPDATE_FILTER_ANIMATION_SPEED]: visStateUpdaters.updateAnimationSpeedUpdater,
 
-  [ActionTypes.PLAY_ANIMATION]: visStateUpdaters.playAnimationUpdater,
+  [ActionTypes.UPDATE_ANIMATION_TIME]: visStateUpdaters.updateAnimationTimeUpdater,
+
+  [ActionTypes.UPDATE_LAYER_ANIMATION_SPEED]: visStateUpdaters.updateLayerAnimationSpeedUpdater,
 
   [ActionTypes.ENABLE_LAYER_ANIMATION]: visStateUpdaters.enableLayerAnimationUpdater,
 

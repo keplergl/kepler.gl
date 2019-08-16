@@ -48,7 +48,7 @@ const KeplerGl = require('kepler.gl/components').injectComponents([
 import sampleTripData from './data/sample-trip-data';
 import sampleGeojson from './data/sample-small-geojson';
 import sampleGeojsonPoints from './data/sample-geojson-points';
-import sampleanimatesmall from './data/sample-animate-small';
+import sampleanimatetrip from './data/sample-animate-trip';
 import sampleH3Data from './data/sample-hex-id-csv';
 import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
 import {addDataToMap, addNotification} from 'kepler.gl/actions';
@@ -223,7 +223,7 @@ class App extends Component {
           {
             info: {label: 'Trip animation'},
             // data: processGeojson(sampleGeojsonPoints)
-            data: processGeojson(sampleanimatesmall)
+            data: processGeojson(sampleanimatetrip)
           } /* ,
           {
             info: {label: 'SF Zip Geo'},
