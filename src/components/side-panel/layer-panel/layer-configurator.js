@@ -601,7 +601,6 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
             {...visConfiguratorProps}
             {...(featureTypes.polygon ? LAYER_VIS_CONFIGS.stroked : {})}
             label="Trail Length"
-            collapsible
           >
             <VisConfigSlider
               {...LAYER_VIS_CONFIGS.trailLength}

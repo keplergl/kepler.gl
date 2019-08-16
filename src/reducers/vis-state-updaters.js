@@ -43,7 +43,7 @@ import {createNewDataEntry} from 'utils/dataset-utils';
 import {
   findDefaultLayer,
   calculateLayerData,
-  getTimeAnimationDomain
+  getTimeAnimationDomainForTripLayer
 } from 'utils/layer-utils/layer-utils';
 
 import {
@@ -168,19 +168,17 @@ export const INITIAL_VIS_STATE = {
     //   }
     // ]
   ],
-
+  //
   // defaults layer classes
   layerClasses: LayerClasses,
 
   // default animation
   animationConfig: {
-    domain: [0, 2000],
+    domain: [null, null],
     currentTime: 0,
-    duration: 10
+    duration: 10,
+    speed: 1
   }
-  // layers: {
-  //   [layer.id]: {enabled: true, speed: 1000, currentTime: null}
-  // }
 };
 
 function updateStateWithLayerAndData(state, {layerData, layer, idx}) {
@@ -657,17 +655,17 @@ export const updateAnimationSpeedUpdater = (state, action) => ({
 });
 
 /**
- * Update animation current time
+ * Reset animation config current time to a specified value
  * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
- * @param {Number} action.value current time value of action
+ * @param {Number} action.value the value current time will be set to
  * @returns {Object} nextState
  * @public
  *
  */
 
-export const playAnimationUpdater = (state, {value}) => ({
+export const updateAnimationTimeUpdater = (state, {value}) => ({
   ...state,
   animationConfig: {
     ...state.animationConfig,
@@ -675,25 +673,81 @@ export const playAnimationUpdater = (state, {value}) => ({
   }
 });
 
+function updateAnimationDomain(state) {
+  // merge all animatable layer domain and update global config
+  const animatableLayers = state.layers.filter(l => l.config.animation.enabled);
+
+  const mergedDomain = animatableLayers.reduce(
+    (accu, layer) => [
+      Math.min(accu[0], layer.config.animation.domain[0]),
+      Math.max(accu[1], layer.config.animation.domain[1])
+    ],
+    [+Infinity, -Infinity]
+  );
+
+  return {
+    ...state,
+    animationConfig: {
+      ...state.animationConfig,
+      currentTime: mergedDomain[0],
+      domain: mergedDomain
+    }
+  };
+}
+
 /**
- * Enable animation domain with the min and max of timestamps from geojson
+ * Set animation domain with the min and max of timestamps from geojson
+ * Enable multi-layer domain range
  * @memberof visStateUpdaters
  * @param {Object} state `visState`
  * @param {Object} action action
+ *  @param {Object} action.oldLayer the layer object to be updated
  * @returns {Object} nextState
  * @public
  *
  */
 
-export const enableLayerAnimationUpdater = (state, action) => {
-  const {oldLayer} = action;
-  const [minTs, maxTs] = getTimeAnimationDomain(oldLayer, state.datasets);
+export const enableLayerAnimationUpdater = (state, oldLayer) => {
+  // calculate domain for 1 layer and update global domain
+  const domain = getTimeAnimationDomainForTripLayer(
+    oldLayer[0],
+    state.datasets
+  );
+
+  const newLayer = oldLayer[0].updateLayerConfig({
+    animation: {
+      ...oldLayer[0].config.animation,
+      domain
+    }
+  });
+
+  const idx = state.layers.findIndex(l => l.id === oldLayer.id);
+  const oldLayerData = state.layerData[idx];
+  const {layerData, layer} = calculateLayerData(newLayer, state, oldLayerData, {
+    sameData: true
+  });
+  const newState = updateStateWithLayerAndData(state, {layerData, layer, idx});
+
+  return updateAnimationDomain(newState);
+};
+
+/**
+ * Update animation speed with the vertical speed slider
+ * @memberof visStateUpdaters
+ * @param {Object} state `visState`
+ * @param {Object} action action
+ * @param {Number} action.speed the updated speed of the animation
+ * @returns {Object} nextState
+ * @public
+ *
+ */
+
+export const updateLayerAnimationSpeedUpdater = (state, {speed}) => {
   return {
     ...state,
     animationConfig: {
       ...state.animationConfig,
-      currentTime: minTs,
-      domain: [minTs, maxTs]
+      speed
     }
   };
 };
@@ -793,7 +847,7 @@ export const removeLayerUpdater = (state, {idx}) => {
   const layerToRemove = state.layers[idx];
   const newMaps = removeLayerFromSplitMaps(state.splitMaps, layerToRemove);
 
-  return {
+  const newState = {
     ...state,
     layers: [...layers.slice(0, idx), ...layers.slice(idx + 1, layers.length)],
     layerData: [
@@ -807,6 +861,8 @@ export const removeLayerUpdater = (state, {idx}) => {
     hoverInfo: layerToRemove.isLayerHovered(hoverInfo) ? undefined : hoverInfo,
     splitMaps: newMaps
   };
+
+  return updateAnimationDomain(newState);
 };
 
 /**
@@ -1154,6 +1210,16 @@ export const updateVisDataUpdater = (state, action) => {
     mergedState = addDefaultLayers(mergedState, newDateEntries);
   }
 
+  const newLayers = mergedState.layers.filter(
+    l => l.config.dataId in newDateEntries
+  );
+
+  newLayers.forEach(l => {
+    if (l.config.animation.enabled) {
+      mergedState = enableLayerAnimationUpdater(mergedState, [l]);
+    }
+  });
+
   if (mergedState.splitMaps.length) {
     newLayers = mergedState.layers.filter(
       l => l.config.dataId in newDateEntries
@@ -1178,7 +1244,9 @@ export const updateVisDataUpdater = (state, action) => {
     }
   });
 
-  return updateAllLayerDomainData(mergedState, Object.keys(newDateEntries));
+  const updatedState = updateAllLayerDomainData(mergedState, Object.keys(newDateEntries));
+  console.time('test data load finish')
+  return updatedState
 };
 /* eslint-enable max-statements */
 
@@ -1367,9 +1435,11 @@ export function updateAllLayerDomainData(state, dataId, newFilter) {
     }
   });
 
-  return {
+  const newState = {
     ...state,
     layers: newLayers,
     layerData: newLayerDatas
   };
+
+  return newState;
 }

@@ -54,7 +54,8 @@ function LayerPanelFactory(LayerConfigurator) {
       layerVisConfigChange: PropTypes.func.isRequired,
       layerVisualChannelConfigChange: PropTypes.func.isRequired,
       layerColorUIChange: PropTypes.func.isRequired,
-      playAnimation: PropTypes.func.isRequired,
+      updateAnimationTime: PropTypes.func,
+      updateLayerAnimationSpeed: PropTypes.func,
       enableLayerAnimation: PropTypes.func.isRequired
     };
 

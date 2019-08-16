@@ -457,7 +457,6 @@ export function processGeojson(rawData) {
       }
     });
   });
-
   return processRowObject(allData);
 }
 
@@ -475,9 +474,7 @@ export function formatCsv(data, fields) {
   data.forEach(row => {
     formattedData.push(
       row.map((d, i) =>
-        d && GEOJSON_FIELDS.geojson.includes(fields[i].name)
-          ? JSON.stringify(d)
-          : d
+        d && GEOJSON_FIELDS.geojson.includes(fields[i].name) ? JSON.stringify(d) : d
       )
     );
   });
@@ -525,9 +522,7 @@ export function validateInputData(data) {
     }
 
     if (!f.name) {
-      assert(
-        `field.name is required but missing in field ${JSON.stringify(f)}`
-      );
+      assert(`field.name is required but missing in field ${JSON.stringify(f)}`);
       // assign a name
       f.name = `column_${i}`;
     }
