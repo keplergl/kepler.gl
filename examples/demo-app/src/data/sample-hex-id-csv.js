@@ -107,3 +107,113 @@ export default `hex_id,value
 89283082d73ffff,1
 8928309530bffff,1
 8928309532bffff,1`;
+
+export const config = {
+  version: 'v1',
+  config: {
+    visState: {
+      filters: [],
+      layers: [
+        {
+          id: 'avlgol',
+          type: 'hexagonId',
+          config: {
+            dataId: 'h3-hex-id',
+            label: 'H3 Hexagon',
+            color: [241, 92, 23],
+            columns: {
+              hex_id: 'hex_id'
+            },
+            isVisible: true,
+            visConfig: {
+              opacity: 0.8,
+              colorRange: {
+                name: 'Global Warming',
+                type: 'sequential',
+                category: 'Uber',
+                colors: [
+                  '#5A1846',
+                  '#900C3F',
+                  '#C70039',
+                  '#E3611C',
+                  '#F1920E',
+                  '#FFC300'
+                ]
+              },
+              coverage: 1,
+              sizeRange: [0, 500],
+              coverageRange: [0, 1],
+              elevationScale: 5
+            },
+            textLabel: [
+              {
+                field: null,
+                color: [255, 255, 255],
+                size: 18,
+                offset: [0, 0],
+                anchor: 'start',
+                alignment: 'center'
+              }
+            ]
+          },
+          visualChannels: {
+            colorField: {
+              name: 'value',
+              type: 'integer'
+            },
+            colorScale: 'quantile',
+            sizeField: null,
+            sizeScale: 'linear',
+            coverageField: null,
+            coverageScale: 'linear'
+          }
+        }
+      ],
+      interactionConfig: {
+        tooltip: {
+          fieldsToShow: {
+            'h3-hex-id': ['hex_id', 'value']
+          },
+          enabled: true
+        },
+        brush: {
+          size: 0.5,
+          enabled: false
+        }
+      },
+      layerBlending: 'normal',
+      splitMaps: [{
+        layers: {
+          avlgol: {
+            isAvailable: true,
+            isVisible: true
+          }
+        }
+      }, {
+        layers: {
+          avlgol: {
+            isAvailable: true,
+            isVisible: true
+          }
+        }
+      }]
+    },
+    mapStyle: {
+      styleType: 'dark',
+      topLayerGroups: {},
+      visibleLayerGroups: {
+        label: true,
+        road: true,
+        border: false,
+        building: true,
+        water: true,
+        land: true,
+        '3d building': false
+      },
+      mapStyles: {}
+    },
+    mapState: {
+      isSplit: true
+    }
+  }
+};

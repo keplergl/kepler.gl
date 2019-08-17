@@ -25,6 +25,7 @@ import {getInitialInputStyle} from 'reducers/map-style-updaters';
 import keplerGlReducer from 'reducers/core';
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStyleActions from 'actions/map-style-actions';
+import * as MapStateActions from 'actions/map-state-actions';
 import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
 
 // fixtures
@@ -268,6 +269,22 @@ function mockStateWithCustomMapStyle() {
   return updatedState;
 }
 
+function mockStateWithSplitMaps(state) {
+  const initialState = state || mockStateWithFileUpload();
+
+  const firstLayer = initialState.visState.layers[0];
+
+  const prepareState = applyActions(keplerGlReducer, initialState, [
+    // toggle splitMaps
+    {action: MapStateActions.toggleSplitMap, payload: []},
+
+    // toggleLayerForMap
+    {action: VisStateActions.toggleLayerForMap, payload: [0, firstLayer.id]}
+  ]);
+
+  return prepareState;
+}
+
 export const StateWFiles = mockStateWithFileUpload();
 export const StateWFilters = mockStateWithFilters();
 export const StateWFilesFiltersLayerColor = mockStateWithLayerDimensions(
@@ -275,7 +292,7 @@ export const StateWFilesFiltersLayerColor = mockStateWithLayerDimensions(
 );
 
 export const StateWCustomMapStyle = mockStateWithCustomMapStyle();
-
+export const StateWSplitMaps = mockStateWithSplitMaps();
 // saved hexagon layer
 export const expectedSavedLayer0 = {
   id: 'hexagon-2',

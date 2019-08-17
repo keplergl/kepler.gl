@@ -4,13 +4,12 @@
 
 -   [combinedUpdaters][1]
     -   [addDataToMapUpdater][3]
-    -   [updateVisDataUpdater][5]
 
 ## combinedUpdaters
 
 Some actions will affect the entire kepler.lg instance state.
 The updaters for these actions is exported as `combinedUpdaters`. These updater take the entire instance state
-as the first argument. Read more about [Using updaters][7]
+as the first argument. Read more about [Using updaters][5]
 
 **Examples**
 
@@ -54,52 +53,26 @@ export default composedReducer;
 
 Combine data and full configuration update in a single action
 
--   **Action**: [`addDataToMap`][8]
+-   **Action**: [`addDataToMap`][6]
 
 **Parameters**
 
--   `state` **[Object][9]** kepler.gl instance state, containing all subreducer state
--   `action` **[Object][9]** 
-    -   `action.payload` **[Object][9]** `{datasets, options, config}`
-        -   `action.payload.datasets` **([Array][10]&lt;[Object][9]> | [Object][9])** **\*required** datasets can be a dataset or an array of datasets
+-   `state` **[Object][7]** kepler.gl instance state, containing all subreducer state
+-   `action` **[Object][7]** 
+    -   `action.payload` **[Object][7]** `{datasets, options, config}`
+        -   `action.payload.datasets` **([Array][8]&lt;[Object][7]> | [Object][7])** **\*required** datasets can be a dataset or an array of datasets
             Each dataset object needs to have `info` and `data` property.
-            -   `action.payload.datasets.info` **[Object][9]** \-info of a dataset
-                -   `action.payload.datasets.info.id` **[string][11]** id of this dataset. If config is defined, `id` should matches the `dataId` in config.
-                -   `action.payload.datasets.info.label` **[string][11]** A display name of this dataset
-            -   `action.payload.datasets.data` **[Object][9]** **\*required** The data object, in a tabular format with 2 properties `fields` and `rows`
-                -   `action.payload.datasets.data.fields` **[Array][10]&lt;[Object][9]>** **\*required** Array of fields,
-                    -   `action.payload.datasets.data.fields.name` **[string][11]** **\*required** Name of the field,
-                -   `action.payload.datasets.data.rows` **[Array][10]&lt;[Array][10]>** **\*required** Array of rows, in a tabular format with `fields` and `rows`
-        -   `action.payload.options` **[Object][9]** option object `{centerMap: true}`
-        -   `action.payload.config` **[Object][9]** map config
+            -   `action.payload.datasets.info` **[Object][7]** \-info of a dataset
+                -   `action.payload.datasets.info.id` **[string][9]** id of this dataset. If config is defined, `id` should matches the `dataId` in config.
+                -   `action.payload.datasets.info.label` **[string][9]** A display name of this dataset
+            -   `action.payload.datasets.data` **[Object][7]** **\*required** The data object, in a tabular format with 2 properties `fields` and `rows`
+                -   `action.payload.datasets.data.fields` **[Array][8]&lt;[Object][7]>** **\*required** Array of fields,
+                    -   `action.payload.datasets.data.fields.name` **[string][9]** **\*required** Name of the field,
+                -   `action.payload.datasets.data.rows` **[Array][8]&lt;[Array][8]>** **\*required** Array of rows, in a tabular format with `fields` and `rows`
+        -   `action.payload.options` **[Object][7]** option object `{centerMap: true}`
+        -   `action.payload.config` **[Object][7]** map config
 
-Returns **[Object][9]** nextState
-
-### updateVisDataUpdater
-
-Apply data and config to visState reducer
-
--   **Action**: [`updateVisData`][12]
-
-**Parameters**
-
--   `state` **[Object][9]** kepler.gl instance state, containing all subreducer state
--   `action` **[Object][9]** 
-    -   `action.datasets` **([Array][10]&lt;[Object][9]> | [Object][9])** **\*required** datasets can be a dataset or an array of datasets
-        Each dataset object needs to have `info` and `data` property.
-        -   `action.datasets.info` **[Object][9]** \-info of a dataset
-            -   `action.datasets.info.id` **[string][11]** id of this dataset. If config is defined, `id` should matches the `dataId` in config.
-            -   `action.datasets.info.label` **[string][11]** A display name of this dataset
-        -   `action.datasets.data` **[Object][9]** **\*required** The data object, in a tabular format with 2 properties `fields` and `rows`
-            -   `action.datasets.data.fields` **[Array][10]&lt;[Object][9]>** **\*required** Array of fields,
-                -   `action.datasets.data.fields.name` **[string][11]** **\*required** Name of the field,
-            -   `action.datasets.data.rows` **[Array][10]&lt;[Array][10]>** **\*required** Array of rows, in a tabular format with `fields` and `rows`
-    -   `action.options` **[Object][9]** 
-        -   `action.options.centerMap` **[Boolean][13]** 
-        -   `action.options.readOnly` **[Boolean][13]** 
-    -   `action.config` **[Object][9]** 
-
-Returns **[Object][9]** nextState
+Returns **[Object][7]** nextState
 
 [1]: #combinedupdaters
 
@@ -109,20 +82,12 @@ Returns **[Object][9]** nextState
 
 [4]: #parameters
 
-[5]: #updatevisdataupdater
+[5]: ../advanced-usage/using-updaters.md
 
-[6]: #parameters-1
+[6]: ../actions/actions.md#adddatatomap
 
-[7]: ../advanced-usage/using-updaters.md
+[7]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
 
-[8]: ../actions/actions.md#adddatatomap
+[8]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
 
-[9]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
-
-[10]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
-
-[11]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
-
-[12]: ../actions/actions.md#updatevisdata
-
-[13]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+[9]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String

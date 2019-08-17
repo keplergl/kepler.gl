@@ -52,8 +52,15 @@ import {
   mergeFilters,
   mergeLayers,
   mergeInteractions,
-  mergeLayerBlending
+  mergeLayerBlending,
+  mergeSplitMaps
 } from './vis-state-merger';
+
+import {
+  addNewLayersToSplitMap,
+  removeLayerFromSplitMaps,
+  computeSplitMapLayers
+} from 'utils/split-map-utils';
 
 import {Layer, LayerClasses} from 'layers';
 import {processFileToLoad} from '/utils/file-utils';
@@ -846,7 +853,7 @@ export const showDatasetTableUpdater = (state, action) => {
  * @returns {Object} nextState
  * @public
  */
-export const resetMapConfigVisStateUpdater = (state) => ({
+export const resetMapConfigUpdater = (state) => ({
   ...INITIAL_VIS_STATE,
   ...state.initialState,
   initialState: state.initialState
@@ -858,11 +865,13 @@ export const resetMapConfigVisStateUpdater = (state) => ({
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {Object} action.payload map config to be propagated
+ * @param {Object} action.payload.config map config to be propagated
+ * @param {Object} action.payload.option {keepExistingConfig: true | false}
  * @returns {Object} nextState
  * @public
  */
-export const receiveMapConfigUpdater = (state, action) => {
-  if (!action.payload.visState) {
+export const receiveMapConfigUpdater = (state, {payload: {config = {}, options = {}}}) => {
+  if (!config.visState) {
     return state;
   }
 
@@ -872,19 +881,18 @@ export const receiveMapConfigUpdater = (state, action) => {
     interactionConfig,
     layerBlending,
     splitMaps
-  } = action.payload.visState;
+  } = config.visState;
 
-  // always reset config when receive a new config
-  const resetState = resetMapConfigVisStateUpdater(state);
-  let mergedState = {
-    ...resetState,
-    splitMaps: splitMaps || [] // maps doesn't require any logic
-  };
+  const {keepExistingConfig} = options;
+
+  // reset config if keepExistingConfig is falsy
+  let mergedState = !keepExistingConfig ? resetMapConfigUpdater(state) : state;
 
   mergedState = mergeFilters(mergedState, filters);
   mergedState = mergeLayers(mergedState, layers);
   mergedState = mergeInteractions(mergedState, interactionConfig);
   mergedState = mergeLayerBlending(mergedState, layerBlending);
+  mergedState = mergeSplitMaps(mergedState, splitMaps);
 
   return mergedState;
 };
@@ -1009,7 +1017,7 @@ export const toggleLayerForMapUpdater = (state, {mapIndex, layerId}) => {
  * @param {Array<Object>} action.datasets.data.fields - ***required** Array of fields,
  * @param {string} action.datasets.data.fields.name - ***required** Name of the field,
  * @param {Array<Array>} action.datasets.data.rows - ***required** Array of rows, in a tabular format with `fields` and `rows`
- * @param {Object} action.options option object `{centerMap: true}`
+ * @param {Object} action.options option object `{centerMap: true, keepExistingConfig: false}`
  * @param {Object} action.config map config
  * @returns {Object} nextState
  * @public
@@ -1017,16 +1025,11 @@ export const toggleLayerForMapUpdater = (state, {mapIndex, layerId}) => {
 /* eslint-disable max-statements */
 export const updateVisDataUpdater = (state, action) => {
   // datasets can be a single data entries or an array of multiple data entries
+  const {config, options} = action;
+
   const datasets = Array.isArray(action.datasets)
     ? action.datasets
     : [action.datasets];
-
-  if (action.config) {
-    // apply config if passed from action
-    state = receiveMapConfigUpdater(state, {
-      payload: {visState: action.config}
-    });
-  }
 
   const newDateEntries = datasets.reduce(
     (accu, {info = {}, data}) => ({
@@ -1040,10 +1043,15 @@ export const updateVisDataUpdater = (state, action) => {
     return state;
   }
 
+  // apply config if passed from action
+  const previousState = config ? receiveMapConfigUpdater(state, {
+    payload: {config, options}
+  }) : state;
+
   const stateWithNewData = {
-    ...state,
+    ...previousState,
     datasets: {
-      ...state.datasets,
+      ...previousState.datasets,
       ...newDateEntries
     }
   };
@@ -1052,13 +1060,16 @@ export const updateVisDataUpdater = (state, action) => {
   const {
     filterToBeMerged = [],
     layerToBeMerged = [],
-    interactionToBeMerged = {}
+    interactionToBeMerged = {},
+    splitMapsToBeMerged = []
   } = stateWithNewData;
 
   // merge state with saved filters
   let mergedState = mergeFilters(stateWithNewData, filterToBeMerged);
   // merge state with saved layers
   mergedState = mergeLayers(mergedState, layerToBeMerged);
+  // merge state with saved splitMaps
+  mergedState = mergeSplitMaps(mergedState, splitMapsToBeMerged);
 
   if (mergedState.layers.length === state.layers.length) {
     // no layer merged, find defaults
@@ -1091,80 +1102,6 @@ export const updateVisDataUpdater = (state, action) => {
   return updateAllLayerDomainData(mergedState, Object.keys(newDateEntries));
 };
 /* eslint-enable max-statements */
-
-/**
- * This method will compute the default maps layer settings
- * based on the current layers visibility
- * @param {Array<Object>} layers
- * @returns {Array<Object>} split map settings
- */
-function computeSplitMapLayers(layers) {
-  const mapLayers = layers
-    .filter(layer => layer.config.isVisible)
-    .reduce(
-      (newLayers, currentLayer) => ({
-        ...newLayers,
-        [currentLayer.id]: currentLayer.config.isVisible
-      }),
-      {}
-    );
-
-  return [
-    {layers: mapLayers},
-    {layers: cloneDeep(mapLayers)}
-  ];
-}
-
-/**
- * Remove an existing layer from split map settings
- * @param {Object} splitMaps
- * @param {Object} layer
- * @returns {Object} Maps of custom layer objects
- */
-function removeLayerFromSplitMaps(splitMaps, layer) {
-  if (!splitMaps.length) {
-    return splitMaps;
-  }
-  return splitMaps.map(settings => {
-    // eslint-disable-next-line no-unused-vars
-    const {[layer.id]: _, ...newLayers} = settings.layers;
-    return {
-      ...settings,
-      layers: newLayers
-    };
-  })
-}
-
-/**
- * Add new layers to both existing maps
- * @param {Object} splitMaps
- * @param {Object|Array<Object>} layers
- * @returns {Array<Object>} new splitMaps
- */
-function addNewLayersToSplitMap(splitMaps, layers) {
-  const newLayers = Array.isArray(layers) ? layers : [layers];
-
-  if (!splitMaps.length || !newLayers.length) {
-    return splitMaps;
-  }
-
-  // add new layer to both maps,
-  // don't override, if layer.id is already in splitMaps
-  return splitMaps.map(settings => ({
-    ...settings,
-    layers: {
-      ...settings.layers,
-      ...newLayers.reduce(
-        (accu, newLayer) =>
-          [newLayer.id] in settings.layers || !newLayer.config.isVisible ? accu : {
-            ...accu,
-            [newLayer.id]: newLayer.config.isVisible
-          },
-        {}
-      )
-    }
-  }));
-}
 
 /**
  * When a user clicks on the specific map closing icon

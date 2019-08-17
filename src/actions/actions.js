@@ -45,9 +45,10 @@ import {createAction} from 'redux-actions';
    *
    * @param {Object} data.options
    * @param {boolean} data.options.centerMap `default: true` if `centerMap` is set to `true` kepler.gl will
-   * place the map view within the data points boundaries
+   * place the map view within the data points boundaries.  `options.centerMap` will override `config.mapState` if passed in.
    * @param {boolean} data.options.readOnly `default: false` if `readOnly` is set to `true`
    * the left setting panel will be hidden
+   * @param {boolean} data.options.keepExistingConfig whether to keep exiting map data and associated layer filter  interaction config `default: false`.
    * @param {Object} data.config this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
    * @public
    * @example
@@ -93,7 +94,8 @@ import {createAction} from 'redux-actions';
    *     },
    *     option: {
    *       centerMap: true,
-   *       readOnly: false
+   *       readOnly: false,
+   *       keepExistingConfig: false
    *     },
    *     config: sampleConfig
    *   })
@@ -126,6 +128,12 @@ export const resetMapConfig = createAction(
  * It will reset current configuration first then apply config to it.
  * @memberof main
  * @param {Object} config - ***required** The Config Object
+ * @param {Object} options - ***optional** The Option object
+ * @param {boolean} options.centerMap `default: true` if `centerMap` is set to `true` kepler.gl will
+ * place the map view within the data points boundaries
+ * @param {boolean} options.readOnly `default: false` if `readOnly` is set to `true`
+ * the left setting panel will be hidden
+ * @param {boolean} options.keepExistingConfig whether to keep exiting layer filter and interaction config `default: false`.
  * @public
  * @example
  * import {receiveMapConfig} from 'kepler.gl/actions';
@@ -136,7 +144,7 @@ export const resetMapConfig = createAction(
  */
 export const receiveMapConfig = createAction(
   ActionTypes.RECEIVE_MAP_CONFIG,
-  config => config
+  (config, options) => ({config, options})
 );
 
 /**

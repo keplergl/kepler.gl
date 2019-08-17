@@ -29,6 +29,8 @@ import {
   adjustValueToFilterDomain
 } from 'utils/filter-utils';
 
+import {getInitialMapLayersForSplitMap} from 'utils/split-map-utils';
+
 import {LAYER_BLENDINGS} from 'constants/default-settings';
 
 /**
@@ -205,6 +207,39 @@ export function mergeInteractions(state, interactionToBeMerged) {
 }
 
 /**
+ * Merge splitMaps config with current visStete.
+ * 1. if current map is split, but splitMap DOESNOT contain maps
+ *    : don't merge anything
+ * 2. if current map is NOT split, but splitMaps contain maps
+ *    : add to splitMaps, and add current layers to splitMaps
+ */
+export function mergeSplitMaps(state, splitMaps = []) {
+  const merged = [...state.splitMaps];
+  const unmerged = [];
+  splitMaps.forEach((sm, i) => {
+    Object.entries(sm.layers).forEach(([id, value]) => {
+      // check if layer exists
+      const pushTo = state.layers.find(l => l.id === id) ? merged : unmerged;
+
+      // create map panel if current map is not split
+      pushTo[i] = pushTo[i] || {
+        layers: pushTo === merged ? getInitialMapLayersForSplitMap(state.layers) : []
+      };
+      pushTo[i].layers = {
+        ...pushTo[i].layers,
+        [id]: value
+      };
+    });
+  });
+
+  return {
+    ...state,
+    splitMaps: merged,
+    splitMapsToBeMerged: unmerged
+  };
+}
+
+/**
  * Merge interactionConfig.tooltip with saved config,
  * validate fieldsToShow
  *
@@ -299,22 +334,32 @@ export function validateSavedLayerColumns(fields, savedCols, emptyCols) {
  * @param {Object} savedTextLabel
  * @return {Object} - validated textlabel
  */
-export function validateSavedTextLabel(fields, [layerTextLabel], savedTextLabel) {
-  const savedTextLabels = Array.isArray(savedTextLabel) ?
-    savedTextLabel : [savedTextLabel];
+export function validateSavedTextLabel(
+  fields,
+  [layerTextLabel],
+  savedTextLabel
+) {
+  const savedTextLabels = Array.isArray(savedTextLabel)
+    ? savedTextLabel
+    : [savedTextLabel];
 
   // validate field
   return savedTextLabels.map(textLabel => {
-    const field = textLabel.field ? fields.find(fd =>
-      Object.keys(textLabel.field).every(
-        key => textLabel.field[key] === fd[key]
-      )
-    ) : null;
+    const field = textLabel.field
+      ? fields.find(fd =>
+          Object.keys(textLabel.field).every(
+            key => textLabel.field[key] === fd[key]
+          )
+        )
+      : null;
 
-    return Object.keys(layerTextLabel).reduce((accu, key) => ({
-      ...accu,
-      [key]: key === 'field' ? field : (textLabel[key] || layerTextLabel[key])
-    }), {});
+    return Object.keys(layerTextLabel).reduce(
+      (accu, key) => ({
+        ...accu,
+        [key]: key === 'field' ? field : textLabel[key] || layerTextLabel[key]
+      }),
+      {}
+    );
   });
 }
 
@@ -360,7 +405,11 @@ export function validateSavedVisualChannels(
  * @param {Object} layerClasses
  * @return {null | Object} - validated layer or null
  */
-export function validateLayerWithData({fields, id: dataId}, savedLayer, layerClasses) {
+export function validateLayerWithData(
+  {fields, id: dataId},
+  savedLayer,
+  layerClasses
+) {
   const {type} = savedLayer;
   // layer doesnt have a valid type
   if (
@@ -399,11 +448,14 @@ export function validateLayerWithData({fields, id: dataId}, savedLayer, layerCla
     savedLayer
   );
 
-  const textLabel = savedLayer.config.textLabel && newLayer.config.textLabel ? validateSavedTextLabel(
-    fields,
-    newLayer.config.textLabel,
-    savedLayer.config.textLabel
-  ) : newLayer.config.textLabel;
+  const textLabel =
+    savedLayer.config.textLabel && newLayer.config.textLabel
+      ? validateSavedTextLabel(
+          fields,
+          newLayer.config.textLabel,
+          savedLayer.config.textLabel
+        )
+      : newLayer.config.textLabel;
 
   // copy visConfig over to emptyLayer to make sure it has all the props
   const visConfig = newLayer.copyLayerConfig(
