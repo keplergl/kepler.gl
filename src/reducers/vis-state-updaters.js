@@ -177,7 +177,7 @@ export const INITIAL_VIS_STATE = {
     domain: [null, null],
     currentTime: 0,
     duration: 10,
-    speed: 1
+    speed: 0.03
   }
 };
 
@@ -1294,9 +1294,7 @@ function closeSpecificMapAtIndex(state, action) {
  */
 export const loadFilesUpdater = (state, action) => {
   const {files} = action;
-
   const filesToLoad = files.map(fileBlob => processFileToLoad(fileBlob));
-
   // reader -> parser -> augment -> receiveVisData
   const loadFileTasks = [
     Task.all(filesToLoad.map(LOAD_FILE_TASK)).bimap(

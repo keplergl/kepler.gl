@@ -34,6 +34,7 @@ import {
   dataToTimeStamp
 } from '../geojson-layer/geojson-utils';
 import {hexToRgb} from 'utils/color-utils';
+import TripInfoModalFactory from './trip-info-modal';
 
 export const tripVisConfigs = {
   opacity: 'opacity',
@@ -67,6 +68,7 @@ export default class TripLayer extends Layer {
     this.dataToFeature = {};
     this.registerVisConfig(tripVisConfigs);
     this.getFeature = memoize(featureAccessor, featureResolver);
+    this._layerInfoModal = TripInfoModalFactory();
   }
 
   get type() {
@@ -101,6 +103,15 @@ export default class TripLayer extends Layer {
     return this.getFeature(this.config.columns);
   }
 
+  get layerInfoModal() {
+    return {
+      id: 'iconInfo',
+      template: this._layerInfoModal,
+      modalProps: {
+        title: 'How to enable trip animation'
+      }
+    };
+  }
   static findDefaultLayerProps({label, fields, data}, foundLayers) {
     const geojsonColumns = fields.filter(f => f.type === 'geojson').map(f => f.name);
 
@@ -207,7 +218,7 @@ export default class TripLayer extends Layer {
 
     return {
       data: geojsonData,
-      getPath: d => d.geometry.coordinates, // .map(coord => coord.slice(0, 2)),
+      getPath: d => d.geometry.coordinates,
       getTimestamps: d => this.dataToTimeStamp[d.properties.index],
       getColor: d =>
         cScale
@@ -256,6 +267,7 @@ export default class TripLayer extends Layer {
   }
 
   renderLayer({data, idx, mapState, animationConfig}) {
+    console.log(animationConfig.domain[0])
     const {lightSettings} = this.meta;
     const zoomFactor = this.getZoomFactor(mapState);
     const {visConfig} = this.config;
@@ -273,14 +285,11 @@ export default class TripLayer extends Layer {
         colorField: this.config.colorField,
         colorRange: visConfig.colorRange,
         colorScale: this.config.colorScale
-      },
-      getTrailLength: {
-        trailLength: visConfig.trailLength
-      },
-      getWidth: {
-        sizeField: this.config.sizeField,
-        sizeRange: visConfig.sizeRange
       }
+      // getWidth: {
+      //   sizeField: this.config.sizeField,
+      //   sizeRange: visConfig.sizeRange
+      // }
     };
 
     return [
@@ -290,14 +299,14 @@ export default class TripLayer extends Layer {
         idx,
         data: data.data,
         getPath: data.getPath,
-        getTimestamps: data.getTimestamps,
+        getTimestamps: d => data.getTimestamps(d).map(ts => ts - animationConfig.domain[0]) ,
         getColor: data.getColor,
-        opacity: 0.3,
-        getWidth: 2,
+        // opacity: 0.3,
+        getWidth: d => 4,
         widthMinPixels: 2,
         rounded: true,
         trailLength: visConfig.trailLength,
-        currentTime: animationConfig.currentTime,
+        currentTime: animationConfig.currentTime - animationConfig.domain[0],
         lightSettings,
         updateTriggers
       })

@@ -60,7 +60,7 @@ export const LAYER_VIS_CONFIGS = {
     defaultValue: 180,
     label: 'Stroke Width',
     isRanged: false,
-    range: [1, 220],
+    range: [1, 1000],
     step: 1,
     group: PROPERTY_GROUPS.stroke,
     property: 'trailLength'
