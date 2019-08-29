@@ -37,6 +37,7 @@
     "start:custom-reducer": "npm run install-and-start -- examples/custom-reducer start-local",
     "start:replace-component": "npm run install-and-start -- examples/replace-component start-local",
     "start:custom-theme": "npm run install-and-start -- examples/custom-theme start-local",
+    "start:node-app": "npm run install-and-start -- examples/node-app start-local",
     "start:web": "npm run install-and-start -- website start",
     "build": "rm -fr dist && uber-licence && babel src --out-dir dist --source-maps inline",
     "build:umd": "webpack --config ./webpack/umd.js --progress --env.prod",
