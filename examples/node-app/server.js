@@ -27,12 +27,14 @@ const webpackENV = process.env.WEBPACK_ENV;
 const config = require('./webpack.config.js')(webpackENV);
 
 const isDeveloping = process.env.NODE_ENV !== 'production';
-const port = isDeveloping ? 3000 : process.env.PORT;
+const ADDRESS = '0.0.0.0';
+const DEV_PORT = 3000;
+const port = isDeveloping ? DEV_PORT : process.env.PORT;
 
 const app = express();
 
 const HTML_FILE = path.join(__dirname, 'index.html');
-// console.log('isDeveloping', isDeveloping);
+/* eslint-disable no-console */
 if (isDeveloping) {
   const compiler = webpack(config);
   const middleware = webpackMiddleware(compiler, {
@@ -61,9 +63,10 @@ if (isDeveloping) {
   });
 }
 
-app.listen(port, '0.0.0.0', function onStart(err) {
+app.listen(port, ADDRESS, function onStart(err) {
   if (err) {
     console.log(err);
   }
-  console.info('==> 🌎 Listening on port %s. Open up http://0.0.0.0:%s/ in your browser.', port, port);
+  console.info(`==> 🌎 Listening on port ${port}. Open up http://${ADDRESS}:${port}/ in your browser.`, port, port);
 });
+/* eslint-enable no-console */
