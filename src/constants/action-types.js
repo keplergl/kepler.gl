@@ -136,6 +136,7 @@ const ActionTypes = keyMirror({
   // uiState > export map
   SET_EXPORT_MAP_FORMAT: null,
   SET_USER_MAPBOX_ACCESS_TOKEN: null,
+  SET_EXPORT_MAP_HTML_MODE: null,
 
   // all
   INIT: null,

@@ -244,6 +244,15 @@ export const setExportMapFormat = createAction(
 );
 
 /**
+ * Set the HTML mode to use to export HTML mode
+ * @type {actionCreator}
+ */
+export const setExportHTMLMapMode = createAction(
+  ActionTypes.SET_EXPORT_MAP_HTML_MODE,
+  payload => payload
+);
+
+/**
  * This declaration is needed to group actions in docs
  */
 /**
