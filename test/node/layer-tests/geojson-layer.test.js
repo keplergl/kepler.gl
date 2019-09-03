@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import test from 'tape';
 import GeojsonLayer from 'layers/geojson-layer/geojson-layer';
 import {processCsvData} from 'processors/data-processor';
 
@@ -26,7 +25,7 @@ import {wktCsv, updatedLayerSimplifiedShape, updatedLayerV2}
 from 'test/fixtures/test-csv-data';
 import {testCreateCases, testFormatLayerDataCases} from 'test/helpers/layer-utils';
 
-test('#GeojsonLayer -> constructor', t => {
+it('#GeojsonLayer -> constructor', () => {
   const TEST_CASES = {
     CREATE: [{
       props: {
@@ -35,18 +34,17 @@ test('#GeojsonLayer -> constructor', t => {
         label: 'test geojson layer'
       },
       test: layer => {
-        t.ok(layer.config.dataId === 'smoothie', 'geojsonLayer dataId should be correct');
-        t.ok(layer.type === 'geojson', 'type should be geojson');
-        t.ok(layer.isAggregated === false, 'geojsonLayer is not aggregated');
+        expect(layer.config.dataId).toBe('smoothie');
+        expect(layer.type).toBe('geojson');
+        expect(layer.isAggregated).toBe(false);
       }
     }]
   };
 
-  testCreateCases(t, GeojsonLayer, TEST_CASES.CREATE);
-  t.end();
+  testCreateCases(GeojsonLayer, TEST_CASES.CREATE);
 });
 
-test('#GeojsonLayer -> formatLayerData', t => {
+it('#GeojsonLayer -> formatLayerData', () => {
   const {rows} = processCsvData(wktCsv);
 
   const filteredIndex = [0, 2, 4];
@@ -82,16 +80,16 @@ test('#GeojsonLayer -> formatLayerData', t => {
       const expectedLayerMeta = updatedLayerV2.meta;
       const expectedDataToFeature = updatedLayerV2.dataToFeature;
 
-      t.deepEqual(layerData.data, expectedLayerData.data, 'should format correct geojson layerData');
-      t.ok(typeof layerData.getFeature === 'function', 'should have getFeature');
-      t.ok(typeof layerData.getFillColor === 'function', 'should have getFillColor');
-      t.ok(typeof layerData.getLineColor === 'function', 'should have getLineColor');
-      t.ok(typeof layerData.getLineWidth === 'function', 'should have getSize');
-      t.ok(typeof layerData.getElevation === 'function', 'should have getRadius');
-      t.ok(typeof layerData.getRadius === 'function', 'should have getRadius');
+      expect(layerData.data).toEqual(expectedLayerData.data);
+      expect(typeof layerData.getFeature).toBe('function');
+      expect(typeof layerData.getFillColor).toBe('function');
+      expect(typeof layerData.getLineColor).toBe('function');
+      expect(typeof layerData.getLineWidth).toBe('function');
+      expect(typeof layerData.getElevation).toBe('function');
+      expect(typeof layerData.getRadius).toBe('function');
 
-      t.deepEqual(layer.meta, expectedLayerMeta, 'should format correct geojson layerData');
-      t.deepEqual(layer.dataToFeature, expectedDataToFeature, 'should format correct geojson layerData');
+      expect(layer.meta).toEqual(expectedLayerMeta);
+      expect(layer.dataToFeature).toEqual(expectedDataToFeature);
     }
   }, {
     props: {
@@ -124,19 +122,18 @@ test('#GeojsonLayer -> formatLayerData', t => {
       const expectedLayerMeta = updatedLayerSimplifiedShape.meta;
       const expectedDataToFeature = updatedLayerSimplifiedShape.dataToFeature;
 
-      t.deepEqual(layerData.data, expectedLayerData.data, 'should format correct geojson layerData');
-      t.ok(typeof layerData.getFeature === 'function', 'should have getFeature');
-      t.ok(typeof layerData.getFillColor === 'function', 'should have getFillColor');
-      t.ok(typeof layerData.getLineColor === 'function', 'should have getLineColor');
-      t.ok(typeof layerData.getLineWidth === 'function', 'should have getSize');
-      t.ok(typeof layerData.getElevation === 'function', 'should have getRadius');
-      t.ok(typeof layerData.getRadius === 'function', 'should have getRadius');
+      expect(layerData.data).toEqual(expectedLayerData.data);
+      expect(typeof layerData.getFeature).toBe('function');
+      expect(typeof layerData.getFillColor).toBe('function');
+      expect(typeof layerData.getLineColor).toBe('function');
+      expect(typeof layerData.getLineWidth).toBe('function');
+      expect(typeof layerData.getElevation).toBe('function');
+      expect(typeof layerData.getRadius).toBe('function');
 
-      t.deepEqual(layer.meta, expectedLayerMeta, 'should format correct geojson layerData');
-      t.deepEqual(layer.dataToFeature, expectedDataToFeature, 'should format correct geojson layerData');
+      expect(layer.meta).toEqual(expectedLayerMeta);
+      expect(layer.dataToFeature).toEqual(expectedDataToFeature);
     }
   }];
 
-  testFormatLayerDataCases(t, GeojsonLayer, TEST_CASES);
-  t.end();
+  testFormatLayerDataCases(GeojsonLayer, TEST_CASES);
 });
