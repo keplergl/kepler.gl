@@ -18,7 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import test from 'tape';
+// TODO: still need to fix the issue with gl
+
 import {
   testCreateCases,
   testFormatLayerDataCases
@@ -28,7 +29,7 @@ import csvData, {testFields} from 'test/fixtures/test-csv-data';
 import GridLayer from 'layers/grid-layer/grid-layer';
 import {processCsvData} from 'processors/data-processor';
 
-test('#GridLayer -> constructor', t => {
+it('#GridLayer -> constructor', () => {
   const TEST_CASES = {
     CREATE: [
       {
@@ -38,22 +39,18 @@ test('#GridLayer -> constructor', t => {
           label: 'test grid layer'
         },
         test: layer => {
-          t.ok(
-            layer.config.dataId === 'smoothie',
-            'gridLayer dataId should be correct'
-          );
-          t.ok(layer.type === 'grid', 'type should be grid');
-          t.ok(layer.isAggregated === true, 'gridLayer is aggregated');
+         expect(layer.config.dataId).toBe('smoothie');
+         expect(layer.type).toBe('grid');
+         expect(layer.isAggregated).toBe(true);
         }
       }
     ]
   };
 
-  testCreateCases(t, GridLayer, TEST_CASES.CREATE);
-  t.end();
+  testCreateCases(GridLayer, TEST_CASES.CREATE);
 });
 
-test('#GridLayer -> formatLayerData', t => {
+it('#GridLayer -> formatLayerData', () => {
   const {rows} = processCsvData(csvData);
 
   const filteredIndex = [0, 2, 4];
@@ -105,30 +102,12 @@ test('#GridLayer -> formatLayerData', t => {
           getPosition: () => {}
         };
 
-        t.deepEqual(
-          Object.keys(layerData),
-          ['data', 'getPosition'],
-          'layerData should have 2 keys'
-        );
-        t.deepEqual(
-          layerData.data,
-          expectedLayerData.data,
-          'should format correct grid layerData'
-        );
-        t.ok(
-          typeof layerData.getPosition === 'function',
-          'should have getPosition'
-        );
-        t.deepEqual(
-          layerData.getPosition(layerData.data[0]),
-          [31.2590542, 29.9900937],
-          'getPosition should return correct lat lng'
-        );
-        t.deepEqual(
-          layer.meta,
-          expectedLayerMeta,
-          'should format correct grid layerData'
-        );
+        expect(Object.keys(layerData)).toEqual(['data', 'getPosition']);
+        expect(layerData.data).toEqual(expectedLayerData.data);
+
+        expect(typeof layerData.getPosition).toBe('function');
+        expect(layerData.getPosition(layerData.data[0])).toEqual([31.2590542, 29.9900937]);
+        expect(layer.meta).toEqual(expectedLayerMeta);
       }
     },
     {
@@ -163,38 +142,15 @@ test('#GridLayer -> formatLayerData', t => {
           getColorValue: () => {}
         };
 
-        t.deepEqual(
-          Object.keys(layerData),
-          ['data', 'getPosition', 'getColorValue'],
-          'layerData should have 2 keys'
-        );
-        t.deepEqual(
-          layerData.data,
-          expectedLayerData.data,
-          'should filter out nulls, format correct grid layerData'
-        );
-        t.ok(
-          typeof layerData.getPosition === 'function',
-          'should have getPosition'
-        );
-        t.ok(
-          typeof layerData.getColorValue === 'function',
-          'should have getColorValue'
-        );
-        t.deepEqual(
-          layerData.getPosition(layerData.data[0]),
-          [31.2461142, 29.9927699],
-          'getPosition should return correct lat lng'
-        );
-        t.deepEqual(
-          layer.meta,
-          expectedLayerMeta,
-          'should format correct grid layerData'
-        );
+        expect(Object.keys(layerData)).toEqual(['data', 'getPosition', 'getColorValue']);
+        expect(layerData.data).toEqual(expectedLayerData.data);
+        expect(typeof layerData.getPosition).toBe('function');
+        expect(typeof layerData.getColorValue).toBe('function');
+        expect(layerData.getPosition(layerData.data[0])).toEqual([31.2461142, 29.9927699]);
+        expect(layer.meta).toEqual(expectedLayerMeta);
       }
     }
   ];
 
-  testFormatLayerDataCases(t, GridLayer, TEST_CASES);
-  t.end();
+  testFormatLayerDataCases(GridLayer, TEST_CASES);
 });
