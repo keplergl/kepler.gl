@@ -46,7 +46,7 @@ export default function BottomWidgetFactory(TimeWidget) {
       uiState,
       sidePanelWidth
     } = props;
-    const {activeSidePanel} = uiState;
+    const {activeSidePanel, readOnly} = uiState;
     const isOpen = Boolean(activeSidePanel);
 
     const enlargedFilterIdx = filters.findIndex(f => f.enlarged);
@@ -69,9 +69,10 @@ export default function BottomWidgetFactory(TimeWidget) {
         isAnyFilterAnimating={isAnyFilterAnimating}
         enlargedIdx={enlargedFilterIdx}
         filter={filters[enlargedFilterIdx]}
+        readOnly={readOnly}
       />
     );
-  }
+  };
 
   BottomWidget.propTypes = propTypes;
 
