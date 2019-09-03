@@ -18,11 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import test from 'tape-catch';
 import {Layer} from 'layers';
 import AggregationLayer from 'layers/aggregation-layer';
 
-test('#BaseLayer -> updateLayerDomain', t => {
+it('#BaseLayer -> updateLayerDomain', () => {
 
   const allData = [['a', 3], ['b', 4], ['c', 1], ['d', null], ['e', 5], ['f', 0]];
   const data = [['a', 3], ['b', 4], ['c', 1], ['d', null]];
@@ -50,11 +49,9 @@ test('#BaseLayer -> updateLayerDomain', t => {
     filteredIndexForDomain
   });
 
-  t.deepEqual(updatedLayer.config.colorDomain, expectedDomain,
-    'should calculate layer color domain');
+  expect(updatedLayer.config.colorDomain).toEqual(expectedDomain);
 
-  t.deepEqual(updatedLayer.config.sizeDomain, [0, 1],
-    'should not calculate layer size domain');
+  expect(updatedLayer.config.sizeDomain).toEqual([0, 1]);
 
   mockLayer.updateLayerConfig({
     colorField: {
@@ -76,8 +73,7 @@ test('#BaseLayer -> updateLayerDomain', t => {
 
   const expectedOrdinalDomain = ['a', 'b', 'c', 'd', 'e', 'f'];
 
-  t.deepEqual(updatedLayer.config.colorDomain, expectedOrdinalDomain,
-    'should calculate layer color domain based on ordinal domain');
+  expect(updatedLayer.config.colorDomain).toEqual(expectedOrdinalDomain);
 
   const newDataset = {
     allData: [['a', 3], ['b', 4], ['c', 1], ['d', null], ['e', 5], ['f', 0], ['g', 6]],
@@ -88,13 +84,10 @@ test('#BaseLayer -> updateLayerDomain', t => {
 
   updatedLayer = mockLayer.updateLayerDomain(newDataset, {id: 'newFilter'});
 
-  t.deepEqual(updatedLayer.config.colorDomain, expectedOrdinalDomain,
-    'should skip domain calculation if field is oridinal');
-
-  t.end();
+  expect(updatedLayer.config.colorDomain).toEqual(expectedOrdinalDomain);
 });
 
-test('#AggregationLayer -> updateLayerDomain', t => {
+it('#AggregationLayer -> updateLayerDomain', () => {
   const data = [['a', 3], ['b', 4], ['c', 1], ['d', null]];
   const mockLayer = new AggregationLayer();
 
@@ -110,13 +103,10 @@ test('#AggregationLayer -> updateLayerDomain', t => {
   });
 
   const updatedLayer = mockLayer.updateLayerDomain({data, allData: data});
-  t.deepEqual(updatedLayer.config.colorDomain, [0, 1],
-    'should not calculate aggregation layer domain');
-
-  t.end();
+  expect(updatedLayer.config.colorDomain).toEqual([0, 1]);
 });
 
-test('#BaseLayer -> getAllPossibleColumnParis', t => {
+it('#BaseLayer -> getAllPossibleColumnParis', () => {
   const columnes1 = {
     a: [1, 2],
     b: [3, 4]
@@ -129,8 +119,8 @@ test('#BaseLayer -> getAllPossibleColumnParis', t => {
   const columnes3 = {
     a: [1]
   };
-  t.equal(Layer.getAllPossibleColumnParis(columnes1).length, 4, 'should find 4 pairs');
-  t.equal(Layer.getAllPossibleColumnParis(columnes2).length, 2, 'should find 4 pairs');
-  t.equal(Layer.getAllPossibleColumnParis(columnes3).length, 1, 'should find 4 pairs');
-  t.end();
+  expect(Layer.getAllPossibleColumnParis(columnes1).length).toBe(4);
+  expect(Layer.getAllPossibleColumnParis(columnes2).length).toBe(2);
+  expect(Layer.getAllPossibleColumnParis(columnes3).length).toBe(1);
+
 });
