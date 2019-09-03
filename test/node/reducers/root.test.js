@@ -18,13 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import test from 'tape';
 import keplerGlReducer from 'reducers';
 import {registerEntry, resetMapConfig, receiveMapConfig} from 'actions';
 import {createAction, handleActions} from 'redux-actions';
 
-test('keplerGlReducer.initialState', t => {
-
+it('keplerGlReducer.initialState', () => {
   const test1Reducer = keplerGlReducer
     .initialState({
       visState: {
@@ -36,10 +34,10 @@ test('keplerGlReducer.initialState', t => {
     });
 
   const test1ReducerInitialState = test1Reducer(undefined, registerEntry({id: 'test'}));
-  t.deepEqual(test1ReducerInitialState.test.visState.layerClasses, [], 'should override initialState');
-  t.equal(test1ReducerInitialState.test.mapStyle.styleType, 'light', 'should override initialState');
-  t.deepEqual(test1ReducerInitialState.test.visState.initialState, {layerClasses: []}, 'should save initialState');
-  t.deepEqual(test1ReducerInitialState.test.mapStyle.initialState, {styleType: 'light'}, 'should save initialState');
+  expect(test1ReducerInitialState.test.visState.layerClasses).toEqual([]);
+  expect(test1ReducerInitialState.test.mapStyle.styleType).toBe('light');
+  expect(test1ReducerInitialState.test.visState.initialState).toEqual({layerClasses: []});
+  expect(test1ReducerInitialState.test.mapStyle.initialState).toEqual({styleType: 'light'});
 
   // change it
   const newConfig = {
@@ -48,21 +46,19 @@ test('keplerGlReducer.initialState', t => {
   };
 
   const modifiedReducer = test1Reducer(test1ReducerInitialState, receiveMapConfig(newConfig));
-  t.deepEqual(modifiedReducer.test.visState.layerBlending, 'additive', 'should apply config');
-  t.equal(modifiedReducer.test.mapStyle.styleType, 'beautiful', 'should apply config');
-  t.deepEqual(modifiedReducer.test.visState.initialState, {layerClasses: []}, 'should save initialState');
+  expect(modifiedReducer.test.visState.layerBlending).toBe('additive');
+  expect(modifiedReducer.test.mapStyle.styleType).toBe('beautiful');
+  expect(modifiedReducer.test.visState.initialState).toEqual({layerClasses: []});
 
   // reset reducer
   const restTestReducer = test1Reducer(modifiedReducer, resetMapConfig());
-  t.deepEqual(restTestReducer.test.visState.layerClasses, [], 'should override initialState');
-  t.equal(restTestReducer.test.mapStyle.styleType, 'light', 'should override initialState');
-  t.deepEqual(restTestReducer.test.visState.initialState, {layerClasses: []}, 'should save initialState');
-  t.deepEqual(restTestReducer.test.mapStyle.initialState, {styleType: 'light'}, 'should save initialState');
-
-  t.end();
+  expect(restTestReducer.test.visState.layerClasses).toEqual([]);
+  expect(restTestReducer.test.mapStyle.styleType).toBe('light');
+  expect(restTestReducer.test.visState.initialState).toEqual({layerClasses: []});
+  expect(restTestReducer.test.mapStyle.initialState).toEqual({styleType: 'light'});
 });
 
-test('keplerGlReducer.initialState.2', t => {
+it('keplerGlReducer.initialState.2', () => {
   const test1Reducer = keplerGlReducer
   .initialState({
     visState: {
@@ -86,10 +82,10 @@ test('keplerGlReducer.initialState.2', t => {
 
   const test2InitialState = test2Reducer(undefined, registerEntry({id: 'test2'}));
 
-  t.deepEqual(test2InitialState.test2.visState.layerClasses, [], 'should keep previous initialState');
-  t.equal(test2InitialState.test2.mapStyle.styleType, 'smoothie', 'should overide initialState');
-  t.equal(test2InitialState.test2.mapStyle.hello, 'kitty', 'should provide initialState');
-  t.equal(test2InitialState.test2.mapState.dragRotate, true, 'should provide initialState');
+  expect(test2InitialState.test2.visState.layerClasses).toEqual([]);
+  expect(test2InitialState.test2.mapStyle.styleType).toBe('smoothie');
+  expect(test2InitialState.test2.mapStyle.hello).toBe('kitty');
+  expect(test2InitialState.test2.mapState.dragRotate).toBe(true);
 
   // change it
   const newConfig2 = {
@@ -99,22 +95,20 @@ test('keplerGlReducer.initialState.2', t => {
 
   const modifiedReducer2 = test2Reducer(test2InitialState, receiveMapConfig(newConfig2));
 
-  t.deepEqual(modifiedReducer2.test2.visState.layerBlending, 'subtractive', 'should apply config');
-  t.equal(modifiedReducer2.test2.mapStyle.styleType, 'earth', 'should apply config');
-  t.deepEqual(modifiedReducer2.test2.visState.initialState, {layerClasses: []}, 'should save initialState');
+  expect(modifiedReducer2.test2.visState.layerBlending).toEqual('subtractive');
+  expect(modifiedReducer2.test2.mapStyle.styleType).toBe('earth');
+  expect(modifiedReducer2.test2.visState.initialState).toEqual({layerClasses: []});
 
   // reset reducer
   const restTestReducer2 = test2Reducer(modifiedReducer2, resetMapConfig());
-  t.deepEqual(restTestReducer2.test2.visState.layerClasses, [], 'should reset initialState');
-  t.equal(restTestReducer2.test2.mapStyle.styleType, 'smoothie', 'should reset initialState');
-  t.equal(restTestReducer2.test2.mapState.dragRotate, true, 'should reset initialState');
-  t.deepEqual(restTestReducer2.test2.visState.initialState, {layerClasses: []}, 'should save initialState');
-  t.deepEqual(restTestReducer2.test2.mapStyle.initialState, {styleType: 'smoothie', hello: 'kitty'}, 'should save initialState');
-
-  t.end();
+  expect(restTestReducer2.test2.visState.layerClasses).toEqual([]);
+  expect(restTestReducer2.test2.mapStyle.styleType).toBe('smoothie');
+  expect(restTestReducer2.test2.mapState.dragRotate).toBe(true);
+  expect(restTestReducer2.test2.visState.initialState).toEqual({layerClasses: []});
+  expect(restTestReducer2.test2.mapStyle.initialState).toEqual({styleType: 'smoothie', hello: 'kitty'});
 });
 
-test('keplerGlReducer.plugin', t => {
+it('keplerGlReducer.plugin', () => {
   // custom actions
   const hideAndShowSidePanel = createAction('HIDE_AND_SHOW_SIDE_PANEL');
   const hideMapControls = createAction('HIDE_MAP_CONTROLS');
@@ -139,36 +133,34 @@ test('keplerGlReducer.plugin', t => {
   // plugin 2 actions
   const testReducer = keplerGlReducer
   // 1. as reducer map
-  .plugin({
-    'HIDE_AND_SHOW_SIDE_PANEL': (state, action) => ({
-      ...state,
-      uiState: {
-        ...state.uiState,
-        readOnly: !state.uiState.readOnly
-      }
-    }),
-  })
-  .plugin(handleActions({
-    // 2. as reducer
-    'HIDE_MAP_CONTROLS': (state, action) => ({
-      ...state,
-      uiState: {
-        ...state.uiState,
-        mapControls: hiddenMapControl
-      }
+    .plugin({
+      'HIDE_AND_SHOW_SIDE_PANEL': (state, action) => ({
+        ...state,
+        uiState: {
+          ...state.uiState,
+          readOnly: !state.uiState.readOnly
+        }
+      }),
     })
-  }, {}));
+    .plugin(handleActions({
+      // 2. as reducer
+      'HIDE_MAP_CONTROLS': (state, action) => ({
+        ...state,
+        uiState: {
+          ...state.uiState,
+          mapControls: hiddenMapControl
+        }
+      })
+    }, {}));
 
   const testInitialState = testReducer(undefined, registerEntry({id: 'test3'}));
   const previousValue = testInitialState.test3.uiState.readOnly;
 
   // dispatch action
   const updatedState = testReducer(testInitialState, hideAndShowSidePanel());
-  t.equal(updatedState.test3.uiState.readOnly, !previousValue, 'should call hideAndShowSidePanel');
+  expect(updatedState.test3.uiState.readOnly).toBe(!previousValue);
 
   // dispatch action 2
   const updatedState2 = testReducer(testInitialState, hideMapControls());
-  t.equal(updatedState2.test3.uiState.mapControls, hiddenMapControl, 'should call hideMapControls');
-
-  t.end();
+  expect(updatedState2.test3.uiState.mapControls).toBe(hiddenMapControl);
 });
