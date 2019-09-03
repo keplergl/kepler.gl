@@ -37,20 +37,13 @@ test('#HeatmapLayer -> contructor', t => {
           isVisible: true,
           label: 'test heatmap layer'
         },
-        test: layer => {
-          // test constructor
-          t.equal(
-            layer.config.visConfig.radius,
-            20,
-            'Heatmap default radius should be 20'
-          )
-        }
+        // test constructor
+        test: layer => expect(layer.config.visConfig.radius).toBe(20)
       }
     ]
   };
 
-  testCreateCases(t, HeatmapLayer, TEST_CASES.CREATE);
-  t.end()
+  testCreateCases(HeatmapLayer, TEST_CASES.CREATE);
 });
 
 test('#Heatmaplayer -> formatLayerData', t => {
@@ -77,7 +70,7 @@ test('#Heatmaplayer -> formatLayerData', t => {
       },
       data: [data, rows, filteredIndex, undefined],
       test: result => {
-        const {layerData,  layer} = result;
+        const {layerData} = result;
 
         const expectedLayerData = {
           columns,
@@ -144,14 +137,12 @@ test('#Heatmaplayer -> formatLayerData', t => {
           weightField: null
         };
 
-        t.deepEqual(layerData.data, expectedLayerData.data,
-          "should format correct geojson layerData")
+        expect(layerData.data).toEqual(expectedLayerData.data);
       }
     }
   ];
 
-  testFormatLayerDataCases(t, HeatmapLayer, TEST_CASES);
-  t.end()
+  testFormatLayerDataCases(HeatmapLayer, TEST_CASES);
 });
 
 // todo: make sure data is created correctly
