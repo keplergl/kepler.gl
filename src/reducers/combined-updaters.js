@@ -123,7 +123,7 @@ export const addDataToMapUpdater = (state, {payload}) => {
       options,
       config: parsedConfig
     })
-  }
+  };
 
   let bounds;
   if (options.centerMap) {
@@ -156,7 +156,7 @@ export const addDataToMapUpdater = (state, {payload}) => {
     uiState: {
       ...mergedState.uiState,
       ...toggleModalUpdater(mergedState.uiState, {payload: null}),
-      ...((options.readOnly !== undefined && options.readOnly !== null) ? {readOnly: options.readOnly} : {})
+      ...(options.hasOwnProperty('readOnLy') ? {readOnly: options.readOnly} : {})
     }
   };
 
