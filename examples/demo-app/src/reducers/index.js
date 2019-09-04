@@ -21,10 +21,10 @@
 import {combineReducers} from 'redux';
 import {handleActions} from 'redux-actions';
 
-import keplerGlReducer, {combinedUpdaters} from 'kepler.gl/reducers';
+import keplerGlReducer, {combinedUpdaters, uiStateUpdaters} from 'kepler.gl/reducers';
 import {processGeojson, processCsvData} from 'kepler.gl/processors';
 import KeplerGlSchema from 'kepler.gl/schemas';
-import {EXPORT_MAP_FORMAT} from 'kepler.gl/constants';
+import {EXPORT_MAP_FORMATS} from 'kepler.gl/constants';
 
 import sharingReducer from './sharing';
 
@@ -84,6 +84,8 @@ export const appReducer = handleActions({
   })
 }, initialAppState);
 
+const {DEFAULT_EXPORT_MAP} = uiStateUpdaters;
+
 // combine app reducer and keplerGl reducer
 // to mimic the reducer state of kepler.gl website
 const demoReducer = combineReducers({
@@ -94,13 +96,10 @@ const demoReducer = combineReducers({
     // in the exported file
     uiState: {
       exportMap: {
-        format: EXPORT_MAP_FORMAT.HTML,
-        [EXPORT_MAP_FORMAT.JSON]: {
-          hasData: true
-        },
-        [EXPORT_MAP_FORMAT.HTML]: {
-          exportMapboxAccessToken: AUTH_TOKENS.EXPORT_MAPBOX_TOKEN,
-          userMapboxToken: ''
+        ...DEFAULT_EXPORT_MAP,
+        [EXPORT_MAP_FORMATS.HTML]: {
+          ...DEFAULT_EXPORT_MAP[[EXPORT_MAP_FORMATS.HTML]],
+          exportMapboxAccessToken: AUTH_TOKENS.EXPORT_MAPBOX_TOKEN
         }
       }
     }

@@ -53,7 +53,7 @@ import {
   EXPORT_MAP_ID,
   ADD_MAP_STYLE_ID
 } from 'constants/default-settings';
-import {EXPORT_MAP_FORMAT} from '../constants/default-settings';
+import {EXPORT_MAP_FORMATS} from '../constants/default-settings';
 
 const DataTableModalStyle = css`
   top: 80px;
@@ -181,7 +181,7 @@ export default function ModalContainerFactory(
 
     _onExportJSONMap = () => {
       const {uiState} = this.props;
-      const {hasData} = uiState.exportMap[EXPORT_MAP_FORMAT.JSON];
+      const {hasData} = uiState.exportMap[EXPORT_MAP_FORMATS.JSON];
 
       // we pass all props because we avoid to create new variables
       const data = hasData ? KeplerGlSchema.save(this.props)
@@ -198,11 +198,12 @@ export default function ModalContainerFactory(
 
     _onExportHTMLMap = () => {
       const {uiState} = this.props;
-      const {userMapboxToken, exportMapboxAccessToken} = uiState.exportMap[EXPORT_MAP_FORMAT.HTML];
+      const {userMapboxToken, exportMapboxAccessToken, mode} = uiState.exportMap[EXPORT_MAP_FORMATS.HTML];
 
       const data = {
         ...KeplerGlSchema.save(this.props),
-        mapboxApiAccessToken: (userMapboxToken || '') !== '' ? userMapboxToken : exportMapboxAccessToken
+        mapboxApiAccessToken: (userMapboxToken || '') !== '' ? userMapboxToken : exportMapboxAccessToken,
+        mode
       };
 
       this._downloadFile(
@@ -219,8 +220,8 @@ export default function ModalContainerFactory(
       const {format} = uiState.exportMap;
 
       const downloader = {
-        [EXPORT_MAP_FORMAT.HTML]: this._onExportHTMLMap,
-        [EXPORT_MAP_FORMAT.JSON]: this._onExportJSONMap
+        [EXPORT_MAP_FORMATS.HTML]: this._onExportHTMLMap,
+        [EXPORT_MAP_FORMATS.JSON]: this._onExportJSONMap
       }[format];
 
       downloader && downloader();
@@ -367,6 +368,7 @@ export default function ModalContainerFactory(
                 options={uiState.exportMap}
                 onChangeExportMapFormat={this.props.uiStateActions.setExportMapFormat}
                 onEditUserMapboxAccessToken={this.props.uiStateActions.setUserMapboxAccessToken}
+                onChangeExportMapHTMLMode={this.props.uiStateActions.setExportHTMLMapMode}
               />
             );
             modalProps = {

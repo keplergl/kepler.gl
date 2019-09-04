@@ -24,7 +24,8 @@ import {
   EXPORT_DATA_TYPE,
   RATIOS,
   RESOLUTIONS,
-  EXPORT_MAP_FORMAT
+  EXPORT_MAP_FORMATS,
+  EXPORT_HTML_MAP_MODES
 } from 'constants/default-settings';
 import {createNotification} from 'utils/notifications-utils';
 
@@ -155,7 +156,8 @@ export const DEFAULT_NOTIFICATIONS = [];
  */
 export const DEFAULT_EXPORT_HTML = {
   exportMapboxAccessToken: null,
-  userMapboxToken: ''
+  userMapboxToken: '',
+  mode: EXPORT_HTML_MAP_MODES.READ
 };
 
 export const DEFAULT_EXPORT_JSON = {
@@ -163,9 +165,9 @@ export const DEFAULT_EXPORT_JSON = {
 };
 
 export const DEFAULT_EXPORT_MAP = {
-  [EXPORT_MAP_FORMAT.HTML]: DEFAULT_EXPORT_HTML,
-  [EXPORT_MAP_FORMAT.JSON]: DEFAULT_EXPORT_JSON,
-  format: EXPORT_MAP_FORMAT.HTML
+  [EXPORT_MAP_FORMATS.HTML]: DEFAULT_EXPORT_HTML,
+  [EXPORT_MAP_FORMATS.JSON]: DEFAULT_EXPORT_JSON,
+  format: EXPORT_MAP_FORMATS.HTML
 };
 
 /**
@@ -478,9 +480,9 @@ export const setExportDataUpdater = state => ({
   ...state,
   exportMap: {
     ...state.exportMap,
-    [EXPORT_MAP_FORMAT.JSON]: {
-      ...state.exportMap[EXPORT_MAP_FORMAT.JSON],
-      hasData: !state.exportMap[EXPORT_MAP_FORMAT.JSON].hasData
+    [EXPORT_MAP_FORMATS.JSON]: {
+      ...state.exportMap[EXPORT_MAP_FORMATS.JSON],
+      hasData: !state.exportMap[EXPORT_MAP_FORMATS.JSON].hasData
     }
   }
 });
@@ -497,18 +499,41 @@ export const setUserMapboxAccessTokenUpdater = (state, {payload: userMapboxToken
   ...state,
   exportMap: {
     ...state.exportMap,
-    [EXPORT_MAP_FORMAT.HTML]: {
-      ...state.exportMap[EXPORT_MAP_FORMAT.HTML],
+    [EXPORT_MAP_FORMATS.HTML]: {
+      ...state.exportMap[EXPORT_MAP_FORMATS.HTML],
       userMapboxToken
     }
   }
 });
 
+/**
+ * Sets the export map format
+ * @param {Object} state - `uiState`
+ * @param {string} format to use to export the map onto
+ * @return {Object} nextState
+ */
 export const setExportMapFormat = (state, {payload: format}) => ({
   ...state,
   exportMap: {
     ...state.exportMap,
     format
+  }
+});
+
+/**
+ * Set the export html map mode
+ * @param {Object} state - `uiState`
+ * @param {string} mode to be set (available modes: EXPORT_HTML_MAP_MODES)
+ * @return {{[p: string]: *}}
+ */
+export const setExportMapHTMLMode = (state, {payload: mode}) => ({
+  ...state,
+  exportMap: {
+    ...state.exportMap,
+    [EXPORT_MAP_FORMATS.HTML]: {
+      ...state.exportMap[EXPORT_MAP_FORMATS.HTML],
+      mode
+    }
   }
 });
 

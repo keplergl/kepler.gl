@@ -81,6 +81,7 @@ import {
   Settings,
   CursorClick
 } from 'components/common/icons';
+import {getHTMLMapModeTileUrl} from 'utils/utils';
 
 export const KEPLER_GL_NAME = 'kepler.gl';
 
@@ -645,17 +646,30 @@ export const EXPORT_DATA_TYPE_OPTIONS = [
 ];
 
 // Export map types
-export const EXPORT_MAP_FORMAT = keyMirror({
+export const EXPORT_MAP_FORMATS = keyMirror({
   HTML: null,
   JSON: null
 });
 
+export const EXPORT_HTML_MAP_MODES = keyMirror({
+  READ: null,
+  EDIT: null
+});
+
 // Export map options
-export const EXPORT_MAP_FORMAT_OPTIONS = Object.entries(EXPORT_MAP_FORMAT)
+export const EXPORT_MAP_FORMAT_OPTIONS = Object.entries(EXPORT_MAP_FORMATS)
   .map(entry => ({
     id: entry[0],
     label: entry[1].toLowerCase(),
     available: true
+  }));
+
+export const EXPORT_HTML_MAP_MODE_OPTIONS = Object.entries(EXPORT_HTML_MAP_MODES)
+  .map(entry => ({
+    id: entry[0],
+    label: entry[1].toLowerCase(),
+    available: true,
+    url: getHTMLMapModeTileUrl(entry[1])
   }));
 
 export const DEFAULT_UUID_COUNT = 6;

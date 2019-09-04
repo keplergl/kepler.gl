@@ -75,7 +75,6 @@ const combinedUpdaters = null;
 
 export const isValidConfig = config => isObject(config) && isObject(config.config) && config.version;
 export const defaultAddDataToMapOptions = {
-  readOnly: false,
   centerMap: true,
   keepExistingConfig: false
 };
@@ -124,7 +123,7 @@ export const addDataToMapUpdater = (state, {payload}) => {
       options,
       config: parsedConfig
     })
-  }
+  };
 
   let bounds;
   if (options.centerMap) {
@@ -155,10 +154,11 @@ export const addDataToMapUpdater = (state, {payload}) => {
   mergedState = {
     ...mergedState,
     uiState: {
+      ...mergedState.uiState,
       ...toggleModalUpdater(mergedState.uiState, {payload: null}),
-      readOnly: options.readOnly
+      ...(options.hasOwnProperty('readOnLy') ? {readOnly: options.readOnly} : {})
     }
-  }
+  };
 
   return mergedState;
 };

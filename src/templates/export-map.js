@@ -18,7 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {KEPLER_GL_VERSION} from '../constants/default-settings';
+import {
+  KEPLER_GL_VERSION,
+  EXPORT_HTML_MAP_MODES
+} from 'constants/default-settings';
 
 /**
  * This method is used to create an html file which will inlcude kepler and map data
@@ -83,7 +86,11 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           const reducers = (function createReducers(redux, keplerGl) {
             return redux.combineReducers({
               // mount keplerGl reducer
-              keplerGl: keplerGl.keplerGlReducer
+              keplerGl: keplerGl.keplerGlReducer.initialState({
+                uiState: {
+                  readOnly: ${options.mode === EXPORT_HTML_MAP_MODES.READ}
+                }
+              })
             });
           }(Redux, KeplerGl));
 

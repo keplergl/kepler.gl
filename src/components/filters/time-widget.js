@@ -154,7 +154,8 @@ export class TimeWidget extends Component {
       setFilterPlot,
       toggleAnimation,
       updateAnimationSpeed,
-      width
+      width,
+      readOnly
     } = this.props;
 
     const {showSpeedControl} = this.state;
@@ -202,11 +203,13 @@ export class TimeWidget extends Component {
                 updateAnimationSpeed={(speed) => updateAnimationSpeed(enlargedIdx, speed)}
                 speed={filter.speed}/> : null}
             </StyledTitle>
-            <CenterFlexbox>
-              <IconRoundSmall>
-                <Close height="12px" onClick={() => enlargeFilter(enlargedIdx)} />
-              </IconRoundSmall>
-            </CenterFlexbox>
+            {!readOnly ? (
+              <CenterFlexbox>
+                <IconRoundSmall>
+                  <Close height="12px" onClick={() => enlargeFilter(enlargedIdx)} />
+                </IconRoundSmall>
+              </CenterFlexbox>
+            ) : null}
           </TopSectionWrapper>
           <TimeRangeFilter
             filter={filter}

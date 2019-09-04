@@ -183,7 +183,7 @@ function decorate(target, savedInitialState = {}) {
     const targetReducer = provideInitialState(merged);
 
     return decorate(targetReducer, merged);
-  }
+  };
 
   return target;
 }
