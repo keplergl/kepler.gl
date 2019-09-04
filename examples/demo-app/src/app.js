@@ -45,7 +45,7 @@ const KeplerGl = require('kepler.gl/components').injectComponents([
 
 // Sample data
 /* eslint-disable no-unused-vars */
-import sampleTripData, {testCsvData} from './data/sample-trip-data';
+import sampleTripData, {testCsvData, sampleTripDataConfig} from './data/sample-trip-data';
 import sampleGeojson from './data/sample-small-geojson';
 import sampleGeojsonPoints from './data/sample-geojson-points';
 import sampleGeojsonConfig from './data/sample-geojson-config';
@@ -181,19 +181,7 @@ class App extends Component {
           centerMap: true,
           readOnly: false
         },
-        config: {
-          visState: {
-            filters: [
-              {
-                id: 'me',
-                dataId: 'test_trip_data',
-                name: 'tpep_pickup_datetime',
-                type: 'timeRange',
-                enlarged: true
-              }
-            ]
-          }
-        }
+        config: sampleTripDataConfig
       })
     );
   }
