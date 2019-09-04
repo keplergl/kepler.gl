@@ -9,7 +9,7 @@
     "d3-request": "^1.0.6",
     "dropbox": "^4.0.12",
     "global": "^4.3.0",
-    "kepler.gl": "^1.1.4",
+    "kepler.gl": "^1.1.5",
     "lodash.debounce": "^4.0.8",
     "lodash.get": "^4.4.2",
     "react": "^16.8.4",

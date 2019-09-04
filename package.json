@@ -46,6 +46,7 @@
     "add-licence": "uber-licence",
     "prepublish": "uber-licence && yarn build && yarn build:umd",
     "docs": "babel-node ./scripts/documentation.js",
+    "example-version": "babel-node ./scripts/edit-version.js",
     "lint": "eslint src webpack/*.js examples/*.js examples/**/src examples/**/*.js website/*.js website/src --fix",
     "web": "(yarn && yarn install:web && yarn start:web)",
     "deploy": "yarn install:web && (cd website && yarn build)",
