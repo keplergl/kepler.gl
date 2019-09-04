@@ -14,6 +14,12 @@ Each version should:
   Security to invite users to upgrade in case of vulnerabilities.
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
+
+#### [1.1.5] - Sep 5 2019
+- [Bug] Unlock luma.gl version (#713)
+- [Bug] fix heatmap getBounds (#711)
+- [Feat] HTML Export: provide read only mode (#709)
+
 #### [1.1.4] - Sep 3 2019
 - [Bug] Lock deck.gl to version 7.1.5 (#688)
 - [Enhancement] add keepExistingConfig option to addDataToMap (#619)
