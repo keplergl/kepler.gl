@@ -15,7 +15,10 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
-#### [1.1.5] - Sep 5 2019
+#### [1.1.6] - Sep 5 2019
+- [Bug] Upgrade to deck 7.1.11 (#715)
+
+#### [1.1.5] - Sep 4 2019
 - [Bug] Unlock luma.gl version (#713)
 - [Bug] fix heatmap getBounds (#711)
 - [Feat] HTML Export: provide read only mode (#709)
