@@ -1,6 +1,6 @@
-# Open modal
+# Node/Express
 
-Example showing how to replace kepler.gl default components using `injectComponents` method.
+This example shows how to embed Kepler.gl in a node/express/webpack application. 
 
 #### 1. Install
 
