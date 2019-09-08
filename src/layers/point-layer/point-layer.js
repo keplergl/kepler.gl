@@ -135,7 +135,7 @@ export default class PointLayer extends Layer {
     return this.getPosition(this.config.columns);
   }
 
-  static findDefaultLayerProps({fieldPairs = []}, foundLayers) {
+  static findDefaultLayerProps({fieldPairs = []}) {
     const props = [];
 
     // Make layer for each pair
@@ -168,7 +168,7 @@ export default class PointLayer extends Layer {
       props.push(prop);
     });
 
-    return {props, foundLayers};
+    return {props};
   }
 
   getDefaultLayerConfig(props = {}) {

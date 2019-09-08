@@ -279,6 +279,9 @@ mergedH3Layer.config = {
   colorUI: {
     color: DEFAULT_COLOR_UI,
     colorRange: DEFAULT_COLOR_UI
+  },
+  animation: {
+    enabled: false
   }
 };
 

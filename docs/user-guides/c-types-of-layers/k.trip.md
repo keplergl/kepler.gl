@@ -18,8 +18,9 @@ In order to animate the path, the `geoJSON` data needs to contain `LineString` i
   "features": [
     {
       "type": "Feature",
-      "properties": { "vendor":  "A",
-      "vol":20},
+      "properties": {
+        "vendor":  "A"
+      },
       "geometry": {
         "type": "LineString",
         "coordinates": [
@@ -39,14 +40,17 @@ In order to animate the path, the `geoJSON` data needs to contain `LineString` i
 
 - Color
 
-  The path can be colored by an attribute from the geoJSON properties.
+  The path can be colored by an attribute from the properties.
   <img src="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/k-trip-attribute-colors.png" width="256" title="Color Attribute">
 
-* Trail Length
+- Stroke Width
+  Stroke width can be set by an attribute from the properties.
+
+- Trail Length
 
   Trail length determines how long it takes for a path to completely fade out. This can be adjusted using the slider. Short trail length retains few historical locations while long trail length retain more and show a longer tail.
 
-* Animation speed
+- Animation speed
   Animation speed can be adjusted using the animation control at the bottom.
 
 **When there are multiple layers**

@@ -170,7 +170,7 @@ export default function SidePanelFactory(
         setFilter: visStateActions.setFilter,
         showDatasetTable: this._showDatasetTable,
         showAddDataModal: this._showAddDataModal,
-        toggleAnimation: visStateActions.toggleAnimation,
+        toggleAnimation: visStateActions.toggleFilterAnimation,
         enlargeFilter: visStateActions.enlargeFilter
       };
 

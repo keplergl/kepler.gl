@@ -20,48 +20,54 @@
 
 import React, {Component} from 'react';
 import styled from 'styled-components';
-import Slider from 'components/common/slider/slider';
+import RangeSlider from 'components/common/range-slider';
 import onClickOutside from 'react-onclickoutside';
+import {SPEED_CONTROL_RANGE} from 'constants/default-settings';
 
 const SliderWrapper = styled.div`
   position: relative;
-  width: 20px;
-  height: 120px;
-  flex-direction: column;
-  display: flex;
 `;
 
-const VerticalSliderContainer = styled.div`
+const SpeedSliderContainer = styled.div`
   position: absolute;
-  bottom: 10px;
-  width: 40px;
-  padding-left: 50px;
+  bottom: 50px;
+  right: calc(0% - 32px);
+  width: 180px;
+  padding: 2px 8px 2px 12px;
+  background-color: ${props => props.theme.panelBackground};
+  box-shadow: -2px -2px 0 0 rgba(0,0,0,0.10);
+  .kg-range-slider__input {
+    width: 36px;
+  }
 `;
 
-class AnimationSpeedToggle extends Component {
+class AnimationSpeedSlider extends Component {
   handleClickOutside = e => {
     this.props.onHide();
   };
 
+  _onChange = v => this.props.updateAnimationSpeed(v[1]);
+
   render() {
-    const {updateAnimationSpeed, speed} = this.props;
     return (
-      <VerticalSliderContainer>
+      <SpeedSliderContainer className="animation-control__speed-slider">
         <SliderWrapper>
-          <Slider
-            minValue={0}
-            maxValue={10}
+          <RangeSlider
+            range={SPEED_CONTROL_RANGE}
             step={0.01}
-            value1={speed}
-            onSlider1Change={updateAnimationSpeed}
+            value0={0}
+            value1={this.props.speed}
+            onChange={this._onChange}
             isRanged={false}
-            vertical
             showTooltip
+            showInput
+            inputTheme="secondary"
+            inputSize="tiny"
           />
         </SliderWrapper>
-      </VerticalSliderContainer>
+      </SpeedSliderContainer>
     );
   }
 }
 
-export default onClickOutside(AnimationSpeedToggle);
+export default onClickOutside(AnimationSpeedSlider);

@@ -128,9 +128,10 @@ export default class IconLayer extends Layer {
     }
   }
 
-  static findDefaultLayerProps({fieldPairs, fields}, foundLayers) {
-    if (!fieldPairs.length) {
-      return [];
+  static findDefaultLayerProps({fieldPairs = [], fields = []}) {
+    const notFound = {props: []};
+    if (!fieldPairs.length || !fields.length) {
+      return notFound;
     }
 
     const iconFields = fields.filter(({name}) =>
@@ -142,7 +143,7 @@ export default class IconLayer extends Layer {
     );
 
     if (!iconFields.length) {
-      return [];
+      return notFound;
     }
 
     // create icon layers for first point pair
@@ -161,7 +162,7 @@ export default class IconLayer extends Layer {
       isVisible: true
     }));
 
-    return {props, foundLayers};
+    return {props};
   }
 
   // TODO: fix complexity

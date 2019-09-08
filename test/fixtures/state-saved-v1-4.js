@@ -285,7 +285,8 @@ mergedLayer0.config = {
     },
     strokeColor: [23, 184, 190, 255],
     radiusRange: [0, 50]
-  }
+  },
+  animation: {enabled: false}
 };
 
 export const mergedLayers = [mergedLayer0];

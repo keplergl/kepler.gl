@@ -36,14 +36,14 @@ import {
   getFilterProps,
   getFilterPlot,
   getDefaultFilterPlotType,
-  filterData
+  filterData,
+  isInRange
 } from 'utils/filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
 
 import {
   findDefaultLayer,
-  calculateLayerData,
-  getTimeAnimationDomainForTripLayer
+  calculateLayerData
 } from 'utils/layer-utils/layer-utils';
 
 import {
@@ -51,7 +51,8 @@ import {
   mergeLayers,
   mergeInteractions,
   mergeLayerBlending,
-  mergeSplitMaps
+  mergeSplitMaps,
+  mergeAnimationConfig
 } from './vis-state-merger';
 
 import {
@@ -108,6 +109,12 @@ disableStackCapturing();
 const visStateUpdaters = null;
 /* eslint-enable no-unused-vars */
 
+export const defaultAnimationConfig = {
+  domain: null,
+  currentTime: null,
+  speed: 1
+};
+
 /**
  * Default initial `visState`
  * @memberof visStateUpdaters
@@ -126,9 +133,12 @@ const visStateUpdaters = null;
  * @property {string} layerBlending
  * @property {Object} hoverInfo
  * @property {Object} clicked
+ * @property {Object} mousePos
  * @property {boolean} fileLoading
  * @property {*} fileLoadingErr
  * @property {Array} splitMaps - a list of objects of layer availabilities and visibilities for each map
+ * @property {Object} layerClasses
+ * @property {Object} animationConfig
  * @public
  */
 export const INITIAL_VIS_STATE = {
@@ -173,12 +183,8 @@ export const INITIAL_VIS_STATE = {
   layerClasses: LayerClasses,
 
   // default animation
-  animationConfig: {
-    domain: [null, null],
-    currentTime: 0,
-    duration: 10,
-    speed: 0.03
-  }
+  // time in unix timestamp (milliseconds) (the number of seconds since the Unix Epoch)
+  animationConfig: defaultAnimationConfig
 };
 
 function updateStateWithLayerAndData(state, {layerData, layer, idx}) {
@@ -189,6 +195,24 @@ function updateStateWithLayerAndData(state, {layerData, layer, idx}) {
       ? state.layerData.map((d, i) => (i === idx ? layerData : d))
       : state.layerData
   };
+}
+
+export function updateStateOnLayerVisibilityChange(state, layer) {
+  let newState = state;
+  if (state.splitMaps.length) {
+    newState = {
+      ...state,
+      splitMaps: layer.config.isVisible
+        ? addNewLayersToSplitMap(state.splitMaps, layer)
+        : removeLayerFromSplitMaps(state.splitMaps, layer)
+    };
+  }
+
+  if (layer.config.animation.enabled) {
+    newState = updateAnimationDomain(state);
+  }
+
+  return newState;
 }
 
 /**
@@ -204,26 +228,36 @@ export function layerConfigChangeUpdater(state, action) {
   const {oldLayer} = action;
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
   const props = Object.keys(action.newConfig);
-  const newLayer = oldLayer.updateLayerConfig(action.newConfig);
+  let newLayer = oldLayer.updateLayerConfig(action.newConfig);
+
+  let layerData;
+
+  // let newLayer;
   if (newLayer.shouldCalculateLayerData(props)) {
     const oldLayerData = state.layerData[idx];
-    const {layerData, layer} = calculateLayerData(newLayer, state, oldLayerData, {
-      sameData: true
-    });
-    return updateStateWithLayerAndData(state, {layerData, layer, idx});
+    const updateLayerDataResult = calculateLayerData(
+      newLayer,
+      state,
+      oldLayerData,
+      {
+        sameData: true
+      }
+    );
+
+    layerData = updateLayerDataResult.layerData;
+    newLayer = updateLayerDataResult.layer;
   }
 
   let newState = state;
-  if ('isVisible' in action.newConfig && state.splitMaps.length) {
-    newState = {
-      ...state,
-      splitMaps: action.newConfig.isVisible
-        ? addNewLayersToSplitMap(state.splitMaps, newLayer)
-        : removeLayerFromSplitMaps(state.splitMaps, newLayer)
-    };
+  if ('isVisible' in action.newConfig) {
+    newState = updateStateOnLayerVisibilityChange(state, newLayer);
   }
 
-  return updateStateWithLayerAndData(newState, {layer: newLayer, idx});
+  return updateStateWithLayerAndData(newState, {
+    layer: newLayer,
+    layerData,
+    idx
+  });
 }
 
 function addOrRemoveTextLabels(newFields, textLabel) {
@@ -257,6 +291,10 @@ function addOrRemoveTextLabels(newFields, textLabel) {
 }
 
 function updateTextLabelPropAndValue(idx, prop, value, textLabel) {
+  if (!textLabel[idx].hasOwnProperty(prop)) {
+    return textLabel;
+  }
+
   let newTextLabel = textLabel.slice();
 
   if (prop && (value || textLabel.length === 1)) {
@@ -276,19 +314,18 @@ export function layerTextLabelChangeUpdater(state, action) {
   const {textLabel} = oldLayer.config;
 
   let newTextLabel = textLabel.slice();
-
-  if (idx === 'all' && prop === 'fields') {
-    newTextLabel = addOrRemoveTextLabels(value, textLabel);
-  }
-
-  // if idx is set to length, add empty text label
   if (!textLabel[idx] && idx === textLabel.length) {
+    // if idx is set to length, add empty text label
     newTextLabel = [...textLabel, DEFAULT_TEXT_LABEL];
   }
 
-  // update text label prop and value
-  newTextLabel = updateTextLabelPropAndValue(idx, prop, value, newTextLabel);
+  if (idx === 'all' && prop === 'fields') {
+    newTextLabel = addOrRemoveTextLabels(value, textLabel);
+  } else {
+    newTextLabel = updateTextLabelPropAndValue(idx, prop, value, newTextLabel);
+  }
 
+  // update text label prop and value
   return layerConfigChangeUpdater(state, {
     oldLayer,
     newConfig: {textLabel: newTextLabel}
@@ -307,6 +344,9 @@ export function layerTextLabelChangeUpdater(state, action) {
  */
 export function layerTypeChangeUpdater(state, action) {
   const {oldLayer, newType} = action;
+  if (!oldLayer) {
+    return state;
+  }
   const oldId = oldLayer.id;
   const idx = state.layers.findIndex(l => l.id === oldId);
 
@@ -328,14 +368,17 @@ export function layerTypeChangeUpdater(state, action) {
   }
 
   const {layerData, layer} = calculateLayerData(newLayer, state);
+  let newState = updateStateWithLayerAndData(state, {layerData, layer, idx});
 
-  let newState = state;
+  if (layer.config.animation.enabled || oldLayer.config.animation.enabled) {
+    newState = updateAnimationDomain(newState);
+  }
 
   // update splitMap layer id
   if (state.splitMaps.length) {
     newState = {
-      ...state,
-      splitMaps: state.splitMaps.map(settings => {
+      ...newState,
+      splitMaps: newState.splitMaps.map(settings => {
         const {[oldId]: oldLayerMap, ...otherLayers} = settings.layers;
         return oldId in settings.layers
           ? {
@@ -350,7 +393,7 @@ export function layerTypeChangeUpdater(state, action) {
     };
   }
 
-  return updateStateWithLayerAndData(newState, {layerData, layer, idx});
+  return newState;
 }
 
 /**
@@ -405,9 +448,14 @@ export function layerVisConfigChangeUpdater(state, action) {
 
   if (newLayer.shouldCalculateLayerData(props)) {
     const oldLayerData = state.layerData[idx];
-    const {layerData, layer} = calculateLayerData(newLayer, state, oldLayerData, {
-      sameData: true
-    });
+    const {layerData, layer} = calculateLayerData(
+      newLayer,
+      state,
+      oldLayerData,
+      {
+        sameData: true
+      }
+    );
     return updateStateWithLayerAndData(state, {layerData, layer, idx});
   }
 
@@ -647,7 +695,7 @@ export const toggleFilterAnimationUpdater = (state, action) => ({
  * @returns {Object} nextState
  * @public
  */
-export const updateAnimationSpeedUpdater = (state, action) => ({
+export const updateFilterAnimationSpeedUpdater = (state, action) => ({
   ...state,
   filters: state.filters.map((f, i) =>
     i === action.idx ? {...f, speed: action.speed} : f
@@ -672,64 +720,6 @@ export const updateAnimationTimeUpdater = (state, {value}) => ({
     currentTime: value
   }
 });
-
-function updateAnimationDomain(state) {
-  // merge all animatable layer domain and update global config
-  const animatableLayers = state.layers.filter(l => l.config.animation.enabled);
-
-  const mergedDomain = animatableLayers.reduce(
-    (accu, layer) => [
-      Math.min(accu[0], layer.config.animation.domain[0]),
-      Math.max(accu[1], layer.config.animation.domain[1])
-    ],
-    [+Infinity, -Infinity]
-  );
-
-  return {
-    ...state,
-    animationConfig: {
-      ...state.animationConfig,
-      currentTime: mergedDomain[0],
-      domain: mergedDomain
-    }
-  };
-}
-
-/**
- * Set animation domain with the min and max of timestamps from geojson
- * Enable multi-layer domain range
- * @memberof visStateUpdaters
- * @param {Object} state `visState`
- * @param {Object} action action
- *  @param {Object} action.oldLayer the layer object to be updated
- * @returns {Object} nextState
- * @public
- *
- */
-
-export const enableLayerAnimationUpdater = (state, oldLayer) => {
-  // calculate domain for 1 layer and update global domain
-  const domain = getTimeAnimationDomainForTripLayer(
-    oldLayer[0],
-    state.datasets
-  );
-
-  const newLayer = oldLayer[0].updateLayerConfig({
-    animation: {
-      ...oldLayer[0].config.animation,
-      domain
-    }
-  });
-
-  const idx = state.layers.findIndex(l => l.id === oldLayer.id);
-  const oldLayerData = state.layerData[idx];
-  const {layerData, layer} = calculateLayerData(newLayer, state, oldLayerData, {
-    sameData: true
-  });
-  const newState = updateStateWithLayerAndData(state, {layerData, layer, idx});
-
-  return updateAnimationDomain(newState);
-};
 
 /**
  * Update animation speed with the vertical speed slider
@@ -997,7 +987,10 @@ export const resetMapConfigUpdater = state => ({
  * @returns {Object} nextState
  * @public
  */
-export const receiveMapConfigUpdater = (state, {payload: {config = {}, options = {}}}) => {
+export const receiveMapConfigUpdater = (
+  state,
+  {payload: {config = {}, options = {}}}
+) => {
   if (!config.visState) {
     return state;
   }
@@ -1007,7 +1000,8 @@ export const receiveMapConfigUpdater = (state, {payload: {config = {}, options =
     layers,
     interactionConfig,
     layerBlending,
-    splitMaps
+    splitMaps,
+    animationConfig
   } = config.visState;
 
   const {keepExistingConfig} = options;
@@ -1019,6 +1013,7 @@ export const receiveMapConfigUpdater = (state, {payload: {config = {}, options =
   mergedState = mergeInteractions(mergedState, interactionConfig);
   mergedState = mergeLayerBlending(mergedState, layerBlending);
   mergedState = mergeSplitMaps(mergedState, splitMaps);
+  mergedState = mergeAnimationConfig(mergedState, animationConfig);
 
   return mergedState;
 };
@@ -1174,9 +1169,11 @@ export const updateVisDataUpdater = (state, action) => {
   }
 
   // apply config if passed from action
-  const previousState = config ? receiveMapConfigUpdater(state, {
-    payload: {config, options}
-  }) : state;
+  const previousState = config
+    ? receiveMapConfigUpdater(state, {
+        payload: {config, options}
+      })
+    : state;
 
   const stateWithNewData = {
     ...previousState,
@@ -1196,8 +1193,10 @@ export const updateVisDataUpdater = (state, action) => {
 
   // merge state with saved filters
   let mergedState = mergeFilters(stateWithNewData, filterToBeMerged);
+
   // merge state with saved layers
   mergedState = mergeLayers(mergedState, layerToBeMerged);
+
   // merge state with saved splitMaps
   mergedState = mergeSplitMaps(mergedState, splitMapsToBeMerged);
 
@@ -1207,25 +1206,16 @@ export const updateVisDataUpdater = (state, action) => {
 
   if (!newLayers.length) {
     // no layer merged, find defaults
-    mergedState = addDefaultLayers(mergedState, newDateEntries);
+    const result = addDefaultLayers(mergedState, newDateEntries);
+    mergedState = result.state;
+    newLayers = result.newLayers;
   }
 
-  const newLayers = mergedState.layers.filter(
-    l => l.config.dataId in newDateEntries
-  );
-
-  newLayers.forEach(l => {
-    if (l.config.animation.enabled) {
-      mergedState = enableLayerAnimationUpdater(mergedState, [l]);
-    }
-  });
-
   if (mergedState.splitMaps.length) {
+    // if map is split, add new layers to splitMaps
     newLayers = mergedState.layers.filter(
       l => l.config.dataId in newDateEntries
     );
-
-    // if map is split, add new layers to splitMaps
     mergedState = {
       ...mergedState,
       splitMaps: addNewLayersToSplitMap(mergedState.splitMaps, newLayers)
@@ -1244,9 +1234,15 @@ export const updateVisDataUpdater = (state, action) => {
     }
   });
 
-  const updatedState = updateAllLayerDomainData(mergedState, Object.keys(newDateEntries));
-  console.time('test data load finish')
-  return updatedState
+  let updatedState = updateAllLayerDomainData(
+    mergedState,
+    Object.keys(newDateEntries)
+  );
+
+  // register layer animation domain,
+  // need to be called after layer data is calculated
+  updatedState = updateAnimationDomain(updatedState);
+  return updatedState;
 };
 /* eslint-enable max-statements */
 
@@ -1359,13 +1355,16 @@ export function addDefaultLayers(state, datasets) {
   );
 
   return {
-    ...state,
-    layers: [...state.layers, ...defaultLayers],
-    layerOrder: [
-      // put new layers on top of old ones
-      ...defaultLayers.map((_, i) => state.layers.length + i),
-      ...state.layerOrder
-    ]
+    state: {
+      ...state,
+      layers: [...state.layers, ...defaultLayers],
+      layerOrder: [
+        // put new layers on top of old ones
+        ...defaultLayers.map((_, i) => state.layers.length + i),
+        ...state.layerOrder
+      ]
+    },
+    newLayers: defaultLayers
   };
 }
 
@@ -1440,4 +1439,41 @@ export function updateAllLayerDomainData(state, dataId, newFilter) {
   };
 
   return newState;
+}
+
+export function updateAnimationDomain(state) {
+  // merge all animatable layer domain and update global config
+  const animatableLayers = state.layers.filter(
+    l =>
+      l.config.isVisible &&
+      l.config.animation &&
+      l.config.animation.enabled &&
+      Array.isArray(l.animationDomain)
+  );
+
+  if (!animatableLayers.length) {
+    return {
+      ...state,
+      animationConfig: defaultAnimationConfig
+    };
+  }
+
+  const mergedDomain = animatableLayers.reduce(
+    (accu, layer) => [
+      Math.min(accu[0], layer.animationDomain[0]),
+      Math.max(accu[1], layer.animationDomain[1])
+    ],
+    [Number(Infinity), -Infinity]
+  );
+
+  return {
+    ...state,
+    animationConfig: {
+      ...state.animationConfig,
+      currentTime: isInRange(state.animationConfig.currentTime, mergedDomain)
+        ? state.animationConfig.currentTime
+        : mergedDomain[0],
+      domain: mergedDomain
+    }
+  };
 }

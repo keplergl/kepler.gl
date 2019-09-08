@@ -50,7 +50,7 @@ import sampleGeojson from './data/sample-small-geojson';
 import sampleGeojsonPoints from './data/sample-geojson-points';
 import sampleGeojsonConfig from './data/sample-geojson-config';
 import sampleH3Data, {config as h3MapConfig} from './data/sample-hex-id-csv';
-import sampleAnimateTrip from './data/sample-animate-trip';
+import sampleAnimateTrip from './data/sample-animate-trip-data';
 import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
 import {addDataToMap, addNotification} from 'kepler.gl/actions';
 import {processCsvData, processGeojson} from 'kepler.gl/processors';
@@ -162,7 +162,7 @@ class App extends Component {
   }
 
   _loadSampleData() {
-    // this._loadPointData();
+    this._loadPointData();
     // this._loadGeojsonData();
     this._loadTripGeoJson();
     // this._loadIconData();

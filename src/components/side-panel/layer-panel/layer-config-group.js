@@ -22,18 +22,24 @@ import React, {Component} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 import Switch from 'components/common/switch';
+import InfoHelper from 'components/common/info-helper';
 import {VertThreeDots} from 'components/common/icons';
 
 export const StyledLayerConfigGroupLabel = styled.div`
   border-left: 2px solid ${props => props.theme.labelColor};
-  color: ${props => props.theme.textColor};
-  font-size: 12px;
-  font-weight: 500;
   line-height: 12px;
   margin-left: -12px;
   padding-left: 10px;
-  text-transform: capitalize;
-  letter-spacing: 0.2px;
+  display: flex;
+  align-items: center;
+
+  span {
+    color: ${props => props.theme.textColor};
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    text-transform: capitalize;
+  }
 `;
 
 export const StyledLayerConfigGroupAction = styled.div`
@@ -111,7 +117,8 @@ export default class LayerConfigGroup extends Component {
   static defaultProps = {
     collapsible: false,
     expanded: false,
-    onChange: () => {}
+    onChange: () => {},
+    description: null
   };
 
   state = {
@@ -140,7 +147,8 @@ export default class LayerConfigGroup extends Component {
       property,
       layer,
       onChange,
-      collapsible
+      collapsible,
+      description
     } = this.props;
 
     const {collapsed} = this.state;
@@ -154,7 +162,13 @@ export default class LayerConfigGroup extends Component {
           onClick={() => this.setState({collapsed: !this.state.collapsed})}
         >
           <StyledLayerConfigGroupLabel className="layer-config-group__label">
-            {label}
+            <span>{label}</span>
+            {description && (
+              <InfoHelper
+                description={description}
+                id={label}
+              />
+            )}
           </StyledLayerConfigGroupLabel>
           <StyledLayerConfigGroupAction className="layer-config-group__action">
             {property ? (

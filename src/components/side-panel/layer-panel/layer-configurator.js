@@ -596,18 +596,46 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
 
+          {/* Stroke Width */}
+          <LayerConfigGroup
+            {...visConfiguratorProps}
+            label="Stroke Width"
+            collapsible
+          >
+            {layer.config.sizeField ? (
+              <VisConfigSlider
+                {...LAYER_VIS_CONFIGS.strokeWidthRange}
+                {...visConfiguratorProps}
+                label={false}
+              />
+            ) : (
+              <VisConfigSlider
+                {...LAYER_VIS_CONFIGS.thickness}
+                {...visConfiguratorProps}
+                label={false}
+              />
+            )}
+
+            <ConfigGroupCollapsibleContent>
+              <ChannelByValueSelector
+                channel={layer.visualChannels.size}
+                {...layerChannelConfigProps}
+              />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+
           {/* Trail Length*/}
           <LayerConfigGroup
             {...visConfiguratorProps}
             {...(featureTypes.polygon ? LAYER_VIS_CONFIGS.stroked : {})}
             label="Trail Length"
+            description="Number of seconds for a path to completely fade out"
           >
             <VisConfigSlider
               {...LAYER_VIS_CONFIGS.trailLength}
               {...visConfiguratorProps}
               label={false}
             />
-            )
           </LayerConfigGroup>
         </StyledLayerVisualConfigurator>
       );

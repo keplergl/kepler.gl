@@ -97,10 +97,10 @@ export default class HexagonIdLayer extends Layer {
     };
   }
 
-  static findDefaultLayerProps({fields}, foundLayers) {
+  static findDefaultLayerProps({fields = []}) {
     const foundColumns = this.findDefaultColumnField(HEXAGON_ID_FIELDS, fields);
     if (!foundColumns || !foundColumns.length) {
-      return {props: null, foundLayers};
+      return {props: []};
     }
 
     return {
@@ -108,8 +108,7 @@ export default class HexagonIdLayer extends Layer {
         isVisible: true,
         label: 'H3 Hexagon',
         columns
-      })),
-      foundLayers
+      }))
     };
   }
 
@@ -241,10 +240,8 @@ export default class HexagonIdLayer extends Layer {
     });
 
     const bounds = this.getPointsBounds(Object.values(centroids), d => d);
-    const lightSettings = this.getLightSettingsFromBounds(bounds);
-
     this.dataToFeature = {hexagonVertices, hexagonCenter, centroids};
-    this.updateMeta({bounds, lightSettings});
+    this.updateMeta({bounds});
   }
 
   renderLayer({

@@ -24,8 +24,8 @@ import {console as globalConsole} from 'global/window';
 import assert from 'assert';
 import {Analyzer, DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
-import {ALL_FIELD_TYPES, GEOJSON_FIELDS} from 'constants/default-settings';
-import {notNullorUndefined} from 'utils/data-utils';
+import {ALL_FIELD_TYPES} from 'constants/default-settings';
+import {notNullorUndefined, parseFieldValue} from 'utils/data-utils';
 import KeplerGlSchema from 'schemas';
 
 // if any of these value occurs in csv, parse it to null;
@@ -457,7 +457,8 @@ export function processGeojson(rawData) {
       }
     });
   });
-  return processRowObject(allData);
+  const processRow = processRowObject(allData);
+  return processRow;
 }
 
 /**
@@ -472,11 +473,7 @@ export function formatCsv(data, fields) {
 
   // parse geojson object as string
   data.forEach(row => {
-    formattedData.push(
-      row.map((d, i) =>
-        d && GEOJSON_FIELDS.geojson.includes(fields[i].name) ? JSON.stringify(d) : d
-      )
-    );
+    formattedData.push(row.map((d, i) => parseFieldValue(d, fields[i].type)));
   });
 
   return csvFormatRows(formattedData);
@@ -522,7 +519,9 @@ export function validateInputData(data) {
     }
 
     if (!f.name) {
-      assert(`field.name is required but missing in field ${JSON.stringify(f)}`);
+      assert(
+        `field.name is required but missing in field ${JSON.stringify(f)}`
+      );
       // assign a name
       f.name = `column_${i}`;
     }

@@ -23,42 +23,26 @@ import styled from 'styled-components';
 import {createSelector} from 'reselect';
 
 import FieldSelector from 'components/common/field-selector';
+
 import {
   SelectTextBold,
   IconRoundSmall,
-  CenterFlexbox
+  CenterFlexbox,
+  BottomWidgetInner
 } from 'components/common/styled-components';
-import TimeRangeFilter from 'components/filters/time-range-filter';
 import {Close, Clock, LineChart} from 'components/common/icons';
-import SpeedControl from '../common/animation-control/speed-control';
+import SpeedControlFactory from 'components/common/animation-control/speed-control';
+import TimeRangeFilterFactory from 'components/filters/time-range-filter';
+import FloatingTimeDisplayFactory from 'components/common/animation-control/floating-time-display';
 
-const innerPdSide = 32;
-
-const WidgetContainer = styled.div`
-  position: absolute;
-  padding-top: ${props => props.theme.sidePanel.margin.top}px;
-  padding-right: ${props => props.theme.sidePanel.margin.right}px;
-  padding-bottom: ${props => props.theme.sidePanel.margin.bottom}px;
-  padding-left: ${props => props.theme.sidePanel.margin.left}px;
-  bottom: 0;
-  right: 0;
-  z-index: 1;
-  width: ${props => props.width}px;
-
-  .bottom-widget--inner {
-    background-color: ${props => props.theme.sidePanelBg};
-    padding: 6px ${innerPdSide}px 10px ${innerPdSide}px;
-    position: relative;
-  }
-`;
+const TOP_SECTION_HEIGHT = '36px';
 
 const TopSectionWrapper = styled.div`
-  position: absolute;
   display: flex;
   justify-content: space-between;
   width: 100%;
-  padding-right: ${innerPdSide * 2}px;
   color: ${props => props.theme.labelColor};
+  height: ${TOP_SECTION_HEIGHT};
 
   .bottom-widget__y-axis {
     flex-grow: 1;
@@ -95,6 +79,14 @@ const TopSectionWrapper = styled.div`
       }
     }
   }
+
+  .animation-control__speed-control {
+    margin-right: -12px;
+
+    .animation-control__speed-slider {
+      right: calc(0% - 48px);
+    }
+  }
 `;
 
 const StyledTitle = styled(CenterFlexbox)`
@@ -110,46 +102,53 @@ const StyledTitle = styled(CenterFlexbox)`
   }
 `;
 
-export class TimeWidget extends Component {
-  state = {
-    showSpeedControl: false
-  };
+TimeWidgetFactory.deps = [
+  SpeedControlFactory,
+  TimeRangeFilterFactory,
+  FloatingTimeDisplayFactory
+];
 
-  _toggleSpeedControl = () => {
-    this.setState({showSpeedControl: !this.state.showSpeedControl});
-  };
+function TimeWidgetFactory(SpeedControl, TimeRangeFilter, FloatingTimeDisplay) {
+  class TimeWidget extends Component {
+    state = {
+      showSpeedControl: false
+    };
 
-  fieldSelector = props => props.fields;
-  yAxisFieldsSelector = createSelector(
-    this.fieldSelector,
-    fields => fields.filter(f => f.type === 'integer' || f.type === 'real')
-  );
+    fieldSelector = props => props.fields;
+    yAxisFieldsSelector = createSelector(
+      this.fieldSelector,
+      fields => fields.filter(f => f.type === 'integer' || f.type === 'real')
+    );
 
-  render() {
-    const {
-      enlargeFilter,
-      filters,
-      setFilter,
-      setFilterPlot,
-      toggleAnimation,
-      updateAnimationSpeed,
-      width,
-      readOnly,
-      datasets
-    } = this.props;
+    _updateAnimationSpeed = speed =>
+      this.props.updateAnimationSpeed(this.props.index, speed);
 
-    const enlargedIdx = filters.findIndex(f => f.enlarged);
-    const isAnyFilterAnimating = filters.some(f => f.isAnimating);
-    const filter = filters[enlargedIdx];
+    _toggleSpeedControl = () =>
+      this.setState({showSpeedControl: !this.state.showSpeedControl});
 
-    if (enlargedIdx < 0) {
-      return null;
-    }
+    _setFilterPlotYAxis = value =>
+      this.props.setFilterPlot(this.props.index, {yAxis: value});
 
-    const {showSpeedControl} = this.state;
-    return (
-      <WidgetContainer width={width}>
-        <div className="bottom-widget--inner">
+    _updateAnimationSpeed = speed =>
+      this.props.updateAnimationSpeed(this.props.index, speed);
+
+    _toggleAnimation = () => this.props.toggleAnimation(this.props.index);
+
+    _onClose = () => this.props.enlargeFilter(this.props.index);
+
+    render() {
+      const {
+        datasets,
+        filter,
+        index,
+        readOnly,
+        setFilter,
+        showTimeDisplay
+      } = this.props;
+
+      const {showSpeedControl} = this.state;
+      return (
+        <BottomWidgetInner className="bottom-widget--inner">
           <TopSectionWrapper>
             <StyledTitle className="bottom-widget__field">
               <CenterFlexbox className="bottom-widget__icon">
@@ -167,8 +166,7 @@ export class TimeWidget extends Component {
                   placement="top"
                   id="selected-time-widget-field"
                   value={filter.yAxis ? filter.yAxis.name : null}
-                  onSelect={value => setFilterPlot(enlargedIdx, {yAxis: value})}
-                  inputTheme="secondary"
+                  onSelect={this._setFilterPlotYAxis}
                   placeholder="Y Axis"
                   erasable
                   showToken={false}
@@ -176,49 +174,36 @@ export class TimeWidget extends Component {
               </div>
             </StyledTitle>
             <StyledTitle className="bottom-widget__speed">
-            <SpeedControl
-              onClick={this._toggleSpeedControl}
-              showSpeedControl={showSpeedControl}
-              updateAnimationSpeed={speed =>
-                updateAnimationSpeed(enlargedIdx, speed)
-              }
-              speed={filter.speed}
-            />
+              <SpeedControl
+                onClick={this._toggleSpeedControl}
+                showSpeedControl={showSpeedControl}
+                updateAnimationSpeed={this._updateAnimationSpeed}
+                speed={filter.speed}
+              />
             </StyledTitle>
-<<<<<<< HEAD
             {!readOnly ? (
               <CenterFlexbox>
                 <IconRoundSmall>
-                  <Close height="12px" onClick={() => enlargeFilter(enlargedIdx)} />
+                  <Close height="12px" onClick={this._onClose} />
                 </IconRoundSmall>
               </CenterFlexbox>
             ) : null}
-=======
-            <CenterFlexbox>
-              <IconRoundSmall>
-                <Close
-                  height="12px"
-                  onClick={() => enlargeFilter(enlargedIdx)}
-                />
-              </IconRoundSmall>
-            </CenterFlexbox>
->>>>>>> dbd8e126... [Feat] Add trip layer - 1 (#632) (#632)
           </TopSectionWrapper>
-
           <TimeRangeFilter
             filter={filter}
-            setFilter={value => setFilter(enlargedIdx, 'value', value)}
-            isAnyFilterAnimating={isAnyFilterAnimating}
-            updateAnimationSpeed={speed =>
-              updateAnimationSpeed(enlargedIdx, speed)
-            }
-            toggleAnimation={() => toggleAnimation(enlargedIdx)}
+            setFilter={value => setFilter(index, 'value', value)}
+            toggleAnimation={this._toggleAnimation}
+            hideTimeTitle={showTimeDisplay}
+            isAnimatable
           />
-        </div>
-      </WidgetContainer>
-    );
+          {showTimeDisplay ? (
+            <FloatingTimeDisplay currentTime={filter.value} />
+          ) : null}
+        </BottomWidgetInner>
+      );
+    }
   }
+  return TimeWidget;
 }
 
-const TimeWidgetFactory = () => TimeWidget;
 export default TimeWidgetFactory;

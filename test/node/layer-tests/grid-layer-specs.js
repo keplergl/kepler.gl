@@ -63,22 +63,7 @@ test('#GridLayer -> formatLayerData', t => {
   const allDataWithNull = [[null, null, '12']].concat(rows);
 
   const expectedLayerMeta = {
-    bounds: [31.2148748, 29.9870074, 31.2590542, 30.0614122],
-    lightSettings: {
-      lightsPosition: [
-        31.2148748,
-        29.9870074,
-        8000,
-        31.2590542,
-        30.0614122,
-        8000
-      ],
-      ambientRatio: 0.4,
-      diffuseRatio: 0.6,
-      specularRatio: 0.3,
-      lightsStrength: [0.9, 0, 0.8, 0],
-      numberOfLights: 2
-    }
+    bounds: [31.2148748, 29.9870074, 31.2590542, 30.0614122]
   };
 
   const TEST_CASES = [

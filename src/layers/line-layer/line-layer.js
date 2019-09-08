@@ -31,9 +31,9 @@ export default class LineLayer extends ArcLayer {
     return LineLayerIcon;
   }
 
-  static findDefaultLayerProps({fieldPairs}, foundLayers) {
+  static findDefaultLayerProps({fieldPairs = []}) {
     if (fieldPairs.length < 2) {
-      return [];
+      return {props: []};
     }
     const props = {};
 
@@ -48,7 +48,7 @@ export default class LineLayer extends ArcLayer {
       fieldPairs[1].defaultName
     } line`;
 
-    return {props, foundLayers};
+    return {props: [props]};
   }
 
   renderLayer({

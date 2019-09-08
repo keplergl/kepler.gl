@@ -311,7 +311,7 @@ export function updateVisData(datasets, options, config) {
  * @returns {{type: ActionTypes.TOGGLE_FILTER_ANIMATION, idx: idx}}
  * @public
  */
-export function toggleAnimation(idx) {
+export function toggleFilterAnimation(idx) {
   return {
     type: ActionTypes.TOGGLE_FILTER_ANIMATION,
     idx
@@ -326,7 +326,7 @@ export function toggleAnimation(idx) {
  * @returns {{type: ActionTypes.UPDATE_FILTER_ANIMATION_SPEED, idx: idx, speed: speed}}
  * @public
  */
-export function updateAnimationSpeed(idx, speed) {
+export function updateFilterAnimationSpeed(idx, speed) {
   return {
     type: ActionTypes.UPDATE_FILTER_ANIMATION_SPEED,
     idx,
@@ -345,20 +345,6 @@ export function updateAnimationTime(value) {
   return {
     type: ActionTypes.UPDATE_ANIMATION_TIME,
     value
-  };
-}
-
-/**
- * Change filter animation speed
- * @memberof visStateActions
- * @param {Object} layer -  layer to be updated
- * @returns {{type: ActionTypes.ENABLE_LAYER_ANIMATION, layer: oldLayer}}
- * @public
- */
-export function enableLayerAnimation(oldLayer) {
-  return {
-    type: ActionTypes.ENABLE_LAYER_ANIMATION,
-    oldLayer
   };
 }
 

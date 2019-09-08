@@ -24,7 +24,6 @@ import DefaultLayerIcon from './default-layer-icon';
 
 import {
   ALL_FIELD_TYPES,
-  DEFAULT_LIGHT_SETTINGS,
   NO_VALUE_COLOR,
   SCALE_TYPES,
   CHANNEL_SCALES,
@@ -204,12 +203,12 @@ export default class Layer {
     return null;
   }
   /*
-   * Given a dataset, automatically create layers based on it
-   * and return the props
+   * Given a dataset, automatically find props to create layer based on it
+   * and return the props and previous found layers.
    * By default, no layers will be found
    */
-  static findDefaultLayerProps(dataset, layers) {
-    return {props: null, foundLayers: layers};
+  static findDefaultLayerProps(dataset, foundLayers) {
+    return {props: [], foundLayers};
   }
 
   /**
@@ -429,14 +428,15 @@ export default class Layer {
    */
   assignConfigToLayer(configToCopy, visConfigSettings) {
     // don't deep merge visualChannel field
-    const notToDeepMerge = Object.values(this.visualChannels).map(v => v.field);
-
     // don't deep merge color range, reversed: is not a key by default
-    notToDeepMerge.push('colorRange', 'strokeColorRange');
+    const shallowCopy = ['colorRange', 'strokeColorRange'].concat(
+      Object.values(this.visualChannels).map(v => v.field)
+    );
 
-    // don't copy over domain
-    const notToCopy = Object.values(this.visualChannels).map(v => v.domain);
-
+    // don't copy over domain and animation
+    const notToCopy = ['animation'].concat(
+      Object.values(this.visualChannels).map(v => v.domain)
+    );
     // if range is for the same property group copy it, otherwise, not to copy
     Object.values(this.visualChannels).forEach(v => {
       if (
@@ -451,7 +451,7 @@ export default class Layer {
     // don't copy over visualChannel range
     const currentConfig = this.config;
     const copied = this.copyLayerConfig(currentConfig, configToCopy, {
-      notToDeepMerge,
+      shallowCopy,
       notToCopy
     });
 
@@ -468,28 +468,31 @@ export default class Layer {
    * make sure to only copy over value to existing keys
    * @param {object} currentConfig - existing config to be override
    * @param {object} configToCopy - new Config to copy over
-   * @param {string[]} notToDeepMerge - array of properties to not to be deep copied
+   * @param {string[]} shallowCopy - array of properties to not to be deep copied
    * @param {string[]} notToCopy - array of properties not to copy
    * @returns {object} - copied config
    */
   copyLayerConfig(
     currentConfig,
     configToCopy,
-    {notToDeepMerge = [], notToCopy = []} = {}
+    {shallowCopy = [], notToCopy = []} = {}
   ) {
     const copied = {};
     Object.keys(currentConfig).forEach(key => {
       if (
         isPlainObject(currentConfig[key]) &&
         isPlainObject(configToCopy[key]) &&
-        !notToDeepMerge.includes(key) &&
+        !shallowCopy.includes(key) &&
         !notToCopy.includes(key)
       ) {
         // recursively assign object value
         copied[key] = this.copyLayerConfig(
           currentConfig[key],
           configToCopy[key],
-          {notToDeepMerge, notToCopy}
+          {
+            shallowCopy,
+            notToCopy
+          }
         );
       } else if (
         notNullorUndefined(configToCopy[key]) &&
@@ -508,7 +511,10 @@ export default class Layer {
 
   registerVisConfig(layerVisConfigs) {
     Object.keys(layerVisConfigs).forEach(item => {
-      if (typeof item === 'string' && LAYER_VIS_CONFIGS[layerVisConfigs[item]]) {
+      if (
+        typeof item === 'string' &&
+        LAYER_VIS_CONFIGS[layerVisConfigs[item]]
+      ) {
         // if assigned one of default LAYER_CONFIGS
         this.config.visConfig[item] =
           LAYER_VIS_CONFIGS[layerVisConfigs[item]].defaultValue;
@@ -759,20 +765,6 @@ export default class Layer {
     return [lngBounds[0], latBounds[0], lngBounds[1], latBounds[1]];
   }
 
-  getLightSettingsFromBounds(bounds) {
-    return Array.isArray(bounds) && bounds.length >= 4
-      ? {
-          ...DEFAULT_LIGHT_SETTINGS,
-          lightsPosition: [
-            ...bounds.slice(0, 2),
-            DEFAULT_LIGHT_SETTINGS.lightsPosition[2],
-            ...bounds.slice(2, 4),
-            DEFAULT_LIGHT_SETTINGS.lightsPosition[5]
-          ]
-        }
-      : DEFAULT_LIGHT_SETTINGS;
-  }
-
   getEncodedChannelValue(
     scale,
     data,
@@ -921,7 +913,12 @@ export default class Layer {
     // TODO: refactor to add valueAccessor to field
     const fieldIdx = field.tableFieldIndex - 1;
     const isTime = field.type === ALL_FIELD_TYPES.timestamp;
-    const valueAccessor = maybeToDate.bind(null, isTime, fieldIdx, field.format);
+    const valueAccessor = maybeToDate.bind(
+      null,
+      isTime,
+      fieldIdx,
+      field.format
+    );
     const indexValueAccessor = i => valueAccessor(allData[i]);
 
     const sortFunction = getSortingFunction(field.type);
@@ -971,7 +968,9 @@ export default class Layer {
 
     const field = radiusChannel.field;
     const fixed =
-      fixedRadius === undefined ? this.config.visConfig.fixedRadius : fixedRadius;
+      fixedRadius === undefined
+        ? this.config.visConfig.fixedRadius
+        : fixedRadius;
     const {radius} = this.config.visConfig;
 
     return fixed

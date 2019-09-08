@@ -81,13 +81,11 @@ const actionHandler = {
 
   [ActionTypes.TOGGLE_FILTER_ANIMATION]: visStateUpdaters.toggleFilterAnimationUpdater,
 
-  [ActionTypes.UPDATE_FILTER_ANIMATION_SPEED]: visStateUpdaters.updateAnimationSpeedUpdater,
+  [ActionTypes.UPDATE_FILTER_ANIMATION_SPEED]: visStateUpdaters.updateFilterAnimationSpeedUpdater,
 
   [ActionTypes.UPDATE_ANIMATION_TIME]: visStateUpdaters.updateAnimationTimeUpdater,
 
   [ActionTypes.UPDATE_LAYER_ANIMATION_SPEED]: visStateUpdaters.updateLayerAnimationSpeedUpdater,
-
-  [ActionTypes.ENABLE_LAYER_ANIMATION]: visStateUpdaters.enableLayerAnimationUpdater,
 
   [ActionTypes.TOGGLE_LAYER_FOR_MAP]: visStateUpdaters.toggleLayerForMapUpdater,
 

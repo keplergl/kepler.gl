@@ -34,6 +34,19 @@ export const PROPERTY_GROUPS = keyMirror({
   precision: null
 });
 
+export const DEFAULT_LAYER_OPACITY = 0.8;
+
+export const DEFAULT_TEXT_LABEL = {
+  field: null,
+  color: [255, 255, 255],
+  size: 18,
+  offset: [0, 0],
+  anchor: 'start',
+  alignment: 'center'
+};
+
+export const DEFAULT_COLOR_RANGE = DefaultColorRange;
+
 export const LAYER_VIS_CONFIGS = {
   thickness: {
     type: 'number',
@@ -116,7 +129,7 @@ export const LAYER_VIS_CONFIGS = {
   },
   opacity: {
     type: 'number',
-    defaultValue: 0.8,
+    defaultValue: DEFAULT_LAYER_OPACITY,
     label: 'Opacity',
     isRanged: false,
     range: [0, 1],

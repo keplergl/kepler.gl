@@ -371,7 +371,7 @@ function KeplerGlFactory(
   );
 }
 
-function mapStateToProps(state, props) {
+function mapStateToProps(state = {}, props) {
   return {
     ...props,
     visState: state.visState,

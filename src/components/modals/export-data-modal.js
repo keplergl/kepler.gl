@@ -39,8 +39,7 @@ const propTypes = {
   onClose: PropTypes.func.isRequired,
   onChangeExportSelectedDataset: PropTypes.func.isRequired,
   onChangeExportDataType: PropTypes.func.isRequired,
-  onChangeExportFiltered: PropTypes.func.isRequired,
-  onChangeExportConfig: PropTypes.func.isRequired
+  onChangeExportFiltered: PropTypes.func.isRequired
 };
 
 const getDataRowCount = (datasets, selectedDataset, filtered) => {

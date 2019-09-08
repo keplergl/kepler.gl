@@ -85,10 +85,11 @@ export default class ArcLayer extends Layer {
     };
   }
 
-  static findDefaultLayerProps({fieldPairs = []}, foundLayers) {
+  static findDefaultLayerProps({fieldPairs = []}) {
     if (fieldPairs.length < 2) {
-      return [];
+      return {props: []};
     }
+
     const props = {
       color: hexToRgb(DEFAULT_LAYER_COLOR.tripArc)
     };
@@ -102,7 +103,7 @@ export default class ArcLayer extends Layer {
     };
     props.label = `${fieldPairs[0].defaultName} -> ${fieldPairs[1].defaultName} arc`;
 
-    return {props, foundLayers};
+    return {props: [props]};
   }
 
   // TODO: fix complexity

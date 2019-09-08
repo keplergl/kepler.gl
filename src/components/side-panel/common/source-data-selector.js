@@ -71,7 +71,7 @@ export default function SourceDataSelectorFactory(DatasetTag) {
             multiSelect={false}
             onChange={onSelect}
             placeholder={defaultValue}
-            disabled={disabled}
+            disabled={Boolean(disabled)}
             displayOption={'label'}
             DropDownLineItemRenderComponent={DatasetItem}
           />

@@ -308,18 +308,3 @@ export const geoBounds = [
   -122.39166672864975,
   37.79427854456892
 ];
-export const geoLightSettings = {
-  lightsPosition: [
-    -122.40115971858505,
-    37.78202426695214,
-    8000,
-    -122.39166672864975,
-    37.79427854456892,
-    8000
-  ],
-  ambientRatio: 0.4,
-  diffuseRatio: 0.6,
-  specularRatio: 0.3,
-  lightsStrength: [0.9, 0, 0.8, 0],
-  numberOfLights: 2
-};

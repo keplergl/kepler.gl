@@ -27,7 +27,7 @@ import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStyleActions from 'actions/map-style-actions';
 import * as MapStateActions from 'actions/map-state-actions';
 import {addDataToMap} from 'actions/actions';
-import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
+import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_RANGE, DEFAULT_LAYER_OPACITY} from 'layers/layer-factory';
 
 // fixtures
 import {testFields, testAllData} from 'test/fixtures/test-csv-data';
@@ -38,6 +38,8 @@ import {
   config as tripConfig,
   dataId as tripDataId
 } from 'test/fixtures/test-trip-data';
+import tripGeojson, {tripDataInfo} from 'test/fixtures/trip-geojson';
+import {processGeojson} from 'processors/data-processor';
 
 const geojsonFields = cloneDeep(fields);
 const geojsonRows = cloneDeep(rows);
@@ -100,6 +102,28 @@ function mockStateWithFileUpload() {
     if (l.config.visConfig.strokeColor) {
       l.config.visConfig.strokeColor = [i + 10, i + 10, i + 10];
     }
+  });
+
+  return updatedState;
+}
+
+function mockStateWithTripGeojson() {
+  const initialState = cloneDeep(InitialState);
+
+  // load csv and geojson
+  const updatedState = applyActions(keplerGlReducer, initialState, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [
+        [{info: tripDataInfo, data: processGeojson(cloneDeep(tripGeojson))}]
+      ]
+    }
+  ]);
+
+  // replace layer id and color with controlled value for testing
+  updatedState.visState.layers.forEach((l, i) => {
+    l.id = `${l.type}-${i}`;
+    l.config.color = [i, i, i];
   });
 
   return updatedState;
@@ -315,22 +339,10 @@ export const expectedSavedLayer0 = {
     },
     isVisible: true,
     visConfig: {
-      opacity: 0.8,
+      opacity: DEFAULT_LAYER_OPACITY,
       worldUnitSize: 1,
       resolution: 8,
-      colorRange: {
-        name: 'Global Warming',
-        type: 'sequential',
-        category: 'Uber',
-        colors: [
-          '#5A1846',
-          '#900C3F',
-          '#C70039',
-          '#E3611C',
-          '#F1920E',
-          '#FFC300'
-        ]
-      },
+      colorRange: DEFAULT_COLOR_RANGE,
       coverage: 1,
       sizeRange: [0, 500],
       percentile: [0, 100],
@@ -363,22 +375,10 @@ export const expectedLoadedLayer0 = {
     },
     isVisible: true,
     visConfig: {
-      opacity: 0.8,
+      opacity: DEFAULT_LAYER_OPACITY,
       worldUnitSize: 1,
       resolution: 8,
-      colorRange: {
-        name: 'Global Warming',
-        type: 'sequential',
-        category: 'Uber',
-        colors: [
-          '#5A1846',
-          '#900C3F',
-          '#C70039',
-          '#E3611C',
-          '#F1920E',
-          '#FFC300'
-        ]
-      },
+      colorRange: DEFAULT_COLOR_RANGE,
       coverage: 1,
       sizeRange: [0, 500],
       percentile: [0, 100],
@@ -422,7 +422,7 @@ export const expectedSavedLayer1 = {
     visConfig: {
       radius: 10,
       fixedRadius: false,
-      opacity: 0.8,
+      opacity: DEFAULT_LAYER_OPACITY,
       outline: false,
       filled: true,
       thickness: 2,
@@ -432,19 +432,7 @@ export const expectedSavedLayer1 = {
         category: 'Uber',
         colors: ['#E6FAFA', '#AAD7DA', '#68B4BB', '#00939C']
       },
-      strokeColorRange: {
-        name: 'Global Warming',
-        type: 'sequential',
-        category: 'Uber',
-        colors: [
-          '#5A1846',
-          '#900C3F',
-          '#C70039',
-          '#E3611C',
-          '#F1920E',
-          '#FFC300'
-        ]
-      },
+      strokeColorRange: DEFAULT_COLOR_RANGE,
       strokeColor: null,
       radiusRange: [0, 50]
     }
@@ -478,7 +466,7 @@ export const expectedLoadedLayer1 = {
     visConfig: {
       radius: 10,
       fixedRadius: false,
-      opacity: 0.8,
+      opacity: DEFAULT_LAYER_OPACITY,
       outline: false,
       thickness: 2,
       colorRange: {
@@ -487,19 +475,7 @@ export const expectedLoadedLayer1 = {
         category: 'Uber',
         colors: ['#E6FAFA', '#AAD7DA', '#68B4BB', '#00939C']
       },
-      strokeColorRange: {
-        name: 'Global Warming',
-        type: 'sequential',
-        category: 'Uber',
-        colors: [
-          '#5A1846',
-          '#900C3F',
-          '#C70039',
-          '#E3611C',
-          '#F1920E',
-          '#FFC300'
-        ]
-      },
+      strokeColorRange: DEFAULT_COLOR_RANGE,
       filled: true,
       strokeColor: null,
       radiusRange: [0, 50]
@@ -538,34 +514,10 @@ export const expectedSavedLayer2 = {
     },
     isVisible: true,
     visConfig: {
-      opacity: 0.8,
+      opacity: DEFAULT_LAYER_OPACITY,
       thickness: 0.5,
-      colorRange: {
-        name: 'Global Warming',
-        type: 'sequential',
-        category: 'Uber',
-        colors: [
-          '#5A1846',
-          '#900C3F',
-          '#C70039',
-          '#E3611C',
-          '#F1920E',
-          '#FFC300'
-        ]
-      },
-      strokeColorRange: {
-        name: 'Global Warming',
-        type: 'sequential',
-        category: 'Uber',
-        colors: [
-          '#5A1846',
-          '#900C3F',
-          '#C70039',
-          '#E3611C',
-          '#F1920E',
-          '#FFC300'
-        ]
-      },
+      colorRange: DEFAULT_COLOR_RANGE,
+      strokeColorRange: DEFAULT_COLOR_RANGE,
       strokeColor: [11, 11, 11],
       radius: 10,
       sizeRange: [0, 10],
@@ -605,34 +557,10 @@ export const expectedLoadedLayer2 = {
     },
     isVisible: true,
     visConfig: {
-      opacity: 0.8,
+      opacity: DEFAULT_LAYER_OPACITY,
       thickness: 0.5,
-      colorRange: {
-        name: 'Global Warming',
-        type: 'sequential',
-        category: 'Uber',
-        colors: [
-          '#5A1846',
-          '#900C3F',
-          '#C70039',
-          '#E3611C',
-          '#F1920E',
-          '#FFC300'
-        ]
-      },
-      strokeColorRange: {
-        name: 'Global Warming',
-        type: 'sequential',
-        category: 'Uber',
-        colors: [
-          '#5A1846',
-          '#900C3F',
-          '#C70039',
-          '#E3611C',
-          '#F1920E',
-          '#FFC300'
-        ]
-      },
+      colorRange: DEFAULT_COLOR_RANGE,
+      strokeColorRange: DEFAULT_COLOR_RANGE,
       strokeColor: [11, 11, 11],
       radius: 10,
       sizeRange: [0, 10],
@@ -667,3 +595,31 @@ export const StateWFilesFiltersLayerColor = mockStateWithLayerDimensions(
 export const StateWCustomMapStyle = mockStateWithCustomMapStyle();
 export const StateWSplitMaps = mockStateWithSplitMaps();
 export const StateWTrips = mockStateWithTripData();
+
+export const expectedSavedTripLayer = {
+  id: 'trip-0',
+  type: 'trip',
+  config: {
+    dataId: 'trip_data',
+    label: 'Trip Data',
+    color: [0, 0, 0],
+    columns: {
+      geojson: '_geojson'
+    },
+    isVisible: true,
+    visConfig: {
+      opacity: DEFAULT_LAYER_OPACITY,
+      thickness: 0.5,
+      colorRange: DEFAULT_COLOR_RANGE,
+      trailLength: 180,
+      sizeRange: [0, 10]
+    },
+    textLabel: [DEFAULT_TEXT_LABEL]
+  },
+  visualChannels: {
+    colorField: null,
+    colorScale: 'quantile',
+    sizeField: null,
+    sizeScale: 'linear'
+  }
+};

@@ -31,9 +31,9 @@ import classnames from 'classnames';
 import RangeBrush from './range-brush';
 import {getTimeWidgetHintFormatter} from 'utils/filter-utils';
 
-const chartMargin = {top: 18, bottom: 0, left: 0, right: 0};
+const chartMargin = {top: 8, bottom: 0, left: 0, right: 0};
 const chartH = 52;
-const containerH = 78;
+const containerH = 68;
 const histogramStyle = {
   highlightW: 0.7,
   unHighlightedW: 0.4

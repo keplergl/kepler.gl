@@ -36,7 +36,6 @@ export {default as Layer} from './base-layer';
 
 // individual layers
 export const KeplerGlLayers = {
-  TripLayer,
   PointLayer,
   ArcLayer,
   LineLayer,
@@ -47,7 +46,8 @@ export const KeplerGlLayers = {
   IconLayer,
   HeatmapLayer,
   H3Layer,
-  ScenegraphLayer
+  ScenegraphLayer,
+  TripLayer
 };
 
 export const LayerClasses = {
