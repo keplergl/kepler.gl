@@ -25,7 +25,7 @@ import styled from 'styled-components';
 import PanelHeaderAction from 'components/side-panel/panel-header-action';
 import FieldSelector from 'components/common/field-selector';
 import {Trash, Clock} from 'components/common/icons';
-import SourceDataSelector from 'components/side-panel/source-data-selector';
+import SourceDataSelectorFactory from 'components/side-panel/common/source-data-selector';
 import {StyledPanelHeader} from 'components/common/styled-components';
 import * as Filters from 'components/filters';
 
@@ -51,7 +51,9 @@ const StyledFilterContent = styled.div`
   padding: 12px;
 `;
 
-function FilterPanelFactory() {
+FilterPanelFactory.deps = [SourceDataSelectorFactory];
+
+function FilterPanelFactory(SourceDataSelector) {
   return class FilterPanel extends Component {
     static propTypes = {
       idx: PropTypes.number,

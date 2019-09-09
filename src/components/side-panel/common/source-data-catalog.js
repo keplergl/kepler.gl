@@ -19,41 +19,43 @@
 // THE SOFTWARE.
 
 import React from 'react';
+import styled from 'styled-components';
+
 import {SidePanelSection} from 'components/common/styled-components';
-import FieldSelector from 'components/common/field-selector';
-import DatasetTagFactory from 'components/side-panel/common/dataset-tag';
+import DatasetTitleFactory from 'components/side-panel/common/dataset-title';
+import DatasetInfoFactory from 'components/side-panel/common/dataset-info';
 
-TooltipConfigFactory.deps = [DatasetTagFactory];
+const SourceDataCatalogWrapper = styled.div`
+  transition: ${props => props.theme.transition};
+`;
 
-function TooltipConfigFactory(DatasetTag) {
-  const TooltipConfig = ({config, datasets, onChange}) => (
-    <div>
-      {Object.keys(config.fieldsToShow).map(dataId => (
-        <SidePanelSection key={dataId}>
-          <DatasetTag dataset={datasets[dataId]} />
-          <FieldSelector
-            fields={datasets[dataId].fields}
-            value={config.fieldsToShow[dataId]}
-            onSelect={fieldsToShow => {
-              const newConfig = {
-                ...config,
-                fieldsToShow: {
-                  ...config.fieldsToShow,
-                  [dataId]: fieldsToShow.map(d => d.name)
-                }
-              };
-              onChange(newConfig);
-            }}
-            closeOnSelect={false}
-            multiSelect
-            inputTheme="secondary"
+SourceDataCatalogFactory.deps = [DatasetTitleFactory, DatasetInfoFactory];
+
+function SourceDataCatalogFactory(DatasetTitle, DatasetInfo) {
+  const SourceDataCatalog = ({
+    datasets,
+    showDatasetTable,
+    removeDataset,
+    onTitleClick,
+    showDeleteDataset = false
+  }) => (
+    <SourceDataCatalogWrapper className="source-data-catalog">
+      {Object.values(datasets).map((dataset, index) => (
+        <SidePanelSection key={dataset.id}>
+          <DatasetTitle
+            showDatasetTable={showDatasetTable}
+            showDeleteDataset={showDeleteDataset}
+            removeDataset={removeDataset}
+            dataset={dataset}
+            onTitleClick={onTitleClick}
           />
+          {showDatasetTable ? <DatasetInfo dataset={dataset} /> : null}
         </SidePanelSection>
       ))}
-    </div>
+    </SourceDataCatalogWrapper>
   );
 
-  return TooltipConfig;
+  return SourceDataCatalog;
 }
 
-export default TooltipConfigFactory;
+export default SourceDataCatalogFactory;

@@ -26,7 +26,7 @@ import {createSelector} from 'reselect';
 import arrayMove from 'array-move';
 
 import LayerPanelFactory from './layer-panel/layer-panel';
-import SourceDataCatalogFactory from './source-data-catalog';
+import SourceDataCatalogFactory from './common/source-data-catalog';
 import {Add} from 'components/common/icons';
 import ItemSelector from 'components/common/item-selector/item-selector';
 import {
