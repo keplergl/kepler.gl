@@ -677,26 +677,6 @@ test('#visStateReducer -> UPDATE_VIS_DATA.1 -> No data', t => {
 test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
   const oldState = InitialVisState;
 
-  // const testState1 = reducer(
-  //   oldState,
-  //   VisStateActions.updateVisData({
-  //     data: mockRawData,
-  //     info: {id: 'smoothie', label: 'exciting dataset 1'}
-  //   })
-  // );
-
-  // t.deepEqual(
-  //   Object.keys(testState1.datasets),
-  //   ['smoothie'],
-  //   'should save data to smoothie'
-  // );
-
-  // t.equal(
-  //   testState1.layers.length,
-  //   4,
-  //   'should create 4 default layers'
-  // );
-
   const newState = reducer(
     oldState,
     VisStateActions.updateVisData([
