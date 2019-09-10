@@ -18,10 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {scaleQuantize, scaleOrdinal, scaleQuantile, scaleSqrt} from 'd3-scale';
 import {unique} from 'utils/data-utils';
 
-import {SCALE_TYPES} from 'constants/default-settings';
+import {SCALE_TYPES, SCALE_FUNC} from 'constants/default-settings';
 
 // Enable render color by customized color Scale
 export function getBinColorDomain(scaleType, bins, [lowerIdx, upperIdx]) {
@@ -39,17 +38,7 @@ export function getBinColorDomain(scaleType, bins, [lowerIdx, upperIdx]) {
 }
 
 export function getScaleFunctor(scaleType) {
-  switch (scaleType) {
-    case SCALE_TYPES.quantize:
-      return scaleQuantize;
-
-    case SCALE_TYPES.quantile:
-      return scaleQuantile;
-    case SCALE_TYPES.ordinal:
-      return scaleOrdinal;
-    default:
-      return scaleQuantile;
-  }
+  return SCALE_FUNC[scaleType] || SCALE_FUNC.quantile;
 }
 
 export function getColorValueDomain(layer) {
@@ -84,9 +73,18 @@ export function getColorScaleFunction(layer) {
     .range(layer.props.colorRange);
 }
 
+export function getElevationScaleFunction(layer) {
+  const elevationRange = layer.props.elevationRange;
+  const elevationDomain = layer.props.elevationDomain || layer.state.elevationValueDomain;
+
+  layer.state.elevationScaleFunc = getScaleFunctor(layer.props.sizeScale)()
+    .domain(elevationDomain)
+    .range(elevationRange);
+}
+
 export function getRadiusScaleFunction(layer) {
   const {viewport} = layer.context;
-  layer.state.radiusScaleFunc = scaleSqrt()
+  layer.state.radiusScaleFunc = SCALE_FUNC.sqrt()
     .domain(layer.state.radiusDomain)
     .range(
       layer.props.radiusRange.map(
