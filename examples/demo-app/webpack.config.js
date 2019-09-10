@@ -70,10 +70,11 @@ const CONFIG = {
     historyApiFallback: true
   },
 
-  // Optional: Enables reading mapbox and dropbox client token from environment variable
   plugins: [
     new webpack.EnvironmentPlugin([
-      'MapboxAccessToken'
+      'MapboxAccessToken',
+      'DropboxClientId',
+      'MapboxExportToken'
     ])
   ]
 };
