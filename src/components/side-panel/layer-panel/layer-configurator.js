@@ -67,7 +67,6 @@ const StyledLayerVisualConfigurator = styled.div.attrs({
 `;
 
 LayerConfiguratorFactory.deps = [SourceDataSelectorFactory];
-
 export default function LayerConfiguratorFactory(SourceDataSelector) {
   class LayerConfigurator extends Component {
     static propTypes = {
@@ -163,45 +162,19 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
                 label={false}
                 disabled={Boolean(layer.config.sizeField)}
               />
-            ) : null}
-          </ConfigGroupCollapsibleContent>
-        </LayerConfigGroup>
-
-        {/* text label */}
-        <TextLabelPanel
-          fields={visConfiguratorProps.fields}
-          updateLayerTextLabel={this.props.updateLayerTextLabel}
-          textLabel={layer.config.textLabel}
-        />
-      </StyledLayerVisualConfigurator>
-    );
-  }
-
-  _renderClusterLayerConfig({
-    layer,
-    visConfiguratorProps,
-    layerConfiguratorProps,
-    layerChannelConfigProps
-  }) {
-    return (
-      <StyledLayerVisualConfigurator>
-        {/* Color */}
-        <LayerConfigGroup label={'color'} collapsible>
-          <ColorRangeConfig {...visConfiguratorProps} />
-          <ConfigGroupCollapsibleContent>
-            <AggrScaleSelector
-              {...layerConfiguratorProps}
-              channel={layer.visualChannels.color}
-            />
-            <ChannelByValueSelector
-              channel={layer.visualChannels.color}
-              {...layerChannelConfigProps}
-            />
-            {layer.visConfigSettings.colorAggregation.condition(
-              layer.config
-            ) ? (
-              <AggregationTypeSelector
-                {...layer.visConfigSettings.colorAggregation}
+            ) : (
+              <VisConfigSlider
+                {...LAYER_VIS_CONFIGS.radiusRange}
+                {...visConfiguratorProps}
+                label={false}
+                disabled={
+                  !layer.config.sizeField || layer.config.visConfig.fixedRadius
+                }
+              />
+            )}
+            <ConfigGroupCollapsibleContent>
+              <ChannelByValueSelector
+                channel={layer.visualChannels.size}
                 {...layerChannelConfigProps}
               />
               {layer.config.sizeField ? (
@@ -223,45 +196,23 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
       );
     }
 
-  _renderHexagonLayerConfig(props) {
-    return this._renderAggregationLayerConfig(props);
-  }
-
-  _renderAggregationLayerConfig({
-    layer,
-    visConfiguratorProps,
-    layerConfiguratorProps,
-    layerChannelConfigProps
-  }) {
-    const {config} = layer;
-    const {
-      visConfig: {enable3d}
-    } = config;
-    const elevationByDescription =
-      'When off, height is based on count of points';
-    const colorByDescription = 'When off, color is based on count of points';
-
-    return (
-      <StyledLayerVisualConfigurator>
-        {/* Color */}
-        <LayerConfigGroup label={'color'} collapsible>
-          <ColorRangeConfig {...visConfiguratorProps} />
-          <ConfigGroupCollapsibleContent>
-            <AggrScaleSelector
-              {...layerConfiguratorProps}
-              channel={layer.visualChannels.color}
-            />
-            <ChannelByValueSelector
-              channel={layer.visualChannels.color}
-              {...layerChannelConfigProps}
-            />
-            {layer.visConfigSettings.colorAggregation.condition(
-              layer.config
-            ) ? (
-              <AggregationTypeSelector
-                {...layer.visConfigSettings.colorAggregation}
-                {...layerChannelConfigProps}
-                descreiption={colorByDescription}
+    _renderClusterLayerConfig({
+      layer,
+      visConfiguratorProps,
+      layerConfiguratorProps,
+      layerChannelConfigProps
+    }) {
+      return (
+        <StyledLayerVisualConfigurator>
+          {/* Color */}
+          <LayerConfigGroup label={'color'} collapsible>
+            <ColorRangeConfig {...visConfiguratorProps} />
+            <ConfigGroupCollapsibleContent>
+              <AggrScaleSelector
+                {...layerConfiguratorProps}
+                channel={layer.visualChannels.color}
+              />
+              <ChannelByValueSelector
                 channel={layer.visualChannels.color}
                 {...layerChannelConfigProps}
               />
@@ -365,11 +316,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
             <ConfigGroupCollapsibleContent>
               <AggrScaleSelector
                 {...layerConfiguratorProps}
-                channel={layer.visualChannels.size}
-              />
-              <VisConfigSlider
-                {...layer.visConfigSettings.sizeRange}
-                {...visConfiguratorProps}
+                channel={layer.visualChannels.color}
               />
               <ChannelByValueSelector
                 channel={layer.visualChannels.color}
@@ -425,6 +372,14 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
                 {...visConfiguratorProps}
               />
               <ConfigGroupCollapsibleContent>
+                <AggrScaleSelector
+                  {...layerConfiguratorProps}
+                  channel={layer.visualChannels.size}
+                />
+                <VisConfigSlider
+                  {...layer.visConfigSettings.sizeRange}
+                  {...visConfiguratorProps}
+                />
                 <ChannelByValueSelector
                   {...layerChannelConfigProps}
                   channel={layer.visualChannels.size}
@@ -877,7 +832,6 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
 
   return LayerConfigurator;
 }
-
 /*
  * Componentize config component into pure functional components
  */
