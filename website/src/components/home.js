@@ -38,6 +38,7 @@ import Announcement from '../../../examples/demo-app/src/components/announcement
 
 const BannerKey = 'kgHideBanner-iiba';
 const BannerHeight = 30;
+const BACKGROUND_COLOR = '#82368c';
 
 const SECTION_CONTENT = {
   showcase: Showcase,
@@ -79,7 +80,7 @@ export default class Home extends PureComponent {
           <Banner
             show={this.state.showBanner}
             height={BannerHeight}
-            bgColor="#82368c"
+            bgColor={BACKGROUND_COLOR}
             onClose={this._hideBanner}
           >
             <Announcement onDisable={this._disableBanner}/>
