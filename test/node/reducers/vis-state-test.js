@@ -1,3 +1,4 @@
+/* eslint-disable max-statements */
 // Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -621,7 +622,7 @@ test('#visStateReducer -> REMOVE_LAYER', t => {
   t.end();
 });
 
-test('#visStateReducer -> UPDATE_VIS_DATA.1', t => {
+test('#visStateReducer -> UPDATE_VIS_DATA.1 -> No data', t => {
   const oldState = {
     datasets: {},
     layers: [{name: 'a'}, {name: 'b'}],
@@ -673,22 +674,8 @@ test('#visStateReducer -> UPDATE_VIS_DATA.1', t => {
 });
 
 /* eslint-disable max-statements */
-test('#visStateReducer -> UPDATE_VIS_DATA.2', t => {
+test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
   const oldState = InitialVisState;
-
-  const testState1 = reducer(
-    oldState,
-    VisStateActions.updateVisData({
-      data: mockRawData,
-      info: {id: 'smoothie', label: 'exciting dataset 1'}
-    })
-  );
-
-  t.deepEqual(
-    Object.keys(testState1.datasets),
-    ['smoothie'],
-    'should save data to smoothie'
-  );
 
   const newState = reducer(
     oldState,
@@ -823,7 +810,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2', t => {
   t.end();
 });
 
-test('#visStateReducer -> UPDATE_VIS_DATA.3', t => {
+test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
   const mockLayer = new PointLayer({
     dataId: 'snowflake',
     columns: {
@@ -967,7 +954,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3', t => {
   t.end();
 });
 
-test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson', t => {
+test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
   const initialVisState = CloneDeep(INITIAL_VIS_STATE);
 
   const {fields, rows} = processGeojson(CloneDeep(geojsonData));
@@ -1064,6 +1051,69 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson', t => {
     expectedLayerData.data,
     'should save geojson to datasets'
   );
+
+  t.end();
+});
+
+test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> with config', t => {
+  const initialVisState = CloneDeep(INITIAL_VIS_STATE);
+
+  const {fields, rows} = processGeojson(CloneDeep(geojsonData));
+
+  const payload = [
+    {
+      info: {
+        id: 'milkshake',
+        label: 'king milkshake'
+      },
+      data: {fields, rows}
+    }
+  ];
+
+  // receive data
+  const initialState = reducer(
+    initialVisState,
+    VisStateActions.updateVisData(payload)
+  );
+
+  t.equal(initialState.layers.length, 1, 'should create 1 layer');
+
+  // add data and config again
+
+    // data
+  const datasets = [{
+    info: {
+      id: 'milkshake2',
+      label: 'king milkshake'
+    },
+    data: {fields, rows}
+  }];
+
+  const config = {
+    visState: {
+      layers: [
+        {
+          id: 'test_layer_2',
+          type: 'geojson',
+          config: {
+            dataId: 'milkshake2',
+            columns: {
+              geojson: '_geojson'
+            }
+          }
+        }
+      ]
+    }
+  }
+
+  const testState = reducer(
+    initialState,
+    VisStateActions.updateVisData(datasets, {}, config)
+  );
+
+  t.deepEqual(Object.keys(testState.datasets), ['milkshake2'], 'should reset state, and load dataset');
+  t.equal(testState.layers.length, 1, 'should create 1 layer');
+  t.equal(testState.layers[0].id, 'test_layer_2', 'should merge 1 layer from config');
 
   t.end();
 });
@@ -1210,13 +1260,19 @@ test('#visStateReducer -> UPDATE_VIS_DATA.SPLIT_MAPS', t => {
 
   const layer2 = new PointLayer({
     dataId: 'milkshake',
-    id: 'b',
+    id: 'c',
+    isVisible: false
+  });
+
+  const layer3 = new PointLayer({
+    dataId: 'milkshake',
+    id: 'd',
     isVisible: false
   });
 
   const oldState = {
     ...InitialVisState,
-    layers: [layer0, layer1, layer2],
+    layers: [layer0, layer1, layer2, layer3],
     splitMaps: [
       {
         layers: {
@@ -1241,7 +1297,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.SPLIT_MAPS', t => {
       }
     },
     layerData: [],
-    layerOrder: [2, 1, 0]
+    layerOrder: [2, 1, 0, 3]
   };
 
   const newState = reducer(
@@ -1255,7 +1311,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.SPLIT_MAPS', t => {
   );
 
   // first visible layer should be point
-  const id1 = newState.layers[3].id;
+  const id1 = newState.layers[4].id;
   const expectedSplitMaps = [
     {
       layers: {
@@ -1275,18 +1331,18 @@ test('#visStateReducer -> UPDATE_VIS_DATA.SPLIT_MAPS', t => {
 
   t.equal(
     newState.layers.length,
-    7,
+    8,
     'should create 1 arc 1 line and 2 point layers'
   );
   t.deepEqual(
     newState.layerOrder,
-    [3, 4, 5, 6, 2, 1, 0],
+    [4, 5, 6, 7, 2, 1, 0, 3],
     'should move new layers to front'
   );
   t.deepEqual(
     newState.splitMaps,
     expectedSplitMaps,
-    'should add new layers to splitmaps'
+    'should add new layers to split maps'
   );
 
   t.end();

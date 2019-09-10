@@ -887,7 +887,6 @@ export const receiveMapConfigUpdater = (state, {payload: {config = {}, options =
 
   // reset config if keepExistingConfig is falsy
   let mergedState = !keepExistingConfig ? resetMapConfigUpdater(state) : state;
-
   mergedState = mergeFilters(mergedState, filters);
   mergedState = mergeLayers(mergedState, layers);
   mergedState = mergeInteractions(mergedState, interactionConfig);
@@ -1071,15 +1070,20 @@ export const updateVisDataUpdater = (state, action) => {
   // merge state with saved splitMaps
   mergedState = mergeSplitMaps(mergedState, splitMapsToBeMerged);
 
-  if (mergedState.layers.length === state.layers.length) {
+  let newLayers = mergedState.layers.filter(
+    l => l.config.dataId in newDateEntries
+  );
+
+  if (!newLayers.length) {
     // no layer merged, find defaults
     mergedState = addDefaultLayers(mergedState, newDateEntries);
   }
 
   if (mergedState.splitMaps.length) {
-    const newLayers = mergedState.layers.filter(
+    newLayers = mergedState.layers.filter(
       l => l.config.dataId in newDateEntries
     );
+
     // if map is split, add new layers to splitMaps
     mergedState = {
       ...mergedState,
