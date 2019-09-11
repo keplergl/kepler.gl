@@ -15,6 +15,13 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+#### [1.1.7] - Sep 11 2019
+- [Enhancement] Create more factories from SourceDataCatalog, add onClickTitle (#720)
+- [Enhancement] Express example (#704)
+- [Bug] check new layers based on new dataset id (#721)
+- [Feat] Add Log and Sqrt scale (#670)
+- [Chore] Add a script to automatically edit kepler.gl version (#714)
+
 #### [1.1.6] - Sep 5 2019
 - [Bug] Upgrade to deck 7.1.11 (#715)
 
