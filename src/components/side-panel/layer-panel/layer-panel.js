@@ -22,7 +22,7 @@ import React, {Component} from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
 
-import LayerConfigurator from './layer-configurator';
+import LayerConfiguratorFactory from './layer-configurator';
 import LayerPanelHeader from './layer-panel-header';
 
 const PanelWrapper = styled.div`
@@ -36,7 +36,9 @@ const PanelWrapper = styled.div`
   }
 `;
 
-function LayerPanelFactory() {
+LayerPanelFactory.deps = [LayerConfiguratorFactory];
+
+function LayerPanelFactory(LayerConfigurator) {
 
   class LayerPanel extends Component {
     static propTypes = {

@@ -27,7 +27,7 @@ import {
   Button
 } from 'components/common/styled-components';
 import {Add} from 'components/common/icons';
-import SourceDataCatalogFactory from './source-data-catalog';
+import SourceDataCatalogFactory from './common/source-data-catalog';
 import FilterPanelFactory from './filter-panel/filter-panel';
 
 FilterManagerFactory.deps = [

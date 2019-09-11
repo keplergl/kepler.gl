@@ -44,7 +44,14 @@ export {default as PanelToggleFactory} from './side-panel/panel-toggle';
 
 export {AddDataButtonFactory, default as LayerManagerFactory} from './side-panel/layer-manager';
 export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel';
-export {default as SourceDataCatalogFactory} from './side-panel/source-data-catalog';
+export {default as LayerConfiguratorFactory} from './side-panel/layer-panel/layer-configurator';
+
+export {default as DatasetSquare} from './common/styled-components';
+export {default as SourceDataCatalogFactory} from './side-panel/common/source-data-catalog';
+export {default as SourceDataSelectorFactory} from './side-panel/common/source-data-selector';
+export {default as DatasetTitleFactory} from './side-panel/common/dataset-title';
+export {default as DatasetInfoFactory} from './side-panel/common/dataset-info';
+export {default as DatasetTagFactory} from './side-panel/common/dataset-tag';
 
 export {default as FilterManagerFactory} from './side-panel/filter-manager';
 export {default as FilterPanelFactory} from './side-panel/filter-panel/filter-panel';
