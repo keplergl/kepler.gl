@@ -67,9 +67,7 @@ const CONFIG = {
 
   plugins: [
     new webpack.EnvironmentPlugin([
-      'MapboxAccessToken',
-      'DropboxClientId',
-      'MapboxExportToken'
+      'MapboxAccessToken'
     ])
   ]
 };
