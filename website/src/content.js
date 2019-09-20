@@ -81,6 +81,10 @@ export const HEADER_NAVS = [
   {
     text: 'Github',
     link: 'https://github.com/keplergl/kepler.gl'
+  },
+  {
+    text: 'Support Policy',
+    link: '/policy'
   }
 ];
 

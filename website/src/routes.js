@@ -26,6 +26,8 @@ import store from './reducers';
 import Home from './components/home';
 import App from './components/app';
 import Demo from '../../examples/demo-app/src/app';
+import Policy from './components/policy';
+
 import {buildAppRoutes} from '../../examples/demo-app/src/utils/routes';
 
 const appRoute = buildAppRoutes(Demo);
@@ -69,6 +71,7 @@ export default () => (
   <Router history={history}>
     <Route path="/" component={App} onEnter={onEnter}>
       <IndexRoute component={Home} onEnter={onEnter} />
+      <Route path="/policy" component={Policy} onEnter={onEnter} />
       {appRoute}
     </Route>
   </Router>
