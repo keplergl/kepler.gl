@@ -19,9 +19,10 @@
 // THE SOFTWARE.
 
 import React, {Component, createRef} from 'react';
+import {polyfill} from 'react-lifecycles-compat';
+
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-
 import RangePlot from './range-plot';
 import Slider from 'components/common/slider/slider';
 import {Input} from 'components/common/styled-components';
@@ -45,7 +46,7 @@ const RangeInputWrapper = styled.div`
   justify-content: space-between;
 `;
 
-export default class RangeSlider extends Component {
+class RangeSlider extends Component {
   static propTypes = {
     range: PropTypes.arrayOf(PropTypes.number).isRequired,
     value0: PropTypes.number.isRequired,
@@ -72,32 +73,37 @@ export default class RangeSlider extends Component {
     onChange: () => {}
   };
 
-  state = {value0: 0, value1: 1, width: 288};
+  static getDerivedStateFromProps(props, state) {
+    let update = null
+    const {value0, value1} = props;
+    if (props.value0 !== state.prevValue0 && !isNaN(value0)) {
+      update = {...(update || {}), value0, prevValue0: value0};
+    }
+    if (props.value1 !== state.prevValue1 && !isNaN(value1)) {
+      update = {...(update || {}), value1, prevValue1: value1};
+    }
+    return update;
+  }
+
+  state = {
+    value0: 0,
+    value1: 1,
+    prevValue0: 0,
+    prevValue1: 1,
+    width: 288
+  };
 
   componentDidMount() {
-    this._setValueFromProps(this.props);
     this._resize();
   }
 
-  componentWillReceiveProps(nextProps) {
-    this._setValueFromProps(nextProps);
-  }
-
-  componentDidUpdate() {
+  componentDidUpdate(prevProps, prevState) {
     this._resize();
   }
 
   sliderContainer = createRef();
   inputValue0 = createRef();
   inputValue1 = createRef();
-
-  _setValueFromProps = props => {
-    const {value0, value1} = props;
-
-    if (!isNaN(value0) && !isNaN(value1)) {
-      this.setState({value0, value1});
-    }
-  };
 
   _isVal0InRange = val => {
     const {value1, range} = this.props;
@@ -120,7 +126,6 @@ export default class RangeSlider extends Component {
   _setRangeVal1 = val => {
     const {value0, onChange} = this.props;
     val = Number(val);
-
     if (this._isVal1InRange(val)) {
       onChange([value0, this._roundValToStep(val)]);
       return true;
@@ -130,10 +135,10 @@ export default class RangeSlider extends Component {
 
   _setRangeVal0 = val => {
     const {value1, onChange} = this.props;
-    val = Number(val);
+    const val0 = Number(val);
 
-    if (this._isVal0InRange(val)) {
-      onChange([this._roundValToStep(val), value1]);
+    if (this._isVal0InRange(val0)) {
+      onChange([this._roundValToStep(val0), value1]);
       return true;
     }
     return false;
@@ -145,6 +150,9 @@ export default class RangeSlider extends Component {
       this.setState({width});
     }
   }
+  _onChangeInput = (key, e) => {
+    this.setState({[key]: e.target.value});
+  };
 
   _renderInput(key) {
     const setRange = key === 'value0' ? this._setRangeVal0 : this._setRangeVal1;
@@ -155,6 +163,8 @@ export default class RangeSlider extends Component {
       }
     };
 
+    const onChange = this._onChangeInput.bind(this, key);
+
     return (
       <SliderInput
         className="kg-range-slider__input"
@@ -163,9 +173,7 @@ export default class RangeSlider extends Component {
         id={`slider-input-${key}`}
         key={key}
         value={this.state[key]}
-        onChange={e => {
-          this.setState({[key]: e.target.value});
-        }}
+        onChange={onChange}
         onKeyPress={e => {
           if (e.key === 'Enter') {
             update(e);
@@ -252,3 +260,7 @@ export default class RangeSlider extends Component {
     );
   }
 }
+
+polyfill(RangeSlider);
+
+export default RangeSlider;

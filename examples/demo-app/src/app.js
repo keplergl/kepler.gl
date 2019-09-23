@@ -62,6 +62,7 @@ import {processCsvData, processGeojson} from 'kepler.gl/processors';
 
 const BannerHeight = 30;
 const BannerKey = 'kgHideBanner-iiba';
+const keplerGlGetState = state => state.demo.keplerGl;
 
 const GlobalStyle = styled.div`
   font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
@@ -125,7 +126,7 @@ class App extends Component {
     //   window.setTimeout(this._showBanner, 3000);
     // }
     // load sample data
-    // this._loadSampleData();
+    this._loadSampleData();
     // Notifications
     // this._loadMockNotifications();
   }
@@ -353,7 +354,7 @@ class App extends Component {
                   /*
                    * Specify path to keplerGl state, because it is not mount at the root
                    */
-                  getState={state => state.demo.keplerGl}
+                  getState={keplerGlGetState}
                   width={width}
                   height={height - (showBanner ? BannerHeight : 0)}
                   onSaveMap={this._isCloudStorageEnabled() && this._toggleCloudModal}
