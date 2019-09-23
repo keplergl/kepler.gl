@@ -22,7 +22,7 @@ import React, {Component} from 'react';
 import {connect} from 'react-redux';
 import memoize from 'lodash.memoize';
 import {console as Console} from 'global/window';
-import {injector} from './injector';
+import {injector, typeCheckRecipe} from './injector';
 import KeplerGlFactory from './kepler-gl';
 import {forwardTo} from 'actions/action-wrapper';
 
@@ -183,16 +183,10 @@ export const appInjector = allDependencies.reduce(
 );
 
 // Helper to inject custom components and return kepler.gl container
-export function injectComponents(recipes) {
-  if (!Array.isArray(recipes)) {
-    Console.error(errorMsg.wrongType(typeof recipes));
-    return appInjector.get(ContainerFactory);
-  }
-
+export function injectComponents(recipes = []) {
   return recipes
     .reduce((inj, recipe) => {
-      if (!Array.isArray(recipes)) {
-        Console.error(errorMsg.wrongPairType);
+      if (!typeCheckRecipe(recipe)) {
         return inj;
       }
 

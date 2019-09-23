@@ -213,9 +213,7 @@
     "sourceMap": false,
     "instrument": false,
     "exclude": [
-      "test/**/*.js",
-      "src/tasks/*.js",
-      "src/templates/*.js"
+      "test/**/*.js", "src/tasks", "src/templates", "src/styles"
     ]
   },
   "maintainers": [
