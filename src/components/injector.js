@@ -21,7 +21,6 @@
 import React from 'react';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
-import PropTypes from 'prop-types';
 import {console as Console} from 'global/window';
 import KeplerGlContext from 'components/context';
 
@@ -68,16 +67,16 @@ export function injector(map = new Map()) {
         return injector(map);
       }
 
-      return injector((new Map(map)).set(factory, replacement));
+      return injector(new Map(map).set(factory, replacement));
     },
     get
   };
 }
 
-const identity = state => (state);
+const identity = state => state;
 // Helper to add reducer state to custom component
 export function withState(lenses, mapStateToProps = identity, actions = {}) {
-  return (Component) => {
+  return Component => {
     const WrappedComponent = ({state, ...props}) => (
       <KeplerGlContext.Consumer>
         {context => (
@@ -96,10 +95,14 @@ export function withState(lenses, mapStateToProps = identity, actions = {}) {
 
     return connect(
       state => ({...mapStateToProps(state), state}),
-      dispatch => Object.keys(actions).reduce((accu, key) => ({
-        ...accu,
-        [key]: bindActionCreators(actions[key], dispatch)
-      }), {})
+      dispatch =>
+        Object.keys(actions).reduce(
+          (accu, key) => ({
+            ...accu,
+            [key]: bindActionCreators(actions[key], dispatch)
+          }),
+          {}
+        )
     )(WrappedComponent);
-  }
+  };
 }
