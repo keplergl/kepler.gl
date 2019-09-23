@@ -18,6 +18,7 @@
     - [Forward actions][forward-actions]
     - [Saving and loading maps with schema manager][saving-loading-w-schema]
     - [Replace UI component][replace-ui-component]
+    - [Custom Mapbox Host][custom-mapbox-host]
 
 -  [API]()
     - [Components][components]
