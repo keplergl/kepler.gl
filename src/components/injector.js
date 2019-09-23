@@ -23,6 +23,7 @@ import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import PropTypes from 'prop-types';
 import {console as Console} from 'global/window';
+import KeplerGlContext from 'components/context';
 
 const MissingComp = () => <div />;
 export const errorMsg = {
@@ -77,21 +78,22 @@ const identity = state => (state);
 // Helper to add reducer state to custom component
 export function withState(lenses, mapStateToProps = identity, actions = {}) {
   return (Component) => {
-    const WrappedComponent = ({state, ...props}, {selector, id}) => (
-      <Component
-        {...lenses.reduce(
-          (totalState, lens) => ({
-            ...totalState,
-            ...lens(selector(state))
-          }),
-          props
+    const WrappedComponent = ({state, ...props}) => (
+      <KeplerGlContext.Consumer>
+        {context => (
+          <Component
+            {...lenses.reduce(
+              (totalState, lens) => ({
+                ...totalState,
+                ...lens(context.selector(state))
+              }),
+              props
+            )}
+          />
         )}
-      />
+      </KeplerGlContext.Consumer>
     );
-    WrappedComponent.contextTypes = {
-      selector: PropTypes.func,
-      id: PropTypes.string
-    };
+
     return connect(
       state => ({...mapStateToProps(state), state}),
       dispatch => Object.keys(actions).reduce((accu, key) => ({

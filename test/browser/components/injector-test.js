@@ -57,7 +57,7 @@ test('Components -> injector -> injectComponents', t => {
   );
 
   // test if custom header is rendered
-  t.ok(wrapper.find('.my-test-header').length, 'should render custome header');
+  t.ok(wrapper.find('.my-test-header').length, 'should render custom header');
   t.end();
 });
 

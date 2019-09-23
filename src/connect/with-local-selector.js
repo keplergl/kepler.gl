@@ -18,15 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, createContext} from 'react';
+import React, {Component} from 'react';
 import {createSelector} from 'reselect';
+import KeplerGlContext from 'components/context';
 
 const identity = state => state;
-// New Context API only supported after 16.3
-const KeplerGlContext = createContext({
-  selector: identity,
-  id: 'map'
-});
 
 const mergeSelectors = (parentSelector, childSelector) => state =>
   childSelector(parentSelector(state));
