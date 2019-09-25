@@ -2849,7 +2849,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
   t.end();
 });
 
-test.only('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
+test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
   const initialState = CloneDeep(StateWFilesFiltersLayerColor.visState);
   const pointLayer = initialState.layers[0];
 
