@@ -20,15 +20,11 @@
 
 import colorbrewer from 'colorbrewer';
 import {VizColorPalette} from './custom-color-ranges';
-// const schemeGroups = colorbrewer.schemeGroups;
 
 // Add colorbrewer color schemes (Data Science requirement)
 // See http://colorbrewer2.org/
-function entries(obj) {
-  return Object.keys(obj).map(k => [k, obj[k]]);
-}
 
-const colorBrewerMap = entries(colorbrewer.schemeGroups)
+const colorBrewerMap = Object.entries(colorbrewer.schemeGroups)
   .reduce((accu, [type, palettes]) => ({
     ...accu,
     ...palettes.reduce((group, name) => ({
@@ -39,9 +35,9 @@ const colorBrewerMap = entries(colorbrewer.schemeGroups)
 
 const colorRanges = [...VizColorPalette];
 
-for (const [keyName, colorScheme] of entries(colorbrewer)) {
+for (const [keyName, colorScheme] of Object.entries(colorbrewer)) {
   if (keyName !== 'schemeGroups') {
-    for (const [lenKey, colors] of entries(colorScheme)) {
+    for (const [lenKey, colors] of Object.entries(colorScheme)) {
       colorRanges.push({
         name: `ColorBrewer ${keyName}-${lenKey}`,
         type: colorBrewerMap[keyName],
