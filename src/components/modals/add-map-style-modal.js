@@ -149,7 +149,7 @@ class AddMapStyleModal extends Component {
 
   componentWillReceiveProps(nextProps) {
     if (this.props.inputStyle.accessToken !== nextProps.inputStyle.accessToken) {
-      // toke has changed
+      // token has changed
       // ReactMapGl doesn't re-create map when token has changed
       // here we force the map to update
       this.setState({
@@ -175,7 +175,7 @@ class AddMapStyleModal extends Component {
       });
 
       map.on('error', () => {
-        this.loadMaoStyleError();
+        this.loadMapStyleError();
       })
     }
   }
@@ -194,19 +194,20 @@ class AddMapStyleModal extends Component {
     }
   };
 
-  loadMaoStyleError = () => {
+  loadMapStyleError = () => {
     this.props.loadCustomMapStyle({error: true});
   };
 
   render() {
     const {inputStyle, mapState} = this.props;
 
-  const mapProps = {
-    ...mapState,
-    preserveDrawingBuffer: true,
-    mapboxApiAccessToken: inputStyle.accessToken || this.props.mapboxApiAccessToken,
-    transformRequest
-  };
+    const mapProps = {
+      ...mapState,
+      preserveDrawingBuffer: true,
+      mapboxApiUrl: this.props.mapboxApiUrl,
+      mapboxApiAccessToken: inputStyle.accessToken || this.props.mapboxApiAccessToken,
+      transformRequest
+    };
 
     return (
       <div className="add-map-style-modal">
