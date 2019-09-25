@@ -136,7 +136,7 @@ export default class ColorRangeSelect extends Component {
     });
   };
 
-  _CustomPaletteCancel = newConfig => {
+  _onCustomPaletteCancel = newConfig => {
     this._setColorRangeConfig({custom: false});
   };
 
@@ -180,7 +180,7 @@ export default class ColorRangeSelect extends Component {
             onApply={this.props.onSelectColorRange}
             onToggleSketcher={this._onToggleSketcher}
             setCustomPalette={this._onSetCustomPalette}
-            onCancel={this._CustomPaletteCancel}
+            onCancel={this._onCustomPaletteCancel}
           />
         ) : (
           <ColorPaletteGroup

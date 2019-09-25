@@ -260,8 +260,8 @@ class CustomPalette extends Component {
   _onApply = event => {
     event.stopPropagation();
     event.preventDefault();
-    this.props.onApply(this.props.customPalette, event);
     this.props.onCancel();
+    this.props.onApply(this.props.customPalette, event);
   };
 
   _onSortEnd = ({oldIndex, newIndex}) => {
