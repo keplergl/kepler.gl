@@ -2849,7 +2849,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
   t.end();
 });
 
-test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
+test.only('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
   const initialState = CloneDeep(StateWFilesFiltersLayerColor.visState);
   const pointLayer = initialState.layers[0];
 
@@ -2875,7 +2875,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
     colorRange: {
       ...DEFAULT_COLOR_UI,
       customPalette: {
-        name: 'Custom Palette Uber Viz Sequential 2',
+        name: 'Custom Palette',
         type: 'custom',
         category: 'Custom',
         colors: oldColorRange.colors
@@ -2893,8 +2893,9 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
   t.deepEqual(
     nextState.layers[0].config.colorUI,
     expectedColorUI,
-    'should update colorUI.customPalette'
+    'should update colorUI.customPalette with current colorRange colors'
   );
+
   const nextState2 = reducer(
     prepareState,
     VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
@@ -2907,7 +2908,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
     colorRange: {
       ...DEFAULT_COLOR_UI,
       customPalette: {
-        name: 'Custom Palette Uber Viz Sequential 2',
+        name: 'Custom Palette',
         type: 'custom',
         category: 'Custom',
         colors: ['aaa', 'bbb', 'ccc']
@@ -2925,12 +2926,12 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
   t.deepEqual(
     nextState2.layers[0].config.colorUI,
     expectedColorUI2,
-    'should update colorUI.customPalette'
+    'should update colorUI.customPalette colors'
   );
 
   // show sketcher
   const nextState3 = reducer(
-    prepareState,
+    nextState2,
     VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
       showSketcher: 1
     })
@@ -2941,7 +2942,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
     colorRange: {
       showSketcher: 1,
       customPalette: {
-        name: 'Custom Palette Uber Viz Sequential 2',
+        name: 'Custom Palette',
         type: 'custom',
         category: 'Custom',
         colors: ['aaa', 'bbb', 'ccc']
@@ -2959,8 +2960,141 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
   t.deepEqual(
     nextState3.layers[0].config.colorUI,
     expectedColorUI3,
-    'should update colorUI.customPalette'
+    'should set showSketcher: 1'
   );
 
+  // edit color
+  const nextState4 = reducer(
+    nextState3,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
+      customPalette: {
+        colors: ['bbb', 'ccc', 'aaa']
+      }
+    })
+  );
+
+  const expectedColorUI4 = {
+    color: DEFAULT_COLOR_UI,
+    colorRange: {
+      showSketcher: 1,
+      customPalette: {
+        name: 'Custom Palette',
+        type: 'custom',
+        category: 'Custom',
+        colors: ['bbb', 'ccc', 'aaa']
+      },
+      showDropdown: 0,
+      colorRangeConfig: {
+        type: 'all',
+        steps: 4,
+        reversed: false,
+        custom: true
+      }
+    }
+  };
+
+  t.deepEqual(
+    nextState4.layers[0].config.colorUI,
+    expectedColorUI4,
+    'should update colorUI.customPalette colors'
+  );
+
+  // apply color
+  const nextState5 = reducer(
+    nextState4,
+    VisStateActions.layerVisConfigChange(nextState4.layers[0], {
+      colorRange: {
+        name: 'Custom Palette',
+        type: 'custom',
+        category: 'Custom',
+        colors: ['bbb', 'ccc', 'aaa']
+      }
+    })
+  );
+
+  // close custom palette
+  const nextState6 = reducer(
+    nextState5,
+    VisStateActions.layerColorUIChange(nextState5.layers[0], 'colorRange', {
+      colorRangeConfig: {
+        custom: false
+      }
+    })
+  );
+
+  const expectedColorUI6 = {
+    color: DEFAULT_COLOR_UI,
+    colorRange: {
+      showSketcher: 1,
+      // keep the customPalette
+      customPalette: {
+        name: 'Custom Palette',
+        type: 'custom',
+        category: 'Custom',
+        colors: ['bbb', 'ccc', 'aaa']
+      },
+      showDropdown: 0,
+      colorRangeConfig: {
+        type: 'all',
+        steps: 4,
+        reversed: false,
+        custom: false
+      }
+    }
+  };
+
+  t.deepEqual(
+    nextState6.layers[0].config.colorUI,
+    expectedColorUI6,
+    'should set colorRangeConfig.custom false'
+  );
+
+  t.deepEqual(
+    nextState6.layers[0].config.visConfig.colorRange,
+    {
+      name: 'Custom Palette',
+      type: 'custom',
+      category: 'Custom',
+      colors: ['bbb', 'ccc', 'aaa']
+    },
+    'should set visConfig.colorRange'
+  );
+
+  // open it again
+  const nextState7 = reducer(
+    nextState6,
+    VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
+      colorRangeConfig: {
+        custom: true
+      }
+    })
+  );
+
+  const expectedColorUI7 = {
+    color: DEFAULT_COLOR_UI,
+    colorRange: {
+      showSketcher: 1,
+      // keep the customPalette
+      customPalette: {
+        name: 'Custom Palette',
+        type: 'custom',
+        category: 'Custom',
+        colors: ['bbb', 'ccc', 'aaa']
+      },
+      showDropdown: 0,
+      colorRangeConfig: {
+        type: 'all',
+        steps: 4,
+        reversed: false,
+        custom: true
+      }
+    }
+  };
+
+  t.deepEqual(
+    nextState7.layers[0].config.colorUI,
+    expectedColorUI7,
+    'should set colorRangeConfig.custom true'
+  );
   t.end();
 });

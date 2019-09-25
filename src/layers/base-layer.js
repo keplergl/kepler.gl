@@ -598,9 +598,7 @@ export default class Layer {
   updateCustomPalette(newConfig, previous, prop) {
     if (
       !newConfig.colorRangeConfig ||
-      !newConfig.colorRangeConfig.custom ||
-      !previous[prop] ||
-      previous[prop].colorRangeConfig.custom
+      !newConfig.colorRangeConfig.custom
     ) {
       return;
     }
@@ -608,10 +606,10 @@ export default class Layer {
     const {colorUI, visConfig} = this.config;
 
     if (!visConfig[prop]) return;
-    const {colors, name} = visConfig[prop];
+    const {colors} = visConfig[prop];
     const customPalette = {
       ...colorUI[prop].customPalette,
-      name: ['Custom Palette', name].join(' '),
+      name: 'Custom Palette',
       colors: [...colors]
     };
     this.updateLayerConfig({
@@ -656,6 +654,7 @@ export default class Layer {
       newConfig.colorRangeConfig &&
       ['reversed', 'steps'].some(
         key =>
+          newConfig.colorRangeConfig.hasOwnProperty(key) &&
           newConfig.colorRangeConfig[key] !==
           (previous[prop] || DEFAULT_COLOR_UI).colorRangeConfig[key]
       );
@@ -665,20 +664,28 @@ export default class Layer {
     const {steps, reversed} = colorUI[prop].colorRangeConfig;
     const colorRange = visConfig[prop];
     // find based on step or reversed
-    const group = getColorGroupByName(colorRange);
-    if (group) {
-      const sameGroup = COLOR_RANGES.filter(
-        cr => getColorGroupByName(cr) === group
-      );
-      const matched = (sameGroup.length ? sameGroup : COLOR_RANGES).find(
-        cr => cr.colors.length === steps
-      );
+    let update = colorRange;
+    if (newConfig.colorRangeConfig.hasOwnProperty('steps')) {
+      const group = getColorGroupByName(colorRange);
+      if (group) {
+        const sameGroup = COLOR_RANGES.filter(
+          cr => getColorGroupByName(cr) === group
+        );
 
-      if (matched) {
-        const update = reversed ? reverseColorRange(matched) : matched;
-        this.updateLayerVisConfig({[prop]: update});
+        update = (sameGroup.length ? sameGroup : COLOR_RANGES).find(
+          cr => cr.colors.length === steps
+        );
+
+        if (colorRange.reversed && update) {
+          update = reverseColorRange(true, update);
+        }
       }
     }
+    if (newConfig.colorRangeConfig.hasOwnProperty('reversed')) {
+      update = reverseColorRange(reversed, update);
+    };
+
+    this.updateLayerVisConfig({[prop]: update});
   }
 
   /**

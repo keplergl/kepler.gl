@@ -700,7 +700,8 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
 
   t.deepEqual(
     updateLayerColorUI.args[1], ['colorRange', {
-      colorRangeConfig: {custom: false}
+      colorRangeConfig: {custom: false},
+      showSketcher: false
     }],
     'should set custom: false when cancel'
   );
@@ -712,15 +713,16 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
 
   t.deepEqual(
     updateLayerColorUI.args[2], ['colorRange', {
-      colorRangeConfig: {custom: false}
+      colorRangeConfig: {custom: false},
+      showSketcher: false
     }],
-    'should set custom to false'
+    'should set custom to false when click apply'
   );
 
   t.deepEqual(
     updateLayerVisConfig.args[0], [{
       colorRange: {
-        name: 'Custom Palette Ice And Fire 8',
+        name: 'Custom Palette',
         type: 'custom',
         category: 'Custom',
         colors: [
@@ -735,7 +737,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
         ]
       }
     }],
-    'should set colorRange'
+    'should set colorRange to custom'
   );
 
   // click swatch

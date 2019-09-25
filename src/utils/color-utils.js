@@ -71,20 +71,20 @@ export function getColorGroupByName(colorRange) {
     return null;
   }
 
-  return colorRange.name.replace(/\W+\d+$/, '');
+  return colorRange.name.replace(/\b[^a-zA-Z]+$/, '');
 }
 
 /**
  * Get a reversed colorRange
- * @param {Object} colorRange
+ * @param {Boolean} reversed
  * @param {Object} colorRange
  */
-export function reverseColorRange(colorRange) {
+export function reverseColorRange(reversed, colorRange) {
   if (!colorRange) return null;
-  if (colorRange.reversed) return colorRange;
+  // if (colorRange.reversed) return colorRange;
   return {
     ...colorRange,
-    reversed: true,
+    reversed,
     colors: colorRange.colors.slice().reverse()
   };
 }

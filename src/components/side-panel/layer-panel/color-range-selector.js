@@ -137,7 +137,10 @@ export default class ColorRangeSelect extends Component {
   };
 
   _onCustomPaletteCancel = newConfig => {
-    this._setColorRangeConfig({custom: false});
+    this.props.setColorPaletteUI({
+      showSketcher: false,
+      colorRangeConfig: {custom: false}
+    });
   };
 
   _onToggleSketcher = val => {
@@ -248,7 +251,7 @@ export const ColorPaletteGroup = ({reversed, onSelect, selected, colorRanges}) =
         key={`${colorRange.name}-${i}`}
         onClick={e =>
           onSelect(
-            reversed ? reverseColorRange(colorRange) : colorRange,
+            reversed ? reverseColorRange(true, colorRange) : colorRange,
             e
           )
         }
