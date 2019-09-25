@@ -1,4 +1,3 @@
-/* eslint-disable max-statements */
 // Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import test from 'tape-catch';
+/* eslint-disable max-statements */import test from 'tape-catch';
 import CloneDeep from 'lodash.clonedeep';
 
 import * as VisStateActions from 'actions/vis-state-actions';
