@@ -43,10 +43,7 @@ export default class ThreeDBuildingLayer extends CompositeLayer {
       filled: true,
       getElevation: (feature) => feature.properties.height || 0,
       getPolygon: (feature) => feature.coordinates,
-      getFillColor: this.props.threeDBuildingColor,
-      lightSetting: {
-        ambientRatio: 0.2
-      }
+      getFillColor: this.props.threeDBuildingColor
     });
   }
 

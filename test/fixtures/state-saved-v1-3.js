@@ -440,7 +440,8 @@ mergedLayer0.config = {
     },
     radiusRange: [0, 50],
     strokeColor: [18, 147, 154]
-  }
+  },
+  animation: {enabled: false}
 };
 
 const mergedLayer1 = new HexagonLayer({
@@ -494,7 +495,8 @@ mergedLayer1.config = {
     colorAggregation: 'average',
     sizeAggregation: 'average',
     enable3d: false
-  }
+  },
+  animation: {enabled: false}
 };
 
 export const mergedLayers = [mergedLayer0, mergedLayer1];

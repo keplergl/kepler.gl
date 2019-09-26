@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {DEFAULT_LIGHT_SETTINGS} from 'constants/default-settings';
-
 /**
  * Find default layers from fields
  *
@@ -27,29 +25,35 @@ import {DEFAULT_LIGHT_SETTINGS} from 'constants/default-settings';
  * @param {Object} layerClasses
  * @returns {Array} found layers
  */
-export function findDefaultLayer(dataset, layerClasses) {
+export function findDefaultLayer(dataset, layerClasses = {}) {
   if (!dataset) {
     return [];
   }
+  const layerProps = Object.keys(layerClasses).reduce((previous, lc) => {
+    const result =
+      typeof layerClasses[lc].findDefaultLayerProps === 'function'
+        ? layerClasses[lc].findDefaultLayerProps(dataset, previous)
+        : {props: []};
 
-  let layers = [];
-  Object.keys(layerClasses).forEach(lc => {
-    const layerProps = layerClasses[lc].findDefaultLayerProps(dataset);
-    if (layerProps) {
-      const newLayers = (Array.isArray(layerProps) ? layerProps : [layerProps])
-        .map(props => {
-          const layer = new layerClasses[lc]({...props, dataId: dataset.id});
+    const props = Array.isArray(result) ? result : result.props || [];
+    const foundLayers = result.foundLayers || previous;
 
-          return typeof layer.setInitialLayerConfig === 'function'
-          ? layer.setInitialLayerConfig(dataset.allData)
-          : layer
-        });
+    return foundLayers.concat(
+      props.map(p => ({
+        ...p,
+        type: lc,
+        dataId: dataset.id
+      }))
+    );
+  }, []);
 
-      layers = layers.concat(newLayers);
-    }
+  // go through all layerProps to create layer
+  return layerProps.map(props => {
+    const layer = new layerClasses[props.type](props);
+    return typeof layer.setInitialLayerConfig === 'function'
+      ? layer.setInitialLayerConfig(dataset.allData)
+      : layer;
   });
-
-  return layers;
 }
 
 /**
@@ -79,18 +83,4 @@ export function calculateLayerData(layer, state, oldLayerData, opt = {}) {
     opt
   );
   return {layerData, layer};
-}
-
-export function getLightSettingsFromBounds(bounds) {
-  return Array.isArray(bounds) && bounds.length >= 4
-    ? {
-        ...DEFAULT_LIGHT_SETTINGS,
-        lightsPosition: [
-          ...bounds.slice(0, 2),
-          DEFAULT_LIGHT_SETTINGS.lightsPosition[2],
-          ...bounds.slice(2, 4),
-          DEFAULT_LIGHT_SETTINGS.lightsPosition[5]
-        ]
-      }
-    : DEFAULT_LIGHT_SETTINGS;
 }

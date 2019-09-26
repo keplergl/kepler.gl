@@ -29,15 +29,14 @@ import {Input} from 'components/common/styled-components';
 import {roundValToStep} from 'utils/data-utils';
 
 const SliderInput = styled(Input)`
-  height: ${props => props.theme.sliderInputHeight}px;
   width: ${props => props.theme.sliderInputWidth}px;
-  padding: 4px 6px;
-  margin-left: ${props => props.flush ? 0 : 24}px;
+  margin-left: ${props => (props.flush ? 0 : props.size === 'tiny' ? 12 : 18)}px;
 `;
 
 const SliderWrapper = styled.div`
   display: flex;
   position: relative;
+  align-items: center;
 `;
 
 const RangeInputWrapper = styled.div`
@@ -57,6 +56,7 @@ export default class RangeSlider extends Component {
     isEnlarged: PropTypes.bool,
     showInput: PropTypes.bool,
     inputTheme: PropTypes.string,
+    inputSize: PropTypes.string,
     step: PropTypes.number,
     sliderHandleWidth: PropTypes.number,
     xAxis: PropTypes.func
@@ -67,6 +67,8 @@ export default class RangeSlider extends Component {
     isRanged: true,
     showInput: true,
     sliderHandleWidth: 12,
+    inputTheme: '',
+    inputSize: 'small',
     onChange: () => {}
   };
 
@@ -172,6 +174,7 @@ export default class RangeSlider extends Component {
         }}
         onBlur={update}
         flush={key === 'value0'}
+        size={this.props.inputSize}
         secondary={this.props.inputTheme === 'secondary'}
       />
     );
@@ -195,11 +198,12 @@ export default class RangeSlider extends Component {
 
     const height = isRanged && showInput ? '16px' : '24px';
     const {width} = this.state;
-    const plotWidth =  width - sliderHandleWidth;
+    const plotWidth = width - sliderHandleWidth;
 
     return (
       <div
-        className="kg-range-slider" style={{width: '100%', padding: `0 ${sliderHandleWidth / 2}px`}}
+        className="kg-range-slider"
+        style={{width: '100%', padding: `0 ${sliderHandleWidth / 2}px`}}
         ref={this.sliderContainer}
       >
         {histogram && histogram.length ? (
@@ -209,20 +213,17 @@ export default class RangeSlider extends Component {
             plotType={plotType}
             isEnlarged={isEnlarged}
             onBrush={(val0, val1) => {
-              onChange([
-                this._roundValToStep(val0),
-                this._roundValToStep(val1)
-              ]);
+              onChange([this._roundValToStep(val0), this._roundValToStep(val1)]);
             }}
             range={range}
             value={[value0, value1]}
             width={plotWidth}
           />
         ) : null}
-        <SliderWrapper
-          style={{height}}
-          className="kg-range-slider__slider">
-          {this.props.xAxis ? <this.props.xAxis width={plotWidth} domain={range}/> : null}
+        <SliderWrapper style={{height}} className="kg-range-slider__slider">
+          {this.props.xAxis ? (
+            <this.props.xAxis width={plotWidth} domain={range} />
+          ) : null}
           <Slider
             showValues={false}
             isRanged={isRanged}
@@ -241,11 +242,13 @@ export default class RangeSlider extends Component {
           />
           {!isRanged && showInput ? this._renderInput('value1') : null}
         </SliderWrapper>
-        {isRanged && showInput ? <RangeInputWrapper className="range-slider__input-group">
-          {this._renderInput('value0')}
-          {this._renderInput('value1')}
-        </RangeInputWrapper> : null}
+        {isRanged && showInput ? (
+          <RangeInputWrapper className="range-slider__input-group">
+            {this._renderInput('value0')}
+            {this._renderInput('value1')}
+          </RangeInputWrapper>
+        ) : null}
       </div>
     );
   }
-};
+}

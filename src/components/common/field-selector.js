@@ -128,7 +128,7 @@ export default class FieldSelector extends Component {
 
   render() {
     return (
-      <div>
+      <div className="field-selector">
         <ItemSelector
           getOptionValue={d => d}
           closeOnSelect={this.props.closeOnSelect}

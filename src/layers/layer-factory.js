@@ -34,6 +34,42 @@ export const PROPERTY_GROUPS = keyMirror({
   precision: null
 });
 
+export const DEFAULT_LAYER_OPACITY = 0.8;
+
+export const DEFAULT_TEXT_LABEL = {
+  field: null,
+  color: [255, 255, 255],
+  size: 18,
+  offset: [0, 0],
+  anchor: 'start',
+  alignment: 'center'
+};
+
+export const DEFAULT_COLOR_RANGE = DefaultColorRange;
+
+export const DEFAULT_CUSTOM_PALETTE = {
+  name: 'Custom Palette',
+  type: 'custom',
+  category: 'Custom',
+  colors: []
+}
+
+export const DEFAULT_COLOR_UI = {
+  // customPalette in edit
+  customPalette: DEFAULT_CUSTOM_PALETTE,
+  // show color sketcher modal
+  showSketcher: false,
+  // show color range selection panel
+  showDropdown: false,
+  // color range selector config
+  colorRangeConfig: {
+    type: 'all',
+    steps: 6,
+    reversed: false,
+    custom: false
+  }
+};
+
 export const LAYER_VIS_CONFIGS = {
   thickness: {
     type: 'number',
@@ -54,6 +90,16 @@ export const LAYER_VIS_CONFIGS = {
     step: 0.1,
     group: PROPERTY_GROUPS.stroke,
     property: 'sizeRange'
+  },
+  trailLength: {
+    type: 'number',
+    defaultValue: 180,
+    label: 'Stroke Width',
+    isRanged: false,
+    range: [1, 1000],
+    step: 1,
+    group: PROPERTY_GROUPS.stroke,
+    property: 'trailLength'
   },
   // radius is actually radiusScale in deck.gl
   radius: {
@@ -106,7 +152,7 @@ export const LAYER_VIS_CONFIGS = {
   },
   opacity: {
     type: 'number',
-    defaultValue: 0.8,
+    defaultValue: DEFAULT_LAYER_OPACITY,
     label: 'Opacity',
     isRanged: false,
     range: [0, 1],
@@ -213,7 +259,8 @@ export const LAYER_VIS_CONFIGS = {
     group: PROPERTY_GROUPS.height,
     property: 'elevationPercentile',
     // percentile filter only makes sense with linear aggregation
-    condition: config => config.visConfig.enable3d && (config.colorField || config.sizeField)
+    condition: config =>
+      config.visConfig.enable3d && (config.colorField || config.sizeField)
   },
   resolution: {
     type: 'number',
@@ -375,37 +422,5 @@ export const LAYER_TEXT_CONFIGS = {
     options: ['top', 'center', 'bottom'],
     multiSelect: false,
     searchable: false
-  }
-};
-
-export const DEFAULT_TEXT_LABEL = {
-  field: null,
-  color: [255, 255, 255],
-  size: 18,
-  offset: [0, 0],
-  anchor: 'start',
-  alignment: 'center'
-};
-
-export const DEFAULT_CUSTOM_PALETTE = {
-  name: 'Custom Palette',
-  type: 'custom',
-  category: 'Custom',
-  colors: []
-}
-
-export const DEFAULT_COLOR_UI = {
-  // customPalette in edit
-  customPalette: DEFAULT_CUSTOM_PALETTE,
-  // show color sketcher modal
-  showSketcher: false,
-  // show color range selection panel
-  showDropdown: false,
-  // color range selector config
-  colorRangeConfig: {
-    type: 'all',
-    steps: 6,
-    reversed: false,
-    custom: false
   }
 };

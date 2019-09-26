@@ -24,8 +24,8 @@ import {console as globalConsole} from 'global/window';
 import assert from 'assert';
 import {Analyzer, DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
-import {ALL_FIELD_TYPES, GEOJSON_FIELDS} from 'constants/default-settings';
-import {notNullorUndefined} from 'utils/data-utils';
+import {ALL_FIELD_TYPES} from 'constants/default-settings';
+import {notNullorUndefined, parseFieldValue} from 'utils/data-utils';
 import KeplerGlSchema from 'schemas';
 
 // if any of these value occurs in csv, parse it to null;
@@ -423,9 +423,9 @@ export function processGeojson(rawData) {
   const allData = normalizedGeojson.features.reduce((accu, f, i) => {
     if (f.geometry) {
       // check if properties contains object and stringfy this
-      if(typeof f.properties === 'object' && f.properties !== null){
+      if (typeof f.properties === 'object' && f.properties !== null) {
         Object.keys(f.properties).forEach(key => {
-          if(typeof f.properties[key] === 'object'){
+          if (typeof f.properties[key] === 'object') {
             f.properties[key] = JSON.stringify(f.properties[key]);
           }
         });
@@ -457,8 +457,8 @@ export function processGeojson(rawData) {
       }
     });
   });
-
-  return processRowObject(allData);
+  const processRow = processRowObject(allData);
+  return processRow;
 }
 
 /**
@@ -473,12 +473,7 @@ export function formatCsv(data, fields) {
 
   // parse geojson object as string
   data.forEach(row => {
-    formattedData.push(
-      row.map(
-        (d, i) => d && GEOJSON_FIELDS.geojson.includes(fields[i].name) ?
-          JSON.stringify(d) : d
-      )
-    )
+    formattedData.push(row.map((d, i) => parseFieldValue(d, fields[i].type)));
   });
 
   return csvFormatRows(formattedData);
@@ -545,7 +540,10 @@ export function validateInputData(data) {
 
   // if any field has missing type, recalculate it for everyone
   // because we simply lost faith in humanity
-  const sampleData = getSampleForTypeAnalyze({fields: fields.map(f => f.name), allData: rows});
+  const sampleData = getSampleForTypeAnalyze({
+    fields: fields.map(f => f.name),
+    allData: rows
+  });
   const fieldOrder = fields.map(f => f.name);
   const meta = getFieldsFromData(sampleData, fieldOrder);
   const updatedFields = fields.map((f, i) => ({
@@ -572,9 +570,7 @@ export function validateInputData(data) {
  * dispatch(addDataToMap(processKeplerglJSON(keplerGlJson)));
  */
 export function processKeplerglJSON(rawData) {
-  return rawData
-    ? KeplerGlSchema.load(rawData.datasets, rawData.config)
-    : null;
+  return rawData ? KeplerGlSchema.load(rawData.datasets, rawData.config) : null;
 }
 
 export const Processors = {
@@ -585,4 +581,4 @@ export const Processors = {
   analyzerTypeToFieldType,
   getFieldsFromData,
   parseCsvRowsByFieldType
-}
+};

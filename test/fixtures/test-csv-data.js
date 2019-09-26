@@ -966,21 +966,6 @@ export const updatedLayerV2 = {
   meta: {
     featureTypes: {polygon: true},
     bounds: [-74.593264, 40.632238, -74.148473, 41.091647],
-    lightSettings: {
-      lightsPosition: [
-        -74.593264,
-        40.632238,
-        8000,
-        -74.148473,
-        41.091647,
-        8000
-      ],
-      ambientRatio: 0.4,
-      diffuseRatio: 0.6,
-      specularRatio: 0.3,
-      lightsStrength: [0.9, 0, 0.8, 0],
-      numberOfLights: 2
-    },
     fixedRadius: false
   }
 };
@@ -1072,23 +1057,7 @@ export const updatedLayerSimplifiedShape = {
   meta: {
     featureTypes: {polygon: true},
     bounds: [-74.593264, 40.630453, -74.158491, 41.105958],
-    lightSettings: {
-      lightsPosition: [
-        -74.593264,
-        40.630453,
-        8000,
-        -74.158491,
-        41.105958,
-        8000
-      ],
-      ambientRatio: 0.4,
-      diffuseRatio: 0.6,
-      specularRatio: 0.3,
-      lightsStrength: [0.9, 0, 0.8, 0],
-      numberOfLights: 2
-    },
     fixedRadius: false
   }
 };
-
 /* eslint-enable max-lens */

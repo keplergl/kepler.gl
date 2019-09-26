@@ -18,19 +18,48 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import geojsonExtent from '@mapbox/geojson-extent';
 import wktParser from 'wellknown';
 import normalize from '@mapbox/geojson-normalize';
+import bbox from '@turf/bbox';
 
 import {getSampleData} from 'utils/data-utils';
 
+export function parseGeoJsonRawFeature(rawFeature) {
+  if (typeof rawFeature === 'object') {
+    // Support GeoJson feature as object
+    // probably need to normalize it as well
+    const normalized = normalize(rawFeature);
+    if (!normalized || !Array.isArray(normalized.features)) {
+      // fail to normalize GeoJson
+      return null;
+    }
+
+    return normalized.features[0];
+  } else if (typeof rawFeature === 'string') {
+
+    return parseGeometryFromString(rawFeature);
+  } else if (Array.isArray(rawFeature)) {
+    // Support GeoJson  LineString as an array of points
+    return {
+      type: 'Feature',
+      geometry: {
+        // why do we need to flip it...
+        coordinates: rawFeature.map(pts => [pts[1], pts[0]]),
+        type: 'LineString'
+      }
+    };
+  }
+
+  return null;
+}
 /**
- * Parse raw data to geojson feature
+ * Parse raw data to GeoJson feature
  * @param allData
  * @param getFeature
  * @returns {{}}
  */
 export function getGeojsonDataMaps(allData, getFeature) {
+
   const acceptableTypes = [
     'Point',
     'MultiPoint',
@@ -41,38 +70,10 @@ export function getGeojsonDataMaps(allData, getFeature) {
     'GeometryCollection'
   ];
 
-  const dataToFeature = {};
+  const dataToFeature = [];
 
-  allData.forEach((d, index) => {
-    dataToFeature[index] = null;
-    const rawFeature = getFeature(d);
-
-    let feature = null;
-
-    // parse feature from field
-    if (Array.isArray(rawFeature)) {
-      // Support geojson as an array of points
-      feature = {
-        type: 'Feature',
-        geometry: {
-          // why do we need to flip it...
-          coordinates: rawFeature.map(pts => [pts[1], pts[0]]),
-          type: 'LineString'
-        }
-      };
-    } else if (typeof rawFeature === 'string') {
-      feature = parseGeometryFromString(rawFeature);
-    } else if (typeof rawFeature === 'object') {
-      // Support geojson feature as object
-      // probably need to normalize it as well
-      const normalized = normalize(rawFeature);
-      if (!normalized || !Array.isArray(normalized.features)) {
-        // fail to normalize geojson
-        return null;
-      }
-
-      feature = normalized.features[0];
-    }
+  for (let index = 0; index < allData.length; index++) {
+    const feature = parseGeoJsonRawFeature(getFeature(allData[index]));
 
     if (
       feature &&
@@ -87,7 +88,8 @@ export function getGeojsonDataMaps(allData, getFeature) {
 
       dataToFeature[index] = feature;
     }
-  });
+
+  }
 
   return dataToFeature;
 }
@@ -132,10 +134,11 @@ export function parseGeometryFromString(geoString) {
 }
 
 export function getGeojsonBounds(features = []) {
-  // calculate feature bounds is computation heavy
+  // 70 ms for 10,000 polygons
   // here we only pick couple
+  const maxCount = 10000;
   const samples =
-    features.length > 500 ? getSampleData(features, 500) : features;
+    features.length > maxCount ? getSampleData(features, maxCount) : features;
 
   const nonEmpty = samples.filter(
     d =>
@@ -143,7 +146,7 @@ export function getGeojsonBounds(features = []) {
   );
 
   try {
-    return geojsonExtent({
+    return bbox({
       type: 'FeatureCollection',
       features: nonEmpty
     });
@@ -152,21 +155,32 @@ export function getGeojsonBounds(features = []) {
   }
 }
 
-export function featureToDeckGlGeoType(type) {
-  switch (type) {
-    case 'Point':
-    case 'MultiPoint':
-      return 'point';
+export const featureToDeckGlGeoType = {
+  Point: 'point',
+  MultiPoint: 'point',
+  LineString: 'line',
+  MultiLineString: 'line',
+  Polygon: 'polygon',
+  MultiPolygon: 'polygon'
+};
 
-    case 'LineString':
-    case 'MultiLineString':
-      return 'line';
-
-    case 'Polygon':
-    case 'MultiPolygon':
-      return 'polygon';
-
-    default:
-      return null;
+/**
+ * Parse geojson from string
+ * @param {Array<Object>} allFeatures
+ * @returns {Object} mapping of feature type existence
+ */
+export function getGeojsonFeatureTypes(allFeatures) {
+  const featureTypes = {};
+  for (let f = 0; f < allFeatures.length; f++) {
+    const feature = allFeatures[f];
+    const geoType =
+      featureToDeckGlGeoType[
+        feature && feature.geometry && feature.geometry.type
+      ];
+    if (geoType) {
+      featureTypes[geoType] = true;
+    }
   }
+
+  return featureTypes;
 }

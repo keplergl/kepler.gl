@@ -41,7 +41,7 @@ export const enhancers = [applyMiddleware(...middlewares)];
 
 const initialState = {};
 
-// add redux devtools
+//  add redux devtools
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 
 export default createStore(

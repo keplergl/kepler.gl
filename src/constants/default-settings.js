@@ -536,15 +536,6 @@ export const DEFAULT_LAYER_COLOR = {
 // let user pass in default tooltip fields
 export const DEFAULT_TOOLTIP_FIELDS = [];
 
-export const DEFAULT_LIGHT_SETTINGS = {
-  lightsPosition: [-122.45, 37.66, 8000, -122.0, 38.0, 8000],
-  ambientRatio: 0.4,
-  diffuseRatio: 0.6,
-  specularRatio: 0.3,
-  lightsStrength: [0.9, 0.0, 0.8, 0.0],
-  numberOfLights: 2
-};
-
 export const NO_VALUE_COLOR = [0, 0, 0, 0];
 
 export const LAYER_BLENDINGS = {
@@ -702,3 +693,8 @@ export const DEFAULT_NOTIFICATION_TOPICS = keyMirror({
 export const TOKEN_MISUSE_WARNING = '* If you do not provide your own token, the map may fail to display at any time when we replace ours to avoid misuse. ';
 export const DISCLAIMER = 'You can change the Mapbox token later using the following instructions: ';
 export const MAP_CONFIG_DESCRIPTION = 'Map config will be included in the Json file. If you are using kepler.gl in your own app. You can copy this config and pass it to ';
+
+// Animation
+export const BASE_SPEED = 600;
+export const DEFAULT_TIME_FORMAT = 'MM/DD/YY HH:mm:ssa';
+export const SPEED_CONTROL_RANGE = [0, 10];

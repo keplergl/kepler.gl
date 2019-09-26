@@ -31,9 +31,11 @@ import {
 
 import SchemaManager from 'schemas';
 import visStateReducer from 'reducers/vis-state';
+import coreReducer from 'reducers/core';
 import {updateVisData} from 'actions/vis-state-actions';
-import {receiveMapConfig} from 'actions/actions';
+import {receiveMapConfig, addDataToMap} from 'actions/actions';
 import {getDefaultInteraction} from 'utils/interaction-utils';
+import {processKeplerglJSON} from 'processors/data-processor';
 
 // fixtures
 import {
@@ -57,6 +59,11 @@ import {
   stateSavedV1 as savedStateV1Label,
   mergedLayers as mergedLayersV1Label
 } from 'test/fixtures/state-saved-v1-4';
+
+import {
+  savedStateV1TripGeoJson,
+  mergedLayer0 as mergedTripLayer
+} from 'test/fixtures/state-saved-v1-5';
 
 // helpers
 import {cmpFilters, cmpLayers} from 'test/helpers/comparison-utils';
@@ -1049,6 +1056,49 @@ test('VisStateMerger - mergeSplitMaps', t => {
       splitMapsToBeMerged: []
     },
     'should create split maps panel, add current layer to splitMaps and merge split maps'
+  );
+
+  t.end();
+});
+
+test('VisStateMerger - mergeTripGeojson', t => {
+  const initialState = cloneDeep(InitialState);
+
+  // processKeplerglJSON
+  const result = processKeplerglJSON(savedStateV1TripGeoJson)
+  const updatedCore = coreReducer(initialState, addDataToMap(result));
+
+  const mergedVieState = updatedCore.visState;
+
+  t.equal(mergedVieState.layers.length, 1, 'should create 1 layer');
+  const tripLayer = mergedVieState.layers[0];
+
+  t.equal(tripLayer.type, 'trip', 'should create 1 trip layer');
+
+  cmpLayers(t, tripLayer, mergedTripLayer, {id: true, color: true});
+
+  t.deepEqual(
+    tripLayer.dataToFeature,
+    mergedTripLayer.dataToFeature,
+    'dataToFeature should be correct'
+  );
+
+  t.deepEqual(
+    tripLayer.dataToTimeStamp,
+    mergedTripLayer.dataToTimeStamp,
+    'dataToTimeStamp should be correct'
+  );
+
+  t.deepEqual(
+    tripLayer.meta.bounds,
+    mergedTripLayer.meta.bounds,
+    'meta.bounds should be correct'
+  );
+
+  t.deepEqual(
+    tripLayer.meta.featureTypes,
+    mergedTripLayer.meta.featureTypes,
+    'meta.featureTypes should be correct'
   );
 
   t.end();

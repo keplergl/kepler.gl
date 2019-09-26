@@ -311,7 +311,7 @@ export function updateVisData(datasets, options, config) {
  * @returns {{type: ActionTypes.TOGGLE_FILTER_ANIMATION, idx: idx}}
  * @public
  */
-export function toggleAnimation(idx) {
+export function toggleFilterAnimation(idx) {
   return {
     type: ActionTypes.TOGGLE_FILTER_ANIMATION,
     idx
@@ -326,10 +326,38 @@ export function toggleAnimation(idx) {
  * @returns {{type: ActionTypes.UPDATE_FILTER_ANIMATION_SPEED, idx: idx, speed: speed}}
  * @public
  */
-export function updateAnimationSpeed(idx, speed) {
+export function updateFilterAnimationSpeed(idx, speed) {
   return {
     type: ActionTypes.UPDATE_FILTER_ANIMATION_SPEED,
     idx,
+    speed
+  };
+}
+
+/**
+ * Reset animation
+ * @memberof visStateActions
+ * @param {Number} value -  Current value of the slider
+ * @returns {{type: ActionTypes.RESET_ANIMATION, value: value}}
+ * @public
+ */
+export function updateAnimationTime(value) {
+  return {
+    type: ActionTypes.UPDATE_ANIMATION_TIME,
+    value
+  };
+}
+
+/**
+ * update trip layer animation speed
+ * @memberof visStateActions
+ * @param {Number} speed - `speed` to change it to. `speed` is a multiplier
+ * @returns {{type: ActionTypes.UPDATE_LAYER_ANIMATION_SPEED, speed: speed}}
+ * @public
+ */
+export function updateLayerAnimationSpeed(speed) {
+  return {
+    type: ActionTypes.UPDATE_LAYER_ANIMATION_SPEED,
     speed
   };
 }

@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import TimeRangeSliderFactory from './common/time-range-slider';
+
 // Components
 export {default as KeplerGl, default, injectComponents} from './container';
 
@@ -76,8 +78,19 @@ export {default as ExportImageModalFactory} from './modals/export-image-modal';
 export {default as ExportDataModalFactory} from './modals/export-data-modal';
 export {default as AddMapStyleModalFactory} from './modals/add-map-style-modal';
 
-// // Bottom widget factory
+// // common factory
+export {default as AnimationControlFactory} from './common/animation-control/animation-control';
+export {default as SpeedControlFactory} from './common/animation-control/speed-control';
+export {default as AnimationPlaybacksFactory} from './common/animation-control/playback-controls';
+export {default as FloatingTimeDisplayFactory} from './common/animation-control/floating-time-display';
+
+// // Filters
 export {default as TimeWidgetFactory} from './filters/time-widget';
+export {default as SingleSelectFilterFactory} from './filters/single-select-filter';
+export {default as MultiSelectFilterFactory} from './filters/multi-select-filter';
+export {default as TimeRangeFilterFactory} from './filters/time-range-filter';
+
+export {default as RangeFilterFactory} from './filters/range-filter';
 
 // Injector
 export {
@@ -90,10 +103,12 @@ export {default as FileUpload} from './common/file-uploader/file-upload';
 export {default as ItemSelector} from './common/item-selector/item-selector';
 export {default as FieldSelector} from './common/field-selector';
 export {default as RangeSlider} from './common/range-slider';
-export {default as TimeRangeSlider} from './common/time-range-slider';
 export {default as Modal, ModalFooter, ModalTitle} from './common/modal';
 export {default as AppLogo} from './common/logo';
 export {default as Switch} from './common/switch';
 export {default as LoadingSpinner} from './common/loading-spinner';
 export * from './common/styled-components';
 export * as Icons from './common/icons';
+
+export const TimeRangeSlider = TimeRangeSliderFactory();
+export {TimeRangeSliderFactory};

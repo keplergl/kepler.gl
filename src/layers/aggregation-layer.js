@@ -207,10 +207,7 @@ export default class AggregationLayer extends Layer {
     // get bounds from points
     const bounds = this.getPointsBounds(allData, getPosition);
 
-    // get lightSettings from points
-    const lightSettings = this.getLightSettingsFromBounds(bounds);
-
-    this.updateMeta({bounds, lightSettings});
+    this.updateMeta({bounds});
   }
 
   formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {

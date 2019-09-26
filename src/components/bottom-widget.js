@@ -19,13 +19,18 @@
 // THE SOFTWARE.
 
 import React from 'react';
+import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import TimeWidgetFactory from './filters/time-widget';
+import AnimationControlFactory from './common/animation-control/animation-control';
+import {FILTER_TYPES} from 'utils/filter-utils';
 
 const propTypes = {
   filters: PropTypes.arrayOf(PropTypes.object),
   datasets: PropTypes.object,
   uiState: PropTypes.object,
+  layers: PropTypes.arrayOf(PropTypes.object),
+  animationConfig: PropTypes.object,
   visStateActions: PropTypes.object,
   sidePanelWidth: PropTypes.number,
   containerW: PropTypes.number
@@ -33,44 +38,81 @@ const propTypes = {
 
 const maxWidth = 1080;
 
-BottomWidgetFactory.deps = [TimeWidgetFactory];
+BottomWidgetFactory.deps = [TimeWidgetFactory, AnimationControlFactory];
 
-export default function BottomWidgetFactory(TimeWidget) {
+const BottomWidgetContainer = styled.div`
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  padding-top: ${props => props.theme.sidePanel.margin.top}px;
+  padding-right: ${props => props.theme.sidePanel.margin.right}px;
+  padding-bottom: ${props => props.theme.sidePanel.margin.bottom}px;
+  padding-left: ${props => props.theme.sidePanel.margin.left}px;
+  width: ${props => props.width}px;
+  bottom: 0;
+  right: 0;
+  z-index: 1;
+`;
 
-  const BottomWidget = (props) => {
+export default function BottomWidgetFactory(TimeWidget, AnimationControl) {
+  const BottomWidget = props => {
     const {
       datasets,
       filters,
+      animationConfig,
       visStateActions,
       containerW,
       uiState,
-      sidePanelWidth
+      sidePanelWidth,
+      layers
     } = props;
+
     const {activeSidePanel, readOnly} = uiState;
     const isOpen = Boolean(activeSidePanel);
 
-    const enlargedFilterIdx = filters.findIndex(f => f.enlarged);
+    const enlargedFilterIdx = filters.findIndex(f => f.enlarged && f.type === FILTER_TYPES.timeRange);
     const isAnyFilterAnimating = filters.some(f => f.isAnimating);
-    const enlargedFilterWidth = isOpen ? containerW - sidePanelWidth : containerW;
+    const enlargedFilterWidth = isOpen
+      ? containerW - sidePanelWidth
+      : containerW;
 
-    if (enlargedFilterIdx < 0) {
-      return null;
-    }
+    // show playback control if layers contain trip layer & at least one trip layer is visible
+    const animatedLayer = layers.filter(
+      l =>
+        l.config.animation && l.config.animation.enabled && l.config.isVisible
+    );
 
+    const readToAnimation = Array.isArray(animationConfig.domain) && animationConfig.currentTime;
+    // if animation control is showing, hide time display in time slider
+    const showFloatingTimeDisplay = !animatedLayer.length;
     return (
-      <TimeWidget
-        fields={datasets[filters[enlargedFilterIdx].dataId].fields}
-        setFilterPlot={visStateActions.setFilterPlot}
-        setFilter={visStateActions.setFilter}
-        toggleAnimation={visStateActions.toggleAnimation}
-        updateAnimationSpeed={visStateActions.updateAnimationSpeed}
-        enlargeFilter={visStateActions.enlargeFilter}
+      <BottomWidgetContainer
         width={Math.min(maxWidth, enlargedFilterWidth)}
-        isAnyFilterAnimating={isAnyFilterAnimating}
-        enlargedIdx={enlargedFilterIdx}
-        filter={filters[enlargedFilterIdx]}
-        readOnly={readOnly}
-      />
+        className="bottom-widget--container"
+      >
+        {animatedLayer.length && readToAnimation ? (
+          <AnimationControl
+            animationConfig={animationConfig}
+            updateAnimationTime={visStateActions.updateAnimationTime}
+            updateAnimationSpeed={visStateActions.updateLayerAnimationSpeed}
+          />
+        ) : null}
+        {enlargedFilterIdx > -1 ? (
+          <TimeWidget
+            filter={filters[enlargedFilterIdx]}
+            index={enlargedFilterIdx}
+            isAnyFilterAnimating={isAnyFilterAnimating}
+            datasets={datasets}
+            readOnly={readOnly}
+            showTimeDisplay={showFloatingTimeDisplay}
+            setFilterPlot={visStateActions.setFilterPlot}
+            setFilter={visStateActions.setFilter}
+            toggleAnimation={visStateActions.toggleFilterAnimation}
+            updateAnimationSpeed={visStateActions.updateFilterAnimationSpeed}
+            enlargeFilter={visStateActions.enlargeFilter}
+          />
+        ) : null}
+      </BottomWidgetContainer>
     );
   };
 

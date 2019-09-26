@@ -684,6 +684,13 @@ export const propertiesV1 = {
   splitMaps: new SplitMapsSchema({
     key: 'splitMaps',
     version: VERSIONS.v1
+  }),
+  animationConfig: new Schema({
+    version: VERSIONS.v1,
+    properties: {
+      currentTime: null
+    },
+    key: 'animationConfig'
   })
 };
 

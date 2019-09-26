@@ -51,6 +51,7 @@ export {
   EXPORT_DATA_TYPE_OPTIONS,
   DEFAULT_NOTIFICATION_TYPES,
   DEFAULT_NOTIFICATION_TOPICS,
+  DEFAULT_COLOR_RANGE,
   PANELS
 } from './default-settings';
 export {VizColorPalette, DataVizColors} from './custom-color-ranges';

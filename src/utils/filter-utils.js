@@ -79,26 +79,6 @@ export const FILTER_COMPONENTS = {
   [FILTER_TYPES.range]: 'RangeFilter'
 };
 
-export const BASE_SPEED = 600;
-export const TIME_ANIMATION_SPEED = [
-  {
-    label: '0.5x',
-    value: 0.5
-  },
-  {
-    label: '1x',
-    value: 1
-  },
-  {
-    label: '2x',
-    value: 2
-  },
-  {
-    label: '4x',
-    value: 4
-  }
-];
-
 export function getDefaultFilter(dataId) {
   return {
     // link to dataset Id
@@ -348,9 +328,8 @@ export function adjustValueToFilterDomain(value, {domain, type}) {
         return domain.map(d => d);
       }
 
-      return value.map(
-        (d, i) =>
-          notNullorUndefined(d) && isInRange(d, domain) ? d : domain[i]
+      return value.map((d, i) =>
+        notNullorUndefined(d) && isInRange(d, domain) ? d : domain[i]
       );
 
     case FILTER_TYPES.multiSelect:
@@ -498,8 +477,8 @@ export function getTimeWidgetTitleFormatter(domain) {
   return diff > durationYear
     ? 'MM/DD/YY'
     : diff > durationDay
-      ? 'MM/DD hha'
-      : 'MM/DD hh:mma';
+    ? 'MM/DD/YY hh:mma'
+    : 'MM/DD/YY hh:mm:ssa';
 }
 
 export function getTimeWidgetHintFormatter(domain) {
@@ -511,12 +490,12 @@ export function getTimeWidgetHintFormatter(domain) {
   return diff > durationYear
     ? 'MM/DD/YY'
     : diff > durationWeek
-      ? 'MM/DD'
-      : diff > durationDay
-        ? 'MM/DD hha'
-        : diff > durationHour
-          ? 'hh:mma'
-          : 'hh:mm:ssa';
+    ? 'MM/DD'
+    : diff > durationDay
+    ? 'MM/DD hha'
+    : diff > durationHour
+    ? 'hh:mma'
+    : 'hh:mm:ssa';
 }
 
 /**

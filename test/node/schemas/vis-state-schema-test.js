@@ -23,13 +23,16 @@ import cloneDeep from 'lodash.clonedeep';
 import {cmpFilters, cmpSavedLayers} from 'test/helpers/comparison-utils';
 import SchemaManager from 'schemas';
 
-import {StateWFilesFiltersLayerColor,
+import {
+  StateWFilesFiltersLayerColor,
   expectedSavedLayer0,
   expectedLoadedLayer0,
   expectedSavedLayer1,
   expectedLoadedLayer1,
   expectedSavedLayer2,
-  expectedLoadedLayer2
+  expectedLoadedLayer2,
+  StateWTripGeojson,
+  expectedSavedTripLayer
 } from 'test/helpers/mock-state';
 
 test('#visStateSchema -> v1 -> save layers', t => {
@@ -39,7 +42,7 @@ test('#visStateSchema -> v1 -> save layers', t => {
   const vsToSave = SchemaManager.getConfigToSave(initialState).config.visState;
 
   t.deepEqual(Object.keys(vsToSave),
-    ['filters', 'layers', 'interactionConfig', 'layerBlending', 'splitMaps'],
+    ['filters', 'layers', 'interactionConfig', 'layerBlending', 'splitMaps', 'animationConfig'],
     'visState should have all 5 entries');
 
   const exptectedSavedLayers = [
@@ -62,7 +65,7 @@ test('#visStateSchema -> v1 -> load layers', t => {
   const vsLoaded = SchemaManager.parseSavedConfig(savedState).visState;
 
   t.deepEqual(Object.keys(vsLoaded),
-    ['filters', 'layers', 'interactionConfig', 'layerBlending', 'splitMaps'],
+    ['filters', 'layers', 'interactionConfig', 'layerBlending', 'splitMaps', 'animationConfig'],
     'visState should have all 5 entries');
 
   const loadedLayers = vsLoaded.layers;
@@ -162,5 +165,23 @@ test('#visStateSchema -> v1 -> save load layerBlending', t => {
   t.deepEqual(layerBlendingToSave, expectedSaved);
   t.deepEqual(layerBlendingLoaded, expectedSaved);
 
+  t.end();
+});
+
+test('#visStateSchema -> v1 -> save animation', t => {
+  const initialState = cloneDeep(StateWTripGeojson);
+
+  // save state
+  const vsToSave = SchemaManager.getConfigToSave(initialState).config.visState;
+
+  t.deepEqual(Object.keys(vsToSave),
+    ['filters', 'layers', 'interactionConfig', 'layerBlending', 'splitMaps', 'animationConfig'],
+    'visState should have all 5 entries');
+
+  const expectedSavedLayers = [expectedSavedTripLayer];
+  const expectedAnimationConfig = {currentTime: 1565577261000};
+  cmpSavedLayers(t, expectedSavedLayers, vsToSave.layers);
+
+  t.deepEqual(vsToSave.animationConfig, expectedAnimationConfig, 'should save animationConfig');
   t.end();
 });

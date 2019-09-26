@@ -40,7 +40,10 @@ const StyledRangeSlider = styled.div`
 
 const SliderWrapper = styled.div`
   flex-grow: 1;
-  margin-top: ${props => (props.isRanged ? 0 : 10)}px;
+  margin-top: ${props =>
+    props.isRanged
+      ? props.theme.sliderMarginTopIsRange
+      : props.theme.sliderMarginTop}px;
 `;
 
 export default class Slider extends Component {
@@ -85,7 +88,9 @@ export default class Slider extends Component {
   ref = createRef();
 
   _getBaseDistance() {
-    return this.props.vertical ? this.ref.current.offsetHeight : this.ref.current.offsetWidth;
+    return this.props.vertical
+      ? this.ref.current.offsetHeight
+      : this.ref.current.offsetWidth;
   }
 
   _getValDelta(x) {
@@ -96,7 +101,7 @@ export default class Slider extends Component {
 
   _getValue(val, offset) {
     const delta = this._getValDelta(offset);
-    const rawValue =  this.props.vertical ? val - delta : val + delta;
+    const rawValue = this.props.vertical ? val - delta : val + delta;
 
     return this._roundValToStep(rawValue);
   }
@@ -153,6 +158,7 @@ export default class Slider extends Component {
   render() {
     const {
       classSet,
+      disabled,
       isRanged,
       maxValue,
       minValue,
@@ -165,11 +171,12 @@ export default class Slider extends Component {
     const currValDelta = value1 - value0;
     const maxDelta = maxValue - minValue;
     const width = (currValDelta / maxDelta) * 100;
+
     const v0Left = ((value0 - minValue) / maxDelta) * 100;
 
     return (
       <SliderWrapper
-        className={classnames('kg-slider', {...classSet})}
+        className={classnames('kg-slider', {...classSet, disabled})}
         ref={this.ref}
         isRanged={isRanged}
         vertical={vertical}

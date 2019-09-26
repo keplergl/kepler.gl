@@ -50,6 +50,7 @@ import sampleGeojson from './data/sample-small-geojson';
 import sampleGeojsonPoints from './data/sample-geojson-points';
 import sampleGeojsonConfig from './data/sample-geojson-config';
 import sampleH3Data, {config as h3MapConfig} from './data/sample-hex-id-csv';
+import sampleAnimateTrip from './data/sample-animate-trip-data';
 import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
 import {addDataToMap, addNotification} from 'kepler.gl/actions';
 import {processCsvData, processGeojson} from 'kepler.gl/processors';
@@ -161,13 +162,15 @@ class App extends Component {
   }
 
   _loadSampleData() {
-    this._loadTripData();
+    this._loadPointData();
+    // this._loadGeojsonData();
+    this._loadTripGeoJson();
     // this._loadIconData();
     // this._loadGeojsonData();
     // this._loadH3HexagonData();
   }
 
-  _loadTripData() {
+  _loadPointData() {
     this.props.dispatch(
       addDataToMap({
         datasets: {
@@ -197,6 +200,19 @@ class App extends Component {
               id: 'test_icon_data'
             },
             data: processCsvData(sampleIconCsv)
+          }
+        ]
+      })
+    );
+  }
+
+  _loadTripGeoJson() {
+    this.props.dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {label: 'Trip animation'},
+            data: processGeojson(sampleAnimateTrip)
           }
         ]
       })
@@ -336,9 +352,7 @@ class App extends Component {
                   getState={state => state.demo.keplerGl}
                   width={width}
                   height={height - (showBanner ? BannerHeight : 0)}
-                  onSaveMap={
-                    this._isCloudStorageEnabled() && this._toggleCloudModal
-                  }
+                  onSaveMap={this._isCloudStorageEnabled() && this._toggleCloudModal}
                 />
               )}
             </AutoSizer>

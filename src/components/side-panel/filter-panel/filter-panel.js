@@ -27,8 +27,11 @@ import FieldSelector from 'components/common/field-selector';
 import {Trash, Clock} from 'components/common/icons';
 import SourceDataSelectorFactory from 'components/side-panel/common/source-data-selector';
 import {StyledPanelHeader} from 'components/common/styled-components';
-import * as Filters from 'components/filters';
 
+import SingleSelectFilterFactory from 'components/filters/single-select-filter';
+import MultiSelectFilterFactory from 'components/filters/multi-select-filter';
+import TimeRangeFilterFactory from 'components/filters/time-range-filter';
+import RangeFilterFactory from 'components/filters/range-filter';
 import {FILTER_TYPES, FILTER_COMPONENTS} from 'utils/filter-utils';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
 
@@ -44,6 +47,10 @@ const StyledFilterPanel = styled.div`
 const StyledFilterHeader = styled(StyledPanelHeader)`
   cursor: pointer;
   padding: 10px 12px;
+
+  .field-selector {
+    width: calc(100% - 58px);
+  }
 `;
 
 const StyledFilterContent = styled.div`
@@ -51,9 +58,28 @@ const StyledFilterContent = styled.div`
   padding: 12px;
 `;
 
-FilterPanelFactory.deps = [SourceDataSelectorFactory];
+FilterPanelFactory.deps = [
+  SourceDataSelectorFactory,
+  SingleSelectFilterFactory,
+  MultiSelectFilterFactory,
+  TimeRangeFilterFactory,
+  RangeFilterFactory
+];
 
-function FilterPanelFactory(SourceDataSelector) {
+function FilterPanelFactory(
+  SourceDataSelector,
+  SingleSelectFilter,
+  MultiSelectFilter,
+  TimeRangeFilter,
+  RangeFilter
+) {
+  const FilterComponents = {
+    SingleSelectFilter,
+    MultiSelectFilter,
+    TimeRangeFilter,
+    RangeFilter
+  };
+
   return class FilterPanel extends Component {
     static propTypes = {
       idx: PropTypes.number,
@@ -103,22 +129,21 @@ function FilterPanelFactory(SourceDataSelector) {
         toggleAnimation
       } = this.props;
       const {name, enlarged, type, dataId} = filter;
-      const FilterComponent = type && Filters[FILTER_COMPONENTS[type]];
+
+      const FilterComponent = type && FilterComponents[FILTER_COMPONENTS[type]];
       const allAvailableFields = this.availableFieldsSelector(this.props);
 
       return (
         <StyledFilterPanel className="filter-panel">
           <StyledFilterHeader className="filter-panel__header"
             labelRCGColorValues={datasets[dataId].color}>
-            <div style={{flexGrow: 1}}>
-              <FieldSelector
-                inputTheme="secondary"
-                fields={allAvailableFields}
-                value={name}
-                erasable={false}
-                onSelect={value => setFilter(idx, 'name', value.name)}
-              />
-            </div>
+            <FieldSelector
+              inputTheme="secondary"
+              fields={allAvailableFields}
+              value={name}
+              erasable={false}
+              onSelect={value => setFilter(idx, 'name', value.name)}
+            />
             <PanelHeaderAction
               id={filter.id}
               tooltip="delete"
