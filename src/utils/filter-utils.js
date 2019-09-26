@@ -203,7 +203,8 @@ export function getFieldDomain(data, field) {
  * @returns {Object[]} data
  * @returns {Number[]} filteredIndex
  */
-export function filterData(data, dataId, filters) {
+export function filterData(dataset, filters) {
+  const {data, dataId, fields} = dataset;
   if (!data || !dataId) {
     // why would there not be any data? are we over doing this?
     return {data: [], filteredIndex: []};
@@ -237,7 +238,7 @@ export function filterData(data, dataId, filters) {
       // generate 2 sets of
       // filter data used to calculate layer Domain
       const matchForDomain = dynamicDomainFilters.every(filter =>
-        isDataMatchFilter(d, filter, i)
+        isDataMatchFilter(d, filter, i, fields)
       );
 
       if (matchForDomain) {
@@ -245,7 +246,7 @@ export function filterData(data, dataId, filters) {
 
         // filter data for render
         const matchForRender = fixedDomainFilters.every(filter =>
-          isDataMatchFilter(d, filter, i)
+          isDataMatchFilter(d, filter, i, fields)
         );
 
         if (matchForRender) {
@@ -277,8 +278,10 @@ export function filterData(data, dataId, filters) {
  * @param {number} i
  * @returns {Boolean} - whether value falls in the range of the filter
  */
-export function isDataMatchFilter(data, filter, i) {
-  const val = data[filter.fieldIdx];
+export function isDataMatchFilter(data, filter, i, fields) {
+  const field = fields[filter.fieldIdx];
+  const val = field.mappedValue ? field.mappedValue[i] : data[filter.fieldIdx];
+  // const val = data[filter.fieldIdx];
   if (!filter.type) {
     return true;
   }
