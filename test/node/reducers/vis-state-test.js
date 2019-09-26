@@ -2745,6 +2745,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. show dropdown', t => {
   t.end();
 });
 
+// eslint-disable-next-line max-statements
 test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
   const initialState = CloneDeep(StateWFilesFiltersLayerColor.visState);
   const pointLayer = initialState.layers[0];
@@ -2760,7 +2761,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
   const prepareState = reducer(
     initialState,
     VisStateActions.layerColorUIChange(pointLayer, 'colorRange', {
-      showDropdown: true
+      showDropdown: 0
     })
   );
 
@@ -2778,7 +2779,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
     color: DEFAULT_COLOR_UI,
     colorRange: {
       ...DEFAULT_COLOR_UI,
-      showDropdown: true,
+      showDropdown: 0,
       colorRangeConfig: {
         type: 'all',
         steps: 6,
@@ -2817,7 +2818,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
     color: DEFAULT_COLOR_UI,
     colorRange: {
       ...DEFAULT_COLOR_UI,
-      showDropdown: true,
+      showDropdown: 0,
       colorRangeConfig: {
         type: 'all',
         steps: 6,
@@ -2838,12 +2839,94 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
   t.deepEqual(
     nextState2.layers[0].config.colorUI,
     expectedColorUI2,
-    'should update colorUI.colorRangeConfig.steps'
+    'should update colorUI.colorRangeConfig.reversed'
   );
   t.deepEqual(
     nextState2.layers[0].config.visConfig.colorRange,
     expectedColorRange2,
-    'should update visConfig.colorRange based on step'
+    'should update visConfig.colorRange based on reversed'
+  );
+
+  // update step when reversed is true
+  const nextState3 = reducer(
+    nextState,
+    VisStateActions.layerColorUIChange(nextState2.layers[0], 'colorRange', {
+      colorRangeConfig: {steps: 8}
+    })
+  );
+
+  const expectedColorUI3 = {
+    color: DEFAULT_COLOR_UI,
+    colorRange: {
+      ...DEFAULT_COLOR_UI,
+      showDropdown: 0,
+      colorRangeConfig: {
+        type: 'all',
+        steps: 8,
+        reversed: true,
+        custom: false
+      }
+    }
+  };
+
+  const expectedColorRange3 = {
+    name: 'Uber Viz Sequential 6',
+    type: 'sequential',
+    category: 'Uber',
+    colors: [
+      '#E6FAFA',
+      '#C1E5E6',
+      '#9DD0D4',
+      '#75BBC1',
+      '#4BA7AF',
+      '#00939C',
+      '#108188',
+      '#0E7077'
+    ].reverse(),
+    reversed: true
+  };
+
+  t.deepEqual(
+    nextState3.layers[0].config.colorUI,
+    expectedColorUI3,
+    'should update colorUI.colorRangeConfig.steps'
+  );
+  t.deepEqual(
+    nextState3.layers[0].config.visConfig.colorRange,
+    expectedColorRange3,
+    'should update visConfig.colorRange based on match and set reversed'
+  );
+
+  // set to a step that has no match
+  const nextState4 = reducer(
+    nextState,
+    VisStateActions.layerColorUIChange(nextState3.layers[0], 'colorRange', {
+      colorRangeConfig: {steps: 11}
+    })
+  );
+
+  const expectedColorUI4 = {
+    color: DEFAULT_COLOR_UI,
+    colorRange: {
+      ...DEFAULT_COLOR_UI,
+      showDropdown: 0,
+      colorRangeConfig: {
+        type: 'all',
+        steps: 11,
+        reversed: true,
+        custom: false
+      }
+    }
+  };
+  t.deepEqual(
+    nextState4.layers[0].config.colorUI,
+    expectedColorUI4,
+    'should update colorUI.colorRangeConfig to step 11'
+  );
+  t.deepEqual(
+    nextState4.layers[0].config.visConfig.colorRange,
+    expectedColorRange3,
+    'should note update visConfig.colorRange when no match'
   );
 
   t.end();

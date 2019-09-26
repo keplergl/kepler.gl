@@ -632,7 +632,6 @@ export default class Layer {
     if (typeof newConfig.showDropdown !== 'number') return;
 
     const {colorUI, visConfig} = this.config;
-
     this.updateLayerConfig({
       colorUI: {
         ...colorUI,
@@ -664,28 +663,32 @@ export default class Layer {
     const {steps, reversed} = colorUI[prop].colorRangeConfig;
     const colorRange = visConfig[prop];
     // find based on step or reversed
-    let update = colorRange;
+    let update;
     if (newConfig.colorRangeConfig.hasOwnProperty('steps')) {
       const group = getColorGroupByName(colorRange);
+
       if (group) {
         const sameGroup = COLOR_RANGES.filter(
           cr => getColorGroupByName(cr) === group
         );
 
-        update = (sameGroup.length ? sameGroup : COLOR_RANGES).find(
+        update = sameGroup.find(
           cr => cr.colors.length === steps
         );
 
-        if (colorRange.reversed && update) {
+        if (update && colorRange.reversed) {
           update = reverseColorRange(true, update);
         }
       }
     }
+
     if (newConfig.colorRangeConfig.hasOwnProperty('reversed')) {
-      update = reverseColorRange(reversed, update);
+      update = reverseColorRange(reversed, update || colorRange);
     };
 
-    this.updateLayerVisConfig({[prop]: update});
+    if (update) {
+      this.updateLayerVisConfig({[prop]: update});
+    }
   }
 
   /**
