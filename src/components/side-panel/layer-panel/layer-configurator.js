@@ -580,7 +580,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
           {/* Color */}
           <LayerConfigGroup label={'color'} collapsible>
             {layer.config.colorField ? (
-              <ColorRangeConfig {...visConfiguratorProps} />
+              <LayerColorRangeSelector {...visConfiguratorProps} />
             ) : (
               <LayerColorSelector {...layerConfiguratorProps} />
             )}

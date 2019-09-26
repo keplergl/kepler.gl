@@ -27,7 +27,8 @@ import tripGeojson, {
 import {
   DEFAULT_TEXT_LABEL,
   DEFAULT_COLOR_RANGE,
-  DEFAULT_LAYER_OPACITY
+  DEFAULT_LAYER_OPACITY,
+  DEFAULT_COLOR_UI
 } from 'layers/layer-factory';
 import {KeplerGlLayers} from 'layers';
 const {TripLayer} = KeplerGlLayers;
@@ -271,6 +272,10 @@ mergedLayer0.config = {
   sizeDomain: [0, 1],
   sizeScale: 'linear',
   sizeField: null,
+  colorUI: {
+    color: DEFAULT_COLOR_UI,
+    colorRange: DEFAULT_COLOR_UI
+  },
   visConfig: {
     opacity: DEFAULT_LAYER_OPACITY,
     thickness: 0.5,

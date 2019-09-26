@@ -595,6 +595,7 @@ export const StateWFilesFiltersLayerColor = mockStateWithLayerDimensions(
 export const StateWCustomMapStyle = mockStateWithCustomMapStyle();
 export const StateWSplitMaps = mockStateWithSplitMaps();
 export const StateWTrips = mockStateWithTripData();
+export const StateWTripGeojson = mockStateWithTripGeojson();
 
 export const expectedSavedTripLayer = {
   id: 'trip-0',
