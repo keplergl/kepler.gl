@@ -52,8 +52,9 @@ function LayerPanelFactory(LayerConfigurator) {
       onCloseConfig: PropTypes.func,
 
       layerTypeOptions: PropTypes.arrayOf(PropTypes.any),
-      layerVisConfigChange: PropTypes.func,
-      layerVisualChannelConfigChange: PropTypes.func
+      layerVisConfigChange: PropTypes.func.isRequired,
+      layerVisualChannelConfigChange: PropTypes.func.isRequired,
+      layerColorUIChange: PropTypes.func.isRequired
     };
 
     updateLayerConfig = newProp => {
@@ -66,6 +67,10 @@ function LayerPanelFactory(LayerConfigurator) {
 
     updateLayerVisConfig = newVisConfig => {
       this.props.layerVisConfigChange(this.props.layer, newVisConfig);
+    };
+
+    updateLayerColorUI = (...args) => {
+      this.props.layerColorUIChange(this.props.layer, ...args);
     };
 
     updateLayerTextLabel = (...args) => {
@@ -83,7 +88,7 @@ function LayerPanelFactory(LayerConfigurator) {
 
     _updateLayerLabel = ({target: {value}}) => {
       this.updateLayerConfig({label: value});
-    };
+    }
 
     _toggleVisibility = e => {
       e.stopPropagation();
@@ -134,6 +139,7 @@ function LayerPanelFactory(LayerConfigurator) {
               datasets={datasets}
               layerTypeOptions={layerTypeOptions}
               openModal={this.props.openModal}
+              updateLayerColorUI={this.updateLayerColorUI}
               updateLayerConfig={this.updateLayerConfig}
               updateLayerVisualChannelConfig={this.updateLayerVisualChannelConfig}
               updateLayerType={this.updateLayerType}

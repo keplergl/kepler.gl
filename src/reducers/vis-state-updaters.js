@@ -595,6 +595,22 @@ export const addFilterUpdater = (state, action) =>
       };
 
 /**
+ * Set layer color palette ui state
+ * @memberof visStateUpdaters
+ * @param {Object} state
+ * @param {Object} action
+ * @param {Object} action.prop
+ * @param {Object} action.newConfig
+ */
+export const layerColorUIChangeUpdater = (state, {oldLayer, prop, newConfig}) => {
+  const newLayer = oldLayer.updateLayerColorUI(prop, newConfig);
+  return {
+    ...state,
+    layers: state.layers.map(l => l.id === oldLayer.id ? newLayer : l)
+  };
+};
+
+/**
  * Start and end filter animation
  * @memberof visStateUpdaters
  * @param {Object} state `visState`

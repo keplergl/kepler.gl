@@ -51,7 +51,9 @@ function _toArray(item) {
   return [item];
 }
 
-const StyledDropdownSelect = styled.div`
+const StyledDropdownSelect = styled.div.attrs({
+  className: 'item-selector__dropdown'
+})`
   ${props =>
     props.inputTheme === 'secondary'
       ? props.theme.secondaryInput
@@ -79,7 +81,7 @@ const DropdownWrapper = styled.div`
   border: 0;
   width: 100%;
   left: 0;
-  z-index: 100;
+  z-index: ${props => props.theme.dropdownWrapperZ};
   position: absolute;
   bottom: ${props =>
     props.placement === 'top' ? props.theme.inputBoxHeight : 'auto'};
@@ -253,7 +255,7 @@ class ItemSelector extends Component {
     );
 
     const dropdownSelectProps = {
-      className: classnames(`item-selector__dropdown`, {
+      className: classnames({
         active: this.state.showTypeahead
       }),
       disabled: this.props.disabled,

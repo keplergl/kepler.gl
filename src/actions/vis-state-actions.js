@@ -108,6 +108,23 @@ export function layerVisConfigChange(oldLayer, newVisConfig) {
 }
 
 /**
+ * Set the color palette ui for layer color
+ * @memberOf visStateActions
+ * @param {Object} oldLayer - layer to be updated
+ * @param {String} prop - which color prop
+ * @param {object} newConfig - to be merged
+ * @public
+ */
+export function layerColorUIChange(oldLayer, prop, newConfig) {
+  return {
+    type: ActionTypes.LAYER_COLOR_UI_CHANGE,
+    oldLayer,
+    prop,
+    newConfig
+  };
+};
+
+/**
  * Update layer blending mode
  * @memberof visStateActions
  * @param {string} mode one of `additive`, `normal` and `subtractive`

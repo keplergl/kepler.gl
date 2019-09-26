@@ -49,6 +49,8 @@ const actionHandler = {
 
   [ActionTypes.LAYER_VISUAL_CHANNEL_CHANGE]: visStateUpdaters.layerVisualChannelChangeUpdater,
 
+  [ActionTypes.LAYER_COLOR_UI_CHANGE]: visStateUpdaters.layerColorUIChangeUpdater,
+
   [ActionTypes.LOAD_FILES]: visStateUpdaters.loadFilesUpdater,
 
   [ActionTypes.LOAD_FILES_ERR]: visStateUpdaters.loadFilesErrUpdater,

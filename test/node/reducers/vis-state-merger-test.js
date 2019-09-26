@@ -57,24 +57,6 @@ import {
   stateSavedV1 as savedStateV1Label,
   mergedLayers as mergedLayersV1Label
 } from 'test/fixtures/state-saved-v1-4';
-/*
-import {
-  mergedFiltersV0,
-  expectedMergedLayers,
-  expectedMergedInteractions
-} from 'test/fixtures/app-state-parsed';
-
-import {
-  mergedFiltersV1,
-  mergedLayersV1,
-  mergedInteractionV1
-} from 'test/fixtures/app-state-parsed-v1';
-
-import {
-  mergedLayersV1Split,
-  mergedSplitMapsV1
-} from 'test/fixtures/app-state-parsed-v1-split';
-*/
 
 // helpers
 import {cmpFilters, cmpLayers} from 'test/helpers/comparison-utils';

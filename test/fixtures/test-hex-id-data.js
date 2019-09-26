@@ -20,6 +20,7 @@
 
 import {KeplerGlLayers} from 'layers';
 const {H3Layer} = KeplerGlLayers;
+import {DEFAULT_COLOR_UI} from 'layers/layer-factory';
 
 export default `hex_id,value
 89283082c2fffff,64
@@ -274,7 +275,11 @@ mergedH3Layer.config = {
       anchor: 'start',
       alignment: 'center'
     }
-  ]
+  ],
+  colorUI: {
+    color: DEFAULT_COLOR_UI,
+    colorRange: DEFAULT_COLOR_UI
+  }
 };
 
 export const mergedFilters = [

@@ -73,7 +73,6 @@
     "@mapbox/geojson-extent": "^0.3.2",
     "@mapbox/geojson-normalize": "0.0.1",
     "@mapbox/vector-tile": "^1.3.1",
-    "array-move": "^2.0.0",
     "classnames": "^2.2.1",
     "colorbrewer": "^1.0.0",
     "d3-array": "^1.2.0",
@@ -103,6 +102,7 @@
     "moment": "^2.10.6",
     "pbf": "^3.1.0",
     "prop-types": "^15.6.0",
+    "react-color": "^2.17.3",
     "react-file-drop": "^0.1.9",
     "react-json-pretty": "^1.7.9",
     "react-map-gl": "^5.0.3",
@@ -210,7 +210,9 @@
     "sourceMap": false,
     "instrument": false,
     "exclude": [
-      "test/**/*.js"
+      "test/**/*.js",
+      "src/tasks/*.js",
+      "src/templates/*.js"
     ]
   },
   "maintainers": [

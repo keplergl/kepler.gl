@@ -38,6 +38,8 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 
 #### [Layer attributes](./d-layer-attributes.md)
 
+#### [Layer color](./d-color-attributes.md)
+
 #### [Filters](./e-filters.md)
 
 #### Map styles
@@ -50,8 +52,8 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 
 #### [Map settings](./g-map-settings.md)
 
-#### [Time Playback](./h-playback.md)
+#### [Time playback](./h-playback.md)
 
-#### [Save and Export](./k-save-and-export.md)
+#### [Save and export](./k-save-and-export.md)
 
 #### [FAQ](./i-FAQ.md)

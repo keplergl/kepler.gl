@@ -21,7 +21,7 @@
 import {KeplerGlLayers} from 'layers';
 const {PointLayer, ArcLayer, HexagonLayer, GeojsonLayer} = KeplerGlLayers;
 import {getDefaultInteraction} from 'utils/interaction-utils';
-import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
+import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from 'layers/layer-factory';
 
 export const savedStateV0 = {
   config: {
@@ -1037,6 +1037,7 @@ mergedLayer0.config = {
   sizeScale: 'linear',
   sizeDomain: [0, 1],
   textLabel: [DEFAULT_TEXT_LABEL],
+
   visConfig: {
     radius: 270.4,
     opacity: 0.8,
@@ -1115,6 +1116,10 @@ mergedLayer1.config = {
   sizeScale: 'linear',
   sizeDomain: [0, 1],
   textLabel: [DEFAULT_TEXT_LABEL],
+  colorUI: {
+    color: DEFAULT_COLOR_UI,
+    colorRange: DEFAULT_COLOR_UI
+  },
   visConfig: {
     opacity: 0.41,
     thickness: 2,
@@ -1177,6 +1182,10 @@ mergedLayer2.config = {
   sizeDomain: [78, 694],
   sizeScale: 'linear',
   textLabel: [DEFAULT_TEXT_LABEL],
+  colorUI: {
+    color: DEFAULT_COLOR_UI,
+    colorRange: DEFAULT_COLOR_UI
+  },
   visConfig: {
     radius: 10,
     opacity: 0.8,
@@ -1256,6 +1265,10 @@ mergedLayer3.config = {
   sizeScale: 'linear',
   sizeDomain: [0, 1],
   textLabel: [DEFAULT_TEXT_LABEL],
+  colorUI: {
+    color: DEFAULT_COLOR_UI,
+    colorRange: DEFAULT_COLOR_UI
+  },
   visConfig: {
     colorAggregation: 'maximum',
     sizeAggregation: 'average',
@@ -1327,6 +1340,10 @@ mergedLayer4.config = {
   sizeScale: 'linear',
   sizeDomain: [0, 1],
   textLabel: [DEFAULT_TEXT_LABEL],
+  colorUI: {
+    color: DEFAULT_COLOR_UI,
+    colorRange: DEFAULT_COLOR_UI
+  },
   heightField: null,
   heightDomain: [0, 1],
   heightScale: 'linear',

@@ -386,3 +386,26 @@ export const DEFAULT_TEXT_LABEL = {
   anchor: 'start',
   alignment: 'center'
 };
+
+export const DEFAULT_CUSTOM_PALETTE = {
+  name: 'Custom Palette',
+  type: 'custom',
+  category: 'Custom',
+  colors: []
+}
+
+export const DEFAULT_COLOR_UI = {
+  // customPalette in edit
+  customPalette: DEFAULT_CUSTOM_PALETTE,
+  // show color sketcher modal
+  showSketcher: false,
+  // show color range selection panel
+  showDropdown: false,
+  // color range selector config
+  colorRangeConfig: {
+    type: 'all',
+    steps: 6,
+    reversed: false,
+    custom: false
+  }
+};

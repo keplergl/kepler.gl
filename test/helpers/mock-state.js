@@ -26,11 +26,18 @@ import keplerGlReducer from 'reducers/core';
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStyleActions from 'actions/map-style-actions';
 import * as MapStateActions from 'actions/map-state-actions';
+import {addDataToMap} from 'actions/actions';
 import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
 
 // fixtures
 import {testFields, testAllData} from 'test/fixtures/test-csv-data';
 import {fields, rows} from 'test/fixtures/geojson';
+import {
+  fields as tripFields,
+  rows as tripRows,
+  config as tripConfig,
+  dataId as tripDataId
+} from 'test/fixtures/test-trip-data';
 
 const geojsonFields = cloneDeep(fields);
 const geojsonRows = cloneDeep(rows);
@@ -132,6 +139,25 @@ function mockStateWithFilters(state) {
   return prepareState;
 }
 
+/**
+ * Mock state will contain 1 heatmap, 1 point and 1 arc layer, 1 hexbin layer and 1 time filter
+ * @param {*} state
+ */
+function mockStateWithTripData() {
+  const initialState = cloneDeep(InitialState);
+
+  return keplerGlReducer(initialState, addDataToMap({
+    datasets: {
+      info: {
+        label: 'Sample Trips',
+        id: tripDataId
+      },
+      data: {fields: tripFields, rows: tripRows}
+    },
+    config: tripConfig
+  }));
+}
+
 function mockStateWithLayerDimensions(state) {
   const initialState = state || mockStateWithFileUpload();
 
@@ -151,22 +177,12 @@ function mockStateWithLayerDimensions(state) {
     'color'
   ];
 
-  const textLabelField = initialState.visState.datasets['190vdll3di'].fields.find(
-    f => f.name === 'date'
-  );
+  const textLabelField = initialState.visState.datasets[
+    '190vdll3di'
+  ].fields.find(f => f.name === 'date');
 
-  const textLabelPayload1 = [
-    layer0,
-    0,
-    'field',
-    textLabelField
-  ];
-  const textLabelPayload2 = [
-    layer0,
-    0,
-    'color',
-    [255, 0, 0]
-  ];
+  const textLabelPayload1 = [layer0, 0, 'field', textLabelField];
+  const textLabelPayload2 = [layer0, 0, 'color', [255, 0, 0]];
 
   // layers = [ 'point', 'geojson', 'hexagon' ]
   const reorderPayload = [[2, 0, 1]];
@@ -285,14 +301,6 @@ function mockStateWithSplitMaps(state) {
   return prepareState;
 }
 
-export const StateWFiles = mockStateWithFileUpload();
-export const StateWFilters = mockStateWithFilters();
-export const StateWFilesFiltersLayerColor = mockStateWithLayerDimensions(
-  StateWFilters
-);
-
-export const StateWCustomMapStyle = mockStateWithCustomMapStyle();
-export const StateWSplitMaps = mockStateWithSplitMaps();
 // saved hexagon layer
 export const expectedSavedLayer0 = {
   id: 'hexagon-2',
@@ -400,14 +408,16 @@ export const expectedSavedLayer1 = {
       lng: 'gps_data.lng',
       altitude: null
     },
-    textLabel: [{
-      ...DEFAULT_TEXT_LABEL,
-      field: {
-        name: 'date',
-        type: 'date'
-      },
-      color: [255, 0, 0]
-    }],
+    textLabel: [
+      {
+        ...DEFAULT_TEXT_LABEL,
+        field: {
+          name: 'date',
+          type: 'date'
+        },
+        color: [255, 0, 0]
+      }
+    ],
     isVisible: true,
     visConfig: {
       radius: 10,
@@ -426,7 +436,14 @@ export const expectedSavedLayer1 = {
         name: 'Global Warming',
         type: 'sequential',
         category: 'Uber',
-        colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
+        colors: [
+          '#5A1846',
+          '#900C3F',
+          '#C70039',
+          '#E3611C',
+          '#F1920E',
+          '#FFC300'
+        ]
       },
       strokeColor: null,
       radiusRange: [0, 50]
@@ -474,7 +491,14 @@ export const expectedLoadedLayer1 = {
         name: 'Global Warming',
         type: 'sequential',
         category: 'Uber',
-        colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
+        colors: [
+          '#5A1846',
+          '#900C3F',
+          '#C70039',
+          '#E3611C',
+          '#F1920E',
+          '#FFC300'
+        ]
       },
       filled: true,
       strokeColor: null,
@@ -489,14 +513,16 @@ export const expectedLoadedLayer1 = {
     strokeColorScale: 'quantile',
     sizeField: null,
     sizeScale: 'linear',
-    textLabel: [{
-      ...DEFAULT_TEXT_LABEL,
-      field: {
-        name: 'date',
-        type: 'date'
-      },
-      color: [255, 0, 0]
-    }]
+    textLabel: [
+      {
+        ...DEFAULT_TEXT_LABEL,
+        field: {
+          name: 'date',
+          type: 'date'
+        },
+        color: [255, 0, 0]
+      }
+    ]
   }
 };
 
@@ -531,7 +557,14 @@ export const expectedSavedLayer2 = {
         name: 'Global Warming',
         type: 'sequential',
         category: 'Uber',
-        colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
+        colors: [
+          '#5A1846',
+          '#900C3F',
+          '#C70039',
+          '#E3611C',
+          '#F1920E',
+          '#FFC300'
+        ]
       },
       strokeColor: [11, 11, 11],
       radius: 10,
@@ -591,7 +624,14 @@ export const expectedLoadedLayer2 = {
         name: 'Global Warming',
         type: 'sequential',
         category: 'Uber',
-        colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
+        colors: [
+          '#5A1846',
+          '#900C3F',
+          '#C70039',
+          '#E3611C',
+          '#F1920E',
+          '#FFC300'
+        ]
       },
       strokeColor: [11, 11, 11],
       radius: 10,
@@ -617,3 +657,13 @@ export const expectedLoadedLayer2 = {
     textLabel: [DEFAULT_TEXT_LABEL]
   }
 };
+
+export const StateWFiles = mockStateWithFileUpload();
+export const StateWFilters = mockStateWithFilters();
+export const StateWFilesFiltersLayerColor = mockStateWithLayerDimensions(
+  StateWFilters
+);
+
+export const StateWCustomMapStyle = mockStateWithCustomMapStyle();
+export const StateWSplitMaps = mockStateWithSplitMaps();
+export const StateWTrips = mockStateWithTripData();

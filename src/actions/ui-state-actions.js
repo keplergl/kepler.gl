@@ -233,7 +233,7 @@ export const setUserMapboxAccessToken = createAction(
 );
 
 /**
- * Set the expor tmap format (html, json)
+ * Set the export map format (html, json)
  * @memberOf uiStateActions
  * @param {string} payload - map format
  * @public

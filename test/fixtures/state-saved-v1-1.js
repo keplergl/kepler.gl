@@ -20,7 +20,7 @@
 
 import GeojsonLayer from 'layers/geojson-layer/geojson-layer';
 import {Messages, Crosshairs} from 'components/common/icons';
-import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
+import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from 'layers/layer-factory';
 import {getDefaultInteraction} from 'utils/interaction-utils';
 
 export const savedStateV1 = {
@@ -911,6 +911,10 @@ mergedLayer0.config = {
   radiusField: null,
   radiusScale: 'linear',
   radiusDomain: [0, 1],
+  colorUI: {
+    color: DEFAULT_COLOR_UI,
+    colorRange: DEFAULT_COLOR_UI
+  },
   visConfig: {
     opacity: 0.8,
     thickness: 2,
@@ -2717,6 +2721,10 @@ mergedLayer1.config = {
   radiusField: null,
   radiusScale: 'linear',
   radiusDomain: [0, 1],
+  colorUI: {
+    color: DEFAULT_COLOR_UI,
+    colorRange: DEFAULT_COLOR_UI
+  },
   visConfig: {
     opacity: 0.8,
     thickness: 7.6,

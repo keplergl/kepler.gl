@@ -22,96 +22,34 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import uniq from 'lodash.uniq';
 import styled from 'styled-components';
+import {createSelector} from 'reselect';
+
 import ItemSelector from 'components/common/item-selector/item-selector';
 import {PanelLabel} from 'components/common/styled-components';
-import RangeSlider from 'components/common/range-slider';
 import Switch from 'components/common/switch';
 import ColorPalette from './color-palette';
-
+import CustomPalette from './custom-palette';
 import {COLOR_RANGES} from 'constants/color-ranges';
 import {numberSort} from 'utils/data-utils';
+import {reverseColorRange} from 'utils/color-utils';
 
-const ALL_TYPES = uniq(COLOR_RANGES.map(c => c.type).concat(['all']));
-const ALL_STEPS = uniq(COLOR_RANGES.map(d => d.colors.length)).sort(numberSort);
+export const ALL_TYPES = uniq(
+  COLOR_RANGES.map(c => c.type)
+    .filter(ctype => ctype)
+    .concat(['all', 'custom'])
+);
+
+export const ALL_STEPS = uniq(COLOR_RANGES.map(d => d.colors.length)).sort(numberSort);
 
 const StyledColorConfig = styled.div`
   padding: 12px 12px 0 12px;
 `;
 
-const ColorRangeSelector = styled.div`
+const StyledColorRangeSelector = styled.div.attrs({
+  className: 'color-range-selector'
+})`
   padding-bottom: 12px;
 `;
-export default class ColorRangeSelect extends Component {
-  static propTypes = {
-    colorRanges: PropTypes.arrayOf(PropTypes.any),
-    selectedColorRange: PropTypes.object,
-    onSelectColorRange: PropTypes.func.isRequired
-  };
-
-  static defaultProps = {
-    colorRanges: COLOR_RANGES,
-    onSelectColorRange: () => {}
-  };
-
-  state = {
-    config: {
-      type: {
-        type: 'select',
-        value: 'all',
-        options: ALL_TYPES
-      },
-      steps: {
-        type: 'select',
-        value: 6,
-        options: ALL_STEPS
-      },
-      reversed: {
-        type: 'switch',
-        value: false,
-        options: [true, false]
-      }
-    }
-  };
-
-  _updateConfig = ({key, value}) => {
-    const currentValue = this.state.config[key].value;
-    if (value !== currentValue) {
-      this.setState({
-        config: {
-          ...this.state.config,
-          [key]: {
-            ...this.state.config[key],
-            value
-          }
-        }
-      });
-    }
-  };
-
-  render() {
-    const {config} = this.state;
-    return (
-      <ColorRangeSelector className="color-range-selector">
-        <StyledColorConfig>
-          {Object.keys(config).map(key => (
-            <PaletteConfig
-              key={key}
-              label={key}
-              config={config[key]}
-              onChange={value => this._updateConfig({key, value})}
-            />
-          ))}
-        </StyledColorConfig>
-        <ColorPaletteGroup
-          config={config}
-          colorRanges={this.props.colorRanges}
-          onSelect={this.props.onSelectColorRange}
-          selected={this.props.selectedColorRange}
-        />
-      </ColorRangeSelector>
-    );
-  }
-}
 
 const StyledPaletteConfig = styled.div`
   margin-bottom: 8px;
@@ -129,10 +67,141 @@ const StyledPaletteConfig = styled.div`
   }
 `;
 
-const PaletteConfig = ({
-  category,
+const CONFIG_SETTINGS = {
+  type: {
+    type: 'select',
+    options: ALL_TYPES
+  },
+  steps: {
+    type: 'select',
+    options: ALL_STEPS
+  },
+  reversed: {
+    type: 'switch',
+    options: [true, false]
+  },
+  custom: {
+    label: 'Custom Palette',
+    type: 'switch',
+    options: [true, false]
+  }
+};
+
+export default class ColorRangeSelect extends Component {
+  static propTypes = {
+    colorPaletteUI: PropTypes.object.isRequired,
+    selectedColorRange: PropTypes.object.isRequired,
+    onSelectColorRange: PropTypes.func.isRequired,
+    setColorPaletteUI: PropTypes.func.isRequired,
+    // optional
+    colorRanges: PropTypes.arrayOf(PropTypes.any)
+  };
+
+  static defaultProps = {
+    colorRanges: COLOR_RANGES,
+    onSelectColorRange: () => {},
+    setColorPaletteUI: () => {}
+  };
+
+  colorRangesSelector = props => props.colorRanges;
+  configTypeSelector = props => props.colorPaletteUI.colorRangeConfig.type;
+  configStepSelector = props => props.colorPaletteUI.colorRangeConfig.steps;
+  filteredColorRange = createSelector(
+    this.colorRangesSelector,
+    this.configTypeSelector,
+    this.configStepSelector,
+    (colorRanges, type, steps) => {
+      return colorRanges.filter(colorRange => {
+        const isType = type === 'all' || type === colorRange.type;
+        const isStep = Number(steps) === colorRange.colors.length;
+
+        return isType && isStep;
+      });
+    }
+  );
+
+  _updateConfig = ({key, value}) => {
+    this._setColorRangeConfig({[key]: value});
+  };
+
+  _onSetCustomPalette = config => {
+    this.props.setColorPaletteUI({
+      customPalette: config
+    });
+  };
+
+  _setColorRangeConfig = newConfig => {
+    this.props.setColorPaletteUI({
+      colorRangeConfig: newConfig
+    });
+  };
+
+  _onCustomPaletteCancel = newConfig => {
+    this.props.setColorPaletteUI({
+      showSketcher: false,
+      colorRangeConfig: {custom: false}
+    });
+  };
+
+  _onToggleSketcher = val => {
+    this.props.setColorPaletteUI({
+      showSketcher: val
+    });
+  };
+
+  render() {
+    const {
+      customPalette,
+      showSketcher,
+      colorRangeConfig
+    } = this.props.colorPaletteUI;
+
+    const filteredColorRanges = this.filteredColorRange(this.props);
+
+    return (
+      <StyledColorRangeSelector>
+        <StyledColorConfig>
+          {(colorRangeConfig.custom
+            ? ['custom']
+            : Object.keys(colorRangeConfig)
+          ).map(key => (
+            <PaletteConfig
+              key={key}
+              label={CONFIG_SETTINGS[key].label || key}
+              config={CONFIG_SETTINGS[key]}
+              value={colorRangeConfig[key]}
+              onChange={value => this._updateConfig({key, value})}
+            />
+          ))}
+        </StyledColorConfig>
+
+        {colorRangeConfig.custom ? (
+          <CustomPalette
+            customPalette={customPalette}
+            showSketcher={showSketcher}
+            selected={this.props.selectedColorRange}
+            onApply={this.props.onSelectColorRange}
+            onToggleSketcher={this._onToggleSketcher}
+            setCustomPalette={this._onSetCustomPalette}
+            onCancel={this._onCustomPaletteCancel}
+          />
+        ) : (
+          <ColorPaletteGroup
+            colorRanges={filteredColorRanges}
+            onSelect={this.props.onSelectColorRange}
+            selected={this.props.selectedColorRange}
+            reversed={colorRangeConfig.reversed}
+          />
+        )}
+      </StyledColorRangeSelector>
+    );
+  }
+}
+
+export const PaletteConfig = ({
   label,
-  config: {type, value, options},
+  value,
+  config: {type, options},
   onChange
 }) => (
   <StyledPaletteConfig
@@ -153,26 +222,10 @@ const PaletteConfig = ({
         />
       </div>
     )}
-    {type === 'slider' && (
-      <div className="color-palette__config__slider">
-        <div className="color-palette__config__slider__slider">
-          <RangeSlider
-            range={options}
-            value0={options[0]}
-            value1={value}
-            step={1}
-            isRanged={false}
-            showInput={false}
-            onChange={val => onChange(val[1])}
-          />
-        </div>
-        <div className="color-palette__config__slider__number">{value}</div>
-      </div>
-    )}
     {type === 'switch' && (
       <Switch
         checked={value}
-        id={`${category}-${label}-toggle`}
+        id={`${label}-toggle`}
         onChange={() => onChange(!value)}
         secondary
       />
@@ -180,7 +233,9 @@ const PaletteConfig = ({
   </StyledPaletteConfig>
 );
 
-const StyledColorRange = styled.div`
+const StyledColorRange = styled.div.attrs({
+  className: 'color-palette-outer'
+})`
   padding: 0 8px;
   :hover {
     background-color: ${props => props.theme.panelBackgroundHover};
@@ -188,48 +243,28 @@ const StyledColorRange = styled.div`
   }
 `;
 
-const ColorPaletteGroup = ({config = {}, onSelect, selected, colorRanges}) => {
-  const {steps, reversed, type} = config;
+export const ColorPaletteGroup = ({reversed, onSelect, selected, colorRanges}) => (
+  <div className="color-palette__group">
+    {colorRanges.map((colorRange, i) => (
+      <StyledColorRange
 
-  const filtered = colorRanges.filter(colorRange => {
-    const isType =
-      !type || type.value === 'all' || type.value === colorRange.type;
-    const isStep = !steps || Number(steps.value) === colorRange.colors.length;
-
-    return isType && isStep;
-  });
-
-  const isReversed = Boolean(reversed && reversed.value);
-
-  return (
-    <div className="color-palette__group">
-      {filtered.map(colorRange => (
-        <StyledColorRange
-          className="color-ranges"
-          key={colorRange.name}
-          onClick={e =>
-            onSelect(
-              {
-                ...colorRange,
-                reversed: isReversed,
-                colors: isReversed
-                  ? colorRange.colors.slice().reverse()
-                  : colorRange.colors
-              },
-              e
-            )
+        key={`${colorRange.name}-${i}`}
+        onClick={e =>
+          onSelect(
+            reversed ? reverseColorRange(true, colorRange) : colorRange,
+            e
+          )
+        }
+      >
+        <ColorPalette
+          colors={colorRange.colors}
+          isReversed={reversed}
+          isSelected={
+            colorRange.name === selected.name &&
+            reversed === Boolean(selected.reversed)
           }
-        >
-          <ColorPalette
-            colors={colorRange.colors}
-            isReversed={isReversed}
-            isSelected={
-              colorRange.name === selected.name &&
-              isReversed === Boolean(selected.reversed)
-            }
-          />
-        </StyledColorRange>
-      ))}
-    </div>
-  );
-};
+        />
+      </StyledColorRange>
+    ))}
+  </div>
+);
