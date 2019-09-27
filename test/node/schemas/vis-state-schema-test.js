@@ -179,7 +179,7 @@ test('#visStateSchema -> v1 -> save animation', t => {
     'visState should have all 5 entries');
 
   const expectedSavedLayers = [expectedSavedTripLayer];
-  const expectedAnimationConfig = {currentTime: 1565577261000};
+  const expectedAnimationConfig = {currentTime: 1565577261000, speed: 1};
   cmpSavedLayers(t, expectedSavedLayers, vsToSave.layers);
 
   t.deepEqual(vsToSave.animationConfig, expectedAnimationConfig, 'should save animationConfig');
