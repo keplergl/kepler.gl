@@ -688,7 +688,8 @@ export const propertiesV1 = {
   animationConfig: new Schema({
     version: VERSIONS.v1,
     properties: {
-      currentTime: null
+      currentTime: null,
+      speed: null
     },
     key: 'animationConfig'
   })

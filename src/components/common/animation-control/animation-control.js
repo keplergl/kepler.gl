@@ -110,7 +110,7 @@ function AnimationControlFactory(
 
     _nextFrame = () => {
       this._animation = null;
-      const {currentTime, domain, speed} = this.props.animationConfig;
+      const {currentTime, domain, speed = 1} = this.props.animationConfig;
       const adjustedSpeed = ((domain[1] - domain[0]) / BASE_SPEED) * speed;
       const nextTime =
         currentTime + speed > domain[1]
