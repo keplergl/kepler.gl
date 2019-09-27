@@ -303,8 +303,9 @@ export function mergeAnimationConfig(state, animation) {
     return {
       ...state,
       animationConfig: {
-        domain: null,
-        currentTime: animation.currentTime
+        ...state.animationConfig,
+        ...animation,
+        domain: null
       }
     }
   }
