@@ -30,7 +30,7 @@ export default class CodeAlt extends Component {
 
   static defaultProps = {
     height: '16px',
-    predefinedClassName: 'data-ex-icons-crosshairs'
+    predefinedClassName: 'data-ex-icons-codealt'
   };
 
   render() {

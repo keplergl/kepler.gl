@@ -30,7 +30,7 @@ import {media} from 'styles/media-breakpoints';
 const ModalContentWrapper = styled.div`
   overflow-y: scroll;
   max-width: 70vw;
-  max-height: 70vh;
+  max-height: 85vh;
   padding: 24px 72px 40px;
   position: relative;
   top: 92px;

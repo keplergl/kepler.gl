@@ -23,7 +23,7 @@ import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
 import styled from 'styled-components';
 
-import {Tooltip, IconRoundSmall} from 'components/common/styled-components';
+import {Tooltip, IconRoundSmall, MapControlButton} from 'components/common/styled-components';
 import MapLayerSelector from 'components/common/map-layer-selector';
 import KeplerGlLogo from 'components/common/logo';
 import MapLegend from './map-legend';
@@ -51,39 +51,37 @@ const StyledMapControlAction = styled.div`
   justify-content: flex-end;
 `;
 
-const StyledMapControlButton = styled.div`
-  align-items: center;
-  background-color: ${props =>
-    props.active
-      ? props.theme.secondaryBtnActBgd
-      : props.theme.secondaryBtnBgd};
-  border-radius: 18px;
-  border: 0;
-  box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.16);
-  color: ${props =>
-    props.active
-      ? props.theme.secondaryBtnActColor
-      : props.theme.secondaryBtnColor};
-  cursor: pointer;
-  display: flex;
-  height: 36px;
-  justify-content: center;
-  margin: 0;
-  outline: none;
-  padding: 0;
-  transition: ${props => props.theme.transition};
-  width: 36px;
+// const MapControlButton = styled.div.attrs({
+//   className: 'map-control-button'
+// })`
+//   align-items: center;
+//   background-color: ${props =>
+//     props.active
+//       ? props.theme.panelBackgroundHover
+//       : props.theme.panelBackground};
+//   border: 0;
+//   box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.16);
+//   color: ${props => props.theme.primaryBtnColor};
+//   cursor: pointer;
+//   display: flex;
+//   height: 32px;
+//   justify-content: center;
+//   margin: 0;
+//   outline: none;
+//   padding: 0;
+//   transition: ${props => props.theme.transition};
+//   width: 32px;
 
-  :focus {
-    outline: none;
-  }
+//   :focus {
+//     outline: none;
+//   }
 
-  :hover {
-    cursor: pointer;
-    background-color: ${props => props.theme.secondaryBtnActBgd};
-    color: ${props => props.theme.secondaryBtnActColor};
-  }
-`;
+//   :hover {
+//     cursor: pointer;
+//     background-color: ${props => props.theme.secondaryBtnActBgd};
+//     color: ${props => props.theme.secondaryBtnActColor};
+//   }
+// `;
 
 const StyledMapControlPanel = styled.div`
   background-color: ${props => props.theme.mapPanelBackgroundColor};
@@ -132,7 +130,7 @@ const LayerSelectorPanel = ({
   toggleMenuPanel
 }) =>
   !isActive ? (
-    <StyledMapControlButton
+    <MapControlButton
       key={1}
       onClick={e => {
         e.preventDefault();
@@ -147,7 +145,7 @@ const LayerSelectorPanel = ({
         id="toggle-layer"
         message={isActive ? 'Hide layer panel' : 'Show layer panel'}
       />
-    </StyledMapControlButton>
+    </MapControlButton>
   ) : (
     <MapControlPanel header="Visible layers" onClick={toggleMenuPanel}>
       <MapLayerSelector layers={items} onMapToggleLayer={onMapToggleLayer} />
@@ -179,7 +177,7 @@ const MapControlPanel = ({children, header, onClick, scale = 1, isExport}) => (
 
 const MapLegendPanel = ({layers, isActive, scale, toggleMenuPanel, isExport}) =>
   !isActive ? (
-    <StyledMapControlButton
+    <MapControlButton
       key={2}
       data-tip
       data-for="show-legend"
@@ -191,7 +189,7 @@ const MapLegendPanel = ({layers, isActive, scale, toggleMenuPanel, isExport}) =>
     >
       <Legend height="22px" />
       <MapLegendTooltip id="show-legend" message={'show legend'} />
-    </StyledMapControlButton>
+    </MapControlButton>
   ) : (
     <MapControlPanel
       scale={scale}
@@ -268,14 +266,12 @@ const MapControlFactory = () => {
         splitMap = {}
       } = mapControls;
 
-      // const items = this.initialDataSelector(this.props);
-
       return (
         <StyledMapControl className="map-control">
           {/* Split Map */}
           {splitMap.show ? (
             <ActionPanel key={0}>
-              <StyledMapControlButton
+              <MapControlButton
                 active={isSplit}
                 onClick={e => {
                   e.preventDefault();
@@ -293,7 +289,7 @@ const MapControlFactory = () => {
                     isSplit ? 'Close current panel' : 'Switch to dual map view'
                   }
                 />
-              </StyledMapControlButton>
+              </MapControlButton>
             </ActionPanel>
           ) : null}
 
@@ -312,7 +308,7 @@ const MapControlFactory = () => {
           {/* 3D Map */}
           {toggle3d.show ? (
             <ActionPanel key={2}>
-              <StyledMapControlButton
+              <MapControlButton
                 onClick={e => {
                   e.preventDefault();
                   onTogglePerspective();
@@ -327,7 +323,7 @@ const MapControlFactory = () => {
                   id="action-3d"
                   message={dragRotate ? 'Disable 3D Map' : '3D Map'}
                 />
-              </StyledMapControlButton>
+              </MapControlButton>
             </ActionPanel>
           ) : null}
 
