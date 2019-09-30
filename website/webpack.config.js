@@ -29,16 +29,16 @@ const libSources = join(rootDir, 'src');
 const console = require('global/console');
 
 const BABEL_CONFIG = {
-  presets: [
-    '@babel/preset-env',
-    '@babel/preset-react'
-  ],
+  presets: ['@babel/preset-env', '@babel/preset-react'],
   plugins: [
-    ['@babel/plugin-proposal-decorators', {legacy: true }],
+    ['@babel/plugin-proposal-decorators', {legacy: true}],
     '@babel/plugin-proposal-class-properties',
-    ['@babel/transform-runtime', {
-      regenerator: true
-    }],
+    [
+      '@babel/transform-runtime',
+      {
+        regenerator: true
+      }
+    ],
     '@babel/plugin-syntax-dynamic-import',
     '@babel/plugin-syntax-import-meta',
     '@babel/plugin-proposal-json-strings',
@@ -63,29 +63,28 @@ const BABEL_CONFIG = {
     [
       'module-resolver',
       {
-        root: [
-          '../src'
-        ],
+        root: ['../src'],
         alias: {
           test: '../test'
         }
       }
     ],
-    ['search-and-replace', {
-      rules: [
-        {
-          search: '__PACKAGE_VERSION__',
-          replace: KeplerPackage.version
-        }
-      ]
-    }]
+    [
+      'search-and-replace',
+      {
+        rules: [
+          {
+            search: '__PACKAGE_VERSION__',
+            replace: KeplerPackage.version
+          }
+        ]
+      }
+    ]
   ]
 };
 
 const COMMON_CONFIG = {
-  entry: [
-    './src/main'
-  ],
+  entry: ['./src/main'],
   output: {
     path: resolve(__dirname, 'build'),
     filename: 'bundle.js',
@@ -197,21 +196,35 @@ module.exports = env => {
   if (env.prod) {
     if (!process.env.MapboxAccessToken) {
       logError('Error! MapboxAccessToken is not defined');
-      logInstruction(`Make sure to run "export MapboxAccessToken=<token>" before deploy the website`);
-      logInstruction('You can get the token at https://www.mapbox.com/help/how-access-tokens-work/');
+      logInstruction(
+        `Make sure to run "export MapboxAccessToken=<token>" before deploy the website`
+      );
+      logInstruction(
+        'You can get the token at https://www.mapbox.com/help/how-access-tokens-work/'
+      );
       throw new Error('Missing Mapbox Access token');
     }
     if (!process.env.DropboxClientId) {
       logError('Error! DropboxClientId is not defined');
-      logInstruction(`Make sure to run "export MapboxExportToken=<token>" before deploy the website`);
-      logInstruction('You can get the token at https://www.dropbox.com/developers');
+      logInstruction(
+        `Make sure to run "export MapboxExportToken=<token>" before deploy the website`
+      );
+      logInstruction(
+        'You can get the token at https://www.dropbox.com/developers'
+      );
       throw new Error('Missing Export DropboxClientId Access token');
     }
     if (!process.env.MapboxExportToken) {
       logError('Error! MapboxExportToken is not defined');
-      logInstruction(`Make sure to run "export MapboxExportToken=<token>" before deploy the website`);
-      logInstruction('You can get the token at https://www.mapbox.com/help/how-access-tokens-work/');
-      throw new Error('Missing Export Mapbox Access token, used to generate the single map file');
+      logInstruction(
+        `Make sure to run "export MapboxExportToken=<token>" before deploy the website`
+      );
+      logInstruction(
+        'You can get the token at https://www.mapbox.com/help/how-access-tokens-work/'
+      );
+      throw new Error(
+        'Missing Export Mapbox Access token, used to generate the single map file'
+      );
     }
     config = addProdConfig(config);
   }

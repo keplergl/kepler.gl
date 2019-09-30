@@ -67,6 +67,8 @@ app.listen(port, ADDRESS, function onStart(err) {
   if (err) {
     console.log(err);
   }
-  console.info(`==> 🌎 Listening on port ${port}. Open up http://${ADDRESS}:${port}/ in your browser.`);
+  console.info(
+    `==> 🌎 Listening on port ${port}. Open up http://${ADDRESS}:${port}/ in your browser.`
+  );
 });
 /* eslint-enable no-console */
