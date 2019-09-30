@@ -40,21 +40,28 @@ const actionHandler = {
   [ActionTypes.SET_RESOLUTION]: uiStateUpdaters.setResolutionUpdater,
   [ActionTypes.TOGGLE_LEGEND]: uiStateUpdaters.toggleLegendUpdater,
   [ActionTypes.START_EXPORTING_IMAGE]: uiStateUpdaters.startExportingImage,
-  [ActionTypes.SET_EXPORT_IMAGE_DATA_URI]: uiStateUpdaters.setExportImageDataUri,
+  [ActionTypes.SET_EXPORT_IMAGE_DATA_URI]:
+    uiStateUpdaters.setExportImageDataUri,
   [ActionTypes.SET_EXPORT_IMAGE_ERROR]: uiStateUpdaters.setExportImageError,
   [ActionTypes.CLEANUP_EXPORT_IMAGE]: uiStateUpdaters.cleanupExportImage,
 
-  [ActionTypes.SET_EXPORT_SELECTED_DATASET]: uiStateUpdaters.setExportSelectedDatasetUpdater,
+  [ActionTypes.SET_EXPORT_SELECTED_DATASET]:
+    uiStateUpdaters.setExportSelectedDatasetUpdater,
   [ActionTypes.SET_EXPORT_DATA_TYPE]: uiStateUpdaters.setExportDataTypeUpdater,
   [ActionTypes.SET_EXPORT_FILTERED]: uiStateUpdaters.setExportFilteredUpdater,
   [ActionTypes.SET_EXPORT_DATA]: uiStateUpdaters.setExportDataUpdater,
-  [ActionTypes.SET_USER_MAPBOX_ACCESS_TOKEN]: uiStateUpdaters.setUserMapboxAccessTokenUpdater,
+  [ActionTypes.SET_USER_MAPBOX_ACCESS_TOKEN]:
+    uiStateUpdaters.setUserMapboxAccessTokenUpdater,
   [ActionTypes.SET_EXPORT_MAP_FORMAT]: uiStateUpdaters.setExportMapFormat,
   [ActionTypes.SET_EXPORT_MAP_HTML_MODE]: uiStateUpdaters.setExportMapHTMLMode
 };
 
 /* Reducer */
 export const uiStateReducerFactory = (initialState = {}) =>
-  handleActions(actionHandler, {...uiStateUpdaters.INITIAL_UI_STATE, ...initialState, initialState});
+  handleActions(actionHandler, {
+    ...uiStateUpdaters.INITIAL_UI_STATE,
+    ...initialState,
+    initialState
+  });
 
 export default uiStateReducerFactory();

@@ -35,13 +35,20 @@ const actionHandler = {
   [ActionTypes.LOAD_MAP_STYLES]: mapStyleUpdaters.loadMapStylesUpdater,
   [ActionTypes.LOAD_MAP_STYLE_ERR]: mapStyleUpdaters.loadMapStyleErrUpdater,
   [ActionTypes.RECEIVE_MAP_CONFIG]: mapStyleUpdaters.receiveMapConfigUpdater,
-  [ActionTypes.LOAD_CUSTOM_MAP_STYLE]: mapStyleUpdaters.loadCustomMapStyleUpdater,
+  [ActionTypes.LOAD_CUSTOM_MAP_STYLE]:
+    mapStyleUpdaters.loadCustomMapStyleUpdater,
   [ActionTypes.ADD_CUSTOM_MAP_STYLE]: mapStyleUpdaters.addCustomMapStyleUpdater,
-  [ActionTypes.RESET_MAP_CONFIG]: mapStyleUpdaters.resetMapConfigMapStyleUpdater,
-  [ActionTypes.SET_3D_BUILDING_COLOR]: mapStyleUpdaters.set3dBuildingColorUpdater
+  [ActionTypes.RESET_MAP_CONFIG]:
+    mapStyleUpdaters.resetMapConfigMapStyleUpdater,
+  [ActionTypes.SET_3D_BUILDING_COLOR]:
+    mapStyleUpdaters.set3dBuildingColorUpdater
 };
 
 export const mapStyleReducerFactory = (initialState = {}) =>
-  handleActions(actionHandler, {...mapStyleUpdaters.INITIAL_MAP_STYLE, ...initialState, initialState});
+  handleActions(actionHandler, {
+    ...mapStyleUpdaters.INITIAL_MAP_STYLE,
+    ...initialState,
+    initialState
+  });
 
 export default mapStyleReducerFactory();

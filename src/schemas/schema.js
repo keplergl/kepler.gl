@@ -49,7 +49,11 @@ export default class Schema {
                   ? // if it's another schema
                     this.properties[key][operation]
                     ? // call save or load
-                      this.properties[key][internal](node[key], [...parents, node], accu)
+                      this.properties[key][internal](
+                        node[key],
+                        [...parents, node],
+                        accu
+                      )
                     : {}
                   : {[key]: node[key]}
                 : {})
@@ -66,9 +70,7 @@ export default class Schema {
   outdatedVersionError() {
     if (!this._isCurrentVersion()) {
       Console.error(
-        `${this.key} ${
-          this.version
-        } is outdated. save should not be called anymore`
+        `${this.key} ${this.version} is outdated. save should not be called anymore`
       );
     }
   }

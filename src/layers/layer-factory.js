@@ -52,7 +52,7 @@ export const DEFAULT_CUSTOM_PALETTE = {
   type: 'custom',
   category: 'Custom',
   colors: []
-}
+};
 
 export const DEFAULT_COLOR_UI = {
   // customPalette in edit

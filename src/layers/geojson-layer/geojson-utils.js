@@ -36,7 +36,6 @@ export function parseGeoJsonRawFeature(rawFeature) {
 
     return normalized.features[0];
   } else if (typeof rawFeature === 'string') {
-
     return parseGeometryFromString(rawFeature);
   } else if (Array.isArray(rawFeature)) {
     // Support GeoJson  LineString as an array of points
@@ -59,7 +58,6 @@ export function parseGeoJsonRawFeature(rawFeature) {
  * @returns {{}}
  */
 export function getGeojsonDataMaps(allData, getFeature) {
-
   const acceptableTypes = [
     'Point',
     'MultiPoint',
@@ -88,7 +86,6 @@ export function getGeojsonDataMaps(allData, getFeature) {
 
       dataToFeature[index] = feature;
     }
-
   }
 
   return dataToFeature;

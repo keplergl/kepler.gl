@@ -40,4 +40,4 @@ export default class ArrowLeft extends Component {
       </Base>
     );
   }
-};
+}

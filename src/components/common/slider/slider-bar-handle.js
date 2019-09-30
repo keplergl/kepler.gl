@@ -30,7 +30,8 @@ const StyledSlider = styled.div`
     props.active
       ? props.theme.sliderBarHoverColor
       : props.theme.sliderBarColor};
-  ${props => `${props.vertical ? 'width' : 'height'}: ${props.theme.sliderBarHeight}px`};
+  ${props =>
+    `${props.vertical ? 'width' : 'height'}: ${props.theme.sliderBarHeight}px`};
   border-radius: ${props => props.theme.sliderBarRadius};
 
   :hover {
@@ -41,7 +42,6 @@ const StyledSlider = styled.div`
 function nope() {}
 
 export default class SliderBarHandle extends Component {
-
   static propTypes = {
     width: PropTypes.number,
     left: PropTypes.string,
@@ -74,13 +74,15 @@ export default class SliderBarHandle extends Component {
   render() {
     const {width, v0Left} = this.props;
 
-    const style = this.props.vertical ? {
-      height: `${width}%`,
-      bottom: `${-100 + width + v0Left}%`
-    } : {
-      width: `${width}%`,
-      left: `${v0Left}%`
-    };
+    const style = this.props.vertical
+      ? {
+          height: `${width}%`,
+          bottom: `${-100 + width + v0Left}%`
+        }
+      : {
+          width: `${width}%`,
+          left: `${v0Left}%`
+        };
 
     return (
       <StyledSlider
@@ -89,9 +91,13 @@ export default class SliderBarHandle extends Component {
           'kg-range-slider__bar--active': this.state.mouseOver
         })}
         style={style}
-        onMouseDown={this.props.enableBarDrag ? this.mouseEvent.handleMouseDown : nope}
-        onTouchStart={this.props.enableBarDrag ? this.mouseEvent.handleTouchStart : nope}
+        onMouseDown={
+          this.props.enableBarDrag ? this.mouseEvent.handleMouseDown : nope
+        }
+        onTouchStart={
+          this.props.enableBarDrag ? this.mouseEvent.handleTouchStart : nope
+        }
       />
     );
   }
-};
+}

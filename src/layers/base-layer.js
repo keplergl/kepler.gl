@@ -600,10 +600,7 @@ export default class Layer {
   }
 
   updateCustomPalette(newConfig, previous, prop) {
-    if (
-      !newConfig.colorRangeConfig ||
-      !newConfig.colorRangeConfig.custom
-    ) {
+    if (!newConfig.colorRangeConfig || !newConfig.colorRangeConfig.custom) {
       return;
     }
 
@@ -659,7 +656,7 @@ export default class Layer {
         key =>
           newConfig.colorRangeConfig.hasOwnProperty(key) &&
           newConfig.colorRangeConfig[key] !==
-          (previous[prop] || DEFAULT_COLOR_UI).colorRangeConfig[key]
+            (previous[prop] || DEFAULT_COLOR_UI).colorRangeConfig[key]
       );
     if (!shouldUpdate) return;
 
@@ -676,9 +673,7 @@ export default class Layer {
           cr => getColorGroupByName(cr) === group
         );
 
-        update = sameGroup.find(
-          cr => cr.colors.length === steps
-        );
+        update = sameGroup.find(cr => cr.colors.length === steps);
 
         if (update && colorRange.reversed) {
           update = reverseColorRange(true, update);
@@ -688,7 +683,7 @@ export default class Layer {
 
     if (newConfig.colorRangeConfig.hasOwnProperty('reversed')) {
       update = reverseColorRange(reversed, update || colorRange);
-    };
+    }
 
     if (update) {
       this.updateLayerVisConfig({[prop]: update});

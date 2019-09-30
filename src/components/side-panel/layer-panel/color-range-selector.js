@@ -39,7 +39,9 @@ export const ALL_TYPES = uniq(
     .concat(['all', 'custom'])
 );
 
-export const ALL_STEPS = uniq(COLOR_RANGES.map(d => d.colors.length)).sort(numberSort);
+export const ALL_STEPS = uniq(COLOR_RANGES.map(d => d.colors.length)).sort(
+  numberSort
+);
 
 const StyledColorConfig = styled.div`
   padding: 12px 12px 0 12px;
@@ -243,11 +245,15 @@ const StyledColorRange = styled.div.attrs({
   }
 `;
 
-export const ColorPaletteGroup = ({reversed, onSelect, selected, colorRanges}) => (
+export const ColorPaletteGroup = ({
+  reversed,
+  onSelect,
+  selected,
+  colorRanges
+}) => (
   <div className="color-palette__group">
     {colorRanges.map((colorRange, i) => (
       <StyledColorRange
-
         key={`${colorRange.name}-${i}`}
         onClick={e =>
           onSelect(

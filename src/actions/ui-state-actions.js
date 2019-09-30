@@ -45,10 +45,7 @@ export const toggleSidePanel = createAction(
  *  - [`ADD_MAP_STYLE_ID`](../constants/default-settings.md#add_map_style_id)
  * @public
  */
-export const toggleModal = createAction(
-  ActionTypes.TOGGLE_MODAL,
-  id => id
-);
+export const toggleModal = createAction(ActionTypes.TOGGLE_MODAL, id => id);
 
 /**
  * Hide and show side panel header dropdown, activated by clicking the share link on top of the side panel
@@ -120,10 +117,7 @@ export const removeNotification = createAction(
  * @param {string} ratio - one of `'SCREEN'`, `'FOUR_BY_THREE'` and `'SIXTEEN_BY_NINE'`
  * @public
  */
-export const setRatio = createAction(
-  ActionTypes.SET_RATIO,
-  ratio => ratio
-);
+export const setRatio = createAction(ActionTypes.SET_RATIO, ratio => ratio);
 
 /**
  * Set `exportImage.resolution`
@@ -141,9 +135,7 @@ export const setResolution = createAction(
  * @memberof uiStateActions
  * @public
  */
-export const toggleLegend = createAction(
-  ActionTypes.TOGGLE_LEGEND
-);
+export const toggleLegend = createAction(ActionTypes.TOGGLE_LEGEND);
 
 /**
  * Set `exportImage.exporting` to true
@@ -217,9 +209,7 @@ export const setExportFiltered = createAction(
  * @memberof uiStateActions
  * @public
  */
-export const setExportData = createAction(
-  ActionTypes.SET_EXPORT_DATA
-);
+export const setExportData = createAction(ActionTypes.SET_EXPORT_DATA);
 
 /**
  * Whether we export a mapbox access token used to create a single map html file

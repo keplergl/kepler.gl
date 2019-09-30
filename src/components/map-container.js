@@ -119,11 +119,16 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       this.layerDataSelector,
       this.mapLayersSelector,
       // {[id]: true \ false}
-      (layers, layerData, mapLayers) => layers.reduce((accu, layer, idx) => ({
-        ...accu,
-        [layer.id]: layer.shouldRenderLayer(layerData[idx]) &&
-          this._isVisibleMapLayer(layer, mapLayers)
-      }), {})
+      (layers, layerData, mapLayers) =>
+        layers.reduce(
+          (accu, layer, idx) => ({
+            ...accu,
+            [layer.id]:
+              layer.shouldRenderLayer(layerData[idx]) &&
+              this._isVisibleMapLayer(layer, mapLayers)
+          }),
+          {}
+        )
     );
 
     mapboxLayersSelector = createSelector(
@@ -132,7 +137,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       this.layerOrderSelector,
       this.layersToRenderSelector,
       generateMapboxLayers
-    )
+    );
     /* component private functions */
     _isVisibleMapLayer(layer, mapLayers) {
       // if layer.id is not in mapLayers, don't render it
@@ -228,10 +233,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         // deckgl layer to kepler-gl layer
         const layer = layers[overlay.props.idx];
 
-        if (
-          layer.getHoverData &&
-          layersToRender[layer.id]
-        ) {
+        if (layer.getHoverData && layersToRender[layer.id]) {
           // if layer is visible and have hovered data
           const {
             config: {dataId}
@@ -341,20 +343,26 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         deckGlLayers = layerOrder
           .slice()
           .reverse()
-          .filter(idx => layers[idx].overlayType === OVERLAY_TYPE.deckgl && layersToRender[layers[idx].id])
+          .filter(
+            idx =>
+              layers[idx].overlayType === OVERLAY_TYPE.deckgl &&
+              layersToRender[layers[idx].id]
+          )
           .reduce(this._renderLayer, []);
       }
 
       if (mapStyle.visibleLayerGroups['3d building']) {
-        deckGlLayers.push(new ThreeDBuildingLayer({
-          id: '_keplergl_3d-building',
-          mapboxApiAccessToken,
-          mapboxApiUrl,
-          threeDBuildingColor: mapStyle.threeDBuildingColor,
-          updateTriggers: {
-            getFillColor:  mapStyle.threeDBuildingColor
-          }
-        }));
+        deckGlLayers.push(
+          new ThreeDBuildingLayer({
+            id: '_keplergl_3d-building',
+            mapboxApiAccessToken,
+            mapboxApiUrl,
+            threeDBuildingColor: mapStyle.threeDBuildingColor,
+            updateTriggers: {
+              getFillColor: mapStyle.threeDBuildingColor
+            }
+          })
+        );
       }
 
       return (
@@ -373,15 +381,14 @@ export default function MapContainerFactory(MapPopover, MapControl) {
 
     _updateMapboxLayers() {
       const mapboxLayers = this.mapboxLayersSelector(this.props);
-      if (!Object.keys(mapboxLayers).length && !Object.keys(this.previousLayers).length) {
+      if (
+        !Object.keys(mapboxLayers).length &&
+        !Object.keys(this.previousLayers).length
+      ) {
         return;
       }
 
-      updateMapboxLayers(
-        this._map,
-        mapboxLayers,
-        this.previousLayers
-      );
+      updateMapboxLayers(this._map, mapboxLayers, this.previousLayers);
 
       this.previousLayers = mapboxLayers;
     }

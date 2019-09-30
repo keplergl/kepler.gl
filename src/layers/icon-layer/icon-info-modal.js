@@ -20,7 +20,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import {line} from 'd3-shape'
+import {line} from 'd3-shape';
 import {Table, CenterFlexbox} from 'components/common/styled-components';
 
 const lineFunction = line()
@@ -30,11 +30,13 @@ const lineFunction = line()
 const IconShape = ({mesh}) => (
   <svg width="20px" height="20px">
     <g transform="translate(10, 10)">
-    {mesh.cells.map((cell, i) =>
-      <path key={i}
-        fill="#000000"
-            d={lineFunction(cell.map(idx => mesh.positions[idx]))}/>
-    )}
+      {mesh.cells.map((cell, i) => (
+        <path
+          key={i}
+          fill="#000000"
+          d={lineFunction(cell.map(idx => mesh.positions[idx]))}
+        />
+      ))}
     </g>
   </svg>
 );
@@ -62,9 +64,8 @@ const StyledTitle = styled.div`
 `;
 
 const IconItem = ({icon: {id, mesh}}) => (
-  <StyledIconItem
-    className="icon-table__item">
-    <IconShape className="icon-table__item__shape" mesh={mesh}/>
+  <StyledIconItem className="icon-table__item">
+    <IconShape className="icon-table__item__shape" mesh={mesh} />
     <div className="icon-table_item__name">
       <StyledCode>{id}</StyledCode>
     </div>
@@ -74,38 +75,44 @@ const IconItem = ({icon: {id, mesh}}) => (
 const ExampleTable = () => (
   <Table className="icon-example-table">
     <thead>
-    <tr>
-      <th>point_lat</th>
-      <th>point_lng</th>
-      <th>icon</th>
-    </tr>
+      <tr>
+        <th>point_lat</th>
+        <th>point_lng</th>
+        <th>icon</th>
+      </tr>
     </thead>
     <tbody>
-    <tr>
-      <td>37.769897</td>
-      <td>-122.41168</td>
-      <td><StyledCode>android</StyledCode></td>
-    </tr>
-    <tr>
-      <td>37.806928</td>
-      <td>-122.40218</td>
-      <td />
-    </tr>
-    <tr>
-      <td>37.778564</td>
-      <td>-122.39096</td>
-      <td><StyledCode>calendar</StyledCode></td>
-    </tr>
-    <tr>
-      <td>37.745995</td>
-      <td>-122.30220</td>
-      <td />
-    </tr>
-    <tr>
-      <td>37.329841</td>
-      <td>-122.103847</td>
-      <td><StyledCode>control-off</StyledCode></td>
-    </tr>
+      <tr>
+        <td>37.769897</td>
+        <td>-122.41168</td>
+        <td>
+          <StyledCode>android</StyledCode>
+        </td>
+      </tr>
+      <tr>
+        <td>37.806928</td>
+        <td>-122.40218</td>
+        <td />
+      </tr>
+      <tr>
+        <td>37.778564</td>
+        <td>-122.39096</td>
+        <td>
+          <StyledCode>calendar</StyledCode>
+        </td>
+      </tr>
+      <tr>
+        <td>37.745995</td>
+        <td>-122.30220</td>
+        <td />
+      </tr>
+      <tr>
+        <td>37.329841</td>
+        <td>-122.103847</td>
+        <td>
+          <StyledCode>control-off</StyledCode>
+        </td>
+      </tr>
     </tbody>
   </Table>
 );
@@ -130,13 +137,13 @@ const IconInfoModalFactory = (svgIcons = []) => {
       </div>
       <div className="icon-info-modal__example">
         <StyledTitle>Example:</StyledTitle>
-        <ExampleTable/>
+        <ExampleTable />
       </div>
       <div className="icon-info-modal__icons">
         <StyledTitle>Icons</StyledTitle>
         <IconTable className="icon-info-modal__icons__table">
           {svgIcons.map(icon => (
-            <IconItem key={icon.id} icon={icon}/>
+            <IconItem key={icon.id} icon={icon} />
           ))}
         </IconTable>
       </div>
@@ -144,6 +151,6 @@ const IconInfoModalFactory = (svgIcons = []) => {
   );
 
   return IconInfoModal;
-}
+};
 
 export default IconInfoModalFactory;

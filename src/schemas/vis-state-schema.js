@@ -390,8 +390,10 @@ const visConfigModificationV1 = {
   point: (visConfig, parents, accumulated) => {
     const modified = {};
     const [layer] = parents.slice(-2, -1);
-    const isOld = !visConfig.hasOwnProperty('filled') &&
-    !visConfig.strokeColor && !visConfig.strokeColorRange;
+    const isOld =
+      !visConfig.hasOwnProperty('filled') &&
+      !visConfig.strokeColor &&
+      !visConfig.strokeColorRange;
     if (isOld) {
       // color color & color range to stroke color
       modified.strokeColor = layer.config.color;
@@ -410,8 +412,10 @@ const visConfigModificationV1 = {
     // is points?
     const modified = {};
     const [layer] = parents.slice(-2, -1);
-    const isOld = !layer.visualChannels.hasOwnProperty('strokeColorField') &&
-      !visConfig.strokeColor && !visConfig.strokeColorRange;
+    const isOld =
+      !layer.visualChannels.hasOwnProperty('strokeColorField') &&
+      !visConfig.strokeColor &&
+      !visConfig.strokeColorRange;
     // make our best guess if this geojson layer contains point
     const isPoint =
       layer.visualChannels.radiusField ||
@@ -631,10 +635,12 @@ export class SplitMapsSchema extends Schema {
     return {
       splitMaps: splitMaps.map(settings => ({
         ...settings,
-        layers: Object.entries(settings.layers || {})
-          .reduce(this.convertLayerSettings, {})
+        layers: Object.entries(settings.layers || {}).reduce(
+          this.convertLayerSettings,
+          {}
+        )
       }))
-    }
+    };
   }
 }
 

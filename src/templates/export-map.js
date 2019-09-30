@@ -65,7 +65,8 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           /**
            * Provide your MapBox Token
            **/
-          const MAPBOX_TOKEN = '${options.mapboxApiAccessToken || 'PROVIDE_MAPBOX_TOKEN'}';
+          const MAPBOX_TOKEN = '${options.mapboxApiAccessToken ||
+            'PROVIDE_MAPBOX_TOKEN'}';
           const WARNING_MESSAGE = 'Please Provide a Mapbox Token in order to use Kepler.gl. Edit this file and fill out MAPBOX_TOKEN with your access key';
         </script>
       </head>

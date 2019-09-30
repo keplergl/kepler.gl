@@ -61,8 +61,8 @@ export const VisConfigSlider = ({
         {typeof label === 'string'
           ? label
           : typeof label === 'function'
-            ? label(config)
-            : capitalizeFirstLetter(property)}
+          ? label(config)
+          : capitalizeFirstLetter(property)}
       </PanelLabel>
     ) : null}
     <RangeSlider

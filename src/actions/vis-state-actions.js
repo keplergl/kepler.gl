@@ -122,7 +122,7 @@ export function layerColorUIChange(oldLayer, prop, newConfig) {
     prop,
     newConfig
   };
-};
+}
 
 /**
  * Update layer blending mode

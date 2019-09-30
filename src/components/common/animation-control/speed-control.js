@@ -38,7 +38,13 @@ const StyledSpeedText = styled.div`
 `;
 
 function SpeedControlFactory() {
-  const SpeedControl = ({onClick, updateAnimationSpeed, speed, showSpeedControl, buttonHeight='18px'}) => (
+  const SpeedControl = ({
+    onClick,
+    updateAnimationSpeed,
+    speed,
+    showSpeedControl,
+    buttonHeight = '18px'
+  }) => (
     <StyledSpeedToggle className="animation-control__speed-control">
       <Button link width="80px" onClick={onClick}>
         <CenterFlexbox className="bottom-widget__icon speed">

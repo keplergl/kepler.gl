@@ -41,10 +41,7 @@ const StyledInteractionPanel = styled.div`
   padding-bottom: 6px;
 `;
 
-InteractionPanelFactory.deps = [
-  TooltipConfigFactory,
-  BrushConfigFactory
-];
+InteractionPanelFactory.deps = [TooltipConfigFactory, BrushConfigFactory];
 
 function InteractionPanelFactory(TooltipConfig, BrushConfig) {
   return class InteractionPanel extends Component {
@@ -99,7 +96,7 @@ function InteractionPanelFactory(TooltipConfig, BrushConfig) {
           >
             <PanelHeaderContent className="interaction-panel__header__content">
               <div className="interaction-panel__header__icon icon">
-                <config.iconComponent height="12px"/>
+                <config.iconComponent height="12px" />
               </div>
               <div className="interaction-panel__header__title">
                 <PanelHeaderTitle>{config.id}</PanelHeaderTitle>
@@ -114,7 +111,7 @@ function InteractionPanelFactory(TooltipConfig, BrushConfig) {
               />
             </div>
           </StyledPanelHeader>
-          {(config.enabled && template) &&  (
+          {config.enabled && template && (
             <StyledPanelContent className="interaction-panel__content">
               {template}
             </StyledPanelContent>
@@ -122,7 +119,7 @@ function InteractionPanelFactory(TooltipConfig, BrushConfig) {
         </StyledInteractionPanel>
       );
     }
-  }
+  };
 }
 
 export default InteractionPanelFactory;

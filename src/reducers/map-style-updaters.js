@@ -285,8 +285,9 @@ export const mapStyleChangeUpdater = (state, {payload: styleType}) => {
     state.visibleLayerGroups
   );
 
-  const threeDBuildingColor = state.custom3DBuildingColor ? state.threeDBuildingColor :
-  get3DBuildingColor(state.mapStyles[styleType]);
+  const threeDBuildingColor = state.custom3DBuildingColor
+    ? state.threeDBuildingColor
+    : get3DBuildingColor(state.mapStyles[styleType]);
   return {
     ...state,
     styleType,
@@ -395,7 +396,8 @@ export const receiveMapConfigUpdater = (state, {payload: {config = {}}}) => {
     : mapStyle;
 
   // set custom3DBuildingColor: true if mapStyle contains threeDBuildingColor
-  merged.custom3DBuildingColor = Boolean(mapStyle.threeDBuildingColor) || merged.custom3DBuildingColor;
+  merged.custom3DBuildingColor =
+    Boolean(mapStyle.threeDBuildingColor) || merged.custom3DBuildingColor;
   const newState = mapConfigChangeUpdater(state, {payload: merged});
 
   return loadMapStyleTasks ? withTask(newState, loadMapStyleTasks) : newState;

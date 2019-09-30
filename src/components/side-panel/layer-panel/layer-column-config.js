@@ -58,34 +58,34 @@ export default class LayerColumnConfig extends Component {
       <div>
         <SidePanelSection>
           <div className="layer-config__column">
-          <TopRow>
-            <PanelLabel>Columns</PanelLabel>
-            <PanelLabel>* Required</PanelLabel>
-          </TopRow>
-          {Object.keys(layer.config.columns).map(key => (
-            <ColumnSelector
-              column={layer.config.columns[key]}
-              label={key}
-              key={key}
-              allFields={fields}
-              fieldPairs={
-                layer.columnPairs
-                  ? fieldPairs.map(fp => ({
-                      name: fp.defaultName,
-                      type: 'point',
-                      pair: fp.pair
-                    }))
-                  : null
-              }
-              onSelect={val => this._updateColumn(key, val)}
-            />
-          ))}
+            <TopRow>
+              <PanelLabel>Columns</PanelLabel>
+              <PanelLabel>* Required</PanelLabel>
+            </TopRow>
+            {Object.keys(layer.config.columns).map(key => (
+              <ColumnSelector
+                column={layer.config.columns[key]}
+                label={key}
+                key={key}
+                allFields={fields}
+                fieldPairs={
+                  layer.columnPairs
+                    ? fieldPairs.map(fp => ({
+                        name: fp.defaultName,
+                        type: 'point',
+                        pair: fp.pair
+                      }))
+                    : null
+                }
+                onSelect={val => this._updateColumn(key, val)}
+              />
+            ))}
           </div>
         </SidePanelSection>
       </div>
     );
   }
-};
+}
 
 const ColumnRow = styled.div`
   display: flex;

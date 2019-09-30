@@ -105,8 +105,10 @@ class ColorSelector extends Component {
   };
 
   _getEditing = () => {
-    return this.props.colorUI ? this.props.colorUI.showDropdown : this.state.showDropdown;
-  }
+    return this.props.colorUI
+      ? this.props.colorUI.showDropdown
+      : this.state.showDropdown;
+  };
 
   _closePanelDropdown = () => {
     if (this._getEditing() === false) {
@@ -138,12 +140,7 @@ class ColorSelector extends Component {
   };
 
   render() {
-    const {
-      colorSets,
-      disabled,
-      inputTheme,
-      colorUI
-    } = this.props;
+    const {colorSets, disabled, inputTheme, colorUI} = this.props;
 
     const editing = this._getEditing();
     const currentEditing =

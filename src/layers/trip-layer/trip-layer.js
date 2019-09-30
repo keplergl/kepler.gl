@@ -32,10 +32,7 @@ import {
   getGeojsonFeatureTypes
 } from 'layers/geojson-layer/geojson-utils';
 
-import {
-  isTripGeoJsonField,
-  parseTripGeoJsonTimestamp
-} from './trip-utils';
+import {isTripGeoJsonField, parseTripGeoJsonTimestamp} from './trip-utils';
 
 import {hexToRgb} from 'utils/color-utils';
 import TripInfoModalFactory from './trip-info-modal';
@@ -118,7 +115,10 @@ export default class TripLayer extends Layer {
     return this.getFeature(this.config.columns);
   }
 
-  static findDefaultLayerProps({label, fields = [], allData = [], id}, foundLayers) {
+  static findDefaultLayerProps(
+    {label, fields = [], allData = [], id},
+    foundLayers
+  ) {
     const geojsonColumns = fields
       .filter(f => f.type === 'geojson')
       .map(f => f.name);
@@ -272,8 +272,9 @@ export default class TripLayer extends Layer {
 
     this.dataToFeature = getGeojsonDataMaps(allData, getFeature);
 
-    const {dataToTimeStamp, animationDomain} =
-      parseTripGeoJsonTimestamp(this.dataToFeature);
+    const {dataToTimeStamp, animationDomain} = parseTripGeoJsonTimestamp(
+      this.dataToFeature
+    );
 
     this.dataToTimeStamp = dataToTimeStamp;
     this.updateAnimationDomain(animationDomain);

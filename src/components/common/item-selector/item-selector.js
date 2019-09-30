@@ -279,7 +279,10 @@ class ItemSelector extends Component {
             />
           ) : (
             <StyledDropdownSelect {...dropdownSelectProps}>
-              <DropdownSelectValue hasPlaceholder={!hasValue} className="item-selector__dropdown__value">
+              <DropdownSelectValue
+                hasPlaceholder={!hasValue}
+                className="item-selector__dropdown__value"
+              >
                 {hasValue ? (
                   <this.props.DropDownLineItemRenderComponent
                     displayOption={displayOption}
@@ -302,6 +305,6 @@ class ItemSelector extends Component {
       </div>
     );
   }
-};
+}
 
 export default listensToClickOutside(ItemSelector);

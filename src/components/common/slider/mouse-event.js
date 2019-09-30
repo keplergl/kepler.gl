@@ -35,7 +35,7 @@ export default class MouseEventHandler {
     this._prev = 0;
   }
 
-  handleMouseDown = (e) => {
+  handleMouseDown = e => {
     document.addEventListener('mouseup', this._mouseup);
     document.addEventListener('mousemove', this._mousemove);
     this._prev = this._getMousePos(e);
@@ -50,16 +50,15 @@ export default class MouseEventHandler {
   }
 
   _getMouseDelta(e) {
-
     // movementX might not be supported in some browser
     // https://stackoverflow.com/questions/41774726/mouseevent-movementx-property-apparently-not-supported-in-internet-explorer
     const mouseCoord = this._vertical ? e.movementY : e.movementX;
-    const clientCoord = this._getMousePos(e)
+    const clientCoord = this._getMousePos(e);
 
     const delta = mouseCoord === 0 ? clientCoord - this._prev : mouseCoord;
 
     return delta;
-  };
+  }
 
   _mouseup = () => {
     document.removeEventListener('mouseup', this._mouseup);

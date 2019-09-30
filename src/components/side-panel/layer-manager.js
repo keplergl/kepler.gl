@@ -103,7 +103,8 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
   const SortableItem = sortableElement(({children, isSorting}) => {
     return (
       <SortableStyledItem
-        className={classnames('sortable-layer-items', {sorting: isSorting})}>
+        className={classnames('sortable-layer-items', {sorting: isSorting})}
+      >
         {children}
       </SortableStyledItem>
     );
@@ -136,7 +137,7 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
     };
     state = {
       isSorting: false
-    }
+    };
 
     layerClassSelector = props => props.layerClasses;
     layerTypeOptionsSelector = createSelector(
@@ -174,22 +175,18 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
       if (layers[layerIdx].config.isConfigActive) {
         layerConfigChange(layers[layerIdx], {isConfigActive: false});
       }
-    }
+    };
 
     render() {
-      const {
-        layers,
-        datasets,
-        layerOrder,
-        openModal
-      } = this.props;
+      const {layers, datasets, layerOrder, openModal} = this.props;
       const defaultDataset = Object.keys(datasets)[0];
       const layerTypeOptions = this.layerTypeOptionsSelector(this.props);
 
       const layerActions = {
         layerColorUIChange: this.props.layerColorUIChange,
         layerConfigChange: this.props.layerConfigChange,
-        layerVisualChannelConfigChange: this.props.layerVisualChannelConfigChange,
+        layerVisualChannelConfigChange: this.props
+          .layerVisualChannelConfigChange,
         layerTypeChange: this.props.layerTypeChange,
         layerVisConfigChange: this.props.layerVisConfigChange,
         layerTextLabelChange: this.props.layerTextLabelChange,

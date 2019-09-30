@@ -109,7 +109,7 @@ function toSvg(node, options) {
     if (options.height) clone.style.height = `${options.height}px`;
 
     if (options.style)
-      Object.keys(options.style).forEach((property) => {
+      Object.keys(options.style).forEach(property => {
         clone.style[property] = options.style[property];
       });
 
@@ -123,10 +123,11 @@ function toSvg(node, options) {
  * @return {Promise} - A promise that is fulfilled with a Uint8Array containing RGBA pixel data.
  * */
 function toPixelData(node, options) {
-  return draw(node, options || {}).then(canvas =>
-    canvas
-      .getContext('2d')
-      .getImageData(0, 0, getWidth(node), getHeight(node)).data
+  return draw(node, options || {}).then(
+    canvas =>
+      canvas
+        .getContext('2d')
+        .getImageData(0, 0, getWidth(node), getHeight(node)).data
   );
 }
 
@@ -146,7 +147,9 @@ function toPng(node, options) {
  * */
 function toJpeg(node, options) {
   options = options || {};
-  return draw(node, options).then(canvas => canvas.toDataURL('image/jpeg', options.quality || 1.0));
+  return draw(node, options).then(canvas =>
+    canvas.toDataURL('image/jpeg', options.quality || 1.0)
+  );
 }
 
 /**
@@ -161,8 +164,7 @@ function toBlob(node, options) {
 function copyOptions(options) {
   // Copy options to impl options for use in impl
   if (typeof options.imagePlaceholder === 'undefined') {
-    domtoimage.impl.options.imagePlaceholder =
-      defaultOptions.imagePlaceholder;
+    domtoimage.impl.options.imagePlaceholder = defaultOptions.imagePlaceholder;
   } else {
     domtoimage.impl.options.imagePlaceholder = options.imagePlaceholder;
   }
@@ -236,13 +238,14 @@ function cloneNode(node, filter, root) {
       return Promise.resolve(clone);
     }
 
-    return cloneChildrenInOrder(clone, asArray(children), flt)
-    .then(() => clone);
+    return cloneChildrenInOrder(clone, asArray(children), flt).then(
+      () => clone
+    );
   }
 }
 
 function embedFonts(node) {
-  return fontFaces.resolveAll().then((cssText) => {
+  return fontFaces.resolveAll().then(cssText => {
     const styleNode = document.createElement('style');
     node.appendChild(styleNode);
     styleNode.appendChild(document.createTextNode(cssText));
@@ -255,21 +258,20 @@ function inlineImages(node) {
 }
 
 function makeSvgDataUri(node, width, height) {
-  return Promise.resolve(node)
-    .then(nd => {
-      nd.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
-      const serializedString =  new window.XMLSerializer().serializeToString(nd);
+  return Promise.resolve(node).then(nd => {
+    nd.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
+    const serializedString = new window.XMLSerializer().serializeToString(nd);
 
-      const xhtml = escapeXhtml(serializedString);
-      const foreignObject = `<foreignObject x="0" y="0" width="100%" height="100%">${xhtml}</foreignObject>`;
-      const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">${foreignObject}</svg>`;
+    const xhtml = escapeXhtml(serializedString);
+    const foreignObject = `<foreignObject x="0" y="0" width="100%" height="100%">${xhtml}</foreignObject>`;
+    const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">${foreignObject}</svg>`;
 
-      // Optimizing SVGs in data URIs
-      // see https://codepen.io/tigt/post/optimizing-svgs-in-data-uris
-      // the best way of encoding SVG in a data: URI is data:image/svg+xml,[actual data].
-      // We don’t need the ;charset=utf-8 parameter because the given SVG is ASCII.
-      return svgToMiniDataURI(svgStr);
-    });
+    // Optimizing SVGs in data URIs
+    // see https://codepen.io/tigt/post/optimizing-svgs-in-data-uris
+    // the best way of encoding SVG in a data: URI is data:image/svg+xml,[actual data].
+    // We don’t need the ;charset=utf-8 parameter because the given SVG is ASCII.
+    return svgToMiniDataURI(svgStr);
+  });
 }
 
 function newInliner() {
@@ -294,22 +296,23 @@ function newInliner() {
     while ((match = URL_REGEX.exec(string)) !== null) {
       result.push(match[1]);
     }
-    return result.filter((url) => {
+    return result.filter(url => {
       return !isDataUrl(url);
     });
   }
 
   function urlAsRegex(url0) {
-    return new RegExp(
-      `(url\\([\'"]?)(${escape(url0)})([\'"]?\\))`,
-      'g'
-    );
+    return new RegExp(`(url\\([\'"]?)(${escape(url0)})([\'"]?\\))`, 'g');
   }
 
   function inline(string, url, baseUrl, get) {
     return Promise.resolve(url)
-      .then(ul => baseUrl ? resolveUrl(ul, baseUrl) : ul)
-      .then(ul => typeof get === 'function' ? get(ul) : getAndEncode(ul, domtoimage.impl.options))
+      .then(ul => (baseUrl ? resolveUrl(ul, baseUrl) : ul))
+      .then(ul =>
+        typeof get === 'function'
+          ? get(ul)
+          : getAndEncode(ul, domtoimage.impl.options)
+      )
       .then(data => dataAsUrl(data, mimeType(url)))
       .then(dataUrl => string.replace(urlAsRegex(url), `$1${dataUrl}$3`));
   }
@@ -339,9 +342,7 @@ function newFontFaces() {
   function resolveAll() {
     return readAll(document)
       .then(webFonts => {
-        return Promise.all(
-          webFonts.map(webFont => webFont.resolve())
-        );
+        return Promise.all(webFonts.map(webFont => webFont.resolve()));
       })
       .then(cssStrings => cssStrings.join('\n'));
   }
@@ -356,7 +357,9 @@ function newFontFaces() {
     function selectWebFontRules(cssRules) {
       return cssRules
         .filter(rule => rule.type === window.CSSRule.FONT_FACE_RULE)
-        .filter(rule => inliner.shouldProcess(rule.style.getPropertyValue('src')));
+        .filter(rule =>
+          inliner.shouldProcess(rule.style.getPropertyValue('src'))
+        );
     }
 
     function loadExternalStyleSheets(styleSheets) {
@@ -365,8 +368,11 @@ function newFontFaces() {
           if (sheet.href) {
             // cloudfont doesn't have allow origin header properly set
             // error response will remain in cache
-            const cache = sheet.href.includes('uber-fonts') ? 'no-cache' : 'default';
-            return window.fetch(sheet.href, {credentials: 'omit', cache})
+            const cache = sheet.href.includes('uber-fonts')
+              ? 'no-cache'
+              : 'default';
+            return window
+              .fetch(sheet.href, {credentials: 'omit', cache})
               .then(response => response.text())
               .then(setBaseHref(sheet.href))
               .then(toStyleSheet)
@@ -435,7 +441,7 @@ function newFontFaces() {
 
     function getCssRules(styleSheets) {
       const cssRules = [];
-      styleSheets.forEach((sheet) => {
+      styleSheets.forEach(sheet => {
         // try...catch because browser may not able to enumerate rules for cross-domain sheets
         if (!sheet) {
           return;
@@ -485,20 +491,24 @@ function newImages() {
   };
 
   function newImage(element) {
-
     function inline(get) {
       if (element.src) {
         return Promise.resolve();
       }
       return Promise.resolve(element.src)
-        .then(ul => typeof get === 'function' ? get(ul) : getAndEncode(ul, domtoimage.impl.options))
+        .then(ul =>
+          typeof get === 'function'
+            ? get(ul)
+            : getAndEncode(ul, domtoimage.impl.options)
+        )
         .then(data => dataAsUrl(data, mimeType(element.src)))
-        .then(dataUrl =>
-          new Promise((resolve, reject) => {
-            element.onload = resolve;
-            element.onerror = reject;
-            element.src = dataUrl;
-          })
+        .then(
+          dataUrl =>
+            new Promise((resolve, reject) => {
+              element.onload = resolve;
+              element.onerror = reject;
+              element.src = dataUrl;
+            })
         );
     }
 

@@ -69,4 +69,4 @@ export default class UploadButton extends Component {
       </Wrapper>
     );
   }
-};
+}

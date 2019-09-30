@@ -164,13 +164,11 @@ class KeplerGLSchema {
 
     return Object.keys(config).reduce(
       (accu, key) => ({
-          ...accu,
-          ...(key in this._reducerSchemas
-            ? this._reducerSchemas[key][validVersion].load(
-                config[key]
-              )
-            : {})
-        }),
+        ...accu,
+        ...(key in this._reducerSchemas
+          ? this._reducerSchemas[key][validVersion].load(config[key])
+          : {})
+      }),
       {}
     );
   }

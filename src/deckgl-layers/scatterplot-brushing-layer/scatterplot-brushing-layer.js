@@ -40,7 +40,6 @@ const defaultProps = {
 };
 
 export default class ScatterplotBrushingLayer extends ScatterplotLayer {
-
   getShaders() {
     const shaders = super.getShaders();
     return {

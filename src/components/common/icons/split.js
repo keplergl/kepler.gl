@@ -60,4 +60,4 @@ export default class Split extends Component {
       </Base>
     );
   }
-};
+}

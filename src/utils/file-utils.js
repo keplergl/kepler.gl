@@ -21,7 +21,7 @@
 import {generateHashId} from 'utils/utils';
 import {getFileHandler} from 'processors/file-handler';
 
-export const processFileToLoad = (file) => {
+export const processFileToLoad = file => {
   return {
     fileBlob: file,
     info: {
@@ -30,5 +30,5 @@ export const processFileToLoad = (file) => {
       size: file.size
     },
     handler: getFileHandler(file)
-  }
+  };
 };

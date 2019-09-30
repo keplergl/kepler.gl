@@ -75,7 +75,9 @@ export function isTripGeoJsonField(allData = [], field) {
   const getValue = d => d[field.tableFieldIndex - 1];
   const maxCount = 10000;
   const sampleRawFeatures =
-    allData.length > maxCount ? getSampleData(allData, maxCount, getValue) : allData.map(getValue);
+    allData.length > maxCount
+      ? getSampleData(allData, maxCount, getValue)
+      : allData.map(getValue);
 
   const features = sampleRawFeatures.map(parseGeoJsonRawFeature);
 
@@ -92,9 +94,7 @@ export function isTripGeoJsonField(allData = [], field) {
   }
 
   // condition 3:the 4th coordinate of the first feature line strings is valid time
-  const tsHolder = features[0].geometry.coordinates.map(
-    coord => coord[3]
-  );
+  const tsHolder = features[0].geometry.coordinates.map(coord => coord[3]);
 
   return Boolean(containValidTime(tsHolder));
 }
@@ -154,7 +154,7 @@ function findMaxFromSorted(list = []) {
   let i = list.length - 1;
   while (i > 0) {
     if (notNullorUndefined(list[i])) {
-      return list[i]
+      return list[i];
     }
     i--;
   }

@@ -81,7 +81,10 @@ export default class PanelHeaderAction extends Component {
     } = this.props;
     return (
       <HeaderActionWrapper
-        className={classnames('panel--header__action', {disabled, [className]: className})}
+        className={classnames('panel--header__action', {
+          disabled,
+          [className]: className
+        })}
         active={active}
         hoverColor={hoverColor}
         flush={flush}
@@ -105,4 +108,4 @@ export default class PanelHeaderAction extends Component {
       </HeaderActionWrapper>
     );
   }
-};
+}

@@ -19,7 +19,11 @@
 // THE SOFTWARE.
 
 import {CPUGridLayer} from 'deck.gl';
-import {getColorValueDomain, getColorScaleFunction, getElevationScaleFunction} from '../layer-utils/utils';
+import {
+  getColorValueDomain,
+  getColorScaleFunction,
+  getElevationScaleFunction
+} from '../layer-utils/utils';
 
 const defaultProps = {
   ...CPUGridLayer.defaultProps,
@@ -51,7 +55,6 @@ export default class EnhancedCPUGridLayer extends CPUGridLayer {
   getElevationScale() {
     getElevationScaleFunction(this);
   }
-
 }
 
 EnhancedCPUGridLayer.layerName = 'EnhancedGridLayer';

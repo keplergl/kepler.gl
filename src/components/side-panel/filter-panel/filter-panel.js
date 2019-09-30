@@ -135,8 +135,10 @@ function FilterPanelFactory(
 
       return (
         <StyledFilterPanel className="filter-panel">
-          <StyledFilterHeader className="filter-panel__header"
-            labelRCGColorValues={datasets[dataId].color}>
+          <StyledFilterHeader
+            className="filter-panel__header"
+            labelRCGColorValues={datasets[dataId].color}
+          >
             <FieldSelector
               inputTheme="secondary"
               fields={allAvailableFields}
@@ -172,8 +174,7 @@ function FilterPanelFactory(
                 onSelect={value => setFilter(idx, 'dataId', value)}
               />
             )}
-            {type &&
-            !enlarged && (
+            {type && !enlarged && (
               <div className="filter-panel__filter">
                 <FilterComponent
                   filter={filter}
@@ -188,7 +189,7 @@ function FilterPanelFactory(
         </StyledFilterPanel>
       );
     }
-  }
+  };
 }
 
 export default FilterPanelFactory;

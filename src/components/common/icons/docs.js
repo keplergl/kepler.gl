@@ -50,4 +50,4 @@ export default class Docs extends Component {
       </Base>
     );
   }
-};
+}

@@ -30,7 +30,8 @@ import {roundValToStep} from 'utils/data-utils';
 
 const SliderInput = styled(Input)`
   width: ${props => props.theme.sliderInputWidth}px;
-  margin-left: ${props => (props.flush ? 0 : props.size === 'tiny' ? 12 : 18)}px;
+  margin-left: ${props =>
+    props.flush ? 0 : props.size === 'tiny' ? 12 : 18}px;
 `;
 
 const SliderWrapper = styled.div`
@@ -213,7 +214,10 @@ export default class RangeSlider extends Component {
             plotType={plotType}
             isEnlarged={isEnlarged}
             onBrush={(val0, val1) => {
-              onChange([this._roundValToStep(val0), this._roundValToStep(val1)]);
+              onChange([
+                this._roundValToStep(val0),
+                this._roundValToStep(val1)
+              ]);
             }}
             range={range}
             value={[value0, value1]}

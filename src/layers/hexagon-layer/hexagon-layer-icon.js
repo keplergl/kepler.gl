@@ -74,4 +74,4 @@ export default class HexagonLayerIcon extends Component {
       </Base>
     );
   }
-};
+}

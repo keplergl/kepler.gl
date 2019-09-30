@@ -103,9 +103,7 @@ export default class ClusterLayer extends CompositeLayer {
   }
 
   needsReclusterPoints(oldProps, props) {
-    return (
-      Math.round(oldProps.zoom) !== Math.round(props.zoom)
-    );
+    return Math.round(oldProps.zoom) !== Math.round(props.zoom);
   }
 
   needsRecalculateScaleFunction(oldProps, props) {
@@ -162,8 +160,8 @@ export default class ClusterLayer extends CompositeLayer {
       colorScale === SCALE_TYPES.ordinal
         ? getOrdinalDomain(colorValues, identity)
         : colorScale === SCALE_TYPES.quantile
-          ? getQuantileDomain(colorValues, identity, ascending)
-          : getLinearDomain(colorValues, identity);
+        ? getQuantileDomain(colorValues, identity, ascending)
+        : getLinearDomain(colorValues, identity);
 
     this.setState({
       colorDomain,

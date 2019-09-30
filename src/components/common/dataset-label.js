@@ -20,7 +20,10 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import {CenterFlexbox, DatasetSquare} from 'components/common/styled-components';
+import {
+  CenterFlexbox,
+  DatasetSquare
+} from 'components/common/styled-components';
 
 const DatasetName = styled.div`
   font-weight: 500;

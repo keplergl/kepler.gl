@@ -50,9 +50,11 @@ const defaultValidFileExt = [
 const MESSAGE = ' Drag & Drop Your File(s) Here';
 const CHROME_MSG =
   '*Chrome user: Limit file size to 250mb, if need to upload larger file, try Safari';
-const DISCLAIMER = '*Kepler.gl is a client-side application with no server backend. Data lives only on your machine/browser. ' +
+const DISCLAIMER =
+  '*Kepler.gl is a client-side application with no server backend. Data lives only on your machine/browser. ' +
   'No information or map data is sent to any server.';
-const CONFIG_UPLOAD_MESSAGE = 'Upload data files or upload a saved map via previously exported single Json of both config and data';
+const CONFIG_UPLOAD_MESSAGE =
+  'Upload data files or upload a saved map via previously exported single Json of both config and data';
 
 const fileIconColor = '#D3D8E0';
 
@@ -196,10 +198,8 @@ export default class FileUpload extends Component {
       }
     }
 
-    this.setState(
-      nextState,
-      () =>
-        nextState.files.length ? this.props.onFileUpload(nextState.files) : null
+    this.setState(nextState, () =>
+      nextState.files.length ? this.props.onFileUpload(nextState.files) : null
     );
   };
 
@@ -237,10 +237,7 @@ export default class FileUpload extends Component {
     const {dragOver, files} = this.state;
     const {validFileExt} = this.props;
     return (
-      <StyledFileUpload
-        className="file-uploader"
-        ref={this.frame}
-      >
+      <StyledFileUpload className="file-uploader" ref={this.frame}>
         <input
           className="filter-upload__input"
           type="file"
@@ -254,13 +251,20 @@ export default class FileUpload extends Component {
             onDragLeave={() => this._toggleDragState(false)}
             onDrop={this._handleFileInput}
           >
-            <StyledUploadMessage className="file-upload__message">{CONFIG_UPLOAD_MESSAGE}</StyledUploadMessage>
+            <StyledUploadMessage className="file-upload__message">
+              {CONFIG_UPLOAD_MESSAGE}
+            </StyledUploadMessage>
             <StyledFileDrop dragOver={dragOver}>
               <div style={{opacity: dragOver ? 0.5 : 1}}>
                 <StyledDragNDropIcon>
                   <StyledFileTypeFow className="file-type-row">
                     {validFileExt.map(ext => (
-                      <FileType key={ext} ext={ext} height="50px" fontSize="9px"/>
+                      <FileType
+                        key={ext}
+                        ext={ext}
+                        height="50px"
+                        fontSize="9px"
+                      />
                     ))}
                   </StyledFileTypeFow>
                   <DragNDrop height="44px" />
@@ -268,13 +272,13 @@ export default class FileUpload extends Component {
                 <div>{this._renderMessage()}</div>
               </div>
               {!files.length ? (
-                  <StyledDragFileWrapper>
-                    <MsgWrapper>{MESSAGE}</MsgWrapper>
-                    <span className="file-upload-or">or</span>
-                    <UploadButton onUpload={this._handleFileInput}>
-                      browse your files
-                    </UploadButton>
-                  </StyledDragFileWrapper>
+                <StyledDragFileWrapper>
+                  <MsgWrapper>{MESSAGE}</MsgWrapper>
+                  <span className="file-upload-or">or</span>
+                  <UploadButton onUpload={this._handleFileInput}>
+                    browse your files
+                  </UploadButton>
+                </StyledDragFileWrapper>
               ) : null}
               <StyledDisclaimer>{DISCLAIMER}</StyledDisclaimer>
             </StyledFileDrop>

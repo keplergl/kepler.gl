@@ -65,11 +65,11 @@ export function capitalizeFirstLetter(str) {
  * @param {string} str
  * @returns {string}
  */
-export function camelToTitle(str){
-  const breakWord = str.replace( /([A-Z])/g, " $1" );
+export function camelToTitle(str) {
+  const breakWord = str.replace(/([A-Z])/g, ' $1');
   return capitalizeFirstLetter(breakWord);
 }
 
 export function getHTMLMapModeTileUrl(mode) {
-  return `https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/map-${mode.toLowerCase()}-mode.png`
+  return `https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/map-${mode.toLowerCase()}-mode.png`;
 }

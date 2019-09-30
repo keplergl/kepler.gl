@@ -50,8 +50,8 @@ export function getColorValueDomain(layer) {
     // err... what do we do
     layer.state.colorValueDomain = null;
   } else {
-    const lowerIdx = Math.ceil(lowerPercentile / 100 * (len - 1));
-    const upperIdx = Math.floor(upperPercentile / 100 * (len - 1));
+    const lowerIdx = Math.ceil((lowerPercentile / 100) * (len - 1));
+    const upperIdx = Math.floor((upperPercentile / 100) * (len - 1));
 
     // calculate valueDomain based on
     layer.state.colorValueDomain = getBinColorDomain(colorScale, sortedBins, [
@@ -75,7 +75,8 @@ export function getColorScaleFunction(layer) {
 
 export function getElevationScaleFunction(layer) {
   const elevationRange = layer.props.elevationRange;
-  const elevationDomain = layer.props.elevationDomain || layer.state.elevationValueDomain;
+  const elevationDomain =
+    layer.props.elevationDomain || layer.state.elevationValueDomain;
 
   layer.state.elevationScaleFunc = getScaleFunctor(layer.props.sizeScale)()
     .domain(elevationDomain)

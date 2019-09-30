@@ -121,7 +121,9 @@ export const unwrap = action =>
  */
 export const _actionFor = (id, action) =>
   isForwardAction(action)
-    ? action.meta._addr_ === getActionForwardAddress(id) ? action.payload : {}
+    ? action.meta._addr_ === getActionForwardAddress(id)
+      ? action.payload
+      : {}
     : action;
 
 /**
@@ -179,5 +181,5 @@ export const _updateProperty = (state, id, nextState) =>
  * @public
  */
 /* eslint-disable no-unused-vars */
-const forwardActions = null
+const forwardActions = null;
 /* eslint-enable no-unused-vars */

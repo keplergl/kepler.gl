@@ -138,7 +138,9 @@ export default class GeoJsonLayer extends Layer {
   }
 
   static findDefaultLayerProps({label, fields = []}) {
-    const geojsonColumns = fields.filter(f => f.type === 'geojson').map(f => f.name);
+    const geojsonColumns = fields
+      .filter(f => f.type === 'geojson')
+      .map(f => f.name);
 
     const defaultColumns = {
       geojson: uniq([...GEOJSON_FIELDS.geojson, ...geojsonColumns])
@@ -152,7 +154,8 @@ export default class GeoJsonLayer extends Layer {
     return {
       props: foundColumns.map(columns => ({
         label:
-          (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || this.type,
+          (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) ||
+          this.type,
         columns,
         isVisible: true
       }))
@@ -240,7 +243,9 @@ export default class GeoJsonLayer extends Layer {
       geojsonData = oldLayerData.data;
     } else {
       // filteredIndex is a reference of index in allData which can map to feature
-      geojsonData = filteredIndex.map(i => this.dataToFeature[i]).filter(d => d);
+      geojsonData = filteredIndex
+        .map(i => this.dataToFeature[i])
+        .filter(d => d);
     }
 
     // fill color
@@ -274,7 +279,8 @@ export default class GeoJsonLayer extends Layer {
 
     // point radius
     const rScale =
-      radiusField && this.getVisChannelScale(radiusScale, radiusDomain, radiusRange);
+      radiusField &&
+      this.getVisChannelScale(radiusScale, radiusDomain, radiusRange);
 
     return {
       data: geojsonData,
@@ -327,7 +333,6 @@ export default class GeoJsonLayer extends Layer {
   /* eslint-enable complexity */
 
   updateLayerMeta(allData) {
-
     const getFeature = this.getPositionAccessor();
     this.dataToFeature = getGeojsonDataMaps(allData, getFeature);
 

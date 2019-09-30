@@ -300,7 +300,10 @@ export const toggleMapControlUpdater = (state, {payload: panelId}) => ({
  * @returns {Object} nextState
  * @public
  */
-export const openDeleteModalUpdater = (state, {payload: datasetKeyToRemove}) => ({
+export const openDeleteModalUpdater = (
+  state,
+  {payload: datasetKeyToRemove}
+) => ({
   ...state,
   currentModal: DELETE_DATA_ID,
   datasetKeyToRemove

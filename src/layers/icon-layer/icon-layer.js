@@ -35,7 +35,8 @@ export const iconPosAccessor = ({lat, lng}) => d => [
   d.data[lat.fieldIdx]
 ];
 
-export const iconPosResolver = ({lat, lng}) => `${lat.fieldIdx}-${lng.fieldIdx}`;
+export const iconPosResolver = ({lat, lng}) =>
+  `${lat.fieldIdx}-${lng.fieldIdx}`;
 
 export const iconAccessor = ({icon}) => d => d.data[icon.fieldIdx];
 export const iconResolver = ({icon}) => icon.fieldIdx;
@@ -191,7 +192,8 @@ export default class IconLayer extends Layer {
 
     // point radius
     const rScale =
-      sizeField && this.getVisChannelScale(sizeScale, sizeDomain, radiusRange, 0);
+      sizeField &&
+      this.getVisChannelScale(sizeScale, sizeDomain, radiusRange, 0);
 
     const getPosition = this.getPosition(columns);
     const getIcon = this.getIcon(columns);

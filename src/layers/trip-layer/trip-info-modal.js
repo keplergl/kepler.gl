@@ -38,12 +38,12 @@ const TripInfoModalFactory = (svgIcons = []) => {
       <div className="trip-info-modal__description">
         <p>
           In order to animate the path, the geoJSON data needs to contain
-          `LineString` in its feature geometry, and the coordinates in the LineString
-          need to have 4 elements in the formats of
+          `LineString` in its feature geometry, and the coordinates in the
+          LineString need to have 4 elements in the formats of
           <code> [longitude, latitude, altitude, timestamp] </code>
-          with the last element being a timestamp. Valid timestamp formats include
-          unix in seconds such as `1564184363` or in milliseconds such as
-          `1564184363000`.
+          with the last element being a timestamp. Valid timestamp formats
+          include unix in seconds such as `1564184363` or in milliseconds such
+          as `1564184363000`.
         </p>
       </div>
       <div className="trip-info-modal__example">

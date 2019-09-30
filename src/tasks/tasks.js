@@ -34,7 +34,8 @@ export const LOAD_FILE_TASK = taskCreator(
           // result has both datasets and info
           // TODO: I think we should pass info to the handler and return
           // the same format back from the file handler
-          if (result.datasets) { // this is coming from parsing keplergl.json file
+          if (result.datasets) {
+            // this is coming from parsing keplergl.json file
             success(result); // info is already part of datasets
           }
           success({datasets: {data: result, info}});
@@ -54,7 +55,7 @@ export const LOAD_MAP_STYLE_TASK = taskCreator(
         if (!result) {
           error(new Error('Map style response is empty'));
         }
-        success({id, style: result})
+        success({id, style: result});
       }
     }),
 

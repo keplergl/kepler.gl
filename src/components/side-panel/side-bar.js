@@ -75,10 +75,7 @@ const StyledCollapseButton = styled.div`
 
 export const CollapseButtonFactory = () => {
   const CollapseButton = ({onClick, isOpen}) => (
-    <StyledCollapseButton
-      className="side-bar__close"
-      onClick={onClick}
-    >
+    <StyledCollapseButton className="side-bar__close" onClick={onClick}>
       <ArrowRight
         height="12px"
         style={{transform: `rotate(${isOpen ? 180 : 0}deg)`}}
@@ -119,17 +116,17 @@ function SidebarFactory(CollapseButton) {
           width={isOpen ? width : 0}
           className="side-panel--container"
         >
-          <SideBarContainer className="side-bar" style={{width: `${width}px`}}
-                            left={horizontalOffset}>
+          <SideBarContainer
+            className="side-bar"
+            style={{width: `${width}px`}}
+            left={horizontalOffset}
+          >
             {isOpen ? (
               <SideBarInner className="side-bar__inner">
                 {this.props.children}
               </SideBarInner>
             ) : null}
-            <CollapseButton
-              isOpen={isOpen}
-              onClick={this._onOpenOrClose}
-            />
+            <CollapseButton isOpen={isOpen} onClick={this._onOpenOrClose} />
           </SideBarContainer>
         </StyledSidePanelContainer>
       );

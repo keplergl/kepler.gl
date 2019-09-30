@@ -32,7 +32,10 @@ import {
   Trash
 } from 'components/common/icons';
 
-import {InlineInput, StyledPanelHeader} from 'components/common/styled-components';
+import {
+  InlineInput,
+  StyledPanelHeader
+} from 'components/common/styled-components';
 
 const propTypes = {
   // required
@@ -73,7 +76,7 @@ const StyledLayerPanelHeader = styled(StyledPanelHeader)`
     }
 
     .layer__enable-config {
-      color: white
+      color: white;
     }
   }
 `;
@@ -112,11 +115,9 @@ const StyledDragHandle = styled.div`
   }
 `;
 
-const DragHandle = sortableHandle(({className, children}) =>
-  <StyledDragHandle className={className}>
-    {children}
-  </StyledDragHandle>
-);
+const DragHandle = sortableHandle(({className, children}) => (
+  <StyledDragHandle className={className}>{children}</StyledDragHandle>
+));
 
 const LayerPanelHeader = ({
   className,

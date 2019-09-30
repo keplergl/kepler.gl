@@ -331,7 +331,11 @@ export default class PointLayer extends Layer {
     const xMult =
       config.anchor === 'middle' ? 0 : config.anchor === 'start' ? 1 : -1;
     const yMult =
-      config.alignment === 'center' ? 0 : config.alignment === 'bottom' ? 1 : -1;
+      config.alignment === 'center'
+        ? 0
+        : config.alignment === 'bottom'
+        ? 1
+        : -1;
 
     const sizeOffset =
       config.alignment === 'center'

@@ -33,7 +33,7 @@ class ClickOutsideCloseDropdown extends Component {
     show: true
   };
 
-  handleClickOutside = (e) => {
+  handleClickOutside = e => {
     if (typeof this.props.onClose === 'function' && this.props.show) {
       this.props.onClose(e);
     }
@@ -46,6 +46,6 @@ class ClickOutsideCloseDropdown extends Component {
       </StyledPanelDropdown>
     );
   }
-};
+}
 
 export default listensToClickOutside(ClickOutsideCloseDropdown);

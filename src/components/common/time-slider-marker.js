@@ -103,8 +103,7 @@ export default class TimeSliderMarker extends Component {
       .tickSize(8)
       .tickPadding(6);
 
-    select(this.xAxis.current)
-      .call(xAxis);
+    select(this.xAxis.current).call(xAxis);
   }
 
   render() {
@@ -118,4 +117,4 @@ export default class TimeSliderMarker extends Component {
       </TimeSliderContainer>
     );
   }
-};
+}

@@ -38,7 +38,19 @@ import ActionTypes from 'constants/action-types';
  */
 export const registerEntry = createAction(
   ActionTypes.REGISTER_ENTRY,
-  ({id, mint, mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault}) => ({id, mint, mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault})
+  ({
+    id,
+    mint,
+    mapboxApiAccessToken,
+    mapboxApiUrl,
+    mapStylesReplaceDefault
+  }) => ({
+    id,
+    mint,
+    mapboxApiAccessToken,
+    mapboxApiUrl,
+    mapStylesReplaceDefault
+  })
 );
 
 /**
@@ -50,10 +62,7 @@ export const registerEntry = createAction(
  * @param {string} id - the id of the instance to be deleted
  * @public
  */
-export const deleteEntry = createAction(
-  ActionTypes.DELETE_ENTRY,
-  id => id
-);
+export const deleteEntry = createAction(ActionTypes.DELETE_ENTRY, id => id);
 
 /**
  *
@@ -82,5 +91,5 @@ export const renameEntry = createAction(
  * @public
  */
 /* eslint-disable no-unused-vars */
-const rootActions = null
+const rootActions = null;
 /* eslint-enable no-unused-vars */

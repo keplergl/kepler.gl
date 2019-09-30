@@ -118,12 +118,7 @@ const defaultConfirmButton = {
   children: 'Confirm'
 };
 
-export const ModalFooter = ({
-  cancel,
-  confirm,
-  cancelButton,
-  confirmButton
-}) => {
+export const ModalFooter = ({cancel, confirm, cancelButton, confirmButton}) => {
   const cancelButtonProps = {...defaultCancelButton, ...cancelButton};
   const confirmButtonProps = {...defaultConfirmButton, ...confirmButton};
   return (
@@ -172,7 +167,9 @@ class ModalDialog extends Component {
         ariaHideApp={false}
         style={{
           overlay: {
-            backgroundColor: (props.theme && props.theme.modalOverlayBgd) || 'rgba(0, 0, 0, 0.5)',
+            backgroundColor:
+              (props.theme && props.theme.modalOverlayBgd) ||
+              'rgba(0, 0, 0, 0.5)',
             zIndex: (props.theme && props.theme.modalOverLayZ) || 1000,
             // in case we want to override the modal dialog style
             ...props.style
@@ -193,7 +190,9 @@ class ModalDialog extends Component {
             {props.title && (
               <ModalTitle className="modal--title">{props.title}</ModalTitle>
             )}
-            <ModalContent className="modal--body">{props.children}</ModalContent>
+            <ModalContent className="modal--body">
+              {props.children}
+            </ModalContent>
             {props.footer && (
               <ModalFooter
                 cancel={props.close}
@@ -203,7 +202,6 @@ class ModalDialog extends Component {
               />
             )}
           </div>
-
         </ModalContentWrapper>
       </Modal>
     );
@@ -228,7 +226,7 @@ const StyledModal = styled(ModalDialog)`
   `};
 
   :focus {
-    outline: 0
+    outline: 0;
   }
 `;
 

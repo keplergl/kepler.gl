@@ -150,7 +150,7 @@ const LayerHoverInfoFactory = () => {
       PropTypes.arrayOf(PropTypes.any),
       PropTypes.object
     ])
-  }
+  };
   return LayerHoverInfo;
 };
 

@@ -178,7 +178,7 @@ export const receiveMapConfigUpdater = (
   if (options.centerMap && bounds) {
     mergedState = fitBoundsUpdater(mergedState, {
       payload: bounds
-    })
+    });
   }
 
   return {

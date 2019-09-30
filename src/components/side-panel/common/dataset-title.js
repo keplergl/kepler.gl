@@ -102,8 +102,7 @@ DatasetTitleFactory.deps = [DatasetTagFactory];
 
 export default function DatasetTitleFactory(DatasetTag) {
   class DatasetTitle extends PureComponent {
-
-    _onClickTitle = (e) => {
+    _onClickTitle = e => {
       e.stopPropagation();
       if (typeof this.props.onTitleClick === 'function') {
         this.props.onTitleClick();

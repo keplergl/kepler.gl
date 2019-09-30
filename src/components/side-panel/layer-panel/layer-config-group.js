@@ -75,7 +75,6 @@ export const StyledLayerConfigGroup = styled.div`
       max-height: 600px;
     }
     .layer-config-group__content {
-
       .layer-config-group__content__collapsible {
         overflow: hidden;
         max-height: 0;
@@ -163,12 +162,7 @@ export default class LayerConfigGroup extends Component {
         >
           <StyledLayerConfigGroupLabel className="layer-config-group__label">
             <span>{label}</span>
-            {description && (
-              <InfoHelper
-                description={description}
-                id={label}
-              />
-            )}
+            {description && <InfoHelper description={description} id={label} />}
           </StyledLayerConfigGroupLabel>
           <StyledLayerConfigGroupAction className="layer-config-group__action">
             {property ? (

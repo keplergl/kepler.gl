@@ -99,7 +99,7 @@ export const KEPLER_GL_NAME = 'kepler.gl';
 // Since we are injecting this during the build process with babel
 // while developing VERSION is not defined, we capture the exception and return
 // an empty string which will allow us to retrieve the latest umd version
-export const KEPLER_GL_VERSION = "__PACKAGE_VERSION__";
+export const KEPLER_GL_VERSION = '__PACKAGE_VERSION__';
 export const KEPLER_GL_WEBSITE = 'http://kepler.gl/';
 
 export const DIMENSIONS = {
@@ -163,7 +163,8 @@ export const DEFAULT_LAYER_GROUPS = [
   },
   {
     slug: 'road',
-    filter: ({id}) => id.match(/(?=(road|railway|tunnel|street|bridge))(?!.*label)/),
+    filter: ({id}) =>
+      id.match(/(?=(road|railway|tunnel|street|bridge))(?!.*label)/),
     defaultVisibility: true
   },
   {
@@ -183,7 +184,8 @@ export const DEFAULT_LAYER_GROUPS = [
   },
   {
     slug: 'land',
-    filter: ({id}) => id.match(/(?=(parks|landcover|industrial|sand|hillshade))/),
+    filter: ({id}) =>
+      id.match(/(?=(parks|landcover|industrial|sand|hillshade))/),
     defaultVisibility: true
   },
   {
@@ -378,11 +380,31 @@ export const linearFieldAggrScaleFunctions = {
   },
 
   [CHANNEL_SCALES.sizeAggr]: {
-    [AGGREGATION_TYPES.average]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log],
-    [AGGREGATION_TYPES.maximum]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log],
-    [AGGREGATION_TYPES.minimum]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log],
-    [AGGREGATION_TYPES.median]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log],
-    [AGGREGATION_TYPES.sum]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log]
+    [AGGREGATION_TYPES.average]: [
+      SCALE_TYPES.linear,
+      SCALE_TYPES.sqrt,
+      SCALE_TYPES.log
+    ],
+    [AGGREGATION_TYPES.maximum]: [
+      SCALE_TYPES.linear,
+      SCALE_TYPES.sqrt,
+      SCALE_TYPES.log
+    ],
+    [AGGREGATION_TYPES.minimum]: [
+      SCALE_TYPES.linear,
+      SCALE_TYPES.sqrt,
+      SCALE_TYPES.log
+    ],
+    [AGGREGATION_TYPES.median]: [
+      SCALE_TYPES.linear,
+      SCALE_TYPES.sqrt,
+      SCALE_TYPES.log
+    ],
+    [AGGREGATION_TYPES.sum]: [
+      SCALE_TYPES.linear,
+      SCALE_TYPES.sqrt,
+      SCALE_TYPES.log
+    ]
   }
 };
 
@@ -396,7 +418,10 @@ export const ordinalFieldAggrScaleFunctions = {
   // [CHANNEL_SCALES.colorAggr]: [SCALE_TYPES.ordinal, SCALE_TYPES.linear],
   [CHANNEL_SCALES.colorAggr]: {
     [AGGREGATION_TYPES.mode]: [SCALE_TYPES.ordinal],
-    [AGGREGATION_TYPES.countUnique]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile]
+    [AGGREGATION_TYPES.countUnique]: [
+      SCALE_TYPES.quantize,
+      SCALE_TYPES.quantile
+    ]
   },
 
   // Currently doesn't support yet
@@ -409,7 +434,7 @@ export const notSupportedScaleOpts = {
   [CHANNEL_SCALES.size]: []
 };
 
-export const  notSupportAggrOpts = {
+export const notSupportAggrOpts = {
   [CHANNEL_SCALES.colorAggr]: {},
   [CHANNEL_SCALES.sizeAggr]: {}
 };
@@ -419,10 +444,19 @@ export const  notSupportAggrOpts = {
  */
 export const DEFAULT_AGGREGATION = {
   [CHANNEL_SCALES.colorAggr]: {
-    [AGGREGATION_TYPES.count]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile, SCALE_TYPES.sqrt, SCALE_TYPES.log]
+    [AGGREGATION_TYPES.count]: [
+      SCALE_TYPES.quantize,
+      SCALE_TYPES.quantile,
+      SCALE_TYPES.sqrt,
+      SCALE_TYPES.log
+    ]
   },
   [CHANNEL_SCALES.sizeAggr]: {
-    [AGGREGATION_TYPES.count]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log]
+    [AGGREGATION_TYPES.count]: [
+      SCALE_TYPES.linear,
+      SCALE_TYPES.sqrt,
+      SCALE_TYPES.log
+    ]
   }
 };
 
@@ -573,41 +607,54 @@ export const RATIOS = keyMirror({
   SIXTEEN_BY_NINE: null
 });
 
-export const RATIO_OPTIONS = [{
-  id: RATIOS.SCREEN,
-  label: 'Original Screen',
-  getSize: (screenW, screenH) => ({width: screenW, height: screenH})
-}, {
-  id: RATIOS.FOUR_BY_THREE,
-  label: '4:3',
-  getSize: (screenW, screenH) => ({width: screenW, height: Math.round(screenW * 0.75)})
-}, {
-  id: RATIOS.SIXTEEN_BY_NINE,
-  label: '16:9',
-  getSize: (screenW, screenH) => ({width: screenW, height: Math.round(screenW * 0.5625)})
-}];
+export const RATIO_OPTIONS = [
+  {
+    id: RATIOS.SCREEN,
+    label: 'Original Screen',
+    getSize: (screenW, screenH) => ({width: screenW, height: screenH})
+  },
+  {
+    id: RATIOS.FOUR_BY_THREE,
+    label: '4:3',
+    getSize: (screenW, screenH) => ({
+      width: screenW,
+      height: Math.round(screenW * 0.75)
+    })
+  },
+  {
+    id: RATIOS.SIXTEEN_BY_NINE,
+    label: '16:9',
+    getSize: (screenW, screenH) => ({
+      width: screenW,
+      height: Math.round(screenW * 0.5625)
+    })
+  }
+];
 
-export const RESOLUTION_OPTIONS = [{
-  id: RESOLUTIONS.ONE_X,
-  label: '1x',
-  available: true,
-  scale: 1,
-  zoomOffset: Math.log2(1),
-  getSize: (screenW, screenH) => ({
-    width: screenW,
-    height: screenH
-  })
-}, {
-  id: RESOLUTIONS.TWO_X,
-  label: '2x',
-  available: true,
-  scale: 2,
-  zoomOffset: Math.log2(2),
-  getSize: (screenW, screenH) => ({
-    width: screenW * 2,
-    height: screenH * 2
-  })
-}];
+export const RESOLUTION_OPTIONS = [
+  {
+    id: RESOLUTIONS.ONE_X,
+    label: '1x',
+    available: true,
+    scale: 1,
+    zoomOffset: Math.log2(1),
+    getSize: (screenW, screenH) => ({
+      width: screenW,
+      height: screenH
+    })
+  },
+  {
+    id: RESOLUTIONS.TWO_X,
+    label: '2x',
+    available: true,
+    scale: 2,
+    zoomOffset: Math.log2(2),
+    getSize: (screenW, screenH) => ({
+      width: screenW * 2,
+      height: screenH * 2
+    })
+  }
+];
 
 export const DEFAULT_EXPORT_IMAGE_NAME = 'kepler-gl.png';
 
@@ -659,20 +706,22 @@ export const EXPORT_HTML_MAP_MODES = keyMirror({
 });
 
 // Export map options
-export const EXPORT_MAP_FORMAT_OPTIONS = Object.entries(EXPORT_MAP_FORMATS)
-  .map(entry => ({
+export const EXPORT_MAP_FORMAT_OPTIONS = Object.entries(EXPORT_MAP_FORMATS).map(
+  entry => ({
     id: entry[0],
     label: entry[1].toLowerCase(),
     available: true
-  }));
+  })
+);
 
-export const EXPORT_HTML_MAP_MODE_OPTIONS = Object.entries(EXPORT_HTML_MAP_MODES)
-  .map(entry => ({
-    id: entry[0],
-    label: entry[1].toLowerCase(),
-    available: true,
-    url: getHTMLMapModeTileUrl(entry[1])
-  }));
+export const EXPORT_HTML_MAP_MODE_OPTIONS = Object.entries(
+  EXPORT_HTML_MAP_MODES
+).map(entry => ({
+  id: entry[0],
+  label: entry[1].toLowerCase(),
+  available: true,
+  url: getHTMLMapModeTileUrl(entry[1])
+}));
 
 export const DEFAULT_UUID_COUNT = 6;
 
@@ -690,9 +739,12 @@ export const DEFAULT_NOTIFICATION_TOPICS = keyMirror({
   file: null
 });
 
-export const TOKEN_MISUSE_WARNING = '* If you do not provide your own token, the map may fail to display at any time when we replace ours to avoid misuse. ';
-export const DISCLAIMER = 'You can change the Mapbox token later using the following instructions: ';
-export const MAP_CONFIG_DESCRIPTION = 'Map config will be included in the Json file. If you are using kepler.gl in your own app. You can copy this config and pass it to ';
+export const TOKEN_MISUSE_WARNING =
+  '* If you do not provide your own token, the map may fail to display at any time when we replace ours to avoid misuse. ';
+export const DISCLAIMER =
+  'You can change the Mapbox token later using the following instructions: ';
+export const MAP_CONFIG_DESCRIPTION =
+  'Map config will be included in the Json file. If you are using kepler.gl in your own app. You can copy this config and pass it to ';
 
 // Animation
 export const BASE_SPEED = 600;

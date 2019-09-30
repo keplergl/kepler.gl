@@ -36,9 +36,11 @@ const actionHandler = {
 };
 
 /* Reducer */
-export const mapStateReducerFactory = (initialState = {}) => handleActions(
-  actionHandler,
-  {...mapStateUpdaters.INITIAL_MAP_STATE, ...initialState, initialState}
-);
+export const mapStateReducerFactory = (initialState = {}) =>
+  handleActions(actionHandler, {
+    ...mapStateUpdaters.INITIAL_MAP_STATE,
+    ...initialState,
+    initialState
+  });
 
 export default mapStateReducerFactory();

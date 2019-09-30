@@ -389,7 +389,12 @@ function makeGetActionCreators() {
   return createSelector(
     [getDispatch, getUserActions],
     (dispatch, userActions) => {
-      const [visStateActions, mapStateActions, mapStyleActions, uiStateActions] = [
+      const [
+        visStateActions,
+        mapStateActions,
+        mapStyleActions,
+        uiStateActions
+      ] = [
         VisStateActions,
         MapStateActions,
         MapStyleActions,

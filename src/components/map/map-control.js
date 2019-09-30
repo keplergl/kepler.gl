@@ -199,7 +199,7 @@ const MapLegendPanel = ({layers, isActive, scale, toggleMenuPanel, isExport}) =>
       onClick={toggleMenuPanel}
       isExport={isExport}
     >
-      <MapLegend layers={layers}/>
+      <MapLegend layers={layers} />
     </MapControlPanel>
   );
 
@@ -234,7 +234,7 @@ const MapControlFactory = () => {
       this.layerSelector,
       this.layersToRenderSelector,
       (layers, layersToRender) =>
-         layers
+        layers
           .filter(l => l.config.isVisible)
           .map(layer => ({
             id: layer.id,
@@ -245,7 +245,6 @@ const MapControlFactory = () => {
     );
 
     render() {
-
       const {
         dragRotate,
         layers,

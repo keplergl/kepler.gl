@@ -46,6 +46,6 @@ class PointLayerIcon extends Component {
       </Base>
     );
   }
-};
+}
 
 export default PointLayerIcon;

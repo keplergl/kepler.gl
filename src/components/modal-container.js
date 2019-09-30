@@ -58,11 +58,11 @@ import {EXPORT_MAP_FORMATS} from '../constants/default-settings';
 const DataTableModalStyle = css`
   top: 80px;
   padding: 32px 0 0 0;
-  
+
   ${media.portable`
     padding: 0;
   `}
-  
+
   ${media.palm`
     padding: 0;
     margin: 0 auto;
@@ -152,7 +152,9 @@ export default function ModalContainerFactory(
       const {selectedDataset, dataType, filtered} = uiState.exportData;
       // get the selected data
       const filename = 'kepler-gl';
-      const selectedDatasets = datasets[selectedDataset] ? [datasets[selectedDataset]] : Object.values(datasets);
+      const selectedDatasets = datasets[selectedDataset]
+        ? [datasets[selectedDataset]]
+        : Object.values(datasets);
       if (!selectedDatasets.length) {
         // error: selected dataset not found.
         this._closeModal();
@@ -173,7 +175,6 @@ export default function ModalContainerFactory(
           default:
             break;
         }
-
       });
 
       this._closeModal();
@@ -184,7 +185,8 @@ export default function ModalContainerFactory(
       const {hasData} = uiState.exportMap[EXPORT_MAP_FORMATS.JSON];
 
       // we pass all props because we avoid to create new variables
-      const data = hasData ? KeplerGlSchema.save(this.props)
+      const data = hasData
+        ? KeplerGlSchema.save(this.props)
         : KeplerGlSchema.getConfigToSave(this.props);
 
       this._downloadFile(
@@ -198,19 +200,22 @@ export default function ModalContainerFactory(
 
     _onExportHTMLMap = () => {
       const {uiState} = this.props;
-      const {userMapboxToken, exportMapboxAccessToken, mode} = uiState.exportMap[EXPORT_MAP_FORMATS.HTML];
+      const {
+        userMapboxToken,
+        exportMapboxAccessToken,
+        mode
+      } = uiState.exportMap[EXPORT_MAP_FORMATS.HTML];
 
       const data = {
         ...KeplerGlSchema.save(this.props),
-        mapboxApiAccessToken: (userMapboxToken || '') !== '' ? userMapboxToken : exportMapboxAccessToken,
+        mapboxApiAccessToken:
+          (userMapboxToken || '') !== ''
+            ? userMapboxToken
+            : exportMapboxAccessToken,
         mode
       };
 
-      this._downloadFile(
-        exportMapToHTML(data),
-        'text/html',
-        'kepler.gl.html'
-      );
+      this._downloadFile(exportMapToHTML(data), 'text/html', 'kepler.gl.html');
 
       this._closeModal();
     };
@@ -245,11 +250,10 @@ export default function ModalContainerFactory(
       let template = null;
       let modalProps = {};
 
-      if (currentModal && currentModal.id &&
-        currentModal.template) {
+      if (currentModal && currentModal.id && currentModal.template) {
         // if currentMdoal template is already provided
         // TODO: need to check whether template is valid
-        template = (<currentModal.template/>);
+        template = <currentModal.template />;
         modalProps = currentModal.modalProps;
       } else {
         switch (currentModal) {
@@ -275,7 +279,11 @@ export default function ModalContainerFactory(
             break;
           case DELETE_DATA_ID:
             // validate options
-            if (datasetKeyToRemove && datasets && datasets[datasetKeyToRemove]) {
+            if (
+              datasetKeyToRemove &&
+              datasets &&
+              datasets[datasetKeyToRemove]
+            ) {
               template = (
                 <DeleteDatasetModal
                   dataset={datasets[datasetKeyToRemove]}
@@ -341,9 +349,15 @@ export default function ModalContainerFactory(
                 {...uiState.exportData}
                 datasets={datasets}
                 onClose={this._closeModal}
-                onChangeExportDataType={this.props.uiStateActions.setExportDataType}
-                onChangeExportSelectedDataset={this.props.uiStateActions.setExportSelectedDataset}
-                onChangeExportFiltered={this.props.uiStateActions.setExportFiltered}
+                onChangeExportDataType={
+                  this.props.uiStateActions.setExportDataType
+                }
+                onChangeExportSelectedDataset={
+                  this.props.uiStateActions.setExportSelectedDataset
+                }
+                onChangeExportFiltered={
+                  this.props.uiStateActions.setExportFiltered
+                }
               />
             );
             modalProps = {
@@ -359,16 +373,25 @@ export default function ModalContainerFactory(
             };
             break;
           case EXPORT_MAP_ID:
-            const keplerGlConfig = KeplerGlSchema.getConfigToSave(
-              { mapStyle, visState, mapState, uiState }
-            );
+            const keplerGlConfig = KeplerGlSchema.getConfigToSave({
+              mapStyle,
+              visState,
+              mapState,
+              uiState
+            });
             template = (
               <ExportMapModal
                 config={keplerGlConfig}
                 options={uiState.exportMap}
-                onChangeExportMapFormat={this.props.uiStateActions.setExportMapFormat}
-                onEditUserMapboxAccessToken={this.props.uiStateActions.setUserMapboxAccessToken}
-                onChangeExportMapHTMLMode={this.props.uiStateActions.setExportHTMLMapMode}
+                onChangeExportMapFormat={
+                  this.props.uiStateActions.setExportMapFormat
+                }
+                onEditUserMapboxAccessToken={
+                  this.props.uiStateActions.setUserMapboxAccessToken
+                }
+                onChangeExportMapHTMLMode={
+                  this.props.uiStateActions.setExportHTMLMapMode
+                }
               />
             );
             modalProps = {
@@ -391,7 +414,9 @@ export default function ModalContainerFactory(
                 mapState={this.props.mapState}
                 inputStyle={mapStyle.inputStyle}
                 inputMapStyle={this.props.mapStyleActions.inputMapStyle}
-                loadCustomMapStyle={this.props.mapStyleActions.loadCustomMapStyle}
+                loadCustomMapStyle={
+                  this.props.mapStyleActions.loadCustomMapStyle
+                }
               />
             );
             modalProps = {

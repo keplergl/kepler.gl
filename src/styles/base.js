@@ -399,7 +399,9 @@ const secondaryInput = css`
   background-color: ${props => props.theme.secondaryInputBgd};
   border: 1px solid
     ${props =>
-      props.error ? props.theme.errorColor : props.theme.secondaryInputBorderColor};
+      props.error
+        ? props.theme.errorColor
+        : props.theme.secondaryInputBorderColor};
 
   :hover {
     cursor: pointer;
@@ -468,7 +470,9 @@ const inlineInput = css`
 
 const switchTrack = css`
   background: ${props =>
-    props.checked ? props.theme.switchTrackBgdActive : props.theme.switchTrackBgd};
+    props.checked
+      ? props.theme.switchTrackBgdActive
+      : props.theme.switchTrackBgd};
   position: absolute;
   top: 0;
   left: ${props => -props.theme.switchLabelMargin}px;
@@ -527,7 +531,9 @@ const checkboxBox = css`
   width: ${props => props.theme.checkboxWidth}px;
   height: ${props => props.theme.checkboxHeight}px;
   background: ${props =>
-    props.checked ? props.theme.checkboxBoxBgdChecked : props.theme.checkboxBoxBgd};
+    props.checked
+      ? props.theme.checkboxBoxBgdChecked
+      : props.theme.checkboxBoxBgd};
   border: 1px solid
     ${props =>
       props.checked

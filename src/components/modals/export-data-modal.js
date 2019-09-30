@@ -45,7 +45,7 @@ const propTypes = {
 const getDataRowCount = (datasets, selectedDataset, filtered) => {
   const selectedData = datasets[selectedDataset];
   if (!selectedData) {
-    return `${Object.keys(datasets).length} Files ` ;
+    return `${Object.keys(datasets).length} Files `;
   }
   const {allData, data} = selectedData;
   const rowCount = filtered ? data.length : allData.length;
@@ -67,32 +67,31 @@ const ExportDataModal = ({
     <div>
       <StyledExportSection>
         <div className="description">
-          <div className="title">
-            Dataset
-          </div>
-          <div className="subtitle">
-            Choose the datasets you want to export
-          </div>
+          <div className="title">Dataset</div>
+          <div className="subtitle">Choose the datasets you want to export</div>
         </div>
         <div className="selection">
-          <select value={selectedDataset} onChange={e => onChangeExportSelectedDataset(e.target.value)}>
-          {['All'].concat(Object.keys(datasets)).map(d => (
-            <option key={d} value={d}>{(datasets[d] && datasets[d].label) || d}</option>
-          ))}
+          <select
+            value={selectedDataset}
+            onChange={e => onChangeExportSelectedDataset(e.target.value)}
+          >
+            {['All'].concat(Object.keys(datasets)).map(d => (
+              <option key={d} value={d}>
+                {(datasets[d] && datasets[d].label) || d}
+              </option>
+            ))}
           </select>
         </div>
       </StyledExportSection>
       <StyledExportSection>
         <div className="description">
-          <div className="title">
-            Data Type
-          </div>
+          <div className="title">Data Type</div>
           <div className="subtitle">
             Choose the type of data you want to export
           </div>
         </div>
         <div className="selection">
-          {EXPORT_DATA_TYPE_OPTIONS.map(op =>
+          {EXPORT_DATA_TYPE_OPTIONS.map(op => (
             <StyledType
               key={op.id}
               selected={dataType === op.id}
@@ -101,26 +100,34 @@ const ExportDataModal = ({
             >
               <FileType ext={op.label} height="80px" fontSize="11px" />
             </StyledType>
-          )}
+          ))}
         </div>
       </StyledExportSection>
       <StyledExportSection>
         <div className="description">
-          <div className="title">
-            Filter Data
-          </div>
+          <div className="title">Filter Data</div>
           <div className="subtitle">
             You can choose exporting original data or filtered data
           </div>
         </div>
         <div className="selection">
-          <StyledFilteredOption selected={!filtered} onClick={() => onChangeExportFiltered(false)}>
+          <StyledFilteredOption
+            selected={!filtered}
+            onClick={() => onChangeExportFiltered(false)}
+          >
             <div className="filtered-title">Unfiltered Data</div>
-            <div className="filtered-subtitle">{getDataRowCount(datasets, selectedDataset, false)}</div>
+            <div className="filtered-subtitle">
+              {getDataRowCount(datasets, selectedDataset, false)}
+            </div>
           </StyledFilteredOption>
-          <StyledFilteredOption selected={filtered} onClick={() => onChangeExportFiltered(true)}>
+          <StyledFilteredOption
+            selected={filtered}
+            onClick={() => onChangeExportFiltered(true)}
+          >
             <div className="filtered-title">Filtered Data</div>
-            <div className="filtered-subtitle">{getDataRowCount(datasets, selectedDataset, true)}</div>
+            <div className="filtered-subtitle">
+              {getDataRowCount(datasets, selectedDataset, true)}
+            </div>
           </StyledFilteredOption>
         </div>
       </StyledExportSection>

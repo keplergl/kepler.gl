@@ -39,7 +39,6 @@ const PanelWrapper = styled.div`
 LayerPanelFactory.deps = [LayerConfiguratorFactory];
 
 function LayerPanelFactory(LayerConfigurator) {
-
   class LayerPanel extends Component {
     static propTypes = {
       layer: PropTypes.object.isRequired,
@@ -89,7 +88,7 @@ function LayerPanelFactory(LayerConfigurator) {
 
     _updateLayerLabel = ({target: {value}}) => {
       this.updateLayerConfig({label: value});
-    }
+    };
 
     _toggleVisibility = e => {
       e.stopPropagation();
@@ -146,7 +145,9 @@ function LayerPanelFactory(LayerConfigurator) {
               openModal={this.props.openModal}
               updateLayerColorUI={this.updateLayerColorUI}
               updateLayerConfig={this.updateLayerConfig}
-              updateLayerVisualChannelConfig={this.updateLayerVisualChannelConfig}
+              updateLayerVisualChannelConfig={
+                this.updateLayerVisualChannelConfig
+              }
               updateLayerType={this.updateLayerType}
               updateLayerTextLabel={this.updateLayerTextLabel}
               updateLayerVisConfig={this.updateLayerVisConfig}

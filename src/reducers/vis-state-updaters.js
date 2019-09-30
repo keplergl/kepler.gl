@@ -661,11 +661,14 @@ export const addFilterUpdater = (state, action) =>
  * @param {Object} action.prop
  * @param {Object} action.newConfig
  */
-export const layerColorUIChangeUpdater = (state, {oldLayer, prop, newConfig}) => {
+export const layerColorUIChangeUpdater = (
+  state,
+  {oldLayer, prop, newConfig}
+) => {
   const newLayer = oldLayer.updateLayerColorUI(prop, newConfig);
   return {
     ...state,
-    layers: state.layers.map(l => l.id === oldLayer.id ? newLayer : l)
+    layers: state.layers.map(l => (l.id === oldLayer.id ? newLayer : l))
   };
 };
 

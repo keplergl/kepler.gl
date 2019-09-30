@@ -49,14 +49,18 @@ export default class TextLabelPanel extends Component {
 
   render() {
     const {updateLayerTextLabel, textLabel, fields} = this.props;
-    const currentFields = textLabel.map(tl => tl.field && tl.field.name).filter(d => d);
+    const currentFields = textLabel
+      .map(tl => tl.field && tl.field.name)
+      .filter(d => d);
     return (
       <LayerConfigGroup label={'label'} collapsible>
         <ConfigGroupCollapsibleHeader>
           <FieldSelector
             fields={fields}
             value={currentFields}
-            onSelect={selected => updateLayerTextLabel('all', 'fields', selected)}
+            onSelect={selected =>
+              updateLayerTextLabel('all', 'fields', selected)
+            }
             multiSelect
           />
         </ConfigGroupCollapsibleHeader>
@@ -108,7 +112,9 @@ export default class TextLabelPanel extends Component {
                     <ItemSelector
                       {...LAYER_TEXT_CONFIGS.textAlignment}
                       selectedItems={tl.alignment}
-                      onChange={val => updateLayerTextLabel(idx, 'alignment', val)}
+                      onChange={val =>
+                        updateLayerTextLabel(idx, 'alignment', val)
+                      }
                     />
                   </SBFlexboxItem>
                 </SpaceBetweenFlexbox>
@@ -116,7 +122,10 @@ export default class TextLabelPanel extends Component {
             </div>
           ))}
           <SidePanelSection>
-            <Button link onClick={val => updateLayerTextLabel(textLabel.length)}>
+            <Button
+              link
+              onClick={val => updateLayerTextLabel(textLabel.length)}
+            >
               <Add height="12px" />
               Add More Label
             </Button>

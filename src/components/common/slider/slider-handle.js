@@ -68,7 +68,8 @@ const StyledSliderTooltip = styled.div`
   margin-bottom: -6px;
   width: 50px;
 
-  :before,:after {
+  :before,
+  :after {
     content: '';
     width: 0;
     height: 0;
@@ -101,12 +102,11 @@ const SliderTooltip = ({
   sliderHandleWidth
 }) => {
   return (
-    <StyledSliderTooltip
-      sliderHandleWidth={sliderHandleWidth}
-      style={style}>{format(value)}
+    <StyledSliderTooltip sliderHandleWidth={sliderHandleWidth} style={style}>
+      {format(value)}
     </StyledSliderTooltip>
-  )
-}
+  );
+};
 
 export default class SliderHandle extends Component {
   static propTypes = {
@@ -147,11 +147,13 @@ export default class SliderHandle extends Component {
 
     return (
       <div style={{display: this.props.display ? 'block' : 'none'}}>
-        {this.props.showTooltip && this.state.mouseOver ? <SliderTooltip
-          style={style}
-          sliderHandleWidth={this.props.sliderHandleWidth}
-          value={Number.isFinite(this.props.value) ? this.props.value : null}
-        /> : null}
+        {this.props.showTooltip && this.state.mouseOver ? (
+          <SliderTooltip
+            style={style}
+            sliderHandleWidth={this.props.sliderHandleWidth}
+            value={Number.isFinite(this.props.value) ? this.props.value : null}
+          />
+        ) : null}
         <StyledSliderHandle
           className={classnames('kg-range-slider__handle', {
             'kg-range-slider__handle--active': this.state.mouseOver

@@ -193,9 +193,7 @@ class ExportImageModal extends Component {
           </div>
         </ImageOptionList>
         <PreviewImageSection ratio={ratio} width={width} height={height}>
-          <div className="dimension">{`${exportImageSize.width} x ${
-            exportImageSize.height
-          }`}</div>
+          <div className="dimension">{`${exportImageSize.width} x ${exportImageSize.height}`}</div>
           <div className="preview-image">
             {exporting ? (
               <div className="preview-image-spinner">

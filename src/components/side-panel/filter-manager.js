@@ -30,10 +30,7 @@ import {Add} from 'components/common/icons';
 import SourceDataCatalogFactory from './common/source-data-catalog';
 import FilterPanelFactory from './filter-panel/filter-panel';
 
-FilterManagerFactory.deps = [
-  SourceDataCatalogFactory,
-  FilterPanelFactory
-];
+FilterManagerFactory.deps = [SourceDataCatalogFactory, FilterPanelFactory];
 
 function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
   return class FilterManager extends Component {
@@ -100,7 +97,8 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
             width="105px"
             onClick={this._addFilter}
           >
-            <Add height="12px" />Add Filter
+            <Add height="12px" />
+            Add Filter
           </Button>
         </div>
       );

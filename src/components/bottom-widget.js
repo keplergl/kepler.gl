@@ -70,7 +70,9 @@ export default function BottomWidgetFactory(TimeWidget, AnimationControl) {
     const {activeSidePanel, readOnly} = uiState;
     const isOpen = Boolean(activeSidePanel);
 
-    const enlargedFilterIdx = filters.findIndex(f => f.enlarged && f.type === FILTER_TYPES.timeRange);
+    const enlargedFilterIdx = filters.findIndex(
+      f => f.enlarged && f.type === FILTER_TYPES.timeRange
+    );
     const isAnyFilterAnimating = filters.some(f => f.isAnimating);
     const enlargedFilterWidth = isOpen
       ? containerW - sidePanelWidth
@@ -82,7 +84,8 @@ export default function BottomWidgetFactory(TimeWidget, AnimationControl) {
         l.config.animation && l.config.animation.enabled && l.config.isVisible
     );
 
-    const readToAnimation = Array.isArray(animationConfig.domain) && animationConfig.currentTime;
+    const readToAnimation =
+      Array.isArray(animationConfig.domain) && animationConfig.currentTime;
     // if animation control is showing, hide time display in time slider
     const showFloatingTimeDisplay = !animatedLayer.length;
     return (

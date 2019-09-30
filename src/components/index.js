@@ -40,31 +40,59 @@ export {
   ExportConfigFactory,
   ExportMapFactory,
   SaveMapFactory
-} from './side-panel/panel-header'
-export {CollapseButtonFactory, default as SidebarFactory} from './side-panel/side-bar';
+} from './side-panel/panel-header';
+export {
+  CollapseButtonFactory,
+  default as SidebarFactory
+} from './side-panel/side-bar';
 export {default as PanelToggleFactory} from './side-panel/panel-toggle';
 
-export {AddDataButtonFactory, default as LayerManagerFactory} from './side-panel/layer-manager';
-export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel';
-export {default as LayerConfiguratorFactory} from './side-panel/layer-panel/layer-configurator';
+export {
+  AddDataButtonFactory,
+  default as LayerManagerFactory
+} from './side-panel/layer-manager';
+export {
+  default as LayerPanelFactory
+} from './side-panel/layer-panel/layer-panel';
+export {
+  default as LayerConfiguratorFactory
+} from './side-panel/layer-panel/layer-configurator';
 
 export {default as DatasetSquare} from './common/styled-components';
-export {default as SourceDataCatalogFactory} from './side-panel/common/source-data-catalog';
-export {default as SourceDataSelectorFactory} from './side-panel/common/source-data-selector';
-export {default as DatasetTitleFactory} from './side-panel/common/dataset-title';
+export {
+  default as SourceDataCatalogFactory
+} from './side-panel/common/source-data-catalog';
+export {
+  default as SourceDataSelectorFactory
+} from './side-panel/common/source-data-selector';
+export {
+  default as DatasetTitleFactory
+} from './side-panel/common/dataset-title';
 export {default as DatasetInfoFactory} from './side-panel/common/dataset-info';
 export {default as DatasetTagFactory} from './side-panel/common/dataset-tag';
 
 export {default as FilterManagerFactory} from './side-panel/filter-manager';
-export {default as FilterPanelFactory} from './side-panel/filter-panel/filter-panel';
+export {
+  default as FilterPanelFactory
+} from './side-panel/filter-panel/filter-panel';
 
-export {default as InteractionManagerFactory} from './side-panel/interaction-manager';
-export {default as BrushConfigFactory} from './side-panel/interaction-panel/brush-config';
-export {default as TooltipConfigFactory} from './side-panel/interaction-panel/tooltip-config';
+export {
+  default as InteractionManagerFactory
+} from './side-panel/interaction-manager';
+export {
+  default as BrushConfigFactory
+} from './side-panel/interaction-panel/brush-config';
+export {
+  default as TooltipConfigFactory
+} from './side-panel/interaction-panel/tooltip-config';
 
 export {default as MapManagerFactory} from './side-panel/map-manager';
-export {default as LayerGroupSelectorFactory} from './side-panel/map-style-panel/map-layer-selector';
-export {default as MapStyleSelectorFactory} from './side-panel/map-style-panel/map-style-selector';
+export {
+  default as LayerGroupSelectorFactory
+} from './side-panel/map-style-panel/map-layer-selector';
+export {
+  default as MapStyleSelectorFactory
+} from './side-panel/map-style-panel/map-style-selector';
 
 // // map container factories
 export {default as MapPopoverFactory} from './map/map-popover';
@@ -79,24 +107,33 @@ export {default as ExportDataModalFactory} from './modals/export-data-modal';
 export {default as AddMapStyleModalFactory} from './modals/add-map-style-modal';
 
 // // common factory
-export {default as AnimationControlFactory} from './common/animation-control/animation-control';
-export {default as SpeedControlFactory} from './common/animation-control/speed-control';
-export {default as AnimationPlaybacksFactory} from './common/animation-control/playback-controls';
-export {default as FloatingTimeDisplayFactory} from './common/animation-control/floating-time-display';
+export {
+  default as AnimationControlFactory
+} from './common/animation-control/animation-control';
+export {
+  default as SpeedControlFactory
+} from './common/animation-control/speed-control';
+export {
+  default as AnimationPlaybacksFactory
+} from './common/animation-control/playback-controls';
+export {
+  default as FloatingTimeDisplayFactory
+} from './common/animation-control/floating-time-display';
 
 // // Filters
 export {default as TimeWidgetFactory} from './filters/time-widget';
-export {default as SingleSelectFilterFactory} from './filters/single-select-filter';
-export {default as MultiSelectFilterFactory} from './filters/multi-select-filter';
+export {
+  default as SingleSelectFilterFactory
+} from './filters/single-select-filter';
+export {
+  default as MultiSelectFilterFactory
+} from './filters/multi-select-filter';
 export {default as TimeRangeFilterFactory} from './filters/time-range-filter';
 
 export {default as RangeFilterFactory} from './filters/range-filter';
 
 // Injector
-export {
-  injector as injector,
-  withState as withState
-} from './injector'
+export {injector, withState} from './injector';
 
 // Common Components
 export {default as FileUpload} from './common/file-uploader/file-upload';

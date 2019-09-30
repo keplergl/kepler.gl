@@ -45,9 +45,9 @@ const PanelTab = styled.div.attrs({
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: ${props =>
-  props.active ? props.theme.subtextColorActive : 'transparent'};
+    props.active ? props.theme.subtextColorActive : 'transparent'};
   color: ${props =>
-  props.active ? props.theme.subtextColorActive : props.theme.subtextColor};
+    props.active ? props.theme.subtextColorActive : props.theme.subtextColor};
   display: flex;
   justify-content: center;
   margin-right: 12px;
@@ -87,6 +87,6 @@ const PanelToggleFactory = () => {
 
   PanelToggle.propTypes = propTypes;
   return PanelToggle;
-}
+};
 
 export default PanelToggleFactory;

@@ -30,9 +30,7 @@ import ActionTypes from 'constants/action-types';
  * import {togglePerspective} from 'kepler.gl/actions';
  * this.props.dispatch(togglePerspective());
  */
-export const togglePerspective = createAction(
-  ActionTypes.TOGGLE_PERSPECTIVE
-);
+export const togglePerspective = createAction(ActionTypes.TOGGLE_PERSPECTIVE);
 
 /**
  * Fit map viewport to bounds
@@ -43,10 +41,7 @@ export const togglePerspective = createAction(
  * import {fitBounds} from 'kepler.gl/actions';
  * this.props.dispatch(fitBounds([-122.23, 37.127, -122.11, 37.456]));
  */
-export const fitBounds =  createAction(
-  ActionTypes.FIT_BOUNDS,
-  bounds => bounds
-);
+export const fitBounds = createAction(ActionTypes.FIT_BOUNDS, bounds => bounds);
 
 /**
  * Update map viewport
@@ -96,5 +91,5 @@ export const toggleSplitMap = createAction(
  * @public
  */
 /* eslint-disable no-unused-vars */
-const mapStateActions = null
+const mapStateActions = null;
 /* eslint-enable no-unused-vars */

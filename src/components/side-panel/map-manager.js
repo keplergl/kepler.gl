@@ -50,12 +50,14 @@ function MapManagerFactory(MapStyleSelector, LayerGroupSelector) {
     colorSetSelector = createSelector(
       this.buildingColorSelector,
       this.setColorSelector,
-      (selectedColor, setColor) => ([{
-        selectedColor,
-        setColor,
-        isRange: false,
-        label: '3D Building Color'
-      }])
+      (selectedColor, setColor) => [
+        {
+          selectedColor,
+          setColor,
+          isRange: false,
+          label: '3D Building Color'
+        }
+      ]
     );
 
     _updateConfig = newProp => {

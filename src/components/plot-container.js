@@ -107,13 +107,14 @@ export default function PlotContainerFactory(MapContainer) {
         this.props.startExportingImage();
         const filter = node => node.className !== 'mapboxgl-control-container';
 
-        convertToPng(this.plottingAreaRef.current, {filter}).then(dataUri => {
-          this.props.setExportImageDataUri(dataUri);
-        })
-        .catch(err => {
-          this.props.setExportImageError(err);
-          this.props.addNotification(exportImageError({err}));
-        });
+        convertToPng(this.plottingAreaRef.current, {filter})
+          .then(dataUri => {
+            this.props.setExportImageDataUri(dataUri);
+          })
+          .catch(err => {
+            this.props.setExportImageError(err);
+            this.props.addNotification(exportImageError({err}));
+          });
       }
     };
 

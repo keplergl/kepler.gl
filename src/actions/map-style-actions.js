@@ -29,9 +29,7 @@ import ActionTypes from 'constants/action-types';
  * @memberof mapStyleActions
  * @public
  */
-export const addCustomMapStyle = createAction(
-  ActionTypes.ADD_CUSTOM_MAP_STYLE,
-);
+export const addCustomMapStyle = createAction(ActionTypes.ADD_CUSTOM_MAP_STYLE);
 
 /**
  * Input a custom map style object
@@ -138,5 +136,5 @@ export const set3dBuildingColor = createAction(
  * @public
  */
 /* eslint-disable no-unused-vars */
-const mapStyleActions = null
+const mapStyleActions = null;
 /* eslint-enable no-unused-vars */

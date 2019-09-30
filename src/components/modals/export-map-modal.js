@@ -22,7 +22,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import JSONPretty from 'react-json-pretty';
-import {GITHUB_EXPORT_HTML_MAP, GITHUB_ADD_DATA_TO_MAP, GITHUB_EXPORT_HTML_MAP_MODES} from 'constants/user-guides';
+import {
+  GITHUB_EXPORT_HTML_MAP,
+  GITHUB_ADD_DATA_TO_MAP,
+  GITHUB_EXPORT_HTML_MAP_MODES
+} from 'constants/user-guides';
 import {FileType} from 'components/common/icons';
 import {
   StyledModalContent,
@@ -43,11 +47,11 @@ const NO_OP = () => {};
 const StyledInput = styled.input`
   width: 100%;
   padding: ${props => props.theme.inputPadding};
-  color: ${props => props.error ? 'red' : props.theme.titleColorLT};
+  color: ${props => (props.error ? 'red' : props.theme.titleColorLT)};
   height: ${props => props.theme.inputBoxHeight};
   outline: 0;
   font-size: ${props => props.theme.inputFontSize};
-  
+
   :active,
   :focus,
   &.focus,
@@ -76,8 +80,7 @@ const ExportMapStyledExportSection = styled(StyledExportSection)`
 `;
 
 const Link = ({children, ...props}) => (
-  <StyledLink target="_blank"
-              rel="noopener noreferrer" {...props}>
+  <StyledLink target="_blank" rel="noopener noreferrer" {...props}>
     {children}
   </StyledLink>
 );
@@ -110,9 +113,7 @@ const ExportHtmlMap = ({
     </StyledExportSection>
     <ExportMapStyledExportSection className="export-map-modal__html-options">
       <div className="description">
-        <div className="title">
-          Mapbox access token
-        </div>
+        <div className="title">Mapbox access token</div>
         <div className="subtitle">
           Use your own Mapbox access token in the html (optional)
         </div>
@@ -135,25 +136,24 @@ const ExportHtmlMap = ({
     </ExportMapStyledExportSection>
     <ExportMapStyledExportSection>
       <div className="description">
-        <div className="title">
-          Map Mode
-        </div>
+        <div className="title">Map Mode</div>
         <div className="subtitle">
-          Select the app mode. More <a href={GITHUB_EXPORT_HTML_MAP_MODES}>info</a>
+          Select the app mode. More{' '}
+          <a href={GITHUB_EXPORT_HTML_MAP_MODES}>info</a>
         </div>
       </div>
       <div className="selection">
-        {EXPORT_HTML_MAP_MODE_OPTIONS.map(mode =>
+        {EXPORT_HTML_MAP_MODE_OPTIONS.map(mode => (
           <BigStyledType
             key={mode.id}
             selected={options.mode === mode.id}
             available={mode.available}
             onClick={() => mode.available && onChangeExportMapHTMLMode(mode.id)}
           >
-            <img src={mode.url} alt=""/>
+            <img src={mode.url} alt="" />
             <p>Allow users to {mode.label} the map</p>
           </BigStyledType>
-        )}
+        ))}
       </div>
     </ExportMapStyledExportSection>
   </div>
@@ -166,7 +166,7 @@ const StyledJsonExportSection = styled(ExportMapStyledExportSection)`
     color: ${props => props.theme.errorColor};
     font-size: 11px;
   }
-  
+
   .viewer {
     border: 1px solid ${props => props.theme.selectBorderColorLT};
     background-color: white;
@@ -187,35 +187,33 @@ const exportJsonPropTypes = {
   options: PropTypes.object
 };
 
-const ExportJsonMap = ({
-  config = {}
-}) => (
+const ExportJsonMap = ({config = {}}) => (
   <div>
     <StyledExportSection style={{marginTop: INTRA_SECTION_MARGING}}>
       <div className="description" />
       <div className="selection">
-        Export current map data and config into a single Json file. You can later open the same map by uploading this file to kepler.gl.
+        Export current map data and config into a single Json file. You can
+        later open the same map by uploading this file to kepler.gl.
       </div>
     </StyledExportSection>
     <StyledJsonExportSection className="export-map-modal__json-options">
       <div className="description">
-        <div className="title">
-          Map Config
-        </div>
+        <div className="title">Map Config</div>
         <div className="subtitle">
           {MAP_CONFIG_DESCRIPTION}
-          <Link href={GITHUB_ADD_DATA_TO_MAP}>
-            addDataToMap
-          </Link>.
+          <Link href={GITHUB_ADD_DATA_TO_MAP}>addDataToMap</Link>.
         </div>
       </div>
       <div className="selection">
         <div className="viewer">
-          <JSONPretty id="json-pretty" json={config}/>
+          <JSONPretty id="json-pretty" json={config} />
         </div>
         <div className="disclaimer">
           <StyledWarning>
-            * Map config is coupled with loaded datasets. ‘dataId’ is used to bind layers, filters, and tooltips to a specific dataset. When passing this config to addDataToMap, make sure the dataset id matches the dataId/s in this config.
+            * Map config is coupled with loaded datasets. ‘dataId’ is used to
+            bind layers, filters, and tooltips to a specific dataset. When
+            passing this config to addDataToMap, make sure the dataset id
+            matches the dataId/s in this config.
           </StyledWarning>
         </div>
       </div>
@@ -247,15 +245,13 @@ const ExportMapModal = ({
     <div style={style}>
       <StyledExportSection style={{marginBottom: INTRA_SECTION_MARGING}}>
         <div className="description">
-          <div className="title">
-            Map format
-          </div>
+          <div className="title">Map format</div>
           <div className="subtitle">
             Choose the format to export your map to
           </div>
         </div>
         <div className="selection">
-          {EXPORT_MAP_FORMAT_OPTIONS.map(op =>
+          {EXPORT_MAP_FORMAT_OPTIONS.map(op => (
             <StyledType
               key={op.id}
               selected={options.format === op.id}
@@ -264,25 +260,27 @@ const ExportMapModal = ({
             >
               <FileType ext={op.label} height="80px" fontSize="11px" />
             </StyledType>
-          )}
+          ))}
         </div>
       </StyledExportSection>
-      {{
-        [EXPORT_MAP_FORMATS.HTML]:  (
-          <ExportHtmlMap
-            onChangeExportMapHTMLMode={onChangeExportMapHTMLMode}
-            onEditUserMapboxAccessToken={onEditUserMapboxAccessToken}
-            options={options[options.format]}
-          />
-        ),
-        [EXPORT_MAP_FORMATS.JSON]: (
-          <ExportJsonMap
-            config={config}
-            onChangeExportData={onChangeExportData}
-            options={options[options.format]}
-          />
-        )
-      }[options.format]}
+      {
+        {
+          [EXPORT_MAP_FORMATS.HTML]: (
+            <ExportHtmlMap
+              onChangeExportMapHTMLMode={onChangeExportMapHTMLMode}
+              onEditUserMapboxAccessToken={onEditUserMapboxAccessToken}
+              options={options[options.format]}
+            />
+          ),
+          [EXPORT_MAP_FORMATS.JSON]: (
+            <ExportJsonMap
+              config={config}
+              onChangeExportData={onChangeExportData}
+              options={options[options.format]}
+            />
+          )
+        }[options.format]
+      }
     </div>
   </StyledModalContent>
 );

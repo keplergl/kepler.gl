@@ -24,11 +24,12 @@ import {worldToLngLat} from 'viewport-mercator-project';
 
 /* global fetch */
 const TILE_SIZE = 512;
-const MAPBOX_HOST = 'https://a.tiles.mapbox.com'
+const MAPBOX_HOST = 'https://a.tiles.mapbox.com';
 const MAP_SOURCE = '/v4/mapbox.mapbox-streets-v7';
 
 export function getTileData(host, token, {x, y, z}) {
-  const mapSource = `${host || MAPBOX_HOST}${MAP_SOURCE}/${z}/${x}/${y}.vector.pbf?access_token=${token}`;
+  const mapSource = `${host ||
+    MAPBOX_HOST}${MAP_SOURCE}/${z}/${x}/${y}.vector.pbf?access_token=${token}`;
 
   return fetch(mapSource)
     .then(response => response.arrayBuffer())
@@ -46,7 +47,7 @@ export function decodeTile(x, y, z, arrayBuffer) {
   const projectFunc = project.bind(null, xProj, yProj, scale);
 
   /* eslint-disable guard-for-in */
-  const layerName = "building";
+  const layerName = 'building';
   const vectorTileLayer = tile.layers[layerName];
   if (!vectorTileLayer) {
     return [];
@@ -70,7 +71,10 @@ function project(x, y, scale, line, extent) {
   for (let ii = 0; ii < line.length; ii++) {
     const p = line[ii];
     // LNGLAT
-    line[ii] = worldToLngLat([x + p[0] / sizeToPixel, y + p[1] / sizeToPixel], scale);
+    line[ii] = worldToLngLat(
+      [x + p[0] / sizeToPixel, y + p[1] / sizeToPixel],
+      scale
+    );
   }
 }
 

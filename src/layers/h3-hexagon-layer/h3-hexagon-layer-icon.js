@@ -43,6 +43,6 @@ class H3HexagonLayerIcon extends Component {
       </Base>
     );
   }
-};
+}
 
 export default H3HexagonLayerIcon;

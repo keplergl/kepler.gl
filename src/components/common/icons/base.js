@@ -85,10 +85,9 @@ export default class Base extends Component {
         className={`${predefinedClassName} ${className}`}
         {...props}
       >
-        {fillStyle ?
-          <style type="text/css">{fillStyle}</style> : null}
+        {fillStyle ? <style type="text/css">{fillStyle}</style> : null}
         {children}
       </svg>
     );
   }
-};
+}

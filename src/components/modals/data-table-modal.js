@@ -54,62 +54,57 @@ export const DatasetModalTab = styled.div`
   }
 `;
 
-export const DatasetTabs = React.memo(({activeDataset, datasets, showDatasetTable}) => (
-  <DatasetCatalog className="dataset-modal-catalog">
-    {Object.values(datasets).map(dataset => (
-      <DatasetModalTab
-        className="dataset-modal-tab"
-        active={dataset === activeDataset}
-        key={dataset.id}
-        onClick={() => showDatasetTable(dataset.id)}
-      >
-        <DatasetLabel dataset={dataset}/>
-      </DatasetModalTab>
-    ))}
-  </DatasetCatalog>
-));
+export const DatasetTabs = React.memo(
+  ({activeDataset, datasets, showDatasetTable}) => (
+    <DatasetCatalog className="dataset-modal-catalog">
+      {Object.values(datasets).map(dataset => (
+        <DatasetModalTab
+          className="dataset-modal-tab"
+          active={dataset === activeDataset}
+          key={dataset.id}
+          onClick={() => showDatasetTable(dataset.id)}
+        >
+          <DatasetLabel dataset={dataset} />
+        </DatasetModalTab>
+      ))}
+    </DatasetCatalog>
+  )
+);
 
 DatasetTabs.displayName = 'DatasetTabs';
 
-DataTableModalFactory.deps = [
-  DataGridFactory
-];
+DataTableModalFactory.deps = [DataGridFactory];
 
 function DataTableModalFactory(DataGrid) {
-  const DataTableModal = React.memo(({
-    datasets,
-    dataId,
-    height,
-    showDatasetTable,
-    width
-  }) => {
-    if (!datasets || !dataId) {
-      return null;
+  const DataTableModal = React.memo(
+    ({datasets, dataId, height, showDatasetTable, width}) => {
+      if (!datasets || !dataId) {
+        return null;
+      }
+
+      const activeDataset = datasets[dataId];
+      const rows = activeDataset.data;
+
+      return (
+        <StyledModal className="dataset-modal">
+          <DatasetTabs
+            activeDataset={activeDataset}
+            datasets={datasets}
+            showDatasetTable={showDatasetTable}
+          />
+          <DataGrid
+            width={width}
+            height={height}
+            rows={rows}
+            columns={activeDataset.fields}
+          />
+        </StyledModal>
+      );
     }
-
-    const activeDataset = datasets[dataId];
-    const rows = activeDataset.data;
-
-    return (
-      <StyledModal className="dataset-modal" >
-        <DatasetTabs
-          activeDataset={activeDataset}
-          datasets={datasets}
-          showDatasetTable={showDatasetTable}
-        />
-        <DataGrid
-          width={width}
-          height={height}
-          rows={rows}
-          columns={activeDataset.fields}
-        />
-      </StyledModal>
-    );
-  });
+  );
 
   DataTableModal.displayName = 'DataTableModal';
   return DataTableModal;
 }
 
 export default DataTableModalFactory;
-

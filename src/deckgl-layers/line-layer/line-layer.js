@@ -58,8 +58,8 @@ function addBrushingVsShader(vs) {
     'line color vs',
     'vColor = vec4(instanceColors.rgb, instanceColors.a * opacity) / 255.;',
     `vec4 color = mix(instanceColors, instanceTargetColors, positions.x) / 255.;` +
-    `vColor = vec4(color.rgb, color.a * opacity);`
-  )
+      `vColor = vec4(color.rgb, color.a * opacity);`
+  );
 }
 
 export default class LineBrushingLayer extends LineLayer {

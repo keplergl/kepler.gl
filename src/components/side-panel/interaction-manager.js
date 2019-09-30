@@ -24,7 +24,11 @@ import InteractionPanelFactory from './interaction-panel/interaction-panel';
 InteractionManagerFactory.deps = [InteractionPanelFactory];
 
 function InteractionManagerFactory(InteractionPanel) {
-  const InteractionManager = ({interactionConfig, datasets, onConfigChange}) => (
+  const InteractionManager = ({
+    interactionConfig,
+    datasets,
+    onConfigChange
+  }) => (
     <div className="interaction-manager">
       {Object.keys(interactionConfig).map(key => (
         <InteractionPanel

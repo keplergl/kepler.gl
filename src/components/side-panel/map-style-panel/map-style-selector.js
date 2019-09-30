@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import styled from "styled-components";
+import styled from 'styled-components';
 import classnames from 'classnames';
 import {ArrowDown} from 'components/common/icons';
 import PanelHeaderAction from 'components/side-panel/panel-header-action';
@@ -61,7 +61,12 @@ const StyledMapDropdown = styled(StyledPanelHeader)`
 `;
 
 function MapStyleSelectorFactory() {
-  const MapStyleSelector = ({mapStyle, onChange, toggleActive, isSelecting}) => (
+  const MapStyleSelector = ({
+    mapStyle,
+    onChange,
+    toggleActive,
+    isSelecting
+  }) => (
     <div>
       <PanelLabel>Map style</PanelLabel>
       {Object.keys(mapStyle.mapStyles).map(op => (

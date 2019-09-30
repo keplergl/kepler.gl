@@ -120,7 +120,8 @@ export default function SidePanelFactory(
       this.props.uiStateActions.openDeleteModal(key);
     };
 
-    _onExportImage = () => this.props.uiStateActions.toggleModal(EXPORT_IMAGE_ID);
+    _onExportImage = () =>
+      this.props.uiStateActions.toggleModal(EXPORT_IMAGE_ID);
 
     _onExportData = () => this.props.uiStateActions.toggleModal(EXPORT_DATA_ID);
 

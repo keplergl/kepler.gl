@@ -18,9 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-export const GITHUB_EXPORT_HTML_MAP = 'https://github.com/keplergl/kepler.gl/blob/master/docs/user-guides/k-save-and-export.md#2save-and-export-current-map';
-export const GITHUB_ADD_DATA_TO_MAP = 'https://github.com/keplergl/kepler.gl/blob/master/docs/api-reference/actions/actions.md#adddatatomap';
-export const MAPBOX_ACCESS_TOKEN = 'https://docs.mapbox.com/help/how-mapbox-works/access-tokens/';
-export const GITHUB_BUG_REPORT = 'https://github.com/keplergl/kepler.gl/issues/new?template=bug_report.md';
+export const GITHUB_EXPORT_HTML_MAP =
+  'https://github.com/keplergl/kepler.gl/blob/master/docs/user-guides/k-save-and-export.md#2save-and-export-current-map';
+export const GITHUB_ADD_DATA_TO_MAP =
+  'https://github.com/keplergl/kepler.gl/blob/master/docs/api-reference/actions/actions.md#adddatatomap';
+export const MAPBOX_ACCESS_TOKEN =
+  'https://docs.mapbox.com/help/how-mapbox-works/access-tokens/';
+export const GITHUB_BUG_REPORT =
+  'https://github.com/keplergl/kepler.gl/issues/new?template=bug_report.md';
 // TODO: create new readme section
-export const GITHUB_EXPORT_HTML_MAP_MODES = 'https://github.com/keplergl/kepler.gl/blob/master/docs/user-guides/k-save-and-export.md#2save-and-export-current-map';
+export const GITHUB_EXPORT_HTML_MAP_MODES =
+  'https://github.com/keplergl/kepler.gl/blob/master/docs/user-guides/k-save-and-export.md#2save-and-export-current-map';

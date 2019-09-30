@@ -39,7 +39,9 @@ import ColorSelector from './color-selector';
 import SourceDataSelectorFactory from 'components/side-panel/common/source-data-selector';
 import VisConfigSwitch from './vis-config-switch';
 import VisConfigSlider from './vis-config-slider';
-import LayerConfigGroup, {ConfigGroupCollapsibleContent} from './layer-config-group';
+import LayerConfigGroup, {
+  ConfigGroupCollapsibleContent
+} from './layer-config-group';
 import TextLabelPanel from './text-label-panel';
 
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
@@ -65,9 +67,7 @@ const StyledLayerVisualConfigurator = styled.div.attrs({
 `;
 
 export const getLayerFields = (datasets, layer) =>
-  datasets[layer.config.dataId] ?
-  datasets[layer.config.dataId].fields
-  : [];
+  datasets[layer.config.dataId] ? datasets[layer.config.dataId].fields : [];
 
 export const getLayerConfiguratorProps = props => ({
   layer: props.layer,
@@ -87,7 +87,7 @@ export const getLayerChannelConfigProps = props => ({
   layer: props.layer,
   fields: getLayerFields(props.datasets, props.layer),
   onChange: props.updateLayerVisualChannelConfig
-})
+});
 
 LayerConfiguratorFactory.deps = [SourceDataSelectorFactory];
 export default function LayerConfiguratorFactory(SourceDataSelector) {
@@ -242,7 +242,9 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
                 channel={layer.visualChannels.color}
                 {...layerChannelConfigProps}
               />
-              {layer.visConfigSettings.colorAggregation.condition(layer.config) ? (
+              {layer.visConfigSettings.colorAggregation.condition(
+                layer.config
+              ) ? (
                 <AggregationTypeSelector
                   {...layer.visConfigSettings.colorAggregation}
                   {...layerChannelConfigProps}
@@ -328,7 +330,8 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
       const {
         visConfig: {enable3d}
       } = config;
-      const elevationByDescription = 'When off, height is based on count of points';
+      const elevationByDescription =
+        'When off, height is based on count of points';
       const colorByDescription = 'When off, color is based on count of points';
 
       return (
@@ -345,7 +348,9 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
                 channel={layer.visualChannels.color}
                 {...layerChannelConfigProps}
               />
-              {layer.visConfigSettings.colorAggregation.condition(layer.config) ? (
+              {layer.visConfigSettings.colorAggregation.condition(
+                layer.config
+              ) ? (
                 <AggregationTypeSelector
                   {...layer.visConfigSettings.colorAggregation}
                   {...layerChannelConfigProps}
@@ -407,7 +412,9 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
                   description={elevationByDescription}
                   disabled={!enable3d}
                 />
-                {layer.visConfigSettings.sizeAggregation.condition(layer.config) ? (
+                {layer.visConfigSettings.sizeAggregation.condition(
+                  layer.config
+                ) ? (
                   <AggregationTypeSelector
                     {...layer.visConfigSettings.sizeAggregation}
                     {...layerChannelConfigProps}
@@ -968,7 +975,8 @@ export const ArcLayerColorSelector = ({
           label: 'Source'
         },
         {
-          selectedColor: layer.config.visConfig.targetColor || layer.config.color,
+          selectedColor:
+            layer.config.visConfig.targetColor || layer.config.color,
           setColor: rgbValue => onChangeVisConfig({targetColor: rgbValue}),
           label: 'Target'
         }

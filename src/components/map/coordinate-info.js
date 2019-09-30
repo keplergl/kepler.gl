@@ -39,7 +39,7 @@ const CoordinateInfoFactory = () => {
           <tr className="row">
             <td className="row__value">
               {preciseRound(coordinate[1], DECIMAL)},
-          </td>
+            </td>
             <td className="row__value">
               {preciseRound(coordinate[0], DECIMAL)}
             </td>

@@ -22,7 +22,11 @@ import memoize from 'lodash.memoize';
 import Layer from './base-layer';
 import {hexToRgb} from 'utils/color-utils';
 import {aggregate} from 'utils/aggregate-utils';
-import {CHANNEL_SCALES, FIELD_OPTS, DEFAULT_AGGREGATION} from 'constants/default-settings';
+import {
+  CHANNEL_SCALES,
+  FIELD_OPTS,
+  DEFAULT_AGGREGATION
+} from 'constants/default-settings';
 
 export const pointPosAccessor = ({lat, lng}) => d => [
   d[lng.fieldIdx],
@@ -115,13 +119,15 @@ export default class AggregationLayer extends Layer {
    */
   getVisualChannelDescription(key) {
     // e.g. label: Color, measure: Average of ETA
-    const {range, field, defaultMeasure, aggregation} = this.visualChannels[key];
+    const {range, field, defaultMeasure, aggregation} = this.visualChannels[
+      key
+    ];
     return {
       label: this.visConfigSettings[range].label,
       measure: this.config[field]
         ? `${this.config.visConfig[aggregation]} of ${this.config[field].name}`
         : defaultMeasure
-    }
+    };
   }
 
   getHoverData(object) {
@@ -141,7 +147,6 @@ export default class AggregationLayer extends Layer {
    * @param channel
    */
   validateVisualChannel(channel) {
-
     // field type decides aggregation type decides scale type
     this.validateFieldType(channel);
     this.validateAggregationType(channel);
@@ -163,8 +168,9 @@ export default class AggregationLayer extends Layer {
     if (!aggregationOptions.length) {
       // if field cannot be aggregated, set field to null
       this.updateLayerConfig({[field]: null});
-
-    } else if (!aggregationOptions.includes(this.config.visConfig[aggregation])) {
+    } else if (
+      !aggregationOptions.includes(this.config.visConfig[aggregation])
+    ) {
       // current aggregation type is not supported by this field
       // set aggregation to the first supported option
       this.updateLayerVisConfig({[aggregation]: aggregationOptions[0]});
@@ -176,8 +182,10 @@ export default class AggregationLayer extends Layer {
     const {field, channelScaleType} = visualChannel;
 
     return Object.keys(
-      this.config[field] ? FIELD_OPTS[this.config[field].type].scale[channelScaleType] :
-        DEFAULT_AGGREGATION[channelScaleType])
+      this.config[field]
+        ? FIELD_OPTS[this.config[field].type].scale[channelScaleType]
+        : DEFAULT_AGGREGATION[channelScaleType]
+    );
   }
 
   /**
@@ -189,11 +197,13 @@ export default class AggregationLayer extends Layer {
     const visualChannel = this.visualChannels[channel];
     const {field, aggregation, channelScaleType} = visualChannel;
     const aggregationType = this.config.visConfig[aggregation];
-    return this.config[field] ?
-      // scale options based on aggregation
-      FIELD_OPTS[this.config[field].type].scale[channelScaleType][aggregationType] :
-      // default scale options for point count
-      DEFAULT_AGGREGATION[channelScaleType][aggregationType];
+    return this.config[field]
+      ? // scale options based on aggregation
+        FIELD_OPTS[this.config[field].type].scale[channelScaleType][
+          aggregationType
+        ]
+      : // default scale options for point count
+        DEFAULT_AGGREGATION[channelScaleType][aggregationType];
   }
 
   /**

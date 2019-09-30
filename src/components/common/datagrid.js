@@ -21,7 +21,7 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {MultiGrid} from 'react-virtualized';
-import styled, {withTheme}from 'styled-components';
+import styled, {withTheme} from 'styled-components';
 import {createSelector} from 'reselect';
 import classnames from 'classnames';
 import FieldToken from 'components/common/field-token';
@@ -37,23 +37,22 @@ const DataGridWrapper = styled.div`
   .ReactVirtualized__Grid__innerScrollContainer {
     ${props => props.theme.modalScrollBar};
   }
-  
+
   .ReactVirtualized__Grid {
     .column-0 .cell {
       padding-left: 24px;
     }
-    
+
     .cell {
       overflow-y: scroll;
       overflow-x: hidden;
-      
+
       &.geojson {
         span {
           text-align: left;
-        } 
+        }
       }
     }
-    
 
     .last .cell {
       padding-right: 24px;
@@ -72,14 +71,14 @@ const StyledFieldHeader = styled.div`
   background: ${props => props.theme.panelBackgroundLT};
   color: ${props => props.theme.titleColorLT};
   height: 100%;
-  
+
   .label-wrapper {
     display: flex;
     align-items: center;
   }
-  
+
   .icon-wrapper {
-    margin-right: ${props => props.type === 'timestamp' ? '2px' : '0'};
+    margin-right: ${props => (props.type === 'timestamp' ? '2px' : '0')};
     height: 16px;
   }
 `;
@@ -116,7 +115,7 @@ const StyledCell = styled.div`
   text-overflow: ellipsis;
   height: 100%;
   width: 100%;
-  
+
   span {
     overflow: scroll;
     text-overflow: ellipsis;
@@ -138,15 +137,9 @@ export const CellFactory = () => {
   return Cell;
 };
 
-DataGridFactory.deps = [
-  FieldHeaderFactory,
-  CellFactory
-];
+DataGridFactory.deps = [FieldHeaderFactory, CellFactory];
 
-function DataGridFactory(
-  FieldHeader,
-  Cell
-) {
+function DataGridFactory(FieldHeader, Cell) {
   class DataGrid extends PureComponent {
     static propTypes = {
       theme: PropTypes.object,
@@ -157,14 +150,15 @@ function DataGridFactory(
     };
 
     columnsSelector = props => props.columns;
-    hasGeojson = createSelector(this.columnsSelector, columns =>
-      columns.some(c => c.type === ALL_FIELD_TYPES.geojson)
+    hasGeojson = createSelector(
+      this.columnsSelector,
+      columns => columns.some(c => c.type === ALL_FIELD_TYPES.geojson)
     );
 
     _cellRenderer = ({columnIndex, key, rowIndex, style}) => {
       const {columns, rows} = this.props;
 
-      const isLast = columnIndex === columns.length - 1
+      const isLast = columnIndex === columns.length - 1;
 
       const type = columns[columnIndex].type;
 
@@ -172,26 +166,41 @@ function DataGridFactory(
       const className = classnames({
         last: isLast,
         [`header-${columnIndex}`]: rowIndex === 0,
-        [`row-${rowIndex-1} column-${columnIndex}`]: rowIndex > 0
+        [`row-${rowIndex - 1} column-${columnIndex}`]: rowIndex > 0
       });
 
       return (
         <div key={key} style={style} className={className}>
-          {rowIndex === 0
-            ? (<FieldHeader className={`header-cell ${type}`} value={columns[columnIndex].name} type={type} />)
-            : (<Cell className={`cell ${type}`} value={parseFieldValue(rows[rowIndex - 1][columnIndex], type)} type={type} />)
-          }
+          {rowIndex === 0 ? (
+            <FieldHeader
+              className={`header-cell ${type}`}
+              value={columns[columnIndex].name}
+              type={type}
+            />
+          ) : (
+            <Cell
+              className={`cell ${type}`}
+              value={parseFieldValue(rows[rowIndex - 1][columnIndex], type)}
+              type={type}
+            />
+          )}
         </div>
       );
     };
 
-    _rowHeight = ({index}) => index === 0
-      ? this.props.theme.cellHeaderHeight
-      : this.hasGeojson(this.props) ? this.props.theme.extendCellHeight : this.props.theme.cellHeight;
+    _rowHeight = ({index}) =>
+      index === 0
+        ? this.props.theme.cellHeaderHeight
+        : this.hasGeojson(this.props)
+        ? this.props.theme.extendCellHeight
+        : this.props.theme.cellHeight;
 
     _columnWidth = ({index}) => {
-      const isGeojsonField = this.props.columns[index].type === ALL_FIELD_TYPES.geojson;
-      return isGeojsonField ? this.props.theme.extendColumnWidth : this.props.theme.columnWidth;
+      const isGeojsonField =
+        this.props.columns[index].type === ALL_FIELD_TYPES.geojson;
+      return isGeojsonField
+        ? this.props.theme.extendColumnWidth
+        : this.props.theme.columnWidth;
     };
 
     render() {

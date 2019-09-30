@@ -120,7 +120,9 @@ export default class GridLayer extends AggregationLayer {
         elevationLowerPercentile: visConfig.elevationPercentile[0],
         elevationUpperPercentile: visConfig.elevationPercentile[1],
         // parameters
-        parameters: {depthTest: Boolean(visConfig.enable3d || mapState.dragRotate)},
+        parameters: {
+          depthTest: Boolean(visConfig.enable3d || mapState.dragRotate)
+        },
 
         // render
         pickable: true,

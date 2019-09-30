@@ -290,7 +290,9 @@ export default class HexagonIdLayer extends Layer {
         coverage: config.coverageField ? 1 : visConfig.coverage,
 
         // parameters
-        parameters: {depthTest: Boolean(config.sizeField || mapState.dragRotate)},
+        parameters: {
+          depthTest: Boolean(config.sizeField || mapState.dragRotate)
+        },
 
         // highlight
         autoHighlight: Boolean(config.sizeField),

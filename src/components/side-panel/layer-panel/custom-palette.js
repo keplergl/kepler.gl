@@ -130,7 +130,9 @@ const StyledInlineInput = styled.div`
 
 const SortableItem = sortableElement(({children, isSorting}) => (
   <StyledSortableItem
-    className={classnames('custom-palette__sortable-items', {sorting: isSorting})}
+    className={classnames('custom-palette__sortable-items', {
+      sorting: isSorting
+    })}
   >
     {children}
   </StyledSortableItem>
@@ -182,9 +184,14 @@ class CustomPalette extends Component {
       const {defaultSketcherPos, bottomBuffer, sketcherHeight} = this.props;
       if (showSketcher === false || !this.root || !this.root.current)
         return defaultSketcherPos;
-      const {sidePanelInnerPadding = 16, sidePanel = {}, sidePanelScrollBarWidth = 10} = theme;
+      const {
+        sidePanelInnerPadding = 16,
+        sidePanel = {},
+        sidePanelScrollBarWidth = 10
+      } = theme;
       const sidePanelLeft = (sidePanel.margin || {}).left || 20;
-      const offsetX = sidePanelInnerPadding + sidePanelLeft + sidePanelScrollBarWidth;
+      const offsetX =
+        sidePanelInnerPadding + sidePanelLeft + sidePanelScrollBarWidth;
       // find component Root position
       const bounding = this.root.current.getBoundingClientRect();
       const {x, y, width} = bounding;
@@ -219,7 +226,7 @@ class CustomPalette extends Component {
         backgroundColor: 'rgba(0, 0, 0, 0)'
       }
     })
-  )
+  );
   _setColorPaletteUI(colors) {
     this.props.setCustomPalette({
       colors
@@ -249,7 +256,7 @@ class CustomPalette extends Component {
     this._setColorPaletteUI(newColors);
   };
 
-  _onSwatchClick = (index) => {
+  _onSwatchClick = index => {
     this.props.onToggleSketcher(index);
   };
 
@@ -337,7 +344,11 @@ class CustomPalette extends Component {
         <StyledLine />
         {/* Cancel or Confirm Buttons */}
         <StyledButtonContainer>
-          <Button className="confirm-apply__button" link onClick={this._onApply}>
+          <Button
+            className="confirm-apply__button"
+            link
+            onClick={this._onApply}
+          >
             Confirm
           </Button>
           <Button link onClick={this.props.onCancel}>
@@ -353,10 +364,12 @@ class CustomPalette extends Component {
             parentSelector={() => {
               // React modal issue: https://github.com/reactjs/react-modal/issues/769
               // failed to execute removeChild on parent node when it is already unmounted
-              return this.root.current || {
-                removeChild: () => {},
-                appendChild: () => {}
-              }
+              return (
+                this.root.current || {
+                  removeChild: () => {},
+                  appendChild: () => {}
+                }
+              );
             }}
           >
             <CustomPicker

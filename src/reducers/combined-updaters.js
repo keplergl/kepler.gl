@@ -73,7 +73,8 @@ import {isObject} from 'util';
 const combinedUpdaters = null;
 /* eslint-enable no-unused-vars */
 
-export const isValidConfig = config => isObject(config) && isObject(config.config) && config.version;
+export const isValidConfig = config =>
+  isObject(config) && isObject(config.config) && config.version;
 export const defaultAddDataToMapOptions = {
   centerMap: true,
   keepExistingConfig: false
@@ -111,7 +112,7 @@ export const addDataToMapUpdater = (state, {payload}) => {
 
   if (isValidConfig(config)) {
     // if passed in saved config
-    parsedConfig = KeplerGlSchema.parseSavedConfig(config)
+    parsedConfig = KeplerGlSchema.parseSavedConfig(config);
   }
   const oldLayers = state.visState.layers;
 
@@ -156,7 +157,9 @@ export const addDataToMapUpdater = (state, {payload}) => {
     uiState: {
       ...mergedState.uiState,
       ...toggleModalUpdater(mergedState.uiState, {payload: null}),
-      ...(options.hasOwnProperty('readOnLy') ? {readOnly: options.readOnly} : {})
+      ...(options.hasOwnProperty('readOnLy')
+        ? {readOnly: options.readOnly}
+        : {})
     }
   };
 

@@ -92,4 +92,4 @@ export default class GridLayerIcon extends Component {
       </Base>
     );
   }
-};
+}

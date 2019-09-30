@@ -23,7 +23,6 @@ import Layer, {OVERLAY_TYPE} from './base-layer';
 export const mapboxRequiredColumns = ['lat', 'lng'];
 
 class MapboxLayerGL extends Layer {
-
   get overlayType() {
     return OVERLAY_TYPE.mapboxgl;
   }
@@ -55,13 +54,8 @@ class MapboxLayerGL extends Layer {
   // this layer is rendered at mapbox level
   // todo: maybe need to find a better solution for this one
   shouldRenderLayer() {
-    return (
-      this.type &&
-      this.config.isVisible &&
-      this.hasAllColumns()
-    );
+    return this.type && this.config.isVisible && this.hasAllColumns();
   }
-
 }
 
 export default MapboxLayerGL;
