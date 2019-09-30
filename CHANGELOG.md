@@ -14,6 +14,13 @@ Each version should:
   Security to invite users to upgrade in case of vulnerabilities.
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
+#### [1.1.8] - Sep 30 2019
+- [Bug] Fix saving animation speed (#752)
+- [Feat] Add Trip Layer - Final (#699)
+- [Feat] add custom color editor (#601)
+- [Chore] add coverall (#748)
+- [Docs] mapboxApiUrl usage examples (#737)
+- [Feat] Support Policy page (#724)
 
 #### [1.1.7] - Sep 11 2019
 - [Enhancement] Create more factories from SourceDataCatalog, add onClickTitle (#720)
