@@ -18,7 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import widgets from '@jupyter-widgets/base';
+// import widgets from '@jupyter-widgets/base';
+import * as widgets from '@jupyter-widgets/base';
 import KeplerGlJupyter from './keplergl/kepler.gl';
 import log from './log';
 
