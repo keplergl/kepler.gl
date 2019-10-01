@@ -51,38 +51,6 @@ const StyledMapControlAction = styled.div`
   justify-content: flex-end;
 `;
 
-// const MapControlButton = styled.div.attrs({
-//   className: 'map-control-button'
-// })`
-//   align-items: center;
-//   background-color: ${props =>
-//     props.active
-//       ? props.theme.panelBackgroundHover
-//       : props.theme.panelBackground};
-//   border: 0;
-//   box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.16);
-//   color: ${props => props.theme.primaryBtnColor};
-//   cursor: pointer;
-//   display: flex;
-//   height: 32px;
-//   justify-content: center;
-//   margin: 0;
-//   outline: none;
-//   padding: 0;
-//   transition: ${props => props.theme.transition};
-//   width: 32px;
-
-//   :focus {
-//     outline: none;
-//   }
-
-//   :hover {
-//     cursor: pointer;
-//     background-color: ${props => props.theme.secondaryBtnActBgd};
-//     color: ${props => props.theme.secondaryBtnActColor};
-//   }
-// `;
-
 const StyledMapControlPanel = styled.div`
   background-color: ${props => props.theme.mapPanelBackgroundColor};
   flex-grow: 1;
