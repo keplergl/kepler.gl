@@ -18,9 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {addDataToMap} from 'kepler.gl/actions';
+import {addDataToMap, ActionTypes} from 'kepler.gl/actions';
 import {KeplerGlSchema} from 'kepler.gl/schemas';
-import {ActionTypes} from 'kepler.gl/actions';
 import document from 'global/document';
 
 import renderRoot from './components/root';
@@ -105,7 +104,7 @@ class KeplerGlJupyter {
     const divElmt = document.createElement('div');
     divElmt.setAttribute('id', this.id);
     divElmt.setAttribute('style', `width: 100%; height: ${height}px`);
-    that.el.appendChild(divElmt)
+    that.el.appendChild(divElmt);
 
     renderRoot({id: this.id, store: this.store, ele: divElmt});
     const data = getData(that);

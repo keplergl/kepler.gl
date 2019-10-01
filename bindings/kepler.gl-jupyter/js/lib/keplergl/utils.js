@@ -61,10 +61,10 @@ function processReceivedData({data, info}) {
       info.queryType === 'csv'
         ? processCsvData(data)
         : info.queryType === 'json'
-          ? processGeojson(data)
-          : info.queryType === 'df'
-            ? processDataFrame(data)
-            : null;
+        ? processGeojson(data)
+        : info.queryType === 'df'
+        ? processDataFrame(data)
+        : null;
   } catch (e) {
     console.log(
       `Kepler.gl fails to parse data, detected data

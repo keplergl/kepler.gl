@@ -30,7 +30,10 @@ const map = (function initKeplerGl() {
   const store = createAppStore();
 
   const divElmt = document.createElement('div');
-  divElmt.setAttribute('style', 'width: 100vw; height: 100vh; position: absolute');
+  divElmt.setAttribute(
+    'style',
+    'width: 100vw; height: 100vh; position: absolute'
+  );
   document.body.appendChild(divElmt);
 
   return {
