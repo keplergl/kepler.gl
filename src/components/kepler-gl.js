@@ -270,6 +270,7 @@ function KeplerGlFactory(
         hoverInfo,
         clicked,
         mousePos,
+        readOnly: uiState.readOnly,
         toggleMapControl: uiStateActions.toggleMapControl,
         onViewStateChange,
         uiStateActions,

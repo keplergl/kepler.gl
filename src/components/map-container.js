@@ -79,6 +79,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       mapStateActions: PropTypes.object.isRequired,
 
       // optional
+      readOnly: PropTypes.bool,
       isExport: PropTypes.bool,
       clicked: PropTypes.object,
       hoverInfo: PropTypes.object,
@@ -439,6 +440,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             layersToRender={layersToRender}
             mapIndex={this.props.index}
             mapControls={mapControls}
+            readOnly={this.props.readOnly}
             scale={mapState.scale || 1}
             top={0}
             onTogglePerspective={mapStateActions.togglePerspective}
