@@ -35,7 +35,8 @@ import {
   DIMENSIONS,
   KEPLER_GL_NAME,
   KEPLER_GL_VERSION,
-  THEME
+  THEME,
+  DEFAULT_MAPBOX_API_URL
 } from 'constants/default-settings';
 import {MISSING_MAPBOX_TOKEN} from 'constants/user-feedbacks';
 
@@ -103,7 +104,7 @@ function KeplerGlFactory(
     static defaultProps = {
       mapStyles: [],
       mapStylesReplaceDefault: false,
-      mapboxApiUrl: 'https://api.mapbox.com',
+      mapboxApiUrl: DEFAULT_MAPBOX_API_URL,
       width: 800,
       height: 800,
       appName: KEPLER_GL_NAME,

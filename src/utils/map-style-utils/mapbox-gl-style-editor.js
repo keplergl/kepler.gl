@@ -23,8 +23,12 @@ import clondDeep from 'lodash.clonedeep';
 import {
   DEFAULT_LAYER_GROUPS,
   RESOLUTIONS,
-  RESOLUTION_OPTIONS
+  RESOLUTION_OPTIONS,
+  DEFAULT_MAPBOX_API_URL
 } from 'constants/default-settings';
+
+const mapUrlRg = /^mapbox:\/\/styles\/[-a-z0-9]{2,256}\/[-a-z0-9]{2,256}/;
+const httpRg = /^(?=(http:|https:))/;
 
 export function getDefaultLayerGroupVisibility({layerGroups = []}) {
   return layerGroups.reduce(
@@ -93,10 +97,6 @@ export const editBottomMapStyle = memoize(
   resolver
 );
 
-const mapUrlRg = /^mapbox:\/\/styles\/[-a-z0-9]{2,256}\/[-a-z0-9]{2,256}/;
-const httpRg = /^(?=(http:|https:))/;
-const defaultMapboxApiUrl = 'https://api.mapbox.com';
-
 // valid style url
 // mapbox://styles/uberdata/cjfyl03kp1tul2smf5v2tbdd4
 // lowercase letters, numbers and dashes only.
@@ -114,7 +114,7 @@ export function getStyleDownloadUrl(styleUrl, accessToken, mapboxApiUrl) {
     const styleId = styleUrl.replace('mapbox://styles/', '');
 
     // https://api.mapbox.com/styles/v1/heshan0131/cjg1bfumo1cwm2rlrjxkinfgw?pluginName=Keplergl&access_token=<token>
-    return `${mapboxApiUrl || defaultMapboxApiUrl}/styles/v1/${styleId}?pluginName=Keplergl&access_token=${accessToken}`
+    return `${mapboxApiUrl || DEFAULT_MAPBOX_API_URL}/styles/v1/${styleId}?pluginName=Keplergl&access_token=${accessToken}`
   }
 
   // style url not recognized
@@ -123,7 +123,7 @@ export function getStyleDownloadUrl(styleUrl, accessToken, mapboxApiUrl) {
 export function getStyleImageIcon({
   styleUrl,
   mapboxApiAccessToken,
-  mapboxApiUrl = defaultMapboxApiUrl,
+  mapboxApiUrl = DEFAULT_MAPBOX_API_URL,
   mapState = {
     longitude: -122.3391,
     latitude: 37.7922,
