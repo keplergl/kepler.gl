@@ -23,8 +23,11 @@ import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import styled from 'styled-components';
 import MapboxGLMap from 'react-map-gl';
-import {findDOMNode} from 'react-dom';
-import {StyledModalContent, InputLight, StyledMapContainer} from 'components/common/styled-components';
+import {
+  StyledModalContent,
+  InputLight,
+  StyledMapContainer
+} from 'components/common/styled-components';
 import {media} from 'styles/media-breakpoints';
 
 // Utils
@@ -33,7 +36,8 @@ import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 const MapH = 190;
 const MapW = 264;
 const ErrorMsg = {
-  styleError : 'Failed to load map style, make sure it is published. For private style, paste in your access token.'
+  styleError:
+    'Failed to load map style, make sure it is published. For private style, paste in your access token.'
 };
 
 const InstructionPanel = styled.div`
@@ -41,14 +45,14 @@ const InstructionPanel = styled.div`
   flex-direction: column;
   justify-content: space-around;
   font-size: 12px;
-  
+
   .modal-section:first-child {
     margin-top: 24px;
     ${media.palm`
       margin-top: 0;
     `};
   }
-  
+
   input {
     margin-right: 8px;
   }
@@ -63,11 +67,11 @@ const StyledModalSection = styled.div`
   .modal-section-subtitle {
     color: ${props => props.theme.subtextColorLT};
   }
-  
+
   input {
     margin-top: 8px;
   }
-  
+
   ${media.portable`
     margin-bottom: 24px;
   `};
@@ -89,15 +93,15 @@ const PreviewMap = styled.div`
     font-size: 10px;
     padding: 8px 0px;
   }
-  
+
   .preview-title.error {
     color: ${props => props.theme.errorColor};
   }
-  
+
   ${media.portable`
     margin-left: 32px;
   `};
-  
+
   ${media.palm`
     margin-left: unset;
     .preview-title {
@@ -109,11 +113,11 @@ const PreviewMap = styled.div`
 const StyledPreviewImage = styled.div`
   background: ${props => props.theme.modalImagePlaceHolder};
   border-radius: 4px;
-  box-shadow: 0 8px 16px 0 rgba(0,0,0,0.18);
+  box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.18);
   width: ${MapW}px;
   height: ${MapH}px;
   position: relative;
-  
+
   .preview-image-placeholder {
     position: absolute;
     top: 0;
@@ -129,7 +133,7 @@ const StyledPreviewImage = styled.div`
 
 const InlineLink = styled.a`
   font-weight: 500;
-  
+
   :hover {
     cursor: pointer;
   }
@@ -137,10 +141,12 @@ const InlineLink = styled.a`
 
 class AddMapStyleModal extends Component {
   static propTypes = {
-    mapState: PropTypes.object.isRequired,
     inputMapStyle: PropTypes.func.isRequired,
+    inputStyle: PropTypes.object.isRequired,
     loadCustomMapStyle: PropTypes.func.isRequired,
-    inputStyle: PropTypes.object.isRequired
+    mapboxApiAccessToken: PropTypes.string.isRequired,
+    mapboxApiUrl: PropTypes.string.isRequired,
+    mapState: PropTypes.object.isRequired
   };
 
   state = {
@@ -148,7 +154,9 @@ class AddMapStyleModal extends Component {
   };
 
   componentWillReceiveProps(nextProps) {
-    if (this.props.inputStyle.accessToken !== nextProps.inputStyle.accessToken) {
+    if (
+      this.props.inputStyle.accessToken !== nextProps.inputStyle.accessToken
+    ) {
       // toke has changed
       // ReactMapGl doesn't re-create map when token has changed
       // here we force the map to update
@@ -158,7 +166,7 @@ class AddMapStyleModal extends Component {
     }
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps) {
     const map = this.mapRef && this.mapRef.getMap();
     if (map && this._map !== map) {
       this._map = map;
@@ -168,30 +176,14 @@ class AddMapStyleModal extends Component {
         this.loadMapStyleJson(style);
       });
 
-      map.on('render', () => {
-        if (map.isStyleLoaded()) {
-          this.loadMapStyleIcon();
-        }
-      });
-
       map.on('error', () => {
         this.loadMaoStyleError();
-      })
+      });
     }
   }
 
-  loadMapStyleJson = (style) => {
+  loadMapStyleJson = style => {
     this.props.loadCustomMapStyle({style, error: false});
-  };
-
-  loadMapStyleIcon = () => {
-    if (this.mapRef) {
-      const canvas = findDOMNode(this.mapRef).querySelector('.mapboxgl-canvas');
-      const dataUri = canvas.toDataURL();
-      this.props.loadCustomMapStyle({
-        icon: dataUri
-      });
-    }
   };
 
   loadMaoStyleError = () => {
@@ -199,34 +191,66 @@ class AddMapStyleModal extends Component {
   };
 
   render() {
-    const {inputStyle, mapState} = this.props;
+    const {
+      inputStyle,
+      mapState,
+      mapboxApiUrl
+    } = this.props;
 
-  const mapProps = {
-    ...mapState,
-    preserveDrawingBuffer: true,
-    mapboxApiAccessToken: inputStyle.accessToken || this.props.mapboxApiAccessToken,
-    transformRequest
-  };
+    const mapboxApiAccessToken = inputStyle.accessToken || this.props.mapboxApiAccessToken;
+    const mapProps = {
+      ...mapState,
+      mapboxApiUrl,
+      mapboxApiAccessToken,
+      preserveDrawingBuffer: true,
+      transformRequest
+    };
 
     return (
       <div className="add-map-style-modal">
         <StyledModalContent>
           <InstructionPanel>
             <StyledModalSection className="modal-section">
-              <div className="modal-section-title">1. Publish your style at mapbox or provide access token</div>
+              <div className="modal-section-title">
+                1. Publish your style at mapbox or provide access token
+              </div>
               <div className="modal-section-subtitle">
                 You can create your own map style at
-                <InlineLink target="_blank" href="https://www.mapbox.com/studio/styles/"> mapbox</InlineLink> and
-                <InlineLink target="_blank" href="https://www.mapbox.com/help/studio-manual-publish/"> publish</InlineLink> it.
+                <InlineLink
+                  target="_blank"
+                  href="https://www.mapbox.com/studio/styles/"
+                >
+                  {' '}
+                  mapbox
+                </InlineLink>{' '}
+                and
+                <InlineLink
+                  target="_blank"
+                  href="https://www.mapbox.com/help/studio-manual-publish/"
+                >
+                  {' '}
+                  publish
+                </InlineLink>{' '}
+                it.
               </div>
               <div className="modal-section-subtitle">
                 To use private style, paste your
-                <InlineLink target="_blank" href="https://www.mapbox.com/help/how-access-tokens-work/"> access token</InlineLink> here. *kepler.gl is a client-side application, data stays in your browser..
+                <InlineLink
+                  target="_blank"
+                  href="https://www.mapbox.com/help/how-access-tokens-work/"
+                >
+                  {' '}
+                  access token
+                </InlineLink>{' '}
+                here. *kepler.gl is a client-side application, data stays in
+                your browser..
               </div>
               <InputLight
                 type="text"
                 value={inputStyle.accessToken || ''}
-                onChange={({target: {value}}) => this.props.inputMapStyle({...inputStyle, accessToken: value})}
+                onChange={({target: {value}}) =>
+                  this.props.inputMapStyle({accessToken: value})
+                }
                 placeholder="e.g. pk.abcdefg.xxxxxx"
               />
             </StyledModalSection>
@@ -234,12 +258,20 @@ class AddMapStyleModal extends Component {
               <div className="modal-section-title">2. Paste style url</div>
               <div className="modal-section-subtitle">
                 What is a
-                <InlineLink target="_blank" href="https://www.mapbox.com/help/studio-manual-publish/#style-url"> style URL</InlineLink>
+                <InlineLink
+                  target="_blank"
+                  href="https://www.mapbox.com/help/studio-manual-publish/#style-url"
+                >
+                  {' '}
+                  style URL
+                </InlineLink>
               </div>
               <InputLight
                 type="text"
                 value={inputStyle.url || ''}
-                onChange={({target: {value}}) => this.props.inputMapStyle({...inputStyle, url: value})}
+                onChange={({target: {value}}) =>
+                  this.props.inputMapStyle({url: value})
+                }
                 placeholder="e.g. mapbox://styles/uberdataviz/abcdefghijklmnopq"
               />
             </StyledModalSection>
@@ -248,17 +280,24 @@ class AddMapStyleModal extends Component {
               <InputLight
                 type="text"
                 value={inputStyle.label || ''}
-                onChange={({target: {value}}) => this.props.inputMapStyle({...inputStyle, label: value})}
+                onChange={({target: {value}}) =>
+                  this.props.inputMapStyle({label: value})
+                }
               />
             </StyledModalSection>
           </InstructionPanel>
           <PreviewMap>
-            <div className={classnames('preview-title', {error: inputStyle.error})}>
-              {inputStyle.error ? ErrorMsg.styleError :
-                (inputStyle.style && inputStyle.style.name) || ''}</div>
+            <div
+              className={classnames('preview-title', {error: inputStyle.error})}
+            >
+              {inputStyle.error
+                ? ErrorMsg.styleError
+                : (inputStyle.style && inputStyle.style.name) || ''}
+            </div>
             <StyledPreviewImage className="preview-image">
-              {!inputStyle.isValid ?
-                <div className="preview-image-spinner"/> :
+              {!inputStyle.isValid ? (
+                <div className="preview-image-spinner" />
+              ) : (
                 <StyledMapContainer>
                   <MapboxGLMap
                     {...mapProps}
@@ -268,9 +307,10 @@ class AddMapStyleModal extends Component {
                     key={this.state.reRenderKey}
                     width={MapW}
                     height={MapH}
-                    mapStyle={inputStyle.url}/>
+                    mapStyle={inputStyle.url}
+                  />
                 </StyledMapContainer>
-              }
+              )}
             </StyledPreviewImage>
           </PreviewMap>
         </StyledModalContent>

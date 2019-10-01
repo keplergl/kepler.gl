@@ -103,6 +103,7 @@ function KeplerGlFactory(
     static defaultProps = {
       mapStyles: [],
       mapStylesReplaceDefault: false,
+      mapboxApiUrl: 'https://api.mapbox.com',
       width: 800,
       height: 800,
       appName: KEPLER_GL_NAME,

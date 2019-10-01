@@ -92,6 +92,7 @@ import {
   CursorClick
 } from 'components/common/icons';
 import {getHTMLMapModeTileUrl} from 'utils/utils';
+import {MAPBOX_ACCESS_TOKEN} from './user-guides';
 
 export const KEPLER_GL_NAME = 'kepler.gl';
 

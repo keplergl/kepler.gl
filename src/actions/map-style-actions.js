@@ -43,11 +43,12 @@ export const addCustomMapStyle = createAction(
  * @param {string} inputStyle.name - style name
  * @param {Object} inputStyle.layerGroups - layer groups that can be used to set map layer visibility
  * @param {Object} inputStyle.icon - icon image data url
+ * @param {Object} mapState - mapState is optional
  * @public
  */
 export const inputMapStyle = createAction(
   ActionTypes.INPUT_MAP_STYLE,
-  inputStyle => inputStyle
+  (inputStyle, mapState) => ({inputStyle, mapState})
 );
 
 /**

@@ -85,7 +85,6 @@ export const editBottomMapStyle = memoize(
       invisibleFilters.every(match => !match(layer))
     );
 
-    // console.log(filteredLayers)
     return {
       ...mapStyle.style,
       layers: filteredLayers
@@ -120,6 +119,25 @@ export function getStyleDownloadUrl(styleUrl, accessToken, mapboxApiUrl) {
 
   // style url not recognized
   return null;
+}
+export function getStyleImageIcon({
+  styleUrl,
+  mapboxApiAccessToken,
+  mapboxApiUrl = defaultMapboxApiUrl,
+  mapState = {
+    longitude: -122.3391,
+    latitude: 37.7922,
+    zoom: 9
+  },
+  mapW = 400,
+  mapH = 300
+}) {
+  const styleId = styleUrl.replace('mapbox://styles/', '');
+
+  return `${mapboxApiUrl}/styles/v1/${styleId}/static/` +
+  `${mapState.longitude},${mapState.latitude},${mapState.zoom},0,0/` +
+  `${mapW}x${mapH}` +
+  `?access_token=${mapboxApiAccessToken}&logo=false&attribution=false`;
 }
 
 export function scaleMapStyleByResolution(mapboxStyle, resolution) {

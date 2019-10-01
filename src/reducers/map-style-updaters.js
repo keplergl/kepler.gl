@@ -28,7 +28,8 @@ import {
   getStyleDownloadUrl,
   mergeLayerGroupVisibility,
   editTopMapStyle,
-  editBottomMapStyle
+  editBottomMapStyle,
+  getStyleImageIcon
 } from 'utils/map-style-utils/mapbox-gl-style-editor';
 import {
   DEFAULT_MAP_STYLES,
@@ -506,13 +507,29 @@ export const loadCustomMapStyleUpdater = (
  * @returns {Object} nextState
  * @public
  */
-export const inputMapStyleUpdater = (state, {payload: inputStyle}) => ({
-  ...state,
-  inputStyle: {
-    ...inputStyle,
-    isValid: isValidStyleUrl(inputStyle.url)
+export const inputMapStyleUpdater = (state, {payload: {inputStyle, mapState}}) => {
+  const updated = {
+    ...state.inputStyle,
+    ...inputStyle
+  };
+
+  const isValid = isValidStyleUrl(updated.url);
+  const icon = isValid ? getStyleImageIcon({
+    mapState,
+    styleUrl: updated.url,
+    mapboxApiAccessToken: updated.accessToken || state.mapboxApiAccessToken,
+    mapboxApiUrl: state.mapboxApiUrl
+  }) : state.icon;
+
+  return {
+    ...state,
+    inputStyle: {
+      ...updated,
+      isValid,
+      icon
+    }
   }
-});
+};
 
 /**
  * Add map style from user input to reducer and set it to current style
