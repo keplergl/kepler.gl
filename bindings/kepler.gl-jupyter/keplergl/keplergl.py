@@ -160,8 +160,8 @@ class KeplerGl(widgets.DOMWidget):
         data_to_add = data_to_json(self.data, None) if data == None else data_to_json(data, None)
         config_to_add = self.config if config == None else config
 
-        for key in data_to_add:
-            print(type(data_to_add[key]))
+        # for key in data_to_add:
+        #     print(type(data_to_add[key]))
 
         keplergl_data = json.dumps({"config": config_to_add, "data": data_to_add, "options": {"readOnly": read_only}})
 
