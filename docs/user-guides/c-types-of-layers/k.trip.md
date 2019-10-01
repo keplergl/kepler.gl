@@ -1,7 +1,8 @@
 # Trip layer
 
-![Trip layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/k-trip.gif 'Grid layer')
 Trip layer can display animated path.
+
+![Trip layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/k-trip.gif 'Grid layer')
 
 ### How to use trip layer to animate path
 
@@ -41,16 +42,19 @@ In order to animate the path, the `geoJSON` data needs to contain `LineString` i
 - Color
 
   The path can be colored by an attribute from the properties.
+  
   <img src="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/k-trip-attribute-colors.png" width="256" title="Color Attribute">
 
 - Stroke Width
+
   Stroke width can be set by an attribute from the properties.
 
 - Trail Length
 
-  Trail length determines how long it takes for a path to completely fade out. This can be adjusted using the slider. Short trail length retains few historical locations while long trail length retain more and show a longer tail.
+  Trail length determines how long it takes for a path to completely fade out in seconds. This can be adjusted using the slider. Short trail length retains few historical locations while long trail length retain more and show a longer tail.
 
 - Animation speed
+
   Animation speed can be adjusted using the animation control at the bottom.
 
 **When there are multiple layers**
@@ -62,6 +66,7 @@ In order to animate the path, the `geoJSON` data needs to contain `LineString` i
   Other static layers can be added besides the trip layers. Upon hiding the trip layer, its animation control will also hide, giving place to the filter control.
 
 **Export**
-To export an animated map, you can use a screen recording or gif capture tool.
+
+To export an animated map, you can use a screen recording or gif capture tool. You can also export the map as an interactive HTML to open in the browser.
 
 [Back to table of contents](../a-introduction.md)
