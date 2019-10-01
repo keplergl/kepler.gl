@@ -177,7 +177,6 @@ export function addDataConfigToKeplerGl({
   const results = loadJupyterData(data);
   const succeeded = results.filter(r => r && r.data);
   log('addDataConfigToKeplerGl');
-
   log(succeeded);
   log(config);
   store.dispatch(
