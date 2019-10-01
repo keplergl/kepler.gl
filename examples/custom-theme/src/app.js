@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {useEffect, useState} from 'react';
 import styled from 'styled-components';
 import window from 'global/window';
 import {connect} from 'react-redux';
@@ -60,60 +60,46 @@ const StyleSwitch = styled.div`
   border: 1px solid mediumseagreen;
 `;
 
-class App extends Component {
-  state = {
-    customTheme: false,
+function App(props) {
+  const [customTheme, setTheme] = useState(false);
+  const [windowDimension, setDimension] = useState({
     width: window.innerWidth,
     height: window.innerHeight
-  };
+  });
 
-  componentWillMount() {
-    // event listeners
-    window.addEventListener('resize', this._onResize);
+  useEffect(() => {
+    const handleResize = () => {
+      setDimension({width: window.innerWidth, height: window.innerHeight});
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-    this._onResize();
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener('resize', this._onResize);
-  }
-
-  _onResize = () => {
-    this.setState({
-      width: window.innerWidth,
-      height: window.innerHeight
-    });
-  };
-
-  _onToggleTheme = (event) => {
-    const checked = event.target.checked;
-    this.setState({
-      customTheme: checked
-    })
-  };
-
-  render() {
-    const {width, height, customTheme} = this.state;
-    return (
-      <div>
-        <StyleSwitch>
-          <label htmlFor="custom-theme">Custom theme</label>
-          <input type="checkbox" checked={customTheme} id="custom-theme" onChange={this._onToggleTheme}/>
-        </StyleSwitch>
-        <KeplerGl
-          mapboxApiAccessToken={MAPBOX_TOKEN}
-          id="map"
-          /*
-           * Specify path to keplerGl state, because it is not mount at the root
-           */
-          getState={state => state.demo.keplerGl}
-          width={width}
-          height={height}
-          theme={customTheme ? theme : emptyTheme}
+  return (
+    <div>
+      <StyleSwitch>
+        <label htmlFor="custom-theme">Custom theme</label>
+        <input
+          type="checkbox"
+          checked={customTheme}
+          id="custom-theme"
+          onChange={e => setTheme(e.target.checked)}
         />
-      </div>
-    );
-  }
+      </StyleSwitch>
+      <KeplerGl
+        mapboxApiAccessToken={MAPBOX_TOKEN}
+        id="map"
+        /*
+         * Specify path to keplerGl state, because it is not mount at the root
+         */
+        getState={state => state.demo.keplerGl}
+        width={windowDimension.width}
+        height={windowDimension.height}
+        theme={customTheme ? theme : emptyTheme}
+      />
+    </div>
+  );
+  // }
 }
 
 const mapStateToProps = state => state;

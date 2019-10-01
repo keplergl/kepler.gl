@@ -29,9 +29,13 @@ const map = (function initKeplerGl() {
   const id = 'keplergl-0';
   const store = createAppStore();
 
+  const divElmt = document.createElement('div');
+  divElmt.setAttribute('style', 'width: 100vw; height: 100vh; position: absolute');
+  document.body.appendChild(divElmt);
+
   return {
     render: () => {
-      renderRoot({id, store, ele: document.body});
+      renderRoot({id, store, ele: divElmt});
     },
     store
   };

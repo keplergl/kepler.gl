@@ -21,6 +21,7 @@
 import {addDataToMap} from 'kepler.gl/actions';
 import {KeplerGlSchema} from 'kepler.gl/schemas';
 import {ActionTypes} from 'kepler.gl/actions';
+import document from 'global/document';
 
 import renderRoot from './components/root';
 import createAppStore from './store';
@@ -80,7 +81,7 @@ class KeplerGlJupyter {
 
       // should not update model after first UPDATE_MAP action
       // when component first mounted
-      if (previousValue !== hash && this.mapUpdateCounter) {
+      if (previousValue !== hash && this.mapUpdateCounter > 2) {
         // keplerGl State has changed
         log('store state has changed, update model');
         log(previousValue);
@@ -101,7 +102,12 @@ class KeplerGlJupyter {
 
     const height = getHeight(that);
 
-    renderRoot({id: this.id, store: this.store, height, ele: that.el});
+    const divElmt = document.createElement('div');
+    divElmt.setAttribute('id', this.id);
+    divElmt.setAttribute('style', `width: 100%; height: ${height}px`);
+    that.el.appendChild(divElmt)
+
+    renderRoot({id: this.id, store: this.store, ele: divElmt});
     const data = getData(that);
     const config = getConfig(that);
     log('<<<<<<<< render finished! >>>>>>>>>');
@@ -175,7 +181,6 @@ export function addDataConfigToKeplerGl({
 
   log(succeeded);
   log(config);
-
   store.dispatch(
     addDataToMap({
       datasets: succeeded,

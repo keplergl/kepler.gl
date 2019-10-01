@@ -157,11 +157,12 @@ class KeplerGl(widgets.DOMWidget):
         # find open of body
         k = keplergl_html.find("<body>")
 
-        data_to_add = self.data if data == None else data_to_json(data, None)
+        data_to_add = data_to_json(self.data, None) if data == None else data_to_json(data, None)
         config_to_add = self.config if config == None else config
 
-        # type()
-        # print (type(data_to_add))
+        for key in data_to_add:
+            print(type(data_to_add[key]))
+
         keplergl_data = json.dumps({"config": config_to_add, "data": data_to_add, "options": {"readOnly": read_only}})
 
         cmd = """window.__keplerglDataConfig = {};""".format(keplergl_data)

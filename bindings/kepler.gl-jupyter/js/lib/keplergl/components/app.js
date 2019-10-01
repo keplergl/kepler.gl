@@ -18,9 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
-
-const ReactVirtualized = require('react-virtualized/dist/commonjs');
+import React, {useEffect, useState, useRef} from 'react';
 const ReactHelmet = require('react-helmet');
 const Helmet = ReactHelmet ? ReactHelmet.Helmet : null;
 
@@ -34,10 +32,8 @@ import {
 import CustomPanelHeaderFactory from './panel-header';
 import CustomSidebarFactory from './side-bar';
 
-const {AutoSizer} = ReactVirtualized;
-
 const CustomAddDataButtonFactory = () => {
-  const CustomAddDataButton = () => <div/>;
+  const CustomAddDataButton = () => <div />;
   return CustomAddDataButton;
 };
 
@@ -49,53 +45,75 @@ const KeplerGl = injectComponents([
 
 const MAPBOX_TOKEN = process.env.MapboxAccessTokenJupyter; // eslint-disable-line
 
-class App extends React.Component {
-  render() {
+function App() {
+    const rootElm = useRef(null);
+    const [windowDimension, setDimension] = useState({});
+
+    const handleResize = () => {
+      if (!rootElm.current) {
+        return;
+      }
+      const {width, height} = rootElm.current.getBoundingClientRect();
+      if (width !== windowDimension.width || height !== windowDimension.height) {
+        setDimension({width, height});
+      }
+    };
+
+    useEffect(() => {
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     return (
-      <div>
-        {Helmet ? <Helmet>
-          <meta charSet="utf-8" />
-          <title>Kepler.gl Jupyter</title>
-          <link rel="stylesheet" href="http://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css"/>
-          <link rel="stylesheet" href="http://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css"/>
-          <style type="text/css">{
-              `font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
-              font-weight: 400;
-              font-size: 0.875em;
-              line-height: 1.71429;
-              *,
-              *:before,
-              *:after {
-                -webkit-box-sizing: border-box;
-                -moz-box-sizing: border-box;
-                box-sizing: border-box;
-              }
-              body {
-                margin: 0; padding: 0;
-              }
-              .kepler-gl .ReactModal__Overlay.ReactModal__Overlay--after-open {
-                position: absolute !important;
-              }
-              `
-            }
-          </style>
-        </Helmet> : null}
-        <div style={{position: 'absolute', width: '100%', height: '100%'}}>
-          <AutoSizer>
-            {({height, width}) => (
-              <KeplerGl
-                mapboxApiAccessToken={MAPBOX_TOKEN}
-                width={width || 1200}
-                height={height || 800}
-                appName="Kepler.gl Jupyter"
-                version="0.1.0"
-              />
-            )}
-          </AutoSizer>
-        </div>
+      <div style={{width: '100%', height: `100%`}}
+        ref={rootElm}
+        className="keplergl-widget-container"
+      >
+        {Helmet ? (
+          <Helmet>
+            <meta charSet="utf-8" />
+            <title>Kepler.gl Jupyter</title>
+            <link
+              rel="stylesheet"
+              href="http://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css"
+            />
+            <link
+              rel="stylesheet"
+              href="http://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css"
+            />
+            <style type="text/css">
+              {`font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
+                font-weight: 400;
+                font-size: 0.875em;
+                line-height: 1.71429;
+                *,
+                *:before,
+                *:after {
+                  -webkit-box-sizing: border-box;
+                  -moz-box-sizing: border-box;
+                  box-sizing: border-box;
+                }
+                body {
+                  margin: 0; padding: 0;
+                }
+                .kepler-gl .ReactModal__Overlay.ReactModal__Overlay--after-open {
+                  position: absolute !important;
+                }
+                `}
+            </style>
+          </Helmet>
+        ) : null}
+        <KeplerGl
+          mapboxApiAccessToken={MAPBOX_TOKEN}
+          width={windowDimension.width || 800}
+          height={windowDimension.height || 400}
+          appName="Kepler.gl Jupyter"
+          version="0.1.0a9"
+          getMapboxRef={handleResize}
+        />
       </div>
     );
-  }
+  // }
 }
 
 export default App;

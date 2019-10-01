@@ -38,7 +38,6 @@ const VERSIONS = {
   reactDom:clearCarats(dependencies['react-dom']),
   redux: clearCarats(dependencies.redux),
   reactRedux: clearCarats(dependencies['react-redux']),
-  reactVirtualized: clearCarats(dependencies['react-virtualized']),
   styledComponents: clearCarats(dependencies['styled-components']),
   keplergl: clearCarats(dependencies['kepler.gl'])
 }
@@ -57,7 +56,6 @@ const externals = [
   {'kepler.gl/processors': 'KeplerGl'},
   {'kepler.gl/schemas': 'KeplerGl'},
   {'kepler.gl/dist/middleware': 'KeplerGl'},
-  {'react-virtualized/dist/commonjs': 'ReactVirtualized'},
   {'react-helmet': 'Helmet'}
 ].reduce((accu, ext) => ({
   ...accu,
@@ -93,7 +91,7 @@ module.exports = (rules, plugins) => ({
       inlineSource: '.(js|css)$',
       links: [
         'http://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css',
-        'https://api.tiles.mapbox.com/mapbox-gl-js/v0.42.0/mapbox-gl.css'
+        'https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css'
       ],
       scripts: [
 
@@ -101,7 +99,6 @@ module.exports = (rules, plugins) => ({
         `https://unpkg.com/react-dom@${VERSIONS.reactDom}/umd/react-dom.production.min.js`,
         `https://unpkg.com/redux@${VERSIONS.redux}/dist/redux.js`,
         `https://unpkg.com/react-redux@${VERSIONS.reactRedux}/dist/react-redux.min.js`,
-        `https://unpkg.com/react-virtualized@${VERSIONS.reactVirtualized}/dist/umd/react-virtualized.js`,
         `https://unpkg.com/styled-components@${VERSIONS.styledComponents}/dist/styled-components.min.js`,
 
         // load kepler.gl last
