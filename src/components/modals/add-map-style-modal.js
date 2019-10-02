@@ -177,7 +177,7 @@ class AddMapStyleModal extends Component {
       });
 
       map.on('error', () => {
-        this.loadMaoStyleError();
+        this.loadMapStyleError();
       });
     }
   }
@@ -186,7 +186,7 @@ class AddMapStyleModal extends Component {
     this.props.loadCustomMapStyle({style, error: false});
   };
 
-  loadMaoStyleError = () => {
+  loadMapStyleError = () => {
     this.props.loadCustomMapStyle({error: true});
   };
 

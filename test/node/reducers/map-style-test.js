@@ -22,10 +22,10 @@ import test from 'tape';
 import {drainTasksForTesting, succeedTaskWithValues} from 'react-palm/tasks';
 
 import reducer from 'reducers/map-style';
-import {INITIAL_MAP_STYLE, loadMapStylesUpdater} from 'reducers/map-style-updaters';
+import {INITIAL_MAP_STYLE, loadMapStylesUpdater, getInitialInputStyle} from 'reducers/map-style-updaters';
 import {keplerGlInit, receiveMapConfig} from 'actions/actions';
 import SchemaManager from 'schemas';
-import {DEFAULT_MAP_STYLES} from 'constants/default-settings';
+import {DEFAULT_MAP_STYLES, DEFAULT_MAPBOX_API_URL} from 'constants/default-settings';
 
 // helpers
 import {StateWCustomMapStyle} from 'test/helpers/mock-state';
@@ -50,7 +50,10 @@ test('#mapStyleReducer', t => {
 test('#mapStyleReducer -> INIT', t => {
   const newState = reducer(
     InitialMapStyle,
-    keplerGlInit({mapboxApiAccessToken: 'smoothies_secret_token'})
+    keplerGlInit({
+      mapboxApiAccessToken: 'smoothies_secret_token',
+      mapboxApiUrl: 'http://mydomain.com'
+    })
   );
 
   t.deepEqual(
@@ -59,7 +62,7 @@ test('#mapStyleReducer -> INIT', t => {
       ...INITIAL_MAP_STYLE,
       initialState: {},
       mapboxApiAccessToken: 'smoothies_secret_token',
-      mapboxApiUrl: undefined
+      mapboxApiUrl: 'http://mydomain.com'
     },
     'initialize map style with mapboxApiAccessToken'
   );
@@ -89,7 +92,7 @@ test('#mapStyleReducer -> INIT & LOAD_MAP_STYLES', t => {
       mapStyles: {},
       initialState: {},
       mapboxApiAccessToken: 'smoothies_secret_token',
-      mapboxApiUrl: undefined,
+      mapboxApiUrl: DEFAULT_MAPBOX_API_URL,
       mapStylesReplaceDefault: true
     },
     'initialize map style with mapboxApiAccessToken and mapStylesReplaceDefault; mapStyles empty'
@@ -145,7 +148,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
       smoothie_the_cat: {
         accessToken: 'secret_token',
         custom: true,
-        icon: 'data:image/png;base64,xyz',
+        icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
         id: 'smoothie_the_cat',
         label: 'Smoothie the Cat',
         url: 'mapbox://styles/shanhe/smoothie.the.cat'
@@ -153,17 +156,9 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
       ...defaultMapStyles
     },
     mapboxApiAccessToken: 'smoothies_secret_token',
-    mapboxApiUrl: undefined,
+    mapboxApiUrl: DEFAULT_MAPBOX_API_URL,
     mapStylesReplaceDefault: false,
-    inputStyle: {
-      accessToken: null,
-      error: false,
-      isValid: false,
-      label: null,
-      style: null,
-      url: null,
-      custom: true
-    },
+    inputStyle: getInitialInputStyle(),
     threeDBuildingColor: [1, 2, 3],
     custom3DBuildingColor: true,
     initialState: {}
@@ -206,7 +201,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
     smoothie_the_cat: {
       accessToken: 'secret_token',
       custom: true,
-      icon: 'data:image/png;base64,xyz',
+      icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
       id: 'smoothie_the_cat',
       label: 'Smoothie the Cat',
       url: 'mapbox://styles/shanhe/smoothie.the.cat',
@@ -222,17 +217,9 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
     topLayerGroups: {},
     mapStyles: expectedMapStyles,
     mapboxApiAccessToken: 'smoothies_secret_token',
-    mapboxApiUrl: undefined,
+    mapboxApiUrl: DEFAULT_MAPBOX_API_URL,
     mapStylesReplaceDefault: false,
-    inputStyle: {
-      accessToken: null,
-      error: false,
-      isValid: false,
-      label: null,
-      style: null,
-      url: null,
-      custom: true
-    },
+    inputStyle: getInitialInputStyle(),
     threeDBuildingColor: [1, 2, 3],
     custom3DBuildingColor: true,
     initialState: {},

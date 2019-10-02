@@ -33,7 +33,8 @@ import {
 } from 'utils/map-style-utils/mapbox-gl-style-editor';
 import {
   DEFAULT_MAP_STYLES,
-  DEFAULT_LAYER_GROUPS
+  DEFAULT_LAYER_GROUPS,
+  DEFAULT_MAPBOX_API_URL
 } from 'constants/default-settings';
 import {generateHashId} from 'utils/utils';
 import {LOAD_MAP_STYLE_TASK} from 'tasks/tasks';
@@ -61,7 +62,7 @@ const getDefaultState = () => {
     ),
     // save mapbox access token
     mapboxApiAccessToken: null,
-    mapboxApiUrl: null,
+    mapboxApiUrl: DEFAULT_MAPBOX_API_URL,
     mapStylesReplaceDefault: false,
     inputStyle: getInitialInputStyle(),
     threeDBuildingColor: hexToRgb(DEFAULT_BLDG_COLOR),
@@ -236,7 +237,7 @@ export const initMapStyleUpdater = (state, action) => ({
   ...state,
   // save mapbox access token to map style state
   mapboxApiAccessToken: (action.payload || {}).mapboxApiAccessToken,
-  mapboxApiUrl: (action.payload || {}).mapboxApiUrl,
+  mapboxApiUrl: (action.payload || {}).mapboxApiUrl || state.mapboxApiUrl,
   mapStyles:
     action.payload && !action.payload.mapStylesReplaceDefault
       ? state.mapStyles
@@ -449,6 +450,7 @@ export const resetMapConfigMapStyleUpdater = state => {
     ...INITIAL_MAP_STYLE,
     mapboxApiAccessToken: state.mapboxApiAccessToken,
     mapboxApiUrl: state.mapboxApiUrl,
+    mapStylesReplaceDefault: state.mapStylesReplaceDefault,
     ...state.initialState,
     mapStyles: state.mapStyles,
     initialState: state.initialState
@@ -518,8 +520,8 @@ export const inputMapStyleUpdater = (state, {payload: {inputStyle, mapState}}) =
     mapState,
     styleUrl: updated.url,
     mapboxApiAccessToken: updated.accessToken || state.mapboxApiAccessToken,
-    mapboxApiUrl: state.mapboxApiUrl
-  }) : state.icon;
+    mapboxApiUrl: state.mapboxApiUrl || DEFAULT_MAPBOX_API_URL
+  }) : state.inputStyle.icon;
 
   return {
     ...state,
@@ -568,6 +570,7 @@ export function getInitialInputStyle() {
     label: null,
     style: null,
     url: null,
+    icon: null,
     custom: true
   };
 }

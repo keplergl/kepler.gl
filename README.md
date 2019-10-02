@@ -243,6 +243,54 @@ Read more about [Components][components].
 
 You can pass theme name or object used to customize Kepler.gl style. Kepler.gl provide an `'light'` theme besides the default 'dark' theme. When pass in a theme object Kepler.gl will use the value passed as input to override values from [theme](https://github.com/keplergl/kepler.gl/blob/master/src/styles/base.js).
 
+#### `mapboxApiUrl` (String, optional)
+
+- Default: `https://api.mapbox.com`
+
+If you are using your own mapbox tile server, you can pass in your own tile server api url.
+
+#### `mapStylesReplaceDefault` (Boolean, optional)
+
+- Default: `false`
+
+kepler.gl provide 4 map styles to choose from. Pass `true` if you want to supply your own `mapStyles`. See Below.
+
+#### `mapStyles` (Array, optional)
+
+- Default: `[]`
+
+You can supply additional map styles to be displayed in [map style selection panel](https://github.com/keplergl/kepler.gl/blob/master/docs/user-guides/f-map-styles/1-base-map-styles.md). By default, additional map styles will be added to default map styles. If pass `mapStylesReplaceDefault: true`, they will replace the default ones. kepler.gl will attempt to group layers of your style based on its `id` naming convention and use it to allow toggle visibility of [base map layers](https://github.com/keplergl/kepler.gl/blob/master/docs/user-guides/f-map-styles/2-map-layers.md). Supply your own `layerGroups` to override default for more accurate layer grouping.
+
+Each `mapStyles` should has the following properties:
+  - `id` (String, required) unique string that should **not** be one of these reserved `dark` `light` `muted`. `muted_night`
+  - `label` (String, required) name to be displayed in map style selection panel
+  - `url` (String, required) mapbox style url or a url pointing to the map style json object
+  - `icon` (String, optional) image icon of the style, it can be a url, or an [image data url](https://flaviocopes.com/data-urls/#how-does-a-data-url-look)
+  - `layerGroups` (Array, optional)
+
+```js
+  const mapStyles = [
+    {
+      id: 'my_dark_map',
+      label: 'Dark Streets 9',
+      url: 'mapbox://styles/mapbox/dark-v9',
+      icon: `${apiHost}/styles/v1/mapbox/dark-v9/static/-122.3391,37.7922,9.19,0,0/400x300?access_token=${accessToken}&logo=false&attribution=false`,
+      layerGroups: [{
+        slug: 'label',
+        filter: ({id}) => id.match(/(?=(label|place-|poi-))/),
+        defaultVisibility: true
+      }, {
+        // adding this will keep the 3d building option
+        slug: '3d building',
+        filter: () => false,
+        defaultVisibility: false
+      }]
+    }
+  ];
+
+```
+
+
 ### 3. Dispatch custom actions to `keplerGl` reducer.
 
 One advantage of using the reducer over React component state to handle keplerGl state is the flexibility

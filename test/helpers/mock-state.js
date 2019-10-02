@@ -272,7 +272,6 @@ function mockStateWithCustomMapStyle() {
     accessToken: 'secret_token',
     isValid: true,
     label: 'Smoothie the Cat',
-    icon: 'data:image/png;base64,xyz',
     style: {
       version: 'v8',
       id: 'smoothie_the_cat',

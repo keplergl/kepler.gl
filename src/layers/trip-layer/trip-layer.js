@@ -330,8 +330,10 @@ export default class TripLayer extends Layer {
         rounded: true,
         pickable: true,
         autoHighlight: true,
-        parameters: {depthTest: mapState.dragRotate},
-
+        parameters: {
+          depthTest: mapState.dragRotate,
+          depthMask: false
+        },
         trailLength: visConfig.trailLength * 1000,
         currentTime: animationConfig.currentTime - animationConfig.domain[0],
         updateTriggers
