@@ -21,21 +21,16 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import {Provider} from 'react-redux';
-import document from 'global/document';
 import App from './app';
 
-function renderRoot({id, store, height, ele}) {
+function renderRoot({id, store, ele}) {
   const Root = () => (
     <Provider store={store}>
       <App />
     </Provider>
   );
 
-  const divElmt = document.createElement('div');
-  divElmt.setAttribute('id', id);
-  divElmt.setAttribute('style', `width: 100%; height: ${height}px`);
-
-  ReactDOM.render(<Root />, ele.appendChild(divElmt));
+  ReactDOM.render(<Root />, ele);
 }
 
 export default renderRoot;

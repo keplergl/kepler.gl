@@ -198,7 +198,7 @@ export default class RangeSlider extends Component {
 
     const height = isRanged && showInput ? '16px' : '24px';
     const {width} = this.state;
-    const plotWidth = width - sliderHandleWidth;
+    const plotWidth = Math.max(width - sliderHandleWidth, 0);
 
     return (
       <div

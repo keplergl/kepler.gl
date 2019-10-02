@@ -27,7 +27,6 @@
     "add-licence": "uber-licence",
     "prepublish": "uber-licence && yarn build",
     "build": "npm run clean && uber-licence && webpack --config ./webpack/build.js",
-    "build-template": "webpack --config ./webpack/build-html.js --mode development",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint lib webpack --fix",
     "prettier": "prettier --config ./.prettierrc --print-width 80 --single-quote --write lib/**/*.js"
@@ -81,12 +80,11 @@
   "dependencies": {
     "@jupyter-widgets/base": "^1.0.0",
     "global": "^4.3.0",
-    "kepler.gl": "^1.1.3",
+    "kepler.gl": "^1.1.8",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
     "react-helmet": "^5.2.0",
     "react-redux": "^5.1.1",
-    "react-virtualized": "^9.18.5",
     "redux": "^3.7.2",
     "redux-actions": "^2.2.1",
     "styled-components": "^4.1.3",
