@@ -2,7 +2,7 @@
   "scripts": {
     "start": "webpack-dev-server --mode development --progress --hot --open",
     "start-prod": "webpack-dev-server -p --progress --hot --open",
-    "start-local": "webpack-dev-server --mode development --env.es6 --progress --hot --open",
+    "start-local": "webpack-dev-server --mode development --https --env.es6 --progress --hot --open",
     "start-local-deck": "webpack-dev-server --mode development --env.es6 --env.deck --progress --hot --open"
   },
   "dependencies": {
