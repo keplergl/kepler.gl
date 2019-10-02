@@ -49,9 +49,9 @@ const resolver = ({id, mapStyle, visibleLayerGroups = {}}) =>
 /**
  * Edit preset map style to keep only visible layers
  *
- * @param {object} mapStyle - preset map style
- * @param {object} visibleLayerGroups - visible layers of top map
- * @returns {object} top map style
+ * @param {Object} mapStyle - preset map style
+ * @param {Object} visibleLayerGroups - visible layers of top map
+ * @returns {Object} top map style
  */
 export const editTopMapStyle = memoize(({id, mapStyle, visibleLayerGroups}) => {
   const visibleFilters = (mapStyle.layerGroups || [])
@@ -73,9 +73,9 @@ export const editTopMapStyle = memoize(({id, mapStyle, visibleLayerGroups}) => {
 /**
  * Edit preset map style to filter out invisible layers
  *
- * @param {object} mapStyle - preset map style
- * @param {object} visibleLayerGroups - visible layers of bottom map
- * @returns {object} bottom map style
+ * @param {Object} mapStyle - preset map style
+ * @param {Object} visibleLayerGroups - visible layers of bottom map
+ * @returns {Object} bottom map style
  */
 export const editBottomMapStyle = memoize(
   ({id, mapStyle, visibleLayerGroups}) => {
@@ -120,6 +120,17 @@ export function getStyleDownloadUrl(styleUrl, accessToken, mapboxApiUrl) {
   // style url not recognized
   return null;
 }
+
+/**
+ * Generate static map image from style Url to be used as icon
+ * @param {Object} param
+ * @param {string} param.styleUrl
+ * @param {string} param.mapboxApiAccessToken
+ * @param {string} param.mapboxApiUrl
+ * @param {Object} param.mapState
+ * @param {numbers} param.mapW
+ * @param {numbers} param.mapH
+ */
 export function getStyleImageIcon({
   styleUrl,
   mapboxApiAccessToken,
@@ -185,9 +196,9 @@ export function scaleMapStyleByResolution(mapboxStyle, resolution) {
 /**
  * When switch to a new style, try to keep current layer group visibility
  * by merging default and current
- * @param {object} defaultLayerGroup
- * @param {object} currentLayerGroup
- * @return {object} mergedLayerGroups
+ * @param {Object} defaultLayerGroup
+ * @param {Object} currentLayerGroup
+ * @return {Object} mergedLayerGroups
  */
 export function mergeLayerGroupVisibility(defaultLayerGroup, currentLayerGroup) {
   return Object.keys(currentLayerGroup)
