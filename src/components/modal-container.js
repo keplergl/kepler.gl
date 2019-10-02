@@ -41,7 +41,7 @@ import AddMapStyleModalFactory from './modals/add-map-style-modal';
 import {media} from 'styles/media-breakpoints';
 
 // Template
-import {exportMapToHTML} from 'templates/export-map';
+import {exportMapToHTML} from 'templates/export-map-html';
 import {
   ADD_DATA_ID,
   DATA_TABLE_ID,
@@ -58,11 +58,11 @@ import {EXPORT_MAP_FORMATS} from '../constants/default-settings';
 const DataTableModalStyle = css`
   top: 80px;
   padding: 32px 0 0 0;
-  
+
   ${media.portable`
     padding: 0;
   `}
-  
+
   ${media.palm`
     padding: 0;
     margin: 0 auto;
@@ -269,7 +269,7 @@ export default function ModalContainerFactory(
             modalProps.cssStyle = css`
               ${DataTableModalStyle};
               ${media.palm`
-                width: ${width}px; 
+                width: ${width}px;
               `}
             `;
             break;

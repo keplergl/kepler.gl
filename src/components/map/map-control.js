@@ -220,6 +220,7 @@ const MapControlFactory = () => {
       top: PropTypes.number.isRequired,
 
       // optional
+      readOnly: PropTypes.bool,
       scale: PropTypes.number
     };
 
@@ -258,7 +259,8 @@ const MapControlFactory = () => {
         onToggleSplitMap,
         onMapToggleLayer,
         onToggleMapControl,
-        scale
+        scale,
+        readOnly
       } = this.props;
 
       const {
@@ -273,7 +275,7 @@ const MapControlFactory = () => {
       return (
         <StyledMapControl className="map-control">
           {/* Split Map */}
-          {splitMap.show ? (
+          {splitMap.show && readOnly !== true ? (
             <ActionPanel key={0}>
               <StyledMapControlButton
                 active={isSplit}
@@ -298,7 +300,7 @@ const MapControlFactory = () => {
           ) : null}
 
           {/* Map Layers */}
-          {isSplit && visibleLayers.show ? (
+          {isSplit && visibleLayers.show && readOnly !== true ? (
             <ActionPanel key={1}>
               <LayerSelectorPanel
                 items={this.layerPanelItemsSelector(this.props)}
