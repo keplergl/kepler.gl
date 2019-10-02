@@ -19,11 +19,14 @@
 // THE SOFTWARE.
 
 import DropboxHandler from './dropbox';
+import CartoHandler from './carto';
 import {AUTH_TOKENS} from '../../constants/default-settings';
 
 // configure all clients with the right configuration
 DropboxHandler.setAuthToken(AUTH_TOKENS.DROPBOX_CLIEND_ID);
+CartoHandler.setAuthToken(AUTH_TOKENS.CARTO_CLIENT_ID);
 
 export const CLOUD_PROVIDERS = {
-  [DropboxHandler.name]: DropboxHandler
+  [DropboxHandler.name]: DropboxHandler,
+  [CartoHandler.name]: CartoHandler
 };

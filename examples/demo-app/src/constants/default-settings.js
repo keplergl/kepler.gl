@@ -107,6 +107,7 @@ export const DEFAULT_FEATURE_FLAGS = {
 
 export const AUTH_TOKENS = {
   MAPBOX_TOKEN: process.env.MapboxAccessToken, // eslint-disable-line
+  CARTO_CLIENT_ID: process.env.CartoClientId, // eslint-disable-line
   DROPBOX_CLIEND_ID: process.env.DropboxClientId, // eslint-disable-line
   EXPORT_MAPBOX_TOKEN: process.env.MapboxExportToken, // eslint-disable-line
 };

@@ -100,6 +100,7 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR) {
     plugins: [
       new webpack.EnvironmentPlugin([
         'MapboxAccessToken',
+        'CartoClientId',
         'DropboxClientId',
         'MapboxExportToken'
       ])

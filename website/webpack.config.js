@@ -137,6 +137,7 @@ const COMMON_CONFIG = {
     new webpack.EnvironmentPlugin([
       'MapboxAccessToken',
       'DropboxClientId',
+      'CartoClientId',
       'MapboxExportToken'
     ])
   ],
@@ -185,6 +186,7 @@ function logInstruction(msg) {
   console.log('\x1b[36m%s\x1b[0m', msg);
 }
 
+// eslint-disable-next-line max-statements
 module.exports = env => {
   env = env || {};
 
@@ -203,9 +205,15 @@ module.exports = env => {
     }
     if (!process.env.DropboxClientId) {
       logError('Error! DropboxClientId is not defined');
-      logInstruction(`Make sure to run "export MapboxExportToken=<token>" before deploy the website`);
+      logInstruction(`Make sure to run "export DropboxClientId=<token>" before deploy the website`);
       logInstruction('You can get the token at https://www.dropbox.com/developers');
       throw new Error('Missing Export DropboxClientId Access token');
+    }
+    if (!process.env.CartoClientId) {
+      logError('Error! CartoClientId is not defined');
+      logInstruction(`Make sure to run "export CartoClientId=<token>" before deploy the website`);
+      logInstruction('You can get the token at https://www.dropbox.com/developers');
+      throw new Error('Missing Export CartoClientId Access token');
     }
     if (!process.env.MapboxExportToken) {
       logError('Error! MapboxExportToken is not defined');
