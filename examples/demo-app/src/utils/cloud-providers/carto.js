@@ -21,23 +21,29 @@
 // DROPBOX
 import {OAuthApp} from '@carto/toolkit';
 import DropboxIcon from '../../components/icons/carto-icon';
+import {formatCsv} from 'processors/data-processor';
 
 const NAME = 'carto';
-let carto;
+const carto = new OAuthApp({
+  scopes: 'schemas:c'
+}, {
+  namespace: 'keplergl'
+});
 
 /**
  * Set the auth toke to be used with carto client
  * @param authToken
  */
 function setAuthToken(authToken) {
-  if (carto) {
+  if (!carto) {
     return;
   }
 
-  carto = new OAuthApp({
-    clientID: authToken,
-    scopes: 'schemas:c'
-  });
+  carto.setClientID(authToken);
+
+  if (!carto.oauth.expired) {
+    carto.login();
+  }
 }
 
 /**
@@ -48,17 +54,47 @@ function getAccessTokenFromLocation(location) {
   return;
 }
 
-function uploadFile({blob, name, isPublic = true}) {
+async function uploadFile({blob, name: fileName, isPublic = true}) {
+  const payload = JSON.parse(await new Response(blob).text());
+
+  const { config, datasets } = payload;
+
+  const cartoDatasets = datasets.map(convertDataset);
+
+  const result = await carto.CustomStorage.createVisualization({
+    name: fileName,
+    config: JSON.stringify(config),
+    isPrivate: !isPublic
+  }, cartoDatasets, true);
+
   // eslint-disable-next-line no-console
-  console.log('Not implemented', arguments);
+  console.log(result);
+
+  return result;
+}
+
+function convertDataset({ data: dataset }) {
+  const {allData, fields, id} = dataset;
+  const columns = fields.map((field) => ({
+    name: field.name,
+    type: field.type
+  }));
+
+  const file = formatCsv(allData, fields);
+
+  return {
+    name: id,
+    columns,
+    file
+  }
 }
 
 /**
  * The CARTO toolkit library takes care of the login process.
  */
 function handleLogin(onCloudLoginSuccess) {
-  carto.login.then(() => {
-    onCloudLoginSuccess();
+  carto.login().then(() => {
+    onCloudLoginSuccess(NAME);
   });
 }
 

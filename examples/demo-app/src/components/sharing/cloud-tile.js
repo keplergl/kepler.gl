@@ -33,6 +33,7 @@ const StyledTileWrapper = styled.div`
   width: 120px;
   height: 120px;
   background-color: #ffffff;
+  margin-right: 12px;
 
   :hover {
     color: ${props => props.available && props.theme.primaryBtnBgd};
