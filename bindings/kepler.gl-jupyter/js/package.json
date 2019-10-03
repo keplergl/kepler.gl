@@ -1,6 +1,6 @@
 {
   "name": "keplergl-jupyter",
-  "version": "0.1.0-a10",
+  "version": "0.1.0",
   "description": "This is a simple jupyter widget for kepler.gl, an advanced geo-spatial visualization tool, to render large-scale interactive maps.",
   "author": "Shan He",
   "main": "babel/index.js",
