@@ -1,6 +1,6 @@
 {
   "name": "keplergl-jupyter",
-  "version": "0.1.0",
+  "version": "0.1.0a9",
   "description": "This is a simple jupyter widget for kepler.gl, an advanced geo-spatial visualization tool, to render large-scale interactive maps.",
   "author": "Shan He",
   "main": "lib/index.js",
@@ -10,10 +10,11 @@
   },
   "keywords": [
     "jupyter",
+    "jupyterlab",
+    "jupyterlab-extension",
     "widgets",
     "ipython",
-    "ipywidgets",
-    "jupyterlab-extension"
+    "ipywidgets"
   ],
   "files": [
     "lib/**/*.js",
@@ -26,8 +27,9 @@
     "cleanall": "npm run clean && rimraf node_modules/",
     "check-licence": "uber-licence --dry",
     "add-licence": "uber-licence",
-    "prepublish": "uber-licence && yarn build",
+    "prepublish": "uber-licence && yarn build && yarn build:lab",
     "build": "npm run clean && uber-licence && webpack --config ./webpack/build.js",
+    "build:lab": "rimraf babel/ && mkdir babel && babel lib --out-dir babel",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint lib webpack --fix",
     "prettier": "prettier --config ./.prettierrc --print-width 80 --single-quote --write lib/**/*.js"
@@ -82,7 +84,7 @@
     "webpack-stats-plugin": "^0.2.1"
   },
   "dependencies": {
-    "@jupyter-widgets/base": "^2.0.0-rc.2",
+    "@jupyter-widgets/base": "^1.1.10 || ^2",
     "global": "^4.3.0",
     "kepler.gl": "^1.1.8",
     "react": "^16.8.4",
