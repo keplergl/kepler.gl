@@ -10,6 +10,7 @@ This is the [kepler.gl](http://kepler.gl) jupyter widget, an advanced geospatial
 - [Demo Notebooks](#demo-notebooks)
 - [Usage](#usage)
 - [Local Development Setup](#local-development-setup)
+- [FAQ](#faq)
 <!-- /TOC -->
 
 
@@ -27,6 +28,16 @@ If you on Mac used `pip install` and running Notebook 5.3 and above, you don't n
     $ jupyter nbextension install --py --sys-prefix keplergl # can be skipped for notebook 5.3 and above
 
     $ jupyter nbextension enable --py --sys-prefix keplergl # can be skipped for notebook 5.3 and above
+
+If you have JupyterLab, you will also need to install the JupyterLab extension. This require [node](https://nodejs.org/en/download/package-manager/#macos) `> 8.15.0`
+
+If you use [Homebrew](https://brew.sh/) on Mac:
+
+    $ brew install node@8
+
+    $ jupyter labextension install @jupyter-widgets/jupyterlab-manager keplergl-jupyter
+
+For jupyterLab version < 1, (Follow this link)[https://github.com/jupyter-widgets/ipywidgets/tree/master/packages/jupyterlab-manager] to find the specific version of `@jupyter-widgets/jupyterlab-manager` to install.
 
 <br></br>
 # Quick Start
@@ -89,7 +100,8 @@ map_1.save_to_html(file_name='keplergl_map.html')
 You will need to install node, yarn and Jupyter Notebook.
 
 ### 1. Node and Yarn
-Install [node](https://nodejs.org/en/download/package-manager/#macos) (`> 8`), and [yarn](https://yarnpkg.com/en/docs/install#mac-stable)
+Install [node](https://nodejs.org/en/download/package-manager/#macos) `> 8.15.0`, and [yarn](https://yarnpkg.com/en/docs/install#mac-stable). Use [nvm](https://github.com/creationix/nvm) for better node version management e.g. `nvm install 8`.
+
 
 ### 2. Install Jupyter with pip
 
@@ -148,10 +160,60 @@ This command must be run **AFTER** the `js` setup, and folder `static/` was crea
     $ cd notebooks
     $ jupyter notebook
 
+
+
 ### Have fun!
 
 You can now start editing the .js and .py files to see changes reflected in your local notebook. After changing files in the js folder, the local start script will recompile the js files and put them in to `keplergl/static` folder. You need to reload the jupyter notebook page to reload the files.
 
+
+# FAQ
+
+#### 1. What about windows?
+keplergl is currently only published to PyPI, and unfortunately I use a Mac. If you encounter errors installing it on windows. [This issue](https://github.com/keplergl/kepler.gl/issues/557) might shed some light. Follow this issue for [conda](https://github.com/keplergl/kepler.gl/issues/646) support.
+
+#### 2. Install keplergl-jupyter on Jupyter Lab failed?
+
+Make sure you are using node 8.15.0. and you have installed `@jupyter-widgets/jupyterlab-manager`. Depends on your JupyterLab version. You might need to install the specific version of [jupyterlab-manager](https://github.com/jupyter-widgets/ipywidgets/tree/master/packages/jupyterlab-manager). with `jupyter labextension install @jupyter-widgets/jupyterlab-manager@0.31`.
+
+Run `jupyter labextension install <pageanges> --debug` for console outputs before creating an issue.
+
+If you are running `install` and `uninstall` serveral times. You should run.
+```
+jupyter lab clean
+jupyter lab build
+```
+
+#### 2.1 JavaScript heap out of memory when installing lab extension
+If you see this error during install labextension
+
+    $ FATAL ERROR: CALL_AND_RETRY_LAST Allocation failed - JavaScript heap out of memory
+run
+
+    $ export NODE_OPTIONS=--max-old-space-size=4096`
+
+#### 3. Is my lab extension successfully installed?
+Run `jupyter labextension list` You should see below. (Version may vary)
+```sh
+JupyterLab v1.1.4
+Known labextensions:
+   app dir: /Users/xxx/jupyter-python3/ENV3/share/jupyter/lab
+        @jupyter-widgets/jupyterlab-manager v1.0.2  enabled  OK
+        keplergl-jupyter v0.1.0  enabled  OK
+```
+
+#### 4. What's your python and node env
+
+```
+python==3.7.4
+jupyterlab==1.1.4
+ipywidgets==7.5.1
+```
+
+Node
+```
+node==8.15.0
+```
 
 [jupyter_widget]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/jupyter_widget.png
 [empty_map]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/jupyter_empty_map.png
@@ -171,3 +233,5 @@ You can now start editing the .js and .py files to see changes reflected in your
 
 [match-config-w-data]: #match-config-with-data
 [data_format]: #3-data-format
+
+

@@ -6,7 +6,7 @@
   "license": "MIT",
   "main": "dist/index.js",
   "engines": {
-    "node": ">=8.7.0",
+    "node": ">=8.15.0",
     "npm": ">=6.1.0",
     "yarn": ">=1.6.0"
   },

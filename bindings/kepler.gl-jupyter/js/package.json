@@ -4,6 +4,11 @@
   "description": "This is a simple jupyter widget for kepler.gl, an advanced geo-spatial visualization tool, to render large-scale interactive maps.",
   "author": "Shan He",
   "main": "babel/index.js",
+  "engines": {
+    "node": ">=8.15.0",
+    "npm": ">=6.1.0",
+    "yarn": ">=1.6.0"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/keplergl/kepler.gl.git"
