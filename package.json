@@ -199,7 +199,7 @@
     "json-loader": "^0.5.4",
     "nyc": "^11.4.1",
     "ocular-dev-tools": "^0.0.30",
-    "prettier": "^1.7.0",
+    "prettier": "1.18.2",
     "progress-bar-webpack-plugin": "^1.9.3",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
