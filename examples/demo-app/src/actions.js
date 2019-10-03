@@ -359,30 +359,30 @@ export function exportFileToCloud(handlerName = 'dropbox') {
   return (dispatch, getState) => {
     // extract data from kepler
     const data = KeplerGlSchema.save(getState().demo.keplerGl.map);
+    const name = `keplergl_${generateHashId(6)}`;
     const newBlob = new Blob([JSON.stringify(data)], {type: 'application/json'});
-    const fileName = `/keplergl_${generateHashId(6)}.json`;
-    const file = new File([newBlob], fileName);
+    const file = new File([newBlob], `/${name}.json`);
     // We are gonna pass the correct auth token to init the cloud provider
-    dispatch(setPushingFile(true, {filename: file.name, status: 'uploading', metadata: null}));
-    authHandler.uploadFile({blob: file, name: fileName, isPublic: true, authHandler})
+    dispatch(setPushingFile(true, {filename: name, status: 'uploading', metadata: null}));
+    authHandler.uploadFile({blob: file, name, isPublic: true, authHandler})
     // need to perform share as well
       .then(
         response => {
           dispatch(push(`/${MAP_URI}${response.url}`));
-          dispatch(setPushingFile(false, {filename: file.name, status: 'success', metadata: response}));
+          dispatch(setPushingFile(false, {filename: name, status: 'success', metadata: response}));
         },
         error => {
-          dispatch(setPushingFile(false, {filename: file.name, status: 'error', error}));
+          dispatch(setPushingFile(false, {filename: name, status: 'error', error}));
         }
       )
   };
 }
 
-export function setCloudLoginSuccess() {
+export function setCloudLoginSuccess(providerName) {
   return dispatch => {
     dispatch({type: CLOUD_LOGIN_SUCCESS}).then(
       () => {
-        dispatch(exportFileToCloud());
+        dispatch(exportFileToCloud(providerName));
       },
       () => {
         dispatch(setPushingFile(false, {filename: null, status: 'error', error: 'not able to propagate login successfully'}));

@@ -277,12 +277,12 @@ class App extends Component {
     });
   };
 
-  _onExportToCloud = () => {
-    this.props.dispatch(exportFileToCloud());
+  _onExportToCloud = (provider) => {
+    this.props.dispatch(exportFileToCloud(provider));
   };
 
-  _onCloudLoginSuccess = () => {
-    this.props.dispatch(setCloudLoginSuccess());
+  _onCloudLoginSuccess = (provider) => {
+    this.props.dispatch(setCloudLoginSuccess(provider));
   };
 
   _getMapboxRef = (mapbox, index) => {

@@ -28,7 +28,7 @@ import StatusPanel from './status-panel';
 import {CLOUD_PROVIDERS} from '../../utils/cloud-providers';
 import {KEPLER_DISCLAIMER} from '../../constants/default-settings';
 import {getMapPermalink} from '../../utils/url';
-
+ 
 const StyledExportDataSection = styled.div`
   display: flex;
   flex-direction: row;
@@ -141,7 +141,7 @@ const ExportCloudModal = ({
               <CloudTile
                 key={index}
                 token={CLOUD_PROVIDERS[name].getAccessToken()}
-                onExport={onExport}
+                onExport={() => onExport(name)}
                 onLogin={() => CLOUD_PROVIDERS[name].handleLogin(onCloudLoginSuccess)}
                 Icon={CLOUD_PROVIDERS[name].icon}
               />
