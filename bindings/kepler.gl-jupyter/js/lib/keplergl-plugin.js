@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// import widgets from '@jupyter-widgets/base';
 import * as widgets from '@jupyter-widgets/base';
 import KeplerGlJupyter from './keplergl/kepler.gl';
 import log from './log';
@@ -46,8 +45,6 @@ export const KeplerGlModal = widgets.DOMWidgetModel.extend({
     _view_name: 'KeplerGlView',
     _model_module: 'keplergl-jupyter',
     _view_module: 'keplergl-jupyter',
-    _model_module_version: '0.1.0',
-    _view_module_version: '0.1.0',
 
     data: {},
     config: {}
