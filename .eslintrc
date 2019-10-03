@@ -1,8 +1,8 @@
 {
   "extends": [
-    "eslint-config-prettier",
-    "eslint-config-uber-es2015",
     "eslint-config-uber-jsx",
+    "eslint-config-uber-es2015",
+    "eslint-config-prettier",
     "prettier",
     "prettier/react"
   ],
@@ -25,6 +25,7 @@
     "react/no-multi-comp": 0,
     "prefer-spread": 1,
     "prefer-template": 1,
+    "prettier/prettier": "error",
     "quote-props": 1,
     "spaced-comment": 1,
     "max-params": 0,
