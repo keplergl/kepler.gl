@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "description": "This is a simple jupyter widget for kepler.gl, an advanced geo-spatial visualization tool, to render large-scale interactive maps.",
   "author": "Shan He",
+  "license": "MIT",
+
   "main": "babel/index.js",
   "engines": {
     "node": ">=8.15.0",
