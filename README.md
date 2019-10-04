@@ -48,12 +48,12 @@ Kepler.gl is also a React component that uses [Redux](https://redux.js.org/) to 
 
 ## Env
 
-Use Node v6 and above, older node versions have not been tested.
+Use Node 8.15.0 and above, older node versions have not been tested.
 For best results, use [nvm](https://github.com/creationix/nvm) `nvm install`.
 
 ## Install kepler.gl
 
-Install node (`> 6`), yarn, and project dependencies
+Install node (`> 8.15.0`), yarn, and project dependencies
 
 ```sh
 npm install --save kepler.gl

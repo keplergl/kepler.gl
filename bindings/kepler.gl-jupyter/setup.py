@@ -22,7 +22,7 @@ log.set_verbosity(log.DEBUG)
 log.info('setup.py entered')
 log.info('$PATH=%s' % os.environ['PATH'])
 
-LONG_DESCRIPTION = 'This is a simple jupyter widget for kepler.gl, an advanced geospatial visualization tool, to render large-scale interactive maps.'
+LONG_DESCRIPTION = 'A jupyter widget for kepler.gl, an advanced geospatial visualization tool, to render large-scale interactive maps.'
 
 def js_prerelease(command, strict=False):
     """decorator for building minified js/css prior to another command"""
@@ -135,7 +135,7 @@ setup_args = {
             'keplergl/static/extension.js',
             'keplergl/static/index.js',
             'keplergl/static/index.js.map',
-        ],),
+        ]),
         ('etc/jupyter/nbconfig/notebook.d' ,['keplergl-jupyter.json'])
     ],
     'install_requires': [
@@ -161,6 +161,9 @@ setup_args = {
         'ipython',
         'jupyter',
         'widgets',
+        'geospatial',
+        'visualization',
+        'webGL'
     ],
     'classifiers': [
         'Development Status :: 4 - Beta',

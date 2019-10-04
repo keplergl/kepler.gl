@@ -3,21 +3,29 @@
   "version": "0.1.0",
   "description": "This is a simple jupyter widget for kepler.gl, an advanced geo-spatial visualization tool, to render large-scale interactive maps.",
   "author": "Shan He",
-  "main": "lib/index.js",
+  "license": "MIT",
+  "main": "babel/index.js",
+  "engines": {
+    "node": ">=8.15.0",
+    "npm": ">=6.1.0",
+    "yarn": ">=1.6.0"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/keplergl/kepler.gl.git"
   },
   "keywords": [
     "jupyter",
+    "jupyterlab",
+    "jupyterlab-extension",
     "widgets",
     "ipython",
-    "ipywidgets",
-    "jupyterlab-extension"
+    "ipywidgets"
   ],
   "files": [
     "lib/**/*.js",
-    "dist/*.js"
+    "dist/*.js",
+    "babel/**"
   ],
   "scripts": {
     "start": "NODE_ENV=development webpack --config ./webpack/dev.js --mode development --watch --progress",
@@ -25,14 +33,16 @@
     "cleanall": "npm run clean && rimraf node_modules/",
     "check-licence": "uber-licence --dry",
     "add-licence": "uber-licence",
-    "prepublish": "uber-licence && yarn build",
+    "prepublish": "uber-licence && yarn build && yarn build:lab",
     "build": "npm run clean && uber-licence && webpack --config ./webpack/build.js",
+    "build:lab": "rimraf babel/ && mkdir babel && babel lib --out-dir babel",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint lib webpack --fix",
     "prettier": "prettier --config ./.prettierrc --print-width 80 --single-quote --write lib/**/*.js"
   },
   "devDependencies": {
-    "@babel/core": "^7.0.0",
+    "@babel/cli": "7.4.4",
+    "@babel/core": "7.4.5",
     "@babel/plugin-proposal-class-properties": "^7.3.0",
     "@babel/plugin-proposal-decorators": "^7.3.0",
     "@babel/plugin-proposal-do-expressions": "^7.0.0",
@@ -50,6 +60,7 @@
     "@babel/plugin-syntax-dynamic-import": "^7.0.0",
     "@babel/plugin-syntax-import-meta": "^7.0.0",
     "@babel/plugin-transform-modules-commonjs": "^7.2.0",
+    "@babel/plugin-transform-react-jsx": "7.3.0",
     "@babel/plugin-transform-runtime": "^7.0.0",
     "@babel/preset-env": "^7.0.0",
     "@babel/preset-react": "^7.0.0",
@@ -58,6 +69,7 @@
     "babel-plugin-inline-json-import": "^0.2.1",
     "babel-plugin-module-resolver": "^3.0.0",
     "babel-plugin-transform-builtin-extend": "^1.1.0",
+    "babel-plugin-transform-inline-environment-variables": "0.4.3",
     "eslint": "^5.12.1",
     "eslint-config-prettier": "^3.6.0",
     "eslint-config-uber-es2015": "^3.1.2",
@@ -78,7 +90,7 @@
     "webpack-stats-plugin": "^0.2.1"
   },
   "dependencies": {
-    "@jupyter-widgets/base": "^1.0.0",
+    "@jupyter-widgets/base": "^1.1.10 || ^2",
     "global": "^4.3.0",
     "kepler.gl": "^1.1.8",
     "react": "^16.8.4",
@@ -91,6 +103,6 @@
     "uber-licence": "^3.1.1"
   },
   "jupyterlab": {
-    "extension": "lib/labplugin"
+    "extension": "babel/labplugin"
   }
 }

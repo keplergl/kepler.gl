@@ -101,7 +101,7 @@ module.exports = {
       filename: 'index.js',
       path: path.resolve(__dirname, '../dist'),
       libraryTarget: 'amd',
-      publicPath: `https://unpkg.com/keplergl-jupyter@${  version  }/dist/`
+      publicPath: `https://unpkg.com/keplergl-jupyter@${version}/dist/`
     },
     mode: 'production',
     module: {

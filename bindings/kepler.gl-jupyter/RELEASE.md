@@ -1,22 +1,36 @@
-- To release a new version of keplergl on PyPI:
 
-Update _version.py (set release version, remove 'dev')
-git add the _version.py file and git commit
-change version in first_widget/_version.py
-`rm -r dist`
-`python setup.py sdist`
-`twine upload dist/*`
+## Release a new version
 
-Update _version.py (add 'dev' and increment minor)
-git add and git commit
-git push
-git push --tags
+To release a new version. You need publish both the js module in NPM and the python module on PyPI.
+Version number of the js module **`kelergl-jupyter`** and the python module **`keplergl`** should match
 
-- To release a new version of keplergl-jupyter on NPM:
+### To release a new version of keplergl-jupyter on NPM:
+
+- Edit version number in `js/package.json`
+```
+git commit -am "keplergl-jupyter@<version>"
+npm login
+npm publish
+```
+
+### To release a new version of keplergl on PyPI:
+
+- Update version number in  _version.py
 
 ```
-# clean out the `dist` and `node_modules` directories
-git clean -fdx
-npm install
-npm publish
+git add _version.py
+git commit -am "keplergl==<version>
+```
+
+- Remove dist, build and upload to PyPI
+```
+rm -r dist
+python setup.py sdist
+twine upload dist/*
+```
+
+### add tags
+```
+git tag -a <version>-jupyter -m "<version>-jupyter
+git push origin master && git push origin <version>-jupyter
 ```
