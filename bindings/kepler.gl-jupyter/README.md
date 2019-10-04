@@ -10,13 +10,13 @@ This is the [kepler.gl](http://kepler.gl) jupyter widget, an advanced geospatial
 - [Demo Notebooks](#demo-notebooks)
 - [Usage](#usage)
 - [Local Development Setup](#local-development-setup)
-- [FAQ & Troubleshoot](#faq-&-troubleshoot)
+- [FAQ & Troubleshoot](#faq--troubleshoot)
 <!-- /TOC -->
 
 
 <br></br>
 # Installation
-------------
+
 ### Prerequisites
 - Python >= 2
 - ipywidgets >= 7.0.0
@@ -183,11 +183,11 @@ keplergl is currently only published to PyPI, and unfortunately I use a Mac. If 
 
 #### 2. Install keplergl-jupyter on Jupyter Lab failed?
 
-Make sure you are using node 8.15.0. and you have installed `@jupyter-widgets/jupyterlab-manager`. Depends on your JupyterLab version. You might need to install the specific version of [jupyterlab-manager](https://github.com/jupyter-widgets/ipywidgets/tree/master/packages/jupyterlab-manager). with `jupyter labextension install @jupyter-widgets/jupyterlab-manager@0.31`.
+Make sure you are using node 8.15.0. and you have installed `@jupyter-widgets/jupyterlab-manager`. Depends on your JupyterLab version. You might need to install the specific version of [jupyterlab-manager](https://github.com/jupyter-widgets/ipywidgets/tree/master/packages/jupyterlab-manager). with `jupyter labextension install @jupyter-widgets/jupyterlab-manager@0.31`. When use it in Jupyter lab, keplergl is only supported in JupyterLab > 1.0 and Python 3.
 
-Run `jupyter labextension install <pageanges> --debug` for console outputs before creating an issue.
+Run `jupyter labextension install keplergl-jupyter --debug` and copy console output before creating an issue.
 
-If you are running `install` and `uninstall` serveral times. You should run.
+If you are running `install` and `uninstall` several times. You should run.
 ```
 jupyter lab clean
 jupyter lab build
@@ -245,5 +245,3 @@ yarn==1.7.0
 
 [match-config-w-data]: #match-config-with-data
 [data_format]: #3-data-format
-
-
