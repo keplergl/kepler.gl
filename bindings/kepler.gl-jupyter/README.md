@@ -190,7 +190,7 @@ If you see this error during install labextension
     $ FATAL ERROR: CALL_AND_RETRY_LAST Allocation failed - JavaScript heap out of memory
 run
 
-    $ export NODE_OPTIONS=--max-old-space-size=4096`
+    $ export NODE_OPTIONS=--max-old-space-size=4096
 
 #### 3. Is my lab extension successfully installed?
 Run `jupyter labextension list` You should see below. (Version may vary)
