@@ -26,9 +26,6 @@ import UploadButton from './upload-button';
 import {FileType, DragNDrop} from 'components/common/icons';
 import LoadingSpinner from 'components/common/loading-spinner';
 import {isChrome} from 'utils/utils';
-import {GUIDES_FILE_FORMAT} from 'constants/user-guides';
-import ReactMarkdown from 'react-markdown';
-
 // Breakpoints
 import {media} from 'styles/media-breakpoints';
 
@@ -41,6 +38,11 @@ const FileDrop =
 // it requires multiple files to be present.
 const defaultValidFileExt = [
   'csv',
+  // 'tar.gz',
+  // 'tgz',
+  // 'zip',
+  // 'gpx',
+  // 'kml',
   'json',
   'geojson'
 ];
@@ -48,19 +50,12 @@ const defaultValidFileExt = [
 const MESSAGE = ' Drag & Drop Your File(s) Here';
 const CHROME_MSG =
   '*Chrome user: Limit file size to 250mb, if need to upload larger file, try Safari';
-const DISCLAIMER = '*kepler.gl is a client-side application with no server backend. Data lives only on your machine/browser. ' +
+const DISCLAIMER = '*Kepler.gl is a client-side application with no server backend. Data lives only on your machine/browser. ' +
   'No information or map data is sent to any server.';
-const CONFIG_UPLOAD_MESSAGE = `Upload **CSV**, **GeoJson** or saved map **Json**. Read more about [**supported file formats**](${GUIDES_FILE_FORMAT}).`;
+const CONFIG_UPLOAD_MESSAGE = 'Upload data files or upload a saved map via previously exported single Json of both config and data';
 
 const fileIconColor = '#D3D8E0';
 
-const LinkRenderer = props => {
-  return (
-    <a href={props.href} target="_blank" rel="noopener noreferrer">
-      {props.children}
-    </a>
-  );
-};
 const StyledUploadMessage = styled.div`
   color: ${props => props.theme.textColorLT};
   font-size: 14px;
@@ -259,12 +254,7 @@ export default class FileUpload extends Component {
             onDragLeave={() => this._toggleDragState(false)}
             onDrop={this._handleFileInput}
           >
-            <StyledUploadMessage className="file-upload__message">
-              <ReactMarkdown
-                source={CONFIG_UPLOAD_MESSAGE}
-                renderers={{link: LinkRenderer}}
-              />
-            </StyledUploadMessage>
+            <StyledUploadMessage className="file-upload__message">{CONFIG_UPLOAD_MESSAGE}</StyledUploadMessage>
             <StyledFileDrop dragOver={dragOver}>
               <div style={{opacity: dragOver ? 0.5 : 1}}>
                 <StyledDragNDropIcon>
