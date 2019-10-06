@@ -30,12 +30,6 @@ const rules = [
     include: path.join(__dirname, '../lib', 'keplergl'),
     exclude: [/node_modules/]
   }
-  // {
-  //   // The example has some JSON data
-  //   test: /\.json$/,
-  //   loader: 'json-loader',
-  //   exclude: [/node_modules|package.json/]
-  // }
 ];
 
 const plugins = [
@@ -117,5 +111,3 @@ module.exports = {
 
 module.exports.rules = rules;
 module.exports.plugins = plugins;
-
-//     ["@babel/plugin-proposal-decorators", { "legacy": true }],
