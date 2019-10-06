@@ -108,6 +108,10 @@ const demoReducer = combineReducers({
   sharing: sharingReducer
 });
 
+function arrayify(thing) {
+  return Array.isArray(thing) ? thing : [thing];
+}
+
 // this can be moved into a action and call kepler.gl action
 /**
  *
@@ -116,21 +120,27 @@ const demoReducer = combineReducers({
  * @returns {{app: {isMapLoading: boolean}, keplerGl: {map: (state|*)}}}
  */
 export const loadRemoteResourceSuccess = (state, action) => {
-  // TODO: replace generate with a different function
-  const datasetId = action.options.id || generateHashId(6);
-  const {dataUrl} = action.options;
-  let processorMethod = processCsvData;
-  // TODO: create helper to determine file ext eligibility
-  if (dataUrl.includes('.json') || dataUrl.includes('.geojson')) {
-    processorMethod = processGeojson;
-  }
+  const responses = arrayify(action.response);
+  const options = arrayify(action.options);
 
-  const datasets = {
-    info: {
-      id: datasetId
-    },
-    data: processorMethod(action.response)
-  };
+  const datasets = options.map((opt, i) => {
+    const datasetId = opt.id || generateHashId(6);
+    const { dataUrl } = opt;
+  
+    let processorMethod = processCsvData;
+    // TODO: create helper to determine file ext eligibility
+    if (dataUrl.includes('.json') || dataUrl.includes('.geojson')) {
+      processorMethod = processGeojson;
+    }
+
+    return {
+      info: {
+        id: datasetId
+      },
+
+      data: processorMethod(responses[i])
+    }
+  });
 
   const config = action.config ?
     KeplerGlSchema.parseSavedConfig(action.config) : null;

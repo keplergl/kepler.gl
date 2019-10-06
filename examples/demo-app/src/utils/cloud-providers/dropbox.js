@@ -23,6 +23,7 @@ import {Dropbox} from 'dropbox';
 import window from 'global/window';
 import {parseQueryString} from '../url';
 import DropboxIcon from '../../components/icons/dropbox-icon';
+import {loadRemoteMap} from '../../actions';
 
 const NAME = 'dropbox';
 const DOMAIN = 'www.dropbox.com';
@@ -160,6 +161,12 @@ function getAccessToken() {
   return (token || '') !== '' ? token : null;
 }
 
+function loadMap(mapId, query) {
+  if (query.mapUrl) {
+    return loadRemoteMap({ dataUrl: query.mapUrl });
+  }
+}
+
 // All cloud-providers providers must implement the following properties
 export default {
   name: NAME,
@@ -168,5 +175,6 @@ export default {
   handleLogin,
   icon: DropboxIcon,
   setAuthToken,
+  loadMap,
   uploadFile
 };

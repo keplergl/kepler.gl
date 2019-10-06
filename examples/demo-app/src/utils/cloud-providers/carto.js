@@ -22,6 +22,7 @@
 import {OAuthApp} from '@carto/toolkit';
 import DropboxIcon from '../../components/icons/carto-icon';
 import {formatCsv} from 'processors/data-processor';
+import {loadRemoteResourceSuccess,setLoadingMapStatus} from '../../actions';
 
 const NAME = 'carto';
 const carto = new OAuthApp({
@@ -40,10 +41,6 @@ function setAuthToken(authToken) {
   }
 
   carto.setClientID(authToken);
-
-  if (!carto.oauth.expired) {
-    carto.login();
-  }
 }
 
 /**
@@ -61,7 +58,9 @@ async function uploadFile({blob, name: fileName, isPublic = true}) {
 
   const cartoDatasets = datasets.map(convertDataset);
 
-  const result = await carto.CustomStorage.createVisualization({
+  const cs = await carto.CustomStorage;
+
+  const result = await cs.createVisualization({
     name: fileName,
     config: JSON.stringify(config),
     isPrivate: !isPublic
@@ -110,6 +109,17 @@ function getAccessToken() {
   return carto.oauth.expired ? null : carto.oauth.token;
 }
 
+function loadMap(mapId, queryParams) {
+  return dispatch => {
+    dispatch(setLoadingMapStatus(true));
+    carto.PublicStorageReader.getVisualization('roman-carto', mapId).then((result) => {
+      console.log(result);
+
+      dispatch(loadRemoteResourceSuccess([], result.vis.config, []))
+    });
+  }
+}
+
 export default {
   name: NAME,
   getAccessToken,
@@ -117,5 +127,6 @@ export default {
   handleLogin,
   icon: DropboxIcon,
   setAuthToken,
+  loadMap,
   uploadFile
 };

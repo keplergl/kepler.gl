@@ -133,7 +133,7 @@ const ExportCloudModal = ({
         <StyledExportDataSection>
           <div className="description">
             <div className="title">
-              Upload through Dropbox
+              Upload through
             </div>
           </div>
           <div className="selection">
