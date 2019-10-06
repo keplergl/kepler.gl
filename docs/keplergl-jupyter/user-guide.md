@@ -22,9 +22,35 @@
 
 <br></br>
 ## Install
-```python
-pip install keplergl
-```
+### Prerequisites
+- Python >= 2
+- ipywidgets >= 7.0.0
+
+To install use pip:
+
+    $ pip install keplergl
+
+
+If you on Mac used `pip install` and running Notebook 5.3 and above, you don't need to run the following
+
+    $ jupyter nbextension install --py --sys-prefix keplergl # can be skipped for notebook 5.3 and above
+
+    $ jupyter nbextension enable --py --sys-prefix keplergl # can be skipped for notebook 5.3 and above
+
+If you are using Jupyter Lab, you will also need to install the JupyterLab extension. This require [node](https://nodejs.org/en/download/package-manager/#macos) `> 8.15.0`
+
+If you use [Homebrew](https://brew.sh/) on Mac:
+
+    $ brew install node@8
+
+Then install jupyter labextension.
+
+    $ jupyter labextension install @jupyter-widgets/jupyterlab-manager keplergl-jupyter
+
+**Prerequisites for JupyterLab:**
+- Node > 8.15.0
+- Python 3
+- JupyterLab>=1.0.0
 
 ## 1. Load keplergl map
 ### `KeplerGl()`
