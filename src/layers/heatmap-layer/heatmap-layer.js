@@ -45,6 +45,7 @@ export const pointColResolver = ({lat, lng}) =>
 export const heatmapVisConfigs = {
   opacity: 'opacity',
   colorRange: 'colorRange',
+  radiusRange: 'radiusRange',
   radius: 'heatmapRadius'
 };
 
@@ -96,6 +97,15 @@ class HeatmapLayer extends MapboxGLLayer {
 
   get visualChannels() {
     return {
+      size: {
+        range: 'radiusRange',
+        property: 'radius',
+        channelScaleType: 'radius',
+        field: 'sizeField',
+        scale: 'sizeScale',
+        domain: 'sizeDomain',
+        key: 'size'
+      },
       weight: {
         property: 'weight',
         field: 'weightField',
@@ -154,7 +164,7 @@ class HeatmapLayer extends MapboxGLLayer {
   isSameConfig = ({oldLayerData, config}) => {
     // columns must use the same filedIdx
     // this is a fast way to compare columns object
-    const {columns, weightField} = config;
+    const {columns, weightField, sizeField} = config;
 
     if (!oldLayerData) {
       return false;
@@ -162,7 +172,9 @@ class HeatmapLayer extends MapboxGLLayer {
 
     const sameColumns = columns === oldLayerData.columns;
     const sameWeightField = weightField === oldLayerData.weightField;
-    return sameColumns && sameWeightField;
+    const sameSizeField = sizeField === oldLayerData.sizeField;
+
+    return sameColumns && sameWeightField && sameSizeField;
   };
 
   datasetSelector = config => config.dataId;
@@ -171,6 +183,10 @@ class HeatmapLayer extends MapboxGLLayer {
   weightFieldSelector = config =>
     config.weightField ? config.weightField.name : null;
   weightDomainSelector = config => config.weightDomain;
+
+  sizeFieldSelector = config =>
+  config.sizeField ? config.sizeField.name : null;
+  sizeDomainSelector = config => config.sizeDomain;
 
   getPositionAccessor() {
     return this.getPosition(this.config.columns);
@@ -188,8 +204,10 @@ class HeatmapLayer extends MapboxGLLayer {
     this.visConfigSelector,
     this.weightFieldSelector,
     this.weightDomainSelector,
+    this.sizeFieldSelector,
+    this.sizeDomainSelector,
 
-    (datasetId, columns, visConfig, weightField, weightDomain) => {
+    (datasetId, columns, visConfig, weightField, weightDomain, sizeField, sizeDomain) => {
       return {
         type: 'heatmap',
         id: this.id,
@@ -225,7 +243,16 @@ class HeatmapLayer extends MapboxGLLayer {
             ['heatmap-density'],
             ...heatmapDensity(visConfig.colorRange)
           ],
-          'heatmap-radius': [
+          // radius unix in pixels
+          'heatmap-radius': sizeField ? [
+            'interpolate',
+            ['linear'],
+            ['get', sizeField],
+            sizeDomain[0],
+            visConfig.radiusRange[0],
+            sizeDomain[1],
+            visConfig.radiusRange[1]
+          ] : [
             'interpolate',
             ['linear'],
             ['zoom'],
@@ -249,7 +276,7 @@ class HeatmapLayer extends MapboxGLLayer {
       config: this.config
     };
 
-    const {weightField} = this.config;
+    const {weightField, sizeField} = this.config;
     const isSameData = this.isSameData(options, this.config);
     const isSameConfig = this.isSameConfig(options);
 
@@ -265,7 +292,7 @@ class HeatmapLayer extends MapboxGLLayer {
           allData,
           filteredIndex,
           this.config.columns,
-          weightField ? [weightField] : []
+          [weightField, sizeField].filter(f => f)
         );
 
     const newConfig = this.computeHeatmapConfiguration(this.config);

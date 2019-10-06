@@ -293,10 +293,24 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
           </LayerConfigGroup>
           {/* Radius */}
           <LayerConfigGroup label={'radius'}>
-            <VisConfigSlider
-              {...layer.visConfigSettings.radius}
-              {...visConfiguratorProps}
-              label={false}
+            {!layer.config.sizeField ? (
+                <VisConfigSlider
+                  {...LAYER_VIS_CONFIGS.radius}
+                  {...visConfiguratorProps}
+                  label={false}
+                  disabled={Boolean(layer.config.sizeField)}
+                />
+              ) : (
+                <VisConfigSlider
+                  {...LAYER_VIS_CONFIGS.radiusRange}
+                  {...visConfiguratorProps}
+                  label={false}
+                />
+              )
+            }
+            <ChannelByValueSelector
+              channel={layer.visualChannels.size}
+              {...layerChannelConfigProps}
             />
           </LayerConfigGroup>
           {/* Weight */}
