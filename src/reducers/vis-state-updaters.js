@@ -32,11 +32,11 @@ import {addDataToMap} from 'actions';
 // Utils
 import {getDefaultInteraction, findFieldsToShow} from 'utils/interaction-utils';
 import {
+  applyFilterFieldName,
+  applyFiltersToDatasets,
   getDefaultFilter,
-  getFilterProps,
   getFilterPlot,
   getDefaultFilterPlotType,
-  filterData,
   isInRange
 } from 'utils/filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
@@ -518,60 +518,44 @@ export function setFilterUpdater(state, action) {
   };
 
   const {dataId} = newFilter;
-  if (!dataId) {
+  if (!dataId || !dataId.length) {
     return state;
   }
-  const {fields, allData} = state.datasets[dataId];
 
   switch (prop) {
+    // TODO: Next PR for UI if we update dataId, we need to consider two cases:
+    // 1. dataId is empty: create a default filter
+    // 2. Add a new dataset id
     case 'dataId':
       // if trying to update filter dataId. create an empty new filter
       newFilter = getDefaultFilter(dataId);
       break;
 
     case 'name':
-      // find the field
-      const fieldIdx = fields.findIndex(f => f.name === value);
-      let field = fields[fieldIdx];
-
-      if (!field.filterProp) {
-        // get filter domain from field
-        // save filterProps: {domain, steps, value} to field, avoid recalculate
-        field = {
-          ...field,
-          filterProp: getFilterProps(allData, field)
-        };
-      }
-
-      newFilter = {
-        ...newFilter,
-        ...field.filterProp,
-        name: field.name,
-        // can't edit dataId once name is selected
-        freeze: true,
-        fieldIdx
-      };
-      const enlargedFilterIdx = state.filters.findIndex(f => f.enlarged);
-      if (enlargedFilterIdx > -1 && enlargedFilterIdx !== idx) {
-        // there should be only one enlarged filter
-        newFilter.enlarged = false;
-      }
+      // we are supporting the current functionality
+      // TODO: Next PR for UI filter name will only update filter name but it won't have side effects
+      // we are gonna use pair of datasets and fieldIdx to update the filter
+      const {filter: updateFilter, datasets: newDatasets} = applyFilterFieldName(newFilter, state.datasets, value);
+      newFilter = updateFilter;
 
       newState = {
         ...state,
-        datasets: {
-          ...state.datasets,
-          [dataId]: {
-            ...state.datasets[dataId],
-            fields: fields.map((d, i) => (i === fieldIdx ? field : d))
-          }
-        }
+        datasets: newDatasets
       };
       break;
-    case 'value':
     default:
       break;
   }
+
+  const enlargedFilter = state.filters.find(f => f.enlarged);
+
+  if (enlargedFilter && enlargedFilter.id !== newFilter.id) {
+    // there should be only one enlarged filter
+    newFilter.enlarged = false;
+  }
+
+  // TODO: Merge the next two statements into an helper because it's used here and
+  // remove filter
 
   // save new filters to newState
   newState = {
@@ -582,15 +566,10 @@ export function setFilterUpdater(state, action) {
   // filter data
   newState = {
     ...newState,
-    datasets: {
-      ...newState.datasets,
-      [dataId]: {
-        ...newState.datasets[dataId],
-        ...filterData(allData, dataId, newState.filters)
-      }
-    }
+    datasets: applyFiltersToDatasets(dataId, newState.datasets, newState.filters)
   };
 
+  // dataId is an array
   newState = updateAllLayerDomainData(newState, dataId, newFilter);
 
   return newState;
@@ -643,9 +622,9 @@ export const addFilterUpdater = (state, action) =>
   !action.dataId
     ? state
     : {
-        ...state,
-        filters: [...state.filters, getDefaultFilter(action.dataId)]
-      };
+      ...state,
+      filters: [...state.filters, getDefaultFilter(action.dataId)]
+    };
 
 /**
  * Set layer color palette ui state
@@ -777,13 +756,7 @@ export const removeFilterUpdater = (state, action) => {
 
   const newState = {
     ...state,
-    datasets: {
-      ...state.datasets,
-      [dataId]: {
-        ...state.datasets[dataId],
-        ...filterData(state.datasets[dataId].allData, dataId, newFilters)
-      }
-    },
+    datasets: applyFiltersToDatasets(dataId, state.datasets, newFilters),
     filters: newFilters
   };
 
@@ -1086,11 +1059,11 @@ export const mouseMoveUpdater = (state, {evt}) => {
 export const toggleSplitMapUpdater = (state, action) =>
   state.splitMaps && state.splitMaps.length === 0
     ? {
-        ...state,
-        // maybe we should use an array to store state for a single map as well
-        // if current maps length is equal to 0 it means that we are about to split the view
-        splitMaps: computeSplitMapLayers(state.layers)
-      }
+      ...state,
+      // maybe we should use an array to store state for a single map as well
+      // if current maps length is equal to 0 it means that we are about to split the view
+      splitMaps: computeSplitMapLayers(state.layers)
+    }
     : closeSpecificMapAtIndex(state, action);
 
 /**
@@ -1158,6 +1131,7 @@ export const updateVisDataUpdater = (state, action) => {
     }),
     {}
   );
+
   if (!Object.keys(newDateEntries).length) {
     return state;
   }
@@ -1392,9 +1366,9 @@ export function updateAllLayerDomainData(state, dataId, newFilter) {
         newFilter && newFilter.fixedDomain
           ? oldLayer
           : oldLayer.updateLayerDomain(
-              state.datasets[oldLayer.config.dataId],
-              newFilter
-            );
+            state.datasets[oldLayer.config.dataId],
+            newFilter
+          );
 
       const {layerData, layer} = calculateLayerData(
         newLayer,

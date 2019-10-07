@@ -21,9 +21,9 @@
 import moment from 'moment';
 import {ascending, extent, histogram as d3Histogram, ticks} from 'd3-array';
 import keyMirror from 'keymirror';
-
+import uniq from 'lodash.uniq';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
-import {maybeToDate, notNullorUndefined} from './data-utils';
+import {maybeToDate, notNullorUndefined, unique} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
 import {generateHashId} from './utils';
 
@@ -79,32 +79,131 @@ export const FILTER_COMPONENTS = {
   [FILTER_TYPES.range]: 'RangeFilter'
 };
 
+export const DEFAULT_FILTER_STRUCTURE = {
+  dataId: [], // [string]
+  freeze: false,
+  id: null,
+
+  // time range filter specific
+  fixedDomain: false,
+  enlarged: false,
+  isAnimating: false,
+  speed: 1,
+
+  // field specific
+  name: null,
+  type: null,
+  fieldIdx: [], // [integer]
+  domain: null,
+  value: null,
+
+  // plot
+  plotType: PLOT_TYPES.histogram,
+  yAxis: null,
+  interval: null
+};
+
+export const FILTER_ID_LENGTH = 4;
+
+/**
+ * Generates a filter with a dataset id as dataId
+ * @param {[string]} dataId
+ * @return {object} filter
+ */
 export function getDefaultFilter(dataId) {
   return {
-    // link to dataset Id
-    dataId,
-    // should allow to edit dataId
-    freeze: false,
-    id: generateHashId(4),
-
-    // time range filter specific
-    fixedDomain: false,
-    enlarged: false,
-    isAnimating: false,
-    speed: 1,
-
-    // field specific
-    name: null,
-    type: null,
-    fieldIdx: null,
-    domain: null,
-    value: null,
-
-    // plot
-    plotType: PLOT_TYPES.histogram,
-    yAxis: null,
-    interval: null
+    ...DEFAULT_FILTER_STRUCTURE,
+    // store it as dataId and it could be one or many
+    dataId: Array.isArray(dataId) ? dataId : [dataId],
+    id: generateHashId(FILTER_ID_LENGTH)
   };
+}
+
+/**
+ * Check if a filter is valid based on the given dataId
+ * @param {object} filter to validate
+ * @param {string} dataset id to validate filter against
+ * @return {boolean} true if a filter is valid, false otherwise
+ */
+export function validateFilter(filter, datasetId) {
+
+  const valid = Boolean(filter.dataId)
+    // datasetId is contained in dataId
+    && (
+      // filter.dataId is an array
+      (Array.isArray(filter.dataId) && filter.dataId.includes(datasetId))
+      || filter.dataId === datasetId
+    )
+    // value must be defined
+    && filter.value !== null;
+
+  return valid;
+}
+
+/**
+ * Validate saved filter config with new data,
+ * calculate domain and fieldIdx based new fields and data
+ *
+ * @param {Object} dataset
+ * @param {Object} filter - filter to be validate
+ * @return {Object | null} - validated filter
+ */
+export function validateFilterWithData(dataset, filter) {
+  const {fields, allData} = dataset;
+
+  // match filter.name to field.name
+  const fieldIndex = fields.findIndex(({name}) => name === filter.name);
+
+  const field = fields[fieldIndex];
+
+  const filterDatasetIndex = Array.isArray(filter.dataId) ? getDatasetIndexForFilter(dataset, filter) : 0;
+
+  if (!notNullorUndefined((filterDatasetIndex))) {
+    // the current filter is not mapped againt the current dataset
+    return null;
+  }
+
+  // update fieldIdx with the current value
+  const newFieldIdx = [
+    ...(Array.isArray(filter.fieldIdx) ? filter.fieldIdx : [filter.fieldIdx])
+  ];
+
+  newFieldIdx[filterDatasetIndex] = fieldIndex;
+
+  // return filter type, default value, fieldType and fieldDomain from field
+  const filterPropsFromField = getFilterProps(allData, field);
+
+  let matchedFilter = {
+    ...getDefaultFilter(filter.dataId),
+    ...filter,
+    ...filterPropsFromField,
+    freeze: true,
+    fieldIdx: newFieldIdx
+  };
+
+  const {yAxis} = matchedFilter;
+  if (yAxis) {
+    const matcheAxis = fields.find(
+      ({name, type}) => name === yAxis.name && type === yAxis.type
+    );
+
+    matchedFilter = matcheAxis
+      ? {
+        ...matchedFilter,
+        yAxis: matcheAxis,
+        ...getFilterPlot({...matchedFilter, yAxis: matcheAxis}, allData)
+      }
+      : matchedFilter;
+  }
+
+  matchedFilter.value = adjustValueToFilterDomain(filter.value, matchedFilter);
+
+  if (matchedFilter.value === null) {
+    // cannot adjust saved value to filter
+    return null;
+  }
+
+  return matchedFilter;
 }
 
 /**
@@ -196,56 +295,65 @@ export function getFieldDomain(data, field) {
 
 /**
  * Filter data based on an array of filters
- *
- * @param {Object[]} data
- * @param {string} dataId
- * @param {Object[]} filters
- * @returns {Object[]} data
- * @returns {Number[]} filteredIndex
+ * @param {Object} dataset to perform the filter on
+ * @param {Object[]} filters list of filters to use against dataset
  */
-export function filterData(data, dataId, filters) {
-  if (!data || !dataId) {
-    // why would there not be any data? are we over doing this?
-    return {data: [], filteredIndex: []};
-  }
+export function filterData(dataset, filters) {
+  const {allData: data, fields} = dataset;
 
   if (!filters.length) {
-    return {data, filteredIndex: data.map((d, i) => i)};
+    const defaultValues = data.map((d, i) => i);
+    return {data, filteredIndex: defaultValues, filteredIndexForDomain: defaultValues};
   }
 
-  const appliedFilters = filters.filter(
-    d => d.dataId === dataId && d.fieldIdx > -1 && d.value !== null
-  );
+  const appliedFilters = filters.filter(d => validateFilter(d, dataset.id));
 
-  const [dynamicDomainFilters, fixedDomainFilters] = appliedFilters.reduce(
+  // Map filter against current dataset field
+  const filtersToFields = filters.reduce((acc, filter) => {
+    const fieldIndex = getDatasetFieldIndexForFilter(dataset, filter);
+
+    return {
+      ...acc,
+      ...(notNullorUndefined(fieldIndex) ? {[filter.id]: fields[fieldIndex]} : {})
+    }
+  }, {
+    // [filterId]: field
+  });
+
+  const {dynamicDomainFilters, fixedDomainFilters} = appliedFilters.reduce(
     (accu, f) => {
-      if (f.dataId === dataId && f.fieldIdx > -1 && f.value !== null) {
-        (f.fixedDomain ? accu[1] : accu[0]).push(f);
-      }
-      return accu;
+      return {
+        ...accu,
+        ...(f.fixedDomain ? {
+          fixedDomainFilters: [
+            ...accu.fixedDomainFilters,
+            f
+          ]
+        } : {
+          dynamicDomainFilters: [
+            ...accu.dynamicDomainFilters,
+            f
+          ]
+        })
+      };
     },
-    [[], []]
+    {dynamicDomainFilters: [], fixedDomainFilters: []}
   );
-  // console.log(dynamicDomainFilters)
-  // console.log(fixedDomainFilters)
-  // we save a reference of allData index here to access dataToFeature
-  // in geojson and hexgonId layer
-  // console.time('filterData');
 
   const {filtered, filteredIndex, filteredIndexForDomain} = data.reduce(
     (accu, d, i) => {
       // generate 2 sets of
       // filter data used to calculate layer Domain
-      const matchForDomain = dynamicDomainFilters.every(filter =>
-        isDataMatchFilter(d, filter, i)
-      );
+      const matchForDomain = dynamicDomainFilters.every(filter => {
+        return isDataMatchFilter(d, filter, i, filtersToFields[filter.id]);
+      });
 
       if (matchForDomain) {
         accu.filteredIndexForDomain.push(i);
 
         // filter data for render
         const matchForRender = fixedDomainFilters.every(filter =>
-          isDataMatchFilter(d, filter, i)
+          isDataMatchFilter(d, filter, i, filtersToFields[filter.id])
         );
 
         if (matchForRender) {
@@ -259,13 +367,6 @@ export function filterData(data, dataId, filters) {
     {filtered: [], filteredIndex: [], filteredIndexForDomain: []}
   );
 
-  // console.log('data==', data.length)
-  // console.log('filtered==', filtered.length)
-  // console.log('filteredIndex==', filteredIndex.length)
-  // console.log('filteredIndexForDomain==', filteredIndexForDomain.length)
-  //
-  // console.timeEnd('filterData');
-
   return {data: filtered, filteredIndex, filteredIndexForDomain};
 }
 
@@ -275,9 +376,11 @@ export function filterData(data, dataId, filters) {
  * @param {Object[]} data
  * @param {Object} filter
  * @param {number} i
+ * @param {field} field containing values to test data against. This is used only when
+ * testing timestamp filters
  * @returns {Boolean} - whether value falls in the range of the filter
  */
-export function isDataMatchFilter(data, filter, i) {
+export function isDataMatchFilter(data, filter, i, field) {
   const val = data[filter.fieldIdx];
   if (!filter.type) {
     return true;
@@ -288,9 +391,10 @@ export function isDataMatchFilter(data, filter, i) {
       return isInRange(val, filter.value);
 
     case FILTER_TYPES.timeRange:
-      const timeVal = filter.mappedValue
-        ? filter.mappedValue[i]
-        : moment.utc(val).valueOf();
+      const timeVal = field && field.filterProp && field.filterProp.mappedValue
+        ? field.filterProp.mappedValue[i]
+        : moment.utc(data[field.tableFieldIndex - 1]).valueOf();
+
       return isInRange(timeVal, filter.value);
 
     case FILTER_TYPES.multiSelect:
@@ -314,7 +418,6 @@ export function isDataMatchFilter(data, filter, i) {
  * @param {String} filter.type
  * @returns {*} - adjusted value to match filter or null to remove filter
  */
-
 /* eslint-disable complexity */
 export function adjustValueToFilterDomain(value, {domain, type}) {
   if (!domain || !type) {
@@ -563,3 +666,181 @@ export function getDefaultFilterPlotType(filter) {
 
   return filterPlotTypes[filter.yAxis.type] || null;
 }
+
+/**
+ *
+ * @param datasetIds list of dataset ids
+ * @param datasets
+ * @param filters
+ * @return {{[p: string]: *}}
+ */
+export function applyFiltersToDatasets(datasetIds, datasets, filters) {
+  return datasetIds.reduce((acc, dataIdentifier) => ({
+    ...acc,
+    [dataIdentifier]: {
+      ...datasets[dataIdentifier],
+      ...filterData(datasets[dataIdentifier], filters)
+    }
+  }), datasets);
+}
+
+/**
+ * Applies a new field name value to fielter and update both filter and dataset
+ * @param filter to be applied the new field name on
+ * @param datasets
+ * @param fieldName
+ * @return {object} {filter, datasets}
+ */
+export function applyFilterFieldName(filter, datasets, fieldName) {
+  const {dataId} = filter;
+  if (!dataId || !dataId.length) {
+    return filter;
+  }
+
+  return dataId.reduce((acc, dataIdentifier) => {
+    const {fields, allData} = datasets[dataIdentifier];
+
+    // TODO: Next PR for UI filter name will only update filter name but it won't have side effects
+    // we are gonna use pair of datasets and fieldIdx to update the filter
+    const fieldIndex = fields.findIndex(f => f.name === fieldName);
+
+    // if no field with same name is found, move to the next datasets
+    if (fieldIndex === -1) {
+      throw new Error(`fieldIndex not found. Dataset must contain a property with name: ${fieldName}`);
+    }
+
+    // TODO: validate field type
+    const field = fields[fieldIndex];
+
+    const filterProps = getFilterProps(allData, field);
+
+    const filterDatasetIndex = getDatasetIndexForFilter(datasets[dataIdentifier], filter);
+
+    const newFieldIdx = [
+      ...acc.filter.fieldIdx
+    ];
+
+    newFieldIdx[filterDatasetIndex] = fieldIndex;
+
+    const filterWithProps = {
+      ...mergeFilterProps(acc.filter, filterProps),
+      fieldIdx: newFieldIdx
+    };
+
+    const fieldWithFilterProps = {
+      ...field,
+      filterProp: filterProps
+    };
+
+    const newFields = fields.map((d, i) => (i === fieldIndex ? fieldWithFilterProps : d));
+
+    const newDatasets = {
+      ...acc.datasets,
+      [dataIdentifier]: {
+        ...datasets[dataIdentifier],
+        fields: newFields
+      }
+    };
+
+    return {
+      ...acc,
+      filter: filterWithProps,
+      datasets: newDatasets
+    };
+  }, {
+    filter:{
+      ...filter,
+      freeze: true
+    },
+    datasets
+  });
+}
+
+export function mergeFilterProps(filter, filterProps) {
+  if (!filter) {
+    return filterProps;
+  }
+
+  if (filter.fieldType && filter.fieldType !== filterProps.fieldType) {
+    return filter;
+  }
+
+  const newFilter = {
+    ...filter,
+    ...filterProps
+  };
+
+  const combinedDomain = [
+    ...(filter.domain || []),
+    ...filterProps.domain
+  ].sort((a, b) => a - b);
+
+  switch (filterProps.fieldType) {
+    // do nothing since it's always the same
+    // case ALL_FIELD_TYPES.boolean:
+    case ALL_FIELD_TYPES.string:
+    case ALL_FIELD_TYPES.date:
+      return {
+        ...newFilter,
+        domain: unique(combinedDomain).sort()
+      };
+
+    case ALL_FIELD_TYPES.timestamp:
+      const step = filter.step < filterProps.step ? filter.step : filterProps.step;
+
+      return {
+        ...newFilter,
+        step,
+        domain: [
+          combinedDomain[0],
+          combinedDomain[combinedDomain.length -1]
+        ]
+      };
+    case ALL_FIELD_TYPES.real:
+    case ALL_FIELD_TYPES.integer:
+    default:
+      return {
+        ...newFilter,
+        domain: [
+          combinedDomain[0],
+          combinedDomain[combinedDomain.length -1]
+        ]
+      };
+  }
+}
+
+/**
+ * Return filter dataset index from filter.dataId
+ * @param dataset
+ * @param filter
+ * @return {*}
+ */
+function getDatasetIndexForFilter(dataset, filter) {
+  const {dataId} = filter;
+  // dataId is an array
+  return Array.isArray(dataId) ? dataId.findIndex(id => id === dataset.id) : 0;
+}
+
+/**
+ * Return dataset field index from filter.fieldIdx
+ * The index matches the same dataset index for filter.dataId
+ * @param dataset
+ * @param filter
+ * @return {*}
+ */
+function getDatasetFieldIndexForFilter(dataset, filter) {
+  const datasetIndex = getDatasetIndexForFilter(dataset, filter);
+  if (datasetIndex === -1 || filter.fieldIdx === null) {
+    return null;
+  }
+
+  const fieldIndex = filter.fieldIdx[datasetIndex];
+
+  // do we have a standard way to check the following?
+  if (!notNullorUndefined(fieldIndex)) {
+    throw new Error(`Filter does not contain a field index for dataset: ${dataset.id}`);
+  }
+
+  return fieldIndex;
+}
+

@@ -122,7 +122,7 @@ export const hexIdDataConfig = {
       visState: {
         filters: [
           {
-            dataId,
+            dataId: [dataId],
             id: 'byjasfp0u',
             name: 'value',
             type: 'range',
@@ -287,7 +287,7 @@ mergedH3Layer.config = {
 
 export const mergedFilters = [
   {
-    dataId,
+    dataId: [dataId],
     id: 'value',
     name: 'value',
     type: 'range',
@@ -297,7 +297,7 @@ export const mergedFilters = [
     plotType: 'histogram',
     yAxis: null,
     isAnimating: false,
-    fieldIdx: 1,
+    fieldIdx: [1],
     domain: [1, 76],
     step: 0.1,
     interval: null,

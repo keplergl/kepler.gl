@@ -844,7 +844,7 @@ export const mergedFilters = [
     isAnimating: false,
     name: 'zip_area',
     type: 'range',
-    fieldIdx: 3,
+    fieldIdx: [3],
     domain: [0, 48.1],
     value: [0, 21.8],
     step: 0.1,

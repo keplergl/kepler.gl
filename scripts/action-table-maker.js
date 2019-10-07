@@ -46,7 +46,6 @@ export function buildActionTable() {
     actionTypeMap = traverseTree(file, actionTypeMap);
   });
 
-  // console.log(actionMap);
   return Object.keys(actionTypeMap).reduce((accu, type) => {
     accu[actionTypeMap[type].action.name] = {
       ...actionTypeMap[type].action,
@@ -119,7 +118,6 @@ function addActionDeclaration(path, actionMap, filePath) {
 
   const returnValue = returnStatement.argument.properties[0].value;
   const actionType = returnValue.property ? returnValue.property.name : returnValue.name;
-  // console.log(actionType)
   const {loc} = path.node;
 
   actionMap[actionType] = actionMap[actionType] || createActionNode(actionType);

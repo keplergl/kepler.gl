@@ -86,7 +86,6 @@ test('VisStateMerger.v0 -> mergeFilters -> toEmptyState', t => {
     oldState
   );
   const parsedFilters = parsedConfig.visState.filters;
-
   const mergedState = mergeFilters(oldState.visState, parsedFilters);
 
   Object.keys(oldVisState).forEach(key => {
@@ -112,6 +111,7 @@ test('VisStateMerger.v0 -> mergeFilters -> toEmptyState', t => {
 
   // test parsed filters
   cmpFilters(t, mergedFiltersV0, stateWData.filters);
+
   t.end();
 });
 

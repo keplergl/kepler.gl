@@ -200,7 +200,6 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
   t.equal(hexDataset.id, hexDataId, 'should have the id');
   t.deepEqual(nextState1.visState.splitMaps, [], 'should clear out splitMaps');
 
-  // should only create 1 layer and clear out others
   cmpLayers(t, [mergedH3Layer], nextState1.visState.layers);
   cmpFilters(t, mergedFilters, nextState1.visState.filters);
 

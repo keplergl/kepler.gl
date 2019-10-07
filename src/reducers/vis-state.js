@@ -93,8 +93,6 @@ const actionHandler = {
 
   [ActionTypes.UPDATE_LAYER_BLENDING]: visStateUpdaters.updateLayerBlendingUpdater,
 
-  // currently not used
-  // but may be useful if users import vis state reducer
   [ActionTypes.UPDATE_VIS_DATA]: visStateUpdaters.updateVisDataUpdater
 };
 
