@@ -648,7 +648,8 @@ export const filterPropsV1 = {
       name: null,
       type: null
     }
-  })
+  }),
+  fieldIdx: null
 };
 
 export const propertiesV0 = {

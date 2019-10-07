@@ -1723,9 +1723,6 @@ test('#visStateReducer -> UPDATE_VIS_DATA.SPLIT_MAPS', t => {
   t.end();
 });
 
-
-// TODO: create test to add new dataset to existing filter
-// TODO: create test for mergefilterprops
 test('#visStateReducer -> SET_FILTER (processCsvData)', t => {
   // get test data
   const {fields, rows} = processCsvData(testData);

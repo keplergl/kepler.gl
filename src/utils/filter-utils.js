@@ -21,7 +21,6 @@
 import moment from 'moment';
 import {ascending, extent, histogram as d3Histogram, ticks} from 'd3-array';
 import keyMirror from 'keymirror';
-import uniq from 'lodash.uniq';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
 import {maybeToDate, notNullorUndefined, unique} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
@@ -674,7 +673,8 @@ export function getDefaultFilterPlotType(filter) {
  * @return {{[p: string]: *}}
  */
 export function applyFiltersToDatasets(datasetIds, datasets, filters) {
-  return datasetIds.reduce((acc, dataIdentifier) => ({
+  const dataIds = Array.isArray(datasetIds) ? datasetIds : [datasetIds];
+  return dataIds.reduce((acc, dataIdentifier) => ({
     ...acc,
     [dataIdentifier]: {
       ...datasets[dataIdentifier],
@@ -710,9 +710,7 @@ export function applyFilterFieldName(filter, datasets, fieldName) {
 
     // TODO: validate field type
     const field = fields[fieldIndex];
-
     const filterProps = getFilterProps(allData, field);
-
     const filterDatasetIndex = getDatasetIndexForFilter(datasets[dataIdentifier], filter);
 
     const newFieldIdx = [
@@ -755,6 +753,12 @@ export function applyFilterFieldName(filter, datasets, fieldName) {
   });
 }
 
+/**
+ * Merge one filter with other filter prop domain
+ * @param filter
+ * @param filterProps
+ * @return {*}
+ */
 export function mergeFilterProps(filter, filterProps) {
   if (!filter) {
     return filterProps;

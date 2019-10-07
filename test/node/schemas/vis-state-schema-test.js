@@ -92,7 +92,6 @@ test('#visStateSchema -> v1 -> save load filters', t => {
   // test saved filters
   const filtersToSave = vsToSave.filters;
 
-
   const expectedSavedFilters = [{
     dataId: ['190vdll3di'],
     id: 'hjpn8frza',
@@ -101,7 +100,8 @@ test('#visStateSchema -> v1 -> save load filters', t => {
     value: [1474606800000, 1474617600000],
     enlarged: true,
     plotType: 'histogram',
-    yAxis: null
+    yAxis: null,
+    fieldIdx: [7]
   }, {
     dataId: ['ieukmgne'],
     id: 'vpk2466o',
@@ -110,7 +110,8 @@ test('#visStateSchema -> v1 -> save load filters', t => {
     value: ['a'],
     enlarged: false,
     plotType: 'histogram',
-    yAxis: null
+    yAxis: null,
+    fieldIdx: [5]
   }];
 
   cmpFilters(t, expectedSavedFilters, filtersToSave);

@@ -30,7 +30,8 @@ import {
   getTimestampFieldDomain,
   getDefaultFilter,
   getDatasetIndexForFilter,
-  getDatasetFieldIndexForFilter
+  getDatasetFieldIndexForFilter,
+  applyFilterFieldName
 } from 'utils/filter-utils';
 
 import {processCsvData} from 'processors/data-processor';
@@ -734,4 +735,5 @@ test('filterUtils -> getDatasetIndexForFilter', t => {
 
   t.end();
 });
+
 /* eslint-enable max-statements */
