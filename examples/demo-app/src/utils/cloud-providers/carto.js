@@ -36,7 +36,7 @@ const carto = new OAuthApp({
  * @param authToken
  */
 function setAuthToken(authToken) {
-  if (!carto) {
+  if (!carto || !authToken) {
     return;
   }
 
