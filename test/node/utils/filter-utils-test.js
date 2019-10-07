@@ -28,7 +28,9 @@ import {
   isDataMatchFilter,
   getFieldDomain,
   getTimestampFieldDomain,
-  getDefaultFilter
+  getDefaultFilter,
+  getDatasetIndexForFilter,
+  getDatasetFieldIndexForFilter
 } from 'utils/filter-utils';
 
 import {processCsvData} from 'processors/data-processor';
@@ -668,6 +670,67 @@ test('filterUtils -> getTimestampFieldDomain', t => {
       }
     });
   });
+
+  t.end();
+});
+
+test('filterUtils -> getDatasetIndexForFilter', t => {
+  const dataId = 'test-this-id';
+  let fieldIndex = getDatasetIndexForFilter({id: dataId}, {dataId: [dataId]});
+  t.equal(
+    fieldIndex,
+    0,
+    'FieldIndex should be 0'
+  );
+
+  fieldIndex = getDatasetIndexForFilter({id: dataId}, {dataId: ['different-id', dataId]});
+  t.equal(
+    fieldIndex,
+    1,
+    'FieldIndex should be 1'
+  );
+
+  fieldIndex = getDatasetIndexForFilter({id: dataId}, {dataId: ['different-id']});
+  t.equal(
+    fieldIndex,
+    -1,
+    'FieldIndex should be -1'
+  );
+
+  t.end();
+});
+
+test('filterUtils -> getDatasetIndexForFilter', t => {
+  const dataId = 'test-this-id';
+
+  let fieldIndex = getDatasetFieldIndexForFilter({id: dataId}, {
+    dataId: [dataId],
+    fieldIdx: [3]
+  });
+
+  t.equal(
+    fieldIndex,
+    3,
+    'FieldIndex should be 3'
+  );
+
+  fieldIndex = getDatasetFieldIndexForFilter({id: dataId}, {
+    dataId: ['different-id', dataId],
+    fieldIdx: [3, 5]
+  });
+
+  t.equal(
+    fieldIndex,
+    5,
+    'FieldIndex should be 5'
+  );
+
+  fieldIndex = getDatasetFieldIndexForFilter({id: dataId}, {dataId: ['different-id']});
+  t.equal(
+    fieldIndex,
+    -1,
+    'FieldIndex should be -1'
+  );
 
   t.end();
 });

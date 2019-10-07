@@ -126,7 +126,6 @@ export function getDefaultFilter(dataId) {
  * @return {boolean} true if a filter is valid, false otherwise
  */
 export function validateFilter(filter, datasetId) {
-
   const valid = Boolean(filter.dataId)
     // datasetId is contained in dataId
     && (
@@ -158,8 +157,8 @@ export function validateFilterWithData(dataset, filter) {
 
   const filterDatasetIndex = Array.isArray(filter.dataId) ? getDatasetIndexForFilter(dataset, filter) : 0;
 
-  if (!notNullorUndefined((filterDatasetIndex))) {
-    // the current filter is not mapped againt the current dataset
+  if (filterDatasetIndex === -1) {
+    // the current filter is not mapped against the current dataset
     return null;
   }
 
@@ -314,7 +313,7 @@ export function filterData(dataset, filters) {
 
     return {
       ...acc,
-      ...(notNullorUndefined(fieldIndex) ? {[filter.id]: fields[fieldIndex]} : {})
+      ...(fieldIndex !== -1 ? {[filter.id]: fields[fieldIndex]} : {})
     }
   }, {
     // [filterId]: field
@@ -815,10 +814,12 @@ export function mergeFilterProps(filter, filterProps) {
  * @param filter
  * @return {*}
  */
-function getDatasetIndexForFilter(dataset, filter) {
+export function getDatasetIndexForFilter(dataset, filter) {
   const {dataId} = filter;
   // dataId is an array
-  return Array.isArray(dataId) ? dataId.findIndex(id => id === dataset.id) : 0;
+  return Array.isArray(dataId) ? dataId.findIndex(id => id === dataset.id)
+    // if not an array check if the current filter.dataid is equal to dataset.id
+    : dataId === dataset.id ? 0 : -1;
 }
 
 /**
@@ -828,19 +829,14 @@ function getDatasetIndexForFilter(dataset, filter) {
  * @param filter
  * @return {*}
  */
-function getDatasetFieldIndexForFilter(dataset, filter) {
+export function getDatasetFieldIndexForFilter(dataset, filter) {
   const datasetIndex = getDatasetIndexForFilter(dataset, filter);
-  if (datasetIndex === -1 || filter.fieldIdx === null) {
-    return null;
+  if (datasetIndex === -1) {
+    return datasetIndex;
   }
 
   const fieldIndex = filter.fieldIdx[datasetIndex];
 
-  // do we have a standard way to check the following?
-  if (!notNullorUndefined(fieldIndex)) {
-    throw new Error(`Filter does not contain a field index for dataset: ${dataset.id}`);
-  }
-
-  return fieldIndex;
+  return notNullorUndefined(fieldIndex) ? fieldIndex : -1;
 }
 
