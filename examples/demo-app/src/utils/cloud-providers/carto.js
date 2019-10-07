@@ -18,10 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// DROPBOX
+import React from 'react';
 import {OAuthApp} from '@carto/toolkit';
 import DropboxIcon from '../../components/icons/carto-icon';
+import SharingUrl from '../../components/sharing/sharing-url';
 import {formatCsv} from 'processors/data-processor';
+import {getMapPermalink} from '../url';
+import get from 'lodash.get';
 import {loadRemoteResourceSuccess,setLoadingMapStatus} from '../../actions';
 
 const NAME = 'carto';
@@ -69,7 +72,9 @@ async function uploadFile({blob, name: fileName, isPublic = true}) {
   // eslint-disable-next-line no-console
   console.log(result);
 
-  return result;
+  return ({
+    url: `demo/map/carto/${result.id}`
+  });
 }
 
 function convertDataset({ data: dataset }) {
@@ -120,6 +125,14 @@ function loadMap(mapId, queryParams) {
   }
 }
 
+function renderMeta(meta) {
+  const metaUrl = get(meta, 'url');
+  const sharingLink = metaUrl ? getMapPermalink(metaUrl) : null;
+
+  // TODO: link to CARTO dashboard below
+  return (<SharingUrl url={sharingLink} message={'Share your map with other users'} />);
+}
+
 export default {
   name: NAME,
   getAccessToken,
@@ -128,5 +141,6 @@ export default {
   icon: DropboxIcon,
   setAuthToken,
   loadMap,
+  renderMeta,
   uploadFile
 };

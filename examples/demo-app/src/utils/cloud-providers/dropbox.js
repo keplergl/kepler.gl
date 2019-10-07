@@ -19,11 +19,15 @@
 // THE SOFTWARE.
 
 // DROPBOX
+import React from 'react';
 import {Dropbox} from 'dropbox';
 import window from 'global/window';
-import {parseQueryString} from '../url';
+import {parseQueryString, getMapPermalink} from '../url';
 import DropboxIcon from '../../components/icons/dropbox-icon';
 import {loadRemoteMap} from '../../actions';
+import {MAP_URI} from '../../constants/default-settings';
+import get from 'lodash.get';
+import {SharingUrl} from '../../components/sharing/sharing-url';
 
 const NAME = 'dropbox';
 const DOMAIN = 'www.dropbox.com';
@@ -100,7 +104,7 @@ function shareFile(metadata) {
     result => ({
       ...result,
       folder_link: KEPLER_DROPBOX_FOLDER_LINK,
-      url: overrideUrl(result.url)
+      url: `${MAP_URI}${overrideUrl(result.url)}`
     })
   );
 }
@@ -167,6 +171,17 @@ function loadMap(mapId, query) {
   }
 }
 
+function renderMeta(meta) {
+  const metaUrl = get(meta, ['metadata', 'url']);
+  const folderLink = get(meta, ['metadata', 'folder_link']);
+  const sharingLink = metaUrl ? getMapPermalink(metaUrl) : null;
+
+  return [
+    (<SharingUrl key={0} url={sharingLink} message={'Share your map with other users'} />),
+    (folderLink && <a href={folderLink} target="_blank" rel="noopener noreferrer" style={{textDecoration: 'underline'}}>Go to your Kepler.gl Dropbox folder</a>)
+  ];
+}
+
 // All cloud-providers providers must implement the following properties
 export default {
   name: NAME,
@@ -176,5 +191,6 @@ export default {
   icon: DropboxIcon,
   setAuthToken,
   loadMap,
+  renderMeta,
   uploadFile
 };

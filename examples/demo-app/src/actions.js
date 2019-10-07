@@ -25,7 +25,7 @@ import {loadFiles, toggleModal} from 'kepler.gl/actions';
 import {
   LOADING_SAMPLE_ERROR_MESSAGE,
   LOADING_SAMPLE_LIST_ERROR_MESSAGE,
-  MAP_CONFIG_URL, MAP_URI
+  MAP_CONFIG_URL
 } from './constants/default-settings';
 import {LOADING_METHODS_NAMES} from './constants/default-settings';
 import {CLOUD_PROVIDERS} from './utils/cloud-providers';
@@ -368,8 +368,8 @@ export function exportFileToCloud(handlerName = 'dropbox') {
     // need to perform share as well
       .then(
         response => {
-          dispatch(push(`/${MAP_URI}${response.url}`));
-          dispatch(setPushingFile(false, {filename: name, status: 'success', metadata: response}));
+          dispatch(push(`/${response.url}`));
+          dispatch(setPushingFile(false, {filename: name, status: 'success', metadata: { provider: handlerName, ...response }}));
         },
         error => {
           dispatch(setPushingFile(false, {filename: name, status: 'error', error}));

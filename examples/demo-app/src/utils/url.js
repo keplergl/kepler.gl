@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {MAP_URI} from '../constants/default-settings';
-
 export function parseQueryString(query) {
   const searchParams = new URLSearchParams(query);
   const params = {};
@@ -37,7 +35,7 @@ export function parseQueryString(query) {
  * @returns {string}
  */
 export function getMapPermalink(mapLink) {
-  return `${window.location.protocol}//${window.location.host}/${MAP_URI}${mapLink}`
+  return `${window.location.protocol}//${window.location.host}/${mapLink}`
 }
 
 // from http://blog.stevenlevithan.com/archives/parseuri
