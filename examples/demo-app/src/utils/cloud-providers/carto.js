@@ -118,9 +118,16 @@ function loadMap(mapId, queryParams) {
   return dispatch => {
     dispatch(setLoadingMapStatus(true));
     carto.PublicStorageReader.getVisualization('roman-carto', mapId).then((result) => {
-      console.log(result);
+      // These are the options required for the action. For now, all datasets that come from CARTO are CSV
+      const options = result.datasets.map((dataset) => ({
+        // TODO: customStorage should return dataset name without prefix
+        id: dataset.name.split('keplergl_public_v0_')[1],
+        dataUrl: '.csv'
+      }));
 
-      dispatch(loadRemoteResourceSuccess([], result.vis.config, []))
+      const datasets = result.datasets.map((dataset) => dataset.file);
+
+      dispatch(loadRemoteResourceSuccess(datasets, result.vis.config, options))
     });
   }
 }
