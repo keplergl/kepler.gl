@@ -69,11 +69,8 @@ async function uploadFile({blob, name: fileName, isPublic = true}) {
     isPrivate: !isPublic
   }, cartoDatasets, true);
 
-  // eslint-disable-next-line no-console
-  console.log(result);
-
   return ({
-    url: `demo/map/carto/${result.id}`
+    url: `demo/map/carto/${result.id}?owner=${cs.username}`
   });
 }
 
@@ -115,9 +112,11 @@ function getAccessToken() {
 }
 
 function loadMap(mapId, queryParams) {
+  const { owner: username } = queryParams;
+
   return dispatch => {
     dispatch(setLoadingMapStatus(true));
-    carto.PublicStorageReader.getVisualization('roman-carto', mapId).then((result) => {
+    carto.PublicStorageReader.getVisualization(username, mapId).then((result) => {
       // These are the options required for the action. For now, all datasets that come from CARTO are CSV
       const options = result.datasets.map((dataset) => ({
         // TODO: customStorage should return dataset name without prefix
