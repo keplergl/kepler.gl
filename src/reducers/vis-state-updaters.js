@@ -1242,6 +1242,7 @@ export const updateVisDataUpdater = (state, action) => {
   // register layer animation domain,
   // need to be called after layer data is calculated
   updatedState = updateAnimationDomain(updatedState);
+  console.log(updatedState.datasets)
   return updatedState;
 };
 /* eslint-enable max-statements */

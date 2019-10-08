@@ -24,12 +24,46 @@ import {console as globalConsole} from 'global/window';
 import assert from 'assert';
 import {Analyzer, DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
-import {ALL_FIELD_TYPES} from 'constants/default-settings';
-import {notNullorUndefined, parseFieldValue} from 'utils/data-utils';
+import {ALL_FIELD_TYPES, } from 'constants/default-settings';
+import {notNullorUndefined, parseFieldValue, getSampleData} from 'utils/data-utils';
 import KeplerGlSchema from 'schemas';
+import {isObject} from 'utils/utils';
+
+const ACCEPTED_ANALYZER_TYPES = [
+  AnalyzerDATA_TYPES.DATE,
+  AnalyzerDATA_TYPES.TIME,
+  AnalyzerDATA_TYPES.DATETIME,
+  AnalyzerDATA_TYPES.NUMBER,
+  AnalyzerDATA_TYPES.INT,
+  AnalyzerDATA_TYPES.FLOAT,
+  AnalyzerDATA_TYPES.BOOLEAN,
+  AnalyzerDATA_TYPES.STRING,
+  AnalyzerDATA_TYPES.GEOMETRY,
+  AnalyzerDATA_TYPES.GEOMETRY_FROM_STRING,
+  AnalyzerDATA_TYPES.PAIR_GEOMETRY_FROM_STRING
+];
 
 // if any of these value occurs in csv, parse it to null;
 const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN'];
+
+export const PARSE_FIELD_VALUE_FROM_STRING = {
+  [ALL_FIELD_TYPES.boolean]: {
+    valid: d => typeof d === 'boolean',
+    parse: d => d === 'true' || d === 'True' || d === '1'
+  },
+  [ALL_FIELD_TYPES.integer]: {
+    valid: d => parseInt(d, 10) === d,
+    parse: d => parseInt(d, 10)
+  },
+  [ALL_FIELD_TYPES.timestamp]: {
+    valid: (d, field) => ['x', 'X'].includes(field.format) ? typeof d === 'number' : typeof d === 'string',
+    parse: (d, field) => ['x', 'X'].includes(field.format) ? Number(d) : d
+  },
+  [ALL_FIELD_TYPES.real]: {
+    valid: d => parseFloat(d) === d,
+    parse: parseFloat
+  }
+}
 
 /**
  * Process csv data, output a data object with `{fields: [], rows: []}`.
@@ -75,7 +109,7 @@ export function processCsvData(rawData) {
 
   const fields = getFieldsFromData(sample, headerRow);
 
-  const parsedRows = parseCsvByFields(rows, fields);
+  const parsedRows = parseRowsByFields(rows, fields)
 
   return {fields, rows: parsedRows};
 }
@@ -85,7 +119,7 @@ export function processCsvData(rawData) {
  * @param {Array<Array>} rows
  * @param {Array<Object} fields
  */
-export function parseCsvByFields(rows, fields) {
+export function parseRowsByFields(rows, fields) {
   // Edit rows in place
   fields.forEach(parseCsvRowsByFieldType.bind(null, rows));
 
@@ -148,6 +182,7 @@ function cleanUpFalsyCsvValue(rows) {
     }
   }
 }
+
 /**
  * Process uploaded csv file to parse value by field type
  *
@@ -156,36 +191,29 @@ function cleanUpFalsyCsvValue(rows) {
  * @param {Number} i
  * @returns {void}
  */
-export function parseCsvRowsByFieldType(rows, field, i) {
-  const unixFormat = ['x', 'X'];
+export function parseCsvRowsByFieldType(rows, field, i, geoFieldIdx) {
 
-  rows.forEach(row => {
-    if (row[i] !== null) {
-      switch (field.type) {
-        case ALL_FIELD_TYPES.real:
-          row[i] = parseFloat(row[i]);
-          break;
-
-        // TODO: timestamp can be either '1495827326' or '2016-03-10 11:20'
-        // if it's '1495827326' we pass it to int
-        case ALL_FIELD_TYPES.timestamp:
-          row[i] = unixFormat.includes(field.format) ? Number(row[i]) : row[i];
-          break;
-
-        case ALL_FIELD_TYPES.integer:
-          row[i] = parseInt(row[i], 10);
-          break;
-
-        case ALL_FIELD_TYPES.boolean:
-          // 0 and 1 only field can also be boolean
-          row[i] = row[i] === 'true' || row[i] === 'True' || row[i] === '1';
-          break;
-
-        default:
-          break;
-      }
+  const parser = PARSE_FIELD_VALUE_FROM_STRING[field.type];
+  console.log(field.type)
+  if (parser) {
+    // check first not null value of it's already parsed
+    const first = rows.find(r => notNullorUndefined(r[i]));
+    console.log(first[i])
+    if (!first || parser.valid(first[i])) {
+      console.log(field.name + 'Is valid type')
+      return;
     }
-  });
+    console.log('%c need parsing ' + field.name, 'color: red')
+    rows.forEach(row => {
+      // parse string value based on field type
+      row[i] = parser.parse(row[i], field);
+      if (geoFieldIdx > -1 && row[geoFieldIdx] && row[geoFieldIdx].properties) {
+        row[geoFieldIdx].properties[field.name] = row[i];
+      }
+    });
+  } else {
+    console.log('%c skip parsing ' + field.name, 'color: green')
+  }
 }
 
 /**
@@ -230,15 +258,17 @@ export function parseCsvRowsByFieldType(rows, field, i) {
  *
  */
 export function getFieldsFromData(data, fieldOrder) {
+  console.time('getFieldsFromData')
   // add a check for epoch timestamp
   const metadata = Analyzer.computeColMeta(data, [
     {regex: /.*geojson|all_points/g, dataType: 'GEOMETRY'}
-  ]);
+  ], {ignoredDataTypes: getIgnoreDataTypes()});
 
   const {fieldByIndex} = renameDuplicateFields(fieldOrder);
 
-  return fieldOrder.reduce((orderedArray, field, index) => {
+  const result = fieldOrder.reduce((orderedArray, field, index) => {
     const name = fieldByIndex[index];
+
     const fieldMeta = metadata.find(m => m.key === field);
     const {type, format} = fieldMeta || {};
 
@@ -248,9 +278,10 @@ export function getFieldsFromData(data, fieldOrder) {
       tableFieldIndex: index + 1,
       type: analyzerTypeToFieldType(type)
     };
-
     return orderedArray;
   }, []);
+  console.timeEnd('getFieldsFromData')
+  return result;
 }
 
 /**
@@ -284,6 +315,10 @@ export function renameDuplicateFields(fieldOrder) {
   );
 }
 
+export function getIgnoreDataTypes() {
+  return Object.keys(AnalyzerDATA_TYPES).filter(type =>  !ACCEPTED_ANALYZER_TYPES.includes(type));
+}
+
 /**
  * Convert type-analyzer output to kepler.gl field types
  *
@@ -301,10 +336,8 @@ export function analyzerTypeToFieldType(aType) {
     FLOAT,
     BOOLEAN,
     STRING,
-    CITY,
     GEOMETRY,
     GEOMETRY_FROM_STRING,
-    ZIPCODE,
     PAIR_GEOMETRY_FROM_STRING
   } = AnalyzerDATA_TYPES;
 
@@ -328,8 +361,6 @@ export function analyzerTypeToFieldType(aType) {
     case PAIR_GEOMETRY_FROM_STRING:
       return ALL_FIELD_TYPES.geojson;
     case STRING:
-    case CITY:
-    case ZIPCODE:
       return ALL_FIELD_TYPES.string;
     default:
       globalConsole.warn(`Unsupported analyzer type: ${aType}`);
@@ -366,7 +397,16 @@ export function processRowObject(rawData) {
 
   const keys = Object.keys(rawData[0]);
   const rows = rawData.map(d => keys.map(key => d[key]));
-  const fields = getFieldsFromData(rawData, keys);
+
+  // pick samples
+  const sampleData = getSampleData(rawData, 500);
+  console.time('getFieldsFromData')
+  const fields = getFieldsFromData(sampleData, keys);
+  console.timeEnd('getFieldsFromData')
+
+  console.time('parseRowsByFields')
+  // const parsedRows = parseRowsByFields(rows, fields);
+  console.timeEnd('parseRowsByFields')
 
   return {
     fields,
@@ -412,6 +452,7 @@ export function processRowObject(rawData) {
  * }));
  */
 export function processGeojson(rawData) {
+  console.time('fill in data')
   const normalizedGeojson = normalize(rawData);
 
   if (!normalizedGeojson || !Array.isArray(normalizedGeojson.features)) {
@@ -422,7 +463,7 @@ export function processGeojson(rawData) {
   // getting all feature fields
   const allData = normalizedGeojson.features.reduce((accu, f, i) => {
     if (f.geometry) {
-      // check if properties contains object and stringfy this
+      // check if properties contains object and stringify it
       if (typeof f.properties === 'object' && f.properties !== null) {
         Object.keys(f.properties).forEach(key => {
           if (typeof f.properties[key] === 'object') {
@@ -457,10 +498,85 @@ export function processGeojson(rawData) {
       }
     });
   });
+  console.timeEnd('fill in data')
+
+  console.time('processRowObject')
   const processRow = processRowObject(allData);
+  console.timeEnd('processRowObject')
+
   return processRow;
 }
 
+function addFieldsToAllData(fields = [], allData) {
+  fields.forEach(field => {
+    for (let i = 0; i < allData.length; i++) {
+      allData[i][field] = null;
+      allData._geojson.properties[field] = null;
+    }
+  });
+  return allData
+}
+
+export function processGeojsonNew(rawData) {
+  console.time('new fill in data')
+  const normalizedGeojson = normalize(rawData);
+
+  if (!normalizedGeojson || !Array.isArray(normalizedGeojson.features)) {
+    // fail to normalize geojson
+    return null;
+  }
+
+  const {features} = normalizedGeojson;
+  let fields = Object.keys(normalizedGeojson.features.find(f =>
+    isObject(f.properties)
+  ).properties);
+
+  let allData = [];
+
+  for (let i = 0; i < features.length; i++) {
+    const f = features[i];
+
+    if (typeof f.properties === 'object' && f.properties !== null) {
+      Object.keys(f.properties).forEach(key => {
+        if (typeof f.properties[key] === 'object') {
+          f.properties[key] = JSON.stringify(f.properties[key]);
+        }
+      });
+
+      const missingFields = fields
+        .filter(fld => !f.properties.hasOwnProperty(fld));
+
+      const newFields = Object.keys(f.properties)
+        .filter(p => !fields.includes(p));
+
+      if (missingFields.length) {
+        missingFields.forEach(name => {
+          f.properties[name] = null;
+        })
+      }
+
+      if (newFields.length) {
+        allData = addFieldsToAllData(newFields, allData);
+        fields = fields.concat(missingFields);
+      }
+    } else {
+      f.properties = fields.reduce((accu, curr) => ({...accu, curr: null}), {});
+      // if feature does not have properties
+    }
+
+    allData.push({
+      _geojson: f,
+      ...(f.properties)
+    });
+  }
+  console.timeEnd('new fill in data')
+
+  console.time('processRowObject')
+  const processRow = processRowObject(allData);
+  console.timeEnd('processRowObject')
+
+  return processRow;
+}
 /**
  * On export data to csv
  * @param {Array<Array>} data `dataset.allData` or filtered data `dataset.data`

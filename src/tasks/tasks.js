@@ -22,8 +22,9 @@ import {taskCreator} from 'react-palm/tasks';
 import {json as requestJson} from 'd3-request';
 
 export const LOAD_FILE_TASK = taskCreator(
-  ({fileBlob, info, handler, processor}, success, error) =>
-    handler(fileBlob, processor)
+  ({fileBlob, info, handler, processor}, success, error) => {
+    console.time('loadFileTask')
+    return handler(fileBlob, processor)
       .then(result => {
         if (!result) {
           // TODO: capture in the UI and show message
@@ -34,13 +35,18 @@ export const LOAD_FILE_TASK = taskCreator(
           // result has both datasets and info
           // TODO: I think we should pass info to the handler and return
           // the same format back from the file handler
+          console.timeEnd('loadFileTask')
+
           if (result.datasets) { // this is coming from parsing keplergl.json file
             success(result); // info is already part of datasets
           }
           success({datasets: {data: result, info}});
+
         }
       })
-      .catch(err => error(err)),
+      .catch(err => error(err))
+
+    },
 
   'LOAD_FILE_TASK'
 );

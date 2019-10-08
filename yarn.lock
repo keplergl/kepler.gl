@@ -9230,9 +9230,10 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   version "0.14.5"
   resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-0.14.5.tgz#5ae68177f192d4456269d108afa93ff8743f4f64"
 
-type-analyzer@0.2.1:
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/type-analyzer/-/type-analyzer-0.2.1.tgz#c3a04552be0114d079a54b5def72a828605f9cf9"
+type-analyzer@0.2.2:
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/type-analyzer/-/type-analyzer-0.2.2.tgz#be5f48b3ab2bbff0f8d613c9dc76e0b97e719ed4"
+  integrity sha512-0Oq4a8PO50YT0GLXJZrNPjrQtwSjxWeoU3Vdiktz3fwaoTK/cv1F781JPJo9evHXnHhuHuxsgl6vUakZnfv7sQ==
 
 type-check@~0.3.2:
   version "0.3.2"
