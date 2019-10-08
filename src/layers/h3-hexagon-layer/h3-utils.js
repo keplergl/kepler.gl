@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {h3GetResolution, h3ToGeo, h3ToGeoBoundary, geoToH3} from 'h3-js';
-export {h3GetResolution};
+import {h3GetResolution, h3IsValid, h3ToGeo, h3ToGeoBoundary, geoToH3} from 'h3-js';
+export {h3GetResolution, h3IsValid};
 
 // get vertices should return [lon, lat]
 export function getVertices({id}) {
