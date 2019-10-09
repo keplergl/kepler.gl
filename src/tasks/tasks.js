@@ -20,6 +20,7 @@
 
 import {taskCreator} from 'react-palm/tasks';
 import {json as requestJson} from 'd3-request';
+import console from 'global/console';
 
 export const LOAD_FILE_TASK = taskCreator(
   ({fileBlob, info, handler, processor}, success, error) => {
@@ -28,7 +29,7 @@ export const LOAD_FILE_TASK = taskCreator(
       .then(result => {
         if (!result) {
           // TODO: capture in the UI and show message
-          throw new Error('fail to load data');
+          error(new Error('File to load data, result is empty'));
         } else {
           // we are trying to standardize the shape of our return
           // since we start using the kepler.json format
@@ -41,10 +42,12 @@ export const LOAD_FILE_TASK = taskCreator(
             success(result); // info is already part of datasets
           }
           success({datasets: {data: result, info}});
-
         }
       })
-      .catch(err => error(err))
+      .catch(err => {
+        console.log(err);
+        error(err)
+      })
 
     },
 

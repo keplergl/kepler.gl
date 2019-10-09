@@ -22,8 +22,8 @@ import React from 'react';
 import styled from 'styled-components';
 import {CenterFlexbox} from 'components/common/styled-components';
 import {Layers} from 'components/common/icons';
-import {FIELD_DISPLAY_FORMAT} from 'constants/default-settings';
 import PropTypes from 'prop-types';
+import {parseFieldValue} from 'utils/data-utils';
 
 export const StyledLayerName = styled(CenterFlexbox)`
   color: ${props => props.theme.textColorHl};
@@ -78,10 +78,10 @@ const EntryInfoRow = ({name, fields, data}) => {
   }
 
   const valueIdx = field.tableFieldIndex - 1;
-  const format = _getCellFormat(field.type);
+  const displayValue = parseFieldValue(data[valueIdx], field.type);
 
   return (
-    <Row name={name} value={format ? format(data[valueIdx]) : data[valueIdx]} />
+    <Row name={name} value={displayValue} />
   );
 };
 
@@ -112,10 +112,6 @@ const CellInfo = ({data, layer}) => {
     </tbody>
   );
 };
-
-function _getCellFormat(type) {
-  return FIELD_DISPLAY_FORMAT[type];
-}
 
 const LayerHoverInfoFactory = () => {
   const LayerHoverInfo = props => {

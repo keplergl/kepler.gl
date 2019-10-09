@@ -24,6 +24,7 @@ import PropTypes from 'prop-types';
 import LayerHoverInfoFactory from './layer-hover-info';
 import CoordinateInfoFactory from './coordinate-info';
 import {Pin} from 'components/common/icons';
+import ErrorBoundary from 'components/common/error-boundary';
 
 const MAX_WIDTH = 500;
 const MAX_HEIGHT = 600;
@@ -153,27 +154,29 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
         Number.isFinite(x) && Number.isFinite(y) ? this._getPosition(x, y) : {};
 
       return (
-        <StyledMapPopover
-          ref={this.popover}
-          className="map-popover"
-          style={{
-            ...style,
-            maxWidth: MAX_WIDTH
-          }}
-        >
-          {freezed ? (
-            <div className="map-popover__top">
-              <div className="gutter" />
-              <StyledPin className="popover-pin" onClick={this.props.onClose}>
-                <Pin height="16px" />
-              </StyledPin>
-            </div>
-          ) : null}
-          {Array.isArray(coordinate) && (
-            <CoordinateInfo coordinate={coordinate} />
-          )}
-          {layerHoverProp && <LayerHoverInfo {...layerHoverProp} />}
-        </StyledMapPopover>
+        <ErrorBoundary>
+          <StyledMapPopover
+            ref={this.popover}
+            className="map-popover"
+            style={{
+              ...style,
+              maxWidth: MAX_WIDTH
+            }}
+          >
+            {freezed ? (
+              <div className="map-popover__top">
+                <div className="gutter" />
+                <StyledPin className="popover-pin" onClick={this.props.onClose}>
+                  <Pin height="16px" />
+                </StyledPin>
+              </div>
+            ) : null}
+            {Array.isArray(coordinate) && (
+              <CoordinateInfo coordinate={coordinate} />
+            )}
+            {layerHoverProp && <LayerHoverInfo {...layerHoverProp} />}
+          </StyledMapPopover>
+        </ErrorBoundary>
       );
     }
   }

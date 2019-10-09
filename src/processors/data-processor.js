@@ -24,10 +24,11 @@ import {console as globalConsole} from 'global/window';
 import assert from 'assert';
 import {Analyzer, DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
-import {ALL_FIELD_TYPES, } from 'constants/default-settings';
+import {ALL_FIELD_TYPES} from 'constants/default-settings';
 import {notNullorUndefined, parseFieldValue, getSampleData} from 'utils/data-utils';
 import KeplerGlSchema from 'schemas';
-import {isObject} from 'utils/utils';
+import {isPlainObject} from 'utils/utils';
+import {GUIDES_FILE_FORMAT} from 'constants/user-guides';
 
 const ACCEPTED_ANALYZER_TYPES = [
   AnalyzerDATA_TYPES.DATE,
@@ -40,7 +41,10 @@ const ACCEPTED_ANALYZER_TYPES = [
   AnalyzerDATA_TYPES.STRING,
   AnalyzerDATA_TYPES.GEOMETRY,
   AnalyzerDATA_TYPES.GEOMETRY_FROM_STRING,
-  AnalyzerDATA_TYPES.PAIR_GEOMETRY_FROM_STRING
+  AnalyzerDATA_TYPES.PAIR_GEOMETRY_FROM_STRING,
+  AnalyzerDATA_TYPES.ZIPCODE,
+  AnalyzerDATA_TYPES.ARRAY,
+  AnalyzerDATA_TYPES.OBJECT
 ];
 
 // if any of these value occurs in csv, parse it to null;
@@ -198,9 +202,7 @@ export function parseCsvRowsByFieldType(rows, field, i, geoFieldIdx) {
   if (parser) {
     // check first not null value of it's already parsed
     const first = rows.find(r => notNullorUndefined(r[i]));
-    console.log(first[i])
-    if (!first || parser.valid(first[i])) {
-      console.log(field.name + 'Is valid type')
+    if (!first || parser.valid(first[i], field)) {
       return;
     }
     console.log('%c need parsing ' + field.name, 'color: red')
@@ -258,14 +260,13 @@ export function parseCsvRowsByFieldType(rows, field, i, geoFieldIdx) {
  *
  */
 export function getFieldsFromData(data, fieldOrder) {
-  console.time('getFieldsFromData')
   // add a check for epoch timestamp
   const metadata = Analyzer.computeColMeta(data, [
     {regex: /.*geojson|all_points/g, dataType: 'GEOMETRY'}
   ], {ignoredDataTypes: getIgnoreDataTypes()});
 
   const {fieldByIndex} = renameDuplicateFields(fieldOrder);
-
+  console.log(metadata)
   const result = fieldOrder.reduce((orderedArray, field, index) => {
     const name = fieldByIndex[index];
 
@@ -280,7 +281,7 @@ export function getFieldsFromData(data, fieldOrder) {
     };
     return orderedArray;
   }, []);
-  console.timeEnd('getFieldsFromData')
+
   return result;
 }
 
@@ -316,7 +317,8 @@ export function renameDuplicateFields(fieldOrder) {
 }
 
 export function getIgnoreDataTypes() {
-  return Object.keys(AnalyzerDATA_TYPES).filter(type =>  !ACCEPTED_ANALYZER_TYPES.includes(type));
+  return Object.keys(AnalyzerDATA_TYPES)
+    .filter(type =>  !ACCEPTED_ANALYZER_TYPES.includes(type));
 }
 
 /**
@@ -338,7 +340,10 @@ export function analyzerTypeToFieldType(aType) {
     STRING,
     GEOMETRY,
     GEOMETRY_FROM_STRING,
-    PAIR_GEOMETRY_FROM_STRING
+    PAIR_GEOMETRY_FROM_STRING,
+    ZIPCODE,
+    ARRAY,
+    OBJECT
   } = AnalyzerDATA_TYPES;
 
   // TODO: un recognized types
@@ -359,8 +364,11 @@ export function analyzerTypeToFieldType(aType) {
     case GEOMETRY:
     case GEOMETRY_FROM_STRING:
     case PAIR_GEOMETRY_FROM_STRING:
+    case ARRAY:
+    case OBJECT:
       return ALL_FIELD_TYPES.geojson;
     case STRING:
+    case ZIPCODE:
       return ALL_FIELD_TYPES.string;
     default:
       globalConsole.warn(`Unsupported analyzer type: ${aType}`);
@@ -402,15 +410,15 @@ export function processRowObject(rawData) {
   const sampleData = getSampleData(rawData, 500);
   console.time('getFieldsFromData')
   const fields = getFieldsFromData(sampleData, keys);
-  console.timeEnd('getFieldsFromData')
 
+  console.timeEnd('getFieldsFromData')
   console.time('parseRowsByFields')
-  // const parsedRows = parseRowsByFields(rows, fields);
+  const parsedRows = parseRowsByFields(rows, fields);
   console.timeEnd('parseRowsByFields')
 
   return {
     fields,
-    rows
+    rows: parsedRows
   };
 }
 
@@ -456,21 +464,16 @@ export function processGeojson(rawData) {
   const normalizedGeojson = normalize(rawData);
 
   if (!normalizedGeojson || !Array.isArray(normalizedGeojson.features)) {
+    const error = new Error(
+      `Read File Failed: File is not a valid GeoJSON. Read more about [supported file format](${GUIDES_FILE_FORMAT})`
+    );
+    throw(error);
     // fail to normalize geojson
-    return null;
   }
 
   // getting all feature fields
   const allData = normalizedGeojson.features.reduce((accu, f, i) => {
     if (f.geometry) {
-      // check if properties contains object and stringify it
-      if (typeof f.properties === 'object' && f.properties !== null) {
-        Object.keys(f.properties).forEach(key => {
-          if (typeof f.properties[key] === 'object') {
-            f.properties[key] = JSON.stringify(f.properties[key]);
-          }
-        });
-      }
       accu.push({
         // add feature to _geojson field
         _geojson: f,
@@ -528,7 +531,7 @@ export function processGeojsonNew(rawData) {
 
   const {features} = normalizedGeojson;
   let fields = Object.keys(normalizedGeojson.features.find(f =>
-    isObject(f.properties)
+    isPlainObject(f.properties)
   ).properties);
 
   let allData = [];

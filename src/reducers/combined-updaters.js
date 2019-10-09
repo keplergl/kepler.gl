@@ -24,7 +24,7 @@ import {receiveMapConfigUpdater as stateMapConfigUpdater} from './map-state-upda
 import {receiveMapConfigUpdater as styleMapConfigUpdater} from './map-style-updaters';
 import {findMapBounds} from 'utils/data-utils';
 import KeplerGlSchema from 'schemas';
-import {isObject} from 'util';
+import {isPlainObject} from 'utils/utils';
 
 // compose action to apply result multiple reducers, with the output of one
 
@@ -73,7 +73,7 @@ import {isObject} from 'util';
 const combinedUpdaters = null;
 /* eslint-enable no-unused-vars */
 
-export const isValidConfig = config => isObject(config) && isObject(config.config) && config.version;
+export const isValidConfig = config => isPlainObject(config) && isPlainObject(config.config) && config.version;
 export const defaultAddDataToMapOptions = {
   centerMap: true,
   keepExistingConfig: false

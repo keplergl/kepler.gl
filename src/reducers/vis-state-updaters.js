@@ -1242,7 +1242,7 @@ export const updateVisDataUpdater = (state, action) => {
   // register layer animation domain,
   // need to be called after layer data is calculated
   updatedState = updateAnimationDomain(updatedState);
-  console.log(updatedState.datasets)
+
   return updatedState;
 };
 /* eslint-enable max-statements */
@@ -1311,7 +1311,7 @@ export const loadFilesUpdater = (state, action) => {
         );
         return addDataToMap(data);
       },
-      error => loadFilesErr(error)
+      loadFilesErr
     )
   ];
 
@@ -1323,21 +1323,6 @@ export const loadFilesUpdater = (state, action) => {
     loadFileTasks
   );
 };
-
-/**
- * Trigger loading file error
- * @memberof visStateUpdaters
- * @param {Object} state `visState`
- * @param {Object} action action
- * @param {*} action.error
- * @returns {Object} nextState
- * @public
- */
-export const loadFilesErrUpdater = (state, {error}) => ({
-  ...state,
-  fileLoading: false,
-  fileLoadingErr: error
-});
 
 /**
  * Helper function to update All layer domain and layer data of state

@@ -330,17 +330,6 @@ export const FILED_TYPE_DISPLAY = {
   }
 };
 
-export const defaultFormat = d => d;
-
-export const FIELD_DISPLAY_FORMAT = {
-  [ALL_FIELD_TYPES.string]: defaultFormat,
-  [ALL_FIELD_TYPES.timestamp]: defaultFormat,
-  [ALL_FIELD_TYPES.integer]: defaultFormat,
-  [ALL_FIELD_TYPES.boolean]: d => String(d),
-  [ALL_FIELD_TYPES.date]: defaultFormat,
-  [ALL_FIELD_TYPES.geojson]: defaultFormat
-};
-
 export const CHANNEL_SCALES = keyMirror({
   color: null,
   radius: null,
