@@ -32,6 +32,7 @@ import coreReducer from 'reducers/core';
 import {keplerGlInit} from 'actions/actions';
 
 import Container, {errorMsg} from 'components/container';
+import {DEFAULT_MAPBOX_API_URL} from 'constants/default-settings';
 const initialCoreState = coreReducer(undefined, keplerGlInit());
 const initialState = {
   keplerGl: {}
@@ -191,7 +192,7 @@ test('Components -> Container -> Mount with mint:false', t => {
 
   let actions = store.getActions();
 
-  let expectedActions0 = {type: '@@kepler.gl/REGISTER_ENTRY', payload: {id: 'milkshake', mint: false, mapboxApiAccessToken: 'hello.world', mapboxApiUrl: undefined, mapStylesReplaceDefault: undefined}};
+  const expectedActions0 = {type: '@@kepler.gl/REGISTER_ENTRY', payload: {id: 'milkshake', mint: false, mapboxApiAccessToken: 'hello.world', mapboxApiUrl: undefined, mapStylesReplaceDefault: undefined}};
 
   t.deepEqual(
     actions,
@@ -209,7 +210,7 @@ test('Components -> Container -> Mount with mint:false', t => {
           ...initialCoreState.mapStyle,
           // should replace access token
           mapboxApiAccessToken: 'hello.world',
-          mapboxApiUrl: undefined
+          mapboxApiUrl: DEFAULT_MAPBOX_API_URL
         }
       }
     }

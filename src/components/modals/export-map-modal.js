@@ -47,7 +47,7 @@ const StyledInput = styled.input`
   height: ${props => props.theme.inputBoxHeight};
   outline: 0;
   font-size: ${props => props.theme.inputFontSize};
-  
+
   :active,
   :focus,
   &.focus,
@@ -166,7 +166,7 @@ const StyledJsonExportSection = styled(ExportMapStyledExportSection)`
     color: ${props => props.theme.errorColor};
     font-size: 11px;
   }
-  
+
   .viewer {
     border: 1px solid ${props => props.theme.selectBorderColorLT};
     background-color: white;
@@ -180,6 +180,10 @@ const StyledJsonExportSection = styled(ExportMapStyledExportSection)`
     height: 180px;
     width: 100%;
     overflow-y: scroll;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-width: 600px;
   }
 `;
 

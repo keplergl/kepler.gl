@@ -23,8 +23,12 @@ import clondDeep from 'lodash.clonedeep';
 import {
   DEFAULT_LAYER_GROUPS,
   RESOLUTIONS,
-  RESOLUTION_OPTIONS
+  RESOLUTION_OPTIONS,
+  DEFAULT_MAPBOX_API_URL
 } from 'constants/default-settings';
+
+const mapUrlRg = /^mapbox:\/\/styles\/[-a-z0-9]{2,256}\/[-a-z0-9]{2,256}/;
+const httpRg = /^(?=(http:|https:))/;
 
 export function getDefaultLayerGroupVisibility({layerGroups = []}) {
   return layerGroups.reduce(
@@ -45,9 +49,9 @@ const resolver = ({id, mapStyle, visibleLayerGroups = {}}) =>
 /**
  * Edit preset map style to keep only visible layers
  *
- * @param {object} mapStyle - preset map style
- * @param {object} visibleLayerGroups - visible layers of top map
- * @returns {object} top map style
+ * @param {Object} mapStyle - preset map style
+ * @param {Object} visibleLayerGroups - visible layers of top map
+ * @returns {Object} top map style
  */
 export const editTopMapStyle = memoize(({id, mapStyle, visibleLayerGroups}) => {
   const visibleFilters = (mapStyle.layerGroups || [])
@@ -69,9 +73,9 @@ export const editTopMapStyle = memoize(({id, mapStyle, visibleLayerGroups}) => {
 /**
  * Edit preset map style to filter out invisible layers
  *
- * @param {object} mapStyle - preset map style
- * @param {object} visibleLayerGroups - visible layers of bottom map
- * @returns {object} bottom map style
+ * @param {Object} mapStyle - preset map style
+ * @param {Object} visibleLayerGroups - visible layers of bottom map
+ * @returns {Object} bottom map style
  */
 export const editBottomMapStyle = memoize(
   ({id, mapStyle, visibleLayerGroups}) => {
@@ -85,7 +89,6 @@ export const editBottomMapStyle = memoize(
       invisibleFilters.every(match => !match(layer))
     );
 
-    // console.log(filteredLayers)
     return {
       ...mapStyle.style,
       layers: filteredLayers
@@ -93,10 +96,6 @@ export const editBottomMapStyle = memoize(
   },
   resolver
 );
-
-const mapUrlRg = /^mapbox:\/\/styles\/[-a-z0-9]{2,256}\/[-a-z0-9]{2,256}/;
-const httpRg = /^(?=(http:|https:))/;
-const defaultMapboxApiUrl = 'https://api.mapbox.com';
 
 // valid style url
 // mapbox://styles/uberdata/cjfyl03kp1tul2smf5v2tbdd4
@@ -115,11 +114,41 @@ export function getStyleDownloadUrl(styleUrl, accessToken, mapboxApiUrl) {
     const styleId = styleUrl.replace('mapbox://styles/', '');
 
     // https://api.mapbox.com/styles/v1/heshan0131/cjg1bfumo1cwm2rlrjxkinfgw?pluginName=Keplergl&access_token=<token>
-    return `${mapboxApiUrl || defaultMapboxApiUrl}/styles/v1/${styleId}?pluginName=Keplergl&access_token=${accessToken}`
+    return `${mapboxApiUrl || DEFAULT_MAPBOX_API_URL}/styles/v1/${styleId}?pluginName=Keplergl&access_token=${accessToken}`
   }
 
   // style url not recognized
   return null;
+}
+
+/**
+ * Generate static map image from style Url to be used as icon
+ * @param {Object} param
+ * @param {string} param.styleUrl
+ * @param {string} param.mapboxApiAccessToken
+ * @param {string} param.mapboxApiUrl
+ * @param {Object} param.mapState
+ * @param {numbers} param.mapW
+ * @param {numbers} param.mapH
+ */
+export function getStyleImageIcon({
+  styleUrl,
+  mapboxApiAccessToken,
+  mapboxApiUrl = DEFAULT_MAPBOX_API_URL,
+  mapState = {
+    longitude: -122.3391,
+    latitude: 37.7922,
+    zoom: 9
+  },
+  mapW = 400,
+  mapH = 300
+}) {
+  const styleId = styleUrl.replace('mapbox://styles/', '');
+
+  return `${mapboxApiUrl}/styles/v1/${styleId}/static/` +
+  `${mapState.longitude},${mapState.latitude},${mapState.zoom},0,0/` +
+  `${mapW}x${mapH}` +
+  `?access_token=${mapboxApiAccessToken}&logo=false&attribution=false`;
 }
 
 export function scaleMapStyleByResolution(mapboxStyle, resolution) {
@@ -167,9 +196,9 @@ export function scaleMapStyleByResolution(mapboxStyle, resolution) {
 /**
  * When switch to a new style, try to keep current layer group visibility
  * by merging default and current
- * @param {object} defaultLayerGroup
- * @param {object} currentLayerGroup
- * @return {object} mergedLayerGroups
+ * @param {Object} defaultLayerGroup
+ * @param {Object} currentLayerGroup
+ * @return {Object} mergedLayerGroups
  */
 export function mergeLayerGroupVisibility(defaultLayerGroup, currentLayerGroup) {
   return Object.keys(currentLayerGroup)

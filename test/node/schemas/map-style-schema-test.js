@@ -76,7 +76,7 @@ test('#mapStyleSchema -> v1 -> save load mapStyle with custom style', t => {
         id: 'smoothie_the_cat',
         accessToken: 'secret_token',
         label: 'Smoothie the Cat',
-        icon: 'data:image/png;base64,xyz',
+        icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
         custom: true,
         url: 'mapbox://styles/shanhe/smoothie.the.cat'
       }
