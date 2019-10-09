@@ -163,8 +163,7 @@ export default class FileUpload extends Component {
   static propTypes = {
     onFileUpload: PropTypes.func.isRequired,
     validFileExt: PropTypes.arrayOf(PropTypes.string),
-    fileLoading: PropTypes.bool,
-    fileLoadingErr: PropTypes.any
+    fileLoading: PropTypes.bool
   };
 
   state = {
@@ -217,27 +216,19 @@ export default class FileUpload extends Component {
           {`File ${errorFiles.join(', ')} is not supported.`}
         </WarningMsg>
       );
-    } else if (this.props.fileLoadingErr) {
+    } else if (this.props.fileLoading && files.length) {
       return (
-        <WarningMsg>
-          {this.props.fileLoadingErr.message || 'Failed to upload file!'}
-        </WarningMsg>
+        <StyledMessage className="file-uploader__message">
+          <div>Uploading...</div>
+          <PositiveMsg>
+            {`${files.map(f => f.name).join(' and ')}...`}
+          </PositiveMsg>
+          <LoadingSpinner size={20} />
+        </StyledMessage>
       );
     }
 
-    if (!files.length) {
-      return null;
-    }
-
-    return (
-      <StyledMessage className="file-uploader__message">
-        <div>Uploading...</div>
-        <PositiveMsg>
-          {`${files.map(f => f.name).join(' and ')}...`}
-        </PositiveMsg>
-        <LoadingSpinner size={20} />
-      </StyledMessage>
-    );
+    return null;
   }
 
   render() {

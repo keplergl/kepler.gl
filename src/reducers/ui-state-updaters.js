@@ -125,8 +125,7 @@ export const DEFAULT_EXPORT_IMAGE = {
 };
 
 export const DEFAULT_LOAD_FILES = {
-  fileLoading: false,
-  fileLoadingErr: null
+  fileLoading: false
 };
 
 /**
@@ -581,6 +580,14 @@ export const removeNotificationUpdater = (state, {payload: id}) => ({
  * @param {Object} action
  */
 export const loadFilesUpdater = (state) => ({
+  ...state,
+  loadFiles: {
+    ...state.loadFiles,
+    fileLoading: true
+  }
+});
+
+export const loadFilesSuccessUpdater = (state) => ({
   ...state,
   loadFiles: {
     ...state.loadFiles,

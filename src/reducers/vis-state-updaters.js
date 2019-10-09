@@ -134,8 +134,6 @@ export const defaultAnimationConfig = {
  * @property {Object} hoverInfo
  * @property {Object} clicked
  * @property {Object} mousePos
- * @property {boolean} fileLoading
- * @property {*} fileLoadingErr
  * @property {Array} splitMaps - a list of objects of layer availabilities and visibilities for each map
  * @property {Object} layerClasses
  * @property {Object} animationConfig
@@ -163,10 +161,6 @@ export const INITIAL_VIS_STATE = {
   hoverInfo: undefined,
   clicked: undefined,
   mousePos: {},
-
-  // TODO: not used anywhere, delete it
-  fileLoading: false,
-  fileLoadingErr: null,
 
   // this is used when user split maps
   splitMaps: [
@@ -1316,10 +1310,7 @@ export const loadFilesUpdater = (state, action) => {
   ];
 
   return withTask(
-    {
-      ...state,
-      fileLoading: true
-    },
+    state,
     loadFileTasks
   );
 };
