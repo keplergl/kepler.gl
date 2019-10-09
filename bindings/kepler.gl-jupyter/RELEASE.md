@@ -19,7 +19,7 @@ npm publish
 
 ```
 git add _version.py
-git commit -am "keplergl==<version>
+git commit -am "keplergl==<version>"
 ```
 
 - Remove dist, build and upload to PyPI
