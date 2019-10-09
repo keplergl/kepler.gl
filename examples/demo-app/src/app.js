@@ -29,6 +29,7 @@ import Banner from './components/banner';
 import Announcement from './components/announcement';
 import {replaceLoadDataModal} from './factories/load-data-modal';
 import {replaceSaveMap} from './factories/save-map';
+import {replaceMapControl} from './factories/map-control';
 import ExportUrlModal from './components/sharing/export-url-modal';
 import {AUTH_TOKENS} from './constants/default-settings';
 import {
@@ -40,7 +41,8 @@ import {
 
 const KeplerGl = require('kepler.gl/components').injectComponents([
   replaceLoadDataModal(),
-  replaceSaveMap()
+  replaceSaveMap(),
+  replaceMapControl()
 ]);
 
 // Sample data

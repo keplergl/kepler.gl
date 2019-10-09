@@ -18,25 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import PropTypes from 'prop-types';
-import React from 'react';
-import Base from './base';
+import {MapControlFactory} from 'kepler.gl/components';
+import CustomMapControl from '../components/map-control/map-control';
+import {withState} from 'kepler.gl/components';
 
-export default class Files extends React.Component {
-  static propTypes = {
-    /** Set the height of the icon, ex. '16px' */
-    height: PropTypes.string
-  };
-  static defaultProps = {
-    height: '16px',
-    predefinedClassName: 'data-ex-icons-files'
-  };
+export const CustomMapControlFactory = () =>
+  withState(
+    [],
+    state => ({...state.demo.app})
+  )(CustomMapControl);
 
-  render() {
-    return (
-      <Base viewBox="0 0 64 64" {...this.props}>
-        <path d="M48.015 58h-32a8 8 0 0 1-8-8V26h48v24a8 8 0 0 1-8 8zm-2-44h-28a6 6 0 0 0-6 6v2h40v-2a6 6 0 0 0-6-6zm-2 26v-6h-4v4h-16v-4h-4v6a2 2 0 0 0 2 2h20a2 2 0 0 0 2-2zm-4-34h-16a4 4 0 0 0-4 4h24a4 4 0 0 0-4-4z" />
-      </Base>
-    );
-  }
+export function replaceMapControl() {
+  return [MapControlFactory, CustomMapControlFactory];
 }

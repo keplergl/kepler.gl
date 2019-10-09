@@ -149,6 +149,7 @@ export const loadRemoteResourceSuccess = (state, action) => {
     ...state,
     app: {
       ...state.app,
+      currentSample: action.options,
       isMapLoading: false // we turn of the spinner
     },
     keplerGl: {
