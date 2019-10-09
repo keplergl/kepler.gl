@@ -7,7 +7,9 @@ dist/
 build/
 *.py[cod]
 node_modules/
-env/
+ENV/
+ENV3/
+
 # OS X
 .DS_Store
 .vs_code/

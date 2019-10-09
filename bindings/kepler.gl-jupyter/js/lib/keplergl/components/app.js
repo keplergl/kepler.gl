@@ -31,6 +31,7 @@ import {
 
 import CustomPanelHeaderFactory from './panel-header';
 import CustomSidebarFactory from './side-bar';
+export const KEPLER_GL_JUPYTER_VERSION = "__PACKAGE_VERSION__";
 
 const CustomAddDataButtonFactory = () => {
   const CustomAddDataButton = () => <div />;
@@ -46,6 +47,7 @@ const KeplerGl = injectComponents([
 const MAPBOX_TOKEN = process.env.MapboxAccessTokenJupyter; // eslint-disable-line
 
 function App() {
+
   const rootElm = useRef(null);
   const [windowDimension, setDimension] = useState({});
 
@@ -53,15 +55,24 @@ function App() {
     if (!rootElm.current) {
       return;
     }
-    const {width, height} = rootElm.current.getBoundingClientRect();
-    if (width !== windowDimension.width || height !== windowDimension.height) {
-      setDimension({width, height});
-    }
+
+    const width = rootElm.current.offsetWidth;
+    const height = rootElm.current.offsetHeight;
+    const dimensionToSet = {
+      ...(width && width !== windowDimension.width ? {width} : {}),
+      ...(height && height !== windowDimension.height ? {height} : {})
+    };
+
+    setDimension(dimensionToSet);
   };
 
+  // in Jupyter Lab,  parent component has transition when window resize.
+  // need to delay call to get the final parent width,
+  const resizeDelay = () => window.setTimeout(handleResize, 500);
+
   useEffect(() => {
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener('resize', resizeDelay);
+    return () => window.removeEventListener('resize', resizeDelay);
   }, []);
 
   return (
@@ -87,6 +98,7 @@ function App() {
                 font-weight: 400;
                 font-size: 0.875em;
                 line-height: 1.71429;
+
                 *,
                 *:before,
                 *:after {
@@ -100,9 +112,20 @@ function App() {
                 .kepler-gl .ReactModal__Overlay.ReactModal__Overlay--after-open {
                   position: absolute !important;
                 }
+
+                .jupyter-widgets.keplergl-jupyter-widgets {
+                  overflow: hidden;
+                }
+
+                .p-Widget.p-Panel.jp-OutputArea-output.jupyter-widgets {
+                  overflow: hidden
+                }
                 `}
           </style>
-          <script async src="https://www.googletagmanager.com/gtag/js?id=UA-64694404-19"/>
+          <script
+            async
+            src="https://www.googletagmanager.com/gtag/js?id=UA-64694404-19"
+          />
           <script>{`window.dataLayer=window.dataLayer || [];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());gtag('config', 'UA-64694404-19', {page_path: '/keplergl-jupyter-widget'});`}</script>
         </Helmet>
       ) : null}
@@ -111,7 +134,7 @@ function App() {
         width={windowDimension.width || 800}
         height={windowDimension.height || 400}
         appName="Kepler.gl Jupyter"
-        version="0.1.0a9"
+        version={KEPLER_GL_JUPYTER_VERSION}
         getMapboxRef={handleResize}
       />
     </div>

@@ -29,12 +29,6 @@ const rules = [
     loader: 'babel-loader',
     include: path.join(__dirname, '../lib', 'keplergl'),
     exclude: [/node_modules/]
-  },
-  {
-    // The example has some JSON data
-    test: /\.json$/,
-    loader: 'json-loader',
-    exclude: [/node_modules|package.json/]
   }
 ];
 

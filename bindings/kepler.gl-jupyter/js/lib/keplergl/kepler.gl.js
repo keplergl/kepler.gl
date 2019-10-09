@@ -101,9 +101,13 @@ class KeplerGlJupyter {
 
     const height = getHeight(that);
 
+    that.el.classList.add('jupyter-widgets');
+    that.el.classList.add('keplergl-jupyter-widgets');
+
     const divElmt = document.createElement('div');
     divElmt.setAttribute('id', this.id);
-    divElmt.setAttribute('style', `width: 100%; height: ${height}px`);
+    divElmt.classList.add('kepler-gl');
+    divElmt.setAttribute('style', ` width: 100%; height: ${height}px;`);
     that.el.appendChild(divElmt);
 
     renderRoot({id: this.id, store: this.store, ele: divElmt});
