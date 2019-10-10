@@ -77,7 +77,7 @@ function getAccessTokenFromLocation(location) {
  */
 function uploadFile({blob, name, isPublic = true}) {
   const promise = dropbox.filesUpload({
-    path: blob.name || name,
+    path: name || blob.name,
     contents: blob
   });
 
