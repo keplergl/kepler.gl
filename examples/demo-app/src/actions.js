@@ -30,6 +30,7 @@ import {
 import {LOADING_METHODS_NAMES} from './constants/default-settings';
 import {CLOUD_PROVIDERS} from './utils/cloud-providers';
 import {generateHashId} from './utils/strings';
+import { parseUri } from './utils/url';
 import KeplerGlSchema from 'kepler.gl/schemas';
 
 // CONSTANTS
@@ -135,14 +136,14 @@ function detectResponseError(response) {
 export function loadRemoteMap(options) {
   return dispatch => {
     dispatch(setLoadingMapStatus(true));
+    // breakdown url into url+query params
     loadRemoteRawData(options.dataUrl).then(
       // In this part we turn the response into a FileBlob
       // so we can use it to call loadFiles
-      file => {
+      ([file, url]) => {
+        const {file: filename} = parseUri(url);
         dispatch(loadFiles([
-          /* eslint-disable no-undef */
-          new File([file], options.dataUrl)
-          /* eslint-enable no-undef */
+          new File([file], filename)
         ])).then(
           () => dispatch(setLoadingMapStatus(false))
         );
@@ -178,7 +179,7 @@ function loadRemoteRawData(url) {
         reject(responseError);
         return;
       }
-      resolve(result.response)
+      resolve([result.response, url])
     })
   });
 }
