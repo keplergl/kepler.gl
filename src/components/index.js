@@ -69,6 +69,8 @@ export {default as MapStyleSelectorFactory} from './side-panel/map-style-panel/m
 // // map container factories
 export {default as MapPopoverFactory} from './map/map-popover';
 export {default as MapControlFactory} from './map/map-control';
+export {default as LayerHoverInfoFactory} from './map/layer-hover-info';
+export {default as CoordinateInfoFactory} from './map/coordinate-info';
 
 // // modal container factories
 export {default as DeleteDatasetModalFactory} from './modals/delete-data-modal';
