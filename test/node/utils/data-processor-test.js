@@ -81,7 +81,7 @@ test('Processor -> getFieldsFromData', t => {
   t.end();
 });
 
-test('Processor -> processCsvData', t => {
+test.only('Processor -> processCsvData', t => {
 
   // load sample dataset csv as text
   const {fields, rows} = processCsvData(testData);
