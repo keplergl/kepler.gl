@@ -40,8 +40,7 @@ const loadDataModalFactory = () => {
   LoadDataModal.propTypes = {
     // call backs
     onFileUpload: PropTypes.func.isRequired,
-    fileLoading: PropTypes.bool,
-    fileLoadingErr: PropTypes.any
+    fileLoading: PropTypes.bool
   };
 
   return LoadDataModal;

@@ -31,7 +31,6 @@ import {
   getSampleData
 } from 'utils/data-utils';
 import KeplerGlSchema from 'schemas';
-import {isPlainObject} from 'utils/utils';
 import {GUIDES_FILE_FORMAT} from 'constants/user-guides';
 
 const ACCEPTED_ANALYZER_TYPES = [
@@ -52,7 +51,7 @@ const ACCEPTED_ANALYZER_TYPES = [
 ];
 
 // if any of these value occurs in csv, parse it to null;
-const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN'];
+const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN', '\N'];
 
 const IGNORE_DATA_TYPES = Object.keys(AnalyzerDATA_TYPES).filter(
   type => !ACCEPTED_ANALYZER_TYPES.includes(type)
@@ -135,7 +134,8 @@ export function processCsvData(rawData) {
  */
 export function parseRowsByFields(rows, fields) {
   // Edit rows in place
-  fields.forEach(parseCsvRowsByFieldType.bind(null, rows));
+  const geojsonFieldIdx = fields.findIndex(f => f.name === '_geojson');
+  fields.forEach(parseCsvRowsByFieldType.bind(null, rows, geojsonFieldIdx));
 
   return rows;
 }
@@ -205,25 +205,23 @@ function cleanUpFalsyCsvValue(rows) {
  * @param {Number} i
  * @returns {void}
  */
-export function parseCsvRowsByFieldType(rows, field, i, geoFieldIdx) {
+export function parseCsvRowsByFieldType(rows, geoFieldIdx, field, i) {
   const parser = PARSE_FIELD_VALUE_FROM_STRING[field.type];
-  console.log(field.type);
   if (parser) {
     // check first not null value of it's already parsed
     const first = rows.find(r => notNullorUndefined(r[i]));
     if (!first || parser.valid(first[i], field)) {
       return;
     }
-    console.log('%c need parsing ' + field.name, 'color: red');
     rows.forEach(row => {
       // parse string value based on field type
-      row[i] = parser.parse(row[i], field);
-      if (geoFieldIdx > -1 && row[geoFieldIdx] && row[geoFieldIdx].properties) {
-        row[geoFieldIdx].properties[field.name] = row[i];
+      if (row[i] !== null) {
+        row[i] = parser.parse(row[i], field);
+        if (geoFieldIdx > -1 && row[geoFieldIdx] && row[geoFieldIdx].properties) {
+          row[geoFieldIdx].properties[field.name] = row[i];
+        }
       }
     });
-  } else {
-    console.log('%c skip parsing ' + field.name, 'color: green');
   }
 }
 
@@ -327,12 +325,6 @@ export function renameDuplicateFields(fieldOrder) {
   );
 }
 
-export function getIgnoreDataTypes() {
-  return Object.keys(AnalyzerDATA_TYPES).filter(
-    type => !ACCEPTED_ANALYZER_TYPES.includes(type)
-  );
-}
-
 /**
  * Convert type-analyzer output to kepler.gl field types
  *
@@ -375,9 +367,10 @@ export function analyzerTypeToFieldType(aType) {
       return ALL_FIELD_TYPES.boolean;
     case GEOMETRY:
     case GEOMETRY_FROM_STRING:
+    case PAIR_GEOMETRY_FROM_STRING:
     case ARRAY:
     case OBJECT:
-      // TODO: create a new data type of objects
+      // TODO: create a new data type for objects and arrays
       return ALL_FIELD_TYPES.geojson;
     case STRING:
     case ZIPCODE:
@@ -420,13 +413,8 @@ export function processRowObject(rawData) {
 
   // pick samples
   const sampleData = getSampleData(rawData, 500);
-  console.time('getFieldsFromData');
   const fields = getFieldsFromData(sampleData, keys);
-
-  console.timeEnd('getFieldsFromData');
-  console.time('parseRowsByFields');
   const parsedRows = parseRowsByFields(rows, fields);
-  console.timeEnd('parseRowsByFields');
 
   return {
     fields,
@@ -472,7 +460,6 @@ export function processRowObject(rawData) {
  * }));
  */
 export function processGeojson(rawData) {
-  console.time('processGeojson');
   const normalizedGeojson = normalize(rawData);
 
   if (!normalizedGeojson || !Array.isArray(normalizedGeojson.features)) {
@@ -513,8 +500,8 @@ export function processGeojson(rawData) {
       }
     });
   });
+
   const processRow = processRowObject(allData);
-  console.timeEnd('processGeojson');
   return processRow;
 }
 

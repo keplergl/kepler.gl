@@ -24,6 +24,6 @@ after_success:
   - cat coverage/lcov.info | coveralls
 script:
   - npm run lint
-  - npm run cover
+  - npm run coveralls
   - fossa
 cache: yarn

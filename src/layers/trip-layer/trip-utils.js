@@ -55,9 +55,10 @@ export function coordHasLength4(samples) {
 
 export function containValidTime(timestamps) {
   const formattedTimeStamps = timestamps.map(ts => ({ts}));
-  const ignoredDataTypes = Object.keys(DATA_TYPES).filter(type => type !== DATA_TYPES.TIME);
+  const ignoredDataTypes = Object.keys(DATA_TYPES).filter(type =>
+    ![DATA_TYPES.TIME, DATA_TYPES.DATETIME].includes(type));
 
-  // ignroe all types but TIME
+  // ignore all types but TIME to improve performance
   const analyzedType = Analyzer.computeColMeta(formattedTimeStamps, [], {ignoredDataTypes})[0];
 
   if (!analyzedType || analyzedType.category !== 'TIME') {
