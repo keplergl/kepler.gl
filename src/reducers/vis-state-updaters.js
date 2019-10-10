@@ -1284,6 +1284,7 @@ function closeSpecificMapAtIndex(state, action) {
  * @public
  */
 export const loadFilesUpdater = (state, action) => {
+
   const {files} = action;
   const filesToLoad = files.map(fileBlob => processFileToLoad(fileBlob));
   // reader -> parser -> augment -> receiveVisData

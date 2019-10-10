@@ -591,7 +591,7 @@ export const loadFilesSuccessUpdater = (state) => ({
   ...state,
   loadFiles: {
     ...state.loadFiles,
-    fileLoading: true
+    fileLoading: false
   }
 });
 
