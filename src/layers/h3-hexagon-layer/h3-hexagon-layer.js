@@ -23,7 +23,7 @@ import memoize from 'lodash.memoize';
 import Layer from '../base-layer';
 import {GeoJsonLayer, H3HexagonLayer} from 'deck.gl';
 import EnhancedColumnLayer from 'deckgl-layers/column-layer/enhanced-column-layer';
-import {getVertices, getCentroid, idToPolygonGeo} from './h3-utils';
+import {getVertices, getCentroid, idToPolygonGeo, h3IsValid} from './h3-utils';
 import H3HexagonLayerIcon from './h3-hexagon-layer-icon';
 import {CHANNEL_SCALES, HIGHLIGH_COLOR_3D} from 'constants/default-settings';
 
@@ -224,14 +224,14 @@ export default class HexagonIdLayer extends Layer {
 
     allData.forEach((d, index) => {
       const id = getHexId(d);
-      if (typeof id !== 'string' || !id.length) {
+      if (!h3IsValid(id)) {
         return;
       }
       // find hexagonVertices
       // only need 1 instance of hexagonVertices
       if (!hexagonVertices) {
-        hexagonVertices = id && getVertices({id});
-        hexagonCenter = id && getCentroid({id});
+        hexagonVertices = getVertices({id});
+        hexagonCenter = getCentroid({id});
       }
 
       // save a reference of centroids to dataToFeature
