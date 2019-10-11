@@ -27,6 +27,7 @@ import {processCsvData} from 'processors/data-processor';
 import testCsvData, {sampleConfig} from 'test/fixtures/test-csv-data';
 import testHexIdData, {hexIdDataConfig, mergedH3Layer, mergedFilters} from 'test/fixtures/test-hex-id-data';
 import {cmpLayers, cmpFilters, cmpDatasets, cmpInteraction} from 'test/helpers/comparison-utils';
+import {INITIAL_UI_STATE} from 'reducers/ui-state-updaters';
 
 const mockRawData = {
   fields: [
@@ -119,6 +120,33 @@ test('#composerStateReducer - addDataToMapUpdater: mapState should be centered',
     60.71,
     'centerMap: true should override mapState config'
   );
+
+  t.end();
+});
+
+test('#composerStateReducer - addDataToMapUpdater: uiState', t => {
+  // init kepler.gl root and instance
+  const state = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+
+  const newState = addDataToMapUpdater(state, {
+    payload: {
+      datasets: {
+        data: mockRawData,
+        info: {
+          id: 'foo'
+        }
+      }
+    }
+  });
+
+  const expectedUIState = {
+    ...INITIAL_UI_STATE,
+    initialState: {},
+    readOnly: false,
+    currentModal: null
+  }
+
+  t.deepEqual(newState.uiState, expectedUIState, 'ui state should be set readOnly:false,currentModal: null');
 
   t.end();
 });
@@ -233,5 +261,45 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
   t.deepEqual(expectedVisState.layerOrder, actualVisState.layerOrder, 'Should create new layer, move it to the top');
   t.deepEqual(expectedVisState.splitMaps, actualVisState.splitMaps, 'Should keep existing splitMaps, add new layres to splitMaps');
 
+  t.end();
+});
+
+test('#composerStateReducer - addDataToMapUpdater: readOnly', t => {
+
+  const datasets = {
+    data: processCsvData(testCsvData),
+    info: {
+      id: sampleConfig.dataId
+    }
+  }
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+
+  // old state contain splitMaps
+  const nextState = addDataToMapUpdater(state, {
+    payload: {
+      datasets,
+      options: {
+        readOnly: true
+      }
+    }
+  });
+  t.equal(nextState.uiState.readOnly, true, 'should set readonly to be true');
+
+  const nextState1 = addDataToMapUpdater(state, {
+    payload: {
+      datasets
+    }
+  });
+  t.equal(nextState1.uiState.readOnly, false, 'should set readonly to be false');
+
+  const nextState2 = addDataToMapUpdater(state, {
+    payload: {
+      datasets,
+      options: {
+        readOnly: false
+      }
+    }
+  });
+  t.equal(nextState2.uiState.readOnly, false, 'should set readonly to be false');
   t.end();
 });
