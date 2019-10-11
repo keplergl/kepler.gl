@@ -235,3 +235,43 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
 
   t.end();
 });
+
+test('#composerStateReducer - addDataToMapUpdater: readOnly', t => {
+
+  const datasets = {
+    data: processCsvData(testCsvData),
+    info: {
+      id: sampleConfig.dataId
+    }
+  }
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+
+  // old state contain splitMaps
+  const nextState = addDataToMapUpdater(state, {
+    payload: {
+      datasets,
+      options: {
+        readOnly: true
+      }
+    }
+  });
+  t.equal(nextState.uiState.readOnly, true, 'should set readonly to be true');
+
+  const nextState1 = addDataToMapUpdater(state, {
+    payload: {
+      datasets
+    }
+  });
+  t.equal(nextState1.uiState.readOnly, false, 'should set readonly to be false');
+
+  const nextState2 = addDataToMapUpdater(state, {
+    payload: {
+      datasets,
+      options: {
+        readOnly: false
+      }
+    }
+  });
+  t.equal(nextState2.uiState.readOnly, false, 'should set readonly to be false');
+  t.end();
+});

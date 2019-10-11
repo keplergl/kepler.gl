@@ -156,7 +156,7 @@ export const addDataToMapUpdater = (state, {payload}) => {
     uiState: {
       ...mergedState.uiState,
       ...toggleModalUpdater(mergedState.uiState, {payload: null}),
-      ...(options.hasOwnProperty('readOnLy') ? {readOnly: options.readOnly} : {})
+      ...(options.hasOwnProperty('readOnly') ? {readOnly: options.readOnly} : {})
     }
   };
 
