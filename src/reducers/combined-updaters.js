@@ -18,13 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {toggleModalUpdater} from './ui-state-updaters';
+import {toggleModalUpdater, loadFilesSuccessUpdater} from './ui-state-updaters';
 import {updateVisDataUpdater as visStateUpdateVisDataUpdater} from './vis-state-updaters';
 import {receiveMapConfigUpdater as stateMapConfigUpdater} from './map-state-updaters';
 import {receiveMapConfigUpdater as styleMapConfigUpdater} from './map-style-updaters';
 import {findMapBounds} from 'utils/data-utils';
 import KeplerGlSchema from 'schemas';
-import {isObject} from 'util';
+import {isPlainObject} from 'utils/utils';
 
 // compose action to apply result multiple reducers, with the output of one
 
@@ -73,7 +73,8 @@ import {isObject} from 'util';
 const combinedUpdaters = null;
 /* eslint-enable no-unused-vars */
 
-export const isValidConfig = config => isObject(config) && isObject(config.config) && config.version;
+export const isValidConfig = config =>
+  isPlainObject(config) && isPlainObject(config.config) && config.version;
 export const defaultAddDataToMapOptions = {
   centerMap: true,
   keepExistingConfig: false
@@ -111,7 +112,7 @@ export const addDataToMapUpdater = (state, {payload}) => {
 
   if (isValidConfig(config)) {
     // if passed in saved config
-    parsedConfig = KeplerGlSchema.parseSavedConfig(config)
+    parsedConfig = KeplerGlSchema.parseSavedConfig(config);
   }
   const oldLayers = state.visState.layers;
 
@@ -154,9 +155,12 @@ export const addDataToMapUpdater = (state, {payload}) => {
   mergedState = {
     ...mergedState,
     uiState: {
-      ...mergedState.uiState,
-      ...toggleModalUpdater(mergedState.uiState, {payload: null}),
-      ...(options.hasOwnProperty('readOnly') ? {readOnly: options.readOnly} : {})
+      ...toggleModalUpdater(loadFilesSuccessUpdater(mergedState.uiState), {
+        payload: null
+      }),
+      ...(options.hasOwnProperty('readOnly')
+        ? {readOnly: options.readOnly}
+        : {})
     }
   };
 

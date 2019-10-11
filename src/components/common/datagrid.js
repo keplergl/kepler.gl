@@ -30,6 +30,9 @@ import {parseFieldValue} from 'utils/data-utils';
 import {ALL_FIELD_TYPES} from 'constants';
 
 const DataGridWrapper = styled.div`
+  width: 100%;
+  overflow-x: auto;
+
   .ReactVirtualized__Grid:focus,
   .ReactVirtualized__Grid:active {
     outline: 0;
@@ -37,47 +40,53 @@ const DataGridWrapper = styled.div`
   .ReactVirtualized__Grid__innerScrollContainer {
     ${props => props.theme.modalScrollBar};
   }
-  
+
   .ReactVirtualized__Grid {
     .column-0 .cell {
-      padding-left: 24px;
+      padding-left: ${props => props.theme.gridPaddingSide}px;
     }
-    
-    .cell {
-      overflow-y: scroll;
-      overflow-x: hidden;
-      
-      &.geojson {
-        span {
-          text-align: left;
-        } 
-      }
-    }
-    
 
-    .last .cell {
-      padding-right: 24px;
+    .header-0 .header-cell {
+      padding-left: ${props => props.theme.gridPaddingSide}px;
+    }
+
+    .cell {
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: ${props => props.theme.cellPaddingSide}px;
+    }
+
+    .last {
+      .cell {
+        padding-right: ${props => props.theme.gridPaddingSide}px;
+      }
+      .header-cell {
+        padding-right: ${props => props.theme.gridPaddingSide}px;
+      }
     }
   }
 `;
 
 const StyledFieldHeader = styled.div`
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  text-align: center;
+  justify-content: left;
   border-right: 0;
   border-bottom: 0;
   background: ${props => props.theme.panelBackgroundLT};
   color: ${props => props.theme.titleColorLT};
   height: 100%;
-  
+
+  .header-content {
+    display: flex;
+    flex-direction: column;
+  }
+
   .label-wrapper {
     display: flex;
     align-items: center;
   }
-  
+
   .icon-wrapper {
     margin-right: ${props => props.type === 'timestamp' ? '2px' : '0'};
     height: 16px;
@@ -87,14 +96,16 @@ const StyledFieldHeader = styled.div`
 export const FieldHeaderFactory = () => {
   const Header = ({className, value, type}) => (
     <StyledFieldHeader className={className || ''} type={type} title={value}>
-      <div className="label-wrapper">
-        <div className="icon-wrapper">
-          {type === 'timestamp' ? <Clock height="16px" /> : null}
+      <div className="field-header-content">
+        <div className="label-wrapper">
+          <div className="icon-wrapper">
+            {type === 'timestamp' ? <Clock height="16px" /> : null}
+          </div>
+          <span>{value}</span>
         </div>
-        <span>{value}</span>
-      </div>
-      <div className="field-wrapper">
-        <FieldToken type={type} />
+        <div className="field-wrapper">
+          <FieldToken type={type} />
+        </div>
       </div>
     </StyledFieldHeader>
   );
@@ -109,16 +120,14 @@ const StyledCell = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-align: center;
   border-right: 0;
   border-bottom: ${props => props.theme.panelBorderLT};
   color: ${props => props.theme.labelColorLT};
   text-overflow: ellipsis;
   height: 100%;
   width: 100%;
-  
+
   span {
-    overflow: scroll;
     text-overflow: ellipsis;
     white-space: pre-wrap;
     word-wrap: break-word;
@@ -163,9 +172,7 @@ function DataGridFactory(
 
     _cellRenderer = ({columnIndex, key, rowIndex, style}) => {
       const {columns, rows} = this.props;
-
       const isLast = columnIndex === columns.length - 1
-
       const type = columns[columnIndex].type;
 
       // rowIndex -1 because data rows start rendering at index 1 and we normalize back using the -1 param

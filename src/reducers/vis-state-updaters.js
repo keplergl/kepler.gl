@@ -134,8 +134,6 @@ export const defaultAnimationConfig = {
  * @property {Object} hoverInfo
  * @property {Object} clicked
  * @property {Object} mousePos
- * @property {boolean} fileLoading
- * @property {*} fileLoadingErr
  * @property {Array} splitMaps - a list of objects of layer availabilities and visibilities for each map
  * @property {Object} layerClasses
  * @property {Object} animationConfig
@@ -163,10 +161,6 @@ export const INITIAL_VIS_STATE = {
   hoverInfo: undefined,
   clicked: undefined,
   mousePos: {},
-
-  // TODO: not used anywhere, delete it
-  fileLoading: false,
-  fileLoadingErr: null,
 
   // this is used when user split maps
   splitMaps: [
@@ -1242,6 +1236,7 @@ export const updateVisDataUpdater = (state, action) => {
   // register layer animation domain,
   // need to be called after layer data is calculated
   updatedState = updateAnimationDomain(updatedState);
+
   return updatedState;
 };
 /* eslint-enable max-statements */
@@ -1289,6 +1284,7 @@ function closeSpecificMapAtIndex(state, action) {
  * @public
  */
 export const loadFilesUpdater = (state, action) => {
+
   const {files} = action;
   const filesToLoad = files.map(fileBlob => processFileToLoad(fileBlob));
   // reader -> parser -> augment -> receiveVisData
@@ -1310,33 +1306,15 @@ export const loadFilesUpdater = (state, action) => {
         );
         return addDataToMap(data);
       },
-      error => loadFilesErr(error)
+      loadFilesErr
     )
   ];
 
   return withTask(
-    {
-      ...state,
-      fileLoading: true
-    },
+    state,
     loadFileTasks
   );
 };
-
-/**
- * Trigger loading file error
- * @memberof visStateUpdaters
- * @param {Object} state `visState`
- * @param {Object} action action
- * @param {*} action.error
- * @returns {Object} nextState
- * @public
- */
-export const loadFilesErrUpdater = (state, {error}) => ({
-  ...state,
-  fileLoading: false,
-  fileLoadingErr: error
-});
 
 /**
  * Helper function to update All layer domain and layer data of state

@@ -19,31 +19,25 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import PropTypes from 'prop-types';
-import styled from 'styled-components';
+import console from 'global/console';
 
-import FileUpload from 'components/common/file-uploader/file-upload';
+export default class ErrorBoundary extends React.Component {
+  static getDerivedStateFromError(error) {
+    // Update state so the next render will show the fallback UI.
+    return {hasError: true, error};
+  }
+  state = {hasError: false}
+  componentDidCatch(error, errorInfo) {
+    // You can also log the error to an error reporting service
+    console.error(error, errorInfo);
+  }
 
-const StyledLoadDataModal = styled.div`
-  padding: ${props => props.theme.modalPadding};
-`;
+  render() {
+    if (this.state.hasError) {
+      // You can render any custom fallback UI
+      return <h1>Something went wrong.</h1>;
+    }
 
-const loadDataModalFactory = () => {
-  const LoadDataModal = props => (
-    <StyledLoadDataModal>
-      <div className="load-data-modal">
-        <FileUpload {...props}/>
-      </div>
-    </StyledLoadDataModal>
-  );
-
-  LoadDataModal.propTypes = {
-    // call backs
-    onFileUpload: PropTypes.func.isRequired,
-    fileLoading: PropTypes.bool
-  };
-
-  return LoadDataModal;
-};
-
-export default loadDataModalFactory;
+    return this.props.children;
+  }
+}

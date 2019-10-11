@@ -20,18 +20,26 @@
 
 import React from 'react';
 import test from 'tape';
-import {mount} from 'enzyme';
 import {mountWithTheme} from 'test/helpers/component-utils';
 
-import DataTableModalFactory, {DatasetTabs, DatasetModalTab} from
-  'components/modals/data-table-modal';
-import DataGridFactory, {FieldHeaderFactory, CellFactory} from 'components/common/datagrid';
+import DataTableModalFactory, {
+  DatasetTabs,
+  DatasetModalTab
+} from 'components/modals/data-table-modal';
+import DataGridFactory, {
+  FieldHeaderFactory,
+  CellFactory
+} from 'components/common/datagrid';
 
 const FieldHeader = FieldHeaderFactory();
 const Cell = CellFactory();
 const DataGrid = DataGridFactory(FieldHeader, Cell);
 const DataTableModal = DataTableModalFactory(DataGrid);
 import {testFields, testAllData} from 'test/fixtures/test-csv-data';
+import {
+  geoStyleFields,
+  geoStyleRows
+} from 'test/fixtures/geojson';
 
 // This makes sure react-virtualized renders the full grid
 const WIDTH = 1400;
@@ -39,14 +47,9 @@ const HEIGHT = 800;
 const rows = 10;
 
 /* eslint-disable max-statements */
-test('Components -> DataTableModal.render', t => {
+test('Components -> DataTableModal.render: csv', t => {
   t.doesNotThrow(() => {
-    mountWithTheme(
-      <DataTableModal
-        width={WIDTH}
-        height={HEIGHT}
-      />
-    );
+    mountWithTheme(<DataTableModal width={WIDTH} height={HEIGHT} />);
   }, 'Show not fail without data');
 
   const wrapper = mountWithTheme(
@@ -66,12 +69,32 @@ test('Components -> DataTableModal.render', t => {
     />
   );
 
-  t.equal(wrapper.find(DataTableModal).length, 1, 'should render DataTableModal data');
+  t.equal(
+    wrapper.find(DataTableModal).length,
+    1,
+    'should render DataTableModal data'
+  );
   t.equal(wrapper.find(DatasetTabs).length, 1, 'should render DatasetTabs');
-  t.equal(wrapper.find(DatasetModalTab).length, 1, 'should render 1 dataset-modal-catalog');
-  t.equal(wrapper.find('Header').length, testFields.length, `should render ${testFields.length} headers`);
-  t.equal(wrapper.find('Cell').length, testFields.length * rows, `should render ${testFields.length * rows} cells`);
-  t.equal(wrapper.find('StyledComponent.cell.boolean').length, 10, 'should render 10 cells');
+  t.equal(
+    wrapper.find(DatasetModalTab).length,
+    1,
+    'should render 1 dataset-modal-catalog'
+  );
+  t.equal(
+    wrapper.find('Header').length,
+    testFields.length,
+    `should render ${testFields.length} headers`
+  );
+  t.equal(
+    wrapper.find('Cell').length,
+    testFields.length * rows,
+    `should render ${testFields.length * rows} cells`
+  );
+  t.equal(
+    wrapper.find('StyledComponent.cell.boolean').length,
+    10,
+    'should render 10 boolean cells'
+  );
 
   const expectedRows = {
     0: [
@@ -109,8 +132,104 @@ test('Components -> DataTableModal.render', t => {
     t.equal(cells.length, 11, 'should render 11 cells');
 
     for (let c = 0; c < cells.length; c++) {
-      const cellText = cells.at(c).find('span').text();
-      t.equal(cellText, expectedRow[c], `should render cell ${expectedRow[c]} correctly`);
+      const cellText = cells
+        .at(c)
+        .find('span')
+        .text();
+      t.equal(
+        cellText,
+        expectedRow[c],
+        `should render cell ${expectedRow[c]} correctly`
+      );
+    }
+  });
+
+  t.end();
+});
+
+test('Components -> DataTableModal.render: csv', t => {
+  const wrapper = mountWithTheme(
+    <DataTableModal
+      width={WIDTH}
+      height={HEIGHT}
+      datasets={{
+        smoothie: {
+          id: 'smoothie',
+          allData: geoStyleRows,
+          fields: geoStyleFields,
+          color: [113, 113, 113],
+          data: geoStyleRows
+        }
+      }}
+      dataId="smoothie"
+    />
+  );
+
+  t.equal(
+    wrapper.find(DataTableModal).length,
+    1,
+    'should render DataTableModal data'
+  );
+  t.equal(wrapper.find(DatasetTabs).length, 1, 'should render DatasetTabs');
+  t.equal(
+    wrapper.find(DatasetModalTab).length,
+    1,
+    'should render 1 dataset-modal-catalog'
+  );
+  t.equal(
+    wrapper.find('Header').length,
+    geoStyleFields.length,
+    `should render ${geoStyleFields.length} headers`
+  );
+  t.equal(
+    wrapper.find('Cell').length,
+    geoStyleFields.length * geoStyleRows.length,
+    `should render ${geoStyleFields.length * geoStyleRows.length} cells`
+  );
+
+  const expectedRows = {
+    0: [
+      '{"type":"Feature","properties":{"fillColor":[1,2,3],"lineColor":[4,5,6],"lineWidth":1,"elevation":10,"radius":5},"geometry":{"type":"Point","coordinates":[[-122,37]]}}',
+      '[1,2,3]',
+      '[4,5,6]',
+      '1',
+      '10',
+      '5'
+    ],
+    1: [
+      '{"type":"Feature","properties":{"fillColor":[7,8,9],"lineColor":[4,5,6],"lineWidth":3,"elevation":10,"radius":5},"geometry":{"type":"Point","coordinates":[[-122,37]]}}',
+      '[7,8,9]',
+      '[4,5,6]',
+      '3',
+      '10',
+      '5'
+    ],
+    2: [
+      '{"type":"Feature","properties":{"fillColor":[1,2,3],"lineColor":[4,5,6],"lineWidth":4,"elevation":10,"radius":5},"geometry":{"type":"Point","coordinates":[[-122,37]]}}',
+      '[1,2,3]',
+      '[4,5,6]',
+      '4',
+      '10',
+      '5'
+    ]
+  };
+
+  Object.entries(expectedRows).forEach(keyAndRow => {
+    const [index, expectedRow] = keyAndRow;
+
+    const cells = wrapper.find(`.row-${index}`);
+    t.equal(cells.length, 6, 'should render 6 cells');
+
+    for (let c = 0; c < cells.length; c++) {
+      const cellText = cells
+        .at(c)
+        .find('span')
+        .text();
+      t.equal(
+        cellText,
+        expectedRow[c],
+        `should render cell ${expectedRow[c]} correctly`
+      );
     }
   });
 

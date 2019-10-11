@@ -25,9 +25,10 @@ import {
   RATIOS,
   RESOLUTIONS,
   EXPORT_MAP_FORMATS,
-  EXPORT_HTML_MAP_MODES
+  EXPORT_HTML_MAP_MODES,
+  DEFAULT_NOTIFICATION_TOPICS
 } from 'constants/default-settings';
-import {createNotification} from 'utils/notifications-utils';
+import {createNotification, errorNotification} from 'utils/notifications-utils';
 
 export const DEFAULT_ACTIVE_SIDE_PANEL = 'layer';
 export const DEFAULT_MODAL = ADD_DATA_ID;
@@ -123,6 +124,10 @@ export const DEFAULT_EXPORT_IMAGE = {
   error: false
 };
 
+export const DEFAULT_LOAD_FILES = {
+  fileLoading: false
+};
+
 /**
  * Default initial `exportData` settings
  * @memberof uiStateUpdaters
@@ -200,7 +205,8 @@ export const INITIAL_UI_STATE = {
   // map control panels
   mapControls: DEFAULT_MAP_CONTROLS,
   // ui notifications
-  notifications: DEFAULT_NOTIFICATIONS
+  notifications: DEFAULT_NOTIFICATIONS,
+  loadFiles: DEFAULT_LOAD_FILES
 };
 
 /* Updaters */
@@ -300,7 +306,10 @@ export const toggleMapControlUpdater = (state, {payload: panelId}) => ({
  * @returns {Object} nextState
  * @public
  */
-export const openDeleteModalUpdater = (state, {payload: datasetKeyToRemove}) => ({
+export const openDeleteModalUpdater = (
+  state,
+  {payload: datasetKeyToRemove}
+) => ({
   ...state,
   currentModal: DELETE_DATA_ID,
   datasetKeyToRemove
@@ -563,3 +572,42 @@ export const removeNotificationUpdater = (state, {payload: id}) => ({
   ...state,
   notifications: state.notifications.filter(n => n.id !== id)
 });
+
+/**
+ * Fired when file loading begin
+ * @memberof uiStateUpdaters
+ * @param {Object} state `uiState`
+ * @param {Object} action
+ */
+export const loadFilesUpdater = (state) => ({
+  ...state,
+  loadFiles: {
+    ...state.loadFiles,
+    fileLoading: true
+  }
+});
+
+export const loadFilesSuccessUpdater = (state) => ({
+  ...state,
+  loadFiles: {
+    ...state.loadFiles,
+    fileLoading: false
+  }
+});
+
+export const loadFilesErrUpdater = (state, {error}) =>
+  addNotificationUpdater(
+    {
+      ...state,
+      loadFiles: {
+        ...state.loadFiles,
+        fileLoading: false
+      }
+    },
+    {
+      payload: errorNotification({
+        message: (error || {}).message || 'Failde to upload files',
+        topic: DEFAULT_NOTIFICATION_TOPICS.global
+      })
+    }
+  );

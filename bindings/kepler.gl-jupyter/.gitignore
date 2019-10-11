@@ -7,6 +7,7 @@ dist/
 build/
 *.py[cod]
 node_modules/
+env/
 ENV/
 ENV3/
 

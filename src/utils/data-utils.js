@@ -59,20 +59,23 @@ export function findMapBounds(layers) {
       res.push(l.meta.bounds);
     }
     return res;
-  }, [])
+  }, []);
   // return null if no layer is available
   if (availableLayerBounds.length === 0) {
     return null;
   }
   // merge bounds in each layer
-  const newBounds = availableLayerBounds.reduce((res, b) => {
-    return [
-      Math.min(res[0], b[0]),
-      Math.min(res[1], b[1]),
-      Math.max(res[2], b[2]),
-      Math.max(res[3], b[3])
-    ];
-  }, [MAX_LONGITUDE, MAX_LATITUDE, MIN_LONGITUDE, MIN_LATITUDE]);
+  const newBounds = availableLayerBounds.reduce(
+    (res, b) => {
+      return [
+        Math.min(res[0], b[0]),
+        Math.min(res[1], b[1]),
+        Math.max(res[2], b[2]),
+        Math.max(res[3], b[3])
+      ];
+    },
+    [MAX_LONGITUDE, MAX_LATITUDE, MIN_LONGITUDE, MIN_LATITUDE]
+  );
   return newBounds;
 }
 /* eslint-enable max-statements */
@@ -96,7 +99,7 @@ export function getLatLngBounds(points, idx, limit) {
 
 export function clamp([min, max], val) {
   return val <= min ? min : val >= max ? max : val;
-};
+}
 
 export function getSampleData(data, sampleSize = 500, getValue = d => d) {
   const sampleStep = Math.max(Math.floor(data.length / sampleSize), 1);
@@ -117,7 +120,9 @@ export function timeToUnixMilli(value, format) {
   if (notNullorUndefined(value)) {
     return typeof value === 'string'
       ? moment.utc(value, format).valueOf()
-      : format === 'x' ? value * 1000 : value;
+      : format === 'x'
+      ? value * 1000
+      : value;
   }
   return null;
 }
@@ -229,6 +234,25 @@ export function roundValToStep(minValue, step, val) {
   return Number(rounded);
 }
 
+const identity = d => d;
+
+export const FIELD_DISPLAY_FORMAT = {
+  [ALL_FIELD_TYPES.string]: identity,
+  [ALL_FIELD_TYPES.timestamp]: identity,
+  [ALL_FIELD_TYPES.integer]: identity,
+  [ALL_FIELD_TYPES.real]: identity,
+  [ALL_FIELD_TYPES.boolean]: d => String(d),
+  [ALL_FIELD_TYPES.date]: identity,
+  [ALL_FIELD_TYPES.geojson]: d =>
+    typeof d === 'string'
+      ? d
+      : isPlainObject(d)
+      ? JSON.stringify(d)
+      : Array.isArray(d)
+      ? `[${String(d)}]`
+      : ''
+};
+
 /**
  * Parse field value and type and return a string representation
  * @param {string} value the field value
@@ -240,24 +264,17 @@ export const parseFieldValue = (value, type) => {
     return '';
   }
 
-  switch (type) {
-    case ALL_FIELD_TYPES.boolean:
-      return String(value);
-    case ALL_FIELD_TYPES.geojson:
-      return typeof value === 'string' ? value :
-        isPlainObject(value) ? JSON.stringify(value) :
-          Array.isArray(value) ? `[${String(value)}]` : '';
-    default:
-      return value;
-  }
+  return FIELD_DISPLAY_FORMAT[type]
+    ? FIELD_DISPLAY_FORMAT[type](value)
+    : String(value);
 };
 
 const arrayMoveMutate = (array, from, to) => {
-	array.splice(to < 0 ? array.length + to : to, 0, array.splice(from, 1)[0]);
+  array.splice(to < 0 ? array.length + to : to, 0, array.splice(from, 1)[0]);
 };
 
 export const arrayMove = (array, from, to) => {
-	array = array.slice();
-	arrayMoveMutate(array, from, to);
-	return array;
+  array = array.slice();
+  arrayMoveMutate(array, from, to);
+  return array;
 };

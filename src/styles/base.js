@@ -253,11 +253,13 @@ export const notificationPanelItemHeight = 60;
 // Datagrid
 const columnWidth = 200;
 const cellHeaderHeight = 72;
-const cellHeight = 48;
+const cellHeight = 24;
+const cellPaddingSide = 18;
 const extendCellHeight = 2 * cellHeight;
 const extendColumnWidth = 2 * columnWidth;
 const gridDefaultWidth = 800;
 const gridDefaultHeight = 600;
+const gridPaddingSide = 24;
 
 // Floating Time display
 const timeDisplayBorderRadius = 32;
@@ -1037,9 +1039,11 @@ export const theme = {
   extendColumnWidth,
   cellHeaderHeight,
   cellHeight,
+  cellPaddingSide,
   extendCellHeight,
   gridDefaultWidth,
   gridDefaultHeight,
+  gridPaddingSide,
 
   // time display
   timeDisplayBorderRadius,

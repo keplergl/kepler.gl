@@ -308,3 +308,58 @@ export const geoBounds = [
   -122.39166672864975,
   37.79427854456892
 ];
+
+export const geoJsonWithStyle = {
+  type: 'FeatureCollection',
+  features: [
+    {
+      type: 'Feature',
+      properties: {
+        fillColor: [1,2,3],
+        lineColor: [4,5,6],
+        lineWidth: 1,
+        elevation: 10,
+        radius: 5
+      },
+      geometry: {type: 'Point', coordinates: [[-122, 37]]}
+    },
+    {
+      type: 'Feature',
+      properties: {
+        fillColor: [7,8,9],
+        lineColor: [4,5,6],
+        lineWidth: 3,
+        elevation: 10,
+        radius: 5
+      },
+      geometry: {type: 'Point', coordinates: [[-122, 37]]}
+    },
+    {
+      type: 'Feature',
+      properties: {
+        fillColor: [1,2,3],
+        lineColor: [4,5,6],
+        lineWidth: 4,
+        elevation: 10,
+        radius: 5
+      },
+      geometry: {type: 'Point', coordinates: [[-122, 37]]}
+    }
+  ]
+};
+
+// parsed fields and rows
+export const geoStyleFields = [
+  {name: '_geojson', format: '', tableFieldIndex: 1, type: 'geojson'},
+  {name: 'fillColor', format: '', tableFieldIndex: 2, type: 'geojson'},
+  {name: 'lineColor', format: '', tableFieldIndex: 3, type: 'geojson'},
+  {name: 'lineWidth', format: '', tableFieldIndex: 4, type: 'integer'},
+  {name: 'elevation', format: '', tableFieldIndex: 5, type: 'integer'},
+  {name: 'radius', format: '', tableFieldIndex: 6, type: 'integer'}
+];
+
+export const geoStyleRows = [
+  [geoJsonWithStyle.features[0], [1, 2, 3], [4, 5, 6], 1, 10, 5],
+  [geoJsonWithStyle.features[1], [7, 8, 9], [4, 5, 6], 3, 10, 5],
+  [geoJsonWithStyle.features[2], [1, 2, 3], [4, 5, 6], 4, 10, 5]
+];

@@ -302,6 +302,7 @@ export default function ModalContainerFactory(
               <LoadDataModal
                 onClose={this._closeModal}
                 onFileUpload={this._onFileUpload}
+                {...uiState.loadFiles}
               />
             );
             modalProps = {

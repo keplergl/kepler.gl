@@ -20,27 +20,36 @@
 
 import {taskCreator} from 'react-palm/tasks';
 import {json as requestJson} from 'd3-request';
+import console from 'global/console';
 
 export const LOAD_FILE_TASK = taskCreator(
-  ({fileBlob, info, handler, processor}, success, error) =>
-    handler(fileBlob, processor)
+  ({fileBlob, info, handler, processor}, success, error) => {
+    console.time('loadFileTask')
+    return handler(fileBlob, processor)
       .then(result => {
         if (!result) {
           // TODO: capture in the UI and show message
-          throw new Error('fail to load data');
+          error(new Error('File to load data, result is empty'));
         } else {
           // we are trying to standardize the shape of our return
           // since we start using the kepler.json format
           // result has both datasets and info
           // TODO: I think we should pass info to the handler and return
           // the same format back from the file handler
+          console.timeEnd('loadFileTask')
+
           if (result.datasets) { // this is coming from parsing keplergl.json file
             success(result); // info is already part of datasets
           }
           success({datasets: {data: result, info}});
         }
       })
-      .catch(err => error(err)),
+      .catch(err => {
+        console.log(err);
+        error(err)
+      })
+
+    },
 
   'LOAD_FILE_TASK'
 );

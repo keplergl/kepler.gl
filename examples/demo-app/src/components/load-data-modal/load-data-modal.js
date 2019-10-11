@@ -59,7 +59,7 @@ const ModalTab = styled.div`
     border-bottom: 3px solid ${props => props.theme.textColorLT};
     font-weight: 500;
   }
-  
+
   ${media.portable`
     font-size: 12px;
   `};
@@ -73,12 +73,12 @@ const StyledLoadDataModalTabItem = styled.div`
   font-size: 14px;
   font-weight: 400;
   color: ${props => props.theme.subtextColorLT};
-  
+
   ${media.portable`
     margin-left: 16px;
     font-size: 12px;
   `};
-  
+
   :first-child {
     margin-left: 0;
     padding-left: 0;
@@ -96,7 +96,7 @@ const StyledMapIcon = styled.div`
   width: 64px;
   height: 48px;
   border-radius: 2px;
-  
+
   ${media.portable`
     width: 48px;
     height: 32px;
@@ -117,7 +117,7 @@ const StyledTrySampleData = styled.div`
   .demo-map-label {
     font-size: 11px;
     color: ${props => props.theme.labelColorLT};
-    
+
     ${media.portable`
       font-size: 10px;
     `};
@@ -133,7 +133,7 @@ const StyledTrySampleData = styled.div`
     ${media.portable`
       font-size: 12px;
     `};
-      
+
     :hover {
       font-weight: 500;
     }
@@ -179,7 +179,7 @@ class LoadDataModal extends Component {
                   />
                 ) : null}
                 {loadingMethod.id === 'upload' ? (
-                  <FileUpload onFileUpload={this.props.onFileUpload} />
+                  <FileUpload {...this.props} />
                 ) : null}
                 {loadingMethod.id === 'remote' ? (
                   <LoadRemoteMap

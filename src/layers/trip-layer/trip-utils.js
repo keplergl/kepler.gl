@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {Analyzer} from 'type-analyzer';
+import {Analyzer, DATA_TYPES} from 'type-analyzer';
 
 import {
   getSampleData,
@@ -55,7 +55,11 @@ export function coordHasLength4(samples) {
 
 export function containValidTime(timestamps) {
   const formattedTimeStamps = timestamps.map(ts => ({ts}));
-  const analyzedType = Analyzer.computeColMeta(formattedTimeStamps)[0];
+  const ignoredDataTypes = Object.keys(DATA_TYPES).filter(type =>
+    ![DATA_TYPES.TIME, DATA_TYPES.DATETIME].includes(type));
+
+  // ignore all types but TIME to improve performance
+  const analyzedType = Analyzer.computeColMeta(formattedTimeStamps, [], {ignoredDataTypes})[0];
 
   if (!analyzedType || analyzedType.category !== 'TIME') {
     return false;

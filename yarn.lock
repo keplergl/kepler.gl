@@ -1726,23 +1726,12 @@ babel-plugin-syntax-jsx@^6.18.0:
   version "6.18.0"
   resolved "https://registry.yarnpkg.com/babel-plugin-syntax-jsx/-/babel-plugin-syntax-jsx-6.18.0.tgz#0af32a9a6e13ca7a3fd5069e62d7b0f58d0d8946"
 
-babel-plugin-syntax-object-rest-spread@^6.8.0:
-  version "6.13.0"
-  resolved "https://registry.yarnpkg.com/babel-plugin-syntax-object-rest-spread/-/babel-plugin-syntax-object-rest-spread-6.13.0.tgz#fd6536f2bce13836ffa3a5458c4903a597bb3bf5"
-
 babel-plugin-transform-builtin-extend@^1.1.0:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/babel-plugin-transform-builtin-extend/-/babel-plugin-transform-builtin-extend-1.1.2.tgz#5e96fecf58b8fa1ed74efcad88475b2af3c9116e"
   dependencies:
     babel-runtime "^6.2.0"
     babel-template "^6.3.0"
-
-babel-plugin-transform-object-rest-spread@^6.26.0:
-  version "6.26.0"
-  resolved "https://registry.yarnpkg.com/babel-plugin-transform-object-rest-spread/-/babel-plugin-transform-object-rest-spread-6.26.0.tgz#0f36692d50fef6b7e2d4b3ac1478137a963b7b06"
-  dependencies:
-    babel-plugin-syntax-object-rest-spread "^6.8.0"
-    babel-runtime "^6.26.0"
 
 babel-runtime@^6.2.0, babel-runtime@^6.22.0, babel-runtime@^6.26.0:
   version "6.26.0"
@@ -7524,11 +7513,11 @@ react-onclickoutside@^6.7.1:
   version "6.9.0"
   resolved "https://registry.yarnpkg.com/react-onclickoutside/-/react-onclickoutside-6.9.0.tgz#a54bc317ae8cf6131a5d78acea55a11067f37a1f"
 
-react-palm@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/react-palm/-/react-palm-2.0.0.tgz#03be811ced642e9f1ca0fb437e99b8f55419413b"
+react-palm@^3.1.2:
+  version "3.1.2"
+  resolved "https://registry.yarnpkg.com/react-palm/-/react-palm-3.1.2.tgz#8a20fe07e3999e4e5593af90d020eafa769f9ed0"
+  integrity sha512-DSOSWlRf9e3v0IHy28WYEOP7kanrbAiZbcj1TvVcVg9xHXkftFBSmhogpc7OP7s8UrEGGTVs95YJ8iqgoXoGfA==
   dependencies:
-    babel-plugin-transform-object-rest-spread "^6.26.0"
     function.prototype.name "^1.1.0"
     react-dom "^16.4.2"
     react-reconciler "^0.12.0"
@@ -9230,9 +9219,10 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   version "0.14.5"
   resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-0.14.5.tgz#5ae68177f192d4456269d108afa93ff8743f4f64"
 
-type-analyzer@0.2.1:
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/type-analyzer/-/type-analyzer-0.2.1.tgz#c3a04552be0114d079a54b5def72a828605f9cf9"
+type-analyzer@0.2.3:
+  version "0.2.3"
+  resolved "https://registry.yarnpkg.com/type-analyzer/-/type-analyzer-0.2.3.tgz#a265b29b33290e465e2c611c3daaaf979c780e71"
+  integrity sha512-CwHct29PabC8ze2QIczh82/9r277ljuxctCmriwxx63kIXDObe2BhF2iGU/iOnyjU/c+aiSEdWAVqR27rnp4mw==
 
 type-check@~0.3.2:
   version "0.3.2"
