@@ -606,7 +606,7 @@ export const loadFilesErrUpdater = (state, {error}) =>
     },
     {
       payload: errorNotification({
-        message: (error || {}).message || '',
+        message: (error || {}).message || 'Failde to upload files',
         topic: DEFAULT_NOTIFICATION_TOPICS.global
       })
     }

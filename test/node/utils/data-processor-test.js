@@ -19,6 +19,10 @@
 // THE SOFTWARE.
 
 import test from 'tape';
+import sinon from 'sinon';
+import {console as Console} from 'global/window';
+import {DATA_TYPES} from 'type-analyzer';
+
 import testData, {
   dataWithNulls,
   parsedDataWithNulls,
@@ -34,11 +38,16 @@ import {
 } from 'test/fixtures/geojson';
 
 import {
+  ACCEPTED_ANALYZER_TYPES,
+  analyzerTypeToFieldType,
+  formatCsv,
   getFieldsFromData,
   getSampleForTypeAnalyze,
   parseCsvRowsByFieldType,
   processCsvData,
-  processGeojson
+  processGeojson,
+  processRowObject,
+  validateInputData
 } from 'processors/data-processor';
 
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
@@ -106,6 +115,8 @@ test('Processor -> getFieldsFromData', t => {
 });
 
 test('Processor -> processCsvData', t => {
+  t.throws(() => processCsvData(''), 'should throw if csv is empty');
+
   // load sample dataset csv as text
   const {fields, rows} = processCsvData(testData);
 
@@ -134,7 +145,7 @@ test('Processor -> processCsvData', t => {
 });
 
 test('Processor -> processCsvData: duplicated field name', t => {
-  const testData1 = `column1,column1,column2\na,b,c\nc,d,e`;
+  const testData1 = `column1,column1,column1,column2\na,b,c,d\nc,d,e,f`;
 
   // load sample dataset csv as text
   const result = processCsvData(testData1);
@@ -143,9 +154,10 @@ test('Processor -> processCsvData: duplicated field name', t => {
     fields: [
       {name: 'column1', format: '', tableFieldIndex: 1, type: 'string'},
       {name: 'column1-0', format: '', tableFieldIndex: 2, type: 'string'},
-      {name: 'column2', format: '', tableFieldIndex: 3, type: 'string'}
+      {name: 'column1-1', format: '', tableFieldIndex: 3, type: 'string'},
+      {name: 'column2', format: '', tableFieldIndex: 4, type: 'string'}
     ],
-    rows: [['a', 'b', 'c'], ['c', 'd', 'e']]
+    rows: [['a', 'b', 'c', 'd'], ['c', 'd', 'e', 'f']]
   };
 
   t.deepEqual(
@@ -212,18 +224,18 @@ test('Processor => processGeojson: parse rows', t => {
     features: [
       {
         type: 'Feature',
-        properties: {TRIPS: '11',RATE: 'a',TIME: '1570749707'},
-        geometry: {type: 'Point',coordinates: [[-122, 37]]}
+        properties: {TRIPS: '11', RATE: 'a', TIME: '1570749707'},
+        geometry: {type: 'Point', coordinates: [[-122, 37]]}
       },
       {
         type: 'Feature',
-        properties: {TRIPS: '10',RATE: 'b',TIME: '1570749707'},
-        geometry: {type: 'Point',coordinates: [[-122, 37]]}
+        properties: {TRIPS: '10', RATE: 'b', TIME: '1570749707'},
+        geometry: {type: 'Point', coordinates: [[-122, 37]]}
       },
       {
         type: 'Feature',
-        properties: {TRIPS: '9',RATE: 'b',TIME: '1570749707'},
-        geometry: {type: 'Point',coordinates: [[-122, 37]]}
+        properties: {TRIPS: '9', RATE: 'b', TIME: '1570749707'},
+        geometry: {type: 'Point', coordinates: [[-122, 37]]}
       }
     ]
   };
@@ -239,30 +251,51 @@ test('Processor => processGeojson: parse rows', t => {
     [
       {
         type: 'Feature',
-        properties: {TRIPS: 11,RATE: 'a',TIME: 1570749707},
-        geometry: {type: 'Point',coordinates: [[-122, 37]]}
-      }, 11, 'a', 1570749707
+        properties: {TRIPS: 11, RATE: 'a', TIME: 1570749707},
+        geometry: {type: 'Point', coordinates: [[-122, 37]]}
+      },
+      11,
+      'a',
+      1570749707
     ],
     [
       {
         type: 'Feature',
-        properties: {TRIPS: 10,RATE: 'b',TIME: 1570749707},
-        geometry: {type: 'Point',coordinates: [[-122, 37]]}
-      }, 10, 'b', 1570749707
+        properties: {TRIPS: 10, RATE: 'b', TIME: 1570749707},
+        geometry: {type: 'Point', coordinates: [[-122, 37]]}
+      },
+      10,
+      'b',
+      1570749707
     ],
     [
       {
         type: 'Feature',
-        properties: {TRIPS: 9,RATE: 'b',TIME: 1570749707},
-        geometry: {type: 'Point',coordinates: [[-122, 37]]}
-      }, 9, 'b', 1570749707
+        properties: {TRIPS: 9, RATE: 'b', TIME: 1570749707},
+        geometry: {type: 'Point', coordinates: [[-122, 37]]}
+      },
+      9,
+      'b',
+      1570749707
     ]
   ];
   const result = processGeojson(testGeoData);
 
-  t.deepEqual(Object.keys(result), ['fields', 'rows'], 'should contain fields and rows');
-  t.deepEqual(result.fields, expectedFields, 'should parse correct fields when geojson input contain string');
-  t.deepEqual(result.rows, expectedRows, 'should parse correct rows when geojson input contain string');
+  t.deepEqual(
+    Object.keys(result),
+    ['fields', 'rows'],
+    'should contain fields and rows'
+  );
+  t.deepEqual(
+    result.fields,
+    expectedFields,
+    'should parse correct fields when geojson input contain string'
+  );
+  t.deepEqual(
+    result.rows,
+    expectedRows,
+    'should parse correct rows when geojson input contain string'
+  );
 
   t.end();
 });
@@ -346,7 +379,7 @@ test('Processor -> parseCsvRowsByFieldType -> boolean', t => {
   t.end();
 });
 
-test('dataUtils -> getSampleForTypeAnalyze', t => {
+test('Processor -> getSampleForTypeAnalyze', t => {
   const fields = ['string', 'int', 'bool', 'time'];
 
   const allData = [
@@ -396,5 +429,216 @@ test('dataUtils -> getSampleForTypeAnalyze', t => {
   ];
 
   t.deepEqual(sample, expected, 'Should find correct sample for type analyzer');
+  t.end();
+});
+
+test('Processor -> validateInputData', t => {
+  t.equal(validateInputData(null), null, 'Should throw error if data is null');
+  t.equal(
+    validateInputData({rows: 'hello'}),
+    null,
+    'Should throw error if data.rows is null'
+  );
+  t.equal(
+    validateInputData({rows: [], fields: null}),
+    null,
+    'Should throw error if data.fields is null'
+  );
+
+  const cases = [
+    {
+      input: {
+        rows: [[1], [2], [3]],
+        fields: ['a']
+      },
+      expected: {
+        rows: [[1], [2], [3]],
+        fields: [{type: ALL_FIELD_TYPES.integer, format: '', name: 'column_0'}]
+      },
+      msg: 'should re generate field if not an object'
+    },
+    {
+      input: {
+        rows: [[1], [2], [3]],
+        fields: [{type: ALL_FIELD_TYPES.integer, format: ''}]
+      },
+      expected: {
+        rows: [[1], [2], [3]],
+        fields: [{type: ALL_FIELD_TYPES.integer, format: '', name: 'column_0'}]
+      },
+      msg: 'should reassign field name'
+    },
+    {
+      input: {
+        rows: [[1], [2], [3]],
+        fields: [{type: 'hello', format: '', name: 'taro'}]
+      },
+      expected: {
+        rows: [[1], [2], [3]],
+        fields: [{type: ALL_FIELD_TYPES.integer, format: '', name: 'taro'}]
+      },
+      msg: 'should reassign field type'
+    },
+    {
+      input: {
+        rows: [
+          ['2018-09-01 00:00'],
+          ['2018-09-01 01:00'],
+          ['2018-09-01 02:00']
+        ],
+        fields: [{type: ALL_FIELD_TYPES.timestamp, format: '', name: 'taro'}]
+      },
+      expected: {
+        rows: [
+          ['2018-09-01 00:00'],
+          ['2018-09-01 01:00'],
+          ['2018-09-01 02:00']
+        ],
+        fields: [
+          {
+            type: ALL_FIELD_TYPES.timestamp,
+            format: 'YYYY-M-D H:m',
+            name: 'taro'
+          }
+        ]
+      },
+      msg: 'should reassign field type'
+    }
+  ];
+
+  cases.forEach(({input, expected, msg}) => {
+    t.deepEqual(validateInputData(input), expected, msg);
+  });
+
+  t.end();
+});
+
+test('Processor -> processRowObject', t => {
+  t.equal(
+    processRowObject({}),
+    null,
+    'Should return null when rawData is empty'
+  );
+  const cases = [
+    {
+      input: [
+        {a: 1, b: 'c', c: true, d: '1.2'},
+        {a: 2, b: 'c', c: false, d: '1.3'},
+        {a: 3, b: 'd', c: true, d: '1.4'}
+      ],
+      expected: {
+        rows: [[1, 'c', true, 1.2], [2, 'c', false, 1.3], [3, 'd', true, 1.4]],
+        fields: [
+          {
+            name: 'a',
+            type: 'integer',
+            format: '',
+            tableFieldIndex: 1
+          },
+          {
+            name: 'b',
+            type: 'string',
+            format: '',
+            tableFieldIndex: 2
+          },
+          {
+            name: 'c',
+            type: 'boolean',
+            format: '',
+            tableFieldIndex: 3
+          },
+          {
+            name: 'd',
+            type: 'real',
+            format: '',
+            tableFieldIndex: 4
+          }
+        ]
+      },
+      msg: 'should parse correct row objects'
+    }
+  ];
+
+  cases.forEach(({input, expected, msg}) => {
+    t.deepEqual(processRowObject(input), expected, msg);
+  });
+  t.end();
+});
+
+test('Processor -> formatCsv', t => {
+  const geojsonFc = {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        properties: {TRIPS: '11'},
+        geometry: {type: 'Point', coordinates: [[-122, 37]]}
+      },
+      {
+        type: 'Feature',
+        properties: {TRIPS: '10'},
+        geometry: {type: 'Point', coordinates: [[-122, 37]]}
+      },
+      {
+        type: 'Feature',
+        properties: {TRIPS: '9'},
+        geometry: {type: 'Point', coordinates: [[-122, 37]]}
+      }
+    ]
+  };
+
+  const cases = [
+    {
+      input: `gps_data.lat,gps_data.types,epoch,has_result,id,begintrip_ts_local,date
+    29.9900937,driver_analytics,1472688000000,False,1,2016-10-01 09:41:39+00:00,2016-09-23
+    29.9927699,driver_analytics,1472688000000,False,2,2016-10-01 16:46:37+00:00,2016-09-23
+    29.9907261,driver_analytics,1472688000000,False,3,,2016-09-23`,
+      expected:
+        `gps_data.lat,gps_data.types,epoch,has_result,id,begintrip_ts_local,date\n` +
+        `29.9900937,driver_analytics,1472688000000,false,1,2016-10-01 09:41:39+00:00,2016-09-23\n` +
+        `29.9927699,driver_analytics,1472688000000,false,2,2016-10-01 16:46:37+00:00,2016-09-23\n` +
+        `29.9907261,driver_analytics,1472688000000,false,3,,2016-09-23`,
+      processor: processCsvData,
+      msg: 'should format correct csv'
+    },
+    {
+      input: geojsonFc,
+      expected:
+        '_geojson,TRIPS\n"{""type"":""Feature"",""properties"":{""TRIPS"":11},""geometry"":{""type"":""Point"",""coordinates"":[[-122,37]]}}",11\n"{""type"":""Feature"",""properties"":{""TRIPS"":10},""geometry"":{""type"":""Point"",""coordinates"":[[-122,37]]}}",10\n"{""type"":""Feature"",""properties"":{""TRIPS"":9},""geometry"":{""type"":""Point"",""coordinates"":[[-122,37]]}}",9',
+      processor: processGeojson,
+      msg: 'should format correct csv from geojsonInput'
+    }
+  ];
+
+  cases.forEach(({input, expected, msg, processor}) => {
+    const {fields, rows} = processor(input);
+
+    t.deepEqual(formatCsv(rows, fields), expected, msg);
+  });
+  t.end();
+});
+
+test('Processor -> analyzerTypeToFieldType', t => {
+  Object.keys(DATA_TYPES).forEach(atype => {
+    const spy = sinon.spy(Console, 'warn');
+
+    if (!ACCEPTED_ANALYZER_TYPES.includes(atype)) {
+      t.equal(
+        analyzerTypeToFieldType(atype),
+        'string',
+        'should return string if type not recognized'
+      );
+      t.ok(spy.calledOnce, `should warn when pass unrecognized type ${atype}`);
+    } else {
+      const fieldType = analyzerTypeToFieldType(atype);
+      t.ok(
+        ALL_FIELD_TYPES[fieldType],
+        `should assign ${atype} to one of ALL_FIELD_TYPES`
+      );
+    }
+
+    spy.restore();
+  });
+
   t.end();
 });

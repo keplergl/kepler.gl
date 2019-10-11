@@ -32,8 +32,9 @@ import {
 } from 'utils/data-utils';
 import KeplerGlSchema from 'schemas';
 import {GUIDES_FILE_FORMAT} from 'constants/user-guides';
+import {isPlainObject} from 'utils/utils';
 
-const ACCEPTED_ANALYZER_TYPES = [
+export const ACCEPTED_ANALYZER_TYPES = [
   AnalyzerDATA_TYPES.DATE,
   AnalyzerDATA_TYPES.TIME,
   AnalyzerDATA_TYPES.DATETIME,
@@ -108,12 +109,13 @@ export function processCsvData(rawData) {
   // here we assume the csv file that people uploaded will have first row
   // as name of the column
   // TODO: add a alert at upload csv to remind define first row
-  const [headerRow, ...rows] = csvParseRows(rawData);
-
-  if (!rows.length || !headerRow) {
+  const result = csvParseRows(rawData);
+  if (!Array.isArray(result) || result.length < 2) {
     // looks like an empty file, throw error to be catch
     throw new Error('Read File Failed: CSV is empty');
   }
+
+  const [headerRow, ...rows] = result;
 
   cleanUpFalsyCsvValue(rows);
   // No need to run type detection on every data point
@@ -384,7 +386,7 @@ export function analyzerTypeToFieldType(aType) {
 
 /**
  * Process data where each row is an object, output can be passed to [`addDataToMap`](../actions/actions.md#adddatatomap)
- * @param {Object} rawData an array of object
+ * @param {Array<Object>} rawData an array of row object, each object should have the same number of keys
  * @returns {Object} dataset containing `fields` and `rows`
  * @public
  * @example
@@ -404,7 +406,7 @@ export function analyzerTypeToFieldType(aType) {
  * }));
  */
 export function processRowObject(rawData) {
-  if (!rawData.length) {
+  if (!Array.isArray(rawData) || !rawData.length) {
     return null;
   }
 
@@ -525,31 +527,20 @@ export function formatCsv(data, fields) {
 
 /**
  * Validate input data, adding missing field types, rename duplicate columns
- * @param data
+ * @param {Object} data dataset.data
+ * @param {Array<Object>} data.fields an array of fields
+ * @param {Array<Object>} data.rows an array of data rows
  * @returns {{allData: Array, fields: Array}}
  */
 export function validateInputData(data) {
-  // TODO: add test
-  /*
-   * expected input data format
-   * {
-   *   fields: [],
-   *   rows: []
-   * }
-   */
-  let proceed = true;
-  if (!data) {
-    assert('receiveVisData: data cannot be null');
-    proceed = false;
+  if (!isPlainObject(data)) {
+    assert('addDataToMap Error: dataset.data cannot be null');
+    return null;
   } else if (!Array.isArray(data.fields)) {
-    assert('receiveVisData: expect data.fields to be an array');
-    proceed = false;
+    assert('addDataToMap Error: expect dataset.data.fields to be an array');
+    return null;
   } else if (!Array.isArray(data.rows)) {
-    assert('receiveVisData: expect data.rows to be an array');
-    proceed = false;
-  }
-
-  if (!proceed) {
+    assert('addDataToMap Error: expect dataset.data.rows to be an array');
     return null;
   }
 
@@ -557,17 +548,18 @@ export function validateInputData(data) {
 
   // check if all fields has name, format and type
   const allValid = fields.every((f, i) => {
-    if (typeof f !== 'object') {
+
+    if (!isPlainObject(f)) {
       assert(`fields needs to be an array of object, but find ${typeof f}`);
-      return false;
+      fields[i] = {};
     }
 
     if (!f.name) {
       assert(
-        `field.name is required but missing in field ${JSON.stringify(f)}`
+        `field.name is required but missing in ${JSON.stringify(f)}`
       );
       // assign a name
-      f.name = `column_${i}`;
+      fields[i].name = `column_${i}`;
     }
 
     if (!ALL_FIELD_TYPES[f.type]) {
@@ -575,7 +567,15 @@ export function validateInputData(data) {
       return false;
     }
 
-    return f.type !== ALL_FIELD_TYPES.timestamp || typeof f.format === 'string';
+    // check time format is correct based on first 10 not empty element
+    if (f.type === ALL_FIELD_TYPES.timestamp) {
+      const sample = findNonEmptyRowsAtField(rows, i, 10)
+        .map(r => ({ts: r[i]}));
+      const analyzedType = Analyzer.computeColMeta(sample)[0];
+      return analyzedType.category === 'TIME' && analyzedType.format === f.format;
+    }
+
+    return true;
   });
 
   if (allValid) {
@@ -599,6 +599,17 @@ export function validateInputData(data) {
   return {fields: updatedFields, rows};
 }
 
+function findNonEmptyRowsAtField(rows, fieldIdx, total) {
+  const sample = [];
+  let i = 0;
+  while (sample.length < total && i < rows.length) {
+    if (notNullorUndefined(rows[i][fieldIdx])) {
+      sample.push(rows[i]);
+    }
+    i++;
+  }
+  return sample;
+}
 /**
  * Process saved kepler.gl json to be pass to [`addDataToMap`](../actions/actions.md#adddatatomap).
  * The json object should contain `datasets` and `config`.
@@ -624,5 +635,6 @@ export const Processors = {
   processKeplerglJSON,
   analyzerTypeToFieldType,
   getFieldsFromData,
-  parseCsvRowsByFieldType
+  parseCsvRowsByFieldType,
+  formatCsv
 };
