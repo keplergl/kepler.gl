@@ -14,6 +14,23 @@ Each version should:
   Security to invite users to upgrade in case of vulnerabilities.
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
+#### [1.1.9] - Oct 11 2019
+- [Enhancement] improve Geojson processing performance and error handling (#781)
+- [Enhancement] add file format instruction to file upload (#770)
+- [Bug] Filter invalid H3 IDs (#775)
+- [Bug] fix readonly in addDataToMap (#783)
+- [Enhancement] Expose LayerHoverInfoFactory and CoordinateInfoFactory (#769)
+- [Bug] Fixed dropbox upload in Firefox. Passing explicit file name to upload function
+- [Enhancement] Demo app sample info (#758)
+- [Enhancement] Generate custom map style icon from style url (#762)
+- [Jupyter] [Bug] fix lab widget window responsiveness, add version to header (#771)
+- [Jupyter] [Docs] add installation instruction to jupyter widget user guide
+- [Docs] Update add data to map docs
+- [Jupyter] Publish keplergl-jupyter for Jupyter labs (#764)
+- [Jupyter] [Bug] fix flashing html export when open in window (#756)
+- [Enhancement] Add logo and GA to exported html (#757)
+- [Docs] update Trip Layer md
+
 #### [1.1.8] - Sep 30 2019
 - [Bug] Fix saving animation speed (#752)
 - [Feat] Add Trip Layer - Final (#699)
