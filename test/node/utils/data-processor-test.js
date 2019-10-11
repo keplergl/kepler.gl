@@ -33,6 +33,9 @@ import testData, {
 } from 'test/fixtures/test-csv-data';
 import {
   geojsonData,
+  geoJsonWithStyle,
+  geoStyleFields,
+  geoStyleRows,
   fields as geojsonFields,
   rows as geojsonRows
 } from 'test/fixtures/geojson';
@@ -206,6 +209,14 @@ test('Processor => processGeojson', t => {
   t.deepEqual(fields, geojsonFields, 'should format geojson fields');
   t.deepEqual(rows, geojsonRows, 'should format geojson rows');
 
+  t.end();
+});
+
+test('Processor => processGeojson: with style property', t => {
+  const {fields, rows} = processGeojson(geoJsonWithStyle);
+
+  t.deepEqual(fields, geoStyleFields, 'should preserve objects in geojson properties');
+  t.deepEqual(rows, geoStyleRows, 'should preserve objects in geojson properties');
   t.end();
 });
 
