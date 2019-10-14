@@ -37,7 +37,8 @@ import {
   getDefaultFilter,
   getFilterPlot,
   getDefaultFilterPlotType,
-  isInRange
+  isInRange,
+  FILTER_UPDATER_PROPS
 } from 'utils/filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
 
@@ -506,11 +507,17 @@ export function interactionConfigChangeUpdater(state, action) {
  * @param {Number} action.idx `idx` of filter to be updated
  * @param {string} action.prop `prop` of filter, e,g, `dataId`, `name`, `value`
  * @param {*} action.value new value
+ * @param {string} datasetId used when updating a prop (dataId, name) that can be linked to multiple datasets
  * @returns {Object} nextState
  * @public
  */
 export function setFilterUpdater(state, action) {
-  const {idx, prop, value} = action;
+  const {
+    idx,
+    prop,
+    value,
+    datasetIndex
+  } = action;
   let newState = state;
   let newFilter = {
     ...state.filters[idx],
@@ -526,16 +533,16 @@ export function setFilterUpdater(state, action) {
     // TODO: Next PR for UI if we update dataId, we need to consider two cases:
     // 1. dataId is empty: create a default filter
     // 2. Add a new dataset id
-    case 'dataId':
+    case FILTER_UPDATER_PROPS.dataId:
       // if trying to update filter dataId. create an empty new filter
       newFilter = getDefaultFilter(dataId);
       break;
 
-    case 'name':
+    case FILTER_UPDATER_PROPS.name:
       // we are supporting the current functionality
       // TODO: Next PR for UI filter name will only update filter name but it won't have side effects
       // we are gonna use pair of datasets and fieldIdx to update the filter
-      const {filter: updateFilter, datasets: newDatasets} = applyFilterFieldName(newFilter, state.datasets, value);
+      const {filter: updateFilter, datasets: newDatasets} = applyFilterFieldName(newFilter, state.datasets, value, datasetIndex);
       newFilter = updateFilter;
 
       newState = {

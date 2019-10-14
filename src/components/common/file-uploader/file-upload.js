@@ -173,14 +173,15 @@ const StyledDisclaimer = styled(StyledMessage)`
 `;
 
 export default class FileUpload extends Component {
-  static defaultProps = {
-    validFileExt: defaultValidFileExt
-  };
 
   static propTypes = {
     onFileUpload: PropTypes.func.isRequired,
     validFileExt: PropTypes.arrayOf(PropTypes.string),
     fileLoading: PropTypes.bool
+  };
+
+  static defaultProps = {
+    validFileExt: defaultValidFileExt
   };
 
   state = {

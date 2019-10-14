@@ -58,6 +58,11 @@ export const PLOT_TYPES = keyMirror({
   lineChart: null
 });
 
+export const FILTER_UPDATER_PROPS = keyMirror({
+  dataId: null,
+  name: null
+});
+
 const SupportedPlotType = {
   [FILTER_TYPES.timeRange]: {
     default: 'histogram',
@@ -660,9 +665,9 @@ export function getDefaultFilterPlotType(filter) {
 
 /**
  *
- * @param datasetIds list of dataset ids
- * @param datasets
- * @param filters
+ * @param datasetIds list of dataset ids to be filtered
+ * @param datasets all datasets
+ * @param filters all filters to be applied to datasets
  * @return {{[p: string]: *}}
  */
 export function applyFiltersToDatasets(datasetIds, datasets, filters) {
@@ -683,64 +688,64 @@ export function applyFiltersToDatasets(datasetIds, datasets, filters) {
  * @param fieldName
  * @return {object} {filter, datasets}
  */
-export function applyFilterFieldName(filter, datasets, fieldName) {
+export function applyFilterFieldName(filter, datasets, fieldName, filterDatasetIndex = 0) {
+
+  // using filterDatasetIndex we can filter only the specified dataset
   const {dataId} = filter;
 
-  return dataId.reduce((acc, dataIdentifier, index) => {
-    const {fields, allData} = datasets[dataIdentifier];
+  const dataIdentifier = dataId[filterDatasetIndex];
 
-    // TODO: Next PR for UI filter name will only update filter name but it won't have side effects
-    // we are gonna use pair of datasets and fieldIdx to update the filter
-    const fieldIndex = fields.findIndex(f => f.name === fieldName);
+  const {fields, allData} = datasets[dataIdentifier];
 
-    // if no field with same name is found, move to the next datasets
-    if (fieldIndex === -1) {
-      throw new Error(`fieldIndex not found. Dataset must contain a property with name: ${fieldName}`);
+  const fieldIndex = fields.findIndex(f => f.name === fieldName);
+
+  // if no field with same name is found, move to the next datasets
+  if (fieldIndex === -1) {
+    throw new Error(`fieldIndex not found. Dataset must contain a property with name: ${fieldName}`);
+  }
+
+  const newFilter = {
+    ...filter,
+    // TODO, since we allow to add multiple fields to a filter we can no longer freeze the filter
+    freeze: true
+  };
+
+  // TODO: validate field type
+  const field = fields[fieldIndex];
+
+  const filterProps = field.hasOwnProperty('filterProps') ? field.filterProps : getFilterProps(allData, field);
+
+  // Update Filter field idx
+  const newFieldIdx = [
+    ...(filter.fieldIdx || [])
+  ];
+
+  newFieldIdx[filterDatasetIndex] = fieldIndex;
+
+  const filterWithProps = {
+    ...mergeFilterProps(newFilter, filterProps),
+    fieldIdx: newFieldIdx
+  };
+
+  const fieldWithFilterProps = {
+    ...field,
+    filterProp: filterProps
+  };
+
+  const newFields = fields.map((d, i) => (i === fieldIndex ? fieldWithFilterProps : d));
+
+  const newDatasets = {
+    ...datasets,
+    [dataIdentifier]: {
+      ...datasets[dataIdentifier],
+      fields: newFields
     }
+  };
 
-    // TODO: validate field type
-    const field = fields[fieldIndex];
-    const filterProps = field.hasOwnProperty('filterProps') ? field.filterProps : getFilterProps(allData, field);
-
-    const newFieldIdx = [
-      ...acc.filter.fieldIdx
-    ];
-
-    newFieldIdx[index] = fieldIndex;
-
-    const filterWithProps = {
-      ...mergeFilterProps(acc.filter, filterProps),
-      fieldIdx: newFieldIdx
-    };
-
-    const fieldWithFilterProps = {
-      ...field,
-      filterProp: filterProps
-    };
-
-    const newFields = fields.map((d, i) => (i === fieldIndex ? fieldWithFilterProps : d));
-
-    const newDatasets = {
-      ...acc.datasets,
-      [dataIdentifier]: {
-        ...datasets[dataIdentifier],
-        fields: newFields
-      }
-    };
-
-    return {
-      ...acc,
-      filter: filterWithProps,
-      datasets: newDatasets
-    };
-  }, {
-    filter:{
-      ...filter,
-      // TODO, since we allow to add multiple fields to a filter we can no longer freeze the filter
-      freeze: true
-    },
-    datasets
-  });
+  return {
+    filter: filterWithProps,
+    datasets: newDatasets
+  };
 }
 
 /**
