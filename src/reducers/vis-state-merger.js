@@ -23,7 +23,7 @@ import pick from 'lodash.pick';
 
 import {
   applyFiltersToDatasets,
-  validateFilter,
+  shouldApplyfilter,
   validateFilterWithData
 } from 'utils/filter-utils';
 
@@ -53,7 +53,7 @@ export function mergeFilters(state, filtersToMerge) {
   filtersToMerge.forEach(filter => {
     const datasetIds = Object.keys(datasets).reduce((acc, datasetId) => ([
       ...acc,
-      ...(validateFilter(filter, datasetId) ? [datasetId] : [])
+      ...(shouldApplyfilter(filter, datasetId) ? [datasetId] : [])
     ]), []);
 
     if (datasetIds.length) {

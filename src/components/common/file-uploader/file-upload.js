@@ -52,7 +52,6 @@ const DISCLAIMER = '*kepler.gl is a client-side application with no server backe
   'No information or map data is sent to any server.';
 const CONFIG_UPLOAD_MESSAGE = `Upload **CSV**, **GeoJson** or saved map **Json**. Read more about [**supported file formats**](${GUIDES_FILE_FORMAT}).`;
 
-
 const fileIconColor = '#D3D8E0';
 
 const LinkRenderer = props => {

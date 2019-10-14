@@ -124,11 +124,11 @@ export function getDefaultFilter(dataId) {
  * @param {string} dataset id to validate filter against
  * @return {boolean} true if a filter is valid, false otherwise
  */
-export function validateFilter(filter, datasetId) {
+export function shouldApplyfilter(filter, datasetId) {
   const valid = Boolean(filter.dataId)
     // datasetId is contained in dataId
     && (
-      // filter.dataId is an array
+      // filter.dataId is an array or or matches exactly the datasetId
       (Array.isArray(filter.dataId) && filter.dataId.includes(datasetId))
       || filter.dataId === datasetId
     )
@@ -151,6 +151,10 @@ export function validateFilterWithData(dataset, filter) {
 
   // match filter.name to field.name
   const fieldIndex = fields.findIndex(({name}) => name === filter.name);
+
+  if (fieldIndex < 0) {
+    return null;
+  }
 
   const field = fields[fieldIndex];
 
@@ -180,6 +184,7 @@ export function validateFilterWithData(dataset, filter) {
   };
 
   const {yAxis} = matchedFilter;
+  // TODO: validate yAxis against other datasets
   if (yAxis) {
     const matcheAxis = fields.find(
       ({name, type}) => name === yAxis.name && type === yAxis.type
@@ -304,7 +309,7 @@ export function filterData(dataset, filters) {
     return {data, filteredIndex: defaultValues, filteredIndexForDomain: defaultValues};
   }
 
-  const appliedFilters = filters.filter(d => validateFilter(d, dataset.id));
+  const appliedFilters = filters.filter(d => shouldApplyfilter(d, dataset.id));
 
   // Map filter against current dataset field
   const filtersToFields = filters.reduce((acc, filter) => {
@@ -318,24 +323,12 @@ export function filterData(dataset, filters) {
     // [filterId]: field
   });
 
-  const {dynamicDomainFilters, fixedDomainFilters} = appliedFilters.reduce(
+  const [dynamicDomainFilters, fixedDomainFilters] = appliedFilters.reduce(
     (accu, f) => {
-      return {
-        ...accu,
-        ...(f.fixedDomain ? {
-          fixedDomainFilters: [
-            ...accu.fixedDomainFilters,
-            f
-          ]
-        } : {
-          dynamicDomainFilters: [
-            ...accu.dynamicDomainFilters,
-            f
-          ]
-        })
-      };
+      (f.fixedDomain ? accu[1] : accu[0]).push(f);
+      return accu;
     },
-    {dynamicDomainFilters: [], fixedDomainFilters: []}
+    [[], []]
   );
 
   const {filtered, filteredIndex, filteredIndexForDomain} = data.reduce(
@@ -379,7 +372,7 @@ export function filterData(dataset, filters) {
  * @returns {Boolean} - whether value falls in the range of the filter
  */
 export function isDataMatchFilter(data, filter, i, field) {
-  const val = data[filter.fieldIdx];
+  const val = data[field.tableFieldIndex - 1];
   if (!filter.type) {
     return true;
   }
@@ -389,9 +382,9 @@ export function isDataMatchFilter(data, filter, i, field) {
       return isInRange(val, filter.value);
 
     case FILTER_TYPES.timeRange:
-      const timeVal = field && field.filterProp && field.filterProp.mappedValue
+      const timeVal = field && field.filterProp && Array.isArray(field.filterProp.mappedValue)
         ? field.filterProp.mappedValue[i]
-        : moment.utc(data[field.tableFieldIndex - 1]).valueOf();
+        : moment.utc(val).valueOf();
 
       return isInRange(timeVal, filter.value);
 
@@ -692,11 +685,8 @@ export function applyFiltersToDatasets(datasetIds, datasets, filters) {
  */
 export function applyFilterFieldName(filter, datasets, fieldName) {
   const {dataId} = filter;
-  if (!dataId || !dataId.length) {
-    return filter;
-  }
 
-  return dataId.reduce((acc, dataIdentifier) => {
+  return dataId.reduce((acc, dataIdentifier, index) => {
     const {fields, allData} = datasets[dataIdentifier];
 
     // TODO: Next PR for UI filter name will only update filter name but it won't have side effects
@@ -710,14 +700,13 @@ export function applyFilterFieldName(filter, datasets, fieldName) {
 
     // TODO: validate field type
     const field = fields[fieldIndex];
-    const filterProps = getFilterProps(allData, field);
-    const filterDatasetIndex = getDatasetIndexForFilter(datasets[dataIdentifier], filter);
+    const filterProps = field.hasOwnProperty('filterProps') ? field.filterProps : getFilterProps(allData, field);
 
     const newFieldIdx = [
       ...acc.filter.fieldIdx
     ];
 
-    newFieldIdx[filterDatasetIndex] = fieldIndex;
+    newFieldIdx[index] = fieldIndex;
 
     const filterWithProps = {
       ...mergeFilterProps(acc.filter, filterProps),
@@ -747,6 +736,7 @@ export function applyFilterFieldName(filter, datasets, fieldName) {
   }, {
     filter:{
       ...filter,
+      // TODO, since we allow to add multiple fields to a filter we can no longer freeze the filter
       freeze: true
     },
     datasets
