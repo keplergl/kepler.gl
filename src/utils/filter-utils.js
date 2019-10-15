@@ -95,7 +95,7 @@ export const DEFAULT_FILTER_STRUCTURE = {
   speed: 1,
 
   // field specific
-  name: null,
+  name: [], // string
   type: null,
   fieldIdx: [], // [integer]
   domain: null,
@@ -155,15 +155,16 @@ export function validateFilterWithData(dataset, filter) {
   const {fields, allData} = dataset;
 
   // match filter.name to field.name
-  const fieldIndex = fields.findIndex(({name}) => name === filter.name);
+  const filterDataId = Array.isArray(filter.dataId) ? filter.dataId : [filter.dataId];
+  const filterName = Array.isArray(filter.name) ? filter.name : [filter.name];
+  const filterDatasetIndex = Array.isArray(filter.dataId) ? getDatasetIndexForFilter(dataset, filter) : 0;
+  const fieldIndex = fields.findIndex(({name}) => name === filterName[filterDatasetIndex]);
 
   if (fieldIndex < 0) {
     return null;
   }
 
   const field = fields[fieldIndex];
-
-  const filterDatasetIndex = Array.isArray(filter.dataId) ? getDatasetIndexForFilter(dataset, filter) : 0;
 
   if (filterDatasetIndex === -1) {
     // the current filter is not mapped against the current dataset
@@ -184,8 +185,10 @@ export function validateFilterWithData(dataset, filter) {
     ...getDefaultFilter(filter.dataId),
     ...filter,
     ...filterPropsFromField,
+    dataId: filterDataId,
     freeze: true,
-    fieldIdx: newFieldIdx
+    fieldIdx: Object.assign([...newFieldIdx], {[filterDatasetIndex]: fieldIndex}),
+    name: Object.assign([...filterName], {[filterDatasetIndex]: field.name})
   };
 
   const {yAxis} = matchedFilter;
@@ -716,15 +719,13 @@ export function applyFilterFieldName(filter, datasets, fieldName, filterDatasetI
   const filterProps = field.hasOwnProperty('filterProps') ? field.filterProps : getFilterProps(allData, field);
 
   // Update Filter field idx
-  const newFieldIdx = [
-    ...(filter.fieldIdx || [])
-  ];
-
-  newFieldIdx[filterDatasetIndex] = fieldIndex;
+  const filterName = Array.isArray(filter.name) ? filter.name : [filter.name];
+  const filterIdx = Array.isArray(filter.fieldIdx) ? filter.fieldIdx : [filter.fieldIdx];
 
   const filterWithProps = {
     ...mergeFilterProps(newFilter, filterProps),
-    fieldIdx: newFieldIdx
+    name: Object.assign([...filterName], {[filterDatasetIndex]: field.name}),
+    fieldIdx: Object.assign([...filterIdx], {[filterDatasetIndex]: field.tableFieldIndex - 1})
   };
 
   const fieldWithFilterProps = {
@@ -734,17 +735,15 @@ export function applyFilterFieldName(filter, datasets, fieldName, filterDatasetI
 
   const newFields = fields.map((d, i) => (i === fieldIndex ? fieldWithFilterProps : d));
 
-  const newDatasets = {
-    ...datasets,
-    [dataIdentifier]: {
-      ...datasets[dataIdentifier],
-      fields: newFields
-    }
-  };
-
   return {
     filter: filterWithProps,
-    datasets: newDatasets
+    datasets: {
+      ...datasets,
+      [dataIdentifier]: {
+        ...datasets[dataIdentifier],
+        fields: newFields
+      }
+    }
   };
 }
 
@@ -752,9 +751,12 @@ export function applyFilterFieldName(filter, datasets, fieldName, filterDatasetI
  * Merge one filter with other filter prop domain
  * @param filter
  * @param filterProps
+ * @param fieldIndex
+ * @param datasetIndex
  * @return {*}
  */
-export function mergeFilterProps(filter, filterProps) {
+/* eslint-disable complexity */
+export function mergeFilterProps(filter, filterProps, field, datasetIndex = 0) {
   if (!filter) {
     return filterProps;
   }
@@ -763,19 +765,21 @@ export function mergeFilterProps(filter, filterProps) {
     return filter;
   }
 
-  const newFilter = {
-    ...filter,
-    ...filterProps
-  };
-
   const combinedDomain = [
     ...(filter.domain || []),
     ...filterProps.domain
   ].sort((a, b) => a - b);
 
+  const newFilter = {
+    ...filter,
+    ...filterProps,
+    domain: [
+      combinedDomain[0],
+      combinedDomain[combinedDomain.length -1]
+    ]
+  };
+
   switch (filterProps.fieldType) {
-    // do nothing since it's always the same
-    // case ALL_FIELD_TYPES.boolean:
     case ALL_FIELD_TYPES.string:
     case ALL_FIELD_TYPES.date:
       return {
@@ -788,24 +792,16 @@ export function mergeFilterProps(filter, filterProps) {
 
       return {
         ...newFilter,
-        step,
-        domain: [
-          combinedDomain[0],
-          combinedDomain[combinedDomain.length -1]
-        ]
+        step
+        // step: Math.min(filter.step, filterProps.step)
       };
     case ALL_FIELD_TYPES.real:
     case ALL_FIELD_TYPES.integer:
     default:
-      return {
-        ...newFilter,
-        domain: [
-          combinedDomain[0],
-          combinedDomain[combinedDomain.length -1]
-        ]
-      };
+      return newFilter;
   }
 }
+/* eslint-enable complexity */
 
 /**
  * Return filter dataset index from filter.dataId

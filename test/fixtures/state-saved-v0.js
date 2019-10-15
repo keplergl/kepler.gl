@@ -889,12 +889,12 @@ export const expectedFields1 = [
 
 export const mergedFilters = [
   {
-    dataId: '9h10t7fyb',
+    dataId: ['9h10t7fyb'],
     freeze: true,
     id: 'vxzfwyg2v',
     enlarged: false,
     isAnimating: false,
-    name: 'song_name',
+    name: ['song_name'],
     type: 'multiSelect',
     fieldIdx: [0],
     domain: ['2.103.2', '2.107.3', '2.116.2', '2.117.1', '3.68.4' ],
@@ -907,12 +907,12 @@ export const mergedFilters = [
     fixedDomain: false
   },
   {
-    dataId: '9h10t7fyb',
+    dataId: ['9h10t7fyb'],
     freeze: true,
     id: 'fo9tjm2unl',
     enlarged: true,
     isAnimating: false,
-    name: 'timestamp_local',
+    name: ['timestamp_local'],
     type: 'timeRange',
     fieldIdx: [3],
     plotType: 'histogram',
@@ -939,9 +939,9 @@ export const mergedFilters = [
     fixedDomain: true
   },
   {
-    dataId: '9h10t7fyb',
+    dataId: ['9h10t7fyb'],
     id: 'aesy96t5',
-    name: 'type_boolean',
+    name: ['type_boolean'],
     type: 'select',
     freeze: true,
     value: false,
@@ -957,9 +957,9 @@ export const mergedFilters = [
     fixedDomain: false
   },
   {
-    dataId: '9h10t7fyb',
+    dataId: ['9h10t7fyb'],
     id: 's1bhgjt1',
-    name: 'int_range',
+    name: ['int_range'],
     type: 'range',
     value: [78, 309],
     freeze: true,
@@ -979,12 +979,12 @@ export const mergedFilters = [
     fixedDomain: false
   },
   {
-    dataId: 'v79816te8',
+    dataId: ['v79816te8'],
     freeze: true,
     id: '5nfmxjjzl',
     enlarged: false,
     isAnimating: false,
-    name: 'ZIP_CODE',
+    name: ['ZIP_CODE'],
     type: 'range',
     fieldIdx: [2],
     plotType: 'histogram',

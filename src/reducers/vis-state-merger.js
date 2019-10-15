@@ -59,9 +59,9 @@ export function mergeFilters(state, filtersToMerge) {
     if (datasetIds.length) {
 
       // for each dataset data mapped against the current filter are valid
-
       const validatedFilter = datasetIds.reduce((acc, d) => {
-        const updatedFilter = validateFilterWithData(datasets[d], filter);
+        const dataset = datasets[d];
+        const updatedFilter = validateFilterWithData(dataset, filter);
         if (updatedFilter) {
           return acc ? {
             ...acc,
