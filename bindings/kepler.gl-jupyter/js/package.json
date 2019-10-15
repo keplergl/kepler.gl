@@ -1,6 +1,6 @@
 {
   "name": "keplergl-jupyter",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "This is a simple jupyter widget for kepler.gl, an advanced geo-spatial visualization tool, to render large-scale interactive maps.",
   "author": "Shan He",
   "license": "MIT",
@@ -34,7 +34,7 @@
     "check-licence": "uber-licence --dry",
     "add-licence": "uber-licence",
     "prepublish": "uber-licence && yarn build && yarn build:lab",
-    "build": "npm run clean && uber-licence && webpack --config ./webpack/build.js",
+    "build": "npm run clean && webpack --config ./webpack/build.js",
     "build:lab": "rimraf babel/ && mkdir babel && babel lib --out-dir babel",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint lib webpack --fix",
@@ -68,6 +68,7 @@
     "babel-loader": "^8.0.0",
     "babel-plugin-inline-json-import": "^0.2.1",
     "babel-plugin-module-resolver": "^3.0.0",
+    "babel-plugin-search-and-replace": "^1.0.0",
     "babel-plugin-transform-builtin-extend": "^1.1.0",
     "babel-plugin-transform-inline-environment-variables": "0.4.3",
     "eslint": "^5.12.1",
@@ -92,7 +93,7 @@
   "dependencies": {
     "@jupyter-widgets/base": "^1.1.10 || ^2",
     "global": "^4.3.0",
-    "kepler.gl": "^1.1.8",
+    "kepler.gl": "^1.1.9",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
     "react-helmet": "^5.2.0",

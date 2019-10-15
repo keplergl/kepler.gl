@@ -6,8 +6,9 @@ Version number of the js module **`kelergl-jupyter`** and the python module **`k
 
 ### To release a new version of keplergl-jupyter on NPM:
 
-- Edit version number in `js/package.json`
+- Go to the js folder
 ```
+npm version patch | minor | major
 git commit -am "keplergl-jupyter@<version>"
 npm login
 npm publish
@@ -15,11 +16,11 @@ npm publish
 
 ### To release a new version of keplergl on PyPI:
 
-- Update version number in  _version.py
+- Update version number in  keplergl/_version.py. in bindings/kepler.gl-jupyter folder.
 
 ```
-git add _version.py
-git commit -am "keplergl==<version>
+git add keplergl/_version.py
+git commit -am "keplergl==<version>"
 ```
 
 - Remove dist, build and upload to PyPI

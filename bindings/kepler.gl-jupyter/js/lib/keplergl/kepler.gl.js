@@ -183,11 +183,13 @@ export function addDataConfigToKeplerGl({
   log('addDataConfigToKeplerGl');
   log(succeeded);
   log(config);
+  const hasMapState = Boolean(config && config.config && config.config.mapState);
+
   store.dispatch(
     addDataToMap({
       datasets: succeeded,
       config,
-      options: options || {centerMap: true}
+      options: options || {centerMap: !hasMapState}
     })
   );
 }
