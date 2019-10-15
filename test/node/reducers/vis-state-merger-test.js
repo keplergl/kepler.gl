@@ -433,7 +433,6 @@ test('VisStateMerger.v1.split -> mergeLayers -> toEmptyState', t => {
   t.end();
 });
 
-/* Fixed in #618
 test('VisStateMerger.v0 -> mergeLayers -> toWorkingState', t => {
   const savedConfig = cloneDeep(savedStateV0);
   const parsedConfig = SchemaManager.parseSavedConfig(savedConfig.config);
@@ -485,7 +484,7 @@ test('VisStateMerger.v0 -> mergeLayers -> toWorkingState', t => {
 
   t.end();
 });
-*/
+
 test('VisStateMerger.v1 -> mergeLayers -> toWorkingState', t => {
   const savedConfig = cloneDeep(savedStateV1);
   const parsedConfig = SchemaManager.parseSavedConfig(savedConfig.config);

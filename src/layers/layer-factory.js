@@ -132,7 +132,7 @@ export const LAYER_VIS_CONFIGS = {
   },
   clusterRadius: {
     type: 'number',
-    label: 'Cluster Radius in pixels',
+    label: 'Cluster Radius in Pixels',
     defaultValue: 40,
     isRanged: false,
     range: [1, 500],

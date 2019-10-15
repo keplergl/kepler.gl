@@ -34,6 +34,15 @@ const dom = new JSDOM('<!doctype html><html><body></body></html>', {
 const {window} = dom;
 mockCanvas(window);
 
+// // issue: https://github.com/chromaui/chromatic-cli/issues/14
+Object.defineProperty(window, 'fetch', {
+  value: () =>
+    new Promise((res, rej) => {
+      // we just let this never resolve
+    }),
+  writable: true,
+});
+
 const nop = () => {};
 
 function mockCanvas(globalWindow) {
@@ -74,6 +83,7 @@ function mockCanvas(globalWindow) {
 global.window = window;
 global.document = window.document;
 global.HTMLElement = window.HTMLElement;
+global.fetch = window.fetch;
 
 Object.keys(global.window).forEach(property => {
   if (typeof global[property] === 'undefined') {

@@ -33,37 +33,48 @@ export function cmpFilters(
   expectedFilter,
   actualFilter,
   opt = {},
-  idx = ''
+  idx = '',
+  name = ''
 ) {
   t.equal(
     typeof actualFilter,
     typeof expectedFilter,
-    'filters should be same type'
+    `${name}filters should be same type`
   );
-
   if (Array.isArray(expectedFilter) && Array.isArray(actualFilter)) {
     t.equal(
       actualFilter.length,
       expectedFilter.length,
-      'should have same number of filters'
+      `${name} should have same number of filters`
     );
     expectedFilter.forEach((f, i) => {
-      cmpFilters(t, expectedFilter[i], actualFilter[i], opt, i);
+      cmpFilters(t, expectedFilter[i], actualFilter[i], opt, i, name);
     });
   } else {
-    cmpObjectKeys(t,  expectedFilter, actualFilter, `idx:${idx} | ${actualFilter.type} filter ${actualFilter.name}`);
+    cmpObjectKeys(
+      t,
+      expectedFilter,
+      actualFilter,
+      `idx:${idx} | ${actualFilter.type} filter ${actualFilter.name}`
+    );
 
     Object.keys(actualFilter).forEach(key => {
       if (key === 'histogram' || key === 'enlargedHistogram') {
-        if (actualFilter.type === FILTER_TYPES.range || FILTER_TYPES.timeRange) {
-          t.ok(actualFilter[key].length, `filter.${key} should not be empty`);
+        if (
+          actualFilter.type === FILTER_TYPES.range ||
+          FILTER_TYPES.timeRange
+        ) {
+          t.ok(
+            actualFilter[key].length,
+            `${name}.filter.${key} should not be empty`
+          );
         }
       } else if (key !== 'id' || opt.id) {
         // test everything except id, which is auto generated
         t.deepEqual(
           actualFilter[key],
           expectedFilter[key],
-          `idx:${idx} |  ${actualFilter.type} filter ${actualFilter.name} ${key} should be correct`
+          `${name}.idx:${idx} |  ${actualFilter.type} filter ${actualFilter.name} ${key} should be correct`
         );
       }
     });
@@ -87,8 +98,12 @@ export function cmpLayers(t, expectedLayer, actualLayer, opt = {}) {
       cmpLayers(t, expectedLayer[i], actualLayer[i]);
     });
   } else {
-
-    cmpObjectKeys(t, expectedLayer.config, actualLayer.config, `layer.${actualLayer.id}`);
+    cmpObjectKeys(
+      t,
+      expectedLayer.config,
+      actualLayer.config,
+      `layer.${actualLayer.id}`
+    );
 
     Object.keys(expectedLayer.config).forEach(key => {
       // test everything except color and id, which is auto generated
@@ -126,7 +141,12 @@ export function cmpSavedLayers(
       cmpSavedLayers(t, expectedLayer[i], actualLayer[i], opt, i);
     });
   } else {
-    cmpObjectKeys(t, expectedLayer, actualLayer, `idx:${idx} | layer.${actualLayer.type}`);
+    cmpObjectKeys(
+      t,
+      expectedLayer,
+      actualLayer,
+      `idx:${idx} | layer.${actualLayer.type}`
+    );
 
     t.deepEqual(
       actualLayer,
@@ -142,15 +162,18 @@ export function cmpSavedLayers(
       );
 
       if (key === 'config') {
-        cmpObjectKeys(t, expectedLayer.config, actualLayer.config, `idx:${idx} | layer.${actualLayer.type}`);
+        cmpObjectKeys(
+          t,
+          expectedLayer.config,
+          actualLayer.config,
+          `idx:${idx} | layer.${actualLayer.type}`
+        );
 
         Object.keys(actualLayer.config).forEach(ck => {
           t.deepEqual(
             actualLayer.config[ck],
             expectedLayer.config[ck],
-            `idx:${idx} | ${
-              actualLayer.type
-            } layer.config ${ck} should be correct`
+            `idx:${idx} | ${actualLayer.type} layer.config ${ck} should be correct`
           );
         });
       }
@@ -159,7 +182,6 @@ export function cmpSavedLayers(
 }
 
 export function cmpDatasets(t, expectedDatasets, actualDatasets) {
-
   cmpObjectKeys(t, expectedDatasets, actualDatasets, 'datasets');
 
   Object.keys(actualDatasets).forEach(dataId => {
@@ -168,8 +190,12 @@ export function cmpDatasets(t, expectedDatasets, actualDatasets) {
 }
 
 export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {
-
-  cmpObjectKeys(t, expectedDataset, actualDataset, `dataset:${expectedDataset.id}`);
+  cmpObjectKeys(
+    t,
+    expectedDataset,
+    actualDataset,
+    `dataset:${expectedDataset.id}`
+  );
 
   // test everything except auto generated color
   Object.keys(actualDataset).forEach(key => {
@@ -177,23 +203,38 @@ export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {
       t.equal(
         actualDataset.fields.length,
         expectedDataset.fields.length,
-        `dataset.${key} should have same number of fields`
+        `dataset.${expectedDataset.id}.${key} should have same number of fields`
       );
       actualDataset.fields.forEach((actualField, i) => {
         t.deepEqual(
           actualField,
           expectedDataset.fields[i],
-          `dataset.${key} fields ${actualField.name} should be the same`
+          `dataset.${expectedDataset.id}.${key} fields ${actualField.name} should be the same`
         );
       });
     } else if (key === 'gpuFilter') {
       // test gpuFilter props
       cmpGpuFilterProp(t, expectedDataset.gpuFilter, actualDataset.gpuFilter);
+    } else if (key === 'filterRecord') {
+      cmpObjectKeys(
+        t,
+        expectedDataset.filterRecord,
+        actualDataset.filterRecord,
+        `dataset.${expectedDataset.id}.filterRecord`
+      );
+      Object.keys(expectedDataset.filterRecord).forEach(item => {
+        cmpObjectKeys(
+          t,
+          expectedDataset.filterRecord[item],
+          actualDataset.filterRecord[item],
+          `dataset.${expectedDataset.id}.filterRecord.${item}`
+        );
+      });
     } else if (key !== 'color' || opt.color) {
       t.deepEqual(
         actualDataset[key],
         expectedDataset[key],
-        `dataset.${key} should be correct`
+        `dataset.${expectedDataset.id}.${key} should be correct`
       );
     }
   });
@@ -203,9 +244,24 @@ export function cmpGpuFilterProp(t, expectedGpuFilter, actualGpuFilter) {
   cmpObjectKeys(t, expectedGpuFilter, actualGpuFilter, 'gpu filter');
 
   Object.keys(expectedGpuFilter).forEach(key => {
-    if (key === 'filterValueAccessor' && expectedGpuFilter.filterValueAccessor !== 'skip') {
+    if (
+      key === 'filterValueAccessor' &&
+      expectedGpuFilter.filterValueAccessor.inputs
+    ) {
       const {inputs, result} = expectedGpuFilter.filterValueAccessor;
-      t.deepEqual(actualGpuFilter.filterValueAccessor()(...inputs), result, 'getFilterValue should be correct');
+      t.deepEqual(
+        actualGpuFilter.filterValueAccessor()(...inputs),
+        result,
+        'getFilterValue should be correct'
+      );
+    } else if (
+      key === 'filterValueAccessor' &&
+      typeof expectedGpuFilter.filterValueAccessor === 'function'
+    )  {
+
+      // don't compare filter value accessor
+      return;
+
     } else {
       t.deepEqual(
         actualGpuFilter[key],
@@ -225,7 +281,11 @@ export function cmpInteraction(t, expectedInt, actualInt) {
       `interaction.${key} should be same type`
     );
 
-    if (typeof actualInt[key] === 'object' && actualInt[key] !== null && !Array.isArray(actualInt[key])) {
+    if (
+      typeof actualInt[key] === 'object' &&
+      actualInt[key] !== null &&
+      !Array.isArray(actualInt[key])
+    ) {
       cmpInteraction(t, expectedInt[key], actualInt[key]);
     } else {
       t.deepEqual(
@@ -247,7 +307,12 @@ export function cmpParsedAppConfigs(
 
   Object.keys(actualConfig).forEach(key => {
     if (key === 'visState') {
-      cmpObjectKeys(t, expectedConfig.visState, actualConfig.visState, 'visState');
+      cmpObjectKeys(
+        t,
+        expectedConfig.visState,
+        actualConfig.visState,
+        'visState'
+      );
       // for visConfig go through each entry
       cmpParsedAppConfigs(t, expectedConfig[key], actualConfig[key], {
         name: key
@@ -258,7 +323,11 @@ export function cmpParsedAppConfigs(
       cmpFilters(t, expectedConfig[key], actualConfig[key], {id: true});
     } else {
       // for each reducer entry
-      t.deepEqual(actualConfig[key], expectedConfig[key], `${key} should be correct`);
+      t.deepEqual(
+        actualConfig[key],
+        expectedConfig[key],
+        `${key} should be correct`
+      );
     }
   });
 }

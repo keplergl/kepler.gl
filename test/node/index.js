@@ -26,7 +26,3 @@ import './reducers';
 
 // test schemas
 import './schemas';
-
-// test layers
-// TODO: Shan. enable layer test from GPU Data filter - 5
-// import './layer-tests';

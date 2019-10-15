@@ -18,10 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {ColumnLayer} from 'deck.gl';
+import {ColumnLayer} from '@deck.gl/layers';
 import {editShader} from 'deckgl-layers/layer-utils/shader-utils';
-import {extendLayer} from 'deckgl-layers/layer-utils/layer-extension';
-import DataFilterExtension from 'shaderlib/gpu-filtering-module';
 
 function addInstanceCoverage(vs) {
   const addDecl = editShader(
@@ -40,7 +38,7 @@ function addInstanceCoverage(vs) {
   );
 }
 
-// TODO: export all dekc.gl layers from kepler.gl
+// TODO: export all deck.gl layers from kepler.gl
 class EnhancedColumnLayer extends ColumnLayer {
 
   getShaders() {
@@ -63,7 +61,4 @@ class EnhancedColumnLayer extends ColumnLayer {
 
 EnhancedColumnLayer.layerName = 'EnhancedColumnLayer';
 
-export default extendLayer(
-  EnhancedColumnLayer,
-  new DataFilterExtension()
-);
+export default EnhancedColumnLayer;

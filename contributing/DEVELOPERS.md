@@ -68,6 +68,17 @@ http://localhost:8080/
 
 This is the demo app we hosted on [http://kepler.gl/#/demo][demo-app]. By default, it serves non-minified source code inside the src directory.
 
+#### Develop with deck.gl
+
+When develop, upgrade, debug deck.gl, Demo app can load deck.gl directly from src
+```
+// load deck.gl from node_modules/deck.gl/src, sub-modules from node_modules/@deck.gl/<module>/src
+npm run start:deck
+
+// load deck.gl src from the deck.gl folder parallel to kepler.gl
+npm run start:deck-src
+```
+
 ## <a name="tests"> Running Tests
 
 We write unit and browser tests with [Tape][tape] and [Enzyme][enzyme], and lint with [ESLint][eslint]. Make sure to run test before submitting your PR. To run all of the tests once with node:

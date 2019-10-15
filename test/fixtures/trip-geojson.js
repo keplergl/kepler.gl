@@ -26,9 +26,10 @@ export const tripDataInfo = {
 const tripGeoJson = {
   type: 'FeatureCollection',
   features: [
+    // 0
     {
       type: 'Feature',
-      properties: {vendor: 'A'},
+      properties: {vendor: 'A', types: 'driver_analytics_0', trip_distance: 1.59},
       geometry: {
         type: 'LineString',
         coordinates: [
@@ -45,9 +46,10 @@ const tripGeoJson = {
         ]
       }
     },
+    // 1
     {
       type: 'Feature',
-      properties: {vendor: 'B'},
+      properties: {vendor: 'B', value: 4, trip_distance: 2.38},
       geometry: {
         type: 'LineString',
         coordinates: [
@@ -63,9 +65,10 @@ const tripGeoJson = {
         ]
       }
     },
+    // 2
     {
       type: 'Feature',
-      properties: {vendor: 'A'},
+      properties: {vendor: 'A', value: 7, types: 'driver_analytics', trip_distance: 2.83},
       geometry: {
         type: 'LineString',
         coordinates: [
@@ -80,9 +83,10 @@ const tripGeoJson = {
         ]
       }
     },
+    // 3
     {
       type: 'Feature',
-      properties: {vendor: 'A'},
+      properties: {vendor: 'A', value: 11, types: 'driver_gps', trip_distance: 8.33},
       geometry: {
         type: 'LineString',
         coordinates: [
@@ -98,9 +102,10 @@ const tripGeoJson = {
         ]
       }
     },
+    // 4
     {
       type: 'Feature',
-      properties: {vendor: 'A'},
+      properties: {vendor: 'A', value: 6, types: 'driver_analytics', trip_distance: 2.37},
       geometry: {
         type: 'LineString',
         coordinates: [
@@ -114,9 +119,10 @@ const tripGeoJson = {
         ]
       }
     },
+    // 5
     {
       type: 'Feature',
-      properties: {vendor: 'A'},
+      properties: {vendor: 'A', value: 1, types: 'driver_analytics', trip_distance: 7.13},
       geometry: {
         type: 'LineString',
         coordinates: [
@@ -134,9 +140,10 @@ const tripGeoJson = {
         ]
       }
     },
+    // 6
     {
       type: 'Feature',
-      properties: {vendor: 'B'},
+      properties: {vendor: 'B', value: 7, types: 'driver_analytics', trip_distance: 3.22},
       geometry: {
         type: 'LineString',
         coordinates: [
@@ -153,9 +160,10 @@ const tripGeoJson = {
         ]
       }
     },
+    // 7
     {
       type: 'Feature',
-      properties: {vendor: 'A'},
+      properties: {vendor: 'A', value: 15, types: 'driver_analytics', trip_distance: 11},
       geometry: {
         type: 'LineString',
         coordinates: [
@@ -175,9 +183,10 @@ const tripGeoJson = {
         ]
       }
     },
+    // 8
     {
       type: 'Feature',
-      properties: {vendor: 'A'},
+      properties: {vendor: 'A', types: 'driver_analytics', trip_distance: 4.12},
       geometry: {
         type: 'LineString',
         coordinates: [
@@ -202,15 +211,15 @@ const tripGeoJson = {
 
 const fts = tripGeoJson.features;
 export const dataToFeature = [
-  {type: 'Feature', properties: {...fts[0].properties, index: 0}, geometry: fts[0].geometry},
-  {type: 'Feature', properties: {...fts[1].properties, index: 1}, geometry: fts[1].geometry},
+  {type: 'Feature', properties: {...fts[0].properties, value: null, index: 0}, geometry: fts[0].geometry},
+  {type: 'Feature', properties: {...fts[1].properties, types: null, index: 1}, geometry: fts[1].geometry},
   {type: 'Feature', properties: {...fts[2].properties, index: 2}, geometry: fts[2].geometry},
   {type: 'Feature', properties: {...fts[3].properties, index: 3}, geometry: fts[3].geometry},
   {type: 'Feature', properties: {...fts[4].properties, index: 4}, geometry: fts[4].geometry},
   {type: 'Feature', properties: {...fts[5].properties, index: 5}, geometry: fts[5].geometry},
   {type: 'Feature', properties: {...fts[6].properties, index: 6}, geometry: fts[6].geometry},
   {type: 'Feature', properties: {...fts[7].properties, index: 7}, geometry: fts[7].geometry},
-  {type: 'Feature', properties: {...fts[8].properties, index: 8}, geometry: fts[8].geometry}
+  {type: 'Feature', properties: {...fts[8].properties, value: null, index: 8}, geometry: fts[8].geometry}
 ];
 
 export const dataToTimeStamp = [
@@ -325,5 +334,12 @@ export const dataToTimeStamp = [
 ];
 export const timeStampDomain = [1565577261000, 1565578836000];
 export const tripBounds = [-74.33242, 40.60428, -73.78707, 40.88362];
+export const valueDomain = [1, 15];
+
+export const TripLayerMeta = {
+  bounds: tripBounds,
+  featureTypes: {line: true},
+  getFeature: 'test separate'
+};
 
 export default tripGeoJson;

@@ -91,9 +91,18 @@ const insertValue = (obj, key, value) => {
   return {...obj, [key]: value};
 };
 
+/**
+ * check if value is a loose object including a plain object, array, function
+ * @param {*} value
+ */
+export function isObject(value) {
+  return value !== null && (typeof value === 'object' || typeof value === 'function')
+}
+
 const setPath = ([key, ...next], value, obj) => {
-  if (!isPlainObject(obj) && !Array.isArray(obj)) {
-    return obj;
+  // is Object allows js object, array and function
+  if (!isObject(obj)) {
+    return obj
   }
 
   if (next.length === 0) {

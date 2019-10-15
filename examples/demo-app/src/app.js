@@ -170,8 +170,8 @@ class App extends Component {
     // this._loadGeojsonData();
     // this._loadTripGeoJson();
     // this._loadIconData();
-    // this._loadGeojsonData();
     // this._loadH3HexagonData();
+    // this._loadScenegraphLayer();
   }
 
   _loadPointData() {
@@ -189,6 +189,38 @@ class App extends Component {
           readOnly: false
         },
         config: sampleTripDataConfig
+      })
+    );
+  }
+
+  _loadScenegraphLayer() {
+    this.props.dispatch(
+      addDataToMap({
+        datasets: {
+          info: {
+            label: 'Sample Scenegraph Ducks',
+            id: 'test_trip_data'
+          },
+          data: processCsvData(testCsvData)
+        },
+        config: {
+          version: 'v1',
+          config: {
+            visState: {
+              layers: [{
+                type: '3D',
+                config: {
+                  dataId: 'test_trip_data',
+                  columns: {
+                    lat: 'gps_data.lat',
+                    lng: 'gps_data.lng'
+                  },
+                  isVisible: true
+                }
+              }]
+            }
+          }
+        }
       })
     );
   }
@@ -288,17 +320,11 @@ class App extends Component {
   };
 
   _getMapboxRef = (mapbox, index) => {
-    if (!mapbox) {
-      // The ref has been unset.
-      // https://reactjs.org/docs/refs-and-the-dom.html#callback-refs
-      // console.log(`Map ${index} has closed`);
-    } else {
+
+    if (mapbox) {
       // We expect an InteractiveMap created by KeplerGl's MapContainer.
       // https://uber.github.io/react-map-gl/#/Documentation/api-reference/interactive-map
       const map = mapbox.getMap();
-      map.on('zoomend', e => {
-        // console.log(`Map ${index} zoom level: ${e.target.style.z}`);
-      });
     }
   };
 

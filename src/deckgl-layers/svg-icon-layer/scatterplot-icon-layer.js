@@ -18,19 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {ScatterplotLayer} from 'deck.gl';
+import {ScatterplotLayer} from '@deck.gl/layers';
 import {Geometry, Model} from 'luma.gl';
 import GL from '@luma.gl/constants';
-import {extendLayer} from 'deckgl-layers/layer-utils/layer-extension';
-import DataFilterExtension from 'shaderlib/gpu-filtering-module';
-
-const ExtendedScatterplotLayer = extendLayer(
-  ScatterplotLayer,
-  new DataFilterExtension()
-);
 
 const DEFAULT_POS = [-1, -1, 0, -1, 1, 0, 1, 1, 0, 1, -1, 0];
-export default class ScatterplotIconLayer extends ExtendedScatterplotLayer {
+export default class ScatterplotIconLayer extends ScatterplotLayer {
   _getModel(gl) {
     // use default scatterplot shaders
     const shaders = this.getShaders();

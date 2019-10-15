@@ -278,3 +278,16 @@ export const arrayMove = (array, from, to) => {
   arrayMoveMutate(array, from, to);
   return array;
 };
+
+export function findFirstNoneEmpty(data, count = 1, getValue = identity) {
+  let c = 0;
+  const found = [];
+  while (c < count && c < data.length) {
+    const value = getValue(data[c]);
+    if (notNullorUndefined(value)) {
+      found.push(value);
+    }
+    c++;
+  }
+  return found;
+}
