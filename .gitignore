@@ -5,6 +5,7 @@ coverage/
 dist/
 build/
 umd/
+icons/
 */**/dist/
 
 */**/yarn.lock
