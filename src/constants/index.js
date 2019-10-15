@@ -54,5 +54,11 @@ export {
   DEFAULT_COLOR_RANGE,
   PANELS
 } from './default-settings';
+
+export {
+  GITHUB_BUG_REPORT,
+  GITHUB_USER_GUIDE
+} from './user-guides';
+
 export {VizColorPalette, DataVizColors} from './custom-color-ranges';
 export {COLOR_RANGES, DefaultColorRange} from './color-ranges';
