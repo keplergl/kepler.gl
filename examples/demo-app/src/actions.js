@@ -30,7 +30,7 @@ import {
 import {LOADING_METHODS_NAMES} from './constants/default-settings';
 import {CLOUD_PROVIDERS} from './utils/cloud-providers';
 import {generateHashId} from './utils/strings';
-import { parseUri } from './utils/url';
+import {parseUri} from './utils/url';
 import KeplerGlSchema from 'kepler.gl/schemas';
 
 // CONSTANTS
