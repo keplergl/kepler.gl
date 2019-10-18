@@ -30,8 +30,7 @@ import {
   getTimestampFieldDomain,
   getDefaultFilter,
   getDatasetIndexForFilter,
-  getDatasetFieldIndexForFilter,
-  applyFilterFieldName
+  getDatasetFieldIndexForFilter
 } from 'utils/filter-utils';
 
 import {processCsvData} from 'processors/data-processor';
@@ -214,7 +213,7 @@ function testGetTimeFieldDomain(rows, allFields, t) {
 function testIsTimeDataMatchFilter(rows, fields, t) {
 
   const timeStringFilter = {
-    fieldIdx: [ 0 ],
+    fieldIdx: [0],
     type: FILTER_TYPES.timeRange,
     value: [
       moment.utc('2016-09-17 00:09:55').valueOf(),
@@ -234,9 +233,8 @@ function testIsTimeDataMatchFilter(rows, fields, t) {
     `${rows[15][0]} should be outside the range`
   );
 
-
   const epochFilter = {
-    fieldIdx: [ 4 ],
+    fieldIdx: [4],
     type: FILTER_TYPES.timeRange,
     value: [
       moment.utc(1472688000000).valueOf(),
@@ -257,7 +255,7 @@ function testIsTimeDataMatchFilter(rows, fields, t) {
   );
 
   const tzFilter = {
-    fieldIdx: [ 7 ],
+    fieldIdx: [7],
     type: FILTER_TYPES.timeRange,
     value: [
       moment.utc('2016-09-23T00:00:00.000Z').valueOf(),
@@ -278,7 +276,7 @@ function testIsTimeDataMatchFilter(rows, fields, t) {
   );
 
   const utcFilter = {
-    fieldIdx: [ 8 ],
+    fieldIdx: [8],
     type: FILTER_TYPES.timeRange,
     value: [
       moment.utc('2016-10-01 09:45:39+00:00').valueOf(),

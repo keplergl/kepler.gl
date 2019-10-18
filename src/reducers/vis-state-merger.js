@@ -20,6 +20,8 @@
 
 import uniq from 'lodash.uniq';
 import pick from 'lodash.pick';
+import isEqual from 'lodash.isequal';
+import flattenDeep from 'lodash.flattendeep'
 
 import {
   applyFiltersToDatasets,
@@ -51,27 +53,38 @@ export function mergeFilters(state, filtersToMerge) {
 
   // merge filters
   filtersToMerge.forEach(filter => {
-    const datasetIds = Object.keys(datasets).reduce((acc, datasetId) => ([
-      ...acc,
-      ...(shouldApplyfilter(filter, datasetId) ? [datasetId] : [])
-    ]), []);
+    // we can only look for datasets define in the filter dataId
+    const datasetIds = Array.isArray(filter.dataId) ? filter.dataId : [filter.dataId];
 
-    if (datasetIds.length) {
+    // we can merge a filter only if all datasets supposed to be filtered are already laoded
+    if (datasetIds.every(d => datasets[d])) {
 
-      // for each dataset data mapped against the current filter are valid
-      const validatedFilter = datasetIds.reduce((acc, d) => {
+      // all datasetIds in filter must be present the state datasets
+      const {filter: validatedFilter, applytoDatasets} = datasetIds.reduce((acc, d) => {
         const dataset = datasets[d];
         const updatedFilter = validateFilterWithData(dataset, filter);
         if (updatedFilter) {
-          return acc ? {
+          return {
             ...acc,
-            // merge props from every single dataset/field
-            ...mergeFilterProps(acc, updatedFilter)
-          } : updatedFilter;
+            filter: acc.filter ? {
+              ...acc.filter,
+              ...mergeFilterProps(acc, updatedFilter)
+            } : updatedFilter,
+            applytoDatasets: [
+              ...acc.applytoDatasets,
+              d
+            ]
+          };
         }
-      }, null);
+        
+        return acc;
 
-      if (validatedFilter) {
+      }, {
+        filter: null,
+        applytoDatasets: []
+      });
+
+      if (validatedFilter && isEqual(datasetIds, applytoDatasets)) {
         merged.push(validatedFilter);
       }
     } else {
@@ -83,10 +96,7 @@ export function mergeFilters(state, filtersToMerge) {
   const updatedFilters = [...(state.filters || []), ...merged];
 
   // flatten all filter dataIds
-  const datasetsToFilter = uniq(merged.reduce((acc, f) => ([
-    ...acc,
-    ...(Array.isArray(f.dataId) ? f.dataId : [f.dataId])
-  ]), []));
+  const datasetsToFilter = uniq(flattenDeep(merged.map(f => f.dataId)));
 
   const updatedDatasets = applyFiltersToDatasets(datasetsToFilter, datasets, updatedFilters);
 

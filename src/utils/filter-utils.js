@@ -756,18 +756,26 @@ export function applyFilterFieldName(filter, datasets, fieldName, filterDatasetI
  * @return {*}
  */
 /* eslint-disable complexity */
-export function mergeFilterProps(filter, filterProps, field, datasetIndex = 0) {
+export function mergeFilterProps(filter, filterProps) {
   if (!filter) {
     return filterProps;
   }
 
-  if (filter.fieldType && filter.fieldType !== filterProps.fieldType) {
+  if (!filterProps) {
     return filter;
   }
 
-  const combinedDomain = [
+  if (
+    !filterProps
+    || (filter.fieldType && filter.fieldType !== filterProps.fieldType)
+    || !filterProps.domain
+  ) {
+    return filter;
+  }
+
+  const combinedDomain = !filter.domain ? filterProps.domain : [
     ...(filter.domain || []),
-    ...filterProps.domain
+    ...(filterProps.domain || [])
   ].sort((a, b) => a - b);
 
   const newFilter = {
