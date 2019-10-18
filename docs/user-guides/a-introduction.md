@@ -35,6 +35,7 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 * [Hexbin](./c-types-of-layers/h-hexbin.md)
 * [Heatmap](./c-types-of-layers/i-heatmap.md)
 * [H3](./c-types-of-layers/j-h3.md)
+* [Trip](./c-types-of-layer/k-trip.md)
 
 #### [Layer attributes](./d-layer-attributes.md)
 
@@ -42,7 +43,7 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 
 #### [Filters](./e-filters.md)
 
-#### Map styles
+#### [Map styles](./f-map-styles)
 * [Base map styles](./f-map-styles/1-base-map-styles.md)
 * [Map layers](./f-map-styles/2-map-layers.md)
 * [Custom styles](./f-map-styles/3-custom-styles.md)
@@ -50,7 +51,10 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 * [Display legend](./f-map-styles/5-display-legend.md)
 * [Split maps](./f-map-styles/6-split-maps.md)
 
-#### [Map settings](./g-map-settings.md)
+#### [Interactions](./g-map-settings.md)
+* [Tooltips and Highlighting](./g-map-settings.md#tooltips-and-highlighting)
+* [Brushing](./g-map-settings.md#brushing)
+* [Display Coordinates](./g-map-settings.md#display-coordinates)
 
 #### [Time playback](./h-playback.md)
 
