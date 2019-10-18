@@ -1,8 +1,14 @@
 # Interactions
 
+<!-- TOC -->
+  - [Tooltips](#tooltips)
+  - [Brushing](#brushing)
+  - [Display Coordinates](#display-coordinates)
+<!-- /TOC -->
+
 You can toggle customization options on your map, including tooltips, brush highlighting, map imagery (water, parks, etc.), and more.
 
-![Interaction menu](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/g-map-sttings-0.png "Interaction menu")
+![Interaction menu](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/g-interactions-0.png "Interaction menu")
 
 To toggle customization options on your map:
 
@@ -29,7 +35,7 @@ tooltip displays metrics when hovering over a data point. You can choose which f
   - __Web link__
 Tooltip can be a clicable weblink. To add a web link as tooltip, add  url starts with `http://` to the field content.
 
-![tooltips](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/g-map-sttings-1.png "tooltips")
+![tooltips](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/g-interactions-1.png "tooltips")
 
 
 Tip: click a point to pin the tooltip info to the map. To unpin the tooltip, press the blue pin icon.
@@ -47,6 +53,8 @@ Tip: click a point to pin the tooltip info to the map. To unpin the tooltip, pre
 
 ## Display Coordinates
 
-![coordinate](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/g-map-sttings-2.png "coordinate")
+![coordinate](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/g-interactions-2.png "coordinate")
 
 When then on coordinate, a  panel contains latitude and longitude will follow your mouse
+
+[Back to table of contents](./a-introduction.md)
