@@ -18,7 +18,7 @@ kepler.gl provide a set of [Mapbox](https://www.mapbox.com) basemap styles as ba
 
 Open the __Base Map panel__ to select from a list of default map styles.
 
-![base map panel](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/f-map-style-1.png "base map panel")
+![base map panel](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/f-map-styles-1.png "base map panel")
 
 Open the __base map style__ drop down menu to change map color scheme and imagery. Options include:
 - __Dark__: dark base map with light-colored text.
@@ -26,7 +26,7 @@ Open the __base map style__ drop down menu to change map color scheme and imager
 
 ## Toggle Map Layers
 
-![map layers](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/f-map-style-2.png "map layers")
+![map layers](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/f-map-styles-2.png "map layers")
 
 #### Map Layers
 Hide and show water, buildings, roads, and more. Options include:
@@ -38,17 +38,17 @@ Hide and show water, buildings, roads, and more. Options include:
 - __Land__: Shows parks, mountains, and other landscape features.
 - __3d Building__: Shows 3D buildings on the map. 3D buildings are only visible in the 3D map view. Resolution automatically updates based on current map zoom level. Use the input below to edit 3D bulding color.
 
-![3d building](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/f-map-style-3.png "3d buldings")
+![3d building](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/f-map-styles-3.png "3d buldings")
 
 
 #### Layer Order
 To control the order in which map imagery layers are displayed, toggle the move to top icon:
 
-![move to top icon](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/f-map-style-4.png "move to top icon").
+![move to top icon](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/f-map-styles-4.png "move to top icon").
 
 __TIP__: Move labels to the top on maps with colored layers to keep the labels from being concealed.
 
-![Examales of ordered layers](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/f-map-style-5.png "examples of ordered layers")
+![Examales of ordered layers](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/f-map-styles-5.png "examples of ordered layers")
 
 
 ## Custom Map Styles
