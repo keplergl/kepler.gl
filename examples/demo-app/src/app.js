@@ -102,7 +102,7 @@ class App extends Component {
     // if we pass an id as part of the url
     // we ry to fetch along map configurations
     const {
-      params: {id, provider, mapId} = {},
+      params: {id, provider} = {},
       location: {query = {}}
     } = this.props;
 
@@ -110,7 +110,7 @@ class App extends Component {
       const providerHandler = CLOUD_PROVIDERS[provider];
 
       if (providerHandler) {
-        this.props.dispatch(providerHandler.loadMap(mapId, query));
+        this.props.dispatch(providerHandler.loadMap(query));
 
         return;
       }
