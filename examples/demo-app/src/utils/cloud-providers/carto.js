@@ -26,6 +26,7 @@ import {formatCsv} from 'processors/data-processor';
 import {getMapPermalink} from '../url';
 import get from 'lodash.get';
 import {loadRemoteResourceSuccess,setLoadingMapStatus} from '../../actions';
+import {push} from 'react-router-redux';
 
 const NAME = 'carto';
 const carto = new OAuthApp({
@@ -48,7 +49,7 @@ function setAuthToken(authToken) {
 
 /**
  * The CARTO cloud provider polls the created window internally to parse the URL
- * @param {*} location 
+ * @param {*} location
  */
 function getAccessTokenFromLocation(location) {
   return;
@@ -111,10 +112,15 @@ function getAccessToken() {
   return carto.oauth.expired ? null : carto.oauth.token;
 }
 
-function loadMap(mapId, queryParams) {
-  const { owner: username } = queryParams;
+function loadMap(queryParams) {
+  const { owner: username, mapId } = queryParams;
 
   return dispatch => {
+    if (!username || !mapId) {
+      dispatch(push('/demo'));
+      return;
+    }
+
     dispatch(setLoadingMapStatus(true));
     carto.PublicStorageReader.getVisualization(username, mapId).then((result) => {
       // These are the options required for the action. For now, all datasets that come from CARTO are CSV
