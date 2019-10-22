@@ -158,15 +158,17 @@ export function interactionConfigChange(config) {
  * @param {Number} idx -`idx` of filter to be updated
  * @param {string} prop - `prop` of filter, e,g, `dataId`, `name`, `value`
  * @param {*} value - new value
+ * @param {Number} valueIndex - array properties like dataset require index in order to improve performance
  * @returns {{type: ActionTypes.SET_FILTER, idx: idx, prop: prop, value: value}}
  * @public
  */
-export function setFilter(idx, prop, value) {
+export function setFilter(idx, prop, value, valueIndex) {
   return {
     type: ActionTypes.SET_FILTER,
     idx,
     prop,
-    value
+    value,
+    valueIndex
   };
 }
 

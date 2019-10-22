@@ -63,6 +63,10 @@ export const FILTER_UPDATER_PROPS = keyMirror({
   name: null
 });
 
+export const LIMITED_FILTER_EFFECT_PROPS = keyMirror({
+  [FILTER_UPDATER_PROPS.name]: null
+});
+
 const SupportedPlotType = {
   [FILTER_TYPES.timeRange]: {
     default: 'histogram',
@@ -667,20 +671,30 @@ export function getDefaultFilterPlotType(filter) {
 }
 
 /**
+ * Apply a list of filters to a given dataset
+ * @param dataset
+ * @param filters
+ * @return {Object} filtered dataset
+ */
+export function applyFilterToDataset(dataset, filters) {
+  return {
+    ...dataset,
+    ...filterData(dataset, filters)
+  };
+}
+
+/**
  *
  * @param datasetIds list of dataset ids to be filtered
  * @param datasets all datasets
  * @param filters all filters to be applied to datasets
- * @return {{[p: string]: *}}
+ * @return {{[datasetId: string]: Object}} datasets - new updated datasets
  */
 export function applyFiltersToDatasets(datasetIds, datasets, filters) {
   const dataIds = Array.isArray(datasetIds) ? datasetIds : [datasetIds];
   return dataIds.reduce((acc, dataIdentifier) => ({
     ...acc,
-    [dataIdentifier]: {
-      ...datasets[dataIdentifier],
-      ...filterData(datasets[dataIdentifier], filters)
-    }
+    [dataIdentifier]: applyFilterToDataset(datasets[dataIdentifier], filters)
   }), datasets);
 }
 

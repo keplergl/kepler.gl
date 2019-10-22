@@ -25,7 +25,6 @@ import flattenDeep from 'lodash.flattendeep'
 
 import {
   applyFiltersToDatasets,
-  shouldApplyfilter,
   validateFilterWithData
 } from 'utils/filter-utils';
 
@@ -76,7 +75,7 @@ export function mergeFilters(state, filtersToMerge) {
             ]
           };
         }
-        
+
         return acc;
 
       }, {

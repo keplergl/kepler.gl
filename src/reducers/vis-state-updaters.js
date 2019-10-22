@@ -38,7 +38,8 @@ import {
   getFilterPlot,
   getDefaultFilterPlotType,
   isInRange,
-  FILTER_UPDATER_PROPS
+  FILTER_UPDATER_PROPS,
+  LIMITED_FILTER_EFFECT_PROPS
 } from 'utils/filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
 
@@ -516,7 +517,7 @@ export function setFilterUpdater(state, action) {
     idx,
     prop,
     value,
-    datasetIndex
+    valueIndex = 0
   } = action;
   let newState = state;
   let newFilter = {
@@ -528,6 +529,9 @@ export function setFilterUpdater(state, action) {
   if (!dataId || !dataId.length) {
     return state;
   }
+
+  // ENsuring backward compatibility
+  const datasetIds = Array.isArray(dataId) ? dataId : [dataId];
 
   switch (prop) {
     // TODO: Next PR for UI if we update dataId, we need to consider two cases:
@@ -542,15 +546,18 @@ export function setFilterUpdater(state, action) {
       // we are supporting the current functionality
       // TODO: Next PR for UI filter name will only update filter name but it won't have side effects
       // we are gonna use pair of datasets and fieldIdx to update the filter
-      const {filter: updateFilter, datasets: newDatasets} = applyFilterFieldName(newFilter, state.datasets, value, datasetIndex);
+      const {filter: updateFilter, datasets: newDatasets} = applyFilterFieldName(newFilter, state.datasets, value, valueIndex);
       newFilter = updateFilter;
 
       newState = {
         ...state,
         datasets: newDatasets
       };
+
+      // only filter the current dataset
       break;
     default:
+
       break;
   }
 
@@ -561,23 +568,27 @@ export function setFilterUpdater(state, action) {
     newFilter.enlarged = false;
   }
 
-  // TODO: Merge the next two statements into an helper because it's used here and
-  // remove filter
-
   // save new filters to newState
   newState = {
     ...newState,
-    filters: state.filters.map((f, i) => (i === idx ? newFilter : f))
+    filters: Object.assign([...state.filters], {[idx]: newFilter})
   };
+
+  // if we are currently setting a prop that only requires to filter the current
+  // dataset we will pass only the current dataset to applyFiltersToDatasets and
+  // updateAllLayerDomainData otherwise we pass the all list of datasets as defined in dataId
+  const datasetIdsToFilter = LIMITED_FILTER_EFFECT_PROPS[prop] ?
+    [datasetIds[valueIndex]] : datasetIds;
 
   // filter data
   newState = {
     ...newState,
-    datasets: applyFiltersToDatasets(dataId, newState.datasets, newState.filters)
+    datasets: applyFiltersToDatasets(datasetIdsToFilter, newState.datasets, newState.filters)
   };
 
   // dataId is an array
-  newState = updateAllLayerDomainData(newState, dataId, newFilter);
+  // pass only the dataset we need to update
+  newState = updateAllLayerDomainData(newState, datasetIdsToFilter, newFilter);
 
   return newState;
 }
