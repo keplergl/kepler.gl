@@ -20,18 +20,18 @@
 
 import uniq from 'lodash.uniq';
 import pick from 'lodash.pick';
+import isEqual from 'lodash.isequal';
+import flattenDeep from 'lodash.flattendeep'
 
 import {
-  getDefaultFilter,
-  getFilterProps,
-  getFilterPlot,
-  filterData,
-  adjustValueToFilterDomain
+  applyFiltersToDatasets,
+  validateFilterWithData
 } from 'utils/filter-utils';
 
 import {getInitialMapLayersForSplitMap} from 'utils/split-map-utils';
 
 import {LAYER_BLENDINGS} from 'constants/default-settings';
+import {mergeFilterProps} from '../utils/filter-utils';
 
 /**
  * Merge loaded filters with current state, if no fields or data are loaded
@@ -52,43 +52,57 @@ export function mergeFilters(state, filtersToMerge) {
 
   // merge filters
   filtersToMerge.forEach(filter => {
-    // match filter.dataId with current datesets id
-    // uploaded data need to have the same dataId with the filter
-    if (datasets[filter.dataId]) {
-      // datasets is already loaded
-      const validateFilter = validateFilterWithData(
-        datasets[filter.dataId],
-        filter
-      );
+    // we can only look for datasets define in the filter dataId
+    const datasetIds = Array.isArray(filter.dataId) ? filter.dataId : [filter.dataId];
 
-      if (validateFilter) {
-        merged.push(validateFilter);
+    // we can merge a filter only if all datasets supposed to be filtered are already laoded
+    if (datasetIds.every(d => datasets[d])) {
+
+      // all datasetIds in filter must be present the state datasets
+      const {filter: validatedFilter, applytoDatasets} = datasetIds.reduce((acc, d) => {
+        const dataset = datasets[d];
+        const updatedFilter = validateFilterWithData(dataset, filter);
+        if (updatedFilter) {
+          return {
+            ...acc,
+            filter: acc.filter ? {
+              ...acc.filter,
+              ...mergeFilterProps(acc, updatedFilter)
+            } : updatedFilter,
+            applytoDatasets: [
+              ...acc.applytoDatasets,
+              d
+            ]
+          };
+        }
+
+        return acc;
+
+      }, {
+        filter: null,
+        applytoDatasets: []
+      });
+
+      if (validatedFilter && isEqual(datasetIds, applytoDatasets)) {
+        merged.push(validatedFilter);
       }
     } else {
-      // datasets not yet loaded
       unmerged.push(filter);
     }
   });
 
   // filter data
   const updatedFilters = [...(state.filters || []), ...merged];
-  const datasetToFilter = uniq(merged.map(d => d.dataId));
 
-  const updatedDataset = datasetToFilter.reduce(
-    (accu, dataId) => ({
-      ...accu,
-      [dataId]: {
-        ...datasets[dataId],
-        ...filterData(datasets[dataId].allData, dataId, updatedFilters)
-      }
-    }),
-    datasets
-  );
+  // flatten all filter dataIds
+  const datasetsToFilter = uniq(flattenDeep(merged.map(f => f.dataId)));
+
+  const updatedDatasets = applyFiltersToDatasets(datasetsToFilter, datasets, updatedFilters);
 
   return {
     ...state,
     filters: updatedFilters,
-    datasets: updatedDataset,
+    datasets: updatedDatasets,
     filterToBeMerged: unmerged
   };
 }
@@ -330,6 +344,7 @@ export function validateSavedLayerColumns(fields, savedCols, emptyCols) {
     const saved = savedCols[key];
     colFound[key] = {...emptyCols[key]};
 
+    // TODO: replace with new approach
     const fieldIdx = fields.findIndex(({name}) => name === saved);
 
     if (fieldIdx > -1) {
@@ -492,61 +507,4 @@ export function validateLayerWithData(
   });
 
   return newLayer;
-}
-
-/**
- * Validate saved filter config with new data,
- * calculate domain and fieldIdx based new fields and data
- *
- * @param {Array<Object>} dataset.fields
- * @param {Array<Object>} dataset.allData
- * @param {Object} filter - filter to be validate
- * @return {Object | null} - validated filter
- */
-export function validateFilterWithData({fields, allData}, filter) {
-  // match filter.name to field.name
-  const fieldIdx = fields.findIndex(({name}) => name === filter.name);
-
-  if (fieldIdx < 0) {
-    // if can't find field with same name, discharge filter
-    return null;
-  }
-
-  const field = fields[fieldIdx];
-  const value = filter.value;
-
-  // return filter type, default value, fieldType and fieldDomain from field
-  const filterPropsFromField = getFilterProps(allData, field);
-
-  let matchedFilter = {
-    ...getDefaultFilter(filter.dataId),
-    ...filter,
-    ...filterPropsFromField,
-    freeze: true,
-    fieldIdx
-  };
-
-  const {yAxis} = matchedFilter;
-  if (yAxis) {
-    const matcheAxis = fields.find(
-      ({name, type}) => name === yAxis.name && type === yAxis.type
-    );
-
-    matchedFilter = matcheAxis
-      ? {
-          ...matchedFilter,
-          yAxis: matcheAxis,
-          ...getFilterPlot({...matchedFilter, yAxis: matcheAxis}, allData)
-        }
-      : matchedFilter;
-  }
-
-  matchedFilter.value = adjustValueToFilterDomain(value, matchedFilter);
-
-  if (matchedFilter.value === null) {
-    // cannt adjust saved value to filter
-    return null;
-  }
-
-  return matchedFilter;
 }

@@ -140,7 +140,7 @@ function FilterPanelFactory(
             <FieldSelector
               inputTheme="secondary"
               fields={allAvailableFields}
-              value={name}
+              value={Array.isArray(name) ? name[0] : name}
               erasable={false}
               onSelect={value => setFilter(idx, 'name', value.name)}
             />

@@ -93,18 +93,18 @@ test('#visStateSchema -> v1 -> save load filters', t => {
   const filtersToSave = vsToSave.filters;
 
   const expectedSavedFilters = [{
-    dataId: '190vdll3di',
+    dataId: ['190vdll3di'],
     id: 'hjpn8frza',
-    name: 'time',
+    name: ['time'],
     type: 'timeRange',
     value: [1474606800000, 1474617600000],
     enlarged: true,
     plotType: 'histogram',
     yAxis: null
   }, {
-    dataId: 'ieukmgne',
+    dataId: ['ieukmgne'],
     id: 'vpk2466o',
-    name: 'RATE',
+    name: ['RATE'],
     type: 'multiSelect',
     value: ['a'],
     enlarged: false,
