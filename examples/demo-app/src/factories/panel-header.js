@@ -18,47 +18,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// Constants
-export {
-  KEPLER_GL_VERSION,
-  KEPLER_GL_WEBSITE,
-  KEPLER_GL_NAME,
-  DIMENSIONS,
-  ALL_FIELD_TYPES,
-  FIELD_OPTS,
-  FILTER_TYPES,
-  GEOJSON_FIELDS,
-  ICON_FIELDS,
-  TRIP_POINT_FIELDS,
-  TRIP_ARC_FIELDS,
-  SCALE_TYPES,
-  LAYER_TYPES,
-  LAYER_BLENDINGS,
-  AGGREGATION_TYPES,
-  MAX_DEFAULT_TOOLTIPS,
-  DATA_TABLE_ID,
-  DELETE_DATA_ID,
-  ADD_DATA_ID,
-  EXPORT_IMAGE_ID,
-  EXPORT_DATA_ID,
-  EXPORT_MAP_ID,
-  ADD_MAP_STYLE_ID,
-  DEFAULT_LAYER_GROUPS,
-  DEFAULT_MAP_STYLES,
-  THEME,
-  EXPORT_MAP_FORMATS,
-  EXPORT_MAP_FORMAT_OPTIONS,
-  EXPORT_DATA_TYPE_OPTIONS,
-  DEFAULT_NOTIFICATION_TYPES,
-  DEFAULT_NOTIFICATION_TOPICS,
-  DEFAULT_COLOR_RANGE,
-  PANELS
-} from './default-settings';
+import {PanelHeaderFactory, Icons} from 'kepler.gl/components';
+import {GITHUB_BUG_REPORT, GITHUB_USER_GUIDE} from 'kepler.gl/constants';
 
-export {
-  GITHUB_BUG_REPORT,
-  GITHUB_USER_GUIDE
-} from './user-guides';
+export function CustomPanelHeaderFactory(SaveExportDropdown) {
+  const PanelHeader = PanelHeaderFactory(SaveExportDropdown);
 
-export {VizColorPalette, DataVizColors} from './custom-color-ranges';
-export {COLOR_RANGES, DefaultColorRange} from './color-ranges';
+  PanelHeader.defaultProps = {
+    ...PanelHeader.defaultProps,
+    actionItems: [
+      {
+        id: 'bug',
+        iconComponent: Icons.Bug,
+        href: GITHUB_BUG_REPORT,
+        blank: true,
+        tooltip: 'Bug Report',
+        onClick: () => {}
+      },
+      {
+        id: 'docs',
+        iconComponent: Icons.Docs,
+        href: GITHUB_USER_GUIDE,
+        blank: true,
+        tooltip: 'User Guide',
+        onClick: () => {}
+      },
+      {
+        ...PanelHeader.defaultProps.actionItems.find(item => item.id === 'save'),
+        label: null,
+        tooltip: 'Share'
+      }
+    ]
+  };
+  return PanelHeader;
+}
+
+CustomPanelHeaderFactory.deps = PanelHeaderFactory.deps;
+
+export function replacePanelHeader() {
+  return [PanelHeaderFactory, CustomPanelHeaderFactory];
+}

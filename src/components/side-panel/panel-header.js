@@ -59,9 +59,12 @@ const StyledPanelAction = styled.div.attrs({
   height: 26px;
   justify-content: space-between;
   margin-left: 4px;
-  width: 70px;
   padding: 5px;
   font-weight: bold;
+  p {
+    display: inline-block;
+    margin-right: 6px;
+  }
   a {
     height: 20px;
   }
