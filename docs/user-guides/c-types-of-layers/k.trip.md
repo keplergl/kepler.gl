@@ -42,7 +42,7 @@ In order to animate the path, the `geoJSON` data needs to contain `LineString` i
 - Color
 
   The path can be colored by an attribute from the properties.
-  
+
   <img src="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/k-trip-attribute-colors.png" width="256" title="Color Attribute">
 
 - Stroke Width
