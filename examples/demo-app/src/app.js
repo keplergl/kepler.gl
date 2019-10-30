@@ -31,6 +31,7 @@ import {replaceLoadDataModal} from './factories/load-data-modal';
 import {replaceSaveMap} from './factories/save-map';
 import {replaceMapControl} from './factories/map-control';
 import ExportUrlModal from './components/sharing/export-url-modal';
+import ConnectBackendStorageModal from './components/backend-storage-modal/connect-backend-storage-modal';
 import {AUTH_TOKENS} from './constants/default-settings';
 import {CLOUD_PROVIDERS} from './utils/cloud-providers';
 import {
@@ -344,6 +345,12 @@ class App extends Component {
               parentSelector={() => findDOMNode(this.root)}
             />
           )}
+
+          {/* { rootNode && <ConnectBackendStorageModal
+            parentSelector={() => findDOMNode(this.root)}
+            isOpen={true}
+          />} */}
+
           <div
             style={{
               transition: 'margin 1s, height 1s',
