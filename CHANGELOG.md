@@ -14,6 +14,15 @@ Each version should:
   Security to invite users to upgrade in case of vulnerabilities.
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
+#### [1.1.10] - Oct 30 2019
+- [Docs] Add instructions for image and weblink in tooltip (#797)
+- [Enhancement] Add Bug Report User Guides to demo app panel header (#787)
+- [Docs] Fix typos in add-data-workflow-user-guide (#807)
+- [Feat] add stdev and variance aggregators to aggregation layer (#809)
+- [Feat] Multiple datasets per filter (#773)
+- [Bug] Fixed loading urls with query params (#780)
+- [Jupyter] Publish keplergl jupyter 0.1.2 (#784)
+
 #### [1.1.9] - Oct 11 2019
 - [Enhancement] improve Geojson processing performance and error handling (#781)
 - [Enhancement] add file format instruction to file upload (#770)
