@@ -59,7 +59,7 @@ const StyledPanelAction = styled.div.attrs({
   height: 26px;
   justify-content: space-between;
   margin-left: 4px;
-  width: 70px;
+  ${props => props.hasLabel ? 'width: 70px' : ''}
   padding: 5px;
   font-weight: bold;
   a {
@@ -124,7 +124,7 @@ const StyledPanelDropdown = styled.div`
 
 export const PanelAction = ({item, onClick}) => (
   <StyledPanelAction className="side-panel__panel-header__action"
-    data-tip data-for={`${item.id}-action`} onClick={onClick}>
+    data-tip data-for={`${item.id}-action`} onClick={onClick} hasLabel={Boolean(item.label)}>
     {item.label ? <p>{item.label}</p> : null}
     <a target={item.blank ? '_blank' : ''} href={item.href}>
       <item.iconComponent height="20px" />
@@ -343,7 +343,6 @@ function PanelHeaderFactory(
         id: 'connect',
         iconComponent: Database,
         onClick: () => {},
-        label: 'Connect',
         dropdownComponent: SaveMapToBackendDropdown
       },
       {
