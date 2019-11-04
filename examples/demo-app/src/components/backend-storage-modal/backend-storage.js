@@ -8,6 +8,11 @@ const StyledBackendExportSection = styled.div`
   display: flex;
 `;
 
+const StyledSubtitle = styled.div`
+  margin-bottom: 36px;
+  font-size: 14px;
+`;
+
 function useForceUpdate(){
   const [value, setValue] = useState(true); //boolean state
   return () => setValue(!value); // toggle the state to force render
@@ -18,7 +23,7 @@ const BackendStorageModalContent = () => {
 
   return (<StyledModalContent className="export-cloud-modal">
     <div style={{width: '100%'}}>
-      <div>Connect to your Backend Storage to save your maps privately</div>
+      <StyledSubtitle>Connect to your Backend Storage to save your maps privately</StyledSubtitle>
       <StyledBackendExportSection>
         {Object.keys(BACKEND_PROVIDERS).map((name, index) => (
           <BackendTile
@@ -27,7 +32,7 @@ const BackendStorageModalContent = () => {
             isConnected={BACKEND_PROVIDERS[name].isConnected}
             onConnect={BACKEND_PROVIDERS[name].connect.bind(this, forceUpdate)}
             onManageStorage={BACKEND_PROVIDERS[name].manageStorage}
-            onLogout={BACKEND_PROVIDERS[name].logout}
+            onLogout={BACKEND_PROVIDERS[name].logout.bind(this, forceUpdate)}
           />
         ))}
       </StyledBackendExportSection>

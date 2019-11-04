@@ -46,10 +46,17 @@ const setAuthToken = function setAuthToken(authToken) {
   carto.setClientID(authToken);
 };
 
+const logout = function logout(callback) {
+  carto.oauth.clear();
+  carto.oauth._carto.sync();
+  callback();
+};
+
 export default {
   name: NAME,
   icon: CARTOIcon,
   setAuthToken,
   connect,
-  isConnected
+  isConnected,
+  logout
 };

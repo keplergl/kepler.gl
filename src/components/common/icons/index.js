@@ -29,6 +29,7 @@ export {default as Close} from './close';
 export {default as Crosshairs} from './crosshairs';
 export {default as Cube3d} from './cube-3d';
 export {default as CursorClick} from './cursor-click';
+export {default as Database} from './database';
 export {default as Delete} from './delete';
 export {default as Docs} from './docs';
 export {default as DragNDrop} from './drag-n-drop';

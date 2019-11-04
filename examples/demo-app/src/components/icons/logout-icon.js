@@ -18,23 +18,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
-import {Modal} from 'kepler.gl/components';
-import BackendStorageModalContent from './backend-storage';
+import React, {Component} from 'react';
+import {Icons} from 'kepler.gl/components';
+import PropTypes from 'prop-types';
 
-const ConnectBackendStorageModal = ({
-  isOpen,
-  onClose,
-  parentSelector
-}) => (
-  <Modal
-    isOpen={isOpen}
-    close={onClose}
-    title='Connect to your Backend Storage'
-    parentSelector={parentSelector}
-  >
-    <BackendStorageModalContent />
-  </Modal>
-);
+export default class Logout extends Component {
+  static propTypes = {
+    height: PropTypes.string
+  };
 
-export default ConnectBackendStorageModal;
+  static defaultProps = {
+    height: '12px',
+    predefinedClassName: 'data-ex-icons-logout'
+  };
+
+  render() {
+    return (
+      <Icons.IconWrapper {...this.props} viewBox={"0 0 12 12"}>
+        <path d="M4.73333333,8.4 L5.66666667,9.33333333 L9,6 L5.66666667,2.66666667 L4.73333333,3.6 L6.46666667,5.33333333 L0,5.33333333 L0,6.66666667 L6.46666667,6.66666667 L4.73333333,8.4 Z M10.6666667,0 L1.33333333,0 C0.6,0 0,0.6 0,1.33333333 L0,4 L1.33333333,4 L1.33333333,1.33333333 L10.6666667,1.33333333 L10.6666667,10.6666667 L1.33333333,10.6666667 L1.33333333,8 L0,8 L0,10.6666667 C0,11.4 0.6,12 1.33333333,12 L10.6666667,12 C11.4,12 12,11.4 12,10.6666667 L12,1.33333333 C12,0.6 11.4,0 10.6666667,0 Z"></path>
+      </Icons.IconWrapper>
+    );
+  }
+};

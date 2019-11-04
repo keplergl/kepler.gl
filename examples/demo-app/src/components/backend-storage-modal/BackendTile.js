@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import LogoutIcon from '../icons/logout-icon';
 
 const StyledLabel = styled.div`
   font-weight: 600;
@@ -14,7 +15,7 @@ const StyledTileButton = styled.button`
   width: 124px;
   height: 124px;
   margin-bottom: 12px;
-  border: 1px solid ${props => props.theme.selectBorderColorLT};
+  border: 1px solid ${props => props.isConnected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT};
   background-color: #fff;
   cursor: pointer;
   padding: 0;
@@ -35,13 +36,17 @@ const StyledManageOption = styled.a`
   font-weight: 600;
 `;
 
+const StyledLogoutIconOption = styled(LogoutIcon)`
+  margin-right: 6px;
+  vertical-align: text-top;
+`;
+
 const noop = () => {};
 
 const BackendTile = ({
   Icon,
   isConnected,
   onConnect,
-  onManageStorage,
   onLogout
 }) => (
   <StyledTile>
@@ -50,8 +55,12 @@ const BackendTile = ({
       {isConnected() && <StyledLabel>Connected</StyledLabel>}
     </StyledTileButton>
 
-    {isConnected() && <StyledManageOption onClick={onManageStorage}>Manage Storage</StyledManageOption>}
-    {isConnected() && <StyledManageOption onClick={onLogout}>Logout</StyledManageOption>}
+    {isConnected() &&
+      <StyledManageOption onClick={onLogout}>
+        <StyledLogoutIconOption />
+        Logout
+      </StyledManageOption>
+    }
   </StyledTile>
 );
 

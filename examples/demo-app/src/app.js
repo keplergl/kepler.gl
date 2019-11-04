@@ -289,6 +289,12 @@ class App extends Component {
     });
   };
 
+  _toggleSettingsBackendModal = () => {
+    this.setState({
+      settingsBackendModalOpen: !this.state.settingsBackendModalOpen
+    });
+  };
+
   _onExportToCloud = (provider) => {
     this.props.dispatch(exportFileToCloud(provider));
   };
@@ -343,13 +349,14 @@ class App extends Component {
               onCloudLoginSuccess={this._onCloudLoginSuccess}
               // this is to apply the same modal style as kepler.gl core
               parentSelector={() => findDOMNode(this.root)}
-            />
-          )}
+              />
+              )}
 
-          {/* { rootNode && <ConnectBackendStorageModal
+          { rootNode && <ConnectBackendStorageModal
+            isOpen={Boolean(this.state.settingsBackendModalOpen)}
+            onClose={this._toggleSettingsBackendModal}
             parentSelector={() => findDOMNode(this.root)}
-            isOpen={true}
-          />} */}
+          />}
 
           <div
             style={{
@@ -373,6 +380,7 @@ class App extends Component {
                   width={width}
                   height={height - (showBanner ? BannerHeight : 0)}
                   onSaveMap={this._isCloudStorageEnabled() && this._toggleCloudModal}
+                  onBackendStorageSettingsClick={this._toggleSettingsBackendModal}
                 />
               )}
             </AutoSizer>
