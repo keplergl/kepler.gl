@@ -14,30 +14,35 @@ const StyledSubtitle = styled.div`
 `;
 
 function useForceUpdate(){
-  const [value, setValue] = useState(true); //boolean state
-  return () => setValue(!value); // toggle the state to force render
+  const [value, setValue] = useState(true);
+  return () => setValue(!value);
 }
 
 const BackendStorageModalContent = () => {
   const forceUpdate = useForceUpdate();
 
-  return (<StyledModalContent className="export-cloud-modal">
-    <div style={{width: '100%'}}>
-      <StyledSubtitle>Connect to your Backend Storage to save your maps privately</StyledSubtitle>
-      <StyledBackendExportSection>
-        {Object.keys(BACKEND_PROVIDERS).map((name, index) => (
-          <BackendTile
-            key={index}
-            Icon={BACKEND_PROVIDERS[name].icon}
-            isConnected={BACKEND_PROVIDERS[name].isConnected}
-            onConnect={BACKEND_PROVIDERS[name].connect.bind(this, forceUpdate)}
-            onManageStorage={BACKEND_PROVIDERS[name].manageStorage}
-            onLogout={BACKEND_PROVIDERS[name].logout.bind(this, forceUpdate)}
-          />
-        ))}
-      </StyledBackendExportSection>
-    </div>
-  </StyledModalContent>);
+  return (
+    <StyledModalContent className="export-cloud-modal">
+      <div style={{width: '100%'}}>
+        <StyledSubtitle>
+          Connect to your Backend Storage to save your maps privately
+        </StyledSubtitle>
+
+        <StyledBackendExportSection>
+          {Object.keys(BACKEND_PROVIDERS).map((name, index) => (
+            <BackendTile
+              key={index}
+              Icon={BACKEND_PROVIDERS[name].icon}
+              isConnected={BACKEND_PROVIDERS[name].isConnected}
+              onConnect={BACKEND_PROVIDERS[name].connect.bind(this, forceUpdate)}
+              onManageStorage={BACKEND_PROVIDERS[name].manageStorage}
+              onLogout={BACKEND_PROVIDERS[name].logout.bind(this, forceUpdate)}
+            />
+          ))}
+        </StyledBackendExportSection>
+      </div>
+    </StyledModalContent>
+  );
 };
 
 export default BackendStorageModalContent;

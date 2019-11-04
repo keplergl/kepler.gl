@@ -281,6 +281,11 @@ class App extends Component {
     return app.featureFlags.cloudStorage;
   };
 
+  _isBackendStorageEnabled = () => {
+    const {app} = this.props.demo;
+    return app.featureFlags.backendStorage;
+  };
+
   _toggleCloudModal = () => {
     // TODO: this lives only in the demo hence we use the state for now
     // REFCOTOR using redux
@@ -349,14 +354,16 @@ class App extends Component {
               onCloudLoginSuccess={this._onCloudLoginSuccess}
               // this is to apply the same modal style as kepler.gl core
               parentSelector={() => findDOMNode(this.root)}
-              />
-              )}
+            />
+          )}
 
-          { rootNode && <ConnectBackendStorageModal
-            isOpen={Boolean(this.state.settingsBackendModalOpen)}
-            onClose={this._toggleSettingsBackendModal}
-            parentSelector={() => findDOMNode(this.root)}
-          />}
+          {this._isBackendStorageEnabled() && rootNode &&
+            <ConnectBackendStorageModal
+              isOpen={Boolean(this.state.settingsBackendModalOpen)}
+              onClose={this._toggleSettingsBackendModal}
+              parentSelector={() => findDOMNode(this.root)}
+            />
+          }
 
           <div
             style={{
@@ -380,7 +387,7 @@ class App extends Component {
                   width={width}
                   height={height - (showBanner ? BannerHeight : 0)}
                   onSaveMap={this._isCloudStorageEnabled() && this._toggleCloudModal}
-                  onBackendStorageSettingsClick={this._toggleSettingsBackendModal}
+                  onBackendStorageSettingsClick={this._isBackendStorageEnabled() && this._toggleSettingsBackendModal}
                 />
               )}
             </AutoSizer>

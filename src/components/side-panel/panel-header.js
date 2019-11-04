@@ -211,9 +211,7 @@ export const SaveExportDropdownFactory = (
     onExportMap,
     onSaveMap,
     show,
-    onClose,
-    onConnectBackendStorage,
-    onBackendStorageSettingsClick
+    onClose
   }) => {
     return (
       <StyledPanelDropdown show={show} className="save-export-dropdown">
@@ -225,7 +223,7 @@ export const SaveExportDropdownFactory = (
             onClose={onClose}
           />
           <ExportData
-            onClickHandler={onConnectBackendStorage}
+            onClickHandler={onExportData}
             onClose={onClose}
           />
           <ExportMap
@@ -253,14 +251,13 @@ SaveExportDropdownFactory.deps = [
   SaveMapFactory
 ];
 
-// TODO: cambiar nombre
 export const SaveMapToBackendFactory = () => {
   const SaveMapToBackend = (props) => (
     <PanelItem {...props}/>
   );
 
   SaveMapToBackend.defaultProps = {
-    label: 'Save Map',
+    label: 'Save',
     icon: <Map />
   };
 
@@ -339,8 +336,7 @@ function PanelHeaderFactory(
     static defaultProps = {
       logoComponent: KeplerGlLogo,
       actionItems: [{
-        // TODO: Change name
-        id: 'connect',
+        id: 'backendStorage',
         iconComponent: Database,
         onClick: () => {},
         dropdownComponent: SaveMapToBackendDropdown

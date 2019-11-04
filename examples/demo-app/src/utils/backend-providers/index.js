@@ -22,7 +22,6 @@ import CartoBackend from './carto';
 import {AUTH_TOKENS} from '../../constants/default-settings';
 
 // configure all clients with the right configuration
-// DropboxHandler.setAuthToken(AUTH_TOKENS.DROPBOX_CLIEND_ID);
 CartoBackend.setAuthToken(AUTH_TOKENS.CARTO_CLIENT_ID);
 
 export const BACKEND_PROVIDERS = {
