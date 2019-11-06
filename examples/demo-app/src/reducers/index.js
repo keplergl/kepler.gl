@@ -126,7 +126,7 @@ export const loadRemoteResourceSuccess = (state, action) => {
   const datasets = options.map((opt, i) => {
     const datasetId = opt.id || generateHashId(6);
     const { dataUrl } = opt;
-  
+
     let processorMethod = processCsvData;
     // TODO: create helper to determine file ext eligibility
     if (dataUrl.includes('.json') || dataUrl.includes('.geojson')) {
@@ -159,7 +159,7 @@ export const loadRemoteResourceSuccess = (state, action) => {
     ...state,
     app: {
       ...state.app,
-      currentSample: action.options,
+      currentSample: action.options && action.options.length ? action.options[0] : action.options,
       isMapLoading: false // we turn of the spinner
     },
     keplerGl: {
