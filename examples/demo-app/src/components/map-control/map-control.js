@@ -128,7 +128,7 @@ const LinkRenderer = props => {
 
 // convert https://raw.githubusercontent.com/uber-web/kepler.gl-data/master/nyctrips/config.json
 // to https://github.com/uber-web/kepler.gl-data/blob/master/movement_pittsburgh/config.json
-function getURL(url) {
+function getURL(url='') {
   return url
     .replace('https://raw.githubusercontent.com', 'https://github.com')
     .replace('master', 'blob/master');
@@ -152,18 +152,22 @@ function SampleMapPanel(props) {
             />
           </div>
           <div className="project-links">
-            <LinkButton
-              label="Data"
-              href={getURL(props.currentSample.dataUrl)}
-              iconComponent={Icons.Files}
-              height="15px"
-            />
-            <LinkButton
-              label="Config"
-              href={getURL(props.currentSample.configUrl)}
-              iconComponent={Icons.CodeAlt}
-              height="17px"
-            />
+            { props.currentSample.dataUrl &&
+              <LinkButton
+                label="Data"
+                href={getURL(props.currentSample.dataUrl)}
+                iconComponent={Icons.Files}
+                height="15px"
+              />
+            }
+            { props.currentSample.configUrl &&
+              <LinkButton
+                label="Config"
+                href={getURL(props.currentSample.configUrl)}
+                iconComponent={Icons.CodeAlt}
+                height="17px"
+              />
+            }
           </div>
         </StyledProjectPanel>
       ) : (
