@@ -23,6 +23,7 @@ export {default as ArrowDown} from './arrow-down';
 export {default as ArrowLeft} from './arrow-left';
 export {default as ArrowRight} from './arrow-right';
 export {default as Base} from './base';
+export {default as Bug} from './bug';
 export {default as Checkmark} from './checkmark';
 export {default as Clock} from './clock';
 export {default as Close} from './close';

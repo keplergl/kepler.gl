@@ -28,7 +28,9 @@ import {
   isDataMatchFilter,
   getFieldDomain,
   getTimestampFieldDomain,
-  getDefaultFilter
+  getDefaultFilter,
+  getDatasetIndexForFilter,
+  getDatasetFieldIndexForFilter
 } from 'utils/filter-utils';
 
 import {processCsvData} from 'processors/data-processor';
@@ -145,7 +147,7 @@ test('filterUtils -> getFieldDomain.time', async t => {
 
   t.deepEqual(fields, expectedFields, 'should get corrent field type');
   testGetTimeFieldDomain(rows, fields, t);
-  testIsTimeDataMatchFilter(rows, t);
+  testIsTimeDataMatchFilter(rows, fields, t);
 
   t.end();
 });
@@ -208,9 +210,10 @@ function testGetTimeFieldDomain(rows, allFields, t) {
   );
 }
 
-function testIsTimeDataMatchFilter(rows, t) {
+function testIsTimeDataMatchFilter(rows, fields, t) {
+
   const timeStringFilter = {
-    fieldIdx: 0,
+    fieldIdx: [0],
     type: FILTER_TYPES.timeRange,
     value: [
       moment.utc('2016-09-17 00:09:55').valueOf(),
@@ -219,19 +222,19 @@ function testIsTimeDataMatchFilter(rows, t) {
   };
 
   t.equal(
-    isDataMatchFilter(rows[10], timeStringFilter),
+    isDataMatchFilter(rows[10], timeStringFilter, 10, fields[timeStringFilter.fieldIdx[0]]),
     true,
     `${rows[10][0]} should be inside the range`
   );
 
   t.equal(
-    isDataMatchFilter(rows[15], timeStringFilter),
+    isDataMatchFilter(rows[15], timeStringFilter, 15, fields[timeStringFilter.fieldIdx[0]]),
     false,
     `${rows[15][0]} should be outside the range`
   );
 
   const epochFilter = {
-    fieldIdx: 4,
+    fieldIdx: [4],
     type: FILTER_TYPES.timeRange,
     value: [
       moment.utc(1472688000000).valueOf(),
@@ -240,19 +243,19 @@ function testIsTimeDataMatchFilter(rows, t) {
   };
 
   t.equal(
-    isDataMatchFilter(rows[10], epochFilter),
+    isDataMatchFilter(rows[10], epochFilter, 10, fields[epochFilter.fieldIdx[0]]),
     true,
     `${rows[10][1]} should be inside the range`
   );
 
   t.equal(
-    isDataMatchFilter(rows[15], epochFilter),
+    isDataMatchFilter(rows[15], epochFilter, 15, fields[epochFilter.fieldIdx[0]]),
     false,
     `${rows[15][1]} should be outside the range`
   );
 
   const tzFilter = {
-    fieldIdx: 7,
+    fieldIdx: [7],
     type: FILTER_TYPES.timeRange,
     value: [
       moment.utc('2016-09-23T00:00:00.000Z').valueOf(),
@@ -261,19 +264,19 @@ function testIsTimeDataMatchFilter(rows, t) {
   };
 
   t.equal(
-    isDataMatchFilter(rows[10], tzFilter),
+    isDataMatchFilter(rows[10], tzFilter, 10, fields[tzFilter.fieldIdx[0]]),
     true,
     `${rows[10][7]} should be inside the range`
   );
 
   t.equal(
-    isDataMatchFilter(rows[23], tzFilter),
+    isDataMatchFilter(rows[23], tzFilter, 10, fields[tzFilter.fieldIdx[0]]),
     false,
     `${rows[23][7]} should be outside the range`
   );
 
   const utcFilter = {
-    fieldIdx: 8,
+    fieldIdx: [8],
     type: FILTER_TYPES.timeRange,
     value: [
       moment.utc('2016-10-01 09:45:39+00:00').valueOf(),
@@ -282,19 +285,19 @@ function testIsTimeDataMatchFilter(rows, t) {
   };
 
   t.equal(
-    isDataMatchFilter(rows[6], utcFilter),
+    isDataMatchFilter(rows[6], utcFilter, 6, fields[utcFilter.fieldIdx[0]]),
     false,
     `${rows[0][8]} should be outside the range`
   );
 
   t.equal(
-    isDataMatchFilter(rows[4], utcFilter),
+    isDataMatchFilter(rows[4], utcFilter, 4, fields[utcFilter.fieldIdx[0]]),
     true,
     `${rows[4][8]} should be inside the range`
   );
 
   t.equal(
-    isDataMatchFilter(rows[23], utcFilter),
+    isDataMatchFilter(rows[23], utcFilter, 23, fields[utcFilter.fieldIdx[0]]),
     false,
     `${rows[23][8]} should be outside the range`
   );
@@ -669,4 +672,66 @@ test('filterUtils -> getTimestampFieldDomain', t => {
 
   t.end();
 });
+
+test('filterUtils -> getDatasetIndexForFilter', t => {
+  const dataId = 'test-this-id';
+  let fieldIndex = getDatasetIndexForFilter({id: dataId}, {dataId: [dataId]});
+  t.equal(
+    fieldIndex,
+    0,
+    'FieldIndex should be 0'
+  );
+
+  fieldIndex = getDatasetIndexForFilter({id: dataId}, {dataId: ['different-id', dataId]});
+  t.equal(
+    fieldIndex,
+    1,
+    'FieldIndex should be 1'
+  );
+
+  fieldIndex = getDatasetIndexForFilter({id: dataId}, {dataId: ['different-id']});
+  t.equal(
+    fieldIndex,
+    -1,
+    'FieldIndex should be -1'
+  );
+
+  t.end();
+});
+
+test('filterUtils -> getDatasetIndexForFilter', t => {
+  const dataId = 'test-this-id';
+
+  let fieldIndex = getDatasetFieldIndexForFilter({id: dataId}, {
+    dataId: [dataId],
+    fieldIdx: [3]
+  });
+
+  t.equal(
+    fieldIndex,
+    3,
+    'FieldIndex should be 3'
+  );
+
+  fieldIndex = getDatasetFieldIndexForFilter({id: dataId}, {
+    dataId: ['different-id', dataId],
+    fieldIdx: [3, 5]
+  });
+
+  t.equal(
+    fieldIndex,
+    5,
+    'FieldIndex should be 5'
+  );
+
+  fieldIndex = getDatasetFieldIndexForFilter({id: dataId}, {dataId: ['different-id']});
+  t.equal(
+    fieldIndex,
+    -1,
+    'FieldIndex should be -1'
+  );
+
+  t.end();
+});
+
 /* eslint-enable max-statements */

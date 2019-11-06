@@ -12,7 +12,7 @@
 |   |   |
 |---|---|
 | **Local files**  | <span style="font-weight:normal">Upload CSV / GeoJSON files. Because data is only stored in your browser, there is a **250mb** limit on how much data Chrome allows you to upload into a browser. For datasets larger than **250mb** you should directly load them from a remote URL. See below.<span>  |
-| **From URL**  | Directly load data or map json bu pasting a remote URL. You can link it to CSV | JSON | Kepler.gl config json. Make sure the url contains the file extension. CORS policy must be defined on your custom url domain. |
+| **From URL**  | Directly load data or map json by pasting a remote URL. You can link it to CSV | JSON | Kepler.gl config json. Make sure the url contains the file extension. CORS policy must be defined on your custom url domain. |
 | **Sample data**  | Load one of kepler.gl’s sample datasets. The sample map data and config are directly loaded from  [kepler.gl-data github][kepler.gl-data-github] repo  |
 
 
@@ -29,7 +29,7 @@ Geometry coordinates should be presented with a geographic coordinate reference 
 
 ### CSV
 
-Csv file should contian header row and multiple columns. Each row should be 1 feature. Each column should contain only 1 data type, based on which kepler.gl will use to create layers and filters.
+CSV file should contain header row and multiple columns. Each row should be 1 feature. Each column should contain only 1 data type, based on which kepler.gl will use to create layers and filters.
 
 | id | point_latitude | point_longitude | value | start_time
 |---|---|---|---|---
@@ -51,11 +51,11 @@ Because CSV file content is uploaded as strings, kepler.gl will attempt to detec
 |**_`string`_** | `hello`, `world` |
 |**_`timestamp`_** | `2018-09-01 00:00`, `1570306147`, `1570306147000`|
 
-**Note:** Make sure to clean up values such as `N/A`, `Null`, `\N`. If your column contain mixed type, kepler.gl will treat it as **_`string`_** to be safe.
+**Note:** Make sure to clean up values such as `N/A`, `Null`, `\N`. If your column contains mixed type, kepler.gl will treat it as **_`string`_** to be safe.
 
 #### 2. Layer detection based on column names
 
-kepler.gl will auto detect layer, if the column names follows certain naming convention. kepler.gl creates a point layer if  your CSV has columns are named `<name>_lat` and `<name>_lng` or `<name>_latitude` and `<name>_longitude`, or `<name>_lat` and `<name>_lon`.
+kepler.gl will auto detect layer, if the column names follows certain naming convention. kepler.gl creates a point layer if  your CSV has columns that are named `<name>_lat` and `<name>_lng` or `<name>_latitude` and `<name>_longitude`, or `<name>_lat` and `<name>_lon`.
 
 | layer | auto create layer from column names
 |---|---

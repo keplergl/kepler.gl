@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {min, max, mean, median, sum} from 'd3-array';
+import {deviation, min, max, mean, median, sum, variance} from 'd3-array';
 import {AGGREGATION_TYPES} from 'constants/default-settings';
 
 const getFrenquency = data => data.reduce((uniques, val) => {
@@ -53,8 +53,12 @@ export function aggregate(data, technique) {
       return min(data);
     case AGGREGATION_TYPES.median:
       return median(data);
+    case AGGREGATION_TYPES.stdev:
+      return deviation(data);
     case AGGREGATION_TYPES.sum:
       return sum(data);
+    case AGGREGATION_TYPES.variance:
+      return variance(data);
     default:
       return data.length;
   }

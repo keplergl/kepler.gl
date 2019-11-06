@@ -346,7 +346,9 @@ export const AGGREGATION_TYPES = {
   maximum: 'maximum',
   minimum: 'minimum',
   median: 'median',
+  stdev: 'stdev',
   sum: 'sum',
+  variance: 'variance',
   // ordinal
   mode: 'mode',
   countUnique: 'count unique'
@@ -364,7 +366,9 @@ export const linearFieldAggrScaleFunctions = {
     [AGGREGATION_TYPES.maximum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
     [AGGREGATION_TYPES.minimum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
     [AGGREGATION_TYPES.median]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
-    [AGGREGATION_TYPES.sum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile]
+    [AGGREGATION_TYPES.stdev]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
+    [AGGREGATION_TYPES.sum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
+    [AGGREGATION_TYPES.variance]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile]
   },
 
   [CHANNEL_SCALES.sizeAggr]: {
@@ -372,7 +376,9 @@ export const linearFieldAggrScaleFunctions = {
     [AGGREGATION_TYPES.maximum]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log],
     [AGGREGATION_TYPES.minimum]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log],
     [AGGREGATION_TYPES.median]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log],
-    [AGGREGATION_TYPES.sum]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log]
+    [AGGREGATION_TYPES.stdev]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log],
+    [AGGREGATION_TYPES.sum]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log],
+    [AGGREGATION_TYPES.variance]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log]
   }
 };
 

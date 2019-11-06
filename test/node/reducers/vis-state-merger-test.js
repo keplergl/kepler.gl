@@ -48,7 +48,7 @@ import {
   savedStateV1,
   mergedFilters as mergedFiltersV1,
   mergedLayers as mergedLayersV1,
-  mergedInteraction as MergedInteractionV1
+  mergedInteraction as MergedInteractionV1,
 } from 'test/fixtures/state-saved-v1-1';
 import {
   savedStateV1 as savedStateV1Split,
@@ -64,6 +64,10 @@ import {
   savedStateV1TripGeoJson,
   mergedLayer0 as mergedTripLayer
 } from 'test/fixtures/state-saved-v1-5';
+
+import {
+  savedStateWIthNonValidFilters as NonValidFilterState
+} from 'test/fixtures/state-saved-v1-6';
 
 // helpers
 import {cmpFilters, cmpLayers} from 'test/helpers/comparison-utils';
@@ -86,7 +90,6 @@ test('VisStateMerger.v0 -> mergeFilters -> toEmptyState', t => {
     oldState
   );
   const parsedFilters = parsedConfig.visState.filters;
-
   const mergedState = mergeFilters(oldState.visState, parsedFilters);
 
   Object.keys(oldVisState).forEach(key => {
@@ -112,6 +115,7 @@ test('VisStateMerger.v0 -> mergeFilters -> toEmptyState', t => {
 
   // test parsed filters
   cmpFilters(t, mergedFiltersV0, stateWData.filters);
+
   t.end();
 });
 
@@ -1101,5 +1105,44 @@ test('VisStateMerger - mergeTripGeojson', t => {
     'meta.featureTypes should be correct'
   );
 
+  t.end();
+});
+
+test('VisStateMerger.v1 -> mergeFilters -> nonValidFilter', t => {
+  const savedConfig = cloneDeep(NonValidFilterState);
+  const oldState = cloneDeep(InitialState);
+  const oldVisState = oldState.visState;
+
+  const parsedConfig = SchemaManager.parseSavedConfig(
+    savedConfig.config,
+    oldState
+  );
+  const parsedFilters = parsedConfig.visState.filters;
+
+  const mergedState = mergeFilters(oldState.visState, parsedFilters);
+
+  Object.keys(oldVisState).forEach(key => {
+    if (key === 'filterToBeMerged') {
+      t.deepEqual(
+        mergedState.filterToBeMerged,
+        parsedFilters,
+        'Should save filters to filterToBeMerged before data loaded'
+      );
+    } else {
+      t.deepEqual(
+        mergedState[key],
+        oldVisState[key],
+        'Should keep the rest of state same'
+      );
+    }
+  });
+
+  const parsedData = SchemaManager.parseSavedData(savedConfig.datasets);
+
+  // load data into reducer
+  const stateWData = visStateReducer(mergedState, updateVisData(parsedData));
+
+  // parsed filters must be empty
+  cmpFilters(t, [], stateWData.filters);
   t.end();
 });
