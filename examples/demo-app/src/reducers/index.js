@@ -112,6 +112,12 @@ function arrayify(thing) {
   return Array.isArray(thing) ? thing : [thing];
 }
 
+function getSampleFromOptions(options) {
+  return options.length
+    ? options[0]
+    : options;
+}
+
 // this can be moved into a action and call kepler.gl action
 /**
  *
@@ -122,6 +128,7 @@ function arrayify(thing) {
 export const loadRemoteResourceSuccess = (state, action) => {
   const responses = arrayify(action.response);
   const options = arrayify(action.options);
+  const currentSample = getSampleFromOptions(action.options);
 
   const datasets = options.map((opt, i) => {
     const datasetId = opt.id || generateHashId(6);
@@ -159,7 +166,7 @@ export const loadRemoteResourceSuccess = (state, action) => {
     ...state,
     app: {
       ...state.app,
-      currentSample: action.options,
+      currentSample,
       isMapLoading: false // we turn of the spinner
     },
     keplerGl: {

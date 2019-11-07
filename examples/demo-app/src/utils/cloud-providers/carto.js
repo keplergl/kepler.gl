@@ -71,7 +71,7 @@ async function uploadFile({blob, name: fileName, isPublic = true}) {
   }, cartoDatasets, true);
 
   return ({
-    url: `demo/map/carto?mapId=${result.id}&owner=${cs.getSQLClient().username}`
+    url: `demo/map/carto?mapId=${result.id}&owner=${carto.username}`
   });
 }
 
@@ -125,15 +125,16 @@ function loadMap(queryParams) {
     carto.PublicStorageReader.getVisualization(username, mapId).then((result) => {
       // These are the options required for the action. For now, all datasets that come from CARTO are CSV
       const options = result.datasets.map((dataset) => {
+        // TODO: customStorage should return dataset name without prefix
         const datasetId = dataset.name.split('keplergl_public_v0_')[1];
 
-        // TODO: customStorage should return dataset name without prefix
         return {
           id: datasetId,
           label: datasetId,
           description: dataset.description,
           dataUrl: '',
-          configUrl: ''
+          configUrl: '',
+          panelDisabled: true
         };
       });
 
