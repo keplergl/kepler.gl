@@ -20,7 +20,7 @@
 
 import React from 'react';
 import {OAuthApp} from '@carto/toolkit';
-import DropboxIcon from '../../components/icons/carto-icon';
+import CartoIcon from '../../components/icons/carto-icon';
 import SharingUrl from '../../components/sharing/sharing-url';
 import {formatCsv} from 'processors/data-processor';
 import {getMapPermalink} from '../url';
@@ -125,8 +125,7 @@ function loadMap(queryParams) {
     carto.PublicStorageReader.getVisualization(username, mapId).then((result) => {
       // These are the options required for the action. For now, all datasets that come from CARTO are CSV
       const options = result.datasets.map((dataset) => {
-        // TODO: customStorage should return dataset name without prefix
-        const datasetId = dataset.name.split('keplergl_public_v0_')[1];
+        const datasetId = dataset.name;
 
         return {
           id: datasetId,
@@ -158,7 +157,7 @@ export default {
   getAccessToken,
   getAccessTokenFromLocation,
   handleLogin,
-  icon: DropboxIcon,
+  icon: CartoIcon,
   setAuthToken,
   loadMap,
   renderMeta,
