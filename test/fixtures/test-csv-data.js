@@ -451,11 +451,14 @@ export const parsedDataWithNulls = [
 ];
 
 export const wktCsv = `a_zip,simplified_shape_v2,simplified_shape,m_rate,c_zip_type,c_number
-7014,"{""type"":""Polygon"",""coordinates"":[[[-74.158491,40.835947],[-74.157914,40.83902],[-74.148473,40.834522]]]}","POLYGON ((-74.158491 40.835947, -74.158491 40.835947))",7.5,C_Medium_High,29.07437458
-7016,"{""type"":""Polygon"",""coordinates"":[[[-74.31687,40.656696],[-74.319449,40.658154],[-74.31687,40.656696]]]}","POLYGON ((-74.31687 40.656696, -74.312298 40.654042, -74.31687 40.656696))",6.5,C_Medium_High,27.60106201
-7023,"{""type"":""Polygon"",""coordinates"":[[[-74.387589,40.632238],[-74.387589,40.632238]]]}","POLYGON ((-74.387589 40.632238, -74.382333 40.632417, -74.384457 40.630453, -74.387589 40.632238))",7.6,C_Medium_High,23.85239437
-7029,"{""type"":""Polygon"",""coordinates"":[[[-74.165995,40.747969],[-74.165987,40.745199],[-74.165995,40.747969]]]}","POLYGON ((-74.165995 40.747969, -74.163788 40.739201, -74.165987 40.745199, -74.165995 40.747969))",11.8,C_Medium_High,39.13775443
-7416,"{""type"":""MultiPolygon"",""coordinates"":[[[[-74.566993,41.087294],[-74.564908,41.089339],[-74.552353,41.091647],[-74.566993,41.087294]]],[[[-74.593264,41.088526],[-74.593264,41.088526]]]]}","MULTIPOLYGON (((-74.566993 41.087294, -74.564908 41.089339, -74.56559 41.090507, -74.557344 41.105958, -74.585763 41.083491, -74.593264 41.088526)))",10,A_Low_Rural,13.81679389`;
+7015,,,7,C_Medium_High,22.22
+7014,"{""type"":""Polygon"",""coordinates"":[[[-74.158491,40.835947],[-74.157914,40.83902],[-74.148473,40.834522]]]}","POLYGON ((-74.158491 40.835947, -74.157914 40.83902, -74.148473 40.834522))",7.5,C_Medium_High,29.07437458
+7016,"{""type"":""Polygon"",""coordinates"":[[[-74.31687,40.656696],[-74.319449,40.658154],[-74.31687,40.656696]]]}","POLYGON ((-74.31687 40.656696, -74.319449 40.658154, -74.31687 40.656696))",6.5,C_Medium_High,27.60106201
+7023,"{""type"":""Polygon"",""coordinates"":[[[-74.387589,40.632238],[-74.387589,40.632238]]]}","POLYGON ((-74.387589 40.632238, -74.387589 40.632238))",7.6,C_Medium_High,23.85239437
+7029,"{""type"":""Polygon"",""coordinates"":[[[-74.165995,40.747969],[-74.165987,40.745199],[-74.165995,40.747969]]]}","POLYGON ((-74.165995 40.747969, -74.165987 40.745199, -74.165995 40.747969))",11.8,C_Medium_High,39.13775443
+7416,"{""type"":""MultiPolygon"",""coordinates"":[[[[-74.566993,41.087294],[-74.564908,41.089339],[-74.552353,41.091647],[-74.566993,41.087294]]],[[[-74.593264,41.088526],[-74.593264,41.088526]]]]}","MULTIPOLYGON (((-74.566993 41.087294, -74.564908 41.089339, -74.552353 41.091647, -74.566993 41.087294)),((-74.593264 41.088526, -74.593264 41.088526)))",10,A_Low_Rural,13.81679389
+7023,"{""type"":""LineString"",""coordinates"":[[-74.387589,40.632238],[-74.387589,40.632238]]}","LINESTRING (-74.387589 40.632238, -74.387589 40.632238)",7.6,C_Medium_High,23.85239437
+`;
 
 export const testFields = [
   {
@@ -883,11 +886,12 @@ export const testAllData = [
 export default data;
 
 export const updatedLayerV2 = {
-  dataToFeature: {
-    0: {
+  dataToFeature: [
+    null,
+    {
       type: 'Feature',
       properties: {
-        index: 0
+        index: 1
       },
       geometry: {
         type: 'Polygon',
@@ -900,10 +904,10 @@ export const updatedLayerV2 = {
         ]
       }
     },
-    1: {
+    {
       type: 'Feature',
       properties: {
-        index: 1
+        index: 2
       },
       geometry: {
         type: 'Polygon',
@@ -916,20 +920,20 @@ export const updatedLayerV2 = {
         ]
       }
     },
-    2: {
+    {
       type: 'Feature',
       properties: {
-        index: 2
+        index: 3
       },
       geometry: {
         type: 'Polygon',
         coordinates: [[[-74.387589, 40.632238], [-74.387589, 40.632238]]]
       }
     },
-    3: {
+    {
       type: 'Feature',
       properties: {
-        index: 3
+        index: 4
       },
       geometry: {
         type: 'Polygon',
@@ -942,10 +946,10 @@ export const updatedLayerV2 = {
         ]
       }
     },
-    4: {
+    {
       type: 'Feature',
       properties: {
-        index: 4
+        index: 5
       },
       geometry: {
         type: 'MultiPolygon',
@@ -961,102 +965,21 @@ export const updatedLayerV2 = {
           [[[-74.593264, 41.088526], [-74.593264, 41.088526]]]
         ]
       }
+    },
+    {
+      type: 'Feature',
+      properties: {
+        index: 6
+      },
+      geometry: {
+        type: 'LineString',
+        coordinates: [[-74.387589, 40.632238], [-74.387589, 40.632238]]
+      }
     }
-  },
+  ],
   meta: {
-    featureTypes: {polygon: true},
+    featureTypes: {polygon: true, line: true},
     bounds: [-74.593264, 40.632238, -74.148473, 41.091647],
-    fixedRadius: false
-  }
-};
-
-export const updatedLayerSimplifiedShape = {
-  dataToFeature: {
-    0: {
-      type: 'Feature',
-      properties: {
-        index: 0
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [[[-74.158491, 40.835947], [-74.158491, 40.835947]]]
-      }
-    },
-    1: {
-      type: 'Feature',
-      properties: {
-        index: 1
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [
-          [
-            [-74.31687, 40.656696],
-            [-74.312298, 40.654042],
-            [-74.31687, 40.656696]
-          ]
-        ]
-      }
-    },
-    2: {
-      type: 'Feature',
-      properties: {
-        index: 2
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [
-          [
-            [-74.387589, 40.632238],
-            [-74.382333, 40.632417],
-            [-74.384457, 40.630453],
-            [-74.387589, 40.632238]
-          ]
-        ]
-      }
-    },
-    3: {
-      type: 'Feature',
-      properties: {
-        index: 3
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [
-          [
-            [-74.165995, 40.747969],
-            [-74.163788, 40.739201],
-            [-74.165987, 40.745199],
-            [-74.165995, 40.747969]
-          ]
-        ]
-      }
-    },
-    4: {
-      type: 'Feature',
-      properties: {
-        index: 4
-      },
-      geometry: {
-        type: 'MultiPolygon',
-        coordinates: [
-          [
-            [
-              [-74.566993, 41.087294],
-              [-74.564908, 41.089339],
-              [-74.56559, 41.090507],
-              [-74.557344, 41.105958],
-              [-74.585763, 41.083491],
-              [-74.593264, 41.088526]
-            ]
-          ]
-        ]
-      }
-    }
-  },
-  meta: {
-    featureTypes: {polygon: true},
-    bounds: [-74.593264, 40.630453, -74.158491, 41.105958],
     fixedRadius: false
   }
 };

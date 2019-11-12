@@ -594,7 +594,7 @@ test('layerUtils -> findDefaultLayer:GeojsonLayer.wkt', t => {
   const {fields, rows} = processCsvData(wktCsv);
   const dataId = '0dj3h';
   const label = 'some geometry file';
-
+console.log(rows)
   const expected1 = new GeojsonLayer({
     dataId: '0dj3h',
     label: 'some geometry file',

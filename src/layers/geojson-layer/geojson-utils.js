@@ -87,8 +87,9 @@ export function getGeojsonDataMaps(allData, getFeature) {
       };
 
       dataToFeature[index] = feature;
+    } else {
+      dataToFeature[index] = null;
     }
-
   }
 
   return dataToFeature;
