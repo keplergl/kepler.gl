@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@v1
       - uses: actions/setup-node@v1
         with:
-          node-version: 12
+          node-version: 8
       - run: npm install
       - run: npm test
 
@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v1
       - uses: actions/setup-node@v1
         with:
-          node-version: 12
+          node-version: 8
           registry-url: https://registry.npmjs.org/
       - run: npm install
       - run: npm publish
@@ -36,7 +36,7 @@ jobs:
       - uses: actions/checkout@v1
       - uses: actions/setup-node@v1
         with:
-          node-version: 12
+          node-version: 8
           registry-url: https://npm.pkg.github.com/
           scope: '@macrigiuseppe'
       - run: npm install
