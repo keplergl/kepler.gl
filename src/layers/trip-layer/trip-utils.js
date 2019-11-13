@@ -81,8 +81,7 @@ export function isTripGeoJsonField(allData = [], field) {
   const sampleRawFeatures =
     allData.length > maxCount ? getSampleData(allData, maxCount, getValue) : allData.map(getValue);
 
-  const features = sampleRawFeatures.map(parseGeoJsonRawFeature);
-
+  const features = sampleRawFeatures.map(parseGeoJsonRawFeature).filter(f => f);
   const featureTypes = getGeojsonFeatureTypes(features);
 
   // condition 1: contain line string
