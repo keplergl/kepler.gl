@@ -1809,7 +1809,7 @@ test('#visStateReducer -> SET_FILTER (processCsvData)', t => {
 
   const updatedField = {
     ...initialState.datasets.smoothie.fields[10],
-    filterProp: {
+    filterProps: {
       type: 'multiSelect',
       value: [],
       fieldType: 'date',
@@ -2264,7 +2264,7 @@ test('#visStateReducer -> SET_FILTER (processGeojson)', t => {
         ? {
             ...f,
             id: f.name,
-            filterProp: {
+            filterProps: {
               domain: [4, 20],
               fieldType: 'integer',
               histogram: expectedHistogram,
@@ -2421,7 +2421,7 @@ test('#visStateReducer -> SET_FILTER.fixedDomain', t => {
       f.name === 'gps_data.utc_timestamp'
         ? {
             ...f,
-            filterProp: {
+            filterProps: {
               domain: [1474070995000, 1474072208000],
               step: 1000,
               mappedValue: expectedFilterTs.mappedValue,
@@ -2468,7 +2468,7 @@ test('#visStateReducer -> SET_FILTER.fixedDomain', t => {
       f.name === 'date'
         ? {
             ...f,
-            filterProp: {
+            filterProps: {
               domain: ['2016-09-23', '2016-09-24', '2016-10-10'],
               fieldType: 'date',
               type: 'multiSelect',

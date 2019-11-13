@@ -133,7 +133,7 @@ export function getDefaultFilter(dataId) {
  * @param {string} dataset id to validate filter against
  * @return {boolean} true if a filter is valid, false otherwise
  */
-export function shouldApplyfilter(filter, datasetId) {
+export function shouldApplyFilter(filter, datasetId) {
   const valid = Boolean(filter.dataId)
     // datasetId is contained in dataId
     && (
@@ -156,71 +156,67 @@ export function shouldApplyfilter(filter, datasetId) {
  * @return {Object | null} - validated filter
  */
 export function validateFilterWithData(dataset, filter) {
-  const {fields, allData} = dataset;
 
-  // match filter.name to field.name
+  // match filter.dataId
+  const failed = {dataset, filter: null};
+
   const filterDataId = Array.isArray(filter.dataId) ? filter.dataId : [filter.dataId];
-  const filterName = Array.isArray(filter.name) ? filter.name : [filter.name];
-  const filterDatasetIndex = Array.isArray(filter.dataId) ? getDatasetIndexForFilter(dataset, filter) : 0;
-  const fieldIndex = fields.findIndex(({name}) => name === filterName[filterDatasetIndex]);
 
-  if (fieldIndex < 0) {
-    return null;
-  }
-
-  const field = fields[fieldIndex];
-
-  if (filterDatasetIndex === -1) {
+  const filterDatasetIndex = filterDataId.indexOf(dataset.id);
+  if (filterDatasetIndex < 0) {
     // the current filter is not mapped against the current dataset
-    return null;
+    return failed;
   }
 
-  // update fieldIdx with the current value
-  const newFieldIdx = [
-    ...(Array.isArray(filter.fieldIdx) ? filter.fieldIdx : [filter.fieldIdx])
-  ];
-
-  newFieldIdx[filterDatasetIndex] = fieldIndex;
-
-  // return filter type, default value, fieldType and fieldDomain from field
-  const filterPropsFromField = getFilterProps(allData, field);
-
-  let matchedFilter = {
+  const initializeFilter = {
     ...getDefaultFilter(filter.dataId),
     ...filter,
-    ...filterPropsFromField,
     dataId: filterDataId,
-    freeze: true,
-    fieldIdx: Object.assign([...newFieldIdx], {[filterDatasetIndex]: fieldIndex}),
-    name: Object.assign([...filterName], {[filterDatasetIndex]: field.name})
+    name: Array.isArray(filter.name) ? filter.name : [filter.name]
   };
 
-  const {yAxis} = matchedFilter;
+  const fieldName = initializeFilter.name[filterDatasetIndex];
+  const {filter: updatedFilter, dataset: updatedDataset} =
+
+    applyFilterFieldName(initializeFilter, dataset, fieldName, filterDatasetIndex);
+  if (!updatedFilter) {
+    return failed;
+  }
+
+  updatedFilter.value = adjustValueToFilterDomain(filter.value, updatedFilter);
+  if (updatedFilter.value === null) {
+    // cannot adjust saved value to filter
+    return failed;
+  }
+
+  return {
+    filter: validateFilterYAxis(updatedFilter, updatedDataset),
+    dataset: updatedDataset
+  }
+}
+
+function validateFilterYAxis(filter, dataset) {
+  // TODO: validate yAxis against other datasets
+
+  const {fields, allData} = dataset;
+  const {yAxis} = filter;
   // TODO: validate yAxis against other datasets
   if (yAxis) {
-    const matcheAxis = fields.find(
+    const matchedAxis = fields.find(
       ({name, type}) => name === yAxis.name && type === yAxis.type
     );
 
-    matchedFilter = matcheAxis
+    filter = matchedAxis
       ? {
-        ...matchedFilter,
-        yAxis: matcheAxis,
-        ...getFilterPlot({...matchedFilter, yAxis: matcheAxis}, allData)
+        ...filter,
+        yAxis: matchedAxis,
+        ...getFilterPlot({...filter, yAxis: matchedAxis}, allData)
       }
-      : matchedFilter;
+      : filter;
   }
 
-  matchedFilter.value = adjustValueToFilterDomain(filter.value, matchedFilter);
-
-  if (matchedFilter.value === null) {
-    // cannot adjust saved value to filter
-    return null;
-  }
-
-  return matchedFilter;
+  return filter;
 }
-
 /**
  * Get default filter prop based on field type
  *
@@ -229,7 +225,7 @@ export function validateFilterWithData(dataset, filter) {
  * @returns {object} default filter
  */
 export function getFilterProps(data, field) {
-  const filterProp = {
+  const filterProps = {
     ...getFieldDomain(data, field),
     fieldType: field.type
   };
@@ -238,15 +234,15 @@ export function getFilterProps(data, field) {
     case ALL_FIELD_TYPES.real:
     case ALL_FIELD_TYPES.integer:
       return {
-        ...filterProp,
-        value: filterProp.domain,
+        ...filterProps,
+        value: filterProps.domain,
         type: FILTER_TYPES.range,
         typeOptions: [FILTER_TYPES.range]
       };
 
     case ALL_FIELD_TYPES.boolean:
       return {
-        ...filterProp,
+        ...filterProps,
         type: FILTER_TYPES.select,
         value: true
       };
@@ -254,18 +250,18 @@ export function getFilterProps(data, field) {
     case ALL_FIELD_TYPES.string:
     case ALL_FIELD_TYPES.date:
       return {
-        ...filterProp,
+        ...filterProps,
         type: FILTER_TYPES.multiSelect,
         value: []
       };
 
     case ALL_FIELD_TYPES.timestamp:
       return {
-        ...filterProp,
+        ...filterProps,
         type: FILTER_TYPES.timeRange,
         enlarged: true,
         fixedDomain: true,
-        value: filterProp.domain
+        value: filterProps.domain
       };
 
     default:
@@ -321,7 +317,7 @@ export function filterData(dataset, filters) {
     return {data, filteredIndex: defaultValues, filteredIndexForDomain: defaultValues};
   }
 
-  const appliedFilters = filters.filter(d => shouldApplyfilter(d, dataset.id));
+  const appliedFilters = filters.filter(d => shouldApplyFilter(d, dataset.id));
 
   // Map filter against current dataset field
   const filtersToFields = filters.reduce((acc, filter) => {
@@ -394,8 +390,8 @@ export function isDataMatchFilter(data, filter, i, field) {
       return isInRange(val, filter.value);
 
     case FILTER_TYPES.timeRange:
-      const timeVal = field && field.filterProp && Array.isArray(field.filterProp.mappedValue)
-        ? field.filterProp.mappedValue[i]
+      const timeVal = field && field.filterProps && Array.isArray(field.filterProps.mappedValue)
+        ? field.filterProps.mappedValue[i]
         : moment.utc(val).valueOf();
 
       return isInRange(timeVal, filter.value);
@@ -705,20 +701,16 @@ export function applyFiltersToDatasets(datasetIds, datasets, filters) {
  * @param fieldName
  * @return {object} {filter, datasets}
  */
-export function applyFilterFieldName(filter, datasets, fieldName, filterDatasetIndex = 0) {
+export function applyFilterFieldName(filter, dataset, fieldName, filterDatasetIndex = 0) {
 
   // using filterDatasetIndex we can filter only the specified dataset
-  const {dataId} = filter;
-
-  const dataIdentifier = dataId[filterDatasetIndex];
-
-  const {fields, allData} = datasets[dataIdentifier];
+  const {fields, allData} = dataset;
 
   const fieldIndex = fields.findIndex(f => f.name === fieldName);
-
   // if no field with same name is found, move to the next datasets
   if (fieldIndex === -1) {
-    throw new Error(`fieldIndex not found. Dataset must contain a property with name: ${fieldName}`);
+    // throw new Error(`fieldIndex not found. Dataset must contain a property with name: ${fieldName}`);
+    return {filter: null, dataset};
   }
 
   const newFilter = {
@@ -729,34 +721,26 @@ export function applyFilterFieldName(filter, datasets, fieldName, filterDatasetI
 
   // TODO: validate field type
   const field = fields[fieldIndex];
-
   const filterProps = field.hasOwnProperty('filterProps') ? field.filterProps : getFilterProps(allData, field);
-
-  // Update Filter field idx
-  const filterName = Array.isArray(filter.name) ? filter.name : [filter.name];
-  const filterIdx = Array.isArray(filter.fieldIdx) ? filter.fieldIdx : [filter.fieldIdx];
 
   const filterWithProps = {
     ...mergeFilterProps(newFilter, filterProps),
-    name: Object.assign([...filterName], {[filterDatasetIndex]: field.name}),
-    fieldIdx: Object.assign([...filterIdx], {[filterDatasetIndex]: field.tableFieldIndex - 1})
+    name: Object.assign([].concat(filter.name), {[filterDatasetIndex]: field.name}),
+    fieldIdx: Object.assign([].concat(filter.fieldIdx), {[filterDatasetIndex]: field.tableFieldIndex - 1})
   };
 
   const fieldWithFilterProps = {
     ...field,
-    filterProp: filterProps
+    filterProps
   };
 
   const newFields = fields.map((d, i) => (i === fieldIndex ? fieldWithFilterProps : d));
 
   return {
     filter: filterWithProps,
-    datasets: {
-      ...datasets,
-      [dataIdentifier]: {
-        ...datasets[dataIdentifier],
-        fields: newFields
-      }
+    dataset: {
+      ...dataset,
+      fields: newFields
     }
   };
 }

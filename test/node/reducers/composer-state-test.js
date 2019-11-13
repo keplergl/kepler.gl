@@ -25,8 +25,8 @@ import {registerEntry} from 'actions/identity-actions';
 import {processCsvData} from 'processors/data-processor';
 
 import testCsvData, {sampleConfig} from 'test/fixtures/test-csv-data';
-import testHexIdData, {hexIdDataConfig, mergedH3Layer, mergedFilters} from 'test/fixtures/test-hex-id-data';
-import {cmpLayers, cmpFilters, cmpDatasets, cmpInteraction} from 'test/helpers/comparison-utils';
+import testHexIdData, {hexIdDataConfig, mergedH3Layer, mergedFilters, expectedHexDataset} from 'test/fixtures/test-hex-id-data';
+import {cmpLayers, cmpFilters, cmpDatasets, cmpDataset, cmpInteraction} from 'test/helpers/comparison-utils';
 import {INITIAL_UI_STATE} from 'reducers/ui-state-updaters';
 
 const mockRawData = {
@@ -194,10 +194,8 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
   });
 
   const hexDataset = nextState1.visState.datasets[hexDataId];
+  cmpDataset(t, expectedHexDataset, nextState1.visState.datasets[hexDataId])
 
-  t.equal(hexDataset.allData.length, hexData.rows.length, 'should only have new data');
-  t.equal(hexDataset.fields.length, hexData.fields.length, 'should have same length of fields');
-  t.equal(hexDataset.id, hexDataId, 'should have the id');
   t.deepEqual(nextState1.visState.splitMaps, [], 'should clear out splitMaps');
 
   cmpLayers(t, [mergedH3Layer], nextState1.visState.layers);

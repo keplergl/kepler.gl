@@ -45,6 +45,7 @@ export function mergeFilters(state, filtersToMerge) {
   const merged = [];
   const unmerged = [];
   const {datasets} = state;
+  let updatedDatasets = datasets;
 
   if (!Array.isArray(filtersToMerge) || !filtersToMerge.length) {
     return state;
@@ -55,24 +56,32 @@ export function mergeFilters(state, filtersToMerge) {
     // we can only look for datasets define in the filter dataId
     const datasetIds = Array.isArray(filter.dataId) ? filter.dataId : [filter.dataId];
 
-    // we can merge a filter only if all datasets supposed to be filtered are already laoded
+    // we can merge a filter only if all datasets in filter.dataId are laoded
     if (datasetIds.every(d => datasets[d])) {
 
       // all datasetIds in filter must be present the state datasets
-      const {filter: validatedFilter, applytoDatasets} = datasetIds.reduce((acc, d) => {
-        const dataset = datasets[d];
-        const updatedFilter = validateFilterWithData(dataset, filter);
+      const {filter: validatedFilter, applyToDatasets, augmentedDatasets} = datasetIds.reduce((acc, datasetId) => {
+        const dataset = datasets[datasetId];
+        const {filter: updatedFilter, dataset: updatedDataset} = validateFilterWithData(dataset, filter);
+        // console.log(updatedFilter)
         if (updatedFilter) {
           return {
             ...acc,
+            // merge filter props
             filter: acc.filter ? {
               ...acc.filter,
               ...mergeFilterProps(acc, updatedFilter)
             } : updatedFilter,
-            applytoDatasets: [
-              ...acc.applytoDatasets,
-              d
-            ]
+
+            applyToDatasets: [
+              ...acc.applyToDatasets,
+              datasetId
+            ],
+
+            augmentedDatasets: {
+              ...acc.augmentedDatasets,
+              [datasetId]: updatedDataset || dataset
+            }
           };
         }
 
@@ -80,11 +89,16 @@ export function mergeFilters(state, filtersToMerge) {
 
       }, {
         filter: null,
-        applytoDatasets: []
+        applyToDatasets: [],
+        augmentedDatasets: {}
       });
 
-      if (validatedFilter && isEqual(datasetIds, applytoDatasets)) {
+      if (validatedFilter && isEqual(datasetIds, applyToDatasets)) {
         merged.push(validatedFilter);
+        updatedDatasets = {
+          ...updatedDatasets,
+          ...augmentedDatasets
+        }
       }
     } else {
       unmerged.push(filter);
@@ -97,12 +111,12 @@ export function mergeFilters(state, filtersToMerge) {
   // flatten all filter dataIds
   const datasetsToFilter = uniq(flattenDeep(merged.map(f => f.dataId)));
 
-  const updatedDatasets = applyFiltersToDatasets(datasetsToFilter, datasets, updatedFilters);
+  const filtered = applyFiltersToDatasets(datasetsToFilter, updatedDatasets, updatedFilters);
 
   return {
     ...state,
     filters: updatedFilters,
-    datasets: updatedDatasets,
+    datasets: filtered,
     filterToBeMerged: unmerged
   };
 }
