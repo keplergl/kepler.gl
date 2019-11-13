@@ -177,8 +177,8 @@ export function validateFilterWithData(dataset, filter) {
 
   const fieldName = initializeFilter.name[filterDatasetIndex];
   const {filter: updatedFilter, dataset: updatedDataset} =
-
     applyFilterFieldName(initializeFilter, dataset, fieldName, filterDatasetIndex);
+
   if (!updatedFilter) {
     return failed;
   }
