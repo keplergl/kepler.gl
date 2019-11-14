@@ -135,7 +135,6 @@ export const loadRemoteResourceSuccess = (state, action) => {
     const { dataUrl } = opt;
 
     let processorMethod = processCsvData;
-    // TODO: create helper to determine file ext eligibility
     if (dataUrl.includes('.json') || dataUrl.includes('.geojson')) {
       processorMethod = processGeojson;
     }
