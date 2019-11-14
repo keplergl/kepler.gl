@@ -14,6 +14,12 @@ Each version should:
   Security to invite users to upgrade in case of vulnerabilities.
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
+#### [1.1.11] - Nov 13 2019
+[Bug] Correctly save filterProps to field while merging filter from config (#829)
+[Docs] fixing api reference broken link (#812)
+[Bug] fix empty geometry causing trip layer detection to fail (#826)
+[Docs] update a-add-data-to-the-map.md with embed geometries in CSV
+
 #### [1.1.10] - Oct 30 2019
 - [Docs] Add instructions for image and weblink in tooltip (#797)
 - [Enhancement] Add Bug Report User Guides to demo app panel header (#787)
