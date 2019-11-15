@@ -25,9 +25,9 @@ export function getCloudProviders() {
 }
 
 export function getCloudProvider(providerName) {
-  let provider = CLOUD_PROVIDERS.find(provider => provider.name === providerName);
-  if (!provider) {
+  const cloudProvider = CLOUD_PROVIDERS.find(provider => provider.name === providerName);
+  if (!cloudProvider) {
     throw new Error(`Unknown cloud provider ${providerName}`)
   }
-  return provider;
+  return cloudProvider;
 }

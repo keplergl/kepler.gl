@@ -26,5 +26,5 @@ const {DROPBOX_CLIENT_ID} = AUTH_TOKENS;
 const DROPBOX_CLIENT_NAME = 'Kepler.gl%20(managed%20by%20Uber%20Technologies%2C%20Inc.)';
 
 export const CLOUD_PROVIDERS = [
-  new DropboxProvider(DROPBOX_CLIENT_ID, DROPBOX_CLIENT_NAME),
+  new DropboxProvider(DROPBOX_CLIENT_ID, DROPBOX_CLIENT_NAME)
 ];
