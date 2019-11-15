@@ -105,8 +105,16 @@ export const DEFAULT_FEATURE_FLAGS = {
   cloudStorage: true
 };
 
+// 
 export const AUTH_TOKENS = {
   MAPBOX_TOKEN: process.env.MapboxAccessToken, // eslint-disable-line
+
+  DROPBOX_CLIENT_NAME: 'kepler.gl%20(managed%20by%20Uber%20Technologies%2C%20Inc.)',
   DROPBOX_CLIENT_ID: process.env.DropboxClientId, // eslint-disable-line
+
+  GOOGLE_DRIVE_CLIENT_NAME: 'kepler.gl%20(managed%20by%TBD.)', // eslint-disable-line
+  GOOGLE_DRIVE_CLIENT_ID: process.env.GoogleDriveClientId, // eslint-disable-line
+  GOOGLE_DRIVE_APPKEY: process.env.GoogleDriveAppKey, // eslint-disable-line
+
   EXPORT_MAPBOX_TOKEN: process.env.MapboxExportToken, // eslint-disable-line
 };
