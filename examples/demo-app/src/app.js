@@ -99,7 +99,7 @@ class App extends Component {
     height: window.innerHeight
   };
 
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     // if we pass an id as part of the url
     // we ry to fetch along map configurations
     const {
@@ -279,12 +279,12 @@ class App extends Component {
     });
   };
 
-  _onExportToCloud = () => {
-    this.props.dispatch(exportFileToCloud());
+  _onExportToCloud = (providerName) => {
+    this.props.dispatch(exportFileToCloud(providerName));
   };
 
-  _onCloudLoginSuccess = () => {
-    this.props.dispatch(setCloudLoginSuccess());
+  _onCloudLoginSuccess = (providerName) => {
+    this.props.dispatch(setCloudLoginSuccess(providerName));
   };
 
   _getMapboxRef = (mapbox, index) => {

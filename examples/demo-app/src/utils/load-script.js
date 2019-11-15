@@ -18,12 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import DropboxHandler from './dropbox';
-import {AUTH_TOKENS} from '../../constants/default-settings';
-
-// configure all clients with the right configuration
-DropboxHandler.setAuthToken(AUTH_TOKENS.DROPBOX_CLIEND_ID);
-
-export const CLOUD_PROVIDERS = {
-  [DropboxHandler.name]: DropboxHandler
-};
+export function loadScript(src) {
+  return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+  });
+}

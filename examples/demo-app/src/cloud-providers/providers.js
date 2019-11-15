@@ -18,40 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {handleActions} from 'redux-actions';
-import {getCloudProviders} from '../cloud-providers';
-import {CLOUD_LOGIN_SUCCESS, LOAD_REMOTE_RESOURCE_ERROR, PUSHING_FILE} from '../actions';
+import {AUTH_TOKENS} from '../constants/default-settings';
 
-const readAuthTokens = () => getCloudProviders()
-  .reduce((tokens, cloudProvider) => ({
-    ...tokens,
-    [cloudProvider.name]: cloudProvider.getAccessToken()
-  }), {});
+import DropboxProvider from './dropbox-provider';
 
-const sharingInitialState = {
-  isLoading: false,
-  status: null,
-  info: null,
-  tokens: readAuthTokens()
-};
+const {DROPBOX_CLIENT_ID} = AUTH_TOKENS;
+const DROPBOX_CLIENT_NAME = 'Kepler.gl%20(managed%20by%20Uber%20Technologies%2C%20Inc.)';
 
-// file upload reducer
-export const sharingReducer = handleActions({
-  [LOAD_REMOTE_RESOURCE_ERROR]: (state, action) => ({
-    ...state,
-    error: action.error,
-    currentOption: {dataUrl: action.url},
-    isMapLoading: false
-  }),
-  [PUSHING_FILE]: (state, action) => ({
-    ...state,
-    isLoading: action.isLoading,
-    info: action.metadata
-  }),
-  [CLOUD_LOGIN_SUCCESS]: state => ({
-    ...state,
-    tokens: readAuthTokens()
-  })
-}, sharingInitialState);
-
-export default sharingReducer;
+export const CLOUD_PROVIDERS = [
+  new DropboxProvider(DROPBOX_CLIENT_ID, DROPBOX_CLIENT_NAME),
+];

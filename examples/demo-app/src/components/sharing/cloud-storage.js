@@ -25,7 +25,7 @@ import {CopyToClipboard} from 'react-copy-to-clipboard';
 import {StyledModalContent} from 'kepler.gl/components';
 import CloudTile from './cloud-tile';
 import StatusPanel from './status-panel';
-import {CLOUD_PROVIDERS} from '../../utils/cloud-providers';
+import {getCloudProviders} from '../../cloud-providers';
 import {KEPLER_DISCLAIMER} from '../../constants/default-settings';
 import {getMapPermalink} from '../../utils/url';
 
@@ -133,17 +133,18 @@ const ExportCloudModal = ({
         <StyledExportDataSection>
           <div className="description">
             <div className="title">
-              Upload through Dropbox
+              Upload to your cloud storage
             </div>
           </div>
           <div className="selection">
-            {Object.keys(CLOUD_PROVIDERS).map((name, index) => (
+            {getCloudProviders().map(cloudProvider => (
               <CloudTile
-                key={index}
-                token={CLOUD_PROVIDERS[name].getAccessToken()}
+                key={cloudProvider.name}
+                token={cloudProvider.getAccessToken()}
                 onExport={onExport}
-                onLogin={() => CLOUD_PROVIDERS[name].handleLogin(onCloudLoginSuccess)}
-                Icon={CLOUD_PROVIDERS[name].icon}
+                onLogin={() => cloudProvider.login(onCloudLoginSuccess)}
+                Icon={cloudProvider.icon}
+                name={cloudProvider.name}
               />
             ))}
           </div>

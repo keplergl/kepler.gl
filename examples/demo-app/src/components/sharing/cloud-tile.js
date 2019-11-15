@@ -63,11 +63,12 @@ const TileButton = styled.button`
   outline: 0;
 `;
 
-const CloudTile = ({token, onExport, onLogin, Icon}) => {
+const CloudTile = ({token, onExport, onLogin, Icon, name}) => {
   return (
-    <StyledTileWrapper onClick={token ? onExport : onLogin}>
+    <StyledTileWrapper onClick={token ? onExport.bind(null, name) : onLogin}>
       <StyledTile>
         <div>
+          <div style={{textAlign: 'center'}}>{name}</div>
           <TileButton>
             <Icon height="64px" />
             <StyledLabel>{token ? 'Upload' : 'Login'}</StyledLabel>
