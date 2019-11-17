@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {useCallback} from 'react';
 import styled from 'styled-components';
 
 const StyledTileWrapper = styled.div`
@@ -64,8 +64,10 @@ const TileButton = styled.button`
 `;
 
 const CloudTile = ({token, onExport, onLogin, Icon, name}) => {
+  const onExportCallback = useCallback(() => onExport(name), [onExport, name]);
+
   return (
-    <StyledTileWrapper onClick={token ? onExport.bind(null, name) : onLogin}>
+    <StyledTileWrapper onClick={token ? onExportCallback : onLogin}>
       <StyledTile>
         <div>
           <div style={{textAlign: 'center'}}>{name}</div>

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {getCloudProvider} from '../cloud-providers/providers';
+import {getCloudProvider} from '../cloud-providers';
 import {IndexRoute, Route} from 'react-router';
 import React from 'react';
 import Demo from '../app';
