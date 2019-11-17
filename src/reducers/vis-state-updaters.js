@@ -907,7 +907,7 @@ export const removeDatasetUpdater = (state, action) => {
   );
 
   // remove filters
-  const filters = state.filters.filter(filter => filter.dataId !== datasetKey);
+  const filters = state.filters.filter(filter => !filter.dataId.includes(datasetKey));
 
   // update interactionConfig
   let {interactionConfig} = state;

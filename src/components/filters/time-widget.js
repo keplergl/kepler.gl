@@ -162,7 +162,7 @@ function TimeWidgetFactory(SpeedControl, TimeRangeFilter, FloatingTimeDisplay) {
               </CenterFlexbox>
               <div className="bottom-widget__field-select">
                 <FieldSelector
-                  fields={this.yAxisFieldsSelector(datasets[filter.dataId])}
+                  fields={this.yAxisFieldsSelector(datasets[filter.dataId[0]])}
                   placement="top"
                   id="selected-time-widget-field"
                   value={filter.yAxis ? filter.yAxis.name : null}
