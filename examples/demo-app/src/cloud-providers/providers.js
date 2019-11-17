@@ -18,13 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+// Pure cloud storage providers
+import DropboxProvider from './dropbox-provider';
+import GoogleDriveProvider from './google-drive-provider';
+
 import {AUTH_TOKENS} from '../constants/default-settings';
 
-import DropboxProvider from './dropbox-provider';
+const DROPBOX_CLIENT_NAME = AUTH_TOKENS.DROPBOX_CLIENT_NAME;
+const DROPBOX_CLIENT_ID = AUTH_TOKENS.DROPBOX_CLIENT_ID;
 
-const {DROPBOX_CLIENT_ID} = AUTH_TOKENS;
-const DROPBOX_CLIENT_NAME = 'Kepler.gl%20(managed%20by%20Uber%20Technologies%2C%20Inc.)';
+const GOOGLE_DRIVE_CLIENT_NAME = AUTH_TOKENS.GOOGLE_DRIVE_CLIENT_NAME; 
+const GOOGLE_DRIVE_CLIENT_ID = AUTH_TOKENS.GOOGLE_DRIVE_CLIENT_ID;
+const GOOGLE_DRIVE_APPKEY = AUTH_TOKENS.GOOGLE_DRIVE_APPKEY;
 
 export const CLOUD_PROVIDERS = [
-  new DropboxProvider(DROPBOX_CLIENT_ID, DROPBOX_CLIENT_NAME)
+  new GoogleDriveProvider(GOOGLE_DRIVE_CLIENT_NAME, GOOGLE_DRIVE_CLIENT_ID, GOOGLE_DRIVE_APPKEY),
+  new DropboxProvider(DROPBOX_CLIENT_NAME, DROPBOX_CLIENT_ID)
 ];

@@ -30,7 +30,7 @@ const KEPLER_DROPBOX_FOLDER_LINK = `//${DOMAIN}/home/Apps`;
 const CORS_FREE_DOMAIN = 'dl.dropboxusercontent.com';
 
 export default class DropboxProvider {
-  constructor(clientId, appName, icon = DropboxIcon) {
+  constructor(appName, clientId, icon = DropboxIcon) {
     // All cloud-providers providers must implement the following properties
     this.name = NAME;
     this.clientId = clientId;
