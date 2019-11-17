@@ -66,7 +66,7 @@ export default class DropboxProvider {
           timestamp: new Date()
         }));
       }
-      onCloudLoginSuccess(NAME);
+      onCloudLoginSuccess(this.name);
     };
     window.addEventListener('message', handleToken);
   }
