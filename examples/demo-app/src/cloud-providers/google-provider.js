@@ -36,7 +36,7 @@ export default class GoogleProvider {
       this._onLoginStatusChange();
       onCloudLoginSuccess(this.name);
     }).catch (error => {
-      console.error('GOOGLE API LOGIN ERROR', error);
+      console.error('GOOGLE API LOGIN ERROR', error); // eslint-disable-line
     });
   }
 
@@ -102,9 +102,9 @@ export default class GoogleProvider {
     authInstance.isSignedIn.listen(isSignedIn => {
       if (isSignedIn) {
         // NOTE: This is only triggered on fresh login. I.e. signIn() does not trigger this if browser already logged in
-        console.log('GOOGLE API LOGIN DETECTED');
+        console.log('GOOGLE API LOGIN DETECTED'); // eslint-disable-line
       } else {
-        console.log('GOOGLE API LOGOUT DETECTED');
+        console.log('GOOGLE API LOGOUT DETECTED');// eslint-disable-line
         this._clearUserData();
         this._onLoginChange(null);
       }

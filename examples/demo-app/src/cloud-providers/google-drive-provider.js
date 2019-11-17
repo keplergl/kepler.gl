@@ -43,7 +43,7 @@ export default class GoogleDriveProvider extends GoogleProvider {
     const metadata = {
       name, // Filename on Google Drive
       mimeType, // mimeType on Google Drive
-      parents: ['root'], // Folder ID at Google Drive
+      parents: ['root'] // Folder ID at Google Drive
     };
 
     // The body of the post request will be this form
