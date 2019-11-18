@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {CLOUD_PROVIDERS} from './cloud-providers';
+import {getCloudProvider} from '../cloud-providers';
 import {IndexRoute, Route} from 'react-router';
 import React from 'react';
 import Demo from '../app';
@@ -26,7 +26,7 @@ import {DEFAULT_CLOUD_PROVIDER} from '../constants/default-settings';
 
 export function onAuthEnterCallback(nextState, replace, callback) {
   // TODO: detect auth provider
-  const authProvider = CLOUD_PROVIDERS[DEFAULT_CLOUD_PROVIDER];
+  const authProvider = getCloudProvider(DEFAULT_CLOUD_PROVIDER);
 
   // Check if the current tab was opened by our previous tab
   if (window.opener) {
