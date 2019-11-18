@@ -25,7 +25,7 @@ import {loadFiles, toggleModal} from 'kepler.gl/actions';
 import {
   LOADING_SAMPLE_ERROR_MESSAGE,
   LOADING_SAMPLE_LIST_ERROR_MESSAGE,
-  MAP_CONFIG_URL, MAP_URI
+  MAP_CONFIG_URL
 } from './constants/default-settings';
 import {LOADING_METHODS_NAMES} from './constants/default-settings';
 import {getCloudProvider} from './cloud-providers';
@@ -380,7 +380,7 @@ export function exportFileToCloud(providerName) {
     .then(
       response => {
         if (cloudProvider.shareFile) {
-          dispatch(push(`/${MAP_URI}${response.url}`));
+          dispatch(push(`/${response.url}`));
         }
         dispatch(setPushingFile(false, {filename: file.name, status: 'success', metadata: response}));
       },
