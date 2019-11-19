@@ -202,11 +202,7 @@ class Typeahead extends Component {
     super(props);
 
     this.state = {
-      searchResults: getOptionsForValue(
-        this.props.initialValue,
-        this.props,
-        {}
-      ),
+      searchResults: [],
 
       // This should be called something else, 'entryValue'
       entryValue: this.props.value || this.props.initialValue,
@@ -224,10 +220,6 @@ class Typeahead extends Component {
   }
 
   componentDidMount() {
-    this.setState({
-      searchResults: getOptionsForValue('', this.props.options)
-    });
-
     // call focus on entry or div to trigger key events listener
     if (this.entry.current) {
       this.entry.current.focus();
