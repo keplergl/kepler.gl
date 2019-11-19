@@ -105,7 +105,6 @@
     "pbf": "^3.1.0",
     "prop-types": "^15.6.0",
     "react-color": "^2.17.3",
-    "react-file-drop": "^0.1.9",
     "react-json-pretty": "^1.7.9",
     "react-lifecycles-compat": "^3.0.4",
     "react-map-gl": "^5.0.3",
