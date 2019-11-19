@@ -24,7 +24,6 @@ import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import styled from 'styled-components';
 import MapboxGLMap from 'react-map-gl';
-import {findDOMNode} from 'react-dom';
 import {
   StyledModalContent,
   InputLight,

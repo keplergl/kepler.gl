@@ -105,7 +105,7 @@ class App extends Component {
     // we ry to fetch along map configurations
     const {
       params: {id} = {},
-      location: {query = {}}
+      location: {query = {}} = {}
     } = this.props;
 
     // Load sample using its id

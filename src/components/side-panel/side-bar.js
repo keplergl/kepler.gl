@@ -92,18 +92,19 @@ SidebarFactory.deps = [CollapseButtonFactory];
 
 function SidebarFactory(CollapseButton) {
   return class SideBar extends Component {
-    static defaultProps = {
-      width: 300,
-      minifiedWidth: 0,
-      isOpen: true,
-      onOpenOrClose: function noop() {}
-    };
 
     static propTypes = {
       width: PropTypes.number,
       isOpen: PropTypes.bool,
       minifiedWidth: PropTypes.number,
       onOpenOrClose: PropTypes.func
+    };
+
+    static defaultProps = {
+      width: 300,
+      minifiedWidth: 0,
+      isOpen: true,
+      onOpenOrClose: function noop() {}
     };
 
     _onOpenOrClose = () => {
