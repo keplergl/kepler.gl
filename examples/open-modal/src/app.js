@@ -33,7 +33,7 @@ const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
 
 class App extends Component {
   componentDidUpdate(prevProps) {
-    if (!this.props.keplerGl.bar && prevProps.keplerGl.bar) {
+    if (!prevProps.keplerGl.bar && this.props.keplerGl.bar) {
       this.props.dispatch(
         wrapTo('bar', addDataToMap(
           {

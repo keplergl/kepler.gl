@@ -25,6 +25,8 @@ import styled from 'styled-components';
 import UploadButton from './upload-button';
 import {FileType, DragNDrop} from 'components/common/icons';
 import LoadingSpinner from 'components/common/loading-spinner';
+import FileDrop from './file-drop';
+
 import {isChrome} from 'utils/utils';
 import {GUIDES_FILE_FORMAT} from 'constants/user-guides';
 import ReactMarkdown from 'react-markdown';
@@ -32,8 +34,8 @@ import ReactMarkdown from 'react-markdown';
 // Breakpoints
 import {media} from 'styles/media-breakpoints';
 
-const FileDrop =
-  typeof document !== 'undefined' ? require('react-file-drop') : null;
+// const FileDrop =
+//   typeof document !== 'undefined' ? require('react-file-drop') : null;
 
 // File.type is not reliable if the OS does not have a
 // registered mapping for the extension.
@@ -283,7 +285,6 @@ export default class FileUpload extends Component {
         {FileDrop ? (
           <FileDrop
             frame={this.frame.current || document}
-            targetAlwaysVisible
             onDragOver={() => this._toggleDragState(true)}
             onDragLeave={() => this._toggleDragState(false)}
             onDrop={this._handleFileInput}

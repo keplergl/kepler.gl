@@ -114,7 +114,7 @@ const ConfigGroupContent = styled.div`
   }
 `;
 
-export default class LayerConfigGroup extends Component {
+class LayerConfigGroup extends Component {
   static defaultProps = {
     collapsible: false,
     expanded: false,
@@ -189,10 +189,7 @@ export default class LayerConfigGroup extends Component {
     );
   }
 }
-<<<<<<< HEAD
-=======
 
 polyfill(LayerConfigGroup);
 
 export default LayerConfigGroup;
->>>>>>> remove componentWillRecieveProp and componentWillMount
