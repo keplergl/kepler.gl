@@ -33,6 +33,8 @@ import {replaceMapControl} from './factories/map-control';
 import {replacePanelHeader} from './factories/panel-header';
 import ExportUrlModal from './components/sharing/export-url-modal';
 import {AUTH_TOKENS} from './constants/default-settings';
+import {getCloudProvider} from './cloud-providers';
+
 import {
   exportFileToCloud,
   loadRemoteMap,
@@ -103,9 +105,19 @@ class App extends Component {
     // if we pass an id as part of the url
     // we ry to fetch along map configurations
     const {
-      params: {id} = {},
+      params: {id, provider} = {},
       location: {query = {}}
     } = this.props;
+
+    if (provider) {
+      const providerHandler = getCloudProvider(provider);
+
+      if (providerHandler) {
+        this.props.dispatch(providerHandler.loadMap(query));
+
+        return;
+      }
+    }
 
     // Load sample using its id
     if (id) {
