@@ -97,7 +97,7 @@ export default function BottomWidgetFactory(TimeWidget, AnimationControl) {
             updateAnimationSpeed={visStateActions.updateLayerAnimationSpeed}
           />
         ) : null}
-        {enlargedFilterIdx > -1 ? (
+        {enlargedFilterIdx > -1 && Object.keys(datasets).length > 0 ? (
           <TimeWidget
             filter={filters[enlargedFilterIdx]}
             index={enlargedFilterIdx}
