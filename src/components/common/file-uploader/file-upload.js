@@ -19,21 +19,21 @@
 // THE SOFTWARE.
 
 import React, {Component, createRef} from 'react';
+import {polyfill} from 'react-lifecycles-compat';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
 import UploadButton from './upload-button';
 import {FileType, DragNDrop} from 'components/common/icons';
 import LoadingSpinner from 'components/common/loading-spinner';
+import FileDrop from './file-drop';
+
 import {isChrome} from 'utils/utils';
 import {GUIDES_FILE_FORMAT} from 'constants/user-guides';
 import ReactMarkdown from 'react-markdown';
 
 // Breakpoints
 import {media} from 'styles/media-breakpoints';
-
-const FileDrop =
-  typeof document !== 'undefined' ? require('react-file-drop') : null;
 
 // File.type is not reliable if the OS does not have a
 // registered mapping for the extension.
@@ -71,7 +71,7 @@ const StyledUploadMessage = styled.div`
   `}
 `;
 
-const WarningMsg = styled.span`
+export const WarningMsg = styled.span`
   margin-top: 10px;
   color: ${props => props.theme.errorColor};
   font-weight: 500;
@@ -172,7 +172,7 @@ const StyledDisclaimer = styled(StyledMessage)`
   margin: 0 auto;
 `;
 
-export default class FileUpload extends Component {
+class FileUpload extends Component {
 
   static propTypes = {
     onFileUpload: PropTypes.func.isRequired,
@@ -250,6 +250,7 @@ export default class FileUpload extends Component {
         </WarningMsg>
       );
     } else if (this.props.fileLoading && files.length) {
+
       return (
         <StyledMessage className="file-uploader__message">
           <div className="loading-action">Uploading</div>
@@ -283,10 +284,10 @@ export default class FileUpload extends Component {
         {FileDrop ? (
           <FileDrop
             frame={this.frame.current || document}
-            targetAlwaysVisible
             onDragOver={() => this._toggleDragState(true)}
             onDragLeave={() => this._toggleDragState(false)}
             onDrop={this._handleFileInput}
+            className="file-uploader__file-drop"
           >
             <StyledUploadMessage className="file-upload__message">
               <ReactMarkdown
@@ -330,3 +331,7 @@ export default class FileUpload extends Component {
     );
   }
 }
+
+polyfill(FileUpload);
+
+export default FileUpload;

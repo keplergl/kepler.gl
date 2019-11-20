@@ -73,9 +73,9 @@ export default class TimeSliderMarker extends Component {
     this._updateAxis(this.scaleSelector(this.props));
   }
 
-  componentWillReceiveProps(nextProps) {
-    if (this.scaleSelector(this.props) !== this.scaleSelector(nextProps)) {
-      this._updateAxis(this.scaleSelector(nextProps));
+  componentDidUpdate(prevProps) {
+    if (this.scaleSelector(this.props) !== this.scaleSelector(prevProps)) {
+      this._updateAxis(this.scaleSelector(this.props));
     }
   }
 

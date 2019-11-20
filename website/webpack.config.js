@@ -99,6 +99,7 @@ const COMMON_CONFIG = {
       'kepler.gl': libSources,
       react: resolve(rootDir, './node_modules/react'),
       'styled-components': resolve(rootDir, './node_modules/styled-components'),
+      'react-redux': resolve(rootDir, './node_modules/react-redux'),
       'react-palm': resolve(rootDir, './node_modules/react-palm')
     }
   },

@@ -62,6 +62,7 @@ import {processCsvData, processGeojson} from 'kepler.gl/processors';
 
 const BannerHeight = 30;
 const BannerKey = 'kgHideBanner-iiba';
+const keplerGlGetState = state => state.demo.keplerGl;
 
 const GlobalStyle = styled.div`
   font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
@@ -99,12 +100,12 @@ class App extends Component {
     height: window.innerHeight
   };
 
-  UNSAFE_componentWillMount() {
+  componentDidMount() {
     // if we pass an id as part of the url
     // we ry to fetch along map configurations
     const {
       params: {id} = {},
-      location: {query = {}}
+      location: {query = {}} = {}
     } = this.props;
 
     // Load sample using its id
@@ -117,9 +118,7 @@ class App extends Component {
       // TODO?: validate map url
       this.props.dispatch(loadRemoteMap({dataUrl: query.mapUrl}));
     }
-  }
 
-  componentDidMount() {
     // delay zs to show the banner
     // if (!window.localStorage.getItem(BannerKey)) {
     //   window.setTimeout(this._showBanner, 3000);
@@ -353,7 +352,7 @@ class App extends Component {
                   /*
                    * Specify path to keplerGl state, because it is not mount at the root
                    */
-                  getState={state => state.demo.keplerGl}
+                  getState={keplerGlGetState}
                   width={width}
                   height={height - (showBanner ? BannerHeight : 0)}
                   onSaveMap={this._isCloudStorageEnabled() && this._toggleCloudModal}

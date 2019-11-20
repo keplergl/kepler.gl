@@ -113,22 +113,22 @@ function KeplerGlFactory(
       theme: {}
     };
 
-    componentWillMount() {
+    componentDidMount() {
       this._validateMapboxToken();
       this._loadMapStyle(this.props.mapStyles);
       this._handleResize(this.props);
     }
 
-    componentWillReceiveProps(nextProps) {
+    componentDidUpdate(prevProps) {
       if (
         // if dimension props has changed
-        this.props.height !== nextProps.height ||
-        this.props.width !== nextProps.width ||
+        this.props.height !== prevProps.height ||
+        this.props.width !== prevProps.width ||
         // react-map-gl will dispatch updateViewport after this._handleResize is called
         // here we check if this.props.mapState.height is sync with props.height
-        nextProps.height !== this.props.mapState.height
+        this.props.height !== this.props.mapState.height
       ) {
-        this._handleResize(nextProps);
+        this._handleResize(this.props);
       }
     }
 

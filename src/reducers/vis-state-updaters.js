@@ -434,7 +434,6 @@ export function layerVisConfigChangeUpdater(state, action) {
   const {oldLayer} = action;
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
   const props = Object.keys(action.newVisConfig);
-
   const newVisConfig = {
     ...oldLayer.config.visConfig,
     ...action.newVisConfig

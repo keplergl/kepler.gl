@@ -62,17 +62,17 @@ export default function PlotContainerFactory(MapContainer) {
       this._onMapRender = debounce(this._onMapRender, 500);
     }
 
-    componentWillMount() {
+    componentDidMount() {
       this.props.startExportingImage();
     }
 
-    componentWillReceiveProps(newProps) {
+    componentDidUpdate(prevProps) {
       // re-fetch the new screenshot only when ratio legend or resolution changes
       const checks = ['ratio', 'resolution', 'legend'];
       const shouldRetrieveScreenshot = checks.some(
         item =>
           this.props.exportImageSetting[item] !==
-          newProps.exportImageSetting[item]
+          prevProps.exportImageSetting[item]
       );
       if (shouldRetrieveScreenshot) {
         this._retrieveNewScreenshot();
