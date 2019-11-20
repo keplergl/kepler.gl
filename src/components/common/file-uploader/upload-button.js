@@ -65,7 +65,7 @@ export default class UploadButton extends Component {
           style={{display: 'none'}}
           onChange={this._onChange}
         />
-        <span onClick={this._onClick}>{this.props.children}</span>
+        <span className="file-upload__upload-button-span" onClick={this._onClick}>{this.props.children}</span>
       </Wrapper>
     );
   }

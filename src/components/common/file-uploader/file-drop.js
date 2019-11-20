@@ -33,6 +33,7 @@ class FileDrop extends React.PureComponent {
 
   static eventHasFiles = event => {
     // In most browsers this is an array, but in IE11 it's an Object :(
+
     let hasFiles = false;
     if (event.dataTransfer) {
       const types = event.dataTransfer.types;
@@ -148,7 +149,6 @@ class FileDrop extends React.PureComponent {
 
   handleFrameDrop = event => {
     event.preventDefault();
-
     if (!this.state.draggingOverTarget) {
       this.resetDragging();
       if (this.props.onFrameDrop) this.props.onFrameDrop(event);

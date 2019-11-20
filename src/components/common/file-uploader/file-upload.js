@@ -34,9 +34,6 @@ import ReactMarkdown from 'react-markdown';
 // Breakpoints
 import {media} from 'styles/media-breakpoints';
 
-// const FileDrop =
-//   typeof document !== 'undefined' ? require('react-file-drop') : null;
-
 // File.type is not reliable if the OS does not have a
 // registered mapping for the extension.
 // NOTE: Shapefiles must be in a compressed format since
@@ -73,7 +70,7 @@ const StyledUploadMessage = styled.div`
   `}
 `;
 
-const WarningMsg = styled.span`
+export const WarningMsg = styled.span`
   margin-top: 10px;
   color: ${props => props.theme.errorColor};
   font-weight: 500;
@@ -252,6 +249,7 @@ export default class FileUpload extends Component {
         </WarningMsg>
       );
     } else if (this.props.fileLoading && files.length) {
+
       return (
         <StyledMessage className="file-uploader__message">
           <div className="loading-action">Uploading</div>
@@ -288,6 +286,7 @@ export default class FileUpload extends Component {
             onDragOver={() => this._toggleDragState(true)}
             onDragLeave={() => this._toggleDragState(false)}
             onDrop={this._handleFileInput}
+            className="file-uploader__file-drop"
           >
             <StyledUploadMessage className="file-upload__message">
               <ReactMarkdown
