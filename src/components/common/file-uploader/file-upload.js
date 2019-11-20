@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import React, {Component, createRef} from 'react';
+import {polyfill} from 'react-lifecycles-compat';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
@@ -171,7 +172,7 @@ const StyledDisclaimer = styled(StyledMessage)`
   margin: 0 auto;
 `;
 
-export default class FileUpload extends Component {
+class FileUpload extends Component {
 
   static propTypes = {
     onFileUpload: PropTypes.func.isRequired,
@@ -330,3 +331,7 @@ export default class FileUpload extends Component {
     );
   }
 }
+
+polyfill(FileUpload);
+
+export default FileUpload;

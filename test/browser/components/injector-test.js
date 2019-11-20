@@ -25,7 +25,6 @@ import configureStore from 'redux-mock-store';
 import {Provider} from 'react-redux';
 import sinon from 'sinon';
 import {console as Console} from 'global/window';
-import {handleActions} from 'redux-actions';
 
 import {withState, injectComponents, PanelHeaderFactory} from 'components';
 import coreReducer from 'reducers/core';
