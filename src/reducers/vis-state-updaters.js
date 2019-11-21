@@ -512,12 +512,7 @@ export function interactionConfigChangeUpdater(state, action) {
  * @public
  */
 export function setFilterUpdater(state, action) {
-  const {
-    idx,
-    prop,
-    value,
-    valueIndex = 0
-  } = action;
+  const {idx, prop, value, valueIndex = 0} = action;
   let newState = state;
   let newFilter = {
     ...state.filters[idx],
@@ -545,8 +540,14 @@ export function setFilterUpdater(state, action) {
       // we are supporting the current functionality
       // TODO: Next PR for UI filter name will only update filter name but it won't have side effects
       // we are gonna use pair of datasets and fieldIdx to update the filter
-      const datasetId = newFilter.dataId[valueIndex]
-      const {filter: updatedFilter, dataset: newDataset} = applyFilterFieldName(newFilter, state.datasets[datasetId], value, valueIndex);
+      const datasetId = newFilter.dataId[valueIndex];
+      const {filter: updatedFilter, dataset: newDataset} = applyFilterFieldName(
+        newFilter,
+        state.datasets[datasetId],
+        value,
+        valueIndex,
+        {mergeDomain: false}
+      );
       if (!updatedFilter) {
         return state;
       }
@@ -564,7 +565,6 @@ export function setFilterUpdater(state, action) {
       // only filter the current dataset
       break;
     default:
-
       break;
   }
 
@@ -584,13 +584,18 @@ export function setFilterUpdater(state, action) {
   // if we are currently setting a prop that only requires to filter the current
   // dataset we will pass only the current dataset to applyFiltersToDatasets and
   // updateAllLayerDomainData otherwise we pass the all list of datasets as defined in dataId
-  const datasetIdsToFilter = LIMITED_FILTER_EFFECT_PROPS[prop] ?
-    [datasetIds[valueIndex]] : datasetIds;
+  const datasetIdsToFilter = LIMITED_FILTER_EFFECT_PROPS[prop]
+    ? [datasetIds[valueIndex]]
+    : datasetIds;
 
   // filter data
   newState = {
     ...newState,
-    datasets: applyFiltersToDatasets(datasetIdsToFilter, newState.datasets, newState.filters)
+    datasets: applyFiltersToDatasets(
+      datasetIdsToFilter,
+      newState.datasets,
+      newState.filters
+    )
   };
 
   // dataId is an array
@@ -647,9 +652,9 @@ export const addFilterUpdater = (state, action) =>
   !action.dataId
     ? state
     : {
-      ...state,
-      filters: [...state.filters, getDefaultFilter(action.dataId)]
-    };
+        ...state,
+        filters: [...state.filters, getDefaultFilter(action.dataId)]
+      };
 
 /**
  * Set layer color palette ui state
@@ -659,11 +664,14 @@ export const addFilterUpdater = (state, action) =>
  * @param {Object} action.prop
  * @param {Object} action.newConfig
  */
-export const layerColorUIChangeUpdater = (state, {oldLayer, prop, newConfig}) => {
+export const layerColorUIChangeUpdater = (
+  state,
+  {oldLayer, prop, newConfig}
+) => {
   const newLayer = oldLayer.updateLayerColorUI(prop, newConfig);
   return {
     ...state,
-    layers: state.layers.map(l => l.id === oldLayer.id ? newLayer : l)
+    layers: state.layers.map(l => (l.id === oldLayer.id ? newLayer : l))
   };
 };
 
@@ -906,7 +914,9 @@ export const removeDatasetUpdater = (state, action) => {
   );
 
   // remove filters
-  const filters = state.filters.filter(filter => !filter.dataId.includes(datasetKey));
+  const filters = state.filters.filter(
+    filter => !filter.dataId.includes(datasetKey)
+  );
 
   // update interactionConfig
   let {interactionConfig} = state;
@@ -1084,11 +1094,11 @@ export const mouseMoveUpdater = (state, {evt}) => {
 export const toggleSplitMapUpdater = (state, action) =>
   state.splitMaps && state.splitMaps.length === 0
     ? {
-      ...state,
-      // maybe we should use an array to store state for a single map as well
-      // if current maps length is equal to 0 it means that we are about to split the view
-      splitMaps: computeSplitMapLayers(state.layers)
-    }
+        ...state,
+        // maybe we should use an array to store state for a single map as well
+        // if current maps length is equal to 0 it means that we are about to split the view
+        splitMaps: computeSplitMapLayers(state.layers)
+      }
     : closeSpecificMapAtIndex(state, action);
 
 /**
@@ -1283,36 +1293,29 @@ function closeSpecificMapAtIndex(state, action) {
  * @public
  */
 export const loadFilesUpdater = (state, action) => {
-
   const {files} = action;
   const filesToLoad = files.map(fileBlob => processFileToLoad(fileBlob));
   // reader -> parser -> augment -> receiveVisData
   const loadFileTasks = [
-    Task.all(filesToLoad.map(LOAD_FILE_TASK)).bimap(
-      results => {
-        const data = results.reduce(
-          (f, c) => ({
-            // using concat here because the current datasets could be an array or a single item
-            datasets: f.datasets.concat(c.datasets),
-            // we need to deep merge this thing unless we find a better solution
-            // this case will only happen if we allow to load multiple keplergl json files
-            config: {
-              ...f.config,
-              ...(c.config || {})
-            }
-          }),
-          {datasets: [], config: {}, options: {centerMap: true}}
-        );
-        return addDataToMap(data);
-      },
-      loadFilesErr
-    )
+    Task.all(filesToLoad.map(LOAD_FILE_TASK)).bimap(results => {
+      const data = results.reduce(
+        (f, c) => ({
+          // using concat here because the current datasets could be an array or a single item
+          datasets: f.datasets.concat(c.datasets),
+          // we need to deep merge this thing unless we find a better solution
+          // this case will only happen if we allow to load multiple keplergl json files
+          config: {
+            ...f.config,
+            ...(c.config || {})
+          }
+        }),
+        {datasets: [], config: {}, options: {centerMap: true}}
+      );
+      return addDataToMap(data);
+    }, loadFilesErr)
   ];
 
-  return withTask(
-    state,
-    loadFileTasks
-  );
+  return withTask(state, loadFileTasks);
 };
 
 /**
@@ -1391,9 +1394,9 @@ export function updateAllLayerDomainData(state, dataId, newFilter) {
         newFilter && newFilter.fixedDomain
           ? oldLayer
           : oldLayer.updateLayerDomain(
-            state.datasets[oldLayer.config.dataId],
-            newFilter
-          );
+              state.datasets[oldLayer.config.dataId],
+              newFilter
+            );
 
       const {layerData, layer} = calculateLayerData(
         newLayer,
