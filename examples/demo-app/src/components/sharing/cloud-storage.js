@@ -116,6 +116,7 @@ const ExportCloudModal = ({
   const error = get(info, ['error']);
   const folderLink = get(info, ['metadata', 'folder_link']);
   const sharingLink = metaUrl ? getMapPermalink(metaUrl) : null;
+  const providerName = get(info, ['provider']);
   return (
 
     <StyledModalContent className="export-cloud-modal">
@@ -157,12 +158,12 @@ const ExportCloudModal = ({
                 )}
                 {error && (
                   <div className="subtitle" style={{color: 'red', fontWeight: 500}}>
-                    {error.error}
+                    {providerName}: {error.error}
                   </div>
                 )}
                 {metaUrl && [
                   (<SharingUrl key={0} url={sharingLink} message={'Share your map with other users'}/>),
-                  (<a href={folderLink} target="_blank" rel="noopener noreferrer" style={{textDecoration: 'underline'}}>Go to your Kepler.gl Dropbox folder</a>)
+                  (folderLink && <a href={folderLink} target="_blank" rel="noopener noreferrer" style={{textDecoration: 'underline'}}>Go to your Kepler.gl {providerName} page</a>)
                 ]}
               </div>
             </div>
