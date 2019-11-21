@@ -2026,6 +2026,44 @@ test('#visStateReducer -> SET_FILTER (processCsvData)', t => {
   t.end();
 });
 
+test('#visStateReducer -> SET_FILTER.name', t => {
+  const oldState = StateWFilters.visState;
+  const oldFilter0 = oldState.filters[0]
+  // change filter name from RATE to ZIP_CODE
+  const updated = reducer(
+    oldState,
+    VisStateActions.setFilter(1, 'name', 'ZIP_CODE', 0)
+  );
+
+  const expectedFilter0 = oldFilter0;
+  const expectedFilter1 = {
+    dataId: ['ieukmgne'],
+    freeze: true,
+    id: 'RATE-1',
+    fixedDomain: false,
+    enlarged: false,
+    isAnimating: false,
+    speed: 1,
+    name: ['ZIP_CODE'],
+    type: 'range',
+    fieldIdx: [2],
+    domain: [94105, 94111],
+    value: [94105, 94111],
+    plotType: 'histogram',
+    yAxis: null,
+    interval: null,
+    fieldType: 'integer',
+    step: 0.01,
+    histogram: [],
+    enlargedHistogram: 'dont test me',
+    typeOptions: ['range']
+  };
+
+  cmpFilters(t, [expectedFilter0, expectedFilter1], updated.filters);
+
+  t.end();
+});
+
 test('#visStateReducer -> SET_FILTER (processGeojson)', t => {
   const {fields, rows} = processGeojson(CloneDeep(geojsonData));
   const payload = [

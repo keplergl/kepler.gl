@@ -31,7 +31,7 @@ import {
 import {getInitialMapLayersForSplitMap} from 'utils/split-map-utils';
 
 import {LAYER_BLENDINGS} from 'constants/default-settings';
-import {mergeFilterProps} from '../utils/filter-utils';
+import {mergeFilterDomainStep} from '../utils/filter-utils';
 
 /**
  * Merge loaded filters with current state, if no fields or data are loaded
@@ -70,7 +70,7 @@ export function mergeFilters(state, filtersToMerge) {
             // merge filter props
             filter: acc.filter ? {
               ...acc.filter,
-              ...mergeFilterProps(acc, updatedFilter)
+              ...mergeFilterDomainStep(acc, updatedFilter)
             } : updatedFilter,
 
             applyToDatasets: [
