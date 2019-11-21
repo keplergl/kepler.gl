@@ -152,6 +152,7 @@ const ExportCloudModal = ({
                 onLogin={() => cloudProvider.login(onCloudLoginSuccess)}
                 Icon={cloudProvider.icon}
                 name={cloudProvider.name}
+                userName={cloudProvider.getUserName()}
               />
             ))}
           </div>
