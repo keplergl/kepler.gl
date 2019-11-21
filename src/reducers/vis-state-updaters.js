@@ -512,7 +512,12 @@ export function interactionConfigChangeUpdater(state, action) {
  * @public
  */
 export function setFilterUpdater(state, action) {
-  const {idx, prop, value, valueIndex = 0} = action;
+  const {
+    idx,
+    prop,
+    value,
+    valueIndex = 0
+  } = action;
   let newState = state;
   let newFilter = {
     ...state.filters[idx],
@@ -565,6 +570,7 @@ export function setFilterUpdater(state, action) {
       // only filter the current dataset
       break;
     default:
+
       break;
   }
 
@@ -1293,29 +1299,36 @@ function closeSpecificMapAtIndex(state, action) {
  * @public
  */
 export const loadFilesUpdater = (state, action) => {
+
   const {files} = action;
   const filesToLoad = files.map(fileBlob => processFileToLoad(fileBlob));
   // reader -> parser -> augment -> receiveVisData
   const loadFileTasks = [
-    Task.all(filesToLoad.map(LOAD_FILE_TASK)).bimap(results => {
-      const data = results.reduce(
-        (f, c) => ({
-          // using concat here because the current datasets could be an array or a single item
-          datasets: f.datasets.concat(c.datasets),
-          // we need to deep merge this thing unless we find a better solution
-          // this case will only happen if we allow to load multiple keplergl json files
-          config: {
-            ...f.config,
-            ...(c.config || {})
-          }
-        }),
-        {datasets: [], config: {}, options: {centerMap: true}}
-      );
-      return addDataToMap(data);
-    }, loadFilesErr)
+    Task.all(filesToLoad.map(LOAD_FILE_TASK)).bimap(
+      results => {
+        const data = results.reduce(
+          (f, c) => ({
+            // using concat here because the current datasets could be an array or a single item
+            datasets: f.datasets.concat(c.datasets),
+            // we need to deep merge this thing unless we find a better solution
+            // this case will only happen if we allow to load multiple keplergl json files
+            config: {
+              ...f.config,
+              ...(c.config || {})
+            }
+          }),
+          {datasets: [], config: {}, options: {centerMap: true}}
+        );
+        return addDataToMap(data);
+      },
+      loadFilesErr
+    )
   ];
 
-  return withTask(state, loadFileTasks);
+  return withTask(
+    state,
+    loadFileTasks
+  );
 };
 
 /**

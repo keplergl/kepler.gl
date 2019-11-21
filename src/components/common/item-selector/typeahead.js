@@ -95,7 +95,6 @@ function generateSearchFunction(props) {
 }
 
 function getOptionsForValue(value, props, state) {
-
   const {options, showOptionsWhenEmpty} = props;
 
   if (!props.searchable) {
