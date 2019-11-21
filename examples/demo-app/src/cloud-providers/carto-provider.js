@@ -73,6 +73,10 @@ export default class CartoProvider {
     return this._carto.oauth.expired ? null : this._carto.oauth.token;
   }
 
+  getUserName(){
+    return this._carto.username;
+  }
+
   /**
    * The CARTO cloud provider polls the created window internally to parse the URL
    * @param {*} location
