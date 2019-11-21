@@ -123,6 +123,11 @@ export default class DropboxProvider {
     return (token || '') !== '' ? token : null;
   }
 
+  getUserName(){
+    // TODO usersGetCurrentAccount()
+    return null;
+  }
+
   /**
    * This method will extract the auth token from the third party service callback url.
    * @param {object} location the window location provided by react router
