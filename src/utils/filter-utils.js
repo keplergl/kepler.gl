@@ -755,8 +755,8 @@ export function applyFilterFieldName(filter, dataset, fieldName, filterDatasetIn
  */
 /* eslint-disable complexity */
 export function mergeFilterDomainStep(filter, filterProps) {
-  if (!filter || !filterProps) {
-    return filterProps;
+  if (!filter) {
+    return null;
   }
 
   if (!filterProps) {
@@ -764,8 +764,7 @@ export function mergeFilterDomainStep(filter, filterProps) {
   }
 
   if (
-    !filterProps
-    || (filter.fieldType && filter.fieldType !== filterProps.fieldType)
+    (filter.fieldType && filter.fieldType !== filterProps.fieldType)
     || !filterProps.domain
   ) {
     return filter;
