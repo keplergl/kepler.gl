@@ -137,6 +137,12 @@ export default class CartoProvider {
     return (<SharingUrl url={sharingLink} message={'Share your map with other users'} />);
   }
 
+  getMapPermalink(mapLink, fullURL = true) {
+    return (fullURL)
+      ? `${window.location.protocol}//${window.location.host}/${mapLink}`
+      : `/${mapLink}`;
+  }
+
   // PRIVATE
 
   _convertDataset({ data: dataset }) {

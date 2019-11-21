@@ -25,7 +25,7 @@ import {CopyToClipboard} from 'react-copy-to-clipboard';
 import {StyledModalContent} from 'kepler.gl/components';
 import CloudTile from './cloud-tile';
 import StatusPanel from './status-panel';
-import {getCloudProviders} from '../../cloud-providers';
+import {getCloudProviders, getCloudProvider} from '../../cloud-providers';
 import {KEPLER_DISCLAIMER} from '../../constants/default-settings';
 import {getMapPermalink} from '../../utils/url';
 
@@ -112,11 +112,17 @@ const ExportCloudModal = ({
   onExport,
   onCloudLoginSuccess
 }) => {
+
   const metaUrl = get(info, ['metadata', 'url']);
   const error = get(info, ['error']);
   const folderLink = get(info, ['metadata', 'folder_link']);
-  const sharingLink = metaUrl ? getMapPermalink(metaUrl) : null;
   const providerName = get(info, ['provider']);
+  const provider = providerName ? getCloudProvider(providerName) : null
+  const sharingLink = (metaUrl)
+    ? (provider && provider.getMapPermalink)
+      ? provider.getMapPermalink(metaUrl)
+      : getMapPermalink(metaUrl)
+    : null;
   return (
 
     <StyledModalContent className="export-cloud-modal">

@@ -30,7 +30,7 @@ import {
 import {LOADING_METHODS_NAMES} from './constants/default-settings';
 import {getCloudProvider} from './cloud-providers';
 import {generateHashId} from './utils/strings';
-import {parseUri} from './utils/url';
+import {parseUri, getMapPermalink} from './utils/url';
 import KeplerGlSchema from 'kepler.gl/schemas';
 
 // CONSTANTS
@@ -367,7 +367,12 @@ export function exportFileToCloud(providerName) {
     const fileName = `/keplergl_${generateHashId(6)}.json`;
     const file = new File([newBlob], fileName);
     // We are gonna pass the correct auth token to init the cloud provider
-    dispatch(setPushingFile(true, {filename: file.name, status: 'uploading', metadata: null, provider: cloudProvider.name}));
+    dispatch(setPushingFile(true, {
+      filename: file.name,
+      status: 'uploading',
+      metadata: null,
+      provider: cloudProvider.name
+    }));
     cloudProvider.uploadFile({
       data,
       type: 'application/json',
@@ -380,12 +385,25 @@ export function exportFileToCloud(providerName) {
     .then(
       response => {
         if (cloudProvider.shareFile) {
-          dispatch(push(`/${response.url}`));
+          const responseUrl = (cloudProvider.getMapPermalink)
+            ? cloudProvider.getMapPermalink(response.url, false)
+            : getMapPermalink(response.url, false)
+          dispatch(push(responseUrl));
         }
-        dispatch(setPushingFile(false, {filename: file.name, status: 'success', metadata: response, provider: cloudProvider.name}));
+        dispatch(setPushingFile(false, {
+          filename: file.name,
+          status: 'success',
+          metadata: response,
+          provider: cloudProvider.name
+        }));
       },
       error => {
-        dispatch(setPushingFile(false, {filename: file.name, status: 'error', error, provider: cloudProvider.name}));
+        dispatch(setPushingFile(false, {
+          filename: file.name,
+          status: 'error',
+          error, provider:
+          cloudProvider.name
+        }));
       }
     );
   };
@@ -398,7 +416,12 @@ export function setCloudLoginSuccess(providerName) {
         dispatch(exportFileToCloud(providerName));
       },
       () => {
-        dispatch(setPushingFile(false, {filename: null, status: 'error', error: 'not able to propagate login successfully', provider: cloudProvider.name}));
+        dispatch(setPushingFile(false, {
+          filename: null,
+          status: 'error',
+          error: 'not able to propagate login successfully',
+          provider: cloudProvider.name
+        }));
       }
     );
   };
