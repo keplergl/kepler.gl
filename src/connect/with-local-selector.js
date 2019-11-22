@@ -19,18 +19,13 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import PropTypes from 'prop-types';
+import {createSelector} from 'reselect';
+import KeplerGlContext from 'components/context';
 
 const identity = state => state;
 
 const mergeSelectors = (parentSelector, childSelector) => state =>
   childSelector(parentSelector(state));
-
-const computeSelector = (props, ctx) =>
-  mergeSelectors(
-    ctx.selector ? ctx.selector : identity,
-    props.selector ? props.selector : identity
-  );
 
 // store the parent selector in the parent context
 // and return the parent component
@@ -39,39 +34,33 @@ const computeSelector = (props, ctx) =>
 // as well as prop to the given component
 const withLocalSelector = ParentComponent => {
   class WithConnectSelector extends Component {
-    constructor(props, ctx) {
-      super(props, ctx);
+    static contextType = KeplerGlContext;
 
-      this.selector = computeSelector(props, ctx);
-      this.id = props.id;
-    }
-
-    getChildContext() {
-      return {
-        selector: this.selector,
-        id: this.id
-      };
-    }
-
-    componentWillReceiveProps(nextProps, nextContext) {
-      this.selector = computeSelector(nextProps, nextContext);
-      this.id = nextProps.id;
-    }
+    selectorFromContext = (_, ctx) => ctx.selector ? ctx.selector : identity;
+    selectorFromProps = (props, _) => props.selector ? props.selector : identity;
+    idFromProps = (props, _) => props.id;
+    computedSelector = createSelector(
+      this.selectorFromContext,
+      this.selectorFromProps,
+      (ctx, props) => mergeSelectors(ctx, props)
+    );
+    contextSelector = createSelector(
+      this.computedSelector,
+      this.idFromProps,
+      (selector, id) => ({
+        selector, id
+      })
+    )
 
     render() {
-      return <ParentComponent {...this.props} selector={this.selector} />;
+      const computedContext = this.contextSelector(this.props, this.context);
+      return (
+        <KeplerGlContext.Provider value={computedContext}>
+          <ParentComponent {...this.props} selector={computedContext.selector} />;
+        </KeplerGlContext.Provider>
+      );
     }
   }
-
-  WithConnectSelector.contextTypes = {
-    selector: PropTypes.func,
-    id: PropTypes.string
-  };
-
-  WithConnectSelector.childContextTypes = {
-    selector: PropTypes.func,
-    id: PropTypes.string
-  };
 
   return WithConnectSelector;
 };

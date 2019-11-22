@@ -18,17 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// required by enzymev3
-const configure = require('enzyme').configure;
-const Adapter = require('enzyme-adapter-react-16');
-configure({adapter: new Adapter()});
+import {createContext} from 'react';
 
-import './injector-test';
-import './container-test';
-import './kepler-gl-test';
+const identity = state => state;
+// New Context API only supported after 16.3
+const KeplerGlContext = createContext({
+  selector: identity,
+  id: 'map'
+});
 
-import './modals';
-import './notifications';
-import './map';
-import './side-panel';
-import './common';
+export default KeplerGlContext;

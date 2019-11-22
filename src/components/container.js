@@ -22,7 +22,7 @@ import React, {Component} from 'react';
 import {connect} from 'react-redux';
 import memoize from 'lodash.memoize';
 import {console as Console} from 'global/window';
-import {injector} from './injector';
+import {injector, typeCheckRecipe} from './injector';
 import KeplerGlFactory from './kepler-gl';
 import {forwardTo} from 'actions/action-wrapper';
 
@@ -31,6 +31,7 @@ import {
   deleteEntry,
   renameEntry
 } from 'actions/identity-actions';
+import {notNullorUndefined} from 'utils/data-utils';
 
 export const errorMsg = {
   noState:
@@ -38,11 +39,13 @@ export const errorMsg = {
     `You might forget to mount keplerGlReducer in your root reducer.` +
     `If it is not mounted as state.keplerGl by default, you need to provide getState as a prop`,
 
-  wrongType: type => `injectComponents takes an array of factories replacement pairs as input, ` +
+  wrongType: type =>
+    `injectComponents takes an array of factories replacement pairs as input, ` +
     `${type} is provided`,
 
-  wrongPairType: `injectComponents takes an array of factories replacement pairs as input, ` +
-  `each pair be a array as [originalFactory, replacement]`
+  wrongPairType:
+    `injectComponents takes an array of factories replacement pairs as input, ` +
+    `each pair be a array as [originalFactory, replacement]`
 };
 
 ContainerFactory.deps = [KeplerGlFactory];
@@ -97,16 +100,34 @@ export function ContainerFactory(KeplerGl) {
       this.getDispatch = memoize((id, dispatch) => forwardTo(id, dispatch));
     }
 
-    componentWillMount() {
-      const {id, mint, mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault} = this.props;
+    componentDidMount() {
+      const {
+        id,
+        mint,
+        mapboxApiAccessToken,
+        mapboxApiUrl,
+        mapStylesReplaceDefault
+      } = this.props;
       // add a new entry to reducer
-      this.props.dispatch(registerEntry({id, mint, mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault}));
+      this.props.dispatch(
+        registerEntry({
+          id,
+          mint,
+          mapboxApiAccessToken,
+          mapboxApiUrl,
+          mapStylesReplaceDefault
+        })
+      );
     }
 
-    componentWillReceiveProps(nextProps) {
+    componentDidUpdate(prevProps) {
       // check if id has changed, if true, copy state over
-      if (nextProps.id && nextProps.id !== this.props.id) {
-        this.props.dispatch(renameEntry(this.props.id, nextProps.id));
+      if (
+        notNullorUndefined(prevProps.id) &&
+        notNullorUndefined(this.props.id) &&
+        prevProps.id !== this.props.id
+      ) {
+        this.props.dispatch(renameEntry(prevProps.id, this.props.id));
       }
     }
 
@@ -139,42 +160,43 @@ export function ContainerFactory(KeplerGl) {
 
   const mapStateToProps = (state, props) => ({state, ...props});
   const dispatchToProps = dispatch => ({dispatch});
-  return connect(mapStateToProps, dispatchToProps)(Container);
+  return connect(
+    mapStateToProps,
+    dispatchToProps
+  )(Container);
 }
 
 // entryPoint
 function flattenDeps(allDeps, factory) {
   const addToDeps = allDeps.concat([factory]);
-  return Array.isArray(factory.deps) && factory.deps.length ?
-    factory.deps.reduce((accu, dep) => flattenDeps(accu, dep), addToDeps) :
-    addToDeps;
+  return Array.isArray(factory.deps) && factory.deps.length
+    ? factory.deps.reduce((accu, dep) => flattenDeps(accu, dep), addToDeps)
+    : addToDeps;
 }
 
 const allDependencies = flattenDeps([], ContainerFactory);
 
 // provide all dependencies to appInjector
-export const appInjector = allDependencies
-  .reduce((inj, factory) => inj.provide(factory, factory), injector());
+export const appInjector = allDependencies.reduce(
+  (inj, factory) => inj.provide(factory, factory),
+  injector()
+);
 
 // Helper to inject custom components and return kepler.gl container
-export function injectComponents(recipes) {
-  if (!Array.isArray(recipes)) {
-    Console.error(errorMsg.wrongType(typeof(recipes)));
-    return appInjector.get(ContainerFactory);
-  }
-
+export function injectComponents(recipes = []) {
   return recipes
     .reduce((inj, recipe) => {
-      if (!Array.isArray(recipes)) {
-        Console.error(errorMsg.wrongPairType);
+      if (!typeCheckRecipe(recipe)) {
         return inj;
       }
 
       // collect dependencies of custom factories, if there is any.
       // Add them to the injector
       const customDependencies = flattenDeps([], recipe[1]);
-      inj = customDependencies
-        .reduce((ij, factory) => ij.provide(factory, factory), inj);
+      inj = customDependencies.reduce(
+        (ij, factory) => ij.provide(factory, factory),
+        inj
+      );
 
       return inj.provide(...recipe);
     }, appInjector)

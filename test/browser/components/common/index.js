@@ -18,17 +18,4 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// required by enzymev3
-const configure = require('enzyme').configure;
-const Adapter = require('enzyme-adapter-react-16');
-configure({adapter: new Adapter()});
-
-import './injector-test';
-import './container-test';
-import './kepler-gl-test';
-
-import './modals';
-import './notifications';
-import './map';
-import './side-panel';
-import './common';
+import './file-uploader-test';

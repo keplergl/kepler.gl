@@ -32,8 +32,8 @@ import SavedMap from './components/saved-map';
 const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
 
 class App extends Component {
-  componentWillReceiveProps(nextProps) {
-    if (!this.props.keplerGl.bar && nextProps.keplerGl.bar) {
+  componentDidUpdate(prevProps) {
+    if (!prevProps.keplerGl.bar && this.props.keplerGl.bar) {
       this.props.dispatch(
         wrapTo('bar', addDataToMap(
           {

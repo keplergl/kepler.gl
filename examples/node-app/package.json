@@ -10,7 +10,7 @@
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
     "react-palm": "^1.1.2",
-    "react-redux": "^4.4.5",
+    "react-redux": "^7.1.3",
     "react-virtualized": "^9.21.0",
     "redux-actions": "^2.2.1",
     "styled-components": "^4.1.3"

@@ -177,7 +177,7 @@ export function validateFilterWithData(dataset, filter) {
 
   const fieldName = initializeFilter.name[filterDatasetIndex];
   const {filter: updatedFilter, dataset: updatedDataset} =
-    applyFilterFieldName(initializeFilter, dataset, fieldName, filterDatasetIndex);
+    applyFilterFieldName(initializeFilter, dataset, fieldName, filterDatasetIndex, {mergeDomain: true});
 
   if (!updatedFilter) {
     return failed;
@@ -701,7 +701,7 @@ export function applyFiltersToDatasets(datasetIds, datasets, filters) {
  * @param fieldName
  * @return {object} {filter, datasets}
  */
-export function applyFilterFieldName(filter, dataset, fieldName, filterDatasetIndex = 0) {
+export function applyFilterFieldName(filter, dataset, fieldName, filterDatasetIndex = 0, {mergeDomain = false} = {}) {
 
   // using filterDatasetIndex we can filter only the specified dataset
   const {fields, allData} = dataset;
@@ -724,7 +724,7 @@ export function applyFilterFieldName(filter, dataset, fieldName, filterDatasetIn
   const filterProps = field.hasOwnProperty('filterProps') ? field.filterProps : getFilterProps(allData, field);
 
   const filterWithProps = {
-    ...mergeFilterProps(newFilter, filterProps),
+    ...(mergeDomain ? mergeFilterDomainStep(newFilter, filterProps) : {...newFilter, ...filterProps}),
     name: Object.assign([].concat(filter.name), {[filterDatasetIndex]: field.name}),
     fieldIdx: Object.assign([].concat(filter.fieldIdx), {[filterDatasetIndex]: field.tableFieldIndex - 1})
   };
@@ -754,9 +754,9 @@ export function applyFilterFieldName(filter, dataset, fieldName, filterDatasetIn
  * @return {*}
  */
 /* eslint-disable complexity */
-export function mergeFilterProps(filter, filterProps) {
+export function mergeFilterDomainStep(filter, filterProps) {
   if (!filter) {
-    return filterProps;
+    return null;
   }
 
   if (!filterProps) {
@@ -764,8 +764,7 @@ export function mergeFilterProps(filter, filterProps) {
   }
 
   if (
-    !filterProps
-    || (filter.fieldType && filter.fieldType !== filterProps.fieldType)
+    (filter.fieldType && filter.fieldType !== filterProps.fieldType)
     || !filterProps.domain
   ) {
     return filter;
