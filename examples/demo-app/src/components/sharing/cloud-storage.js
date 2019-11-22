@@ -97,7 +97,7 @@ const SharingUrl = ({url, message}) => (
   <StyleSharingUrl>
     <StyledInputLabel>{message}</StyledInputLabel>
     <div style={{display: 'flex'}}>
-      <StyledInput type="text" value={url}/>
+      <StyledInput type="text" value={url} readOnly/>
       <CopyToClipboard text={url}>
         <StyledBtn>copy</StyledBtn>
       </CopyToClipboard>
@@ -169,7 +169,7 @@ const ExportCloudModal = ({
                 )}
                 {metaUrl && [
                   (<SharingUrl key={0} url={sharingLink} message={'Share your map with other users'}/>),
-                  (folderLink && <a href={folderLink} target="_blank" rel="noopener noreferrer" style={{textDecoration: 'underline'}}>Go to your Kepler.gl {providerName} page</a>)
+                  (folderLink && <a key={1} href={folderLink} target="_blank" rel="noopener noreferrer" style={{textDecoration: 'underline'}}>Go to your Kepler.gl {providerName} page</a>)
                 ]}
               </div>
             </div>
