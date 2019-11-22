@@ -74,7 +74,7 @@ export default class CartoProvider {
   }
 
   getUserName(){
-    return this._carto.username;
+    return this._carto.oauth.expired ? null : this._carto.username;
   }
 
   /**
