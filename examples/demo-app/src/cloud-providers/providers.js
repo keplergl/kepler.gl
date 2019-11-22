@@ -18,36 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {getCloudProvider} from '../cloud-providers';
-import {IndexRoute, Route} from 'react-router';
-import React from 'react';
-import Demo from '../app';
-import {DEFAULT_CLOUD_PROVIDER} from '../constants/default-settings';
+import {AUTH_TOKENS} from '../constants/default-settings';
 
-export function onAuthEnterCallback(nextState, replace, callback) {
-  // TODO: detect auth provider
-  const authProvider = getCloudProvider(DEFAULT_CLOUD_PROVIDER);
+import DropboxProvider from './dropbox-provider';
+import CartoProvider from './carto-provider';
 
-  // Check if the current tab was opened by our previous tab
-  if (window.opener) {
-    const {location} = nextState;
-    const token = authProvider.getAccessTokenFromLocation(location);
-    window.opener.postMessage({token}, location.origin);
-  }
+const {DROPBOX_CLIENT_ID, CARTO_CLIENT_ID} = AUTH_TOKENS;
 
-  callback();
-}
+const DROPBOX_CLIENT_NAME = 'Kepler.gl%20(managed%20by%20Uber%20Technologies%2C%20Inc.)';
 
-export function buildAppRoutes(Component) {
-  return [
-    (<Route key="auth" path="auth" component={Demo} onEnter={onAuthEnterCallback} />),
-    (
-      <Route key="demo" path="demo">
-        <IndexRoute component={Component} />
-        <Route path="map" component={Component} />
-        <Route path="map/:provider" component={Component} />
-        <Route path="(:id)" component={Component} />
-      </Route>
-    )
-  ];
-}
+export const CLOUD_PROVIDERS = [
+  new DropboxProvider(DROPBOX_CLIENT_ID, DROPBOX_CLIENT_NAME),
+  new CartoProvider(CARTO_CLIENT_ID)
+];

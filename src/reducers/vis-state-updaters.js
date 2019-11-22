@@ -546,12 +546,20 @@ export function setFilterUpdater(state, action) {
       // we are supporting the current functionality
       // TODO: Next PR for UI filter name will only update filter name but it won't have side effects
       // we are gonna use pair of datasets and fieldIdx to update the filter
-      const {filter: updateFilter, datasets: newDatasets} = applyFilterFieldName(newFilter, state.datasets, value, valueIndex);
-      newFilter = updateFilter;
+      const datasetId = newFilter.dataId[valueIndex]
+      const {filter: updatedFilter, dataset: newDataset} = applyFilterFieldName(newFilter, state.datasets[datasetId], value, valueIndex);
+      if (!updatedFilter) {
+        return state;
+      }
+
+      newFilter = updatedFilter;
 
       newState = {
         ...state,
-        datasets: newDatasets
+        datasets: {
+          ...state.datasets,
+          [datasetId]: newDataset
+        }
       };
 
       // only filter the current dataset
@@ -899,7 +907,7 @@ export const removeDatasetUpdater = (state, action) => {
   );
 
   // remove filters
-  const filters = state.filters.filter(filter => filter.dataId !== datasetKey);
+  const filters = state.filters.filter(filter => !filter.dataId.includes(datasetKey));
 
   // update interactionConfig
   let {interactionConfig} = state;

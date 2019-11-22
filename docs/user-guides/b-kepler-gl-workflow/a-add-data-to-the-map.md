@@ -65,6 +65,26 @@ kepler.gl will auto detect layer, if the column names follows certain naming con
 |**H3**| A column named `h3_id` or `hexagon_id` is present |
 |**Polygon**| A column content contains `geojson` data types. Acceptable formats include [Well-Known Text](http://www.postgis.net/docs/ST_AsText.html) e.g. `POLYGON ((-74.158 40.835, -74.148 40.830, -74.151 40.832, -74.158 40.835))` and [GeoJSON Geometry](https://tools.ietf.org/html/rfc7946#appendix-A). e.g. `{"type":"LineString","coordinates":[[100.0, 0.0],[101.0, 1.0]]}`
 
+#### 3. Embed Geometries in CSV
+Geometries (Polygons, Points, LindStrings etc) can be embedded into CSV as a `GeoJSON` or `WKT` formatted string. 
+
+##### `GeoJSON` String
+Use the geometry of a Feature, which includes type and coordinates. It should be a JSON formatted string, with the `"` corrected escaped. More info on [String escape in csv](https://gpdb.docs.pivotal.io/43250/admin_guide/load/topics/g-escaping-in-csv-formatted-files.html)
+
+Example data.csv with GeoJSON
+```txt
+id,geometry
+1,"{""type"":""Polygon"",""coordinates"":[[[-74.158491,40.835947],[-74.157914,40.83902]]]}"
+```
+
+##### `WKT`String
+[The Well-Known Text (WKT)](https://dev.mysql.com/doc/refman/5.7/en/gis-data-formats.html#gis-wkt-format) representation of geometry values is designed for exchanging geometry data in ASCII form. 
+
+Example data.csv with WKT
+```txt
+id,geometry
+1,"POLYGON((0 0,10 0,10 10,0 10,0 0),(5 5,7 5,7 7,5 7, 5 5))"
+```
 
 ### GeoJSON
 

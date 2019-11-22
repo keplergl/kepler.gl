@@ -21,12 +21,14 @@
 import React from 'react';
 import styled from 'styled-components';
 import get from 'lodash.get';
+import {CopyToClipboard} from 'react-copy-to-clipboard';
 import {StyledModalContent} from 'kepler.gl/components';
 import CloudTile from './cloud-tile';
 import StatusPanel from './status-panel';
-import {CLOUD_PROVIDERS} from '../../utils/cloud-providers';
+import {getCloudProviders, getCloudProvider} from '../../cloud-providers';
 import {KEPLER_DISCLAIMER} from '../../constants/default-settings';
- 
+import {getMapPermalink} from '../../utils/url';
+
 const StyledExportDataSection = styled.div`
   display: flex;
   flex-direction: row;
@@ -53,15 +55,74 @@ const StyledExportDataSection = styled.div`
   }
 `;
 
+export const StyledInputLabel = styled.label`
+  font-size: 12px;
+  color: ${props => props.theme.textColorLT};
+  letter-spacing: 0.2px;
+`;
+
+const StyledInput = styled.input`
+  width: 100%;
+  padding: ${props => props.theme.inputPadding};
+  color: ${props => props.error ? 'red' : props.theme.titleColorLT};
+  height: ${props => props.theme.inputBoxHeight};
+  border: 0;
+  outline: 0;
+  font-size: 14px;
+
+  :active,
+  :focus,
+  &.focus,
+  &.active {
+    outline: 0;
+  }
+`;
+
+export const StyledBtn = styled.button`
+  background-color: ${props => props.theme.primaryBtnActBgd};
+  color: ${props => props.theme.primaryBtnActColor};
+  &:focus {
+    outline: none;
+  }
+`;
+
+export const StyleSharingUrl = styled.div`
+  width: 100%;
+  display: flex;
+  margin-bottom: 14px;
+  flex-direction: column;
+`;
+
+const SharingUrl = ({url, message}) => (
+  <StyleSharingUrl>
+    <StyledInputLabel>{message}</StyledInputLabel>
+    <div style={{display: 'flex'}}>
+      <StyledInput type="text" value={url}/>
+      <CopyToClipboard text={url}>
+        <StyledBtn>copy</StyledBtn>
+      </CopyToClipboard>
+    </div>
+
+  </StyleSharingUrl>
+);
+
 const ExportCloudModal = ({
   isLoading,
   info,
   onExport,
   onCloudLoginSuccess
 }) => {
-  const meta = get(info, ['metadata']);
-  const error = get(info, ['error']);
 
+  const metaUrl = get(info, ['metadata', 'url']);
+  const error = get(info, ['error']);
+  const folderLink = get(info, ['metadata', 'folder_link']);
+  const providerName = get(info, ['provider']);
+  const provider = providerName ? getCloudProvider(providerName) : null
+  const sharingLink = (metaUrl)
+    ? (provider && provider.getMapPermalink)
+      ? provider.getMapPermalink(metaUrl)
+      : getMapPermalink(metaUrl)
+    : null;
   return (
 
     <StyledModalContent className="export-cloud-modal">
@@ -79,17 +140,18 @@ const ExportCloudModal = ({
         <StyledExportDataSection>
           <div className="description">
             <div className="title">
-              Upload through
+              Upload to your cloud storage
             </div>
           </div>
           <div className="selection">
-            {Object.keys(CLOUD_PROVIDERS).map((name, index) => (
+            {getCloudProviders().map(cloudProvider => (
               <CloudTile
-                key={index}
-                token={CLOUD_PROVIDERS[name].getAccessToken()}
-                onExport={() => onExport(name)}
-                onLogin={() => CLOUD_PROVIDERS[name].handleLogin(onCloudLoginSuccess)}
-                Icon={CLOUD_PROVIDERS[name].icon}
+                key={cloudProvider.name}
+                token={cloudProvider.getAccessToken()}
+                onExport={onExport}
+                onLogin={() => cloudProvider.login(onCloudLoginSuccess)}
+                Icon={cloudProvider.icon}
+                name={cloudProvider.name}
               />
             ))}
           </div>
@@ -102,12 +164,13 @@ const ExportCloudModal = ({
                 )}
                 {error && (
                   <div className="subtitle" style={{color: 'red', fontWeight: 500}}>
-                    {error.error}
+                    {providerName}: {error.error}
                   </div>
                 )}
-                {
-                  meta && CLOUD_PROVIDERS[meta.provider].renderMeta(meta)
-                }
+                {metaUrl && [
+                  (<SharingUrl key={0} url={sharingLink} message={'Share your map with other users'}/>),
+                  (folderLink && <a href={folderLink} target="_blank" rel="noopener noreferrer" style={{textDecoration: 'underline'}}>Go to your Kepler.gl {providerName} page</a>)
+                ]}
               </div>
             </div>
           </StyledExportDataSection>

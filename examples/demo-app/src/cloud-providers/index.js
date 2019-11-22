@@ -18,15 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import DropboxHandler from './dropbox';
-import CartoHandler from './carto';
-import {AUTH_TOKENS} from '../../constants/default-settings';
+import {CLOUD_PROVIDERS} from './providers';
 
-// configure all clients with the right configuration
-DropboxHandler.setAuthToken(AUTH_TOKENS.DROPBOX_CLIEND_ID);
-CartoHandler.setAuthToken(AUTH_TOKENS.CARTO_CLIENT_ID);
+export function getCloudProviders() {
+  return CLOUD_PROVIDERS;
+}
 
-export const CLOUD_PROVIDERS = {
-  [DropboxHandler.name]: DropboxHandler,
-  [CartoHandler.name]: CartoHandler
-};
+export function getCloudProvider(providerName) {
+  const cloudProvider = CLOUD_PROVIDERS.find(provider => provider.name === providerName);
+  if (!cloudProvider) {
+    throw new Error(`Unknown cloud provider ${providerName}`)
+  }
+  return cloudProvider;
+}

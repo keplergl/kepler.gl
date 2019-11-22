@@ -33,7 +33,8 @@ import {replaceMapControl} from './factories/map-control';
 import {replacePanelHeader} from './factories/panel-header';
 import ExportUrlModal from './components/sharing/export-url-modal';
 import {AUTH_TOKENS} from './constants/default-settings';
-import {CLOUD_PROVIDERS} from './utils/cloud-providers';
+import {getCloudProvider} from './cloud-providers';
+
 import {
   exportFileToCloud,
   loadRemoteMap,
@@ -100,7 +101,7 @@ class App extends Component {
     height: window.innerHeight
   };
 
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     // if we pass an id as part of the url
     // we ry to fetch along map configurations
     const {
@@ -109,7 +110,7 @@ class App extends Component {
     } = this.props;
 
     if (provider) {
-      const providerHandler = CLOUD_PROVIDERS[provider];
+      const providerHandler = getCloudProvider(provider);
 
       if (providerHandler) {
         this.props.dispatch(providerHandler.loadMap(query));
@@ -290,12 +291,12 @@ class App extends Component {
     });
   };
 
-  _onExportToCloud = (provider) => {
-    this.props.dispatch(exportFileToCloud(provider));
+  _onExportToCloud = (providerName) => {
+    this.props.dispatch(exportFileToCloud(providerName));
   };
 
-  _onCloudLoginSuccess = (provider) => {
-    this.props.dispatch(setCloudLoginSuccess(provider));
+  _onCloudLoginSuccess = (providerName) => {
+    this.props.dispatch(setCloudLoginSuccess(providerName));
   };
 
   _getMapboxRef = (mapbox, index) => {

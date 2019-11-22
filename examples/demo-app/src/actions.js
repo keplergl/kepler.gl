@@ -28,9 +28,9 @@ import {
   MAP_CONFIG_URL
 } from './constants/default-settings';
 import {LOADING_METHODS_NAMES} from './constants/default-settings';
-import {CLOUD_PROVIDERS} from './utils/cloud-providers';
+import {getCloudProvider} from './cloud-providers';
 import {generateHashId} from './utils/strings';
-import {parseUri} from './utils/url';
+import {parseUri, getMapPermalink} from './utils/url';
 import KeplerGlSchema from 'kepler.gl/schemas';
 
 // CONSTANTS
@@ -351,30 +351,61 @@ export function setPushingFile(isLoading, metadata) {
 /**
  * This method will export the current kepler config file to the choosen cloud platform
  * @param data
- * @param handlerName
+ * @param providerName
  * @returns {Function}
  */
-export function exportFileToCloud(handlerName = 'dropbox') {
-  const authHandler = CLOUD_PROVIDERS[handlerName];
+export function exportFileToCloud(providerName) {
+  if (!providerName) {
+    throw new Error('No cloud provider identified')
+  }
+  const cloudProvider = getCloudProvider(providerName);
   return (dispatch, getState) => {
     // extract data from kepler
-    const data = KeplerGlSchema.save(getState().demo.keplerGl.map);
-    const name = `keplergl_${generateHashId(6)}`;
-    const newBlob = new Blob([JSON.stringify(data)], {type: 'application/json'});
-    const file = new File([newBlob], `/${name}.json`);
+    const mapData = KeplerGlSchema.save(getState().demo.keplerGl.map);
+    const data = JSON.stringify(mapData);
+    const newBlob = new Blob([data], {type: 'application/json'});
+    const fileName = `/keplergl_${generateHashId(6)}.json`;
+    const file = new File([newBlob], fileName);
     // We are gonna pass the correct auth token to init the cloud provider
-    dispatch(setPushingFile(true, {filename: name, status: 'uploading', metadata: null}));
-    authHandler.uploadFile({blob: file, name, isPublic: true, authHandler})
+    dispatch(setPushingFile(true, {
+      filename: file.name,
+      status: 'uploading',
+      metadata: null,
+      provider: cloudProvider.name
+    }));
+    cloudProvider.uploadFile({
+      data,
+      type: 'application/json',
+      blob: file,
+      name: fileName,
+      isPublic: true,
+      cloudProvider
+    })
     // need to perform share as well
-      .then(
-        response => {
-          dispatch(push(`/${response.url}`));
-          dispatch(setPushingFile(false, {filename: name, status: 'success', metadata: { provider: handlerName, ...response }}));
-        },
-        error => {
-          dispatch(setPushingFile(false, {filename: name, status: 'error', error}));
+    .then(
+      response => {
+        if (cloudProvider.shareFile) {
+          const responseUrl = (cloudProvider.getMapPermalink)
+            ? cloudProvider.getMapPermalink(response.url, false)
+            : getMapPermalink(response.url, false)
+          dispatch(push(responseUrl));
         }
-      )
+        dispatch(setPushingFile(false, {
+          filename: file.name,
+          status: 'success',
+          metadata: response,
+          provider: cloudProvider.name
+        }));
+      },
+      error => {
+        dispatch(setPushingFile(false, {
+          filename: file.name,
+          status: 'error',
+          error, provider:
+          cloudProvider.name
+        }));
+      }
+    );
   };
 }
 
@@ -385,7 +416,12 @@ export function setCloudLoginSuccess(providerName) {
         dispatch(exportFileToCloud(providerName));
       },
       () => {
-        dispatch(setPushingFile(false, {filename: null, status: 'error', error: 'not able to propagate login successfully'}));
+        dispatch(setPushingFile(false, {
+          filename: null,
+          status: 'error',
+          error: 'not able to propagate login successfully',
+          provider: cloudProvider.name
+        }));
       }
     );
   };

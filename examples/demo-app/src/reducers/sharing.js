@@ -19,13 +19,13 @@
 // THE SOFTWARE.
 
 import {handleActions} from 'redux-actions';
-import {CLOUD_PROVIDERS} from '../utils/cloud-providers';
+import {getCloudProviders} from '../cloud-providers';
 import {CLOUD_LOGIN_SUCCESS, LOAD_REMOTE_RESOURCE_ERROR, PUSHING_FILE} from '../actions';
 
-const readAuthTokens = () => Object.keys(CLOUD_PROVIDERS)
-  .reduce((tokens, name) => ({
+const readAuthTokens = () => getCloudProviders()
+  .reduce((tokens, cloudProvider) => ({
     ...tokens,
-    [name]: CLOUD_PROVIDERS[name].getAccessToken()
+    [cloudProvider.name]: cloudProvider.getAccessToken()
   }), {});
 
 const sharingInitialState = {

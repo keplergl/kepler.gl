@@ -68,7 +68,11 @@ import {
   StateWFilters,
   StateWFiles
 } from 'test/helpers/mock-state';
-import {LAYER_VIS_CONFIGS, DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from 'layers/layer-factory';
+import {
+  LAYER_VIS_CONFIGS,
+  DEFAULT_TEXT_LABEL,
+  DEFAULT_COLOR_UI
+} from 'layers/layer-factory';
 import {getNextColorMakerValue} from 'test/helpers/layer-utils';
 import {StateWFilesFiltersLayerColor} from 'test/helpers/mock-state';
 
@@ -686,10 +690,16 @@ test('#visStateReducer -> LAYER_VIS_CONFIG_CHANGE -> opacity', t => {
   const initialState = StateWFiles.visState;
   const layer = initialState.layers[0];
 
-  const nextState = reducer(initialState,
-    VisStateActions.layerVisConfigChange(layer, {opacity: 0.3}));
+  const nextState = reducer(
+    initialState,
+    VisStateActions.layerVisConfigChange(layer, {opacity: 0.3})
+  );
 
-  t.equal(nextState.layers[0].config.visConfig.opacity, 0.3, 'should update layer opacity');
+  t.equal(
+    nextState.layers[0].config.visConfig.opacity,
+    0.3,
+    'should update layer opacity'
+  );
   t.end();
 });
 
@@ -698,10 +708,16 @@ test('#visStateReducer -> LAYER_TEXT_LABEL_CHANGE', t => {
   // point layer
   const layer = initialState.layers[0];
 
-  t.deepEqual(layer.config.textLabel, [DEFAULT_TEXT_LABEL], 'should set initial textLabel');
+  t.deepEqual(
+    layer.config.textLabel,
+    [DEFAULT_TEXT_LABEL],
+    'should set initial textLabel'
+  );
 
-  const nextState = reducer(initialState,
-    VisStateActions.layerTextLabelChange(layer, 0, 'random', 1));
+  const nextState = reducer(
+    initialState,
+    VisStateActions.layerTextLabelChange(layer, 0, 'random', 1)
+  );
 
   t.equal(
     nextState.layers[0].config.textLabel,
@@ -709,8 +725,15 @@ test('#visStateReducer -> LAYER_TEXT_LABEL_CHANGE', t => {
     'should not update textLabel if prop is not in textLabel'
   );
 
-  const nextState2 = reducer(nextState,
-    VisStateActions.layerTextLabelChange(nextState.layers[0], 0, 'anchor', 'start'));
+  const nextState2 = reducer(
+    nextState,
+    VisStateActions.layerTextLabelChange(
+      nextState.layers[0],
+      0,
+      'anchor',
+      'start'
+    )
+  );
 
   t.deepEqual(
     nextState2.layers[0].config.textLabel[0],
@@ -719,8 +742,12 @@ test('#visStateReducer -> LAYER_TEXT_LABEL_CHANGE', t => {
   );
 
   // set text label field
-  const nextState3 = reducer(nextState2,
-    VisStateActions.layerTextLabelChange(nextState2.layers[0], 0, 'field', {name: 'taro'}));
+  const nextState3 = reducer(
+    nextState2,
+    VisStateActions.layerTextLabelChange(nextState2.layers[0], 0, 'field', {
+      name: 'taro'
+    })
+  );
 
   const expectedTextLabel1 = {
     ...DEFAULT_TEXT_LABEL,
@@ -735,8 +762,10 @@ test('#visStateReducer -> LAYER_TEXT_LABEL_CHANGE', t => {
   );
 
   // add empty field
-  const nextState4 = reducer(nextState3,
-    VisStateActions.layerTextLabelChange(nextState3.layers[0], 1));
+  const nextState4 = reducer(
+    nextState3,
+    VisStateActions.layerTextLabelChange(nextState3.layers[0], 1)
+  );
   t.deepEqual(
     nextState4.layers[0].config.textLabel,
     [expectedTextLabel1, DEFAULT_TEXT_LABEL],
@@ -744,14 +773,19 @@ test('#visStateReducer -> LAYER_TEXT_LABEL_CHANGE', t => {
   );
 
   // add or remove labels
-  const nextState5 = reducer(nextState4,
+  const nextState5 = reducer(
+    nextState4,
     VisStateActions.layerTextLabelChange(
-      nextState4.layers[0], 'all', 'fields', [{name: 'blue'}, {name: 'taro'}]
-  ));
+      nextState4.layers[0],
+      'all',
+      'fields',
+      [{name: 'blue'}, {name: 'taro'}]
+    )
+  );
   const expected5 = [
     expectedTextLabel1,
     {...DEFAULT_TEXT_LABEL, field: {name: 'blue'}}
-  ]
+  ];
   t.deepEqual(
     nextState5.layers[0].config.textLabel,
     expected5,
@@ -759,10 +793,12 @@ test('#visStateReducer -> LAYER_TEXT_LABEL_CHANGE', t => {
   );
 
   // add 1 more label
-  const nextState6 = reducer(nextState5,
-    VisStateActions.layerTextLabelChange(
-      nextState5.layers[0], 2, 'field', {name: 'cat'}
-  ));
+  const nextState6 = reducer(
+    nextState5,
+    VisStateActions.layerTextLabelChange(nextState5.layers[0], 2, 'field', {
+      name: 'cat'
+    })
+  );
   const expected6 = [
     expectedTextLabel1,
     {...DEFAULT_TEXT_LABEL, field: {name: 'blue'}},
@@ -775,10 +811,10 @@ test('#visStateReducer -> LAYER_TEXT_LABEL_CHANGE', t => {
   );
 
   // remove label
-  const nextState7 = reducer(nextState6,
-    VisStateActions.layerTextLabelChange(
-      nextState6.layers[0], 2, 'field', null
-  ));
+  const nextState7 = reducer(
+    nextState6,
+    VisStateActions.layerTextLabelChange(nextState6.layers[0], 2, 'field', null)
+  );
   const expected7 = [
     expectedTextLabel1,
     {...DEFAULT_TEXT_LABEL, field: {name: 'blue'}}
@@ -790,13 +826,16 @@ test('#visStateReducer -> LAYER_TEXT_LABEL_CHANGE', t => {
   );
 
   // remove label with all
-  const nextState8 = reducer(nextState7,
+  const nextState8 = reducer(
+    nextState7,
     VisStateActions.layerTextLabelChange(
-      nextState7.layers[0], 'all', 'fields', [{name: 'blue'}]
-  ));
-  const expected8 = [
-    {...DEFAULT_TEXT_LABEL, field: {name: 'blue'}}
-  ];
+      nextState7.layers[0],
+      'all',
+      'fields',
+      [{name: 'blue'}]
+    )
+  );
+  const expected8 = [{...DEFAULT_TEXT_LABEL, field: {name: 'blue'}}];
   t.deepEqual(
     nextState8.layers[0].config.textLabel,
     expected8,
@@ -864,10 +903,7 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
           [12.29, 37.64, 46.21, 99.127],
           [null, null, 33.1, 29.34]
         ],
-        data: [
-          [12.25, 37.75, 45.21, 100.12],
-          [12.29, 37.64, 46.21, 99.127]
-        ],
+        data: [[12.25, 37.75, 45.21, 100.12], [12.29, 37.64, 46.21, 99.127]],
         filteredIndex: [0, 2],
         filteredIndexForDomain: [0, 2]
       },
@@ -878,10 +914,7 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
           [12.29, 37.64, 46.21, 99.127],
           [null, null, 33.1, 29.34]
         ],
-        data: [
-          [12.25, 37.75, 45.21, 100.12],
-          [12.29, 37.64, 46.21, 99.127]
-        ],
+        data: [[12.25, 37.75, 45.21, 100.12], [12.29, 37.64, 46.21, 99.127]],
         filteredIndex: [0, 2],
         filteredIndexForDomain: [0, 2]
       }
@@ -1809,7 +1842,7 @@ test('#visStateReducer -> SET_FILTER (processCsvData)', t => {
 
   const updatedField = {
     ...initialState.datasets.smoothie.fields[10],
-    filterProp: {
+    filterProps: {
       type: 'multiSelect',
       value: [],
       fieldType: 'date',
@@ -2264,7 +2297,7 @@ test('#visStateReducer -> SET_FILTER (processGeojson)', t => {
         ? {
             ...f,
             id: f.name,
-            filterProp: {
+            filterProps: {
               domain: [4, 20],
               fieldType: 'integer',
               histogram: expectedHistogram,
@@ -2421,7 +2454,7 @@ test('#visStateReducer -> SET_FILTER.fixedDomain', t => {
       f.name === 'gps_data.utc_timestamp'
         ? {
             ...f,
-            filterProp: {
+            filterProps: {
               domain: [1474070995000, 1474072208000],
               step: 1000,
               mappedValue: expectedFilterTs.mappedValue,
@@ -2468,7 +2501,7 @@ test('#visStateReducer -> SET_FILTER.fixedDomain', t => {
       f.name === 'date'
         ? {
             ...f,
-            filterProp: {
+            filterProps: {
               domain: ['2016-09-23', '2016-09-24', '2016-10-10'],
               fieldType: 'date',
               type: 'multiSelect',
@@ -2616,10 +2649,15 @@ test('#visStateReducer -> SET_FILTER_PLOT', t => {
 test('#visStateReducer -> TOGGLE_FILTER_ANIMATION', t => {
   const initialState = StateWFilters.visState;
 
-  const nextState = reducer(initialState, VisStateActions.toggleFilterAnimation(0));
+  const nextState = reducer(
+    initialState,
+    VisStateActions.toggleFilterAnimation(0)
+  );
   t.equal(
     nextState.filters[0].isAnimating,
-    true, 'should set filter to isAnimating: true');
+    true,
+    'should set filter to isAnimating: true'
+  );
 
   t.end();
 });
@@ -2648,7 +2686,10 @@ test('#visStateReducer -> ENLARGE_FILTER', t => {
 
 test('#visStateReducer -> REMOVE_DATASET', t => {
   const initialState = StateWFilters.visState;
-  const nextState = reducer(initialState, VisStateActions.removeDataset('not_me'));
+  const nextState = reducer(
+    initialState,
+    VisStateActions.removeDataset('not_me')
+  );
 
   t.equal(
     initialState,
@@ -2658,72 +2699,63 @@ test('#visStateReducer -> REMOVE_DATASET', t => {
   t.end();
 });
 
-test('#visStateReducer -> REMOVE_DATASET', t => {
-  const layer0 = new ArcLayer({id: 'a', dataId: 'puppy_0'});
-  const layer1 = new PointLayer({id: 'b', dataId: 'puppy_0'});
-  const layer2 = new GeojsonLayer({id: 'c', dataId: 'puppy_1'});
-  const layer3 = new PointLayer({id: 'd', dataId: 'puppy_2'});
+test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
+  const oldState = StateWFilters.visState;
 
-  const oldState = {
+  const expectedState = {
+    layers: [oldState.layers[1]],
+    filters: [oldState.filters[1]],
+    layerData: [oldState.layerData[1]],
+    layerOrder: [0],
     datasets: {
-      puppy_0: {},
-      puppy_1: {},
-      puppy_2: {}
+      ieukmgne: oldState.datasets.ieukmgne
     },
-    layers: [layer0, layer1, layer2, layer3],
-    layerData: [{data: 1}, {data: 2}, {data: 3}, {data: 4}],
-    layerOrder: [2, 3, 1, 0],
-    filters: [{dataId: 'puppy_0'}, {dataId: 'puppy_1'}, {dataId: 'puppy_2'}],
     interactionConfig: {
       tooltip: {
+        id: 'tooltip',
+        enabled: true,
+        iconComponent: oldState.interactionConfig.tooltip.iconComponent,
         config: {
           fieldsToShow: {
-            puppy_0: {},
-            puppy_1: {},
-            puppy_2: {}
+            ieukmgne: ['OBJECTID', 'ZIP_CODE', 'ID', 'TRIPS', 'RATE']
           }
         }
-      }
+      },
+      brush: oldState.interactionConfig.brush,
+      coordinate: oldState.interactionConfig.coordinate
     },
-    hoverInfo: undefined,
-    clicked: undefined,
-    splitMaps: [],
-    animationConfig: defaultAnimationConfig
+    editingDataset: oldState.editingDataset,
+    layerBlending: oldState.layerBlending,
+    hoverInfo: oldState.hoverInfo,
+    clicked: oldState.clicked,
+    mousePos: oldState.mousePos,
+    splitMaps: oldState.splitMaps,
+    layerClasses: oldState.layerClasses,
+    animationConfig: oldState.animationConfig,
+    initialState: [],
+    layerToBeMerged: [],
+    filterToBeMerged: [],
+    splitMapsToBeMerged: [],
+    interactionToBeMerged: []
   };
 
   const newReducer = reducer(
     oldState,
-    VisStateActions.removeDataset('puppy_1')
+    VisStateActions.removeDataset('190vdll3di')
   );
 
   t.deepEqual(
-    newReducer,
-    {
-      datasets: {
-        puppy_0: {},
-        puppy_2: {}
-      },
-      layers: [layer0, layer1, layer3],
-      layerData: [{data: 1}, {data: 2}, {data: 4}],
-      layerOrder: [2, 1, 0],
-      filters: [{dataId: 'puppy_0'}, {dataId: 'puppy_2'}],
-      interactionConfig: {
-        tooltip: {
-          config: {
-            fieldsToShow: {
-              puppy_0: {},
-              puppy_2: {}
-            }
-          }
-        }
-      },
-      hoverInfo: undefined,
-      clicked: undefined,
-      splitMaps: [],
-      animationConfig: defaultAnimationConfig
-    },
-    'should remove dataset, layer and layerData'
+    Object.keys(newReducer).sort(),
+    Object.keys(expectedState).sort(),
+    `visState should have same keys`
   );
+  Object.keys(expectedState).forEach(key => {
+    t.deepEqual(
+      newReducer[key],
+      expectedState[key],
+      `newReducer.${key} should be correct`
+    );
+  });
 
   t.end();
 });
@@ -2880,105 +2912,68 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER', t => {
 });
 
 test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
-  const layer0 = new ArcLayer({id: 'a', dataId: 'puppy_0'});
-  const layer1 = new PointLayer({id: 'b', dataId: 'puppy_0'});
-  const layer2 = new GeojsonLayer({id: 'c', dataId: 'puppy_1'});
-  const layer3 = new PointLayer({id: 'd', dataId: 'puppy_2'});
+  const oldState = StateWSplitMaps.visState;
 
-  const oldState = {
+  const expectedState = {
+    layers: [oldState.layers[0]],
+    layerData: [oldState.layerData[0]],
+    layerOrder: [0],
     datasets: {
-      puppy_0: {},
-      puppy_1: {},
-      puppy_2: {}
+      '190vdll3di': oldState.datasets['190vdll3di']
     },
-    layers: [layer0, layer1, layer2, layer3],
-    layerData: [{data: 1}, {data: 2}, {data: 3}, {data: 4}],
-    layerOrder: [2, 3, 1, 0],
-    filters: [{dataId: 'puppy_0'}, {dataId: 'puppy_1'}, {dataId: 'puppy_2'}],
+    filters: [],
     interactionConfig: {
       tooltip: {
+        id: 'tooltip',
+        enabled: true,
+        iconComponent: oldState.interactionConfig.tooltip.iconComponent,
         config: {
           fieldsToShow: {
-            puppy_0: {},
-            puppy_1: {},
-            puppy_2: {}
+            '190vdll3di': [
+              'gps_data.utc_timestamp',
+              'gps_data.types',
+              'epoch',
+              'has_result',
+              'id'
+            ]
           }
         }
-      }
-    },
-    hoverInfo: undefined,
-    clicked: undefined,
-    splitMaps: [
-      {
-        layers: {
-          a: true,
-          b: true,
-          c: true,
-          d: true
-        }
       },
-      {
-        layers: {
-          a: true,
-          b: true,
-          c: true,
-          d: true
-        }
-      }
-    ],
-    animationConfig: defaultAnimationConfig
+      brush: oldState.interactionConfig.brush,
+      coordinate: oldState.interactionConfig.coordinate
+    },
+    splitMaps: [{layers: {'point-0': false}}, {layers: {'point-0': true}}],
+    editingDataset: oldState.editingDataset,
+    layerBlending: oldState.layerBlending,
+    hoverInfo: oldState.hoverInfo,
+    clicked: oldState.clicked,
+    mousePos: oldState.mousePos,
+    layerClasses: oldState.layerClasses,
+    animationConfig: defaultAnimationConfig,
+    initialState: [],
+    layerToBeMerged: [],
+    filterToBeMerged: [],
+    splitMapsToBeMerged: [],
+    interactionToBeMerged: []
   };
 
   const newReducer = reducer(
     oldState,
-    VisStateActions.removeDataset('puppy_1')
+    VisStateActions.removeDataset('ieukmgne')
   );
-
-  const expectedState = {
-    datasets: {
-      puppy_0: {},
-      puppy_2: {}
-    },
-    layers: [layer0, layer1, layer3],
-    layerData: [{data: 1}, {data: 2}, {data: 4}],
-    layerOrder: [2, 1, 0],
-    filters: [{dataId: 'puppy_0'}, {dataId: 'puppy_2'}],
-    interactionConfig: {
-      tooltip: {
-        config: {
-          fieldsToShow: {
-            puppy_0: {},
-            puppy_2: {}
-          }
-        }
-      }
-    },
-    hoverInfo: undefined,
-    clicked: undefined,
-    splitMaps: [
-      {
-        layers: {
-          a: true,
-          b: true,
-          d: true
-        }
-      },
-      {
-        layers: {
-          a: true,
-          b: true,
-          d: true
-        }
-      }
-    ],
-    animationConfig: defaultAnimationConfig
-  };
 
   t.deepEqual(
-    newReducer,
-    expectedState,
-    'should remove dataset, layer and layerData in split mode'
+    Object.keys(newReducer).sort(),
+    Object.keys(expectedState).sort(),
+    `visState should have same keys`
   );
+  Object.keys(expectedState).forEach(key => {
+    t.deepEqual(
+      newReducer[key],
+      expectedState[key],
+      `newReducer.${key} should be correct`
+    );
+  });
 
   t.end();
 });
@@ -3140,17 +3135,31 @@ test('#visStateReducer -> SPLIT_MAP: HIDE LAYER', t => {
 
 test('#visStateReducer -> UPDATE_ANIMATION_TIME', t => {
   const initialState = StateWTripGeojson;
-  const newState = reducer(initialState, VisStateActions.updateAnimationTime(1000));
+  const newState = reducer(
+    initialState,
+    VisStateActions.updateAnimationTime(1000)
+  );
 
-  t.equal(newState.animationConfig.currentTime, 1000, 'should update animation time');
+  t.equal(
+    newState.animationConfig.currentTime,
+    1000,
+    'should update animation time'
+  );
   t.end();
 });
 
 test('#visStateReducer -> UPDATE_LAYER_ANIMATION_SPEED', t => {
   const initialState = StateWTripGeojson;
-  const newState = reducer(initialState, VisStateActions.updateLayerAnimationSpeed(1.23));
+  const newState = reducer(
+    initialState,
+    VisStateActions.updateLayerAnimationSpeed(1.23)
+  );
 
-  t.equal(newState.animationConfig.speed, 1.23, 'should update animation speed');
+  t.equal(
+    newState.animationConfig.speed,
+    1.23,
+    'should update animation speed'
+  );
 
   t.end();
 });
@@ -3172,18 +3181,26 @@ test('#visStateReducer -> INTERACTION_CONFIG_CHANGE', t => {
     }
   };
 
-  const nextState = reducer(INITIAL_VIS_STATE,
-    VisStateActions.interactionConfigChange(brushConfig));
+  const nextState = reducer(
+    INITIAL_VIS_STATE,
+    VisStateActions.interactionConfigChange(brushConfig)
+  );
 
-  t.deepEqual(nextState.interactionConfig, expectedConfig, 'should disable tooltip');
+  t.deepEqual(
+    nextState.interactionConfig,
+    expectedConfig,
+    'should disable tooltip'
+  );
 
   t.end();
 });
 
 test('#visStateReducer -> SHOW_DATASET_TABLE', t => {
   const initialState = StateWFiles.visState;
-  const nextState = reducer(initialState,
-    VisStateActions.showDatasetTable('abc'));
+  const nextState = reducer(
+    initialState,
+    VisStateActions.showDatasetTable('abc')
+  );
 
   t.equal(nextState.editingDataset, 'abc', 'should set editingDataset');
   t.end();
@@ -3191,8 +3208,10 @@ test('#visStateReducer -> SHOW_DATASET_TABLE', t => {
 
 test('#visStateReducer -> MAP_CLICK', t => {
   const initialState = StateWFiles.visState;
-  const nextState = reducer(initialState,
-    VisStateActions.onLayerClick({picked: true, object: 'he'}));
+  const nextState = reducer(
+    initialState,
+    VisStateActions.onLayerClick({picked: true, object: 'he'})
+  );
 
   t.deepEqual(
     nextState,
@@ -3200,8 +3219,7 @@ test('#visStateReducer -> MAP_CLICK', t => {
     'should set clicked'
   );
 
-  const nextState2 = reducer(nextState,
-    VisStateActions.onMapClick());
+  const nextState2 = reducer(nextState, VisStateActions.onMapClick());
 
   t.equal(nextState2.clicked, null, 'should unset clicked');
 
@@ -3216,15 +3234,17 @@ test('#visStateReducer -> MOUSE_MOVE', t => {
     lngLat: [37, -122]
   };
 
-  const nextState = reducer(initialState,
-    VisStateActions.onMouseMove(evt));
+  const nextState = reducer(initialState, VisStateActions.onMouseMove(evt));
 
-  t.deepEqual(nextState.mousePos,
+  t.deepEqual(
+    nextState.mousePos,
     {
       ...initialState.mousePos,
       mousePosition: [10, 20],
       coordinate: [37, -122]
-    }, 'should set mousePos');
+    },
+    'should set mousePos'
+  );
 
   // disable tooltip
   const tooltipConfig = {
@@ -3232,18 +3252,25 @@ test('#visStateReducer -> MOUSE_MOVE', t => {
     enabled: false
   };
 
-  const nextState1 = reducer(nextState,
-    VisStateActions.interactionConfigChange(tooltipConfig));
+  const nextState1 = reducer(
+    nextState,
+    VisStateActions.interactionConfigChange(tooltipConfig)
+  );
 
-  const nextState2 = reducer(nextState1,
-    VisStateActions.onMouseMove({point: [1, 2], lngLat: [90, 90]}));
+  const nextState2 = reducer(
+    nextState1,
+    VisStateActions.onMouseMove({point: [1, 2], lngLat: [90, 90]})
+  );
 
-  t.deepEqual(nextState2.mousePos,
+  t.deepEqual(
+    nextState2.mousePos,
     {
       ...initialState.mousePos,
       mousePosition: [10, 20],
       coordinate: [37, -122]
-    }, 'should not set mousePos');
+    },
+    'should not set mousePos'
+  );
 
   t.end();
 });
