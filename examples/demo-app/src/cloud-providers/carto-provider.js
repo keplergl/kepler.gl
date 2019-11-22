@@ -129,13 +129,13 @@ export default class CartoProvider {
     }
   }
 
-  renderMeta(meta) {
-    const metaUrl = get(meta, 'url');
-    const sharingLink = metaUrl ? getMapPermalink(metaUrl) : null;
+  // renderMeta(meta) {
+  //   const metaUrl = get(meta, 'url');
+  //   const sharingLink = metaUrl ? getMapPermalink(metaUrl) : null;
 
-    // TODO: link to CARTO dashboard below
-    return (<SharingUrl url={sharingLink} message={'Share your map with other users'} />);
-  }
+  //   // TODO: link to CARTO dashboard below
+  //   return (<SharingUrl url={sharingLink} message={'Share your map with other users'} />);
+  // }
 
   getMapPermalink(mapLink, fullURL = true) {
     return (fullURL)
