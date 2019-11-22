@@ -23,15 +23,16 @@ import styled from 'styled-components';
 
 const StyledTileWrapper = styled.div`
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   border-radius: 2px;
   border: 1px solid ${props => props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT};
   color: ${props => props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT};
   cursor: pointer;
   font-weight: 500;
   width: 120px;
-  height: 120px;
+  height: 168px;
   background-color: #ffffff;
   margin-right: 12px;
 
@@ -41,19 +42,15 @@ const StyledTileWrapper = styled.div`
   }
 `;
 
-const StyledLabel = styled.div`
-  font-size: 14px;
-  color: ${props => props.theme.textColorLT};
-  letter-spacing: 0.2px;
-  text-align: center;
-  ul {
-    padding-left: 12px;
-  }
+const StyledCloudName = styled.div`
+  font-size: 12px;
+  margin-top: 12px;
+  margin-bottom: 4px;
 `;
 
 const StyledTile = styled.div`
   width: 64px;
-  margin: 12px;
+  height: 92px;
 `;
 
 const TileButton = styled.button`
@@ -64,20 +61,41 @@ const TileButton = styled.button`
   outline: 0;
 `;
 
-const CloudTile = ({token, onExport, onLogin, Icon, name}) => {
+const StyledAction = styled.div`
+  font-size: 14px;
+  color: ${props => props.theme.textColorLT};
+  letter-spacing: 0.2px;
+  text-align: center;
+  ul {
+    padding-left: 12px;
+  }
+`;
+
+const StyledUserName = styled.div`
+  font-size: 11px;
+  margin-top: 8px;
+  text-align: center;
+  color: ${props => props.theme.primaryBtnActBgd};
+  overflow: hidden;
+  width: 100px;
+  text-overflow: ellipsis;
+`;
+
+const CloudTile = ({token, onExport, onLogin, Icon, name, userName}) => {
   const onExportCallback = useCallback(() => onExport(name), [onExport, name]);
 
   return (
     <StyledTileWrapper onClick={token ? onExportCallback : onLogin}>
+      <StyledCloudName>{name}</StyledCloudName>
       <StyledTile>
-        <div>
-          <div style={{textAlign: 'center'}}>{name}</div>
           <TileButton>
             <Icon height="64px" />
-            <StyledLabel>{token ? 'Upload' : 'Login'}</StyledLabel>
+            <StyledAction>{token ? 'Upload' : 'Login'}</StyledAction>
           </TileButton>
-        </div>
       </StyledTile>
+      {userName && (
+        <StyledUserName>{userName}</StyledUserName>
+      )}
     </StyledTileWrapper>
   );
 };

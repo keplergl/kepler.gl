@@ -65,28 +65,16 @@ export default class CartoProvider {
     return;
   }
 
-  // /**
-  //  * Set the auth toke to be used with carto client
-  //  * @param authToken
-  //  */
-  // setAuthToken(authToken) {
-  //   if (!carto || !authToken) {
-  //     return;
-  //   }
-
-  //   carto.setClientID(authToken);
-  // }
-
   /**
    * Returns the access token. If it has expired returns null. The toolkit library loads it
    * from localStorage automatically
    */
   getAccessToken() {
-    if (this._carto.oauth.expired) {
-      return null;
-    }
-
     return this._carto.oauth.expired ? null : this._carto.oauth.token;
+  }
+
+  getUserName(){
+    return this._carto.oauth.expired ? null : this._carto.username;
   }
 
   /**
