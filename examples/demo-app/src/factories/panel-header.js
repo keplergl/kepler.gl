@@ -56,5 +56,5 @@ export function CustomPanelHeaderFactory(SaveExportDropdown) {
 CustomPanelHeaderFactory.deps = PanelHeaderFactory.deps;
 
 export function replacePanelHeader() {
-  return [PanelHeaderFactory, CustomPanelHeaderFactory];
+  return [CustomPanelHeaderFactory];
 }
