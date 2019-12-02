@@ -21,8 +21,8 @@
 import {PanelHeaderFactory, Icons} from 'kepler.gl/components';
 import {GITHUB_BUG_REPORT, GITHUB_USER_GUIDE} from 'kepler.gl/constants';
 
-export function CustomPanelHeaderFactory(SaveExportDropdown) {
-  const PanelHeader = PanelHeaderFactory(SaveExportDropdown);
+export function CustomPanelHeaderFactory(SaveExportDropdown, SaveMapToBackendDropdown) {
+  const PanelHeader = PanelHeaderFactory(SaveExportDropdown, SaveMapToBackendDropdown);
 
   PanelHeader.defaultProps = {
     ...PanelHeader.defaultProps,
@@ -44,6 +44,11 @@ export function CustomPanelHeaderFactory(SaveExportDropdown) {
         onClick: () => {}
       },
       {
+        ...PanelHeader.defaultProps.actionItems.find(item => item.id === 'backendStorage'),
+        label: null,
+        tooltip: 'Save'
+      },
+      {
         ...PanelHeader.defaultProps.actionItems.find(item => item.id === 'save'),
         label: null,
         tooltip: 'Share'
@@ -56,5 +61,5 @@ export function CustomPanelHeaderFactory(SaveExportDropdown) {
 CustomPanelHeaderFactory.deps = PanelHeaderFactory.deps;
 
 export function replacePanelHeader() {
-  return [CustomPanelHeaderFactory];
+  return [PanelHeaderFactory, CustomPanelHeaderFactory];
 }
