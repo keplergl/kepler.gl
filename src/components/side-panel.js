@@ -205,6 +205,7 @@ export default function SidePanelFactory(
               hideExportDropdown={uiStateActions.hideExportDropdown}
               onExportMap={this._onExportMap}
               onSaveMap={this.props.onSaveMap}
+              onBackendStorageSettingsClick={this.props.onBackendStorageSettingsClick}
             />
             <PanelToggle
               panels={PANELS}

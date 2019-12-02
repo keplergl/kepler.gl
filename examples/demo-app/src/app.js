@@ -32,6 +32,7 @@ import {replaceSaveMap} from './factories/save-map';
 import {replaceMapControl} from './factories/map-control';
 import {replacePanelHeader} from './factories/panel-header';
 import ExportUrlModal from './components/sharing/export-url-modal';
+import ConnectBackendStorageModal from './components/backend-storage-modal/connect-backend-storage-modal';
 import {AUTH_TOKENS} from './constants/default-settings';
 import {getCloudProvider} from './cloud-providers';
 
@@ -282,11 +283,22 @@ class App extends Component {
     return app.featureFlags.cloudStorage;
   };
 
+  _isBackendStorageEnabled = () => {
+    const {app} = this.props.demo;
+    return app.featureFlags.backendStorage;
+  };
+
   _toggleCloudModal = () => {
     // TODO: this lives only in the demo hence we use the state for now
     // REFCOTOR using redux
     this.setState({
       cloudModalOpen: !this.state.cloudModalOpen
+    });
+  };
+
+  _toggleSettingsBackendModal = () => {
+    this.setState({
+      settingsBackendModalOpen: !this.state.settingsBackendModalOpen
     });
   };
 
@@ -346,6 +358,15 @@ class App extends Component {
               parentSelector={() => findDOMNode(this.root)}
             />
           )}
+
+          {this._isBackendStorageEnabled() && rootNode &&
+            <ConnectBackendStorageModal
+              isOpen={Boolean(this.state.settingsBackendModalOpen)}
+              onClose={this._toggleSettingsBackendModal}
+              parentSelector={() => findDOMNode(this.root)}
+            />
+          }
+
           <div
             style={{
               transition: 'margin 1s, height 1s',
@@ -368,6 +389,7 @@ class App extends Component {
                   width={width}
                   height={height - (showBanner ? BannerHeight : 0)}
                   onSaveMap={this._isCloudStorageEnabled() && this._toggleCloudModal}
+                  onBackendStorageSettingsClick={this._isBackendStorageEnabled() && this._toggleSettingsBackendModal}
                 />
               )}
             </AutoSizer>
