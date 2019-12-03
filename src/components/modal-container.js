@@ -34,7 +34,7 @@ import DataTableModalFactory from './modals/data-table-modal';
 import LoadDataModalFactory from './modals/load-data-modal';
 import ExportImageModalFactory from './modals/export-image-modal';
 import ExportDataModalFactory from './modals/export-data-modal';
-import ExportMapModalFactory from './modals/export-map-modal';
+import ExportMapModalFactory from './modals/export-map-modal/export-map-modal';
 import AddMapStyleModalFactory from './modals/add-map-style-modal';
 
 // Breakpoints

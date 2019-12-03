@@ -268,6 +268,9 @@ const timeDisplayMinWidth = 176;
 const timeDisplayOpacity = 0.8;
 const timeDisplayPadding = '0 24px';
 
+// Export map modal
+const exportIntraSectionMargin = '8';
+
 export const textTruncate = {
   maxWidth: '100%',
   overflow: 'hidden',
@@ -1051,6 +1054,10 @@ export const theme = {
   timeDisplayMinWidth,
   timeDisplayOpacity,
   timeDisplayPadding,
+
+  // export map
+  exportIntraSectionMargin,
+
   // Breakpoints
   breakPoints
 };
