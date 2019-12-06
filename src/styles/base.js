@@ -144,7 +144,7 @@ export const switchTrackBorderRadius = '1px';
 export const switchBtnBgd = '#6A7485';
 export const switchBtnBgdActive = '#D3D8E0';
 export const switchBtnBoxShadow = '0 2px 4px 0 rgba(0,0,0,0.40)';
-export const switchBtnBorderRadius = '1px';
+export const switchBtnBorderRadius = '0';
 export const switchBtnWidth = '12px';
 export const switchBtnHeight = '12px';
 
@@ -498,6 +498,7 @@ const switchButton = css`
   background: ${props =>
     props.checked ? props.theme.switchBtnBgdActive : props.theme.switchBtnBgd};
   box-shadow: ${props => props.theme.switchBtnBoxShadow};
+  border-radius: ${props => props.theme.switchBtnBorderRadius};
 `;
 
 const inputSwitch = css`
