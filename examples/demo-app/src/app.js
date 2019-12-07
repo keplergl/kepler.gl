@@ -187,7 +187,7 @@ class App extends Component {
           centerMap: true,
           readOnly: false
         },
-        // config: sampleTripDataConfig
+        config: sampleTripDataConfig
       })
     );
   }
