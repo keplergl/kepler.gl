@@ -79,6 +79,7 @@ export {default as LoadDataModalFactory} from './modals/load-data-modal';
 export {default as ExportImageModalFactory} from './modals/export-image-modal';
 export {default as ExportDataModalFactory} from './modals/export-data-modal';
 export {default as AddMapStyleModalFactory} from './modals/add-map-style-modal';
+export {default as ExportMapModalFactory} from './modals/export-map-modal/export-map-modal';
 
 // // common factory
 export {default as AnimationControlFactory} from './common/animation-control/animation-control';
