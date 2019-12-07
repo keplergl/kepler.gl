@@ -104,7 +104,7 @@ export default class ClusterLayer extends CompositeLayer {
 
   needsReclusterPoints(oldProps, props) {
     return (
-      Math.round(oldProps.zoom) !== Math.round(props.zoom)
+      Math.round(oldProps.mapState.zoom) !== Math.round(props.mapState.zoom)
     );
   }
 
