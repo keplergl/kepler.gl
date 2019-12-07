@@ -108,26 +108,31 @@ export function testFormatLayerDataCases(t, LayerClass, testCases) {
 export function testRenderLayerCases(t, LayerClass, testCases) {
   testCases.forEach(tc => {
     const layer = testCreateLayer(t, LayerClass, tc.props);
+    let result;
 
     if (layer) {
-      const result = testFormatLayerData(t, layer, tc.data);
+      result = testFormatLayerData(t, layer, tc.data);
+    }
 
-      if (result) {
-        let deckLayers;
+    if (result) {
+      let deckLayers;
 
-        t.doesNotThrow(() => {
-          deckLayers = layer.renderLayer({
-            data: result,
-            idx: 0,
-            layerInteraction: {},
-            mapState: INITIAL_MAP_STATE,
-            interactionConfig: INITIAL_VIS_STATE.interactionConfig,
-            ...(tc.renderArgs || {})
-          });
-        }, `${layer.type}.renderLayer should not fail`);
+      t.doesNotThrow(() => {
+        deckLayers = layer.renderLayer({
+          data: result,
+          idx: 0,
+          layerInteraction: {},
+          mapState: INITIAL_MAP_STATE,
+          interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+          ...(tc.renderArgs || {})
+        });
+      }, `${layer.type}.renderLayer should not fail`);
 
-        if (deckLayers) {
-          testInitializeDeckLayer(t, layer.type, deckLayers);
+      if (deckLayers) {
+        const initialDeckLayers = testInitializeDeckLayer(t, layer.type, deckLayers);
+
+        if (tc.assert) {
+          tc.assert(initialDeckLayers, layer, result);
         }
       }
     }
@@ -152,7 +157,7 @@ export function testInitializeDeckLayer(t, layerType, layers) {
   );
 
   spy.restore();
-  return null;
+  return layerManager.layers;
 }
 
 /**

@@ -45,19 +45,14 @@ const getClusterer = memoize(({clusterRadius, geoJSON}) => {
     maxZoom: 20,
     radius: clusterRadius,
     reduce: (accumulated, props) => {
-      if (props.points) {
-        // avoid using spread to prevent max call stack exceeded error
-        props.points.forEach(p => {
-          accumulated.points.push(p);
-        });
-      } else {
-        accumulated.points.push(props);
-      }
-    }
+      accumulated.points = [...accumulated.points, ...props.points]
+    },
+    map: props => ({points: [props.data]})
   }).load(geoJSON);
 }, clusterResolver);
 
 export function clustersAtZoom({bbox, clusterRadius, geoJSON, zoom}) {
+  console.log({clusterRadius})
   const clusterer = getClusterer({clusterRadius, geoJSON});
   return clusterer.getClusters(bbox, zoom);
 }
