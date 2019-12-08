@@ -1,5 +1,5 @@
 import React from 'react';
-import {Home} from 'ocular-gatsby/components';
+import {Home} from 'gatsby-theme-ocular/components';
 import './style.css';
 
 if (typeof window !== 'undefined') {
