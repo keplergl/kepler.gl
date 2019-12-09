@@ -82,6 +82,14 @@ const getOrdinalLegends = scale => {
 };
 
 const getQuantLegends = (scale, labelFormat) => {
+  if (typeof scale.invertExtent !== 'function') {
+    // only quantile, quantize, threshold scale has invertExtent method
+    return {
+      data: [],
+      labels: []
+    };
+  }
+
   const labels = scale.range().map(d => {
     const invert = scale.invertExtent(d);
     return `${labelFormat(invert[0])} to ${labelFormat(invert[1])}`;
