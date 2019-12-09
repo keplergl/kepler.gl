@@ -7,9 +7,9 @@
         {
           "title": "Overview",
           "entries": [
-            {"entry": "docs/README"},
+            {"entry": "docs"},
             {"entry": "docs/user-guides/a-introduction"},
-            {"entry": "docs/user-guides/b-kepler-gl-workflow.a-add-data-to-the-map"},
+            {"entry": "docs/user-guides/b-kepler-gl-workflow/a-add-data-to-the-map"},
 
             {"entry": "docs/user-guides/c-types-of-layers"},
             {"entry": "docs/user-guides/d-layer-attributes"},
@@ -21,13 +21,21 @@
             {"entry": "docs/user-guides/j-get-started"},
             {"entry": "docs/user-guides/k-save-and-export"},
             {"entry": "docs/user-guides/l-color-attributes"},
-            {"entry": "docs/user-guides/m-map-settings"},
-
+            {"entry": "docs/user-guides/m-map-settings"}
+          ]
+        },
+        {
+          "title": "Workflow",
+          "entries": [
             {"entry": "docs/user-guides/b-kepler-gl-workflow/b-add-data-layers/a-adding-data-layers"},
             {"entry": "docs/user-guides/b-kepler-gl-workflow/b-add-data-layers/b-create-a-layer"},
             {"entry": "docs/user-guides/b-kepler-gl-workflow/b-add-data-layers/c-hide-edit-and-delete-layers"},
-            {"entry": "docs/user-guides/b-kepler-gl-workflow/b-add-data-layers/d-blend-and-rearrange-layers"},
-
+            {"entry": "docs/user-guides/b-kepler-gl-workflow/b-add-data-layers/d-blend-and-rearrange-layers"}
+          ]
+        },
+        {
+          "title": "Layer Types",
+          "entries": [
             {"entry": "docs/user-guides/c-types-of-layers/a-point"},
             {"entry": "docs/user-guides/c-types-of-layers/b-arc"},
             {"entry": "docs/user-guides/c-types-of-layers/c-line"},
@@ -40,22 +48,6 @@
             {"entry": "docs/user-guides/c-types-of-layers/j-h3"},
             {"entry": "docs/user-guides/c-types-of-layers/k.trip"}
           ]
-        },
-        {
-          "title": "Workflow",
-          "entries": [
-            {"entry": "docs/api-reference/overview"},
-            {"entry": "docs/api-reference/get-started"},
-            {"entry": "docs/api-reference/ecosystem"}
-          ]
-        },
-        {
-          "title": "Layer Types",
-          "entries": [
-            {"entry": "docs/api-reference/overview"},
-            {"entry": "docs/api-reference/get-started"},
-            {"entry": "docs/api-reference/ecosystem"}
-          ]
         }
       ]
     },
@@ -66,10 +58,16 @@
       "title": "API Reference",
       "chapters": [
         {
+          "title": "Overview",
+          "entries": [
+            {"entry": "docs/api-reference/overview"}
+          ]
+        },
+        {
           "title": "Actions",
           "entries": [
-            {"entry": "docs/actions/overview"},
-            {"entry": "docs/actions/actions"}
+            {"entry": "docs/api-reference/actions/overview"},
+            {"entry": "docs/api-reference/actions/actions"}
           ]
         },
         {
@@ -88,13 +86,13 @@
         {
           "title": "Reducers",
           "entries": [
-            {"entry": "docs/api-reference/overview"},
-            {"entry": "docs/api-reference/combine"},
-            {"entry": "docs/api-reference/map-state"},
-            {"entry": "docs/api-reference/map-style"},
-            {"entry": "docs/api-reference/reducers"},
-            {"entry": "docs/api-reference/ui-state"},
-            {"entry": "docs/api-reference/vis-state"}
+            {"entry": "docs/api-reference/reducers/overview"},
+            {"entry": "docs/api-reference/reducers/combine"},
+            {"entry": "docs/api-reference/reducers/map-state"},
+            {"entry": "docs/api-reference/reducers/map-style"},
+            {"entry": "docs/api-reference/reducers/reducers"},
+            {"entry": "docs/api-reference/reducers/ui-state"},
+            {"entry": "docs/api-reference/reducers/vis-state"}
           ]
         },
         {
