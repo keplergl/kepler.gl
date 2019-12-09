@@ -118,7 +118,7 @@ const GATSBY_CONFIG = {
 
         ADDITIONAL_LINKS: [],
 
-        // INDEX_PAGE_URL: resolve(__dirname, './templates/index.jsx'),
+        INDEX_PAGE_URL: resolve(__dirname, './templates/index.jsx'),
 
         EXAMPLES: [
           // {

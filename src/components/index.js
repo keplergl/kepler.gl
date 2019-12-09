@@ -96,8 +96,8 @@ export {default as RangeFilterFactory} from './filters/range-filter';
 
 // Injector
 export {
-  injector as injector,
-  withState as withState
+  injector,
+  withState
 } from './injector'
 
 // Common Components
@@ -110,7 +110,8 @@ export {default as AppLogo} from './common/logo';
 export {default as Switch} from './common/switch';
 export {default as LoadingSpinner} from './common/loading-spinner';
 export * from './common/styled-components';
-export * as Icons from './common/icons';
+import * as Icons from './common/icons';
+export {Icons};
 
 export const TimeRangeSlider = TimeRangeSliderFactory();
 export {TimeRangeSliderFactory};
