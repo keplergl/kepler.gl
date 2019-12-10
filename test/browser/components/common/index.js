@@ -19,3 +19,4 @@
 // THE SOFTWARE.
 
 import './file-uploader-test';
+import './color-legend-test';

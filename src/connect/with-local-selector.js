@@ -56,7 +56,7 @@ const withLocalSelector = ParentComponent => {
       const computedContext = this.contextSelector(this.props, this.context);
       return (
         <KeplerGlContext.Provider value={computedContext}>
-          <ParentComponent {...this.props} selector={computedContext.selector} />;
+          <ParentComponent {...this.props} selector={computedContext.selector} />
         </KeplerGlContext.Provider>
       );
     }
