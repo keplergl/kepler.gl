@@ -5,13 +5,12 @@ import './style.css';
 
 import {toggleDarkMode} from '../src/state/test';
 
-// import HeroExample from '../src/components/home';
-const HeroExample = 'div';
+import HeroExample from '../src/components/home';
+// const HeroExample = 'div';
 
 if (typeof window !== 'undefined') {
   window.website = true;
 }
-
 
 const DarkButton = ({isDarkMode, dispatch}) => (
   <button
@@ -21,7 +20,6 @@ const DarkButton = ({isDarkMode, dispatch}) => (
     Dark Mode
   </button>
 );
-
 
 class IndexPage extends React.Component {
   render() {

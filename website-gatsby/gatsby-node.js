@@ -18,6 +18,7 @@ function onCreateWebpackConfig(opts, ocularOptions = global.ocularOptions) {
   Object.assign(config.resolve.alias, {
     'components': resolve(__dirname, '../src/components'),
     'constants': resolve(__dirname, '../src/constants'),
+    'actions': resolve(__dirname, '../src/actions'),
     'utils': resolve(__dirname, '../src/utils')
     // 'kepler.gl/dist': libSources,
     // // Imports the kepler.gl library from the src directory in this repo
