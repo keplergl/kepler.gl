@@ -1,16 +1,8 @@
-import React from 'react';
 import {OAuthApp} from '@carto/toolkit';
 import CartoIcon from '../components/icons/carto-icon';
-import SharingUrl from '../components/sharing/sharing-url';
 import {formatCsv} from 'processors/data-processor';
-import {getMapPermalink} from '../utils/url';
-import get from 'lodash.get';
-import {loadRemoteResourceSuccess,setLoadingMapStatus} from '../actions';
-import {push} from 'react-router-redux';
-
 const NAME = 'carto';
 const NAMESPACE = 'keplergl';
-const DEFAULT_URL = '/demo';
 
 export default class CartoProvider {
   constructor(clientId){
@@ -85,48 +77,37 @@ export default class CartoProvider {
     return;
   }
 
-  loadMap(queryParams) {
+  async loadMap(queryParams) {
     const { owner: username, mapId } = queryParams;
 
-    return dispatch => {
-      if (!username || !mapId) {
-        dispatch(push(DEFAULT_URL));
-        return;
-      }
-
-      dispatch(setLoadingMapStatus(true));
-      this._carto.PublicStorageReader.getVisualization(username, mapId).then((result) => {
-        // These are the options required for the action. For now, all datasets that come from CARTO are CSV
-        const options = result.datasets.map((dataset) => {
-          const datasetId = dataset.name;
-
-          return {
-            id: datasetId,
-            label: datasetId,
-            description: dataset.description,
-            dataUrl: '',
-            configUrl: '',
-            panelDisabled: true
-          };
-        });
-
-        const datasets = result.datasets.map((dataset) => dataset.file);
-
-        dispatch(loadRemoteResourceSuccess(datasets, result.vis.config, options))
-      });
+    if (!username || !mapId) {
+      return;
     }
+
+
+    const visualization = await this._carto.PublicStorageReader.getVisualization(username, mapId);
+
+    // These are the options required for the action. For now, all datasets that come from CARTO are CSV
+    const options = visualization.datasets.map((dataset) => {
+      const datasetId = dataset.name;
+
+      return {
+        id: datasetId,
+        label: datasetId,
+        description: dataset.description,
+        dataUrl: '',
+        configUrl: '',
+        panelDisabled: true
+      };
+    });
+
+    const datasets = visualization.datasets.map((dataset) => dataset.file);
+
+    return {datasets, vis: visualization.vis, options};
   }
 
-  // renderMeta(meta) {
-  //   const metaUrl = get(meta, 'url');
-  //   const sharingLink = metaUrl ? getMapPermalink(metaUrl) : null;
-
-  //   // TODO: link to CARTO dashboard below
-  //   return (<SharingUrl url={sharingLink} message={'Share your map with other users'} />);
-  // }
-
   getMapPermalink(mapLink, fullURL = true) {
-    return (fullURL)
+    return fullURL
       ? `${window.location.protocol}//${window.location.host}/${mapLink}`
       : `/${mapLink}`;
   }
