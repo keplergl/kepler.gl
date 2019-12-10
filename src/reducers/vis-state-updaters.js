@@ -582,6 +582,7 @@ export function setFilterUpdater(state, action) {
       }
 
       newFilter = updatedFilter;
+
       if (newFilter.gpu) {
         newFilter = setFilterGpuMode(newFilter, state.filters);
         newFilter = assignGpuChannel(newFilter, state.filters);

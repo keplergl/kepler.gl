@@ -173,8 +173,10 @@ export default class TripLayer extends Layer {
 
   // TODO: fix complexity
   /* eslint-disable complexity */
-  formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
+  formatLayerData(datasets, oldLayerData) {
     // to-do: parse segment from allData
+    const {filteredIndex, allData} = datasets[this.config.dataId];
+
     const {
       colorScale,
       colorField,
@@ -201,7 +203,6 @@ export default class TripLayer extends Layer {
     if (
       oldLayerData &&
       oldLayerData.data &&
-      opt.sameData &&
       oldLayerData.getFeature === getFeature
     ) {
       // no need to create a new array of data

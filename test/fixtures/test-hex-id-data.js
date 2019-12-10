@@ -242,7 +242,8 @@ export const mergedFilters = [
     speed: 1,
     fieldType: 'integer',
     typeOptions: ['range'],
-    fixedDomain: false
+    fixedDomain: false,
+    gpuChannel: [0]
   }
 ];
 
@@ -512,7 +513,8 @@ export const expectedHexDataset = {
   filteredIndexForDomain,
   fieldPairs: [],
   label: 'new dataset',
-  color: 'dont test me'
+  color: 'dont test me',
+  allIndexes: allData.map((d, i) => i)
 };
 
 export const mergedH3Layer = new H3Layer({

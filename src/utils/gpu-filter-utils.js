@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {set} from './utils';
+import {set, arrayfy} from './utils';
 import {MAX_GPU_FILTERS} from 'constants/default-settings';
 import {notNullorUndefined} from './data-utils';
 /**
@@ -26,45 +26,92 @@ import {notNullorUndefined} from './data-utils';
  * @param {Object} gpuFilter
  * @param {Array<Object>} filters
  */
-export function setFilterGpuMode(gpuFilter, filters) {
-  const gpuFilters = filters.filter(
-    f => f.dateId === gpuFilter.dataId && f.gpu
-  );
-  if (gpuFilter.gpu && gpuFilters.length === MAX_GPU_FILTERS) {
-    return set(['gpu'], false, gpuFilter);
-  }
-  return gpuFilter;
+export function setFilterGpuMode(filter, filters) {
+  // filter can be apply to multiple dataset, hence gpu filter mode should also be
+  // an array, however, to keep us sane, for now, we only check if there is available channel for every dataId,
+  // if all of them has, we set gpu mode to true
+  // TODO: refactor filter so we don't keep an array of everything
+
+  filter.dataId.forEach((dataId, datasetIdx) => {
+    const gpuFilters = filters.filter(f => f.dataId.includes(dataId) && f.gpu);
+
+    if (filter.gpu && gpuFilters.length === MAX_GPU_FILTERS) {
+      return set(['gpu'], false, filter);
+    }
+  });
+
+  return filter;
 }
 
 export function assignGpuChannels(allFilters) {
   return allFilters.reduce((accu, f, index) => {
     let filters = accu;
-    if (f.gpu && !Number.isFinite(f.gpuChannel)) {
+
+    // if gpu is true assign and validate gpu Channel
+    if (f.gpu) {
       f = assignGpuChannel(f, accu);
       filters = set([index], f, accu);
     }
+
     return filters;
   }, allFilters);
 }
 /**
  * Assign a new gpu filter a channel based on first availability
- * @param {Object} gpuFilter
+ * @param {Object} filter
  * @param {Array<Object>} filters
  */
-export function assignGpuChannel(gpuFilter, filters) {
-  const findGpuChannel = channel => f =>
-    f.dataId === gpuFilter.dataId && f.gpu && f.gpuChannel === channel;
-
-  let i = 0;
-
-  while (i < MAX_GPU_FILTERS) {
-    if (!filters.find(findGpuChannel(i))) {
-      return set(['gpuChannel'], i, gpuFilter);
-    }
-    i++;
+export function assignGpuChannel(filter, filters) {
+  // find first available channel
+  if (!filter.gpu) {
+    return filter;
   }
 
-  return gpuFilter;
+  const gpuChannel = filter.gpuChannel || [];
+
+  filter.dataId.forEach((dataId, datasetIdx) => {
+    const findGpuChannel = channel => f => {
+      const dataIdx = arrayfy(f.dataId).indexOf(dataId);
+      return (
+        f.id !== filter.id &&
+        dataIdx > -1 &&
+        f.gpu &&
+        arrayfy(f.gpuChannel)[dataIdx] === channel
+      );
+    };
+
+    if (
+      Number.isFinite(gpuChannel[datasetIdx]) &&
+      !filters.find(findGpuChannel(gpuChannel[datasetIdx]))
+    ) {
+      // if value is already assigned and valid
+      return;
+    }
+
+    let i = 0;
+
+    while (i < MAX_GPU_FILTERS) {
+      if (!filters.find(findGpuChannel(i))) {
+        gpuChannel[datasetIdx] = i;
+        return;
+      }
+      i++;
+    }
+  });
+
+  // if cannot find channel for all dataid, set gpu back to false
+  // TODO: refactor filter to handle same filter different gpu mode
+  if (!gpuChannel.length || !gpuChannel.every(Number.isFinite)) {
+    return {
+      ...filter,
+      gpu: false
+    };
+  }
+
+  return {
+    ...filter,
+    gpuChannel
+  };
 }
 /**
  * Edit filter.gpu to ensure that only
@@ -75,30 +122,34 @@ export function assignGpuChannel(gpuFilter, filters) {
 export function resetFilterGpuMode(filters) {
   const gpuPerDataset = {};
 
-  return filters.map(f => {
+  return filters.map((f, i) => {
     if (f.gpu) {
-      const count = gpuPerDataset[f.dataId];
+      let gpu = true;
+      arrayfy(f.dataId).forEach(dataId => {
+        const count = gpuPerDataset[dataId];
 
-      if (count === MAX_GPU_FILTERS) {
+        if (count === MAX_GPU_FILTERS) {
+          gpu = false;
+        } else {
+          gpuPerDataset[dataId] = count ? count + 1 : 1;
+        }
+      });
+
+      if (!gpu) {
         return set(['gpu'], false, f);
       }
-
-      gpuPerDataset[f.dataId] = count ? count + 1 : 1;
     }
 
     return f;
-  }, filters);
+  });
 }
 
 /**
  * Initial filter uniform
- * @returns {{filterMin: Array<Number>,filterMax: Array<Number>}}
+ * @returns {Array<Array<Number>>}
  */
 function getEmptyFilterRange() {
-  return {
-    filterMin: new Array(MAX_GPU_FILTERS).fill(0),
-    filterMax: new Array(MAX_GPU_FILTERS).fill(0)
-  };
+  return new Array(MAX_GPU_FILTERS).fill(0).map(d => [0, 0]);
 }
 
 // By default filterValueAccessor expect each datum to be formated as {index, data}
@@ -120,11 +171,13 @@ const getFilterValueAccessor = channels => (
     if (!filter) {
       return 0;
     }
-    const value = filter.mappedValue ?
-      filter.mappedValue[getIndex(d)] :
-      getData(d)[filter.fieldIdx];
+    const value = filter.mappedValue
+      ? filter.mappedValue[getIndex(d)]
+      : getData(d)[filter.fieldIdx];
 
-    return notNullorUndefined(value) ? value : Number.MIN_SAFE_INTEGER;
+    return notNullorUndefined(value)
+      ? value - filter.domain[0]
+      : Number.MIN_SAFE_INTEGER;
   });
 
 /**
@@ -142,12 +195,15 @@ export function getGpuFilterProps(filters, dataId) {
 
   for (let i = 0; i < MAX_GPU_FILTERS; i++) {
     const filter = filters.find(
-      f => f.dataId === dataId && f.gpu && f.gpuChannel === i
+      f => f.gpu &&
+        f.dataId.includes(dataId) &&
+        f.gpuChannel[f.dataId.indexOf(dataId)] === i
     );
-    filterRange.filterMin[i] = filter ? filter.value[0] : 0;
-    filterRange.filterMax[i] = filter ? filter.value[1] : 0;
 
-    triggers[i] = filter ? filter.name : null;
+    filterRange[i][0] = filter ? filter.value[0] - filter.domain[0] : 0;
+    filterRange[i][1] = filter ? filter.value[1] - filter.domain[0] : 0;
+
+    triggers[`gpuFilter_${i}`] = filter ? filter.name[filter.dataId.indexOf(dataId)] : null;
     channels.push(filter);
   }
 
