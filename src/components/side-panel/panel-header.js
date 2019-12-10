@@ -59,7 +59,6 @@ const StyledPanelAction = styled.div.attrs({
   height: 26px;
   justify-content: space-between;
   margin-left: 4px;
-  ${props => props.hasLabel ? 'width: 70px' : ''}
   padding: 5px;
   font-weight: bold;
   p {
@@ -287,17 +286,20 @@ export const SaveMapToBackendDropdownFactory = (
   const SaveExportDropdown = ({
     show,
     onClose,
-    onBackendStorageSettingsClick
+    onBackendStorageSettingsClick,
+    onSaveMapToBackendClick
   }) => {
     return (
       <StyledPanelDropdown show={show} className="save-export-dropdown">
         <ClickOutsideCloseDropdown className="save-export-dropdown__inner"
           show={show}
           onClose={onClose}>
-          <SaveMapToBackend
-            onClickHandler={onBackendStorageSettingsClick}
-            onClose={onClose}
-          />
+          {onSaveMapToBackendClick ? (
+            <SaveMapToBackend
+              onClickHandler={onSaveMapToBackendClick}
+              onClose={onClose}
+            />
+          ) : null}
 
           {onBackendStorageSettingsClick ? (
             <BackendStorageSettings
@@ -363,6 +365,7 @@ function PanelHeaderFactory(
         onExportImage,
         onExportData,
         onBackendStorageSettingsClick,
+        onSaveMapToBackendClick,
         onExportConfig,
         onExportMap,
         visibleDropdown,
@@ -397,6 +400,7 @@ function PanelHeaderFactory(
                       onExportConfig={onExportConfig}
                       onExportMap={onExportMap}
                       onBackendStorageSettingsClick={onBackendStorageSettingsClick}
+                      onSaveMapToBackendClick={onSaveMapToBackendClick}
                     />
                   ) : null}
                 </div>

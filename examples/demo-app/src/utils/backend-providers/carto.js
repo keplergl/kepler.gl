@@ -20,12 +20,14 @@
 
 import {OAuthApp} from '@carto/toolkit';
 import CARTOIcon from '../../components/icons/carto-icon';
+import {formatCsv} from 'processors/data-processor';
 
 const NAME = 'carto';
+const NAMESPACE = 'keplergl';
 
 const carto = new OAuthApp(
   { scopes: 'schemas:c' },
-  { namespace: 'keplergl' }
+  { namespace: NAMESPACE }
 );
 
 window.cartoClient = carto;
@@ -46,11 +48,49 @@ const setAuthToken = function setAuthToken(authToken) {
   carto.setClientID(authToken);
 };
 
+const uploadFile = async function uploadFile({blob, name: fileName, isPublic = false}) {
+  if (isConnected) {
+    const payload = JSON.parse(await new Response(blob).text());
+
+    const { config, datasets } = payload;
+
+    const cartoDatasets = datasets.map(_convertDataset);
+
+    const cs = await carto.getCustomStorage();
+
+    const result = await cs.createVisualization({
+      name: fileName,
+      config: JSON.stringify(config),
+      isPrivate: !isPublic
+    }, cartoDatasets, true);
+
+    return ({
+      url: `demo/map/carto?mapId=${result.id}&owner=${carto.username}`
+    });
+  }
+}
+
 const logout = function logout(callback) {
   carto.oauth.clear();
   carto.oauth._carto.sync();
   callback();
 };
+
+const _convertDataset = function _convertDataset({ data: dataset }) {
+  const {allData, fields, id} = dataset;
+  const columns = fields.map((field) => ({
+    name: field.name,
+    type: field.type
+  }));
+
+  const file = formatCsv(allData, fields);
+
+  return {
+    name: id,
+    columns,
+    file
+  }
+}
 
 export default {
   name: NAME,
@@ -58,5 +98,6 @@ export default {
   setAuthToken,
   connect,
   isConnected,
+  uploadFile,
   logout
 };

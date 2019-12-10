@@ -33,6 +33,7 @@ import {replaceMapControl} from './factories/map-control';
 import {replacePanelHeader} from './factories/panel-header';
 import ExportUrlModal from './components/sharing/export-url-modal';
 import ConnectBackendStorageModal from './components/backend-storage-modal/connect-backend-storage-modal';
+import SaveMapBackendStorageModal from './components/save-map-modal/save-map-backend-storage-modal';
 import {AUTH_TOKENS} from './constants/default-settings';
 import {getCloudProvider} from './cloud-providers';
 
@@ -302,6 +303,12 @@ class App extends Component {
     });
   };
 
+  _toggleSaveMapToBackendModal = () => {
+    this.setState({
+      saveMapToBackendModalOpen: !this.state.saveMapToBackendModalOpen
+    });
+  }
+
   _onExportToCloud = (providerName) => {
     this.props.dispatch(exportFileToCloud(providerName));
   };
@@ -367,6 +374,15 @@ class App extends Component {
             />
           }
 
+          {this._isBackendStorageEnabled() && rootNode &&
+            <SaveMapBackendStorageModal
+              isOpen={Boolean(this.state.saveMapToBackendModalOpen)}
+              onClose={this._toggleSaveMapToBackendModal}
+              parentSelector={() => findDOMNode(this.root)}
+              mapData={this.props.demo.keplerGl.map}
+            />
+          }
+
           <div
             style={{
               transition: 'margin 1s, height 1s',
@@ -390,6 +406,7 @@ class App extends Component {
                   height={height - (showBanner ? BannerHeight : 0)}
                   onSaveMap={this._isCloudStorageEnabled() && this._toggleCloudModal}
                   onBackendStorageSettingsClick={this._isBackendStorageEnabled() && this._toggleSettingsBackendModal}
+                  onSaveMapToBackendClick={this._isBackendStorageEnabled() && this._toggleSaveMapToBackendModal}
                 />
               )}
             </AutoSizer>
