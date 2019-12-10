@@ -45,14 +45,16 @@ const feature0 = {
     ]
   }
 };
+
 const feature0Parsed = {
   type: 'Feature',
   geometry: feature0.geometry,
   properties: {
     ...feature0.properties,
-    OBJ: '{"id":1}'
+    OBJ: {id: 1}
   }
 };
+
 const feature1 = {
   type: 'Feature',
   properties: {
@@ -78,14 +80,16 @@ const feature1 = {
     ]
   }
 };
+
 const feature1Parsed = {
   type: 'Feature',
   geometry: feature1.geometry,
   properties: {
     ...feature1.properties,
-    OBJ: '{"id":2}'
+    OBJ: {id: 2}
   }
 };
+
 const feature2 = {
   type: 'Feature',
   properties: {
@@ -115,7 +119,7 @@ const feature2Parsed = {
   geometry: feature2.geometry,
   properties: {
     ...feature2.properties,
-    OBJ: '{"id":3}'
+    OBJ: {id: 3}
   }
 };
 
@@ -144,20 +148,22 @@ const feature3 = {
     ]
   }
 };
+
 const feature3Parsed = {
   type: 'Feature',
   geometry: feature3.geometry,
   properties: {
     ...feature3.properties,
     TRIPS: null,
-    OBJ: '{"id":4}'
+    OBJ: {id: 4}
   }
 };
+
 const feature4 = {
   type: 'Feature',
   properties: {
     OBJECTID: 5,
-    ZIP_CODE: 74107,
+    ZIP_CODE: 94107,
     ID: 9409,
     RATE: 'c',
     OBJ: {
@@ -176,15 +182,17 @@ const feature4 = {
     ]
   }
 }
+
 const feature4Parsed = {
   type: 'Feature',
   geometry: feature4.geometry,
   properties: {
     ...feature4.properties,
     TRIPS: null,
-    OBJ: '{"id":5}'
+    OBJ: {id: 5}
   }
 };
+
 export const geojsonData = {
   type: 'FeatureCollection',
   features: [
@@ -242,7 +250,7 @@ export const fields = [
     analyzerType: 'STRING'
   },
   {
-    type: 'string',
+    type: 'geojson',
     name: 'OBJ',
     format: '',
     tableFieldIndex: 7,
@@ -256,51 +264,11 @@ export const datasetFields = fields.map(f => ({
 }));
 
 export const rows = [
-  [
-    feature0Parsed,
-    1,
-    94107,
-    94107,
-    11,
-    'a',
-    '{"id":1}'
-  ],
-  [
-    feature1Parsed,
-    2,
-    94105,
-    94105,
-    4,
-    'b',
-    '{"id":2}'
-  ],
-  [
-    feature2,
-    3,
-    94109,
-    94109,
-    20,
-    null,
-    '{"id":3}'
-  ],
-  [
-    feature3Parsed,
-    4,
-    94111,
-    94111,
-    null,
-    'c',
-    '{"id":4}'
-  ],
-  [
-    feature4Parsed,
-    5,
-    74107,
-    9409,
-    null,
-    'c',
-    '{"id":5}'
-  ]
+  [feature0Parsed, 1, 94107, 94107, 11, 'a', {id: 1}],
+  [feature1Parsed, 2, 94105, 94105, 4, 'b', {id: 2}],
+  [feature2Parsed, 3, 94109, 94109, 20, null, {id: 3}],
+  [feature3Parsed, 4, 94111, 94111, null, 'c', {id: 4}],
+  [feature4Parsed, 5, 94107, 9409, null, 'c', {id: 5}]
 ];
 
 // add index to properties
