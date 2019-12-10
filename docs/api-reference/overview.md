@@ -42,8 +42,8 @@ To start out with kepler.gl, you simply need to add the Kepler.gl UI component a
 [advanced-usage]: ./advanced-usage.md
 [components]: ./components/overview.md
 [reducers]: ./reducers/overview.md
-[actions-updaters]: ./actions/overview.md
-[processors]: ./processors/overview.md
+[actions-updaters]: ./actions/actions.md
+[processors]: ./processors/processors.md
 [schemas]: ./schemas/overview.md
 
 [replace-ui-component]: ./advanced-usages/replace-ui-component.md
@@ -52,7 +52,7 @@ To start out with kepler.gl, you simply need to add the Kepler.gl UI component a
 [using-updaters]: ./advanced-usages/using-updaters.md
 [forward-actions]: ./advanced-usages/forward-actions.md
 [saving-loading-w-schema]: ./advanced-usages/saving-loading-w-schema.md
-
+[custom-mapbox-host]: ./advanced-usages/custom-mapbox-host.md
 [component]: ./ecosystem.md#component
 [reducer-and-forward-dispatcher]: ./ecosystem.md#reducer-and-forward-dispatcher
 [actions-and-updaters]: ./ecosystem.md#actions-and-updaters

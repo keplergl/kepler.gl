@@ -40,6 +40,7 @@ import {getCloudProvider} from './cloud-providers';
 import {
   exportFileToCloud,
   loadRemoteMap,
+  loadCloudMap,
   loadSampleConfigurations,
   setCloudLoginSuccess
 } from './actions';
@@ -106,20 +107,15 @@ class App extends Component {
 
   componentDidMount() {
     // if we pass an id as part of the url
-    // we ry to fetch along map configurations
+    // we try to fetch along map configurations
     const {
       params: {id, provider} = {},
       location: {query = {}} = {}
     } = this.props;
 
     if (provider) {
-      const providerHandler = getCloudProvider(provider);
-
-      if (providerHandler) {
-        this.props.dispatch(providerHandler.loadMap(query));
-
+        this.props.dispatch(loadCloudMap(query, provider));
         return;
-      }
     }
 
     // Load sample using its id
@@ -181,7 +177,7 @@ class App extends Component {
   _loadSampleData() {
     this._loadPointData();
     // this._loadGeojsonData();
-    this._loadTripGeoJson();
+    // this._loadTripGeoJson();
     // this._loadIconData();
     // this._loadGeojsonData();
     // this._loadH3HexagonData();

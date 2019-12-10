@@ -349,6 +349,32 @@ export function setPushingFile(isLoading, metadata) {
 }
 
 /**
+ * This method will load a kepler config from a cloud platform
+ * @param {Object} queryParams
+ * @param {string} providerName
+ * @returns {Function}
+ */
+export function loadCloudMap(queryParams, providerName) {
+  return async (dispatch) => {
+    if (!providerName) {
+      throw new Error('No cloud provider identified')
+    }
+    dispatch(setLoadingMapStatus(true));
+
+    const cloudProvider = getCloudProvider(providerName);
+    cloudProvider.loadMap(queryParams)
+      .then(map => {
+        dispatch(loadRemoteResourceSuccess(map.datasets, map.vis.config, map.options))
+      })
+      .catch(error => {
+        const {target = {}} = error;
+        const {status, responseText = 'Error loading map'} = target;
+        dispatch(loadRemoteResourceError({status, message: responseText}, providerName));
+      });
+  }
+}
+
+/**
  * This method will export the current kepler config file to the choosen cloud platform
  * @param data
  * @param providerName
@@ -385,7 +411,7 @@ export function exportFileToCloud(providerName) {
     .then(
       response => {
         if (cloudProvider.shareFile) {
-          const responseUrl = (cloudProvider.getMapPermalink)
+          const responseUrl = cloudProvider.getMapPermalink
             ? cloudProvider.getMapPermalink(response.url, false)
             : getMapPermalink(response.url, false)
           dispatch(push(responseUrl));

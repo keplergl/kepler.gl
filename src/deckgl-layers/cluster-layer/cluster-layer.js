@@ -104,7 +104,7 @@ export default class ClusterLayer extends CompositeLayer {
 
   needsReclusterPoints(oldProps, props) {
     return (
-      Math.round(oldProps.zoom) !== Math.round(props.zoom)
+      Math.round(oldProps.mapState.zoom) !== Math.round(props.mapState.zoom)
     );
   }
 
@@ -125,20 +125,16 @@ export default class ClusterLayer extends CompositeLayer {
 
   getClusters() {
     const {geoJSON} = this.state;
-    const {clusterRadius} = this.props;
-    const {
-      viewport,
-      viewport: {longitude, latitude, height, width}
-    } = this.context;
-
+    const {clusterRadius, mapState} = this.props;
+    const {longitude, latitude, zoom, width, height} = mapState;
     // zoom needs to be an integer for the different map utils. Also helps with cache key.
-    const zoom = Math.round(viewport.zoom);
-    const bbox = geoViewport.bounds([longitude, latitude], zoom, [
+    const zoomRound = Math.round(zoom);
+    const bbox = geoViewport.bounds([longitude, latitude], zoomRound, [
       width,
       height
     ]);
 
-    const clusters = clustersAtZoom({bbox, clusterRadius, geoJSON, zoom});
+    const clusters = clustersAtZoom({bbox, clusterRadius, geoJSON, zoom: zoomRound});
 
     this.setState({clusters});
   }

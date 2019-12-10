@@ -1052,6 +1052,7 @@ export const ChannelByValueSelector = ({
 export const AggrScaleSelector = ({channel, layer, onChange}) => {
   const {scale, key} = channel;
   const scaleOptions = layer.getScaleOptions(key);
+
   return Array.isArray(scaleOptions) && scaleOptions.length > 1 ? (
     <DimensionScaleSelector
       label={`${key} Scale`}
