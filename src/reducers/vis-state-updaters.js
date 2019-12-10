@@ -42,6 +42,10 @@ import {
   LIMITED_FILTER_EFFECT_PROPS,
   updateFilterDataId
 } from 'utils/filter-utils';
+import {
+  setFilterGpuMode,
+  assignGpuChannel
+} from 'utils/gpu-filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
 import {set} from 'utils/utils';
 
@@ -561,6 +565,12 @@ export function setFilterUpdater(state, action) {
       }
 
       newFilter = updatedFilter;
+
+      if (newFilter.gpu) {
+        newFilter = setFilterGpuMode(newFilter, state.filters);
+        newFilter = assignGpuChannel(newFilter, state.filters);
+      }
+
       newState = set(['datasets', datasetId], newDataset, state);
 
       // only filter the current dataset

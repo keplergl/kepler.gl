@@ -60,7 +60,6 @@ test('#GeojsonLayer -> constructor', t => {
   t.end();
 });
 
-/*
 test('#GeojsonLayer -> formatLayerData', t => {
   const filteredIndex = [0, 2, 4];
 
