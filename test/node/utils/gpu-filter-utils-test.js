@@ -19,29 +19,33 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {resetFilterGpuMode, assignGpuChannel, assignGpuChannels} from 'utils/gpu-filter-utils';
+import {
+  resetFilterGpuMode,
+  assignGpuChannel,
+  assignGpuChannels
+} from 'utils/gpu-filter-utils';
 
 test('gpuFilterUtils -> resetFilterGpuMode', t => {
   const testFilters = [
-    {dataId: 'smoothie', gpu: true},
-    {dataId: 'smoothie', gpu: true},
-    {dataId: 'smoothie', gpu: false},
-    {dataId: 'smoothie', gpu: true},
-    {dataId: 'smoothie', gpu: true},
-    {dataId: 'smoothie', gpu: true},
-    {dataId: 'milkshake', gpu: true},
-    {dataId: 'milkshake', gpu: false}
+    {id: '1', dataId: ['smoothie'], gpu: true},
+    {id: '2', dataId: ['smoothie'], gpu: true},
+    {id: '3', dataId: ['smoothie'], gpu: false},
+    {id: '4', dataId: ['smoothie'], gpu: true},
+    {id: '5', dataId: ['smoothie'], gpu: true},
+    {id: '6', dataId: ['smoothie'], gpu: true},
+    {id: '7', dataId: ['milkshake'], gpu: true},
+    {id: '8', dataId: ['milkshake'], gpu: false}
   ];
 
   const expectedFilters = [
-    {dataId: 'smoothie', gpu: true},
-    {dataId: 'smoothie', gpu: true},
-    {dataId: 'smoothie', gpu: false},
-    {dataId: 'smoothie', gpu: true},
-    {dataId: 'smoothie', gpu: true},
-    {dataId: 'smoothie', gpu: false},
-    {dataId: 'milkshake', gpu: true},
-    {dataId: 'milkshake', gpu: false}
+    {id: '1', dataId: ['smoothie'], gpu: true},
+    {id: '2', dataId: ['smoothie'], gpu: true},
+    {id: '3', dataId: ['smoothie'], gpu: false},
+    {id: '4', dataId: ['smoothie'], gpu: true},
+    {id: '5', dataId: ['smoothie'], gpu: true},
+    {id: '6', dataId: ['smoothie'], gpu: false},
+    {id: '7', dataId: ['milkshake'], gpu: true},
+    {id: '8', dataId: ['milkshake'], gpu: false}
   ];
 
   const result = resetFilterGpuMode(testFilters);
@@ -51,40 +55,74 @@ test('gpuFilterUtils -> resetFilterGpuMode', t => {
 });
 
 test('gpuFilterUtils -> assignGpuChannel', t => {
-  const testCases = [{
-    gpuFilter: {dataId: 'a', gpu: true},
-    filters: [
-      {dataId: 'b', gpu: true, gpuChannel: 0},
-      {dataId: 'a', gpu: true, gpuChannel: 0}
-    ],
-    result: {dataId: 'a', gpu: true, gpuChannel: 1}
-  }, {
-    gpuFilter: {dataId: 'a', gpu: true},
-    filters: [
-      {dataId: 'b', gpu: true, gpuChannel: 0},
-      {dataId: 'a', gpu: true, gpuChannel: 1}
-    ],
-    result: {dataId: 'a', gpu: true, gpuChannel: 0}
-  }, {
-    gpuFilter: {dataId: 'a', gpu: true},
-    filters: [
-      {dataId: 'b', gpu: true, gpuChannel: 0},
-      {dataId: 'a', gpu: true, gpuChannel: 3},
-      {dataId: 'a', gpu: true, gpuChannel: 0},
-      {dataId: 'a', gpu: true, gpuChannel: 2}
-    ],
-    result: {dataId: 'a', gpu: true, gpuChannel: 1}
-  }, {
-    gpuFilter: {dataId: 'a', gpu: true},
-    filters: [
-      {dataId: 'b', gpu: true, gpuChannel: 0},
-      {dataId: 'a', gpu: true, gpuChannel: 3},
-      {dataId: 'a', gpu: true, gpuChannel: 2},
-      {dataId: 'a', gpu: true, gpuChannel: 0},
-      {dataId: 'a', gpu: true, gpuChannel: 1}
-    ],
-    result: {dataId: 'a', gpu: true}
-  }];
+  const testCases = [
+    {
+      gpuFilter: {id: '3', dataId: ['a'], gpu: true},
+      filters: [
+        {id: '1', dataId: ['b'], gpu: true, gpuChannel: [0]},
+        {id: '2', dataId: ['a'], gpu: true, gpuChannel: [0]}
+      ],
+      result: {
+        id: '3',
+        dataId: ['a'],
+        gpu: true,
+        gpuChannel: [1]
+      }
+    },
+    {
+      gpuFilter: {id: '3', dataId: ['a'], gpu: true, gpuChannel: [1]},
+      filters: [
+        {id: '3', dataId: ['a'], gpu: true, gpuChannel: [1]},
+        {id: '1', dataId: ['b'], gpu: true, gpuChannel: [0]},
+        {id: '2', dataId: ['a'], gpu: true, gpuChannel: [0]}
+      ],
+      result: {
+        id: '3',
+        dataId: ['a'],
+        gpu: true,
+        gpuChannel: [1]
+      }
+    },
+    {
+      gpuFilter: {id: '3', dataId: ['a'], gpu: true},
+      filters: [
+        {id: '1', dataId: ['b'], gpu: true, gpuChannel: [0]},
+        {id: '2', dataId: ['a'], gpu: true, gpuChannel: [1]}
+      ],
+      result: {id: '3', dataId: ['a'], gpu: true, gpuChannel: [0]}
+    },
+    {
+      gpuFilter: {id: '5', dataId: ['a', 'b'], gpu: true},
+      filters: [
+        {id: '1', dataId: ['b'], gpu: true, gpuChannel: [0]},
+        {id: '2', dataId: ['a'], gpu: true, gpuChannel: [3]},
+        {id: '3', dataId: ['a'], gpu: true, gpuChannel: [0]},
+        {id: '4', dataId: ['a'], gpu: true, gpuChannel: [2]}
+      ],
+      result: {id: '5', dataId: ['a', 'b'], gpu: true, gpuChannel: [1, 1]}
+    },
+    {
+      gpuFilter: {id: '5', dataId: ['a', 'b'], gpu: true, gpuChannel: [1]},
+      filters: [
+        {id: '1', dataId: ['b'], gpu: true, gpuChannel: [0]},
+        {id: '2', dataId: ['a'], gpu: true, gpuChannel: [3]},
+        {id: '3', dataId: ['a', 'b'], gpu: true, gpuChannel: [0, 2]},
+        {id: '4', dataId: ['a'], gpu: true, gpuChannel: [2]}
+      ],
+      result: {id: '5', dataId: ['a', 'b'], gpu: true, gpuChannel: [1, 1]}
+    },
+    {
+      gpuFilter: {id: '6', dataId: ['a'], gpu: true},
+      filters: [
+        {id: '1', dataId: ['b'], gpu: true, gpuChannel: [0]},
+        {id: '2', dataId: ['a'], gpu: true, gpuChannel: [3]},
+        {id: '3', dataId: ['a'], gpu: true, gpuChannel: [2]},
+        {id: '4', dataId: ['a'], gpu: true, gpuChannel: [0]},
+        {id: '5', dataId: ['a'], gpu: true, gpuChannel: [1]}
+      ],
+      result: {id: '6', dataId: ['a'], gpu: false}
+    }
+  ];
 
   testCases.forEach(tc => {
     t.deepEqual(
@@ -98,39 +136,56 @@ test('gpuFilterUtils -> assignGpuChannel', t => {
 });
 
 test('gpuFilterUtils -> assignGpuChannels', t => {
-  const testCases = [{
-    filters: [
-      {dataId: 'a', gpu: true, gpuChannel: 1},
-      {dataId: 'a', gpu: true},
-      {dataId: 'b', gpu: true},
-      {dataId: 'b', gpu: false}
-    ],
-    result: [
-      {dataId: 'a', gpu: true, gpuChannel: 1},
-      {dataId: 'a', gpu: true, gpuChannel: 0},
-      {dataId: 'b', gpu: true, gpuChannel: 0},
-      {dataId: 'b', gpu: false}
-    ]
-  }, {
-    filters: [
-      {dataId: 'a', gpu: true, gpuChannel: 1},
-      {dataId: 'b', gpu: true, gpuChannel: 1},
-      {dataId: 'a', gpu: true, gpuChannel: 2},
-      {dataId: 'b', gpu: false},
-      {dataId: 'a', gpu: true},
-      {dataId: 'b', gpu: true},
-      {dataId: 'b', gpu: true, gpuChannel: 0}
-    ],
-    result: [
-      {dataId: 'a', gpu: true, gpuChannel: 1},
-      {dataId: 'b', gpu: true, gpuChannel: 1},
-      {dataId: 'a', gpu: true, gpuChannel: 2},
-      {dataId: 'b', gpu: false},
-      {dataId: 'a', gpu: true, gpuChannel: 0},
-      {dataId: 'b', gpu: true, gpuChannel: 2},
-      {dataId: 'b', gpu: true, gpuChannel: 0}
-    ]
-  }];
+  const testCases = [
+    {
+      filters: [
+        {id: '1', dataId: ['a'], gpu: true, gpuChannel: [1]},
+        {id: '2', dataId: ['a'], gpu: true},
+        {id: '3', dataId: ['b'], gpu: true},
+        {id: '4', dataId: ['b'], gpu: false}
+      ],
+      result: [
+        {id: '1', dataId: ['a'], gpu: true, gpuChannel: [1]},
+        {id: '2', dataId: ['a'], gpu: true, gpuChannel: [0]},
+        {id: '3', dataId: ['b'], gpu: true, gpuChannel: [0]},
+        {id: '4', dataId: ['b'], gpu: false}
+      ]
+    },
+    {
+      filters: [
+        {id: '1', dataId: ['a'], gpu: true, gpuChannel: [1]},
+        {id: '2', dataId: ['b'], gpu: true, gpuChannel: [1]},
+        {id: '3', dataId: ['a'], gpu: true, gpuChannel: [2]},
+        {id: '4', dataId: ['b'], gpu: false},
+        {id: '5', dataId: ['a'], gpu: true},
+        {id: '6', dataId: ['b'], gpu: true},
+        {id: '7', dataId: ['b'], gpu: true, gpuChannel: [0]}
+      ],
+      result: [
+        {id: '1', dataId: ['a'], gpu: true, gpuChannel: [1]},
+        {id: '2', dataId: ['b'], gpu: true, gpuChannel: [1]},
+        {id: '3', dataId: ['a'], gpu: true, gpuChannel: [2]},
+        {id: '4', dataId: ['b'], gpu: false},
+        {id: '5', dataId: ['a'], gpu: true, gpuChannel: [0]},
+        {id: '6', dataId: ['b'], gpu: true, gpuChannel: [2]},
+        {id: '7', dataId: ['b'], gpu: true, gpuChannel: [0]}
+      ]
+    },
+    {
+      filters: [
+        {id: '1', dataId: ['a', 'b'], gpu: true, gpuChannel: [1, 0]},
+        {id: '2', dataId: ['a'], gpu: true, gpuChannel: [1]},
+        {id: '3', dataId: ['b', 'a'], gpu: true},
+        {id: '4', dataId: ['b'], gpu: true}
+      ],
+      result: [
+        {id: '1', dataId: ['a', 'b'], gpu: true, gpuChannel: [0, 0]},
+        {id: '2', dataId: ['a'], gpu: true, gpuChannel: [1]},
+        {id: '3', dataId: ['b', 'a'], gpu: true, gpuChannel: [1, 2]},
+        {id: '4', dataId: ['b'], gpu: true, gpuChannel: [2]}
+      ]
+    }
+  ];
 
   testCases.forEach(tc => {
     t.deepEqual(

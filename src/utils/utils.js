@@ -56,7 +56,9 @@ export function isPlainObject(obj) {
  * @returns {string}
  */
 export function capitalizeFirstLetter(str) {
-  return typeof str === 'string' ? str.charAt(0).toUpperCase() + str.slice(1) : str;
+  return typeof str === 'string'
+    ? str.charAt(0).toUpperCase() + str.slice(1)
+    : str;
 }
 
 /**
@@ -65,13 +67,13 @@ export function capitalizeFirstLetter(str) {
  * @param {string} str
  * @returns {string}
  */
-export function camelToTitle(str){
-  const breakWord = str.replace( /([A-Z])/g, " $1" );
+export function camelToTitle(str) {
+  const breakWord = str.replace(/([A-Z])/g, ' $1');
   return capitalizeFirstLetter(breakWord);
 }
 
 export function getHTMLMapModeTileUrl(mode) {
-  return `https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/map-${mode.toLowerCase()}-mode.png`
+  return `https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/map-${mode.toLowerCase()}-mode.png`;
 }
 
 /**
@@ -82,24 +84,26 @@ export function getHTMLMapModeTileUrl(mode) {
  * @returns {Array|Object}
  */
 const insertValue = (obj, key, value) => {
-  if (Array.isArray(obj) && typeof(key) === 'number') {
-  	return [...obj.slice(0, key), value, ...obj.slice(key + 1, obj.length)]
+  if (Array.isArray(obj) && typeof key === 'number') {
+    return [...obj.slice(0, key), value, ...obj.slice(key + 1, obj.length)];
   }
 
   return {...obj, [key]: value};
-}
+};
 
 const setPath = ([key, ...next], value, obj) => {
-  if (!isPlainObject(obj)) {
-    return obj
+  if (!isPlainObject(obj) && !Array.isArray(obj)) {
+    return obj;
   }
 
   if (next.length === 0) {
-    return insertValue(obj, key, value)
+    return insertValue(obj, key, value);
   }
 
   return insertValue(
-    obj, key, setPath(next, value, obj.hasOwnProperty(key) ? obj[key] : {})
+    obj,
+    key,
+    setPath(next, value, obj.hasOwnProperty(key) ? obj[key] : {})
   );
 };
 
@@ -110,4 +114,8 @@ const setPath = ([key, ...next], value, obj) => {
  * @param {Object} obj
  * @returns {Object}
  */
-export const set = (path, value, obj) => obj === null ? obj : setPath(path, value, obj);
+export const set = (path, value, obj) =>
+  obj === null ? obj : setPath(path, value, obj);
+
+export const arrayfy = val =>
+val !== undefined && val !== null ? (Array.isArray(val) ? val : [val]) : [];

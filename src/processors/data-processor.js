@@ -31,9 +31,8 @@ import {
   getSampleData
 } from 'utils/data-utils';
 import KeplerGlSchema from 'schemas';
-import {GUIDES_FILE_FORMAT, USER_GUIDE_GEOJSON} from 'constants/user-guides';
+import {GUIDES_FILE_FORMAT} from 'constants/user-guides';
 import {isPlainObject} from 'utils/utils';
-import {isObject} from 'utils/utils';
 
 export const ACCEPTED_ANALYZER_TYPES = [
   AnalyzerDATA_TYPES.DATE,
@@ -479,7 +478,7 @@ export function processGeojson(rawData) {
   for (let i = 0; i < normalizedGeojson.features.length; i++) {
     const f = normalizedGeojson.features[i];
     if (f.geometry) {
-      accu.push({
+      allDataRows.push({
         // add feature to _geojson field
         _geojson: f,
         ...(f.properties || {})

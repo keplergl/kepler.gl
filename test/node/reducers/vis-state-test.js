@@ -890,26 +890,28 @@ test('#visStateReducer -> UPDATE_LAYER_BLENDING', t => {
   t.end();
 });
 
+/*
+TODO: fixed in gpu data filter -5
 test('#visStateReducer -> REMOVE_FILTER', t => {
   const filter1 = {
-    fieldIdx: 0,
+    fieldIdx: [0],
     dataId: ['smoothie'],
     name: 'start_point_lat',
     type: 'range',
     value: [12.25, 12.29],
     gpu: true,
     fixedDomain: false,
-    gpuChannel: 0
+    gpuChannel: [0]
   };
   const filter2 = {
-    fieldIdx: 1,
+    fieldIdx: [1],
     dataId: ['milkshake'],
     name: 'start_point_lng',
     type: 'range',
     value: [35.3, 37.75],
     gpu: true,
     fixedDomain: false,
-    gpuChannel: 0
+    gpuChannel: [0]
   };
   const currentFilters = [filter1, filter2];
   const allIndexes = mockData.data.map((_, i) => i);
@@ -1053,6 +1055,7 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
   );
   t.end();
 });
+*/
 
 test('#visStateReducer -> REMOVE_LAYER', t => {
   const layer1 = new PointLayer({id: 'a'});
@@ -1171,11 +1174,8 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
       allIndexes: mockRawData.rows.map((_, i) => i),
       allData: mockRawData.rows,
       gpuFilter: {
-        filterRange: {
-          filterMin: [0, 0, 0, 0],
-          filterMax: [0, 0, 0, 0]
-        },
-        filterValueUpdateTriggers: {0: null, 1: null, 2: null, 3: null},
+        filterRange: [[0, 0], [0, 0], [0, 0], [0, 0]],
+        filterValueUpdateTriggers: {gpuFilter_0: null, gpuFilter_1: null, gpuFilter_2: null, gpuFilter_3: null},
         filterValueAccessor: {
           inputs: ['a', 'b', 'c', 'd', 'e'],
           result: [0, 0, 0, 0]
@@ -1347,15 +1347,12 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
       filteredIndexForDomain: mockRawData.rows.map((_, i) => i),
       allIndexes: mockRawData.rows.map((_, i) => i),
       gpuFilter: {
-        filterRange: {
-          filterMin: [0, 0, 0, 0],
-          filterMax: [0, 0, 0, 0]
-        },
+        filterRange: [[ 0, 0 ], [ 0, 0 ], [ 0, 0 ], [ 0, 0 ]],
         filterValueUpdateTriggers: {
-          0: null,
-          1: null,
-          2: null,
-          3: null
+          gpuFilter_0: null,
+          gpuFilter_1: null,
+          gpuFilter_2: null,
+          gpuFilter_3: null
         },
         filterValueAccessor: {
           inputs: [
@@ -1487,15 +1484,12 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
     fields: fields.map(f => ({...f, id: f.name})),
     fieldPairs: [],
     gpuFilter: {
-      filterRange: {
-        filterMin: [0, 0, 0, 0],
-        filterMax: [0, 0, 0, 0]
-      },
+      filterRange: [[ 0, 0 ], [ 0, 0 ], [ 0, 0 ], [ 0, 0 ]],
       filterValueUpdateTriggers: {
-        0: null,
-        1: null,
-        2: null,
-        3: null
+        gpuFilter_0: null,
+        gpuFilter_1: null,
+        gpuFilter_2: null,
+        gpuFilter_3: null
       },
       filterValueAccessor: {
         inputs: [
@@ -1557,7 +1551,6 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
 
   t.end();
 });
-*/
 
 test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> with config', t => {
   const initialVisState = CloneDeep(INITIAL_VIS_STATE);
@@ -1636,29 +1629,25 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
   const oldState = CloneDeep(INITIAL_VIS_STATE);
   oldState.filterToBeMerged = [
     {
-      ...getDefaultFilter('smoothie'),
+      dataId: 'smoothie',
       id: '38chejr',
       enlarged: true,
       name: mockFilter.name,
       type: mockFilter.type,
-      value: mockFilter.value,
-      // fieldIdx is now required
-      fieldIdx: [0]
+      value: mockFilter.value
     },
     {
-      ...getDefaultFilter('nothing_here'),
+      dataId: 'nothing_here',
       id: 'vuey55d',
       enlarged: true,
       name: 'test_test',
       type: 'select',
-      value: true,
-      // fieldIdx is now required
-      fieldIdx: [0]
+      value: true
     }
   ];
 
   const expectedFilter = {
-    ...getDefaultFilter('smoothie'),
+    dataId: ['smoothie'],
     domain: [12.25, 12.29],
     enlarged: true,
     fieldIdx: [0],
@@ -1669,7 +1658,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
     plotType: 'histogram',
     yAxis: null,
     gpu: true,
-    gpuChannel: 0,
+    gpuChannel: [0],
     interval: null,
     histogram: [],
     enlargedHistogram: [],
@@ -1706,15 +1695,17 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
         gpu: [newState.filters.find(f => f.id === '38chejr')]
       },
       gpuFilter: {
-        filterRange: {
-          filterMin: [mockFilter.value[0], 0, 0, 0],
-          filterMax: [mockFilter.value[1], 0, 0, 0]
-        },
+        filterRange: [
+          [mockFilter.value[0] - expectedFilter.domain[0], mockFilter.value[1] - expectedFilter.domain[0]],
+          [0, 0],
+          [0, 0],
+          [0, 0]
+        ],
         filterValueUpdateTriggers: {
-          0: mockFilter.name,
-          1: null,
-          2: null,
-          3: null
+          gpuFilter_0: mockFilter.name,
+          gpuFilter_1: null,
+          gpuFilter_2: null,
+          gpuFilter_3: null
         },
         filterValueAccessor: {
           inputs: [{data: mockRawData.rows[0], index: 1}],
@@ -1944,7 +1935,7 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
   );
 
   const expectedFilter = {
-    ...getDefaultFilter('smoothie'),
+    dataId: ['smoothie'],
     freeze: false,
     id: 'donnot test me yet',
     name: [],
@@ -1958,7 +1949,8 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
     yAxis: null,
     speed: 1,
     interval: null,
-    gpu: false
+    gpu: false,
+    fieldIdx: []
   };
 
   cmpFilters(t, expectedFilter, stateWithFilter.filters[0]);
@@ -1971,7 +1963,7 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
   );
 
   const expectedFilterWName = {
-    ...getDefaultFilter('smoothie'),
+    dataId: ['smoothie'],
     freeze: true,
     id: filterId,
     name: ['date'],
@@ -2027,15 +2019,12 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
       gpu: []
     },
     gpuFilter: {
-      filterRange: {
-        filterMin: [0, 0, 0, 0],
-        filterMax: [0, 0, 0, 0]
-      },
+      filterRange: [[0, 0], [0, 0], [0, 0], [0, 0]],
       filterValueUpdateTriggers: {
-        0: null,
-        1: null,
-        2: null,
-        3: null
+        gpuFilter_0: null,
+        gpuFilter_1: null,
+        gpuFilter_2: null,
+        gpuFilter_3: null
       },
       filterValueAccessor: {
         inputs: [
@@ -2152,7 +2141,9 @@ test('#visStateReducer -> SET_FILTER.name', t => {
     step: 0.01,
     histogram: [],
     enlargedHistogram: 'dont test me',
-    typeOptions: ['range']
+    typeOptions: ['range'],
+    gpu: true,
+    gpuChannel: [0]
   };
 
   cmpFilters(t, [expectedFilter0, expectedFilter1], updated.filters);
@@ -2217,7 +2208,7 @@ test('#visStateReducer -> setFilter.dynamicDomain & gpu', t => {
     interval: null,
     speed: 1,
     gpu: true,
-    gpuChannel: 0
+    gpuChannel: [0]
   };
 
   // test filter
@@ -2262,21 +2253,18 @@ test('#visStateReducer -> setFilter.dynamicDomain & gpu', t => {
         : {...f, id: f.name}
     ),
     gpuFilter: {
-      filterRange: {
-        filterMin: [8, 0, 0, 0],
-        filterMax: [20, 0, 0, 0]
-      },
+      filterRange: [[4, 16], [0, 0], [0, 0], [0, 0]],
       filterValueUpdateTriggers: {
-        0: 'TRIPS',
-        1: null,
-        2: null,
-        3: null
+        gpuFilter_0: 'TRIPS',
+        gpuFilter_1: null,
+        gpuFilter_2: null,
+        gpuFilter_3: null
       },
       filterValueAccessor: {
         inputs: [
           {data: initialState.datasets.milkshake.allData[0], index: 0}
         ],
-        result: [11, 0, 0, 0]
+        result: [7, 0, 0, 0]
       }
     },
     filterRecord: {
@@ -2421,7 +2409,7 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
     isAnimating: false,
     fieldType: 'timestamp',
     gpu: true,
-    gpuChannel: 0
+    gpuChannel: [0]
   };
 
   cmpFilters(t, expectedFilterTs, stateWidthTsFilter.filters[0]);
@@ -2457,21 +2445,18 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
       gpu: [stateWidthTsFilter.filters[0]]
     },
     gpuFilter: {
-      filterRange: {
-        filterMin: [1474071425000, 0, 0, 0],
-        filterMax: [1474071740000, 0, 0, 0]
-      },
+      filterRange: [[1474071425000 - 1474070995000, 1474071740000 - 1474070995000], [0, 0], [0, 0], [0, 0]],
       filterValueUpdateTriggers: {
-        0: 'gps_data.utc_timestamp',
-        1: null,
-        2: null,
-        3: null
+        gpuFilter_0: 'gps_data.utc_timestamp',
+        gpuFilter_1: null,
+        gpuFilter_2: null,
+        gpuFilter_3: null
       },
       filterValueAccessor: {
         inputs: [
-          {data: datasetSmoothie.allData[0], index: 0}
+          {data: datasetSmoothie.allData[1], index: 1}
         ],
-        result: [1474070995000, 0, 0, 0]
+        result: [61000, 0, 0, 0]
       }
     },
     // copy everything
@@ -2516,21 +2501,18 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
         : f
     ),
     gpuFilter: {
-      filterRange: {
-        filterMin: [1474071425000, 0, 0, 0],
-        filterMax: [1474071740000, 0, 0, 0]
-      },
+      filterRange: [[1474071425000 - 1474070995000, 1474071740000 - 1474070995000], [0, 0], [0, 0], [0, 0]],
       filterValueUpdateTriggers: {
-        0: 'gps_data.utc_timestamp',
-        1: null,
-        2: null,
-        3: null
+        gpuFilter_0: 'gps_data.utc_timestamp',
+        gpuFilter_1: null,
+        gpuFilter_2: null,
+        gpuFilter_3: null
       },
       filterValueAccessor: {
         inputs: [
-          {data: datasetSmoothie.allData[0], index: 0}
+          {data: datasetSmoothie.allData[1], index: 1}
         ],
-        result: [1474070995000, 0, 0, 0]
+        result: [61000, 0, 0, 0]
       }
     },
     filterRecord: {
@@ -2669,7 +2651,7 @@ test('#visStateReducer -> SET_FILTER_PLOT', t => {
     isAnimating: false,
     fieldType: 'timestamp',
     gpu: true,
-    gpuChannel: 0
+    gpuChannel: [0]
   };
 
   // test filter

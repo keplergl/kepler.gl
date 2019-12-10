@@ -24,12 +24,8 @@ import keyMirror from 'keymirror';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
 import {maybeToDate, notNullorUndefined, unique} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
-import {generateHashId, set} from './utils';
-import {
-  setFilterGpuMode,
-  assignGpuChannel,
-  getGpuFilterProps
-} from './gpu-filter-utils';
+import {generateHashId, set, arrayfy} from './utils';
+import {getGpuFilterProps} from './gpu-filter-utils';
 
 export const TimestampStepMap = [
   {max: 1, step: 0.05},
@@ -236,7 +232,7 @@ function validateFilterYAxis(filter, dataset) {
  * @returns {Object} default filter
  */
 export function getFilterProps(allData, field) {
-  const filterProp = {
+  const filterProps = {
     ...getFieldDomain(allData, field),
     fieldType: field.type
   };
@@ -323,51 +319,52 @@ export function updateFilterDataId(dataId) {
   return getDefaultFilter(dataId);
 }
 
-/**
- *
- * @param {Object} filter
- * @param {Number} idx
- * @param {Object} dataset
- * @param {Array<Object>} filters
- * @returns {{newField: Object, newFilter: Object}}
- */
-export function updateFilterField(filter, idx, dataset, filters) {
-  const {name} = filter;
-  const {fields, allData} = dataset;
-  // find the field
-  const fieldIdx = fields.findIndex(f => f.name === name);
+// /**
+//  *
+//  * @param {Object} filter
+//  * @param {Number} idx
+//  * @param {Object} dataset
+//  * @param {Array<Object>} filters
+//  * @returns {{newField: Object, newFilter: Object}}
+//  */
+// export function updateFilterField(filter, idx, dataset, filters) {
+//   const {name} = filter;
+//   const {fields, allData} = dataset;
+//   // find the field
+//   const fieldIdx = fields.findIndex(f => f.name === name);
 
-  let newField = fields[fieldIdx];
+//   let newField = fields[fieldIdx];
 
-  if (!newField.filterProp) {
-    // get filter domain from field
-    // save filterProps: {domain, steps, value} to field, avoid recalculate
-    newField = set(['filterProp'], getFilterProps(allData, newField), newField);
-  }
+//   if (!newField.filterProp) {
+//     // get filter domain from field
+//     // save filterProps: {domain, steps, value} to field, avoid recalculate
+//     newField = set(['filterProp'], getFilterProps(allData, newField), newField);
+//   }
 
-  let newFilter = {
-    ...filter,
-    ...newField.filterProp,
-    name: newField.name,
-    // can't edit dataId once name is selected
-    freeze: true,
-    fieldIdx
-  };
+//   let newFilter = {
+//     ...filter,
+//     ...newField.filterProp,
+//     name: newField.name,
+//     // can't edit dataId once name is selected
+//     freeze: true,
+//     fieldIdx
+//   };
 
-  const enlargedFilterIdx = filters.findIndex(f => f.enlarged);
+//   const enlargedFilterIdx = filters.findIndex(f => f.enlarged);
 
-  if (enlargedFilterIdx > -1 && enlargedFilterIdx !== idx) {
-    // there should be only one enlarged filter
-    newFilter.enlarged = false;
-  }
+//   if (enlargedFilterIdx > -1 && enlargedFilterIdx !== idx) {
+//     // there should be only one enlarged filter
+//     newFilter.enlarged = false;
+//   }
 
-  if (newFilter.gpu) {
-    newFilter = setFilterGpuMode(newFilter, filters);
-    newFilter = assignGpuChannel(newFilter, filters);
-  }
+//   if (newFilter.gpu) {
+//     newFilter = setFilterGpuMode(newFilter, filters);
+//     newFilter = assignGpuChannel(newFilter, filters);
+//   }
 
-  return {newField, newFilter};
-}
+//   return {newField, newFilter};
+// }
+
 /**
  * Filter data based on an array of filters
  *
@@ -408,7 +405,7 @@ export function filterDataset(dataset, filters, opt = {}) {
     const dynamicDomainFilters = shouldCalDomain ? filterRecord.dynamicDomain : null;
     const cpuFilters = shouldCalIndex ? (opt.cpuOnly ? filters : filterRecord.cpu) : null;
     const filtersToFields = filters.reduce((acc, filter) => {
-      const fieldIndex = getDatasetFieldIndexForFilter(dataset, filter);
+      const fieldIndex = getDatasetFieldIndexForFilter(dataset.id, filter);
 
       return {
         ...acc,
@@ -487,7 +484,8 @@ export function getFilterRecord(dataId, filters) {
   };
 
   filters.forEach(f => {
-    if (f.dataId === dataId && f.fieldIdx > -1 && f.value !== null) {
+    if (getDatasetFieldIndexForFilter(dataId, f) > -1 && f.value !== null) {
+      // console.log(f.name)
       (f.fixedDomain
         ? filterRecord.fixedDomain
         : filterRecord.dynamicDomain
@@ -895,6 +893,7 @@ export function applyFiltersToDatasets(datasetIds, datasets, filters) {
  * @param {Object} dataset - dataset the field belongs to
  * @param {string} fieldName - field.name
  * @param {Number} filterDatasetIndex - field.name
+ * @param {Number} filters - current
  * @param {Object} option
  * @return {Object} {filter, datasets}
  */
@@ -916,20 +915,18 @@ export function applyFilterFieldName(
     return {filter: null, dataset};
   }
 
-  const newFilter = {
-    ...filter,
-    // TODO, since we allow to add multiple fields to a filter we can no longer freeze the filter
-    freeze: true
-  };
+  // let newFilter = {...filter};
 
   // TODO: validate field type
   const field = fields[fieldIndex];
   const filterProps = field.hasOwnProperty('filterProps') ? field.filterProps : getFilterProps(allData, field);
 
-  const filterWithProps = {
-    ...(mergeDomain ? mergeFilterDomainStep(newFilter, filterProps) : {...newFilter, ...filterProps}),
+  const newFilter = {
+    ...(mergeDomain ? mergeFilterDomainStep(filter, filterProps) : {...filter, ...filterProps}),
     name: Object.assign([].concat(filter.name), {[filterDatasetIndex]: field.name}),
-    fieldIdx: Object.assign([].concat(filter.fieldIdx), {[filterDatasetIndex]: field.tableFieldIndex - 1})
+    fieldIdx: Object.assign([].concat(filter.fieldIdx), {[filterDatasetIndex]: field.tableFieldIndex - 1}),
+    // TODO, since we allow to add multiple fields to a filter we can no longer freeze the filter
+    freeze: true
   };
 
   const fieldWithFilterProps = {
@@ -940,7 +937,7 @@ export function applyFilterFieldName(
   const newFields = fields.map((d, i) => (i === fieldIndex ? fieldWithFilterProps : d));
 
   return {
-    filter: filterWithProps,
+    filter: newFilter,
     dataset: {
       ...dataset,
       fields: newFields
@@ -1012,30 +1009,16 @@ export function mergeFilterDomainStep(filter, filterProps) {
 /* eslint-enable complexity */
 
 /**
- * Return filter dataset index from filter.dataId
- * @param dataset
- * @param filter
- * @return {*}
- */
-export function getDatasetIndexForFilter(dataset, filter) {
-  const {dataId} = filter;
-  // dataId is an array
-  return Array.isArray(dataId) ? dataId.findIndex(id => id === dataset.id)
-    // if not an array check if the current filter.dataid is equal to dataset.id
-    : dataId === dataset.id ? 0 : -1;
-}
-
-/**
  * Return dataset field index from filter.fieldIdx
  * The index matches the same dataset index for filter.dataId
  * @param dataset
  * @param filter
  * @return {*}
  */
-export function getDatasetFieldIndexForFilter(dataset, filter) {
-  const datasetIndex = getDatasetIndexForFilter(dataset, filter);
-  if (datasetIndex === -1) {
-    return datasetIndex;
+export function getDatasetFieldIndexForFilter(dataId, filter) {
+  const datasetIndex = arrayfy(filter.dataId).findIndex(id => id === dataId);
+  if (datasetIndex < 0) {
+    return -1;
   }
 
   const fieldIndex = filter.fieldIdx[datasetIndex];

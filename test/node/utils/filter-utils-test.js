@@ -30,7 +30,6 @@ import {
   getHistogram,
   getTimestampFieldDomain,
   getDefaultFilter,
-  getDatasetIndexForFilter,
   getDatasetFieldIndexForFilter,
   diffFilters
 } from 'utils/filter-utils';
@@ -414,36 +413,10 @@ test('filterUtils -> getTimestampFieldDomain', t => {
   t.end();
 });
 
-test('filterUtils -> getDatasetIndexForFilter', t => {
-  const dataId = 'test-this-id';
-  let fieldIndex = getDatasetIndexForFilter({id: dataId}, {dataId: [dataId]});
-  t.equal(
-    fieldIndex,
-    0,
-    'FieldIndex should be 0'
-  );
-
-  fieldIndex = getDatasetIndexForFilter({id: dataId}, {dataId: ['different-id', dataId]});
-  t.equal(
-    fieldIndex,
-    1,
-    'FieldIndex should be 1'
-  );
-
-  fieldIndex = getDatasetIndexForFilter({id: dataId}, {dataId: ['different-id']});
-  t.equal(
-    fieldIndex,
-    -1,
-    'FieldIndex should be -1'
-  );
-
-  t.end();
-});
-
-test('filterUtils -> getDatasetIndexForFilter', t => {
+test('filterUtils -> getDatasetFieldIndexForFilter', t => {
   const dataId = 'test-this-id';
 
-  let fieldIndex = getDatasetFieldIndexForFilter({id: dataId}, {
+  let fieldIndex = getDatasetFieldIndexForFilter(dataId, {
     dataId: [dataId],
     fieldIdx: [3]
   });
@@ -454,7 +427,7 @@ test('filterUtils -> getDatasetIndexForFilter', t => {
     'FieldIndex should be 3'
   );
 
-  fieldIndex = getDatasetFieldIndexForFilter({id: dataId}, {
+  fieldIndex = getDatasetFieldIndexForFilter(dataId, {
     dataId: ['different-id', dataId],
     fieldIdx: [3, 5]
   });
@@ -465,7 +438,7 @@ test('filterUtils -> getDatasetIndexForFilter', t => {
     'FieldIndex should be 5'
   );
 
-  fieldIndex = getDatasetFieldIndexForFilter({id: dataId}, {dataId: ['different-id']});
+  fieldIndex = getDatasetFieldIndexForFilter(dataId, {dataId: ['different-id']});
   t.equal(
     fieldIndex,
     -1,

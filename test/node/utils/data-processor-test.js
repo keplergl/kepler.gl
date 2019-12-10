@@ -196,6 +196,9 @@ test('Processor -> processCsv.wkt', t => {
   const {fields, rows} = processCsvData(wktCsv);
 
   t.deepEqual(fields, wktCsvFields, 'should find geometry fields as type:geojson');
+  rows.forEach((r, i) => {
+    t.deepEqual(r, wktCsvRows[i], `should process wkt rows[${i}] correctly`);
+  });
   t.deepEqual(rows, wktCsvRows, 'should process wkt rows correctly');
 
   t.end();

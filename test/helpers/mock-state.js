@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import test from 'tape-catch';
 import cloneDeep from 'lodash.clonedeep';
 import {VizColorPalette} from 'constants/custom-color-ranges';
 import {getInitialInputStyle} from 'reducers/map-style-updaters';
@@ -102,6 +103,11 @@ function mockStateWithFileUpload() {
     if (l.config.visConfig.strokeColor) {
       l.config.visConfig.strokeColor = [i + 10, i + 10, i + 10];
     }
+  });
+
+  test(t => {
+    t.equal(updatedState.visState.layers.length, 2, 'should auto create 2 layers');
+    t.end();
   });
 
   return updatedState;
