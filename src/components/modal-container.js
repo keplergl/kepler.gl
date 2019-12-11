@@ -24,7 +24,7 @@ import {css} from 'styled-components';
 import {findDOMNode} from 'react-dom';
 import {Blob} from 'global/window';
 
-import ModalDialog from './common/modal';
+import ModalDialogFactory from './modals/modal-dialog';
 import {formatCsv} from 'processors/data-processor';
 import KeplerGlSchema from 'schemas';
 import {downloadFile, dataURItoBlob} from 'utils/export-image-utils';
@@ -85,7 +85,8 @@ ModalContainerFactory.deps = [
   ExportImageModalFactory,
   ExportDataModalFactory,
   ExportMapModalFactory,
-  AddMapStyleModalFactory
+  AddMapStyleModalFactory,
+  ModalDialogFactory
 ];
 
 export default function ModalContainerFactory(
@@ -95,7 +96,8 @@ export default function ModalContainerFactory(
   ExportImageModal,
   ExportDataModal,
   ExportMapModal,
-  AddMapStyleModal
+  AddMapStyleModal,
+  ModalDialog
 ) {
   class ModalWrapper extends Component {
     static propTypes = {

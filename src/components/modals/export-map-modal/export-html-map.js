@@ -12,14 +12,15 @@ import {
 import {
   DISCLAIMER,
   EXPORT_HTML_MAP_MODE_OPTIONS,
-  TOKEN_MISUSE_WARNING,
-  NO_OP
+  TOKEN_MISUSE_WARNING
 } from 'constants/default-settings';
 import {
   GITHUB_EXPORT_HTML_MAP,
   GITHUB_EXPORT_HTML_MAP_MODES
 } from 'constants/user-guides';
 import styled from 'styled-components';
+
+const NO_OP = () => {};
 
 const ExportMapStyledExportSection = styled(StyledExportSection)`
   .disclaimer {

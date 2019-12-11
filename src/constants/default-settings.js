@@ -694,6 +694,3 @@ export const MAP_CONFIG_DESCRIPTION = 'Map config will be included in the Json f
 export const BASE_SPEED = 600;
 export const DEFAULT_TIME_FORMAT = 'MM/DD/YY HH:mm:ssa';
 export const SPEED_CONTROL_RANGE = [0, 10];
-
-// No Op
-export const NO_OP = () => {};

@@ -28,8 +28,7 @@ import {
 } from 'components/common/styled-components';
 import {
   EXPORT_MAP_FORMATS,
-  EXPORT_MAP_FORMAT_OPTIONS,
-  NO_OP
+  EXPORT_MAP_FORMAT_OPTIONS
 } from 'constants/default-settings';
 import {
   StyledExportMapSection
@@ -46,6 +45,8 @@ const propTypes = {
 };
 
 const style = {width: '100%'};
+
+const NO_OP = () => {};
 
 ExportMapModalFactory.deps = [
   ExportHtmlMapFactory,
