@@ -73,6 +73,7 @@ export {default as LayerHoverInfoFactory} from './map/layer-hover-info';
 export {default as CoordinateInfoFactory} from './map/coordinate-info';
 
 // // modal container factories
+export {default as ModalDialoFactory} from './modals/modal-dialog';
 export {default as DeleteDatasetModalFactory} from './modals/delete-data-modal';
 export {default as DataTableModalFactory} from './modals/data-table-modal';
 export {default as LoadDataModalFactory} from './modals/load-data-modal';
