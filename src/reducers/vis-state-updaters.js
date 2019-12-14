@@ -1376,6 +1376,54 @@ export const deleteFeatureUpdater = (state, {payload: selectedFeatureId}) => {
 };
 
 /**
+ * Trigger loading file error
+ * @memberof visStateUpdaters
+ * @param {Object} state `visState`
+ * @param {Object} action action
+ * @param {*} action.error
+ * @returns {Object} nextState
+ * @public
+ */
+export const loadFilesErrUpdater = (state, {error}) => ({
+  ...state,
+  fileLoading: false,
+  fileLoadingErr: error
+});
+
+/**
+ * Update editor features
+ * @memberof visStateUpdaters
+ * @param {Object} state `visState`
+ * @param {[Object]} features to store
+ * @return {Object} nextState
+ */
+export function setFeaturesUpdater(state, {features = []}) {
+  return {
+    ...state,
+    editor: {
+      ...state.editor,
+      features
+    }
+  }
+}
+
+/**
+ * @memberof visStateUpdaters
+ * @param {Object} state `visState`
+ * @param {string} selectedFeatureId feature to delete
+ * @return {Object} nextState
+ */
+export const deleteFeatureUpdater = (state, {payload: selectedFeatureId}) => {
+  return selectedFeatureId ? {
+    ...state,
+    editor: {
+      ...state.editor,
+      features: state.editor.features.filter(f => f.id !== selectedFeatureId)
+    }
+  } : state;
+};
+
+/**
  * Helper function to update All layer domain and layer data of state
  * @memberof visStateUpdaters
  * @param {Object} state `visState`
