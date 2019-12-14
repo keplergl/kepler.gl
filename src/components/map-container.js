@@ -31,6 +31,8 @@ import MapPopoverFactory from 'components/map/map-popover';
 import MapControlFactory from 'components/map/map-control';
 import {StyledMapContainer} from 'components/common/styled-components';
 
+import Draw from './editor';
+
 // utils
 import {generateMapboxLayers, updateMapboxLayers} from 'layers/mapbox-utils';
 import {OVERLAY_TYPE} from 'layers/base-layer';
@@ -69,14 +71,14 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       layerData: PropTypes.arrayOf(PropTypes.any).isRequired,
       layers: PropTypes.arrayOf(PropTypes.any).isRequired,
       mapState: PropTypes.object.isRequired,
+      uiState: PropTypes.object.isRequired,
       mapStyle: PropTypes.object.isRequired,
-      mapControls: PropTypes.object.isRequired,
       mousePos: PropTypes.object.isRequired,
       mapboxApiAccessToken: PropTypes.string.isRequired,
       mapboxApiUrl: PropTypes.string,
-      toggleMapControl: PropTypes.func.isRequired,
       visStateActions: PropTypes.object.isRequired,
       mapStateActions: PropTypes.object.isRequired,
+      uiStateActions: PropTypes.object.isRequired,
 
       // optional
       readOnly: PropTypes.bool,
@@ -133,7 +135,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       this.layerOrderSelector,
       this.layersToRenderSelector,
       generateMapboxLayers
-    )
+    );
+
     /* component private functions */
     _isVisibleMapLayer(layer, mapLayers) {
       // if layer.id is not in mapLayers, don't render it
@@ -197,6 +200,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     };
 
     /* component render functions */
+
     /* eslint-disable complexity */
     _renderMapPopover(layersToRender) {
       // TODO: move this into reducer so it can be tested
@@ -280,7 +284,6 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     _getHoverXY(viewport, lngLat) {
       const screenCoord =
         !viewport || !lngLat ? null : viewport.project(lngLat);
-
       return screenCoord && {x: screenCoord[0], y: screenCoord[1]};
     }
 
@@ -411,8 +414,10 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         datasets,
         mapboxApiAccessToken,
         mapboxApiUrl,
-        mapControls,
-        toggleMapControl
+        uiState,
+        uiStateActions,
+        visStateActions,
+        editor
       } = this.props;
       const layersToRender = this.layersToRenderSelector(this.props);
       if (!mapStyle.bottomMapStyle) {
@@ -429,6 +434,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         transformRequest
       };
 
+      const isEdit = uiState.mapControls.mapDraw.active;
+
       return (
         <StyledMapContainer style={MAP_STYLE.container}>
           <MapControl
@@ -439,14 +446,16 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             layers={layers}
             layersToRender={layersToRender}
             mapIndex={this.props.index}
-            mapControls={mapControls}
+            mapControls={uiState.mapControls}
             readOnly={this.props.readOnly}
             scale={mapState.scale || 1}
             top={0}
+            editor={uiState.editor}
             onTogglePerspective={mapStateActions.togglePerspective}
             onToggleSplitMap={mapStateActions.toggleSplitMap}
             onMapToggleLayer={this._handleMapToggleLayer}
-            onToggleMapControl={toggleMapControl}
+            onToggleMapControl={uiStateActions.toggleMapControl}
+            onSetEditorMode={uiStateActions.setEditorMode}
           />
           <MapComponent
             {...mapProps}
@@ -459,6 +468,24 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           >
             {this._renderDeckOverlay(layersToRender)}
             {this._renderMapboxOverlays(layersToRender)}
+            {/*
+                By placing the editor in this map we have to perform fewer checks for css zIndex
+                and fewer updates when we switch from edit to read mode
+              */}
+            <Draw
+              datasets={datasets}
+              editor={uiState.editor}
+              features={editor.features}
+              isEnabled={isEdit}
+              layers={layers}
+              onDeleteFeature={uiStateActions.deleteFeature}
+              onSelect={uiStateActions.setSelectedFeature}
+              onUpdate={visStateActions.setFeatures}
+              style={{
+                pointerEvents: isEdit ? 'all' : 'none',
+                position: 'absolute'
+              }}
+            />
           </MapComponent>
           {mapStyle.topMapStyle && (
             <div style={MAP_STYLE.top}>
@@ -474,6 +501,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       );
     }
   }
+
+  MapContainer.displayName = 'MapContainer';
 
   return MapContainer;
 }

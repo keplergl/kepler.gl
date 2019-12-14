@@ -156,7 +156,7 @@ export const receiveMapConfig = createAction(
  * @param {Boolean} payload.mapStylesReplaceDefault - mapStylesReplaceDefault to be saved to mapStyle reducer
  * @public
  */
-export const keplerGlInit =  createAction(
+export const keplerGlInit = createAction(
   ActionTypes.INIT,
   ({mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault} = {}) => ({mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault})
 );

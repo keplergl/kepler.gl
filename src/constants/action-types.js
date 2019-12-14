@@ -93,6 +93,7 @@ const ActionTypes = keyMirror({
   LOAD_FILES: null,
   LOAD_FILES_ERR: null,
   LAYER_COLOR_UI_CHANGE: null,
+  SET_FEATURES: null,
 
   // mapState
   UPDATE_MAP: null,
@@ -143,11 +144,19 @@ const ActionTypes = keyMirror({
   SET_USER_MAPBOX_ACCESS_TOKEN: null,
   SET_EXPORT_MAP_HTML_MODE: null,
 
+  // uiState > editor
+  SET_EDITOR_MODE: null,
+  SET_SELECTED_FEATURE: null,
+
   // all
   INIT: null,
   ADD_DATA_TO_MAP: null,
   RECEIVE_MAP_CONFIG: null,
-  RESET_MAP_CONFIG: null
+  RESET_MAP_CONFIG: null,
+
+  // geolocations
+  DELETE_FEATURE: null
+
 });
 
 const addPrefix = actions =>

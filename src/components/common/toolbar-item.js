@@ -18,5 +18,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './map-legend-test';
-import './map-control-test';
+import React from 'react';
+import styled from 'styled-components';
+
+const StyledDiv = styled.div`
+  color: ${props => props.active ?
+  'white' : props.theme.textColor
+  };
+`;
+
+const ToolbarItem = React.memo(({active, className, icon, label, onClick}) => (
+  <StyledDiv active={active} className="toolbar-item" onClick={(e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onClick(e);
+  }}>
+    {icon}
+    <div className="toolbar-item__title">{label}</div>
+  </StyledDiv>
+));
+
+ToolbarItem.displayName = 'ToolbarItem';
+
+export default ToolbarItem;

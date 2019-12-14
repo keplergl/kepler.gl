@@ -51,7 +51,10 @@ export default class Base extends Component {
     width: null,
     viewBox: '0 0 64 64',
     predefinedClassName: '',
-    className: ''
+    className: '',
+    style: {
+      fill: 'currentColor'
+    }
   };
 
   render() {
@@ -59,7 +62,7 @@ export default class Base extends Component {
       height,
       width,
       viewBox,
-      style = {},
+      style,
       children,
       predefinedClassName,
       className,
@@ -69,7 +72,6 @@ export default class Base extends Component {
     } = this.props;
     const svgHeight = height;
     const svgWidth = width || svgHeight;
-    style.fill = 'currentColor';
 
     const fillStyle =
       Array.isArray(colors) &&

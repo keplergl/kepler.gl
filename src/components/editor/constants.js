@@ -18,5 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './map-legend-test';
-import './map-control-test';
+// Copied from react-map-gl-draw until it gets exported
+export const RENDER_STATE = {
+  INACTIVE: 'INACTIVE',
+  UNCOMMITTED: 'UNCOMMITTED',
+  SELECTED: 'SELECTED',
+  HOVERED: 'HOVERED'
+};
+export const RENDER_TYPE = {
+  POINT: 'Point',
+  LINE_STRING: 'LineString',
+  POLYGON: 'Polygon',
+  RECTANGLE: 'Rectangle'
+};
+
+export const COLORS = {
+  PRIMARY: '#26B5F2',
+  SECONDARY: '#ffff00',
+  TERTIARY: '#6c6c6c'
+};
+

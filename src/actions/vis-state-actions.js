@@ -485,7 +485,7 @@ export function loadFiles(files) {
  * Trigger loading file error
  * @memberof visStateActions
  * @param {*} error
- * @returns {{type: ActionTypes.LOAD_FILES_ERR, error: *}}
+ * @returns {{type: ActionTypes.LOAD_FILES_ERR, error: Object}}
  * @public
  */
 export function loadFilesErr(error) {
@@ -493,6 +493,19 @@ export function loadFilesErr(error) {
     type: ActionTypes.LOAD_FILES_ERR,
     error
   };
+}
+
+/**
+ * Store features to state
+ * @memberof visStateActions
+ * @param {Array<Object>} features
+ * @returns {{type: ActionTypes.SET_FEATURES, features: Object}}
+ */
+export function setFeatures(features) {
+  return {
+    type: ActionTypes.SET_FEATURES,
+    features
+  }
 }
 
 /**

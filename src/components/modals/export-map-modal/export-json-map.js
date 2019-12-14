@@ -101,6 +101,8 @@ const ExportJsonMap = React.memo(({
 
 ExportJsonMap.propTypes = exportJsonPropTypes;
 
+ExportJsonMap.displayName = 'ExportJsonMap';
+
 const ExportJsonMapFactory = () => ExportJsonMap;
 
 export default ExportJsonMapFactory;

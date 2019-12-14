@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import keyMirror from 'keymirror';
+import {EditorModes} from 'react-map-gl-draw';
 
 import {
   scaleLinear,
@@ -694,3 +695,19 @@ export const MAP_CONFIG_DESCRIPTION = 'Map config will be included in the Json f
 export const BASE_SPEED = 600;
 export const DEFAULT_TIME_FORMAT = 'MM/DD/YY HH:mm:ssa';
 export const SPEED_CONTROL_RANGE = [0, 10];
+
+// We could use directly react-map-gl-draw EditorMode but this would
+// create a direct dependency with react-map-gl-draw
+// Created this map to be independent from react-map-gl-draw
+
+// export const MAP_MODES = keyMirror({
+//   READ: null,
+//   EDIT: null
+// });
+
+export const EDITOR_MODES = {
+  READ_ONLY: EditorModes.READ_ONLY,
+  DRAW_POLYGON: EditorModes.DRAW_POLYGON,
+  DRAW_RECTANGLE: EditorModes.DRAW_RECTANGLE,
+  EDIT: EditorModes.EDIT_VERTEX
+};

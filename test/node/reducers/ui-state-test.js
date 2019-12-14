@@ -32,9 +32,10 @@ import {
   setExportDataType,
   setExportFiltered,
   addNotification,
-  loadFilesErrUpdater
+  setEditorMode,
+  deleteFeature
 } from 'actions/ui-state-actions';
-import {loadFiles, loadFilesErr} from 'actions/vis-state-actions';
+import {loadFiles, loadFilesErr, setFeatures} from 'actions/vis-state-actions';
 import reducer, {uiStateReducerFactory} from 'reducers/ui-state';
 import {INITIAL_UI_STATE} from 'reducers/ui-state-updaters';
 import {
@@ -47,6 +48,9 @@ import {
   DEFAULT_NOTIFICATION_TYPES
 } from 'constants/default-settings';
 import {removeNotification} from 'actions/ui-state-actions';
+import {EDITOR_MODES} from 'constants/default-settings';
+import {mockPolygonFeature} from '../../fixtures/polygon';
+import {setSelectedFeature} from '../../../src/actions';
 
 test('#uiStateReducer', t => {
   t.deepEqual(
@@ -340,6 +344,79 @@ test('#uiStateReducer -> LOAD_FILES_ERR', t => {
       id: expectedId
     }],
     'should add an error notification'
+  );
+
+  t.end();
+});
+
+test('#uiStateReducer -> SET_EDITOR_MODE', t => {
+  const newState = reducer(INITIAL_UI_STATE, setEditorMode(EDITOR_MODES.EDIT));
+  t.equal(
+    newState.editor.mode,
+    EDITOR_MODES.EDIT,
+    'Editor mode should be set to vertex'
+  );
+
+  t.end();
+});
+
+test('#uiStateReducer -> SET_FEATURES/SET_SELECTED_FEATURE/DELETE_FEATURE', t => {
+
+  let newState = reducer(INITIAL_UI_STATE, setFeatures([]));
+
+  t.deepEqual(
+    newState,
+    INITIAL_UI_STATE,
+    'Editor should not have features and return the same state'
+  );
+
+  newState = reducer(INITIAL_UI_STATE, setFeatures([
+    {
+      ...mockPolygonFeature,
+      properties: {
+        ...mockPolygonFeature.properties,
+        isClosed: false
+      }
+    }
+  ]));
+
+  t.equal(
+    newState.editor.mode,
+    INITIAL_UI_STATE.editor.mode,
+    'Editor mode should not change because feature is not closed'
+  );
+
+  newState = reducer(newState, setFeatures([
+    {
+      ...mockPolygonFeature,
+      properties: {
+        ...mockPolygonFeature.properties,
+        isClosed: false
+      }
+    },
+    mockPolygonFeature
+  ]));
+
+  t.equal(
+    newState.editor.mode,
+    EDITOR_MODES.EDIT,
+    'Editor mode should be set to edit_vertex'
+  );
+
+  newState = reducer(newState, setSelectedFeature({selectedFeatureId: mockPolygonFeature.id}));
+
+  t.equal(
+    newState.editor.selectedFeature.id,
+    mockPolygonFeature.id,
+    'Selected feature should have been set correctly'
+  );
+
+  newState = reducer(newState, deleteFeature(mockPolygonFeature.id));
+
+  t.equal(
+    newState.editor.selectedFeature,
+    null,
+    'Editor reset selected feature to null'
   );
 
   t.end();

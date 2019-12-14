@@ -19,3 +19,4 @@
 // THE SOFTWARE.
 
 import './color-selector-test';
+import './save-export-dropdown-test';

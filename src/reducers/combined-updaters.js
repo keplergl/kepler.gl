@@ -19,7 +19,9 @@
 // THE SOFTWARE.
 
 import {toggleModalUpdater, loadFilesSuccessUpdater} from './ui-state-updaters';
-import {updateVisDataUpdater as visStateUpdateVisDataUpdater} from './vis-state-updaters';
+import {
+  updateVisDataUpdater as visStateUpdateVisDataUpdater
+} from './vis-state-updaters';
 import {receiveMapConfigUpdater as stateMapConfigUpdater} from './map-state-updaters';
 import {receiveMapConfigUpdater as styleMapConfigUpdater} from './map-style-updaters';
 import {findMapBounds} from 'utils/data-utils';

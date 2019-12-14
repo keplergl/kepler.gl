@@ -145,6 +145,8 @@ const ExportHtmlMap = React.memo(({
 
 ExportHtmlMap.propTypes = exportHtmlPropTypes;
 
+ExportHtmlMap.displayName = 'ExportHtmlMap';
+
 const ExportHtmlMapFactory = () => ExportHtmlMap;
 
 export default ExportHtmlMapFactory;
