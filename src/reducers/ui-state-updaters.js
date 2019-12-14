@@ -26,7 +26,8 @@ import {
   RESOLUTIONS,
   EXPORT_MAP_FORMATS,
   EXPORT_HTML_MAP_MODES,
-  DEFAULT_NOTIFICATION_TOPICS
+  DEFAULT_NOTIFICATION_TOPICS,
+  EDITOR_MODES
 } from 'constants/default-settings';
 import {createNotification, errorNotification} from 'utils/notifications-utils';
 
@@ -84,22 +85,21 @@ const uiStateUpdaters = null;
  * @property {Object} splitMap Default: `{show: true}`
  * @public
  */
-export const DEFAULT_MAP_CONTROLS = {
-  visibleLayers: {
-    show: true,
-    active: false
-  },
-  mapLegend: {
-    show: true,
-    active: false
-  },
-  toggle3d: {
-    show: true
-  },
-  splitMap: {
-    show: true
-  }
+const DEFAULT_MAP_CONTROLS_FEATURES = {
+  show: true,
+  active: false
 };
+
+export const DEFAULT_MAP_CONTROLS = [
+  'visibleLayers',
+  'mapLegend',
+  'toggle3d',
+  'splitMap',
+  'mapDraw'
+].reduce((final, current) => ({
+  ...final,
+  [current]: DEFAULT_MAP_CONTROLS_FEATURES
+}), {});
 
 /**
  * Default image export config
@@ -175,6 +175,11 @@ export const DEFAULT_EXPORT_MAP = {
   format: EXPORT_MAP_FORMATS.HTML
 };
 
+export const DEFAULT_EDITOR = {
+  mode: EDITOR_MODES.DRAW_POLYGON,
+  selectedFeature: null
+};
+
 /**
  * Default initial `uiState`
  * @memberof uiStateUpdaters
@@ -206,7 +211,10 @@ export const INITIAL_UI_STATE = {
   mapControls: DEFAULT_MAP_CONTROLS,
   // ui notifications
   notifications: DEFAULT_NOTIFICATIONS,
-  loadFiles: DEFAULT_LOAD_FILES
+  // load files
+  loadFiles: DEFAULT_LOAD_FILES,
+  // editor mode
+  editor: DEFAULT_EDITOR
 };
 
 /* Updaters */
@@ -220,14 +228,11 @@ export const INITIAL_UI_STATE = {
  * @public
  */
 export const toggleSidePanelUpdater = (state, {payload: id}) => {
-  if (id === state.activeSidePanel) {
-    return state;
-  }
-
-  return {
-    ...state,
-    activeSidePanel: id
-  };
+  return  id === state.activeSidePanel ?
+    state : {
+      ...state,
+      activeSidePanel: id
+    };
 };
 
 /**
@@ -521,7 +526,7 @@ export const setUserMapboxAccessTokenUpdater = (
  * @param {string} format to use to export the map onto
  * @return {Object} nextState
  */
-export const setExportMapFormat = (state, {payload: format}) => ({
+export const setExportMapFormatUpdater = (state, {payload: format}) => ({
   ...state,
   exportMap: {
     ...state.exportMap,
@@ -577,7 +582,6 @@ export const removeNotificationUpdater = (state, {payload: id}) => ({
  * Fired when file loading begin
  * @memberof uiStateUpdaters
  * @param {Object} state `uiState`
- * @param {Object} action
  */
 export const loadFilesUpdater = (state) => ({
   ...state,
@@ -595,19 +599,87 @@ export const loadFilesSuccessUpdater = (state) => ({
   }
 });
 
-export const loadFilesErrUpdater = (state, {error}) =>
-  addNotificationUpdater(
-    {
-      ...state,
-      loadFiles: {
-        ...state.loadFiles,
-        fileLoading: false
-      }
-    },
-    {
-      payload: errorNotification({
-        message: (error || {}).message || 'Failed to upload files',
-        topic: DEFAULT_NOTIFICATION_TOPICS.global
-      })
+export const loadFilesErrUpdater = (state, {error}) => addNotificationUpdater(
+  {
+    ...state,
+    loadFiles: {
+      ...state.loadFiles,
+      fileLoading: false
     }
-  );
+  },
+  {
+    payload: errorNotification({
+      message: (error || {}).message || 'Failed to upload files',
+      topic: DEFAULT_NOTIFICATION_TOPICS.global
+    })
+  }
+);
+
+/**
+ * Update the status of the editor
+ * @memberof uiStateUpdaters
+ * @param {Object} state `uiState`
+ * @param {string} mode to set to editor to
+ * @return {Object} nextState
+ */
+export const setEditorModeUpdater = (state, {payload: mode}) => ({
+  ...state,
+  editor: {
+    ...state.editor,
+    mode
+  }
+});
+
+/**
+ * Update editor mode once feature is closed
+ * @memberof uiStateUpdaters
+ * @param {Object} state `uiState`
+ * @param {[Object]} features to store
+ * @return {Object} nextState
+ */
+export function setFeaturesUpdater(state, {features = []}) {
+  if (!features.length) {
+    return state;
+  }
+  const lastFeature = features[features.length - 1];
+
+  return !lastFeature.properties.isClosed ?
+    state : {
+      ...state,
+      editor: {
+        ...state.editor,
+        mode: EDITOR_MODES.EDIT
+      }
+    };
+}
+
+/**
+ * Set the current selected feature
+ * @memberof uiStateUpdaters
+ * @param {Object} state `uiState`
+ * @param {[Object]} features to store
+ * @return {Object} nextState
+ */
+export const setSelectedFeatureUpdater = (state, {payload: selectedFeatureId}) => ({
+  ...state,
+  editor: {
+    ...state.editor,
+    selectedFeature: selectedFeatureId ? {id: selectedFeatureId} : null
+  }
+});
+
+/**
+ * @memberof uiStateUpdaters
+ * @param {Object} state `uiState`
+ * @param {string} selectedFeatureId feature to delete
+ * @return {Object} nextState
+ */
+export const deleteFeatureUpdater = (state, {payload: selectedFeatureId}) => {
+  return selectedFeatureId ? {
+    ...state,
+    editor: {
+      ...state.editor,
+      selectedFeature: null
+    }
+  } : state;
+};

@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,21 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// required by enzymev3
-const configure = require('enzyme').configure;
-const Adapter = require('enzyme-adapter-react-16');
-configure({adapter: new Adapter()});
+// Copied from react-map-gl-draw until it gets exported
+export const RENDER_STATE = {
+  INACTIVE: 'INACTIVE',
+  UNCOMMITTED: 'UNCOMMITTED',
+  SELECTED: 'SELECTED',
+  HOVERED: 'HOVERED'
+};
+export const RENDER_TYPE = {
+  POINT: 'Point',
+  LINE_STRING: 'LineString',
+  POLYGON: 'Polygon',
+  RECTANGLE: 'Rectangle'
+};
 
-import './injector-test';
-import './container-test';
-import './kepler-gl-test';
-
-import './modals';
-import './notifications';
-import './map';
-import './side-panel';
-
-import './common';
-import './editor';
-import './map-container-test';
+export const COLORS = {
+  PRIMARY: '#26B5F2',
+  SECONDARY: '#ffff00',
+  TERTIARY: '#6c6c6c'
+};
 

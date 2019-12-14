@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,21 +18,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// required by enzymev3
-const configure = require('enzyme').configure;
-const Adapter = require('enzyme-adapter-react-16');
-configure({adapter: new Adapter()});
-
-import './injector-test';
-import './container-test';
-import './kepler-gl-test';
-
-import './modals';
-import './notifications';
-import './map';
-import './side-panel';
-
-import './common';
-import './editor';
-import './map-container-test';
-
+export const mockPolygonFeature = {
+  type: 'Feature',
+  geometry: {
+    type: 'Polygon',
+    coordinates: [
+      [
+        [
+          12.0,
+          30.0
+        ],
+        [
+          12.0,
+          36.0
+        ],
+        [
+          12.5,
+          36.0
+        ],
+        [
+          12.5,
+          30.0
+        ],
+        [
+          12.0,
+          30.0
+        ]
+      ]
+    ]
+  },
+  properties: {
+    renderType: 'Polygon',
+    isClosed: true,
+    bbox: {
+      xmin: 12,
+      xmax: null,
+      ymin: 36,
+      ymax: null
+    }
+  },
+  id: 'bf5be428-f522-4a52-8ea5-3e90e86aad51'
+};

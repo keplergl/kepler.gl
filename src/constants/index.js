@@ -52,7 +52,8 @@ export {
   DEFAULT_NOTIFICATION_TYPES,
   DEFAULT_NOTIFICATION_TOPICS,
   DEFAULT_COLOR_RANGE,
-  PANELS
+  PANELS,
+  EDITOR_MODES
 } from './default-settings';
 
 export {

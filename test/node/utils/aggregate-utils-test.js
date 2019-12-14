@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,21 +18,68 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// required by enzymev3
-const configure = require('enzyme').configure;
-const Adapter = require('enzyme-adapter-react-16');
-configure({adapter: new Adapter()});
+import test from 'tape';
+import {
+  getFrequency,
+  getMode,
+  aggregate
+} from 'utils/aggregate-utils';
+import {AGGREGATION_TYPES} from 'constants/default-settings';
 
-import './injector-test';
-import './container-test';
-import './kepler-gl-test';
+test('AggregateUtils - GetFrequency', t => {
 
-import './modals';
-import './notifications';
-import './map';
-import './side-panel';
+  t.deepEqual(
+    getFrequency([2, 1, 2, 1]),
+    {
+      1: 2,
+      2: 2
+    },
+    'Should compute frequency corerctly'
+  );
 
-import './common';
-import './editor';
-import './map-container-test';
+  t.deepEqual(
+    getFrequency([]),
+    {},
+    'Should return an empty object'
+  );
 
+  t.end();
+});
+
+test('AggregateUtils - GetMode', t => {
+
+  t.deepEqual(
+    getMode([2, 1, 2, 1]),
+    '1',
+    'should return 1 as Mode'
+  );
+
+  t.end();
+});
+
+test('AggregateUtils - aggregate', t => {
+
+  const data = [1, 2, 3, 1, 2, 3, 4, 3];
+  const results = [
+    8,
+    2.375,
+    4,
+    1,
+    2.5,
+    1.0606601717798212,
+    19,
+    1.125,
+    '3',
+    8
+  ];
+  Object.keys(AGGREGATION_TYPES).map((technique, index) => {
+    t.equal(
+      aggregate(data, technique),
+      results[index],
+      `Should compute the right aggregation using ${technique} - ${index}`
+    )
+  });
+
+  t.end();
+
+});

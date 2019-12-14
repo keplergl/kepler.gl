@@ -25,6 +25,8 @@ import {Tooltip} from 'components/common/styled-components';
 import KeplerGlLogo from 'components/common/logo';
 import {Save, Files, Share, Picture, Map} from 'components/common/icons';
 import ClickOutsideCloseDropdown from 'components/side-panel/panel-dropdown';
+import Toolbar from 'components/common/toolbar';
+import ToolbarItem from 'components/common/toolbar-item';
 
 const StyledPanelHeader = styled.div.attrs({
   className: 'side-side-panel__header'
@@ -80,49 +82,10 @@ const StyledPanelAction = styled.div.attrs({
   }
 `;
 
-const StyledPanelDropdown = styled.div`
-  background-color: ${props => props.theme.dropdownListBgd};
-  box-shadow: ${props => props.theme.dropdownListShadow};
-  font-size: 11px;
-  padding: 16px 0;
+// By assigning this style we can position the toolbar in the right place on the screen
+const StyledToolbar = styled(Toolbar)`
   position: absolute;
   left: 64px;
-  transition: ${props => props.theme.transitionSlow};
-  display: flex;
-  margin-top: ${props => props.show ? '6px' : '20px'};
-  opacity: ${props => props.show ? 1 : 0};
-  transform: translateX(calc(-50% + 20px));
-  pointer-events:  ${props => props.show ? 'all' : 'none'};
-  z-index: 1000;
-
-  .save-export-dropdown__inner {
-    box-shadow: none;
-    background-color: transparent;
-    display: flex;
-  }
-
-  .save-export-dropdown__item {
-    align-items: center;
-    border-right: 1px solid ${props => props.theme.panelHeaderIcon};
-    color: ${props => props.theme.textColor};
-    display: flex;
-    flex-direction: column;
-    padding: 0 22px;
-
-    :hover {
-      cursor: pointer;
-      color: ${props => props.theme.textColorHl};
-    }
-
-    &:last-child {
-      border-right: 0;
-    }
-  }
-
-  .save-export-dropdown__title {
-    white-space: nowrap;
-    margin-top: 4px;
-  }
 `;
 
 export const PanelAction = ({item, onClick}) => (
@@ -143,21 +106,8 @@ export const PanelAction = ({item, onClick}) => (
   </StyledPanelAction>
 );
 
-const PanelItem = ({onClose, onClickHandler, label, icon}) => (
-  <div className="save-export-dropdown__item" onClick={(e) => {
-    e.stopPropagation();
-    onClose();
-    onClickHandler();
-  }}>
-    {icon}
-    <div className="save-export-dropdown__title">{label}</div>
-  </div>
-);
-
 export const ExportImageFactory = () => {
-  const ExportImage = (props) => (
-    <PanelItem {...props}/>
-  );
+  const ExportImage = props => (<ToolbarItem {...props}/>);
   ExportImage.defaultProps = {
     label: 'Export Image',
     icon: <Picture />
@@ -167,9 +117,7 @@ export const ExportImageFactory = () => {
 };
 
 export const ExportDataFactory = () => {
-  const ExportData = (props) => (
-    <PanelItem {...props}/>
-  );
+  const ExportData = props => (<ToolbarItem {...props}/>);
   ExportData.defaultProps = {
     label: 'Export Data',
     icon: <Files />
@@ -179,9 +127,7 @@ export const ExportDataFactory = () => {
 };
 
 export const ExportMapFactory = () => {
-  const ExportMap = (props) => (
-    <PanelItem {...props}/>
-  );
+  const ExportMap = props => (<ToolbarItem {...props}/>);
   ExportMap.defaultProps = {
     label: 'Export Map',
     icon: <Map />
@@ -191,9 +137,7 @@ export const ExportMapFactory = () => {
 };
 
 export const SaveMapFactory = () => {
-  const SaveMap = (props) => (
-    <PanelItem {...props}/>
-  );
+  const SaveMap = props => (<ToolbarItem {...props}/>);
   SaveMap.defaultProps = {
     label: 'Save Map',
     icon: <Share />
@@ -202,11 +146,19 @@ export const SaveMapFactory = () => {
   return SaveMap;
 };
 
-export const SaveExportDropdownFactory = (
+SaveExportDropdownFactory.deps = [
+  ExportImageFactory,
+  ExportDataFactory,
+  ExportMapFactory,
+  SaveMapFactory
+];
+
+export function SaveExportDropdownFactory(
   ExportImage,
   ExportData,
   ExportMap,
-  SaveMap) => {
+  SaveMap) {
+
   const SaveExportDropdown = ({
     onExportImage,
     onExportData,
@@ -217,42 +169,49 @@ export const SaveExportDropdownFactory = (
     onClose
   }) => {
     return (
-      <StyledPanelDropdown show={show} className="save-export-dropdown">
-        <ClickOutsideCloseDropdown className="save-export-dropdown__inner"
+      <StyledToolbar show={show} onClose={onClose} className="save-export-dropdown">
+        <ClickOutsideCloseDropdown
+          className="save-export-dropdown__inner"
           show={show}
           onClose={onClose}>
           <ExportImage
-            onClickHandler={onExportImage}
-            onClose={onClose}
+            className="export-image"
+            onClick={() => {
+              onExportImage();
+              onClose();
+            }}
           />
           <ExportData
-            onClickHandler={onExportData}
-            onClose={onClose}
+            className="export-data"
+            onClick={() => {
+              onExportData();
+              onClose();
+            }}
           />
           <ExportMap
-            onClickHandler={onExportMap}
-            onClose={onClose}
+            className="export-map"
+            onClick={() => {
+              onExportMap();
+              onClose();
+            }}
           />
           {onSaveMap ? (
             <SaveMap
-              onClickHandler={onSaveMap}
-              onClose={onClose}
+              className="save-map"
+              onClick={() => {
+                onSaveMap();
+                onClose();
+              }}
             />
-          ) : null}
+        ) : null}
         </ClickOutsideCloseDropdown>
-      </StyledPanelDropdown>
+      </StyledToolbar>
+
     );
   };
 
   return SaveExportDropdown;
-};
-
-SaveExportDropdownFactory.deps = [
-  ExportImageFactory,
-  ExportDataFactory,
-  ExportMapFactory,
-  SaveMapFactory
-];
+}
 
 PanelHeaderFactory.deps = [
   SaveExportDropdownFactory

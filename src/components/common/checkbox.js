@@ -22,6 +22,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import pick from 'lodash.pick';
+import classnames from 'classnames';
 
 function noop() {}
 
@@ -100,7 +101,7 @@ export default class Checkbox extends Component {
 
     const LabelElement = this.props.type === 'checkbox' ? StyledCheckboxInput : StyledSwitchInput;
     return (
-      <StyledCheckbox className="kg-checkbox">
+      <StyledCheckbox className={classnames('kg-checkbox', this.props.className)}>
         <HiddenInput {...inputProps} />
         <LabelElement className="kg-checkbox__label" {...labelProps}>
           {this.props.label}

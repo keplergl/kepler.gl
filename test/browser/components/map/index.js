@@ -19,3 +19,4 @@
 // THE SOFTWARE.
 
 import './map-legend-test';
+import './map-control-test';

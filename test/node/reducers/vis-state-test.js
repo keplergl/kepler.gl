@@ -24,6 +24,7 @@ import CloneDeep from 'lodash.clonedeep';
 
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
+import * as UIStateActions from 'actions/ui-state-actions';
 import reducer from 'reducers/vis-state';
 
 import {
@@ -35,7 +36,6 @@ import {getDefaultFilter} from 'utils/filter-utils';
 import {getDefaultInteraction} from 'utils/interaction-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
 import {processCsvData, processGeojson} from 'processors/data-processor';
-
 import {Layer, KeplerGlLayers} from 'layers';
 const {
   ArcLayer,
@@ -54,6 +54,7 @@ import {
 } from 'test/fixtures/geojson';
 
 import tripGeojson, {timeStampDomain} from 'test/fixtures/trip-geojson';
+import {mockPolygonFeature} from '../../fixtures/polygon';
 
 // test helpers
 import {
@@ -2657,7 +2658,8 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
     layerToBeMerged: [],
     filterToBeMerged: [],
     splitMapsToBeMerged: [],
-    interactionToBeMerged: []
+    interactionToBeMerged: [],
+    editor: oldState.editor
   };
 
   const newReducer = reducer(
@@ -2875,7 +2877,8 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
     layerToBeMerged: [],
     filterToBeMerged: [],
     splitMapsToBeMerged: [],
-    interactionToBeMerged: []
+    interactionToBeMerged: [],
+    editor: oldState.editor
   };
 
   const newReducer = reducer(
@@ -3287,8 +3290,6 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
       showDropdown: 0
     })
   );
-
-  const {colorRangeConfig} = prepareState.layers[0].config.colorUI.colorRange;
 
   // set color range steps
   const nextState = reducer(
@@ -3702,5 +3703,29 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
     expectedColorUI7,
     'should set colorRangeConfig.custom true'
   );
+  t.end();
+});
+
+test('#visStateReducer -> setFeatures/delete', t => {
+  const expectedFeatures = [mockPolygonFeature];
+  let newReducer = reducer(
+    INITIAL_VIS_STATE,
+    VisStateActions.setFeatures([mockPolygonFeature])
+  );
+
+  t.deepEqual(
+    newReducer.editor.features,
+    expectedFeatures,
+    'should add new feature'
+  );
+
+  newReducer = reducer(newReducer, UIStateActions.deleteFeature(mockPolygonFeature.id));
+
+  t.deepEqual(
+    newReducer.editor.features,
+    [],
+    'Should not have features'
+  );
+
   t.end();
 });

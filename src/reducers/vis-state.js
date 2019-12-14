@@ -93,7 +93,11 @@ const actionHandler = {
 
   [ActionTypes.UPDATE_LAYER_BLENDING]: visStateUpdaters.updateLayerBlendingUpdater,
 
-  [ActionTypes.UPDATE_VIS_DATA]: visStateUpdaters.updateVisDataUpdater
+  [ActionTypes.UPDATE_VIS_DATA]: visStateUpdaters.updateVisDataUpdater,
+
+  [ActionTypes.SET_FEATURES]: visStateUpdaters.setFeaturesUpdater,
+
+  [ActionTypes.DELETE_FEATURE]: visStateUpdaters.deleteFeatureUpdater
 };
 
 // construct vis-state reducer

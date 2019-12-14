@@ -271,6 +271,10 @@ const timeDisplayPadding = '0 24px';
 // Export map modal
 const exportIntraSectionMargin = '8';
 
+// Action Panel
+export const actionPanelWidth = 110;
+export const actionPanelHeight = 32;
+
 export const textTruncate = {
   maxWidth: '100%',
   overflow: 'hidden',
@@ -1058,6 +1062,10 @@ export const theme = {
 
   // export map
   exportIntraSectionMargin,
+
+  // Action Panel
+  actionPanelWidth,
+  actionPanelHeight,
 
   // Breakpoints
   breakPoints
