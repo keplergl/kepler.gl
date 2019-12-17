@@ -22,7 +22,6 @@ import React, { Component } from 'react';
 import {Modal} from 'kepler.gl/components';
 import SaveMapModalContent from './save-map-modal-content'
 import {BACKEND_PROVIDERS} from '../../utils/backend-providers';
-import KeplerGlSchema from 'kepler.gl/schemas';
 
 class SaveMapBackendStorageModal extends Component {
   mapTitle = '';
@@ -45,31 +44,38 @@ class SaveMapBackendStorageModal extends Component {
   }
 
   _saveMap = async (map) => {
-    debugger;
-    // Prepare data
-    const mapData = KeplerGlSchema.save(map);
-    const data = JSON.stringify(mapData);
-    const newBlob = new Blob([data], {type: 'application/json'});
-    const fileName = `/keplergl_${this.state.title}.json`;
-    const file = new File([newBlob], fileName);
+    // // Prepare data
+    // const mapData = KeplerGlSchema.save(map);
+    // const data = JSON.stringify(mapData);
+    // const newBlob = new Blob([data], {type: 'application/json'});
+    // const fileName = `/keplergl_${this.state.title}.json`;
+    // const file = new File([newBlob], fileName);
 
-    const activeProvider = this._getActiveProvider();
-    const result = await activeProvider.uploadFile({
-      data,
-      type: 'application/json',
-      blob: file,
-      name: fileName,
-      isPublic: false,
-      activeProvider
-    });
+    // const activeProvider = this._getActiveProvider();
+    // const result = await activeProvider.uploadFile({
+    //   data,
+    //   type: 'application/json',
+    //   blob: file,
+    //   name: fileName,
+    //   isPublic: false,
+    //   activeProvider
+    // });
+    // console.log(`Saving map "${this.state.title}" => ${result.url}`);
 
-    console.log(`Saving map "${this.state.title}" => ${result.url}`);
+    const provider = this._getActiveProvider();
+    const extraData = {
+      title: this.state.title.length ? this.state.title : null,
+      description: this.state.description.length ? this.state.description : null
+    };
+    this.props.onSave(provider, extraData);
+
   }
 
   _isSaveDisabled = () => this.state.title.length < 3;
 
   _getActiveProvider = () => {
-    return Object.values(BACKEND_PROVIDERS).find((provider) => provider.isConnected);
+    const provider = Object.values(BACKEND_PROVIDERS).find((provider) => provider.isConnected);
+    return provider ? provider.name : null
   }
 
   _modalProps = {
@@ -83,15 +89,16 @@ class SaveMapBackendStorageModal extends Component {
   }
 
   render() {
-    const { isOpen, onClose, parentSelector, mapData } = this.props;
+    const { isOpen, onClose, parentSelector } = this.props;
     const { title, description } = this.state;
     this._isSaveDisabled = this._isSaveDisabled.bind(this);
+    this._saveMap = this._saveMap.bind(this);
     return (
       <Modal
         isOpen={isOpen}
         close={onClose}
         parentSelector={parentSelector}
-        onConfirm={() => {this._saveMap(mapData)}}
+        onConfirm={ () => { this._saveMap(); }}
         {...this._modalProps}
       >
         <SaveMapModalContent

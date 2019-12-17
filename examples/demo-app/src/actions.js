@@ -380,7 +380,7 @@ export function loadCloudMap(queryParams, providerName) {
  * @param providerName
  * @returns {Function}
  */
-export function exportFileToCloud(providerName) {
+export function exportFileToCloud(providerName, isPublic = true, extraData = {title: null, description: null}) {
   if (!providerName) {
     throw new Error('No cloud provider identified')
   }
@@ -391,6 +391,7 @@ export function exportFileToCloud(providerName) {
     const data = JSON.stringify(mapData);
     const newBlob = new Blob([data], {type: 'application/json'});
     const fileName = `/keplergl_${generateHashId(6)}.json`;
+    extraData.title = extraData.title || fileName;
     const file = new File([newBlob], fileName);
     // We are gonna pass the correct auth token to init the cloud provider
     dispatch(setPushingFile(true, {
@@ -403,8 +404,9 @@ export function exportFileToCloud(providerName) {
       data,
       type: 'application/json',
       blob: file,
-      name: fileName,
-      isPublic: true,
+      name: extraData.title,
+      description: extraData.description,
+      isPublic,
       cloudProvider
     })
     // need to perform share as well

@@ -35,7 +35,7 @@ import ExportUrlModal from './components/sharing/export-url-modal';
 import ConnectBackendStorageModal from './components/backend-storage-modal/connect-backend-storage-modal';
 import SaveMapBackendStorageModal from './components/save-map-modal/save-map-backend-storage-modal';
 import {AUTH_TOKENS} from './constants/default-settings';
-import {getCloudProvider} from './cloud-providers';
+import {getCloudProvider, getCloudProviders} from './cloud-providers';
 
 import {
   exportFileToCloud,
@@ -293,6 +293,12 @@ class App extends Component {
     });
   };
 
+  _hasBackendProviderActive = () => {
+    const providers = getCloudProviders();
+    const activeProvider = providers.find((provider) => !!provider.getAccessToken());
+    return !!activeProvider;
+  }
+
   _toggleSettingsBackendModal = () => {
     this.setState({
       settingsBackendModalOpen: !this.state.settingsBackendModalOpen
@@ -300,14 +306,22 @@ class App extends Component {
   };
 
   _toggleSaveMapToBackendModal = () => {
-    this.setState({
-      saveMapToBackendModalOpen: !this.state.saveMapToBackendModalOpen
-    });
+    if (this._hasBackendProviderActive()) {
+      this.setState({
+        saveMapToBackendModalOpen: !this.state.saveMapToBackendModalOpen
+      });
+    } else {
+      this._toggleSettingsBackendModal();
+    }
   }
 
   _onExportToCloud = (providerName) => {
     this.props.dispatch(exportFileToCloud(providerName));
   };
+
+  _onSaveToCloud = (providerName, extraData) => {
+    this.props.dispatch(exportFileToCloud(providerName, false, extraData));
+  }
 
   _onCloudLoginSuccess = (providerName) => {
     this.props.dispatch(setCloudLoginSuccess(providerName));
@@ -374,8 +388,8 @@ class App extends Component {
             <SaveMapBackendStorageModal
               isOpen={Boolean(this.state.saveMapToBackendModalOpen)}
               onClose={this._toggleSaveMapToBackendModal}
+              onSave={this._onSaveToCloud}
               parentSelector={() => findDOMNode(this.root)}
-              mapData={this.props.demo.keplerGl.map}
             />
           }
 

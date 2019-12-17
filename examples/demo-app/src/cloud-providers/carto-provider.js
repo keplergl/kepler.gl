@@ -3,12 +3,14 @@ import CartoIcon from '../components/icons/carto-icon';
 import {formatCsv} from 'processors/data-processor';
 const NAME = 'carto';
 const NAMESPACE = 'keplergl';
+const PRIVATE_STORAGE_ENABLED = true;
 
 export default class CartoProvider {
   constructor(clientId){
     this.name = NAME;
     this.clientId = clientId;
     this.icon = CartoIcon;
+    this.currentMap = null;
 
     // Initialize CARTO API
     this._carto = new OAuthApp({
@@ -29,7 +31,17 @@ export default class CartoProvider {
     });
   }
 
-  async uploadFile({blob, name: fileName, isPublic = true}) {
+  logout(onCloudLogoutSuccess) {
+    this._carto.oauth.clear();
+    this._carto.oauth._carto.sync();
+    onCloudLogoutSuccess();
+  };
+
+  hasPrivateStorage() {
+    return PRIVATE_STORAGE_ENABLED;
+  }
+
+  async uploadFile({blob, name, description, isPublic = true}) {
     const payload = JSON.parse(await new Response(blob).text());
 
     const { config, datasets } = payload;
@@ -38,11 +50,27 @@ export default class CartoProvider {
 
     const cs = await this._carto.getCustomStorage();
 
-    const result = await cs.createVisualization({
-      name: fileName,
-      config: JSON.stringify(config),
-      isPrivate: !isPublic
-    }, cartoDatasets, true);
+    let result;
+    if (this.currentMap && this.currentMap.name === name) {
+      result = await cs.updateVisualization({
+        id: this.currentMap.id,
+        name,
+        description,
+        config: JSON.stringify(config),
+        isPrivate: this.currentMap.isPrivate
+      }, cartoDatasets)
+    } else {
+      result = await cs.createVisualization({
+        name,
+        description,
+        config: JSON.stringify(config),
+        isPrivate: !isPublic
+      }, cartoDatasets, true);
+    }
+
+    if (result) {
+      this.currentMap = result;
+    }
 
     return ({
       url: `demo/map/carto?mapId=${result.id}&owner=${this._carto.username}`
@@ -84,7 +112,7 @@ export default class CartoProvider {
       return;
     }
 
-
+    // TODO: Check for private visualizations
     const visualization = await this._carto.PublicStorageReader.getVisualization(username, mapId);
 
     // These are the options required for the action. For now, all datasets that come from CARTO are CSV

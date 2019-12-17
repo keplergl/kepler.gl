@@ -28,6 +28,7 @@ const NAME = 'dropbox';
 const DOMAIN = 'www.dropbox.com';
 const KEPLER_DROPBOX_FOLDER_LINK = `//${DOMAIN}/home/Apps`;
 const CORS_FREE_DOMAIN = 'dl.dropboxusercontent.com';
+const PRIVATE_STORAGE_ENABLED = false;
 
 export default class DropboxProvider {
   constructor(clientId, appName, icon = DropboxIcon) {
@@ -69,6 +70,14 @@ export default class DropboxProvider {
       onCloudLoginSuccess(this.name);
     };
     window.addEventListener('message', handleToken);
+  }
+
+  logout(onCloudLogoutSuccess) {
+    // TODO: Implement
+  };
+
+  hasPrivateStorage() {
+    return PRIVATE_STORAGE_ENABLED;
   }
 
   /**

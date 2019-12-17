@@ -22,7 +22,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import {StyledModalContent} from 'kepler.gl/components';
 import BackendTile from './BackendTile';
-import {BACKEND_PROVIDERS} from '../../utils/backend-providers';
+import {getCloudProviders} from '../../cloud-providers';
 
 const StyledBackendExportSection = styled.div`
   display: flex;
@@ -40,6 +40,7 @@ function useForceUpdate(){
 
 const BackendStorageModalContent = () => {
   const forceUpdate = useForceUpdate();
+  const providers = getCloudProviders();
 
   return (
     <StyledModalContent className="export-cloud-modal">
@@ -49,14 +50,14 @@ const BackendStorageModalContent = () => {
         </StyledSubtitle>
 
         <StyledBackendExportSection>
-          {Object.keys(BACKEND_PROVIDERS).map((name, index) => (
+          {providers.map(provider => (
+            provider.hasPrivateStorage() &&
             <BackendTile
-              key={index}
-              Icon={BACKEND_PROVIDERS[name].icon}
-              isConnected={BACKEND_PROVIDERS[name].isConnected}
-              onConnect={BACKEND_PROVIDERS[name].connect.bind(this, forceUpdate)}
-              onManageStorage={BACKEND_PROVIDERS[name].manageStorage}
-              onLogout={BACKEND_PROVIDERS[name].logout.bind(this, forceUpdate)}
+              key={provider.name}
+              Icon={provider.icon}
+              isConnected={() => !!provider.getAccessToken()}
+              onConnect={() => {provider.login(forceUpdate)}}
+              onLogout={() => {provider.logout(forceUpdate)}}
             />
           ))}
         </StyledBackendExportSection>
