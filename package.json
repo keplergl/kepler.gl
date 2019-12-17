@@ -1,7 +1,7 @@
 {
   "name": "kepler.gl",
   "author": "Shan He <shan@uber.com>",
-  "version": "1.1.11",
+  "version": "1.1.12",
   "description": "kepler.gl is a webgl based application to visualize large scale location data in the browser",
   "license": "MIT",
   "main": "dist/index.js",
@@ -181,6 +181,7 @@
     "jsdom": "^11.1.0",
     "json-loader": "^0.5.4",
     "nyc": "^11.4.1",
+    "ocular-dev-tools": "^0.0.30",
     "prettier": "^1.7.0",
     "progress-bar-webpack-plugin": "^1.9.3",
     "react": "^16.8.4",
