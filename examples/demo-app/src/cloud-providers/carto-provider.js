@@ -26,9 +26,13 @@ export default class CartoProvider {
    * The CARTO toolkit library takes care of the login process.
    */
   login(onCloudLoginSuccess) {
-    this._carto.login().then(() => {
-      onCloudLoginSuccess(this.name);
-    });
+    try {
+      this._carto.login().then(() => {
+        onCloudLoginSuccess(this.name);
+      });
+    } catch (error) {
+      this._manageErrors(error);
+    }
   }
 
   logout(onCloudLogoutSuccess) {
@@ -90,11 +94,19 @@ export default class CartoProvider {
    * from localStorage automatically
    */
   getAccessToken() {
-    return this._carto.oauth.expired ? null : this._carto.oauth.token;
+    try {
+      return this._carto.oauth.expired ? null : this._carto.oauth.token;
+    } catch (error) {
+      this._manageErrors(error);
+    }
   }
 
   getUserName(){
-    return this._carto.oauth.expired ? null : this._carto.username;
+    try {
+      return this._carto.oauth.expired ? null : this._carto.username;
+    } catch (error) {
+      this._manageErrors(error);
+    }
   }
 
   /**
@@ -155,6 +167,21 @@ export default class CartoProvider {
       name: id,
       columns,
       file
+    }
+  }
+
+  _manageErrors(error) {
+    if (error && error.message) {
+      switch (error.message) {
+        case 'No client ID has been specified':
+          console.error('No ClientID set for CARTO provider'); break;
+        case 'Cannot set the client ID more than once':
+          console.error('CARTO provider already initialized'); break;
+        default:
+          console.error(`CARTO provider: ${error.message}`);
+      }
+    } else {
+      console.error(`General error in CARTO provider`);
     }
   }
 

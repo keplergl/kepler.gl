@@ -135,12 +135,16 @@ const COMMON_CONFIG = {
 
   // Optional: Enables reading mapbox token from environment variable
   plugins: [
-    new webpack.EnvironmentPlugin([
-      'MapboxAccessToken',
-      'DropboxClientId',
-      'CartoClientId',
-      'MapboxExportToken'
-    ])
+    // Provide default values to suppress warnings
+    new webpack.EnvironmentPlugin({
+      MapboxAccessToken: undefined,
+      DropboxClientId: null,
+      CartoClientId: null,
+      GoogleDriveClientId: null,
+      MapboxExportToken: null,
+      UNFOLDED_API_URL: null,
+      SHAPIFY_API_URL: null
+    })
   ],
 
   // Required to avoid deck.gl undefined module when code is minified

@@ -73,12 +73,14 @@ export {default as LayerHoverInfoFactory} from './map/layer-hover-info';
 export {default as CoordinateInfoFactory} from './map/coordinate-info';
 
 // // modal container factories
+export {default as ModalDialoFactory} from './modals/modal-dialog';
 export {default as DeleteDatasetModalFactory} from './modals/delete-data-modal';
 export {default as DataTableModalFactory} from './modals/data-table-modal';
 export {default as LoadDataModalFactory} from './modals/load-data-modal';
 export {default as ExportImageModalFactory} from './modals/export-image-modal';
 export {default as ExportDataModalFactory} from './modals/export-data-modal';
 export {default as AddMapStyleModalFactory} from './modals/add-map-style-modal';
+export {default as ExportMapModalFactory} from './modals/export-map-modal/export-map-modal';
 
 // // common factory
 export {default as AnimationControlFactory} from './common/animation-control/animation-control';
@@ -96,8 +98,8 @@ export {default as RangeFilterFactory} from './filters/range-filter';
 
 // Injector
 export {
-  injector as injector,
-  withState as withState
+  injector,
+  withState
 } from './injector'
 
 // Common Components
@@ -110,7 +112,8 @@ export {default as AppLogo} from './common/logo';
 export {default as Switch} from './common/switch';
 export {default as LoadingSpinner} from './common/loading-spinner';
 export * from './common/styled-components';
-export * as Icons from './common/icons';
+import * as Icons from './common/icons';
+export {Icons};
 
 export const TimeRangeSlider = TimeRangeSliderFactory();
 export {TimeRangeSliderFactory};
