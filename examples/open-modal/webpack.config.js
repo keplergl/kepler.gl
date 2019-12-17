@@ -39,11 +39,6 @@ const CONFIG = {
 
   devtool: 'source-map',
 
-  resolve: {
-    // Make src files outside of this dir resolve modules in our node_modules folder
-    modules: [resolve(__dirname, '.'), resolve(__dirname, 'node_modules'), 'node_modules']
-  },
-
   module: {
     rules: [
       {
