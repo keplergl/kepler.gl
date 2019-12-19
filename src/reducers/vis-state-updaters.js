@@ -1165,7 +1165,7 @@ export const updateVisDataUpdater = (state, action) => {
     ? action.datasets
     : [action.datasets];
 
-  const newDateEntries = datasets.reduce(
+  const newDataEntries = datasets.reduce(
     (accu, {info = {}, data}) => ({
       ...accu,
       ...(createNewDataEntry({info, data}, state.datasets) || {})
@@ -1173,7 +1173,7 @@ export const updateVisDataUpdater = (state, action) => {
     {}
   );
 
-  if (!Object.keys(newDateEntries).length) {
+  if (!Object.keys(newDataEntries).length) {
     return state;
   }
 
@@ -1188,7 +1188,7 @@ export const updateVisDataUpdater = (state, action) => {
     ...previousState,
     datasets: {
       ...previousState.datasets,
-      ...newDateEntries
+      ...newDataEntries
     }
   };
 
@@ -1210,12 +1210,12 @@ export const updateVisDataUpdater = (state, action) => {
   mergedState = mergeSplitMaps(mergedState, splitMapsToBeMerged);
 
   let newLayers = mergedState.layers.filter(
-    l => l.config.dataId in newDateEntries
+    l => l.config.dataId in newDataEntries
   );
 
   if (!newLayers.length) {
     // no layer merged, find defaults
-    const result = addDefaultLayers(mergedState, newDateEntries);
+    const result = addDefaultLayers(mergedState, newDataEntries);
     mergedState = result.state;
     newLayers = result.newLayers;
   }
@@ -1223,7 +1223,7 @@ export const updateVisDataUpdater = (state, action) => {
   if (mergedState.splitMaps.length) {
     // if map is split, add new layers to splitMaps
     newLayers = mergedState.layers.filter(
-      l => l.config.dataId in newDateEntries
+      l => l.config.dataId in newDataEntries
     );
     mergedState = {
       ...mergedState,
@@ -1235,17 +1235,17 @@ export const updateVisDataUpdater = (state, action) => {
   mergedState = mergeInteractions(mergedState, interactionToBeMerged);
 
   // if no tooltips merged add default tooltips
-  Object.keys(newDateEntries).forEach(dataId => {
+  Object.keys(newDataEntries).forEach(dataId => {
     const tooltipFields =
       mergedState.interactionConfig.tooltip.config.fieldsToShow[dataId];
     if (!Array.isArray(tooltipFields) || !tooltipFields.length) {
-      mergedState = addDefaultTooltips(mergedState, newDateEntries[dataId]);
+      mergedState = addDefaultTooltips(mergedState, newDataEntries[dataId]);
     }
   });
 
   let updatedState = updateAllLayerDomainData(
     mergedState,
-    Object.keys(newDateEntries)
+    Object.keys(newDataEntries)
   );
 
   // register layer animation domain,
