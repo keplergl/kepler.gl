@@ -26,8 +26,7 @@ import {
   RESOLUTIONS,
   EXPORT_MAP_FORMATS,
   EXPORT_HTML_MAP_MODES,
-  DEFAULT_NOTIFICATION_TOPICS,
-  EDITOR_MODES
+  DEFAULT_NOTIFICATION_TOPICS
 } from 'constants/default-settings';
 import {createNotification, errorNotification} from 'utils/notifications-utils';
 
@@ -175,11 +174,6 @@ export const DEFAULT_EXPORT_MAP = {
   format: EXPORT_MAP_FORMATS.HTML
 };
 
-export const DEFAULT_EDITOR = {
-  mode: EDITOR_MODES.DRAW_POLYGON,
-  selectedFeature: null
-};
-
 /**
  * Default initial `uiState`
  * @memberof uiStateUpdaters
@@ -212,9 +206,7 @@ export const INITIAL_UI_STATE = {
   // ui notifications
   notifications: DEFAULT_NOTIFICATIONS,
   // load files
-  loadFiles: DEFAULT_LOAD_FILES,
-  // editor mode
-  editor: DEFAULT_EDITOR
+  loadFiles: DEFAULT_LOAD_FILES
 };
 
 /* Updaters */
@@ -614,72 +606,3 @@ export const loadFilesErrUpdater = (state, {error}) => addNotificationUpdater(
     })
   }
 );
-
-/**
- * Update the status of the editor
- * @memberof uiStateUpdaters
- * @param {Object} state `uiState`
- * @param {string} mode to set to editor to
- * @return {Object} nextState
- */
-export const setEditorModeUpdater = (state, {payload: mode}) => ({
-  ...state,
-  editor: {
-    ...state.editor,
-    mode
-  }
-});
-
-/**
- * Update editor mode once feature is closed
- * @memberof uiStateUpdaters
- * @param {Object} state `uiState`
- * @param {[Object]} features to store
- * @return {Object} nextState
- */
-export function setFeaturesUpdater(state, {features = []}) {
-  if (!features.length) {
-    return state;
-  }
-  const lastFeature = features[features.length - 1];
-
-  return !lastFeature.properties.isClosed ?
-    state : {
-      ...state,
-      editor: {
-        ...state.editor,
-        mode: EDITOR_MODES.EDIT
-      }
-    };
-}
-
-/**
- * Set the current selected feature
- * @memberof uiStateUpdaters
- * @param {Object} state `uiState`
- * @param {[Object]} features to store
- * @return {Object} nextState
- */
-export const setSelectedFeatureUpdater = (state, {payload: selectedFeatureId}) => ({
-  ...state,
-  editor: {
-    ...state.editor,
-    selectedFeature: selectedFeatureId ? {id: selectedFeatureId} : null
-  }
-});
-
-/**
- * @memberof uiStateUpdaters
- * @param {Object} state `uiState`
- * @param {string} selectedFeatureId feature to delete
- * @return {Object} nextState
- */
-export const deleteFeatureUpdater = (state, {payload: selectedFeatureId}) => {
-  return selectedFeatureId ? {
-    ...state,
-    editor: {
-      ...state.editor,
-      selectedFeature: null
-    }
-  } : state;
-};

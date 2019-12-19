@@ -42,10 +42,12 @@ export class FeatureActionPanel extends PureComponent {
     datasets: PropTypes.object.isRequired,
     position: PropTypes.object.isRequired,
     layers: PropTypes.arrayOf(PropTypes.object).isRequired,
+    currentFilter: PropTypes.object,
     onClose: PropTypes.func.isRequired,
     onDeleteFeature: PropTypes.func.isRequired
   };
 
+  // Used by onClickOutside
   handleClickOutside = e => {
     e.preventDefault();
     e.stopPropagation();
@@ -58,8 +60,12 @@ export class FeatureActionPanel extends PureComponent {
       datasets,
       position,
       layers,
+      currentFilter,
+      onToggleLayer,
       onDeleteFeature
     } = this.props;
+
+    const {layerId = []} = (currentFilter || {});
 
     return (
       <StyledActionsLayer className={className} position={position}>
@@ -70,8 +76,9 @@ export class FeatureActionPanel extends PureComponent {
                 key={index}
                 label={layer.config.label}
                 color={datasets[layer.config.dataId].color}
-                isSelection
-                onClick={() => {}}
+                isSelection={true}
+                isActive={layerId.includes(layer.id)}
+                onClick={() => onToggleLayer(layer)}
                 className="layer-panel-item"
               />
             ))}

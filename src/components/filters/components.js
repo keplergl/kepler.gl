@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,8 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-export {default as SingleSelectFilter} from './single-select-filter';
-export {default as MultiSelectFilter} from './multi-select-filter';
-export {default as TimeRangeFilter} from './time-range-filter';
-export {default as RangeFilter} from './range-filter';
-export {default as PolygonFilter} from './polygon-filter';
+import styled from 'styled-components';
+import {PanelLabel} from 'components/common/styled-components';
+
+export const StyledFilterPanel = styled(PanelLabel)`
+  font-weight: 500;
+  color: white;
+`;

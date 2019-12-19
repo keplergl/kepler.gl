@@ -45,6 +45,7 @@ test('MapContainerFactory - display all options', t => {
       }}
       mapLayers={{}}
       layers={[]}
+      filters={[]}
       datasets={{}}
       uiState={{
         mapControls: {

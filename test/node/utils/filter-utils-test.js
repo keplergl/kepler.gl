@@ -30,10 +30,13 @@ import {
   getTimestampFieldDomain,
   getDefaultFilter,
   getDatasetIndexForFilter,
-  getDatasetFieldIndexForFilter
+  getDatasetFieldIndexForFilter,
+  validatePolygonFilter,
+  getLayerPointsToFilter
 } from 'utils/filter-utils';
 
 import {processCsvData} from 'processors/data-processor';
+import {LAYER_TYPES} from 'constants';
 
 /* eslint-disable max-statements */
 test('filterUtils -> adjustValueToFilterDomain', t => {
@@ -729,6 +732,143 @@ test('filterUtils -> getDatasetIndexForFilter', t => {
     fieldIndex,
     -1,
     'FieldIndex should be -1'
+  );
+
+  t.end();
+});
+
+test('filterUtils -> getLayerPointsToFilter', t => {
+  let layer = {
+    type: LAYER_TYPES.point,
+    config: {
+      columns: {
+        lat: {
+          fieldIdx: 0,
+          value: 'start_point_lat'
+        },
+        lng: {
+          fieldIdx: 1,
+          value: 'start_point_lng'
+        },
+        altitude: {
+          value: null,
+          fieldIdx: -1,
+          optional: true
+        }
+      }
+    }
+  };
+
+  const data = [
+    12.25,
+    30.5,
+    45.5,
+    32.5
+  ];
+
+  t.deepEqual(
+    getLayerPointsToFilter(layer, data),
+    [
+      [
+        30.5,
+        12.25
+      ]
+    ],
+    'Should find the exact point to filter for Layer Point'
+  );
+
+  layer = {
+    type: LAYER_TYPES.arc,
+    config: {
+      columns: {
+        lat0: {
+          fieldIdx: 0,
+          value: 'start_point_lat'
+        },
+        lng0: {
+          fieldIdx: 1,
+          value: 'start_point_lng'
+        },
+        lat1: {
+          fieldIdx: 2,
+          value: 'end_point_lat'
+        },
+        lng1: {
+          fieldIdx: 3,
+          value: 'end_point_lng'
+        }
+      }
+    }
+  };
+
+  t.deepEqual(
+    getLayerPointsToFilter(layer, data),
+    [
+      [
+        30.5,
+        12.25
+      ],
+      [
+        32.5,
+        45.5
+      ]
+    ],
+    'Should find the exact point to filter for Layer Point'
+  );
+
+  t.end();
+});
+
+test('filterUtils -> validatePolygonFilter', t => {
+  const filter = {
+    layerId: ['layer1'],
+    dataId: ['puppy'],
+    value: {
+      id: 'feature_1',
+      geometry: {
+        coordinates: []
+      }
+    },
+    type: 'polygon'
+  };
+
+  const dataset = {
+    id: 'puppy'
+  };
+
+  const layers = [{
+    id: 'layer1'
+  }];
+
+  t.deepEqual(
+    validatePolygonFilter(dataset, filter, layers).filter,
+    {
+      ...filter,
+      fieldIdx: [ 0 ],
+      freeze: true
+    },
+    'Should positively validate filter'
+  );
+
+  t.equal(
+    validatePolygonFilter(dataset, filter, [{id: 'layer2'}]).filter,
+    null,
+    'Should not validate the filter since layers are not matched'
+  );
+
+  t.equal(
+    validatePolygonFilter(dataset, {}, layers).filter,
+    null,
+    'Should non validate empty filter'
+  );
+
+  t.deepEqual(
+    validatePolygonFilter(dataset, {
+      ...filter,
+      dataId: ['non_valid']
+    }, layers).filter,
+    null,
+    'Should non validate filter with non existing dataId'
   );
 
   t.end();

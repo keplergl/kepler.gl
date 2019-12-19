@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-export const transformRequest = (url, resourceType) => {
+export const transformRequest = url => {
   const isMapboxRequest = url.slice(8, 22) === 'api.mapbox.com' ||
     url.slice(10, 26) === 'tiles.mapbox.com';
 

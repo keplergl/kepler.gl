@@ -63,7 +63,8 @@ function AnimationPlaybacksFactory() {
         })}
       >
         <ButtonGroup>
-          <IconButton  className="playback-control-button"
+          <IconButton
+            className="playback-control-button"
             {...btnStyle}
             onClick={updateAnimationTime}>
             <Reset height={buttonHeight} />

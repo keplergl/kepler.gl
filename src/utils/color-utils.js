@@ -88,3 +88,18 @@ export function reverseColorRange(reversed, colorRange) {
     colors: colorRange.colors.slice().reverse()
   };
 }
+
+/**
+ * given a list of rgb arrays it will generate a linear gradient css rule
+ * @param direction
+ * @param colors
+ * @return {string}
+ */
+export function createLinearGradient(direction, colors) {
+  const step = parseFloat(100.00/colors.length).toFixed(2);
+  const bands = colors.map((rgb, index) => {
+    return `rgba(${rgb.join(',')}, 1) ${step * index}%, rgba(${rgb.join(',')}, 1) ${step * (index + 1)}%`
+  });
+
+  return `linear-gradient(to ${direction}, ${bands.join(',')})`;
+}

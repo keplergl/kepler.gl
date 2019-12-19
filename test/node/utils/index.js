@@ -27,3 +27,4 @@ import './interaction-utils-test';
 import './mapbox-gl-style-editor-test';
 import './notifications-utils-test';
 import './aggregate-utils-test';
+import './color-util-test';

@@ -1274,7 +1274,6 @@ export const updatedLayerV2 = {
         type: 'LineString',
         coordinates: [
           [-74.387589, 40.632238],
-          
           [-74.387589, 40.632238]
         ]
       }

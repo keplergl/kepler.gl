@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,28 +19,47 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import ItemSelector from '../common/item-selector/item-selector';
-import {PanelLabel, SidePanelSection} from '../common/styled-components';
+import styled from 'styled-components';
+import {StyledFilterHeader} from 'components/common/styled-components';
+import PanelHeaderAction from 'components/side-panel/panel-header-action';
+import {Trash} from 'components/common/icons';
 
-export default function SingleSelectFilterFactory() {
-  const SingleSelectFilter = ({filter, setFilter}) => (
-    <SidePanelSection>
-      <PanelLabel>Value equals</PanelLabel>
-      <ItemSelector
-        selectedItems={filter.value}
-        placeholder="Select a Value"
-        options={filter.domain}
-        multiSelect={false}
-        searchable={false}
-        displayOption={d => String(d)}
-        getOptionValue={d => d}
-        onChange={setFilter}
-        inputTheme="secondary"
+const StyledChildrenContainer = styled.div`
+  display: flex;
+  flex: 2;
+`;
+
+FilterPanelHeaderFactory.deps = [];
+
+function FilterPanelHeaderFactory() {
+  const FilterPanelHeader = ({
+    children,
+    datasets,
+    allAvailableFields,
+    setFilter,
+    idx,
+    filter,
+    removeFilter
+  }) => (
+    <StyledFilterHeader
+      className="filter-panel__header"
+      labelRCGColorValues={datasets.map(d => d.color)}
+    >
+      <StyledChildrenContainer>
+        {children}
+      </StyledChildrenContainer>
+      <PanelHeaderAction
+        id={filter.id}
+        tooltip="delete"
+        tooltipType="error"
+        onClick={removeFilter}
+        hoverColor={'errorColor'}
+        IconComponent={Trash}
       />
-    </SidePanelSection>
+    </StyledFilterHeader>
   );
 
-  SingleSelectFilter.displayName = 'SingleSelectFilter';
-
-  return SingleSelectFilter;
+  return FilterPanelHeader;
 }
+
+export default FilterPanelHeaderFactory;

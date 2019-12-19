@@ -31,7 +31,7 @@ import {
 import {getInitialMapLayersForSplitMap} from 'utils/split-map-utils';
 
 import {LAYER_BLENDINGS} from 'constants/default-settings';
-import {mergeFilterDomainStep} from '../utils/filter-utils';
+import {mergeFilterDomainStep, FILTER_TYPES} from '../utils/filter-utils';
 
 /**
  * Merge loaded filters with current state, if no fields or data are loaded
@@ -56,14 +56,15 @@ export function mergeFilters(state, filtersToMerge) {
     // we can only look for datasets define in the filter dataId
     const datasetIds = Array.isArray(filter.dataId) ? filter.dataId : [filter.dataId];
 
-    // we can merge a filter only if all datasets in filter.dataId are laoded
+    // we can merge a filter only if all datasets in filter.dataId are loaded
     if (datasetIds.every(d => datasets[d])) {
 
       // all datasetIds in filter must be present the state datasets
       const {filter: validatedFilter, applyToDatasets, augmentedDatasets} = datasetIds.reduce((acc, datasetId) => {
+
         const dataset = updatedDatasets[datasetId];
-        const {filter: updatedFilter, dataset: updatedDataset} =
-          validateFilterWithData(acc.augmentedDatasets[datasetId] || dataset, filter);
+        const layers = state.layers.filter(l => l.config.dataId === dataset.id);
+        const {filter: updatedFilter, dataset: updatedDataset} = validateFilterWithData(acc.augmentedDatasets[datasetId] || dataset, filter, layers);
 
         if (updatedFilter) {
           return {
@@ -87,7 +88,6 @@ export function mergeFilters(state, filtersToMerge) {
         }
 
         return acc;
-
       }, {
         filter: null,
         applyToDatasets: [],
@@ -112,13 +112,24 @@ export function mergeFilters(state, filtersToMerge) {
   // flatten all filter dataIds
   const datasetsToFilter = uniq(flattenDeep(merged.map(f => f.dataId)));
 
-  const filtered = applyFiltersToDatasets(datasetsToFilter, updatedDatasets, updatedFilters);
+  const filtered = applyFiltersToDatasets(datasetsToFilter, updatedDatasets, updatedFilters, state.layers);
+
+  const features = updatedFilters.reduce((acc, f) => {
+    return f.type === FILTER_TYPES.polygon ? [...acc, f.value] : acc;
+  }, []);
 
   return {
     ...state,
     filters: updatedFilters,
     datasets: filtered,
-    filterToBeMerged: unmerged
+    filterToBeMerged: unmerged,
+    editor: {
+      ...state.editor,
+      features: [
+        ...(state.editor || {}).features,
+        ...features
+      ]
+    }
   };
 }
 
