@@ -54,7 +54,7 @@ export function getOrdinalDomain(data, valueAccessor) {
  * @param {function} valueAccessor
  * @returns {Array} domain
  */
-export function getLinearDomain(data, valueAccessor) {
+export function getLinearDomain(data, valueAccessor = null) {
   const range =
     typeof valueAccessor === 'function'
       ? extent(data, valueAccessor)

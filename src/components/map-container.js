@@ -41,6 +41,7 @@ import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 
 // default-settings
 import ThreeDBuildingLayer from 'deckgl-layers/3d-building-layer/3d-building-layer';
+import {FILTER_TYPES} from 'utils/filter-utils';
 
 const MAP_STYLE = {
   container: {
@@ -70,6 +71,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       layerOrder: PropTypes.arrayOf(PropTypes.any).isRequired,
       layerData: PropTypes.arrayOf(PropTypes.any).isRequired,
       layers: PropTypes.arrayOf(PropTypes.any).isRequired,
+      filters: PropTypes.arrayOf(PropTypes.any).isRequired,
       mapState: PropTypes.object.isRequired,
       uiState: PropTypes.object.isRequired,
       mapStyle: PropTypes.object.isRequired,
@@ -127,6 +129,12 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         [layer.id]: layer.shouldRenderLayer(layerData[idx]) &&
           this._isVisibleMapLayer(layer, mapLayers)
       }), {})
+    );
+
+    filtersSelector = props => props.filters;
+    polygonFilters = createSelector(
+      this.filtersSelector,
+      filters => filters.filter(f => f.type === FILTER_TYPES.polygon)
     );
 
     mapboxLayersSelector = createSelector(
@@ -419,7 +427,9 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         visStateActions,
         editor
       } = this.props;
+
       const layersToRender = this.layersToRenderSelector(this.props);
+
       if (!mapStyle.bottomMapStyle) {
         // style not yet loaded
         return <div />;
@@ -450,12 +460,13 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             readOnly={this.props.readOnly}
             scale={mapState.scale || 1}
             top={0}
-            editor={uiState.editor}
+            editor={editor}
             onTogglePerspective={mapStateActions.togglePerspective}
             onToggleSplitMap={mapStateActions.toggleSplitMap}
             onMapToggleLayer={this._handleMapToggleLayer}
             onToggleMapControl={uiStateActions.toggleMapControl}
-            onSetEditorMode={uiStateActions.setEditorMode}
+            onSetEditorMode={visStateActions.setEditorMode}
+            onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
           />
           <MapComponent
             {...mapProps}
@@ -468,22 +479,20 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           >
             {this._renderDeckOverlay(layersToRender)}
             {this._renderMapboxOverlays(layersToRender)}
-            {/*
-                By placing the editor in this map we have to perform fewer checks for css zIndex
-                and fewer updates when we switch from edit to read mode
-              */}
             <Draw
               datasets={datasets}
-              editor={uiState.editor}
-              features={editor.features}
+              editor={editor}
+              filters={this.polygonFilters(this.props)}
               isEnabled={isEdit}
               layers={layers}
-              onDeleteFeature={uiStateActions.deleteFeature}
-              onSelect={uiStateActions.setSelectedFeature}
+              onDeleteFeature={visStateActions.deleteFeature}
+              onSelect={visStateActions.setSelectedFeature}
               onUpdate={visStateActions.setFeatures}
+              onTogglePolygonFilter={visStateActions.togglePolygonFilter}
               style={{
                 pointerEvents: isEdit ? 'all' : 'none',
-                position: 'absolute'
+                position: 'absolute',
+                display: editor.visible ? 'block' : 'none'
               }}
             />
           </MapComponent>

@@ -144,7 +144,7 @@ test('#composerStateReducer - addDataToMapUpdater: uiState', t => {
     initialState: {},
     readOnly: false,
     currentModal: null
-  }
+  };
 
   t.deepEqual(newState.uiState, expectedUIState, 'ui state should be set readOnly:false,currentModal: null');
 
@@ -194,7 +194,7 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
   });
 
   const hexDataset = nextState1.visState.datasets[hexDataId];
-  cmpDataset(t, expectedHexDataset, nextState1.visState.datasets[hexDataId])
+  cmpDataset(t, expectedHexDataset, nextState1.visState.datasets[hexDataId]);
 
   t.deepEqual(nextState1.visState.splitMaps, [], 'should clear out splitMaps');
 

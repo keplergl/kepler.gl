@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {useCallback} from 'react';
 import styled from 'styled-components';
 import {
   ArrowRight
@@ -32,7 +32,7 @@ const StyledItem = styled.div`
   font-size: 12px;
   line-height: 14px;
   padding: 8px;
-  height: ${props => props.theme.actionPanelHeight}px;
+  min-height: ${props => props.theme.actionPanelHeight}px;
   text-transform: capitalize;
   background-color: ${props => props.theme.dropdownListBgd};
   width: ${props => props.theme.actionPanelWidth}px;
@@ -72,6 +72,7 @@ const StyledCheckedbox = styled(Checkbox)`
     color: ${props => props.theme.textColor};
     padding-left: 20px;
     line-height: 12px;
+    
     &:before {
       width:  12px;
       height: 12px;
@@ -102,35 +103,49 @@ export const ActionPanelItem = React.memo(({
   label,
   onClick,
   isSelection,
-  style}) => (
-  <StyledItem style={style} className={className} onClick={!isSelection ? onClick : null} color={color}>
-    {Icon ? (
-      <div className="icon">
-        <Icon height="16px"/>
-      </div>
+  isActive,
+  style}) => {
+
+  const onClickCallback = useCallback(event => {
+    event.preventDefault();
+    event.stopPropagation();
+    onClick()
+  }, [onClick]);
+
+  return (
+    <StyledItem
+      className={className}
+      onClick={onClickCallback}
+      color={color}
+      style={style}
+    >
+      {Icon ? (
+        <div className="icon">
+          <Icon height="16px"/>
+        </div>
       ) : null}
-    {isSelection ? (
-      <StyledCheckedbox
-        type="checkbox"
-        checked={false}
-        id={`switch-${label}`}
-        onChange={onClick}
-        secondary
-        label={label}
-      />
-    ) : (
-      <span className="label">{label}</span>
-    )}
-    {children && children.length ? ( <div className="label-icon">
-      <ArrowRight height="16px" />
-    </div>) : null}
-    {children && children.length ? (
-      <div className="nested-group">
-        {React.Children.map(children, renderChildren)}
-      </div>
-    ) : null}
-  </StyledItem>
-));
+      {isSelection ? (
+        <StyledCheckedbox
+          type="checkbox"
+          checked={Boolean(isActive)}
+          id={`switch-${label}`}
+          secondary
+          label={label}
+        />
+      ) : (
+        <span className="label">{label}</span>
+      )}
+      {children && children.length ? ( <div className="label-icon">
+        <ArrowRight height="16px" />
+      </div>) : null}
+      {children && children.length ? (
+        <div className="nested-group">
+          {React.Children.map(children, renderChildren)}
+        </div>
+      ) : null}
+    </StyledItem>
+  );
+});
 
 ActionPanelItem.displayName = 'ActionPanelItem';
 

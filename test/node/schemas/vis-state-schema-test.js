@@ -100,7 +100,8 @@ test('#visStateSchema -> v1 -> save load filters', t => {
     value: [1474606800000, 1474617600000],
     enlarged: true,
     plotType: 'histogram',
-    yAxis: null
+    yAxis: null,
+    fixedDomain: true
   }, {
     dataId: ['ieukmgne'],
     id: 'vpk2466o',
@@ -109,7 +110,8 @@ test('#visStateSchema -> v1 -> save load filters', t => {
     value: ['a'],
     enlarged: false,
     plotType: 'histogram',
-    yAxis: null
+    yAxis: null,
+    fixedDomain: false
   }];
 
   cmpFilters(t, expectedSavedFilters, filtersToSave);

@@ -19,8 +19,10 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
+import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
+import classnames from 'classnames';
 
 import ItemSelector from './item-selector/item-selector';
 import FieldToken from '../common/field-token';
@@ -28,17 +30,29 @@ import {classList} from './item-selector/dropdown-list';
 
 const defaultDisplayOption = d => d.name;
 
+const StyledFieldItem = styled.div`
+  .${classList.listItemAnchor} {
+    color: white;
+  }
+`;
+
+const StyledToken = styled.div`
+  display: inline-block;
+  margin: 0 4px 0 0;
+`;
 // custom list Item
-const FieldListItemFactory = showToken => {
+export const FieldListItemFactory = (showToken = true) => {
   const FieldListItem = ({value, displayOption = defaultDisplayOption}) => (
-    <div>
+    <StyledFieldItem>
       {showToken ? (
-        <div style={{display: 'inline-block', margin: '0 4px 0 0'}}>
+        <StyledToken>
           <FieldToken type={value.type} />
-        </div>
+        </StyledToken>
       ) : null}
-      <span className={classList.listItemAnchor}>{displayOption(value)}</span>
-    </div>
+      <span className={classnames(classList.listItemAnchor, value.type, displayOption(value))}>
+        {displayOption(value)}
+      </span>
+    </StyledFieldItem>
   );
 
   return FieldListItem;

@@ -39,6 +39,7 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
   return class FilterManager extends Component {
     static propTypes = {
       datasets: PropTypes.object,
+      layers: PropTypes.arrayOf(PropTypes.any).isRequired,
       addFilter: PropTypes.func.isRequired,
       removeFilter: PropTypes.func.isRequired,
       enlargeFilter: PropTypes.func.isRequired,
@@ -66,7 +67,7 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
     };
 
     render() {
-      const {filters, datasets} = this.props;
+      const {filters, datasets, layers} = this.props;
       const isAnyFilterAnimating = filters.some(f => f.isAnimating);
       const hadEmptyFilter = filters.some(f => !f.name);
       const hadDataset = Object.keys(datasets).length;
@@ -87,6 +88,7 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
                   filters={filters}
                   filter={filter}
                   datasets={datasets}
+                  layers={layers}
                   isAnyFilterAnimating={isAnyFilterAnimating}
                   removeFilter={() => this.props.removeFilter(idx)}
                   enlargeFilter={() => this.props.enlargeFilter(idx)}

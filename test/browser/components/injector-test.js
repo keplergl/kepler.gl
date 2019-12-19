@@ -29,8 +29,8 @@ import {console as Console} from 'global/window';
 import {withState, injectComponents, PanelHeaderFactory} from 'components';
 import coreReducer from 'reducers/core';
 import {keplerGlInit} from 'actions/actions';
-import {errorMsg} from 'components/injector';
 import {visStateLens, uiStateLens, mapStateLens, mapStyleLens} from 'reducers';
+import {errorMsg} from 'components/injector';
 
 const mockStore = configureStore();
 const initialCoreState = coreReducer(undefined, keplerGlInit({}));

@@ -21,6 +21,8 @@
 import {console as Console} from 'global/window';
 import Task, {disableStackCapturing, withTask} from 'react-palm/tasks';
 import cloneDeep from 'lodash.clonedeep';
+import uniq from 'lodash.uniq';
+import {toArray} from 'utils/utils';
 
 // Tasks
 import {LOAD_FILE_TASK} from 'tasks/tasks';
@@ -32,14 +34,17 @@ import {addDataToMap} from 'actions';
 // Utils
 import {getDefaultInteraction, findFieldsToShow} from 'utils/interaction-utils';
 import {
+  FILTER_TYPES,
+  FILTER_UPDATER_PROPS,
+  LIMITED_FILTER_EFFECT_PROPS,
   applyFilterFieldName,
   applyFiltersToDatasets,
+  generatePolygonFilter,
   getDefaultFilter,
   getFilterPlot,
   getDefaultFilterPlotType,
   isInRange,
-  FILTER_UPDATER_PROPS,
-  LIMITED_FILTER_EFFECT_PROPS
+  updatePolygonFilter
 } from 'utils/filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
 
@@ -66,6 +71,10 @@ import {
 import {Layer, LayerClasses} from 'layers';
 import {processFileToLoad} from '/utils/file-utils';
 import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
+
+import {
+  EDITOR_MODES
+} from 'constants/default-settings';
 
 // react-palm
 // disable capture exception for react-palm call to withTask
@@ -111,10 +120,17 @@ disableStackCapturing();
 const visStateUpdaters = null;
 /* eslint-enable no-unused-vars */
 
-export const defaultAnimationConfig = {
+export const defaultAnimationConfig ={
   domain: null,
   currentTime: null,
   speed: 1
+};
+
+export const DEFAULT_EDITOR = {
+  mode: EDITOR_MODES.DRAW_POLYGON,
+  features: [],
+  selectedFeature: null,
+  visible: true
 };
 
 /**
@@ -183,10 +199,8 @@ export const INITIAL_VIS_STATE = {
   // time in unix timestamp (milliseconds) (the number of seconds since the Unix Epoch)
   animationConfig: defaultAnimationConfig,
 
-  editor: {
-    // GEO FEATURES (Shapes)
-    features: []
-  }
+  editor: DEFAULT_EDITOR
+
 };
 
 function updateStateWithLayerAndData(state, {layerData, layer, idx}) {
@@ -309,6 +323,10 @@ function updateTextLabelPropAndValue(idx, prop, value, textLabel) {
   }
 
   return newTextLabel;
+}
+
+function getFilterIdxByFeatureId(state, featureId) {
+  return state.filters.findIndex(f => f.type === FILTER_TYPES.polygon && f.value.id === featureId);
 }
 
 export function layerTextLabelChangeUpdater(state, action) {
@@ -530,8 +548,8 @@ export function setFilterUpdater(state, action) {
     return state;
   }
 
-  // ENsuring backward compatibility
-  const datasetIds = Array.isArray(dataId) ? dataId : [dataId];
+  // Ensuring backward compatibility
+  let datasetIds = Array.isArray(dataId) ? dataId : [dataId];
 
   switch (prop) {
     // TODO: Next PR for UI if we update dataId, we need to consider two cases:
@@ -573,6 +591,20 @@ export function setFilterUpdater(state, action) {
 
       // only filter the current dataset
       break;
+    case FILTER_UPDATER_PROPS.layerId:
+      const layers = state.layers.filter(l => value.includes(l.id));
+
+      const newDatasetIds = layers.map(l => l.config.dataId);
+
+      // there may be new datasets therefore we need to make sure we filter them as well
+      datasetIds = uniq(datasetIds.concat(newDatasetIds));
+
+      newFilter = {
+        ...newFilter,
+        dataId: newDatasetIds
+      };
+
+      break;
     default:
       break;
   }
@@ -603,7 +635,8 @@ export function setFilterUpdater(state, action) {
     datasets: applyFiltersToDatasets(
       datasetIdsToFilter,
       newState.datasets,
-      newState.filters
+      newState.filters,
+      newState.layers
     )
   };
 
@@ -727,7 +760,6 @@ export const updateFilterAnimationSpeedUpdater = (state, action) => ({
  * @public
  *
  */
-
 export const updateAnimationTimeUpdater = (state, {value}) => ({
   ...state,
   animationConfig: {
@@ -746,7 +778,6 @@ export const updateAnimationTimeUpdater = (state, {value}) => ({
  * @public
  *
  */
-
 export const updateLayerAnimationSpeedUpdater = (state, {speed}) => {
   return {
     ...state,
@@ -796,10 +827,18 @@ export const removeFilterUpdater = (state, action) => {
     ...state.filters.slice(idx + 1, state.filters.length)
   ];
 
+  const filter = state.filters[idx];
+
   const newState = {
     ...state,
-    datasets: applyFiltersToDatasets(dataId, state.datasets, newFilters),
-    filters: newFilters
+    datasets: applyFiltersToDatasets(dataId, state.datasets, newFilters, state.layers),
+    filters: newFilters,
+    editor: {
+      ...state.editor,
+      features: filter.type !== FILTER_TYPES.polygon ?
+        state.editor.features : state.editor.features.filter(f => f.id !== filter.value.id),
+      selectedFeature: null
+    }
   };
 
   return updateAllLayerDomainData(newState, dataId);
@@ -859,6 +898,7 @@ export const removeLayerUpdater = (state, {idx}) => {
     clicked: layerToRemove.isLayerHovered(clicked) ? undefined : clicked,
     hoverInfo: layerToRemove.isLayerHovered(hoverInfo) ? undefined : hoverInfo,
     splitMaps: newMaps
+    // TODO: update filters, create helper to remove layer form filter (remove layerid and dataid) if mapped
   };
 
   return updateAnimationDomain(newState);
@@ -1019,8 +1059,8 @@ export const receiveMapConfigUpdater = (
 
   // reset config if keepExistingConfig is falsy
   let mergedState = !keepExistingConfig ? resetMapConfigUpdater(state) : state;
-  mergedState = mergeFilters(mergedState, filters);
   mergedState = mergeLayers(mergedState, layers);
+  mergedState = mergeFilters(mergedState, filters);
   mergedState = mergeInteractions(mergedState, interactionConfig);
   mergedState = mergeLayerBlending(mergedState, layerBlending);
   mergedState = mergeSplitMaps(mergedState, splitMaps);
@@ -1164,9 +1204,7 @@ export const updateVisDataUpdater = (state, action) => {
   // datasets can be a single data entries or an array of multiple data entries
   const {config, options} = action;
 
-  const datasets = Array.isArray(action.datasets)
-    ? action.datasets
-    : [action.datasets];
+  const datasets = toArray(action.datasets);
 
   const newDataEntries = datasets.reduce(
     (accu, {info = {}, data}) => ({
@@ -1203,11 +1241,11 @@ export const updateVisDataUpdater = (state, action) => {
     splitMapsToBeMerged = []
   } = stateWithNewData;
 
-  // merge state with saved filters
-  let mergedState = mergeFilters(stateWithNewData, filterToBeMerged);
+  // We need to merge layers before filters because polygon filters requires layers to be loaded
+  let mergedState = mergeLayers(stateWithNewData, layerToBeMerged);
 
-  // merge state with saved layers
-  mergedState = mergeLayers(mergedState, layerToBeMerged);
+  // merge state with saved filters
+  mergedState = mergeFilters(mergedState, filterToBeMerged);
 
   // merge state with saved splitMaps
   mergedState = mergeSplitMaps(mergedState, splitMapsToBeMerged);
@@ -1391,39 +1429,6 @@ export const loadFilesErrUpdater = (state, {error}) => ({
 });
 
 /**
- * Update editor features
- * @memberof visStateUpdaters
- * @param {Object} state `visState`
- * @param {[Object]} features to store
- * @return {Object} nextState
- */
-export function setFeaturesUpdater(state, {features = []}) {
-  return {
-    ...state,
-    editor: {
-      ...state.editor,
-      features
-    }
-  }
-}
-
-/**
- * @memberof visStateUpdaters
- * @param {Object} state `visState`
- * @param {string} selectedFeatureId feature to delete
- * @return {Object} nextState
- */
-export const deleteFeatureUpdater = (state, {payload: selectedFeatureId}) => {
-  return selectedFeatureId ? {
-    ...state,
-    editor: {
-      ...state.editor,
-      features: state.editor.features.filter(f => f.id !== selectedFeatureId)
-    }
-  } : state;
-};
-
-/**
  * Helper function to update All layer domain and layer data of state
  * @memberof visStateUpdaters
  * @param {Object} state `visState`
@@ -1481,7 +1486,7 @@ export function addDefaultTooltips(state, dataset) {
 }
 
 /**
- * Helper function to update layer domains for an array of datsets
+ * Helper function to update layer domains for an array of datasets
  * @param {Object} state
  * @param {Array|Array<string>} dataId dataset id or array of dataset ids
  * @param {Object} newFilter if is called by setFilter, the filter that has changed
@@ -1490,7 +1495,7 @@ export function addDefaultTooltips(state, dataset) {
 export function updateAllLayerDomainData(state, dataId, newFilter) {
   const dataIds = typeof dataId === 'string' ? [dataId] : dataId;
   const newLayers = [];
-  const newLayerDatas = [];
+  const newLayerData = [];
 
   state.layers.forEach((oldLayer, i) => {
     if (oldLayer.config.dataId && dataIds.includes(oldLayer.config.dataId)) {
@@ -1509,18 +1514,19 @@ export function updateAllLayerDomainData(state, dataId, newFilter) {
         state.layerData[i]
       );
 
+      // console.log('LayerData', layerData);
       newLayers.push(layer);
-      newLayerDatas.push(layerData);
+      newLayerData.push(layerData);
     } else {
       newLayers.push(oldLayer);
-      newLayerDatas.push(state.layerData[i]);
+      newLayerData.push(state.layerData[i]);
     }
   });
 
   const newState = {
     ...state,
     layers: newLayers,
-    layerData: newLayerDatas
+    layerData: newLayerData
   };
 
   return newState;
@@ -1561,4 +1567,216 @@ export function updateAnimationDomain(state) {
       domain: mergedDomain
     }
   };
+}
+
+/**
+ * Update the status of the editor
+ * @memberof visStateUpdaters
+ * @param {Object} state `visState`
+ * @param {string} mode to set to editor to
+ * @return {Object} nextState
+ */
+export const setEditorModeUpdater = (state, {mode}) => ({
+  ...state,
+  editor: {
+    ...state.editor,
+    mode
+  }
+});
+
+/**
+ * Update editor features
+ * @memberof visStateUpdaters
+ * @param {Object} state `visState`
+ * @param {[Object]} features to store
+ * @return {Object} nextState
+ */
+export function setFeaturesUpdater(state, {features = []}) {
+
+  const lastFeature = features.length && features[features.length - 1];
+
+  let newState = {
+    ...state,
+    editor: {
+      ...state.editor,
+      features,
+      mode: lastFeature && lastFeature.properties.isClosed ?
+        EDITOR_MODES.EDIT : state.editor.mode
+    }
+  };
+
+  // Retrieve existing feature
+  const {selectedFeature} = state.editor;
+
+  // If no feature is selected we can simply return since no operations
+  if (!selectedFeature) {
+    return newState;
+  }
+
+  // TODO: check if the feature has changed
+  const feature = features.find(f => f.id === selectedFeature.id);
+
+  if (!feature) {
+    return newState;
+  }
+
+  const filtersIdx = getFilterIdxByFeatureId(newState, selectedFeature.id);
+
+  const filter = state.filters[filtersIdx];
+
+  const newFilter = updatePolygonFilter(filter, feature);
+
+  const newFilters = Object.assign([...state.filters], {[filtersIdx]: newFilter});
+
+  // no filters found
+  if (filtersIdx === -1) {
+    return newState;
+  }
+
+  newState = {
+    ...state,
+    datasets: applyFiltersToDatasets(newFilter.dataId, newState.datasets, newFilters, newState.layers),
+    filters: newFilters
+  };
+
+  return updateAllLayerDomainData(newState, Object.keys(newState.datasets));
+}
+
+/**
+ * Set the current selected feature
+ * @memberof uiStateUpdaters
+ * @param {Object} state `uiState`
+ * @param {[Object]} features to store
+ * @return {Object} nextState
+ */
+export const setSelectedFeatureUpdater = (state, {selectedFeatureId}) => ({
+  ...state,
+  editor: {
+    ...state.editor,
+    selectedFeature: {id: selectedFeatureId}
+  }
+});
+
+/**
+ * Delete existing feature from filters
+ * @memberof visStateUpdaters
+ * @param {Object} state `visState`
+ * @param {string} selectedFeatureId feature to delete
+ * @return {Object} nextState
+ */
+export function deleteFeatureUpdater(state, {featureId}) {
+  if (!featureId) {
+    return state;
+  }
+
+  const {editor} = state;
+
+  // modify editor object
+  const newEditor = {
+    ...editor,
+    features: editor.features.filter(f => f.id !== featureId),
+    selectedFeature: {
+      id: null
+    }
+  };
+
+  const filterIdx = getFilterIdxByFeatureId(state, featureId);
+
+  const newState = {
+    ...state,
+    editor: newEditor
+  };
+
+  return filterIdx === -1 ? newState : removeFilterUpdater(newState, {idx: filterIdx});
+}
+
+/**
+ * Toggle feature as layer filter
+ * @memberof visStateUpdaters
+ * @param state
+ * @param {Object} payload
+ * @param {string} payload.featureId
+ * @param {Object} payload.layer
+ * @return {Object} nextState
+ */
+export function togglePolygonFilterUpdater(state, payload) {
+  const {layer, featureId} = payload;
+  const {dataId} = layer.config;
+  const filterIdx = getFilterIdxByFeatureId(state, featureId);
+  let datasetIds = toArray(dataId);
+
+  const {features: editorFeatures} = state.editor;
+  const currentFeature = editorFeatures.find(feat => feat.id === featureId);
+
+  let newFilter = null;
+  let newFilters = null;
+
+  // If filter already exists, we need to find out if the current layer is already included
+  if (filterIdx >= 0) {
+    const {layerId} = state.filters[filterIdx];
+
+    const isLayerIncluded = layerId.includes(layer.id);
+    const filter = state.filters[filterIdx];
+    const newLayerId =  isLayerIncluded ?
+      filter.layerId.filter(l => l !== layer.id) : [
+        ...filter.layerId,
+        layer.id
+      ];
+
+    // the list of datasets is going to have the same length or fewer elements
+    const newDataId = uniq(newLayerId.reduce((acc, lId) => {
+      const currentLayer = state.layers.find(l => l.id === lId);
+      // if the datasetId is already included in dataId we skip it otherwise we add it
+      return [
+        ...acc,
+        currentLayer.config.dataId
+      ];
+    }, []));
+
+    newFilter = {
+      ...filter,
+      layerId: newLayerId,
+      dataId: newDataId
+    };
+
+    // keep track of all datasets to update
+    datasetIds = isLayerIncluded ?
+      // we remove the layer
+      datasetIds.filter(id => id !== layer.id) : newDataId;
+
+    newFilters = Object.assign([...state.filters], {[filterIdx]: newFilter});
+
+  } else {
+    newFilter = generatePolygonFilter(toArray(layer), currentFeature);
+
+    newFilters = [
+      ...state.filters,
+      newFilter
+    ];
+  }
+
+  // filter data
+  const newState = {
+    ...state,
+    datasets: applyFiltersToDatasets(datasetIds, state.datasets, newFilters, state.layers),
+    filters: newFilters
+  };
+
+  return updateAllLayerDomainData(newState, dataId, newFilter);
+}
+
+/**
+ * Update editor
+ * @param {Object} state `visState`
+ * @param visible
+ * @return {Object} nextState
+ */
+export function toggleEditorVisibility(state, {visible}) {
+  return {
+    ...state,
+    editor: {
+      ...state.editor,
+      visible: !state.editor.visible
+    }
+  }
 }

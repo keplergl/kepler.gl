@@ -231,6 +231,7 @@ export default function SidePanelFactory(
                   <FilterManager
                     {...filterManagerActions}
                     datasets={datasets}
+                    layers={layers}
                     filters={filters}
                   />
                 )}

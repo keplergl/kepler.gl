@@ -54,13 +54,7 @@ const actionHandler = {
 
   [ActionTypes.SET_EXPORT_MAP_HTML_MODE]: uiStateUpdaters.setExportMapHTMLMode,
   [ActionTypes.LOAD_FILES]: uiStateUpdaters.loadFilesUpdater,
-  [ActionTypes.LOAD_FILES_ERR]: uiStateUpdaters.loadFilesErrUpdater,
-
-  // Geo operations
-  [ActionTypes.SET_EDITOR_MODE]: uiStateUpdaters.setEditorModeUpdater,
-  [ActionTypes.SET_FEATURES]: uiStateUpdaters.setFeaturesUpdater,
-  [ActionTypes.SET_SELECTED_FEATURE]: uiStateUpdaters.setSelectedFeatureUpdater,
-  [ActionTypes.DELETE_FEATURE]: uiStateUpdaters.deleteFeatureUpdater
+  [ActionTypes.LOAD_FILES_ERR]: uiStateUpdaters.loadFilesErrUpdater
 };
 
 /* Reducer */

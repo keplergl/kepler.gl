@@ -37,7 +37,9 @@ import {
   DrawPolygon,
   Polygon,
   Rectangle,
-  CursorClick
+  CursorClick,
+  EyeSeen,
+  EyeUnseen
 } from 'components/common/icons';
 import Toolbar from 'components/common/toolbar';
 import ToolbarItem from 'components/common/toolbar-item';
@@ -245,7 +247,13 @@ const StyledToolBar = styled(Toolbar)`
   right: 32px;
 `;
 
-const MapDrawPanel = React.memo(({editor, isActive, onToggleMenuPanel, onSetEditorMode}) => {
+const MapDrawPanel = React.memo(({
+  editor,
+  isActive,
+  onToggleMenuPanel,
+  onSetEditorMode,
+  onToggleEditorVisibility
+}) => {
   return (
     <div style={{position: 'relative'}}>
       {isActive ? (
@@ -267,6 +275,12 @@ const MapDrawPanel = React.memo(({editor, isActive, onToggleMenuPanel, onSetEdit
             label="rectangle"
             icon={(<Rectangle height="22px"/>)}
             active={editor.mode === EDITOR_MODES.DRAW_RECTANGLE}
+          />
+          <ToolbarItem
+            onClick={onToggleEditorVisibility}
+            label={editor.visible ? 'hide' : 'show'}
+            icon={editor.visible ? (<EyeSeen height="22px"/>) : (<EyeUnseen height="22px"/>)}
+            active={true}
           />
         </StyledToolBar>
       ) : null}
@@ -305,6 +319,7 @@ const MapControlFactory = () => {
       onToggleSplitMap: PropTypes.func.isRequired,
       onToggleMapControl: PropTypes.func.isRequired,
       onSetEditorMode: PropTypes.func.isRequired,
+      onToggleEditorVisibility: PropTypes.func.isRequired,
       top: PropTypes.number.isRequired,
 
       // optional
@@ -418,6 +433,7 @@ const MapControlFactory = () => {
                 editor={editor}
                 onToggleMenuPanel={() => onToggleMapControl('mapDraw')}
                 onSetEditorMode={this.props.onSetEditorMode}
+                onToggleEditorVisibility={this.props.onToggleEditorVisibility}
               />
             </ActionPanel>
           ) : null}

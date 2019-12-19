@@ -340,7 +340,7 @@ export function updateFilterAnimationSpeed(idx, speed) {
  * Reset animation
  * @memberof visStateActions
  * @param {Number} value -  Current value of the slider
- * @returns {{type: ActionTypes.RESET_ANIMATION, value: value}}
+ * @returns {{type: ActionTypes.UPDATE_ANIMATION_TIME, value: value}}
  * @public
  */
 export function updateAnimationTime(value) {
@@ -505,6 +505,76 @@ export function setFeatures(features) {
   return {
     type: ActionTypes.SET_FEATURES,
     features
+  }
+}
+
+/**
+ * It will apply the provide feature as filter to the given layer.
+ * If the given feature is already applied as filter to the layer it  will remove it from  the filter list
+ * @memberof visStateActions
+ * @param {Object} featureId feature to use as filter base for layer
+ * @param {Object} layer
+ * @return {{feature: *, type: ActionTypes.TOGGLE_POLYGON_FILTER, layer: *}}
+ */
+export function togglePolygonFilter(layer, featureId) {
+  return {
+    type: ActionTypes.TOGGLE_POLYGON_FILTER,
+    layer,
+    featureId
+  };
+}
+
+/**
+ * Set the current feature to be edited/deleted
+ * @memberof visStateActions
+ * @param {Object} feature
+ * @param {string} feature.selectedFeatureId
+ * @return {{selectedFeatureId: *, type: ActionTypes.SET_SELECTED_FEATURE}}
+ */
+export function setSelectedFeature({selectedFeatureId}) {
+  return {
+    type: ActionTypes.SET_SELECTED_FEATURE,
+    selectedFeatureId
+  }
+}
+
+/**
+ * Delete the given feature
+ * @memberof visStateActions
+ * @param {string} featureId if of the feature
+ * @return {{type: ActionTypes.DELETE_FEATURE, featureId: *}}
+ */
+export function deleteFeature(featureId) {
+  return {
+    type: ActionTypes.DELETE_FEATURE,
+    featureId
+  };
+}
+
+/** Set the map mode
+ * @memberof main
+ * @param {string} mode one of EDITOR_MODES
+ * @public
+ * @example
+ * import {setMapMode} from 'kepler.gl/actions';
+ * import {EDITOR_MODES} from 'kepler.gl/constants';
+ *
+ * this.props.dispatch(setMapMode(EDITOR_MODES.DRAW_POLYGON));
+ */
+export function setEditorMode(mode) {
+  return {
+    type: ActionTypes.SET_EDITOR_MODE,
+    mode
+  };
+}
+
+/**
+ * Toggle editor layer visibility
+ * @return {{type: ActionTypes.TOGGLE_EDITOR_VISIBILITY}}
+ */
+export function toggleEditorVisibility() {
+  return {
+    type: ActionTypes.TOGGLE_EDITOR_VISIBILITY
   }
 }
 
