@@ -189,7 +189,7 @@ function findLayerFillColor(layer) {
 function get3DBuildingColor(style) {
   // set building color to be the same as the background color.
   if (!style.style) {
-    return DEFAULT_BLDG_COLOR;
+    return hexToRgb(DEFAULT_BLDG_COLOR);
   }
 
   const backgroundLayer = (style.style.layers || []).find(
@@ -288,7 +288,8 @@ export const mapStyleChangeUpdater = (state, {payload: styleType}) => {
   );
 
   const threeDBuildingColor = state.custom3DBuildingColor ? state.threeDBuildingColor :
-  get3DBuildingColor(state.mapStyles[styleType]);
+    get3DBuildingColor(state.mapStyles[styleType]);
+
   return {
     ...state,
     styleType,
