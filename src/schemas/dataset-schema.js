@@ -24,7 +24,6 @@ import {console as globalConsole} from 'global/window';
 import {VERSIONS} from './versions';
 import Schema from './schema';
 import {getFieldsFromData, getSampleForTypeAnalyze} from 'processors/data-processor';
-import {ALL_FIELD_TYPES} from 'constants/default-settings';
 
 // version v0
 const fieldPropertiesV0 = {

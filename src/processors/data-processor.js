@@ -594,7 +594,8 @@ export function validateInputData(data) {
   const updatedFields = fields.map((f, i) => ({
     ...f,
     type: meta[i].type,
-    format: meta[i].format
+    format: meta[i].format,
+    analyzerType: meta[i].type
   }));
 
   return {fields: updatedFields, rows};
