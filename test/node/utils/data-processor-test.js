@@ -464,7 +464,7 @@ test('Processor -> validateInputData', t => {
       },
       expected: {
         rows: [[1], [2], [3]],
-        fields: [{type: ALL_FIELD_TYPES.integer, format: '', name: 'column_0'}]
+        fields: [{type: ALL_FIELD_TYPES.integer, format: '', name: 'column_0', analyzerType: 'INT'}]
       },
       msg: 'should re generate field if not an object'
     },
@@ -475,7 +475,7 @@ test('Processor -> validateInputData', t => {
       },
       expected: {
         rows: [[1], [2], [3]],
-        fields: [{type: ALL_FIELD_TYPES.integer, format: '', name: 'column_0'}]
+        fields: [{type: ALL_FIELD_TYPES.integer, format: '', name: 'column_0', analyzerType: 'INT'}]
       },
       msg: 'should reassign field name'
     },
@@ -486,7 +486,9 @@ test('Processor -> validateInputData', t => {
       },
       expected: {
         rows: [[1], [2], [3]],
-        fields: [{type: ALL_FIELD_TYPES.integer, format: '', name: 'taro'}]
+        fields: [{
+          type: ALL_FIELD_TYPES.integer, format: '', name: 'taro', analyzerType: 'INT'
+        }]
       },
       msg: 'should reassign field type'
     },
@@ -509,7 +511,8 @@ test('Processor -> validateInputData', t => {
           {
             type: ALL_FIELD_TYPES.timestamp,
             format: 'YYYY-M-D H:m',
-            name: 'taro'
+            name: 'taro',
+            analyzerType: 'DATETIME'
           }
         ]
       },

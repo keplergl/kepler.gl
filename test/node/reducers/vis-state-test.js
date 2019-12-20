@@ -108,25 +108,33 @@ const expectedFields = [
     name: 'start_point_lat',
     id: 'start_point_lat',
     type: 'real',
-    tableFieldIndex: 1
+    tableFieldIndex: 1,
+    analyzerType: 'FLOAT',
+    format: ''
   },
   {
     name: 'start_point_lng',
     id: 'start_point_lng',
     type: 'real',
-    tableFieldIndex: 2
+    tableFieldIndex: 2,
+    analyzerType: 'FLOAT',
+    format: ''
   },
   {
     name: 'end_point_lat',
     id: 'end_point_lat',
     type: 'real',
-    tableFieldIndex: 3
+    tableFieldIndex: 3,
+    analyzerType: 'FLOAT',
+    format: ''
   },
   {
     name: 'end_point_lng',
     id: 'end_point_lng',
     type: 'real',
-    tableFieldIndex: 4
+    tableFieldIndex: 4,
+    analyzerType: 'FLOAT',
+    format: ''
   }
 ];
 

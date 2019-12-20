@@ -568,6 +568,11 @@ export function validateInputData(data) {
       return false;
     }
 
+    if (!fields.every(f => f.analyzerType)) {
+      assert('field missing analyzerType');
+      return false;
+    }
+
     // check time format is correct based on first 10 not empty element
     if (f.type === ALL_FIELD_TYPES.timestamp) {
       const sample = findNonEmptyRowsAtField(rows, i, 10)
@@ -595,7 +600,7 @@ export function validateInputData(data) {
     ...f,
     type: meta[i].type,
     format: meta[i].format,
-    analyzerType: meta[i].type
+    analyzerType: meta[i].analyzerType
   }));
 
   return {fields: updatedFields, rows};
