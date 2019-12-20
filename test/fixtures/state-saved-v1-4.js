@@ -238,7 +238,8 @@ mergedLayer0.config = {
       type: 'string',
       format: '',
       id: 'name',
-      tableFieldIndex: 8
+      tableFieldIndex: 8,
+      analyzerType: 'STRING'
     },
     color: [184, 15, 135, 255],
     size: 27,

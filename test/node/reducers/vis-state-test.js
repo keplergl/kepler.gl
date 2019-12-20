@@ -2622,7 +2622,8 @@ test('#visStateReducer -> SET_FILTER_PLOT', t => {
       name: 'id',
       id: 'id',
       format: '',
-      tableFieldIndex: 7
+      tableFieldIndex: 7,
+      analyzerType: 'INT'
     },
     interval: null,
     lineChart: {

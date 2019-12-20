@@ -137,7 +137,7 @@ export default class GeoJsonLayer extends Layer {
     return this.getFeature(this.config.columns);
   }
 
-  static findDefaultLayerProps({label, fields = []}) {
+  static findDefaultLayerProps({label, fields = [], allData = []}) {
     const geojsonColumns = fields.filter(f => f.type === 'geojson').map(f => f.name);
 
     const defaultColumns = {

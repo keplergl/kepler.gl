@@ -5037,18 +5037,18 @@ export const v1expectedInfo_2 = {
 };
 
 export const v1expectedFields_2 = [
-  {name: 'uuid', type: 'string', format: ''},
-  {name: 'lat', type: 'real', format: ''},
-  {name: 'lng', type: 'real', format: ''},
-  {name: 'Latitude', type: 'real', format: ''},
-  {name: 'Longitude', type: 'real', format: ''},
-  {name: 'at_Latitude', type: 'real', format: ''},
-  {name: 'at_Longitude', type: 'real', format: ''},
-  {name: 'metric', type: 'real', format: ''},
-  {name: 'epoch', type: 'timestamp', format: 'x'},
-  {name: 'epoch_ms', type: 'timestamp', format: 'X'},
-  {name: 'meta_data', type: 'real', format: ''},
-  {name: 'start_ts', type: 'timestamp', format: 'x'},
-  {name: 'end_ts', type: 'timestamp', format: 'x'},
-  {name: 'time string', type: 'timestamp', format: 'YYYY/M/D H:m'}
+  {name: 'uuid', type: 'string', format: '', analyzerType: 'STRING'},
+  {name: 'lat', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'lng', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'Latitude', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'Longitude', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'at_Latitude', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'at_Longitude', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'metric', type: 'real', format: '', analyzerType: 'NUMBER'},
+  {name: 'epoch', type: 'timestamp', format: 'x', analyzerType: 'TIME'},
+  {name: 'epoch_ms', type: 'timestamp', format: 'X', analyzerType: 'TIME'},
+  {name: 'meta_data', type: 'integer', format: '', analyzerType: 'INT'},
+  {name: 'start_ts', type: 'timestamp', format: 'x', analyzerType: 'TIME'},
+  {name: 'end_ts', type: 'timestamp', format: 'x', analyzerType: 'TIME'},
+  {name: 'time string', type: 'timestamp', format: 'YYYY/M/D H:m', analyzerType: 'DATETIME'}
 ];

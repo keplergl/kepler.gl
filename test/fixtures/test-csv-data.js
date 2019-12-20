@@ -465,67 +465,78 @@ export const testFields = [
     type: 'timestamp',
     name: 'gps_data.utc_timestamp',
     format: 'YYYY-M-D H:m:s',
-    tableFieldIndex: 1
+    tableFieldIndex: 1,
+    analyzerType: 'DATETIME'
   },
   {
     type: 'real',
     name: 'gps_data.lat',
     format: '',
-    tableFieldIndex: 2
+    tableFieldIndex: 2,
+    analyzerType: 'FLOAT'
   },
   {
     type: 'real',
     name: 'gps_data.lng',
     format: '',
-    tableFieldIndex: 3
+    tableFieldIndex: 3,
+    analyzerType: 'FLOAT'
   },
   {
     type: 'string',
     name: 'gps_data.types',
     format: '',
-    tableFieldIndex: 4
+    tableFieldIndex: 4,
+    analyzerType: 'STRING'
   },
   {
     type: 'timestamp',
     name: 'epoch',
     format: 'X',
-    tableFieldIndex: 5
+    tableFieldIndex: 5,
+    analyzerType: 'TIME'
   },
   {
     type: 'boolean',
     name: 'has_result',
     format: '',
-    tableFieldIndex: 6
+    tableFieldIndex: 6,
+    analyzerType: 'BOOLEAN'
   },
   {
     type: 'integer',
     name: 'id',
     format: '',
-    tableFieldIndex: 7
+    tableFieldIndex: 7,
+    analyzerType: 'INT'
   },
   {
     type: 'timestamp',
     name: 'time',
     format: 'YYYY-M-DTHH:mm:ss.SSSS',
-    tableFieldIndex: 8
+    tableFieldIndex: 8,
+    analyzerType: 'DATETIME'
   },
   {
     type: 'timestamp',
     name: 'begintrip_ts_utc',
     format: 'YYYY-M-D HH:mm:ssZZ',
-    tableFieldIndex: 9
+    tableFieldIndex: 9,
+    analyzerType: 'DATETIME'
   },
   {
     type: 'timestamp',
     name: 'begintrip_ts_local',
     format: 'YYYY-M-D HH:mm:ssZZ',
-    tableFieldIndex: 10
+    tableFieldIndex: 10,
+    analyzerType: 'DATETIME'
   },
   {
     type: 'date',
     name: 'date',
     format: 'YYYY-M-D',
-    tableFieldIndex: 11
+    tableFieldIndex: 11,
+    analyzerType: 'DATE'
   }
 ];
 
@@ -534,37 +545,43 @@ export const wktCsvFields = [
     type: 'integer',
     name: 'a_zip',
     format: '',
-    tableFieldIndex: 1
+    tableFieldIndex: 1,
+    analyzerType: 'INT'
   },
   {
     type: 'geojson',
     name: 'simplified_shape_v2',
     format: '',
-    tableFieldIndex: 2
+    tableFieldIndex: 2,
+    analyzerType: 'PAIR_GEOMETRY_FROM_STRING'
   },
   {
     type: 'geojson',
     name: 'simplified_shape',
     format: '',
-    tableFieldIndex: 3
+    tableFieldIndex: 3,
+    analyzerType: 'GEOMETRY_FROM_STRING'
   },
   {
     type: 'real',
     name: 'm_rate',
     format: '',
-    tableFieldIndex: 4
+    tableFieldIndex: 4,
+    analyzerType: 'FLOAT'
   },
   {
     type: 'string',
     name: 'c_zip_type',
     format: '',
-    tableFieldIndex: 5
+    tableFieldIndex: 5,
+    analyzerType: 'STRING'
   },
   {
     type: 'real',
     name: 'c_number',
     format: '',
-    tableFieldIndex: 6
+    tableFieldIndex: 6,
+    analyzerType: 'FLOAT'
   }
 ];
 

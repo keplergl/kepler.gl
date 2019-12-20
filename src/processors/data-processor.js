@@ -288,7 +288,8 @@ export function getFieldsFromData(data, fieldOrder) {
       name,
       format,
       tableFieldIndex: index + 1,
-      type: analyzerTypeToFieldType(type)
+      type: analyzerTypeToFieldType(type),
+      analyzerType: type
     };
     return orderedArray;
   }, []);

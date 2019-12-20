@@ -35,7 +35,8 @@ const fieldPropertiesV0 = {
 const fieldPropertiesV1 = {
   name: null,
   type: null,
-  format: null
+  format: null,
+  analyzerType: null
 };
 
 class FieldSchema extends Schema {
@@ -82,7 +83,10 @@ class DatasetSchema extends Schema {
     // recalculate field type
     // because we have updated type-analyzer
     // we need to add format to each field
-    const needCalculateMeta = fields[0] && !fields[0].hasOwnProperty('format');
+    const needCalculateMeta = fields[0] && (
+      !fields[0].hasOwnProperty('format') ||
+      !fields[0].hasOwnProperty('analyzerType')
+    );
 
     if (needCalculateMeta) {
       const fieldOrder = fields.map(f => f.name);
@@ -90,18 +94,17 @@ class DatasetSchema extends Schema {
       const sampleData = getSampleForTypeAnalyze({fields: fieldOrder, allData});
       const meta = getFieldsFromData(sampleData, fieldOrder);
 
-      updatedFields = fields.map((f, i) => ({
-        ...f,
-        // note here we add format to timestamp field
-        format: f.type === ALL_FIELD_TYPES.timestamp ? meta[i].format : ''
+      updatedFields = meta.map((f, i) => ({
+        ...pick(meta[i], ['name', 'type', 'format']),
+        analyzerType: meta[i].analyzerType
       }));
 
       updatedFields.forEach((f, i) => {
-        if (meta[i].type !== f.type) {
+        if (fields[i].type !== f.type) {
           // if newly detected field type is different from saved type
           // we log it but won't update it, cause we don't want to break people's map
           globalConsole.warn(
-            `detect ${f.name} type is now ${meta[i].type} instead of ${f.type}`
+            `detect ${f.name} type is now ${f.type} instead of ${fields[i].type}`
           );
         }
       });

@@ -155,10 +155,10 @@ test('Processor -> processCsvData: duplicated field name', t => {
 
   const expectedResult = {
     fields: [
-      {name: 'column1', format: '', tableFieldIndex: 1, type: 'string'},
-      {name: 'column1-0', format: '', tableFieldIndex: 2, type: 'string'},
-      {name: 'column1-1', format: '', tableFieldIndex: 3, type: 'string'},
-      {name: 'column2', format: '', tableFieldIndex: 4, type: 'string'}
+      {name: 'column1', format: '', tableFieldIndex: 1, type: 'string', analyzerType: 'STRING'},
+      {name: 'column1-0', format: '', tableFieldIndex: 2, type: 'string', analyzerType: 'STRING'},
+      {name: 'column1-1', format: '', tableFieldIndex: 3, type: 'string', analyzerType: 'STRING'},
+      {name: 'column2', format: '', tableFieldIndex: 4, type: 'string', analyzerType: 'STRING'}
     ],
     rows: [['a', 'b', 'c', 'd'], ['c', 'd', 'e', 'f']]
   };
@@ -252,10 +252,10 @@ test('Processor => processGeojson: parse rows', t => {
   };
 
   const expectedFields = [
-    {name: '_geojson', format: '', tableFieldIndex: 1, type: 'geojson'},
-    {name: 'TRIPS', format: '', tableFieldIndex: 2, type: 'integer'},
-    {name: 'RATE', format: '', tableFieldIndex: 3, type: 'string'},
-    {name: 'TIME', format: 'x', tableFieldIndex: 4, type: 'timestamp'}
+    {name: '_geojson', format: '', tableFieldIndex: 1, type: 'geojson', analyzerType: 'GEOMETRY'},
+    {name: 'TRIPS', format: '', tableFieldIndex: 2, type: 'integer', analyzerType: 'INT'},
+    {name: 'RATE', format: '', tableFieldIndex: 3, type: 'string', analyzerType: 'STRING'},
+    {name: 'TIME', format: 'x', tableFieldIndex: 4, type: 'timestamp', analyzerType: 'TIME'}
   ];
 
   const expectedRows = [
@@ -544,25 +544,29 @@ test('Processor -> processRowObject', t => {
             name: 'a',
             type: 'integer',
             format: '',
-            tableFieldIndex: 1
+            tableFieldIndex: 1,
+            analyzerType: 'INT'
           },
           {
             name: 'b',
             type: 'string',
             format: '',
-            tableFieldIndex: 2
+            tableFieldIndex: 2,
+            analyzerType: 'STRING'
           },
           {
             name: 'c',
             type: 'boolean',
             format: '',
-            tableFieldIndex: 3
+            tableFieldIndex: 3,
+            analyzerType: 'BOOLEAN'
           },
           {
             name: 'd',
             type: 'real',
             format: '',
-            tableFieldIndex: 4
+            tableFieldIndex: 4,
+            analyzerType: 'FLOAT'
           }
         ]
       },
