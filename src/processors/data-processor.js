@@ -568,7 +568,7 @@ export function validateInputData(data) {
       return false;
     }
 
-    if (!fields.every(f => f.analyzerType)) {
+    if (!fields.every(field => field.analyzerType)) {
       assert('field missing analyzerType');
       return false;
     }
