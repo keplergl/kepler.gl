@@ -133,37 +133,43 @@ export const fields = [
     type: 'geojson',
     name: '_geojson',
     format: '',
-    tableFieldIndex: 1
+    tableFieldIndex: 1,
+    analyzerType: 'GEOMETRY'
   },
   {
     type: 'integer',
     name: 'OBJECTID',
     format: '',
-    tableFieldIndex: 2
+    tableFieldIndex: 2,
+    analyzerType: 'INT'
   },
   {
     type: 'integer',
     name: 'ZIP_CODE',
     format: '',
-    tableFieldIndex: 3
+    tableFieldIndex: 3,
+    analyzerType: 'INT'
   },
   {
     type: 'integer',
     name: 'ID',
     format: '',
-    tableFieldIndex: 4
+    tableFieldIndex: 4,
+    analyzerType: 'INT'
   },
   {
     type: 'integer',
     name: 'TRIPS',
     format: '',
-    tableFieldIndex: 5
+    tableFieldIndex: 5,
+    analyzerType: 'INT'
   },
   {
     type: 'string',
     name: 'RATE',
     format: '',
-    tableFieldIndex: 6
+    tableFieldIndex: 6,
+    analyzerType: 'STRING'
   }
 ];
 
@@ -350,12 +356,12 @@ export const geoJsonWithStyle = {
 
 // parsed fields and rows
 export const geoStyleFields = [
-  {name: '_geojson', format: '', tableFieldIndex: 1, type: 'geojson'},
-  {name: 'fillColor', format: '', tableFieldIndex: 2, type: 'geojson'},
-  {name: 'lineColor', format: '', tableFieldIndex: 3, type: 'geojson'},
-  {name: 'lineWidth', format: '', tableFieldIndex: 4, type: 'integer'},
-  {name: 'elevation', format: '', tableFieldIndex: 5, type: 'integer'},
-  {name: 'radius', format: '', tableFieldIndex: 6, type: 'integer'}
+  {name: '_geojson', format: '', tableFieldIndex: 1, type: 'geojson', analyzerType: 'GEOMETRY'},
+  {name: 'fillColor', format: '', tableFieldIndex: 2, type: 'geojson', analyzerType: 'ARRAY'},
+  {name: 'lineColor', format: '', tableFieldIndex: 3, type: 'geojson', analyzerType: 'ARRAY'},
+  {name: 'lineWidth', format: '', tableFieldIndex: 4, type: 'integer', analyzerType: 'INT'},
+  {name: 'elevation', format: '', tableFieldIndex: 5, type: 'integer', analyzerType: 'INT'},
+  {name: 'radius', format: '', tableFieldIndex: 6, type: 'integer', analyzerType: 'INT'}
 ];
 
 export const geoStyleRows = [

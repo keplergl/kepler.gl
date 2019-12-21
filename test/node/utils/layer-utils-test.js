@@ -32,6 +32,7 @@ import {wktCsv} from 'test/fixtures/test-csv-data';
 import {cmpLayers} from 'test/helpers/comparison-utils';
 import {getNextColorMakerValue} from 'test/helpers/layer-utils';
 import tripGeojson, {timeStampDomain, tripBounds} from 'test/fixtures/trip-geojson';
+import {geoJsonWithStyle} from 'test/fixtures/geojson';
 
 test('layerUtils -> findDefaultLayer.1', t => {
   const inputFields = [
@@ -592,6 +593,7 @@ test('layerUtils -> findDefaultLayer:GeojsonLayer', t => {
 
 test('layerUtils -> findDefaultLayer:GeojsonLayer.wkt', t => {
   const {fields, rows} = processCsvData(wktCsv);
+
   const dataId = '0dj3h';
   const label = 'some geometry file';
 
@@ -634,6 +636,25 @@ test('layerUtils -> findDefaultLayer:GeojsonLayer.wkt', t => {
   );
 
   cmpLayers(t, [expected1, expected2], geojsonLayers);
+  t.end();
+});
+
+test('layerUtils -> findDefaultLayer:GeojsonWithStyle', t => {
+  const {fields, rows} = processGeojson(geoJsonWithStyle);
+
+  const geojsonLayers = findDefaultLayer(
+    {
+      fields,
+      id: 'test',
+      dataId: 'taro',
+      label: 'chubby prince',
+      fieldPairs: [],
+      allData: rows
+    },
+    KeplerGlLayers
+  );
+
+  t.equal(geojsonLayers.length, 1, 'should find 1 layer');
   t.end();
 });
 
