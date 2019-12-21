@@ -320,11 +320,17 @@ class App extends Component {
   };
 
   _getMapboxRef = (mapbox, index) => {
-
-    if (mapbox) {
+    if (!mapbox) {
+      // The ref has been unset.
+      // https://reactjs.org/docs/refs-and-the-dom.html#callback-refs
+      // console.log(`Map ${index} has closed`);
+    } else {
       // We expect an InteractiveMap created by KeplerGl's MapContainer.
       // https://uber.github.io/react-map-gl/#/Documentation/api-reference/interactive-map
       const map = mapbox.getMap();
+      map.on('zoomend', e => {
+        // console.log(`Map ${index} zoom level: ${e.target.style.z}`);
+      });
     }
   };
 
