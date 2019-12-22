@@ -16,10 +16,11 @@ install:
 node_js:
   - 8
   - 10
-services:
-  - xvfb
 before_script:
   - "curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | sudo bash"
+  - ulimit -c unlimited -S       # enable core dumps
+  - export DISPLAY=:99.0; sh -e /etc/init.d/xvfb start
+  - sleep 3 # give xvfb some time to start
 after_success:
   - cat coverage/lcov.info | coveralls
 script:
