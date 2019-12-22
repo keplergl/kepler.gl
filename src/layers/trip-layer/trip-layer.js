@@ -317,6 +317,7 @@ export default class TripLayer extends Layer {
           data.getTimestamps(d).map(ts => ts - animationConfig.domain[0]),
         widthScale: this.config.visConfig.thickness * zoomFactor * 8,
         rounded: true,
+        wrapLongitude: false,
         parameters: {
           depthTest: mapState.dragRotate,
           depthMask: false

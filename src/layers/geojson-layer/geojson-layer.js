@@ -430,6 +430,7 @@ export default class GeoJsonLayer extends Layer {
         filled: visConfig.filled,
         extruded: visConfig.enable3d,
         wireframe: visConfig.wireframe,
+        wrapLongitude: false,
         lineMiterLimit: 2,
         rounded: true,
         updateTriggers
