@@ -83,11 +83,13 @@ export default class ClusterLayer extends AggregationLayer {
         ...gpuFilter.filterValueUpdateTriggers
       }
     };
+    const {_filterData: filterData, ...clusterData} = data;
 
     return [
       new DeckGLClusterLayer({
         ...this.getDefaultDeckLayerProps(opts),
-        ...data,
+        ...clusterData,
+        filterData,
 
         // radius
         radiusScale: 1,

@@ -42,16 +42,15 @@ export function getGeoJSON(data, getPosition, filterData) {
 
 const clusterResolver = ({clusterRadius}) => `${clusterRadius}`;
 
-const getClusterer = ({clusterRadius, geoJSON}) => {
-  return new Supercluster({
+const getClusterer = ({clusterRadius, geoJSON}) =>
+  new Supercluster({
     maxZoom: 20,
     radius: clusterRadius,
     reduce: (accumulated, props) => {
-      accumulated.points = [...accumulated.points, ...props.points]
+      accumulated.points = [...accumulated.points, ...props.points];
     },
     map: props => ({points: [props.data]})
   }).load(geoJSON);
-}
 
 export default class ClusterBuilder {
   constructor() {
@@ -62,8 +61,7 @@ export default class ClusterBuilder {
     const clusterer = this.clusterer({clusterRadius, geoJSON});
 
     // map clusters to formatted bins to be passed to deck.gl bin-sorter
-    const clusters =
-      clusterer.getClusters(bbox, zoom)
+    const clusters = clusterer.getClusters(bbox, zoom)
       .map((c, i) => ({
         points: c.properties.points,
         position: c.geometry.coordinates,

@@ -231,6 +231,14 @@ test('#ClusterLayer -> renderLayer', t => {
   const filteredIndex = [0, 1, 2, 4, 5, 7];
   const spyLayerCallbacks = sinon.spy();
 
+  // 0 2016-09-17 00:09:55: 1474070995000 - false
+  // 1 2016-09-17 00:10:56: 1474071056000 - false
+  // 2 2016-09-17 00:11:56: 1474071116000 - true
+  // 4 2016-09-17 00:14:00: 1474071240000 - true
+  // 5 2016-09-17 00:15:01: 1474071301000 - true
+  // 7 2016-09-17 00:17:05: 1474071425000 - true
+
+  // timeFilter [1474071095000, 1474071608000]
   const TEST_CASES = [
     {
       name: 'Cluster gps point.1',
@@ -297,43 +305,42 @@ test('#ClusterLayer -> renderLayer', t => {
         const expectedScatterplotData = [
           {
             points: [
-              {index: 0, data: preparedDataset.allData[0]},
-              {index: 1, data: preparedDataset.allData[1]}
-            ],
-            position: [-122.39995, 37.78340215834403],
-            index: 0,
-            filteredPoints: []
-          },
-          {
-            points: [
-              {index: 4, data: preparedDataset.allData[4]}
+              {
+                index: 4,
+                data: preparedDataset.allData[4]
+              }
             ],
             position: [-122.136795, 37.456535],
-            index: 1,
-            filteredPoints: [{index: 4, data: preparedDataset.allData[4]}]
+            index: 0,
+            filteredPoints: null
           },
           {
             points: [
-              {index: 5, data: preparedDataset.allData[5]}
+              {
+                index: 5,
+                data: preparedDataset.allData[5]
+              }
             ],
             position: [-122.10239, 37.40066],
-            index: 2,
-            filteredPoints: [{index: 5, data: preparedDataset.allData[5]}]
+            index: 1,
+            filteredPoints: null
           },
           {
             points: [
-              {index: 7, data: preparedDataset.allData[7]}
+              {
+                index: 7,
+                data: preparedDataset.allData[7]
+              }
             ],
             position: [-122.26108, 37.879066],
-            index: 3,
-            filteredPoints: [{index: 7, data: preparedDataset.allData[7]}]
+            index: 2,
+            filteredPoints: null
           }
         ];
-
         const expectedColorBins = [
+          {i: 0, value: 1, counts: 1},
           {i: 1, value: 1, counts: 1},
-          {i: 2, value: 1, counts: 1},
-          {i: 3, value: 1, counts: 1}
+          {i: 2, value: 1, counts: 1}
         ];
 
         t.deepEqual(

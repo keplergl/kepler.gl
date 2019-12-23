@@ -45,6 +45,7 @@ function processGeoJSON(step, props, aggregation, viewport) {
 }
 
 function getClusters(step, props, aggregation, viewport) {
+
   const {geoJSON, clusterBuilder} = this.state;
   const {clusterRadius, zoom, width, height} = props;
   const {longitude, latitude} = viewport;
@@ -187,17 +188,15 @@ export default class ClusterLayer extends CompositeLayer {
     return this.state.cpuAggregator.getPickingInfo({info}, this.props);
   }
 
-  _onGetSublayerColor(cell) {
-    return this.state.cpuAggregator.getAccessor('fillColor', this.props)(cell);
-  }
-
-  // create a method for testing
-  _onGetSublayerRadius(cell) {
-    return this.state.cpuAggregator.getAccessor('radius', this.props)(cell);
-  }
-
   _getSublayerUpdateTriggers() {
     return this.state.cpuAggregator.getUpdateTriggers(this.props);
+  }
+
+  _getSubLayerAccessors() {
+    return {
+      getRadius: this.state.cpuAggregator.getAccessor('radius', this.props),
+      getFillColor: this.state.cpuAggregator.getAccessor('fillColor', this.props)
+    };
   }
 
   renderLayers() {
@@ -209,6 +208,7 @@ export default class ClusterLayer extends CompositeLayer {
     // base layer props
     const {opacity, pickable, autoHighlight, highlightColor} = this.props;
     const updateTriggers = this._getSublayerUpdateTriggers();
+    const accessors = this._getSubLayerAccessors();
 
     const distanceScale = getDistanceScales(this.context.viewport);
     const metersPerPixel = distanceScale.metersPerPixel[0];
@@ -223,8 +223,7 @@ export default class ClusterLayer extends CompositeLayer {
       autoHighlight,
       highlightColor,
       updateTriggers,
-      getRadius: this._onGetSublayerRadius.bind(this),
-      getFillColor: this._onGetSublayerColor.bind(this)
+      ...accessors
     });
   }
 }

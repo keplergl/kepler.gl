@@ -1,4 +1,7 @@
 language: node_js
+os: linux
+env:
+    - CXX=g++-6
 addons:
   apt:
     sources:
