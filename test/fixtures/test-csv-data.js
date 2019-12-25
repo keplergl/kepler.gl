@@ -453,7 +453,7 @@ export const parsedDataWithNulls = [
 export const wktCsv = `a_zip,simplified_shape_v2,simplified_shape,m_rate,c_zip_type,c_number
 7015,,,7,C_Medium_High,22.22
 7014,"{""type"":""Polygon"",""coordinates"":[[[-74.158491,40.835947],[-74.157914,40.83902],[-74.148473,40.834522]]]}","POLYGON ((-74.158491 40.835947, -74.157914 40.83902, -74.148473 40.834522))",7.5,C_Medium_High,29.1
-7016,"{""type"":""Polygon"",""coordinates"":[[[-74.31687,40.656696],[-74.319449,40.658154],[-74.31687,40.656696]]]}","POLYGON ((-74.31687 40.656696, -74.319449 40.658154, -74.31687 40.656696))",6.5,C_Medium_High,27.6
+7016,"{""type"":""Polygon"",""coordinates"":[[[-74.31687,40.656696],[-74.319449,40.658154],[-74.31687,40.656696]]]}","POLYGON ((-74.31687 40.656696, -74.319449 40.658154, -74.31687 40.656696))",,C_Medium_High,27.6
 7023,"{""type"":""Polygon"",""coordinates"":[[[-74.387589,40.632238],[-74.387589,40.632238]]]}","POLYGON ((-74.387589 40.632238, -74.387589 40.632238))",7.6,C_Medium_High,23.8
 7029,"{""type"":""Polygon"",""coordinates"":[[[-74.165995,40.747969],[-74.165987,40.745199],[-74.165995,40.747969]]]}","POLYGON ((-74.165995 40.747969, -74.165987 40.745199, -74.165995 40.747969))",11.8,C_Medium_High,39.1
 7416,"{""type"":""MultiPolygon"",""coordinates"":[[[[-74.566993,41.087294],[-74.564908,41.089339],[-74.552353,41.091647],[-74.566993,41.087294]]],[[[-74.593264,41.088526],[-74.593264,41.088526]]]]}","MULTIPOLYGON (((-74.566993 41.087294, -74.564908 41.089339, -74.552353 41.091647, -74.566993 41.087294)),((-74.593264 41.088526, -74.593264 41.088526)))",10,A_Low_Rural,13.8
@@ -871,7 +871,7 @@ export const wktCsvRows = [
     7016,
     '{"type":"Polygon","coordinates":[[[-74.31687,40.656696],[-74.319449,40.658154],[-74.31687,40.656696]]]}',
     'POLYGON ((-74.31687 40.656696, -74.319449 40.658154, -74.31687 40.656696))',
-    6.5,
+    null,
     'C_Medium_High',
     27.6
   ],
@@ -1226,6 +1226,7 @@ export const testAllData = [
 
 export default data;
 
+// geojson layer from wktcsv
 export const updatedLayerV2 = {
   dataToFeature: [
     null,
@@ -1320,42 +1321,6 @@ export const updatedLayerV2 = {
     {
       type: 'Feature',
       properties: {
-        index: 5
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [
-          [
-            [-74.158491, 40.835947],
-            [-74.157914, 40.83902],
-            [-74.148473, 40.834522]
-          ]
-        ]
-      }
-    }
-  ],
-  meta: {
-    featureTypes: {polygon: true},
-    bounds: [-74.593264, 40.632238, -74.148473, 41.091647],
-    fixedRadius: false
-  }
-};
-
-export const updatedLayerSimplifiedShape = {
-  dataToFeature: [
-    {
-      type: 'Feature',
-      properties: {
-        index: 0
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [[[-74.158491, 40.835947], [-74.158491, 40.835947]]]
-      }
-    },
-    {
-      type: 'Feature',
-      properties: {
         index: 6
       },
       geometry: {
@@ -1364,16 +1329,6 @@ export const updatedLayerSimplifiedShape = {
           [-74.387589, 40.632238],
           [-74.387589, 40.632238]
         ]
-      }
-    },
-    {
-      type: 'Feature',
-      properties: {
-        index: 5
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [[[-74.158491, 40.835947], [-74.158491, 40.835947]]]
       }
     }
   ],

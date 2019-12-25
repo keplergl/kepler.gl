@@ -139,37 +139,68 @@ function updateSourceData(map, sourceId, data) {
  * @param properties [{label: {fieldIdx}]
  * @returns {{type: string, properties: {}, features: {type: string, properties: {}, geometry: {type: string, coordinates: *[]}}[]}}
  */
-export function geojsonFromPoints(
+export function geoJsonFromData(
   allData = [],
   filteredIndex = [],
-  columns = {},
-  properties = []
+  getGeometry,
+  getProperties = (d, i) => {}
 ) {
+
   const geojson = {
     type: 'FeatureCollection',
     features: []
   };
 
   for (let i = 0; i < filteredIndex.length; i++) {
-    const point = allData[filteredIndex[i]];
-    geojson.features.push({
-      type: 'Feature',
-      properties: properties.reduce(
-        (final, property) => ({
-          ...final,
-          [property.name]: point[property.tableFieldIndex - 1]
-        }),
-        {}
-      ),
-      geometry: {
-        type: 'Point',
-        coordinates: [
-          columns.lng ? point[columns.lng.fieldIdx] : null, // lng
-          columns.lat ? point[columns.lat.fieldIdx] : null // lat
-        ]
-      }
-    });
+    const index = filteredIndex[i];
+    const point = allData[index];
+    const geometry = getGeometry(point);
+
+    if (geometry) {
+      geojson.features.push({
+        type: 'Feature',
+        properties: {
+          index,
+          ...getProperties(point, index)
+        },
+        geometry
+      });
+    }
   }
 
   return geojson;
 }
+
+export const prefixGpuField = (name) => `gpu:${name}`
+
+export function gpuFilterToMapboxFilter(gpuFilter) {
+  const {
+    filterRange,
+    filterValueUpdateTriggers
+  } = gpuFilter;
+
+  const hasFilter = Object.values(filterValueUpdateTriggers).filter(d => d);
+
+  if (!hasFilter.length) {
+    return null;
+  }
+
+  const condition = ['all'];
+
+  // [">=", key, value]
+  // ["<=", key, value]
+  const expressions = Object.values(filterValueUpdateTriggers).reduce(
+    (accu, name, i) =>
+      name
+        ? [
+            ...accu,
+            ['>=', prefixGpuField(name), filterRange[i][0]],
+            ['<=', prefixGpuField(name), filterRange[i][1]]
+          ]
+        : accu,
+    condition
+  );
+
+  return expressions;
+}
+

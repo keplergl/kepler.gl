@@ -42,9 +42,10 @@ const DataGrid = DataGridFactory(FieldHeader, Cell);
 const DataTableModal = DataTableModalFactory(DataGrid);
 
 // This makes sure react-virtualized renders the full grid
+// width needs to be large enough to fit all
 const WIDTH = 2100;
 const HEIGHT = 800;
-const rows = 10;
+const rows = testAllData.length;
 
 /* eslint-disable max-statements */
 test('Components -> DataTableModal.render: csv 1', t => {
@@ -61,8 +62,7 @@ test('Components -> DataTableModal.render: csv 1', t => {
           id: 'smoothie',
           allData: testAllData,
           fields: testFields,
-          color: [113, 113, 113],
-          data: testAllData.slice(0, rows)
+          color: [113, 113, 113]
         }
       }}
       dataId="smoothie"
@@ -94,8 +94,8 @@ test('Components -> DataTableModal.render: csv 1', t => {
   );
   t.equal(
     wrapper.find('StyledComponent.cell.boolean').length,
-    10,
-    'should render 10 boolean cells'
+    rows,
+    `should render ${rows.length} boolean cells`
   );
 
   const expectedRows = {
@@ -190,7 +190,7 @@ test('Components -> DataTableModal.render: csv 2', t => {
 
   const expectedRows = {
     0: [
-      '{"type":"Feature","properties":{"fillColor":[1,2,3],"lineColor":[4,5,6],"lineWidth":1,"elevation":10,"radius":5},"geometry":{"type":"Point","coordinates":[[-122,37]]}}',
+      '{"type":"Feature","properties":{"fillColor":[1,2,3],"lineColor":[4,5,6],"lineWidth":1,"elevation":10,"radius":5},"geometry":{"type":"Point","coordinates":[-122.1,37.3]}}',
       '[1,2,3]',
       '[4,5,6]',
       '1',
@@ -198,7 +198,7 @@ test('Components -> DataTableModal.render: csv 2', t => {
       '5'
     ],
     1: [
-      '{"type":"Feature","properties":{"fillColor":[7,8,9],"lineColor":[4,5,6],"lineWidth":3,"elevation":10,"radius":5},"geometry":{"type":"Point","coordinates":[[-122,37]]}}',
+      '{"type":"Feature","properties":{"fillColor":[7,8,9],"lineColor":[4,5,6],"lineWidth":3,"elevation":10,"radius":5},"geometry":{"type":"Point","coordinates":[-122.2,37.2]}}',
       '[7,8,9]',
       '[4,5,6]',
       '3',
@@ -206,7 +206,7 @@ test('Components -> DataTableModal.render: csv 2', t => {
       '5'
     ],
     2: [
-      '{"type":"Feature","properties":{"fillColor":[1,2,3],"lineColor":[4,5,6],"lineWidth":4,"elevation":10,"radius":5},"geometry":{"type":"Point","coordinates":[[-122,37]]}}',
+      '{"type":"Feature","properties":{"fillColor":[1,2,3],"lineColor":[4,5,6],"lineWidth":4,"elevation":10,"radius":5},"geometry":{"type":"Point","coordinates":[-122.3,37.1]}}',
       '[1,2,3]',
       '[4,5,6]',
       '4',

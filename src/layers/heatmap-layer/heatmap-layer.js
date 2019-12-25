@@ -26,7 +26,6 @@ import {
   ALL_FIELD_TYPES
 } from 'constants/default-settings';
 import {hexToRgb} from 'utils/color-utils';
-import {geojsonFromPoints} from '../mapbox-utils';
 import MapboxGLLayer from '../mapboxgl-layer';
 import HeatmapLayerIcon from './heatmap-layer-icon';
 
@@ -34,9 +33,9 @@ const MAX_ZOOM_LEVEL = 18;
 
 export const pointPosAccessor = ({lat, lng}) => d => [
   // lng
-  d.data[lng.fieldIdx],
+  d[lng.fieldIdx],
   // lat
-  d.data[lat.fieldIdx]
+  d[lat.fieldIdx]
 ];
 
 export const pointColResolver = ({lat, lng}) =>
@@ -81,7 +80,7 @@ const heatmapDensity = colorRange => {
   return colorDensity;
 };
 
-const shouldRebuild = (sameData, sameConfig) => !(sameData && sameConfig);
+// const shouldRebuild = (sameData, sameConfig) => !(sameData && sameConfig);
 
 class HeatmapLayer extends MapboxGLLayer {
   constructor(props) {
@@ -145,131 +144,99 @@ class HeatmapLayer extends MapboxGLLayer {
     return layerConfig;
   }
 
-  isSameData = ({allData, filteredIndex, oldLayerData, opt = {}}, config) => {
-    return Boolean(
-      oldLayerData && oldLayerData.columns === config.columns && opt.sameData
-    );
-  };
-
-  isSameConfig = ({oldLayerData, config}) => {
-    // columns must use the same filedIdx
-    // this is a fast way to compare columns object
-    const {columns, weightField} = config;
-
-    if (!oldLayerData) {
-      return false;
-    }
-
-    const sameColumns = columns === oldLayerData.columns;
-    const sameWeightField = weightField === oldLayerData.weightField;
-    return sameColumns && sameWeightField;
-  };
-
-  datasetSelector = config => config.dataId;
-  columnsSelector = config => pointColResolver(config.columns);
-  visConfigSelector = config => config.visConfig;
-  weightFieldSelector = config =>
-    config.weightField ? config.weightField.name : null;
-  weightDomainSelector = config => config.weightDomain;
-
   getPositionAccessor() {
     return this.getPosition(this.config.columns);
   }
 
   updateLayerMeta(allData) {
     const getPosition = this.getPositionAccessor();
-    const bounds = this.getPointsBounds(allData, d => getPosition({data: d}));
+    const bounds = this.getPointsBounds(allData, d => getPosition(d));
     this.updateMeta({bounds});
   }
 
-  computeHeatmapConfiguration = createSelector(
-    this.datasetSelector,
-    this.columnsSelector,
+  columnsSelector = config => pointColResolver(config.columns);
+  visConfigSelector = config => config.visConfig;
+  weightFieldSelector = config =>
+    config.weightField ? config.weightField.name : null;
+  weightDomainSelector = config => config.weightDomain;
+
+  paintSelector = createSelector(
     this.visConfigSelector,
     this.weightFieldSelector,
     this.weightDomainSelector,
+    (visConfig, weightField, weightDomain) => ({
+      'heatmap-weight': weightField
+        ? [
+            'interpolate',
+            ['linear'],
+            ['get', weightField],
+            weightDomain[0],
+            0,
+            weightDomain[1],
+            1
+          ]
+        : 1,
+      'heatmap-intensity': [
+        'interpolate',
+        ['linear'],
+        ['zoom'],
+        0,
+        1,
+        MAX_ZOOM_LEVEL,
+        3
+      ],
+      'heatmap-color': [
+        'interpolate',
+        ['linear'],
+        ['heatmap-density'],
+        ...heatmapDensity(visConfig.colorRange)
+      ],
+      'heatmap-radius': [
+        'interpolate',
+        ['linear'],
+        ['zoom'],
+        0,
+        2,
+        MAX_ZOOM_LEVEL,
+        visConfig.radius // radius
+      ],
+      'heatmap-opacity': visConfig.opacity
+    })
+  );
 
-    (datasetId, columns, visConfig, weightField, weightDomain) => {
+  computeHeatmapConfiguration = createSelector(
+    this.sourceSelector,
+    this.filterSelector,
+    this.paintSelector,
+    (source, filter, paint) => {
+
       return {
         type: 'heatmap',
         id: this.id,
-        source: `${datasetId}-${columns}`,
+        source,
         layout: {
           visibility: 'visible'
         },
         maxzoom: MAX_ZOOM_LEVEL,
-        paint: {
-          'heatmap-weight': weightField
-            ? [
-                'interpolate',
-                ['linear'],
-                ['get', weightField],
-                weightDomain[0],
-                0,
-                weightDomain[1],
-                1
-              ]
-            : 1,
-          'heatmap-intensity': [
-            'interpolate',
-            ['linear'],
-            ['zoom'],
-            0,
-            1,
-            MAX_ZOOM_LEVEL,
-            3
-          ],
-          'heatmap-color': [
-            'interpolate',
-            ['linear'],
-            ['heatmap-density'],
-            ...heatmapDensity(visConfig.colorRange)
-          ],
-          'heatmap-radius': [
-            'interpolate',
-            ['linear'],
-            ['zoom'],
-            0,
-            2,
-            MAX_ZOOM_LEVEL,
-            visConfig.radius // radius
-          ],
-          'heatmap-opacity': visConfig.opacity
-        }
+        filter,
+        paint
       };
     }
   );
 
+  getGeometry(position) {
+    return position.every(Number.isFinite) ? {
+      type: 'Point',
+      coordinates: position
+    } : null;
+  };
+
   formatLayerData(datasets, oldLayerData, opt = {}) {
-
-    const {filteredIndex, allData} = datasets[this.config.dataId];
-    const options = {
-      allData,
-      filteredIndex,
-      oldLayerData,
-      opt,
-      config: this.config
-    };
     const {weightField} = this.config;
-    const isSameData = this.isSameData(options, this.config);
-    const isSameConfig = this.isSameConfig(options);
-
     const getPosition = this.getPositionAccessor();
+    const {data} = this.updateData(datasets, oldLayerData);
 
-    if (!oldLayerData || oldLayerData.getPosition !== getPosition) {
-      this.updateLayerMeta(allData, getPosition);
-    }
-
-    const data = !shouldRebuild(isSameData, isSameConfig)
-      ? oldLayerData.data
-      : geojsonFromPoints(
-          allData,
-          filteredIndex,
-          this.config.columns,
-          weightField ? [weightField] : []
-        );
-
-    const newConfig = this.computeHeatmapConfiguration(this.config);
+    const newConfig = this.computeHeatmapConfiguration(this.config, datasets);
     newConfig.id = this.id;
 
     return {

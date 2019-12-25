@@ -23,7 +23,6 @@ import {load} from '@loaders.gl/core';
 import {GLTFScenegraphLoader} from '@luma.gl/addons';
 
 import Layer from '../base-layer';
-import memoize from 'lodash.memoize';
 import ScenegraphLayerIcon from './scenegraph-layer-icon';
 import ScenegraphInfoModalFactory from './scenegraph-info-modal';
 
@@ -47,9 +46,6 @@ export const scenegraphPosAccessor = ({lat, lng, altitude}) => d => [
   altitude && altitude.fieldIdx > -1 ? d.data[altitude.fieldIdx] : 0
 ];
 
-export const scenegraphPosResolver = ({lat, lng, altitude}) =>
-  `${lat.fieldIdx}-${lng.fieldIdx}-${altitude ? altitude.fieldIdx : 'z'}`;
-
 export const scenegraphVisConfigs = {
   opacity: 'opacity',
   colorRange: 'colorRange',
@@ -71,7 +67,7 @@ export default class ScenegraphLayer extends Layer {
     super(props);
 
     this.registerVisConfig(scenegraphVisConfigs);
-    this.getPosition = memoize(scenegraphPosAccessor, scenegraphPosResolver);
+    this.getPositionAccessor = () => scenegraphPosAccessor(this.config.columns);
 
     // prepare layer info modal
     this._layerInfoModal = ScenegraphInfoModalFactory();
@@ -107,46 +103,38 @@ export default class ScenegraphLayer extends Layer {
     };
   }
 
-  formatLayerData(datasets, oldLayerData, opt = {}) {
-    const {columns} = this.config;
-    const {filteredIndex, allData} = datasets[this.config.dataId];
+  calculateDataAttribute({allData, filteredIndex}, getPosition) {
+    const data = [];
 
-    const getPosition = this.getPosition(columns);
+    for (let i = 0; i < filteredIndex.length; i++) {
+      const index = filteredIndex[i];
+      const pos = getPosition({data: allData[index]});
 
-    if (!oldLayerData || oldLayerData.getPosition !== getPosition) {
-      this.updateLayerMeta(allData, getPosition);
-    }
-
-    let data;
-    if (
-      oldLayerData &&
-      oldLayerData.data &&
-      opt.sameData &&
-      oldLayerData.getPosition === getPosition
-    ) {
-      data = oldLayerData.data;
-    } else {
-      data = filteredIndex.reduce((accu, index) => {
-        const pos = getPosition({data: allData[index]});
-
-        // if doesn't have point lat or lng, do not add the point
-        // deck.gl can't handle position = null
-        if (!pos.every(Number.isFinite)) {
-          return accu;
-        }
-
-        accu.push({
-          index,
-          data: allData[index]
+      // if doesn't have point lat or lng, do not add the point
+      // deck.gl can't handle position = null
+      if (pos.every(Number.isFinite)) {
+        data.push({
+          data: allData[index],
+          position: pos,
+          // index is important for filter
+          index
         });
-
-        return accu;
-      }, []);
+      }
     }
+    return data;
+  }
 
+  formatLayerData(datasets, oldLayerData, opt = {}) {
+    const {gpuFilter} = datasets[this.config.dataId];
+    const {data} = this.updateData(
+      datasets,
+      oldLayerData
+    );
+    const getPosition = this.getPositionAccessor();
     return {
       data,
-      getPosition
+      getPosition,
+      getFilterValue: gpuFilter.filterValueAccessor()
     };
   }
 
@@ -155,19 +143,11 @@ export default class ScenegraphLayer extends Layer {
     this.updateMeta({bounds});
   }
 
-  renderLayer({
-    data,
-    idx,
-    objectHovered,
-    mapState,
-    interactionConfig,
-    layerInteraction
-  }) {
-    const layerProps = {
-      radiusMinPixels: 1,
-      radiusScale: this.getRadiusScaleByZoom(mapState),
-      ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
-    };
+  renderLayer(opts) {
+    const {
+      data,
+      gpuFilter
+    } = opts;
 
     const {
       visConfig: {sizeScale = 1, angleX = 0, angleY = 0, angleZ = 90}
@@ -175,32 +155,22 @@ export default class ScenegraphLayer extends Layer {
 
     return [
       new DeckScenegraphLayer({
-        ...layerProps,
+        ...this.getDefaultDeckLayerProps(opts),
         ...data,
-        ...layerInteraction,
-        id: this.id,
-        idx,
-        opacity: this.config.visConfig.opacity,
-
         fetch,
-
         scenegraph: this.config.visConfig.scenegraph || DEFAULT_MODEL,
-
         sizeScale,
         getTranslation: DEFAULT_TRANSITION,
         getScale: DEFAULT_SCALE,
         getOrientation: [angleX, angleY, angleZ],
         getColor: DEFAULT_COLOR,
-
-        // picking
-        pickable: true,
-
         // parameters
         parameters: {depthTest: true, blend: false},
-
         // update triggers
         updateTriggers: {
-          getOrientation: {angleX, angleY, angleZ}
+          getOrientation: {angleX, angleY, angleZ},
+          getPosition: this.config.columns,
+          getFilterValue: gpuFilter.filterValueUpdateTriggers
         }
       })
     ];

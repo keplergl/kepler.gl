@@ -19,13 +19,11 @@
 // THE SOFTWARE.
 
 import uniq from 'lodash.uniq';
-import {TextLayer} from 'deck.gl';
-import MultiIconLayer from 'deckgl-layers/text-layer/multi-icon-layer';
+import {BrushingExtension} from '@deck.gl/extensions';
+import {ScatterplotLayer, TextLayer} from '@deck.gl/layers';
 import {getDistanceScales} from 'viewport-mercator-project';
 
 import Layer from '../base-layer';
-import ScatterplotBrushingLayer from 'deckgl-layers/scatterplot-brushing-layer/scatterplot-brushing-layer';
-
 import {hexToRgb} from 'utils/color-utils';
 import PointLayerIcon from './point-layer-icon';
 import {DEFAULT_LAYER_COLOR, CHANNEL_SCALES} from 'constants/default-settings';
@@ -46,6 +44,8 @@ export const pointLabelAccessor = textLabel => d => {
 
 export const pointRequiredColumns = ['lat', 'lng'];
 export const pointOptionalColumns = ['altitude'];
+
+const brushingExtension = new BrushingExtension();
 
 export const pointVisConfigs = {
   radius: 'radius',
@@ -172,7 +172,7 @@ export default class PointLayer extends Layer {
     };
   }
 
-  calculateDataAttribute(allData, filteredIndex, getPosition) {
+  calculateDataAttribute({allData, filteredIndex}, getPosition) {
     const data = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {
@@ -228,10 +228,9 @@ export default class PointLayer extends Layer {
       }
     } = this.config;
 
-    const {filteredIndex, allData, gpuFilter} = datasets[this.config.dataId];
+    const {gpuFilter} = datasets[this.config.dataId];
     const {data, triggerChanged} = this.updateData(
-      allData,
-      filteredIndex,
+      datasets,
       oldLayerData
     );
     const getPosition = this.getPositionAccessor();
@@ -342,33 +341,24 @@ export default class PointLayer extends Layer {
         ];
   }
 
-  renderLayer({
-    data,
-    idx,
-    gpuFilter,
-    layerInteraction,
-    objectHovered,
-    mapState,
-    interactionConfig
-  }) {
-    const enableBrushing = interactionConfig.brush.enabled;
+  renderLayer(opts) {
+    const {
+      data,
+      gpuFilter,
+      objectHovered,
+      mapState,
+      interactionConfig
+    } = opts;
+
     const radiusScale = this.getRadiusScaleByZoom(mapState);
 
     const layerProps = {
       stroked: this.config.visConfig.outline,
       filled: this.config.visConfig.filled,
-      filterRange: gpuFilter.filterRange,
-      radiusMinPixels: 0,
-      lineWidthMinPixels: this.config.visConfig.thickness,
+      // filterRange: gpuFilter.filterRange,
+      lineWidthScale: this.config.visConfig.thickness,
       radiusScale,
       ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
-    };
-
-    const interaction = {
-      autoHighlight: !enableBrushing,
-      enableBrushing,
-      brushRadius: interactionConfig.brush.config.size * 1000,
-      highlightColor: this.config.highlightColor
     };
 
     const {textLabel} = this.config;
@@ -395,34 +385,33 @@ export default class PointLayer extends Layer {
       getFilterValue: gpuFilter.filterValueUpdateTriggers
     };
 
+    const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
+    const brushingProps = this.getBrushingExtensionProps(interactionConfig);
+
     return [
-      new ScatterplotBrushingLayer({
+      new ScatterplotLayer({
+        ...defaultLayerProps,
+        ...brushingProps,
         ...layerProps,
-        ...layerInteraction,
         ...data,
-        ...interaction,
-        idx,
-        id: this.id,
-        opacity: this.config.visConfig.opacity,
-        pickable: true,
         parameters: {
           // circles will be flat on the map when the altitude column is not used
           depthTest: this.config.columns.altitude.fieldIdx > -1
         },
-        updateTriggers
+        updateTriggers,
+        extensions: [...defaultLayerProps.extensions, brushingExtension]
       }),
       // hover layer
       ...(this.isLayerHovered(objectHovered)
         ? [
-            new ScatterplotBrushingLayer({
+            new ScatterplotLayer({
+              ...this.getDefaultHoverLayerProps(),
               ...layerProps,
-              id: `${this.id}-hovered`,
               data: [objectHovered.object],
               getLineColor: this.config.highlightColor,
               getFillColor: this.config.highlightColor,
               getRadius: data.getRadius,
-              getPosition: data.getPosition,
-              pickable: false
+              getPosition: data.getPosition
             })
           ]
         : []),
@@ -431,7 +420,7 @@ export default class PointLayer extends Layer {
         if (d.getText) {
           accu.push(
             new TextLayer({
-              ...layerInteraction,
+              ...brushingProps,
               id: `${this.id}-label-${textLabel[i].field.name}`,
               data: data.data,
               getPosition: data.getPosition,
@@ -452,19 +441,10 @@ export default class PointLayer extends Layer {
                 // text will always show on top of all layers
                 depthTest: false
               },
-              _subLayerProps: {
-                // overide default sublayer to add gpu filter extension
-                characters: {
-                  type: MultiIconLayer,
-                  filterRange: gpuFilter.filterRange,
-                  // data is transformed in text sublayer
-                  getFilterValue: datum =>
-                    data.getFilterValue(data.data[datum.objectIndex]),
-                  updateTriggers: {
-                    getFilterValue: gpuFilter.filterValueUpdateTriggers
-                  }
-                }
-              },
+
+              getFilterValue: data.getFilterValue,
+              extensions: [...defaultLayerProps.extensions, brushingExtension],
+              filterRange: defaultLayerProps.filterRange,
               updateTriggers: {
                 getPosition: this.config.columns,
                 getText: textLabel[i].field.name,
@@ -476,7 +456,8 @@ export default class PointLayer extends Layer {
                 },
                 getTextAnchor: textLabel[i].anchor,
                 getAlignmentBaseline: textLabel[i].alignment,
-                getColor: textLabel[i].color
+                getColor: textLabel[i].color,
+                getFilterValue: gpuFilter.filterValueUpdateTriggers
               }
             })
           );

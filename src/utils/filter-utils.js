@@ -472,6 +472,7 @@ export function filterDataset(dataset, filters, layers, opt = {}) {
   if (!filters.length) {
     return {
       ...newDataset,
+      gpuFilter: getGpuFilterProps(filters, dataId),
       filteredIndex: dataset.allIndexes,
       filteredIndexForDomain: dataset.allIndexes
     };
@@ -565,7 +566,6 @@ export function getFilterRecord(dataId, filters) {
 
   filters.forEach(f => {
     if (getDatasetFieldIndexForFilter(dataId, f) > -1 && f.value !== null) {
-      // console.log(f.name)
       (f.fixedDomain
         ? filterRecord.fixedDomain
         : filterRecord.dynamicDomain
@@ -599,7 +599,7 @@ export function diffFilters(filterRecord, oldFilterRecord = {}) {
         filterChanged = set([record, filter.id], 'added', filterChanged);
       } else {
         // check  what has changed
-        ['name', 'value'].forEach(prop => {
+        ['name', 'value', 'dataId'].forEach(prop => {
           if (filter[prop] !== oldFilter[prop]) {
             filterChanged = set(
               [record, filter.id],

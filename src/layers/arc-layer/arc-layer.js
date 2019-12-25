@@ -19,7 +19,9 @@
 // THE SOFTWARE.
 
 import Layer from '../base-layer';
-import ArcBrushingLayer from 'deckgl-layers/arc-brushing-layer/arc-brushing-layer';
+import {BrushingExtension} from '@deck.gl/extensions';
+import {ArcLayer as DeckArcLayer} from '@deck.gl/layers';
+
 import {hexToRgb} from 'utils/color-utils';
 import ArcLayerIcon from './arc-layer-icon';
 import {DEFAULT_LAYER_COLOR} from 'constants/default-settings';
@@ -102,11 +104,7 @@ export default class ArcLayer extends Layer {
     return {props: [props]};
   }
 
-  getPositionAccessor() {
-    return this.getPosition(this.config.columns);
-  }
-
-  calculateDataAttribute(allData, filteredIndex, getPosition) {
+  calculateDataAttribute({allData, filteredIndex}, getPosition) {
     const data = [];
     for (let i = 0; i < filteredIndex.length; i++) {
       // data = filteredIndex.reduce((accu, index) => {
@@ -142,8 +140,8 @@ export default class ArcLayer extends Layer {
       visConfig: {sizeRange, colorRange, targetColor}
     } = this.config;
 
-    const {filteredIndex, allData, gpuFilter} = datasets[this.config.dataId];
-    const {data} = this.updateData(allData, filteredIndex, oldLayerData);
+    const {gpuFilter} = datasets[this.config.dataId];
+    const {data} = this.updateData(datasets, oldLayerData);
 
     // arc color
     const cScale =
@@ -161,7 +159,7 @@ export default class ArcLayer extends Layer {
     const getStrokeWidth = sScale ? d =>
        this.getEncodedChannelValue(sScale, d.data, sizeField, 0) : 1;
 
-    const getColor = cScale
+    const getSourceColor = cScale
       ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
       : color;
 
@@ -171,8 +169,7 @@ export default class ArcLayer extends Layer {
 
     return {
       data,
-      getColor,
-      getSourceColor: getColor,
+      getSourceColor,
       getTargetColor,
       getWidth: getStrokeWidth,
       getFilterValue: gpuFilter.filterValueAccessor()
@@ -188,7 +185,6 @@ export default class ArcLayer extends Layer {
       const pos = getPosition({data: d});
       return [pos[0], pos[1]];
     });
-
     const tBounds = this.getPointsBounds(allData, d => {
       const pos = getPosition({data: d});
       return [pos[3], pos[4]];
@@ -207,16 +203,13 @@ export default class ArcLayer extends Layer {
     this.updateMeta({bounds});
   }
 
-  renderLayer({
-    data,
-    idx,
-    gpuFilter,
-    objectHovered,
-    layerInteraction,
-    mapState,
-    interactionConfig
-  }) {
-    const {brush} = interactionConfig;
+  renderLayer(opts) {
+    const {
+      data,
+      gpuFilter,
+      objectHovered,
+      interactionConfig
+    } = opts;
 
     const colorUpdateTriggers = {
       color: this.config.color,
@@ -226,33 +219,14 @@ export default class ArcLayer extends Layer {
       targetColor: this.config.visConfig.targetColor
     };
 
-    const interaction = {
-      // auto highlighting
-      pickable: true,
-      autoHighlight: !brush.enabled,
-      highlightColor: this.config.highlightColor,
-
-      // brushing
-      brushRadius: brush.config.size * 1000,
-      brushSource: true,
-      brushTarget: true,
-      enableBrushing: brush.enabled
-    };
+    const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
 
     return [
-      new ArcBrushingLayer({
+      new DeckArcLayer({
+        ...defaultLayerProps,
+        ...this.getBrushingExtensionProps(interactionConfig),
         ...data,
-        ...interaction,
-        ...layerInteraction,
-        id: this.id,
-        idx,
-        opacity: this.config.visConfig.opacity,
-        pickedColor: this.config.highlightColor,
-        strokeScale: this.config.visConfig.thickness,
-
-        // parameters
-        parameters: {depthTest: mapState.dragRotate},
-        filterRange: gpuFilter.filterRange,
+        widthScale: this.config.visConfig.thickness,
         updateTriggers: {
           getFilterValue: gpuFilter.filterValueUpdateTriggers,
           getWidth: {
@@ -261,19 +235,19 @@ export default class ArcLayer extends Layer {
           },
           getSourceColor: colorUpdateTriggers,
           getTargetColor: colorUpdateTriggers
-        }
+        },
+        extensions: [...defaultLayerProps.extensions, new BrushingExtension()]
       }),
       // hover layer
       ...(this.isLayerHovered(objectHovered)
         ? [
-            new ArcBrushingLayer({
-              id: `${this.id}-hovered`,
+            new DeckArcLayer({
+              ...this.getDefaultHoverLayerProps(),
               data: [objectHovered.object],
-              strokeScale: this.config.visConfig.thickness,
+              widthScale: this.config.visConfig.thickness,
               getSourceColor: this.config.highlightColor,
               getTargetColor: this.config.highlightColor,
-              getWidth: data.getWidth,
-              pickable: false
+              getWidth: data.getWidth
             })
           ]
         : [])
