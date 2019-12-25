@@ -209,8 +209,12 @@ export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {
         cmpField(
           t,
           expectedDataset.fields[i],
+<<<<<<< HEAD
           actualField,
           `dataset.${expectedDataset.id} fields ${actualField.name}`
+=======
+          `dataset.${expectedDataset.id}.${key} fields ${actualField.name} should be the same`
+>>>>>>> [Feat] Gpu data filtering - 5 (#858)
         );
       });
     } else if (key === 'gpuFilter') {
