@@ -19,40 +19,41 @@
 // THE SOFTWARE.
 
 import {CPUGridLayer} from 'deck.gl';
-import {getColorValueDomain, getColorScaleFunction, getElevationScaleFunction} from '../layer-utils/utils';
+import CPUAggregator, {getAggregatedData} from '../layer-utils/cpu-aggregator';
 
-const defaultProps = {
-  ...CPUGridLayer.defaultProps,
-  sizeScale: 'linear',
-  colorScale: 'quantile'
+export const gridAggregation = {
+  key: 'position',
+  updateSteps: [
+    {
+      key: 'aggregate',
+      triggers: {
+        cellSize: {
+          prop: 'cellSize'
+        },
+        position: {
+          prop: 'getPosition',
+          updateTrigger: 'getPosition'
+        },
+        aggregator: {
+          prop: 'gridAggregator'
+        }
+      },
+      updater: getAggregatedData
+    }
+  ]
 };
 
-export default class EnhancedCPUGridLayer extends CPUGridLayer {
-  getDimensionUpdaters() {
-    const dimensionUpdaters = super.getDimensionUpdaters();
-    // add colorScale and sizeScale to dimension updates
-    dimensionUpdaters.getFillColor[1].triggers.push('colorScale');
-    dimensionUpdaters.getElevation[1].triggers.push('sizeScale');
-    return dimensionUpdaters;
-  }
+export default class ScaleEnhancedGridLayer extends CPUGridLayer {
+  initializeState() {
+    const cpuAggregator = new CPUAggregator({
+      aggregation: gridAggregation
+    });
 
-  /*
-   * override default layer method to calculate color domain
-   * and scale function base on color scale type
-   */
-  getColorValueDomain() {
-    getColorValueDomain(this);
+    this.state = {
+      cpuAggregator,
+      aggregatorState: cpuAggregator.state
+    };
   }
-
-  getColorScale() {
-    getColorScaleFunction(this);
-  }
-
-  getElevationScale() {
-    getElevationScaleFunction(this);
-  }
-
 }
 
-EnhancedCPUGridLayer.layerName = 'EnhancedGridLayer';
-EnhancedCPUGridLayer.defaultProps = defaultProps;
+ScaleEnhancedGridLayer.layerName = 'ScaleEnhancedGridLayer';

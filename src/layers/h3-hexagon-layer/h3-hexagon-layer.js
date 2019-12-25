@@ -19,7 +19,8 @@
 // THE SOFTWARE.
 
 import Layer from '../base-layer';
-import {GeoJsonLayer, H3HexagonLayer} from 'deck.gl';
+import {GeoJsonLayer} from '@deck.gl/layers';
+import {H3HexagonLayer} from '@deck.gl/geo-layers';
 import EnhancedColumnLayer from 'deckgl-layers/column-layer/enhanced-column-layer';
 import {getVertices, getCentroid, idToPolygonGeo, h3IsValid} from './h3-utils';
 import H3HexagonLayerIcon from './h3-hexagon-layer-icon';
@@ -120,7 +121,7 @@ export default class HexagonIdLayer extends Layer {
     };
   }
 
-  calculateDataAttribute(allData, filteredIndex, getHexId) {
+  calculateDataAttribute({allData, filteredIndex}, getHexId) {
     const data = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {
@@ -158,9 +159,9 @@ export default class HexagonIdLayer extends Layer {
       visConfig: {sizeRange, colorRange, coverageRange}
     } = this.config;
 
-    const {filteredIndex, allData, gpuFilter} = datasets[this.config.dataId];
+    const {gpuFilter} = datasets[this.config.dataId];
     const getHexId = this.getPositionAccessor();
-    const {data} = this.updateData(allData, filteredIndex, oldLayerData);
+    const {data} = this.updateData(datasets, oldLayerData);
     // color
     const cScale =
       colorField &&
@@ -231,15 +232,14 @@ export default class HexagonIdLayer extends Layer {
     this.updateMeta({bounds});
   }
 
-  renderLayer({
-    data,
-    idx,
-    gpuFilter,
-    layerInteraction,
-    objectHovered,
-    mapState,
-    interactionConfig
-  }) {
+  renderLayer(opts) {
+    const {
+      data,
+      gpuFilter,
+      objectHovered,
+      mapState
+    } = opts;
+
     const zoomFactor = this.getZoomFactor(mapState);
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
     const {config} = this;
@@ -249,39 +249,33 @@ export default class HexagonIdLayer extends Layer {
       getColor: {
         color: config.color,
         colorField: config.colorField,
-        colorRange: config.visConfig.colorRange,
+        colorRange: visConfig.colorRange,
         colorScale: config.colorScale
       },
       getElevation: {
         sizeField: config.sizeField,
-        sizeRange: config.visConfig.sizeRange
-      }
+        sizeRange: visConfig.sizeRange
+      },
+      getFilterValue: gpuFilter.filterValueUpdateTriggers
     };
 
     const columnLayerTriggers = {
       getCoverage: {
         coverageField: config.coverageField,
-        coverageRange: config.visConfig.coverageRange
-      },
-      getFilterValue: gpuFilter.filterValueUpdateTriggers
+        coverageRange: visConfig.coverageRange
+      }
     };
+
+    const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
 
     return [
       new H3HexagonLayer({
-        ...layerInteraction,
+        ...defaultLayerProps,
         ...data,
-        id: this.id,
-        idx,
-        pickable: true,
         getHexagon: x => x.id,
 
         // coverage
         coverage: config.coverageField ? 1 : visConfig.coverage,
-
-        // parameters
-        parameters: {
-          depthTest: Boolean(config.sizeField || mapState.dragRotate)
-        },
 
         // highlight
         autoHighlight: Boolean(config.sizeField),
@@ -291,25 +285,20 @@ export default class HexagonIdLayer extends Layer {
         extruded: Boolean(config.sizeField),
         elevationScale: visConfig.elevationScale * eleZoomFactor,
 
-        // color
-        opacity: visConfig.opacity,
-
         // render
         updateTriggers: h3HexagonLayerTriggers,
         _subLayerProps: {
           'hexagon-cell': {
             type: EnhancedColumnLayer,
             getCoverage: data.getCoverage,
-            getFilterValue: data.getFilterValue,
-            updateTriggers: columnLayerTriggers,
-            filterRange: gpuFilter.filterRange
+            updateTriggers: columnLayerTriggers
           }
         }
       }),
       ...(this.isLayerHovered(objectHovered) && !config.sizeField
         ? [
             new GeoJsonLayer({
-              id: `${this.id}-hovered`,
+              ...this.getDefaultHoverLayerProps(),
               data: [idToPolygonGeo(objectHovered)],
               getLineColor: config.highlightColor,
               lineWidthScale: 8 * zoomFactor

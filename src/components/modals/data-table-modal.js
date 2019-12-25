@@ -88,7 +88,7 @@ function DataTableModalFactory(DataGrid) {
     }
 
     const activeDataset = datasets[dataId];
-    const rows = activeDataset.data;
+    const rows = activeDataset.allData;
 
     return (
       <StyledModal className="dataset-modal" >

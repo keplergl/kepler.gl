@@ -23,7 +23,10 @@ export default {
   features: [
     {
       type: 'Feature',
-      properties: {vendor: 'A'},
+      properties: {
+        vendor: 'A',
+        value: 10
+      },
       geometry: {
         type: 'LineString',
         coordinates: [
@@ -85,7 +88,10 @@ export default {
     },
     {
       type: 'Feature',
-      properties: {vendor: 'B'},
+      properties: {
+        vendor: 'B',
+        value: 4
+      },
       geometry: {
         type: 'LineString',
         coordinates: [
@@ -149,7 +155,10 @@ export default {
     },
     {
       type: 'Feature',
-      properties: {vendor: 'A'},
+      properties: {
+        vendor: 'A',
+        value: 7
+      },
       geometry: {
         type: 'LineString',
         coordinates: [
@@ -197,7 +206,10 @@ export default {
     },
     {
       type: 'Feature',
-      properties: {vendor: 'A'},
+      properties: {
+        vendor: 'A',
+        value: 11
+      },
       geometry: {
         type: 'LineString',
         coordinates: [
@@ -228,7 +240,10 @@ export default {
     },
     {
       type: 'Feature',
-      properties: {vendor: 'B'},
+      properties: {
+        vendor: 'B',
+        value: 6
+      },
       geometry: {
         type: 'LineString',
         coordinates: [
@@ -278,7 +293,10 @@ export default {
     },
     {
       type: 'Feature',
-      properties: {vendor: 'A'},
+      properties: {
+        vendor: 'A',
+        value: 1
+      },
       geometry: {
         type: 'LineString',
         coordinates: [
@@ -294,7 +312,10 @@ export default {
     },
     {
       type: 'Feature',
-      properties: {vendor: 'A'},
+      properties: {
+        vendor: 'A',
+        value: 7
+      },
       geometry: {
         type: 'LineString',
         coordinates: [
@@ -332,7 +353,10 @@ export default {
     },
     {
       type: 'Feature',
-      properties: {vendor: 'B'},
+      properties: {
+        vendor: 'B',
+        value: 15
+      },
       geometry: {
         type: 'LineString',
         coordinates: [

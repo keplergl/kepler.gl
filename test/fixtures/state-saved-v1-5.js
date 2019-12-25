@@ -21,8 +21,7 @@
 import tripGeojson, {
   timeStampDomain,
   tripBounds,
-  dataToTimeStamp,
-  dataToFeature
+  dataToTimeStamp
 } from 'test/fixtures/trip-geojson';
 import {
   DEFAULT_TEXT_LABEL,
@@ -287,7 +286,80 @@ mergedLayer0.config = {
   animation: {enabled: true, domain: timeStampDomain}
 };
 
-mergedLayer0.dataToFeature = dataToFeature;
+mergedLayer0.dataToFeature = [
+  {
+    type: 'Feature',
+    properties: {
+      vendor: 'A',
+      index: 0
+    },
+    geometry: tripGeojson.features[0].geometry
+  },
+  {
+    type: 'Feature',
+    properties: {
+      vendor: 'B',
+      index: 1
+    },
+    geometry: tripGeojson.features[1].geometry
+  },
+  {
+    type: 'Feature',
+    properties: {
+      vendor: 'A',
+      index: 2
+    },
+    geometry: tripGeojson.features[2].geometry
+  },
+  {
+    type: 'Feature',
+    properties: {
+      vendor: 'A',
+      index: 3
+    },
+    geometry: tripGeojson.features[3].geometry
+  },
+  {
+    type: 'Feature',
+    properties: {
+      vendor: 'A',
+      index: 4
+    },
+    geometry: tripGeojson.features[4].geometry
+  },
+  {
+    type: 'Feature',
+    properties: {
+      vendor: 'A',
+      index: 5
+    },
+    geometry: tripGeojson.features[5].geometry
+  },
+  {
+    type: 'Feature',
+    properties: {
+      vendor: 'B',
+      index: 6
+    },
+    geometry: tripGeojson.features[6].geometry
+  },
+  {
+    type: 'Feature',
+    properties: {
+      vendor: 'A',
+      index: 7
+    },
+    geometry: tripGeojson.features[7].geometry
+  },
+  {
+    type: 'Feature',
+    properties: {
+      vendor: 'A',
+      index: 8
+    },
+    geometry: tripGeojson.features[8].geometry
+  }
+];
 mergedLayer0.dataToTimeStamp = dataToTimeStamp;
 mergedLayer0.meta.bounds = tripBounds;
 mergedLayer0.meta.featureTypes = {line: true};
