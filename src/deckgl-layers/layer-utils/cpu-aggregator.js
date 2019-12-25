@@ -578,9 +578,6 @@ export default class CPUAggregator {
             getPickingInfo(this.state.dimensions[key], cell, layerProps)
           );
         }
-        // const {sortedBins} = this.state.dimensions[key];
-        // const value = sortedBins.binMap[cell.index] && sortedBins.binMap[cell.index].value;
-        // binInfo[pickingInfo] = value;
       }
 
       object = Object.assign(binInfo, cell, {

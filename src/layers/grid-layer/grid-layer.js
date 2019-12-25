@@ -76,7 +76,8 @@ export default class GridLayer extends AggregationLayer {
       ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d
         ? [
             new GeoJsonLayer({
-              id: `${this.id}-hovered`,
+              ...this.getDefaultHoverLayerProps(),
+              wrapLongitude: false,
               data: [
                 pointToPolygonGeo({
                   object: objectHovered.object,
