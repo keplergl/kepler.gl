@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,11 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {_MultiIconLayer} from '@deck.gl/layers';
-import {extendLayer} from 'deckgl-layers/layer-utils/layer-extension';
-import DataFilterExtension from 'shaderlib/gpu-filtering-module';
-
-export default extendLayer(
-  _MultiIconLayer,
-  new DataFilterExtension()
-);
+import './base-layer-sepcs';
+import './arc-layer-specs';
+import './cluster-layer-specs';
+import './geojson-layer-specs';
+import './grid-layer-specs';
+import './h3-hexagon-layer-specs';
+import './heatmap-layer-specs';
+import './hexagon-layer-specs';
+import './icon-layer-specs';
+import './line-layer-specs';
+import './point-layer-specs';
+import './scenegraph-layer-specs';
+import './trip-layer-specs';

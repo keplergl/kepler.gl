@@ -27,9 +27,9 @@ import sinon from 'sinon';
 import {console as Console} from 'global/window';
 
 import {withState, injectComponents, PanelHeaderFactory} from 'components';
+import {errorMsg} from 'components/injector';
 import coreReducer from 'reducers/core';
 import {keplerGlInit} from 'actions/actions';
-import {errorMsg} from 'components/injector';
 import {visStateLens, uiStateLens, mapStateLens, mapStyleLens} from 'reducers';
 
 const mockStore = configureStore();
@@ -207,6 +207,7 @@ test('Components -> injector -> missing dep', t => {
   );
 
   t.ok(spy.calledOnce, 'should call Console.error twice');
+
   t.equal(
     spy.getCall(0).args[0],
     `${errorMsg.incompatibleDeps(myCustomHeaderFactory, 0)}`,

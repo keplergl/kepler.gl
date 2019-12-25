@@ -34,7 +34,7 @@ import {StyledMapContainer} from 'components/common/styled-components';
 // utils
 import {generateMapboxLayers, updateMapboxLayers} from 'layers/mapbox-utils';
 import {OVERLAY_TYPE} from 'layers/base-layer';
-import {onWebGLInitialized, setLayerBlending} from 'utils/gl-utils';
+import {setLayerBlending} from 'utils/gl-utils';
 import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 
 // default-settings
@@ -152,8 +152,6 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       });
     };
 
-    _onWebGLInitialized = onWebGLInitialized;
-
     _handleMapToggleLayer = layerId => {
       const {index: mapIndex = 0, visStateActions} = this.props;
       visStateActions.toggleLayerForMap(mapIndex, layerId);
@@ -225,6 +223,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         objectInfo &&
         objectInfo.picked
       ) {
+
         // if anything hovered
         const {object, layer: overlay} = objectInfo;
 
@@ -295,17 +294,11 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         clicked,
         mapState,
         interactionConfig,
-        mousePos,
         animationConfig
       } = this.props;
       const layer = layers[idx];
       const data = layerData[idx];
       const {gpuFilter} = datasets[layer.config.dataId] || {};
-      // console.log(datasets[layer.config.dataId])
-      const layerInteraction = {
-        mousePosition: mousePos.mousePosition,
-        wrapLongitude: true
-      };
 
       const objectHovered = clicked || hoverInfo;
       const layerCallbacks = {
@@ -319,7 +312,6 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         idx,
         interactionConfig,
         layerCallbacks,
-        layerInteraction,
         mapState,
         animationConfig,
         objectHovered
@@ -369,7 +361,6 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           viewState={mapState}
           id="default-deckgl-overlay"
           layers={deckGlLayers}
-          onWebGLInitialized={this._onWebGLInitialized}
           onBeforeRender={this._onBeforeRender}
           onHover={visStateActions.onLayerHover}
           onClick={visStateActions.onLayerClick}

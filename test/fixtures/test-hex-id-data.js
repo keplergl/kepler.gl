@@ -29,80 +29,14 @@ export default `hex_id,value
 89283082817ffff,74
 89283082c3bffff,66
 89283082883ffff,76
-89283082c03ffff,60
-89283082807ffff,68
-8928308289bffff,49
-89283082c0fffff,41
-89283082c87ffff,50
-89283082d4fffff,45
-89283082c77ffff,41
-89283082c2bffff,53
-89283082803ffff,41
-89283082813ffff,43
-89283082d5bffff,45
-89283082897ffff,40
-89283082c67ffff,42
-89283082d47ffff,51
-89283082dc3ffff,52
 89283082c33ffff,43
 89283082c23ffff,40
 89283082887ffff,36
-89283082d4bffff,36
-892830828bbffff,48
-892830828b7ffff,28
-89283082c17ffff,34
-89283082c6fffff,21
-8928308288bffff,25
-892830828abffff,26
-89283082c27ffff,27
-89283082c8fffff,33
-89283082cafffff,29
-89283082c13ffff,27
-89283082cabffff,22
-89283082c63ffff,26
-89283082d43ffff,30
-89283082d53ffff,19
-892830828a3ffff,28
-89283082d1bffff,20
-89283095367ffff,17
-8928309536bffff,26
-89283082c37ffff,16
-89283082c73ffff,17
-89283082c8bffff,15
 89283082ca7ffff,27
 89283082cb3ffff,32
 89283082c0bffff,26
 89283082ca3ffff,19
 89283082dcfffff,18
-89283082c1bffff,20
-89283082ddbffff,18
-8928309534fffff,16
-89283082d03ffff,15
-89283082cbbffff,21
-89283082cd7ffff,9
-8928309534bffff,9
-892830828c7ffff,13
-89283082cc7ffff,12
-89283082d0bffff,19
-89283082dcbffff,19
-89283082dd3ffff,15
-89283082dd7ffff,15
-892830828d7ffff,13
-89283082d17ffff,5
-8928309536fffff,8
-89283095373ffff,6
-89283082cb7ffff,15
-89283082d83ffff,9
-89283082d07ffff,4
-89283082d0fffff,3
-89283082d13ffff,6
-89283082d9bffff,5
-89283082c83ffff,11
-89283082d8bffff,4
-89283082dc7ffff,5
-89283095377ffff,5
-89283082c97ffff,4
-89283082d7bffff,2
 89283082d8fffff,1
 89283095347ffff,3
 89283095363ffff,2
@@ -126,7 +60,7 @@ export const hexIdDataConfig = {
             id: 'byjasfp0u',
             name: 'value',
             type: 'range',
-            value: [11.2, 18],
+            value: [11.2, 28],
             enlarged: false,
             plotType: 'histogram',
             yAxis: null
@@ -227,7 +161,7 @@ export const mergedFilters = [
     id: 'value',
     name: ['value'],
     type: 'range',
-    value: [11.2, 18],
+    value: [11.2, 28],
     enlarged: false,
     freeze: true,
     plotType: 'histogram',
@@ -243,122 +177,12 @@ export const mergedFilters = [
     fieldType: 'integer',
     typeOptions: ['range'],
     fixedDomain: false,
-    gpuChannel: [0]
+    gpuChannel: [0],
+    gpu: true
   }
 ];
 
-const allData = [
-  ['89283082c2fffff', 64],
-  ['8928308288fffff', 73],
-  ['89283082c07ffff', 65],
-  ['89283082817ffff', 74],
-  ['89283082c3bffff', 66],
-  ['89283082883ffff', 76],
-  ['89283082c03ffff', 60],
-  ['89283082807ffff', 68],
-  ['8928308289bffff', 49],
-  ['89283082c0fffff', 41],
-  ['89283082c87ffff', 50],
-  ['89283082d4fffff', 45],
-  ['89283082c77ffff', 41],
-  ['89283082c2bffff', 53],
-  ['89283082803ffff', 41],
-  ['89283082813ffff', 43],
-  ['89283082d5bffff', 45],
-  ['89283082897ffff', 40],
-  ['89283082c67ffff', 42],
-  ['89283082d47ffff', 51],
-  ['89283082dc3ffff', 52],
-  ['89283082c33ffff', 43],
-  ['89283082c23ffff', 40],
-  ['89283082887ffff', 36],
-  ['89283082d4bffff', 36],
-  ['892830828bbffff', 48],
-  ['892830828b7ffff', 28],
-  ['89283082c17ffff', 34],
-  ['89283082c6fffff', 21],
-  ['8928308288bffff', 25],
-  ['892830828abffff', 26],
-  ['89283082c27ffff', 27],
-  ['89283082c8fffff', 33],
-  ['89283082cafffff', 29],
-  ['89283082c13ffff', 27],
-  ['89283082cabffff', 22],
-  ['89283082c63ffff', 26],
-  ['89283082d43ffff', 30],
-  ['89283082d53ffff', 19],
-  ['892830828a3ffff', 28],
-  ['89283082d1bffff', 20],
-  ['89283095367ffff', 17],
-  ['8928309536bffff', 26],
-  ['89283082c37ffff', 16],
-  ['89283082c73ffff', 17],
-  ['89283082c8bffff', 15],
-  ['89283082ca7ffff', 27],
-  ['89283082cb3ffff', 32],
-  ['89283082c0bffff', 26],
-  ['89283082ca3ffff', 19],
-  ['89283082dcfffff', 18],
-  ['89283082c1bffff', 20],
-  ['89283082ddbffff', 18],
-  ['8928309534fffff', 16],
-  ['89283082d03ffff', 15],
-  ['89283082cbbffff', 21],
-  ['89283082cd7ffff', 9],
-  ['8928309534bffff', 9],
-  ['892830828c7ffff', 13],
-  ['89283082cc7ffff', 12],
-  ['89283082d0bffff', 19],
-  ['89283082dcbffff', 19],
-  ['89283082dd3ffff', 15],
-  ['89283082dd7ffff', 15],
-  ['892830828d7ffff', 13],
-  ['89283082d17ffff', 5],
-  ['8928309536fffff', 8],
-  ['89283095373ffff', 6],
-  ['89283082cb7ffff', 15],
-  ['89283082d83ffff', 9],
-  ['89283082d07ffff', 4],
-  ['89283082d0fffff', 3],
-  ['89283082d13ffff', 6],
-  ['89283082d9bffff', 5],
-  ['89283082c83ffff', 11],
-  ['89283082d8bffff', 4],
-  ['89283082dc7ffff', 5],
-  ['89283095377ffff', 5],
-  ['89283082c97ffff', 4],
-  ['89283082d7bffff', 2],
-  ['89283082d8fffff', 1],
-  ['89283095347ffff', 3],
-  ['89283095363ffff', 2],
-  ['8928309537bffff', 4],
-  ['89283082d93ffff', 6],
-  ['89283082d73ffff', 1],
-  ['8928309530bffff', 1],
-  ['8928309532bffff', 1]
-];
-
-const filteredData = [
-  ['89283095367ffff', 17],
-  ['89283082c37ffff', 16],
-  ['89283082c73ffff', 17],
-  ['89283082c8bffff', 15],
-  ['89283082dcfffff', 18],
-  ['89283082ddbffff', 18],
-  ['8928309534fffff', 16],
-  ['89283082d03ffff', 15],
-  ['892830828c7ffff', 13],
-  ['89283082cc7ffff', 12],
-  ['89283082dd3ffff', 15],
-  ['89283082dd7ffff', 15],
-  ['892830828d7ffff', 13],
-  ['89283082cb7ffff', 15]
-];
-
-const filteredIndex = [41, 43, 44, 45, 50, 52, 53, 54, 58, 59, 62, 63, 64, 68];
-const filteredIndexForDomain = [41, 43, 44, 45, 50, 52, 53, 54, 58, 59, 62, 63, 64, 68];
-
-const fields = [
+const mergedFields = [
   {
     name: 'hex_id',
     format: '',
@@ -379,40 +203,40 @@ const fields = [
       step: 0.1,
       histogram: [
         {count: 4, x0: 1, x1: 2},
-        {count: 4, x0: 2, x1: 4},
-        {count: 8, x0: 4, x1: 6},
-        {count: 3, x0: 6, x1: 8},
-        {count: 4, x0: 8, x1: 10},
-        {count: 1, x0: 10, x1: 12},
-        {count: 3, x0: 12, x1: 14},
-        {count: 5, x0: 14, x1: 16},
-        {count: 4, x0: 16, x1: 18},
-        {count: 6, x0: 18, x1: 20},
-        {count: 4, x0: 20, x1: 22},
-        {count: 1, x0: 22, x1: 24},
-        {count: 1, x0: 24, x1: 26},
-        {count: 7, x0: 26, x1: 28},
-        {count: 3, x0: 28, x1: 30},
-        {count: 1, x0: 30, x1: 32},
-        {count: 2, x0: 32, x1: 34},
-        {count: 1, x0: 34, x1: 36},
-        {count: 2, x0: 36, x1: 38},
+        {count: 2, x0: 2, x1: 4},
+        {count: 1, x0: 4, x1: 6},
+        {count: 1, x0: 6, x1: 8},
+        {count: 0, x0: 8, x1: 10},
+        {count: 0, x0: 10, x1: 12},
+        {count: 0, x0: 12, x1: 14},
+        {count: 0, x0: 14, x1: 16},
+        {count: 0, x0: 16, x1: 18},
+        {count: 2, x0: 18, x1: 20},
+        {count: 0, x0: 20, x1: 22},
+        {count: 0, x0: 22, x1: 24},
+        {count: 0, x0: 24, x1: 26},
+        {count: 2, x0: 26, x1: 28},
+        {count: 0, x0: 28, x1: 30},
+        {count: 0, x0: 30, x1: 32},
+        {count: 1, x0: 32, x1: 34},
+        {count: 0, x0: 34, x1: 36},
+        {count: 1, x0: 36, x1: 38},
         {count: 0, x0: 38, x1: 40},
-        {count: 5, x0: 40, x1: 42},
-        {count: 3, x0: 42, x1: 44},
-        {count: 2, x0: 44, x1: 46},
+        {count: 1, x0: 40, x1: 42},
+        {count: 1, x0: 42, x1: 44},
+        {count: 0, x0: 44, x1: 46},
         {count: 0, x0: 46, x1: 48},
-        {count: 2, x0: 48, x1: 50},
-        {count: 2, x0: 50, x1: 52},
-        {count: 2, x0: 52, x1: 54},
+        {count: 0, x0: 48, x1: 50},
+        {count: 0, x0: 50, x1: 52},
+        {count: 0, x0: 52, x1: 54},
         {count: 0, x0: 54, x1: 56},
         {count: 0, x0: 56, x1: 58},
         {count: 0, x0: 58, x1: 60},
-        {count: 1, x0: 60, x1: 62},
+        {count: 0, x0: 60, x1: 62},
         {count: 0, x0: 62, x1: 64},
         {count: 2, x0: 64, x1: 66},
         {count: 1, x0: 66, x1: 68},
-        {count: 1, x0: 68, x1: 70},
+        {count: 0, x0: 68, x1: 70},
         {count: 0, x0: 70, x1: 72},
         {count: 1, x0: 72, x1: 74},
         {count: 1, x0: 74, x1: 76},
@@ -420,65 +244,65 @@ const fields = [
       ],
       enlargedHistogram: [
         {count: 4, x0: 1, x1: 2},
-        {count: 2, x0: 2, x1: 3},
-        {count: 2, x0: 3, x1: 4},
-        {count: 4, x0: 4, x1: 5},
-        {count: 4, x0: 5, x1: 6},
-        {count: 3, x0: 6, x1: 7},
+        {count: 1, x0: 2, x1: 3},
+        {count: 1, x0: 3, x1: 4},
+        {count: 1, x0: 4, x1: 5},
+        {count: 0, x0: 5, x1: 6},
+        {count: 1, x0: 6, x1: 7},
         {count: 0, x0: 7, x1: 8},
-        {count: 1, x0: 8, x1: 9},
-        {count: 3, x0: 9, x1: 10},
+        {count: 0, x0: 8, x1: 9},
+        {count: 0, x0: 9, x1: 10},
         {count: 0, x0: 10, x1: 11},
-        {count: 1, x0: 11, x1: 12},
-        {count: 1, x0: 12, x1: 13},
-        {count: 2, x0: 13, x1: 14},
+        {count: 0, x0: 11, x1: 12},
+        {count: 0, x0: 12, x1: 13},
+        {count: 0, x0: 13, x1: 14},
         {count: 0, x0: 14, x1: 15},
-        {count: 5, x0: 15, x1: 16},
-        {count: 2, x0: 16, x1: 17},
-        {count: 2, x0: 17, x1: 18},
-        {count: 2, x0: 18, x1: 19},
-        {count: 4, x0: 19, x1: 20},
-        {count: 2, x0: 20, x1: 21},
-        {count: 2, x0: 21, x1: 22},
-        {count: 1, x0: 22, x1: 23},
+        {count: 0, x0: 15, x1: 16},
+        {count: 0, x0: 16, x1: 17},
+        {count: 0, x0: 17, x1: 18},
+        {count: 1, x0: 18, x1: 19},
+        {count: 1, x0: 19, x1: 20},
+        {count: 0, x0: 20, x1: 21},
+        {count: 0, x0: 21, x1: 22},
+        {count: 0, x0: 22, x1: 23},
         {count: 0, x0: 23, x1: 24},
         {count: 0, x0: 24, x1: 25},
-        {count: 1, x0: 25, x1: 26},
-        {count: 4, x0: 26, x1: 27},
-        {count: 3, x0: 27, x1: 28},
-        {count: 2, x0: 28, x1: 29},
-        {count: 1, x0: 29, x1: 30},
-        {count: 1, x0: 30, x1: 31},
+        {count: 0, x0: 25, x1: 26},
+        {count: 1, x0: 26, x1: 27},
+        {count: 1, x0: 27, x1: 28},
+        {count: 0, x0: 28, x1: 29},
+        {count: 0, x0: 29, x1: 30},
+        {count: 0, x0: 30, x1: 31},
         {count: 0, x0: 31, x1: 32},
         {count: 1, x0: 32, x1: 33},
-        {count: 1, x0: 33, x1: 34},
-        {count: 1, x0: 34, x1: 35},
+        {count: 0, x0: 33, x1: 34},
+        {count: 0, x0: 34, x1: 35},
         {count: 0, x0: 35, x1: 36},
-        {count: 2, x0: 36, x1: 37},
+        {count: 1, x0: 36, x1: 37},
         {count: 0, x0: 37, x1: 38},
         {count: 0, x0: 38, x1: 39},
         {count: 0, x0: 39, x1: 40},
-        {count: 2, x0: 40, x1: 41},
-        {count: 3, x0: 41, x1: 42},
-        {count: 1, x0: 42, x1: 43},
-        {count: 2, x0: 43, x1: 44},
+        {count: 1, x0: 40, x1: 41},
+        {count: 0, x0: 41, x1: 42},
+        {count: 0, x0: 42, x1: 43},
+        {count: 1, x0: 43, x1: 44},
         {count: 0, x0: 44, x1: 45},
-        {count: 2, x0: 45, x1: 46},
+        {count: 0, x0: 45, x1: 46},
         {count: 0, x0: 46, x1: 47},
         {count: 0, x0: 47, x1: 48},
-        {count: 1, x0: 48, x1: 49},
-        {count: 1, x0: 49, x1: 50},
-        {count: 1, x0: 50, x1: 51},
-        {count: 1, x0: 51, x1: 52},
-        {count: 1, x0: 52, x1: 53},
-        {count: 1, x0: 53, x1: 54},
+        {count: 0, x0: 48, x1: 49},
+        {count: 0, x0: 49, x1: 50},
+        {count: 0, x0: 50, x1: 51},
+        {count: 0, x0: 51, x1: 52},
+        {count: 0, x0: 52, x1: 53},
+        {count: 0, x0: 53, x1: 54},
         {count: 0, x0: 54, x1: 55},
         {count: 0, x0: 55, x1: 56},
         {count: 0, x0: 56, x1: 57},
         {count: 0, x0: 57, x1: 58},
         {count: 0, x0: 58, x1: 59},
         {count: 0, x0: 59, x1: 60},
-        {count: 1, x0: 60, x1: 61},
+        {count: 0, x0: 60, x1: 61},
         {count: 0, x0: 61, x1: 62},
         {count: 0, x0: 62, x1: 63},
         {count: 0, x0: 63, x1: 64},
@@ -486,7 +310,7 @@ const fields = [
         {count: 1, x0: 65, x1: 66},
         {count: 1, x0: 66, x1: 67},
         {count: 0, x0: 67, x1: 68},
-        {count: 1, x0: 68, x1: 69},
+        {count: 0, x0: 68, x1: 69},
         {count: 0, x0: 69, x1: 70},
         {count: 0, x0: 70, x1: 71},
         {count: 0, x0: 71, x1: 72},
@@ -499,23 +323,11 @@ const fields = [
       fieldType: 'integer',
       value: [1, 76],
       type: 'range',
-      typeOptions: ['range']
+      typeOptions: ['range'],
+      gpu: true
     }
   }
 ];
-
-export const expectedHexDataset = {
-  id: dataId,
-  fields,
-  allData,
-  data: filteredData,
-  filteredIndex,
-  filteredIndexForDomain,
-  fieldPairs: [],
-  label: 'new dataset',
-  color: 'dont test me',
-  allIndexes: allData.map((d, i) => i)
-};
 
 export const mergedH3Layer = new H3Layer({
   id: 'avlgol'
@@ -534,9 +346,9 @@ mergedH3Layer.config = {
   isVisible: true,
   highlightColor: [252, 242, 26, 255],
   isConfigActive: false,
-  colorField: fields[1],
+  colorField: mergedFields[1],
   colorScale: 'quantile',
-  colorDomain: [12, 13, 13, 15, 15, 15, 15, 15, 16, 16, 17, 17, 18, 18],
+  colorDomain: [18, 19, 26, 27],
   sizeField: null,
   sizeDomain: [0, 1],
   sizeScale: 'linear',
@@ -572,5 +384,64 @@ mergedH3Layer.config = {
   },
   animation: {
     enabled: false
+  }
+};
+
+export const expectedMergedDataset = {
+  id: 'h3-hex-id',
+  label: 'new dataset',
+  color: 'dont test me',
+  allData: [
+    ['89283082c2fffff', 64],
+    ['8928308288fffff', 73],
+    ['89283082c07ffff', 65],
+    ['89283082817ffff', 74],
+    ['89283082c3bffff', 66],
+    ['89283082883ffff', 76],
+    ['89283082c33ffff', 43],
+    ['89283082c23ffff', 40],
+    ['89283082887ffff', 36],
+    ['89283082ca7ffff', 27],
+    ['89283082cb3ffff', 32],
+    ['89283082c0bffff', 26],
+    ['89283082ca3ffff', 19],
+    ['89283082dcfffff', 18],
+    ['89283082d8fffff', 1],
+    ['89283095347ffff', 3],
+    ['89283095363ffff', 2],
+    ['8928309537bffff', 4],
+    ['89283082d93ffff', 6],
+    ['89283082d73ffff', 1],
+    ['8928309530bffff', 1],
+    ['8928309532bffff', 1]
+  ],
+  allIndexes: new Array(22).fill(0).map((d, i) => i),
+  filteredIndex: new Array(22).fill(0).map((d, i) => i),
+  filteredIndexForDomain: [9, 11, 12, 13],
+  fieldPairs: [],
+  fields: mergedFields,
+  gpuFilter: {
+    filterRange: [
+      [10.2, 27],
+      [0, 0],
+      [0, 0],
+      [0, 0]
+    ],
+    filterValueUpdateTriggers: {
+      gpuFilter_0: 'value',
+      gpuFilter_1: null,
+      gpuFilter_2: null,
+      gpuFilter_3: null
+    },
+    filterValueAccessor: {
+      inputs: [{data: ['89283082c33ffff', 43], index: 6}],
+      result: [42, 0, 0, 0]
+    }
+  },
+  filterRecord: {
+    dynamicDomain: [mergedFilters[0]],
+    fixedDomain: [],
+    cpu: [],
+    gpu: [mergedFilters[0]]
   }
 };

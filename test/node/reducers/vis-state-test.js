@@ -33,7 +33,6 @@ import {
 
 import {getDefaultInteraction} from 'utils/interaction-utils';
 import {
-  filterDataset,
   getDefaultFilter,
   getHistogram
 } from 'utils/filter-utils';
@@ -68,7 +67,8 @@ import {
   cmpFilters,
   cmpLayers,
   cmpDatasets,
-  cmpDataset
+  cmpDataset,
+  cmpObjectKeys
 } from 'test/helpers/comparison-utils';
 import {
   applyActions,
@@ -894,172 +894,167 @@ test('#visStateReducer -> UPDATE_LAYER_BLENDING', t => {
   t.end();
 });
 
-/*
-TODO: fixed in gpu data filter -5
 test('#visStateReducer -> REMOVE_FILTER', t => {
-  const filter1 = {
-    fieldIdx: [0],
-    dataId: ['smoothie'],
-    name: 'start_point_lat',
-    type: 'range',
-    value: [12.25, 12.29],
-    gpu: true,
-    fixedDomain: false,
-    gpuChannel: [0]
-  };
-  const filter2 = {
-    fieldIdx: [1],
-    dataId: ['milkshake'],
-    name: 'start_point_lng',
-    type: 'range',
-    value: [35.3, 37.75],
-    gpu: true,
-    fixedDomain: false,
-    gpuChannel: [0]
-  };
-  const currentFilters = [filter1, filter2];
-  const allIndexes = mockData.data.map((_, i) => i);
-  const milkshake = {
-    allData: mockData.data,
-    id: 'milkshake',
-    allIndexes,
-    filteredIndexForDomain: allIndexes,
-    filteredIndex: allIndexes
-  };
+  const initialState = StateWFilters.visState;
+  // filter[0]: 'time' '190vdll3di'
+  // filter[1]: 'RATE' 'ieukmgne'
 
-  const smoothie = {
-    allData: mockData.data,
-    id: 'smoothie',
-    allIndexes,
-    filteredIndexForDomain: allIndexes,
-    filteredIndex: allIndexes
-  };
+  const dataset0 = initialState.datasets['190vdll3di'];
+  const dataset1 = initialState.datasets.ieukmgne;
 
-  const oldState = {
-    filters: currentFilters,
-    datasets: {
-      milkshake: filterDataset(milkshake, currentFilters),
-      smoothie: filterDataset(smoothie, currentFilters)
-    },
-    layers: [],
-    layerData: []
-  };
-
-  // remove smoothie filter - gpu: true, fixedDomain: false
-  const newReducer = reducer(oldState, VisStateActions.removeFilter(0));
-  const expectedState = {
-    filters: [filter2],
-    datasets: {
-      milkshake: {
-        id: 'milkshake',
-        allData: mockData.data,
-        // filteredIndex and filteredIndexForDomain shouldn't changed
-        filteredIndex: oldState.datasets.milkshake.filteredIndex,
-        filteredIndexForDomain:
-          oldState.datasets.milkshake.filteredIndexForDomain,
-        allIndexes: milkshake.allIndexes,
-        filterRecord: {
-          dynamicDomain: [filter2],
-          fixedDomain: [],
-          cpu: [],
-          gpu: [filter2]
-        },
-        gpuFilter: {
-          filterRange: {
-            filterMin: [35.3, 0, 0, 0],
-            filterMax: [37.75, 0, 0, 0]
-          },
-          filterValueUpdateTriggers: {
-            0: 'start_point_lng',
-            1: null,
-            2: null,
-            3: null
-          },
-          filterValueAccessor: {
-            inputs: [
-              {data: mockData.data[0], index: 0}
-            ],
-            result: [37.75, 0, 0, 0]
-          }
-        }
+  const expectedData0 = {
+    ...dataset0,
+    gpuFilter: {
+      filterRange: [
+        [1474606800000 - 1474588800000, 1474617600000 - 1474588800000],
+        [0, 0],
+        [0, 0],
+        [0, 0]
+      ],
+      filterValueUpdateTriggers: {
+        gpuFilter_0: 'time',
+        gpuFilter_1: null,
+        gpuFilter_2: null,
+        gpuFilter_3: null
       },
-      smoothie: {
-        id: 'smoothie',
-        allData: mockData.data,
-        allIndexes: smoothie.allIndexes,
-        // filteredIndex shouldn't changed
-        filteredIndex: oldState.datasets.smoothie.filteredIndex,
-        // filteredIndexForDomain should changed
-        filteredIndexForDomain: [0, 1, 2, 3],
-        filterRecord: {
-          dynamicDomain: [],
-          fixedDomain: [],
-          cpu: [],
-          gpu: []
-        },
-        gpuFilter: {
-          filterRange: {
-            filterMin: [0, 0, 0, 0],
-            filterMax: [0, 0, 0, 0]
-          },
-          filterValueUpdateTriggers: {
-            0: null,
-            1: null,
-            2: null,
-            3: null
-          },
-          filterValueAccessor: {
-            inputs: [
-              {data: mockData.data[0], index: 0}
-            ],
-            result: [0, 0, 0, 0]
+      filterValueAccessor: {
+        inputs: [
+          {
+            data: dataset0.allData[0],
+            index: 0
           }
-        }
+        ],
+        result: [0, 0, 0, 0]
       }
     },
-    layers: [],
-    layerData: []
+    filterRecord: {
+      dynamicDomain: [],
+      fixedDomain: [initialState.filters[0]],
+      cpu: [],
+      gpu: [initialState.filters[0]]
+    }
   };
 
-  t.deepEqual(
-    Object.keys(newReducer),
-    ['filters', 'datasets', 'layers', 'layerData'],
-    'new reducer should have these keys'
-  );
+  // ieukmgne
+  const expectedData1 = {
+    ...dataset1,
+    filteredIndex: dataset1.allIndexes,
+    filteredIndexForDomain: dataset1.allIndexes,
+    filterRecord: {
+      dynamicDomain: [],
+      fixedDomain: [],
+      cpu: [],
+      gpu: []
+    }
+  };
 
-  t.deepEqual(
-    newReducer.filters,
-    expectedState.filters,
-    `should remove filter and recalculate data only for associated dataset`
-  );
+  const expectedFilters = [
+    {
+      dataId: ['190vdll3di'],
+      freeze: true,
+      id: 'time-0',
+      fixedDomain: true,
+      enlarged: true,
+      isAnimating: false,
+      speed: 1,
+      name: ['time'],
+      type: 'timeRange',
+      fieldIdx: [7],
+      domain: [1474588800000, 1474617600000],
+      value: [1474606800000, 1474617600000],
+      plotType: 'histogram',
+      yAxis: null,
+      interval: null,
+      gpu: true,
+      step: 1000,
+      mappedValue: [],
+      fieldType: 'timestamp',
+      gpuChannel: [0],
+      enlargedHistogram: [],
+      histogram: [],
+      mappedValue: [
+        1474588800000,
+        1474588800000,
+        1474588800000,
+        1474588800000,
+        1474588800000,
+        1474606800000,
+        1474606800000,
+        1474588800000,
+        1474588800000,
+        1474610400000,
+        1474606800000,
+        null,
+        null,
+        1474610400000,
+        1474610400000,
+        1474588800000,
+        1474614000000,
+        1474614000000,
+        1474614000000,
+        1474614000000,
+        1474614000000,
+        1474617600000,
+        1474617600000,
+        1474617600000
+      ]
+    }
+  ];
 
-  // Test filter dataset result
-  cmpDatasets(t, expectedState.datasets, newReducer.datasets, 'should update datasets');
+  // remove smoothie filter - gpu: true, fixedDomain: false
+  const newReducer = reducer(initialState, VisStateActions.removeFilter(1));
 
-  // check if `filteredIndex`, `filteredIndexForDomain` is shallow equal
-  t.equal(
-    newReducer.datasets.milkshake.filteredIndex,
-    oldState.datasets.milkshake.filteredIndex,
-    'milkeshake filterIndex should be shallow equal'
-  );
-  t.equal(
-    newReducer.datasets.milkshake.filteredIndexForDomain,
-    oldState.datasets.milkshake.filteredIndexForDomain,
-    'milkeshake filteredIndexForDomain should be shallow equal'
-  );
-  t.equal(
-    newReducer.datasets.smoothie.filteredIndex,
-    oldState.datasets.smoothie.filteredIndex,
-    'smoothie filterIndex should be shallow equal'
-  );
-  t.notEqual(
-    newReducer.datasets.smoothie.filteredIndexForDomain,
-    oldState.datasets.smoothie.filteredIndex,
-    'smoothie filteredIndexForDomain should be updated'
-  );
+  const expectedLayerData1 = {data: dataset1.allData.map(d => d)};
+  const expectedState = {
+    ...initialState,
+    filters: expectedFilters,
+    datasets: {
+      '190vdll3di': expectedData0,
+      ieukmgne: expectedData1
+    },
+    layerData: [
+      initialState.layerData[0],
+      expectedLayerData1
+    ]
+  };
+
+  cmpObjectKeys(t, expectedState, newReducer, 'After removing filter, visState');
+
+  Object.keys(newReducer).forEach(key => {
+    switch (key) {
+      case 'datasets':
+        cmpDatasets(t, expectedState.datasets, newReducer.datasets);
+        break;
+      case 'filters':
+        cmpFilters(t, expectedState.filters, newReducer.filters);
+        break;
+      case 'layers':
+        cmpLayers(t, expectedState.layers, newReducer.layers);
+        break;
+      case 'layerData':
+        // only compare length
+
+        t.equal(
+          expectedState.layerData.length,
+          newReducer.layerData.length,
+          'should have same number of layerData'
+        );
+        newReducer.layerData.forEach((ld, i) => {
+          t.equal(
+            expectedState.layerData[i].data.length,
+            newReducer.layerData[i].data.length,
+            'layerData.data should have same length'
+          );
+        });
+        break;
+      default:
+        t.deepEqual(newReducer[key], expectedState[key], `visState.${key} should be correct after removing filter`);
+        break;
+    }
+  });
+
   t.end();
 });
-*/
 
 test('#visStateReducer -> REMOVE_LAYER', t => {
   const layer1 = new PointLayer({id: 'a'});
@@ -1179,7 +1174,12 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
       allData: mockRawData.rows,
       gpuFilter: {
         filterRange: [[0, 0], [0, 0], [0, 0], [0, 0]],
-        filterValueUpdateTriggers: {gpuFilter_0: null, gpuFilter_1: null, gpuFilter_2: null, gpuFilter_3: null},
+        filterValueUpdateTriggers: {
+          gpuFilter_0: null,
+          gpuFilter_1: null,
+          gpuFilter_2: null,
+          gpuFilter_3: null
+        },
         filterValueAccessor: {
           inputs: ['a', 'b', 'c', 'd', 'e'],
           result: [0, 0, 0, 0]
@@ -1351,7 +1351,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
       filteredIndexForDomain: mockRawData.rows.map((_, i) => i),
       allIndexes: mockRawData.rows.map((_, i) => i),
       gpuFilter: {
-        filterRange: [[ 0, 0 ], [ 0, 0 ], [ 0, 0 ], [ 0, 0 ]],
+        filterRange: [[0, 0], [0, 0], [0, 0], [0, 0]],
         filterValueUpdateTriggers: {
           gpuFilter_0: null,
           gpuFilter_1: null,
@@ -1359,9 +1359,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
           gpuFilter_3: null
         },
         filterValueAccessor: {
-          inputs: [
-            {data: mockData.data[0], index: 0}
-          ],
+          inputs: [{data: mockData.data[0], index: 0}],
           result: [0, 0, 0, 0]
         }
       },
@@ -1488,7 +1486,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
     fields: fields.map(f => ({...f, id: f.name})),
     fieldPairs: [],
     gpuFilter: {
-      filterRange: [[ 0, 0 ], [ 0, 0 ], [ 0, 0 ], [ 0, 0 ]],
+      filterRange: [[0, 0], [0, 0], [0, 0], [0, 0]],
       filterValueUpdateTriggers: {
         gpuFilter_0: null,
         gpuFilter_1: null,
@@ -1496,9 +1494,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
         gpuFilter_3: null
       },
       filterValueAccessor: {
-        inputs: [
-          {data: mockData.data[0], index: 0}
-        ],
+        inputs: [{data: mockData.data[0], index: 0}],
         result: [0, 0, 0, 0]
       }
     }
@@ -1518,7 +1514,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
     strokeColor: layer1StrokeColor
   });
   expectedLayer.dataToFeature = expectedDataToFeature;
-  expectedLayer.meta = updatedGeoJsonLayer.meta
+  expectedLayer.meta = updatedGeoJsonLayer.meta;
 
   const expectedLayerData = {
     data: geojsonData.features.map((f, i) => ({
@@ -1686,6 +1682,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
   );
 
   const allIndexes = mockRawData.rows.map((_, i) => i);
+
   const expectedDatasets = {
     smoothie: {
       fields: expectedFields,
@@ -1713,7 +1710,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
         },
         filterValueAccessor: {
           inputs: [{data: mockRawData.rows[0], index: 1}],
-          result: [12.25, 0, 0, 0]
+          result: [12.25 - expectedFilter.domain[0], 0, 0, 0]
         }
       },
       allIndexes,
@@ -2031,9 +2028,7 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
         gpuFilter_3: null
       },
       filterValueAccessor: {
-        inputs: [
-          {data: allData[0], index: 0}
-        ],
+        inputs: [{data: allData[0], index: 0}],
         result: [0, 0, 0, 0]
       }
     },
