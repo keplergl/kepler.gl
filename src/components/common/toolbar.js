@@ -18,17 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
 import styled from 'styled-components';
-import classnames from 'classnames';
 
-const StyledPanelDropdown = styled.div`
+const Toolbar = styled.div`
   display: flex;
-  flex-direction: ${props => props.direction};
+  flex-direction: row;
   background-color: ${props => props.theme.dropdownListBgd};
   box-shadow: ${props => props.theme.dropdownListShadow};
   font-size: 11px;
-  padding: ${props => props.direction === 'row' ? '16px 0;' : '0;'};
+  padding: 16px 0;
   transition: ${props => props.theme.transitionSlow};
   margin-top: ${props => props.show ? '6px' : '20px'};
   opacity: ${props => props.show ? 1 : 0};
@@ -62,23 +60,8 @@ const StyledPanelDropdown = styled.div`
     &:last-child {
       border-right: 0;
     }
-    
-    ${props => props.direction === 'column' ? `
-      border-bottom: 1px solid ${props.theme.panelHeaderIcon};
-      padding: 8px 22px;
-      &:last-child {
-        border-bottom: 0;
-      }
-      ` : null
-    };
   }
 `;
-
-const Toolbar = React.memo(({children, className, show, direction = 'row'}) => (
-  <StyledPanelDropdown className={classnames('save-export-dropdown', className)} show={show} direction={direction}>
-    {children}
-  </StyledPanelDropdown>
-));
 
 Toolbar.displayName = 'Toolbar';
 

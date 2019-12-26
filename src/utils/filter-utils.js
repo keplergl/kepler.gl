@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import moment from 'moment';
 import {ascending, extent, histogram as d3Histogram, ticks} from 'd3-array';
 import keyMirror from 'keymirror';
 import get from 'lodash.get';
@@ -29,6 +28,7 @@ import {maybeToDate, notNullorUndefined, unique} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
 import {generateHashId} from './utils';
 import {toArray} from 'utils/utils';
+import {timeToUnixMilli} from './data-utils';
 import {LAYER_TYPES} from '../constants';
 
 export const TimestampStepMap = [
@@ -120,6 +120,8 @@ export const DEFAULT_FILTER_STRUCTURE = {
 };
 
 export const FILTER_ID_LENGTH = 4;
+
+export const LAYER_FILTERS = [FILTER_TYPES.polygon];
 
 /**
  * Generates a filter with a dataset id as dataId
@@ -370,6 +372,67 @@ export function getFieldDomain(data, field) {
   }
 }
 
+export const getPolygonFilterFunctor = (layer, filter) => {
+  const getPosition = layer.getPositionAccessor();
+
+  switch (layer.type) {
+    case LAYER_TYPES.arc:
+    case LAYER_TYPES.line:
+      return data => {
+        const pos = getPosition({data});
+        return pos.every(Number.isFinite) && [
+          [pos[0], pos[1]],
+          [pos[3], pos[4]]
+        ].every(point => isInPolygon(point, filter.value));
+      };
+    default:
+      return data => {
+        const pos = getPosition({data});
+        return pos.every(Number.isFinite) && isInPolygon(pos, filter.value);
+      }
+  }
+};
+
+/**
+ * @param field dataset Field
+ * @param dataId Dataset id
+ * @param filter Filter object
+ * @param layers list of layers to filter upon
+ * @return {*}
+ */
+export function getFilterFunction(field, dataId, filter, layers) {
+  // field could be null
+  const valueAccessor = data => field ? data[field.tableFieldIndex - 1] : null;
+
+  switch (filter.type) {
+    case FILTER_TYPES.range:
+      return data => isInRange(valueAccessor(data), filter.value);
+    case FILTER_TYPES.multiSelect:
+      return data => filter.value.includes(valueAccessor(data));
+    case FILTER_TYPES.select:
+      return data => valueAccessor(data) === filter.value;
+    case FILTER_TYPES.timeRange:
+      const mapppedValue = get(field, ['filterProp', 'mappedValue']);
+      const accessor = Array.isArray(mapppedValue) ?
+        (data, index) => field.filterProp.mappedValue[index]
+        : data => timeToUnixMilli(valueAccessor(data), field.format);
+      return (data, index) => isInRange(accessor(data, index), filter.value);
+    case FILTER_TYPES.polygon:
+      if (!(layers || layers.length === 0)) {
+        return () => true;
+      }
+
+      const layerFilterFunctions = filter.layerId
+        .map(id => layers.find(l => l.id === id))
+        .filter(l => l && l.config.dataId === dataId)
+        .map(layer => getPolygonFilterFunctor(layer, filter));
+
+      return data => layerFilterFunctions.every(filterFunc => filterFunc(data));
+    default:
+      return () => true;
+  }
+}
+
 /**
  * Filter data based on an array of filters
  * @param {Object} dataset to perform the filter on
@@ -386,16 +449,15 @@ export function filterData(dataset, filters, layers) {
   const appliedFilters = filters.filter(d => shouldApplyFilter(d, dataset.id));
 
   // Map filter against current dataset field
-  const filtersToFields = filters.reduce((acc, filter) => {
+  const filterFunctors = appliedFilters.reduce((acc, filter) => {
     const fieldIndex = getDatasetFieldIndexForFilter(dataset, filter);
+    const field = fieldIndex !== -1 ? fields[fieldIndex] : null;
 
     return {
       ...acc,
-      ...(fieldIndex !== -1 ? {[filter.id]: fields[fieldIndex]} : {})
+      [filter.id]: getFilterFunction(field, dataset.id, filter, layers)
     }
-  }, {
-    // [filterId]: field
-  });
+  }, {});
 
   const [dynamicDomainFilters, fixedDomainFilters] = appliedFilters.reduce(
     (accu, f) => {
@@ -407,19 +469,12 @@ export function filterData(dataset, filters, layers) {
 
   const {filtered, filteredIndex, filteredIndexForDomain} = data.reduce(
     (accu, d, i) => {
-      // generate 2 sets of
-      // filter data used to calculate layer Domain
-      const matchForDomain = dynamicDomainFilters.every(filter => {
-        return isDataMatchFilter(d, filter, i, filtersToFields[filter.id], layers);
-      });
+      const matchForDomain = dynamicDomainFilters.every(filter => filterFunctors[filter.id](d, i));
 
       if (matchForDomain) {
         accu.filteredIndexForDomain.push(i);
 
-        // filter data for render
-        const matchForRender = fixedDomainFilters.every(filter =>
-          isDataMatchFilter(d, filter, i, filtersToFields[filter.id], layers)
-        );
+        const matchForRender = fixedDomainFilters.every(filter => filterFunctors[filter.id](d, i));
 
         if (matchForRender) {
           accu.filtered.push(d);
@@ -433,89 +488,6 @@ export function filterData(dataset, filters, layers) {
   );
 
   return {data: filtered, filteredIndex, filteredIndexForDomain};
-}
-
-/**
- * This returns the points to evaluate in polygon filter
- * @param layer
- * @param data
- * @return {*[][]}
- */
-export const getLayerPointsToFilter = (layer, data) => {
-  switch (layer.type) {
-    case LAYER_TYPES.arc:
-    case LAYER_TYPES.line:
-      const {
-        lng0,
-        lat0,
-        lng1,
-        lat1
-      } = layer.config.columns;
-      return [
-        [data[lng0.fieldIdx], data[lat0.fieldIdx]],
-        [data[lng1.fieldIdx], data[lat1.fieldIdx]]
-      ];
-    default:
-      const {lng, lat} = layer.config.columns;
-      return [
-        [data[lng.fieldIdx], data[lat.fieldIdx]]
-      ];
-  }
-};
-
-const filterDataMatchers = {
-  [FILTER_TYPES.range]: (data, filter, index, field) => {
-    const val = field ? data[field.tableFieldIndex - 1] : null;
-    return isInRange(val, filter.value)
-  },
-  [FILTER_TYPES.timeRange]: (data, filter, index, field) => {
-    const val = field ? data[field.tableFieldIndex - 1] : null;
-    const timeVal = field && field.filterProp && Array.isArray(field.filterProp.mappedValue)
-      ? field.filterProp.mappedValue[index]
-      : moment.utc(val).valueOf();
-
-    return isInRange(timeVal, filter.value);
-  },
-  [FILTER_TYPES.multiSelect]: (data, filter, index, field) => {
-    const val = field ? data[field.tableFieldIndex - 1] : null;
-    return filter.value.includes(val)
-  },
-  [FILTER_TYPES.select]: (data, filter, index, field) => {
-    const val = field ? data[field.tableFieldIndex - 1] : null;
-    return val === filter.value
-  },
-  // layers contain only layers for the current dataset
-  [FILTER_TYPES.polygon]: (data, filter, index, field, layers) => {
-    if (!(layers || layers.length === 0)) {
-      return true;
-    }
-
-    // determine which layers to apply the filter on
-    const currentLayers = filter.layerId.map(id =>
-        layers.find(l => l.id === id)
-      // we may get null value because filter.layerId may contain layers from other datasets
-    ).filter(l => Boolean(l));
-
-    return currentLayers.every(layer => {
-      const points = getLayerPointsToFilter(layer, data);
-      return points.every(point => isInPolygon(point, filter.value))
-    });
-  }
-};
-
-/**
- * Check if value is in range of filter
- *
- * @param {Object[]} data
- * @param {Object} filter
- * @param {number} i
- * @param {field} field containing values to test data against. This is used only when
- * testing timestamp filters
- * @returns {Boolean} - whether value falls in the range of the filter
- */
-export function isDataMatchFilter(data, filter, i, field, layers = null) {
-  return !filter.type || !filterDataMatchers.hasOwnProperty(filter.type)
-    ? true : filterDataMatchers[filter.type](data, filter, i, field, layers);
 }
 
 /**
@@ -827,8 +799,10 @@ export function applyFiltersToDatasets(datasetIds, datasets, filters, layers) {
 /**
  * Applies a new field name value to fielter and update both filter and dataset
  * @param filter to be applied the new field name on
- * @param datasets
+ * @param dataset
  * @param fieldName
+ * @param filterDatasetIndex
+ * @param options
  * @return {object} {filter, datasets}
  */
 export function applyFilterFieldName(filter, dataset, fieldName, filterDatasetIndex = 0, {mergeDomain = false} = {}) {
@@ -1015,4 +989,21 @@ export function updatePolygonFilter(filter, feature) {
       }
     }
   }
+}
+
+function isLayerFilter(filter) {
+  return LAYER_FILTERS.includes(filter.type);
+}
+
+/**
+ * Returns an object where filters are  split between layer and non layer  filters
+ * @param filters list of filter to process
+ * @return {*}
+ */
+export function getFiltersByType(filters) {
+  return (filters || []).reduce((acc, filter) => ({
+    ...acc,
+    ...(isLayerFilter(filter) ? {layerFilters: [...acc.layerFilters, filter]}
+      : {nonLayerFilters: [...acc.nonLayerFilters, filter]})
+  }), {layerFilters: [], nonLayerFilters: []});
 }

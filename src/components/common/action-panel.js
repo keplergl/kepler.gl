@@ -135,12 +135,14 @@ export const ActionPanelItem = React.memo(({
       ) : (
         <span className="label">{label}</span>
       )}
-      {children && children.length ? ( <div className="label-icon">
-        <ArrowRight height="16px" />
-      </div>) : null}
       {children && children.length ? (
-        <div className="nested-group">
-          {React.Children.map(children, renderChildren)}
+        <div>
+          <div className="label-icon">
+            <ArrowRight height="16px" />
+          </div>
+          <div className="nested-group">
+            {React.Children.map(children, renderChildren)}
+          </div>
         </div>
       ) : null}
     </StyledItem>
@@ -162,11 +164,15 @@ const StyledActionPanel = styled.div`
       :
       `border-right: 1px solid ${props.theme.panelHeaderIcon}`
     }
+    
+    &:last-of-type {
+      border-bottom: 0
+    }
   }
 `;
 
 // React compound element https://medium.com/@Dane_s/react-js-compound-components-a6e54b5c9992
-const ActionPanel = ({children, className, direction = 'column', onClick}) => (
+const ActionPanel = ({children, className, direction = 'column'}) => (
   <StyledActionPanel className={className} direction={direction}>
     {React.Children.map(children, renderChildren)}
   </StyledActionPanel>

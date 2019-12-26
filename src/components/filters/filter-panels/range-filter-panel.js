@@ -62,7 +62,7 @@ function RangeFilterPanelFactory(
       [idx, setFilter]);
 
     return (
-      <>
+      <div>
         <FilterPanelHeader
           datasets={[datasets[filter.dataId[0]]]}
           allAvailableFields={allAvailableFields}
@@ -100,7 +100,7 @@ function RangeFilterPanelFactory(
             </div>
           )}
         </StyledFilterContent>
-      </>
+      </div>
     );
   });
 

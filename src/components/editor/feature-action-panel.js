@@ -32,8 +32,6 @@ const LAYOVER_OFFSET = 4;
 
 const StyledActionsLayer = styled.div`
   position: absolute;
-  top: ${props => props.position.y + LAYOVER_OFFSET}px;
-  left: ${props => props.position.x + LAYOVER_OFFSET}px;
 `;
 
 export class FeatureActionPanel extends PureComponent {
@@ -45,6 +43,10 @@ export class FeatureActionPanel extends PureComponent {
     currentFilter: PropTypes.object,
     onClose: PropTypes.func.isRequired,
     onDeleteFeature: PropTypes.func.isRequired
+  };
+
+  static defaultProps = {
+    position: {}
   };
 
   // Used by onClickOutside
@@ -68,7 +70,13 @@ export class FeatureActionPanel extends PureComponent {
     const {layerId = []} = (currentFilter || {});
 
     return (
-      <StyledActionsLayer className={className} position={position}>
+      <StyledActionsLayer
+        className={className}
+        style={{
+          top: `${position.y + LAYOVER_OFFSET}px`,
+          left: `${position.x + LAYOVER_OFFSET}px`
+        }}
+      >
         <ActionPanel>
           <ActionPanelItem label="layer" Icon={Layers}>
             {layers.map((layer, index) => (

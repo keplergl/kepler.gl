@@ -22,7 +22,6 @@ import React, {Component} from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
-import classnames from 'classnames';
 
 import ItemSelector from './item-selector/item-selector';
 import FieldToken from '../common/field-token';
@@ -49,7 +48,7 @@ export const FieldListItemFactory = (showToken = true) => {
           <FieldToken type={value.type} />
         </StyledToken>
       ) : null}
-      <span className={classnames(classList.listItemAnchor, value.type, displayOption(value))}>
+      <span className={classList.listItemAnchor}>
         {displayOption(value)}
       </span>
     </StyledFieldItem>

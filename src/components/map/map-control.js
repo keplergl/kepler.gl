@@ -41,7 +41,7 @@ import {
   EyeSeen,
   EyeUnseen
 } from 'components/common/icons';
-import Toolbar from 'components/common/toolbar';
+import VerticalToolbar from 'components/common/vertical-toolbar';
 import ToolbarItem from 'components/common/toolbar-item';
 import {EDITOR_MODES} from 'constants/default-settings';
 
@@ -242,7 +242,7 @@ const Toggle3dButton = React.memo(({dragRotate, onTogglePerspective}) => (
 
 Toggle3dButton.displayName = 'Toggle3dButton';
 
-const StyledToolBar = styled(Toolbar)`
+const StyledToolbar = styled(VerticalToolbar)`
   position: absolute;
   right: 32px;
 `;
@@ -257,7 +257,7 @@ const MapDrawPanel = React.memo(({
   return (
     <div style={{position: 'relative'}}>
       {isActive ? (
-        <StyledToolBar show={isActive} direction="column">
+        <StyledToolbar show={isActive}>
           <ToolbarItem
             onClick={() => onSetEditorMode(EDITOR_MODES.EDIT)}
             label="select"
@@ -282,7 +282,7 @@ const MapDrawPanel = React.memo(({
             icon={editor.visible ? (<EyeSeen height="22px"/>) : (<EyeUnseen height="22px"/>)}
             active={true}
           />
-        </StyledToolBar>
+        </StyledToolbar>
       ) : null}
       <MapControlButton
         onClick={e => {

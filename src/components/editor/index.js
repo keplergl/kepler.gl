@@ -24,7 +24,8 @@ import styled from 'styled-components';
 import {Editor} from 'react-map-gl-draw';
 import window from 'global/window';
 import classnames from 'classnames';
-
+import get from 'lodash.get';
+import {EDITOR_AVAILABLE_LAYERS} from 'constants/default-settings';
 import FeatureActionPanel from './feature-action-panel';
 
 import {
@@ -35,7 +36,7 @@ import {
   getStyle as getEditHandleStyle,
   getEditHandleShape
 } from './handle-style';
-import {EDITOR_MODES, LAYER_TYPES} from 'constants';
+import {EDITOR_MODES} from 'constants';
 
 const DELETE_KEY_EVENT_CODE = 8;
 const ESCAPE_KEY_EVENT_CODE = 27;
@@ -44,14 +45,7 @@ const StyledWrapper = styled.div`
   cursor: ${props => props.editor.mode === EDITOR_MODES.EDIT ? 'pointer' : 'crosshair'};
 `;
 
-const AVAILABLE_LAYERS = [
-  LAYER_TYPES.point,
-  LAYER_TYPES.hexagon,
-  LAYER_TYPES.arc,
-  LAYER_TYPES.line
-];
-
-const editorLayerFilter = layer => AVAILABLE_LAYERS.includes(layer.type);
+const editorLayerFilter = layer => EDITOR_AVAILABLE_LAYERS.includes(layer.type);
 
 class Draw extends Component {
   static propTypes = {
@@ -152,10 +146,11 @@ class Draw extends Component {
       style
     } = this.props;
 
-    const {selectedFeature = {}} = editor;
     const {lastPosition, showActions} = this.state;
-    const selectedFeatureId = (selectedFeature || {}).id;
-    const currentFilter = filters.find(f => f.value.id === selectedFeatureId);
+    const selectedFeatureId = get(editor, ['selectedFeature', 'id']);
+    const currentFilter = filters.find(f =>
+      f.value && f.value.id === selectedFeatureId
+    );
     const availableLayers = layers.filter(editorLayerFilter);
 
     return (
@@ -175,7 +170,7 @@ class Draw extends Component {
           getFeatureStyle={getFeatureStyle}
           getEditHandleStyle={getEditHandleStyle}
         />
-        {showActions && Boolean(selectedFeature) ? (
+        {showActions && Boolean(selectedFeatureId) ? (
           <FeatureActionPanel
             datasets={datasets}
             layers={availableLayers}
