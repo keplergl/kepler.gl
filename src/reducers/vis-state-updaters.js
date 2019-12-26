@@ -44,7 +44,8 @@ import {
   getFilterPlot,
   getDefaultFilterPlotType,
   isInRange,
-  updatePolygonFilter
+  updatePolygonFilter,
+  getFiltersByType
 } from 'utils/filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
 
@@ -1059,8 +1060,10 @@ export const receiveMapConfigUpdater = (
 
   // reset config if keepExistingConfig is falsy
   let mergedState = !keepExistingConfig ? resetMapConfigUpdater(state) : state;
+  const {layerFilters, nonLayerFilters} = getFiltersByType(filters);
+  mergedState = mergeFilters(mergedState, nonLayerFilters);
   mergedState = mergeLayers(mergedState, layers);
-  mergedState = mergeFilters(mergedState, filters);
+  mergedState = mergeFilters(mergedState, layerFilters);
   mergedState = mergeInteractions(mergedState, interactionConfig);
   mergedState = mergeLayerBlending(mergedState, layerBlending);
   mergedState = mergeSplitMaps(mergedState, splitMaps);
@@ -1241,11 +1244,15 @@ export const updateVisDataUpdater = (state, action) => {
     splitMapsToBeMerged = []
   } = stateWithNewData;
 
-  // We need to merge layers before filters because polygon filters requires layers to be loaded
-  let mergedState = mergeLayers(stateWithNewData, layerToBeMerged);
-
   // merge state with saved filters
-  mergedState = mergeFilters(mergedState, filterToBeMerged);
+
+  const {layerFilters, nonLayerFilters} = getFiltersByType(filterToBeMerged);
+  let mergedState = mergeFilters(stateWithNewData, nonLayerFilters);
+
+  // We need to merge layers before filters because polygon filters requires layers to be loaded
+  mergedState = mergeLayers(mergedState, layerToBeMerged);
+
+  mergedState = mergeFilters(mergedState, layerFilters);
 
   // merge state with saved splitMaps
   mergedState = mergeSplitMaps(mergedState, splitMapsToBeMerged);

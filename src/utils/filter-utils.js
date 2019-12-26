@@ -1003,7 +1003,8 @@ function isLayerFilter(filter) {
 export function getFiltersByType(filters) {
   return (filters || []).reduce((acc, filter) => ({
     ...acc,
-    ...(isLayerFilter(filter) ? {layerFilters: [...acc.layerFilters, filter]}
+    ...(isLayerFilter(filter) ?
+      {layerFilters: [...acc.layerFilters, filter]}
       : {nonLayerFilters: [...acc.nonLayerFilters, filter]})
   }), {layerFilters: [], nonLayerFilters: []});
 }
