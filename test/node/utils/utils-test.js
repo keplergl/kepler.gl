@@ -2,18 +2,15 @@ import test from 'tape';
 import {toArray} from 'utils/utils';
 
 test('utils -> toArray', t => {
-
   t.deepEqual(
     toArray(),
     [],
     'Should return an empty array for undefined value'
   );
 
-  const items = [1, 2];
-
   t.deepEqual(
-    toArray(items),
-    items,
+    toArray([1, 2]),
+    [1, 2],
     'Should not change an existing array'
   );
 

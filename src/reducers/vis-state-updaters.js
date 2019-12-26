@@ -121,7 +121,7 @@ disableStackCapturing();
 const visStateUpdaters = null;
 /* eslint-enable no-unused-vars */
 
-export const defaultAnimationConfig ={
+export const defaultAnimationConfig = {
   domain: null,
   currentTime: null,
   speed: 1
@@ -201,7 +201,6 @@ export const INITIAL_VIS_STATE = {
   animationConfig: defaultAnimationConfig,
 
   editor: DEFAULT_EDITOR
-
 };
 
 function updateStateWithLayerAndData(state, {layerData, layer, idx}) {
@@ -550,7 +549,8 @@ export function setFilterUpdater(state, action) {
   }
 
   // Ensuring backward compatibility
-  let datasetIds = Array.isArray(dataId) ? dataId : [dataId];
+
+  let datasetIds = toArray(dataId);
 
   switch (prop) {
     // TODO: Next PR for UI if we update dataId, we need to consider two cases:
@@ -834,12 +834,11 @@ export const removeFilterUpdater = (state, action) => {
     ...state,
     datasets: applyFiltersToDatasets(dataId, state.datasets, newFilters, state.layers),
     filters: newFilters,
-    editor: {
+    editor: filter.type === FILTER_TYPES.polygon ? {
       ...state.editor,
-      features: filter.type !== FILTER_TYPES.polygon ?
-        state.editor.features : state.editor.features.filter(f => f.id !== filter.value.id),
+      features: state.editor.features.filter(f => f.id !== filter.value.id),
       selectedFeature: null
-    }
+    } : state.editor
   };
 
   return updateAllLayerDomainData(newState, dataId);
@@ -1388,54 +1387,6 @@ export const loadFilesErrUpdater = (state, {error}) => ({
 });
 
 /**
- * Update editor features
- * @memberof visStateUpdaters
- * @param {Object} state `visState`
- * @param {[Object]} features to store
- * @return {Object} nextState
- */
-export function setFeaturesUpdater(state, {features = []}) {
-  return {
-    ...state,
-    editor: {
-      ...state.editor,
-      features
-    }
-  }
-}
-
-/**
- * @memberof visStateUpdaters
- * @param {Object} state `visState`
- * @param {string} selectedFeatureId feature to delete
- * @return {Object} nextState
- */
-export const deleteFeatureUpdater = (state, {payload: selectedFeatureId}) => {
-  return selectedFeatureId ? {
-    ...state,
-    editor: {
-      ...state.editor,
-      features: state.editor.features.filter(f => f.id !== selectedFeatureId)
-    }
-  } : state;
-};
-
-/**
- * Trigger loading file error
- * @memberof visStateUpdaters
- * @param {Object} state `visState`
- * @param {Object} action action
- * @param {*} action.error
- * @returns {Object} nextState
- * @public
- */
-export const loadFilesErrUpdater = (state, {error}) => ({
-  ...state,
-  fileLoading: false,
-  fileLoadingErr: error
-});
-
-/**
  * Helper function to update All layer domain and layer data of state
  * @memberof visStateUpdaters
  * @param {Object} state `visState`
@@ -1627,18 +1578,18 @@ export function setFeaturesUpdater(state, {features = []}) {
     return newState;
   }
 
-  const filtersIdx = getFilterIdxByFeatureId(newState, selectedFeature.id);
+  const filterIdx = getFilterIdxByFeatureId(newState, selectedFeature.id);
 
-  const filter = state.filters[filtersIdx];
+  // no filters found
+  if (filterIdx === -1) {
+    return newState;
+  }
+
+  const filter = state.filters[filterIdx];
 
   const newFilter = updatePolygonFilter(filter, feature);
 
-  const newFilters = Object.assign([...state.filters], {[filtersIdx]: newFilter});
-
-  // no filters found
-  if (filtersIdx === -1) {
-    return newState;
-  }
+  const newFilters = Object.assign([...state.filters], {[filterIdx]: newFilter});
 
   newState = {
     ...state,

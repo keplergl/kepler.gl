@@ -78,7 +78,7 @@ export class FeatureActionPanel extends PureComponent {
         }}
       >
         <ActionPanel>
-          <ActionPanelItem label="layer" Icon={Layers}>
+          <ActionPanelItem label="layers" Icon={Layers}>
             {layers.map((layer, index) => (
               <ActionPanelItem
                 key={index}

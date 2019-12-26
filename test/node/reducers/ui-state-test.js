@@ -46,8 +46,6 @@ import {
   DEFAULT_NOTIFICATION_TYPES
 } from 'constants/default-settings';
 import {removeNotification} from 'actions/ui-state-actions';
-import {EDITOR_MODES} from 'constants/default-settings';
-import {mockPolygonFeature} from '../../fixtures/polygon';
 
 test('#uiStateReducer', t => {
   t.deepEqual(

@@ -264,5 +264,5 @@ export const mockPolygonData = {
       size: 0.5,
       enabled: false
     }
-  },
+  }
 };

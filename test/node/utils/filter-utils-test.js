@@ -31,10 +31,13 @@ import {
   getDefaultFilter,
   getDatasetIndexForFilter,
   getDatasetFieldIndexForFilter,
-  validatePolygonFilter
+  validatePolygonFilter,
+  filterData,
+  generatePolygonFilter
 } from 'utils/filter-utils';
 
 import {processCsvData} from 'processors/data-processor';
+import {mockPolygonFeature, mockPolygonData} from '../../fixtures/polygon';
 
 /* eslint-disable max-statements */
 test('filterUtils -> adjustValueToFilterDomain', t => {
@@ -831,7 +834,74 @@ test('filterUtils -> validatePolygonFilter', t => {
     'Should non validate filter with non existing dataId'
   );
 
+  t.deepEqual(
+    validatePolygonFilter(dataset, {
+      ...filter,
+      value: {
+        id: 'wrong-value-for-polygon-type'
+      }
+    }, layers).filter,
+    null,
+    'Should not validate filter given type and value'
+  );
+
   t.end();
 });
 
+test('filterUtils -> filterData', t => {
+  const dataset = {
+    id: 'dataset-1',
+    allData: [],
+    data: [],
+    fields: []
+  };
+
+  t.deepEqual(
+    filterData(dataset, []),
+    {data: [], filteredIndex: [], filteredIndexForDomain: []}
+  );
+
+  t.end();
+});
+
+test('filterUtils -> Polygon getFilterFunction ', t => {
+
+  const dataset = {
+    id: 'puppy',
+    data: mockPolygonData.data,
+    allData: mockPolygonData.data,
+    fields: mockPolygonData.fields
+  };
+  const {layers, data} = mockPolygonData;
+
+  const polygonFilter = generatePolygonFilter(layers, mockPolygonFeature);
+
+  let filterFunction = getFilterFunction(
+    null,
+    dataset.id,
+    polygonFilter,
+    []
+  );
+
+  t.equal(
+    filterFunction(data[0], 0),
+    true,
+    `Should return true because layer list is empty`
+  );
+
+  filterFunction = getFilterFunction(
+    null,
+    'puppy-2',
+    polygonFilter,
+    layers
+  );
+
+  t.equal(
+    filterFunction(data[0], 0),
+    true,
+    `${data[0][0]} - ${data[0][1]} should be inside the range`
+  );
+
+  t.end();
+});
 /* eslint-enable max-statements */

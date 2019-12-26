@@ -46,6 +46,7 @@ const {
   LineLayer,
   TripLayer
 } = KeplerGlLayers;
+
 // fixtures
 import testData, {testFields, testAllData} from 'test/fixtures/test-csv-data';
 import {
