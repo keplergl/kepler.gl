@@ -203,7 +203,7 @@ function cleanUpFalsyCsvValue(rows) {
  * Process uploaded csv file to parse value by field type
  *
  * @param {Array<Array>} rows
- * @param geoFieldIdx geo field index
+ * @param {Number} geo field index
  * @param {Object} field
  * @param {Number} i
  * @returns {void}

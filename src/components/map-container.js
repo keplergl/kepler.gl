@@ -485,6 +485,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
               filters={this.polygonFilters(this.props)}
               isEnabled={isEdit}
               layers={layers}
+              layersToRender={layersToRender}
               onDeleteFeature={visStateActions.deleteFeature}
               onSelect={visStateActions.setSelectedFeature}
               onUpdate={visStateActions.setFeatures}

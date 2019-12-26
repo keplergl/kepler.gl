@@ -76,6 +76,8 @@ import {
   savedStateWIthNonValidFilters as NonValidFilterState
 } from 'test/fixtures/state-saved-v1-6';
 
+import {polygonFilterMap} from 'test/fixtures/polygon-filter-map';
+
 // helpers
 import {cmpFilters, cmpLayers, cmpDatasets} from 'test/helpers/comparison-utils';
 
@@ -1276,6 +1278,7 @@ test('VisStateMerger.v1 -> mergeFilters -> nonValidFilter', t => {
   t.end();
 });
 
+
 test('VisStateMerger.v1 -> mergeFilters -> multiFilters', t => {
   const stateToSave = cloneDeep(StateWMultiFilters);
   const oldCsvData = stateToSave.visState.datasets[testCsvDataId];
@@ -1346,5 +1349,45 @@ test('VisStateMerger.v1 -> mergeFilters -> multiFilters', t => {
   ];
 
   cmpFilters(t, expectedFilters, mergedState.filters);
+  t.end();
+});
+
+test('VisStateMerger -> import polygon filter map', t => {
+  const oldState = cloneDeep(InitialState);
+  const savedConfig = cloneDeep(polygonFilterMap);
+  const oldVisState = oldState.visState;
+
+  const parsedConfig = SchemaManager.parseSavedConfig(
+    savedConfig.config,
+    oldState
+  );
+
+  const parsedFilters = parsedConfig.visState.filters;
+
+  const mergedState = mergeFilters(oldState.visState, parsedFilters);
+
+  Object.keys(oldVisState).forEach(key => {
+    if (key === 'filterToBeMerged') {
+      t.deepEqual(
+        mergedState.filterToBeMerged,
+        parsedFilters,
+        'Should save filters to filterToBeMerged before data loaded'
+      );
+    } else {
+      t.deepEqual(
+        mergedState[key],
+        oldVisState[key],
+        'Should keep the rest of state same'
+      );
+    }
+  });
+
+  const parsedData = SchemaManager.parseSavedData(savedConfig.datasets);
+
+  // load data into reducer
+  const stateWData = visStateReducer(mergedState, updateVisData(parsedData));
+
+  // parsed filters must be empty
+  cmpFilters(t, [], stateWData.filters);
   t.end();
 });

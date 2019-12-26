@@ -22,7 +22,7 @@ import {ascending, extent, histogram as d3Histogram, ticks} from 'd3-array';
 import keyMirror from 'keymirror';
 import get from 'lodash.get';
 import booleanWithin from '@turf/boolean-within';
-import {point as turfPoint, polygon as turfPolygon} from '@turf/helpers';
+import {point as turfPoint} from '@turf/helpers';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
 import {maybeToDate, notNullorUndefined, unique} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
@@ -159,7 +159,7 @@ export function validatePolygonFilter(dataset, filter, layers) {
   const failed = {dataset, filter: null};
   const {value, layerId, type, dataId} = filter;
 
-  if (!(value && value.id && layerId)) {
+  if (!layerId || !isValidFilterValue(type, value)) {
     return failed;
   }
 
@@ -173,10 +173,6 @@ export function validatePolygonFilter(dataset, filter, layers) {
 
   if (!layer) {
     return failed;
-  }
-
-  if (!isValidFilterValue({type, value})) {
-    return null;
   }
 
   return {
@@ -418,7 +414,7 @@ export function getFilterFunction(field, dataId, filter, layers) {
         : data => timeToUnixMilli(valueAccessor(data), field.format);
       return (data, index) => isInRange(accessor(data, index), filter.value);
     case FILTER_TYPES.polygon:
-      if (!(layers || layers.length === 0)) {
+      if (!layers || !layers.length) {
         return () => true;
       }
 
@@ -437,6 +433,7 @@ export function getFilterFunction(field, dataId, filter, layers) {
  * Filter data based on an array of filters
  * @param {Object} dataset to perform the filter on
  * @param {Object[]} filters list of filters to use against dataset
+ * @return {Object} {data: filtered, filteredIndex, filteredIndexForDomain}
  */
 export function filterData(dataset, filters, layers) {
   const {allData: data, fields} = dataset;
@@ -701,7 +698,7 @@ export function getTimeWidgetHintFormatter(domain) {
  * @returns {boolean} whether filter is value
  */
 /* eslint-disable complexity */
-export function isValidFilterValue({type, value}) {
+export function isValidFilterValue(type, value) {
   if (!type) {
     return false;
   }
@@ -976,17 +973,11 @@ export function generatePolygonFilter(layers, feature) {
  * @return {object} Filter
  */
 export function updatePolygonFilter(filter, feature) {
-  const polygon = turfPolygon(feature.geometry.coordinates);
   return {
     ...filter,
-    // we merge both turf and feature properties into one
     value: {
-      ...polygon,
-      id: feature.id,
-      properties: {
-        ...feature.properties,
-        ...polygon.properties
-      }
+      ...feature,
+      id: feature.id
     }
   }
 }

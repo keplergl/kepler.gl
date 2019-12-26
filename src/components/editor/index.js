@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -56,6 +56,7 @@ class Draw extends Component {
     filters: PropTypes.arrayOf(PropTypes.object).isRequired,
     isEnabled: PropTypes.bool,
     layers: PropTypes.arrayOf(PropTypes.object).isRequired,
+    layersToRender: PropTypes.object.isRequired,
     onSelect: PropTypes.func.isRequired,
     onUpdate: PropTypes.func.isRequired,
     onDeleteFeature: PropTypes.func.isRequired,
@@ -141,6 +142,7 @@ class Draw extends Component {
       datasets,
       editor,
       layers,
+      layersToRender,
       filters,
       onUpdate,
       style
@@ -151,7 +153,10 @@ class Draw extends Component {
     const currentFilter = filters.find(f =>
       f.value && f.value.id === selectedFeatureId
     );
-    const availableLayers = layers.filter(editorLayerFilter);
+
+    const availableLayers = layers
+      .filter(editorLayerFilter)
+      .filter(layer => layersToRender[layer.id]);
 
     return (
       <StyledWrapper
