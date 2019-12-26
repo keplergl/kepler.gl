@@ -28,7 +28,7 @@
     "install-and-start": "node ./scripts/install-and-start",
     "fast-test": "npm run test-node && npm run test-browser",
     "test-browser": "NODE_ENV=test babel-tape-runner -r ./test/setup-browser-env.js ./test/browser.js | tap-spec",
-    "test-node": "NODE_ENV=test babel-tape-runner ./test/node.js | tap-spec",
+    "test-node": "NODE_ENV=test babel-tape-runner ./test/node.js",
     "test": "npm run lint && npm run test-node && npm run test-browser",
     "cover": "nyc --reporter html --reporter cobertura --reporter json-summary npm test && nyc report",
     "coveralls": "nyc npm test && nyc report --reporter cobertura --reporter=text-lcov | coveralls",

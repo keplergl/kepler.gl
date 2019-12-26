@@ -25,18 +25,16 @@ import testData, {testFields} from 'test/fixtures/test-csv-data';
 import {
   FILTER_TYPES,
   adjustValueToFilterDomain,
-  isDataMatchFilter,
+  getFilterFunction,
   getFieldDomain,
   getTimestampFieldDomain,
   getDefaultFilter,
   getDatasetIndexForFilter,
   getDatasetFieldIndexForFilter,
-  validatePolygonFilter,
-  getLayerPointsToFilter
+  validatePolygonFilter
 } from 'utils/filter-utils';
 
 import {processCsvData} from 'processors/data-processor';
-import {LAYER_TYPES} from 'constants';
 
 /* eslint-disable max-statements */
 test('filterUtils -> adjustValueToFilterDomain', t => {
@@ -148,9 +146,9 @@ test('filterUtils -> getFieldDomain.time', async t => {
 
   const {fields, rows} = await processCsvData(data);
 
-  t.deepEqual(fields, expectedFields, 'should get corrent field type');
+  t.deepEqual(fields, expectedFields, 'should get current field type');
   testGetTimeFieldDomain(rows, fields, t);
-  testIsTimeDataMatchFilter(rows, fields, t);
+  testGetFilterFunction(rows, fields, t);
 
   t.end();
 });
@@ -208,30 +206,41 @@ function testGetTimeFieldDomain(rows, allFields, t) {
     t.deepEqual(
       tc.input,
       tc.output,
-      `should process correct domian for timestamp ${tc.msg}`
+      `should process correct domain for timestamp ${tc.msg}`
     )
   );
 }
 
-function testIsTimeDataMatchFilter(rows, fields, t) {
-
+function testGetFilterFunction(rows, fields, t) {
+  const dataId = 'dataset-1';
   const timeStringFilter = {
     fieldIdx: [0],
     type: FILTER_TYPES.timeRange,
     value: [
       moment.utc('2016-09-17 00:09:55').valueOf(),
       moment.utc('2016-09-17 00:20:08').valueOf()
-    ]
+    ],
+    id: 'filter-1',
+    dataId: [dataId]
   };
 
+  let field = fields[timeStringFilter.fieldIdx[0]];
+
+  let filterFunction = getFilterFunction(
+    field,
+    dataId,
+    timeStringFilter,
+    []
+  );
+
   t.equal(
-    isDataMatchFilter(rows[10], timeStringFilter, 10, fields[timeStringFilter.fieldIdx[0]]),
+    filterFunction(rows[10], 10),
     true,
     `${rows[10][0]} should be inside the range`
   );
 
   t.equal(
-    isDataMatchFilter(rows[15], timeStringFilter, 15, fields[timeStringFilter.fieldIdx[0]]),
+    filterFunction(rows[15], 15),
     false,
     `${rows[15][0]} should be outside the range`
   );
@@ -242,17 +251,28 @@ function testIsTimeDataMatchFilter(rows, fields, t) {
     value: [
       moment.utc(1472688000000).valueOf(),
       moment.utc(1472734400000).valueOf()
-    ]
+    ],
+    id: 'filter-2',
+    dataId: [dataId]
   };
 
+  field = fields[epochFilter.fieldIdx[0]];
+
+  filterFunction = getFilterFunction(
+    field,
+    dataId,
+    epochFilter,
+    []
+  );
+
   t.equal(
-    isDataMatchFilter(rows[10], epochFilter, 10, fields[epochFilter.fieldIdx[0]]),
+    filterFunction(rows[10], 10),
     true,
     `${rows[10][1]} should be inside the range`
   );
 
   t.equal(
-    isDataMatchFilter(rows[15], epochFilter, 15, fields[epochFilter.fieldIdx[0]]),
+    filterFunction(rows[15], 15),
     false,
     `${rows[15][1]} should be outside the range`
   );
@@ -263,17 +283,28 @@ function testIsTimeDataMatchFilter(rows, fields, t) {
     value: [
       moment.utc('2016-09-23T00:00:00.000Z').valueOf(),
       moment.utc('2016-09-23T06:00:00.000Z').valueOf()
-    ]
+    ],
+    id: 'filter-3',
+    dataId: [dataId]
   };
 
+  field = fields[tzFilter.fieldIdx[0]];
+
+  filterFunction = getFilterFunction(
+    field,
+    dataId,
+    tzFilter,
+    []
+  );
+
   t.equal(
-    isDataMatchFilter(rows[10], tzFilter, 10, fields[tzFilter.fieldIdx[0]]),
+    filterFunction(rows[10], 10),
     true,
     `${rows[10][7]} should be inside the range`
   );
 
   t.equal(
-    isDataMatchFilter(rows[23], tzFilter, 10, fields[tzFilter.fieldIdx[0]]),
+    filterFunction(rows[23], 10),
     false,
     `${rows[23][7]} should be outside the range`
   );
@@ -284,23 +315,34 @@ function testIsTimeDataMatchFilter(rows, fields, t) {
     value: [
       moment.utc('2016-10-01 09:45:39+00:00').valueOf(),
       moment.utc('2016-10-01 10:00:00+00:00').valueOf()
-    ]
+    ],
+    id: 'filter-4',
+    dataId: [dataId]
   };
 
+  field = fields[utcFilter.fieldIdx[0]];
+
+  filterFunction = getFilterFunction(
+    field,
+    dataId,
+    utcFilter,
+    []
+  );
+
   t.equal(
-    isDataMatchFilter(rows[6], utcFilter, 6, fields[utcFilter.fieldIdx[0]]),
+    filterFunction(rows[6], 6),
     false,
     `${rows[0][8]} should be outside the range`
   );
 
   t.equal(
-    isDataMatchFilter(rows[4], utcFilter, 4, fields[utcFilter.fieldIdx[0]]),
+    filterFunction(rows[4], 4),
     true,
     `${rows[4][8]} should be inside the range`
   );
 
   t.equal(
-    isDataMatchFilter(rows[23], utcFilter, 23, fields[utcFilter.fieldIdx[0]]),
+    filterFunction(rows[23], 23),
     false,
     `${rows[23][8]} should be outside the range`
   );
@@ -732,88 +774,6 @@ test('filterUtils -> getDatasetIndexForFilter', t => {
     fieldIndex,
     -1,
     'FieldIndex should be -1'
-  );
-
-  t.end();
-});
-
-test('filterUtils -> getLayerPointsToFilter', t => {
-  let layer = {
-    type: LAYER_TYPES.point,
-    config: {
-      columns: {
-        lat: {
-          fieldIdx: 0,
-          value: 'start_point_lat'
-        },
-        lng: {
-          fieldIdx: 1,
-          value: 'start_point_lng'
-        },
-        altitude: {
-          value: null,
-          fieldIdx: -1,
-          optional: true
-        }
-      }
-    }
-  };
-
-  const data = [
-    12.25,
-    30.5,
-    45.5,
-    32.5
-  ];
-
-  t.deepEqual(
-    getLayerPointsToFilter(layer, data),
-    [
-      [
-        30.5,
-        12.25
-      ]
-    ],
-    'Should find the exact point to filter for Layer Point'
-  );
-
-  layer = {
-    type: LAYER_TYPES.arc,
-    config: {
-      columns: {
-        lat0: {
-          fieldIdx: 0,
-          value: 'start_point_lat'
-        },
-        lng0: {
-          fieldIdx: 1,
-          value: 'start_point_lng'
-        },
-        lat1: {
-          fieldIdx: 2,
-          value: 'end_point_lat'
-        },
-        lng1: {
-          fieldIdx: 3,
-          value: 'end_point_lng'
-        }
-      }
-    }
-  };
-
-  t.deepEqual(
-    getLayerPointsToFilter(layer, data),
-    [
-      [
-        30.5,
-        12.25
-      ],
-      [
-        32.5,
-        45.5
-      ]
-    ],
-    'Should find the exact point to filter for Layer Point'
   );
 
   t.end();

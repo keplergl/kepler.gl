@@ -705,3 +705,10 @@ export const EDITOR_MODES = {
   DRAW_RECTANGLE: EditorModes.DRAW_RECTANGLE,
   EDIT: EditorModes.EDIT_VERTEX
 };
+
+export const EDITOR_AVAILABLE_LAYERS = [
+  LAYER_TYPES.point,
+  LAYER_TYPES.hexagon,
+  LAYER_TYPES.arc,
+  LAYER_TYPES.line
+];
