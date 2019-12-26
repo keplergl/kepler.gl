@@ -214,13 +214,15 @@ export function mergeInteractions(state, interactionToBeMerged) {
       merged[key] = {
         ...state.interactionConfig[key],
         enabled,
-        config: pick(
-          {
-            ...state.interactionConfig[key].config,
-            ...configToMerge
-          },
-          Object.keys(state.interactionConfig[key].config)
-        )
+        ...(state.interactionConfig[key].config ? {
+          config: pick(
+            {
+              ...state.interactionConfig[key].config,
+              ...configToMerge
+            },
+            Object.keys(state.interactionConfig[key].config)
+          )
+        } : {})
       };
     });
   }

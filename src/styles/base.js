@@ -206,7 +206,7 @@ export const modalPadding = '10px 0';
 export const modalLateralPadding = '72px';
 export const modalPortableLateralPadding = '36px';
 
-export const modalOverLayZ = 1000;
+export const modalOverLayZ = 1001;
 export const modalOverlayBgd = 'rgba(0, 0, 0, 0.5)';
 export const modalContentZ = 10002;
 export const modalFooterZ = 10001;

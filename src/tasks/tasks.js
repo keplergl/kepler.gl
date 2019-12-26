@@ -24,7 +24,7 @@ import console from 'global/console';
 
 export const LOAD_FILE_TASK = taskCreator(
   ({fileBlob, info, handler, processor}, success, error) => {
-    console.time('loadFileTask')
+    console.time('loadFileTask');
     return handler(fileBlob, processor)
       .then(result => {
         if (!result) {
@@ -36,7 +36,7 @@ export const LOAD_FILE_TASK = taskCreator(
           // result has both datasets and info
           // TODO: I think we should pass info to the handler and return
           // the same format back from the file handler
-          console.timeEnd('loadFileTask')
+          console.timeEnd('loadFileTask');
 
           if (result.datasets) { // this is coming from parsing keplergl.json file
             success(result); // info is already part of datasets

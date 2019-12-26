@@ -42,12 +42,12 @@ import {
 } from 'test/fixtures/geojson';
 
 // This makes sure react-virtualized renders the full grid
-const WIDTH = 1400;
+const WIDTH = 2100;
 const HEIGHT = 800;
 const rows = 10;
 
 /* eslint-disable max-statements */
-test('Components -> DataTableModal.render: csv', t => {
+test('Components -> DataTableModal.render: csv 1', t => {
   t.doesNotThrow(() => {
     mountWithTheme(<DataTableModal width={WIDTH} height={HEIGHT} />);
   }, 'Show not fail without data');
@@ -147,7 +147,7 @@ test('Components -> DataTableModal.render: csv', t => {
   t.end();
 });
 
-test('Components -> DataTableModal.render: csv', t => {
+test('Components -> DataTableModal.render: csv 2', t => {
   const wrapper = mountWithTheme(
     <DataTableModal
       width={WIDTH}
