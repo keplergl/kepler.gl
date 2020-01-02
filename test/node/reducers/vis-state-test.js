@@ -24,6 +24,7 @@ import CloneDeep from 'lodash.clonedeep';
 
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
+import * as UiStateActions from 'actions/ui-state-actions';
 import reducer from 'reducers/vis-state';
 
 import {
@@ -3276,6 +3277,7 @@ test('#visStateReducer -> MOUSE_MOVE', t => {
 
   t.end();
 });
+
 test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. show dropdown', t => {
   const initialState = CloneDeep(StateWFilesFiltersLayerColor.visState);
   const pointLayer = initialState.layers[0];
@@ -3783,5 +3785,108 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
     expectedColorUI7,
     'should set colorRangeConfig.custom true'
   );
+  t.end();
+});
+
+test('#visStateReducer -> APPLY_CPU_FILTER. no filter', t => {
+  const initialState = CloneDeep(StateWFiles.visState);
+  const dataId = '190vdll3di';
+  const previousDataset = initialState.datasets[dataId];
+
+  const nextState = reducer(
+    initialState,
+    VisStateActions.applyCPUFilter(dataId)
+  );
+
+  const expectedDataset = {
+    ...previousDataset,
+    filteredIdxCPU: previousDataset.allIndexes,
+    filterRecordCPU: {
+      dynamicDomain: [],
+      fixedDomain: [],
+      cpu: [],
+      gpu: []
+    }
+  };
+
+  cmpDataset(t, expectedDataset, nextState.datasets[dataId]);
+  t.end();
+});
+
+test('#visStateReducer -> APPLY_CPU_FILTER. has gpu filter', t => {
+  const initialState = CloneDeep(StateWFilters.visState);
+  // dataset has gpu filter
+  const dataId = '190vdll3di';
+  const previousDataset = initialState.datasets[dataId];
+  const gpuFilter = initialState.filters[0];
+
+  const nextState = reducer(
+    initialState,
+    VisStateActions.applyCPUFilter(dataId)
+  );
+
+  const expectedDataset = {
+    ...previousDataset,
+    filteredIdxCPU: [5, 6, 9, 10, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23],
+    filterRecordCPU: {
+      dynamicDomain: [],
+      fixedDomain: [gpuFilter],
+      cpu: [gpuFilter],
+      gpu: []
+    }
+  };
+
+  cmpDataset(t, expectedDataset, nextState.datasets[dataId]);
+
+  // calling it again
+  const nextState2 = reducer(
+    nextState,
+    VisStateActions.applyCPUFilter(dataId)
+  );
+
+  t.equal(
+    nextState.datasets[dataId].filteredIdxCPU,
+    nextState2.datasets[dataId].filteredIdxCPU,
+    'should directly copy filter result when filter hasnot changed'
+  );
+  t.end();
+});
+
+test('#visStateReducer -> APPLY_CPU_FILTER. has cpu filter', t => {
+  const initialState = CloneDeep(StateWFilters.visState);
+  // dataset has gpu filter
+  const dataId = 'ieukmgne';
+  const previousDataset2 = initialState.datasets[dataId];
+  const ordinalFilter = initialState.filters[1];
+
+  const nextState = reducer(
+    initialState,
+    VisStateActions.applyCPUFilter(dataId)
+  );
+
+  const expectedDataset = {
+    ...previousDataset2,
+    filteredIdxCPU: [0],
+    filterRecordCPU: {
+      dynamicDomain: [],
+      fixedDomain: [ordinalFilter],
+      cpu: [ordinalFilter],
+      gpu: []
+    }
+  };
+
+  cmpDataset(t, expectedDataset, nextState.datasets[dataId]);
+
+  const nextState2 = reducer(
+    nextState,
+    VisStateActions.applyCPUFilter(dataId)
+  );
+
+  t.equal(
+    nextState.datasets[dataId].filteredIdxCPU,
+    nextState2.datasets[dataId].filteredIdxCPU,
+    'should directly copy filter result when filter hasnot changed'
+  );
+
   t.end();
 });

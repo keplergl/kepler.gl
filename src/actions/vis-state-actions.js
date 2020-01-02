@@ -496,6 +496,20 @@ export function loadFilesErr(error) {
 }
 
 /**
+ * Trigger loading file error
+ * @memberof visStateActions
+ * @param {*} error
+ * @returns {{type: ActionTypes.LOAD_FILES_ERR, error: *}}
+ * @public
+ */
+export function applyCPUFilter(dataId) {
+  return {
+    type: ActionTypes.APPLY_CPU_FILTER,
+    dataId
+  };
+}
+
+/**
  * This declaration is needed to group actions in docs
  */
 /**

@@ -246,6 +246,13 @@ export const TRIP_ARC_FIELDS = {
   lng1: 'dropoff'
 };
 
+export const FILTER_TYPES = keyMirror({
+  range: null,
+  select: null,
+  timeRange: null,
+  multiSelect: null
+});
+
 export const SCALE_TYPES = keyMirror({
   ordinal: null,
   quantile: null,

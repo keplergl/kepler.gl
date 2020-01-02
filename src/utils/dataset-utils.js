@@ -106,7 +106,7 @@ export function createNewDataEntry({info = {}, data}, datasets = {}) {
       filteredIndexForDomain: allIndexes,
       fieldPairs: findPointFieldPairs(fields),
       fields,
-      gpuFilter: getGpuFilterProps([], dataId)
+      gpuFilter: getGpuFilterProps([], dataId, fields)
     }
   };
 }

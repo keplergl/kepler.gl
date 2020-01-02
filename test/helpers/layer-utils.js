@@ -178,7 +178,7 @@ export function testRenderLayerCases(t, LayerClass, testCases) {
           mapState: INITIAL_MAP_STATE,
           gpuFilter:
             tc.datasets[layer.config.dataId].gpuFilter ||
-            getGpuFilterProps([], layer.config.dataId),
+            getGpuFilterProps([], layer.config.dataId, tc.datasets[layer.config.dataId].fields),
           interactionConfig: INITIAL_VIS_STATE.interactionConfig,
           ...(tc.renderArgs || {})
         });

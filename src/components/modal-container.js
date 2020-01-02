@@ -154,15 +154,17 @@ export default function ModalContainerFactory(
       const {selectedDataset, dataType, filtered} = uiState.exportData;
       // get the selected data
       const filename = 'kepler-gl';
-      const selectedDatasets = datasets[selectedDataset] ? [datasets[selectedDataset]] : Object.values(datasets);
+      const selectedDatasets = datasets[selectedDataset] ?
+        [datasets[selectedDataset]] : Object.values(datasets);
+
       if (!selectedDatasets.length) {
         // error: selected dataset not found.
         this._closeModal();
       }
 
       selectedDatasets.forEach(selectedData => {
-        const {allData, data, fields, label} = selectedData;
-        const exportData = filtered ? data : allData;
+        const {allData, fields, label, filteredIdxCPU} = selectedData;
+        const exportData = filtered ? filteredIdxCPU.map(i => allData[i]) : allData;
         // start to export data according to selected data type
         switch (dataType) {
           case EXPORT_DATA_TYPE.CSV: {
@@ -175,7 +177,6 @@ export default function ModalContainerFactory(
           default:
             break;
         }
-
       });
 
       this._closeModal();
@@ -343,6 +344,7 @@ export default function ModalContainerFactory(
               <ExportDataModal
                 {...uiState.exportData}
                 datasets={datasets}
+                applyCPUFilter={this.props.visStateActions.applyCPUFilter}
                 onClose={this._closeModal}
                 onChangeExportDataType={this.props.uiStateActions.setExportDataType}
                 onChangeExportSelectedDataset={this.props.uiStateActions.setExportSelectedDataset}

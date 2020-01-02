@@ -21,11 +21,11 @@
 import moment from 'moment';
 import {ascending, extent, histogram as d3Histogram, ticks} from 'd3-array';
 import keyMirror from 'keymirror';
-import {ALL_FIELD_TYPES} from 'constants/default-settings';
+import {ALL_FIELD_TYPES, FILTER_TYPES} from 'constants/default-settings';
 import {maybeToDate, notNullorUndefined, unique} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
 import {generateHashId, set, arrayfy} from './utils';
-import {getGpuFilterProps} from './gpu-filter-utils';
+import {getGpuFilterProps, getDatasetFieldIndexForFilter} from './gpu-filter-utils';
 
 export const TimestampStepMap = [
   {max: 1, step: 0.05},
@@ -46,13 +46,6 @@ const durationHour = durationMinute * 60;
 const durationDay = durationHour * 24;
 const durationWeek = durationDay * 7;
 const durationYear = durationDay * 365;
-
-export const FILTER_TYPES = keyMirror({
-  range: null,
-  select: null,
-  timeRange: null,
-  multiSelect: null
-});
 
 export const PLOT_TYPES = keyMirror({
   histogram: null,
@@ -166,8 +159,7 @@ export function validateFilterWithData(dataset, filter) {
 
   // match filter.dataId
   const failed = {dataset, filter: null};
-
-  const filterDataId = Array.isArray(filter.dataId) ? filter.dataId : [filter.dataId];
+  const filterDataId = arrayfy(filter.dataId);
 
   const filterDatasetIndex = filterDataId.indexOf(dataset.id);
   if (filterDatasetIndex < 0) {
@@ -179,7 +171,7 @@ export function validateFilterWithData(dataset, filter) {
     ...getDefaultFilter(filter.dataId),
     ...filter,
     dataId: filterDataId,
-    name: Array.isArray(filter.name) ? filter.name : [filter.name]
+    name: arrayfy(filter.name)
   };
 
   const fieldName = initializeFilter.name[filterDatasetIndex];
@@ -319,52 +311,6 @@ export function updateFilterDataId(dataId) {
   return getDefaultFilter(dataId);
 }
 
-// /**
-//  *
-//  * @param {Object} filter
-//  * @param {Number} idx
-//  * @param {Object} dataset
-//  * @param {Array<Object>} filters
-//  * @returns {{newField: Object, newFilter: Object}}
-//  */
-// export function updateFilterField(filter, idx, dataset, filters) {
-//   const {name} = filter;
-//   const {fields, allData} = dataset;
-//   // find the field
-//   const fieldIdx = fields.findIndex(f => f.name === name);
-
-//   let newField = fields[fieldIdx];
-
-//   if (!newField.filterProp) {
-//     // get filter domain from field
-//     // save filterProps: {domain, steps, value} to field, avoid recalculate
-//     newField = set(['filterProp'], getFilterProps(allData, newField), newField);
-//   }
-
-//   let newFilter = {
-//     ...filter,
-//     ...newField.filterProp,
-//     name: newField.name,
-//     // can't edit dataId once name is selected
-//     freeze: true,
-//     fieldIdx
-//   };
-
-//   const enlargedFilterIdx = filters.findIndex(f => f.enlarged);
-
-//   if (enlargedFilterIdx > -1 && enlargedFilterIdx !== idx) {
-//     // there should be only one enlarged filter
-//     newFilter.enlarged = false;
-//   }
-
-//   if (newFilter.gpu) {
-//     newFilter = setFilterGpuMode(newFilter, filters);
-//     newFilter = assignGpuChannel(newFilter, filters);
-//   }
-
-//   return {newField, newFilter};
-// }
-
 /**
  * Filter data based on an array of filters
  *
@@ -372,6 +318,7 @@ export function updateFilterDataId(dataId) {
  * @param {Array<Object>} filters
  * @param {Object} opt
  * @param {Object} opt.cpuOnly only allow cpu filtering
+ * @param {Object} opt.ignoreDomain ignore filter for domain calculation
  * @returns {Object} dataset
  * @returns {Array<Number>} dataset.filteredIndex
  * @returns {Array<Number>} dataset.filteredIndexForDomain
@@ -380,13 +327,13 @@ export function filterDataset(dataset, filters, opt = {}) {
   const {allData, id: dataId, filterRecord: oldFilterRecord, fields} = dataset;
 
   // if there is no filters
-  const filterRecord = getFilterRecord(dataId, filters);
+  const filterRecord = getFilterRecord(dataId, filters, opt);
 
   const newDataset = set(['filterRecord'], filterRecord, dataset);
   if (!filters.length) {
     return {
       ...newDataset,
-      gpuFilter: getGpuFilterProps(filters, dataId),
+      gpuFilter: getGpuFilterProps(filters, dataId, fields),
       filteredIndex: dataset.allIndexes,
       filteredIndexForDomain: dataset.allIndexes
     };
@@ -398,13 +345,13 @@ export function filterDataset(dataset, filters, opt = {}) {
   // filteredIndex used to calculate layer data
   // filteredIndexForDomain used to calculate layer Domain
   const shouldCalDomain = Boolean(changedFilters.dynamicDomain);
-  const shouldCalIndex = Boolean(changedFilters.cpu) || opt.cpuOnly;
+  const shouldCalIndex = Boolean(changedFilters.cpu);
 
   let filterResult = {};
   if (shouldCalDomain || shouldCalIndex) {
 
     const dynamicDomainFilters = shouldCalDomain ? filterRecord.dynamicDomain : null;
-    const cpuFilters = shouldCalIndex ? (opt.cpuOnly ? filters : filterRecord.cpu) : null;
+    const cpuFilters = shouldCalIndex ? filterRecord.cpu : null;
     const filtersToFields = filters.reduce((acc, filter) => {
       const fieldIndex = getDatasetFieldIndexForFilter(dataset.id, filter);
 
@@ -425,7 +372,7 @@ export function filterDataset(dataset, filters, opt = {}) {
   return {
     ...newDataset,
     ...filterResult,
-    gpuFilter: getGpuFilterProps(filters, dataId)
+    gpuFilter: getGpuFilterProps(filters, dataId, fields)
   };
 }
 
@@ -437,14 +384,12 @@ export function filterDataset(dataset, filters, opt = {}) {
  * @returns {{filteredIndex: Array, filteredIndexForDomain: Array}} filteredIndex and filteredIndexForDomain
  */
 function filterDataByFilterTypes({dynamicDomainFilters, cpuFilters, filtersToFields}, allData) {
-  // const filteredIndexForDomain = [];
-  // const filteredIndex = [];
+
   const result = {
     ...(dynamicDomainFilters ? {filteredIndexForDomain: []} : {}),
     ...(cpuFilters ? {filteredIndex: []} : {})
   };
 
-  // const appliedFilters = filters.filter(d => shouldApplyFilter(d, dataset.id));
   for (let i = 0; i < allData.length; i++) {
     const matchForDomain =
       dynamicDomainFilters &&
@@ -459,7 +404,7 @@ function filterDataByFilterTypes({dynamicDomainFilters, cpuFilters, filtersToFie
     const matchForRender =
       cpuFilters &&
       cpuFilters.every(filter =>
-        isDataMatchFilter(allData[i], filter, i)
+        isDataMatchFilter(allData[i], filter, i, filtersToFields[filter.id])
       );
 
     if (matchForRender) {
@@ -474,9 +419,11 @@ function filterDataByFilterTypes({dynamicDomainFilters, cpuFilters, filtersToFie
  * Get a record of filters based on domain type and gpu / cpu
  * @param {string} dataId
  * @param {Array<Object>} filters
+ * @param {Object} opt.cpuOnly only allow cpu filtering
+ * @param {Object} opt.ignoreDomain ignore filter for domain calculation
  * @returns {{dynamicDomain: Array, fixedDomain: Array, cpu: Array, gpu: Array}} filterRecord
  */
-export function getFilterRecord(dataId, filters) {
+export function getFilterRecord(dataId, filters, opt = {}) {
   const filterRecord = {
     dynamicDomain: [],
     fixedDomain: [],
@@ -486,11 +433,13 @@ export function getFilterRecord(dataId, filters) {
 
   filters.forEach(f => {
     if (getDatasetFieldIndexForFilter(dataId, f) > -1 && f.value !== null) {
-      (f.fixedDomain
+
+      (f.fixedDomain || opt.ignoreDomain
         ? filterRecord.fixedDomain
         : filterRecord.dynamicDomain
       ).push(f);
-      (f.gpu ? filterRecord.gpu : filterRecord.cpu).push(f);
+
+      (f.gpu && !opt.cpuOnly ? filterRecord.gpu : filterRecord.cpu).push(f);
     }
   });
 
@@ -859,19 +808,6 @@ export function getDefaultFilterPlotType(filter) {
   return filterPlotTypes[filter.yAxis.type] || null;
 }
 
-// /**
-//  * Apply a list of filters to a given dataset
-//  * @param dataset
-//  * @param filters
-//  * @return {Object} filtered dataset
-//  */
-// export function applyFilterToDataset(dataset, filters) {
-//   return {
-//     ...dataset,
-//     ...filterDataByFilterTypes(dataset, filters)
-//   };
-// }
-
 /**
  *
  * @param datasetIds list of dataset ids to be filtered
@@ -880,10 +816,10 @@ export function getDefaultFilterPlotType(filter) {
  * @return {{[datasetId: string]: Object}} datasets - new updated datasets
  */
 export function applyFiltersToDatasets(datasetIds, datasets, filters) {
-  const dataIds = Array.isArray(datasetIds) ? datasetIds : [datasetIds];
-  return dataIds.reduce((acc, dataIdentifier) => ({
+  const dataIds = arrayfy(datasetIds);
+  return dataIds.reduce((acc, dataId) => ({
     ...acc,
-    [dataIdentifier]: filterDataset(datasets[dataIdentifier], filters)
+    [dataId]: filterDataset(datasets[dataId], filters)
   }), datasets);
 }
 
@@ -1006,22 +942,3 @@ export function mergeFilterDomainStep(filter, filterProps) {
   }
 }
 /* eslint-enable complexity */
-
-/**
- * Return dataset field index from filter.fieldIdx
- * The index matches the same dataset index for filter.dataId
- * @param dataset
- * @param filter
- * @return {*}
- */
-export function getDatasetFieldIndexForFilter(dataId, filter) {
-  const datasetIndex = arrayfy(filter.dataId).findIndex(id => id === dataId);
-  if (datasetIndex < 0) {
-    return -1;
-  }
-
-  const fieldIndex = filter.fieldIdx[datasetIndex];
-
-  return notNullorUndefined(fieldIndex) ? fieldIndex : -1;
-}
-

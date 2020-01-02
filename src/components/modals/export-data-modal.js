@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 
 import {EXPORT_DATA_TYPE_OPTIONS} from 'constants/default-settings';
@@ -36,6 +36,7 @@ const propTypes = {
   dataType: PropTypes.string.isRequired,
   filtered: PropTypes.bool.isRequired,
   // callbacks
+  applyCPUFilter: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired,
   onChangeExportSelectedDataset: PropTypes.func.isRequired,
   onChangeExportDataType: PropTypes.func.isRequired,
@@ -45,90 +46,123 @@ const propTypes = {
 const getDataRowCount = (datasets, selectedDataset, filtered) => {
   const selectedData = datasets[selectedDataset];
   if (!selectedData) {
-    return `${Object.keys(datasets).length} Files ` ;
+    return `${Object.keys(datasets).length} Files `;
   }
-  const {allData, data} = selectedData;
-  const rowCount = filtered ? data.length : allData.length;
+  const {allData, filteredIdxCPU} = selectedData;
+
+  if (filtered && !filteredIdxCPU) {
+    return '-';
+  }
+
+  const rowCount = filtered ? filteredIdxCPU.length : allData.length;
+
   return `${rowCount.toLocaleString()} Rows`;
 };
 
-const ExportDataModal = ({
-  datasets,
-  selectedDataset,
-  dataType,
-  filtered,
-  config,
-  // callbacks:
-  onChangeExportDataType,
-  onChangeExportSelectedDataset,
-  onChangeExportFiltered
-}) => (
-  <StyledModalContent className="export-data-modal">
-    <div>
-      <StyledExportSection>
-        <div className="description">
-          <div className="title">
-            Dataset
-          </div>
-          <div className="subtitle">
-            Choose the datasets you want to export
-          </div>
-        </div>
-        <div className="selection">
-          <select value={selectedDataset} onChange={e => onChangeExportSelectedDataset(e.target.value)}>
-          {['All'].concat(Object.keys(datasets)).map(d => (
-            <option key={d} value={d}>{(datasets[d] && datasets[d].label) || d}</option>
-          ))}
-          </select>
-        </div>
-      </StyledExportSection>
-      <StyledExportSection>
-        <div className="description">
-          <div className="title">
-            Data Type
-          </div>
-          <div className="subtitle">
-            Choose the type of data you want to export
-          </div>
-        </div>
-        <div className="selection">
-          {EXPORT_DATA_TYPE_OPTIONS.map(op =>
-            <StyledType
-              key={op.id}
-              selected={dataType === op.id}
-              available={op.available}
-              onClick={() => op.available && onChangeExportDataType(op.id)}
-            >
-              <FileType ext={op.label} height="80px" fontSize="11px" />
-            </StyledType>
-          )}
-        </div>
-      </StyledExportSection>
-      <StyledExportSection>
-        <div className="description">
-          <div className="title">
-            Filter Data
-          </div>
-          <div className="subtitle">
-            You can choose exporting original data or filtered data
-          </div>
-        </div>
-        <div className="selection">
-          <StyledFilteredOption selected={!filtered} onClick={() => onChangeExportFiltered(false)}>
-            <div className="filtered-title">Unfiltered Data</div>
-            <div className="filtered-subtitle">{getDataRowCount(datasets, selectedDataset, false)}</div>
-          </StyledFilteredOption>
-          <StyledFilteredOption selected={filtered} onClick={() => onChangeExportFiltered(true)}>
-            <div className="filtered-title">Filtered Data</div>
-            <div className="filtered-subtitle">{getDataRowCount(datasets, selectedDataset, true)}</div>
-          </StyledFilteredOption>
-        </div>
-      </StyledExportSection>
-    </div>
-  </StyledModalContent>
-);
+const ExportDataModalFactory = () => {
+  class ExportDataModal extends Component {
+    componentDidMount() {
+      if (this.props.selectedDataset) {
+        this.props.applyCPUFilter(this.props.selectedDataset);
+      }
+    }
 
-ExportDataModal.propTypes = propTypes;
+    _onSelectDataset = ({target: {value}}) => {
+      this.props.applyCPUFilter(value);
+      this.props.onChangeExportSelectedDataset(value);
+    };
 
-const ExportDataModalFactory = () => ExportDataModal;
+    render() {
+      const {
+        datasets,
+        selectedDataset,
+        dataType,
+        filtered,
+        // callbacks:
+        onChangeExportDataType,
+        onChangeExportFiltered
+      } = this.props;
+
+      return (
+        <StyledModalContent className="export-data-modal">
+          <div>
+            <StyledExportSection>
+              <div className="description">
+                <div className="title">Dataset</div>
+                <div className="subtitle">
+                  Choose the datasets you want to export
+                </div>
+              </div>
+              <div className="selection">
+                <select
+                  value={selectedDataset}
+                  onChange={this._onSelectDataset}
+                >
+                  {['All'].concat(Object.keys(datasets)).map(d => (
+                    <option key={d} value={d}>
+                      {(datasets[d] && datasets[d].label) || d}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </StyledExportSection>
+            <StyledExportSection>
+              <div className="description">
+                <div className="title">Data Type</div>
+                <div className="subtitle">
+                  Choose the type of data you want to export
+                </div>
+              </div>
+              <div className="selection">
+                {EXPORT_DATA_TYPE_OPTIONS.map(op => (
+                  <StyledType
+                    key={op.id}
+                    selected={dataType === op.id}
+                    available={op.available}
+                    onClick={() =>
+                      op.available && onChangeExportDataType(op.id)
+                    }
+                  >
+                    <FileType ext={op.label} height="80px" fontSize="11px" />
+                  </StyledType>
+                ))}
+              </div>
+            </StyledExportSection>
+            <StyledExportSection>
+              <div className="description">
+                <div className="title">Filter Data</div>
+                <div className="subtitle">
+                  You can choose exporting original data or filtered data
+                </div>
+              </div>
+              <div className="selection">
+                <StyledFilteredOption
+                  selected={!filtered}
+                  onClick={() => onChangeExportFiltered(false)}
+                >
+                  <div className="filtered-title">Unfiltered Data</div>
+                  <div className="filtered-subtitle">
+                    {getDataRowCount(datasets, selectedDataset, false)}
+                  </div>
+                </StyledFilteredOption>
+                <StyledFilteredOption
+                  selected={filtered}
+                  onClick={() => onChangeExportFiltered(true)}
+                >
+                  <div className="filtered-title">Filtered Data</div>
+                  <div className="filtered-subtitle">
+                    {getDataRowCount(datasets, selectedDataset, true)}
+                  </div>
+                </StyledFilteredOption>
+              </div>
+            </StyledExportSection>
+          </div>
+        </StyledModalContent>
+      );
+    }
+  }
+  ExportDataModal.propTypes = propTypes;
+  return ExportDataModal;
+};
+
 export default ExportDataModalFactory;

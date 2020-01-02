@@ -34,8 +34,10 @@ import {getDefaultInteraction, findFieldsToShow} from 'utils/interaction-utils';
 import {
   applyFilterFieldName,
   applyFiltersToDatasets,
+  filterDataset,
   getDefaultFilter,
   getFilterPlot,
+  getFilterRecord,
   getDefaultFilterPlotType,
   isInRange,
   FILTER_UPDATER_PROPS,
@@ -1322,6 +1324,70 @@ export const loadFilesUpdater = (state, action) => {
   ];
 
   return withTask(state, loadFileTasks);
+};
+
+/**
+ * When select dataset for export, apply cpu filter to selected dataset
+ * @memberof visStateUpdaters
+ * @param {Object} state `visState`
+ * @param {Object} action
+ * @param {string} action.dataId dataset id
+ * @returns {Object} nextState
+ * @public
+ */
+export const applyCPUFilterUpdater = (state, {dataId}) => {
+
+  // apply cpuFilter
+  const datasetFilters = state.filters.filter(f => f.dataId.includes(dataId));
+
+  const selectedDataset = state.datasets[dataId];
+
+  if (!selectedDataset) {
+    return state;
+  }
+
+  const opt = {
+    cpuOnly: true,
+    ignoreDomain: true
+  };
+
+  if (!datasetFilters.length) {
+    // no filter
+    const filtered = {
+      ...selectedDataset,
+      filteredIdxCPU: selectedDataset.allIndexes,
+      filterRecordCPU: getFilterRecord(dataId, state.filters, opt)
+    };
+
+    return set(['datasets', dataId], filtered, state);
+  }
+
+  // no gpu filter
+  if (!datasetFilters.find(f => f.gpu)) {
+    const filtered = {
+      ...selectedDataset,
+      filteredIdxCPU: selectedDataset.filteredIndex,
+      filterRecordCPU: getFilterRecord(dataId, state.filters, opt)
+    };
+    return set(['datasets', dataId], filtered, state);
+  }
+
+  // make a copy for cpu filtering
+  const copied = {
+    ...selectedDataset,
+    filterRecord: selectedDataset.filterRecordCPU,
+    filteredIndex: selectedDataset.filteredIdxCPU
+  };
+
+  const filtered = filterDataset(copied, state.filters, opt);
+
+  const cpuFilteredDataset = {
+    ...selectedDataset,
+    filteredIdxCPU: filtered.filteredIndex,
+    filterRecordCPU: filtered.filterRecord
+  };
+
+  return set(['datasets', dataId], cpuFilteredDataset, state);
 };
 
 /**
