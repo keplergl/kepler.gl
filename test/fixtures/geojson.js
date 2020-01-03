@@ -105,7 +105,7 @@ export const geojsonData = {
       properties: {
         OBJECTID: 4,
         ZIP_CODE: 94111,
-        ID: 9411,
+        ID: 94111,
         RATE: 'c'
       },
       geometry: {
@@ -127,6 +127,8 @@ export const geojsonData = {
     }
   ]
 };
+
+export const geoJsonDataId = 'ieukmgne';
 
 export const fields = [
   {
@@ -172,6 +174,11 @@ export const fields = [
     analyzerType: 'STRING'
   }
 ];
+
+export const datasetFields = fields.map(f => ({
+  ...f,
+  id: f.name
+}));
 
 export const rows = [
   [
@@ -280,7 +287,7 @@ export const rows = [
       properties: {
         OBJECTID: 4,
         ZIP_CODE: 94111,
-        ID: 9411,
+        ID: 94111,
         RATE: 'c'
       },
       geometry: {
@@ -302,11 +309,198 @@ export const rows = [
     },
     4,
     94111,
-    9411,
+    94111,
     null,
     'c'
   ]
 ];
+
+// add index to properties
+export const datasetAllData = rows.map((row, index) =>
+  row.map((cell, i) =>
+    i === 0
+      ? {
+          ...cell,
+          properties: {
+            ...cell.properties,
+            index
+          }
+        }
+      : cell
+  )
+);
+
+export const geoJsonTripHistogram = [
+  {count: 1, x0: 4, x1: 4.5},
+  {count: 0, x0: 4.5, x1: 5},
+  {count: 0, x0: 5, x1: 5.5},
+  {count: 0, x0: 5.5, x1: 6},
+  {count: 0, x0: 6, x1: 6.5},
+  {count: 0, x0: 6.5, x1: 7},
+  {count: 0, x0: 7, x1: 7.5},
+  {count: 0, x0: 7.5, x1: 8},
+  {count: 0, x0: 8, x1: 8.5},
+  {count: 0, x0: 8.5, x1: 9},
+  {count: 0, x0: 9, x1: 9.5},
+  {count: 0, x0: 9.5, x1: 10},
+  {count: 0, x0: 10, x1: 10.5},
+  {count: 0, x0: 10.5, x1: 11},
+  {count: 1, x0: 11, x1: 11.5},
+  {count: 0, x0: 11.5, x1: 12},
+  {count: 0, x0: 12, x1: 12.5},
+  {count: 0, x0: 12.5, x1: 13},
+  {count: 0, x0: 13, x1: 13.5},
+  {count: 0, x0: 13.5, x1: 14},
+  {count: 0, x0: 14, x1: 14.5},
+  {count: 0, x0: 14.5, x1: 15},
+  {count: 0, x0: 15, x1: 15.5},
+  {count: 0, x0: 15.5, x1: 16},
+  {count: 0, x0: 16, x1: 16.5},
+  {count: 0, x0: 16.5, x1: 17},
+  {count: 0, x0: 17, x1: 17.5},
+  {count: 0, x0: 17.5, x1: 18},
+  {count: 0, x0: 18, x1: 18.5},
+  {count: 0, x0: 18.5, x1: 19},
+  {count: 0, x0: 19, x1: 19.5},
+  {count: 0, x0: 19.5, x1: 20},
+  {count: 1, x0: 20, x1: 20}
+];
+
+export const geoJsonTripHistogramEnlarged = [
+  {count: 1, x0: 4, x1: 4.2},
+  {count: 0, x0: 4.2, x1: 4.4},
+  {count: 0, x0: 4.4, x1: 4.6},
+  {count: 0, x0: 4.6, x1: 4.8},
+  {count: 0, x0: 4.8, x1: 5},
+  {count: 0, x0: 5, x1: 5.2},
+  {count: 0, x0: 5.2, x1: 5.4},
+  {count: 0, x0: 5.4, x1: 5.6},
+  {count: 0, x0: 5.6, x1: 5.8},
+  {count: 0, x0: 5.8, x1: 6},
+  {count: 0, x0: 6, x1: 6.2},
+  {count: 0, x0: 6.2, x1: 6.4},
+  {count: 0, x0: 6.4, x1: 6.6},
+  {count: 0, x0: 6.6, x1: 6.8},
+  {count: 0, x0: 6.8, x1: 7},
+  {count: 0, x0: 7, x1: 7.2},
+  {count: 0, x0: 7.2, x1: 7.4},
+  {count: 0, x0: 7.4, x1: 7.6},
+  {count: 0, x0: 7.6, x1: 7.8},
+  {count: 0, x0: 7.8, x1: 8},
+  {count: 0, x0: 8, x1: 8.2},
+  {count: 0, x0: 8.2, x1: 8.4},
+  {count: 0, x0: 8.4, x1: 8.6},
+  {count: 0, x0: 8.6, x1: 8.8},
+  {count: 0, x0: 8.8, x1: 9},
+  {count: 0, x0: 9, x1: 9.2},
+  {count: 0, x0: 9.2, x1: 9.4},
+  {count: 0, x0: 9.4, x1: 9.6},
+  {count: 0, x0: 9.6, x1: 9.8},
+  {count: 0, x0: 9.8, x1: 10},
+  {count: 0, x0: 10, x1: 10.2},
+  {count: 0, x0: 10.2, x1: 10.4},
+  {count: 0, x0: 10.4, x1: 10.6},
+  {count: 0, x0: 10.6, x1: 10.8},
+  {count: 0, x0: 10.8, x1: 11},
+  {count: 1, x0: 11, x1: 11.2},
+  {count: 0, x0: 11.2, x1: 11.4},
+  {count: 0, x0: 11.4, x1: 11.6},
+  {count: 0, x0: 11.6, x1: 11.8},
+  {count: 0, x0: 11.8, x1: 12},
+  {count: 0, x0: 12, x1: 12.2},
+  {count: 0, x0: 12.2, x1: 12.4},
+  {count: 0, x0: 12.4, x1: 12.6},
+  {count: 0, x0: 12.6, x1: 12.8},
+  {count: 0, x0: 12.8, x1: 13},
+  {count: 0, x0: 13, x1: 13.2},
+  {count: 0, x0: 13.2, x1: 13.4},
+  {count: 0, x0: 13.4, x1: 13.6},
+  {count: 0, x0: 13.6, x1: 13.8},
+  {count: 0, x0: 13.8, x1: 14},
+  {count: 0, x0: 14, x1: 14.2},
+  {count: 0, x0: 14.2, x1: 14.4},
+  {count: 0, x0: 14.4, x1: 14.6},
+  {count: 0, x0: 14.6, x1: 14.8},
+  {count: 0, x0: 14.8, x1: 15},
+  {count: 0, x0: 15, x1: 15.2},
+  {count: 0, x0: 15.2, x1: 15.4},
+  {count: 0, x0: 15.4, x1: 15.6},
+  {count: 0, x0: 15.6, x1: 15.8},
+  {count: 0, x0: 15.8, x1: 16},
+  {count: 0, x0: 16, x1: 16.2},
+  {count: 0, x0: 16.2, x1: 16.4},
+  {count: 0, x0: 16.4, x1: 16.6},
+  {count: 0, x0: 16.6, x1: 16.8},
+  {count: 0, x0: 16.8, x1: 17},
+  {count: 0, x0: 17, x1: 17.2},
+  {count: 0, x0: 17.2, x1: 17.4},
+  {count: 0, x0: 17.4, x1: 17.6},
+  {count: 0, x0: 17.6, x1: 17.8},
+  {count: 0, x0: 17.8, x1: 18},
+  {count: 0, x0: 18, x1: 18.2},
+  {count: 0, x0: 18.2, x1: 18.4},
+  {count: 0, x0: 18.4, x1: 18.6},
+  {count: 0, x0: 18.6, x1: 18.8},
+  {count: 0, x0: 18.8, x1: 19},
+  {count: 0, x0: 19, x1: 19.2},
+  {count: 0, x0: 19.2, x1: 19.4},
+  {count: 0, x0: 19.4, x1: 19.6},
+  {count: 0, x0: 19.6, x1: 19.8},
+  {count: 0, x0: 19.8, x1: 20},
+  {count: 1, x0: 20, x1: 20}
+];
+
+export const geoJsonTripFilterProps = {
+  domain: [4, 20],
+  fieldType: 'integer',
+  histogram: geoJsonTripHistogram,
+  enlargedHistogram: geoJsonTripHistogramEnlarged,
+  step: 0.01,
+  type: 'range',
+  typeOptions: ['range'],
+  value: [4, 20]
+};
+
+export const mergedTripFilter = {
+  ...geoJsonTripFilterProps,
+  dataId: [geoJsonDataId],
+  freeze: true,
+  id: 'TRIPS-3',
+  fixedDomain: false,
+  enlarged: false,
+  isAnimating: false,
+  speed: 1,
+  name: ['TRIPS'],
+  fieldIdx: [4],
+  value: [4, 12],
+  plotType: 'histogram',
+  yAxis: null,
+  interval: null
+};
+
+export const geoJsonRateFilterProps = {
+  domain: ['a', 'b', 'c'],
+  fieldType: 'string',
+  type: 'multiSelect',
+  value: []
+};
+
+export const mergedRateFilter = {
+  ...geoJsonRateFilterProps,
+  name: ['RATE'],
+  dataId: [geoJsonDataId],
+  freeze: true,
+  id: 'RATE-1',
+  fixedDomain: false,
+  enlarged: false,
+  isAnimating: false,
+  speed: 1,
+  fieldIdx: [5],
+  value: ['a'],
+  plotType: 'histogram',
+  yAxis: null,
+  interval: null
+};
 
 export const geoBounds = [
   -122.40115971858505,
@@ -321,8 +515,8 @@ export const geoJsonWithStyle = {
     {
       type: 'Feature',
       properties: {
-        fillColor: [1,2,3],
-        lineColor: [4,5,6],
+        fillColor: [1, 2, 3],
+        lineColor: [4, 5, 6],
         lineWidth: 1,
         elevation: 10,
         radius: 5
@@ -332,8 +526,8 @@ export const geoJsonWithStyle = {
     {
       type: 'Feature',
       properties: {
-        fillColor: [7,8,9],
-        lineColor: [4,5,6],
+        fillColor: [7, 8, 9],
+        lineColor: [4, 5, 6],
         lineWidth: 3,
         elevation: 10,
         radius: 5
@@ -343,8 +537,8 @@ export const geoJsonWithStyle = {
     {
       type: 'Feature',
       properties: {
-        fillColor: [1,2,3],
-        lineColor: [4,5,6],
+        fillColor: [1, 2, 3],
+        lineColor: [4, 5, 6],
         lineWidth: 4,
         elevation: 10,
         radius: 5
@@ -356,12 +550,48 @@ export const geoJsonWithStyle = {
 
 // parsed fields and rows
 export const geoStyleFields = [
-  {name: '_geojson', format: '', tableFieldIndex: 1, type: 'geojson', analyzerType: 'GEOMETRY'},
-  {name: 'fillColor', format: '', tableFieldIndex: 2, type: 'geojson', analyzerType: 'ARRAY'},
-  {name: 'lineColor', format: '', tableFieldIndex: 3, type: 'geojson', analyzerType: 'ARRAY'},
-  {name: 'lineWidth', format: '', tableFieldIndex: 4, type: 'integer', analyzerType: 'INT'},
-  {name: 'elevation', format: '', tableFieldIndex: 5, type: 'integer', analyzerType: 'INT'},
-  {name: 'radius', format: '', tableFieldIndex: 6, type: 'integer', analyzerType: 'INT'}
+  {
+    name: '_geojson',
+    format: '',
+    tableFieldIndex: 1,
+    type: 'geojson',
+    analyzerType: 'GEOMETRY'
+  },
+  {
+    name: 'fillColor',
+    format: '',
+    tableFieldIndex: 2,
+    type: 'geojson',
+    analyzerType: 'ARRAY'
+  },
+  {
+    name: 'lineColor',
+    format: '',
+    tableFieldIndex: 3,
+    type: 'geojson',
+    analyzerType: 'ARRAY'
+  },
+  {
+    name: 'lineWidth',
+    format: '',
+    tableFieldIndex: 4,
+    type: 'integer',
+    analyzerType: 'INT'
+  },
+  {
+    name: 'elevation',
+    format: '',
+    tableFieldIndex: 5,
+    type: 'integer',
+    analyzerType: 'INT'
+  },
+  {
+    name: 'radius',
+    format: '',
+    tableFieldIndex: 6,
+    type: 'integer',
+    analyzerType: 'INT'
+  }
 ];
 
 export const geoStyleRows = [

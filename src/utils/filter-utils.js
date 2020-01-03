@@ -798,7 +798,6 @@ export function mergeFilterDomainStep(filter, filterProps) {
       return {
         ...newFilter,
         step
-        // step: Math.min(filter.step, filterProps.step)
       };
     case ALL_FIELD_TYPES.real:
     case ALL_FIELD_TYPES.integer:
