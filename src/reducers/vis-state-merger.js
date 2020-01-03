@@ -61,8 +61,6 @@ export function mergeFilters(state, filtersToMerge) {
 
       // all datasetIds in filter must be present the state datasets
       const {filter: validatedFilter, applyToDatasets, augmentedDatasets} = datasetIds.reduce((acc, datasetId) => {
-        // const dataset = datasets[datasetId];
-        // const {filter: updatedFilter, dataset: updatedDataset} = validateFilterWithData(dataset, filter);
         const dataset = updatedDatasets[datasetId];
         const {filter: updatedFilter, dataset: updatedDataset} =
           validateFilterWithData(acc.augmentedDatasets[datasetId] || dataset, filter);
