@@ -91,8 +91,10 @@ import {
   testAllData,
   timeFilterProps,
   dateFilterProps,
+  epochFilterProps,
   mergedTimeFilter,
-  mergedDateFilter
+  mergedDateFilter,
+  mergedEpochFilter
 } from 'test/fixtures/test-csv-data';
 
 import {
@@ -1195,21 +1197,53 @@ test('VisStateMerger.v1 -> mergeFilters -> multiFilters', t => {
         ...f,
         ...(
           f.name === 'time' ?
-          {filterProps: timeFilterProps} : f.name === 'date' ?
-          {filterProps: dateFilterProps} : {}
+          {filterProps: timeFilterProps} :
+          f.name === 'date' ?
+          {filterProps: dateFilterProps} :
+          f.name === 'epoch' ?
+          {filterProps: epochFilterProps} :
+          {}
         )
       })),
       allData: testAllData,
+      allIndexes: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
       id: testCsvDataId,
       label: 'hello.csv',
       color: 'donot test me',
-      data: [
-        testAllData[9],
-        testAllData[10]
-      ],
-      filteredIndex: [9, 10],
+      filteredIndex: [0, 1, 2, 3, 7, 8, 9, 10, 11, 12],
       filteredIndexForDomain: [0, 1, 2, 3, 7, 8, 9, 10, 11, 12],
-      fieldPairs: oldCsvData.fieldPairs
+      fieldPairs: oldCsvData.fieldPairs,
+      filterRecord: {
+        dynamicDomain: [mergedDateFilter],
+        fixedDomain: [mergedTimeFilter, mergedEpochFilter],
+        cpu: [mergedDateFilter],
+        gpu: [mergedTimeFilter, mergedEpochFilter]
+      },
+      gpuFilter: {
+        filterRange: [
+          [1474606800000 - 1474588800000, 1474617600000 - 1474588800000],
+          [1472700000000 - 1472688000000, 1472760000000 - 1472688000000],
+          [0, 0],
+          [0, 0]
+        ],
+        filterValueUpdateTriggers: {
+          gpuFilter_0: 'time',
+          gpuFilter_1: 'epoch',
+          gpuFilter_2: null,
+          gpuFilter_3: null
+        },
+        filterValueAccessor: {
+          inputs: [{
+            data: testAllData[1],
+            index: 1
+          }],
+          result: [
+            1474588800000 - 1474588800000,
+            1472688000000 - 1472688000000,
+            0,0
+          ]
+        }
+      }
     },
     [testGeoJsonDataId]: {
       fields: testGeoJsonFields.map(f => ({
@@ -1220,11 +1254,38 @@ test('VisStateMerger.v1 -> mergeFilters -> multiFilters', t => {
           {filterProps: geoJsonRateFilterProps} : {}
         )
       })),
+      filterRecord: {
+        dynamicDomain: [mergedRateFilter, mergedTripFilter],
+        fixedDomain: [],
+        cpu: [mergedRateFilter],
+        gpu: [mergedTripFilter]
+      },
+      gpuFilter: {
+        filterRange: [
+          [0, 8],
+          [0, 0],
+          [0, 0],
+          [0, 0]
+        ],
+        filterValueUpdateTriggers: {
+          gpuFilter_0: 'TRIPS',
+          gpuFilter_1: null,
+          gpuFilter_2: null,
+          gpuFilter_3: null
+        },
+        filterValueAccessor: {
+          inputs: [{
+            data: testGeoJsonAllData[1],
+            index: 1
+          }],
+          result: [0, 0, 0, 0]
+        }
+      },
       allData: testGeoJsonAllData,
+      allIndexes: [0, 1, 2, 3, 4],
       id: testGeoJsonDataId,
       label: 'zip.geojson',
       color: 'donot test me',
-      data: [testGeoJsonAllData[0]],
       filteredIndex: [0],
       filteredIndexForDomain: [0],
       fieldPairs: oldGeoJsonData.fieldPairs
@@ -1237,7 +1298,8 @@ test('VisStateMerger.v1 -> mergeFilters -> multiFilters', t => {
     mergedTimeFilter,
     mergedRateFilter,
     mergedDateFilter,
-    mergedTripFilter
+    mergedTripFilter,
+    mergedEpochFilter
   ];
 
   cmpFilters(t, expectedFilters, mergedState.filters);
