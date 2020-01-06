@@ -206,10 +206,11 @@ export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {
         `dataset.${expectedDataset.id}.${key} should have same number of fields`
       );
       actualDataset.fields.forEach((actualField, i) => {
-        t.deepEqual(
-          actualField,
+        cmpField(
+          t,
           expectedDataset.fields[i],
-          `dataset.${expectedDataset.id}.${key} fields ${actualField.name} should be the same`
+          actualField,
+          `dataset.${expectedDataset.id} fields ${actualField.name}`
         );
       });
     } else if (key === 'gpuFilter') {
@@ -223,11 +224,13 @@ export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {
         `dataset.${expectedDataset.id}.filterRecord`
       );
       Object.keys(expectedDataset.filterRecord).forEach(item => {
-        cmpObjectKeys(
-          t,
-          expectedDataset.filterRecord[item],
-          actualDataset.filterRecord[item],
-          `dataset.${expectedDataset.id}.filterRecord.${item}`
+        t.ok(Array.isArray(expectedDataset.filterRecord[item]),
+          `dataset.${expectedDataset.id}.filterRecord.${item} should be an array`);
+        // compare filter name
+        t.deepEqual(
+          actualDataset.filterRecord[item].map(f => f.name),
+          expectedDataset.filterRecord[item].map(f => f.name),
+          `dataset.${expectedDataset.id}.filterRecord.${item} should contain correct filter`
         );
       });
     } else if (key !== 'color' || opt.color) {
@@ -328,6 +331,35 @@ export function cmpParsedAppConfigs(
         expectedConfig[key],
         `${key} should be correct`
       );
+    }
+  });
+}
+
+export function cmpField(t, expected, actual, name) {
+  cmpObjectKeys(t, expected, actual, name);
+
+  Object.keys(expected).forEach(k => {
+    if (k === 'filterProps') {
+      // compare filterProps
+      t.ok(typeof actual[k] === 'object', `${name} should have filterProps`);
+
+      if (actual[k]) {
+        cmpObjectKeys(t, expected[k], actual[k], `${name} filterProps`);
+        // compare filterProps key
+        Object.keys(expected[k]).forEach(key => {
+          if (key === 'histogram' || key === 'enlargedHistogram') {
+            t.ok(actual[k][key].length, `${name}.filterProps.${key} should not be empty`);
+          } else {
+            t.deepEqual(
+              actual[k][key],
+              expected[k][key],
+              `${name}.filterProps.${key} should be correct`
+            );
+          }
+        });
+      }
+    } else {
+      t.deepEqual(actual[k], expected[k], `${name}.${k} should be the same`);
     }
   });
 }
