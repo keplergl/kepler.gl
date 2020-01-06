@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import AggregationLayer from '../aggregation-layer';
-import {ScatterplotLayer} from 'deck.gl';
+import {ScatterplotLayer} from '@deck.gl/layers';
 
 import DeckGLClusterLayer from 'deckgl-layers/cluster-layer/cluster-layer';
 import {CHANNEL_SCALES} from 'constants/default-settings';

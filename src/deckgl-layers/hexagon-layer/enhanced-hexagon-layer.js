@@ -53,6 +53,10 @@ export default class ScaleEnhancedHexagonLayer extends HexagonLayer {
       cpuAggregator,
       aggregatorState: cpuAggregator.state
     };
+    const attributeManager = this.getAttributeManager();
+    attributeManager.add({
+      positions: {size: 3, accessor: 'getPosition'}
+    });
   }
 }
 

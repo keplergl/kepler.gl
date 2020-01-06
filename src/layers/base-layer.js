@@ -22,6 +22,7 @@ import {console as Console} from 'global/window';
 import keymirror from 'keymirror';
 import {DataFilterExtension} from '@deck.gl/extensions';
 import {COORDINATE_SYSTEM} from '@deck.gl/core';
+import {TextLayer} from '@deck.gl/layers';
 
 import DefaultLayerIcon from './default-layer-icon';
 import {diffUpdateTriggers} from './layer-update';
@@ -1071,5 +1072,50 @@ export default class Layer {
       wrapLongitude: true,
       coordinateSystem: COORDINATE_SYSTEM.LNGLAT
     }
+  }
+
+  renderTextLabelLayer({getPosition, getPixelOffset, updateTriggers, sharedProps}, renderOpts) {
+    const {data, mapState} = renderOpts;
+    const {textLabel} = this.config;
+
+    return data.textLabels.reduce((accu, d, i) => {
+      if (d.getText) {
+        accu.push(
+          new TextLayer({
+            ...sharedProps,
+            id: `${this.id}-label-${textLabel[i].field.name}`,
+            data: data.data,
+            getText: d.getText,
+            characterSet: d.characterSet,
+            getPixelOffset: getPixelOffset(textLabel[i]),
+            getSize: 1,
+            sizeScale: textLabel[i].size,
+            getTextAnchor: textLabel[i].anchor,
+            getAlignmentBaseline: textLabel[i].alignment,
+            getColor: textLabel[i].color,
+            parameters: {
+              // text will always show on top of all layers
+              depthTest: false
+            },
+
+            getFilterValue: data.getFilterValue,
+            updateTriggers: {
+              ...updateTriggers,
+              getText: textLabel[i].field.name,
+              getPixelOffset: {
+                ...updateTriggers.getRadius,
+                mapState,
+                anchor: textLabel[i].anchor,
+                alignment: textLabel[i].alignment
+              },
+              getTextAnchor: textLabel[i].anchor,
+              getAlignmentBaseline: textLabel[i].alignment,
+              getColor: textLabel[i].color
+            }
+          })
+        );
+      }
+      return accu;
+    }, [])
   }
 }

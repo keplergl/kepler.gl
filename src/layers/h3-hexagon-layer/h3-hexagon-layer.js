@@ -184,7 +184,7 @@ export default class HexagonIdLayer extends Layer {
       ? d => this.getEncodedChannelValue(sScale, d.data, sizeField, 0)
       : 0;
 
-    const getColor = cScale
+    const getFillColor = cScale
       ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
       : color;
 
@@ -195,7 +195,7 @@ export default class HexagonIdLayer extends Layer {
     return {
       data,
       getElevation,
-      getColor,
+      getFillColor,
       getHexId,
       getCoverage,
       getFilterValue: gpuFilter.filterValueAccessor(),
@@ -246,7 +246,7 @@ export default class HexagonIdLayer extends Layer {
     const {visConfig} = config;
 
     const h3HexagonLayerTriggers = {
-      getColor: {
+      getFillColor: {
         color: config.color,
         colorField: config.colorField,
         colorRange: visConfig.colorRange,

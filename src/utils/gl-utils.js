@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {setParameters} from 'luma.gl';
+import {setParameters} from '@luma.gl/core';
 import {LAYER_BLENDINGS} from 'constants/default-settings';
 import GL from '@luma.gl/constants';
 

@@ -53,6 +53,10 @@ export default class ScaleEnhancedGridLayer extends CPUGridLayer {
       cpuAggregator,
       aggregatorState: cpuAggregator.state
     };
+    const attributeManager = this.getAttributeManager();
+    attributeManager.add({
+      positions: {size: 3, accessor: 'getPosition'}
+    });
   }
 }
 
