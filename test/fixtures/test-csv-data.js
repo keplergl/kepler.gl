@@ -575,6 +575,33 @@ export const timeMappedValue = [
   1474617600000
 ];
 
+export const epochMappedValue = [
+  1472688000000,
+  1472688000000,
+  1472688000000,
+  1472688000000,
+  1472688000000,
+  1472688000000,
+  1472688000000,
+  1472688000000,
+  1472708000000,
+  1472708000000,
+  1472708000000,
+  1472708000000,
+  1472754400000,
+  1472754400000,
+  1472754400000,
+  1472754400000,
+  1472774400000,
+  1472774400000,
+  1472774400000,
+  1472774400000,
+  1472774400000,
+  1472774400000,
+  1472774400000,
+  1472774400000
+];
+
 export const timeHistogram = [
   {count: 8, x0: 1474588800000, x1: 1474589000000},
   {count: 0, x0: 1474589000000, x1: 1474590000000},
@@ -766,6 +793,7 @@ export const timeFilterProps = {
   type: 'timeRange',
   enlarged: true,
   fixedDomain: true,
+  gpu: true,
   value: [1474588800000, 1474617600000]
 };
 
@@ -784,13 +812,50 @@ export const mergedTimeFilter = {
   plotType: 'histogram',
   yAxis: null,
   interval: null,
-  value: [1474606800000, 1474617600000]
+  value: [1474606800000, 1474617600000],
+  gpuChannel: [0]
+};
+
+export const epochFilterProps = {
+  domain: [1472688000000, 1472774400000],
+  step: 1000,
+  mappedValue: epochMappedValue,
+  histogram: 'dont test me',
+  enlargedHistogram: 'dont test me',
+  fieldType: 'timestamp',
+  type: 'timeRange',
+  enlarged: true,
+  fixedDomain: true,
+  gpu: true,
+  value: [1472688000000, 1472774400000]
+};
+
+// value set mockStateWithFilters 1472700000000, 1472760000000
+export const mergedEpochFilter = {
+  ...epochFilterProps,
+  dataId: [dataId],
+  freeze: true,
+  id: 'epoch-1',
+  fixedDomain: true,
+  enlarged: true,
+  isAnimating: false,
+  speed: 1,
+  name: ['epoch'],
+  type: 'timeRange',
+  fieldIdx: [4],
+  plotType: 'histogram',
+  yAxis: null,
+  interval: null,
+  value: [1472700000000, 1472760000000],
+  // time filter is in channel 0
+  gpuChannel: [1]
 };
 
 export const dateFilterProps ={
   domain: ['2016-09-23', '2016-09-24', '2016-10-10'],
   fieldType: 'date',
   type: 'multiSelect',
+  gpu: false,
   value: []
 }
 

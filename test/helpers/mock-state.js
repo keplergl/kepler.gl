@@ -202,7 +202,19 @@ function mockStateWithMultiFilters() {
     {action: VisStateActions.setFilter, payload: [3, 'name', 'TRIPS']},
 
     // set filter value
-    {action: VisStateActions.setFilter, payload: [3, 'value', [4, 12]]}
+    {action: VisStateActions.setFilter, payload: [3, 'value', [4, 12]]},
+
+    // add another gpu filter
+    {action: VisStateActions.addFilter, payload: [testCsvDataId]},
+
+    // set filter to 'time'
+    {action: VisStateActions.setFilter, payload: [4, 'name', 'epoch']},
+
+    // set filter value
+    {
+      action: VisStateActions.setFilter,
+      payload: [4, 'value', [1472700000000, 1472760000000]]
+    },
   ]);
 
   // replace filter id with controlled value for easy testing

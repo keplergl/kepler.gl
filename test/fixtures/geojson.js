@@ -431,14 +431,16 @@ export const mergedTripFilter = {
   value: [4, 12],
   plotType: 'histogram',
   yAxis: null,
-  interval: null
+  interval: null,
+  gpuChannel: [0]
 };
 
 export const geoJsonRateFilterProps = {
   domain: ['a', 'b', 'c'],
   fieldType: 'string',
   type: 'multiSelect',
-  value: []
+  value: [],
+  gpu: false
 };
 
 export const mergedRateFilter = {
