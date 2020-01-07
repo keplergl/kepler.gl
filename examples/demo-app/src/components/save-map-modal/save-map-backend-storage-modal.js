@@ -43,25 +43,7 @@ class SaveMapBackendStorageModal extends Component {
     this.setState({ description: description });
   }
 
-  _saveMap = async (map) => {
-    // // Prepare data
-    // const mapData = KeplerGlSchema.save(map);
-    // const data = JSON.stringify(mapData);
-    // const newBlob = new Blob([data], {type: 'application/json'});
-    // const fileName = `/keplergl_${this.state.title}.json`;
-    // const file = new File([newBlob], fileName);
-
-    // const activeProvider = this._getActiveProvider();
-    // const result = await activeProvider.uploadFile({
-    //   data,
-    //   type: 'application/json',
-    //   blob: file,
-    //   name: fileName,
-    //   isPublic: false,
-    //   activeProvider
-    // });
-    // console.log(`Saving map "${this.state.title}" => ${result.url}`);
-
+  _saveMap = async () => {
     const provider = this._getActiveProvider();
     const extraData = {
       title: this.state.title.length ? this.state.title : null,

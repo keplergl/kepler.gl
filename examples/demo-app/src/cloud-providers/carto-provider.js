@@ -77,7 +77,7 @@ export default class CartoProvider {
     }
 
     return ({
-      url: `demo/map/carto?mapId=${result.id}&owner=${this._carto.username}`
+      url: `demo/map/carto?mapId=${result.id}&owner=${this._carto.username}&privateMap=${!isPublic}`
     });
   }
 
@@ -118,14 +118,28 @@ export default class CartoProvider {
   }
 
   async loadMap(queryParams) {
-    const { owner: username, mapId } = queryParams;
+    const { owner: username, mapId, privateMap } = queryParams;
 
     if (!username || !mapId) {
       return;
     }
 
-    // TODO: Check for private visualizations
-    const visualization = await this._carto.PublicStorageReader.getVisualization(username, mapId);
+    let visualization;
+
+    if (privateMap.trim().toLowerCase() === 'true') {
+      await this._carto.login();
+      const currentUsername = this.getUserName();
+      if (currentUsername && currentUsername===username) {
+        const cs = await this._carto.getCustomStorage();
+        visualization = await cs.getVisualization(mapId);
+      }
+    } else {
+      visualization = await this._carto.PublicStorageReader.getVisualization(username, mapId);
+    }
+
+    if (!visualization) {
+      throw {target: {status: 404, responseText: `Can't find map with ID: ${mapId}`}};
+    }
 
     // These are the options required for the action. For now, all datasets that come from CARTO are CSV
     const options = visualization.datasets.map((dataset) => {
@@ -142,6 +156,8 @@ export default class CartoProvider {
     });
 
     const datasets = visualization.datasets.map((dataset) => dataset.file);
+
+    this.currentMap = visualization.vis;
 
     return {datasets, vis: visualization.vis, options};
   }

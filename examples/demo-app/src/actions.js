@@ -369,6 +369,7 @@ export function loadCloudMap(queryParams, providerName) {
       .catch(error => {
         const {target = {}} = error;
         const {status, responseText = 'Error loading map'} = target;
+        dispatch(setLoadingMapStatus(false));
         dispatch(loadRemoteResourceError({status, message: responseText}, providerName));
       });
   }
@@ -424,6 +425,7 @@ export function exportFileToCloud(providerName, isPublic = true, extraData = {ti
           metadata: response,
           provider: cloudProvider.name
         }));
+        dispatch(toggleModal(null));
       },
       error => {
         dispatch(setPushingFile(false, {
