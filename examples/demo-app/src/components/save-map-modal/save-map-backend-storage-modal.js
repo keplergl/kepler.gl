@@ -19,19 +19,24 @@
 // THE SOFTWARE.
 
 import React, { Component } from 'react';
-import {Modal} from 'kepler.gl/components';
+import {Modal, LoadingSpinner} from 'kepler.gl/components';
+import styled from 'styled-components';
 import SaveMapModalContent from './save-map-modal-content'
 import {BACKEND_PROVIDERS} from '../../utils/backend-providers';
 
+const StyledSpinner = styled.div`
+  text-align: center;
+  span {
+    margin: 0 auto;
+  }
+`;
 class SaveMapBackendStorageModal extends Component {
-  mapTitle = '';
-  mapDescription = '';
-
   constructor(props) {
     super(props);
     this.state = {
       title: '',
-      description: ''
+      description: '',
+      isUploading: false
     };
   }
 
@@ -50,7 +55,6 @@ class SaveMapBackendStorageModal extends Component {
       description: this.state.description.length ? this.state.description : null
     };
     this.props.onSave(provider, extraData);
-
   }
 
   _isSaveDisabled = () => this.state.title.length < 3;
@@ -58,6 +62,19 @@ class SaveMapBackendStorageModal extends Component {
   _getActiveProvider = () => {
     const provider = Object.values(BACKEND_PROVIDERS).find((provider) => provider.isConnected);
     return provider ? provider.name : null
+  }
+
+  _updateStatus = () => {
+    const sharing = this.props.sharing;
+    if (sharing && sharing.info && sharing.info.status) {
+      const status = sharing.info.status;
+      if (status === 'uploading' && !this.state.isUploading) {
+        this.setState({ isUploading: true });
+      } else if (status === 'success' && this.state.isUploading) {
+        this.setState({ isUploading: false });
+        this.props.onSaveFinished();
+      }
+    }
   }
 
   _modalProps = {
@@ -71,10 +88,12 @@ class SaveMapBackendStorageModal extends Component {
   }
 
   render() {
-    const { isOpen, onClose, parentSelector } = this.props;
+    const { isOpen, onClose, parentSelector, sharing } = this.props;
     const { title, description } = this.state;
+    const isLoading = sharing.isLoading;
     this._isSaveDisabled = this._isSaveDisabled.bind(this);
     this._saveMap = this._saveMap.bind(this);
+    this._updateStatus();
     return (
       <Modal
         isOpen={isOpen}
@@ -83,12 +102,20 @@ class SaveMapBackendStorageModal extends Component {
         onConfirm={ () => { this._saveMap(); }}
         {...this._modalProps}
       >
-        <SaveMapModalContent
-          title={title}
-          onTitleChange={ this._saveTitle }
-          description={description}
-          onDescriptionChange={ this._saveDescription }
-        />
+        {isLoading ?
+          (
+            <StyledSpinner>
+              <LoadingSpinner />
+            </StyledSpinner>
+          ) : (
+            <SaveMapModalContent
+              title={title}
+              onTitleChange={ this._saveTitle }
+              description={description}
+              onDescriptionChange={ this._saveDescription }
+            />
+          )
+        }
       </Modal>
     );
   }

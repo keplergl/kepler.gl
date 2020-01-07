@@ -364,7 +364,7 @@ export function loadCloudMap(queryParams, providerName) {
     const cloudProvider = getCloudProvider(providerName);
     cloudProvider.loadMap(queryParams)
       .then(map => {
-        dispatch(loadRemoteResourceSuccess(map.datasets, map.vis.config, map.options))
+        dispatch(loadRemoteResourceSuccess(map.datasets, map.vis.config, map.options));
       })
       .catch(error => {
         const {target = {}} = error;

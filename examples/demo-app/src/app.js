@@ -323,6 +323,12 @@ class App extends Component {
     this.props.dispatch(exportFileToCloud(providerName, false, extraData));
   }
 
+  _onSaveToCloudFinished = () => {
+    this.setState({
+      saveMapToBackendModalOpen: false
+    });
+  }
+
   _onCloudLoginSuccess = (providerName) => {
     this.props.dispatch(setCloudLoginSuccess(providerName));
   };
@@ -386,9 +392,11 @@ class App extends Component {
 
           {this._isBackendStorageEnabled() && rootNode &&
             <SaveMapBackendStorageModal
+              sharing={sharing}
               isOpen={Boolean(this.state.saveMapToBackendModalOpen)}
               onClose={this._toggleSaveMapToBackendModal}
               onSave={this._onSaveToCloud}
+              onSaveFinished={this._onSaveToCloudFinished}
               parentSelector={() => findDOMNode(this.root)}
             />
           }
