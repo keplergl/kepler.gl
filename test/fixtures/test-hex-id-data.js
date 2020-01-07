@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -363,7 +363,8 @@ const fields = [
     format: '',
     tableFieldIndex: 1,
     type: 'string',
-    id: 'hex_id'
+    id: 'hex_id',
+    analyzerType: 'STRING'
   },
   {
     name: 'value',
@@ -371,6 +372,7 @@ const fields = [
     tableFieldIndex: 2,
     type: 'integer',
     id: 'value',
+    analyzerType: 'INT',
     filterProps: {
       domain: [1, 76],
       step: 0.1,

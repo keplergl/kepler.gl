@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -804,57 +804,68 @@ export const expectedFields0 = [
   {
     name: 'song_name',
     type: 'string',
-    format: ''
+    format: '',
+    analyzerType: 'STRING'
   },
   {
     name: 'begintrip_lat',
     type: 'real',
-    format: ''
+    format: '',
+    analyzerType: 'FLOAT'
   },
   {
     name: 'begintrip_lng',
     type: 'real',
-    format: ''
+    format: '',
+    analyzerType: 'FLOAT'
   },
   {
     name: 'timestamp_local',
     type: 'timestamp',
-    format: 'YYYY-M-DTHH:mm:ss.SSSS'
+    format: 'YYYY-M-DTHH:mm:ss.SSSS',
+    analyzerType: 'DATETIME'
   },
   {
     name: 'counting',
     type: 'real',
-    format: ''
+    format: '',
+    analyzerType: 'FLOAT'
   },
   {
     name: 'detail',
     type: 'string',
-    format: ''
+    format: '',
+    analyzerType: 'STRING'
   },
   {
     name: 'dropoff_lat',
     type: 'real',
-    format: ''
+    format: '',
+    analyzerType: 'FLOAT'
   },
   {
     name: 'dropoff_lng',
     type: 'real',
-    format: ''
+    format: '',
+    analyzerType: 'FLOAT'
   },
   {
     name: 'dropoff_timestamp_local',
     type: 'timestamp',
-    format: 'YYYY-M-DTHH:mm:ss.SSSS'
+    format: 'YYYY-M-DTHH:mm:ss.SSSS',
+    analyzerType: 'DATETIME'
   },
   {
     name: 'int_range',
     type: 'integer',
-    format: ''
+    format: '',
+    analyzerType: 'INT'
   },
   {
     name: 'type_boolean',
     type: 'boolean',
-    format: ''
+    format: '',
+    analyzerType: 'BOOLEAN'
   }
 ];
 
@@ -868,22 +879,26 @@ export const expectedFields1 = [
   {
     name: '_geojson',
     type: 'geojson',
-    format: ''
+    format: '',
+    analyzerType: 'GEOMETRY'
   },
   {
     name: 'OBJECTID',
     type: 'integer',
-    format: ''
+    format: '',
+    analyzerType: 'INT'
   },
   {
     name: 'ZIP_CODE',
     type: 'integer',
-    format: ''
+    format: '',
+    analyzerType: 'INT'
   },
   {
     name: 'ID',
     type: 'integer',
-    format: ''
+    format: '',
+    analyzerType: 'INT'
   }
 ];
 
@@ -1150,7 +1165,8 @@ mergedLayer2.config = {
     type: 'string',
     id: 'song_name',
     format: '',
-    tableFieldIndex: 1
+    tableFieldIndex: 1,
+    analyzerType: 'STRING'
   },
   colorScale: 'ordinal',
   colorDomain: ['2.103.2', '2.107.3', '2.116.2', '2.117.1', '3.68.4'],
@@ -1162,7 +1178,8 @@ mergedLayer2.config = {
     format: '',
     id: 'int_range',
     type: 'integer',
-    tableFieldIndex: 10
+    tableFieldIndex: 10,
+    analyzerType: 'INT'
   },
   sizeDomain: [78, 694],
   sizeScale: 'linear',
@@ -1226,7 +1243,8 @@ mergedLayer3.config = {
     id: 'int_range',
     type: 'integer',
     format: '',
-    tableFieldIndex: 10
+    tableFieldIndex: 10,
+    analyzerType: 'INT'
   },
   highlightColor: [252, 242, 26, 255],
   isConfigActive: false,
@@ -1286,7 +1304,8 @@ mergedLayer4.config = {
     id: 'ID',
     type: 'integer',
     format: '',
-    tableFieldIndex: 4
+    tableFieldIndex: 4,
+    analyzerType: 'INT'
   },
   colorScale: 'quantize',
   colorDomain: [94107, 94132],

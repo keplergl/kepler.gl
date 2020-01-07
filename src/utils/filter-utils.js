@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -798,7 +798,6 @@ export function mergeFilterDomainStep(filter, filterProps) {
       return {
         ...newFilter,
         step
-        // step: Math.min(filter.step, filterProps.step)
       };
     case ALL_FIELD_TYPES.real:
     case ALL_FIELD_TYPES.integer:

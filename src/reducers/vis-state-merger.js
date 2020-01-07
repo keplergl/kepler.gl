@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -61,8 +61,9 @@ export function mergeFilters(state, filtersToMerge) {
 
       // all datasetIds in filter must be present the state datasets
       const {filter: validatedFilter, applyToDatasets, augmentedDatasets} = datasetIds.reduce((acc, datasetId) => {
-        const dataset = datasets[datasetId];
-        const {filter: updatedFilter, dataset: updatedDataset} = validateFilterWithData(dataset, filter);
+        const dataset = updatedDatasets[datasetId];
+        const {filter: updatedFilter, dataset: updatedDataset} =
+          validateFilterWithData(acc.augmentedDatasets[datasetId] || dataset, filter);
 
         if (updatedFilter) {
           return {
@@ -80,7 +81,7 @@ export function mergeFilters(state, filtersToMerge) {
 
             augmentedDatasets: {
               ...acc.augmentedDatasets,
-              [datasetId]: updatedDataset || dataset
+              [datasetId]: updatedDataset
             }
           };
         }

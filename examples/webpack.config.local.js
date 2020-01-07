@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -54,12 +54,10 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR) {
       alias: {
         // Imports kepler.gl library from the src directory in this repo
         'kepler.gl': SRC_DIR,
-        react: resolve(EXAMPLE_DIR, './node_modules/react'),
-        'react-redux': resolve(EXAMPLE_DIR, './node_modules/react-redux'),
-        'styled-components': resolve(
-          EXAMPLE_DIR,
-          './node_modules/styled-components'
-        ),
+        react: `${NODE_MODULES_DIR}/react`,
+        'react-dom': `${NODE_MODULES_DIR}/react-dom`,
+        'react-redux': `${NODE_MODULES_DIR}/react-redux/lib`,
+        'styled-components': `${NODE_MODULES_DIR}/styled-components`,
         ...(env.deck
           ? {
               'luma.gl': `${NODE_MODULES_DIR}/luma.gl/src`,

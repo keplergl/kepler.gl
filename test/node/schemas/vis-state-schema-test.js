@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,9 @@ import {
   expectedSavedLayer2,
   expectedLoadedLayer2,
   StateWTripGeojson,
-  expectedSavedTripLayer
+  expectedSavedTripLayer,
+  testCsvDataId,
+  testGeoJsonDataId
 } from 'test/helpers/mock-state';
 
 test('#visStateSchema -> v1 -> save layers', t => {
@@ -93,7 +95,7 @@ test('#visStateSchema -> v1 -> save load filters', t => {
   const filtersToSave = vsToSave.filters;
 
   const expectedSavedFilters = [{
-    dataId: ['190vdll3di'],
+    dataId: [testCsvDataId],
     id: 'hjpn8frza',
     name: ['time'],
     type: 'timeRange',
@@ -102,7 +104,7 @@ test('#visStateSchema -> v1 -> save load filters', t => {
     plotType: 'histogram',
     yAxis: null
   }, {
-    dataId: ['ieukmgne'],
+    dataId: [testGeoJsonDataId],
     id: 'vpk2466o',
     name: ['RATE'],
     type: 'multiSelect',
@@ -130,14 +132,14 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
     tooltip: {
       enabled: true,
       fieldsToShow: {
-        '190vdll3di': [
+        [testCsvDataId]: [
           'gps_data.utc_timestamp',
           'gps_data.types',
           'epoch',
           'has_result',
           'id'
         ],
-        ieukmgne: [
+        [testGeoJsonDataId]: [
           'OBJECTID', 'ZIP_CODE', 'ID', 'TRIPS', 'RATE'
         ]}},
     brush: {

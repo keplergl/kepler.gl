@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -380,7 +380,8 @@ mergedLayer0.config = {
     type: 'integer',
     id: 'deliver_radius',
     format: '',
-    tableFieldIndex: 1
+    tableFieldIndex: 1,
+    analyzerType: 'INT'
   },
   colorDomain: [1000, 1000, 2000, 2000, 2000, 3000, 3000, 3000, 3000],
   highlightColor: [252, 242, 26, 255],
@@ -394,7 +395,8 @@ mergedLayer0.config = {
     type: 'integer',
     id: 'deliver_radius',
     format: '',
-    tableFieldIndex: 1
+    tableFieldIndex: 1,
+    analyzerType: 'INT'
   },
   sizeScale: 'sqrt',
   sizeDomain: [1000, 3000],

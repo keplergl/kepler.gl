@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -45,7 +45,7 @@ const data = `gps_data.utc_timestamp,gps_data.lat,gps_data.lng,gps_data.types,ep
 2016-09-17 00:30:03,30.0612697,31.2191059,driver_gps,1472774400000,True,7,2016-09-23T08:00:00.000Z,2016-10-01 09:53:35+00:00,2016-10-01 16:53:35+00:00,2016-10-10
 2016-09-17 00:30:08,30.0610977,31.2194728,driver_gps,1472774400000,True,,2016-09-23T08:00:00.000Z,,,`;
 
-const dataId = 'test_trip_data';
+export const dataId = '190vdll3di';
 
 export const config = {
   version: 'v1',
@@ -460,111 +460,400 @@ export const wktCsv = `a_zip,simplified_shape_v2,simplified_shape,m_rate,c_zip_t
 7023,"{""type"":""LineString"",""coordinates"":[[-74.387589,40.632238],[-74.387589,40.632238]]}","LINESTRING (-74.387589 40.632238, -74.387589 40.632238)",7.6,C_Medium_High,23.85239437
 `;
 
+// csv data
 export const testFields = [
   {
     type: 'timestamp',
     name: 'gps_data.utc_timestamp',
     format: 'YYYY-M-D H:m:s',
-    tableFieldIndex: 1
+    tableFieldIndex: 1,
+    analyzerType: 'DATETIME'
   },
   {
     type: 'real',
     name: 'gps_data.lat',
     format: '',
-    tableFieldIndex: 2
+    tableFieldIndex: 2,
+    analyzerType: 'FLOAT'
   },
   {
     type: 'real',
     name: 'gps_data.lng',
     format: '',
-    tableFieldIndex: 3
+    tableFieldIndex: 3,
+    analyzerType: 'FLOAT'
   },
   {
     type: 'string',
     name: 'gps_data.types',
     format: '',
-    tableFieldIndex: 4
+    tableFieldIndex: 4,
+    analyzerType: 'STRING'
   },
   {
     type: 'timestamp',
     name: 'epoch',
     format: 'X',
-    tableFieldIndex: 5
+    tableFieldIndex: 5,
+    analyzerType: 'TIME'
   },
   {
     type: 'boolean',
     name: 'has_result',
     format: '',
-    tableFieldIndex: 6
+    tableFieldIndex: 6,
+    analyzerType: 'BOOLEAN'
   },
   {
     type: 'integer',
     name: 'id',
     format: '',
-    tableFieldIndex: 7
+    tableFieldIndex: 7,
+    analyzerType: 'INT'
   },
   {
     type: 'timestamp',
     name: 'time',
     format: 'YYYY-M-DTHH:mm:ss.SSSS',
-    tableFieldIndex: 8
+    tableFieldIndex: 8,
+    analyzerType: 'DATETIME'
   },
   {
     type: 'timestamp',
     name: 'begintrip_ts_utc',
     format: 'YYYY-M-D HH:mm:ssZZ',
-    tableFieldIndex: 9
+    tableFieldIndex: 9,
+    analyzerType: 'DATETIME'
   },
   {
     type: 'timestamp',
     name: 'begintrip_ts_local',
     format: 'YYYY-M-D HH:mm:ssZZ',
-    tableFieldIndex: 10
+    tableFieldIndex: 10,
+    analyzerType: 'DATETIME'
   },
   {
     type: 'date',
     name: 'date',
     format: 'YYYY-M-D',
-    tableFieldIndex: 11
+    tableFieldIndex: 11,
+    analyzerType: 'DATE'
   }
 ];
+
+// add id to fields
+// TODO: cleaning up after filter refractor
+export const datasetCsvFields = testFields.map(f => ({
+  ...f,
+  id: f.name
+}));
+
+export const timeMappedValue = [
+  1474588800000,
+  1474588800000,
+  1474588800000,
+  1474588800000,
+  1474588800000,
+  1474606800000,
+  1474606800000,
+  1474588800000,
+  1474588800000,
+  1474610400000,
+  1474606800000,
+  null,
+  null,
+  1474610400000,
+  1474610400000,
+  1474588800000,
+  1474614000000,
+  1474614000000,
+  1474614000000,
+  1474614000000,
+  1474614000000,
+  1474617600000,
+  1474617600000,
+  1474617600000
+];
+
+export const timeHistogram = [
+  {count: 8, x0: 1474588800000, x1: 1474589000000},
+  {count: 0, x0: 1474589000000, x1: 1474590000000},
+  {count: 0, x0: 1474590000000, x1: 1474591000000},
+  {count: 0, x0: 1474591000000, x1: 1474592000000},
+  {count: 0, x0: 1474592000000, x1: 1474593000000},
+  {count: 0, x0: 1474593000000, x1: 1474594000000},
+  {count: 0, x0: 1474594000000, x1: 1474595000000},
+  {count: 0, x0: 1474595000000, x1: 1474596000000},
+  {count: 0, x0: 1474596000000, x1: 1474597000000},
+  {count: 0, x0: 1474597000000, x1: 1474598000000},
+  {count: 0, x0: 1474598000000, x1: 1474599000000},
+  {count: 0, x0: 1474599000000, x1: 1474600000000},
+  {count: 0, x0: 1474600000000, x1: 1474601000000},
+  {count: 0, x0: 1474601000000, x1: 1474602000000},
+  {count: 0, x0: 1474602000000, x1: 1474603000000},
+  {count: 0, x0: 1474603000000, x1: 1474604000000},
+  {count: 0, x0: 1474604000000, x1: 1474605000000},
+  {count: 0, x0: 1474605000000, x1: 1474606000000},
+  {count: 3, x0: 1474606000000, x1: 1474607000000},
+  {count: 0, x0: 1474607000000, x1: 1474608000000},
+  {count: 0, x0: 1474608000000, x1: 1474609000000},
+  {count: 0, x0: 1474609000000, x1: 1474610000000},
+  {count: 3, x0: 1474610000000, x1: 1474611000000},
+  {count: 0, x0: 1474611000000, x1: 1474612000000},
+  {count: 0, x0: 1474612000000, x1: 1474613000000},
+  {count: 0, x0: 1474613000000, x1: 1474614000000},
+  {count: 5, x0: 1474614000000, x1: 1474615000000},
+  {count: 0, x0: 1474615000000, x1: 1474616000000},
+  {count: 0, x0: 1474616000000, x1: 1474617000000},
+  {count: 3, x0: 1474617000000, x1: 1474617600000}
+];
+
+export const enlargedTimeHistogram = [
+  {count: 8, x0: 1474588800000, x1: 1474589000000},
+  {count: 0, x0: 1474589000000, x1: 1474589200000},
+  {count: 0, x0: 1474589200000, x1: 1474589400000},
+  {count: 0, x0: 1474589400000, x1: 1474589600000},
+  {count: 0, x0: 1474589600000, x1: 1474589800000},
+  {count: 0, x0: 1474589800000, x1: 1474590000000},
+  {count: 0, x0: 1474590000000, x1: 1474590200000},
+  {count: 0, x0: 1474590200000, x1: 1474590400000},
+  {count: 0, x0: 1474590400000, x1: 1474590600000},
+  {count: 0, x0: 1474590600000, x1: 1474590800000},
+  {count: 0, x0: 1474590800000, x1: 1474591000000},
+  {count: 0, x0: 1474591000000, x1: 1474591200000},
+  {count: 0, x0: 1474591200000, x1: 1474591400000},
+  {count: 0, x0: 1474591400000, x1: 1474591600000},
+  {count: 0, x0: 1474591600000, x1: 1474591800000},
+  {count: 0, x0: 1474591800000, x1: 1474592000000},
+  {count: 0, x0: 1474592000000, x1: 1474592200000},
+  {count: 0, x0: 1474592200000, x1: 1474592400000},
+  {count: 0, x0: 1474592400000, x1: 1474592600000},
+  {count: 0, x0: 1474592600000, x1: 1474592800000},
+  {count: 0, x0: 1474592800000, x1: 1474593000000},
+  {count: 0, x0: 1474593000000, x1: 1474593200000},
+  {count: 0, x0: 1474593200000, x1: 1474593400000},
+  {count: 0, x0: 1474593400000, x1: 1474593600000},
+  {count: 0, x0: 1474593600000, x1: 1474593800000},
+  {count: 0, x0: 1474593800000, x1: 1474594000000},
+  {count: 0, x0: 1474594000000, x1: 1474594200000},
+  {count: 0, x0: 1474594200000, x1: 1474594400000},
+  {count: 0, x0: 1474594400000, x1: 1474594600000},
+  {count: 0, x0: 1474594600000, x1: 1474594800000},
+  {count: 0, x0: 1474594800000, x1: 1474595000000},
+  {count: 0, x0: 1474595000000, x1: 1474595200000},
+  {count: 0, x0: 1474595200000, x1: 1474595400000},
+  {count: 0, x0: 1474595400000, x1: 1474595600000},
+  {count: 0, x0: 1474595600000, x1: 1474595800000},
+  {count: 0, x0: 1474595800000, x1: 1474596000000},
+  {count: 0, x0: 1474596000000, x1: 1474596200000},
+  {count: 0, x0: 1474596200000, x1: 1474596400000},
+  {count: 0, x0: 1474596400000, x1: 1474596600000},
+  {count: 0, x0: 1474596600000, x1: 1474596800000},
+  {count: 0, x0: 1474596800000, x1: 1474597000000},
+  {count: 0, x0: 1474597000000, x1: 1474597200000},
+  {count: 0, x0: 1474597200000, x1: 1474597400000},
+  {count: 0, x0: 1474597400000, x1: 1474597600000},
+  {count: 0, x0: 1474597600000, x1: 1474597800000},
+  {count: 0, x0: 1474597800000, x1: 1474598000000},
+  {count: 0, x0: 1474598000000, x1: 1474598200000},
+  {count: 0, x0: 1474598200000, x1: 1474598400000},
+  {count: 0, x0: 1474598400000, x1: 1474598600000},
+  {count: 0, x0: 1474598600000, x1: 1474598800000},
+  {count: 0, x0: 1474598800000, x1: 1474599000000},
+  {count: 0, x0: 1474599000000, x1: 1474599200000},
+  {count: 0, x0: 1474599200000, x1: 1474599400000},
+  {count: 0, x0: 1474599400000, x1: 1474599600000},
+  {count: 0, x0: 1474599600000, x1: 1474599800000},
+  {count: 0, x0: 1474599800000, x1: 1474600000000},
+  {count: 0, x0: 1474600000000, x1: 1474600200000},
+  {count: 0, x0: 1474600200000, x1: 1474600400000},
+  {count: 0, x0: 1474600400000, x1: 1474600600000},
+  {count: 0, x0: 1474600600000, x1: 1474600800000},
+  {count: 0, x0: 1474600800000, x1: 1474601000000},
+  {count: 0, x0: 1474601000000, x1: 1474601200000},
+  {count: 0, x0: 1474601200000, x1: 1474601400000},
+  {count: 0, x0: 1474601400000, x1: 1474601600000},
+  {count: 0, x0: 1474601600000, x1: 1474601800000},
+  {count: 0, x0: 1474601800000, x1: 1474602000000},
+  {count: 0, x0: 1474602000000, x1: 1474602200000},
+  {count: 0, x0: 1474602200000, x1: 1474602400000},
+  {count: 0, x0: 1474602400000, x1: 1474602600000},
+  {count: 0, x0: 1474602600000, x1: 1474602800000},
+  {count: 0, x0: 1474602800000, x1: 1474603000000},
+  {count: 0, x0: 1474603000000, x1: 1474603200000},
+  {count: 0, x0: 1474603200000, x1: 1474603400000},
+  {count: 0, x0: 1474603400000, x1: 1474603600000},
+  {count: 0, x0: 1474603600000, x1: 1474603800000},
+  {count: 0, x0: 1474603800000, x1: 1474604000000},
+  {count: 0, x0: 1474604000000, x1: 1474604200000},
+  {count: 0, x0: 1474604200000, x1: 1474604400000},
+  {count: 0, x0: 1474604400000, x1: 1474604600000},
+  {count: 0, x0: 1474604600000, x1: 1474604800000},
+  {count: 0, x0: 1474604800000, x1: 1474605000000},
+  {count: 0, x0: 1474605000000, x1: 1474605200000},
+  {count: 0, x0: 1474605200000, x1: 1474605400000},
+  {count: 0, x0: 1474605400000, x1: 1474605600000},
+  {count: 0, x0: 1474605600000, x1: 1474605800000},
+  {count: 0, x0: 1474605800000, x1: 1474606000000},
+  {count: 0, x0: 1474606000000, x1: 1474606200000},
+  {count: 0, x0: 1474606200000, x1: 1474606400000},
+  {count: 0, x0: 1474606400000, x1: 1474606600000},
+  {count: 0, x0: 1474606600000, x1: 1474606800000},
+  {count: 3, x0: 1474606800000, x1: 1474607000000},
+  {count: 0, x0: 1474607000000, x1: 1474607200000},
+  {count: 0, x0: 1474607200000, x1: 1474607400000},
+  {count: 0, x0: 1474607400000, x1: 1474607600000},
+  {count: 0, x0: 1474607600000, x1: 1474607800000},
+  {count: 0, x0: 1474607800000, x1: 1474608000000},
+  {count: 0, x0: 1474608000000, x1: 1474608200000},
+  {count: 0, x0: 1474608200000, x1: 1474608400000},
+  {count: 0, x0: 1474608400000, x1: 1474608600000},
+  {count: 0, x0: 1474608600000, x1: 1474608800000},
+  {count: 0, x0: 1474608800000, x1: 1474609000000},
+  {count: 0, x0: 1474609000000, x1: 1474609200000},
+  {count: 0, x0: 1474609200000, x1: 1474609400000},
+  {count: 0, x0: 1474609400000, x1: 1474609600000},
+  {count: 0, x0: 1474609600000, x1: 1474609800000},
+  {count: 0, x0: 1474609800000, x1: 1474610000000},
+  {count: 0, x0: 1474610000000, x1: 1474610200000},
+  {count: 0, x0: 1474610200000, x1: 1474610400000},
+  {count: 3, x0: 1474610400000, x1: 1474610600000},
+  {count: 0, x0: 1474610600000, x1: 1474610800000},
+  {count: 0, x0: 1474610800000, x1: 1474611000000},
+  {count: 0, x0: 1474611000000, x1: 1474611200000},
+  {count: 0, x0: 1474611200000, x1: 1474611400000},
+  {count: 0, x0: 1474611400000, x1: 1474611600000},
+  {count: 0, x0: 1474611600000, x1: 1474611800000},
+  {count: 0, x0: 1474611800000, x1: 1474612000000},
+  {count: 0, x0: 1474612000000, x1: 1474612200000},
+  {count: 0, x0: 1474612200000, x1: 1474612400000},
+  {count: 0, x0: 1474612400000, x1: 1474612600000},
+  {count: 0, x0: 1474612600000, x1: 1474612800000},
+  {count: 0, x0: 1474612800000, x1: 1474613000000},
+  {count: 0, x0: 1474613000000, x1: 1474613200000},
+  {count: 0, x0: 1474613200000, x1: 1474613400000},
+  {count: 0, x0: 1474613400000, x1: 1474613600000},
+  {count: 0, x0: 1474613600000, x1: 1474613800000},
+  {count: 0, x0: 1474613800000, x1: 1474614000000},
+  {count: 5, x0: 1474614000000, x1: 1474614200000},
+  {count: 0, x0: 1474614200000, x1: 1474614400000},
+  {count: 0, x0: 1474614400000, x1: 1474614600000},
+  {count: 0, x0: 1474614600000, x1: 1474614800000},
+  {count: 0, x0: 1474614800000, x1: 1474615000000},
+  {count: 0, x0: 1474615000000, x1: 1474615200000},
+  {count: 0, x0: 1474615200000, x1: 1474615400000},
+  {count: 0, x0: 1474615400000, x1: 1474615600000},
+  {count: 0, x0: 1474615600000, x1: 1474615800000},
+  {count: 0, x0: 1474615800000, x1: 1474616000000},
+  {count: 0, x0: 1474616000000, x1: 1474616200000},
+  {count: 0, x0: 1474616200000, x1: 1474616400000},
+  {count: 0, x0: 1474616400000, x1: 1474616600000},
+  {count: 0, x0: 1474616600000, x1: 1474616800000},
+  {count: 0, x0: 1474616800000, x1: 1474617000000},
+  {count: 0, x0: 1474617000000, x1: 1474617200000},
+  {count: 0, x0: 1474617200000, x1: 1474617400000},
+  {count: 0, x0: 1474617400000, x1: 1474617600000},
+  {count: 3, x0: 1474617600000, x1: 1474617600000}
+];
+
+export const timeFilterProps = {
+  domain: [1474588800000, 1474617600000],
+  step: 1000,
+  mappedValue: timeMappedValue,
+  histogram: timeHistogram,
+  enlargedHistogram: enlargedTimeHistogram,
+  fieldType: 'timestamp',
+  type: 'timeRange',
+  enlarged: true,
+  fixedDomain: true,
+  value: [1474588800000, 1474617600000]
+};
+
+export const mergedTimeFilter = {
+  ...timeFilterProps,
+  dataId: [dataId],
+  freeze: true,
+  id: 'time-0',
+  fixedDomain: true,
+  enlarged: true,
+  isAnimating: false,
+  speed: 1,
+  name: ['time'],
+  type: 'timeRange',
+  fieldIdx: [7],
+  plotType: 'histogram',
+  yAxis: null,
+  interval: null,
+  value: [1474606800000, 1474617600000]
+};
+
+export const dateFilterProps ={
+  domain: ['2016-09-23', '2016-09-24', '2016-10-10'],
+  fieldType: 'date',
+  type: 'multiSelect',
+  value: []
+}
+
+export const mergedDateFilter = {
+  ...dateFilterProps,
+  dataId: [dataId],
+  freeze: true,
+  id: 'date-2',
+  fixedDomain: false,
+  enlarged: false,
+  isAnimating: false,
+  speed: 1,
+  name: ['date'],
+  type: 'multiSelect',
+  fieldIdx: [10],
+  value: ['2016-09-24', '2016-09-23'],
+  plotType: 'histogram',
+  yAxis: null,
+  interval: null
+}
 
 export const wktCsvFields = [
   {
     type: 'integer',
     name: 'a_zip',
     format: '',
-    tableFieldIndex: 1
+    tableFieldIndex: 1,
+    analyzerType: 'INT'
   },
   {
     type: 'geojson',
     name: 'simplified_shape_v2',
     format: '',
-    tableFieldIndex: 2
+    tableFieldIndex: 2,
+    analyzerType: 'PAIR_GEOMETRY_FROM_STRING'
   },
   {
     type: 'geojson',
     name: 'simplified_shape',
     format: '',
-    tableFieldIndex: 3
+    tableFieldIndex: 3,
+    analyzerType: 'GEOMETRY_FROM_STRING'
   },
   {
     type: 'real',
     name: 'm_rate',
     format: '',
-    tableFieldIndex: 4
+    tableFieldIndex: 4,
+    analyzerType: 'FLOAT'
   },
   {
     type: 'string',
     name: 'c_zip_type',
     format: '',
-    tableFieldIndex: 5
+    tableFieldIndex: 5,
+    analyzerType: 'STRING'
   },
   {
     type: 'real',
     name: 'c_number',
     format: '',
-    tableFieldIndex: 6
+    tableFieldIndex: 6,
+    analyzerType: 'FLOAT'
   }
 ];
 
@@ -927,7 +1216,12 @@ export const updatedLayerV2 = {
       },
       geometry: {
         type: 'Polygon',
-        coordinates: [[[-74.387589, 40.632238], [-74.387589, 40.632238]]]
+        coordinates: [
+          [
+            [-74.387589, 40.632238],
+            [-74.387589, 40.632238]
+          ]
+        ]
       }
     },
     {
@@ -962,7 +1256,12 @@ export const updatedLayerV2 = {
               [-74.566993, 41.087294]
             ]
           ],
-          [[[-74.593264, 41.088526], [-74.593264, 41.088526]]]
+          [
+            [
+              [-74.593264, 41.088526],
+              [-74.593264, 41.088526]
+            ]
+          ]
         ]
       }
     },
@@ -973,7 +1272,10 @@ export const updatedLayerV2 = {
       },
       geometry: {
         type: 'LineString',
-        coordinates: [[-74.387589, 40.632238], [-74.387589, 40.632238]]
+        coordinates: [
+          [-74.387589, 40.632238],
+          [-74.387589, 40.632238]
+        ]
       }
     }
   ],

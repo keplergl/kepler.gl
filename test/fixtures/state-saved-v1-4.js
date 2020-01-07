@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -238,7 +238,8 @@ mergedLayer0.config = {
       type: 'string',
       format: '',
       id: 'name',
-      tableFieldIndex: 8
+      tableFieldIndex: 8,
+      analyzerType: 'STRING'
     },
     color: [184, 15, 135, 255],
     size: 27,

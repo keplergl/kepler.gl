@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -38,11 +38,6 @@ const CONFIG = {
   },
 
   devtool: 'source-map',
-
-  resolve: {
-    // Make src files outside of this dir resolve modules in our node_modules folder
-    modules: [resolve(__dirname, '.'), resolve(__dirname, 'node_modules'), 'node_modules']
-  },
 
   module: {
     rules: [

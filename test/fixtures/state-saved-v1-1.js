@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import GeojsonLayer from 'layers/geojson-layer/geojson-layer';
-import {Messages, Crosshairs} from 'components/common/icons';
 import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from 'layers/layer-factory';
 import {getDefaultInteraction} from 'utils/interaction-utils';
 
@@ -817,22 +816,22 @@ export const v0ExpectedInfo = {
 };
 
 export const v0ExpectedFields = [
-  {name: 'a_zip', type: 'integer', format: ''},
-  {name: 'simplified_shape_v2', type: 'geojson', format: ''},
-  {name: 'simplified_shape', type: 'geojson', format: ''},
-  {name: 'zip_area', type: 'real', format: ''},
-  {name: 'avg_number', type: 'real', format: ''},
-  {name: 'str_type', type: 'string', format: ''},
-  {name: 'int_type', type: 'integer', format: ''},
-  {name: 'real_type', type: 'real', format: ''},
-  {name: 'c_m_r', type: 'integer', format: ''},
-  {name: 'c_m_t', type: 'real', format: ''},
-  {name: 'c_a_v', type: 'real', format: ''},
-  {name: 'c_ch', type: 'real', format: ''},
-  {name: 'c_ta', type: 'real', format: ''},
-  {name: 'c_k_a', type: 'real', format: ''},
-  {name: 'c_ltv', type: 'real', format: ''},
-  {name: 'b_r_p', type: 'real', format: ''}
+  {name: 'a_zip', type: 'integer', format: '', analyzerType: 'INT'},
+  {name: 'simplified_shape_v2', type: 'geojson', format: '', analyzerType: 'PAIR_GEOMETRY_FROM_STRING'},
+  {name: 'simplified_shape', type: 'geojson', format: '', analyzerType: 'GEOMETRY_FROM_STRING'},
+  {name: 'zip_area', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'avg_number', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'str_type', type: 'string', format: '', analyzerType: 'STRING'},
+  {name: 'int_type', type: 'integer', format: '', analyzerType: 'INT'},
+  {name: 'real_type', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'c_m_r', type: 'integer', format: '', analyzerType: 'INT'},
+  {name: 'c_m_t', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'c_a_v', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'c_ch', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'c_ta', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'c_k_a', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'c_ltv', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'b_r_p', type: 'real', format: '', analyzerType: 'FLOAT'}
 ];
 
 export const mergedFilters = [
@@ -882,7 +881,8 @@ mergedLayer0.config = {
     type: 'integer',
     id: 'c_m_r',
     format: '',
-    tableFieldIndex: 9
+    tableFieldIndex: 9,
+    analyzerType: 'INT'
   },
   colorScale: 'quantize',
   colorDomain: [45, 9642],
@@ -891,7 +891,8 @@ mergedLayer0.config = {
     type: 'integer',
     id: 'c_m_r',
     format: '',
-    tableFieldIndex: 9
+    tableFieldIndex: 9,
+    analyzerType: 'INT'
   },
   strokeColorScale: 'quantize',
   strokeColorDomain: [45, 9642],
@@ -904,7 +905,8 @@ mergedLayer0.config = {
     type: 'real',
     id: 'c_a_v',
     format: '',
-    tableFieldIndex: 11
+    tableFieldIndex: 11,
+    analyzerType: 'FLOAT'
   },
   heightScale: 'linear',
   heightDomain: [211.9244058, 858.5168842],
@@ -2703,7 +2705,8 @@ mergedLayer1.config = {
     id: 'c_ta',
     type: 'real',
     format: '',
-    tableFieldIndex: 13
+    tableFieldIndex: 13,
+    analyzerType: 'FLOAT'
   },
   sizeScale: 'linear',
   sizeDomain: [0.970877074, 1],

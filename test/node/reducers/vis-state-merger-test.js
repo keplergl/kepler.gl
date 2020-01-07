@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -44,17 +44,20 @@ import {
   mergedLayers as mergedLayersV0,
   mergedInteractions as mergedInteractionsV0
 } from 'test/fixtures/state-saved-v0';
+
 import {
   savedStateV1,
   mergedFilters as mergedFiltersV1,
   mergedLayers as mergedLayersV1,
   mergedInteraction as MergedInteractionV1,
 } from 'test/fixtures/state-saved-v1-1';
+
 import {
   savedStateV1 as savedStateV1Split,
   mergedLayers as mergedLayersV1Split,
   mergedSplitMaps as mergedSplitMapsV1
 } from 'test/fixtures/state-saved-v1-3';
+
 import {
   stateSavedV1 as savedStateV1Label,
   mergedLayers as mergedLayersV1Label
@@ -70,15 +73,36 @@ import {
 } from 'test/fixtures/state-saved-v1-6';
 
 // helpers
-import {cmpFilters, cmpLayers} from 'test/helpers/comparison-utils';
+import {cmpFilters, cmpLayers, cmpDatasets} from 'test/helpers/comparison-utils';
 
 // mock app state
 import {
   InitialState,
   StateWFilters,
+  StateWMultiFilters,
   StateWFilesFiltersLayerColor,
-  StateWSplitMaps
+  StateWSplitMaps,
+  testCsvDataId,
+  testGeoJsonDataId
 } from 'test/helpers/mock-state';
+
+import {
+  datasetCsvFields,
+  testAllData,
+  timeFilterProps,
+  dateFilterProps,
+  mergedTimeFilter,
+  mergedDateFilter
+} from 'test/fixtures/test-csv-data';
+
+import {
+  datasetFields as testGeoJsonFields,
+  datasetAllData as testGeoJsonAllData,
+  geoJsonRateFilterProps,
+  geoJsonTripFilterProps,
+  mergedTripFilter,
+  mergedRateFilter
+} from 'test/fixtures/geojson';
 
 test('VisStateMerger.v0 -> mergeFilters -> toEmptyState', t => {
   const savedConfig = cloneDeep(savedStateV0);
@@ -661,14 +685,14 @@ test('VisStateMerger.v0 -> mergeInteractions -> toWorkingState', t => {
       enabled: true,
       config: {
         fieldsToShow: {
-          '190vdll3di': [
+          [testCsvDataId]: [
             'gps_data.utc_timestamp',
             'gps_data.types',
             'epoch',
             'has_result',
             'id'
           ],
-          ieukmgne: ['OBJECTID', 'ZIP_CODE', 'ID', 'TRIPS', 'RATE'],
+          [testGeoJsonDataId]: ['OBJECTID', 'ZIP_CODE', 'ID', 'TRIPS', 'RATE'],
           '9h10t7fyb': ['int_range', 'detail', 'type_boolean'],
           v79816te8: ['ID', 'ZIP_CODE']
         }
@@ -816,14 +840,14 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
             enabled: false,
             config: {
               fieldsToShow: {
-                '190vdll3di': [
+                [testCsvDataId]: [
                   'gps_data.utc_timestamp',
                   'gps_data.types',
                   'epoch',
                   'has_result',
                   'id'
                 ],
-                ieukmgne: ['OBJECTID', 'ZIP_CODE', 'ID', 'TRIPS', 'RATE']
+                [testGeoJsonDataId]: ['OBJECTID', 'ZIP_CODE', 'ID', 'TRIPS', 'RATE']
               }
             }
           },
@@ -860,14 +884,14 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
       enabled: false,
       config: {
         fieldsToShow: {
-          '190vdll3di': [
+          [testCsvDataId]: [
             'gps_data.utc_timestamp',
             'gps_data.types',
             'epoch',
             'has_result',
             'id'
           ],
-          ieukmgne: ['OBJECTID', 'ZIP_CODE', 'ID', 'TRIPS', 'RATE'],
+          [testGeoJsonDataId]: ['OBJECTID', 'ZIP_CODE', 'ID', 'TRIPS', 'RATE'],
           a5ybmwl2d: ['a_zip', 'str_type', 'int_type']
         }
       }
@@ -1144,5 +1168,78 @@ test('VisStateMerger.v1 -> mergeFilters -> nonValidFilter', t => {
 
   // parsed filters must be empty
   cmpFilters(t, [], stateWData.filters);
+  t.end();
+});
+
+test('VisStateMerger.v1 -> mergeFilters -> multiFilters', t => {
+  const stateToSave = cloneDeep(StateWMultiFilters);
+  const oldCsvData = stateToSave.visState.datasets[testCsvDataId];
+  const oldGeoJsonData = stateToSave.visState.datasets[testGeoJsonDataId];
+  const appStateToSave = SchemaManager.save(stateToSave);
+  const stateParsed = SchemaManager.load(appStateToSave);
+
+  const oldState = cloneDeep(InitialState);
+  const oldVisState = oldState.visState;
+
+  const mergedState = visStateReducer(oldVisState,
+    updateVisData(
+      stateParsed.datasets,
+      {},
+      stateParsed.config
+    ));
+  // check datasets is filtered
+  // and field has filterProps
+  const expectedDatasets = {
+    [testCsvDataId]: {
+      fields: datasetCsvFields.map(f => ({
+        ...f,
+        ...(
+          f.name === 'time' ?
+          {filterProps: timeFilterProps} : f.name === 'date' ?
+          {filterProps: dateFilterProps} : {}
+        )
+      })),
+      allData: testAllData,
+      id: testCsvDataId,
+      label: 'hello.csv',
+      color: 'donot test me',
+      data: [
+        testAllData[9],
+        testAllData[10]
+      ],
+      filteredIndex: [9, 10],
+      filteredIndexForDomain: [0, 1, 2, 3, 7, 8, 9, 10, 11, 12],
+      fieldPairs: oldCsvData.fieldPairs
+    },
+    [testGeoJsonDataId]: {
+      fields: testGeoJsonFields.map(f => ({
+        ...f,
+        ...(
+          f.name === 'TRIPS' ?
+          {filterProps: geoJsonTripFilterProps} : f.name === 'RATE' ?
+          {filterProps: geoJsonRateFilterProps} : {}
+        )
+      })),
+      allData: testGeoJsonAllData,
+      id: testGeoJsonDataId,
+      label: 'zip.geojson',
+      color: 'donot test me',
+      data: [testGeoJsonAllData[0]],
+      filteredIndex: [0],
+      filteredIndexForDomain: [0],
+      fieldPairs: oldGeoJsonData.fieldPairs
+    }
+  };
+
+  cmpDatasets(t, expectedDatasets, mergedState.datasets);
+
+  const expectedFilters = [
+    mergedTimeFilter,
+    mergedRateFilter,
+    mergedDateFilter,
+    mergedTripFilter
+  ];
+
+  cmpFilters(t, expectedFilters, mergedState.filters);
   t.end();
 });

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,7 @@ import mapStyleSchema from './map-style-schema';
 import mapStateSchema from './map-state-schema';
 
 import {CURRENT_VERSION, VERSIONS} from './versions';
+import {isPlainObject} from 'utils/utils';
 
 const REDUCER_SCHEMAS = {
   visState: visStateSchema,
@@ -81,10 +82,29 @@ class KeplerGLSchema {
     };
   }
 
+  /**
+   *  Load saved map, argument can be (datasets, config) or ({datasets, config})
+   * @param {Object|Array<Object>} savedDatasets
+   * @param {Object} savedConfig
+   */
   load(savedDatasets, savedConfig) {
+    // if pass dataset and config in as a single object
+    if (
+      arguments.length === 1 &&
+      isPlainObject(arguments[0]) &&
+      (Array.isArray(arguments[0].datasets) ||
+        isPlainObject(arguments[0].config))
+    ) {
+      return this.load(arguments[0].datasets, arguments[0].config);
+    }
+
     return {
-      datasets: this.parseSavedData(savedDatasets),
-      config: savedConfig ? this.parseSavedConfig(savedConfig) : undefined
+      ...(Array.isArray(savedDatasets)
+        ? {datasets: this.parseSavedData(savedDatasets)}
+        : {}),
+      ...(savedConfig
+        ? {config: this.parseSavedConfig(savedConfig)}
+        : {})
     };
   }
 
@@ -164,13 +184,11 @@ class KeplerGLSchema {
 
     return Object.keys(config).reduce(
       (accu, key) => ({
-          ...accu,
-          ...(key in this._reducerSchemas
-            ? this._reducerSchemas[key][validVersion].load(
-                config[key]
-              )
-            : {})
-        }),
+        ...accu,
+        ...(key in this._reducerSchemas
+          ? this._reducerSchemas[key][validVersion].load(config[key])
+          : {})
+      }),
       {}
     );
   }

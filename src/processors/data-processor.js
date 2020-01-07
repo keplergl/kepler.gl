@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -288,7 +288,8 @@ export function getFieldsFromData(data, fieldOrder) {
       name,
       format,
       tableFieldIndex: index + 1,
-      type: analyzerTypeToFieldType(type)
+      type: analyzerTypeToFieldType(type),
+      analyzerType: type
     };
     return orderedArray;
   }, []);
@@ -567,6 +568,11 @@ export function validateInputData(data) {
       return false;
     }
 
+    if (!fields.every(field => field.analyzerType)) {
+      assert('field missing analyzerType');
+      return false;
+    }
+
     // check time format is correct based on first 10 not empty element
     if (f.type === ALL_FIELD_TYPES.timestamp) {
       const sample = findNonEmptyRowsAtField(rows, i, 10)
@@ -593,7 +599,8 @@ export function validateInputData(data) {
   const updatedFields = fields.map((f, i) => ({
     ...f,
     type: meta[i].type,
-    format: meta[i].format
+    format: meta[i].format,
+    analyzerType: meta[i].analyzerType
   }));
 
   return {fields: updatedFields, rows};

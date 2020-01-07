@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -30,8 +30,16 @@ import {addDataToMap} from 'actions/actions';
 import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_RANGE, DEFAULT_LAYER_OPACITY} from 'layers/layer-factory';
 
 // fixtures
-import {testFields, testAllData} from 'test/fixtures/test-csv-data';
-import {fields, rows} from 'test/fixtures/geojson';
+import {
+  dataId as csvDataId,
+  testFields,
+  testAllData
+} from 'test/fixtures/test-csv-data';
+import {
+  fields,
+  rows,
+  geoJsonDataId
+} from 'test/fixtures/geojson';
 import {
   fields as tripFields,
   rows as tripRows,
@@ -43,17 +51,19 @@ import {processGeojson} from 'processors/data-processor';
 
 const geojsonFields = cloneDeep(fields);
 const geojsonRows = cloneDeep(rows);
+export const testCsvDataId = csvDataId;
+export const testGeoJsonDataId = geoJsonDataId;
 
-const csvInfo = {
-  id: '190vdll3di',
+export const csvInfo = {
+  id: testCsvDataId,
   label: 'hello.csv',
   queryType: 'file',
   queryOption: 'csv',
   params: {file: null}
 };
 
-const geojsonInfo = {
-  id: 'ieukmgne',
+export const geojsonInfo = {
+  id: testGeoJsonDataId,
   label: 'zip.geojson',
   queryType: 'file',
   queryOption: 'geojson',
@@ -134,7 +144,7 @@ function mockStateWithFilters(state) {
 
   const prepareState = applyActions(keplerGlReducer, initialState, [
     // add filter
-    {action: VisStateActions.addFilter, payload: ['190vdll3di']},
+    {action: VisStateActions.addFilter, payload: [testCsvDataId]},
 
     // set filter to 'time'
     {action: VisStateActions.setFilter, payload: [0, 'name', 'time']},
@@ -146,13 +156,47 @@ function mockStateWithFilters(state) {
     },
 
     // add another filter
-    {action: VisStateActions.addFilter, payload: ['ieukmgne']},
+    {action: VisStateActions.addFilter, payload: [testGeoJsonDataId]},
 
     // set filter to 'RATE'
     {action: VisStateActions.setFilter, payload: [1, 'name', 'RATE']},
 
     // set filter value
     {action: VisStateActions.setFilter, payload: [1, 'value', ['a']]}
+  ]);
+
+  // replace filter id with controlled value for easy testing
+  prepareState.visState.filters.forEach((f, i) => {
+    f.id = `${f.name}-${i}`;
+  });
+
+  return prepareState;
+}
+
+function mockStateWithMultiFilters() {
+  const initialState = mockStateWithFilters();
+
+  const prepareState = applyActions(keplerGlReducer, initialState, [
+    // add filter
+    {action: VisStateActions.addFilter, payload: [testCsvDataId]},
+
+    // set filter to 'time'
+    {action: VisStateActions.setFilter, payload: [2, 'name', 'date']},
+
+    // set filter value
+    {
+      action: VisStateActions.setFilter,
+      payload: [2, 'value', ['2016-09-24', '2016-09-23']]
+    },
+
+    // add another filter
+    {action: VisStateActions.addFilter, payload: [testGeoJsonDataId]},
+
+    // set filter to 'RATE'
+    {action: VisStateActions.setFilter, payload: [3, 'name', 'TRIPS']},
+
+    // set filter value
+    {action: VisStateActions.setFilter, payload: [3, 'value', [4, 12]]}
   ]);
 
   // replace filter id with controlled value for easy testing
@@ -186,10 +230,10 @@ function mockStateWithLayerDimensions(state) {
   const initialState = state || mockStateWithFileUpload();
 
   const layer0 = initialState.visState.layers.find(
-    l => l.config.dataId === '190vdll3di' && l.type === 'point'
+    l => l.config.dataId === testCsvDataId && l.type === 'point'
   );
 
-  const colorField = initialState.visState.datasets['190vdll3di'].fields.find(
+  const colorField = initialState.visState.datasets[testCsvDataId].fields.find(
     f => f.name === 'gps_data.types'
   );
 
@@ -202,7 +246,7 @@ function mockStateWithLayerDimensions(state) {
   ];
 
   const textLabelField = initialState.visState.datasets[
-    '190vdll3di'
+    testCsvDataId
   ].fields.find(f => f.name === 'date');
 
   const textLabelPayload1 = [layer0, 0, 'field', textLabelField];
@@ -243,7 +287,7 @@ function mockStateWithLayerDimensions(state) {
   hexagonLayer.id = 'hexagon-2';
 
   const updateLayerConfig = {
-    dataId: '190vdll3di',
+    dataId: testCsvDataId,
     columns: {
       lat: {value: 'gps_data.lat', fieldIdx: 1},
       lng: {value: 'gps_data.lng', fieldIdx: 2}
@@ -329,7 +373,7 @@ export const expectedSavedLayer0 = {
   id: 'hexagon-2',
   type: 'hexagon',
   config: {
-    dataId: '190vdll3di',
+    dataId: testCsvDataId,
     label: 'new layer',
     color: [2, 2, 2],
     columns: {
@@ -365,7 +409,7 @@ export const expectedLoadedLayer0 = {
   id: 'hexagon-2',
   type: 'hexagon',
   config: {
-    dataId: '190vdll3di',
+    dataId: testCsvDataId,
     label: 'new layer',
     color: [2, 2, 2],
     columns: {
@@ -399,7 +443,7 @@ export const expectedSavedLayer1 = {
   id: 'point-0',
   type: 'point',
   config: {
-    dataId: '190vdll3di',
+    dataId: testCsvDataId,
     label: 'gps data',
     color: [0, 0, 0],
     columns: {
@@ -453,7 +497,7 @@ export const expectedLoadedLayer1 = {
   id: 'point-0',
   type: 'point',
   config: {
-    dataId: '190vdll3di',
+    dataId: testCsvDataId,
     label: 'gps data',
     color: [0, 0, 0],
     columns: {
@@ -505,7 +549,7 @@ export const expectedSavedLayer2 = {
   id: 'geojson-1',
   type: 'geojson',
   config: {
-    dataId: 'ieukmgne',
+    dataId: testGeoJsonDataId,
     label: 'zip',
     color: [1, 1, 1],
     columns: {
@@ -548,7 +592,7 @@ export const expectedLoadedLayer2 = {
   id: 'geojson-1',
   type: 'geojson',
   config: {
-    dataId: 'ieukmgne',
+    dataId: testGeoJsonDataId,
     label: 'zip',
     color: [1, 1, 1],
     columns: {
@@ -590,6 +634,7 @@ export const StateWFilters = mockStateWithFilters();
 export const StateWFilesFiltersLayerColor = mockStateWithLayerDimensions(
   StateWFilters
 );
+export const StateWMultiFilters = mockStateWithMultiFilters();
 
 export const StateWCustomMapStyle = mockStateWithCustomMapStyle();
 export const StateWSplitMaps = mockStateWithSplitMaps();
