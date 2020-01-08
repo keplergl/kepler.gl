@@ -146,7 +146,9 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
       enabled: false,
       size: 0.5
     },
-    coordinate: { enabled: false }
+    coordinate: {
+      enabled: false
+    }
   };
 
   t.deepEqual(interactionToSave, expectedSaved);

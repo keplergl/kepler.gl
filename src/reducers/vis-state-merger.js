@@ -189,6 +189,8 @@ export function mergeInteractions(state, interactionToBeMerged) {
         return;
       }
 
+      const currentConfig = state.interactionConfig[key].config;
+
       const {enabled, ...configSaved} = interactionToBeMerged[key] || {};
       let configToMerge = configSaved;
 
@@ -201,7 +203,7 @@ export function mergeInteractions(state, interactionToBeMerged) {
         // merge new dataset tooltips with original dataset tooltips
         configToMerge = {
           fieldsToShow: {
-            ...state.interactionConfig[key].config.fieldsToShow,
+            ...currentConfig.fieldsToShow,
             ...mergedTooltip
           }
         };
@@ -214,13 +216,13 @@ export function mergeInteractions(state, interactionToBeMerged) {
       merged[key] = {
         ...state.interactionConfig[key],
         enabled,
-        ...(state.interactionConfig[key].config ? {
+        ...(currentConfig ? {
           config: pick(
             {
-              ...state.interactionConfig[key].config,
+              ...currentConfig,
               ...configToMerge
             },
-            Object.keys(state.interactionConfig[key].config)
+            Object.keys(currentConfig)
           )
         } : {})
       };
