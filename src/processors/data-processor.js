@@ -361,7 +361,6 @@ export function analyzerTypeToFieldType(aType) {
     case TIME:
     case DATETIME:
       return ALL_FIELD_TYPES.timestamp;
-    case NUMBER:
     case FLOAT:
       return ALL_FIELD_TYPES.real;
     case INT:
@@ -375,6 +374,7 @@ export function analyzerTypeToFieldType(aType) {
     case OBJECT:
       // TODO: create a new data type for objects and arrays
       return ALL_FIELD_TYPES.geojson;
+    case NUMBER:
     case STRING:
     case ZIPCODE:
       return ALL_FIELD_TYPES.string;

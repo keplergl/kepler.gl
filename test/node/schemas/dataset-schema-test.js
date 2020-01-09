@@ -86,7 +86,7 @@ test('#DatasetSchema -> SchemaManager.parseSavedData', t => {
   t.deepEqual(
     parsedValid[0].data.rows,
     expectedRows0,
-    'should parse fields correctly'
+    'should parse rows correctly'
   );
 
   t.deepEqual(
@@ -107,7 +107,7 @@ test('#DatasetSchema -> SchemaManager.parseSavedData', t => {
   t.deepEqual(
     parsedValid[1].data.rows,
     expectedRows1,
-    'should parse fields correctly'
+    'should parse rows correctly'
   );
 
   t.end();
@@ -144,7 +144,7 @@ test('#DatasetSchema -> SchemaManager.parseSavedData.v1', t => {
   t.deepEqual(
     parsedValid[0].data.rows,
     expectedRows,
-    'should parse fields correctly'
+    'should parse rows correctly'
   );
 
   t.end();
@@ -179,7 +179,7 @@ test('#DatasetSchema -> SchemaManager.parseSavedData.v1 with ts', t => {
   t.deepEqual(
     parsedValid[0].data.rows,
     expectedRows,
-    'should parse fields correctly'
+    'should parse rows correctly'
   );
 
   t.end();
