@@ -516,11 +516,11 @@ export function setFeatures(features) {
  * @param {Object} layer
  * @return {{feature: *, type: ActionTypes.TOGGLE_POLYGON_FILTER, layer: *}}
  */
-export function togglePolygonFilter(layer, featureId) {
+export function togglePolygonFilter(layer, feature) {
   return {
     type: ActionTypes.TOGGLE_POLYGON_FILTER,
     layer,
-    featureId
+    feature
   };
 }
 
@@ -531,10 +531,10 @@ export function togglePolygonFilter(layer, featureId) {
  * @param {string} feature.selectedFeatureId
  * @return {{selectedFeatureId: *, type: ActionTypes.SET_SELECTED_FEATURE}}
  */
-export function setSelectedFeature({selectedFeatureId}) {
+export function setSelectedFeature(feature) {
   return {
     type: ActionTypes.SET_SELECTED_FEATURE,
-    selectedFeatureId
+    feature
   }
 }
 
@@ -544,10 +544,10 @@ export function setSelectedFeature({selectedFeatureId}) {
  * @param {string} featureId if of the feature
  * @return {{type: ActionTypes.DELETE_FEATURE, featureId: *}}
  */
-export function deleteFeature(featureId) {
+export function deleteFeature(feature) {
   return {
     type: ActionTypes.DELETE_FEATURE,
-    featureId
+    feature
   };
 }
 
