@@ -106,6 +106,9 @@ export default class ArcLayer extends Layer {
     return {props: [props]};
   }
 
+  getPositionAccessor() {
+    return this.getPosition(this.config.columns);
+  }
   // TODO: fix complexity
   /* eslint-disable complexity */
   formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
@@ -114,7 +117,6 @@ export default class ArcLayer extends Layer {
       colorDomain,
       colorField,
       color,
-      columns,
       sizeField,
       sizeScale,
       sizeDomain,
@@ -134,7 +136,7 @@ export default class ArcLayer extends Layer {
     const sScale =
       sizeField && this.getVisChannelScale(sizeScale, sizeDomain, sizeRange);
 
-    const getPosition = this.getPosition(columns);
+    const getPosition = this.getPositionAccessor();
 
     if (!oldLayerData || oldLayerData.getPosition !== getPosition) {
       this.updateLayerMeta(allData, getPosition);
@@ -191,8 +193,10 @@ export default class ArcLayer extends Layer {
   }
   /* eslint-enable complexity */
 
-  updateLayerMeta(allData, getPosition) {
+  updateLayerMeta(allData) {
     // get bounds from arcs
+    const getPosition = this.getPositionAccessor();
+
     const sBounds = this.getPointsBounds(allData, d => {
       const pos = getPosition({data: d});
       return [pos[0], pos[1]];

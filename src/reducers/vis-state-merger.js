@@ -114,22 +114,11 @@ export function mergeFilters(state, filtersToMerge) {
 
   const filtered = applyFiltersToDatasets(datasetsToFilter, updatedDatasets, updatedFilters, state.layers);
 
-  const features = updatedFilters.reduce((acc, f) => {
-    return f.type === FILTER_TYPES.polygon ? [...acc, f.value] : acc;
-  }, []);
-
   return {
     ...state,
     filters: updatedFilters,
     datasets: filtered,
-    filterToBeMerged: unmerged,
-    editor: {
-      ...state.editor,
-      features: [
-        ...(state.editor || {}).features,
-        ...features
-      ]
-    }
+    filterToBeMerged: unmerged
   };
 }
 
