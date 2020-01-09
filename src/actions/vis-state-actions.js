@@ -496,10 +496,10 @@ export function loadFilesErr(error) {
 }
 
 /**
- * Trigger loading file error
+ * Trigger CPU filter of selected dataset
  * @memberof visStateActions
- * @param {*} error
- * @returns {{type: ActionTypes.LOAD_FILES_ERR, error: *}}
+ * @param {string | Arrary<string>} dataId - single dataId or an array of dataIds
+ * @returns {{type: ActionTypes.APPLY_CPU_FILTER, dataId: string}}
  * @public
  */
 export function applyCPUFilter(dataId) {

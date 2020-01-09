@@ -24,7 +24,6 @@ import CloneDeep from 'lodash.clonedeep';
 
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
-import * as UiStateActions from 'actions/ui-state-actions';
 import reducer from 'reducers/vis-state';
 
 import {
@@ -52,7 +51,6 @@ const {
 import testData, {testFields, testAllData} from 'test/fixtures/test-csv-data';
 import {
   geojsonData,
-  geoBounds,
   geoJsonTripFilterProps,
   expectedDataToFeature,
   updatedGeoJsonLayer,
@@ -3853,6 +3851,45 @@ test('#visStateReducer -> APPLY_CPU_FILTER. has gpu filter', t => {
 });
 
 test('#visStateReducer -> APPLY_CPU_FILTER. has cpu filter', t => {
+  const initialState = CloneDeep(StateWFilters.visState);
+  // dataset has gpu filter
+  const dataId = 'ieukmgne';
+  const previousDataset2 = initialState.datasets[dataId];
+  const ordinalFilter = initialState.filters[1];
+
+  const nextState = reducer(
+    initialState,
+    VisStateActions.applyCPUFilter(dataId)
+  );
+
+  const expectedDataset = {
+    ...previousDataset2,
+    filteredIdxCPU: [0],
+    filterRecordCPU: {
+      dynamicDomain: [],
+      fixedDomain: [ordinalFilter],
+      cpu: [ordinalFilter],
+      gpu: []
+    }
+  };
+
+  cmpDataset(t, expectedDataset, nextState.datasets[dataId]);
+
+  const nextState2 = reducer(
+    nextState,
+    VisStateActions.applyCPUFilter(dataId)
+  );
+
+  t.equal(
+    nextState.datasets[dataId].filteredIdxCPU,
+    nextState2.datasets[dataId].filteredIdxCPU,
+    'should directly copy filter result when filter hasnot changed'
+  );
+
+  t.end();
+});
+
+test.only('#visStateReducer -> APPLY_CPU_FILTER. multiple datasets', t => {
   const initialState = CloneDeep(StateWFilters.visState);
   // dataset has gpu filter
   const dataId = 'ieukmgne';

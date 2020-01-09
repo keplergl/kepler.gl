@@ -35,6 +35,7 @@ import {
   applyFilterFieldName,
   applyFiltersToDatasets,
   filterDataset,
+  filterDatasetCPU,
   getDefaultFilter,
   getFilterPlot,
   getFilterRecord,
@@ -49,7 +50,7 @@ import {
   assignGpuChannel
 } from 'utils/gpu-filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
-import {set} from 'utils/utils';
+import {set, arrayfy} from 'utils/utils';
 
 import {
   findDefaultLayer,
@@ -1338,56 +1339,9 @@ export const loadFilesUpdater = (state, action) => {
 export const applyCPUFilterUpdater = (state, {dataId}) => {
 
   // apply cpuFilter
-  const datasetFilters = state.filters.filter(f => f.dataId.includes(dataId));
+  const dataIds = arrayfy(dataId);
 
-  const selectedDataset = state.datasets[dataId];
-
-  if (!selectedDataset) {
-    return state;
-  }
-
-  const opt = {
-    cpuOnly: true,
-    ignoreDomain: true
-  };
-
-  if (!datasetFilters.length) {
-    // no filter
-    const filtered = {
-      ...selectedDataset,
-      filteredIdxCPU: selectedDataset.allIndexes,
-      filterRecordCPU: getFilterRecord(dataId, state.filters, opt)
-    };
-
-    return set(['datasets', dataId], filtered, state);
-  }
-
-  // no gpu filter
-  if (!datasetFilters.find(f => f.gpu)) {
-    const filtered = {
-      ...selectedDataset,
-      filteredIdxCPU: selectedDataset.filteredIndex,
-      filterRecordCPU: getFilterRecord(dataId, state.filters, opt)
-    };
-    return set(['datasets', dataId], filtered, state);
-  }
-
-  // make a copy for cpu filtering
-  const copied = {
-    ...selectedDataset,
-    filterRecord: selectedDataset.filterRecordCPU,
-    filteredIndex: selectedDataset.filteredIdxCPU
-  };
-
-  const filtered = filterDataset(copied, state.filters, opt);
-
-  const cpuFilteredDataset = {
-    ...selectedDataset,
-    filteredIdxCPU: filtered.filteredIndex,
-    filterRecordCPU: filtered.filterRecord
-  };
-
-  return set(['datasets', dataId], cpuFilteredDataset, state);
+  return dataIds.reduce((accu, id) => filterDatasetCPU(accu, id), state);
 };
 
 /**

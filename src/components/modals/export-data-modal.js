@@ -62,9 +62,9 @@ const getDataRowCount = (datasets, selectedDataset, filtered) => {
 const ExportDataModalFactory = () => {
   class ExportDataModal extends Component {
     componentDidMount() {
-      if (this.props.selectedDataset) {
-        this.props.applyCPUFilter(this.props.selectedDataset);
-      }
+      const toCPUFilter =
+        this.props.selectedDataset || Object.keys(this.props.datasets);
+      this.props.applyCPUFilter(toCPUFilter);
     }
 
     _onSelectDataset = ({target: {value}}) => {
@@ -78,7 +78,6 @@ const ExportDataModalFactory = () => {
         selectedDataset,
         dataType,
         filtered,
-        // callbacks:
         onChangeExportDataType,
         onChangeExportFiltered
       } = this.props;

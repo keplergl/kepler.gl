@@ -96,8 +96,6 @@ const actionHandler = {
   [ActionTypes.UPDATE_VIS_DATA]: visStateUpdaters.updateVisDataUpdater,
 
   [ActionTypes.APPLY_CPU_FILTER]: visStateUpdaters.applyCPUFilterUpdater
-
-  // [ActionTypes.SET_EXPORT_SELECTED_DATASET]: visStateUpdaters.setExportSelectedDatasetUpdater
 };
 
 // construct vis-state reducer

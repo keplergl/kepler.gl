@@ -851,8 +851,6 @@ export function applyFilterFieldName(
     return {filter: null, dataset};
   }
 
-  // let newFilter = {...filter};
-
   // TODO: validate field type
   const field = fields[fieldIndex];
   const filterProps = field.hasOwnProperty('filterProps') ? field.filterProps : getFilterProps(allData, field);
@@ -942,3 +940,62 @@ export function mergeFilterDomainStep(filter, filterProps) {
   }
 }
 /* eslint-enable complexity */
+
+/**
+ * Run filter entirely on CPU
+ * @param {Object} state - visState
+ * @param {string} dataId
+ * @return {Object} state state with updated datasets
+ */
+export function filterDatasetCPU(state, dataId) {
+  const datasetFilters = state.filters.filter(f => f.dataId.includes(dataId));
+
+  const selectedDataset = state.datasets[dataId];
+
+  if (!selectedDataset) {
+    return state;
+  }
+
+  const opt = {
+    cpuOnly: true,
+    ignoreDomain: true
+  };
+
+  if (!datasetFilters.length) {
+    // no filter
+    const filtered = {
+      ...selectedDataset,
+      filteredIdxCPU: selectedDataset.allIndexes,
+      filterRecordCPU: getFilterRecord(dataId, state.filters, opt)
+    };
+
+    return set(['datasets', dataId], filtered, state);
+  }
+
+  // no gpu filter
+  if (!datasetFilters.find(f => f.gpu)) {
+    const filtered = {
+      ...selectedDataset,
+      filteredIdxCPU: selectedDataset.filteredIndex,
+      filterRecordCPU: getFilterRecord(dataId, state.filters, opt)
+    };
+    return set(['datasets', dataId], filtered, state);
+  }
+
+  // make a copy for cpu filtering
+  const copied = {
+    ...selectedDataset,
+    filterRecord: selectedDataset.filterRecordCPU,
+    filteredIndex: selectedDataset.filteredIdxCPU
+  };
+
+  const filtered = filterDataset(copied, state.filters, opt);
+
+  const cpuFilteredDataset = {
+    ...selectedDataset,
+    filteredIdxCPU: filtered.filteredIndex,
+    filterRecordCPU: filtered.filterRecord
+  };
+
+  return set(['datasets', dataId], cpuFilteredDataset, state);
+}
