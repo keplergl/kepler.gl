@@ -48,7 +48,7 @@ const {
   TripLayer
 } = KeplerGlLayers;
 // fixtures
-import testData, {testFields, testAllData} from 'test/fixtures/test-csv-data';
+import testData, {mergedTimeFilter, testFields, testAllData} from 'test/fixtures/test-csv-data';
 import {
   geojsonData,
   geoJsonTripFilterProps,
@@ -895,11 +895,11 @@ test('#visStateReducer -> UPDATE_LAYER_BLENDING', t => {
 
 test('#visStateReducer -> REMOVE_FILTER', t => {
   const initialState = StateWFilters.visState;
-  // filter[0]: 'time' '190vdll3di'
-  // filter[1]: 'RATE' 'ieukmgne'
+  // filter[0]: 'time' testCsvData
+  // filter[1]: 'RATE' testGeoJsonData
 
-  const dataset0 = initialState.datasets['190vdll3di'];
-  const dataset1 = initialState.datasets.ieukmgne;
+  const dataset0 = initialState.datasets[testCsvDataId];
+  const dataset1 = initialState.datasets[testGeoJsonDataId];
 
   const expectedData0 = {
     ...dataset0,
@@ -934,7 +934,6 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
     }
   };
 
-  // ieukmgne
   const expectedData1 = {
     ...dataset1,
     filteredIndex: dataset1.allIndexes,
@@ -947,58 +946,7 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
     }
   };
 
-  const expectedFilters = [
-    {
-      dataId: ['190vdll3di'],
-      freeze: true,
-      id: 'time-0',
-      fixedDomain: true,
-      enlarged: true,
-      isAnimating: false,
-      speed: 1,
-      name: ['time'],
-      type: 'timeRange',
-      fieldIdx: [7],
-      domain: [1474588800000, 1474617600000],
-      value: [1474606800000, 1474617600000],
-      plotType: 'histogram',
-      yAxis: null,
-      interval: null,
-      gpu: true,
-      step: 1000,
-      mappedValue: [],
-      fieldType: 'timestamp',
-      gpuChannel: [0],
-      enlargedHistogram: [],
-      histogram: [],
-      mappedValue: [
-        1474588800000,
-        1474588800000,
-        1474588800000,
-        1474588800000,
-        1474588800000,
-        1474606800000,
-        1474606800000,
-        1474588800000,
-        1474588800000,
-        1474610400000,
-        1474606800000,
-        null,
-        null,
-        1474610400000,
-        1474610400000,
-        1474588800000,
-        1474614000000,
-        1474614000000,
-        1474614000000,
-        1474614000000,
-        1474614000000,
-        1474617600000,
-        1474617600000,
-        1474617600000
-      ]
-    }
-  ];
+  const expectedFilters = [mergedTimeFilter];
 
   // remove smoothie filter - gpu: true, fixedDomain: false
   const newReducer = reducer(initialState, VisStateActions.removeFilter(1));
@@ -1008,8 +956,8 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
     ...initialState,
     filters: expectedFilters,
     datasets: {
-      '190vdll3di': expectedData0,
-      ieukmgne: expectedData1
+      [testCsvDataId]: expectedData0,
+      [testGeoJsonDataId]: expectedData1
     },
     layerData: [
       initialState.layerData[0],
@@ -3788,7 +3736,7 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
 
 test('#visStateReducer -> APPLY_CPU_FILTER. no filter', t => {
   const initialState = CloneDeep(StateWFiles.visState);
-  const dataId = '190vdll3di';
+  const dataId = testCsvDataId;
   const previousDataset = initialState.datasets[dataId];
 
   const nextState = reducer(
@@ -3814,7 +3762,7 @@ test('#visStateReducer -> APPLY_CPU_FILTER. no filter', t => {
 test('#visStateReducer -> APPLY_CPU_FILTER. has gpu filter', t => {
   const initialState = CloneDeep(StateWFilters.visState);
   // dataset has gpu filter
-  const dataId = '190vdll3di';
+  const dataId = testCsvDataId;
   const previousDataset = initialState.datasets[dataId];
   const gpuFilter = initialState.filters[0];
 
@@ -3853,7 +3801,7 @@ test('#visStateReducer -> APPLY_CPU_FILTER. has gpu filter', t => {
 test('#visStateReducer -> APPLY_CPU_FILTER. has cpu filter', t => {
   const initialState = CloneDeep(StateWFilters.visState);
   // dataset has gpu filter
-  const dataId = 'ieukmgne';
+  const dataId = testGeoJsonDataId;
   const previousDataset2 = initialState.datasets[dataId];
   const ordinalFilter = initialState.filters[1];
 
@@ -3889,19 +3837,30 @@ test('#visStateReducer -> APPLY_CPU_FILTER. has cpu filter', t => {
   t.end();
 });
 
-test.only('#visStateReducer -> APPLY_CPU_FILTER. multiple datasets', t => {
+test('#visStateReducer -> APPLY_CPU_FILTER. has multi datsets', t => {
   const initialState = CloneDeep(StateWFilters.visState);
-  // dataset has gpu filter
-  const dataId = 'ieukmgne';
-  const previousDataset2 = initialState.datasets[dataId];
+  const previousDataset1 = initialState.datasets[testCsvDataId];
+  const previousDataset2 = initialState.datasets[testGeoJsonDataId];
+  const gpuFilter = initialState.filters[0];
   const ordinalFilter = initialState.filters[1];
 
   const nextState = reducer(
     initialState,
-    VisStateActions.applyCPUFilter(dataId)
+    VisStateActions.applyCPUFilter([testCsvDataId, testGeoJsonDataId])
   );
 
-  const expectedDataset = {
+  const expectedDataset1 = {
+    ...previousDataset1,
+    filteredIdxCPU: [5, 6, 9, 10, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23],
+    filterRecordCPU: {
+      dynamicDomain: [],
+      fixedDomain: [gpuFilter],
+      cpu: [gpuFilter],
+      gpu: []
+    }
+  };
+
+  const expectedDataset2 = {
     ...previousDataset2,
     filteredIdxCPU: [0],
     filterRecordCPU: {
@@ -3912,18 +3871,12 @@ test.only('#visStateReducer -> APPLY_CPU_FILTER. multiple datasets', t => {
     }
   };
 
-  cmpDataset(t, expectedDataset, nextState.datasets[dataId]);
+  const expectedDatasets = {
+    [testCsvDataId]: expectedDataset1,
+    [testGeoJsonDataId]: expectedDataset2
+  };
 
-  const nextState2 = reducer(
-    nextState,
-    VisStateActions.applyCPUFilter(dataId)
-  );
-
-  t.equal(
-    nextState.datasets[dataId].filteredIdxCPU,
-    nextState2.datasets[dataId].filteredIdxCPU,
-    'should directly copy filter result when filter hasnot changed'
-  );
+  cmpDatasets(t, expectedDatasets, nextState.datasets);
 
   t.end();
 });

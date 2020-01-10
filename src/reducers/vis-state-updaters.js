@@ -34,11 +34,9 @@ import {getDefaultInteraction, findFieldsToShow} from 'utils/interaction-utils';
 import {
   applyFilterFieldName,
   applyFiltersToDatasets,
-  filterDataset,
   filterDatasetCPU,
   getDefaultFilter,
   getFilterPlot,
-  getFilterRecord,
   getDefaultFilterPlotType,
   isInRange,
   FILTER_UPDATER_PROPS,
