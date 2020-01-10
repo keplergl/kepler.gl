@@ -24,12 +24,13 @@
  */
 import PropTypes from 'prop-types';
 import React from 'react';
+import window from 'global/window';
 
 class FileDrop extends React.PureComponent {
   static isIE = () =>
-    window &&
-    (window.navigator.userAgent.indexOf('MSIE') !== -1 ||
-      window.navigator.appVersion.indexOf('Trident/') > 0);
+    window && window.navigator &&
+      ((window.navigator.userAgent || []).indexOf('MSIE') > -1 ||
+      (window.navigator.appVersion || []).indexOf('Trident/') > -1);
 
   static eventHasFiles = event => {
     // In most browsers this is an array, but in IE11 it's an Object :(
@@ -99,7 +100,7 @@ class FileDrop extends React.PureComponent {
     window.addEventListener('dragover', this.handleWindowDragOverOrDrop);
     window.addEventListener('drop', this.handleWindowDragOverOrDrop);
   }
-  
+
   componentDidUpdate(prevProps) {
     if (prevProps.frame !== this.props.frame) {
       this.resetDragging();
@@ -107,7 +108,7 @@ class FileDrop extends React.PureComponent {
       this.startFrameListeners(this.props.frame);
     }
   }
-  
+
   componentWillUnmount() {
     this.stopFrameListeners(this.props.frame);
     window.removeEventListener('dragover', this.handleWindowDragOverOrDrop);
