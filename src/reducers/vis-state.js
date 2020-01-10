@@ -99,7 +99,7 @@ const actionHandler = {
 
   [ActionTypes.DELETE_FEATURE]: visStateUpdaters.deleteFeatureUpdater,
 
-  [ActionTypes.TOGGLE_POLYGON_FILTER]: visStateUpdaters.togglePolygonFilterUpdater,
+  [ActionTypes.SET_POLYGON_FILTER_LAYER]: visStateUpdaters.setPolygonFilterLayerUpdater,
 
   [ActionTypes.SET_SELECTED_FEATURE]: visStateUpdaters.setSelectedFeatureUpdater,
 

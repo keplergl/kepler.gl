@@ -24,11 +24,10 @@ import get from 'lodash.get';
 import booleanWithin from '@turf/boolean-within';
 import {point as turfPoint} from '@turf/helpers';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
-import {maybeToDate, notNullorUndefined, unique} from './data-utils';
+import {maybeToDate, notNullorUndefined, unique, timeToUnixMilli} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
 import {generateHashId} from './utils';
 import {toArray} from 'utils/utils';
-import {timeToUnixMilli} from './data-utils';
 import {LAYER_TYPES} from '../constants';
 
 export const TimestampStepMap = [
@@ -372,6 +371,12 @@ export const getPolygonFilterFunctor = (layer, filter) => {
   const getPosition = layer.getPositionAccessor();
 
   switch (layer.type) {
+    case LAYER_TYPES.point:
+    case LAYER_TYPES.icon:
+      return data => {
+        const pos = getPosition({data});
+        return pos.every(Number.isFinite) && isInPolygon(pos, filter.value);
+      };
     case LAYER_TYPES.arc:
     case LAYER_TYPES.line:
       return data => {
@@ -382,10 +387,7 @@ export const getPolygonFilterFunctor = (layer, filter) => {
         ].every(point => isInPolygon(point, filter.value));
       };
     default:
-      return data => {
-        const pos = getPosition({data});
-        return pos.every(Number.isFinite) && isInPolygon(pos, filter.value);
-      }
+      return () => true
   }
 };
 
@@ -408,9 +410,9 @@ export function getFilterFunction(field, dataId, filter, layers) {
     case FILTER_TYPES.select:
       return data => valueAccessor(data) === filter.value;
     case FILTER_TYPES.timeRange:
-      const mapppedValue = get(field, ['filterProp', 'mappedValue']);
-      const accessor = Array.isArray(mapppedValue) ?
-        (data, index) => field.filterProp.mappedValue[index]
+      const mappedValue = get(field, ['filterProp', 'mappedValue']);
+      const accessor = Array.isArray(mappedValue) ?
+        (data, index) => mappedValue[index]
         : data => timeToUnixMilli(valueAccessor(data), field.format);
       return (data, index) => isInRange(accessor(data, index), filter.value);
     case FILTER_TYPES.polygon:
@@ -947,6 +949,7 @@ export const featureToFilterValue = (feature, filterId) => ({
     filterId
   }
 });
+
 export const getFilterIdInFeature = f => get(f, ['properties', 'filterId']);
 
 /**
@@ -966,6 +969,7 @@ export function generatePolygonFilter(layers, feature) {
     layerId: [],
     name: []
   });
+
   const filter = getDefaultFilter(dataId);
   return {
     ...filter,

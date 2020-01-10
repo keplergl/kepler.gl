@@ -21,7 +21,7 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import {Editor} from 'react-map-gl-draw';
+import {Editor as Draw} from 'react-map-gl-draw';
 import window from 'global/window';
 import classnames from 'classnames';
 import get from 'lodash.get';
@@ -39,6 +39,7 @@ import {
   getEditHandleShape
 } from './handle-style';
 import {EDITOR_MODES} from 'constants';
+import {createSelector} from 'reselect';
 
 const DELETE_KEY_EVENT_CODE = 46;
 const BACKSPACE_KEY_EVENT_CODE = 8;
@@ -50,7 +51,7 @@ const StyledWrapper = styled.div`
 
 const editorLayerFilter = layer => EDITOR_AVAILABLE_LAYERS.includes(layer.type);
 
-class Draw extends Component {
+class Editor extends Component {
   static propTypes = {
     classnames: PropTypes.string,
     clickRadius: PropTypes.number,
@@ -83,6 +84,41 @@ class Draw extends Component {
     window.removeEventListener('keydown', this._onKeyPressed);
   }
 
+  layerSelector = props => props.layers;
+  layersToRenderSelector = props => props.layersToRender;
+  filterSelector = props => props.filters;
+  selectedFeatureIdSelector = props => get(props, ['editor', 'selectedFeature', 'id']);
+  editorFeatureSelector = props => get(props, ['editor', 'features']);
+
+  currentFilterSelector = createSelector(
+    this.filterSelector,
+    this.selectedFeatureIdSelector,
+    (filters, selectedFeatureId) => filters.find(f =>
+      f.value && f.value.id === selectedFeatureId
+    )
+  );
+
+  availableLayersSeletor = createSelector(
+    this.layerSelector,
+    this.layersToRenderSelector,
+    (layers, layersToRender) => layers
+      .filter(editorLayerFilter)
+      .filter(layer => {
+
+        return layersToRender[layer.id];
+      })
+  );
+
+  allFeaturesSelector = createSelector(
+    this.filterSelector,
+    this.editorFeatureSelector,
+    (filters, editorFeatures) =>
+      filters
+        .filter(f => f.type === FILTER_TYPES.polygon)
+        .map(f => f.value)
+        .concat(editorFeatures)
+  );
+
   _onKeyPressed = event => {
     const {isEnabled} = this.props;
 
@@ -102,7 +138,8 @@ class Draw extends Component {
     }
   };
 
-  _onSelect = (allFeatures, {selectedFeatureId, sourceEvent}) => {
+  _onSelect = ({selectedFeatureId, sourceEvent}) => {
+    const allFeatures = this.allFeaturesSelector(this.props);
     this.setState({
       ...(sourceEvent.rightButton ? {
         showActions: true,
@@ -147,25 +184,15 @@ class Draw extends Component {
       clickRadius,
       datasets,
       editor,
-      layers,
-      layersToRender,
-      filters,
       onUpdate,
       style
     } = this.props;
 
     const {lastPosition, showActions} = this.state;
     const selectedFeatureId = get(editor, ['selectedFeature', 'id']);
-    const currentFilter = filters.find(f =>
-      f.value && f.value.id === selectedFeatureId
-    );
-
-    const availableLayers = layers
-      .filter(editorLayerFilter)
-      .filter(layer => layersToRender[layer.id]);
-
-    const featureFromFilters = filters.filter(f => f.type === FILTER_TYPES.polygon).map(f => f.value);
-    const allFeatures = featureFromFilters.concat(editor.features);
+    const currentFilter = this.currentFilterSelector(this.props);
+    const availableLayers = this.availableLayersSeletor(this.props);
+    const allFeatures = this.allFeaturesSelector(this.props);
 
     return (
       <StyledWrapper
@@ -173,12 +200,12 @@ class Draw extends Component {
         className={classnames('editor', className)}
         style={style}
       >
-        <Editor
+        <Draw
           clickRadius={clickRadius}
           mode={editor.mode}
           features={allFeatures}
           selectedFeatureId={selectedFeatureId}
-          onSelect={this._onSelect.bind(this, allFeatures)}
+          onSelect={this._onSelect}
           onUpdate={onUpdate}
           getEditHandleShape={getEditHandleShape}
           getFeatureStyle={getFeatureStyle}
@@ -200,4 +227,4 @@ class Draw extends Component {
   }
 }
 
-export default Draw;
+export default Editor;

@@ -31,7 +31,7 @@ import {
 import {getInitialMapLayersForSplitMap} from 'utils/split-map-utils';
 
 import {LAYER_BLENDINGS} from 'constants/default-settings';
-import {mergeFilterDomainStep, FILTER_TYPES} from '../utils/filter-utils';
+import {mergeFilterDomainStep} from '../utils/filter-utils';
 
 /**
  * Merge loaded filters with current state, if no fields or data are loaded

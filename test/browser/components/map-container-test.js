@@ -100,7 +100,7 @@ test('MapContainerFactory - display all options', t => {
     'Should display 1 InteractiveMap'
   );
 
-  // Draw
+  // Editor
   t.equal(
     $.find('StaticMap').length,
     1,

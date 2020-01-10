@@ -156,7 +156,7 @@ const ActionTypes = keyMirror({
 
   // geo-operations
   SET_FEATURES: null,
-  TOGGLE_POLYGON_FILTER: null,
+  SET_POLYGON_FILTER_LAYER: null,
   DELETE_FEATURE: null,
   TOGGLE_EDITOR_VISIBILITY: null
 });

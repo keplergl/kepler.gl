@@ -514,11 +514,11 @@ export function setFeatures(features) {
  * @memberof visStateActions
  * @param {Object} featureId feature to use as filter base for layer
  * @param {Object} layer
- * @return {{feature: *, type: ActionTypes.TOGGLE_POLYGON_FILTER, layer: *}}
+ * @return {{feature: *, type: ActionTypes.SET_POLYGON_FILTER_LAYER, layer: *}}
  */
-export function togglePolygonFilter(layer, feature) {
+export function setPolygonFilterLayer(layer, feature) {
   return {
-    type: ActionTypes.TOGGLE_POLYGON_FILTER,
+    type: ActionTypes.SET_POLYGON_FILTER_LAYER,
     layer,
     feature
   };

@@ -35,7 +35,6 @@ import {addDataToMap} from 'actions';
 // Utils
 import {getDefaultInteraction, findFieldsToShow} from 'utils/interaction-utils';
 import {
-  FILTER_TYPES,
   FILTER_UPDATER_PROPS,
   LIMITED_FILTER_EFFECT_PROPS,
   applyFilterFieldName,
@@ -325,10 +324,6 @@ function updateTextLabelPropAndValue(idx, prop, value, textLabel) {
   }
 
   return newTextLabel;
-}
-
-function getFilterIdxByFeatureId(state, featureId) {
-  return state.filters.findIndex(f => f.type === FILTER_TYPES.polygon && f.value.id === featureId);
 }
 
 export function layerTextLabelChangeUpdater(state, action) {
@@ -634,7 +629,6 @@ export function setFilterUpdater(state, action) {
   const datasetIdsToFilter = LIMITED_FILTER_EFFECT_PROPS[prop]
     ? [datasetIds[valueIndex]]
     : datasetIds;
-    console.log('datasetIdsToFilter:', datasetIdsToFilter)
 
   // filter data
   newState = {
@@ -1541,7 +1535,8 @@ export const setEditorModeUpdater = (state, {mode}) => ({
   ...state,
   editor: {
     ...state.editor,
-    mode
+    mode,
+    selectedFeature: null
   }
 });
 
@@ -1655,8 +1650,7 @@ export function deleteFeatureUpdater(state, {feature}) {
  * @param {Object} payload.layer
  * @return {Object} nextState
  */
-export function togglePolygonFilterUpdater(state, payload) {
-
+export function setPolygonFilterLayerUpdater(state, payload) {
   const {layer, feature} = payload;
   const filterId = getFilterIdInFeature(feature);
 
@@ -1699,7 +1693,6 @@ export function togglePolygonFilterUpdater(state, payload) {
         ...filter.layerId,
         layer.id
       ];
-
   } else {
 
     // if we haven't create the polygon filter, create it

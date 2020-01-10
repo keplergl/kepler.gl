@@ -31,7 +31,7 @@ import MapPopoverFactory from 'components/map/map-popover';
 import MapControlFactory from 'components/map/map-control';
 import {StyledMapContainer} from 'components/common/styled-components';
 
-import Draw from './editor';
+import Editor from './editor/editor';
 
 // utils
 import {generateMapboxLayers, updateMapboxLayers} from 'layers/mapbox-utils';
@@ -479,7 +479,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           >
             {this._renderDeckOverlay(layersToRender)}
             {this._renderMapboxOverlays(layersToRender)}
-            <Draw
+            <Editor
               datasets={datasets}
               editor={editor}
               filters={this.polygonFilters(this.props)}
@@ -489,7 +489,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
               onDeleteFeature={visStateActions.deleteFeature}
               onSelect={visStateActions.setSelectedFeature}
               onUpdate={visStateActions.setFeatures}
-              onTogglePolygonFilter={visStateActions.togglePolygonFilter}
+              onTogglePolygonFilter={visStateActions.setPolygonFilterLayer}
               style={{
                 pointerEvents: isEdit ? 'all' : 'none',
                 position: 'absolute',
