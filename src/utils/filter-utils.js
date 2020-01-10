@@ -410,7 +410,7 @@ export function getFilterFunction(field, dataId, filter, layers) {
     case FILTER_TYPES.select:
       return data => valueAccessor(data) === filter.value;
     case FILTER_TYPES.timeRange:
-      const mappedValue = get(field, ['filterProp', 'mappedValue']);
+      const mappedValue = get(field, ['filterProps', 'mappedValue']);
       const accessor = Array.isArray(mappedValue) ?
         (data, index) => mappedValue[index]
         : data => timeToUnixMilli(valueAccessor(data), field.format);
