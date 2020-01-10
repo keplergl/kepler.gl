@@ -354,7 +354,7 @@ export function setPushingFile(isLoading, metadata) {
  * @param {string} providerName
  * @returns {Function}
  */
-export function loadCloudMap(queryParams, providerName) {
+export function loadCloudMap(queryParams, providerName, pushRoute = false) {
   return async (dispatch) => {
     if (!providerName) {
       throw new Error('No cloud provider identified')
@@ -362,6 +362,12 @@ export function loadCloudMap(queryParams, providerName) {
     dispatch(setLoadingMapStatus(true));
 
     const cloudProvider = getCloudProvider(providerName);
+
+    if (pushRoute) {
+      const mapUrl = cloudProvider._composeURL(queryParams);
+      dispatch(push(mapUrl));
+    }
+
     cloudProvider.loadMap(queryParams)
       .then(map => {
         dispatch(loadRemoteResourceSuccess(map.datasets, map.vis.config, map.options));

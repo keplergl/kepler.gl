@@ -25,6 +25,7 @@ import {withState} from 'kepler.gl/components';
 import {
   loadRemoteMap,
   loadSample,
+  loadCloudMap,
   switchToLoadingMethod
 } from '../actions';
 
@@ -35,7 +36,8 @@ export const CustomLoadDataModalFactory = () =>
     {
       onSwitchToLoadingMethod: switchToLoadingMethod,
       onLoadSample: loadSample,
-      onLoadRemoteMap: loadRemoteMap
+      onLoadRemoteMap: loadRemoteMap,
+      onLoadCloudMap: loadCloudMap
     }
   )(LoadDataModal);
 

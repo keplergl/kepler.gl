@@ -29,6 +29,7 @@ import {LOADING_METHODS, ASSETS_URL, LOADING_METHODS_NAMES} from '../../constant
 
 import SampleMapGallery from './sample-data-viewer';
 import LoadRemoteMap from './load-remote-map';
+import LoadStorageMap from './load-storage-map';
 
 const propTypes = {
   // query options
@@ -184,6 +185,13 @@ class LoadDataModal extends Component {
                 {loadingMethod.id === 'remote' ? (
                   <LoadRemoteMap
                     onLoadRemoteMap={this.props.onLoadRemoteMap}
+                    option={this.props.currentOption}
+                    error={this.props.error}
+                  />
+                ) : null}
+                {loadingMethod.id === 'storage' ? (
+                  <LoadStorageMap
+                    onLoadCloudMap={this.props.onLoadCloudMap}
                     option={this.props.currentOption}
                     error={this.props.error}
                   />

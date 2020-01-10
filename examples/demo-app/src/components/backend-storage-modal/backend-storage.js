@@ -21,7 +21,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import {StyledModalContent} from 'kepler.gl/components';
-import BackendTile from './BackendTile';
+import BackendTile from './backend-tile';
 import {getCloudProviders} from '../../cloud-providers';
 
 const StyledBackendExportSection = styled.div`

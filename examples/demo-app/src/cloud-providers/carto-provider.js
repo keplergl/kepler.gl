@@ -77,7 +77,11 @@ export default class CartoProvider {
     }
 
     return ({
-      url: `demo/map/carto?mapId=${result.id}&owner=${this._carto.username}&privateMap=${!isPublic}`
+      url: this._composeURL({
+        mapId: result.id,
+        owner: this._carto.username,
+        privateMap: !isPublic
+      })
     });
   }
 
@@ -162,6 +166,34 @@ export default class CartoProvider {
     return {datasets, vis: visualization.vis, options};
   }
 
+  async getVisualizations(opts) {
+    const {type='all', pageOffset=0, pageSize=-1} = {...opts};
+    await this._carto.login();
+    const username = this.getUserName();
+    const cs = await this._carto.getCustomStorage();
+    const visualizations = await cs.getVisualizations();
+    const formattedVis = [];
+
+    // Format visualization object
+    for (const vis of visualizations) {
+      formattedVis.push({
+        id: vis.id,
+        title: vis.name,
+        description: vis.description,
+        privateMap: vis.isPrivate,
+        thumbnail: vis.thumbnail === 'undefined' ? null : vis.thumbnail,
+        lastModification: vis.lastModified,
+        loadParams: {
+          owner: username,
+          mapId: vis.id,
+          privateMap: vis.isPrivate.toString()
+        }
+      })
+    }
+
+    return formattedVis;
+  }
+
   getMapPermalink(mapLink, fullURL = true) {
     return fullURL
       ? `${window.location.protocol}//${window.location.host}/${mapLink}`
@@ -199,6 +231,10 @@ export default class CartoProvider {
     } else {
       console.error(`General error in CARTO provider`);
     }
+  }
+
+  _composeURL({mapId, owner, privateMap}) {
+    return `demo/map/carto?mapId=${mapId}&owner=${owner}&privateMap=${privateMap}`
   }
 
 }

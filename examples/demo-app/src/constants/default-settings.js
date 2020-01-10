@@ -50,7 +50,8 @@ export const QUERY_OPTIONS = keyMirror({
 export const LOADING_METHODS_NAMES = keyMirror({
   upload: null,
   remote: null,
-  sample: null
+  sample: null,
+  storage: null
 });
 
 export const LOADING_METHODS = [
@@ -80,6 +81,10 @@ export const LOADING_METHODS = [
   {
     id: LOADING_METHODS_NAMES.remote,
     label: 'Load Map using URL'
+  },
+  {
+    id: LOADING_METHODS_NAMES.storage,
+    label: 'Load via Storage'
   },
   {
     id: LOADING_METHODS_NAMES.sample,
