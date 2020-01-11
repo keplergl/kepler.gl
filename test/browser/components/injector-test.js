@@ -26,7 +26,13 @@ import {Provider} from 'react-redux';
 import sinon from 'sinon';
 import {console as Console} from 'global/window';
 
-import {withState, injectComponents, PanelHeaderFactory} from 'components';
+import {
+  withState,
+  injectComponents,
+  PanelHeaderFactory,
+  MapContainerFactory
+} from 'components';
+
 import coreReducer from 'reducers/core';
 import {keplerGlInit} from 'actions/actions';
 import {errorMsg} from 'components/injector';
@@ -184,15 +190,21 @@ test('Components -> injector -> wrong replacement type', t => {
   t.end();
 });
 
-test('Components -> injector -> missing dep', t => {
-  const spy = sinon.spy(Console, 'error');
+test('Components -> injector -> replace and render existing', t => {
+  myCustomHeaderFactory.deps = PanelHeaderFactory.deps;
 
-  const myCustomHeaderFactory = Missing => () => <Missing />;
+  function myCustomHeaderFactory(...deps) {
+    const PanelHeader = PanelHeaderFactory(...deps);
+    PanelHeader.defaultProps
+    const MyHeader = props => {
+      return <PanelHeader {...props} appName="taro" />;
+    };
+    return MyHeader;
+  }
 
   const KeplerGl = injectComponents([
     [PanelHeaderFactory, myCustomHeaderFactory]
   ]);
-
   // assume instance reducer is already mounted
   const store = mockStore({
     keplerGl: {
@@ -200,30 +212,16 @@ test('Components -> injector -> missing dep', t => {
     }
   });
 
-  const wrapper = mount(
-    <Provider store={store}>
-      <KeplerGl id="foo" mapboxApiAccessToken="smoothie_and_milkshake" />
-    </Provider>
-  );
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mount(
+      <Provider store={store}>
+        <KeplerGl id="foo" mapboxApiAccessToken="smoothie_and_milkshake" />
+      </Provider>
+    );
+  }, 'should not throw error when replace and render existing component');
 
-  t.ok(spy.calledOnce, 'should call Console.error twice');
-  t.equal(
-    spy.getCall(0).args[0],
-    `${errorMsg.incompatibleDeps(myCustomHeaderFactory, 0)}`,
-    'should warn when deps of custom factory is not provided'
-  );
-
-  t.ok(
-    wrapper.find('.factory-missing-deps'),
-    'should render missing deps component'
-  );
-  t.equal(
-    wrapper.find('.factory-missing-deps').html(),
-    '<div class="factory-missing-deps">myCustomHeaderFactory is missing dependencies</div>',
-    'should render missing deps component'
-  );
-
-  spy.restore();
+  t.equal(wrapper.find('.logo__link').text(), 'taro', 'should render provided prop');
   t.end();
 });
 
