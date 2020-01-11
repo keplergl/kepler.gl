@@ -29,8 +29,8 @@ import window from 'global/window';
 class FileDrop extends React.PureComponent {
   static isIE = () =>
     window && window.navigator &&
-      ((window.navigator.userAgent || []).indexOf('MSIE') > -1 ||
-      (window.navigator.appVersion || []).indexOf('Trident/') > -1);
+      ((window.navigator.userAgent || []).includes('MSIE') ||
+      (window.navigator.appVersion || []).includes('Trident/'));
 
   static eventHasFiles = event => {
     // In most browsers this is an array, but in IE11 it's an Object :(
