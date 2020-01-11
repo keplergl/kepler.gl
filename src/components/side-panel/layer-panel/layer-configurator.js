@@ -736,10 +736,11 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
           </LayerConfigGroup>
 
           {/* Elevation */}
-          {featureTypes.polygon && visConfig.filled ? (
+          {featureTypes.polygon ? (
             <LayerConfigGroup
               {...visConfiguratorProps}
               {...LAYER_VIS_CONFIGS.enable3d}
+              disabled={!visConfig.filled}
               collapsible
             >
               <VisConfigSlider

@@ -70,6 +70,10 @@ export const StyledLayerConfigGroup = styled.div`
   padding-left: 18px;
   margin-bottom: 12px;
 
+  &.disabled {
+    opacity: 0.3;
+    pointer-events: none;
+  }
   &.collapsed {
     .layer-config-group__header__collapsible {
       overflow: visible;
@@ -119,7 +123,8 @@ class LayerConfigGroup extends Component {
     collapsible: false,
     expanded: false,
     onChange: () => {},
-    description: null
+    description: null,
+    disabled: false
   };
 
   static getDerivedStateFromProps(props, state) {
@@ -143,14 +148,15 @@ class LayerConfigGroup extends Component {
       layer,
       onChange,
       collapsible,
-      description
+      description,
+      disabled
     } = this.props;
 
     const {collapsed} = this.state;
 
     return (
       <StyledLayerConfigGroup
-        className={classnames('layer-config-group', {collapsed})}
+        className={classnames('layer-config-group', {collapsed, disabled})}
       >
         <StyledConfigGroupHeader
           className="layer-config-group__header"
