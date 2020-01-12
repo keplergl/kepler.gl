@@ -21,8 +21,12 @@
 import React, {useMemo, useCallback} from 'react';
 import {StyledFilterContent} from 'components/common/styled-components';
 import PolygonFilterFactory from 'components/filters/polygon-filter';
+import PanelHeaderAction from 'components/side-panel/panel-header-action';
+import {EyeSeen} from 'components/common/icons';
+import {EyeUnseen} from 'components/common/icons';
 import FilterPanelHeaderFactory from 'components/side-panel/filter-panel/filter-panel-header';
 import {StyledFilterPanel} from '../components';
+import get from 'lodash.get';
 
 PolygonFilterPanelFactory.deps = [
   FilterPanelHeaderFactory,
@@ -43,7 +47,8 @@ function PolygonFilterPanelFactory(
     isAnyFilterAnimating,
     enlargeFilter,
     removeFilter,
-    setFilter
+    setFilter,
+    toggleFilterFeature
   }) => {
 
     const filterDatasets = useMemo(() => filter.dataId.map(d => datasets[d]),
@@ -53,6 +58,8 @@ function PolygonFilterPanelFactory(
     const onSetLayers = useCallback(value =>
         setFilter(idx, 'layerId', value),
       [setFilter]);
+
+    const isVisible = get(filter, ['value', 'properties', 'isVisible'], true);
 
     return (
       <>
@@ -64,6 +71,13 @@ function PolygonFilterPanelFactory(
           removeFilter={removeFilter}
         >
           <StyledFilterPanel>Polygon</StyledFilterPanel>
+          <PanelHeaderAction
+            id={filter.id}
+            onClick={toggleFilterFeature}
+            tooltip={isVisible ? 'Hide Feature' : 'Show feature'}
+            IconComponent={isVisible ? EyeSeen : EyeUnseen}
+            active={isVisible}
+          />
         </FilterPanelHeader>
         <StyledFilterContent className="filter-panel__content">
           <div className="filter-panel__filter">
@@ -71,6 +85,7 @@ function PolygonFilterPanelFactory(
               filter={filter}
               layers={layers}
               setLayers={onSetLayers}
+              toggleFilterFeature={toggleFilterFeature}
             />
           </div>
         </StyledFilterContent>

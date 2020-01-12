@@ -236,7 +236,7 @@ test('VisStateMerger.v0 -> mergeFilters -> toWorkingState', t => {
   t.end();
 });
 
-test.only('VisStateMerger.v1 -> mergeFilters -> toWorkingState', t => {
+test('VisStateMerger.v1 -> mergeFilters -> toWorkingState', t => {
   const savedConfig = cloneDeep(savedStateV1);
   const oldState = cloneDeep(StateWFilters);
 

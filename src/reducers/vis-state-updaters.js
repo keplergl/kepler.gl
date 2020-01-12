@@ -811,6 +811,28 @@ export const enlargeFilterUpdater = (state, action) => {
 };
 
 /**
+ * Toggles filter feature visibility
+ * @memberof visStateUpdaters
+ * @param {Object} state `visState`
+ * @param {Object} action action
+ * @param {Number} action.idx index of filter to enlarge
+ * @returns {Object} nextState
+ */
+export const toggleFilterFeatureUpdater = (state, action) => {
+  const filter = state.filters[action.idx];
+  const isVisible = get(filter, ['value', 'properties', 'isVisible']);
+  const newFilter = {
+    ...filter,
+    value: featureToFilterValue(filter.value, filter.id, {isVisible: !isVisible})
+  };
+
+  return {
+    ...state,
+    filters: Object.assign([].concat(state.filters), {[action.idx]: newFilter})
+  };
+};
+
+/**
  * Remove a filter
  * @memberof visStateUpdaters
  * @param {Object} state `visState`

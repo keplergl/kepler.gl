@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import {RenderStates, RenderTypes} from 'react-map-gl-draw';
+import get from 'lodash.get';
 import {COLORS} from './constants';
 
 export const DEFAULT_RADIUS = 5;
@@ -56,9 +57,10 @@ export const RENDER_TYPE_STYLES = {
 export function noOp() {}
 
 export function getStyle({feature, state}) {
+  const isVisible = get(feature, ['properties', 'isVisible'], true);
   const style = {
     stroke: STATE_STYLES_STROKE[state] || DEFAULT_STATE_STYLE_STROKE,
-    strokeWidth: STATE_STYLES_STROKE_WIDTH,
+    strokeWidth: isVisible ? STATE_STYLES_STROKE_WIDTH : 0,
     fill: STATE_STYLES_FILL[state] || DEFAULT_STATE_STYLE_FILL,
     fillOpacity: DEFAULT_STATE_STYLE_OPACITY,
     ...(state !== RenderStates.SELECTED ? {strokeDasharray: DEFAULT_STROKE_DASH_ARRAY} : null)

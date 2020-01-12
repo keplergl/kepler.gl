@@ -44,6 +44,7 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
       removeFilter: PropTypes.func.isRequired,
       enlargeFilter: PropTypes.func.isRequired,
       toggleAnimation: PropTypes.func.isRequired,
+      toggleFilterFeature: PropTypes.func.isRequired,
       setFilter: PropTypes.func.isRequired,
       filters: PropTypes.arrayOf(PropTypes.any).isRequired,
       showDatasetTable: PropTypes.func,
@@ -93,6 +94,7 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
                   removeFilter={() => this.props.removeFilter(idx)}
                   enlargeFilter={() => this.props.enlargeFilter(idx)}
                   toggleAnimation={() => this.props.toggleAnimation(idx)}
+                  toggleFilterFeature={() => this.props.toggleFilterFeature(idx)}
                   setFilter={this.props.setFilter}
                 />
               ))}

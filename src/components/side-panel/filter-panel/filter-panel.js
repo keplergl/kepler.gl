@@ -79,6 +79,7 @@ function FilterPanelFactory(
       removeFilter: PropTypes.func.isRequired,
       enlargeFilter: PropTypes.func.isRequired,
       toggleAnimation: PropTypes.func.isRequired,
+      toggleFilterFeature: PropTypes.func.isRequired,
       datasets: PropTypes.object,
       showDatasetTable: PropTypes.func,
       isAnyFilterAnimating: PropTypes.bool

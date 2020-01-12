@@ -379,6 +379,18 @@ export function enlargeFilter(idx) {
 }
 
 /**
+ * SHow/hide filter feature on map
+ * @param {Number} idx - index of filter feature to show/hide
+ * @return {{type: ActionTypes.TOGGLE_FEATURE_LAYER, idx: idx}}
+ */
+export function toggleFilterFeature(idx) {
+  return {
+    type: ActionTypes.TOGGLE_FILTER_FEATURE,
+    idx
+  }
+}
+
+/**
  * Trigger layer hover event with hovered object
  * @memberof visStateActions
  * @param {Object} info - Object hovered, returned by deck.gl

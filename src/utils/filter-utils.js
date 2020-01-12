@@ -941,11 +941,12 @@ export function getDatasetFieldIndexForFilter(dataset, filter) {
   return notNullorUndefined(fieldIndex) ? fieldIndex : -1;
 }
 
-export const featureToFilterValue = (feature, filterId) => ({
+export const featureToFilterValue = (feature, filterId, properties = {}) => ({
   ...feature,
   id: feature.id,
   properties: {
     ...feature.properties,
+    ...properties,
     filterId
   }
 });
@@ -977,7 +978,7 @@ export function generatePolygonFilter(layers, feature) {
     type: FILTER_TYPES.polygon,
     name,
     layerId,
-    value: featureToFilterValue(feature, filter.id)
+    value: featureToFilterValue(feature, filter.id, {isVisible: true})
   };
 }
 
