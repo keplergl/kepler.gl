@@ -33,128 +33,13 @@ import {
   getDatasetFieldIndexForFilter,
   validatePolygonFilter,
   filterData,
-  generatePolygonFilter
+  generatePolygonFilter,
+  isValidFilterValue,
+  isInPolygon
 } from 'utils/filter-utils';
 
 import {processCsvData} from 'processors/data-processor';
 import {mockPolygonFeature, mockPolygonData} from '../../fixtures/polygon';
-
-/* eslint-disable max-statements */
-test('filterUtils -> adjustValueToFilterDomain', t => {
-  // TODO: needs id
-  const rangeFilter = getDefaultFilter();
-  rangeFilter.type = FILTER_TYPES.range;
-  rangeFilter.domain = [0, 1];
-
-  t.deepEqual(
-    adjustValueToFilterDomain([0, 0.5], rangeFilter),
-    [0, 0.5],
-    'should return value matched to range filter'
-  );
-
-  t.deepEqual(
-    adjustValueToFilterDomain([-1, 0.5], rangeFilter),
-    [0, 0.5],
-    'should return value adjust to range filter'
-  );
-
-  t.deepEqual(
-    adjustValueToFilterDomain([0.1, 1.5], rangeFilter),
-    [0.1, 1],
-    'should return value adjust to range filter'
-  );
-
-  t.deepEqual(
-    adjustValueToFilterDomain([1.1, 2], rangeFilter),
-    [0, 1],
-    'should return value adjust to range filter'
-  );
-
-  t.deepEqual(
-    adjustValueToFilterDomain(null, rangeFilter),
-    [0, 1],
-    'should return value adjust to range filter'
-  );
-
-  t.deepEqual(
-    adjustValueToFilterDomain([undefined, 0.5], rangeFilter),
-    [0, 0.5],
-    'should return value adjust to range filter'
-  );
-
-  // TODO needs id
-  const multiSelectFilter = getDefaultFilter();
-  multiSelectFilter.type = FILTER_TYPES.multiSelect;
-  multiSelectFilter.domain = ['a', 'b', 'c'];
-
-  t.deepEqual(
-    adjustValueToFilterDomain(['a', 'b'], multiSelectFilter),
-    ['a', 'b'],
-    'should return value matched to multiSelect filter'
-  );
-
-  t.deepEqual(
-    adjustValueToFilterDomain(['a', 'b', 'd'], multiSelectFilter),
-    ['a', 'b'],
-    'should return value matched to multiSelect filter'
-  );
-
-  t.deepEqual(
-    adjustValueToFilterDomain(['a', 'b', null], multiSelectFilter),
-    ['a', 'b'],
-    'should return value matched to multiSelect filter'
-  );
-
-  t.deepEqual(
-    adjustValueToFilterDomain(null, multiSelectFilter),
-    [],
-    'should return [] if nothing matched to multiSelect filter'
-  );
-
-  t.deepEqual(
-    adjustValueToFilterDomain([1, 2], multiSelectFilter),
-    [],
-    'should return [] if nothing matched to multiSelect filter'
-  );
-
-  // TODO needs id
-  const selectFilter = getDefaultFilter();
-  selectFilter.type = FILTER_TYPES.select;
-  selectFilter.domain = ['a', 'b', 'c'];
-
-  t.equal(
-    adjustValueToFilterDomain('a', selectFilter),
-    'a',
-    'should return value matched to select filter'
-  );
-
-  t.equal(
-    adjustValueToFilterDomain(['a', 'b'], selectFilter),
-    true,
-    'should return true if nothing matched to select filter'
-  );
-
-  t.equal(
-    adjustValueToFilterDomain(null, selectFilter),
-    true,
-    'should return true if nothing matched to select filter'
-  );
-
-  t.end();
-});
-
-test('filterUtils -> getFieldDomain.time', async t => {
-  const data = testData;
-  const expectedFields = testFields;
-
-  const {fields, rows} = await processCsvData(data);
-
-  t.deepEqual(fields, expectedFields, 'should get current field type');
-  testGetTimeFieldDomain(rows, fields, t);
-  testGetFilterFunction(rows, fields, t);
-
-  t.end();
-});
 
 function testGetTimeFieldDomain(rows, allFields, t) {
   const test_cases = [
@@ -350,6 +235,123 @@ function testGetFilterFunction(rows, fields, t) {
     `${rows[23][8]} should be outside the range`
   );
 }
+
+/* eslint-disable max-statements */
+test('filterUtils -> adjustValueToFilterDomain', t => {
+  // TODO: needs id
+  const rangeFilter = getDefaultFilter();
+  rangeFilter.type = FILTER_TYPES.range;
+  rangeFilter.domain = [0, 1];
+
+  t.deepEqual(
+    adjustValueToFilterDomain([0, 0.5], rangeFilter),
+    [0, 0.5],
+    'should return value matched to range filter'
+  );
+
+  t.deepEqual(
+    adjustValueToFilterDomain([-1, 0.5], rangeFilter),
+    [0, 0.5],
+    'should return value adjust to range filter'
+  );
+
+  t.deepEqual(
+    adjustValueToFilterDomain([0.1, 1.5], rangeFilter),
+    [0.1, 1],
+    'should return value adjust to range filter'
+  );
+
+  t.deepEqual(
+    adjustValueToFilterDomain([1.1, 2], rangeFilter),
+    [0, 1],
+    'should return value adjust to range filter'
+  );
+
+  t.deepEqual(
+    adjustValueToFilterDomain(null, rangeFilter),
+    [0, 1],
+    'should return value adjust to range filter'
+  );
+
+  t.deepEqual(
+    adjustValueToFilterDomain([undefined, 0.5], rangeFilter),
+    [0, 0.5],
+    'should return value adjust to range filter'
+  );
+
+  // TODO needs id
+  const multiSelectFilter = getDefaultFilter();
+  multiSelectFilter.type = FILTER_TYPES.multiSelect;
+  multiSelectFilter.domain = ['a', 'b', 'c'];
+
+  t.deepEqual(
+    adjustValueToFilterDomain(['a', 'b'], multiSelectFilter),
+    ['a', 'b'],
+    'should return value matched to multiSelect filter'
+  );
+
+  t.deepEqual(
+    adjustValueToFilterDomain(['a', 'b', 'd'], multiSelectFilter),
+    ['a', 'b'],
+    'should return value matched to multiSelect filter'
+  );
+
+  t.deepEqual(
+    adjustValueToFilterDomain(['a', 'b', null], multiSelectFilter),
+    ['a', 'b'],
+    'should return value matched to multiSelect filter'
+  );
+
+  t.deepEqual(
+    adjustValueToFilterDomain(null, multiSelectFilter),
+    [],
+    'should return [] if nothing matched to multiSelect filter'
+  );
+
+  t.deepEqual(
+    adjustValueToFilterDomain([1, 2], multiSelectFilter),
+    [],
+    'should return [] if nothing matched to multiSelect filter'
+  );
+
+  // TODO needs id
+  const selectFilter = getDefaultFilter();
+  selectFilter.type = FILTER_TYPES.select;
+  selectFilter.domain = ['a', 'b', 'c'];
+
+  t.equal(
+    adjustValueToFilterDomain('a', selectFilter),
+    'a',
+    'should return value matched to select filter'
+  );
+
+  t.equal(
+    adjustValueToFilterDomain(['a', 'b'], selectFilter),
+    true,
+    'should return true if nothing matched to select filter'
+  );
+
+  t.equal(
+    adjustValueToFilterDomain(null, selectFilter),
+    true,
+    'should return true if nothing matched to select filter'
+  );
+
+  t.end();
+});
+
+test('filterUtils -> getFieldDomain.time', async t => {
+  const data = testData;
+  const expectedFields = testFields;
+
+  const {fields, rows} = await processCsvData(data);
+
+  t.deepEqual(fields, expectedFields, 'should get current field type');
+  testGetTimeFieldDomain(rows, fields, t);
+  testGetFilterFunction(rows, fields, t);
+
+  t.end();
+});
 
 test('filterUtils -> getTimestampFieldDomain', t => {
   /* eslint-disable func-style */
@@ -782,6 +784,170 @@ test('filterUtils -> getDatasetIndexForFilter', t => {
   t.end();
 });
 
+test('filterUtils -> isValidFilterValue', t => {
+  t.equal(
+    isValidFilterValue(null, true),
+    false,
+    'Should return false because type is null'
+  );
+
+  t.equal(
+    isValidFilterValue(FILTER_TYPES.select, true),
+    true,
+    'Should return true because type is select and value is true'
+  );
+
+  t.equal(
+    isValidFilterValue(FILTER_TYPES.select, false),
+    true,
+    'Should return true because type is select and value is true'
+  );
+
+  t.equal(
+    isValidFilterValue(FILTER_TYPES.timeRange, false),
+    false,
+    'Should return false because type is timeRange and value is not an array'
+  );
+
+  t.equal(
+    isValidFilterValue(FILTER_TYPES.timeRange, []),
+    true,
+    'Should return true because type is timeRange and value is an empty array'
+  );
+
+  t.equal(
+    isValidFilterValue(FILTER_TYPES.timeRange, [1]),
+    true,
+    'Should return false because type is timeRange and value is an array'
+  );
+
+  t.equal(
+    isValidFilterValue(FILTER_TYPES.multiSelect, true),
+    false,
+    'Should return false because type is multiSelect and value is not an array'
+  );
+
+  t.equal(
+    isValidFilterValue(FILTER_TYPES.multiSelect, []),
+    false,
+    'Should return false because type is multiSelect and value is an empty array'
+  );
+
+  t.equal(
+    isValidFilterValue(FILTER_TYPES.multiSelect, [1]),
+    true,
+    'Should return false because type is multiSelect and value is an array'
+  );
+
+  t.end();
+});
+
+test('filterUtils -> isInPolygon', t => {
+  t.equal(
+    isInPolygon(
+      [120.47448, 23.667604],
+      {
+        type: 'Feature',
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [
+                120.21949418752885,
+                23.755486652156186
+              ],
+              [
+                120.21949418752885,
+                23.221461105318184
+              ],
+              [
+                121.05994828909135,
+                23.221461105318184
+              ],
+              [
+                121.05994828909135,
+                23.755486652156186
+              ],
+              [
+                120.21949418752885,
+                23.755486652156186
+              ]
+            ]
+          ]
+        },
+        properties: {
+          renderType: 'Rectangle',
+          isClosed: true,
+          bbox: {
+            xmin: 120.21949418752885,
+            xmax: null,
+            ymin: 23.755486652156186,
+            ymax: null
+          },
+          isVisible: true,
+          filterId: 'z1ilfjv6'
+        },
+        id: '036d9e21-af6b-4350-aab9-f1ce37c35cce'
+      }
+    ),
+    true,
+    'Should return true because the point is within the polygon'
+  );
+
+  t.equal(
+    isInPolygon(
+      [119.47448, 23.667604],
+      {
+        type: 'Feature',
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [
+                120.21949418752885,
+                23.755486652156186
+              ],
+              [
+                120.21949418752885,
+                23.221461105318184
+              ],
+              [
+                121.05994828909135,
+                23.221461105318184
+              ],
+              [
+                121.05994828909135,
+                23.755486652156186
+              ],
+              [
+                120.21949418752885,
+                23.755486652156186
+              ]
+            ]
+          ]
+        },
+        properties: {
+          renderType: 'Rectangle',
+          isClosed: true,
+          bbox: {
+            xmin: 120.21949418752885,
+            xmax: null,
+            ymin: 23.755486652156186,
+            ymax: null
+          },
+          isVisible: true,
+          filterId: 'z1ilfjv6'
+        },
+        id: '036d9e21-af6b-4350-aab9-f1ce37c35cce'
+      }
+    ),
+    false,
+    'Should return false because the point is not within the polygon'
+  );
+
+  t.end();
+});
+
 test('filterUtils -> validatePolygonFilter', t => {
   const filter = {
     layerId: ['layer1'],
@@ -872,6 +1038,7 @@ test('filterUtils -> Polygon getFilterFunction ', t => {
     allData: mockPolygonData.data,
     fields: mockPolygonData.fields
   };
+
   const {layers, data} = mockPolygonData;
 
   const polygonFilter = generatePolygonFilter(layers, mockPolygonFeature);
