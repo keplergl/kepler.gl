@@ -60,6 +60,7 @@ function PolygonFilterPanelFactory(
       [setFilter]);
 
     const isVisible = get(filter, ['value', 'properties', 'isVisible'], true);
+    const featureType = get(filter, ['value', 'properties', 'renderType'], true);
 
     return (
       <>
@@ -70,7 +71,7 @@ function PolygonFilterPanelFactory(
           filter={filter}
           removeFilter={removeFilter}
         >
-          <StyledFilterPanel>Polygon</StyledFilterPanel>
+          <StyledFilterPanel>Geo - {featureType}</StyledFilterPanel>
           <PanelHeaderAction
             id={filter.id}
             onClick={toggleFilterFeature}

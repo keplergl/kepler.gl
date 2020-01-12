@@ -20,6 +20,7 @@
 
 import {RenderStates, RenderTypes} from 'react-map-gl-draw';
 import {COLORS} from './constants';
+import get from 'lodash.get';
 
 const DEFAULT_EDIT_HANDLE_SHAPE = 'circle';
 
@@ -67,9 +68,11 @@ export const DEFAULT_RADIUS = 5;
 function noOp() {}
 
 export function getStyle({feature, state}) {
+  const isVisible = get(feature, ['properties', 'isVisible'], true);
+
   const style = {
     stroke: STATE_STYLES_STROKE[state] || DEFAULT_STATE_STYLE_STROKE,
-    strokeWidth: STATE_STYLES_STROKE_WIDTH,
+    strokeWidth: isVisible  ? STATE_STYLES_STROKE_WIDTH : 0,
     fill: DEFAULT_STATE_STYLE_FILL,
     fillOpacity: DEFAULT_STATE_STYLE_OPACITY,
     r: DEFAULT_RADIUS
