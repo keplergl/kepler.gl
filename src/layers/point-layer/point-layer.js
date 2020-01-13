@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import uniq from 'lodash.uniq';
-import {BrushingExtension} from '@deck.gl/extensions';
+import {BrushingExtension} from 'extensions/brushing';
 import {ScatterplotLayer, TextLayer} from '@deck.gl/layers';
 import {getDistanceScales} from 'viewport-mercator-project';
 

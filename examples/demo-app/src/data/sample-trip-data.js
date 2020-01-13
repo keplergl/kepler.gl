@@ -3981,17 +3981,17 @@ export const sampleTripDataConfig = {
   config: {
     visState: {
       layers: [
-        {
-          type: 'heatmap',
-          config: {
-            dataId: 'test_trip_data',
-            columns: {
-              lat: 'pickup_latitude',
-              lng: 'pickup_longitude'
-            },
-            isVisible: true
-          }
-        },
+        // {
+        //   type: 'heatmap',
+        //   config: {
+        //     dataId: 'test_trip_data',
+        //     columns: {
+        //       lat: 'pickup_latitude',
+        //       lng: 'pickup_longitude'
+        //     },
+        //     isVisible: true
+        //   }
+        // },
         {
           type: 'point',
           config: {
@@ -4000,31 +4000,51 @@ export const sampleTripDataConfig = {
               lat: 'pickup_latitude',
               lng: 'pickup_longitude'
             },
+            color: [255, 0, 0],
+            label: 'pickup',
             isVisible: true
           }
         },
         {
-          type: 'cluster',
+          type: 'point',
           config: {
             dataId: 'test_trip_data',
             columns: {
-              lat: 'pickup_latitude',
-              lng: 'pickup_longitude'
+              lat: 'dropoff_latitude',
+              lng: 'dropoff_longitude'
             },
+            color: [0, 0, 255],
+            label: 'dropoff',
             isVisible: true
           }
         },
+        // {
+        //   type: 'cluster',
+        //   config: {
+        //     dataId: 'test_trip_data',
+        //     columns: {
+        //       lat: 'pickup_latitude',
+        //       lng: 'pickup_longitude'
+        //     },
+        //     isVisible: true
+        //   }
+        // },
         {
           type: 'arc',
           config: {
             dataId: 'test_trip_data',
+            label: 'pickup -> dropoff',
             columns: {
               lat0: 'pickup_latitude',
               lng0: 'pickup_longitude',
               lat1: 'dropoff_latitude',
               lng1: 'dropoff_longitude'
             },
-            isVisible: true
+            color: [255, 0, 0],
+            isVisible: true,
+            visConfig: {
+              targetColor: [0, 0, 255]
+            }
           }
         }
       ],

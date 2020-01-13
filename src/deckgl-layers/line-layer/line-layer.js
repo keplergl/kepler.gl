@@ -27,7 +27,7 @@ const defaultProps = {
   getTargetColor: x => x.color || [0, 0, 0, 255]
 };
 
-function addBrushingVsShader(vs) {
+function addInstanceColorShader(vs) {
   const targetColorVs = editShader(
     vs,
     'line target color vs',
@@ -50,7 +50,7 @@ export default class EnhancedLineLayer extends LineLayer {
 
     return {
       ...shaders,
-      vs: addBrushingVsShader(shaders.vs)
+      vs: addInstanceColorShader(shaders.vs)
     };
   }
 

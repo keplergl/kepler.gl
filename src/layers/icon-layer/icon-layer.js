@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import window from 'global/window';
-import {BrushingExtension} from '@deck.gl/extensions';
+import {BrushingExtension} from 'extensions/brushing';
 
 import {hexToRgb} from 'utils/color-utils';
 import SvgIconLayer from 'deckgl-layers/svg-icon-layer/svg-icon-layer';

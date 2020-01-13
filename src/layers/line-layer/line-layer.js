@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {BrushingExtension} from '@deck.gl/extensions';
+import {BrushingExtension} from 'extensions/brushing';
 
 import LineLayerIcon from './line-layer-icon';
 import ArcLayer from '../arc-layer/arc-layer';

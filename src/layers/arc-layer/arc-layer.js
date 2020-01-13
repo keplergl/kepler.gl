@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import Layer from '../base-layer';
-import {BrushingExtension} from '@deck.gl/extensions';
+import {BrushingExtension} from 'extensions/brushing';
 import {ArcLayer as DeckArcLayer} from '@deck.gl/layers';
 
 import {hexToRgb} from 'utils/color-utils';
@@ -36,6 +36,12 @@ export const arcPosAccessor = ({lat0, lng0, lat1, lng1}) => d => [
 ];
 
 export const arcRequiredColumns = ['lat0', 'lng0', 'lat1', 'lng1'];
+export const arcColumnLabels = {
+  lat0: 'source lat',
+  lng0: 'source lng',
+  lat1: 'target lat',
+  lng1: 'target lng'
+};
 
 export const arcVisConfigs = {
   opacity: 'opacity',
@@ -69,6 +75,9 @@ export default class ArcLayer extends Layer {
     return arcRequiredColumns;
   }
 
+  get columnLabels() {
+    return arcColumnLabels;
+  }
   get columnPairs() {
     return this.defaultLinkColumnPairs;
   }
@@ -171,6 +180,7 @@ export default class ArcLayer extends Layer {
       data,
       getSourceColor,
       getTargetColor,
+      // getBrushingTarget: d => d.targetPosition,
       getWidth: getStrokeWidth,
       getFilterValue: gpuFilter.filterValueAccessor()
     };
@@ -224,6 +234,7 @@ export default class ArcLayer extends Layer {
         ...defaultLayerProps,
         ...this.getBrushingExtensionProps(interactionConfig),
         ...data,
+        brushingTarget: 'source_target',
         widthScale: this.config.visConfig.thickness,
         updateTriggers: {
           getFilterValue: gpuFilter.filterValueUpdateTriggers,
