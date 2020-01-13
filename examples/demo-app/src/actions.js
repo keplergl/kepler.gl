@@ -364,7 +364,7 @@ export function loadCloudMap(queryParams, providerName, pushRoute = false) {
     const cloudProvider = getCloudProvider(providerName);
 
     if (pushRoute) {
-      const mapUrl = cloudProvider._composeURL(queryParams);
+      const mapUrl = cloudProvider.getMapPermalinkFromParams(queryParams, false);
       dispatch(push(mapUrl));
     }
 

@@ -166,8 +166,8 @@ export default class CartoProvider {
     return {datasets, vis: visualization.vis, options};
   }
 
-  async getVisualizations(opts) {
-    const {type='all', pageOffset=0, pageSize=-1} = {...opts};
+  async getVisualizations() {
+    // TODO: Implement pagination using {type='all', pageOffset=0, pageSize=-1}
     await this._carto.login();
     const username = this.getUserName();
     const cs = await this._carto.getCustomStorage();
@@ -195,6 +195,13 @@ export default class CartoProvider {
   }
 
   getMapPermalink(mapLink, fullURL = true) {
+    return fullURL
+      ? `${window.location.protocol}//${window.location.host}/${mapLink}`
+      : `/${mapLink}`;
+  }
+
+  getMapPermalinkFromParams({mapId, owner, privateMap, fullURL = true}) {
+    const mapLink = this._composeURL({mapId, owner, privateMap});
     return fullURL
       ? `${window.location.protocol}//${window.location.host}/${mapLink}`
       : `/${mapLink}`;

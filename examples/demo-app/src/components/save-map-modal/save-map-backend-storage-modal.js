@@ -57,7 +57,7 @@ class SaveMapBackendStorageModal extends Component {
     this.props.onSave(provider, extraData);
   }
 
-  _isSaveDisabled = () => this.state.title.length < 3;
+  _isSaveDisabled = () => this.props.sharing.isLoading || this.state.title.length < 3;
 
   _getActiveProvider = () => {
     const provider = Object.values(BACKEND_PROVIDERS).find((provider) => provider.isConnected);
@@ -94,6 +94,7 @@ class SaveMapBackendStorageModal extends Component {
     this._isSaveDisabled = this._isSaveDisabled.bind(this);
     this._saveMap = this._saveMap.bind(this);
     this._updateStatus();
+    this._modalProps.confirmButton.disabled = this._isSaveDisabled();
     return (
       <Modal
         isOpen={isOpen}
