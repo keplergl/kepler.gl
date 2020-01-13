@@ -23,6 +23,7 @@ import {routerReducer, routerMiddleware} from 'react-router-redux';
 import {browserHistory} from 'react-router';
 import {enhanceReduxMiddleware} from 'kepler.gl/middleware';
 import thunk from 'redux-thunk';
+import window from 'global/window';
 
 import demoReducer from './reducers/index';
 
@@ -41,10 +42,10 @@ export const enhancers = [applyMiddleware(...middlewares)];
 const initialState = {};
 
 //  add redux devtools
-// const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 
 export default createStore(
   reducers,
   initialState,
-  compose(...enhancers)
+  composeEnhancers(...enhancers)
 );
