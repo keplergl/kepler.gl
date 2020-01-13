@@ -40,6 +40,7 @@ import {
   applyFilterFieldName,
   applyFiltersToDatasets,
   generatePolygonFilter,
+  filterDatasetCPU,
   getDefaultFilter,
   getFilterPlot,
   getDefaultFilterPlotType,
@@ -53,7 +54,7 @@ import {
   assignGpuChannel
 } from 'utils/gpu-filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
-import {set} from 'utils/utils';
+import {set, arrayfy} from 'utils/utils';
 
 import {
   findDefaultLayer,
@@ -1400,6 +1401,23 @@ export const loadFilesErrUpdater = (state, {error}) => ({
   fileLoading: false,
   fileLoadingErr: error
 });
+
+/**
+ * When select dataset for export, apply cpu filter to selected dataset
+ * @memberof visStateUpdaters
+ * @param {Object} state `visState`
+ * @param {Object} action
+ * @param {string} action.dataId dataset id
+ * @returns {Object} nextState
+ * @public
+ */
+export const applyCPUFilterUpdater = (state, {dataId}) => {
+
+  // apply cpuFilter
+  const dataIds = arrayfy(dataId);
+
+  return dataIds.reduce((accu, id) => filterDatasetCPU(accu, id), state);
+};
 
 /**
  * Helper function to update All layer domain and layer data of state

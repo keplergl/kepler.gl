@@ -23,7 +23,6 @@ import moment from 'moment';
 import testData, {testFields} from 'test/fixtures/test-csv-data';
 
 import {
-  FILTER_TYPES,
   adjustValueToFilterDomain,
   getFilterFunction,
   getFieldDomain,
@@ -39,6 +38,7 @@ import {
   diffFilters
 } from 'utils/filter-utils';
 
+import {FILTER_TYPES} from 'constants/default-settings';
 import {processCsvData} from 'processors/data-processor';
 import {mockPolygonFeature, mockPolygonData} from '../../fixtures/polygon';
 

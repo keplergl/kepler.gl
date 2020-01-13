@@ -23,12 +23,12 @@ import keyMirror from 'keymirror';
 import get from 'lodash.get';
 import booleanWithin from '@turf/boolean-within';
 import {point as turfPoint} from '@turf/helpers';
-import {ALL_FIELD_TYPES} from 'constants/default-settings';
+import {ALL_FIELD_TYPES, FILTER_TYPES} from 'constants/default-settings';
 import {maybeToDate, notNullorUndefined, unique, timeToUnixMilli} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
 import {LAYER_TYPES} from '../constants';
 import {generateHashId, set, toArray} from './utils';
-import {getGpuFilterProps} from './gpu-filter-utils';
+import {getGpuFilterProps, getDatasetFieldIndexForFilter} from './gpu-filter-utils';
 
 export const TimestampStepMap = [
   {max: 1, step: 0.05},
@@ -49,14 +49,6 @@ const durationHour = durationMinute * 60;
 const durationDay = durationHour * 24;
 const durationWeek = durationDay * 7;
 const durationYear = durationDay * 365;
-
-export const FILTER_TYPES = keyMirror({
-  range: null,
-  select: null,
-  timeRange: null,
-  multiSelect: null,
-  polygon: null
-});
 
 export const PLOT_TYPES = keyMirror({
   histogram: null,
@@ -207,7 +199,6 @@ const filterValidators = {
 export function validateFilter(dataset, filter) {
   // match filter.dataId
   const failed = {dataset, filter: null};
-
   const filterDataId = toArray(filter.dataId);
 
   const filterDatasetIndex = filterDataId.indexOf(dataset.id);
@@ -220,7 +211,7 @@ export function validateFilter(dataset, filter) {
     ...getDefaultFilter(filter.dataId),
     ...filter,
     dataId: filterDataId,
-    name: Array.isArray(filter.name) ? filter.name : [filter.name]
+    name: toArray(filter.name)
   };
 
   const fieldName = initializeFilter.name[filterDatasetIndex];
@@ -458,6 +449,7 @@ export function updateFilterDataId(dataId) {
  * @param {Array<Object>} filters
  * @param {Object} opt
  * @param {Object} opt.cpuOnly only allow cpu filtering
+ * @param {Object} opt.ignoreDomain ignore filter for domain calculation
  * @returns {Object} dataset
  * @returns {Array<Number>} dataset.filteredIndex
  * @returns {Array<Number>} dataset.filteredIndexForDomain
@@ -466,13 +458,14 @@ export function filterDataset(dataset, filters, layers, opt = {}) {
   const {allData, id: dataId, filterRecord: oldFilterRecord, fields} = dataset;
 
   // if there is no filters
-  const filterRecord = getFilterRecord(dataId, filters);
+  const filterRecord = getFilterRecord(dataId, filters, opt);
+
   const newDataset = set(['filterRecord'], filterRecord, dataset);
 
   if (!filters.length) {
     return {
       ...newDataset,
-      gpuFilter: getGpuFilterProps(filters, dataId),
+      gpuFilter: getGpuFilterProps(filters, dataId, fields),
       filteredIndex: dataset.allIndexes,
       filteredIndexForDomain: dataset.allIndexes
     };
@@ -484,13 +477,14 @@ export function filterDataset(dataset, filters, layers, opt = {}) {
   // filteredIndex used to calculate layer data
   // filteredIndexForDomain used to calculate layer Domain
   const shouldCalDomain = Boolean(changedFilters.dynamicDomain);
-  const shouldCalIndex = Boolean(changedFilters.cpu) || opt.cpuOnly;
+  const shouldCalIndex = Boolean(changedFilters.cpu);
 
   let filterResult = {};
   if (shouldCalDomain || shouldCalIndex) {
 
     const dynamicDomainFilters = shouldCalDomain ? filterRecord.dynamicDomain : null;
-    const cpuFilters = shouldCalIndex ? (opt.cpuOnly ? filters : filterRecord.cpu) : null;
+    const cpuFilters = shouldCalIndex ? filterRecord.cpu : null;
+
     const filterFuncs = filters.reduce((acc, filter) => {
       const fieldIndex = getDatasetFieldIndexForFilter(dataset.id, filter);
       const field = fieldIndex !== -1 ? fields[fieldIndex] : null;
@@ -510,7 +504,7 @@ export function filterDataset(dataset, filters, layers, opt = {}) {
   return {
     ...newDataset,
     ...filterResult,
-    gpuFilter: getGpuFilterProps(filters, dataId)
+    gpuFilter: getGpuFilterProps(filters, dataId, fields)
   };
 }
 
@@ -519,6 +513,7 @@ export function filterDataset(dataset, filters, layers, opt = {}) {
  * @param {Object} filters
  * @param {Array|null} filters.dynamicDomainFilters
  * @param {Array|null} filters.cpuFilters
+ * @param {Object} filters.filterFuncs
  * @returns {{filteredIndex: Array, filteredIndexForDomain: Array}} filteredIndex and filteredIndexForDomain
  */
 function filterDataByFilterTypes({dynamicDomainFilters, cpuFilters, filterFuncs}, allData) {
@@ -554,9 +549,11 @@ function filterDataByFilterTypes({dynamicDomainFilters, cpuFilters, filterFuncs}
  * Get a record of filters based on domain type and gpu / cpu
  * @param {string} dataId
  * @param {Array<Object>} filters
+ * @param {Object} opt.cpuOnly only allow cpu filtering
+ * @param {Object} opt.ignoreDomain ignore filter for domain calculation
  * @returns {{dynamicDomain: Array, fixedDomain: Array, cpu: Array, gpu: Array}} filterRecord
  */
-export function getFilterRecord(dataId, filters) {
+export function getFilterRecord(dataId, filters, opt = {}) {
   const filterRecord = {
     dynamicDomain: [],
     fixedDomain: [],
@@ -566,11 +563,13 @@ export function getFilterRecord(dataId, filters) {
 
   filters.forEach(f => {
     if (getDatasetFieldIndexForFilter(dataId, f) > -1 && f.value !== null) {
-      (f.fixedDomain
+
+      (f.fixedDomain || opt.ignoreDomain
         ? filterRecord.fixedDomain
         : filterRecord.dynamicDomain
       ).push(f);
-      (f.gpu ? filterRecord.gpu : filterRecord.cpu).push(f);
+
+      (f.gpu && !opt.cpuOnly ? filterRecord.gpu : filterRecord.cpu).push(f);
     }
   });
 
@@ -921,7 +920,7 @@ export function getDefaultFilterPlotType(filter) {
  * @return {{[datasetId: string]: Object}} datasets - new updated datasets
  */
 export function applyFiltersToDatasets(datasetIds, datasets, filters, layers) {
-  const dataIds = Array.isArray(datasetIds) ? datasetIds : [datasetIds];
+  const dataIds = toArray(datasetIds);
   return dataIds.reduce((acc, dataId) => {
     const layersToFilter = (layers || []).filter(l => l.config.dataId === dataId);
     const appliedFilters = filters.filter(d => shouldApplyFilter(d, dataId));
@@ -960,12 +959,6 @@ export function applyFilterFieldName(
     // throw new Error(`fieldIndex not found. Dataset must contain a property with name: ${fieldName}`);
     return {filter: null, dataset};
   }
-
-  let newFilter = {
-    ...filter,
-    // TODO, since we allow to add multiple fields to a filter we can no longer freeze the filter
-    freeze: true
-  };
 
   // TODO: validate field type
   const field = fields[fieldIndex];
@@ -1065,16 +1058,17 @@ export function mergeFilterDomainStep(filter, filterProps) {
  * @param filter
  * @return {*}
  */
-export function getDatasetFieldIndexForFilter(dataId, filter) {
-  const datasetIndex = toArray(filter.dataId).findIndex(id => id === dataId);
-  if (datasetIndex < 0) {
-    return -1;
+export function getDatasetFieldIndexForFilter(dataset, filter) {
+  const datasetIndex = getDatasetIndexForFilter(dataset, filter);
+  if (datasetIndex === -1) {
+    return datasetIndex;
   }
 
   const fieldIndex = filter.fieldIdx[datasetIndex];
 
   return notNullorUndefined(fieldIndex) ? fieldIndex : -1;
 }
+
 
 export const featureToFilterValue = (feature, filterId, properties = {}) => ({
   ...feature,
@@ -1115,4 +1109,63 @@ export function generatePolygonFilter(layers, feature) {
     layerId,
     value: featureToFilterValue(feature, filter.id, {isVisible: true})
   };
+}
+
+/**
+ * Run filter entirely on CPU
+ * @param {Object} state - visState
+ * @param {string} dataId
+ * @return {Object} state state with updated datasets
+ */
+export function filterDatasetCPU(state, dataId) {
+  const datasetFilters = state.filters.filter(f => f.dataId.includes(dataId));
+
+  const selectedDataset = state.datasets[dataId];
+
+  if (!selectedDataset) {
+    return state;
+  }
+
+  const opt = {
+    cpuOnly: true,
+    ignoreDomain: true
+  };
+
+  if (!datasetFilters.length) {
+    // no filter
+    const filtered = {
+      ...selectedDataset,
+      filteredIdxCPU: selectedDataset.allIndexes,
+      filterRecordCPU: getFilterRecord(dataId, state.filters, opt)
+    };
+
+    return set(['datasets', dataId], filtered, state);
+  }
+
+  // no gpu filter
+  if (!datasetFilters.find(f => f.gpu)) {
+    const filtered = {
+      ...selectedDataset,
+      filteredIdxCPU: selectedDataset.filteredIndex,
+      filterRecordCPU: getFilterRecord(dataId, state.filters, opt)
+    };
+    return set(['datasets', dataId], filtered, state);
+  }
+
+  // make a copy for cpu filtering
+  const copied = {
+    ...selectedDataset,
+    filterRecord: selectedDataset.filterRecordCPU,
+    filteredIndex: selectedDataset.filteredIdxCPU
+  };
+
+  const filtered = filterDataset(copied, state.filters, opt);
+
+  const cpuFilteredDataset = {
+    ...selectedDataset,
+    filteredIdxCPU: filtered.filteredIndex,
+    filterRecordCPU: filtered.filterRecord
+  };
+
+  return set(['datasets', dataId], cpuFilteredDataset, state);
 }

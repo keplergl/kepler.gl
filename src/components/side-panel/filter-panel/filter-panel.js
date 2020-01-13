@@ -22,8 +22,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
 import styled from 'styled-components';
-import {FILTER_TYPES} from 'utils/filter-utils';
-import {ALL_FIELD_TYPES} from 'constants/default-settings';
+import {ALL_FIELD_TYPES, FILTER_TYPES} from 'constants/default-settings';
 
 import FilterPanelHeaderFactory from 'components/side-panel/filter-panel/filter-panel-header';
 import NewFilterPanelFactory from 'components/filters/filter-panels/new-filter-panel';

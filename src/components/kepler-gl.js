@@ -347,7 +347,6 @@ function KeplerGlFactory(
               }
               containerW={containerW}
             />
-
             <ModalWrapper
               mapStyle={mapStyle}
               visState={visState}

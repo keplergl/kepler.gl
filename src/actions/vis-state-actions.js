@@ -582,6 +582,21 @@ export function setEditorMode(mode) {
 }
 
 /**
+ * Trigger CPU filter of selected dataset
+ * @memberof visStateActions
+ * @param {string | Arrary<string>} dataId - single dataId or an array of dataIds
+ * @returns {{type: ActionTypes.APPLY_CPU_FILTER, dataId: string}}
+ * @public
+ */
+export function applyCPUFilter(dataId) {
+  return {
+    type: ActionTypes.APPLY_CPU_FILTER,
+    dataId
+  };
+}
+
+/**
+
  * Toggle editor layer visibility
  * @memberof visStateActions
  * @return {{type: ActionTypes.TOGGLE_EDITOR_VISIBILITY}}

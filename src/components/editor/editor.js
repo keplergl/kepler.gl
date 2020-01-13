@@ -28,7 +28,7 @@ import get from 'lodash.get';
 
 import {EDITOR_AVAILABLE_LAYERS} from 'constants/default-settings';
 import FeatureActionPanel from './feature-action-panel';
-import {FILTER_TYPES} from 'utils/filter-utils';
+import {FILTER_TYPES} from 'constants/default-settings';
 
 import {
   DEFAULT_RADIUS,
