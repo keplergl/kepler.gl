@@ -496,6 +496,20 @@ export function loadFilesErr(error) {
 }
 
 /**
+ * Trigger CPU filter of selected dataset
+ * @memberof visStateActions
+ * @param {string | Arrary<string>} dataId - single dataId or an array of dataIds
+ * @returns {{type: ActionTypes.APPLY_CPU_FILTER, dataId: string}}
+ * @public
+ */
+export function applyCPUFilter(dataId) {
+  return {
+    type: ActionTypes.APPLY_CPU_FILTER,
+    dataId
+  };
+}
+
+/**
  * This declaration is needed to group actions in docs
  */
 /**

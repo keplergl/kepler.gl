@@ -34,6 +34,7 @@ import {getDefaultInteraction, findFieldsToShow} from 'utils/interaction-utils';
 import {
   applyFilterFieldName,
   applyFiltersToDatasets,
+  filterDatasetCPU,
   getDefaultFilter,
   getFilterPlot,
   getDefaultFilterPlotType,
@@ -47,7 +48,7 @@ import {
   assignGpuChannel
 } from 'utils/gpu-filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
-import {set} from 'utils/utils';
+import {set, arrayfy} from 'utils/utils';
 
 import {
   findDefaultLayer,
@@ -1322,6 +1323,23 @@ export const loadFilesUpdater = (state, action) => {
   ];
 
   return withTask(state, loadFileTasks);
+};
+
+/**
+ * When select dataset for export, apply cpu filter to selected dataset
+ * @memberof visStateUpdaters
+ * @param {Object} state `visState`
+ * @param {Object} action
+ * @param {string} action.dataId dataset id
+ * @returns {Object} nextState
+ * @public
+ */
+export const applyCPUFilterUpdater = (state, {dataId}) => {
+
+  // apply cpuFilter
+  const dataIds = arrayfy(dataId);
+
+  return dataIds.reduce((accu, id) => filterDatasetCPU(accu, id), state);
 };
 
 /**

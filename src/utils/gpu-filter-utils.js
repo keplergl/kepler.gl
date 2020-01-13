@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,8 +19,10 @@
 // THE SOFTWARE.
 
 import {set, arrayfy} from './utils';
-import {MAX_GPU_FILTERS} from 'constants/default-settings';
+import {MAX_GPU_FILTERS, FILTER_TYPES} from 'constants/default-settings';
 import {notNullorUndefined} from './data-utils';
+import moment from 'moment';
+
 /**
  * Set gpu mode based on current number of gpu filters exists
  * @param {Object} gpuFilter
@@ -162,7 +164,7 @@ const defaultGetData = d => d.data;
  * @param {Array<Object>} channels
  * @return {Function} getFilterValue
  */
-const getFilterValueAccessor = channels => (
+const getFilterValueAccessor = (channels, dataId, fields) => (
   getIndex = defaultGetIndex,
   getData = defaultGetData
 ) => d =>
@@ -171,9 +173,15 @@ const getFilterValueAccessor = channels => (
     if (!filter) {
       return 0;
     }
-    const value = filter.mappedValue
-      ? filter.mappedValue[getIndex(d)]
-      : getData(d)[filter.fieldIdx];
+    const fieldIndex = getDatasetFieldIndexForFilter(dataId, filter);
+    const field = fields[fieldIndex];
+
+    const value =
+      filter.type === FILTER_TYPES.timeRange
+        ? field.filterProps && Array.isArray(field.filterProps.mappedValue)
+          ? field.filterProps.mappedValue[getIndex(d)]
+          : moment.utc(getData(d)[fieldIndex]).valueOf()
+        : getData(d)[fieldIndex];
 
     return notNullorUndefined(value)
       ? value - filter.domain[0]
@@ -186,7 +194,7 @@ const getFilterValueAccessor = channels => (
  * @param {string} dataId
  * @returns {{filterRange: {Object}, filterValueUpdateTriggers: Object, getFilterValue: Function}}
  */
-export function getGpuFilterProps(filters, dataId) {
+export function getGpuFilterProps(filters, dataId, fields) {
   const filterRange = getEmptyFilterRange();
   const triggers = {};
 
@@ -195,7 +203,8 @@ export function getGpuFilterProps(filters, dataId) {
 
   for (let i = 0; i < MAX_GPU_FILTERS; i++) {
     const filter = filters.find(
-      f => f.gpu &&
+      f =>
+        f.gpu &&
         f.dataId.includes(dataId) &&
         f.gpuChannel[f.dataId.indexOf(dataId)] === i
     );
@@ -203,15 +212,35 @@ export function getGpuFilterProps(filters, dataId) {
     filterRange[i][0] = filter ? filter.value[0] - filter.domain[0] : 0;
     filterRange[i][1] = filter ? filter.value[1] - filter.domain[0] : 0;
 
-    triggers[`gpuFilter_${i}`] = filter ? filter.name[filter.dataId.indexOf(dataId)] : null;
+    triggers[`gpuFilter_${i}`] = filter
+      ? filter.name[filter.dataId.indexOf(dataId)]
+      : null;
     channels.push(filter);
   }
 
-  const filterValueAccessor = getFilterValueAccessor(channels);
+  const filterValueAccessor = getFilterValueAccessor(channels, dataId, fields);
 
   return {
     filterRange,
     filterValueUpdateTriggers: triggers,
     filterValueAccessor
   };
+}
+
+/**
+ * Return dataset field index from filter.fieldIdx
+ * The index matches the same dataset index for filter.dataId
+ * @param dataset
+ * @param filter
+ * @return {*}
+ */
+export function getDatasetFieldIndexForFilter(dataId, filter) {
+  const datasetIndex = arrayfy(filter.dataId).indexOf(dataId);
+  if (datasetIndex < 0) {
+    return -1;
+  }
+
+  const fieldIndex = filter.fieldIdx[datasetIndex];
+
+  return notNullorUndefined(fieldIndex) ? fieldIndex : -1;
 }

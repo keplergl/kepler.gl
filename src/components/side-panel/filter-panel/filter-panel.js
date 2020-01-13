@@ -32,8 +32,8 @@ import SingleSelectFilterFactory from 'components/filters/single-select-filter';
 import MultiSelectFilterFactory from 'components/filters/multi-select-filter';
 import TimeRangeFilterFactory from 'components/filters/time-range-filter';
 import RangeFilterFactory from 'components/filters/range-filter';
-import {FILTER_TYPES, FILTER_COMPONENTS} from 'utils/filter-utils';
-import {ALL_FIELD_TYPES} from 'constants/default-settings';
+import {FILTER_COMPONENTS} from 'utils/filter-utils';
+import {ALL_FIELD_TYPES, FILTER_TYPES} from 'constants/default-settings';
 
 const StyledFilterPanel = styled.div`
   margin-bottom: 12px;

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {FILTER_TYPES} from 'utils/filter-utils';
+import {FILTER_TYPES} from 'constants/default-settings';
 
 export function cmpObjectKeys(t, expectedObj, actualObj, name) {
   t.deepEqual(

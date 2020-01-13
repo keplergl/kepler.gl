@@ -23,17 +23,16 @@ import moment from 'moment';
 import testData, {testFields} from 'test/fixtures/test-csv-data';
 
 import {
-  FILTER_TYPES,
   adjustValueToFilterDomain,
   isDataMatchFilter,
   getFieldDomain,
   getHistogram,
   getTimestampFieldDomain,
   getDefaultFilter,
-  getDatasetFieldIndexForFilter,
   diffFilters
 } from 'utils/filter-utils';
 
+import {FILTER_TYPES} from 'constants/default-settings';
 import {processCsvData} from 'processors/data-processor';
 
 /* eslint-disable max-statements */
@@ -409,41 +408,6 @@ test('filterUtils -> getTimestampFieldDomain', t => {
       }
     });
   });
-
-  t.end();
-});
-
-test('filterUtils -> getDatasetFieldIndexForFilter', t => {
-  const dataId = 'test-this-id';
-
-  let fieldIndex = getDatasetFieldIndexForFilter(dataId, {
-    dataId: [dataId],
-    fieldIdx: [3]
-  });
-
-  t.equal(
-    fieldIndex,
-    3,
-    'FieldIndex should be 3'
-  );
-
-  fieldIndex = getDatasetFieldIndexForFilter(dataId, {
-    dataId: ['different-id', dataId],
-    fieldIdx: [3, 5]
-  });
-
-  t.equal(
-    fieldIndex,
-    5,
-    'FieldIndex should be 5'
-  );
-
-  fieldIndex = getDatasetFieldIndexForFilter(dataId, {dataId: ['different-id']});
-  t.equal(
-    fieldIndex,
-    -1,
-    'FieldIndex should be -1'
-  );
 
   t.end();
 });

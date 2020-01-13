@@ -20,6 +20,8 @@
 
 import {extent} from 'd3-array';
 
+export const geoJsonDataId = 'ieukmgne';
+
 /**
  *
  * GeoJSON with Polygons
@@ -202,8 +204,6 @@ export const geojsonData = {
   type: 'FeatureCollection',
   features: [feature0, feature1, feature2, feature3, feature4]
 };
-
-export const geoJsonDataId = 'ieukmgne';
 
 export const fields = [
   {

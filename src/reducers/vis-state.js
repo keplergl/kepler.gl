@@ -93,7 +93,9 @@ const actionHandler = {
 
   [ActionTypes.UPDATE_LAYER_BLENDING]: visStateUpdaters.updateLayerBlendingUpdater,
 
-  [ActionTypes.UPDATE_VIS_DATA]: visStateUpdaters.updateVisDataUpdater
+  [ActionTypes.UPDATE_VIS_DATA]: visStateUpdaters.updateVisDataUpdater,
+
+  [ActionTypes.APPLY_CPU_FILTER]: visStateUpdaters.applyCPUFilterUpdater
 };
 
 // construct vis-state reducer
