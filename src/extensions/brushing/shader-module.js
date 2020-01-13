@@ -58,7 +58,6 @@ const fs = `
   varying float brushing_isVisible;
 `;
 
-// filter_setValue(instanceFilterValue);
 const moduleName = 'enhanced_brushing';
 
 const TARGET = {
