@@ -86,6 +86,13 @@ export const ADD_MAP_STYLE_ID = 'addMapStyle';
  * @public
  */
 export const EXPORT_MAP_ID = 'exportMap';
+/**
+ * Modal id: save map modal
+ * @constant
+ * @type {string}
+ * @public
+ */
+export const SAVE_MAP_ID = 'saveMap';
 
 import {
   Layers,
@@ -627,8 +634,6 @@ export const EXPORT_IMG_RESOLUTION_OPTIONS = [
   }
 ];
 
-export const DEFAULT_EXPORT_IMAGE_NAME = 'kepler-gl.png';
-
 export const EXPORT_DATA_TYPE = keyMirror({
   CSV: null
   // SHAPEFILE: null,
@@ -738,3 +743,12 @@ export const EDITOR_AVAILABLE_LAYERS = [
  * Max number of filter value buffers that deck.gl provides
  */
 export const MAX_GPU_FILTERS = 4;
+export const MAP_THUMBNAIL_DIMENSION = {
+  width: 300,
+  height: 200
+};
+
+export const MAP_INFO_CHARACTER = {
+  title: 100,
+  description: 100
+};

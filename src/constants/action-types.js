@@ -96,6 +96,7 @@ const ActionTypes = keyMirror({
   LAYER_COLOR_UI_CHANGE: null,
   TOGGLE_FEATURE_LAYER: null,
   APPLY_CPU_FILTER: null,
+  SET_MAP_INFO: null,
 
   // mapState
   UPDATE_MAP: null,
@@ -127,9 +128,10 @@ const ActionTypes = keyMirror({
   REMOVE_NOTIFICATION: null,
 
   // uiState > export image
-  SET_RATIO: null,
-  SET_RESOLUTION: null,
-  TOGGLE_LEGEND: null,
+  // SET_RATIO: null,
+  // SET_RESOLUTION: null,
+  // TOGGLE_LEGEND: null,
+  SET_EXPORT_IMAGE_SETTING: null,
   START_EXPORTING_IMAGE: null,
   SET_EXPORT_IMAGE_DATA_URI: null,
   SET_EXPORT_IMAGE_ERROR: null,

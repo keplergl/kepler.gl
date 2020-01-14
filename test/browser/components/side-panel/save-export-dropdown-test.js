@@ -20,28 +20,19 @@
 
 import React from 'react';
 import test from 'tape';
-import {shallow} from 'enzyme';
+import {mount} from 'enzyme';
 import sinon from 'sinon';
 import {
-  ExportImageFactory,
-  ExportDataFactory,
-  ExportMapFactory,
-  SaveMapFactory,
-  SaveExportDropdownFactory
+  SaveExportDropdownFactory,
+  PanelHeaderDropdownFactory
 } from 'components/side-panel/panel-header';
+import ToolbarItem from 'components/common/toolbar-item';
 
 test('SaveExportDropdown', t => {
 
-  const ExportImage = ExportImageFactory();
-  const ExportData = ExportDataFactory();
-  const ExportMap = ExportMapFactory();
-  const SaveMap = SaveMapFactory();
-
+  const PanelHeaderDropdown = PanelHeaderDropdownFactory();
   const SaveExportDropdown = SaveExportDropdownFactory(
-    ExportImage,
-    ExportData,
-    ExportMap,
-    SaveMap
+    PanelHeaderDropdown
   );
 
   const onExportImage = sinon.spy();
@@ -51,7 +42,7 @@ test('SaveExportDropdown', t => {
   const onSaveMap = sinon.spy();
   const onClose = sinon.spy();
 
-  const $ = shallow(
+  const wrapper = mount(
     <SaveExportDropdown
       onExportImage={onExportImage}
       onExportData={onExportData}
@@ -62,53 +53,39 @@ test('SaveExportDropdown', t => {
       onClose={onClose}
     />
   );
-
   t.equal(
-    $.find('ExportImage').length,
+    wrapper.find(PanelHeaderDropdown).length,
     1,
-    'We should display 1 ExportImage'
+    'We should display 1 PanelHeaderDropdown'
+  );
+  t.equal(
+    wrapper.find(ToolbarItem).length,
+    4,
+    'We should display 4 ToolbarItems'
   );
 
-  t.equal(
-    $.find('ExportData').length,
-    1,
-    'We should display 1 ExportData'
-  );
-
-  t.equal(
-    $.find('ExportMap').length,
-    1,
-    'We should display 1 ExportMap'
-  );
-
-  t.equal(
-    $.find('SaveMap').length,
-    1,
-    'We should display 1 SaveMap'
-  );
-
-  $.find('ExportImage').simulate('click');
+  wrapper.find('.toolbar-item').at(0).simulate('click');
   t.equal(
     onExportImage.called,
     true,
     'Should have called export image callback'
   );
 
-  $.find('ExportData').simulate('click');
+  wrapper.find('.toolbar-item').at(1).simulate('click');
   t.equal(
     onExportData.called,
     true,
     'Should have called export data callback'
   );
 
-  $.find('ExportMap').simulate('click');
+  wrapper.find('.toolbar-item').at(2).simulate('click');
   t.equal(
     onExportMap.called,
     true,
     'Should have called export map callback'
   );
 
-  $.find('SaveMap').simulate('click');
+  wrapper.find('.toolbar-item').at(3).simulate('click');
   t.equal(
     onSaveMap.called,
     true,

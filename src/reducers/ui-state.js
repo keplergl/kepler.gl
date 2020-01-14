@@ -36,9 +36,7 @@ const actionHandler = {
   [ActionTypes.ADD_NOTIFICATION]: uiStateUpdaters.addNotificationUpdater,
   [ActionTypes.REMOVE_NOTIFICATION]: uiStateUpdaters.removeNotificationUpdater,
 
-  [ActionTypes.SET_RATIO]: uiStateUpdaters.setRatioUpdater,
-  [ActionTypes.SET_RESOLUTION]: uiStateUpdaters.setResolutionUpdater,
-  [ActionTypes.TOGGLE_LEGEND]: uiStateUpdaters.toggleLegendUpdater,
+  [ActionTypes.SET_EXPORT_IMAGE_SETTING]: uiStateUpdaters.setExportImageSetting,
   [ActionTypes.START_EXPORTING_IMAGE]: uiStateUpdaters.startExportingImage,
   [ActionTypes.SET_EXPORT_IMAGE_DATA_URI]: uiStateUpdaters.setExportImageDataUri,
   [ActionTypes.SET_EXPORT_IMAGE_ERROR]: uiStateUpdaters.setExportImageError,
