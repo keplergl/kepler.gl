@@ -261,26 +261,30 @@ const MapDrawPanel = React.memo(({
           <ToolbarItem
             onClick={() => onSetEditorMode(EDITOR_MODES.EDIT)}
             label="select"
-            icon={(<CursorClick height="22px"/>)}
+            iconHeight="22px"
+            icon={CursorClick}
             active={editor.mode === EDITOR_MODES.EDIT}
           />
           <ToolbarItem
             onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_POLYGON)}
             label="polygon"
-            icon={(<Polygon height="22px"/>)}
+            iconHeight="22px"
+            icon={Polygon}
             active={editor.mode === EDITOR_MODES.DRAW_POLYGON}
           />
           <ToolbarItem
             onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_RECTANGLE)}
             label="rectangle"
-            icon={(<Rectangle height="22px"/>)}
+            iconHeight="22px"
+            icon={Rectangle}
             active={editor.mode === EDITOR_MODES.DRAW_RECTANGLE}
           />
           <ToolbarItem
             onClick={onToggleEditorVisibility}
             label={editor.visible ? 'hide' : 'show'}
-            icon={editor.visible ? (<EyeSeen height="22px"/>) : (<EyeUnseen height="22px"/>)}
-            active={true}
+            iconHeight="22px"
+            icon={editor.visible ? EyeSeen : EyeUnseen}
+            active
           />
         </StyledToolbar>
       ) : null}

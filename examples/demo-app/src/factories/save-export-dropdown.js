@@ -18,32 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
-import styled from 'styled-components';
+import {SaveExportDropdownFactory, Icons} from 'kepler.gl/components';
 
-const StyledDiv = styled.div.attrs({
-  className: 'toolbar-item'
-})`
-  color: ${props => (props.active ? 'white' : props.theme.textColor)};
-`;
-
-const ToolbarItem = React.memo(props => (
-  <StyledDiv
-    active={props.active}
-    onClick={e => {
-      e.stopPropagation();
-      e.preventDefault();
-      if (typeof props.onClose === 'function') {
-        props.onClose();
+function CustomSaveExportDropdownFactory(PanelHeaderDropdown) {
+  const SaveExportDropdown = SaveExportDropdownFactory(PanelHeaderDropdown);
+  const defaultProps = {
+    ...SaveExportDropdown.defaultProps,
+    items: [
+      ...SaveExportDropdown.defaultProps.items.slice(0, 3),
+      {
+        ...SaveExportDropdown.defaultProps.items[3],
+        icon: Icons.Share,
+        label: 'Share Public URL'
       }
-      props.onClick(e);
-    }}
-  >
-    <props.icon/>
-    <div className="toolbar-item__title">{props.label}</div>
-  </StyledDiv>
-));
+    ]
+  };
 
-ToolbarItem.displayName = 'ToolbarItem';
+  SaveExportDropdown.defaultProps = defaultProps;
+  return SaveExportDropdown;
+}
 
-export default ToolbarItem;
+CustomSaveExportDropdownFactory.deps = SaveExportDropdownFactory.deps;
+
+export function replaceSaveExportDropdown() {
+  return [SaveExportDropdownFactory, CustomSaveExportDropdownFactory];
+}

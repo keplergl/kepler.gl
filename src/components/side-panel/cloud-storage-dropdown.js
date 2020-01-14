@@ -18,17 +18,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {SaveMapFactory} from 'kepler.gl/components';
+import React from 'react';
+import {PanelHeaderDropdownFactory, Icons} from 'kepler.gl/components';
 
-export const CustomSaveMapFactory = () => {
-  const SaveMap = SaveMapFactory();
-  SaveMap.defaultProps = {
-    ...SaveMap.defaultProps,
-    label: 'Share Public URL'
-  };
-  return SaveMap;
+const CloudStorageItems = [
+  {
+    label: 'Save',
+    icon: Icons.Save2,
+    key: 'data',
+    onClick: props => props.onSaveMap
+  },
+  {
+    label: 'Settings',
+    icon: Icons.Gear,
+    key: 'settings',
+    onClick: props => props.onExportData
+  }
+];
+
+const PanelHeaderDropdown = PanelHeaderDropdownFactory();
+
+const CloudStorageDropdown = ({show, onClose}) => {
+  return (
+    <PanelHeaderDropdown
+      items={CloudStorageItems}
+      show={show}
+      onClose={onClose}
+      id="cloud-storage"
+    />
+  );
 };
 
-export function replaceSaveMap() {
-  return [SaveMapFactory, CustomSaveMapFactory]
-}
+export default CloudStorageDropdown;

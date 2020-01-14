@@ -37,6 +37,7 @@ import {
   EXPORT_IMAGE_ID,
   EXPORT_DATA_ID,
   EXPORT_MAP_ID,
+  SAVE_MAP_ID,
   PANELS
 } from 'constants/default-settings';
 
@@ -120,11 +121,13 @@ export default function SidePanelFactory(
       this.props.uiStateActions.openDeleteModal(key);
     };
 
-    _onExportImage = () => this.props.uiStateActions.toggleModal(EXPORT_IMAGE_ID);
+    _onClickExportImage = () => this.props.uiStateActions.toggleModal(EXPORT_IMAGE_ID);
 
-    _onExportData = () => this.props.uiStateActions.toggleModal(EXPORT_DATA_ID);
+    _onClickExportData = () => this.props.uiStateActions.toggleModal(EXPORT_DATA_ID);
 
-    _onExportMap = () => this.props.uiStateActions.toggleModal(EXPORT_MAP_ID);
+    _onClickExportMap = () => this.props.uiStateActions.toggleModal(EXPORT_MAP_ID);
+
+    _onClickSaveToStorage = () => this.props.uiStateActions.toggleModal(SAVE_MAP_ID);
 
     render() {
       const {
@@ -199,12 +202,13 @@ export default function SidePanelFactory(
             <PanelHeader
               appName={appName}
               version={version}
-              onExportImage={this._onExportImage}
-              onExportData={this._onExportData}
               visibleDropdown={uiState.visibleDropdown}
               showExportDropdown={uiStateActions.showExportDropdown}
               hideExportDropdown={uiStateActions.hideExportDropdown}
-              onExportMap={this._onExportMap}
+              onExportImage={this._onClickExportImage}
+              onExportData={this._onClickExportData}
+              onExportMap={this._onClickExportMap}
+              onSaveToStorage={this.props.onSaveToStorage ? this._onClickSaveToStorage : null}
               onSaveMap={this.props.onSaveMap}
             />
             <PanelToggle

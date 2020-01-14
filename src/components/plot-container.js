@@ -27,7 +27,7 @@ import {StaticMap} from 'react-map-gl';
 import debounce from 'lodash.debounce';
 import {exportImageError} from 'utils/notifications-utils';
 import MapContainerFactory from './map-container';
-import {calculateExportImageSize, convertToPng} from 'utils/export-image-utils';
+import {convertToPng} from 'utils/export-utils';
 import {scaleMapStyleByResolution} from 'utils/map-style-utils/mapbox-gl-style-editor';
 
 const propTypes = {
@@ -109,25 +109,18 @@ export default function PlotContainerFactory(MapContainer) {
         this.props.startExportingImage();
         const filter = node => node.className !== 'mapboxgl-control-container';
 
-        convertToPng(this.plottingAreaRef.current, {filter}).then(dataUri => {
-          this.props.setExportImageDataUri(dataUri);
-        })
-        .catch(err => {
-          this.props.setExportImageError(err);
-          this.props.addNotification(exportImageError({err}));
-        });
+        convertToPng(this.plottingAreaRef.current, {filter})
+          .then(this.props.setExportImageDataUri)
+          .catch(err => {
+            this.props.setExportImageError(err);
+            this.props.addNotification(exportImageError({err}));
+          });
       }
     };
 
     render() {
-      const {width, height, exportImageSetting, mapFields} = this.props;
-      const {ratio, resolution, legend} = exportImageSetting;
-      const exportImageSize = calculateExportImageSize({
-        width,
-        height,
-        ratio,
-        resolution
-      });
+      const {exportImageSetting, mapFields} = this.props;
+      const {imageSize = {}, legend} = exportImageSetting;
 
       const mapProps = {
         ...mapFields,
@@ -136,8 +129,8 @@ export default function PlotContainerFactory(MapContainer) {
         // override viewport based on export settings
         mapState: {
           ...mapFields.mapState,
-          ...exportImageSize,
-          zoom: mapFields.mapState.zoom + exportImageSize.zoomOffset
+          ...imageSize,
+          zoom: mapFields.mapState.zoom + (imageSize.zoomOffset || 0)
         },
         mapControls: {
           // override map legend visibility
@@ -157,8 +150,8 @@ export default function PlotContainerFactory(MapContainer) {
           <div
             ref={this.plottingAreaRef}
             style={{
-              width: exportImageSize.width,
-              height: exportImageSize.height
+              width: imageSize.imageW,
+              height: imageSize.imageH
             }}
           >
             <MapContainer

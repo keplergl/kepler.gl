@@ -481,6 +481,21 @@ export function setFilterPlot(idx, newProp) {
 }
 
 /**
+ * Set the property of a filter plot
+ * @memberof visStateActions
+ * @param {Number} idx
+ * @param {Object} newProp key value mapping of new prop `{yAxis: 'histogram'}`
+ * @returns {{type: ActionTypes.SET_FILTER_PLOT, idx: *, newProp: *}}
+ * @public
+ */
+export function setMapInfo(info) {
+  return {
+    type: ActionTypes.SET_MAP_INFO,
+    info
+  };
+}
+
+/**
  * Trigger file loading dispatch `addDataToMap` if succeed, or `loadFilesErr` if failed
  * @memberof visStateActions
  * @param {Array<Object>} files array of fileblob

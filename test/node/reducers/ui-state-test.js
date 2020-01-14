@@ -24,9 +24,7 @@ import {
   toggleSidePanel,
   toggleModal,
   openDeleteModal,
-  setResolution,
-  setRatio,
-  toggleLegend,
+  setExportImageSetting,
   toggleMapControl,
   setExportSelectedDataset,
   setExportDataType,
@@ -38,7 +36,6 @@ import reducer, {uiStateReducerFactory} from 'reducers/ui-state';
 import {INITIAL_UI_STATE} from 'reducers/ui-state-updaters';
 import {
   EXPORT_DATA_TYPE,
-  EXPORT_IMG_RATIOS,
   RESOLUTIONS
 } from 'constants/default-settings';
 import {
@@ -116,33 +113,10 @@ test('#uiStateReducer -> OPEN_DELETE_MODAL', t => {
   t.end();
 });
 
-test('#uiStateReducer -> SET_RATIO', t => {
+test('#uiStateReducer -> SET_EXPORT_IMAGE_SETTING', t => {
   const newReducer = reducer(
     INITIAL_UI_STATE,
-    setRatio({ratio: EXPORT_IMG_RATIOS.SIXTEEN_BY_NINE})
-  );
-
-  const expectedState = {
-    ...INITIAL_UI_STATE,
-    exportImage: {
-      ...INITIAL_UI_STATE.exportImage,
-      ratio: EXPORT_IMG_RATIOS.SIXTEEN_BY_NINE
-    }
-  };
-
-  t.deepEqual(
-    newReducer,
-    expectedState,
-    'should set the ratio to SIXTEEN_BY_NINE'
-  );
-
-  t.end();
-});
-
-test('#uiStateReducer -> SET_RESOLUTION', t => {
-  const newReducer = reducer(
-    INITIAL_UI_STATE,
-    setResolution({resolution: RESOLUTIONS.TWO_X})
+    setExportImageSetting({resolution: RESOLUTIONS.TWO_X})
   );
 
   const expectedState = {
@@ -154,22 +128,6 @@ test('#uiStateReducer -> SET_RESOLUTION', t => {
   };
 
   t.deepEqual(newReducer, expectedState, 'should set the resolution to TWO_X');
-
-  t.end();
-});
-
-test('#uiStateReducer -> TOGGLE_LEGEND', t => {
-  const newReducer = reducer(INITIAL_UI_STATE, toggleLegend());
-
-  const expectedState = {
-    ...INITIAL_UI_STATE,
-    exportImage: {
-      ...INITIAL_UI_STATE.exportImage,
-      legend: true
-    }
-  };
-
-  t.deepEqual(newReducer, expectedState, 'should set the legend to true');
 
   t.end();
 });
