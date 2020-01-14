@@ -41,6 +41,10 @@ export default class CartoProvider {
     onCloudLogoutSuccess();
   };
 
+  isConnected() {
+    return Boolean(this._carto.oauth.token);
+  };
+
   hasPrivateStorage() {
     return PRIVATE_STORAGE_ENABLED;
   }
@@ -205,6 +209,12 @@ export default class CartoProvider {
     return fullURL
       ? `${window.location.protocol}//${window.location.host}/${mapLink}`
       : `/${mapLink}`;
+  }
+
+  getCurrentVisualization() {
+    return this.currentMap
+      ? { title: this.currentMap.name, description: this.currentMap.description }
+      : null;
   }
 
   // PRIVATE

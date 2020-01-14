@@ -74,7 +74,11 @@ export default class DropboxProvider {
 
   logout(onCloudLogoutSuccess) {
     // TODO: Implement
-  };
+  }
+
+  isConnected() {
+    // TODO: Implement
+  }
 
   hasPrivateStorage() {
     return PRIVATE_STORAGE_ENABLED;

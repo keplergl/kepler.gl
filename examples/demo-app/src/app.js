@@ -390,7 +390,7 @@ class App extends Component {
             />
           }
 
-          {this._isBackendStorageEnabled() && rootNode &&
+          {this._isBackendStorageEnabled() && rootNode && Boolean(this.state.saveMapToBackendModalOpen) &&
             <SaveMapBackendStorageModal
               sharing={sharing}
               isOpen={Boolean(this.state.saveMapToBackendModalOpen)}

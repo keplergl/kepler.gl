@@ -112,10 +112,15 @@ const StyledVisualizationItem = styled.div`
   }
 
   .vis_item-description {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     padding-left: 12px;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .vis_item-privacy {
+    flex: 0 1 auto;
+    padding-left: 12px;
   }
 
   .vis_item-modification-date {
@@ -139,6 +144,7 @@ const VisualizationItem = ({vis, onClick}) => {
       <MapIcon className="vis_item-icon" height="16px"/>
       <span className="vis_item-title">{vis.title}</span>
       <span className="vis_item-description">{vis.description}</span>
+      <span className="vis_item-privacy">({vis.privateMap ? 'Private' : 'Public'})</span>
       <span className="vis_item-modification-date">Last modified {moment.utc( vis.lastModification).fromNow()}</span>
     </StyledVisualizationItem>
   );

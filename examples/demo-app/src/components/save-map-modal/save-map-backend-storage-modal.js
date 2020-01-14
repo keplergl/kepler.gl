@@ -22,7 +22,7 @@ import React, { Component } from 'react';
 import {Modal, LoadingSpinner} from 'kepler.gl/components';
 import styled from 'styled-components';
 import SaveMapModalContent from './save-map-modal-content'
-import {BACKEND_PROVIDERS} from '../../utils/backend-providers';
+import {getCloudProviders} from '../../cloud-providers';
 
 const StyledSpinner = styled.div`
   text-align: center;
@@ -38,6 +38,9 @@ class SaveMapBackendStorageModal extends Component {
       description: '',
       isUploading: false
     };
+
+    this._saveMap = this._saveMap.bind(this);
+    this._isSaveDisabled = this._isSaveDisabled.bind(this);
   }
 
   _saveTitle = (title) => {
@@ -50,18 +53,32 @@ class SaveMapBackendStorageModal extends Component {
 
   _saveMap = async () => {
     const provider = this._getActiveProvider();
-    const extraData = {
-      title: this.state.title.length ? this.state.title : null,
-      description: this.state.description.length ? this.state.description : null
-    };
-    this.props.onSave(provider, extraData);
+    if (provider) {
+      const extraData = {
+        title: this.state.title.length ? this.state.title : null,
+        description: this.state.description.length ? this.state.description : null
+      };
+      this.props.onSave(provider.name, extraData);
+    }
   }
 
   _isSaveDisabled = () => this.props.sharing.isLoading || this.state.title.length < 3;
 
   _getActiveProvider = () => {
-    const provider = Object.values(BACKEND_PROVIDERS).find((provider) => provider.isConnected);
-    return provider ? provider.name : null
+    const providers = getCloudProviders();
+    const provider = Object.values(providers).find((provider) => provider.hasPrivateStorage && provider.isConnected());
+    return provider;
+  }
+
+  _getLastSavedMapInfo = () => {
+    // Fill map info with loaded map
+    const provider = this._getActiveProvider();
+    if (provider && provider.getCurrentVisualization) {
+      const currentVis = provider.getCurrentVisualization();
+      if (currentVis) {
+        this.setState({ title: currentVis.title, description: currentVis.description });
+      }
+    }
   }
 
   _updateStatus = () => {
@@ -87,13 +104,18 @@ class SaveMapBackendStorageModal extends Component {
     }
   }
 
+  componentWillMount() {
+    this._getLastSavedMapInfo();
+  }
+
+  componentWillUpdate() {
+    this._updateStatus();
+  }
+
   render() {
     const { isOpen, onClose, parentSelector, sharing } = this.props;
-    const { title, description } = this.state;
     const isLoading = sharing.isLoading;
-    this._isSaveDisabled = this._isSaveDisabled.bind(this);
-    this._saveMap = this._saveMap.bind(this);
-    this._updateStatus();
+    const { title, description } = this.state;
     this._modalProps.confirmButton.disabled = this._isSaveDisabled();
     return (
       <Modal
