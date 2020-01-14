@@ -607,10 +607,11 @@ test('Processor -> formatCsv', t => {
 
   const cases = [
     {
-      input: `gps_data.lat,gps_data.types,epoch,has_result,id,begintrip_ts_local,date
-    29.9900937,driver_analytics,1472688000000,False,1,2016-10-01 09:41:39+00:00,2016-09-23
-    29.9927699,driver_analytics,1472688000000,False,2,2016-10-01 16:46:37+00:00,2016-09-23
-    29.9907261,driver_analytics,1472688000000,False,3,,2016-09-23`,
+      input:
+        `gps_data.lat,gps_data.types,epoch,has_result,id,begintrip_ts_local,date\n` +
+        `29.9900937,driver_analytics,1472688000000,False,1,2016-10-01 09:41:39+00:00,2016-09-23\n` +
+        `29.9927699,driver_analytics,1472688000000,False,2,2016-10-01 16:46:37+00:00,2016-09-23\n` +
+        `29.9907261,driver_analytics,1472688000000,False,3,,2016-09-23`,
       expected:
         `gps_data.lat,gps_data.types,epoch,has_result,id,begintrip_ts_local,date\n` +
         `29.9900937,driver_analytics,1472688000000,false,1,2016-10-01 09:41:39+00:00,2016-09-23\n` +
