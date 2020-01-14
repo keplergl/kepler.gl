@@ -11,7 +11,7 @@
 
 -  [Get Started][get-started]
 
--  [Advanced Usage][advanced-usage]
+-  Advanced Usage
     - [Using reducer plugin][reducer-plugin]
     - [Custom reducer initial state][custom-initial-state]
     - [Using updaters to modify kepler.gl state][using-updaters]
