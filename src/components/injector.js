@@ -30,12 +30,7 @@ export const errorMsg = {
   noDep: (fac, parent) =>
     `${fac.name} is required as a dependency of ${parent.name}, ` +
     `but is not provided to injectComponents. It will not be rendered.`,
-  notFunc: '`factory and its replacement should be a function`',
-  incompatibleDeps: (
-    fac,
-    given
-  ) => `${fac.name} is expecting ${fac.length} arguments, but ${given} is given,
-    You are likely forget to declare ${fac.name}.deps = []`
+  notFunc: '`factory and its replacement should be a function`'
 };
 
 export function injector(map = new Map()) {
@@ -49,22 +44,11 @@ export function injector(map = new Map()) {
     }
 
     // check if custom factory deps is declared
-    const depsLength = factory.deps ? factory.deps.length : 0;
-    let instances;
-    if (factory.length !== depsLength) {
-      Console.error(errorMsg.incompatibleDeps(factory, depsLength));
-
-      const MissingDeps = () => (
-        <div className="factory-missing-deps">{factory.name} is missing dependencies</div>
+    const instances =
+      cache.get(factory) ||
+      factory(
+        ...(factory.deps ? factory.deps.map(dep => get(dep, factory)) : [])
       );
-      instances = MissingDeps;
-    } else {
-      instances =
-        cache.get(factory) ||
-        factory(
-          ...(factory.deps ? factory.deps.map(dep => get(dep, factory)) : [])
-        );
-    }
 
     cache.set(fac, instances);
     return instances;
