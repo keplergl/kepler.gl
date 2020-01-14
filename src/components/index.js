@@ -35,11 +35,7 @@ export {default as PlotContainerFactory} from './plot-container';
 export {
   default as PanelHeaderFactory,
   SaveExportDropdownFactory,
-  ExportImageFactory,
-  ExportDataFactory,
-  ExportConfigFactory,
-  ExportMapFactory,
-  SaveMapFactory
+  PanelHeaderDropdownFactory
 } from './side-panel/panel-header'
 export {CollapseButtonFactory, default as SidebarFactory} from './side-panel/side-bar';
 export {default as PanelToggleFactory} from './side-panel/panel-toggle';
@@ -73,7 +69,7 @@ export {default as LayerHoverInfoFactory} from './map/layer-hover-info';
 export {default as CoordinateInfoFactory} from './map/coordinate-info';
 
 // // modal container factories
-export {default as ModalDialoFactory} from './modals/modal-dialog';
+export {default as ModalDialogFactory} from './modals/modal-dialog';
 export {default as DeleteDatasetModalFactory} from './modals/delete-data-modal';
 export {default as DataTableModalFactory} from './modals/data-table-modal';
 export {default as LoadDataModalFactory} from './modals/load-data-modal';

@@ -28,9 +28,9 @@ import {theme} from 'kepler.gl/styles';
 import Banner from './components/banner';
 import Announcement from './components/announcement';
 import {replaceLoadDataModal} from './factories/load-data-modal';
-import {replaceSaveMap} from './factories/save-map';
 import {replaceMapControl} from './factories/map-control';
 import {replacePanelHeader} from './factories/panel-header';
+import {replaceSaveExportDropdown} from './factories/save-export-dropdown';
 import ExportUrlModal from './components/sharing/export-url-modal';
 import {AUTH_TOKENS} from './constants/default-settings';
 import {
@@ -42,9 +42,9 @@ import {
 
 const KeplerGl = require('kepler.gl/components').injectComponents([
   replaceLoadDataModal(),
-  replaceSaveMap(),
   replaceMapControl(),
-  replacePanelHeader()
+  replacePanelHeader(),
+  replaceSaveExportDropdown()
 ]);
 
 // Sample data
@@ -356,6 +356,7 @@ class App extends Component {
                   width={width}
                   height={height - (showBanner ? BannerHeight : 0)}
                   onSaveMap={this._isCloudStorageEnabled() && this._toggleCloudModal}
+                  onSaveToStorage={() => {}}
                 />
               )}
             </AutoSizer>

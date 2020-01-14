@@ -18,46 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {PanelHeaderFactory, Icons} from 'kepler.gl/components';
-import {GITHUB_BUG_REPORT, GITHUB_USER_GUIDE} from 'kepler.gl/constants';
+import {SaveExportDropdownFactory, Icons} from 'kepler.gl/components';
 
-export function CustomPanelHeaderFactory(...deps) {
-  const PanelHeader = PanelHeaderFactory(...deps);
-  const defaultActionItems = PanelHeader.defaultProps.actionItems;
-  PanelHeader.defaultProps = {
-    ...PanelHeader.defaultProps,
-    actionItems: [
+function CustomSaveExportDropdownFactory(PanelHeaderDropdown) {
+  const SaveExportDropdown = SaveExportDropdownFactory(PanelHeaderDropdown);
+  const defaultProps = {
+    ...SaveExportDropdown.defaultProps,
+    items: [
+      ...SaveExportDropdown.defaultProps.items.slice(0, 3),
       {
-        id: 'bug',
-        iconComponent: Icons.Bug,
-        href: GITHUB_BUG_REPORT,
-        blank: true,
-        tooltip: 'Bug Report',
-        onClick: () => {}
-      },
-      {
-        id: 'docs',
-        iconComponent: Icons.Docs,
-        href: GITHUB_USER_GUIDE,
-        blank: true,
-        tooltip: 'User Guide',
-        onClick: () => {}
-      },
-      defaultActionItems.find(item => item.id === 'storage'),
-      {
-        ...defaultActionItems.find(
-          item => item.id === 'save'
-        ),
-        label: null,
-        tooltip: 'Share'
+        ...SaveExportDropdown.defaultProps.items[3],
+        icon: Icons.Share,
+        label: 'Share Public URL'
       }
     ]
   };
-  return PanelHeader;
+
+  SaveExportDropdown.defaultProps = defaultProps;
+  return SaveExportDropdown;
 }
 
-CustomPanelHeaderFactory.deps = PanelHeaderFactory.deps;
+CustomSaveExportDropdownFactory.deps = SaveExportDropdownFactory.deps;
 
-export function replacePanelHeader() {
-  return [PanelHeaderFactory, CustomPanelHeaderFactory];
+export function replaceSaveExportDropdown() {
+  return [SaveExportDropdownFactory, CustomSaveExportDropdownFactory];
 }
