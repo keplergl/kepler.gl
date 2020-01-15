@@ -143,14 +143,28 @@ const VisualizationItem = ({vis, onClick}) => {
     <StyledVisualizationItem onClick={onClick}>
       <MapIcon className="vis_item-icon" height="16px"/>
       <span className="vis_item-title">{vis.title}</span>
-      <span className="vis_item-description">{vis.description}</span>
+      {vis.description && vis.description.length && (<span className="vis_item-description">{vis.description}</span>)}
       <span className="vis_item-privacy">({vis.privateMap ? 'Private' : 'Public'})</span>
       <span className="vis_item-modification-date">Last modified {moment.utc( vis.lastModification).fromNow()}</span>
     </StyledVisualizationItem>
   );
 };
 
-const LoadStorageMap = ({onLoadCloudMap}) => {
+export const StyledError = styled.div`
+  color: red;
+`;
+
+export const StyledErrorDescription = styled.div`
+  font-size: 14px;
+`;
+
+const Error = ({error}) => (
+  <StyledError>
+    <StyledErrorDescription>Error loading map: {error.message}</StyledErrorDescription>
+  </StyledError>
+);
+
+const LoadStorageMap = ({onLoadCloudMap, error}) => {
   const [visualizations, setVisualizations] = useState(null);
   const [selectedProvider, setSelectedProvider] = useState(null);
 
@@ -226,6 +240,7 @@ const LoadStorageMap = ({onLoadCloudMap}) => {
             </StyledVisualizationList>
           </StyledProviderVisSection>
         </StyledVisualizationSection>)}
+        {error && (<Error error={error} />)}
     </div>
   );
 };

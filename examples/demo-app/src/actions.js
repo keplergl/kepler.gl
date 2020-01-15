@@ -40,6 +40,7 @@ export const LOAD_REMOTE_RESOURCE_SUCCESS = 'LOAD_REMOTE_RESOURCE_SUCCESS';
 export const LOAD_REMOTE_RESOURCE_ERROR = 'LOAD_REMOTE_RESOURCE_ERROR';
 export const LOAD_MAP_SAMPLE_FILE = 'LOAD_MAP_SAMPLE_FILE';
 export const SET_SAMPLE_LOADING_STATUS = 'SET_SAMPLE_LOADING_STATUS';
+export const LOAD_CLOUD_VIS_ERROR = 'LOAD_CLOUD_VIS_ERROR';
 
 // Sharing
 export const PUSHING_FILE = 'PUSHING_FILE';
@@ -107,6 +108,13 @@ export function setLoadingMapStatus(isMapLoading) {
     type: SET_SAMPLE_LOADING_STATUS,
     isMapLoading
   };
+}
+
+export function loadCloudVisError(error) {
+  return {
+    type: LOAD_CLOUD_VIS_ERROR,
+    error
+  }
 }
 
 /**
@@ -359,6 +367,7 @@ export function loadCloudMap(queryParams, providerName, pushRoute = false) {
     if (!providerName) {
       throw new Error('No cloud provider identified')
     }
+    dispatch(loadCloudVisError(null));
     dispatch(setLoadingMapStatus(true));
 
     const cloudProvider = getCloudProvider(providerName);
@@ -376,7 +385,7 @@ export function loadCloudMap(queryParams, providerName, pushRoute = false) {
         const {target = {}} = error;
         const {status, responseText = 'Error loading map'} = target;
         dispatch(setLoadingMapStatus(false));
-        dispatch(loadRemoteResourceError({status, message: responseText}, providerName));
+        dispatch(loadCloudVisError({status, message: responseText}));
       });
   }
 }

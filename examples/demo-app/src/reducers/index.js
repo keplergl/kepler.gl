@@ -33,7 +33,8 @@ import {
   SET_LOADING_METHOD,
   LOAD_MAP_SAMPLE_FILE,
   LOAD_REMOTE_RESOURCE_SUCCESS,
-  SET_SAMPLE_LOADING_STATUS
+  SET_SAMPLE_LOADING_STATUS,
+  LOAD_CLOUD_VIS_ERROR
 } from '../actions';
 
 import {
@@ -81,6 +82,11 @@ export const appReducer = handleActions({
   [SET_SAMPLE_LOADING_STATUS]: (state, action) => ({
     ...state,
     isMapLoading: action.isMapLoading
+  }),
+  [LOAD_CLOUD_VIS_ERROR]: (state, action) => ({
+    ...state,
+    error: action.error,
+    isMapLoading: false
   })
 }, initialAppState);
 

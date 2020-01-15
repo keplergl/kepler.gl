@@ -36,9 +36,13 @@ export default class CartoProvider {
   }
 
   logout(onCloudLogoutSuccess) {
-    this._carto.oauth.clear();
-    this._carto.oauth._carto.sync();
-    onCloudLogoutSuccess();
+    try {
+      this._carto.oauth.clear();
+      this._carto.oauth._carto.sync();
+      onCloudLogoutSuccess();
+    } catch (error) {
+      this._manageErrors(error);
+    }
   };
 
   isConnected() {
@@ -50,43 +54,53 @@ export default class CartoProvider {
   }
 
   async uploadFile({blob, name, description, isPublic = true}) {
-    const payload = JSON.parse(await new Response(blob).text());
+    try {
+      const payload = JSON.parse(await new Response(blob).text());
 
-    const { config, datasets } = payload;
+      const { config, datasets } = payload;
 
-    const cartoDatasets = datasets.map(this._convertDataset);
+      const cartoDatasets = datasets.map(this._convertDataset);
 
-    const cs = await this._carto.getCustomStorage();
+      const cs = await this._carto.getCustomStorage();
 
-    let result;
-    if (this.currentMap && this.currentMap.name === name) {
-      result = await cs.updateVisualization({
-        id: this.currentMap.id,
-        name,
-        description,
-        config: JSON.stringify(config),
-        isPrivate: this.currentMap.isPrivate
-      }, cartoDatasets)
-    } else {
-      result = await cs.createVisualization({
-        name,
-        description,
-        config: JSON.stringify(config),
-        isPrivate: !isPublic
-      }, cartoDatasets, true);
+      let result;
+      if (this.currentMap && this.currentMap.name === name) {
+        result = await cs.updateVisualization({
+          id: this.currentMap.id,
+          name,
+          description,
+          config: JSON.stringify(config),
+          isPrivate: this.currentMap.isPrivate
+        }, cartoDatasets)
+      } else {
+        // TODO: Ask for changing current shared map generation because of being too oriented to file based clouds
+        // Check public name generation and replace
+        const regex = /(?:^\/keplergl_)([a-z0-9]+)(?:.json$)/;
+        const capturedName = name.match(regex);
+        const visName = capturedName ? `sharedmap_${capturedName[1]}` : name;
+
+        result = await cs.createVisualization({
+          name: visName,
+          description,
+          config: JSON.stringify(config),
+          isPrivate: !isPublic
+        }, cartoDatasets, true);
+      }
+
+      if (result) {
+        this.currentMap = result;
+      }
+
+      return ({
+        url: this._composeURL({
+          mapId: result.id,
+          owner: this._carto.username,
+          privateMap: !isPublic
+        })
+      });
+    } catch (error) {
+      this._manageErrors(error);
     }
-
-    if (result) {
-      this.currentMap = result;
-    }
-
-    return ({
-      url: this._composeURL({
-        mapId: result.id,
-        owner: this._carto.username,
-        privateMap: !isPublic
-      })
-    });
   }
 
   /**
@@ -126,76 +140,84 @@ export default class CartoProvider {
   }
 
   async loadMap(queryParams) {
-    const { owner: username, mapId, privateMap } = queryParams;
+    try {
+      const { owner: username, mapId, privateMap } = queryParams;
 
-    if (!username || !mapId) {
-      return;
-    }
-
-    let visualization;
-
-    if (privateMap.trim().toLowerCase() === 'true') {
-      await this._carto.login();
-      const currentUsername = this.getUserName();
-      if (currentUsername && currentUsername===username) {
-        const cs = await this._carto.getCustomStorage();
-        visualization = await cs.getVisualization(mapId);
+      if (!username || !mapId) {
+        return;
       }
-    } else {
-      visualization = await this._carto.PublicStorageReader.getVisualization(username, mapId);
+
+      let visualization;
+
+      if (privateMap.trim().toLowerCase() === 'true') {
+        await this._carto.login();
+        const currentUsername = this.getUserName();
+        if (currentUsername && currentUsername===username) {
+          const cs = await this._carto.getCustomStorage();
+          visualization = await cs.getVisualization(mapId);
+        }
+      } else {
+        visualization = await this._carto.PublicStorageReader.getVisualization(username, mapId);
+      }
+
+      if (!visualization) {
+        throw {target: {status: 404, responseText: `Can't find map with ID: ${mapId}`}};
+      }
+
+      // These are the options required for the action. For now, all datasets that come from CARTO are CSV
+      const options = visualization.datasets.map((dataset) => {
+        const datasetId = dataset.name;
+
+        return {
+          id: datasetId,
+          label: datasetId,
+          description: dataset.description,
+          dataUrl: '',
+          configUrl: '',
+          panelDisabled: true
+        };
+      });
+
+      const datasets = visualization.datasets.map((dataset) => dataset.file);
+
+      this.currentMap = visualization.vis;
+
+      return {datasets, vis: visualization.vis, options};
+    } catch (error) {
+      this._manageErrors(error);
     }
-
-    if (!visualization) {
-      throw {target: {status: 404, responseText: `Can't find map with ID: ${mapId}`}};
-    }
-
-    // These are the options required for the action. For now, all datasets that come from CARTO are CSV
-    const options = visualization.datasets.map((dataset) => {
-      const datasetId = dataset.name;
-
-      return {
-        id: datasetId,
-        label: datasetId,
-        description: dataset.description,
-        dataUrl: '',
-        configUrl: '',
-        panelDisabled: true
-      };
-    });
-
-    const datasets = visualization.datasets.map((dataset) => dataset.file);
-
-    this.currentMap = visualization.vis;
-
-    return {datasets, vis: visualization.vis, options};
   }
 
   async getVisualizations() {
     // TODO: Implement pagination using {type='all', pageOffset=0, pageSize=-1}
-    await this._carto.login();
-    const username = this.getUserName();
-    const cs = await this._carto.getCustomStorage();
-    const visualizations = await cs.getVisualizations();
-    const formattedVis = [];
+    try {
+      await this._carto.login();
+      const username = this.getUserName();
+      const cs = await this._carto.getCustomStorage();
+      const visualizations = await cs.getVisualizations();
+      const formattedVis = [];
 
-    // Format visualization object
-    for (const vis of visualizations) {
-      formattedVis.push({
-        id: vis.id,
-        title: vis.name,
-        description: vis.description,
-        privateMap: vis.isPrivate,
-        thumbnail: vis.thumbnail === 'undefined' ? null : vis.thumbnail,
-        lastModification: vis.lastModified,
-        loadParams: {
-          owner: username,
-          mapId: vis.id,
-          privateMap: vis.isPrivate.toString()
-        }
-      })
+      // Format visualization object
+      for (const vis of visualizations) {
+        formattedVis.push({
+          id: vis.id,
+          title: vis.name,
+          description: vis.description,
+          privateMap: vis.isPrivate,
+          thumbnail: vis.thumbnail === 'undefined' ? null : vis.thumbnail,
+          lastModification: vis.lastModified,
+          loadParams: {
+            owner: username,
+            mapId: vis.id,
+            privateMap: vis.isPrivate.toString()
+          }
+        })
+      }
+
+      return formattedVis;
+    } catch (error) {
+      this._manageErrors(error);
     }
-
-    return formattedVis;
   }
 
   getMapPermalink(mapLink, fullURL = true) {
@@ -204,7 +226,7 @@ export default class CartoProvider {
       : `/${mapLink}`;
   }
 
-  getMapPermalinkFromParams({mapId, owner, privateMap, fullURL = true}) {
+  getMapPermalinkFromParams({mapId, owner, privateMap}, fullURL = true) {
     const mapLink = this._composeURL({mapId, owner, privateMap});
     return fullURL
       ? `${window.location.protocol}//${window.location.host}/${mapLink}`
@@ -248,6 +270,7 @@ export default class CartoProvider {
     } else {
       console.error(`General error in CARTO provider`);
     }
+    throw {target: {status: 0, responseText: error.message}};
   }
 
   _composeURL({mapId, owner, privateMap}) {
