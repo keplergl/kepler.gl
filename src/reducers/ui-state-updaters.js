@@ -86,7 +86,9 @@ const uiStateUpdaters = null;
  */
 const DEFAULT_MAP_CONTROLS_FEATURES = {
   show: true,
-  active: false
+  active: false,
+  // defines which map index users are interacting with (through map controls)
+  activeMapIndex: 0
 };
 
 export const DEFAULT_MAP_CONTROLS = [
@@ -110,6 +112,7 @@ export const DEFAULT_MAP_CONTROLS = [
  * @property {boolean} legend Default: `false`,
  * @property {string} imageDataUri Default: `''`,
  * @property {boolean} exporting Default: `false`
+ * @property {boolean} error Default: `false`
  * @public
  */
 export const DEFAULT_EXPORT_IMAGE = {
@@ -187,6 +190,7 @@ export const DEFAULT_EXPORT_MAP = {
  * @property {Object} exportImage Default: [`DEFAULT_EXPORT_IMAGE`](#default_export_image)
  * @property {Object} exportData Default: [`DEFAULT_EXPORT_DATA`](#default_export_data)
  * @property {Object} mapControls Default: [`DEFAULT_MAP_CONTROLS`](#default_map_controls)
+ * @property {number} activeMapIndex defines which map the user clicked on. Default: 0
  * @public
  */
 export const INITIAL_UI_STATE = {
@@ -283,13 +287,18 @@ export const hideExportDropdownUpdater = state => ({
  * @returns {Object} nextState
  * @public
  */
-export const toggleMapControlUpdater = (state, {payload: panelId}) => ({
+export const toggleMapControlUpdater = (state, {payload: {panelId, index = 0} }) => ({
   ...state,
   mapControls: {
     ...state.mapControls,
     [panelId]: {
       ...state.mapControls[panelId],
-      active: !state.mapControls[panelId].active
+      // this handles split map interaction
+      // Toggling from within the same map will simply toggle the active property
+      // Toggling from within different maps we set the active property to true
+      active: index === state.mapControls[panelId].activeMapIndex
+        ? !state.mapControls[panelId].active : true,
+      activeMapIndex: index
     }
   }
 });
@@ -564,6 +573,7 @@ export const addNotificationUpdater = (state, {payload}) => ({
  * @param {Object} action
  * @param {String} action.payload id of the notification to be removed
  * @returns {Object} nextState
+ * @public
  */
 export const removeNotificationUpdater = (state, {payload: id}) => ({
   ...state,
@@ -574,6 +584,8 @@ export const removeNotificationUpdater = (state, {payload: id}) => ({
  * Fired when file loading begin
  * @memberof uiStateUpdaters
  * @param {Object} state `uiState`
+ * @returns {Object} nextState
+ * @public
  */
 export const loadFilesUpdater = (state) => ({
   ...state,
@@ -583,6 +595,11 @@ export const loadFilesUpdater = (state) => ({
   }
 });
 
+/**
+ * Handles loading file success and set fileLoading property to false
+ * @param {Object} state `uiState`
+ * @returns {Object} nextState
+ */
 export const loadFilesSuccessUpdater = (state) => ({
   ...state,
   loadFiles: {
@@ -591,6 +608,13 @@ export const loadFilesSuccessUpdater = (state) => ({
   }
 });
 
+/**
+ * Handles load file error and set fileLoading property to false
+ * @param state
+ * @param error
+ * @returns {Object} nextState
+ * @public
+ */
 export const loadFilesErrUpdater = (state, {error}) => addNotificationUpdater(
   {
     ...state,
@@ -606,3 +630,23 @@ export const loadFilesErrUpdater = (state, {error}) => addNotificationUpdater(
     })
   }
 );
+
+/**
+ * Handles toggle map split and reset all map control index to 0
+ *
+ * @param state
+ * @returns {Object} nextState
+ * @public
+ */
+export const toggleSplitMapUpdater = (state) => ({
+  ...state,
+  mapControls: Object.entries(state.mapControls)
+    .reduce((acc, entry) => ({
+      ...acc,
+      [entry[0]]: {
+        ...entry[1],
+        activeMapIndex: 0
+      }
+    }), {})
+});
+

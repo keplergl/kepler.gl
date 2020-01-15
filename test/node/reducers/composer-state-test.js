@@ -28,6 +28,7 @@ import testCsvData, {sampleConfig} from 'test/fixtures/test-csv-data';
 import testHexIdData, {hexIdDataConfig, mergedH3Layer, mergedFilters, expectedHexDataset} from 'test/fixtures/test-hex-id-data';
 import {cmpLayers, cmpFilters, cmpDatasets, cmpDataset, cmpInteraction} from 'test/helpers/comparison-utils';
 import {INITIAL_UI_STATE} from 'reducers/ui-state-updaters';
+import {toggleMapControlUpdater} from 'reducers/map-state-updaters';
 
 const mockRawData = {
   fields: [
@@ -268,7 +269,7 @@ test('#composerStateReducer - addDataToMapUpdater: readOnly', t => {
     info: {
       id: sampleConfig.dataId
     }
-  }
+  };
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
 
   // old state contain splitMaps

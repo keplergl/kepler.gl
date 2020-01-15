@@ -47,24 +47,27 @@ const ESCAPE_KEY_EVENT_CODE = 27;
 
 const StyledWrapper = styled.div`
   cursor: ${props => props.editor.mode === EDITOR_MODES.EDIT ? 'pointer' : 'crosshair'};
+  position: relative;
 `;
 
 const editorLayerFilter = layer => EDITOR_AVAILABLE_LAYERS.includes(layer.type);
 
 class Editor extends Component {
   static propTypes = {
-    classnames: PropTypes.string,
-    clickRadius: PropTypes.number,
+    filters: PropTypes.arrayOf(PropTypes.object).isRequired,
+    layers: PropTypes.arrayOf(PropTypes.object).isRequired,
     datasets: PropTypes.object.isRequired,
     editor: PropTypes.object.isRequired,
-    filters: PropTypes.arrayOf(PropTypes.object).isRequired,
-    isEnabled: PropTypes.bool,
-    layers: PropTypes.arrayOf(PropTypes.object).isRequired,
     layersToRender: PropTypes.object.isRequired,
     onSelect: PropTypes.func.isRequired,
     onUpdate: PropTypes.func.isRequired,
     onDeleteFeature: PropTypes.func.isRequired,
-    onTogglePolygonFilter: PropTypes.func.isRequired
+    onTogglePolygonFilter: PropTypes.func.isRequired,
+
+    index: PropTypes.number,
+    classnames: PropTypes.string,
+    clickRadius: PropTypes.number,
+    isEnabled: PropTypes.bool
   };
 
   static defaultProps = {
@@ -104,7 +107,6 @@ class Editor extends Component {
     (layers, layersToRender) => layers
       .filter(editorLayerFilter)
       .filter(layer => {
-
         return layersToRender[layer.id];
       })
   );
@@ -144,8 +146,8 @@ class Editor extends Component {
       ...(sourceEvent.rightButton ? {
         showActions: true,
         lastPosition: {
-          x: sourceEvent.changedPointers[0].clientX,
-          y: sourceEvent.changedPointers[0].clientY
+          x: sourceEvent.changedPointers[0].offsetX,
+          y: sourceEvent.changedPointers[0].offsetY
         }
       } : null)
     }, () => {

@@ -183,7 +183,8 @@ test('#uiStateReducer -> TOGGLE_MAP_CONTROL', t => {
       ...INITIAL_UI_STATE.mapControls,
       mapLegend: {
         show: INITIAL_UI_STATE.mapControls.mapLegend.show,
-        active: !INITIAL_UI_STATE.mapControls.mapLegend.active
+        active: !INITIAL_UI_STATE.mapControls.mapLegend.active,
+        activeMapIndex: 0
       }
     }
   };

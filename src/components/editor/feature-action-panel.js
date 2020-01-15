@@ -23,6 +23,7 @@ import ActionPanel, {ActionPanelItem} from 'components/common/action-panel';
 import styled from 'styled-components';
 import onClickOutside from 'react-onclickoutside';
 import PropTypes from 'prop-types';
+import classnames from 'classnames';
 import {
   Trash,
   Layers
@@ -71,7 +72,7 @@ export class FeatureActionPanel extends PureComponent {
 
     return (
       <StyledActionsLayer
-        className={className}
+        className={classnames('feature-action-panel', className)}
         style={{
           top: `${position.y + LAYOVER_OFFSET}px`,
           left: `${position.x + LAYOVER_OFFSET}px`

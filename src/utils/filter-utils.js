@@ -981,21 +981,3 @@ export function generatePolygonFilter(layers, feature) {
     value: featureToFilterValue(feature, filter.id, {isVisible: true})
   };
 }
-
-function isLayerFilter(filter) {
-  return LAYER_FILTERS.includes(filter.type);
-}
-
-/**
- * Returns an object where filters are  split between layer and non layer  filters
- * @param filters list of filter to process
- * @return {*}
- */
-export function getFiltersByType(filters) {
-  return (filters || []).reduce((acc, filter) => ({
-    ...acc,
-    ...(isLayerFilter(filter) ?
-      {layerFilters: [...acc.layerFilters, filter]}
-      : {nonLayerFilters: [...acc.nonLayerFilters, filter]})
-  }), {layerFilters: [], nonLayerFilters: []});
-}

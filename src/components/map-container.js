@@ -91,12 +91,14 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       onMapToggleLayer: PropTypes.func,
       onMapStyleLoaded: PropTypes.func,
       onMapRender: PropTypes.func,
-      getMapboxRef: PropTypes.func
+      getMapboxRef: PropTypes.func,
+      index: PropTypes.number
     };
 
     static defaultProps = {
       MapComponent: MapboxGLMap,
-      deckGlProps: {}
+      deckGlProps: {},
+      index: 0
     };
 
     constructor(props) {
@@ -411,6 +413,15 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       this.props.mapStateActions.updateMap(viewState);
     };
 
+    _toggleMapControl = panelId => {
+      const {
+        index,
+        uiStateActions
+      } = this.props;
+
+      uiStateActions.toggleMapControl(panelId, index);
+    };
+
     render() {
       const {
         mapState,
@@ -423,9 +434,9 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         mapboxApiAccessToken,
         mapboxApiUrl,
         uiState,
-        uiStateActions,
         visStateActions,
-        editor
+        editor,
+        index
       } = this.props;
 
       const layersToRender = this.layersToRenderSelector(this.props);
@@ -449,6 +460,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       return (
         <StyledMapContainer style={MAP_STYLE.container}>
           <MapControl
+            index={index}
             datasets={datasets}
             dragRotate={mapState.dragRotate}
             isSplit={Boolean(mapLayers)}
@@ -464,7 +476,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             onTogglePerspective={mapStateActions.togglePerspective}
             onToggleSplitMap={mapStateActions.toggleSplitMap}
             onMapToggleLayer={this._handleMapToggleLayer}
-            onToggleMapControl={uiStateActions.toggleMapControl}
+            onToggleMapControl={this._toggleMapControl}
             onSetEditorMode={visStateActions.setEditorMode}
             onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
           />
@@ -480,6 +492,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             {this._renderDeckOverlay(layersToRender)}
             {this._renderMapboxOverlays(layersToRender)}
             <Editor
+              index={index}
               datasets={datasets}
               editor={editor}
               filters={this.polygonFilters(this.props)}

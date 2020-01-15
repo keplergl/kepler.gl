@@ -532,7 +532,14 @@ mergedH3Layer.config = {
   isVisible: true,
   highlightColor: [252, 242, 26, 255],
   isConfigActive: false,
-  colorField: fields[1],
+  colorField: {
+    name: 'value',
+    format: '',
+    tableFieldIndex: 2,
+    type: 'integer',
+    analyzerType: 'INT',
+    id: 'value'
+  },
   colorScale: 'quantile',
   colorDomain: [12, 13, 13, 15, 15, 15, 15, 15, 16, 16, 17, 17, 18, 18],
   sizeField: null,

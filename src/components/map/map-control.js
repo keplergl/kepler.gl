@@ -326,12 +326,14 @@ const MapControlFactory = () => {
       readOnly: PropTypes.bool,
       scale: PropTypes.number,
       mapLayers: PropTypes.object,
-      editor: PropTypes.object
+      editor: PropTypes.object,
+      indexMap: PropTypes.number
     };
 
     static defaultProps = {
       isSplit: false,
-      top: 0
+      top: 0,
+      indexMap: 0
     };
 
     layerSelector = props => props.layers;
@@ -351,7 +353,6 @@ const MapControlFactory = () => {
     );
 
     render() {
-
       const {
         dragRotate,
         layers,
@@ -366,7 +367,8 @@ const MapControlFactory = () => {
         onToggleMapControl,
         editor,
         scale,
-        readOnly
+        readOnly,
+        index
       } = this.props;
 
       const {
@@ -429,7 +431,7 @@ const MapControlFactory = () => {
           {mapDraw.show ? (
             <ActionPanel key={4}>
               <MapDrawPanel
-                isActive={mapDraw.active}
+                isActive={mapDraw.active && mapDraw.activeMapIndex === index}
                 editor={editor}
                 onToggleMenuPanel={() => onToggleMapControl('mapDraw')}
                 onSetEditorMode={this.props.onSetEditorMode}

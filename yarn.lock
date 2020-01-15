@@ -13313,10 +13313,10 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-0.14.5.tgz#5ae68177f192d4456269d108afa93ff8743f4f64"
   integrity sha1-WuaBd/GS1EViadEIr6k/+HQ/T2Q=
 
-type-analyzer@0.2.3:
-  version "0.2.3"
-  resolved "https://registry.yarnpkg.com/type-analyzer/-/type-analyzer-0.2.3.tgz#a265b29b33290e465e2c611c3daaaf979c780e71"
-  integrity sha512-CwHct29PabC8ze2QIczh82/9r277ljuxctCmriwxx63kIXDObe2BhF2iGU/iOnyjU/c+aiSEdWAVqR27rnp4mw==
+type-analyzer@0.2.4:
+  version "0.2.4"
+  resolved "https://registry.yarnpkg.com/type-analyzer/-/type-analyzer-0.2.4.tgz#bb7150437d96e2d6bcd78bcfdd05a5c73d7309d0"
+  integrity sha512-5ldI2maOK8b4/TUpmyj41LMXyqtUHUnp9I33EALQPbMOLpkepYC97q6jL2ED/w77bkDF4abOPHv9VnZt9BcEcA==
 
 type-check@~0.3.2:
   version "0.3.2"
