@@ -244,7 +244,7 @@ Input a custom map style object
 
 **Parameters**
 
--   `inputStyle` **[Object][154]** 
+-   `inputStyle` **[Object][154]**
     -   `inputStyle.url` **[string][152]** style url e.g. `'mapbox://styles/heshan/xxxxxyyyyzzz'`
     -   `inputStyle.id` **[string][152]** style url e.g. `'custom_style_1'`
     -   `inputStyle.style` **[Object][154]** actual mapbox style json
@@ -261,10 +261,10 @@ Callback when a custom map style object is received
 
 **Parameters**
 
--   `customMapStyle` **[Object][154]** 
-    -   `customMapStyle.icon` **[string][152]** 
-    -   `customMapStyle.style` **[Object][154]** 
-    -   `customMapStyle.error` **any** 
+-   `customMapStyle` **[Object][154]**
+    -   `customMapStyle.icon` **[string][152]**
+    -   `customMapStyle.style` **[Object][154]**
+    -   `customMapStyle.error` **any**
 
 ### loadMapStyleErr
 
@@ -275,7 +275,7 @@ Callback when load map style error
 
 **Parameters**
 
--   `error` **any** 
+-   `error` **any**
 
 ### loadMapStyles
 
@@ -319,7 +319,7 @@ Request map style style object based on style.url.
 
 **Parameters**
 
--   `mapStyles` **[Array][164]&lt;[Object][154]>** 
+-   `mapStyles` **[Array][164]&lt;[Object][154]>**
 
 ### set3dBuildingColor
 
@@ -340,7 +340,7 @@ is listened by all subreducers,
 ### addDataToMap
 
 Add data to kepler.gl reducer, prepare map with preset configuration if config is passed.
-Kepler.gl provides a handy set of utils to parse data from different format to the `data` object required in dataset. You rarely need to manually format the data obejct.
+Kepler.gl provides a handy set of utils to parse data from different formats to the `data` object required in dataset. You rarely need to manually format the data obejct.
 
 Use `KeplerGlSchema.getConfigToSave` to generate a json blob of the currents instance config.
 The config object value will always have higher precedence than the options properties.
@@ -353,7 +353,7 @@ to match the `info.id` of your dataset to the `dataId` in each `layer`, `filter`
 
 **Parameters**
 
--   `data` **[Object][154]** 
+-   `data` **[Object][154]** **\*required**
     -   `data.datasets` **([Array][164]&lt;[Object][154]> | [Object][154])** **\*required** datasets can be a dataset or an array of datasets
         Each dataset object needs to have `info` and `data` property.
         -   `data.datasets.info` **[Object][154]** \-info of a dataset
@@ -363,7 +363,7 @@ to match the `info.id` of your dataset to the `dataId` in each `layer`, `filter`
             -   `data.datasets.data.fields` **[Array][164]&lt;[Object][154]>** **\*required** Array of fields,
                 -   `data.datasets.data.fields.name` **[string][152]** **\*required** Name of the field,
             -   `data.datasets.data.rows` **[Array][164]&lt;[Array][164]>** **\*required** Array of rows, in a tabular format with `fields` and `rows`
-    -   `data.options` **[Object][154]** 
+    -   `data.options` **[Object][154]**
         -   `data.options.centerMap` **[boolean][155]** `default: true` if `centerMap` is set to `true` kepler.gl will
             place the map view within the data points boundaries.  `options.centerMap` will override `config.mapState` if passed in.
         -   `data.options.readOnly` **[boolean][155]** `default: false` if `readOnly` is set to `true`
@@ -432,7 +432,7 @@ Initialize kepler.gl reducer. It is used to pass in `mapboxApiAccessToken` to `m
 
 **Parameters**
 
--   `payload` **[Object][154]** 
+-   `payload` **[Object][154]**
     -   `payload.mapboxApiAccessToken` **[string][152]** mapboxApiAccessToken to be saved to mapStyle reducer
     -   `payload.mapboxApiUrl` **[string][152]** mapboxApiUrl to be saved to mapStyle reducer.
     -   `payload.mapStylesReplaceDefault` **[Boolean][155]** mapStylesReplaceDefault to be saved to mapStyle reducer
@@ -497,7 +497,7 @@ Add a new filter
 
 -   `dataId` **[string][152]** dataset `id` this new filter is associated with
 
-Returns **{type: ActionTypes.ADD_FILTER, dataId: dataId}** 
+Returns **{type: ActionTypes.ADD_FILTER, dataId: dataId}**
 
 ### addLayer
 
@@ -510,7 +510,7 @@ Add a new layer
 
 -   `props` **[Object][154]** new layer props
 
-Returns **{type: ActionTypes.ADD_LAYER, props: props}** 
+Returns **{type: ActionTypes.ADD_LAYER, props: props}**
 
 ### enlargeFilter
 
@@ -523,7 +523,7 @@ Show larger time filter at bottom for time playback (apply to time filter only)
 
 -   `idx` **[Number][177]** index of filter to enlarge
 
-Returns **{type: ActionTypes.ENLARGE_FILTER, idx: idx}** 
+Returns **{type: ActionTypes.ENLARGE_FILTER, idx: idx}**
 
 ### interactionConfigChange
 
@@ -536,7 +536,7 @@ Update `interactionConfig`
 
 -   `config` **[Object][154]** new config as key value map: `{tooltip: {enabled: true}}`
 
-Returns **{type: ActionTypes.INTERACTION_CONFIG_CHANGE, config: config}** 
+Returns **{type: ActionTypes.INTERACTION_CONFIG_CHANGE, config: config}**
 
 ### layerConfigChange
 
@@ -550,7 +550,7 @@ Update layer base config: dataId, label, column, isVisible
 -   `oldLayer` **[Object][154]** layer to be updated
 -   `newConfig` **[Object][154]** new config
 
-Returns **{type: ActionTypes.LAYER_CONFIG_CHANGE, oldLayer: oldLayer, newConfig: newConfig}** 
+Returns **{type: ActionTypes.LAYER_CONFIG_CHANGE, oldLayer: oldLayer, newConfig: newConfig}**
 
 ### layerTextLabelChange
 
@@ -578,7 +578,7 @@ Update layer type. Previews layer config will be copied if applicable.
 -   `oldLayer` **[Object][154]** layer to be updated
 -   `newType` **[string][152]** new type
 
-Returns **{type: ActionTypes.LAYER_TYPE_CHANGE, oldLayer: oldLayer, newType: newType}** 
+Returns **{type: ActionTypes.LAYER_TYPE_CHANGE, oldLayer: oldLayer, newType: newType}**
 
 ### layerVisConfigChange
 
@@ -592,7 +592,7 @@ Update layer `visConfig`
 -   `oldLayer` **[Object][154]** layer to be updated
 -   `newVisConfig` **[Object][154]** new visConfig as a key value map: e.g. `{opacity: 0.8}`
 
-Returns **{type: ActionTypes.LAYER_VIS_CONFIG_CHANGE, oldLayer: oldLayer, newVisConfig: newVisConfig}** 
+Returns **{type: ActionTypes.LAYER_VIS_CONFIG_CHANGE, oldLayer: oldLayer, newVisConfig: newVisConfig}**
 
 ### layerVisualChannelConfigChange
 
@@ -607,7 +607,7 @@ Update layer visual channel
 -   `newConfig` **[Object][154]** new visual channel config
 -   `channel` **[string][152]** channel to be updated
 
-Returns **{type: ActionTypes.LAYER_VISUAL_CHANNEL_CHANGE, oldLayer: oldLayer, newConfig: newConfig, channel: channel}** 
+Returns **{type: ActionTypes.LAYER_VISUAL_CHANNEL_CHANGE, oldLayer: oldLayer, newConfig: newConfig, channel: channel}**
 
 ### loadFiles
 
@@ -620,7 +620,7 @@ Trigger file loading dispatch `addDataToMap` if succeed, or `loadFilesErr` if fa
 
 -   `files` **[Array][164]&lt;[Object][154]>** array of fileblob
 
-Returns **{type: ActionTypes.LOAD_FILES, files: any}** 
+Returns **{type: ActionTypes.LOAD_FILES, files: any}**
 
 ### loadFilesErr
 
@@ -631,9 +631,9 @@ Trigger loading file error
 
 **Parameters**
 
--   `error` **any** 
+-   `error` **any**
 
-Returns **{type: ActionTypes.LOAD_FILES_ERR, error: any}** 
+Returns **{type: ActionTypes.LOAD_FILES_ERR, error: any}**
 
 ### onLayerClick
 
@@ -646,7 +646,7 @@ Trigger layer click event with clicked object
 
 -   `info` **[Object][154]** Object clicked, returned by deck.gl
 
-Returns **{type: ActionTypes.LAYER_CLICK, info: info}** 
+Returns **{type: ActionTypes.LAYER_CLICK, info: info}**
 
 ### onLayerHover
 
@@ -659,7 +659,7 @@ Trigger layer hover event with hovered object
 
 -   `info` **[Object][154]** Object hovered, returned by deck.gl
 
-Returns **{type: ActionTypes.LAYER_HOVER, info: info}** 
+Returns **{type: ActionTypes.LAYER_HOVER, info: info}**
 
 ### onMapClick
 
@@ -668,7 +668,7 @@ Trigger map click event, unselect clicked object
 -   **ActionTypes**: [`ActionTypes.MAP_CLICK`][12]
 -   **Updaters**: [`visStateUpdaters.mapClickUpdater`][188]
 
-Returns **{type: ActionTypes.MAP_CLICK}** 
+Returns **{type: ActionTypes.MAP_CLICK}**
 
 ### onMouseMove
 
@@ -683,7 +683,7 @@ React-map-gl PointerEvent
 
 -   `evt` **[Object][154]** PointerEvent
 
-Returns **{type: ActionTypes.MAP_CLICK}** 
+Returns **{type: ActionTypes.MAP_CLICK}**
 
 ### removeDataset
 
@@ -696,7 +696,7 @@ Remove a dataset and all layers, filters, tooltip configs that based on it
 
 -   `key` **[string][152]** dataset id
 
-Returns **{type: ActionTypes.REMOVE_DATASET, key: key}** 
+Returns **{type: ActionTypes.REMOVE_DATASET, key: key}**
 
 ### removeFilter
 
@@ -709,7 +709,7 @@ Remove a filter from `visState.filters`, once a filter is removed, data will be 
 
 -   `idx` **[Number][177]** idx of filter to be removed
 
-Returns **{type: ActionTypes.REMOVE_FILTER, idx: idx}** 
+Returns **{type: ActionTypes.REMOVE_FILTER, idx: idx}**
 
 ### removeLayer
 
@@ -722,7 +722,7 @@ Remove a layer
 
 -   `idx` **[Number][177]** idx of layer to be removed
 
-Returns **{type: ActionTypes.REMOVE_LAYER, idx: idx}** 
+Returns **{type: ActionTypes.REMOVE_LAYER, idx: idx}**
 
 ### reorderLayer
 
@@ -743,7 +743,7 @@ Reorder layer, order is an array of layer indexes, index 0 will be the one at th
 this.props.dispatch(reorderLayer([1, 0, 2, 3]));
 ```
 
-Returns **{type: ActionTypes.REORDER_LAYER, order: order}** 
+Returns **{type: ActionTypes.REORDER_LAYER, order: order}**
 
 ### setFilter
 
@@ -758,7 +758,7 @@ Update filter property
 -   `prop` **[string][152]** `prop` of filter, e,g, `dataId`, `name`, `value`
 -   `value` **any** new value
 
-Returns **{type: ActionTypes.SET_FILTER, idx: idx, prop: prop, value: value}** 
+Returns **{type: ActionTypes.SET_FILTER, idx: idx, prop: prop, value: value}**
 
 ### setFilterPlot
 
@@ -769,10 +769,10 @@ Set the property of a filter plot
 
 **Parameters**
 
--   `idx` **[Number][177]** 
+-   `idx` **[Number][177]**
 -   `newProp` **[Object][154]** key value mapping of new prop `{yAxis: 'histogram'}`
 
-Returns **{type: ActionTypes.SET_FILTER_PLOT, idx: any, newProp: any}** 
+Returns **{type: ActionTypes.SET_FILTER_PLOT, idx: any, newProp: any}**
 
 ### showDatasetTable
 
@@ -785,7 +785,7 @@ Display dataset table in a modal
 
 -   `dataId` **[string][152]** dataset id to show in table
 
-Returns **{type: ActionTypes.SHOW_DATASET_TABLE, dataId: dataId}** 
+Returns **{type: ActionTypes.SHOW_DATASET_TABLE, dataId: dataId}**
 
 ### toggleAnimation
 
@@ -798,7 +798,7 @@ Start and end filter animation
 
 -   `idx` **[Number][177]** idx of filter
 
-Returns **{type: ActionTypes.TOGGLE_FILTER_ANIMATION, idx: idx}** 
+Returns **{type: ActionTypes.TOGGLE_FILTER_ANIMATION, idx: idx}**
 
 ### toggleLayerForMap
 
@@ -812,7 +812,7 @@ Toggle visibility of a layer in a split map
 -   `mapIndex` **[Number][177]** index of the split map
 -   `layerId` **[string][152]** id of the layer
 
-Returns **{type: ActionTypes.TOGGLE_LAYER_FOR_MAP, mapIndex: any, layerId: any}** 
+Returns **{type: ActionTypes.TOGGLE_LAYER_FOR_MAP, mapIndex: any, layerId: any}**
 
 ### updateAnimationSpeed
 
@@ -826,7 +826,7 @@ Change filter animation speed
 -   `idx` **[Number][177]**  `idx` of filter
 -   `speed` **[Number][177]** `speed` to change it to. `speed` is a multiplier
 
-Returns **{type: ActionTypes.UPDATE_FILTER_ANIMATION_SPEED, idx: idx, speed: speed}** 
+Returns **{type: ActionTypes.UPDATE_FILTER_ANIMATION_SPEED, idx: idx, speed: speed}**
 
 ### updateLayerBlending
 
@@ -839,7 +839,7 @@ Update layer blending mode
 
 -   `mode` **[string][152]** one of `additive`, `normal` and `subtractive`
 
-Returns **{type: ActionTypes.UPDATE_LAYER_BLENDING, mode: mode}** 
+Returns **{type: ActionTypes.UPDATE_LAYER_BLENDING, mode: mode}**
 
 ### updateVisData
 
@@ -859,14 +859,14 @@ Add new dataset to `visState`, with option to load a map config along with the d
         -   `datasets.data.fields` **[Array][164]&lt;[Object][154]>** **\*required** Array of fields,
             -   `datasets.data.fields.name` **[string][152]** **\*required** Name of the field,
         -   `datasets.data.rows` **[Array][164]&lt;[Array][164]>** **\*required** Array of rows, in a tabular format with `fields` and `rows`
--   `options` **[Object][154]** 
+-   `options` **[Object][154]**
     -   `options.centerMap` **[boolean][155]** `default: true` if `centerMap` is set to `true` kepler.gl will
         place the map view within the data points boundaries
     -   `options.readOnly` **[boolean][155]** `default: false` if `readOnly` is set to `true`
         the left setting panel will be hidden
 -   `config` **[Object][154]** this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
 
-Returns **{type: ActionTypes.UPDATE_VIS_DATA, datasets: datasets, options: options, config: config}** 
+Returns **{type: ActionTypes.UPDATE_VIS_DATA, datasets: datasets, options: options, config: config}**
 
 ## uiStateActions
 
@@ -1084,7 +1084,7 @@ If `mint` is set to be `true` in the component prop, the instance state will be 
 the instance state and later transfer it to a newly mounted component with the same `id`
 
 -   **ActionTypes**: [`ActionTypes.DELETE_ENTRY`][12]
--   **Updaters**: 
+-   **Updaters**:
 
 **Parameters**
 
@@ -1097,11 +1097,11 @@ Note that if you dispatch actions such as adding data to a kepler.gl instance be
 performed. Instance reducer can only handle actions when it is instantiated.
 
 -   **ActionTypes**: [`ActionTypes.REGISTER_ENTRY`][12]
--   **Updaters**: 
+-   **Updaters**:
 
 **Parameters**
 
--   `payload` **[Object][154]** 
+-   `payload` **[Object][154]**
     -   `payload.id` **[string][152]** **\*required** The id of the instance
     -   `payload.mint` **[boolean][155]** Whether to use a fresh empty state, when `mint: true` it will _always_ load a fresh state when the component is re-mounted.
         When `mint: false` it will register with existing instance state under the same `id`, when the component is unmounted then mounted again. Default: `true`
@@ -1114,7 +1114,7 @@ performed. Instance reducer can only handle actions when it is instantiated.
 Rename an instance in the root reducer, keep its entire state
 
 -   **ActionTypes**: [`ActionTypes.RENAME_ENTRY`][12]
--   **Updaters**: 
+-   **Updaters**:
 
 **Parameters**
 
@@ -1544,7 +1544,7 @@ Set the expor tmap format (html, json)
 
 [165]: ../reducers/map-style.md#mapstyleupdatersset3dbuildingcolorupdater
 
-[166]: ../reducers/composers.md#combinedupdatersadddatatomapupdater
+[166]: ../reducers/combine.md#combinedupdatersadddatatomapupdater
 
 [167]: ../reducers/map-style.md#mapstyleupdatersinitmapstyleupdater
 
