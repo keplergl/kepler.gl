@@ -180,7 +180,6 @@ export default class ArcLayer extends Layer {
       data,
       getSourceColor,
       getTargetColor,
-      // getBrushingTarget: d => d.targetPosition,
       getWidth: getStrokeWidth,
       getFilterValue: gpuFilter.filterValueAccessor()
     };
@@ -232,9 +231,8 @@ export default class ArcLayer extends Layer {
     return [
       new DeckArcLayer({
         ...defaultLayerProps,
-        ...this.getBrushingExtensionProps(interactionConfig),
+        ...this.getBrushingExtensionProps(interactionConfig, 'source_target'),
         ...data,
-        brushingTarget: 'source_target',
         widthScale: this.config.visConfig.thickness,
         updateTriggers: {
           getFilterValue: gpuFilter.filterValueUpdateTriggers,

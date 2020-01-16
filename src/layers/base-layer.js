@@ -1035,14 +1035,14 @@ export default class Layer {
     return props.some(p => !this.noneLayerDataAffectingProps.includes(p));
   }
 
-  getBrushingExtensionProps(interactionConfig) {
+  getBrushingExtensionProps(interactionConfig, brushingTarget) {
     const {brush} = interactionConfig;
 
     return {
       // brushing
       autoHighlight: !brush.enabled,
       brushingRadius: brush.config.size * 1000,
-      brushingTarget: 'source',
+      brushingTarget: brushingTarget || 'source',
       brushingEnabled: brush.enabled
     }
   }

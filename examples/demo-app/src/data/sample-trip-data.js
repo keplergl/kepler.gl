@@ -3981,17 +3981,17 @@ export const sampleTripDataConfig = {
   config: {
     visState: {
       layers: [
-        // {
-        //   type: 'heatmap',
-        //   config: {
-        //     dataId: 'test_trip_data',
-        //     columns: {
-        //       lat: 'pickup_latitude',
-        //       lng: 'pickup_longitude'
-        //     },
-        //     isVisible: true
-        //   }
-        // },
+        {
+          type: 'heatmap',
+          config: {
+            dataId: 'test_trip_data',
+            columns: {
+              lat: 'pickup_latitude',
+              lng: 'pickup_longitude'
+            },
+            isVisible: true
+          }
+        },
         {
           type: 'point',
           config: {
@@ -4018,17 +4018,17 @@ export const sampleTripDataConfig = {
             isVisible: true
           }
         },
-        // {
-        //   type: 'cluster',
-        //   config: {
-        //     dataId: 'test_trip_data',
-        //     columns: {
-        //       lat: 'pickup_latitude',
-        //       lng: 'pickup_longitude'
-        //     },
-        //     isVisible: true
-        //   }
-        // },
+        {
+          type: 'cluster',
+          config: {
+            dataId: 'test_trip_data',
+            columns: {
+              lat: 'pickup_latitude',
+              lng: 'pickup_longitude'
+            },
+            isVisible: true
+          }
+        },
         {
           type: 'arc',
           config: {

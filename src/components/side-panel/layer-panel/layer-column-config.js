@@ -75,7 +75,7 @@ export default class LayerColumnConfig extends Component {
     const {
       columns,
       columnLabels,
-      fields,
+      fields
     } = this.props;
 
     const fieldPairs = this.fieldPairsSelector(this.props);

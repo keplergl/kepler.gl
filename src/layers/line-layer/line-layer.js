@@ -78,7 +78,7 @@ export default class LineLayer extends ArcLayer {
       // base layer
       new EnhancedLineLayer({
         ...defaultLayerProps,
-        ...this.getBrushingExtensionProps(interactionConfig),
+        ...this.getBrushingExtensionProps(interactionConfig, 'source_target'),
         ...data,
         ...layerProps,
         getColor: data.getSourceColor,
