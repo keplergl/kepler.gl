@@ -262,34 +262,36 @@ kepler.gl provide 4 map styles to choose from. Pass `true` if you want to supply
 You can supply additional map styles to be displayed in [map style selection panel](https://github.com/keplergl/kepler.gl/blob/master/docs/user-guides/f-map-styles/1-base-map-styles.md). By default, additional map styles will be added to default map styles. If pass `mapStylesReplaceDefault: true`, they will replace the default ones. kepler.gl will attempt to group layers of your style based on its `id` naming convention and use it to allow toggle visibility of [base map layers](https://github.com/keplergl/kepler.gl/blob/master/docs/user-guides/f-map-styles/2-map-layers.md). Supply your own `layerGroups` to override default for more accurate layer grouping.
 
 Each `mapStyles` should has the following properties:
-  - `id` (String, required) unique string that should **not** be one of these reserved `dark` `light` `muted`. `muted_night`
-  - `label` (String, required) name to be displayed in map style selection panel
-  - `url` (String, required) mapbox style url or a url pointing to the map style json object
-  - `icon` (String, optional) image icon of the style, it can be a url, or an [image data url](https://flaviocopes.com/data-urls/#how-does-a-data-url-look)
-  - `layerGroups` (Array, optional)
+
+- `id` (String, required) unique string that should **not** be one of these reserved `dark` `light` `muted`. `muted_night`
+- `label` (String, required) name to be displayed in map style selection panel
+- `url` (String, required) mapbox style url or a url pointing to the map style json object
+- `icon` (String, optional) image icon of the style, it can be a url, or an [image data url](https://flaviocopes.com/data-urls/#how-does-a-data-url-look)
+- `layerGroups` (Array, optional)
 
 ```js
-  const mapStyles = [
-    {
-      id: 'my_dark_map',
-      label: 'Dark Streets 9',
-      url: 'mapbox://styles/mapbox/dark-v9',
-      icon: `${apiHost}/styles/v1/mapbox/dark-v9/static/-122.3391,37.7922,9.19,0,0/400x300?access_token=${accessToken}&logo=false&attribution=false`,
-      layerGroups: [{
+const mapStyles = [
+  {
+    id: 'my_dark_map',
+    label: 'Dark Streets 9',
+    url: 'mapbox://styles/mapbox/dark-v9',
+    icon: `${apiHost}/styles/v1/mapbox/dark-v9/static/-122.3391,37.7922,9.19,0,0/400x300?access_token=${accessToken}&logo=false&attribution=false`,
+    layerGroups: [
+      {
         slug: 'label',
         filter: ({id}) => id.match(/(?=(label|place-|poi-))/),
         defaultVisibility: true
-      }, {
+      },
+      {
         // adding this will keep the 3d building option
         slug: '3d building',
         filter: () => false,
         defaultVisibility: false
-      }]
-    }
-  ];
-
+      }
+    ]
+  }
+];
 ```
-
 
 ### 3. Dispatch custom actions to `keplerGl` reducer.
 
@@ -533,24 +535,26 @@ Read more about [replacing UI component][replace-ui-component]
 
 ### 6. How to add data to map
 
-To interact with a kepler.gl instance and add new data to it, you can dispatch **`addDataToMap`** action from anywhere inside your app. It adds a dataset or multiple datasets to kepler.gl instance and update the full configuration (mapState, mapStyle, visState).
+To interact with a kepler.gl instance and add new data to it, you can dispatch the **`addDataToMap`** action from anywhere inside your app. It adds a dataset or multiple datasets to a kepler.gl instance and updates the full configuration (mapState, mapStyle, visState).
 
 #### Parameters
 
-- `datasets` **([Array][41]&lt;[Object][40]> | [Object][40])** **\*required** datasets can be a dataset or an array of datasets
-  Each dataset object needs to have `info` and `data` property.
-  - `datasets.info` **[Object][40]** \-info of a dataset
-    - `datasets.info.id` **[string][42]** id of this dataset. If config is defined, `id` should matches the `dataId` in config.
-    - `datasets.info.label` **[string][42]** A display name of this dataset
-  - `datasets.data` **[Object][40]** **\*required** The data object, in a tabular format with 2 properties `fields` and `rows`
-    - `datasets.data.fields` **[Array][41]&lt;[Object][40]>** **\*required** Array of fields,
-      - `datasets.data.fields.name` **[string][42]** **\*required** Name of the field,
-    - `datasets.data.rows` **[Array][41]&lt;[Array][41]>** **\*required** Array of rows, in a tabular format with `fields` and `rows`
-- `options` **[Object][40]**
-  - `options.centerMap` **[boolean][43]** `default: true` if `centerMap` is set to `true` kepler.gl will place the map view within the data points boundaries
-  - `options.readOnly` **[boolean][43]** `default: false` if `readOnly` is set to `true`
-    the left setting panel will be hidden
-  - `options.keepExistingConfig` **[boolean][43]** `default: false`  whether to keep exiting map config, including layers, filters and splitMaps.
+- `data` **[Object][40]** **\*required**
+  - `datasets` **([Array][41]&lt;[Object][40]> | [Object][40])** **\*required** datasets can be a dataset or an array of datasets
+    Each dataset object needs to have `info` and `data` property.
+    - `datasets.info` **[Object][40]** \-info of a dataset
+      - `datasets.info.id` **[string][42]** id of this dataset. If config is defined, `id` should matches the `dataId` in config.
+      - `datasets.info.label` **[string][42]** A display name of this dataset
+    - `datasets.data` **[Object][40]** **\*required** The data object, in a tabular format with 2 properties `fields` and `rows`
+      - `datasets.data.fields` **[Array][41]&lt;[Object][40]>** **\*required** Array of fields,
+        - `datasets.data.fields.name` **[string][42]** **\*required** Name of the field,
+      - `datasets.data.rows` **[Array][41]&lt;[Array][41]>** **\*required** Array of rows, in a tabular format with `fields` and `rows`
+  - `options` **[Object][40]**
+
+    - `options.centerMap` **[boolean][43]** `default: true` if `centerMap` is set to `true` kepler.gl will place the map view within the data points boundaries
+    - `options.readOnly` **[boolean][43]** `default: false` if `readOnly` is set to `true`
+      the left setting panel will be hidden
+    - `options.keepExistingConfig` **[boolean][43]** `default: false` whether to keep exiting map config, including layers, filters and splitMaps.
 
 - `config` **[Object][40]** this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
 

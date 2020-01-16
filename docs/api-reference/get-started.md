@@ -55,7 +55,7 @@ const Map = props => (
 
 #### 3. Add data to map
 
-In order to interact with a kepler.gl instance and add new data to it, you can dispatch __`addDataToMap`__ action from anywhere inside your app. It adds dataset to kepler.gl instance and update the full configuration (mapState, mapStyle, visState).
+In order to interact with a kepler.gl instance and add new data to it, you can dispatch the __`addDataToMap`__ action from anywhere inside your app. It adds dataset(s) to a kepler.gl instance and updates the full configuration (mapState, mapStyle, visState).
 
 Read more about [addDataToMap](./actions/actions.md#adddatatomap)
 
