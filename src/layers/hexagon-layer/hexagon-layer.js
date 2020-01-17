@@ -79,6 +79,7 @@ export default class HexagonLayer extends AggregationLayer {
       new EnhancedHexagonLayer({
         ...data,
         ...layerInteraction,
+        wrapLongitude: false,
         id: this.id,
         idx,
 
