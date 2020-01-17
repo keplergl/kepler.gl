@@ -15,6 +15,24 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [1.1.13] - Jan 17 2020
+- [Enhancement] added coordinate to tooltip export configuration (#876)
+- [Bug] mapState not applied in exported map html (#913)
+- [Chore] Update grammar, cleanup whitespace, fix broken link (#912)
+- [Docs] add Upgrade-guide 
+- [Docs] Remove hyperlink with "Advanced Usage" (#903)
+- [Docs] add initial cloud provider api (#868)
+- [Enhancement] treat type-analyzer type: NUMBER as strings (#891)
+- [Bug] remove argument.length check in injector (#899)
+- [Enhancement] add disabled to layer-configurator group (#897)
+- [Bug] Fix a bug in file-drop.js that causes error in server side render (#896)
+- [Bug] Ensure all colors returned from get3DBuildingColor are RGB arrays (#871)
+- [Chore] License 2020 (#883)
+- [Bug] Correctly copy over field.filterProps when merging multiple filters  (#884)
+- [Bug] Fix newDateEntries typo and formatting fixes (#870)
+- [Bug] Fix multiple geojson layer found when properties contain object and array (#872)
+- [Bug] fix demo-app resolve react-redux (#866)
+
 ## [1.1.12] - Dec 14 2019
 - [Bug] Remove sqrt, log from default color aggregation for count (#856)
 - [Bug] fix cluster point count, cluster layer failed to render on export image (#855)
