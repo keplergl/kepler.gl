@@ -31,6 +31,7 @@ import {cdnUrl} from '../utils';
 import {LinkButton} from './common/styled-components';
 import {media} from '../styles';
 import MapboxLogo from './mapbox-logo';
+import NetlifyLogo from './netlify-logo';
 import {DEMO_LINK} from '../constants';
 
 const Container = styled.div`
@@ -149,7 +150,7 @@ export default class Footer extends PureComponent {
           <img style={{width: '120px'}} src={cdnUrl('icons/kepler.gl-logo.png')} />
           <BrandingContainer>
             <img src={cdnUrl('icons/uber.svg')} />
-            <MapboxLogo/>
+            <MapboxLogo />
             <CreatedBy>
               created by
               <StyledLogo className="fg">
@@ -179,6 +180,7 @@ export default class Footer extends PureComponent {
             </LinkButton>
           </ButtonContainer>
           <SocialContainer>
+            <NetlifyLogo />
             <FacebookShareButton url="https://uber.github.io/kepler.gl/">
               <FacebookIcon size={32} />
             </FacebookShareButton>
