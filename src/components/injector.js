@@ -35,7 +35,7 @@ export const ERROR_MSG = {
     `${fac.name} is required as a dependency of ${parent.name}, ` +
     `but is not provided to injectComponents. It will not be rendered.`,
 
-  notFunc: '`factory and its replacement should be a function`'
+  notFunc: 'factory and its replacement should be a function'
 };
 
 export function injector(map = new Map()) {
