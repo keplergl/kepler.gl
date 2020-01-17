@@ -33,14 +33,14 @@ import {
 } from 'actions/identity-actions';
 import {notNullorUndefined} from 'utils/data-utils';
 
-ContainerFactory.deps = [KeplerGlFactory];
-
 export const ERROR_MSG = {
   noState:
     `kepler.gl state does not exist. ` +
     `You might forget to mount keplerGlReducer in your root reducer.` +
     `If it is not mounted as state.keplerGl by default, you need to provide getState as a prop`
 };
+
+ContainerFactory.deps = [KeplerGlFactory];
 
 export function ContainerFactory(KeplerGl) {
   /** @lends KeplerGl */
