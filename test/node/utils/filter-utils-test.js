@@ -973,7 +973,7 @@ test('filterUtils -> validatePolygonFilter', t => {
     validatePolygonFilter(dataset, filter, layers).filter,
     {
       ...filter,
-      fieldIdx: [ 0 ],
+      fieldIdx: [],
       freeze: true
     },
     'Should positively validate filter'

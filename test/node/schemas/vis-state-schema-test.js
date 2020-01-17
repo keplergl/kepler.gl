@@ -102,8 +102,7 @@ test('#visStateSchema -> v1 -> save load filters', t => {
     value: [1474606800000, 1474617600000],
     enlarged: true,
     plotType: 'histogram',
-    yAxis: null,
-    fixedDomain: true
+    yAxis: null
   }, {
     dataId: [testGeoJsonDataId],
     id: 'vpk2466o',
@@ -112,8 +111,7 @@ test('#visStateSchema -> v1 -> save load filters', t => {
     value: ['a'],
     enlarged: false,
     plotType: 'histogram',
-    yAxis: null,
-    fixedDomain: false
+    yAxis: null
   }];
 
   cmpFilters(t, expectedSavedFilters, filtersToSave);

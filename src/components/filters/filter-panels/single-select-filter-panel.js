@@ -19,22 +19,17 @@
 // THE SOFTWARE.
 
 import React, {useCallback} from 'react';
-import {StyledFilterContent} from 'components/common/styled-components';
 import SingleSelectFilterFactory from 'components/filters/single-select-filter';
-import FilterPanelHeaderFactory from 'components/side-panel/filter-panel/filter-panel-header';
-import FieldSelector from 'components/common/field-selector';
-import SourceDataSelectorFactory from 'components/side-panel/common/source-data-selector';
+import FieldPanelWithFieldSelectFactory from 'components/filters/filter-panels/filter-panel-with-field-select';
 
 SingleSelectFilterPanelFactory.deps = [
-  FilterPanelHeaderFactory,
-  SingleSelectFilterFactory,
-  SourceDataSelectorFactory
+  FieldPanelWithFieldSelectFactory,
+  SingleSelectFilterFactory
 ];
 
 function SingleSelectFilterPanelFactory(
-  FilterPanelHeader,
-  SingleSelectFilter,
-  SourceDataSelector
+  FieldPanelWithFieldSelect,
+  SingleSelectFilter
 ) {
   const SingleSelectFilterPanel = React.memo(({
     idx,
@@ -47,48 +42,20 @@ function SingleSelectFilterPanelFactory(
     removeFilter,
     toggleAnimation
   }) => {
-
-    const onFieldSelector = useCallback(field =>
-        setFilter(idx, 'name', field.name),
-      [idx, setFilter]
-    );
-
-    const onSourceDataSelector = useCallback(value =>
-        setFilter(idx, 'dataId', value),
-      [idx, setFilter]
-    );
-
     const onSetFilter = useCallback(value =>
         setFilter(idx, 'value', value),
       [idx, setFilter]);
 
     return (
-      <>
-        <FilterPanelHeader
-          datasets={[datasets[filter.dataId[0]]]}
+      <div className="single-select-filter-panel">
+        <FieldPanelWithFieldSelect
           allAvailableFields={allAvailableFields}
-          idx={idx}
+          datasets={datasets}
           filter={filter}
+          idx={idx}
           removeFilter={removeFilter}
+          setFilter={setFilter}
         >
-          <FieldSelector
-            inputTheme="secondary"
-            fields={allAvailableFields}
-            value={Array.isArray(filter.name) ? filter.name[0] : filter.name}
-            erasable={false}
-            onSelect={onFieldSelector}
-          />
-        </FilterPanelHeader>
-        <StyledFilterContent className="filter-panel__content">
-          {Object.keys(datasets).length > 1 && (
-            <SourceDataSelector
-              inputTheme="secondary"
-              datasets={datasets}
-              disabled={filter.freeze}
-              dataId={filter.dataId}
-              onSelect={onSourceDataSelector}
-            />
-          )}
           {filter.type && !filter.enlarged && (
             <div className="filter-panel__filter">
               <SingleSelectFilter
@@ -100,8 +67,8 @@ function SingleSelectFilterPanelFactory(
               />
             </div>
           )}
-        </StyledFilterContent>
-      </>
+        </FieldPanelWithFieldSelect>
+      </div>
     );
   });
 

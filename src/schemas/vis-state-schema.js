@@ -654,7 +654,6 @@ export const filterPropsV1 = {
       type: null
     }
   }),
-  fixedDomain: null,
 
   // polygon filter properties
   layerId: null

@@ -178,7 +178,7 @@ export function validatePolygonFilter(dataset, filter, layers) {
     filter: {
       ...filter,
       freeze: true,
-      fieldIdx: [0]
+      fieldIdx: []
     },
     dataset
   };

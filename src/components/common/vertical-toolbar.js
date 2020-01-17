@@ -26,7 +26,7 @@ const VerticalToolbar = styled(Toolbar)`
   padding: 0 24px;
   
   .toolbar-item {
-    padding: 16px;
+    padding: 16px 0;
     border-right: 0;
     border-bottom: 1px solid ${props => props.theme.panelHeaderIcon};
     

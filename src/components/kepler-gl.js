@@ -265,6 +265,7 @@ function KeplerGlFactory(
         uiState,
         editor: visState.editor,
         mapStyle,
+        mapControls: uiState.mapControls,
         layers,
         layerOrder,
         layerData,

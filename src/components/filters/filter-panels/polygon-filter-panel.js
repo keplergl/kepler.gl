@@ -26,6 +26,7 @@ import {EyeSeen} from 'components/common/icons';
 import {EyeUnseen} from 'components/common/icons';
 import FilterPanelHeaderFactory from 'components/side-panel/filter-panel/filter-panel-header';
 import {StyledFilterPanel} from '../components';
+
 import get from 'lodash.get';
 
 PolygonFilterPanelFactory.deps = [
@@ -63,7 +64,7 @@ function PolygonFilterPanelFactory(
     const featureType = get(filter, ['value', 'properties', 'renderType'], true);
 
     return (
-      <>
+      <div className="polygon-filter-panel">
         <FilterPanelHeader
           datasets={filterDatasets}
           allAvailableFields={allAvailableFields}
@@ -90,7 +91,7 @@ function PolygonFilterPanelFactory(
             />
           </div>
         </StyledFilterContent>
-      </>
+      </div>
     )
   });
 

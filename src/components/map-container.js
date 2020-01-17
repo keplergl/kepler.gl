@@ -73,6 +73,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       layers: PropTypes.arrayOf(PropTypes.any).isRequired,
       filters: PropTypes.arrayOf(PropTypes.any).isRequired,
       mapState: PropTypes.object.isRequired,
+      mapControls: PropTypes.object.isRequired,
       uiState: PropTypes.object.isRequired,
       mapStyle: PropTypes.object.isRequired,
       mousePos: PropTypes.object.isRequired,
@@ -433,6 +434,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         datasets,
         mapboxApiAccessToken,
         mapboxApiUrl,
+        mapControls,
         uiState,
         visStateActions,
         editor,
@@ -468,7 +470,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             layers={layers}
             layersToRender={layersToRender}
             mapIndex={this.props.index}
-            mapControls={uiState.mapControls}
+            mapControls={mapControls}
             readOnly={this.props.readOnly}
             scale={mapState.scale || 1}
             top={0}

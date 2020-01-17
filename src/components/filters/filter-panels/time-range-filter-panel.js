@@ -18,25 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback} from 'react';
-import {StyledFilterContent} from 'components/common/styled-components';
+import React, {useCallback, useMemo} from 'react';
 import TimeRangeFilterFactory from 'components/filters/time-range-filter';
-import FilterPanelHeaderFactory from 'components/side-panel/filter-panel/filter-panel-header';
-import PanelHeaderAction from 'components/side-panel/panel-header-action';
 import {Clock} from 'components/common/icons';
-import FieldSelector from 'components/common/field-selector';
 import SourceDataSelectorFactory from 'components/side-panel/common/source-data-selector';
+import FieldPanelWithFieldSelectFactory from 'components/filters/filter-panels/filter-panel-with-field-select';
 
 TimeRangeFilterPanelFactory.deps = [
-  FilterPanelHeaderFactory,
+  FieldPanelWithFieldSelectFactory,
   TimeRangeFilterFactory,
   SourceDataSelectorFactory
 ];
 
 function TimeRangeFilterPanelFactory(
-  FilterPanelHeader,
-  TimeRangeFilter,
-  SourceDataSelector
+  FieldPanelWithFieldSelect,
+  TimeRangeFilter
 ) {
   const TimeRangeFilterPanel = React.memo(({
     idx,
@@ -49,54 +45,29 @@ function TimeRangeFilterPanelFactory(
     removeFilter,
     toggleAnimation
   }) => {
-    const onFieldSelector = useCallback(field =>
-        setFilter(idx, 'name', field.name),
-      [idx, setFilter]
-    );
-
-    const onSourceDataSelector = useCallback(value =>
-        setFilter(idx, 'dataId', value),
-      [idx, setFilter]
-    );
-
     const onSetFilter = useCallback(value =>
         setFilter(idx, 'value', value),
       [idx, setFilter]);
 
+    const panelActions = useMemo(() => ([{
+      id: filter.id,
+      onClick: enlargeFilter,
+      tooltip: 'Time Playback',
+      iconComponent: Clock,
+      active: filter.enlarged
+    }]), [filter.id, filter.enlargeFilter, enlargeFilter]);
+
     return (
       <>
-        <FilterPanelHeader
-          datasets={[datasets[filter.dataId[0]]]}
+        <FieldPanelWithFieldSelect
           allAvailableFields={allAvailableFields}
-          idx={idx}
+          datasets={datasets}
           filter={filter}
+          idx={idx}
           removeFilter={removeFilter}
+          setFilter={setFilter}
+          panelActions={panelActions}
         >
-          <FieldSelector
-            inputTheme="secondary"
-            fields={allAvailableFields}
-            value={Array.isArray(filter.name) ? filter.name[0] : filter.name}
-            erasable={false}
-            onSelect={onFieldSelector}
-          />
-          <PanelHeaderAction
-            id={filter.id}
-            onClick={enlargeFilter}
-            tooltip="Time Playback"
-            IconComponent={Clock}
-            active={filter.enlarged}
-          />
-        </FilterPanelHeader>
-        <StyledFilterContent className="filter-panel__content">
-          {Object.keys(datasets).length > 1 && (
-            <SourceDataSelector
-              inputTheme="secondary"
-              datasets={datasets}
-              disabled={filter.freeze}
-              dataId={filter.dataId}
-              onSelect={onSourceDataSelector}
-            />
-          )}
           {filter.type && !filter.enlarged && (
             <div className="filter-panel__filter">
               <TimeRangeFilter
@@ -108,7 +79,7 @@ function TimeRangeFilterPanelFactory(
               />
             </div>
           )}
-        </StyledFilterContent>
+        </FieldPanelWithFieldSelect>
       </>
     );
   });
