@@ -69,6 +69,10 @@ import {
 } from 'test/fixtures/state-saved-v1-5';
 
 import {
+  savedStateV1InteractionCoordinate
+} from 'test/fixtures/state-saved-v1-7';
+
+import {
   savedStateWIthNonValidFilters as NonValidFilterState
 } from 'test/fixtures/state-saved-v1-6';
 
@@ -760,7 +764,6 @@ test('VisStateMerger.v1 -> mergeInteractions -> toEmptyState', t => {
             }
           }
         },
-
         'Should disable tooltip'
       );
     } else {
@@ -858,9 +861,13 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
             config: {
               size: 1
             }
+          },
+
+          coordinate: {
+            ...defaultInteraction.coordinate,
+            enabled: false
           }
         },
-
         'Should disable interaction: null'
       );
     } else {
@@ -909,6 +916,104 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
     expectedInteractions,
     'should merge interactionConfig'
   );
+  t.deepEqual(stateWData.interactionToBeMerged, {}, 'should clear interaction');
+
+  t.end();
+});
+
+test('VisStateMerger.v1 -> mergeInteractions -> coordinate', t => {
+  const savedConfig = cloneDeep(savedStateV1InteractionCoordinate);
+  const oldState = cloneDeep(InitialState);
+  const oldVisState = oldState.visState;
+
+  const parsedConfig = SchemaManager.parseSavedConfig(
+    savedConfig.config,
+    oldState
+  );
+
+  const parsedInteraction = parsedConfig.visState.interactionConfig;
+
+  // merge interactions
+  const mergedState = mergeInteractions(oldState.visState, parsedInteraction);
+  const defaultInteraction = getDefaultInteraction();
+
+  const expectedInteractionToBeMerged = {};
+
+  Object.keys(oldVisState).forEach(key => {
+    if (key === 'interactionToBeMerged') {
+      t.deepEqual(
+        mergedState.interactionToBeMerged,
+        expectedInteractionToBeMerged,
+        'Should save interactions to interactionToBeMerged before data loaded'
+      );
+    } else if (key === 'interactionConfig') {
+      t.deepEqual(
+        mergedState.interactionConfig,
+        {
+          ...defaultInteraction,
+
+          tooltip: {
+            ...defaultInteraction.tooltip,
+            enabled: false
+          },
+
+          brush: {
+            ...defaultInteraction.brush,
+            config: {
+              size: 1
+            }
+          },
+
+          coordinate: {
+            ...defaultInteraction.coordinate,
+            enabled: true
+          }
+        },
+        'Should disable interaction: null'
+      );
+    } else {
+      t.deepEqual(
+        mergedState[key],
+        oldVisState[key],
+        'Should keep the rest of state same'
+      );
+    }
+  });
+
+  const parsedData = SchemaManager.parseSavedData(savedConfig.datasets);
+
+  // load data into reducer
+  const stateWData = visStateReducer(mergedState, updateVisData(parsedData));
+
+  const expectedInteractions = {
+    ...defaultInteraction,
+    tooltip: {
+      ...defaultInteraction.tooltip,
+      enabled: false,
+      config: {
+        fieldsToShow: {
+          a5ybmwl2d: ['a_zip', 'zip_area', 'avg_number', 'str_type', 'int_type']
+        }
+      }
+    },
+    brush: {
+      ...defaultInteraction.brush,
+      enabled: false,
+      config: {size: 1}
+    },
+    coordinate: {
+      ...defaultInteraction.coordinate,
+      enabled: true
+    }
+  };
+
+  // test parsed interactions
+  t.deepEqual(
+    stateWData.interactionConfig,
+    expectedInteractions,
+    'should merge interactionConfig'
+  );
+
   t.deepEqual(stateWData.interactionToBeMerged, {}, 'should clear interaction');
 
   t.end();

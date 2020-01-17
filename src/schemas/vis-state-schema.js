@@ -559,6 +559,11 @@ class InteractionSchemaV0 extends Schema {
   }
 }
 
+const interactionPropsV1 = [
+  ...interactionPropsV0,
+  'coordinate'
+];
+
 class InteractionSchemaV1 extends Schema {
   key = 'interactionConfig';
 
@@ -678,7 +683,7 @@ export const propertiesV1 = {
   }),
   interactionConfig: new InteractionSchemaV1({
     version: VERSIONS.v1,
-    properties: interactionPropsV0
+    properties: interactionPropsV1
   }),
   layerBlending: null,
   splitMaps: new SplitMapsSchema({

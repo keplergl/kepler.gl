@@ -111,6 +111,8 @@ function ExportMapModalFactory(
 
   ExportMapModal.propTypes = propTypes;
 
+  ExportMapModal.displayName = 'ExportMapModal';
+
   return ExportMapModal;
 }
 

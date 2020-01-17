@@ -145,6 +145,9 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
     brush: {
       enabled: false,
       size: 0.5
+    },
+    coordinate: {
+      enabled: false
     }
   };
 
