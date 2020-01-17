@@ -248,7 +248,13 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
               config
             );
 
-            store.dispatch(keplerGl.addDataToMap(loadedData));
+            store.dispatch(keplerGl.addDataToMap({
+              datasets: loadedData.datasets,
+              config: loadedData.config,
+              options: {
+                centerMap: false
+              }
+            }));
           }(KeplerGl, store))
         </script>
       </body>
