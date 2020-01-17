@@ -26,11 +26,16 @@ import KeplerGlContext from 'components/context';
 
 const MissingComp = () => <div />;
 
-export const errorMsg = {
+export const ERROR_MSG = {
+  wrongRecipeType:
+    `injectComponents takes an array of factories replacement pairs as input, ` +
+    `each pair be a array as [originalFactory, replacement].`,
+
   noDep: (fac, parent) =>
     `${fac.name} is required as a dependency of ${parent.name}, ` +
     `but is not provided to injectComponents. It will not be rendered.`,
-  notFunc: '`factory and its replacement should be a function`'
+
+  notFunc: 'factory and its replacement should be a function'
 };
 
 export function injector(map = new Map()) {
@@ -39,7 +44,7 @@ export function injector(map = new Map()) {
     const factory = map.get(fac);
     // factory is not injected
     if (!factory) {
-      Console.error(errorMsg.noDep(fac, parent));
+      Console.error(ERROR_MSG.noDep(fac, parent));
       return MissingComp;
     }
 
@@ -69,18 +74,19 @@ export function injector(map = new Map()) {
 
 export function typeCheckRecipe(recipe) {
   if (!Array.isArray(recipe) || recipe.length < 2) {
-    Console.error(errorMsg.wrongPairType);
+    Console.error('Error injecting [factory, replacement]', recipe);
+    Console.error(ERROR_MSG.wrongRecipeType);
     return false;
   }
 
   const [factory, replacement] = recipe;
   if (typeof factory !== 'function') {
     Console.error('Error injecting factory: ', factory);
-    Console.error(errorMsg.notFunc);
+    Console.error(ERROR_MSG.notFunc);
     return false;
   } else if (typeof replacement !== 'function') {
     Console.error('Error injecting replacement for: ', factory);
-    Console.error(errorMsg.notFunc);
+    Console.error(ERROR_MSG.notFunc);
     return false;
   }
 
