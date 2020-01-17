@@ -324,7 +324,7 @@ test('#LineLayer -> formatLayerData', t => {
   t.end();
 });
 
-test('#ArcLayer -> renderLayer', t => {
+test('#LineLayer -> renderLayer', t => {
   const filteredIndex = [0, 2, 4];
 
   const TEST_CASES = [
@@ -401,7 +401,7 @@ test('#ArcLayer -> renderLayer', t => {
           props.brushingEnabled, true, 'should have brushingEnabled: true'
         );
         t.equal(
-          props.brushingTarget, 'source', 'brushingTarget: should be source'
+          props.brushingTarget, 'source_target', 'brushingTarget: should be source'
         )
       }
     }

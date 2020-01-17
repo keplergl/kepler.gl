@@ -264,7 +264,7 @@ test('#TripLayer -> formatLayerData', t => {
   t.end();
 });
 
-test('#GeojsonLayer -> renderLayer', t => {
+test('#TripLayer -> renderLayer', t => {
   const filteredIndex = [0, 2, 4];
 
   const TEST_CASES = [
@@ -443,7 +443,7 @@ test('#GeojsonLayer -> renderLayer', t => {
         );
 
         t.deepEqual(
-          attributes.instanceTimestamps.value,
+          attributes.instanceTimestamps.value.slice(0, 44),
           expectedTimestamps,
           'Should have correct instanceTimestamps'
         );

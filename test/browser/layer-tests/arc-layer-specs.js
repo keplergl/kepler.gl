@@ -401,7 +401,7 @@ test('#ArcLayer -> renderLayer', t => {
         const expectedProps = {
           brushingRadius: 2500,
           brushingEnabled: true,
-          brushingTarget: 'source'
+          brushingTarget: 'source_target'
         }
         Object.keys(expectedProps).forEach(key => {
           t.equal(
