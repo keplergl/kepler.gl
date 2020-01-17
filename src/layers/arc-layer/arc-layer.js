@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import Layer from '../base-layer';
-import {BrushingExtension} from 'extensions/brushing';
+import {BrushingExtension} from '@deck.gl/extensions';
 import {ArcLayer as DeckArcLayer} from '@deck.gl/layers';
 
 import {hexToRgb} from 'utils/color-utils';

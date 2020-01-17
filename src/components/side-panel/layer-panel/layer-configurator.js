@@ -892,8 +892,8 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
               <LayerColumnConfig
                 columnPairs={layer.columnPairs}
                 columns={layer.config.columns}
-                assignColumnPairs={layer.assignColumnPairs}
-                assignColumn={layer.assignColumn}
+                assignColumnPairs={layer.assignColumnPairs.bind(layer)}
+                assignColumn={layer.assignColumn.bind(layer)}
                 columnLabels={layer.columnLabels}
                 fields={fields}
                 fieldPairs={fieldPairs}
