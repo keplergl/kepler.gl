@@ -31,7 +31,7 @@ import rootReducer from 'reducers/root';
 import coreReducer from 'reducers/core';
 import {keplerGlInit} from 'actions/actions';
 
-import Container, {errorMsg} from 'components/container';
+import Container, {ERROR_MSG} from 'components/container';
 import {DEFAULT_MAPBOX_API_URL} from 'constants/default-settings';
 const initialCoreState = coreReducer(undefined, keplerGlInit());
 const initialState = {
@@ -54,7 +54,7 @@ test('Components -> Container -> Mount with mint:true', t => {
   t.ok(spy.calledOnce, 'should call console.error once');
   t.equal(
     spy.getCall(0).args[0],
-    errorMsg.noState,
+    ERROR_MSG.noState,
     'should warn when cannot find kepler.gl state'
   );
 

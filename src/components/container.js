@@ -33,22 +33,14 @@ import {
 } from 'actions/identity-actions';
 import {notNullorUndefined} from 'utils/data-utils';
 
-export const errorMsg = {
-  noState:
-    `kepler.gl state doesnt exist. ` +
-    `You might forget to mount keplerGlReducer in your root reducer.` +
-    `If it is not mounted as state.keplerGl by default, you need to provide getState as a prop`,
-
-  wrongType: type =>
-    `injectComponents takes an array of factories replacement pairs as input, ` +
-    `${type} is provided`,
-
-  wrongPairType:
-    `injectComponents takes an array of factories replacement pairs as input, ` +
-    `each pair be a array as [originalFactory, replacement]`
-};
-
 ContainerFactory.deps = [KeplerGlFactory];
+
+export const ERROR_MSG = {
+  noState:
+    `kepler.gl state does not exist. ` +
+    `You might forget to mount keplerGlReducer in your root reducer.` +
+    `If it is not mounted as state.keplerGl by default, you need to provide getState as a prop`
+};
 
 export function ContainerFactory(KeplerGl) {
   /** @lends KeplerGl */
@@ -91,7 +83,7 @@ export function ContainerFactory(KeplerGl) {
       this.getSelector = memoize((id, getState) => state => {
         if (!getState(state)) {
           // log error
-          Console.error(errorMsg.noState);
+          Console.error(ERROR_MSG.noState);
 
           return null;
         }
