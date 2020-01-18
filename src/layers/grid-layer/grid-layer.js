@@ -97,6 +97,7 @@ export default class GridLayer extends AggregationLayer {
       new DeckGLGridLayer({
         ...data,
         ...layerInteraction,
+        wrapLongitude: false,
         id: this.id,
         idx,
         cellSize,

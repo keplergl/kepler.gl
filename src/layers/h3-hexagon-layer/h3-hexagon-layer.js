@@ -281,6 +281,7 @@ export default class HexagonIdLayer extends Layer {
       new H3HexagonLayer({
         ...layerInteraction,
         ...data,
+        wrapLongitude: false,
         id: this.id,
         idx,
         pickable: true,
