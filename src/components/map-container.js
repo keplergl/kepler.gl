@@ -462,14 +462,13 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       return (
         <StyledMapContainer style={MAP_STYLE.container}>
           <MapControl
-            index={index}
             datasets={datasets}
             dragRotate={mapState.dragRotate}
             isSplit={Boolean(mapLayers)}
             isExport={this.props.isExport}
             layers={layers}
             layersToRender={layersToRender}
-            mapIndex={this.props.index}
+            mapIndex={index}
             mapControls={mapControls}
             readOnly={this.props.readOnly}
             scale={mapState.scale || 1}

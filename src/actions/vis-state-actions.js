@@ -381,7 +381,7 @@ export function enlargeFilter(idx) {
 /**
  * SHow/hide filter feature on map
  * @param {Number} idx - index of filter feature to show/hide
- * @return {{type: ActionTypes.TOGGLE_FEATURE_LAYER, idx: idx}}
+ * @return {{type: ActionTypes.TOGGLE_FILTER_FEATURE, idx: idx}}
  */
 export function toggleFilterFeature(idx) {
   return {
@@ -524,7 +524,7 @@ export function setFeatures(features) {
  * It will apply the provide feature as filter to the given layer.
  * If the given feature is already applied as filter to the layer it  will remove it from  the filter list
  * @memberof visStateActions
- * @param {Object} featureId feature to use as filter base for layer
+ * @param {Object} feature
  * @param {Object} layer
  * @return {{feature: *, type: ActionTypes.SET_POLYGON_FILTER_LAYER, layer: *}}
  */
@@ -540,7 +540,6 @@ export function setPolygonFilterLayer(layer, feature) {
  * Set the current feature to be edited/deleted
  * @memberof visStateActions
  * @param {Object} feature
- * @param {string} feature.selectedFeatureId
  * @return {{selectedFeatureId: *, type: ActionTypes.SET_SELECTED_FEATURE}}
  */
 export function setSelectedFeature(feature) {
@@ -553,7 +552,7 @@ export function setSelectedFeature(feature) {
 /**
  * Delete the given feature
  * @memberof visStateActions
- * @param {string} featureId if of the feature
+ * @param {Object} feature
  * @return {{type: ActionTypes.DELETE_FEATURE, featureId: *}}
  */
 export function deleteFeature(feature) {
