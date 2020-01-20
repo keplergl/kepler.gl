@@ -286,6 +286,72 @@ export const CloudStorageDropdownFactory = PanelHeaderDropdown => {
 };
 CloudStorageDropdownFactory.deps = [PanelHeaderDropdownFactory];
 
+export const SaveMapToBackendFactory = () => {
+  const SaveMapToBackend = (props) => (
+    <PanelItem {...props}/>
+  );
+
+  SaveMapToBackend.defaultProps = {
+    label: 'Save',
+    icon: <Map />
+  };
+
+  return SaveMapToBackend;
+};
+
+export const BackendStorageSettingsFactory = () => {
+  const BackendStorageSettings = (props) => (
+    <PanelItem {...props}/>
+  );
+
+  BackendStorageSettings.defaultProps = {
+    label: 'Settings',
+    icon: <Settings />
+  };
+
+  return BackendStorageSettings;
+};
+
+export const SaveMapToBackendDropdownFactory = (
+  SaveMapToBackend,
+  BackendStorageSettings) => {
+  const SaveExportDropdown = ({
+    show,
+    onClose,
+    onBackendStorageSettingsClick,
+    onSaveMapToBackendClick
+  }) => {
+    return (
+      <StyledPanelDropdown show={show} className="save-export-dropdown">
+        <ClickOutsideCloseDropdown className="save-export-dropdown__inner"
+          show={show}
+          onClose={onClose}>
+          {onSaveMapToBackendClick ? (
+            <SaveMapToBackend
+              onClickHandler={onSaveMapToBackendClick}
+              onClose={onClose}
+            />
+          ) : null}
+
+          {onBackendStorageSettingsClick ? (
+            <BackendStorageSettings
+              onClickHandler={onBackendStorageSettingsClick}
+              onClose={onClose}
+            />
+          ) : null}
+        </ClickOutsideCloseDropdown>
+      </StyledPanelDropdown>
+    );
+  };
+
+  return SaveExportDropdown;
+};
+
+SaveMapToBackendDropdownFactory.deps = [
+  SaveMapToBackendFactory,
+  BackendStorageSettingsFactory
+];
+
 PanelHeaderFactory.deps = [
   SaveExportDropdownFactory,
   CloudStorageDropdownFactory
@@ -336,6 +402,8 @@ function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
         onSaveMap,
         onExportImage,
         onExportData,
+        onBackendStorageSettingsClick,
+        onSaveMapToBackendClick,
         onExportConfig,
         onExportMap,
         visibleDropdown,
@@ -373,6 +441,8 @@ function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
                       onExportImage={onExportImage}
                       onExportConfig={onExportConfig}
                       onExportMap={onExportMap}
+                      onBackendStorageSettingsClick={onBackendStorageSettingsClick}
+                      onSaveMapToBackendClick={onSaveMapToBackendClick}
                     />
                   ) : null}
                 </div>

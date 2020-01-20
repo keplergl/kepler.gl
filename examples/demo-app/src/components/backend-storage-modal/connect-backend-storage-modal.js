@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
+// Copyright (c) 2019 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,16 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {AUTH_TOKENS} from '../constants/default-settings';
+import React from 'react';
+import {Modal} from 'kepler.gl/components';
+import BackendStorageModalContent from './backend-storage';
 
-import DropboxProvider from './dropbox-provider';
-import CartoProvider from './carto-provider';
+const ConnectBackendStorageModal = ({
+  isOpen,
+  onClose,
+  parentSelector
+}) => (
+  <Modal
+    isOpen={isOpen}
+    close={onClose}
+    title='Connect to your Backend Storage'
+    parentSelector={parentSelector}
+  >
+    <BackendStorageModalContent />
+  </Modal>
+);
 
-const {DROPBOX_CLIENT_ID, CARTO_CLIENT_ID} = AUTH_TOKENS;
-
-const DROPBOX_CLIENT_NAME = 'Kepler.gl%20(managed%20by%20Uber%20Technologies%2C%20Inc.)';
-
-export const CLOUD_PROVIDERS = [
-  new DropboxProvider(DROPBOX_CLIENT_ID, DROPBOX_CLIENT_NAME),
-  new CartoProvider(CARTO_CLIENT_ID)
-];
+export default ConnectBackendStorageModal;

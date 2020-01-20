@@ -33,7 +33,8 @@ import {
   SET_LOADING_METHOD,
   LOAD_MAP_SAMPLE_FILE,
   LOAD_REMOTE_RESOURCE_SUCCESS,
-  SET_SAMPLE_LOADING_STATUS
+  SET_SAMPLE_LOADING_STATUS,
+  LOAD_CLOUD_VIS_ERROR
 } from '../actions';
 
 import {
@@ -81,6 +82,11 @@ export const appReducer = handleActions({
   [SET_SAMPLE_LOADING_STATUS]: (state, action) => ({
     ...state,
     isMapLoading: action.isMapLoading
+  }),
+  [LOAD_CLOUD_VIS_ERROR]: (state, action) => ({
+    ...state,
+    error: action.error,
+    isMapLoading: false
   })
 }, initialAppState);
 
@@ -108,6 +114,16 @@ const demoReducer = combineReducers({
   sharing: sharingReducer
 });
 
+function arrayify(thing) {
+  return Array.isArray(thing) ? thing : [thing];
+}
+
+function getSampleFromOptions(options) {
+  return options.length
+    ? options[0]
+    : options;
+}
+
 // this can be moved into a action and call kepler.gl action
 /**
  *
@@ -116,21 +132,27 @@ const demoReducer = combineReducers({
  * @returns {{app: {isMapLoading: boolean}, keplerGl: {map: (state|*)}}}
  */
 export const loadRemoteResourceSuccess = (state, action) => {
-  // TODO: replace generate with a different function
-  const datasetId = action.options.id || generateHashId(6);
-  const {dataUrl} = action.options;
-  let processorMethod = processCsvData;
-  // TODO: create helper to determine file ext eligibility
-  if (dataUrl.includes('.json') || dataUrl.includes('.geojson')) {
-    processorMethod = processGeojson;
-  }
+  const responses = arrayify(action.response);
+  const options = arrayify(action.options);
+  const currentSample = getSampleFromOptions(action.options);
 
-  const datasets = {
-    info: {
-      id: datasetId
-    },
-    data: processorMethod(action.response)
-  };
+  const datasets = options.map((opt, i) => {
+    const datasetId = opt.id || generateHashId(6);
+    const { dataUrl } = opt;
+
+    let processorMethod = processCsvData;
+    if (dataUrl.includes('.json') || dataUrl.includes('.geojson')) {
+      processorMethod = processGeojson;
+    }
+
+    return {
+      info: {
+        id: datasetId
+      },
+
+      data: processorMethod(responses[i])
+    }
+  });
 
   const config = action.config ?
     KeplerGlSchema.parseSavedConfig(action.config) : null;
@@ -149,8 +171,8 @@ export const loadRemoteResourceSuccess = (state, action) => {
     ...state,
     app: {
       ...state.app,
-      currentSample: action.options,
-      isMapLoading: false // we turn of the spinner
+      currentSample,
+      isMapLoading: false // we turn off the spinner
     },
     keplerGl: {
       ...state.keplerGl, // in case you keep multiple instances

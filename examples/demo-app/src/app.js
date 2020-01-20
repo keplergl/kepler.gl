@@ -32,10 +32,15 @@ import {replaceMapControl} from './factories/map-control';
 import {replacePanelHeader} from './factories/panel-header';
 import {replaceSaveExportDropdown} from './factories/save-export-dropdown';
 import ExportUrlModal from './components/sharing/export-url-modal';
+import ConnectBackendStorageModal from './components/backend-storage-modal/connect-backend-storage-modal';
+import SaveMapBackendStorageModal from './components/save-map-modal/save-map-backend-storage-modal';
 import {AUTH_TOKENS} from './constants/default-settings';
+import {getCloudProvider, getCloudProviders} from './cloud-providers';
+
 import {
   exportFileToCloud,
   loadRemoteMap,
+  loadCloudMap,
   loadSampleConfigurations,
   setCloudLoginSuccess
 } from './actions';
@@ -102,11 +107,16 @@ class App extends Component {
 
   componentDidMount() {
     // if we pass an id as part of the url
-    // we ry to fetch along map configurations
+    // we try to fetch along map configurations
     const {
-      params: {id} = {},
+      params: {id, provider} = {},
       location: {query = {}} = {}
     } = this.props;
+
+    if (provider) {
+        this.props.dispatch(loadCloudMap(query, provider));
+        return;
+    }
 
     // Load sample using its id
     if (id) {
@@ -270,6 +280,11 @@ class App extends Component {
     return app.featureFlags.cloudStorage;
   };
 
+  _isBackendStorageEnabled = () => {
+    const {app} = this.props.demo;
+    return app.featureFlags.backendStorage;
+  };
+
   _toggleCloudModal = () => {
     // TODO: this lives only in the demo hence we use the state for now
     // REFCOTOR using redux
@@ -278,9 +293,41 @@ class App extends Component {
     });
   };
 
+  _hasBackendProviderActive = () => {
+    const providers = getCloudProviders();
+    const activeProvider = providers.find((provider) => !!provider.getAccessToken());
+    return !!activeProvider;
+  }
+
+  _toggleSettingsBackendModal = () => {
+    this.setState({
+      settingsBackendModalOpen: !this.state.settingsBackendModalOpen
+    });
+  };
+
+  _toggleSaveMapToBackendModal = () => {
+    if (this._hasBackendProviderActive()) {
+      this.setState({
+        saveMapToBackendModalOpen: !this.state.saveMapToBackendModalOpen
+      });
+    } else {
+      this._toggleSettingsBackendModal();
+    }
+  }
+
   _onExportToCloud = (providerName) => {
     this.props.dispatch(exportFileToCloud(providerName));
   };
+
+  _onSaveToCloud = (providerName, extraData) => {
+    this.props.dispatch(exportFileToCloud(providerName, false, extraData));
+  }
+
+  _onSaveToCloudFinished = () => {
+    this.setState({
+      saveMapToBackendModalOpen: false
+    });
+  }
 
   _onCloudLoginSuccess = (providerName) => {
     this.props.dispatch(setCloudLoginSuccess(providerName));
@@ -334,6 +381,26 @@ class App extends Component {
               parentSelector={() => findDOMNode(this.root)}
             />
           )}
+
+          {this._isBackendStorageEnabled() && rootNode &&
+            <ConnectBackendStorageModal
+              isOpen={Boolean(this.state.settingsBackendModalOpen)}
+              onClose={this._toggleSettingsBackendModal}
+              parentSelector={() => findDOMNode(this.root)}
+            />
+          }
+
+          {this._isBackendStorageEnabled() && rootNode && Boolean(this.state.saveMapToBackendModalOpen) &&
+            <SaveMapBackendStorageModal
+              sharing={sharing}
+              isOpen={Boolean(this.state.saveMapToBackendModalOpen)}
+              onClose={this._toggleSaveMapToBackendModal}
+              onSave={this._onSaveToCloud}
+              onSaveFinished={this._onSaveToCloudFinished}
+              parentSelector={() => findDOMNode(this.root)}
+            />
+          }
+
           <div
             style={{
               transition: 'margin 1s, height 1s',

@@ -25,7 +25,7 @@ import {CopyToClipboard} from 'react-copy-to-clipboard';
 import {StyledModalContent} from 'kepler.gl/components';
 import CloudTile from './cloud-tile';
 import StatusPanel from './status-panel';
-import {getCloudProviders} from '../../cloud-providers';
+import {getCloudProviders, getCloudProvider} from '../../cloud-providers';
 import {KEPLER_DISCLAIMER} from '../../constants/default-settings';
 import {getMapPermalink} from '../../utils/url';
 
@@ -69,7 +69,7 @@ const StyledInput = styled.input`
   border: 0;
   outline: 0;
   font-size: 14px;
-  
+
   :active,
   :focus,
   &.focus,
@@ -97,7 +97,7 @@ const SharingUrl = ({url, message}) => (
   <StyleSharingUrl>
     <StyledInputLabel>{message}</StyledInputLabel>
     <div style={{display: 'flex'}}>
-      <StyledInput type="text" value={url}/>
+      <StyledInput type="text" value={url} readOnly/>
       <CopyToClipboard text={url}>
         <StyledBtn>copy</StyledBtn>
       </CopyToClipboard>
@@ -112,10 +112,17 @@ const ExportCloudModal = ({
   onExport,
   onCloudLoginSuccess
 }) => {
+
   const metaUrl = get(info, ['metadata', 'url']);
   const error = get(info, ['error']);
   const folderLink = get(info, ['metadata', 'folder_link']);
-  const sharingLink = metaUrl ? getMapPermalink(metaUrl) : null;
+  const providerName = get(info, ['provider']);
+  const provider = providerName ? getCloudProvider(providerName) : null
+  const sharingLink = (metaUrl)
+    ? (provider && provider.getMapPermalink)
+      ? provider.getMapPermalink(metaUrl)
+      : getMapPermalink(metaUrl)
+    : null;
   return (
 
     <StyledModalContent className="export-cloud-modal">
@@ -145,6 +152,7 @@ const ExportCloudModal = ({
                 onLogin={() => cloudProvider.login(onCloudLoginSuccess)}
                 Icon={cloudProvider.icon}
                 name={cloudProvider.name}
+                userName={cloudProvider.getUserName()}
               />
             ))}
           </div>
@@ -157,12 +165,12 @@ const ExportCloudModal = ({
                 )}
                 {error && (
                   <div className="subtitle" style={{color: 'red', fontWeight: 500}}>
-                    {error.error}
+                    {providerName}: {error.error}
                   </div>
                 )}
                 {metaUrl && [
                   (<SharingUrl key={0} url={sharingLink} message={'Share your map with other users'}/>),
-                  (<a href={folderLink} target="_blank" rel="noopener noreferrer" style={{textDecoration: 'underline'}}>Go to your Kepler.gl Dropbox folder</a>)
+                  (folderLink && <a key={1} href={folderLink} target="_blank" rel="noopener noreferrer" style={{textDecoration: 'underline'}}>Go to your Kepler.gl {providerName} page</a>)
                 ]}
               </div>
             </div>

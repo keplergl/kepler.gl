@@ -50,7 +50,8 @@ export const QUERY_OPTIONS = keyMirror({
 export const LOADING_METHODS_NAMES = keyMirror({
   upload: null,
   remote: null,
-  sample: null
+  sample: null,
+  storage: null
 });
 
 export const LOADING_METHODS = [
@@ -82,6 +83,10 @@ export const LOADING_METHODS = [
     label: 'Load Map using URL'
   },
   {
+    id: LOADING_METHODS_NAMES.storage,
+    label: 'Load via Storage'
+  },
+  {
     id: LOADING_METHODS_NAMES.sample,
     label: 'Sample Data',
     options: [
@@ -95,18 +100,20 @@ export const LOADING_SAMPLE_ERROR_MESSAGE = 'Not able to load sample';
 export const LOADING_URL_MESSAGE = 'You can use the following formats: CSV | JSON | Kepler.gl config json. Make sure the url contains the file extension.';
 export const CORS_LINK = 'https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS';
 export const KEPLER_DISCLAIMER = '* Kepler.gl will save your map data to your personal cloud storage, only people with the URL can access your map and data. ' +
-  'You can edit/delete the data file in your cloud account anytime.';
+  'You can edit/delete the data in your cloud account anytime.';
 
 export const DEFAULT_LOADING_METHOD = LOADING_METHODS[0];
 
 export const DEFAULT_CLOUD_PROVIDER = 'dropbox';
 
 export const DEFAULT_FEATURE_FLAGS = {
-  cloudStorage: true
+  cloudStorage: true,
+  backendStorage: true
 };
 
 export const AUTH_TOKENS = {
   MAPBOX_TOKEN: process.env.MapboxAccessToken, // eslint-disable-line
   DROPBOX_CLIENT_ID: process.env.DropboxClientId, // eslint-disable-line
+  CARTO_CLIENT_ID: process.env.CartoClientId, // eslint-disable-line
   EXPORT_MAPBOX_TOKEN: process.env.MapboxExportToken, // eslint-disable-line
 };

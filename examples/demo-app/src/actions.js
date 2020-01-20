@@ -25,12 +25,12 @@ import {loadFiles, toggleModal} from 'kepler.gl/actions';
 import {
   LOADING_SAMPLE_ERROR_MESSAGE,
   LOADING_SAMPLE_LIST_ERROR_MESSAGE,
-  MAP_CONFIG_URL, MAP_URI
+  MAP_CONFIG_URL
 } from './constants/default-settings';
 import {LOADING_METHODS_NAMES} from './constants/default-settings';
 import {getCloudProvider} from './cloud-providers';
 import {generateHashId} from './utils/strings';
-import {parseUri} from './utils/url';
+import {parseUri, getMapPermalink} from './utils/url';
 import KeplerGlSchema from 'kepler.gl/schemas';
 
 // CONSTANTS
@@ -40,6 +40,7 @@ export const LOAD_REMOTE_RESOURCE_SUCCESS = 'LOAD_REMOTE_RESOURCE_SUCCESS';
 export const LOAD_REMOTE_RESOURCE_ERROR = 'LOAD_REMOTE_RESOURCE_ERROR';
 export const LOAD_MAP_SAMPLE_FILE = 'LOAD_MAP_SAMPLE_FILE';
 export const SET_SAMPLE_LOADING_STATUS = 'SET_SAMPLE_LOADING_STATUS';
+export const LOAD_CLOUD_VIS_ERROR = 'LOAD_CLOUD_VIS_ERROR';
 
 // Sharing
 export const PUSHING_FILE = 'PUSHING_FILE';
@@ -107,6 +108,13 @@ export function setLoadingMapStatus(isMapLoading) {
     type: SET_SAMPLE_LOADING_STATUS,
     isMapLoading
   };
+}
+
+export function loadCloudVisError(error) {
+  return {
+    type: LOAD_CLOUD_VIS_ERROR,
+    error
+  }
 }
 
 /**
@@ -349,12 +357,46 @@ export function setPushingFile(isLoading, metadata) {
 }
 
 /**
+ * This method will load a kepler config from a cloud platform
+ * @param {Object} queryParams
+ * @param {string} providerName
+ * @returns {Function}
+ */
+export function loadCloudMap(queryParams, providerName, pushRoute = false) {
+  return async (dispatch) => {
+    if (!providerName) {
+      throw new Error('No cloud provider identified')
+    }
+    dispatch(loadCloudVisError(null));
+    dispatch(setLoadingMapStatus(true));
+
+    const cloudProvider = getCloudProvider(providerName);
+
+    if (pushRoute) {
+      const mapUrl = cloudProvider.getMapPermalinkFromParams(queryParams, false);
+      dispatch(push(mapUrl));
+    }
+
+    cloudProvider.loadMap(queryParams)
+      .then(map => {
+        dispatch(loadRemoteResourceSuccess(map.datasets, map.vis.config, map.options));
+      })
+      .catch(error => {
+        const {target = {}} = error;
+        const {status, responseText = 'Error loading map'} = target;
+        dispatch(setLoadingMapStatus(false));
+        dispatch(loadCloudVisError({status, message: responseText}));
+      });
+  }
+}
+
+/**
  * This method will export the current kepler config file to the choosen cloud platform
  * @param data
  * @param providerName
  * @returns {Function}
  */
-export function exportFileToCloud(providerName) {
+export function exportFileToCloud(providerName, isPublic = true, extraData = {title: null, description: null}) {
   if (!providerName) {
     throw new Error('No cloud provider identified')
   }
@@ -365,27 +407,48 @@ export function exportFileToCloud(providerName) {
     const data = JSON.stringify(mapData);
     const newBlob = new Blob([data], {type: 'application/json'});
     const fileName = `/keplergl_${generateHashId(6)}.json`;
+    extraData.title = extraData.title || fileName;
     const file = new File([newBlob], fileName);
     // We are gonna pass the correct auth token to init the cloud provider
-    dispatch(setPushingFile(true, {filename: file.name, status: 'uploading', metadata: null}));
+    dispatch(setPushingFile(true, {
+      filename: file.name,
+      status: 'uploading',
+      metadata: null,
+      provider: cloudProvider.name
+    }));
     cloudProvider.uploadFile({
       data,
       type: 'application/json',
       blob: file,
-      name: fileName,
-      isPublic: true,
+      name: extraData.title,
+      description: extraData.description,
+      isPublic,
       cloudProvider
     })
     // need to perform share as well
     .then(
       response => {
         if (cloudProvider.shareFile) {
-          dispatch(push(`/${MAP_URI}${response.url}`));
+          const responseUrl = cloudProvider.getMapPermalink
+            ? cloudProvider.getMapPermalink(response.url, false)
+            : getMapPermalink(response.url, false)
+          dispatch(push(responseUrl));
         }
-        dispatch(setPushingFile(false, {filename: file.name, status: 'success', metadata: response}));
+        dispatch(setPushingFile(false, {
+          filename: file.name,
+          status: 'success',
+          metadata: response,
+          provider: cloudProvider.name
+        }));
+        dispatch(toggleModal(null));
       },
       error => {
-        dispatch(setPushingFile(false, {filename: file.name, status: 'error', error}));
+        dispatch(setPushingFile(false, {
+          filename: file.name,
+          status: 'error',
+          error, provider:
+          cloudProvider.name
+        }));
       }
     );
   };
@@ -398,7 +461,12 @@ export function setCloudLoginSuccess(providerName) {
         dispatch(exportFileToCloud(providerName));
       },
       () => {
-        dispatch(setPushingFile(false, {filename: null, status: 'error', error: 'not able to propagate login successfully'}));
+        dispatch(setPushingFile(false, {
+          filename: null,
+          status: 'error',
+          error: 'not able to propagate login successfully',
+          provider: cloudProvider.name
+        }));
       }
     );
   };
