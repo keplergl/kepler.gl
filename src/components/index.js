@@ -35,11 +35,7 @@ export {default as PlotContainerFactory} from './plot-container';
 export {
   default as PanelHeaderFactory,
   SaveExportDropdownFactory,
-  ExportImageFactory,
-  ExportDataFactory,
-  ExportConfigFactory,
-  ExportMapFactory,
-  SaveMapFactory
+  PanelHeaderDropdownFactory
 } from './side-panel/panel-header'
 export {CollapseButtonFactory, default as SidebarFactory} from './side-panel/side-bar';
 export {default as PanelToggleFactory} from './side-panel/panel-toggle';

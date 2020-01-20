@@ -248,6 +248,16 @@ export const InputLight = styled.input`
   ${props => props.theme.inputLT}
 `;
 
+export const TextArea = styled.textarea`
+  ${props =>
+    props.secondary ? props.theme.secondaryInput : props.theme.input};
+`
+export const TextAreaLight = styled.textarea`
+  ${props => props.theme.inputLT}
+  height: auto;
+  white-space: pre-wrap;
+`;
+
 export const InlineInput = styled(Input)`
   ${props => props.theme.inlineInput};
 `;
@@ -368,6 +378,58 @@ export const StyledModalContent = styled.div`
   `};
 `;
 
+export const StyledModalVerticalPanel = styled.div.attrs({
+  className: 'modal-vertical-panel'
+})`
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  font-size: 12px;
+
+  .modal-section:first-child {
+    margin-top: 24px;
+    ${media.palm`
+      margin-top: 0;
+    `};
+  }
+
+  input {
+    margin-right: 8px;
+  }
+`;
+
+export const StyledModalSection = styled.div.attrs({
+  className: 'modal-section'
+})`
+  margin-bottom: 32px;
+
+  .modal-section-title {
+    font-weight: 500;
+  }
+  .modal-section-subtitle {
+    color: ${props => props.theme.subtextColorLT};
+  }
+
+  input {
+    margin-top: 8px;
+  }
+
+  ${media.portable`
+    margin-bottom: 24px;
+  `};
+  ${media.palm`
+    margin-bottom: 16px;
+  `};
+`;
+
+export const StyledModalInputFootnote = styled.div.attrs({
+  className: 'modal-input__footnote'
+})`
+  display: flex;
+  justify-content: flex-end;
+  color: ${props => props.error ? props.theme.errorColor : props.theme.subtextColorLT};
+  font-size: 10px;
+`
 /**
  * Newer versions of mapbox.gl display an error message banner on top of the map by default
  * which will cause the map to display points in the wrong locations

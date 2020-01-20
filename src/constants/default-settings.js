@@ -85,6 +85,13 @@ export const ADD_MAP_STYLE_ID = 'addMapStyle';
  * @public
  */
 export const EXPORT_MAP_ID = 'exportMap';
+/**
+ * Modal id: save map modal
+ * @constant
+ * @type {string}
+ * @public
+ */
+export const SAVE_MAP_ID = 'saveMap';
 
 import {
   Layers,
@@ -605,8 +612,6 @@ export const RESOLUTION_OPTIONS = [{
   })
 }];
 
-export const DEFAULT_EXPORT_IMAGE_NAME = 'kepler-gl.png';
-
 export const EXPORT_DATA_TYPE = keyMirror({
   CSV: null
   // SHAPEFILE: null,
@@ -694,3 +699,13 @@ export const MAP_CONFIG_DESCRIPTION = 'Map config will be included in the Json f
 export const BASE_SPEED = 600;
 export const DEFAULT_TIME_FORMAT = 'MM/DD/YY HH:mm:ssa';
 export const SPEED_CONTROL_RANGE = [0, 10];
+
+export const MAP_THUMBNAIL_DIMENSION = {
+  width: 300,
+  height: 200
+};
+
+export const MAP_INFO_CHARACTER = {
+  title: 100,
+  description: 100
+};

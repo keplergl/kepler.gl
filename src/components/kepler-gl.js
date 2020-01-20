@@ -36,7 +36,8 @@ import {
   KEPLER_GL_NAME,
   KEPLER_GL_VERSION,
   THEME,
-  DEFAULT_MAPBOX_API_URL
+  DEFAULT_MAPBOX_API_URL,
+  SAVE_MAP_ID
 } from 'constants/default-settings';
 import {MISSING_MAPBOX_TOKEN} from 'constants/user-feedbacks';
 
@@ -196,6 +197,7 @@ function KeplerGlFactory(
         appName,
         version,
         onSaveMap,
+        onSaveToStorage,
         onViewStateChange,
         width,
         height,
@@ -249,6 +251,7 @@ function KeplerGlFactory(
         mapStyle,
         layerBlending,
         onSaveMap,
+        onSaveToStorage,
         uiState,
         mapStyleActions,
         visStateActions,
@@ -302,7 +305,8 @@ function KeplerGlFactory(
             />
           ));
 
-      const isExporting = uiState.currentModal === EXPORT_IMAGE_ID;
+      const isExporting =
+        uiState.currentModal === EXPORT_IMAGE_ID || uiState.currentModal === SAVE_MAP_ID;
       const theme = this.availableThemeSelector(this.props);
 
       return (
@@ -362,6 +366,7 @@ function KeplerGlFactory(
               rootNode={this.root.current}
               containerW={containerW}
               containerH={mapState.height}
+              onSaveToStorage={onSaveToStorage}
             />
           </GlobalStyle>
         </ThemeProvider>

@@ -115,34 +115,14 @@ export const removeNotification = createAction(
 );
 
 /**
- * Set `exportImage.ratio`
+ * Set `exportImage` settings: ratio, resolution, legend
  * @memberof uiStateActions
- * @param {string} ratio - one of `'SCREEN'`, `'FOUR_BY_THREE'` and `'SIXTEEN_BY_NINE'`
+ * @param {Object} newSetting - {ratio: '1x'}
  * @public
  */
-export const setRatio = createAction(
-  ActionTypes.SET_RATIO,
-  ratio => ratio
-);
-
-/**
- * Set `exportImage.resolution`
- * @memberof uiStateActions
- * @param {string} resolution - one of `'ONE_X'`, `'TWO_X'`
- * @public
- */
-export const setResolution = createAction(
-  ActionTypes.SET_RESOLUTION,
-  resolution => resolution
-);
-
-/**
- * Set `exportImage.legend` to true or false
- * @memberof uiStateActions
- * @public
- */
-export const toggleLegend = createAction(
-  ActionTypes.TOGGLE_LEGEND
+export const setExportImageSetting = createAction(
+  ActionTypes.SET_EXPORT_IMAGE_SETTING,
+  newSetting => newSetting
 );
 
 /**

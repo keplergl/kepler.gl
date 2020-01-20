@@ -60,7 +60,7 @@ export default class LayerColumnConfig extends Component {
           <div className="layer-config__column">
           <TopRow>
             <PanelLabel>Columns</PanelLabel>
-            <PanelLabel>* Required</PanelLabel>
+            <PanelLabel>Required*</PanelLabel>
           </TopRow>
           {Object.keys(layer.config.columns).map(key => (
             <ColumnSelector

@@ -78,6 +78,7 @@ import {
 } from 'layers/layer-factory';
 import {getNextColorMakerValue} from 'test/helpers/layer-utils';
 import {StateWFilesFiltersLayerColor} from 'test/helpers/mock-state';
+import {getDefaultMapInfo} from 'utils/map-info-utils';
 
 const mockData = {
   fields: [
@@ -1531,9 +1532,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
       enlarged: true,
       name: mockFilter.name,
       type: mockFilter.type,
-      value: mockFilter.value,
-      // fieldIdx is now required
-      fieldIdx: [0]
+      value: mockFilter.value
     },
     {
       ...getDefaultFilter('nothing_here'),
@@ -1541,31 +1540,34 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
       enlarged: true,
       name: 'test_test',
       type: 'select',
-      value: true,
-      // fieldIdx is now required
-      fieldIdx: [0]
+      value: true
     }
   ];
 
-  const expectedFilter = {
-    ...getDefaultFilter('smoothie'),
+  const expectedFilterProps = {
     domain: [12.25, 12.29],
+    step: 0.001,
+    histogram: [1], // test not empty
+    enlargedHistogram: [2], // test not empty
+    fieldType: 'real',
+    type: mockFilter.type,
     enlarged: true,
+    fixedDomain: false,
+    value: [12.25, 12.29]
+  };
+
+  const expectedFilter = {
+    ...expectedFilterProps,
+    dataId: ['smoothie'],
     fieldIdx: [0],
     id: '38chejr',
-    fieldType: 'real',
-    fixedDomain: false,
     freeze: true,
     plotType: 'histogram',
     yAxis: null,
     interval: null,
-    histogram: [1],
-    enlargedHistogram: [1],
-    isAnimating: false,
     name: [mockFilter.name],
     speed: 1,
-    step: 0.001,
-    type: mockFilter.type,
+    isAnimating: false,
     typeOptions: ['range'],
     value: mockFilter.value
   };
@@ -1584,7 +1586,10 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
 
   const expectedDatasets = {
     smoothie: {
-      fields: expectedFields,
+      fields: expectedFields.map(f => f.name === mockFilter.name ? {
+        ...f,
+        filterProps: expectedFilterProps
+      } : f),
       filteredIndex: [0],
       filteredIndexForDomain: [0],
       allData: mockRawData.rows,
@@ -1634,7 +1639,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
         name: 'test_test',
         type: 'select',
         value: true,
-        fieldIdx: [0]
+        fieldIdx: []
       }
     ],
     filters: [expectedFilter],
@@ -1643,12 +1648,13 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
 
   cmpFilters(t, expectedState.filters, newState.filters);
 
-  // t.deepEqual(
-  //   newState.filterToBeMerged,
-  //   expectedState.filterToBeMerged,
-  //   'should saved unmerged filter to filterToBeMerged'
-  // );
-  //
+  t.deepEqual(
+    newState.filterToBeMerged,
+    expectedState.filterToBeMerged,
+    'should saved unmerged filter to filterToBeMerged'
+  );
+
+  // TODO:Shan enable this when GPU filter is landed
   // cmpDatasets(t, expectedState.datasets, newState.datasets);
 
   t.end();
@@ -2657,7 +2663,8 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
     layerToBeMerged: [],
     filterToBeMerged: [],
     splitMapsToBeMerged: [],
-    interactionToBeMerged: []
+    interactionToBeMerged: [],
+    mapInfo: getDefaultMapInfo()
   };
 
   const newReducer = reducer(
@@ -2875,7 +2882,8 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
     layerToBeMerged: [],
     filterToBeMerged: [],
     splitMapsToBeMerged: [],
-    interactionToBeMerged: []
+    interactionToBeMerged: [],
+    mapInfo: getDefaultMapInfo()
   };
 
   const newReducer = reducer(

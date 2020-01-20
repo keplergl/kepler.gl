@@ -63,8 +63,10 @@ import {
   computeSplitMapLayers
 } from 'utils/split-map-utils';
 
+import {getDefaultMapInfo} from 'utils/map-info-utils';
+
 import {Layer, LayerClasses} from 'layers';
-import {processFileToLoad} from '/utils/file-utils';
+import {processFileToLoad} from 'utils/file-utils';
 import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
 
 // react-palm
@@ -142,6 +144,8 @@ export const defaultAnimationConfig = {
  * @public
  */
 export const INITIAL_VIS_STATE = {
+  // map info
+  mapInfo: getDefaultMapInfo(),
   // layers
   layers: [],
   layerData: [],
@@ -1321,6 +1325,22 @@ export const loadFilesUpdater = (state, action) => {
   return withTask(state, loadFileTasks);
 };
 
+/**
+ * User input to update the info of the map
+ * @memberof visStateUpdaters
+ * @param {Object} state `visState`
+ * @param {Object} action action
+ * @param {Object} action.info {title: 'hello'}
+ * @returns {Object} nextState
+ * @public
+ */
+export const setMapInfoUpdater = (state, action) => ({
+  ...state,
+  mapInfo: {
+    ...state.mapInfo,
+    ...action.info
+  }
+});
 /**
  * Helper function to update All layer domain and layer data of state
  * @memberof visStateUpdaters
