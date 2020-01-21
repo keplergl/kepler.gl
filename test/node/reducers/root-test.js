@@ -20,7 +20,7 @@
 
 import test from 'tape';
 import keplerGlReducer from 'reducers';
-import {registerEntry, resetMapConfig, receiveMapConfig} from 'actions';
+import {registerEntry, resetMapConfig, receiveMapConfig, toggleSplitMap, toggleMapControl} from 'actions';
 import {createAction, handleActions} from 'redux-actions';
 
 test('keplerGlReducer.initialState', t => {
@@ -169,6 +169,57 @@ test('keplerGlReducer.plugin', t => {
   // dispatch action 2
   const updatedState2 = testReducer(testInitialState, hideMapControls());
   t.equal(updatedState2.test3.uiState.mapControls, hiddenMapControl, 'should call hideMapControls');
+
+  t.end();
+});
+
+test('keplerGlReducer - splitMap and mapControl interaction', t => {
+  // init kepler.gl root and instance
+  let state = keplerGlReducer(undefined, registerEntry({id: 'test'}));
+
+  state = keplerGlReducer(state, toggleMapControl('mapDraw'));
+
+  t.equal(
+    state.test.uiState.mapControls.mapDraw.active,
+    true,
+    'Map draw should now be active'
+  );
+
+  t.equal(
+    state.test.uiState.mapControls.mapDraw.activeMapIndex,
+    0,
+    'Map draw split index should be 0'
+  );
+
+  state = keplerGlReducer(state, toggleMapControl('mapDraw'));
+
+  t.equal(
+    state.test.uiState.mapControls.mapDraw.active,
+    false,
+    'Map draw should now be non active'
+  );
+
+  state = keplerGlReducer(state, toggleSplitMap());
+
+  t.equal(
+    state.test.mapState.isSplit,
+    true,
+    'Should have split map'
+  );
+
+  state = keplerGlReducer(state, toggleMapControl('mapDraw', 1));
+
+  t.equal(
+    state.test.uiState.mapControls.mapDraw.active,
+    true,
+    'Split View - Map draw should now be active'
+  );
+
+  t.equal(
+    state.test.uiState.mapControls.mapDraw.activeMapIndex,
+    1,
+    'Split View - Map draw split index should be 1'
+  );
 
   t.end();
 });

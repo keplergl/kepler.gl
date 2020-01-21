@@ -31,8 +31,7 @@ import {
   setExportSelectedDataset,
   setExportDataType,
   setExportFiltered,
-  addNotification,
-  loadFilesErrUpdater
+  addNotification
 } from 'actions/ui-state-actions';
 import {loadFiles, loadFilesErr} from 'actions/vis-state-actions';
 import reducer, {uiStateReducerFactory} from 'reducers/ui-state';
@@ -184,7 +183,8 @@ test('#uiStateReducer -> TOGGLE_MAP_CONTROL', t => {
       ...INITIAL_UI_STATE.mapControls,
       mapLegend: {
         show: INITIAL_UI_STATE.mapControls.mapLegend.show,
-        active: !INITIAL_UI_STATE.mapControls.mapLegend.active
+        active: !INITIAL_UI_STATE.mapControls.mapLegend.active,
+        activeMapIndex: 0
       }
     }
   };

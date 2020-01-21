@@ -28,6 +28,7 @@ import reducer from 'reducers/vis-state';
 
 import {
   INITIAL_VIS_STATE,
+  DEFAULT_EDITOR,
   defaultAnimationConfig
 } from 'reducers/vis-state-updaters';
 
@@ -35,8 +36,9 @@ import {getDefaultFilter} from 'utils/filter-utils';
 import {getDefaultInteraction} from 'utils/interaction-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
 import {processCsvData, processGeojson} from 'processors/data-processor';
-
 import {Layer, KeplerGlLayers} from 'layers';
+import {EDITOR_MODES} from 'constants/default-settings';
+
 const {
   ArcLayer,
   PointLayer,
@@ -44,6 +46,7 @@ const {
   LineLayer,
   TripLayer
 } = KeplerGlLayers;
+
 // fixtures
 import testData, {testFields, testAllData} from 'test/fixtures/test-csv-data';
 import {
@@ -54,6 +57,7 @@ import {
 } from 'test/fixtures/geojson';
 
 import tripGeojson, {timeStampDomain} from 'test/fixtures/trip-geojson';
+import {mockPolygonFeature, mockPolygonData} from '../../fixtures/polygon';
 
 // test helpers
 import {
@@ -182,8 +186,6 @@ const mockRawData = {
 
 // const InitialVisState = reducer(undefined, {});
 test('#visStateReducer', t => {
-  reducer(undefined, {});
-
   t.deepEqual(
     reducer(undefined, {}),
     {...INITIAL_VIS_STATE, initialState: {}},
@@ -931,7 +933,8 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
       }
     },
     layers: [],
-    layerData: []
+    layerData: [],
+    editor: DEFAULT_EDITOR
   };
 
   // remove smoothie filter
@@ -963,9 +966,9 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
           filteredIndexForDomain: [0, 1, 2, 3]
         }
       },
-
       layers: [],
-      layerData: []
+      layerData: [],
+      editor: DEFAULT_EDITOR
     },
     'should remove filter and recalculate data only for associated dataset'
   );
@@ -2657,7 +2660,8 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
     layerToBeMerged: [],
     filterToBeMerged: [],
     splitMapsToBeMerged: [],
-    interactionToBeMerged: []
+    interactionToBeMerged: [],
+    editor: oldState.editor
   };
 
   const newReducer = reducer(
@@ -2875,7 +2879,8 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
     layerToBeMerged: [],
     filterToBeMerged: [],
     splitMapsToBeMerged: [],
-    interactionToBeMerged: []
+    interactionToBeMerged: [],
+    editor: oldState.editor
   };
 
   const newReducer = reducer(
@@ -3287,8 +3292,6 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. colorRangeConfig.step', t => {
       showDropdown: 0
     })
   );
-
-  const {colorRangeConfig} = prepareState.layers[0].config.colorUI.colorRange;
 
   // set color range steps
   const nextState = reducer(
@@ -3702,5 +3705,530 @@ test('#visStateReducer -> LAYER_COLOR_UI_CHANGE. custom Palette', t => {
     expectedColorUI7,
     'should set colorRangeConfig.custom true'
   );
+  t.end();
+});
+
+test('#visStateReducer -> setFeatures/delete', t => {
+  const expectedFeatures = [mockPolygonFeature];
+  let newReducer = reducer(
+    INITIAL_VIS_STATE,
+    VisStateActions.setFeatures([mockPolygonFeature])
+  );
+
+  t.deepEqual(
+    newReducer.editor.features,
+    expectedFeatures,
+    'should add new feature'
+  );
+
+  newReducer = reducer(newReducer, VisStateActions.deleteFeature(mockPolygonFeature));
+
+  t.deepEqual(
+    newReducer.editor.features,
+    [],
+    'Should not have features'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> POLYGON: Add/Remove new polygon feature', t => {
+  const expectedFeatures = [mockPolygonFeature];
+  let newReducer = reducer(
+    INITIAL_VIS_STATE,
+    VisStateActions.setFeatures([mockPolygonFeature])
+  );
+
+  t.deepEqual(
+    newReducer.editor.features,
+    expectedFeatures,
+    'should add new feature'
+  );
+
+  newReducer = reducer(
+    newReducer,
+    VisStateActions.setSelectedFeature(mockPolygonFeature)
+  );
+
+  const updatedFeature = {
+    ...mockPolygonFeature,
+    geometry: {
+      ...mockPolygonFeature.geometry,
+      coordinates: [
+        [
+          [
+            12.0,
+            30.0
+          ],
+          [
+            12.0,
+            36.0
+          ],
+          [
+            12.5,
+            36.0
+          ],
+          [
+            12.0,
+            30.0
+          ]
+        ]
+      ]
+    }
+  };
+
+  newReducer = reducer(
+    newReducer,
+    VisStateActions.setFeatures([updatedFeature])
+  );
+
+  t.deepEqual(
+    newReducer.editor.selectedFeature.id,
+    mockPolygonFeature.id,
+    'should set selected feature'
+  );
+
+  newReducer = reducer(
+    newReducer,
+    VisStateActions.deleteFeature(mockPolygonFeature)
+  );
+
+  t.deepEqual(
+    newReducer.editor,
+    {
+      features: [],
+      selectedFeature: null,
+      visible: true,
+      mode: 'EDIT_VERTEX'
+    },
+    'Should remove existing feature and set selected feature to null'
+  );
+
+  t.end();
+});
+
+/* eslint-disable max-statements */
+test('#visStateReducer -> POLYGON: Create polygon filter', t => {
+  const state = {
+    ...INITIAL_VIS_STATE,
+    datasets: {
+      puppy: {
+        data: mockPolygonData.data,
+        allData: mockPolygonData.data,
+        fields: mockPolygonData.fields
+      },
+      cat: {
+        data: mockPolygonData.data,
+        allData: mockPolygonData.data,
+        fields: mockPolygonData.fields
+      }
+    },
+    layers: [],
+    layerData: []
+  };
+
+  let newReducer = reducer(state, VisStateActions.addLayer());
+
+  t.equal(
+    newReducer.layers.length,
+    1,
+    'Should have created a new layer'
+  );
+
+  // add new polygon feature
+  newReducer = reducer(newReducer, VisStateActions.setFeatures([mockPolygonFeature]));
+
+  // set selected feature
+  newReducer = reducer(
+    newReducer,
+    VisStateActions.setSelectedFeature(mockPolygonFeature)
+  );
+
+  // set it as filter
+  newReducer = reducer(
+    newReducer,
+    VisStateActions.setPolygonFilterLayer(newReducer.layers[0], mockPolygonFeature)
+  );
+
+  const newFilter = newReducer.filters[0];
+
+  const filterFeature = newReducer.filters[0].value;
+
+  const expectedFilter = {
+    id: newFilter.id,
+    dataId: ['puppy'],
+    freeze: false,
+    fixedDomain: true,
+    enlarged: false,
+    isAnimating: false,
+    speed: 1,
+    name: [],
+    type: 'polygon',
+    fieldIdx: [],
+    domain: null,
+    value: {
+      ...mockPolygonFeature,
+      properties: {
+        ...mockPolygonFeature.properties,
+        isVisible: true,
+        filterId: newFilter.id
+      }
+    },
+    plotType: 'histogram',
+    yAxis: null,
+    interval: null,
+    layerId: [newReducer.layers[0].id]
+  };
+
+  t.deepEqual(
+    newFilter,
+    expectedFilter,
+    'Should have created a polygon filter'
+  );
+
+  // Add a second layer to the same dataset
+  newReducer = reducer(newReducer, VisStateActions.addLayer());
+
+  t.equal(
+    newReducer.layers.length,
+    2,
+    'Should have created a second layer'
+  );
+
+  // set polygon filter for the second layer
+  newReducer = reducer(
+    newReducer,
+    VisStateActions.setPolygonFilterLayer(newReducer.layers[1], filterFeature)
+  );
+
+  t.equal(
+    newReducer.filters.length,
+    1,
+    'Should still have 1 polygon filter'
+  );
+
+  t.equal(
+    newReducer.filters[0].layerId.length,
+    2,
+    'Should have two values in filter.layerId'
+  );
+
+  // Add a new dataset layer to the same dataset
+  newReducer = reducer(newReducer, VisStateActions.addLayer({dataId: 'cat'}));
+  t.equal(
+    newReducer.layers.length,
+    3,
+    'Should have created a third layer'
+  );
+
+  // Set polygon for a different dataset layer
+  newReducer = reducer(
+    newReducer,
+    VisStateActions.setPolygonFilterLayer(newReducer.layers[2], filterFeature)
+  );
+
+  t.equal(
+    newReducer.filters[0].layerId.length,
+    3,
+    'Should 3 values in filter.layerId'
+  );
+
+  t.equal(
+    newReducer.filters[0].dataId.length,
+    2,
+    'Should have two values in filter.dataId'
+  );
+
+  // TODO: invert filter
+
+  // remove the second layer from the filter
+  newReducer = reducer(
+    newReducer,
+    VisStateActions.setPolygonFilterLayer(newReducer.layers[1], filterFeature)
+  );
+
+  t.equal(
+    newReducer.filters[0].layerId.length,
+    2,
+    'Should have two values in filter.layerId after removing second element'
+  );
+
+  t.equal(
+    newReducer.filters[0].dataId.length,
+    2,
+    'Should have two values in filter.dataId after removing one layer'
+  );
+
+  // remove the first layer from the filter
+  newReducer = reducer(
+    newReducer,
+    VisStateActions.setPolygonFilterLayer(newReducer.layers[0], filterFeature)
+  );
+
+  t.equal(
+    newReducer.filters[0].layerId.length,
+    1,
+    'Should have one value in filter.layerId after removing first element'
+  );
+
+  t.equal(
+    newReducer.filters[0].dataId.length,
+    1,
+    'Should have one value in filter.dataId after removing first layer'
+  );
+
+  t.end();
+});
+/* eslint-enable max-statements */
+
+test('#visStateReducer -> POLYGON: Toggle filter feature', t => {
+  const state = {
+    ...INITIAL_VIS_STATE,
+    datasets: {
+      puppy: {
+        data: mockPolygonData.data,
+        allData: mockPolygonData.data,
+        fields: mockPolygonData.fields
+      },
+      cat: {
+        data: mockPolygonData.data,
+        allData: mockPolygonData.data,
+        fields: mockPolygonData.fields
+      }
+    },
+    layers: [],
+    layerData: []
+  };
+
+  let newReducer = reducer(state, VisStateActions.addLayer());
+
+  t.equal(
+    newReducer.layers.length,
+    1,
+    'Should have created a new layer'
+  );
+
+  // add new polygon feature
+  newReducer = reducer(newReducer, VisStateActions.setFeatures([mockPolygonFeature]));
+
+  // set selected feature
+  newReducer = reducer(
+    newReducer,
+    VisStateActions.setSelectedFeature(mockPolygonFeature)
+  );
+
+  // set it as filter
+  newReducer = reducer(
+    newReducer,
+    VisStateActions.setPolygonFilterLayer(newReducer.layers[0], mockPolygonFeature)
+  );
+
+  const newFilter = newReducer.filters[0];
+
+  const expectedFilter = {
+    id: newFilter.id,
+    dataId: ['puppy'],
+    freeze: false,
+    fixedDomain: true,
+    enlarged: false,
+    isAnimating: false,
+    speed: 1,
+    name: [],
+    type: 'polygon',
+    fieldIdx: [],
+    domain: null,
+    value: {
+      ...mockPolygonFeature,
+      properties: {
+        ...mockPolygonFeature.properties,
+        isVisible: true,
+        filterId: newFilter.id
+      }
+    },
+    plotType: 'histogram',
+    yAxis: null,
+    interval: null,
+    layerId: [newReducer.layers[0].id]
+  };
+
+  t.deepEqual(
+    newFilter,
+    expectedFilter,
+    'Should have created a polygon filter'
+  );
+
+  let filterFeature = newReducer.filters[0].value;
+
+  t.deepEqual(
+    filterFeature.properties.isVisible,
+    true,
+    'Should have feature visibility set to true'
+  );
+
+  newReducer = reducer(newReducer, VisStateActions.toggleFilterFeature(0));
+
+  filterFeature = newReducer.filters[0].value;
+
+  t.deepEqual(
+    filterFeature.properties.isVisible,
+    false,
+    'Should hide filter feature'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> POLYGON: delete polygon filter', t => {
+  const state = {
+    ...INITIAL_VIS_STATE,
+    datasets: {
+      puppy: {
+        data: mockData.data,
+        allData: mockData.data,
+        fields: mockData.fields
+      }
+    },
+    layers: [],
+    layerData: []
+  };
+
+  let newReducer = reducer(state, VisStateActions.addLayer());
+
+  t.equal(
+    newReducer.layers.length,
+    1,
+    'Should have created a new layer'
+  );
+
+  // add new polygon feature
+  newReducer = reducer(newReducer, VisStateActions.setFeatures([mockPolygonFeature]));
+
+  // set selected feature
+  newReducer = reducer(
+    newReducer,
+    VisStateActions.setSelectedFeature(mockPolygonFeature)
+  );
+
+  // set it as filter
+  newReducer = reducer(
+    newReducer,
+    VisStateActions.setPolygonFilterLayer(newReducer.layers[0], mockPolygonFeature)
+  );
+
+  // Update filters using setFilter
+  newReducer = reducer(
+    newReducer,
+    VisStateActions.setFilter(0, 'layerId', [])
+  );
+
+  t.deepEqual(
+    newReducer.filters[0].layerId,
+    [],
+    'Should have removed layers from filter'
+  );
+
+  t.deepEqual(
+    newReducer.filters[0].dataId,
+    [],
+    'Should have removed datasets from filter'
+  );
+
+  // unset it as filter
+  newReducer = reducer(
+    newReducer,
+    VisStateActions.removeFilter(0)
+  );
+
+  t.deepEqual(
+    newReducer.filters,
+    [],
+    'Should have removed the created polygon filter'
+  );
+
+  // deleting the filter will also delete the feature
+  t.deepEqual(
+    newReducer.editor.features.length,
+    0,
+    'Should have removed the feature'
+  );
+
+  t.end();
+});
+
+test('#uiStateReducer -> SET_EDITOR_MODE', t => {
+  const newState = reducer(INITIAL_VIS_STATE, VisStateActions.setEditorMode(EDITOR_MODES.EDIT));
+
+  t.equal(
+    newState.editor.mode,
+    EDITOR_MODES.EDIT,
+    'Editor mode should be set to vertex'
+  );
+
+  t.end();
+});
+
+test('#uiStateReducer -> TOGGLE_EDITOR_VISIBILITY', t => {
+  let newState = reducer(INITIAL_VIS_STATE, VisStateActions.toggleEditorVisibility());
+
+  t.equal(
+    newState.editor.visible,
+    false,
+    'Should set editor visibility to false'
+  );
+
+  newState = reducer(newState, VisStateActions.toggleEditorVisibility());
+
+  t.equal(
+    newState.editor.visible,
+    true,
+    'Should set editor visibility to true'
+  );
+
+  t.end();
+});
+
+test('#uiStateReducer -> SET_FEATURES/SET_SELECTED_FEATURE/DELETE_FEATURE', t => {
+
+  let newState = reducer(INITIAL_VIS_STATE, VisStateActions.setFeatures([]));
+
+  t.deepEqual(
+    newState,
+    INITIAL_VIS_STATE,
+    'Editor should not have features and return the same state'
+  );
+
+  newState = reducer(INITIAL_VIS_STATE, VisStateActions.setFeatures([
+    {
+      ...mockPolygonFeature,
+      properties: {
+        ...mockPolygonFeature.properties,
+        isClosed: false
+      }
+    }
+  ]));
+
+  t.equal(
+    newState.editor.mode,
+    INITIAL_VIS_STATE.editor.mode,
+    'Editor mode should not change because feature is not closed'
+  );
+
+  newState = reducer(newState, VisStateActions.setFeatures([
+    {
+      ...mockPolygonFeature,
+      properties: {
+        ...mockPolygonFeature.properties,
+        isClosed: false
+      }
+    },
+    mockPolygonFeature
+  ]));
+
+  t.equal(
+    newState.editor.mode,
+    EDITOR_MODES.EDIT,
+    'Editor mode should be set to edit_vertex'
+  );
+
   t.end();
 });

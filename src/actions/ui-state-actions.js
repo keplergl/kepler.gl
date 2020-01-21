@@ -78,7 +78,7 @@ export const hideExportDropdown = createAction(
  */
 export const toggleMapControl = createAction(
   ActionTypes.TOGGLE_MAP_CONTROL,
-  panelId => panelId
+  (panelId, index) => ({panelId, index})
 );
 
 /**

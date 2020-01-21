@@ -37,6 +37,7 @@ CSV file should contain header row and multiple columns. Each row should be 1 fe
 | b | 31.2311 | -127.30231 | 11 | 2019-08-01 12:05
 | c | 31.2334 | -127.30238 | 9 | 2019-08-01 11:55
 
+
 #### 1. Data type detection
 
 Because CSV file content is uploaded as strings, kepler.gl will attempt to detect column data type by parsing a sample of data in each column. kepler.gl can detect
@@ -139,7 +140,7 @@ id,geometry
             ]
         },
         "properties": {
-          "prop0": "value0",
+          "prop0": "value0"
         }
     }]
   }

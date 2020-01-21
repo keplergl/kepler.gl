@@ -172,7 +172,7 @@ function DataGridFactory(
 
     _cellRenderer = ({columnIndex, key, rowIndex, style}) => {
       const {columns, rows} = this.props;
-      const isLast = columnIndex === columns.length - 1
+      const isLast = columnIndex === columns.length - 1;
       const type = columns[columnIndex].type;
 
       // rowIndex -1 because data rows start rendering at index 1 and we normalize back using the -1 param
@@ -227,7 +227,7 @@ function DataGridFactory(
   DataGrid.displayName = 'DataGrid';
 
   // Wrapping the component using withTheme because we need to
-  // access variables outside sytled-components context
+  // access variables outside styled-components context
   return withTheme(DataGrid);
 }
 

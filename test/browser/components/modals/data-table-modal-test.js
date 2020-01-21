@@ -30,16 +30,16 @@ import DataGridFactory, {
   FieldHeaderFactory,
   CellFactory
 } from 'components/common/datagrid';
-
-const FieldHeader = FieldHeaderFactory();
-const Cell = CellFactory();
-const DataGrid = DataGridFactory(FieldHeader, Cell);
-const DataTableModal = DataTableModalFactory(DataGrid);
 import {testFields, testAllData} from 'test/fixtures/test-csv-data';
 import {
   geoStyleFields,
   geoStyleRows
 } from 'test/fixtures/geojson';
+
+const FieldHeader = FieldHeaderFactory();
+const Cell = CellFactory();
+const DataGrid = DataGridFactory(FieldHeader, Cell);
+const DataTableModal = DataTableModalFactory(DataGrid);
 
 // This makes sure react-virtualized renders the full grid
 const WIDTH = 2100;
@@ -68,6 +68,8 @@ test('Components -> DataTableModal.render: csv 1', t => {
       dataId="smoothie"
     />
   );
+
+  // console.log(wrapper.debug());
 
   t.equal(
     wrapper.find(DataTableModal).length,
@@ -127,9 +129,8 @@ test('Components -> DataTableModal.render: csv 1', t => {
 
   Object.entries(expectedRows).forEach(keyAndRow => {
     const [index, expectedRow] = keyAndRow;
-
     const cells = wrapper.find(`.row-${index}`);
-    t.equal(cells.length, 11, 'should render 11 cells');
+    t.equal(cells.length, 11, `should render 11 cells for index ${index}`);
 
     for (let c = 0; c < cells.length; c++) {
       const cellText = cells

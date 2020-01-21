@@ -262,18 +262,20 @@ function KeplerGlFactory(
         mapboxApiAccessToken,
         mapboxApiUrl,
         mapState,
+        uiState,
+        editor: visState.editor,
         mapStyle,
         mapControls: uiState.mapControls,
         layers,
         layerOrder,
         layerData,
         layerBlending,
+        filters,
         interactionConfig,
         hoverInfo,
         clicked,
         mousePos,
         readOnly: uiState.readOnly,
-        toggleMapControl: uiStateActions.toggleMapControl,
         onViewStateChange,
         uiStateActions,
         visStateActions,
@@ -290,7 +292,7 @@ function KeplerGlFactory(
               key={0}
               index={0}
               {...mapFields}
-              mapLayers={isSplit ? splitMaps[0].layers : null}
+              mapLayers={null}
             />
           ]
         : splitMaps.map((settings, index) => (
@@ -308,11 +310,8 @@ function KeplerGlFactory(
       return (
         <ThemeProvider theme={theme}>
           <GlobalStyle
-            style={{
-              position: 'relative',
-              width: `${width}px`,
-              height: `${height}px`
-            }}
+            width={width}
+            height={height}
             className="kepler-gl"
             id={`kepler-gl__${id}`}
             ref={this.root}

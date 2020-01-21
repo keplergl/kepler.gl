@@ -557,12 +557,23 @@ export const addCustomMapStyleUpdater = state => {
   return mapStyleChangeUpdater(newState, {payload: styleId});
 };
 
+/**
+ * Updates 3d building color
+ * @memberof mapStyleUpdaters
+ * @param state
+ * @param color
+ * @return {Object} nextState
+ */
 export const set3dBuildingColorUpdater = (state, {payload: color}) => ({
   ...state,
   threeDBuildingColor: color,
   custom3DBuildingColor: true
 });
 
+/**
+ * Return the initial input style
+ * @return Object
+ */
 export function getInitialInputStyle() {
   return {
     accessToken: null,

@@ -88,7 +88,6 @@ function DataTableModalFactory(DataGrid) {
     }
 
     const activeDataset = datasets[dataId];
-    const rows = activeDataset.data;
 
     return (
       <StyledModal className="dataset-modal" >
@@ -100,7 +99,7 @@ function DataTableModalFactory(DataGrid) {
         <DataGrid
           width={width}
           height={height}
-          rows={rows}
+          rows={activeDataset.data}
           columns={activeDataset.fields}
         />
       </StyledModal>
