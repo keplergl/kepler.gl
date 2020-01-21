@@ -562,8 +562,7 @@ export function getFilterRecord(dataId, filters, opt = {}) {
   };
 
   filters.forEach(f => {
-    if (getDatasetFieldIndexForFilter(dataId, f) > -1 && f.value !== null) {
-
+    if (isValidFilterValue(f.type, f.value) && toArray(f.dataId).includes(dataId)) {
       (f.fixedDomain || opt.ignoreDomain
         ? filterRecord.fixedDomain
         : filterRecord.dynamicDomain
@@ -1051,25 +1050,6 @@ export function mergeFilterDomainStep(filter, filterProps) {
 }
 /* eslint-enable complexity */
 
-/**
- * Return dataset field index from filter.fieldIdx
- * The index matches the same dataset index for filter.dataId
- * @param dataset
- * @param filter
- * @return {*}
- */
-export function getDatasetFieldIndexForFilter(dataset, filter) {
-  const datasetIndex = getDatasetIndexForFilter(dataset, filter);
-  if (datasetIndex === -1) {
-    return datasetIndex;
-  }
-
-  const fieldIndex = filter.fieldIdx[datasetIndex];
-
-  return notNullorUndefined(fieldIndex) ? fieldIndex : -1;
-}
-
-
 export const featureToFilterValue = (feature, filterId, properties = {}) => ({
   ...feature,
   id: feature.id,
@@ -1119,7 +1099,6 @@ export function generatePolygonFilter(layers, feature) {
  */
 export function filterDatasetCPU(state, dataId) {
   const datasetFilters = state.filters.filter(f => f.dataId.includes(dataId));
-
   const selectedDataset = state.datasets[dataId];
 
   if (!selectedDataset) {
@@ -1159,7 +1138,7 @@ export function filterDatasetCPU(state, dataId) {
     filteredIndex: selectedDataset.filteredIdxCPU
   };
 
-  const filtered = filterDataset(copied, state.filters, opt);
+  const filtered = filterDataset(copied, state.filters, state.layers, opt);
 
   const cpuFilteredDataset = {
     ...selectedDataset,

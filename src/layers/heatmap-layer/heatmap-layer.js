@@ -80,8 +80,6 @@ const heatmapDensity = colorRange => {
   return colorDensity;
 };
 
-// const shouldRebuild = (sameData, sameConfig) => !(sameData && sameConfig);
-
 class HeatmapLayer extends MapboxGLLayer {
   constructor(props) {
     super(props);
@@ -231,7 +229,7 @@ class HeatmapLayer extends MapboxGLLayer {
     } : null;
   };
 
-  formatLayerData(datasets, oldLayerData, opt = {}) {
+  formatLayerData(datasets, oldLayerData) {
     const {weightField} = this.config;
     const getPosition = this.getPositionAccessor();
     const {data} = this.updateData(datasets, oldLayerData);

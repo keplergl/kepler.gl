@@ -251,7 +251,8 @@ export const FILTER_TYPES = keyMirror({
   range: null,
   select: null,
   timeRange: null,
-  multiSelect: null
+  multiSelect: null,
+  polygon: null
 });
 
 export const SCALE_TYPES = keyMirror({

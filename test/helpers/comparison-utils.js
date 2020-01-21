@@ -216,21 +216,21 @@ export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {
     } else if (key === 'gpuFilter') {
       // test gpuFilter props
       cmpGpuFilterProp(t, expectedDataset.gpuFilter, actualDataset.gpuFilter);
-    } else if (key === 'filterRecord') {
+    } else if (key === 'filterRecord' || key === 'filterRecordCPU') {
       cmpObjectKeys(
         t,
-        expectedDataset.filterRecord,
-        actualDataset.filterRecord,
-        `dataset.${expectedDataset.id}.filterRecord`
+        expectedDataset[key],
+        actualDataset[key],
+        `dataset.${expectedDataset.id}.${key}`
       );
-      Object.keys(expectedDataset.filterRecord).forEach(item => {
-        t.ok(Array.isArray(expectedDataset.filterRecord[item]),
-          `dataset.${expectedDataset.id}.filterRecord.${item} should be an array`);
+      Object.keys(expectedDataset[key]).forEach(item => {
+        t.ok(Array.isArray(expectedDataset[key][item]),
+          `dataset.${expectedDataset.id}[key].${item} should be an array`);
         // compare filter name
         t.deepEqual(
-          actualDataset.filterRecord[item].map(f => f.name),
-          expectedDataset.filterRecord[item].map(f => f.name),
-          `dataset.${expectedDataset.id}.filterRecord.${item} should contain correct filter`
+          actualDataset[key][item].map(f => f.name),
+          expectedDataset[key][item].map(f => f.name),
+          `dataset.${expectedDataset.id}.${key}.${item} should contain correct filter`
         );
       });
     } else if (key !== 'color' || opt.color) {

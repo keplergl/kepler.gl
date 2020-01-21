@@ -22,7 +22,7 @@ import uniq from 'lodash.uniq';
 import pick from 'lodash.pick';
 import isEqual from 'lodash.isequal';
 import flattenDeep from 'lodash.flattendeep'
-import {arrayfy} from 'utils/utils';
+import {toArray} from 'utils/utils';
 
 import {
   applyFiltersToDatasets,
@@ -59,7 +59,7 @@ export function mergeFilters(state, filtersToMerge) {
   // merge filters
   filtersToMerge.forEach(filter => {
     // we can only look for datasets define in the filter dataId
-    const datasetIds = arrayfy(filter.dataId);
+    const datasetIds = toArray(filter.dataId);
 
     // we can merge a filter only if all datasets in filter.dataId are loaded
     if (datasetIds.every(d => datasets[d])) {

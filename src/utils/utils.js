@@ -150,6 +150,3 @@ const setPath = ([key, ...next], value, obj) => {
  */
 export const set = (path, value, obj) =>
   obj === null ? obj : setPath(path, value, obj);
-
-export const arrayfy = val =>
-val !== undefined && val !== null ? (Array.isArray(val) ? val : [val]) : [];

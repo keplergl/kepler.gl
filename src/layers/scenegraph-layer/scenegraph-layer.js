@@ -124,7 +124,7 @@ export default class ScenegraphLayer extends Layer {
     return data;
   }
 
-  formatLayerData(datasets, oldLayerData, opt = {}) {
+  formatLayerData(datasets, oldLayerData) {
     const {gpuFilter} = datasets[this.config.dataId];
     const {data} = this.updateData(
       datasets,

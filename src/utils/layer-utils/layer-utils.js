@@ -62,11 +62,9 @@ export function findDefaultLayer(dataset, layerClasses = {}) {
  * @param {Object} layer
  * @param {Object} state
  * @param {Object} oldLayerData
- * @param {Object} opt
- * @param {Boolean} opt.sameData
  * @returns {{layerData: Array<Object>, layer: Object | undefined}}
  */
-export function calculateLayerData(layer, state, oldLayerData, opt = {}) {
+export function calculateLayerData(layer, state, oldLayerData) {
   const {type} = layer;
 
   if (!type || !layer.hasAllColumns() || !layer.config.dataId) {
@@ -75,8 +73,7 @@ export function calculateLayerData(layer, state, oldLayerData, opt = {}) {
 
   const layerData = layer.formatLayerData(
     state.datasets,
-    oldLayerData,
-    opt
+    oldLayerData
   );
   return {layerData, layer};
 }

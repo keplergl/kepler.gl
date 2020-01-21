@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {set, arrayfy} from './utils';
+import {set, toArray} from './utils';
 import {MAX_GPU_FILTERS, FILTER_TYPES} from 'constants/default-settings';
 import {notNullorUndefined} from './data-utils';
 import moment from 'moment';
@@ -73,12 +73,12 @@ export function assignGpuChannel(filter, filters) {
 
   filter.dataId.forEach((dataId, datasetIdx) => {
     const findGpuChannel = channel => f => {
-      const dataIdx = arrayfy(f.dataId).indexOf(dataId);
+      const dataIdx = toArray(f.dataId).indexOf(dataId);
       return (
         f.id !== filter.id &&
         dataIdx > -1 &&
         f.gpu &&
-        arrayfy(f.gpuChannel)[dataIdx] === channel
+        toArray(f.gpuChannel)[dataIdx] === channel
       );
     };
 
@@ -127,7 +127,7 @@ export function resetFilterGpuMode(filters) {
   return filters.map((f, i) => {
     if (f.gpu) {
       let gpu = true;
-      arrayfy(f.dataId).forEach(dataId => {
+      toArray(f.dataId).forEach(dataId => {
         const count = gpuPerDataset[dataId];
 
         if (count === MAX_GPU_FILTERS) {
@@ -235,7 +235,7 @@ export function getGpuFilterProps(filters, dataId, fields) {
  * @return {*}
  */
 export function getDatasetFieldIndexForFilter(dataId, filter) {
-  const datasetIndex = arrayfy(filter.dataId).indexOf(dataId);
+  const datasetIndex = toArray(filter.dataId).indexOf(dataId);
   if (datasetIndex < 0) {
     return -1;
   }

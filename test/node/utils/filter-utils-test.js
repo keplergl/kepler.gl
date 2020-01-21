@@ -29,14 +29,14 @@ import {
   getHistogram,
   getTimestampFieldDomain,
   getDefaultFilter,
-  getDatasetFieldIndexForFilter,
   validatePolygonFilter,
-  filterData,
   generatePolygonFilter,
   isValidFilterValue,
   isInPolygon,
   diffFilters
 } from 'utils/filter-utils';
+
+import {getDatasetFieldIndexForFilter} from 'utils/gpu-filter-utils';
 
 import {FILTER_TYPES} from 'constants/default-settings';
 import {processCsvData} from 'processors/data-processor';
@@ -702,7 +702,7 @@ test('filterUtils -> validatePolygonFilter', t => {
   t.equal(
     validatePolygonFilter(dataset, {}, layers).filter,
     null,
-    'Should non validate empty filter'
+    'Should not validate empty filter'
   );
 
   t.deepEqual(
@@ -711,7 +711,7 @@ test('filterUtils -> validatePolygonFilter', t => {
       dataId: ['non_valid']
     }, layers).filter,
     null,
-    'Should non validate filter with non existing dataId'
+    'Should not validate filter with non existing dataId'
   );
 
   t.deepEqual(
@@ -722,23 +722,7 @@ test('filterUtils -> validatePolygonFilter', t => {
       }
     }, layers).filter,
     null,
-    'Should not validate filter given type and value'
-  );
-
-  t.end();
-});
-
-test('filterUtils -> filterData', t => {
-  const dataset = {
-    id: 'dataset-1',
-    allData: [],
-    data: [],
-    fields: []
-  };
-
-  t.deepEqual(
-    filterData(dataset, []),
-    {data: [], filteredIndex: [], filteredIndexForDomain: []}
+    'Should not validate filter given type and value without corresponding layer'
   );
 
   t.end();

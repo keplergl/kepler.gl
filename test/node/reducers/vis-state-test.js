@@ -28,15 +28,12 @@ import reducer from 'reducers/vis-state';
 
 import {
   INITIAL_VIS_STATE,
-  DEFAULT_EDITOR,
   defaultAnimationConfig
 } from 'reducers/vis-state-updaters';
 
 import {getDefaultInteraction} from 'utils/interaction-utils';
 import {
-  filterDataset,
-  getDefaultFilter,
-  getHistogram
+  getDefaultFilter
 } from 'utils/filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
 import {processCsvData, processGeojson} from 'processors/data-processor';
@@ -58,9 +55,7 @@ import {
   geoJsonTripFilterProps,
   expectedDataToFeature,
   updatedGeoJsonLayer,
-  fields as geojsonFields,
-  mappedTripValue,
-  tripDomain
+  fields as geojsonFields
 } from 'test/fixtures/geojson';
 
 import tripGeojson, {timeStampDomain} from 'test/fixtures/trip-geojson';
@@ -1949,7 +1944,6 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
 
   const {allData} = initialState.datasets.smoothie;
 
-  const updatedFilter = stateWithFilterName.filters[0];
   // test dataset
   const expectedDataset = {
     id: 'smoothie',
@@ -1960,13 +1954,13 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
       ...initialState.datasets.smoothie.fields.slice(0, 10),
       updatedField
     ],
-    filteredIndex: [],
-    filteredIndexForDomain: [],
+    filteredIndex: allData.map((d, i) => i),
+    filteredIndexForDomain: allData.map((d, i) => i),
     allIndexes: allData.map((d, i) => i),
     filterRecord: {
-      dynamicDomain: [updatedFilter],
+      dynamicDomain: [],
       fixedDomain: [],
-      cpu: [updatedFilter],
+      cpu: [],
       gpu: []
     },
     gpuFilter: {
@@ -1999,7 +1993,7 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
       }
     ]
   };
-
+  console.log('cmpDataset')
   cmpDataset(t, expectedDataset, stateWithFilterName.datasets.smoothie);
 
   // set filter value
@@ -3846,9 +3840,7 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
         allData: mockPolygonData.data,
         fields: mockPolygonData.fields
       }
-    },
-    layers: [],
-    layerData: []
+    }
   };
 
   let newReducer = reducer(state, VisStateActions.addLayer());
@@ -3901,7 +3893,8 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
     plotType: 'histogram',
     yAxis: null,
     interval: null,
-    layerId: [newReducer.layers[0].id]
+    layerId: [newReducer.layers[0].id],
+    gpu: false
   };
 
   t.deepEqual(
@@ -4019,9 +4012,7 @@ test('#visStateReducer -> POLYGON: Toggle filter feature', t => {
         allData: mockPolygonData.data,
         fields: mockPolygonData.fields
       }
-    },
-    layers: [],
-    layerData: []
+    }
   };
 
   let newReducer = reducer(state, VisStateActions.addLayer());
@@ -4072,7 +4063,8 @@ test('#visStateReducer -> POLYGON: Toggle filter feature', t => {
     plotType: 'histogram',
     yAxis: null,
     interval: null,
-    layerId: [newReducer.layers[0].id]
+    layerId: [newReducer.layers[0].id],
+    gpu: false
   };
 
   t.deepEqual(

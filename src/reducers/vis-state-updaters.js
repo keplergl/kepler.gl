@@ -22,7 +22,6 @@ import {console as Console} from 'global/window';
 import Task, {disableStackCapturing, withTask} from 'react-palm/tasks';
 import cloneDeep from 'lodash.clonedeep';
 import uniq from 'lodash.uniq';
-import {toArray} from 'utils/utils';
 import get from 'lodash.get';
 
 // Tasks
@@ -54,7 +53,7 @@ import {
   assignGpuChannel
 } from 'utils/gpu-filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
-import {set, arrayfy} from 'utils/utils';
+import {set, toArray} from 'utils/utils';
 
 import {
   findDefaultLayer,
@@ -261,10 +260,7 @@ export function layerConfigChangeUpdater(state, action) {
     const updateLayerDataResult = calculateLayerData(
       newLayer,
       state,
-      oldLayerData,
-      {
-        sameData: true
-      }
+      oldLayerData
     );
 
     layerData = updateLayerDataResult.layerData;
@@ -440,9 +436,7 @@ export function layerVisualChannelChangeUpdater(state, action) {
   newLayer.updateLayerVisualChannel(dataset, channel);
 
   const oldLayerData = state.layerData[idx];
-  const {layerData, layer} = calculateLayerData(newLayer, state, oldLayerData, {
-    sameData: true
-  });
+  const {layerData, layer} = calculateLayerData(newLayer, state, oldLayerData);
 
   return updateStateWithLayerAndData(state, {layerData, layer, idx});
 }
@@ -473,10 +467,7 @@ export function layerVisConfigChangeUpdater(state, action) {
     const {layerData, layer} = calculateLayerData(
       newLayer,
       state,
-      oldLayerData,
-      {
-        sameData: true
-      }
+      oldLayerData
     );
     return updateStateWithLayerAndData(state, {layerData, layer, idx});
   }
@@ -1414,7 +1405,7 @@ export const loadFilesErrUpdater = (state, {error}) => ({
 export const applyCPUFilterUpdater = (state, {dataId}) => {
 
   // apply cpuFilter
-  const dataIds = arrayfy(dataId);
+  const dataIds = toArray(dataId);
 
   return dataIds.reduce((accu, id) => filterDatasetCPU(accu, id), state);
 };
