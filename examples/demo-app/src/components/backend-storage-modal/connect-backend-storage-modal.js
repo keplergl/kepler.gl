@@ -25,6 +25,7 @@ import BackendStorageModalContent from './backend-storage';
 const ConnectBackendStorageModal = ({
   isOpen,
   onClose,
+  onCloudLoginChanged,
   parentSelector
 }) => (
   <Modal
@@ -33,7 +34,7 @@ const ConnectBackendStorageModal = ({
     title='Connect to your Backend Storage'
     parentSelector={parentSelector}
   >
-    <BackendStorageModalContent />
+    <BackendStorageModalContent onCloudLoginChanged={onCloudLoginChanged} />
   </Modal>
 );
 

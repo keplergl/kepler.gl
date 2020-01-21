@@ -278,7 +278,7 @@ export const CloudStorageDropdownFactory = PanelHeaderDropdown => {
         label: 'Settings',
         icon: Gear,
         key: 'settings',
-        onClick: props => props.onExportData
+        onClick: props => props.onSaveToStorageSettings
       }
     ]
   };
@@ -286,71 +286,71 @@ export const CloudStorageDropdownFactory = PanelHeaderDropdown => {
 };
 CloudStorageDropdownFactory.deps = [PanelHeaderDropdownFactory];
 
-export const SaveMapToBackendFactory = () => {
-  const SaveMapToBackend = (props) => (
-    <PanelItem {...props}/>
-  );
+// export const SaveMapToBackendFactory = () => {
+//   const SaveMapToBackend = (props) => (
+//     <PanelItem {...props}/>
+//   );
 
-  SaveMapToBackend.defaultProps = {
-    label: 'Save',
-    icon: <Map />
-  };
+//   SaveMapToBackend.defaultProps = {
+//     label: 'Save',
+//     icon: <Map />
+//   };
 
-  return SaveMapToBackend;
-};
+//   return SaveMapToBackend;
+// };
 
-export const BackendStorageSettingsFactory = () => {
-  const BackendStorageSettings = (props) => (
-    <PanelItem {...props}/>
-  );
+// export const BackendStorageSettingsFactory = () => {
+//   const BackendStorageSettings = (props) => (
+//     <PanelItem {...props}/>
+//   );
 
-  BackendStorageSettings.defaultProps = {
-    label: 'Settings',
-    icon: <Settings />
-  };
+//   BackendStorageSettings.defaultProps = {
+//     label: 'Settings',
+//     icon: <Settings />
+//   };
 
-  return BackendStorageSettings;
-};
+//   return BackendStorageSettings;
+// };
 
-export const SaveMapToBackendDropdownFactory = (
-  SaveMapToBackend,
-  BackendStorageSettings) => {
-  const SaveExportDropdown = ({
-    show,
-    onClose,
-    onBackendStorageSettingsClick,
-    onSaveMapToBackendClick
-  }) => {
-    return (
-      <StyledPanelDropdown show={show} className="save-export-dropdown">
-        <ClickOutsideCloseDropdown className="save-export-dropdown__inner"
-          show={show}
-          onClose={onClose}>
-          {onSaveMapToBackendClick ? (
-            <SaveMapToBackend
-              onClickHandler={onSaveMapToBackendClick}
-              onClose={onClose}
-            />
-          ) : null}
+// export const SaveMapToBackendDropdownFactory = (
+//   SaveMapToBackend,
+//   BackendStorageSettings) => {
+//   const SaveExportDropdown = ({
+//     show,
+//     onClose,
+//     onBackendStorageSettingsClick,
+//     onSaveMapToBackendClick
+//   }) => {
+//     return (
+//       <StyledPanelDropdown show={show} className="save-export-dropdown">
+//         <ClickOutsideCloseDropdown className="save-export-dropdown__inner"
+//           show={show}
+//           onClose={onClose}>
+//           {onSaveMapToBackendClick ? (
+//             <SaveMapToBackend
+//               onClickHandler={onSaveMapToBackendClick}
+//               onClose={onClose}
+//             />
+//           ) : null}
 
-          {onBackendStorageSettingsClick ? (
-            <BackendStorageSettings
-              onClickHandler={onBackendStorageSettingsClick}
-              onClose={onClose}
-            />
-          ) : null}
-        </ClickOutsideCloseDropdown>
-      </StyledPanelDropdown>
-    );
-  };
+//           {onBackendStorageSettingsClick ? (
+//             <BackendStorageSettings
+//               onClickHandler={onBackendStorageSettingsClick}
+//               onClose={onClose}
+//             />
+//           ) : null}
+//         </ClickOutsideCloseDropdown>
+//       </StyledPanelDropdown>
+//     );
+//   };
 
-  return SaveExportDropdown;
-};
+//   return SaveExportDropdown;
+// };
 
-SaveMapToBackendDropdownFactory.deps = [
-  SaveMapToBackendFactory,
-  BackendStorageSettingsFactory
-];
+// SaveMapToBackendDropdownFactory.deps = [
+//   SaveMapToBackendFactory,
+//   BackendStorageSettingsFactory
+// ];
 
 PanelHeaderFactory.deps = [
   SaveExportDropdownFactory,
@@ -370,6 +370,7 @@ function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
       onExportConfig: PropTypes.func,
       onExportMap: PropTypes.func,
       onSaveToStorage: PropTypes.func,
+      onSaveToStorageSettings: PropTypes.func,
       onSaveMap: PropTypes.func
     };
 
@@ -399,11 +400,10 @@ function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
         version,
         actionItems,
         onSaveToStorage,
+        onSaveToStorageSettings,
         onSaveMap,
         onExportImage,
         onExportData,
-        onBackendStorageSettingsClick,
-        onSaveMapToBackendClick,
         onExportConfig,
         onExportMap,
         visibleDropdown,
@@ -436,13 +436,12 @@ function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
                       onClose={hideExportDropdown}
                       show={visibleDropdown === item.id}
                       onSaveToStorage={onSaveToStorage}
+                      onSaveToStorageSettings={onSaveToStorageSettings}
                       onSaveMap={onSaveMap}
                       onExportData={onExportData}
                       onExportImage={onExportImage}
                       onExportConfig={onExportConfig}
                       onExportMap={onExportMap}
-                      onBackendStorageSettingsClick={onBackendStorageSettingsClick}
-                      onSaveMapToBackendClick={onSaveMapToBackendClick}
                     />
                   ) : null}
                 </div>

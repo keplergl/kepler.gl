@@ -20,7 +20,7 @@
 
 import {handleActions} from 'redux-actions';
 import {getCloudProviders} from '../cloud-providers';
-import {CLOUD_LOGIN_SUCCESS, LOAD_REMOTE_RESOURCE_ERROR, PUSHING_FILE} from '../actions';
+import { CLOUD_LOGIN_SUCCESS, LOAD_REMOTE_RESOURCE_ERROR, PUSHING_FILE, CLOUD_SET_PROVIDER } from '../actions';
 
 const readAuthTokens = () => getCloudProviders()
   .reduce((tokens, cloudProvider) => ({
@@ -32,7 +32,8 @@ const sharingInitialState = {
   isLoading: false,
   status: null,
   info: null,
-  tokens: readAuthTokens()
+  tokens: readAuthTokens(),
+  currentProvider: null
 };
 
 // file upload reducer
@@ -48,9 +49,14 @@ export const sharingReducer = handleActions({
     isLoading: action.isLoading,
     info: action.metadata
   }),
-  [CLOUD_LOGIN_SUCCESS]: state => ({
+  [CLOUD_LOGIN_SUCCESS]: (state) => ({
     ...state,
     tokens: readAuthTokens()
+  }),
+  [CLOUD_SET_PROVIDER]: (state, action) => ({
+    ...state,
+    tokens: readAuthTokens(),
+    currentProvider: action.provider
   })
 }, sharingInitialState);
 

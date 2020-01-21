@@ -45,6 +45,7 @@ export const LOAD_CLOUD_VIS_ERROR = 'LOAD_CLOUD_VIS_ERROR';
 // Sharing
 export const PUSHING_FILE = 'PUSHING_FILE';
 export const CLOUD_LOGIN_SUCCESS  = 'CLOUD_LOGIN_SUCCESS';
+export const CLOUD_SET_PROVIDER = 'CLOUD_SET_PROVIDER';
 
 // ACTIONS
 export function initApp() {
@@ -454,6 +455,70 @@ export function exportFileToCloud(providerName, isPublic = true, extraData = {ti
   };
 }
 
+/**
+ * This method will export the current kepler config file to the choosen cloud platform
+ * @param data
+ * @param providerName
+ * @returns {Function}
+ */
+export function saveMapToCloud(providerName, {map, info, thumbnail}) {
+  if (!providerName) {
+    throw new Error('No cloud provider identified')
+  }
+  const cloudProvider = getCloudProvider(providerName);
+  return (dispatch, getState) => {
+    // extract data from kepler
+    const mapData = KeplerGlSchema.save(getState().demo.keplerGl.map);
+    const data = JSON.stringify(mapData);
+    const newBlob = new Blob([data], {type: 'application/json'});
+    const fileName = `/keplergl_${generateHashId(6)}.json`;
+    info.title = info.title || fileName;
+    const file = new File([newBlob], fileName);
+    // We are gonna pass the correct auth token to init the cloud provider
+    dispatch(setPushingFile(true, {
+      filename: file.name,
+      status: 'uploading',
+      metadata: null,
+      provider: cloudProvider.name
+    }));
+    cloudProvider.uploadFile({
+      data,
+      type: 'application/json',
+      blob: file,
+      name: info.title,
+      description: info.description,
+      isPublic: false,
+      cloudProvider
+    })
+    // need to perform share as well
+    .then(
+      response => {
+        if (cloudProvider.shareFile) {
+          const responseUrl = cloudProvider.getMapPermalink
+            ? cloudProvider.getMapPermalink(response.url, false)
+            : getMapPermalink(response.url, false)
+          dispatch(push(responseUrl));
+        }
+        dispatch(setPushingFile(false, {
+          filename: file.name,
+          status: 'success',
+          metadata: response,
+          provider: cloudProvider.name
+        }));
+        dispatch(toggleModal(null));
+      },
+      error => {
+        dispatch(setPushingFile(false, {
+          filename: file.name,
+          status: 'error',
+          error, provider:
+          cloudProvider.name
+        }));
+      }
+    );
+  };
+}
+
 export function setCloudLoginSuccess(providerName) {
   return dispatch => {
     dispatch({type: CLOUD_LOGIN_SUCCESS}).then(
@@ -469,5 +534,11 @@ export function setCloudLoginSuccess(providerName) {
         }));
       }
     );
+  };
+}
+
+export function setDefaultCloudProvider(providerName) {
+  return dispatch => {
+    dispatch({ type: CLOUD_SET_PROVIDER, provider: providerName });
   };
 }

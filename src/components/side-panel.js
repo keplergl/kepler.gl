@@ -208,9 +208,8 @@ export default function SidePanelFactory(
               onExportData={this._onClickExportData}
               onExportMap={this._onClickExportMap}
               onSaveToStorage={this.props.onSaveToStorage ? this._onClickSaveToStorage : null}
+              onSaveToStorageSettings={this.props.onSaveToStorageSettings ? this.props.onSaveToStorageSettings : null}
               onSaveMap={this.props.onSaveMap}
-              onBackendStorageSettingsClick={this.props.onBackendStorageSettingsClick}
-              onSaveMapToBackendClick={this.props.onSaveMapToBackendClick}
             />
             <PanelToggle
               panels={PANELS}

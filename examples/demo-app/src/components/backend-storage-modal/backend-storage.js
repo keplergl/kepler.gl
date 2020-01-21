@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, { useState } from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import {StyledModalContent} from 'kepler.gl/components';
 import BackendTile from './backend-tile';
@@ -33,13 +33,7 @@ const StyledSubtitle = styled.div`
   font-size: 14px;
 `;
 
-function useForceUpdate(){
-  const [value, setValue] = useState(true);
-  return () => setValue(!value);
-}
-
-const BackendStorageModalContent = () => {
-  const forceUpdate = useForceUpdate();
+const BackendStorageModalContent = ({onCloudLoginChanged}) => {
   const providers = getCloudProviders();
 
   return (
@@ -56,8 +50,12 @@ const BackendStorageModalContent = () => {
               key={provider.name}
               Icon={provider.icon}
               isConnected={() => !!provider.getAccessToken()}
-              onConnect={() => {provider.login(forceUpdate)}}
-              onLogout={() => {provider.logout(forceUpdate)}}
+              onConnect={() => {provider.login(() => {
+                onCloudLoginChanged(provider.name);
+              })}}
+              onLogout={() => {provider.logout(() => {
+                onCloudLoginChanged(null);
+              })}}
             />
           ))}
         </StyledBackendExportSection>

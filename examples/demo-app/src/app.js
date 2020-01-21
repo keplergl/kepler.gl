@@ -42,7 +42,9 @@ import {
   loadRemoteMap,
   loadCloudMap,
   loadSampleConfigurations,
-  setCloudLoginSuccess
+  setCloudLoginSuccess,
+  saveMapToCloud,
+  setDefaultCloudProvider
 } from './actions';
 
 const KeplerGl = require('kepler.gl/components').injectComponents([
@@ -294,9 +296,11 @@ class App extends Component {
   };
 
   _hasBackendProviderActive = () => {
-    const providers = getCloudProviders();
-    const activeProvider = providers.find((provider) => !!provider.getAccessToken());
-    return !!activeProvider;
+    let provider;
+    if (this.props.demo.sharing.currentProvider) {
+      provider = getCloudProvider(this.props.demo.sharing.currentProvider);
+    }
+    return provider && provider.isConnected();
   }
 
   _toggleSettingsBackendModal = () => {
@@ -319,8 +323,9 @@ class App extends Component {
     this.props.dispatch(exportFileToCloud(providerName));
   };
 
-  _onSaveToCloud = (providerName, extraData) => {
-    this.props.dispatch(exportFileToCloud(providerName, false, extraData));
+  _onSaveToCloud = ({map, info, thumbnail}) => {
+    const providerName = this.props.demo.sharing.currentProvider;
+    this.props.dispatch(saveMapToCloud(providerName, {map, info, thumbnail}));
   }
 
   _onSaveToCloudFinished = () => {
@@ -332,6 +337,11 @@ class App extends Component {
   _onCloudLoginSuccess = (providerName) => {
     this.props.dispatch(setCloudLoginSuccess(providerName));
   };
+
+  _onSetCloudProvider = (providerName) => {
+    this.props.dispatch(setDefaultCloudProvider(providerName));
+  };
+  
 
   _getMapboxRef = (mapbox, index) => {
     if (!mapbox) {
@@ -386,11 +396,12 @@ class App extends Component {
             <ConnectBackendStorageModal
               isOpen={Boolean(this.state.settingsBackendModalOpen)}
               onClose={this._toggleSettingsBackendModal}
+              onCloudLoginChanged={this._onSetCloudProvider}
               parentSelector={() => findDOMNode(this.root)}
             />
           }
 
-          {this._isBackendStorageEnabled() && rootNode && Boolean(this.state.saveMapToBackendModalOpen) &&
+          {/* {this._isBackendStorageEnabled() && rootNode && Boolean(this.state.saveMapToBackendModalOpen) &&
             <SaveMapBackendStorageModal
               sharing={sharing}
               isOpen={Boolean(this.state.saveMapToBackendModalOpen)}
@@ -399,7 +410,7 @@ class App extends Component {
               onSaveFinished={this._onSaveToCloudFinished}
               parentSelector={() => findDOMNode(this.root)}
             />
-          }
+          } */}
 
           <div
             style={{
@@ -423,7 +434,8 @@ class App extends Component {
                   width={width}
                   height={height - (showBanner ? BannerHeight : 0)}
                   onSaveMap={this._isCloudStorageEnabled() && this._toggleCloudModal}
-                  onSaveToStorage={() => {}}
+                  onSaveToStorageSettings={this._toggleSettingsBackendModal}
+                  onSaveToStorage={ this._onSaveToCloud }
                 />
               )}
             </AutoSizer>
