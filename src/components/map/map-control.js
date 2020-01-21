@@ -37,9 +37,11 @@ import {
   DrawPolygon,
   Polygon,
   Rectangle,
-  CursorClick
+  CursorClick,
+  EyeSeen,
+  EyeUnseen
 } from 'components/common/icons';
-import Toolbar from 'components/common/toolbar';
+import VerticalToolbar from 'components/common/vertical-toolbar';
 import ToolbarItem from 'components/common/toolbar-item';
 import {EDITOR_MODES} from 'constants/default-settings';
 
@@ -240,16 +242,22 @@ const Toggle3dButton = React.memo(({dragRotate, onTogglePerspective}) => (
 
 Toggle3dButton.displayName = 'Toggle3dButton';
 
-const StyledToolBar = styled(Toolbar)`
+const StyledToolbar = styled(VerticalToolbar)`
   position: absolute;
   right: 32px;
 `;
 
-const MapDrawPanel = React.memo(({editor, isActive, onToggleMenuPanel, onSetEditorMode}) => {
+const MapDrawPanel = React.memo(({
+  editor,
+  isActive,
+  onToggleMenuPanel,
+  onSetEditorMode,
+  onToggleEditorVisibility
+}) => {
   return (
     <div style={{position: 'relative'}}>
       {isActive ? (
-        <StyledToolBar show={isActive} direction="column">
+        <StyledToolbar show={isActive}>
           <ToolbarItem
             onClick={() => onSetEditorMode(EDITOR_MODES.EDIT)}
             label="select"
@@ -268,7 +276,13 @@ const MapDrawPanel = React.memo(({editor, isActive, onToggleMenuPanel, onSetEdit
             icon={(<Rectangle height="22px"/>)}
             active={editor.mode === EDITOR_MODES.DRAW_RECTANGLE}
           />
-        </StyledToolBar>
+          <ToolbarItem
+            onClick={onToggleEditorVisibility}
+            label={editor.visible ? 'hide' : 'show'}
+            icon={editor.visible ? (<EyeSeen height="22px"/>) : (<EyeUnseen height="22px"/>)}
+            active={true}
+          />
+        </StyledToolbar>
       ) : null}
       <MapControlButton
         onClick={e => {
@@ -305,6 +319,7 @@ const MapControlFactory = () => {
       onToggleSplitMap: PropTypes.func.isRequired,
       onToggleMapControl: PropTypes.func.isRequired,
       onSetEditorMode: PropTypes.func.isRequired,
+      onToggleEditorVisibility: PropTypes.func.isRequired,
       top: PropTypes.number.isRequired,
 
       // optional
@@ -316,7 +331,8 @@ const MapControlFactory = () => {
 
     static defaultProps = {
       isSplit: false,
-      top: 0
+      top: 0,
+      mapIndex: 0
     };
 
     layerSelector = props => props.layers;
@@ -336,7 +352,6 @@ const MapControlFactory = () => {
     );
 
     render() {
-
       const {
         dragRotate,
         layers,
@@ -414,10 +429,11 @@ const MapControlFactory = () => {
           {mapDraw.show ? (
             <ActionPanel key={4}>
               <MapDrawPanel
-                isActive={mapDraw.active}
+                isActive={mapDraw.active && mapDraw.activeMapIndex === mapIndex}
                 editor={editor}
                 onToggleMenuPanel={() => onToggleMapControl('mapDraw')}
                 onSetEditorMode={this.props.onSetEditorMode}
+                onToggleEditorVisibility={this.props.onToggleEditorVisibility}
               />
             </ActionPanel>
           ) : null}

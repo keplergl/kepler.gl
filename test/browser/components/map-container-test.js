@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -45,6 +45,7 @@ test('MapContainerFactory - display all options', t => {
       }}
       mapLayers={{}}
       layers={[]}
+      filters={[]}
       datasets={{}}
       uiState={{
         mapControls: {
@@ -99,7 +100,7 @@ test('MapContainerFactory - display all options', t => {
     'Should display 1 InteractiveMap'
   );
 
-  // Draw
+  // Editor
   t.equal(
     $.find('StaticMap').length,
     1,

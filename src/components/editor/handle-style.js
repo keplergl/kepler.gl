@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,6 +20,7 @@
 
 import {RenderStates, RenderTypes} from 'react-map-gl-draw';
 import {COLORS} from './constants';
+import get from 'lodash.get';
 
 const DEFAULT_EDIT_HANDLE_SHAPE = 'circle';
 
@@ -67,9 +68,11 @@ export const DEFAULT_RADIUS = 5;
 function noOp() {}
 
 export function getStyle({feature, state}) {
+  const isVisible = get(feature, ['properties', 'isVisible'], true);
+
   const style = {
     stroke: STATE_STYLES_STROKE[state] || DEFAULT_STATE_STYLE_STROKE,
-    strokeWidth: STATE_STYLES_STROKE_WIDTH,
+    strokeWidth: isVisible  ? STATE_STYLES_STROKE_WIDTH : 0,
     fill: DEFAULT_STATE_STYLE_FILL,
     fillOpacity: DEFAULT_STATE_STYLE_OPACITY,
     r: DEFAULT_RADIUS

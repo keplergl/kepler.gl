@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,7 @@ import ActionPanel, {ActionPanelItem} from 'components/common/action-panel';
 import styled from 'styled-components';
 import onClickOutside from 'react-onclickoutside';
 import PropTypes from 'prop-types';
+import classnames from 'classnames';
 import {
   Trash,
   Layers
@@ -32,8 +33,6 @@ const LAYOVER_OFFSET = 4;
 
 const StyledActionsLayer = styled.div`
   position: absolute;
-  top: ${props => props.position.y + LAYOVER_OFFSET}px;
-  left: ${props => props.position.x + LAYOVER_OFFSET}px;
 `;
 
 export class FeatureActionPanel extends PureComponent {
@@ -42,10 +41,16 @@ export class FeatureActionPanel extends PureComponent {
     datasets: PropTypes.object.isRequired,
     position: PropTypes.object.isRequired,
     layers: PropTypes.arrayOf(PropTypes.object).isRequired,
+    currentFilter: PropTypes.object,
     onClose: PropTypes.func.isRequired,
     onDeleteFeature: PropTypes.func.isRequired
   };
 
+  static defaultProps = {
+    position: {}
+  };
+
+  // Used by onClickOutside
   handleClickOutside = e => {
     e.preventDefault();
     e.stopPropagation();
@@ -58,20 +63,31 @@ export class FeatureActionPanel extends PureComponent {
       datasets,
       position,
       layers,
+      currentFilter,
+      onToggleLayer,
       onDeleteFeature
     } = this.props;
 
+    const {layerId = []} = (currentFilter || {});
+
     return (
-      <StyledActionsLayer className={className} position={position}>
+      <StyledActionsLayer
+        className={classnames('feature-action-panel', className)}
+        style={{
+          top: `${position.y + LAYOVER_OFFSET}px`,
+          left: `${position.x + LAYOVER_OFFSET}px`
+        }}
+      >
         <ActionPanel>
-          <ActionPanelItem label="layer" Icon={Layers}>
+          <ActionPanelItem label="layers" Icon={Layers}>
             {layers.map((layer, index) => (
               <ActionPanelItem
                 key={index}
                 label={layer.config.label}
                 color={datasets[layer.config.dataId].color}
-                isSelection
-                onClick={() => {}}
+                isSelection={true}
+                isActive={layerId.includes(layer.id)}
+                onClick={() => onToggleLayer(layer)}
                 className="layer-panel-item"
               />
             ))}

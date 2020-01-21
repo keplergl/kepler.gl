@@ -42,7 +42,12 @@ export const enhancers = [applyMiddleware(...middlewares)];
 const initialState = {};
 
 //  add redux devtools
-const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({
+  actionsBlacklist: [
+    '@@kepler.gl/MOUSE_MOVE',
+    '@@kepler.gl/UPDATE_MAP'
+  ]
+}) || compose;
 
 export default createStore(
   reducers,

@@ -31,7 +31,7 @@ import MapPopoverFactory from 'components/map/map-popover';
 import MapControlFactory from 'components/map/map-control';
 import {StyledMapContainer} from 'components/common/styled-components';
 
-import Draw from './editor';
+import Editor from './editor/editor';
 
 // utils
 import {generateMapboxLayers, updateMapboxLayers} from 'layers/mapbox-utils';
@@ -41,6 +41,7 @@ import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 
 // default-settings
 import ThreeDBuildingLayer from 'deckgl-layers/3d-building-layer/3d-building-layer';
+import {FILTER_TYPES} from 'utils/filter-utils';
 
 const MAP_STYLE = {
   container: {
@@ -70,7 +71,9 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       layerOrder: PropTypes.arrayOf(PropTypes.any).isRequired,
       layerData: PropTypes.arrayOf(PropTypes.any).isRequired,
       layers: PropTypes.arrayOf(PropTypes.any).isRequired,
+      filters: PropTypes.arrayOf(PropTypes.any).isRequired,
       mapState: PropTypes.object.isRequired,
+      mapControls: PropTypes.object.isRequired,
       uiState: PropTypes.object.isRequired,
       mapStyle: PropTypes.object.isRequired,
       mousePos: PropTypes.object.isRequired,
@@ -89,12 +92,14 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       onMapToggleLayer: PropTypes.func,
       onMapStyleLoaded: PropTypes.func,
       onMapRender: PropTypes.func,
-      getMapboxRef: PropTypes.func
+      getMapboxRef: PropTypes.func,
+      index: PropTypes.number
     };
 
     static defaultProps = {
       MapComponent: MapboxGLMap,
-      deckGlProps: {}
+      deckGlProps: {},
+      index: 0
     };
 
     constructor(props) {
@@ -127,6 +132,12 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         [layer.id]: layer.shouldRenderLayer(layerData[idx]) &&
           this._isVisibleMapLayer(layer, mapLayers)
       }), {})
+    );
+
+    filtersSelector = props => props.filters;
+    polygonFilters = createSelector(
+      this.filtersSelector,
+      filters => filters.filter(f => f.type === FILTER_TYPES.polygon)
     );
 
     mapboxLayersSelector = createSelector(
@@ -403,6 +414,15 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       this.props.mapStateActions.updateMap(viewState);
     };
 
+    _toggleMapControl = panelId => {
+      const {
+        index,
+        uiStateActions
+      } = this.props;
+
+      uiStateActions.toggleMapControl(panelId, index);
+    };
+
     render() {
       const {
         mapState,
@@ -414,12 +434,15 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         datasets,
         mapboxApiAccessToken,
         mapboxApiUrl,
+        mapControls,
         uiState,
-        uiStateActions,
         visStateActions,
-        editor
+        editor,
+        index
       } = this.props;
+
       const layersToRender = this.layersToRenderSelector(this.props);
+
       if (!mapStyle.bottomMapStyle) {
         // style not yet loaded
         return <div />;
@@ -445,17 +468,18 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             isExport={this.props.isExport}
             layers={layers}
             layersToRender={layersToRender}
-            mapIndex={this.props.index}
-            mapControls={uiState.mapControls}
+            mapIndex={index}
+            mapControls={mapControls}
             readOnly={this.props.readOnly}
             scale={mapState.scale || 1}
             top={0}
-            editor={uiState.editor}
+            editor={editor}
             onTogglePerspective={mapStateActions.togglePerspective}
             onToggleSplitMap={mapStateActions.toggleSplitMap}
             onMapToggleLayer={this._handleMapToggleLayer}
-            onToggleMapControl={uiStateActions.toggleMapControl}
-            onSetEditorMode={uiStateActions.setEditorMode}
+            onToggleMapControl={this._toggleMapControl}
+            onSetEditorMode={visStateActions.setEditorMode}
+            onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
           />
           <MapComponent
             {...mapProps}
@@ -468,22 +492,22 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           >
             {this._renderDeckOverlay(layersToRender)}
             {this._renderMapboxOverlays(layersToRender)}
-            {/*
-                By placing the editor in this map we have to perform fewer checks for css zIndex
-                and fewer updates when we switch from edit to read mode
-              */}
-            <Draw
+            <Editor
+              index={index}
               datasets={datasets}
-              editor={uiState.editor}
-              features={editor.features}
+              editor={editor}
+              filters={this.polygonFilters(this.props)}
               isEnabled={isEdit}
               layers={layers}
-              onDeleteFeature={uiStateActions.deleteFeature}
-              onSelect={uiStateActions.setSelectedFeature}
+              layersToRender={layersToRender}
+              onDeleteFeature={visStateActions.deleteFeature}
+              onSelect={visStateActions.setSelectedFeature}
               onUpdate={visStateActions.setFeatures}
+              onTogglePolygonFilter={visStateActions.setPolygonFilterLayer}
               style={{
                 pointerEvents: isEdit ? 'all' : 'none',
-                position: 'absolute'
+                position: 'absolute',
+                display: editor.visible ? 'block' : 'none'
               }}
             />
           </MapComponent>

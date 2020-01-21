@@ -28,6 +28,7 @@ import testCsvData, {sampleConfig} from 'test/fixtures/test-csv-data';
 import testHexIdData, {hexIdDataConfig, mergedH3Layer, mergedFilters, expectedHexDataset} from 'test/fixtures/test-hex-id-data';
 import {cmpLayers, cmpFilters, cmpDatasets, cmpDataset, cmpInteraction} from 'test/helpers/comparison-utils';
 import {INITIAL_UI_STATE} from 'reducers/ui-state-updaters';
+import {toggleMapControlUpdater} from 'reducers/map-state-updaters';
 
 const mockRawData = {
   fields: [
@@ -144,7 +145,7 @@ test('#composerStateReducer - addDataToMapUpdater: uiState', t => {
     initialState: {},
     readOnly: false,
     currentModal: null
-  }
+  };
 
   t.deepEqual(newState.uiState, expectedUIState, 'ui state should be set readOnly:false,currentModal: null');
 
@@ -194,7 +195,7 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
   });
 
   const hexDataset = nextState1.visState.datasets[hexDataId];
-  cmpDataset(t, expectedHexDataset, nextState1.visState.datasets[hexDataId])
+  cmpDataset(t, expectedHexDataset, nextState1.visState.datasets[hexDataId]);
 
   t.deepEqual(nextState1.visState.splitMaps, [], 'should clear out splitMaps');
 
@@ -268,7 +269,7 @@ test('#composerStateReducer - addDataToMapUpdater: readOnly', t => {
     info: {
       id: sampleConfig.dataId
     }
-  }
+  };
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
 
   // old state contain splitMaps

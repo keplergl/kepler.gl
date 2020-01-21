@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,11 +21,14 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import {Editor} from 'react-map-gl-draw';
+import {Editor as Draw} from 'react-map-gl-draw';
 import window from 'global/window';
 import classnames from 'classnames';
+import get from 'lodash.get';
 
+import {EDITOR_AVAILABLE_LAYERS} from 'constants/default-settings';
 import FeatureActionPanel from './feature-action-panel';
+import {FILTER_TYPES} from 'utils/filter-utils';
 
 import {
   DEFAULT_RADIUS,
@@ -36,25 +39,35 @@ import {
   getEditHandleShape
 } from './handle-style';
 import {EDITOR_MODES} from 'constants';
+import {createSelector} from 'reselect';
 
-const DELETE_KEY_EVENT_CODE = 8;
+const DELETE_KEY_EVENT_CODE = 46;
+const BACKSPACE_KEY_EVENT_CODE = 8;
 const ESCAPE_KEY_EVENT_CODE = 27;
 
 const StyledWrapper = styled.div`
   cursor: ${props => props.editor.mode === EDITOR_MODES.EDIT ? 'pointer' : 'crosshair'};
+  position: relative;
 `;
 
-class Draw extends Component {
+const editorLayerFilter = layer => EDITOR_AVAILABLE_LAYERS.includes(layer.type);
+
+class Editor extends Component {
   static propTypes = {
-    clickRadius: PropTypes.number,
+    filters: PropTypes.arrayOf(PropTypes.object).isRequired,
+    layers: PropTypes.arrayOf(PropTypes.object).isRequired,
     datasets: PropTypes.object.isRequired,
     editor: PropTypes.object.isRequired,
-    features: PropTypes.arrayOf(PropTypes.object).isRequired,
-    isEnabled: PropTypes.bool,
-    layers: PropTypes.arrayOf(PropTypes.object).isRequired,
+    layersToRender: PropTypes.object.isRequired,
     onSelect: PropTypes.func.isRequired,
     onUpdate: PropTypes.func.isRequired,
-    onDeleteFeature: PropTypes.func.isRequired
+    onDeleteFeature: PropTypes.func.isRequired,
+    onTogglePolygonFilter: PropTypes.func.isRequired,
+
+    index: PropTypes.number,
+    classnames: PropTypes.string,
+    clickRadius: PropTypes.number,
+    isEnabled: PropTypes.bool
   };
 
   static defaultProps = {
@@ -74,6 +87,40 @@ class Draw extends Component {
     window.removeEventListener('keydown', this._onKeyPressed);
   }
 
+  layerSelector = props => props.layers;
+  layersToRenderSelector = props => props.layersToRender;
+  filterSelector = props => props.filters;
+  selectedFeatureIdSelector = props => get(props, ['editor', 'selectedFeature', 'id']);
+  editorFeatureSelector = props => get(props, ['editor', 'features']);
+
+  currentFilterSelector = createSelector(
+    this.filterSelector,
+    this.selectedFeatureIdSelector,
+    (filters, selectedFeatureId) => filters.find(f =>
+      f.value && f.value.id === selectedFeatureId
+    )
+  );
+
+  availableLayersSeletor = createSelector(
+    this.layerSelector,
+    this.layersToRenderSelector,
+    (layers, layersToRender) => layers
+      .filter(editorLayerFilter)
+      .filter(layer => {
+        return layersToRender[layer.id];
+      })
+  );
+
+  allFeaturesSelector = createSelector(
+    this.filterSelector,
+    this.editorFeatureSelector,
+    (filters, editorFeatures) =>
+      filters
+        .filter(f => f.type === FILTER_TYPES.polygon)
+        .map(f => f.value)
+        .concat(editorFeatures)
+  );
+
   _onKeyPressed = event => {
     const {isEnabled} = this.props;
 
@@ -83,26 +130,30 @@ class Draw extends Component {
 
     switch (event.which) {
       case DELETE_KEY_EVENT_CODE:
+      case BACKSPACE_KEY_EVENT_CODE:
         this._onDeleteSelectedFeature();
         break;
       case ESCAPE_KEY_EVENT_CODE:
-        this.props.onSelect({selectedFeatureId: null});
+        this.props.onSelect(null);
         break;
       default: break;
     }
   };
 
   _onSelect = ({selectedFeatureId, sourceEvent}) => {
+    const allFeatures = this.allFeaturesSelector(this.props);
     this.setState({
       ...(sourceEvent.rightButton ? {
         showActions: true,
         lastPosition: {
-          x: sourceEvent.changedPointers[0].clientX,
-          y: sourceEvent.changedPointers[0].clientY
+          x: sourceEvent.changedPointers[0].offsetX,
+          y: sourceEvent.changedPointers[0].offsetY
         }
       } : null)
     }, () => {
-      this.props.onSelect({selectedFeatureId});
+      this.props.onSelect(
+        allFeatures.find(f => f.id === selectedFeatureId)
+      );
     });
   };
 
@@ -113,11 +164,20 @@ class Draw extends Component {
 
     const {editor} = this.props;
     const {selectedFeature = {}} = editor;
-    this.props.onDeleteFeature((selectedFeature || {}).id);
+    this.props.onDeleteFeature(selectedFeature);
   };
 
   _closeFeatureAction = () => {
     this.setState({showActions: false});
+  };
+
+  _onToggleLayer = layer => {
+    const {selectedFeature} = this.props.editor;
+    if (!selectedFeature) {
+      return;
+    }
+
+    this.props.onTogglePolygonFilter(layer, selectedFeature);
   };
 
   render() {
@@ -126,32 +186,42 @@ class Draw extends Component {
       clickRadius,
       datasets,
       editor,
-      features,
-      layers,
+      onUpdate,
       style
     } = this.props;
-    const {selectedFeature = {}} = editor;
+
+    const {lastPosition, showActions} = this.state;
+    const selectedFeatureId = get(editor, ['selectedFeature', 'id']);
+    const currentFilter = this.currentFilterSelector(this.props);
+    const availableLayers = this.availableLayersSeletor(this.props);
+    const allFeatures = this.allFeaturesSelector(this.props);
 
     return (
-      <StyledWrapper editor={editor} className={classnames('editor', className)} style={style}>
-        <Editor
+      <StyledWrapper
+        editor={editor}
+        className={classnames('editor', className)}
+        style={style}
+      >
+        <Draw
           clickRadius={clickRadius}
           mode={editor.mode}
-          features={features}
-          selectedFeatureId={(selectedFeature || {}).id}
+          features={allFeatures}
+          selectedFeatureId={selectedFeatureId}
           onSelect={this._onSelect}
-          onUpdate={this.props.onUpdate}
+          onUpdate={onUpdate}
           getEditHandleShape={getEditHandleShape}
           getFeatureStyle={getFeatureStyle}
           getEditHandleStyle={getEditHandleStyle}
         />
-        {this.state.showActions ? (
+        {showActions && Boolean(selectedFeatureId) ? (
           <FeatureActionPanel
             datasets={datasets}
-            layers={layers}
+            layers={availableLayers}
+            currentFilter={currentFilter}
             onClose={this._closeFeatureAction}
             onDeleteFeature={this._onDeleteSelectedFeature}
-            position={this.state.lastPosition}
+            onToggleLayer={this._onToggleLayer}
+            position={lastPosition}
           />
         ) : null}
       </StyledWrapper>
@@ -159,4 +229,4 @@ class Draw extends Component {
   }
 }
 
-export default Draw;
+export default Editor;

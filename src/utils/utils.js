@@ -70,6 +70,31 @@ export function camelToTitle(str){
   return capitalizeFirstLetter(breakWord);
 }
 
+/**
+ * Returns the img url for a given map export option
+ * @param mode export option
+ * @return {string} url
+ */
 export function getHTMLMapModeTileUrl(mode) {
   return `https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/map-${mode.toLowerCase()}-mode.png`
+}
+
+/**
+ * Converts non-arrays to arrays.  Leaves arrays alone.  Converts
+ * undefined values to empty arrays ([] instead of [undefined]).
+ * Otherwise, just returns [item] for non-array items.
+ *
+ * @param {*} item
+ * @returns {array} boom! much array. very indexed. so useful.
+ */
+export function toArray(item) {
+  if (Array.isArray(item)) {
+    return item;
+  }
+
+  if (typeof item === 'undefined' || item === null) {
+    return [];
+  }
+
+  return [item];
 }

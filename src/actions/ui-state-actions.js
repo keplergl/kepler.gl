@@ -78,7 +78,7 @@ export const hideExportDropdown = createAction(
  */
 export const toggleMapControl = createAction(
   ActionTypes.TOGGLE_MAP_CONTROL,
-  panelId => panelId
+  (panelId, index) => ({panelId, index})
 );
 
 /**
@@ -250,31 +250,6 @@ export const setExportMapFormat = createAction(
 export const setExportHTMLMapMode = createAction(
   ActionTypes.SET_EXPORT_MAP_HTML_MODE,
   payload => payload
-);
-
-/** Set the map mode
- * @memberof main
- * @param {string} mode one of EDITOR_MODES
- * @public
- * @example
- * import {setMapMode} from 'kepler.gl/actions';
- * import {EDITOR_MODES} from 'kepler.gl/constants';
- *
- * this.props.dispatch(setMapMode(EDITOR_MODES.DRAW_POLYGON));
- */
-export const setEditorMode = createAction(
-  ActionTypes.SET_EDITOR_MODE,
-  mode => mode
-);
-
-export const setSelectedFeature = createAction(
-  ActionTypes.SET_SELECTED_FEATURE,
-  ({selectedFeatureId}) => selectedFeatureId
-);
-
-export const deleteFeature = createAction(
-  ActionTypes.DELETE_FEATURE,
-  featureId => featureId
 );
 
 /**

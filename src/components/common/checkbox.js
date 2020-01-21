@@ -42,7 +42,7 @@ const HiddenInput = styled.input`
 
 const StyledCheckbox = styled.div`
   line-height: 0;
-  height: ${props => props.theme.switchBtnHeight};
+  min-height: ${props => props.theme.switchBtnHeight};
   margin-left: ${props => props.theme.switchLabelMargin}px;
 `;
 

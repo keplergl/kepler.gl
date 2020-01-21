@@ -171,7 +171,8 @@ export default function SidePanelFactory(
         showDatasetTable: this._showDatasetTable,
         showAddDataModal: this._showAddDataModal,
         toggleAnimation: visStateActions.toggleFilterAnimation,
-        enlargeFilter: visStateActions.enlargeFilter
+        enlargeFilter: visStateActions.enlargeFilter,
+        toggleFilterFeature: visStateActions.toggleFilterFeature
       };
 
       const interactionManagerActions = {
@@ -231,6 +232,7 @@ export default function SidePanelFactory(
                   <FilterManager
                     {...filterManagerActions}
                     datasets={datasets}
+                    layers={layers}
                     filters={filters}
                   />
                 )}

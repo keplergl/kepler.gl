@@ -56,14 +56,15 @@ export function mergeFilters(state, filtersToMerge) {
     // we can only look for datasets define in the filter dataId
     const datasetIds = Array.isArray(filter.dataId) ? filter.dataId : [filter.dataId];
 
-    // we can merge a filter only if all datasets in filter.dataId are laoded
+    // we can merge a filter only if all datasets in filter.dataId are loaded
     if (datasetIds.every(d => datasets[d])) {
 
       // all datasetIds in filter must be present the state datasets
       const {filter: validatedFilter, applyToDatasets, augmentedDatasets} = datasetIds.reduce((acc, datasetId) => {
+
         const dataset = updatedDatasets[datasetId];
-        const {filter: updatedFilter, dataset: updatedDataset} =
-          validateFilterWithData(acc.augmentedDatasets[datasetId] || dataset, filter);
+        const layers = state.layers.filter(l => l.config.dataId === dataset.id);
+        const {filter: updatedFilter, dataset: updatedDataset} = validateFilterWithData(acc.augmentedDatasets[datasetId] || dataset, filter, layers);
 
         if (updatedFilter) {
           return {
@@ -87,7 +88,6 @@ export function mergeFilters(state, filtersToMerge) {
         }
 
         return acc;
-
       }, {
         filter: null,
         applyToDatasets: [],
@@ -112,7 +112,7 @@ export function mergeFilters(state, filtersToMerge) {
   // flatten all filter dataIds
   const datasetsToFilter = uniq(flattenDeep(merged.map(f => f.dataId)));
 
-  const filtered = applyFiltersToDatasets(datasetsToFilter, updatedDatasets, updatedFilters);
+  const filtered = applyFiltersToDatasets(datasetsToFilter, updatedDatasets, updatedFilters, state.layers);
 
   return {
     ...state,
