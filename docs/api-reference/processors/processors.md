@@ -159,7 +159,7 @@ Process data where each row is an object, output can be passed to [`addDataToMap
 
 **Parameters**
 
--   `rawData` **[Object][17]** an array of object
+-   `rawData` **[Array][16]&lt;[Object][17]>** an array of row object, each object should have the same number of keys
 
 **Examples**
 

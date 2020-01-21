@@ -597,6 +597,7 @@ export const loadFilesUpdater = (state) => ({
 
 /**
  * Handles loading file success and set fileLoading property to false
+ * @memberof uiStateUpdaters
  * @param {Object} state `uiState`
  * @returns {Object} nextState
  */
@@ -610,6 +611,7 @@ export const loadFilesSuccessUpdater = (state) => ({
 
 /**
  * Handles load file error and set fileLoading property to false
+ * @memberof uiStateUpdaters
  * @param state
  * @param error
  * @returns {Object} nextState
@@ -633,7 +635,7 @@ export const loadFilesErrUpdater = (state, {error}) => addNotificationUpdater(
 
 /**
  * Handles toggle map split and reset all map control index to 0
- *
+ * @memberof uiStateUpdaters
  * @param state
  * @returns {Object} nextState
  * @public

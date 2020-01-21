@@ -379,7 +379,8 @@ export function enlargeFilter(idx) {
 }
 
 /**
- * SHow/hide filter feature on map
+ * Show/hide filter feature on map
+ * @memberof visStateActions
  * @param {Number} idx - index of filter feature to show/hide
  * @return {{type: ActionTypes.TOGGLE_FILTER_FEATURE, idx: idx}}
  */
@@ -522,10 +523,10 @@ export function setFeatures(features) {
 
 /**
  * It will apply the provide feature as filter to the given layer.
- * If the given feature is already applied as filter to the layer it  will remove it from  the filter list
+ * If the given feature is already applied as filter to the layer, it will remove the layer from the filter
  * @memberof visStateActions
- * @param {Object} feature
  * @param {Object} layer
+ * @param {Object} feature
  * @return {{feature: *, type: ActionTypes.SET_POLYGON_FILTER_LAYER, layer: *}}
  */
 export function setPolygonFilterLayer(layer, feature) {
@@ -540,7 +541,7 @@ export function setPolygonFilterLayer(layer, feature) {
  * Set the current feature to be edited/deleted
  * @memberof visStateActions
  * @param {Object} feature
- * @return {{selectedFeatureId: *, type: ActionTypes.SET_SELECTED_FEATURE}}
+ * @return {{feature: feature, type: ActionTypes.SET_SELECTED_FEATURE}}
  */
 export function setSelectedFeature(feature) {
   return {
@@ -553,7 +554,7 @@ export function setSelectedFeature(feature) {
  * Delete the given feature
  * @memberof visStateActions
  * @param {Object} feature
- * @return {{type: ActionTypes.DELETE_FEATURE, featureId: *}}
+ * @return {{type: ActionTypes.DELETE_FEATURE, feature: feature}}
  */
 export function deleteFeature(feature) {
   return {
@@ -563,8 +564,9 @@ export function deleteFeature(feature) {
 }
 
 /** Set the map mode
- * @memberof main
+ * @memberof visStateActions
  * @param {string} mode one of EDITOR_MODES
+ * @return {{type: ActionTypes. SET_EDITOR_MODE, mode: *}}
  * @public
  * @example
  * import {setMapMode} from 'kepler.gl/actions';
@@ -581,6 +583,7 @@ export function setEditorMode(mode) {
 
 /**
  * Toggle editor layer visibility
+ * @memberof visStateActions
  * @return {{type: ActionTypes.TOGGLE_EDITOR_VISIBILITY}}
  */
 export function toggleEditorVisibility() {

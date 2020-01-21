@@ -100,6 +100,8 @@ Input a custom map style object
         -   `action.payload.name` **[string][22]** style name
         -   `action.payload.layerGroups` **[Object][23]** layer groups that can be used to set map layer visibility
         -   `action.payload.icon` **[Object][23]** icon image data url
+    -   `action.payload.inputStyle`  
+    -   `action.payload.mapState`  
 
 Returns **[Object][23]** nextState
 
