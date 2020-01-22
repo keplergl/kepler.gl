@@ -462,15 +462,13 @@ export function exportFileToCloud(providerName, isPublic = true, extraData = {ti
  * @param data
  * @returns {Function}
  */
-export function saveMapToCloud(providerName, data = {map, info, thumbnail}) {
+export function saveMapToCloud(providerName, {map, info, thumbnail}) {
   if (!providerName) {
     throw new Error('No cloud provider identified')
   }
   const cloudProvider = getCloudProvider(providerName);
-  return (dispatch, getState) => {
-    // extract data from kepler
-    const mapData = KeplerGlSchema.save(getState().demo.keplerGl.map);
-    const data = JSON.stringify(mapData);
+  return (dispatch) => {
+    const data = JSON.stringify(map);
     const newBlob = new Blob([data], {type: 'application/json'});
     const fileName = `/keplergl_${generateHashId(6)}.json`;
     info.title = info.title || fileName;
