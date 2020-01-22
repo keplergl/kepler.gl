@@ -25,8 +25,8 @@ import styled from 'styled-components';
 import {calculateExportImageSize} from 'utils/export-image-utils';
 import {
   EXPORT_IMG_RATIO_OPTIONS,
-  EXPORT_IMG_RESOLUTION_OPTIONS,
-  RATIOS
+  EXPORT_IMG_RATIOS,
+  EXPORT_IMG_RESOLUTION_OPTIONS
 } from 'constants/default-settings';
 
 import {
@@ -79,9 +79,9 @@ const PreviewImageSection = styled.div`
     box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.18);
     width: 100%;
     padding-bottom: ${props =>
-      props.ratio === RATIOS.SCREEN
+      props.ratio === EXPORT_IMG_RATIOS.SCREEN
         ? `${(100 * props.height) / props.width}%`
-        : props.ratio === RATIOS.SIXTEEN_BY_NINE
+        : props.ratio === EXPORT_IMG_RATIOS.SIXTEEN_BY_NINE
         ? '56.25%'
         : '75%'};
     position: relative;

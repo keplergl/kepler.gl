@@ -564,7 +564,7 @@ export const RESOLUTIONS = keyMirror({
   TWO_X: null
 });
 
-export const RATIOS = keyMirror({
+export const EXPORT_IMG_RATIOS = keyMirror({
   SCREEN: null,
   FOUR_BY_THREE: null,
   SIXTEEN_BY_NINE: null
@@ -572,12 +572,12 @@ export const RATIOS = keyMirror({
 
 export const EXPORT_IMG_RATIO_OPTIONS = [
   {
-    id: RATIOS.SCREEN,
+    id: EXPORT_IMG_RATIOS.SCREEN,
     label: 'Original Screen',
     getSize: (screenW, screenH) => ({width: screenW, height: screenH})
   },
   {
-    id: RATIOS.FOUR_BY_THREE,
+    id: EXPORT_IMG_RATIOS.FOUR_BY_THREE,
     label: '4:3',
     getSize: (screenW, screenH) => ({
       width: screenW,
@@ -585,7 +585,7 @@ export const EXPORT_IMG_RATIO_OPTIONS = [
     })
   },
   {
-    id: RATIOS.SIXTEEN_BY_NINE,
+    id: EXPORT_IMG_RATIOS.SIXTEEN_BY_NINE,
     label: '16:9',
     getSize: (screenW, screenH) => ({
       width: screenW,
