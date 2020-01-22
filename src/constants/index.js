@@ -32,7 +32,7 @@ export {
   DEFAULT_NOTIFICATION_TYPES,
   DELETE_DATA_ID,
   DIMENSIONS,
-  EDITOR_MODES
+  EDITOR_MODES,
   EXPORT_DATA_ID,
   EXPORT_DATA_TYPE_OPTIONS,
   EXPORT_IMAGE_ID,
@@ -55,13 +55,10 @@ export {
   SCALE_TYPES,
   THEME,
   TRIP_ARC_FIELDS,
-  TRIP_POINT_FIELDS,
+  TRIP_POINT_FIELDS
 } from './default-settings';
 
-export {
-  GITHUB_BUG_REPORT,
-  GITHUB_USER_GUIDE
-} from './user-guides';
+export {GITHUB_BUG_REPORT, GITHUB_USER_GUIDE} from './user-guides';
 
 export {VizColorPalette, DataVizColors} from './custom-color-ranges';
 export {COLOR_RANGES, DefaultColorRange} from './color-ranges';

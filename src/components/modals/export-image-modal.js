@@ -25,8 +25,8 @@ import styled from 'styled-components';
 import {calculateExportImageSize} from 'utils/export-image-utils';
 import {
   EXPORT_IMG_RATIO_OPTIONS,
-  EXPORT_IMG_RESOLUTION_OPTIONS
-  RATIOS,
+  EXPORT_IMG_RESOLUTION_OPTIONS,
+  RATIOS
 } from 'constants/default-settings';
 
 import {

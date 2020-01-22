@@ -28,8 +28,8 @@ import {
   document
 } from 'global/window';
 import {
-  EXPORT_IMG_RATIO_OPTIONS
-  EXPORT_IMG_RESOLUTION_OPTIONS,
+  EXPORT_IMG_RATIO_OPTIONS,
+  EXPORT_IMG_RESOLUTION_OPTIONS
 } from 'constants/default-settings';
 
 export function calculateExportImageSize({width, height, ratio, resolution}) {
