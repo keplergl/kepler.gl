@@ -53,6 +53,7 @@ const BackendStorageModalContent = ({onCloudLoginChanged}) => {
               onConnect={() => {provider.login(() => {
                 onCloudLoginChanged(provider.name);
               })}}
+              onSelect={() => { onCloudLoginChanged(provider.name); }}
               onLogout={() => {provider.logout(() => {
                 onCloudLoginChanged(null);
               })}}

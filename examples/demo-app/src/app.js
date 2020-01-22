@@ -33,9 +33,8 @@ import {replacePanelHeader} from './factories/panel-header';
 import {replaceSaveExportDropdown} from './factories/save-export-dropdown';
 import ExportUrlModal from './components/sharing/export-url-modal';
 import ConnectBackendStorageModal from './components/backend-storage-modal/connect-backend-storage-modal';
-import SaveMapBackendStorageModal from './components/save-map-modal/save-map-backend-storage-modal';
 import {AUTH_TOKENS} from './constants/default-settings';
-import {getCloudProvider, getCloudProviders} from './cloud-providers';
+import {getCloudProvider} from './cloud-providers';
 
 import {
   exportFileToCloud,
@@ -309,16 +308,6 @@ class App extends Component {
     });
   };
 
-  _toggleSaveMapToBackendModal = () => {
-    if (this._hasBackendProviderActive()) {
-      this.setState({
-        saveMapToBackendModalOpen: !this.state.saveMapToBackendModalOpen
-      });
-    } else {
-      this._toggleSettingsBackendModal();
-    }
-  }
-
   _onExportToCloud = (providerName) => {
     this.props.dispatch(exportFileToCloud(providerName));
   };
@@ -326,12 +315,6 @@ class App extends Component {
   _onSaveToCloud = ({map, info, thumbnail}) => {
     const providerName = this.props.demo.sharing.currentProvider;
     this.props.dispatch(saveMapToCloud(providerName, {map, info, thumbnail}));
-  }
-
-  _onSaveToCloudFinished = () => {
-    this.setState({
-      saveMapToBackendModalOpen: false
-    });
   }
 
   _onCloudLoginSuccess = (providerName) => {
@@ -400,17 +383,6 @@ class App extends Component {
               parentSelector={() => findDOMNode(this.root)}
             />
           }
-
-          {/* {this._isBackendStorageEnabled() && rootNode && Boolean(this.state.saveMapToBackendModalOpen) &&
-            <SaveMapBackendStorageModal
-              sharing={sharing}
-              isOpen={Boolean(this.state.saveMapToBackendModalOpen)}
-              onClose={this._toggleSaveMapToBackendModal}
-              onSave={this._onSaveToCloud}
-              onSaveFinished={this._onSaveToCloudFinished}
-              parentSelector={() => findDOMNode(this.root)}
-            />
-          } */}
 
           <div
             style={{

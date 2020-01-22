@@ -53,7 +53,7 @@ export default class CartoProvider {
     return PRIVATE_STORAGE_ENABLED;
   }
 
-  async uploadFile({blob, name, description, isPublic = true}) {
+  async uploadFile({blob, name, description, thumbnail, isPublic = true}) {
     try {
       const payload = JSON.parse(await new Response(blob).text());
 
@@ -63,12 +63,17 @@ export default class CartoProvider {
 
       const cs = await this._carto.getCustomStorage();
 
+      const thumbnailBase64 = thumbnail
+        ? await this._blobToBase64(thumbnail)
+        : null;
+
       let result;
       if (this.currentMap && this.currentMap.name === name) {
         result = await cs.updateVisualization({
           id: this.currentMap.id,
           name,
           description,
+          thumbnail: thumbnailBase64,
           config: JSON.stringify(config),
           isPrivate: this.currentMap.isPrivate
         }, cartoDatasets)
@@ -82,6 +87,7 @@ export default class CartoProvider {
         result = await cs.createVisualization({
           name: visName,
           description,
+          thumbnail: thumbnailBase64,
           config: JSON.stringify(config),
           isPrivate: !isPublic
         }, cartoDatasets, true);
@@ -275,6 +281,20 @@ export default class CartoProvider {
 
   _composeURL({mapId, owner, privateMap}) {
     return `demo/map/carto?mapId=${mapId}&owner=${owner}&privateMap=${privateMap}`
+  }
+
+  _blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (!reader.error) {
+          resolve(reader.result);
+        } else {
+          reject(reader.error);
+        }
+      }
+      reader.readAsDataURL(blob);
+    })
   }
 
 }

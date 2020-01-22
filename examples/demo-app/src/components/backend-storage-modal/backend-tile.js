@@ -67,10 +67,11 @@ const BackendTile = ({
   Icon,
   isConnected,
   onConnect,
+  onSelect,
   onLogout
 }) => (
   <StyledTile>
-    <StyledTileButton onClick={isConnected() ? noop : onConnect} isConnected={isConnected()}>
+      <StyledTileButton onClick={isConnected() ? onSelect : onConnect} isConnected={isConnected()}>
       <Icon height="88px" />
       {isConnected() && <StyledLabel>Connected</StyledLabel>}
     </StyledTileButton>

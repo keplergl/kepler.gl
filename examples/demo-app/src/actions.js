@@ -381,6 +381,7 @@ export function loadCloudMap(queryParams, providerName, pushRoute = false) {
     cloudProvider.loadMap(queryParams)
       .then(map => {
         dispatch(loadRemoteResourceSuccess(map.datasets, map.vis.config, map.options));
+        dispatch(setDefaultCloudProvider(cloudProvider.name));
       })
       .catch(error => {
         const {target = {}} = error;
@@ -456,12 +457,12 @@ export function exportFileToCloud(providerName, isPublic = true, extraData = {ti
 }
 
 /**
- * This method will export the current kepler config file to the choosen cloud platform
- * @param data
+ * This method will export the current kepler config file to the choosen cloud backend platform
  * @param providerName
+ * @param data
  * @returns {Function}
  */
-export function saveMapToCloud(providerName, {map, info, thumbnail}) {
+export function saveMapToCloud(providerName, data = {map, info, thumbnail}) {
   if (!providerName) {
     throw new Error('No cloud provider identified')
   }
@@ -487,6 +488,7 @@ export function saveMapToCloud(providerName, {map, info, thumbnail}) {
       blob: file,
       name: info.title,
       description: info.description,
+      thumbnail,
       isPublic: false,
       cloudProvider
     })
