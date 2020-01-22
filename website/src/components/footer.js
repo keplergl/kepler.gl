@@ -55,6 +55,10 @@ const BrandingContainer = styled.div`
   ${media.palm`
     margin-top: ${props => props.theme.margins.small};
   `};
+  
+  > * {
+    margin-left: ${props => props.theme.margins.small};
+  }
 `;
 
 const CreatedBy = styled.div`
@@ -151,6 +155,7 @@ export default class Footer extends PureComponent {
           <BrandingContainer>
             <img src={cdnUrl('icons/uber.svg')} />
             <MapboxLogo />
+            <NetlifyLogo />
             <CreatedBy>
               created by
               <StyledLogo className="fg">
@@ -180,7 +185,6 @@ export default class Footer extends PureComponent {
             </LinkButton>
           </ButtonContainer>
           <SocialContainer>
-            <NetlifyLogo />
             <FacebookShareButton url="https://uber.github.io/kepler.gl/">
               <FacebookIcon size={32} />
             </FacebookShareButton>
