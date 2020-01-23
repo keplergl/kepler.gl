@@ -50,20 +50,19 @@ const LogosContainer = styled.div`
 `;
 
 const BrandingContainer = styled.div`
-  display: inline-flex;
-  align-items: center;
   ${media.palm`
     margin-top: ${props => props.theme.margins.small};
   `};
   
-  > * {
-    margin-left: ${props => props.theme.margins.small};
-  }
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  column-gap: 20px;
+  align-items: center;
+ 
 `;
 
 const CreatedBy = styled.div`
   display: inline-flex;
-  margin-left: 20px;
   align-items: center;
   color: ${props => props.theme.footerColor};
   font-size: 11px;
