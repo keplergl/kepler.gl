@@ -41,6 +41,7 @@ import {
   v1expectedInfo_2,
   v1expectedFields_2
 } from "test/fixtures/state-saved-v1-2";
+import {cmpDataset} from 'test/helpers/comparison-utils';
 
 /* eslint-disable max-statements */
 test('#DatasetSchema -> SchemaManager.parseSavedData', t => {
@@ -170,12 +171,23 @@ test('#DatasetSchema -> SchemaManager.parseSavedData.v1 with ts', t => {
     expectedDataset,
     'should parse dataset correctly'
   );
+
   t.deepEqual(parsedValid[0].info, v1expectedInfo_2, 'should parse info correctly');
-  t.deepEqual(
-    parsedValid[0].data.fields,
-    v1expectedFields_2,
-    'should parse fields correctly'
+
+  t.equal(
+    parsedValid[0].data.fields.length,
+    v1expectedFields_2.length,
+    'should have same number of fields'
   );
+
+  parsedValid[0].data.fields.forEach((actualField, i) => {
+    t.deepEqual(
+      actualField,
+      v1expectedFields_2[i],
+      `fields ${actualField.name} should be the same`
+    );
+  });
+
   t.deepEqual(
     parsedValid[0].data.rows,
     expectedRows,
