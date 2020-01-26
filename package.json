@@ -126,7 +126,7 @@
     "redux-actions": "^2.2.1",
     "reselect": "^3.0.1",
     "supercluster": "^6.0.1",
-    "type-analyzer": "0.2.4",
+    "type-analyzer": "0.2.5",
     "uber-licence": "^3.1.1",
     "viewport-mercator-project": "^6.0.0",
     "wellknown": "^0.5.0"
