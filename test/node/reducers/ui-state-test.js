@@ -37,9 +37,9 @@ import {loadFiles, loadFilesErr} from 'actions/vis-state-actions';
 import reducer, {uiStateReducerFactory} from 'reducers/ui-state';
 import {INITIAL_UI_STATE} from 'reducers/ui-state-updaters';
 import {
-  RATIOS,
-  RESOLUTIONS,
-  EXPORT_DATA_TYPE
+  EXPORT_DATA_TYPE,
+  EXPORT_IMG_RATIOS,
+  RESOLUTIONS
 } from 'constants/default-settings';
 import {
   DEFAULT_NOTIFICATION_TOPICS,
@@ -119,14 +119,14 @@ test('#uiStateReducer -> OPEN_DELETE_MODAL', t => {
 test('#uiStateReducer -> SET_RATIO', t => {
   const newReducer = reducer(
     INITIAL_UI_STATE,
-    setRatio({ratio: RATIOS.SIXTEEN_BY_NINE})
+    setRatio({ratio: EXPORT_IMG_RATIOS.SIXTEEN_BY_NINE})
   );
 
   const expectedState = {
     ...INITIAL_UI_STATE,
     exportImage: {
       ...INITIAL_UI_STATE.exportImage,
-      ratio: RATIOS.SIXTEEN_BY_NINE
+      ratio: EXPORT_IMG_RATIOS.SIXTEEN_BY_NINE
     }
   };
 

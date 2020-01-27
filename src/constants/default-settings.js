@@ -101,7 +101,7 @@ export const KEPLER_GL_NAME = 'kepler.gl';
 // Since we are injecting this during the build process with babel
 // while developing VERSION is not defined, we capture the exception and return
 // an empty string which will allow us to retrieve the latest umd version
-export const KEPLER_GL_VERSION = "__PACKAGE_VERSION__";
+export const KEPLER_GL_VERSION = '__PACKAGE_VERSION__';
 export const KEPLER_GL_WEBSITE = 'http://kepler.gl/';
 
 export const DIMENSIONS = {
@@ -406,7 +406,7 @@ export const notSupportedScaleOpts = {
   [CHANNEL_SCALES.size]: []
 };
 
-export const  notSupportAggrOpts = {
+export const notSupportAggrOpts = {
   [CHANNEL_SCALES.colorAggr]: {},
   [CHANNEL_SCALES.sizeAggr]: {}
 };
@@ -564,47 +564,60 @@ export const RESOLUTIONS = keyMirror({
   TWO_X: null
 });
 
-export const RATIOS = keyMirror({
+export const EXPORT_IMG_RATIOS = keyMirror({
   SCREEN: null,
   FOUR_BY_THREE: null,
   SIXTEEN_BY_NINE: null
 });
 
-export const RATIO_OPTIONS = [{
-  id: RATIOS.SCREEN,
-  label: 'Original Screen',
-  getSize: (screenW, screenH) => ({width: screenW, height: screenH})
-}, {
-  id: RATIOS.FOUR_BY_THREE,
-  label: '4:3',
-  getSize: (screenW, screenH) => ({width: screenW, height: Math.round(screenW * 0.75)})
-}, {
-  id: RATIOS.SIXTEEN_BY_NINE,
-  label: '16:9',
-  getSize: (screenW, screenH) => ({width: screenW, height: Math.round(screenW * 0.5625)})
-}];
+export const EXPORT_IMG_RATIO_OPTIONS = [
+  {
+    id: EXPORT_IMG_RATIOS.SCREEN,
+    label: 'Original Screen',
+    getSize: (screenW, screenH) => ({width: screenW, height: screenH})
+  },
+  {
+    id: EXPORT_IMG_RATIOS.FOUR_BY_THREE,
+    label: '4:3',
+    getSize: (screenW, screenH) => ({
+      width: screenW,
+      height: Math.round(screenW * 0.75)
+    })
+  },
+  {
+    id: EXPORT_IMG_RATIOS.SIXTEEN_BY_NINE,
+    label: '16:9',
+    getSize: (screenW, screenH) => ({
+      width: screenW,
+      height: Math.round(screenW * 0.5625)
+    })
+  }
+];
 
-export const RESOLUTION_OPTIONS = [{
-  id: RESOLUTIONS.ONE_X,
-  label: '1x',
-  available: true,
-  scale: 1,
-  zoomOffset: Math.log2(1),
-  getSize: (screenW, screenH) => ({
-    width: screenW,
-    height: screenH
-  })
-}, {
-  id: RESOLUTIONS.TWO_X,
-  label: '2x',
-  available: true,
-  scale: 2,
-  zoomOffset: Math.log2(2),
-  getSize: (screenW, screenH) => ({
-    width: screenW * 2,
-    height: screenH * 2
-  })
-}];
+export const EXPORT_IMG_RESOLUTION_OPTIONS = [
+  {
+    id: RESOLUTIONS.ONE_X,
+    label: '1x',
+    available: true,
+    scale: 1,
+    zoomOffset: Math.log2(1),
+    getSize: (screenW, screenH) => ({
+      width: screenW,
+      height: screenH
+    })
+  },
+  {
+    id: RESOLUTIONS.TWO_X,
+    label: '2x',
+    available: true,
+    scale: 2,
+    zoomOffset: Math.log2(2),
+    getSize: (screenW, screenH) => ({
+      width: screenW * 2,
+      height: screenH * 2
+    })
+  }
+];
 
 export const DEFAULT_EXPORT_IMAGE_NAME = 'kepler-gl.png';
 

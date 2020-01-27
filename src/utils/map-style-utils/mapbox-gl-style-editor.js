@@ -23,7 +23,7 @@ import clondDeep from 'lodash.clonedeep';
 import {
   DEFAULT_LAYER_GROUPS,
   RESOLUTIONS,
-  RESOLUTION_OPTIONS,
+  EXPORT_IMG_RESOLUTION_OPTIONS,
   DEFAULT_MAPBOX_API_URL
 } from 'constants/default-settings';
 
@@ -156,7 +156,7 @@ export function scaleMapStyleByResolution(mapboxStyle, resolution) {
   const {filter: labelLayerFilter} = labelLayerGroup;
 
   if (resolution !== RESOLUTIONS.ONE_X && mapboxStyle) {
-    const {scale, zoomOffset} = RESOLUTION_OPTIONS.find(
+    const {scale, zoomOffset} = EXPORT_IMG_RESOLUTION_OPTIONS.find(
       r => r.id === resolution
     );
     const copyStyle = clondDeep(mapboxStyle);

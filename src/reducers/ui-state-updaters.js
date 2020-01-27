@@ -19,14 +19,14 @@
 // THE SOFTWARE.
 
 import {
-  DELETE_DATA_ID,
   ADD_DATA_ID,
+  DEFAULT_NOTIFICATION_TOPICS,
+  DELETE_DATA_ID,
   EXPORT_DATA_TYPE,
-  RATIOS,
-  RESOLUTIONS,
-  EXPORT_MAP_FORMATS,
   EXPORT_HTML_MAP_MODES,
-  DEFAULT_NOTIFICATION_TOPICS
+  EXPORT_IMG_RATIOS,
+  EXPORT_MAP_FORMATS,
+  RESOLUTIONS
 } from 'constants/default-settings';
 import {createNotification, errorNotification} from 'utils/notifications-utils';
 
@@ -117,7 +117,7 @@ export const DEFAULT_MAP_CONTROLS = [
  */
 export const DEFAULT_EXPORT_IMAGE = {
   // user options
-  ratio: RATIOS.SCREEN,
+  ratio: EXPORT_IMG_RATIOS.SCREEN,
   resolution: RESOLUTIONS.ONE_X,
   legend: false,
   // exporting state

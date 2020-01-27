@@ -27,10 +27,15 @@ import {
   ArrayBuffer,
   document
 } from 'global/window';
-import {RESOLUTION_OPTIONS, RATIO_OPTIONS} from 'constants/default-settings';
+import {
+  EXPORT_IMG_RATIO_OPTIONS,
+  EXPORT_IMG_RESOLUTION_OPTIONS
+} from 'constants/default-settings';
 
 export function calculateExportImageSize({width, height, ratio, resolution}) {
-  const resolutionItem = RESOLUTION_OPTIONS.find(op => op.id === resolution);
+  const resolutionItem = EXPORT_IMG_RESOLUTION_OPTIONS.find(
+    op => op.id === resolution
+  );
   const {width: scaledWidth, height: scaledHeight} = resolutionItem.getSize(
     width,
     height
@@ -40,7 +45,7 @@ export function calculateExportImageSize({width, height, ratio, resolution}) {
   return {
     zoomOffset,
     scale,
-    ...RATIO_OPTIONS.find(op => op.id === ratio).getSize(
+    ...EXPORT_IMG_RATIO_OPTIONS.find(op => op.id === ratio).getSize(
       scaledWidth,
       scaledHeight
     )
