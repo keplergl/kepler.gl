@@ -5044,7 +5044,7 @@ export const v1expectedFields_2 = [
   {name: 'Longitude', type: 'real', format: '', analyzerType: 'FLOAT'},
   {name: 'at_Latitude', type: 'real', format: '', analyzerType: 'FLOAT'},
   {name: 'at_Longitude', type: 'real', format: '', analyzerType: 'FLOAT'},
-  {name: 'metric', type: 'string', format: '', analyzerType: 'NUMBER'},
+  {name: 'metric', type: 'real', format: '', analyzerType: 'FLOAT'},
   {name: 'epoch', type: 'timestamp', format: 'x', analyzerType: 'TIME'},
   {name: 'epoch_ms', type: 'timestamp', format: 'X', analyzerType: 'TIME'},
   {name: 'meta_data', type: 'integer', format: '', analyzerType: 'INT'},
