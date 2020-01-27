@@ -130,8 +130,10 @@ const LinkRenderer = props => {
 // to https://github.com/uber-web/kepler.gl-data/blob/master/movement_pittsburgh/config.json
 function getURL(url) {
   return url
-    .replace('https://raw.githubusercontent.com', 'https://github.com')
-    .replace('master', 'blob/master');
+    ? url
+      .replace('https://raw.githubusercontent.com', 'https://github.com')
+      .replace('master', 'blob/master')
+    : url;
 }
 
 function SampleMapPanel(props) {

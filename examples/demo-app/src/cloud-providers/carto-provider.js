@@ -296,7 +296,9 @@ export default class CartoProvider {
     } else {
       console.error(`General error in CARTO provider`);
     }
-    throw {target: {status: 0, responseText: error.message}};
+
+    // Use 'CARTO' as error code in order to show provider in notifications
+    throw {target: {status: 'CARTO', responseText: error.message}};
   }
 
   _composeURL({mapId, owner, privateMap}) {
