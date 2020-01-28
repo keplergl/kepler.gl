@@ -65,6 +65,10 @@ export default class CartoProvider {
     }
   };
 
+  isEnabled() {
+    return this.clientId != null;
+  }
+
   isConnected() {
     return Boolean(this._carto.oauth.token);
   };
@@ -142,19 +146,25 @@ export default class CartoProvider {
    * from localStorage automatically
    */
   getAccessToken() {
+    let accessToken = null;
     try {
-      return this._carto.oauth.expired ? null : this._carto.oauth.token;
+      accessToken = this._carto.oauth.expired ? null : this._carto.oauth.token;
     } catch (error) {
-      this._manageErrors(error);
+      this._manageErrors(error, false);
     }
+
+    return accessToken;
   }
 
   getUserName(){
+    let username = null;
     try {
-      return this._carto.oauth.expired ? null : this._carto.username;
+      username = this._carto.oauth.expired ? null : this._carto.username;
     } catch (error) {
-      this._manageErrors(error);
+      this._manageErrors(error, false);
     }
+
+    return username;
   }
 
   /**
@@ -283,7 +293,7 @@ export default class CartoProvider {
     }
   }
 
-  _manageErrors(error) {
+  _manageErrors(error, throwException=true) {
     if (error && error.message) {
       switch (error.message) {
         case 'No client ID has been specified':
@@ -298,7 +308,9 @@ export default class CartoProvider {
     }
 
     // Use 'CARTO' as error code in order to show provider in notifications
-    throw {target: {status: 'CARTO', responseText: error.message}};
+    if (throwException) {
+      throw {target: {status: 'CARTO', responseText: error.message}};
+    }
   }
 
   _composeURL({mapId, owner, privateMap}) {

@@ -208,7 +208,7 @@ const LoadStorageMap = ({onLoadCloudMap, error}) => {
   const [visualizations, setVisualizations] = useState(null);
   const [selectedProvider, setSelectedProvider] = useState(null);
 
-  const providers = getCloudProviders();
+  const providers = getCloudProviders().filter((provider) => provider.hasPrivateStorage() && provider.isEnabled());
 
   const selectProvider = (provider) => {
     if (!!provider.getAccessToken()) {
@@ -238,9 +238,11 @@ const LoadStorageMap = ({onLoadCloudMap, error}) => {
 
   return (
     <div>
+      {!providers.length && (
+        <p>No storage providers available</p>
+      )}
       {!selectedProvider && (<StyledProviderSection>
         {providers.map(provider => (
-          provider.hasPrivateStorage() &&
           <ProviderTile
             key={provider.name}
             Icon={provider.icon}

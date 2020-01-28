@@ -76,6 +76,11 @@ export default class DropboxProvider {
     // TODO: Implement
   }
 
+  isEnabled() {
+    // TODO: Implement
+    return this.clientId != null;
+  }
+
   isConnected() {
     // TODO: Implement
   }
