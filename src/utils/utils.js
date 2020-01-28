@@ -56,7 +56,9 @@ export function isPlainObject(obj) {
  * @returns {string}
  */
 export function capitalizeFirstLetter(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
+  return typeof str === 'string'
+    ? str.charAt(0).toUpperCase() + str.slice(1)
+    : str;
 }
 
 /**
@@ -65,8 +67,8 @@ export function capitalizeFirstLetter(str) {
  * @param {string} str
  * @returns {string}
  */
-export function camelToTitle(str){
-  const breakWord = str.replace( /([A-Z])/g, " $1" );
+export function camelToTitle(str) {
+  const breakWord = str.replace(/([A-Z])/g, ' $1');
   return capitalizeFirstLetter(breakWord);
 }
 
@@ -76,7 +78,7 @@ export function camelToTitle(str){
  * @return {string} url
  */
 export function getHTMLMapModeTileUrl(mode) {
-  return `https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/map-${mode.toLowerCase()}-mode.png`
+  return `https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/map-${mode.toLowerCase()}-mode.png`;
 }
 
 /**
@@ -98,3 +100,53 @@ export function toArray(item) {
 
   return [item];
 }
+
+/**
+ * immutably insert value to an Array or Object
+ * @param {Array|Object} obj
+ * @param {Number|String} key
+ * @param {*} value
+ * @returns {Array|Object}
+ */
+const insertValue = (obj, key, value) => {
+  if (Array.isArray(obj) && typeof key === 'number') {
+    return [...obj.slice(0, key), value, ...obj.slice(key + 1, obj.length)];
+  }
+
+  return {...obj, [key]: value};
+};
+
+/**
+ * check if value is a loose object including a plain object, array, function
+ * @param {*} value
+ */
+export function isObject(value) {
+  return value !== null && (typeof value === 'object' || typeof value === 'function')
+}
+
+const setPath = ([key, ...next], value, obj) => {
+  // is Object allows js object, array and function
+  if (!isObject(obj)) {
+    return obj
+  }
+
+  if (next.length === 0) {
+    return insertValue(obj, key, value);
+  }
+
+  return insertValue(
+    obj,
+    key,
+    setPath(next, value, obj.hasOwnProperty(key) ? obj[key] : {})
+  );
+};
+
+/**
+ * Immutable version of _.set
+ * @param {Array<String|Number>} path
+ * @param {*} value
+ * @param {Object} obj
+ * @returns {Object}
+ */
+export const set = (path, value, obj) =>
+  obj === null ? obj : setPath(path, value, obj);

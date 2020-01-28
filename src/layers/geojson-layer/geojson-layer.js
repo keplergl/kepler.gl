@@ -18,13 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import memoize from 'lodash.memoize';
 import uniq from 'lodash.uniq';
 import {DATA_TYPES} from 'type-analyzer';
 
 import Layer, {colorMaker} from '../base-layer';
-import {GeoJsonLayer as DeckGLGeoJsonLayer} from 'deck.gl';
-
+import {GeoJsonLayer as DeckGLGeoJsonLayer} from '@deck.gl/layers';
 import {hexToRgb} from 'utils/color-utils';
 import {
   getGeojsonDataMaps,
@@ -73,7 +71,9 @@ export const geojsonVisConfigs = {
 
 export const geoJsonRequiredColumns = ['geojson'];
 export const featureAccessor = ({geojson}) => d => d[geojson.fieldIdx];
-export const featureResolver = ({geojson}) => geojson.fieldIdx;
+export const defaultElevation = 500;
+export const defaultLineWidth = 1;
+export const defaultRadius = 1;
 
 export default class GeoJsonLayer extends Layer {
   constructor(props) {
@@ -81,7 +81,7 @@ export default class GeoJsonLayer extends Layer {
 
     this.dataToFeature = [];
     this.registerVisConfig(geojsonVisConfigs);
-    this.getFeature = memoize(featureAccessor, featureResolver);
+    this.getPositionAccessor = () => featureAccessor(this.config.columns);
   }
 
   get type() {
@@ -197,9 +197,14 @@ export default class GeoJsonLayer extends Layer {
     return allData[object.properties.index];
   }
 
+  calculateDataAttribute({allData, filteredIndex}, getPosition) {
+    return filteredIndex
+      .map(i => this.dataToFeature[i])
+      .filter(d => d);
+  }
   // TODO: fix complexity
   /* eslint-disable complexity */
-  formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
+  formatLayerData(datasets, oldLayerData, opt = {}) {
     const {
       colorScale,
       colorField,
@@ -231,31 +236,8 @@ export default class GeoJsonLayer extends Layer {
       strokeColor
     } = visConfig;
 
-    const getFeature = this.getPositionAccessor(this.config.column);
-
-    // geojson feature are object, if doesn't exists
-    // create it and save to layer
-    if (!oldLayerData || oldLayerData.getFeature !== getFeature) {
-      this.updateLayerMeta(allData, getFeature);
-    }
-
-    let geojsonData;
-
-    if (
-      oldLayerData &&
-      oldLayerData.data &&
-      opt.sameData &&
-      oldLayerData.getFeature === getFeature
-    ) {
-      // no need to create a new array of data
-      // use updateTriggers to selectively re-calculate attributes
-      geojsonData = oldLayerData.data;
-    } else {
-      // filteredIndex is a reference of index in allData which can map to feature
-      geojsonData = filteredIndex
-        .map(i => this.dataToFeature[i])
-        .filter(d => d);
-    }
+    const {allData, gpuFilter} = datasets[this.config.dataId];
+    const {data} = this.updateData(datasets, oldLayerData);
 
     // fill color
     const cScale =
@@ -274,6 +256,7 @@ export default class GeoJsonLayer extends Layer {
         strokeColorDomain,
         strokeColorRange.colors.map(hexToRgb)
       );
+
     // calculate stroke scale - if stroked = true
     const sScale =
       sizeField &&
@@ -291,9 +274,16 @@ export default class GeoJsonLayer extends Layer {
       radiusField &&
       this.getVisChannelScale(radiusScale, radiusDomain, radiusRange);
 
+    // access feature properties from geojson sub layer
+    const getDataForGpuFilter = f => allData[f.properties.index];
+    const getIndexForGpuFilter = f => f.properties.index;
+
     return {
-      data: geojsonData,
-      getFeature,
+      data,
+      getFilterValue: gpuFilter.filterValueAccessor(
+        getIndexForGpuFilter,
+        getDataForGpuFilter
+      ),
       getFillColor: d =>
         cScale
           ? this.getEncodedChannelValue(
@@ -318,7 +308,7 @@ export default class GeoJsonLayer extends Layer {
               sizeField,
               0
             )
-          : d.properties.lineWidth || 1,
+          : d.properties.lineWidth || defaultLineWidth,
       getElevation: d =>
         eScale
           ? this.getEncodedChannelValue(
@@ -327,7 +317,7 @@ export default class GeoJsonLayer extends Layer {
               heightField,
               0
             )
-          : d.properties.elevation || 500,
+          : d.properties.elevation || defaultElevation,
       getRadius: d =>
         rScale
           ? this.getEncodedChannelValue(
@@ -336,7 +326,7 @@ export default class GeoJsonLayer extends Layer {
               radiusField,
               0
             )
-          : d.properties.radius || 1
+          : d.properties.radius || defaultRadius
     };
   }
   /* eslint-enable complexity */
@@ -347,7 +337,6 @@ export default class GeoJsonLayer extends Layer {
 
     // get bounds from features
     const bounds = getGeojsonBounds(this.dataToFeature);
-
     // if any of the feature has properties.radius set to be true
     const fixedRadius = Boolean(
       this.dataToFeature.find(d => d && d.properties && d.properties.radius)
@@ -379,14 +368,20 @@ export default class GeoJsonLayer extends Layer {
     return this;
   }
 
-  renderLayer({data, idx, objectHovered, mapState, interactionConfig}) {
+  renderLayer(opts) {
+    const {
+      data,
+      gpuFilter,
+      objectHovered,
+      mapState
+    } = opts;
+
     const {fixedRadius} = this.meta;
     const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius);
     const zoomFactor = this.getZoomFactor(mapState);
     const {visConfig} = this.config;
 
     const layerProps = {
-      // multiplier applied just so it being consistent with previously saved maps
       lineWidthScale: visConfig.thickness * zoomFactor * 8,
       elevationScale: visConfig.elevationScale,
       pointRadiusScale: radiusScale,
@@ -418,33 +413,24 @@ export default class GeoJsonLayer extends Layer {
       getRadius: {
         radiusField: this.config.radiusField,
         radiusRange: visConfig.radiusRange
-      }
+      },
+      getFilterValue: gpuFilter.filterValueUpdateTriggers
     };
+
+    const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
 
     return [
       new DeckGLGeoJsonLayer({
+        ...defaultLayerProps,
         ...layerProps,
-        id: this.id,
-        idx,
-        data: data.data,
-        getFillColor: data.getFillColor,
-        getLineColor: data.getLineColor,
-        getLineWidth: data.getLineWidth,
-        getRadius: data.getRadius,
-        getElevation: data.getElevation,
-        // highlight
-        pickable: true,
+        ...data,
         highlightColor: HIGHLIGH_COLOR_3D,
         autoHighlight: visConfig.enable3d,
-        // parameters
-        parameters: {
-          depthTest: Boolean(visConfig.enable3d || mapState.dragRotate)
-        },
-        opacity: visConfig.opacity,
         stroked: visConfig.stroked,
         filled: visConfig.filled,
         extruded: visConfig.enable3d,
         wireframe: visConfig.wireframe,
+        wrapLongitude: false,
         lineMiterLimit: 2,
         rounded: true,
         updateTriggers
@@ -452,17 +438,16 @@ export default class GeoJsonLayer extends Layer {
       ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d
         ? [
             new DeckGLGeoJsonLayer({
+              ...this.getDefaultHoverLayerProps(),
               ...layerProps,
-              id: `${this.id}-hovered`,
               data: [objectHovered.object],
               getLineWidth: data.getLineWidth,
               getRadius: data.getRadius,
               getElevation: data.getElevation,
               getLineColor: this.config.highlightColor,
               getFillColor: this.config.highlightColor,
-              updateTriggers,
+              // always draw outline
               stroked: true,
-              pickable: false,
               filled: false
             })
           ]

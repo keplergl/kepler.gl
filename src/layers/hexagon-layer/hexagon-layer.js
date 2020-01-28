@@ -24,7 +24,6 @@ import EnhancedHexagonLayer from 'deckgl-layers/hexagon-layer/enhanced-hexagon-l
 import {hexagonToPolygonGeo} from './hexagon-utils';
 import HexagonLayerIcon from './hexagon-layer-icon';
 import {clamp} from 'utils/data-utils';
-import {HIGHLIGH_COLOR_3D} from 'constants/default-settings';
 
 export const hexagonVisConfigs = {
   opacity: 'opacity',
@@ -61,64 +60,30 @@ export default class HexagonLayer extends AggregationLayer {
     return HexagonLayerIcon;
   }
 
-  renderLayer({
-    data,
-    idx,
-    objectHovered,
-    mapState,
-    interaction,
-    layerCallbacks,
-    layerInteraction
-  }) {
+  renderLayer(opts) {
+    const {
+      data,
+      objectHovered,
+      mapState
+    } = opts;
     const zoomFactor = this.getZoomFactor(mapState);
-    const eleZoomFactor = this.getElevationZoomFactor(mapState);
     const {visConfig} = this.config;
     const radius = visConfig.worldUnitSize * 1000;
 
     return [
       new EnhancedHexagonLayer({
+        ...this.getDefaultAggregationLayerProp(opts),
         ...data,
-        ...layerInteraction,
         wrapLongitude: false,
-        id: this.id,
-        idx,
-
-        // highlight
-        autoHighlight: visConfig.enable3d,
-        highlightColor: HIGHLIGH_COLOR_3D,
-
-        radius,
-        coverage: visConfig.coverage,
-
-        // color
-        colorRange: this.getColorRange(visConfig.colorRange),
-        colorScale: this.config.colorScale,
-        opacity: visConfig.opacity,
-        upperPercentile: visConfig.percentile[1],
-        lowerPercentile: visConfig.percentile[0],
-
-        // parameters
-        parameters: {depthTest: Boolean(visConfig.enable3d || mapState.dragRotate)},
-
-        // elevation
-        extruded: visConfig.enable3d,
-        elevationScale: visConfig.elevationScale * eleZoomFactor,
-        elevationLowerPercentile: visConfig.elevationPercentile[0],
-        elevationUpperPercentile: visConfig.elevationPercentile[1],
-
-        // render
-        pickable: true,
-
-        // callbacks
-        onSetColorDomain: layerCallbacks.onSetLayerDomain
+        radius
       }),
 
       // render an outline of each hexagon if not extruded
       ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d
         ? [
             new GeoJsonLayer({
-              ...layerInteraction,
-              id: `${this.id}-hovered`,
+              ...this.getDefaultAggregationLayerProp(),
+              wrapLongitude: false,
               data: [
                 hexagonToPolygonGeo(
                   objectHovered,

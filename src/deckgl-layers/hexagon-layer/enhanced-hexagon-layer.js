@@ -18,38 +18,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {HexagonLayer} from 'deck.gl';
-import {pointToHexbin} from './hexagon-aggregator';
+import {HexagonLayer} from '@deck.gl/aggregation-layers';
+import CPUAggregator, {getAggregatedData} from '../layer-utils/cpu-aggregator';
 
-import {getColorValueDomain, getColorScaleFunction} from '../layer-utils/utils';
-
-const defaultProps = {
-  ...HexagonLayer.defaultProps,
-  hexagonAggregator: pointToHexbin,
-  colorScale: 'quantile'
+export const hexagonAggregation = {
+  key: 'position',
+  updateSteps: [
+    {
+      key: 'aggregate',
+      triggers: {
+        cellSize: {
+          prop: 'radius'
+        },
+        position: {
+          prop: 'getPosition',
+          updateTrigger: 'getPosition'
+        },
+        aggregator: {
+          prop: 'hexagonAggregator'
+        }
+      },
+      updater: getAggregatedData
+    }
+  ]
 };
 
-export default class EnhancedHexagonLayer extends HexagonLayer {
-  getDimensionUpdaters() {
-    const dimensionUpdaters = super.getDimensionUpdaters();
-    // add colorScale to dimension updates
-    dimensionUpdaters.getFillColor[1].triggers.push('colorScale');
-    dimensionUpdaters.getElevation[1].triggers.push('sizeScale');
-    return dimensionUpdaters;
-  }
+export default class ScaleEnhancedHexagonLayer extends HexagonLayer {
+  initializeState() {
+    const cpuAggregator = new CPUAggregator({
+      aggregation: hexagonAggregation
+    });
 
-  /*
-   * override default layer method to calculate color domain
-   * and scale function base on color scale type
-   */
-  getColorValueDomain() {
-    getColorValueDomain(this);
-  }
-
-  getColorScale() {
-    getColorScaleFunction(this);
+    this.state = {
+      cpuAggregator,
+      aggregatorState: cpuAggregator.state
+    };
   }
 }
 
-EnhancedHexagonLayer.layerName = 'EnhancedHexagonLayer';
-EnhancedHexagonLayer.defaultProps = defaultProps;
+ScaleEnhancedHexagonLayer.layerName = 'ScaleEnhancedHexagonLayer';

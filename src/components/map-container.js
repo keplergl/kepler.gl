@@ -36,12 +36,12 @@ import Editor from './editor/editor';
 // utils
 import {generateMapboxLayers, updateMapboxLayers} from 'layers/mapbox-utils';
 import {OVERLAY_TYPE} from 'layers/base-layer';
-import {onWebGLInitialized, setLayerBlending} from 'utils/gl-utils';
+import {setLayerBlending} from 'utils/gl-utils';
 import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 
 // default-settings
 import ThreeDBuildingLayer from 'deckgl-layers/3d-building-layer/3d-building-layer';
-import {FILTER_TYPES} from 'utils/filter-utils';
+import {FILTER_TYPES} from 'constants/default-settings';
 
 const MAP_STYLE = {
   container: {
@@ -108,6 +108,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       this.previousLayers = {
         // [layers.id]: mapboxLayerConfig
       };
+
+      this._deck = null;
     }
 
     componentWillUnmount() {
@@ -163,8 +165,6 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         colorDomain
       });
     };
-
-    _onWebGLInitialized = onWebGLInitialized;
 
     _handleMapToggleLayer = layerId => {
       const {index: mapIndex = 0, visStateActions} = this.props;
@@ -238,6 +238,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         objectInfo &&
         objectInfo.picked
       ) {
+
         // if anything hovered
         const {object, layer: overlay} = objectInfo;
 
@@ -300,22 +301,18 @@ export default function MapContainerFactory(MapPopover, MapControl) {
 
     _renderLayer = (overlays, idx) => {
       const {
+        datasets,
         layers,
         layerData,
         hoverInfo,
         clicked,
         mapState,
         interactionConfig,
-        mousePos,
         animationConfig
       } = this.props;
       const layer = layers[idx];
       const data = layerData[idx];
-
-      const layerInteraction = {
-        mousePosition: mousePos.mousePosition,
-        wrapLongitude: true
-      };
+      const {gpuFilter} = datasets[layer.config.dataId] || {};
 
       const objectHovered = clicked || hoverInfo;
       const layerCallbacks = {
@@ -325,13 +322,13 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       // Layer is Layer class
       const layerOverlay = layer.renderLayer({
         data,
+        gpuFilter,
         idx,
-        layerInteraction,
-        objectHovered,
-        mapState,
         interactionConfig,
         layerCallbacks,
-        animationConfig
+        mapState,
+        animationConfig,
+        objectHovered
       });
 
       return overlays.concat(layerOverlay || []);
@@ -378,10 +375,14 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           viewState={mapState}
           id="default-deckgl-overlay"
           layers={deckGlLayers}
-          onWebGLInitialized={this._onWebGLInitialized}
           onBeforeRender={this._onBeforeRender}
           onHover={visStateActions.onLayerHover}
           onClick={visStateActions.onLayerClick}
+          ref={comp => {
+            if (comp && comp.deck && !this._deck) {
+              this._deck = comp.deck;
+            }
+          }}
         />
       );
     }

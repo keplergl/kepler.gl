@@ -29,7 +29,8 @@ import testData, {
   testFields,
   testAllData,
   wktCsv,
-  wktCsvFields
+  wktCsvFields,
+  wktCsvRows
 } from 'test/fixtures/test-csv-data';
 import {
   geojsonData,
@@ -192,13 +193,13 @@ test('Processor -> processCsvData -> with nulls', t => {
 });
 
 test('Processor -> processCsv.wkt', t => {
-  const {fields} = processCsvData(wktCsv);
+  const {fields, rows} = processCsvData(wktCsv);
 
-  t.deepEqual(
-    fields,
-    wktCsvFields,
-    'should find geometry fields as type:geojson'
-  );
+  t.deepEqual(fields, wktCsvFields, 'should find geometry fields as type:geojson');
+  rows.forEach((r, i) => {
+    t.deepEqual(r, wktCsvRows[i], `should process wkt rows[${i}] correctly`);
+  });
+  t.deepEqual(rows, wktCsvRows, 'should process wkt rows correctly');
 
   t.end();
 });
@@ -206,9 +207,15 @@ test('Processor -> processCsv.wkt', t => {
 test('Processor => processGeojson', t => {
   const {fields, rows} = processGeojson(geojsonData);
 
-  t.deepEqual(fields, geojsonFields, 'should format geojson fields');
-  t.deepEqual(rows, geojsonRows, 'should format geojson rows');
+  t.equal(fields.length, geojsonFields.length, 'should have same field length');
+  fields.forEach((f, i) => {
+    t.deepEqual(f, geojsonFields[i], 'should format geojson fields');
+  })
 
+  t.equal(rows.length, geojsonRows.length, 'should have same row length');
+  rows.forEach((r, i) => {
+    t.deepEqual(r, geojsonRows[i], 'should format correct geojson rows');
+  });
   t.end();
 });
 

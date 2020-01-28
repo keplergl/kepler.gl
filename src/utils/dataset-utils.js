@@ -23,6 +23,8 @@ import uniq from 'lodash.uniq';
 import {TRIP_POINT_FIELDS} from 'constants/default-settings';
 import {generateHashId} from './utils';
 import {validateInputData} from 'processors/data-processor';
+import {getGpuFilterProps} from 'utils/gpu-filter-utils';
+
 // apply a color for each dataset
 // to use as label colors
 const datasetColors = [
@@ -92,18 +94,19 @@ export function createNewDataEntry({info = {}, data}, datasets = {}) {
     tableFieldIndex: i + 1
   }));
 
+  const allIndexes = allData.map((_, i) => i);
   return {
     [dataId]: {
       ...datasetInfo,
       color: datasetInfo.color || getNewDatasetColor(datasets),
       id: dataId,
       allData,
-      // TODO: no need to make a copy anymore, only save fieldedIndex
-      data: allData.slice(),
-      filteredIndex: allData.map((_, i) => i),
-      filteredIndexForDomain: allData.map((_, i) => i),
+      allIndexes,
+      filteredIndex: allIndexes,
+      filteredIndexForDomain: allIndexes,
       fieldPairs: findPointFieldPairs(fields),
-      fields
+      fields,
+      gpuFilter: getGpuFilterProps([], dataId, fields)
     }
   };
 }

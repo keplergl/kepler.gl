@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {ColumnLayer} from 'deck.gl';
+import {ColumnLayer} from '@deck.gl/layers';
 import {editShader} from 'deckgl-layers/layer-utils/shader-utils';
 
 function addInstanceCoverage(vs) {
@@ -38,8 +38,8 @@ function addInstanceCoverage(vs) {
   );
 }
 
-// TODO: export all dekc.gl layers from kepler.gl
-export default class EnhancedColumnLayer extends ColumnLayer {
+// TODO: export all deck.gl layers from kepler.gl
+class EnhancedColumnLayer extends ColumnLayer {
 
   getShaders() {
     const shaders = super.getShaders();
@@ -60,3 +60,5 @@ export default class EnhancedColumnLayer extends ColumnLayer {
 }
 
 EnhancedColumnLayer.layerName = 'EnhancedColumnLayer';
+
+export default EnhancedColumnLayer;

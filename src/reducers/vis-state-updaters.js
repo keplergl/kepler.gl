@@ -22,7 +22,6 @@ import {console as Console} from 'global/window';
 import Task, {disableStackCapturing, withTask} from 'react-palm/tasks';
 import cloneDeep from 'lodash.clonedeep';
 import uniq from 'lodash.uniq';
-import {toArray} from 'utils/utils';
 import get from 'lodash.get';
 
 // Tasks
@@ -40,14 +39,21 @@ import {
   applyFilterFieldName,
   applyFiltersToDatasets,
   generatePolygonFilter,
+  filterDatasetCPU,
   getDefaultFilter,
   getFilterPlot,
   getDefaultFilterPlotType,
   isInRange,
   getFilterIdInFeature,
-  featureToFilterValue
+  featureToFilterValue,
+  updateFilterDataId
 } from 'utils/filter-utils';
+import {
+  setFilterGpuMode,
+  assignGpuChannel
+} from 'utils/gpu-filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
+import {set, toArray} from 'utils/utils';
 
 import {
   findDefaultLayer,
@@ -254,10 +260,7 @@ export function layerConfigChangeUpdater(state, action) {
     const updateLayerDataResult = calculateLayerData(
       newLayer,
       state,
-      oldLayerData,
-      {
-        sameData: true
-      }
+      oldLayerData
     );
 
     layerData = updateLayerDataResult.layerData;
@@ -378,11 +381,11 @@ export function layerTypeChangeUpdater(state, action) {
 
   newLayer.assignConfigToLayer(oldLayer.config, oldLayer.visConfigSettings);
 
-  if (newLayer.config.dataId) {
-    const dataset = state.datasets[newLayer.config.dataId];
-    newLayer.updateLayerDomain(dataset);
-  }
-
+  // if (newLayer.config.dataId) {
+  //   const dataset = state.datasets[newLayer.config.dataId];
+  //   newLayer.updateLayerDomain(dataset);
+  // }
+  newLayer.updateLayerDomain(state.datasets);
   const {layerData, layer} = calculateLayerData(newLayer, state);
   let newState = updateStateWithLayerAndData(state, {layerData, layer, idx});
 
@@ -433,9 +436,7 @@ export function layerVisualChannelChangeUpdater(state, action) {
   newLayer.updateLayerVisualChannel(dataset, channel);
 
   const oldLayerData = state.layerData[idx];
-  const {layerData, layer} = calculateLayerData(newLayer, state, oldLayerData, {
-    sameData: true
-  });
+  const {layerData, layer} = calculateLayerData(newLayer, state, oldLayerData);
 
   return updateStateWithLayerAndData(state, {layerData, layer, idx});
 }
@@ -466,10 +467,7 @@ export function layerVisConfigChangeUpdater(state, action) {
     const {layerData, layer} = calculateLayerData(
       newLayer,
       state,
-      oldLayerData,
-      {
-        sameData: true
-      }
+      oldLayerData
     );
     return updateStateWithLayerAndData(state, {layerData, layer, idx});
   }
@@ -532,12 +530,15 @@ export function interactionConfigChangeUpdater(state, action) {
  * @public
  */
 export function setFilterUpdater(state, action) {
-  const {idx, prop, value, valueIndex = 0} = action;
+  const {
+    idx,
+    prop,
+    value,
+    valueIndex = 0
+  } = action;
+
+  let newFilter = set([prop], value, state.filters[idx]);
   let newState = state;
-  let newFilter = {
-    ...state.filters[idx],
-    [prop]: value
-  };
 
   const {dataId} = newFilter;
 
@@ -550,7 +551,7 @@ export function setFilterUpdater(state, action) {
     // 2. Add a new dataset id
     case FILTER_UPDATER_PROPS.dataId:
       // if trying to update filter dataId. create an empty new filter
-      newFilter = getDefaultFilter(dataId);
+      newFilter = updateFilterDataId(dataId);
       break;
 
     case FILTER_UPDATER_PROPS.name:
@@ -574,13 +575,12 @@ export function setFilterUpdater(state, action) {
 
       newFilter = updatedFilter;
 
-      newState = {
-        ...state,
-        datasets: {
-          ...state.datasets,
-          [datasetId]: newDataset
-        }
-      };
+      if (newFilter.gpu) {
+        newFilter = setFilterGpuMode(newFilter, state.filters);
+        newFilter = assignGpuChannel(newFilter, state.filters);
+      }
+
+      newState = set(['datasets', datasetId], newDataset, state);
 
       // only filter the current dataset
       break;
@@ -617,10 +617,7 @@ export function setFilterUpdater(state, action) {
   }
 
   // save new filters to newState
-  newState = {
-    ...newState,
-    filters: Object.assign([...state.filters], {[idx]: newFilter})
-  };
+  newState = set(['filters', idx], newFilter, newState);
 
   // if we are currently setting a prop that only requires to filter the current
   // dataset we will pass only the current dataset to applyFiltersToDatasets and
@@ -630,16 +627,14 @@ export function setFilterUpdater(state, action) {
     : datasetIds;
 
   // filter data
-  newState = {
-    ...newState,
-    datasets: applyFiltersToDatasets(
-      datasetIdsToFilter,
-      newState.datasets,
-      newState.filters,
-      newState.layers
-    )
-  };
+  const filteredDatasets = applyFiltersToDatasets(
+    datasetIdsToFilter,
+    newState.datasets,
+    newState.filters,
+    newState.layers
+  );
 
+  newState = set(['datasets'], filteredDatasets, newState);
   // dataId is an array
   // pass only the dataset we need to update
   newState = updateAllLayerDomainData(newState, datasetIdsToFilter, newFilter);
@@ -849,15 +844,15 @@ export const removeFilterUpdater = (state, action) => {
     ...state.filters.slice(idx + 1, state.filters.length)
   ];
 
-  const newState = {
-    ...state,
-    datasets: applyFiltersToDatasets(dataId, state.datasets, newFilters, state.layers),
-    filters: newFilters,
-    editor: getFilterIdInFeature(state.editor.selectedFeature) === id ? {
-      ...state.editor,
-      selectedFeature: null
-    } : state.editor
-  };
+  const filteredDatasets = applyFiltersToDatasets(dataId, state.datasets, newFilters, state.layers);
+  const newEditor = getFilterIdInFeature(state.editor.selectedFeature) === id ? {
+    ...state.editor,
+    selectedFeature: null
+  } : state.editor;
+
+  let newState = set(['filters'], newFilters, state);
+  newState = set(['datasets'], filteredDatasets, newState);
+  newState = set(['editor'], newEditor, newState);
 
   return updateAllLayerDomainData(newState, dataId);
 };
@@ -1359,6 +1354,7 @@ function closeSpecificMapAtIndex(state, action) {
 export const loadFilesUpdater = (state, action) => {
   const {files} = action;
   const filesToLoad = files.map(fileBlob => processFileToLoad(fileBlob));
+
   // reader -> parser -> augment -> receiveVisData
   const loadFileTasks = [
     Task.all(filesToLoad.map(LOAD_FILE_TASK)).bimap(results => {
@@ -1398,6 +1394,23 @@ export const loadFilesErrUpdater = (state, {error}) => ({
 });
 
 /**
+ * When select dataset for export, apply cpu filter to selected dataset
+ * @memberof visStateUpdaters
+ * @param {Object} state `visState`
+ * @param {Object} action
+ * @param {string} action.dataId dataset id
+ * @returns {Object} nextState
+ * @public
+ */
+export const applyCPUFilterUpdater = (state, {dataId}) => {
+
+  // apply cpuFilter
+  const dataIds = toArray(dataId);
+
+  return dataIds.reduce((accu, id) => filterDatasetCPU(accu, id), state);
+};
+
+/**
  * Helper function to update All layer domain and layer data of state
  * @memberof visStateUpdaters
  * @param {Object} state `visState`
@@ -1435,46 +1448,36 @@ export function addDefaultLayers(state, datasets) {
  */
 export function addDefaultTooltips(state, dataset) {
   const tooltipFields = findFieldsToShow(dataset);
-
-  return {
-    ...state,
-    interactionConfig: {
-      ...state.interactionConfig,
-      tooltip: {
-        ...state.interactionConfig.tooltip,
-        config: {
-          // find default fields to show in tooltip
-          fieldsToShow: {
-            ...state.interactionConfig.tooltip.config.fieldsToShow,
-            ...tooltipFields
-          }
-        }
-      }
-    }
+  const merged = {
+    ...state.interactionConfig.tooltip.config.fieldsToShow,
+    ...tooltipFields
   };
+
+  return set(['interactionConfig', 'tooltip', 'config', 'fieldsToShow'], merged, state);
 }
 
 /**
  * Helper function to update layer domains for an array of datasets
  * @param {Object} state
  * @param {Array|Array<string>} dataId dataset id or array of dataset ids
- * @param {Object} newFilter if is called by setFilter, the filter that has changed
+ * @param {Object} updatedFilter if is called by setFilter, the filter that has updated
  * @returns {Object} nextState
  */
-export function updateAllLayerDomainData(state, dataId, newFilter) {
+export function updateAllLayerDomainData(state, dataId, updatedFilter) {
   const dataIds = typeof dataId === 'string' ? [dataId] : dataId;
   const newLayers = [];
   const newLayerData = [];
 
   state.layers.forEach((oldLayer, i) => {
     if (oldLayer.config.dataId && dataIds.includes(oldLayer.config.dataId)) {
+
       // No need to recalculate layer domain if filter has fixed domain
       const newLayer =
-        newFilter && newFilter.fixedDomain
+        updatedFilter && updatedFilter.fixedDomain
           ? oldLayer
           : oldLayer.updateLayerDomain(
-              state.datasets[oldLayer.config.dataId],
-              newFilter
+              state.datasets,
+              updatedFilter
             );
 
       const {layerData, layer} = calculateLayerData(

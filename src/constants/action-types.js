@@ -95,6 +95,7 @@ const ActionTypes = keyMirror({
   LOAD_FILES_ERR: null,
   LAYER_COLOR_UI_CHANGE: null,
   TOGGLE_FEATURE_LAYER: null,
+  APPLY_CPU_FILTER: null,
 
   // mapState
   UPDATE_MAP: null,

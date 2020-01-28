@@ -34,7 +34,6 @@ import {
 
 import coreReducer from 'reducers/core';
 import {keplerGlInit} from 'actions/actions';
-import {ERROR_MSG} from 'components/injector';
 import {visStateLens, uiStateLens, mapStateLens, mapStyleLens} from 'reducers';
 
 const mockStore = configureStore();

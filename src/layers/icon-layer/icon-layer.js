@@ -18,15 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import Layer from '../base-layer';
-import memoize from 'lodash.memoize';
 import window from 'global/window';
+import {BrushingExtension} from '@deck.gl/extensions';
 
 import {hexToRgb} from 'utils/color-utils';
 import SvgIconLayer from 'deckgl-layers/svg-icon-layer/svg-icon-layer';
 import IconLayerIcon from './icon-layer-icon';
 import {ICON_FIELDS, CLOUDFRONT} from 'constants/default-settings';
 import IconInfoModalFactory from './icon-info-modal';
+import Layer from '../base-layer';
+
+const brushingExtension = new BrushingExtension();
 
 export const SVG_ICON_URL = `${CLOUDFRONT}/icons/svg-icons.json`;
 
@@ -34,11 +36,7 @@ export const iconPosAccessor = ({lat, lng}) => d => [
   d.data[lng.fieldIdx],
   d.data[lat.fieldIdx]
 ];
-
-export const iconPosResolver = ({lat, lng}) => `${lat.fieldIdx}-${lng.fieldIdx}`;
-
 export const iconAccessor = ({icon}) => d => d.data[icon.fieldIdx];
-export const iconResolver = ({icon}) => icon.fieldIdx;
 
 export const iconRequiredColumns = ['lat', 'lng', 'icon'];
 
@@ -50,16 +48,26 @@ export const pointVisConfigs = {
   radiusRange: 'radiusRange'
 };
 
+function flatterIconPositions(icon) {
+  return icon.mesh.cells.reduce((prev, cell) => {
+    cell.forEach(p => {
+      Array.prototype.push.apply(prev, icon.mesh.positions[p]);
+    });
+    return prev;
+  }, []);
+}
+
 export default class IconLayer extends Layer {
-  constructor(props) {
+  constructor(props = {}) {
     super(props);
 
     this.registerVisConfig(pointVisConfigs);
-    this.getPosition = memoize(iconPosAccessor, iconPosResolver);
-    this.getIcon = memoize(iconAccessor, iconResolver);
+    this.getPositionAccessor = () => iconPosAccessor(this.config.columns);
+    this.getIconAccessor = () => iconAccessor(this.config.columns);
 
     // prepare layer info modal
     this._layerInfoModal = IconInfoModalFactory();
+    this.iconGeometry = props.iconGeometry || null;
     this.getSvgIcons();
   }
 
@@ -101,7 +109,7 @@ export default class IconLayer extends Layer {
     };
   }
 
-  async getSvgIcons() {
+  getSvgIcons() {
     const fetchConfig = {
       method: 'GET',
       mode: 'cors',
@@ -109,22 +117,21 @@ export default class IconLayer extends Layer {
     };
 
     if (window.fetch) {
-      const response = await window.fetch(SVG_ICON_URL, fetchConfig);
-      const {svgIcons} = await response.json();
 
-      this.iconGeometry = svgIcons.reduce(
-        (accu, curr) => ({
-          ...accu,
-          [curr.id]: curr.mesh.cells.reduce((prev, cell) => {
-            cell.forEach(p => {
-              Array.prototype.push.apply(prev, curr.mesh.positions[p]);
-            });
-            return prev;
-          }, [])
-        }),
-        {}
-      );
-      this._layerInfoModal = IconInfoModalFactory(svgIcons);
+      window.fetch(SVG_ICON_URL, fetchConfig)
+        .then(response => response.json())
+        .then((parsed = {}) => {
+          const {svgIcons = []} = parsed;
+          this.iconGeometry = svgIcons.reduce(
+            (accu, curr) => ({
+              ...accu,
+              [curr.id]: flatterIconPositions(curr)
+            }),
+            {}
+          );
+
+          this._layerInfoModal = IconInfoModalFactory(svgIcons);
+      });
     }
   }
 
@@ -165,20 +172,44 @@ export default class IconLayer extends Layer {
     return {props};
   }
 
-  // TODO: fix complexity
-  /* eslint-disable complexity */
-  formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
+  calculateDataAttribute({allData, filteredIndex}, getPosition) {
+    const getIcon = this.getIconAccessor();
+    const data = [];
+
+    for (let i = 0; i < filteredIndex.length; i++) {
+      const index = filteredIndex[i];
+      const pos = getPosition({data: allData[index]});
+      const icon = getIcon({data: allData[index]});
+
+      // if doesn't have point lat or lng, do not add the point
+      // deck.gl can't handle position = null
+      if (pos.every(Number.isFinite) && typeof icon === 'string') {
+        data.push({
+          index,
+          icon,
+          data: allData[index]
+        });
+      }
+    }
+
+    return data;
+  }
+
+  formatLayerData(datasets, oldLayerData, opt = {}) {
     const {
       colorScale,
       colorDomain,
       colorField,
       color,
-      columns,
       sizeField,
       sizeScale,
       sizeDomain,
       visConfig: {radiusRange, colorRange}
     } = this.config;
+    const getPosition = this.getPositionAccessor();
+
+    const {gpuFilter} = datasets[this.config.dataId];
+    const {data} = this.updateData(datasets, oldLayerData);
 
     // point color
     const cScale =
@@ -193,126 +224,82 @@ export default class IconLayer extends Layer {
     const rScale =
       sizeField && this.getVisChannelScale(sizeScale, sizeDomain, radiusRange, 0);
 
-    const getPosition = this.getPosition(columns);
-    const getIcon = this.getIcon(columns);
+    const getRadius = rScale ? d =>
+      this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
 
-    if (!oldLayerData || oldLayerData.getPosition !== getPosition) {
-      this.updateLayerMeta(allData, getPosition);
-    }
-
-    let data;
-    if (
-      oldLayerData &&
-      oldLayerData.data &&
-      opt.sameData &&
-      oldLayerData.getPosition === getPosition &&
-      oldLayerData.getIcon === getIcon
-    ) {
-      data = oldLayerData.data;
-    } else {
-      data = filteredIndex.reduce((accu, index) => {
-        const pos = getPosition({data: allData[index]});
-        const icon = getIcon({data: allData[index]});
-
-        // if doesn't have point lat or lng, do not add the point
-        // deck.gl can't handle position = null
-        if (!pos.every(Number.isFinite) || typeof icon !== 'string') {
-          return accu;
-        }
-
-        accu.push({
-          index,
-          icon,
-          data: allData[index]
-        });
-
-        return accu;
-      }, []);
-    }
-
-    const getRadius = rScale
-      ? d => this.getEncodedChannelValue(rScale, d.data, sizeField, 0)
-      : 1;
-
-    const getColor = cScale
+    const getFillColor = cScale
       ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
       : color;
 
     return {
       data,
       getPosition,
-      getIcon,
-      getColor,
+      getFillColor,
+      getFilterValue: gpuFilter.filterValueAccessor(),
       getRadius
     };
   }
-  /* eslint-enable complexity */
 
   updateLayerMeta(allData, getPosition) {
     const bounds = this.getPointsBounds(allData, d => getPosition({data: d}));
     this.updateMeta({bounds});
   }
 
-  renderLayer({
-    data,
-    idx,
-    objectHovered,
-    mapState,
-    interactionConfig,
-    layerInteraction
-  }) {
+  renderLayer(opts) {
+    const {
+      data,
+      gpuFilter,
+      objectHovered,
+      mapState,
+      interactionConfig
+    } = opts;
+
     const layerProps = {
-      radiusMinPixels: 1,
       radiusScale: this.getRadiusScaleByZoom(mapState),
       ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
     };
+
+    const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
+    const brushingProps = this.getBrushingExtensionProps(interactionConfig);
 
     return !this.iconGeometry
       ? []
       : [
           new SvgIconLayer({
+            ...defaultLayerProps,
+            ...brushingProps,
             ...layerProps,
             ...data,
-            ...layerInteraction,
-            id: this.id,
-            idx,
-            opacity: this.config.visConfig.opacity,
             getIconGeometry: id => this.iconGeometry[id],
-
-            // picking
-            autoHighlight: true,
-            highlightColor: this.config.highlightColor,
-            pickable: true,
-
-            // parameters
-            parameters: {depthTest: mapState.dragRotate},
 
             // update triggers
             updateTriggers: {
+              getFilterValue: gpuFilter.filterValueUpdateTriggers,
               getRadius: {
                 sizeField: this.config.colorField,
                 radiusRange: this.config.visConfig.radiusRange,
                 sizeScale: this.config.sizeScale
               },
-              getColor: {
+              getFillColor: {
                 color: this.config.color,
                 colorField: this.config.colorField,
                 colorRange: this.config.visConfig.colorRange,
                 colorScale: this.config.colorScale
               }
-            }
+            },
+            extensions: [...defaultLayerProps.extensions, brushingExtension]
           }),
+
           ...(this.isLayerHovered(objectHovered)
             ? [
                 new SvgIconLayer({
+                  ...this.getDefaultHoverLayerProps(),
                   ...layerProps,
-                  id: `${this.id}-hovered`,
                   data: [objectHovered.object],
                   getPosition: data.getPosition,
                   getRadius: data.getRadius,
-                  getColor: this.config.highlightColor,
-                  getIconGeometry: id => this.iconGeometry[id],
-                  pickable: false
+                  getFillColor: this.config.highlightColor,
+                  getIconGeometry: id => this.iconGeometry[id]
                 })
               ]
             : [])

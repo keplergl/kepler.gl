@@ -78,6 +78,7 @@ function FieldPanelWithFieldSelectFactory(
           {panelActions && panelActions.map(panelAction => (
             <PanelHeaderAction
               id={panelAction.id}
+              key={panelAction.id}
               onClick={panelAction.onClick}
               tooltip={panelAction.tooltip}
               IconComponent={panelAction.iconComponent}

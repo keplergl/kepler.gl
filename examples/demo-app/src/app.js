@@ -125,6 +125,7 @@ class App extends Component {
     // }
     // load sample data
     // this._loadSampleData();
+
     // Notifications
     // this._loadMockNotifications();
   }
@@ -169,8 +170,8 @@ class App extends Component {
     // this._loadGeojsonData();
     // this._loadTripGeoJson();
     // this._loadIconData();
-    // this._loadGeojsonData();
     // this._loadH3HexagonData();
+    // this._loadScenegraphLayer();
   }
 
   _loadPointData() {
@@ -188,6 +189,38 @@ class App extends Component {
           readOnly: false
         },
         config: sampleTripDataConfig
+      })
+    );
+  }
+
+  _loadScenegraphLayer() {
+    this.props.dispatch(
+      addDataToMap({
+        datasets: {
+          info: {
+            label: 'Sample Scenegraph Ducks',
+            id: 'test_trip_data'
+          },
+          data: processCsvData(testCsvData)
+        },
+        config: {
+          version: 'v1',
+          config: {
+            visState: {
+              layers: [{
+                type: '3D',
+                config: {
+                  dataId: 'test_trip_data',
+                  columns: {
+                    lat: 'gps_data.lat',
+                    lng: 'gps_data.lng'
+                  },
+                  isVisible: true
+                }
+              }]
+            }
+          }
+        }
       })
     );
   }

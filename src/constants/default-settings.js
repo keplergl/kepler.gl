@@ -247,6 +247,14 @@ export const TRIP_ARC_FIELDS = {
   lng1: 'dropoff'
 };
 
+export const FILTER_TYPES = keyMirror({
+  range: null,
+  select: null,
+  timeRange: null,
+  multiSelect: null,
+  polygon: null
+});
+
 export const SCALE_TYPES = keyMirror({
   ordinal: null,
   quantile: null,
@@ -725,3 +733,8 @@ export const EDITOR_AVAILABLE_LAYERS = [
   LAYER_TYPES.arc,
   LAYER_TYPES.line
 ];
+// GPU Filtering
+/**
+ * Max number of filter value buffers that deck.gl provides
+ */
+export const MAX_GPU_FILTERS = 4;

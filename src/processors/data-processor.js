@@ -52,7 +52,7 @@ export const ACCEPTED_ANALYZER_TYPES = [
 ];
 
 // if any of these value occurs in csv, parse it to null;
-const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN', '\N'];
+const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN', '/N'];
 
 const IGNORE_DATA_TYPES = Object.keys(AnalyzerDATA_TYPES).filter(
   type => !ACCEPTED_ANALYZER_TYPES.includes(type)
@@ -475,19 +475,19 @@ export function processGeojson(rawData) {
   }
 
   // getting all feature fields
-  const allData = normalizedGeojson.features.reduce((accu, f, i) => {
+  const allDataRows = [];
+  for (let i = 0; i < normalizedGeojson.features.length; i++) {
+    const f = normalizedGeojson.features[i];
     if (f.geometry) {
-      accu.push({
+      allDataRows.push({
         // add feature to _geojson field
         _geojson: f,
         ...(f.properties || {})
       });
     }
-    return accu;
-  }, []);
-
+  }
   // get all the field
-  const fields = allData.reduce((prev, curr) => {
+  const fields = allDataRows.reduce((prev, curr) => {
     Object.keys(curr).forEach(key => {
       if (!prev.includes(key)) {
         prev.push(key);
@@ -497,16 +497,16 @@ export function processGeojson(rawData) {
   }, []);
 
   // make sure each feature has exact same fields
-  allData.forEach(d => {
+  allDataRows.forEach(d => {
     fields.forEach(f => {
       if (!(f in d)) {
         d[f] = null;
+        d._geojson.properties[f] = null;
       }
     });
   });
 
-  const processRow = processRowObject(allData);
-  return processRow;
+  return processRowObject(allDataRows);
 }
 
 /**

@@ -919,7 +919,8 @@ export const mergedFilters = [
     yAxis: null,
     interval: null,
     speed: 1,
-    fixedDomain: false
+    fixedDomain: false,
+    gpu: false
   },
   {
     dataId: ['9h10t7fyb'],
@@ -951,7 +952,9 @@ export const mergedFilters = [
       1453770540000
     ],
     fieldType: 'timestamp',
-    fixedDomain: true
+    fixedDomain: true,
+    gpu: true,
+    gpuChannel: [0]
   },
   {
     dataId: ['9h10t7fyb'],
@@ -969,7 +972,8 @@ export const mergedFilters = [
     yAxis: null,
     interval: null,
     speed: 1,
-    fixedDomain: false
+    fixedDomain: false,
+    gpu: false
   },
   {
     dataId: ['9h10t7fyb'],
@@ -991,7 +995,9 @@ export const mergedFilters = [
     speed: 1,
     fieldType: 'integer',
     typeOptions: ['range'],
-    fixedDomain: false
+    fixedDomain: false,
+    gpu: true,
+    gpuChannel: [1]
   },
   {
     dataId: ['v79816te8'],
@@ -1013,7 +1019,9 @@ export const mergedFilters = [
     speed: 1,
     fieldType: 'integer',
     typeOptions: ['range'],
-    fixedDomain: false
+    fixedDomain: false,
+    gpu: true,
+    gpuChannel: [0]
   }
 ];
 
@@ -1182,7 +1190,7 @@ mergedLayer2.config = {
     analyzerType: 'INT'
   },
   sizeDomain: [78, 694],
-  sizeScale: 'linear',
+  sizeScale: 'sqrt',
   textLabel: [DEFAULT_TEXT_LABEL],
   colorUI: {
     color: DEFAULT_COLOR_UI,

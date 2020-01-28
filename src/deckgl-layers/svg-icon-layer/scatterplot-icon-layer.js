@@ -18,15 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {ScatterplotLayer} from 'deck.gl';
+import {ScatterplotLayer} from '@deck.gl/layers';
 import {Geometry, Model} from 'luma.gl';
 import GL from '@luma.gl/constants';
 
+const DEFAULT_POS = [-1, -1, 0, -1, 1, 0, 1, 1, 0, 1, -1, 0];
 export default class ScatterplotIconLayer extends ScatterplotLayer {
   _getModel(gl) {
     // use default scatterplot shaders
     const shaders = this.getShaders();
-    const defaultPos = [-1, -1, 0, -1, 1, 0, 1, 1, 0, 1, -1, 0];
+
     const {iconGeometry} = this.props;
 
     const geometry = iconGeometry
@@ -39,7 +40,7 @@ export default class ScatterplotIconLayer extends ScatterplotLayer {
       : new Geometry({
           drawMode: GL.TRIANGLE_FAN,
           attributes: {
-            positions: new Float32Array(defaultPos)
+            positions: new Float32Array(DEFAULT_POS)
           }
         });
 

@@ -26,6 +26,3 @@ import './reducers';
 
 // test schemas
 import './schemas';
-
-// test layers
-import './layer-tests';

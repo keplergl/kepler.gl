@@ -22,20 +22,41 @@ import memoize from 'lodash.memoize';
 import Layer from './base-layer';
 import {hexToRgb} from 'utils/color-utils';
 import {aggregate} from 'utils/aggregate-utils';
-import {CHANNEL_SCALES, FIELD_OPTS, DEFAULT_AGGREGATION} from 'constants/default-settings';
+import {HIGHLIGH_COLOR_3D} from 'constants/default-settings';
+
+import {
+  CHANNEL_SCALES,
+  FIELD_OPTS,
+  DEFAULT_AGGREGATION
+} from 'constants/default-settings';
 
 export const pointPosAccessor = ({lat, lng}) => d => [
-  d[lng.fieldIdx],
-  d[lat.fieldIdx]
+  d.data[lng.fieldIdx],
+  d.data[lat.fieldIdx]
 ];
 
 export const pointPosResolver = ({lat, lng}) =>
   `${lat.fieldIdx}-${lng.fieldIdx}`;
 
-export const getValueAggr = (field, aggregation) => points =>
-  aggregate(points.map(p => p[field.tableFieldIndex - 1]), aggregation);
+export const getValueAggrFunc = (
+  field,
+  aggregation
+) => {
+  return points => {
 
-const aggrResolver = (field, aggregation) => `${field.name}-${aggregation}`;
+    return field
+      ? aggregate(
+          points.map(p => p.data[field.tableFieldIndex - 1]),
+          aggregation
+        )
+      : points.length;
+  };
+};
+
+export const getFilterDataFunc = (filterRange, getFilterValue) => pt =>
+  getFilterValue(pt).every(
+    (val, i) => val >= filterRange[i][0] && val <= filterRange[i][1]
+  );
 
 const getLayerColorRange = colorRange => colorRange.colors.map(hexToRgb);
 
@@ -45,10 +66,8 @@ export default class AggregationLayer extends Layer {
   constructor(props) {
     super(props);
 
-    this.getPosition = memoize(pointPosAccessor, pointPosResolver);
-    this.getColorValue = memoize(getValueAggr, aggrResolver);
+    this.getPositionAccessor = () => pointPosAccessor(this.config.columns);
     this.getColorRange = memoize(getLayerColorRange);
-    this.getElevationValue = memoize(getValueAggr, aggrResolver);
   }
 
   get isAggregated() {
@@ -68,7 +87,6 @@ export default class AggregationLayer extends Layer {
       ...super.noneLayerDataAffectingProps,
       'enable3d',
       'colorRange',
-      'colorScale',
       'colorDomain',
       'sizeRange',
       'sizeScale',
@@ -115,13 +133,15 @@ export default class AggregationLayer extends Layer {
    */
   getVisualChannelDescription(key) {
     // e.g. label: Color, measure: Average of ETA
-    const {range, field, defaultMeasure, aggregation} = this.visualChannels[key];
+    const {range, field, defaultMeasure, aggregation} = this.visualChannels[
+      key
+    ];
     return {
       label: this.visConfigSettings[range].label,
       measure: this.config[field]
         ? `${this.config.visConfig[aggregation]} of ${this.config[field].name}`
         : defaultMeasure
-    }
+    };
   }
 
   getHoverData(object) {
@@ -141,7 +161,6 @@ export default class AggregationLayer extends Layer {
    * @param channel
    */
   validateVisualChannel(channel) {
-
     // field type decides aggregation type decides scale type
     this.validateFieldType(channel);
     this.validateAggregationType(channel);
@@ -163,8 +182,9 @@ export default class AggregationLayer extends Layer {
     if (!aggregationOptions.length) {
       // if field cannot be aggregated, set field to null
       this.updateLayerConfig({[field]: null});
-
-    } else if (!aggregationOptions.includes(this.config.visConfig[aggregation])) {
+    } else if (
+      !aggregationOptions.includes(this.config.visConfig[aggregation])
+    ) {
       // current aggregation type is not supported by this field
       // set aggregation to the first supported option
       this.updateLayerVisConfig({[aggregation]: aggregationOptions[0]});
@@ -176,8 +196,10 @@ export default class AggregationLayer extends Layer {
     const {field, channelScaleType} = visualChannel;
 
     return Object.keys(
-      this.config[field] ? FIELD_OPTS[this.config[field].type].scale[channelScaleType] :
-        DEFAULT_AGGREGATION[channelScaleType])
+      this.config[field]
+        ? FIELD_OPTS[this.config[field].type].scale[channelScaleType]
+        : DEFAULT_AGGREGATION[channelScaleType]
+    );
   }
 
   /**
@@ -189,65 +211,134 @@ export default class AggregationLayer extends Layer {
     const visualChannel = this.visualChannels[channel];
     const {field, aggregation, channelScaleType} = visualChannel;
     const aggregationType = this.config.visConfig[aggregation];
-    return this.config[field] ?
-      // scale options based on aggregation
-      FIELD_OPTS[this.config[field].type].scale[channelScaleType][aggregationType] :
-      // default scale options for point count
-      DEFAULT_AGGREGATION[channelScaleType][aggregationType];
+    return this.config[field]
+      ? // scale options based on aggregation
+        FIELD_OPTS[this.config[field].type].scale[channelScaleType][
+          aggregationType
+        ]
+      : // default scale options for point count
+        DEFAULT_AGGREGATION[channelScaleType][aggregationType];
   }
 
   /**
    * Aggregation layer handles visual channel aggregation inside deck.gl layer
    */
-  updateLayerDomain(dataset, newFilter) {
+  updateLayerDomain(datasets, newFilter) {
     return this;
   }
 
   updateLayerMeta(allData, getPosition) {
     // get bounds from points
-    const bounds = this.getPointsBounds(allData, getPosition);
+    const bounds = this.getPointsBounds(allData, d => getPosition({data: d}));
 
     this.updateMeta({bounds});
   }
 
-  formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
-    const getPosition = this.getPosition(this.config.columns);
+  calculateDataAttribute({allData, filteredIndex}, getPosition) {
+    const data = [];
 
-    if (!oldLayerData || oldLayerData.getPosition !== getPosition) {
-      this.updateLayerMeta(allData, getPosition);
+    for (let i = 0; i < filteredIndex.length; i++) {
+      const index = filteredIndex[i];
+      const pos = getPosition({data: allData[index]});
+
+      // if doesn't have point lat or lng, do not add the point
+      // deck.gl can't handle position = null
+      if (pos.every(Number.isFinite)) {
+        data.push({
+          index,
+          data: allData[index]
+        });
+      }
     }
 
-    const getColorValue = this.config.colorField
-      ? this.getColorValue(
-          this.config.colorField,
-          this.config.visConfig.colorAggregation
-        )
+    return data;
+  }
+
+  formatLayerData(datasets, oldLayerData) {
+    const getPosition = this.getPositionAccessor(); // if (
+    const {gpuFilter} = datasets[this.config.dataId];
+
+    const getColorValue = getValueAggrFunc(
+      this.config.colorField,
+      this.config.visConfig.colorAggregation
+    );
+
+    const getElevationValue = getValueAggrFunc(
+      this.config.sizeField,
+      this.config.visConfig.sizeAggregation
+    );
+    const hasFilter = Object.values(gpuFilter.filterRange).some(arr =>
+      arr.some(v => v !== 0)
+    );
+    const getFilterValue = gpuFilter.filterValueAccessor();
+    const filterData = hasFilter
+      ? getFilterDataFunc(gpuFilter.filterRange, getFilterValue)
       : undefined;
 
-    const getElevationValue = this.config.sizeField
-      ? this.getElevationValue(
-          this.config.sizeField,
-          this.config.visConfig.sizeAggregation
-        )
-      : undefined;
-
-    let data;
-    if (
-      oldLayerData &&
-      oldLayerData.data &&
-      opt.sameData &&
-      oldLayerData.getPosition === getPosition
-    ) {
-      data = oldLayerData.data;
-    } else {
-      data = filteredIndex.map(i => allData[i]);
-    }
+    const {data} = this.updateData(datasets, oldLayerData);
 
     return {
       data,
       getPosition,
+      _filterData: filterData,
       ...(getColorValue ? {getColorValue} : {}),
       ...(getElevationValue ? {getElevationValue} : {})
+    };
+  }
+
+  getDefaultDeckLayerProps(opts) {
+    const baseProp = super.getDefaultDeckLayerProps(opts);
+    return {
+      ...baseProp,
+      highlightColor: HIGHLIGH_COLOR_3D,
+      // gpu data filtering is not supported in aggregation layer
+      extensions: [],
+      autoHighlight: this.config.visConfig.enable3d
+    };
+  }
+
+  getDefaultAggregationLayerProp(opts) {
+    const {gpuFilter, mapState, layerCallbacks} = opts;
+    const {visConfig} = this.config;
+    const eleZoomFactor = this.getElevationZoomFactor(mapState);
+    const updateTriggers = {
+      getColorValue: {
+        colorField: this.config.colorField,
+        colorAggregation: this.config.visConfig.colorAggregation
+      },
+      getElevationValue: {
+        sizeField: this.config.sizeField,
+        sizeAggregation: this.config.visConfig.sizeAggregation
+      },
+      _filterData: {
+        filterRange: gpuFilter.filterRange,
+        ...gpuFilter.filterValueUpdateTriggers
+      }
+    };
+
+    return {
+      ...this.getDefaultDeckLayerProps(opts),
+      coverage: visConfig.coverage,
+
+      // color
+      colorRange: this.getColorRange(visConfig.colorRange),
+      colorScaleType: this.config.colorScale,
+      upperPercentile: visConfig.percentile[1],
+      lowerPercentile: visConfig.percentile[0],
+
+      // elevation
+      extruded: visConfig.enable3d,
+      elevationScale: visConfig.elevationScale * eleZoomFactor,
+      elevationScaleType: this.config.sizeScale,
+      elevationRange: visConfig.sizeRange,
+      elevationLowerPercentile: visConfig.elevationPercentile[0],
+      elevationUpperPercentile: visConfig.elevationPercentile[1],
+
+      // updateTriggers
+      updateTriggers,
+
+      // callbacks
+      onSetColorDomain: layerCallbacks.onSetLayerDomain
     };
   }
 }
