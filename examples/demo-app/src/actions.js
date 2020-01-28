@@ -20,7 +20,8 @@
 
 import {push} from 'react-router-redux';
 import {request, text as requestText, json as requestJson} from 'd3-request';
-import { loadFiles, toggleModal, addNotification, removeNotification} from 'kepler.gl/actions';
+import { loadFiles, toggleModal} from 'kepler.gl/actions';
+import { showNotification } from './utils/notifications';
 
 import {
   LOADING_SAMPLE_ERROR_MESSAGE,
@@ -366,10 +367,7 @@ export function setPushingFile(isLoading, metadata) {
 export function loadCloudMap(queryParams, providerName, pushRoute = false) {
   return async (dispatch) => {
     if (!providerName) {
-      dispatch(addNotification({
-        message: 'No cloud provider identified.',
-        type: 'error'
-      }));
+      dispatch(showNotification('error', 'No cloud provider identified.'));
 
       throw new Error('No cloud provider identified')
     }
@@ -388,22 +386,14 @@ export function loadCloudMap(queryParams, providerName, pushRoute = false) {
         dispatch(loadRemoteResourceSuccess(map.datasets, map.vis.config, map.options));
         dispatch(setDefaultCloudProvider(cloudProvider.name));
 
-        dispatch(addNotification({
-          message: 'Loaded succesfully.',
-          type: 'success',
-          id: 'load-success'
-        }));
-        setTimeout(() => { dispatch(removeNotification('load-success')); }, 5000);
+        dispatch(showNotification('success', 'Loaded succesfully.', 5000));
       })
       .catch(error => {
         const {target = {}} = error;
         const {status, responseText = 'Cannot load map'} = target;
         dispatch(setLoadingMapStatus(false));
         
-        dispatch(addNotification({
-          message: `Error${status ? ` ${status}` : ''}: ${responseText}.`,
-          type: 'error'
-        }));
+        dispatch(showNotification('error', `Error${status ? ` ${status}` : ''}: ${responseText}.`));
       });
   }
 }
@@ -481,10 +471,7 @@ export function exportFileToCloud(providerName, isPublic = true, extraData = {ti
 export function saveMapToCloud(providerName, {map, info, thumbnail}) {
   return (dispatch) => {
     if (!providerName) {
-      dispatch(addNotification({
-        message: 'No cloud provider selected.',
-        type: 'error'
-      }));
+      dispatch(showNotification('error', 'No cloud provider selected.'));
 
       throw new Error('No cloud provider selected.')
     }
@@ -529,10 +516,7 @@ export function saveMapToCloud(providerName, {map, info, thumbnail}) {
         }));
         dispatch(toggleModal(null));
 
-        dispatch(addNotification({
-          message: 'Saved succesfully',
-          type: 'success'
-        }));
+        dispatch(showNotification('success', 'Saved succesfully', 5000));
       },
       error => {
         dispatch(setPushingFile(false, {
@@ -542,10 +526,7 @@ export function saveMapToCloud(providerName, {map, info, thumbnail}) {
           cloudProvider.name
         }));
 
-        dispatch(addNotification({
-          message: `Error saving map: ${error}`,
-          type: 'error'
-        }));
+        dispatch(showNotification('error', `Error saving map: ${error}`));
       }
     );
   };
