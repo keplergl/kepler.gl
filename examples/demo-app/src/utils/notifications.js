@@ -19,15 +19,22 @@
 // THE SOFTWARE.
 
 import {addNotification, removeNotification} from 'kepler.gl/actions';
+import {DEFAULT_NOTIFICATION_TYPES, DEFAULT_NOTIFICATION_TOPICS, DEFAULT_UUID_COUNT} from 'kepler.gl/constants';
+import {generateHashId} from './strings';
 
 export function showNotification(type, message, timeout) {
     return (dispatch) => {
-        const id = `notification_${new Date().getTime()}`
+        const id = generateHashId(DEFAULT_UUID_COUNT);
+        const topic = DEFAULT_NOTIFICATION_TOPICS.global;
         dispatch(addNotification({
             id,
+            topic,
             message,
             type
         }));
+        timeout = timeout || type == DEFAULT_NOTIFICATION_TYPES.success
+            ? 5000
+            : null;
         if (timeout) {
             setTimeout(() => { dispatch(removeNotification(id)); }, timeout);
         }

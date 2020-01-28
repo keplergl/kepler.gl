@@ -21,7 +21,7 @@
 import {push} from 'react-router-redux';
 import {request, text as requestText, json as requestJson} from 'd3-request';
 import { loadFiles, toggleModal} from 'kepler.gl/actions';
-import { showNotification } from './utils/notifications';
+import { DEFAULT_NOTIFICATION_TYPES } from 'kepler.gl/constants'
 
 import {
   LOADING_SAMPLE_ERROR_MESSAGE,
@@ -32,6 +32,7 @@ import {LOADING_METHODS_NAMES} from './constants/default-settings';
 import {getCloudProvider} from './cloud-providers';
 import {generateHashId} from './utils/strings';
 import {parseUri, getMapPermalink} from './utils/url';
+import { showNotification } from './utils/notifications';
 import KeplerGlSchema from 'kepler.gl/schemas';
 
 // CONSTANTS
@@ -367,7 +368,7 @@ export function setPushingFile(isLoading, metadata) {
 export function loadCloudMap(queryParams, providerName, pushRoute = false) {
   return async (dispatch) => {
     if (!providerName) {
-      dispatch(showNotification('error', 'No cloud provider identified.'));
+      dispatch(showNotification(DEFAULT_NOTIFICATION_TYPES.error, 'No cloud provider identified.'));
 
       throw new Error('No cloud provider identified')
     }
@@ -386,14 +387,14 @@ export function loadCloudMap(queryParams, providerName, pushRoute = false) {
         dispatch(loadRemoteResourceSuccess(map.datasets, map.vis.config, map.options));
         dispatch(setDefaultCloudProvider(cloudProvider.name));
 
-        dispatch(showNotification('success', 'Loaded succesfully.', 5000));
+        dispatch(showNotification(DEFAULT_NOTIFICATION_TYPES.success, 'Loaded succesfully.'));
       })
       .catch(error => {
         const {target = {}} = error;
         const {status, responseText = 'Cannot load map'} = target;
         dispatch(setLoadingMapStatus(false));
         
-        dispatch(showNotification('error', `Error${status ? ` ${status}` : ''}: ${responseText}.`));
+        dispatch(showNotification(DEFAULT_NOTIFICATION_TYPES.error, `Error${status ? ` ${status}` : ''}: ${responseText}.`));
       });
   }
 }
@@ -471,7 +472,7 @@ export function exportFileToCloud(providerName, isPublic = true, extraData = {ti
 export function saveMapToCloud(providerName, {map, info, thumbnail}) {
   return (dispatch) => {
     if (!providerName) {
-      dispatch(showNotification('error', 'No cloud provider selected.'));
+      dispatch(showNotification(DEFAULT_NOTIFICATION_TYPES.error, 'No cloud provider selected.'));
 
       throw new Error('No cloud provider selected.')
     }
@@ -516,7 +517,7 @@ export function saveMapToCloud(providerName, {map, info, thumbnail}) {
         }));
         dispatch(toggleModal(null));
 
-        dispatch(showNotification('success', 'Saved succesfully', 5000));
+        dispatch(showNotification(DEFAULT_NOTIFICATION_TYPES.success, 'Saved succesfully'));
       },
       error => {
         dispatch(setPushingFile(false, {
@@ -526,7 +527,7 @@ export function saveMapToCloud(providerName, {map, info, thumbnail}) {
           cloudProvider.name
         }));
 
-        dispatch(showNotification('error', `Error saving map: ${error}`));
+        dispatch(showNotification(DEFAULT_NOTIFICATION_TYPES.error, `Error saving map: ${error}`));
       }
     );
   };
