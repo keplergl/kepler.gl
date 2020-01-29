@@ -200,13 +200,14 @@ export const StyledErrorDescription = styled.div`
 
 const Error = ({error}) => (
   <StyledError>
-    <StyledErrorDescription>Error loading map: {error.message}</StyledErrorDescription>
+    <StyledErrorDescription>Error: {error.message}</StyledErrorDescription>
   </StyledError>
 );
 
 const LoadStorageMap = ({onLoadCloudMap, error}) => {
   const [visualizations, setVisualizations] = useState(null);
   const [selectedProvider, setSelectedProvider] = useState(null);
+  const [exception, setException] = useState(null);
 
   const providers = getCloudProviders().filter((provider) => provider.hasPrivateStorage() && provider.isEnabled());
 
@@ -222,17 +223,24 @@ const LoadStorageMap = ({onLoadCloudMap, error}) => {
     if (providerName) {
       setSelectedProvider(providerName);
       getVisualizations(providerName);
+      setException(null);
     } else {
       setSelectedProvider(null);
       setVisualizations(null);
+      setException(null);
     }
   }
 
   const getVisualizations = async (providerName) => {
     if (providerName) {
-      const cloudProvider = getCloudProvider(providerName);
-      const visualizations = await cloudProvider.getVisualizations();
-      setVisualizations(visualizations);
+      try {
+        const cloudProvider = getCloudProvider(providerName);
+        const visualizations = await cloudProvider.getVisualizations();
+        setVisualizations(visualizations);
+      } catch (exception) {
+        setSelectedProvider(null);
+        setException({ message: `${exception.target.status} - ${exception.target.responseText}` });
+      }
     }
   };
 
@@ -282,7 +290,7 @@ const LoadStorageMap = ({onLoadCloudMap, error}) => {
             </StyledVisualizationList>
           </StyledProviderVisSection>
         </StyledVisualizationSection>)}
-        {error && (<Error error={error} />)}
+        {error || exception && (<Error error={error || exception} />)}
     </div>
   );
 };

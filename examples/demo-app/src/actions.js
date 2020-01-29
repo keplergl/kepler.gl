@@ -527,7 +527,10 @@ export function saveMapToCloud(providerName, {map, info, thumbnail}) {
           cloudProvider.name
         }));
 
-        dispatch(showNotification(DEFAULT_NOTIFICATION_TYPES.error, `Error saving map: ${error}`));
+        const {target = {}} = error;
+        const {status, responseText} = target;
+
+        dispatch(showNotification(DEFAULT_NOTIFICATION_TYPES.error, `Error saving map (${status}): ${responseText}`));
       }
     );
   };

@@ -300,6 +300,10 @@ export default class CartoProvider {
           console.error('No ClientID set for CARTO provider'); break;
         case 'Cannot set the client ID more than once':
           console.error('CARTO provider already initialized'); break;
+        case (error.message.match(/relation "[a-zA-Z0-9_]+" does not exist/) || {}).input:
+          console.error('CARTO custom storage is not properly initialized');
+          error.message = 'Custom storage is not properly initialized';
+          break;
         default:
           console.error(`CARTO provider: ${error.message}`);
       }
