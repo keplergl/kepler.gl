@@ -82,7 +82,7 @@ export default class HexagonLayer extends AggregationLayer {
       ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d
         ? [
             new GeoJsonLayer({
-              ...this.getDefaultAggregationLayerProp(),
+              ...this.getDefaultHoverLayerProps(),
               wrapLongitude: false,
               data: [
                 hexagonToPolygonGeo(

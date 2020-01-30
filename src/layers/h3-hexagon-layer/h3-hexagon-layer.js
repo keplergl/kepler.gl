@@ -303,7 +303,8 @@ export default class HexagonIdLayer extends Layer {
               ...this.getDefaultHoverLayerProps(),
               data: [idToPolygonGeo(objectHovered)],
               getLineColor: config.highlightColor,
-              lineWidthScale: 8 * zoomFactor
+              lineWidthScale: 8 * zoomFactor,
+              wrapLongitude: false
             })
           ]
         : [])
