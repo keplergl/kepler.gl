@@ -23,6 +23,7 @@ import {routerReducer, routerMiddleware} from 'react-router-redux';
 import {browserHistory} from 'react-router';
 import {enhanceReduxMiddleware} from 'kepler.gl/middleware';
 import thunk from 'redux-thunk';
+// eslint-disable-next-line no-unused-vars
 import window from 'global/window';
 
 import demoReducer from './reducers/index';
