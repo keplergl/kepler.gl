@@ -294,7 +294,10 @@ export default class CartoProvider {
   }
 
   _manageErrors(error, throwException=true) {
+    let message;
     if (error && error.message) {
+      message = error.message;
+
       switch (error.message) {
         case 'No client ID has been specified':
           console.error('No ClientID set for CARTO provider'); break;
@@ -302,18 +305,19 @@ export default class CartoProvider {
           console.error('CARTO provider already initialized'); break;
         case (error.message.match(/relation "[a-zA-Z0-9_]+" does not exist/) || {}).input:
           console.error('CARTO custom storage is not properly initialized');
-          error.message = 'Custom storage is not properly initialized';
+          message = 'Custom storage is not properly initialized';
           break;
         default:
-          console.error(`CARTO provider: ${error.message}`);
+          console.error(`CARTO provider: ${message}`);
       }
     } else {
-      console.error(`General error in CARTO provider`);
+      message = 'General error in CARTO provider'
+      console.error(message);
     }
 
     // Use 'CARTO' as error code in order to show provider in notifications
     if (throwException) {
-      throw {target: {status: 'CARTO', responseText: error.message}};
+      throw {target: {status: 'CARTO', responseText: message}};
     }
   }
 
