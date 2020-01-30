@@ -26,8 +26,10 @@ import {
   dataId,
   pointLayerMeta
 } from 'test/helpers/layer-utils';
+import {StateWFiles, testCsvDataId} from 'test/helpers/mock-state';
+import {gpsPointBounds} from 'test/fixtures/test-csv-data';
 
-import HeatmapLayer from 'layers/heatmap-layer/heatmap-layer';
+import HeatmapLayer, {MAX_ZOOM_LEVEL} from 'layers/heatmap-layer/heatmap-layer';
 
 const columns = {
   lat: 'lat',
@@ -73,7 +75,7 @@ test('#HeatmapLayer -> contructor', t => {
   t.end();
 });
 
-test('#Heatmaplayer -> formatLayerData', t => {
+test('#Heatmaplayer -> formatLayerData -> w/ GpuFilter', t => {
   const filteredIndex = [0, 2, 4];
 
   const expectedConfig = {
@@ -149,7 +151,10 @@ test('#Heatmaplayer -> formatLayerData', t => {
         const {layerData, layer} = result;
 
         const expectedLayerData = {
-          columns,
+          columns: {
+            lat: {value: 'lat', fieldIdx: 1},
+            lng: {value: 'lng', fieldIdx: 2}
+          },
           config: expectedConfig,
           data: {
             type: 'FeatureCollection',
@@ -183,6 +188,11 @@ test('#Heatmaplayer -> formatLayerData', t => {
           Object.keys(expectedLayerData).sort(),
           'lheatmap ayerData should have correct keys'
         );
+        t.deepEqual(
+          layerData.columns,
+          expectedLayerData.columns,
+          'should format correct heatmap layerData.columns'
+        );
 
         // test data
         t.deepEqual(
@@ -204,6 +214,140 @@ test('#Heatmaplayer -> formatLayerData', t => {
         t.deepEqual(
           layer.meta,
           pointLayerMeta,
+          'should format correct heatmap layer.meta'
+        );
+      }
+    }
+  ];
+
+  testFormatLayerDataCases(t, HeatmapLayer, TEST_CASES);
+  t.end();
+});
+
+test('#Heatmaplayer -> formatLayerData -> w/o GpuFilter', t => {
+  const testData = StateWFiles.visState.datasets[testCsvDataId];
+  const gpsColumns = {
+    lat: 'gps_data.lat',
+    lng: 'gps_data.lng'
+  };
+
+  const expectedConfig = {
+    type: 'heatmap',
+    id: 'heatmap-test-1',
+    source: `${testCsvDataId}-1-2`,
+    layout: {visibility: 'visible'},
+    maxzoom: 18,
+    paint: {
+      'heatmap-weight': 1,
+      'heatmap-intensity': [
+        'interpolate',
+        ['linear'],
+        ['zoom'],
+        0,
+        1,
+        MAX_ZOOM_LEVEL,
+        3
+      ],
+      'heatmap-color': [
+        'interpolate',
+        ['linear'],
+        ['heatmap-density'],
+        0,
+        'rgba(0,0,0,0)',
+        0.25,
+        'rgb(1,1,1)',
+        0.5,
+        'rgb(2,2,2)',
+        0.75,
+        'rgb(3,3,3)'
+      ],
+      'heatmap-radius': [
+        'interpolate',
+        ['linear'],
+        ['zoom'],
+        0,
+        2,
+        MAX_ZOOM_LEVEL,
+        100
+      ],
+      'heatmap-opacity': 0.2
+    }
+  };
+
+  const TEST_CASES = [
+    {
+      name: 'Heatmap gps point.1',
+      layer: {
+        type: 'heatmap',
+        id: 'heatmap-test-1',
+        config: {
+          dataId: testCsvDataId,
+          label: 'mapbox heatmap',
+          isVisible: true,
+          columns: gpsColumns,
+          visConfig: {
+            colorRange: {
+              colors: ['#010101', '#020202', '#030303']
+            },
+            radius: 100,
+            opacity: 0.2
+          }
+        }
+      },
+      datasets: StateWFiles.visState.datasets,
+      assert: result => {
+        const {layerData, layer} = result;
+
+        const expectedLayerData = {
+          columns: {
+            lat: {value: 'gps_data.lat', fieldIdx: 1},
+            lng: {value: 'gps_data.lng', fieldIdx: 2}
+          },
+          config: expectedConfig,
+          weightField: null,
+          getPosition: () => {}
+        };
+        const expectedLayerMeta = {bounds: gpsPointBounds};
+
+        // test columns,
+        t.deepEqual(
+          layerData.columns,
+          expectedLayerData.columns,
+          'should format correct heatmap layerData.columns'
+        );
+
+        // test data
+        t.equal(
+          layerData.data.features.length,
+          testData.allData.length,
+          'should have same number of features'
+        );
+
+        t.deepEqual(
+          layerData.data.features[0],
+          {
+            type: 'Feature',
+            properties: {
+              index: 0
+            },
+            geometry: {type: 'Point', coordinates: [31.2590542, 29.9900937]}
+          },
+          'should format correct feature 0'
+        );
+        // test id
+        expectedLayerData.config.id = layer.id;
+
+        // test config
+        t.deepEqual(
+          layerData.config,
+          expectedLayerData.config,
+          'should format correct heatmap layerData.config'
+        );
+
+        // test layer.meta
+        t.deepEqual(
+          layer.meta,
+          expectedLayerMeta,
           'should format correct heatmap layer.meta'
         );
       }
