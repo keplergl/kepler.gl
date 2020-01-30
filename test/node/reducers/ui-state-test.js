@@ -35,8 +35,8 @@ import {loadFiles, loadFilesErr} from 'actions/vis-state-actions';
 import reducer, {uiStateReducerFactory} from 'reducers/ui-state';
 import {INITIAL_UI_STATE} from 'reducers/ui-state-updaters';
 import {
-  RESOLUTIONS,
-  EXPORT_DATA_TYPE
+  EXPORT_DATA_TYPE,
+  RESOLUTIONS
 } from 'constants/default-settings';
 import {
   DEFAULT_NOTIFICATION_TOPICS,
@@ -141,7 +141,8 @@ test('#uiStateReducer -> TOGGLE_MAP_CONTROL', t => {
       ...INITIAL_UI_STATE.mapControls,
       mapLegend: {
         show: INITIAL_UI_STATE.mapControls.mapLegend.show,
-        active: !INITIAL_UI_STATE.mapControls.mapLegend.active
+        active: !INITIAL_UI_STATE.mapControls.mapLegend.active,
+        activeMapIndex: 0
       }
     }
   };

@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import test from 'tape-catch';
 import cloneDeep from 'lodash.clonedeep';
 import {VizColorPalette} from 'constants/custom-color-ranges';
 import {getInitialInputStyle} from 'reducers/map-style-updaters';
@@ -114,6 +115,11 @@ function mockStateWithFileUpload() {
     }
   });
 
+  test(t => {
+    t.equal(updatedState.visState.layers.length, 2, 'should auto create 2 layers');
+    t.end();
+  });
+
   return updatedState;
 }
 
@@ -196,7 +202,19 @@ function mockStateWithMultiFilters() {
     {action: VisStateActions.setFilter, payload: [3, 'name', 'TRIPS']},
 
     // set filter value
-    {action: VisStateActions.setFilter, payload: [3, 'value', [4, 12]]}
+    {action: VisStateActions.setFilter, payload: [3, 'value', [4, 12]]},
+
+    // add another gpu filter
+    {action: VisStateActions.addFilter, payload: [testCsvDataId]},
+
+    // set filter to 'time'
+    {action: VisStateActions.setFilter, payload: [4, 'name', 'epoch']},
+
+    // set filter value
+    {
+      action: VisStateActions.setFilter,
+      payload: [4, 'value', [1472700000000, 1472760000000]]
+    },
   ]);
 
   // replace filter id with controlled value for easy testing

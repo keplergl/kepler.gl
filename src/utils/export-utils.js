@@ -28,10 +28,10 @@ import {
   document
 } from 'global/window';
 import {
-  RESOLUTION_OPTIONS,
-  RATIO_OPTIONS,
+  EXPORT_IMG_RESOLUTION_OPTIONS,
+  EXPORT_IMG_RATIO_OPTIONS,
   RESOLUTIONS,
-  RATIOS,
+  EXPORT_IMG_RATIOS,
   EXPORT_DATA_TYPE
 } from 'constants/default-settings';
 import {exportMapToHTML} from 'templates/export-map-html';
@@ -47,11 +47,11 @@ export const DEFAULT_HTML_NAME = 'kepler.gl.html';
 export const DEFAULT_JSON_NAME = 'keplergl.json';
 export const DEFAULT_DATA_NAME = 'kepler-gl';
 
-const defaultResolution = RESOLUTION_OPTIONS.find(
+const defaultResolution = EXPORT_IMG_RESOLUTION_OPTIONS.find(
   op => op.id === RESOLUTIONS.ONE_X
 );
 
-const defaultRatio = RATIO_OPTIONS.find(op => op.id === RATIOS.FOUR_BY_THREE);
+const defaultRatio = EXPORT_IMG_RATIO_OPTIONS.find(op => op.id === EXPORT_IMG_RATIOS.FOUR_BY_THREE);
 
 export function calculateExportImageSize({mapW, mapH, ratio, resolution}) {
   if (mapW <= 0 || mapH <= 0) {
@@ -59,8 +59,8 @@ export function calculateExportImageSize({mapW, mapH, ratio, resolution}) {
   }
 
   const resolutionItem =
-    RESOLUTION_OPTIONS.find(op => op.id === resolution) || defaultResolution;
-  const ratioItem = RATIO_OPTIONS.find(op => op.id === ratio) || defaultRatio;
+    EXPORT_IMG_RESOLUTION_OPTIONS.find(op => op.id === resolution) || defaultResolution;
+  const ratioItem = EXPORT_IMG_RATIO_OPTIONS.find(op => op.id === ratio) || defaultRatio;
 
   const {width: scaledWidth, height: scaledHeight} = resolutionItem.getSize(
     mapW,
@@ -171,8 +171,8 @@ export function exportData(state, option) {
   }
 
   selectedDatasets.forEach(selectedData => {
-    const {allData, data, fields, label} = selectedData;
-    const toExport = filtered ? data : allData;
+    const {allData, fields, label, filteredIdxCPU = []} = selectedData;
+    const toExport = filtered ? filteredIdxCPU.map(i => allData[i]) : allData;
     // start to export data according to selected data type
     switch (dataType) {
       case EXPORT_DATA_TYPE.CSV: {

@@ -18,117 +18,192 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-export const geojsonData = {
-  type: 'FeatureCollection',
-  features: [
-    {
-      type: 'Feature',
-      properties: {
-        OBJECTID: 1,
-        ZIP_CODE: 94107,
-        ID: 94107,
-        TRIPS: 11,
-        RATE: 'a'
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [
-          [
-            [-122.401159718585049, 37.782024266952142],
-            [-122.400374366843309, 37.782644515545172],
-            [-122.400019020063766, 37.782925153640136],
-            [-122.399891477967842, 37.783025880124256],
-            [-122.398930331092998, 37.783784933304034],
-            [-122.397811613142864, 37.784666586003652],
-            [-122.396705177550587, 37.785542130425938],
-            [-122.395895701657864, 37.784896929203114],
-            [-122.395160622349934, 37.78431101230386],
-            [-122.394398389309941, 37.783701667981575],
-            [-122.401159718585049, 37.782024266952142]
-          ]
-        ]
-      }
-    },
-    {
-      type: 'Feature',
-      properties: {
-        OBJECTID: 2,
-        ZIP_CODE: 94105,
-        ID: 94105,
-        TRIPS: 4,
-        RATE: 'b'
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [
-          [
-            [-122.39249932896719, 37.793768814133983],
-            [-122.391890260341384, 37.794278544568918],
-            [-122.391788865572423, 37.794170982455135],
-            [-122.39173429034625, 37.79420276052317],
-            [-122.391666728649753, 37.794132425256194],
-            [-122.391723034266192, 37.79410061945832],
-            [-122.391673228351905, 37.794047854124599],
-            [-122.391982015107928, 37.793871906128679],
-            [-122.39249932896719, 37.793768814133983]
-          ]
-        ]
-      }
-    },
-    {
-      type: 'Feature',
-      properties: {
-        OBJECTID: 3,
-        ZIP_CODE: 94109,
-        ID: 94109,
-        TRIPS: 20
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [
-          [
-            [-122.39249932896719, 37.793768814133983],
-            [-122.391890260341384, 37.794278544568918],
-            [-122.391788865572423, 37.794170982455135],
-            [-122.39173429034625, 37.79420276052317],
-            [-122.391666728649753, 37.794132425256194],
-            [-122.391723034266192, 37.79410061945832],
-            [-122.391673228351905, 37.794047854124599],
-            [-122.391982015107928, 37.793871906128679],
-            [-122.39249932896719, 37.793768814133983]
-          ]
-        ]
-      }
-    },
-    {
-      type: 'Feature',
-      properties: {
-        OBJECTID: 4,
-        ZIP_CODE: 94111,
-        ID: 94111,
-        RATE: 'c'
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [
-          [
-            [-122.39249932896719, 37.793768814133983],
-            [-122.391890260341384, 37.794278544568918],
-            [-122.391788865572423, 37.794170982455135],
-            [-122.39173429034625, 37.79420276052317],
-            [-122.391666728649753, 37.794132425256194],
-            [-122.391723034266192, 37.79410061945832],
-            [-122.391673228351905, 37.794047854124599],
-            [-122.391982015107928, 37.793871906128679],
-            [-122.39249932896719, 37.793768814133983]
-          ]
-        ]
-      }
-    }
-  ]
-};
+import {extent} from 'd3-array';
 
 export const geoJsonDataId = 'ieukmgne';
+
+/**
+ *
+ * GeoJSON with Polygons
+ */
+const feature0 = {
+  type: 'Feature',
+  properties: {
+    OBJECTID: 1,
+    ZIP_CODE: 94107,
+    ID: 94107,
+    TRIPS: 11,
+    RATE: 'a',
+    OBJ: {
+      id: 1
+    }
+  },
+  geometry: {
+    type: 'Polygon',
+    coordinates: [
+      [
+        [-122.401159718585049, 37.782024266952142],
+        [-122.400374366843309, 37.782644515545172],
+        [-122.400019020063766, 37.782925153640136],
+        [-122.399891477967842, 37.783025880124256],
+        [-122.398930331092998, 37.783784933304034]
+      ]
+    ]
+  }
+};
+
+const feature0Parsed = {
+  type: 'Feature',
+  geometry: feature0.geometry,
+  properties: {
+    ...feature0.properties,
+    OBJ: {id: 1}
+  }
+};
+
+const feature1 = {
+  type: 'Feature',
+  properties: {
+    OBJECTID: 2,
+    ZIP_CODE: 94105,
+    ID: 94105,
+    TRIPS: 4,
+    RATE: 'b',
+    OBJ: {
+      id: 2
+    }
+  },
+  geometry: {
+    type: 'Polygon',
+    coordinates: [
+      [
+        [-122.39249932896719, 37.793768814133983],
+        [-122.391890260341384, 37.794278544568918],
+        [-122.391666728649753, 37.794132425256194],
+        [-122.391723034266192, 37.79410061945832],
+        [-122.39249932896719, 37.793768814133983]
+      ]
+    ]
+  }
+};
+
+const feature1Parsed = {
+  type: 'Feature',
+  geometry: feature1.geometry,
+  properties: {
+    ...feature1.properties,
+    OBJ: {id: 2}
+  }
+};
+
+const feature2 = {
+  type: 'Feature',
+  properties: {
+    OBJECTID: 3,
+    ZIP_CODE: 94109,
+    ID: 94109,
+    TRIPS: 20,
+    RATE: null,
+    OBJ: {
+      id: 3
+    }
+  },
+  geometry: {
+    type: 'Polygon',
+    coordinates: [
+      [
+        [-122.39249932896719, 37.793768814133983],
+        [-122.391890260341384, 37.794278544568918],
+        [-122.391982015107928, 37.793871906128679],
+        [-122.39249932896719, 37.793768814133983]
+      ]
+    ]
+  }
+};
+
+const feature2Parsed = {
+  type: 'Feature',
+  geometry: feature2.geometry,
+  properties: {
+    ...feature2.properties,
+    OBJ: {id: 3}
+  }
+};
+
+const feature3 = {
+  type: 'Feature',
+  properties: {
+    OBJECTID: 4,
+    ZIP_CODE: 94111,
+    ID: 94111,
+    RATE: 'c',
+    OBJ: {
+      id: 4
+    }
+  },
+  geometry: {
+    type: 'Polygon',
+    coordinates: [
+      [
+        [-122.39249932896719, 37.793768814133983],
+        [-122.391666728649753, 37.794132425256194],
+        [-122.391723034266192, 37.79410061945832],
+        [-122.391673228351905, 37.794047854124599],
+        [-122.391982015107928, 37.793871906128679],
+        [-122.39249932896719, 37.793768814133983]
+      ]
+    ]
+  }
+};
+
+const feature3Parsed = {
+  type: 'Feature',
+  geometry: feature3.geometry,
+  properties: {
+    ...feature3.properties,
+    TRIPS: null,
+    OBJ: {id: 4}
+  }
+};
+
+const feature4 = {
+  type: 'Feature',
+  properties: {
+    OBJECTID: 5,
+    ZIP_CODE: 94107,
+    ID: 9409,
+    RATE: 'c',
+    OBJ: {
+      id: 5
+    }
+  },
+  geometry: {
+    type: 'Polygon',
+    coordinates: [
+      [
+        [-122.39249932896719, 37.793768814133983],
+        [-122.391890260341384, 37.794278544568918],
+        [-122.391788865572423, 37.794170982455135],
+        [-122.39249932896719, 37.793768814133983]
+      ]
+    ]
+  }
+}
+
+const feature4Parsed = {
+  type: 'Feature',
+  geometry: feature4.geometry,
+  properties: {
+    ...feature4.properties,
+    TRIPS: null,
+    OBJ: {id: 5}
+  }
+};
+
+export const geojsonData = {
+  type: 'FeatureCollection',
+  features: [feature0, feature1, feature2, feature3, feature4]
+};
 
 export const fields = [
   {
@@ -172,6 +247,13 @@ export const fields = [
     format: '',
     tableFieldIndex: 6,
     analyzerType: 'STRING'
+  },
+  {
+    type: 'geojson',
+    name: 'OBJ',
+    format: '',
+    tableFieldIndex: 7,
+    analyzerType: 'OBJECT'
   }
 ];
 
@@ -181,138 +263,11 @@ export const datasetFields = fields.map(f => ({
 }));
 
 export const rows = [
-  [
-    {
-      type: 'Feature',
-      properties: {
-        OBJECTID: 1,
-        ZIP_CODE: 94107,
-        ID: 94107,
-        TRIPS: 11,
-        RATE: 'a'
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [
-          [
-            [-122.401159718585049, 37.782024266952142],
-            [-122.400374366843309, 37.782644515545172],
-            [-122.400019020063766, 37.782925153640136],
-            [-122.399891477967842, 37.783025880124256],
-            [-122.398930331092998, 37.783784933304034],
-            [-122.397811613142864, 37.784666586003652],
-            [-122.396705177550587, 37.785542130425938],
-            [-122.395895701657864, 37.784896929203114],
-            [-122.395160622349934, 37.78431101230386],
-            [-122.394398389309941, 37.783701667981575],
-            [-122.401159718585049, 37.782024266952142]
-          ]
-        ]
-      }
-    },
-    1,
-    94107,
-    94107,
-    11,
-    'a'
-  ],
-  [
-    {
-      type: 'Feature',
-      properties: {
-        OBJECTID: 2,
-        ZIP_CODE: 94105,
-        ID: 94105,
-        TRIPS: 4,
-        RATE: 'b'
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [
-          [
-            [-122.39249932896719, 37.793768814133983],
-            [-122.391890260341384, 37.794278544568918],
-            [-122.391788865572423, 37.794170982455135],
-            [-122.39173429034625, 37.79420276052317],
-            [-122.391666728649753, 37.794132425256194],
-            [-122.391723034266192, 37.79410061945832],
-            [-122.391673228351905, 37.794047854124599],
-            [-122.391982015107928, 37.793871906128679],
-            [-122.39249932896719, 37.793768814133983]
-          ]
-        ]
-      }
-    },
-    2,
-    94105,
-    94105,
-    4,
-    'b'
-  ],
-  [
-    {
-      type: 'Feature',
-      properties: {
-        OBJECTID: 3,
-        ZIP_CODE: 94109,
-        ID: 94109,
-        TRIPS: 20
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [
-          [
-            [-122.39249932896719, 37.793768814133983],
-            [-122.391890260341384, 37.794278544568918],
-            [-122.391788865572423, 37.794170982455135],
-            [-122.39173429034625, 37.79420276052317],
-            [-122.391666728649753, 37.794132425256194],
-            [-122.391723034266192, 37.79410061945832],
-            [-122.391673228351905, 37.794047854124599],
-            [-122.391982015107928, 37.793871906128679],
-            [-122.39249932896719, 37.793768814133983]
-          ]
-        ]
-      }
-    },
-    3,
-    94109,
-    94109,
-    20,
-    null
-  ],
-  [
-    {
-      type: 'Feature',
-      properties: {
-        OBJECTID: 4,
-        ZIP_CODE: 94111,
-        ID: 94111,
-        RATE: 'c'
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [
-          [
-            [-122.39249932896719, 37.793768814133983],
-            [-122.391890260341384, 37.794278544568918],
-            [-122.391788865572423, 37.794170982455135],
-            [-122.39173429034625, 37.79420276052317],
-            [-122.391666728649753, 37.794132425256194],
-            [-122.391723034266192, 37.79410061945832],
-            [-122.391673228351905, 37.794047854124599],
-            [-122.391982015107928, 37.793871906128679],
-            [-122.39249932896719, 37.793768814133983]
-          ]
-        ]
-      }
-    },
-    4,
-    94111,
-    94111,
-    null,
-    'c'
-  ]
+  [feature0Parsed, 1, 94107, 94107, 11, 'a', {id: 1}],
+  [feature1Parsed, 2, 94105, 94105, 4, 'b', {id: 2}],
+  [feature2Parsed, 3, 94109, 94109, 20, null, {id: 3}],
+  [feature3Parsed, 4, 94111, 94111, null, 'c', {id: 4}],
+  [feature4Parsed, 5, 94107, 9409, null, 'c', {id: 5}]
 ];
 
 // add index to properties
@@ -458,7 +413,8 @@ export const geoJsonTripFilterProps = {
   step: 0.01,
   type: 'range',
   typeOptions: ['range'],
-  value: [4, 20]
+  value: [4, 20],
+  gpu: true
 };
 
 export const mergedTripFilter = {
@@ -475,14 +431,16 @@ export const mergedTripFilter = {
   value: [4, 12],
   plotType: 'histogram',
   yAxis: null,
-  interval: null
+  interval: null,
+  gpuChannel: [0]
 };
 
 export const geoJsonRateFilterProps = {
   domain: ['a', 'b', 'c'],
   fieldType: 'string',
   type: 'multiSelect',
-  value: []
+  value: [],
+  gpu: false
 };
 
 export const mergedRateFilter = {
@@ -509,6 +467,35 @@ export const geoBounds = [
   37.79427854456892
 ];
 
+export const expectedDataToFeature = [
+  feature0Parsed,
+  feature1Parsed,
+  feature2Parsed,
+  feature3Parsed,
+  feature4Parsed
+].map((f, i) => ({
+  ...f,
+  properties: {...f.properties, index: i}
+}));
+
+export const updatedGeoJsonLayer = {
+  dataToFeature: expectedDataToFeature,
+  meta: {
+    featureTypes: {polygon: true},
+    bounds: geoBounds,
+    fixedRadius: false
+  }
+};
+
+export const mappedTripValue = geojsonData.features.map(
+  f => f.properties.TRIPS
+);
+
+export const tripDomain = extent(mappedTripValue);
+
+/**
+ * GeoJSON with style properties
+ */
 export const geoJsonWithStyle = {
   type: 'FeatureCollection',
   features: [
@@ -521,7 +508,7 @@ export const geoJsonWithStyle = {
         elevation: 10,
         radius: 5
       },
-      geometry: {type: 'Point', coordinates: [[-122, 37]]}
+      geometry: {type: 'Point', coordinates: [-122.1, 37.3]}
     },
     {
       type: 'Feature',
@@ -532,7 +519,7 @@ export const geoJsonWithStyle = {
         elevation: 10,
         radius: 5
       },
-      geometry: {type: 'Point', coordinates: [[-122, 37]]}
+      geometry: {type: 'Point', coordinates: [-122.2, 37.2]}
     },
     {
       type: 'Feature',
@@ -543,7 +530,7 @@ export const geoJsonWithStyle = {
         elevation: 10,
         radius: 5
       },
-      geometry: {type: 'Point', coordinates: [[-122, 37]]}
+      geometry: {type: 'Point', coordinates: [-122.3, 37.1]}
     }
   ]
 };
@@ -599,3 +586,21 @@ export const geoStyleRows = [
   [geoJsonWithStyle.features[1], [7, 8, 9], [4, 5, 6], 3, 10, 5],
   [geoJsonWithStyle.features[2], [1, 2, 3], [4, 5, 6], 4, 10, 5]
 ];
+
+export const geoStyleDataToFeature = geoJsonWithStyle.features.map((f, i) => ({
+  ...f,
+  properties: {...f.properties, index: i}
+}));
+
+export const geoStyleBounds = [
+  -122.3,
+  37.1,
+  -122.1,
+  37.3
+];
+
+export const geoStyleMeta = {
+  featureTypes: {point: true},
+  bounds: geoStyleBounds,
+  fixedRadius: true
+};

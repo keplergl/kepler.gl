@@ -62,9 +62,10 @@ export const CenterFlexbox = styled.div`
 
 export const SpaceBetweenFlexbox = styled.div`
   display: flex;
-  align-items: space-between;
+  justify-content: space-between;
   margin-left: -16px;
 `;
+
 export const SBFlexboxItem = styled.div`
   flex-grow: 1;
   margin-left: 16px;
@@ -601,4 +602,9 @@ export const MapControlButton = styled.div.attrs({
     background-color: ${props => props.theme.secondaryBtnActBgd};
     color: ${props => props.theme.secondaryBtnActColor};
   }
+`;
+
+export const StyledFilterContent = styled.div`
+  background-color: ${props => props.theme.panelBackground};
+  padding: 12px;
 `;

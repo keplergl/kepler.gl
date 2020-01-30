@@ -18,9 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import ArcLayer from '../arc-layer/arc-layer';
-import DeckGLLineLayer from 'deckgl-layers/line-layer/line-layer';
+import {BrushingExtension} from '@deck.gl/extensions';
+
 import LineLayerIcon from './line-layer-icon';
+import ArcLayer from '../arc-layer/arc-layer';
+import EnhancedLineLayer from 'deckgl-layers/line-layer/line-layer';
 
 export default class LineLayer extends ArcLayer {
   get type() {
@@ -51,15 +53,17 @@ export default class LineLayer extends ArcLayer {
     return {props: [props]};
   }
 
-  renderLayer({
-    data,
-    idx,
-    layerInteraction,
-    objectHovered,
-    mapState,
-    interactionConfig
-  }) {
-    const {brush} = interactionConfig;
+  renderLayer(opts) {
+    const {
+      data,
+      gpuFilter,
+      objectHovered,
+      interactionConfig
+    } = opts;
+
+    const layerProps = {
+      widthScale: this.config.visConfig.thickness
+    };
 
     const colorUpdateTriggers = {
       color: this.config.color,
@@ -69,52 +73,36 @@ export default class LineLayer extends ArcLayer {
       targetColor: this.config.visConfig.targetColor
     };
 
-    const interaction = {
-      // auto highlighting
-      pickable: true,
-      autoHighlight: !brush.enabled,
-      highlightColor: this.config.highlightColor,
-
-      // brushing
-      brushRadius: brush.config.size * 1000,
-      brushSource: true,
-      brushTarget: true,
-      enableBrushing: brush.enabled
-    };
-
+    const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     return [
       // base layer
-      new DeckGLLineLayer({
-        ...layerInteraction,
+      new EnhancedLineLayer({
+        ...defaultLayerProps,
+        ...this.getBrushingExtensionProps(interactionConfig, 'source_target'),
         ...data,
-        ...interaction,
+        ...layerProps,
         getColor: data.getSourceColor,
-        id: this.id,
-        idx,
-        opacity: this.config.visConfig.opacity,
-        strokeScale: this.config.visConfig.thickness,
-        // parameters
-        parameters: {depthTest: mapState.dragRotate},
         updateTriggers: {
+          getFilterValue: gpuFilter.filterValueUpdateTriggers,
           getWidth: {
             sizeField: this.config.sizeField,
             sizeRange: this.config.visConfig.sizeRange
           },
           getColor: colorUpdateTriggers,
           getTargetColor: colorUpdateTriggers
-        }
+        },
+        extensions: [...defaultLayerProps.extensions, new BrushingExtension()]
       }),
       // hover layer
       ...(this.isLayerHovered(objectHovered)
         ? [
-            new DeckGLLineLayer({
-              id: `${this.id}-hovered`,
+            new EnhancedLineLayer({
+              ...this.getDefaultHoverLayerProps(),
+              ...layerProps,
               data: [objectHovered.object],
-              strokeScale: this.config.visConfig.thickness,
               getColor: this.config.highlightColor,
               getTargetColor: this.config.highlightColor,
-              getWidth: data.getWidth,
-              pickable: false
+              getWidth: data.getWidth
             })
           ]
         : [])

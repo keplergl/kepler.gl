@@ -46,6 +46,6 @@ class ClickOutsideCloseDropdown extends Component {
       </StyledPanelDropdown>
     );
   }
-};
+}
 
 export default listensToClickOutside(ClickOutsideCloseDropdown);

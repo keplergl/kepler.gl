@@ -23,7 +23,10 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import ImagePreview from 'components/common/image-preview';
 
-import {RATIO_OPTIONS, RESOLUTION_OPTIONS} from 'constants/default-settings';
+import {
+  EXPORT_IMG_RATIO_OPTIONS,
+  EXPORT_IMG_RESOLUTION_OPTIONS
+} from 'constants/default-settings';
 
 import {
   StyledModalContent,
@@ -91,7 +94,7 @@ const ExportImageModalFactory = () => {
               <div className="image-option-section-title">Ratio</div>
               Choose the ratio for various usages.
               <div className="button-list">
-                {RATIO_OPTIONS.map(op => (
+                {EXPORT_IMG_RATIO_OPTIONS.map(op => (
                   <SelectionButton
                     key={op.id}
                     selected={ratio === op.id}
@@ -106,7 +109,7 @@ const ExportImageModalFactory = () => {
               <div className="image-option-section-title">Resolution</div>
               High resolution is better for prints.
               <div className="button-list">
-                {RESOLUTION_OPTIONS.map(op => (
+                {EXPORT_IMG_RESOLUTION_OPTIONS.map(op => (
                   <SelectionButton
                     key={op.id}
                     selected={resolution === op.id}

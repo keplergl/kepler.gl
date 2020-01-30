@@ -18,16 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {registerShaderModules, setParameters} from 'luma.gl';
-import brushingModule from 'shaderlib/brushing-module';
+import {setParameters} from 'luma.gl';
 import {LAYER_BLENDINGS} from 'constants/default-settings';
 import GL from '@luma.gl/constants';
 
 const getGlConst = d => GL[d];
-
-export function onWebGLInitialized(gl) {
-  registerShaderModules([brushingModule], {ignoreMultipleRegistrations: true});
-}
 
 export function setLayerBlending(gl, layerBlending) {
   const blending = LAYER_BLENDINGS[layerBlending];

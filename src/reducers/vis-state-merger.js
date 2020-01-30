@@ -22,6 +22,7 @@ import uniq from 'lodash.uniq';
 import pick from 'lodash.pick';
 import isEqual from 'lodash.isequal';
 import flattenDeep from 'lodash.flattendeep'
+import {toArray} from 'utils/utils';
 
 import {
   applyFiltersToDatasets,
@@ -29,6 +30,9 @@ import {
 } from 'utils/filter-utils';
 
 import {getInitialMapLayersForSplitMap} from 'utils/split-map-utils';
+import {
+  resetFilterGpuMode, assignGpuChannels
+} from 'utils/gpu-filter-utils';
 
 import {LAYER_BLENDINGS} from 'constants/default-settings';
 import {mergeFilterDomainStep} from '../utils/filter-utils';
@@ -42,6 +46,7 @@ import {mergeFilterDomainStep} from '../utils/filter-utils';
  * @return {Object} updatedState
  */
 export function mergeFilters(state, filtersToMerge) {
+
   const merged = [];
   const unmerged = [];
   const {datasets} = state;
@@ -54,16 +59,19 @@ export function mergeFilters(state, filtersToMerge) {
   // merge filters
   filtersToMerge.forEach(filter => {
     // we can only look for datasets define in the filter dataId
-    const datasetIds = Array.isArray(filter.dataId) ? filter.dataId : [filter.dataId];
+    const datasetIds = toArray(filter.dataId);
 
-    // we can merge a filter only if all datasets in filter.dataId are laoded
+    // we can merge a filter only if all datasets in filter.dataId are loaded
     if (datasetIds.every(d => datasets[d])) {
 
       // all datasetIds in filter must be present the state datasets
       const {filter: validatedFilter, applyToDatasets, augmentedDatasets} = datasetIds.reduce((acc, datasetId) => {
+
         const dataset = updatedDatasets[datasetId];
-        const {filter: updatedFilter, dataset: updatedDataset} =
-          validateFilterWithData(acc.augmentedDatasets[datasetId] || dataset, filter);
+        const layers = state.layers.filter(l => l.config.dataId === dataset.id);
+        const {filter: updatedFilter, dataset: updatedDataset} = validateFilterWithData(
+          acc.augmentedDatasets[datasetId] || dataset, filter, layers
+        );
 
         if (updatedFilter) {
           return {
@@ -87,7 +95,6 @@ export function mergeFilters(state, filtersToMerge) {
         }
 
         return acc;
-
       }, {
         filter: null,
         applyToDatasets: [],
@@ -106,13 +113,14 @@ export function mergeFilters(state, filtersToMerge) {
     }
   });
 
+  // merge filter with existing
+  let updatedFilters = [...(state.filters || []), ...merged];
+  updatedFilters = resetFilterGpuMode(updatedFilters);
+  updatedFilters = assignGpuChannels(updatedFilters);
   // filter data
-  const updatedFilters = [...(state.filters || []), ...merged];
-
-  // flatten all filter dataIds
   const datasetsToFilter = uniq(flattenDeep(merged.map(f => f.dataId)));
 
-  const filtered = applyFiltersToDatasets(datasetsToFilter, updatedDatasets, updatedFilters);
+  const filtered = applyFiltersToDatasets(datasetsToFilter, updatedDatasets, updatedFilters, state.layers);
 
   return {
     ...state,
@@ -422,31 +430,35 @@ export function validateSavedTextLabel(
  * refer to vis-state-schema.js VisualChannelSchemaV1
  *
  * @param {Array<Object>} fields
- * @param {Object} visualChannels
+ * @param {Object} newLayer
  * @param {Object} savedLayer
- * @return {Object} - validated visual channel in config or {}
+ * @return {Object} - newLayer
  */
 export function validateSavedVisualChannels(
   fields,
-  visualChannels,
+  newLayer,
   savedLayer
 ) {
-  return Object.values(visualChannels).reduce((found, {field, scale}) => {
+  Object.values(newLayer.visualChannels).forEach(({field, scale, key}) => {
     let foundField;
     if (savedLayer.config[field]) {
       foundField = fields.find(fd =>
         Object.keys(savedLayer.config[field]).every(
-          key => savedLayer.config[field][key] === fd[key]
+          prop => savedLayer.config[field][prop] === fd[prop]
         )
       );
     }
 
-    return {
-      ...found,
+    const foundChannel = {
       ...(foundField ? {[field]: foundField} : {}),
       ...(savedLayer.config[scale] ? {[scale]: savedLayer.config[scale]} : {})
     };
-  }, {});
+    if (Object.keys(foundChannel).length) {
+      newLayer.updateLayerConfig(foundChannel);
+      newLayer.validateVisualChannel(key);
+    }
+  });
+  return newLayer;
 }
 
 /**
@@ -474,7 +486,7 @@ export function validateLayerWithData(
     return null;
   }
 
-  const newLayer = new layerClasses[type]({
+  let newLayer = new layerClasses[type]({
     id: savedLayer.id,
     dataId,
     label: savedLayer.config.label,
@@ -496,9 +508,9 @@ export function validateLayerWithData(
   // visual channel field is saved to be {name, type}
   // find visual channel field by matching both name and type
   // refer to vis-state-schema.js VisualChannelSchemaV1
-  const foundVisualChannelConfigs = validateSavedVisualChannels(
+  newLayer = validateSavedVisualChannels(
     fields,
-    newLayer.visualChannels,
+    newLayer,
     savedLayer
   );
 
@@ -521,8 +533,7 @@ export function validateLayerWithData(
   newLayer.updateLayerConfig({
     columns,
     visConfig,
-    textLabel,
-    ...foundVisualChannelConfigs
+    textLabel
   });
 
   return newLayer;

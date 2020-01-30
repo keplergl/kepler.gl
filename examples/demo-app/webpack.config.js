@@ -70,7 +70,8 @@ const CONFIG = {
     new webpack.EnvironmentPlugin([
       'MapboxAccessToken',
       'DropboxClientId',
-      'CartoClientId'
+      'CartoClientId',
+      'MapboxExportToken'
     ])
   ]
 };

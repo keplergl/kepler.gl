@@ -275,6 +275,7 @@ export default function ModalContainerFactory(
               <ExportDataModal
                 {...uiState.exportData}
                 datasets={datasets}
+                applyCPUFilter={this.props.visStateActions.applyCPUFilter}
                 onClose={this._closeModal}
                 onChangeExportDataType={uiStateActions.setExportDataType}
                 onChangeExportSelectedDataset={uiStateActions.setExportSelectedDataset}

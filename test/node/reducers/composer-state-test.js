@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+/* eslint-disable max-statements */
+
 import test from 'tape';
 import keplerGlReducer from 'reducers';
 import {addDataToMapUpdater} from 'reducers/combined-updaters';
@@ -25,9 +27,20 @@ import {registerEntry} from 'actions/identity-actions';
 import {processCsvData} from 'processors/data-processor';
 
 import testCsvData, {sampleConfig} from 'test/fixtures/test-csv-data';
-import testHexIdData, {hexIdDataConfig, mergedH3Layer, mergedFilters, expectedHexDataset} from 'test/fixtures/test-hex-id-data';
-import {cmpLayers, cmpFilters, cmpDatasets, cmpDataset, cmpInteraction} from 'test/helpers/comparison-utils';
+import testHexIdData, {
+  hexIdDataConfig,
+  mergedH3Layer,
+  mergedFilters,
+  expectedMergedDataset
+} from 'test/fixtures/test-hex-id-data';
+import {
+  cmpLayers,
+  cmpFilters,
+  cmpDataset,
+  cmpInteraction
+} from 'test/helpers/comparison-utils';
 import {INITIAL_UI_STATE} from 'reducers/ui-state-updaters';
+import {toggleMapControlUpdater} from 'reducers/map-state-updaters';
 
 const mockRawData = {
   fields: [
@@ -144,9 +157,13 @@ test('#composerStateReducer - addDataToMapUpdater: uiState', t => {
     initialState: {},
     readOnly: false,
     currentModal: null
-  }
+  };
 
-  t.deepEqual(newState.uiState, expectedUIState, 'ui state should be set readOnly:false,currentModal: null');
+  t.deepEqual(
+    newState.uiState,
+    expectedUIState,
+    'ui state should be set readOnly:false,currentModal: null'
+  );
 
   t.end();
 });
@@ -193,8 +210,7 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
     }
   });
 
-  const hexDataset = nextState1.visState.datasets[hexDataId];
-  cmpDataset(t, expectedHexDataset, nextState1.visState.datasets[hexDataId])
+  cmpDataset(t, expectedMergedDataset, nextState1.visState.datasets[hexDataId])
 
   t.deepEqual(nextState1.visState.splitMaps, [], 'should clear out splitMaps');
 
@@ -222,10 +238,7 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
   const expectedVisState = {
     layers: [...oldLayers, mergedH3Layer],
     filters: [...oldFilters, ...mergedFilters],
-    datasets: {
-      ...oldDatasets,
-      [hexDataId]: hexDataset
-    },
+    datasets: 'test seperate',
     interactionConfig: {
       ...oldInteractionConfig,
       tooltip: {
@@ -239,36 +252,55 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
       }
     },
     splitMaps: [
-      {layers: {
-        ...oldSplitMaps[0].layers,
-        avlgol: true
-      }},
-      {layers: {
-        ...oldSplitMaps[1].layers,
-        avlgol: true
-      }}
+      {
+        layers: {
+          ...oldSplitMaps[0].layers,
+          avlgol: true
+        }
+      },
+      {
+        layers: {
+          ...oldSplitMaps[1].layers,
+          avlgol: true
+        }
+      }
     ],
     layerOrder: [2, 0, 1]
   };
 
   cmpLayers(t, expectedVisState.layers, actualVisState.layers);
   cmpFilters(t, expectedVisState.filters, actualVisState.filters);
-  cmpDatasets(t, expectedVisState.datasets, actualVisState.datasets);
-  cmpInteraction(t, expectedVisState.interactionConfig, actualVisState.interactionConfig);
-  t.deepEqual(expectedVisState.layerOrder, actualVisState.layerOrder, 'Should create new layer, move it to the top');
-  t.deepEqual(expectedVisState.splitMaps, actualVisState.splitMaps, 'Should keep existing splitMaps, add new layres to splitMaps');
+  // test datasets
+  t.deepEqual(Object.keys(actualVisState.datasets), [sampleConfig.dataId, hexDataId], 'should save 2 datasets to state');
+  t.equal(actualVisState.datasets[sampleConfig.dataId], oldDatasets[sampleConfig.dataId], 'should keep oldDataset same');
+
+  cmpDataset(t, expectedMergedDataset, actualVisState.datasets[hexDataId], 'should merge and filter hexdata');
+  cmpInteraction(
+    t,
+    expectedVisState.interactionConfig,
+    actualVisState.interactionConfig
+  );
+  t.deepEqual(
+    expectedVisState.layerOrder,
+    actualVisState.layerOrder,
+    'Should create new layer, move it to the top'
+  );
+  t.deepEqual(
+    expectedVisState.splitMaps,
+    actualVisState.splitMaps,
+    'Should keep existing splitMaps, add new layers to splitMaps'
+  );
 
   t.end();
 });
 
 test('#composerStateReducer - addDataToMapUpdater: readOnly', t => {
-
   const datasets = {
     data: processCsvData(testCsvData),
     info: {
       id: sampleConfig.dataId
     }
-  }
+  };
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
 
   // old state contain splitMaps
@@ -287,7 +319,11 @@ test('#composerStateReducer - addDataToMapUpdater: readOnly', t => {
       datasets
     }
   });
-  t.equal(nextState1.uiState.readOnly, false, 'should set readonly to be false');
+  t.equal(
+    nextState1.uiState.readOnly,
+    false,
+    'should set readonly to be false'
+  );
 
   const nextState2 = addDataToMapUpdater(state, {
     payload: {
@@ -297,6 +333,10 @@ test('#composerStateReducer - addDataToMapUpdater: readOnly', t => {
       }
     }
   });
-  t.equal(nextState2.uiState.readOnly, false, 'should set readonly to be false');
+  t.equal(
+    nextState2.uiState.readOnly,
+    false,
+    'should set readonly to be false'
+  );
   t.end();
 });

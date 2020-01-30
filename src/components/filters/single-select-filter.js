@@ -40,5 +40,7 @@ export default function SingleSelectFilterFactory() {
     </SidePanelSection>
   );
 
+  SingleSelectFilter.displayName = 'SingleSelectFilter';
+
   return SingleSelectFilter;
 }

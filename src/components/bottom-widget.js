@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import TimeWidgetFactory from './filters/time-widget';
 import AnimationControlFactory from './common/animation-control/animation-control';
-import {FILTER_TYPES} from 'utils/filter-utils';
+import {FILTER_TYPES} from 'constants/default-settings';
 
 const propTypes = {
   filters: PropTypes.arrayOf(PropTypes.object),

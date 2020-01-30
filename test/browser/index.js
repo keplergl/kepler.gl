@@ -20,3 +20,6 @@
 
 // component tests
 import './components';
+
+// test layers
+import './layer-tests';

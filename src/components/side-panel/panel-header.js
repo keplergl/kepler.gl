@@ -34,6 +34,8 @@ import {
   Map as MapIcon
 } from 'components/common/icons';
 import ClickOutsideCloseDropdown from 'components/side-panel/panel-dropdown';
+import Toolbar from 'components/common/toolbar';
+import ToolbarItem from 'components/common/toolbar-item';
 
 const StyledPanelHeader = styled.div.attrs({
   className: 'side-side-panel__header'
@@ -89,49 +91,10 @@ const StyledPanelAction = styled.div.attrs({
   }
 `;
 
-const StyledPanelDropdown = styled.div`
-  background-color: ${props => props.theme.dropdownListBgd};
-  box-shadow: ${props => props.theme.dropdownListShadow};
-  font-size: 11px;
-  padding: 16px 0;
+// By assigning this style we can position the toolbar in the right place on the screen
+const StyledToolbar = styled(Toolbar)`
   position: absolute;
   left: 64px;
-  transition: ${props => props.theme.transitionSlow};
-  display: flex;
-  margin-top: ${props => (props.show ? '6px' : '20px')};
-  opacity: ${props => (props.show ? 1 : 0)};
-  transform: translateX(calc(-50% + 20px));
-  pointer-events: ${props => (props.show ? 'all' : 'none')};
-  z-index: 1000;
-
-  .panel-header-dropdown__inner {
-    box-shadow: none;
-    background-color: transparent;
-    display: flex;
-  }
-
-  .panel-header-dropdown__item {
-    align-items: center;
-    border-right: 1px solid ${props => props.theme.panelHeaderIcon};
-    color: ${props => props.theme.textColor};
-    display: flex;
-    flex-direction: column;
-    padding: 0 22px;
-
-    :hover {
-      cursor: pointer;
-      color: ${props => props.theme.textColorHl};
-    }
-
-    &:last-child {
-      border-right: 0;
-    }
-  }
-
-  .panel-header-dropdown__title {
-    white-space: nowrap;
-    margin-top: 4px;
-  }
 `;
 
 export const PanelAction = ({item, onClick}) => (
@@ -158,40 +121,26 @@ export const PanelAction = ({item, onClick}) => (
   </StyledPanelAction>
 );
 
-const PanelItem = props => (
-  <div
-    className="panel-header-dropdown__item"
-    onClick={e => {
-      e.stopPropagation();
-      props.onClose();
-      props.onClickHandler();
-    }}
-  >
-    <props.icon />
-    <div className="panel-header-dropdown__title">{props.label}</div>
-  </div>
-);
-
 export const PanelHeaderDropdownFactory = () => {
   const PanelHeaderDropdown = ({items, show, onClose, id}) => {
     return (
-      <StyledPanelDropdown show={show} className={`${id}-dropdown`}>
+      <StyledToolbar show={show} className={`${id}-dropdown`}>
         <ClickOutsideCloseDropdown
           className="panel-header-dropdown__inner"
           show={show}
           onClose={onClose}
         >
           {items.map(itm => (
-            <PanelItem
+            <ToolbarItem
               key={itm.key}
               label={itm.label}
               icon={itm.icon}
-              onClickHandler={itm.onClick}
+              onClick={itm.onClick}
               onClose={onClose}
             />
           ))}
         </ClickOutsideCloseDropdown>
-      </StyledPanelDropdown>
+      </StyledToolbar>
     );
   };
 
@@ -285,72 +234,6 @@ export const CloudStorageDropdownFactory = PanelHeaderDropdown => {
   return CloudStorageDropdown;
 };
 CloudStorageDropdownFactory.deps = [PanelHeaderDropdownFactory];
-
-// export const SaveMapToBackendFactory = () => {
-//   const SaveMapToBackend = (props) => (
-//     <PanelItem {...props}/>
-//   );
-
-//   SaveMapToBackend.defaultProps = {
-//     label: 'Save',
-//     icon: <Map />
-//   };
-
-//   return SaveMapToBackend;
-// };
-
-// export const BackendStorageSettingsFactory = () => {
-//   const BackendStorageSettings = (props) => (
-//     <PanelItem {...props}/>
-//   );
-
-//   BackendStorageSettings.defaultProps = {
-//     label: 'Settings',
-//     icon: <Settings />
-//   };
-
-//   return BackendStorageSettings;
-// };
-
-// export const SaveMapToBackendDropdownFactory = (
-//   SaveMapToBackend,
-//   BackendStorageSettings) => {
-//   const SaveExportDropdown = ({
-//     show,
-//     onClose,
-//     onBackendStorageSettingsClick,
-//     onSaveMapToBackendClick
-//   }) => {
-//     return (
-//       <StyledPanelDropdown show={show} className="save-export-dropdown">
-//         <ClickOutsideCloseDropdown className="save-export-dropdown__inner"
-//           show={show}
-//           onClose={onClose}>
-//           {onSaveMapToBackendClick ? (
-//             <SaveMapToBackend
-//               onClickHandler={onSaveMapToBackendClick}
-//               onClose={onClose}
-//             />
-//           ) : null}
-
-//           {onBackendStorageSettingsClick ? (
-//             <BackendStorageSettings
-//               onClickHandler={onBackendStorageSettingsClick}
-//               onClose={onClose}
-//             />
-//           ) : null}
-//         </ClickOutsideCloseDropdown>
-//       </StyledPanelDropdown>
-//     );
-//   };
-
-//   return SaveExportDropdown;
-// };
-
-// SaveMapToBackendDropdownFactory.deps = [
-//   SaveMapToBackendFactory,
-//   BackendStorageSettingsFactory
-// ];
 
 PanelHeaderFactory.deps = [
   SaveExportDropdownFactory,

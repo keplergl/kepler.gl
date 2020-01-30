@@ -95,7 +95,23 @@ const actionHandler = {
 
   [ActionTypes.UPDATE_LAYER_BLENDING]: visStateUpdaters.updateLayerBlendingUpdater,
 
-  [ActionTypes.UPDATE_VIS_DATA]: visStateUpdaters.updateVisDataUpdater
+  [ActionTypes.UPDATE_VIS_DATA]: visStateUpdaters.updateVisDataUpdater,
+
+  [ActionTypes.SET_FEATURES]: visStateUpdaters.setFeaturesUpdater,
+
+  [ActionTypes.DELETE_FEATURE]: visStateUpdaters.deleteFeatureUpdater,
+
+  [ActionTypes.SET_POLYGON_FILTER_LAYER]: visStateUpdaters.setPolygonFilterLayerUpdater,
+
+  [ActionTypes.SET_SELECTED_FEATURE]: visStateUpdaters.setSelectedFeatureUpdater,
+
+  [ActionTypes.SET_EDITOR_MODE]: visStateUpdaters.setEditorModeUpdater,
+
+  [ActionTypes.TOGGLE_EDITOR_VISIBILITY]: visStateUpdaters.toggleEditorVisibility,
+
+  [ActionTypes.TOGGLE_FILTER_FEATURE]: visStateUpdaters.toggleFilterFeatureUpdater,
+
+  [ActionTypes.APPLY_CPU_FILTER]: visStateUpdaters.applyCPUFilterUpdater
 };
 
 // construct vis-state reducer

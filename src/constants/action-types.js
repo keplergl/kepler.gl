@@ -87,12 +87,15 @@ const ActionTypes = keyMirror({
   UPDATE_LAYER_ANIMATION_SPEED: null,
   TOGGLE_LAYER_CONFIG_ACTIVE: null,
   ENLARGE_FILTER: null,
+  TOGGLE_FILTER_FEATURE: null,
   SET_VISIBLE_LAYERS_FOR_MAP: null,
   TOGGLE_LAYER_FOR_MAP: null,
   SET_FILTER_PLOT: null,
   LOAD_FILES: null,
   LOAD_FILES_ERR: null,
   LAYER_COLOR_UI_CHANGE: null,
+  TOGGLE_FEATURE_LAYER: null,
+  APPLY_CPU_FILTER: null,
   SET_MAP_INFO: null,
 
   // mapState
@@ -145,11 +148,21 @@ const ActionTypes = keyMirror({
   SET_USER_MAPBOX_ACCESS_TOKEN: null,
   SET_EXPORT_MAP_HTML_MODE: null,
 
+  // uiState > editor
+  SET_EDITOR_MODE: null,
+  SET_SELECTED_FEATURE: null,
+
   // all
   INIT: null,
   ADD_DATA_TO_MAP: null,
   RECEIVE_MAP_CONFIG: null,
-  RESET_MAP_CONFIG: null
+  RESET_MAP_CONFIG: null,
+
+  // geo-operations
+  SET_FEATURES: null,
+  SET_POLYGON_FILTER_LAYER: null,
+  DELETE_FEATURE: null,
+  TOGGLE_EDITOR_VISIBILITY: null
 });
 
 const addPrefix = actions =>

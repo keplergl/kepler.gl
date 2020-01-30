@@ -855,7 +855,9 @@ export const mergedFilters = [
     speed: 1,
     fieldType: 'real',
     typeOptions: ['range'],
-    fixedDomain: false
+    fixedDomain: false,
+    gpu: true,
+    gpuChannel: [0]
   }
 ];
 

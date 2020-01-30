@@ -125,7 +125,8 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
               // mount keplerGl reducer
               keplerGl: keplerGl.keplerGlReducer.initialState({
                 uiState: {
-                  readOnly: ${options.mode === EXPORT_HTML_MAP_MODES.READ}
+                  readOnly: ${options.mode === EXPORT_HTML_MAP_MODES.READ},
+                  currentModal: null
                 }
               })
             });

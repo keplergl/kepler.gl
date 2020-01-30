@@ -31,6 +31,7 @@ import {cdnUrl} from '../utils';
 import {LinkButton} from './common/styled-components';
 import {media} from '../styles';
 import MapboxLogo from './mapbox-logo';
+import NetlifyLogo from './netlify-logo';
 import {DEMO_LINK} from '../constants';
 
 const Container = styled.div`
@@ -49,16 +50,19 @@ const LogosContainer = styled.div`
 `;
 
 const BrandingContainer = styled.div`
-  display: inline-flex;
-  align-items: center;
   ${media.palm`
     margin-top: ${props => props.theme.margins.small};
   `};
+  
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  column-gap: 20px;
+  align-items: center;
+ 
 `;
 
 const CreatedBy = styled.div`
   display: inline-flex;
-  margin-left: 20px;
   align-items: center;
   color: ${props => props.theme.footerColor};
   font-size: 11px;
@@ -149,7 +153,8 @@ export default class Footer extends PureComponent {
           <img style={{width: '120px'}} src={cdnUrl('icons/kepler.gl-logo.png')} />
           <BrandingContainer>
             <img src={cdnUrl('icons/uber.svg')} />
-            <MapboxLogo/>
+            <MapboxLogo />
+            <NetlifyLogo />
             <CreatedBy>
               created by
               <StyledLogo className="fg">

@@ -31,14 +31,17 @@ import MapPopoverFactory from 'components/map/map-popover';
 import MapControlFactory from 'components/map/map-control';
 import {StyledMapContainer} from 'components/common/styled-components';
 
+import Editor from './editor/editor';
+
 // utils
 import {generateMapboxLayers, updateMapboxLayers} from 'layers/mapbox-utils';
 import {OVERLAY_TYPE} from 'layers/base-layer';
-import {onWebGLInitialized, setLayerBlending} from 'utils/gl-utils';
+import {setLayerBlending} from 'utils/gl-utils';
 import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 
 // default-settings
 import ThreeDBuildingLayer from 'deckgl-layers/3d-building-layer/3d-building-layer';
+import {FILTER_TYPES} from 'constants/default-settings';
 
 const MAP_STYLE = {
   container: {
@@ -68,15 +71,17 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       layerOrder: PropTypes.arrayOf(PropTypes.any).isRequired,
       layerData: PropTypes.arrayOf(PropTypes.any).isRequired,
       layers: PropTypes.arrayOf(PropTypes.any).isRequired,
+      filters: PropTypes.arrayOf(PropTypes.any).isRequired,
       mapState: PropTypes.object.isRequired,
-      mapStyle: PropTypes.object.isRequired,
       mapControls: PropTypes.object.isRequired,
+      uiState: PropTypes.object.isRequired,
+      mapStyle: PropTypes.object.isRequired,
       mousePos: PropTypes.object.isRequired,
       mapboxApiAccessToken: PropTypes.string.isRequired,
       mapboxApiUrl: PropTypes.string,
-      toggleMapControl: PropTypes.func.isRequired,
       visStateActions: PropTypes.object.isRequired,
       mapStateActions: PropTypes.object.isRequired,
+      uiStateActions: PropTypes.object.isRequired,
 
       // optional
       readOnly: PropTypes.bool,
@@ -87,12 +92,14 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       onMapToggleLayer: PropTypes.func,
       onMapStyleLoaded: PropTypes.func,
       onMapRender: PropTypes.func,
-      getMapboxRef: PropTypes.func
+      getMapboxRef: PropTypes.func,
+      index: PropTypes.number
     };
 
     static defaultProps = {
       MapComponent: MapboxGLMap,
-      deckGlProps: {}
+      deckGlProps: {},
+      index: 0
     };
 
     constructor(props) {
@@ -101,6 +108,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       this.previousLayers = {
         // [layers.id]: mapboxLayerConfig
       };
+
+      this._deck = null;
     }
 
     componentWillUnmount() {
@@ -127,13 +136,20 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       }), {})
     );
 
+    filtersSelector = props => props.filters;
+    polygonFilters = createSelector(
+      this.filtersSelector,
+      filters => filters.filter(f => f.type === FILTER_TYPES.polygon)
+    );
+
     mapboxLayersSelector = createSelector(
       this.layersSelector,
       this.layerDataSelector,
       this.layerOrderSelector,
       this.layersToRenderSelector,
       generateMapboxLayers
-    )
+    );
+
     /* component private functions */
     _isVisibleMapLayer(layer, mapLayers) {
       // if layer.id is not in mapLayers, don't render it
@@ -149,8 +165,6 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         colorDomain
       });
     };
-
-    _onWebGLInitialized = onWebGLInitialized;
 
     _handleMapToggleLayer = layerId => {
       const {index: mapIndex = 0, visStateActions} = this.props;
@@ -197,6 +211,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     };
 
     /* component render functions */
+
     /* eslint-disable complexity */
     _renderMapPopover(layersToRender) {
       // TODO: move this into reducer so it can be tested
@@ -223,6 +238,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         objectInfo &&
         objectInfo.picked
       ) {
+
         // if anything hovered
         const {object, layer: overlay} = objectInfo;
 
@@ -280,28 +296,23 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     _getHoverXY(viewport, lngLat) {
       const screenCoord =
         !viewport || !lngLat ? null : viewport.project(lngLat);
-
       return screenCoord && {x: screenCoord[0], y: screenCoord[1]};
     }
 
     _renderLayer = (overlays, idx) => {
       const {
+        datasets,
         layers,
         layerData,
         hoverInfo,
         clicked,
         mapState,
         interactionConfig,
-        mousePos,
         animationConfig
       } = this.props;
       const layer = layers[idx];
       const data = layerData[idx];
-
-      const layerInteraction = {
-        mousePosition: mousePos.mousePosition,
-        wrapLongitude: true
-      };
+      const {gpuFilter} = datasets[layer.config.dataId] || {};
 
       const objectHovered = clicked || hoverInfo;
       const layerCallbacks = {
@@ -311,13 +322,13 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       // Layer is Layer class
       const layerOverlay = layer.renderLayer({
         data,
+        gpuFilter,
         idx,
-        layerInteraction,
-        objectHovered,
-        mapState,
         interactionConfig,
         layerCallbacks,
-        animationConfig
+        mapState,
+        animationConfig,
+        objectHovered
       });
 
       return overlays.concat(layerOverlay || []);
@@ -364,10 +375,14 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           viewState={mapState}
           id="default-deckgl-overlay"
           layers={deckGlLayers}
-          onWebGLInitialized={this._onWebGLInitialized}
           onBeforeRender={this._onBeforeRender}
           onHover={visStateActions.onLayerHover}
           onClick={visStateActions.onLayerClick}
+          ref={comp => {
+            if (comp && comp.deck && !this._deck) {
+              this._deck = comp.deck;
+            }
+          }}
         />
       );
     }
@@ -400,6 +415,15 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       this.props.mapStateActions.updateMap(viewState);
     };
 
+    _toggleMapControl = panelId => {
+      const {
+        index,
+        uiStateActions
+      } = this.props;
+
+      uiStateActions.toggleMapControl(panelId, index);
+    };
+
     render() {
       const {
         mapState,
@@ -412,9 +436,14 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         mapboxApiAccessToken,
         mapboxApiUrl,
         mapControls,
-        toggleMapControl
+        uiState,
+        visStateActions,
+        editor,
+        index
       } = this.props;
+
       const layersToRender = this.layersToRenderSelector(this.props);
+
       if (!mapStyle.bottomMapStyle) {
         // style not yet loaded
         return <div />;
@@ -429,6 +458,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         transformRequest
       };
 
+      const isEdit = uiState.mapControls.mapDraw.active;
+
       return (
         <StyledMapContainer style={MAP_STYLE.container}>
           <MapControl
@@ -438,15 +469,18 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             isExport={this.props.isExport}
             layers={layers}
             layersToRender={layersToRender}
-            mapIndex={this.props.index}
+            mapIndex={index}
             mapControls={mapControls}
             readOnly={this.props.readOnly}
             scale={mapState.scale || 1}
             top={0}
+            editor={editor}
             onTogglePerspective={mapStateActions.togglePerspective}
             onToggleSplitMap={mapStateActions.toggleSplitMap}
             onMapToggleLayer={this._handleMapToggleLayer}
-            onToggleMapControl={toggleMapControl}
+            onToggleMapControl={this._toggleMapControl}
+            onSetEditorMode={visStateActions.setEditorMode}
+            onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
           />
           <MapComponent
             {...mapProps}
@@ -459,6 +493,24 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           >
             {this._renderDeckOverlay(layersToRender)}
             {this._renderMapboxOverlays(layersToRender)}
+            <Editor
+              index={index}
+              datasets={datasets}
+              editor={editor}
+              filters={this.polygonFilters(this.props)}
+              isEnabled={isEdit}
+              layers={layers}
+              layersToRender={layersToRender}
+              onDeleteFeature={visStateActions.deleteFeature}
+              onSelect={visStateActions.setSelectedFeature}
+              onUpdate={visStateActions.setFeatures}
+              onTogglePolygonFilter={visStateActions.setPolygonFilterLayer}
+              style={{
+                pointerEvents: isEdit ? 'all' : 'none',
+                position: 'absolute',
+                display: editor.visible ? 'block' : 'none'
+              }}
+            />
           </MapComponent>
           {mapStyle.topMapStyle && (
             <div style={MAP_STYLE.top}>
@@ -474,6 +526,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       );
     }
   }
+
+  MapContainer.displayName = 'MapContainer';
 
   return MapContainer;
 }

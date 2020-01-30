@@ -63,33 +63,49 @@ export default class ClusterLayer extends AggregationLayer {
     };
   }
 
-  renderLayer({
-    data,
-    idx,
-    objectHovered,
-    mapState,
-    interaction,
-    layerCallbacks
-  }) {
+  renderLayer(opts) {
     const {visConfig} = this.config;
+    const {
+      data,
+      gpuFilter,
+      objectHovered,
+      mapState,
+      layerCallbacks
+    } = opts;
+
+    const updateTriggers = {
+      getColorValue: {
+        colorField: this.config.colorField,
+        colorAggregation: this.config.visConfig.colorAggregation
+      },
+      filterData: {
+        filterRange: gpuFilter.filterRange,
+        ...gpuFilter.filterValueUpdateTriggers
+      }
+    };
+    const {_filterData: filterData, ...clusterData} = data;
 
     return [
       new DeckGLClusterLayer({
-        ...data,
-        id: this.id,
-        idx,
+        ...this.getDefaultDeckLayerProps(opts),
+        ...clusterData,
+        filterData,
+
+        // radius
         radiusScale: 1,
         radiusRange: visConfig.radiusRange,
         clusterRadius: visConfig.clusterRadius,
+
+        // color
         colorRange: this.getColorRange(visConfig.colorRange),
-        colorScale: this.config.colorScale,
-        pickable: true,
-        autoHighlight: true,
-        highlightColor: this.config.highlightColor,
-        opacity: visConfig.opacity,
-        mapState,
-        // parameters
-        parameters: {depthTest: mapState.dragRotate},
+        colorScaleType: this.config.colorScale,
+
+        zoom: Math.round(mapState.zoom),
+        width: mapState.width,
+        height: mapState.height,
+
+        // updateTriggers
+        updateTriggers,
 
         // call back from layer after calculate clusters
         onSetColorDomain: layerCallbacks.onSetLayerDomain

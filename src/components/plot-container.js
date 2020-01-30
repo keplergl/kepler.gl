@@ -46,6 +46,8 @@ const StyledPlotContainer = styled.div`
   .mapboxgl-ctrl-bottom-right {
     display: none;
   }
+  
+  position: absolute;
 `;
 
 const deckGlProps = {
@@ -143,6 +145,7 @@ export default function PlotContainerFactory(MapContainer) {
       return (
         <StyledPlotContainer
           style={{position: 'absolute', top: -9999, left: -9999}}
+          className="export-map-instance"
         >
           <div
             ref={this.plottingAreaRef}

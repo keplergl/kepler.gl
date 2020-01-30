@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import keyMirror from 'keymirror';
+import {EditorModes} from 'react-map-gl-draw';
 
 import {
   scaleLinear,
@@ -107,7 +108,7 @@ export const KEPLER_GL_NAME = 'kepler.gl';
 // Since we are injecting this during the build process with babel
 // while developing VERSION is not defined, we capture the exception and return
 // an empty string which will allow us to retrieve the latest umd version
-export const KEPLER_GL_VERSION = "__PACKAGE_VERSION__";
+export const KEPLER_GL_VERSION = '__PACKAGE_VERSION__';
 export const KEPLER_GL_WEBSITE = 'http://kepler.gl/';
 
 export const DIMENSIONS = {
@@ -252,6 +253,14 @@ export const TRIP_ARC_FIELDS = {
   lat1: 'dropoff',
   lng1: 'dropoff'
 };
+
+export const FILTER_TYPES = keyMirror({
+  range: null,
+  select: null,
+  timeRange: null,
+  multiSelect: null,
+  polygon: null
+});
 
 export const SCALE_TYPES = keyMirror({
   ordinal: null,
@@ -412,7 +421,7 @@ export const notSupportedScaleOpts = {
   [CHANNEL_SCALES.size]: []
 };
 
-export const  notSupportAggrOpts = {
+export const notSupportAggrOpts = {
   [CHANNEL_SCALES.colorAggr]: {},
   [CHANNEL_SCALES.sizeAggr]: {}
 };
@@ -570,47 +579,60 @@ export const RESOLUTIONS = keyMirror({
   TWO_X: null
 });
 
-export const RATIOS = keyMirror({
+export const EXPORT_IMG_RATIOS = keyMirror({
   SCREEN: null,
   FOUR_BY_THREE: null,
   SIXTEEN_BY_NINE: null
 });
 
-export const RATIO_OPTIONS = [{
-  id: RATIOS.SCREEN,
-  label: 'Original Screen',
-  getSize: (screenW, screenH) => ({width: screenW, height: screenH})
-}, {
-  id: RATIOS.FOUR_BY_THREE,
-  label: '4:3',
-  getSize: (screenW, screenH) => ({width: screenW, height: Math.round(screenW * 0.75)})
-}, {
-  id: RATIOS.SIXTEEN_BY_NINE,
-  label: '16:9',
-  getSize: (screenW, screenH) => ({width: screenW, height: Math.round(screenW * 0.5625)})
-}];
+export const EXPORT_IMG_RATIO_OPTIONS = [
+  {
+    id: EXPORT_IMG_RATIOS.SCREEN,
+    label: 'Original Screen',
+    getSize: (screenW, screenH) => ({width: screenW, height: screenH})
+  },
+  {
+    id: EXPORT_IMG_RATIOS.FOUR_BY_THREE,
+    label: '4:3',
+    getSize: (screenW, screenH) => ({
+      width: screenW,
+      height: Math.round(screenW * 0.75)
+    })
+  },
+  {
+    id: EXPORT_IMG_RATIOS.SIXTEEN_BY_NINE,
+    label: '16:9',
+    getSize: (screenW, screenH) => ({
+      width: screenW,
+      height: Math.round(screenW * 0.5625)
+    })
+  }
+];
 
-export const RESOLUTION_OPTIONS = [{
-  id: RESOLUTIONS.ONE_X,
-  label: '1x',
-  available: true,
-  scale: 1,
-  zoomOffset: Math.log2(1),
-  getSize: (screenW, screenH) => ({
-    width: screenW,
-    height: screenH
-  })
-}, {
-  id: RESOLUTIONS.TWO_X,
-  label: '2x',
-  available: true,
-  scale: 2,
-  zoomOffset: Math.log2(2),
-  getSize: (screenW, screenH) => ({
-    width: screenW * 2,
-    height: screenH * 2
-  })
-}];
+export const EXPORT_IMG_RESOLUTION_OPTIONS = [
+  {
+    id: RESOLUTIONS.ONE_X,
+    label: '1x',
+    available: true,
+    scale: 1,
+    zoomOffset: Math.log2(1),
+    getSize: (screenW, screenH) => ({
+      width: screenW,
+      height: screenH
+    })
+  },
+  {
+    id: RESOLUTIONS.TWO_X,
+    label: '2x',
+    available: true,
+    scale: 2,
+    zoomOffset: Math.log2(2),
+    getSize: (screenW, screenH) => ({
+      width: screenW * 2,
+      height: screenH * 2
+    })
+  }
+];
 
 export const EXPORT_DATA_TYPE = keyMirror({
   CSV: null
@@ -700,6 +722,27 @@ export const BASE_SPEED = 600;
 export const DEFAULT_TIME_FORMAT = 'MM/DD/YY HH:mm:ssa';
 export const SPEED_CONTROL_RANGE = [0, 10];
 
+// We could use directly react-map-gl-draw EditorMode but this would
+// create a direct dependency with react-map-gl-draw
+// Created this map to be independent from react-map-gl-draw
+export const EDITOR_MODES = {
+  READ_ONLY: EditorModes.READ_ONLY,
+  DRAW_POLYGON: EditorModes.DRAW_POLYGON,
+  DRAW_RECTANGLE: EditorModes.DRAW_RECTANGLE,
+  EDIT: EditorModes.EDIT_VERTEX
+};
+
+export const EDITOR_AVAILABLE_LAYERS = [
+  LAYER_TYPES.point,
+  LAYER_TYPES.hexagon,
+  LAYER_TYPES.arc,
+  LAYER_TYPES.line
+];
+// GPU Filtering
+/**
+ * Max number of filter value buffers that deck.gl provides
+ */
+export const MAX_GPU_FILTERS = 4;
 export const MAP_THUMBNAIL_DIMENSION = {
   width: 300,
   height: 200
