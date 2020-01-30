@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import {findDOMNode} from 'react-dom';
+// import {findDOMNode} from 'react-dom';
 import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import styled, {ThemeProvider} from 'styled-components';
 import window from 'global/window';
@@ -30,21 +30,20 @@ import Announcement from './components/announcement';
 import {replaceLoadDataModal} from './factories/load-data-modal';
 import {replaceMapControl} from './factories/map-control';
 import {replacePanelHeader} from './factories/panel-header';
-import {replaceSaveExportDropdown} from './factories/save-export-dropdown';
-import ExportUrlModal from './components/sharing/export-url-modal';
 import {AUTH_TOKENS} from './constants/default-settings';
 import {
-  exportFileToCloud,
   loadRemoteMap,
   loadSampleConfigurations,
-  setCloudLoginSuccess
+  onExportFileSuccess
 } from './actions';
 
+import {getCloudProviders} from './cloud-providers';
+
+const CloudProviders = getCloudProviders();
 const KeplerGl = require('kepler.gl/components').injectComponents([
   replaceLoadDataModal(),
   replaceMapControl(),
-  replacePanelHeader(),
-  replaceSaveExportDropdown()
+  replacePanelHeader()
 ]);
 
 // Sample data
@@ -124,7 +123,7 @@ class App extends Component {
     //   window.setTimeout(this._showBanner, 3000);
     // }
     // load sample data
-    // this._loadSampleData();
+    this._loadSampleData();
 
     // Notifications
     // this._loadMockNotifications();
@@ -166,11 +165,11 @@ class App extends Component {
   }
 
   _loadSampleData() {
-    this._loadPointData();
+    // this._loadPointData();
     // this._loadGeojsonData();
     // this._loadTripGeoJson();
     // this._loadIconData();
-    // this._loadH3HexagonData();
+    this._loadH3HexagonData();
     // this._loadScenegraphLayer();
   }
 
@@ -298,25 +297,12 @@ class App extends Component {
     );
   }
 
-  _isCloudStorageEnabled = () => {
-    const {app} = this.props.demo;
-    return app.featureFlags.cloudStorage;
-  };
-
   _toggleCloudModal = () => {
     // TODO: this lives only in the demo hence we use the state for now
     // REFCOTOR using redux
     this.setState({
       cloudModalOpen: !this.state.cloudModalOpen
     });
-  };
-
-  _onExportToCloud = (providerName) => {
-    this.props.dispatch(exportFileToCloud(providerName));
-  };
-
-  _onCloudLoginSuccess = (providerName) => {
-    this.props.dispatch(setCloudLoginSuccess(providerName));
   };
 
   _getMapboxRef = (mapbox, index) => {
@@ -336,8 +322,6 @@ class App extends Component {
 
   render() {
     const {showBanner} = this.state;
-    const {sharing} = this.props.demo;
-    const rootNode = this.root;
     return (
       <ThemeProvider theme={theme}>
         <GlobalStyle
@@ -356,17 +340,6 @@ class App extends Component {
           >
             <Announcement onDisable={this._disableBanner} />
           </Banner>
-          {this._isCloudStorageEnabled() && rootNode && (
-            <ExportUrlModal
-              sharing={sharing}
-              isOpen={Boolean(this.state.cloudModalOpen)}
-              onClose={this._toggleCloudModal}
-              onExport={this._onExportToCloud}
-              onCloudLoginSuccess={this._onCloudLoginSuccess}
-              // this is to apply the same modal style as kepler.gl core
-              parentSelector={() => findDOMNode(this.root)}
-            />
-          )}
           <div
             style={{
               transition: 'margin 1s, height 1s',
@@ -388,8 +361,8 @@ class App extends Component {
                   getState={keplerGlGetState}
                   width={width}
                   height={height - (showBanner ? BannerHeight : 0)}
-                  onSaveMap={this._isCloudStorageEnabled() && this._toggleCloudModal}
-                  onSaveToStorage={() => {}}
+                  cloudProviders={CloudProviders}
+                  onExportToCloudSuccess={onExportFileSuccess}
                 />
               )}
             </AutoSizer>

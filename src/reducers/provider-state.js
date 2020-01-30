@@ -19,39 +19,28 @@
 // THE SOFTWARE.
 
 import {handleActions} from 'redux-actions';
-import {getCloudProviders} from '../cloud-providers';
-import {CLOUD_LOGIN_SUCCESS, LOAD_REMOTE_RESOURCE_ERROR, PUSHING_FILE} from '../actions';
+import * as providerStateUpdaters from './provider-state-updaters';
+import {ActionTypes} from 'actions/provider-actions';
 
-const readAuthTokens = () => getCloudProviders()
-  .reduce((tokens, cloudProvider) => ({
-    ...tokens,
-    [cloudProvider.name]: cloudProvider.getAccessToken()
-  }), {});
+/**
+ * Important: Do not rename `actionHandler` or the assignment pattern of property value.
+ * It is used to generate documentation
+ */
+const actionHandler = {
+  [ActionTypes.EXPORT_FILE_TO_CLOUD]: providerStateUpdaters.exportFileToCloudUpdater,
+  [ActionTypes.EXPORT_FILE_SUCCESS]: providerStateUpdaters.exportFileSuccessUpdater,
+  [ActionTypes.EXPORT_FILE_ERROR]: providerStateUpdaters.exportFileErrorUpdater,
+  [ActionTypes.RESET_PROVIDER_STATUS]: providerStateUpdaters.resetProviderStatusUpdater,
+  [ActionTypes.SET_CLOUD_PROVIDER]: providerStateUpdaters.setCloudProviderUpdater,
+  [ActionTypes.SAVE_TO_CLOUD_SUCCESS]: providerStateUpdaters.saveToCloudSuccessUpdater
+}
 
-const sharingInitialState = {
-  isLoading: false,
-  status: null,
-  info: null,
-  tokens: readAuthTokens()
-};
+// construct provider-state reducer
+export const providerStateReducerFactory = (initialState = {}) =>
+  handleActions(actionHandler, {
+    ...providerStateUpdaters.INITIAL_PROVIDER_STATE,
+    ...initialState,
+    initialState
+  });
 
-// file upload reducer
-export const sharingReducer = handleActions({
-  [LOAD_REMOTE_RESOURCE_ERROR]: (state, action) => ({
-    ...state,
-    error: action.error,
-    currentOption: {dataUrl: action.url},
-    isMapLoading: false
-  }),
-  [PUSHING_FILE]: (state, action) => ({
-    ...state,
-    isLoading: action.isLoading,
-    info: action.metadata
-  }),
-  [CLOUD_LOGIN_SUCCESS]: state => ({
-    ...state,
-    tokens: readAuthTokens()
-  })
-}, sharingInitialState);
-
-export default sharingReducer;
+export default providerStateReducerFactory();

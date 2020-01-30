@@ -19,8 +19,8 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import {Icons} from 'kepler.gl/components';
 import PropTypes from 'prop-types';
+import Base from './base';
 
 class MapIcon extends Component {
   static propTypes = {
@@ -31,13 +31,13 @@ class MapIcon extends Component {
 
   static defaultProps = {
     height: '16px',
-    predefinedClassName: 'data-ex-icons-add',
+    predefinedClassName: 'data-ex-icons-map-icon',
     totalColor: 1
   };
 
   render() {
     return (
-      <Icons.IconWrapper {...this.props} viewBox={"0 0 602 602"}>
+      <Base {...this.props} viewBox={"0 0 602 602"}>
         <g>
           <path
             d="M573.864,323.679l25.6-201.737L409.988,50.046L197.993,151.289L0,67.678l27.935,220.105L2.223,506.009l208.665,39.135
@@ -59,7 +59,7 @@ class MapIcon extends Component {
 			c6.123,17.472,22.13,30.499,37.994,42.232c-2.902,4.64-4.664,10.084-4.664,15.953c0,16.681,13.507,30.192,30.198,30.192
 			c16.657,0,30.192-13.512,30.192-30.192C536.213,418.979,522.689,405.449,506.021,405.449z"/>
         </g>
-      </Icons.IconWrapper>
+      </Base>
     );
   }
 }

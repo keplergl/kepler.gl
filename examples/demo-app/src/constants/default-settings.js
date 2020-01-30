@@ -94,8 +94,8 @@ export const LOADING_SAMPLE_LIST_ERROR_MESSAGE = 'Not able to load sample galler
 export const LOADING_SAMPLE_ERROR_MESSAGE = 'Not able to load sample';
 export const LOADING_URL_MESSAGE = 'You can use the following formats: CSV | JSON | Kepler.gl config json. Make sure the url contains the file extension.';
 export const CORS_LINK = 'https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS';
-export const KEPLER_DISCLAIMER = '* Kepler.gl will save your map data to your personal cloud storage, only people with the URL can access your map and data. ' +
-  'You can edit/delete the data file in your cloud account anytime.';
+// export const KEPLER_DISCLAIMER = '* Kepler.gl will save your map data to your personal cloud storage, only people with the URL can access your map and data. ' +
+//   'You can edit/delete the data file in your cloud account anytime.';
 
 export const DEFAULT_LOADING_METHOD = LOADING_METHODS[0];
 
@@ -109,4 +109,5 @@ export const AUTH_TOKENS = {
   MAPBOX_TOKEN: process.env.MapboxAccessToken, // eslint-disable-line
   DROPBOX_CLIENT_ID: process.env.DropboxClientId, // eslint-disable-line
   EXPORT_MAPBOX_TOKEN: process.env.MapboxExportToken, // eslint-disable-line
+  CARTO_CLIENT_ID: process.env.CartoClientId // eslint-disable-line
 };

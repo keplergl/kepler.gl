@@ -22,7 +22,9 @@ import React from 'react';
 import styled from 'styled-components';
 import LoadingSpinner from 'components/common/loading-spinner';
 
-const StyledImagePreview = styled.div`
+const StyledImagePreview = styled.div.attrs({
+  className: 'image-preview'
+})`
   align-items: center;
   display: flex;
   flex-direction: column;

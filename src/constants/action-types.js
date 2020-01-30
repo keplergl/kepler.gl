@@ -165,7 +165,7 @@ const ActionTypes = keyMirror({
   TOGGLE_EDITOR_VISIBILITY: null
 });
 
-const addPrefix = actions =>
+export const addPrefix = actions =>
   Object.keys(actions).reduce(
     (accu, key) => ({
       ...accu,

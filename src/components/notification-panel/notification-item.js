@@ -90,14 +90,18 @@ export default function NotificationItemFactory() {
         id: PropTypes.string.isRequired,
         type: PropTypes.string.isRequired,
         message: PropTypes.string.isRequired
-      }).isRequired
+      }).isRequired,
+      isExpanded: PropTypes.bool
     };
 
-    constructor(props) {
-      super(props);
-      this.state = {
-        isExpanded: false
-      };
+    state = {
+      isExpanded: false
+    };
+
+    componentDidMount() {
+      if (this.props.isExpanded) {
+        this.setState({isExpanded: true});
+      }
     }
 
     render() {
@@ -124,12 +128,12 @@ export default function NotificationItemFactory() {
               renderers={{link: LinkRenderer}}
             />
           </NotificationMessage>
-          <div className="notification-item--action">
+          {typeof removeNotification === 'function' ? <div className="notification-item--action">
             <DeleteIcon
               height="10px"
               onClick={() => removeNotification(notification.id)}
             />
-          </div>
+          </div> : null}
         </NotificationItemContent>
       );
     }

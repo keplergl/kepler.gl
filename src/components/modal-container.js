@@ -37,6 +37,7 @@ import ExportDataModalFactory from './modals/export-data-modal';
 import ExportMapModalFactory from './modals/export-map-modal/export-map-modal';
 import AddMapStyleModalFactory from './modals/add-map-style-modal';
 import SaveMapModalFactory from './modals/save-map-modal';
+import ShareMapModalFactory from './modals/share-map-modal';
 
 // Breakpoints
 import {media} from 'styles/media-breakpoints';
@@ -50,7 +51,8 @@ import {
   EXPORT_IMAGE_ID,
   EXPORT_MAP_ID,
   ADD_MAP_STYLE_ID,
-  SAVE_MAP_ID
+  SAVE_MAP_ID,
+  SHARE_MAP_ID
 } from 'constants/default-settings';
 import {EXPORT_MAP_FORMATS} from '../constants/default-settings';
 
@@ -77,6 +79,10 @@ const LoadDataModalStyle = css`
   top: 60px;
 `;
 
+const DefaultStyle = css`
+  max-width: 960px;
+`
+
 ModalContainerFactory.deps = [
   DeleteDatasetModalFactory,
   DataTableModalFactory,
@@ -86,7 +92,8 @@ ModalContainerFactory.deps = [
   ExportMapModalFactory,
   AddMapStyleModalFactory,
   ModalDialogFactory,
-  SaveMapModalFactory
+  SaveMapModalFactory,
+  ShareMapModalFactory
 ];
 
 export default function ModalContainerFactory(
@@ -98,7 +105,8 @@ export default function ModalContainerFactory(
   ExportMapModal,
   AddMapStyleModal,
   ModalDialog,
-  SaveMapModal
+  SaveMapModal,
+  ShareMapModal
 ) {
   class ModalWrapper extends Component {
     static propTypes = {
@@ -114,7 +122,8 @@ export default function ModalContainerFactory(
       visStateActions: PropTypes.object.isRequired,
       uiStateActions: PropTypes.object.isRequired,
       mapStyleActions: PropTypes.object.isRequired,
-      onSaveToStorage: PropTypes.func
+      onSaveToStorage: PropTypes.func,
+      cloudProviders: PropTypes.arrayOf(PropTypes.object)
     };
 
     _closeModal = () => {
@@ -158,10 +167,33 @@ export default function ModalContainerFactory(
       this._closeModal();
     };
 
-    _onSaveMap = () => {
+    _exportFileToCloud = ({provider, isPublic, closeModal}) => {
       const toSave = exportMap(this.props);
-      this.props.onSaveToStorage(toSave);
+      this.props.providerActions.exportFileToCloud({
+        mapData: toSave,
+        provider,
+        isPublic,
+        closeModal,
+        onSuccess: this.props.onExportToCloudSuccess,
+        onError: this.props.onExportToCloudError
+      });
     }
+
+    _onSaveMap = () => {
+      const {currentProvider} = this.props.providerState;
+      const provider = this.props.cloudProviders.find(p => p.name === currentProvider);
+      this._exportFileToCloud({provider, isPublic: false, closeModal: true});
+    }
+
+    _onShareMapUrl = (provider) => {
+      this._exportFileToCloud({provider, isPublic: true, closeModal: false});
+    }
+
+    _onCloseSaveMap = () => {
+      this.props.providerActions.resetProviderStatus();
+      this._closeModal();
+    }
+
     /* eslint-disable complexity */
     render() {
       const {
@@ -173,7 +205,9 @@ export default function ModalContainerFactory(
         visState,
         rootNode,
         visStateActions,
-        uiStateActions
+        uiStateActions,
+        cloudProviders,
+        providerState
       } = this.props;
       const {currentModal, datasetKeyToRemove} = uiState;
       const {datasets, layers, editingDataset} = visState;
@@ -218,7 +252,6 @@ export default function ModalContainerFactory(
                   layers={layers}
                 />
               );
-
               modalProps = {
                 title: 'Delete Dataset',
                 cssStyle: DeleteDatasetModalStyled,
@@ -258,7 +291,6 @@ export default function ModalContainerFactory(
               />
             );
             modalProps = {
-              close: false,
               title: 'Export Image',
               footer: true,
               onCancel: this._closeModal,
@@ -283,7 +315,6 @@ export default function ModalContainerFactory(
               />
             );
             modalProps = {
-              close: false,
               title: 'Export Data',
               footer: true,
               onCancel: this._closeModal,
@@ -308,7 +339,6 @@ export default function ModalContainerFactory(
               />
             );
             modalProps = {
-              close: false,
               title: 'Export Map',
               footer: true,
               onCancel: this._closeModal,
@@ -331,7 +361,6 @@ export default function ModalContainerFactory(
               />
             );
             modalProps = {
-              close: false,
               title: 'Add Custom Mapbox Style',
               footer: true,
               onCancel: this._closeModal,
@@ -346,10 +375,13 @@ export default function ModalContainerFactory(
           case SAVE_MAP_ID:
             template = (
               <SaveMapModal
+                {...providerState}
                 exportImage={uiState.exportImage}
                 mapInfo={visState.mapInfo}
                 onSetMapInfo={visStateActions.setMapInfo}
                 onUpdateSetting={uiStateActions.setExportImageSetting}
+                cloudProviders={cloudProviders.filter(p => p.hasPrivateStorage())}
+                onSetCloudProvider={this.props.providerActions.setCloudProvider}
               />
             );
             modalProps = {
@@ -359,9 +391,26 @@ export default function ModalContainerFactory(
               onConfirm: this._onSaveMap,
               confirmButton: {
                 large: true,
-                disabled: uiState.exportImage.exporting || !isValidMapInfo(visState.mapInfo),
+                disabled: uiState.exportImage.exporting ||
+                  !isValidMapInfo(visState.mapInfo) ||
+                  !providerState.currentProvider,
                 children: 'Save'
               }
+            };
+            break;
+
+          case SHARE_MAP_ID:
+            template = (
+              <ShareMapModal
+                {...providerState}
+                cloudProviders={cloudProviders.filter(p => p.hasSharingUrl())}
+                onExport={this._onShareMapUrl}
+                onSetCloudProvider={this.props.providerActions.setCloudProvider}
+              />
+            );
+            modalProps = {
+              title: 'Share URL',
+              onCancel: this._onCloseSaveMap
             };
             break;
           default:
@@ -371,10 +420,11 @@ export default function ModalContainerFactory(
 
       return this.props.rootNode ? (
         <ModalDialog
-          {...modalProps}
           parentSelector={() => findDOMNode(rootNode)}
           isOpen={Boolean(currentModal)}
-          close={this._closeModal}
+          onCancel={this._closeModal}
+          {...modalProps}
+          cssStyle={DefaultStyle.concat(modalProps.cssStyle || '')}
         >
           {template}
         </ModalDialog>

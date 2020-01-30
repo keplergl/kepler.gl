@@ -36,8 +36,10 @@ export function parseQueryString(query) {
  * @param mapLink the cloud-providers url used to store the map
  * @returns {string}
  */
-export function getMapPermalink(mapLink) {
-  return `${window.location.protocol}//${window.location.host}/${MAP_URI}${mapLink}`
+export function getMapPermalink(mapLink, fullUrl = true) {
+  return fullUrl
+    ? `${window.location.protocol}//${window.location.host}/${MAP_URI}${mapLink}`
+    : `/${MAP_URI}${mapLink}`;
 }
 
 // from http://blog.stevenlevithan.com/archives/parseuri
