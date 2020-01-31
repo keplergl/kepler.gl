@@ -30,7 +30,7 @@ export const StyledLayerName = styled(CenterFlexbox)`
   font-size: 12px;
   letter-spacing: 0.43px;
   text-transform: capitalize;
-  padding-left: 14px;
+  padding: 0 14px;
   margin-top: 12px;
 
   svg {
@@ -115,14 +115,14 @@ const CellInfo = ({data, layer}) => {
 
 const LayerHoverInfoFactory = () => {
   const LayerHoverInfo = props => {
-    const {data, layer, fieldsToShow} = props;
+    const {data, layer} = props;
 
-    if (!data || !layer || !fieldsToShow.length) {
+    if (!data || !layer) {
       return null;
     }
 
     return (
-      <div>
+      <div className="map-popover__layer-info">
         <StyledLayerName className="map-popover__layer-name">
           <Layers height="12px" />
           {props.layer.config.label}

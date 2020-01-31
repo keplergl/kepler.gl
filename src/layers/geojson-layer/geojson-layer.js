@@ -440,6 +440,7 @@ export default class GeoJsonLayer extends Layer {
             new DeckGLGeoJsonLayer({
               ...this.getDefaultHoverLayerProps(),
               ...layerProps,
+              wrapLongitude: false,
               data: [objectHovered.object],
               getLineWidth: data.getLineWidth,
               getRadius: data.getRadius,
