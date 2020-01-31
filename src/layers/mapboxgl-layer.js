@@ -76,6 +76,11 @@ class MapboxLayerGL extends Layer {
     gpuFilter => gpuFilterToMapboxFilter(gpuFilter)
   );
 
+  isValidFilter(filter) {
+    // mapbox will crash if filter is not an array or empty
+    return Array.isArray(filter) && filter.length;
+  }
+
   getDataUpdateTriggers({filteredIndex, gpuFilter, id}) {
     const {columns} = this.config;
 

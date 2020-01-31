@@ -29,7 +29,7 @@ import {hexToRgb} from 'utils/color-utils';
 import MapboxGLLayer from '../mapboxgl-layer';
 import HeatmapLayerIcon from './heatmap-layer-icon';
 
-const MAX_ZOOM_LEVEL = 18;
+export const MAX_ZOOM_LEVEL = 18;
 
 export const pointPosAccessor = ({lat, lng}) => d => [
   // lng
@@ -216,8 +216,8 @@ class HeatmapLayer extends MapboxGLLayer {
           visibility: 'visible'
         },
         maxzoom: MAX_ZOOM_LEVEL,
-        filter,
-        paint
+        paint,
+        ...(this.isValidFilter(filter) ? {filter} : {})
       };
     }
   );
