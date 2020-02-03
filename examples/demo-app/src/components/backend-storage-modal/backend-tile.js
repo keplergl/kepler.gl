@@ -40,7 +40,6 @@ const StyledTileButton = styled.button`
   cursor: pointer;
   padding: 0;
   outline: 0;
-  pointer-events: ${props => props.isConnected ? 'none' : 'auto'}
 
   :hover {
     border-color: ${props => props.theme.primaryBtnBgd};
@@ -71,7 +70,7 @@ const BackendTile = ({
   onLogout
 }) => (
   <StyledTile>
-      <StyledTileButton onClick={isConnected() ? onSelect : onConnect} isConnected={isConnected()}>
+    <StyledTileButton onClick={ isConnected() ? onSelect : onConnect } isConnected={isConnected()}>
       <Icon height="88px" />
       {isConnected() && <StyledLabel>Connected</StyledLabel>}
     </StyledTileButton>
