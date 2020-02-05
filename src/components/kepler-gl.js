@@ -112,7 +112,8 @@ function KeplerGlFactory(
       appName: KEPLER_GL_NAME,
       version: KEPLER_GL_VERSION,
       sidePanelWidth: DIMENSIONS.sidePanel.width,
-      theme: {}
+      theme: {},
+      cloudProviders: []
     };
 
     componentDidMount() {
@@ -380,9 +381,9 @@ function KeplerGlFactory(
               containerW={containerW}
               containerH={mapState.height}
               providerState={this.props.providerState}
-              // onSaveToStorage={onSaveToStorage}
               cloudProviders={this.props.cloudProviders}
               onExportToCloudSuccess={this.props.onExportToCloudSuccess}
+              onExportToCloudError={this.props.onExportToCloudError}
             />
           </GlobalStyle>
         </ThemeProvider>

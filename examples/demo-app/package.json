@@ -7,7 +7,6 @@
     "start-local-deck-src": "webpack-dev-server --mode development --env.es6 --env.deck_src --progress --hot --open"
   },
   "dependencies": {
-    "@carto/toolkit": "0.0.1-rc.12",
     "d3-request": "^1.0.6",
     "dropbox": "^4.0.12",
     "global": "^4.3.0",
