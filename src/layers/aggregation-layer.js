@@ -42,6 +42,7 @@ export const getValueAggrFunc = (
   field,
   aggregation
 ) => {
+
   return points => {
 
     return field
@@ -301,6 +302,7 @@ export default class AggregationLayer extends Layer {
     const {gpuFilter, mapState, layerCallbacks} = opts;
     const {visConfig} = this.config;
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
+    console.log(this.config.visConfig.colorAggregation)
     const updateTriggers = {
       getColorValue: {
         colorField: this.config.colorField,
@@ -325,6 +327,7 @@ export default class AggregationLayer extends Layer {
       colorScaleType: this.config.colorScale,
       upperPercentile: visConfig.percentile[1],
       lowerPercentile: visConfig.percentile[0],
+      colorAggregation: visConfig.colorAggregation,
 
       // elevation
       extruded: visConfig.enable3d,

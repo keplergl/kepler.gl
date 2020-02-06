@@ -240,6 +240,7 @@ export default class ArcLayer extends Layer {
           getFilterValue: gpuFilter.filterValueUpdateTriggers,
           getWidth: {
             sizeField: this.config.sizeField,
+            sizeScale: this.config.sizeScale,
             sizeRange: this.config.visConfig.sizeRange
           },
           getSourceColor: colorUpdateTriggers,

@@ -99,6 +99,7 @@ export default class ClusterLayer extends AggregationLayer {
         // color
         colorRange: this.getColorRange(visConfig.colorRange),
         colorScaleType: this.config.colorScale,
+        colorAggregation: visConfig.colorAggregation,
 
         zoom: Math.round(mapState.zoom),
         width: mapState.width,

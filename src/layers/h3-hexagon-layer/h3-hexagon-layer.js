@@ -254,7 +254,8 @@ export default class HexagonIdLayer extends Layer {
       },
       getElevation: {
         sizeField: config.sizeField,
-        sizeRange: visConfig.sizeRange
+        sizeRange: visConfig.sizeRange,
+        sizeScale: config.sizeScale
       },
       getFilterValue: gpuFilter.filterValueUpdateTriggers
     };
