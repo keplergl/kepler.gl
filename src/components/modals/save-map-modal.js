@@ -25,7 +25,8 @@ import CloudTile from './cloud-tile';
 
 import {
   MAP_THUMBNAIL_DIMENSION,
-  MAP_INFO_CHARACTER
+  MAP_INFO_CHARACTER,
+  EXPORT_IMG_RATIOS
 } from 'constants/default-settings';
 
 import {
@@ -96,7 +97,8 @@ function SaveMapModalFactory() {
     componentDidMount() {
       this.props.onUpdateSetting({
         mapW: this.props.thumbWidth,
-        mapH: this.props.thumbHeight
+        mapH: this.props.thumbHeight,
+        ratio: EXPORT_IMG_RATIOS.CUSTOM
       });
       this._setDefaultProvider();
     }

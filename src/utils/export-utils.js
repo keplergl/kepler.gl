@@ -53,14 +53,27 @@ const defaultResolution = EXPORT_IMG_RESOLUTION_OPTIONS.find(
 
 const defaultRatio = EXPORT_IMG_RATIO_OPTIONS.find(op => op.id === EXPORT_IMG_RATIOS.FOUR_BY_THREE);
 
+export function getScaleFromImageSize(imageW, imageH, mapW, mapH) {
+  if ([imageW, imageH, mapW, mapH].some(d => d <= 0)) {
+    return 1;
+  }
+
+  const base = imageW / imageH > 1 ? imageW : imageH;
+  const mapBase = imageW / imageH > 1 ? mapW : mapH;
+  const scale = base / mapBase;
+
+  return scale;
+}
+
 export function calculateExportImageSize({mapW, mapH, ratio, resolution}) {
   if (mapW <= 0 || mapH <= 0) {
     return null;
   }
 
+  const ratioItem = EXPORT_IMG_RATIO_OPTIONS.find(op => op.id === ratio) || defaultRatio;
+
   const resolutionItem =
     EXPORT_IMG_RESOLUTION_OPTIONS.find(op => op.id === resolution) || defaultResolution;
-  const ratioItem = EXPORT_IMG_RATIO_OPTIONS.find(op => op.id === ratio) || defaultRatio;
 
   const {width: scaledWidth, height: scaledHeight} = resolutionItem.getSize(
     mapW,
@@ -72,10 +85,10 @@ export function calculateExportImageSize({mapW, mapH, ratio, resolution}) {
     scaledHeight
   );
 
-  const {zoomOffset, scale} = resolutionItem;
+  const {scale} = ratioItem.id === EXPORT_IMG_RATIOS.CUSTOM ?
+    {} : resolutionItem;
 
   return {
-    zoomOffset,
     scale,
     imageW,
     imageH

@@ -589,7 +589,8 @@ export const RESOLUTIONS = keyMirror({
 export const EXPORT_IMG_RATIOS = keyMirror({
   SCREEN: null,
   FOUR_BY_THREE: null,
-  SIXTEEN_BY_NINE: null
+  SIXTEEN_BY_NINE: null,
+  CUSTOM: null
 });
 
 export const EXPORT_IMG_RATIO_OPTIONS = [
@@ -597,6 +598,12 @@ export const EXPORT_IMG_RATIO_OPTIONS = [
     id: EXPORT_IMG_RATIOS.SCREEN,
     label: 'Original Screen',
     getSize: (screenW, screenH) => ({width: screenW, height: screenH})
+  },
+  {
+    id: EXPORT_IMG_RATIOS.CUSTOM,
+    hidden: true,
+    label: 'Custom',
+    getSize: (mapW, mapH) => ({width: mapW, height: mapH})
   },
   {
     id: EXPORT_IMG_RATIOS.FOUR_BY_THREE,
@@ -622,7 +629,6 @@ export const EXPORT_IMG_RESOLUTION_OPTIONS = [
     label: '1x',
     available: true,
     scale: 1,
-    zoomOffset: Math.log2(1),
     getSize: (screenW, screenH) => ({
       width: screenW,
       height: screenH
@@ -633,7 +639,6 @@ export const EXPORT_IMG_RESOLUTION_OPTIONS = [
     label: '2x',
     available: true,
     scale: 2,
-    zoomOffset: Math.log2(2),
     getSize: (screenW, screenH) => ({
       width: screenW * 2,
       height: screenH * 2
