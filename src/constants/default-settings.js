@@ -765,3 +765,16 @@ export const MAP_INFO_CHARACTER = {
   title: 100,
   description: 100
 };
+
+// Load data
+export const LOADING_METHODS = keyMirror({
+  upload: null,
+  storage: null
+});
+
+export const DATASET_FORMATS = keyMirror({
+  row: null,
+  geojson: null,
+  csv: null,
+  keplergl: null
+});

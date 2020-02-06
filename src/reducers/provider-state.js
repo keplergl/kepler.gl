@@ -32,7 +32,9 @@ const actionHandler = {
   [ActionTypes.EXPORT_FILE_ERROR]: providerStateUpdaters.exportFileErrorUpdater,
   [ActionTypes.RESET_PROVIDER_STATUS]: providerStateUpdaters.resetProviderStatusUpdater,
   [ActionTypes.SET_CLOUD_PROVIDER]: providerStateUpdaters.setCloudProviderUpdater,
-  [ActionTypes.SAVE_TO_CLOUD_SUCCESS]: providerStateUpdaters.saveToCloudSuccessUpdater
+  [ActionTypes.SAVE_TO_CLOUD_SUCCESS]: providerStateUpdaters.saveToCloudSuccessUpdater,
+  [ActionTypes.LOAD_CLOUD_MAP]: providerStateUpdaters.loadCloudMapUpdater,
+  [ActionTypes.LOAD_CLOUD_MAP_SUCCESS]: providerStateUpdaters.loadCloudMapSuccessUpdater
 }
 
 // construct provider-state reducer

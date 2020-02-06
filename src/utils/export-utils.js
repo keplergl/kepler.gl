@@ -203,13 +203,13 @@ export function exportData(state, option) {
 }
 
 export function exportMap(state, option) {
-  const mapToState = KeplerGlSchema.save(state);
+  const mapToSave = KeplerGlSchema.save(state);
   const {mapInfo} = state.visState;
   const {imageDataUri} = state.uiState.exportImage;
   const thumbnail = imageDataUri ? dataURItoBlob(imageDataUri) : null
 
   return {
-    map: mapToState,
+    map: mapToSave,
     info: mapInfo,
     thumbnail
   };

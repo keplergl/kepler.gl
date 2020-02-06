@@ -21,14 +21,19 @@ import {createAction} from 'redux-actions';
 import keyMirror from 'keymirror';
 import {addPrefix} from 'constants/action-types';
 
-export const ActionTypes = addPrefix(keyMirror({
-  EXPORT_FILE_TO_CLOUD: null,
-  EXPORT_FILE_SUCCESS: null,
-  EXPORT_FILE_ERROR: null,
-  RESET_PROVIDER_STATUS: null,
-  SET_CLOUD_PROVIDER: null,
-  SAVE_TO_CLOUD_SUCCESS: null
-}));
+export const ActionTypes = addPrefix(
+  keyMirror({
+    EXPORT_FILE_TO_CLOUD: null,
+    EXPORT_FILE_SUCCESS: null,
+    EXPORT_FILE_ERROR: null,
+    RESET_PROVIDER_STATUS: null,
+    SET_CLOUD_PROVIDER: null,
+    SAVE_TO_CLOUD_SUCCESS: null,
+    LOAD_CLOUD_MAP: null,
+    LOAD_CLOUD_MAP_SUCCESS: null,
+    LOAD_CLOUD_MAP_ERROR: null
+  })
+);
 
 export const exportFileToCloud = createAction(
   ActionTypes.EXPORT_FILE_TO_CLOUD,
@@ -44,7 +49,12 @@ export const exportFileToCloud = createAction(
 
 export const exportFileSuccess = createAction(
   ActionTypes.EXPORT_FILE_SUCCESS,
-  ({response, provider, onSuccess, closeModal}) => ({response, provider, onSuccess, closeModal})
+  ({response, provider, onSuccess, closeModal}) => ({
+    response,
+    provider,
+    onSuccess,
+    closeModal
+  })
 );
 
 export const exportFileError = createAction(
@@ -53,8 +63,9 @@ export const exportFileError = createAction(
 );
 
 export const saveToCloudSuccess = createAction(
-  ActionTypes.SAVE_TO_CLOUD_SUCCESS
-)
+  ActionTypes.SAVE_TO_CLOUD_SUCCESS,
+  message => message
+);
 
 export const resetProviderStatus = createAction(
   ActionTypes.RESET_PROVIDER_STATUS
@@ -63,4 +74,19 @@ export const resetProviderStatus = createAction(
 export const setCloudProvider = createAction(
   ActionTypes.SET_CLOUD_PROVIDER,
   provider => provider
+);
+
+export const loadCloudMap = createAction(
+  ActionTypes.LOAD_CLOUD_MAP,
+  ({map, provider, onSuccess, onError}) => ({map, provider, onSuccess, onError})
+);
+
+export const loadCloudMapSuccess = createAction(
+  ActionTypes.LOAD_CLOUD_MAP_SUCCESS,
+  ({response, provider, onSuccess, onError}) => ({
+    response,
+    provider,
+    onSuccess,
+    onError
+  })
 );

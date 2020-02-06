@@ -22,6 +22,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import CloudTile from './cloud-tile';
+import ImageModalContainer from './image-modal-container';
 
 import {
   MAP_THUMBNAIL_DIMENSION,
@@ -70,51 +71,32 @@ const StyledSaveMapModal = styled.div.attrs({
   }
 `;
 
+const nop = () => {};
+
 function SaveMapModalFactory() {
   class SaveMapModal extends Component {
     static propTypes = {
       exportImage: PropTypes.object.isRequired,
       mapInfo: PropTypes.object.isRequired,
-      onSetMapInfo: PropTypes.func.isRequired,
-      onSetCloudProvider: PropTypes.func.isRequired,
       isLoading: PropTypes.bool.isRequired,
       thumbWidth: PropTypes.number,
       thumbHeight: PropTypes.number,
       characterLimits: PropTypes.object,
       cloudProviders: PropTypes.arrayOf(PropTypes.object),
-      currentProvider: PropTypes.string
+      currentProvider: PropTypes.string,
+      onSetMapInfo: PropTypes.func.isRequired,
+      onSetCloudProvider: PropTypes.func.isRequired,
+      onUpdateImageSetting: PropTypes.func.isRequired
     };
 
     static defaultProps = {
-      thumbWidth: MAP_THUMBNAIL_DIMENSION.width,
-      thumbHeight: MAP_THUMBNAIL_DIMENSION.height,
       characterLimits: MAP_INFO_CHARACTER,
       cloudProviders: [],
       currentProvider: null,
+      error: null,
       isLoading: false,
-      mapInfo: {title: '', description: ''}
+      onSetCloudProvider: nop
     };
-
-    componentDidMount() {
-      this.props.onUpdateSetting({
-        mapW: this.props.thumbWidth,
-        mapH: this.props.thumbHeight,
-        ratio: EXPORT_IMG_RATIOS.CUSTOM
-      });
-      this._setDefaultProvider();
-    }
-
-    _setDefaultProvider() {
-      if (!this.props.currentProvider && this.props.cloudProviders.length) {
-        const connected = this.props.cloudProviders.find(
-          p => typeof p.getAccessToken === 'function' && p.getAccessToken()
-        );
-
-        if (connected) {
-          this.props.onSetCloudProvider(connected.name);
-        }
-      }
-    }
 
     _onChangeInput = (key, e) => {
       const {
@@ -131,10 +113,17 @@ function SaveMapModalFactory() {
         cloudProviders,
         isLoading,
         currentProvider,
-        onSetCloudProvider
+        onSetCloudProvider,
+        onUpdateImageSetting
       } = this.props;
 
       return (
+        <ImageModalContainer
+          currentProvider={currentProvider}
+          cloudProviders={cloudProviders}
+          onUpdateImageSetting={onUpdateImageSetting}
+          onSetCloudProvider={onSetCloudProvider}
+        >
         <StyledSaveMapModal>
           <StyledModalContent className="save-map-modal-content">
             <StyledExportSection disabled={isLoading}>
@@ -161,7 +150,7 @@ function SaveMapModalFactory() {
               <div className="description image-preview-panel">
                 <ImagePreview
                   exportImage={exportImage}
-                  width={this.props.thumbWidth}
+                  width={MAP_THUMBNAIL_DIMENSION.width}
                   showDimension={false}
                 />
               </div>
@@ -213,6 +202,7 @@ function SaveMapModalFactory() {
             </StyledExportSection>
           </StyledModalContent>
         </StyledSaveMapModal>
+        </ImageModalContainer>
       );
     }
   }

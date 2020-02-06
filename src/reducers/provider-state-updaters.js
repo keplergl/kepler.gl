@@ -21,25 +21,51 @@
 import {withTask} from 'react-palm/tasks';
 import {default as Console} from 'global/console';
 import window from 'global/window';
-
-import {generateHashId, getError} from 'utils/utils';
-import {EXPORT_FILE_TO_CLOUD_TASK, ACTION_TASK, DELAY_TASK} from 'tasks/tasks';
-import {exportFileSuccess, exportFileError, saveToCloudSuccess} from 'actions/provider-actions';
+import {generateHashId, getError, isPlainObject} from 'utils/utils';
+import {
+  EXPORT_FILE_TO_CLOUD_TASK,
+  ACTION_TASK,
+  DELAY_TASK,
+  LOAD_CLOUD_MAP_TASK
+} from 'tasks/tasks';
+import {
+  exportFileSuccess,
+  exportFileError,
+  saveToCloudSuccess,
+  loadCloudMapSuccess
+} from 'actions/provider-actions';
 import {
   removeNotification,
   toggleModal,
   addNotification
 } from 'actions/ui-state-actions';
+import {addDataToMap} from 'actions/actions';
 import {
   DEFAULT_NOTIFICATION_TYPES,
-  DEFAULT_NOTIFICATION_TOPICS
+  DEFAULT_NOTIFICATION_TOPICS,
+  DATASET_FORMATS
 } from 'constants/default-settings';
+import {toArray} from 'utils/utils';
+import KeplerGlSchema from 'schemas';
 
 export const INITIAL_PROVIDER_STATE = {
   isLoading: false,
   error: null,
   currentProvider: null,
   successInfo: {}
+};
+import {
+  processRowObject,
+  processGeojson,
+  processCsvData,
+  processKeplerglDataset
+} from 'processors/data-processor';
+
+const DATASET_HANDLERS = {
+  [DATASET_FORMATS.row]: processRowObject,
+  [DATASET_FORMATS.geojson]: processGeojson,
+  [DATASET_FORMATS.csv]: processCsvData,
+  [DATASET_FORMATS.keplergl]: processKeplerglDataset
 };
 
 function createFileJson(mapData = {}) {
@@ -68,6 +94,22 @@ function createActionTask(action, payload) {
   return null;
 }
 
+function _validateProvider(provider, method) {
+  if (!provider) {
+    Console.error(`provider is not defined`);
+    return false;
+  }
+
+  if (typeof provider[method] !== 'function') {
+    Console.error(
+      `${method} is not a function of Cloud provider: ${provider.name}`
+    );
+    return false;
+  }
+
+  return true;
+}
+
 /**
  * This method will export the current kepler config file to the chosen cloud proder
  * add returns a share URL
@@ -76,20 +118,18 @@ function createActionTask(action, payload) {
  * @param {*} action
  */
 export const exportFileToCloudUpdater = (state, action) => {
-  const {mapData, provider, isPublic, onSuccess, onError, closeModal} = action.payload;
+  const {
+    mapData,
+    provider,
+    isPublic,
+    onSuccess,
+    onError,
+    closeModal
+  } = action.payload;
 
-  if (!provider) {
-    Console.error(`provider is not defined`);
+  if (!_validateProvider(provider, 'uploadFile')) {
     return state;
   }
-
-  if (typeof provider.uploadFile !== 'function') {
-    Console.error(
-      `uploadFile is not a function of Cloud provider: ${provider.name}`
-    );
-    return state;
-  }
-
   // TODO: do we need to always create a fileBlob?
   // if this is provider specific, we should just send over the json
   // and let provider decide what format to use
@@ -150,12 +190,14 @@ export const exportFileSuccessUpdater = (state, action) => {
  * @param {*} action
  */
 export const saveToCloudSuccessUpdater = (state, action) => {
+  const message = action.payload;
+
   const id = generateHashId();
   const successNote = {
     id,
     type: DEFAULT_NOTIFICATION_TYPES.success,
     topic: DEFAULT_NOTIFICATION_TOPICS.global,
-    message: `Saved to ${state.currentProvider} successfully`
+    message: message || `Saved to ${state.currentProvider} successfully`
   };
 
   const tasks = [
@@ -186,6 +228,112 @@ export const exportFileErrorUpdater = (state, action) => {
   return task ? withTask(newState, task) : newState;
 };
 
+export const loadCloudMapUpdater = (state, action) => {
+  const {map, provider, onSuccess, onError} = action.payload;
+
+  if (!_validateProvider(provider, 'loadMap')) {
+    return state;
+  }
+
+  const newState = {
+    ...state,
+    isLoading: true
+  };
+
+  // payload called by provider.loadMap
+  const uploadFileTask = LOAD_CLOUD_MAP_TASK({provider, payload: map}).bimap(
+    // success
+    response => loadCloudMapSuccess({response, provider, onSuccess, onError}),
+    // error
+    error => exportFileErrorUpdater({error, provider, onError})
+  );
+
+  return withTask(newState, uploadFileTask);
+};
+
+function checkLoadMapResponseError(response) {
+  if (!response || !isPlainObject(response)) {
+    return new Error('Load map response is empty');
+  }
+  if (!isPlainObject(response.map)) {
+    return new Error(`Load map response should be an object property "map"`);
+  }
+  if (!response.map.datasets || !response.map.config) {
+    return new Error(
+      `Load map response.map should be an object with property datasets or config`
+    );
+  }
+
+  return null;
+}
+
+function getDatasetHandler(format) {
+  const defaultHandler = DATASET_HANDLERS[DATASET_FORMATS.csv];
+  if (!format) {
+    Console.warn(
+      'format is not provided in load map response, will use csv by default'
+    );
+    return defaultHandler;
+  }
+
+  if (!DATASET_HANDLERS[format]) {
+    const supportedFormat = Object.keys(DATASET_FORMATS)
+      .map(k => `'${k}'`)
+      .join(', ');
+    Console.warn(
+      `unknown format ${format}. Please use one of ${supportedFormat}, will use csv by default`
+    );
+    return defaultHandler;
+  }
+
+  return DATASET_HANDLERS[format];
+}
+
+function parseLoadMapResponse(response) {
+  const {map, format, mapInfo} = response;
+  const processorMethod = getDatasetHandler(format);
+
+  const parsedDatasets = toArray(map.datasets).map((ds, i) => {
+    if (format === DATASET_FORMATS.keplergl) {
+      // no need to obtain id, directly pass them in
+      return processorMethod(ds);
+    }
+    const info = (ds && ds.info) || {id: generateHashId(6)};
+    const data = processorMethod(ds.data || ds);
+    return {info, data};
+  });
+
+  const parsedConfig = map.config ? KeplerGlSchema.parseSavedConfig(map.config) : null;
+
+  return {datasets: parsedDatasets, config: parsedConfig, mapInfo};
+}
+
+export const loadCloudMapSuccessUpdater = (state, action) => {
+  const {response, provider, onSuccess, onError} = action.payload;
+
+  const formatError = checkLoadMapResponseError(response);
+  if (formatError) {
+    // if response format is not correct
+    return exportFileErrorUpdater(state, {
+      payload: {error: formatError, provider, onError}
+    });
+  }
+
+  const newState = {
+    ...state,
+    isLoading: false
+  };
+
+  const payload = parseLoadMapResponse(response);
+
+  const tasks = [
+    ACTION_TASK().map(_ => addDataToMap(payload)),
+    createActionTask(onSuccess, {response, provider}),
+    ACTION_TASK().map(_ => saveToCloudSuccess(`Map from ${provider.name} loaded`))
+  ].filter(d => d);
+
+  return tasks.length ? withTask(newState, tasks) : newState;
+};
 /**
  *
  * @param {*} state

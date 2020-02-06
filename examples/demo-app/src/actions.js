@@ -27,7 +27,6 @@ import {
   LOADING_SAMPLE_LIST_ERROR_MESSAGE,
   MAP_CONFIG_URL
 } from './constants/default-settings';
-import {LOADING_METHODS_NAMES} from './constants/default-settings';
 import {parseUri, getMapPermalink} from './utils/url';
 
 // CONSTANTS
@@ -46,32 +45,6 @@ export const CLOUD_LOGIN_SUCCESS  = 'CLOUD_LOGIN_SUCCESS';
 export function initApp() {
   return {
     type: INIT
-  };
-}
-
-/**
- * this method set the current loading method
- * @param {string} method the string id for the loading method to use
- * @returns {{type: string, method: *}}
- */
-export function setLoadingMethod(method) {
-  return {
-    type: SET_LOADING_METHOD,
-    method
-  };
-}
-
-/**
- * this action is triggered when user switches between load modal tabs
- * @param {string} method
- * @returns {Function}
- */
-export function switchToLoadingMethod(method) {
-  return (dispatch, getState) => {
-    dispatch(setLoadingMethod(method));
-    if (method === LOADING_METHODS_NAMES.sample && getState().demo.app.sampleMaps.length === 0) {
-      dispatch(loadSampleConfigurations());
-    }
   };
 }
 

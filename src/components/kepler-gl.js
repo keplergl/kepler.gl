@@ -38,7 +38,8 @@ import {
   KEPLER_GL_VERSION,
   THEME,
   DEFAULT_MAPBOX_API_URL,
-  SAVE_MAP_ID
+  SAVE_MAP_ID,
+  SHARE_MAP_ID
 } from 'constants/default-settings';
 import {MISSING_MAPBOX_TOKEN} from 'constants/user-feedbacks';
 
@@ -323,7 +324,9 @@ function KeplerGlFactory(
           ));
 
       const isExporting =
-        uiState.currentModal === EXPORT_IMAGE_ID || uiState.currentModal === SAVE_MAP_ID;
+        uiState.currentModal === EXPORT_IMAGE_ID ||
+        uiState.currentModal === SAVE_MAP_ID ||
+        uiState.currentModal === SHARE_MAP_ID;
       const theme = this.availableThemeSelector(this.props);
 
       return (

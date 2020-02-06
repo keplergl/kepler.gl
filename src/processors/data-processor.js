@@ -32,7 +32,7 @@ import {
 } from 'utils/data-utils';
 import KeplerGlSchema from 'schemas';
 import {GUIDES_FILE_FORMAT} from 'constants/user-guides';
-import {isPlainObject} from 'utils/utils';
+import {isPlainObject, toArray} from 'utils/utils';
 
 export const ACCEPTED_ANALYZER_TYPES = [
   AnalyzerDATA_TYPES.DATE,
@@ -636,11 +636,25 @@ export function processKeplerglJSON(rawData) {
   return rawData ? KeplerGlSchema.load(rawData.datasets, rawData.config) : null;
 }
 
+/**
+ * Parse a single or an array of datasets saved using kepler.gl schema
+ * @param {Array | Array<Object>} rawData
+ */
+export function processKeplerglDataset(rawData) {
+  if (!rawData) {
+    return null;
+  }
+
+  const results = KeplerGlSchema.parseSavedData(toArray(rawData));
+  return Array.isArray(rawData) ? results : results[0];
+}
+
 export const Processors = {
   processGeojson,
   processCsvData,
   processRowObject,
   processKeplerglJSON,
+  processKeplerglDataset,
   analyzerTypeToFieldType,
   getFieldsFromData,
   parseCsvRowsByFieldType,

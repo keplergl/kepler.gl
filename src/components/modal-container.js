@@ -22,6 +22,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {css} from 'styled-components';
 import {findDOMNode} from 'react-dom';
+import {createSelector} from 'reselect';
 
 import ModalDialogFactory from './modals/modal-dialog';
 import KeplerGlSchema from 'schemas';
@@ -125,7 +126,15 @@ export default function ModalContainerFactory(
       onSaveToStorage: PropTypes.func,
       cloudProviders: PropTypes.arrayOf(PropTypes.object)
     };
-
+    cloudProviders = props => props.cloudProviders;
+    providerWithStorage = createSelector(
+      this.cloudProviders,
+      cloudProviders => cloudProviders.filter(p => p.hasPrivateStorage())
+    );
+    providerWithShare = createSelector(
+     this.cloudProviders,
+     cloudProviders => cloudProviders.filter(p => p.hasSharingUrl())
+    );
     _closeModal = () => {
       this.props.uiStateActions.toggleModal(null);
     };
@@ -194,6 +203,14 @@ export default function ModalContainerFactory(
       this._closeModal();
     }
 
+    _onLoadCloudMap = payload => {
+      this.props.providerActions.loadCloudMap({
+        ...payload,
+        onSuccess: this.props.onLoadCloudMapSuccess,
+        onError: this.props.onLoadCloudMapError
+      });
+    }
+
     /* eslint-disable complexity */
     render() {
       const {
@@ -206,7 +223,6 @@ export default function ModalContainerFactory(
         rootNode,
         visStateActions,
         uiStateActions,
-        cloudProviders,
         providerState
       } = this.props;
       const {currentModal, datasetKeyToRemove} = uiState;
@@ -269,8 +285,12 @@ export default function ModalContainerFactory(
           case ADD_DATA_ID:
             template = (
               <LoadDataModal
+                {...providerState}
                 onClose={this._closeModal}
                 onFileUpload={this._onFileUpload}
+                onLoadCloudMap={this._onLoadCloudMap}
+                cloudProviders={this.providerWithStorage(this.props)}
+                onSetCloudProvider={this.props.providerActions.setCloudProvider}
                 {...uiState.loadFiles}
               />
             );
@@ -379,8 +399,8 @@ export default function ModalContainerFactory(
                 exportImage={uiState.exportImage}
                 mapInfo={visState.mapInfo}
                 onSetMapInfo={visStateActions.setMapInfo}
-                onUpdateSetting={uiStateActions.setExportImageSetting}
-                cloudProviders={cloudProviders.filter(p => p.hasPrivateStorage())}
+                onUpdateImageSetting={uiStateActions.setExportImageSetting}
+                cloudProviders={this.providerWithStorage(this.props)}
                 onSetCloudProvider={this.props.providerActions.setCloudProvider}
               />
             );
@@ -403,9 +423,11 @@ export default function ModalContainerFactory(
             template = (
               <ShareMapModal
                 {...providerState}
-                cloudProviders={cloudProviders.filter(p => p.hasSharingUrl())}
+                isReady={!uiState.exportImage.exporting}
+                cloudProviders={this.providerWithShare(this.props)}
                 onExport={this._onShareMapUrl}
                 onSetCloudProvider={this.props.providerActions.setCloudProvider}
+                onUpdateImageSetting={uiStateActions.setExportImageSetting}
               />
             );
             modalProps = {

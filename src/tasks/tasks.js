@@ -77,6 +77,13 @@ export const EXPORT_FILE_TO_CLOUD_TASK = Task.fromPromise(
   'EXPORT_FILE_TO_CLOUD_TASK'
 );
 
+export const LOAD_CLOUD_MAP_TASK = Task.fromPromise(
+
+  ({provider, payload}) => provider.loadMap(payload),
+
+  'LOAD_CLOUD_MAP_TASK'
+)
+
 /**
  *  task to dispatch a function as a task
  */
