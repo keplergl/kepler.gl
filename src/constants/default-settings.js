@@ -93,6 +93,13 @@ export const EXPORT_MAP_ID = 'exportMap';
  * @public
  */
 export const SAVE_MAP_ID = 'saveMap';
+/**
+ * Modal id: share map url modal
+ * @constant
+ * @type {string}
+ * @public
+ */
+export const SHARE_MAP_ID = 'shareMap';
 
 import {
   Layers,
@@ -716,7 +723,8 @@ export const DEFAULT_NOTIFICATION_TOPICS = keyMirror({
 export const TOKEN_MISUSE_WARNING = '* If you do not provide your own token, the map may fail to display at any time when we replace ours to avoid misuse. ';
 export const DISCLAIMER = 'You can change the Mapbox token later using the following instructions: ';
 export const MAP_CONFIG_DESCRIPTION = 'Map config will be included in the Json file. If you are using kepler.gl in your own app. You can copy this config and pass it to ';
-
+export const SHARE_DISCLAIMER = 'kepler.gl will save your map data to your personal cloud storage, only people with the URL can access your map and data. ' +
+  'You can edit/delete the data file in your cloud account anytime.';
 // Animation
 export const BASE_SPEED = 600;
 export const DEFAULT_TIME_FORMAT = 'MM/DD/YY HH:mm:ssa';

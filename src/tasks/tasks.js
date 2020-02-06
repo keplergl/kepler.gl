@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {taskCreator} from 'react-palm/tasks';
+import Task, {taskCreator} from 'react-palm/tasks';
 import {json as requestJson} from 'd3-request';
 import console from 'global/console';
 
@@ -66,4 +66,29 @@ export const LOAD_MAP_STYLE_TASK = taskCreator(
     }),
 
   'LOAD_MAP_STYLE_TASK'
+);
+
+/**
+ * task to upload file to cloud provider
+ */
+export const EXPORT_FILE_TO_CLOUD_TASK = Task.fromPromise(
+
+  ({provider, payload}) => provider.uploadFile(payload),
+
+  'EXPORT_FILE_TO_CLOUD_TASK'
+)
+
+/**
+ *  task to dispatch a function as a task
+ */
+export const ACTION_TASK = Task.fromCallback(
+  (_, cb) => cb(),
+
+  'ACTION_TASK'
+)
+
+export const DELAY_TASK = Task.fromCallback(
+  (delay, cb) => window.setTimeout(() => cb(), delay),
+
+  'DELAY_TASK'
 );

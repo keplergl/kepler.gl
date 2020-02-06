@@ -25,15 +25,18 @@ import {parseQueryString} from '../utils/url';
 import DropboxIcon from '../components/icons/dropbox-icon';
 
 const NAME = 'dropbox';
+const DISPLAY_NAME = 'Dropbox';
 const DOMAIN = 'www.dropbox.com';
 const KEPLER_DROPBOX_FOLDER_LINK = `//${DOMAIN}/home/Apps`;
 const CORS_FREE_DOMAIN = 'dl.dropboxusercontent.com';
 const PRIVATE_STORAGE_ENABLED = false;
+const SHARING_ENABLED = true;
 
 export default class DropboxProvider {
   constructor(clientId, appName, icon = DropboxIcon) {
     // All cloud-providers providers must implement the following properties
     this.name = NAME;
+    this.displayName = DISPLAY_NAME;
     this.clientId = clientId;
     this.appName = appName;
     this.icon = icon;
@@ -54,6 +57,7 @@ export default class DropboxProvider {
    */
   login(onCloudLoginSuccess) {
     const link = this._authLink();
+
     const authWindow = window.open(link, '_blank', 'width=1024,height=716');
     const handleToken = e => {
       // TODO: add security step to validate which domain the message is coming from
@@ -61,15 +65,23 @@ export default class DropboxProvider {
       window.removeEventListener('message', handleToken);
       this._dropbox.setAccessToken(e.data.token);
       if (window.localStorage) {
-        window.localStorage.setItem('dropbox', JSON.stringify({
-          // dropbox token doesn't expire unless revoked by the user
-          token: e.data.token,
-          timestamp: new Date()
-        }));
+        window.localStorage.setItem(
+          'dropbox',
+          JSON.stringify({
+            // dropbox token doesn't expire unless revoked by the user
+            token: e.data.token,
+            timestamp: new Date()
+          })
+        );
       }
-      onCloudLoginSuccess(this.name);
     };
+    onCloudLoginSuccess();
     window.addEventListener('message', handleToken);
+  }
+
+  getUserName() {
+    // TODO: Implement
+    return null;
   }
 
   logout(onCloudLogoutSuccess) {
@@ -78,7 +90,7 @@ export default class DropboxProvider {
 
   isEnabled() {
     // TODO: Implement
-    return this.clientId != null;
+    return this.clientId !== null;
   }
 
   isConnected() {
@@ -89,16 +101,21 @@ export default class DropboxProvider {
     return PRIVATE_STORAGE_ENABLED;
   }
 
+  hasSharingUrl() {
+    return SHARING_ENABLED;
+  }
+
   /**
    *
-   * @param blob to upload
-   * @param name if blob doesn't contain a file name, this field is used
-   * @param isPublic define whether the file will be available pubblicaly once uploaded
+   * @param mapData map data and config in one json object {map: {datasets: Array<Object>, config: Object, info: Object}
+   * @param blob json file blob to upload
+   * @param fileName if blob doesn't contain a file name, this field is used
+   * @param isPublic define whether the file will be available publicly once uploaded
    * @returns {Promise<DropboxTypes.files.FileMetadata>}
    */
-  async uploadFile({blob, name, isPublic = true}) {
+  async uploadFile({mapData, blob, fileName, isPublic = true}) {
     const metadata = await this._dropbox.filesUpload({
-      path: name || blob.name,
+      path: `/${fileName || blob.name}`,
       contents: blob
     });
 
@@ -111,18 +128,20 @@ export default class DropboxProvider {
    * @returns {Promise<DropboxTypes.sharing.FileLinkMetadataReference | DropboxTypes.sharing.FolderLinkMetadataReference | DropboxTypes.sharing.SharedLinkMetadataReference>}
    */
   shareFile(metadata) {
-    return this._dropbox.sharingCreateSharedLinkWithSettings({
-      path: metadata.path_display || metadata.path_lower
-    }).then(
-      // Update URL to avoid CORS issue
-      // Unfortunately this is not the ideal scenario but it will make sure people
-      // can share dropbox urls with users without the dropbox account (publish on twitter, facebook)
-      result => ({
-        ...result,
-        folder_link: this._folderLink,
-        url: this._overrideUrl(result.url)
+    return this._dropbox
+      .sharingCreateSharedLinkWithSettings({
+        path: metadata.path_display || metadata.path_lower
       })
-    );
+      .then(
+        // Update URL to avoid CORS issue
+        // Unfortunately this is not the ideal scenario but it will make sure people
+        // can share dropbox urls with users without the dropbox account (publish on twitter, facebook)
+        result => ({
+          ...result,
+          folder_link: this._folderLink,
+          url: this._overrideUrl(result.url)
+        })
+      );
   }
 
   /**
@@ -170,7 +189,7 @@ export default class DropboxProvider {
     return this._dropbox.getAuthenticationUrl(
       `${window.location.origin}/${path}`,
       btoa(JSON.stringify({handler: 'dropbox', origin: window.location.origin}))
-    )
+    );
   }
 
   /**
@@ -182,6 +201,8 @@ export default class DropboxProvider {
    * @returns {DropboxTypes.sharing.FileLinkMetadataReference}
    */
   _overrideUrl(url) {
-    return url ? url.slice(0, url.indexOf('?')).replace(DOMAIN, CORS_FREE_DOMAIN) : null;
+    return url
+      ? url.slice(0, url.indexOf('?')).replace(DOMAIN, CORS_FREE_DOMAIN)
+      : null;
   }
 }

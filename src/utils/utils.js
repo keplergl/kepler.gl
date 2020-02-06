@@ -150,3 +150,29 @@ const setPath = ([key, ...next], value, obj) => {
  */
 export const set = (path, value, obj) =>
   obj === null ? obj : setPath(path, value, obj);
+
+/**
+ * Get error information of unknown type
+ * Extracts as much human readable information as possible
+ * Ensure result is an Error object suitable for throw or promise rejection
+ *
+ * @private
+ * @param {*}  err - Unknown error
+ * @return {string} - human readable error msg
+ */
+export function getError(err) {
+
+  if (!err) {
+    return 'Something went wrong';
+  }
+
+  if (typeof err === 'string') {
+    return err;
+  } else if (err instanceof Error) {
+    return err.message;
+  } else if (typeof err === 'object') {
+    return getError(err.error) || JSON.stringify(err);
+  }
+
+  return null;
+}

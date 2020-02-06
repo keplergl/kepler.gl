@@ -1100,5 +1100,8 @@ export const themeLT = {
   mapPanelHeaderBackgroundColor: '#f7f7F7',
   sliderBarBgd: '#D3D8E0',
   secondarySwitchBtnBgd: '#D3D8E0',
-  switchTrackBgd: '#D3D8E0'
+  switchTrackBgd: '#D3D8E0',
+
+  // button
+  linkBtnActColor: textColorLT
 };

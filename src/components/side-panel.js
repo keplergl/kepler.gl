@@ -38,6 +38,7 @@ import {
   EXPORT_DATA_ID,
   EXPORT_MAP_ID,
   SAVE_MAP_ID,
+  SHARE_MAP_ID,
   PANELS
 } from 'constants/default-settings';
 
@@ -93,7 +94,8 @@ export default function SidePanelFactory(
       width: PropTypes.number.isRequired,
       datasets: PropTypes.object.isRequired,
       visStateActions: PropTypes.object.isRequired,
-      mapStyleActions: PropTypes.object.isRequired
+      mapStyleActions: PropTypes.object.isRequired,
+      availableProviders: PropTypes.object
     };
     /* component private functions */
     _onOpenOrClose = () => {
@@ -129,6 +131,8 @@ export default function SidePanelFactory(
 
     _onClickSaveToStorage = () => this.props.uiStateActions.toggleModal(SAVE_MAP_ID);
 
+    _onClickShareMap = () => this.props.uiStateActions.toggleModal(SHARE_MAP_ID);
+
     render() {
       const {
         appName,
@@ -143,7 +147,8 @@ export default function SidePanelFactory(
         interactionConfig,
         visStateActions,
         mapStyleActions,
-        uiStateActions
+        uiStateActions,
+        availableProviders = {}
       } = this.props;
 
       const {activeSidePanel} = uiState;
@@ -208,9 +213,9 @@ export default function SidePanelFactory(
               onExportImage={this._onClickExportImage}
               onExportData={this._onClickExportData}
               onExportMap={this._onClickExportMap}
-              onSaveToStorage={this.props.onSaveToStorage ? this._onClickSaveToStorage : null}
-              onSaveToStorageSettings={this.props.onSaveToStorageSettings ? this.props.onSaveToStorageSettings : null}
               onSaveMap={this.props.onSaveMap}
+              onSaveToStorage={availableProviders.hasStorage ? this._onClickSaveToStorage : null}
+              onShareMap={availableProviders.hasShare ? this._onClickShareMap : null}
             />
             <PanelToggle
               panels={PANELS}

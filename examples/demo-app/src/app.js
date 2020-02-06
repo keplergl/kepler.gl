@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import {findDOMNode} from 'react-dom';
 import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import styled, {ThemeProvider} from 'styled-components';
 import window from 'global/window';
@@ -30,27 +29,23 @@ import Announcement from './components/announcement';
 import {replaceLoadDataModal} from './factories/load-data-modal';
 import {replaceMapControl} from './factories/map-control';
 import {replacePanelHeader} from './factories/panel-header';
-import {replaceSaveExportDropdown} from './factories/save-export-dropdown';
-import ExportUrlModal from './components/sharing/export-url-modal';
-import ConnectBackendStorageModal from './components/backend-storage-modal/connect-backend-storage-modal';
 import {AUTH_TOKENS} from './constants/default-settings';
 import {getCloudProvider} from './cloud-providers';
 
 import {
-  exportFileToCloud,
   loadRemoteMap,
   loadCloudMap,
   loadSampleConfigurations,
-  setCloudLoginSuccess,
-  saveMapToCloud,
-  setDefaultCloudProvider
+  onExportFileSuccess
 } from './actions';
 
+import {getCloudProviders} from './cloud-providers';
+
+const CloudProviders = getCloudProviders();
 const KeplerGl = require('kepler.gl/components').injectComponents([
   replaceLoadDataModal(),
   replaceMapControl(),
-  replacePanelHeader(),
-  replaceSaveExportDropdown()
+  replacePanelHeader()
 ]);
 
 // Sample data
@@ -309,16 +304,6 @@ class App extends Component {
     );
   }
 
-  _isCloudStorageEnabled = () => {
-    const {app} = this.props.demo;
-    return app.featureFlags.cloudStorage;
-  };
-
-  _isBackendStorageEnabled = () => {
-    const {app} = this.props.demo;
-    return app.featureFlags.backendStorage;
-  };
-
   _toggleCloudModal = () => {
     // TODO: this lives only in the demo hence we use the state for now
     // REFCOTOR using redux
@@ -326,38 +311,6 @@ class App extends Component {
       cloudModalOpen: !this.state.cloudModalOpen
     });
   };
-
-  _hasBackendProviderActive = () => {
-    let provider;
-    if (this.props.demo.sharing.currentProvider) {
-      provider = getCloudProvider(this.props.demo.sharing.currentProvider);
-    }
-    return provider && provider.isConnected();
-  }
-
-  _toggleSettingsBackendModal = () => {
-    this.setState({
-      settingsBackendModalOpen: !this.state.settingsBackendModalOpen
-    });
-  };
-
-  _onExportToCloud = (providerName) => {
-    this.props.dispatch(exportFileToCloud(providerName));
-  };
-
-  _onSaveToCloud = ({map, info, thumbnail}) => {
-    const providerName = this.props.demo.sharing.currentProvider;
-    this.props.dispatch(saveMapToCloud(providerName, {map, info, thumbnail}));
-  }
-
-  _onCloudLoginSuccess = (providerName) => {
-    this.props.dispatch(setCloudLoginSuccess(providerName));
-  };
-
-  _onSetCloudProvider = (providerName) => {
-    this.props.dispatch(setDefaultCloudProvider(providerName));
-  };
-  
 
   _getMapboxRef = (mapbox, index) => {
     if (!mapbox) {
@@ -376,8 +329,6 @@ class App extends Component {
 
   render() {
     const {showBanner} = this.state;
-    const {sharing} = this.props.demo;
-    const rootNode = this.root;
     return (
       <ThemeProvider theme={theme}>
         <GlobalStyle
@@ -396,27 +347,6 @@ class App extends Component {
           >
             <Announcement onDisable={this._disableBanner} />
           </Banner>
-          {this._isCloudStorageEnabled() && rootNode && (
-            <ExportUrlModal
-              sharing={sharing}
-              isOpen={Boolean(this.state.cloudModalOpen)}
-              onClose={this._toggleCloudModal}
-              onExport={this._onExportToCloud}
-              onCloudLoginSuccess={this._onCloudLoginSuccess}
-              // this is to apply the same modal style as kepler.gl core
-              parentSelector={() => findDOMNode(this.root)}
-            />
-          )}
-
-          {this._isBackendStorageEnabled() && rootNode &&
-            <ConnectBackendStorageModal
-              isOpen={Boolean(this.state.settingsBackendModalOpen)}
-              onClose={this._toggleSettingsBackendModal}
-              onCloudLoginChanged={this._onSetCloudProvider}
-              parentSelector={() => findDOMNode(this.root)}
-            />
-          }
-
           <div
             style={{
               transition: 'margin 1s, height 1s',
@@ -438,9 +368,8 @@ class App extends Component {
                   getState={keplerGlGetState}
                   width={width}
                   height={height - (showBanner ? BannerHeight : 0)}
-                  onSaveMap={this._isCloudStorageEnabled() && this._toggleCloudModal}
-                  onSaveToStorageSettings={this._toggleSettingsBackendModal}
-                  onSaveToStorage={ this._onSaveToCloud }
+                  cloudProviders={CloudProviders}
+                  onExportToCloudSuccess={onExportFileSuccess}
                 />
               )}
             </AutoSizer>

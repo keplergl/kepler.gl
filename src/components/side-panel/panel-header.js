@@ -31,7 +31,8 @@ import {
   Gear,
   Picture,
   Db,
-  Map as MapIcon
+  Map as MapIcon,
+  Share
 } from 'components/common/icons';
 import ClickOutsideCloseDropdown from 'components/side-panel/panel-dropdown';
 import Toolbar from 'components/common/toolbar';
@@ -163,6 +164,7 @@ export const SaveExportDropdownFactory = PanelHeaderDropdown => {
   const dropdownItemsSelector = getDropdownItemsSelector();
 
   const SaveExportDropdown = props => (
+
     <PanelHeaderDropdown
       items={dropdownItemsSelector(props)}
       show={props.show}
@@ -196,6 +198,12 @@ export const SaveExportDropdownFactory = PanelHeaderDropdown => {
         icon: Save2,
         key: 'save',
         onClick: props => props.onSaveMap
+      },
+      {
+        label: 'Share Map URL',
+        icon: Share,
+        key: 'save',
+        onClick: props => props.onShareMap
       }
     ]
   };
@@ -253,8 +261,8 @@ function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
       onExportConfig: PropTypes.func,
       onExportMap: PropTypes.func,
       onSaveToStorage: PropTypes.func,
-      onSaveToStorageSettings: PropTypes.func,
-      onSaveMap: PropTypes.func
+      onSaveMap: PropTypes.func,
+      onShareMap: PropTypes.func
     };
 
     static defaultProps = {
@@ -285,6 +293,7 @@ function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
         onSaveToStorage,
         onSaveToStorageSettings,
         onSaveMap,
+        onShareMap,
         onExportImage,
         onExportData,
         onExportConfig,
@@ -293,13 +302,19 @@ function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
         showExportDropdown,
         hideExportDropdown
       } = this.props;
+      let items = actionItems || [];
+
+      // don't render cloud storage icon if onSaveToStorage is not provided
+      if (typeof onSaveToStorage !== 'function') {
+        items = actionItems.filter(ai => ai.id !== 'storage')
+      }
 
       return (
         <StyledPanelHeader className="side-panel__panel-header">
           <StyledPanelHeaderTop className="side-panel__panel-header__top">
             <this.props.logoComponent appName={appName} version={version} />
             <StyledPanelTopActions>
-              {actionItems.map(item => (
+              {items.map(item => (
                 <div
                   className="side-panel__panel-header__right"
                   key={item.id}
@@ -321,6 +336,7 @@ function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
                       onSaveToStorage={onSaveToStorage}
                       onSaveToStorageSettings={onSaveToStorageSettings}
                       onSaveMap={onSaveMap}
+                      onShareMap={onShareMap}
                       onExportData={onExportData}
                       onExportImage={onExportImage}
                       onExportConfig={onExportConfig}

@@ -60,6 +60,12 @@ export const CenterFlexbox = styled.div`
   align-items: center;
 `;
 
+export const CenterVerticalFlexbox = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
 export const SpaceBetweenFlexbox = styled.div`
   display: flex;
   justify-content: space-between;
@@ -236,7 +242,8 @@ export const Button = styled.div.attrs({
   }
 
   svg {
-    margin-right: 8px;
+    margin-right: ${props =>
+      props.large ? '10px' : props.small ? '6px' : '8px'};
   }
 `;
 
@@ -252,7 +259,7 @@ export const InputLight = styled.input`
 export const TextArea = styled.textarea`
   ${props =>
     props.secondary ? props.theme.secondaryInput : props.theme.input};
-`
+`;
 export const TextAreaLight = styled.textarea`
   ${props => props.theme.inputLT}
   height: auto;
@@ -428,9 +435,10 @@ export const StyledModalInputFootnote = styled.div.attrs({
 })`
   display: flex;
   justify-content: flex-end;
-  color: ${props => props.error ? props.theme.errorColor : props.theme.subtextColorLT};
+  color: ${props =>
+    props.error ? props.theme.errorColor : props.theme.subtextColorLT};
   font-size: 10px;
-`
+`;
 /**
  * Newer versions of mapbox.gl display an error message banner on top of the map by default
  * which will cause the map to display points in the wrong locations
@@ -447,21 +455,28 @@ export const StyledExportSection = styled.div`
   flex-direction: row;
   margin: 35px 0;
   width: 100%;
+  color: ${props => props.theme.textColorLT};
+  font-size: 12px;
+  opacity: ${props => (props.disabled ? 0.3 : 1)};
+  pointer-events: ${props => (props.disabled ? 'none' : 'all')};
 
   .description {
     width: 185px;
-
     .title {
       font-weight: 500;
-      color: ${props => props.theme.textColorLT};
-      font-size: 12px;
     }
     .subtitle {
-      color: ${props => props.theme.textColor};
+      color: ${props => props.theme.subtextColorLT};
       font-size: 11px;
     }
   }
-
+  .warning {
+    color: ${props => props.theme.errorColor};
+    font-weight: 500;
+  }
+  .description.full {
+    width: 100%;
+  }
   .selection {
     display: flex;
     flex-wrap: wrap;

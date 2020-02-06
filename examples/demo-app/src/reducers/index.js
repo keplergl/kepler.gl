@@ -26,8 +26,6 @@ import {processGeojson, processCsvData} from 'kepler.gl/processors';
 import KeplerGlSchema from 'kepler.gl/schemas';
 import {EXPORT_MAP_FORMATS} from 'kepler.gl/constants';
 
-import sharingReducer from './sharing';
-
 import {
   INIT,
   SET_LOADING_METHOD,
@@ -110,8 +108,7 @@ const demoReducer = combineReducers({
       }
     }
   }),
-  app: appReducer,
-  sharing: sharingReducer
+  app: appReducer
 });
 
 function arrayify(thing) {

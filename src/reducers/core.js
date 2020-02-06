@@ -24,6 +24,7 @@ import {visStateReducerFactory} from './vis-state';
 import {mapStateReducerFactory} from './map-state';
 import {mapStyleReducerFactory} from './map-style';
 import {uiStateReducerFactory} from './ui-state';
+import {providerStateReducerFactory} from './provider-state';
 
 import composers from './composers';
 
@@ -32,7 +33,8 @@ const combined = (initialState = {}) =>
     visState: visStateReducerFactory(initialState.visState),
     mapState: mapStateReducerFactory(initialState.mapState),
     mapStyle: mapStyleReducerFactory(initialState.mapStyle),
-    uiState: uiStateReducerFactory(initialState.uiState)
+    uiState: uiStateReducerFactory(initialState.uiState),
+    providerState: providerStateReducerFactory(initialState.providerState)
   });
 
 export const coreReducerFactory = (initialState = {}) => (state, action) => {
@@ -79,3 +81,12 @@ export const visStateLens = reduxState => ({visState: reduxState.visState});
  * @public
  */
 export const uiStateLens = reduxState => ({uiState: reduxState.uiState});
+
+/**
+ * Connect subreducer `providerState`, used with `injectComponents`. Learn more at
+ * [Replace UI Component](../advanced-usages/replace-ui-component.md#pass-custom-component-props)
+ *
+ * @param {*} reduxState
+ * @public
+ */
+export const providerStateLens = reduxState => ({providerState: reduxState.providerState});
