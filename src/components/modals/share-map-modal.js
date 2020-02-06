@@ -174,6 +174,7 @@ export default function ShareMapUrlModalFactory() {
                       cloudProvider={cloudProvider}
                       actionName="Upload"
                       isSelected={cloudProvider.name === currentProvider}
+                      isConnected={Boolean(cloudProvider.getAccessToken())}
                     />
                   ))}
                 </div>

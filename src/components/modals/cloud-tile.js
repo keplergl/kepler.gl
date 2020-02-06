@@ -134,9 +134,10 @@ const CloudTile = ({
   // function to take after login or logout
   onSetCloudProvider,
   // whether provider is selected as currentProvider
-  isSelected
+  isSelected,
+  // whether user has logged in
+  isConnected
 }) => {
-  const isConnected = Boolean(cloudProvider.getAccessToken());
   const userName =
     typeof cloudProvider.getUserName === 'function'
       ? cloudProvider.getUserName()

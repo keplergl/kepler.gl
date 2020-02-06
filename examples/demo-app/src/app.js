@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-// import {findDOMNode} from 'react-dom';
 import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import styled, {ThemeProvider} from 'styled-components';
 import window from 'global/window';
