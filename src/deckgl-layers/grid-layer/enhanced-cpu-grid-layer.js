@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {CPUGridLayer} from 'deck.gl';
+import {CPUGridLayer} from '@deck.gl/aggregation-layers';
 import CPUAggregator, {getAggregatedData} from '../layer-utils/cpu-aggregator';
 
 export const gridAggregation = {

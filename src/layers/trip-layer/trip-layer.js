@@ -21,7 +21,7 @@
 import memoize from 'lodash.memoize';
 import uniq from 'lodash.uniq';
 import Layer from '../base-layer';
-import {TripsLayer as DeckGLTripsLayer} from 'deck.gl';
+import {TripsLayer as DeckGLTripsLayer} from '@deck.gl/geo-layers';
 
 import {GEOJSON_FIELDS} from 'constants/default-settings';
 import TripLayerIcon from './trip-layer-icon';

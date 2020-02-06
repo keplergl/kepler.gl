@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {WebMercatorViewport} from 'deck.gl';
+import {WebMercatorViewport} from '@deck.gl/core';
 
 export function hexagonToPolygonGeo({object}, properties, radius, mapState) {
   const viewport = new WebMercatorViewport(mapState);

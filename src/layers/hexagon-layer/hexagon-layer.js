@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {GeoJsonLayer} from 'deck.gl';
+import {GeoJsonLayer} from '@deck.gl/layers';
 import AggregationLayer from '../aggregation-layer';
 import EnhancedHexagonLayer from 'deckgl-layers/hexagon-layer/enhanced-hexagon-layer';
 import {hexagonToPolygonGeo} from './hexagon-utils';

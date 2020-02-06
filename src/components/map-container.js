@@ -22,7 +22,7 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import MapboxGLMap from 'react-map-gl';
-import DeckGL from 'deck.gl';
+import DeckGL from '@deck.gl/react';
 import {createSelector} from 'reselect';
 import WebMercatorViewport from 'viewport-mercator-project';
 

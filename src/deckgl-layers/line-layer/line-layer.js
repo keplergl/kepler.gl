@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {LineLayer} from 'deck.gl';
+import {LineLayer} from '@deck.gl/layers';
 import GL from '@luma.gl/constants';
 import {editShader} from 'deckgl-layers/layer-utils/shader-utils';
 
