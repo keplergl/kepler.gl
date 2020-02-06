@@ -20,7 +20,8 @@
 
 import {toggleModalUpdater, loadFilesSuccessUpdater} from './ui-state-updaters';
 import {
-  updateVisDataUpdater as visStateUpdateVisDataUpdater
+  updateVisDataUpdater as visStateUpdateVisDataUpdater,
+  setMapInfoUpdater
 } from './vis-state-updaters';
 import {receiveMapConfigUpdater as stateMapConfigUpdater} from './map-state-updaters';
 import {receiveMapConfigUpdater as styleMapConfigUpdater} from './map-style-updaters';
@@ -103,7 +104,7 @@ export const defaultAddDataToMapOptions = {
  * @public
  */
 export const addDataToMapUpdater = (state, {payload}) => {
-  const {datasets, config} = payload;
+  const {datasets, config, info} = payload;
 
   const options = {
     ...defaultAddDataToMapOptions,
@@ -127,6 +128,15 @@ export const addDataToMapUpdater = (state, {payload}) => {
       config: parsedConfig
     })
   };
+
+  // merge map info
+  // save title, description provider and queryParams
+  if (info) {
+    mergedState = {
+      ...mergedState,
+      visState: setMapInfoUpdater(mergedState.visState, {info})
+    };
+  }
 
   let bounds;
   if (options.centerMap) {

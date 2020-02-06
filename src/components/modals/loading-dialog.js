@@ -18,17 +18,49 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {generateHashId} from 'utils/utils';
-import {getFileHandler} from 'processors/file-handler';
+import React from 'react';
+import styled from 'styled-components';
+import LoadingSpinner from 'components/common/loading-spinner';
 
-export const processFileToLoad = (file) => {
-  return {
-    fileBlob: file,
-    info: {
-      id: generateHashId(4),
-      label: file.name,
-      size: file.size
-    },
-    handler: getFileHandler(file)
+const StyledSpinner = styled.div`
+  text-align: center;
+
+  span {
+    margin: 0 auto;
   }
-};
+`;
+
+const StyledLoadingDialog = styled.div.attrs({
+  className: 'data-loading-dialog'
+})`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1;
+
+  .loading-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .loading-message {
+    margin-left: 32px;
+    color: ${props => props.theme.titleColorLT};
+    font-weight: 500;
+    font-size: 14px;
+  }
+`;
+
+const LoadingDialog = ({size = 64, message = 'Loading...'}) => (
+  <StyledLoadingDialog>
+    <div className="loading-content">
+      <StyledSpinner>
+        <LoadingSpinner size={size} />
+      </StyledSpinner>
+      <div className="loading-message">{message}</div>
+    </div>
+  </StyledLoadingDialog>
+);
+
+export default LoadingDialog;

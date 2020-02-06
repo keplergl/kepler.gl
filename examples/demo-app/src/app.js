@@ -33,12 +33,13 @@ import {AUTH_TOKENS} from './constants/default-settings';
 import {
   loadRemoteMap,
   loadSampleConfigurations,
-  onExportFileSuccess
+  onExportFileSuccess,
+  onLoadCloudMapSuccess
 } from './actions';
 
-import {getCloudProviders} from './cloud-providers';
+import {loadCloudMap} from 'kepler.gl/actions';
+import {CLOUD_PROVIDERS} from './cloud-providers';
 
-const CloudProviders = getCloudProviders();
 const KeplerGl = require('kepler.gl/components').injectComponents([
   replaceLoadDataModal(),
   replaceMapControl(),
@@ -102,9 +103,19 @@ class App extends Component {
     // if we pass an id as part of the url
     // we ry to fetch along map configurations
     const {
-      params: {id} = {},
+      params: {id, provider} = {},
       location: {query = {}} = {}
     } = this.props;
+
+    const cloudProvider = CLOUD_PROVIDERS.find(c => c.name === provider);
+    if (provider) {
+      this.props.dispatch(loadCloudMap({
+        loadParams: query,
+        provider: cloudProvider,
+        onSuccess: onLoadCloudMapSuccess
+      }));
+      return;
+  }
 
     // Load sample using its id
     if (id) {
@@ -164,10 +175,10 @@ class App extends Component {
   }
 
   _loadSampleData() {
-    this._loadPointData();
+    // this._loadPointData();
     // this._loadGeojsonData();
     // this._loadTripGeoJson();
-    // this._loadIconData();
+    this._loadIconData();
     // this._loadH3HexagonData();
     // this._loadScenegraphLayer();
   }
@@ -360,8 +371,9 @@ class App extends Component {
                   getState={keplerGlGetState}
                   width={width}
                   height={height - (showBanner ? BannerHeight : 0)}
-                  cloudProviders={CloudProviders}
+                  cloudProviders={CLOUD_PROVIDERS}
                   onExportToCloudSuccess={onExportFileSuccess}
+                  onLoadCloudMapSuccess={onLoadCloudMapSuccess}
                 />
               )}
             </AutoSizer>

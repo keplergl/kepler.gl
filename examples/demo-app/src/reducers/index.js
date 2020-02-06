@@ -31,6 +31,7 @@ import {
   SET_LOADING_METHOD,
   LOAD_MAP_SAMPLE_FILE,
   LOAD_REMOTE_RESOURCE_SUCCESS,
+  LOAD_REMOTE_RESOURCE_ERROR,
   SET_SAMPLE_LOADING_STATUS
 } from '../actions';
 
@@ -156,8 +157,33 @@ export const loadRemoteResourceSuccess = (state, action) => {
   };
 };
 
+export const loadRemoteResourceError = (state, action) => {
+  const {error, url} = action;
+
+  const errorNote = {
+    type: 'error',
+    message: error.message || `Error loading ${url}`
+  };
+
+  return {
+    ...state,
+    app: {
+      ...state.app,
+      isMapLoading: false // we turn of the spinner
+    },
+    keplerGl: {
+      ...state.keplerGl, // in case you keep multiple instances
+      map: {
+        ...state.keplerGl.map,
+        uiState: uiStateUpdaters.addNotificationUpdater(state.keplerGl.map.uiState, {payload: errorNote})
+      }
+    }
+  };
+};
+
 const composedUpdaters = {
-  [LOAD_REMOTE_RESOURCE_SUCCESS]: loadRemoteResourceSuccess
+  [LOAD_REMOTE_RESOURCE_SUCCESS]: loadRemoteResourceSuccess,
+  [LOAD_REMOTE_RESOURCE_ERROR]: loadRemoteResourceError
 };
 
 const composedReducer = (state, action) => {

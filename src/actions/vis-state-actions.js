@@ -509,6 +509,13 @@ export function loadFiles(files) {
   };
 }
 
+export function loadFileSuccess({fileCache, filesToLoad, totalCount}) {
+  return {
+    type: ActionTypes.LOAD_FILES_SUCCESS,
+    fileCache, filesToLoad, totalCount
+  }
+}
+
 /**
  * Trigger loading file error
  * @memberof visStateActions

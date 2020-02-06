@@ -27,8 +27,7 @@ import {
   LOADING_SAMPLE_LIST_ERROR_MESSAGE,
   MAP_CONFIG_URL
 } from './constants/default-settings';
-import {LOADING_METHODS_NAMES} from './constants/default-settings';
-import {parseUri, getMapPermalink} from './utils/url';
+import {parseUri} from './utils/url';
 
 // CONSTANTS
 export const INIT = 'INIT';
@@ -46,32 +45,6 @@ export const CLOUD_LOGIN_SUCCESS  = 'CLOUD_LOGIN_SUCCESS';
 export function initApp() {
   return {
     type: INIT
-  };
-}
-
-/**
- * this method set the current loading method
- * @param {string} method the string id for the loading method to use
- * @returns {{type: string, method: *}}
- */
-export function setLoadingMethod(method) {
-  return {
-    type: SET_LOADING_METHOD,
-    method
-  };
-}
-
-/**
- * this action is triggered when user switches between load modal tabs
- * @param {string} method
- * @returns {Function}
- */
-export function switchToLoadingMethod(method) {
-  return (dispatch, getState) => {
-    dispatch(setLoadingMethod(method));
-    if (method === LOADING_METHODS_NAMES.sample && getState().demo.app.sampleMaps.length === 0) {
-      dispatch(loadSampleConfigurations());
-    }
   };
 }
 
@@ -106,15 +79,30 @@ export function setLoadingMapStatus(isMapLoading) {
   };
 }
 
-export function onExportFileSuccess({response = {}, provider}) {
+/**
+ * Actions passed to kepler.gl, called
+ *
+ * Note: exportFile is called on both saving and sharing
+ *
+ * @param {*} param0
+ */
+export function onExportFileSuccess({response = {}, provider, options}) {
   return dispatch => {
-    // TODO: a more generic way to generate responseUrl
-    if (response.url) {
-      const responseUrl = provider.getMapPermalink
-        ? provider.getMapPermalink(response.url, false)
-        : getMapPermalink(response.url, false)
+    // if isPublic is true, use share Url
+    if (options.isPublic && provider.getShareUrl) {
+      dispatch(push(provider.getShareUrl(false)));
+    } else if (!options.isPublic && provider.getMapUrl) {
+      // if save private map to storage, use map url
+      dispatch(push(provider.getMapUrl(false)));
+    }
+  }
+}
 
-      dispatch(push(responseUrl));
+export function onLoadCloudMapSuccess({response, provider, loadParams}) {
+  return dispatch => {
+    if (provider.getMapPermalinkFromParams) {
+      const mapUrl = provider.getMapPermalinkFromParams(loadParams, false);
+      dispatch(push(mapUrl));
     }
   }
 }
@@ -161,7 +149,8 @@ export function loadRemoteMap(options) {
       error => {
         const {target = {}} = error;
         const {status, responseText} = target;
-        dispatch(loadRemoteResourceError({status, message: responseText}, options.dataUrl));
+        dispatch(
+          loadRemoteResourceError({status, message: responseText}, options.dataUrl));
       }
     );
   }
@@ -182,6 +171,7 @@ function loadRemoteRawData(url) {
     request(url, (error, result) => {
       if (error) {
         reject(error);
+        return;
       }
       const responseError = detectResponseError(result);
       if (responseError) {
@@ -247,7 +237,9 @@ function loadRemoteSampleMap(options) {
           if (error) {
             const {target = {}} = error;
             const {status, responseText} = target;
-            dispatch(loadRemoteResourceError({status, message: `${responseText} - ${LOADING_SAMPLE_ERROR_MESSAGE} ${options.id} (${configUrl})`}, configUrl));
+            dispatch(loadRemoteResourceError({
+              status,
+              message: `${responseText} - ${LOADING_SAMPLE_ERROR_MESSAGE} ${options.id} (${configUrl})`}, configUrl));
           }
         }
       );
@@ -269,6 +261,7 @@ function loadRemoteConfig(url) {
     requestJson(url, (error, config) => {
       if (error) {
         reject(error);
+        return;
       }
       const responseError = detectResponseError(config);
       if (responseError) {
@@ -301,6 +294,7 @@ function loadRemoteData(url) {
     requestMethod(url, (error, result) => {
       if (error) {
         reject(error);
+        return;
       }
       const responseError = detectResponseError(result);
       if (responseError) {

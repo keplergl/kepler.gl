@@ -120,21 +120,20 @@ export default function NotificationItemFactory() {
           <NotificationIcon className="notification-item--icon">
             {icons[notification.type]}
           </NotificationIcon>
-          <NotificationMessage
-            isExpanded={isExpanded}
-            theme={this.props.theme}
-          >
+          <NotificationMessage isExpanded={isExpanded} theme={this.props.theme}>
             <ReactMarkdown
               source={notification.message}
               renderers={{link: LinkRenderer}}
             />
           </NotificationMessage>
-          {typeof removeNotification === 'function' ? <div className="notification-item--action">
-            <DeleteIcon
-              height="10px"
-              onClick={() => removeNotification(notification.id)}
-            />
-          </div> : null}
+          {typeof removeNotification === 'function' ? (
+            <div className="notification-item--action">
+              <DeleteIcon
+                height="10px"
+                onClick={() => removeNotification(notification.id)}
+              />
+            </div>
+          ) : null}
         </NotificationItemContent>
       );
     }

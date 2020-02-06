@@ -19,17 +19,17 @@
 // THE SOFTWARE.
 
 import {console as Console} from 'global/window';
-import Task, {disableStackCapturing, withTask} from 'react-palm/tasks';
+import {disableStackCapturing, withTask} from 'react-palm/tasks';
 import cloneDeep from 'lodash.clonedeep';
 import uniq from 'lodash.uniq';
 import get from 'lodash.get';
 import xor from 'lodash.xor';
 
 // Tasks
-import {LOAD_FILE_TASK} from 'tasks/tasks';
+import {LOAD_FILE_TASK, ACTION_TASK} from 'tasks/tasks';
 
 // Actions
-import {loadFilesErr} from 'actions/vis-state-actions';
+import {loadFilesErr, loadFileSuccess} from 'actions/vis-state-actions';
 import {addDataToMap} from 'actions';
 
 // Utils
@@ -49,12 +49,9 @@ import {
   featureToFilterValue,
   updateFilterDataId
 } from 'utils/filter-utils';
-import {
-  setFilterGpuMode,
-  assignGpuChannel
-} from 'utils/gpu-filter-utils';
+import {setFilterGpuMode, assignGpuChannel} from 'utils/gpu-filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
-import {set, toArray} from 'utils/utils';
+import {set, toArray, generateHashId} from 'utils/utils';
 
 import {
   findDefaultLayer,
@@ -77,12 +74,8 @@ import {
 } from 'utils/split-map-utils';
 
 import {Layer, LayerClasses} from 'layers';
-import {processFileToLoad} from 'utils/file-utils';
 import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
-
-import {
-  EDITOR_MODES
-} from 'constants/default-settings';
+import {EDITOR_MODES, DATASET_FORMATS} from 'constants/default-settings';
 
 // react-palm
 // disable capture exception for react-palm call to withTask
@@ -536,12 +529,7 @@ export function interactionConfigChangeUpdater(state, action) {
  * @public
  */
 export function setFilterUpdater(state, action) {
-  const {
-    idx,
-    prop,
-    value,
-    valueIndex = 0
-  } = action;
+  const {idx, prop, value, valueIndex = 0} = action;
 
   const oldFilter = state.filters[idx];
   let newFilter = set([prop], value, oldFilter);
@@ -831,7 +819,9 @@ export const toggleFilterFeatureUpdater = (state, action) => {
   const isVisible = get(filter, ['value', 'properties', 'isVisible']);
   const newFilter = {
     ...filter,
-    value: featureToFilterValue(filter.value, filter.id, {isVisible: !isVisible})
+    value: featureToFilterValue(filter.value, filter.id, {
+      isVisible: !isVisible
+    })
   };
 
   return {
@@ -858,11 +848,19 @@ export const removeFilterUpdater = (state, action) => {
     ...state.filters.slice(idx + 1, state.filters.length)
   ];
 
-  const filteredDatasets = applyFiltersToDatasets(dataId, state.datasets, newFilters, state.layers);
-  const newEditor = getFilterIdInFeature(state.editor.selectedFeature) === id ? {
-    ...state.editor,
-    selectedFeature: null
-  } : state.editor;
+  const filteredDatasets = applyFiltersToDatasets(
+    dataId,
+    state.datasets,
+    newFilters,
+    state.layers
+  );
+  const newEditor =
+    getFilterIdInFeature(state.editor.selectedFeature) === id
+      ? {
+          ...state.editor,
+          selectedFeature: null
+        }
+      : state.editor;
 
   let newState = set(['filters'], newFilters, state);
   newState = set(['datasets'], filteredDatasets, newState);
@@ -1367,29 +1365,127 @@ function closeSpecificMapAtIndex(state, action) {
  */
 export const loadFilesUpdater = (state, action) => {
   const {files} = action;
-  const filesToLoad = files.map(fileBlob => processFileToLoad(fileBlob));
+  if (!files.length) {
+    return state;
+  }
+  // const filesToLoad = files.map(fileBlob => processFileToLoad(fileBlob));
 
   // reader -> parser -> augment -> receiveVisData
-  const loadFileTasks = [
-    Task.all(filesToLoad.map(LOAD_FILE_TASK)).bimap(results => {
-      const data = results.reduce(
-        (f, c) => ({
-          // using concat here because the current datasets could be an array or a single item
-          datasets: f.datasets.concat(c.datasets),
+  // const loadFileTasks = [
+  //   Task.all(filesToLoad.map(LOAD_FILE_TASK)).bimap(
+  //     // success
+  //     results => {
+  //       console.log(results)
+  //       const data = results.reduce(
+  //         (f, c) => ({
+  //           // using concat here because the current datasets could be an array or a single item
+  //           datasets: f.datasets.concat(c.datasets),
+  //           // we need to deep merge this thing unless we find a better solution
+  //           // this case will only happen if we allow to load multiple keplergl json files
+  //           config: {
+  //             ...f.config,
+  //             ...(c.config || {})
+  //           }
+  //         }),
+  //         {datasets: [], config: {}, options: {centerMap: true}}
+  //       );
+
+  //       return addDataToMap(data);
+  //     },
+  //     // error
+  //     loadFilesErr)
+  // ];
+
+  const fileCache = [];
+  return withTask(
+    {
+      ...state,
+      fileLoading: true,
+      fileLoadingProgress: 0
+    },
+    makeLoadFileTask(files.length, files, fileCache)
+  );
+};
+
+function makeLoadFileTask(totalCount, filesToLoad, fileCache) {
+  const file = filesToLoad.pop();
+
+  return LOAD_FILE_TASK({file, fileCache}).bimap(
+    // success
+    result =>
+      loadFileSuccess({
+        fileCache: result,
+        filesToLoad: [...filesToLoad],
+        totalCount
+      }),
+    // error
+    loadFilesErr
+  );
+}
+
+export const loadFileSuccessUpdater = (state, action) => {
+  const {fileCache, filesToLoad = [], totalCount} = action;
+
+  // still more to load
+  if (filesToLoad.length) {
+    const fileLoadingProgress =
+      ((totalCount - filesToLoad.length) / totalCount) * 100;
+
+    return withTask(
+      {
+        ...state,
+        fileLoadingProgress
+      },
+      makeLoadFileTask(totalCount, filesToLoad, fileCache)
+    );
+  }
+
+  const result = fileCache.reduce(
+    (accu, file) => {
+      const {data, info = {}} = file;
+      const {format} = info;
+
+      if (format) {
+        if (format !== DATASET_FORMATS.keplergl) {
+          const newDataset = {
+            data,
+            info: {
+              id: generateHashId(4),
+              ...info
+            }
+          };
+
+          accu.datasets.push(newDataset);
+          return accu;
+        }
+
+        return {
+          datasets: accu.datasets.concat(data.datasets),
           // we need to deep merge this thing unless we find a better solution
           // this case will only happen if we allow to load multiple keplergl json files
           config: {
-            ...f.config,
-            ...(c.config || {})
+            ...accu.config,
+            ...(data.config || {})
           }
-        }),
-        {datasets: [], config: {}, options: {centerMap: true}}
-      );
-      return addDataToMap(data);
-    }, loadFilesErr)
-  ];
+        };
+      }
+      return accu;
+    },
+    {datasets: [], config: {}}
+  );
 
-  return withTask(state, loadFileTasks);
+  const options = {
+    centerMap: !(result.config && result.config.mapState)
+  };
+
+  return withTask(
+    {
+      ...state,
+      fileLoading: false,
+      fileLoadingProgress: 100
+    },
+    ACTION_TASK().map(_ => addDataToMap({...result, options}))
+  );
 };
 
 /**
@@ -1417,7 +1513,6 @@ export const loadFilesErrUpdater = (state, {error}) => ({
  * @public
  */
 export const applyCPUFilterUpdater = (state, {dataId}) => {
-
   // apply cpuFilter
   const dataIds = toArray(dataId);
 
@@ -1483,7 +1578,11 @@ export function addDefaultTooltips(state, dataset) {
     ...tooltipFields
   };
 
-  return set(['interactionConfig', 'tooltip', 'config', 'fieldsToShow'], merged, state);
+  return set(
+    ['interactionConfig', 'tooltip', 'config', 'fieldsToShow'],
+    merged,
+    state
+  );
 }
 
 /**
@@ -1500,15 +1599,11 @@ export function updateAllLayerDomainData(state, dataId, updatedFilter) {
 
   state.layers.forEach((oldLayer, i) => {
     if (oldLayer.config.dataId && dataIds.includes(oldLayer.config.dataId)) {
-
       // No need to recalculate layer domain if filter has fixed domain
       const newLayer =
         updatedFilter && updatedFilter.fixedDomain
           ? oldLayer
-          : oldLayer.updateLayerDomain(
-              state.datasets,
-              updatedFilter
-            );
+          : oldLayer.updateLayerDomain(state.datasets, updatedFilter);
 
       const {layerData, layer} = calculateLayerData(
         newLayer,
@@ -1596,7 +1691,6 @@ export const setEditorModeUpdater = (state, {mode}) => ({
  * @return {Object} nextState
  */
 export function setFeaturesUpdater(state, {features = []}) {
-
   const lastFeature = features.length && features[features.length - 1];
 
   const newState = {
@@ -1605,8 +1699,10 @@ export function setFeaturesUpdater(state, {features = []}) {
       ...state.editor,
       // only save none filter features to editor
       features: features.filter(f => !getFilterIdInFeature(f)),
-      mode: lastFeature && lastFeature.properties.isClosed ?
-        EDITOR_MODES.EDIT : state.editor.mode
+      mode:
+        lastFeature && lastFeature.properties.isClosed
+          ? EDITOR_MODES.EDIT
+          : state.editor.mode
     }
   };
 
@@ -1626,10 +1722,14 @@ export function setFeaturesUpdater(state, {features = []}) {
   if (filterId) {
     const featureValue = featureToFilterValue(feature, filterId);
     const filterIdx = state.filters.findIndex(fil => fil.id === filterId);
-    return setFilterUpdater(newState, {idx: filterIdx, prop: 'value', value: featureValue});
+    return setFilterUpdater(newState, {
+      idx: filterIdx,
+      prop: 'value',
+      value: featureValue
+    });
   }
 
-  return newState
+  return newState;
 }
 
 /**
@@ -1655,7 +1755,6 @@ export const setSelectedFeatureUpdater = (state, {feature}) => ({
  * @return {Object} nextState
  */
 export function deleteFeatureUpdater(state, {feature}) {
-
   if (!feature) {
     return state;
   }
@@ -1669,10 +1768,13 @@ export function deleteFeatureUpdater(state, {feature}) {
   };
 
   if (getFilterIdInFeature(feature)) {
-    const filterIdx = newState.filters
-      .findIndex(f => f.id === getFilterIdInFeature(feature));
+    const filterIdx = newState.filters.findIndex(
+      f => f.id === getFilterIdInFeature(feature)
+    );
 
-    return filterIdx > -1 ? removeFilterUpdater(newState, {idx: filterIdx}) : newState;
+    return filterIdx > -1
+      ? removeFilterUpdater(newState, {idx: filterIdx})
+      : newState;
   }
 
   // modify editor object
@@ -1716,7 +1818,8 @@ export function setPolygonFilterLayerUpdater(state, payload) {
       const noneFilterFeature = {
         ...feature,
         properties: {
-          ...feature.properties, filterId: null
+          ...feature.properties,
+          filterId: null
         }
       };
 
@@ -1734,14 +1837,11 @@ export function setPolygonFilterLayerUpdater(state, payload) {
     const isLayerIncluded = layerId.includes(layer.id);
     const filter = state.filters[filterIdx];
 
-    newLayerId = isLayerIncluded ?
-     // if layer is included, remove it
-      filter.layerId.filter(l => l !== layer.id) : [
-        ...filter.layerId,
-        layer.id
-      ];
+    newLayerId = isLayerIncluded
+      ? // if layer is included, remove it
+        filter.layerId.filter(l => l !== layer.id)
+      : [...filter.layerId, layer.id];
   } else {
-
     // if we haven't create the polygon filter, create it
     const newFilter = generatePolygonFilter([], feature);
     filterIdx = state.filters.length;
@@ -1758,7 +1858,11 @@ export function setPolygonFilterLayerUpdater(state, payload) {
     };
   }
 
-  return setFilterUpdater(newState, {idx: filterIdx, prop: 'layerId', value: newLayerId})
+  return setFilterUpdater(newState, {
+    idx: filterIdx,
+    prop: 'layerId',
+    value: newLayerId
+  });
 }
 
 /**
@@ -1774,5 +1878,5 @@ export function toggleEditorVisibility(state, {visible}) {
       ...state.editor,
       visible: !state.editor.visible
     }
-  }
+  };
 }
