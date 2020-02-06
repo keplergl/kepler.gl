@@ -18,25 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {AUTH_TOKENS} from '../constants/default-settings';
+import React from 'react';
+import ErrorBoundary from 'components/common/error-boundary';
+import NotificationItemFactory from 'components/notification-panel/notification-item';
+const NotificationItem = NotificationItemFactory();
 
-import DropboxProvider from './dropbox/dropbox-provider';
-import CartoProvider from './carto/carto-provider';
+const ErrorDisplay = ({error}) => (
+  <ErrorBoundary>
+    <NotificationItem
+      notification={{
+        type: 'error',
+        message: error,
+        id: 'cloud-export-error'
+      }}
+      isExpanded
+    />
+  </ErrorBoundary>
+);
 
-const {DROPBOX_CLIENT_ID, CARTO_CLIENT_ID} = AUTH_TOKENS;
-const DROPBOX_CLIENT_NAME = 'Kepler.gl%20(managed%20by%20Uber%20Technologies%2C%20Inc.)';
-
-export const DEFAULT_CLOUD_PROVIDER = 'dropbox';
-
-export const CLOUD_PROVIDERS = [
-  new DropboxProvider(DROPBOX_CLIENT_ID, DROPBOX_CLIENT_NAME),
-  new CartoProvider(CARTO_CLIENT_ID)
-];
-
-export function getCloudProvider(providerName) {
-  const cloudProvider = CLOUD_PROVIDERS.find(provider => provider.name === providerName);
-  if (!cloudProvider) {
-    throw new Error(`Unknown cloud provider ${providerName}`);
-  }
-  return cloudProvider;
-}
+export default ErrorDisplay;

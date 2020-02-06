@@ -29,34 +29,64 @@ export const ActionTypes = addPrefix(
     EXPORT_FILE_ERROR: null,
     RESET_PROVIDER_STATUS: null,
     SET_CLOUD_PROVIDER: null,
-    SAVE_TO_CLOUD_SUCCESS: null
+    POST_SAVE_LOAD_SUCCESS: null,
+    LOAD_CLOUD_MAP: null,
+    LOAD_CLOUD_MAP_SUCCESS: null,
+    LOAD_CLOUD_MAP_ERROR: null,
+    GET_SAVED_MAPS: null,
+    GET_SAVED_MAPS_SUCCESS: null,
+    GET_SAVED_MAPS_ERROR: null
   })
 );
 
 export const exportFileToCloud = createAction(
   ActionTypes.EXPORT_FILE_TO_CLOUD,
-  ({mapData, provider, isPublic, onSuccess, onError, closeModal}) => ({
-    mapData,
-    provider,
-    isPublic,
-    onSuccess,
-    onError,
-    closeModal
-  })
+  payload => payload
 );
 
 export const exportFileSuccess = createAction(
   ActionTypes.EXPORT_FILE_SUCCESS,
-  ({response, provider, onSuccess, closeModal}) => ({response, provider, onSuccess, closeModal})
+  payload => payload
 );
 
 export const exportFileError = createAction(
   ActionTypes.EXPORT_FILE_ERROR,
-  ({error, provider, onError}) => ({error, provider, onError})
+  payload => payload
 );
 
-export const saveToCloudSuccess = createAction(ActionTypes.SAVE_TO_CLOUD_SUCCESS);
+export const postSaveLoadSuccess = createAction(
+  ActionTypes.POST_SAVE_LOAD_SUCCESS,
+  message => message
+);
 
 export const resetProviderStatus = createAction(ActionTypes.RESET_PROVIDER_STATUS);
 
-export const setCloudProvider = createAction(ActionTypes.SET_CLOUD_PROVIDER, provider => provider);
+export const setCloudProvider = createAction(
+  ActionTypes.SET_CLOUD_PROVIDER,
+  provider => provider
+);
+
+export const loadCloudMap = createAction(
+  ActionTypes.LOAD_CLOUD_MAP,
+  payload => payload
+);
+
+export const loadCloudMapSuccess = createAction(
+  ActionTypes.LOAD_CLOUD_MAP_SUCCESS,
+  payload => payload
+);
+
+export const getSavedMaps = createAction(
+  ActionTypes.GET_SAVED_MAPS,
+  provider => provider
+);
+
+export const getSavedMapsSuccess = createAction(
+  ActionTypes.GET_SAVED_MAPS_SUCCESS,
+  payload => payload
+);
+
+export const getSavedMapsError = createAction(
+  ActionTypes.GET_SAVED_MAPS_ERROR,
+  payload => payload
+);

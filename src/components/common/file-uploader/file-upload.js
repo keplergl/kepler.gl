@@ -169,142 +169,167 @@ const StyledDisclaimer = styled(StyledMessage)`
   margin: 0 auto;
 `;
 
-class FileUpload extends Component {
-  static propTypes = {
-    onFileUpload: PropTypes.func.isRequired,
-    validFileExt: PropTypes.arrayOf(PropTypes.string),
-    fileLoading: PropTypes.bool
-  };
+function FileUploadFactory() {
+  class FileUpload extends Component {
+    static propTypes = {
+      onFileUpload: PropTypes.func.isRequired,
+      validFileExt: PropTypes.arrayOf(PropTypes.string),
+      fileLoading: PropTypes.bool
+    };
 
-  static defaultProps = {
-    validFileExt: defaultValidFileExt
-  };
+    static defaultProps = {
+      validFileExt: defaultValidFileExt
+    };
 
-  state = {
-    dragOver: false,
-    fileLoading: false,
-    files: [],
-    errorFiles: []
-  };
+    state = {
+      dragOver: false,
+      fileLoading: false,
+      files: [],
+      errorFiles: []
+    };
 
-  static getDerivedStateFromProps(props, state) {
-    if (state.fileLoading && props.fileLoading === false && state.files.length) {
+    static getDerivedStateFromProps(props, state) {
+      if (
+        state.fileLoading &&
+        props.fileLoading === false &&
+        state.files.length
+      ) {
+        return {
+          files: [],
+          fileLoading: props.fileLoading
+        };
+      }
       return {
-        files: [],
         fileLoading: props.fileLoading
       };
     }
-    return {
-      fileLoading: props.fileLoading
+
+    frame = createRef();
+
+    _isValidFileType = filename => {
+      const {validFileExt} = this.props;
+      const fileExt = validFileExt.find(ext => filename.endsWith(ext));
+
+      return Boolean(fileExt);
     };
-  }
 
-  frame = createRef();
-
-  _isValidFileType = filename => {
-    const {validFileExt} = this.props;
-    const fileExt = validFileExt.find(ext => filename.endsWith(ext));
-
-    return Boolean(fileExt);
-  };
-
-  _handleFileInput = (files, e) => {
-    if (e) {
-      e.stopPropagation();
-    }
-
-    const nextState = {files: [], errorFiles: [], dragOver: false};
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-
-      if (file && this._isValidFileType(file.name)) {
-        nextState.files.push(file);
-      } else {
-        nextState.errorFiles.push(file.name);
+    _handleFileInput = (files, e) => {
+      if (e) {
+        e.stopPropagation();
       }
+
+      const nextState = {files: [], errorFiles: [], dragOver: false};
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        if (file && this._isValidFileType(file.name)) {
+          nextState.files.push(file);
+        } else {
+          nextState.errorFiles.push(file.name);
+        }
+      }
+
+      this.setState(nextState, () =>
+        nextState.files.length ? this.props.onFileUpload(nextState.files) : null
+      );
+    };
+
+    _toggleDragState = newState => {
+      this.setState({dragOver: newState});
+    };
+
+    _renderMessage() {
+      const {errorFiles, files} = this.state;
+      if (errorFiles.length) {
+        return (
+          <WarningMsg>
+            {`File ${errorFiles.join(', ')} is not supported.`}
+          </WarningMsg>
+        );
+      } else if (this.props.fileLoading && files.length) {
+        return (
+          <StyledMessage className="file-uploader__message">
+            <div className="loading-action">Uploading</div>
+            <div>
+              {files.map((f, i) => (
+                <PositiveMsg key={i}>{f.name}</PositiveMsg>
+              ))}
+              ...
+            </div>
+            <div className="loading-spinner">
+              <LoadingSpinner size={20} />
+            </div>
+          </StyledMessage>
+        );
+      }
+
+      return null;
     }
 
-    this.setState(nextState, () =>
-      nextState.files.length ? this.props.onFileUpload(nextState.files) : null
-    );
-  };
+    render() {
+      const {dragOver, files} = this.state;
+      const {validFileExt} = this.props;
 
-  _toggleDragState = newState => {
-    this.setState({dragOver: newState});
-  };
-
-  _renderMessage() {
-    const {errorFiles, files} = this.state;
-    if (errorFiles.length) {
-      return <WarningMsg>{`File ${errorFiles.join(', ')} is not supported.`}</WarningMsg>;
-    } else if (this.props.fileLoading && files.length) {
       return (
-        <StyledMessage className="file-uploader__message">
-          <div className="loading-action">Uploading</div>
-          <div>
-            {files.map((f, i) => (
-              <PositiveMsg key={i}>{f.name}</PositiveMsg>
-            ))}
-            ...
-          </div>
-          <div className="loading-spinner">
-            <LoadingSpinner size={20} />
-          </div>
-        </StyledMessage>
+        <StyledFileUpload className="file-uploader" ref={this.frame}>
+          <input
+            className="filter-upload__input"
+            type="file"
+            onChange={this._onChange}
+          />
+          {FileDrop ? (
+            <FileDrop
+              frame={this.frame.current || document}
+              onDragOver={() => this._toggleDragState(true)}
+              onDragLeave={() => this._toggleDragState(false)}
+              onDrop={this._handleFileInput}
+              className="file-uploader__file-drop"
+            >
+              <StyledUploadMessage className="file-upload__message">
+                <ReactMarkdown
+                  source={CONFIG_UPLOAD_MESSAGE}
+                  renderers={{link: LinkRenderer}}
+                />
+              </StyledUploadMessage>
+              <StyledFileDrop dragOver={dragOver}>
+                <div style={{opacity: dragOver ? 0.5 : 1}}>
+                  <StyledDragNDropIcon>
+                    <StyledFileTypeFow className="file-type-row">
+                      {validFileExt.map(ext => (
+                        <FileType
+                          key={ext}
+                          ext={ext}
+                          height="50px"
+                          fontSize="9px"
+                        />
+                      ))}
+                    </StyledFileTypeFow>
+                    <DragNDrop height="44px" />
+                  </StyledDragNDropIcon>
+                  <div>{this._renderMessage()}</div>
+                </div>
+                {!files.length ? (
+                  <StyledDragFileWrapper>
+                    <MsgWrapper>{MESSAGE}</MsgWrapper>
+                    <span className="file-upload-or">or</span>
+                    <UploadButton onUpload={this._handleFileInput}>
+                      browse your files
+                    </UploadButton>
+                  </StyledDragFileWrapper>
+                ) : null}
+                <StyledDisclaimer>{DISCLAIMER}</StyledDisclaimer>
+              </StyledFileDrop>
+            </FileDrop>
+          ) : null}
+
+          <WarningMsg>{isChrome() ? CHROME_MSG : ''}</WarningMsg>
+        </StyledFileUpload>
       );
     }
-
-    return null;
   }
 
-  render() {
-    const {dragOver, files} = this.state;
-    const {validFileExt} = this.props;
-
-    return (
-      <StyledFileUpload className="file-uploader" ref={this.frame}>
-        <input className="filter-upload__input" type="file" onChange={this._onChange} />
-        {FileDrop ? (
-          <FileDrop
-            frame={this.frame.current || document}
-            onDragOver={() => this._toggleDragState(true)}
-            onDragLeave={() => this._toggleDragState(false)}
-            onDrop={this._handleFileInput}
-            className="file-uploader__file-drop"
-          >
-            <StyledUploadMessage className="file-upload__message">
-              <ReactMarkdown source={CONFIG_UPLOAD_MESSAGE} renderers={{link: LinkRenderer}} />
-            </StyledUploadMessage>
-            <StyledFileDrop dragOver={dragOver}>
-              <div style={{opacity: dragOver ? 0.5 : 1}}>
-                <StyledDragNDropIcon>
-                  <StyledFileTypeFow className="file-type-row">
-                    {validFileExt.map(ext => (
-                      <FileType key={ext} ext={ext} height="50px" fontSize="9px" />
-                    ))}
-                  </StyledFileTypeFow>
-                  <DragNDrop height="44px" />
-                </StyledDragNDropIcon>
-                <div>{this._renderMessage()}</div>
-              </div>
-              {!files.length ? (
-                <StyledDragFileWrapper>
-                  <MsgWrapper>{MESSAGE}</MsgWrapper>
-                  <span className="file-upload-or">or</span>
-                  <UploadButton onUpload={this._handleFileInput}>browse your files</UploadButton>
-                </StyledDragFileWrapper>
-              ) : null}
-              <StyledDisclaimer>{DISCLAIMER}</StyledDisclaimer>
-            </StyledFileDrop>
-          </FileDrop>
-        ) : null}
-
-        <WarningMsg>{isChrome() ? CHROME_MSG : ''}</WarningMsg>
-      </StyledFileUpload>
-    );
-  }
+  return polyfill(FileUpload);
 }
 
-polyfill(FileUpload);
-
-export default FileUpload;
+export default FileUploadFactory;
+export const FileUpload = FileUploadFactory();

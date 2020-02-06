@@ -21,7 +21,11 @@
 import React from 'react';
 import styled from 'styled-components';
 import {Logout, Login} from 'components/common/icons';
-import {CenterVerticalFlexbox, Button} from 'components/common/styled-components';
+import {
+  CenterVerticalFlexbox,
+  Button
+} from 'components/common/styled-components';
+import LoadingSpinner from 'components/common/loading-spinner';
 
 const StyledTileWrapper = styled.div.attrs({
   className: 'provider-tile__wrapper'
@@ -112,7 +116,13 @@ const LogoutButton = ({onClick}) => (
   </Button>
 );
 
-// eslint-disable-next-line complexity
+const ActionButton = ({isConnected, actionName, isReady}) =>
+  isConnected && actionName ? (
+    <Button className="cloud-tile__action" small secondary disabled={!isReady}>
+      {isReady ? actionName : <LoadingSpinner size={12} />}
+    </Button>
+  ) : null;
+
 const CloudTile = ({
   // action when click on the tile
   onSelect,
@@ -129,11 +139,16 @@ const CloudTile = ({
   // whether provider is selected as currentProvider
   isSelected,
   // whether user has logged in
-  isConnected
+  isConnected,
+
+  isReady = true
 }) => {
   const userName =
-    typeof cloudProvider.getUserName === 'function' ? cloudProvider.getUserName() : null;
-  const onClickConnect =
+    typeof cloudProvider.getUserName === 'function'
+      ? cloudProvider.getUserName()
+      : null;
+
+    const onClickConnect =
     typeof onConnect === 'function'
       ? onConnect
       : () => cloudProvider.login(() => onSetCloudProvider(cloudProvider.name));
@@ -148,11 +163,11 @@ const CloudTile = ({
       <StyledTileWrapper onClick={isConnected ? onSelect : onClickConnect} selected={isSelected}>
         <StyledCloudName>{cloudProvider.displayName || cloudProvider.name}</StyledCloudName>
         {cloudProvider.icon ? <cloudProvider.icon height="64px" /> : null}
-        {isConnected && actionName ? (
-          <Button className="cloud-tile__action" small secondary>
-            {actionName}
-          </Button>
-        ) : null}
+        <ActionButton
+          isConnected={isConnected}
+          actionName={actionName}
+          isReady={isReady}
+        />
         {userName && <StyledUserName>{userName}</StyledUserName>}
         {isSelected && <CheckMark />}
       </StyledTileWrapper>

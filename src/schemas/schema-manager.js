@@ -77,11 +77,15 @@ class KeplerGLSchema {
       config: this.getConfigToSave(state),
       info: {
         app: 'kepler.gl',
-        created_at: new Date().toString()
+        created_at: new Date().toString(),
+        ...this.getMapInfo(state)
       }
     };
   }
 
+  getMapInfo(state) {
+    return state.visState.mapInfo;
+  }
   /**
    *  Load saved map, argument can be (datasets, config) or ({datasets, config})
    * @param {Object|Array<Object>} savedDatasets

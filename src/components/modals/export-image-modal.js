@@ -23,7 +23,11 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import ImagePreview from 'components/common/image-preview';
 
-import {EXPORT_IMG_RATIO_OPTIONS, EXPORT_IMG_RESOLUTION_OPTIONS} from 'constants/default-settings';
+import {
+  EXPORT_IMG_RATIO_OPTIONS,
+  EXPORT_IMG_RESOLUTION_OPTIONS,
+  EXPORT_IMG_RATIOS
+} from 'constants/default-settings';
 
 import {StyledModalContent, SelectionButton} from 'components/common/styled-components';
 import Switch from 'components/common/switch';
@@ -73,7 +77,12 @@ const ExportImageModalFactory = () => {
     _updateMapDim() {
       const {exportImage, mapH, mapW} = this.props;
       if (mapH !== exportImage.mapH || mapW !== exportImage.mapW) {
-        this.props.onUpdateSetting({mapH, mapW});
+        this.props.onUpdateSetting({
+          mapH,
+          mapW,
+          ratio: EXPORT_IMG_RATIOS.CUSTOM,
+          legend: false
+        });
       }
     }
 

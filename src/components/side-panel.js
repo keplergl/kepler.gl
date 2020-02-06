@@ -41,7 +41,8 @@ import {
   EXPORT_MAP_ID,
   SAVE_MAP_ID,
   SHARE_MAP_ID,
-  SIDEBAR_PANELS
+  SIDEBAR_PANELS,
+  OVERWRITE_MAP_ID
 } from 'constants/default-settings';
 
 const SidePanelContent = styled.div`
@@ -76,7 +77,7 @@ SidePanelFactory.deps = [
  *
  * Vertical sidebar containing input components for the rendering layers
  */
-export default function SidePanelFactory(
+export default function SidePanelFactory (
   Sidebar,
   PanelHeader,
   PanelToggle,
@@ -103,7 +104,7 @@ export default function SidePanelFactory(
       visStateActions: PropTypes.object.isRequired,
       mapStyleActions: PropTypes.object.isRequired,
       availableProviders: PropTypes.object,
-      panels: PropTypes.arrayOf(PropTypes.object)
+      mapSaved: PropTypes.string
     };
 
     static defaultProps = {
@@ -147,10 +148,15 @@ export default function SidePanelFactory(
 
     _onClickExportMap = () => this.props.uiStateActions.toggleModal(EXPORT_MAP_ID);
 
-    _onClickSaveToStorage = () => this.props.uiStateActions.toggleModal(SAVE_MAP_ID);
+    _onClickSaveToStorage = () => {
+      this.props.uiStateActions.toggleModal(this.props.mapSaved ? OVERWRITE_MAP_ID : SAVE_MAP_ID);
+    };
+
+    _onClickSaveAsToStorage = () => this.props.uiStateActions.toggleModal(SAVE_MAP_ID);
 
     _onClickShareMap = () => this.props.uiStateActions.toggleModal(SHARE_MAP_ID);
 
+    // eslint-disable-next-line complexity
     render() {
       const {
         appName,
@@ -235,6 +241,11 @@ export default function SidePanelFactory(
               onExportMap={this._onClickExportMap}
               onSaveMap={this.props.onSaveMap}
               onSaveToStorage={availableProviders.hasStorage ? this._onClickSaveToStorage : null}
+              onSaveAsToStorage={
+                availableProviders.hasStorage && this.props.mapSaved
+                  ? this._onClickSaveAsToStorage
+                  : null
+              }
               onShareMap={availableProviders.hasShare ? this._onClickShareMap : null}
             />
             <PanelToggle

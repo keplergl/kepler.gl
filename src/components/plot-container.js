@@ -89,10 +89,11 @@ export default function PlotContainerFactory(MapContainer) {
       if (imageSize.scale) {
         return imageSize.scale;
       }
+
       const scale = getScaleFromImageSize(
         imageSize.imageW,
         imageSize.imageH,
-        mapState.width,
+        mapState.width * (mapState.isSplit ? 2 : 1),
         mapState.height
       );
 
@@ -130,8 +131,10 @@ export default function PlotContainerFactory(MapContainer) {
     };
 
     render() {
-      const {exportImageSetting, mapFields} = this.props;
+      const {exportImageSetting, mapFields, splitMaps} = this.props;
       const {imageSize = {}, legend} = exportImageSetting;
+      const isSplit = splitMaps && splitMaps.length > 1;
+
       const size = {
         width: imageSize.imageW || 1,
         height: imageSize.imageH || 1
@@ -144,7 +147,8 @@ export default function PlotContainerFactory(MapContainer) {
         // override viewport based on export settings
         mapState: {
           ...mapFields.mapState,
-          ...size,
+          width: size.width / (isSplit ? 2 : 1),
+          height: size.height,
           zoom: mapFields.mapState.zoom + (Math.log2(scale) || 0)
         },
         mapControls: {
@@ -154,8 +158,22 @@ export default function PlotContainerFactory(MapContainer) {
             active: true
           }
         },
-        MapComponent: StaticMap
+        MapComponent: StaticMap,
+        onMapRender: this._onMapRender,
+        isExport: true,
+        deckGlProps
       };
+
+      const mapContainers = !isSplit
+        ? <MapContainer index={0} {...mapProps} />
+        : splitMaps.map((settings, index) => (
+            <MapContainer
+              key={index}
+              index={index}
+              {...mapProps}
+              mapLayers={splitMaps[index].layers}
+            />
+          ));
 
       return (
         <StyledPlotContainer
@@ -166,16 +184,11 @@ export default function PlotContainerFactory(MapContainer) {
             ref={this.plottingAreaRef}
             style={{
               width: `${size.width}px`,
-              height: `${size.height}px`
+              height: `${size.height}px`,
+              display: 'flex'
             }}
           >
-            <MapContainer
-              index={0}
-              onMapRender={this._onMapRender}
-              isExport
-              deckGlProps={deckGlProps}
-              {...mapProps}
-            />
+            {mapContainers}
           </div>
         </StyledPlotContainer>
       );

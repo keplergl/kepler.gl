@@ -29,6 +29,8 @@ import {
 } from 'constants/default-settings';
 import {exportMapToHTML} from 'templates/export-map-html';
 import {formatCsv} from 'processors/data-processor';
+import get from 'lodash.get';
+import {set, generateHashId} from 'utils/utils';
 
 import KeplerGlSchema from 'schemas';
 
@@ -145,7 +147,17 @@ export function exportToJsonString(data) {
 export function getMapJSON(state, options = DEFAULT_EXPORT_JSON_SETTINGS) {
   const {hasData} = options;
 
-  return hasData ? KeplerGlSchema.save(state) : KeplerGlSchema.getConfigToSave(state);
+  if (!hasData) {
+    return KeplerGlSchema.getConfigToSave(state);
+  }
+
+  let mapToSave = KeplerGlSchema.save(state);
+  // add file name if title is not provided
+  const title = get(mapToSave, ['info', 'title']);
+  if (!title || !title.length) {
+    mapToSave = set(['info', 'title'], `keplergl_${generateHashId(6)}`, mapToSave);
+  }
+  return mapToSave;
 }
 
 export function exportJson(state, options = {}) {
@@ -202,15 +214,13 @@ export function exportData(state, option) {
   });
 }
 
-export function exportMap(state) {
-  const mapToState = getMapJSON(state);
-  const {mapInfo} = state.visState;
+export function exportMap(state, option) {
   const {imageDataUri} = state.uiState.exportImage;
   const thumbnail = imageDataUri ? dataURItoBlob(imageDataUri) : null;
+  const mapToSave = getMapJSON(state, option);
 
   return {
-    map: mapToState,
-    info: mapInfo,
+    map: mapToSave,
     thumbnail
   };
 }

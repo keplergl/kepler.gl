@@ -19,17 +19,61 @@
 // THE SOFTWARE.
 
 import {LoadDataModalFactory} from 'kepler.gl/components';
-import LoadDataModal from '../components/load-data-modal/load-data-modal';
 import {withState} from 'kepler.gl/components';
+import {LOADING_METHODS_NAMES} from '../constants/default-settings';
 
-import {loadRemoteMap, loadSample, switchToLoadingMethod} from '../actions';
+import SampleMapGallery from '../components/load-data-modal/sample-data-viewer';
+import LoadRemoteMap from '../components/load-data-modal/load-remote-map';
+import SampleMapsTab from '../components/load-data-modal/sample-maps-tab';
 
-export const CustomLoadDataModalFactory = () =>
-  withState([], state => ({...state.demo.app}), {
-    onSwitchToLoadingMethod: switchToLoadingMethod,
-    onLoadSample: loadSample,
-    onLoadRemoteMap: loadRemoteMap
-  })(LoadDataModal);
+import {
+  loadRemoteMap,
+  loadSample,
+  loadSampleConfigurations
+
+} from '../actions';
+
+const additionalMethods = {
+  remote: {
+    id: LOADING_METHODS_NAMES.remote,
+    label: 'Load Map using URL',
+    elementType: LoadRemoteMap
+  },
+  sample: {
+    id: LOADING_METHODS_NAMES.sample,
+    label: 'Sample Maps',
+    elementType: SampleMapGallery,
+    tabElementType: SampleMapsTab
+  }
+};
+
+const CustomLoadDataModalFactory = (...deps) => {
+  const LoadDataModal = LoadDataModalFactory(...deps);
+  const defaultLoadingMethods = LoadDataModal.defaultProps.loadingMethods;
+
+  // add more loading methods
+  LoadDataModal.defaultProps = {
+    ...LoadDataModal.defaultProps,
+    loadingMethods: [
+      defaultLoadingMethods.find(lm => lm.id === 'upload'),
+      additionalMethods.remote,
+      defaultLoadingMethods.find(lm => lm.id === 'storage'),
+      additionalMethods.sample
+    ]
+  };
+
+  return withState(
+    [],
+    state => ({...state.demo.app}),
+    {
+      onLoadSample: loadSample,
+      onLoadRemoteMap: loadRemoteMap,
+      loadSampleConfigurations
+    }
+  )(LoadDataModal);
+}
+
+CustomLoadDataModalFactory.deps = LoadDataModalFactory.deps;
 
 export function replaceLoadDataModal() {
   return [LoadDataModalFactory, CustomLoadDataModalFactory];

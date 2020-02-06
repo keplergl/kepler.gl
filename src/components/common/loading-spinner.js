@@ -31,10 +31,10 @@ const animationName = keyframes`
 `;
 
 const Loader = styled.span`
-    border-left-color: rgb(198, 198, 198);
-    border-top-color: rgb(198, 198, 198);
+    border-left-color: ${props => props.color || props.theme.primaryBtnBgd};
     animation: _preloader_spin_ 500ms linear infinite;
     border-radius: 50%;
+    border-top-color: transparent;
     border-bottom-color: transparent;
     border-right-color: transparent;
     cursor: wait;
@@ -43,8 +43,22 @@ const Loader = styled.span`
     animation-name: ${animationName};
 }`;
 
-const LoadingSpinner = ({size = 32}) => (
-  <Loader style={{width: `${size}px`, height: `${size}px`}} />
+const LoadingWrapper = styled.div`
+  border-radius: 50%;
+  border: 3px solid ${props => props.borderColor || props.theme.borderColorLT};
+  padding: 2px;
+`;
+
+const LoadingSpinner = ({size = 32, color, borderColor, strokeWidth = 3, gap = 2}) => (
+  <LoadingWrapper style={{width: `${size}px`, height: `${size}px`, padding: `${gap}px`}}>
+    <Loader
+      color={color}
+      style={{
+        width: `${size - strokeWidth * 2 - gap * 2}px`,
+        height: `${size - strokeWidth * 2 - gap * 2}px`
+      }}
+    />
+  </LoadingWrapper>
 );
 
 export default LoadingSpinner;
