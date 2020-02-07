@@ -30,7 +30,6 @@ import {replaceLoadDataModal} from './factories/load-data-modal';
 import {replaceMapControl} from './factories/map-control';
 import {replacePanelHeader} from './factories/panel-header';
 import {AUTH_TOKENS} from './constants/default-settings';
-import {getCloudProvider} from './cloud-providers';
 
 import {
   loadRemoteMap,

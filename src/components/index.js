@@ -110,6 +110,7 @@ export {default as LoadingSpinner} from './common/loading-spinner';
 export * from './common/styled-components';
 import * as Icons from './common/icons';
 export {Icons};
+export {default as CloudTile} from './modals/cloud-tile';
 
 export const TimeRangeSlider = TimeRangeSliderFactory();
 export {TimeRangeSliderFactory};

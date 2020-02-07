@@ -24,6 +24,7 @@ import {formatCsv} from 'processors/data-processor';
 const NAME = 'carto';
 const NAMESPACE = 'keplergl';
 const PRIVATE_STORAGE_ENABLED = true;
+const SHARING_ENABLED = true;
 
 export default class CartoProvider {
   constructor(clientId){
@@ -77,7 +78,11 @@ export default class CartoProvider {
     return PRIVATE_STORAGE_ENABLED;
   }
 
-  async uploadFile({blob, name, description, thumbnail, isPublic = true}) {
+  hasSharingUrl() {
+    return SHARING_ENABLED;
+  }
+
+  async uploadFile({blob, fileName, mapData, isPublic = true}) {
     try {
       const payload = JSON.parse(await new Response(blob).text());
 
@@ -86,9 +91,12 @@ export default class CartoProvider {
       const cartoDatasets = datasets.map(this._convertDataset);
 
       const cs = await this._carto.getCustomStorage();
+      
+      const {title, description} = mapData.info;
+      const name = title || fileName;
 
-      const thumbnailBase64 = thumbnail
-        ? await this._blobToBase64(thumbnail)
+      const thumbnailBase64 = mapData && mapData.thumbnail
+        ? await this._blobToBase64(mapData.thumbnail)
         : null;
 
       let result;
@@ -104,7 +112,7 @@ export default class CartoProvider {
       } else {
         // TODO: Ask for changing current shared map generation because of being too oriented to file based clouds
         // Check public name generation and replace
-        const regex = /(?:^\/keplergl_)([a-z0-9]+)(?:.json$)/;
+        const regex = /(?:^keplergl_)([a-z0-9]+)(?:.json$)/;
         const capturedName = name.match(regex);
         const visName = capturedName ? `sharedmap_${capturedName[1]}` : name;
 

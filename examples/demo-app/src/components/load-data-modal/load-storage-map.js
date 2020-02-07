@@ -18,12 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import styled from 'styled-components';
 import moment from 'moment';
-import {Icons, LoadingSpinner} from 'kepler.gl/components';
+import {CloudTile, Icons, LoadingSpinner} from 'kepler.gl/components';
 import {getCloudProvider, getCloudProviders} from '../../cloud-providers';
-import ProviderTile from './provider-tile';
 
 const StyledProviderSection = styled.div`
   display: flex;
@@ -208,16 +207,23 @@ const LoadStorageMap = ({onLoadCloudMap, error}) => {
   const [visualizations, setVisualizations] = useState(null);
   const [selectedProvider, setSelectedProvider] = useState(null);
   const [exception, setException] = useState(null);
+  const [, updateState] = React.useState();
+  const forceUpdate = useCallback(() => updateState({}), []);
 
   const providers = getCloudProviders().filter((provider) => provider.hasPrivateStorage() && provider.isEnabled());
 
-  const selectProvider = (provider) => {
-    if (!!provider.getAccessToken()) {
-      updateSelectedProvider(provider.name);
-    } else {
-      provider.login(updateSelectedProvider);
+  const getVisualizations = async (providerName) => {
+    if (providerName) {
+      try {
+        const cloudProvider = getCloudProvider(providerName);
+        const visualizationList = await cloudProvider.getVisualizations();
+        setVisualizations(visualizationList);
+      } catch (err) {
+        setSelectedProvider(null);
+        setException({ message: `${err.target.status} - ${err.target.responseText}` });
+      }
     }
-  }
+  };
 
   const updateSelectedProvider = (providerName) => {
     if (providerName) {
@@ -229,20 +235,21 @@ const LoadStorageMap = ({onLoadCloudMap, error}) => {
       setVisualizations(null);
       setException(null);
     }
+    forceUpdate();
   }
 
-  const getVisualizations = async (providerName) => {
-    if (providerName) {
-      try {
-        const cloudProvider = getCloudProvider(providerName);
-        const visualizations = await cloudProvider.getVisualizations();
-        setVisualizations(visualizations);
-      } catch (exception) {
-        setSelectedProvider(null);
-        setException({ message: `${exception.target.status} - ${exception.target.responseText}` });
-      }
+  const selectProvider = (provider) => {
+    if (provider.getAccessToken()) {
+      updateSelectedProvider(provider.name);
+    } else {
+      provider.login(updateSelectedProvider);
     }
-  };
+  }
+
+  const unselectProvider = (provider) => {
+    provider.logout(updateSelectedProvider)
+    updateSelectedProvider(null);
+  }
 
   return (
     <div>
@@ -251,12 +258,14 @@ const LoadStorageMap = ({onLoadCloudMap, error}) => {
       )}
       {!selectedProvider && (<StyledProviderSection>
         {providers.map(provider => (
-          <ProviderTile
+          <CloudTile
             key={provider.name}
-            Icon={provider.icon}
-            isConnected={() => !!provider.getAccessToken()}
+            onSelect={() => {selectProvider(provider)}}
             onConnect={() => {selectProvider(provider)}}
-            onLogout={() => {provider.logout(updateSelectedProvider)}}
+            onLogout={() => {unselectProvider(provider)}}
+            cloudProvider={provider}
+            isSelected={selectedProvider && provider.name === selectedProvider.name}
+            isConnected={Boolean(provider.getAccessToken())}
           />
         ))}
       </StyledProviderSection>)}

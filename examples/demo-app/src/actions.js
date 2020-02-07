@@ -20,8 +20,8 @@
 
 import {push} from 'react-router-redux';
 import {request, text as requestText, json as requestJson} from 'd3-request';
-import { loadFiles, toggleModal} from 'kepler.gl/actions';
-import { DEFAULT_NOTIFICATION_TYPES } from 'kepler.gl/constants'
+import {loadFiles, setMapInfo, toggleModal} from 'kepler.gl/actions';
+import {DEFAULT_NOTIFICATION_TYPES} from 'kepler.gl/constants'
 
 import {
   LOADING_SAMPLE_ERROR_MESSAGE,
@@ -30,6 +30,8 @@ import {
 } from './constants/default-settings';
 import {LOADING_METHODS_NAMES} from './constants/default-settings';
 import {parseUri, getMapPermalink} from './utils/url';
+import {getCloudProvider} from './cloud-providers';
+import { showNotification } from './utils/notifications';
 
 // CONSTANTS
 export const INIT = 'INIT';
@@ -107,6 +109,13 @@ export function setLoadingMapStatus(isMapLoading) {
     type: SET_SAMPLE_LOADING_STATUS,
     isMapLoading
   };
+}
+
+export function loadCloudVisError(error) {
+  return {
+    type: LOAD_CLOUD_VIS_ERROR,
+    error
+  }
 }
 
 export function onExportFileSuccess({response = {}, provider}) {
@@ -345,3 +354,47 @@ export function loadSampleConfigurations(sampleMapId = null) {
     });
   }
 }
+
+/**
+ * This method will load a kepler config from a cloud platform
+ * @param {Object} queryParams
+ * @param {string} providerName
+ * @returns {Function}
+ */
+export function loadCloudMap(queryParams, providerName, pushRoute = false) {
+  return async (dispatch) => {
+    if (!providerName) {
+      dispatch(showNotification(DEFAULT_NOTIFICATION_TYPES.error, 'No cloud provider identified.'));
+
+      throw new Error('No cloud provider identified')
+    }
+    dispatch(loadCloudVisError(null));
+    dispatch(setLoadingMapStatus(true));
+
+    const cloudProvider = getCloudProvider(providerName);
+
+    if (pushRoute) {
+      const mapUrl = cloudProvider.getMapPermalinkFromParams(queryParams, false);
+      dispatch(push(mapUrl));
+    }
+
+    cloudProvider.loadMap(queryParams)
+      .then(map => {
+        dispatch(loadRemoteResourceSuccess(map.datasets, map.vis.config, map.options));
+        dispatch(setMapInfo({
+          title: map.vis.name,
+          description: map.vis.description
+        }));
+
+        dispatch(showNotification(DEFAULT_NOTIFICATION_TYPES.success, 'Loaded succesfully.'));
+      })
+      .catch(error => {
+        const {target = {}} = error;
+        const {status, responseText = 'Cannot load map'} = target;
+        dispatch(setLoadingMapStatus(false));
+        
+        dispatch(showNotification(DEFAULT_NOTIFICATION_TYPES.error, `Error${status ? ` ${status}` : ''}: ${responseText}.`));
+      });
+  }
+}
+

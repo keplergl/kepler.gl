@@ -72,7 +72,6 @@ function createActionTask(action, payload) {
  */
 export const exportFileToCloudUpdater = (state, action) => {
   const {mapData, provider, isPublic, onSuccess, onError, closeModal} = action.payload;
-  console.log(mapData);
 
   if (!provider) {
     Console.error(`provider is not defined`);
