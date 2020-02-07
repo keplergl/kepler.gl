@@ -75,8 +75,6 @@ import {
   computeSplitMapLayers
 } from 'utils/split-map-utils';
 
-import {getDefaultMapInfo} from 'utils/map-info-utils';
-
 import {Layer, LayerClasses} from 'layers';
 import {processFileToLoad} from 'utils/file-utils';
 import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
@@ -169,7 +167,10 @@ export const DEFAULT_EDITOR = {
  */
 export const INITIAL_VIS_STATE = {
   // map info
-  mapInfo: getDefaultMapInfo(),
+  mapInfo: {
+    title: '',
+    description: ''
+  },
   // layers
   layers: [],
   layerData: [],

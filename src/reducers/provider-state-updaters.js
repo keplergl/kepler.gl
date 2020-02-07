@@ -20,6 +20,8 @@
 
 import {withTask} from 'react-palm/tasks';
 import {default as Console} from 'global/console';
+import window from 'global/window';
+
 import {generateHashId, getError} from 'utils/utils';
 import {EXPORT_FILE_TO_CLOUD_TASK, ACTION_TASK, DELAY_TASK} from 'tasks/tasks';
 import {exportFileSuccess, exportFileError, saveToCloudSuccess} from 'actions/provider-actions';
@@ -40,10 +42,13 @@ export const INITIAL_PROVIDER_STATE = {
   successInfo: {}
 };
 
-function createFileJson(mapData) {
-  const {map, info} = mapData;
+function createFileJson(mapData = {}) {
+  if (!window.Blob || !window.File) {
+    return {file: null, fileName: null};
+  }
+  const {map = {}, info = {}} = mapData;
   const data = JSON.stringify(map);
-  const newBlob = new Blob([data], {type: 'application/json'});
+  const newBlob = new window.Blob([data], {type: 'application/json'});
 
   // TODO: Allow user import file name
   const name =
@@ -52,7 +57,7 @@ function createFileJson(mapData) {
       : `keplergl_${generateHashId(6)}`;
   const fileName = `${name}.json`;
 
-  return {file: new File([newBlob], fileName), fileName};
+  return {file: new window.File([newBlob], fileName), fileName};
 }
 
 function createActionTask(action, payload) {
@@ -103,7 +108,6 @@ export const exportFileToCloudUpdater = (state, action) => {
     fileName,
     isPublic
   };
-
   const uploadFileTask = EXPORT_FILE_TO_CLOUD_TASK({provider, payload}).bimap(
     // success
     response => exportFileSuccess({response, provider, onSuccess, closeModal}),
@@ -170,6 +174,7 @@ export const saveToCloudSuccessUpdater = (state, action) => {
  */
 export const exportFileErrorUpdater = (state, action) => {
   const {error, provider, onError} = action.payload;
+
   const newState = {
     ...state,
     isLoading: false,
@@ -193,6 +198,11 @@ export const resetProviderStatusUpdater = (state, action) => ({
   successInfo: {}
 });
 
+/**
+ * Set current cloudProvider
+ * @param {*} state
+ * @param {*} action
+ */
 export const setCloudProviderUpdater = (state, action) => ({
   ...state,
   currentProvider: action.payload
