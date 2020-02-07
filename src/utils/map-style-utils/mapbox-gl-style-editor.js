@@ -22,8 +22,6 @@ import memoize from 'lodash.memoize';
 import clondDeep from 'lodash.clonedeep';
 import {
   DEFAULT_LAYER_GROUPS,
-  RESOLUTIONS,
-  EXPORT_IMG_RESOLUTION_OPTIONS,
   DEFAULT_MAPBOX_API_URL
 } from 'constants/default-settings';
 
