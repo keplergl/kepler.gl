@@ -19,8 +19,8 @@ services:
 install:
   - yarn --ignore-engines
 node_js:
-  - 8
   - 10
+  - 12
 before_script:
   - "curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | sudo bash"
   - ulimit -c unlimited -S       # enable core dumps
