@@ -77,9 +77,9 @@ function SaveMapModalFactory() {
       mapInfo: PropTypes.object.isRequired,
       onSetMapInfo: PropTypes.func.isRequired,
       onSetCloudProvider: PropTypes.func.isRequired,
-      thumbWidth: PropTypes.number.isRequired,
-      thumbHeight: PropTypes.number.isRequired,
       isLoading: PropTypes.bool.isRequired,
+      thumbWidth: PropTypes.number,
+      thumbHeight: PropTypes.number,
       characterLimits: PropTypes.object,
       cloudProviders: PropTypes.arrayOf(PropTypes.object),
       currentProvider: PropTypes.string
@@ -91,7 +91,8 @@ function SaveMapModalFactory() {
       characterLimits: MAP_INFO_CHARACTER,
       cloudProviders: [],
       currentProvider: null,
-      isLoading: false
+      isLoading: false,
+      mapInfo: {title: '', description: ''}
     };
 
     componentDidMount() {
@@ -169,6 +170,7 @@ function SaveMapModalFactory() {
                   <div className="modal-section-title">Name*</div>
                   <div>
                     <InputLight
+                      id="map-title"
                       type="text"
                       value={mapInfo.title}
                       onChange={e => this._onChangeInput('title', e)}
@@ -187,6 +189,7 @@ function SaveMapModalFactory() {
                   <div>
                     <TextAreaLight
                       rows="3"
+                      id="map-description"
                       style={{resize: 'none'}}
                       value={mapInfo.description}
                       onChange={e => this._onChangeInput('description', e)}

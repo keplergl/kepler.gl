@@ -26,7 +26,9 @@ import {
   Button
 } from 'components/common/styled-components';
 
-const StyledTileWrapper = styled.div`
+const StyledTileWrapper = styled.div.attrs({
+  className: 'provider-tile__wrapper'
+})`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -150,7 +152,7 @@ const CloudTile = ({
   const onClickLogout =
     typeof onLogout === 'function'
       ? onLogout
-      : () => cloudProvider.logout(() => onSetCloudProvider(null));
+      : () => cloudProvider.logout(() => isSelected ? onSetCloudProvider(null) : null);
 
   return (
     <StyledBox>
@@ -171,9 +173,9 @@ const CloudTile = ({
         {isSelected && <CheckMark />}
       </StyledTileWrapper>
       {isConnected ? (
-        <LogoutButton onClick={onClickLogout} />
+        <LogoutButton className="logout-button" onClick={onClickLogout} />
       ) : (
-        <LoginButton onClick={onClickConnect} />
+        <LoginButton className="login-button" onClick={onClickConnect} />
       )}
     </StyledBox>
   );

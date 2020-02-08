@@ -67,17 +67,17 @@ const StyledImagePreview = styled.div.attrs({
   }
 `;
 
-const ImagePreview = ({exportImage, width = 400, showDimension}) => {
+const ImagePreview = ({exportImage = {}, width = 400, showDimension}) => {
   const {
     error,
     imageDataUri,
     exporting,
-    imageSize: {imageW, imageH}
+    imageSize: {imageW, imageH} = {}
   } = exportImage;
 
   const imageStyle = {
     width: `${width}px`,
-    height: `${(imageH / imageW) * width}px`
+    height: `${(imageH / (imageW || 1)) * width}px`
   };
 
   return (
