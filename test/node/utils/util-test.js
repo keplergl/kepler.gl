@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {set, toArray} from 'utils/utils';
+import {set, toArray, getError} from 'utils/utils';
 
 test('Utils -> set', t => {
   const obj1 = {map: {map1: 'world'}};
@@ -60,4 +60,16 @@ test('Utils -> toArray', t => {
   );
 
   t.end();
+});
+
+test('Utils -> getError', t => {
+  t.equal(getError(new Error('oops')), 'oops', 'should find error message from Error object');
+  t.equal(getError('sorry'), 'sorry', 'should find error message from string');
+  t.equal(getError(), 'Something went wrong', 'should find error message from empty');
+
+  t.equal(getError({error: {message: 'not good'}}), 'not good', 'should find error message from object');
+  t.equal(getError({err: {error: 'not good'}}), 'not good', 'should find error message from object');
+  t.equal(getError({status: 400}), '{"status":400}', 'should find error message from object');
+
+  t.end()
 });
