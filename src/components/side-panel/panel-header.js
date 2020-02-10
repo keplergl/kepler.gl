@@ -235,7 +235,7 @@ export const CloudStorageDropdownFactory = PanelHeaderDropdown => {
         label: 'Settings',
         icon: Gear,
         key: 'settings',
-        onClick: props => props.onSaveToStorageSettings
+        onClick: props => props.onExportData
       }
     ]
   };
@@ -291,7 +291,6 @@ function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
         version,
         actionItems,
         onSaveToStorage,
-        onSaveToStorageSettings,
         onSaveMap,
         onShareMap,
         onExportImage,
@@ -334,7 +333,6 @@ function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
                       onClose={hideExportDropdown}
                       show={visibleDropdown === item.id}
                       onSaveToStorage={onSaveToStorage}
-                      onSaveToStorageSettings={onSaveToStorageSettings}
                       onSaveMap={onSaveMap}
                       onShareMap={onShareMap}
                       onExportData={onExportData}

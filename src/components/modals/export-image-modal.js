@@ -94,7 +94,7 @@ const ExportImageModalFactory = () => {
               <div className="image-option-section-title">Ratio</div>
               Choose the ratio for various usages.
               <div className="button-list">
-                {EXPORT_IMG_RATIO_OPTIONS.map(op => (
+                {EXPORT_IMG_RATIO_OPTIONS.filter(op => !op.hidden).map(op => (
                   <SelectionButton
                     key={op.id}
                     selected={ratio === op.id}

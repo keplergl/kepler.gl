@@ -169,7 +169,10 @@ export const DEFAULT_EDITOR = {
  */
 export const INITIAL_VIS_STATE = {
   // map info
-  mapInfo: getDefaultMapInfo(),
+  mapInfo: {
+    title: '',
+    description: ''
+  },
   // layers
   layers: [],
   layerData: [],

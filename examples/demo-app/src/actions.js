@@ -30,8 +30,11 @@ import {
 } from './constants/default-settings';
 import {LOADING_METHODS_NAMES} from './constants/default-settings';
 import {parseUri, getMapPermalink} from './utils/url';
+<<<<<<< HEAD
 import {getCloudProvider} from './cloud-providers';
 import { showNotification } from './utils/notifications';
+=======
+>>>>>>> upstream/backend-storage-ui
 
 // CONSTANTS
 export const INIT = 'INIT';

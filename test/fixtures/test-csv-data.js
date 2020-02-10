@@ -46,7 +46,7 @@ const data = `gps_data.utc_timestamp,gps_data.lat,gps_data.lng,gps_data.types,ep
 2016-09-17 00:30:08,30.0610977,31.2194728,driver_gps,1472774400000,True,,2016-09-23T08:00:00.000Z,,,`;
 
 export const dataId = '190vdll3di';
-
+export const gpsPointBounds = [31.2148748, 29.9870074, 31.2590542, 30.0614122];
 export const config = {
   version: 'v1',
   config: {

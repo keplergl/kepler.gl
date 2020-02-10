@@ -20,14 +20,6 @@
 
 import {MAP_INFO_CHARACTER} from 'constants/default-settings';
 
-export function getDefaultMapInfo() {
-  return {
-    title: '',
-    description: '',
-    id: ''
-  };
-}
-
 export function isValidMapInfo(mapInfo) {
   return (
     mapInfo.title.length &&

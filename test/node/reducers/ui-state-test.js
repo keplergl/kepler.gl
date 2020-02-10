@@ -36,9 +36,7 @@ import reducer, {uiStateReducerFactory} from 'reducers/ui-state';
 import {INITIAL_UI_STATE} from 'reducers/ui-state-updaters';
 import {
   EXPORT_DATA_TYPE,
-  RESOLUTIONS
-} from 'constants/default-settings';
-import {
+  RESOLUTIONS,
   DEFAULT_NOTIFICATION_TOPICS,
   DEFAULT_NOTIFICATION_TYPES
 } from 'constants/default-settings';

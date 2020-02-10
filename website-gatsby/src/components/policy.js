@@ -87,7 +87,7 @@ export default class Home extends PureComponent {
                     As an open source project, questions and bug reports can be filed with the project community,
                     and you can participate in the development of the project's source code. Bug reports and
                     issues can be submitted at <a href={GITHUB_PROJECT_ISSUES}>Kepler.gl Github issues</a>.
-                    Questions can be asked on the project's mailing lists, which you can subscribe at <a href={MAILING_LIST_URL}>Kepler.gl Mailing list</a>
+                    Questions can be asked on the project's mailing lists, which you can subscribe at <a href={MAILING_LIST_URL}>Kepler.gl Mailing list</a>.
                     Please review the applicable <a href={CONTRIBUTING_URL}>contributing guidelines</a> and procedures in connection with your submissions.
                     Please note that the Kepler.gl project and Urban Computing Foundation do not otherwise provide support for users of Kepler.gl software.
                   </span>

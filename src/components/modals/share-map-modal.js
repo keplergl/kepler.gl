@@ -39,7 +39,9 @@ export const StyledInputLabel = styled.label`
   letter-spacing: 0.2px;
 `;
 
-export const StyleSharingUrl = styled.div`
+export const StyleSharingUrl = styled.div.attrs({
+  className: 'sharing-url'
+})`
   width: 100%;
   display: flex;
   margin-bottom: 14px;
@@ -55,7 +57,7 @@ export const StyleSharingUrl = styled.div`
   }
 `;
 
-const SharingUrl = ({url, message}) => {
+export const SharingUrl = ({url, message}) => {
   const [copied, setCopy] = useState(false);
   return (
     <StyleSharingUrl>

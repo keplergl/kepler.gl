@@ -46,7 +46,9 @@ const DeleteIcon = styled(Delete)`
   cursor: pointer;
 `;
 
-const NotificationMessage = styled.div`
+const NotificationMessage = styled.div.attrs({
+  className: 'notification-item--message'
+})`
   flex-grow: 2;
   width: ${props => props.theme.notificationPanelItemWidth}px;
   margin: 0 1em;
@@ -119,7 +121,6 @@ export default function NotificationItemFactory() {
             {icons[notification.type]}
           </NotificationIcon>
           <NotificationMessage
-            className="notification-item--message"
             isExpanded={isExpanded}
             theme={this.props.theme}
           >

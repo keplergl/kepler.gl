@@ -32,7 +32,7 @@ const CloudStorageItems = [
     label: 'Settings',
     icon: Icons.Gear,
     key: 'settings',
-    onClick: props => props.onSaveToStorageSettings
+    onClick: props => props.onExportData
   }
 ];
 

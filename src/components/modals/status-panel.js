@@ -84,7 +84,7 @@ const UploadAnimation = props => (
       <MapIcon height="48px" />
     </StyledMapIcon>
     <Line />
-    <props.icon height="64px" />
+    {props.icon && <props.icon height="64px" />}
   </StyledUploader>
 );
 
