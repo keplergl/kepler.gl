@@ -67,7 +67,7 @@ export default class CartoProvider {
   };
 
   isEnabled() {
-    return this.clientId != null;
+    return this.clientId !== null;
   }
 
   isConnected() {
@@ -239,7 +239,7 @@ export default class CartoProvider {
       const username = this.getUserName();
       const cs = await this._carto.getCustomStorage();
       const visualizations = await cs.getVisualizations();
-      const formattedVis = [];
+      let formattedVis = [];
 
       // Format visualization object
       for (const vis of visualizations) {
@@ -249,7 +249,7 @@ export default class CartoProvider {
           description: vis.description,
           privateMap: vis.isPrivate,
           thumbnail: vis.thumbnail === 'undefined' ? null : vis.thumbnail,
-          lastModification: vis.lastModified,
+          lastModification: new Date(Date.parse(vis.lastModified)),
           loadParams: {
             owner: username,
             mapId: vis.id,
@@ -257,6 +257,8 @@ export default class CartoProvider {
           }
         })
       }
+
+      formattedVis = formattedVis.sort((a, b) => b.lastModification - a.lastModification);
 
       return formattedVis;
     } catch (error) {
