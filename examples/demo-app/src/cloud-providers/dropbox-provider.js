@@ -268,19 +268,40 @@ export default class DropboxProvider {
     window.addEventListener('message', handleToken);
   }
 
+  /**
+   *
+   * @param {Object} map - entire item of the visualizations list returned by provider.getVisualizations()
+   * @returns {Object} map data, config and info {map: {datasets: Array<Object>, config: Object}, mapInfo: {title: string, description: string}, format: string}
+   */
   async loadMap(map) {
-    // TODO: implement
+    // TODO: implement for dropbox
+    // the map obejct should contain:
+    // {
+    //  datasets: [],
+    //  config:
+    // }
+    // each dataset object should be {info: {id, label}, data: {...}}
+    // to inform how kepler should process your data object, pass in `format`
+    // foramt options are:
+    // 'csv': csv file string
+    // 'geojson': geojson object
+    // 'row': row object
+    // 'keplergl': datasets array saved using KeplerGlSchema.save
+
+    const mockResponse = {
+      map: stateSavedV1,
+      mapInfo: {
+        title: 'test map',
+        description: 'Hello this is my test dropbox map'
+      },
+      // pass csv here if your provider currently only support save / load file as csv
+      format: 'keplergl'
+    };
+
     function mockResult() {
       return new Promise(resolve => {
         setTimeout(() => {
-          resolve({
-            map: stateSavedV1,
-            mapInfo: {
-              title: 'test map',
-              description: 'Hello this is my test dropbox map'
-            },
-            format: 'keplergl'
-          });
+          resolve(mockResponse);
         }, 100);
       });
     }
