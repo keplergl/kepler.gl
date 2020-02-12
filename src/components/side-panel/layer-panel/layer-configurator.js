@@ -80,6 +80,7 @@ export const getLayerChannelConfigProps = props => ({
 });
 
 LayerConfiguratorFactory.deps = [SourceDataSelectorFactory];
+
 export default function LayerConfiguratorFactory(SourceDataSelector) {
   class LayerConfigurator extends Component {
     static propTypes = {
@@ -723,9 +724,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
 
     _render3DLayerConfig({
       layer,
-      visConfiguratorProps,
-      layerConfiguratorProps,
-      layerChannelConfigProps
+      visConfiguratorProps
     }) {
       return (
         <Fragment>
@@ -770,6 +769,60 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
             />
           </LayerConfigGroup>
         </Fragment>
+      );
+    }
+
+    _renderS2LayerConfig({
+      layer,
+      visConfiguratorProps,
+      layerConfiguratorProps,
+      layerChannelConfigProps
+    }) {
+      return (
+        <StyledLayerVisualConfigurator>
+          {/* Color */}
+          <LayerConfigGroup
+            {...layer.visConfigSettings.filled}
+            {...visConfiguratorProps}
+            label="Fill Color"
+            collapsible
+          >
+            {layer.config.colorField ? (
+              <LayerColorRangeSelector {...visConfiguratorProps} />
+            ) : (
+              <LayerColorSelector {...layerConfiguratorProps} />
+            )}
+            <ConfigGroupCollapsibleContent>
+              <ChannelByValueSelector
+                channel={layer.visualChannels.color}
+                {...layerChannelConfigProps}
+              />
+              <VisConfigSlider
+                {...LAYER_VIS_CONFIGS.opacity}
+                {...visConfiguratorProps}
+              />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+
+          {/* height */}
+          <LayerConfigGroup
+            {...LAYER_VIS_CONFIGS.enable3d}
+            {...visConfiguratorProps}
+            collapsible
+          >
+            <VisConfigSlider
+              {...LAYER_VIS_CONFIGS.elevationRange}
+              {...visConfiguratorProps}
+              label={false}
+            />
+            <ConfigGroupCollapsibleContent>
+              <ChannelByValueSelector
+                channel={layer.visualChannels.size}
+                {...layerChannelConfigProps}
+              />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+        </StyledLayerVisualConfigurator>
       );
     }
 

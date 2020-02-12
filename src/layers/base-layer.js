@@ -215,7 +215,7 @@ export default class Layer {
    * Given a array of preset required column names
    * found field that has the same name to set as layer column
    *
-   * @param {object[]} defaultFields
+   * @param {object} defaultFields
    * @param {object[]} allFields
    * @returns {object[] | null} all possible required layer column pairs
    */

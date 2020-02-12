@@ -4,7 +4,7 @@
 
 H3 layers visualize spatial data using [H3 Hexagonal Hierarchical Spatial Index](https://eng.uber.com/h3/).
 
-To use H3 layer, you need a `hex_id` in your dataset, which can be generated using [h3-js](https://github.com/uber/h3-js) from latitude, longitude and resolution.
+To use H3 layer, you need a `hex_id` or `hexagon_id` in your dataset, which can be generated using [h3-js](https://github.com/uber/h3-js) from latitude, longitude and resolution.
 
 ### Naming Convention
 kepler.gl __auto generates__ H3 layer from column: `hex_id`, `hexagon_id`

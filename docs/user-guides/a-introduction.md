@@ -35,7 +35,8 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 * [Hexbin](./c-types-of-layers/h-hexbin.md)
 * [Heatmap](./c-types-of-layers/i-heatmap.md)
 * [H3](./c-types-of-layers/j-h3.md)
-* [Trip](./c-types-of-layers/k.trip.md)
+* [Trip](./c-types-of-layers/k-trip.md)
+* [S2](./c-types-of-layers/l-s2.md)
 
 #### [Layer attributes](./d-layer-attributes.md)
 

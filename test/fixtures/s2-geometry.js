@@ -18,17 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './base-layer-sepcs';
-import './arc-layer-specs';
-import './cluster-layer-specs';
-import './geojson-layer-specs';
-import './grid-layer-specs';
-import './h3-hexagon-layer-specs';
-import './heatmap-layer-specs';
-import './hexagon-layer-specs';
-import './icon-layer-specs';
-import './line-layer-specs';
-import './point-layer-specs';
-import './scenegraph-layer-specs';
-import './trip-layer-specs';
-import './s2-geometry-layer-specs';
+export const data = 's2,value\n' +
+  '80858004,0.5979242952642347\n' +
+  '8085800c,0.5446256069712141\n' +
+  '80858014,0.1187171597109975\n' +
+  '8085801c,0.2859146314037557\n' +
+  '80858024,0.19549012367504126\n' +
+  '80858034,0.3373452974230604\n' +
+  '8085803c,0.9218176408795662\n' +
+  '80858044,0.23470692356446143\n' +
+  '8085804c,0.1580509670379684\n' +
+  '80858054,0.15992745628743954';
