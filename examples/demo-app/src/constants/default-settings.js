@@ -114,5 +114,4 @@ export const AUTH_TOKENS = {
   DROPBOX_CLIENT_ID: process.env.DropboxClientId, // eslint-disable-line
   CARTO_CLIENT_ID: process.env.CartoClientId, // eslint-disable-line
   EXPORT_MAPBOX_TOKEN: process.env.MapboxExportToken, // eslint-disable-line
-  CARTO_CLIENT_ID: process.env.CartoClientId // eslint-disable-line
 };
