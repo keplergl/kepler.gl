@@ -34,7 +34,10 @@ const actionHandler = {
   [ActionTypes.SET_CLOUD_PROVIDER]: providerStateUpdaters.setCloudProviderUpdater,
   [ActionTypes.SAVE_TO_CLOUD_SUCCESS]: providerStateUpdaters.saveToCloudSuccessUpdater,
   [ActionTypes.LOAD_CLOUD_MAP]: providerStateUpdaters.loadCloudMapUpdater,
-  [ActionTypes.LOAD_CLOUD_MAP_SUCCESS]: providerStateUpdaters.loadCloudMapSuccessUpdater
+  [ActionTypes.LOAD_CLOUD_MAP_SUCCESS]: providerStateUpdaters.loadCloudMapSuccessUpdater,
+  [ActionTypes.GET_SAVED_MAPS]: providerStateUpdaters.getSavedMapsUpdater,
+  [ActionTypes.GET_SAVED_MAPS_SUCCESS]: providerStateUpdaters.getSavedMapsSuccessUpdater,
+  [ActionTypes.GET_SAVED_MAPS_ERROR]: providerStateUpdaters.getSavedMapsErrorUpdater
 }
 
 // construct provider-state reducer

@@ -20,35 +20,33 @@
 
 import Task, {taskCreator} from 'react-palm/tasks';
 import {json as requestJson} from 'd3-request';
-import console from 'global/console';
+import {readFile} from 'processors/mapshaper-import';
 
-export const LOAD_FILE_TASK = taskCreator(
-  ({fileBlob, info, handler, processor}, success, error) => {
-    return handler(fileBlob, processor)
-      .then(result => {
-        if (!result) {
-          // TODO: capture in the UI and show message
-          error(new Error('File to load data, result is empty'));
-        } else {
-          // we are trying to standardize the shape of our return
-          // since we start using the kepler.json format
-          // result has both datasets and info
-          // TODO: I think we should pass info to the handler and return
-          // the same format back from the file handler
+// export const LOAD_FILE_TASK = taskCreator(
+//   ({fileBlob, info, handler, processor}, success, error) => {
+//     return handler(fileBlob, processor)
+//       .then(result => {
+//         if (!result) {
+//           // TODO: capture in the UI and show message
+//           error(new Error('File to load data, result is empty'));
+//         } else {
+//           if (result.datasets) {
+//             // this is coming from parsing keplergl.json file
+//             success(result); // info is already part of datasets
+//           }
+//           success({datasets: {data: result, info}});
+//         }
+//       })
+//       .catch(err => {
+//         console.log(err);
+//         error(err);
+//       });
+//   },
 
-          if (result.datasets) {
-            // this is coming from parsing keplergl.json file
-            success(result); // info is already part of datasets
-          }
-          success({datasets: {data: result, info}});
-        }
-      })
-      .catch(err => {
-        console.log(err);
-        error(err);
-      });
-  },
-
+//   'LOAD_FILE_TASK'
+// );
+export const LOAD_FILE_TASK = Task.fromPromise(
+  ({file, fileCache}) => readFile({file, fileCache}),
   'LOAD_FILE_TASK'
 );
 
@@ -72,18 +70,22 @@ export const LOAD_MAP_STYLE_TASK = taskCreator(
  * task to upload file to cloud provider
  */
 export const EXPORT_FILE_TO_CLOUD_TASK = Task.fromPromise(
-  ({provider, payload}) => provider.uploadFile(payload),
+  ({provider, payload}) => provider.uploadMap(payload),
 
   'EXPORT_FILE_TO_CLOUD_TASK'
 );
 
 export const LOAD_CLOUD_MAP_TASK = Task.fromPromise(
-
-  ({provider, payload}) => provider.loadMap(payload),
+  ({provider, payload}) => provider.downloadMap(payload),
 
   'LOAD_CLOUD_MAP_TASK'
-)
+);
 
+export const GET_SAVED_MAPS_TASK = Task.fromPromise(
+  (provider) => provider.listMaps(),
+
+  'GET_SAVED_MAPS_TASK'
+);
 /**
  *  task to dispatch a function as a task
  */

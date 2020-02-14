@@ -87,7 +87,8 @@ function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
       PropTypes.shape({
         id: PropTypes.string,
         label: PropTypes.string,
-        elementType: PropTypes.elementType
+        elementType: PropTypes.elementType,
+        tabElementType: PropTypes.elementType
       })
     )
   };

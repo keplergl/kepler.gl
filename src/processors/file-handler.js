@@ -19,7 +19,12 @@
 // THE SOFTWARE.
 
 import {FileReader} from 'global/window';
-import {processCsvData, processGeojson, processKeplerglJSON} from './data-processor';
+import {
+  processCsvData,
+  processGeojson,
+  processKeplerglJSON
+} from './data-processor';
+import {importJSON} from './mapshaper-json-import';
 
 const FILE_HANDLERS = {
   csv: loadCsv,
@@ -34,9 +39,7 @@ export function getFileHandler(fileBlob) {
 export function getFileType(filename) {
   if (filename.endsWith('csv')) {
     return 'csv';
-  }
-
-  else if (filename.endsWith('json') || filename.endsWith('geojson')) {
+  } else if (filename.endsWith('json') || filename.endsWith('geojson')) {
     // Read GeoJson from browser
     return 'json';
   }
@@ -57,24 +60,32 @@ function readCSVFile(fileBlob) {
 }
 
 export function loadCsv(fileBlob, processor = processCsvData) {
-  return readCSVFile(fileBlob).then(
-    rawData => (rawData ? processor(rawData) : null)
+  return readCSVFile(fileBlob).then(rawData =>
+    rawData ? processor(rawData) : null
   );
 }
 
 function readJSONFile(fileBlob) {
+  const useBinary = true;
   return new Promise((resolve, reject) => {
     const fileReader = new FileReader();
     fileReader.onload = ({target: {result}}) => {
       try {
-        const json = JSON.parse(result);
+        const json = useBinary
+          ? importJSON({filename: fileBlob.name, content: result})
+          : JSON.parse(result);
+        console.log(json)
         resolve(json);
       } catch (err) {
+        console.log(err)
         resolve(null);
       }
     };
-
-    fileReader.readAsText(fileBlob);
+    if (useBinary) {
+      fileReader.readAsArrayBuffer(fileBlob);
+    } else {
+      fileReader.readAsText(fileBlob, 'UTF-8');
+    }
   });
 }
 
@@ -88,8 +99,8 @@ export function isKeplerGlMap(json) {
   );
 }
 
-export function determineJsonProcess(jsonData, defaultProcessor) {
-  if (isKeplerGlMap(jsonData)) {
+export function determineJsonProcess({dataset, format}, defaultProcessor) {
+  if (isKeplerGlMap(dataset)) {
     return processKeplerglJSON;
   }
 
@@ -97,8 +108,7 @@ export function determineJsonProcess(jsonData, defaultProcessor) {
 }
 
 export function loadJSON(fileBlob, processor = processGeojson) {
-  return readJSONFile(fileBlob).then(
-    rawData =>
-      rawData ? determineJsonProcess(rawData, processor)(rawData) : null
+  return readJSONFile(fileBlob).then(content =>
+    content ? determineJsonProcess(content, processor)(content.dataset) : null
   );
 }

@@ -99,23 +99,23 @@ const StyledInnerDiv = styled.div`
 export default function ShareMapUrlModalFactory() {
   class ShareMapUrlModal extends Component {
     static defaultProps = {
-      isLoading: false,
+      isProviderLoading: false,
       onExport: nop,
       cloudProviders: [],
       currentProvider: null,
-      error: null,
+      providerError: null,
       successInfo: {},
       onSetCloudProvider: nop
     };
 
     render() {
       const {
-        isLoading,
+        isProviderLoading,
         isReady,
         onExport,
         cloudProviders,
         currentProvider,
-        error,
+        providerError,
         successInfo,
         onSetCloudProvider,
         onUpdateImageSetting
@@ -153,7 +153,7 @@ export default function ShareMapUrlModalFactory() {
                     <div className="title warning">{SHARE_DISCLAIMER}</div>
                   </div>
                 </StyledExportSection>
-                <StyledExportSection disabled={isLoading}>
+                <StyledExportSection disabled={isProviderLoading}>
                   <div className="description">
                     <div className="title">Cloud storage</div>
                     <div className="subtitle">
@@ -175,10 +175,10 @@ export default function ShareMapUrlModalFactory() {
                     ))}
                   </div>
                 </StyledExportSection>
-                {isLoading || error ? (
+                {isProviderLoading || providerError ? (
                   <StatusPanel
-                    isLoading={isLoading}
-                    error={error}
+                    isLoading={isProviderLoading}
+                    error={providerError}
                     providerIcon={provider && provider.icon}
                   />
                 ) : null}

@@ -24,6 +24,7 @@ import {LOADING_METHODS_NAMES} from '../constants/default-settings';
 
 import SampleMapGallery from '../components/load-data-modal/sample-data-viewer';
 import LoadRemoteMap from '../components/load-data-modal/load-remote-map';
+import SampleMapsTab from '../components/load-data-modal/sample-maps-tab';
 
 import {
   loadRemoteMap,
@@ -41,7 +42,8 @@ const additionalMethods = {
   sample: {
     id: LOADING_METHODS_NAMES.sample,
     label: 'Sample Maps',
-    elementType: SampleMapGallery
+    elementType: SampleMapGallery,
+    tabElementType: SampleMapsTab
   }
 };
 

@@ -273,7 +273,7 @@ export default class DropboxProvider {
    * @param {Object} map - entire item of the visualizations list returned by provider.getVisualizations()
    * @returns {Object} map data, config and info {map: {datasets: Array<Object>, config: Object}, mapInfo: {title: string, description: string}, format: string}
    */
-  async loadMap(map) {
+  async downloadMap(map) {
     // TODO: implement for dropbox
     // the map obejct should contain:
     // {
@@ -288,30 +288,47 @@ export default class DropboxProvider {
     // 'row': row object
     // 'keplergl': datasets array saved using KeplerGlSchema.save
 
-    const mockResponse = {
-      map: stateSavedV1,
-      mapInfo: {
-        title: 'test map',
-        description: 'Hello this is my test dropbox map'
-      },
-      // pass csv here if your provider currently only support save / load file as csv
-      format: 'keplergl'
-    };
+    console.log(map);
+    // const mockResponse = {
+    //   map: stateSavedV1,
+    //   mapInfo: {
+    //     title: 'test map',
+    //     description: 'Hello this is my test dropbox map'
+    //   },
+    //   // pass csv here if your provider currently only support save / load file as csv
+    //   format: 'keplergl'
+    // };
 
-    function mockResult() {
-      return new Promise(resolve => {
-        setTimeout(() => {
-          resolve(mockResponse);
-        }, 100);
-      });
-    }
+    // function mockResult() {
+    //   return new Promise(resolve => {
+    //     setTimeout(() => {
+    //       resolve(mockResponse);
+    //     }, 100);
+    //   });
+    // }
 
-    const result =  await mockResult();
-
+    // const result =  await mockResult();
+    const result = await this._dropbox.filesDownload({
+      path: map.path_lower
+    });
+    const file = await this._readFile(result.fileBlob);
+    console.log(file)
     return result;
   }
 
-  async getVisualizations() {
+  _readFile(fileBlob) {
+    return new Promise((resolve, reject) => {
+
+      const fileReader = new FileReader(fileBlob);
+      fileReader.onload = ({target: {result}}) => {
+        resolve(result);
+      };
+
+      fileReader.readAsText(fileBlob);
+    });
+  }
+
+  async listMaps() {
     // list files
     try {
       // https://dropbox.github.io/dropbox-sdk-js/Dropbox.html#filesListFolder__anchor
@@ -340,10 +357,12 @@ export default class DropboxProvider {
         });
 
       // dropbox returns
-
       return Object.values(visualizations).reverse();
+
     } catch (error) {
-      console.warn(error);
+
+      // made the error message human readable for provider updater
+      throw(this._handleDropboxError(error));
     }
   }
 
@@ -358,6 +377,14 @@ export default class DropboxProvider {
     return this._getUserFromAccount(response);
   }
 
+  _handleDropboxError(error) {
+    // dropbox list_folder error
+    if (error && error.error && error.error.error_summary) {
+      return `Dropbox Error: ${error.error.error_summary}`;
+    }
+
+    return error;
+  }
   getUserName() {
     // load user from
     if (window.localStorage) {
@@ -407,7 +434,7 @@ export default class DropboxProvider {
    * @param isPublic define whether the file will be available publicly once uploaded
    * @returns {Promise<DropboxTypes.files.FileMetadata>}
    */
-  async uploadFile({mapData, blob, fileName, isPublic = true}) {
+  async uploadMap({mapData, blob, fileName, isPublic = true}) {
 
     const metadata = await this._dropbox.filesUpload({
       path: `${this._path}/${fileName || blob.name}`,

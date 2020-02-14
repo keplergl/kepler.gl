@@ -22,10 +22,8 @@ import React from 'react';
 import styled from 'styled-components';
 import {MapIcon} from 'components/common/icons';
 import {StyledExportSection} from 'components/common/styled-components';
-import NotificationItemFactory from 'components/notification-panel/notification-item';
-import ErrorBoundary from 'components/common/error-boundary';
+import ErrorDisplay from './error-display';
 
-const NotificationItem = NotificationItemFactory();
 const StyledUploader = styled.div`
   display: flex;
   align-items: center;
@@ -63,19 +61,6 @@ const Line = () => (
   <StyledSvg height="5px" width="150px">
     <line x1="0" y1="4" x2="150" y2="4" />
   </StyledSvg>
-);
-
-const ErrorDisplay = ({error}) => (
-  <ErrorBoundary>
-    <NotificationItem
-      notification={{
-        type: 'error',
-        message: error,
-        id: 'cloud-export-error'
-      }}
-      isExpanded
-    />
-  </ErrorBoundary>
 );
 
 const UploadAnimation = props => (

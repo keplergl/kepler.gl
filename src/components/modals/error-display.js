@@ -18,16 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {generateHashId} from 'utils/utils';
+import React from 'react';
+import ErrorBoundary from 'components/common/error-boundary';
+import NotificationItemFactory from 'components/notification-panel/notification-item';
+const NotificationItem = NotificationItemFactory();
 
-export const processFileToLoad = (file) => {
-  return {
-    fileBlob: file,
-    info: {
-      id: generateHashId(4),
-      label: file.name,
-      size: file.size
-    }
-    // handler: getFileHandler(file)
-  }
-};
+const ErrorDisplay = ({error}) => (
+  <ErrorBoundary>
+    <NotificationItem
+      notification={{
+        type: 'error',
+        message: error,
+        id: 'cloud-export-error'
+      }}
+      isExpanded
+    />
+  </ErrorBoundary>
+);
+
+export default ErrorDisplay;

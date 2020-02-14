@@ -21,11 +21,13 @@
 import React, {Component} from 'react';
 import styled from 'styled-components';
 import moment from 'moment';
+import {createSelector} from 'reselect';
 
 import LoadingDialog from './loading-dialog';
 import {Button} from 'components/common/styled-components';
 import CloudTile from './cloud-tile';
 import {Base, ArrowLeft} from 'components/common/icons';
+import ErrorDisplay from './error-display';
 
 const StyledProviderSection = styled.div`
   display: flex;
@@ -209,141 +211,113 @@ const VisualizationItem = ({vis, onClick}) => {
     </StyledVisualizationItem>
   );
 };
-
-export const StyledError = styled.div`
-  color: red;
-`;
-
-export const StyledErrorDescription = styled.div`
-  font-size: 14px;
-`;
-
-const Error = ({error}) => (
-  <StyledError>
-    <StyledErrorDescription>Error: {error.message}</StyledErrorDescription>
-  </StyledError>
-);
+const ProviderSelect = ({
+  cloudProviders,
+  onSetCloudProvider,
+  currentProvider
+}) =>
+  cloudProviders.length ? (
+    <StyledProviderSection>
+      {cloudProviders.map(provider => (
+        <CloudTile
+          key={provider.name}
+          onSelect={() => onSetCloudProvider(provider.name)}
+          onSetCloudProvider={onSetCloudProvider}
+          cloudProvider={provider}
+          isSelected={provider.name === currentProvider}
+          isConnected={Boolean(provider.getAccessToken())}
+        />
+      ))}
+    </StyledProviderSection>
+  ) : (
+    <p>No storage provider available</p>
+  );
 
 function LoadStorageMapFactory() {
   class LoadStorageMap extends Component {
-    state = {
-      visualizations: null,
-      exception: null
-    };
-
     componentDidMount() {
-      if (this.props.currentProvider && !this.state.visualizations) {
-        // request visualizations
-        this._getVisualizations(this.props.currentProvider);
+      this._getSavedMaps();
+    }
+    componentDidUpdate(prevProps) {
+      if (prevProps.currentProvider !== this.props.currentProvider) {
+        this._getSavedMaps();
       }
     }
+    cloudProviders = props => props.cloudProviders;
+    currentProvider = props => props.currentProvider;
+    providerSelector = createSelector(
+      this.currentProvider,
+      this.cloudProviders,
+      (currentProvider, cloudProviders) =>
+        (cloudProviders || []).find(p => p.name === currentProvider)
+    );
 
-    _getVisualizations = async providerName => {
-      if (providerName) {
-        try {
-          const cloudProvider = this.props.cloudProviders.find(
-            p => p,
-            name === providerName
-          );
-          const visualizationList = await cloudProvider.getVisualizations();
-          this._setVisualizations(visualizationList);
-        } catch (err) {
-          this.props.onSetCloudProvider(null);
-          this.setException({
-            message: `${err.target.status} - ${err.target.responseText}`
-          });
-        }
+    _getSavedMaps() {
+      const provider = this.providerSelector(this.props);
+      if (provider) {
+        this.props.getSavedMaps(provider);
       }
-    };
-
-    _updateSelectedProvider = providerName => {
-      if (providerName) {
-        this.props.onSetCloudProvider(providerName);
-        this._getVisualizations(providerName);
-        this._setException(null);
-      } else {
-        this.props.onSetCloudProvider(null);
-        this._setVisualizations(null);
-        this._setException(null);
-      }
-    };
-
-    _setVisualizations = (visualizations) => {
-      this.setState({visualizations});
-    };
-
-    _setException = (exception) => {
-      this.setState({exception});
     }
 
     render() {
       const {
         onLoadCloudMap,
-        error,
+        visualizations,
         cloudProviders,
         currentProvider = null,
-        isLoading,
+        isProviderLoading,
         onSetCloudProvider
       } = this.props;
-      const {visualizations, exception} = this.state;
+
+      const provider = this.providerSelector(this.props);
 
       return (
         <div>
-          {!cloudProviders.length && <p>No storage provider available</p>}
-          {!currentProvider && (
-            <StyledProviderSection>
-              {cloudProviders.map(provider => (
-                <CloudTile
-                  key={provider.name}
-                  onSelect={() => {
-                    this._updateSelectedProvider(provider.name);
-                  }}
-                  onSetCloudProvider={onSetCloudProvider}
-                  cloudProvider={provider}
-                  isSelected={provider.name === currentProvider}
-                  isConnected={Boolean(provider.getAccessToken())}
-                />
-              ))}
-            </StyledProviderSection>
+          {!provider ? (
+            <ProviderSelect
+              cloudProviders={cloudProviders}
+              onSetCloudProvider={onSetCloudProvider}
+              currentProvider={currentProvider}
+            />
+          ) : (
+            <>
+              {isProviderLoading && (
+                <StyledSpinner>
+                  <LoadingDialog size={64} message="Loading..." />
+                </StyledSpinner>
+              )}
+              {!isProviderLoading && visualizations && (
+                <StyledVisualizationSection>
+                  <StyledBackBtn>
+                    <Button link onClick={() => onSetCloudProvider(null)}>
+                      <ArrowLeft height="14px" />
+                      Back
+                    </Button>
+                  </StyledBackBtn>
+                  <StyledProviderVisSection>
+                    <span className="title">
+                      <span>{currentProvider}</span> Storage / Maps
+                    </span>
+                    <StyledSeparator />
+                    <StyledVisualizationList>
+                      {visualizations.map(vis => (
+                        <VisualizationItem
+                          key={vis.id}
+                          onClick={() =>
+                            onLoadCloudMap({
+                              map: vis,
+                              provider
+                            })
+                          }
+                          vis={vis}
+                        />
+                      ))}
+                    </StyledVisualizationList>
+                  </StyledProviderVisSection>
+                </StyledVisualizationSection>
+              )}
+            </>
           )}
-          {((currentProvider && !visualizations) || isLoading) && (
-            <StyledSpinner>
-              <LoadingDialog size={64} message="Loading..." />
-            </StyledSpinner>
-          )}
-          {currentProvider && visualizations && (
-            <StyledVisualizationSection>
-              <StyledBackBtn>
-                <Button link onClick={() => onSetCloudProvider(null)}>
-                  <ArrowLeft height="14px" />
-                  Back
-                </Button>
-              </StyledBackBtn>
-              <StyledProviderVisSection>
-                <span className="title">
-                  <span>{currentProvider}</span> Storage / Maps
-                </span>
-                <StyledSeparator />
-                <StyledVisualizationList>
-                  {visualizations.map(vis => (
-                    <VisualizationItem
-                      key={vis.id}
-                      onClick={() =>
-                        onLoadCloudMap({
-                          map: vis,
-                          provider: cloudProviders.find(
-                            p => p.name === currentProvider
-                          )
-                        })
-                      }
-                      vis={vis}
-                    />
-                  ))}
-                </StyledVisualizationList>
-              </StyledProviderVisSection>
-            </StyledVisualizationSection>
-          )}
-          {(error || exception) && <Error error={error || exception} />}
         </div>
       );
     }

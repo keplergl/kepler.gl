@@ -55,6 +55,8 @@ const actionHandler = {
 
   [ActionTypes.LOAD_FILES_ERR]: visStateUpdaters.loadFilesErrUpdater,
 
+  [ActionTypes.LOAD_FILES_SUCCESS]: visStateUpdaters.loadFileSuccessUpdater,
+
   [ActionTypes.MAP_CLICK]: visStateUpdaters.mapClickUpdater,
 
   [ActionTypes.MOUSE_MOVE]: visStateUpdaters.mouseMoveUpdater,

@@ -26,13 +26,16 @@ import {
   EXPORT_FILE_TO_CLOUD_TASK,
   ACTION_TASK,
   DELAY_TASK,
-  LOAD_CLOUD_MAP_TASK
+  LOAD_CLOUD_MAP_TASK,
+  GET_SAVED_MAPS_TASK
 } from 'tasks/tasks';
 import {
   exportFileSuccess,
   exportFileError,
   saveToCloudSuccess,
-  loadCloudMapSuccess
+  loadCloudMapSuccess,
+  getSavedMapsSuccess,
+  getSavedMapsError
 } from 'actions/provider-actions';
 import {
   removeNotification,
@@ -49,24 +52,12 @@ import {toArray} from 'utils/utils';
 import KeplerGlSchema from 'schemas';
 
 export const INITIAL_PROVIDER_STATE = {
-  isLoading: false,
-  error: null,
+  isProviderLoading: false,
+  providerError: null,
   currentProvider: null,
   successInfo: {}
 };
-import {
-  processRowObject,
-  processGeojson,
-  processCsvData,
-  processKeplerglDataset
-} from 'processors/data-processor';
-
-const DATASET_HANDLERS = {
-  [DATASET_FORMATS.row]: processRowObject,
-  [DATASET_FORMATS.geojson]: processGeojson,
-  [DATASET_FORMATS.csv]: processCsvData,
-  [DATASET_FORMATS.keplergl]: processKeplerglDataset
-};
+import {DATASET_HANDLERS} from 'processors/data-processor';
 
 function createFileJson(mapData = {}) {
   if (!window.Blob || !window.File) {
@@ -110,6 +101,21 @@ function _validateProvider(provider, method) {
   return true;
 }
 
+function createGlobalNotificationTasks({type, message, delayClose = true}) {
+  const id = generateHashId();
+  const successNote = {
+    id,
+    type:
+      DEFAULT_NOTIFICATION_TYPES[type] || DEFAULT_NOTIFICATION_TYPES.success,
+    topic: DEFAULT_NOTIFICATION_TOPICS.global,
+    message
+  };
+  const task = ACTION_TASK().map(_ => addNotification(successNote));
+  return delayClose
+    ? [task, DELAY_TASK(3000).map(_ => removeNotification(id))]
+    : [task];
+}
+
 /**
  * This method will export the current kepler config file to the chosen cloud proder
  * add returns a share URL
@@ -127,7 +133,7 @@ export const exportFileToCloudUpdater = (state, action) => {
     closeModal
   } = action.payload;
 
-  if (!_validateProvider(provider, 'uploadFile')) {
+  if (!_validateProvider(provider, 'uploadMap')) {
     return state;
   }
   // TODO: do we need to always create a fileBlob?
@@ -137,11 +143,11 @@ export const exportFileToCloudUpdater = (state, action) => {
 
   const newState = {
     ...state,
-    isLoading: true,
+    isProviderLoading: true,
     currentProvider: provider.name
   };
 
-  // payload called by provider.uploadFile
+  // payload called by provider.uploadMap
   const payload = {
     mapData,
     blob: file,
@@ -168,7 +174,7 @@ export const exportFileSuccessUpdater = (state, action) => {
 
   const newState = {
     ...state,
-    isLoading: false,
+    isProviderLoading: false,
     // TODO: do we always have to store this?
     successInfo: {
       metaUrl: response.url,
@@ -190,20 +196,12 @@ export const exportFileSuccessUpdater = (state, action) => {
  * @param {*} action
  */
 export const saveToCloudSuccessUpdater = (state, action) => {
-  const message = action.payload;
-
-  const id = generateHashId();
-  const successNote = {
-    id,
-    type: DEFAULT_NOTIFICATION_TYPES.success,
-    topic: DEFAULT_NOTIFICATION_TOPICS.global,
-    message: message || `Saved to ${state.currentProvider} successfully`
-  };
+  const message =
+    action.payload || `Saved to ${state.currentProvider} successfully`;
 
   const tasks = [
     ACTION_TASK().map(_ => toggleModal(null)),
-    ACTION_TASK().map(_ => addNotification(successNote)),
-    DELAY_TASK(3000).map(_ => removeNotification(id))
+    ...createGlobalNotificationTasks({message})
   ];
 
   return withTask(state, tasks);
@@ -216,11 +214,11 @@ export const saveToCloudSuccessUpdater = (state, action) => {
  */
 export const exportFileErrorUpdater = (state, action) => {
   const {error, provider, onError} = action.payload;
-
+  console.log(error);
   const newState = {
     ...state,
-    isLoading: false,
-    error: getError(error)
+    isProviderLoading: false,
+    providerError: getError(error)
   };
 
   const task = createActionTask(onError, {error, provider});
@@ -231,16 +229,16 @@ export const exportFileErrorUpdater = (state, action) => {
 export const loadCloudMapUpdater = (state, action) => {
   const {map, provider, onSuccess, onError} = action.payload;
 
-  if (!_validateProvider(provider, 'loadMap')) {
+  if (!_validateProvider(provider, 'downloadMap')) {
     return state;
   }
 
   const newState = {
     ...state,
-    isLoading: true
+    isProviderLoading: true
   };
 
-  // payload called by provider.loadMap
+  // payload called by provider.downloadMap
   const uploadFileTask = LOAD_CLOUD_MAP_TASK({provider, payload: map}).bimap(
     // success
     response => loadCloudMapSuccess({response, provider, onSuccess, onError}),
@@ -303,7 +301,9 @@ function parseLoadMapResponse(response) {
     return {info, data};
   });
 
-  const parsedConfig = map.config ? KeplerGlSchema.parseSavedConfig(map.config) : null;
+  const parsedConfig = map.config
+    ? KeplerGlSchema.parseSavedConfig(map.config)
+    : null;
 
   return {datasets: parsedDatasets, config: parsedConfig, mapInfo};
 }
@@ -321,7 +321,7 @@ export const loadCloudMapSuccessUpdater = (state, action) => {
 
   const newState = {
     ...state,
-    isLoading: false
+    isProviderLoading: false
   };
 
   const payload = parseLoadMapResponse(response);
@@ -329,7 +329,9 @@ export const loadCloudMapSuccessUpdater = (state, action) => {
   const tasks = [
     ACTION_TASK().map(_ => addDataToMap(payload)),
     createActionTask(onSuccess, {response, provider}),
-    ACTION_TASK().map(_ => saveToCloudSuccess(`Map from ${provider.name} loaded`))
+    ACTION_TASK().map(_ =>
+      saveToCloudSuccess(`Map from ${provider.name} loaded`)
+    )
   ].filter(d => d);
 
   return tasks.length ? withTask(newState, tasks) : newState;
@@ -341,7 +343,7 @@ export const loadCloudMapSuccessUpdater = (state, action) => {
  */
 export const resetProviderStatusUpdater = (state, action) => ({
   ...state,
-  isLoading: false,
+  isProviderLoading: false,
   error: null,
   successInfo: {}
 });
@@ -355,3 +357,48 @@ export const setCloudProviderUpdater = (state, action) => ({
   ...state,
   currentProvider: action.payload
 });
+
+export const getSavedMapsUpdater = (state, action) => {
+  const provider = action.payload;
+  if (!_validateProvider(provider, 'listMaps')) {
+    return state;
+  }
+
+  const getSavedMapsTask = GET_SAVED_MAPS_TASK(provider).bimap(
+    // success
+    visualizations => getSavedMapsSuccess({visualizations, provider}),
+    // error
+    error => getSavedMapsError({error, provider})
+  );
+
+  return withTask(
+    {
+      ...state,
+      isProviderLoading: true
+    },
+    getSavedMapsTask
+  );
+};
+
+export const getSavedMapsSuccessUpdater = (state, action) => ({
+  ...state,
+  isProviderLoading: false,
+  visualizations: action.payload.visualizations
+});
+
+export const getSavedMapsErrorUpdater = (state, action) => {
+  const message =
+    getError(action.payload.error) ||
+    `Error getting saved maps from ${state.currentProvider}`;
+
+  const newState = {
+    ...state,
+    currentProvider: null,
+    isProviderLoading: false
+  };
+
+  return withTask(
+    newState,
+    createGlobalNotificationTasks({type: 'error', message})
+  );
+};

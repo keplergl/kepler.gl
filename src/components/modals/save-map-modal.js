@@ -78,7 +78,7 @@ function SaveMapModalFactory() {
     static propTypes = {
       exportImage: PropTypes.object.isRequired,
       mapInfo: PropTypes.object.isRequired,
-      isLoading: PropTypes.bool.isRequired,
+      isProviderLoading: PropTypes.bool.isRequired,
       thumbWidth: PropTypes.number,
       thumbHeight: PropTypes.number,
       characterLimits: PropTypes.object,
@@ -93,8 +93,8 @@ function SaveMapModalFactory() {
       characterLimits: MAP_INFO_CHARACTER,
       cloudProviders: [],
       currentProvider: null,
-      error: null,
-      isLoading: false,
+      providerError: null,
+      isProviderLoading: false,
       onSetCloudProvider: nop
     };
 
@@ -111,7 +111,7 @@ function SaveMapModalFactory() {
         exportImage,
         characterLimits = {},
         cloudProviders,
-        isLoading,
+        isProviderLoading,
         currentProvider,
         onSetCloudProvider,
         onUpdateImageSetting
@@ -126,7 +126,7 @@ function SaveMapModalFactory() {
         >
         <StyledSaveMapModal>
           <StyledModalContent className="save-map-modal-content">
-            <StyledExportSection disabled={isLoading}>
+            <StyledExportSection disabled={isProviderLoading}>
               <div className="description">
                 <div className="title">Cloud storage</div>
                 <div className="subtitle">

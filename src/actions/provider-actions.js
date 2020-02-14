@@ -17,6 +17,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+
 import {createAction} from 'redux-actions';
 import keyMirror from 'keymirror';
 import {addPrefix} from 'constants/action-types';
@@ -31,7 +32,10 @@ export const ActionTypes = addPrefix(
     SAVE_TO_CLOUD_SUCCESS: null,
     LOAD_CLOUD_MAP: null,
     LOAD_CLOUD_MAP_SUCCESS: null,
-    LOAD_CLOUD_MAP_ERROR: null
+    LOAD_CLOUD_MAP_ERROR: null,
+    GET_SAVED_MAPS: null,
+    GET_SAVED_MAPS_SUCCESS: null,
+    GET_SAVED_MAPS_ERROR: null
   })
 );
 
@@ -89,4 +93,19 @@ export const loadCloudMapSuccess = createAction(
     onSuccess,
     onError
   })
+);
+
+export const getSavedMaps = createAction(
+  ActionTypes.GET_SAVED_MAPS,
+  provider => provider
+);
+
+export const getSavedMapsSuccess = createAction(
+  ActionTypes.GET_SAVED_MAPS_SUCCESS,
+  ({visualizations, provider}) => ({visualizations, provider})
+);
+
+export const getSavedMapsError = createAction(
+  ActionTypes.GET_SAVED_MAPS_ERROR,
+  ({error, provider}) => ({error, provider})
 );

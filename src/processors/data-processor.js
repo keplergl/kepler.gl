@@ -24,7 +24,7 @@ import {console as globalConsole} from 'global/window';
 import assert from 'assert';
 import {Analyzer, DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
-import {ALL_FIELD_TYPES} from 'constants/default-settings';
+import {ALL_FIELD_TYPES, DATASET_FORMATS} from 'constants/default-settings';
 import {
   notNullorUndefined,
   parseFieldValue,
@@ -648,6 +648,13 @@ export function processKeplerglDataset(rawData) {
   const results = KeplerGlSchema.parseSavedData(toArray(rawData));
   return Array.isArray(rawData) ? results : results[0];
 }
+
+export const DATASET_HANDLERS = {
+  [DATASET_FORMATS.row]: processRowObject,
+  [DATASET_FORMATS.geojson]: processGeojson,
+  [DATASET_FORMATS.csv]: processCsvData,
+  [DATASET_FORMATS.keplergl]: processKeplerglDataset
+};
 
 export const Processors = {
   processGeojson,

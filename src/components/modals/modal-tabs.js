@@ -33,6 +33,7 @@ const ModalTab = styled.div`
 
   .load-data-modal__tab__inner {
     display: flex;
+    width: 100%;
   }
 
   .load-data-modal__tab__item.active {
@@ -78,7 +79,9 @@ const ModalTabItem = ({currentMethod, method, toggleMethod}) => {
     toggleMethod
   ]);
 
-  return (
+  return method.tabElementType ? (
+    <method.tabElementType onClick={onClick} />
+  ) : (
     <StyledLoadDataModalTabItem
       className={classnames('load-data-modal__tab__item', {
         active: currentMethod && method.id === currentMethod
@@ -103,9 +106,6 @@ function ModalTabsFactory() {
           />
         ))}
       </div>
-      {/* <TrySampleData
-        onClick={() => toggleMethod(LOADING_METHODS_NAMES.sample)}
-      /> */}
     </ModalTab>
   );
 
