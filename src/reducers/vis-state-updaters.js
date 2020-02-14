@@ -23,6 +23,7 @@ import Task, {disableStackCapturing, withTask} from 'react-palm/tasks';
 import cloneDeep from 'lodash.clonedeep';
 import uniq from 'lodash.uniq';
 import get from 'lodash.get';
+import xor from 'lodash.xor';
 
 // Tasks
 import {LOAD_FILE_TASK} from 'tasks/tasks';
@@ -537,7 +538,8 @@ export function setFilterUpdater(state, action) {
     valueIndex = 0
   } = action;
 
-  let newFilter = set([prop], value, state.filters[idx]);
+  const oldFilter = state.filters[idx];
+  let newFilter = set([prop], value, oldFilter);
   let newState = state;
 
   const {dataId} = newFilter;
@@ -585,23 +587,30 @@ export function setFilterUpdater(state, action) {
       // only filter the current dataset
       break;
     case FILTER_UPDATER_PROPS.layerId:
-      // const layers = state.layers.filter(l => value.includes(l.id));
+      // We need to update only datasetId/s if we have added/removed layers
+      // - check for layerId changes (XOR works because of string values)
+      // if no differences between layerIds, don't do any filtering
+      const layerIdDifference = xor(newFilter.layerId, oldFilter.layerId);
 
       const layerDataIds = uniq(
-        value
+        layerIdDifference
           .map(lid => get(state.layers.find(l => l.id === lid), ['config', 'dataId']))
           .filter(d => d)
       );
 
-      // diff filter.dataId with layerDataIds, to determine which dataset to run filter on
-      datasetIds = [
-        ...layerDataIds.filter(lid => !datasetIds.includes(lid)),
-        ...datasetIds.filter(did => !layerDataIds.includes(did))
-      ];
+      // only filter datasetsIds
+      datasetIds = layerDataIds;
+
+      // Update newFilter dataIds
+      const newDataIds = uniq(
+        newFilter.layerId
+          .map(lid => get(state.layers.find(l => l.id === lid), ['config', 'dataId']))
+          .filter(d => d)
+      );
 
       newFilter = {
         ...newFilter,
-        dataId: layerDataIds
+        dataId: newDataIds
       };
 
       break;
