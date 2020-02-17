@@ -75,6 +75,8 @@ const actionHandler = {
 
   [ActionTypes.SET_FILTER_PLOT]: visStateUpdaters.setFilterPlotUpdater,
 
+  [ActionTypes.SET_MAP_INFO]: visStateUpdaters.setMapInfoUpdater,
+
   [ActionTypes.SET_VISIBLE_LAYERS_FOR_MAP]: visStateUpdaters.setVisibleLayersForMapUpdater,
 
   [ActionTypes.SHOW_DATASET_TABLE]: visStateUpdaters.showDatasetTableUpdater,

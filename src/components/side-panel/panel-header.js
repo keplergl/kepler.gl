@@ -21,9 +21,19 @@
 import React, {Component} from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
+import {createSelector} from 'reselect';
 import {Tooltip} from 'components/common/styled-components';
 import KeplerGlLogo from 'components/common/logo';
-import {Save, Files, Share, Picture, Map} from 'components/common/icons';
+import {
+  Save,
+  DataTable,
+  Save2,
+  Gear,
+  Picture,
+  Db,
+  Map as MapIcon,
+  Share
+} from 'components/common/icons';
 import ClickOutsideCloseDropdown from 'components/side-panel/panel-dropdown';
 import Toolbar from 'components/common/toolbar';
 import ToolbarItem from 'components/common/toolbar-item';
@@ -45,13 +55,13 @@ const StyledPanelHeaderTop = styled.div.attrs({
 `;
 
 const StyledPanelTopActions = styled.div.attrs({
-  className: 'side-panel__header__actions'
+  className: 'side-panel__top__actions'
 })`
   display: flex;
 `;
 
 const StyledPanelAction = styled.div.attrs({
-  className: 'side-panel__header__actions'
+  className: 'side-panel__panel-header__action'
 })`
   align-items: center;
   border-radius: 2px;
@@ -89,156 +99,190 @@ const StyledToolbar = styled(Toolbar)`
 `;
 
 export const PanelAction = ({item, onClick}) => (
-  <StyledPanelAction className="side-panel__panel-header__action"
-    data-tip data-for={`${item.id}-action`} onClick={onClick}>
+  <StyledPanelAction
+    className="side-panel__panel-header__action"
+    data-tip
+    data-for={`${item.id}-action`}
+    onClick={onClick}
+  >
     {item.label ? <p>{item.label}</p> : null}
     <a target={item.blank ? '_blank' : ''} href={item.href}>
       <item.iconComponent height="20px" />
     </a>
-    {item.tooltip ? (<Tooltip
-      id={`${item.id}-action`}
-      place="bottom"
-      delayShow={500}
-      effect="solid"
-    >
-      <span>{item.tooltip}</span>
-    </Tooltip>) : null }
+    {item.tooltip ? (
+      <Tooltip
+        id={`${item.id}-action`}
+        place="bottom"
+        delayShow={500}
+        effect="solid"
+      >
+        <span>{item.tooltip}</span>
+      </Tooltip>
+    ) : null}
   </StyledPanelAction>
 );
 
-export const ExportImageFactory = () => {
-  const ExportImage = props => (<ToolbarItem {...props}/>);
-  ExportImage.defaultProps = {
-    label: 'Export Image',
-    icon: <Picture />
-  };
-
-  return ExportImage;
-};
-
-export const ExportDataFactory = () => {
-  const ExportData = props => (<ToolbarItem {...props}/>);
-  ExportData.defaultProps = {
-    label: 'Export Data',
-    icon: <Files />
-  };
-
-  return ExportData;
-};
-
-export const ExportMapFactory = () => {
-  const ExportMap = props => (<ToolbarItem {...props}/>);
-  ExportMap.defaultProps = {
-    label: 'Export Map',
-    icon: <Map />
-  };
-
-  return ExportMap;
-};
-
-export const SaveMapFactory = () => {
-  const SaveMap = props => (<ToolbarItem {...props}/>);
-  SaveMap.defaultProps = {
-    label: 'Save Map',
-    icon: <Share />
-  };
-
-  return SaveMap;
-};
-
-SaveExportDropdownFactory.deps = [
-  ExportImageFactory,
-  ExportDataFactory,
-  ExportMapFactory,
-  SaveMapFactory
-];
-
-export function SaveExportDropdownFactory(
-  ExportImage,
-  ExportData,
-  ExportMap,
-  SaveMap) {
-
-  const SaveExportDropdown = ({
-    onExportImage,
-    onExportData,
-    onExportConfig,
-    onExportMap,
-    onSaveMap,
-    show,
-    onClose
-  }) => {
+export const PanelHeaderDropdownFactory = () => {
+  const PanelHeaderDropdown = ({items, show, onClose, id}) => {
     return (
-      <StyledToolbar show={show} onClose={onClose} className="save-export-dropdown">
+      <StyledToolbar show={show} className={`${id}-dropdown`}>
         <ClickOutsideCloseDropdown
-          className="save-export-dropdown__inner"
+          className="panel-header-dropdown__inner"
           show={show}
-          onClose={onClose}>
-          <ExportImage
-            className="export-image"
-            onClick={() => {
-              onExportImage();
-              onClose();
-            }}
-          />
-          <ExportData
-            className="export-data"
-            onClick={() => {
-              onExportData();
-              onClose();
-            }}
-          />
-          <ExportMap
-            className="export-map"
-            onClick={() => {
-              onExportMap();
-              onClose();
-            }}
-          />
-          {onSaveMap ? (
-            <SaveMap
-              className="save-map"
-              onClick={() => {
-                onSaveMap();
-                onClose();
-              }}
+          onClose={onClose}
+        >
+          {items.map(itm => (
+            <ToolbarItem
+              key={itm.key}
+              label={itm.label}
+              icon={itm.icon}
+              onClick={itm.onClick}
+              onClose={onClose}
             />
-        ) : null}
+          ))}
         </ClickOutsideCloseDropdown>
       </StyledToolbar>
-
     );
   };
 
+  return PanelHeaderDropdown;
+};
+
+const getDropdownItemsSelector = () =>
+  createSelector(
+    props => props,
+    props =>
+      props.items
+        .map(t => ({
+          ...t,
+          onClick: t.onClick && t.onClick(props) ? t.onClick(props) : null
+        }))
+        .filter(l => l.onClick)
+  );
+
+export const SaveExportDropdownFactory = PanelHeaderDropdown => {
+  const dropdownItemsSelector = getDropdownItemsSelector();
+
+  const SaveExportDropdown = props => (
+
+    <PanelHeaderDropdown
+      items={dropdownItemsSelector(props)}
+      show={props.show}
+      onClose={props.onClose}
+      id="save-export"
+    />
+  );
+
+  SaveExportDropdown.defaultProps = {
+    items: [
+      {
+        label: 'Export Image',
+        icon: Picture,
+        key: 'image',
+        onClick: props => props.onExportImage
+      },
+      {
+        label: 'Export Data',
+        icon: DataTable,
+        key: 'data',
+        onClick: props => props.onExportData
+      },
+      {
+        label: 'Export Map',
+        icon: MapIcon,
+        key: 'map',
+        onClick: props => props.onExportMap
+      },
+      {
+        label: 'Save Map',
+        icon: Save2,
+        key: 'save',
+        onClick: props => props.onSaveMap
+      },
+      {
+        label: 'Share Map URL',
+        icon: Share,
+        key: 'save',
+        onClick: props => props.onShareMap
+      }
+    ]
+  };
+
   return SaveExportDropdown;
-}
+};
+SaveExportDropdownFactory.deps = [PanelHeaderDropdownFactory];
+
+export const CloudStorageDropdownFactory = PanelHeaderDropdown => {
+  const dropdownItemsSelector = getDropdownItemsSelector();
+
+  const CloudStorageDropdown = (props) => (
+    <PanelHeaderDropdown
+      items={dropdownItemsSelector(props)}
+      show={props.show}
+      onClose={props.onClose}
+      id="cloud-storage"
+    />
+  );
+  CloudStorageDropdown.defaultProps = {
+    items: [
+      {
+        label: 'Save',
+        icon: Save2,
+        key: 'data',
+        onClick: props => props.onSaveToStorage
+      },
+      {
+        label: 'Settings',
+        icon: Gear,
+        key: 'settings',
+        onClick: props => props.onExportData
+      }
+    ]
+  };
+  return CloudStorageDropdown;
+};
+CloudStorageDropdownFactory.deps = [PanelHeaderDropdownFactory];
 
 PanelHeaderFactory.deps = [
-  SaveExportDropdownFactory
+  SaveExportDropdownFactory,
+  CloudStorageDropdownFactory
 ];
 
-function PanelHeaderFactory(
-  SaveExportDropdown
-) {
+function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
   return class PanelHeader extends Component {
     static propTypes = {
       appName: PropTypes.string,
       version: PropTypes.string,
-      uiState: PropTypes.object,
-      uiStateActions: PropTypes.object,
+      visibleDropdown: PropTypes.string,
       logoComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
-      actionItems: PropTypes.arrayOf(PropTypes.any)
+      actionItems: PropTypes.arrayOf(PropTypes.any),
+      onExportImage: PropTypes.func,
+      onExportData: PropTypes.func,
+      onExportConfig: PropTypes.func,
+      onExportMap: PropTypes.func,
+      onSaveToStorage: PropTypes.func,
+      onSaveMap: PropTypes.func,
+      onShareMap: PropTypes.func
     };
 
     static defaultProps = {
       logoComponent: KeplerGlLogo,
-      actionItems: [{
-        id: 'save',
-        iconComponent: Save,
-        onClick: () => {},
-        label: 'Share',
-        dropdownComponent: SaveExportDropdown
-      }]
+      actionItems: [
+        {
+          id: 'storage',
+          iconComponent: Db,
+          tooltip: 'Cloud Storage',
+          onClick: () => {},
+          dropdownComponent: CloudStorageDropdown
+        },
+        {
+          id: 'save',
+          iconComponent: Save,
+          onClick: () => {},
+          label: 'Share',
+          dropdownComponent: SaveExportDropdown
+        }
+      ]
     };
 
     render() {
@@ -246,7 +290,9 @@ function PanelHeaderFactory(
         appName,
         version,
         actionItems,
+        onSaveToStorage,
         onSaveMap,
+        onShareMap,
         onExportImage,
         onExportData,
         onExportConfig,
@@ -255,15 +301,24 @@ function PanelHeaderFactory(
         showExportDropdown,
         hideExportDropdown
       } = this.props;
+      let items = actionItems || [];
+
+      // don't render cloud storage icon if onSaveToStorage is not provided
+      if (typeof onSaveToStorage !== 'function') {
+        items = actionItems.filter(ai => ai.id !== 'storage')
+      }
 
       return (
         <StyledPanelHeader className="side-panel__panel-header">
           <StyledPanelHeaderTop className="side-panel__panel-header__top">
-            <this.props.logoComponent appName={appName} version={version}/>
+            <this.props.logoComponent appName={appName} version={version} />
             <StyledPanelTopActions>
-              {actionItems.map(item => (
-                <div className="side-panel__panel-header__right"
-                     key={item.id} style={{position: 'relative'}}>
+              {items.map(item => (
+                <div
+                  className="side-panel__panel-header__right"
+                  key={item.id}
+                  style={{position: 'relative'}}
+                >
                   <PanelAction
                     item={item}
                     onClick={() => {
@@ -277,7 +332,9 @@ function PanelHeaderFactory(
                     <item.dropdownComponent
                       onClose={hideExportDropdown}
                       show={visibleDropdown === item.id}
+                      onSaveToStorage={onSaveToStorage}
                       onSaveMap={onSaveMap}
+                      onShareMap={onShareMap}
                       onExportData={onExportData}
                       onExportImage={onExportImage}
                       onExportConfig={onExportConfig}
@@ -291,7 +348,7 @@ function PanelHeaderFactory(
         </StyledPanelHeader>
       );
     }
-  }
+  };
 }
 
 export default PanelHeaderFactory;

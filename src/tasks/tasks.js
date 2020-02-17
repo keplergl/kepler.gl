@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {taskCreator} from 'react-palm/tasks';
+import Task, {taskCreator} from 'react-palm/tasks';
 import {json as requestJson} from 'd3-request';
 import console from 'global/console';
 
@@ -36,7 +36,8 @@ export const LOAD_FILE_TASK = taskCreator(
           // TODO: I think we should pass info to the handler and return
           // the same format back from the file handler
 
-          if (result.datasets) { // this is coming from parsing keplergl.json file
+          if (result.datasets) {
+            // this is coming from parsing keplergl.json file
             success(result); // info is already part of datasets
           }
           success({datasets: {data: result, info}});
@@ -44,10 +45,9 @@ export const LOAD_FILE_TASK = taskCreator(
       })
       .catch(err => {
         console.log(err);
-        error(err)
-      })
-
-    },
+        error(err);
+      });
+  },
 
   'LOAD_FILE_TASK'
 );
@@ -61,9 +61,33 @@ export const LOAD_MAP_STYLE_TASK = taskCreator(
         if (!result) {
           error(new Error('Map style response is empty'));
         }
-        success({id, style: result})
+        success({id, style: result});
       }
     }),
 
   'LOAD_MAP_STYLE_TASK'
+);
+
+/**
+ * task to upload file to cloud provider
+ */
+export const EXPORT_FILE_TO_CLOUD_TASK = Task.fromPromise(
+  ({provider, payload}) => provider.uploadFile(payload),
+
+  'EXPORT_FILE_TO_CLOUD_TASK'
+);
+
+/**
+ *  task to dispatch a function as a task
+ */
+export const ACTION_TASK = Task.fromCallback(
+  (_, cb) => cb(),
+
+  'ACTION_TASK'
+);
+
+export const DELAY_TASK = Task.fromCallback(
+  (delay, cb) => window.setTimeout(() => cb(), delay),
+
+  'DELAY_TASK'
 );

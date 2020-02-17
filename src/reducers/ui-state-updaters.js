@@ -29,6 +29,7 @@ import {
   RESOLUTIONS
 } from 'constants/default-settings';
 import {createNotification, errorNotification} from 'utils/notifications-utils';
+import {calculateExportImageSize} from 'utils/export-utils';
 
 export const DEFAULT_ACTIVE_SIDE_PANEL = 'layer';
 export const DEFAULT_MODAL = ADD_DATA_ID;
@@ -120,6 +121,14 @@ export const DEFAULT_EXPORT_IMAGE = {
   ratio: EXPORT_IMG_RATIOS.SCREEN,
   resolution: RESOLUTIONS.ONE_X,
   legend: false,
+  mapH: 0,
+  mapW: 0,
+  imageSize: {
+    zoomOffset: 0,
+    scale: 1,
+    imagW: 0,
+    imageH: 0
+  },
   // exporting state
   imageDataUri: '',
   exporting: false,
@@ -328,47 +337,19 @@ export const openDeleteModalUpdater = (
  * @returns {Object} nextState
  * @public
  */
-export const toggleLegendUpdater = state => ({
-  ...state,
-  exportImage: {
-    ...state.exportImage,
-    legend: !state.exportImage.legend
-  }
-});
+export const setExportImageSetting = (state, {payload: newSetting}) => {
+  const updated = {...state.exportImage, ...newSetting};
+  const imageSize =
+    calculateExportImageSize(updated) || state.exportImage.imageSize;
 
-/**
- * Set `exportImage.ratio`
- * @memberof uiStateUpdaters
- * @param {Object} state `uiState`
- * @param {Object} action
- * @param {string} action.payload one of `'SCREEN'`, `'FOUR_BY_THREE'` and `'SIXTEEN_BY_NINE'`
- * @returns {Object} nextState
- * @public
- */
-export const setRatioUpdater = (state, {payload}) => ({
-  ...state,
-  exportImage: {
-    ...state.exportImage,
-    ratio: payload.ratio
-  }
-});
-
-/**
- * Set `exportImage.resolution`
- * @memberof uiStateUpdaters
- * @param {Object} state `uiState`
- * @param {Object} action
- * @param {string} action.payload one of `'ONE_X'`, `'TWO_X'`
- * @returns {Object} nextState
- * @public
- */
-export const setResolutionUpdater = (state, {payload}) => ({
-  ...state,
-  exportImage: {
-    ...state.exportImage,
-    resolution: payload.resolution
-  }
-});
+  return {
+    ...state,
+    exportImage: {
+      ...updated,
+      imageSize
+    }
+  };
+};
 
 /**
  * Set `exportImage.exporting` to `true`
@@ -587,7 +568,7 @@ export const removeNotificationUpdater = (state, {payload: id}) => ({
  * @returns {Object} nextState
  * @public
  */
-export const loadFilesUpdater = (state) => ({
+export const loadFilesUpdater = state => ({
   ...state,
   loadFiles: {
     ...state.loadFiles,

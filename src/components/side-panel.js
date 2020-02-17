@@ -37,6 +37,8 @@ import {
   EXPORT_IMAGE_ID,
   EXPORT_DATA_ID,
   EXPORT_MAP_ID,
+  SAVE_MAP_ID,
+  SHARE_MAP_ID,
   PANELS
 } from 'constants/default-settings';
 
@@ -92,7 +94,8 @@ export default function SidePanelFactory(
       width: PropTypes.number.isRequired,
       datasets: PropTypes.object.isRequired,
       visStateActions: PropTypes.object.isRequired,
-      mapStyleActions: PropTypes.object.isRequired
+      mapStyleActions: PropTypes.object.isRequired,
+      availableProviders: PropTypes.object
     };
     /* component private functions */
     _onOpenOrClose = () => {
@@ -120,11 +123,15 @@ export default function SidePanelFactory(
       this.props.uiStateActions.openDeleteModal(key);
     };
 
-    _onExportImage = () => this.props.uiStateActions.toggleModal(EXPORT_IMAGE_ID);
+    _onClickExportImage = () => this.props.uiStateActions.toggleModal(EXPORT_IMAGE_ID);
 
-    _onExportData = () => this.props.uiStateActions.toggleModal(EXPORT_DATA_ID);
+    _onClickExportData = () => this.props.uiStateActions.toggleModal(EXPORT_DATA_ID);
 
-    _onExportMap = () => this.props.uiStateActions.toggleModal(EXPORT_MAP_ID);
+    _onClickExportMap = () => this.props.uiStateActions.toggleModal(EXPORT_MAP_ID);
+
+    _onClickSaveToStorage = () => this.props.uiStateActions.toggleModal(SAVE_MAP_ID);
+
+    _onClickShareMap = () => this.props.uiStateActions.toggleModal(SHARE_MAP_ID);
 
     render() {
       const {
@@ -140,7 +147,8 @@ export default function SidePanelFactory(
         interactionConfig,
         visStateActions,
         mapStyleActions,
-        uiStateActions
+        uiStateActions,
+        availableProviders = {}
       } = this.props;
 
       const {activeSidePanel} = uiState;
@@ -199,13 +207,15 @@ export default function SidePanelFactory(
             <PanelHeader
               appName={appName}
               version={version}
-              onExportImage={this._onExportImage}
-              onExportData={this._onExportData}
               visibleDropdown={uiState.visibleDropdown}
               showExportDropdown={uiStateActions.showExportDropdown}
               hideExportDropdown={uiStateActions.hideExportDropdown}
-              onExportMap={this._onExportMap}
+              onExportImage={this._onClickExportImage}
+              onExportData={this._onClickExportData}
+              onExportMap={this._onClickExportMap}
               onSaveMap={this.props.onSaveMap}
+              onSaveToStorage={availableProviders.hasStorage ? this._onClickSaveToStorage : null}
+              onShareMap={availableProviders.hasShare ? this._onClickShareMap : null}
             />
             <PanelToggle
               panels={PANELS}

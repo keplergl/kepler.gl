@@ -27,7 +27,9 @@ import MapboxGLMap from 'react-map-gl';
 import {
   StyledModalContent,
   InputLight,
-  StyledMapContainer
+  StyledMapContainer,
+  StyledModalVerticalPanel,
+  StyledModalSection
 } from 'components/common/styled-components';
 import {media} from 'styles/media-breakpoints';
 
@@ -40,46 +42,6 @@ const ErrorMsg = {
   styleError:
     'Failed to load map style, make sure it is published. For private style, paste in your access token.'
 };
-
-const InstructionPanel = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-  font-size: 12px;
-
-  .modal-section:first-child {
-    margin-top: 24px;
-    ${media.palm`
-      margin-top: 0;
-    `};
-  }
-
-  input {
-    margin-right: 8px;
-  }
-`;
-
-const StyledModalSection = styled.div`
-  margin-bottom: 32px;
-
-  .modal-section-title {
-    font-weight: 500;
-  }
-  .modal-section-subtitle {
-    color: ${props => props.theme.subtextColorLT};
-  }
-
-  input {
-    margin-top: 8px;
-  }
-
-  ${media.portable`
-    margin-bottom: 24px;
-  `};
-  ${media.palm`
-    margin-bottom: 16px;
-  `};
-`;
 
 const PreviewMap = styled.div`
   align-items: center;
@@ -215,8 +177,8 @@ function AddMapStyleModalFactory() {
       return (
         <div className="add-map-style-modal">
           <StyledModalContent>
-            <InstructionPanel>
-              <StyledModalSection className="modal-section">
+            <StyledModalVerticalPanel>
+              <StyledModalSection>
                 <div className="modal-section-title">
                   1. Publish your style at mapbox or provide access token
                 </div>
@@ -260,7 +222,7 @@ function AddMapStyleModalFactory() {
                   placeholder="e.g. pk.abcdefg.xxxxxx"
                 />
               </StyledModalSection>
-              <StyledModalSection className="modal-section">
+              <StyledModalSection>
                 <div className="modal-section-title">2. Paste style url</div>
                 <div className="modal-section-subtitle">
                   What is a
@@ -281,7 +243,7 @@ function AddMapStyleModalFactory() {
                   placeholder="e.g. mapbox://styles/uberdataviz/abcdefghijklmnopq"
                 />
               </StyledModalSection>
-              <StyledModalSection className="modal-section">
+              <StyledModalSection>
                 <div className="modal-section-title">3. Name your style</div>
                 <InputLight
                   type="text"
@@ -291,7 +253,7 @@ function AddMapStyleModalFactory() {
                   }
                 />
               </StyledModalSection>
-            </InstructionPanel>
+            </StyledModalVerticalPanel>
             <PreviewMap>
               <div
                 className={classnames('preview-title', {

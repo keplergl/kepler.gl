@@ -121,13 +121,15 @@ const insertValue = (obj, key, value) => {
  * @param {*} value
  */
 export function isObject(value) {
-  return value !== null && (typeof value === 'object' || typeof value === 'function')
+  return (
+    value !== null && (typeof value === 'object' || typeof value === 'function')
+  );
 }
 
 const setPath = ([key, ...next], value, obj) => {
   // is Object allows js object, array and function
   if (!isObject(obj)) {
-    return obj
+    return obj;
   }
 
   if (next.length === 0) {
@@ -150,3 +152,34 @@ const setPath = ([key, ...next], value, obj) => {
  */
 export const set = (path, value, obj) =>
   obj === null ? obj : setPath(path, value, obj);
+
+/**
+ * Get error information of unknown type
+ * Extracts as much human readable information as possible
+ * Ensure result is an Error object suitable for throw or promise rejection
+ *
+ * @private
+ * @param {*}  err - Unknown error
+ * @return {string} - human readable error msg
+ */
+export function getError(err) {
+  if (!err) {
+    return 'Something went wrong';
+  }
+
+  if (typeof err === 'string') {
+    return err;
+  } else if (err instanceof Error) {
+    return err.message;
+  } else if (typeof err === 'object') {
+    return err.error
+      ? getError(err.error)
+      : err.err
+      ? getError(err.err)
+      : err.message
+      ? getError(err.message)
+      : JSON.stringify(err);
+  }
+
+  return null;
+}

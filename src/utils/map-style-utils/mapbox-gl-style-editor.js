@@ -22,8 +22,6 @@ import memoize from 'lodash.memoize';
 import clondDeep from 'lodash.clonedeep';
 import {
   DEFAULT_LAYER_GROUPS,
-  RESOLUTIONS,
-  EXPORT_IMG_RESOLUTION_OPTIONS,
   DEFAULT_MAPBOX_API_URL
 } from 'constants/default-settings';
 
@@ -151,23 +149,22 @@ export function getStyleImageIcon({
   `?access_token=${mapboxApiAccessToken}&logo=false&attribution=false`;
 }
 
-export function scaleMapStyleByResolution(mapboxStyle, resolution) {
-  const labelLayerGroup = DEFAULT_LAYER_GROUPS.find(lg => lg.slug === 'label');
-  const {filter: labelLayerFilter} = labelLayerGroup;
+export function scaleMapStyleByResolution(mapboxStyle, scale) {
 
-  if (resolution !== RESOLUTIONS.ONE_X && mapboxStyle) {
-    const {scale, zoomOffset} = EXPORT_IMG_RESOLUTION_OPTIONS.find(
-      r => r.id === resolution
-    );
+  if (scale !== 1 && mapboxStyle) {
+    const labelLayerGroup = DEFAULT_LAYER_GROUPS.find(lg => lg.slug === 'label');
+    const {filter: labelLayerFilter} = labelLayerGroup;
+    const zoomOffset = Math.log2(scale);
+
     const copyStyle = clondDeep(mapboxStyle);
     (copyStyle.layers || []).forEach(d => {
       // edit minzoom and maxzoom
       if (d.maxzoom) {
-        d.maxzoom += zoomOffset;
+        d.maxzoom = Math.max(d.maxzoom + zoomOffset, 1);
       }
 
       if (d.minzoom) {
-        d.minzoom += zoomOffset;
+        d.minzoom = Math.max(d.minzoom + zoomOffset, 1);
       }
 
       // edit text size
@@ -177,9 +174,10 @@ export function scaleMapStyleByResolution(mapboxStyle, resolution) {
           d.layout['text-size'] &&
           Array.isArray(d.layout['text-size'].stops)
         ) {
+
           d.layout['text-size'].stops.forEach(stop => {
             // zoom
-            stop[0] += Math.log2(scale);
+            stop[0] = Math.max(stop[0] + zoomOffset, 1);
             // size
             stop[1] *= scale;
           });

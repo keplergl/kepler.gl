@@ -143,7 +143,7 @@ export const ModalFooter = ({
 class ModalDialog extends Component {
   static propTypes = {
     footer: PropTypes.bool,
-    close: PropTypes.func.isRequired,
+    close: PropTypes.bool,
     onConfirm: PropTypes.func,
     onCancel: PropTypes.func,
     confirmButton: PropTypes.object,
@@ -155,7 +155,7 @@ class ModalDialog extends Component {
 
   static defaultProps = {
     footer: false,
-    close: () => {},
+    close: true,
     onConfirm: () => {},
     onCancel: () => {},
     cancelButton: defaultCancelButton,
@@ -185,7 +185,7 @@ class ModalDialog extends Component {
           footer={props.footer}
         >
           {props.close && (
-            <CloseButton className="modal--close" onClick={props.close}>
+            <CloseButton className="modal--close" onClick={props.onCancel}>
               <Delete height="14px" />
             </CloseButton>
           )}
@@ -196,7 +196,7 @@ class ModalDialog extends Component {
             <ModalContent className="modal--body">{props.children}</ModalContent>
             {props.footer && (
               <ModalFooter
-                cancel={props.close}
+                cancel={props.onCancel}
                 confirm={props.onConfirm}
                 cancelButton={props.cancelButton}
                 confirmButton={props.confirmButton}

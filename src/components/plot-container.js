@@ -27,8 +27,9 @@ import {StaticMap} from 'react-map-gl';
 import debounce from 'lodash.debounce';
 import {exportImageError} from 'utils/notifications-utils';
 import MapContainerFactory from './map-container';
-import {calculateExportImageSize, convertToPng} from 'utils/export-image-utils';
+import {convertToPng} from 'utils/export-utils';
 import {scaleMapStyleByResolution} from 'utils/map-style-utils/mapbox-gl-style-editor';
+import {getScaleFromImageSize} from 'utils/export-utils';
 
 const propTypes = {
   width: PropTypes.number.isRequired,
@@ -46,7 +47,7 @@ const StyledPlotContainer = styled.div`
   .mapboxgl-ctrl-bottom-right {
     display: none;
   }
-  
+
   position: absolute;
 `;
 
@@ -84,17 +85,32 @@ export default function PlotContainerFactory(MapContainer) {
     plottingAreaRef = createRef();
 
     mapStyleSelector = props => props.mapFields.mapStyle;
-    resolutionSelector = props => props.exportImageSetting.resolution;
+    mapScaleSelector = props => {
+      const {imageSize} = props.exportImageSetting;
+      const {mapState} = props.mapFields;
+      if (imageSize.scale) {
+        return imageSize.scale;
+      }
+      const scale = getScaleFromImageSize(
+        imageSize.imageW,
+        imageSize.imageH,
+        mapState.width,
+        mapState.height
+      );
+
+      return scale > 0 ? scale : 1;
+    }
+
     scaledMapStyleSelector = createSelector(
       this.mapStyleSelector,
-      this.resolutionSelector,
-      (mapStyle, resolution) => ({
+      this.mapScaleSelector,
+      (mapStyle, scale) => ({
         ...mapStyle,
         bottomMapStyle: scaleMapStyleByResolution(
           mapStyle.bottomMapStyle,
-          resolution
+          scale
         ),
-        topMapStyle: scaleMapStyleByResolution(mapStyle.topMapStyle, resolution)
+        topMapStyle: scaleMapStyleByResolution(mapStyle.topMapStyle, scale)
       })
     );
 
@@ -109,26 +125,23 @@ export default function PlotContainerFactory(MapContainer) {
         this.props.startExportingImage();
         const filter = node => node.className !== 'mapboxgl-control-container';
 
-        convertToPng(this.plottingAreaRef.current, {filter}).then(dataUri => {
-          this.props.setExportImageDataUri(dataUri);
-        })
-        .catch(err => {
-          this.props.setExportImageError(err);
-          this.props.addNotification(exportImageError({err}));
-        });
+        convertToPng(this.plottingAreaRef.current, {filter})
+          .then(this.props.setExportImageDataUri)
+          .catch(err => {
+            this.props.setExportImageError(err);
+            this.props.addNotification(exportImageError({err}));
+          });
       }
     };
 
     render() {
-      const {width, height, exportImageSetting, mapFields} = this.props;
-      const {ratio, resolution, legend} = exportImageSetting;
-      const exportImageSize = calculateExportImageSize({
-        width,
-        height,
-        ratio,
-        resolution
-      });
-
+      const {exportImageSetting, mapFields} = this.props;
+      const {imageSize = {}, legend} = exportImageSetting;
+      const size = {
+        width: imageSize.imageW || 1,
+        height: imageSize.imageH || 1
+      };
+      const scale = this.mapScaleSelector(this.props);
       const mapProps = {
         ...mapFields,
         mapStyle: this.scaledMapStyleSelector(this.props),
@@ -136,8 +149,8 @@ export default function PlotContainerFactory(MapContainer) {
         // override viewport based on export settings
         mapState: {
           ...mapFields.mapState,
-          ...exportImageSize,
-          zoom: mapFields.mapState.zoom + exportImageSize.zoomOffset
+          ...size,
+          zoom: mapFields.mapState.zoom + (Math.log2(scale) || 0)
         },
         mapControls: {
           // override map legend visibility
@@ -157,8 +170,8 @@ export default function PlotContainerFactory(MapContainer) {
           <div
             ref={this.plottingAreaRef}
             style={{
-              width: exportImageSize.width,
-              height: exportImageSize.height
+              width: `${size.width}px` ,
+              height: `${size.height}px`
             }}
           >
             <MapContainer

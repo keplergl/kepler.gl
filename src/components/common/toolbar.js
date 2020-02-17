@@ -28,13 +28,13 @@ const Toolbar = styled.div`
   font-size: 11px;
   padding: 16px 0;
   transition: ${props => props.theme.transitionSlow};
-  margin-top: ${props => props.show ? '6px' : '20px'};
-  opacity: ${props => props.show ? 1 : 0};
+  margin-top: ${props => (props.show ? '6px' : '20px')};
+  opacity: ${props => (props.show ? 1 : 0)};
   transform: translateX(calc(-50% + 20px));
-  pointer-events:  ${props => props.show ? 'all' : 'none'};
+  pointer-events: ${props => (props.show ? 'all' : 'none')};
   z-index: 1000;
 
-  .save-export-dropdown__inner {
+  .panel-header-dropdown__inner {
     box-shadow: none;
     background-color: transparent;
     display: flex;
@@ -46,7 +46,7 @@ const Toolbar = styled.div`
     padding: 0 22px;
     display: flex;
     flex-direction: column;
-    
+
     .toolbar-item__title {
       white-space: nowrap;
       margin-top: 4px;

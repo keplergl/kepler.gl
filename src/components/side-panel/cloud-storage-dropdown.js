@@ -18,40 +18,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {handleActions} from 'redux-actions';
-import {getCloudProviders} from '../cloud-providers';
-import {CLOUD_LOGIN_SUCCESS, LOAD_REMOTE_RESOURCE_ERROR, PUSHING_FILE} from '../actions';
+import React from 'react';
+import {PanelHeaderDropdownFactory, Icons} from 'kepler.gl/components';
 
-const readAuthTokens = () => getCloudProviders()
-  .reduce((tokens, cloudProvider) => ({
-    ...tokens,
-    [cloudProvider.name]: cloudProvider.getAccessToken()
-  }), {});
+const CloudStorageItems = [
+  {
+    label: 'Save',
+    icon: Icons.Save2,
+    key: 'data',
+    onClick: props => props.onSaveMap
+  },
+  {
+    label: 'Settings',
+    icon: Icons.Gear,
+    key: 'settings',
+    onClick: props => props.onExportData
+  }
+];
 
-const sharingInitialState = {
-  isLoading: false,
-  status: null,
-  info: null,
-  tokens: readAuthTokens()
+const PanelHeaderDropdown = PanelHeaderDropdownFactory();
+
+const CloudStorageDropdown = ({show, onClose}) => {
+  return (
+    <PanelHeaderDropdown
+      items={CloudStorageItems}
+      show={show}
+      onClose={onClose}
+      id="cloud-storage"
+    />
+  );
 };
 
-// file upload reducer
-export const sharingReducer = handleActions({
-  [LOAD_REMOTE_RESOURCE_ERROR]: (state, action) => ({
-    ...state,
-    error: action.error,
-    currentOption: {dataUrl: action.url},
-    isMapLoading: false
-  }),
-  [PUSHING_FILE]: (state, action) => ({
-    ...state,
-    isLoading: action.isLoading,
-    info: action.metadata
-  }),
-  [CLOUD_LOGIN_SUCCESS]: state => ({
-    ...state,
-    tokens: readAuthTokens()
-  })
-}, sharingInitialState);
-
-export default sharingReducer;
+export default CloudStorageDropdown;

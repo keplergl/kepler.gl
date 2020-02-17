@@ -18,31 +18,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
-import {Modal} from 'kepler.gl/components';
-import CloudStorage from './cloud-storage';
+import {handleActions} from 'redux-actions';
+import * as providerStateUpdaters from './provider-state-updaters';
+import {ActionTypes} from 'actions/provider-actions';
 
-const ExportUrlModal = ({
-  sharing,
-  isOpen,
-  onClose,
-  onExport,
-  onCloudLoginSuccess,
-  parentSelector
-}) => (
-  <Modal
-    isOpen={isOpen}
-    close={onClose}
-    title={'Save / Share your map'}
-    parentSelector={parentSelector}
-  >
-    <CloudStorage
-      isLoading={sharing.isLoading}
-      info={sharing.info}
-      onExport={onExport}
-      onCloudLoginSuccess={onCloudLoginSuccess}
-    />
-  </Modal>
-);
+/**
+ * Important: Do not rename `actionHandler` or the assignment pattern of property value.
+ * It is used to generate documentation
+ */
+const actionHandler = {
+  [ActionTypes.EXPORT_FILE_TO_CLOUD]: providerStateUpdaters.exportFileToCloudUpdater,
+  [ActionTypes.EXPORT_FILE_SUCCESS]: providerStateUpdaters.exportFileSuccessUpdater,
+  [ActionTypes.EXPORT_FILE_ERROR]: providerStateUpdaters.exportFileErrorUpdater,
+  [ActionTypes.RESET_PROVIDER_STATUS]: providerStateUpdaters.resetProviderStatusUpdater,
+  [ActionTypes.SET_CLOUD_PROVIDER]: providerStateUpdaters.setCloudProviderUpdater,
+  [ActionTypes.SAVE_TO_CLOUD_SUCCESS]: providerStateUpdaters.saveToCloudSuccessUpdater
+}
 
-export default ExportUrlModal;
+// construct provider-state reducer
+export const providerStateReducerFactory = (initialState = {}) =>
+  handleActions(actionHandler, {
+    ...providerStateUpdaters.INITIAL_PROVIDER_STATE,
+    ...initialState,
+    initialState
+  });
+
+export default providerStateReducerFactory();

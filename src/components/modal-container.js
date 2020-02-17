@@ -22,12 +22,12 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {css} from 'styled-components';
 import {findDOMNode} from 'react-dom';
-import {Blob} from 'global/window';
 
 import ModalDialogFactory from './modals/modal-dialog';
-import {formatCsv} from 'processors/data-processor';
 import KeplerGlSchema from 'schemas';
-import {downloadFile, dataURItoBlob} from 'utils/export-image-utils';
+import {exportJson, exportHtml, exportData, exportImage, exportMap} from 'utils/export-utils';
+import {isValidMapInfo} from 'utils/map-info-utils';
+
 // modals
 import DeleteDatasetModalFactory from './modals/delete-data-modal';
 import DataTableModalFactory from './modals/data-table-modal';
@@ -36,22 +36,23 @@ import ExportImageModalFactory from './modals/export-image-modal';
 import ExportDataModalFactory from './modals/export-data-modal';
 import ExportMapModalFactory from './modals/export-map-modal/export-map-modal';
 import AddMapStyleModalFactory from './modals/add-map-style-modal';
+import SaveMapModalFactory from './modals/save-map-modal';
+import ShareMapModalFactory from './modals/share-map-modal';
 
 // Breakpoints
 import {media} from 'styles/media-breakpoints';
 
 // Template
-import {exportMapToHTML} from 'templates/export-map-html';
 import {
   ADD_DATA_ID,
   DATA_TABLE_ID,
-  DEFAULT_EXPORT_IMAGE_NAME,
   DELETE_DATA_ID,
   EXPORT_DATA_ID,
-  EXPORT_DATA_TYPE,
   EXPORT_IMAGE_ID,
   EXPORT_MAP_ID,
-  ADD_MAP_STYLE_ID
+  ADD_MAP_STYLE_ID,
+  SAVE_MAP_ID,
+  SHARE_MAP_ID
 } from 'constants/default-settings';
 import {EXPORT_MAP_FORMATS} from '../constants/default-settings';
 
@@ -78,6 +79,10 @@ const LoadDataModalStyle = css`
   top: 60px;
 `;
 
+const DefaultStyle = css`
+  max-width: 960px;
+`
+
 ModalContainerFactory.deps = [
   DeleteDatasetModalFactory,
   DataTableModalFactory,
@@ -86,7 +91,9 @@ ModalContainerFactory.deps = [
   ExportDataModalFactory,
   ExportMapModalFactory,
   AddMapStyleModalFactory,
-  ModalDialogFactory
+  ModalDialogFactory,
+  SaveMapModalFactory,
+  ShareMapModalFactory
 ];
 
 export default function ModalContainerFactory(
@@ -97,7 +104,9 @@ export default function ModalContainerFactory(
   ExportDataModal,
   ExportMapModal,
   AddMapStyleModal,
-  ModalDialog
+  ModalDialog,
+  SaveMapModal,
+  ShareMapModal
 ) {
   class ModalWrapper extends Component {
     static propTypes = {
@@ -112,7 +121,9 @@ export default function ModalContainerFactory(
       visState: PropTypes.object.isRequired,
       visStateActions: PropTypes.object.isRequired,
       uiStateActions: PropTypes.object.isRequired,
-      mapStyleActions: PropTypes.object.isRequired
+      mapStyleActions: PropTypes.object.isRequired,
+      onSaveToStorage: PropTypes.func,
+      cloudProviders: PropTypes.arrayOf(PropTypes.object)
     };
 
     _closeModal = () => {
@@ -134,101 +145,54 @@ export default function ModalContainerFactory(
     };
 
     _onExportImage = () => {
-      const {exporting, imageDataUri} = this.props.uiState.exportImage;
-      if (!exporting && imageDataUri) {
-        const file = dataURItoBlob(imageDataUri);
-        downloadFile(file, DEFAULT_EXPORT_IMAGE_NAME);
-      }
-      this.props.uiStateActions.cleanupExportImage();
-      this._closeModal();
-    };
-
-    _downloadFile(data, type, filename) {
-      const fileBlob = new Blob([data], {type});
-      downloadFile(fileBlob, filename);
-    }
-
-    _onExportData = () => {
-      const {visState, uiState} = this.props;
-      const {datasets} = visState;
-      const {selectedDataset, dataType, filtered} = uiState.exportData;
-      // get the selected data
-      const filename = 'kepler-gl';
-      const selectedDatasets = datasets[selectedDataset] ?
-        [datasets[selectedDataset]] : Object.values(datasets);
-
-      if (!selectedDatasets.length) {
-        // error: selected dataset not found.
+      if (!this.props.uiState.exportImage.exporting) {
+        exportImage(this.props, this.props.uiState.exportImage);
+        this.props.uiStateActions.cleanupExportImage();
         this._closeModal();
       }
-
-      selectedDatasets.forEach(selectedData => {
-        const {allData, fields, label, filteredIdxCPU = []} = selectedData;
-        const exportData = filtered ? filteredIdxCPU.map(i => allData[i]) : allData;
-        // start to export data according to selected data type
-        switch (dataType) {
-          case EXPORT_DATA_TYPE.CSV: {
-            const type = 'text/csv';
-            const csv = formatCsv(exportData, fields);
-            this._downloadFile(csv, type, `${filename}_${label}.csv`);
-            break;
-          }
-          // TODO: support more file types.
-          default:
-            break;
-        }
-      });
-
-      this._closeModal();
     };
 
-    _onExportJSONMap = () => {
-      const {uiState} = this.props;
-      const {hasData} = uiState.exportMap[EXPORT_MAP_FORMATS.JSON];
-
-      // we pass all props because we avoid to create new variables
-      const data = hasData ? KeplerGlSchema.save(this.props)
-        : KeplerGlSchema.getConfigToSave(this.props);
-
-      this._downloadFile(
-        JSON.stringify(data, null, 2),
-        'application/json',
-        'keplergl.json'
-      );
-
-      this._closeModal();
-    };
-
-    _onExportHTMLMap = () => {
-      const {uiState} = this.props;
-      const {userMapboxToken, exportMapboxAccessToken, mode} = uiState.exportMap[EXPORT_MAP_FORMATS.HTML];
-
-      const data = {
-        ...KeplerGlSchema.save(this.props),
-        mapboxApiAccessToken: (userMapboxToken || '') !== '' ? userMapboxToken : exportMapboxAccessToken,
-        mode
-      };
-
-      this._downloadFile(
-        exportMapToHTML(data),
-        'text/html',
-        'kepler.gl.html'
-      );
-
+    _onExportData = () => {
+      exportData(this.props, this.props.uiState.exportData);
       this._closeModal();
     };
 
     _onExportMap = () => {
       const {uiState} = this.props;
       const {format} = uiState.exportMap;
-
-      const downloader = {
-        [EXPORT_MAP_FORMATS.HTML]: this._onExportHTMLMap,
-        [EXPORT_MAP_FORMATS.JSON]: this._onExportJSONMap
-      }[format];
-
-      downloader && downloader();
+      (format === EXPORT_MAP_FORMATS.HTML ? exportHtml : exportJson)(
+        this.props,
+        this.props.uiState.exportMap[format] || {}
+      );
+      this._closeModal();
     };
+
+    _exportFileToCloud = ({provider, isPublic, closeModal}) => {
+      const toSave = exportMap(this.props);
+      this.props.providerActions.exportFileToCloud({
+        mapData: toSave,
+        provider,
+        isPublic,
+        closeModal,
+        onSuccess: this.props.onExportToCloudSuccess,
+        onError: this.props.onExportToCloudError
+      });
+    }
+
+    _onSaveMap = () => {
+      const {currentProvider} = this.props.providerState;
+      const provider = this.props.cloudProviders.find(p => p.name === currentProvider);
+      this._exportFileToCloud({provider, isPublic: false, closeModal: true});
+    }
+
+    _onShareMapUrl = (provider) => {
+      this._exportFileToCloud({provider, isPublic: true, closeModal: false});
+    }
+
+    _onCloseSaveMap = () => {
+      this.props.providerActions.resetProviderStatus();
+      this._closeModal();
+    }
 
     /* eslint-disable complexity */
     render() {
@@ -240,7 +204,10 @@ export default function ModalContainerFactory(
         uiState,
         visState,
         rootNode,
-        visStateActions
+        visStateActions,
+        uiStateActions,
+        cloudProviders,
+        providerState
       } = this.props;
       const {currentModal, datasetKeyToRemove} = uiState;
       const {datasets, layers, editingDataset} = visState;
@@ -285,7 +252,6 @@ export default function ModalContainerFactory(
                   layers={layers}
                 />
               );
-
               modalProps = {
                 title: 'Delete Dataset',
                 cssStyle: DeleteDatasetModalStyled,
@@ -318,16 +284,13 @@ export default function ModalContainerFactory(
           case EXPORT_IMAGE_ID:
             template = (
               <ExportImageModal
-                {...uiState.exportImage}
-                width={containerW}
-                height={containerH}
-                onChangeRatio={this.props.uiStateActions.setRatio}
-                onChangeResolution={this.props.uiStateActions.setResolution}
-                onToggleLegend={this.props.uiStateActions.toggleLegend}
+                exportImage={uiState.exportImage}
+                mapW={containerW}
+                mapH={containerH}
+                onUpdateSetting={uiStateActions.setExportImageSetting}
               />
             );
             modalProps = {
-              close: false,
               title: 'Export Image',
               footer: true,
               onCancel: this._closeModal,
@@ -346,13 +309,12 @@ export default function ModalContainerFactory(
                 datasets={datasets}
                 applyCPUFilter={this.props.visStateActions.applyCPUFilter}
                 onClose={this._closeModal}
-                onChangeExportDataType={this.props.uiStateActions.setExportDataType}
-                onChangeExportSelectedDataset={this.props.uiStateActions.setExportSelectedDataset}
-                onChangeExportFiltered={this.props.uiStateActions.setExportFiltered}
+                onChangeExportDataType={uiStateActions.setExportDataType}
+                onChangeExportSelectedDataset={uiStateActions.setExportSelectedDataset}
+                onChangeExportFiltered={uiStateActions.setExportFiltered}
               />
             );
             modalProps = {
-              close: false,
               title: 'Export Data',
               footer: true,
               onCancel: this._closeModal,
@@ -365,19 +327,18 @@ export default function ModalContainerFactory(
             break;
           case EXPORT_MAP_ID:
             const keplerGlConfig = KeplerGlSchema.getConfigToSave(
-              { mapStyle, visState, mapState, uiState }
+              {mapStyle, visState, mapState, uiState}
             );
             template = (
               <ExportMapModal
                 config={keplerGlConfig}
                 options={uiState.exportMap}
-                onChangeExportMapFormat={this.props.uiStateActions.setExportMapFormat}
-                onEditUserMapboxAccessToken={this.props.uiStateActions.setUserMapboxAccessToken}
-                onChangeExportMapHTMLMode={this.props.uiStateActions.setExportHTMLMapMode}
+                onChangeExportMapFormat={uiStateActions.setExportMapFormat}
+                onEditUserMapboxAccessToken={uiStateActions.setUserMapboxAccessToken}
+                onChangeExportMapHTMLMode={uiStateActions.setExportHTMLMapMode}
               />
             );
             modalProps = {
-              close: false,
               title: 'Export Map',
               footer: true,
               onCancel: this._closeModal,
@@ -400,7 +361,6 @@ export default function ModalContainerFactory(
               />
             );
             modalProps = {
-              close: false,
               title: 'Add Custom Mapbox Style',
               footer: true,
               onCancel: this._closeModal,
@@ -412,7 +372,47 @@ export default function ModalContainerFactory(
               }
             };
             break;
+          case SAVE_MAP_ID:
+            template = (
+              <SaveMapModal
+                {...providerState}
+                exportImage={uiState.exportImage}
+                mapInfo={visState.mapInfo}
+                onSetMapInfo={visStateActions.setMapInfo}
+                onUpdateSetting={uiStateActions.setExportImageSetting}
+                cloudProviders={cloudProviders.filter(p => p.hasPrivateStorage())}
+                onSetCloudProvider={this.props.providerActions.setCloudProvider}
+              />
+            );
+            modalProps = {
+              title: 'Save Map',
+              footer: true,
+              onCancel: this._closeModal,
+              onConfirm: this._onSaveMap,
+              confirmButton: {
+                large: true,
+                disabled: uiState.exportImage.exporting ||
+                  !isValidMapInfo(visState.mapInfo) ||
+                  !providerState.currentProvider,
+                children: 'Save'
+              }
+            };
+            break;
 
+          case SHARE_MAP_ID:
+            template = (
+              <ShareMapModal
+                {...providerState}
+                cloudProviders={cloudProviders.filter(p => p.hasSharingUrl())}
+                onExport={this._onShareMapUrl}
+                onSetCloudProvider={this.props.providerActions.setCloudProvider}
+              />
+            );
+            modalProps = {
+              title: 'Share URL',
+              onCancel: this._onCloseSaveMap
+            };
+            break;
           default:
             break;
         }
@@ -420,10 +420,11 @@ export default function ModalContainerFactory(
 
       return this.props.rootNode ? (
         <ModalDialog
-          {...modalProps}
           parentSelector={() => findDOMNode(rootNode)}
           isOpen={Boolean(currentModal)}
-          close={this._closeModal}
+          onCancel={this._closeModal}
+          {...modalProps}
+          cssStyle={DefaultStyle.concat(modalProps.cssStyle || '')}
         >
           {template}
         </ModalDialog>

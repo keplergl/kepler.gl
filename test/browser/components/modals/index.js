@@ -19,3 +19,5 @@
 // THE SOFTWARE.
 
 import './data-table-modal-test';
+import './save-map-modal-test';
+import './share-map-modal-test';

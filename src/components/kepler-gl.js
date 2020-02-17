@@ -29,6 +29,7 @@ import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
 import * as MapStyleActions from 'actions/map-style-actions';
 import * as UIStateActions from 'actions/ui-state-actions';
+import * as ProviderActions from 'actions/provider-actions';
 
 import {
   EXPORT_IMAGE_ID,
@@ -36,7 +37,8 @@ import {
   KEPLER_GL_NAME,
   KEPLER_GL_VERSION,
   THEME,
-  DEFAULT_MAPBOX_API_URL
+  DEFAULT_MAPBOX_API_URL,
+  SAVE_MAP_ID
 } from 'constants/default-settings';
 import {MISSING_MAPBOX_TOKEN} from 'constants/user-feedbacks';
 
@@ -95,7 +97,7 @@ KeplerGlFactory.deps = [
 function KeplerGlFactory(
   BottomWidget,
   MapContainer,
-  ModalWrapper,
+  ModalContainer,
   SidePanel,
   PlotContainer,
   NotificationPanel
@@ -110,7 +112,8 @@ function KeplerGlFactory(
       appName: KEPLER_GL_NAME,
       version: KEPLER_GL_VERSION,
       sidePanelWidth: DIMENSIONS.sidePanel.width,
-      theme: {}
+      theme: {},
+      cloudProviders: []
     };
 
     componentDidMount() {
@@ -134,7 +137,7 @@ function KeplerGlFactory(
 
     root = createRef();
 
-    /* selector */
+    /* selectors */
     themeSelector = props => props.theme;
     availableThemeSelector = createSelector(
       this.themeSelector,
@@ -149,6 +152,16 @@ function KeplerGlFactory(
           : theme
     );
 
+    availableProviders = createSelector(
+      props => props.cloudProviders,
+      providers => Array.isArray(providers) && providers.length ?
+      ({
+        hasStorage: providers.some(p => p.hasPrivateStorage()),
+        hasShare: providers.some(p => p.hasSharingUrl())
+      }) : {}
+    );
+
+    /* private methods */
     _validateMapboxToken() {
       const {mapboxApiAccessToken} = this.props;
       if (!validateToken(mapboxApiAccessToken)) {
@@ -213,8 +226,11 @@ function KeplerGlFactory(
         visStateActions,
         mapStateActions,
         mapStyleActions,
-        uiStateActions
+        uiStateActions,
+        providerActions
       } = this.props;
+
+      const availableProviders = this.availableProviders(this.props);
 
       const {
         filters,
@@ -249,11 +265,13 @@ function KeplerGlFactory(
         mapStyle,
         layerBlending,
         onSaveMap,
+        // onSaveToStorage,
         uiState,
         mapStyleActions,
         visStateActions,
         uiStateActions,
-        width: this.props.sidePanelWidth
+        width: this.props.sidePanelWidth,
+        availableProviders
       };
 
       const mapFields = {
@@ -304,7 +322,8 @@ function KeplerGlFactory(
             />
           ));
 
-      const isExporting = uiState.currentModal === EXPORT_IMAGE_ID;
+      const isExporting =
+        uiState.currentModal === EXPORT_IMAGE_ID || uiState.currentModal === SAVE_MAP_ID;
       const theme = this.availableThemeSelector(this.props);
 
       return (
@@ -347,7 +366,7 @@ function KeplerGlFactory(
               }
               containerW={containerW}
             />
-            <ModalWrapper
+            <ModalContainer
               mapStyle={mapStyle}
               visState={visState}
               mapState={mapState}
@@ -357,9 +376,14 @@ function KeplerGlFactory(
               visStateActions={visStateActions}
               uiStateActions={uiStateActions}
               mapStyleActions={mapStyleActions}
+              providerActions={providerActions}
               rootNode={this.root.current}
               containerW={containerW}
               containerH={mapState.height}
+              providerState={this.props.providerState}
+              cloudProviders={this.props.cloudProviders}
+              onExportToCloudSuccess={this.props.onExportToCloudSuccess}
+              onExportToCloudError={this.props.onExportToCloudError}
             />
           </GlobalStyle>
         </ThemeProvider>
@@ -378,7 +402,8 @@ function mapStateToProps(state = {}, props) {
     visState: state.visState,
     mapStyle: state.mapStyle,
     mapState: state.mapState,
-    uiState: state.uiState
+    uiState: state.uiState,
+    providerState: state.providerState
   };
 }
 
@@ -390,11 +415,12 @@ function makeGetActionCreators() {
   return createSelector(
     [getDispatch, getUserActions],
     (dispatch, userActions) => {
-      const [visStateActions, mapStateActions, mapStyleActions, uiStateActions] = [
+      const [visStateActions, mapStateActions, mapStyleActions, uiStateActions, providerActions] = [
         VisStateActions,
         MapStateActions,
         MapStyleActions,
-        UIStateActions
+        UIStateActions,
+        ProviderActions
       ].map(actions =>
         bindActionCreators(mergeActions(actions, userActions), dispatch)
       );
@@ -404,6 +430,7 @@ function makeGetActionCreators() {
         mapStateActions,
         mapStyleActions,
         uiStateActions,
+        providerActions,
         dispatch
       };
     }

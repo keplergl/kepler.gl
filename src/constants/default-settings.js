@@ -86,6 +86,20 @@ export const ADD_MAP_STYLE_ID = 'addMapStyle';
  * @public
  */
 export const EXPORT_MAP_ID = 'exportMap';
+/**
+ * Modal id: save map modal
+ * @constant
+ * @type {string}
+ * @public
+ */
+export const SAVE_MAP_ID = 'saveMap';
+/**
+ * Modal id: share map url modal
+ * @constant
+ * @type {string}
+ * @public
+ */
+export const SHARE_MAP_ID = 'shareMap';
 
 import {
   Layers,
@@ -575,7 +589,8 @@ export const RESOLUTIONS = keyMirror({
 export const EXPORT_IMG_RATIOS = keyMirror({
   SCREEN: null,
   FOUR_BY_THREE: null,
-  SIXTEEN_BY_NINE: null
+  SIXTEEN_BY_NINE: null,
+  CUSTOM: null
 });
 
 export const EXPORT_IMG_RATIO_OPTIONS = [
@@ -583,6 +598,12 @@ export const EXPORT_IMG_RATIO_OPTIONS = [
     id: EXPORT_IMG_RATIOS.SCREEN,
     label: 'Original Screen',
     getSize: (screenW, screenH) => ({width: screenW, height: screenH})
+  },
+  {
+    id: EXPORT_IMG_RATIOS.CUSTOM,
+    hidden: true,
+    label: 'Custom',
+    getSize: (mapW, mapH) => ({width: mapW, height: mapH})
   },
   {
     id: EXPORT_IMG_RATIOS.FOUR_BY_THREE,
@@ -608,7 +629,6 @@ export const EXPORT_IMG_RESOLUTION_OPTIONS = [
     label: '1x',
     available: true,
     scale: 1,
-    zoomOffset: Math.log2(1),
     getSize: (screenW, screenH) => ({
       width: screenW,
       height: screenH
@@ -619,15 +639,12 @@ export const EXPORT_IMG_RESOLUTION_OPTIONS = [
     label: '2x',
     available: true,
     scale: 2,
-    zoomOffset: Math.log2(2),
     getSize: (screenW, screenH) => ({
       width: screenW * 2,
       height: screenH * 2
     })
   }
 ];
-
-export const DEFAULT_EXPORT_IMAGE_NAME = 'kepler-gl.png';
 
 export const EXPORT_DATA_TYPE = keyMirror({
   CSV: null
@@ -711,7 +728,8 @@ export const DEFAULT_NOTIFICATION_TOPICS = keyMirror({
 export const TOKEN_MISUSE_WARNING = '* If you do not provide your own token, the map may fail to display at any time when we replace ours to avoid misuse. ';
 export const DISCLAIMER = 'You can change the Mapbox token later using the following instructions: ';
 export const MAP_CONFIG_DESCRIPTION = 'Map config will be included in the Json file. If you are using kepler.gl in your own app. You can copy this config and pass it to ';
-
+export const SHARE_DISCLAIMER = 'kepler.gl will save your map data to your personal cloud storage, only people with the URL can access your map and data. ' +
+  'You can edit/delete the data file in your cloud account anytime.';
 // Animation
 export const BASE_SPEED = 600;
 export const DEFAULT_TIME_FORMAT = 'MM/DD/YY HH:mm:ssa';
@@ -738,3 +756,12 @@ export const EDITOR_AVAILABLE_LAYERS = [
  * Max number of filter value buffers that deck.gl provides
  */
 export const MAX_GPU_FILTERS = 4;
+export const MAP_THUMBNAIL_DIMENSION = {
+  width: 300,
+  height: 200
+};
+
+export const MAP_INFO_CHARACTER = {
+  title: 100,
+  description: 100
+};

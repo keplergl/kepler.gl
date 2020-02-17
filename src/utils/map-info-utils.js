@@ -18,32 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
-import styled from 'styled-components';
+import {MAP_INFO_CHARACTER} from 'constants/default-settings';
 
-const StyledDiv = styled.div.attrs({
-  className: 'toolbar-item'
-})`
-  color: ${props => (props.active ? 'white' : props.theme.textColor)};
-`;
-
-const ToolbarItem = React.memo(props => (
-  <StyledDiv
-    active={props.active}
-    onClick={e => {
-      e.stopPropagation();
-      e.preventDefault();
-      if (typeof props.onClose === 'function') {
-        props.onClose();
-      }
-      props.onClick(e);
-    }}
-  >
-    <props.icon/>
-    <div className="toolbar-item__title">{props.label}</div>
-  </StyledDiv>
-));
-
-ToolbarItem.displayName = 'ToolbarItem';
-
-export default ToolbarItem;
+export function isValidMapInfo(mapInfo) {
+  return (
+    mapInfo.title.length &&
+    mapInfo.title.length <= MAP_INFO_CHARACTER.title &&
+    (!mapInfo.description.length ||
+      mapInfo.description.length <= MAP_INFO_CHARACTER.description)
+  );
+}
