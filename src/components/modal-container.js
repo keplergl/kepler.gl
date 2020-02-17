@@ -444,7 +444,7 @@ export default function ModalContainerFactory(
               title: 'Save Map',
               footer: true,
               onCancel: this._closeModal,
-              onConfirm: this._onSaveMap,
+              onConfirm: () => this._onSaveMap(false),
               confirmButton: {
                 large: true,
                 disabled:

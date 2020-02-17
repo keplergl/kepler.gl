@@ -371,7 +371,7 @@ export const requestMapStylesUpdater = (state, {payload: mapStyles}) => {
  * @returns {Object} nextState or `react-pam` tasks to load map style object
  */
 export const receiveMapConfigUpdater = (state, {payload: {config = {}}}) => {
-  const {mapStyle} = config;
+  const {mapStyle} = config || {};
 
   if (!mapStyle) {
     return state;

@@ -168,7 +168,7 @@ export const receiveMapConfigUpdater = (
   state,
   {payload: {config = {}, options = {}, bounds = null}}
 ) => {
-  const {mapState} = config;
+  const {mapState} = config || {};
 
   // merged received mapstate with previous state
   let mergedState = {...state, ...mapState};

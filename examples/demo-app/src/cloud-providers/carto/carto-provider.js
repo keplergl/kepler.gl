@@ -23,6 +23,7 @@ import Console from 'global/console';
 import CartoIcon from './carto-icon';
 import {formatCsv} from 'processors/data-processor';
 const NAME = 'carto';
+const DISPLAY_NAME = 'CARTO';
 const NAMESPACE = 'keplergl';
 const PRIVATE_STORAGE_ENABLED = true;
 const SHARING_ENABLED = true;
@@ -30,8 +31,10 @@ const SHARING_ENABLED = true;
 export default class CartoProvider {
   constructor(clientId) {
     this.name = NAME;
+    this.displayName = DISPLAY_NAME;
     this.clientId = clientId;
     this.icon = CartoIcon;
+    this.thumbnail = {width: 300, height: 200};
     this.currentMap = null;
 
     // Initialize CARTO API
@@ -222,12 +225,7 @@ export default class CartoProvider {
       }
 
       if (!visualization) {
-        throw new Error({
-          target: {
-            status: 404,
-            responseText: `Can't find map with ID: ${mapId}`
-          }
-        });
+        throw new Error(`Can't find map with ID: ${mapId}`);
       }
 
       // These are the options required for the action. For now, all datasets that come from CARTO are CSV
@@ -254,7 +252,7 @@ export default class CartoProvider {
       return {
         map: {
           datasets,
-          config: visualization.vis
+          config: visualization.vis.config
         },
         format: 'csv'
       };
@@ -365,7 +363,7 @@ export default class CartoProvider {
 
     // Use 'CARTO' as error code in order to show provider in notifications
     if (throwException) {
-      throw new Error({target: {status: 'CARTO', responseText: message}});
+      throw new Error(message);
     }
   }
 
