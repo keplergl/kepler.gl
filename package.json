@@ -105,6 +105,7 @@
     "lodash.throttle": "^4.1.1",
     "lodash.uniq": "^4.0.1",
     "lodash.uniqby": "^4.7.0",
+    "lodash.xor": "^4.5.0",
     "luma.gl": "^7.3.2",
     "mini-svg-data-uri": "^1.0.3",
     "moment": "^2.10.6",

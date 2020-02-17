@@ -1051,7 +1051,7 @@ export default class Layer {
     return {
       id: this.id,
       idx,
-      coordinateSystem: COORDINATE_SYSTEM.LNGLAT_DEPRECATED,
+      coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
       pickable: true,
       wrapLongitude: true,
       parameters: {depthTest: Boolean(mapState.dragRotate || this.config.visConfig.enable3d)},
@@ -1069,7 +1069,7 @@ export default class Layer {
       id: `${this.id}-hovered`,
       pickable: false,
       wrapLongitude: true,
-      coordinateSystem: COORDINATE_SYSTEM.LNGLAT_DEPRECATED
+      coordinateSystem: COORDINATE_SYSTEM.LNGLAT
     }
   }
 }

@@ -1996,7 +1996,7 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
       }
     ]
   };
-  console.log('cmpDataset')
+
   cmpDataset(t, expectedDataset, stateWithFilterName.datasets.smoothie);
 
   // set filter value
@@ -3839,28 +3839,58 @@ test('#visStateReducer -> POLYGON: Add/Remove new polygon feature', t => {
 /* eslint-disable max-statements */
 test('#visStateReducer -> POLYGON: Create polygon filter', t => {
   const state = {
-    ...INITIAL_VIS_STATE,
-    datasets: {
-      puppy: {
-        data: mockPolygonData.data,
-        allData: mockPolygonData.data,
-        fields: mockPolygonData.fields
-      },
-      cat: {
-        data: mockPolygonData.data,
-        allData: mockPolygonData.data,
-        fields: mockPolygonData.fields
-      }
-    }
+    ...INITIAL_VIS_STATE
   };
 
-  let newReducer = reducer(state, VisStateActions.addLayer());
+  const datasets = [
+    {
+      data: {
+        fields: [
+          {
+            name: 'start_point_lat',
+            format: '',
+            tableFieldIndex: 1,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          },
+          {
+            name: 'start_point_lng',
+            format: '',
+            tableFieldIndex: 2,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          },
+          {
+            name: 'end_point_lat',
+            format: '',
+            tableFieldIndex: 3,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          },
+          {
+            name: 'end_point_lng',
+            format: '',
+            tableFieldIndex: 4,
+            type: 'real',
+            analyzerType: 'FLOAT'
+          }
+        ],
+        rows: mockPolygonData.data
+      },
+      info: {
+        label: 'test.csv',
+        size: 144
+      }
+    }
+  ];
 
-  t.equal(
-    newReducer.layers.length,
-    1,
-    'Should have created a new layer'
-  );
+  const options = {
+    centerMap: true,
+    keepExistingConfig: false
+  };
+
+  // visStateUpdateVisDataUpdater - creates 4 layers
+  let newReducer = reducer(state, VisStateActions.updateVisData(datasets, options, {}));
 
   // add new polygon feature
   newReducer = reducer(newReducer, VisStateActions.setFeatures([mockPolygonFeature]));
@@ -3879,11 +3909,10 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
 
   const newFilter = newReducer.filters[0];
 
-  const filterFeature = newReducer.filters[0].value;
-
+  const firstDataset = Object.keys(newReducer.datasets)[0];
   const expectedFilter = {
     id: newFilter.id,
-    dataId: ['puppy'],
+    dataId: [firstDataset],
     freeze: false,
     fixedDomain: true,
     enlarged: false,
@@ -3914,14 +3943,19 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
     'Should have created a polygon filter'
   );
 
-  // Add a second layer to the same dataset
-  newReducer = reducer(newReducer, VisStateActions.addLayer());
+  t.equal(
+    newReducer.layerData[0].data.length,
+    2,
+    'Layer Point 1 should only show 2 points'
+  );
 
   t.equal(
-    newReducer.layers.length,
+    newReducer.layerData[1].data.length,
     2,
-    'Should have created a second layer'
+    'Layer Point 2 should only show 2 points'
   );
+
+  const filterFeature = newReducer.filters[0].value;
 
   // set polygon filter for the second layer
   newReducer = reducer(
@@ -3941,18 +3975,31 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
     'Should have two values in filter.layerId'
   );
 
-  // Add a new dataset layer to the same dataset
-  newReducer = reducer(newReducer, VisStateActions.addLayer({dataId: 'cat'}));
   t.equal(
-    newReducer.layers.length,
-    3,
-    'Should have created a third layer'
+    newReducer.layerData[0].data.length,
+    0,
+    'Layer Point 1 should show 0 points'
+  );
+
+  t.equal(
+    newReducer.layerData[1].data.length,
+    0,
+    'Layer Point 2 show show 0 points'
+  );
+
+  // Adding a new dataset - creates extra 4 layers
+  newReducer = reducer(newReducer, VisStateActions.updateVisData(datasets, options, {}));
+
+  t.equal(
+    newReducer.layerData[4].data.length,
+    4,
+    'Layer Point 5 should full data'
   );
 
   // Set polygon for a different dataset layer
   newReducer = reducer(
     newReducer,
-    VisStateActions.setPolygonFilterLayer(newReducer.layers[2], filterFeature)
+    VisStateActions.setPolygonFilterLayer(newReducer.layers[4], filterFeature)
   );
 
   t.equal(
@@ -3967,9 +4014,13 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
     'Should have two values in filter.dataId'
   );
 
-  // TODO: invert filter
+  t.equal(
+    newReducer.layerData[4].data.length,
+    2,
+    'Layer Point 5 should 2 points because filtered'
+  );
 
-  // remove the second layer from the filter
+  // Remove second layer from filter
   newReducer = reducer(
     newReducer,
     VisStateActions.setPolygonFilterLayer(newReducer.layers[1], filterFeature)
@@ -3978,31 +4029,31 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
   t.equal(
     newReducer.filters[0].layerId.length,
     2,
-    'Should have two values in filter.layerId after removing second element'
+    'Should 3 values in filter.layerId'
   );
 
   t.equal(
     newReducer.filters[0].dataId.length,
     2,
-    'Should have two values in filter.dataId after removing one layer'
-  );
-
-  // remove the first layer from the filter
-  newReducer = reducer(
-    newReducer,
-    VisStateActions.setPolygonFilterLayer(newReducer.layers[0], filterFeature)
+    'Should have two values in filter.dataId'
   );
 
   t.equal(
-    newReducer.filters[0].layerId.length,
-    1,
-    'Should have one value in filter.layerId after removing first element'
+    newReducer.layerData[0].data.length,
+    2,
+    'Layer Point 1 show 2 points because we removed layer 2'
   );
 
   t.equal(
-    newReducer.filters[0].dataId.length,
-    1,
-    'Should have one value in filter.dataId after removing first layer'
+    newReducer.layerData[4].data.length,
+    2,
+    'Layer Point 5 should 2 points because filtered'
+  );
+
+  t.equal(
+    newReducer.layerData[2].data.length,
+    2,
+    'Layer Point 2 should still show 2 filters because layer 1 is still filtered'
   );
 
   t.end();

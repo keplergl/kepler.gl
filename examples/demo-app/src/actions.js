@@ -30,6 +30,8 @@ import {
 } from './constants/default-settings';
 import {LOADING_METHODS_NAMES} from './constants/default-settings';
 import {parseUri, getMapPermalink} from './utils/url';
+
+// TODO: Delete after fixing conflicts
 import {getCloudProvider} from './cloud-providers';
 import {showNotification} from './utils/notifications';
 
@@ -111,6 +113,7 @@ export function setLoadingMapStatus(isMapLoading) {
   };
 }
 
+// TODO: Delete after fixing conflicts
 export function loadCloudVisError(error) {
   return {
     type: LOAD_CLOUD_VIS_ERROR,
@@ -355,6 +358,7 @@ export function loadSampleConfigurations(sampleMapId = null) {
   }
 }
 
+// TODO: Delete after fixing conflicts
 /**
  * This method will load a kepler config from a cloud platform
  * @param {Object} queryParams
