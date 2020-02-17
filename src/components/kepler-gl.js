@@ -38,7 +38,8 @@ import {
   KEPLER_GL_VERSION,
   THEME,
   DEFAULT_MAPBOX_API_URL,
-  SAVE_MAP_ID
+  SAVE_MAP_ID,
+  SHARE_MAP_ID
 } from 'constants/default-settings';
 import {MISSING_MAPBOX_TOKEN} from 'constants/user-feedbacks';
 
@@ -221,6 +222,7 @@ function KeplerGlFactory(
         mapState,
         uiState,
         visState,
+        providerState,
 
         // actions,
         visStateActions,
@@ -265,13 +267,13 @@ function KeplerGlFactory(
         mapStyle,
         layerBlending,
         onSaveMap,
-        // onSaveToStorage,
         uiState,
         mapStyleActions,
         visStateActions,
         uiStateActions,
         width: this.props.sidePanelWidth,
-        availableProviders
+        availableProviders,
+        mapSaved: providerState.mapSaved
       };
 
       const mapFields = {
@@ -323,7 +325,9 @@ function KeplerGlFactory(
           ));
 
       const isExporting =
-        uiState.currentModal === EXPORT_IMAGE_ID || uiState.currentModal === SAVE_MAP_ID;
+        uiState.currentModal === EXPORT_IMAGE_ID ||
+        uiState.currentModal === SAVE_MAP_ID ||
+        uiState.currentModal === SHARE_MAP_ID;
       const theme = this.availableThemeSelector(this.props);
 
       return (
@@ -381,8 +385,11 @@ function KeplerGlFactory(
               containerW={containerW}
               containerH={mapState.height}
               providerState={this.props.providerState}
+              // User defined cloud provider props
               cloudProviders={this.props.cloudProviders}
               onExportToCloudSuccess={this.props.onExportToCloudSuccess}
+              onLoadCloudMapSuccess={this.props.onLoadCloudMapSuccess}
+              onLoadCloudMapError={this.props.onLoadCloudMapError}
               onExportToCloudError={this.props.onExportToCloudError}
             />
           </GlobalStyle>

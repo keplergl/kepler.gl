@@ -39,7 +39,8 @@ import {
   EXPORT_MAP_ID,
   SAVE_MAP_ID,
   SHARE_MAP_ID,
-  PANELS
+  PANELS,
+  OVERWRITE_MAP_ID
 } from 'constants/default-settings';
 
 const SidePanelContent = styled.div`
@@ -95,7 +96,8 @@ export default function SidePanelFactory(
       datasets: PropTypes.object.isRequired,
       visStateActions: PropTypes.object.isRequired,
       mapStyleActions: PropTypes.object.isRequired,
-      availableProviders: PropTypes.object
+      availableProviders: PropTypes.object,
+      mapSaved: PropTypes.string
     };
     /* component private functions */
     _onOpenOrClose = () => {
@@ -123,15 +125,26 @@ export default function SidePanelFactory(
       this.props.uiStateActions.openDeleteModal(key);
     };
 
-    _onClickExportImage = () => this.props.uiStateActions.toggleModal(EXPORT_IMAGE_ID);
+    _onClickExportImage = () =>
+      this.props.uiStateActions.toggleModal(EXPORT_IMAGE_ID);
 
-    _onClickExportData = () => this.props.uiStateActions.toggleModal(EXPORT_DATA_ID);
+    _onClickExportData = () =>
+      this.props.uiStateActions.toggleModal(EXPORT_DATA_ID);
 
-    _onClickExportMap = () => this.props.uiStateActions.toggleModal(EXPORT_MAP_ID);
+    _onClickExportMap = () =>
+      this.props.uiStateActions.toggleModal(EXPORT_MAP_ID);
 
-    _onClickSaveToStorage = () => this.props.uiStateActions.toggleModal(SAVE_MAP_ID);
+    _onClickSaveToStorage = () => {
+      this.props.uiStateActions.toggleModal(
+        this.props.mapSaved ? OVERWRITE_MAP_ID : SAVE_MAP_ID
+      );
+    };
 
-    _onClickShareMap = () => this.props.uiStateActions.toggleModal(SHARE_MAP_ID);
+    _onClickSaveAsToStorage = () =>
+      this.props.uiStateActions.toggleModal(SAVE_MAP_ID);
+
+    _onClickShareMap = () =>
+      this.props.uiStateActions.toggleModal(SHARE_MAP_ID);
 
     render() {
       const {
@@ -214,8 +227,19 @@ export default function SidePanelFactory(
               onExportData={this._onClickExportData}
               onExportMap={this._onClickExportMap}
               onSaveMap={this.props.onSaveMap}
-              onSaveToStorage={availableProviders.hasStorage ? this._onClickSaveToStorage : null}
-              onShareMap={availableProviders.hasShare ? this._onClickShareMap : null}
+              onSaveToStorage={
+                availableProviders.hasStorage
+                  ? this._onClickSaveToStorage
+                  : null
+              }
+              onSaveAsToStorage={
+                availableProviders.hasStorage && this.props.mapSaved
+                  ? this._onClickSaveAsToStorage
+                  : null
+              }
+              onShareMap={
+                availableProviders.hasShare ? this._onClickShareMap : null
+              }
             />
             <PanelToggle
               panels={PANELS}

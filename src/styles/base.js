@@ -29,7 +29,7 @@ export const boxShadow = '0 1px 2px 0 rgba(0,0,0,0.10)';
 export const boxSizing = 'border-box';
 export const borderRadius = '1px';
 export const borderColor = '#3A414C';
-export const borderColorLight = '#F1F1F1';
+export const borderColorLT = '#F1F1F1';
 
 // TEXT
 export const fontFamily = `ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif`;
@@ -184,7 +184,7 @@ export const panelBackgroundLT = '#f8f8f9';
 
 export const panelBorderColor = '#3A414C';
 export const panelBorder = `1px solid ${borderColor}`;
-export const panelBorderLT = `1px solid ${borderColorLight}`;
+export const panelBorderLT = `1px solid ${borderColorLT}`;
 
 export const mapPanelBackgroundColor = '#242730';
 export const mapPanelHeaderBackgroundColor = '#29323C';
@@ -809,6 +809,9 @@ export const theme = {
   chickletedInput,
   chickletedInputContainer,
   secondaryChickletedInput,
+
+  borderColor,
+  borderColorLT,
 
   secondaryInput,
   dropdownScrollBar,

@@ -31,8 +31,8 @@ import {
   SET_LOADING_METHOD,
   LOAD_MAP_SAMPLE_FILE,
   LOAD_REMOTE_RESOURCE_SUCCESS,
-  SET_SAMPLE_LOADING_STATUS,
-  LOAD_CLOUD_VIS_ERROR
+  LOAD_REMOTE_RESOURCE_ERROR,
+  SET_SAMPLE_LOADING_STATUS
 } from '../actions';
 
 import {
@@ -80,11 +80,6 @@ export const appReducer = handleActions({
   [SET_SAMPLE_LOADING_STATUS]: (state, action) => ({
     ...state,
     isMapLoading: action.isMapLoading
-  }),
-  [LOAD_CLOUD_VIS_ERROR]: (state, action) => ({
-    ...state,
-    error: action.error,
-    isMapLoading: false
   })
 }, initialAppState);
 
@@ -178,8 +173,33 @@ export const loadRemoteResourceSuccess = (state, action) => {
   };
 };
 
+export const loadRemoteResourceError = (state, action) => {
+  const {error, url} = action;
+
+  const errorNote = {
+    type: 'error',
+    message: error.message || `Error loading ${url}`
+  };
+
+  return {
+    ...state,
+    app: {
+      ...state.app,
+      isMapLoading: false // we turn of the spinner
+    },
+    keplerGl: {
+      ...state.keplerGl, // in case you keep multiple instances
+      map: {
+        ...state.keplerGl.map,
+        uiState: uiStateUpdaters.addNotificationUpdater(state.keplerGl.map.uiState, {payload: errorNote})
+      }
+    }
+  };
+};
+
 const composedUpdaters = {
-  [LOAD_REMOTE_RESOURCE_SUCCESS]: loadRemoteResourceSuccess
+  [LOAD_REMOTE_RESOURCE_SUCCESS]: loadRemoteResourceSuccess,
+  [LOAD_REMOTE_RESOURCE_ERROR]: loadRemoteResourceError
 };
 
 const composedReducer = (state, action) => {

@@ -44,7 +44,6 @@ export {AddDataButtonFactory, default as LayerManagerFactory} from './side-panel
 export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel';
 export {default as LayerConfiguratorFactory} from './side-panel/layer-panel/layer-configurator';
 
-export {default as DatasetSquare} from './common/styled-components';
 export {default as SourceDataCatalogFactory} from './side-panel/common/source-data-catalog';
 export {default as SourceDataSelectorFactory} from './side-panel/common/source-data-selector';
 export {default as DatasetTitleFactory} from './side-panel/common/dataset-title';
@@ -62,13 +61,13 @@ export {default as MapManagerFactory} from './side-panel/map-manager';
 export {default as LayerGroupSelectorFactory} from './side-panel/map-style-panel/map-layer-selector';
 export {default as MapStyleSelectorFactory} from './side-panel/map-style-panel/map-style-selector';
 
-// // map container factories
+// // map factories
 export {default as MapPopoverFactory} from './map/map-popover';
 export {default as MapControlFactory} from './map/map-control';
 export {default as LayerHoverInfoFactory} from './map/layer-hover-info';
 export {default as CoordinateInfoFactory} from './map/coordinate-info';
 
-// // modal container factories
+// // modal factories
 export {default as ModalDialogFactory} from './modals/modal-dialog';
 export {default as DeleteDatasetModalFactory} from './modals/delete-data-modal';
 export {default as DataTableModalFactory} from './modals/data-table-modal';
@@ -77,12 +76,15 @@ export {default as ExportImageModalFactory} from './modals/export-image-modal';
 export {default as ExportDataModalFactory} from './modals/export-data-modal';
 export {default as AddMapStyleModalFactory} from './modals/add-map-style-modal';
 export {default as ExportMapModalFactory} from './modals/export-map-modal/export-map-modal';
+export {default as ModalTabsFactory} from './modals/modal-tabs';
+export {default as LoadStorageMapFactory} from './modals/load-storage-map';
 
 // // common factory
 export {default as AnimationControlFactory} from './common/animation-control/animation-control';
 export {default as SpeedControlFactory} from './common/animation-control/speed-control';
 export {default as AnimationPlaybacksFactory} from './common/animation-control/playback-controls';
 export {default as FloatingTimeDisplayFactory} from './common/animation-control/floating-time-display';
+export {default as DatasetSquare} from './common/styled-components';
 
 // // Filters
 export {default as TimeWidgetFactory} from './filters/time-widget';
@@ -99,7 +101,8 @@ export {
 } from './injector'
 
 // Common Components
-export {default as FileUpload} from './common/file-uploader/file-upload';
+export {default as CloudTile} from './modals/cloud-tile';
+export {default as FileUploadFactory, FileUpload} from './common/file-uploader/file-upload';
 export {default as ItemSelector} from './common/item-selector/item-selector';
 export {default as FieldSelector} from './common/field-selector';
 export {default as RangeSlider} from './common/range-slider';
@@ -110,7 +113,6 @@ export {default as LoadingSpinner} from './common/loading-spinner';
 export * from './common/styled-components';
 import * as Icons from './common/icons';
 export {Icons};
-export {default as CloudTile} from './modals/cloud-tile';
 
 export const TimeRangeSlider = TimeRangeSliderFactory();
 export {TimeRangeSliderFactory};

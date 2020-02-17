@@ -18,25 +18,49 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
-import {Icons} from 'kepler.gl/components';
-import PropTypes from 'prop-types';
+import React from 'react';
+import styled from 'styled-components';
+import LoadingSpinner from 'components/common/loading-spinner';
 
-export default class Logout extends Component {
-  static propTypes = {
-    height: PropTypes.string
-  };
+const StyledSpinner = styled.div`
+  text-align: center;
 
-  static defaultProps = {
-    height: '12px',
-    predefinedClassName: 'data-ex-icons-logout'
-  };
-
-  render() {
-    return (
-      <Icons.IconWrapper {...this.props} viewBox={"0 0 12 12"}>
-        <path d="M4.73333333,8.4 L5.66666667,9.33333333 L9,6 L5.66666667,2.66666667 L4.73333333,3.6 L6.46666667,5.33333333 L0,5.33333333 L0,6.66666667 L6.46666667,6.66666667 L4.73333333,8.4 Z M10.6666667,0 L1.33333333,0 C0.6,0 0,0.6 0,1.33333333 L0,4 L1.33333333,4 L1.33333333,1.33333333 L10.6666667,1.33333333 L10.6666667,10.6666667 L1.33333333,10.6666667 L1.33333333,8 L0,8 L0,10.6666667 C0,11.4 0.6,12 1.33333333,12 L10.6666667,12 C11.4,12 12,11.4 12,10.6666667 L12,1.33333333 C12,0.6 11.4,0 10.6666667,0 Z"></path>
-      </Icons.IconWrapper>
-    );
+  span {
+    margin: 0 auto;
   }
-};
+`;
+
+const StyledLoadingDialog = styled.div.attrs({
+  className: 'data-loading-dialog'
+})`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1;
+
+  .loading-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .loading-message {
+    margin-left: 32px;
+    color: ${props => props.theme.titleColorLT};
+    font-weight: 500;
+    font-size: 14px;
+  }
+`;
+
+const LoadingDialog = ({size = 64, message = 'Loading...'}) => (
+  <StyledLoadingDialog>
+    <div className="loading-content">
+      <StyledSpinner>
+        <LoadingSpinner size={size} />
+      </StyledSpinner>
+      <div className="loading-message">{message}</div>
+    </div>
+  </StyledLoadingDialog>
+);
+
+export default LoadingDialog;

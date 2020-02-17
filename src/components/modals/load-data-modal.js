@@ -18,32 +18,98 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {useState} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
+import get from 'lodash.get';
 
-import FileUpload from 'components/common/file-uploader/file-upload';
+import FileUploadFactory from 'components/common/file-uploader/file-upload';
+import LoadStorageMapFactory from './load-storage-map';
+import ModalTabsFactory from './modal-tabs';
 
-const StyledLoadDataModal = styled.div`
+import LoadingDialog from './loading-dialog';
+import {LOADING_METHODS} from 'constants/default-settings';
+
+const StyledLoadDataModal = styled.div.attrs({
+  className: 'load-data-modal'
+})`
   padding: ${props => props.theme.modalPadding};
+  min-height: 440px;
+  display: flex;
+  flex-direction: column;
+  /* justify-content: flex-start; */
 `;
 
-const loadDataModalFactory = () => {
-  const LoadDataModal = props => (
-    <StyledLoadDataModal>
-      <div className="load-data-modal">
-        <FileUpload {...props}/>
-      </div>
-    </StyledLoadDataModal>
-  );
+const noop = () => {};
+const getDefaultMethod = methods =>
+  Array.isArray(methods) ? get(methods, [0]) : null;
+
+LoadDataModalFactory.deps = [
+  ModalTabsFactory,
+  FileUploadFactory,
+  LoadStorageMapFactory
+];
+
+function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
+  const LoadDataModal = props => {
+    const {
+      fileLoading,
+      loadingMethods
+    } = props;
+    const [currentMethod, toggleMethod] = useState(
+      getDefaultMethod(loadingMethods)
+    );
+
+    return (
+      <StyledLoadDataModal>
+        <ModalTabs
+          currentMethod={currentMethod.id}
+          loadingMethods={loadingMethods}
+          toggleMethod={toggleMethod}
+        />
+        {fileLoading ? (
+          <LoadingDialog size={64}/>
+        ) : (
+          currentMethod && (
+            <currentMethod.elementType key={currentMethod.id} {...props} />
+          )
+        )}
+      </StyledLoadDataModal>
+    );
+  };
 
   LoadDataModal.propTypes = {
     // call backs
     onFileUpload: PropTypes.func.isRequired,
-    fileLoading: PropTypes.bool
+    onLoadCloudMap: PropTypes.func.isRequired,
+    fileLoading: PropTypes.bool,
+    loadingMethods: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.string,
+        label: PropTypes.string,
+        elementType: PropTypes.elementType,
+        tabElementType: PropTypes.elementType
+      })
+    )
   };
 
+  LoadDataModal.defaultProps = {
+    onFileUpload: noop,
+    fileLoading: false,
+    loadingMethods: [
+      {
+        id: LOADING_METHODS.upload,
+        label: 'Load Files',
+        elementType: FileUpload
+      },
+      {
+        id: LOADING_METHODS.storage,
+        label: 'Load from Storage',
+        elementType: LoadStorageMap
+      }
+    ]
+  };
   return LoadDataModal;
-};
+}
 
-export default loadDataModalFactory;
+export default LoadDataModalFactory;

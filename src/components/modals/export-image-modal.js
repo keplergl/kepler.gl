@@ -25,7 +25,8 @@ import ImagePreview from 'components/common/image-preview';
 
 import {
   EXPORT_IMG_RATIO_OPTIONS,
-  EXPORT_IMG_RESOLUTION_OPTIONS
+  EXPORT_IMG_RESOLUTION_OPTIONS,
+  EXPORT_IMG_RATIOS
 } from 'constants/default-settings';
 
 import {
@@ -79,7 +80,12 @@ const ExportImageModalFactory = () => {
     _updateMapDim() {
       const {exportImage, mapH, mapW} = this.props;
       if (mapH !== exportImage.mapH || mapW !== exportImage.mapW) {
-        this.props.onUpdateSetting({mapH, mapW});
+        this.props.onUpdateSetting({
+          mapH,
+          mapW,
+          ratio: EXPORT_IMG_RATIOS.CUSTOM,
+          legend: false
+        });
       }
     }
 

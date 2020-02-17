@@ -18,11 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {getCloudProvider} from '../cloud-providers';
 import {IndexRoute, Route} from 'react-router';
 import React from 'react';
 import Demo from '../app';
-import {DEFAULT_CLOUD_PROVIDER} from '../constants/default-settings';
+import {getCloudProvider, DEFAULT_CLOUD_PROVIDER} from '../cloud-providers';
 
 export function onAuthEnterCallback(nextState, replace, callback) {
   // TODO: detect auth provider
@@ -47,6 +46,7 @@ export function buildAppRoutes(Component) {
         <Route path="map" component={Component} />
         <Route path="map/:provider" component={Component} />
         <Route path="(:id)" component={Component} />
+        <Route path="map/:provider" component={Component} />
       </Route>
     )
   ];

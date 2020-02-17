@@ -18,19 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import {Icons} from 'kepler.gl/components';
 import {format} from 'd3-format';
 
 const numFormat = format(',');
-
-const propTypes = {
-  sampleData: PropTypes.object.isRequired,
-  onLoadSample: PropTypes.func.isRequired,
-  back: PropTypes.func.isRequired
-};
 
 const StyledSampleGallery = styled.div`
   display: flex;
@@ -79,26 +72,6 @@ const StyledSampleMap = styled.div`
   }
 `;
 
-const BackLink = styled.div`
-  display: flex;
-  font-size: 14px;
-  align-items: center;
-  color: ${props => props.theme.titleColorLT};
-  cursor: pointer;
-  margin-bottom: 40px;
-
-  :hover {
-    font-weight: 500;
-  }
-
-  span {
-    white-space: nowrap;
-  }
-  svg {
-    margin-right: 10px;
-  }
-`;
-
 const StyledImageCaption = styled.div`
   color: ${props => props.theme.labelColorLT};
   font-size: 11px;
@@ -129,29 +102,38 @@ const SampleMap = ({sample, onClick}) => (
   </StyledSampleMap>
 );
 
-const SampleMapGallery = ({sampleData, sampleMaps, onLoadSample, back, error}) => (
-  <div className="sample-data-modal">
-    <BackLink onClick={back}>
-      <Icons.LeftArrow height="12px" />
-      <span>Back</span>
-    </BackLink>
-    {error && (
-      <StyledError>
-        {error.message}
-      </StyledError>
-    )}
-    <StyledSampleGallery className="sample-map-gallery">
-      {sampleMaps.filter(sp => sp.visible).map(sp => (
-        <SampleMap
-          sample={sp}
-          key={sp.id}
-          onClick={() => onLoadSample(sp)}
-        />
-      ))}
-    </StyledSampleGallery>
-  </div>
-);
+export default class SampleMapGallery extends Component {
+  static propTypes = {
+    sampleMaps: PropTypes.arrayOf(PropTypes.object),
+    onLoadSample: PropTypes.func.isRequired,
+    loadSampleConfigurations: PropTypes.func.isRequired,
+    error: PropTypes.object
 
-SampleMapGallery.propTypes = propTypes;
+  };
+  componentDidMount() {
+    if (!this.props.sampleMaps.length) {
+      this.props.loadSampleConfigurations();
+    }
+  }
 
-export default SampleMapGallery;
+  render() {
+    const {sampleMaps, onLoadSample, error} = this.props;
+
+    return (
+      <div className="sample-data-modal">
+        {error && <StyledError>{error.message}</StyledError>}
+        <StyledSampleGallery className="sample-map-gallery">
+          {sampleMaps
+            .filter(sp => sp.visible)
+            .map(sp => (
+              <SampleMap
+                sample={sp}
+                key={sp.id}
+                onClick={() => onLoadSample(sp)}
+              />
+            ))}
+        </StyledSampleGallery>
+      </div>
+    );
+  }
+}
