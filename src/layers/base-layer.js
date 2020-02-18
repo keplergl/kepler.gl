@@ -73,6 +73,7 @@ import {
  */
 const MAX_SAMPLE_SIZE = 5000;
 const dataFilterExtension = new DataFilterExtension({filterSize: MAX_GPU_FILTERS});
+const identity = d => d;
 
 export const OVERLAY_TYPE = keymirror({
   deckgl: null,
@@ -753,7 +754,7 @@ export default class Layer {
       .range(fixed ? domain : range);
   }
 
-  getPointsBounds(allData, getPosition) {
+  getPointsBounds(allData, getPosition = identity) {
     // no need to loop through the entire dataset
     // get a sample of data to calculate bounds
     const sampleData =

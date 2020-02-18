@@ -211,15 +211,12 @@ export default class HexagonIdLayer extends Layer {
       if (!h3IsValid(id)) {
         return null;
       }
-      // find hexagonVertices
-      // only need 1 instance of hexagonVertices
-
       // save a reference of centroids to dataToFeature
       // so we don't have to re calculate it again
       return getCentroid({id});
     });
 
-    const bounds = this.getPointsBounds(Object.values(centroids), d => d);
+    const bounds = this.getPointsBounds(centroids);
     this.dataToFeature = {centroids};
     this.updateMeta({bounds});
   }

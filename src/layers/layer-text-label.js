@@ -22,6 +22,8 @@ import {getDistanceScales} from 'viewport-mercator-project';
 import {notNullorUndefined} from 'utils/data-utils';
 import uniq from 'lodash.uniq';
 
+export const defaultPadding = 20;
+
 export function getTextOffsetByRadius(radiusScale, getRadius, mapState) {
 
   return textLabel => {
@@ -39,7 +41,7 @@ export function getTextOffsetByRadius(radiusScale, getRadius, mapState) {
         : textLabel.size;
 
     const pixelRadius = radiusScale * distanceScale.pixelsPerMeter[0];
-    const padding = 20;
+    const padding = defaultPadding;
 
     return typeof getRadius === 'function'
       ? d => [
