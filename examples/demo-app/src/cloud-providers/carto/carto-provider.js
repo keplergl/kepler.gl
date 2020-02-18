@@ -147,11 +147,11 @@ export default class CartoProvider {
       }
 
       return {
-        url: this._composeURL({
+        shareUrl: this.getMapPermalinkFromParams({
           mapId: result.id,
           owner: this._carto.username,
           privateMap: !isPublic
-        })
+        }, true)
       };
     } catch (error) {
       this._manageErrors(error);
@@ -252,7 +252,8 @@ export default class CartoProvider {
       return {
         map: {
           datasets,
-          config: visualization.vis.config
+          config: visualization.vis.config,
+          info: {title: visualization.vis.name, description: visualization.vis.description}
         },
         format: 'csv'
       };

@@ -217,7 +217,7 @@ export default function ModalContainerFactory(
     };
 
     _onShareMapUrl = provider => {
-      this._exportFileToCloud({provider, isPublic: true, closeModal: false});
+      this._exportFileToCloud({provider, isPublic: true, overwrite: false, closeModal: false});
     };
 
     _onCloseSaveMap = () => {

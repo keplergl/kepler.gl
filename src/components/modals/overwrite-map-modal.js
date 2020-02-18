@@ -67,7 +67,7 @@ const OverwriteMapModalFactory = () => {
             </StyledIcon>
             <StyledMsg className="overwrite-map-msg">
               <StyledTitle>{title}</StyledTitle>
-              {` already exists in your ${mapSaved}. Would you like to overwrite it?`}
+              {` already exists in your ${mapSaved} account. Would you like to overwrite it?`}
             </StyledMsg>
           </>
         )}
