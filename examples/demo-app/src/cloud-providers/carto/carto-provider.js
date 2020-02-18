@@ -48,6 +48,10 @@ export default class CartoProvider {
     );
 
     this._carto.setClientID(clientId);
+
+    if (this.getAccessToken()) {
+      this.login();
+    }
   }
 
   /**
@@ -56,7 +60,7 @@ export default class CartoProvider {
   login(onCloudLoginSuccess) {
     try {
       this._carto.login().then(() => {
-        onCloudLoginSuccess(this.name);
+        onCloudLoginSuccess && onCloudLoginSuccess(this.name);
       });
     } catch (error) {
       this._manageErrors(error);
