@@ -18,16 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import uniq from 'lodash.uniq';
 import {BrushingExtension} from '@deck.gl/extensions';
 import {ScatterplotLayer} from '@deck.gl/layers';
-import {getDistanceScales} from 'viewport-mercator-project';
 
 import Layer from '../base-layer';
 import {hexToRgb} from 'utils/color-utils';
 import PointLayerIcon from './point-layer-icon';
 import {DEFAULT_LAYER_COLOR, CHANNEL_SCALES} from 'constants/default-settings';
-import {notNullorUndefined} from 'utils/data-utils';
+
+import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 
 export const pointPosAccessor = ({lat, lng, altitude}) => d => [
   // lng
@@ -36,11 +35,6 @@ export const pointPosAccessor = ({lat, lng, altitude}) => d => [
   d.data[lat.fieldIdx],
   altitude && altitude.fieldIdx > -1 ? d.data[altitude.fieldIdx] : 0
 ];
-
-export const pointLabelAccessor = textLabel => d => {
-  const val = d.data[textLabel.field.tableFieldIndex - 1];
-  return notNullorUndefined(val) ? String(val) : '';
-};
 
 export const pointRequiredColumns = ['lat', 'lng'];
 export const pointOptionalColumns = ['altitude'];
@@ -65,38 +59,6 @@ export const pointVisConfigs = {
   }
 };
 
-function getTextOffset(config, data, mapState) {
-  const {getRadius} = data;
-  const {radiusScale} = config.visConfig;
-
-  return textLabel => {
-    const distanceScale = getDistanceScales(mapState);
-    const xMult =
-      textLabel.anchor === 'middle' ? 0 : textLabel.anchor === 'start' ? 1 : -1;
-    const yMult =
-      textLabel.alignment === 'center' ? 0 : textLabel.alignment === 'bottom' ? 1 : -1;
-
-    const sizeOffset =
-      textLabel.alignment === 'center'
-        ? 0
-        : textLabel.alignment === 'bottom'
-        ? textLabel.size
-        : textLabel.size;
-
-    const pixelRadius = radiusScale * distanceScale.pixelsPerMeter[0];
-    const padding = 20;
-
-    return typeof getRadius === 'function'
-      ? d => [
-          xMult * (getRadius(d) * pixelRadius + padding),
-          yMult * (getRadius(d) * pixelRadius + padding + sizeOffset)
-        ]
-      : [
-          xMult * (getRadius * pixelRadius + padding),
-          yMult * (getRadius * pixelRadius + padding + sizeOffset)
-        ];
-  }
-}
 export default class PointLayer extends Layer {
   constructor(props) {
     super(props);
@@ -225,19 +187,6 @@ export default class PointLayer extends Layer {
     return data;
   }
 
-  getDataUpdateTriggers({filteredIndex}) {
-    return {
-      ...super.getDataUpdateTriggers({filteredIndex}),
-      ...this.config.textLabel.reduce(
-        (accu, tl, i) => ({
-          ...accu,
-          [`getLabelCharacterSet-${i}`]: tl.field ? tl.field.name : null
-        }),
-        {}
-      )
-    };
-  }
-
   formatLayerData(datasets, oldLayerData) {
     const {
       colorScale,
@@ -303,29 +252,11 @@ export default class PointLayer extends Layer {
       : strokeColor || color;
 
     // get all distinct characters in the text labels
-    const textLabels = textLabel.map((tl, i) => {
-      if (!tl.field) {
-        // if no field selected,
-        return {
-          getText: null,
-          characterSet: []
-        };
-      }
-
-      const getText = pointLabelAccessor(tl);
-      let characterSet;
-
-      if (!triggerChanged[`getLabelCharacterSet-${i}`]) {
-        characterSet = oldLayerData.textLabels[i].characterSet;
-      } else {
-        const allLabels = tl.field ? data.map(getText) : [];
-        characterSet = uniq(allLabels.join(''));
-      }
-
-      return {
-        characterSet,
-        getText
-      };
+    const textLabels = formatTextLabelData({
+      textLabel,
+      triggerChanged,
+      oldLayerData,
+      data
     });
 
     return {
@@ -361,7 +292,6 @@ export default class PointLayer extends Layer {
     const layerProps = {
       stroked: this.config.visConfig.outline,
       filled: this.config.visConfig.filled,
-      // filterRange: gpuFilter.filterRange,
       lineWidthScale: this.config.visConfig.thickness,
       radiusScale,
       ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
@@ -370,7 +300,6 @@ export default class PointLayer extends Layer {
     const updateTriggers = {
       getPosition: this.config.columns,
       getRadius: {
-
         sizeField: this.config.sizeField,
         radiusRange: this.config.visConfig.radiusRange,
         fixedRadius: this.config.visConfig.fixedRadius,
@@ -393,9 +322,9 @@ export default class PointLayer extends Layer {
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const brushingProps = this.getBrushingExtensionProps(interactionConfig);
-    const getPixelOffset = getTextOffset(
-      this.config,
-      data,
+    const getPixelOffset = getTextOffsetByRadius(
+      radiusScale,
+      data.getRadius,
       mapState
     );
     const extensions = [...defaultLayerProps.extensions, brushingExtension];

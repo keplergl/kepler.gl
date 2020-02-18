@@ -205,7 +205,6 @@ export default class GeoJsonLayer extends Layer {
   // TODO: fix complexity
   /* eslint-disable complexity */
   formatLayerData(datasets, oldLayerData, opt = {}) {
-    console.log('formatLayerData')
 
     const {
       colorScale,
@@ -421,7 +420,7 @@ export default class GeoJsonLayer extends Layer {
       getFilterValue: gpuFilter.filterValueUpdateTriggers
     };
 
-    const defaultLayerProps = this.getDefau
+    const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     return [
       new DeckGLGeoJsonLayer({
         ...defaultLayerProps,

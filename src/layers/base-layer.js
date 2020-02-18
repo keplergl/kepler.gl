@@ -819,7 +819,14 @@ export default class Layer {
 
     return {
       getData: {datasetId: id, columns, filteredIndex},
-      getMeta: {datasetId: id, columns}
+      getMeta: {datasetId: id, columns},
+      ...(this.config.textLabel || []).reduce(
+        (accu, tl, i) => ({
+          ...accu,
+          [`getLabelCharacterSet-${i}`]: tl.field ? tl.field.name : null
+        }),
+        {}
+      )
     }
   }
 

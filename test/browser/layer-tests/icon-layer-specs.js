@@ -23,6 +23,9 @@ import React from 'react';
 import {mount} from 'enzyme';
 import sinon from 'sinon';
 import sinonStubPromise from 'sinon-stub-promise';
+import {getDistanceScales} from 'viewport-mercator-project';
+import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
+
 sinonStubPromise(sinon);
 
 import {
@@ -106,7 +109,21 @@ test('#IconLayer -> formatLayerData', t => {
           dataId,
           label: 'gps point icon',
           columns,
-          color: [2, 3, 4]
+          color: [2, 3, 4],
+          textLabel: [
+            {
+              field: {
+                name: 'types',
+                type: 'string'
+              }
+            },
+            {
+              field: {
+                name: 'has_result',
+                type: 'boolean'
+              }
+            }
+          ]
         },
         type: 'icon',
         id: 'test_layer_1'
@@ -126,6 +143,16 @@ test('#IconLayer -> formatLayerData', t => {
               data: testRows[0],
               index: 0,
               icon: 'accel'
+            }
+          ],
+          textLabels: [
+            {
+              characterSet: [],
+              getText: () => {}
+            },
+            {
+              characterSet: [],
+              getText: () => {}
             }
           ],
           getFilterValue: () => {},
@@ -162,6 +189,22 @@ test('#IconLayer -> formatLayerData', t => {
           layerData.data.map(layerData.getFilterValue),
           [[Number.MIN_SAFE_INTEGER, 0, 0, 0]],
           'getFilterValue should return [value, 0, 0, 0]'
+        );
+        // textLabels
+        t.deepEqual(
+          layerData.textLabels.length,
+          expectedLayerData.textLabels.length,
+          'textLabels should have 2 items'
+        );
+        t.deepEqual(
+          layerData.textLabels[0].characterSet,
+          ['d','r','i','v','e','_','a','n','l','y','t','c','s','0'],
+          'textLabels should have correct characterSet'
+        );
+        t.deepEqual(
+          layerData.textLabels[0].getText(layerData.data[0]),
+          'driver_analytics_0',
+          'textLabels getText should have correct text'
         );
         // layerMeta
         t.deepEqual(
@@ -392,6 +435,62 @@ test('#IconLayer -> renderLayer', t => {
             `should have correct props.${key}`
           );
         });
+      }
+    },
+    {
+      name: 'Test render icon.1 -> with text labels',
+      layer: {
+        config: {
+          dataId,
+          label: 'gps point icon',
+          columns,
+          color: [2, 3, 4],
+          textLabel: [
+            {
+              field: {
+                name: 'types',
+                type: 'string'
+              }
+              // default anchor: start, alignment: center
+            },
+            {
+              field: {
+                name: 'has_result',
+                type: 'boolean'
+              },
+              anchor: 'middle',
+              alignment: 'bottom'
+            }
+          ]
+        },
+        type: 'icon',
+        id: 'test_layer_1'
+      },
+      afterLayerInitialized: layer => {
+        layer.iconGeometry = iconGeometry;
+      },
+      datasets: {
+        [dataId]: {
+          ...preparedDataset,
+          filteredIndex
+        }
+      },
+      assert: (deckLayers, layer, layerData) => {
+        t.equal(deckLayers.length, 7, 'Should create 7 deck.gl layer');
+        t.deepEqual(
+          deckLayers.map(l => l.id),
+          [
+            'test_layer_1',
+            'test_layer_1-accel',
+            'test_layer_1-attach',
+            'test_layer_1-label-types',
+            'test_layer_1-label-types-characters',
+            'test_layer_1-label-has_result',
+            'test_layer_1-label-has_result-characters'
+          ],
+          'Should create 5 deck.gl layers'
+        );
+        // test test_layer_1-label-types
       }
     }
   ];
