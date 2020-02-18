@@ -786,6 +786,7 @@ export default class Layer {
     nullValue = NO_VALUE_COLOR,
     getValue = defaultGetFieldValue
   ) {
+
     const {type} = field;
     const value = getValue(field, data);
 

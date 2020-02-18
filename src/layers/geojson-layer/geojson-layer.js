@@ -205,6 +205,8 @@ export default class GeoJsonLayer extends Layer {
   // TODO: fix complexity
   /* eslint-disable complexity */
   formatLayerData(datasets, oldLayerData, opt = {}) {
+    console.log('formatLayerData')
+
     const {
       colorScale,
       colorField,
@@ -393,7 +395,7 @@ export default class GeoJsonLayer extends Layer {
     const updateTriggers = {
       getElevation: {
         heightField: this.config.heightField,
-        heightScale: this.config.heightScale,
+        heightScaleType: this.config.heightScale,
         heightRange: visConfig.heightRange
       },
       getFillColor: {
@@ -419,8 +421,7 @@ export default class GeoJsonLayer extends Layer {
       getFilterValue: gpuFilter.filterValueUpdateTriggers
     };
 
-    const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
-
+    const defaultLayerProps = this.getDefau
     return [
       new DeckGLGeoJsonLayer({
         ...defaultLayerProps,
