@@ -1094,6 +1094,7 @@ export default class Layer {
             id: `${this.id}-label-${textLabel[i].field.name}`,
             data: data.data,
             getText: d.getText,
+            getPosition,
             characterSet: d.characterSet,
             getPixelOffset: getPixelOffset(textLabel[i]),
             getSize: 1,

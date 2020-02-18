@@ -491,6 +491,59 @@ test('#IconLayer -> renderLayer', t => {
           'Should create 5 deck.gl layers'
         );
         // test test_layer_1-label-types
+        const {
+          getPosition,
+          getColor,
+          getSize,
+          getPixelOffset,
+          getFilterValue
+        } = deckLayers[4].props;
+        const {getPixelOffset: getPixelOffset1} = deckLayers[6].props;
+
+        const distanceScale = getDistanceScales(INITIAL_MAP_STATE);
+        const radiusScale = layer.getRadiusScaleByZoom(INITIAL_MAP_STATE);
+        const pixelRadius = radiusScale * distanceScale.pixelsPerMeter[0];
+
+        const padding = 20;
+
+        // anchor: start, alignment: center
+        const expectedPixelOffset0 = [
+          1 * (pixelRadius + padding),
+          0 * (pixelRadius + padding + 0)
+        ];
+
+        // anchor: 'middle', alignment: 'bottom'
+        const expectedPixelOffset1 = [
+          0 * (pixelRadius + padding),
+          1 * (pixelRadius + padding + DEFAULT_TEXT_LABEL.size)
+        ];
+
+        t.deepEqual(
+          getPosition(layerData.data[0]),
+          [testRows[0][2], testRows[0][1]],
+          'Should calculate correct getPosition'
+        );
+        t.deepEqual(
+          getColor,
+          DEFAULT_TEXT_LABEL.color,
+          'Should calculate correct getColor'
+        );
+        t.deepEqual(getSize, 1, 'Should calculate correct getSize');
+        t.deepEqual(
+          getPixelOffset,
+          expectedPixelOffset0,
+          'Should calculate correct instancePixelOffset'
+        );
+        t.deepEqual(
+          getPixelOffset1,
+          expectedPixelOffset1,
+          'Should calculate correct instancePixelOffset'
+        );
+        t.deepEqual(
+          getFilterValue(layerData.data[0]),
+          [Number.MIN_SAFE_INTEGER, 0, 0, 0],
+          'Should calculate correct instancePixelOffset'
+        );
       }
     }
   ];

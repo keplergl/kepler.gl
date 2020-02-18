@@ -62,7 +62,7 @@ export default class TextLabelPanel extends Component {
         </ConfigGroupCollapsibleHeader>
         <ConfigGroupCollapsibleContent>
           {textLabel.map((tl, idx) => (
-            <div key={tl.field ? tl.field.name : 'null'}>
+            <div key={tl.field ? tl.field.name : `null-${idx}`}>
               <PanelLabel>{`Label ${idx + 1}`}</PanelLabel>
               <SidePanelSection>
                 <FieldSelector

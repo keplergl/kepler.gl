@@ -306,13 +306,14 @@ export default class IconLayer extends Layer {
     );
     const extensions = [...defaultLayerProps.extensions, brushingExtension];
 
-    // shared Props  point layer and tex layer
+    // shared Props between layer and label layer
     const sharedProps = {
       getFilterValue: data.getFilterValue,
       extensions,
       filterRange: defaultLayerProps.filterRange,
       ...brushingProps
     };
+
     const labelLayers = [
       ...this.renderTextLabelLayer({
         getPosition: data.getPosition,
