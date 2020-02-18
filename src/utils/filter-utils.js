@@ -938,7 +938,6 @@ export function applyFiltersToDatasets(datasetIds, datasets, filters, layers) {
  * @param {Object} dataset - dataset the field belongs to
  * @param {string} fieldName - field.name
  * @param {Number} filterDatasetIndex - field.name
- * @param {Number} filters - current
  * @param {Object} option
  * @return {Object} {filter, datasets}
  */
@@ -952,7 +951,10 @@ export function applyFilterFieldName(
   // using filterDatasetIndex we can filter only the specified dataset
   const {fields, allData} = dataset;
 
-  const fieldIndex = fields.findIndex(f => f.name === fieldName);
+  const fieldIndex = fields.findIndex(f => {
+    return f.name === fieldName;
+  });
+
   // if no field with same name is found, move to the next datasets
   if (fieldIndex === -1) {
     // throw new Error(`fieldIndex not found. Dataset must contain a property with name: ${fieldName}`);
@@ -972,7 +974,10 @@ export function applyFilterFieldName(
       [filterDatasetIndex]: field.tableFieldIndex - 1
     }),
     // TODO, since we allow to add multiple fields to a filter we can no longer freeze the filter
-    freeze: true
+    freeze: true,
+    // if we only have one dataset we replace whatever value we already have with the new one
+    // otherwise we use an existing one
+    value: filter.dataId.length === 1 ? filterProps.value :  filter.value
   };
 
   const fieldWithFilterProps = {
@@ -997,7 +1002,7 @@ export function applyFilterFieldName(
  * @param filterProps
  * @param fieldIndex
  * @param datasetIndex
- * @return {*}
+ * @return {object} newly updated filter
  */
 /* eslint-disable complexity */
 export function mergeFilterDomainStep(filter, filterProps) {

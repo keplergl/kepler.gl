@@ -526,10 +526,14 @@ export function setFilterUpdater(state, action) {
     // 1. dataId is empty: create a default filter
     // 2. Add a new dataset id
     case FILTER_UPDATER_PROPS.dataId:
-      // if trying to update filter dataId. create an empty new filter
-      newFilter = updateFilterDataId(dataId);
-      break;
 
+      // if filter is just being initialized
+      if (oldFilter.dataId.length === 0 && newFilter.dataId.length > 0) {
+        // if trying to update filter dataId. create an empty new filter
+        newFilter = updateFilterDataId(dataId);
+      }
+
+      break;
     case FILTER_UPDATER_PROPS.name:
       // we are supporting the current functionality
       // TODO: Next PR for UI filter name will only update filter name but it won't have side effects
@@ -540,8 +544,10 @@ export function setFilterUpdater(state, action) {
         state.datasets[datasetId],
         value,
         valueIndex,
-        {mergeDomain: false}
+        // merge domain only if we have multiple datasets
+        {mergeDomain: newFilter.dataId.length > 1}
       );
+
       if (!updatedFilter) {
         return state;
       }
@@ -554,8 +560,6 @@ export function setFilterUpdater(state, action) {
       }
 
       newState = set(['datasets', datasetId], newDataset, state);
-
-      // only filter the current dataset
       break;
     case FILTER_UPDATER_PROPS.layerId:
       // We need to update only datasetId/s if we have added/removed layers
