@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {CPUGridLayer} from 'deck.gl';
+import {CPUGridLayer} from '@deck.gl/aggregation-layers';
 import CPUAggregator, {getAggregatedData} from '../layer-utils/cpu-aggregator';
 
 export const gridAggregation = {
@@ -53,6 +53,10 @@ export default class ScaleEnhancedGridLayer extends CPUGridLayer {
       cpuAggregator,
       aggregatorState: cpuAggregator.state
     };
+    const attributeManager = this.getAttributeManager();
+    attributeManager.add({
+      positions: {size: 3, accessor: 'getPosition'}
+    });
   }
 }
 

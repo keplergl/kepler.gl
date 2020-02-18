@@ -279,18 +279,21 @@ export const LAYER_VIS_CONFIGS = {
     isRanged: false,
     range: [1, 1000],
     step: 1,
-    // group: PROPERTY_GROUPS.cell,
     property: 'sizeScale'
   },
   angle: {
     type: 'number',
     defaultValue: 0,
-    // label: 'Size Scale',
     isRanged: false,
     range: [0, 360],
     step: 1
-    // group: PROPERTY_GROUPS.cell,
-    // property: 'sizeScale'
+  },
+  angleZ: {
+    type: 'number',
+    defaultValue: 90,
+    isRanged: false,
+    range: [0, 360],
+    step: 1
   },
   worldUnitSize: {
     type: 'number',

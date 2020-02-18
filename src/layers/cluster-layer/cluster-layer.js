@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import AggregationLayer from '../aggregation-layer';
-import {ScatterplotLayer} from 'deck.gl';
+import {ScatterplotLayer} from '@deck.gl/layers';
 
 import DeckGLClusterLayer from 'deckgl-layers/cluster-layer/cluster-layer';
 import {CHANNEL_SCALES} from 'constants/default-settings';
@@ -99,6 +99,7 @@ export default class ClusterLayer extends AggregationLayer {
         // color
         colorRange: this.getColorRange(visConfig.colorRange),
         colorScaleType: this.config.colorScale,
+        colorAggregation: visConfig.colorAggregation,
 
         zoom: Math.round(mapState.zoom),
         width: mapState.width,

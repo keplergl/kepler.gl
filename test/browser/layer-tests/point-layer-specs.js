@@ -540,7 +540,7 @@ test('#PointLayer -> renderLayer', t => {
           ],
           'Should create 5 deck.gl layers'
         );
-        // test test_layer_1-label-types
+        // test test_layer_1-label-types-characters
         const {
           getPosition,
           getColor,

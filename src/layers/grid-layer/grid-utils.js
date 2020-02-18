@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {WebMercatorViewport} from 'deck.gl';
+import {WebMercatorViewport} from '@deck.gl/core';
 
 /**
  * top left of the grid to a square polygon for the hover layer

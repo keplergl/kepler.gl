@@ -86,7 +86,8 @@ export default class LineLayer extends ArcLayer {
           getFilterValue: gpuFilter.filterValueUpdateTriggers,
           getWidth: {
             sizeField: this.config.sizeField,
-            sizeRange: this.config.visConfig.sizeRange
+            sizeRange: this.config.visConfig.sizeRange,
+            sizeScale: this.config.sizeScale
           },
           getColor: colorUpdateTriggers,
           getTargetColor: colorUpdateTriggers

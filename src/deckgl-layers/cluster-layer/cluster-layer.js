@@ -18,7 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {CompositeLayer, ScatterplotLayer} from 'deck.gl';
+import {ScatterplotLayer} from '@deck.gl/layers';
+import {_AggregationLayer as AggregationLayer} from '@deck.gl/aggregation-layers';
+
 import geoViewport from '@mapbox/geo-viewport';
 import CPUAggregator, {defaultColorDimension, getDimensionScale} from '../layer-utils/cpu-aggregator';
 import {getDistanceScales} from 'viewport-mercator-project';
@@ -36,7 +38,7 @@ const defaultRadiusRange = LAYER_VIS_CONFIGS.clusterRadiusRange.defaultValue;
 const defaultGetColorValue = points => points.length;
 const defaultGetRadiusValue = cell => cell.filteredPoints ? cell.filteredPoints.length : cell.points.length;
 
-function processGeoJSON(step, props, aggregation, viewport) {
+function processGeoJSON(step, props, aggregation, {viewport}) {
   const {data, getPosition, filterData} = props;
   const geoJSON = getGeoJSON(data, getPosition, filterData);
   const clusterBuilder = new ClusterBuilder();
@@ -44,7 +46,7 @@ function processGeoJSON(step, props, aggregation, viewport) {
   this.setState({geoJSON, clusterBuilder});
 }
 
-function getClusters(step, props, aggregation, viewport) {
+function getClusters(step, props, aggregation, {viewport}) {
 
   const {geoJSON, clusterBuilder} = this.state;
   const {clusterRadius, zoom, width, height} = props;
@@ -161,7 +163,7 @@ const defaultProps = {
   getRadiusValue: {type: 'accessor', value: defaultGetRadiusValue}
 };
 
-export default class ClusterLayer extends CompositeLayer {
+export default class ClusterLayer extends AggregationLayer {
   initializeState() {
     const cpuAggregator = new CPUAggregator({
       aggregation: clusterAggregation,
@@ -172,6 +174,10 @@ export default class ClusterLayer extends CompositeLayer {
       cpuAggregator,
       aggregatorState: cpuAggregator.state
     };
+    const attributeManager = this.getAttributeManager();
+    attributeManager.add({
+      positions: {size: 3, accessor: 'getPosition'}
+    });
   }
 
   updateState({oldProps, props, changeFlags}) {
@@ -179,7 +185,11 @@ export default class ClusterLayer extends CompositeLayer {
       // make a copy of the internal state of cpuAggregator for testing
       aggregatorState: this.state.cpuAggregator.updateState(
         {oldProps, props, changeFlags},
-        this.context.viewport
+        {
+          viewport: this.context.viewport,
+          attributes: this.getAttributes(),
+          numInstances: this.getNumInstances(props)
+        }
       )
     });
   }

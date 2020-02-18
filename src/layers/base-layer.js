@@ -22,6 +22,7 @@ import {console as Console} from 'global/window';
 import keymirror from 'keymirror';
 import {DataFilterExtension} from '@deck.gl/extensions';
 import {COORDINATE_SYSTEM} from '@deck.gl/core';
+import {TextLayer} from '@deck.gl/layers';
 
 import DefaultLayerIcon from './default-layer-icon';
 import {diffUpdateTriggers} from './layer-update';
@@ -72,6 +73,7 @@ import {
  */
 const MAX_SAMPLE_SIZE = 5000;
 const dataFilterExtension = new DataFilterExtension({filterSize: MAX_GPU_FILTERS});
+const identity = d => d;
 
 export const OVERLAY_TYPE = keymirror({
   deckgl: null,
@@ -752,7 +754,7 @@ export default class Layer {
       .range(fixed ? domain : range);
   }
 
-  getPointsBounds(allData, getPosition) {
+  getPointsBounds(allData, getPosition = identity) {
     // no need to loop through the entire dataset
     // get a sample of data to calculate bounds
     const sampleData =
@@ -785,6 +787,7 @@ export default class Layer {
     nullValue = NO_VALUE_COLOR,
     getValue = defaultGetFieldValue
   ) {
+
     const {type} = field;
     const value = getValue(field, data);
 
@@ -817,7 +820,14 @@ export default class Layer {
 
     return {
       getData: {datasetId: id, columns, filteredIndex},
-      getMeta: {datasetId: id, columns}
+      getMeta: {datasetId: id, columns},
+      ...(this.config.textLabel || []).reduce(
+        (accu, tl, i) => ({
+          ...accu,
+          [`getLabelCharacterSet-${i}`]: tl.field ? tl.field.name : null
+        }),
+        {}
+      )
     }
   }
 
@@ -1071,5 +1081,51 @@ export default class Layer {
       wrapLongitude: true,
       coordinateSystem: COORDINATE_SYSTEM.LNGLAT
     }
+  }
+
+  renderTextLabelLayer({getPosition, getPixelOffset, updateTriggers, sharedProps}, renderOpts) {
+    const {data, mapState} = renderOpts;
+    const {textLabel} = this.config;
+
+    return data.textLabels.reduce((accu, d, i) => {
+      if (d.getText) {
+        accu.push(
+          new TextLayer({
+            ...sharedProps,
+            id: `${this.id}-label-${textLabel[i].field.name}`,
+            data: data.data,
+            getText: d.getText,
+            getPosition,
+            characterSet: d.characterSet,
+            getPixelOffset: getPixelOffset(textLabel[i]),
+            getSize: 1,
+            sizeScale: textLabel[i].size,
+            getTextAnchor: textLabel[i].anchor,
+            getAlignmentBaseline: textLabel[i].alignment,
+            getColor: textLabel[i].color,
+            parameters: {
+              // text will always show on top of all layers
+              depthTest: false
+            },
+
+            getFilterValue: data.getFilterValue,
+            updateTriggers: {
+              ...updateTriggers,
+              getText: textLabel[i].field.name,
+              getPixelOffset: {
+                ...updateTriggers.getRadius,
+                mapState,
+                anchor: textLabel[i].anchor,
+                alignment: textLabel[i].alignment
+              },
+              getTextAnchor: textLabel[i].anchor,
+              getAlignmentBaseline: textLabel[i].alignment,
+              getColor: textLabel[i].color
+            }
+          })
+        );
+      }
+      return accu;
+    }, [])
   }
 }

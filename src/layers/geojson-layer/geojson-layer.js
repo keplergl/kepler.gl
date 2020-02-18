@@ -205,6 +205,7 @@ export default class GeoJsonLayer extends Layer {
   // TODO: fix complexity
   /* eslint-disable complexity */
   formatLayerData(datasets, oldLayerData, opt = {}) {
+
     const {
       colorScale,
       colorField,
@@ -379,11 +380,13 @@ export default class GeoJsonLayer extends Layer {
     const {fixedRadius} = this.meta;
     const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius);
     const zoomFactor = this.getZoomFactor(mapState);
+    const eleZoomFactor = this.getElevationZoomFactor(mapState);
+
     const {visConfig} = this.config;
 
     const layerProps = {
       lineWidthScale: visConfig.thickness * zoomFactor * 8,
-      elevationScale: visConfig.elevationScale,
+      elevationScale: visConfig.elevationScale * eleZoomFactor,
       pointRadiusScale: radiusScale,
       lineMiterLimit: 4
     };
@@ -391,7 +394,7 @@ export default class GeoJsonLayer extends Layer {
     const updateTriggers = {
       getElevation: {
         heightField: this.config.heightField,
-        heightScale: this.config.heightScale,
+        heightScaleType: this.config.heightScale,
         heightRange: visConfig.heightRange
       },
       getFillColor: {
@@ -418,7 +421,6 @@ export default class GeoJsonLayer extends Layer {
     };
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
-
     return [
       new DeckGLGeoJsonLayer({
         ...defaultLayerProps,

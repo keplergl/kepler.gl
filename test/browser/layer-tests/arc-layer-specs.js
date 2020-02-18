@@ -153,7 +153,7 @@ test('#ArcLayer -> formatLayerData', t => {
           layerData.data.map(layerData.getFilterValue),
           [
             [Number.MIN_SAFE_INTEGER, 0, 0, 0],
-            [moment.utc(testRows[4][0]).valueOf() - preparedFilterDomain0, 0, 0, 0],
+            [moment.utc(testRows[4][0]).valueOf() - preparedFilterDomain0, 0, 0, 0]
           ],
           'getFilterValue should return [value, 0, 0, 0]'
         );

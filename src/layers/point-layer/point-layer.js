@@ -18,16 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import uniq from 'lodash.uniq';
 import {BrushingExtension} from '@deck.gl/extensions';
-import {ScatterplotLayer, TextLayer} from '@deck.gl/layers';
-import {getDistanceScales} from 'viewport-mercator-project';
+import {ScatterplotLayer} from '@deck.gl/layers';
 
 import Layer from '../base-layer';
 import {hexToRgb} from 'utils/color-utils';
 import PointLayerIcon from './point-layer-icon';
 import {DEFAULT_LAYER_COLOR, CHANNEL_SCALES} from 'constants/default-settings';
-import {notNullorUndefined} from 'utils/data-utils';
+
+import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 
 export const pointPosAccessor = ({lat, lng, altitude}) => d => [
   // lng
@@ -36,11 +35,6 @@ export const pointPosAccessor = ({lat, lng, altitude}) => d => [
   d.data[lat.fieldIdx],
   altitude && altitude.fieldIdx > -1 ? d.data[altitude.fieldIdx] : 0
 ];
-
-export const pointLabelAccessor = textLabel => d => {
-  const val = d.data[textLabel.field.tableFieldIndex - 1];
-  return notNullorUndefined(val) ? String(val) : '';
-};
 
 export const pointRequiredColumns = ['lat', 'lng'];
 export const pointOptionalColumns = ['altitude'];
@@ -193,19 +187,6 @@ export default class PointLayer extends Layer {
     return data;
   }
 
-  getDataUpdateTriggers({filteredIndex}) {
-    return {
-      ...super.getDataUpdateTriggers({filteredIndex}),
-      ...this.config.textLabel.reduce(
-        (accu, tl, i) => ({
-          ...accu,
-          [`getLabelCharacterSet-${i}`]: tl.field ? tl.field.name : null
-        }),
-        {}
-      )
-    };
-  }
-
   formatLayerData(datasets, oldLayerData) {
     const {
       colorScale,
@@ -235,6 +216,7 @@ export default class PointLayer extends Layer {
     );
     const getPosition = this.getPositionAccessor();
     // point color
+
     const cScale =
       colorField &&
       this.getVisChannelScale(
@@ -270,29 +252,11 @@ export default class PointLayer extends Layer {
       : strokeColor || color;
 
     // get all distinct characters in the text labels
-    const textLabels = textLabel.map((tl, i) => {
-      if (!tl.field) {
-        // if no field selected,
-        return {
-          getText: null,
-          characterSet: []
-        };
-      }
-
-      const getText = pointLabelAccessor(tl);
-      let characterSet;
-
-      if (!triggerChanged[`getLabelCharacterSet-${i}`]) {
-        characterSet = oldLayerData.textLabels[i].characterSet;
-      } else {
-        const allLabels = tl.field ? data.map(getText) : [];
-        characterSet = uniq(allLabels.join(''));
-      }
-
-      return {
-        characterSet,
-        getText
-      };
+    const textLabels = formatTextLabelData({
+      textLabel,
+      triggerChanged,
+      oldLayerData,
+      data
     });
 
     return {
@@ -311,34 +275,7 @@ export default class PointLayer extends Layer {
     const getPosition = this.getPositionAccessor();
     const bounds = this.getPointsBounds(allData, d => getPosition({data: d}));
     this.updateMeta({bounds});
-  }
 
-  getTextOffset(config, radiusScale, getRadius, mapState) {
-    const distanceScale = getDistanceScales(mapState);
-    const xMult =
-      config.anchor === 'middle' ? 0 : config.anchor === 'start' ? 1 : -1;
-    const yMult =
-      config.alignment === 'center' ? 0 : config.alignment === 'bottom' ? 1 : -1;
-
-    const sizeOffset =
-      config.alignment === 'center'
-        ? 0
-        : config.alignment === 'bottom'
-        ? config.size
-        : config.size;
-
-    const pixelRadius = radiusScale * distanceScale.pixelsPerMeter[0];
-    const padding = 20;
-
-    return typeof getRadius === 'function'
-      ? d => [
-          xMult * (getRadius(d) * pixelRadius + padding),
-          yMult * (getRadius(d) * pixelRadius + padding + sizeOffset)
-        ]
-      : [
-          xMult * (getRadius * pixelRadius + padding),
-          yMult * (getRadius * pixelRadius + padding + sizeOffset)
-        ];
   }
 
   renderLayer(opts) {
@@ -355,13 +292,11 @@ export default class PointLayer extends Layer {
     const layerProps = {
       stroked: this.config.visConfig.outline,
       filled: this.config.visConfig.filled,
-      // filterRange: gpuFilter.filterRange,
       lineWidthScale: this.config.visConfig.thickness,
       radiusScale,
       ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
     };
 
-    const {textLabel} = this.config;
     const updateTriggers = {
       getPosition: this.config.columns,
       getRadius: {
@@ -387,6 +322,19 @@ export default class PointLayer extends Layer {
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const brushingProps = this.getBrushingExtensionProps(interactionConfig);
+    const getPixelOffset = getTextOffsetByRadius(
+      radiusScale,
+      data.getRadius,
+      mapState
+    );
+    const extensions = [...defaultLayerProps.extensions, brushingExtension];
+
+    const sharedProps = {
+      getFilterValue: data.getFilterValue,
+      extensions,
+      filterRange: defaultLayerProps.filterRange,
+      ...brushingProps
+    };
 
     return [
       new ScatterplotLayer({
@@ -399,7 +347,7 @@ export default class PointLayer extends Layer {
           depthTest: this.config.columns.altitude.fieldIdx > -1
         },
         updateTriggers,
-        extensions: [...defaultLayerProps.extensions, brushingExtension]
+        extensions
       }),
       // hover layer
       ...(this.isLayerHovered(objectHovered)
@@ -413,57 +361,16 @@ export default class PointLayer extends Layer {
               getRadius: data.getRadius,
               getPosition: data.getPosition
             })
+
           ]
         : []),
       // text label layer
-      ...data.textLabels.reduce((accu, d, i) => {
-        if (d.getText) {
-          accu.push(
-            new TextLayer({
-              ...brushingProps,
-              id: `${this.id}-label-${textLabel[i].field.name}`,
-              data: data.data,
-              getPosition: data.getPosition,
-              getText: d.getText,
-              characterSet: d.characterSet,
-              getPixelOffset: this.getTextOffset(
-                textLabel[i],
-                radiusScale,
-                data.getRadius,
-                mapState
-              ),
-              getSize: 1,
-              sizeScale: textLabel[i].size,
-              getTextAnchor: textLabel[i].anchor,
-              getAlignmentBaseline: textLabel[i].alignment,
-              getColor: textLabel[i].color,
-              parameters: {
-                // text will always show on top of all layers
-                depthTest: false
-              },
-
-              getFilterValue: data.getFilterValue,
-              extensions: [...defaultLayerProps.extensions, brushingExtension],
-              filterRange: defaultLayerProps.filterRange,
-              updateTriggers: {
-                getPosition: this.config.columns,
-                getText: textLabel[i].field.name,
-                getPixelOffset: {
-                  ...updateTriggers.getRadius,
-                  mapState,
-                  anchor: textLabel[i].anchor,
-                  alignment: textLabel[i].alignment
-                },
-                getTextAnchor: textLabel[i].anchor,
-                getAlignmentBaseline: textLabel[i].alignment,
-                getColor: textLabel[i].color,
-                getFilterValue: gpuFilter.filterValueUpdateTriggers
-              }
-            })
-          );
-        }
-        return accu;
-      }, [])
+      ...this.renderTextLabelLayer({
+        getPosition: data.getPosition,
+        sharedProps,
+        getPixelOffset,
+        updateTriggers
+      }, opts)
     ];
   }
 }
