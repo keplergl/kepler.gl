@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {LayerManager, MapView} from 'deck.gl';
+import {LayerManager, MapView} from '@deck.gl/core';
 import React from 'react';
 import {gl} from '@deck.gl/test-utils';
 import sinon from 'sinon';
@@ -319,7 +319,9 @@ export const pointLayerMeta = {
 export const arcLayerMeta = {
   bounds: bounds.arc
 };
-
+export const hexagonIdLayerMeta = {
+  bounds: bounds.h3
+}
 export {iconGeometry, fieldDomain};
 
 /*

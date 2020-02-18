@@ -379,11 +379,13 @@ export default class GeoJsonLayer extends Layer {
     const {fixedRadius} = this.meta;
     const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius);
     const zoomFactor = this.getZoomFactor(mapState);
+    const eleZoomFactor = this.getElevationZoomFactor(mapState);
+
     const {visConfig} = this.config;
 
     const layerProps = {
       lineWidthScale: visConfig.thickness * zoomFactor * 8,
-      elevationScale: visConfig.elevationScale,
+      elevationScale: visConfig.elevationScale * eleZoomFactor,
       pointRadiusScale: radiusScale,
       lineMiterLimit: 4
     };

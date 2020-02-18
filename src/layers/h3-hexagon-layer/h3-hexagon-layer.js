@@ -22,7 +22,7 @@ import Layer from '../base-layer';
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {H3HexagonLayer} from '@deck.gl/geo-layers';
 import EnhancedColumnLayer from 'deckgl-layers/column-layer/enhanced-column-layer';
-import {getVertices, getCentroid, idToPolygonGeo, h3IsValid} from './h3-utils';
+import {getCentroid, idToPolygonGeo, h3IsValid} from './h3-utils';
 import H3HexagonLayerIcon from './h3-hexagon-layer-icon';
 import {CHANNEL_SCALES, HIGHLIGH_COLOR_3D} from 'constants/default-settings';
 
@@ -31,7 +31,9 @@ export const HEXAGON_ID_FIELDS = {
 };
 
 export const hexIdRequiredColumns = ['hex_id'];
-export const hexIdAccessor = ({hex_id}) => d => d[hex_id.fieldIdx];
+export const hexIdAccessor = ({hex_id}) => d => d.data[hex_id.fieldIdx];
+export const defaultElevation = 500;
+export const defaultCoverage = 1;
 
 export const HexagonIdVisConfigs = {
   opacity: 'opacity',
@@ -126,7 +128,7 @@ export default class HexagonIdLayer extends Layer {
 
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
-      const id = getHexId(allData[index]);
+      const id = getHexId({data: allData[index]});
       const centroid = this.dataToFeature.centroids[index];
 
       if (centroid) {
@@ -182,7 +184,7 @@ export default class HexagonIdLayer extends Layer {
 
     const getElevation = sScale
       ? d => this.getEncodedChannelValue(sScale, d.data, sizeField, 0)
-      : 0;
+      : defaultElevation;
 
     const getFillColor = cScale
       ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
@@ -190,7 +192,7 @@ export default class HexagonIdLayer extends Layer {
 
     const getCoverage = coScale
       ? d => this.getEncodedChannelValue(coScale, d.data, coverageField, 0)
-      : 1;
+      : defaultCoverage;
 
     return {
       data,
@@ -198,37 +200,27 @@ export default class HexagonIdLayer extends Layer {
       getFillColor,
       getHexId,
       getCoverage,
-      getFilterValue: gpuFilter.filterValueAccessor(),
-      hexagonVertices: this.dataToFeature.hexagonVertices,
-      hexagonCenter: this.dataToFeature.hexagonCenter
+      getFilterValue: gpuFilter.filterValueAccessor()
     };
   }
   /* eslint-enable complexity */
 
   updateLayerMeta(allData, getHexId) {
-    let hexagonVertices;
-    let hexagonCenter;
-    const centroids = {};
-
-    allData.forEach((d, index) => {
-      const id = getHexId(d);
+    const centroids = allData.map((d, index) => {
+      const id = getHexId({data: d});
       if (!h3IsValid(id)) {
-        return;
+        return null;
       }
       // find hexagonVertices
       // only need 1 instance of hexagonVertices
-      if (!hexagonVertices) {
-        hexagonVertices = id && getVertices({id});
-        hexagonCenter = id && getCentroid({id});
-      }
 
       // save a reference of centroids to dataToFeature
       // so we don't have to re calculate it again
-      centroids[index] = getCentroid({id});
+      return getCentroid({id});
     });
 
     const bounds = this.getPointsBounds(Object.values(centroids), d => d);
-    this.dataToFeature = {hexagonVertices, hexagonCenter, centroids};
+    this.dataToFeature = {centroids};
     this.updateMeta({bounds});
   }
 

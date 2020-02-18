@@ -308,7 +308,7 @@ test('#GridLayer -> renderLayer', t => {
         const expectedGridCellData = [
           {
             index: 0,
-            position: [-122.59661345873265, 37.743177277521255],
+            position: [-122.59661271087748, 37.743177277521255],
             count: 2,
             points: [
               {
@@ -320,11 +320,12 @@ test('#GridLayer -> renderLayer', t => {
                 data: preparedDataset.allData[1]
               }
             ],
+            lonIdx: 253, latIdx: 711,
             filteredPoints: []
           },
           {
             index: 1,
-            position: [-122.14283174694398, 37.38384344551697],
+            position: [-122.14283099317691, 37.38384344551697],
             count: 2,
             points: [
               {
@@ -336,6 +337,7 @@ test('#GridLayer -> renderLayer', t => {
                 data: preparedDataset.allData[5]
               }
             ],
+            lonIdx: 255, latIdx: 709,
             filteredPoints: [
               {
                 index: 4,
@@ -349,7 +351,7 @@ test('#GridLayer -> renderLayer', t => {
           },
           {
             index: 2,
-            position: [-122.36972260283831, 37.743177277521255],
+            position: [-122.3697218520272, 37.743177277521255],
             count: 1,
             points: [
               {
@@ -357,6 +359,7 @@ test('#GridLayer -> renderLayer', t => {
                 data: preparedDataset.allData[7]
               }
             ],
+            lonIdx: 254, latIdx: 711,
             filteredPoints: [
               {
                 index: 7,
@@ -380,6 +383,13 @@ test('#GridLayer -> renderLayer', t => {
           expectedGridCellData,
           'should pass correct data to grid cell layer'
         );
+        gridCellLayerProp.data.forEach((ac, i) => {
+          t.deepEqual(
+            gridCellLayerProp.data[i],
+            expectedGridCellData[i],
+            `should pass correct data:${i} to grid cell layer`
+          );
+        })
         t.deepEqual(
           spyLayerCallbacks.args[0][0],
           [1, 2],

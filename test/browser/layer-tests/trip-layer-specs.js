@@ -337,65 +337,31 @@ test('#TripLayer -> renderLayer', t => {
         // test attributes
         const {attributes} = deckTripLayer.state.attributeManager;
 
-        // instanceStrokeWidths
-
         const fvs = [
           [Number.MIN_SAFE_INTEGER, 0, 0, 0],
           [7 - valueFilterDomain0, 0, 0, 0],
           [6 - valueFilterDomain0, 0, 0, 0]
         ];
+        // use picking Colors to determine number numVertexs
+        const numVertexs = [];
+        let currentIdx = 0;
+        let count = 0;
 
-        const numVertexs = [9, 7, 6];
-        const testLen = 9 + 7 + 6;
+        for (let c = 0; c < attributes.instancePickingColors.value.length; c+=3) {
+          if (attributes.instancePickingColors.value[c] > currentIdx || c === attributes.instancePickingColors.value.length - 3) {
+            currentIdx = attributes.instancePickingColors.value[c];
+            if (count > 0) {
+              numVertexs.push(count);
+            }
+            count = 1;
+          } else if (attributes.instancePickingColors.value[c] === currentIdx) {
+            count += 1;
+          }
+        }
+
+        const testLen = numVertexs.reduce((accu, c) => accu + c, 0);
         const expectedFilterValues = new Float32Array(testLen * 4);
         const expectedColors = new Float32Array(testLen * 4);
-
-        const expectedTimestamps = new Float32Array([
-          1077000,
-          1085000,
-          1085000,
-          1095000,
-          1095000,
-          1103000,
-          1103000,
-          1104000,
-          1104000,
-          1106000,
-          1106000,
-          1107000,
-          1107000,
-          1110000,
-          1110000,
-          1112000,
-          1112000,
-          1114000,
-          834000,
-          862000,
-          862000,
-          864000,
-          864000,
-          895000,
-          895000,
-          920000,
-          920000,
-          953000,
-          953000,
-          976000,
-          976000,
-          989000,
-          1405000,
-          1433000,
-          1433000,
-          1451000,
-          1451000,
-          1471000,
-          1471000,
-          1495000,
-          1495000,
-          1517000,
-          1517000,
-          1575000
-        ]);
 
         let c = 0;
         for (let i = 0; i < 3; i++) {
@@ -412,40 +378,11 @@ test('#TripLayer -> renderLayer', t => {
           }
         }
 
-        const expectedStroke = new Float32Array([
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1
-        ])
+        const expectedStroke = new Float32Array(testLen).fill(1);
         t.deepEqual(
           attributes.filterValues.value.slice(0, testLen * 4),
           expectedFilterValues,
           'Should have correct filterValues'
-        );
-
-        t.deepEqual(
-          attributes.instanceTimestamps.value.slice(0, 44),
-          expectedTimestamps,
-          'Should have correct instanceTimestamps'
         );
 
         t.deepEqual(
