@@ -4,6 +4,7 @@
     "eslint-config-uber-es2015",
     "eslint-config-prettier",
     "prettier",
+    "plugin:prettier/recommended",
     "prettier/react"
   ],
   "env": {
