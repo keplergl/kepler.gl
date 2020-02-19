@@ -28,17 +28,20 @@ import CloudTile from 'components/modals/cloud-tile';
 import ImagePreview from 'components/common/image-preview';
 const SaveMapModal = SaveMapModalFactory();
 
-test('Components -> SaveMapModal.mount', t => {
-  const onUpdateSetting = sinon.spy();
+test.only('Components -> SaveMapModal.mount', t => {
+  const onUpdateImageSetting = sinon.spy();
   const onSetCloudProvider = sinon.spy();
 
   // mount
   t.doesNotThrow(() => {
     mountWithTheme(
-      <SaveMapModal onUpdateSetting={onUpdateSetting} onSetCloudProvider={onSetCloudProvider} />
+      <SaveMapModal
+        onUpdateImageSetting={onUpdateImageSetting}
+        onSetCloudProvider={onSetCloudProvider}
+      />
     );
   }, 'Show not fail without props');
-  t.ok(onUpdateSetting.calledOnce, 'should call onUpdateSetting when mount');
+  t.ok(onUpdateImageSetting.calledOnce, 'should call onUpdateImageSetting when mount');
   t.ok(onSetCloudProvider.notCalled, 'should not call onSetCloudProvider when mount');
 
   t.end();

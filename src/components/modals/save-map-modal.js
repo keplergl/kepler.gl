@@ -70,7 +70,7 @@ const StyledSaveMapModal = styled.div.attrs({
 
 const nop = () => {};
 
-export const MapInfoPanel = ({mapInfo, characterLimits, onChangeInput}) => (
+export const MapInfoPanel = ({mapInfo = {description: '', title: ''}, characterLimits, onChangeInput}) => (
   <div className="selection map-info-panel">
     <StyledModalSection className="save-map-modal-name">
       <div className="modal-section-title">Name*</div>
