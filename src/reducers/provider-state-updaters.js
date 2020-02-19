@@ -97,7 +97,7 @@ function createGlobalNotificationTasks({type, message, delayClose = true}) {
  * @param {*} action
  */
 export const exportFileToCloudUpdater = (state, action) => {
-  const {mapData, provider, options, onSuccess, onError, closeModal} = action.payload;
+  const {mapData, provider, options = {}, onSuccess, onError, closeModal} = action.payload;
 
   if (!_validateProvider(provider, 'uploadMap')) {
     return state;
@@ -307,7 +307,7 @@ export const loadCloudMapSuccessUpdater = (state, action) => {
 export const resetProviderStatusUpdater = (state, action) => ({
   ...state,
   isProviderLoading: false,
-  error: null,
+  providerError: null,
   successInfo: {}
 });
 
