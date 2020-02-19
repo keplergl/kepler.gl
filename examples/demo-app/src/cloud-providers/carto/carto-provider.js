@@ -316,6 +316,20 @@ export default class CartoProvider {
       : `/${mapLink}`;
   }
 
+  getShareUrl(fullUrl = false) {
+    return this.getMapUrl(fullUrl);
+  }
+
+  getMapUrl(fullUrl = true) {
+    if (this.currentMap) {
+      return this.getMapPermalinkFromParams({
+        mapId: this.currentMap.id,
+        owner: this.getUserName(),
+        privateMap: this.currentMap.isPrivate
+      }, fullUrl);
+    }
+  }
+
   getCurrentVisualization() {
     return this.currentMap
       ? {title: this.currentMap.name, description: this.currentMap.description}
