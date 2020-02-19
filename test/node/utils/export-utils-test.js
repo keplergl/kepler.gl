@@ -1,12 +1,11 @@
 import test from  'tape';
 import {registerEntry} from 'actions/identity-actions';
 import keplerGlReducer from 'reducers';
-import {exportMapToJson} from 'utils/export-utils';
+import {getMapJSON, exportToJsonString} from 'utils/export-utils';
 
 test('exportUtils -> ExportJson', t => {
   const state = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
-
-  const body = exportMapToJson(state);
+  const body = exportToJsonString(getMapJSON(state));
 
   t.equal(
     typeof body,

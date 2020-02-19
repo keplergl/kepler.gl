@@ -142,18 +142,27 @@ export function exportImage(state) {
   }
 }
 
-export function exportMapToJson(state, options = {}) {
+export function exportToJsonString(data) {
+  try {
+    return JSON.stringify(data, null, 2)
+  } catch (e) {
+    return e.description;
+  }
+}
+
+export function getMapJSON(state, options = {}) {
   const {hasData} = options;
 
-  const data = hasData
+  return hasData
     ? KeplerGlSchema.save(state)
     : KeplerGlSchema.getConfigToSave(state);
-
-  return JSON.stringify(data, null, 2);
 }
 
 export function exportJson(state, options = {}) {
-  const fileBlob = new Blob([exportMapToJson(state, options)], {type: 'application/json'});
+
+  const map = getMapJSON(state, options);
+
+  const fileBlob = new Blob([exportToJsonString(map)], {type: 'application/json'});
   downloadFile(fileBlob, DEFAULT_JSON_NAME);
 }
 
@@ -161,7 +170,7 @@ export function exportHtml(state, options) {
   const {userMapboxToken, exportMapboxAccessToken, mode} = options;
 
   const data = {
-    ...KeplerGlSchema.save(state),
+    ...getMapJSON(state, {hasData: true}),
     mapboxApiAccessToken:
       (userMapboxToken || '') !== ''
         ? userMapboxToken
