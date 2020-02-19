@@ -459,8 +459,10 @@ export default function ModalContainerFactory(
             template = (
               <OverWriteMapModal
                 {...providerState}
-                cloudProviders={this.props.cloudProviders}
                 title={get(visState, ['mapInfo', 'title'])}
+                cloudProviders={this.props.cloudProviders}
+                onSetCloudProvider={this.props.providerActions.setCloudProvider}
+                onUpdateImageSetting={uiStateActions.setExportImageSetting}
               />
             );
             modalProps = {
@@ -471,7 +473,10 @@ export default function ModalContainerFactory(
               onCancel: this._closeModal,
               confirmButton: {
                 large: true,
-                children: 'Yes'
+                children: 'Yes',
+                disabled: uiState.exportImage.exporting ||
+                !isValidMapInfo(visState.mapInfo) ||
+                !providerState.currentProvider
               }
             };
             break;
