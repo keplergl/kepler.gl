@@ -30,3 +30,4 @@ import './notifications-utils-test';
 import './aggregate-utils-test';
 import './color-util-test';
 import './util-test';
+import './export-utils-test';

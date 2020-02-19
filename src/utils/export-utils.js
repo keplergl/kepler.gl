@@ -134,22 +134,26 @@ export function downloadFile(fileBlob, filename) {
   URL.revokeObjectURL(url);
 }
 
-export function exportImage(state, options) {
-  const {imageDataUri} = state.uiState.exportImage
+export function exportImage(state) {
+  const {imageDataUri} = state.uiState.exportImage;
   if (imageDataUri) {
     const file = dataURItoBlob(imageDataUri);
     downloadFile(file, DEFAULT_IMAGE_NAME);
   }
 }
 
-export function exportJson(state, options) {
+export function exportMapToJson(state, options = {}) {
   const {hasData} = options;
 
   const data = hasData
     ? KeplerGlSchema.save(state)
     : KeplerGlSchema.getConfigToSave(state);
 
-  const fileBlob = new Blob([data], {type: 'application/json'});
+  return JSON.stringify(data, null, 2);
+}
+
+export function exportJson(state, options = {}) {
+  const fileBlob = new Blob([exportMapToJson(state, options)], {type: 'application/json'});
   downloadFile(fileBlob, DEFAULT_JSON_NAME);
 }
 

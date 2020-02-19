@@ -40,7 +40,6 @@ import {
   cmpInteraction
 } from 'test/helpers/comparison-utils';
 import {INITIAL_UI_STATE} from 'reducers/ui-state-updaters';
-import {toggleMapControlUpdater} from 'reducers/map-state-updaters';
 
 const mockRawData = {
   fields: [
