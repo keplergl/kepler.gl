@@ -177,22 +177,22 @@ export default function ModalContainerFactory(
         onSuccess: this.props.onExportToCloudSuccess,
         onError: this.props.onExportToCloudError
       });
-    }
+    };
 
     _onSaveMap = () => {
       const {currentProvider} = this.props.providerState;
       const provider = this.props.cloudProviders.find(p => p.name === currentProvider);
       this._exportFileToCloud({provider, isPublic: false, closeModal: true});
-    }
+    };
 
     _onShareMapUrl = (provider) => {
       this._exportFileToCloud({provider, isPublic: true, closeModal: false});
-    }
+    };
 
     _onCloseSaveMap = () => {
       this.props.providerActions.resetProviderStatus();
       this._closeModal();
-    }
+    };
 
     /* eslint-disable complexity */
     render() {

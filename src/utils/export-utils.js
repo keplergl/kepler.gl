@@ -47,6 +47,14 @@ export const DEFAULT_HTML_NAME = 'kepler.gl.html';
 export const DEFAULT_JSON_NAME = 'keplergl.json';
 export const DEFAULT_DATA_NAME = 'kepler-gl';
 
+/**
+ * Default json export settings
+ * @type {{hasData: boolean}}
+ */
+export const DEFAULT_EXPORT_JSON_SETTINGS = {
+  hasData: true
+};
+
 const defaultResolution = EXPORT_IMG_RESOLUTION_OPTIONS.find(
   op => op.id === RESOLUTIONS.ONE_X
 );
@@ -144,13 +152,13 @@ export function exportImage(state) {
 
 export function exportToJsonString(data) {
   try {
-    return JSON.stringify(data, null, 2)
+    return JSON.stringify(data)
   } catch (e) {
     return e.description;
   }
 }
 
-export function getMapJSON(state, options = {}) {
+export function getMapJSON(state, options = DEFAULT_EXPORT_JSON_SETTINGS) {
   const {hasData} = options;
 
   return hasData
@@ -170,7 +178,7 @@ export function exportHtml(state, options) {
   const {userMapboxToken, exportMapboxAccessToken, mode} = options;
 
   const data = {
-    ...getMapJSON(state, {hasData: true}),
+    ...getMapJSON(state),
     mapboxApiAccessToken:
       (userMapboxToken || '') !== ''
         ? userMapboxToken
@@ -215,11 +223,11 @@ export function exportData(state, option) {
   });
 }
 
-export function exportMap(state, option) {
-  const mapToState = KeplerGlSchema.save(state);
+export function exportMap(state) {
+  const mapToState = getMapJSON(state);
   const {mapInfo} = state.visState;
   const {imageDataUri} = state.uiState.exportImage;
-  const thumbnail = imageDataUri ? dataURItoBlob(imageDataUri) : null
+  const thumbnail = imageDataUri ? dataURItoBlob(imageDataUri) : null;
 
   return {
     map: mapToState,
