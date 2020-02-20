@@ -28,7 +28,7 @@ export const MAP_URI = 'demo/map?mapUrl=';
 /*
  * If you want to add more samples, feel free to edit the json file on github kepler.gl data repo
  */
-export const MAP_CONFIG_URL = `${DATA_URL}samples.json?nocache=${(new Date()).getTime()}`;
+export const MAP_CONFIG_URL = `${DATA_URL}samples.json?nocache=${new Date().getTime()}`;
 
 /**
  * I know this is already defined in Kepler core but it should be defined here
@@ -64,8 +64,8 @@ export const LOADING_METHODS = [
         label: 'Csv',
         icon: 'note',
         description:
-        'Upload a csv file where each row contains one feature and its meta data. ' +
-        'Columns with name xxx_lat and xxx_lng will be automatically detected as points.'
+          'Upload a csv file where each row contains one feature and its meta data. ' +
+          'Columns with name xxx_lat and xxx_lng will be automatically detected as points.'
       },
       {
         id: QUERY_OPTIONS.geojson,
@@ -92,7 +92,8 @@ export const LOADING_METHODS = [
 
 export const LOADING_SAMPLE_LIST_ERROR_MESSAGE = 'Not able to load sample gallery';
 export const LOADING_SAMPLE_ERROR_MESSAGE = 'Not able to load sample';
-export const LOADING_URL_MESSAGE = 'You can use the following formats: CSV | JSON | Kepler.gl config json. Make sure the url contains the file extension.';
+export const LOADING_URL_MESSAGE =
+  'You can use the following formats: CSV | JSON | Kepler.gl config json. Make sure the url contains the file extension.';
 export const CORS_LINK = 'https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS';
 
 export const DEFAULT_LOADING_METHOD = LOADING_METHODS[0];

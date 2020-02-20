@@ -51,9 +51,7 @@ export function injector(map = new Map()) {
     // check if custom factory deps is declared
     const instances =
       cache.get(factory) ||
-      factory(
-        ...(factory.deps ? factory.deps.map(dep => get(dep, factory)) : [])
-      );
+      factory(...(factory.deps ? factory.deps.map(dep => get(dep, factory)) : []));
 
     cache.set(fac, instances);
     return instances;
@@ -95,11 +93,7 @@ export function typeCheckRecipe(recipe) {
 
 const identity = state => state;
 // Helper to add reducer state to custom component
-export function withState(
-  lenses = [],
-  mapStateToProps = identity,
-  actions = {}
-) {
+export function withState(lenses = [], mapStateToProps = identity, actions = {}) {
   return Component => {
     const WrappedComponent = ({state, ...props}) => (
       <KeplerGlContext.Consumer>

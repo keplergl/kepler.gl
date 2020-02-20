@@ -92,14 +92,17 @@ const LIBRARY_BUNDLE_CONFIG = env => ({
         include: [SRC_DIR],
         options: {
           plugins: [
-            ['search-and-replace', {
-              rules: [
-                {
-                  search: '__PACKAGE_VERSION__',
-                  replace: KeplerPackage.version
-                }
-              ]
-            }]
+            [
+              'search-and-replace',
+              {
+                rules: [
+                  {
+                    search: '__PACKAGE_VERSION__',
+                    replace: KeplerPackage.version
+                  }
+                ]
+              }
+            ]
           ]
         }
       }

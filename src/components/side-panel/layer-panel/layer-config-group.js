@@ -80,7 +80,6 @@ export const StyledLayerConfigGroup = styled.div`
       max-height: 600px;
     }
     .layer-config-group__content {
-
       .layer-config-group__content__collapsible {
         overflow: hidden;
         max-height: 0;
@@ -155,30 +154,21 @@ class LayerConfigGroup extends Component {
     const {collapsed} = this.state;
 
     return (
-      <StyledLayerConfigGroup
-        className={classnames('layer-config-group', {collapsed, disabled})}
-      >
+      <StyledLayerConfigGroup className={classnames('layer-config-group', {collapsed, disabled})}>
         <StyledConfigGroupHeader
           className="layer-config-group__header"
           onClick={() => this.setState({collapsed: !this.state.collapsed})}
         >
           <StyledLayerConfigGroupLabel className="layer-config-group__label">
             <span>{label}</span>
-            {description && (
-              <InfoHelper
-                description={description}
-                id={label}
-              />
-            )}
+            {description && <InfoHelper description={description} id={label} />}
           </StyledLayerConfigGroupLabel>
           <StyledLayerConfigGroupAction className="layer-config-group__action">
             {property ? (
               <Switch
                 checked={layer.config.visConfig[property]}
                 id={`${layer.id}-${property}`}
-                onChange={() =>
-                  onChange({[property]: !layer.config.visConfig[property]})
-                }
+                onChange={() => onChange({[property]: !layer.config.visConfig[property]})}
               />
             ) : null}
             {collapsible ? <VertThreeDots height="18px" /> : null}

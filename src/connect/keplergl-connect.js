@@ -31,18 +31,13 @@ export const connect = (
   options
 ) => BaseComponent => {
   const mapDispatchToProps = makeMapDispatchToProps();
-  const reduxMapState = (state, props) =>
-    mapStateToProps(props.selector(state), props, state);
+  const reduxMapState = (state, props) => mapStateToProps(props.selector(state), props, state);
 
-  const reduxMapDispatch = (dispatch, props) =>
-    mapDispatchToProps(props.dispatch, props, dispatch);
+  const reduxMapDispatch = (dispatch, props) => mapDispatchToProps(props.dispatch, props, dispatch);
 
-  const ReduxComponent = reduxConnect(
-    reduxMapState,
-    reduxMapDispatch,
-    reduxMergeProps,
-    options
-  )(BaseComponent);
+  const ReduxComponent = reduxConnect(reduxMapState, reduxMapDispatch, reduxMergeProps, options)(
+    BaseComponent
+  );
 
   // save selector to context so it can be accessed by its children
   return withLocalSelector(ReduxComponent);

@@ -210,8 +210,7 @@ export const Button = styled.div.attrs({
   letter-spacing: 0.3px;
   line-height: 14px;
   outline: 0;
-  padding: ${props =>
-    props.large ? '14px 32px' : props.small ? '6px 9px' : '9px 12px'};
+  padding: ${props => (props.large ? '14px 32px' : props.small ? '6px 9px' : '9px 12px')};
   text-align: center;
   transition: ${props => props.theme.transition};
   vertical-align: middle;
@@ -242,14 +241,12 @@ export const Button = styled.div.attrs({
   }
 
   svg {
-    margin-right: ${props =>
-      props.large ? '10px' : props.small ? '6px' : '8px'};
+    margin-right: ${props => (props.large ? '10px' : props.small ? '6px' : '8px')};
   }
 `;
 
 export const Input = styled.input`
-  ${props =>
-    props.secondary ? props.theme.secondaryInput : props.theme.input};
+  ${props => (props.secondary ? props.theme.secondaryInput : props.theme.input)};
 `;
 
 export const InputLight = styled.input`
@@ -257,8 +254,7 @@ export const InputLight = styled.input`
 `;
 
 export const TextArea = styled.textarea`
-  ${props =>
-    props.secondary ? props.theme.secondaryInput : props.theme.input};
+  ${props => (props.secondary ? props.theme.secondaryInput : props.theme.input)};
 `;
 export const TextAreaLight = styled.textarea`
   ${props => props.theme.inputLT}
@@ -272,15 +268,10 @@ export const InlineInput = styled(Input)`
 
 export const StyledPanelHeader = styled.div`
   background-color: ${props =>
-    props.active
-      ? props.theme.panelBackgroundHover
-      : props.theme.panelBackground};
+    props.active ? props.theme.panelBackgroundHover : props.theme.panelBackground};
   border-left: 3px solid
     rgb(
-      ${props =>
-        props.labelRCGColorValues
-          ? props.labelRCGColorValues.join(',')
-          : 'transparent'}
+      ${props => (props.labelRCGColorValues ? props.labelRCGColorValues.join(',') : 'transparent')}
     );
   padding: 0 10px 0 0;
   height: ${props => props.theme.panelHeaderHeight}px;
@@ -330,14 +321,8 @@ export const DatasetSquare = styled.div`
 export const SelectionButton = styled.div`
   border-radius: 2px;
   border: 1px solid
-    ${props =>
-      props.selected
-        ? props.theme.primaryBtnBgd
-        : props.theme.selectBorderColorLT};
-  color: ${props =>
-    props.selected
-      ? props.theme.primaryBtnBgd
-      : props.theme.selectBorderColorLT};
+    ${props => (props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT)};
+  color: ${props => (props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT)};
   cursor: pointer;
   font-weight: 500;
   margin-right: 6px;
@@ -435,8 +420,7 @@ export const StyledModalInputFootnote = styled.div.attrs({
 })`
   display: flex;
   justify-content: flex-end;
-  color: ${props =>
-    props.error ? props.theme.errorColor : props.theme.subtextColorLT};
+  color: ${props => (props.error ? props.theme.errorColor : props.theme.subtextColorLT)};
   font-size: 10px;
 `;
 /**
@@ -497,20 +481,17 @@ export const StyledExportSection = styled.div`
       height: 36px;
 
       background-image: linear-gradient(45deg, transparent 50%, gray 50%),
-        linear-gradient(135deg, gray 50%, transparent 50%),
-        linear-gradient(to right, #ccc, #ccc);
-      background-position: calc(100% - 20px) calc(1em + 2px),
-        calc(100% - 15px) calc(1em + 2px), calc(100% - 2.5em) 4.5em;
+        linear-gradient(135deg, gray 50%, transparent 50%), linear-gradient(to right, #ccc, #ccc);
+      background-position: calc(100% - 20px) calc(1em + 2px), calc(100% - 15px) calc(1em + 2px),
+        calc(100% - 2.5em) 4.5em;
       background-size: 5px 5px, 5px 5px, 1px 1.5em;
       background-repeat: no-repeat;
     }
 
     select:focus {
       background-image: linear-gradient(45deg, green 50%, transparent 50%),
-        linear-gradient(135deg, transparent 50%, green 50%),
-        linear-gradient(to right, #ccc, #ccc);
-      background-position: calc(100% - 15px) 1em, calc(100% - 20px) 1em,
-        calc(100% - 2.5em) 4.5em;
+        linear-gradient(135deg, transparent 50%, green 50%), linear-gradient(to right, #ccc, #ccc);
+      background-position: calc(100% - 15px) 1em, calc(100% - 20px) 1em, calc(100% - 2.5em) 4.5em;
       background-size: 5px 5px, 5px 5px, 1px 1.5em;
       background-repeat: no-repeat;
       border-color: green;
@@ -523,10 +504,7 @@ export const StyledFilteredOption = styled.div`
   align-items: center;
   border-radius: 2px;
   border: 1px solid
-    ${props =>
-      props.selected
-        ? props.theme.primaryBtnBgd
-        : props.theme.selectBorderColorLT};
+    ${props => (props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT)};
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -554,14 +532,8 @@ export const StyledFilteredOption = styled.div`
 export const StyledType = styled.div`
   border-radius: 2px;
   border: 1px solid
-    ${props =>
-      props.selected
-        ? props.theme.primaryBtnBgd
-        : props.theme.selectBorderColorLT};
-  color: ${props =>
-    props.selected
-      ? props.theme.primaryBtnBgd
-      : props.theme.selectBorderColorLT};
+    ${props => (props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT)};
+  color: ${props => (props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT)};
   cursor: pointer;
   font-weight: 500;
   height: 100px;
@@ -581,8 +553,7 @@ export const WidgetContainer = styled.div`
 
 export const BottomWidgetInner = styled.div`
   background-color: ${props => props.theme.panelBackground};
-  padding: ${props =>
-    `${props.theme.bottomInnerPdVert}px ${props.theme.bottomInnerPdSide}px`};
+  padding: ${props => `${props.theme.bottomInnerPdVert}px ${props.theme.bottomInnerPdSide}px`};
   position: relative;
   margin-top: ${props => props.theme.bottomPanelGap}px;
 `;
@@ -592,9 +563,7 @@ export const MapControlButton = styled.div.attrs({
 })`
   align-items: center;
   background-color: ${props =>
-    props.active
-      ? props.theme.panelBackgroundHover
-      : props.theme.panelBackground};
+    props.active ? props.theme.panelBackgroundHover : props.theme.panelBackground};
   border: 0;
   box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.16);
   color: ${props => props.theme.primaryBtnColor};

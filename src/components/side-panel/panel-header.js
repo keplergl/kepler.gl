@@ -65,8 +65,7 @@ const StyledPanelAction = styled.div.attrs({
 })`
   align-items: center;
   border-radius: 2px;
-  color: ${props =>
-    props.active ? props.theme.textColorHl : props.theme.subtextColor};
+  color: ${props => (props.active ? props.theme.textColorHl : props.theme.subtextColor)};
   display: flex;
   height: 26px;
   justify-content: space-between;
@@ -110,12 +109,7 @@ export const PanelAction = ({item, onClick}) => (
       <item.iconComponent height="20px" />
     </a>
     {item.tooltip ? (
-      <Tooltip
-        id={`${item.id}-action`}
-        place="bottom"
-        delayShow={500}
-        effect="solid"
-      >
+      <Tooltip id={`${item.id}-action`} place="bottom" delayShow={500} effect="solid">
         <span>{item.tooltip}</span>
       </Tooltip>
     ) : null}
@@ -164,7 +158,6 @@ export const SaveExportDropdownFactory = PanelHeaderDropdown => {
   const dropdownItemsSelector = getDropdownItemsSelector();
 
   const SaveExportDropdown = props => (
-
     <PanelHeaderDropdown
       items={dropdownItemsSelector(props)}
       show={props.show}
@@ -215,7 +208,7 @@ SaveExportDropdownFactory.deps = [PanelHeaderDropdownFactory];
 export const CloudStorageDropdownFactory = PanelHeaderDropdown => {
   const dropdownItemsSelector = getDropdownItemsSelector();
 
-  const CloudStorageDropdown = (props) => (
+  const CloudStorageDropdown = props => (
     <PanelHeaderDropdown
       items={dropdownItemsSelector(props)}
       show={props.show}
@@ -243,10 +236,7 @@ export const CloudStorageDropdownFactory = PanelHeaderDropdown => {
 };
 CloudStorageDropdownFactory.deps = [PanelHeaderDropdownFactory];
 
-PanelHeaderFactory.deps = [
-  SaveExportDropdownFactory,
-  CloudStorageDropdownFactory
-];
+PanelHeaderFactory.deps = [SaveExportDropdownFactory, CloudStorageDropdownFactory];
 
 function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
   return class PanelHeader extends Component {
@@ -305,7 +295,7 @@ function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
 
       // don't render cloud storage icon if onSaveToStorage is not provided
       if (typeof onSaveToStorage !== 'function') {
-        items = actionItems.filter(ai => ai.id !== 'storage')
+        items = actionItems.filter(ai => ai.id !== 'storage');
       }
 
       return (

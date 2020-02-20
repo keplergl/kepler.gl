@@ -24,10 +24,7 @@ import styled from 'styled-components';
 import FieldSelector from 'components/common/field-selector';
 import {createSelector} from 'reselect';
 
-import {
-  PanelLabel,
-  SidePanelSection
-} from 'components/common/styled-components';
+import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
 
 const TopRow = styled.div`
   display: flex;
@@ -51,13 +48,14 @@ export default class LayerColumnConfig extends Component {
   fieldPairsSelector = createSelector(
     this.columnPairs,
     this.fieldPairs,
-    (columnPairs, fieldPairs) => columnPairs ?
-      fieldPairs.map(fp => ({
-          name: fp.defaultName,
-          type: 'point',
-          pair: fp.pair
-        }))
-      : null
+    (columnPairs, fieldPairs) =>
+      columnPairs
+        ? fieldPairs.map(fp => ({
+            name: fp.defaultName,
+            type: 'point',
+            pair: fp.pair
+          }))
+        : null
   );
 
   _updateColumn(key, value) {
@@ -72,11 +70,7 @@ export default class LayerColumnConfig extends Component {
   }
 
   render() {
-    const {
-      columns,
-      columnLabels,
-      fields
-    } = this.props;
+    const {columns, columnLabels, fields} = this.props;
 
     const fieldPairs = this.fieldPairsSelector(this.props);
 
@@ -91,7 +85,7 @@ export default class LayerColumnConfig extends Component {
             {Object.keys(columns).map(key => (
               <ColumnSelector
                 column={columns[key]}
-                label={columnLabels && columnLabels[key] || key}
+                label={(columnLabels && columnLabels[key]) || key}
                 key={key}
                 allFields={fields}
                 fieldPairs={fieldPairs}
@@ -103,7 +97,7 @@ export default class LayerColumnConfig extends Component {
       </div>
     );
   }
-};
+}
 
 const ColumnRow = styled.div`
   display: flex;

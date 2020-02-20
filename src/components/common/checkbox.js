@@ -27,8 +27,7 @@ import classnames from 'classnames';
 function noop() {}
 
 const StyledSwitchInput = styled.label`
-  ${props =>
-    props.secondary ? props.theme.secondarySwitch : props.theme.inputSwitch};
+  ${props => (props.secondary ? props.theme.secondarySwitch : props.theme.inputSwitch)};
 `;
 
 const StyledCheckboxInput = styled.label`

@@ -39,11 +39,7 @@ import {
 } from 'constants/default-settings';
 import {COLOR_RANGES} from 'constants/color-ranges';
 import {DataVizColors} from 'constants/custom-color-ranges';
-import {
-  LAYER_VIS_CONFIGS,
-  DEFAULT_TEXT_LABEL,
-  DEFAULT_COLOR_UI
-} from './layer-factory';
+import {LAYER_VIS_CONFIGS, DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from './layer-factory';
 
 import {generateHashId, isPlainObject} from 'utils/utils';
 
@@ -61,11 +57,7 @@ import {
   getLogDomain,
   getLinearDomain
 } from 'utils/data-scale-utils';
-import {
-  hexToRgb,
-  getColorGroupByName,
-  reverseColorRange
-} from 'utils/color-utils';
+import {hexToRgb, getColorGroupByName, reverseColorRange} from 'utils/color-utils';
 
 /**
  * Approx. number of points to sample in a large data set
@@ -231,8 +223,7 @@ export default class Layer {
     // find all matched fields for each required col
     const requiredColumns = Object.keys(defaultFields).reduce((prev, key) => {
       const requiredFields = allFields.filter(
-        f =>
-          f.name === defaultFields[key] || defaultFields[key].includes(f.name)
+        f => f.name === defaultFields[key] || defaultFields[key].includes(f.name)
       );
 
       prev[key] = requiredFields.length
@@ -442,15 +433,12 @@ export default class Layer {
     );
 
     // don't copy over domain and animation
-    const notToCopy = ['animation'].concat(
-      Object.values(this.visualChannels).map(v => v.domain)
-    );
+    const notToCopy = ['animation'].concat(Object.values(this.visualChannels).map(v => v.domain));
     // if range is for the same property group copy it, otherwise, not to copy
     Object.values(this.visualChannels).forEach(v => {
       if (
         configToCopy.visConfig[v.range] &&
-        visConfigSettings[v.range].group !==
-          this.visConfigSettings[v.range].group
+        visConfigSettings[v.range].group !== this.visConfigSettings[v.range].group
       ) {
         notToCopy.push(v.range);
       }
@@ -480,11 +468,7 @@ export default class Layer {
    * @param {string[]} notToCopy - array of properties not to copy
    * @returns {object} - copied config
    */
-  copyLayerConfig(
-    currentConfig,
-    configToCopy,
-    {shallowCopy = [], notToCopy = []} = {}
-  ) {
+  copyLayerConfig(currentConfig, configToCopy, {shallowCopy = [], notToCopy = []} = {}) {
     const copied = {};
     Object.keys(currentConfig).forEach(key => {
       if (
@@ -494,18 +478,11 @@ export default class Layer {
         !notToCopy.includes(key)
       ) {
         // recursively assign object value
-        copied[key] = this.copyLayerConfig(
-          currentConfig[key],
-          configToCopy[key],
-          {
-            shallowCopy,
-            notToCopy
-          }
-        );
-      } else if (
-        notNullorUndefined(configToCopy[key]) &&
-        !notToCopy.includes(key)
-      ) {
+        copied[key] = this.copyLayerConfig(currentConfig[key], configToCopy[key], {
+          shallowCopy,
+          notToCopy
+        });
+      } else if (notNullorUndefined(configToCopy[key]) && !notToCopy.includes(key)) {
         // copy
         copied[key] = configToCopy[key];
       } else {
@@ -519,19 +496,11 @@ export default class Layer {
 
   registerVisConfig(layerVisConfigs) {
     Object.keys(layerVisConfigs).forEach(item => {
-      if (
-        typeof item === 'string' &&
-        LAYER_VIS_CONFIGS[layerVisConfigs[item]]
-      ) {
+      if (typeof item === 'string' && LAYER_VIS_CONFIGS[layerVisConfigs[item]]) {
         // if assigned one of default LAYER_CONFIGS
-        this.config.visConfig[item] =
-          LAYER_VIS_CONFIGS[layerVisConfigs[item]].defaultValue;
+        this.config.visConfig[item] = LAYER_VIS_CONFIGS[layerVisConfigs[item]].defaultValue;
         this.visConfigSettings[item] = LAYER_VIS_CONFIGS[layerVisConfigs[item]];
-      } else if (
-        ['type', 'defaultValue'].every(p =>
-          layerVisConfigs[item].hasOwnProperty(p)
-        )
-      ) {
+      } else if (['type', 'defaultValue'].every(p => layerVisConfigs[item].hasOwnProperty(p))) {
         // if provided customized visConfig, and has type && defaultValue
         // TODO: further check if customized visConfig is valid
         this.config.visConfig[item] = layerVisConfigs[item].defaultValue;
@@ -576,18 +545,12 @@ export default class Layer {
       return this;
     }
 
-    const colorUIProp = Object.entries(newConfig).reduce(
-      (accu, [key, value]) => {
-        return {
-          ...accu,
-          [key]:
-            isPlainObject(accu[key]) && isPlainObject(value)
-              ? {...accu[key], ...value}
-              : value
-        };
-      },
-      previous[prop] || DEFAULT_COLOR_UI
-    );
+    const colorUIProp = Object.entries(newConfig).reduce((accu, [key, value]) => {
+      return {
+        ...accu,
+        [key]: isPlainObject(accu[key]) && isPlainObject(value) ? {...accu[key], ...value} : value
+      };
+    }, previous[prop] || DEFAULT_COLOR_UI);
 
     const colorUI = {
       ...previous,
@@ -608,10 +571,7 @@ export default class Layer {
   }
 
   updateCustomPalette(newConfig, previous, prop) {
-    if (
-      !newConfig.colorRangeConfig ||
-      !newConfig.colorRangeConfig.custom
-    ) {
+    if (!newConfig.colorRangeConfig || !newConfig.colorRangeConfig.custom) {
       return;
     }
 
@@ -667,7 +627,7 @@ export default class Layer {
         key =>
           newConfig.colorRangeConfig.hasOwnProperty(key) &&
           newConfig.colorRangeConfig[key] !==
-          (previous[prop] || DEFAULT_COLOR_UI).colorRangeConfig[key]
+            (previous[prop] || DEFAULT_COLOR_UI).colorRangeConfig[key]
       );
     if (!shouldUpdate) return;
 
@@ -680,13 +640,9 @@ export default class Layer {
       const group = getColorGroupByName(colorRange);
 
       if (group) {
-        const sameGroup = COLOR_RANGES.filter(
-          cr => getColorGroupByName(cr) === group
-        );
+        const sameGroup = COLOR_RANGES.filter(cr => getColorGroupByName(cr) === group);
 
-        update = sameGroup.find(
-          cr => cr.colors.length === steps
-        );
+        update = sameGroup.find(cr => cr.colors.length === steps);
 
         if (update && colorRange.reversed) {
           update = reverseColorRange(true, update);
@@ -696,7 +652,7 @@ export default class Layer {
 
     if (newConfig.colorRangeConfig.hasOwnProperty('reversed')) {
       update = reverseColorRange(reversed, update || colorRange);
-    };
+    }
 
     if (update) {
       this.updateLayerVisConfig({[prop]: update});
@@ -758,9 +714,7 @@ export default class Layer {
     // no need to loop through the entire dataset
     // get a sample of data to calculate bounds
     const sampleData =
-      allData.length > MAX_SAMPLE_SIZE
-        ? getSampleData(allData, MAX_SAMPLE_SIZE)
-        : allData;
+      allData.length > MAX_SAMPLE_SIZE ? getSampleData(allData, MAX_SAMPLE_SIZE) : allData;
     const points = sampleData.map(getPosition);
 
     const latBounds = getLatLngBounds(points, 1, [-90, 90]);
@@ -787,7 +741,6 @@ export default class Layer {
     nullValue = NO_VALUE_COLOR,
     getValue = defaultGetFieldValue
   ) {
-
     const {type} = field;
     const value = getValue(field, data);
 
@@ -828,7 +781,7 @@ export default class Layer {
         }),
         {}
       )
-    }
+    };
   }
 
   updateData(datasets, oldLayerData) {
@@ -867,7 +820,6 @@ export default class Layer {
       return this;
     }
     Object.values(this.visualChannels).forEach(channel => {
-
       const {scale} = channel;
       const scaleType = this.config[scale];
       // ordinal domain is based on allData, if only filter changed
@@ -976,12 +928,7 @@ export default class Layer {
     // TODO: refactor to add valueAccessor to field
     const fieldIdx = field.tableFieldIndex - 1;
     const isTime = field.type === ALL_FIELD_TYPES.timestamp;
-    const valueAccessor = maybeToDate.bind(
-      null,
-      isTime,
-      fieldIdx,
-      field.format
-    );
+    const valueAccessor = maybeToDate.bind(null, isTime, fieldIdx, field.format);
     const indexValueAccessor = i => valueAccessor(allData[i]);
 
     const sortFunction = getSortingFunction(field.type);
@@ -994,11 +941,7 @@ export default class Layer {
         return getOrdinalDomain(allData, valueAccessor);
 
       case SCALE_TYPES.quantile:
-        return getQuantileDomain(
-          filteredIndexForDomain,
-          indexValueAccessor,
-          sortFunction
-        );
+        return getQuantileDomain(filteredIndexForDomain, indexValueAccessor, sortFunction);
 
       case SCALE_TYPES.log:
         return getLogDomain(filteredIndexForDomain, indexValueAccessor);
@@ -1013,32 +956,22 @@ export default class Layer {
 
   isLayerHovered(objectInfo) {
     return (
-      objectInfo &&
-      objectInfo.layer &&
-      objectInfo.picked &&
-      objectInfo.layer.props.id === this.id
+      objectInfo && objectInfo.layer && objectInfo.picked && objectInfo.layer.props.id === this.id
     );
   }
 
   getRadiusScaleByZoom(mapState, fixedRadius) {
-    const radiusChannel = Object.values(this.visualChannels).find(
-      vc => vc.property === 'radius'
-    );
+    const radiusChannel = Object.values(this.visualChannels).find(vc => vc.property === 'radius');
 
     if (!radiusChannel) {
       return 1;
     }
 
     const field = radiusChannel.field;
-    const fixed =
-      fixedRadius === undefined
-        ? this.config.visConfig.fixedRadius
-        : fixedRadius;
+    const fixed = fixedRadius === undefined ? this.config.visConfig.fixedRadius : fixedRadius;
     const {radius} = this.config.visConfig;
 
-    return fixed
-      ? 1
-      : (this.config[field] ? 1 : radius) * this.getZoomFactor(mapState);
+    return fixed ? 1 : (this.config[field] ? 1 : radius) * this.getZoomFactor(mapState);
   }
 
   shouldCalculateLayerData(props) {
@@ -1054,7 +987,7 @@ export default class Layer {
       brushingRadius: brush.config.size * 1000,
       brushingTarget: brushingTarget || 'source',
       brushingEnabled: brush.enabled
-    }
+    };
   }
 
   getDefaultDeckLayerProps({idx, gpuFilter, mapState}) {
@@ -1071,7 +1004,7 @@ export default class Layer {
       // data filtering
       extensions: [dataFilterExtension],
       filterRange: gpuFilter.filterRange
-    }
+    };
   }
 
   getDefaultHoverLayerProps() {
@@ -1080,7 +1013,7 @@ export default class Layer {
       pickable: false,
       wrapLongitude: true,
       coordinateSystem: COORDINATE_SYSTEM.LNGLAT
-    }
+    };
   }
 
   renderTextLabelLayer({getPosition, getPixelOffset, updateTriggers, sharedProps}, renderOpts) {
@@ -1126,6 +1059,6 @@ export default class Layer {
         );
       }
       return accu;
-    }, [])
+    }, []);
   }
 }

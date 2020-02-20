@@ -54,9 +54,9 @@ export const datasetColorMaker = generateColor();
 
 function getNewDatasetColor(datasets) {
   const presetColors = datasetColors.map(String);
-  const usedColors = uniq(
-    Object.values(datasets).map(d => String(d.color))
-  ).filter(c => presetColors.includes(c));
+  const usedColors = uniq(Object.values(datasets).map(d => String(d.color))).filter(c =>
+    presetColors.includes(c)
+  );
 
   if (usedColors.length === presetColors.length) {
     // if we already depleted the pool of color
@@ -139,10 +139,7 @@ export function findPointFieldPairs(fields) {
 
         const partnerIdx = allNames.findIndex(d => d === partner);
         if (partnerIdx > -1) {
-          const defaultName = removeSuffixAndDelimiters(
-            fieldName,
-            suffixPair[0]
-          );
+          const defaultName = removeSuffixAndDelimiters(fieldName, suffixPair[0]);
 
           carry.push({
             defaultName,

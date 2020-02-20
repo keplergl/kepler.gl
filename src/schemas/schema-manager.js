@@ -92,19 +92,14 @@ class KeplerGLSchema {
     if (
       arguments.length === 1 &&
       isPlainObject(arguments[0]) &&
-      (Array.isArray(arguments[0].datasets) ||
-        isPlainObject(arguments[0].config))
+      (Array.isArray(arguments[0].datasets) || isPlainObject(arguments[0].config))
     ) {
       return this.load(arguments[0].datasets, arguments[0].config);
     }
 
     return {
-      ...(Array.isArray(savedDatasets)
-        ? {datasets: this.parseSavedData(savedDatasets)}
-        : {}),
-      ...(savedConfig
-        ? {config: this.parseSavedConfig(savedConfig)}
-        : {})
+      ...(Array.isArray(savedDatasets) ? {datasets: this.parseSavedData(savedDatasets)} : {}),
+      ...(savedConfig ? {config: this.parseSavedConfig(savedConfig)} : {})
     };
   }
 
@@ -200,9 +195,7 @@ class KeplerGLSchema {
    */
   validateVersion(version) {
     if (!version) {
-      Console.error(
-        'There is no version number associated with this saved map'
-      );
+      Console.error('There is no version number associated with this saved map');
       return null;
     }
 

@@ -20,11 +20,7 @@
 
 import {createSelector} from 'reselect';
 import memoize from 'lodash.memoize';
-import {
-  CHANNEL_SCALES,
-  SCALE_FUNC,
-  ALL_FIELD_TYPES
-} from 'constants/default-settings';
+import {CHANNEL_SCALES, SCALE_FUNC, ALL_FIELD_TYPES} from 'constants/default-settings';
 import {hexToRgb} from 'utils/color-utils';
 import MapboxGLLayer from '../mapboxgl-layer';
 import HeatmapLayerIcon from './heatmap-layer-icon';
@@ -38,8 +34,7 @@ export const pointPosAccessor = ({lat, lng}) => d => [
   d[lat.fieldIdx]
 ];
 
-export const pointColResolver = ({lat, lng}) =>
-  `${lat.fieldIdx}-${lng.fieldIdx}`;
+export const pointColResolver = ({lat, lng}) => `${lat.fieldIdx}-${lng.fieldIdx}`;
 
 export const heatmapVisConfigs = {
   opacity: 'opacity',
@@ -120,9 +115,7 @@ class HeatmapLayer extends MapboxGLLayer {
         }
       : {
           label: 'weight',
-          measure: this.config.weightField
-            ? this.config.weightField.name
-            : 'Density'
+          measure: this.config.weightField ? this.config.weightField.name : 'Density'
         };
   }
 
@@ -154,8 +147,7 @@ class HeatmapLayer extends MapboxGLLayer {
 
   columnsSelector = config => pointColResolver(config.columns);
   visConfigSelector = config => config.visConfig;
-  weightFieldSelector = config =>
-    config.weightField ? config.weightField.name : null;
+  weightFieldSelector = config => (config.weightField ? config.weightField.name : null);
   weightDomainSelector = config => config.weightDomain;
 
   paintSelector = createSelector(
@@ -164,25 +156,9 @@ class HeatmapLayer extends MapboxGLLayer {
     this.weightDomainSelector,
     (visConfig, weightField, weightDomain) => ({
       'heatmap-weight': weightField
-        ? [
-            'interpolate',
-            ['linear'],
-            ['get', weightField],
-            weightDomain[0],
-            0,
-            weightDomain[1],
-            1
-          ]
+        ? ['interpolate', ['linear'], ['get', weightField], weightDomain[0], 0, weightDomain[1], 1]
         : 1,
-      'heatmap-intensity': [
-        'interpolate',
-        ['linear'],
-        ['zoom'],
-        0,
-        1,
-        MAX_ZOOM_LEVEL,
-        3
-      ],
+      'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 1, MAX_ZOOM_LEVEL, 3],
       'heatmap-color': [
         'interpolate',
         ['linear'],
@@ -207,7 +183,6 @@ class HeatmapLayer extends MapboxGLLayer {
     this.filterSelector,
     this.paintSelector,
     (source, filter, paint) => {
-
       return {
         type: 'heatmap',
         id: this.id,
@@ -223,11 +198,13 @@ class HeatmapLayer extends MapboxGLLayer {
   );
 
   getGeometry(position) {
-    return position.every(Number.isFinite) ? {
-      type: 'Point',
-      coordinates: position
-    } : null;
-  };
+    return position.every(Number.isFinite)
+      ? {
+          type: 'Point',
+          coordinates: position
+        }
+      : null;
+  }
 
   formatLayerData(datasets, oldLayerData) {
     const {weightField} = this.config;

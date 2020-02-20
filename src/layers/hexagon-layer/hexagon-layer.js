@@ -61,11 +61,7 @@ export default class HexagonLayer extends AggregationLayer {
   }
 
   renderLayer(opts) {
-    const {
-      data,
-      objectHovered,
-      mapState
-    } = opts;
+    const {data, objectHovered, mapState} = opts;
     const zoomFactor = this.getZoomFactor(mapState);
     const {visConfig} = this.config;
     const radius = visConfig.worldUnitSize * 1000;
@@ -84,14 +80,7 @@ export default class HexagonLayer extends AggregationLayer {
             new GeoJsonLayer({
               ...this.getDefaultHoverLayerProps(),
               wrapLongitude: false,
-              data: [
-                hexagonToPolygonGeo(
-                  objectHovered,
-                  {},
-                  radius * visConfig.coverage,
-                  mapState
-                )
-              ],
+              data: [hexagonToPolygonGeo(objectHovered, {}, radius * visConfig.coverage, mapState)],
               getLineColor: this.config.highlightColor,
               lineWidthScale: clamp([1, 100], radius * 0.1 * zoomFactor)
             })

@@ -79,12 +79,7 @@ class Tutorials extends PureComponent {
           ))}
         </StaggeredScrollAnimation>
         <CenteredContent>
-          <LinkButton
-            outline
-            large
-            target="_blank"
-            href="https://medium.com/vis-gl"
-          >
+          <LinkButton outline large target="_blank" href="https://medium.com/vis-gl">
             Read More
           </LinkButton>
         </CenteredContent>

@@ -129,11 +129,15 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       this.layerDataSelector,
       this.mapLayersSelector,
       // {[id]: true \ false}
-      (layers, layerData, mapLayers) => layers.reduce((accu, layer, idx) => ({
-        ...accu,
-        [layer.id]: layer.shouldRenderLayer(layerData[idx]) &&
-          this._isVisibleMapLayer(layer, mapLayers)
-      }), {})
+      (layers, layerData, mapLayers) =>
+        layers.reduce(
+          (accu, layer, idx) => ({
+            ...accu,
+            [layer.id]:
+              layer.shouldRenderLayer(layerData[idx]) && this._isVisibleMapLayer(layer, mapLayers)
+          }),
+          {}
+        )
     );
 
     filtersSelector = props => props.filters;
@@ -233,30 +237,21 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       let layerHoverProp = null;
       let position = {x: mousePosition[0], y: mousePosition[1]};
 
-      if (
-        interactionConfig.tooltip.enabled &&
-        objectInfo &&
-        objectInfo.picked
-      ) {
-
+      if (interactionConfig.tooltip.enabled && objectInfo && objectInfo.picked) {
         // if anything hovered
         const {object, layer: overlay} = objectInfo;
 
         // deckgl layer to kepler-gl layer
         const layer = layers[overlay.props.idx];
 
-        if (
-          layer.getHoverData &&
-          layersToRender[layer.id]
-        ) {
+        if (layer.getHoverData && layersToRender[layer.id]) {
           // if layer is visible and have hovered data
           const {
             config: {dataId}
           } = layer;
           const {allData, fields} = datasets[dataId];
           const data = layer.getHoverData(object, allData);
-          const fieldsToShow =
-            interactionConfig.tooltip.config.fieldsToShow[dataId];
+          const fieldsToShow = interactionConfig.tooltip.config.fieldsToShow[dataId];
 
           layerHoverProp = {
             data,
@@ -279,8 +274,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             {...position}
             layerHoverProp={layerHoverProp}
             coordinate={
-              interactionConfig.coordinate.enabled &&
-              ((pinned || {}).coordinate || coordinate)
+              interactionConfig.coordinate.enabled && ((pinned || {}).coordinate || coordinate)
             }
             freezed={Boolean(clicked || pinned)}
             onClose={this._onCloseMapPopover}
@@ -294,8 +288,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     /* eslint-enable complexity */
 
     _getHoverXY(viewport, lngLat) {
-      const screenCoord =
-        !viewport || !lngLat ? null : viewport.project(lngLat);
+      const screenCoord = !viewport || !lngLat ? null : viewport.project(lngLat);
       return screenCoord && {x: screenCoord[0], y: screenCoord[1]};
     }
 
@@ -353,20 +346,24 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         deckGlLayers = layerOrder
           .slice()
           .reverse()
-          .filter(idx => layers[idx].overlayType === OVERLAY_TYPE.deckgl && layersToRender[layers[idx].id])
+          .filter(
+            idx => layers[idx].overlayType === OVERLAY_TYPE.deckgl && layersToRender[layers[idx].id]
+          )
           .reduce(this._renderLayer, []);
       }
 
       if (mapStyle.visibleLayerGroups['3d building']) {
-        deckGlLayers.push(new ThreeDBuildingLayer({
-          id: '_keplergl_3d-building',
-          mapboxApiAccessToken,
-          mapboxApiUrl,
-          threeDBuildingColor: mapStyle.threeDBuildingColor,
-          updateTriggers: {
-            getFillColor:  mapStyle.threeDBuildingColor
-          }
-        }));
+        deckGlLayers.push(
+          new ThreeDBuildingLayer({
+            id: '_keplergl_3d-building',
+            mapboxApiAccessToken,
+            mapboxApiUrl,
+            threeDBuildingColor: mapStyle.threeDBuildingColor,
+            updateTriggers: {
+              getFillColor: mapStyle.threeDBuildingColor
+            }
+          })
+        );
       }
 
       return (
@@ -393,11 +390,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         return;
       }
 
-      updateMapboxLayers(
-        this._map,
-        mapboxLayers,
-        this.previousLayers
-      );
+      updateMapboxLayers(this._map, mapboxLayers, this.previousLayers);
 
       this.previousLayers = mapboxLayers;
     }
@@ -416,10 +409,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     };
 
     _toggleMapControl = panelId => {
-      const {
-        index,
-        uiStateActions
-      } = this.props;
+      const {index, uiStateActions} = this.props;
 
       uiStateActions.toggleMapControl(panelId, index);
     };
@@ -514,11 +504,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           </MapComponent>
           {mapStyle.topMapStyle && (
             <div style={MAP_STYLE.top}>
-              <MapComponent
-                {...mapProps}
-                key="top"
-                mapStyle={mapStyle.topMapStyle}
-              />
+              <MapComponent {...mapProps} key="top" mapStyle={mapStyle.topMapStyle} />
             </div>
           )}
           {this._renderMapPopover(layersToRender)}

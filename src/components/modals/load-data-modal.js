@@ -32,7 +32,7 @@ const loadDataModalFactory = () => {
   const LoadDataModal = props => (
     <StyledLoadDataModal>
       <div className="load-data-modal">
-        <FileUpload {...props}/>
+        <FileUpload {...props} />
       </div>
     </StyledLoadDataModal>
   );

@@ -23,15 +23,14 @@ import keplerGlReducer from 'kepler.gl/reducers';
 import {enhanceReduxMiddleware} from 'kepler.gl/middleware';
 import appReducer from './app-reducer';
 
-const customizedKeplerGlReducer = keplerGlReducer
-  .initialState({
-    uiState: {
-      // hide side panel when mounted
-      activeSidePanel: null,
-      // hide all modals whtn mounted
-      currentModal: null
-    }
-  });
+const customizedKeplerGlReducer = keplerGlReducer.initialState({
+  uiState: {
+    // hide side panel when mounted
+    activeSidePanel: null,
+    // hide all modals whtn mounted
+    currentModal: null
+  }
+});
 
 const reducers = combineReducers({
   keplerGl: customizedKeplerGlReducer,
@@ -41,8 +40,4 @@ const reducers = combineReducers({
 const middlewares = enhanceReduxMiddleware([]);
 const enhancers = [applyMiddleware(...middlewares)];
 
-export default createStore(
-  reducers,
-  {},
-  compose(...enhancers)
-);
+export default createStore(reducers, {}, compose(...enhancers));

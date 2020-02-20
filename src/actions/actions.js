@@ -101,10 +101,7 @@ import {createAction} from 'redux-actions';
  *   })
  * );
  */
-export const addDataToMap = createAction(
-  ActionTypes.ADD_DATA_TO_MAP,
-  data => data
-);
+export const addDataToMap = createAction(ActionTypes.ADD_DATA_TO_MAP, data => data);
 
 /**
  * Reset all sub-reducers to its initial state. This can be used to clear out all configuration in the reducer.
@@ -140,10 +137,10 @@ export const resetMapConfig = createAction(ActionTypes.RESET_MAP_CONFIG);
  * const parsedConfig = KeplerGlSchema.parseSavedConfig(config);
  * this.props.dispatch(receiveMapConfig(parsedConfig));
  */
-export const receiveMapConfig = createAction(
-  ActionTypes.RECEIVE_MAP_CONFIG,
-  (config, options) => ({config, options})
-);
+export const receiveMapConfig = createAction(ActionTypes.RECEIVE_MAP_CONFIG, (config, options) => ({
+  config,
+  options
+}));
 
 /**
  * Initialize kepler.gl reducer. It is used to pass in `mapboxApiAccessToken` to `mapStyle` reducer.

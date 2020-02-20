@@ -61,12 +61,11 @@ export default class ClusterBuilder {
     const clusterer = this.clusterer({clusterRadius, geoJSON});
 
     // map clusters to formatted bins to be passed to deck.gl bin-sorter
-    const clusters = clusterer.getClusters(bbox, zoom)
-      .map((c, i) => ({
-        points: c.properties.points,
-        position: c.geometry.coordinates,
-        index: i
-      }));
+    const clusters = clusterer.getClusters(bbox, zoom).map((c, i) => ({
+      points: c.properties.points,
+      position: c.geometry.coordinates,
+      index: i
+    }));
 
     return clusters;
   }

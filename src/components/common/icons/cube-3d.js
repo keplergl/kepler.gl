@@ -42,4 +42,4 @@ export default class Cube3D extends Component {
       </Base>
     );
   }
-};
+}

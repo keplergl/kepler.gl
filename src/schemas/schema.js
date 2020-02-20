@@ -65,11 +65,7 @@ export default class Schema {
 
   outdatedVersionError() {
     if (!this._isCurrentVersion()) {
-      Console.error(
-        `${this.key} ${
-          this.version
-        } is outdated. save should not be called anymore`
-      );
+      Console.error(`${this.key} ${this.version} is outdated. save should not be called anymore`);
     }
   }
 

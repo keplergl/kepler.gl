@@ -200,30 +200,17 @@ export default class PointLayer extends Layer {
       sizeScale,
       sizeDomain,
       textLabel,
-      visConfig: {
-        radiusRange,
-        fixedRadius,
-        colorRange,
-        strokeColorRange,
-        strokeColor
-      }
+      visConfig: {radiusRange, fixedRadius, colorRange, strokeColorRange, strokeColor}
     } = this.config;
 
     const {gpuFilter} = datasets[this.config.dataId];
-    const {data, triggerChanged} = this.updateData(
-      datasets,
-      oldLayerData
-    );
+    const {data, triggerChanged} = this.updateData(datasets, oldLayerData);
     const getPosition = this.getPositionAccessor();
     // point color
 
     const cScale =
       colorField &&
-      this.getVisChannelScale(
-        colorScale,
-        colorDomain,
-        colorRange.colors.map(hexToRgb)
-      );
+      this.getVisChannelScale(colorScale, colorDomain, colorRange.colors.map(hexToRgb));
 
     // stroke color
     const scScale =
@@ -236,12 +223,9 @@ export default class PointLayer extends Layer {
 
     // point radius
     const rScale =
-      sizeField &&
-      this.getVisChannelScale(sizeScale, sizeDomain, radiusRange, fixedRadius);
+      sizeField && this.getVisChannelScale(sizeScale, sizeDomain, radiusRange, fixedRadius);
 
-    const getRadius = rScale
-      ? d => this.getEncodedChannelValue(rScale, d.data, sizeField, 0)
-      : 1;
+    const getRadius = rScale ? d => this.getEncodedChannelValue(rScale, d.data, sizeField, 0) : 1;
 
     const getFillColor = cScale
       ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
@@ -275,17 +259,10 @@ export default class PointLayer extends Layer {
     const getPosition = this.getPositionAccessor();
     const bounds = this.getPointsBounds(allData, d => getPosition({data: d}));
     this.updateMeta({bounds});
-
   }
 
   renderLayer(opts) {
-    const {
-      data,
-      gpuFilter,
-      objectHovered,
-      mapState,
-      interactionConfig
-    } = opts;
+    const {data, gpuFilter, objectHovered, mapState, interactionConfig} = opts;
 
     const radiusScale = this.getRadiusScaleByZoom(mapState);
 
@@ -322,11 +299,7 @@ export default class PointLayer extends Layer {
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const brushingProps = this.getBrushingExtensionProps(interactionConfig);
-    const getPixelOffset = getTextOffsetByRadius(
-      radiusScale,
-      data.getRadius,
-      mapState
-    );
+    const getPixelOffset = getTextOffsetByRadius(radiusScale, data.getRadius, mapState);
     const extensions = [...defaultLayerProps.extensions, brushingExtension];
 
     const sharedProps = {
@@ -361,16 +334,18 @@ export default class PointLayer extends Layer {
               getRadius: data.getRadius,
               getPosition: data.getPosition
             })
-
           ]
         : []),
       // text label layer
-      ...this.renderTextLabelLayer({
-        getPosition: data.getPosition,
-        sharedProps,
-        getPixelOffset,
-        updateTriggers
-      }, opts)
+      ...this.renderTextLabelLayer(
+        {
+          getPosition: data.getPosition,
+          sharedProps,
+          getPixelOffset,
+          updateTriggers
+        },
+        opts
+      )
     ];
   }
 }

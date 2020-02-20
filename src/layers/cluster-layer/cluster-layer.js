@@ -65,13 +65,7 @@ export default class ClusterLayer extends AggregationLayer {
 
   renderLayer(opts) {
     const {visConfig} = this.config;
-    const {
-      data,
-      gpuFilter,
-      objectHovered,
-      mapState,
-      layerCallbacks
-    } = opts;
+    const {data, gpuFilter, objectHovered, mapState, layerCallbacks} = opts;
 
     const updateTriggers = {
       getColorValue: {
@@ -113,17 +107,17 @@ export default class ClusterLayer extends AggregationLayer {
       }),
       // hover layer
       ...(this.isLayerHovered(objectHovered)
-      ? [
-          new ScatterplotLayer({
-            id: `${this.id}-hovered`,
-            data: [objectHovered.object],
-            getFillColor: this.config.highlightColor,
-            getRadius: d => d.radius,
-            radiusScale: 1,
-            pickable: false
-          })
-        ]
-      : [])
+        ? [
+            new ScatterplotLayer({
+              id: `${this.id}-hovered`,
+              data: [objectHovered.object],
+              getFillColor: this.config.highlightColor,
+              getRadius: d => d.radius,
+              radiusScale: 1,
+              pickable: false
+            })
+          ]
+        : [])
     ];
   }
 }

@@ -39,8 +39,7 @@ const StyledDatasetTitle = styled.div`
     cursor: ${props => (props.clickable ? 'pointer' : 'auto')};
 
     .dataset-name {
-      color: ${props =>
-        props.clickable ? props.theme.textColorHl : props.theme.textColor};
+      color: ${props => (props.clickable ? props.theme.textColorHl : props.theme.textColor)};
     }
 
     .dataset-action {
@@ -61,11 +60,7 @@ const DataTagAction = styled.div`
 `;
 
 const ShowDataTable = ({id, showDatasetTable = nop}) => (
-  <DataTagAction
-    className="dataset-action show-data-table"
-    data-tip
-    data-for={`data-table-${id}`}
-  >
+  <DataTagAction className="dataset-action show-data-table" data-tip data-for={`data-table-${id}`}>
     <Table
       height="16px"
       onClick={e => {
@@ -102,8 +97,7 @@ DatasetTitleFactory.deps = [DatasetTagFactory];
 
 export default function DatasetTitleFactory(DatasetTag) {
   class DatasetTitle extends PureComponent {
-
-    _onClickTitle = (e) => {
+    _onClickTitle = e => {
       e.stopPropagation();
       if (typeof this.props.onTitleClick === 'function') {
         this.props.onTitleClick();
@@ -133,16 +127,10 @@ export default function DatasetTitleFactory(DatasetTag) {
             </CenterFlexbox>
           ) : null}
           {showDatasetTable ? (
-            <ShowDataTable
-              id={dataset.id}
-              showDatasetTable={showDatasetTable}
-            />
+            <ShowDataTable id={dataset.id} showDatasetTable={showDatasetTable} />
           ) : null}
           {showDeleteDataset ? (
-            <RemoveDataset
-              datasetKey={dataset.id}
-              removeDataset={removeDataset}
-            />
+            <RemoveDataset datasetKey={dataset.id} removeDataset={removeDataset} />
           ) : null}
         </StyledDatasetTitle>
       );

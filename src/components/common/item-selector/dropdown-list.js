@@ -48,14 +48,8 @@ export default class DropdownList extends Component {
     allowCustomValues: PropTypes.number,
     customClasses: PropTypes.object,
     customValues: PropTypes.arrayOf(PropTypes.any),
-    customListItemComponent: PropTypes.oneOfType([
-      PropTypes.element,
-      PropTypes.func
-    ]),
-    customListHeaderComponent: PropTypes.oneOfType([
-      PropTypes.element,
-      PropTypes.func
-    ]),
+    customListItemComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
+    customListHeaderComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
     selectionIndex: PropTypes.number,
     onOptionSelected: PropTypes.func,
     displayOption: PropTypes.func.isRequired,
@@ -115,10 +109,7 @@ export default class DropdownList extends Component {
                 onMouseDown={e => this._onClick(value, e)}
                 onClick={e => this._onClick(value, e)}
               >
-                <this.props.customListItemComponent
-                  value={value}
-                  displayOption={display}
-                />
+                <this.props.customListItemComponent value={value} displayOption={display} />
               </div>
             ))}
           </div>
@@ -133,13 +124,10 @@ export default class DropdownList extends Component {
             onMouseDown={e => this._onClick(value, e)}
             onClick={e => this._onClick(value, e)}
           >
-            <this.props.customListItemComponent
-              value={value}
-              displayOption={display}
-            />
+            <this.props.customListItemComponent value={value} displayOption={display} />
           </div>
         ))}
       </DropdownListWrapper>
     );
   }
-};
+}

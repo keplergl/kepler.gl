@@ -34,9 +34,7 @@ export function getFileHandler(fileBlob) {
 export function getFileType(filename) {
   if (filename.endsWith('csv')) {
     return 'csv';
-  }
-
-  else if (filename.endsWith('json') || filename.endsWith('geojson')) {
+  } else if (filename.endsWith('json') || filename.endsWith('geojson')) {
     // Read GeoJson from browser
     return 'json';
   }
@@ -57,9 +55,7 @@ function readCSVFile(fileBlob) {
 }
 
 export function loadCsv(fileBlob, processor = processCsvData) {
-  return readCSVFile(fileBlob).then(
-    rawData => (rawData ? processor(rawData) : null)
-  );
+  return readCSVFile(fileBlob).then(rawData => (rawData ? processor(rawData) : null));
 }
 
 function readJSONFile(fileBlob) {
@@ -97,8 +93,7 @@ export function determineJsonProcess(jsonData, defaultProcessor) {
 }
 
 export function loadJSON(fileBlob, processor = processGeojson) {
-  return readJSONFile(fileBlob).then(
-    rawData =>
-      rawData ? determineJsonProcess(rawData, processor)(rawData) : null
+  return readJSONFile(fileBlob).then(rawData =>
+    rawData ? determineJsonProcess(rawData, processor)(rawData) : null
   );
 }

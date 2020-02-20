@@ -24,22 +24,28 @@ import {StyledFilterPanel} from './components';
 import {LAYER_TYPES} from 'constants';
 
 const layerFilter = layer => layer.type === LAYER_TYPES.point;
-const isAlreadySelected = (selectedLayers, layerId) => selectedLayers.findIndex(l => l.id === layerId) === -1;
+const isAlreadySelected = (selectedLayers, layerId) =>
+  selectedLayers.findIndex(l => l.id === layerId) === -1;
 
 function PolygonFilterFactory() {
   const PolygonFilter = React.memo(({filter, layers, setLayers}) => {
+    const setNewLayers = useCallback(
+      newLayers => {
+        return setLayers(newLayers.map(l => l.id));
+      },
+      [layers, setLayers]
+    );
 
-    const setNewLayers = useCallback(newLayers => {
-      return setLayers(newLayers.map(l => l.id));
-    }, [layers, setLayers]);
-
-    const selectedLayers = useMemo(() =>
-        layers.filter(l => filter.layerId.includes(l.id)),
-      [filter, layers]);
+    const selectedLayers = useMemo(() => layers.filter(l => filter.layerId.includes(l.id)), [
+      filter,
+      layers
+    ]);
 
     const availableLayers = useMemo(() => {
       // remove already added layers and filter out non point layers
-      return layers.filter(layer => layerFilter(layer) && isAlreadySelected(selectedLayers, layer.id));
+      return layers.filter(
+        layer => layerFilter(layer) && isAlreadySelected(selectedLayers, layer.id)
+      );
     }, [layers, selectedLayers]);
 
     return (
@@ -55,7 +61,7 @@ function PolygonFilterFactory() {
           displayOption={l => l.config.label}
         />
       </div>
-    )
+    );
   });
 
   PolygonFilter.displayName = 'PolygonFilter';
@@ -63,4 +69,4 @@ function PolygonFilterFactory() {
   return PolygonFilter;
 }
 
-export default PolygonFilterFactory
+export default PolygonFilterFactory;

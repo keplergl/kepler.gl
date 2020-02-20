@@ -24,7 +24,7 @@ import styled from 'styled-components';
 
 const StyledSideBarContainer = styled.div`
   .side-panel--container {
-    transform:scale(0.85);
+    transform: scale(0.85);
     transform-origin: top left;
     height: 117.64%;
     padding-top: 0;
@@ -50,14 +50,11 @@ const StyledCloseButton = styled.div`
     cursor: pointer;
     background-color: ${props => props.theme.primaryBtnBgdHover};
   }
-`
+`;
 
 const CloseButtonFactory = () => {
   const CloseButton = ({onClick, isOpen}) => (
-    <StyledCloseButton
-      className="side-bar__close"
-      onClick={onClick}
-    >
+    <StyledCloseButton className="side-bar__close" onClick={onClick}>
       <Icons.ArrowRight
         height="18px"
         style={{transform: `rotate(${isOpen ? 180 : 0}deg)`, marginLeft: isOpen ? 0 : '30px'}}
@@ -71,9 +68,9 @@ const CloseButtonFactory = () => {
 // adding a wrapper component to edit its style
 function CustomSidebarFactory(CloseButton) {
   const SideBar = SidebarFactory(CloseButton);
-  const CustomSidebar = (props) => (
+  const CustomSidebar = props => (
     <StyledSideBarContainer>
-      <SideBar {...props}/>
+      <SideBar {...props} />
     </StyledSideBarContainer>
   );
   return CustomSidebar;
@@ -83,4 +80,3 @@ function CustomSidebarFactory(CloseButton) {
 CustomSidebarFactory.deps = [CloseButtonFactory];
 
 export default CustomSidebarFactory;
-

@@ -91,19 +91,14 @@ export function AddDataButtonFactory() {
   return AddDataButton;
 }
 
-LayerManagerFactory.deps = [
-  AddDataButtonFactory,
-  LayerPanelFactory,
-  SourceDataCatalogFactory
-];
+LayerManagerFactory.deps = [AddDataButtonFactory, LayerPanelFactory, SourceDataCatalogFactory];
 
 function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
   // By wrapping layer panel using a sortable element we don't have to implement the drag and drop logic into the panel itself;
   // Developers can provide any layer panel implementation and it will still be sortable
   const SortableItem = sortableElement(({children, isSorting}) => {
     return (
-      <SortableStyledItem
-        className={classnames('sortable-layer-items', {sorting: isSorting})}>
+      <SortableStyledItem className={classnames('sortable-layer-items', {sorting: isSorting})}>
         {children}
       </SortableStyledItem>
     );
@@ -136,7 +131,7 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
     };
     state = {
       isSorting: false
-    }
+    };
 
     layerClassSelector = props => props.layerClasses;
     layerTypeOptionsSelector = createSelector(
@@ -157,9 +152,7 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
     };
 
     _handleSort = ({oldIndex, newIndex}) => {
-      this.props.updateLayerOrder(
-        arrayMove(this.props.layerOrder, oldIndex, newIndex)
-      );
+      this.props.updateLayerOrder(arrayMove(this.props.layerOrder, oldIndex, newIndex));
       this.setState({isSorting: false});
     };
 
@@ -174,15 +167,10 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
       if (layers[layerIdx].config.isConfigActive) {
         layerConfigChange(layers[layerIdx], {isConfigActive: false});
       }
-    }
+    };
 
     render() {
-      const {
-        layers,
-        datasets,
-        layerOrder,
-        openModal
-      } = this.props;
+      const {layers, datasets, layerOrder, openModal} = this.props;
       const defaultDataset = Object.keys(datasets)[0];
       const layerTypeOptions = this.layerTypeOptionsSelector(this.props);
 
@@ -210,10 +198,7 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
             removeDataset={this.props.removeDataset}
             showDeleteDataset
           />
-          <AddDataButton
-            onClick={this.props.showAddDataModal}
-            isInactive={!defaultDataset}
-          />
+          <AddDataButton onClick={this.props.showAddDataModal} isInactive={!defaultDataset} />
           <SidePanelDivider />
           <SidePanelSection>
             <SortableContainer

@@ -48,9 +48,7 @@ export const FieldListItemFactory = (showToken = true) => {
           <FieldToken type={value.type} />
         </StyledToken>
       ) : null}
-      <span className={classList.listItemAnchor}>
-        {displayOption(value)}
-      </span>
+      <span className={classList.listItemAnchor}>{displayOption(value)}</span>
     </StyledFieldItem>
   );
 
@@ -73,10 +71,7 @@ const FieldType = PropTypes.oneOfType([
 
 export default class FieldSelector extends Component {
   static propTypes = {
-    fields: PropTypes.oneOfType([
-      PropTypes.array,
-      PropTypes.arrayOf(FieldType)
-    ]),
+    fields: PropTypes.oneOfType([PropTypes.array, PropTypes.arrayOf(FieldType)]),
     onSelect: PropTypes.func.isRequired,
     placement: PropTypes.string,
     value: FieldType,
@@ -113,11 +108,7 @@ export default class FieldSelector extends Component {
     this.fieldsSelector,
     this.valueSelector,
     (fields, value) =>
-      fields.filter(f =>
-        (Array.isArray(value) ? value : [value]).includes(
-          defaultDisplayOption(f)
-        )
-      )
+      fields.filter(f => (Array.isArray(value) ? value : [value]).includes(defaultDisplayOption(f)))
   );
 
   fieldOptionsSelector = createSelector(
@@ -127,9 +118,7 @@ export default class FieldSelector extends Component {
       if (!filterFieldTypes) {
         return fields;
       }
-      const filters = Array.isArray(filterFieldTypes)
-        ? filterFieldTypes
-        : [filterFieldTypes];
+      const filters = Array.isArray(filterFieldTypes) ? filterFieldTypes : [filterFieldTypes];
       return fields.filter(f => filters.includes(f.type));
     }
   );
@@ -157,14 +146,10 @@ export default class FieldSelector extends Component {
           placeholder={this.props.placeholder}
           placement={this.props.placement}
           onChange={this.props.onSelect}
-          DropDownLineItemRenderComponent={this.fieldListItemSelector(
-            this.props
-          )}
-          DropdownHeaderComponent={
-            this.props.suggested ? SuggestedFieldHeader : null
-          }
+          DropDownLineItemRenderComponent={this.fieldListItemSelector(this.props)}
+          DropdownHeaderComponent={this.props.suggested ? SuggestedFieldHeader : null}
         />
       </div>
     );
   }
-};
+}

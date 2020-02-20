@@ -30,59 +30,61 @@ TimeRangeFilterPanelFactory.deps = [
   SourceDataSelectorFactory
 ];
 
-function TimeRangeFilterPanelFactory(
-  FieldPanelWithFieldSelect,
-  TimeRangeFilter
-) {
-  const TimeRangeFilterPanel = React.memo(({
-    idx,
-    datasets,
-    allAvailableFields,
-    filter,
-    isAnyFilterAnimating,
-    enlargeFilter,
-    setFilter,
-    removeFilter,
-    toggleAnimation
-  }) => {
-    const onSetFilter = useCallback(value =>
-        setFilter(idx, 'value', value),
-      [idx, setFilter]);
+function TimeRangeFilterPanelFactory(FieldPanelWithFieldSelect, TimeRangeFilter) {
+  const TimeRangeFilterPanel = React.memo(
+    ({
+      idx,
+      datasets,
+      allAvailableFields,
+      filter,
+      isAnyFilterAnimating,
+      enlargeFilter,
+      setFilter,
+      removeFilter,
+      toggleAnimation
+    }) => {
+      const onSetFilter = useCallback(value => setFilter(idx, 'value', value), [idx, setFilter]);
 
-    const panelActions = useMemo(() => ([{
-      id: filter.id,
-      onClick: enlargeFilter,
-      tooltip: 'Time Playback',
-      iconComponent: Clock,
-      active: filter.enlarged
-    }]), [filter.id, filter.enlargeFilter, enlargeFilter]);
+      const panelActions = useMemo(
+        () => [
+          {
+            id: filter.id,
+            onClick: enlargeFilter,
+            tooltip: 'Time Playback',
+            iconComponent: Clock,
+            active: filter.enlarged
+          }
+        ],
+        [filter.id, filter.enlargeFilter, enlargeFilter]
+      );
 
-    return (
-      <>
-        <FieldPanelWithFieldSelect
-          allAvailableFields={allAvailableFields}
-          datasets={datasets}
-          filter={filter}
-          idx={idx}
-          removeFilter={removeFilter}
-          setFilter={setFilter}
-          panelActions={panelActions}
-        >
-          {filter.type && !filter.enlarged && (
-            <div className="filter-panel__filter">
-              <TimeRangeFilter
-                filter={filter}
-                idx={idx}
-                isAnyFilterAnimating={isAnyFilterAnimating}
-                toggleAnimation={toggleAnimation}
-                setFilter={onSetFilter}
-              />
-            </div>
-          )}
-        </FieldPanelWithFieldSelect>
-      </>
-    );
-  });
+      return (
+        <>
+          <FieldPanelWithFieldSelect
+            allAvailableFields={allAvailableFields}
+            datasets={datasets}
+            filter={filter}
+            idx={idx}
+            removeFilter={removeFilter}
+            setFilter={setFilter}
+            panelActions={panelActions}
+          >
+            {filter.type && !filter.enlarged && (
+              <div className="filter-panel__filter">
+                <TimeRangeFilter
+                  filter={filter}
+                  idx={idx}
+                  isAnyFilterAnimating={isAnyFilterAnimating}
+                  toggleAnimation={toggleAnimation}
+                  setFilter={onSetFilter}
+                />
+              </div>
+            )}
+          </FieldPanelWithFieldSelect>
+        </>
+      );
+    }
+  );
 
   TimeRangeFilterPanel.displayName = 'TimeRangeFilterPanel';
 

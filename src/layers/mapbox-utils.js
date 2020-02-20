@@ -39,9 +39,7 @@ export function generateMapboxLayers(
       .slice()
       .reverse()
       .filter(
-        idx =>
-          layers[idx].overlayType === OVERLAY_TYPE.mapboxgl &&
-          layersToRender[layers[idx].id]
+        idx => layers[idx].overlayType === OVERLAY_TYPE.mapboxgl && layersToRender[layers[idx].id]
       )
       .reduce((accu, index) => {
         const layer = layers[index];
@@ -81,8 +79,7 @@ export function updateMapboxLayers(map, newLayers = {}, oldLayers = null) {
       return;
     }
 
-    const {data: oldData, config: oldConfig} =
-      (oldLayers && oldLayers[layerId]) || {};
+    const {data: oldData, config: oldConfig} = (oldLayers && oldLayers[layerId]) || {};
 
     if (data && data !== oldData) {
       updateSourceData(map, sourceId, data);
@@ -145,7 +142,6 @@ export function geoJsonFromData(
   getGeometry,
   getProperties = (d, i) => {}
 ) {
-
   const geojson = {
     type: 'FeatureCollection',
     features: []
@@ -171,13 +167,10 @@ export function geoJsonFromData(
   return geojson;
 }
 
-export const prefixGpuField = (name) => `gpu:${name}`
+export const prefixGpuField = name => `gpu:${name}`;
 
 export function gpuFilterToMapboxFilter(gpuFilter) {
-  const {
-    filterRange,
-    filterValueUpdateTriggers
-  } = gpuFilter;
+  const {filterRange, filterValueUpdateTriggers} = gpuFilter;
 
   const hasFilter = Object.values(filterValueUpdateTriggers).filter(d => d);
 
@@ -203,4 +196,3 @@ export function gpuFilterToMapboxFilter(gpuFilter) {
 
   return expressions;
 }
-

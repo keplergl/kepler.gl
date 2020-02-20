@@ -40,4 +40,4 @@ export default class Share extends Component {
       </Base>
     );
   }
-};
+}

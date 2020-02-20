@@ -45,6 +45,6 @@ class DefaultLayerIcon extends Component {
       </Base>
     );
   }
-};
+}
 
 export default DefaultLayerIcon;

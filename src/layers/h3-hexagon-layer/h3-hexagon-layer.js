@@ -167,20 +167,14 @@ export default class HexagonIdLayer extends Layer {
     // color
     const cScale =
       colorField &&
-      this.getVisChannelScale(
-        colorScale,
-        colorDomain,
-        colorRange.colors.map(c => hexToRgb(c))
-      );
+      this.getVisChannelScale(colorScale, colorDomain, colorRange.colors.map(c => hexToRgb(c)));
 
     // height
-    const sScale =
-      sizeField && this.getVisChannelScale(sizeScale, sizeDomain, sizeRange, 0);
+    const sScale = sizeField && this.getVisChannelScale(sizeScale, sizeDomain, sizeRange, 0);
 
     // coverage
     const coScale =
-      coverageField &&
-      this.getVisChannelScale(coverageScale, coverageDomain, coverageRange, 0);
+      coverageField && this.getVisChannelScale(coverageScale, coverageDomain, coverageRange, 0);
 
     const getElevation = sScale
       ? d => this.getEncodedChannelValue(sScale, d.data, sizeField, 0)
@@ -222,12 +216,7 @@ export default class HexagonIdLayer extends Layer {
   }
 
   renderLayer(opts) {
-    const {
-      data,
-      gpuFilter,
-      objectHovered,
-      mapState
-    } = opts;
+    const {data, gpuFilter, objectHovered, mapState} = opts;
 
     const zoomFactor = this.getZoomFactor(mapState);
     const eleZoomFactor = this.getElevationZoomFactor(mapState);

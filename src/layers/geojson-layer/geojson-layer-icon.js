@@ -65,4 +65,4 @@ export default class GeojsonLayerIcon extends Component {
       </Base>
     );
   }
-};
+}

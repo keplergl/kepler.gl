@@ -22,14 +22,16 @@ import {createAction} from 'redux-actions';
 import keyMirror from 'keymirror';
 import {addPrefix} from 'constants/action-types';
 
-export const ActionTypes = addPrefix(keyMirror({
-  EXPORT_FILE_TO_CLOUD: null,
-  EXPORT_FILE_SUCCESS: null,
-  EXPORT_FILE_ERROR: null,
-  RESET_PROVIDER_STATUS: null,
-  SET_CLOUD_PROVIDER: null,
-  SAVE_TO_CLOUD_SUCCESS: null
-}));
+export const ActionTypes = addPrefix(
+  keyMirror({
+    EXPORT_FILE_TO_CLOUD: null,
+    EXPORT_FILE_SUCCESS: null,
+    EXPORT_FILE_ERROR: null,
+    RESET_PROVIDER_STATUS: null,
+    SET_CLOUD_PROVIDER: null,
+    SAVE_TO_CLOUD_SUCCESS: null
+  })
+);
 
 export const exportFileToCloud = createAction(
   ActionTypes.EXPORT_FILE_TO_CLOUD,
@@ -53,15 +55,8 @@ export const exportFileError = createAction(
   ({error, provider, onError}) => ({error, provider, onError})
 );
 
-export const saveToCloudSuccess = createAction(
-  ActionTypes.SAVE_TO_CLOUD_SUCCESS
-)
+export const saveToCloudSuccess = createAction(ActionTypes.SAVE_TO_CLOUD_SUCCESS);
 
-export const resetProviderStatus = createAction(
-  ActionTypes.RESET_PROVIDER_STATUS
-);
+export const resetProviderStatus = createAction(ActionTypes.RESET_PROVIDER_STATUS);
 
-export const setCloudProvider = createAction(
-  ActionTypes.SET_CLOUD_PROVIDER,
-  provider => provider
-);
+export const setCloudProvider = createAction(ActionTypes.SET_CLOUD_PROVIDER, provider => provider);

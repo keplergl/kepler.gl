@@ -61,7 +61,7 @@ export function getH3VerticeTransform(rawVertices, centroid) {
   const vertices = revertVertices(rawVertices.map(vt => offset(vt, centroid)));
   const radius = getRadius(vertices[0], vertices[3]);
 
-  const angle = getAngle(vertices[0], vertices[3])
+  const angle = getAngle(vertices[0], vertices[3]);
 
   // rotate hexagon vertices, so that v0 - v3 axis parallel with xAxis
   //   2___1
@@ -75,15 +75,13 @@ export function getH3VerticeTransform(rawVertices, centroid) {
   const normalVertices = getHexagonVertices(radius);
 
   // calculate distortion
-  return getDistortions(rotatedVertices, normalVertices)
+  return getDistortions(rotatedVertices, normalVertices);
 }
 
 // Vertices index based on
 // https://github.com/uber/luma.gl/blob/master/modules/core/src/geometry/truncated-cone-geometry.js
 export function distortCylinderPositions(positions, distortions) {
-
-  const primitives = distortions.map(({dr, da}, i) =>
-    getPtOnCircle(dr, da + Math.PI * i / 3));
+  const primitives = distortions.map(({dr, da}, i) => getPtOnCircle(dr, da + (Math.PI * i) / 3));
   // close it
   primitives.push(primitives[0]);
 
@@ -105,8 +103,8 @@ function offset([px, py], [x0, y0]) {
 function rotate([cx, cy], [x, y], radians) {
   const cos = Math.cos(radians);
   const sin = Math.sin(radians);
-  const nx = (cos * (x - cx)) + (sin * (y - cy)) + cx;
-  const ny = (cos * (y - cy)) - (sin * (x - cx)) + cy;
+  const nx = cos * (x - cx) + sin * (y - cy) + cx;
+  const ny = cos * (y - cy) - sin * (x - cx) + cy;
 
   return [nx, ny];
 }
@@ -134,14 +132,14 @@ export function getAngle(pt0, pt3) {
 }
 
 function getPtOnCircle(radius, angle) {
-  return [radius *  Math.cos(angle), radius *  Math.sin(angle)];
+  return [radius * Math.cos(angle), radius * Math.sin(angle)];
 }
 
 function getHexagonVertices(r) {
   const ang60 = Math.PI / 3;
-  const pts = []
+  const pts = [];
   for (let i = 0; i < 6; i++) {
-    pts.push(getPtOnCircle(r, ang60 * i))
+    pts.push(getPtOnCircle(r, ang60 * i));
   }
 
   return pts;
@@ -163,7 +161,7 @@ function getDistortions(vts, origs) {
     const org = origs[i];
 
     const r = getRadius(org, ct);
-    const dr = getRadius(vt, ct) / r
+    const dr = getRadius(vt, ct) / r;
 
     const da = Math.atan2(vt[1], vt[0]) - Math.atan2(org[1], org[0]);
 

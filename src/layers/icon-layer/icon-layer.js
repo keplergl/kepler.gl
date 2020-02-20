@@ -33,10 +33,7 @@ const brushingExtension = new BrushingExtension();
 
 export const SVG_ICON_URL = `${CLOUDFRONT}/icons/svg-icons.json`;
 
-export const iconPosAccessor = ({lat, lng}) => d => [
-  d.data[lng.fieldIdx],
-  d.data[lat.fieldIdx]
-];
+export const iconPosAccessor = ({lat, lng}) => d => [d.data[lng.fieldIdx], d.data[lat.fieldIdx]];
 export const iconAccessor = ({icon}) => d => d.data[icon.fieldIdx];
 
 export const iconRequiredColumns = ['lat', 'lng', 'icon'];
@@ -53,13 +50,9 @@ function flatterIconPositions(icon) {
   // had to flip y, since @luma modal has changed
   return icon.mesh.cells.reduce((prev, cell) => {
     cell.forEach(p => {
-      prev.push(...(
-        [
-          icon.mesh.positions[p][0],
-          -icon.mesh.positions[p][1],
-          icon.mesh.positions[p][2]
-        ]
-      ))
+      prev.push(
+        ...[icon.mesh.positions[p][0], -icon.mesh.positions[p][1], icon.mesh.positions[p][2]]
+      );
     });
     return prev;
   }, []);
@@ -125,8 +118,8 @@ export default class IconLayer extends Layer {
     };
 
     if (window.fetch) {
-
-      window.fetch(SVG_ICON_URL, fetchConfig)
+      window
+        .fetch(SVG_ICON_URL, fetchConfig)
         .then(response => response.json())
         .then((parsed = {}) => {
           const {svgIcons = []} = parsed;
@@ -139,7 +132,7 @@ export default class IconLayer extends Layer {
           );
 
           this._layerInfoModal = IconInfoModalFactory(svgIcons);
-      });
+        });
     }
   }
 
@@ -218,26 +211,17 @@ export default class IconLayer extends Layer {
     const getPosition = this.getPositionAccessor();
 
     const {gpuFilter} = datasets[this.config.dataId];
-    const {data, triggerChanged} = this.updateData(
-      datasets,
-      oldLayerData
-    );
+    const {data, triggerChanged} = this.updateData(datasets, oldLayerData);
 
     // point color
     const cScale =
       colorField &&
-      this.getVisChannelScale(
-        colorScale,
-        colorDomain,
-        colorRange.colors.map(hexToRgb)
-      );
+      this.getVisChannelScale(colorScale, colorDomain, colorRange.colors.map(hexToRgb));
 
     // point radius
-    const rScale =
-      sizeField && this.getVisChannelScale(sizeScale, sizeDomain, radiusRange, 0);
+    const rScale = sizeField && this.getVisChannelScale(sizeScale, sizeDomain, radiusRange, 0);
 
-    const getRadius = rScale ? d =>
-      this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
+    const getRadius = rScale ? d => this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
 
     const getFillColor = cScale
       ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
@@ -267,13 +251,7 @@ export default class IconLayer extends Layer {
   }
 
   renderLayer(opts) {
-    const {
-      data,
-      gpuFilter,
-      objectHovered,
-      mapState,
-      interactionConfig
-    } = opts;
+    const {data, gpuFilter, objectHovered, mapState, interactionConfig} = opts;
 
     const radiusScale = this.getRadiusScaleByZoom(mapState);
 
@@ -299,11 +277,7 @@ export default class IconLayer extends Layer {
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const brushingProps = this.getBrushingExtensionProps(interactionConfig);
-    const getPixelOffset = getTextOffsetByRadius(
-      radiusScale,
-      data.getRadius,
-      mapState
-    );
+    const getPixelOffset = getTextOffsetByRadius(radiusScale, data.getRadius, mapState);
     const extensions = [...defaultLayerProps.extensions, brushingExtension];
 
     // shared Props between layer and label layer
@@ -315,13 +289,16 @@ export default class IconLayer extends Layer {
     };
 
     const labelLayers = [
-      ...this.renderTextLabelLayer({
-        getPosition: data.getPosition,
-        sharedProps,
-        getPixelOffset,
-        updateTriggers
-      }, opts)
-    ]
+      ...this.renderTextLabelLayer(
+        {
+          getPosition: data.getPosition,
+          sharedProps,
+          getPixelOffset,
+          updateTriggers
+        },
+        opts
+      )
+    ];
 
     return !this.iconGeometry
       ? []

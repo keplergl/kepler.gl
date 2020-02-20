@@ -80,9 +80,7 @@ const EntryInfoRow = ({name, fields, data}) => {
   const valueIdx = field.tableFieldIndex - 1;
   const displayValue = parseFieldValue(data[valueIdx], field.type);
 
-  return (
-    <Row name={name} value={displayValue} />
-  );
+  return <Row name={name} value={displayValue} />;
 };
 
 const CellInfo = ({data, layer}) => {
@@ -90,11 +88,7 @@ const CellInfo = ({data, layer}) => {
 
   return (
     <tbody>
-      <Row
-        name={'total points'}
-        key="count"
-        value={data.points && data.points.length}
-      />
+      <Row name={'total points'} key="count" value={data.points && data.points.length} />
       {colorField && layer.visualChannels.color ? (
         <Row
           name={layer.getVisualChannelDescription('color').measure}
@@ -128,11 +122,7 @@ const LayerHoverInfoFactory = () => {
           {props.layer.config.label}
         </StyledLayerName>
         <table className="map-popover__table">
-          {props.layer.isAggregated ? (
-            <CellInfo {...props} />
-          ) : (
-            <EntryInfo {...props} />
-          )}
+          {props.layer.isAggregated ? <CellInfo {...props} /> : <EntryInfo {...props} />}
         </table>
       </div>
     );
@@ -142,11 +132,8 @@ const LayerHoverInfoFactory = () => {
     fields: PropTypes.arrayOf(PropTypes.any),
     fieldsToShow: PropTypes.arrayOf(PropTypes.any),
     layer: PropTypes.object,
-    data: PropTypes.oneOfType([
-      PropTypes.arrayOf(PropTypes.any),
-      PropTypes.object
-    ])
-  }
+    data: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.any), PropTypes.object])
+  };
   return LayerHoverInfo;
 };
 

@@ -20,16 +20,9 @@
 
 import {Analyzer, DATA_TYPES} from 'type-analyzer';
 
-import {
-  getSampleData,
-  timeToUnixMilli,
-  notNullorUndefined
-} from 'utils/data-utils';
+import {getSampleData, timeToUnixMilli, notNullorUndefined} from 'utils/data-utils';
 
-import {
-  parseGeoJsonRawFeature,
-  getGeojsonFeatureTypes
-} from 'layers/geojson-layer/geojson-utils';
+import {parseGeoJsonRawFeature, getGeojsonFeatureTypes} from 'layers/geojson-layer/geojson-utils';
 
 /**
  * Parse geojson from string
@@ -55,8 +48,9 @@ export function coordHasLength4(samples) {
 
 export function containValidTime(timestamps) {
   const formattedTimeStamps = timestamps.map(ts => ({ts}));
-  const ignoredDataTypes = Object.keys(DATA_TYPES).filter(type =>
-    ![DATA_TYPES.TIME, DATA_TYPES.DATETIME].includes(type));
+  const ignoredDataTypes = Object.keys(DATA_TYPES).filter(
+    type => ![DATA_TYPES.TIME, DATA_TYPES.DATETIME].includes(type)
+  );
 
   // ignore all types but TIME to improve performance
   const analyzedType = Analyzer.computeColMeta(formattedTimeStamps, [], {ignoredDataTypes})[0];
@@ -95,9 +89,7 @@ export function isTripGeoJsonField(allData = [], field) {
   }
 
   // condition 3:the 4th coordinate of the first feature line strings is valid time
-  const tsHolder = features[0].geometry.coordinates.map(
-    coord => coord[3]
-  );
+  const tsHolder = features[0].geometry.coordinates.map(coord => coord[3]);
 
   return Boolean(containValidTime(tsHolder));
 }
@@ -112,11 +104,7 @@ export function parseTripGeoJsonTimestamp(dataToFeature) {
   // select a sample trip to analyze time format
   const empty = {dataToTimeStamp: [], animationDomain: null};
   const sampleTrip = dataToFeature.find(
-    f =>
-      f &&
-      f.geometry &&
-      f.geometry.coordinates &&
-      f.geometry.coordinates.length >= 3
+    f => f && f.geometry && f.geometry.coordinates && f.geometry.coordinates.length >= 3
   );
 
   // if no valid geometry
@@ -124,9 +112,7 @@ export function parseTripGeoJsonTimestamp(dataToFeature) {
     return empty;
   }
 
-  const analyzedType = containValidTime(
-    sampleTrip.geometry.coordinates.map(coord => coord[3])
-  );
+  const analyzedType = containValidTime(sampleTrip.geometry.coordinates.map(coord => coord[3]));
 
   if (!analyzedType) {
     return empty;
@@ -134,9 +120,7 @@ export function parseTripGeoJsonTimestamp(dataToFeature) {
 
   const {format} = analyzedType;
   const getTimeValue = coord =>
-    coord && notNullorUndefined(coord[3])
-      ? timeToUnixMilli(coord[3], format)
-      : null;
+    coord && notNullorUndefined(coord[3]) ? timeToUnixMilli(coord[3], format) : null;
 
   const dataToTimeStamp = dataToFeature.map(f =>
     f && f.geometry && Array.isArray(f.geometry.coordinates)
@@ -157,7 +141,7 @@ function findMaxFromSorted(list = []) {
   let i = list.length - 1;
   while (i > 0) {
     if (notNullorUndefined(list[i])) {
-      return list[i]
+      return list[i];
     }
     i--;
   }

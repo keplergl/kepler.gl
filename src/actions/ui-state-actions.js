@@ -27,10 +27,7 @@ import ActionTypes from 'constants/action-types';
  * @param {string} id  id of side panel to be shown, one of `layer`, `filter`, `interaction`, `map`
  * @public
  */
-export const toggleSidePanel = createAction(
-  ActionTypes.TOGGLE_SIDE_PANEL,
-  id => id
-);
+export const toggleSidePanel = createAction(ActionTypes.TOGGLE_SIDE_PANEL, id => id);
 
 /**
  * Show and hide modal dialog
@@ -45,10 +42,7 @@ export const toggleSidePanel = createAction(
  *  - [`ADD_MAP_STYLE_ID`](../constants/default-settings.md#add_map_style_id)
  * @public
  */
-export const toggleModal = createAction(
-  ActionTypes.TOGGLE_MODAL,
-  id => id
-);
+export const toggleModal = createAction(ActionTypes.TOGGLE_MODAL, id => id);
 
 /**
  * Hide and show side panel header dropdown, activated by clicking the share link on top of the side panel
@@ -56,19 +50,14 @@ export const toggleModal = createAction(
  * @param {string} id - id of the dropdown
  * @public
  */
-export const showExportDropdown = createAction(
-  ActionTypes.SHOW_EXPORT_DROPDOWN,
-  id => id
-);
+export const showExportDropdown = createAction(ActionTypes.SHOW_EXPORT_DROPDOWN, id => id);
 
 /**
  * Hide side panel header dropdown, activated by clicking the share link on top of the side panel
  * @memberof uiStateActions
  * @public
  */
-export const hideExportDropdown = createAction(
-  ActionTypes.HIDE_EXPORT_DROPDOWN
-);
+export const hideExportDropdown = createAction(ActionTypes.HIDE_EXPORT_DROPDOWN);
 
 /**
  * Toggle active map control panel
@@ -76,10 +65,10 @@ export const hideExportDropdown = createAction(
  * @param {string} panelId - map control panel id, one of the keys of: [`DEFAULT_MAP_CONTROLS`](#default_map_controls)
  * @public
  */
-export const toggleMapControl = createAction(
-  ActionTypes.TOGGLE_MAP_CONTROL,
-  (panelId, index) => ({panelId, index})
-);
+export const toggleMapControl = createAction(ActionTypes.TOGGLE_MAP_CONTROL, (panelId, index) => ({
+  panelId,
+  index
+}));
 
 /**
  * Toggle active map control panel
@@ -87,10 +76,7 @@ export const toggleMapControl = createAction(
  * @param {string} datasetId - `id` of the dataset to be deleted
  * @public
  */
-export const openDeleteModal = createAction(
-  ActionTypes.OPEN_DELETE_MODAL,
-  datasetId => datasetId
-);
+export const openDeleteModal = createAction(ActionTypes.OPEN_DELETE_MODAL, datasetId => datasetId);
 
 /**
  * Add a notification to be displayed
@@ -109,10 +95,7 @@ export const addNotification = createAction(
  * @param {string} id - `id` of the notification to be removed
  * @public
  */
-export const removeNotification = createAction(
-  ActionTypes.REMOVE_NOTIFICATION,
-  id => id
-);
+export const removeNotification = createAction(ActionTypes.REMOVE_NOTIFICATION, id => id);
 
 /**
  * Set `exportImage` settings: ratio, resolution, legend
@@ -130,9 +113,7 @@ export const setExportImageSetting = createAction(
  * @memberof uiStateActions
  * @public
  */
-export const startExportingImage = createAction(
-  ActionTypes.START_EXPORTING_IMAGE
-);
+export const startExportingImage = createAction(ActionTypes.START_EXPORTING_IMAGE);
 
 /**
  * Set `exportImage.setExportImageDataUri` to a dataUri
@@ -145,19 +126,14 @@ export const setExportImageDataUri = createAction(
   dataUri => dataUri
 );
 
-export const setExportImageError = createAction(
-  ActionTypes.SET_EXPORT_IMAGE_ERROR,
-  error => error
-);
+export const setExportImageError = createAction(ActionTypes.SET_EXPORT_IMAGE_ERROR, error => error);
 
 /**
  * Delete cached export image
  * @memberof uiStateActions
  * @public
  */
-export const cleanupExportImage = createAction(
-  ActionTypes.CLEANUP_EXPORT_IMAGE
-);
+export const cleanupExportImage = createAction(ActionTypes.CLEANUP_EXPORT_IMAGE);
 
 /**
  * Set selected dataset for export
@@ -187,19 +163,14 @@ export const setExportDataType = createAction(
  * @param {boolean} payload - set `true` to ony export filtered data
  * @public
  */
-export const setExportFiltered = createAction(
-  ActionTypes.SET_EXPORT_FILTERED,
-  payload => payload
-);
+export const setExportFiltered = createAction(ActionTypes.SET_EXPORT_FILTERED, payload => payload);
 
 /**
  * Whether to including data in map config, toggle between `true` or `false`
  * @memberof uiStateActions
  * @public
  */
-export const setExportData = createAction(
-  ActionTypes.SET_EXPORT_DATA
-);
+export const setExportData = createAction(ActionTypes.SET_EXPORT_DATA);
 
 /**
  * Whether we export a mapbox access token used to create a single map html file

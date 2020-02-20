@@ -32,9 +32,9 @@ const CONFIG = {
     app: resolve('./src/main.js')
   },
   output: {
-    path: resolve(__dirname, "build"),
-    filename: "bundle.js",
-    publicPath: "/"
+    path: resolve(__dirname, 'build'),
+    filename: 'bundle.js',
+    publicPath: '/'
   },
 
   devtool: 'source-map',
@@ -67,11 +67,7 @@ const CONFIG = {
 
   // Optional: Enables reading mapbox and dropbox client token from environment variable
   plugins: [
-    new webpack.EnvironmentPlugin([
-      'MapboxAccessToken',
-      'DropboxClientId',
-      'MapboxExportToken'
-    ])
+    new webpack.EnvironmentPlugin(['MapboxAccessToken', 'DropboxClientId', 'MapboxExportToken'])
   ]
 };
 

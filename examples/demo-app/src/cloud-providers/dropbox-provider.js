@@ -196,8 +196,6 @@ export default class DropboxProvider {
    * @returns {DropboxTypes.sharing.FileLinkMetadataReference}
    */
   _overrideUrl(url) {
-    return url
-      ? url.slice(0, url.indexOf('?')).replace(DOMAIN, CORS_FREE_DOMAIN)
-      : null;
+    return url ? url.slice(0, url.indexOf('?')).replace(DOMAIN, CORS_FREE_DOMAIN) : null;
   }
 }

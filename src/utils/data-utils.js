@@ -144,9 +144,7 @@ export function notNullorUndefined(d) {
 }
 
 export function isPlainObject(obj) {
-  return (
-    obj === Object(obj) && typeof obj !== 'function' && !Array.isArray(obj)
-  );
+  return obj === Object(obj) && typeof obj !== 'function' && !Array.isArray(obj);
 }
 
 export function numberSort(a, b) {
@@ -175,9 +173,7 @@ export function preciseRound(num, decimals) {
   const t = Math.pow(10, decimals);
   return (
     Math.round(
-      num * t +
-        (decimals > 0 ? 1 : 0) *
-          (Math.sign(num) * (10 / Math.pow(100, decimals)))
+      num * t + (decimals > 0 ? 1 : 0) * (Math.sign(num) * (10 / Math.pow(100, decimals)))
     ) / t
   ).toFixed(decimals);
 }
@@ -264,9 +260,7 @@ export const parseFieldValue = (value, type) => {
     return '';
   }
 
-  return FIELD_DISPLAY_FORMAT[type]
-    ? FIELD_DISPLAY_FORMAT[type](value)
-    : String(value);
+  return FIELD_DISPLAY_FORMAT[type] ? FIELD_DISPLAY_FORMAT[type](value) : String(value);
 };
 
 const arrayMoveMutate = (array, from, to) => {

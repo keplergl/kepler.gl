@@ -62,8 +62,7 @@ const getDataRowCount = (datasets, selectedDataset, filtered) => {
 const ExportDataModalFactory = () => {
   class ExportDataModal extends Component {
     componentDidMount() {
-      const toCPUFilter =
-        this.props.selectedDataset || Object.keys(this.props.datasets);
+      const toCPUFilter = this.props.selectedDataset || Object.keys(this.props.datasets);
       this.props.applyCPUFilter(toCPUFilter);
     }
 
@@ -88,15 +87,10 @@ const ExportDataModalFactory = () => {
             <StyledExportSection>
               <div className="description">
                 <div className="title">Dataset</div>
-                <div className="subtitle">
-                  Choose the datasets you want to export
-                </div>
+                <div className="subtitle">Choose the datasets you want to export</div>
               </div>
               <div className="selection">
-                <select
-                  value={selectedDataset}
-                  onChange={this._onSelectDataset}
-                >
+                <select value={selectedDataset} onChange={this._onSelectDataset}>
                   {['All'].concat(Object.keys(datasets)).map(d => (
                     <option key={d} value={d}>
                       {(datasets[d] && datasets[d].label) || d}
@@ -108,9 +102,7 @@ const ExportDataModalFactory = () => {
             <StyledExportSection>
               <div className="description">
                 <div className="title">Data Type</div>
-                <div className="subtitle">
-                  Choose the type of data you want to export
-                </div>
+                <div className="subtitle">Choose the type of data you want to export</div>
               </div>
               <div className="selection">
                 {EXPORT_DATA_TYPE_OPTIONS.map(op => (
@@ -118,9 +110,7 @@ const ExportDataModalFactory = () => {
                     key={op.id}
                     selected={dataType === op.id}
                     available={op.available}
-                    onClick={() =>
-                      op.available && onChangeExportDataType(op.id)
-                    }
+                    onClick={() => op.available && onChangeExportDataType(op.id)}
                   >
                     <FileType ext={op.label} height="80px" fontSize="11px" />
                   </StyledType>

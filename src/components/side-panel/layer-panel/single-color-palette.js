@@ -70,18 +70,13 @@ const SingleColorPalette = ({selectedColor, onSelectColor}) => (
             style={{
               backgroundColor: ColorsByTheme[theme][key],
               borderColor:
-                selectedColor ===
-                ColorsByTheme[theme][key].toUpperCase()
+                selectedColor === ColorsByTheme[theme][key].toUpperCase()
                   ? 'white'
                   : ColorsByTheme[theme][key]
             }}
             key={`${theme}_${key}`}
-            selected={
-              selectedColor === ColorsByTheme[theme][key].toUpperCase()
-            }
-            onClick={e =>
-              onSelectColor(hexToRgb(ColorsByTheme[theme][key]), e)
-            }
+            selected={selectedColor === ColorsByTheme[theme][key].toUpperCase()}
+            onClick={e => onSelectColor(hexToRgb(ColorsByTheme[theme][key]), e)}
           />
         ))}
       </StyledColorColumn>

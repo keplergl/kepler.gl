@@ -70,16 +70,15 @@ export default function BottomWidgetFactory(TimeWidget, AnimationControl) {
     const {activeSidePanel, readOnly} = uiState;
     const isOpen = Boolean(activeSidePanel);
 
-    const enlargedFilterIdx = filters.findIndex(f => f.enlarged && f.type === FILTER_TYPES.timeRange);
+    const enlargedFilterIdx = filters.findIndex(
+      f => f.enlarged && f.type === FILTER_TYPES.timeRange
+    );
     const isAnyFilterAnimating = filters.some(f => f.isAnimating);
-    const enlargedFilterWidth = isOpen
-      ? containerW - sidePanelWidth
-      : containerW;
+    const enlargedFilterWidth = isOpen ? containerW - sidePanelWidth : containerW;
 
     // show playback control if layers contain trip layer & at least one trip layer is visible
     const animatedLayer = layers.filter(
-      l =>
-        l.config.animation && l.config.animation.enabled && l.config.isVisible
+      l => l.config.animation && l.config.animation.enabled && l.config.isVisible
     );
 
     const readToAnimation = Array.isArray(animationConfig.domain) && animationConfig.currentTime;

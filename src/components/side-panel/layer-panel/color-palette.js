@@ -56,7 +56,7 @@ const PaletteContainer = styled.div.attrs({
   flex-grow: 1;
   border-width: 1px;
   border-style: solid;
-  border-color: ${props => props.isSelected ? '#FFFFFF' : 'transparent'};
+  border-color: ${props => (props.isSelected ? '#FFFFFF' : 'transparent')};
   padding: 4px;
   border-radius: 4px;
 `;
@@ -68,16 +68,10 @@ const StyledColorBlock = styled.div.attrs({
 `;
 
 const ColorPalette = ({colors, height, className, isSelected, isReversed}) => (
-  <PaletteContainer
-    className={className}
-    isSelected={isSelected}
-  >
+  <PaletteContainer className={className} isSelected={isSelected}>
     <PaletteWrapper style={{height, transform: `scale(${isReversed ? -1 : 1}, 1)`}}>
       {colors.map((color, index) => (
-        <StyledColorBlock
-          key={`${color}-${index}`}
-          style={{backgroundColor: color}}
-        />
+        <StyledColorBlock key={`${color}-${index}`} style={{backgroundColor: color}} />
       ))}
     </PaletteWrapper>
   </PaletteContainer>

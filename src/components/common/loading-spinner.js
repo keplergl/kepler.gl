@@ -44,7 +44,7 @@ const Loader = styled.span`
 }`;
 
 const LoadingSpinner = ({size = 32}) => (
-    <Loader style={{width: `${size}px`, height: `${size}px`}}/>
+  <Loader style={{width: `${size}px`, height: `${size}px`}} />
 );
 
 export default LoadingSpinner;

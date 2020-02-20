@@ -33,13 +33,13 @@ const propTypes = {
   value: PropTypes.string
 };
 
-const Switch = (props) => {
+const Switch = props => {
   const switchProps = {
     ...props,
     switch: props.type !== 'checkbox'
   };
 
-  return <Checkbox {...switchProps}/>;
+  return <Checkbox {...switchProps} />;
 };
 
 Switch.propTypes = propTypes;

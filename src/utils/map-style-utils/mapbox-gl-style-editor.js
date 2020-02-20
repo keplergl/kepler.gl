@@ -20,10 +20,7 @@
 
 import memoize from 'lodash.memoize';
 import clondDeep from 'lodash.clonedeep';
-import {
-  DEFAULT_LAYER_GROUPS,
-  DEFAULT_MAPBOX_API_URL
-} from 'constants/default-settings';
+import {DEFAULT_LAYER_GROUPS, DEFAULT_MAPBOX_API_URL} from 'constants/default-settings';
 
 const mapUrlRg = /^mapbox:\/\/styles\/[-a-z0-9]{2,256}\/[-a-z0-9]{2,256}/;
 const httpRg = /^(?=(http:|https:))/;
@@ -75,25 +72,22 @@ export const editTopMapStyle = memoize(({id, mapStyle, visibleLayerGroups}) => {
  * @param {Object} visibleLayerGroups - visible layers of bottom map
  * @returns {Object} bottom map style
  */
-export const editBottomMapStyle = memoize(
-  ({id, mapStyle, visibleLayerGroups}) => {
-    const invisibleFilters = (mapStyle.layerGroups || [])
-      .filter(lg => !visibleLayerGroups[lg.slug])
-      .map(lg => lg.filter);
+export const editBottomMapStyle = memoize(({id, mapStyle, visibleLayerGroups}) => {
+  const invisibleFilters = (mapStyle.layerGroups || [])
+    .filter(lg => !visibleLayerGroups[lg.slug])
+    .map(lg => lg.filter);
 
-    // if bottom map
-    // filter out invisible layers
-    const filteredLayers = mapStyle.style.layers.filter(layer =>
-      invisibleFilters.every(match => !match(layer))
-    );
+  // if bottom map
+  // filter out invisible layers
+  const filteredLayers = mapStyle.style.layers.filter(layer =>
+    invisibleFilters.every(match => !match(layer))
+  );
 
-    return {
-      ...mapStyle.style,
-      layers: filteredLayers
-    };
-  },
-  resolver
-);
+  return {
+    ...mapStyle.style,
+    layers: filteredLayers
+  };
+}, resolver);
 
 // valid style url
 // mapbox://styles/uberdata/cjfyl03kp1tul2smf5v2tbdd4
@@ -112,7 +106,8 @@ export function getStyleDownloadUrl(styleUrl, accessToken, mapboxApiUrl) {
     const styleId = styleUrl.replace('mapbox://styles/', '');
 
     // https://api.mapbox.com/styles/v1/heshan0131/cjg1bfumo1cwm2rlrjxkinfgw?pluginName=Keplergl&access_token=<token>
-    return `${mapboxApiUrl || DEFAULT_MAPBOX_API_URL}/styles/v1/${styleId}?pluginName=Keplergl&access_token=${accessToken}`
+    return `${mapboxApiUrl ||
+      DEFAULT_MAPBOX_API_URL}/styles/v1/${styleId}?pluginName=Keplergl&access_token=${accessToken}`;
   }
 
   // style url not recognized
@@ -143,14 +138,15 @@ export function getStyleImageIcon({
 }) {
   const styleId = styleUrl.replace('mapbox://styles/', '');
 
-  return `${mapboxApiUrl}/styles/v1/${styleId}/static/` +
-  `${mapState.longitude},${mapState.latitude},${mapState.zoom},0,0/` +
-  `${mapW}x${mapH}` +
-  `?access_token=${mapboxApiAccessToken}&logo=false&attribution=false`;
+  return (
+    `${mapboxApiUrl}/styles/v1/${styleId}/static/` +
+    `${mapState.longitude},${mapState.latitude},${mapState.zoom},0,0/` +
+    `${mapW}x${mapH}` +
+    `?access_token=${mapboxApiAccessToken}&logo=false&attribution=false`
+  );
 }
 
 export function scaleMapStyleByResolution(mapboxStyle, scale) {
-
   if (scale !== 1 && mapboxStyle) {
     const labelLayerGroup = DEFAULT_LAYER_GROUPS.find(lg => lg.slug === 'label');
     const {filter: labelLayerFilter} = labelLayerGroup;
@@ -169,12 +165,7 @@ export function scaleMapStyleByResolution(mapboxStyle, scale) {
 
       // edit text size
       if (labelLayerFilter(d)) {
-        if (
-          d.layout &&
-          d.layout['text-size'] &&
-          Array.isArray(d.layout['text-size'].stops)
-        ) {
-
+        if (d.layout && d.layout['text-size'] && Array.isArray(d.layout['text-size'].stops)) {
           d.layout['text-size'].stops.forEach(stop => {
             // zoom
             stop[0] = Math.max(stop[0] + zoomOffset, 1);
@@ -199,10 +190,11 @@ export function scaleMapStyleByResolution(mapboxStyle, scale) {
  * @return {Object} mergedLayerGroups
  */
 export function mergeLayerGroupVisibility(defaultLayerGroup, currentLayerGroup) {
-  return Object.keys(currentLayerGroup)
-    .reduce((accu, key) => ({
+  return Object.keys(currentLayerGroup).reduce(
+    (accu, key) => ({
       ...accu,
       ...(defaultLayerGroup.hasOwnProperty(key) ? {[key]: currentLayerGroup[key]} : {})
-    }), defaultLayerGroup);
+    }),
+    defaultLayerGroup
+  );
 }
-

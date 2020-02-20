@@ -126,10 +126,7 @@ export default class ScenegraphLayer extends Layer {
 
   formatLayerData(datasets, oldLayerData) {
     const {gpuFilter} = datasets[this.config.dataId];
-    const {data} = this.updateData(
-      datasets,
-      oldLayerData
-    );
+    const {data} = this.updateData(datasets, oldLayerData);
     const getPosition = this.getPositionAccessor();
     return {
       data,
@@ -144,10 +141,7 @@ export default class ScenegraphLayer extends Layer {
   }
 
   renderLayer(opts) {
-    const {
-      data,
-      gpuFilter
-    } = opts;
+    const {data, gpuFilter} = opts;
 
     const {
       visConfig: {sizeScale = 1, angleX = 0, angleY = 0, angleZ = 90}

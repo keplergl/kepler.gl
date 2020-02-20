@@ -55,11 +55,7 @@ export default class GridLayer extends AggregationLayer {
   }
 
   renderLayer(opts) {
-    const {
-      data,
-      objectHovered,
-      mapState
-    } = opts;
+    const {data, objectHovered, mapState} = opts;
 
     const zoomFactor = this.getZoomFactor(mapState);
     const {visConfig} = this.config;

@@ -48,10 +48,7 @@ export default class HexagonLayerIcon extends Component {
           points="23.9,37.8 30.9,41.9 30.9,50 23.9,54 16.8,50 16.8,41.9 "
           style={{opacity: 0.4}}
         />
-        <polygon
-          className="cr6"
-          points="40.1,10 47.2,14 47.2,22.1 40.1,26.2 33.1,22.1 33.1,14 "
-        />
+        <polygon className="cr6" points="40.1,10 47.2,14 47.2,22.1 40.1,26.2 33.1,22.1 33.1,14 " />
         <polygon
           className="cr3"
           points="40.1,37.8 47.2,41.9 47.2,50 40.1,54 33.1,50 33.1,41.9 "
@@ -74,4 +71,4 @@ export default class HexagonLayerIcon extends Component {
       </Base>
     );
   }
-};
+}

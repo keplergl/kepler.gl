@@ -36,10 +36,7 @@ import {toArray} from 'utils/utils';
 const StyledDropdownSelect = styled.div.attrs({
   className: 'item-selector__dropdown'
 })`
-  ${props =>
-    props.inputTheme === 'secondary'
-      ? props.theme.secondaryInput
-      : props.theme.input};
+  ${props => (props.inputTheme === 'secondary' ? props.theme.secondaryInput : props.theme.input)};
 
   .list__item__anchor {
     ${props => props.theme.dropdownListAnchor};
@@ -48,9 +45,7 @@ const StyledDropdownSelect = styled.div.attrs({
 
 const DropdownSelectValue = styled.span`
   color: ${props =>
-    props.hasPlaceholder
-      ? props.theme.selectColorPlaceHolder
-      : props.theme.selectColor};
+    props.hasPlaceholder ? props.theme.selectColorPlaceHolder : props.theme.selectColor};
   overflow: hidden;
 `;
 
@@ -65,8 +60,7 @@ const DropdownWrapper = styled.div`
   left: 0;
   z-index: ${props => props.theme.dropdownWrapperZ};
   position: absolute;
-  bottom: ${props =>
-    props.placement === 'top' ? props.theme.inputBoxHeight : 'auto'};
+  bottom: ${props => (props.placement === 'top' ? props.theme.inputBoxHeight : 'auto')};
   margin-top: ${props => (props.placement === 'bottom' ? '4px' : 'auto')};
   margin-bottom: ${props => (props.placement === 'top' ? '4px' : 'auto')};
 `;
@@ -218,9 +212,7 @@ class ItemSelector extends Component {
           customListComponent={this.props.DropDownRenderComponent}
           customListHeaderComponent={this.props.DropdownHeaderComponent}
           customListItemComponent={this.props.DropDownLineItemRenderComponent}
-          displayOption={Accessor.generateOptionToStringFor(
-            this.props.displayOption
-          )}
+          displayOption={Accessor.generateOptionToStringFor(this.props.displayOption)}
           searchable={this.props.searchable}
           showOptionsWhenEmpty
           selectedItems={toArray(this.props.selectedItems)}
@@ -232,9 +224,7 @@ class ItemSelector extends Component {
   render() {
     const selected = toArray(this.props.selectedItems);
     const hasValue = selected.length;
-    const displayOption = Accessor.generateOptionToStringFor(
-      this.props.displayOption
-    );
+    const displayOption = Accessor.generateOptionToStringFor(this.props.displayOption);
 
     const dropdownSelectProps = {
       className: classnames({
@@ -261,7 +251,10 @@ class ItemSelector extends Component {
             />
           ) : (
             <StyledDropdownSelect {...dropdownSelectProps}>
-              <DropdownSelectValue hasPlaceholder={!hasValue} className="item-selector__dropdown__value">
+              <DropdownSelectValue
+                hasPlaceholder={!hasValue}
+                className="item-selector__dropdown__value"
+              >
                 {hasValue ? (
                   <this.props.DropDownLineItemRenderComponent
                     displayOption={displayOption}
@@ -284,6 +277,6 @@ class ItemSelector extends Component {
       </div>
     );
   }
-};
+}
 
 export default listensToClickOutside(ItemSelector);

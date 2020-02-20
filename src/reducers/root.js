@@ -31,8 +31,10 @@ const initialCoreState = {};
 export function provideInitialState(initialState) {
   const coreReducer = coreReducerFactory(initialState);
 
-  const handleRegisterEntry = (state, {payload: {id, mint, mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault}}) => {
-
+  const handleRegisterEntry = (
+    state,
+    {payload: {id, mint, mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault}}
+  ) => {
     // by default, always create a mint state even if the same id already exist
     // if state.id exist and mint=false, keep the existing state
     const previousState = state[id] && mint === false ? state[id] : undefined;
@@ -40,8 +42,11 @@ export function provideInitialState(initialState) {
     return {
       // register entry to kepler.gl passing in mapbox config to mapStyle
       ...state,
-      [id]: coreReducer(previousState, keplerGlInit({mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault}))
-    }
+      [id]: coreReducer(
+        previousState,
+        keplerGlInit({mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault})
+      )
+    };
   };
 
   const handleDeleteEntry = (state, {payload: id}) =>
@@ -87,12 +92,15 @@ function mergeInitialState(saved = {}, provided = {}) {
   const keys = ['mapState', 'mapStyle', 'visState', 'uiState'];
 
   // shallow merge each reducer
-  return keys.reduce((accu, key) => ({
-    ...accu,
-    ...(saved[key] && provided[key] ?
-        {[key]: {...saved[key], ...provided[key]}} :
-        {[key]: saved[key] || provided[key] || {}})
-  }), {});
+  return keys.reduce(
+    (accu, key) => ({
+      ...accu,
+      ...(saved[key] && provided[key]
+        ? {[key]: {...saved[key], ...provided[key]}}
+        : {[key]: saved[key] || provided[key] || {}})
+    }),
+    {}
+  );
 }
 
 function decorate(target, savedInitialState = {}) {

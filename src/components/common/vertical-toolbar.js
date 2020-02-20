@@ -24,12 +24,12 @@ import Toolbar from './toolbar';
 const VerticalToolbar = styled(Toolbar)`
   flex-direction: column;
   padding: 0 24px;
-  
+
   .toolbar-item {
     padding: 16px 0;
     border-right: 0;
     border-bottom: 1px solid ${props => props.theme.panelHeaderIcon};
-    
+
     &:last-of-type {
       border-bottom: 0;
     }

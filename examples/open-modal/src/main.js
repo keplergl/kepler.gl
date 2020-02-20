@@ -27,7 +27,7 @@ import App from './app';
 
 const Root = () => (
   <Provider store={store}>
-    <App/>
+    <App />
   </Provider>
 );
 

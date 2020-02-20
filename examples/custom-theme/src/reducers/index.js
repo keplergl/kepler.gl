@@ -23,9 +23,7 @@ import {handleActions} from 'redux-actions';
 
 import keplerGlReducer from 'kepler.gl/reducers';
 
-import {
-  INIT
-} from '../actions';
+import {INIT} from '../actions';
 
 // INITIAL_APP_STATE
 const initialAppState = {
@@ -33,12 +31,15 @@ const initialAppState = {
 };
 
 // App reducer
-export const appReducer = handleActions({
-  [INIT]: (state) => ({
-    ...state,
-    loaded: true
-  })
-}, initialAppState);
+export const appReducer = handleActions(
+  {
+    [INIT]: state => ({
+      ...state,
+      loaded: true
+    })
+  },
+  initialAppState
+);
 
 // export demoReducer to be combined in website app
 export default combineReducers({

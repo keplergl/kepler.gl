@@ -37,9 +37,7 @@ export function getValueFunc(aggregation, accessor) {
     Console.warn(`Aggregation ${aggregation} is not supported`);
   }
 
-  const op =
-    AGGREGATION_OPERATION[aggregation.toUpperCase()] ||
-    AGGREGATION_OPERATION.SUM;
+  const op = AGGREGATION_OPERATION[aggregation.toUpperCase()] || AGGREGATION_OPERATION.SUM;
   const keplerOp = DECK_AGGREGATION_MAP[op];
 
   return pts => aggregate(pts.map(accessor), keplerOp);
@@ -94,12 +92,10 @@ export function getDimensionValueDomain(step, props, dimensionUpdater) {
 
   // for log and sqrt scale, returns linear domain by default
   // TODO: support other scale function domain in bin sorter
-  const valueDomain = this.state.dimensions[
-    key
-  ].sortedBins.getValueDomainByScale(props[scaleType.prop], [
-    props[lowerPercentile.prop],
-    props[upperPercentile.prop]
-  ]);
+  const valueDomain = this.state.dimensions[key].sortedBins.getValueDomainByScale(
+    props[scaleType.prop],
+    [props[lowerPercentile.prop], props[upperPercentile.prop]]
+  );
 
   this._setDimensionState(key, {valueDomain});
 }
@@ -114,8 +110,7 @@ export function getDimensionScale(step, props, dimensionUpdater) {
   }
 
   const dimensionRange = props[range.prop];
-  const dimensionDomain =
-    props[domain.prop] || this.state.dimensions[key].valueDomain;
+  const dimensionDomain = props[domain.prop] || this.state.dimensions[key].valueDomain;
 
   const scaleFunctor = getScaleFunctor(scaleType && props[scaleType.prop])();
 
@@ -199,8 +194,7 @@ export const defaultColorDimension = {
   accessor: 'getFillColor',
   getPickingInfo: (dimensionState, cell) => {
     const {sortedBins} = dimensionState;
-    const colorValue =
-      sortedBins.binMap[cell.index] && sortedBins.binMap[cell.index].value;
+    const colorValue = sortedBins.binMap[cell.index] && sortedBins.binMap[cell.index].value;
     return {colorValue};
   },
   nullValue: [0, 0, 0, 0],
@@ -266,8 +260,7 @@ export const defaultElevationDimension = {
   accessor: 'getElevation',
   getPickingInfo: (dimensionState, cell) => {
     const {sortedBins} = dimensionState;
-    const elevationValue =
-      sortedBins.binMap[cell.index] && sortedBins.binMap[cell.index].value;
+    const elevationValue = sortedBins.binMap[cell.index] && sortedBins.binMap[cell.index].value;
     return {elevationValue};
   },
   nullValue: -1,
@@ -328,10 +321,7 @@ export const defaultElevationDimension = {
   getSubLayerAccessor
 };
 
-export const defaultDimensions = [
-  defaultColorDimension,
-  defaultElevationDimension
-];
+export const defaultDimensions = [defaultColorDimension, defaultElevationDimension];
 
 export default class CPUAggregator {
   constructor(opts = {}) {
@@ -368,11 +358,7 @@ export default class CPUAggregator {
     let dimensionChanges = [];
     // update all dimensions
     for (const dim in this.dimensionUpdaters) {
-      const updaters = this._accumulateUpdaters(
-        0,
-        props,
-        this.dimensionUpdaters[dim]
-      );
+      const updaters = this._accumulateUpdaters(0, props, this.dimensionUpdaters[dim]);
       dimensionChanges = dimensionChanges.concat(updaters);
     }
 
@@ -380,12 +366,7 @@ export default class CPUAggregator {
   }
 
   updateAggregation(props, aggregationParams) {
-
-    const updaters = this._accumulateUpdaters(
-      0,
-      props,
-      this.aggregationUpdater
-    );
+    const updaters = this._accumulateUpdaters(0, props, this.aggregationUpdater);
     updaters.forEach(f => typeof f === 'function' && f(aggregationParams));
   }
 
@@ -401,11 +382,7 @@ export default class CPUAggregator {
       return this.state;
     }
 
-    const aggregationChanges = this._getAggregationChanges(
-      oldProps,
-      props,
-      changeFlags
-    );
+    const aggregationChanges = this._getAggregationChanges(oldProps, props, changeFlags);
 
     if (aggregationChanges && aggregationChanges.length) {
       // get aggregatedData
@@ -413,8 +390,7 @@ export default class CPUAggregator {
       this.updateAllDimensions(props);
     } else {
       // only update dimensions
-      dimensionChanges =
-        this._getDimensionChanges(oldProps, props, changeFlags) || [];
+      dimensionChanges = this._getDimensionChanges(oldProps, props, changeFlags) || [];
       dimensionChanges.forEach(f => typeof f === 'function' && f());
     }
 
@@ -470,12 +446,7 @@ export default class CPUAggregator {
     for (let i = step; i < dimension.updateSteps.length; i++) {
       if (typeof dimension.updateSteps[i].updater === 'function') {
         updaters.push(
-          dimension.updateSteps[i].updater.bind(
-            this,
-            dimension.updateSteps[i],
-            props,
-            dimension
-          )
+          dimension.updateSteps[i].updater.bind(this, dimension.updateSteps[i], props, dimension)
         );
       }
     }
@@ -490,21 +461,14 @@ export default class CPUAggregator {
     );
 
     if (needUpdateStep > -1) {
-      updaters = updaters.concat(
-        this._accumulateUpdaters(needUpdateStep, props, dimension)
-      );
+      updaters = updaters.concat(this._accumulateUpdaters(needUpdateStep, props, dimension));
     }
 
     return updaters;
   }
 
   _getAggregationChanges(oldProps, props, changeFlags) {
-    const updaters = this._getAllUpdaters(
-      this.aggregationUpdater,
-      oldProps,
-      props,
-      changeFlags
-    );
+    const updaters = this._getAllUpdaters(this.aggregationUpdater, oldProps, props, changeFlags);
     return updaters.length ? updaters : null;
   }
 
@@ -515,12 +479,7 @@ export default class CPUAggregator {
     for (const key in this.dimensionUpdaters) {
       // return the first triggered updater for each dimension
       const dimension = this.dimensionUpdaters[key];
-      const dimensionUpdaters = this._getAllUpdaters(
-        dimension,
-        oldProps,
-        props,
-        changeFlags
-      );
+      const dimensionUpdaters = this._getAllUpdaters(dimension, oldProps, props, changeFlags);
       updaters = updaters.concat(dimensionUpdaters);
     }
 

@@ -25,15 +25,8 @@ import window from 'global/window';
 import {generateHashId, getError} from 'utils/utils';
 import {EXPORT_FILE_TO_CLOUD_TASK, ACTION_TASK, DELAY_TASK} from 'tasks/tasks';
 import {exportFileSuccess, exportFileError, saveToCloudSuccess} from 'actions/provider-actions';
-import {
-  removeNotification,
-  toggleModal,
-  addNotification
-} from 'actions/ui-state-actions';
-import {
-  DEFAULT_NOTIFICATION_TYPES,
-  DEFAULT_NOTIFICATION_TOPICS
-} from 'constants/default-settings';
+import {removeNotification, toggleModal, addNotification} from 'actions/ui-state-actions';
+import {DEFAULT_NOTIFICATION_TYPES, DEFAULT_NOTIFICATION_TOPICS} from 'constants/default-settings';
 
 export const INITIAL_PROVIDER_STATE = {
   isLoading: false,
@@ -51,10 +44,7 @@ function createFileJson(mapData = {}) {
   const newBlob = new window.Blob([data], {type: 'application/json'});
 
   // TODO: Allow user import file name
-  const name =
-    info.title && info.title.length
-      ? info.title
-      : `keplergl_${generateHashId(6)}`;
+  const name = info.title && info.title.length ? info.title : `keplergl_${generateHashId(6)}`;
   const fileName = `${name}.json`;
 
   return {file: new window.File([newBlob], fileName), fileName};
@@ -84,9 +74,7 @@ export const exportFileToCloudUpdater = (state, action) => {
   }
 
   if (typeof provider.uploadFile !== 'function') {
-    Console.error(
-      `uploadFile is not a function of Cloud provider: ${provider.name}`
-    );
+    Console.error(`uploadFile is not a function of Cloud provider: ${provider.name}`);
     return state;
   }
 

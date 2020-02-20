@@ -50,8 +50,7 @@ const StyledLayerGroupItem = styled.div`
 `;
 
 const LayerLabel = styled(PanelLabelBold)`
-  color: ${props =>
-    props.active ? props.theme.textColor : props.theme.labelColor};
+  color: ${props => (props.active ? props.theme.textColor : props.theme.labelColor)};
 `;
 
 function LayerGroupSelectorFactory() {
