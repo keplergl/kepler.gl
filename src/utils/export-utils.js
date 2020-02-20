@@ -47,6 +47,14 @@ export const DEFAULT_HTML_NAME = 'kepler.gl.html';
 export const DEFAULT_JSON_NAME = 'keplergl.json';
 export const DEFAULT_DATA_NAME = 'kepler-gl';
 
+/**
+ * Default json export settings
+ * @type {{hasData: boolean}}
+ */
+export const DEFAULT_EXPORT_JSON_SETTINGS = {
+  hasData: true
+};
+
 const defaultResolution = EXPORT_IMG_RESOLUTION_OPTIONS.find(
   op => op.id === RESOLUTIONS.ONE_X
 );
@@ -134,22 +142,35 @@ export function downloadFile(fileBlob, filename) {
   URL.revokeObjectURL(url);
 }
 
-export function exportImage(state, options) {
-  const {imageDataUri} = state.uiState.exportImage
+export function exportImage(state) {
+  const {imageDataUri} = state.uiState.exportImage;
   if (imageDataUri) {
     const file = dataURItoBlob(imageDataUri);
     downloadFile(file, DEFAULT_IMAGE_NAME);
   }
 }
 
-export function exportJson(state, options) {
+export function exportToJsonString(data) {
+  try {
+    return JSON.stringify(data)
+  } catch (e) {
+    return e.description;
+  }
+}
+
+export function getMapJSON(state, options = DEFAULT_EXPORT_JSON_SETTINGS) {
   const {hasData} = options;
 
-  const data = hasData
+  return hasData
     ? KeplerGlSchema.save(state)
     : KeplerGlSchema.getConfigToSave(state);
+}
 
-  const fileBlob = new Blob([data], {type: 'application/json'});
+export function exportJson(state, options = {}) {
+
+  const map = getMapJSON(state, options);
+
+  const fileBlob = new Blob([exportToJsonString(map)], {type: 'application/json'});
   downloadFile(fileBlob, DEFAULT_JSON_NAME);
 }
 
@@ -157,7 +178,7 @@ export function exportHtml(state, options) {
   const {userMapboxToken, exportMapboxAccessToken, mode} = options;
 
   const data = {
-    ...KeplerGlSchema.save(state),
+    ...getMapJSON(state),
     mapboxApiAccessToken:
       (userMapboxToken || '') !== ''
         ? userMapboxToken
@@ -202,11 +223,11 @@ export function exportData(state, option) {
   });
 }
 
-export function exportMap(state, option) {
-  const mapToState = KeplerGlSchema.save(state);
+export function exportMap(state) {
+  const mapToState = getMapJSON(state);
   const {mapInfo} = state.visState;
   const {imageDataUri} = state.uiState.exportImage;
-  const thumbnail = imageDataUri ? dataURItoBlob(imageDataUri) : null
+  const thumbnail = imageDataUri ? dataURItoBlob(imageDataUri) : null;
 
   return {
     map: mapToState,
