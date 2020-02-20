@@ -66,7 +66,7 @@ const LogoSvg = () => (
   </svg>
 );
 
-const KeplerGlLogo = ({appName = KEPLER_GL_NAME, version = KEPLER_GL_VERSION}) => (
+const KeplerGlLogo = ({appName, version}) => (
   <LogoWrapper className="side-panel-logo">
     <LogoSvgWrapper>
       <LogoSvg />
@@ -80,9 +80,16 @@ const KeplerGlLogo = ({appName = KEPLER_GL_NAME, version = KEPLER_GL_VERSION}) =
   </LogoWrapper>
 );
 
-KeplerGlLogo.defaultProps = {
+KeplerGlLogo.propTypes = {
   appName: PropTypes.string,
-  version: PropTypes.string
+  version: PropTypes.string,
+  appWebsite: PropTypes.string
+};
+
+KeplerGlLogo.defaultProps = {
+  appName: KEPLER_GL_NAME,
+  version: KEPLER_GL_VERSION,
+  appWebsite: KEPLER_GL_WEBSITE
 };
 
 export default KeplerGlLogo;

@@ -208,6 +208,7 @@ function KeplerGlFactory(
         id,
         appName,
         version,
+        appWebsite,
         onSaveMap,
         onViewStateChange,
         width,
@@ -256,6 +257,7 @@ function KeplerGlFactory(
       const sideFields = {
         appName,
         version,
+        appWebsite,
         datasets,
         filters,
         layers,
@@ -265,7 +267,6 @@ function KeplerGlFactory(
         mapStyle,
         layerBlending,
         onSaveMap,
-        // onSaveToStorage,
         uiState,
         mapStyleActions,
         visStateActions,

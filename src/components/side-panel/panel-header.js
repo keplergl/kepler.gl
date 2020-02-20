@@ -100,7 +100,6 @@ const StyledToolbar = styled(Toolbar)`
 
 export const PanelAction = ({item, onClick}) => (
   <StyledPanelAction
-    className="side-panel__panel-header__action"
     data-tip
     data-for={`${item.id}-action`}
     onClick={onClick}
