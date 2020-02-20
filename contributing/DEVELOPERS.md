@@ -107,7 +107,7 @@ To generate a coverage report
 yarn cover
 ```
 
-<!-- ## <a name="rules"></a> Coding Rules -->
+## <a name="rules"></a> Coding Rules
 
 To ensure consistency throughout the source code, keep these rules in mind as you are working:
 
@@ -115,6 +115,12 @@ To ensure consistency throughout the source code, keep these rules in mind as yo
 * All public API methods **must be documented** with using jsdoc. To see how we document our APIs, please check
   out the existing source code and see the section about [writing documentation](#documentation)
 
+This project use Eslint together Prettier. The linter should automatically inform you if you break any rules (like incorrect indenting, line breaking or if you forget a semicolon). Before doing a pull request, make sure to run the linter.
+
+```shell
+# To run the linter
+yarn lint
+```
 
 ## <a name="commits"></a> Git Commit Guidelines
 
