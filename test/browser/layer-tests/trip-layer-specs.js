@@ -106,7 +106,11 @@ test('#TripLayer -> formatLayerData', t => {
         );
         t.deepEqual(
           layerData.data.map(layerData.getColor),
-          [[1, 2, 3], [1, 2, 3], [1, 2, 3]],
+          [
+            [1, 2, 3],
+            [1, 2, 3],
+            [1, 2, 3]
+          ],
           'getColor should return correct value'
         );
         t.deepEqual(
@@ -216,7 +220,11 @@ test('#TripLayer -> formatLayerData', t => {
         // range ['#010101', '#020202', '#030303']
         t.deepEqual(
           layerData.data.map(layerData.getColor),
-          [[2, 2, 2], [1, 1, 1], [1, 1, 1]],
+          [
+            [2, 2, 2],
+            [1, 1, 1],
+            [1, 1, 1]
+          ],
           'getColor should return correct value'
         );
         // getWidth
@@ -284,7 +292,11 @@ test('#TripLayer -> renderLayer', t => {
       },
       assert: (deckLayers, layer) => {
         const ids = ['test_trip_layer_1'];
-        t.deepEqual(deckLayers.map(l => l.id), ids, 'Should render 1 deck layers');
+        t.deepEqual(
+          deckLayers.map(l => l.id),
+          ids,
+          'Should render 1 deck layers'
+        );
 
         const deckTripLayer = deckLayers[0];
         const expectedProps = {
@@ -293,7 +305,12 @@ test('#TripLayer -> renderLayer', t => {
           widthScale: 128,
           currentTime: 0,
           parameters: {depthTest: false, depthMask: false},
-          filterRange: [[3, 11], [0, 0], [0, 0], [0, 0]],
+          filterRange: [
+            [3, 11],
+            [0, 0],
+            [0, 0],
+            [0, 0]
+          ],
           opacity: 0.8
         };
 

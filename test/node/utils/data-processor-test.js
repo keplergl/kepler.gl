@@ -149,7 +149,10 @@ test('Processor -> processCsvData: duplicated field name', t => {
       {name: 'column1-1', format: '', tableFieldIndex: 3, type: 'string', analyzerType: 'STRING'},
       {name: 'column2', format: '', tableFieldIndex: 4, type: 'string', analyzerType: 'STRING'}
     ],
-    rows: [['a', 'b', 'c', 'd'], ['c', 'd', 'e', 'f']]
+    rows: [
+      ['a', 'b', 'c', 'd'],
+      ['c', 'd', 'e', 'f']
+    ]
   };
 
   t.deepEqual(result, expectedResult, `should return ${testAllData.length} rows`);
@@ -486,7 +489,11 @@ test('Processor -> processRowObject', t => {
         {a: 3, b: 'd', c: true, d: '1.4'}
       ],
       expected: {
-        rows: [[1, 'c', true, 1.2], [2, 'c', false, 1.3], [3, 'd', true, 1.4]],
+        rows: [
+          [1, 'c', true, 1.2],
+          [2, 'c', false, 1.3],
+          [3, 'd', true, 1.4]
+        ],
         fields: [
           {
             name: 'a',

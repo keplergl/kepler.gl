@@ -1230,7 +1230,12 @@ test('VisStateMerger.v1 -> mergeFilters -> multiFilters', t => {
         gpu: [mergedTripFilter]
       },
       gpuFilter: {
-        filterRange: [[0, 8], [0, 0], [0, 0], [0, 0]],
+        filterRange: [
+          [0, 8],
+          [0, 0],
+          [0, 0],
+          [0, 0]
+        ],
         filterValueUpdateTriggers: {
           gpuFilter_0: 'TRIPS',
           gpuFilter_1: null,

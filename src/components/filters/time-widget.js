@@ -109,9 +109,8 @@ function TimeWidgetFactory(SpeedControl, TimeRangeFilter, FloatingTimeDisplay) {
     };
 
     fieldSelector = props => props.fields;
-    yAxisFieldsSelector = createSelector(
-      this.fieldSelector,
-      fields => fields.filter(f => f.type === 'integer' || f.type === 'real')
+    yAxisFieldsSelector = createSelector(this.fieldSelector, fields =>
+      fields.filter(f => f.type === 'integer' || f.type === 'real')
     );
 
     _updateAnimationSpeed = speed => this.props.updateAnimationSpeed(this.props.index, speed);

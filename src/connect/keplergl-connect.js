@@ -35,9 +35,12 @@ export const connect = (
 
   const reduxMapDispatch = (dispatch, props) => mapDispatchToProps(props.dispatch, props, dispatch);
 
-  const ReduxComponent = reduxConnect(reduxMapState, reduxMapDispatch, reduxMergeProps, options)(
-    BaseComponent
-  );
+  const ReduxComponent = reduxConnect(
+    reduxMapState,
+    reduxMapDispatch,
+    reduxMergeProps,
+    options
+  )(BaseComponent);
 
   // save selector to context so it can be accessed by its children
   return withLocalSelector(ReduxComponent);

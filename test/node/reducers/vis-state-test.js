@@ -935,7 +935,12 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
       allIndexes: mockRawData.rows.map((_, i) => i),
       allData: mockRawData.rows,
       gpuFilter: {
-        filterRange: [[0, 0], [0, 0], [0, 0], [0, 0]],
+        filterRange: [
+          [0, 0],
+          [0, 0],
+          [0, 0],
+          [0, 0]
+        ],
         filterValueUpdateTriggers: {
           gpuFilter_0: null,
           gpuFilter_1: null,
@@ -1069,7 +1074,12 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
   const oldState = {
     ...INITIAL_VIS_STATE,
     layers: [mockLayer],
-    layerData: [[1, 2], [3, 4], [5, 6], [7, 8]],
+    layerData: [
+      [1, 2],
+      [3, 4],
+      [5, 6],
+      [7, 8]
+    ],
     datasets: {
       snowflake: {
         fields: [{id: 'a'}, {id: 'b'}],
@@ -1105,7 +1115,12 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
       filteredIndexForDomain: mockRawData.rows.map((_, i) => i),
       allIndexes: mockRawData.rows.map((_, i) => i),
       gpuFilter: {
-        filterRange: [[0, 0], [0, 0], [0, 0], [0, 0]],
+        filterRange: [
+          [0, 0],
+          [0, 0],
+          [0, 0],
+          [0, 0]
+        ],
         filterValueUpdateTriggers: {
           gpuFilter_0: null,
           gpuFilter_1: null,
@@ -1221,7 +1236,12 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
     fields: fields.map(f => ({...f, id: f.name})),
     fieldPairs: [],
     gpuFilter: {
-      filterRange: [[0, 0], [0, 0], [0, 0], [0, 0]],
+      filterRange: [
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0]
+      ],
       filterValueUpdateTriggers: {
         gpuFilter_0: null,
         gpuFilter_1: null,
@@ -1721,7 +1741,12 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
       gpu: []
     },
     gpuFilter: {
-      filterRange: [[0, 0], [0, 0], [0, 0], [0, 0]],
+      filterRange: [
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0]
+      ],
       filterValueUpdateTriggers: {
         gpuFilter_0: null,
         gpuFilter_1: null,
@@ -1956,7 +1981,12 @@ test('#visStateReducer -> setFilter.dynamicDomain & gpu', t => {
         : {...f, id: f.name}
     ),
     gpuFilter: {
-      filterRange: [[4, 16], [0, 0], [0, 0], [0, 0]],
+      filterRange: [
+        [4, 16],
+        [0, 0],
+        [0, 0],
+        [0, 0]
+      ],
       filterValueUpdateTriggers: {
         gpuFilter_0: 'TRIPS',
         gpuFilter_1: null,
@@ -3426,7 +3456,14 @@ test('#visStateReducer -> POLYGON: Add/Remove new polygon feature', t => {
     ...mockPolygonFeature,
     geometry: {
       ...mockPolygonFeature.geometry,
-      coordinates: [[[12.0, 30.0], [12.0, 36.0], [12.5, 36.0], [12.0, 30.0]]]
+      coordinates: [
+        [
+          [12.0, 30.0],
+          [12.0, 36.0],
+          [12.5, 36.0],
+          [12.0, 30.0]
+        ]
+      ]
     }
   };
 

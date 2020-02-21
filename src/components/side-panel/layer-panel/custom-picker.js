@@ -54,17 +54,14 @@ class CustomPicker extends Component {
   };
 
   themeSelector = props => props.theme;
-  pickerStyleSelector = createSelector(
-    this.themeSelector,
-    theme => ({
-      picker: {
-        width: '200px',
-        padding: '10px 10px 8px',
-        boxSizing: 'initial',
-        background: theme.panelBackground
-      }
-    })
-  );
+  pickerStyleSelector = createSelector(this.themeSelector, theme => ({
+    picker: {
+      width: '200px',
+      padding: '10px 10px 8px',
+      boxSizing: 'initial',
+      background: theme.panelBackground
+    }
+  }));
 
   handleClickOutside = e => {
     this.props.onSwatchClose();

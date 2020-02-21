@@ -126,17 +126,26 @@ test('#GeojsonLayer -> formatLayerData', t => {
         );
         t.deepEqual(
           layerData.data.map(layerData.getFillColor),
-          [[1, 2, 3], [1, 2, 3]],
+          [
+            [1, 2, 3],
+            [1, 2, 3]
+          ],
           'getFillColor should return correct value'
         );
         t.deepEqual(
           layerData.data.map(layerData.getFilterValue),
-          [[Number.MIN_SAFE_INTEGER, 0, 0, 0], [11.8 - geoFilterDomain0, 0, 0, 0]],
+          [
+            [Number.MIN_SAFE_INTEGER, 0, 0, 0],
+            [11.8 - geoFilterDomain0, 0, 0, 0]
+          ],
           'getFilterValue should return correct value'
         );
         t.deepEqual(
           layerData.data.map(layerData.getLineColor),
-          [[1, 2, 3], [1, 2, 3]],
+          [
+            [1, 2, 3],
+            [1, 2, 3]
+          ],
           'getLineColor should return correct value'
         );
         t.deepEqual(
@@ -244,7 +253,10 @@ test('#GeojsonLayer -> formatLayerData', t => {
           // by c_zip_type
           // 'C_Medium_High' null  'A_Low_Rural',
           layerData.data.map(layerData.getFillColor),
-          [[2, 2, 2], [2, 2, 2]],
+          [
+            [2, 2, 2],
+            [2, 2, 2]
+          ],
           'getFillColor should return correct value'
         );
 
@@ -252,14 +264,20 @@ test('#GeojsonLayer -> formatLayerData', t => {
           // by m_rate
           // 7.5 null 10
           layerData.data.map(layerData.getFilterValue),
-          [[Number.MIN_SAFE_INTEGER, 0, 0, 0], [11.8 - geoFilterDomain0, 0, 0, 0]],
+          [
+            [Number.MIN_SAFE_INTEGER, 0, 0, 0],
+            [11.8 - geoFilterDomain0, 0, 0, 0]
+          ],
           'getFilterValue should return correct value'
         );
         t.deepEqual(
           // by c_zip_type
           // 'C_Medium_High' null  'A_Low_Rural',
           layerData.data.map(layerData.getLineColor),
-          [[5, 5, 5], [5, 5, 5]],
+          [
+            [5, 5, 5],
+            [5, 5, 5]
+          ],
           'getLineColor should return correct value'
         );
         t.deepEqual(
@@ -346,7 +364,11 @@ test('#GeojsonLayer -> formatLayerData', t => {
         );
         t.deepEqual(
           layerData.data.map(layerData.getFillColor),
-          [[5, 5, 5], [5, 5, 5], [5, 5, 5]],
+          [
+            [5, 5, 5],
+            [5, 5, 5],
+            [5, 5, 5]
+          ],
           'getFillColor should return correct value'
         );
         t.deepEqual(
@@ -360,7 +382,11 @@ test('#GeojsonLayer -> formatLayerData', t => {
         );
         t.deepEqual(
           layerData.data.map(layerData.getLineColor),
-          [[5, 5, 5], [5, 5, 5], [5, 5, 5]],
+          [
+            [5, 5, 5],
+            [5, 5, 5],
+            [5, 5, 5]
+          ],
           'getLineColor should return correct value'
         );
         t.deepEqual(
@@ -440,17 +466,29 @@ test('#GeojsonLayer -> formatLayerData', t => {
         );
         t.deepEqual(
           layerData.data.map(layerData.getFillColor),
-          [[1, 2, 3], [7, 8, 9], [1, 2, 3]],
+          [
+            [1, 2, 3],
+            [7, 8, 9],
+            [1, 2, 3]
+          ],
           'getFillColor should return correct value'
         );
         t.deepEqual(
           layerData.data.map(layerData.getFilterValue),
-          [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+          [
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0]
+          ],
           'getFilterValue should return correct value'
         );
         t.deepEqual(
           layerData.data.map(layerData.getLineColor),
-          [[4, 5, 6], [4, 5, 6], [4, 5, 6]],
+          [
+            [4, 5, 6],
+            [4, 5, 6],
+            [4, 5, 6]
+          ],
           'getLineColor should return correct value'
         );
         t.deepEqual(
@@ -508,7 +546,11 @@ test('#GeojsonLayer -> renderLayer', t => {
       },
       assert: deckLayers => {
         const ids = ['test_layer_1', 'test_layer_1-polygons-fill', 'test_layer_1-polygons-stroke'];
-        t.deepEqual(deckLayers.map(l => l.id), ids, 'Should render 3 deck layers');
+        t.deepEqual(
+          deckLayers.map(l => l.id),
+          ids,
+          'Should render 3 deck layers'
+        );
         // polygon fill attributes;
         const {attributes} = deckLayers[1].state.attributeManager;
         const indices = attributes.indices.value;

@@ -266,7 +266,10 @@ test('#LineLayer -> formatLayerData', t => {
         // range ['#010101', '#020202', '#030303']
         t.deepEqual(
           layerData.data.map(layerData.getSourceColor),
-          [[2, 2, 2], [1, 1, 1]],
+          [
+            [2, 2, 2],
+            [1, 1, 1]
+          ],
           'getSourceColor should be correct'
         );
         // getTargetColor
@@ -274,7 +277,10 @@ test('#LineLayer -> formatLayerData', t => {
         // range ['#010101', '#020202', '#030303']
         t.deepEqual(
           layerData.data.map(layerData.getTargetColor),
-          [[2, 2, 2], [1, 1, 1]],
+          [
+            [2, 2, 2],
+            [1, 1, 1]
+          ],
           'getTargetColors  be correct'
         );
         // getWidth

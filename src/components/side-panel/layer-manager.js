@@ -134,17 +134,15 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
     };
 
     layerClassSelector = props => props.layerClasses;
-    layerTypeOptionsSelector = createSelector(
-      this.layerClassSelector,
-      layerClasses =>
-        Object.keys(layerClasses).map(key => {
-          const layer = new layerClasses[key]();
-          return {
-            id: key,
-            label: layer.name,
-            icon: layer.layerIcon
-          };
-        })
+    layerTypeOptionsSelector = createSelector(this.layerClassSelector, layerClasses =>
+      Object.keys(layerClasses).map(key => {
+        const layer = new layerClasses[key]();
+        return {
+          id: key,
+          label: layer.name,
+          icon: layer.layerIcon
+        };
+      })
     );
 
     _addEmptyNewLayer = () => {

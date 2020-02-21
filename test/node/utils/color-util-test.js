@@ -30,7 +30,11 @@ test('createLinearGradient', t => {
     'Should create a solid gradient with 1 color'
   );
 
-  colors = [[100, 100, 100], [200, 200, 200], [300, 300, 300]];
+  colors = [
+    [100, 100, 100],
+    [200, 200, 200],
+    [300, 300, 300]
+  ];
 
   t.deepEqual(
     createLinearGradient('bottom', colors),
@@ -38,7 +42,12 @@ test('createLinearGradient', t => {
     'Should create a linear gradient'
   );
 
-  colors = [[10, 10, 10], [20, 20, 20], [30, 30, 30], [40, 40, 40]];
+  colors = [
+    [10, 10, 10],
+    [20, 20, 20],
+    [30, 30, 30],
+    [40, 40, 40]
+  ];
 
   t.deepEqual(
     createLinearGradient('bottom', colors),

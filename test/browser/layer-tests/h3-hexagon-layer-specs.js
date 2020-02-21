@@ -185,7 +185,10 @@ test('#H3Layer -> formatLayerData', t => {
         // range ['#010101', '#020202', '#030303']
         t.deepEqual(
           layerData.data.map(layerData.getFillColor),
-          [[2, 2, 2], [1, 1, 1]],
+          [
+            [2, 2, 2],
+            [1, 1, 1]
+          ],
           'getFillColor should be correct'
         );
         // getElevation

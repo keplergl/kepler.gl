@@ -115,7 +115,10 @@ test('#ScenegraphLayer -> formatLayerData', t => {
         );
         t.deepEqual(
           layerData.data.map(layerData.getPosition),
-          [[testRows[0][2], testRows[0][1], 0], [testRows[4][2], testRows[4][1], 0]],
+          [
+            [testRows[0][2], testRows[0][1], 0],
+            [testRows[4][2], testRows[4][1], 0]
+          ],
           'getPosition should return correct lat lng'
         );
         // getFilterValue

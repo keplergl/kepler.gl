@@ -674,12 +674,18 @@ test('filterUtils -> diffFilters', t => {
       filterRecord: {
         dynamicDomain: [{id: 'aa', name: 'hello', value: 'bb'}],
         fixedDomain: [{id: 'bb', name: 'ab', value: 'ab'}],
-        cpu: [{id: 'dd', name: 'hey', value: 'ee'}, {id: 'ee', name: 'ee', value: 'ff'}],
+        cpu: [
+          {id: 'dd', name: 'hey', value: 'ee'},
+          {id: 'ee', name: 'ee', value: 'ff'}
+        ],
         gpu: []
       },
       oldFilterRecord: {
         dynamicDomain: [{id: 'aa', name: 'hello', value: 'bb'}],
-        fixedDomain: [{id: 'bb', name: 'cd', value: 'ab'}, {id: 'cc', name: 'world', value: 'dd'}],
+        fixedDomain: [
+          {id: 'bb', name: 'cd', value: 'ab'},
+          {id: 'cc', name: 'world', value: 'dd'}
+        ],
         cpu: [{id: 'ee', name: 'ee', value: 'gg'}],
         gpu: []
       },

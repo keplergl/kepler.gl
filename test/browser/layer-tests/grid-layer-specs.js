@@ -268,7 +268,11 @@ test('#GridLayer -> renderLayer', t => {
         const expectedProps = {
           coverage: layer.config.visConfig.coverage,
           cellSize: layer.config.visConfig.worldUnitSize * 1000,
-          colorRange: [[8, 8, 8], [9, 9, 9], [7, 7, 7]],
+          colorRange: [
+            [8, 8, 8],
+            [9, 9, 9],
+            [7, 7, 7]
+          ],
           colorScaleType: layer.config.colorScale,
           elevationScaleType: layer.config.sizeScale,
           elevationScale: layer.config.visConfig.elevationScale,
@@ -346,9 +350,15 @@ test('#GridLayer -> renderLayer', t => {
             ]
           }
         ];
-        const expectedColorBins = [{i: 2, value: 1, counts: 1}, {i: 1, value: 2, counts: 2}];
+        const expectedColorBins = [
+          {i: 2, value: 1, counts: 1},
+          {i: 1, value: 2, counts: 2}
+        ];
 
-        const expectedElevationBins = [{i: 2, value: 1, counts: 1}, {i: 1, value: 2, counts: 2}];
+        const expectedElevationBins = [
+          {i: 2, value: 1, counts: 1},
+          {i: 1, value: 2, counts: 2}
+        ];
 
         t.deepEqual(
           gridCellLayerProp.data,

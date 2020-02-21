@@ -141,9 +141,8 @@ export default function MapContainerFactory(MapPopover, MapControl) {
     );
 
     filtersSelector = props => props.filters;
-    polygonFilters = createSelector(
-      this.filtersSelector,
-      filters => filters.filter(f => f.type === FILTER_TYPES.polygon)
+    polygonFilters = createSelector(this.filtersSelector, filters =>
+      filters.filter(f => f.type === FILTER_TYPES.polygon)
     );
 
     mapboxLayersSelector = createSelector(

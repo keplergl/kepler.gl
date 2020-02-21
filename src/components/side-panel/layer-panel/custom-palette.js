@@ -170,27 +170,24 @@ class CustomPalette extends Component {
   // derive sketcher position based on root component
   showSketcherSelector = props => props.showSketcher;
   themeSelector = props => props.theme;
-  sketcherPosSelector = createSelector(
-    this.showSketcherSelector,
-    (showSketcher, theme = {}) => {
-      const {defaultSketcherPos, bottomBuffer, sketcherHeight} = this.props;
-      if (showSketcher === false || !this.root || !this.root.current) return defaultSketcherPos;
-      const {sidePanelInnerPadding = 16, sidePanel = {}, sidePanelScrollBarWidth = 10} = theme;
-      const sidePanelLeft = (sidePanel.margin || {}).left || 20;
-      const offsetX = sidePanelInnerPadding + sidePanelLeft + sidePanelScrollBarWidth;
-      // find component Root position
-      const bounding = this.root.current.getBoundingClientRect();
-      const {x, y, width} = bounding;
+  sketcherPosSelector = createSelector(this.showSketcherSelector, (showSketcher, theme = {}) => {
+    const {defaultSketcherPos, bottomBuffer, sketcherHeight} = this.props;
+    if (showSketcher === false || !this.root || !this.root.current) return defaultSketcherPos;
+    const {sidePanelInnerPadding = 16, sidePanel = {}, sidePanelScrollBarWidth = 10} = theme;
+    const sidePanelLeft = (sidePanel.margin || {}).left || 20;
+    const offsetX = sidePanelInnerPadding + sidePanelLeft + sidePanelScrollBarWidth;
+    // find component Root position
+    const bounding = this.root.current.getBoundingClientRect();
+    const {x, y, width} = bounding;
 
-      // set the top so it won't collide with bottom widget
-      const top =
-        y + sketcherHeight <= window.innerHeight - bottomBuffer
-          ? y
-          : window.innerHeight - bottomBuffer - sketcherHeight;
+    // set the top so it won't collide with bottom widget
+    const top =
+      y + sketcherHeight <= window.innerHeight - bottomBuffer
+        ? y
+        : window.innerHeight - bottomBuffer - sketcherHeight;
 
-      return {top: `${top}px`, left: `${x + width + offsetX}px`};
-    }
-  );
+    return {top: `${top}px`, left: `${x + width + offsetX}px`};
+  });
 
   modalStylesSelector = createSelector(
     this.themeSelector,

@@ -263,7 +263,11 @@ test('#ClusterLayer -> renderLayer', t => {
         const scatterplotLayerProp = scatterplotLayer.props;
 
         const expectedProps = {
-          colorRange: [[8, 8, 8], [9, 9, 9], [7, 7, 7]],
+          colorRange: [
+            [8, 8, 8],
+            [9, 9, 9],
+            [7, 7, 7]
+          ],
           radiusScale: 1,
           radiusRange: layer.config.visConfig.radiusRange,
           clusterRadius: layer.config.visConfig.clusterRadius,

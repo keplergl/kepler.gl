@@ -55,8 +55,7 @@ const InputBox = styled.div`
 `;
 
 const TypeaheadInput = styled.input`
-  ${props => props.theme.secondaryInput}
-  :hover {
+  ${props => props.theme.secondaryInput} :hover {
     cursor: pointer;
     background-color: ${props => props.theme.secondaryInputBgd};
   }

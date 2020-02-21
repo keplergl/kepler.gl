@@ -160,9 +160,8 @@ function DataGridFactory(FieldHeader, Cell) {
     };
 
     columnsSelector = props => props.columns;
-    hasGeojson = createSelector(
-      this.columnsSelector,
-      columns => columns.some(c => c.type === ALL_FIELD_TYPES.geojson)
+    hasGeojson = createSelector(this.columnsSelector, columns =>
+      columns.some(c => c.type === ALL_FIELD_TYPES.geojson)
     );
 
     _cellRenderer = ({columnIndex, key, rowIndex, style}) => {

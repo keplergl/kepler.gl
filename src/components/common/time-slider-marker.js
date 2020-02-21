@@ -83,15 +83,12 @@ export default class TimeSliderMarker extends Component {
 
   domainSelector = props => props.domain;
   widthSelector = props => props.width;
-  scaleSelector = createSelector(
-    this.domainSelector,
-    this.widthSelector,
-    (domain, width) =>
-      Array.isArray(domain)
-        ? scaleUtc()
-            .domain(domain)
-            .range([0, width])
-        : null
+  scaleSelector = createSelector(this.domainSelector, this.widthSelector, (domain, width) =>
+    Array.isArray(domain)
+      ? scaleUtc()
+          .domain(domain)
+          .range([0, width])
+      : null
   );
 
   _updateAxis(scale) {

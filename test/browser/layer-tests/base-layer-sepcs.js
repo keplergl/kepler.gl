@@ -100,7 +100,12 @@ test('#BaseLayer -> updateLayerDomain', t => {
 });
 */
 test('#AggregationLayer -> updateLayerDomain', t => {
-  const data = [['a', 3], ['b', 4], ['c', 1], ['d', null]];
+  const data = [
+    ['a', 3],
+    ['b', 4],
+    ['c', 1],
+    ['d', null]
+  ];
   const mockLayer = new AggregationLayer({dataId: 'test'});
 
   mockLayer.updateLayerConfig({
