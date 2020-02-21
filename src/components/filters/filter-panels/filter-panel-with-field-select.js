@@ -44,7 +44,7 @@ function FieldPanelWithFieldSelectFactory(FilterPanelHeader, SourceDataSelector)
         setFilter
       ]);
 
-      const onSourceDataSelector = useCallback(value => setFilter(idx, 'dataId', value), [
+      const onSourceDataSelector = useCallback(value => setFilter(idx, 'dataId', [value]), [
         idx,
         setFilter
       ]);

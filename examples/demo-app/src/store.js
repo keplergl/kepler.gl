@@ -54,7 +54,7 @@ if (window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__) {
       '@@kepler.gl/LAYER_HOVER'
     ]
   })
-};
+}
 */
 
 export default createStore(reducers, initialState, composeEnhancers(...enhancers));
