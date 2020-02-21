@@ -109,11 +109,7 @@ test('Processor -> getFieldsFromData', t => {
   ];
 
   fields.forEach((f, i) =>
-    t.equal(
-      f.type,
-      expectedFieldTypes[i],
-      `should find field type as ${expectedFieldTypes[i]}`
-    )
+    t.equal(f.type, expectedFieldTypes[i], `should find field type as ${expectedFieldTypes[i]}`)
   );
   t.end();
 });
@@ -124,21 +120,13 @@ test('Processor -> processCsvData', t => {
   // load sample dataset csv as text
   const {fields, rows} = processCsvData(testData);
 
-  t.equal(
-    rows.length,
-    testAllData.length,
-    `should return ${testAllData.length} rows`
-  );
+  t.equal(rows.length, testAllData.length, `should return ${testAllData.length} rows`);
 
   t.deepEqual(fields, testFields, 'should parse fields correctly');
   t.deepEqual(rows, testAllData, 'should parse rows correctly');
 
   fields.forEach((f, i) => {
-    t.deepEqual(
-      f,
-      testFields[i],
-      `should parse correct field ${testFields[i].name}`
-    );
+    t.deepEqual(f, testFields[i], `should parse correct field ${testFields[i].name}`);
   });
 
   rows.forEach((r, i) => {
@@ -164,11 +152,7 @@ test('Processor -> processCsvData: duplicated field name', t => {
     rows: [['a', 'b', 'c', 'd'], ['c', 'd', 'e', 'f']]
   };
 
-  t.deepEqual(
-    result,
-    expectedResult,
-    `should return ${testAllData.length} rows`
-  );
+  t.deepEqual(result, expectedResult, `should return ${testAllData.length} rows`);
 
   t.end();
 });
@@ -178,11 +162,7 @@ test('Processor -> processCsvData -> with nulls', t => {
   t.deepEqual(fields, testFields, 'should parse fields correctly');
 
   fields.forEach((f, i) => {
-    t.deepEqual(
-      f,
-      testFields[i],
-      `should parse correct field ${testFields[i].name}`
-    );
+    t.deepEqual(f, testFields[i], `should parse correct field ${testFields[i].name}`);
   });
 
   t.deepEqual(rows, parsedDataWithNulls, 'should parse rows correctly');
@@ -210,7 +190,7 @@ test('Processor => processGeojson', t => {
   t.equal(fields.length, geojsonFields.length, 'should have same field length');
   fields.forEach((f, i) => {
     t.deepEqual(f, geojsonFields[i], 'should format geojson fields');
-  })
+  });
 
   t.equal(rows.length, geojsonRows.length, 'should have same row length');
   rows.forEach((r, i) => {
@@ -299,11 +279,7 @@ test('Processor => processGeojson: parse rows', t => {
   ];
   const result = processGeojson(testGeoData);
 
-  t.deepEqual(
-    Object.keys(result),
-    ['fields', 'rows'],
-    'should contain fields and rows'
-  );
+  t.deepEqual(Object.keys(result), ['fields', 'rows'], 'should contain fields and rows');
   t.deepEqual(
     result.fields,
     expectedFields,
@@ -334,16 +310,7 @@ test('Processor -> parseCsvRowsByFieldType -> real', t => {
     [' 1.55e+3 xyz']
   ];
 
-  const expected = [
-    [0.0],
-    [1.0],
-    [-1.0],
-    [155.0],
-    [1550.0],
-    [0.00155],
-    [0.00155],
-    [1550.0]
-  ];
+  const expected = [[0.0], [1.0], [-1.0], [155.0], [1550.0], [0.00155], [0.00155], [1550.0]];
 
   parseCsvRowsByFieldType(rows, -1, field, 0);
   t.same(rows, expected, 'should parsed reals properly');
@@ -369,28 +336,10 @@ test('Processor -> parseCsvRowsByFieldType -> boolean', t => {
     type: ALL_FIELD_TYPES.boolean
   };
 
-  const rows = [
-    [null],
-    ['0'],
-    ['1'],
-    ['True'],
-    ['False'],
-    ['0'],
-    ['1'],
-    ['true']
-  ];
+  const rows = [[null], ['0'], ['1'], ['True'], ['False'], ['0'], ['1'], ['true']];
 
   // is parsing '' meaningful, why not false
-  const expected = [
-    [null],
-    [false],
-    [true],
-    [true],
-    [false],
-    [false],
-    [true],
-    [true]
-  ];
+  const expected = [[null], [false], [true], [true], [false], [false], [true], [true]];
 
   parseCsvRowsByFieldType(rows, -1, field, 0);
   t.same(rows, expected, 'should parsed boolean properly');
@@ -452,11 +401,7 @@ test('Processor -> getSampleForTypeAnalyze', t => {
 
 test('Processor -> validateInputData', t => {
   t.equal(validateInputData(null), null, 'Should throw error if data is null');
-  t.equal(
-    validateInputData({rows: 'hello'}),
-    null,
-    'Should throw error if data.rows is null'
-  );
+  t.equal(validateInputData({rows: 'hello'}), null, 'Should throw error if data.rows is null');
   t.equal(
     validateInputData({rows: [], fields: null}),
     null,
@@ -493,27 +438,24 @@ test('Processor -> validateInputData', t => {
       },
       expected: {
         rows: [[1], [2], [3]],
-        fields: [{
-          type: ALL_FIELD_TYPES.integer, format: '', name: 'taro', analyzerType: 'INT'
-        }]
+        fields: [
+          {
+            type: ALL_FIELD_TYPES.integer,
+            format: '',
+            name: 'taro',
+            analyzerType: 'INT'
+          }
+        ]
       },
       msg: 'should reassign field type'
     },
     {
       input: {
-        rows: [
-          ['2018-09-01 00:00'],
-          ['2018-09-01 01:00'],
-          ['2018-09-01 02:00']
-        ],
+        rows: [['2018-09-01 00:00'], ['2018-09-01 01:00'], ['2018-09-01 02:00']],
         fields: [{type: ALL_FIELD_TYPES.timestamp, format: '', name: 'taro'}]
       },
       expected: {
-        rows: [
-          ['2018-09-01 00:00'],
-          ['2018-09-01 01:00'],
-          ['2018-09-01 02:00']
-        ],
+        rows: [['2018-09-01 00:00'], ['2018-09-01 01:00'], ['2018-09-01 02:00']],
         fields: [
           {
             type: ALL_FIELD_TYPES.timestamp,
@@ -535,11 +477,7 @@ test('Processor -> validateInputData', t => {
 });
 
 test('Processor -> processRowObject', t => {
-  t.equal(
-    processRowObject({}),
-    null,
-    'Should return null when rawData is empty'
-  );
+  t.equal(processRowObject({}), null, 'Should return null when rawData is empty');
   const cases = [
     {
       input: [
@@ -657,10 +595,7 @@ test('Processor -> analyzerTypeToFieldType', t => {
       t.ok(spy.calledOnce, `should warn when pass unrecognized type ${atype}`);
     } else {
       const fieldType = analyzerTypeToFieldType(atype);
-      t.ok(
-        ALL_FIELD_TYPES[fieldType],
-        `should assign ${atype} to one of ALL_FIELD_TYPES`
-      );
+      t.ok(ALL_FIELD_TYPES[fieldType], `should assign ${atype} to one of ALL_FIELD_TYPES`);
     }
 
     spy.restore();

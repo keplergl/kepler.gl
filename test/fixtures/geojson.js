@@ -188,7 +188,7 @@ const feature4 = {
       ]
     ]
   }
-}
+};
 
 const feature4Parsed = {
   type: 'Feature',
@@ -487,9 +487,7 @@ export const updatedGeoJsonLayer = {
   }
 };
 
-export const mappedTripValue = geojsonData.features.map(
-  f => f.properties.TRIPS
-);
+export const mappedTripValue = geojsonData.features.map(f => f.properties.TRIPS);
 
 export const tripDomain = extent(mappedTripValue);
 
@@ -592,12 +590,7 @@ export const geoStyleDataToFeature = geoJsonWithStyle.features.map((f, i) => ({
   properties: {...f.properties, index: i}
 }));
 
-export const geoStyleBounds = [
-  -122.3,
-  37.1,
-  -122.1,
-  37.3
-];
+export const geoStyleBounds = [-122.3, 37.1, -122.1, 37.3];
 
 export const geoStyleMeta = {
   featureTypes: {point: true},

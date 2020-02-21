@@ -211,15 +211,27 @@ const tripGeoJson = {
 
 const fts = tripGeoJson.features;
 export const dataToFeature = [
-  {type: 'Feature', properties: {...fts[0].properties, value: null, index: 0}, geometry: fts[0].geometry},
-  {type: 'Feature', properties: {...fts[1].properties, types: null, index: 1}, geometry: fts[1].geometry},
+  {
+    type: 'Feature',
+    properties: {...fts[0].properties, value: null, index: 0},
+    geometry: fts[0].geometry
+  },
+  {
+    type: 'Feature',
+    properties: {...fts[1].properties, types: null, index: 1},
+    geometry: fts[1].geometry
+  },
   {type: 'Feature', properties: {...fts[2].properties, index: 2}, geometry: fts[2].geometry},
   {type: 'Feature', properties: {...fts[3].properties, index: 3}, geometry: fts[3].geometry},
   {type: 'Feature', properties: {...fts[4].properties, index: 4}, geometry: fts[4].geometry},
   {type: 'Feature', properties: {...fts[5].properties, index: 5}, geometry: fts[5].geometry},
   {type: 'Feature', properties: {...fts[6].properties, index: 6}, geometry: fts[6].geometry},
   {type: 'Feature', properties: {...fts[7].properties, index: 7}, geometry: fts[7].geometry},
-  {type: 'Feature', properties: {...fts[8].properties, value: null, index: 8}, geometry: fts[8].geometry}
+  {
+    type: 'Feature',
+    properties: {...fts[8].properties, value: null, index: 8},
+    geometry: fts[8].geometry
+  }
 ];
 
 export const dataToTimeStamp = [

@@ -77,7 +77,7 @@ test('MapContainerFactory - display all options', t => {
       }}
       mapboxApiAccessToken=""
       editor={{
-        features:[]
+        features: []
       }}
       onMapStyleLoaded={onMapStyleLoaded}
       mousePos={{
@@ -88,41 +88,21 @@ test('MapContainerFactory - display all options', t => {
     />
   );
 
-  t.equal(
-    $.find('MapControl').length,
-    1,
-    'Should display 1 MapControl'
-  );
+  t.equal($.find('MapControl').length, 1, 'Should display 1 MapControl');
 
-  t.equal(
-    $.find('InteractiveMap').length,
-    1,
-    'Should display 1 InteractiveMap'
-  );
+  t.equal($.find('InteractiveMap').length, 1, 'Should display 1 InteractiveMap');
 
   // Editor
-  t.equal(
-    $.find('StaticMap').length,
-    1,
-    'Should display 1 DeckGl'
-  );
+  t.equal($.find('StaticMap').length, 1, 'Should display 1 DeckGl');
 
   const instance = $.instance();
 
   instance._onMapboxStyleUpdate();
 
-  t.equal(
-    onMapStyleLoaded.called,
-    true,
-    'Should be calling onMapStyleLoaded'
-  );
+  t.equal(onMapStyleLoaded.called, true, 'Should be calling onMapStyleLoaded');
 
   instance._onCloseMapPopover();
-  t.equal(
-    onLayerClick.called,
-    true,
-    'Should be calling onLayerClick'
-  );
+  t.equal(onLayerClick.called, true, 'Should be calling onLayerClick');
 
   t.end();
 });

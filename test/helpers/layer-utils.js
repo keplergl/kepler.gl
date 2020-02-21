@@ -64,10 +64,7 @@ export function testCreateLayerFromConfig(t, tc) {
   t.doesNotThrow(() => {
     const {dataId} = layerConfig.config;
     layer = validateLayerWithData(datasets[dataId], layerConfig, LayerClasses);
-    t.ok(
-      layer instanceof LayerClasses[layerConfig.type],
-      `${layerConfig.type} layer created`
-    );
+    t.ok(layer instanceof LayerClasses[layerConfig.type], `${layerConfig.type} layer created`);
     layer.updateLayerDomain(datasets);
     if (tc.afterLayerInitialized) {
       tc.afterLayerInitialized(layer);
@@ -130,18 +127,11 @@ export function testFormatLayerDataCases(t, LayerClass, testCases) {
 
     // if provided updates
     if (layer && tc.updates) {
-      const applyUpdates = Array.isArray(tc.updates)
-        ? tc.updates
-        : [tc.updates];
+      const applyUpdates = Array.isArray(tc.updates) ? tc.updates : [tc.updates];
 
       // apply 1 or multiple updates
       applyUpdates.forEach(update => {
-        const updated = testUpdateLayer(
-          t,
-          updatedLayer,
-          update.method,
-          update.args
-        );
+        const updated = testUpdateLayer(t, updatedLayer, update.method, update.args);
         updatedLayer = updated.layer;
       });
     }
@@ -190,12 +180,7 @@ export function testRenderLayerCases(t, LayerClass, testCases) {
     }
 
     if (deckLayers) {
-      const initialDeckLayers = testInitializeDeckLayer(
-        t,
-        layer.type,
-        deckLayers,
-        {viewport}
-      );
+      const initialDeckLayers = testInitializeDeckLayer(t, layer.type, deckLayers, {viewport});
 
       if (tc.assert) {
         tc.assert(initialDeckLayers, layer, result);
@@ -215,19 +200,12 @@ export function testInitializeDeckLayer(t, layerType, deckLayers, {viewport}) {
   const spy = sinon.spy(Console, 'error');
 
   t.doesNotThrow(
-    () =>
-      layerManager.setLayers(
-        Array.isArray(deckLayers) ? deckLayers : [deckLayers]
-      ),
+    () => layerManager.setLayers(Array.isArray(deckLayers) ? deckLayers : [deckLayers]),
     `initialization of ${layerType} layer render should not fail`
   );
 
   // listen on console.error in editShader, fail the test if any error is logged
-  t.deepEqual(
-    spy.args,
-    [],
-    'should not call console.error during layer initialization'
-  );
+  t.deepEqual(spy.args, [], 'should not call console.error during layer initialization');
 
   spy.restore();
   return layerManager.layers;
@@ -245,8 +223,7 @@ export function getNextColorMakerValue(num = 1) {
 
   for (let n = 0; n < num; n++) {
     const next = index + n + 1;
-    const nextIndex =
-      next < layerColors.length ? next : next - layerColors.length;
+    const nextIndex = next < layerColors.length ? next : next - layerColors.length;
     results.push(layerColors[nextIndex]);
   }
 
@@ -285,9 +262,7 @@ function addFilterToData(data, id, filters) {
 }
 
 export const {rows, fields} = processCsvData(csvData);
-export const {rows: testRows, fields: testFields} = processCsvData(
-  testLayerData
-);
+export const {rows: testRows, fields: testFields} = processCsvData(testLayerData);
 
 export const dataId = '0dj3h';
 export {
@@ -299,9 +274,7 @@ export {
 /*
  * point, arc, hex, csv dataset from with gpu time filter
  */
-const timeFilter = [
-  {name: 'utc_timestamp', value: [1474071095000, 1474071608000]}
-];
+const timeFilter = [{name: 'utc_timestamp', value: [1474071095000, 1474071608000]}];
 
 const stateWithTimeFilter = addFilterToData(
   {fields: testFields, rows: testRows},
@@ -321,7 +294,7 @@ export const arcLayerMeta = {
 };
 export const hexagonIdLayerMeta = {
   bounds: bounds.h3
-}
+};
 export {iconGeometry, fieldDomain};
 
 /*
@@ -329,11 +302,9 @@ export {iconGeometry, fieldDomain};
  */
 export const {rows: geoCsvRows, fields: geoCsvFields} = processCsvData(wktCsv);
 
-const stateWithGeoFilter = addFilterToData(
-  {fields: geoCsvFields, rows: geoCsvRows},
-  dataId,
-  [{name: 'm_rate', value: [7, 10]}]
-);
+const stateWithGeoFilter = addFilterToData({fields: geoCsvFields, rows: geoCsvRows}, dataId, [
+  {name: 'm_rate', value: [7, 10]}
+]);
 
 export const preparedGeoDataset = stateWithGeoFilter.datasets[dataId];
 export const preparedGeoDatasetFilter = stateWithGeoFilter.filters[0];
@@ -341,15 +312,11 @@ export const preparedGeoDatasetFilter = stateWithGeoFilter.filters[0];
 /*
  * GeoJson dataset with gpu filter
  */
-export const {rows: geoJsonRows, fields: geoJsonFields} = processGeojson(
-  cloneDeep(geojsonData)
-);
+export const {rows: geoJsonRows, fields: geoJsonFields} = processGeojson(cloneDeep(geojsonData));
 
-const stateWithGeojsonFilter = addFilterToData(
-  {fields: geoJsonFields, rows: geoJsonRows},
-  dataId,
-  [{name: 'TRIPS', value: [4, 12]}]
-);
+const stateWithGeojsonFilter = addFilterToData({fields: geoJsonFields, rows: geoJsonRows}, dataId, [
+  {name: 'TRIPS', value: [4, 12]}
+]);
 
 export const prepareGeojsonDataset = stateWithGeojsonFilter.datasets[dataId];
 export const prepareGeojsonDatasetFilter = stateWithGeojsonFilter.filters[0];
@@ -359,9 +326,7 @@ export const geojsonFilterDomain0 = prepareGeojsonDatasetFilter.domain[0];
 /*
  * trip GeoJson dataset with gpu filter
  */
-export const {rows: tripGeoRows, fields: tripGeoFields} = processGeojson(
-  cloneDeep(tripGeoJson)
-);
+export const {rows: tripGeoRows, fields: tripGeoFields} = processGeojson(cloneDeep(tripGeoJson));
 
 const stateWithTripGeojsonFilter = addFilterToData(
   {fields: tripGeoFields, rows: tripGeoRows},

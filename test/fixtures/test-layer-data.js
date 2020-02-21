@@ -18,9 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {getCentroid} from 'layers/h3-hexagon-layer/h3-utils';
-import {extent} from 'd3-array';
-
 export default `utc_timestamp,lat,lng,lat_1,lng_1,types,has_result,id,hex_id,trip_distance,icon
 Null,37.778564,-122.39096,37.769897,-122.41168,driver_analytics_0,FALSE,1,89283082c2fffff,1.59,accel
 2016-09-17 00:10:56,37.78824,-122.40894,37.798237,-122.41889,null,FALSE,null,8928308288fffff,2.38,add-person
@@ -47,14 +44,9 @@ export const bounds = {
   'lat-lng': [-122.42459, 37.40066, -122.10239, 38.281445],
   'lat_1-lng_1': [-122.42929, 37.37006, -121.96353, 37.798237],
   arc: [-122.42929, 37.37006, -121.96353, 38.281445],
-  h3: [
-    -122.42488652083654,
-    37.75385576067885,
-    -122.42073136602062,
-    37.771654262080524
-  ]
+  h3: [-122.42488652083654, 37.75385576067885, -122.42073136602062, 37.771654262080524]
 };
 
 export const fieldDomain = {
   id: [1, 3, 4, 5, 34, 43, 222, 345]
-}
+};

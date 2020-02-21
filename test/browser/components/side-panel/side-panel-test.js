@@ -20,7 +20,6 @@
 
 import React from 'react';
 import test from 'tape';
-import {mount} from 'enzyme';
 import sinon from 'sinon';
 import SidePanelFactory from 'components/side-panel';
 import SidebarFactory from 'components/side-panel/side-bar';
@@ -35,10 +34,8 @@ import {SaveExportDropdownFactory} from 'components/side-panel/panel-header';
 import ToolbarItem from 'components/common/toolbar-item';
 
 import * as VisStateActions from 'actions/vis-state-actions';
-import * as MapStateActions from 'actions/map-state-actions';
 import * as MapStyleActions from 'actions/map-style-actions';
 import * as UIStateActions from 'actions/ui-state-actions';
-import * as ProviderActions from 'actions/provider-actions';
 
 import {appInjector} from 'components/container';
 import {mountWithTheme} from 'test/helpers/component-utils';
@@ -52,24 +49,13 @@ const FilterManager = appInjector.get(FilterManagerFactory);
 const InteractionManager = appInjector.get(InteractionManagerFactory);
 const MapManager = appInjector.get(MapManagerFactory);
 const PanelToggle = appInjector.get(PanelToggleFactory);
-const CustomPanels = appInjector.get(CustomPanelsFactory);
 const SaveExportDropdown = appInjector.get(SaveExportDropdownFactory);
 
 // mock state
 import {InitialState} from 'test/helpers/mock-state';
 
 // Constants
-import {
-  ADD_DATA_ID,
-  ADD_MAP_STYLE_ID,
-  DATA_TABLE_ID,
-  EXPORT_IMAGE_ID,
-  EXPORT_DATA_ID,
-  EXPORT_MAP_ID,
-  SAVE_MAP_ID,
-  SHARE_MAP_ID,
-  SIDEBAR_PANELS
-} from 'constants/default-settings';
+import {EXPORT_IMAGE_ID, EXPORT_DATA_ID, EXPORT_MAP_ID} from 'constants/default-settings';
 
 // default props from initial state
 const defaultProps = {
@@ -113,41 +99,29 @@ test('Components -> SidePanel -> toggle panel', t => {
   let wrapper;
   // mount
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(
-      <SidePanel {...defaultProps} uiStateActions={uiStateActions} />
-    );
+    wrapper = mountWithTheme(<SidePanel {...defaultProps} uiStateActions={uiStateActions} />);
   }, 'SidePanel should not fail');
 
   t.ok(wrapper.find(PanelToggle).length === 1, 'should render PanelToggle');
 
-  t.equal(
-    wrapper.find('.side-panel__tab').length,
-    4,
-    'should render 4 panel tabs'
-  );
+  t.equal(wrapper.find('.side-panel__tab').length, 4, 'should render 4 panel tabs');
   const layerTab = wrapper.find('.side-panel__tab').at(0);
 
   // click layer tab
   layerTab.simulate('click');
-  t.ok(
-    toggleSidePanel.calledWith('layer'),
-    'should call toggleSidePanel with layer'
-  );
+  t.ok(toggleSidePanel.calledWith('layer'), 'should call toggleSidePanel with layer');
   t.end();
 });
 
 test('Components -> SidePanel -> render panel', t => {
-
   let wrapper;
   let uiState = {
     ...defaultProps.uiState,
     activeSidePanel: 'layer'
-  }
+  };
   // mount LayerManager
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(
-      <SidePanel {...defaultProps} uiState={uiState} />
-    );
+    wrapper = mountWithTheme(<SidePanel {...defaultProps} uiState={uiState} />);
   }, 'SidePanel should not fail');
 
   t.ok(wrapper.find(LayerManager).length === 1, 'should render LayerManager');
@@ -156,11 +130,9 @@ test('Components -> SidePanel -> render panel', t => {
   uiState = {
     ...defaultProps.uiState,
     activeSidePanel: 'filter'
-  }
+  };
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(
-      <SidePanel {...defaultProps} uiState={uiState} />
-    );
+    wrapper = mountWithTheme(<SidePanel {...defaultProps} uiState={uiState} />);
   }, 'SidePanel should not fail');
   t.ok(wrapper.find(FilterManager).length === 1, 'should render FilterManager');
 
@@ -168,23 +140,19 @@ test('Components -> SidePanel -> render panel', t => {
   uiState = {
     ...defaultProps.uiState,
     activeSidePanel: 'interaction'
-  }
+  };
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(
-      <SidePanel {...defaultProps} uiState={uiState} />
-    );
+    wrapper = mountWithTheme(<SidePanel {...defaultProps} uiState={uiState} />);
   }, 'SidePanel should not fail');
   t.ok(wrapper.find(InteractionManager).length === 1, 'should render InteractionManager');
 
-   // mount MapManager
-   uiState = {
+  // mount MapManager
+  uiState = {
     ...defaultProps.uiState,
     activeSidePanel: 'map'
-  }
+  };
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(
-      <SidePanel {...defaultProps} uiState={uiState} />
-    );
+    wrapper = mountWithTheme(<SidePanel {...defaultProps} uiState={uiState} />);
   }, 'SidePanel should not fail');
   t.ok(wrapper.find(MapManager).length === 1, 'should render MapManager');
 
@@ -192,8 +160,8 @@ test('Components -> SidePanel -> render panel', t => {
 });
 
 test('Components -> SidePanel -> render custom panel', t => {
-  const RocketIcon = () => <div id="rocket-icon"/>;
-  const ChartIcon = () => <div id="chart-icon"/>
+  const RocketIcon = () => <div id="rocket-icon" />;
+  const ChartIcon = () => <div id="chart-icon" />;
 
   const MyPanels = props => {
     if (props.activeSidePanel === 'rocket') {
@@ -235,16 +203,10 @@ test('Components -> SidePanel -> render custom panel', t => {
 
   // mount CustomSidePanel
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(
-      <CustomSidePanel {...defaultProps} />
-    );
+    wrapper = mountWithTheme(<CustomSidePanel {...defaultProps} />);
   }, 'SidePanel should not fail');
 
-  t.equal(
-    wrapper.find('.side-panel__tab').length,
-    6,
-    'should render 6 panel tabs'
-  );
+  t.equal(wrapper.find('.side-panel__tab').length, 6, 'should render 6 panel tabs');
 
   t.equal(wrapper.find(RocketIcon).length, 1, 'should render RocketIcon');
   t.equal(wrapper.find(ChartIcon).length, 1, 'should render RocketIcon');
@@ -252,15 +214,9 @@ test('Components -> SidePanel -> render custom panel', t => {
   // mount CustomSidePanel with 1 of the custom panel
   const uiState = {...defaultProps.uiState, activeSidePanel: 'rocket'};
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(
-      <CustomSidePanel {...defaultProps} uiState={uiState}/>
-    );
+    wrapper = mountWithTheme(<CustomSidePanel {...defaultProps} uiState={uiState} />);
   }, 'SidePanel should not fail when mount with custom side panel activated');
-  t.equal(
-    wrapper.find(MyPanels).length,
-    1,
-    'should render MyPanels'
-  );
+  t.equal(wrapper.find(MyPanels).length, 1, 'should render MyPanels');
   t.end();
 });
 
@@ -274,9 +230,7 @@ test('Components -> SidePanel -> PanelHeader', t => {
   let wrapper;
   // mount
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(
-      <SidePanel {...defaultProps} uiStateActions={uiStateActions} />
-    );
+    wrapper = mountWithTheme(<SidePanel {...defaultProps} uiStateActions={uiStateActions} />);
   }, 'SidePanel should not fail');
 
   t.ok(wrapper.find(PanelHeader).length === 1, 'should render PanelHeader');
@@ -306,10 +260,7 @@ test('Components -> SidePanel -> PanelHeader', t => {
     .at(0)
     .simulate('click');
 
-  t.ok(
-    showExportDropdown.calledWith('save'),
-    'should call toggleSidePanel with share'
-  );
+  t.ok(showExportDropdown.calledWith('save'), 'should call toggleSidePanel with share');
 
   // mound with exportDropdown
   const uiState = {
@@ -318,11 +269,7 @@ test('Components -> SidePanel -> PanelHeader', t => {
   };
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
-      <SidePanel
-        {...defaultProps}
-        uiState={uiState}
-        uiStateActions={uiStateActions}
-      />
+      <SidePanel {...defaultProps} uiState={uiState} uiStateActions={uiStateActions} />
     );
   }, 'SidePanel should not fail');
 
@@ -346,18 +293,11 @@ test('Components -> SidePanel -> PanelHeader -> ExportDropDown', t => {
   // mount
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
-      <SidePanel
-        {...defaultProps}
-        uiState={uiState}
-        uiStateActions={uiStateActions}
-      />
+      <SidePanel {...defaultProps} uiState={uiState} uiStateActions={uiStateActions} />
     );
   }, 'SidePanel should not fail');
 
-  t.ok(
-    wrapper.find(SaveExportDropdown).length === 1,
-    'should render SaveExportDropdown'
-  );
+  t.ok(wrapper.find(SaveExportDropdown).length === 1, 'should render SaveExportDropdown');
   t.equal(wrapper.find(ToolbarItem).length, 3, 'should render 3 ToolbarItem');
 
   // export image
@@ -375,10 +315,7 @@ test('Components -> SidePanel -> PanelHeader -> ExportDropDown', t => {
     .at(0)
     .find('.toolbar-item')
     .simulate('click');
-  t.ok(
-    toggleModal.calledWith(EXPORT_IMAGE_ID),
-    'Should call toggleModal with EXPORT_IMAGE_ID'
-  );
+  t.ok(toggleModal.calledWith(EXPORT_IMAGE_ID), 'Should call toggleModal with EXPORT_IMAGE_ID');
 
   // export data
   t.equal(
@@ -395,10 +332,7 @@ test('Components -> SidePanel -> PanelHeader -> ExportDropDown', t => {
     .at(1)
     .find('.toolbar-item')
     .simulate('click');
-  t.ok(
-    toggleModal.calledWith(EXPORT_DATA_ID),
-    'Should call toggleModal with EXPORT_DATA_ID'
-  );
+  t.ok(toggleModal.calledWith(EXPORT_DATA_ID), 'Should call toggleModal with EXPORT_DATA_ID');
 
   // export map
   t.equal(
@@ -415,10 +349,7 @@ test('Components -> SidePanel -> PanelHeader -> ExportDropDown', t => {
     .at(2)
     .find('.toolbar-item')
     .simulate('click');
-  t.ok(
-    toggleModal.calledWith(EXPORT_MAP_ID),
-    'Should call toggleModal with EXPORT_MAP_ID'
-  );
+  t.ok(toggleModal.calledWith(EXPORT_MAP_ID), 'Should call toggleModal with EXPORT_MAP_ID');
 
   t.end();
 });

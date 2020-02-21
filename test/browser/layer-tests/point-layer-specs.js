@@ -48,16 +48,10 @@ test('#PointLayer -> constructor', t => {
           label: 'test point layer'
         },
         test: layer => {
-          t.ok(
-            layer.config.dataId === 'smoothie',
-            'PointLayer dataId should be correct'
-          );
+          t.ok(layer.config.dataId === 'smoothie', 'PointLayer dataId should be correct');
           t.ok(layer.type === 'point', 'type should be point');
           t.ok(layer.isAggregated === false, 'PointLayer is not aggregated');
-          t.ok(
-            layer.config.label === 'test point layer',
-            'label should be correct'
-          );
+          t.ok(layer.config.label === 'test point layer', 'label should be correct');
           t.deepEqual(
             layer.columnPairs,
             {
@@ -174,11 +168,7 @@ test('#PointLayer -> formatLayerData', t => {
           'getFillColor should be a constant'
         );
         // getLineColor
-        t.deepEqual(
-          layerData.getLineColor,
-          [1, 2, 3],
-          'getLineColor should be a constant'
-        );
+        t.deepEqual(layerData.getLineColor, [1, 2, 3], 'getLineColor should be a constant');
         // getRadius
         t.equal(layerData.getRadius, 1, 'getRadius should be a constant');
         // getFilterValue
@@ -198,7 +188,7 @@ test('#PointLayer -> formatLayerData', t => {
         );
         t.deepEqual(
           layerData.textLabels[0].characterSet,
-          ['d','r','i','v','e','_','a','n','l','y','t','c','s','0'],
+          ['d', 'r', 'i', 'v', 'e', '_', 'a', 'n', 'l', 'y', 't', 'c', 's', '0'],
           'textLabels should have correct characterSet'
         );
         t.deepEqual(
@@ -207,11 +197,7 @@ test('#PointLayer -> formatLayerData', t => {
           'textLabels getText should have correct text'
         );
         // layerMeta
-        t.deepEqual(
-          layer.meta,
-          pointLayerMeta,
-          'should format correct point layer meta'
-        );
+        t.deepEqual(layer.meta, pointLayerMeta, 'should format correct point layer meta');
       }
     },
     {
@@ -279,11 +265,7 @@ test('#PointLayer -> formatLayerData', t => {
           Object.keys(expectedLayerData).sort,
           'layerData should have 7 keys'
         );
-        t.deepEqual(
-          layer.config.colorDomain,
-          fieldDomain.id,
-          'should update layer color domain'
-        );
+        t.deepEqual(layer.config.colorDomain, fieldDomain.id, 'should update layer color domain');
         t.deepEqual(
           layerData.data,
           expectedLayerData.data,
@@ -296,11 +278,7 @@ test('#PointLayer -> formatLayerData', t => {
           'getPosition should return correct lat lng'
         );
         // layerMeta
-        t.deepEqual(
-          layer.meta,
-          pointLayerMeta,
-          'should format correct layerMeta'
-        );
+        t.deepEqual(layer.meta, pointLayerMeta, 'should format correct layerMeta');
         // getFillColor
         t.deepEqual(
           layerData.getFillColor(layerData.data[0]),
@@ -308,18 +286,10 @@ test('#PointLayer -> formatLayerData', t => {
           'getFillColor should return correct color'
         );
         // getLineColor
-        t.deepEqual(
-          layerData.getLineColor,
-          [4, 5, 6],
-          'getLineColor should return correct color'
-        );
+        t.deepEqual(layerData.getLineColor, [4, 5, 6], 'getLineColor should return correct color');
         // getRadius
         // domain [1, 12124]
-        t.equal(
-          layerData.getRadius(layerData.data[0]),
-          1,
-          'getRadius should return fixed radius'
-        );
+        t.equal(layerData.getRadius(layerData.data[0]), 1, 'getRadius should return fixed radius');
       }
     },
     {
@@ -478,11 +448,7 @@ test('#PointLayer -> renderLayer', t => {
           filterRange: preparedDataset.gpuFilter.filterRange
         };
         Object.keys(expectedProps).forEach(key => {
-          t.deepEqual(
-            props[key],
-            expectedProps[key],
-            `should have correct props.${key}`
-          );
+          t.deepEqual(props[key], expectedProps[key], `should have correct props.${key}`);
         });
       }
     },
@@ -557,10 +523,7 @@ test('#PointLayer -> renderLayer', t => {
         const padding = 20;
 
         // anchor: start, alignment: center
-        const expectedPixelOffset0 = [
-          1 * (pixelRadius + padding),
-          0 * (pixelRadius + padding + 0)
-        ];
+        const expectedPixelOffset0 = [1 * (pixelRadius + padding), 0 * (pixelRadius + padding + 0)];
 
         // anchor: 'middle', alignment: 'bottom'
         const expectedPixelOffset1 = [
@@ -573,11 +536,7 @@ test('#PointLayer -> renderLayer', t => {
           [testRows[0][2], testRows[0][1], 1],
           'Should calculate correct getPosition'
         );
-        t.deepEqual(
-          getColor,
-          DEFAULT_TEXT_LABEL.color,
-          'Should calculate correct getColor'
-        );
+        t.deepEqual(getColor, DEFAULT_TEXT_LABEL.color, 'Should calculate correct getColor');
         t.deepEqual(getSize, 1, 'Should calculate correct getSize');
         t.deepEqual(
           getPixelOffset,
@@ -640,11 +599,7 @@ test('#PointLayer -> renderLayer', t => {
       assert: (deckLayers, layer, layerData) => {
         t.deepEqual(
           deckLayers.map(l => l.id),
-          [
-            'test_layer_1',
-            'test_layer_1-label-types',
-            'test_layer_1-label-types-characters'
-          ],
+          ['test_layer_1', 'test_layer_1-label-types', 'test_layer_1-label-types-characters'],
           'Should create 3 deck.gl layers'
         );
         // test test_layer_1-label-types
@@ -670,9 +625,6 @@ test('#PointLayer -> renderLayer', t => {
           expectedPixelOffset1,
           'Should calculate correct instancePixelOffset multiplied by getRadius'
         );
-
-
-        const {attributes} = deckLayers[0].state.attributeManager;
       }
     }
   ];

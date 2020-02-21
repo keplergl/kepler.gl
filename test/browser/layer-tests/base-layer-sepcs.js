@@ -115,8 +115,11 @@ test('#AggregationLayer -> updateLayerDomain', t => {
   });
 
   const updatedLayer = mockLayer.updateLayerDomain({test: {data, allData: data}});
-  t.deepEqual(updatedLayer.config.colorDomain, [0, 1],
-    'should not calculate aggregation layer domain');
+  t.deepEqual(
+    updatedLayer.config.colorDomain,
+    [0, 1],
+    'should not calculate aggregation layer domain'
+  );
 
   t.end();
 });

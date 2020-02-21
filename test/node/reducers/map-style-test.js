@@ -22,7 +22,11 @@ import test from 'tape';
 import {drainTasksForTesting, succeedTaskWithValues} from 'react-palm/tasks';
 
 import reducer from 'reducers/map-style';
-import {INITIAL_MAP_STYLE, loadMapStylesUpdater, getInitialInputStyle} from 'reducers/map-style-updaters';
+import {
+  INITIAL_MAP_STYLE,
+  loadMapStylesUpdater,
+  getInitialInputStyle
+} from 'reducers/map-style-updaters';
 import {keplerGlInit, receiveMapConfig} from 'actions/actions';
 import SchemaManager from 'schemas';
 import {DEFAULT_MAP_STYLES, DEFAULT_MAPBOX_API_URL} from 'constants/default-settings';
@@ -71,10 +75,10 @@ test('#mapStyleReducer -> INIT', t => {
 
 test('#mapStyleReducer -> INIT & LOAD_MAP_STYLES', t => {
   const myMapStyle = {
-    id    : 'default dark v9',
-    label : 'default dark v9',
-    url   : 'mapbox://styles/mapbox/dark-v9',
-    icon  : `images/light.png`,
+    id: 'default dark v9',
+    label: 'default dark v9',
+    url: 'mapbox://styles/mapbox/dark-v9',
+    icon: `images/light.png`,
     layerGroups: []
   };
   const newState = reducer(
@@ -102,7 +106,7 @@ test('#mapStyleReducer -> INIT & LOAD_MAP_STYLES', t => {
     [myMapStyle.id]: myMapStyle
   };
 
-  const finalState = loadMapStylesUpdater(newState, { payload: mapStyles });
+  const finalState = loadMapStylesUpdater(newState, {payload: mapStyles});
 
   t.deepEqual(
     finalState,
@@ -127,10 +131,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
   // load state
   const stateLoaded = SchemaManager.parseSavedConfig(savedState);
 
-  const stateWithConfig = reducer(
-    stateWithToken,
-    receiveMapConfig(stateLoaded)
-  );
+  const stateWithConfig = reducer(stateWithToken, receiveMapConfig(stateLoaded));
 
   const defaultMapStyles = DEFAULT_MAP_STYLES.reduce(
     (accu, st) => ({
@@ -148,7 +149,8 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
       smoothie_the_cat: {
         accessToken: 'secret_token',
         custom: true,
-        icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+        icon:
+          'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
         id: 'smoothie_the_cat',
         label: 'Smoothie the Cat',
         url: 'mapbox://styles/shanhe/smoothie.the.cat'
@@ -164,11 +166,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
     initialState: {}
   };
 
-  t.deepEqual(
-    stateWithConfig,
-    expectedStateWithConfig,
-    'should load saved map style config'
-  );
+  t.deepEqual(stateWithConfig, expectedStateWithConfig, 'should load saved map style config');
 
   const [task1, ...more] = drainTasksForTesting();
 
@@ -184,11 +182,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
     ]
   };
 
-  t.deepEqual(
-    task1.payload,
-    expectedTask.payload,
-    'should create task to load map styles'
-  );
+  t.deepEqual(task1.payload, expectedTask.payload, 'should create task to load map styles');
 
   const resultState1 = reducer(
     stateWithConfig,
@@ -201,7 +195,8 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
     smoothie_the_cat: {
       accessToken: 'secret_token',
       custom: true,
-      icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+      icon:
+        'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
       id: 'smoothie_the_cat',
       label: 'Smoothie the Cat',
       url: 'mapbox://styles/shanhe/smoothie.the.cat',

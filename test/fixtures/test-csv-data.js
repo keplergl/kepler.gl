@@ -95,14 +95,7 @@ export const config = {
                 name: 'Global Warming',
                 type: 'sequential',
                 category: 'Uber',
-                colors: [
-                  '#5A1846',
-                  '#900C3F',
-                  '#C70039',
-                  '#E3611C',
-                  '#F1920E',
-                  '#FFC300'
-                ]
+                colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
               },
               radiusRange: [28.5, 194.7],
               filled: true
@@ -153,14 +146,7 @@ export const config = {
                 name: 'Global Warming',
                 type: 'sequential',
                 category: 'Uber',
-                colors: [
-                  '#5A1846',
-                  '#900C3F',
-                  '#C70039',
-                  '#E3611C',
-                  '#F1920E',
-                  '#FFC300'
-                ]
+                colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
               },
               coverage: 1,
               sizeRange: [0, 500],
@@ -851,13 +837,13 @@ export const mergedEpochFilter = {
   gpuChannel: [1]
 };
 
-export const dateFilterProps ={
+export const dateFilterProps = {
   domain: ['2016-09-23', '2016-09-24', '2016-10-10'],
   fieldType: 'date',
   type: 'multiSelect',
   gpu: false,
   value: []
-}
+};
 
 export const mergedDateFilter = {
   ...dateFilterProps,
@@ -875,7 +861,7 @@ export const mergedDateFilter = {
   plotType: 'histogram',
   yAxis: null,
   interval: null
-}
+};
 
 export const wktCsvFields = [
   {
@@ -923,7 +909,7 @@ export const wktCsvFields = [
 ];
 
 export const wktCsvRows = [
-  [ 7015, null, null, 7, 'C_Medium_High', 22.22 ],
+  [7015, null, null, 7, 'C_Medium_High', 22.22],
   [
     7014,
     '{"type":"Polygon","coordinates":[[[-74.158491,40.835947],[-74.157914,40.83902],[-74.148473,40.834522]]]}',
@@ -1302,13 +1288,7 @@ export const updatedLayerV2 = {
       },
       geometry: {
         type: 'Polygon',
-        coordinates: [
-          [
-            [-74.158491, 40.835947],
-            [-74.157914, 40.83902],
-            [-74.148473, 40.834522]
-          ]
-        ]
+        coordinates: [[[-74.158491, 40.835947], [-74.157914, 40.83902], [-74.148473, 40.834522]]]
       }
     },
     {
@@ -1318,13 +1298,7 @@ export const updatedLayerV2 = {
       },
       geometry: {
         type: 'Polygon',
-        coordinates: [
-          [
-            [-74.31687, 40.656696],
-            [-74.319449, 40.658154],
-            [-74.31687, 40.656696]
-          ]
-        ]
+        coordinates: [[[-74.31687, 40.656696], [-74.319449, 40.658154], [-74.31687, 40.656696]]]
       }
     },
     {
@@ -1334,12 +1308,7 @@ export const updatedLayerV2 = {
       },
       geometry: {
         type: 'Polygon',
-        coordinates: [
-          [
-            [-74.387589, 40.632238],
-            [-74.387589, 40.632238]
-          ]
-        ]
+        coordinates: [[[-74.387589, 40.632238], [-74.387589, 40.632238]]]
       }
     },
     {
@@ -1349,13 +1318,7 @@ export const updatedLayerV2 = {
       },
       geometry: {
         type: 'Polygon',
-        coordinates: [
-          [
-            [-74.165995, 40.747969],
-            [-74.165987, 40.745199],
-            [-74.165995, 40.747969]
-          ]
-        ]
+        coordinates: [[[-74.165995, 40.747969], [-74.165987, 40.745199], [-74.165995, 40.747969]]]
       }
     },
     {
@@ -1374,12 +1337,7 @@ export const updatedLayerV2 = {
               [-74.566993, 41.087294]
             ]
           ],
-          [
-            [
-              [-74.593264, 41.088526],
-              [-74.593264, 41.088526]
-            ]
-          ]
+          [[[-74.593264, 41.088526], [-74.593264, 41.088526]]]
         ]
       }
     },
@@ -1390,10 +1348,7 @@ export const updatedLayerV2 = {
       },
       geometry: {
         type: 'LineString',
-        coordinates: [
-          [-74.387589, 40.632238],
-          [-74.387589, 40.632238]
-        ]
+        coordinates: [[-74.387589, 40.632238], [-74.387589, 40.632238]]
       }
     }
   ],

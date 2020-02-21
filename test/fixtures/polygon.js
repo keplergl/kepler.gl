@@ -24,26 +24,11 @@ export const mockPolygonFeature = {
     type: 'Polygon',
     coordinates: [
       [
-        [
-          28.66601562502387,
-          15.343585399424173
-        ],
-        [
-          28.66601562502387,
-          11.109477534559822
-        ],
-        [
-          32.75292968752382,
-          11.109477534559822
-        ],
-        [
-          32.75292968752382,
-          15.343585399424173
-        ],
-        [
-          28.66601562502387,
-          15.343585399424173
-        ]
+        [28.66601562502387, 15.343585399424173],
+        [28.66601562502387, 11.109477534559822],
+        [32.75292968752382, 11.109477534559822],
+        [32.75292968752382, 15.343585399424173],
+        [28.66601562502387, 15.343585399424173]
       ]
     ]
   },
@@ -92,11 +77,7 @@ export const mockPolygonData = {
       config: {
         dataId: 'puppy',
         label: 'start point',
-        color: [
-          227,
-          26,
-          26
-        ],
+        color: [227, 26, 26],
         columns: {
           lat: 'start_point_lat',
           lng: 'start_point_lng',
@@ -114,47 +95,23 @@ export const mockPolygonData = {
             name: 'Global Warming',
             type: 'sequential',
             category: 'Uber',
-            colors: [
-              '#5A1846',
-              '#900C3F',
-              '#C70039',
-              '#E3611C',
-              '#F1920E',
-              '#FFC300'
-            ]
+            colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
           },
           strokeColorRange: {
             name: 'Global Warming',
             type: 'sequential',
             category: 'Uber',
-            colors: [
-              '#5A1846',
-              '#900C3F',
-              '#C70039',
-              '#E3611C',
-              '#F1920E',
-              '#FFC300'
-            ]
+            colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
           },
-          radiusRange: [
-            0,
-            50
-          ],
+          radiusRange: [0, 50],
           filled: true
         },
         textLabel: [
           {
             field: null,
-            color: [
-              255,
-              255,
-              255
-            ],
+            color: [255, 255, 255],
             size: 18,
-            offset: [
-              0,
-              0
-            ],
+            offset: [0, 0],
             anchor: 'start',
             alignment: 'center'
           }
@@ -175,11 +132,7 @@ export const mockPolygonData = {
       config: {
         dataId: 'puppy',
         label: 'end point',
-        color: [
-          255,
-          203,
-          153
-        ],
+        color: [255, 203, 153],
         columns: {
           lat: 'end_point_lat',
           lng: 'end_point_lng',
@@ -197,47 +150,23 @@ export const mockPolygonData = {
             name: 'Global Warming',
             type: 'sequential',
             category: 'Uber',
-            colors: [
-              '#5A1846',
-              '#900C3F',
-              '#C70039',
-              '#E3611C',
-              '#F1920E',
-              '#FFC300'
-            ]
+            colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
           },
           strokeColorRange: {
             name: 'Global Warming',
             type: 'sequential',
             category: 'Uber',
-            colors: [
-              '#5A1846',
-              '#900C3F',
-              '#C70039',
-              '#E3611C',
-              '#F1920E',
-              '#FFC300'
-            ]
+            colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
           },
-          radiusRange: [
-            0,
-            50
-          ],
+          radiusRange: [0, 50],
           filled: true
         },
         textLabel: [
           {
             field: null,
-            color: [
-              255,
-              255,
-              255
-            ],
+            color: [255, 255, 255],
             size: 18,
-            offset: [
-              0,
-              0
-            ],
+            offset: [0, 0],
             anchor: 'start',
             alignment: 'center'
           }

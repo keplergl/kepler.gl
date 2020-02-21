@@ -25,7 +25,6 @@ import test from 'tape';
 import MapControlFactory from 'components/map/map-control';
 
 test('MapControlFactory - display all options', t => {
-
   const MapControl = MapControlFactory();
   const onToggleSplitMap = sinon.spy();
   const onTogglePerspective = sinon.spy();
@@ -53,11 +52,7 @@ test('MapControlFactory - display all options', t => {
     />
   );
 
-  t.equal(
-    $.find('ActionPanel').length,
-    4,
-    'Should show 4 action panels'
-  );
+  t.equal($.find('ActionPanel').length, 4, 'Should show 4 action panels');
 
   t.end();
 });

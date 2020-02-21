@@ -20,12 +20,7 @@
 
 import test from 'tape';
 
-import {
-  updateMap,
-  togglePerspective,
-  fitBounds,
-  toggleSplitMap
-} from 'actions/map-state-actions';
+import {updateMap, togglePerspective, fitBounds, toggleSplitMap} from 'actions/map-state-actions';
 
 import {receiveMapConfig} from 'actions/actions';
 
@@ -36,7 +31,11 @@ const InitialMapState = reducer(undefined, {});
 test('#mapStateReducer', t => {
   const newState = reducer(undefined, {});
 
-  t.deepEqual(newState, {...INITIAL_MAP_STATE, initialState: {}}, 'should return the initial state');
+  t.deepEqual(
+    newState,
+    {...INITIAL_MAP_STATE, initialState: {}},
+    'should return the initial state'
+  );
 
   t.end();
 });
@@ -45,7 +44,11 @@ test('#mapStateReducerFactory', t => {
   const mapStateReducer = mapStateReducerFactory({dragRotate: true});
   const newState = mapStateReducer(undefined, {});
 
-  t.deepEqual(newState, {...INITIAL_MAP_STATE, dragRotate: true, initialState: {dragRotate: true}}, 'should return the initial state');
+  t.deepEqual(
+    newState,
+    {...INITIAL_MAP_STATE, dragRotate: true, initialState: {dragRotate: true}},
+    'should return the initial state'
+  );
 
   t.end();
 });
@@ -60,11 +63,7 @@ test('#mapStateReducer -> UPDATE_MAP', t => {
 
   const newState = reducer(undefined, updateMap(mapUpdate));
 
-  t.deepEqual(
-    newState,
-    expectedState,
-    'should update map longitude and latitude'
-  );
+  t.deepEqual(newState, expectedState, 'should update map longitude and latitude');
 
   t.end();
 });
@@ -74,20 +73,12 @@ test('#mapStateReducer -> TOGGLE_PERSPECTIVE', t => {
   t.equal(newState.dragRotate, false, 'dragRotate should default to false');
 
   const newState2 = reducer(undefined, togglePerspective());
-  t.equal(
-    newState2.dragRotate,
-    true,
-    'dragRotate toggle should set it to true'
-  );
+  t.equal(newState2.dragRotate, true, 'dragRotate toggle should set it to true');
   t.equal(newState2.pitch, 50, 'pitch should set to default');
   t.equal(newState2.bearing, 24, 'bearing should set to default');
 
   const newState3 = reducer(newState2, togglePerspective());
-  t.equal(
-    newState3.dragRotate,
-    false,
-    'dragRotate 2nd toggle should set it to false'
-  );
+  t.equal(newState3.dragRotate, false, 'dragRotate 2nd toggle should set it to false');
   t.equal(newState3.pitch, 0, 'pitch should set to zero');
   t.equal(newState3.bearing, 0, 'bearing should set to zero');
 
@@ -98,12 +89,7 @@ test('#mapStateReducer -> FIT_BOUNDS', t => {
   // default input and output in @mapbox/geo-viewport
   // https://github.com/mapbox/geo-viewport
 
-  const bounds = [
-    5.668343999999995,
-    45.111511000000014,
-    5.852471999999996,
-    45.26800200000002
-  ];
+  const bounds = [5.668343999999995, 45.111511000000014, 5.852471999999996, 45.26800200000002];
 
   const mapUpdate = {
     width: 640,
@@ -139,11 +125,7 @@ test('#mapStateReducer -> SPLIT_MAP: toggle', t => {
 
   // go back to single view
   newState = reducer(newState, toggleSplitMap());
-  t.deepEqual(
-    newState,
-    INITIAL_MAP_STATE,
-    'should validate toggle back from split view'
-  );
+  t.deepEqual(newState, INITIAL_MAP_STATE, 'should validate toggle back from split view');
 
   t.end();
 });
@@ -217,7 +199,6 @@ test('#mapStateReducer -> SPLIT_MAP: upload mapState config to update split map 
   );
 
   t.end();
-
 });
 
 test('#mapStateReducer -> SPLIT_MAP: close map at specific point', t => {
@@ -234,11 +215,7 @@ test('#mapStateReducer -> SPLIT_MAP: close map at specific point', t => {
 
   // go back to single view
   newState = reducer(newState, toggleSplitMap(1));
-  t.deepEqual(
-    newState,
-    INITIAL_MAP_STATE,
-    'should validate toggle back from split view'
-  );
+  t.deepEqual(newState, INITIAL_MAP_STATE, 'should validate toggle back from split view');
 
   t.end();
 });

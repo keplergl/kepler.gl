@@ -26,11 +26,7 @@ import {Provider} from 'react-redux';
 import sinon from 'sinon';
 import {console as Console} from 'global/window';
 
-import {
-  withState,
-  injectComponents,
-  PanelHeaderFactory
-} from 'components';
+import {withState, injectComponents, PanelHeaderFactory} from 'components';
 
 import coreReducer from 'reducers/core';
 import {keplerGlInit} from 'actions/actions';
@@ -43,9 +39,7 @@ test('Components -> injector -> injectComponents', t => {
   const CustomHeader = () => <div className="my-test-header">smoothie</div>;
   const myCustomHeaderFactory = () => CustomHeader;
 
-  const KeplerGl = injectComponents([
-    [PanelHeaderFactory, myCustomHeaderFactory]
-  ]);
+  const KeplerGl = injectComponents([[PanelHeaderFactory, myCustomHeaderFactory]]);
 
   // assume instance reducer is already mounted
   const store = mockStore({
@@ -68,9 +62,7 @@ test('Components -> injector -> injectComponents', t => {
 test('Components -> injector -> missing deps', t => {
   const spy = sinon.spy(Console, 'error');
 
-  const myCustomNameFactory = () => () => (
-    <div className="my-test-header-name">name</div>
-  );
+  const myCustomNameFactory = () => () => <div className="my-test-header-name">name</div>;
   const myCustomHeaderFactory = Name => () => (
     <div className="my-test-header-1">
       <Name />
@@ -79,9 +71,7 @@ test('Components -> injector -> missing deps', t => {
   );
   myCustomHeaderFactory.deps = [myCustomNameFactory];
 
-  const KeplerGl = injectComponents([
-    [PanelHeaderFactory, myCustomHeaderFactory]
-  ]);
+  const KeplerGl = injectComponents([[PanelHeaderFactory, myCustomHeaderFactory]]);
 
   // assume instance reducer is already mounted
   const store = mockStore({
@@ -96,15 +86,9 @@ test('Components -> injector -> missing deps', t => {
     </Provider>
   );
 
-  t.ok(
-    spy.notCalled,
-    'Should automatically add custom deps and not call console.error'
-  );
+  t.ok(spy.notCalled, 'Should automatically add custom deps and not call console.error');
 
-  t.ok(
-    wrapper.find('.my-test-header-name').length,
-    'should still render custom header name'
-  );
+  t.ok(wrapper.find('.my-test-header-name').length, 'should still render custom header name');
 
   spy.restore();
   t.end();
@@ -143,10 +127,7 @@ test('Components -> injector -> wrong factory type', t => {
   );
 
   // test if custom header is rendered
-  t.ok(
-    wrapper.find('.side-panel__panel-header').length,
-    'should render default header'
-  );
+  t.ok(wrapper.find('.side-panel__panel-header').length, 'should render default header');
 
   spy.restore();
   t.end();
@@ -179,10 +160,7 @@ test('Components -> injector -> wrong replacement type', t => {
   );
 
   // test if custom header is rendered
-  t.ok(
-    wrapper.find('.side-panel__panel-header').length,
-    'should render default header'
-  );
+  t.ok(wrapper.find('.side-panel__panel-header').length, 'should render default header');
 
   spy.restore();
   t.end();
@@ -193,16 +171,14 @@ test('Components -> injector -> replace and render existing', t => {
 
   function myCustomHeaderFactory(...deps) {
     const PanelHeader = PanelHeaderFactory(...deps);
-    PanelHeader.defaultProps
+    PanelHeader.defaultProps;
     const MyHeader = props => {
       return <PanelHeader {...props} appName="taro" />;
     };
     return MyHeader;
   }
 
-  const KeplerGl = injectComponents([
-    [PanelHeaderFactory, myCustomHeaderFactory]
-  ]);
+  const KeplerGl = injectComponents([[PanelHeaderFactory, myCustomHeaderFactory]]);
   // assume instance reducer is already mounted
   const store = mockStore({
     keplerGl: {
@@ -224,17 +200,11 @@ test('Components -> injector -> replace and render existing', t => {
 });
 
 test('Components -> injector -> withState.lens', t => {
-  const CustomHeader = ({visState}) => (
-    <div className="my-test-header-3">smoothie</div>
-  );
+  const CustomHeader = ({visState}) => <div className="my-test-header-3">smoothie</div>;
   const myCustomHeaderFactory = () =>
-    withState([visStateLens, mapStateLens, uiStateLens, mapStyleLens])(
-      CustomHeader
-    );
+    withState([visStateLens, mapStateLens, uiStateLens, mapStyleLens])(CustomHeader);
 
-  const KeplerGl = injectComponents([
-    [PanelHeaderFactory, myCustomHeaderFactory]
-  ]);
+  const KeplerGl = injectComponents([[PanelHeaderFactory, myCustomHeaderFactory]]);
 
   // assume instance reducer is already mounted
   const store = mockStore({
@@ -263,15 +233,11 @@ test('Components -> injector -> withState.lens', t => {
 });
 
 test('Components -> injector -> withState.mapStateToProps', t => {
-  const CustomHeader = ({visState}) => (
-    <div className="my-test-header-3">smoothie</div>
-  );
+  const CustomHeader = ({visState}) => <div className="my-test-header-3">smoothie</div>;
   const myCustomHeaderFactory = () =>
     withState([], state => ({ids: Object.keys(state)}))(CustomHeader);
 
-  const KeplerGl = injectComponents([
-    [PanelHeaderFactory, myCustomHeaderFactory]
-  ]);
+  const KeplerGl = injectComponents([[PanelHeaderFactory, myCustomHeaderFactory]]);
 
   // assume instance reducer is already mounted
   const store = mockStore({
@@ -308,9 +274,7 @@ test('Components -> injector -> actions', t => {
   const myCustomHeaderFactory = () =>
     withState([], state => state, {add: testAction})(CustomHeader);
 
-  const KeplerGl = injectComponents([
-    [PanelHeaderFactory, myCustomHeaderFactory]
-  ]);
+  const KeplerGl = injectComponents([[PanelHeaderFactory, myCustomHeaderFactory]]);
 
   // assume instance reducer is already mounted
   const store = mockStore({

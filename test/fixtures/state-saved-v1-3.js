@@ -225,14 +225,7 @@ export const savedStateV1 = {
                   name: 'ColorBrewer YlGn-6',
                   type: 'sequential',
                   category: 'ColorBrewer',
-                  colors: [
-                    '#006837',
-                    '#31a354',
-                    '#78c679',
-                    '#addd8e',
-                    '#d9f0a3',
-                    '#ffffcc'
-                  ],
+                  colors: ['#006837', '#31a354', '#78c679', '#addd8e', '#d9f0a3', '#ffffcc'],
                   reversed: true
                 },
                 radiusRange: [0, 50]
@@ -262,13 +255,7 @@ export const savedStateV1 = {
                   name: 'Uber Viz Diverging 1',
                   type: 'diverging',
                   category: 'Uber',
-                  colors: [
-                    '#00939C',
-                    '#85C4C8',
-                    '#FEEEE8',
-                    '#EC9370',
-                    '#C22E00'
-                  ],
+                  colors: ['#00939C', '#85C4C8', '#FEEEE8', '#EC9370', '#C22E00'],
                   reversed: false
                 },
                 coverage: 1,
@@ -292,13 +279,7 @@ export const savedStateV1 = {
         interactionConfig: {
           tooltip: {
             fieldsToShow: {
-              fm8v2jcza: [
-                'deliver_radius',
-                'boolean',
-                'num_boolean',
-                'int',
-                'boolean_1'
-              ]
+              fm8v2jcza: ['deliver_radius', 'boolean', 'num_boolean', 'int', 'boolean_1']
             },
             enabled: true
           },
@@ -416,28 +397,14 @@ mergedLayer0.config = {
       name: 'ColorBrewer YlGn-6',
       type: 'sequential',
       category: 'ColorBrewer',
-      colors: [
-        '#006837',
-        '#31a354',
-        '#78c679',
-        '#addd8e',
-        '#d9f0a3',
-        '#ffffcc'
-      ],
+      colors: ['#006837', '#31a354', '#78c679', '#addd8e', '#d9f0a3', '#ffffcc'],
       reversed: true
     },
     strokeColorRange: {
       name: 'ColorBrewer YlGn-6',
       type: 'sequential',
       category: 'ColorBrewer',
-      colors: [
-        '#006837',
-        '#31a354',
-        '#78c679',
-        '#addd8e',
-        '#d9f0a3',
-        '#ffffcc'
-      ],
+      colors: ['#006837', '#31a354', '#78c679', '#addd8e', '#d9f0a3', '#ffffcc'],
       reversed: true
     },
     radiusRange: [0, 50],

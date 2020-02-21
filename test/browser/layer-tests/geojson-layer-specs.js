@@ -25,10 +25,7 @@ import GeojsonLayer, {
   defaultRadius
 } from 'layers/geojson-layer/geojson-layer';
 
-import {
-  updatedLayerSimplifiedShape,
-  updatedLayerV2
-} from 'test/fixtures/test-csv-data';
+import {updatedLayerV2} from 'test/fixtures/test-csv-data';
 import {
   dataId,
   preparedGeoDataset,
@@ -58,10 +55,7 @@ test('#GeojsonLayer -> constructor', t => {
           label: 'test geojson layer'
         },
         test: layer => {
-          t.ok(
-            layer.config.dataId === 'smoothie',
-            'geojsonLayer dataId should be correct'
-          );
+          t.ok(layer.config.dataId === 'smoothie', 'geojsonLayer dataId should be correct');
           t.ok(layer.type === 'geojson', 'type should be geojson');
           t.ok(layer.isAggregated === false, 'geojsonLayer is not aggregated');
         }
@@ -100,10 +94,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
       assert: result => {
         const {layerData, layer} = result;
         const expectedLayerData = {
-          data: [
-            updatedLayerV2.dataToFeature[2],
-            updatedLayerV2.dataToFeature[4]
-          ]
+          data: [updatedLayerV2.dataToFeature[2], updatedLayerV2.dataToFeature[4]]
         };
         const expectedDataKeys = [
           'data',
@@ -140,10 +131,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
         );
         t.deepEqual(
           layerData.data.map(layerData.getFilterValue),
-          [
-            [Number.MIN_SAFE_INTEGER, 0, 0, 0],
-            [11.8 - geoFilterDomain0, 0, 0, 0]
-          ],
+          [[Number.MIN_SAFE_INTEGER, 0, 0, 0], [11.8 - geoFilterDomain0, 0, 0, 0]],
           'getFilterValue should return correct value'
         );
         t.deepEqual(
@@ -162,11 +150,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
           'getRadius should return correct value'
         );
         // meta
-        t.deepEqual(
-          layer.meta,
-          expectedLayerMeta,
-          'should format correct geojson layer meta'
-        );
+        t.deepEqual(layer.meta, expectedLayerMeta, 'should format correct geojson layer meta');
         // dataToFeature
         t.equal(
           layer.dataToFeature.length,
@@ -205,12 +189,8 @@ test('#GeojsonLayer -> formatLayerData', t => {
             }
           },
           // color by c_zip_type(string)
-          colorField: preparedGeoDataset.fields.find(
-            f => f.name === 'c_zip_type'
-          ),
-          strokeColorField: preparedGeoDataset.fields.find(
-            f => f.name === 'c_zip_type'
-          ),
+          colorField: preparedGeoDataset.fields.find(f => f.name === 'c_zip_type'),
+          strokeColorField: preparedGeoDataset.fields.find(f => f.name === 'c_zip_type'),
 
           // stroke by c_number(real)
           sizeField: preparedGeoDataset.fields.find(f => f.name === 'c_number'),
@@ -227,10 +207,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
       assert: result => {
         const {layerData, layer} = result;
         const expectedLayerData = {
-          data: [
-            updatedLayerV2.dataToFeature[2],
-            updatedLayerV2.dataToFeature[4]
-          ]
+          data: [updatedLayerV2.dataToFeature[2], updatedLayerV2.dataToFeature[4]]
         };
         const expectedDataKeys = [
           'data',
@@ -275,10 +252,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
           // by m_rate
           // 7.5 null 10
           layerData.data.map(layerData.getFilterValue),
-          [
-            [Number.MIN_SAFE_INTEGER, 0, 0, 0],
-            [11.8 - geoFilterDomain0, 0, 0, 0]
-          ],
+          [[Number.MIN_SAFE_INTEGER, 0, 0, 0], [11.8 - geoFilterDomain0, 0, 0, 0]],
           'getFilterValue should return correct value'
         );
         t.deepEqual(
@@ -303,11 +277,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
           'getRadius should return correct value'
         );
         // meta
-        t.deepEqual(
-          layer.meta,
-          expectedLayerMeta,
-          'should format correct geojson layerData'
-        );
+        t.deepEqual(layer.meta, expectedLayerMeta, 'should format correct geojson layerData');
         // dataToFeature
         t.deepEqual(
           layer.dataToFeature,
@@ -405,11 +375,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
         );
 
         // meta
-        t.deepEqual(
-          layer.meta,
-          expectedLayerMeta,
-          'should format correct geojson layer meta'
-        );
+        t.deepEqual(layer.meta, expectedLayerMeta, 'should format correct geojson layer meta');
         // dataToFeature
         t.deepEqual(
           layer.dataToFeature,
@@ -499,11 +465,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
         );
 
         // meta
-        t.deepEqual(
-          layer.meta,
-          expectedLayerMeta,
-          'should format correct geojson layer meta'
-        );
+        t.deepEqual(layer.meta, expectedLayerMeta, 'should format correct geojson layer meta');
         // dataToFeature
         t.deepEqual(
           layer.dataToFeature,
@@ -545,16 +507,8 @@ test('#GeojsonLayer -> renderLayer', t => {
         }
       },
       assert: deckLayers => {
-        const ids = [
-          'test_layer_1',
-          'test_layer_1-polygons-fill',
-          'test_layer_1-polygons-stroke'
-        ];
-        t.deepEqual(
-          deckLayers.map(l => l.id),
-          ids,
-          'Should render 3 deck layers'
-        );
+        const ids = ['test_layer_1', 'test_layer_1-polygons-fill', 'test_layer_1-polygons-stroke'];
+        t.deepEqual(deckLayers.map(l => l.id), ids, 'Should render 3 deck layers');
         // polygon fill attributes;
         const {attributes} = deckLayers[1].state.attributeManager;
         const indices = attributes.indices.value;

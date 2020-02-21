@@ -33,14 +33,7 @@ test('Components -> ColorLegend.render', t => {
   const fieldType = 'real';
   const domain = [0, 20];
   const scaleType = 'quantize';
-  const range = [
-    '#5A1846',
-    '#900C3F',
-    '#C70039',
-    '#E3611C',
-    '#F1920E',
-    '#FFC300'
-  ];
+  const range = ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300'];
   const displayLabel = true;
 
   const props = {
@@ -81,7 +74,7 @@ test('Components -> ColorLegend.render', t => {
     .find('text')
     .at(0)
     .text();
-  t.equal(row1Txt, '', 'should not render text')
+  t.equal(row1Txt, '', 'should not render text');
 
   t.end();
 });

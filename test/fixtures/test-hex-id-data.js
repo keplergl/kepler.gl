@@ -84,14 +84,7 @@ export const hexIdDataConfig = {
                   name: 'Global Warming',
                   type: 'sequential',
                   category: 'Uber',
-                  colors: [
-                    '#5A1846',
-                    '#900C3F',
-                    '#C70039',
-                    '#E3611C',
-                    '#F1920E',
-                    '#FFC300'
-                  ]
+                  colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
                 },
                 coverage: 1,
                 sizeRange: [0, 500],
@@ -428,12 +421,7 @@ export const expectedMergedDataset = {
   fieldPairs: [],
   fields: mergedFields,
   gpuFilter: {
-    filterRange: [
-      [10.2, 27],
-      [0, 0],
-      [0, 0],
-      [0, 0]
-    ],
+    filterRange: [[10.2, 27], [0, 0], [0, 0], [0, 0]],
     filterValueUpdateTriggers: {
       gpuFilter_0: 'value',
       gpuFilter_1: null,

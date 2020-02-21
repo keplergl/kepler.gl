@@ -23,9 +23,7 @@ import test from 'tape';
 import sinon from 'sinon';
 import {mountWithTheme} from 'test/helpers/component-utils';
 
-import FileUplad, {
-  WarningMsg
-} from 'components/common/file-uploader/file-upload';
+import FileUplad, {WarningMsg} from 'components/common/file-uploader/file-upload';
 import FileDrop from 'components/common/file-uploader/file-drop';
 import UploadButton from 'components/common/file-uploader/upload-button';
 
@@ -69,7 +67,6 @@ test('Components -> FileUpload.onDrop', t => {
   const files = wrapper.state().files;
 
   t.deepEqual(files, mockFiles, 'should set files to state');
-  const uploadMsg = wrapper.find('.file-uploader__message');
 
   t.end();
 });
@@ -80,9 +77,7 @@ test('Components -> FileUpload.onDrop -> render loading msg', t => {
     t.deepEqual(arg, mockFiles, 'should call onFileUpload with files');
   });
 
-  const wrapper = mountWithTheme(
-    <FileUplad onFileUpload={onFileUpload} fileLoading />
-  );
+  const wrapper = mountWithTheme(<FileUplad onFileUpload={onFileUpload} fileLoading />);
 
   const FileDropDiv = wrapper.find('.file-uploader__file-drop').at(0);
   // mock file drop event
@@ -196,7 +191,7 @@ test('Components -> UploadButton fileInput', t => {
 
   // simulate click
   uploadButton.find('.file-upload__upload-button-span').simulate('click');
-  
+
   // mock file drop event
   const mockEvent = {
     target: {

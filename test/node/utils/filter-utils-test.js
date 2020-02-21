@@ -56,10 +56,7 @@ function testGetTimeFieldDomain(rows, allFields, t) {
     {
       name: 'epoch',
       input: getFieldDomain(rows, allFields[4]).domain,
-      output: [
-        moment.utc(1472688000000).valueOf(),
-        moment.utc(1472774400000).valueOf()
-      ],
+      output: [moment.utc(1472688000000).valueOf(), moment.utc(1472774400000).valueOf()],
       msg: 1472688000000
     },
     {
@@ -92,11 +89,7 @@ function testGetTimeFieldDomain(rows, allFields, t) {
   ];
 
   test_cases.forEach(tc =>
-    t.deepEqual(
-      tc.input,
-      tc.output,
-      `should process correct domain for timestamp ${tc.msg}`
-    )
+    t.deepEqual(tc.input, tc.output, `should process correct domain for timestamp ${tc.msg}`)
   );
 }
 
@@ -115,56 +108,27 @@ function testGetFilterFunction(rows, fields, t) {
 
   let field = fields[timeStringFilter.fieldIdx[0]];
 
-  let filterFunction = getFilterFunction(
-    field,
-    dataId,
-    timeStringFilter,
-    []
-  );
+  let filterFunction = getFilterFunction(field, dataId, timeStringFilter, []);
 
-  t.equal(
-    filterFunction(rows[10], 10),
-    true,
-    `${rows[10][0]} should be inside the range`
-  );
+  t.equal(filterFunction(rows[10], 10), true, `${rows[10][0]} should be inside the range`);
 
-  t.equal(
-    filterFunction(rows[15], 15),
-    false,
-    `${rows[15][0]} should be outside the range`
-  );
+  t.equal(filterFunction(rows[15], 15), false, `${rows[15][0]} should be outside the range`);
 
   const epochFilter = {
     fieldIdx: [4],
     type: FILTER_TYPES.timeRange,
-    value: [
-      moment.utc(1472688000000).valueOf(),
-      moment.utc(1472734400000).valueOf()
-    ],
+    value: [moment.utc(1472688000000).valueOf(), moment.utc(1472734400000).valueOf()],
     id: 'filter-2',
     dataId: [dataId]
   };
 
   field = fields[epochFilter.fieldIdx[0]];
 
-  filterFunction = getFilterFunction(
-    field,
-    dataId,
-    epochFilter,
-    []
-  );
+  filterFunction = getFilterFunction(field, dataId, epochFilter, []);
 
-  t.equal(
-    filterFunction(rows[10], 10),
-    true,
-    `${rows[10][1]} should be inside the range`
-  );
+  t.equal(filterFunction(rows[10], 10), true, `${rows[10][1]} should be inside the range`);
 
-  t.equal(
-    filterFunction(rows[15], 15),
-    false,
-    `${rows[15][1]} should be outside the range`
-  );
+  t.equal(filterFunction(rows[15], 15), false, `${rows[15][1]} should be outside the range`);
 
   const tzFilter = {
     fieldIdx: [7],
@@ -179,24 +143,11 @@ function testGetFilterFunction(rows, fields, t) {
 
   field = fields[tzFilter.fieldIdx[0]];
 
-  filterFunction = getFilterFunction(
-    field,
-    dataId,
-    tzFilter,
-    []
-  );
+  filterFunction = getFilterFunction(field, dataId, tzFilter, []);
 
-  t.equal(
-    filterFunction(rows[10], 10),
-    true,
-    `${rows[10][7]} should be inside the range`
-  );
+  t.equal(filterFunction(rows[10], 10), true, `${rows[10][7]} should be inside the range`);
 
-  t.equal(
-    filterFunction(rows[23], 10),
-    false,
-    `${rows[23][7]} should be outside the range`
-  );
+  t.equal(filterFunction(rows[23], 10), false, `${rows[23][7]} should be outside the range`);
 
   const utcFilter = {
     fieldIdx: [8],
@@ -211,30 +162,13 @@ function testGetFilterFunction(rows, fields, t) {
 
   field = fields[utcFilter.fieldIdx[0]];
 
-  filterFunction = getFilterFunction(
-    field,
-    dataId,
-    utcFilter,
-    []
-  );
+  filterFunction = getFilterFunction(field, dataId, utcFilter, []);
 
-  t.equal(
-    filterFunction(rows[6], 6),
-    false,
-    `${rows[0][8]} should be outside the range`
-  );
+  t.equal(filterFunction(rows[6], 6), false, `${rows[0][8]} should be outside the range`);
 
-  t.equal(
-    filterFunction(rows[4], 4),
-    true,
-    `${rows[4][8]} should be inside the range`
-  );
+  t.equal(filterFunction(rows[4], 4), true, `${rows[4][8]} should be inside the range`);
 
-  t.equal(
-    filterFunction(rows[23], 23),
-    false,
-    `${rows[23][8]} should be outside the range`
-  );
+  t.equal(filterFunction(rows[23], 23), false, `${rows[23][8]} should be outside the range`);
 }
 
 /* eslint-disable max-statements */
@@ -380,11 +314,7 @@ test('filterUtils -> getTimestampFieldDomain', t => {
       }
     },
     tiny: {
-      input: [
-        '2016-10-01 09:45:39.001',
-        '2016-10-01 09:45:39.002',
-        '2016-10-01 09:45:39.003'
-      ],
+      input: ['2016-10-01 09:45:39.001', '2016-10-01 09:45:39.002', '2016-10-01 09:45:39.003'],
       expect: {
         domain: [1475315139001, 1475315139003],
         mappedValue: [1475315139001, 1475315139002, 1475315139003],
@@ -396,11 +326,7 @@ test('filterUtils -> getTimestampFieldDomain', t => {
       }
     },
     small: {
-      input: [
-        '2016-10-01 09:45:39.010',
-        '2016-10-01 09:45:39.020',
-        '2016-10-01 09:45:39.030'
-      ],
+      input: ['2016-10-01 09:45:39.010', '2016-10-01 09:45:39.020', '2016-10-01 09:45:39.030'],
       expect: {
         domain: [1475315139010, 1475315139030],
         mappedValue: [1475315139010, 1475315139020, 1475315139030],
@@ -410,11 +336,7 @@ test('filterUtils -> getTimestampFieldDomain', t => {
       }
     },
     medium: {
-      input: [
-        '2016-10-01 09:45:39.100',
-        '2016-10-01 09:45:39.200',
-        '2016-10-01 09:45:39.300'
-      ],
+      input: ['2016-10-01 09:45:39.100', '2016-10-01 09:45:39.200', '2016-10-01 09:45:39.300'],
       expect: {
         domain: [1475315139100, 1475315139300],
         mappedValue: [1475315139100, 1475315139200, 1475315139300],
@@ -436,10 +358,7 @@ test('filterUtils -> getTimestampFieldDomain', t => {
   };
 
   Object.keys(timeData).forEach(key => {
-    const tsFieldDomain = getTimestampFieldDomain(
-      timeData[key].input,
-      valueAccessor
-    );
+    const tsFieldDomain = getTimestampFieldDomain(timeData[key].input, valueAccessor);
     t.deepEqual(
       Object.keys(tsFieldDomain).sort(),
       Object.keys(timeData[key].expect).sort(),
@@ -471,39 +390,23 @@ test('filterUtils -> getDatasetFieldIndexForFilter', t => {
     fieldIdx: [3]
   });
 
-  t.equal(
-    fieldIndex,
-    3,
-    'FieldIndex should be 3'
-  );
+  t.equal(fieldIndex, 3, 'FieldIndex should be 3');
 
   fieldIndex = getDatasetFieldIndexForFilter(dataId, {
     dataId: ['different-id', dataId],
     fieldIdx: [3, 5]
   });
 
-  t.equal(
-    fieldIndex,
-    5,
-    'FieldIndex should be 5'
-  );
+  t.equal(fieldIndex, 5, 'FieldIndex should be 5');
 
   fieldIndex = getDatasetFieldIndexForFilter(dataId, {dataId: ['different-id']});
-  t.equal(
-    fieldIndex,
-    -1,
-    'FieldIndex should be -1'
-  );
+  t.equal(fieldIndex, -1, 'FieldIndex should be -1');
 
   t.end();
 });
 
 test('filterUtils -> isValidFilterValue', t => {
-  t.equal(
-    isValidFilterValue(null, true),
-    false,
-    'Should return false because type is null'
-  );
+  t.equal(isValidFilterValue(null, true), false, 'Should return false because type is null');
 
   t.equal(
     isValidFilterValue(FILTER_TYPES.select, true),
@@ -558,103 +461,67 @@ test('filterUtils -> isValidFilterValue', t => {
 
 test('filterUtils -> isInPolygon', t => {
   t.equal(
-    isInPolygon(
-      [120.47448, 23.667604],
-      {
-        type: 'Feature',
-        geometry: {
-          type: 'Polygon',
-          coordinates: [
-            [
-              [
-                120.21949418752885,
-                23.755486652156186
-              ],
-              [
-                120.21949418752885,
-                23.221461105318184
-              ],
-              [
-                121.05994828909135,
-                23.221461105318184
-              ],
-              [
-                121.05994828909135,
-                23.755486652156186
-              ],
-              [
-                120.21949418752885,
-                23.755486652156186
-              ]
-            ]
+    isInPolygon([120.47448, 23.667604], {
+      type: 'Feature',
+      geometry: {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [120.21949418752885, 23.755486652156186],
+            [120.21949418752885, 23.221461105318184],
+            [121.05994828909135, 23.221461105318184],
+            [121.05994828909135, 23.755486652156186],
+            [120.21949418752885, 23.755486652156186]
           ]
+        ]
+      },
+      properties: {
+        renderType: 'Rectangle',
+        isClosed: true,
+        bbox: {
+          xmin: 120.21949418752885,
+          xmax: null,
+          ymin: 23.755486652156186,
+          ymax: null
         },
-        properties: {
-          renderType: 'Rectangle',
-          isClosed: true,
-          bbox: {
-            xmin: 120.21949418752885,
-            xmax: null,
-            ymin: 23.755486652156186,
-            ymax: null
-          },
-          isVisible: true,
-          filterId: 'z1ilfjv6'
-        },
-        id: '036d9e21-af6b-4350-aab9-f1ce37c35cce'
-      }
-    ),
+        isVisible: true,
+        filterId: 'z1ilfjv6'
+      },
+      id: '036d9e21-af6b-4350-aab9-f1ce37c35cce'
+    }),
     true,
     'Should return true because the point is within the polygon'
   );
 
   t.equal(
-    isInPolygon(
-      [119.47448, 23.667604],
-      {
-        type: 'Feature',
-        geometry: {
-          type: 'Polygon',
-          coordinates: [
-            [
-              [
-                120.21949418752885,
-                23.755486652156186
-              ],
-              [
-                120.21949418752885,
-                23.221461105318184
-              ],
-              [
-                121.05994828909135,
-                23.221461105318184
-              ],
-              [
-                121.05994828909135,
-                23.755486652156186
-              ],
-              [
-                120.21949418752885,
-                23.755486652156186
-              ]
-            ]
+    isInPolygon([119.47448, 23.667604], {
+      type: 'Feature',
+      geometry: {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [120.21949418752885, 23.755486652156186],
+            [120.21949418752885, 23.221461105318184],
+            [121.05994828909135, 23.221461105318184],
+            [121.05994828909135, 23.755486652156186],
+            [120.21949418752885, 23.755486652156186]
           ]
+        ]
+      },
+      properties: {
+        renderType: 'Rectangle',
+        isClosed: true,
+        bbox: {
+          xmin: 120.21949418752885,
+          xmax: null,
+          ymin: 23.755486652156186,
+          ymax: null
         },
-        properties: {
-          renderType: 'Rectangle',
-          isClosed: true,
-          bbox: {
-            xmin: 120.21949418752885,
-            xmax: null,
-            ymin: 23.755486652156186,
-            ymax: null
-          },
-          isVisible: true,
-          filterId: 'z1ilfjv6'
-        },
-        id: '036d9e21-af6b-4350-aab9-f1ce37c35cce'
-      }
-    ),
+        isVisible: true,
+        filterId: 'z1ilfjv6'
+      },
+      id: '036d9e21-af6b-4350-aab9-f1ce37c35cce'
+    }),
     false,
     'Should return false because the point is not within the polygon'
   );
@@ -679,9 +546,11 @@ test('filterUtils -> validatePolygonFilter', t => {
     id: 'puppy'
   };
 
-  const layers = [{
-    id: 'layer1'
-  }];
+  const layers = [
+    {
+      id: 'layer1'
+    }
+  ];
 
   t.deepEqual(
     validatePolygonFilter(dataset, filter, layers).filter,
@@ -706,21 +575,29 @@ test('filterUtils -> validatePolygonFilter', t => {
   );
 
   t.deepEqual(
-    validatePolygonFilter(dataset, {
-      ...filter,
-      dataId: ['non_valid']
-    }, layers).filter,
+    validatePolygonFilter(
+      dataset,
+      {
+        ...filter,
+        dataId: ['non_valid']
+      },
+      layers
+    ).filter,
     null,
     'Should not validate filter with non existing dataId'
   );
 
   t.deepEqual(
-    validatePolygonFilter(dataset, {
-      ...filter,
-      value: {
-        id: 'wrong-value-for-polygon-type'
-      }
-    }, layers).filter,
+    validatePolygonFilter(
+      dataset,
+      {
+        ...filter,
+        value: {
+          id: 'wrong-value-for-polygon-type'
+        }
+      },
+      layers
+    ).filter,
     null,
     'Should not validate filter given type and value without corresponding layer'
   );
@@ -729,7 +606,6 @@ test('filterUtils -> validatePolygonFilter', t => {
 });
 
 test('filterUtils -> Polygon getFilterFunction ', t => {
-
   const dataset = {
     id: 'puppy',
     data: mockPolygonData.data,
@@ -741,25 +617,11 @@ test('filterUtils -> Polygon getFilterFunction ', t => {
 
   const polygonFilter = generatePolygonFilter(layers, mockPolygonFeature);
 
-  let filterFunction = getFilterFunction(
-    null,
-    dataset.id,
-    polygonFilter,
-    []
-  );
+  let filterFunction = getFilterFunction(null, dataset.id, polygonFilter, []);
 
-  t.equal(
-    filterFunction(data[0], 0),
-    true,
-    `Should return true because layer list is empty`
-  );
+  t.equal(filterFunction(data[0], 0), true, `Should return true because layer list is empty`);
 
-  filterFunction = getFilterFunction(
-    null,
-    'puppy-2',
-    polygonFilter,
-    layers
-  );
+  filterFunction = getFilterFunction(null, 'puppy-2', polygonFilter, layers);
 
   t.equal(
     filterFunction(data[0], 0),
@@ -812,18 +674,12 @@ test('filterUtils -> diffFilters', t => {
       filterRecord: {
         dynamicDomain: [{id: 'aa', name: 'hello', value: 'bb'}],
         fixedDomain: [{id: 'bb', name: 'ab', value: 'ab'}],
-        cpu: [
-          {id: 'dd', name: 'hey', value: 'ee'},
-          {id: 'ee', name: 'ee', value: 'ff'}
-        ],
+        cpu: [{id: 'dd', name: 'hey', value: 'ee'}, {id: 'ee', name: 'ee', value: 'ff'}],
         gpu: []
       },
       oldFilterRecord: {
         dynamicDomain: [{id: 'aa', name: 'hello', value: 'bb'}],
-        fixedDomain: [
-          {id: 'bb', name: 'cd', value: 'ab'},
-          {id: 'cc', name: 'world', value: 'dd'}
-        ],
+        fixedDomain: [{id: 'bb', name: 'cd', value: 'ab'}, {id: 'cc', name: 'world', value: 'dd'}],
         cpu: [{id: 'ee', name: 'ee', value: 'gg'}],
         gpu: []
       },
