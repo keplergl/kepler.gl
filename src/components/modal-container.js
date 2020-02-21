@@ -27,13 +27,7 @@ import get from 'lodash.get';
 
 import ModalDialogFactory from './modals/modal-dialog';
 import KeplerGlSchema from 'schemas';
-import {
-  exportJson,
-  exportHtml,
-  exportData,
-  exportImage,
-  exportMap
-} from 'utils/export-utils';
+import {exportJson, exportHtml, exportData, exportImage, exportMap} from 'utils/export-utils';
 import {isValidMapInfo} from 'utils/map-info-utils';
 
 // modals
@@ -201,9 +195,7 @@ export default function ModalContainerFactory(
 
     _onSaveMap = (overwrite = false) => {
       const {currentProvider} = this.props.providerState;
-      const provider = this.props.cloudProviders.find(
-        p => p.name === currentProvider
-      );
+      const provider = this.props.cloudProviders.find(p => p.name === currentProvider);
       this._exportFileToCloud({
         provider,
         isPublic: false,
@@ -217,7 +209,7 @@ export default function ModalContainerFactory(
     };
 
     _onShareMapUrl = provider => {
-      this._exportFileToCloud({provider, isPublic: true, closeModal: false});
+      this._exportFileToCloud({provider, isPublic: true, overwrite: false, closeModal: false});
     };
 
     _onCloseSaveMap = () => {
@@ -282,11 +274,7 @@ export default function ModalContainerFactory(
             break;
           case DELETE_DATA_ID:
             // validate options
-            if (
-              datasetKeyToRemove &&
-              datasets &&
-              datasets[datasetKeyToRemove]
-            ) {
+            if (datasetKeyToRemove && datasets && datasets[datasetKeyToRemove]) {
               template = (
                 <DeleteDatasetModal dataset={datasets[datasetKeyToRemove]} layers={layers} />
               );
@@ -354,9 +342,7 @@ export default function ModalContainerFactory(
                 applyCPUFilter={this.props.visStateActions.applyCPUFilter}
                 onClose={this._closeModal}
                 onChangeExportDataType={uiStateActions.setExportDataType}
-                onChangeExportSelectedDataset={
-                  uiStateActions.setExportSelectedDataset
-                }
+                onChangeExportSelectedDataset={uiStateActions.setExportSelectedDataset}
                 onChangeExportFiltered={uiStateActions.setExportFiltered}
               />
             );
@@ -383,9 +369,7 @@ export default function ModalContainerFactory(
                 config={keplerGlConfig}
                 options={uiState.exportMap}
                 onChangeExportMapFormat={uiStateActions.setExportMapFormat}
-                onEditUserMapboxAccessToken={
-                  uiStateActions.setUserMapboxAccessToken
-                }
+                onEditUserMapboxAccessToken={uiStateActions.setUserMapboxAccessToken}
                 onChangeExportMapHTMLMode={uiStateActions.setExportHTMLMapMode}
               />
             );
@@ -408,9 +392,7 @@ export default function ModalContainerFactory(
                 mapState={this.props.mapState}
                 inputStyle={mapStyle.inputStyle}
                 inputMapStyle={this.props.mapStyleActions.inputMapStyle}
-                loadCustomMapStyle={
-                  this.props.mapStyleActions.loadCustomMapStyle
-                }
+                loadCustomMapStyle={this.props.mapStyleActions.loadCustomMapStyle}
               />
             );
             modalProps = {
@@ -458,6 +440,8 @@ export default function ModalContainerFactory(
                 {...providerState}
                 cloudProviders={this.props.cloudProviders}
                 title={get(visState, ['mapInfo', 'title'])}
+                onSetCloudProvider={this.props.providerActions.setCloudProvider}
+                onUpdateImageSetting={uiStateActions.setExportImageSetting}
               />
             );
             modalProps = {
@@ -468,7 +452,11 @@ export default function ModalContainerFactory(
               onCancel: this._closeModal,
               confirmButton: {
                 large: true,
-                children: 'Yes'
+                children: 'Yes',
+                disabled:
+                  uiState.exportImage.exporting ||
+                  !isValidMapInfo(visState.mapInfo) ||
+                  !providerState.currentProvider
               }
             };
             break;

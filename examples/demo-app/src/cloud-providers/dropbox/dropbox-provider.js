@@ -32,6 +32,7 @@ const KEPLER_DROPBOX_FOLDER_LINK = `//${DOMAIN}/home/Apps`;
 const CORS_FREE_DOMAIN = 'dl.dropboxusercontent.com';
 const PRIVATE_STORAGE_ENABLED = true;
 const SHARING_ENABLED = true;
+const MAX_THUMBNAIL_BATCH = 25;
 
 function parseQueryString(query) {
   const searchParams = new URLSearchParams(query);
@@ -162,17 +163,15 @@ export default class DropboxProvider {
       });
       const {pngs, visualizations} = this._parseEntries(response);
       // https://dropbox.github.io/dropbox-sdk-js/Dropbox.html#filesGetThumbnailBatch__anchor
-      const thumbnails = await this._dropbox.filesGetThumbnailBatch({
-        entries: Object.values(pngs).map(img => ({
-          path: img.path_lower,
-          format: 'png',
-          size: 'w128h128'
-        }))
-      });
+      // up to 25 per request
+      // TODO: implement pagination, so we don't need to get all the thumbs all at once
+      const thumbnails = await Promise.all(this._getThumbnailRequests(pngs)).then(results =>
+        results.reduce((accu, r) => [...accu, ...(r.entries || [])], [])
+      );
 
       // append to visualizations
       thumbnails &&
-        thumbnails.entries.forEach(thb => {
+        thumbnails.forEach(thb => {
           if (thb['.tag'] === 'success' && thb.thumbnail) {
             const matchViz = visualizations[pngs[thb.metadata.id] && pngs[thb.metadata.id].name];
             if (matchViz) {
@@ -421,6 +420,29 @@ export default class DropboxProvider {
 
   _getUserFromAccount(response) {
     return response ? (response.name && response.name.abbreviated_name) || response.email : null;
+  }
+
+  _getThumbnailRequests(pngs) {
+    const batches = Object.values(pngs).reduce((accu, c) => {
+      const lastBatch = accu.length && accu[accu.length - 1];
+      if (!lastBatch || lastBatch.length >= MAX_THUMBNAIL_BATCH) {
+        // add new batch
+        accu.push([c]);
+      } else {
+        lastBatch.push(c);
+      }
+      return accu;
+    }, []);
+
+    return batches.map(batch =>
+      this._dropbox.filesGetThumbnailBatch({
+        entries: batch.map(img => ({
+          path: img.path_lower,
+          format: 'png',
+          size: 'w128h128'
+        }))
+      })
+    );
   }
 
   /**

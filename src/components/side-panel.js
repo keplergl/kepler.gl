@@ -104,7 +104,17 @@ export default function SidePanelFactory (
       visStateActions: PropTypes.object.isRequired,
       mapStyleActions: PropTypes.object.isRequired,
       availableProviders: PropTypes.object,
-      mapSaved: PropTypes.string
+      mapSaved: PropTypes.string,
+      panels: PropTypes.arrayOf(PropTypes.object)
+    };
+
+    static defaultProps = {
+      panels: SIDEBAR_PANELS,
+      uiState: {},
+      visStateActions: {},
+      mapStyleActions: {},
+      uiStateActions: {},
+      availableProviders: {}
     };
 
     static defaultProps = {
@@ -287,7 +297,7 @@ export default function SidePanelFactory (
                 {activeSidePanel === 'map' && (
                   <MapManager {...mapManagerActions} mapStyle={this.props.mapStyle} />
                 )}
-                {customPanels.length && customPanels.find(p => p.id === activeSidePanel) ? (
+                {(customPanels || []).find(p => p.id === activeSidePanel) ? (
                   <CustomPanels
                     {...getCustomPanelProps(this.props)}
                     activeSidePanel={activeSidePanel}

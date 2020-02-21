@@ -125,9 +125,7 @@ export default function ShareMapUrlModalFactory() {
                 <StyledExportSection>
                   <div className="description">
                     <div className="title">Share Map Url</div>
-                    <div className="subtitle">
-                      Generate a map url to share with others
-                    </div>
+                    <div className="subtitle">Generate a map url to share with others</div>
                   </div>
                   <div className="selection">
                     <div className="title warning">{SHARE_DISCLAIMER}</div>
