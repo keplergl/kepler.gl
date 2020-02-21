@@ -185,8 +185,7 @@ export default function SidePanelFactory(
         layerConfigChange: visStateActions.layerConfigChange,
         layerColorUIChange: visStateActions.layerColorUIChange,
         layerTextLabelChange: visStateActions.layerTextLabelChange,
-        layerVisualChannelConfigChange:
-          visStateActions.layerVisualChannelConfigChange,
+        layerVisualChannelConfigChange: visStateActions.layerVisualChannelConfigChange,
         layerTypeChange: visStateActions.layerTypeChange,
         layerVisConfigChange: visStateActions.layerVisConfigChange,
         updateLayerBlending: visStateActions.updateLayerBlending,
@@ -287,10 +286,7 @@ export default function SidePanelFactory(
                   />
                 )}
                 {activeSidePanel === 'map' && (
-                  <MapManager
-                    {...mapManagerActions}
-                    mapStyle={this.props.mapStyle}
-                  />
+                  <MapManager {...mapManagerActions} mapStyle={this.props.mapStyle} />
                 )}
                 {customPanels.length && customPanels.find(p => p.id === activeSidePanel) && (
                   <CustomPanels

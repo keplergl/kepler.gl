@@ -101,12 +101,7 @@ export const SAVE_MAP_ID = 'saveMap';
  */
 export const SHARE_MAP_ID = 'shareMap';
 
-import {
-  Layers,
-  FilterFunnel,
-  Settings,
-  CursorClick
-} from 'components/common/icons';
+import {Layers, FilterFunnel, Settings, CursorClick} from 'components/common/icons';
 import {getHTMLMapModeTileUrl} from 'utils/utils';
 
 export const KEPLER_GL_NAME = 'kepler.gl';
@@ -251,11 +246,7 @@ export const ICON_FIELDS = {
   icon: ['icon']
 };
 
-export const TRIP_POINT_FIELDS = [
-  ['lat', 'lng'],
-  ['lat', 'lon'],
-  ['latitude', 'longitude']
-];
+export const TRIP_POINT_FIELDS = [['lat', 'lng'], ['lat', 'lon'], ['latitude', 'longitude']];
 
 export const TRIP_ARC_FIELDS = {
   lat0: 'begintrip',
@@ -523,14 +514,10 @@ export const FIELD_OPTS = {
   }
 };
 
-export const CHANNEL_SCALE_SUPPORTED_FIELDS = Object.keys(
-  CHANNEL_SCALES
-).reduce(
+export const CHANNEL_SCALE_SUPPORTED_FIELDS = Object.keys(CHANNEL_SCALES).reduce(
   (accu, key) => ({
     ...accu,
-    [key]: Object.keys(FIELD_OPTS).filter(
-      ft => Object.keys(FIELD_OPTS[ft].scale[key]).length
-    )
+    [key]: Object.keys(FIELD_OPTS).filter(ft => Object.keys(FIELD_OPTS[ft].scale[key]).length)
   }),
   {}
 );
@@ -568,12 +555,7 @@ export const LAYER_BLENDINGS = {
   normal: {
     // reference to
     // https://limnu.com/webgl-blending-youre-probably-wrong/
-    blendFunc: [
-      'SRC_ALPHA',
-      'ONE_MINUS_SRC_ALPHA',
-      'ONE',
-      'ONE_MINUS_SRC_ALPHA'
-    ],
+    blendFunc: ['SRC_ALPHA', 'ONE_MINUS_SRC_ALPHA', 'ONE', 'ONE_MINUS_SRC_ALPHA'],
     blendEquation: ['FUNC_ADD', 'FUNC_ADD']
   },
   subtractive: {
@@ -697,20 +679,18 @@ export const EXPORT_HTML_MAP_MODES = keyMirror({
 });
 
 // Export map options
-export const EXPORT_MAP_FORMAT_OPTIONS = Object.entries(EXPORT_MAP_FORMATS)
-  .map(entry => ({
-    id: entry[0],
-    label: entry[1].toLowerCase(),
-    available: true
-  }));
+export const EXPORT_MAP_FORMAT_OPTIONS = Object.entries(EXPORT_MAP_FORMATS).map(entry => ({
+  id: entry[0],
+  label: entry[1].toLowerCase(),
+  available: true
+}));
 
-export const EXPORT_HTML_MAP_MODE_OPTIONS = Object.entries(EXPORT_HTML_MAP_MODES)
-  .map(entry => ({
-    id: entry[0],
-    label: entry[1].toLowerCase(),
-    available: true,
-    url: getHTMLMapModeTileUrl(entry[1])
-  }));
+export const EXPORT_HTML_MAP_MODE_OPTIONS = Object.entries(EXPORT_HTML_MAP_MODES).map(entry => ({
+  id: entry[0],
+  label: entry[1].toLowerCase(),
+  available: true,
+  url: getHTMLMapModeTileUrl(entry[1])
+}));
 
 export const DEFAULT_UUID_COUNT = 6;
 
@@ -728,10 +708,14 @@ export const DEFAULT_NOTIFICATION_TOPICS = keyMirror({
   file: null
 });
 
-export const TOKEN_MISUSE_WARNING = '* If you do not provide your own token, the map may fail to display at any time when we replace ours to avoid misuse. ';
-export const DISCLAIMER = 'You can change the Mapbox token later using the following instructions: ';
-export const MAP_CONFIG_DESCRIPTION = 'Map config will be included in the Json file. If you are using kepler.gl in your own app. You can copy this config and pass it to ';
-export const SHARE_DISCLAIMER = 'kepler.gl will save your map data to your personal cloud storage, only people with the URL can access your map and data. ' +
+export const TOKEN_MISUSE_WARNING =
+  '* If you do not provide your own token, the map may fail to display at any time when we replace ours to avoid misuse. ';
+export const DISCLAIMER =
+  'You can change the Mapbox token later using the following instructions: ';
+export const MAP_CONFIG_DESCRIPTION =
+  'Map config will be included in the Json file. If you are using kepler.gl in your own app. You can copy this config and pass it to ';
+export const SHARE_DISCLAIMER =
+  'kepler.gl will save your map data to your personal cloud storage, only people with the URL can access your map and data. ' +
   'You can edit/delete the data file in your cloud account anytime.';
 // Animation
 export const BASE_SPEED = 600;

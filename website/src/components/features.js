@@ -78,12 +78,7 @@ class Features extends PureComponent {
       <div>
         <StaggeredScrollAnimation Container={FeaturesContainer}>
           {FEATURES.map(({title, description, image}, i) => (
-            <Feature
-              key={`feature-${i}`}
-              title={title}
-              description={description}
-              image={image}
-            />
+            <Feature key={`feature-${i}`} title={title} description={description} image={image} />
           ))}
         </StaggeredScrollAnimation>
         <CenteredContent>

@@ -82,10 +82,9 @@ class DatasetSchema extends Schema {
     // recalculate field type
     // because we have updated type-analyzer
     // we need to add format to each field
-    const needCalculateMeta = fields[0] && (
-      !fields[0].hasOwnProperty('format') ||
-      !fields[0].hasOwnProperty('analyzerType')
-    );
+    const needCalculateMeta =
+      fields[0] &&
+      (!fields[0].hasOwnProperty('format') || !fields[0].hasOwnProperty('analyzerType'));
 
     if (needCalculateMeta) {
       const fieldOrder = fields.map(f => f.name);
@@ -102,9 +101,7 @@ class DatasetSchema extends Schema {
         if (fields[i].type !== f.type) {
           // if newly detected field type is different from saved type
           // we log it but won't update it, cause we don't want to break people's map
-          globalConsole.warn(
-            `detect ${f.name} type is now ${f.type} instead of ${fields[i].type}`
-          );
+          globalConsole.warn(`detect ${f.name} type is now ${f.type} instead of ${fields[i].type}`);
         }
       });
     }

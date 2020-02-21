@@ -155,11 +155,14 @@ const StyledSpinner = styled.div`
 `;
 
 class LoadDataModal extends Component {
-
   render() {
     const {
-      loadingMethod, currentOption, previousMethod,
-      sampleMaps, isMapLoading, onSwitchToLoadingMethod,
+      loadingMethod,
+      currentOption,
+      previousMethod,
+      sampleMaps,
+      isMapLoading,
+      onSwitchToLoadingMethod,
       error
     } = this.props;
 
@@ -170,34 +173,30 @@ class LoadDataModal extends Component {
             <StyledSpinner>
               <LoadingSpinner />
             </StyledSpinner>
-            ) : (
-              <div>
-                {loadingMethod.id !== 'sample' ? (
-                  <Tabs
-                    method={loadingMethod.id}
-                    toggleMethod={this.props.onSwitchToLoadingMethod}
-                  />
-                ) : null}
-                {loadingMethod.id === 'upload' ? (
-                  <FileUpload {...this.props} />
-                ) : null}
-                {loadingMethod.id === 'remote' ? (
-                  <LoadRemoteMap
-                    onLoadRemoteMap={this.props.onLoadRemoteMap}
-                    option={this.props.currentOption}
-                    error={this.props.error}
-                  />
-                ) : null}
-                {loadingMethod.id === 'sample' ? (
-                  <SampleMapGallery
-                    sampleData={currentOption}
-                    sampleMaps={sampleMaps}
-                    back={() => onSwitchToLoadingMethod(previousMethod.id)}
-                    onLoadSample={this.props.onLoadSample}
-                    error={error} />
-                ) : null}
-              </div>)
-          }
+          ) : (
+            <div>
+              {loadingMethod.id !== 'sample' ? (
+                <Tabs method={loadingMethod.id} toggleMethod={this.props.onSwitchToLoadingMethod} />
+              ) : null}
+              {loadingMethod.id === 'upload' ? <FileUpload {...this.props} /> : null}
+              {loadingMethod.id === 'remote' ? (
+                <LoadRemoteMap
+                  onLoadRemoteMap={this.props.onLoadRemoteMap}
+                  option={this.props.currentOption}
+                  error={this.props.error}
+                />
+              ) : null}
+              {loadingMethod.id === 'sample' ? (
+                <SampleMapGallery
+                  sampleData={currentOption}
+                  sampleMaps={sampleMaps}
+                  back={() => onSwitchToLoadingMethod(previousMethod.id)}
+                  onLoadSample={this.props.onLoadSample}
+                  error={error}
+                />
+              ) : null}
+            </div>
+          )}
         </div>
       </ThemeProvider>
     );
@@ -207,19 +206,18 @@ class LoadDataModal extends Component {
 const Tabs = ({method, toggleMethod}) => (
   <ModalTab className="load-data-modal__tab">
     <div className="load-data-modal__tab__inner">
-      {LOADING_METHODS.map(
-        ({id, label}) =>
-          id !== 'sample' ? (
-            <StyledLoadDataModalTabItem
-              className={classnames('load-data-modal__tab__item', {
-                active: method && id === method
-              })}
-              key={id}
-              onClick={() => toggleMethod(id)}
-            >
-              <div>{label}</div>
-            </StyledLoadDataModalTabItem>
-          ) : null
+      {LOADING_METHODS.map(({id, label}) =>
+        id !== 'sample' ? (
+          <StyledLoadDataModalTabItem
+            className={classnames('load-data-modal__tab__item', {
+              active: method && id === method
+            })}
+            key={id}
+            onClick={() => toggleMethod(id)}
+          >
+            <div>{label}</div>
+          </StyledLoadDataModalTabItem>
+        ) : null
       )}
     </div>
     <TrySampleData onClick={() => toggleMethod(LOADING_METHODS_NAMES.sample)} />

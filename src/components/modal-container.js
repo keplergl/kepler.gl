@@ -81,7 +81,7 @@ const LoadDataModalStyle = css`
 
 const DefaultStyle = css`
   max-width: 960px;
-`
+`;
 
 ModalContainerFactory.deps = [
   DeleteDatasetModalFactory,
@@ -185,7 +185,7 @@ export default function ModalContainerFactory(
       this._exportFileToCloud({provider, isPublic: false, closeModal: true});
     };
 
-    _onShareMapUrl = (provider) => {
+    _onShareMapUrl = provider => {
       this._exportFileToCloud({provider, isPublic: true, closeModal: false});
     };
 
@@ -215,11 +215,10 @@ export default function ModalContainerFactory(
       let template = null;
       let modalProps = {};
 
-      if (currentModal && currentModal.id &&
-        currentModal.template) {
+      if (currentModal && currentModal.id && currentModal.template) {
         // if currentMdoal template is already provided
         // TODO: need to check whether template is valid
-        template = (<currentModal.template/>);
+        template = <currentModal.template />;
         modalProps = currentModal.modalProps;
       } else {
         switch (currentModal) {
@@ -247,10 +246,7 @@ export default function ModalContainerFactory(
             // validate options
             if (datasetKeyToRemove && datasets && datasets[datasetKeyToRemove]) {
               template = (
-                <DeleteDatasetModal
-                  dataset={datasets[datasetKeyToRemove]}
-                  layers={layers}
-                />
+                <DeleteDatasetModal dataset={datasets[datasetKeyToRemove]} layers={layers} />
               );
               modalProps = {
                 title: 'Delete Dataset',
@@ -326,9 +322,12 @@ export default function ModalContainerFactory(
             };
             break;
           case EXPORT_MAP_ID:
-            const keplerGlConfig = KeplerGlSchema.getConfigToSave(
-              {mapStyle, visState, mapState, uiState}
-            );
+            const keplerGlConfig = KeplerGlSchema.getConfigToSave({
+              mapStyle,
+              visState,
+              mapState,
+              uiState
+            });
             template = (
               <ExportMapModal
                 config={keplerGlConfig}
@@ -391,7 +390,8 @@ export default function ModalContainerFactory(
               onConfirm: this._onSaveMap,
               confirmButton: {
                 large: true,
-                disabled: uiState.exportImage.exporting ||
+                disabled:
+                  uiState.exportImage.exporting ||
                   !isValidMapInfo(visState.mapInfo) ||
                   !providerState.currentProvider,
                 children: 'Save'

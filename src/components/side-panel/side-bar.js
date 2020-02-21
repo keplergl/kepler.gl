@@ -75,14 +75,8 @@ const StyledCollapseButton = styled.div`
 
 export const CollapseButtonFactory = () => {
   const CollapseButton = ({onClick, isOpen}) => (
-    <StyledCollapseButton
-      className="side-bar__close"
-      onClick={onClick}
-    >
-      <ArrowRight
-        height="12px"
-        style={{transform: `rotate(${isOpen ? 180 : 0}deg)`}}
-      />
+    <StyledCollapseButton className="side-bar__close" onClick={onClick}>
+      <ArrowRight height="12px" style={{transform: `rotate(${isOpen ? 180 : 0}deg)`}} />
     </StyledCollapseButton>
   );
   return CollapseButton;
@@ -92,7 +86,6 @@ SidebarFactory.deps = [CollapseButtonFactory];
 
 function SidebarFactory(CollapseButton) {
   return class SideBar extends Component {
-
     static propTypes = {
       width: PropTypes.number,
       isOpen: PropTypes.bool,
@@ -116,21 +109,16 @@ function SidebarFactory(CollapseButton) {
       const horizontalOffset = isOpen ? 0 : minifiedWidth - width;
 
       return (
-        <StyledSidePanelContainer
-          width={isOpen ? width : 0}
-          className="side-panel--container"
-        >
-          <SideBarContainer className="side-bar" style={{width: `${width}px`}}
-                            left={horizontalOffset}>
+        <StyledSidePanelContainer width={isOpen ? width : 0} className="side-panel--container">
+          <SideBarContainer
+            className="side-bar"
+            style={{width: `${width}px`}}
+            left={horizontalOffset}
+          >
             {isOpen ? (
-              <SideBarInner className="side-bar__inner">
-                {this.props.children}
-              </SideBarInner>
+              <SideBarInner className="side-bar__inner">{this.props.children}</SideBarInner>
             ) : null}
-            <CollapseButton
-              isOpen={isOpen}
-              onClick={this._onOpenOrClose}
-            />
+            <CollapseButton isOpen={isOpen} onClick={this._onOpenOrClose} />
           </SideBarContainer>
         </StyledSidePanelContainer>
       );

@@ -19,14 +19,7 @@
 // THE SOFTWARE.
 
 import domtoimage from 'utils/dom-to-image';
-import {
-  Blob,
-  URL,
-  atob,
-  Uint8Array,
-  ArrayBuffer,
-  document
-} from 'global/window';
+import {Blob, URL, atob, Uint8Array, ArrayBuffer, document} from 'global/window';
 import {
   EXPORT_IMG_RESOLUTION_OPTIONS,
   EXPORT_IMG_RATIO_OPTIONS,
@@ -55,9 +48,7 @@ export const DEFAULT_EXPORT_JSON_SETTINGS = {
   hasData: true
 };
 
-const defaultResolution = EXPORT_IMG_RESOLUTION_OPTIONS.find(
-  op => op.id === RESOLUTIONS.ONE_X
-);
+const defaultResolution = EXPORT_IMG_RESOLUTION_OPTIONS.find(op => op.id === RESOLUTIONS.ONE_X);
 
 const defaultRatio = EXPORT_IMG_RATIO_OPTIONS.find(op => op.id === EXPORT_IMG_RATIOS.FOUR_BY_THREE);
 
@@ -83,18 +74,11 @@ export function calculateExportImageSize({mapW, mapH, ratio, resolution}) {
   const resolutionItem =
     EXPORT_IMG_RESOLUTION_OPTIONS.find(op => op.id === resolution) || defaultResolution;
 
-  const {width: scaledWidth, height: scaledHeight} = resolutionItem.getSize(
-    mapW,
-    mapH
-  );
+  const {width: scaledWidth, height: scaledHeight} = resolutionItem.getSize(mapW, mapH);
 
-  const {width: imageW, height: imageH} = ratioItem.getSize(
-    scaledWidth,
-    scaledHeight
-  );
+  const {width: imageW, height: imageH} = ratioItem.getSize(scaledWidth, scaledHeight);
 
-  const {scale} = ratioItem.id === EXPORT_IMG_RATIOS.CUSTOM ?
-    {} : resolutionItem;
+  const {scale} = ratioItem.id === EXPORT_IMG_RATIOS.CUSTOM ? {} : resolutionItem;
 
   return {
     scale,
@@ -152,7 +136,7 @@ export function exportImage(state) {
 
 export function exportToJsonString(data) {
   try {
-    return JSON.stringify(data)
+    return JSON.stringify(data);
   } catch (e) {
     return e.description;
   }
@@ -161,13 +145,10 @@ export function exportToJsonString(data) {
 export function getMapJSON(state, options = DEFAULT_EXPORT_JSON_SETTINGS) {
   const {hasData} = options;
 
-  return hasData
-    ? KeplerGlSchema.save(state)
-    : KeplerGlSchema.getConfigToSave(state);
+  return hasData ? KeplerGlSchema.save(state) : KeplerGlSchema.getConfigToSave(state);
 }
 
 export function exportJson(state, options = {}) {
-
   const map = getMapJSON(state, options);
 
   const fileBlob = new Blob([exportToJsonString(map)], {type: 'application/json'});
@@ -180,9 +161,7 @@ export function exportHtml(state, options) {
   const data = {
     ...getMapJSON(state),
     mapboxApiAccessToken:
-      (userMapboxToken || '') !== ''
-        ? userMapboxToken
-        : exportMapboxAccessToken,
+      (userMapboxToken || '') !== '' ? userMapboxToken : exportMapboxAccessToken,
     mode
   };
 

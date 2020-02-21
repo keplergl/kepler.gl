@@ -150,21 +150,14 @@ export default class ColorRangeSelect extends Component {
   };
 
   render() {
-    const {
-      customPalette,
-      showSketcher,
-      colorRangeConfig
-    } = this.props.colorPaletteUI;
+    const {customPalette, showSketcher, colorRangeConfig} = this.props.colorPaletteUI;
 
     const filteredColorRanges = this.filteredColorRange(this.props);
 
     return (
       <StyledColorRangeSelector>
         <StyledColorConfig>
-          {(colorRangeConfig.custom
-            ? ['custom']
-            : Object.keys(colorRangeConfig)
-          ).map(key => (
+          {(colorRangeConfig.custom ? ['custom'] : Object.keys(colorRangeConfig)).map(key => (
             <PaletteConfig
               key={key}
               label={CONFIG_SETTINGS[key].label || key}
@@ -198,16 +191,8 @@ export default class ColorRangeSelect extends Component {
   }
 }
 
-export const PaletteConfig = ({
-  label,
-  value,
-  config: {type, options},
-  onChange
-}) => (
-  <StyledPaletteConfig
-    className="color-palette__config"
-    onClick={e => e.stopPropagation()}
-  >
+export const PaletteConfig = ({label, value, config: {type, options}, onChange}) => (
+  <StyledPaletteConfig className="color-palette__config" onClick={e => e.stopPropagation()}>
     <div className="color-palette__config__label">
       <PanelLabel>{label}</PanelLabel>
     </div>
@@ -223,12 +208,7 @@ export const PaletteConfig = ({
       </div>
     )}
     {type === 'switch' && (
-      <Switch
-        checked={value}
-        id={`${label}-toggle`}
-        onChange={() => onChange(!value)}
-        secondary
-      />
+      <Switch checked={value} id={`${label}-toggle`} onChange={() => onChange(!value)} secondary />
     )}
   </StyledPaletteConfig>
 );
@@ -247,22 +227,13 @@ export const ColorPaletteGroup = ({reversed, onSelect, selected, colorRanges}) =
   <div className="color-palette__group">
     {colorRanges.map((colorRange, i) => (
       <StyledColorRange
-
         key={`${colorRange.name}-${i}`}
-        onClick={e =>
-          onSelect(
-            reversed ? reverseColorRange(true, colorRange) : colorRange,
-            e
-          )
-        }
+        onClick={e => onSelect(reversed ? reverseColorRange(true, colorRange) : colorRange, e)}
       >
         <ColorPalette
           colors={colorRange.colors}
           isReversed={reversed}
-          isSelected={
-            colorRange.name === selected.name &&
-            reversed === Boolean(selected.reversed)
-          }
+          isSelected={colorRange.name === selected.name && reversed === Boolean(selected.reversed)}
         />
       </StyledColorRange>
     ))}

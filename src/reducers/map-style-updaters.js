@@ -135,12 +135,7 @@ export const INITIAL_MAP_STYLE = getDefaultState();
  * @param {Object} mapStyles - a dictionary of all map styles
  * @returns {Object} bottomMapStyle | topMapStyle | isRaster
  */
-export function getMapStyles({
-  styleType,
-  visibleLayerGroups,
-  topLayerGroups,
-  mapStyles
-}) {
+export function getMapStyles({styleType, visibleLayerGroups, topLayerGroups, mapStyles}) {
   const mapStyle = mapStyles[styleType];
 
   // style might not be loaded yet
@@ -192,18 +187,12 @@ function get3DBuildingColor(style) {
     return hexToRgb(DEFAULT_BLDG_COLOR);
   }
 
-  const backgroundLayer = (style.style.layers || []).find(
-    ({id}) => id === 'background'
-  );
+  const backgroundLayer = (style.style.layers || []).find(({id}) => id === 'background');
 
-  const buildingLayer = (style.style.layers || []).find(({id}) =>
-    id.match(/building/)
-  );
+  const buildingLayer = (style.style.layers || []).find(({id}) => id.match(/building/));
 
   const buildingColor =
-    findLayerFillColor(buildingLayer) ||
-    findLayerFillColor(backgroundLayer) ||
-    DEFAULT_BLDG_COLOR;
+    findLayerFillColor(buildingLayer) || findLayerFillColor(backgroundLayer) || DEFAULT_BLDG_COLOR;
 
   // brighten or darken building based on style
   const operation = style.id.match(/(?=(dark|night))/) ? 'brighter' : 'darker';
@@ -238,10 +227,7 @@ export const initMapStyleUpdater = (state, action) => ({
   // save mapbox access token to map style state
   mapboxApiAccessToken: (action.payload || {}).mapboxApiAccessToken,
   mapboxApiUrl: (action.payload || {}).mapboxApiUrl || state.mapboxApiUrl,
-  mapStyles:
-    action.payload && !action.payload.mapStylesReplaceDefault
-      ? state.mapStyles
-      : {},
+  mapStyles: action.payload && !action.payload.mapStylesReplaceDefault ? state.mapStyles : {},
   mapStylesReplaceDefault: action.payload.mapStylesReplaceDefault || false
 });
 // });
@@ -278,17 +264,16 @@ export const mapStyleChangeUpdater = (state, {payload: styleType}) => {
     // we might not have received the style yet
     return state;
   }
-  const defaultLGVisibility = getDefaultLayerGroupVisibility(
-    state.mapStyles[styleType]
-  );
+  const defaultLGVisibility = getDefaultLayerGroupVisibility(state.mapStyles[styleType]);
 
   const visibleLayerGroups = mergeLayerGroupVisibility(
     defaultLGVisibility,
     state.visibleLayerGroups
   );
 
-  const threeDBuildingColor = state.custom3DBuildingColor ? state.threeDBuildingColor :
-    get3DBuildingColor(state.mapStyles[styleType]);
+  const threeDBuildingColor = state.custom3DBuildingColor
+    ? state.threeDBuildingColor
+    : get3DBuildingColor(state.mapStyles[styleType]);
 
   return {
     ...state,
@@ -319,9 +304,7 @@ export const loadMapStylesUpdater = (state, action) => {
       ...accu,
       [id]: {
         ...newStyles[id],
-        layerGroups:
-          newStyles[id].layerGroups ||
-          getLayerGroupsFromStyle(newStyles[id].style)
+        layerGroups: newStyles[id].layerGroups || getLayerGroupsFromStyle(newStyles[id].style)
       }
     }),
     {}
@@ -379,11 +362,7 @@ export const receiveMapConfigUpdater = (state, {payload: {config = {}}}) => {
 
   // if saved custom mapStyles load the style object
   const loadMapStyleTasks = mapStyle.mapStyles
-    ? getLoadMapStyleTasks(
-        mapStyle.mapStyles,
-        state.mapboxApiAccessToken,
-        state.mapboxApiUrl
-      )
+    ? getLoadMapStyleTasks(mapStyle.mapStyles, state.mapboxApiAccessToken, state.mapboxApiUrl)
     : null;
 
   // merge default mapStyles
@@ -398,7 +377,8 @@ export const receiveMapConfigUpdater = (state, {payload: {config = {}}}) => {
     : mapStyle;
 
   // set custom3DBuildingColor: true if mapStyle contains threeDBuildingColor
-  merged.custom3DBuildingColor = Boolean(mapStyle.threeDBuildingColor) || merged.custom3DBuildingColor;
+  merged.custom3DBuildingColor =
+    Boolean(mapStyle.threeDBuildingColor) || merged.custom3DBuildingColor;
   const newState = mapConfigChangeUpdater(state, {payload: merged});
 
   return loadMapStyleTasks ? withTask(newState, loadMapStyleTasks) : newState;
@@ -411,11 +391,7 @@ function getLoadMapStyleTasks(mapStyles, mapboxApiAccessToken, mapboxApiUrl) {
         .map(({id, url, accessToken}) => ({
           id,
           url: isValidStyleUrl(url)
-            ? getStyleDownloadUrl(
-                url,
-                accessToken || mapboxApiAccessToken,
-                mapboxApiUrl
-              )
+            ? getStyleDownloadUrl(url, accessToken || mapboxApiAccessToken, mapboxApiUrl)
             : url
         }))
         .map(LOAD_MAP_STYLE_TASK)
@@ -472,10 +448,7 @@ export const resetMapConfigMapStyleUpdater = state => {
  * @returns {Object} nextState
  * @public
  */
-export const loadCustomMapStyleUpdater = (
-  state,
-  {payload: {icon, style, error}}
-) => ({
+export const loadCustomMapStyleUpdater = (state, {payload: {icon, style, error}}) => ({
   ...state,
   inputStyle: {
     ...state.inputStyle,
@@ -517,12 +490,14 @@ export const inputMapStyleUpdater = (state, {payload: {inputStyle, mapState}}) =
   };
 
   const isValid = isValidStyleUrl(updated.url);
-  const icon = isValid ? getStyleImageIcon({
-    mapState,
-    styleUrl: updated.url,
-    mapboxApiAccessToken: updated.accessToken || state.mapboxApiAccessToken,
-    mapboxApiUrl: state.mapboxApiUrl || DEFAULT_MAPBOX_API_URL
-  }) : state.inputStyle.icon;
+  const icon = isValid
+    ? getStyleImageIcon({
+        mapState,
+        styleUrl: updated.url,
+        mapboxApiAccessToken: updated.accessToken || state.mapboxApiAccessToken,
+        mapboxApiUrl: state.mapboxApiUrl || DEFAULT_MAPBOX_API_URL
+      })
+    : state.inputStyle.icon;
 
   return {
     ...state,
@@ -531,7 +506,7 @@ export const inputMapStyleUpdater = (state, {payload: {inputStyle, mapState}}) =
       isValid,
       icon
     }
-  }
+  };
 };
 
 /**

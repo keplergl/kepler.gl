@@ -164,8 +164,7 @@ function AddMapStyleModalFactory() {
     render() {
       const {inputStyle, mapState, mapboxApiUrl} = this.props;
 
-      const mapboxApiAccessToken =
-        inputStyle.accessToken || this.props.mapboxApiAccessToken;
+      const mapboxApiAccessToken = inputStyle.accessToken || this.props.mapboxApiAccessToken;
       const mapProps = {
         ...mapState,
         mapboxApiUrl,
@@ -184,10 +183,7 @@ function AddMapStyleModalFactory() {
                 </div>
                 <div className="modal-section-subtitle">
                   You can create your own map style at
-                  <InlineLink
-                    target="_blank"
-                    href="https://www.mapbox.com/studio/styles/"
-                  >
+                  <InlineLink target="_blank" href="https://www.mapbox.com/studio/styles/">
                     {' '}
                     mapbox
                   </InlineLink>{' '}
@@ -210,15 +206,12 @@ function AddMapStyleModalFactory() {
                     {' '}
                     access token
                   </InlineLink>{' '}
-                  here. *kepler.gl is a client-side application, data stays in
-                  your browser..
+                  here. *kepler.gl is a client-side application, data stays in your browser..
                 </div>
                 <InputLight
                   type="text"
                   value={inputStyle.accessToken || ''}
-                  onChange={({target: {value}}) =>
-                    this.props.inputMapStyle({accessToken: value})
-                  }
+                  onChange={({target: {value}}) => this.props.inputMapStyle({accessToken: value})}
                   placeholder="e.g. pk.abcdefg.xxxxxx"
                 />
               </StyledModalSection>
@@ -237,9 +230,7 @@ function AddMapStyleModalFactory() {
                 <InputLight
                   type="text"
                   value={inputStyle.url || ''}
-                  onChange={({target: {value}}) =>
-                    this.props.inputMapStyle({url: value})
-                  }
+                  onChange={({target: {value}}) => this.props.inputMapStyle({url: value})}
                   placeholder="e.g. mapbox://styles/uberdataviz/abcdefghijklmnopq"
                 />
               </StyledModalSection>
@@ -248,9 +239,7 @@ function AddMapStyleModalFactory() {
                 <InputLight
                   type="text"
                   value={inputStyle.label || ''}
-                  onChange={({target: {value}}) =>
-                    this.props.inputMapStyle({label: value})
-                  }
+                  onChange={({target: {value}}) => this.props.inputMapStyle({label: value})}
                 />
               </StyledModalSection>
             </StyledModalVerticalPanel>

@@ -36,7 +36,7 @@ export {
   default as PanelHeaderFactory,
   SaveExportDropdownFactory,
   PanelHeaderDropdownFactory
-} from './side-panel/panel-header'
+} from './side-panel/panel-header';
 export {CollapseButtonFactory, default as SidebarFactory} from './side-panel/side-bar';
 export {default as PanelToggleFactory} from './side-panel/panel-toggle';
 
@@ -59,7 +59,9 @@ export {default as BrushConfigFactory} from './side-panel/interaction-panel/brus
 export {default as TooltipConfigFactory} from './side-panel/interaction-panel/tooltip-config';
 
 export {default as MapManagerFactory} from './side-panel/map-manager';
-export {default as LayerGroupSelectorFactory} from './side-panel/map-style-panel/map-layer-selector';
+export {
+  default as LayerGroupSelectorFactory
+} from './side-panel/map-style-panel/map-layer-selector';
 export {default as MapStyleSelectorFactory} from './side-panel/map-style-panel/map-style-selector';
 export {default as CustomPanelsFactory} from './side-panel/custom-panel';
 
@@ -83,7 +85,9 @@ export {default as ExportMapModalFactory} from './modals/export-map-modal/export
 export {default as AnimationControlFactory} from './common/animation-control/animation-control';
 export {default as SpeedControlFactory} from './common/animation-control/speed-control';
 export {default as AnimationPlaybacksFactory} from './common/animation-control/playback-controls';
-export {default as FloatingTimeDisplayFactory} from './common/animation-control/floating-time-display';
+export {
+  default as FloatingTimeDisplayFactory
+} from './common/animation-control/floating-time-display';
 
 // // Filters
 export {default as TimeWidgetFactory} from './filters/time-widget';
@@ -94,10 +98,7 @@ export {default as TimeRangeFilterFactory} from './filters/time-range-filter';
 export {default as RangeFilterFactory} from './filters/range-filter';
 
 // Injector
-export {
-  injector,
-  withState
-} from './injector'
+export {injector, withState} from './injector';
 
 // Common Components
 export {default as FileUpload} from './common/file-uploader/file-upload';

@@ -74,7 +74,7 @@ class RangeSlider extends Component {
   };
 
   static getDerivedStateFromProps(props, state) {
-    let update = null
+    let update = null;
     const {value0, value1} = props;
     if (props.value0 !== state.prevValue0 && !isNaN(value0)) {
       update = {...(update || {}), value0, prevValue0: value0};
@@ -229,9 +229,7 @@ class RangeSlider extends Component {
           />
         ) : null}
         <SliderWrapper style={{height}} className="kg-range-slider__slider">
-          {this.props.xAxis ? (
-            <this.props.xAxis width={plotWidth} domain={range} />
-          ) : null}
+          {this.props.xAxis ? <this.props.xAxis width={plotWidth} domain={range} /> : null}
           <Slider
             showValues={false}
             isRanged={isRanged}

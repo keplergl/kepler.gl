@@ -20,9 +20,7 @@
 
 import React, {useCallback} from 'react';
 import styled from 'styled-components';
-import {
-  ArrowRight
-} from 'components/common/icons';
+import {ArrowRight} from 'components/common/icons';
 import Checkbox from 'components/common/switch';
 
 const StyledItem = styled.div`
@@ -37,8 +35,8 @@ const StyledItem = styled.div`
   background-color: ${props => props.theme.dropdownListBgd};
   width: ${props => props.theme.actionPanelWidth}px;
   position: relative;
-  ${props => props.color ? `border-left: 3px solid rgb(${props.color});` : ''}
-  
+  ${props => (props.color ? `border-left: 3px solid rgb(${props.color});` : '')}
+
   :hover {
     cursor: pointer;
     color: ${props => props.theme.textColorHl};
@@ -46,15 +44,15 @@ const StyledItem = styled.div`
       display: block;
     }
   }
-  
+
   .label {
     margin-left: 8px;
   }
-  
+
   .label-icon {
     margin-left: auto;
   }
-  
+
   .nested-group {
     width: 110px;
     display: none;
@@ -72,9 +70,9 @@ const StyledCheckedbox = styled(Checkbox)`
     color: ${props => props.theme.textColor};
     padding-left: 20px;
     line-height: 12px;
-    
+
     &:before {
-      width:  12px;
+      width: 12px;
       height: 12px;
       background-color: ${props => props.theme.dropdownListBgd};
     }
@@ -84,70 +82,59 @@ const StyledCheckedbox = styled(Checkbox)`
   }
 `;
 
-const renderChildren = (child, index) => React.cloneElement(child, {
-  onClick: () => {
-    if (React.isValidElement(child)) {
-      if (child.props.onClick) {
-        child.props.onClick(index);
+const renderChildren = (child, index) =>
+  React.cloneElement(child, {
+    onClick: () => {
+      if (React.isValidElement(child)) {
+        if (child.props.onClick) {
+          child.props.onClick(index);
+        }
       }
-    }
-  },
-  className: 'action-panel-item'
-});
+    },
+    className: 'action-panel-item'
+  });
 
-export const ActionPanelItem = React.memo(({
-  children,
-  color,
-  className,
-  Icon,
-  label,
-  onClick,
-  isSelection,
-  isActive,
-  style}) => {
+export const ActionPanelItem = React.memo(
+  ({children, color, className, Icon, label, onClick, isSelection, isActive, style}) => {
+    const onClickCallback = useCallback(
+      event => {
+        event.preventDefault();
+        event.stopPropagation();
+        onClick();
+      },
+      [onClick]
+    );
 
-  const onClickCallback = useCallback(event => {
-    event.preventDefault();
-    event.stopPropagation();
-    onClick()
-  }, [onClick]);
-
-  return (
-    <StyledItem
-      className={className}
-      onClick={onClickCallback}
-      color={color}
-      style={style}
-    >
-      {Icon ? (
-        <div className="icon">
-          <Icon height="16px"/>
-        </div>
-      ) : null}
-      {isSelection ? (
-        <StyledCheckedbox
-          type="checkbox"
-          checked={Boolean(isActive)}
-          id={`switch-${label}`}
-          secondary
-          label={label}
-        />
-      ) : (
-        <span className="label">{label}</span>
-      )}
-      {children && children.length ? (
-        <div>
-          <div className="label-icon">
-            <ArrowRight height="16px" />
+    return (
+      <StyledItem className={className} onClick={onClickCallback} color={color} style={style}>
+        {Icon ? (
+          <div className="icon">
+            <Icon height="16px" />
           </div>
-          <div className="nested-group">
-            {React.Children.map(children, renderChildren)}
+        ) : null}
+        {isSelection ? (
+          <StyledCheckedbox
+            type="checkbox"
+            checked={Boolean(isActive)}
+            id={`switch-${label}`}
+            secondary
+            label={label}
+          />
+        ) : (
+          <span className="label">{label}</span>
+        )}
+        {children && children.length ? (
+          <div>
+            <div className="label-icon">
+              <ArrowRight height="16px" />
+            </div>
+            <div className="nested-group">{React.Children.map(children, renderChildren)}</div>
           </div>
-        </div>
-      ) : null}
-    </StyledItem>
-  );
-});
+        ) : null}
+      </StyledItem>
+    );
+  }
+);
 
 ActionPanelItem.displayName = 'ActionPanelItem';
 
@@ -159,14 +146,13 @@ const StyledActionPanel = styled.div`
   color: ${props => props.theme.textColor};
 
   .action-panel-item {
-    ${props => props.direction === 'column' ?
-      `border-bottom: 1px solid ${props.theme.panelHeaderIcon}`
-      :
-      `border-right: 1px solid ${props.theme.panelHeaderIcon}`
-    }
-    
+    ${props =>
+      props.direction === 'column'
+        ? `border-bottom: 1px solid ${props.theme.panelHeaderIcon}`
+        : `border-right: 1px solid ${props.theme.panelHeaderIcon}`}
+
     &:last-of-type {
-      border-bottom: 0
+      border-bottom: 0;
     }
   }
 `;

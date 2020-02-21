@@ -112,12 +112,7 @@ const MapLegendTooltip = ({id, message}) => (
   </Tooltip>
 );
 
-const LayerSelectorPanel = React.memo(({
-  items,
-  onMapToggleLayer,
-  isActive,
-  toggleMenuPanel
-}) =>
+const LayerSelectorPanel = React.memo(({items, onMapToggleLayer, isActive, toggleMenuPanel}) =>
   !isActive ? (
     <MapControlButton
       key={1}
@@ -192,9 +187,9 @@ const MapLegendPanel = ({layers, isActive, scale, onToggleMenuPanel, isExport}) 
       onClick={onToggleMenuPanel}
       isExport={isExport}
     >
-      <MapLegend layers={layers}/>
+      <MapLegend layers={layers} />
     </MapControlPanel>
-);
+  );
 
 MapLegendPanel.displayName = 'MapControlPanel';
 
@@ -213,9 +208,7 @@ const SplitMapButton = React.memo(({isSplit, mapIndex, onToggleSplitMap}) => (
     {isSplit ? <Delete height="18px" /> : <Split height="18px" />}
     <MapControlTooltip
       id="action-toggle"
-      message={
-        isSplit ? 'Close current panel' : 'Switch to dual map view'
-      }
+      message={isSplit ? 'Close current panel' : 'Switch to dual map view'}
     />
   </MapControlButton>
 ));
@@ -233,10 +226,7 @@ const Toggle3dButton = React.memo(({dragRotate, onTogglePerspective}) => (
     data-for="action-3d"
   >
     <Cube3d height="22px" />
-    <MapControlTooltip
-      id="action-3d"
-      message={dragRotate ? 'Disable 3D Map' : '3D Map'}
-    />
+    <MapControlTooltip id="action-3d" message={dragRotate ? 'Disable 3D Map' : '3D Map'} />
   </MapControlButton>
 ));
 
@@ -247,65 +237,58 @@ const StyledToolbar = styled(VerticalToolbar)`
   right: 32px;
 `;
 
-const MapDrawPanel = React.memo(({
-  editor,
-  isActive,
-  onToggleMenuPanel,
-  onSetEditorMode,
-  onToggleEditorVisibility
-}) => {
-  return (
-    <div style={{position: 'relative'}}>
-      {isActive ? (
-        <StyledToolbar show={isActive}>
-          <ToolbarItem
-            onClick={() => onSetEditorMode(EDITOR_MODES.EDIT)}
-            label="select"
-            iconHeight="22px"
-            icon={CursorClick}
-            active={editor.mode === EDITOR_MODES.EDIT}
-          />
-          <ToolbarItem
-            onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_POLYGON)}
-            label="polygon"
-            iconHeight="22px"
-            icon={Polygon}
-            active={editor.mode === EDITOR_MODES.DRAW_POLYGON}
-          />
-          <ToolbarItem
-            onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_RECTANGLE)}
-            label="rectangle"
-            iconHeight="22px"
-            icon={Rectangle}
-            active={editor.mode === EDITOR_MODES.DRAW_RECTANGLE}
-          />
-          <ToolbarItem
-            onClick={onToggleEditorVisibility}
-            label={editor.visible ? 'hide' : 'show'}
-            iconHeight="22px"
-            icon={editor.visible ? EyeSeen : EyeUnseen}
-            active
-          />
-        </StyledToolbar>
-      ) : null}
-      <MapControlButton
-        onClick={e => {
-          e.preventDefault();
-          onToggleMenuPanel();
-        }}
-        active={isActive}
-        data-tip
-        data-for="map-draw"
-      >
-        <DrawPolygon height="22px"/>
-        <MapControlTooltip
-          id="map-draw"
-          message="Draw on map"
-        />
-      </MapControlButton>
-    </div>
-  );
-});
+const MapDrawPanel = React.memo(
+  ({editor, isActive, onToggleMenuPanel, onSetEditorMode, onToggleEditorVisibility}) => {
+    return (
+      <div style={{position: 'relative'}}>
+        {isActive ? (
+          <StyledToolbar show={isActive}>
+            <ToolbarItem
+              onClick={() => onSetEditorMode(EDITOR_MODES.EDIT)}
+              label="select"
+              iconHeight="22px"
+              icon={CursorClick}
+              active={editor.mode === EDITOR_MODES.EDIT}
+            />
+            <ToolbarItem
+              onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_POLYGON)}
+              label="polygon"
+              iconHeight="22px"
+              icon={Polygon}
+              active={editor.mode === EDITOR_MODES.DRAW_POLYGON}
+            />
+            <ToolbarItem
+              onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_RECTANGLE)}
+              label="rectangle"
+              iconHeight="22px"
+              icon={Rectangle}
+              active={editor.mode === EDITOR_MODES.DRAW_RECTANGLE}
+            />
+            <ToolbarItem
+              onClick={onToggleEditorVisibility}
+              label={editor.visible ? 'hide' : 'show'}
+              iconHeight="22px"
+              icon={editor.visible ? EyeSeen : EyeUnseen}
+              active
+            />
+          </StyledToolbar>
+        ) : null}
+        <MapControlButton
+          onClick={e => {
+            e.preventDefault();
+            onToggleMenuPanel();
+          }}
+          active={isActive}
+          data-tip
+          data-for="map-draw"
+        >
+          <DrawPolygon height="22px" />
+          <MapControlTooltip id="map-draw" message="Draw on map" />
+        </MapControlButton>
+      </div>
+    );
+  }
+);
 
 MapDrawPanel.displayName = 'MapDrawPanel';
 
@@ -345,7 +328,7 @@ const MapControlFactory = () => {
       this.layerSelector,
       this.layersToRenderSelector,
       (layers, layersToRender) =>
-         layers
+        layers
           .filter(l => l.config.isVisible)
           .map(layer => ({
             id: layer.id,
@@ -409,10 +392,7 @@ const MapControlFactory = () => {
           {/* 3D Map */}
           {toggle3d.show ? (
             <ActionPanel className="toggle-3d" key={2}>
-              <Toggle3dButton
-                dragRotate={dragRotate}
-                onTogglePerspective={onTogglePerspective}
-              />
+              <Toggle3dButton dragRotate={dragRotate} onTogglePerspective={onTogglePerspective} />
             </ActionPanel>
           ) : null}
 

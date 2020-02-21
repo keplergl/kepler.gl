@@ -24,10 +24,7 @@ import PropTypes from 'prop-types';
 const getStyleClassFromColor = (totalColor, colors) =>
   new Array(totalColor)
     .fill(1)
-    .reduce(
-      (accu, c, i) => `${accu}.cr${i + 1} {fill:${colors[i % colors.length]};}`,
-      ''
-    );
+    .reduce((accu, c, i) => `${accu}.cr${i + 1} {fill:${colors[i % colors.length]};}`, '');
 
 export default class Base extends Component {
   static displayName = 'Base Icon';
@@ -74,9 +71,7 @@ export default class Base extends Component {
     const svgWidth = width || svgHeight;
 
     const fillStyle =
-      Array.isArray(colors) &&
-      totalColor &&
-      getStyleClassFromColor(totalColor, colors);
+      Array.isArray(colors) && totalColor && getStyleClassFromColor(totalColor, colors);
 
     return (
       <svg
@@ -87,10 +82,9 @@ export default class Base extends Component {
         className={`${predefinedClassName} ${className}`}
         {...props}
       >
-        {fillStyle ?
-          <style type="text/css">{fillStyle}</style> : null}
+        {fillStyle ? <style type="text/css">{fillStyle}</style> : null}
         {children}
       </svg>
     );
   }
-};
+}

@@ -33,7 +33,7 @@ const actionHandler = {
   [ActionTypes.RESET_PROVIDER_STATUS]: providerStateUpdaters.resetProviderStatusUpdater,
   [ActionTypes.SET_CLOUD_PROVIDER]: providerStateUpdaters.setCloudProviderUpdater,
   [ActionTypes.SAVE_TO_CLOUD_SUCCESS]: providerStateUpdaters.saveToCloudSuccessUpdater
-}
+};
 
 // construct provider-state reducer
 export const providerStateReducerFactory = (initialState = {}) =>

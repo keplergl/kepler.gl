@@ -32,13 +32,7 @@ import {WebMercatorViewport} from '@deck.gl/core';
  */
 
 // TODO: TEST
-export function pointToPolygonGeo({
-  object,
-  cellSize,
-  coverage,
-  properties,
-  mapState
-}) {
+export function pointToPolygonGeo({object, cellSize, coverage, properties, mapState}) {
   const {position} = object;
   const viewport = new WebMercatorViewport(mapState);
 

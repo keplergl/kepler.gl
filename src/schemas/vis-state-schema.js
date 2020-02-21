@@ -70,10 +70,7 @@ class DimensionFieldSchemaV0 extends Schema {
   save(field) {
     // should not be called anymore
     return {
-      [this.key]:
-        field !== null
-          ? this.savePropertiesOrApplySchema(field)[this.key]
-          : null
+      [this.key]: field !== null ? this.savePropertiesOrApplySchema(field)[this.key] : null
     };
   }
 
@@ -313,11 +310,7 @@ const visualChannelModificationV1 = {
   point: (vc, parents, accumulator) => {
     const [layer] = parents.slice(-1);
 
-    if (
-      layer.config.visConfig.outline &&
-      vc.colorField &&
-      !vc.hasOwnProperty('strokeColorField')
-    ) {
+    if (layer.config.visConfig.outline && vc.colorField && !vc.hasOwnProperty('strokeColorField')) {
       // point layer now supports both outline and fill
       // for older schema where filled has not been added to point layer
       // copy colorField, colorScale to strokeColorField, and strokeColorScale
@@ -335,8 +328,7 @@ const visualChannelModificationV1 = {
     const isOld = !vc.hasOwnProperty('strokeColorField');
     // make our best guess if this geojson layer contains point
     const isPoint =
-      vc.radiusField ||
-      layer.config.visConfig.radius !== LAYER_VIS_CONFIGS.radius.defaultValue;
+      vc.radiusField || layer.config.visConfig.radius !== LAYER_VIS_CONFIGS.radius.defaultValue;
 
     if (isOld && !isPoint && layer.config.visConfig.stroked) {
       // if stroked is true, copy color config to stroke color config
@@ -390,8 +382,8 @@ const visConfigModificationV1 = {
   point: (visConfig, parents, accumulated) => {
     const modified = {};
     const [layer] = parents.slice(-2, -1);
-    const isOld = !visConfig.hasOwnProperty('filled') &&
-    !visConfig.strokeColor && !visConfig.strokeColorRange;
+    const isOld =
+      !visConfig.hasOwnProperty('filled') && !visConfig.strokeColor && !visConfig.strokeColorRange;
     if (isOld) {
       // color color & color range to stroke color
       modified.strokeColor = layer.config.color;
@@ -410,8 +402,10 @@ const visConfigModificationV1 = {
     // is points?
     const modified = {};
     const [layer] = parents.slice(-2, -1);
-    const isOld = !layer.visualChannels.hasOwnProperty('strokeColorField') &&
-      !visConfig.strokeColor && !visConfig.strokeColorRange;
+    const isOld =
+      !layer.visualChannels.hasOwnProperty('strokeColorField') &&
+      !visConfig.strokeColor &&
+      !visConfig.strokeColorRange;
     // make our best guess if this geojson layer contains point
     const isPoint =
       layer.visualChannels.radiusField ||
@@ -500,9 +494,7 @@ class LayerSchemaV0 extends Schema {
 
   load(layers) {
     return {
-      [this.key]: layers.map(
-        layer => this.loadPropertiesOrApplySchema(layer, layers).layers
-      )
+      [this.key]: layers.map(layer => this.loadPropertiesOrApplySchema(layer, layers).layers)
     };
   }
 }
@@ -531,9 +523,7 @@ class InteractionSchemaV0 extends Schema {
       [this.key]: this.properties.reduce(
         (accu, key) => ({
           ...accu,
-          ...(interactionConfig[key].enabled
-            ? {[key]: interactionConfig[key].config}
-            : {})
+          ...(interactionConfig[key].enabled ? {[key]: interactionConfig[key].config} : {})
         }),
         {}
       )
@@ -559,10 +549,7 @@ class InteractionSchemaV0 extends Schema {
   }
 }
 
-const interactionPropsV1 = [
-  ...interactionPropsV0,
-  'coordinate'
-];
+const interactionPropsV1 = [...interactionPropsV0, 'coordinate'];
 
 class InteractionSchemaV1 extends Schema {
   key = 'interactionConfig';
@@ -599,9 +586,7 @@ export const filterPropsV0 = {
 export class DimensionFieldSchema extends Schema {
   save(field) {
     return {
-      [this.key]: field
-        ? this.savePropertiesOrApplySchema(field)[this.key]
-        : null
+      [this.key]: field ? this.savePropertiesOrApplySchema(field)[this.key] : null
     };
   }
 
@@ -636,10 +621,9 @@ export class SplitMapsSchema extends Schema {
     return {
       splitMaps: splitMaps.map(settings => ({
         ...settings,
-        layers: Object.entries(settings.layers || {})
-          .reduce(this.convertLayerSettings, {})
+        layers: Object.entries(settings.layers || {}).reduce(this.convertLayerSettings, {})
       }))
-    }
+    };
   }
 }
 
@@ -718,8 +702,7 @@ export const visStateSchemaV1 = new Schema({
 export const visStateSchema = {
   [VERSIONS.v0]: {
     save: toSave => visStateSchemaV0.save(toSave),
-    load: toLoad =>
-      visStateSchemaV1.load(visStateSchemaV0.load(toLoad).visState)
+    load: toLoad => visStateSchemaV1.load(visStateSchemaV0.load(toLoad).visState)
   },
   [VERSIONS.v1]: visStateSchemaV1
 };

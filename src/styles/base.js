@@ -340,9 +340,7 @@ const input = css`
     background-color: ${props =>
       props.active ? props.theme.inputBgdActive : props.theme.inputBgdHover};
     border-color: ${props =>
-      props.active
-        ? props.theme.inputBorderActiveColor
-        : props.theme.inputBorderHoverColor};
+      props.active ? props.theme.inputBorderActiveColor : props.theme.inputBorderHoverColor};
   }
 
   :active,
@@ -395,10 +393,8 @@ const inputLT = css`
 
   :hover {
     background-color: ${props => props.theme.selectBackgroundLT};
-    cursor: ${props =>
-      ['number', 'text'].includes(props.type) ? 'text' : 'pointer'};
-    border-color: ${props =>
-      props.active ? props.theme.textColorLT : props.theme.subtextColor};
+    cursor: ${props => (['number', 'text'].includes(props.type) ? 'text' : 'pointer')};
+    border-color: ${props => (props.active ? props.theme.textColorLT : props.theme.subtextColor)};
   }
 `;
 
@@ -407,8 +403,7 @@ const secondaryInput = css`
   color: ${props => props.theme.secondaryInputColor};
   background-color: ${props => props.theme.secondaryInputBgd};
   border: 1px solid
-    ${props =>
-      props.error ? props.theme.errorColor : props.theme.secondaryInputBorderColor};
+    ${props => (props.error ? props.theme.errorColor : props.theme.secondaryInputBorderColor)};
 
   :hover {
     cursor: pointer;
@@ -493,8 +488,7 @@ const switchButton = css`
   position: absolute;
   top: 0;
   left: ${props =>
-    (props.checked ? props.theme.switchWidth / 2 : -1) -
-    props.theme.switchLabelMargin}px;
+    (props.checked ? props.theme.switchWidth / 2 : -1) - props.theme.switchLabelMargin}px;
   content: '';
   display: block;
   height: ${props => props.theme.switchBtnHeight};
@@ -540,9 +534,7 @@ const checkboxBox = css`
     props.checked ? props.theme.checkboxBoxBgdChecked : props.theme.checkboxBoxBgd};
   border: 1px solid
     ${props =>
-      props.checked
-        ? props.theme.checkboxBoxBgdChecked
-        : props.theme.checkboxBorderColor};
+      props.checked ? props.theme.checkboxBoxBgdChecked : props.theme.checkboxBorderColor};
   border-radius: 2px;
   content: '';
 `;
@@ -586,17 +578,13 @@ const secondarySwitch = css`
   ${props => props.theme.inputSwitch}
   :before {
     ${props => props.theme.switchTrack} background: ${props =>
-  props.checked
-    ? props.theme.switchTrackBgdActive
-    : props.theme.secondarySwitchTrackBgd};
+  props.checked ? props.theme.switchTrackBgdActive : props.theme.secondarySwitchTrackBgd};
   }
 
   :after {
     ${props => props.theme.switchButton}
     background: ${props =>
-      props.checked
-        ? props.theme.switchBtnBgdActive
-        : props.theme.secondarySwitchBtnBgd};
+      props.checked ? props.theme.switchBtnBgdActive : props.theme.secondarySwitchBtnBgd};
   }
 `;
 

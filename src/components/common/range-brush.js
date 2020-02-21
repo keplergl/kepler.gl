@@ -76,11 +76,13 @@ export default class RangeBrush extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    const {value: [val0, val1], width} = this.props;
+    const {
+      value: [val0, val1],
+      width
+    } = this.props;
     const [prevVal0, prevVal1] = prevProps.value;
 
     if (prevProps.width !== width) {
-
       // width change should not trigger this._brush
       this.moving = true;
       this.root.call(this.brush);
@@ -88,7 +90,6 @@ export default class RangeBrush extends Component {
     }
 
     if (!this.brushing && !this.moving) {
-
       if (prevVal0 !== val0 || prevVal1 !== val1) {
         this.moving = true;
         this._move(val0, val1);
@@ -104,19 +105,27 @@ export default class RangeBrush extends Component {
   }
 
   _move(val0, val1) {
-    const {domain: [min, max], width} = this.props;
-    const scale = x => (x - min) * width / (max - min);
+    const {
+      domain: [min, max],
+      width
+    } = this.props;
+    const scale = x => ((x - min) * width) / (max - min);
     this.brush.move(this.root, [scale(val0), scale(val1)]);
   }
 
   _brush([sel0, sel1]) {
-    const {domain: [min, max], width} = this.props;
-    const invert = x => x * (max - min) / width + min;
+    const {
+      domain: [min, max],
+      width
+    } = this.props;
+    const invert = x => (x * (max - min)) / width + min;
     this._onBrush(invert(sel0), invert(sel1));
   }
 
   _onBrush(val0, val1) {
-    const {value: [currentVal0, currentVal1]} = this.props;
+    const {
+      value: [currentVal0, currentVal1]
+    } = this.props;
 
     if (currentVal0 === val0 && currentVal1 === val1) {
       return;
@@ -125,11 +134,6 @@ export default class RangeBrush extends Component {
     this.props.onBrush(val0, val1);
   }
   render() {
-    return (
-      <StyledG
-        className="kg-range-slider__brush"
-        ref={this.rootContainer}
-      />
-    );
+    return <StyledG className="kg-range-slider__brush" ref={this.rootContainer} />;
   }
-};
+}

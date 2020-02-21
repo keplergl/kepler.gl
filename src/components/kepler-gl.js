@@ -154,11 +154,13 @@ function KeplerGlFactory(
 
     availableProviders = createSelector(
       props => props.cloudProviders,
-      providers => Array.isArray(providers) && providers.length ?
-      ({
-        hasStorage: providers.some(p => p.hasPrivateStorage()),
-        hasShare: providers.some(p => p.hasSharingUrl())
-      }) : {}
+      providers =>
+        Array.isArray(providers) && providers.length
+          ? {
+              hasStorage: providers.some(p => p.hasPrivateStorage()),
+              hasShare: providers.some(p => p.hasSharingUrl())
+            }
+          : {}
     );
 
     /* private methods */
@@ -306,14 +308,7 @@ function KeplerGlFactory(
       const containerW = mapState.width * (Number(isSplit) + 1);
 
       const mapContainers = !isSplit
-        ? [
-            <MapContainer
-              key={0}
-              index={0}
-              {...mapFields}
-              mapLayers={null}
-            />
-          ]
+        ? [<MapContainer key={0} index={0} {...mapFields} mapLayers={null} />]
         : splitMaps.map((settings, index) => (
             <MapContainer
               key={index}
@@ -361,9 +356,7 @@ function KeplerGlFactory(
               animationConfig={animationConfig}
               visStateActions={visStateActions}
               sidePanelWidth={
-                uiState.readOnly
-                  ? 0
-                  : this.props.sidePanelWidth + DIMENSIONS.sidePanel.margin.left
+                uiState.readOnly ? 0 : this.props.sidePanelWidth + DIMENSIONS.sidePanel.margin.left
               }
               containerW={containerW}
             />
@@ -392,9 +385,7 @@ function KeplerGlFactory(
     }
   }
 
-  return keplerGlConnect(mapStateToProps, makeMapDispatchToProps)(
-    withTheme(KeplerGL)
-  );
+  return keplerGlConnect(mapStateToProps, makeMapDispatchToProps)(withTheme(KeplerGL));
 }
 
 function mapStateToProps(state = {}, props) {
@@ -422,9 +413,7 @@ function makeGetActionCreators() {
         MapStyleActions,
         UIStateActions,
         ProviderActions
-      ].map(actions =>
-        bindActionCreators(mergeActions(actions, userActions), dispatch)
-      );
+      ].map(actions => bindActionCreators(mergeActions(actions, userActions), dispatch));
 
       return {
         visStateActions,

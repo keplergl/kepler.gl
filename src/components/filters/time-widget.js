@@ -73,9 +73,7 @@ const TopSectionWrapper = styled.div`
 
       .item-selector__dropdown__value {
         color: ${props =>
-          props.hoverColor
-            ? props.theme[props.hoverColor]
-            : props.theme.textColorHl};
+          props.hoverColor ? props.theme[props.hoverColor] : props.theme.textColorHl};
       }
     }
   }
@@ -102,11 +100,7 @@ const StyledTitle = styled(CenterFlexbox)`
   }
 `;
 
-TimeWidgetFactory.deps = [
-  SpeedControlFactory,
-  TimeRangeFilterFactory,
-  FloatingTimeDisplayFactory
-];
+TimeWidgetFactory.deps = [SpeedControlFactory, TimeRangeFilterFactory, FloatingTimeDisplayFactory];
 
 function TimeWidgetFactory(SpeedControl, TimeRangeFilter, FloatingTimeDisplay) {
   class TimeWidget extends Component {
@@ -120,31 +114,20 @@ function TimeWidgetFactory(SpeedControl, TimeRangeFilter, FloatingTimeDisplay) {
       fields => fields.filter(f => f.type === 'integer' || f.type === 'real')
     );
 
-    _updateAnimationSpeed = speed =>
-      this.props.updateAnimationSpeed(this.props.index, speed);
+    _updateAnimationSpeed = speed => this.props.updateAnimationSpeed(this.props.index, speed);
 
-    _toggleSpeedControl = () =>
-      this.setState({showSpeedControl: !this.state.showSpeedControl});
+    _toggleSpeedControl = () => this.setState({showSpeedControl: !this.state.showSpeedControl});
 
-    _setFilterPlotYAxis = value =>
-      this.props.setFilterPlot(this.props.index, {yAxis: value});
+    _setFilterPlotYAxis = value => this.props.setFilterPlot(this.props.index, {yAxis: value});
 
-    _updateAnimationSpeed = speed =>
-      this.props.updateAnimationSpeed(this.props.index, speed);
+    _updateAnimationSpeed = speed => this.props.updateAnimationSpeed(this.props.index, speed);
 
     _toggleAnimation = () => this.props.toggleAnimation(this.props.index);
 
     _onClose = () => this.props.enlargeFilter(this.props.index);
 
     render() {
-      const {
-        datasets,
-        filter,
-        index,
-        readOnly,
-        setFilter,
-        showTimeDisplay
-      } = this.props;
+      const {datasets, filter, index, readOnly, setFilter, showTimeDisplay} = this.props;
 
       const {showSpeedControl} = this.state;
       return (
@@ -196,9 +179,7 @@ function TimeWidgetFactory(SpeedControl, TimeRangeFilter, FloatingTimeDisplay) {
             hideTimeTitle={showTimeDisplay}
             isAnimatable
           />
-          {showTimeDisplay ? (
-            <FloatingTimeDisplay currentTime={filter.value} />
-          ) : null}
+          {showTimeDisplay ? <FloatingTimeDisplay currentTime={filter.value} /> : null}
         </BottomWidgetInner>
       );
     }

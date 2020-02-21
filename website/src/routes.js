@@ -32,7 +32,7 @@ import {buildAppRoutes} from '../../examples/demo-app/src/utils/routes';
 
 const appRoute = buildAppRoutes(Demo);
 
-const trackPageChange = (location) => {
+const trackPageChange = location => {
   const links = location.split('/');
 
   if (links.length === 3) {
@@ -40,7 +40,7 @@ const trackPageChange = (location) => {
     window.gtag('event', 'load_sample', {
       event_label: sampleId,
       value: sampleId
-    })
+    });
   }
 };
 
@@ -52,7 +52,7 @@ history.listen(location => {
 });
 
 function isOldUrl(location) {
-  return Boolean(location.pathname === '/' && location.hash && location.hash.startsWith('#/demo'))
+  return Boolean(location.pathname === '/' && location.hash && location.hash.startsWith('#/demo'));
 }
 
 function onEnter(nextState, replace, callback) {
@@ -61,7 +61,7 @@ function onEnter(nextState, replace, callback) {
    * we redirect to '/demo/.../
    **/
   if (isOldUrl(nextState.location)) {
-    replace(location.hash.substring(1))
+    replace(location.hash.substring(1));
   }
   callback();
 }

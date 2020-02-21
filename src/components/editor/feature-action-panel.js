@@ -24,10 +24,7 @@ import styled from 'styled-components';
 import onClickOutside from 'react-onclickoutside';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
-import {
-  Trash,
-  Layers
-} from 'components/common/icons';
+import {Trash, Layers} from 'components/common/icons';
 
 const LAYOVER_OFFSET = 4;
 
@@ -68,7 +65,7 @@ export class FeatureActionPanel extends PureComponent {
       onDeleteFeature
     } = this.props;
 
-    const {layerId = []} = (currentFilter || {});
+    const {layerId = []} = currentFilter || {};
 
     return (
       <StyledActionsLayer
@@ -100,7 +97,7 @@ export class FeatureActionPanel extends PureComponent {
           />
         </ActionPanel>
       </StyledActionsLayer>
-    )
+    );
   }
 }
 

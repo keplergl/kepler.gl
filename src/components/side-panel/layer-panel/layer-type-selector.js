@@ -95,13 +95,9 @@ const DropdownListWrapper = styled.div`
 `;
 
 const LayerTypeListItem = ({value, isTile}) => (
-  <StyledListItem
-    className={classNames('layer-type-selector__item__inner', {list: !isTile})}
-  >
+  <StyledListItem className={classNames('layer-type-selector__item__inner', {list: !isTile})}>
     <div className="layer-type-selector__item__icon">
-      <value.icon
-        height={`${isTile ? ITEM_SIZE.large : ITEM_SIZE.small}px`}
-      />
+      <value.icon height={`${isTile ? ITEM_SIZE.large : ITEM_SIZE.small}px`} />
     </div>
     <div className="layer-type-selector__item__label">{value.label}</div>
   </StyledListItem>

@@ -30,14 +30,8 @@ import {EDITOR_AVAILABLE_LAYERS} from 'constants/default-settings';
 import FeatureActionPanel from './feature-action-panel';
 import {FILTER_TYPES} from 'constants/default-settings';
 
-import {
-  DEFAULT_RADIUS,
-  getStyle as getFeatureStyle
-} from './feature-styles';
-import {
-  getStyle as getEditHandleStyle,
-  getEditHandleShape
-} from './handle-style';
+import {DEFAULT_RADIUS, getStyle as getFeatureStyle} from './feature-styles';
+import {getStyle as getEditHandleStyle, getEditHandleShape} from './handle-style';
 import {EDITOR_MODES} from 'constants';
 import {createSelector} from 'reselect';
 
@@ -46,7 +40,7 @@ const BACKSPACE_KEY_EVENT_CODE = 8;
 const ESCAPE_KEY_EVENT_CODE = 27;
 
 const StyledWrapper = styled.div`
-  cursor: ${props => props.editor.mode === EDITOR_MODES.EDIT ? 'pointer' : 'crosshair'};
+  cursor: ${props => (props.editor.mode === EDITOR_MODES.EDIT ? 'pointer' : 'crosshair')};
   position: relative;
 `;
 
@@ -96,17 +90,14 @@ class Editor extends Component {
   currentFilterSelector = createSelector(
     this.filterSelector,
     this.selectedFeatureIdSelector,
-    (filters, selectedFeatureId) => filters.find(f =>
-      f.value && f.value.id === selectedFeatureId
-    )
+    (filters, selectedFeatureId) => filters.find(f => f.value && f.value.id === selectedFeatureId)
   );
 
   availableLayersSeletor = createSelector(
     this.layerSelector,
     this.layersToRenderSelector,
-    (layers, layersToRender) => layers
-      .filter(editorLayerFilter)
-      .filter(layer => {
+    (layers, layersToRender) =>
+      layers.filter(editorLayerFilter).filter(layer => {
         return layersToRender[layer.id];
       })
   );
@@ -136,25 +127,29 @@ class Editor extends Component {
       case ESCAPE_KEY_EVENT_CODE:
         this.props.onSelect(null);
         break;
-      default: break;
+      default:
+        break;
     }
   };
 
   _onSelect = ({selectedFeatureId, sourceEvent}) => {
     const allFeatures = this.allFeaturesSelector(this.props);
-    this.setState({
-      ...(sourceEvent.rightButton ? {
-        showActions: true,
-        lastPosition: {
-          x: sourceEvent.changedPointers[0].offsetX,
-          y: sourceEvent.changedPointers[0].offsetY
-        }
-      } : null)
-    }, () => {
-      this.props.onSelect(
-        allFeatures.find(f => f.id === selectedFeatureId)
-      );
-    });
+    this.setState(
+      {
+        ...(sourceEvent.rightButton
+          ? {
+              showActions: true,
+              lastPosition: {
+                x: sourceEvent.changedPointers[0].offsetX,
+                y: sourceEvent.changedPointers[0].offsetY
+              }
+            }
+          : null)
+      },
+      () => {
+        this.props.onSelect(allFeatures.find(f => f.id === selectedFeatureId));
+      }
+    );
   };
 
   _onDeleteSelectedFeature = () => {
@@ -181,14 +176,7 @@ class Editor extends Component {
   };
 
   render() {
-    const {
-      className,
-      clickRadius,
-      datasets,
-      editor,
-      onUpdate,
-      style
-    } = this.props;
+    const {className, clickRadius, datasets, editor, onUpdate, style} = this.props;
 
     const {lastPosition, showActions} = this.state;
     const selectedFeatureId = get(editor, ['selectedFeature', 'id']);
@@ -197,11 +185,7 @@ class Editor extends Component {
     const allFeatures = this.allFeaturesSelector(this.props);
 
     return (
-      <StyledWrapper
-        editor={editor}
-        className={classnames('editor', className)}
-        style={style}
-      >
+      <StyledWrapper editor={editor} className={classnames('editor', className)} style={style}>
         <Draw
           clickRadius={clickRadius}
           mode={editor.mode}

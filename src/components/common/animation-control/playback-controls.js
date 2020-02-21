@@ -42,7 +42,7 @@ const IconButton = styled(Button)`
   }
 `;
 
-function nop() {};
+function nop() {}
 const DEFAULT_BUTTON_HEIGHT = '18px';
 
 function AnimationPlaybacksFactory() {
@@ -66,7 +66,8 @@ function AnimationPlaybacksFactory() {
           <IconButton
             className="playback-control-button"
             {...btnStyle}
-            onClick={updateAnimationTime}>
+            onClick={updateAnimationTime}
+          >
             <Reset height={buttonHeight} />
           </IconButton>
           <IconButton
@@ -74,11 +75,7 @@ function AnimationPlaybacksFactory() {
             className={classnames('playback-control-button', {active: isAnimating})}
             onClick={isAnimating ? pauseAnimation : startAnimation}
           >
-            {isAnimating ? (
-              <Pause height={buttonHeight} />
-            ) : (
-              <Play height={buttonHeight} />
-            )}
+            {isAnimating ? <Pause height={buttonHeight} /> : <Play height={buttonHeight} />}
           </IconButton>
         </ButtonGroup>
       </StyledAnimationControls>

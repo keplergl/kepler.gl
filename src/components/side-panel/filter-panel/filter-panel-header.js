@@ -28,17 +28,16 @@ import {StyledPanelHeader} from 'components/common/styled-components';
 export const StyledFilterHeader = styled(StyledPanelHeader)`
   cursor: pointer;
   padding: 10px 12px;
-  
+
   .field-selector {
     flex: 2;
   }
-  
-  border-left: 3px solid;
-  ${props => props.labelRCGColorValues && props.labelRCGColorValues.length > 0 ?
-  `border-image: ${createLinearGradient('bottom', props.labelRCGColorValues)} 3;`
-  : 'border-color: transparent;'
-  }
 
+  border-left: 3px solid;
+  ${props =>
+    props.labelRCGColorValues && props.labelRCGColorValues.length > 0
+      ? `border-image: ${createLinearGradient('bottom', props.labelRCGColorValues)} 3;`
+      : 'border-color: transparent;'}
 `;
 
 const StyledChildrenContainer = styled.div`
@@ -62,9 +61,7 @@ function FilterPanelHeaderFactory() {
       className="filter-panel__header"
       labelRCGColorValues={datasets.map(d => d.color)}
     >
-      <StyledChildrenContainer>
-        {children}
-      </StyledChildrenContainer>
+      <StyledChildrenContainer>{children}</StyledChildrenContainer>
       <PanelHeaderAction
         id={filter.id}
         tooltip="delete"

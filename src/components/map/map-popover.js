@@ -150,8 +150,7 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
     render() {
       const {x, y, freezed, coordinate, layerHoverProp} = this.props;
 
-      const style =
-        Number.isFinite(x) && Number.isFinite(y) ? this._getPosition(x, y) : {};
+      const style = Number.isFinite(x) && Number.isFinite(y) ? this._getPosition(x, y) : {};
 
       return (
         <ErrorBoundary>
@@ -171,9 +170,7 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
                 </StyledPin>
               </div>
             ) : null}
-            {Array.isArray(coordinate) && (
-              <CoordinateInfo coordinate={coordinate} />
-            )}
+            {Array.isArray(coordinate) && <CoordinateInfo coordinate={coordinate} />}
             {layerHoverProp && <LayerHoverInfo {...layerHoverProp} />}
           </StyledMapPopover>
         </ErrorBoundary>

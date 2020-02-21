@@ -29,9 +29,7 @@ import ActionTypes from 'constants/action-types';
  * @memberof mapStyleActions
  * @public
  */
-export const addCustomMapStyle = createAction(
-  ActionTypes.ADD_CUSTOM_MAP_STYLE,
-);
+export const addCustomMapStyle = createAction(ActionTypes.ADD_CUSTOM_MAP_STYLE);
 
 /**
  * Input a custom map style object
@@ -46,10 +44,10 @@ export const addCustomMapStyle = createAction(
  * @param {Object} mapState - mapState is optional
  * @public
  */
-export const inputMapStyle = createAction(
-  ActionTypes.INPUT_MAP_STYLE,
-  (inputStyle, mapState) => ({inputStyle, mapState})
-);
+export const inputMapStyle = createAction(ActionTypes.INPUT_MAP_STYLE, (inputStyle, mapState) => ({
+  inputStyle,
+  mapState
+}));
 
 /**
  * Update `visibleLayerGroups`to change layer group visibility
@@ -57,10 +55,7 @@ export const inputMapStyle = createAction(
  * @param {Object} mapStyle new config `{visibleLayerGroups: {label: false, road: true, background: true}}`
  * @public
  */
-export const mapConfigChange = createAction(
-  ActionTypes.MAP_CONFIG_CHANGE,
-  mapStyle => mapStyle
-);
+export const mapConfigChange = createAction(ActionTypes.MAP_CONFIG_CHANGE, mapStyle => mapStyle);
 
 /**
  * Request map style style object based on style.url.
@@ -78,10 +73,7 @@ export const requestMapStyles = createAction(
  * @param {Object} newStyles a `{[id]: style}` mapping
  * @public
  */
-export const loadMapStyles = createAction(
-  ActionTypes.LOAD_MAP_STYLES,
-  newStyles => newStyles
-);
+export const loadMapStyles = createAction(ActionTypes.LOAD_MAP_STYLES, newStyles => newStyles);
 
 /**
  * Callback when load map style error
@@ -89,10 +81,7 @@ export const loadMapStyles = createAction(
  * @param {*} error
  * @public
  */
-export const loadMapStyleErr = createAction(
-  ActionTypes.LOAD_MAP_STYLE_ERR,
-  error => error
-);
+export const loadMapStyleErr = createAction(ActionTypes.LOAD_MAP_STYLE_ERR, error => error);
 
 /**
  * Change to another map style. The selected style should already been loaded into `mapStyle.mapStyles`
@@ -100,10 +89,7 @@ export const loadMapStyleErr = createAction(
  * @param {string} styleType the style to change to
  * @public
  */
-export const mapStyleChange = createAction(
-  ActionTypes.MAP_STYLE_CHANGE,
-  styleType => styleType
-);
+export const mapStyleChange = createAction(ActionTypes.MAP_STYLE_CHANGE, styleType => styleType);
 
 /**
  * Callback when a custom map style object is received
@@ -126,10 +112,7 @@ export const loadCustomMapStyle = createAction(
  * @param {Array} color - [r, g, b]
  * @public
  */
-export const set3dBuildingColor = createAction(
-  ActionTypes.SET_3D_BUILDING_COLOR,
-  color => color
-);
+export const set3dBuildingColor = createAction(ActionTypes.SET_3D_BUILDING_COLOR, color => color);
 
 /**
  * Actions handled mostly by  `mapStyle` reducer.
@@ -139,5 +122,5 @@ export const set3dBuildingColor = createAction(
  * @public
  */
 /* eslint-disable no-unused-vars */
-const mapStyleActions = null
+const mapStyleActions = null;
 /* eslint-enable no-unused-vars */

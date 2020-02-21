@@ -33,10 +33,7 @@ const reducers = combineReducers({
   routing: routerReducer
 });
 
-export const middlewares = enhanceReduxMiddleware([
-  thunk,
-  routerMiddleware(browserHistory)
-]);
+export const middlewares = enhanceReduxMiddleware([thunk, routerMiddleware(browserHistory)]);
 
 export const enhancers = [applyMiddleware(...middlewares)];
 
@@ -60,8 +57,4 @@ if (window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__) {
 };
 */
 
-export default createStore(
-  reducers,
-  initialState,
-  composeEnhancers(...enhancers)
-);
+export default createStore(reducers, initialState, composeEnhancers(...enhancers));

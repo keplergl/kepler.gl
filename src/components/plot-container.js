@@ -73,9 +73,7 @@ export default function PlotContainerFactory(MapContainer) {
       // re-fetch the new screenshot only when ratio legend or resolution changes
       const checks = ['ratio', 'resolution', 'legend'];
       const shouldRetrieveScreenshot = checks.some(
-        item =>
-          this.props.exportImageSetting[item] !==
-          prevProps.exportImageSetting[item]
+        item => this.props.exportImageSetting[item] !== prevProps.exportImageSetting[item]
       );
       if (shouldRetrieveScreenshot) {
         this._retrieveNewScreenshot();
@@ -99,17 +97,14 @@ export default function PlotContainerFactory(MapContainer) {
       );
 
       return scale > 0 ? scale : 1;
-    }
+    };
 
     scaledMapStyleSelector = createSelector(
       this.mapStyleSelector,
       this.mapScaleSelector,
       (mapStyle, scale) => ({
         ...mapStyle,
-        bottomMapStyle: scaleMapStyleByResolution(
-          mapStyle.bottomMapStyle,
-          scale
-        ),
+        bottomMapStyle: scaleMapStyleByResolution(mapStyle.bottomMapStyle, scale),
         topMapStyle: scaleMapStyleByResolution(mapStyle.topMapStyle, scale)
       })
     );
@@ -170,7 +165,7 @@ export default function PlotContainerFactory(MapContainer) {
           <div
             ref={this.plottingAreaRef}
             style={{
-              width: `${size.width}px` ,
+              width: `${size.width}px`,
               height: `${size.height}px`
             }}
           >

@@ -21,11 +21,7 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 
-import {
-  PanelLabel,
-  PanelLabelWrapper,
-  SidePanelSection
-} from 'components/common/styled-components';
+import {PanelLabel, PanelLabelWrapper, SidePanelSection} from 'components/common/styled-components';
 import FieldSelector from 'components/common/field-selector';
 import InfoHelper from 'components/common/info-helper';
 import DimensionScaleSelector from './dimension-scale-selector';
@@ -54,13 +50,7 @@ export default class VisConfigByFieldSelector extends Component {
   };
 
   render() {
-    const {
-      property,
-      showScale,
-      selectedField,
-      description,
-      scaleOptions = []
-    } = this.props;
+    const {property, showScale, selectedField, description, scaleOptions = []} = this.props;
 
     return (
       <SidePanelSection>
@@ -70,10 +60,7 @@ export default class VisConfigByFieldSelector extends Component {
               {this.props.label || `${capitalizeFirstLetter(property)} based on`}
             </PanelLabel>
             {description && (
-              <InfoHelper
-                description={description}
-                id={`${this.props.id}-${property}`}
-              />
+              <InfoHelper description={description} id={`${this.props.id}-${property}`} />
             )}
           </PanelLabelWrapper>
           <FieldSelector
@@ -98,4 +85,4 @@ export default class VisConfigByFieldSelector extends Component {
       </SidePanelSection>
     );
   }
-};
+}

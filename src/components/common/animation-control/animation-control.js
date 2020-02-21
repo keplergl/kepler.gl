@@ -68,11 +68,7 @@ AnimationControlFactory.deps = [
   FloatingTimeDisplayFactory
 ];
 
-function AnimationControlFactory(
-  SpeedControl,
-  AnimationPlaybacks,
-  FloatingTimeDisplay
-) {
+function AnimationControlFactory(SpeedControl, AnimationPlaybacks, FloatingTimeDisplay) {
   class AnimationControl extends Component {
     constructor(props) {
       super(props);
@@ -112,10 +108,7 @@ function AnimationControlFactory(
       this._animation = null;
       const {currentTime, domain, speed = 1} = this.props.animationConfig;
       const adjustedSpeed = ((domain[1] - domain[0]) / BASE_SPEED) * speed;
-      const nextTime =
-        currentTime + speed > domain[1]
-          ? domain[0]
-          : currentTime + adjustedSpeed;
+      const nextTime = currentTime + speed > domain[1] ? domain[0] : currentTime + adjustedSpeed;
       this.props.updateAnimationTime(nextTime);
     };
 

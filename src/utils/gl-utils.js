@@ -30,9 +30,13 @@ export function setLayerBlending(gl, layerBlending) {
 
   setParameters(gl, {
     [GL.BLEND]: true,
-    ...(blendFunc ? {
-      blendFunc: blendFunc.map(getGlConst),
-      blendEquation: Array.isArray(blendEquation) ? blendEquation.map(getGlConst) : getGlConst(blendEquation)
-    } : {})
+    ...(blendFunc
+      ? {
+          blendFunc: blendFunc.map(getGlConst),
+          blendEquation: Array.isArray(blendEquation)
+            ? blendEquation.map(getGlConst)
+            : getGlConst(blendEquation)
+        }
+      : {})
   });
-};
+}

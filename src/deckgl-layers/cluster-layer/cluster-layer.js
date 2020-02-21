@@ -22,7 +22,10 @@ import {ScatterplotLayer} from '@deck.gl/layers';
 import {_AggregationLayer as AggregationLayer} from '@deck.gl/aggregation-layers';
 
 import geoViewport from '@mapbox/geo-viewport';
-import CPUAggregator, {defaultColorDimension, getDimensionScale} from '../layer-utils/cpu-aggregator';
+import CPUAggregator, {
+  defaultColorDimension,
+  getDimensionScale
+} from '../layer-utils/cpu-aggregator';
 import {getDistanceScales} from 'viewport-mercator-project';
 import {max} from 'd3-array';
 
@@ -36,7 +39,8 @@ const defaultRadius = LAYER_VIS_CONFIGS.clusterRadius.defaultValue;
 const defaultRadiusRange = LAYER_VIS_CONFIGS.clusterRadiusRange.defaultValue;
 
 const defaultGetColorValue = points => points.length;
-const defaultGetRadiusValue = cell => cell.filteredPoints ? cell.filteredPoints.length : cell.points.length;
+const defaultGetRadiusValue = cell =>
+  cell.filteredPoints ? cell.filteredPoints.length : cell.points.length;
 
 function processGeoJSON(step, props, aggregation, {viewport}) {
   const {data, getPosition, filterData} = props;
@@ -47,7 +51,6 @@ function processGeoJSON(step, props, aggregation, {viewport}) {
 }
 
 function getClusters(step, props, aggregation, {viewport}) {
-
   const {geoJSON, clusterBuilder} = this.state;
   const {clusterRadius, zoom, width, height} = props;
   const {longitude, latitude} = viewport;

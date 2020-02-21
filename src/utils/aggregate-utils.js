@@ -21,15 +21,21 @@
 import {deviation, min, max, mean, median, sum, variance} from 'd3-array';
 import {AGGREGATION_TYPES} from 'constants/default-settings';
 
-export const getFrequency = data => data.reduce((uniques, val) => ({
-  ...uniques,
-  [val]: (uniques[val] || 0) + 1
-}), {});
+export const getFrequency = data =>
+  data.reduce(
+    (uniques, val) => ({
+      ...uniques,
+      [val]: (uniques[val] || 0) + 1
+    }),
+    {}
+  );
 
 export const getMode = data => {
   const occur = getFrequency(data);
-  return Object.keys(occur).reduce((prev, key) =>
-    occur[prev] >= occur[key] ? prev : key, Object.keys(occur)[0]);
+  return Object.keys(occur).reduce(
+    (prev, key) => (occur[prev] >= occur[key] ? prev : key),
+    Object.keys(occur)[0]
+  );
 };
 
 export function aggregate(data, technique) {

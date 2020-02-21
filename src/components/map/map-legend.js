@@ -98,16 +98,18 @@ export const SingleColorLegend = React.memo(({width, color}) => (
 
 SingleColorLegend.displayName = 'SingleColorLegend';
 
-export const MultiColorLegend = React.memo(({colorRange, colorScale, colorDomain, colorField, width}) => (
-  <ColorLegend
-    scaleType={colorScale}
-    displayLabel
-    domain={colorDomain}
-    fieldType={(colorField && colorField.type) || 'real'}
-    range={colorRange.colors}
-    width={width}
-  />
-));
+export const MultiColorLegend = React.memo(
+  ({colorRange, colorScale, colorDomain, colorField, width}) => (
+    <ColorLegend
+      scaleType={colorScale}
+      displayLabel
+      domain={colorDomain}
+      fieldType={(colorField && colorField.type) || 'real'}
+      range={colorRange.colors}
+      width={width}
+    />
+  )
+);
 
 MultiColorLegend.displayName = 'MultiColorLegend';
 
@@ -122,32 +124,32 @@ export const LayerColorLegend = React.memo(({description, config, width, colorCh
       <div className="legend--layer_type">{camelToTitle(key)}</div>
       <div className="legend--layer_color-schema">
         <div>
-          {enableColorBy ? (
-            <VisualChannelMetric name={enableColorBy} />
-          ) : null}
+          {enableColorBy ? <VisualChannelMetric name={enableColorBy} /> : null}
           <div className="legend--layer_color-legend">
-            {enableColorBy ?
+            {enableColorBy ? (
               <MultiColorLegend
                 colorScale={colorScale}
                 colorField={colorField}
                 colorDomain={colorDomain}
                 colorRange={colorRange}
-                width={width} /> :
+                width={width}
+              />
+            ) : (
               <SingleColorLegend
                 color={config.visConfig[property] || config[property] || config.color}
                 width={width}
               />
-            }
+            )}
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 });
 
 LayerColorLegend.displayName = 'LayerColorLegend';
 
-const isColorChannel = (visualChannel) =>
+const isColorChannel = visualChannel =>
   [CHANNEL_SCALES.color, CHANNEL_SCALES.colorAggr].includes(visualChannel.channelScaleType);
 
 const MAP_LEGEND_WIDTH = DIMENSIONS.mapControl.width - 2 * DIMENSIONS.mapControl.padding;
@@ -159,10 +161,10 @@ const MapLegend = ({layers = []}) => (
         return null;
       }
 
-      const colorChannels = Object.values(layer.visualChannels)
-        .filter(isColorChannel);
-      const nonColorChannels = Object.values(layer.visualChannels)
-      .filter(vc => !isColorChannel(vc));
+      const colorChannels = Object.values(layer.visualChannels).filter(isColorChannel);
+      const nonColorChannels = Object.values(layer.visualChannels).filter(
+        vc => !isColorChannel(vc)
+      );
 
       return (
         <StyledMapControlLegend
@@ -172,37 +174,31 @@ const MapLegend = ({layers = []}) => (
         >
           <div className="legend--layer_name">{layer.config.label}</div>
           {colorChannels.map(colorChannel =>
-              !colorChannel.condition || colorChannel.condition(layer.config) ?
-                (
-                  <LayerColorLegend
-                    key={colorChannel.key}
-                    description={layer.getVisualChannelDescription(colorChannel.key)}
-                    config={layer.config}
-                    width={MAP_LEGEND_WIDTH}
-                    colorChannel={colorChannel}
-                  />
-                ) : null
-            )}
-          {nonColorChannels
-            .map(visualChannel => {
-              const matchCondition =
-                !visualChannel.condition ||
-                visualChannel.condition(layer.config);
-              const enabled =
-                layer.config[visualChannel.field] ||
-                visualChannel.defaultMeasure;
+            !colorChannel.condition || colorChannel.condition(layer.config) ? (
+              <LayerColorLegend
+                key={colorChannel.key}
+                description={layer.getVisualChannelDescription(colorChannel.key)}
+                config={layer.config}
+                width={MAP_LEGEND_WIDTH}
+                colorChannel={colorChannel}
+              />
+            ) : null
+          )}
+          {nonColorChannels.map(visualChannel => {
+            const matchCondition =
+              !visualChannel.condition || visualChannel.condition(layer.config);
+            const enabled = layer.config[visualChannel.field] || visualChannel.defaultMeasure;
 
-              const description = layer.getVisualChannelDescription(visualChannel.key);
+            const description = layer.getVisualChannelDescription(visualChannel.key);
 
-              return matchCondition && enabled ?
-                (
-                  <LayerSizeLegend
-                    key={visualChannel.key}
-                    label={description.label}
-                    name={description.measure}
-                  />
-                ) : null;
-            })}
+            return matchCondition && enabled ? (
+              <LayerSizeLegend
+                key={visualChannel.key}
+                label={description.label}
+                name={description.measure}
+              />
+            ) : null;
+          })}
         </StyledMapControlLegend>
       );
     })}

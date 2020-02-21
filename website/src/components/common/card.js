@@ -94,13 +94,7 @@ const Link = styled.div`
   color: black;
 `;
 
-export const VerticalCard = ({
-  title,
-  description,
-  image,
-  linkText,
-  linkUrl
-}) => (
+export const VerticalCard = ({title, description, image, linkText, linkUrl}) => (
   <VerticalContainer>
     <VerticalCardImage src={image} />
     <Content>
@@ -111,13 +105,7 @@ export const VerticalCard = ({
   </VerticalContainer>
 );
 
-export const HorizontalCard = ({
-  title,
-  description,
-  image,
-  linkText,
-  linkUrl
-}) => (
+export const HorizontalCard = ({title, description, image, linkText, linkUrl}) => (
   <HorizontalContainer>
     <HorizontalCardImage src={image} />
     <Content>

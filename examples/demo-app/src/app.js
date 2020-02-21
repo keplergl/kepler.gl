@@ -30,11 +30,7 @@ import {replaceLoadDataModal} from './factories/load-data-modal';
 import {replaceMapControl} from './factories/map-control';
 import {replacePanelHeader} from './factories/panel-header';
 import {AUTH_TOKENS} from './constants/default-settings';
-import {
-  loadRemoteMap,
-  loadSampleConfigurations,
-  onExportFileSuccess
-} from './actions';
+import {loadRemoteMap, loadSampleConfigurations, onExportFileSuccess} from './actions';
 
 import {getCloudProviders} from './cloud-providers';
 
@@ -101,10 +97,7 @@ class App extends Component {
   componentDidMount() {
     // if we pass an id as part of the url
     // we ry to fetch along map configurations
-    const {
-      params: {id} = {},
-      location: {query = {}} = {}
-    } = this.props;
+    const {params: {id} = {}, location: {query = {}} = {}} = this.props;
 
     // Load sample using its id
     if (id) {
@@ -205,17 +198,19 @@ class App extends Component {
           version: 'v1',
           config: {
             visState: {
-              layers: [{
-                type: '3D',
-                config: {
-                  dataId: 'test_trip_data',
-                  columns: {
-                    lat: 'gps_data.lat',
-                    lng: 'gps_data.lng'
-                  },
-                  isVisible: true
+              layers: [
+                {
+                  type: '3D',
+                  config: {
+                    dataId: 'test_trip_data',
+                    columns: {
+                      lat: 'gps_data.lat',
+                      lng: 'gps_data.lng'
+                    },
+                    isVisible: true
+                  }
                 }
-              }]
+              ]
             }
           }
         }

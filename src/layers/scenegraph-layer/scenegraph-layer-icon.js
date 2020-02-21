@@ -39,10 +39,7 @@ export default class ScenegraphLayerIcon extends Component {
     return (
       <Base {...this.props}>
         <g transform="translate(-20, -99)" id="layer1">
-          <g
-            transform="matrix(0.26458333,0,0,0.26458333,-191.59545,42.388813)"
-            id="g3042"
-          >
+          <g transform="matrix(0.26458333,0,0,0.26458333,-191.59545,42.388813)" id="g3042">
             <ellipse
               id="path2999"
               cx="931.42627"

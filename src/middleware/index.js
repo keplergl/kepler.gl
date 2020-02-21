@@ -30,8 +30,5 @@ import {taskMiddleware} from 'react-palm/tasks';
  * @returns {*[]} the original list of middlewares plus the react-palm middleware
  */
 export function enhanceReduxMiddleware(middlewares = []) {
-  return [
-    ...middlewares,
-    taskMiddleware
-  ];
+  return [...middlewares, taskMiddleware];
 }

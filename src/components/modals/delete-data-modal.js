@@ -28,9 +28,7 @@ const StyledMsg = styled.div`
 
 export const DeleteDatasetModal = ({dataset = {}, layers = []}) => {
   // retrieve only layers related to the current dataset
-  const currDatasetLayers = layers.filter(
-    layer => layer.config.dataId === dataset.id
-  );
+  const currDatasetLayers = layers.filter(layer => layer.config.dataId === dataset.id);
 
   return (
     <div className="delete-dataset-modal">

@@ -55,7 +55,7 @@ const StyledSaveMapModal = styled.div.attrs({
     width: 300px;
 
     .image-preview {
-      padding: 0
+      padding: 0;
     }
   }
 
@@ -140,9 +140,7 @@ function SaveMapModalFactory() {
             <StyledExportSection disabled={isLoading}>
               <div className="description">
                 <div className="title">Cloud storage</div>
-                <div className="subtitle">
-                  Login save map to your personal cloud storage
-                </div>
+                <div className="subtitle">Login save map to your personal cloud storage</div>
               </div>
               <div className="selection">
                 {cloudProviders.map(cloudProvider => (
@@ -179,10 +177,7 @@ function SaveMapModalFactory() {
                   </div>
                 </StyledModalSection>
                 <StyledModalSection>
-                  <div
-                    className="save-map-modal-description"
-                    style={{display: 'flex'}}
-                  >
+                  <div className="save-map-modal-description" style={{display: 'flex'}}>
                     <div className="modal-section-title">Description</div>
                     <div className="modal-section-subtitle">(optional)</div>
                   </div>
@@ -204,9 +199,7 @@ function SaveMapModalFactory() {
                     }
                   >
                     {mapInfo.description.length}/
-                    {characterLimits.description ||
-                      MAP_INFO_CHARACTER.description}{' '}
-                    characters
+                    {characterLimits.description || MAP_INFO_CHARACTER.description} characters
                   </StyledModalInputFootnote>
                 </StyledModalSection>
               </div>

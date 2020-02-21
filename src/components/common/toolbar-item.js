@@ -39,7 +39,7 @@ const ToolbarItem = React.memo(props => (
       props.onClick(e);
     }}
   >
-    <props.icon/>
+    <props.icon />
     <div className="toolbar-item__title">{props.label}</div>
   </StyledDiv>
 ));

@@ -23,10 +23,7 @@ import CustomMapControl from '../components/map-control/map-control';
 import {withState} from 'kepler.gl/components';
 
 export const CustomMapControlFactory = () =>
-  withState(
-    [],
-    state => ({...state.demo.app})
-  )(CustomMapControl);
+  withState([], state => ({...state.demo.app}))(CustomMapControl);
 
 export function replaceMapControl() {
   return [MapControlFactory, CustomMapControlFactory];

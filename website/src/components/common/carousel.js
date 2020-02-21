@@ -41,8 +41,7 @@ const Item = styled.div`
   position: absolute;
   transition: transform 1s;
   cursor: pointer;
-  transform: perspective(600px)
-    translate3d(${props => props.tX}%, 0, ${props => props.tZ}px);
+  transform: perspective(600px) translate3d(${props => props.tX}%, 0, ${props => props.tZ}px);
 `;
 
 export default class Carousel extends PureComponent {

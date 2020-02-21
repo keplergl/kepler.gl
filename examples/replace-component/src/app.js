@@ -21,7 +21,7 @@
 import React, {Component} from 'react';
 import {connect} from 'react-redux';
 import {addDataToMap, wrapTo} from 'kepler.gl/actions';
-import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer'
+import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import styled from 'styled-components';
 import {theme} from 'kepler.gl/styles';
 
@@ -66,32 +66,22 @@ const KeplerGl = injectComponents([
 
 class App extends Component {
   componentDidMount() {
-    this.props.dispatch(
-      wrapTo('map1', addDataToMap(
-        {datasets: sampleData})
-      )
-    );
+    this.props.dispatch(wrapTo('map1', addDataToMap({datasets: sampleData})));
   }
 
   render() {
     return (
       <div style={{position: 'absolute', width: '100%', height: '100%'}}>
-          <AutoSizer>
-            {({height, width}) => (
-            <KeplerGl
-              mapboxApiAccessToken={MAPBOX_TOKEN}
-              id="map1"
-              width={width}
-              height={height}
-            />
+        <AutoSizer>
+          {({height, width}) => (
+            <KeplerGl mapboxApiAccessToken={MAPBOX_TOKEN} id="map1" width={width} height={height} />
           )}
-          </AutoSizer>
-          <StyledMapConfigDisplay>
-            {this.props.app.mapConfig ?
-              JSON.stringify(this.props.app.mapConfig) :
-              'Click Save Config to Display Config Here'
-            }
-          </StyledMapConfigDisplay>
+        </AutoSizer>
+        <StyledMapConfigDisplay>
+          {this.props.app.mapConfig
+            ? JSON.stringify(this.props.app.mapConfig)
+            : 'Click Save Config to Display Config Here'}
+        </StyledMapConfigDisplay>
       </div>
     );
   }
@@ -100,4 +90,7 @@ class App extends Component {
 const mapStateToProps = state => state;
 const dispatchToProps = dispatch => ({dispatch});
 
-export default connect(mapStateToProps, dispatchToProps)(App);
+export default connect(
+  mapStateToProps,
+  dispatchToProps
+)(App);

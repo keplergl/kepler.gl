@@ -19,9 +19,7 @@
 // THE SOFTWARE.
 
 import {toggleModalUpdater, loadFilesSuccessUpdater} from './ui-state-updaters';
-import {
-  updateVisDataUpdater as visStateUpdateVisDataUpdater
-} from './vis-state-updaters';
+import {updateVisDataUpdater as visStateUpdateVisDataUpdater} from './vis-state-updaters';
 import {receiveMapConfigUpdater as stateMapConfigUpdater} from './map-state-updaters';
 import {receiveMapConfigUpdater as styleMapConfigUpdater} from './map-style-updaters';
 import {findMapBounds} from 'utils/data-utils';
@@ -131,9 +129,7 @@ export const addDataToMapUpdater = (state, {payload}) => {
   let bounds;
   if (options.centerMap) {
     // find map bounds for new layers
-    const newLayers = mergedState.visState.layers.filter(
-      nl => !oldLayers.find(ol => ol === nl)
-    );
+    const newLayers = mergedState.visState.layers.filter(nl => !oldLayers.find(ol => ol === nl));
     bounds = findMapBounds(newLayers);
   }
 
@@ -160,9 +156,7 @@ export const addDataToMapUpdater = (state, {payload}) => {
       ...toggleModalUpdater(loadFilesSuccessUpdater(mergedState.uiState), {
         payload: null
       }),
-      ...(options.hasOwnProperty('readOnly')
-        ? {readOnly: options.readOnly}
-        : {})
+      ...(options.hasOwnProperty('readOnly') ? {readOnly: options.readOnly} : {})
     }
   };
 

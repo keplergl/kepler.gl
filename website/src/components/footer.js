@@ -20,12 +20,7 @@
 
 import React, {PureComponent} from 'react';
 import styled from 'styled-components';
-import {
-  FacebookIcon,
-  FacebookShareButton,
-  TwitterIcon,
-  TwitterShareButton
-} from 'react-share';
+import {FacebookIcon, FacebookShareButton, TwitterIcon, TwitterShareButton} from 'react-share';
 
 import {cdnUrl} from '../utils';
 import {LinkButton} from './common/styled-components';
@@ -53,12 +48,11 @@ const BrandingContainer = styled.div`
   ${media.palm`
     margin-top: ${props => props.theme.margins.small};
   `};
-  
+
   display: grid;
   grid-template-columns: repeat(4, auto);
   column-gap: 20px;
   align-items: center;
- 
 `;
 
 const CreatedBy = styled.div`
@@ -158,11 +152,7 @@ export default class Footer extends PureComponent {
             <CreatedBy>
               created by
               <StyledLogo className="fg">
-                <a
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  href="http://vis.gl"
-                >
+                <a target="_blank" rel="noopener noreferrer" href="http://vis.gl">
                   VIS.GL
                 </a>
               </StyledLogo>
@@ -186,8 +176,7 @@ export default class Footer extends PureComponent {
           <SocialContainer>
             <FacebookShareButton url="https://uber.github.io/kepler.gl/">
               <FacebookIcon size={32} />
-            </FacebookShareButton>
-            {' '}
+            </FacebookShareButton>{' '}
             <TwitterShareButton url="https://uber.github.io/kepler.gl/" hashtags={['keplergl']}>
               <TwitterIcon size={32} />
             </TwitterShareButton>

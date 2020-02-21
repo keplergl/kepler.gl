@@ -21,19 +21,12 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
-import {
-  SidePanelSection,
-  SidePanelDivider,
-  Button
-} from 'components/common/styled-components';
+import {SidePanelSection, SidePanelDivider, Button} from 'components/common/styled-components';
 import {Add} from 'components/common/icons';
 import SourceDataCatalogFactory from './common/source-data-catalog';
 import FilterPanelFactory from './filter-panel/filter-panel';
 
-FilterManagerFactory.deps = [
-  SourceDataCatalogFactory,
-  FilterPanelFactory
-];
+FilterManagerFactory.deps = [SourceDataCatalogFactory, FilterPanelFactory];
 
 function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
   return class FilterManager extends Component {
@@ -57,8 +50,7 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
     datasetsSelector = state => state.datasets;
     defaultDatasetSelector = createSelector(
       this.datasetsSelector,
-      datasets =>
-        (Object.keys(datasets).length && Object.keys(datasets)[0]) || null
+      datasets => (Object.keys(datasets).length && Object.keys(datasets)[0]) || null
     );
 
     /* actions */
@@ -75,10 +67,7 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
 
       return (
         <div className="filter-manager">
-          <SourceDataCatalog
-            datasets={datasets}
-            showDatasetTable={this.props.showDatasetTable}
-          />
+          <SourceDataCatalog datasets={datasets} showDatasetTable={this.props.showDatasetTable} />
           <SidePanelDivider />
           <SidePanelSection>
             {filters &&
@@ -99,12 +88,9 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
                 />
               ))}
           </SidePanelSection>
-          <Button
-            inactive={hadEmptyFilter || !hadDataset}
-            width="105px"
-            onClick={this._addFilter}
-          >
-            <Add height="12px" />Add Filter
+          <Button inactive={hadEmptyFilter || !hadDataset} width="105px" onClick={this._addFilter}>
+            <Add height="12px" />
+            Add Filter
           </Button>
         </div>
       );

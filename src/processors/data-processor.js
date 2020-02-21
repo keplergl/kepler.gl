@@ -25,11 +25,7 @@ import assert from 'assert';
 import {Analyzer, DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
-import {
-  notNullorUndefined,
-  parseFieldValue,
-  getSampleData
-} from 'utils/data-utils';
+import {notNullorUndefined, parseFieldValue, getSampleData} from 'utils/data-utils';
 import KeplerGlSchema from 'schemas';
 import {GUIDES_FILE_FORMAT} from 'constants/user-guides';
 import {isPlainObject} from 'utils/utils';
@@ -69,9 +65,7 @@ export const PARSE_FIELD_VALUE_FROM_STRING = {
   },
   [ALL_FIELD_TYPES.timestamp]: {
     valid: (d, field) =>
-      ['x', 'X'].includes(field.format)
-        ? typeof d === 'number'
-        : typeof d === 'string',
+      ['x', 'X'].includes(field.format) ? typeof d === 'number' : typeof d === 'string',
     parse: (d, field) => (['x', 'X'].includes(field.format) ? Number(d) : d)
   },
   [ALL_FIELD_TYPES.real]: {
@@ -550,16 +544,13 @@ export function validateInputData(data) {
 
   // check if all fields has name, format and type
   const allValid = fields.every((f, i) => {
-
     if (!isPlainObject(f)) {
       assert(`fields needs to be an array of object, but find ${typeof f}`);
       fields[i] = {};
     }
 
     if (!f.name) {
-      assert(
-        `field.name is required but missing in ${JSON.stringify(f)}`
-      );
+      assert(`field.name is required but missing in ${JSON.stringify(f)}`);
       // assign a name
       fields[i].name = `column_${i}`;
     }
@@ -576,8 +567,7 @@ export function validateInputData(data) {
 
     // check time format is correct based on first 10 not empty element
     if (f.type === ALL_FIELD_TYPES.timestamp) {
-      const sample = findNonEmptyRowsAtField(rows, i, 10)
-        .map(r => ({ts: r[i]}));
+      const sample = findNonEmptyRowsAtField(rows, i, 10).map(r => ({ts: r[i]}));
       const analyzedType = Analyzer.computeColMeta(sample)[0];
       return analyzedType.category === 'TIME' && analyzedType.format === f.format;
     }

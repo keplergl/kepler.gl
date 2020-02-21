@@ -36,10 +36,7 @@ export const ColorBlock = styled.div`
 `;
 
 export const ColorSelectorInput = styled.div`
-  ${props =>
-    props.inputTheme === 'secondary'
-      ? props.theme.secondaryInput
-      : props.theme.input};
+  ${props => (props.inputTheme === 'secondary' ? props.theme.secondaryInput : props.theme.input)};
   height: ${props => props.theme.inputBoxHeight};
 
   .color-selector__selector__label {
@@ -66,10 +63,7 @@ class ColorSelector extends Component {
   static propTypes = {
     colorSets: PropTypes.arrayOf(
       PropTypes.shape({
-        selectedColor: PropTypes.oneOfType([
-          PropTypes.arrayOf(PropTypes.any),
-          PropTypes.object
-        ]),
+        selectedColor: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.any), PropTypes.object]),
         setColor: PropTypes.func.isRequired,
         isRange: PropTypes.bool,
         label: PropTypes.string
@@ -106,7 +100,7 @@ class ColorSelector extends Component {
 
   _getEditing = () => {
     return this.props.colorUI ? this.props.colorUI.showDropdown : this.state.showDropdown;
-  }
+  };
 
   _closePanelDropdown = () => {
     if (this._getEditing() === false) {
@@ -138,16 +132,10 @@ class ColorSelector extends Component {
   };
 
   render() {
-    const {
-      colorSets,
-      disabled,
-      inputTheme,
-      colorUI
-    } = this.props;
+    const {colorSets, disabled, inputTheme, colorUI} = this.props;
 
     const editing = this._getEditing();
-    const currentEditing =
-      colorSets[editing] && typeof colorSets[editing] === 'object';
+    const currentEditing = colorSets[editing] && typeof colorSets[editing] === 'object';
 
     return (
       <div className="color-selector" ref={this.node}>
@@ -170,9 +158,7 @@ class ColorSelector extends Component {
                   />
                 )}
                 {cSet.label ? (
-                  <div className="color-selector__selector__label">
-                    {cSet.label}
-                  </div>
+                  <div className="color-selector__selector__label">{cSet.label}</div>
                 ) : null}
               </ColorSelectorInput>
             </div>

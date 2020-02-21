@@ -40,7 +40,7 @@ export const SET_SAMPLE_LOADING_STATUS = 'SET_SAMPLE_LOADING_STATUS';
 
 // Sharing
 export const PUSHING_FILE = 'PUSHING_FILE';
-export const CLOUD_LOGIN_SUCCESS  = 'CLOUD_LOGIN_SUCCESS';
+export const CLOUD_LOGIN_SUCCESS = 'CLOUD_LOGIN_SUCCESS';
 
 // ACTIONS
 export function initApp() {
@@ -89,7 +89,7 @@ export function loadRemoteResourceError(error, url) {
     type: LOAD_REMOTE_RESOURCE_ERROR,
     error,
     url
-  }
+  };
 }
 
 export function loadMapSampleFile(samples) {
@@ -112,11 +112,11 @@ export function onExportFileSuccess({response = {}, provider}) {
     if (response.url) {
       const responseUrl = provider.getMapPermalink
         ? provider.getMapPermalink(response.url, false)
-        : getMapPermalink(response.url, false)
+        : getMapPermalink(response.url, false);
 
       dispatch(push(responseUrl));
     }
-  }
+  };
 }
 /**
  * this method detects whther the response status is < 200 or > 300 in case the error
@@ -129,7 +129,7 @@ function detectResponseError(response) {
     return {
       status: response.statusCode,
       message: response.body || response.message || response
-    }
+    };
   }
 }
 
@@ -151,12 +151,9 @@ export function loadRemoteMap(options) {
       // so we can use it to call loadFiles
       ([file, url]) => {
         const {file: filename} = parseUri(url);
-        dispatch(loadFiles([
-          new File([file], filename)
-        ])).then(
-          () => dispatch(setLoadingMapStatus(false))
+        dispatch(loadFiles([new File([file], filename)])).then(() =>
+          dispatch(setLoadingMapStatus(false))
         );
-
       },
       error => {
         const {target = {}} = error;
@@ -164,7 +161,7 @@ export function loadRemoteMap(options) {
         dispatch(loadRemoteResourceError({status, message: responseText}, options.dataUrl));
       }
     );
-  }
+  };
 }
 
 /**
@@ -175,7 +172,7 @@ export function loadRemoteMap(options) {
 function loadRemoteRawData(url) {
   if (!url) {
     // TODO: we should return reject with an appropriate error
-    return Promise.resolve(null)
+    return Promise.resolve(null);
   }
 
   return new Promise((resolve, reject) => {
@@ -188,8 +185,8 @@ function loadRemoteRawData(url) {
         reject(responseError);
         return;
       }
-      resolve([result.response, url])
-    })
+      resolve([result.response, url]);
+    });
   });
 }
 
@@ -231,27 +228,33 @@ export function loadSample(options, pushRoute = true) {
  * @returns {Function}
  */
 function loadRemoteSampleMap(options) {
-  return (dispatch) => {
+  return dispatch => {
     // Load configuration first
     const {configUrl, dataUrl} = options;
 
-    Promise
-      .all([loadRemoteConfig(configUrl), loadRemoteData(dataUrl)])
-      .then(
-        ([config, data]) => {
-          // TODO: these two actions can be merged
-          dispatch(loadRemoteResourceSuccess(data, config, options));
-          dispatch(toggleModal(null));
-        },
-        error => {
-          if (error) {
-            const {target = {}} = error;
-            const {status, responseText} = target;
-            dispatch(loadRemoteResourceError({status, message: `${responseText} - ${LOADING_SAMPLE_ERROR_MESSAGE} ${options.id} (${configUrl})`}, configUrl));
-          }
+    Promise.all([loadRemoteConfig(configUrl), loadRemoteData(dataUrl)]).then(
+      ([config, data]) => {
+        // TODO: these two actions can be merged
+        dispatch(loadRemoteResourceSuccess(data, config, options));
+        dispatch(toggleModal(null));
+      },
+      error => {
+        if (error) {
+          const {target = {}} = error;
+          const {status, responseText} = target;
+          dispatch(
+            loadRemoteResourceError(
+              {
+                status,
+                message: `${responseText} - ${LOADING_SAMPLE_ERROR_MESSAGE} ${options.id} (${configUrl})`
+              },
+              configUrl
+            )
+          );
         }
-      );
-  }
+      }
+    );
+  };
 }
 
 /**
@@ -262,7 +265,7 @@ function loadRemoteSampleMap(options) {
 function loadRemoteConfig(url) {
   if (!url) {
     // TODO: we should return reject with an appropriate error
-    return Promise.resolve(null)
+    return Promise.resolve(null);
   }
 
   return new Promise((resolve, reject) => {
@@ -276,8 +279,8 @@ function loadRemoteConfig(url) {
         return;
       }
       resolve(config);
-    })
-  })
+    });
+  });
 }
 
 /**
@@ -288,7 +291,7 @@ function loadRemoteConfig(url) {
 function loadRemoteData(url) {
   if (!url) {
     // TODO: we should return reject with an appropriate error
-    return Promise.resolve(null)
+    return Promise.resolve(null);
   }
 
   let requestMethod = requestText;
@@ -308,7 +311,7 @@ function loadRemoteData(url) {
         return;
       }
       resolve(result);
-    })
+    });
   });
 }
 
@@ -324,7 +327,12 @@ export function loadSampleConfigurations(sampleMapId = null) {
       if (error) {
         const {target = {}} = error;
         const {status, responseText} = target;
-        dispatch(loadRemoteResourceError({status, message: `${responseText} - ${LOADING_SAMPLE_LIST_ERROR_MESSAGE}`}, MAP_CONFIG_URL));
+        dispatch(
+          loadRemoteResourceError(
+            {status, message: `${responseText} - ${LOADING_SAMPLE_LIST_ERROR_MESSAGE}`},
+            MAP_CONFIG_URL
+          )
+        );
       } else {
         const responseError = detectResponseError(samples);
         if (responseError) {
@@ -340,5 +348,5 @@ export function loadSampleConfigurations(sampleMapId = null) {
         }
       }
     });
-  }
+  };
 }

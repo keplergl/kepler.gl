@@ -37,4 +37,3 @@ export const COLORS = {
   SECONDARY: '#ffff00',
   TERTIARY: '#6c6c6c'
 };
-

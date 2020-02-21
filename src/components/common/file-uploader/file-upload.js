@@ -39,16 +39,13 @@ import {media} from 'styles/media-breakpoints';
 // registered mapping for the extension.
 // NOTE: Shapefiles must be in a compressed format since
 // it requires multiple files to be present.
-const defaultValidFileExt = [
-  'csv',
-  'json',
-  'geojson'
-];
+const defaultValidFileExt = ['csv', 'json', 'geojson'];
 
 const MESSAGE = ' Drag & Drop Your File(s) Here';
 const CHROME_MSG =
   '*Chrome user: Limit file size to 250mb, if need to upload larger file, try Safari';
-const DISCLAIMER = '*kepler.gl is a client-side application with no server backend. Data lives only on your machine/browser. ' +
+const DISCLAIMER =
+  '*kepler.gl is a client-side application with no server backend. Data lives only on your machine/browser. ' +
   'No information or map data is sent to any server.';
 const CONFIG_UPLOAD_MESSAGE = `Upload **CSV**, **GeoJson** or saved map **Json**. Read more about [**supported file formats**](${GUIDES_FILE_FORMAT}).`;
 
@@ -173,7 +170,6 @@ const StyledDisclaimer = styled(StyledMessage)`
 `;
 
 class FileUpload extends Component {
-
   static propTypes = {
     onFileUpload: PropTypes.func.isRequired,
     validFileExt: PropTypes.arrayOf(PropTypes.string),
@@ -192,11 +188,7 @@ class FileUpload extends Component {
   };
 
   static getDerivedStateFromProps(props, state) {
-    if (
-      state.fileLoading &&
-      props.fileLoading === false &&
-      state.files.length
-    ) {
+    if (state.fileLoading && props.fileLoading === false && state.files.length) {
       return {
         files: [],
         fileLoading: props.fileLoading
@@ -244,13 +236,8 @@ class FileUpload extends Component {
   _renderMessage() {
     const {errorFiles, files} = this.state;
     if (errorFiles.length) {
-      return (
-        <WarningMsg>
-          {`File ${errorFiles.join(', ')} is not supported.`}
-        </WarningMsg>
-      );
+      return <WarningMsg>{`File ${errorFiles.join(', ')} is not supported.`}</WarningMsg>;
     } else if (this.props.fileLoading && files.length) {
-
       return (
         <StyledMessage className="file-uploader__message">
           <div className="loading-action">Uploading</div>
@@ -276,11 +263,7 @@ class FileUpload extends Component {
 
     return (
       <StyledFileUpload className="file-uploader" ref={this.frame}>
-        <input
-          className="filter-upload__input"
-          type="file"
-          onChange={this._onChange}
-        />
+        <input className="filter-upload__input" type="file" onChange={this._onChange} />
         {FileDrop ? (
           <FileDrop
             frame={this.frame.current || document}
@@ -290,22 +273,14 @@ class FileUpload extends Component {
             className="file-uploader__file-drop"
           >
             <StyledUploadMessage className="file-upload__message">
-              <ReactMarkdown
-                source={CONFIG_UPLOAD_MESSAGE}
-                renderers={{link: LinkRenderer}}
-              />
+              <ReactMarkdown source={CONFIG_UPLOAD_MESSAGE} renderers={{link: LinkRenderer}} />
             </StyledUploadMessage>
             <StyledFileDrop dragOver={dragOver}>
               <div style={{opacity: dragOver ? 0.5 : 1}}>
                 <StyledDragNDropIcon>
                   <StyledFileTypeFow className="file-type-row">
                     {validFileExt.map(ext => (
-                      <FileType
-                        key={ext}
-                        ext={ext}
-                        height="50px"
-                        fontSize="9px"
-                      />
+                      <FileType key={ext} ext={ext} height="50px" fontSize="9px" />
                     ))}
                   </StyledFileTypeFow>
                   <DragNDrop height="44px" />
@@ -316,9 +291,7 @@ class FileUpload extends Component {
                 <StyledDragFileWrapper>
                   <MsgWrapper>{MESSAGE}</MsgWrapper>
                   <span className="file-upload-or">or</span>
-                  <UploadButton onUpload={this._handleFileInput}>
-                    browse your files
-                  </UploadButton>
+                  <UploadButton onUpload={this._handleFileInput}>browse your files</UploadButton>
                 </StyledDragFileWrapper>
               ) : null}
               <StyledDisclaimer>{DISCLAIMER}</StyledDisclaimer>

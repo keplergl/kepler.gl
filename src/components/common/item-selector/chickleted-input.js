@@ -75,13 +75,13 @@ const Chicklet = ({disabled, name, remove}) => (
 );
 
 const ChickletedInputContainer = styled.div`
-  ${props => props.inputTheme === 'secondary' ?
-    props.theme.secondaryChickletedInput : props.theme.chickletedInput}
+  ${props =>
+    props.inputTheme === 'secondary'
+      ? props.theme.secondaryChickletedInput
+      : props.theme.chickletedInput}
 
   color: ${props =>
-    props.hasPlaceholder
-      ? props.theme.selectColorPlaceHolder
-      : props.theme.selectColor};
+    props.hasPlaceholder ? props.theme.selectColorPlaceHolder : props.theme.selectColor};
   overflow: hidden;
 `;
 
@@ -106,16 +106,18 @@ const ChickletedInput = ({
     inputTheme={inputTheme}
     hasPlaceholder={!selectedItems || !selectedItems.length}
   >
-    {selectedItems.length > 0
-      ? selectedItems.map((item, i) => (
-          <Chicklet
-            disabled={disabled}
-            key={`${displayOption(item)}_${i}`}
-            name={displayOption(item)}
-            remove={e => removeItem(item, e)}
-          />
-        ))
-      : <span className={`${className} chickleted-input__placeholder`}>{placeholder}</span>}
+    {selectedItems.length > 0 ? (
+      selectedItems.map((item, i) => (
+        <Chicklet
+          disabled={disabled}
+          key={`${displayOption(item)}_${i}`}
+          name={displayOption(item)}
+          remove={e => removeItem(item, e)}
+        />
+      ))
+    ) : (
+      <span className={`${className} chickleted-input__placeholder`}>{placeholder}</span>
+    )}
   </ChickletedInputContainer>
 );
 

@@ -52,35 +52,38 @@ const initialAppState = {
   sampleMaps: [], // this is used to store sample maps fetch from a remote json file
   isMapLoading: false, // determine whether we are loading a sample map,
   error: null, // contains error when loading/retrieving data/configuration
-    // {
-    //   status: null,
-    //   message: null
-    // }
+  // {
+  //   status: null,
+  //   message: null
+  // }
   // eventually we may have an async process to fetch these from a remote location
   featureFlags: DEFAULT_FEATURE_FLAGS
 };
 
 // App reducer
-export const appReducer = handleActions({
-  [INIT]: (state) => ({
-    ...state,
-    loaded: true
-  }),
-  [SET_LOADING_METHOD]: (state, action) => ({
-    ...state,
-    previousMethod: state.loadingMethod,
-    loadingMethod: LOADING_METHODS.find(({id}) => id === action.method),
-    error: null
-  }),
-  [LOAD_MAP_SAMPLE_FILE]: (state, action) => ({
-    ...state,
-    sampleMaps: action.samples
-  }),
-  [SET_SAMPLE_LOADING_STATUS]: (state, action) => ({
-    ...state,
-    isMapLoading: action.isMapLoading
-  })
-}, initialAppState);
+export const appReducer = handleActions(
+  {
+    [INIT]: state => ({
+      ...state,
+      loaded: true
+    }),
+    [SET_LOADING_METHOD]: (state, action) => ({
+      ...state,
+      previousMethod: state.loadingMethod,
+      loadingMethod: LOADING_METHODS.find(({id}) => id === action.method),
+      error: null
+    }),
+    [LOAD_MAP_SAMPLE_FILE]: (state, action) => ({
+      ...state,
+      sampleMaps: action.samples
+    }),
+    [SET_SAMPLE_LOADING_STATUS]: (state, action) => ({
+      ...state,
+      isMapLoading: action.isMapLoading
+    })
+  },
+  initialAppState
+);
 
 const {DEFAULT_EXPORT_MAP} = uiStateUpdaters;
 
@@ -129,8 +132,7 @@ export const loadRemoteResourceSuccess = (state, action) => {
     data: processorMethod(action.response)
   };
 
-  const config = action.config ?
-    KeplerGlSchema.parseSavedConfig(action.config) : null;
+  const config = action.config ? KeplerGlSchema.parseSavedConfig(action.config) : null;
 
   const keplerGlInstance = combinedUpdaters.addDataToMapUpdater(
     state.keplerGl.map, // "map" is the id of your kepler.gl instance

@@ -59,17 +59,10 @@ export default class Swipeable extends PureComponent {
     const {children, onChange, selectedIndex} = this.props;
     return (
       <div>
-        <SwipeableViews
-          enableMouseEvents
-          index={selectedIndex}
-          onChange={onChange}>
+        <SwipeableViews enableMouseEvents index={selectedIndex} onChange={onChange}>
           {children}
         </SwipeableViews>
-        <Pagination
-          items={children}
-          selectedIndex={selectedIndex}
-          onChange={onChange}
-        />
+        <Pagination items={children} selectedIndex={selectedIndex} onChange={onChange} />
       </div>
     );
   }

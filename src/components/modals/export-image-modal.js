@@ -23,15 +23,9 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import ImagePreview from 'components/common/image-preview';
 
-import {
-  EXPORT_IMG_RATIO_OPTIONS,
-  EXPORT_IMG_RESOLUTION_OPTIONS
-} from 'constants/default-settings';
+import {EXPORT_IMG_RATIO_OPTIONS, EXPORT_IMG_RESOLUTION_OPTIONS} from 'constants/default-settings';
 
-import {
-  StyledModalContent,
-  SelectionButton
-} from 'components/common/styled-components';
+import {StyledModalContent, SelectionButton} from 'components/common/styled-components';
 import Switch from 'components/common/switch';
 
 const ImageOptionList = styled.div`
@@ -113,9 +107,7 @@ const ExportImageModalFactory = () => {
                   <SelectionButton
                     key={op.id}
                     selected={resolution === op.id}
-                    onClick={() =>
-                      op.available && onUpdateSetting({resolution: op.id})
-                    }
+                    onClick={() => op.available && onUpdateSetting({resolution: op.id})}
                   >
                     {op.label}
                   </SelectionButton>

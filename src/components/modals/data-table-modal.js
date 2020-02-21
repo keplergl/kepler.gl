@@ -63,7 +63,7 @@ export const DatasetTabs = React.memo(({activeDataset, datasets, showDatasetTabl
         key={dataset.id}
         onClick={() => showDatasetTable(dataset.id)}
       >
-        <DatasetLabel dataset={dataset}/>
+        <DatasetLabel dataset={dataset} />
       </DatasetModalTab>
     ))}
   </DatasetCatalog>
@@ -71,18 +71,10 @@ export const DatasetTabs = React.memo(({activeDataset, datasets, showDatasetTabl
 
 DatasetTabs.displayName = 'DatasetTabs';
 
-DataTableModalFactory.deps = [
-  DataGridFactory
-];
+DataTableModalFactory.deps = [DataGridFactory];
 
 function DataTableModalFactory(DataGrid) {
-  const DataTableModal = React.memo(({
-    datasets,
-    dataId,
-    height,
-    showDatasetTable,
-    width
-  }) => {
+  const DataTableModal = React.memo(({datasets, dataId, height, showDatasetTable, width}) => {
     if (!datasets || !dataId) {
       return null;
     }
@@ -91,18 +83,13 @@ function DataTableModalFactory(DataGrid) {
     const rows = activeDataset.allData;
 
     return (
-      <StyledModal className="dataset-modal" >
+      <StyledModal className="dataset-modal">
         <DatasetTabs
           activeDataset={activeDataset}
           datasets={datasets}
           showDatasetTable={showDatasetTable}
         />
-        <DataGrid
-          width={width}
-          height={height}
-          rows={rows}
-          columns={activeDataset.fields}
-        />
+        <DataGrid width={width} height={height} rows={rows} columns={activeDataset.fields} />
       </StyledModal>
     );
   });
@@ -112,4 +99,3 @@ function DataTableModalFactory(DataGrid) {
 }
 
 export default DataTableModalFactory;
-

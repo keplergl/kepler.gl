@@ -36,8 +36,10 @@ export default class Minus extends Component {
   render() {
     return (
       <Base {...this.props}>
-        <g><path d="M55 36H9a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h46a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1z"/></g>
+        <g>
+          <path d="M55 36H9a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h46a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1z" />
+        </g>
       </Base>
     );
   }
-};
+}

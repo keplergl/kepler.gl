@@ -30,9 +30,7 @@ import ActionTypes from 'constants/action-types';
  * import {togglePerspective} from 'kepler.gl/actions';
  * this.props.dispatch(togglePerspective());
  */
-export const togglePerspective = createAction(
-  ActionTypes.TOGGLE_PERSPECTIVE
-);
+export const togglePerspective = createAction(ActionTypes.TOGGLE_PERSPECTIVE);
 
 /**
  * Fit map viewport to bounds
@@ -43,10 +41,7 @@ export const togglePerspective = createAction(
  * import {fitBounds} from 'kepler.gl/actions';
  * this.props.dispatch(fitBounds([-122.23, 37.127, -122.11, 37.456]));
  */
-export const fitBounds =  createAction(
-  ActionTypes.FIT_BOUNDS,
-  bounds => bounds
-);
+export const fitBounds = createAction(ActionTypes.FIT_BOUNDS, bounds => bounds);
 
 /**
  * Update map viewport
@@ -66,10 +61,7 @@ export const fitBounds =  createAction(
  * this.props.dispatch(updateMap({latitude: 37.75043, longitude: -122.34679, width: 800, height: 1200}));
  */
 
-export const updateMap = createAction(
-  ActionTypes.UPDATE_MAP,
-  viewport => viewport
-);
+export const updateMap = createAction(ActionTypes.UPDATE_MAP, viewport => viewport);
 
 /**
  * Toggle between single map or split maps
@@ -80,10 +72,7 @@ export const updateMap = createAction(
  * import {toggleSplitMap} from 'kepler.gl/actions';
  * this.props.dispatch(toggleSplitMap());
  */
-export const toggleSplitMap = createAction(
-  ActionTypes.TOGGLE_SPLIT_MAP,
-  index => index
-);
+export const toggleSplitMap = createAction(ActionTypes.TOGGLE_SPLIT_MAP, index => index);
 
 /**
  * This declaration is needed to group actions in docs
@@ -96,5 +85,5 @@ export const toggleSplitMap = createAction(
  * @public
  */
 /* eslint-disable no-unused-vars */
-const mapStateActions = null
+const mapStateActions = null;
 /* eslint-enable no-unused-vars */
