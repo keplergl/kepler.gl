@@ -18,6 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './color-selector-test';
-import './save-export-dropdown-test';
-import './side-panel-test';
+import React from 'react';
+
+// This is a dummy component that can be replaced to inject more side panel sub panels into the side bar
+function CustomPanelsFactory() {
+  const CustomPanels = props => {
+    return <div />;
+  };
+
+  CustomPanels.defaultProps = {
+    // provide a list of additional panels
+    panels: [
+      // {
+      //   id: 'rocket',
+      //   label: 'Rocket',
+      //   iconComponent: Icons.Rocket
+      // },
+      // {
+      //   id: 'chart',
+      //   label: 'Chart',
+      //   iconComponent: Icons.LineChart
+      // }
+    ],
+    // prop selector from side panel props
+    getProps: sidePanelProps => ({})
+  };
+
+  return CustomPanels;
+}
+
+export default CustomPanelsFactory;

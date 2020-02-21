@@ -146,7 +146,7 @@ export const THEME = keyMirror({
   dark: null
 });
 
-export const PANELS = [
+export const SIDEBAR_PANELS = [
   {
     id: 'layer',
     label: 'Layers',
@@ -168,6 +168,9 @@ export const PANELS = [
     iconComponent: Settings
   }
 ];
+
+// backward compatibility
+export const PANELS = SIDEBAR_PANELS;
 
 // MAP STYLES
 

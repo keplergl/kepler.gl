@@ -33,12 +33,14 @@ import {
   SidebarFactory,
   PanelHeaderFactory,
   PanelToggleFactory,
+  CustomPanelsFactory,
   injectComponents
 } from 'kepler.gl/components';
 
 import CustomPanelHeaderFactory from './components/panel-header';
 import CustomSidebarFactory from './components/side-bar';
 import CustomPanelToggleFactory from './components/panel-toggle';
+import CustomSidePanelFactory from './components/custom-panel';
 
 const StyledMapConfigDisplay = styled.div`
   position: absolute;
@@ -58,7 +60,8 @@ const StyledMapConfigDisplay = styled.div`
 const KeplerGl = injectComponents([
   [SidebarFactory, CustomSidebarFactory],
   [PanelHeaderFactory, CustomPanelHeaderFactory],
-  [PanelToggleFactory, CustomPanelToggleFactory]
+  [PanelToggleFactory, CustomPanelToggleFactory],
+  [CustomPanelsFactory, CustomSidePanelFactory]
 ]);
 
 class App extends Component {
