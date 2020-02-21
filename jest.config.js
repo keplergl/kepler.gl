@@ -18,34 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
-import styled from 'styled-components';
-
-const StyledDiv = styled.div.attrs({
-  className: 'toolbar-item'
-})`
-  color: ${props => (props.active ? props.theme.titleTextColor : props.theme.textColor)};
-`;
-
-const ToolbarItem = React.memo(props => (
-  <StyledDiv
-    id={props.id}
-    className={props.className}
-    active={props.active}
-    onClick={e => {
-      e.stopPropagation();
-      e.preventDefault();
-      if (typeof props.onClose === 'function') {
-        props.onClose();
-      }
-      props.onClick(e);
-    }}
-  >
-    <props.icon />
-    <div className="toolbar-item__title">{props.label}</div>
-  </StyledDiv>
-));
-
-ToolbarItem.displayName = 'ToolbarItem';
-
-export default ToolbarItem;
+module.exports = {
+  preset: 'jest-puppeteer',
+  globals: {
+    URL: 'http://localhost:8080'
+  },
+  testMatch: [
+    '**/test/e2e/**/*.test.js'
+  ],
+  verbose: true,
+  setupFilesAfterEnv: ['./jest-extend-image-snapshot']
+};

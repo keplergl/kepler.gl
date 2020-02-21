@@ -155,7 +155,7 @@ const isColorChannel = visualChannel =>
 const MAP_LEGEND_WIDTH = DIMENSIONS.mapControl.width - 2 * DIMENSIONS.mapControl.padding;
 
 const MapLegend = ({layers = []}) => (
-  <div>
+  <div className="map-legend">
     {layers.map((layer, index) => {
       if (!layer.isValidToSave()) {
         return null;

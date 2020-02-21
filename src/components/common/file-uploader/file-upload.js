@@ -130,12 +130,6 @@ const StyledFileTypeFow = styled.div`
 `;
 
 const StyledFileUpload = styled.div`
-  .filter-upload__input {
-    visibility: hidden;
-    height: 0;
-    position: absolute;
-  }
-
   .file-drop {
     position: relative;
   }
@@ -264,7 +258,6 @@ function FileUploadFactory() {
 
       return (
         <StyledFileUpload className="file-uploader" ref={this.frame}>
-          <input className="filter-upload__input" type="file" onChange={this._onChange} />
           {FileDrop ? (
             <FileDrop
               frame={this.frame.current || document}

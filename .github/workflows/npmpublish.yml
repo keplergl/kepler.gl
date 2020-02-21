@@ -14,7 +14,7 @@ jobs:
           node-version: 10
           registry-url: https://registry.npmjs.org/
       - run: npm install -g yarn
-      - run: yarn
+      - run: yarn --ignore
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}

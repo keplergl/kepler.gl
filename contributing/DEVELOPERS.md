@@ -239,35 +239,6 @@ To checkout the build
     cd website && yarn build
 ```
 
-Publish on github pages __Authorized User Only__.
-
-<b>important* Before publish. Copy the mapbox token at [this link](http://t.uber.com/kepler.gl-token). (Only accessible by Uber developer). Deploy will fail if token is missing</b>
-```
-    export MapboxAccessToken=<insert_your_token>
-    yarn deploy
-```
-
-### <a name="gh-pages"></a> Testing environment using GH Pages
-We currently host the demo-app on Github pages. We have provided a way to test github pages before pushing the branch to
-the actual repo.
-In order to test github pages with your changes, you need to satisfy the following requirements first:
-- Make sure you have your own github pages (username.github.io) repo, [click here](https://pages.github.com/)
-- In your local fork of kepler.gl, add your github pages repo to the list of git remotes by doing:
-
-```bash
-git remote add test git@github.com:<username>/<username>.github.io.git
-```
-
-With the above command, A new origin __test__ will be created, and your own testing copy of gh pages will be push to it.
-
-When everything is set up, run the following command:
-
-```bash
-yarn deploy:test
-```
-
-The above command will build the website and push to your gh-pages branch.
-
 [demo-app]: http://kepler.gl/#/demo
 [documentationjs]: https://documentation.js.org/
 [eslint]: https://eslint.org/
