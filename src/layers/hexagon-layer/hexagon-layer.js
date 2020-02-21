@@ -80,7 +80,9 @@ export default class HexagonLayer extends AggregationLayer {
             new GeoJsonLayer({
               ...this.getDefaultHoverLayerProps(),
               wrapLongitude: false,
-              data: [hexagonToPolygonGeo(objectHovered, {}, radius * visConfig.coverage, mapState)],
+              data: [
+                hexagonToPolygonGeo(objectHovered, {}, radius * visConfig.coverage, mapState)
+              ].filter(d => d),
               getLineColor: this.config.highlightColor,
               lineWidthScale: clamp([1, 100], radius * 0.1 * zoomFactor)
             })

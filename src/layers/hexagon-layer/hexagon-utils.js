@@ -19,13 +19,23 @@
 // THE SOFTWARE.
 
 import {WebMercatorViewport} from '@deck.gl/core';
+import Console from 'global/console';
 
 export function hexagonToPolygonGeo({object}, properties, radius, mapState) {
   const viewport = new WebMercatorViewport(mapState);
+  if (!Array.isArray(object.position)) {
+    return null;
+  }
 
   const screenCenter = viewport.projectFlat(object.position);
-  const {pixelsPerMeter} = viewport.getDistanceScales();
-  const pixRadius = radius * pixelsPerMeter[0];
+  const {unitsPerMeter} = viewport.getDistanceScales(object.position);
+
+  if (!Array.isArray(unitsPerMeter)) {
+    Console.warn(`unitsPerMeter is undefined`);
+    return null;
+  }
+
+  const pixRadius = radius * unitsPerMeter[0];
 
   const coordinates = [];
 
