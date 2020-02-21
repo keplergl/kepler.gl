@@ -27,6 +27,7 @@ import {hexToRgb} from 'utils/color-utils';
 import {getGeojsonDataMaps, getGeojsonBounds, getGeojsonFeatureTypes} from './geojson-utils';
 import GeojsonLayerIcon from './geojson-layer-icon';
 import {GEOJSON_FIELDS, HIGHLIGH_COLOR_3D, CHANNEL_SCALES} from 'constants/default-settings';
+import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
 
 const SUPPORTED_ANALYZER_TYPES = {
   [DATA_TYPES.GEOMETRY]: true,
@@ -36,15 +37,13 @@ const SUPPORTED_ANALYZER_TYPES = {
 
 export const geojsonVisConfigs = {
   opacity: 'opacity',
+  strokeOpacity: {
+    ...LAYER_VIS_CONFIGS.opacity,
+    property: 'strokeOpacity'
+  },
   thickness: {
-    type: 'number',
-    defaultValue: 0.5,
-    label: 'Stroke Width',
-    isRanged: false,
-    range: [0, 100],
-    step: 0.1,
-    group: 'stroke',
-    property: 'thickness'
+    ...LAYER_VIS_CONFIGS.thickness,
+    defaultValue: 0.5
   },
   strokeColor: 'strokeColor',
   colorRange: 'colorRange',
@@ -321,7 +320,7 @@ export default class GeoJsonLayer extends Layer {
   renderLayer(opts) {
     const {data, gpuFilter, objectHovered, mapState} = opts;
 
-    const {fixedRadius} = this.meta;
+    const {fixedRadius, featureTypes} = this.meta;
     const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius);
     const zoomFactor = this.getZoomFactor(mapState);
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
@@ -365,6 +364,10 @@ export default class GeoJsonLayer extends Layer {
     };
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
+    const opaOverwrite = {
+      opacity: visConfig.strokeOpacity
+    };
+
     return [
       new DeckGLGeoJsonLayer({
         ...defaultLayerProps,
@@ -379,7 +382,18 @@ export default class GeoJsonLayer extends Layer {
         wrapLongitude: false,
         lineMiterLimit: 2,
         rounded: true,
-        updateTriggers
+        updateTriggers,
+        _subLayerProps: {
+          ...(featureTypes.polygon ? {'polygons-stroke': opaOverwrite} : {}),
+          ...(featureTypes.line ? {'line-strings': opaOverwrite} : {}),
+          ...(featureTypes.point
+            ? {
+                points: {
+                  lineOpacity: visConfig.strokeOpacity
+                }
+              }
+            : {})
+        }
       }),
       ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d
         ? [

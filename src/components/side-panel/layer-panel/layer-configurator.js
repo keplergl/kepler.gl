@@ -607,7 +607,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
                   channel={layer.visualChannels.color}
                   {...layerChannelConfigProps}
                 />
-                <VisConfigSlider {...LAYER_VIS_CONFIGS.opacity} {...visConfiguratorProps} />
+                <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
               </ConfigGroupCollapsibleContent>
             </LayerConfigGroup>
           ) : null}
@@ -632,6 +632,10 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
               <ChannelByValueSelector
                 channel={layer.visualChannels.strokeColor}
                 {...layerChannelConfigProps}
+              />
+              <VisConfigSlider
+                {...layer.visConfigSettings.strokeOpacity}
+                {...visConfiguratorProps}
               />
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
