@@ -33,7 +33,10 @@ export const pointPosResolver = ({lat, lng}) => `${lat.fieldIdx}-${lng.fieldIdx}
 export const getValueAggrFunc = (field, aggregation) => {
   return points => {
     return field
-      ? aggregate(points.map(p => p.data[field.tableFieldIndex - 1]), aggregation)
+      ? aggregate(
+          points.map(p => p.data[field.tableFieldIndex - 1]),
+          aggregation
+        )
       : points.length;
   };
 };
@@ -273,7 +276,7 @@ export default class AggregationLayer extends Layer {
   }
 
   getDefaultAggregationLayerProp(opts) {
-    const {gpuFilter, mapState, layerCallbacks} = opts;
+    const {gpuFilter, mapState, layerCallbacks = {}} = opts;
     const {visConfig} = this.config;
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
 

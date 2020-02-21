@@ -47,25 +47,12 @@ test('#HeatmapLayer -> contructor', t => {
         },
         test: layer => {
           // test constructor
-          t.equal(
-            layer.config.visConfig.radius,
-            20,
-            'Heatmap default radius should be 20'
-          );
-          t.ok(
-            layer.config.dataId === 'taro',
-            'heatmaplayer dataId should be correct'
-          );
+          t.equal(layer.config.visConfig.radius, 20, 'Heatmap default radius should be 20');
+          t.ok(layer.config.dataId === 'taro', 'heatmaplayer dataId should be correct');
           t.ok(layer.type === 'heatmap', 'type should be heatmap');
           t.ok(layer.isAggregated === true, 'heatmaplayer is aggregated');
-          t.ok(
-            layer.config.label === 'test heatmap layer',
-            'label should be correct'
-          );
-          t.ok(
-            Object.keys(layer.columnPairs).length,
-            'should have columnPairs'
-          );
+          t.ok(layer.config.label === 'test heatmap layer', 'label should be correct');
+          t.ok(Object.keys(layer.columnPairs).length, 'should have columnPairs');
         }
       }
     ]
@@ -84,21 +71,9 @@ test('#Heatmaplayer -> formatLayerData -> w/ GpuFilter', t => {
     source: `${dataId}-1-2`,
     layout: {visibility: 'visible'},
     maxzoom: 18,
-    filter: [
-      'all',
-      ['>=', 'gpu:utc_timestamp', 39000],
-      ['<=', 'gpu:utc_timestamp', 552000]
-    ],
+    filter: ['all', ['>=', 'gpu:utc_timestamp', 39000], ['<=', 'gpu:utc_timestamp', 552000]],
     paint: {
-      'heatmap-weight': [
-        'interpolate',
-        ['linear'],
-        ['get', 'id'],
-        1,
-        0,
-        345,
-        1
-      ],
+      'heatmap-weight': ['interpolate', ['linear'], ['get', 'id'], 1, 0, 345, 1],
       'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 1, 18, 3],
       'heatmap-color': [
         'interpolate',
@@ -211,11 +186,7 @@ test('#Heatmaplayer -> formatLayerData -> w/ GpuFilter', t => {
         );
 
         // test layer.meta
-        t.deepEqual(
-          layer.meta,
-          pointLayerMeta,
-          'should format correct heatmap layer.meta'
-        );
+        t.deepEqual(layer.meta, pointLayerMeta, 'should format correct heatmap layer.meta');
       }
     }
   ];
@@ -239,15 +210,7 @@ test('#Heatmaplayer -> formatLayerData -> w/o GpuFilter', t => {
     maxzoom: 18,
     paint: {
       'heatmap-weight': 1,
-      'heatmap-intensity': [
-        'interpolate',
-        ['linear'],
-        ['zoom'],
-        0,
-        1,
-        MAX_ZOOM_LEVEL,
-        3
-      ],
+      'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 1, MAX_ZOOM_LEVEL, 3],
       'heatmap-color': [
         'interpolate',
         ['linear'],
@@ -261,15 +224,7 @@ test('#Heatmaplayer -> formatLayerData -> w/o GpuFilter', t => {
         0.75,
         'rgb(3,3,3)'
       ],
-      'heatmap-radius': [
-        'interpolate',
-        ['linear'],
-        ['zoom'],
-        0,
-        2,
-        MAX_ZOOM_LEVEL,
-        100
-      ],
+      'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 2, MAX_ZOOM_LEVEL, 100],
       'heatmap-opacity': 0.2
     }
   };
@@ -345,11 +300,7 @@ test('#Heatmaplayer -> formatLayerData -> w/o GpuFilter', t => {
         );
 
         // test layer.meta
-        t.deepEqual(
-          layer.meta,
-          expectedLayerMeta,
-          'should format correct heatmap layer.meta'
-        );
+        t.deepEqual(layer.meta, expectedLayerMeta, 'should format correct heatmap layer.meta');
       }
     }
   ];
