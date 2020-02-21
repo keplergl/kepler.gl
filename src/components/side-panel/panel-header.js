@@ -98,11 +98,7 @@ const StyledToolbar = styled(Toolbar)`
 `;
 
 export const PanelAction = ({item, onClick}) => (
-  <StyledPanelAction
-    data-tip
-    data-for={`${item.id}-action`}
-    onClick={onClick}
-  >
+  <StyledPanelAction data-tip data-for={`${item.id}-action`} onClick={onClick}>
     {item.label ? <p>{item.label}</p> : null}
     <a target={item.blank ? '_blank' : ''} href={item.href}>
       <item.iconComponent height="20px" />

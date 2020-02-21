@@ -22,6 +22,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
 import styled from 'styled-components';
+import get from 'lodash.get';
 import {ALL_FIELD_TYPES, FILTER_TYPES} from 'constants/default-settings';
 
 import FilterPanelHeaderFactory from 'components/side-panel/filter-panel/filter-panel-header';
@@ -85,8 +86,14 @@ function FilterPanelFactory(
     };
 
     /* selectors */
-    fieldsSelector = props =>
-      (props.filter.dataId[0] && props.datasets[props.filter.dataId[0]].fields) || [];
+    fieldsSelector = props => {
+      const datasetId = props.filter.dataId[0];
+      if (!datasetId) {
+        return [];
+      }
+      return get(props, ['datasets', datasetId, 'fields'], []);
+    };
+
     filterSelector = props => props.filters;
     nameSelector = props => props.filter.name;
     dataIdSelector = props => props.filter.dataId[0];

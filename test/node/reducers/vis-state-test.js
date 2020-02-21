@@ -26,27 +26,16 @@ import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
 import reducer from 'reducers/vis-state';
 
-import {
-  INITIAL_VIS_STATE,
-  defaultAnimationConfig
-} from 'reducers/vis-state-updaters';
+import {INITIAL_VIS_STATE, defaultAnimationConfig} from 'reducers/vis-state-updaters';
 
 import {getDefaultInteraction} from 'utils/interaction-utils';
-import {
-  getDefaultFilter
-} from 'utils/filter-utils';
+import {getDefaultFilter} from 'utils/filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
 import {processCsvData, processGeojson} from 'processors/data-processor';
 import {Layer, KeplerGlLayers} from 'layers';
 import {EDITOR_MODES} from 'constants/default-settings';
 
-const {
-  ArcLayer,
-  PointLayer,
-  GeojsonLayer,
-  LineLayer,
-  TripLayer
-} = KeplerGlLayers;
+const {ArcLayer, PointLayer, GeojsonLayer, LineLayer, TripLayer} = KeplerGlLayers;
 
 // fixtures
 import testData, {mergedTimeFilter, testFields, testAllData} from 'test/fixtures/test-csv-data';
@@ -78,11 +67,7 @@ import {
   testCsvDataId,
   testGeoJsonDataId
 } from 'test/helpers/mock-state';
-import {
-  LAYER_VIS_CONFIGS,
-  DEFAULT_TEXT_LABEL,
-  DEFAULT_COLOR_UI
-} from 'layers/layer-factory';
+import {LAYER_VIS_CONFIGS, DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from 'layers/layer-factory';
 import {getNextColorMakerValue} from 'test/helpers/layer-utils';
 import {StateWFilesFiltersLayerColor} from 'test/helpers/mock-state';
 
@@ -201,24 +186,13 @@ test('#visStateReducer', t => {
 test('#visStateReducer -> ADD_FILTER', t => {
   const dataId = 'kitten';
   const newFilter = getDefaultFilter(dataId);
-  const newReducer = reducer(
-    {filters: [mockFilter]},
-    VisStateActions.addFilter(dataId)
-  );
+  const newReducer = reducer({filters: [mockFilter]}, VisStateActions.addFilter(dataId));
 
   const expectedReducer = {filters: [mockFilter, newFilter]};
 
-  t.equal(
-    newReducer.filters.length,
-    expectedReducer.filters.length,
-    'should add a default filter'
-  );
+  t.equal(newReducer.filters.length, expectedReducer.filters.length, 'should add a default filter');
 
-  t.deepEqual(
-    newReducer.filters[0],
-    expectedReducer.filters[0],
-    'should add a default filter'
-  );
+  t.deepEqual(newReducer.filters[0], expectedReducer.filters[0], 'should add a default filter');
 
   cmpFilters(t, newReducer.filters[1], expectedReducer.filters[1]);
   t.end();
@@ -264,32 +238,20 @@ test('#visStateReducer -> ADD_LAYER.1', t => {
   ];
 
   t.equal(newReducer.layers.length, 2, 'should have 2 layers');
-  t.equal(
-    newReducer.layers[1].config.isVisible,
-    true,
-    'newLayer visibility should be set to true'
-  );
+  t.equal(newReducer.layers[1].config.isVisible, true, 'newLayer visibility should be set to true');
   t.equal(
     newReducer.layers[1].config.isConfigActive,
     true,
     'newLayer isConfigActive should be set to true'
   );
-  t.equal(
-    newReducer.layers[1].config.dataId,
-    'puppy',
-    'newLayer dataId should be set to default'
-  );
+  t.equal(newReducer.layers[1].config.dataId, 'puppy', 'newLayer dataId should be set to default');
   t.deepEqual(
     newReducer.layerData,
     [oldState.layerData[0], {}],
     'newState should have empty layer datat'
   );
   t.deepEqual(newReducer.layerOrder, [0, 1], 'should add to layerOrder');
-  t.deepEqual(
-    newReducer.splitMaps,
-    expectedSplitMaps,
-    'should add to SplitMaps'
-  );
+  t.deepEqual(newReducer.splitMaps, expectedSplitMaps, 'should add to SplitMaps');
 
   t.end();
 });
@@ -305,15 +267,8 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.0', t => {
 
   t.equal(oldState, nextState, 'should return state when no argument is given');
 
-  const nextState2 = reducer(
-    oldState,
-    VisStateActions.layerTypeChange(layer, 'no_type')
-  );
-  t.equal(
-    oldState,
-    nextState2,
-    'should return state when pass a none existing type'
-  );
+  const nextState2 = reducer(oldState, VisStateActions.layerTypeChange(layer, 'no_type'));
+  t.equal(oldState, nextState2, 'should return state when pass a none existing type');
 
   t.end();
 });
@@ -347,10 +302,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.1', t => {
     ]
   };
 
-  const nextState = reducer(
-    oldState,
-    VisStateActions.layerTypeChange(layer, 'point')
-  );
+  const nextState = reducer(oldState, VisStateActions.layerTypeChange(layer, 'point'));
   const newId = nextState.layers[1].id;
   const expectedSplitMaps = [
     {
@@ -405,11 +357,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
   const stringField = testFields.find(f => f.type === 'string');
   let nextState = reducer(
     oldState,
-    VisStateActions.layerVisualChannelConfigChange(
-      pointLayer,
-      {colorField: stringField},
-      'color'
-    )
+    VisStateActions.layerVisualChannelConfigChange(pointLayer, {colorField: stringField}, 'color')
   );
   nextState = reducer(
     nextState,
@@ -1850,10 +1798,7 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
   ];
 
   // receive data
-  const initialState = reducer(
-    INITIAL_VIS_STATE,
-    VisStateActions.updateVisData(payload)
-  );
+  const initialState = reducer(INITIAL_VIS_STATE, VisStateActions.updateVisData(payload));
 
   const expectedLayer1 = new PointLayer({
     isVisible: true,
@@ -2042,9 +1987,12 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
       {data: allData[21], index: 21, position: [31.2187021, 30.0614122, 0]},
       {data: allData[22], index: 22, position: [31.2191059, 30.0612697, 0]}
     ],
-    getPosition: () => {},
-    getColor: () => {},
-    getRadius: () => {}
+    getPosition: () => {
+    },
+    getColor: () => {
+    },
+    getRadius: () => {
+    }
   };
 
   t.deepEqual(
@@ -2058,7 +2006,7 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
 
 test('#visStateReducer -> SET_FILTER.name', t => {
   const oldState = StateWFilters.visState;
-  const oldFilter0 = oldState.filters[0]
+  const oldFilter0 = oldState.filters[0];
   // change filter name from RATE to ZIP_CODE
   const updated = reducer(
     oldState,
@@ -2092,6 +2040,37 @@ test('#visStateReducer -> SET_FILTER.name', t => {
   };
 
   cmpFilters(t, [expectedFilter0, expectedFilter1], updated.filters);
+
+  t.end();
+});
+
+test('#visStateReducer -> SET_FILTER.dataId', t => {
+  const oldState = StateWFilters.visState;
+  let newState = reducer(oldState, VisStateActions.setFilter(1, 'dataId', testCsvDataId));
+
+  let newFilter = newState.filters[1];
+  let expectedFilter = {
+    ...getDefaultFilter(testCsvDataId),
+    id: newFilter.id
+  };
+
+  t.deepEqual(newFilter, expectedFilter, 'Should create a new filter using the provided dataId');
+
+  // Using an array of dataId
+  newState = reducer(newState, VisStateActions.setFilter(1, 'dataId', [testCsvDataId]));
+
+  newFilter = newState.filters[1];
+
+  expectedFilter = {
+    ...getDefaultFilter(testCsvDataId),
+    id: newFilter.id
+  };
+
+  t.deepEqual(
+    newFilter,
+    expectedFilter,
+    'Should create a new filter using the provided list of dataId'
+  );
 
   t.end();
 });
@@ -2176,10 +2155,10 @@ test('#visStateReducer -> setFilter.dynamicDomain & gpu', t => {
     fields: geojsonFields.map(f =>
       f.name === 'TRIPS'
         ? {
-            ...f,
-            id: f.name,
-            filterProps: geoJsonTripFilterProps
-          }
+          ...f,
+          id: f.name,
+          filterProps: geoJsonTripFilterProps
+        }
         : {...f, id: f.name}
     ),
     gpuFilter: {
@@ -2350,22 +2329,22 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
     fields: datasetSmoothie.fields.map(f =>
       f.name === 'gps_data.utc_timestamp'
         ? {
-            ...f,
-            filterProps: {
-              domain: [1474070995000, 1474072208000],
-              step: 1000,
-              mappedValue: expectedFilterTs.mappedValue,
-              histogram: stateWidthTsFilter.filters[0].histogram,
-              enlargedHistogram:
-                stateWidthTsFilter.filters[0].enlargedHistogram,
-              fieldType: 'timestamp',
-              type: 'timeRange',
-              enlarged: true,
-              fixedDomain: true,
-              value: [1474070995000, 1474072208000],
-              gpu: true
-            }
+          ...f,
+          filterProps: {
+            domain: [1474070995000, 1474072208000],
+            step: 1000,
+            mappedValue: expectedFilterTs.mappedValue,
+            histogram: stateWidthTsFilter.filters[0].histogram,
+            enlargedHistogram:
+            stateWidthTsFilter.filters[0].enlargedHistogram,
+            fieldType: 'timestamp',
+            type: 'timeRange',
+            enlarged: true,
+            fixedDomain: true,
+            value: [1474070995000, 1474072208000],
+            gpu: true
           }
+        }
         : f
     ),
     filterRecord: {
@@ -2419,15 +2398,15 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
     fields: stateWidthTsFilter.datasets.smoothie.fields.map(f =>
       f.name === 'date'
         ? {
-            ...f,
-            filterProps: {
-              domain: ['2016-09-23', '2016-09-24', '2016-10-10'],
-              fieldType: 'date',
-              type: 'multiSelect',
-              value: [],
-              gpu: false
-            }
+          ...f,
+          filterProps: {
+            domain: ['2016-09-23', '2016-09-24', '2016-10-10'],
+            fieldType: 'date',
+            type: 'multiSelect',
+            value: [],
+            gpu: false
           }
+        }
         : f
     ),
     gpuFilter: {
@@ -2455,11 +2434,7 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
     filteredIndexForDomain: [7, 8, 9, 10, 11, 12, 17, 18, 19, 20, 21, 22]
   };
 
-  cmpDataset(
-    t,
-    expectedFilteredDataset,
-    stateWidthTsAndNameFilter.datasets.smoothie
-  );
+  cmpDataset(t, expectedFilteredDataset, stateWidthTsAndNameFilter.datasets.smoothie);
 
   t.end();
 });
@@ -4259,7 +4234,7 @@ test('#uiStateReducer -> TOGGLE_EDITOR_VISIBILITY', t => {
     newState.editor.visible,
     true,
     'Should set editor visibility to true'
-    );
+  );
 
   t.end();
 });
