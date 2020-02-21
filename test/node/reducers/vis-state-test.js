@@ -1987,9 +1987,12 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
       {data: allData[21], index: 21, position: [31.2187021, 30.0614122, 0]},
       {data: allData[22], index: 22, position: [31.2191059, 30.0612697, 0]}
     ],
-    getPosition: () => {},
-    getColor: () => {},
-    getRadius: () => {}
+    getPosition: () => {
+    },
+    getColor: () => {
+    },
+    getRadius: () => {
+    }
   };
 
   t.deepEqual(
@@ -2003,7 +2006,7 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
 
 test('#visStateReducer -> SET_FILTER.name', t => {
   const oldState = StateWFilters.visState;
-  const oldFilter0 = oldState.filters[0]
+  const oldFilter0 = oldState.filters[0];
   // change filter name from RATE to ZIP_CODE
   const updated = reducer(
     oldState,
@@ -2037,6 +2040,37 @@ test('#visStateReducer -> SET_FILTER.name', t => {
   };
 
   cmpFilters(t, [expectedFilter0, expectedFilter1], updated.filters);
+
+  t.end();
+});
+
+test('#visStateReducer -> SET_FILTER.dataId', t => {
+  const oldState = StateWFilters.visState;
+  let newState = reducer(oldState, VisStateActions.setFilter(1, 'dataId', testCsvDataId));
+
+  let newFilter = newState.filters[1];
+  let expectedFilter = {
+    ...getDefaultFilter(testCsvDataId),
+    id: newFilter.id
+  };
+
+  t.deepEqual(newFilter, expectedFilter, 'Should create a new filter using the provided dataId');
+
+  // Using an array of dataId
+  newState = reducer(newState, VisStateActions.setFilter(1, 'dataId', [testCsvDataId]));
+
+  newFilter = newState.filters[1];
+
+  expectedFilter = {
+    ...getDefaultFilter(testCsvDataId),
+    id: newFilter.id
+  };
+
+  t.deepEqual(
+    newFilter,
+    expectedFilter,
+    'Should create a new filter using the provided list of dataId'
+  );
 
   t.end();
 });
@@ -2121,10 +2155,10 @@ test('#visStateReducer -> setFilter.dynamicDomain & gpu', t => {
     fields: geojsonFields.map(f =>
       f.name === 'TRIPS'
         ? {
-            ...f,
-            id: f.name,
-            filterProps: geoJsonTripFilterProps
-          }
+          ...f,
+          id: f.name,
+          filterProps: geoJsonTripFilterProps
+        }
         : {...f, id: f.name}
     ),
     gpuFilter: {
@@ -2295,22 +2329,22 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
     fields: datasetSmoothie.fields.map(f =>
       f.name === 'gps_data.utc_timestamp'
         ? {
-            ...f,
-            filterProps: {
-              domain: [1474070995000, 1474072208000],
-              step: 1000,
-              mappedValue: expectedFilterTs.mappedValue,
-              histogram: stateWidthTsFilter.filters[0].histogram,
-              enlargedHistogram:
-                stateWidthTsFilter.filters[0].enlargedHistogram,
-              fieldType: 'timestamp',
-              type: 'timeRange',
-              enlarged: true,
-              fixedDomain: true,
-              value: [1474070995000, 1474072208000],
-              gpu: true
-            }
+          ...f,
+          filterProps: {
+            domain: [1474070995000, 1474072208000],
+            step: 1000,
+            mappedValue: expectedFilterTs.mappedValue,
+            histogram: stateWidthTsFilter.filters[0].histogram,
+            enlargedHistogram:
+            stateWidthTsFilter.filters[0].enlargedHistogram,
+            fieldType: 'timestamp',
+            type: 'timeRange',
+            enlarged: true,
+            fixedDomain: true,
+            value: [1474070995000, 1474072208000],
+            gpu: true
           }
+        }
         : f
     ),
     filterRecord: {
@@ -2364,15 +2398,15 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
     fields: stateWidthTsFilter.datasets.smoothie.fields.map(f =>
       f.name === 'date'
         ? {
-            ...f,
-            filterProps: {
-              domain: ['2016-09-23', '2016-09-24', '2016-10-10'],
-              fieldType: 'date',
-              type: 'multiSelect',
-              value: [],
-              gpu: false
-            }
+          ...f,
+          filterProps: {
+            domain: ['2016-09-23', '2016-09-24', '2016-10-10'],
+            fieldType: 'date',
+            type: 'multiSelect',
+            value: [],
+            gpu: false
           }
+        }
         : f
     ),
     gpuFilter: {
@@ -4200,7 +4234,7 @@ test('#uiStateReducer -> TOGGLE_EDITOR_VISIBILITY', t => {
     newState.editor.visible,
     true,
     'Should set editor visibility to true'
-    );
+  );
 
   t.end();
 });

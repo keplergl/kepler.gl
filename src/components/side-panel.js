@@ -88,8 +88,7 @@ export default function SidePanelFactory(
   CustomPanels
 ) {
   const customPanels = get(CustomPanels, ['defaultProps', 'panels']) || [];
-  const getCustomPanelProps =
-    get(CustomPanels, ['defaultProps', 'getProps']) || (() => ({}));
+  const getCustomPanelProps = get(CustomPanels, ['defaultProps', 'getProps']) || (() => ({}));
 
   class SidePanel extends PureComponent {
     static propTypes = {
@@ -142,20 +141,15 @@ export default function SidePanelFactory(
       this.props.uiStateActions.openDeleteModal(key);
     };
 
-    _onClickExportImage = () =>
-      this.props.uiStateActions.toggleModal(EXPORT_IMAGE_ID);
+    _onClickExportImage = () => this.props.uiStateActions.toggleModal(EXPORT_IMAGE_ID);
 
-    _onClickExportData = () =>
-      this.props.uiStateActions.toggleModal(EXPORT_DATA_ID);
+    _onClickExportData = () => this.props.uiStateActions.toggleModal(EXPORT_DATA_ID);
 
-    _onClickExportMap = () =>
-      this.props.uiStateActions.toggleModal(EXPORT_MAP_ID);
+    _onClickExportMap = () => this.props.uiStateActions.toggleModal(EXPORT_MAP_ID);
 
-    _onClickSaveToStorage = () =>
-      this.props.uiStateActions.toggleModal(SAVE_MAP_ID);
+    _onClickSaveToStorage = () => this.props.uiStateActions.toggleModal(SAVE_MAP_ID);
 
-    _onClickShareMap = () =>
-      this.props.uiStateActions.toggleModal(SHARE_MAP_ID);
+    _onClickShareMap = () => this.props.uiStateActions.toggleModal(SHARE_MAP_ID);
 
     render() {
       const {
@@ -240,14 +234,8 @@ export default function SidePanelFactory(
               onExportData={this._onClickExportData}
               onExportMap={this._onClickExportMap}
               onSaveMap={this.props.onSaveMap}
-              onSaveToStorage={
-                availableProviders.hasStorage
-                  ? this._onClickSaveToStorage
-                  : null
-              }
-              onShareMap={
-                availableProviders.hasShare ? this._onClickShareMap : null
-              }
+              onSaveToStorage={availableProviders.hasStorage ? this._onClickSaveToStorage : null}
+              onShareMap={availableProviders.hasShare ? this._onClickShareMap : null}
             />
             <PanelToggle
               panels={panels}
@@ -300,7 +288,7 @@ export default function SidePanelFactory(
         </div>
       );
     }
-  };
+  }
 
   return SidePanel;
 }
