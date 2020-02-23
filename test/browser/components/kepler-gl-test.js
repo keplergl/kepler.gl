@@ -62,7 +62,6 @@ const initialState = {
 const mockStore = configureStore();
 
 test('Components -> KeplerGl -> Mount', t => {
-
   // mount with empty store
   const store = mockStore(initialState);
   let wrapper;
@@ -92,7 +91,6 @@ test('Components -> KeplerGl -> Mount', t => {
 });
 
 test('Components -> KeplerGl -> Mount -> readOnly', t => {
-
   // mount with readOnly true
   const initialStateReadonly = {
     keplerGl: {
@@ -134,7 +132,6 @@ test('Components -> KeplerGl -> Mount -> readOnly', t => {
 });
 
 test('Components -> KeplerGl -> Mount -> Plot', t => {
-
   // mount with readOnly true
   const initialStatePlots = {
     keplerGl: {
@@ -183,10 +180,7 @@ test('Components -> KeplerGl -> Mount -> Split Maps', t => {
         ...initialCoreState,
         visState: {
           ...initialCoreState.visState,
-          splitMaps: [
-            {layers: {}},
-            {layers: {}}
-          ]
+          splitMaps: [{layers: {}}, {layers: {}}]
         }
       }
     }
@@ -222,10 +216,9 @@ test('Components -> KeplerGl -> Mount -> Split Maps', t => {
 test('Components -> KeplerGl -> Mount -> Load default map style task', t => {
   // mount with empty store
   const store = mockStore(initialState);
-  let wrapper;
 
   t.doesNotThrow(() => {
-    wrapper = mount(
+    mount(
       <Provider store={store}>
         <KeplerGl
           id="map"
@@ -242,10 +235,7 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', t => {
     {type: ActionTypes.LOAD_MAP_STYLES, payload: {}},
     {
       type: ActionTypes.REQUEST_MAP_STYLES,
-      payload: DEFAULT_MAP_STYLES.reduce(
-        (accu, curr) => ({...accu, [curr.id]: curr}),
-        {}
-      )
+      payload: DEFAULT_MAP_STYLES.reduce((accu, curr) => ({...accu, [curr.id]: curr}), {})
     },
     {type: ActionTypes.UPDATE_MAP, payload: {width: 800, height: 800}}
   ];
@@ -284,11 +274,7 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', t => {
     ]
   };
 
-  t.deepEqual(
-    task1.payload,
-    expectedTask.payload,
-    'should create task to load map styles'
-  );
+  t.deepEqual(task1.payload, expectedTask.payload, 'should create task to load map styles');
   t.deepEqual(resultState1, initialCoreState, 'state should be the same');
 
   const resultState2 = coreReducer(
@@ -333,7 +319,6 @@ test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
   // mount with empty store
   const store = mockStore(initialState);
   // mount without id or a kepler.gl state
-  let wrapper;
 
   const customStyle1 = {
     id: 'smoothie',
@@ -359,7 +344,7 @@ test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
     ]
   };
   t.doesNotThrow(() => {
-    wrapper = mount(
+    mount(
       <Provider store={store}>
         <KeplerGl
           id="map"
@@ -421,6 +406,7 @@ test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
   );
 
   // Do not remove this. Necessary for testing flow
+  // eslint-disable-next-line no-unused-vars
   const resultState2 = coreReducer(resultState1, actions[1]);
   const [task1, ...rest] = drainTasksForTesting();
   t.equal(rest.length, 0, 'should dispatch 1 tasks');
@@ -455,11 +441,7 @@ test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
     ]
   };
 
-  t.deepEqual(
-    task1.payload,
-    expectedTask.payload,
-    'should create task to load map styles'
-  );
+  t.deepEqual(task1.payload, expectedTask.payload, 'should create task to load map styles');
 
   t.end();
 });

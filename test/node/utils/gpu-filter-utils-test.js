@@ -189,11 +189,7 @@ test('gpuFilterUtils -> assignGpuChannels', t => {
   ];
 
   testCases.forEach(tc => {
-    t.deepEqual(
-      assignGpuChannels(tc.filters),
-      tc.result,
-      'should assign correct channel'
-    );
+    t.deepEqual(assignGpuChannels(tc.filters), tc.result, 'should assign correct channel');
   });
   t.end();
 });
@@ -206,29 +202,17 @@ test('gpuFilterUtils -> getDatasetFieldIndexForFilter', t => {
     fieldIdx: [3]
   });
 
-  t.equal(
-    fieldIndex,
-    3,
-    'FieldIndex should be 3'
-  );
+  t.equal(fieldIndex, 3, 'FieldIndex should be 3');
 
   fieldIndex = getDatasetFieldIndexForFilter(dataId, {
     dataId: ['different-id', dataId],
     fieldIdx: [3, 5]
   });
 
-  t.equal(
-    fieldIndex,
-    5,
-    'FieldIndex should be 5'
-  );
+  t.equal(fieldIndex, 5, 'FieldIndex should be 5');
 
   fieldIndex = getDatasetFieldIndexForFilter(dataId, {dataId: ['different-id']});
-  t.equal(
-    fieldIndex,
-    -1,
-    'FieldIndex should be -1'
-  );
+  t.equal(fieldIndex, -1, 'FieldIndex should be -1');
 
   t.end();
 });

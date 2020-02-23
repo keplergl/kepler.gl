@@ -44,14 +44,10 @@ const withLocalSelector = ParentComponent => {
       this.selectorFromProps,
       (ctx, props) => mergeSelectors(ctx, props)
     );
-    contextSelector = createSelector(
-      this.computedSelector,
-      this.idFromProps,
-      (selector, id) => ({
-        selector,
-        id
-      })
-    );
+    contextSelector = createSelector(this.computedSelector, this.idFromProps, (selector, id) => ({
+      selector,
+      id
+    }));
 
     render() {
       const computedContext = this.contextSelector(this.props, this.context);

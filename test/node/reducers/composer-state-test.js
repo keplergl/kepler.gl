@@ -33,12 +33,7 @@ import testHexIdData, {
   mergedFilters,
   expectedMergedDataset
 } from 'test/fixtures/test-hex-id-data';
-import {
-  cmpLayers,
-  cmpFilters,
-  cmpDataset,
-  cmpInteraction
-} from 'test/helpers/comparison-utils';
+import {cmpLayers, cmpFilters, cmpDataset, cmpInteraction} from 'test/helpers/comparison-utils';
 import {INITIAL_UI_STATE} from 'reducers/ui-state-updaters';
 
 const mockRawData = {
@@ -122,16 +117,8 @@ test('#composerStateReducer - addDataToMapUpdater: mapState should be centered',
     }
   });
 
-  t.equal(
-    newState.mapState.latitude,
-    29.23,
-    'centerMap: true should override mapState config'
-  );
-  t.equal(
-    newState.mapState.longitude,
-    60.71,
-    'centerMap: true should override mapState config'
-  );
+  t.equal(newState.mapState.latitude, 29.23, 'centerMap: true should override mapState config');
+  t.equal(newState.mapState.longitude, 60.71, 'centerMap: true should override mapState config');
 
   t.end();
 });
@@ -209,7 +196,7 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
     }
   });
 
-  cmpDataset(t, expectedMergedDataset, nextState1.visState.datasets[hexDataId])
+  cmpDataset(t, expectedMergedDataset, nextState1.visState.datasets[hexDataId]);
 
   t.deepEqual(nextState1.visState.splitMaps, [], 'should clear out splitMaps');
 
@@ -270,15 +257,24 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
   cmpLayers(t, expectedVisState.layers, actualVisState.layers);
   cmpFilters(t, expectedVisState.filters, actualVisState.filters);
   // test datasets
-  t.deepEqual(Object.keys(actualVisState.datasets), [sampleConfig.dataId, hexDataId], 'should save 2 datasets to state');
-  t.equal(actualVisState.datasets[sampleConfig.dataId], oldDatasets[sampleConfig.dataId], 'should keep oldDataset same');
-
-  cmpDataset(t, expectedMergedDataset, actualVisState.datasets[hexDataId], 'should merge and filter hexdata');
-  cmpInteraction(
-    t,
-    expectedVisState.interactionConfig,
-    actualVisState.interactionConfig
+  t.deepEqual(
+    Object.keys(actualVisState.datasets),
+    [sampleConfig.dataId, hexDataId],
+    'should save 2 datasets to state'
   );
+  t.equal(
+    actualVisState.datasets[sampleConfig.dataId],
+    oldDatasets[sampleConfig.dataId],
+    'should keep oldDataset same'
+  );
+
+  cmpDataset(
+    t,
+    expectedMergedDataset,
+    actualVisState.datasets[hexDataId],
+    'should merge and filter hexdata'
+  );
+  cmpInteraction(t, expectedVisState.interactionConfig, actualVisState.interactionConfig);
   t.deepEqual(
     expectedVisState.layerOrder,
     actualVisState.layerOrder,
@@ -318,11 +314,7 @@ test('#composerStateReducer - addDataToMapUpdater: readOnly', t => {
       datasets
     }
   });
-  t.equal(
-    nextState1.uiState.readOnly,
-    false,
-    'should set readonly to be false'
-  );
+  t.equal(nextState1.uiState.readOnly, false, 'should set readonly to be false');
 
   const nextState2 = addDataToMapUpdater(state, {
     payload: {
@@ -332,10 +324,6 @@ test('#composerStateReducer - addDataToMapUpdater: readOnly', t => {
       }
     }
   });
-  t.equal(
-    nextState2.uiState.readOnly,
-    false,
-    'should set readonly to be false'
-  );
+  t.equal(nextState2.uiState.readOnly, false, 'should set readonly to be false');
   t.end();
 });

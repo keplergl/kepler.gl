@@ -105,14 +105,7 @@ export const savedConfigV0 = {
               name: 'Global Warming',
               type: 'sequential',
               category: 'Uber',
-              colors: [
-                '#5A1846',
-                '#900C3F',
-                '#C70039',
-                '#E3611C',
-                '#F1920E',
-                '#FFC300'
-              ]
+              colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
             },
             opacity: 0.8,
             thickness: 8,
@@ -258,28 +251,14 @@ export const parsedConfigV0 = {
               name: 'Global Warming',
               type: 'sequential',
               category: 'Uber',
-              colors: [
-                '#5A1846',
-                '#900C3F',
-                '#C70039',
-                '#E3611C',
-                '#F1920E',
-                '#FFC300'
-              ]
+              colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
             },
             strokeColor: [136, 87, 44, 255],
             strokeColorRange: {
               name: 'Global Warming',
               type: 'sequential',
               category: 'Uber',
-              colors: [
-                '#5A1846',
-                '#900C3F',
-                '#C70039',
-                '#E3611C',
-                '#F1920E',
-                '#FFC300'
-              ]
+              colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
             },
             opacity: 0.8,
             thickness: 8,

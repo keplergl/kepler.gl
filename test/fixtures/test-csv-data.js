@@ -95,14 +95,7 @@ export const config = {
                 name: 'Global Warming',
                 type: 'sequential',
                 category: 'Uber',
-                colors: [
-                  '#5A1846',
-                  '#900C3F',
-                  '#C70039',
-                  '#E3611C',
-                  '#F1920E',
-                  '#FFC300'
-                ]
+                colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
               },
               radiusRange: [28.5, 194.7],
               filled: true
@@ -153,14 +146,7 @@ export const config = {
                 name: 'Global Warming',
                 type: 'sequential',
                 category: 'Uber',
-                colors: [
-                  '#5A1846',
-                  '#900C3F',
-                  '#C70039',
-                  '#E3611C',
-                  '#F1920E',
-                  '#FFC300'
-                ]
+                colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
               },
               coverage: 1,
               sizeRange: [0, 500],
@@ -851,13 +837,13 @@ export const mergedEpochFilter = {
   gpuChannel: [1]
 };
 
-export const dateFilterProps ={
+export const dateFilterProps = {
   domain: ['2016-09-23', '2016-09-24', '2016-10-10'],
   fieldType: 'date',
   type: 'multiSelect',
   gpu: false,
   value: []
-}
+};
 
 export const mergedDateFilter = {
   ...dateFilterProps,
@@ -875,7 +861,7 @@ export const mergedDateFilter = {
   plotType: 'histogram',
   yAxis: null,
   interval: null
-}
+};
 
 export const wktCsvFields = [
   {
@@ -923,7 +909,7 @@ export const wktCsvFields = [
 ];
 
 export const wktCsvRows = [
-  [ 7015, null, null, 7, 'C_Medium_High', 22.22 ],
+  [7015, null, null, 7, 'C_Medium_High', 22.22],
   [
     7014,
     '{"type":"Polygon","coordinates":[[[-74.158491,40.835947],[-74.157914,40.83902],[-74.148473,40.834522]]]}',

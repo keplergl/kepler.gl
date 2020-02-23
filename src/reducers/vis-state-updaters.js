@@ -567,7 +567,12 @@ export function setFilterUpdater(state, action) {
 
       const layerDataIds = uniq(
         layerIdDifference
-          .map(lid => get(state.layers.find(l => l.id === lid), ['config', 'dataId']))
+          .map(lid =>
+            get(
+              state.layers.find(l => l.id === lid),
+              ['config', 'dataId']
+            )
+          )
           .filter(d => d)
       );
 
@@ -577,7 +582,12 @@ export function setFilterUpdater(state, action) {
       // Update newFilter dataIds
       const newDataIds = uniq(
         newFilter.layerId
-          .map(lid => get(state.layers.find(l => l.id === lid), ['config', 'dataId']))
+          .map(lid =>
+            get(
+              state.layers.find(l => l.id === lid),
+              ['config', 'dataId']
+            )
+          )
           .filter(d => d)
       );
 

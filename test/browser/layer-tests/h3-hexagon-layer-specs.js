@@ -19,9 +19,6 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import React from 'react';
-import {mount} from 'enzyme';
-import sinon from 'sinon';
 import moment from 'moment';
 
 import {
@@ -35,7 +32,6 @@ import {
   hexagonIdLayerMeta
 } from 'test/helpers/layer-utils';
 import {KeplerGlLayers} from 'layers';
-import {INITIAL_MAP_STATE} from 'reducers/map-state-updaters';
 import {getCentroid} from 'layers/h3-hexagon-layer/h3-utils';
 import {defaultElevation} from 'layers/h3-hexagon-layer/h3-hexagon-layer';
 const {H3Layer} = KeplerGlLayers;
@@ -55,16 +51,10 @@ test('#H3Layer -> constructor', t => {
           label: 'test h3 layer'
         },
         test: layer => {
-          t.ok(
-            layer.config.dataId === 'smoothie',
-            'H3Layer dataId should be correct'
-          );
+          t.ok(layer.config.dataId === 'smoothie', 'H3Layer dataId should be correct');
           t.ok(layer.type === 'hexagonId', 'type should be h3');
           t.ok(layer.isAggregated === false, 'H3Layer is not aggregated');
-          t.ok(
-            layer.config.label === 'test h3 layer',
-            'label should be correct'
-          );
+          t.ok(layer.config.label === 'test h3 layer', 'label should be correct');
         }
       }
     ]
@@ -130,17 +120,9 @@ test('#H3Layer -> formatLayerData', t => {
           'should format correct point layerData data'
         );
         // getFillColor
-        t.deepEqual(
-          layerData.getFillColor,
-          [2, 3, 4],
-          'getFillColor should be a constant'
-        );
+        t.deepEqual(layerData.getFillColor, [2, 3, 4], 'getFillColor should be a constant');
         // getElevation
-        t.deepEqual(
-          layerData.getElevation,
-          defaultElevation,
-          'getElevation should be a constant'
-        );
+        t.deepEqual(layerData.getElevation, defaultElevation, 'getElevation should be a constant');
         // getHexId
         t.deepEqual(
           layerData.data.map(layerData.getHexId),
@@ -158,11 +140,7 @@ test('#H3Layer -> formatLayerData', t => {
         );
 
         // layerMeta
-        t.deepEqual(
-          layer.meta,
-          hexagonIdLayerMeta,
-          'should format correct point layer meta'
-        );
+        t.deepEqual(layer.meta, hexagonIdLayerMeta, 'should format correct point layer meta');
       }
     },
     {
@@ -207,7 +185,10 @@ test('#H3Layer -> formatLayerData', t => {
         // range ['#010101', '#020202', '#030303']
         t.deepEqual(
           layerData.data.map(layerData.getFillColor),
-          [[2, 2, 2], [1, 1, 1]],
+          [
+            [2, 2, 2],
+            [1, 1, 1]
+          ],
           'getFillColor should be correct'
         );
         // getElevation
@@ -264,15 +245,8 @@ test('#H3Layer -> renderLayer', t => {
       },
       assert: (deckLayers, layer) => {
         t.equal(layer.type, 'hexagonId', 'should create 1 hexagonId layer');
-        t.equal(
-          deckLayers.length,
-          2,
-          'Should create 2 deck.gl layers'
-        );
-        const expectedLayerIds = [
-          'test_layer_1',
-          'test_layer_1-hexagon-cell'
-        ];
+        t.equal(deckLayers.length, 2, 'Should create 2 deck.gl layers');
+        const expectedLayerIds = ['test_layer_1', 'test_layer_1-hexagon-cell'];
 
         t.deepEqual(
           deckLayers.map(l => l.id),
@@ -293,11 +267,7 @@ test('#H3Layer -> renderLayer', t => {
           elevationScale: 5
         };
         Object.keys(expectedProps).forEach(key => {
-          t.deepEqual(
-            props[key],
-            expectedProps[key],
-            `should have correct props.${key}`
-          );
+          t.deepEqual(props[key], expectedProps[key], `should have correct props.${key}`);
         });
       }
     }

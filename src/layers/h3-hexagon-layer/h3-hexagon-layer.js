@@ -167,7 +167,11 @@ export default class HexagonIdLayer extends Layer {
     // color
     const cScale =
       colorField &&
-      this.getVisChannelScale(colorScale, colorDomain, colorRange.colors.map(c => hexToRgb(c)));
+      this.getVisChannelScale(
+        colorScale,
+        colorDomain,
+        colorRange.colors.map(c => hexToRgb(c))
+      );
 
     // height
     const sScale = sizeField && this.getVisChannelScale(sizeScale, sizeDomain, sizeRange, 0);

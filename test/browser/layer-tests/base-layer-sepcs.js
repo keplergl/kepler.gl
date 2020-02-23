@@ -100,7 +100,12 @@ test('#BaseLayer -> updateLayerDomain', t => {
 });
 */
 test('#AggregationLayer -> updateLayerDomain', t => {
-  const data = [['a', 3], ['b', 4], ['c', 1], ['d', null]];
+  const data = [
+    ['a', 3],
+    ['b', 4],
+    ['c', 1],
+    ['d', null]
+  ];
   const mockLayer = new AggregationLayer({dataId: 'test'});
 
   mockLayer.updateLayerConfig({
@@ -115,8 +120,11 @@ test('#AggregationLayer -> updateLayerDomain', t => {
   });
 
   const updatedLayer = mockLayer.updateLayerDomain({test: {data, allData: data}});
-  t.deepEqual(updatedLayer.config.colorDomain, [0, 1],
-    'should not calculate aggregation layer domain');
+  t.deepEqual(
+    updatedLayer.config.colorDomain,
+    [0, 1],
+    'should not calculate aggregation layer domain'
+  );
 
   t.end();
 });

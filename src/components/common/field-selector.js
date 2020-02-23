@@ -104,11 +104,8 @@ export default class FieldSelector extends Component {
   filterFieldTypesSelector = props => props.filterFieldTypes;
   showTokenSelector = props => props.showToken;
 
-  selectedItemsSelector = createSelector(
-    this.fieldsSelector,
-    this.valueSelector,
-    (fields, value) =>
-      fields.filter(f => (Array.isArray(value) ? value : [value]).includes(defaultDisplayOption(f)))
+  selectedItemsSelector = createSelector(this.fieldsSelector, this.valueSelector, (fields, value) =>
+    fields.filter(f => (Array.isArray(value) ? value : [value]).includes(defaultDisplayOption(f)))
   );
 
   fieldOptionsSelector = createSelector(
@@ -123,10 +120,7 @@ export default class FieldSelector extends Component {
     }
   );
 
-  fieldListItemSelector = createSelector(
-    this.showTokenSelector,
-    FieldListItemFactory
-  );
+  fieldListItemSelector = createSelector(this.showTokenSelector, FieldListItemFactory);
 
   render() {
     return (

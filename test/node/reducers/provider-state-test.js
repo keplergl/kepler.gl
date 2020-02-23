@@ -20,20 +20,12 @@
 
 import test from 'tape';
 import React from 'react';
-import {
-  drainTasksForTesting,
-  succeedTaskInTest,
-  errorTaskInTest
-} from 'react-palm/tasks';
+import {drainTasksForTesting, succeedTaskInTest, errorTaskInTest} from 'react-palm/tasks';
 import sinon from 'sinon';
 import {default as Console} from 'global/console';
 import ActionTypes from 'constants/action-types';
 
-import {
-  exportFileToCloud,
-  resetProviderStatus,
-  setCloudProvider
-} from 'actions/provider-actions';
+import {exportFileToCloud, resetProviderStatus, setCloudProvider} from 'actions/provider-actions';
 import reducer, {providerStateReducerFactory} from 'reducers/provider-state';
 import {INITIAL_PROVIDER_STATE} from 'reducers/provider-state-updaters';
 
@@ -105,16 +97,10 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD', t => {
     'provider is not defined',
     'should warn when cannot find kepler.gl state'
   );
-  reducer(
-    undefined,
-    exportFileToCloud({provider: {name: 'taro', hello: true}})
-  );
+  reducer(undefined, exportFileToCloud({provider: {name: 'taro', hello: true}}));
 
   // uploadFile
-  t.ok(
-    errSpy.calledTwice,
-    'should call console.error if provider does not have uploadFile'
-  );
+  t.ok(errSpy.calledTwice, 'should call console.error if provider does not have uploadFile');
   t.equal(
     errSpy.getCall(1).args[0],
     'uploadFile is not a function of Cloud provider: taro',
@@ -147,11 +133,7 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD', t => {
     'Should set isLoading and current provider'
   );
 
-  t.equal(
-    task1.type,
-    'EXPORT_FILE_TO_CLOUD_TASK',
-    'should create export file tasks'
-  );
+  t.equal(task1.type, 'EXPORT_FILE_TO_CLOUD_TASK', 'should create export file tasks');
   t.deepEqual(
     task1.payload,
     {
@@ -167,10 +149,7 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD', t => {
   );
 
   // success
-  const resultState1 = reducer(
-    nextState,
-    succeedTaskInTest(task1, {url: 'taro_and_blue'})
-  );
+  const resultState1 = reducer(nextState, succeedTaskInTest(task1, {url: 'taro_and_blue'}));
 
   t.deepEqual(
     resultState1,
@@ -187,10 +166,7 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD', t => {
   t.ok(task2.length === 0, 'should create 0 task');
 
   // error
-  const resultState2 = reducer(
-    nextState,
-    errorTaskInTest(task1, new Error('hello'))
-  );
+  const resultState2 = reducer(nextState, errorTaskInTest(task1, new Error('hello')));
   t.deepEqual(
     resultState2,
     {
@@ -259,11 +235,7 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD -> onSuccess : onError', t =
   );
   const [task1, ...more] = drainTasksForTesting();
   t.ok(more.length === 0, 'should create 1 task');
-  t.equal(
-    task1.type,
-    'EXPORT_FILE_TO_CLOUD_TASK',
-    'should create export file tasks'
-  );
+  t.equal(task1.type, 'EXPORT_FILE_TO_CLOUD_TASK', 'should create export file tasks');
 
   // success
   const nextState = reducer(state, succeedTaskInTest(task1, mockResponse));
@@ -285,10 +257,7 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD -> onSuccess : onError', t =
   );
 
   const resultState1 = reducer(nextState, succeedTaskInTest(task2, undefined));
-  const resultState2 = reducer(
-    resultState1,
-    succeedTaskInTest(task3, undefined)
-  );
+  const resultState2 = reducer(resultState1, succeedTaskInTest(task3, undefined));
 
   // saveToCloudSuccess
   const [task4, task5, task6, ...more3] = drainTasksForTesting();
@@ -313,7 +282,11 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD -> onSuccess : onError', t =
     'Should call toggleModal(null'
   );
   const resultState4 = composedReducer(resultState3, succeedTaskInTest(task5, undefined));
-  t.equal(resultState4.notification.type, 'success', 'Should call addNotification with successNote');
+  t.equal(
+    resultState4.notification.type,
+    'success',
+    'Should call addNotification with successNote'
+  );
 
   const resultState5 = composedReducer(resultState4, succeedTaskInTest(task6, undefined));
   t.equal(resultState5.remove, true, 'Should call removeNotification');
@@ -346,7 +319,7 @@ test('#providerStateReducer -> RESET_PROVIDER_STATUS', t => {
   );
 
   t.end();
-})
+});
 
 test('#providerStateReducer -> SET_CLOUD_PROVIDER', t => {
   const nextState = reducer(undefined, setCloudProvider('blue'));

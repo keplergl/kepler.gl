@@ -139,17 +139,15 @@ function KeplerGlFactory(
 
     /* selectors */
     themeSelector = props => props.theme;
-    availableThemeSelector = createSelector(
-      this.themeSelector,
-      theme =>
-        typeof theme === 'object'
-          ? {
-              ...basicTheme,
-              ...theme
-            }
-          : theme === THEME.light
-          ? themeLT
-          : theme
+    availableThemeSelector = createSelector(this.themeSelector, theme =>
+      typeof theme === 'object'
+        ? {
+            ...basicTheme,
+            ...theme
+          }
+        : theme === THEME.light
+        ? themeLT
+        : theme
     );
 
     availableProviders = createSelector(
@@ -404,27 +402,24 @@ const getDispatch = dispatch => dispatch;
 const getUserActions = (dispatch, props) => props.actions || defaultUserActions;
 
 function makeGetActionCreators() {
-  return createSelector(
-    [getDispatch, getUserActions],
-    (dispatch, userActions) => {
-      const [visStateActions, mapStateActions, mapStyleActions, uiStateActions, providerActions] = [
-        VisStateActions,
-        MapStateActions,
-        MapStyleActions,
-        UIStateActions,
-        ProviderActions
-      ].map(actions => bindActionCreators(mergeActions(actions, userActions), dispatch));
+  return createSelector([getDispatch, getUserActions], (dispatch, userActions) => {
+    const [visStateActions, mapStateActions, mapStyleActions, uiStateActions, providerActions] = [
+      VisStateActions,
+      MapStateActions,
+      MapStyleActions,
+      UIStateActions,
+      ProviderActions
+    ].map(actions => bindActionCreators(mergeActions(actions, userActions), dispatch));
 
-      return {
-        visStateActions,
-        mapStateActions,
-        mapStyleActions,
-        uiStateActions,
-        providerActions,
-        dispatch
-      };
-    }
-  );
+    return {
+      visStateActions,
+      mapStateActions,
+      mapStyleActions,
+      uiStateActions,
+      providerActions,
+      dispatch
+    };
+  });
 }
 
 function makeMapDispatchToProps() {

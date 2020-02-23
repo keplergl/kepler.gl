@@ -52,20 +52,11 @@ test('#ArcLayer -> constructor', t => {
           label: 'test arc layer'
         },
         test: layer => {
-          t.ok(
-            layer.config.dataId === 'smoothie',
-            'ArcLayer dataId should be correct'
-          );
+          t.ok(layer.config.dataId === 'smoothie', 'ArcLayer dataId should be correct');
           t.ok(layer.type === 'arc', 'type should be arc');
           t.ok(layer.isAggregated === false, 'ArcLayer is not aggregated');
-          t.ok(
-            layer.config.label === 'test arc layer',
-            'label should be correct'
-          );
-          t.ok(
-            Object.keys(layer.columnPairs).length,
-            'should have columnPairs'
-          );
+          t.ok(layer.config.label === 'test arc layer', 'label should be correct');
+          t.ok(Object.keys(layer.columnPairs).length, 'should have columnPairs');
         }
       }
     ]
@@ -159,11 +150,7 @@ test('#ArcLayer -> formatLayerData', t => {
         );
 
         // layerMeta
-        t.deepEqual(
-          layer.meta,
-          arcLayerMeta,
-          'should format correct arc layer meta'
-        );
+        t.deepEqual(layer.meta, arcLayerMeta, 'should format correct arc layer meta');
       }
     },
     {
@@ -209,11 +196,7 @@ test('#ArcLayer -> formatLayerData', t => {
           'getSourceColor should be a constant'
         );
         // getSourceColor
-        t.deepEqual(
-          layerData.getTargetColor,
-          [1, 2, 3],
-          'getTargetColors should be a constant'
-        );
+        t.deepEqual(layerData.getTargetColor, [1, 2, 3], 'getTargetColors should be a constant');
       }
     },
     {
@@ -224,7 +207,7 @@ test('#ArcLayer -> formatLayerData', t => {
           label: 'trip arcs',
           columns,
           color: [10, 10, 10],
-           // color by types(string)
+          // color by types(string)
           colorField: {
             type: 'string',
             name: 'types'
@@ -289,7 +272,10 @@ test('#ArcLayer -> formatLayerData', t => {
         // range ['#010101', '#020202', '#030303']
         t.deepEqual(
           layerData.data.map(layerData.getSourceColor),
-          [[2, 2, 2], [1, 1, 1]],
+          [
+            [2, 2, 2],
+            [1, 1, 1]
+          ],
           'getSourceColor should be correct'
         );
         // getTargetColor
@@ -297,7 +283,10 @@ test('#ArcLayer -> formatLayerData', t => {
         // range ['#010101', '#020202', '#030303']
         t.deepEqual(
           layerData.data.map(layerData.getTargetColor),
-          [[2, 2, 2], [1, 1, 1]],
+          [
+            [2, 2, 2],
+            [1, 1, 1]
+          ],
           'getTargetColors  be correct'
         );
         // getWidth
@@ -314,7 +303,7 @@ test('#ArcLayer -> formatLayerData', t => {
           layerData.data.map(layerData.getFilterValue),
           [
             [Number.MIN_SAFE_INTEGER, 0, 0, 0],
-            [moment.utc(testRows[4][0]).valueOf() - preparedFilterDomain0, 0, 0, 0],
+            [moment.utc(testRows[4][0]).valueOf() - preparedFilterDomain0, 0, 0, 0]
           ],
           'getFilterValue should return [value, 0, 0, 0]'
         );
@@ -356,13 +345,9 @@ test('#ArcLayer -> renderLayer', t => {
           opacity: layer.config.visConfig.opacity,
           widthScale: layer.config.visConfig.thickness,
           filterRange: preparedDataset.gpuFilter.filterRange
-        }
+        };
         Object.keys(expectedProps).forEach(key => {
-          t.equal(
-            props[key],
-            expectedProps[key],
-            `should have correct props.${key}`
-          );
+          t.equal(props[key], expectedProps[key], `should have correct props.${key}`);
         });
       }
     },
@@ -402,13 +387,9 @@ test('#ArcLayer -> renderLayer', t => {
           brushingRadius: 2500,
           brushingEnabled: true,
           brushingTarget: 'source_target'
-        }
+        };
         Object.keys(expectedProps).forEach(key => {
-          t.equal(
-            props[key],
-            expectedProps[key],
-            `should have correct props.${key}`
-          );
+          t.equal(props[key], expectedProps[key], `should have correct props.${key}`);
         });
       }
     }

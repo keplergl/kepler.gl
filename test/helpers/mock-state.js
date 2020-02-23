@@ -31,16 +31,8 @@ import {addDataToMap} from 'actions/actions';
 import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_RANGE, DEFAULT_LAYER_OPACITY} from 'layers/layer-factory';
 
 // fixtures
-import {
-  dataId as csvDataId,
-  testFields,
-  testAllData
-} from 'test/fixtures/test-csv-data';
-import {
-  fields,
-  rows,
-  geoJsonDataId
-} from 'test/fixtures/geojson';
+import {dataId as csvDataId, testFields, testAllData} from 'test/fixtures/test-csv-data';
+import {fields, rows, geoJsonDataId} from 'test/fixtures/geojson';
 import {
   fields as tripFields,
   rows as tripRows,
@@ -75,8 +67,7 @@ export function applyActions(reducer, initialState, actions) {
   const actionQ = Array.isArray(actions) ? actions : [actions];
 
   return actionQ.reduce(
-    (updatedState, {action, payload}) =>
-      reducer(updatedState, action(...payload)),
+    (updatedState, {action, payload}) => reducer(updatedState, action(...payload)),
     initialState
   );
 }
@@ -94,15 +85,11 @@ function mockStateWithFileUpload() {
   const updatedState = applyActions(keplerGlReducer, initialState, [
     {
       action: VisStateActions.updateVisData,
-      payload: [
-        [{info: csvInfo, data: {fields: testFields, rows: testAllData}}]
-      ]
+      payload: [[{info: csvInfo, data: {fields: testFields, rows: testAllData}}]]
     },
     {
       action: VisStateActions.updateVisData,
-      payload: [
-        [{info: geojsonInfo, data: {fields: geojsonFields, rows: geojsonRows}}]
-      ]
+      payload: [[{info: geojsonInfo, data: {fields: geojsonFields, rows: geojsonRows}}]]
     }
   ]);
 
@@ -130,9 +117,7 @@ function mockStateWithTripGeojson() {
   const updatedState = applyActions(keplerGlReducer, initialState, [
     {
       action: VisStateActions.updateVisData,
-      payload: [
-        [{info: tripDataInfo, data: processGeojson(cloneDeep(tripGeojson))}]
-      ]
+      payload: [[{info: tripDataInfo, data: processGeojson(cloneDeep(tripGeojson))}]]
     }
   ]);
 
@@ -214,7 +199,7 @@ function mockStateWithMultiFilters() {
     {
       action: VisStateActions.setFilter,
       payload: [4, 'value', [1472700000000, 1472760000000]]
-    },
+    }
   ]);
 
   // replace filter id with controlled value for easy testing
@@ -232,16 +217,19 @@ function mockStateWithMultiFilters() {
 function mockStateWithTripData() {
   const initialState = cloneDeep(InitialState);
 
-  return keplerGlReducer(initialState, addDataToMap({
-    datasets: {
-      info: {
-        label: 'Sample Trips',
-        id: tripDataId
+  return keplerGlReducer(
+    initialState,
+    addDataToMap({
+      datasets: {
+        info: {
+          label: 'Sample Trips',
+          id: tripDataId
+        },
+        data: {fields: tripFields, rows: tripRows}
       },
-      data: {fields: tripFields, rows: tripRows}
-    },
-    config: tripConfig
-  }));
+      config: tripConfig
+    })
+  );
 }
 
 function mockStateWithLayerDimensions(state) {
@@ -263,9 +251,9 @@ function mockStateWithLayerDimensions(state) {
     'color'
   ];
 
-  const textLabelField = initialState.visState.datasets[
-    testCsvDataId
-  ].fields.find(f => f.name === 'date');
+  const textLabelField = initialState.visState.datasets[testCsvDataId].fields.find(
+    f => f.name === 'date'
+  );
 
   const textLabelPayload1 = [layer0, 0, 'field', textLabelField];
   const textLabelPayload2 = [layer0, 0, 'color', [255, 0, 0]];
@@ -649,9 +637,7 @@ export const expectedLoadedLayer2 = {
 
 export const StateWFiles = mockStateWithFileUpload();
 export const StateWFilters = mockStateWithFilters();
-export const StateWFilesFiltersLayerColor = mockStateWithLayerDimensions(
-  StateWFilters
-);
+export const StateWFilesFiltersLayerColor = mockStateWithLayerDimensions(StateWFilters);
 export const StateWMultiFilters = mockStateWithMultiFilters();
 
 export const StateWCustomMapStyle = mockStateWithCustomMapStyle();

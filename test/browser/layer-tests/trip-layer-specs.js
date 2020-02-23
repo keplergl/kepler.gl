@@ -31,11 +31,7 @@ import {
   valueFilterDomain0,
   animationConfig
 } from 'test/helpers/layer-utils';
-import {
-  TripLayerMeta,
-  dataToFeature,
-  dataToTimeStamp
-} from 'test/fixtures/trip-geojson';
+import {TripLayerMeta, dataToFeature, dataToTimeStamp} from 'test/fixtures/trip-geojson';
 
 test('#TripLayer -> constructor', t => {
   const TEST_CASES = {
@@ -47,10 +43,7 @@ test('#TripLayer -> constructor', t => {
           label: 'test trip layer'
         },
         test: layer => {
-          t.ok(
-            layer.config.dataId === 'smoothie',
-            'tripnLayer dataId should be correct'
-          );
+          t.ok(layer.config.dataId === 'smoothie', 'tripnLayer dataId should be correct');
           t.ok(layer.type === 'trip', 'type should be trip');
           t.ok(layer.isAggregated === false, 'tripLayer is not aggregated');
         }
@@ -347,8 +340,11 @@ test('#TripLayer -> renderLayer', t => {
         let currentIdx = 0;
         let count = 0;
 
-        for (let c = 0; c < attributes.instancePickingColors.value.length; c+=3) {
-          if (attributes.instancePickingColors.value[c] > currentIdx || c === attributes.instancePickingColors.value.length - 3) {
+        for (let c = 0; c < attributes.instancePickingColors.value.length; c += 3) {
+          if (
+            attributes.instancePickingColors.value[c] > currentIdx ||
+            c === attributes.instancePickingColors.value.length - 3
+          ) {
             currentIdx = attributes.instancePickingColors.value[c];
             if (count > 0) {
               numVertexs.push(count);

@@ -58,7 +58,10 @@ const mockSvgIcons = [
         [0.97, -0.5, 0],
         [0.3, -0.4, 0]
       ],
-      cells: [[0, 1, 3], [1, 2, 3]]
+      cells: [
+        [0, 1, 3],
+        [1, 2, 3]
+      ]
     }
   }
 ];
@@ -73,20 +76,11 @@ test('#IconLayer -> constructor', t => {
           label: 'test icon layer'
         },
         test: layer => {
-          t.ok(
-            layer.config.dataId === 'smoothie',
-            'IconLayer dataId should be correct'
-          );
+          t.ok(layer.config.dataId === 'smoothie', 'IconLayer dataId should be correct');
           t.ok(layer.type === 'icon', 'type should be icon');
           t.ok(layer.isAggregated === false, 'IconLayer is not aggregated');
-          t.ok(
-            layer.config.label === 'test icon layer',
-            'label should be correct'
-          );
-          t.ok(
-            Object.keys(layer.columnPairs).length,
-            'should have columnPairs'
-          );
+          t.ok(layer.config.label === 'test icon layer', 'label should be correct');
+          t.ok(Object.keys(layer.columnPairs).length, 'should have columnPairs');
 
           // t.ok(spy.calledOnce, 'should call window.fetch once');
         }
@@ -177,11 +171,7 @@ test('#IconLayer -> formatLayerData', t => {
           'getPosition should return correct position'
         );
         // getFillColor
-        t.deepEqual(
-          layerData.getFillColor,
-          [2, 3, 4],
-          'getFillColor should be a constant'
-        );
+        t.deepEqual(layerData.getFillColor, [2, 3, 4], 'getFillColor should be a constant');
         // getRadius
         t.equal(layerData.getRadius, 1, 'getRadius should be a constant');
         // getFilterValue
@@ -198,7 +188,7 @@ test('#IconLayer -> formatLayerData', t => {
         );
         t.deepEqual(
           layerData.textLabels[0].characterSet,
-          ['d','r','i','v','e','_','a','n','l','y','t','c','s','0'],
+          ['d', 'r', 'i', 'v', 'e', '_', 'a', 'n', 'l', 'y', 't', 'c', 's', '0'],
           'textLabels should have correct characterSet'
         );
         t.deepEqual(
@@ -207,11 +197,7 @@ test('#IconLayer -> formatLayerData', t => {
           'textLabels getText should have correct text'
         );
         // layerMeta
-        t.deepEqual(
-          layer.meta,
-          pointLayerMeta,
-          'should format correct point layer meta'
-        );
+        t.deepEqual(layer.meta, pointLayerMeta, 'should format correct point layer meta');
       }
     },
     {
@@ -341,11 +327,7 @@ test('#IconLayer -> renderLayer', t => {
           3,
           'Should create 3 deck.gl layer when icon geometry is provided'
         );
-        const expectedLayerIds = [
-          'test_layer_1',
-          'test_layer_1-accel',
-          'test_layer_1-attach'
-        ];
+        const expectedLayerIds = ['test_layer_1', 'test_layer_1-accel', 'test_layer_1-attach'];
 
         t.deepEqual(
           deckLayers.map(l => l.id),
@@ -363,11 +345,7 @@ test('#IconLayer -> renderLayer', t => {
           brushingEnabled: false
         };
         Object.keys(expectedProps).forEach(key => {
-          t.deepEqual(
-            props[key],
-            expectedProps[key],
-            `should have correct props.${key}`
-          );
+          t.deepEqual(props[key], expectedProps[key], `should have correct props.${key}`);
         });
       }
     },
@@ -409,11 +387,7 @@ test('#IconLayer -> renderLayer', t => {
           3,
           'Should create 3 deck.gl layer when icon geometry is provided'
         );
-        const expectedLayerIds = [
-          'test_layer_1',
-          'test_layer_1-accel',
-          'test_layer_1-attach'
-        ];
+        const expectedLayerIds = ['test_layer_1', 'test_layer_1-accel', 'test_layer_1-attach'];
 
         t.deepEqual(
           deckLayers.map(l => l.id),
@@ -429,11 +403,7 @@ test('#IconLayer -> renderLayer', t => {
           brushingEnabled: true
         };
         Object.keys(expectedProps).forEach(key => {
-          t.deepEqual(
-            props[key],
-            expectedProps[key],
-            `should have correct props.${key}`
-          );
+          t.deepEqual(props[key], expectedProps[key], `should have correct props.${key}`);
         });
       }
     },
@@ -507,10 +477,7 @@ test('#IconLayer -> renderLayer', t => {
         const padding = 20;
 
         // anchor: start, alignment: center
-        const expectedPixelOffset0 = [
-          1 * (pixelRadius + padding),
-          0 * (pixelRadius + padding + 0)
-        ];
+        const expectedPixelOffset0 = [1 * (pixelRadius + padding), 0 * (pixelRadius + padding + 0)];
 
         // anchor: 'middle', alignment: 'bottom'
         const expectedPixelOffset1 = [
@@ -523,11 +490,7 @@ test('#IconLayer -> renderLayer', t => {
           [testRows[0][2], testRows[0][1]],
           'Should calculate correct getPosition'
         );
-        t.deepEqual(
-          getColor,
-          DEFAULT_TEXT_LABEL.color,
-          'Should calculate correct getColor'
-        );
+        t.deepEqual(getColor, DEFAULT_TEXT_LABEL.color, 'Should calculate correct getColor');
         t.deepEqual(getSize, 1, 'Should calculate correct getSize');
         t.deepEqual(
           getPixelOffset,
@@ -573,7 +536,15 @@ test('#IconLayer -> fetch icon geometry -> renderIconModal', t => {
   }, 'mount layer info modal with icons should not fail');
 
   t.equal(wrapper.find('.icon-table__item').length, 3, 'should render 1 icon');
-  t.equal(wrapper.find('.icon-table_item__name').at(0).find('code').text(), 'alert', 'should render alert icon');
+  t.equal(
+    wrapper
+      .find('.icon-table_item__name')
+      .at(0)
+      .find('code')
+      .text(),
+    'alert',
+    'should render alert icon'
+  );
 
   stubedFetch.restore();
   t.end();

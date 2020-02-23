@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-/* eslint-disable max-statements */import React from 'react';
+/* eslint-disable max-statements */ import React from 'react';
 import test from 'tape';
 import {mount} from 'enzyme';
 import sinon from 'sinon';
@@ -44,16 +44,11 @@ import ColorRangeSelector, {
 import ColorPalette from 'components/side-panel/layer-panel/color-palette';
 import CustomPalette from 'components/side-panel/layer-panel/custom-palette';
 import CustomPicker from 'components/side-panel/layer-panel/custom-picker';
-
-import ItemSelector from 'components/common/item-selector/item-selector';
-import {Button, InlineInput} from 'components/common/styled-components';
+import {Button} from 'components/common/styled-components';
 
 import {COLOR_RANGES} from 'constants/color-ranges';
 
-import {
-  StateWFilesFiltersLayerColor,
-  StateWTrips
-} from 'test/helpers/mock-state';
+import {StateWFilesFiltersLayerColor, StateWTrips} from 'test/helpers/mock-state';
 import {mountWithTheme} from 'test/helpers/component-utils';
 import {hexToRgb} from 'utils/color-utils';
 
@@ -88,9 +83,7 @@ test('Components -> LayerColorSelector.render -> render layer color', t => {
   const layerConfiguratorProps = getLayerConfiguratorProps(mockProps);
 
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(
-      <LayerColorSelector {...layerConfiguratorProps} />
-    );
+    wrapper = mountWithTheme(<LayerColorSelector {...layerConfiguratorProps} />);
   }, 'Should not fail with layers');
   const CSInstance = wrapper.find(ColorSelector);
 
@@ -103,11 +96,7 @@ test('Components -> LayerColorSelector.render -> render layer color', t => {
       setColor: () => {}
     }
   ];
-  t.equal(
-    cSProps.colorSets.length,
-    expectedColorSets.length,
-    'should pass correct colorSets'
-  );
+  t.equal(cSProps.colorSets.length, expectedColorSets.length, 'should pass correct colorSets');
   t.deepEqual(
     Object.keys(cSProps.colorSets[0]),
     Object.keys(expectedColorSets[0]),
@@ -161,9 +150,7 @@ test('Components -> LayerColorSelector.render -> render single color click', t =
   const layerConfiguratorProps = getLayerConfiguratorProps(mockProps);
 
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(
-      <LayerColorSelector {...layerConfiguratorProps} />
-    );
+    wrapper = mountWithTheme(<LayerColorSelector {...layerConfiguratorProps} />);
   }, 'Should not fail render color select');
   const CSInstance = wrapper.find(ColorSelector);
 
@@ -173,10 +160,7 @@ test('Components -> LayerColorSelector.render -> render single color click', t =
   const scp = wrapper.find(SingleColorPalette);
   t.equal(scp.length, 1, 'should render 1 SingleColorPalette');
 
-  t.ok(
-    wrapper.find('.single-color-palette__block'),
-    'should render color blocks'
-  );
+  t.ok(wrapper.find('.single-color-palette__block'), 'should render color blocks');
 
   // click color block
   wrapper
@@ -238,11 +222,7 @@ test('Components -> ArcLayerColorSelector.render -> render single color', t => {
       label: 'Target'
     }
   ];
-  t.equal(
-    cSProps.colorSets.length,
-    expectedColorSets.length,
-    'should pass correct colorSets'
-  );
+  t.equal(cSProps.colorSets.length, expectedColorSets.length, 'should pass correct colorSets');
   t.deepEqual(
     Object.keys(cSProps.colorSets[0]),
     Object.keys(expectedColorSets[0]),
@@ -262,18 +242,12 @@ test('Components -> ArcLayerColorSelector.render -> render single color', t => {
   t.equal(csInput.length, 2, 'should render 2 ColorSelectorInput');
   csInput.at(1).simulate('mousedown');
 
-  t.ok(
-    updateLayerColorUI.calledOnce,
-    'should call updateLayerColorUI when mousedown 2nd block'
-  );
+  t.ok(updateLayerColorUI.calledOnce, 'should call updateLayerColorUI when mousedown 2nd block');
   t.ok(
     updateLayerVisConfig.notCalled,
     'should not call updateLayerColorUI when mousedown 2nd block'
   );
-  t.ok(
-    updateLayerConfig.notCalled,
-    'should not call updateLayerConfig when mousedown 2nd block'
-  );
+  t.ok(updateLayerConfig.notCalled, 'should not call updateLayerConfig when mousedown 2nd block');
 
   // should open dropdown
   t.ok(updateLayerColorUI.calledWith('color', {showDropdown: 1}));
@@ -321,10 +295,7 @@ test('Components -> ArcLayerColorSelector.render -> render single color click', 
   const scp = wrapper.find(SingleColorPalette);
   t.equal(scp.length, 1, 'should render 1 SingleColorPalette');
 
-  t.ok(
-    wrapper.find('.single-color-palette__block'),
-    'should render color blocks'
-  );
+  t.ok(wrapper.find('.single-color-palette__block'), 'should render color blocks');
 
   // click color block
   wrapper
@@ -358,9 +329,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector', t => {
 
   let wrapper;
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(
-      <LayerColorRangeSelector {...visConfiguratorProps} />
-    );
+    wrapper = mountWithTheme(<LayerColorRangeSelector {...visConfiguratorProps} />);
   }, 'Should not fail render color range select');
   const CPInstance = wrapper.find(ColorPalette);
   t.equal(CPInstance.length, 1, 'should render 1 ColorPalette');
@@ -382,18 +351,12 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector', t => {
   t.equal(csInput.length, 1, 'should render 2 ColorSelectorInput');
   csInput.at(0).simulate('mousedown');
 
-  t.ok(
-    updateLayerColorUI.calledOnce,
-    'should call updateLayerColorUI when mousedown 2nd block'
-  );
+  t.ok(updateLayerColorUI.calledOnce, 'should call updateLayerColorUI when mousedown 2nd block');
   t.ok(
     updateLayerVisConfig.notCalled,
     'should not call updateLayerColorUI when mousedown 2nd block'
   );
-  t.ok(
-    updateLayerConfig.notCalled,
-    'should not call updateLayerConfig when mousedown 2nd block'
-  );
+  t.ok(updateLayerConfig.notCalled, 'should not call updateLayerConfig when mousedown 2nd block');
 
   // should open dropdown
   t.ok(updateLayerColorUI.calledWith('colorRange', {showDropdown: 0}));
@@ -425,17 +388,11 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
   let wrapper;
 
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(
-      <LayerColorRangeSelector {...visConfiguratorProps} />
-    );
+    wrapper = mountWithTheme(<LayerColorRangeSelector {...visConfiguratorProps} />);
   }, 'Should not fail render color range select');
 
   // open color dropdown
-  t.equal(
-    wrapper.find('.color-range-selector').length,
-    1,
-    'should render 1 color-range-selector'
-  );
+  t.equal(wrapper.find('.color-range-selector').length, 1, 'should render 1 color-range-selector');
 
   const crs = wrapper.find(ColorRangeSelector);
   t.equal(crs.length, 1, 'should render 1 ColorRangeSelector');
@@ -446,8 +403,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
   const cpg = crs.find(ColorPaletteGroup);
   t.equal(cpg.length, 1, 'should render 1 ColorPaletteGroup');
 
-  const expectedGroups =
-    COLOR_RANGES.filter(cr => cr.colors.length === 6).length + 1;
+  const expectedGroups = COLOR_RANGES.filter(cr => cr.colors.length === 6).length + 1;
 
   t.equal(
     wrapper.find(ColorPalette).length,
@@ -455,11 +411,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
     `should render ${expectedGroups} ColorPalette`
   );
   const typeSelect = crs.find(PaletteConfig).at(0);
-  t.equal(
-    typeSelect.find('.side-panel-panel__label').text(),
-    'type',
-    'should render type'
-  );
+  t.equal(typeSelect.find('.side-panel-panel__label').text(), 'type', 'should render type');
 
   // click on type select
   t.equal(
@@ -592,17 +544,11 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
   const visConfiguratorProps = getVisConfiguratorProps(mockProps);
   let wrapper;
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(
-      <LayerColorRangeSelector {...visConfiguratorProps} />
-    );
+    wrapper = mountWithTheme(<LayerColorRangeSelector {...visConfiguratorProps} />);
   }, 'Should not fail render color range select');
 
   // open color dropdown
-  t.equal(
-    wrapper.find('.color-range-selector').length,
-    1,
-    'should render 1 color-range-selector'
-  );
+  t.equal(wrapper.find('.color-range-selector').length, 1, 'should render 1 color-range-selector');
   const crs = wrapper.find(ColorRangeSelector);
   t.equal(crs.length, 1, 'should render 1 ColorRangeSelector');
 
@@ -645,9 +591,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
   const visConfiguratorProps = getVisConfiguratorProps(mockProps);
   let wrapper;
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(
-      <LayerColorRangeSelector {...visConfiguratorProps} />
-    );
+    wrapper = mountWithTheme(<LayerColorRangeSelector {...visConfiguratorProps} />);
   }, 'Should not fail render color range select');
   // current colorRange
   // { name: 'Ice And Fire 8',
@@ -675,21 +619,25 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
     .simulate('click');
 
   t.deepEqual(
-    updateLayerColorUI.args[0], ['colorRange', {
-      customPalette: {
-        colors: [
-          '#7F1941',
-          '#D50255',
-          '#FEAD54',
-          '#FEEDB1',
-          '#E8FEB5',
-          '#49E3CE',
-          '#0198BD',
-          '#007A99',
-          '#007A99'
-        ]
+    updateLayerColorUI.args[0],
+    [
+      'colorRange',
+      {
+        customPalette: {
+          colors: [
+            '#7F1941',
+            '#D50255',
+            '#FEAD54',
+            '#FEEDB1',
+            '#E8FEB5',
+            '#49E3CE',
+            '#0198BD',
+            '#007A99',
+            '#007A99'
+          ]
+        }
       }
-    }],
+    ],
     'should add color to custom palette when click add step'
   );
 
@@ -699,10 +647,14 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
     .simulate('click');
 
   t.deepEqual(
-    updateLayerColorUI.args[1], ['colorRange', {
-      colorRangeConfig: {custom: false},
-      showSketcher: false
-    }],
+    updateLayerColorUI.args[1],
+    [
+      'colorRange',
+      {
+        colorRangeConfig: {custom: false},
+        showSketcher: false
+      }
+    ],
     'should set custom: false when cancel'
   );
 
@@ -712,31 +664,38 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
     .simulate('click');
 
   t.deepEqual(
-    updateLayerColorUI.args[2], ['colorRange', {
-      colorRangeConfig: {custom: false},
-      showSketcher: false
-    }],
+    updateLayerColorUI.args[2],
+    [
+      'colorRange',
+      {
+        colorRangeConfig: {custom: false},
+        showSketcher: false
+      }
+    ],
     'should set custom to false when click apply'
   );
 
   t.deepEqual(
-    updateLayerVisConfig.args[0], [{
-      colorRange: {
-        name: 'Custom Palette',
-        type: 'custom',
-        category: 'Custom',
-        colors: [
-          '#7F1941',
-          '#D50255',
-          '#FEAD54',
-          '#FEEDB1',
-          '#E8FEB5',
-          '#49E3CE',
-          '#0198BD',
-          '#007A99'
-        ]
+    updateLayerVisConfig.args[0],
+    [
+      {
+        colorRange: {
+          name: 'Custom Palette',
+          type: 'custom',
+          category: 'Custom',
+          colors: [
+            '#7F1941',
+            '#D50255',
+            '#FEAD54',
+            '#FEEDB1',
+            '#E8FEB5',
+            '#49E3CE',
+            '#0198BD',
+            '#007A99'
+          ]
+        }
       }
-    }],
+    ],
     'should set colorRange to custom'
   );
 
@@ -784,9 +743,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
   const visConfiguratorProps = getVisConfiguratorProps(mockProps);
   let wrapper;
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(
-      <LayerColorRangeSelector {...visConfiguratorProps} />
-    );
+    wrapper = mountWithTheme(<LayerColorRangeSelector {...visConfiguratorProps} />);
   }, 'Should not fail render color range select');
 
   const cp = wrapper.find(CustomPalette);

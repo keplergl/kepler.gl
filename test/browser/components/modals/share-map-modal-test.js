@@ -22,9 +22,7 @@ import React from 'react';
 import test from 'tape';
 import {mountWithTheme} from 'test/helpers/component-utils';
 import sinon from 'sinon';
-import ShareMapUrlModalFactory, {
-  SharingUrl
-} from 'components/modals/share-map-modal';
+import ShareMapUrlModalFactory, {SharingUrl} from 'components/modals/share-map-modal';
 
 import CloudTile from 'components/modals/cloud-tile';
 import StatusPanel from 'components/modals/status-panel';
@@ -35,14 +33,9 @@ test('Components -> ShareMapUrlModal.mount', t => {
 
   // mount
   t.doesNotThrow(() => {
-    mountWithTheme(
-      <ShareMapUrlModal onSetCloudProvider={onSetCloudProvider} />
-    );
+    mountWithTheme(<ShareMapUrlModal onSetCloudProvider={onSetCloudProvider} />);
   }, 'Show not fail without props');
-  t.ok(
-    onSetCloudProvider.notCalled,
-    'should not call onSetCloudProvider when mount'
-  );
+  t.ok(onSetCloudProvider.notCalled, 'should not call onSetCloudProvider when mount');
 
   t.end();
 });
@@ -57,16 +50,10 @@ test('Components -> ShareMapUrlModal.mount with providers', t => {
   // mount
   t.doesNotThrow(() => {
     mountWithTheme(
-      <ShareMapUrlModal
-        onSetCloudProvider={onSetCloudProvider}
-        cloudProviders={[mockProvider]}
-      />
+      <ShareMapUrlModal onSetCloudProvider={onSetCloudProvider} cloudProviders={[mockProvider]} />
     );
   }, 'Show not fail mount props');
-  t.ok(
-    onSetCloudProvider.calledWithExactly('taro'),
-    'should set default provider when mount'
-  );
+  t.ok(onSetCloudProvider.calledWithExactly('taro'), 'should set default provider when mount');
 
   const wrapper = mountWithTheme(
     <ShareMapUrlModal
@@ -75,10 +62,7 @@ test('Components -> ShareMapUrlModal.mount with providers', t => {
       currentProvider="hello"
     />
   );
-  t.ok(
-    onSetCloudProvider.calledOnce,
-    'should not set default provider if it is already set'
-  );
+  t.ok(onSetCloudProvider.calledOnce, 'should not set default provider if it is already set');
 
   t.ok(wrapper.find(CloudTile).length === 1, 'should render 1 cloud provider');
   t.ok(wrapper.find(StatusPanel).length === 0, 'should not render StatusPanel');
@@ -95,18 +79,11 @@ test('Components -> ShareMapUrlModal.mount with isLoading', t => {
   let wrapper;
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
-      <ShareMapUrlModal
-        isLoading
-        onSetCloudProvider={() => {}}
-        cloudProviders={[mockProvider]}
-      />
+      <ShareMapUrlModal isLoading onSetCloudProvider={() => {}} cloudProviders={[mockProvider]} />
     );
   }, 'Show not fail mount with isLoading');
 
-  t.ok(
-    wrapper.find(StatusPanel).length === 1,
-    'should render StatusPanel when loading'
-  );
+  t.ok(wrapper.find(StatusPanel).length === 1, 'should render StatusPanel when loading');
 
   wrapper = mountWithTheme(
     <ShareMapUrlModal
@@ -115,15 +92,8 @@ test('Components -> ShareMapUrlModal.mount with isLoading', t => {
       cloudProviders={[mockProvider]}
     />
   );
-  t.ok(
-    wrapper.find(StatusPanel).length === 1,
-    'should render StatusPanel when error'
-  );
-  t.equal(
-    wrapper.find('.notification-item--message').length,
-    1,
-    'should render 1 message'
-  );
+  t.ok(wrapper.find(StatusPanel).length === 1, 'should render StatusPanel when error');
+  t.equal(wrapper.find('.notification-item--message').length, 1, 'should render 1 message');
   t.equal(
     wrapper
       .find('.notification-item--message')
@@ -156,10 +126,7 @@ test('Components -> ShareMapUrlModal.mount with SharingUrl', t => {
     );
   }, 'Show not fail mount with successInfo');
 
-  t.ok(
-    wrapper.find(SharingUrl).length === 1,
-    'should render SharingUrl when loading'
-  );
+  t.ok(wrapper.find(SharingUrl).length === 1, 'should render SharingUrl when loading');
 
   t.equal(
     wrapper

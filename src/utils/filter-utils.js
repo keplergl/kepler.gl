@@ -387,7 +387,10 @@ export const getPolygonFilterFunctor = (layer, filter) => {
         const pos = getPosition({data});
         return (
           pos.every(Number.isFinite) &&
-          [[pos[0], pos[1]], [pos[3], pos[4]]].every(point => isInPolygon(point, filter.value))
+          [
+            [pos[0], pos[1]],
+            [pos[3], pos[4]]
+          ].every(point => isInPolygon(point, filter.value))
         );
       };
     default:

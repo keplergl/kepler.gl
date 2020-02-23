@@ -230,14 +230,7 @@ export const savedStateV0 = {
                 name: 'Global Warming',
                 type: 'sequential',
                 category: 'Uber',
-                colors: [
-                  '#5A1846',
-                  '#900C3F',
-                  '#C70039',
-                  '#E3611C',
-                  '#F1920E',
-                  '#FFC300'
-                ]
+                colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
               },
               radiusRange: [1, 100],
               'hi-precision': false
@@ -280,14 +273,7 @@ export const savedStateV0 = {
                 name: 'Global Warming',
                 type: 'sequential',
                 category: 'Uber',
-                colors: [
-                  '#5A1846',
-                  '#900C3F',
-                  '#C70039',
-                  '#E3611C',
-                  '#F1920E',
-                  '#FFC300'
-                ]
+                colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
               },
               sizeRange: [0, 10],
               'hi-precision': false
@@ -370,14 +356,7 @@ export const savedStateV0 = {
                 name: 'Global Warming',
                 type: 'sequential',
                 category: 'Uber',
-                colors: [
-                  '#5A1846',
-                  '#900C3F',
-                  '#C70039',
-                  '#E3611C',
-                  '#F1920E',
-                  '#FFC300'
-                ]
+                colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
               },
               coverage: 1,
               sizeRange: [0, 50],
@@ -912,7 +891,7 @@ export const mergedFilters = [
     name: ['song_name'],
     type: 'multiSelect',
     fieldIdx: [0],
-    domain: ['2.103.2', '2.107.3', '2.116.2', '2.117.1', '3.68.4' ],
+    domain: ['2.103.2', '2.107.3', '2.116.2', '2.117.1', '3.68.4'],
     value: ['3.68.4', '2.117.1', '2.103.2', '2.116.2'],
     fieldType: 'string',
     plotType: 'histogram',
@@ -1469,24 +1448,13 @@ mergedLayer4.dataToFeature = {
 };
 
 mergedLayer4.meta = {
-  bounds: [
-    -122.50828762723958,
-    37.733266432915535,
-    -122.39989147796784,
-    37.787534455433345
-  ],
+  bounds: [-122.50828762723958, 37.733266432915535, -122.39989147796784, 37.787534455433345],
   featureTypes: {polygon: true},
   fp64: false,
   fixedRadius: false
 };
 
-export const mergedLayers = [
-  mergedLayer0,
-  mergedLayer1,
-  mergedLayer2,
-  mergedLayer3,
-  mergedLayer4
-];
+export const mergedLayers = [mergedLayer0, mergedLayer1, mergedLayer2, mergedLayer3, mergedLayer4];
 
 const defaultInteraction = getDefaultInteraction();
 export const mergedInteractions = {

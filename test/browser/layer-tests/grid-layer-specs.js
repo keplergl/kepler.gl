@@ -50,20 +50,11 @@ test('#GridLayer -> constructor', t => {
           label: 'test grid layer'
         },
         test: layer => {
-          t.ok(
-            layer.config.dataId === 'taro',
-            'gridLayer dataId should be correct'
-          );
+          t.ok(layer.config.dataId === 'taro', 'gridLayer dataId should be correct');
           t.ok(layer.type === 'grid', 'type should be grid');
           t.ok(layer.isAggregated === true, 'gridLayer is aggregated');
-          t.ok(
-            layer.config.label === 'test grid layer',
-            'label should be correct'
-          );
-          t.ok(
-            Object.keys(layer.columnPairs).length,
-            'should have columnPairs'
-          );
+          t.ok(layer.config.label === 'test grid layer', 'label should be correct');
+          t.ok(Object.keys(layer.columnPairs).length, 'should have columnPairs');
         }
       }
     ]
@@ -113,11 +104,7 @@ test('#GridLayer -> formatLayerData', t => {
           Object.keys(expectedLayerData).sort(),
           'layerData should have 4 keys'
         );
-        t.deepEqual(
-          layerData.data,
-          expectedLayerData.data,
-          'should format correct grid layerData'
-        );
+        t.deepEqual(layerData.data, expectedLayerData.data, 'should format correct grid layerData');
         // test getPosition
         t.deepEqual(
           layerData.getPosition(layerData.data[0]),
@@ -148,11 +135,7 @@ test('#GridLayer -> formatLayerData', t => {
           '_filterData should filter data correctly'
         );
         // test layer.meta
-        t.deepEqual(
-          layer.meta,
-          pointLayerMeta,
-          'should format correct grid layer meta'
-        );
+        t.deepEqual(layer.meta, pointLayerMeta, 'should format correct grid layer meta');
       }
     },
     {
@@ -298,11 +281,7 @@ test('#GridLayer -> renderLayer', t => {
         };
 
         Object.keys(expectedProps).forEach(key => {
-          t.deepEqual(
-            props[key],
-            expectedProps[key],
-            `should have correct props.${key}`
-          );
+          t.deepEqual(props[key], expectedProps[key], `should have correct props.${key}`);
         });
 
         const expectedGridCellData = [
@@ -320,7 +299,8 @@ test('#GridLayer -> renderLayer', t => {
                 data: preparedDataset.allData[1]
               }
             ],
-            lonIdx: 253, latIdx: 711,
+            lonIdx: 253,
+            latIdx: 711,
             filteredPoints: []
           },
           {
@@ -337,7 +317,8 @@ test('#GridLayer -> renderLayer', t => {
                 data: preparedDataset.allData[5]
               }
             ],
-            lonIdx: 255, latIdx: 709,
+            lonIdx: 255,
+            latIdx: 709,
             filteredPoints: [
               {
                 index: 4,
@@ -359,7 +340,8 @@ test('#GridLayer -> renderLayer', t => {
                 data: preparedDataset.allData[7]
               }
             ],
-            lonIdx: 254, latIdx: 711,
+            lonIdx: 254,
+            latIdx: 711,
             filteredPoints: [
               {
                 index: 7,
@@ -389,7 +371,7 @@ test('#GridLayer -> renderLayer', t => {
             expectedGridCellData[i],
             `should pass correct data:${i} to grid cell layer`
           );
-        })
+        });
         t.deepEqual(
           spyLayerCallbacks.args[0][0],
           [1, 2],
@@ -397,15 +379,13 @@ test('#GridLayer -> renderLayer', t => {
         );
 
         t.deepEqual(
-          cpuGridLayer.state.aggregatorState.dimensions.fillColor.sortedBins
-            .sortedBins,
+          cpuGridLayer.state.aggregatorState.dimensions.fillColor.sortedBins.sortedBins,
           expectedColorBins,
           'should create correct color bins'
         );
 
         t.deepEqual(
-          cpuGridLayer.state.aggregatorState.dimensions.elevation.sortedBins
-            .sortedBins,
+          cpuGridLayer.state.aggregatorState.dimensions.elevation.sortedBins.sortedBins,
           expectedElevationBins,
           'should create correct elevation bins'
         );

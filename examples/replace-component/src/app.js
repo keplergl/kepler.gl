@@ -90,7 +90,4 @@ class App extends Component {
 const mapStateToProps = state => state;
 const dispatchToProps = dispatch => ({dispatch});
 
-export default connect(
-  mapStateToProps,
-  dispatchToProps
-)(App);
+export default connect(mapStateToProps, dispatchToProps)(App);

@@ -142,10 +142,7 @@ export function ContainerFactory(KeplerGl) {
 
   const mapStateToProps = (state, props) => ({state, ...props});
   const dispatchToProps = dispatch => ({dispatch});
-  return connect(
-    mapStateToProps,
-    dispatchToProps
-  )(Container);
+  return connect(mapStateToProps, dispatchToProps)(Container);
 }
 
 // entryPoint

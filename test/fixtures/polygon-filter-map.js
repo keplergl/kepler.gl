@@ -25,11 +25,7 @@ export const polygonFilterMap = {
       data: {
         id: '9bluyz5s2',
         label: 'kepler-gl_new dataset (3).csv',
-        color: [
-          143,
-          47,
-          191
-        ],
+        color: [143, 47, 191],
         allData: [
           [
             '1967/08/01 10:33:50.47',
@@ -255,13 +251,9 @@ export const polygonFilterMap = {
       visState: {
         filters: [
           {
-            dataId: [
-              '9bluyz5s2'
-            ],
+            dataId: ['9bluyz5s2'],
             id: '1545pmr0s',
-            name: [
-              'Point'
-            ],
+            name: ['Point'],
             type: 'polygon',
             value: {
               type: 'Feature',
@@ -269,26 +261,11 @@ export const polygonFilterMap = {
                 type: 'Polygon',
                 coordinates: [
                   [
-                    [
-                      -121.20301917819414,
-                      36.19054006644038
-                    ],
-                    [
-                      -121.20301917819414,
-                      36.05580399351024
-                    ],
-                    [
-                      -120.91706956830599,
-                      36.05580399351024
-                    ],
-                    [
-                      -120.91706956830599,
-                      36.19054006644038
-                    ],
-                    [
-                      -121.20301917819414,
-                      36.19054006644038
-                    ]
+                    [-121.20301917819414, 36.19054006644038],
+                    [-121.20301917819414, 36.05580399351024],
+                    [-120.91706956830599, 36.05580399351024],
+                    [-120.91706956830599, 36.19054006644038],
+                    [-121.20301917819414, 36.19054006644038]
                   ]
                 ]
               },
@@ -308,9 +285,7 @@ export const polygonFilterMap = {
             plotType: 'histogram',
             yAxis: null,
             fixedDomain: true,
-            layerId: [
-              'i1w1f0m'
-            ]
+            layerId: ['i1w1f0m']
           }
         ],
         layers: [
@@ -320,11 +295,7 @@ export const polygonFilterMap = {
             config: {
               dataId: '9bluyz5s2',
               label: 'Point',
-              color: [
-                183,
-                136,
-                94
-              ],
+              color: [183, 136, 94],
               columns: {
                 lat: 'Latitude',
                 lng: 'Longitude',
@@ -342,47 +313,23 @@ export const polygonFilterMap = {
                   name: 'Global Warming',
                   type: 'sequential',
                   category: 'Uber',
-                  colors: [
-                    '#5A1846',
-                    '#900C3F',
-                    '#C70039',
-                    '#E3611C',
-                    '#F1920E',
-                    '#FFC300'
-                  ]
+                  colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
                 },
                 strokeColorRange: {
                   name: 'Global Warming',
                   type: 'sequential',
                   category: 'Uber',
-                  colors: [
-                    '#5A1846',
-                    '#900C3F',
-                    '#C70039',
-                    '#E3611C',
-                    '#F1920E',
-                    '#FFC300'
-                  ]
+                  colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
                 },
-                radiusRange: [
-                  0,
-                  50
-                ],
+                radiusRange: [0, 50],
                 filled: true
               },
               textLabel: [
                 {
                   field: null,
-                  color: [
-                    255,
-                    255,
-                    255
-                  ],
+                  color: [255, 255, 255],
                   size: 18,
-                  offset: [
-                    0,
-                    0
-                  ],
+                  offset: [0, 0],
                   anchor: 'start',
                   alignment: 'center'
                 }
@@ -401,13 +348,7 @@ export const polygonFilterMap = {
         interactionConfig: {
           tooltip: {
             fieldsToShow: {
-              '9bluyz5s2': [
-                'DateTime',
-                'Latitude',
-                'Longitude',
-                'Depth',
-                'Magnitude'
-              ]
+              '9bluyz5s2': ['DateTime', 'Latitude', 'Longitude', 'Depth', 'Magnitude']
             },
             enabled: true
           },
@@ -444,11 +385,7 @@ export const polygonFilterMap = {
           land: true,
           '3d building': false
         },
-        threeDBuildingColor: [
-          9.665468314072013,
-          17.18305478057247,
-          31.1442867897876
-        ],
+        threeDBuildingColor: [9.665468314072013, 17.18305478057247, 31.1442867897876],
         mapStyles: {}
       }
     }

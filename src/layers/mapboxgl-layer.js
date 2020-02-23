@@ -65,9 +65,8 @@ class MapboxLayerGL extends Layer {
     (datasetId, columns) => `${datasetId}-${columns}`
   );
 
-  filterSelector = createSelector(
-    this.gpuFilterSelector,
-    gpuFilter => gpuFilterToMapboxFilter(gpuFilter)
+  filterSelector = createSelector(this.gpuFilterSelector, gpuFilter =>
+    gpuFilterToMapboxFilter(gpuFilter)
   );
 
   isValidFilter(filter) {

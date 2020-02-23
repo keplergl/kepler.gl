@@ -35,17 +35,11 @@ test('Components -> SaveMapModal.mount', t => {
   // mount
   t.doesNotThrow(() => {
     mountWithTheme(
-      <SaveMapModal
-        onUpdateSetting={onUpdateSetting}
-        onSetCloudProvider={onSetCloudProvider}
-      />
+      <SaveMapModal onUpdateSetting={onUpdateSetting} onSetCloudProvider={onSetCloudProvider} />
     );
   }, 'Show not fail without props');
   t.ok(onUpdateSetting.calledOnce, 'should call onUpdateSetting when mount');
-  t.ok(
-    onSetCloudProvider.notCalled,
-    'should not call onSetCloudProvider when mount'
-  );
+  t.ok(onSetCloudProvider.notCalled, 'should not call onSetCloudProvider when mount');
 
   t.end();
 });
@@ -67,10 +61,7 @@ test('Components -> SaveMapModal.mount with providers', t => {
       />
     );
   }, 'Show not fail mount props');
-  t.ok(
-    onSetCloudProvider.calledWithExactly('taro'),
-    'should set default provider when mount'
-  );
+  t.ok(onSetCloudProvider.calledWithExactly('taro'), 'should set default provider when mount');
 
   const wrapper = mountWithTheme(
     <SaveMapModal
@@ -80,10 +71,7 @@ test('Components -> SaveMapModal.mount with providers', t => {
       currentProvider="hello"
     />
   );
-  t.ok(
-    onSetCloudProvider.calledOnce,
-    'should not set default provider if it is already set'
-  );
+  t.ok(onSetCloudProvider.calledOnce, 'should not set default provider if it is already set');
 
   t.ok(wrapper.find(CloudTile).length === 1, 'should render 1 cloud provider');
   t.ok(wrapper.find(ImagePreview).length === 1, 'should render 1 ImagePreview');
@@ -109,10 +97,7 @@ test('Components -> SaveMapModal on change input', t => {
 
   wrapper.find('textarea#map-description').simulate('change', eventObj);
 
-  t.ok(
-    onSetMapInfo.calledWithExactly({description: 'taro'}),
-    'should set map description'
-  );
+  t.ok(onSetMapInfo.calledWithExactly({description: 'taro'}), 'should set map description');
 
   t.end();
 });
@@ -140,20 +125,27 @@ test('Components -> SaveMapModal on click provider', t => {
     wrapper = mountWithTheme(
       <SaveMapModal
         cloudProviders={[mockProvider, mockProvider2]}
-        currentProvider='taro'
+        currentProvider="taro"
         onUpdateSetting={() => {}}
-        onSetCloudProvider={onSetCloudProvider} />
+        onSetCloudProvider={onSetCloudProvider}
+      />
     );
   }, 'Show not fail mount props');
 
   t.equal(wrapper.find('.provider-tile__wrapper').length, 2, 'should render 1 provider tile');
 
   // click taro to select
-  wrapper.find('.provider-tile__wrapper').at(0).simulate('click');
+  wrapper
+    .find('.provider-tile__wrapper')
+    .at(0)
+    .simulate('click');
   t.ok(onSetCloudProvider.calledWithExactly('taro'), 'should call onSetCloudProvider with taro');
 
   // click blue to login
-  wrapper.find('.provider-tile__wrapper').at(1).simulate('click');
+  wrapper
+    .find('.provider-tile__wrapper')
+    .at(1)
+    .simulate('click');
   t.ok(login.calledOnce, 'should call login');
 
   // call onSuccess after login to set current provider
@@ -172,4 +164,3 @@ test('Components -> SaveMapModal on click provider', t => {
 
   t.end();
 });
-
