@@ -508,13 +508,13 @@ const switchButton = css`
 const inputSwitch = css`
   user-select: none;
   cursor: pointer;
-  line-height: 0;
+  line-height: 16px;
   font-weight: 500;
   font-size: 12px;
   color: ${props => props.theme.labelColor};
   position: relative;
   display: inline-block;
-  padding-top: ${props => props.theme.switchHeight / 2}px;
+  padding-top: 0;
   padding-right: 0;
   padding-bottom: 0;
   padding-left: ${props => props.theme.switchWidth}px;

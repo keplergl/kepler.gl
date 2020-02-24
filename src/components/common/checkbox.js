@@ -28,8 +28,6 @@ function noop() {}
 
 const StyledSwitchInput = styled.label`
   ${props => (props.secondary ? props.theme.secondarySwitch : props.theme.inputSwitch)};
-  line-height: 16px;
-  padding-top: 0;
 `;
 
 const StyledCheckboxInput = styled.label`
