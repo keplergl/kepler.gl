@@ -131,17 +131,17 @@ export const config = {
   config: {
     visState: {
       layers: [
-        {
-          type: 'heatmap',
-          config: {
-            dataId,
-            columns: {
-              lat: 'pickup_latitude',
-              lng: 'pickup_longitude'
-            },
-            isVisible: true
-          }
-        },
+        // {
+        //   type: 'heatmap',
+        //   config: {
+        //     dataId,
+        //     columns: {
+        //       lat: 'pickup_latitude',
+        //       lng: 'pickup_longitude'
+        //     },
+        //     isVisible: true
+        //   }
+        // },
         {
           type: 'point',
           config: {
@@ -187,53 +187,53 @@ export const config = {
             }
           }
         },
-        {
-          type: 'arc',
-          config: {
-            dataId,
-            columns: {
-              lat0: 'pickup_latitude',
-              lng0: 'pickup_longitude',
-              lat1: 'dropoff_latitude',
-              lng1: 'dropoff_longitude'
-            },
-            isVisible: true
-          }
-        },
-        {
-          id: '38f7j6',
-          type: 'hexagon',
-          config: {
-            dataId,
-            label: 'new layer',
-            columns: {
-              lat: 'pickup_latitude',
-              lng: 'pickup_longitude'
-            },
-            isVisible: true,
-            visConfig: {
-              opacity: 0.76,
-              worldUnitSize: 0.3,
-              colorRange: {
-                name: 'ColorBrewer PuOr-10',
-                type: 'diverging',
-                category: 'ColorBrewer',
-                colors: [
-                  '#7f3b08',
-                  '#b35806',
-                  '#e08214',
-                  '#fdb863',
-                  '#fee0b6',
-                  '#d8daeb',
-                  '#b2abd2',
-                  '#8073ac',
-                  '#542788',
-                  '#2d004b'
-                ]
-              }
-            }
-          }
-        }
+        // {
+        //   type: 'arc',
+        //   config: {
+        //     dataId,
+        //     columns: {
+        //       lat0: 'pickup_latitude',
+        //       lng0: 'pickup_longitude',
+        //       lat1: 'dropoff_latitude',
+        //       lng1: 'dropoff_longitude'
+        //     },
+        //     isVisible: true
+        //   }
+        // },
+        // {
+        //   id: '38f7j6',
+        //   type: 'hexagon',
+        //   config: {
+        //     dataId,
+        //     label: 'new layer',
+        //     columns: {
+        //       lat: 'pickup_latitude',
+        //       lng: 'pickup_longitude'
+        //     },
+        //     isVisible: true,
+        //     visConfig: {
+        //       opacity: 0.76,
+        //       worldUnitSize: 0.3,
+        //       colorRange: {
+        //         name: 'ColorBrewer PuOr-10',
+        //         type: 'diverging',
+        //         category: 'ColorBrewer',
+        //         colors: [
+        //           '#7f3b08',
+        //           '#b35806',
+        //           '#e08214',
+        //           '#fdb863',
+        //           '#fee0b6',
+        //           '#d8daeb',
+        //           '#b2abd2',
+        //           '#8073ac',
+        //           '#542788',
+        //           '#2d004b'
+        //         ]
+        //       }
+        //     }
+        //   }
+        // }
       ],
       filters: [
         {

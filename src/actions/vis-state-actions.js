@@ -622,6 +622,12 @@ export function toggleEditorVisibility() {
   };
 }
 
+export function onWebGLInitialized(gl) {
+  return {
+    type: ActionTypes.ON_WEBGL_INITIALIZED,
+    gl
+  };
+}
 /**
  * This declaration is needed to group actions in docs
  */

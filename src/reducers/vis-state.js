@@ -111,7 +111,9 @@ const actionHandler = {
 
   [ActionTypes.TOGGLE_FILTER_FEATURE]: visStateUpdaters.toggleFilterFeatureUpdater,
 
-  [ActionTypes.APPLY_CPU_FILTER]: visStateUpdaters.applyCPUFilterUpdater
+  [ActionTypes.APPLY_CPU_FILTER]: visStateUpdaters.applyCPUFilterUpdater,
+
+  [ActionTypes.ON_WEBGL_INITIALIZED]: visStateUpdaters.onWebGLInitializedUpdater
 };
 
 // construct vis-state reducer

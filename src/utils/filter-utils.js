@@ -29,6 +29,9 @@ import * as ScaleUtils from './data-scale-utils';
 import {LAYER_TYPES} from '../constants';
 import {generateHashId, set, toArray} from './utils';
 import {getGpuFilterProps, getDatasetFieldIndexForFilter} from './gpu-filter-utils';
+import {GPUPointInPolygon} from '@luma.gl/experimental';
+import {Buffer} from '@luma.gl/webgl';
+import {isWebGL, isWebGL2} from '@luma.gl/core';
 
 export const TimestampStepMap = [
   {max: 1, step: 0.05},
@@ -371,6 +374,53 @@ export function getFieldDomain(allData, field) {
   }
 }
 
+// eslint-disable-next-line max-statements
+export function gpuPolygonFilter(gl2, allData, layer, filter) {
+  let gpuPointInPolygon = filter.gpuPointInPolygon;
+  let filterArgs = filter.filterArgs;
+
+  if (!gpuPointInPolygon) {
+    gpuPointInPolygon = new GPUPointInPolygon(gl2);
+  }
+
+  const {columns} = layer.config;
+  if (columns !== filter.columns) {
+    console.log('update filterArgs')
+    const getPosition = layer.getPositionAccessor();
+    const points = allData.map(d => getPosition({data: d}));
+    const count = points.length;
+
+    const flatArray = new Float32Array(count * 2);
+    for (let i = 0; i < count; i++) {
+      flatArray[i * 2] = points[i][0];
+      flatArray[i * 2 + 1] = points[i][1];
+    }
+
+    const positionBuffer = new Buffer(gl2, flatArray);
+    // Allocate result buffer with enough space (2 floats for each point)
+    const filterValueIndexBuffer = new Buffer(gl2, count * 2 * 4);
+    filterArgs = {positionBuffer, filterValueIndexBuffer, count};
+  }
+
+  const polygons = toArray(filter.value).map(p => p.geometry.coordinates);
+
+  gpuPointInPolygon.update({polygons});
+  gpuPointInPolygon.filter(filterArgs);
+  const results = filterArgs.filterValueIndexBuffer.getData();
+  const filteredIndex = [];
+  for (let j = 0; j < filterArgs.count; j++) {
+    if (results[j * 2] > -1) {
+      filteredIndex.push(results[j * 2 + 1]);
+    }
+  }
+
+  // save it in filter
+  filter.gpuPointInPolygon = gpuPointInPolygon;
+  filter.columns = columns;
+  filter.filterArgs = filterArgs;
+
+  return filteredIndex;
+}
 export const getPolygonFilterFunctor = (layer, filter) => {
   const getPosition = layer.getPositionAccessor();
 
@@ -387,10 +437,7 @@ export const getPolygonFilterFunctor = (layer, filter) => {
         const pos = getPosition({data});
         return (
           pos.every(Number.isFinite) &&
-          [
-            [pos[0], pos[1]],
-            [pos[3], pos[4]]
-          ].every(point => isInPolygon(point, filter.value))
+          [[pos[0], pos[1]], [pos[3], pos[4]]].every(point => isInPolygon(point, filter.value))
         );
       };
     default:
@@ -405,7 +452,7 @@ export const getPolygonFilterFunctor = (layer, filter) => {
  * @param layers list of layers to filter upon
  * @return {*}
  */
-export function getFilterFunction(field, dataId, filter, layers) {
+export function getFilterFunction(field, dataId, filter, layers, gl) {
   // field could be null
   const valueAccessor = data => (field ? data[field.tableFieldIndex - 1] : null);
 
@@ -426,13 +473,13 @@ export function getFilterFunction(field, dataId, filter, layers) {
       if (!layers || !layers.length) {
         return () => true;
       }
+      return allData => gpuPolygonFilter(gl, allData, layers[0], filter);
+      // const layerFilterFunctions = filter.layerId
+      //   .map(id => layers.find(l => l.id === id))
+      //   .filter(l => l && l.config.dataId === dataId)
+      //   .map(layer => getPolygonFilterFunctor(layer, filter));
 
-      const layerFilterFunctions = filter.layerId
-        .map(id => layers.find(l => l.id === id))
-        .filter(l => l && l.config.dataId === dataId)
-        .map(layer => getPolygonFilterFunctor(layer, filter));
-
-      return data => layerFilterFunctions.every(filterFunc => filterFunc(data));
+      // return allData => layerFilterFunctions.every(filterFunc => filterFunc(allData));
     default:
       return () => true;
   }
@@ -454,7 +501,7 @@ export function updateFilterDataId(dataId) {
  * @returns {Array<Number>} dataset.filteredIndex
  * @returns {Array<Number>} dataset.filteredIndexForDomain
  */
-export function filterDataset(dataset, filters, layers, opt = {}) {
+export function filterDataset(dataset, filters, layers, gl, opt = {}) {
   const {allData, id: dataId, filterRecord: oldFilterRecord, fields} = dataset;
 
   // if there is no filters
@@ -477,12 +524,13 @@ export function filterDataset(dataset, filters, layers, opt = {}) {
   // filteredIndex used to calculate layer data
   // filteredIndexForDomain used to calculate layer Domain
   const shouldCalDomain = Boolean(changedFilters.dynamicDomain);
-  const shouldCalIndex = Boolean(changedFilters.cpu);
+  const shouldCalIndex = Boolean(changedFilters.cpu || changedFilters.buffer);
 
   let filterResult = {};
   if (shouldCalDomain || shouldCalIndex) {
     const dynamicDomainFilters = shouldCalDomain ? filterRecord.dynamicDomain : null;
     const cpuFilters = shouldCalIndex ? filterRecord.cpu : null;
+    const bufferFilters = filterRecord.buffer;
 
     const filterFuncs = filters.reduce((acc, filter) => {
       const fieldIndex = getDatasetFieldIndexForFilter(dataset.id, filter);
@@ -490,12 +538,12 @@ export function filterDataset(dataset, filters, layers, opt = {}) {
 
       return {
         ...acc,
-        [filter.id]: getFilterFunction(field, dataset.id, filter, layers)
+        [filter.id]: getFilterFunction(field, dataset.id, filter, layers, gl)
       };
     }, {});
 
     filterResult = filterDataByFilterTypes(
-      {dynamicDomainFilters, cpuFilters, filterFuncs},
+      {dynamicDomainFilters, cpuFilters, bufferFilters, filterFuncs},
       allData
     );
   }
@@ -515,11 +563,22 @@ export function filterDataset(dataset, filters, layers, opt = {}) {
  * @param {Object} filters.filterFuncs
  * @returns {{filteredIndex: Array, filteredIndexForDomain: Array}} filteredIndex and filteredIndexForDomain
  */
-function filterDataByFilterTypes({dynamicDomainFilters, cpuFilters, filterFuncs}, allData) {
+function filterDataByFilterTypes(
+  {dynamicDomainFilters, cpuFilters, bufferFilters, filterFuncs},
+  allData
+) {
+  console.time('filter Polygon')
   const result = {
     ...(dynamicDomainFilters ? {filteredIndexForDomain: []} : {}),
     ...(cpuFilters ? {filteredIndex: []} : {})
   };
+
+  if (bufferFilters.length) {
+    result.filteredIndex = filterFuncs[bufferFilters[0].id](allData);
+    console.timeEnd('filter Polygon')
+
+    return result;
+  }
 
   for (let i = 0; i < allData.length; i++) {
     const d = allData[i];
@@ -554,17 +613,22 @@ export function getFilterRecord(dataId, filters, opt = {}) {
     dynamicDomain: [],
     fixedDomain: [],
     cpu: [],
-    gpu: []
+    gpu: [],
+    buffer: []
   };
 
   filters.forEach(f => {
     if (isValidFilterValue(f.type, f.value) && toArray(f.dataId).includes(dataId)) {
-      (f.fixedDomain || opt.ignoreDomain
-        ? filterRecord.fixedDomain
-        : filterRecord.dynamicDomain
-      ).push(f);
+      if (f.type === 'polygon') {
+        filterRecord.buffer.push(f);
+      } else {
+        (f.fixedDomain || opt.ignoreDomain
+          ? filterRecord.fixedDomain
+          : filterRecord.dynamicDomain
+        ).push(f);
 
-      (f.gpu && !opt.cpuOnly ? filterRecord.gpu : filterRecord.cpu).push(f);
+        (f.gpu && !opt.cpuOnly ? filterRecord.gpu : filterRecord.cpu).push(f);
+      }
     }
   });
 
@@ -900,7 +964,7 @@ export function getDefaultFilterPlotType(filter) {
  * @param filters all filters to be applied to datasets
  * @return {{[datasetId: string]: Object}} datasets - new updated datasets
  */
-export function applyFiltersToDatasets(datasetIds, datasets, filters, layers) {
+export function applyFiltersToDatasets(datasetIds, datasets, filters, layers, gl) {
   const dataIds = toArray(datasetIds);
   return dataIds.reduce((acc, dataId) => {
     const layersToFilter = (layers || []).filter(l => l.config.dataId === dataId);
@@ -908,7 +972,7 @@ export function applyFiltersToDatasets(datasetIds, datasets, filters, layers) {
 
     return {
       ...acc,
-      [dataId]: filterDataset(datasets[dataId], appliedFilters, layersToFilter)
+      [dataId]: filterDataset(datasets[dataId], appliedFilters, layersToFilter, gl)
     };
   }, datasets);
 }

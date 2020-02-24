@@ -213,6 +213,10 @@ export default function MapContainerFactory(MapPopover, MapControl) {
       setLayerBlending(gl, this.props.layerBlending);
     };
 
+    _onWebGLInitialized = gl => {
+      this.props.visStateActions.onWebGLInitialized(gl);
+    };
+
     /* component render functions */
 
     /* eslint-disable complexity */
@@ -374,6 +378,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
           onBeforeRender={this._onBeforeRender}
           onHover={visStateActions.onLayerHover}
           onClick={visStateActions.onLayerClick}
+          onWebGLInitialized={this._onWebGLInitialized}
           ref={comp => {
             if (comp && comp.deck && !this._deck) {
               this._deck = comp.deck;

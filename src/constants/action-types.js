@@ -97,6 +97,7 @@ const ActionTypes = keyMirror({
   TOGGLE_FEATURE_LAYER: null,
   APPLY_CPU_FILTER: null,
   SET_MAP_INFO: null,
+  ON_WEBGL_INITIALIZED: null,
 
   // mapState
   UPDATE_MAP: null,

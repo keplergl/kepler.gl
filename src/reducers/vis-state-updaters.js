@@ -24,6 +24,8 @@ import cloneDeep from 'lodash.clonedeep';
 import uniq from 'lodash.uniq';
 import get from 'lodash.get';
 import xor from 'lodash.xor';
+import {isWebGL, isWebGL2} from '@luma.gl/core';
+import assert from 'assert';
 
 // Tasks
 import {LOAD_FILE_TASK} from 'tasks/tasks';
@@ -567,12 +569,7 @@ export function setFilterUpdater(state, action) {
 
       const layerDataIds = uniq(
         layerIdDifference
-          .map(lid =>
-            get(
-              state.layers.find(l => l.id === lid),
-              ['config', 'dataId']
-            )
-          )
+          .map(lid => get(state.layers.find(l => l.id === lid), ['config', 'dataId']))
           .filter(d => d)
       );
 
@@ -582,12 +579,7 @@ export function setFilterUpdater(state, action) {
       // Update newFilter dataIds
       const newDataIds = uniq(
         newFilter.layerId
-          .map(lid =>
-            get(
-              state.layers.find(l => l.id === lid),
-              ['config', 'dataId']
-            )
-          )
+          .map(lid => get(state.layers.find(l => l.id === lid), ['config', 'dataId']))
           .filter(d => d)
       );
 
@@ -623,7 +615,8 @@ export function setFilterUpdater(state, action) {
     datasetIdsToFilter,
     newState.datasets,
     newState.filters,
-    newState.layers
+    newState.layers,
+    newState.gl
   );
 
   newState = set(['datasets'], filteredDatasets, newState);
@@ -1015,6 +1008,7 @@ export const showDatasetTableUpdater = (state, action) => {
 export const resetMapConfigUpdater = state => ({
   ...INITIAL_VIS_STATE,
   ...state.initialState,
+  gl: state.gl,
   initialState: state.initialState
 });
 
@@ -1694,6 +1688,16 @@ export function setPolygonFilterLayerUpdater(state, payload) {
   }
 
   return setFilterUpdater(newState, {idx: filterIdx, prop: 'layerId', value: newLayerId});
+}
+
+export function onWebGLInitializedUpdater(state, {gl}) {
+  assert(isWebGL(gl));
+  assert(isWebGL2(gl));
+
+  return {
+    ...state,
+    gl
+  };
 }
 
 /**
