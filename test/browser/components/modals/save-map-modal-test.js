@@ -26,9 +26,12 @@ import SaveMapModalFactory from 'components/modals/save-map-modal';
 
 import CloudTile from 'components/modals/cloud-tile';
 import ImagePreview from 'components/common/image-preview';
+import MockProvider from 'test/helpers/mock-provider';
+
+const mockProvider = new MockProvider();
 const SaveMapModal = SaveMapModalFactory();
 
-test.only('Components -> SaveMapModal.mount', t => {
+test('Components -> SaveMapModal.mount', t => {
   const onUpdateImageSetting = sinon.spy();
   const onSetCloudProvider = sinon.spy();
 
@@ -38,10 +41,17 @@ test.only('Components -> SaveMapModal.mount', t => {
       <SaveMapModal
         onUpdateImageSetting={onUpdateImageSetting}
         onSetCloudProvider={onSetCloudProvider}
+        cloudProviders={[mockProvider]}
+        currentProvider="taro"
       />
     );
   }, 'Show not fail without props');
   t.ok(onUpdateImageSetting.calledOnce, 'should call onUpdateImageSetting when mount');
+  t.deepEqual(
+    onUpdateImageSetting.args,
+    [[{mapW: 100, mapH: 60, ratio: 'CUSTOM', legend: false}]],
+    'should call onUpdateImageSetting when mount'
+  );
   t.ok(onSetCloudProvider.notCalled, 'should not call onSetCloudProvider when mount');
 
   t.end();
@@ -50,10 +60,6 @@ test.only('Components -> SaveMapModal.mount', t => {
 test('Components -> SaveMapModal.mount with providers', t => {
   const onSetCloudProvider = sinon.spy();
 
-  const mockProvider = {
-    getAccessToken: () => true,
-    name: 'taro'
-  };
   // mount
   t.doesNotThrow(() => {
     mountWithTheme(
@@ -109,12 +115,7 @@ test('Components -> SaveMapModal on click provider', t => {
   const onSetCloudProvider = sinon.spy();
   const login = sinon.spy();
   const logout = sinon.spy();
-
-  const mockProvider = {
-    getAccessToken: () => true,
-    name: 'taro',
-    logout
-  };
+  mockProvider.logout = logout;
 
   const mockProvider2 = {
     getAccessToken: () => false,
@@ -129,8 +130,9 @@ test('Components -> SaveMapModal on click provider', t => {
       <SaveMapModal
         cloudProviders={[mockProvider, mockProvider2]}
         currentProvider="taro"
-        onUpdateSetting={() => {}}
         onSetCloudProvider={onSetCloudProvider}
+        onUpdateSetting={() => {}}
+        onUpdateImageSetting={() => {}}
       />
     );
   }, 'Show not fail mount props');

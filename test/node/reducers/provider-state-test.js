@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import React from 'react';
 import {drainTasksForTesting, succeedTaskInTest, errorTaskInTest} from 'react-palm/tasks';
 import sinon from 'sinon';
 import {default as Console} from 'global/console';
@@ -28,37 +27,7 @@ import ActionTypes from 'constants/action-types';
 import {exportFileToCloud, resetProviderStatus, setCloudProvider} from 'actions/provider-actions';
 import reducer, {providerStateReducerFactory} from 'reducers/provider-state';
 import {INITIAL_PROVIDER_STATE} from 'reducers/provider-state-updaters';
-
-const MockIcon = () => <div id="provider-icon" />;
-
-class MockProvider {
-  constructor() {
-    // All cloud-providers providers must implement the following properties
-    this.name = 'taro';
-    this.displayName = 'Taro';
-    this.icon = MockIcon;
-  }
-  login(onSuccess) {
-    onSuccess();
-    return;
-  }
-  logout(onSuccess) {
-    onSuccess();
-    return;
-  }
-  hasPrivateStorage() {
-    return true;
-  }
-  hasSharingUrl() {
-    return true;
-  }
-  async uploadMap(args) {
-    const promise = new Promise((resolve, reject) => {
-      () => resolve('done!')();
-    });
-    await promise;
-  }
-}
+import MockProvider from 'test/helpers/mock-provider';
 
 test('#providerStateReducer', t => {
   t.deepEqual(

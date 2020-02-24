@@ -100,8 +100,8 @@ export function onExportFileSuccess({response = {}, provider, options}) {
 
 export function onLoadCloudMapSuccess({response, provider, loadParams}) {
   return dispatch => {
-    if (provider.getMapPermalinkFromParams) {
-      const mapUrl = provider.getMapPermalinkFromParams(loadParams, false);
+    if (provider.getMapUrl) {
+      const mapUrl = provider.getMapUrl(false);
       dispatch(push(mapUrl));
     }
   };

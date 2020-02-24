@@ -185,7 +185,7 @@ function SaveMapModalFactory() {
                       onSetCloudProvider={onSetCloudProvider}
                       cloudProvider={cloudProvider}
                       isSelected={cloudProvider.name === currentProvider}
-                      isConnected={Boolean(cloudProvider.getAccessToken())}
+                      isConnected={Boolean(cloudProvider.getAccessToken && cloudProvider.getAccessToken())}
                     />
                   ))}
                 </div>

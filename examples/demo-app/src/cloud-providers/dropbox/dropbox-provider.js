@@ -188,22 +188,6 @@ export default class DropboxProvider {
     }
   }
 
-  // append url after map sharing
-  getMapPermalink(mapLink, fullUrl = true) {
-    return fullUrl
-      ? `${window.location.protocol}//${window.location.host}/${MAP_URI}${mapLink}`
-      : `/${MAP_URI}${mapLink}`;
-  }
-
-  // append map url after load map from storage, this url is not meant
-  // to be directly shared with others
-  _getMapPermalinkFromParams({path}, fullURL = true) {
-    const mapLink = `demo/map/dropbox?path=${path}`;
-    return fullURL
-      ? `${window.location.protocol}//${window.location.host}/${mapLink}`
-      : `/${mapLink}`;
-  }
-
   getUserName() {
     // load user from
     if (window.localStorage) {
@@ -282,12 +266,20 @@ export default class DropboxProvider {
     return this._loadParam;
   }
 
+  /**
+   * Get the share url of current map, this url can be accessed by anyone
+   * @param {boolean} fullUrl
+   */
   getShareUrl(fullUrl = false) {
     return fullUrl
       ? `${window.location.protocol}//${window.location.host}/${MAP_URI}${this._shareUrl}`
       : `/${MAP_URI}${this._shareUrl}`;
   }
 
+  /**
+   * Get the map url of current map, this url can only be accessed by current logged in user
+   * @param {boolean} fullUrl
+   */
   getMapUrl(fullURL = true) {
     const {path} = this._loadParam;
     const mapLink = `demo/map/dropbox?path=${path}`;
@@ -295,6 +287,7 @@ export default class DropboxProvider {
       ? `${window.location.protocol}//${window.location.host}/${mapLink}`
       : `/${mapLink}`;
   }
+
   /**
    * Provides the current dropbox auth token. If stored in localStorage is set onto dropbox handler and returned
    * @returns {any}
@@ -367,11 +360,21 @@ export default class DropboxProvider {
     });
   }
 
-  /**
-   * Generate auth link url to open to be used to handle OAuth2
-   * @param {string} path
-   */
+  // append url after map sharing
+  _getMapPermalink(mapLink, fullUrl = true) {
+    return fullUrl
+      ? `${window.location.protocol}//${window.location.host}/${MAP_URI}${mapLink}`
+      : `/${MAP_URI}${mapLink}`;
+  }
 
+  // append map url after load map from storage, this url is not meant
+  // to be directly shared with others
+  _getMapPermalinkFromParams({path}, fullURL = true) {
+    const mapLink = `demo/map/dropbox?path=${path}`;
+    return fullURL
+      ? `${window.location.protocol}//${window.location.host}/${mapLink}`
+      : `/${mapLink}`;
+  }
   /**
    * It will set access to file to public
    * @param {Object} metadata metadata response from uploading the file
@@ -399,6 +402,10 @@ export default class DropboxProvider {
       );
   }
 
+  /**
+   * Generate auth link url to open to be used to handle OAuth2
+   * @param {string} path
+   */
   _authLink(path = 'auth') {
     return this._dropbox.getAuthenticationUrl(
       `${window.location.origin}/${path}`,

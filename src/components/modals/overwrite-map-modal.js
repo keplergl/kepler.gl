@@ -22,6 +22,7 @@ import React from 'react';
 import styled from 'styled-components';
 import {CenterVerticalFlexbox} from 'components/common/styled-components';
 import {UploadAnimation} from './status-panel';
+import ImageModalContainer from './image-modal-container';
 
 const StyledMsg = styled.div`
   margin-top: 24px;
@@ -48,28 +49,37 @@ const OverwriteMapModalFactory = () => {
     title,
     currentProvider,
     cloudProviders,
-    isProviderLoading
+    isProviderLoading,
+    onUpdateImageSetting,
+    onSetCloudProvider
   }) => {
     const provider = cloudProviders.find(cp => cp.name === currentProvider);
     return (
-      <StyledOverwriteMapModal className="overwrite-map-modal">
-        {isProviderLoading ? (
-          <StyledMsg>
-            <StyledTitle>Saving map...</StyledTitle>
-            <UploadAnimation icon={provider && provider.icon} />
-          </StyledMsg>
-        ) : (
-          <>
-            <StyledIcon>
-              {provider && provider.icon ? <provider.icon height="64px" /> : null}
-            </StyledIcon>
-            <StyledMsg className="overwrite-map-msg">
-              <StyledTitle>{title}</StyledTitle>
-              {` already exists in your ${mapSaved}. Would you like to overwrite it?`}
+      <ImageModalContainer
+        currentProvider={currentProvider}
+        cloudProviders={cloudProviders}
+        onUpdateImageSetting={onUpdateImageSetting}
+        onSetCloudProvider={onSetCloudProvider}
+      >
+        <StyledOverwriteMapModal className="overwrite-map-modal">
+          {isProviderLoading ? (
+            <StyledMsg>
+              <StyledTitle>Saving map...</StyledTitle>
+              <UploadAnimation icon={provider && provider.icon} />
             </StyledMsg>
-          </>
-        )}
-      </StyledOverwriteMapModal>
+          ) : (
+            <>
+              <StyledIcon>
+                {provider && provider.icon ? <provider.icon height="64px" /> : null}
+              </StyledIcon>
+              <StyledMsg className="overwrite-map-msg">
+                <StyledTitle>{title}</StyledTitle>
+                {` already exists in your ${mapSaved}. Would you like to overwrite it?`}
+              </StyledMsg>
+            </>
+          )}
+        </StyledOverwriteMapModal>
+      </ImageModalContainer>
     );
   };
   return OverwriteMapModal;
