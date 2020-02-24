@@ -708,9 +708,9 @@ export function getNumericStepSize(diff) {
   } else if (diff > 1) {
     return 0.001;
   } else if (diff <= 1) {
-    // Try to get at least 100 steps - and keep the step size below that of
+    // Try to get at least 1000 steps - and keep the step size below that of
     // the (diff > 1) case.
-    const x = diff / 100;
+    const x = diff / 1000;
     // Find the exponent and truncate to 10 to the power of that exponent.
     const exponentialForm = x.toExponential();
     const exponent = parseFloat(exponentialForm.split('e')[1]);

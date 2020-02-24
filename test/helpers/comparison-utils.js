@@ -74,7 +74,7 @@ export function cmpFilters(
         t.deepEqual(
           actualFilter[key],
           expectedFilter[key],
-          `${name}.idx:${idx} |  ${actualFilter.type} filter ${actualFilter.name} ${key} should be correct`
+          `${name}.idx:${idx} |  ${actualFilter.type} filter ${actualFilter.name} ${key} should be correct (${actualFilter[key]} vs ${expectedFilter[key]})`
         );
       }
     });

@@ -110,7 +110,7 @@ function testGetNumericFieldStep(rows, allFields, t) {
     {
       name: 'smallest',
       input: getFieldDomain(rows, allFields[0]).step,
-      output: 0.000001
+      output: 0.0000001
     },
     {
       name: 'small',
