@@ -162,7 +162,13 @@ export default function SidePanelFactory(
       this.props.uiStateActions.toggleModal(this.props.mapSaved ? OVERWRITE_MAP_ID : SAVE_MAP_ID);
     };
 
-    _onClickSaveAsToStorage = () => this.props.uiStateActions.toggleModal(SAVE_MAP_ID);
+    _onClickSaveAsToStorage = () => {
+      // add (copy) to file name
+      this.props.visStateActions.setMapInfo({
+        title: `${this.props.mapInfo.title || 'Kepler.gl'} (Copy)`
+      });
+      this.props.uiStateActions.toggleModal(SAVE_MAP_ID);
+    };
 
     _onClickShareMap = () => this.props.uiStateActions.toggleModal(SHARE_MAP_ID);
 

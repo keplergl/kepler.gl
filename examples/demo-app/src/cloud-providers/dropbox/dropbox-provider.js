@@ -151,6 +151,7 @@ export default class DropboxProvider {
       format: 'keplergl'
     };
 
+    this._loadParam = loadParams;
     return response;
   }
 
@@ -245,7 +246,7 @@ export default class DropboxProvider {
       path: `${this._path}/${fileName}`,
       contents: JSON.stringify(fileContent),
       // FileWriteMode: Selects what to do if the file already exists.
-      mode: options.overwrite ? 'overwrite' : 'update'
+      mode: options.overwrite ? 'overwrite' : 'add'
     });
 
     // save a thumbnail image

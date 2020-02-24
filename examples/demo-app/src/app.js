@@ -132,7 +132,7 @@ class App extends Component {
     //   window.setTimeout(this._showBanner, 3000);
     // }
     // load sample data
-    // this._loadSampleData();
+    this._loadSampleData();
 
     // Notifications
     // this._loadMockNotifications();
