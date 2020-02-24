@@ -189,11 +189,7 @@ function FileUploadFactory() {
     };
 
     static getDerivedStateFromProps(props, state) {
-      if (
-        state.fileLoading &&
-        props.fileLoading === false &&
-        state.files.length
-      ) {
+      if (state.fileLoading && props.fileLoading === false && state.files.length) {
         return {
           files: [],
           fileLoading: props.fileLoading
@@ -241,11 +237,7 @@ function FileUploadFactory() {
     _renderMessage() {
       const {errorFiles, files} = this.state;
       if (errorFiles.length) {
-        return (
-          <WarningMsg>
-            {`File ${errorFiles.join(', ')} is not supported.`}
-          </WarningMsg>
-        );
+        return <WarningMsg>{`File ${errorFiles.join(', ')} is not supported.`}</WarningMsg>;
       } else if (this.props.fileLoading && files.length) {
         return (
           <StyledMessage className="file-uploader__message">
@@ -272,11 +264,7 @@ function FileUploadFactory() {
 
       return (
         <StyledFileUpload className="file-uploader" ref={this.frame}>
-          <input
-            className="filter-upload__input"
-            type="file"
-            onChange={this._onChange}
-          />
+          <input className="filter-upload__input" type="file" onChange={this._onChange} />
           {FileDrop ? (
             <FileDrop
               frame={this.frame.current || document}
@@ -286,22 +274,14 @@ function FileUploadFactory() {
               className="file-uploader__file-drop"
             >
               <StyledUploadMessage className="file-upload__message">
-                <ReactMarkdown
-                  source={CONFIG_UPLOAD_MESSAGE}
-                  renderers={{link: LinkRenderer}}
-                />
+                <ReactMarkdown source={CONFIG_UPLOAD_MESSAGE} renderers={{link: LinkRenderer}} />
               </StyledUploadMessage>
               <StyledFileDrop dragOver={dragOver}>
                 <div style={{opacity: dragOver ? 0.5 : 1}}>
                   <StyledDragNDropIcon>
                     <StyledFileTypeFow className="file-type-row">
                       {validFileExt.map(ext => (
-                        <FileType
-                          key={ext}
-                          ext={ext}
-                          height="50px"
-                          fontSize="9px"
-                        />
+                        <FileType key={ext} ext={ext} height="50px" fontSize="9px" />
                       ))}
                     </StyledFileTypeFow>
                     <DragNDrop height="44px" />
@@ -312,9 +292,7 @@ function FileUploadFactory() {
                   <StyledDragFileWrapper>
                     <MsgWrapper>{MESSAGE}</MsgWrapper>
                     <span className="file-upload-or">or</span>
-                    <UploadButton onUpload={this._handleFileInput}>
-                      browse your files
-                    </UploadButton>
+                    <UploadButton onUpload={this._handleFileInput}>browse your files</UploadButton>
                   </StyledDragFileWrapper>
                 ) : null}
                 <StyledDisclaimer>{DISCLAIMER}</StyledDisclaimer>

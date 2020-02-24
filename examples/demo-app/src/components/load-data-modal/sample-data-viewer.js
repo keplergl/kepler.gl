@@ -108,7 +108,6 @@ export default class SampleMapGallery extends Component {
     onLoadSample: PropTypes.func.isRequired,
     loadSampleConfigurations: PropTypes.func.isRequired,
     error: PropTypes.object
-
   };
   componentDidMount() {
     if (!this.props.sampleMaps.length) {
@@ -126,11 +125,7 @@ export default class SampleMapGallery extends Component {
           {sampleMaps
             .filter(sp => sp.visible)
             .map(sp => (
-              <SampleMap
-                sample={sp}
-                key={sp.id}
-                onClick={() => onLoadSample(sp)}
-              />
+              <SampleMap sample={sp} key={sp.id} onClick={() => onLoadSample(sp)} />
             ))}
         </StyledSampleGallery>
       </div>

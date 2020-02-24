@@ -77,7 +77,7 @@ SidePanelFactory.deps = [
  *
  * Vertical sidebar containing input components for the rendering layers
  */
-export default function SidePanelFactory (
+export default function SidePanelFactory(
   Sidebar,
   PanelHeader,
   PanelToggle,

@@ -61,9 +61,7 @@ const OverwriteMapModalFactory = () => {
         ) : (
           <>
             <StyledIcon>
-              {provider && provider.icon ? (
-                <provider.icon height="64px" />
-              ) : null}
+              {provider && provider.icon ? <provider.icon height="64px" /> : null}
             </StyledIcon>
             <StyledMsg className="overwrite-map-msg">
               <StyledTitle>{title}</StyledTitle>

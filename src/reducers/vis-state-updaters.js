@@ -826,12 +826,7 @@ export const removeFilterUpdater = (state, action) => {
     ...state.filters.slice(idx + 1, state.filters.length)
   ];
 
-  const filteredDatasets = applyFiltersToDatasets(
-    dataId,
-    state.datasets,
-    newFilters,
-    state.layers
-  );
+  const filteredDatasets = applyFiltersToDatasets(dataId, state.datasets, newFilters, state.layers);
   const newEditor =
     getFilterIdInFeature(state.editor.selectedFeature) === id
       ? {
@@ -1388,8 +1383,7 @@ export const loadFileSuccessUpdater = (state, action) => {
 
   // still more to load
   if (filesToLoad.length) {
-    const fileLoadingProgress =
-      ((totalCount - filesToLoad.length) / totalCount) * 100;
+    const fileLoadingProgress = ((totalCount - filesToLoad.length) / totalCount) * 100;
 
     return withTask(
       {
@@ -1535,11 +1529,7 @@ export function addDefaultTooltips(state, dataset) {
     ...tooltipFields
   };
 
-  return set(
-    ['interactionConfig', 'tooltip', 'config', 'fieldsToShow'],
-    merged,
-    state
-  );
+  return set(['interactionConfig', 'tooltip', 'config', 'fieldsToShow'], merged, state);
 }
 
 /**
@@ -1562,11 +1552,7 @@ export function updateAllLayerDomainData(state, dataId, updatedFilter) {
           ? oldLayer
           : oldLayer.updateLayerDomain(state.datasets, updatedFilter);
 
-      const {layerData, layer} = calculateLayerData(
-        newLayer,
-        state,
-        state.layerData[i]
-      );
+      const {layerData, layer} = calculateLayerData(newLayer, state, state.layerData[i]);
 
       // console.log('LayerData', layerData);
       newLayers.push(layer);
@@ -1656,10 +1642,7 @@ export function setFeaturesUpdater(state, {features = []}) {
       ...state.editor,
       // only save none filter features to editor
       features: features.filter(f => !getFilterIdInFeature(f)),
-      mode:
-        lastFeature && lastFeature.properties.isClosed
-          ? EDITOR_MODES.EDIT
-          : state.editor.mode
+      mode: lastFeature && lastFeature.properties.isClosed ? EDITOR_MODES.EDIT : state.editor.mode
     }
   };
 
@@ -1725,13 +1708,9 @@ export function deleteFeatureUpdater(state, {feature}) {
   };
 
   if (getFilterIdInFeature(feature)) {
-    const filterIdx = newState.filters.findIndex(
-      f => f.id === getFilterIdInFeature(feature)
-    );
+    const filterIdx = newState.filters.findIndex(f => f.id === getFilterIdInFeature(feature));
 
-    return filterIdx > -1
-      ? removeFilterUpdater(newState, {idx: filterIdx})
-      : newState;
+    return filterIdx > -1 ? removeFilterUpdater(newState, {idx: filterIdx}) : newState;
   }
 
   // modify editor object

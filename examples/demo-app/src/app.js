@@ -102,20 +102,19 @@ class App extends Component {
   componentDidMount() {
     // if we pass an id as part of the url
     // we ry to fetch along map configurations
-    const {
-      params: {id, provider} = {},
-      location: {query = {}} = {}
-    } = this.props;
+    const {params: {id, provider} = {}, location: {query = {}} = {}} = this.props;
 
     const cloudProvider = CLOUD_PROVIDERS.find(c => c.name === provider);
     if (provider) {
-      this.props.dispatch(loadCloudMap({
-        loadParams: query,
-        provider: cloudProvider,
-        onSuccess: onLoadCloudMapSuccess
-      }));
+      this.props.dispatch(
+        loadCloudMap({
+          loadParams: query,
+          provider: cloudProvider,
+          onSuccess: onLoadCloudMapSuccess
+        })
+      );
       return;
-  }
+    }
 
     // Load sample using its id
     if (id) {

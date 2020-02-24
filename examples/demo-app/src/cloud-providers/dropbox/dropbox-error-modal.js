@@ -59,13 +59,6 @@ export default class Frame extends Component {
   };
 
   render() {
-    return (
-      <iframe
-        width={`${WIDTH}px`}
-        height={`${HEIGHT}px`}
-        style={style}
-        ref={this.root}
-      />
-    );
+    return <iframe width={`${WIDTH}px`} height={`${HEIGHT}px`} style={style} ref={this.root} />;
   }
 }

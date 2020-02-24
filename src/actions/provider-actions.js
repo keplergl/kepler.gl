@@ -39,20 +39,11 @@ export const ActionTypes = addPrefix(
   })
 );
 
-export const exportFileToCloud = createAction(
-  ActionTypes.EXPORT_FILE_TO_CLOUD,
-  payload => payload
-);
+export const exportFileToCloud = createAction(ActionTypes.EXPORT_FILE_TO_CLOUD, payload => payload);
 
-export const exportFileSuccess = createAction(
-  ActionTypes.EXPORT_FILE_SUCCESS,
-  payload => payload
-);
+export const exportFileSuccess = createAction(ActionTypes.EXPORT_FILE_SUCCESS, payload => payload);
 
-export const exportFileError = createAction(
-  ActionTypes.EXPORT_FILE_ERROR,
-  payload => payload
-);
+export const exportFileError = createAction(ActionTypes.EXPORT_FILE_ERROR, payload => payload);
 
 export const postSaveLoadSuccess = createAction(
   ActionTypes.POST_SAVE_LOAD_SUCCESS,
@@ -61,32 +52,20 @@ export const postSaveLoadSuccess = createAction(
 
 export const resetProviderStatus = createAction(ActionTypes.RESET_PROVIDER_STATUS);
 
-export const setCloudProvider = createAction(
-  ActionTypes.SET_CLOUD_PROVIDER,
-  provider => provider
-);
+export const setCloudProvider = createAction(ActionTypes.SET_CLOUD_PROVIDER, provider => provider);
 
-export const loadCloudMap = createAction(
-  ActionTypes.LOAD_CLOUD_MAP,
-  payload => payload
-);
+export const loadCloudMap = createAction(ActionTypes.LOAD_CLOUD_MAP, payload => payload);
 
 export const loadCloudMapSuccess = createAction(
   ActionTypes.LOAD_CLOUD_MAP_SUCCESS,
   payload => payload
 );
 
-export const getSavedMaps = createAction(
-  ActionTypes.GET_SAVED_MAPS,
-  provider => provider
-);
+export const getSavedMaps = createAction(ActionTypes.GET_SAVED_MAPS, provider => provider);
 
 export const getSavedMapsSuccess = createAction(
   ActionTypes.GET_SAVED_MAPS_SUCCESS,
   payload => payload
 );
 
-export const getSavedMapsError = createAction(
-  ActionTypes.GET_SAVED_MAPS_ERROR,
-  payload => payload
-);
+export const getSavedMapsError = createAction(ActionTypes.GET_SAVED_MAPS_ERROR, payload => payload);

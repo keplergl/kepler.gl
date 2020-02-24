@@ -184,19 +184,12 @@ const VisualizationItem = ({vis, onClick}) => {
   return (
     <StyledVisualizationItem onClick={onClick}>
       {vis.thumbnail ? (
-        <div
-          className="vis_item-thumb"
-          style={{backgroundImage: `url(${vis.thumbnail})`}}
-        >
-          <span className="vis_item-privacy">
-            {vis.privateMap ? 'Private' : 'Public'}
-          </span>
+        <div className="vis_item-thumb" style={{backgroundImage: `url(${vis.thumbnail})`}}>
+          <span className="vis_item-privacy">{vis.privateMap ? 'Private' : 'Public'}</span>
         </div>
       ) : (
         <MapIcon className="vis_item-icon">
-          <span className="vis_item-privacy">
-            {vis.privateMap ? 'Private' : 'Public'}
-          </span>
+          <span className="vis_item-privacy">{vis.privateMap ? 'Private' : 'Public'}</span>
         </MapIcon>
       )}
       <span className="vis_item-title">{vis.title}</span>
@@ -209,11 +202,7 @@ const VisualizationItem = ({vis, onClick}) => {
     </StyledVisualizationItem>
   );
 };
-const ProviderSelect = ({
-  cloudProviders,
-  onSetCloudProvider,
-  currentProvider
-}) =>
+const ProviderSelect = ({cloudProviders, onSetCloudProvider, currentProvider}) =>
   cloudProviders.length ? (
     <StyledProviderSection>
       {cloudProviders.map(provider => (
@@ -242,10 +231,10 @@ function LoadStorageMapFactory() {
       }
     }
 
-    _getProvider = ()=> {
+    _getProvider = () => {
       const {currentProvider, cloudProviders} = this.props;
-      return (cloudProviders || []).find(p => p.name === currentProvider)
-    }
+      return (cloudProviders || []).find(p => p.name === currentProvider);
+    };
 
     _getSavedMaps() {
       const provider = this._getProvider();
@@ -258,7 +247,7 @@ function LoadStorageMapFactory() {
       this.props.onLoadCloudMap({
         loadParams: vis.loadParams,
         provider
-      })
+      });
     }
     render() {
       const {

@@ -164,16 +164,18 @@ export default function PlotContainerFactory(MapContainer) {
         deckGlProps
       };
 
-      const mapContainers = !isSplit
-        ? <MapContainer index={0} {...mapProps} />
-        : splitMaps.map((settings, index) => (
-            <MapContainer
-              key={index}
-              index={index}
-              {...mapProps}
-              mapLayers={splitMaps[index].layers}
-            />
-          ));
+      const mapContainers = !isSplit ? (
+        <MapContainer index={0} {...mapProps} />
+      ) : (
+        splitMaps.map((settings, index) => (
+          <MapContainer
+            key={index}
+            index={index}
+            {...mapProps}
+            mapLayers={splitMaps[index].layers}
+          />
+        ))
+      );
 
       return (
         <StyledPlotContainer

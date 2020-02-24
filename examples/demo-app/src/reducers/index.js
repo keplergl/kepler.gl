@@ -177,7 +177,9 @@ export const loadRemoteResourceError = (state, action) => {
       ...state.keplerGl, // in case you keep multiple instances
       map: {
         ...state.keplerGl.map,
-        uiState: uiStateUpdaters.addNotificationUpdater(state.keplerGl.map.uiState, {payload: errorNote})
+        uiState: uiStateUpdaters.addNotificationUpdater(state.keplerGl.map.uiState, {
+          payload: errorNote
+        })
       }
     }
   };

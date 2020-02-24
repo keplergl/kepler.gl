@@ -21,10 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import {Logout, Login} from 'components/common/icons';
-import {
-  CenterVerticalFlexbox,
-  Button
-} from 'components/common/styled-components';
+import {CenterVerticalFlexbox, Button} from 'components/common/styled-components';
 import LoadingSpinner from 'components/common/loading-spinner';
 
 const StyledTileWrapper = styled.div.attrs({
@@ -144,11 +141,9 @@ const CloudTile = ({
   isReady = true
 }) => {
   const userName =
-    typeof cloudProvider.getUserName === 'function'
-      ? cloudProvider.getUserName()
-      : null;
+    typeof cloudProvider.getUserName === 'function' ? cloudProvider.getUserName() : null;
 
-    const onClickConnect =
+  const onClickConnect =
     typeof onConnect === 'function'
       ? onConnect
       : () => cloudProvider.login(() => onSetCloudProvider(cloudProvider.name));
@@ -163,11 +158,7 @@ const CloudTile = ({
       <StyledTileWrapper onClick={isConnected ? onSelect : onClickConnect} selected={isSelected}>
         <StyledCloudName>{cloudProvider.displayName || cloudProvider.name}</StyledCloudName>
         {cloudProvider.icon ? <cloudProvider.icon height="64px" /> : null}
-        <ActionButton
-          isConnected={isConnected}
-          actionName={actionName}
-          isReady={isReady}
-        />
+        <ActionButton isConnected={isConnected} actionName={actionName} isReady={isReady} />
         {userName && <StyledUserName>{userName}</StyledUserName>}
         {isSelected && <CheckMark />}
       </StyledTileWrapper>
