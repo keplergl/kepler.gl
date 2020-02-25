@@ -14,12 +14,39 @@ Each version should:
   Security to invite users to upgrade in case of vulnerabilities.
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
+## [2.0.0] - Feb 25 2020
+- [Enhancement] Independently customize Geojson layer fill stroke opacity (#966)
+- [Bug] Fix text collision on toggle input (#973)
+- [Chore] upgrade prettier to 1.19 to better handle single line function compositions (#971)
+- [Style] run prettier and lint on tests (#968)
+- [Bug] Select dataset filter bug (#965)
+- [Bug] fix hexagon layer hover crash (#964)
+- [Style] run prettier (#963)
+- [Feat] Allow adding custom side panel tabs
+- [Chore] Fix prettier update config (#767)
+- [Bug] Fixed json map export and added tests (#956)
+- [Bug] Resolve deck luma version conflict (#955)
+- [Feat] upgrade to deck.gl@8 (#889)
+- [Feat] UI for save map to backend storage (#906)
+- [Bug] Fixed geo-filter extra layer issue (#936)
+- [Bug] Fix low projection accuracy in higher zoom level (#946)
+- [Bug] fix hexagon layer hover cause app crash (#933)
+- [Bug] fix heatmap crash when there is no filter (#934)
+- [Bug] should add redux devtools in demo app by default (#932)
+- [Feat] Gpu data filter (#878)
+- [Feat] Global export of image export constants (#923)
+- [Bug] Fix mix int/float column interpreted as sting (#927)
+- [Chore] Correctly update the copy changes to actions.js (#914)
+- [Enhancement] Hide data modal in export map (#920)
+- [Chore] remove action to publish to github package repo (#919)
+- [Feat] Geo-Operations: create and apply polygon filters (#595)
+- [Bug] Fix h3 layer projection error at edge of world map (#918)
 
 ## [1.1.13] - Jan 17 2020
 - [Enhancement] added coordinate to tooltip export configuration (#876)
 - [Bug] mapState not applied in exported map html (#913)
 - [Chore] Update grammar, cleanup whitespace, fix broken link (#912)
-- [Docs] add Upgrade-guide 
+- [Docs] add Upgrade-guide
 - [Docs] Remove hyperlink with "Advanced Usage" (#903)
 - [Docs] add initial cloud provider api (#868)
 - [Enhancement] treat type-analyzer type: NUMBER as strings (#891)
