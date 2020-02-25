@@ -722,10 +722,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
       );
     }
 
-    _render3DLayerConfig({
-      layer,
-      visConfiguratorProps
-    }) {
+    _render3DLayerConfig({layer, visConfiguratorProps}) {
       return (
         <Fragment>
           <LayerConfigGroup label={'3D Model'} collapsible>
@@ -797,19 +794,12 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
                 channel={layer.visualChannels.color}
                 {...layerChannelConfigProps}
               />
-              <VisConfigSlider
-                {...LAYER_VIS_CONFIGS.opacity}
-                {...visConfiguratorProps}
-              />
+              <VisConfigSlider {...LAYER_VIS_CONFIGS.opacity} {...visConfiguratorProps} />
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
 
           {/* height */}
-          <LayerConfigGroup
-            {...LAYER_VIS_CONFIGS.enable3d}
-            {...visConfiguratorProps}
-            collapsible
-          >
+          <LayerConfigGroup {...LAYER_VIS_CONFIGS.enable3d} {...visConfiguratorProps} collapsible>
             <VisConfigSlider
               {...LAYER_VIS_CONFIGS.elevationRange}
               {...visConfiguratorProps}

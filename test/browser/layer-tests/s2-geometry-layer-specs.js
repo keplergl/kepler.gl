@@ -19,40 +19,39 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {
-  testCreateCases,
-  testFormatLayerDataCases
-} from 'test/helpers/layer-utils';
+import {testCreateCases, testFormatLayerDataCases} from 'test/helpers/layer-utils';
 import {getGpuFilterProps} from 'utils/gpu-filter-utils';
 import {data} from 'test/fixtures/s2-geometry';
 import S2GeometryLayer from 'layers/s2-geometry-layer/s2-geometry-layer';
 import {processCsvData} from 'processors/data-processor';
 
 test('#S2Geometry -> constructor', t => {
-  const TEST_CASES = [{
-    props: {
-      dataId: 'smoothie',
-      isVisible: true,
-      label: 'text s2geometry layer'
-    },
-    test: layer => {
-      t.ok(
-        layer.config.dataId === 'smoothie',
-        'S2GeometryLayer dataId should be correct'
-      );
-      t.ok(layer.type === 's2', 'type should be s2');
-      t.deepEqual(Object.keys(layer.visConfigSettings), [
-          'opacity',
-          'colorRange',
-          'filled',
-          'enable3d',
-          'elevationScale',
-          'elevationPercentile',
-          'sizeRange'
-        ],
-        'should provide the correct visConfigSettings properties');
+  const TEST_CASES = [
+    {
+      props: {
+        dataId: 'smoothie',
+        isVisible: true,
+        label: 'text s2geometry layer'
+      },
+      test: layer => {
+        t.ok(layer.config.dataId === 'smoothie', 'S2GeometryLayer dataId should be correct');
+        t.ok(layer.type === 's2', 'type should be s2');
+        t.deepEqual(
+          Object.keys(layer.visConfigSettings),
+          [
+            'opacity',
+            'colorRange',
+            'filled',
+            'enable3d',
+            'elevationScale',
+            'elevationPercentile',
+            'sizeRange'
+          ],
+          'should provide the correct visConfigSettings properties'
+        );
+      }
     }
-  }];
+  ];
 
   testCreateCases(t, S2GeometryLayer, TEST_CASES);
   t.end();
@@ -61,28 +60,35 @@ test('#S2Geometry -> constructor', t => {
 test('#S2Geometry -> formatLayerData', t => {
   const {rows, fields} = processCsvData(data);
 
-  t.deepEqual(fields, [
-    {
-      name: 's2',
-      format: '',
-      tableFieldIndex: 1,
-      type: 'string',
-      analyzerType: 'STRING'
-    },
+  t.deepEqual(
+    fields,
+    [
       {
-      name: 'value',
-      format: '',
-      tableFieldIndex: 2,
-      type: 'real',
-      analyzerType: 'FLOAT'
-    }
-  ], 'Should compute fields correctly');
+        name: 's2',
+        format: '',
+        tableFieldIndex: 1,
+        type: 'string',
+        analyzerType: 'STRING'
+      },
+      {
+        name: 'value',
+        format: '',
+        tableFieldIndex: 2,
+        type: 'real',
+        analyzerType: 'FLOAT'
+      }
+    ],
+    'Should compute fields correctly'
+  );
 
   const filteredIndex = [0, 2, 4];
 
   const dataId = 'puppy';
 
-  const nullRows = [[null, 12345], [null, 3456]];
+  const nullRows = [
+    [null, 12345],
+    [null, 3456]
+  ];
   const rowsWithNull = nullRows.concat(rows);
   const dataset = {
     fields,
@@ -103,11 +109,7 @@ test('#S2Geometry -> formatLayerData', t => {
       config: {
         dataId,
         label: 'S2',
-        color: [
-          255,
-          203,
-          153
-        ],
+        color: [255, 203, 153],
         columns: {
           token: 's2'
         },
@@ -136,16 +138,12 @@ test('#S2Geometry -> formatLayerData', t => {
           getS2Token: () => {}
         };
 
-        t.equal(
-          layerData.getElevation,
-          0,
-          'Elevation should be set to 0'
-        );
+        t.equal(layerData.getElevation, 0, 'Elevation should be set to 0');
 
         // test layer.meta
         t.deepEqual(
           layer.meta,
-          {},
+          {bounds: [-122.39575481805574, 37.79109908631398, -122.3617617587711, 37.81968456730113]},
           'should format correct S2 layer meta'
         );
 
@@ -186,25 +184,13 @@ test('#S2Geometry -> formatLayerData', t => {
           getS2Token: () => {}
         };
 
-        t.ok(
-          typeof layerData.getFillColor === 'function',
-          'should have getFillColor'
-        );
+        t.ok(typeof layerData.getFillColor === 'function', 'should have getFillColor');
 
-        t.ok(
-          typeof layerData.getElevation === 'function',
-          'should have getElevation'
-        );
+        t.ok(typeof layerData.getElevation === 'function', 'should have getElevation');
 
-        t.ok(
-          typeof layerData.getFilterValue === 'function',
-          'should have getFilterValue'
-        );
+        t.ok(typeof layerData.getFilterValue === 'function', 'should have getFilterValue');
 
-        t.ok(
-          typeof layerData.getS2Token === 'function',
-          'should have getS2Token'
-        );
+        t.ok(typeof layerData.getS2Token === 'function', 'should have getS2Token');
 
         t.deepEqual(
           layerData.data,

@@ -18,18 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {S2Layer} from 'deck.gl';
+import {S2Layer} from '@deck.gl/geo-layers';
 import {hexToRgb} from 'utils/color-utils';
-
+import {HIGHLIGH_COLOR_3D} from 'constants/default-settings';
 import Layer from '../base-layer';
 import S2LayerIcon from './s2-layer-icon';
-import {HIGHLIGH_COLOR_3D} from 'constants/default-settings';
+import {getS2Center} from './s2-utils';
 
 export const S2_TOKEN_FIELDS = {
-  token: [
-    's2',
-    's2_token'
-  ]
+  token: ['s2', 's2_token']
 };
 
 export const s2RequiredColumns = ['token'];
@@ -53,7 +50,6 @@ export const S2VisConfigs = {
 };
 
 export default class S2GeometryLayer extends Layer {
-
   constructor(props) {
     super(props);
     this.registerVisConfig(S2VisConfigs);
@@ -65,7 +61,7 @@ export default class S2GeometryLayer extends Layer {
   }
 
   get name() {
-    return 'S2'
+    return 'S2';
   }
 
   get requiredLayerColumns() {
@@ -110,7 +106,14 @@ export default class S2GeometryLayer extends Layer {
   }
 
   updateLayerMeta(allData, getS2Token) {
-    return {};
+    const centroids = allData.reduce((acc, entry) => {
+      const s2Token = getS2Token(entry);
+      return s2Token ? [...acc, getS2Center(s2Token)] : acc;
+    }, []);
+
+    const bounds = this.getPointsBounds(centroids);
+    this.dataToFeature = {centroids};
+    this.updateMeta({bounds});
   }
 
   getDefaultLayerConfig(props = {}) {
@@ -149,8 +152,7 @@ export default class S2GeometryLayer extends Layer {
       );
 
     // height
-    const sScale =
-      sizeField && this.getVisChannelScale(sizeScale, sizeDomain, sizeRange, 0);
+    const sScale = sizeField && this.getVisChannelScale(sizeScale, sizeDomain, sizeRange, 0);
 
     const getFillColor = cScale
       ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
@@ -171,12 +173,7 @@ export default class S2GeometryLayer extends Layer {
   /* eslint-enable complexity */
 
   renderLayer(opts) {
-    const {
-      data,
-      gpuFilter,
-      interactionConfig,
-      mapState
-    } = opts;
+    const {data, gpuFilter, interactionConfig, mapState} = opts;
 
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
     const {config} = this;
@@ -225,7 +222,5 @@ export default class S2GeometryLayer extends Layer {
         elevationUpperPercentile: visConfig.elevationPercentile[1]
       })
     ];
-
   }
-
 }
