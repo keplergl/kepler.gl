@@ -1373,7 +1373,8 @@ mergedLayer4.config = {
     stroked: false,
     filled: true,
     enable3d: false,
-    wireframe: false
+    wireframe: false,
+    strokeOpacity: 0.8
   },
   animation: {enabled: false}
 };

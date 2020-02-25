@@ -276,12 +276,12 @@ export default function SidePanelFactory(
                 {activeSidePanel === 'map' && (
                   <MapManager {...mapManagerActions} mapStyle={this.props.mapStyle} />
                 )}
-                {customPanels.length && customPanels.find(p => p.id === activeSidePanel) && (
+                {customPanels.length && customPanels.find(p => p.id === activeSidePanel) ? (
                   <CustomPanels
                     {...getCustomPanelProps(this.props)}
                     activeSidePanel={activeSidePanel}
                   />
-                )}
+                ) : null}
               </div>
             </SidePanelContent>
           </Sidebar>

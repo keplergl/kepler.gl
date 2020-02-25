@@ -534,7 +534,8 @@ test('#GeojsonLayer -> renderLayer', t => {
             geojson: '_geojson'
           },
           visConfig: {
-            strokeColor: [4, 5, 6]
+            strokeColor: [4, 5, 6],
+            strokeOpacity: 0.1
           }
         }
       },
@@ -554,6 +555,54 @@ test('#GeojsonLayer -> renderLayer', t => {
         // polygon fill attributes;
         const {attributes} = deckLayers[1].state.attributeManager;
         const indices = attributes.indices.value;
+
+        const {props: fillLayerProp} = deckLayers[1];
+        const {props: strokeLayerProp} = deckLayers[2];
+
+        const expectedFillLayerProp = {
+          extruded: false,
+          elevationScale: 5,
+          filled: false,
+          wireframe: false,
+          opacity: 0.8,
+          parameters: {depthTest: false},
+          visible: true,
+          autoHighlight: false,
+          wrapLongitude: false,
+          id: 'test_layer_1-polygons-fill',
+          filterRange: [
+            [0, 8],
+            [0, 0],
+            [0, 0],
+            [0, 0]
+          ]
+        };
+
+        const expectedStrokeLayerProp = {
+          widthScale: 128,
+          rounded: false,
+          miterLimit: 2,
+          opacity: 0.1,
+          visible: true,
+          wrapLongitude: false,
+          id: 'test_layer_1-polygons-stroke'
+        };
+
+        Object.keys(expectedFillLayerProp).forEach(key => {
+          t.deepEqual(
+            fillLayerProp[key],
+            expectedFillLayerProp[key],
+            `should have correct fillLayerProp.${key}`
+          );
+        });
+
+        Object.keys(expectedStrokeLayerProp).forEach(key => {
+          t.deepEqual(
+            strokeLayerProp[key],
+            expectedStrokeLayerProp[key],
+            `should have correct strokeLayerProp.${key}`
+          );
+        });
 
         // test instanceFilterValues
         const expectedFilterValues = new Float32Array([
