@@ -494,10 +494,13 @@ export function filterDataset(dataset, filters, layers, opt = {}) {
       };
     }, {});
 
+    console.time('cpu polygon filter')
     filterResult = filterDataByFilterTypes(
       {dynamicDomainFilters, cpuFilters, filterFuncs},
       allData
     );
+    console.timeEnd('cpu polygon filter')
+
   }
 
   return {
