@@ -239,6 +239,29 @@ To checkout the build
     cd website && yarn build
 ```
 
+## Publish the website
+
+[Netlify](https://www.netlify.com/) is used to support kepler.gl demo website.
+
+Netlify is connected to the following github triggers:
+- Create a new PR
+- Updated an existing PR
+- Merge PR onto master
+
+A new production version of kepler.gl website is automatically created and deployed every time a PR is merged onto master.
+
+In order to support testing environment, NEtlify is setup to generate build every time a PR is created or updated.
+By generating builds for new and updated PRs we support CI/CD so developers can test their own build in a production like environment 
+
+### Publish kepler.gl package to NPM
+In order to publsih a new verion of the kepler.gl package a developer must perform the following steps:
+1. Update __package.json__ file with the new version value.
+2. Update each of the example folder package.json kepler.gl dependency with the newer version specified during step 1.
+3. Update __CHANGELOG.md__ with the latest commit changes.
+4. Create a new PR for review.
+5. Once the PR is reviewed and merged, create a new git tag with the new version value.
+6. Once the new tag is pushed to remote, Github will automatically trgger a new Github Action flow that will automatically build and publish the new package version to NPM registry.
+
 [demo-app]: http://kepler.gl/#/demo
 [documentationjs]: https://documentation.js.org/
 [eslint]: https://eslint.org/
