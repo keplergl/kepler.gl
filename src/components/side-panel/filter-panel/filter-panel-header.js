@@ -20,18 +20,11 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import PanelHeaderAction from 'components/side-panel/panel-header-action';
-import {Trash} from 'components/common/icons';
 import {createLinearGradient} from 'utils/color-utils';
 import {StyledPanelHeader} from 'components/common/styled-components';
 
-export const StyledFilterHeader = styled(StyledPanelHeader)`
-  cursor: pointer;
-  padding: 10px 12px;
-
-  .field-selector {
-    flex: 2;
-  }
+export const StyledFilterTag = styled(StyledPanelHeader)`
+  padding: 0 4px;
 
   border-left: 3px solid;
   ${props =>
@@ -42,36 +35,33 @@ export const StyledFilterHeader = styled(StyledPanelHeader)`
 
 const StyledChildrenContainer = styled.div`
   display: flex;
+  align-items: flex-start;
   flex: 2;
+  padding-top: 8px;
+`;
+
+const StyledFilterHeaderContainer = styled(StyledPanelHeader)`
+  display: flex;
+  height: unset;
+  align-items: flex-start;
 `;
 
 FilterPanelHeaderFactory.deps = [];
 
 function FilterPanelHeaderFactory() {
-  const FilterPanelHeader = ({
-    children,
-    datasets,
-    allAvailableFields,
-    setFilter,
-    idx,
-    filter,
-    removeFilter
-  }) => (
-    <StyledFilterHeader
-      className="filter-panel__header"
-      labelRCGColorValues={datasets.map(d => d.color)}
-    >
-      <StyledChildrenContainer>{children}</StyledChildrenContainer>
-      <PanelHeaderAction
-        id={filter.id}
-        tooltip="delete"
-        tooltipType="error"
-        onClick={removeFilter}
-        hoverColor={'errorColor'}
-        IconComponent={Trash}
+  const FilterPanelHeader = ({children, datasets}) => (
+    <StyledFilterHeaderContainer className="filter-panel__header">
+      <StyledFilterTag
+        className="filter-panel__tag"
+        labelRCGColorValues={datasets.map(d => d.color)}
       />
-    </StyledFilterHeader>
+      <StyledChildrenContainer className="filter-panel__actions">
+        {children}
+      </StyledChildrenContainer>
+    </StyledFilterHeaderContainer>
   );
+
+  FilterPanelHeader.displayName = 'FilterPanelHeader';
 
   return FilterPanelHeader;
 }

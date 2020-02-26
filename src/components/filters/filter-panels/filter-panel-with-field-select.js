@@ -18,16 +18,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback, useMemo} from 'react';
+import React, {useMemo} from 'react';
 import {StyledFilterContent} from 'components/common/styled-components';
 import FilterPanelHeaderFactory from 'components/side-panel/filter-panel/filter-panel-header';
-import FieldSelector from 'components/common/field-selector';
-import PanelHeaderAction from 'components/side-panel/panel-header-action';
 import SourceDataSelectorFactory from 'components/side-panel/common/source-data-selector';
+import FilterPanelHeaderActionsFactory from './filter-panel-header-actions';
+import SourcePairSelectorFactory from './source-pair-selector';
 
-FieldPanelWithFieldSelectFactory.deps = [FilterPanelHeaderFactory, SourceDataSelectorFactory];
+FieldPanelWithFieldSelectFactory.deps = [
+  FilterPanelHeaderFactory,
+  SourceDataSelectorFactory,
+  FilterPanelHeaderActionsFactory,
+  SourcePairSelectorFactory
+];
 
-function FieldPanelWithFieldSelectFactory(FilterPanelHeader, SourceDataSelector) {
+function FieldPanelWithFieldSelectFactory(
+  FilterPanelHeader,
+  SourceDataSelector,
+  FilterPanelHeaderActions,
+  SourcePairSelector
+) {
   const FilterPanelWithFieldSelect = React.memo(
     ({
       allAvailableFields,
@@ -39,61 +49,27 @@ function FieldPanelWithFieldSelectFactory(FilterPanelHeader, SourceDataSelector)
       setFilter,
       panelActions = []
     }) => {
-      const onFieldSelector = useCallback(field => setFilter(idx, 'name', field.name), [
-        idx,
-        setFilter
+      const filterDatasets = useMemo(() => filter.dataId.map(datasetId => datasets[datasetId]), [
+        filter.dataId
       ]);
-
-      const onSourceDataSelector = useCallback(value => setFilter(idx, 'dataId', [value]), [
-        idx,
-        setFilter
-      ]);
-
-      const fieldValue = useMemo(
-        () => (Array.isArray(filter.name) ? filter.name[0] : filter.name),
-        [filter.name]
-      );
 
       return (
         <>
-          <FilterPanelHeader
-            datasets={[datasets[filter.dataId[0]]]}
-            allAvailableFields={allAvailableFields}
-            idx={idx}
-            filter={filter}
-            removeFilter={removeFilter}
-          >
-            <FieldSelector
-              inputTheme="secondary"
-              fields={allAvailableFields}
-              value={fieldValue}
-              erasable={false}
-              onSelect={onFieldSelector}
+          <FilterPanelHeader datasets={filterDatasets}>
+            <SourcePairSelector
+              idx={idx}
+              filter={filter}
+              datasets={datasets}
+              allAvailableFields={allAvailableFields}
+              setFilter={setFilter}
             />
-            {panelActions &&
-              panelActions.map(panelAction => (
-                <PanelHeaderAction
-                  id={panelAction.id}
-                  key={panelAction.id}
-                  onClick={panelAction.onClick}
-                  tooltip={panelAction.tooltip}
-                  IconComponent={panelAction.iconComponent}
-                  active={panelAction.active}
-                />
-              ))}
+            <FilterPanelHeaderActions
+              actions={panelActions}
+              filter={filter}
+              removeFilter={removeFilter}
+            />
           </FilterPanelHeader>
-          <StyledFilterContent className="filter-panel__content">
-            {Object.keys(datasets).length > 1 && (
-              <SourceDataSelector
-                inputTheme="secondary"
-                datasets={datasets}
-                disabled={filter.freeze}
-                dataId={filter.dataId}
-                onSelect={onSourceDataSelector}
-              />
-            )}
-            {children}
-          </StyledFilterContent>
+          <StyledFilterContent className="filter-panel__content">{children}</StyledFilterContent>
         </>
       );
     }
@@ -101,7 +77,7 @@ function FieldPanelWithFieldSelectFactory(FilterPanelHeader, SourceDataSelector)
 
   FilterPanelWithFieldSelect.displayName = 'FilterPanelWithFieldSelect';
 
-  return FilterPanelWithFieldSelect;
+  return React.memo(FilterPanelWithFieldSelect);
 }
 
 export default FieldPanelWithFieldSelectFactory;

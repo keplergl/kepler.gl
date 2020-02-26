@@ -977,7 +977,7 @@ export function applyFilterFieldName(
     freeze: true,
     // if we only have one dataset we replace whatever value we already have with the new one
     // otherwise we use an existing one
-    value: filter.dataId.length === 1 ? filterProps.value :  filter.value
+    value: filter.dataId.length === 1 ? filterProps.value : filter.value
   };
 
   const fieldWithFilterProps = {

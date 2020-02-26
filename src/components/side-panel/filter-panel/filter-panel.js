@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {Component, useMemo} from 'react';
 import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
 import styled from 'styled-components';
@@ -95,7 +95,7 @@ function FilterPanelFactory(
     };
 
     filterSelector = props => props.filters;
-    nameSelector = props => props.filter.name;
+    nameSelector = props => props.filter.name[0];
     dataIdSelector = props => props.filter.dataId[0];
 
     // only show current field and field that's not already been used as a filter
