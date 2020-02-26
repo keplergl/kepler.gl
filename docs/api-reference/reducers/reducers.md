@@ -7,8 +7,9 @@
     -   [keplerGlReducer.plugin][6]
 -   [mapStateLens][9]
 -   [mapStyleLens][11]
--   [uiStateLens][13]
--   [visStateLens][15]
+-   [providerStateLens][13]
+-   [uiStateLens][15]
+-   [visStateLens][17]
 
 ## keplerGlReducer
 
@@ -43,14 +44,14 @@ which will be shallow **merged** with default initial state.
 
 Default subreducer state:
 
--   [`visState`][17]
--   [`mapState`][18]
--   [`mapStyle`][19]
--   [`uiState`][20]
+-   [`visState`][19]
+-   [`mapState`][20]
+-   [`mapStyle`][21]
+-   [`uiState`][22]
 
 **Parameters**
 
--   `iniSt` **[Object][21]** custom state to be merged with default initial state
+-   `iniSt` **[Object][23]** custom state to be merged with default initial state
 
 **Examples**
 
@@ -73,7 +74,7 @@ You should only use this to adding additional actions instead of replacing defau
 
 **Parameters**
 
--   `customReducer` **([Object][21] \| [Function][22])** A reducer map or a reducer
+-   `customReducer` **([Object][23] \| [Function][24])** A reducer map or a reducer
 
 **Examples**
 
@@ -104,7 +105,7 @@ const myKeplerGlReducer = keplerGlReducer
 ## mapStateLens
 
 Connect subreducer `mapState`, used with `injectComponents`. Learn more at
-[Replace UI Component][23]
+[Replace UI Component][25]
 
 **Parameters**
 
@@ -113,7 +114,16 @@ Connect subreducer `mapState`, used with `injectComponents`. Learn more at
 ## mapStyleLens
 
 Connect subreducer `mapStyle`, used with `injectComponents`. Learn more at
-[Replace UI Component][23]
+[Replace UI Component][25]
+
+**Parameters**
+
+-   `reduxState` **any** 
+
+## providerStateLens
+
+Connect subreducer `providerState`, used with `injectComponents`. Learn more at
+[Replace UI Component][25]
 
 **Parameters**
 
@@ -122,7 +132,7 @@ Connect subreducer `mapStyle`, used with `injectComponents`. Learn more at
 ## uiStateLens
 
 Connect subreducer `uiState`, used with `injectComponents`. Learn more at
-[Replace UI Component][23]
+[Replace UI Component][25]
 
 **Parameters**
 
@@ -131,7 +141,7 @@ Connect subreducer `uiState`, used with `injectComponents`. Learn more at
 ## visStateLens
 
 Connect subreducer `visState`, used with `injectComponents`. Learn more at
-[Replace UI Component][23]
+[Replace UI Component][25]
 
 **Parameters**
 
@@ -161,24 +171,28 @@ Connect subreducer `visState`, used with `injectComponents`. Learn more at
 
 [12]: #parameters-3
 
-[13]: #uistatelens
+[13]: #providerstatelens
 
 [14]: #parameters-4
 
-[15]: #visstatelens
+[15]: #uistatelens
 
 [16]: #parameters-5
 
-[17]: ./vis-state.md#INITIAL_VIS_STATE
+[17]: #visstatelens
 
-[18]: ./map-state.md#INITIAL_MAP_STATE
+[18]: #parameters-6
 
-[19]: ./map-style.md#INITIAL_MAP_STYLE
+[19]: ./vis-state.md#INITIAL_VIS_STATE
 
-[20]: ./ui-state.md#INITIAL_UI_STATE
+[20]: ./map-state.md#INITIAL_MAP_STATE
 
-[21]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+[21]: ./map-style.md#INITIAL_MAP_STYLE
 
-[22]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function
+[22]: ./ui-state.md#INITIAL_UI_STATE
 
-[23]: ../advanced-usages/replace-ui-component.md#pass-custom-component-props
+[23]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+
+[24]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function
+
+[25]: ../advanced-usages/replace-ui-component.md#pass-custom-component-props

@@ -180,16 +180,20 @@ const MapIcon = props => {
   );
 };
 
+const PrivacyBadge = ({privateMap}) => (
+  <span className="vis_item-privacy">{privateMap ? 'Private' : 'Public'}</span>
+);
+
 const VisualizationItem = ({vis, onClick}) => {
   return (
     <StyledVisualizationItem onClick={onClick}>
       {vis.thumbnail ? (
         <div className="vis_item-thumb" style={{backgroundImage: `url(${vis.thumbnail})`}}>
-          <span className="vis_item-privacy">{vis.privateMap ? 'Private' : 'Public'}</span>
+          {vis.hasOwnProperty('privateMap') ? <PrivacyBadge privateMap={vis.privateMap} /> : null}
         </div>
       ) : (
         <MapIcon className="vis_item-icon">
-          <span className="vis_item-privacy">{vis.privateMap ? 'Private' : 'Public'}</span>
+          {vis.hasOwnProperty('privateMap') ? <PrivacyBadge privateMap={vis.privateMap} /> : null}
         </MapIcon>
       )}
       <span className="vis_item-title">{vis.title}</span>

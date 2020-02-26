@@ -45,7 +45,7 @@ const PATHS = {
   api: resolve('./docs/api-reference')
 };
 
-const BT = "`";
+const BT = '`';
 
 const TREE = {
   path: '',
@@ -63,14 +63,17 @@ const TREE = {
             'map-state-actions.js',
             'map-style-actions.js',
             'identity-actions.js'
-          ], output: 'actions.md', config: {shallow: true}}
+          ],
+          output: 'actions.md',
+          config: {shallow: true}
+        }
       ]
     },
     {
       path: 'reducers',
       children: [
         {input: ['root.js', 'core.js'], output: 'reducers.md', config: {shallow: true}},
-        {input: 'combined-updaters.js', output: 'combine.md',  config: {shallow: true}},
+        {input: 'combined-updaters.js', output: 'combine.md', config: {shallow: true}},
         {input: 'vis-state-updaters.js', output: 'vis-state.md', config: {shallow: true}},
         {input: 'map-state-updaters.js', output: 'map-state.md', config: {shallow: true}},
         {input: 'map-style-updaters.js', output: 'map-style.md', config: {shallow: true}},
@@ -79,12 +82,14 @@ const TREE = {
     },
     {
       path: 'processors',
-      children: [
-        {input: 'data-processor.js', output: 'processors.md', config: {shallow: true}}
-      ]
+      children: [{input: 'data-processor.js', output: 'processors.md', config: {shallow: true}}]
+    },
+    {
+      path: 'cloud-providers',
+      children: [{input: 'provider.js', output: 'cloud-provider.md', config: {shallow: true}}]
     }
   ]
-}
+};
 
 function _overrideHeading(nodes) {
   const contents = ['Examples', 'Parameters'];
@@ -95,13 +100,14 @@ function _overrideHeading(nodes) {
   });
 
   return nodes.map(node => {
-    if (node.type === 'heading' &&
+    if (
+      node.type === 'heading' &&
       Array.isArray(node.children) &&
-      contents.includes(node.children[0].value)) {
-
+      contents.includes(node.children[0].value)
+    ) {
       const value = node.children[0].value;
       const replacement = mdContents[contents.indexOf(value)].children[0];
-      return replacement
+      return replacement;
     }
 
     return node;
@@ -112,7 +118,9 @@ function _appendActionTypesAndUpdatersToActions(node, actionMap) {
   // __Updaters__: [`visStateUpdaters.loadFilesUpdater`](../reducers/ui-state.md#uistateupdaterssetexportfilteredupdater)
 
   if (node.members && node.members.static.length) {
-    node.members.static = node.members.static.map(nd => _appendActionTypesAndUpdatersToActions(nd, actionMap));
+    node.members.static = node.members.static.map(nd =>
+      _appendActionTypesAndUpdatersToActions(nd, actionMap)
+    );
   }
 
   const action = node.name;
@@ -122,10 +130,14 @@ function _appendActionTypesAndUpdatersToActions(node, actionMap) {
   }
 
   const {actionType, updaters} = actionMap[action];
-  const updaterList = updaters.map(({updater, name, path}) => (
-    `[${BT}${updater}.${name}${BT}](../reducers/${path.split('/')[2].replace('.js', '')}.md#${(updater + name).toLowerCase()})`
-  )).join(', ');
-
+  const updaterList = updaters
+    .map(
+      ({updater, name, path}) =>
+        `[${BT}${updater}.${name}${BT}](../reducers/${path.split('/')[2].replace('.js', '')}.md#${(
+          updater + name
+        ).toLowerCase()})`
+    )
+    .join(', ');
 
   const mdContent = `
   * __ActionTypes__: [${BT}ActionTypes.${actionType}${BT}](#actiontypes)
@@ -147,8 +159,9 @@ function _appendActionToUpdaters(node, actionMap) {
 
   const updater = node.name;
 
-  const action = Object.values(actionMap)
-    .find(action => action.updaters.find(up => up.name === updater));
+  const action = Object.values(actionMap).find(action =>
+    action.updaters.find(up => up.name === updater)
+  );
 
   if (!action) {
     return node;
@@ -164,8 +177,8 @@ function _appendActionToUpdaters(node, actionMap) {
 
 function _appendListToDescription(node, mdContent) {
   const tree = unified()
-  .use(markdown)
-  .parse(mdContent);
+    .use(markdown)
+    .parse(mdContent);
 
   if (typeof node.description === 'object') {
     node.description.children = (node.description.children || []).concat(tree.children);
@@ -193,16 +206,17 @@ function _isExampleOrParam(node) {
 }
 
 function _isExampleOrParameterLink(node) {
-  return _isParagraph(node) &&
+  return (
+    _isParagraph(node) &&
     _isLinkReference(node.children[0]) &&
-    _isExampleOrParam(node.children[0].children[0]);
+    _isExampleOrParam(node.children[0].children[0])
+  );
 }
 
 /**
  * Remove example and parameter link from TOC
  */
 function _cleanUpTOCChildren(node) {
-
   if (!Array.isArray(node.children)) {
     return node;
   }
@@ -211,10 +225,12 @@ function _cleanUpTOCChildren(node) {
     return null;
   }
 
-  const filteredChildren = node.children.reduce((accu, nd) => {
-    accu.push(_cleanUpTOCChildren(nd));
-    return accu;
-  }, []).filter(n => n);
+  const filteredChildren = node.children
+    .reduce((accu, nd) => {
+      accu.push(_cleanUpTOCChildren(nd));
+      return accu;
+    }, [])
+    .filter(n => n);
 
   if (!filteredChildren.length) {
     return null;
@@ -227,7 +243,8 @@ function _cleanUpTOCChildren(node) {
 }
 
 function buildChildDoc(inputPath, outputPath, actionMap, config) {
-  return documentation.build(inputPath, {...INPUT_CONFIG, ...config})
+  return documentation
+    .build(inputPath, {...INPUT_CONFIG, ...config})
     .then(res => {
       // res is an array of parsed comments with inferred properties
       // and more: everything you need to build documentation or
@@ -242,7 +259,7 @@ function buildChildDoc(inputPath, outputPath, actionMap, config) {
         processed = res.map(node => _appendActionToUpdaters(node, actionMap));
       }
 
-      return documentation.formats.remark(processed, OUT_CONFIG)
+      return documentation.formats.remark(processed, OUT_CONFIG);
     })
     .then(output => {
       // output is a string of remark json
@@ -250,7 +267,7 @@ function buildChildDoc(inputPath, outputPath, actionMap, config) {
 
       ast.children = _overrideHeading(ast.children);
       if (ast.children.length < 3) {
-        logError(inputPath, 'has less than 3 children')
+        logError(inputPath, 'has less than 3 children');
       }
       const tableOfContent = _cleanUpTOCChildren(ast.children[2]);
       ast.children[2] = tableOfContent;
@@ -265,34 +282,31 @@ function buildChildDoc(inputPath, outputPath, actionMap, config) {
 }
 
 function buildMdDocs(nodePath, node, actionMap, allTasks) {
-
   const {path, children} = node;
   const joinPath = nodePath ? `${nodePath}/${path}` : path;
 
   children.forEach(child => {
-
     if (!child.children) {
+      const {input, output, config} = child;
+      const inputPaths = (Array.isArray(input) ? input : [input]).reduce((accu, inp) => {
+        const inputPath = join(PATHS.src, joinPath, inp);
 
-        const {input, output, config} = child;
-        const inputPaths = (Array.isArray(input) ? input : [input]).reduce((accu, inp) => {
-          const inputPath = join(PATHS.src, joinPath, inp);
-
-          if (fs.existsSync(inputPath)) {
-            // Do something
-            accu.push(inputPath);
-          } else {
-            logError(`[Error] ${inputPath} doesn't exist!`);
-          }
-
-          return accu;
-        }, []);
-
-        if (!inputPaths.length) {
-          return;
+        if (fs.existsSync(inputPath)) {
+          // Do something
+          accu.push(inputPath);
+        } else {
+          logError(`[Error] ${inputPath} doesn't exist!`);
         }
-        const outputPath = join(PATHS.api, joinPath, output);
 
-        allTasks.push(buildChildDoc(inputPaths, outputPath, actionMap, config));
+        return accu;
+      }, []);
+
+      if (!inputPaths.length) {
+        return;
+      }
+      const outputPath = join(PATHS.api, joinPath, output);
+
+      allTasks.push(buildChildDoc(inputPaths, outputPath, actionMap, config));
     } else {
       buildMdDocs(joinPath, child, actionMap, allTasks);
     }
@@ -300,7 +314,6 @@ function buildMdDocs(nodePath, node, actionMap, allTasks) {
 
   return allTasks;
 }
-
 
 function buildDocs() {
   logProgress('\n================= Start Building API Documentation =================\n');
@@ -313,8 +326,7 @@ function buildDocs() {
 
   Promise.all(allTasks).then(() => {
     logSuccess('\n================= Building API Documentation Success! =================\n');
-  })
-
+  });
 }
 
 buildDocs();

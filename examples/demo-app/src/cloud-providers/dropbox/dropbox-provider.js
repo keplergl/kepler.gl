@@ -24,6 +24,7 @@ import window from 'global/window';
 import Console from 'global/console';
 import DropboxIcon from './dropbox-icon';
 import {MAP_URI} from '../../constants/default-settings';
+import {Provider} from 'kepler.gl/cloud-providers';
 
 const NAME = 'dropbox';
 const DISPLAY_NAME = 'Dropbox';
@@ -44,15 +45,13 @@ function parseQueryString(query) {
   return params;
 }
 
-export default class DropboxProvider {
-  constructor(clientId, appName, icon = DropboxIcon) {
+export default class DropboxProvider extends Provider {
+  constructor(clientId, appName) {
+    super({name: NAME, displayName: DISPLAY_NAME, icon: DropboxIcon});
     // All cloud-providers providers must implement the following properties
-    this.name = NAME;
-    this.displayName = DISPLAY_NAME;
+
     this.clientId = clientId;
     this.appName = appName;
-    this.icon = icon;
-    this.thumbnail = {width: 300, height: 200};
 
     this._folderLink = `${KEPLER_DROPBOX_FOLDER_LINK}/${appName}`;
     this._path = `/Apps/${window.decodeURIComponent(this.appName)}`;
@@ -68,7 +67,7 @@ export default class DropboxProvider {
    * - Receive the token when ready
    * - Close the opened tab
    */
-  login(onCloudLoginSuccess) {
+  async login(onCloudLoginSuccess) {
     const link = this._authLink();
 
     const authWindow = window.open(link, '_blank', 'width=1024,height=716');
@@ -110,35 +109,8 @@ export default class DropboxProvider {
     window.addEventListener('message', handleToken);
   }
 
-  /**
-   *
-   * @param {Object} map - entire item of the visualizations list returned by provider.getVisualizations()
-   * @returns {Object} map data, config and info {map: {datasets: Array<Object>, config: Object}, mapInfo: {title: string, description: string}, format: string}
-   */
   async downloadMap(loadParams) {
-    // the response map obejct should contain: datasets: [], config: {}, and info: {}
-    // each dataset object should be {info: {id, label}, data: {...}}
-    // to inform how kepler should process your data object, pass in `format`
-    // foramt options are:
-    // 'csv': csv file string
-    // 'geojson': geojson object
-    // 'row': row object
-    // 'keplergl': datasets array saved using KeplerGlSchema.save
 
-    // const mockResponse = {
-    //   map: {
-    //     datasets: [],
-    //     config: {},
-    //     info: {
-    //       app: 'kepler.gl',
-    //       created_at: ''
-    //       title: 'test map',
-    //       description: 'Hello this is my test dropbox map'
-    //     }
-    //   },
-    //   // pass csv here if your provider currently only support save / load file as csv
-    //   format: 'keplergl'
-    // };
     const token = this.getAccessToken();
     if (!token) {
       this.login(() => this.downloadMap(loadParams));
@@ -271,7 +243,7 @@ export default class DropboxProvider {
    * Get the share url of current map, this url can be accessed by anyone
    * @param {boolean} fullUrl
    */
-  getShareUrl(fullUrl = false) {
+  getShareUrl(fullUrl = true) {
     return fullUrl
       ? `${window.location.protocol}//${window.location.host}/${MAP_URI}${this._shareUrl}`
       : `/${MAP_URI}${this._shareUrl}`;
