@@ -110,7 +110,6 @@ export default class DropboxProvider extends Provider {
   }
 
   async downloadMap(loadParams) {
-
     const token = this.getAccessToken();
     if (!token) {
       this.login(() => this.downloadMap(loadParams));
