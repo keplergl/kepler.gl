@@ -105,7 +105,7 @@ class App extends Component {
     const {params: {id, provider} = {}, location: {query = {}} = {}} = this.props;
 
     const cloudProvider = CLOUD_PROVIDERS.find(c => c.name === provider);
-    if (provider) {
+    if (cloudProvider) {
       this.props.dispatch(
         loadCloudMap({
           loadParams: query,
