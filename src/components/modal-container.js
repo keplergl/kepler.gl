@@ -180,7 +180,7 @@ export default function ModalContainerFactory(
 
     _exportFileToCloud = ({provider, isPublic, overwrite, closeModal}) => {
       const toSave = exportMap(this.props);
-      console.log(toSave);
+
       this.props.providerActions.exportFileToCloud({
         mapData: toSave,
         provider,

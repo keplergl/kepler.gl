@@ -213,19 +213,21 @@ export default class DropboxProvider extends Provider {
     const name = map.info && map.info.title;
     const fileName = `${name}.json`;
     const fileContent = map;
+    // FileWriteMode: Selects what to do if the file already exists.
+    const mode = options.overwrite ? 'overwrite' : 'add';
 
     const metadata = await this._dropbox.filesUpload({
       path: `${this._path}/${fileName}`,
       contents: JSON.stringify(fileContent),
-      // FileWriteMode: Selects what to do if the file already exists.
-      mode: options.overwrite ? 'overwrite' : 'add'
+      mode
     });
 
     // save a thumbnail image
     thumbnail &&
       (await this._dropbox.filesUpload({
         path: `${this._path}/${fileName}`.replace(/\.json$/, '.png'),
-        contents: thumbnail
+        contents: thumbnail,
+        mode
       }));
 
     // keep on create shareUrl
@@ -448,8 +450,6 @@ export default class DropboxProvider extends Provider {
           title,
           id,
           lastModification: new Date(client_modified).getTime(),
-          // TODO: map has shared url?
-          privateMap: false,
           loadParams: {
             path: path_lower
           }

@@ -20,7 +20,7 @@
 
 import {LoadDataModalFactory} from 'kepler.gl/components';
 import {withState} from 'kepler.gl/components';
-import {LOADING_METHODS_NAMES} from '../constants/default-settings';
+import {LOADING_METHODS} from '../constants/default-settings';
 
 import SampleMapGallery from '../components/load-data-modal/sample-data-viewer';
 import LoadRemoteMap from '../components/load-data-modal/load-remote-map';
@@ -30,12 +30,12 @@ import {loadRemoteMap, loadSample, loadSampleConfigurations} from '../actions';
 
 const additionalMethods = {
   remote: {
-    id: LOADING_METHODS_NAMES.remote,
+    id: LOADING_METHODS.remote,
     label: 'Load Map using URL',
     elementType: LoadRemoteMap
   },
   sample: {
-    id: LOADING_METHODS_NAMES.sample,
+    id: LOADING_METHODS.sample,
     label: 'Sample Maps',
     elementType: SampleMapGallery,
     tabElementType: SampleMapsTab
