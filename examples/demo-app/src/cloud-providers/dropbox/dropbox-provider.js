@@ -34,6 +34,7 @@ const CORS_FREE_DOMAIN = 'dl.dropboxusercontent.com';
 const PRIVATE_STORAGE_ENABLED = true;
 const SHARING_ENABLED = true;
 const MAX_THUMBNAIL_BATCH = 25;
+const IMAGE_URL_PREFIX = 'data:image/gif;base64,';
 
 function parseQueryString(query) {
   const searchParams = new URLSearchParams(query);
@@ -147,7 +148,7 @@ export default class DropboxProvider extends Provider {
           if (thb['.tag'] === 'success' && thb.thumbnail) {
             const matchViz = visualizations[pngs[thb.metadata.id] && pngs[thb.metadata.id].name];
             if (matchViz) {
-              matchViz.thumbnail = `data:image/gif;base64,${thb.thumbnail}`;
+              matchViz.thumbnail = `${IMAGE_URL_PREFIX}${thb.thumbnail}`;
             }
           }
         });
@@ -304,6 +305,7 @@ export default class DropboxProvider extends Provider {
       response = await this._dropbox.usersGetCurrentAccount();
     } catch (error) {
       Console.warn(error);
+      return null;
     }
 
     return this._getUserFromAccount(response);

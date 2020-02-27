@@ -293,13 +293,17 @@ function LoadStorageMapFactory() {
                     </span>
                     <StyledSeparator />
                     <StyledVisualizationList>
-                      {visualizations.map(vis => (
-                        <VisualizationItem
-                          key={vis.id}
-                          onClick={() => this._onLoadCloudMap(provider, vis)}
-                          vis={vis}
-                        />
-                      ))}
+                      {visualizations.length ? (
+                        visualizations.map(vis => (
+                          <VisualizationItem
+                            key={vis.id}
+                            onClick={() => this._onLoadCloudMap(provider, vis)}
+                            vis={vis}
+                          />
+                        ))
+                      ) : (
+                        <div className="visualization-list__message">>No saved maps yet</div>
+                      )}
                     </StyledVisualizationList>
                   </StyledProviderVisSection>
                 </StyledVisualizationSection>

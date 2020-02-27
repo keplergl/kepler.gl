@@ -1323,33 +1323,6 @@ export const loadFilesUpdater = (state, action) => {
   if (!files.length) {
     return state;
   }
-  // const filesToLoad = files.map(fileBlob => processFileToLoad(fileBlob));
-
-  // reader -> parser -> augment -> receiveVisData
-  // const loadFileTasks = [
-  //   Task.all(filesToLoad.map(LOAD_FILE_TASK)).bimap(
-  //     // success
-  //     results => {
-  //       console.log(results)
-  //       const data = results.reduce(
-  //         (f, c) => ({
-  //           // using concat here because the current datasets could be an array or a single item
-  //           datasets: f.datasets.concat(c.datasets),
-  //           // we need to deep merge this thing unless we find a better solution
-  //           // this case will only happen if we allow to load multiple keplergl json files
-  //           config: {
-  //             ...f.config,
-  //             ...(c.config || {})
-  //           }
-  //         }),
-  //         {datasets: [], config: {}, options: {centerMap: true}}
-  //       );
-
-  //       return addDataToMap(data);
-  //     },
-  //     // error
-  //     loadFilesErr)
-  // ];
 
   const fileCache = [];
   return withTask(
