@@ -37,18 +37,10 @@ function NewFilterPanelFactory(FilterPanelHeader, SourcePairSelector, FilterPane
     allAvailableFields,
     setFilter,
     removeFilter,
-    enlargeFilter
+    actions = []
   }) => (
     <>
-      <FilterPanelHeader
-        datasets={[datasets[filter.dataId[0]]]}
-        allAvailableFields={allAvailableFields}
-        idx={idx}
-        filter={filter}
-        removeFilter={removeFilter}
-        enlargeFilter={enlargeFilter}
-        enlarged={filter.enlarged}
-      >
+      <FilterPanelHeader datasets={[datasets[filter.dataId[0]]]}>
         <SourcePairSelector
           idx={idx}
           filter={filter}
@@ -56,7 +48,7 @@ function NewFilterPanelFactory(FilterPanelHeader, SourcePairSelector, FilterPane
           allAvailableFields={allAvailableFields}
           setFilter={setFilter}
         />
-        <FilterPanelHeaderActions filter={filter} removeFilter={removeFilter} />
+        <FilterPanelHeaderActions actions={actions} filter={filter} removeFilter={removeFilter} />
       </FilterPanelHeader>
     </>
   );

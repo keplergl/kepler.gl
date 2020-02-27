@@ -18,61 +18,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useMemo} from 'react';
+import React from 'react';
 import {StyledFilterContent} from 'components/common/styled-components';
-import FilterPanelHeaderFactory from 'components/side-panel/filter-panel/filter-panel-header';
-import SourceDataSelectorFactory from 'components/side-panel/common/source-data-selector';
-import FilterPanelHeaderActionsFactory from './filter-panel-header-actions';
-import SourcePairSelectorFactory from './source-pair-selector';
+import NewFilterPanelFactory from 'components/filters/filter-panels/new-filter-panel';
 
-FieldPanelWithFieldSelectFactory.deps = [
-  FilterPanelHeaderFactory,
-  SourceDataSelectorFactory,
-  FilterPanelHeaderActionsFactory,
-  SourcePairSelectorFactory
-];
+FieldPanelWithFieldSelectFactory.deps = [NewFilterPanelFactory];
 
-function FieldPanelWithFieldSelectFactory(
-  FilterPanelHeader,
-  SourceDataSelector,
-  FilterPanelHeaderActions,
-  SourcePairSelector
-) {
-  const FilterPanelWithFieldSelect = React.memo(
-    ({
-      allAvailableFields,
-      children,
-      datasets,
-      filter,
-      idx,
-      removeFilter,
-      setFilter,
-      panelActions = []
-    }) => {
-      const filterDatasets = useMemo(() => filter.dataId.map(datasetId => datasets[datasetId]), [
-        filter.dataId
-      ]);
-
-      return (
-        <>
-          <FilterPanelHeader datasets={filterDatasets}>
-            <SourcePairSelector
-              idx={idx}
-              filter={filter}
-              datasets={datasets}
-              allAvailableFields={allAvailableFields}
-              setFilter={setFilter}
-            />
-            <FilterPanelHeaderActions
-              actions={panelActions}
-              filter={filter}
-              removeFilter={removeFilter}
-            />
-          </FilterPanelHeader>
-          <StyledFilterContent className="filter-panel__content">{children}</StyledFilterContent>
-        </>
-      );
-    }
+function FieldPanelWithFieldSelectFactory(NewFilterPanel) {
+  const FilterPanelWithFieldSelect = ({
+    allAvailableFields,
+    children,
+    datasets,
+    filter,
+    idx,
+    removeFilter,
+    setFilter,
+    enlargeFilter,
+    panelActions = []
+  }) => (
+    <>
+      <NewFilterPanel
+        idx={idx}
+        filter={filter}
+        datasets={datasets}
+        allAvailableFields={allAvailableFields}
+        setFilter={setFilter}
+        removeFilter={removeFilter}
+        actions={panelActions}
+      />
+      <StyledFilterContent className="filter-panel__content">{children}</StyledFilterContent>
+    </>
   );
 
   FilterPanelWithFieldSelect.displayName = 'FilterPanelWithFieldSelect';

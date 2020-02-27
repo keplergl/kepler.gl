@@ -19,7 +19,7 @@ function SourcePairSelectorFactory(SourceDataSelector) {
       setFilter
     ]);
 
-    const onSourceDataSelector = useCallback(value => setFilter(idx, 'dataId', [value]), [
+    const onSourceDataSelector = useCallback(value => setFilter(idx, 'dataId', value), [
       idx,
       setFilter
     ]);
@@ -39,17 +39,19 @@ function SourcePairSelectorFactory(SourceDataSelector) {
           erasable={false}
           onSelect={onFieldSelector}
         />
-        {hasMultidatasets && (
+        {hasMultidatasets ? (
           <SourceDataSelector
             inputTheme="secondary"
             datasets={datasets}
             dataId={filter.dataId}
             onSelect={onSourceDataSelector}
           />
-        )}
-        <Button className="add-data-source-button" link>
-          + Add data source
-        </Button>
+        ) : null}
+        {hasMultidatasets ? (
+          <Button className="add-data-source-button" link>
+            + Add data source
+          </Button>
+        ) : null}
       </StyledDatasetSelector>
     );
   };
