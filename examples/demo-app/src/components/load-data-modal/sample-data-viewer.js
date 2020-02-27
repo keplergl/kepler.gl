@@ -22,6 +22,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {format} from 'd3-format';
+import {LoadingDialog} from 'kepler.gl/components';
 
 const numFormat = format(',');
 
@@ -116,18 +117,22 @@ export default class SampleMapGallery extends Component {
   }
 
   render() {
-    const {sampleMaps, onLoadSample, error} = this.props;
-
+    const {sampleMaps, onLoadSample, error, isMapLoading} = this.props;
     return (
       <div className="sample-data-modal">
-        {error && <StyledError>{error.message}</StyledError>}
-        <StyledSampleGallery className="sample-map-gallery">
-          {sampleMaps
-            .filter(sp => sp.visible)
-            .map(sp => (
-              <SampleMap sample={sp} key={sp.id} onClick={() => onLoadSample(sp)} />
-            ))}
-        </StyledSampleGallery>
+        {error ? (
+          <StyledError>{error.message}</StyledError>
+        ) : isMapLoading ? (
+          <LoadingDialog size={64} message="Loading..." />
+        ) : (
+          <StyledSampleGallery className="sample-map-gallery">
+            {sampleMaps
+              .filter(sp => sp.visible)
+              .map(sp => (
+                <SampleMap sample={sp} key={sp.id} onClick={() => onLoadSample(sp)} />
+              ))}
+          </StyledSampleGallery>
+        )}
       </div>
     );
   }

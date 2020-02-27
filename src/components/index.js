@@ -108,6 +108,7 @@ export {default as Modal, ModalFooter, ModalTitle} from './common/modal';
 export {default as AppLogo} from './common/logo';
 export {default as Switch} from './common/switch';
 export {default as LoadingSpinner} from './common/loading-spinner';
+export {default as LoadingDialog} from './modals/loading-dialog';
 export * from './common/styled-components';
 import * as Icons from './common/icons';
 export {Icons};

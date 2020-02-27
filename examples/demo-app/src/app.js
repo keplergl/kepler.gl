@@ -174,10 +174,10 @@ class App extends Component {
   }
 
   _loadSampleData() {
-    // this._loadPointData();
+    this._loadPointData();
     // this._loadGeojsonData();
     // this._loadTripGeoJson();
-    this._loadIconData();
+    // this._loadIconData();
     // this._loadH3HexagonData();
     // this._loadScenegraphLayer();
   }
