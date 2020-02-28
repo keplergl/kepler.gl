@@ -240,6 +240,7 @@ export default function ModalContainerFactory(
         uiStateActions,
         providerState
       } = this.props;
+
       const {currentModal, datasetKeyToRemove} = uiState;
       const {datasets, layers, editingDataset} = visState;
 
