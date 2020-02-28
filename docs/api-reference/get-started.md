@@ -1,26 +1,26 @@
-## Get Started
+# Get Started
 
-### Installation
+## Installation
 
-Use <b>Node v6</b> and above, older node versions have not been tested
+Use **Node v6** and above, older node versions have not been tested
 
-```sh
+```bash
 npm install --save kepler.gl
 ```
 
-### Get Mapbox Token
+## Get Mapbox Token
 
 Kepler.gl is built on top of [Mapbox GL](https://www.mapbox.com). A mapbox account and an access token are needed to use kepler.gl in your app. Get a [Mapbox Access Token](https://www.mapbox.com/help/define-access-token/) at mapbox.com.
 
-### Basic Usage
+## Basic Usage
 
-![Basic Usage][basic-usage]
+![](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/api_basic-usage.png)
 
-#### 1. Mount reducer
+### 1. Mount reducer
 
-Kepler.gl uses [Redux](https://redux.js.org/) to manage its internal state, along with [react-palm](https://github.com/btford/react-palm) middleware to handle side effects. Mount kepler.gl reducer in your store, apply  `taskMiddleware`.
+Kepler.gl uses [Redux](https://redux.js.org/) to manage its internal state, along with [react-palm](https://github.com/btford/react-palm) middleware to handle side effects. Mount kepler.gl reducer in your store, apply `taskMiddleware`.
 
-```js
+```javascript
 import keplerGlReducer from 'kepler.gl/reducers';
 import {createStore, combineReducers, applyMiddleware} from 'redux';
 import {taskMiddleware} from 'react-palm/tasks';
@@ -36,12 +36,12 @@ const reducer = combineReducers({
 // create store
 const store = createStore(reducer, {}, applyMiddleware(taskMiddleware));
 ```
-If you mount `keplerGlReducer` in another address instead of `keplerGl`, or it is not
-mounted at root of your reducer, you will need to specify the path to it when you mount the component with the `getState` prop.
 
-#### 2. Mount component
+If you mount `keplerGlReducer` in another address instead of `keplerGl`, or it is not mounted at root of your reducer, you will need to specify the path to it when you mount the component with the `getState` prop.
 
-```js
+### 2. Mount component
+
+```javascript
 import KeplerGl from 'kepler.gl';
 
 const Map = props => (
@@ -53,14 +53,13 @@ const Map = props => (
 );
 ```
 
-#### 3. Add data to map
+### 3. Add data to map
 
-In order to interact with a kepler.gl instance and add new data to it, you can dispatch the __`addDataToMap`__ action from anywhere inside your app. It adds dataset(s) to a kepler.gl instance and updates the full configuration (mapState, mapStyle, visState).
+In order to interact with a kepler.gl instance and add new data to it, you can dispatch the **`addDataToMap`** action from anywhere inside your app. It adds dataset\(s\) to a kepler.gl instance and updates the full configuration \(mapState, mapStyle, visState\).
 
-Read more about [addDataToMap](./actions/actions.md#adddatatomap)
+Read more about [addDataToMap](actions/actions.md#adddatatomap)
 
-
-```js
+```javascript
 import {addDataToMap} from 'kepler.gl/actions';
 
 this.props.dispatch(
@@ -86,4 +85,3 @@ this.props.dispatch(
 );
 ```
 
-[basic-usage]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/api_basic-usage.png
