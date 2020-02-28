@@ -24,16 +24,7 @@ import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
 import {Tooltip} from 'components/common/styled-components';
 import KeplerGlLogo from 'components/common/logo';
-import {
-  Save,
-  DataTable,
-  Save2,
-  Gear,
-  Picture,
-  Db,
-  Map as MapIcon,
-  Share
-} from 'components/common/icons';
+import {Save, DataTable, Save2, Picture, Db, Map as MapIcon, Share} from 'components/common/icons';
 import ClickOutsideCloseDropdown from 'components/side-panel/panel-dropdown';
 import Toolbar from 'components/common/toolbar';
 import ToolbarItem from 'components/common/toolbar-item';
@@ -91,10 +82,8 @@ const StyledPanelAction = styled.div.attrs({
   }
 `;
 
-// By assigning this style we can position the toolbar in the right place on the screen
 const StyledToolbar = styled(Toolbar)`
   position: absolute;
-  left: 64px;
 `;
 
 export const PanelAction = ({item, onClick}) => (
@@ -190,7 +179,7 @@ export const SaveExportDropdownFactory = PanelHeaderDropdown => {
       {
         label: 'Share Map URL',
         icon: Share,
-        key: 'save',
+        key: 'share',
         onClick: props => props.onShareMap
       }
     ]
@@ -216,15 +205,21 @@ export const CloudStorageDropdownFactory = PanelHeaderDropdown => {
       {
         label: 'Save',
         icon: Save2,
-        key: 'data',
+        key: 'save',
         onClick: props => props.onSaveToStorage
       },
       {
-        label: 'Settings',
-        icon: Gear,
-        key: 'settings',
-        onClick: props => props.onExportData
+        label: 'Save As',
+        icon: Save2,
+        key: 'saveAs',
+        onClick: props => props.onSaveAsToStorage
       }
+      // {
+      //   label: 'Settings',
+      //   icon: Gear,
+      //   key: 'settings',
+      //   onClick: props => props.onExportData
+      // }
     ]
   };
   return CloudStorageDropdown;
@@ -246,6 +241,7 @@ function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
       onExportConfig: PropTypes.func,
       onExportMap: PropTypes.func,
       onSaveToStorage: PropTypes.func,
+      onSaveAsToStorage: PropTypes.func,
       onSaveMap: PropTypes.func,
       onShareMap: PropTypes.func
     };
@@ -275,21 +271,15 @@ function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
         appName,
         version,
         actionItems,
-        onSaveToStorage,
-        onSaveMap,
-        onShareMap,
-        onExportImage,
-        onExportData,
-        onExportConfig,
-        onExportMap,
         visibleDropdown,
         showExportDropdown,
-        hideExportDropdown
+        hideExportDropdown,
+        ...dropdownCallbacks
       } = this.props;
       let items = actionItems || [];
 
       // don't render cloud storage icon if onSaveToStorage is not provided
-      if (typeof onSaveToStorage !== 'function') {
+      if (typeof this.props.onSaveToStorage !== 'function') {
         items = actionItems.filter(ai => ai.id !== 'storage');
       }
 
@@ -317,13 +307,7 @@ function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
                     <item.dropdownComponent
                       onClose={hideExportDropdown}
                       show={visibleDropdown === item.id}
-                      onSaveToStorage={onSaveToStorage}
-                      onSaveMap={onSaveMap}
-                      onShareMap={onShareMap}
-                      onExportData={onExportData}
-                      onExportImage={onExportImage}
-                      onExportConfig={onExportConfig}
-                      onExportMap={onExportMap}
+                      {...dropdownCallbacks}
                     />
                   ) : null}
                 </div>

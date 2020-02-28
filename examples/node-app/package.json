@@ -6,7 +6,7 @@
   "dependencies": {
     "express": "^4.17.1",
     "global": "^4.3.0",
-    "kepler.gl": "^1.1.13",
+    "kepler.gl": "^2.0.0",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
     "react-palm": "^3.1.2",

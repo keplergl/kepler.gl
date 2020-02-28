@@ -18,29 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {MAP_URI} from '../constants/default-settings';
-
-export function parseQueryString(query) {
-  const searchParams = new URLSearchParams(query);
-  const params = {};
-  for (const p of searchParams) {
-    if (p && p.length === 2 && p[0]) params[p[0]] = p[1];
-  }
-
-  return params;
-}
-
-/**
- * Returns a permalink with the given map url: kepler.gl/[]
- * @param mapLink the cloud-providers url used to store the map
- * @returns {string}
- */
-export function getMapPermalink(mapLink, fullUrl = true) {
-  return fullUrl
-    ? `${window.location.protocol}//${window.location.host}/${MAP_URI}${mapLink}`
-    : `/${MAP_URI}${mapLink}`;
-}
-
 // from http://blog.stevenlevithan.com/archives/parseuri
 /**
  * Allows to break down a url into multiple params

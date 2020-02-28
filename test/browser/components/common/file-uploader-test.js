@@ -23,7 +23,7 @@ import test from 'tape';
 import sinon from 'sinon';
 import {mountWithTheme} from 'test/helpers/component-utils';
 
-import FileUplad, {WarningMsg} from 'components/common/file-uploader/file-upload';
+import {FileUpload, WarningMsg} from 'components/common/file-uploader/file-upload';
 import FileDrop from 'components/common/file-uploader/file-drop';
 import UploadButton from 'components/common/file-uploader/upload-button';
 
@@ -31,7 +31,7 @@ test('Components -> FileUploader.render', t => {
   let wrapper;
 
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(<FileUplad />);
+    wrapper = mountWithTheme(<FileUpload />);
   }, 'Show not fail without data');
 
   t.equal(wrapper.find(FileDrop).length, 1, 'should render FileUploader');
@@ -46,7 +46,7 @@ test('Components -> FileUpload.onDrop', t => {
     t.deepEqual(arg, mockFiles, 'should call onFileUpload with files');
   });
   const stopPropagation = sinon.spy();
-  const wrapper = mountWithTheme(<FileUplad onFileUpload={onFileUpload} />);
+  const wrapper = mountWithTheme(<FileUpload onFileUpload={onFileUpload} />);
 
   t.equal(wrapper.find(FileDrop).length, 1, 'should render FileUploader');
 
@@ -77,7 +77,7 @@ test('Components -> FileUpload.onDrop -> render loading msg', t => {
     t.deepEqual(arg, mockFiles, 'should call onFileUpload with files');
   });
 
-  const wrapper = mountWithTheme(<FileUplad onFileUpload={onFileUpload} fileLoading />);
+  const wrapper = mountWithTheme(<FileUpload onFileUpload={onFileUpload} fileLoading />);
 
   const FileDropDiv = wrapper.find('.file-uploader__file-drop').at(0);
   // mock file drop event
@@ -108,7 +108,7 @@ test('Components -> FileUpload.onDrop -> render error msg', t => {
     t.deepEqual(arg, mockFiles, 'should call onFileUpload with files');
   });
 
-  const wrapper = mountWithTheme(<FileUplad onFileUpload={onFileUpload} />);
+  const wrapper = mountWithTheme(<FileUpload onFileUpload={onFileUpload} />);
 
   const FileDropDiv = wrapper.find('.file-uploader__file-drop').at(0);
   // mock file drop event
@@ -136,7 +136,7 @@ test('Components -> FileUpload.dragOver', t => {
   const onFileUpload = sinon.spy(arg => {
     t.deepEqual(arg, mockFiles, 'should call onFileUpload with files');
   });
-  const wrapper = mountWithTheme(<FileUplad onFileUpload={onFileUpload} />);
+  const wrapper = mountWithTheme(<FileUpload onFileUpload={onFileUpload} />);
 
   t.equal(wrapper.find(FileDrop).length, 1, 'should render FileUploader');
 
@@ -160,7 +160,7 @@ test('Components -> FileUpload.dragLeave', t => {
   const onFileUpload = sinon.spy(arg => {
     t.deepEqual(arg, mockFiles, 'should call onFileUpload with files');
   });
-  const wrapper = mountWithTheme(<FileUplad onFileUpload={onFileUpload} />);
+  const wrapper = mountWithTheme(<FileUpload onFileUpload={onFileUpload} />);
 
   t.equal(wrapper.find(FileDrop).length, 1, 'should render FileUploader');
 
@@ -184,7 +184,7 @@ test('Components -> UploadButton fileInput', t => {
   const onFileUpload = sinon.spy(arg => {
     t.deepEqual(arg, mockFiles, 'should call onFileUpload with files');
   });
-  const wrapper = mountWithTheme(<FileUplad onFileUpload={onFileUpload} />);
+  const wrapper = mountWithTheme(<FileUpload onFileUpload={onFileUpload} />);
   const uploadButton = wrapper.find(UploadButton);
   t.equal(uploadButton.length, 1, 'should render UploadButton');
   const input = uploadButton.find('input');

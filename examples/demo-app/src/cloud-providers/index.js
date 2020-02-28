@@ -18,11 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {CLOUD_PROVIDERS} from './providers';
+import {AUTH_TOKENS} from '../constants/default-settings';
 
-export function getCloudProviders() {
-  return CLOUD_PROVIDERS;
-}
+import DropboxProvider from './dropbox/dropbox-provider';
+
+const {DROPBOX_CLIENT_ID} = AUTH_TOKENS;
+const DROPBOX_CLIENT_NAME = 'Kepler.gl%20(managed%20by%20Uber%20Technologies%2C%20Inc.)';
+
+export const DEFAULT_CLOUD_PROVIDER = 'dropbox';
+
+export const CLOUD_PROVIDERS = [new DropboxProvider(DROPBOX_CLIENT_ID, DROPBOX_CLIENT_NAME)];
 
 export function getCloudProvider(providerName) {
   const cloudProvider = CLOUD_PROVIDERS.find(provider => provider.name === providerName);

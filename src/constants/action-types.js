@@ -93,6 +93,7 @@ const ActionTypes = keyMirror({
   SET_FILTER_PLOT: null,
   LOAD_FILES: null,
   LOAD_FILES_ERR: null,
+  LOAD_FILES_SUCCESS: null,
   LAYER_COLOR_UI_CHANGE: null,
   TOGGLE_FEATURE_LAYER: null,
   APPLY_CPU_FILTER: null,

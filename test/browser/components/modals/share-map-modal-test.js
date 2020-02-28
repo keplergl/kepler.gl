@@ -79,15 +79,22 @@ test('Components -> ShareMapUrlModal.mount with isLoading', t => {
   let wrapper;
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
-      <ShareMapUrlModal isLoading onSetCloudProvider={() => {}} cloudProviders={[mockProvider]} />
+      <ShareMapUrlModal
+        isProviderLoading
+        onSetCloudProvider={() => {}}
+        cloudProviders={[mockProvider]}
+      />
     );
-  }, 'Show not fail mount with isLoading');
+  }, 'Show not fail mount with isProviderLoading');
 
-  t.ok(wrapper.find(StatusPanel).length === 1, 'should render StatusPanel when loading');
+  t.ok(
+    wrapper.find(StatusPanel).length === 1,
+    'should render StatusPanel when isProviderLoading=true'
+  );
 
   wrapper = mountWithTheme(
     <ShareMapUrlModal
-      error="something is wrong"
+      providerError="something is wrong"
       onSetCloudProvider={() => {}}
       cloudProviders={[mockProvider]}
     />
@@ -109,8 +116,7 @@ test('Components -> ShareMapUrlModal.mount with SharingUrl', t => {
   const shareUrl = 'http://taro-and-blue';
   const mockProvider = {
     getAccessToken: () => true,
-    name: 'taro',
-    getMapPermalink: () => shareUrl
+    name: 'taro'
   };
 
   // mount
@@ -118,7 +124,7 @@ test('Components -> ShareMapUrlModal.mount with SharingUrl', t => {
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
       <ShareMapUrlModal
-        successInfo={{metaUrl: 'http://somdthing'}}
+        successInfo={{shareUrl}}
         cloudProviders={[mockProvider]}
         currentProvider="taro"
         onSetCloudProvider={() => {}}
@@ -134,7 +140,7 @@ test('Components -> ShareMapUrlModal.mount with SharingUrl', t => {
       .find('input')
       .props().value,
     shareUrl,
-    'should render with successInfo.metaUrl'
+    'should render with successInfo.shareUrl'
   );
 
   t.end();

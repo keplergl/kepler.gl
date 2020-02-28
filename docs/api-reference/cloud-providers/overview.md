@@ -14,56 +14,52 @@ A "cloud provider" object provides:
 - any service specific methods (such as `uploadFile`)
 - a set of oauth2 methods to plug into the authentication flow and get access tokens
 
-Cloud-providers providers implement the following properties
+Cloud-providers providers can implement the following properties
 
-| Field/method | Description |
-| --- | --- |
-| `name` | |
-| `icon` | |
-| `login` | |
-| `uploadFile` | |
+| Field/method | Description | Required? |
+| --- | --- | --- |
+| `name` | Name of the provider | required |
+| `displayName` | Display name |
+| `icon` | React Element to render as Icon |
+| `thumbnail` | Size of the thumbnail image of the map that required by the provider |
+| `hasPrivateStorage` | To participate in kepler's build-in private map saving function | required |
+| `hasSharingUrl` | To participate in kepler's build-in share map via URL function | required |
+| `getShareUrl` | To show user the shared Url of the map |
+| `getMapUrl` | To update browser location once a map has been saved / loaded |
 | `getAccessToken` | To participate in kepler's built-in oauth login routes |
-| `getAccessTokenFromLocation` | To participate in kepler's built-in oauth login routes |
-| `hasPrivateStorage` | To participate in kepler's build-in map saving function |
-| `hasSharingUrl` | To participate in kepler's build-in share map via URL function |
+| `getUserName` | To display user name of the logged in user |
+| `login` | Method called to perform user login | required |
+| `logout` | Method called to logout an user | required |
+| `uploadMap` | Method called to upload map to storage | required |
+| `listMaps` | Method called to load a catalog of maps saved by the current user | required |
+| `downloadMap` | MEthod called to download a specific map | required |
+
 
 ## Adding a new Cloud Provider
 
-An instance of the provider is added to array of cloud providers in the file `src/cloud-providers/providers.js`
+An instance of the provider is added to array of cloud providers in the file `src/cloud-providers/providers.js` then passed to kepler.gl demo app. An example provider: [Dropbox Provider](https://github.com/keplergl/kepler.gl/blob/master/examples/demo-app/src/cloud-providers/dropbox-provider.js)
+
+```js
+import {Provider} from 'kepler.gl/cloud-providers';
+
+class MyProvider extends Provider {
+  constructor() {
+    this.name = 'foo';
+    this.displayName = 'My Provider';
+  }
+  // ... other required methods below
+}
+
+const myProvider = new MyProvider();
+const App = () =>
+  <KeplerGl
+    mapboxApiAccessToken={AUTH_TOKENS.MAPBOX_TOKEN}
+    id="map"
+    cloudProviders={[myProvider]}
+  />
+```
+
 
 ## Cloud Provider Instance Fields and Methods
 
-## name : String
-
-The UI name of the provider
-
-## icon : ReactElement
-
-This should be a React SVG icon for the provider
-
-## hasPrivateStorage() : Boolean
-
-Whether the provider has private backend to store maps. If any provider supports private storage, The cloud storage icon in side panel will be shown.
-
-## hasSharingUrl() : Boolean
-
-Whether the provider supports share map with an URL. If any provider supports this feature, The share map url icon option will be shown as an option in the share map dropdown.
-
-## Methods
-
-### login()
-
-### upload({})
-
-### getAccessToken
-
-This lets the provider participate in kepler's built-in oauth flow.
-
-Can be ignored for providers that implement or use libraries that implement custom login flows (e.g signin using Google gapi).
-
-### getAccessTokenFromLocation
-
-This lets the provider participate in kepler's built-in oauth flow.
-
-Can be ignored for providers that implement or use libraries that implement custom login flows (e.g signin using Google gapi).
-
+See [Cloud Provider API](./cloud-provider.md)

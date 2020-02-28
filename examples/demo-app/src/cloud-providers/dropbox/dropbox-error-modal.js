@@ -18,11 +18,47 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {AUTH_TOKENS} from '../constants/default-settings';
+import React, {Component, createRef} from 'react';
+import ReactDOM from 'react-dom';
 
-import DropboxProvider from './dropbox-provider';
+const WIDTH = 400;
+const HEIGHT = 800;
+const style = {borther: 0};
 
-const {DROPBOX_CLIENT_ID} = AUTH_TOKENS;
-const DROPBOX_CLIENT_NAME = 'Kepler.gl%20(managed%20by%20Uber%20Technologies%2C%20Inc.)';
+export default class Frame extends Component {
+  componentDidMount() {
+    this.renderFrameContents();
+  }
+  componentDidUpdate() {
+    this.renderFrameContents();
+  }
 
-export const CLOUD_PROVIDERS = [new DropboxProvider(DROPBOX_CLIENT_ID, DROPBOX_CLIENT_NAME)];
+  componentWillUnmount() {
+    ReactDOM.unmountComponentAtNode(this.root.current.contentDocument);
+  }
+
+  root = createRef();
+  innerHtml = createRef();
+
+  renderFrameContents = () => {
+    const doc = this.root.current.contentDocument;
+    if (doc.readyState === 'complete') {
+      ReactDOM.render(
+        <html
+          ref={this.innerHtml}
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{
+            __html: this.props.children
+          }}
+        />,
+        doc
+      );
+    } else {
+      setTimeout(this.renderFrameContents.bind(this), 0);
+    }
+  };
+
+  render() {
+    return <iframe width={`${WIDTH}px`} height={`${HEIGHT}px`} style={style} ref={this.root} />;
+  }
+}

@@ -97,6 +97,10 @@ import {createAction} from 'redux-actions';
  *       readOnly: false,
  *       keepExistingConfig: false
  *     },
+ *     info: {
+ *       title: 'Taro and Blue',
+ *       description: 'This is my map'
+ *     }
  *     config: sampleConfig
  *   })
  * );
