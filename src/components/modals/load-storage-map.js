@@ -60,6 +60,7 @@ const StyledProviderVisSection = styled.div`
   flex: 1 1 auto;
   background-color: #f8f8f9;
   padding: 20px 24px;
+  min-height: 280px;
 
   .title {
     font-size: 14px;
@@ -302,7 +303,7 @@ function LoadStorageMapFactory() {
                           />
                         ))
                       ) : (
-                        <div className="visualization-list__message">>No saved maps yet</div>
+                        <div className="visualization-list__message">No saved maps yet</div>
                       )}
                     </StyledVisualizationList>
                   </StyledProviderVisSection>
