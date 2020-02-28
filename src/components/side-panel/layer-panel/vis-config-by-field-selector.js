@@ -20,14 +20,15 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
+import {FormattedMessage, injectIntl} from 'react-intl';
 
 import {PanelLabel, PanelLabelWrapper, SidePanelSection} from 'components/common/styled-components';
 import FieldSelector from 'components/common/field-selector';
 import InfoHelper from 'components/common/info-helper';
 import DimensionScaleSelector from './dimension-scale-selector';
-import {capitalizeFirstLetter} from 'utils/utils';
+import {camelize} from 'utils/utils';
 
-export default class VisConfigByFieldSelector extends Component {
+class VisConfigByFieldSelector extends Component {
   static propTypes = {
     channel: PropTypes.string.isRequired,
     fields: PropTypes.arrayOf(PropTypes.any).isRequired,
@@ -50,17 +51,39 @@ export default class VisConfigByFieldSelector extends Component {
   };
 
   render() {
-    const {property, showScale, selectedField, description, scaleOptions = []} = this.props;
+    const {
+      property,
+      showScale,
+      selectedField,
+      description,
+      label,
+      intl,
+      scaleOptions = []
+    } = this.props;
 
     return (
       <SidePanelSection>
         <SidePanelSection>
           <PanelLabelWrapper>
             <PanelLabel>
-              {this.props.label || `${capitalizeFirstLetter(property)} based on`}
+              {(label && <FormattedMessage id={label} />) || (
+                <FormattedMessage
+                  id="layer.propertyBasedOn"
+                  values={{
+                    property: intl.formatMessage({
+                      id: `property.${camelize(property)}`,
+                      defaultMessage: property
+                    })
+                  }}
+                />
+              )}
             </PanelLabel>
             {description && (
-              <InfoHelper description={description} id={`${this.props.id}-${property}`} />
+              <InfoHelper
+                description={description}
+                property={property}
+                id={`${this.props.id}-${property}`}
+              />
             )}
           </PanelLabelWrapper>
           <FieldSelector
@@ -86,3 +109,5 @@ export default class VisConfigByFieldSelector extends Component {
     );
   }
 }
+
+export default injectIntl(VisConfigByFieldSelector);

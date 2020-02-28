@@ -69,6 +69,19 @@ export function camelToTitle(str) {
 }
 
 /**
+ * Convert names to camel style
+ * Stroke Color -> strokeColor
+ * @param {string} str
+ * @returns {string}
+ */
+export const camelize = str => {
+  return str.replace(/(?:^\w|[A-Z]|\b\w|\s+)/g, (match, index) => {
+    if (Number(match) === 0) return ''; // or if (/\s+/.test(match)) for white spaces
+    return index === 0 ? match.toLowerCase() : match.toUpperCase();
+  });
+};
+
+/**
  * Returns the img url for a given map export option
  * @param mode export option
  * @return {string} url

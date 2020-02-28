@@ -22,13 +22,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {StyledExportSection, StyledType} from 'components/common/styled-components';
 import {StyledExportMapSection, StyledWarning, ExportMapLink} from './components';
-import {
-  DISCLAIMER,
-  EXPORT_HTML_MAP_MODE_OPTIONS,
-  TOKEN_MISUSE_WARNING
-} from 'constants/default-settings';
+import {EXPORT_HTML_MAP_MODE_OPTIONS} from 'constants/default-settings';
 import {GITHUB_EXPORT_HTML_MAP, GITHUB_EXPORT_HTML_MAP_MODES} from 'constants/user-guides';
 import styled from 'styled-components';
+import {FormattedMessage, injectIntl} from 'react-intl';
 
 const NO_OP = () => {};
 
@@ -71,38 +68,56 @@ const exportHtmlPropTypes = {
 };
 
 const ExportHtmlMap = React.memo(
-  ({onChangeExportMapHTMLMode = NO_OP, onEditUserMapboxAccessToken = NO_OP, options = {}}) => (
+  ({
+    onChangeExportMapHTMLMode = NO_OP,
+    onEditUserMapboxAccessToken = NO_OP,
+    options = {},
+    intl
+  }) => (
     <div>
       <StyledExportMapSection>
         <div className="description" />
-        <div className="selection">Export your map into an interactive html file.</div>
+        <div className="selection">
+          <FormattedMessage id={'modal.exportMap.html.selection'} />
+        </div>
       </StyledExportMapSection>
       <ExportMapStyledExportSection className="export-map-modal__html-options">
         <div className="description">
-          <div className="title">Mapbox access token</div>
-          <div className="subtitle">Use your own Mapbox access token in the html (optional)</div>
+          <div className="title">
+            <FormattedMessage id={'modal.exportMap.html.tokenTitle'} />
+          </div>
+          <div className="subtitle">
+            <FormattedMessage id={'modal.exportMap.html.tokenSubtitle'} />
+          </div>
         </div>
         <div className="selection">
           <StyledInput
             onChange={e => onEditUserMapboxAccessToken(e.target.value)}
             type="text"
-            placeholder="Paste your Mapbox access token"
+            placeholder={intl.formatMessage({id: 'modal.exportMap.html.tokenPlaceholder'})}
             value={options ? options.userMapboxToken : ''}
           />
           <div className="disclaimer">
-            <StyledWarning>{TOKEN_MISUSE_WARNING}</StyledWarning>
-            <span>{DISCLAIMER}</span>
+            <StyledWarning>
+              <FormattedMessage id={'modal.exportMap.html.tokenMisuseWarning'} />
+            </StyledWarning>
+            <FormattedMessage id={'modal.exportMap.html.tokenDisclaimer'} />
             <ExportMapLink href={GITHUB_EXPORT_HTML_MAP}>
-              How to update an existing map token.
+              <FormattedMessage id={'modal.exportMap.html.tokenUpdate'} />
             </ExportMapLink>
           </div>
         </div>
       </ExportMapStyledExportSection>
       <ExportMapStyledExportSection>
         <div className="description">
-          <div className="title">Map Mode</div>
+          <div className="title">
+            <FormattedMessage id={'modal.exportMap.html.modeTitle'} />
+          </div>
           <div className="subtitle">
-            Select the app mode. More <a href={GITHUB_EXPORT_HTML_MAP_MODES}>info</a>
+            <FormattedMessage id={'modal.exportMap.html.modeSubtitle1'} />
+            <a href={GITHUB_EXPORT_HTML_MAP_MODES}>
+              <FormattedMessage id={'modal.exportMap.html.modeSubtitle2'} />
+            </a>
           </div>
         </div>
         <div className="selection">
@@ -114,7 +129,12 @@ const ExportHtmlMap = React.memo(
               onClick={() => mode.available && onChangeExportMapHTMLMode(mode.id)}
             >
               <img src={mode.url} alt="" />
-              <p>Allow users to {mode.label} the map</p>
+              <p>
+                <FormattedMessage
+                  id={'modal.exportMap.html.modeDescription'}
+                  values={{mode: intl.formatMessage({id: mode.label})}}
+                />
+              </p>
             </BigStyledTile>
           ))}
         </div>
@@ -127,6 +147,6 @@ ExportHtmlMap.propTypes = exportHtmlPropTypes;
 
 ExportHtmlMap.displayName = 'ExportHtmlMap';
 
-const ExportHtmlMapFactory = () => ExportHtmlMap;
+const ExportHtmlMapFactory = () => injectIntl(ExportHtmlMap);
 
 export default ExportHtmlMapFactory;

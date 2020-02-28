@@ -20,9 +20,11 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import {FormattedMessage, useIntl} from 'react-intl';
 import {Tooltip} from './styled-components';
 import {Docs} from 'components/common/icons';
 import styled from 'styled-components';
+import {camelize} from 'utils/utils';
 
 const StyledInfoHelper = styled.div`
   align-items: center;
@@ -45,11 +47,22 @@ const propTypes = {
   containerClass: PropTypes.string
 };
 
-const InfoHelper = ({description, containerClass, id}) => (
+const InfoHelper = ({description, property, containerClass, id}) => (
   <StyledInfoHelper className={`info-helper ${containerClass || ''}`} data-tip data-for={id}>
     <Docs height="16px" />
     <Tooltip id={id} effect="solid">
-      <div className="info-helper__content">{description}</div>
+      <div className="info-helper__content">
+        {description && (
+          <FormattedMessage
+            id={description}
+            values={{
+              property: useIntl().formatMessage({
+                id: property ? `property.${camelize(property)}` : 'misc.empty'
+              })
+            }}
+          />
+        )}
+      </div>
     </Tooltip>
   </StyledInfoHelper>
 );

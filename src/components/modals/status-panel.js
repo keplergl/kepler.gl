@@ -23,6 +23,7 @@ import styled from 'styled-components';
 import {MapIcon} from 'components/common/icons';
 import {StyledExportSection} from 'components/common/styled-components';
 import ErrorDisplay from './error-display';
+import {FormattedMessage} from 'react-intl';
 
 const StyledUploader = styled.div`
   display: flex;
@@ -76,7 +77,13 @@ export const UploadAnimation = props => (
 const StatusPanel = ({error, isLoading, providerIcon}) => (
   <StyledExportSection>
     <div className="description">
-      <div className="title">{isLoading ? 'Map Uploading' : error ? 'Error' : null}</div>
+      <div className="title">
+        {isLoading ? (
+          <FormattedMessage id={'modal.statusPanel.mapUploading'} />
+        ) : error ? (
+          <FormattedMessage id={'modal.statusPanel.error'} />
+        ) : null}
+      </div>
     </div>
     <div className="selection">
       {isLoading && <UploadAnimation icon={providerIcon} />}

@@ -22,6 +22,7 @@ import React from 'react';
 import styled from 'styled-components';
 import {line} from 'd3-shape';
 import {Table, CenterFlexbox} from 'components/common/styled-components';
+import { FormattedMessage } from "react-intl";
 
 const lineFunction = line()
   .x(d => d[0] * 10)
@@ -123,20 +124,16 @@ const IconInfoModalFactory = (svgIcons = []) => {
   const IconInfoModal = () => (
     <div className="icon-info-modal">
       <div className="icon-info-modal__description">
-        <span>
-          In your csv, create a column, put the name of the icon you want to draw in it. You can
-          leave the cell empty if you do not want the icon to show for some points. When the column
-          is named{' '}
-        </span>
-        <code>icon</code>
-        <span> kepler.gl will automatically create a icon layer for you.</span>
+        <FormattedMessage id={'modal.iconInfo.description1'} />{' '}
+        <code><FormattedMessage id={'modal.iconInfo.code'} /></code>
+        <FormattedMessage id={'modal.iconInfo.description2'}/>
       </div>
       <div className="icon-info-modal__example">
-        <StyledTitle>Example:</StyledTitle>
+        <StyledTitle><FormattedMessage id={'modal.iconInfo.example'}/></StyledTitle>
         <ExampleTable />
       </div>
       <div className="icon-info-modal__icons">
-        <StyledTitle>Icons</StyledTitle>
+        <StyledTitle><FormattedMessage id={'modal.iconInfo.icons'}/></StyledTitle>
         <IconTable className="icon-info-modal__icons__table">
           {svgIcons.map(icon => (
             <IconItem key={icon.id} icon={icon} />

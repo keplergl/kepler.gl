@@ -52,7 +52,7 @@ export default class ClusterLayer extends AggregationLayer {
       color: {
         aggregation: 'colorAggregation',
         channelScaleType: CHANNEL_SCALES.colorAggr,
-        defaultMeasure: 'Point Count',
+        defaultMeasure: 'property.pointCount',
         domain: 'colorDomain',
         field: 'colorField',
         key: 'color',

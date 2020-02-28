@@ -38,7 +38,7 @@ import * as MapStyleActions from 'actions/map-style-actions';
 import * as UIStateActions from 'actions/ui-state-actions';
 
 import {appInjector} from 'components/container';
-import {mountWithTheme} from 'test/helpers/component-utils';
+import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
 // components
 const SidePanel = appInjector.get(SidePanelFactory);
@@ -79,7 +79,11 @@ test('Components -> SidePanel.mount -> no prop', t => {
   // mount
   let wrapper;
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(<SidePanel {...defaultProps} />);
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <SidePanel {...defaultProps} />
+      </IntlWrapper>
+    );
   }, 'SidePanel should not fail without props');
 
   t.ok(wrapper.find(PanelHeader).length === 1, 'should render PanelHeader');
@@ -99,7 +103,11 @@ test('Components -> SidePanel -> toggle panel', t => {
   let wrapper;
   // mount
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(<SidePanel {...defaultProps} uiStateActions={uiStateActions} />);
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <SidePanel {...defaultProps} uiStateActions={uiStateActions} />
+      </IntlWrapper>
+    );
   }, 'SidePanel should not fail');
 
   t.ok(wrapper.find(PanelToggle).length === 1, 'should render PanelToggle');
@@ -121,7 +129,11 @@ test('Components -> SidePanel -> render panel', t => {
   };
   // mount LayerManager
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(<SidePanel {...defaultProps} uiState={uiState} />);
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <SidePanel {...defaultProps} uiState={uiState} />
+      </IntlWrapper>
+    );
   }, 'SidePanel should not fail');
 
   t.ok(wrapper.find(LayerManager).length === 1, 'should render LayerManager');
@@ -132,7 +144,11 @@ test('Components -> SidePanel -> render panel', t => {
     activeSidePanel: 'filter'
   };
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(<SidePanel {...defaultProps} uiState={uiState} />);
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <SidePanel {...defaultProps} uiState={uiState} />
+      </IntlWrapper>
+    );
   }, 'SidePanel should not fail');
   t.ok(wrapper.find(FilterManager).length === 1, 'should render FilterManager');
 
@@ -142,7 +158,11 @@ test('Components -> SidePanel -> render panel', t => {
     activeSidePanel: 'interaction'
   };
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(<SidePanel {...defaultProps} uiState={uiState} />);
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <SidePanel {...defaultProps} uiState={uiState} />
+      </IntlWrapper>
+    );
   }, 'SidePanel should not fail');
   t.ok(wrapper.find(InteractionManager).length === 1, 'should render InteractionManager');
 
@@ -152,7 +172,11 @@ test('Components -> SidePanel -> render panel', t => {
     activeSidePanel: 'map'
   };
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(<SidePanel {...defaultProps} uiState={uiState} />);
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <SidePanel {...defaultProps} uiState={uiState} />
+      </IntlWrapper>
+    );
   }, 'SidePanel should not fail');
   t.ok(wrapper.find(MapManager).length === 1, 'should render MapManager');
 
@@ -203,7 +227,11 @@ test('Components -> SidePanel -> render custom panel', t => {
 
   // mount CustomSidePanel
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(<CustomSidePanel {...defaultProps} />);
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <CustomSidePanel {...defaultProps} />
+      </IntlWrapper>
+    );
   }, 'SidePanel should not fail');
 
   t.equal(wrapper.find('.side-panel__tab').length, 6, 'should render 6 panel tabs');
@@ -214,7 +242,11 @@ test('Components -> SidePanel -> render custom panel', t => {
   // mount CustomSidePanel with 1 of the custom panel
   const uiState = {...defaultProps.uiState, activeSidePanel: 'rocket'};
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(<CustomSidePanel {...defaultProps} uiState={uiState} />);
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <CustomSidePanel {...defaultProps} uiState={uiState} />
+      </IntlWrapper>
+    );
   }, 'SidePanel should not fail when mount with custom side panel activated');
   t.equal(wrapper.find(MyPanels).length, 1, 'should render MyPanels');
   t.end();
@@ -230,7 +262,11 @@ test('Components -> SidePanel -> PanelHeader', t => {
   let wrapper;
   // mount
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(<SidePanel {...defaultProps} uiStateActions={uiStateActions} />);
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <SidePanel {...defaultProps} uiStateActions={uiStateActions} />
+      </IntlWrapper>
+    );
   }, 'SidePanel should not fail');
 
   t.ok(wrapper.find(PanelHeader).length === 1, 'should render PanelHeader');
@@ -269,7 +305,9 @@ test('Components -> SidePanel -> PanelHeader', t => {
   };
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
-      <SidePanel {...defaultProps} uiState={uiState} uiStateActions={uiStateActions} />
+      <IntlWrapper>
+        <SidePanel {...defaultProps} uiState={uiState} uiStateActions={uiStateActions} />
+      </IntlWrapper>
     );
   }, 'SidePanel should not fail');
 
@@ -293,7 +331,9 @@ test('Components -> SidePanel -> PanelHeader -> ExportDropDown', t => {
   // mount
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
-      <SidePanel {...defaultProps} uiState={uiState} uiStateActions={uiStateActions} />
+      <IntlWrapper>
+        <SidePanel {...defaultProps} uiState={uiState} uiStateActions={uiStateActions} />
+      </IntlWrapper>
     );
   }, 'SidePanel should not fail');
 

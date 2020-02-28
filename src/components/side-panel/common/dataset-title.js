@@ -20,9 +20,10 @@
 
 import React, {PureComponent} from 'react';
 import styled from 'styled-components';
+import {FormattedMessage} from 'react-intl';
 
-import {Tooltip, CenterFlexbox} from 'components/common/styled-components';
-import {Table, Trash, ArrowRight} from 'components/common/icons';
+import {CenterFlexbox, Tooltip} from 'components/common/styled-components';
+import {ArrowRight, Table, Trash} from 'components/common/icons';
 import DatasetTagFactory from 'components/side-panel/common/dataset-tag';
 
 function nop() {}
@@ -69,7 +70,9 @@ const ShowDataTable = ({id, showDatasetTable = nop}) => (
       }}
     />
     <Tooltip id={`data-table-${id}`} effect="solid">
-      <span>Show data table</span>
+      <span>
+        <FormattedMessage id={'datasetTitle.showDataTable'} />
+      </span>
     </Tooltip>
   </DataTagAction>
 );
@@ -88,7 +91,9 @@ const RemoveDataset = ({datasetKey, removeDataset = nop}) => (
       }}
     />
     <Tooltip id={`delete-${datasetKey}`} effect="solid" type="error">
-      <span>Remove dataset</span>
+      <span>
+        <FormattedMessage id={'datasetTitle.removeDataset'} />
+      </span>
     </Tooltip>
   </DataTagAction>
 );

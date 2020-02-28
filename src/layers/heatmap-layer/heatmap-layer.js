@@ -96,7 +96,7 @@ class HeatmapLayer extends MapboxGLLayer {
         key: 'weight',
         // supportedFieldTypes can be determined by channelScaleType
         // or specified here
-        defaultMeasure: 'density',
+        defaultMeasure: 'property.density',
         supportedFieldTypes: [ALL_FIELD_TYPES.real, ALL_FIELD_TYPES.integer],
         channelScaleType: CHANNEL_SCALES.size
       }
@@ -110,12 +110,12 @@ class HeatmapLayer extends MapboxGLLayer {
   getVisualChannelDescription(channel) {
     return channel === 'color'
       ? {
-          label: 'color',
-          measure: 'Density'
+          label: 'property.color',
+          measure: 'property.density'
         }
       : {
-          label: 'weight',
-          measure: this.config.weightField ? this.config.weightField.name : 'Density'
+          label: 'property.weight',
+          measure: this.config.weightField ? this.config.weightField.name : 'property.density'
         };
   }
 

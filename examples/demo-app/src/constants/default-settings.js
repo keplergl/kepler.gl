@@ -54,8 +54,6 @@ export const LOADING_METHODS = keyMirror({
 
 export const LOADING_SAMPLE_LIST_ERROR_MESSAGE = 'Not able to load sample gallery';
 export const LOADING_SAMPLE_ERROR_MESSAGE = 'Not able to load sample';
-export const LOADING_URL_MESSAGE =
-  'You can use the following formats: CSV | JSON | Kepler.gl config json. Make sure the url contains the file extension.';
 export const CORS_LINK = 'https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS';
 
 export const DEFAULT_FEATURE_FLAGS = {

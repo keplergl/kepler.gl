@@ -23,11 +23,14 @@ import RangeSlider from 'components/common/range-slider';
 
 import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
 import {BRUSH_CONFIG} from 'utils/interaction-utils';
+import {FormattedMessage} from 'react-intl';
 
 function BrushConfigFactory() {
   const BrushConfig = ({config, onChange}) => (
     <SidePanelSection>
-      <PanelLabel>Brush Radius (km)</PanelLabel>
+      <PanelLabel>
+        <FormattedMessage id={'misc.brushRadius'} />
+      </PanelLabel>
       <RangeSlider
         range={BRUSH_CONFIG.range}
         value0={0}

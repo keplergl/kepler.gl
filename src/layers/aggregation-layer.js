@@ -89,7 +89,7 @@ export default class AggregationLayer extends Layer {
       color: {
         aggregation: 'colorAggregation',
         channelScaleType: CHANNEL_SCALES.colorAggr,
-        defaultMeasure: 'Point Count',
+        defaultMeasure: 'property.pointCount',
         domain: 'colorDomain',
         field: 'colorField',
         key: 'color',
@@ -101,7 +101,7 @@ export default class AggregationLayer extends Layer {
         aggregation: 'sizeAggregation',
         channelScaleType: CHANNEL_SCALES.sizeAggr,
         condition: config => config.visConfig.enable3d,
-        defaultMeasure: 'Point Count',
+        defaultMeasure: 'property.pointCount',
         domain: 'sizeDomain',
         field: 'sizeField',
         key: 'size',

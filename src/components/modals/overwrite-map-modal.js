@@ -23,6 +23,7 @@ import styled from 'styled-components';
 import {CenterVerticalFlexbox} from 'components/common/styled-components';
 import {UploadAnimation} from './status-panel';
 import ImageModalContainer from './image-modal-container';
+import {FormattedMessage} from 'react-intl';
 
 const StyledMsg = styled.div`
   margin-top: 24px;
@@ -64,7 +65,9 @@ const OverwriteMapModalFactory = () => {
         <StyledOverwriteMapModal className="overwrite-map-modal">
           {isProviderLoading ? (
             <StyledMsg>
-              <StyledTitle>Saving map...</StyledTitle>
+              <StyledTitle>
+                <FormattedMessage id={'modal.overwriteMap.title'} />
+              </StyledTitle>
               <UploadAnimation icon={provider && provider.icon} />
             </StyledMsg>
           ) : (
@@ -74,7 +77,7 @@ const OverwriteMapModalFactory = () => {
               </StyledIcon>
               <StyledMsg className="overwrite-map-msg">
                 <StyledTitle>{title}</StyledTitle>
-                {` already exists in your ${mapSaved}. Would you like to overwrite it?`}
+                <FormattedMessage id={'modal.overwriteMap.alreadyExists'} values={{mapSaved}} />
               </StyledMsg>
             </>
           )}

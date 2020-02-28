@@ -36,7 +36,7 @@ import {
   expectedSavedLayer0 as hexagonLayer,
   expectedSavedLayer2 as geojsonLayer
 } from 'test/helpers/mock-state';
-import {mountWithTheme} from 'test/helpers/component-utils';
+import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
 test('Components -> MapLegend.render', t => {
   t.doesNotThrow(() => {
@@ -52,7 +52,11 @@ test('Components -> MapLegend.render -> with layers', t => {
   let wrapper;
 
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(<MapLegend layers={layers} />);
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <MapLegend layers={layers} />
+      </IntlWrapper>
+    );
   }, 'Show not fail with layers');
 
   t.equal(

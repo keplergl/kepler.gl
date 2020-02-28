@@ -24,9 +24,10 @@ import classnames from 'classnames';
 import styled from 'styled-components';
 import {sortableHandle} from 'react-sortable-hoc';
 import PanelHeaderAction from 'components/side-panel/panel-header-action';
-import {EyeSeen, EyeUnseen, VertDots, ArrowDown, Trash} from 'components/common/icons';
+import {ArrowDown, EyeSeen, EyeUnseen, Trash, VertDots} from 'components/common/icons';
 
 import {InlineInput, StyledPanelHeader} from 'components/common/styled-components';
+import {FormattedMessage} from 'react-intl';
 
 const propTypes = {
   // required
@@ -152,7 +153,9 @@ function LayerPanelHeaderFactory() {
         <LayerTitleSection className="layer__title">
           <div>
             <LayerLabelEditor layerId={layerId} label={label} onEdit={onUpdateLayerLabel} />
-            <div className="layer__title__type">{layerType}</div>
+            <div className="layer__title__type">
+              {layerType && <FormattedMessage id={`layer.type.${layerType.toLowerCase()}`} />}
+            </div>
           </div>
         </LayerTitleSection>
       </HeaderLabelSection>
@@ -161,7 +164,7 @@ function LayerPanelHeaderFactory() {
           <PanelHeaderAction
             className="layer__remove-layer"
             id={layerId}
-            tooltip={'Remove layer'}
+            tooltip={'tooltip.removeLayer'}
             onClick={onRemoveLayer}
             tooltipType="error"
             IconComponent={Trash}
@@ -170,14 +173,14 @@ function LayerPanelHeaderFactory() {
         <PanelHeaderAction
           className="layer__visibility-toggle"
           id={layerId}
-          tooltip={isVisible ? 'hide layer' : 'show layer'}
+          tooltip={isVisible ? 'tooltip.hideLayer' : 'tooltip.showLayer'}
           onClick={onToggleVisibility}
           IconComponent={isVisible ? EyeSeen : EyeUnseen}
         />
         <PanelHeaderAction
           className="layer__enable-config"
           id={layerId}
-          tooltip={'Layer settings'}
+          tooltip={'tooltip.layerSettings'}
           onClick={onToggleEnableConfig}
           IconComponent={ArrowDown}
         />

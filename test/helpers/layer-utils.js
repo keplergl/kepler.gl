@@ -37,14 +37,14 @@ import {LayerClasses} from 'layers';
 import {processCsvData, processGeojson} from 'processors/data-processor';
 import {applyActions} from 'test/helpers/mock-state';
 import {visStateReducer} from 'reducers';
-
 // Fixtures
 import csvData, {wktCsv} from 'test/fixtures/test-csv-data';
-import testLayerData, {bounds, iconGeometry, fieldDomain} from 'test/fixtures/test-layer-data';
+import testLayerData, {bounds, fieldDomain, iconGeometry} from 'test/fixtures/test-layer-data';
 import {geojsonData} from 'test/fixtures/geojson';
 import tripGeoJson from 'test/fixtures/trip-geojson';
 
 import {logStep} from '../../scripts/log';
+import {IntlWrapper} from './component-utils';
 
 export function testCreateLayer(t, LayerClass, props = {}) {
   let layer;
@@ -98,7 +98,11 @@ export function testCreateCases(t, LayerClass, testCases) {
 
       if (layer.layerInfoModal) {
         t.doesNotThrow(() => {
-          mount(<layer.layerInfoModal.template />);
+          mount(
+            <IntlWrapper>
+              <layer.layerInfoModal.template />
+            </IntlWrapper>
+          );
         }, 'layer info modal should be mountable');
       }
     }

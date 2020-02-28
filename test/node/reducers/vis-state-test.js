@@ -2412,6 +2412,7 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
     interactionConfig: {
       tooltip: {
         id: 'tooltip',
+        label: 'interactions.tooltip',
         enabled: true,
         iconComponent: oldState.interactionConfig.tooltip.iconComponent,
         config: {
@@ -2622,6 +2623,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
     interactionConfig: {
       tooltip: {
         id: 'tooltip',
+        label: 'interactions.tooltip',
         enabled: true,
         iconComponent: oldState.interactionConfig.tooltip.iconComponent,
         config: {

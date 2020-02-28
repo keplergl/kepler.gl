@@ -40,6 +40,7 @@ import {
 } from 'test/helpers/layer-utils';
 import {KeplerGlLayers} from 'layers';
 import {INITIAL_MAP_STATE} from 'reducers/map-state-updaters';
+import { IntlWrapper } from "../../helpers/component-utils";
 
 const {IconLayer} = KeplerGlLayers;
 const columns = {
@@ -532,7 +533,7 @@ test('#IconLayer -> fetch icon geometry -> renderIconModal', t => {
 
   let wrapper;
   t.doesNotThrow(() => {
-    wrapper = mount(<iconLayer.layerInfoModal.template />);
+    wrapper = mount(<IntlWrapper><iconLayer.layerInfoModal.template /></IntlWrapper>);
   }, 'mount layer info modal with icons should not fail');
 
   t.equal(wrapper.find('.icon-table__item').length, 3, 'should render 1 icon');

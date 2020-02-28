@@ -22,10 +22,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import JSONPretty from 'react-json-pretty';
 import {GITHUB_ADD_DATA_TO_MAP} from 'constants/user-guides';
-import {MAP_CONFIG_DESCRIPTION} from 'constants/default-settings';
 import styled from 'styled-components';
 import {StyledExportSection} from 'components/common/styled-components';
 import {StyledExportMapSection, StyledWarning, ExportMapLink} from './components';
+import {FormattedMessage} from 'react-intl';
 
 const StyledJsonExportSection = styled(StyledExportSection)`
   .note {
@@ -62,15 +62,16 @@ const ExportJsonMap = React.memo(({config = {}}) => (
     <StyledExportMapSection>
       <div className="description" />
       <div className="selection">
-        Export current map data and config into a single Json file. You can later open the same map
-        by uploading this file to kepler.gl.
+        <FormattedMessage id={'modal.exportMap.json.selection'} />
       </div>
     </StyledExportMapSection>
     <StyledJsonExportSection className="export-map-modal__json-options">
       <div className="description">
-        <div className="title">Map Config</div>
+        <div className="title">
+          <FormattedMessage id={'modal.exportMap.json.configTitle'} />
+        </div>
         <div className="subtitle">
-          {MAP_CONFIG_DESCRIPTION}
+          <FormattedMessage id={'modal.exportMap.json.configDisclaimer'} />
           <ExportMapLink href={GITHUB_ADD_DATA_TO_MAP}>addDataToMap</ExportMapLink>.
         </div>
       </div>
@@ -80,9 +81,7 @@ const ExportJsonMap = React.memo(({config = {}}) => (
         </div>
         <div className="disclaimer">
           <StyledWarning>
-            * Map config is coupled with loaded datasets. ‘dataId’ is used to bind layers, filters,
-            and tooltips to a specific dataset. When passing this config to addDataToMap, make sure
-            the dataset id matches the dataId/s in this config.
+            <FormattedMessage id={'modal.exportMap.json.disclaimer'} />
           </StyledWarning>
         </div>
       </div>

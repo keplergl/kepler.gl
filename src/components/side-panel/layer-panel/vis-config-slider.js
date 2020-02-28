@@ -20,10 +20,10 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {SidePanelSection, PanelLabel} from 'components/common/styled-components';
-import {capitalizeFirstLetter} from 'utils/utils';
+import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
 
 import RangeSlider from 'components/common/range-slider';
+import {FormattedMessage} from 'react-intl';
 
 const propTypes = {
   layer: PropTypes.object.isRequired,
@@ -51,11 +51,13 @@ export const VisConfigSlider = ({
   <SidePanelSection disabled={Boolean(disabled)}>
     {label ? (
       <PanelLabel>
-        {typeof label === 'string'
-          ? label
-          : typeof label === 'function'
-          ? label(config)
-          : capitalizeFirstLetter(property)}
+        {typeof label === 'string' ? (
+          <FormattedMessage id={label} />
+        ) : typeof label === 'function' ? (
+          <FormattedMessage id={label(config)} />
+        ) : (
+          <FormattedMessage id={`property.${property}`} />
+        )}
       </PanelLabel>
     ) : null}
     <RangeSlider
