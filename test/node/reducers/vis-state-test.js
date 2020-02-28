@@ -1592,15 +1592,15 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
   ];
 
   const expectedFilterProps = {
-    domain: [12.249999999999998,12.289999999999997],
-    step: 0.000009999999999999999,
+    domain: [12.249990000000002,12.290000000000001],
+    step: 0.00001,
     histogram: [1], // test not empty
     enlargedHistogram: [2], // test not empty
     fieldType: 'real',
     type: mockFilter.type,
     gpu: true,
     typeOptions: ['range'],
-    value: [12.249999999999998,12.289999999999997]
+    value: [12.249990000000002,12.290000000000001]
   };
 
   const expectedFilter = {
