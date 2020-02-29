@@ -13,7 +13,8 @@ jobs:
         with:
           node-version: 8
           registry-url: https://registry.npmjs.org/
-      - run: npm install
+      - run: npm install -g yarn
+      - run: yarn
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
