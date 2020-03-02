@@ -186,6 +186,7 @@ export default function ModalContainerFactory(
 
     _exportFileToCloud = ({provider, isPublic, overwrite, closeModal}) => {
       const toSave = exportMap(this.props);
+
       this.props.providerActions.exportFileToCloud({
         mapData: toSave,
         provider,
@@ -201,9 +202,7 @@ export default function ModalContainerFactory(
 
     _onSaveMap = (overwrite = false) => {
       const {currentProvider} = this.props.providerState;
-      const provider = this.props.cloudProviders.find(
-        p => p.name === currentProvider
-      );
+      const provider = this.props.cloudProviders.find(p => p.name === currentProvider);
       this._exportFileToCloud({
         provider,
         isPublic: false,
@@ -247,6 +246,7 @@ export default function ModalContainerFactory(
         uiStateActions,
         providerState
       } = this.props;
+
       const {currentModal, datasetKeyToRemove} = uiState;
       const {datasets, layers, editingDataset} = visState;
 
@@ -288,10 +288,7 @@ export default function ModalContainerFactory(
               datasets[datasetKeyToRemove]
             ) {
               template = (
-                <DeleteDatasetModal
-                  dataset={datasets[datasetKeyToRemove]}
-                  layers={layers}
-                />
+                <DeleteDatasetModal dataset={datasets[datasetKeyToRemove]} layers={layers} />
               );
               modalProps = {
                 title: 'Delete Dataset',
@@ -459,8 +456,8 @@ export default function ModalContainerFactory(
             template = (
               <OverWriteMapModal
                 {...providerState}
-                title={get(visState, ['mapInfo', 'title'])}
                 cloudProviders={this.props.cloudProviders}
+                title={get(visState, ['mapInfo', 'title'])}
                 onSetCloudProvider={this.props.providerActions.setCloudProvider}
                 onUpdateImageSetting={uiStateActions.setExportImageSetting}
               />
@@ -474,9 +471,10 @@ export default function ModalContainerFactory(
               confirmButton: {
                 large: true,
                 children: 'Yes',
-                disabled: uiState.exportImage.exporting ||
-                !isValidMapInfo(visState.mapInfo) ||
-                !providerState.currentProvider
+                disabled:
+                  uiState.exportImage.exporting ||
+                  !isValidMapInfo(visState.mapInfo) ||
+                  !providerState.currentProvider
               }
             };
             break;

@@ -23,11 +23,7 @@ import classnames from 'classnames';
 import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
 import styled, {withTheme, css} from 'styled-components';
-import {
-  sortableContainer,
-  sortableElement,
-  sortableHandle
-} from 'react-sortable-hoc';
+import {sortableContainer, sortableElement, sortableHandle} from 'react-sortable-hoc';
 import Modal from 'react-modal';
 
 import {Button, InlineInput} from 'components/common/styled-components';
@@ -136,9 +132,7 @@ const SortableItem = sortableElement(({children, isSorting}) => (
   </StyledSortableItem>
 ));
 
-const SortableContainer = sortableContainer(({children}) => (
-  <div>{children}</div>
-));
+const SortableContainer = sortableContainer(({children}) => <div>{children}</div>);
 
 const DragHandle = sortableHandle(({className, children}) => (
   <StyledDragHandle className={className}>{children}</StyledDragHandle>
@@ -176,28 +170,24 @@ class CustomPalette extends Component {
   // derive sketcher position based on root component
   showSketcherSelector = props => props.showSketcher;
   themeSelector = props => props.theme;
-  sketcherPosSelector = createSelector(
-    this.showSketcherSelector,
-    (showSketcher, theme = {}) => {
-      const {defaultSketcherPos, bottomBuffer, sketcherHeight} = this.props;
-      if (showSketcher === false || !this.root || !this.root.current)
-        return defaultSketcherPos;
-      const {sidePanelInnerPadding = 16, sidePanel = {}, sidePanelScrollBarWidth = 10} = theme;
-      const sidePanelLeft = (sidePanel.margin || {}).left || 20;
-      const offsetX = sidePanelInnerPadding + sidePanelLeft + sidePanelScrollBarWidth;
-      // find component Root position
-      const bounding = this.root.current.getBoundingClientRect();
-      const {x, y, width} = bounding;
+  sketcherPosSelector = createSelector(this.showSketcherSelector, (showSketcher, theme = {}) => {
+    const {defaultSketcherPos, bottomBuffer, sketcherHeight} = this.props;
+    if (showSketcher === false || !this.root || !this.root.current) return defaultSketcherPos;
+    const {sidePanelInnerPadding = 16, sidePanel = {}, sidePanelScrollBarWidth = 10} = theme;
+    const sidePanelLeft = (sidePanel.margin || {}).left || 20;
+    const offsetX = sidePanelInnerPadding + sidePanelLeft + sidePanelScrollBarWidth;
+    // find component Root position
+    const bounding = this.root.current.getBoundingClientRect();
+    const {x, y, width} = bounding;
 
-      // set the top so it won't collide with bottom widget
-      const top =
-        y + sketcherHeight <= window.innerHeight - bottomBuffer
-          ? y
-          : window.innerHeight - bottomBuffer - sketcherHeight;
+    // set the top so it won't collide with bottom widget
+    const top =
+      y + sketcherHeight <= window.innerHeight - bottomBuffer
+        ? y
+        : window.innerHeight - bottomBuffer - sketcherHeight;
 
-      return {top: `${top}px`, left: `${x + width + offsetX}px`};
-    }
-  );
+    return {top: `${top}px`, left: `${x + width + offsetX}px`};
+  });
 
   modalStylesSelector = createSelector(
     this.themeSelector,
@@ -219,7 +209,7 @@ class CustomPalette extends Component {
         backgroundColor: 'rgba(0, 0, 0, 0)'
       }
     })
-  )
+  );
   _setColorPaletteUI(colors) {
     this.props.setCustomPalette({
       colors
@@ -249,7 +239,7 @@ class CustomPalette extends Component {
     this._setColorPaletteUI(newColors);
   };
 
-  _onSwatchClick = (index) => {
+  _onSwatchClick = index => {
     this.props.onToggleSketcher(index);
   };
 
@@ -300,18 +290,11 @@ class CustomPalette extends Component {
           useDragHandle
         >
           {colors.map((color, index) => (
-            <SortableItem
-              key={index}
-              index={index}
-              isSorting={this.state.isSorting}
-            >
+            <SortableItem key={index} index={index} isSorting={this.state.isSorting}>
               <DragHandle className="layer__drag-handle">
                 <VertDots height="20px" />
               </DragHandle>
-              <StyledSwatch
-                color={color}
-                onClick={e => this._onSwatchClick(index, e)}
-              />
+              <StyledSwatch color={color} onClick={e => this._onSwatchClick(index, e)} />
               <StyledInlineInput>
                 <InlineInput
                   type="text"
@@ -353,10 +336,12 @@ class CustomPalette extends Component {
             parentSelector={() => {
               // React modal issue: https://github.com/reactjs/react-modal/issues/769
               // failed to execute removeChild on parent node when it is already unmounted
-              return this.root.current || {
-                removeChild: () => {},
-                appendChild: () => {}
-              }
+              return (
+                this.root.current || {
+                  removeChild: () => {},
+                  appendChild: () => {}
+                }
+              );
             }}
           >
             <CustomPicker

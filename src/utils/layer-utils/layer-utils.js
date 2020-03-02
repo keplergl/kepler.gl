@@ -71,9 +71,6 @@ export function calculateLayerData(layer, state, oldLayerData) {
     return {layer, layerData: {}};
   }
 
-  const layerData = layer.formatLayerData(
-    state.datasets,
-    oldLayerData
-  );
+  const layerData = layer.formatLayerData(state.datasets, oldLayerData);
   return {layerData, layer};
 }

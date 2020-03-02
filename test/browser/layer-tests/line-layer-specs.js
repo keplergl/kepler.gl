@@ -51,20 +51,11 @@ test('#LineLayer -> constructor', t => {
           label: 'test line layer'
         },
         test: layer => {
-          t.ok(
-            layer.config.dataId === 'smoothie',
-            'LineLayer dataId should be correct'
-          );
+          t.ok(layer.config.dataId === 'smoothie', 'LineLayer dataId should be correct');
           t.ok(layer.type === 'line', 'type should be line');
           t.ok(layer.isAggregated === false, 'LineLayer is not aggregated');
-          t.ok(
-            layer.config.label === 'test line layer',
-            'label should be correct'
-          );
-          t.ok(
-            Object.keys(layer.columnPairs).length,
-            'should have columnPairs'
-          );
+          t.ok(layer.config.label === 'test line layer', 'label should be correct');
+          t.ok(Object.keys(layer.columnPairs).length, 'should have columnPairs');
         }
       }
     ]
@@ -127,11 +118,7 @@ test('#LineLayer -> formatLayerData', t => {
           expectedDataKeys,
           'layerData should have 6 keys'
         );
-        t.deepEqual(
-          layerData.data,
-          expectedLayerData.data,
-          'should format correct line layerData'
-        );
+        t.deepEqual(layerData.data, expectedLayerData.data, 'should format correct line layerData');
         // getSourceColor
         t.deepEqual(
           layerData.getSourceColor,
@@ -151,17 +138,13 @@ test('#LineLayer -> formatLayerData', t => {
           layerData.data.map(layerData.getFilterValue),
           [
             [Number.MIN_SAFE_INTEGER, 0, 0, 0],
-            [moment.utc(testRows[4][0]).valueOf() - filterDomain0, 0, 0, 0],
+            [moment.utc(testRows[4][0]).valueOf() - filterDomain0, 0, 0, 0]
           ],
           'getFilterValue should return [value, 0, 0, 0]'
         );
 
         // layerMeta
-        t.deepEqual(
-          layer.meta,
-          arcLayerMeta,
-          'should format correct arc layer meta'
-        );
+        t.deepEqual(layer.meta, arcLayerMeta, 'should format correct arc layer meta');
       }
     },
     {
@@ -186,7 +169,7 @@ test('#LineLayer -> formatLayerData', t => {
         const {layerData, layer} = result;
 
         const expectedLayerData = {
-          data:  [],
+          data: [],
           getFilterValue: () => {},
           getSourceColor: () => {},
           getTargetColor: () => {},
@@ -206,11 +189,7 @@ test('#LineLayer -> formatLayerData', t => {
           'getSourceColor should be a constant'
         );
         // getSourceColor
-        t.deepEqual(
-          layerData.getTargetColor,
-          [1, 2, 3],
-          'getTargetColors should be a constant'
-        );
+        t.deepEqual(layerData.getTargetColor, [1, 2, 3], 'getTargetColors should be a constant');
       }
     },
     {
@@ -287,7 +266,10 @@ test('#LineLayer -> formatLayerData', t => {
         // range ['#010101', '#020202', '#030303']
         t.deepEqual(
           layerData.data.map(layerData.getSourceColor),
-          [[2, 2, 2], [1, 1, 1]],
+          [
+            [2, 2, 2],
+            [1, 1, 1]
+          ],
           'getSourceColor should be correct'
         );
         // getTargetColor
@@ -295,7 +277,10 @@ test('#LineLayer -> formatLayerData', t => {
         // range ['#010101', '#020202', '#030303']
         t.deepEqual(
           layerData.data.map(layerData.getTargetColor),
-          [[2, 2, 2], [1, 1, 1]],
+          [
+            [2, 2, 2],
+            [1, 1, 1]
+          ],
           'getTargetColors  be correct'
         );
         // getWidth
@@ -312,7 +297,7 @@ test('#LineLayer -> formatLayerData', t => {
           layerData.data.map(layerData.getFilterValue),
           [
             [Number.MIN_SAFE_INTEGER, 0, 0, 0],
-            [moment.utc(testRows[4][0]).valueOf() - filterDomain0, 0, 0, 0],
+            [moment.utc(testRows[4][0]).valueOf() - filterDomain0, 0, 0, 0]
           ],
           'getFilterValue should return [value, 0, 0, 0]'
         );
@@ -350,15 +335,17 @@ test('#LineLayer -> renderLayer', t => {
         t.equal(deckLayers.length, 1, 'Should create 1 deck.gl layer');
         const {props} = deckLayers[0];
         // test instancePositions
+        t.equal(props.opacity, layer.config.visConfig.opacity, 'should calculate correct opacity');
         t.equal(
-          props.opacity, layer.config.visConfig.opacity, 'should calculate correct opacity'
+          props.widthScale,
+          layer.config.visConfig.thickness,
+          'should apply correct widthScale'
         );
         t.equal(
-          props.widthScale, layer.config.visConfig.thickness, 'should apply correct widthScale'
-        )
-        t.equal(
-          props.filterRange, preparedDataset.gpuFilter.filterRange, 'should supply correct filterRange'
-        )
+          props.filterRange,
+          preparedDataset.gpuFilter.filterRange,
+          'should supply correct filterRange'
+        );
       }
     },
     {
@@ -394,15 +381,9 @@ test('#LineLayer -> renderLayer', t => {
         const {props} = deckLayers[0];
         // test instancePositions
 
-        t.equal(
-          props.brushingRadius, 2500, 'should supply brushingRadius'
-        );
-        t.equal(
-          props.brushingEnabled, true, 'should have brushingEnabled: true'
-        );
-        t.equal(
-          props.brushingTarget, 'source_target', 'brushingTarget: should be source'
-        )
+        t.equal(props.brushingRadius, 2500, 'should supply brushingRadius');
+        t.equal(props.brushingEnabled, true, 'should have brushingEnabled: true');
+        t.equal(props.brushingTarget, 'source_target', 'brushingTarget: should be source');
       }
     }
   ];

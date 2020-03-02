@@ -19,36 +19,18 @@
 // THE SOFTWARE.
 
 import domtoimage from 'utils/dom-to-image';
-import {
-  Blob,
-  URL,
-  atob,
-  Uint8Array,
-  ArrayBuffer,
-  document
-} from 'global/window';
-import {
-  EXPORT_IMG_RATIO_OPTIONS,
-  EXPORT_IMG_RESOLUTION_OPTIONS
-} from 'constants/default-settings';
+import {Blob, URL, atob, Uint8Array, ArrayBuffer, document} from 'global/window';
+import {EXPORT_IMG_RATIO_OPTIONS, EXPORT_IMG_RESOLUTION_OPTIONS} from 'constants/default-settings';
 
 export function calculateExportImageSize({width, height, ratio, resolution}) {
-  const resolutionItem = EXPORT_IMG_RESOLUTION_OPTIONS.find(
-    op => op.id === resolution
-  );
-  const {width: scaledWidth, height: scaledHeight} = resolutionItem.getSize(
-    width,
-    height
-  );
+  const resolutionItem = EXPORT_IMG_RESOLUTION_OPTIONS.find(op => op.id === resolution);
+  const {width: scaledWidth, height: scaledHeight} = resolutionItem.getSize(width, height);
   const {zoomOffset, scale} = resolutionItem;
 
   return {
     zoomOffset,
     scale,
-    ...EXPORT_IMG_RATIO_OPTIONS.find(op => op.id === ratio).getSize(
-      scaledWidth,
-      scaledHeight
-    )
+    ...EXPORT_IMG_RATIO_OPTIONS.find(op => op.id === ratio).getSize(scaledWidth, scaledHeight)
   };
 }
 

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {setParameters} from 'luma.gl';
+import {setParameters} from '@luma.gl/core';
 import {LAYER_BLENDINGS} from 'constants/default-settings';
 import GL from '@luma.gl/constants';
 
@@ -30,9 +30,13 @@ export function setLayerBlending(gl, layerBlending) {
 
   setParameters(gl, {
     [GL.BLEND]: true,
-    ...(blendFunc ? {
-      blendFunc: blendFunc.map(getGlConst),
-      blendEquation: Array.isArray(blendEquation) ? blendEquation.map(getGlConst) : getGlConst(blendEquation)
-    } : {})
+    ...(blendFunc
+      ? {
+          blendFunc: blendFunc.map(getGlConst),
+          blendEquation: Array.isArray(blendEquation)
+            ? blendEquation.map(getGlConst)
+            : getGlConst(blendEquation)
+        }
+      : {})
   });
-};
+}

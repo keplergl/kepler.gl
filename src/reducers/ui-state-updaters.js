@@ -98,10 +98,13 @@ export const DEFAULT_MAP_CONTROLS = [
   'toggle3d',
   'splitMap',
   'mapDraw'
-].reduce((final, current) => ({
-  ...final,
-  [current]: DEFAULT_MAP_CONTROLS_FEATURES
-}), {});
+].reduce(
+  (final, current) => ({
+    ...final,
+    [current]: DEFAULT_MAP_CONTROLS_FEATURES
+  }),
+  {}
+);
 
 /**
  * Default image export config
@@ -233,11 +236,12 @@ export const INITIAL_UI_STATE = {
  * @public
  */
 export const toggleSidePanelUpdater = (state, {payload: id}) => {
-  return  id === state.activeSidePanel ?
-    state : {
-      ...state,
-      activeSidePanel: id
-    };
+  return id === state.activeSidePanel
+    ? state
+    : {
+        ...state,
+        activeSidePanel: id
+      };
 };
 
 /**
@@ -296,7 +300,7 @@ export const hideExportDropdownUpdater = state => ({
  * @returns {Object} nextState
  * @public
  */
-export const toggleMapControlUpdater = (state, {payload: {panelId, index = 0} }) => ({
+export const toggleMapControlUpdater = (state, {payload: {panelId, index = 0}}) => ({
   ...state,
   mapControls: {
     ...state.mapControls,
@@ -305,8 +309,10 @@ export const toggleMapControlUpdater = (state, {payload: {panelId, index = 0} })
       // this handles split map interaction
       // Toggling from within the same map will simply toggle the active property
       // Toggling from within different maps we set the active property to true
-      active: index === state.mapControls[panelId].activeMapIndex
-        ? !state.mapControls[panelId].active : true,
+      active:
+        index === state.mapControls[panelId].activeMapIndex
+          ? !state.mapControls[panelId].active
+          : true,
       activeMapIndex: index
     }
   }
@@ -321,10 +327,7 @@ export const toggleMapControlUpdater = (state, {payload: {panelId, index = 0} })
  * @returns {Object} nextState
  * @public
  */
-export const openDeleteModalUpdater = (
-  state,
-  {payload: datasetKeyToRemove}
-) => ({
+export const openDeleteModalUpdater = (state, {payload: datasetKeyToRemove}) => ({
   ...state,
   currentModal: DELETE_DATA_ID,
   datasetKeyToRemove
@@ -339,8 +342,7 @@ export const openDeleteModalUpdater = (
  */
 export const setExportImageSetting = (state, {payload: newSetting}) => {
   const updated = {...state.exportImage, ...newSetting};
-  const imageSize =
-    calculateExportImageSize(updated) || state.exportImage.imageSize;
+  const imageSize = calculateExportImageSize(updated) || state.exportImage.imageSize;
 
   return {
     ...state,
@@ -488,10 +490,7 @@ export const setExportDataUpdater = state => ({
  * @returns {Object} nextState
  * @public
  */
-export const setUserMapboxAccessTokenUpdater = (
-  state,
-  {payload: userMapboxToken}
-) => ({
+export const setUserMapboxAccessTokenUpdater = (state, {payload: userMapboxToken}) => ({
   ...state,
   exportMap: {
     ...state.exportMap,
@@ -582,7 +581,7 @@ export const loadFilesUpdater = state => ({
  * @param {Object} state `uiState`
  * @returns {Object} nextState
  */
-export const loadFilesSuccessUpdater = (state) => ({
+export const loadFilesSuccessUpdater = state => ({
   ...state,
   loadFiles: {
     ...state.loadFiles,
@@ -598,21 +597,22 @@ export const loadFilesSuccessUpdater = (state) => ({
  * @returns {Object} nextState
  * @public
  */
-export const loadFilesErrUpdater = (state, {error}) => addNotificationUpdater(
-  {
-    ...state,
-    loadFiles: {
-      ...state.loadFiles,
-      fileLoading: false
+export const loadFilesErrUpdater = (state, {error}) =>
+  addNotificationUpdater(
+    {
+      ...state,
+      loadFiles: {
+        ...state.loadFiles,
+        fileLoading: false
+      }
+    },
+    {
+      payload: errorNotification({
+        message: (error || {}).message || 'Failed to upload files',
+        topic: DEFAULT_NOTIFICATION_TOPICS.global
+      })
     }
-  },
-  {
-    payload: errorNotification({
-      message: (error || {}).message || 'Failed to upload files',
-      topic: DEFAULT_NOTIFICATION_TOPICS.global
-    })
-  }
-);
+  );
 
 /**
  * Handles toggle map split and reset all map control index to 0
@@ -621,15 +621,16 @@ export const loadFilesErrUpdater = (state, {error}) => addNotificationUpdater(
  * @returns {Object} nextState
  * @public
  */
-export const toggleSplitMapUpdater = (state) => ({
+export const toggleSplitMapUpdater = state => ({
   ...state,
-  mapControls: Object.entries(state.mapControls)
-    .reduce((acc, entry) => ({
+  mapControls: Object.entries(state.mapControls).reduce(
+    (acc, entry) => ({
       ...acc,
       [entry[0]]: {
         ...entry[1],
         activeMapIndex: 0
       }
-    }), {})
+    }),
+    {}
+  )
 });
-

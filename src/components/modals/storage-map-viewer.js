@@ -135,7 +135,7 @@ const AssetItem = ({asset, onClick}) => (
     <div className="asset__image" onClick={onClick}>
       {asset.imageUrl && <img src={asset.imageUrl} />}
     </div>
-    <div className="asset__title">{asset.label}</div>
+    <div className="asset__title">{asset.label || asset.title}</div>
     <div className="asset__image__caption">{asset.description}</div>
     {asset.lastUpdated ? (
       <div className="asset__last-updated">Last Modified {getDuration(asset.lastUpdated)} ago</div>

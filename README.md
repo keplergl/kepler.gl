@@ -1,84 +1,62 @@
-<p align="right">
-  <a href="https://npmjs.org/package/kepler.gl">
-    <img src="https://img.shields.io/npm/v/kepler.gl.svg?style=flat" alt="version" />
-  </a>
-  <a href="https://travis-ci.com/keplergl/kepler.gl">
-    <img src="https://api.travis-ci.com/keplergl/kepler.gl.svg?branch=master" alt="build" />
-  </a>
-  <a href="https://github.com/keplergl/kepler.gl">
-    <img src="https://img.shields.io/github/stars/keplergl/kepler.gl.svg?style=flat" alt="stars" />
-  </a>
-  <a href='https://opensource.org/licenses/MIT'>
-    <img src='https://img.shields.io/badge/License-MIT-blue.svg' alt='MIT License' />
-  </a>
-  <a href='https://app.fossa.com/projects/custom%2B4458%2Fgithub.com%2Fkeplergl%2Fkepler.gl?ref=badge_shield'>
-    <img src='https://app.fossa.com/api/projects/custom%2B4458%2Fgithub.com%2Fkeplergl%2Fkepler.gl.svg?type=shield' alt='Fossa' />
-  </a>
-  <a href="https://app.netlify.com/sites/keplergl/deploys" alt="Netlify Status">
-    <img src="https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fdeveloper.oswaldlabs.com%2Fnetlify-status%2F0c9b895c-acd0-43fd-8af7-fe960181b686?style=flat" />
-  </a>
-</p>
+# README
 
-<h1 align="center">kepler.gl | <a href="http://kepler.gl">Website</a> |
-<a href="http://kepler.gl/#/demo">Demo App</a>
-</h1>
-<h3></h3>
+ [![version](https://img.shields.io/npm/v/kepler.gl.svg?style=flat)](https://npmjs.org/package/kepler.gl) [![build](https://api.travis-ci.com/keplergl/kepler.gl.svg?branch=master)](https://travis-ci.com/keplergl/kepler.gl) [![stars](https://img.shields.io/github/stars/keplergl/kepler.gl.svg?style=flat)](https://github.com/keplergl/kepler.gl) [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT) [![Fossa](https://app.fossa.com/api/projects/custom%2B4458%2Fgithub.com%2Fkeplergl%2Fkepler.gl.svg?type=shield)](https://app.fossa.com/projects/custom%2B4458%2Fgithub.com%2Fkeplergl%2Fkepler.gl?ref=badge_shield) [![](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fdeveloper.oswaldlabs.com%2Fnetlify-status%2F0c9b895c-acd0-43fd-8af7-fe960181b686?style=flat)](https://app.netlify.com/sites/keplergl/deploys)
 
-[<img width="120" alt="Kepler.gl" src="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/website/icons/kepler.gl-logo.png">](http://kepler.gl)
+kepler.gl \| [Website](http://kepler.gl) \| [Demo App](http://kepler.gl/#/demo)
 
-[<img width="600" alt="Kepler.gl Demo" src="https://eng.uber.com/wp-content/uploads/2018/05/image4-3-768x493.png">](http://kepler.gl/#/demo)
+[![Kepler.gl](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/website/icons/kepler.gl-logo.png)](http://kepler.gl)
 
-[Kepler.gl][web] is a data-agnostic, high-performance web-based application for visual exploration of large-scale geolocation data sets. Built on top of [Mapbox GL](https://www.mapbox.com) and [deck.gl](http://uber.github.io/deck.gl/#/), kepler.gl can render millions of points representing thousands of trips and perform spatial aggregations on the fly.
+[![Kepler.gl Demo](https://eng.uber.com/wp-content/uploads/2018/05/image4-3-768x493.png)](http://kepler.gl/#/demo)
 
-Kepler.gl is also a React component that uses [Redux](https://redux.js.org/) to manage its state and data flow. It can be embedded into other React-Redux applications and is highly customizable. For information on how to embed kepler.gl in your app take a look at this step-by-step [tutorial][vis-academy] on vis.academy.
+[Kepler.gl](http://www.kepler.gl/) is a data-agnostic, high-performance web-based application for visual exploration of large-scale geolocation data sets. Built on top of [Mapbox GL](https://www.mapbox.com) and [deck.gl](http://uber.github.io/deck.gl/#/), kepler.gl can render millions of points representing thousands of trips and perform spatial aggregations on the fly.
+
+Kepler.gl is also a React component that uses [Redux](https://redux.js.org/) to manage its state and data flow. It can be embedded into other React-Redux applications and is highly customizable. For information on how to embed kepler.gl in your app take a look at this step-by-step [tutorial](http://vis.academy/#/kepler.gl/) on vis.academy.
 
 ## Links
 
-- [Website][web]
-- [Demo][demo-app]
-- [Examples][examples]
-- [Get Started][get-started]
-- [App User Guide][user-guide]
-- [Jupyter Widget User Guide][user-guide-jupyter]
-- [Tutorial][vis-academy]
-- [Stack Overflow][stack]
-- [Contribution Guidelines][contributing]
-- [Api Reference][api-reference]
-- [Roadmap][roadmap]
+* [Website](http://www.kepler.gl/)
+* [Demo](http://kepler.gl/#/demo)
+* [Examples](https://github.com/keplergl/kepler.gl/tree/master/examples)
+* [Get Started](docs/api-reference/get-started.md)
+* [App User Guide](docs/user-guides/a-introduction.md)
+* [Jupyter Widget User Guide](docs/keplergl-jupyter/user-guide.md)
+* [Tutorial](http://vis.academy/#/kepler.gl/)
+* [Stack Overflow](https://stackoverflow.com/questions/tagged/kepler.gl)
+* [Contribution Guidelines](contributing/contributing.md)
+* [Api Reference]()
+* [Roadmap](https://github.com/keplergl/kepler.gl/wiki/Kepler.gl-2019-Roadmap)
 
 ## Env
 
-Use Node 8.15.0 and above, older node versions have not been tested.
-For best results, use [nvm](https://github.com/creationix/nvm) `nvm install`.
+Use Node 8.15.0 and above, older node versions have not been tested. For best results, use [nvm](https://github.com/creationix/nvm) `nvm install`.
 
 ## Install kepler.gl
 
-Install node (`> 8.15.0`), yarn, and project dependencies
+Install node \(`> 8.15.0`\), yarn, and project dependencies
 
-```sh
+```bash
 npm install --save kepler.gl
 // or
 yarn add kepler.gl
 ```
 
-kepler.gl is built upon [mapbox][mapbox]. You will need a [Mapbox Access Token][mapbox-token] to use it.
+kepler.gl is built upon [mapbox](https://www.mapbox.com). You will need a [Mapbox Access Token](https://www.mapbox.com/help/define-access-token/) to use it.
 
-If you don't use a module bundler, it's also fine. Kepler.gl npm package includes precompiled production UMD builds in the (umd folder)[https://unpkg.com/kepler.gl/umd].
-You can add the script tag to your html file as it follows:
+If you don't use a module bundler, it's also fine. Kepler.gl npm package includes precompiled production UMD builds in the \(umd folder\)\[[https://unpkg.com/kepler.gl/umd](https://unpkg.com/kepler.gl/umd)\]. You can add the script tag to your html file as it follows:
 
-```html
+```markup
 <script src="https://unpkg.com/kepler.gl/umd/keplergl.min.js"></script>
 ```
 
 or if you would like, you can load a specific version
 
-```html
+```markup
 <script src="https://unpkg.com/kepler.gl@0.2.2/umd/keplergl.min.js"></script>
 ```
 
 ## Develop kepler.gl
 
-Take a look at the [development guide][developers] to develop kepler.gl locally.
+Take a look at the [development guide](contributing/developers.md) to develop kepler.gl locally.
 
 ## Basic Usage
 
@@ -86,12 +64,11 @@ Here are the basic steps to import kepler.gl into your app. You also take a look
 
 ### 1. Mount reducer
 
-Kepler.gl uses Redux to manage its internal state, along with [react-palm][react-palm] middleware to handle side effects.
+Kepler.gl uses Redux to manage its internal state, along with [react-palm](https://github.com/btford/react-palm) middleware to handle side effects.
 
-You need to add `taskMiddleware` of `react-palm` to your store too. We are actively working on a solution where
-`react-palm` will not be required, however it is still a very lightweight side effects management tool that is easier to test than react-thunk.
+You need to add `taskMiddleware` of `react-palm` to your store too. We are actively working on a solution where `react-palm` will not be required, however it is still a very lightweight side effects management tool that is easier to test than react-thunk.
 
-```js
+```javascript
 import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
 import keplerGlReducer from 'kepler.gl/reducers';
 import {enhanceReduxMiddleware} from 'kepler.gl/middleware';
@@ -119,7 +96,7 @@ export default createStore(
 
 Or if use enhancer:
 
-```js
+```javascript
 // using enhancers
 const initialState = {};
 const middlewares = enhanceReduxMiddleware([
@@ -130,15 +107,13 @@ const enhancers = [applyMiddleware(...middlewares)];
 export default createStore(reducer, initialState, compose(...enhancers));
 ```
 
-If you mount kepler.gl reducer in another address instead of `keplerGl`, or the kepler.gl reducer is not
-mounted at root of your state, you will need to specify the path to it when you mount the component
-with the `getState` prop.
+If you mount kepler.gl reducer in another address instead of `keplerGl`, or the kepler.gl reducer is not mounted at root of your state, you will need to specify the path to it when you mount the component with the `getState` prop.
 
-Read more about [Reducers][reducers].
+Read more about [Reducers](docs/api-reference/reducers/overview.md).
 
 ### 2. Mount Component
 
-```js
+```javascript
 import KeplerGl from 'kepler.gl';
 
 const Map = props => (
@@ -153,123 +128,118 @@ const Map = props => (
 
 #### Props
 
-##### `id` (String, required)
+**id \(String, required\)**
 
-- Default: `map`
+* Default: `map`
 
-The id of this KeplerGl instance. `id` is required if you have multiple
-KeplerGl instances in your app. It defines the prop name of the KeplerGl state that is
-stored in the KeplerGl reducer. For example, the state of the KeplerGl component with id `foo` is
-stored in `state.keplerGl.foo`.
+The id of this KeplerGl instance. `id` is required if you have multiple KeplerGl instances in your app. It defines the prop name of the KeplerGl state that is stored in the KeplerGl reducer. For example, the state of the KeplerGl component with id `foo` is stored in `state.keplerGl.foo`.
 
-In case you create multiple kepler.gl instances using the same id, the kepler.gl state defined by the entry will be
-overridden by the latest instance and reset to a blank state.
+In case you create multiple kepler.gl instances using the same id, the kepler.gl state defined by the entry will be overridden by the latest instance and reset to a blank state.
 
-##### `mapboxApiAccessToken` (String, required)
+**mapboxApiAccessToken \(String, required\)**
 
-- Default: `undefined`
+* Default: `undefined`
 
-You can create a free account at [mapbox][mapbox] and create a token at [www.mapbox.com/account/access-tokens][mapbox-token]
+You can create a free account at [mapbox](https://www.mapbox.com) and create a token at [www.mapbox.com/account/access-tokens](https://www.mapbox.com/help/define-access-token/)
 
-##### `getState` (Function, optional)
+**getState \(Function, optional\)**
 
-- Default: `state => state.keplerGl`
+* Default: `state => state.keplerGl`
 
 The path to the root keplerGl state in your reducer.
 
-##### `width` (Number, optional)
+**width \(Number, optional\)**
 
-- Default: `800`
+* Default: `800`
 
 Width of the KeplerGl UI.
 
-##### `height` (Number, optional)
+**height \(Number, optional\)**
 
-- Default: `800`
+* Default: `800`
 
-##### `appName` (String, optional)
+**appName \(String, optional\)**
 
-- Default: `Kepler.Gl`
+* Default: `Kepler.Gl`
 
 App name displayed in side panel header
 
-##### `version` (String, optional)
+**version \(String, optional\)**
 
-- Default: `v1.0`
+* Default: `v1.0`
 
 version displayed in side panel header
 
-##### `onSaveMap` (Function, optional)
+**onSaveMap \(Function, optional\)**
 
-- Default: `undefined`
+* Default: `undefined`
 
 Action called when click Save Map Url in side panel header.
 
-##### `onViewStateChange` (Function, optional)
+**onViewStateChange \(Function, optional\)**
 
-- Default: `undefined`
-- Parameter: `viewState` - An updated view state object containing parameters such as longitude, latitude, zoom etc
+* Default: `undefined`
+* Parameter: `viewState` - An updated view state object containing parameters such as longitude, latitude, zoom etc
 
 Action triggered when map viewport is updated.
 
-##### `getMapboxRef(mapbox, index)` (Function, optional)
+**getMapboxRef\(mapbox, index\) \(Function, optional\)**
 
-- Default: `undefined`
+* Default: `undefined`
 
 Function called when `KeplerGL` adds or removes a `MapContainer` component having an inner Mapbox map.
 
 The `mapbox` argument is an [`InteractiveMap`](https://uber.github.io/react-map-gl/#/Documentation/api-reference/interactive-map) when added or `null` when removed.
 
-The `index` argument is 0 for a single map or 1 for an additional map (since `KeplerGL` supports an optional split map view).
+The `index` argument is 0 for a single map or 1 for an additional map \(since `KeplerGL` supports an optional split map view\).
 
-##### `actions` (Object, optional)
+**actions \(Object, optional\)**
 
-- Default: `{}`
+* Default: `{}`
 
 Actions creators to replace default kepler.gl action creator. Only use custom action when you want to modify action payload.
 
-##### `mint` (Boolean, optional)
+**mint \(Boolean, optional\)**
 
-- Default: `true`
+* Default: `true`
 
-Whether to load a fresh empty state when component is mounted. when parse `mint: true` kepler.gl component will always load a fresh state when re-mount the same component, state inside this component will be destroyed once its unmounted.
-By Parsing `mint: false` kepler.gl will keep the component state in the store even when it is unmounted, and use it as initial state when re-mounted again. This is useful when mounting kepler.gl in a modal, and keep the same map when re-open.
+Whether to load a fresh empty state when component is mounted. when parse `mint: true` kepler.gl component will always load a fresh state when re-mount the same component, state inside this component will be destroyed once its unmounted. By Parsing `mint: false` kepler.gl will keep the component state in the store even when it is unmounted, and use it as initial state when re-mounted again. This is useful when mounting kepler.gl in a modal, and keep the same map when re-open.
 
-Read more about [Components][components].
+Read more about [Components](docs/api-reference/components/overview.md).
 
-##### `theme` (Object | String, optional)
+**theme \(Object \| String, optional\)**
 
-- default: `null`
+* default: `null`
 
 You can pass theme name or object used to customize Kepler.gl style. Kepler.gl provide an `'light'` theme besides the default 'dark' theme. When pass in a theme object Kepler.gl will use the value passed as input to override values from [theme](https://github.com/keplergl/kepler.gl/blob/master/src/styles/base.js).
 
-#### `mapboxApiUrl` (String, optional)
+#### `mapboxApiUrl` \(String, optional\)
 
-- Default: `https://api.mapbox.com`
+* Default: `https://api.mapbox.com`
 
 If you are using your own mapbox tile server, you can pass in your own tile server api url.
 
-#### `mapStylesReplaceDefault` (Boolean, optional)
+#### `mapStylesReplaceDefault` \(Boolean, optional\)
 
-- Default: `false`
+* Default: `false`
 
 kepler.gl provide 4 map styles to choose from. Pass `true` if you want to supply your own `mapStyles`. See Below.
 
-#### `mapStyles` (Array, optional)
+#### `mapStyles` \(Array, optional\)
 
-- Default: `[]`
+* Default: `[]`
 
 You can supply additional map styles to be displayed in [map style selection panel](https://github.com/keplergl/kepler.gl/blob/master/docs/user-guides/f-map-styles/1-base-map-styles.md). By default, additional map styles will be added to default map styles. If pass `mapStylesReplaceDefault: true`, they will replace the default ones. kepler.gl will attempt to group layers of your style based on its `id` naming convention and use it to allow toggle visibility of [base map layers](https://github.com/keplergl/kepler.gl/blob/master/docs/user-guides/f-map-styles/2-map-layers.md). Supply your own `layerGroups` to override default for more accurate layer grouping.
 
 Each `mapStyles` should has the following properties:
 
-- `id` (String, required) unique string that should **not** be one of these reserved `dark` `light` `muted`. `muted_night`
-- `label` (String, required) name to be displayed in map style selection panel
-- `url` (String, required) mapbox style url or a url pointing to the map style json object
-- `icon` (String, optional) image icon of the style, it can be a url, or an [image data url](https://flaviocopes.com/data-urls/#how-does-a-data-url-look)
-- `layerGroups` (Array, optional)
+* `id` \(String, required\) unique string that should **not** be one of these reserved `dark` `light` `muted`. `muted_night`
+* `label` \(String, required\) name to be displayed in map style selection panel
+* `url` \(String, required\) mapbox style url or a url pointing to the map style json object
+* `icon` \(String, optional\) image icon of the style, it can be a url, or an [image data url](https://flaviocopes.com/data-urls/#how-does-a-data-url-look)
+* `layerGroups` \(Array, optional\)
 
-```js
+```javascript
 const mapStyles = [
   {
     id: 'my_dark_map',
@@ -295,19 +265,15 @@ const mapStyles = [
 
 ### 3. Dispatch custom actions to `keplerGl` reducer.
 
-One advantage of using the reducer over React component state to handle keplerGl state is the flexibility
-to customize its behavior. If you only have one `KeplerGl` instance in your app or never intend to dispatch actions to KeplerGl from outside the component itself,
-you don’t need to worry about forwarding dispatch and can move on to the next section. But life is full of customizations, and we want to make yours as enjoyable as possible.
+One advantage of using the reducer over React component state to handle keplerGl state is the flexibility to customize its behavior. If you only have one `KeplerGl` instance in your app or never intend to dispatch actions to KeplerGl from outside the component itself, you don’t need to worry about forwarding dispatch and can move on to the next section. But life is full of customizations, and we want to make yours as enjoyable as possible.
 
 There are multiple ways to dispatch actions to a specific `KeplerGl` instance.
 
-- In the root reducer, with reducer updaters.
+* In the root reducer, with reducer updaters.
 
-Each action is mapped to a reducer updater in kepler.gl. You can import the reducer updater corresponding to a specific action, and call it with the previous state and action payload to get the updated state.
-e.g. `updateVisDataUpdater` is the updater for `ActionTypes.UPDATE_VIS_DATA` (take a look at each reducer `reducers/vis-state.js` for action to updater mapping).
-Here is an example how you can listen to an app action `QUERY_SUCCESS` and call `updateVisDataUpdater` to load data into Kepler.Gl.
+Each action is mapped to a reducer updater in kepler.gl. You can import the reducer updater corresponding to a specific action, and call it with the previous state and action payload to get the updated state. e.g. `updateVisDataUpdater` is the updater for `ActionTypes.UPDATE_VIS_DATA` \(take a look at each reducer `reducers/vis-state.js` for action to updater mapping\). Here is an example how you can listen to an app action `QUERY_SUCCESS` and call `updateVisDataUpdater` to load data into Kepler.Gl.
 
-```js
+```javascript
 import keplerGlReducer, {visStateUpdaters} from 'kepler.gl/reducers';
 
 // Root Reducer
@@ -342,14 +308,13 @@ const composedReducer = (state, action) => {
 export default composedReducer;
 ```
 
-Read more about [using updaters to modify kepler.gl state][using-updaters]
+Read more about [using updaters to modify kepler.gl state](docs/api-reference/advanced-usages/using-updaters.md)
 
-- Using redux `connect`
+* Using redux `connect`
 
-You can add a dispatch function to your component that dispatches actions to a specific `keplerGl` component,
-using connect.
+You can add a dispatch function to your component that dispatches actions to a specific `keplerGl` component, using connect.
 
-```js
+```javascript
 // component
 import KeplerGl from 'kepler.gl';
 
@@ -378,11 +343,11 @@ export default connect(
 )(MapContainer);
 ```
 
-- Wrap action payload
+* Wrap action payload
 
 You can also simply wrap an action into a forward action with the `wrapTo` helper
 
-```js
+```javascript
 // component
 import KeplerGl from 'kepler.gl';
 
@@ -399,17 +364,16 @@ const MapContainer = ({dispatch}) => (
     />
   </div>
 );
-
 ```
 
-Read more about [forward dispatching actions][forward-actions]
+Read more about [forward dispatching actions](docs/api-reference/advanced-usages/forward-actions.md)
 
 ### 4. Customize style.
 
 Kepler.gl implements css styling using [Styled-Components](https://www.styled-components.com/). By using said framework Kepler.gl offers the ability to customize its style/theme using the following approaches:
 
-- Passing a Theme prop
-- Styled-Components ThemeProvider
+* Passing a Theme prop
+* Styled-Components ThemeProvider
 
 The available properties to customize are listed here [theme](https://github.com/keplergl/kepler.gl/blob/master/src/styles/base.js).
 
@@ -470,10 +434,7 @@ return (
 
 ### 5. Render Custom UI components.
 
-Everyone wants the flexibility to render custom kepler.gl components. Kepler.gl has a dependency injection system that allow you to inject
-components to KeplerGl replacing existing ones. All you need to do is to create a component factory for the one you want to replace, import the original component factory
-and call `injectComponents` at the root component of your app where `KeplerGl` is mounted.
-Take a look at `examples/demo-app/src/app.js` and see how it renders a custom side panel header in kepler.gl
+Everyone wants the flexibility to render custom kepler.gl components. Kepler.gl has a dependency injection system that allow you to inject components to KeplerGl replacing existing ones. All you need to do is to create a component factory for the one you want to replace, import the original component factory and call `injectComponents` at the root component of your app where `KeplerGl` is mounted. Take a look at `examples/demo-app/src/app.js` and see how it renders a custom side panel header in kepler.gl
 
 ```javascript
 import {injectComponents, PanelHeaderFactory} from 'kepler.gl/components';
@@ -497,7 +458,7 @@ const MapContainer = () => (
 
 Using `withState` helper to add reducer state and actions to customized component as additional props.
 
-```js
+```javascript
 import {
   withState,
   injectComponents,
@@ -531,32 +492,35 @@ const myCustomHeaderFactory = () =>
   )(CustomHeader);
 ```
 
-Read more about [replacing UI component][replace-ui-component]
+Read more about [replacing UI component](docs/api-reference/advanced-usages/replace-ui-component.md)
 
 ### 6. How to add data to map
 
-To interact with a kepler.gl instance and add new data to it, you can dispatch the **`addDataToMap`** action from anywhere inside your app. It adds a dataset or multiple datasets to a kepler.gl instance and updates the full configuration (mapState, mapStyle, visState).
+To interact with a kepler.gl instance and add new data to it, you can dispatch the **`addDataToMap`** action from anywhere inside your app. It adds a dataset or multiple datasets to a kepler.gl instance and updates the full configuration \(mapState, mapStyle, visState\).
 
 #### Parameters
 
-- `data` **[Object][40]** **\*required**
-  - `datasets` **([Array][41]&lt;[Object][40]> | [Object][40])** **\*required** datasets can be a dataset or an array of datasets
+* `data` [**Object**](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object) **\*required**
+  * `datasets` **\(**[**Array**](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)**&lt;**[**Object**](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)**&gt; \|** [**Object**](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)**\)** **\*required** datasets can be a dataset or an array of datasets
+
     Each dataset object needs to have `info` and `data` property.
-    - `datasets.info` **[Object][40]** \-info of a dataset
-      - `datasets.info.id` **[string][42]** id of this dataset. If config is defined, `id` should matches the `dataId` in config.
-      - `datasets.info.label` **[string][42]** A display name of this dataset
-    - `datasets.data` **[Object][40]** **\*required** The data object, in a tabular format with 2 properties `fields` and `rows`
-      - `datasets.data.fields` **[Array][41]&lt;[Object][40]>** **\*required** Array of fields,
-        - `datasets.data.fields.name` **[string][42]** **\*required** Name of the field,
-      - `datasets.data.rows` **[Array][41]&lt;[Array][41]>** **\*required** Array of rows, in a tabular format with `fields` and `rows`
-  - `options` **[Object][40]**
 
-    - `options.centerMap` **[boolean][43]** `default: true` if `centerMap` is set to `true` kepler.gl will place the map view within the data points boundaries
-    - `options.readOnly` **[boolean][43]** `default: false` if `readOnly` is set to `true`
+    * `datasets.info` [**Object**](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object) -info of a dataset
+      * `datasets.info.id` [**string**](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String) id of this dataset. If config is defined, `id` should matches the `dataId` in config.
+      * `datasets.info.label` [**string**](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String) A display name of this dataset
+    * `datasets.data` [**Object**](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object) **\*required** The data object, in a tabular format with 2 properties `fields` and `rows`
+      * `datasets.data.fields` [**Array**](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)**&lt;**[**Object**](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)**&gt;** **\*required** Array of fields,
+        * `datasets.data.fields.name` [**string**](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String) **\*required** Name of the field,
+      * `datasets.data.rows` [**Array**](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)**&lt;**[**Array**](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)**&gt;** **\*required** Array of rows, in a tabular format with `fields` and `rows`
+
+  * `options` [**Object**](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)
+    * `options.centerMap` [**boolean**](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean) `default: true` if `centerMap` is set to `true` kepler.gl will place the map view within the data points boundaries
+    * `options.readOnly` [**boolean**](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean) `default: false` if `readOnly` is set to `true`
+
       the left setting panel will be hidden
-    - `options.keepExistingConfig` **[boolean][43]** `default: false` whether to keep exiting map config, including layers, filters and splitMaps.
 
-- `config` **[Object][40]** this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
+    * `options.keepExistingConfig` [**boolean**](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean) `default: false` whether to keep exiting map config, including layers, filters and splitMaps.
+* `config` [**Object**](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object) this object will contain the full kepler.gl instance configuration {mapState, mapStyle, visState}
 
 Kepler.gl provides an easy API `KeplerGlSchema.getConfigToSave` to generate a json blob of the current kepler instance configuration.
 
@@ -611,38 +575,5 @@ this.props.dispatch(
 );
 ```
 
-Read more about [addDataToMap](./docs/api-reference/actions/actions.md#adddatatomap) and [Saving and loading maps with schema manager][saving-loading-w-schema].
+Read more about [addDataToMap](docs/api-reference/actions/actions.md#adddatatomap) and [Saving and loading maps with schema manager](docs/api-reference/advanced-usages/saving-loading-w-schema.md).
 
-[contributing]: contributing/CONTRIBUTING.md
-[demo-app]: http://kepler.gl/#/demo
-[github]: https://github.com/keplergl/kepler.gl
-[github-pr]: https://help.github.com/articles/creating-a-pull-request/
-[mapbox]: https://www.mapbox.com
-[mapbox-token]: https://www.mapbox.com/help/define-access-token/
-[developers]: contributing/DEVELOPERS.md
-[examples]: https://github.com/keplergl/kepler.gl/tree/master/examples
-[react-palm]: https://github.com/btford/react-palm
-[roadmap]: https://github.com/keplergl/kepler.gl/wiki/Kepler.gl-2019-Roadmap
-[stack]: https://stackoverflow.com/questions/tagged/kepler.gl
-[web]: http://www.kepler.gl/
-[vis-academy]: http://vis.academy/#/kepler.gl/
-[user-guide]: ./docs/user-guides/a-introduction.md
-[user-guide-jupyter]: ./docs/keplergl-jupyter/user-guide.md
-[api-reference]: ./docs/api-reference/overview.md
-[get-started]: ./docs/api-reference/get-started.md
-[reducers]: ./docs/api-reference/reducers/overview.md
-[components]: ./docs/api-reference/components/overview.md
-[reducers]: ./docs/api-reference/reducers/overview.md
-[actions-updaters]: ./docs/api-reference/actions/overview.md
-[processors]: ./docs/api-reference/processors/overview.md
-[schemas]: ./docs/api-reference/schemas/overview.md
-[using-updaters]: ./docs/api-reference/advanced-usages/using-updaters.md
-[forward-actions]: ./docs/api-reference/advanced-usages/forward-actions.md
-[replace-ui-component]: ./docs/api-reference/advanced-usages/replace-ui-component.md
-[saving-loading-w-schema]: ./docs/api-reference/advanced-usages/saving-loading-w-schema.md
-[40]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
-[41]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
-[42]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
-[43]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
-[44]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
-[45]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function

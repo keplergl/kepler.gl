@@ -18,30 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {CompositeLayer} from 'deck.gl';
+import {CompositeLayer} from '@deck.gl/core';
 import ScatterplotIconLayer from './scatterplot-icon-layer';
 
 // default icon geometry is a square
-const DEFAULT_ICON_GEOMETRY = [
-  1,
-  1,
-  0,
-  1,
-  -1,
-  0,
-  -1,
-  -1,
-  0,
-  -1,
-  -1,
-  0,
-  -1,
-  1,
-  0,
-  1,
-  1,
-  0
-];
+const DEFAULT_ICON_GEOMETRY = [1, 1, 0, 1, -1, 0, -1, -1, 0, -1, -1, 0, -1, 1, 0, 1, 1, 0];
 
 const defaultProps = {
   getIconGeometry: iconId => DEFAULT_ICON_GEOMETRY,
@@ -72,7 +53,7 @@ export default class SvgIconLayer extends CompositeLayer {
         id: iconId,
         geometry: getIconGeometry(iconId) || DEFAULT_ICON_GEOMETRY,
         data: []
-      }
+      };
       iconLayers[iconId].data.push(data[i]);
     }
     this.setState({

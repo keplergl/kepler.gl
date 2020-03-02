@@ -39,8 +39,8 @@ import {
   THEME,
   DEFAULT_MAPBOX_API_URL,
   SAVE_MAP_ID,
-  OVERWRITE_MAP_ID,
-  SHARE_MAP_ID
+  SHARE_MAP_ID,
+  OVERWRITE_MAP_ID
 } from 'constants/default-settings';
 import {MISSING_MAPBOX_TOKEN} from 'constants/user-feedbacks';
 
@@ -141,26 +141,26 @@ function KeplerGlFactory(
 
     /* selectors */
     themeSelector = props => props.theme;
-    availableThemeSelector = createSelector(
-      this.themeSelector,
-      theme =>
-        typeof theme === 'object'
-          ? {
-              ...basicTheme,
-              ...theme
-            }
-          : theme === THEME.light
-          ? themeLT
-          : theme
+    availableThemeSelector = createSelector(this.themeSelector, theme =>
+      typeof theme === 'object'
+        ? {
+            ...basicTheme,
+            ...theme
+          }
+        : theme === THEME.light
+        ? themeLT
+        : theme
     );
 
     availableProviders = createSelector(
       props => props.cloudProviders,
-      providers => Array.isArray(providers) && providers.length ?
-      ({
-        hasStorage: providers.some(p => p.hasPrivateStorage()),
-        hasShare: providers.some(p => p.hasSharingUrl())
-      }) : {}
+      providers =>
+        Array.isArray(providers) && providers.length
+          ? {
+              hasStorage: providers.some(p => p.hasPrivateStorage()),
+              hasShare: providers.some(p => p.hasSharingUrl())
+            }
+          : {}
     );
 
     /* private methods */
@@ -210,6 +210,7 @@ function KeplerGlFactory(
         id,
         appName,
         version,
+        appWebsite,
         onSaveMap,
         onViewStateChange,
         width,
@@ -248,7 +249,8 @@ function KeplerGlFactory(
         hoverInfo,
         clicked,
         mousePos,
-        animationConfig
+        animationConfig,
+        mapInfo
       } = visState;
 
       const notificationPanelFields = {
@@ -259,6 +261,7 @@ function KeplerGlFactory(
       const sideFields = {
         appName,
         version,
+        appWebsite,
         datasets,
         filters,
         layers,
@@ -266,6 +269,7 @@ function KeplerGlFactory(
         layerClasses,
         interactionConfig,
         mapStyle,
+        mapInfo,
         layerBlending,
         onSaveMap,
         uiState,
@@ -308,14 +312,7 @@ function KeplerGlFactory(
       const containerW = mapState.width * (Number(isSplit) + 1);
 
       const mapContainers = !isSplit
-        ? [
-            <MapContainer
-              key={0}
-              index={0}
-              {...mapFields}
-              mapLayers={null}
-            />
-          ]
+        ? [<MapContainer key={0} index={0} {...mapFields} mapLayers={null} />]
         : splitMaps.map((settings, index) => (
             <MapContainer
               key={index}
@@ -328,8 +325,9 @@ function KeplerGlFactory(
       const isExporting =
         uiState.currentModal === EXPORT_IMAGE_ID ||
         uiState.currentModal === SAVE_MAP_ID ||
-        uiState.currentModal === OVERWRITE_MAP_ID ||
-        uiState.currentModal === SHARE_MAP_ID;
+        uiState.currentModal === SHARE_MAP_ID ||
+        uiState.currentModal === OVERWRITE_MAP_ID;
+
       const theme = this.availableThemeSelector(this.props);
 
       return (
@@ -366,9 +364,7 @@ function KeplerGlFactory(
               animationConfig={animationConfig}
               visStateActions={visStateActions}
               sidePanelWidth={
-                uiState.readOnly
-                  ? 0
-                  : this.props.sidePanelWidth + DIMENSIONS.sidePanel.margin.left
+                uiState.readOnly ? 0 : this.props.sidePanelWidth + DIMENSIONS.sidePanel.margin.left
               }
               containerW={containerW}
             />
@@ -400,9 +396,7 @@ function KeplerGlFactory(
     }
   }
 
-  return keplerGlConnect(mapStateToProps, makeMapDispatchToProps)(
-    withTheme(KeplerGL)
-  );
+  return keplerGlConnect(mapStateToProps, makeMapDispatchToProps)(withTheme(KeplerGL));
 }
 
 function mapStateToProps(state = {}, props) {
@@ -421,29 +415,24 @@ const getDispatch = dispatch => dispatch;
 const getUserActions = (dispatch, props) => props.actions || defaultUserActions;
 
 function makeGetActionCreators() {
-  return createSelector(
-    [getDispatch, getUserActions],
-    (dispatch, userActions) => {
-      const [visStateActions, mapStateActions, mapStyleActions, uiStateActions, providerActions] = [
-        VisStateActions,
-        MapStateActions,
-        MapStyleActions,
-        UIStateActions,
-        ProviderActions
-      ].map(actions =>
-        bindActionCreators(mergeActions(actions, userActions), dispatch)
-      );
+  return createSelector([getDispatch, getUserActions], (dispatch, userActions) => {
+    const [visStateActions, mapStateActions, mapStyleActions, uiStateActions, providerActions] = [
+      VisStateActions,
+      MapStateActions,
+      MapStyleActions,
+      UIStateActions,
+      ProviderActions
+    ].map(actions => bindActionCreators(mergeActions(actions, userActions), dispatch));
 
-      return {
-        visStateActions,
-        mapStateActions,
-        mapStyleActions,
-        uiStateActions,
-        providerActions,
-        dispatch
-      };
-    }
-  );
+    return {
+      visStateActions,
+      mapStateActions,
+      mapStyleActions,
+      uiStateActions,
+      providerActions,
+      dispatch
+    };
+  });
 }
 
 function makeMapDispatchToProps() {

@@ -112,10 +112,7 @@ export const updateMapUpdater = (state, action) => ({
  */
 export const fitBoundsUpdater = (state, action) => {
   const bounds = action.payload;
-  const {center, zoom} = geoViewport.viewport(bounds, [
-    state.width,
-    state.height
-  ]);
+  const {center, zoom} = geoViewport.viewport(bounds, [state.width, state.height]);
 
   return {
     ...state,
@@ -178,7 +175,7 @@ export const receiveMapConfigUpdater = (
   if (options.centerMap && bounds) {
     mergedState = fitBoundsUpdater(mergedState, {
       payload: bounds
-    })
+    });
   }
 
   return {

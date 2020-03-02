@@ -154,9 +154,7 @@ function makeBabelRule(env, exampleDir) {
     // do not exclude deck.gl and luma.gl when loading from root/node_modules
     exclude:
       env.deck || env.deck_src
-        ? [
-            /node_modules\/(?!(@deck\.gl|@luma\.gl|@probe\.gl|probe.gl|@loaders\.gl)\/).*/
-          ]
+        ? [/node_modules\/(?!(@deck\.gl|@luma\.gl|@probe\.gl|probe.gl|@loaders\.gl)\/).*/]
         : [/node_modules/],
     options: {
       presets: ['@babel/preset-env', '@babel/preset-react'],
@@ -235,10 +233,7 @@ function addLocalDevSettings(env, exampleConfig, exampleDir, externals) {
 
   config.module = {
     ...config.module,
-    rules: [
-      ...(config.module ? config.module.rules : []),
-      ...localDevConfig.module.rules
-    ]
+    rules: [...(config.module ? config.module.rules : []), ...localDevConfig.module.rules]
   };
 
   return config;
@@ -258,21 +253,14 @@ function addBabelSettings(env, config, exampleDir) {
 }
 
 module.exports = (exampleConfig, exampleDir) => env => {
-
   // find all @deck.gl @luma.gl @loaders.gl modules
   const modules = ['@deck.gl', '@loaders.gl', '@luma.gl', '@probe.gl'];
   const loadAllDirs = modules.map(
     dir =>
       new Promise(function readDir(success, reject) {
-        fs.readdir(join(NODE_MODULES_DIR, dir), function readDirItems(
-          err,
-          items
-        ) {
+        fs.readdir(join(NODE_MODULES_DIR, dir), function readDirItems(err, items) {
           if (err) {
-            logError(
-              `Cannot find ${dir} in node_modules, make sure it is installed.`,
-              err
-            );
+            logError(`Cannot find ${dir} in node_modules, make sure it is installed.`, err);
             success(null);
           }
           success(items);
@@ -288,12 +276,7 @@ module.exports = (exampleConfig, exampleDir) => env => {
       'probe.gl': results[3]
     }))
     .then(externals => {
-      let config = addLocalDevSettings(
-        env,
-        exampleConfig,
-        exampleDir,
-        externals
-      );
+      let config = addLocalDevSettings(env, exampleConfig, exampleDir, externals);
       config = addBabelSettings(env, config, exampleDir, externals);
 
       return config;

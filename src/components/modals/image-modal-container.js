@@ -22,10 +22,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import get from 'lodash.get';
 
-import {
-  MAP_THUMBNAIL_DIMENSION,
-  EXPORT_IMG_RATIOS
-} from 'constants/default-settings';
+import {MAP_THUMBNAIL_DIMENSION, EXPORT_IMG_RATIOS} from 'constants/default-settings';
 
 export default class ImageModalContainer extends Component {
   static propTypes = {
@@ -54,8 +51,7 @@ export default class ImageModalContainer extends Component {
 
   _updateThumbSize() {
     if (this.props.currentProvider && this.props.cloudProviders.length) {
-      const provider = this.props.cloudProviders
-        .find(p => p.name === this.props.currentProvider);
+      const provider = this.props.cloudProviders.find(p => p.name === this.props.currentProvider);
 
       if (provider && provider.thumbnail) {
         this.props.onUpdateImageSetting({
@@ -81,11 +77,6 @@ export default class ImageModalContainer extends Component {
   }
 
   render() {
-    return (
-      <>
-        {this.props.children}
-      </>
-    )
+    return <>{this.props.children}</>;
   }
-
 }

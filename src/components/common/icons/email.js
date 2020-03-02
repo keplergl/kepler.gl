@@ -42,4 +42,4 @@ export default class Email extends Component {
       </Base>
     );
   }
-};
+}

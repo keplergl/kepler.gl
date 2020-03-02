@@ -24,6 +24,7 @@ import window from 'global/window';
 import Console from 'global/console';
 import DropboxIcon from './dropbox-icon';
 import {MAP_URI} from '../../constants/default-settings';
+import {Provider} from 'kepler.gl/cloud-providers';
 
 const NAME = 'dropbox';
 const DISPLAY_NAME = 'Dropbox';
@@ -32,6 +33,8 @@ const KEPLER_DROPBOX_FOLDER_LINK = `//${DOMAIN}/home/Apps`;
 const CORS_FREE_DOMAIN = 'dl.dropboxusercontent.com';
 const PRIVATE_STORAGE_ENABLED = true;
 const SHARING_ENABLED = true;
+const MAX_THUMBNAIL_BATCH = 25;
+const IMAGE_URL_PREFIX = 'data:image/gif;base64,';
 
 function parseQueryString(query) {
   const searchParams = new URLSearchParams(query);
@@ -43,15 +46,13 @@ function parseQueryString(query) {
   return params;
 }
 
-export default class DropboxProvider {
-  constructor(clientId, appName, icon = DropboxIcon) {
+export default class DropboxProvider extends Provider {
+  constructor(clientId, appName) {
+    super({name: NAME, displayName: DISPLAY_NAME, icon: DropboxIcon});
     // All cloud-providers providers must implement the following properties
-    this.name = NAME;
-    this.displayName = DISPLAY_NAME;
+
     this.clientId = clientId;
     this.appName = appName;
-    this.icon = icon;
-    this.thumbnail = {width: 300, height: 200};
 
     this._folderLink = `${KEPLER_DROPBOX_FOLDER_LINK}/${appName}`;
     this._path = `/Apps/${window.decodeURIComponent(this.appName)}`;
@@ -67,7 +68,7 @@ export default class DropboxProvider {
    * - Receive the token when ready
    * - Close the opened tab
    */
-  login(onCloudLoginSuccess) {
+  async login(onCloudLoginSuccess) {
     const link = this._authLink();
 
     const authWindow = window.open(link, '_blank', 'width=1024,height=716');
@@ -109,35 +110,7 @@ export default class DropboxProvider {
     window.addEventListener('message', handleToken);
   }
 
-  /**
-   *
-   * @param {Object} map - entire item of the visualizations list returned by provider.getVisualizations()
-   * @returns {Object} map data, config and info {map: {datasets: Array<Object>, config: Object}, mapInfo: {title: string, description: string}, format: string}
-   */
   async downloadMap(loadParams) {
-    // the response map obejct should contain: datasets: [], config: {}, and info: {}
-    // each dataset object should be {info: {id, label}, data: {...}}
-    // to inform how kepler should process your data object, pass in `format`
-    // foramt options are:
-    // 'csv': csv file string
-    // 'geojson': geojson object
-    // 'row': row object
-    // 'keplergl': datasets array saved using KeplerGlSchema.save
-
-    // const mockResponse = {
-    //   map: {
-    //     datasets: [],
-    //     config: {},
-    //     info: {
-    //       app: 'kepler.gl',
-    //       created_at: ''
-    //       title: 'test map',
-    //       description: 'Hello this is my test dropbox map'
-    //     }
-    //   },
-    //   // pass csv here if your provider currently only support save / load file as csv
-    //   format: 'keplergl'
-    // };
     const token = this.getAccessToken();
     if (!token) {
       this.login(() => this.downloadMap(loadParams));
@@ -150,6 +123,7 @@ export default class DropboxProvider {
       format: 'keplergl'
     };
 
+    this._loadParam = loadParams;
     return response;
   }
 
@@ -162,24 +136,19 @@ export default class DropboxProvider {
       });
       const {pngs, visualizations} = this._parseEntries(response);
       // https://dropbox.github.io/dropbox-sdk-js/Dropbox.html#filesGetThumbnailBatch__anchor
-      const thumbnails = await this._dropbox.filesGetThumbnailBatch({
-        entries: Object.values(pngs).map(img => ({
-          path: img.path_lower,
-          format: 'png',
-          size: 'w128h128'
-        }))
-      });
+      // up to 25 per request
+      // TODO: implement pagination, so we don't need to get all the thumbs all at once
+      const thumbnails = await Promise.all(this._getThumbnailRequests(pngs)).then(results =>
+        results.reduce((accu, r) => [...accu, ...(r.entries || [])], [])
+      );
 
       // append to visualizations
       thumbnails &&
-        thumbnails.entries.forEach(thb => {
+        thumbnails.forEach(thb => {
           if (thb['.tag'] === 'success' && thb.thumbnail) {
-            const matchViz =
-              visualizations[
-                pngs[thb.metadata.id] && pngs[thb.metadata.id].name
-              ];
+            const matchViz = visualizations[pngs[thb.metadata.id] && pngs[thb.metadata.id].name];
             if (matchViz) {
-              matchViz.thumbnail = `data:image/gif;base64,${thb.thumbnail}`;
+              matchViz.thumbnail = `${IMAGE_URL_PREFIX}${thb.thumbnail}`;
             }
           }
         });
@@ -190,22 +159,6 @@ export default class DropboxProvider {
       // made the error message human readable for provider updater
       throw this._handleDropboxError(error);
     }
-  }
-
-  // append url after map sharing
-  getMapPermalink(mapLink, fullUrl = true) {
-    return fullUrl
-      ? `${window.location.protocol}//${window.location.host}/${MAP_URI}${mapLink}`
-      : `/${MAP_URI}${mapLink}`;
-  }
-
-  // append map url after load map from storage, this url is not meant
-  // to be directly shared with others
-  _getMapPermalinkFromParams({path}, fullURL = true) {
-    const mapLink = `demo/map/dropbox?path=${path}`;
-    return fullURL
-      ? `${window.location.protocol}//${window.location.host}/${mapLink}`
-      : `/${mapLink}`;
   }
 
   getUserName() {
@@ -260,19 +213,21 @@ export default class DropboxProvider {
     const name = map.info && map.info.title;
     const fileName = `${name}.json`;
     const fileContent = map;
+    // FileWriteMode: Selects what to do if the file already exists.
+    const mode = options.overwrite ? 'overwrite' : 'add';
 
     const metadata = await this._dropbox.filesUpload({
       path: `${this._path}/${fileName}`,
       contents: JSON.stringify(fileContent),
-      // FileWriteMode: Selects what to do if the file already exists.
-      mode: options.overwrite ? 'overwrite' : 'update'
+      mode
     });
 
     // save a thumbnail image
     thumbnail &&
       (await this._dropbox.filesUpload({
         path: `${this._path}/${fileName}`.replace(/\.json$/, '.png'),
-        contents: thumbnail
+        contents: thumbnail,
+        mode
       }));
 
     // keep on create shareUrl
@@ -286,12 +241,20 @@ export default class DropboxProvider {
     return this._loadParam;
   }
 
-  getShareUrl(fullUrl = false) {
+  /**
+   * Get the share url of current map, this url can be accessed by anyone
+   * @param {boolean} fullUrl
+   */
+  getShareUrl(fullUrl = true) {
     return fullUrl
       ? `${window.location.protocol}//${window.location.host}/${MAP_URI}${this._shareUrl}`
       : `/${MAP_URI}${this._shareUrl}`;
   }
 
+  /**
+   * Get the map url of current map, this url can only be accessed by current logged in user
+   * @param {boolean} fullUrl
+   */
   getMapUrl(fullURL = true) {
     const {path} = this._loadParam;
     const mapLink = `demo/map/dropbox?path=${path}`;
@@ -299,6 +262,7 @@ export default class DropboxProvider {
       ? `${window.location.protocol}//${window.location.host}/${mapLink}`
       : `/${mapLink}`;
   }
+
   /**
    * Provides the current dropbox auth token. If stored in localStorage is set onto dropbox handler and returned
    * @returns {any}
@@ -341,6 +305,7 @@ export default class DropboxProvider {
       response = await this._dropbox.usersGetCurrentAccount();
     } catch (error) {
       Console.warn(error);
+      return null;
     }
 
     return this._getUserFromAccount(response);
@@ -371,11 +336,21 @@ export default class DropboxProvider {
     });
   }
 
-  /**
-   * Generate auth link url to open to be used to handle OAuth2
-   * @param {string} path
-   */
+  // append url after map sharing
+  _getMapPermalink(mapLink, fullUrl = true) {
+    return fullUrl
+      ? `${window.location.protocol}//${window.location.host}/${MAP_URI}${mapLink}`
+      : `/${MAP_URI}${mapLink}`;
+  }
 
+  // append map url after load map from storage, this url is not meant
+  // to be directly shared with others
+  _getMapPermalinkFromParams({path}, fullURL = true) {
+    const mapLink = `demo/map/dropbox?path=${path}`;
+    return fullURL
+      ? `${window.location.protocol}//${window.location.host}/${mapLink}`
+      : `/${mapLink}`;
+  }
   /**
    * It will set access to file to public
    * @param {Object} metadata metadata response from uploading the file
@@ -403,6 +378,10 @@ export default class DropboxProvider {
       );
   }
 
+  /**
+   * Generate auth link url to open to be used to handle OAuth2
+   * @param {string} path
+   */
   _authLink(path = 'auth') {
     return this._dropbox.getAuthenticationUrl(
       `${window.location.origin}/${path}`,
@@ -419,15 +398,34 @@ export default class DropboxProvider {
    * @returns {DropboxTypes.sharing.FileLinkMetadataReference}
    */
   _overrideUrl(url) {
-    return url
-      ? url.slice(0, url.indexOf('?')).replace(DOMAIN, CORS_FREE_DOMAIN)
-      : null;
+    return url ? url.slice(0, url.indexOf('?')).replace(DOMAIN, CORS_FREE_DOMAIN) : null;
   }
 
   _getUserFromAccount(response) {
-    return response
-      ? (response.name && response.name.abbreviated_name) || response.email
-      : null;
+    return response ? (response.name && response.name.abbreviated_name) || response.email : null;
+  }
+
+  _getThumbnailRequests(pngs) {
+    const batches = Object.values(pngs).reduce((accu, c) => {
+      const lastBatch = accu.length && accu[accu.length - 1];
+      if (!lastBatch || lastBatch.length >= MAX_THUMBNAIL_BATCH) {
+        // add new batch
+        accu.push([c]);
+      } else {
+        lastBatch.push(c);
+      }
+      return accu;
+    }, []);
+
+    return batches.map(batch =>
+      this._dropbox.filesGetThumbnailBatch({
+        entries: batch.map(img => ({
+          path: img.path_lower,
+          format: 'png',
+          size: 'w128h128'
+        }))
+      })
+    );
   }
 
   /**
@@ -453,8 +451,6 @@ export default class DropboxProvider {
           title,
           id,
           lastModification: new Date(client_modified).getTime(),
-          // TODO: map has shared url?
-          privateMap: false,
           loadParams: {
             path: path_lower
           }

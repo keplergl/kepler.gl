@@ -25,10 +25,7 @@ import CloudTile from './cloud-tile';
 import ImageModalContainer from './image-modal-container';
 import {UploadAnimation} from './status-panel';
 
-import {
-  MAP_THUMBNAIL_DIMENSION,
-  MAP_INFO_CHARACTER
-} from 'constants/default-settings';
+import {MAP_THUMBNAIL_DIMENSION, MAP_INFO_CHARACTER} from 'constants/default-settings';
 
 import {
   StyledModalContent,
@@ -73,7 +70,11 @@ const StyledSaveMapModal = styled.div.attrs({
 
 const nop = () => {};
 
-export const MapInfoPanel = ({mapInfo, characterLimits, onChangeInput}) => (
+export const MapInfoPanel = ({
+  mapInfo = {description: '', title: ''},
+  characterLimits,
+  onChangeInput
+}) => (
   <div className="selection map-info-panel">
     <StyledModalSection className="save-map-modal-name">
       <div className="modal-section-title">Name*</div>
@@ -105,12 +106,10 @@ export const MapInfoPanel = ({mapInfo, characterLimits, onChangeInput}) => (
       <StyledModalInputFootnote
         className="save-map-modal-description__footnote"
         error={
-          characterLimits.description &&
-          mapInfo.description.length > characterLimits.description
+          characterLimits.description && mapInfo.description.length > characterLimits.description
         }
       >
-        {mapInfo.description.length}/
-        {characterLimits.description || MAP_INFO_CHARACTER.description}{' '}
+        {mapInfo.description.length}/{characterLimits.description || MAP_INFO_CHARACTER.description}{' '}
         characters
       </StyledModalInputFootnote>
     </StyledModalSection>
@@ -176,9 +175,7 @@ function SaveMapModalFactory() {
               <StyledExportSection disabled={isProviderLoading}>
                 <div className="description">
                   <div className="title">Cloud storage</div>
-                  <div className="subtitle">
-                    Login save map to your personal cloud storage
-                  </div>
+                  <div className="subtitle">Login save map to your personal cloud storage</div>
                 </div>
                 <div className="selection">
                   {cloudProviders.map(cloudProvider => (
@@ -188,7 +185,9 @@ function SaveMapModalFactory() {
                       onSetCloudProvider={onSetCloudProvider}
                       cloudProvider={cloudProvider}
                       isSelected={cloudProvider.name === currentProvider}
-                      isConnected={Boolean(cloudProvider.getAccessToken())}
+                      isConnected={Boolean(
+                        cloudProvider.getAccessToken && cloudProvider.getAccessToken()
+                      )}
                     />
                   ))}
                 </div>

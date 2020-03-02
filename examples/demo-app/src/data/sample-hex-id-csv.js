@@ -131,14 +131,7 @@ export const config = {
                 name: 'Global Warming',
                 type: 'sequential',
                 category: 'Uber',
-                colors: [
-                  '#5A1846',
-                  '#900C3F',
-                  '#C70039',
-                  '#E3611C',
-                  '#F1920E',
-                  '#FFC300'
-                ]
+                colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
               },
               coverage: 1,
               sizeRange: [0, 500],
@@ -182,21 +175,24 @@ export const config = {
         }
       },
       layerBlending: 'normal',
-      splitMaps: [{
-        layers: {
-          avlgol: {
-            isAvailable: true,
-            isVisible: true
+      splitMaps: [
+        {
+          layers: {
+            avlgol: {
+              isAvailable: true,
+              isVisible: true
+            }
+          }
+        },
+        {
+          layers: {
+            avlgol: {
+              isAvailable: true,
+              isVisible: true
+            }
           }
         }
-      }, {
-        layers: {
-          avlgol: {
-            isAvailable: true,
-            isVisible: true
-          }
-        }
-      }]
+      ]
     },
     mapStyle: {
       styleType: 'dark',

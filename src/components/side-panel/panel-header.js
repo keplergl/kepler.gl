@@ -24,15 +24,7 @@ import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
 import {Tooltip} from 'components/common/styled-components';
 import KeplerGlLogo from 'components/common/logo';
-import {
-  Save,
-  DataTable,
-  Save2,
-  Picture,
-  Db,
-  Map as MapIcon,
-  Share
-} from 'components/common/icons';
+import {Save, DataTable, Save2, Picture, Db, Map as MapIcon, Share} from 'components/common/icons';
 import ClickOutsideCloseDropdown from 'components/side-panel/panel-dropdown';
 import Toolbar from 'components/common/toolbar';
 import ToolbarItem from 'components/common/toolbar-item';
@@ -64,8 +56,7 @@ const StyledPanelAction = styled.div.attrs({
 })`
   align-items: center;
   border-radius: 2px;
-  color: ${props =>
-    props.active ? props.theme.textColorHl : props.theme.subtextColor};
+  color: ${props => (props.active ? props.theme.textColorHl : props.theme.subtextColor)};
   display: flex;
   height: 26px;
   justify-content: space-between;
@@ -96,23 +87,13 @@ const StyledToolbar = styled(Toolbar)`
 `;
 
 export const PanelAction = ({item, onClick}) => (
-  <StyledPanelAction
-    className="side-panel__panel-header__action"
-    data-tip
-    data-for={`${item.id}-action`}
-    onClick={onClick}
-  >
+  <StyledPanelAction data-tip data-for={`${item.id}-action`} onClick={onClick}>
     {item.label ? <p>{item.label}</p> : null}
     <a target={item.blank ? '_blank' : ''} href={item.href}>
       <item.iconComponent height="20px" />
     </a>
     {item.tooltip ? (
-      <Tooltip
-        id={`${item.id}-action`}
-        place="bottom"
-        delayShow={500}
-        effect="solid"
-      >
+      <Tooltip id={`${item.id}-action`} place="bottom" delayShow={500} effect="solid">
         <span>{item.tooltip}</span>
       </Tooltip>
     ) : null}
@@ -161,7 +142,6 @@ export const SaveExportDropdownFactory = PanelHeaderDropdown => {
   const dropdownItemsSelector = getDropdownItemsSelector();
 
   const SaveExportDropdown = props => (
-
     <PanelHeaderDropdown
       items={dropdownItemsSelector(props)}
       show={props.show}
@@ -212,7 +192,7 @@ SaveExportDropdownFactory.deps = [PanelHeaderDropdownFactory];
 export const CloudStorageDropdownFactory = PanelHeaderDropdown => {
   const dropdownItemsSelector = getDropdownItemsSelector();
 
-  const CloudStorageDropdown = (props) => (
+  const CloudStorageDropdown = props => (
     <PanelHeaderDropdown
       items={dropdownItemsSelector(props)}
       show={props.show}
@@ -246,10 +226,7 @@ export const CloudStorageDropdownFactory = PanelHeaderDropdown => {
 };
 CloudStorageDropdownFactory.deps = [PanelHeaderDropdownFactory];
 
-PanelHeaderFactory.deps = [
-  SaveExportDropdownFactory,
-  CloudStorageDropdownFactory
-];
+PanelHeaderFactory.deps = [SaveExportDropdownFactory, CloudStorageDropdownFactory];
 
 function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
   return class PanelHeader extends Component {
@@ -303,7 +280,7 @@ function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
 
       // don't render cloud storage icon if onSaveToStorage is not provided
       if (typeof this.props.onSaveToStorage !== 'function') {
-        items = actionItems.filter(ai => ai.id !== 'storage')
+        items = actionItems.filter(ai => ai.id !== 'storage');
       }
 
       return (

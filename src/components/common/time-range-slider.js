@@ -78,10 +78,7 @@ export default function TimeRangeSliderFactory(PlaybackControls) {
         width: 288
       };
       this._animation = null;
-      this._sliderThrottle = throttle(
-        (...value) => this.props.onChange(...value),
-        20
-      );
+      this._sliderThrottle = throttle((...value) => this.props.onChange(...value), 20);
     }
 
     componentDidUpdate() {
@@ -96,9 +93,7 @@ export default function TimeRangeSliderFactory(PlaybackControls) {
       this.timeSelector,
       this.formatSelector,
       (currentTime, format) => {
-        const groupTime = Array.isArray(currentTime)
-          ? currentTime
-          : [currentTime];
+        const groupTime = Array.isArray(currentTime) ? currentTime : [currentTime];
         return groupTime.reduce(
           (accu, curr) => {
             const displayDateTime = moment.utc(curr).format(format);
@@ -150,8 +145,7 @@ export default function TimeRangeSliderFactory(PlaybackControls) {
       const speed = ((domain[1] - domain[0]) / BASE_SPEED) * this.props.speed;
 
       // loop when reaches the end
-      const value0 =
-        value[1] + speed > domain[1] ? domain[0] : value[0] + speed;
+      const value0 = value[1] + speed > domain[1] ? domain[0] : value[0] + speed;
       const value1 = value0 + value[1] - value[0];
       this.props.onChange([value0, value1]);
     };
@@ -163,16 +157,9 @@ export default function TimeRangeSliderFactory(PlaybackControls) {
       return (
         <div className="time-range-slider">
           {!hideTimeTitle ? (
-            <TimeTitle
-              timeFormat={this.props.timeFormat}
-              value={value}
-              isEnlarged={isEnlarged}
-            />
+            <TimeTitle timeFormat={this.props.timeFormat} value={value} isEnlarged={isEnlarged} />
           ) : null}
-          <StyledSliderContainer
-            className="time-range-slider__container"
-            isEnlarged={isEnlarged}
-          >
+          <StyledSliderContainer className="time-range-slider__container" isEnlarged={isEnlarged}>
             {isEnlarged ? (
               <PlaybackControls
                 isAnimatable={this.props.isAnimatable}
@@ -187,9 +174,7 @@ export default function TimeRangeSliderFactory(PlaybackControls) {
             ) : null}
             <div
               style={{
-                width: isEnlarged
-                  ? `calc(100% - ${animationControlWidth}px)`
-                  : '100%'
+                width: isEnlarged ? `calc(100% - ${animationControlWidth}px)` : '100%'
               }}
             >
               <RangeSlider
@@ -246,25 +231,14 @@ const TimeValueWrapper = styled.div`
 `;
 
 const TimeTitle = ({value, isEnlarged, timeFormat = DEFAULT_TIME_FORMAT}) => (
-  <TimeValueWrapper
-    isEnlarged={isEnlarged}
-    className="time-range-slider__time-title"
-  >
-    <TimeValue
-      key={0}
-      value={moment.utc(value[0]).format(timeFormat)}
-      split={!isEnlarged}
-    />
+  <TimeValueWrapper isEnlarged={isEnlarged} className="time-range-slider__time-title">
+    <TimeValue key={0} value={moment.utc(value[0]).format(timeFormat)} split={!isEnlarged} />
     {isEnlarged ? (
       <div className="horizontal-bar">
         <Minus height="12px" />
       </div>
     ) : null}
-    <TimeValue
-      key={1}
-      value={moment.utc(value[1]).format(timeFormat)}
-      split={!isEnlarged}
-    />
+    <TimeValue key={1} value={moment.utc(value[1]).format(timeFormat)} split={!isEnlarged} />
   </TimeValueWrapper>
 );
 
@@ -276,11 +250,7 @@ const TimeValue = ({value, split}) => (
         .split(' ')
         .map((v, i) => (
           <div key={i}>
-            {i === 0 ? (
-              <SelectText>{v}</SelectText>
-            ) : (
-              <SelectTextBold>{v}</SelectTextBold>
-            )}
+            {i === 0 ? <SelectText>{v}</SelectText> : <SelectTextBold>{v}</SelectTextBold>}
           </div>
         ))
     ) : (

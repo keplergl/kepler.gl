@@ -55,8 +55,7 @@ const InputBox = styled.div`
 `;
 
 const TypeaheadInput = styled.input`
-  ${props => props.theme.secondaryInput}
-  :hover {
+  ${props => props.theme.secondaryInput} :hover {
     cursor: pointer;
     background-color: ${props => props.theme.secondaryInputBgd};
   }
@@ -73,9 +72,7 @@ function generateSearchFunction(props) {
   const {searchOptions, filterOption} = props;
   if (typeof searchOptions === 'function') {
     if (filterOption !== null) {
-      Console.warn(
-        'searchOptions prop is being used, filterOption prop will be ignored'
-      );
+      Console.warn('searchOptions prop is being used, filterOption prop will be ignored');
     }
     return searchOptions;
   } else if (typeof filterOption === 'function') {
@@ -89,9 +86,7 @@ function generateSearchFunction(props) {
       : Accessor.IDENTITY_FN;
 
   return (value, options) =>
-    fuzzy
-      .filter(value, options, {extract: mapper})
-      .map(res => options[res.index]);
+    fuzzy.filter(value, options, {extract: mapper}).map(res => options[res.index]);
 }
 
 function getOptionsForValue(value, props, state) {
@@ -146,18 +141,9 @@ class Typeahead extends Component {
     inputDisplayOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
     formInputOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
     defaultClassNames: PropTypes.bool,
-    customListComponent: PropTypes.oneOfType([
-      PropTypes.element,
-      PropTypes.func
-    ]),
-    customListItemComponent: PropTypes.oneOfType([
-      PropTypes.element,
-      PropTypes.func
-    ]),
-    customListHeaderComponent: PropTypes.oneOfType([
-      PropTypes.element,
-      PropTypes.func
-    ]),
+    customListComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
+    customListItemComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
+    customListHeaderComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
     showOptionsWhenEmpty: PropTypes.bool,
     searchable: PropTypes.bool
   };
@@ -259,8 +245,7 @@ class Typeahead extends Component {
             : this.state.searchResults
         }
         areResultsTruncated={
-          this.props.maxVisible &&
-          this.state.searchResults.length > this.props.maxVisible
+          this.props.maxVisible && this.state.searchResults.length > this.props.maxVisible
         }
         resultsTruncatedMessage={this.props.resultsTruncatedMessage}
         onOptionSelected={this._onOptionSelected}
@@ -356,9 +341,7 @@ class Typeahead extends Component {
 
     events[KeyEvent.DOM_VK_UP] = this.navUp;
     events[KeyEvent.DOM_VK_DOWN] = this.navDown;
-    events[KeyEvent.DOM_VK_RETURN] = events[
-      KeyEvent.DOM_VK_ENTER
-    ] = this._onEnter;
+    events[KeyEvent.DOM_VK_RETURN] = events[KeyEvent.DOM_VK_ENTER] = this._onEnter;
     events[KeyEvent.DOM_VK_ESCAPE] = this._onEscape;
     events[KeyEvent.DOM_VK_TAB] = this._onTab;
 
@@ -445,13 +428,7 @@ class Typeahead extends Component {
       return null;
     }
 
-    return (
-      <input
-        type="hidden"
-        name={this.props.name}
-        value={this.state.selection}
-      />
-    );
+    return <input type="hidden" name={this.props.name} value={this.state.selection} />;
   }
 
   _hasHint() {
@@ -459,16 +436,12 @@ class Typeahead extends Component {
   }
 
   _hasFixedOptions() {
-    return (
-      Array.isArray(this.props.fixedOptions) && this.props.fixedOptions.length
-    );
+    return Array.isArray(this.props.fixedOptions) && this.props.fixedOptions.length;
   }
 
   render() {
     const inputClasses = {};
-    inputClasses[this.props.customClasses.input] = Boolean(
-      this.props.customClasses.input
-    );
+    inputClasses[this.props.customClasses.input] = Boolean(this.props.customClasses.input);
     const inputClassList = classNames(inputClasses);
 
     const classes = {

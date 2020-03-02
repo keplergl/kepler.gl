@@ -38,7 +38,7 @@ const actionHandler = {
   [ActionTypes.GET_SAVED_MAPS]: providerStateUpdaters.getSavedMapsUpdater,
   [ActionTypes.GET_SAVED_MAPS_SUCCESS]: providerStateUpdaters.getSavedMapsSuccessUpdater,
   [ActionTypes.GET_SAVED_MAPS_ERROR]: providerStateUpdaters.getSavedMapsErrorUpdater
-}
+};
 
 // construct provider-state reducer
 export const providerStateReducerFactory = (initialState = {}) =>

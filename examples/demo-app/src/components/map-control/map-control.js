@@ -20,12 +20,7 @@
 
 import React, {useState} from 'react';
 import styled from 'styled-components';
-import {
-  MapControlFactory,
-  Icons,
-  IconRoundSmall,
-  MapControlButton
-} from 'kepler.gl/components';
+import {MapControlFactory, Icons, IconRoundSmall, MapControlButton} from 'kepler.gl/components';
 import ReactMarkdown from 'react-markdown';
 
 const MapControl = MapControlFactory();
@@ -87,8 +82,7 @@ const StyledPanelAction = styled.div`
     display: flex;
     height: 16px;
     padding-right: 10px;
-    color: ${props =>
-      props.active ? props.theme.textColorHl : props.theme.subtextColor};
+    color: ${props => (props.active ? props.theme.textColorHl : props.theme.subtextColor)};
 
     svg {
       margin-right: 8px;
@@ -145,7 +139,7 @@ function SampleMapPanel(props) {
         <StyledProjectPanel>
           <div className="project-title">
             <div>{props.currentSample.label}</div>
-            <CloseButton onClick={() => setActive(false)}/>
+            <CloseButton onClick={() => setActive(false)} />
           </div>
           <div className="project-description">
             <ReactMarkdown

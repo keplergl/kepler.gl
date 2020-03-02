@@ -40,7 +40,7 @@ Object.defineProperty(window, 'fetch', {
     new Promise((res, rej) => {
       // we just let this never resolve
     }),
-  writable: true,
+  writable: true
 });
 
 const nop = () => {};

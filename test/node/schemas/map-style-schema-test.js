@@ -31,9 +31,11 @@ test('#mapStyleSchema -> v1 -> save load mapStyle', t => {
   const msToSave = savedState.config.mapStyle;
   const msLoaded = SchemaManager.parseSavedConfig(savedState).mapStyle;
 
-  t.deepEqual(Object.keys(msToSave),
+  t.deepEqual(
+    Object.keys(msToSave),
     ['styleType', 'topLayerGroups', 'visibleLayerGroups', 'threeDBuildingColor', 'mapStyles'],
-    'mapStyle should have all 4 entries');
+    'mapStyle should have all 4 entries'
+  );
 
   const expectedSaved = {
     styleType: 'dark',
@@ -72,11 +74,12 @@ test('#mapStyleSchema -> v1 -> save load mapStyle with custom style', t => {
     },
     threeDBuildingColor: [1, 2, 3],
     mapStyles: {
-      'smoothie_the_cat': {
+      smoothie_the_cat: {
         id: 'smoothie_the_cat',
         accessToken: 'secret_token',
         label: 'Smoothie the Cat',
-        icon: 'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+        icon:
+          'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
         custom: true,
         url: 'mapbox://styles/shanhe/smoothie.the.cat'
       }

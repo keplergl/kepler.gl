@@ -30,11 +30,7 @@ const propTypes = {
   layer: PropTypes.object.isRequired,
   property: PropTypes.string.isRequired,
   onChange: PropTypes.func.isRequired,
-  label: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.bool,
-    PropTypes.func
-  ]),
+  label: PropTypes.oneOfType([PropTypes.string, PropTypes.bool, PropTypes.func]),
   description: PropTypes.string,
   disabled: PropTypes.bool
 };

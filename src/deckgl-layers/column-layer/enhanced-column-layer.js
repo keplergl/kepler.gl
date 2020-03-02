@@ -40,7 +40,6 @@ function addInstanceCoverage(vs) {
 
 // TODO: export all deck.gl layers from kepler.gl
 class EnhancedColumnLayer extends ColumnLayer {
-
   getShaders() {
     const shaders = super.getShaders();
 

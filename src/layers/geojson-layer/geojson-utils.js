@@ -36,7 +36,6 @@ export function parseGeoJsonRawFeature(rawFeature) {
 
     return normalized.features[0];
   } else if (typeof rawFeature === 'string') {
-
     return parseGeometryFromString(rawFeature);
   } else if (Array.isArray(rawFeature)) {
     // Support GeoJson  LineString as an array of points
@@ -59,7 +58,6 @@ export function parseGeoJsonRawFeature(rawFeature) {
  * @returns {{}}
  */
 export function getGeojsonDataMaps(allData, getFeature) {
-
   const acceptableTypes = [
     'Point',
     'MultiPoint',
@@ -75,11 +73,7 @@ export function getGeojsonDataMaps(allData, getFeature) {
   for (let index = 0; index < allData.length; index++) {
     const feature = parseGeoJsonRawFeature(getFeature(allData[index]));
 
-    if (
-      feature &&
-      feature.geometry &&
-      acceptableTypes.includes(feature.geometry.type)
-    ) {
+    if (feature && feature.geometry && acceptableTypes.includes(feature.geometry.type)) {
       // store index of the data in feature properties
       feature.properties = {
         ...(feature.properties || {}),
@@ -138,12 +132,10 @@ export function getGeojsonBounds(features = []) {
   // 70 ms for 10,000 polygons
   // here we only pick couple
   const maxCount = 10000;
-  const samples =
-    features.length > maxCount ? getSampleData(features, maxCount) : features;
+  const samples = features.length > maxCount ? getSampleData(features, maxCount) : features;
 
   const nonEmpty = samples.filter(
-    d =>
-      d && d.geometry && d.geometry.coordinates && d.geometry.coordinates.length
+    d => d && d.geometry && d.geometry.coordinates && d.geometry.coordinates.length
   );
 
   try {
@@ -174,10 +166,7 @@ export function getGeojsonFeatureTypes(allFeatures) {
   const featureTypes = {};
   for (let f = 0; f < allFeatures.length; f++) {
     const feature = allFeatures[f];
-    const geoType =
-      featureToDeckGlGeoType[
-        feature && feature.geometry && feature.geometry.type
-      ];
+    const geoType = featureToDeckGlGeoType[feature && feature.geometry && feature.geometry.type];
     if (geoType) {
       featureTypes[geoType] = true;
     }

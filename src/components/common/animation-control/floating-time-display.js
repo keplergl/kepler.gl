@@ -108,9 +108,7 @@ export default function FloatingTimeDisplayFactory() {
       this.timeSelector,
       this.formatSelector,
       (currentTime, format) => {
-        const groupTime = Array.isArray(currentTime)
-          ? currentTime
-          : [currentTime];
+        const groupTime = Array.isArray(currentTime) ? currentTime : [currentTime];
         return groupTime.reduce(
           (accu, curr) => {
             const displayDateTime = moment.utc(curr).format(format);
@@ -131,13 +129,8 @@ export default function FloatingTimeDisplayFactory() {
     render() {
       const {displayDate, displayTime} = this.displayTimeSelector(this.props);
       const twoGroups = displayDate.length === 2 && displayTime.length === 2;
-      const bottomRow = displayTime.length
-        ? displayTime
-        : displayDate.length
-        ? displayDate
-        : null;
-      const topRow =
-        displayDate.length && displayTime.length ? displayDate : null;
+      const bottomRow = displayTime.length ? displayTime : displayDate.length ? displayDate : null;
+      const topRow = displayDate.length && displayTime.length ? displayDate : null;
 
       return (
         <StyledTimeDisplay className="animation-control__time-display">
@@ -146,17 +139,13 @@ export default function FloatingTimeDisplayFactory() {
               <StyledTimeValueGroup>
                 {/* Time Start */}
                 <StyledTimeDisplayTop>{displayDate[0]}</StyledTimeDisplayTop>
-                <StyledTimeDisplayBottom>
-                  {displayTime[0]}
-                </StyledTimeDisplayBottom>
+                <StyledTimeDisplayBottom>{displayTime[0]}</StyledTimeDisplayBottom>
               </StyledTimeValueGroup>
               <TimeDivider />
               <StyledTimeValueGroup>
                 {/* Time End */}
                 <StyledTimeDisplayTop>{displayDate[1]}</StyledTimeDisplayTop>
-                <StyledTimeDisplayBottom>
-                  {displayTime[1]}
-                </StyledTimeDisplayBottom>
+                <StyledTimeDisplayBottom>{displayTime[1]}</StyledTimeDisplayBottom>
               </StyledTimeValueGroup>
             </StyledTimeDisplayGroups>
           ) : (

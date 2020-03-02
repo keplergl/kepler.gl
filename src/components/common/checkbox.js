@@ -27,8 +27,7 @@ import classnames from 'classnames';
 function noop() {}
 
 const StyledSwitchInput = styled.label`
-  ${props =>
-    props.secondary ? props.theme.secondarySwitch : props.theme.inputSwitch};
+  ${props => (props.secondary ? props.theme.secondarySwitch : props.theme.inputSwitch)};
 `;
 
 const StyledCheckboxInput = styled.label`
@@ -41,7 +40,7 @@ const HiddenInput = styled.input`
 `;
 
 const StyledCheckbox = styled.div`
-  line-height: 0;
+  display: flex;
   min-height: ${props => props.theme.switchBtnHeight};
   margin-left: ${props => props.theme.switchLabelMargin}px;
 `;

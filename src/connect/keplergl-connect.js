@@ -31,11 +31,9 @@ export const connect = (
   options
 ) => BaseComponent => {
   const mapDispatchToProps = makeMapDispatchToProps();
-  const reduxMapState = (state, props) =>
-    mapStateToProps(props.selector(state), props, state);
+  const reduxMapState = (state, props) => mapStateToProps(props.selector(state), props, state);
 
-  const reduxMapDispatch = (dispatch, props) =>
-    mapDispatchToProps(props.dispatch, props, dispatch);
+  const reduxMapDispatch = (dispatch, props) => mapDispatchToProps(props.dispatch, props, dispatch);
 
   const ReduxComponent = reduxConnect(
     reduxMapState,

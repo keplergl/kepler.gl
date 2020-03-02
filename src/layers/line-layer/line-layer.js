@@ -46,20 +46,13 @@ export default class LineLayer extends ArcLayer {
       lat1: fieldPairs[1].pair.lat,
       lng1: fieldPairs[1].pair.lng
     };
-    props.label = `${fieldPairs[0].defaultName} -> ${
-      fieldPairs[1].defaultName
-    } line`;
+    props.label = `${fieldPairs[0].defaultName} -> ${fieldPairs[1].defaultName} line`;
 
     return {props: [props]};
   }
 
   renderLayer(opts) {
-    const {
-      data,
-      gpuFilter,
-      objectHovered,
-      interactionConfig
-    } = opts;
+    const {data, gpuFilter, objectHovered, interactionConfig} = opts;
 
     const layerProps = {
       widthScale: this.config.visConfig.thickness
@@ -86,7 +79,8 @@ export default class LineLayer extends ArcLayer {
           getFilterValue: gpuFilter.filterValueUpdateTriggers,
           getWidth: {
             sizeField: this.config.sizeField,
-            sizeRange: this.config.visConfig.sizeRange
+            sizeRange: this.config.visConfig.sizeRange,
+            sizeScale: this.config.sizeScale
           },
           getColor: colorUpdateTriggers,
           getTargetColor: colorUpdateTriggers

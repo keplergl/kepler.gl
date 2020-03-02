@@ -26,11 +26,7 @@ export default function MultiSelectFilterFactory() {
   const MultiSelectFilter = ({filter, setFilter}) => (
     <div>
       <PanelLabel htmlFor={`filter-${filter.id}`}>Values in</PanelLabel>
-      <ItemSelector
-        options={filter.domain}
-        selectedItems={filter.value}
-        onChange={setFilter}
-      />
+      <ItemSelector options={filter.domain} selectedItems={filter.value} onChange={setFilter} />
     </div>
   );
   return MultiSelectFilter;

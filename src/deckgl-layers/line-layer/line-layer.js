@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {LineLayer} from 'deck.gl';
+import {LineLayer} from '@deck.gl/layers';
 import GL from '@luma.gl/constants';
 import {editShader} from 'deckgl-layers/layer-utils/shader-utils';
 
@@ -40,8 +40,8 @@ function addInstanceColorShader(vs) {
     'line color vs',
     'vColor = vec4(instanceColors.rgb, instanceColors.a * opacity);',
     `vec4 color = mix(instanceColors, instanceTargetColors, positions.x);` +
-    `vColor = vec4(color.rgb, color.a * opacity);`
-  )
+      `vColor = vec4(color.rgb, color.a * opacity);`
+  );
 }
 
 export default class EnhancedLineLayer extends LineLayer {

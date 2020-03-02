@@ -76,10 +76,7 @@ export default class SlideShow extends PureComponent {
   };
 
   componentDidMount() {
-    this._intervalId = setInterval(
-      this._transitionImage,
-      this.props.slideDuration
-    );
+    this._intervalId = setInterval(this._transitionImage, this.props.slideDuration);
   }
 
   componentWillUnmount() {

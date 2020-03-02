@@ -155,18 +155,14 @@ export default class ArcLayer extends Layer {
     // arc color
     const cScale =
       colorField &&
-      this.getVisChannelScale(
-        colorScale,
-        colorDomain,
-        colorRange.colors.map(hexToRgb)
-      );
+      this.getVisChannelScale(colorScale, colorDomain, colorRange.colors.map(hexToRgb));
 
     // arc thickness
-    const sScale =
-      sizeField && this.getVisChannelScale(sizeScale, sizeDomain, sizeRange);
+    const sScale = sizeField && this.getVisChannelScale(sizeScale, sizeDomain, sizeRange);
 
-    const getStrokeWidth = sScale ? d =>
-       this.getEncodedChannelValue(sScale, d.data, sizeField, 0) : 1;
+    const getStrokeWidth = sScale
+      ? d => this.getEncodedChannelValue(sScale, d.data, sizeField, 0)
+      : 1;
 
     const getSourceColor = cScale
       ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
@@ -213,12 +209,7 @@ export default class ArcLayer extends Layer {
   }
 
   renderLayer(opts) {
-    const {
-      data,
-      gpuFilter,
-      objectHovered,
-      interactionConfig
-    } = opts;
+    const {data, gpuFilter, objectHovered, interactionConfig} = opts;
 
     const colorUpdateTriggers = {
       color: this.config.color,
@@ -240,6 +231,7 @@ export default class ArcLayer extends Layer {
           getFilterValue: gpuFilter.filterValueUpdateTriggers,
           getWidth: {
             sizeField: this.config.sizeField,
+            sizeScale: this.config.sizeScale,
             sizeRange: this.config.visConfig.sizeRange
           },
           getSourceColor: colorUpdateTriggers,

@@ -48,20 +48,11 @@ test('#HexagonLayer -> constructor', t => {
           label: 'test hexagon layer'
         },
         test: layer => {
-          t.ok(
-            layer.config.dataId === 'blue',
-            'HexagonLayer dataId should be correct'
-          );
+          t.ok(layer.config.dataId === 'blue', 'HexagonLayer dataId should be correct');
           t.ok(layer.type === 'hexagon', 'type should be hexagon');
           t.ok(layer.isAggregated === true, 'HexagonLayer is aggregated');
-          t.ok(
-            layer.config.label === 'test hexagon layer',
-            'label should be correct'
-          );
-          t.ok(
-            Object.keys(layer.columnPairs).length,
-            'should have columnPairs'
-          );
+          t.ok(layer.config.label === 'test hexagon layer', 'label should be correct');
+          t.ok(Object.keys(layer.columnPairs).length, 'should have columnPairs');
         }
       }
     ]
@@ -146,11 +137,7 @@ test('#HexagonLayer -> formatLayerData', t => {
           '_filterData should filter data correctly'
         );
         // test layer.meta
-        t.deepEqual(
-          layer.meta,
-          pointLayerMeta,
-          'should format correct hexagon layer meta'
-        );
+        t.deepEqual(layer.meta, pointLayerMeta, 'should format correct hexagon layer meta');
       }
     },
     {
@@ -283,46 +270,46 @@ test('#HexagonLayer -> renderLayer', t => {
 
         // deckGl default pointToHexbin reads viewport set to width: 1 and height: 1 on initial render
         const pt0 = {
-          screenCoord: [41949.62272711111, 101320.76889147105],
+          screenCoord: [81.93285590277779, 314.10787407420145],
           index: 0,
           data: allData[0]
         };
         const pt1 = {
-          screenCoord: [41936.53009066667, 101311.85384886562],
+          screenCoord: [81.90728081597221, 314.125282797666],
           index: 1,
           data: allData[1]
         };
         const pt4 = {
-          screenCoord: [42134.70003199999, 101616.81008745039],
+          screenCoord: [82.29433593749998, 313.5296684059477],
           index: 4,
           data: allData[4]
         };
         const pt5 = {
-          screenCoord: [42159.752988444445, 101668.04589451979],
+          screenCoord: [82.34327256944445, 313.4296004913215],
           index: 5,
           data: allData[5]
         };
         const pt7 = {
-          screenCoord: [42044.19845688889, 101228.11376437404],
+          screenCoord: [82.11757812499998, 314.2888411459387],
           index: 7,
           data: allData[7]
         };
 
         const expectedHexCellData = [
           {
-            position: [-122.47496374709492, 37.71932315011047],
+            position: [-122.56068191457787, 37.71853775731428],
             points: [pt0, pt1],
             index: 0,
             filteredPoints: []
           },
           {
-            position: [-122.2779601982836, 37.44892081775436],
+            position: [-121.9705519342482, 37.44853622864796],
             points: [pt4, pt5],
             index: 1,
             filteredPoints: [pt4, pt5]
           },
           {
-            position: [-122.2779601982836, 37.98874207331562],
+            position: [-122.36397192113466, 37.98755881236511],
             points: [pt7],
             index: 2,
             filteredPoints: [pt7]
@@ -330,21 +317,17 @@ test('#HexagonLayer -> renderLayer', t => {
         ];
 
         // assigned by d3-hexbin
-        expectedHexCellData[0].points.x = 41888.45306522654;
-        expectedHexCellData[0].points.y = 101375.32539537722;
-        expectedHexCellData[1].points.x = 42031.9066716143;
-        expectedHexCellData[1].points.y = 101623.79433016981;
-        expectedHexCellData[2].points.x = 42031.9066716143;
-        expectedHexCellData[2].points.y = 101126.85646058463;
+        expectedHexCellData[0].points.x = 81.69147461037814;
+        expectedHexCellData[0].points.y = 313.99990548499255;
+        expectedHexCellData[1].points.x = 82.53077058240257;
+        expectedHexCellData[1].points.y = 313.5153377296145;
+        expectedHexCellData[2].points.x = 81.97123993438628;
+        expectedHexCellData[2].points.y = 314.4844732403706;
 
         const expectedProps = {
           coverage: layer.config.visConfig.coverage,
           radius: layer.config.visConfig.worldUnitSize * 1000,
-          colorRange: [
-            [8, 8, 8],
-            [9, 9, 9],
-            [7, 7, 7]
-          ],
+          colorRange: [[8, 8, 8], [9, 9, 9], [7, 7, 7]],
           colorScaleType: layer.config.colorScale,
           elevationScaleType: layer.config.sizeScale,
           elevationScale: layer.config.visConfig.elevationScale,
@@ -352,27 +335,23 @@ test('#HexagonLayer -> renderLayer', t => {
           lowerPercentile: layer.config.visConfig.percentile[0]
         };
 
-        const expectedColorBins = [
-          {i: 2, value: 1, counts: 1},
-          {i: 1, value: 2, counts: 2},
-        ];
-        const expectedElevationBins = [
-          {i: 2, value: 1, counts: 1},
-          {i: 1, value: 2, counts: 2},
-        ];
+        const expectedColorBins = [{i: 2, value: 1, counts: 1}, {i: 1, value: 2, counts: 2}];
+        const expectedElevationBins = [{i: 2, value: 1, counts: 1}, {i: 1, value: 2, counts: 2}];
 
         t.deepEqual(
           hexCellLayer.props.data,
           expectedHexCellData,
           'should pass correct data to hexagon cell layer'
         );
-
-        Object.keys(expectedProps).forEach(key => {
+        expectedHexCellData.forEach((d, i) => {
           t.deepEqual(
-            props[key],
-            expectedProps[key],
-            `should have correct props.${key}`
+            hexCellLayer.props.data[i],
+            expectedHexCellData[i],
+            'should pass correct data to hexagon cell layer'
           );
+        });
+        Object.keys(expectedProps).forEach(key => {
+          t.deepEqual(props[key], expectedProps[key], `should have correct props.${key}`);
         });
 
         t.deepEqual(
@@ -391,6 +370,113 @@ test('#HexagonLayer -> renderLayer', t => {
           state.aggregatorState.dimensions.elevation.sortedBins.sortedBins,
           expectedElevationBins,
           'should create correct elevation bins'
+        );
+      }
+    }
+  ];
+
+  testRenderLayerCases(t, HexagonLayer, TEST_CASES);
+  t.end();
+});
+
+function creatLayerObjectHovered({layerId, data, object}) {
+  return {
+    color: [],
+    layer: {
+      props: {id: layerId}
+    },
+    index: data.index,
+    picked: true,
+    // mock
+    x: 200,
+    y: 200,
+    pixel: [200, 200],
+    coordinate: [-117.986, 34.173],
+    lngLat: [-117.986, 34.173],
+    devicePixel: [1449, 759],
+    pixelRatio: 2,
+    object,
+    handled: false
+  };
+}
+
+test('#HexagonLayer -> renderHover', t => {
+  const filteredIndex = [0, 1, 2, 4, 5, 7];
+  const {allData} = preparedDataset;
+  const testObjectHovered = creatLayerObjectHovered({
+    layerId: 'test_layer_1',
+    data: allData[0],
+    object: {
+      colorValue: 1,
+      elevationValue: 1,
+      position: [-122.56068191457787, 37.71853775731428],
+      index: 0,
+      points: [{}, {}]
+    }
+  });
+
+  const TEST_CASES = [
+    {
+      name: 'Hexagon gps point.1',
+      layer: {
+        type: 'hexagon',
+        id: 'test_layer_1',
+        config: {
+          dataId,
+          label: 'some geometry file',
+          columns,
+          color: [1, 2, 3],
+          visConfig: {
+            worldUnitSize: 20,
+            colorRange: {
+              colors: ['#080808', '#090909', '#070707']
+            }
+          }
+        }
+      },
+      datasets: {
+        [dataId]: {
+          ...preparedDataset,
+          filteredIndex
+        }
+      },
+      renderArgs: {
+        objectHovered: testObjectHovered
+      },
+      assert: (deckLayers, layer) => {
+        t.deepEqual(
+          deckLayers.map(l => l.id),
+          [
+            'test_layer_1',
+            'test_layer_1-hexagon-cell',
+            'test_layer_1-hovered',
+            'test_layer_1-hovered-line-strings'
+          ],
+          'Should create 4 deck.gl layers'
+        );
+        const expectedHoverData = [
+          {
+            geometry: {
+              coordinates: [
+                [-122.36376320555154, 37.80841570626016],
+                [-122.56068191457787, 37.898184393157855],
+                [-122.75760062360423, 37.80841570626016],
+                [-122.75760062360423, 37.628550634764665],
+                [-122.56068191457787, 37.538454428239675],
+                [-122.36376320555154, 37.628550634764665],
+                [-122.36376320555154, 37.80841570626016]
+              ],
+              type: 'LineString'
+            },
+            properties: {}
+          }
+        ];
+
+        const hoverLayer = deckLayers[2];
+        t.deepEqual(
+          hoverLayer.props.data,
+          expectedHoverData,
+          'should send correct hover layer data'
         );
       }
     }

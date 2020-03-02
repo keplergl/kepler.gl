@@ -36,11 +36,7 @@ import {
   getSavedMapsSuccess,
   getSavedMapsError
 } from 'actions/provider-actions';
-import {
-  removeNotification,
-  toggleModal,
-  addNotification
-} from 'actions/ui-state-actions';
+import {removeNotification, toggleModal, addNotification} from 'actions/ui-state-actions';
 import {addDataToMap} from 'actions/actions';
 import {
   DEFAULT_NOTIFICATION_TYPES,
@@ -74,9 +70,7 @@ function _validateProvider(provider, method) {
   }
 
   if (typeof provider[method] !== 'function') {
-    Console.error(
-      `${method} is not a function of Cloud provider: ${provider.name}`
-    );
+    Console.error(`${method} is not a function of Cloud provider: ${provider.name}`);
     return false;
   }
 
@@ -87,15 +81,12 @@ function createGlobalNotificationTasks({type, message, delayClose = true}) {
   const id = generateHashId();
   const successNote = {
     id,
-    type:
-      DEFAULT_NOTIFICATION_TYPES[type] || DEFAULT_NOTIFICATION_TYPES.success,
+    type: DEFAULT_NOTIFICATION_TYPES[type] || DEFAULT_NOTIFICATION_TYPES.success,
     topic: DEFAULT_NOTIFICATION_TOPICS.global,
     message
   };
   const task = ACTION_TASK().map(_ => addNotification(successNote));
-  return delayClose
-    ? [task, DELAY_TASK(3000).map(_ => removeNotification(id))]
-    : [task];
+  return delayClose ? [task, DELAY_TASK(3000).map(_ => removeNotification(id))] : [task];
 }
 
 /**
@@ -106,14 +97,7 @@ function createGlobalNotificationTasks({type, message, delayClose = true}) {
  * @param {*} action
  */
 export const exportFileToCloudUpdater = (state, action) => {
-  const {
-    mapData,
-    provider,
-    options,
-    onSuccess,
-    onError,
-    closeModal
-  } = action.payload;
+  const {mapData, provider, options = {}, onSuccess, onError, closeModal} = action.payload;
 
   if (!_validateProvider(provider, 'uploadMap')) {
     return state;
@@ -153,14 +137,17 @@ export const exportFileSuccessUpdater = (state, action) => {
     isProviderLoading: false,
     // TODO: do we always have to store this?
     successInfo: response,
-    ...(!options.isPublic ? {
-      mapSaved: provider.name
-    } : {})
+    ...(!options.isPublic
+      ? {
+          mapSaved: provider.name
+        }
+      : {})
   };
 
   const tasks = [
     createActionTask(onSuccess, {response, provider, options}),
-    closeModal && ACTION_TASK().map(_ => postSaveLoadSuccess(`Map saved to ${state.currentProvider}!`))
+    closeModal &&
+      ACTION_TASK().map(_ => postSaveLoadSuccess(`Map saved to ${state.currentProvider}!`))
   ].filter(d => d);
 
   return tasks.length ? withTask(newState, tasks) : newState;
@@ -172,8 +159,7 @@ export const exportFileSuccessUpdater = (state, action) => {
  * @param {*} action
  */
 export const postSaveLoadSuccessUpdater = (state, action) => {
-  const message =
-    action.payload || `Saved / Load to ${state.currentProvider} Success`;
+  const message = action.payload || `Saved / Load to ${state.currentProvider} Success`;
 
   const tasks = [
     ACTION_TASK().map(_ => toggleModal(null)),
@@ -235,9 +221,7 @@ function checkLoadMapResponseError(response) {
     return new Error(`Load map response should be an object property "map"`);
   }
   if (!response.map.datasets || !response.map.config) {
-    return new Error(
-      `Load map response.map should be an object with property datasets or config`
-    );
+    return new Error(`Load map response.map should be an object with property datasets or config`);
   }
 
   return null;
@@ -246,9 +230,7 @@ function checkLoadMapResponseError(response) {
 function getDatasetHandler(format) {
   const defaultHandler = DATASET_HANDLERS[DATASET_FORMATS.csv];
   if (!format) {
-    Console.warn(
-      'format is not provided in load map response, will use csv by default'
-    );
+    Console.warn('format is not provided in load map response, will use csv by default');
     return defaultHandler;
   }
 
@@ -279,9 +261,7 @@ function parseLoadMapResponse(response, loadParams, provider) {
     return {info, data};
   });
 
-  const parsedConfig = map.config
-    ? KeplerGlSchema.parseSavedConfig(map.config)
-    : null;
+  const parsedConfig = map.config ? KeplerGlSchema.parseSavedConfig(map.config) : null;
 
   const info = {
     ...map.info,
@@ -327,7 +307,7 @@ export const loadCloudMapSuccessUpdater = (state, action) => {
 export const resetProviderStatusUpdater = (state, action) => ({
   ...state,
   isProviderLoading: false,
-  error: null,
+  providerError: null,
   successInfo: {}
 });
 
@@ -371,10 +351,9 @@ export const getSavedMapsSuccessUpdater = (state, action) => ({
 
 export const getSavedMapsErrorUpdater = (state, action) => {
   const message =
-    getError(action.payload.error) ||
-    `Error getting saved maps from ${state.currentProvider}`;
+    getError(action.payload.error) || `Error getting saved maps from ${state.currentProvider}`;
 
-  Console.warn(action.payload.error)
+  Console.warn(action.payload.error);
 
   const newState = {
     ...state,

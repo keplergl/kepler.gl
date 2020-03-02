@@ -36,15 +36,18 @@ const initialState = {
 };
 
 // REDUCER
-const appReducer = handleActions({
-  [INIT]: (state, action) => ({
-    ...state,
-    loaded: true
-  }),
-  [SET_MAP_CONFIG]: (state, action) => ({
-    ...state,
-    mapConfig: KeplerGlSchema.getConfigToSave(action.payload)
-  })
-}, initialState);
+const appReducer = handleActions(
+  {
+    [INIT]: (state, action) => ({
+      ...state,
+      loaded: true
+    }),
+    [SET_MAP_CONFIG]: (state, action) => ({
+      ...state,
+      mapConfig: KeplerGlSchema.getConfigToSave(action.payload)
+    })
+  },
+  initialState
+);
 
 export default appReducer;

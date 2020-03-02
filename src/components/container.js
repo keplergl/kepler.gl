@@ -26,11 +26,7 @@ import {injector, typeCheckRecipe} from './injector';
 import KeplerGlFactory from './kepler-gl';
 import {forwardTo} from 'actions/action-wrapper';
 
-import {
-  registerEntry,
-  deleteEntry,
-  renameEntry
-} from 'actions/identity-actions';
+import {registerEntry, deleteEntry, renameEntry} from 'actions/identity-actions';
 import {notNullorUndefined} from 'utils/data-utils';
 
 export const ERROR_MSG = {
@@ -93,13 +89,7 @@ export function ContainerFactory(KeplerGl) {
     }
 
     componentDidMount() {
-      const {
-        id,
-        mint,
-        mapboxApiAccessToken,
-        mapboxApiUrl,
-        mapStylesReplaceDefault
-      } = this.props;
+      const {id, mint, mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault} = this.props;
       // add a new entry to reducer
       this.props.dispatch(
         registerEntry({
@@ -152,10 +142,7 @@ export function ContainerFactory(KeplerGl) {
 
   const mapStateToProps = (state, props) => ({state, ...props});
   const dispatchToProps = dispatch => ({dispatch});
-  return connect(
-    mapStateToProps,
-    dispatchToProps
-  )(Container);
+  return connect(mapStateToProps, dispatchToProps)(Container);
 }
 
 // entryPoint
@@ -185,10 +172,7 @@ export function injectComponents(recipes = []) {
       // collect dependencies of custom factories, if there is any.
       // Add them to the injector
       const customDependencies = flattenDeps([], recipe[1]);
-      inj = customDependencies.reduce(
-        (ij, factory) => ij.provide(factory, factory),
-        inj
-      );
+      inj = customDependencies.reduce((ij, factory) => ij.provide(factory, factory), inj);
 
       return inj.provide(...recipe);
     }, appInjector)

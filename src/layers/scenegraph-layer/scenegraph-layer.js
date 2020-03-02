@@ -20,7 +20,7 @@
 
 import {ScenegraphLayer as DeckScenegraphLayer} from '@deck.gl/mesh-layers';
 import {load} from '@loaders.gl/core';
-import {GLTFScenegraphLoader} from '@luma.gl/addons';
+import {GLTFLoader} from '@loaders.gl/gltf';
 
 import Layer from '../base-layer';
 import ScenegraphLayerIcon from './scenegraph-layer-icon';
@@ -31,7 +31,7 @@ export const scenegraphOptionalColumns = ['altitude'];
 
 function fetch(url, {propName, layer}) {
   if (propName === 'scenegraph') {
-    return load(url, GLTFScenegraphLoader, layer.getLoadOptions());
+    return load(url, GLTFLoader, layer.getLoadOptions());
   }
 
   return fetch(url).then(response => response.json());
@@ -51,8 +51,8 @@ export const scenegraphVisConfigs = {
   colorRange: 'colorRange',
   //
   sizeScale: 'sizeScale',
-  angleX: 'angleX',
-  angleY: 'angleY',
+  angleX: 'angle',
+  angleY: 'angle',
   angleZ: 'angleZ'
 };
 
@@ -126,10 +126,7 @@ export default class ScenegraphLayer extends Layer {
 
   formatLayerData(datasets, oldLayerData) {
     const {gpuFilter} = datasets[this.config.dataId];
-    const {data} = this.updateData(
-      datasets,
-      oldLayerData
-    );
+    const {data} = this.updateData(datasets, oldLayerData);
     const getPosition = this.getPositionAccessor();
     return {
       data,
@@ -144,10 +141,7 @@ export default class ScenegraphLayer extends Layer {
   }
 
   renderLayer(opts) {
-    const {
-      data,
-      gpuFilter
-    } = opts;
+    const {data, gpuFilter} = opts;
 
     const {
       visConfig: {sizeScale = 1, angleX = 0, angleY = 0, angleZ = 90}

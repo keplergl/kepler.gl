@@ -75,10 +75,7 @@ export function assignGpuChannel(filter, filters) {
     const findGpuChannel = channel => f => {
       const dataIdx = toArray(f.dataId).indexOf(dataId);
       return (
-        f.id !== filter.id &&
-        dataIdx > -1 &&
-        f.gpu &&
-        toArray(f.gpuChannel)[dataIdx] === channel
+        f.id !== filter.id && dataIdx > -1 && f.gpu && toArray(f.gpuChannel)[dataIdx] === channel
       );
     };
 
@@ -183,9 +180,7 @@ const getFilterValueAccessor = (channels, dataId, fields) => (
           : moment.utc(getData(d)[fieldIndex]).valueOf()
         : getData(d)[fieldIndex];
 
-    return notNullorUndefined(value)
-      ? value - filter.domain[0]
-      : Number.MIN_SAFE_INTEGER;
+    return notNullorUndefined(value) ? value - filter.domain[0] : Number.MIN_SAFE_INTEGER;
   });
 
 /**
@@ -203,18 +198,13 @@ export function getGpuFilterProps(filters, dataId, fields) {
 
   for (let i = 0; i < MAX_GPU_FILTERS; i++) {
     const filter = filters.find(
-      f =>
-        f.gpu &&
-        f.dataId.includes(dataId) &&
-        f.gpuChannel[f.dataId.indexOf(dataId)] === i
+      f => f.gpu && f.dataId.includes(dataId) && f.gpuChannel[f.dataId.indexOf(dataId)] === i
     );
 
     filterRange[i][0] = filter ? filter.value[0] - filter.domain[0] : 0;
     filterRange[i][1] = filter ? filter.value[1] - filter.domain[0] : 0;
 
-    triggers[`gpuFilter_${i}`] = filter
-      ? filter.name[filter.dataId.indexOf(dataId)]
-      : null;
+    triggers[`gpuFilter_${i}`] = filter ? filter.name[filter.dataId.indexOf(dataId)] : null;
     channels.push(filter);
   }
 

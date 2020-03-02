@@ -20,9 +20,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import {
-  StyledExportSection
-} from 'components/common/styled-components';
+import {StyledExportSection} from 'components/common/styled-components';
 
 export const StyledExportMapSection = styled(StyledExportSection)`
   margin-top: ${props => props.theme.exportIntraSectionMargin}px;
@@ -38,8 +36,7 @@ export const StyledExportLink = styled.a`
 `;
 
 export const ExportMapLink = ({children, ...props}) => (
-  <StyledExportLink target="_blank"
-              rel="noopener noreferrer" {...props}>
+  <StyledExportLink target="_blank" rel="noopener noreferrer" {...props}>
     {children}
   </StyledExportLink>
 );

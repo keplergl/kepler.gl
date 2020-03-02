@@ -30,19 +30,14 @@ export default class ThreeDBuildingLayer extends CompositeLayer {
     return new SolidPolygonLayer({
       ...props,
       parameter: {
-        blendFunc: [
-          'SRC_ALPHA',
-          'ONE_MINUS_SRC_ALPHA',
-          'ONE',
-          'ONE_MINUS_SRC_ALPHA'
-        ],
+        blendFunc: ['SRC_ALPHA', 'ONE_MINUS_SRC_ALPHA', 'ONE', 'ONE_MINUS_SRC_ALPHA'],
         blendEquation: ['FUNC_ADD', 'FUNC_ADD']
       },
       extruded: true,
       opacity: 1,
       filled: true,
-      getElevation: (feature) => feature.properties.height || 0,
-      getPolygon: (feature) => feature.coordinates,
+      getElevation: feature => feature.properties.height || 0,
+      getPolygon: feature => feature.coordinates,
       getFillColor: this.props.threeDBuildingColor
     });
   }
@@ -50,7 +45,8 @@ export default class ThreeDBuildingLayer extends CompositeLayer {
   renderLayers() {
     return [
       new DeckGLTileLayer({
-        getTileData: (args) => getTileData(this.props.mapboxApiUrl, this.props.mapboxApiAccessToken, args),
+        getTileData: args =>
+          getTileData(this.props.mapboxApiUrl, this.props.mapboxApiAccessToken, args),
         minZoom: 13,
         renderSubLayers: this.renderSubLayers.bind(this),
         updateTriggers: this.props.updateTriggers

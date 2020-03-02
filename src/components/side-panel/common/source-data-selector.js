@@ -21,10 +21,7 @@
 import React, {Component} from 'react';
 import {createSelector} from 'reselect';
 
-import {
-  PanelLabel,
-  SidePanelSection
-} from 'components/common/styled-components';
+import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
 import ItemSelector from 'components/common/item-selector/item-selector';
 import DatasetTagFactory from 'components/side-panel/common/dataset-tag';
 
@@ -39,24 +36,16 @@ export default function SourceDataSelectorFactory(DatasetTag) {
     /* selectors */
     /* eslint-disable no-invalid-this */
     datasetsSelector = props => props.datasets;
-    dsOptionsSelector = createSelector(
-      this.datasetsSelector,
-      datasets =>
-        Object.values(datasets).map(ds => ({
-          label: ds.label,
-          value: ds.id,
-          color: ds.color
-        }))
+    dsOptionsSelector = createSelector(this.datasetsSelector, datasets =>
+      Object.values(datasets).map(ds => ({
+        label: ds.label,
+        value: ds.id,
+        color: ds.color
+      }))
     );
 
     render() {
-      const {
-        dataId,
-        disabled,
-        onSelect,
-        defaultValue,
-        inputTheme
-      } = this.props;
+      const {dataId, disabled, onSelect, defaultValue, inputTheme} = this.props;
       const dsOptions = this.dsOptionsSelector(this.props);
 
       return (
@@ -82,6 +71,6 @@ export default function SourceDataSelectorFactory(DatasetTag) {
 
   SourceDataSelector.defaultProps = {
     defaultValue: defaultPlaceHolder
-  }
+  };
   return SourceDataSelector;
 }

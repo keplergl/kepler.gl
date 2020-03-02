@@ -29,12 +29,7 @@ const NotificationItem = NotificationItemFactory();
 
 test('Notification item -> display SUCCESS notification', t => {
   const notification = createNotification({message: 'success', type: 'success'});
-  const $ = shallow(
-    <NotificationItem
-      theme={theme}
-      notification={notification}
-    />
-  );
+  const $ = shallow(<NotificationItem theme={theme} notification={notification} />);
 
   // validate the icon
   t.equal($.find('Checkmark').length, 1, 'Should display info icon');
@@ -49,12 +44,7 @@ test('Notification item -> display SUCCESS notification', t => {
 
 test('Notification item -> display ERROR notification', t => {
   const notification = createNotification({message: 'error', type: 'error'});
-  const $ = shallow(
-    <NotificationItem
-      notification={notification}
-      theme={theme}
-    />
-  );
+  const $ = shallow(<NotificationItem notification={notification} theme={theme} />);
 
   // validate the icon
   t.equal($.find('Warning').length, 1, 'Should display warning icon');

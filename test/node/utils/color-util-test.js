@@ -22,10 +22,7 @@ import test from 'tape';
 import {createLinearGradient} from 'utils/color-utils';
 
 test('createLinearGradient', t => {
-
-  let colors = [
-    [100, 100, 100]
-  ];
+  let colors = [[100, 100, 100]];
 
   t.deepEqual(
     createLinearGradient('bottom', colors),

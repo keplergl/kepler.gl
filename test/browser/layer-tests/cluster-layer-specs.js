@@ -51,20 +51,11 @@ test('#ClusterLayer -> constructor', t => {
           label: 'test cluster layer'
         },
         test: layer => {
-          t.ok(
-            layer.config.dataId === 'taro',
-            'clusterLayer dataId should be correct'
-          );
+          t.ok(layer.config.dataId === 'taro', 'clusterLayer dataId should be correct');
           t.ok(layer.type === 'cluster', 'type should be cluster');
           t.ok(layer.isAggregated === true, 'clusterLayer is aggregated');
-          t.ok(
-            layer.config.label === 'test cluster layer',
-            'label should be correct'
-          );
-          t.ok(
-            Object.keys(layer.columnPairs).length,
-            'should have columnPairs'
-          );
+          t.ok(layer.config.label === 'test cluster layer', 'label should be correct');
+          t.ok(Object.keys(layer.columnPairs).length, 'should have columnPairs');
         }
       }
     ]
@@ -114,11 +105,7 @@ test('#ClusterLayer -> formatLayerData', t => {
           Object.keys(expectedLayerData).sort(),
           'layerData should have 4 keys'
         );
-        t.deepEqual(
-          layerData.data,
-          expectedLayerData.data,
-          'should format correct grid layerData'
-        );
+        t.deepEqual(layerData.data, expectedLayerData.data, 'should format correct grid layerData');
         // test getPosition
         t.deepEqual(
           layerData.getPosition(layerData.data[0]),
@@ -149,11 +136,7 @@ test('#ClusterLayer -> formatLayerData', t => {
           '_filterData should filter data correctly'
         );
         // test layer.meta
-        t.deepEqual(
-          layer.meta,
-          pointLayerMeta,
-          'should format correct grid layer meta'
-        );
+        t.deepEqual(layer.meta, pointLayerMeta, 'should format correct grid layer meta');
       }
     },
     {
@@ -295,11 +278,7 @@ test('#ClusterLayer -> renderLayer', t => {
         };
 
         Object.keys(expectedProps).forEach(key => {
-          t.deepEqual(
-            props[key],
-            expectedProps[key],
-            `should have correct props.${key}`
-          );
+          t.deepEqual(props[key], expectedProps[key], `should have correct props.${key}`);
         });
 
         const expectedScatterplotData = [
@@ -356,8 +335,7 @@ test('#ClusterLayer -> renderLayer', t => {
 
         // fillColor
         t.deepEqual(
-          clusterLayer.state.aggregatorState.dimensions.fillColor.sortedBins
-            .sortedBins,
+          clusterLayer.state.aggregatorState.dimensions.fillColor.sortedBins.sortedBins,
           expectedColorBins,
           'should create correct color bins sortedBins'
         );

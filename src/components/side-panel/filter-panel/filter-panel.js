@@ -22,6 +22,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
 import styled from 'styled-components';
+import get from 'lodash.get';
 import {ALL_FIELD_TYPES, FILTER_TYPES} from 'constants/default-settings';
 
 import FilterPanelHeaderFactory from 'components/side-panel/filter-panel/filter-panel-header';
@@ -85,7 +86,14 @@ function FilterPanelFactory(
     };
 
     /* selectors */
-    fieldsSelector = props => props.filter.dataId[0] && props.datasets[props.filter.dataId[0]].fields || [];
+    fieldsSelector = props => {
+      const datasetId = props.filter.dataId[0];
+      if (!datasetId) {
+        return [];
+      }
+      return get(props, ['datasets', datasetId, 'fields'], []);
+    };
+
     filterSelector = props => props.filters;
     nameSelector = props => props.filter.name;
     dataIdSelector = props => props.filter.dataId[0];
@@ -101,30 +109,25 @@ function FilterPanelFactory(
           f =>
             f.type &&
             f.type !== ALL_FIELD_TYPES.geojson &&
-            (f.name === name ||
-              !filters.find(d => d.name === f.name && d.dataId === dataId))
+            (f.name === name || !filters.find(d => d.name === f.name && d.dataId === dataId))
         )
     );
 
     render() {
-      const {
-        filter
-      } = this.props;
+      const {filter} = this.props;
 
       const {type} = filter;
-      const FilterFilterComponent = (type && FilterPanelComponents[type]) || FilterPanelComponents.default;
+      const FilterFilterComponent =
+        (type && FilterPanelComponents[type]) || FilterPanelComponents.default;
       const allAvailableFields = this.availableFieldsSelector(this.props);
 
       return (
         <StyledFilterPanel className="filter-panel">
-          <FilterFilterComponent
-            allAvailableFields={allAvailableFields}
-            {...this.props}
-          />
+          <FilterFilterComponent allAvailableFields={allAvailableFields} {...this.props} />
         </StyledFilterPanel>
       );
     }
-  }
+  };
 }
 
 export default FilterPanelFactory;

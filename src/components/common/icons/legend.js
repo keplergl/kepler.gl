@@ -40,4 +40,4 @@ export default class Legend extends Component {
       </Base>
     );
   }
-};
+}

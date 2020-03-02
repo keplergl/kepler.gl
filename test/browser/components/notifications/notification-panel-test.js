@@ -52,4 +52,3 @@ test('Notification Panel - Show notifications', t => {
 
   t.end();
 });
-

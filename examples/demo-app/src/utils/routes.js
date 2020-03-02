@@ -39,15 +39,12 @@ export function onAuthEnterCallback(nextState, replace, callback) {
 
 export function buildAppRoutes(Component) {
   return [
-    (<Route key="auth" path="auth" component={Demo} onEnter={onAuthEnterCallback} />),
-    (
-      <Route key="demo" path="demo">
-        <IndexRoute component={Component} />
-        <Route path="map" component={Component} />
-        <Route path="map/:provider" component={Component} />
-        <Route path="(:id)" component={Component} />
-        <Route path="map/:provider" component={Component} />
-      </Route>
-    )
+    <Route key="auth" path="auth" component={Demo} onEnter={onAuthEnterCallback} />,
+    <Route key="demo" path="demo">
+      <IndexRoute component={Component} />
+      <Route path="map" component={Component} />
+      <Route path="(:id)" component={Component} />
+      <Route path="map/:provider" component={Component} />
+    </Route>
   ];
 }

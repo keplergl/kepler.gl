@@ -45,9 +45,7 @@ export function isChrome() {
  * @returns {boolean} - yes or no
  */
 export function isPlainObject(obj) {
-  return (
-    obj === Object(obj) && typeof obj !== 'function' && !Array.isArray(obj)
-  );
+  return obj === Object(obj) && typeof obj !== 'function' && !Array.isArray(obj);
 }
 
 /**
@@ -56,9 +54,7 @@ export function isPlainObject(obj) {
  * @returns {string}
  */
 export function capitalizeFirstLetter(str) {
-  return typeof str === 'string'
-    ? str.charAt(0).toUpperCase() + str.slice(1)
-    : str;
+  return typeof str === 'string' ? str.charAt(0).toUpperCase() + str.slice(1) : str;
 }
 
 /**
@@ -121,9 +117,7 @@ const insertValue = (obj, key, value) => {
  * @param {*} value
  */
 export function isObject(value) {
-  return (
-    value !== null && (typeof value === 'object' || typeof value === 'function')
-  );
+  return value !== null && (typeof value === 'object' || typeof value === 'function');
 }
 
 const setPath = ([key, ...next], value, obj) => {
@@ -136,11 +130,7 @@ const setPath = ([key, ...next], value, obj) => {
     return insertValue(obj, key, value);
   }
 
-  return insertValue(
-    obj,
-    key,
-    setPath(next, value, obj.hasOwnProperty(key) ? obj[key] : {})
-  );
+  return insertValue(obj, key, setPath(next, value, obj.hasOwnProperty(key) ? obj[key] : {}));
 };
 
 /**
@@ -150,8 +140,7 @@ const setPath = ([key, ...next], value, obj) => {
  * @param {Object} obj
  * @returns {Object}
  */
-export const set = (path, value, obj) =>
-  obj === null ? obj : setPath(path, value, obj);
+export const set = (path, value, obj) => (obj === null ? obj : setPath(path, value, obj));
 
 /**
  * Get error information of unknown type

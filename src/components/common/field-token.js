@@ -21,10 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import {
-  FILED_TYPE_DISPLAY,
-  FIELD_COLORS
-} from '../../constants/default-settings';
+import {FILED_TYPE_DISPLAY, FIELD_COLORS} from '../../constants/default-settings';
 
 const FieldTag = styled.div`
   background-color: rgba(${props => props.color}, 0.2);
@@ -41,10 +38,7 @@ const FieldTag = styled.div`
 
 const FieldToken = ({type}) => (
   <FieldTag
-    color={
-      (FILED_TYPE_DISPLAY[type] && FILED_TYPE_DISPLAY[type].color) ||
-      FIELD_COLORS.default
-    }
+    color={(FILED_TYPE_DISPLAY[type] && FILED_TYPE_DISPLAY[type].color) || FIELD_COLORS.default}
   >
     {FILED_TYPE_DISPLAY[type].label}
   </FieldTag>

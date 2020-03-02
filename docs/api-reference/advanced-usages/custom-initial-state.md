@@ -4,7 +4,7 @@ For advanced users who wish to modify the initial state of kepler.gl reducer, ke
 
 Here is an example modify `uiState` `initialState` to hide side panel, and selectively display map control button.
 
-```js
+```javascript
 import {combineReducers} from 'redux';
 import keplerGlReducer from 'kepler.gl/reducers';
 
@@ -39,7 +39,5 @@ const reducers = combineReducers({
 });
 ```
 
-For full implementation, take a look at the [custom reducer example][custom-reducer-example]
-
-[custom-reducer-example]: https://github.com/keplergl/kepler.gl/tree/master/examples/custom-reducer
+For full implementation, take a look at the [custom reducer example](https://github.com/keplergl/kepler.gl/tree/master/examples/custom-reducer)
 

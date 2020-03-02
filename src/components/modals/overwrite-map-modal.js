@@ -19,8 +19,7 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import styled, {ThemeProvider} from 'styled-components';
-import {themeLT} from 'styles/base';
+import styled from 'styled-components';
 import {CenterVerticalFlexbox} from 'components/common/styled-components';
 import {UploadAnimation} from './status-panel';
 import ImageModalContainer from './image-modal-container';
@@ -51,40 +50,36 @@ const OverwriteMapModalFactory = () => {
     currentProvider,
     cloudProviders,
     isProviderLoading,
-    onSetCloudProvider,
-    onUpdateImageSetting
+    onUpdateImageSetting,
+    onSetCloudProvider
   }) => {
     const provider = cloudProviders.find(cp => cp.name === currentProvider);
     return (
-      <ThemeProvider theme={themeLT}>
-        <ImageModalContainer
-            currentProvider={currentProvider}
-            cloudProviders={cloudProviders}
-            onUpdateImageSetting={onUpdateImageSetting}
-            onSetCloudProvider={onSetCloudProvider}
-        >
-          <StyledOverwriteMapModal className="overwrite-map-modal">
-            {isProviderLoading ? (
-              <StyledMsg>
-                <StyledTitle>Saving map...</StyledTitle>
-                <UploadAnimation icon={provider && provider.icon} />
+      <ImageModalContainer
+        currentProvider={currentProvider}
+        cloudProviders={cloudProviders}
+        onUpdateImageSetting={onUpdateImageSetting}
+        onSetCloudProvider={onSetCloudProvider}
+      >
+        <StyledOverwriteMapModal className="overwrite-map-modal">
+          {isProviderLoading ? (
+            <StyledMsg>
+              <StyledTitle>Saving map...</StyledTitle>
+              <UploadAnimation icon={provider && provider.icon} />
+            </StyledMsg>
+          ) : (
+            <>
+              <StyledIcon>
+                {provider && provider.icon ? <provider.icon height="64px" /> : null}
+              </StyledIcon>
+              <StyledMsg className="overwrite-map-msg">
+                <StyledTitle>{title}</StyledTitle>
+                {` already exists in your ${mapSaved}. Would you like to overwrite it?`}
               </StyledMsg>
-            ) : (
-              <>
-                <StyledIcon>
-                  {provider && provider.icon ? (
-                    <provider.icon height="64px" />
-                  ) : null}
-                </StyledIcon>
-                <StyledMsg className="overwrite-map-msg">
-                  <StyledTitle>{title}</StyledTitle>
-                  {` already exists in your ${mapSaved} account. Would you like to overwrite it?`}
-                </StyledMsg>
-              </>
-            )}
-          </StyledOverwriteMapModal>
-        </ImageModalContainer>
-      </ThemeProvider>
+            </>
+          )}
+        </StyledOverwriteMapModal>
+      </ImageModalContainer>
     );
   };
   return OverwriteMapModal;

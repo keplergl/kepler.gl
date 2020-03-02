@@ -24,10 +24,9 @@ import document from 'global/document';
 import {IMAGE_EXPORT_ERRORS} from 'constants/user-feedbacks';
 
 export function processClone(original, clone) {
-
   if (!(clone instanceof window.Element)) {
-    return clone
-  };
+    return clone;
+  }
 
   function copyProperties(sourceStyle, targetStyle) {
     const propertyKeys = asArray(sourceStyle);
@@ -58,25 +57,25 @@ export function processClone(original, clone) {
   }
 
   function formatPseudoElementStyle(cln, elm, stl) {
-    const formatCssText = (stl1) => {
+    const formatCssText = stl1 => {
       const cnt = stl1.getPropertyValue('content');
       return `${stl.cssText} content: ${cnt};`;
-    }
+    };
 
-    const formatProperty = (name) => {
-      return (
-        `${name}:${stl.getPropertyValue(name)}${stl.getPropertyPriority(name) ? ' !important' : ''}`
-      );
-    }
+    const formatProperty = name => {
+      return `${name}:${stl.getPropertyValue(name)}${
+        stl.getPropertyPriority(name) ? ' !important' : ''
+      }`;
+    };
 
-    const formatCssProperties = (stl2) => {
-      return `${asArray(stl2).map(formatProperty).join('; ')};`;
-    }
+    const formatCssProperties = stl2 => {
+      return `${asArray(stl2)
+        .map(formatProperty)
+        .join('; ')};`;
+    };
 
     const selector = `.${cln}:${elm}`;
-    const cssText = stl.cssText
-      ? formatCssText(stl)
-      : formatCssProperties(stl);
+    const cssText = stl.cssText ? formatCssText(stl) : formatCssProperties(stl);
 
     return document.createTextNode(`${selector}{${cssText}}`);
   }
@@ -92,9 +91,7 @@ export function processClone(original, clone) {
     const className = uid();
     cln.className = `${cln.className} ${className}`;
     const styleElement = document.createElement('style');
-    styleElement.appendChild(
-      formatPseudoElementStyle(className, element, style)
-    );
+    styleElement.appendChild(formatPseudoElementStyle(className, element, style));
     cln.appendChild(styleElement);
   }
 
@@ -103,10 +100,8 @@ export function processClone(original, clone) {
   }
 
   function copyUserInput([og, cln]) {
-    if (og instanceof window.HTMLTextAreaElement)
-      cln.innerHTML = og.value;
-    if (og instanceof window.HTMLInputElement)
-      cln.setAttribute('value', og.value);
+    if (og instanceof window.HTMLTextAreaElement) cln.innerHTML = og.value;
+    if (og instanceof window.HTMLInputElement) cln.setAttribute('value', og.value);
   }
 
   function fixSvg(cln) {
@@ -124,15 +119,15 @@ export function processClone(original, clone) {
 
   return Promise.resolve([original, clone])
     .then(([og, cln]) => {
-      cloneStyle(og, cln)
+      cloneStyle(og, cln);
       return [og, cln];
     })
     .then(([og, cln]) => {
-      clonePseudoElements([og, cln])
+      clonePseudoElements([og, cln]);
       return [og, cln];
     })
     .then(([og, cln]) => {
-      copyUserInput([og, cln])
+      copyUserInput([og, cln]);
       return [og, cln];
     })
     .then(([og, cln]) => {
@@ -169,7 +164,7 @@ export function makeImage(uri) {
     image.onload = () => {
       resolve(image);
     };
-    image.onerror = (err) => {
+    image.onerror = err => {
       const message = IMAGE_EXPORT_ERRORS.dataUri;
       console.log(uri);
       // error is an Event Object
@@ -194,9 +189,9 @@ function parseExtension(url) {
 
 function mimes() {
   /*
-  * Only WOFF and EOT mime types for fonts are 'real'
-  * see http://www.iana.org/assignments/media-types/media-types.xhtml
-  */
+   * Only WOFF and EOT mime types for fonts are 'real'
+   * see http://www.iana.org/assignments/media-types/media-types.xhtml
+   */
   const WOFF = 'application/font-woff';
   const JPEG = 'image/jpeg';
 
@@ -229,7 +224,7 @@ export function escape(string) {
 
 export function delay(ms) {
   return arg => {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       window.setTimeout(() => {
         resolve(arg);
       }, ms);
@@ -249,12 +244,9 @@ function cvToBlob(canvas) {
     const length = binaryString.length;
     const binaryArray = new Uint8Array(length);
 
-    for (let i = 0; i < length; i++)
-      binaryArray[i] = binaryString.charCodeAt(i);
+    for (let i = 0; i < length; i++) binaryArray[i] = binaryString.charCodeAt(i);
 
-    resolve(
-      new window.Blob([binaryArray], {type: 'image/png'})
-    );
+    resolve(new window.Blob([binaryArray], {type: 'image/png'}));
   });
 }
 
@@ -350,9 +342,7 @@ export function getAndEncode(url, options) {
       if (placeholder) {
         resolve(placeholder);
       } else {
-        fail(
-          `timeout of ${TIMEOUT}ms occurred while fetching resource: ${url}`
-        );
+        fail(`timeout of ${TIMEOUT}ms occurred while fetching resource: ${url}`);
       }
     }
 

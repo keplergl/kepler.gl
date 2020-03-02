@@ -73,9 +73,7 @@ export default function PlotContainerFactory(MapContainer) {
       // re-fetch the new screenshot only when ratio legend or resolution changes
       const checks = ['ratio', 'resolution', 'legend'];
       const shouldRetrieveScreenshot = checks.some(
-        item =>
-          this.props.exportImageSetting[item] !==
-          prevProps.exportImageSetting[item]
+        item => this.props.exportImageSetting[item] !== prevProps.exportImageSetting[item]
       );
       if (shouldRetrieveScreenshot) {
         this._retrieveNewScreenshot();
@@ -107,10 +105,7 @@ export default function PlotContainerFactory(MapContainer) {
       this.mapScaleSelector,
       (mapStyle, scale) => ({
         ...mapStyle,
-        bottomMapStyle: scaleMapStyleByResolution(
-          mapStyle.bottomMapStyle,
-          scale
-        ),
+        bottomMapStyle: scaleMapStyleByResolution(mapStyle.bottomMapStyle, scale),
         topMapStyle: scaleMapStyleByResolution(mapStyle.topMapStyle, scale)
       })
     );
@@ -169,16 +164,18 @@ export default function PlotContainerFactory(MapContainer) {
         deckGlProps
       };
 
-      const mapContainers = !isSplit
-        ? <MapContainer index={0} {...mapProps} />
-        : splitMaps.map((settings, index) => (
-            <MapContainer
-              key={index}
-              index={index}
-              {...mapProps}
-              mapLayers={splitMaps[index].layers}
-            />
-          ));
+      const mapContainers = !isSplit ? (
+        <MapContainer index={0} {...mapProps} />
+      ) : (
+        splitMaps.map((settings, index) => (
+          <MapContainer
+            key={index}
+            index={index}
+            {...mapProps}
+            mapLayers={splitMaps[index].layers}
+          />
+        ))
+      );
 
       return (
         <StyledPlotContainer

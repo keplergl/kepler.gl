@@ -21,10 +21,7 @@
 import React from 'react';
 import RangeSlider from 'components/common/range-slider';
 
-import {
-  PanelLabel,
-  SidePanelSection
-} from 'components/common/styled-components';
+import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
 import {BRUSH_CONFIG} from 'utils/interaction-utils';
 
 function BrushConfigFactory() {

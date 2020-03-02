@@ -42,7 +42,7 @@ test('FeatureActionPanel -> display layers', t => {
 
   const datasets = {
     puppy: {
-      color: [123,123,123]
+      color: [123, 123, 123]
     }
   };
 
@@ -59,12 +59,7 @@ test('FeatureActionPanel -> display layers', t => {
     />
   );
 
-  t.equal(
-    $.find('.layer-panel-item').length,
-    2,
-    'We should display only 2 action panel items'
-  );
+  t.equal($.find('.layer-panel-item').length, 2, 'We should display only 2 action panel items');
 
   t.end();
-
 });

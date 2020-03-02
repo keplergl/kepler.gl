@@ -28,8 +28,9 @@ import window from 'global/window';
 
 class FileDrop extends React.PureComponent {
   static isIE = () =>
-    window && window.navigator &&
-      ((window.navigator.userAgent || []).includes('MSIE') ||
+    window &&
+    window.navigator &&
+    ((window.navigator.userAgent || []).includes('MSIE') ||
       (window.navigator.appVersion || []).includes('Trident/'));
 
   static eventHasFiles = event => {
@@ -64,11 +65,7 @@ class FileDrop extends React.PureComponent {
           `Warning: Required prop \`${propName}\` was not specified in \`${componentName}\``
         );
       }
-      if (
-        prop !== document &&
-        prop !== window &&
-        !(prop instanceof HTMLElement)
-      ) {
+      if (prop !== document && prop !== window && !(prop instanceof HTMLElement)) {
         return new Error(
           `Warning: Prop \`${propName}\` must be one of the following: document, HTMLElement!`
         );
@@ -205,10 +202,8 @@ class FileDrop extends React.PureComponent {
     const {draggingOverTarget, draggingOverFrame} = this.state;
 
     let fileDropTargetClassName = targetClassName;
-    if (draggingOverFrame)
-      fileDropTargetClassName += ` ${draggingOverFrameClassName}`;
-    if (draggingOverTarget)
-      fileDropTargetClassName += ` ${draggingOverTargetClassName}`;
+    if (draggingOverFrame) fileDropTargetClassName += ` ${draggingOverFrameClassName}`;
+    if (draggingOverTarget) fileDropTargetClassName += ` ${draggingOverTargetClassName}`;
 
     return (
       <div

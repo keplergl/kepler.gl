@@ -35,4 +35,3 @@ import './side-panel';
 import './common';
 import './editor';
 import './map-container-test';
-

@@ -36,21 +36,18 @@ const withLocalSelector = ParentComponent => {
   class WithConnectSelector extends Component {
     static contextType = KeplerGlContext;
 
-    selectorFromContext = (_, ctx) => ctx.selector ? ctx.selector : identity;
-    selectorFromProps = (props, _) => props.selector ? props.selector : identity;
+    selectorFromContext = (_, ctx) => (ctx.selector ? ctx.selector : identity);
+    selectorFromProps = (props, _) => (props.selector ? props.selector : identity);
     idFromProps = (props, _) => props.id;
     computedSelector = createSelector(
       this.selectorFromContext,
       this.selectorFromProps,
       (ctx, props) => mergeSelectors(ctx, props)
     );
-    contextSelector = createSelector(
-      this.computedSelector,
-      this.idFromProps,
-      (selector, id) => ({
-        selector, id
-      })
-    )
+    contextSelector = createSelector(this.computedSelector, this.idFromProps, (selector, id) => ({
+      selector,
+      id
+    }));
 
     render() {
       const computedContext = this.contextSelector(this.props, this.context);

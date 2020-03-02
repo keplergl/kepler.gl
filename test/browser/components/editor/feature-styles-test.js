@@ -44,13 +44,16 @@ test('FeatureStyles - getStyles point', t => {
   );
 
   t.deepEqual(
-    getStyle({feature: {
+    getStyle({
+      feature: {
         ...feature,
         properties: {
           ...feature.properties,
           isVisible: false
         }
-      }, state: RenderStates.INACTIVE}),
+      },
+      state: RenderStates.INACTIVE
+    }),
     {
       stroke: '#26B5F2',
       strokeWidth: 0,
@@ -65,7 +68,6 @@ test('FeatureStyles - getStyles point', t => {
 });
 
 test('FeatureStyles - getStyles line-string', t => {
-
   const feature = {
     properties: {
       isVisible: true,
@@ -86,13 +88,16 @@ test('FeatureStyles - getStyles line-string', t => {
   );
 
   t.deepEqual(
-    getStyle({feature: {
+    getStyle({
+      feature: {
         ...feature,
         properties: {
           ...feature.properties,
           isVisible: false
         }
-      }, state: RenderStates.INACTIVE}),
+      },
+      state: RenderStates.INACTIVE
+    }),
     {
       stroke: '#26B5F2',
       strokeWidth: 0,
@@ -104,4 +109,3 @@ test('FeatureStyles - getStyles line-string', t => {
   );
   t.end();
 });
-

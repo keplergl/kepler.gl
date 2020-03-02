@@ -43,27 +43,13 @@ const config = {
                 name: 'Global Warming',
                 type: 'sequential',
                 category: 'Uber',
-                colors: [
-                  '#5A1846',
-                  '#900C3F',
-                  '#C70039',
-                  '#E3611C',
-                  '#F1920E',
-                  '#FFC300'
-                ]
+                colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
               },
               strokeColorRange: {
                 name: 'Global Warming',
                 type: 'sequential',
                 category: 'Uber',
-                colors: [
-                  '#5A1846',
-                  '#900C3F',
-                  '#C70039',
-                  '#E3611C',
-                  '#F1920E',
-                  '#FFC300'
-                ]
+                colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
               },
               radius: 22.5,
               sizeRange: [0, 10],
@@ -134,14 +120,7 @@ const config = {
                 name: 'Global Warming',
                 type: 'sequential',
                 category: 'Uber',
-                colors: [
-                  '#5A1846',
-                  '#900C3F',
-                  '#C70039',
-                  '#E3611C',
-                  '#F1920E',
-                  '#FFC300'
-                ]
+                colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
               },
               radius: 10,
               sizeRange: [0, 10],

@@ -39,29 +39,27 @@ const ButtonWrapper = styled.div`
 
 const PanelToggle = PanelToggleFactory();
 
-const PanelToggleWrapper = (props) => (
+const PanelToggleWrapper = props => (
   <StyledPanelToggleWrapper>
     <PanelToggle {...props} />
     <ButtonWrapper>
-      <Button
-        onClick={() => props.onClickSaveConfig(props.mapState)}
-        width="120px"
-      >
-        <Icons.Files height="12px" />Save Config
+      <Button onClick={() => props.onClickSaveConfig(props.mapState)} width="120px">
+        <Icons.Files height="12px" />
+        Save Config
       </Button>
     </ButtonWrapper>
   </StyledPanelToggleWrapper>
 );
 
 const CustomPanelToggleFactory = () =>
-withState(
-  // lenses
-  [visStateLens],
-  // mapStateToProps
-  state => ({mapState: state.keplerGl.map1}),
-  {
-    onClickSaveConfig: setMapConfig
-  }
-)(PanelToggleWrapper);
+  withState(
+    // lenses
+    [visStateLens],
+    // mapStateToProps
+    state => ({mapState: state.keplerGl.map1}),
+    {
+      onClickSaveConfig: setMapConfig
+    }
+  )(PanelToggleWrapper);
 
 export default CustomPanelToggleFactory;

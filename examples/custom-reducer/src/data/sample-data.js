@@ -21,7 +21,7 @@
 export default {
   info: {
     label: 'San Francisco Trees',
-    id: "tree_data"
+    id: 'tree_data'
   },
   data: {
     fields: [

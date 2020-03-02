@@ -37,28 +37,17 @@ const StyledLoadDataModal = styled.div.attrs({
   min-height: 440px;
   display: flex;
   flex-direction: column;
-  /* justify-content: flex-start; */
 `;
 
 const noop = () => {};
-const getDefaultMethod = methods =>
-  Array.isArray(methods) ? get(methods, [0]) : null;
+const getDefaultMethod = methods => (Array.isArray(methods) ? get(methods, [0]) : null);
 
-LoadDataModalFactory.deps = [
-  ModalTabsFactory,
-  FileUploadFactory,
-  LoadStorageMapFactory
-];
+LoadDataModalFactory.deps = [ModalTabsFactory, FileUploadFactory, LoadStorageMapFactory];
 
 function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
   const LoadDataModal = props => {
-    const {
-      fileLoading,
-      loadingMethods
-    } = props;
-    const [currentMethod, toggleMethod] = useState(
-      getDefaultMethod(loadingMethods)
-    );
+    const {fileLoading, loadingMethods} = props;
+    const [currentMethod, toggleMethod] = useState(getDefaultMethod(loadingMethods));
 
     return (
       <StyledLoadDataModal>
@@ -68,11 +57,9 @@ function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
           toggleMethod={toggleMethod}
         />
         {fileLoading ? (
-          <LoadingDialog size={64}/>
+          <LoadingDialog size={64} />
         ) : (
-          currentMethod && (
-            <currentMethod.elementType key={currentMethod.id} {...props} />
-          )
+          currentMethod && <currentMethod.elementType key={currentMethod.id} {...props} />
         )}
       </StyledLoadDataModal>
     );

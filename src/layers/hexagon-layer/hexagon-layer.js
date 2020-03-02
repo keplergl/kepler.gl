@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {GeoJsonLayer} from 'deck.gl';
+import {GeoJsonLayer} from '@deck.gl/layers';
 import AggregationLayer from '../aggregation-layer';
 import EnhancedHexagonLayer from 'deckgl-layers/hexagon-layer/enhanced-hexagon-layer';
 import {hexagonToPolygonGeo} from './hexagon-utils';
@@ -61,11 +61,7 @@ export default class HexagonLayer extends AggregationLayer {
   }
 
   renderLayer(opts) {
-    const {
-      data,
-      objectHovered,
-      mapState
-    } = opts;
+    const {data, objectHovered, mapState} = opts;
     const zoomFactor = this.getZoomFactor(mapState);
     const {visConfig} = this.config;
     const radius = visConfig.worldUnitSize * 1000;
@@ -85,13 +81,8 @@ export default class HexagonLayer extends AggregationLayer {
               ...this.getDefaultHoverLayerProps(),
               wrapLongitude: false,
               data: [
-                hexagonToPolygonGeo(
-                  objectHovered,
-                  {},
-                  radius * visConfig.coverage,
-                  mapState
-                )
-              ],
+                hexagonToPolygonGeo(objectHovered, {}, radius * visConfig.coverage, mapState)
+              ].filter(d => d),
               getLineColor: this.config.highlightColor,
               lineWidthScale: clamp([1, 100], radius * 0.1 * zoomFactor)
             })

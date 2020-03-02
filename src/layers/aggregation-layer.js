@@ -24,26 +24,14 @@ import {hexToRgb} from 'utils/color-utils';
 import {aggregate} from 'utils/aggregate-utils';
 import {HIGHLIGH_COLOR_3D} from 'constants/default-settings';
 
-import {
-  CHANNEL_SCALES,
-  FIELD_OPTS,
-  DEFAULT_AGGREGATION
-} from 'constants/default-settings';
+import {CHANNEL_SCALES, FIELD_OPTS, DEFAULT_AGGREGATION} from 'constants/default-settings';
 
-export const pointPosAccessor = ({lat, lng}) => d => [
-  d.data[lng.fieldIdx],
-  d.data[lat.fieldIdx]
-];
+export const pointPosAccessor = ({lat, lng}) => d => [d.data[lng.fieldIdx], d.data[lat.fieldIdx]];
 
-export const pointPosResolver = ({lat, lng}) =>
-  `${lat.fieldIdx}-${lng.fieldIdx}`;
+export const pointPosResolver = ({lat, lng}) => `${lat.fieldIdx}-${lng.fieldIdx}`;
 
-export const getValueAggrFunc = (
-  field,
-  aggregation
-) => {
+export const getValueAggrFunc = (field, aggregation) => {
   return points => {
-
     return field
       ? aggregate(
           points.map(p => p.data[field.tableFieldIndex - 1]),
@@ -54,9 +42,7 @@ export const getValueAggrFunc = (
 };
 
 export const getFilterDataFunc = (filterRange, getFilterValue) => pt =>
-  getFilterValue(pt).every(
-    (val, i) => val >= filterRange[i][0] && val <= filterRange[i][1]
-  );
+  getFilterValue(pt).every((val, i) => val >= filterRange[i][0] && val <= filterRange[i][1]);
 
 const getLayerColorRange = colorRange => colorRange.colors.map(hexToRgb);
 
@@ -133,9 +119,7 @@ export default class AggregationLayer extends Layer {
    */
   getVisualChannelDescription(key) {
     // e.g. label: Color, measure: Average of ETA
-    const {range, field, defaultMeasure, aggregation} = this.visualChannels[
-      key
-    ];
+    const {range, field, defaultMeasure, aggregation} = this.visualChannels[key];
     return {
       label: this.visConfigSettings[range].label,
       measure: this.config[field]
@@ -182,9 +166,7 @@ export default class AggregationLayer extends Layer {
     if (!aggregationOptions.length) {
       // if field cannot be aggregated, set field to null
       this.updateLayerConfig({[field]: null});
-    } else if (
-      !aggregationOptions.includes(this.config.visConfig[aggregation])
-    ) {
+    } else if (!aggregationOptions.includes(this.config.visConfig[aggregation])) {
       // current aggregation type is not supported by this field
       // set aggregation to the first supported option
       this.updateLayerVisConfig({[aggregation]: aggregationOptions[0]});
@@ -213,9 +195,7 @@ export default class AggregationLayer extends Layer {
     const aggregationType = this.config.visConfig[aggregation];
     return this.config[field]
       ? // scale options based on aggregation
-        FIELD_OPTS[this.config[field].type].scale[channelScaleType][
-          aggregationType
-        ]
+        FIELD_OPTS[this.config[field].type].scale[channelScaleType][aggregationType]
       : // default scale options for point count
         DEFAULT_AGGREGATION[channelScaleType][aggregationType];
   }
@@ -267,9 +247,7 @@ export default class AggregationLayer extends Layer {
       this.config.sizeField,
       this.config.visConfig.sizeAggregation
     );
-    const hasFilter = Object.values(gpuFilter.filterRange).some(arr =>
-      arr.some(v => v !== 0)
-    );
+    const hasFilter = Object.values(gpuFilter.filterRange).some(arr => arr.some(v => v !== 0));
     const getFilterValue = gpuFilter.filterValueAccessor();
     const filterData = hasFilter
       ? getFilterDataFunc(gpuFilter.filterRange, getFilterValue)
@@ -298,9 +276,10 @@ export default class AggregationLayer extends Layer {
   }
 
   getDefaultAggregationLayerProp(opts) {
-    const {gpuFilter, mapState, layerCallbacks} = opts;
+    const {gpuFilter, mapState, layerCallbacks = {}} = opts;
     const {visConfig} = this.config;
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
+
     const updateTriggers = {
       getColorValue: {
         colorField: this.config.colorField,
@@ -325,6 +304,7 @@ export default class AggregationLayer extends Layer {
       colorScaleType: this.config.colorScale,
       upperPercentile: visConfig.percentile[1],
       lowerPercentile: visConfig.percentile[0],
+      colorAggregation: visConfig.colorAggregation,
 
       // elevation
       extruded: visConfig.enable3d,

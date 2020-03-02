@@ -29,16 +29,11 @@ const HeaderActionWrapper = styled.div`
   display: flex;
   align-items: center;
   color: ${props =>
-    props.active
-      ? props.theme.panelHeaderIconActive
-      : props.theme.panelHeaderIcon};
+    props.active ? props.theme.panelHeaderIconActive : props.theme.panelHeaderIcon};
 
   :hover {
     cursor: pointer;
-    color: ${props =>
-      props.hoverColor
-        ? props.theme[props.hoverColor]
-        : props.theme.textColorHl};
+    color: ${props => (props.hoverColor ? props.theme[props.hoverColor] : props.theme.textColorHl)};
   }
 
   &.disabled {
@@ -93,16 +88,11 @@ export default class PanelHeaderAction extends Component {
           onClick={onClick}
         />
         {tooltip ? (
-          <Tooltip
-            id={`${tooltip}_${id}`}
-            effect="solid"
-            delayShow={500}
-            type={tooltipType}
-          >
+          <Tooltip id={`${tooltip}_${id}`} effect="solid" delayShow={500} type={tooltipType}>
             <span>{tooltip}</span>
           </Tooltip>
         ) : null}
       </HeaderActionWrapper>
     );
   }
-};
+}

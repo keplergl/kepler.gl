@@ -239,10 +239,7 @@ test('layerUtils -> findDefaultLayer.1', t => {
   ];
 
   const fieldPairs = findPointFieldPairs(inputFields);
-  const layers = findDefaultLayer(
-    {fields: inputFields, fieldPairs, id: dataId},
-    LayerClasses
-  );
+  const layers = findDefaultLayer({fields: inputFields, fieldPairs, id: dataId}, LayerClasses);
 
   t.equal(layers.length, outputLayers.length, 'number of layers found');
 
@@ -346,10 +343,7 @@ test('layerUtils -> findDefaultLayer.3', t => {
   ];
 
   const fieldPairs = findPointFieldPairs(inputFields);
-  const layers = findDefaultLayer(
-    {fields: inputFields, fieldPairs, id: dataId},
-    KeplerGlLayers
-  );
+  const layers = findDefaultLayer({fields: inputFields, fieldPairs, id: dataId}, KeplerGlLayers);
 
   t.equal(layers.length, 1, 'number of layers found');
   layers.forEach((l, i) => cmpLayers(t, outputLayers[i], l));
@@ -472,10 +466,7 @@ test('layerUtils -> findDefaultLayer.4', t => {
   ];
 
   const fieldPairs = findPointFieldPairs(inputFields);
-  const layers = findDefaultLayer(
-    {fields: inputFields, fieldPairs, id: dataId},
-    KeplerGlLayers
-  );
+  const layers = findDefaultLayer({fields: inputFields, fieldPairs, id: dataId}, KeplerGlLayers);
 
   t.equal(layers.length, outputLayers.length, 'number of layers found');
   layers.forEach((l, i) => cmpLayers(t, outputLayers[i], l));
@@ -497,10 +488,7 @@ test('layerUtils -> findDefaultLayer.5', t => {
   ];
 
   const fieldPairs = findPointFieldPairs(inputFields);
-  const layers = findDefaultLayer(
-    {fields: inputFields, fieldPairs, id: 'yo'},
-    KeplerGlLayers
-  );
+  const layers = findDefaultLayer({fields: inputFields, fieldPairs, id: 'yo'}, KeplerGlLayers);
 
   t.equal(layers.length, 0, 'number of layers found');
 
@@ -551,6 +539,7 @@ test('layerUtils -> findDefaultLayer:GeojsonLayer', t => {
     }
   });
 
+  // eslint-disable-next-line no-unused-vars
   const [layer1Color, layer2Color, layer2Stroke] = getNextColorMakerValue(3);
   expected1.updateLayerVisConfig({filled: true, stroked: false});
   expected2.updateLayerVisConfig({
@@ -613,12 +602,9 @@ test('layerUtils -> findDefaultLayer:GeojsonLayer.wkt', t => {
       geojson: {value: 'simplified_shape', fieldIdx: 2}
     }
   });
-  const [
-    layer1Color,
-    strokeColor1,
-    layer2Color,
-    strokeColor2
-  ] = getNextColorMakerValue(4);
+
+  // eslint-disable-next-line no-unused-vars
+  const [layer1Color, strokeColor1, layer2Color, strokeColor2] = getNextColorMakerValue(4);
   expected1.updateLayerVisConfig({
     filled: true,
     stroked: true,
@@ -741,17 +727,9 @@ test('layerUtils -> findDefaultLayer: TripLayer', t => {
     'should set correct animation domain'
   );
 
-  t.deepEqual(
-    foundLayer.meta.bounds,
-    tripBounds,
-    'should set correct bounds'
-  );
+  t.deepEqual(foundLayer.meta.bounds, tripBounds, 'should set correct bounds');
 
-  t.deepEqual(
-    foundLayer.meta.featureTypes,
-    {line: true},
-    'should set correct bounds'
-  );
+  t.deepEqual(foundLayer.meta.featureTypes, {line: true}, 'should set correct bounds');
 
   t.end();
 });
@@ -762,7 +740,7 @@ test('layerUtils -> findDefaultLayer: TripLayer.1 -> no ts', t => {
     ...f,
     geometry: {
       ...f.geometry,
-      coordinates: f.geometry.coordinates.map(coord => ([...coord.slice(0, 3), 'hello']))
+      coordinates: f.geometry.coordinates.map(coord => [...coord.slice(0, 3), 'hello'])
     }
   }));
 
@@ -776,10 +754,7 @@ test('layerUtils -> findDefaultLayer: TripLayer.1 -> no ts', t => {
     data: processGeojson(noTripGeojson)
   });
 
-  const layers = findDefaultLayer(
-    dataset.taro,
-    LayerClasses
-  );
+  const layers = findDefaultLayer(dataset.taro, LayerClasses);
 
   t.equal(layers.length, 1, 'should find 1 layer');
   const foundLayer = layers[0];
@@ -811,10 +786,7 @@ test('layerUtils -> findDefaultLayer: TripLayer.1 -> ts as string', t => {
     data: processGeojson(tripData)
   });
 
-  const layers = findDefaultLayer(
-    dataset.taro,
-    LayerClasses
-  );
+  const layers = findDefaultLayer(dataset.taro, LayerClasses);
 
   t.equal(layers.length, 1, 'should find 1 layer');
   const foundLayer = layers[0];

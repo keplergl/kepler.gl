@@ -122,7 +122,7 @@ export function layerColorUIChange(oldLayer, prop, newConfig) {
     prop,
     newConfig
   };
-};
+}
 
 /**
  * Update layer blending mode
@@ -388,7 +388,7 @@ export function toggleFilterFeature(idx) {
   return {
     type: ActionTypes.TOGGLE_FILTER_FEATURE,
     idx
-  }
+  };
 }
 
 /**
@@ -512,8 +512,10 @@ export function loadFiles(files) {
 export function loadFileSuccess({fileCache, filesToLoad, totalCount}) {
   return {
     type: ActionTypes.LOAD_FILES_SUCCESS,
-    fileCache, filesToLoad, totalCount
-  }
+    fileCache,
+    filesToLoad,
+    totalCount
+  };
 }
 
 /**
@@ -540,7 +542,7 @@ export function setFeatures(features) {
   return {
     type: ActionTypes.SET_FEATURES,
     features
-  }
+  };
 }
 
 /**
@@ -569,7 +571,7 @@ export function setSelectedFeature(feature) {
   return {
     type: ActionTypes.SET_SELECTED_FEATURE,
     feature
-  }
+  };
 }
 
 /**
@@ -626,7 +628,7 @@ export function applyCPUFilter(dataId) {
 export function toggleEditorVisibility() {
   return {
     type: ActionTypes.TOGGLE_EDITOR_VISIBILITY
-  }
+  };
 }
 
 /**

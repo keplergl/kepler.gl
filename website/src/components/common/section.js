@@ -38,8 +38,8 @@ export const SectionContainer = styled.div`
     props.isDark
       ? props.theme.darkBackgroundColor
       : props.background
-        ? `url(${props.background})`
-        : 'white'};
+      ? `url(${props.background})`
+      : 'white'};
   padding: ${props => props.theme.margins.huge};
   margin-bottom: ${props => props.theme.margins.large};
   background-size: cover;

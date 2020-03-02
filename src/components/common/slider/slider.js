@@ -33,17 +33,14 @@ const StyledRangeSlider = styled.div`
   position: relative;
   margin-bottom: 12px;
   background-color: ${props => props.theme.sliderBarBgd};
-  ${props =>
-    `${props.vertical ? 'width' : 'height'}: ${props.theme.sliderBarHeight}px`};
+  ${props => `${props.vertical ? 'width' : 'height'}: ${props.theme.sliderBarHeight}px`};
   ${props => `${props.vertical ? 'height' : 'width'}: 100%`};
 `;
 
 const SliderWrapper = styled.div`
   flex-grow: 1;
   margin-top: ${props =>
-    props.isRanged
-      ? props.theme.sliderMarginTopIsRange
-      : props.theme.sliderMarginTop}px;
+    props.isRanged ? props.theme.sliderMarginTopIsRange : props.theme.sliderMarginTop}px;
 `;
 
 export default class Slider extends Component {
@@ -88,9 +85,7 @@ export default class Slider extends Component {
   ref = createRef();
 
   _getBaseDistance() {
-    return this.props.vertical
-      ? this.ref.current.offsetHeight
-      : this.ref.current.offsetWidth;
+    return this.props.vertical ? this.ref.current.offsetHeight : this.ref.current.offsetWidth;
   }
 
   _getValDelta(x) {

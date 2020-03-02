@@ -1,7 +1,10 @@
-### 1. Configuring Mapbox API hostname
+# custom-mapbox-host
+
+## 1. Configuring Mapbox API hostname
+
 The KeplerGL component accepts an optional parameter `mapboxApiUrl` to override the default value of `https://api.mapbox.com`.
 
-```js
+```javascript
   <KeplerGl
       id="foo"
       mapboxApiAccessToken={token}
@@ -10,9 +13,11 @@ The KeplerGL component accepts an optional parameter `mapboxApiUrl` to override 
       height={height}/>
 ```
 
-### 2. Overriding the default MapStyles
+## 2. Overriding the default MapStyles
+
 The default MapStyles KeplerGL uses might not be accessible to you, in this case you will need to provide MapStyle overrides. During construction of your component:
-```js
+
+```javascript
   this.token = '';
   this.apiHost = "https://api.mapbox.cn";
   this.mapStyles = [
@@ -34,7 +39,8 @@ The default MapStyles KeplerGL uses might not be accessible to you, in this case
 ```
 
 and In render:
-```js
+
+```javascript
   <KeplerGl
       id="foo"
       mapboxApiAccessToken={this.token}
@@ -43,3 +49,4 @@ and In render:
       width={width}
       height={height}/>
 ```
+

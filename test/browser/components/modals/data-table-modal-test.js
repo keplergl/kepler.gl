@@ -26,15 +26,9 @@ import DataTableModalFactory, {
   DatasetTabs,
   DatasetModalTab
 } from 'components/modals/data-table-modal';
-import DataGridFactory, {
-  FieldHeaderFactory,
-  CellFactory
-} from 'components/common/datagrid';
+import DataGridFactory, {FieldHeaderFactory, CellFactory} from 'components/common/datagrid';
 import {testFields, testAllData} from 'test/fixtures/test-csv-data';
-import {
-  geoStyleFields,
-  geoStyleRows
-} from 'test/fixtures/geojson';
+import {geoStyleFields, geoStyleRows} from 'test/fixtures/geojson';
 
 const FieldHeader = FieldHeaderFactory();
 const Cell = CellFactory();
@@ -71,17 +65,9 @@ test('Components -> DataTableModal.render: csv 1', t => {
 
   // console.log(wrapper.debug());
 
-  t.equal(
-    wrapper.find(DataTableModal).length,
-    1,
-    'should render DataTableModal data'
-  );
+  t.equal(wrapper.find(DataTableModal).length, 1, 'should render DataTableModal data');
   t.equal(wrapper.find(DatasetTabs).length, 1, 'should render DatasetTabs');
-  t.equal(
-    wrapper.find(DatasetModalTab).length,
-    1,
-    'should render 1 dataset-modal-catalog'
-  );
+  t.equal(wrapper.find(DatasetModalTab).length, 1, 'should render 1 dataset-modal-catalog');
   t.equal(
     wrapper.find('Header').length,
     testFields.length,
@@ -137,11 +123,7 @@ test('Components -> DataTableModal.render: csv 1', t => {
         .at(c)
         .find('span')
         .text();
-      t.equal(
-        cellText,
-        expectedRow[c],
-        `should render cell ${expectedRow[c]} correctly`
-      );
+      t.equal(cellText, expectedRow[c], `should render cell ${expectedRow[c]} correctly`);
     }
   });
 
@@ -166,17 +148,9 @@ test('Components -> DataTableModal.render: csv 2', t => {
     />
   );
 
-  t.equal(
-    wrapper.find(DataTableModal).length,
-    1,
-    'should render DataTableModal data'
-  );
+  t.equal(wrapper.find(DataTableModal).length, 1, 'should render DataTableModal data');
   t.equal(wrapper.find(DatasetTabs).length, 1, 'should render DatasetTabs');
-  t.equal(
-    wrapper.find(DatasetModalTab).length,
-    1,
-    'should render 1 dataset-modal-catalog'
-  );
+  t.equal(wrapper.find(DatasetModalTab).length, 1, 'should render 1 dataset-modal-catalog');
   t.equal(
     wrapper.find('Header').length,
     geoStyleFields.length,
@@ -226,11 +200,7 @@ test('Components -> DataTableModal.render: csv 2', t => {
         .at(c)
         .find('span')
         .text();
-      t.equal(
-        cellText,
-        expectedRow[c],
-        `should render cell ${expectedRow[c]} correctly`
-      );
+      t.equal(cellText, expectedRow[c], `should render cell ${expectedRow[c]} correctly`);
     }
   });
 

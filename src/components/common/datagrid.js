@@ -21,7 +21,7 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {MultiGrid} from 'react-virtualized';
-import styled, {withTheme}from 'styled-components';
+import styled, {withTheme} from 'styled-components';
 import {createSelector} from 'reselect';
 import classnames from 'classnames';
 import FieldToken from 'components/common/field-token';
@@ -88,7 +88,7 @@ const StyledFieldHeader = styled.div`
   }
 
   .icon-wrapper {
-    margin-right: ${props => props.type === 'timestamp' ? '2px' : '0'};
+    margin-right: ${props => (props.type === 'timestamp' ? '2px' : '0')};
     height: 16px;
   }
 `;
@@ -147,15 +147,9 @@ export const CellFactory = () => {
   return Cell;
 };
 
-DataGridFactory.deps = [
-  FieldHeaderFactory,
-  CellFactory
-];
+DataGridFactory.deps = [FieldHeaderFactory, CellFactory];
 
-function DataGridFactory(
-  FieldHeader,
-  Cell
-) {
+function DataGridFactory(FieldHeader, Cell) {
   class DataGrid extends PureComponent {
     static propTypes = {
       theme: PropTypes.object,
@@ -179,22 +173,34 @@ function DataGridFactory(
       const className = classnames({
         last: isLast,
         [`header-${columnIndex}`]: rowIndex === 0,
-        [`row-${rowIndex-1} column-${columnIndex}`]: rowIndex > 0
+        [`row-${rowIndex - 1} column-${columnIndex}`]: rowIndex > 0
       });
 
       return (
         <div key={key} style={style} className={className}>
-          {rowIndex === 0
-            ? (<FieldHeader className={`header-cell ${type}`} value={columns[columnIndex].name} type={type} />)
-            : (<Cell className={`cell ${type}`} value={parseFieldValue(rows[rowIndex - 1][columnIndex], type)} type={type} />)
-          }
+          {rowIndex === 0 ? (
+            <FieldHeader
+              className={`header-cell ${type}`}
+              value={columns[columnIndex].name}
+              type={type}
+            />
+          ) : (
+            <Cell
+              className={`cell ${type}`}
+              value={parseFieldValue(rows[rowIndex - 1][columnIndex], type)}
+              type={type}
+            />
+          )}
         </div>
       );
     };
 
-    _rowHeight = ({index}) => index === 0
-      ? this.props.theme.cellHeaderHeight
-      : this.hasGeojson(this.props) ? this.props.theme.extendCellHeight : this.props.theme.cellHeight;
+    _rowHeight = ({index}) =>
+      index === 0
+        ? this.props.theme.cellHeaderHeight
+        : this.hasGeojson(this.props)
+        ? this.props.theme.extendCellHeight
+        : this.props.theme.cellHeight;
 
     _columnWidth = ({index}) => {
       const isGeojsonField = this.props.columns[index].type === ALL_FIELD_TYPES.geojson;

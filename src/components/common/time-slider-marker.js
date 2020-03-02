@@ -83,15 +83,12 @@ export default class TimeSliderMarker extends Component {
 
   domainSelector = props => props.domain;
   widthSelector = props => props.width;
-  scaleSelector = createSelector(
-    this.domainSelector,
-    this.widthSelector,
-    (domain, width) =>
-      Array.isArray(domain)
-        ? scaleUtc()
-            .domain(domain)
-            .range([0, width])
-        : null
+  scaleSelector = createSelector(this.domainSelector, this.widthSelector, (domain, width) =>
+    Array.isArray(domain)
+      ? scaleUtc()
+          .domain(domain)
+          .range([0, width])
+      : null
   );
 
   _updateAxis(scale) {
@@ -103,19 +100,14 @@ export default class TimeSliderMarker extends Component {
       .tickSize(8)
       .tickPadding(6);
 
-    select(this.xAxis.current)
-      .call(xAxis);
+    select(this.xAxis.current).call(xAxis);
   }
 
   render() {
     return (
-      <TimeSliderContainer
-        className="time-slider-marker"
-        width={this.props.width}
-        height={height}
-      >
+      <TimeSliderContainer className="time-slider-marker" width={this.props.width} height={height}>
         <g className="x axis" ref={this.xAxis} transform="translate(0, 0)" />
       </TimeSliderContainer>
     );
   }
-};
+}

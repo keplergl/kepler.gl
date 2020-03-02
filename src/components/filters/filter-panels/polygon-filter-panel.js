@@ -29,71 +29,62 @@ import {StyledFilterPanel} from '../components';
 
 import get from 'lodash.get';
 
-PolygonFilterPanelFactory.deps = [
-  FilterPanelHeaderFactory,
-  PolygonFilterFactory
-];
+PolygonFilterPanelFactory.deps = [FilterPanelHeaderFactory, PolygonFilterFactory];
 
-function PolygonFilterPanelFactory(
-  FilterPanelHeader,
-  PolygonFilter
-) {
-  const PolygonFilterPanel = React.memo(({
-    idx,
-    datasets,
-    layers,
-    layerData,
-    allAvailableFields,
-    filter,
-    isAnyFilterAnimating,
-    enlargeFilter,
-    removeFilter,
-    setFilter,
-    toggleFilterFeature
-  }) => {
+function PolygonFilterPanelFactory(FilterPanelHeader, PolygonFilter) {
+  const PolygonFilterPanel = React.memo(
+    ({
+      idx,
+      datasets,
+      layers,
+      layerData,
+      allAvailableFields,
+      filter,
+      isAnyFilterAnimating,
+      enlargeFilter,
+      removeFilter,
+      setFilter,
+      toggleFilterFeature
+    }) => {
+      const filterDatasets = useMemo(() => filter.dataId.map(d => datasets[d]), [filter, datasets]);
 
-    const filterDatasets = useMemo(() => filter.dataId.map(d => datasets[d]),
-      [filter, datasets]
-    );
+      const onSetLayers = useCallback(value => setFilter(idx, 'layerId', value), [setFilter]);
 
-    const onSetLayers = useCallback(value =>
-        setFilter(idx, 'layerId', value),
-      [setFilter]);
+      const isVisible = get(filter, ['value', 'properties', 'isVisible'], true);
+      const featureType = get(filter, ['value', 'properties', 'renderType'], true);
 
-    const isVisible = get(filter, ['value', 'properties', 'isVisible'], true);
-    const featureType = get(filter, ['value', 'properties', 'renderType'], true);
-
-    return (
-      <div className="polygon-filter-panel">
-        <FilterPanelHeader
-          datasets={filterDatasets}
-          allAvailableFields={allAvailableFields}
-          idx={idx}
-          filter={filter}
-          removeFilter={removeFilter}
-        >
-          <StyledFilterPanel>Geo - {featureType}</StyledFilterPanel>
-          <PanelHeaderAction
-            id={filter.id}
-            onClick={toggleFilterFeature}
-            tooltip={isVisible ? 'Hide Feature' : 'Show feature'}
-            IconComponent={isVisible ? EyeSeen : EyeUnseen}
-            active={isVisible}
-          />
-        </FilterPanelHeader>
-        <StyledFilterContent className="filter-panel__content">
-          <div className="filter-panel__filter">
-            <PolygonFilter
-              filter={filter}
-              layers={layers}
-              setLayers={onSetLayers}
-              toggleFilterFeature={toggleFilterFeature}
+      return (
+        <div className="polygon-filter-panel">
+          <FilterPanelHeader
+            datasets={filterDatasets}
+            allAvailableFields={allAvailableFields}
+            idx={idx}
+            filter={filter}
+            removeFilter={removeFilter}
+          >
+            <StyledFilterPanel>Geo - {featureType}</StyledFilterPanel>
+            <PanelHeaderAction
+              id={filter.id}
+              onClick={toggleFilterFeature}
+              tooltip={isVisible ? 'Hide Feature' : 'Show feature'}
+              IconComponent={isVisible ? EyeSeen : EyeUnseen}
+              active={isVisible}
             />
-          </div>
-        </StyledFilterContent>
-      </div>
-    )
-  });
+          </FilterPanelHeader>
+          <StyledFilterContent className="filter-panel__content">
+            <div className="filter-panel__filter">
+              <PolygonFilter
+                filter={filter}
+                layers={layers}
+                setLayers={onSetLayers}
+                toggleFilterFeature={toggleFilterFeature}
+              />
+            </div>
+          </StyledFilterContent>
+        </div>
+      );
+    }
+  );
 
   PolygonFilterPanel.displayName = 'PolygonFilterPanel';
 

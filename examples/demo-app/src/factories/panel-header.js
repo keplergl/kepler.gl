@@ -45,9 +45,7 @@ export function CustomPanelHeaderFactory(...deps) {
       },
       defaultActionItems.find(item => item.id === 'storage'),
       {
-        ...defaultActionItems.find(
-          item => item.id === 'save'
-        ),
+        ...defaultActionItems.find(item => item.id === 'save'),
         label: null,
         tooltip: 'Share'
       }

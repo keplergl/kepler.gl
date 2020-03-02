@@ -76,9 +76,7 @@ export const UploadAnimation = props => (
 const StatusPanel = ({error, isLoading, providerIcon}) => (
   <StyledExportSection>
     <div className="description">
-      <div className="title">
-        {isLoading ? 'Map Uploading' : error ? 'Error' : null}
-      </div>
+      <div className="title">{isLoading ? 'Map Uploading' : error ? 'Error' : null}</div>
     </div>
     <div className="selection">
       {isLoading && <UploadAnimation icon={providerIcon} />}

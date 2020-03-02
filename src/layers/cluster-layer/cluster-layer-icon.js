@@ -66,6 +66,6 @@ class ClusterLayerIcon extends Component {
       </Base>
     );
   }
-};
+}
 
 export default ClusterLayerIcon;

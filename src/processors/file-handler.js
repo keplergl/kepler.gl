@@ -44,22 +44,23 @@ export function readFile({file, fileCache = []}) {
       resolve(fileCache);
     }
 
-    handler({file, format})
-      .then(result => {
-        if (!result || !result.data) {
-          // return fileCache, to keep process other files
-          resolve(fileCache);
-        }
-        resolve([...fileCache, {
+    handler({file, format}).then(result => {
+      if (!result || !result.data) {
+        // return fileCache, to keep process other files
+        resolve(fileCache);
+      }
+      resolve([
+        ...fileCache,
+        {
           data: result.data,
           info: {
             label: file.name,
             format: result.format
           }
-        }])
-      });
-
-  })
+        }
+      ]);
+    });
+  });
 }
 
 export function getFileHandler(fileBlob) {
@@ -92,9 +93,7 @@ function readCSVFile(fileBlob) {
 }
 
 export function loadCsv({file, format, processor = processCsvData}) {
-  return readCSVFile(file).then(rawData =>
-    rawData ? {data: processor(rawData), format} : null
-  );
+  return readCSVFile(file).then(rawData => (rawData ? {data: processor(rawData), format} : null));
 }
 
 export function loadJSON({file, processor = processGeojson}) {

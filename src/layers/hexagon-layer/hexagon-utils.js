@@ -18,14 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {WebMercatorViewport} from 'deck.gl';
+import {WebMercatorViewport} from '@deck.gl/core';
+import Console from 'global/console';
 
 export function hexagonToPolygonGeo({object}, properties, radius, mapState) {
   const viewport = new WebMercatorViewport(mapState);
+  if (!Array.isArray(object.position)) {
+    return null;
+  }
 
   const screenCenter = viewport.projectFlat(object.position);
-  const {pixelsPerMeter} = viewport.getDistanceScales();
-  const pixRadius = radius * pixelsPerMeter[0];
+  const {unitsPerMeter} = viewport.getDistanceScales(object.position);
+
+  if (!Array.isArray(unitsPerMeter)) {
+    Console.warn(`unitsPerMeter is undefined`);
+    return null;
+  }
+
+  const pixRadius = radius * unitsPerMeter[0];
 
   const coordinates = [];
 
@@ -47,10 +57,7 @@ export function hexagonToPolygonGeo({object}, properties, radius, mapState) {
 
 function hex_corner(center, radius, i) {
   const angle_deg = 60 * i + 30;
-  const angle_rad = Math.PI / 180 * angle_deg;
+  const angle_rad = (Math.PI / 180) * angle_deg;
 
-  return [
-    center[0] + radius * Math.cos(angle_rad),
-    center[1] + radius * Math.sin(angle_rad)
-  ];
+  return [center[0] + radius * Math.cos(angle_rad), center[1] + radius * Math.sin(angle_rad)];
 }

@@ -23,13 +23,13 @@
  * Allows to break down a url into multiple params
  * @param str
  */
-export function parseUri (str) {
+export function parseUri(str) {
   const o = parseUri.options;
-  const m = o.parser[o.strictMode ? "strict" : "loose"].exec(str);
+  const m = o.parser[o.strictMode ? 'strict' : 'loose'].exec(str);
   const uri = {};
   let i = 14;
 
-  while (i--) uri[o.key[i]] = m[i] || "";
+  while (i--) uri[o.key[i]] = m[i] || '';
 
   uri[o.q.name] = {};
   uri[o.key[12]].replace(o.q.parser, ($0, $1, $2) => {
@@ -42,20 +42,27 @@ export function parseUri (str) {
 parseUri.options = {
   strictMode: false,
   key: [
-    'source','protocol',
-    'authority','userInfo',
-    'user','password',
-    'host','port',
-    'relative','path',
-    'directory','file',
-    'query','anchor'
+    'source',
+    'protocol',
+    'authority',
+    'userInfo',
+    'user',
+    'password',
+    'host',
+    'port',
+    'relative',
+    'path',
+    'directory',
+    'file',
+    'query',
+    'anchor'
   ],
-  q:   {
-    name:   'queryKey',
+  q: {
+    name: 'queryKey',
     parser: /(?:^|&)([^&=]*)=?([^&]*)/g
   },
   parser: {
     strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
-    loose:  /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
+    loose: /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
   }
 };

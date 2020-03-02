@@ -23,7 +23,7 @@ import moment from 'moment';
 import global from 'global';
 import sinon from 'sinon';
 import sinonStubPromise from 'sinon-stub-promise';
-sinonStubPromise(sinon)
+sinonStubPromise(sinon);
 
 import {
   testCreateCases,
@@ -49,23 +49,11 @@ test('#ScenegraphLayer -> constructor', t => {
           label: 'test 3d layer'
         },
         test: layer => {
-          t.ok(
-            layer.config.dataId === 'smoothie',
-            'ScenegraphLayer dataId should be correct'
-          );
+          t.ok(layer.config.dataId === 'smoothie', 'ScenegraphLayer dataId should be correct');
           t.ok(layer.type === '3D', 'type should be 3D');
-          t.ok(
-            layer.isAggregated === false,
-            'ScenegraphLayer is not aggregated'
-          );
-          t.ok(
-            layer.config.label === 'test 3d layer',
-            'label should be correct'
-          );
-          t.ok(
-            Object.keys(layer.columnPairs).length,
-            'should have columnPairs'
-          );
+          t.ok(layer.isAggregated === false, 'ScenegraphLayer is not aggregated');
+          t.ok(layer.config.label === 'test 3d layer', 'label should be correct');
+          t.ok(Object.keys(layer.columnPairs).length, 'should have columnPairs');
         }
       }
     ]
@@ -138,16 +126,12 @@ test('#ScenegraphLayer -> formatLayerData', t => {
           layerData.data.map(layerData.getFilterValue),
           [
             [Number.MIN_SAFE_INTEGER, 0, 0, 0],
-            [moment.utc(testRows[4][0]).valueOf() - preparedFilterDomain0, 0, 0, 0],
+            [moment.utc(testRows[4][0]).valueOf() - preparedFilterDomain0, 0, 0, 0]
           ],
           'getFilterValue should return [value, 0, 0, 0]'
         );
         // layerMeta
-        t.deepEqual(
-          layer.meta,
-          pointLayerMeta,
-          'should format correct point layer meta'
-        );
+        t.deepEqual(layer.meta, pointLayerMeta, 'should format correct point layer meta');
       }
     }
   ];
@@ -157,7 +141,6 @@ test('#ScenegraphLayer -> formatLayerData', t => {
 });
 
 test('#ScenegraphLayer -> renderLayer', t => {
-
   // TODO: mock actual gltf response
   const mockSuccessResponse = {};
   const mockJsonPromise = sinon.stub().returnsPromise();
@@ -196,16 +179,13 @@ test('#ScenegraphLayer -> renderLayer', t => {
           opacity: layer.config.visConfig.opacity,
           sizeScale: layer.config.visConfig.sizeScale,
           filterRange: preparedDataset.gpuFilter.filterRange
-        }
+        };
         Object.keys(expectedProps).forEach(key => {
-          t.equal(
-            props[key],
-            expectedProps[key],
-            `should have correct props.${key}`
-          );
+          t.equal(props[key], expectedProps[key], `should have correct props.${key}`);
         });
       }
-    }];
+    }
+  ];
 
   testRenderLayerCases(t, ScenegraphLayer, TEST_CASES);
 

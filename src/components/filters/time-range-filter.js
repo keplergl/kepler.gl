@@ -28,13 +28,7 @@ import TimeRangeSliderFactory from 'components/common/time-range-slider';
 TimeRangeFilterFactory.deps = [TimeRangeSliderFactory];
 
 function TimeRangeFilterFactory(TimeRangeSlider) {
-  const TimeRangeFilter = ({
-    filter,
-    setFilter,
-    isAnimatable,
-    toggleAnimation,
-    hideTimeTitle
-  }) => (
+  const TimeRangeFilter = ({filter, setFilter, isAnimatable, toggleAnimation, hideTimeTitle}) => (
     <TimeRangeSlider
       domain={filter.domain}
       value={filter.value}
@@ -42,9 +36,7 @@ function TimeRangeFilterFactory(TimeRangeSlider) {
       lineChart={filter.lineChart}
       step={filter.step}
       speed={filter.speed}
-      histogram={
-        filter.enlarged ? filter.enlargedHistogram : filter.histogram
-      }
+      histogram={filter.enlarged ? filter.enlargedHistogram : filter.histogram}
       onChange={setFilter}
       toggleAnimation={toggleAnimation}
       isAnimatable={isAnimatable}

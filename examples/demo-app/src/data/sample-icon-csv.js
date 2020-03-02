@@ -208,14 +208,7 @@ export const config = {
                 name: 'Global Warming',
                 type: 'sequential',
                 category: 'Uber',
-                colors: [
-                  '#5A1846',
-                  '#900C3F',
-                  '#C70039',
-                  '#E3611C',
-                  '#F1920E',
-                  '#FFC300'
-                ]
+                colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
               },
               coverage: 1,
               sizeRange: [0, 500],
@@ -242,13 +235,7 @@ export const config = {
       interactionConfig: {
         tooltip: {
           fieldsToShow: {
-            test_icon_data: [
-              'time',
-              'icon',
-              'icon-bk',
-              'annotation-severity',
-              'annotation-html'
-            ],
+            test_icon_data: ['time', 'icon', 'icon-bk', 'annotation-severity', 'annotation-html'],
             '6b69fg6ca': ['OBJECTID', 'ZIP_CODE', 'ID']
           },
           enabled: true

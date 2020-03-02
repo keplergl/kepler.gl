@@ -102,11 +102,7 @@ test('#uiStateReducer -> OPEN_DELETE_MODAL', t => {
     datasetKeyToRemove: 'chai'
   };
 
-  t.deepEqual(
-    newReducer,
-    expectedState,
-    'should open delete data modal and save key to remove'
-  );
+  t.deepEqual(newReducer, expectedState, 'should open delete data modal and save key to remove');
 
   t.end();
 });
@@ -167,10 +163,7 @@ test('#uiStateReducer -> SET_EXPORT_SELECTED_DATASET', t => {
 });
 
 test('#uiStateReducer -> SET_EXPORT_DATA_TYPE', t => {
-  const newReducer = reducer(
-    INITIAL_UI_STATE,
-    setExportDataType(EXPORT_DATA_TYPE.JSON)
-  );
+  const newReducer = reducer(INITIAL_UI_STATE, setExportDataType(EXPORT_DATA_TYPE.JSON));
 
   const expectedState = {
     ...INITIAL_UI_STATE,
@@ -212,11 +205,7 @@ test('#uiStateReducer -> ADD_NOTIFICATION', t => {
     })
   );
 
-  t.equal(
-    newState.notifications.length,
-    1,
-    'AddNotification should add one new notification'
-  );
+  t.equal(newState.notifications.length, 1, 'AddNotification should add one new notification');
   t.deepEqual(
     newState.notifications[0],
     {
@@ -242,11 +231,7 @@ test('#uiStateReducer -> REMOVE_NOTIFICATION', t => {
     })
   );
 
-  t.equal(
-    newState.notifications.length,
-    1,
-    'AddNotification should add one new notification'
-  );
+  t.equal(newState.notifications.length, 1, 'AddNotification should add one new notification');
   t.deepEqual(
     newState.notifications[0],
     {
@@ -260,28 +245,17 @@ test('#uiStateReducer -> REMOVE_NOTIFICATION', t => {
 
   const nextState = reducer(newState, removeNotification('test-1'));
 
-  t.equal(
-    nextState.notifications.length,
-    0,
-    'RemoveNotification removed one notification'
-  );
+  t.equal(nextState.notifications.length, 0, 'RemoveNotification removed one notification');
 
   t.end();
 });
 
 test('#uiStateReducer -> LOAD_FILES_ERR', t => {
   const newState = reducer(INITIAL_UI_STATE, loadFiles());
-  t.equal(
-    newState.loadFiles.fileLoading,
-    true,
-    'should set fileLoading to true'
-  );
+  t.equal(newState.loadFiles.fileLoading, true, 'should set fileLoading to true');
 
-  const newState1 = reducer(
-    newState,
-    loadFilesErr(new Error('this is an error'))
-  );
-  const expectedId = newState1.notifications.length ? newState1.notifications[0].id : 'error'
+  const newState1 = reducer(newState, loadFilesErr(new Error('this is an error')));
+  const expectedId = newState1.notifications.length ? newState1.notifications[0].id : 'error';
   t.equal(
     newState1.loadFiles.fileLoading,
     false,
@@ -289,12 +263,14 @@ test('#uiStateReducer -> LOAD_FILES_ERR', t => {
   );
   t.deepEqual(
     newState1.notifications,
-    [{
-      type: 'error',
-      topic: 'global',
-      message: 'this is an error',
-      id: expectedId
-    }],
+    [
+      {
+        type: 'error',
+        topic: 'global',
+        message: 'this is an error',
+        id: expectedId
+      }
+    ],
     'should add an error notification'
   );
 

@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import AggregationLayer from '../aggregation-layer';
-import {ScatterplotLayer} from 'deck.gl';
+import {ScatterplotLayer} from '@deck.gl/layers';
 
 import DeckGLClusterLayer from 'deckgl-layers/cluster-layer/cluster-layer';
 import {CHANNEL_SCALES} from 'constants/default-settings';
@@ -65,13 +65,7 @@ export default class ClusterLayer extends AggregationLayer {
 
   renderLayer(opts) {
     const {visConfig} = this.config;
-    const {
-      data,
-      gpuFilter,
-      objectHovered,
-      mapState,
-      layerCallbacks
-    } = opts;
+    const {data, gpuFilter, objectHovered, mapState, layerCallbacks} = opts;
 
     const updateTriggers = {
       getColorValue: {
@@ -99,6 +93,7 @@ export default class ClusterLayer extends AggregationLayer {
         // color
         colorRange: this.getColorRange(visConfig.colorRange),
         colorScaleType: this.config.colorScale,
+        colorAggregation: visConfig.colorAggregation,
 
         zoom: Math.round(mapState.zoom),
         width: mapState.width,
@@ -112,17 +107,17 @@ export default class ClusterLayer extends AggregationLayer {
       }),
       // hover layer
       ...(this.isLayerHovered(objectHovered)
-      ? [
-          new ScatterplotLayer({
-            id: `${this.id}-hovered`,
-            data: [objectHovered.object],
-            getFillColor: this.config.highlightColor,
-            getRadius: d => d.radius,
-            radiusScale: 1,
-            pickable: false
-          })
-        ]
-      : [])
+        ? [
+            new ScatterplotLayer({
+              id: `${this.id}-hovered`,
+              data: [objectHovered.object],
+              getFillColor: this.config.highlightColor,
+              getRadius: d => d.radius,
+              radiusScale: 1,
+              pickable: false
+            })
+          ]
+        : [])
     ];
   }
 }

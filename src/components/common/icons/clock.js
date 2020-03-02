@@ -23,7 +23,6 @@ import PropTypes from 'prop-types';
 import Base from './base';
 
 export default class Clock extends Component {
-
   static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
@@ -42,4 +41,4 @@ export default class Clock extends Component {
       </Base>
     );
   }
-};
+}

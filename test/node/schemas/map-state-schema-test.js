@@ -31,9 +31,11 @@ test('#mapStateSchema -> v1 -> save load mapState', t => {
   const msToSave = savedState.config.mapState;
   const msLoaded = SchemaManager.parseSavedConfig(savedState).mapState;
 
-  t.deepEqual(Object.keys(msToSave),
+  t.deepEqual(
+    Object.keys(msToSave),
     ['bearing', 'dragRotate', 'latitude', 'longitude', 'pitch', 'zoom', 'isSplit'],
-    'mapState should have all 6 entries');
+    'mapState should have all 6 entries'
+  );
 
   const expected = {
     pitch: 0,

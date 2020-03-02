@@ -20,3 +20,4 @@
 
 import './color-selector-test';
 import './save-export-dropdown-test';
+import './side-panel-test';

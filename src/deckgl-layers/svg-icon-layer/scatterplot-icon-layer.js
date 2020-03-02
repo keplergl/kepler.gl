@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {ScatterplotLayer} from '@deck.gl/layers';
-import {Geometry, Model} from 'luma.gl';
+import {Geometry, Model} from '@luma.gl/core';
 import GL from '@luma.gl/constants';
 
 const DEFAULT_POS = [-1, -1, 0, -1, 1, 0, 1, 1, 0, 1, -1, 0];

@@ -74,10 +74,7 @@ const StyledLoadDataModalTabItem = styled.div`
 const noop = () => {};
 
 const ModalTabItem = ({currentMethod, method, toggleMethod}) => {
-  const onClick = useCallback(() => toggleMethod(method), [
-    method,
-    toggleMethod
-  ]);
+  const onClick = useCallback(() => toggleMethod(method), [method, toggleMethod]);
 
   return method.tabElementType ? (
     <method.tabElementType onClick={onClick} />

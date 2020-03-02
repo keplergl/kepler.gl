@@ -21,7 +21,7 @@
 import memoize from 'lodash.memoize';
 import uniq from 'lodash.uniq';
 import Layer from '../base-layer';
-import {TripsLayer as DeckGLTripsLayer} from 'deck.gl';
+import {TripsLayer as DeckGLTripsLayer} from '@deck.gl/geo-layers';
 
 import {GEOJSON_FIELDS} from 'constants/default-settings';
 import TripLayerIcon from './trip-layer-icon';
@@ -32,10 +32,7 @@ import {
   getGeojsonFeatureTypes
 } from 'layers/geojson-layer/geojson-utils';
 
-import {
-  isTripGeoJsonField,
-  parseTripGeoJsonTimestamp
-} from './trip-utils';
+import {isTripGeoJsonField, parseTripGeoJsonTimestamp} from './trip-utils';
 
 import {hexToRgb} from 'utils/color-utils';
 import TripInfoModalFactory from './trip-info-modal';
@@ -122,9 +119,7 @@ export default class TripLayer extends Layer {
   }
 
   static findDefaultLayerProps({label, fields = [], allData = [], id}, foundLayers) {
-    const geojsonColumns = fields
-      .filter(f => f.type === 'geojson')
-      .map(f => f.name);
+    const geojsonColumns = fields.filter(f => f.type === 'geojson').map(f => f.name);
 
     const defaultColumns = {
       geojson: uniq([...GEOJSON_FIELDS.geojson, ...geojsonColumns])
@@ -142,9 +137,7 @@ export default class TripLayer extends Layer {
 
     return {
       props: tripColumns.map(columns => ({
-        label:
-          (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) ||
-          this.type,
+        label: (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || this.type,
         columns,
         isVisible: true
       })),
@@ -176,8 +169,8 @@ export default class TripLayer extends Layer {
 
   calculateDataAttribute({allData, filteredIndex}, getPosition) {
     return filteredIndex
-    .map(i => this.dataToFeature[i])
-    .filter(d => d && d.geometry.type === 'LineString');
+      .map(i => this.dataToFeature[i])
+      .filter(d => d && d.geometry.type === 'LineString');
   }
 
   formatLayerData(datasets, oldLayerData) {
@@ -201,43 +194,25 @@ export default class TripLayer extends Layer {
     // color
     const cScale =
       colorField &&
-      this.getVisChannelScale(
-        colorScale,
-        colorDomain,
-        colorRange.colors.map(hexToRgb)
-      );
+      this.getVisChannelScale(colorScale, colorDomain, colorRange.colors.map(hexToRgb));
     // calculate stroke scale - if stroked = true
-    const sScale =
-      sizeField &&
-      this.getVisChannelScale(sizeScale, sizeDomain, sizeRange);
+    const sScale = sizeField && this.getVisChannelScale(sizeScale, sizeDomain, sizeRange);
     // access feature properties from geojson sub layer
     const getDataForGpuFilter = f => allData[f.properties.index];
     const getIndexForGpuFilter = f => f.properties.index;
 
     return {
       data,
-      getFilterValue: gpuFilter.filterValueAccessor(
-        getIndexForGpuFilter,
-        getDataForGpuFilter
-      ),
+      getFilterValue: gpuFilter.filterValueAccessor(getIndexForGpuFilter, getDataForGpuFilter),
       getPath: d => d.geometry.coordinates,
       getTimestamps: d => this.dataToTimeStamp[d.properties.index],
       getColor: d =>
         cScale
-          ? this.getEncodedChannelValue(
-              cScale,
-              allData[d.properties.index],
-              colorField
-            )
+          ? this.getEncodedChannelValue(cScale, allData[d.properties.index], colorField)
           : d.properties.fillColor || color,
       getWidth: d =>
         sScale
-          ? this.getEncodedChannelValue(
-              sScale,
-              allData[d.properties.index],
-              sizeField,
-              0
-            )
+          ? this.getEncodedChannelValue(sScale, allData[d.properties.index], sizeField, 0)
           : d.properties.lineWidth || defaultWidth
     };
   }
@@ -260,8 +235,7 @@ export default class TripLayer extends Layer {
 
     this.dataToFeature = getGeojsonDataMaps(allData, getFeature);
 
-    const {dataToTimeStamp, animationDomain} =
-      parseTripGeoJsonTimestamp(this.dataToFeature);
+    const {dataToTimeStamp, animationDomain} = parseTripGeoJsonTimestamp(this.dataToFeature);
 
     this.dataToTimeStamp = dataToTimeStamp;
     this.updateAnimationDomain(animationDomain);
@@ -281,12 +255,7 @@ export default class TripLayer extends Layer {
   }
 
   renderLayer(opts) {
-    const {
-      data,
-      gpuFilter,
-      mapState,
-      animationConfig
-    } = opts;
+    const {data, gpuFilter, mapState, animationConfig} = opts;
     const {visConfig} = this.config;
     const zoomFactor = this.getZoomFactor(mapState);
 
@@ -313,8 +282,7 @@ export default class TripLayer extends Layer {
       new DeckGLTripsLayer({
         ...defaultLayerProps,
         ...data,
-        getTimestamps: d =>
-          data.getTimestamps(d).map(ts => ts - animationConfig.domain[0]),
+        getTimestamps: d => data.getTimestamps(d).map(ts => ts - animationConfig.domain[0]),
         widthScale: this.config.visConfig.thickness * zoomFactor * 8,
         rounded: true,
         wrapLongitude: false,

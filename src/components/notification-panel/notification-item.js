@@ -25,15 +25,12 @@ import {Delete, Info, Warning, Checkmark} from 'components/common/icons';
 import ReactMarkdown from 'react-markdown';
 
 const NotificationItemContent = styled.div`
-  background-color: ${props =>
-    props.theme.notificationColors[props.type] || '#000'};
+  background-color: ${props => props.theme.notificationColors[props.type] || '#000'};
   color: #fff;
   display: flex;
   flex-direction: row;
-  width: ${props =>
-    props.theme.notificationPanelItemWidth * (1 + Number(props.isExpanded))}px;
-  height: ${props =>
-    props.theme.notificationPanelItemHeight * (1 + Number(props.isExpanded))}px;
+  width: ${props => props.theme.notificationPanelItemWidth * (1 + Number(props.isExpanded))}px;
+  height: ${props => props.theme.notificationPanelItemHeight * (1 + Number(props.isExpanded))}px;
   font-size: 11px;
   margin-bottom: 1rem;
   padding: 1em;
@@ -121,17 +118,11 @@ export default function NotificationItemFactory() {
             {icons[notification.type]}
           </NotificationIcon>
           <NotificationMessage isExpanded={isExpanded} theme={this.props.theme}>
-            <ReactMarkdown
-              source={notification.message}
-              renderers={{link: LinkRenderer}}
-            />
+            <ReactMarkdown source={notification.message} renderers={{link: LinkRenderer}} />
           </NotificationMessage>
           {typeof removeNotification === 'function' ? (
             <div className="notification-item--action">
-              <DeleteIcon
-                height="10px"
-                onClick={() => removeNotification(notification.id)}
-              />
+              <DeleteIcon height="10px" onClick={() => removeNotification(notification.id)} />
             </div>
           ) : null}
         </NotificationItemContent>

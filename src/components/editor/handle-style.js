@@ -52,9 +52,7 @@ const STATE_STYLES_STROKE_WIDTH = 1;
 export const RENDER_TYPE_STYLES = {
   [RenderTypes.POINT]: state => ({
     fill: STATE_STYLES_FILL[state],
-    stroke: state === RenderStates.SELECTED
-      ? COLORS.PRIMARY
-      : DEFAULT_STATE_STYLE_STROKE
+    stroke: state === RenderStates.SELECTED ? COLORS.PRIMARY : DEFAULT_STATE_STYLE_STROKE
   }),
   [RenderTypes.LINE_STRING]: () => rectStyle,
   [RenderTypes.RECTANGLE]: () => rectStyle,
@@ -72,7 +70,7 @@ export function getStyle({feature, state}) {
 
   const style = {
     stroke: STATE_STYLES_STROKE[state] || DEFAULT_STATE_STYLE_STROKE,
-    strokeWidth: isVisible  ? STATE_STYLES_STROKE_WIDTH : 0,
+    strokeWidth: isVisible ? STATE_STYLES_STROKE_WIDTH : 0,
     fill: DEFAULT_STATE_STYLE_FILL,
     fillOpacity: DEFAULT_STATE_STYLE_OPACITY,
     r: DEFAULT_RADIUS

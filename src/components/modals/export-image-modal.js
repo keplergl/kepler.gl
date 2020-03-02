@@ -29,10 +29,7 @@ import {
   EXPORT_IMG_RATIOS
 } from 'constants/default-settings';
 
-import {
-  StyledModalContent,
-  SelectionButton
-} from 'components/common/styled-components';
+import {StyledModalContent, SelectionButton} from 'components/common/styled-components';
 import Switch from 'components/common/switch';
 
 const ImageOptionList = styled.div`
@@ -119,9 +116,7 @@ const ExportImageModalFactory = () => {
                   <SelectionButton
                     key={op.id}
                     selected={resolution === op.id}
-                    onClick={() =>
-                      op.available && onUpdateSetting({resolution: op.id})
-                    }
+                    onClick={() => op.available && onUpdateSetting({resolution: op.id})}
                   >
                     {op.label}
                   </SelectionButton>

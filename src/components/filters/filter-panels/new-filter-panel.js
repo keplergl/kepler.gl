@@ -24,67 +24,55 @@ import FilterPanelHeaderFactory from 'components/side-panel/filter-panel/filter-
 import FieldSelector from 'components/common/field-selector';
 import SourceDataSelectorFactory from 'components/side-panel/common/source-data-selector';
 
-NewFilterPanelFactory.deps = [
-  FilterPanelHeaderFactory,
-  SourceDataSelectorFactory
-];
+NewFilterPanelFactory.deps = [FilterPanelHeaderFactory, SourceDataSelectorFactory];
 
-function NewFilterPanelFactory(
-  FilterPanelHeader,
-  SourceDataSelector
-) {
-  const NewFilterPanel = React.memo(({
-    idx,
-    filter,
-    datasets,
-    allAvailableFields,
-    setFilter,
-    removeFilter,
-    enlargeFilter
-  }) => {
-    const onFieldSelector = useCallback(field =>
-        setFilter(idx, 'name', field.name),
-      [idx, setFilter]
-    );
+function NewFilterPanelFactory(FilterPanelHeader, SourceDataSelector) {
+  const NewFilterPanel = React.memo(
+    ({idx, filter, datasets, allAvailableFields, setFilter, removeFilter, enlargeFilter}) => {
+      const onFieldSelector = useCallback(field => setFilter(idx, 'name', field.name), [
+        idx,
+        setFilter
+      ]);
 
-    const onSourceDataSelector = useCallback(value =>
-        setFilter(idx, 'dataId', value),
-      [idx, setFilter]
-    );
+      const onSourceDataSelector = useCallback(value => setFilter(idx, 'dataId', value), [
+        idx,
+        setFilter
+      ]);
 
-    return (
-      <>
-        <FilterPanelHeader
-          datasets={[datasets[filter.dataId[0]]]}
-          allAvailableFields={allAvailableFields}
-          idx={idx}
-          filter={filter}
-          removeFilter={removeFilter}
-          enlargeFilter={enlargeFilter}
-          enlarged={filter.enlarged}
-        >
-          <FieldSelector
-            inputTheme="secondary"
-            fields={allAvailableFields}
-            value={Array.isArray(filter.name) ? filter.name[0] : filter.name}
-            erasable={false}
-            onSelect={onFieldSelector}
-          />
-        </FilterPanelHeader>
-        <StyledFilterContent className="filter-panel__content">
-          {Object.keys(datasets).length > 1 && (
-            <SourceDataSelector
+      return (
+        <>
+          <FilterPanelHeader
+            datasets={[datasets[filter.dataId[0]]]}
+            allAvailableFields={allAvailableFields}
+            idx={idx}
+            filter={filter}
+            removeFilter={removeFilter}
+            enlargeFilter={enlargeFilter}
+            enlarged={filter.enlarged}
+          >
+            <FieldSelector
               inputTheme="secondary"
-              datasets={datasets}
-              disabled={filter.freeze}
-              dataId={filter.dataId}
-              onSelect={onSourceDataSelector}
+              fields={allAvailableFields}
+              value={Array.isArray(filter.name) ? filter.name[0] : filter.name}
+              erasable={false}
+              onSelect={onFieldSelector}
             />
-          )}
-        </StyledFilterContent>
-      </>
-    );
-  });
+          </FilterPanelHeader>
+          <StyledFilterContent className="filter-panel__content">
+            {Object.keys(datasets).length > 1 && (
+              <SourceDataSelector
+                inputTheme="secondary"
+                datasets={datasets}
+                disabled={filter.freeze}
+                dataId={filter.dataId}
+                onSelect={onSourceDataSelector}
+              />
+            )}
+          </StyledFilterContent>
+        </>
+      );
+    }
+  );
 
   NewFilterPanel.displayName = 'NewFilterPanel';
 

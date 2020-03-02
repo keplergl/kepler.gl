@@ -18,10 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {
-  KEPLER_GL_VERSION,
-  EXPORT_HTML_MAP_MODES
-} from 'constants/default-settings';
+import {KEPLER_GL_VERSION, EXPORT_HTML_MAP_MODES} from 'constants/default-settings';
 
 /**
  * This method is used to create an html file which will inlcude kepler and map data

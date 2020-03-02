@@ -20,7 +20,7 @@
 
 import React from 'react';
 import {connect} from 'react-redux';
-import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer'
+import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import styled from 'styled-components';
 import KeplerGl from 'kepler.gl';
 
@@ -36,12 +36,7 @@ const App = () => (
   <StyledWrapper>
     <AutoSizer>
       {({height, width}) => (
-        <KeplerGl
-          mapboxApiAccessToken={MAPBOX_TOKEN}
-          id="map1"
-          width={width}
-          height={height}
-        />
+        <KeplerGl mapboxApiAccessToken={MAPBOX_TOKEN} id="map1" width={width} height={height} />
       )}
     </AutoSizer>
   </StyledWrapper>

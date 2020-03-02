@@ -21,16 +21,11 @@
 import Layer, {OVERLAY_TYPE} from './base-layer';
 import {createSelector} from 'reselect';
 
-import {
-  geoJsonFromData,
-  prefixGpuField,
-  gpuFilterToMapboxFilter
-} from './mapbox-utils';
+import {geoJsonFromData, prefixGpuField, gpuFilterToMapboxFilter} from './mapbox-utils';
 
 export const mapboxRequiredColumns = ['lat', 'lng'];
 
-export const pointColResolver = ({lat, lng}) =>
-  `${lat.fieldIdx}-${lng.fieldIdx}`;
+export const pointColResolver = ({lat, lng}) => `${lat.fieldIdx}-${lng.fieldIdx}`;
 
 class MapboxLayerGL extends Layer {
   get overlayType() {
@@ -61,8 +56,7 @@ class MapboxLayerGL extends Layer {
     return {};
   }
   datasetSelector = config => config.dataId;
-  gpuFilterSelector = (config, datasets) =>
-    (datasets[config.dataId] || {}).gpuFilter;
+  gpuFilterSelector = (config, datasets) => (datasets[config.dataId] || {}).gpuFilter;
   columnsSelector = config => pointColResolver(config.columns);
 
   sourceSelector = createSelector(
@@ -71,9 +65,8 @@ class MapboxLayerGL extends Layer {
     (datasetId, columns) => `${datasetId}-${columns}`
   );
 
-  filterSelector = createSelector(
-    this.gpuFilterSelector,
-    gpuFilter => gpuFilterToMapboxFilter(gpuFilter)
+  filterSelector = createSelector(this.gpuFilterSelector, gpuFilter =>
+    gpuFilterToMapboxFilter(gpuFilter)
   );
 
   isValidFilter(filter) {
@@ -127,8 +120,7 @@ class MapboxLayerGL extends Layer {
     const {filterValueUpdateTriggers, filterValueAccessor} = gpuFilter;
 
     // gpuField To property
-    const hasFilter = Object.values(filterValueUpdateTriggers).filter(d => d)
-      .length;
+    const hasFilter = Object.values(filterValueUpdateTriggers).filter(d => d).length;
     const valueAccessor = filterValueAccessor();
 
     const getPropertyFromFilter = hasFilter

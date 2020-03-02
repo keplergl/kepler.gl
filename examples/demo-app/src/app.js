@@ -102,21 +102,20 @@ class App extends Component {
 
   componentDidMount() {
     // if we pass an id as part of the url
-    // we try to fetch along map configurations
-    const {
-      params: {id, provider} = {},
-      location: {query = {}} = {}
-    } = this.props;
+    // we ry to fetch along map configurations
+    const {params: {id, provider} = {}, location: {query = {}} = {}} = this.props;
 
     const cloudProvider = CLOUD_PROVIDERS.find(c => c.name === provider);
-    if (provider) {
-      this.props.dispatch(loadCloudMap({
-        loadParams: query,
-        provider: cloudProvider,
-        onSuccess: onLoadCloudMapSuccess
-      }));
+    if (cloudProvider) {
+      this.props.dispatch(
+        loadCloudMap({
+          loadParams: query,
+          provider: cloudProvider,
+          onSuccess: onLoadCloudMapSuccess
+        })
+      );
       return;
-  }
+    }
 
     // Load sample using its id
     if (id) {
@@ -217,17 +216,19 @@ class App extends Component {
           version: 'v1',
           config: {
             visState: {
-              layers: [{
-                type: '3D',
-                config: {
-                  dataId: 'test_trip_data',
-                  columns: {
-                    lat: 'gps_data.lat',
-                    lng: 'gps_data.lng'
-                  },
-                  isVisible: true
+              layers: [
+                {
+                  type: '3D',
+                  config: {
+                    dataId: 'test_trip_data',
+                    columns: {
+                      lat: 'gps_data.lat',
+                      lng: 'gps_data.lng'
+                    },
+                    isVisible: true
+                  }
                 }
-              }]
+              ]
             }
           }
         }
@@ -388,7 +389,4 @@ class App extends Component {
 const mapStateToProps = state => state;
 const dispatchToProps = dispatch => ({dispatch});
 
-export default connect(
-  mapStateToProps,
-  dispatchToProps
-)(App);
+export default connect(mapStateToProps, dispatchToProps)(App);

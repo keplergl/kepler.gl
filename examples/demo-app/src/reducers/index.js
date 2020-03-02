@@ -28,60 +28,48 @@ import {EXPORT_MAP_FORMATS} from 'kepler.gl/constants';
 
 import {
   INIT,
-  SET_LOADING_METHOD,
   LOAD_MAP_SAMPLE_FILE,
   LOAD_REMOTE_RESOURCE_SUCCESS,
   LOAD_REMOTE_RESOURCE_ERROR,
   SET_SAMPLE_LOADING_STATUS
 } from '../actions';
 
-import {
-  AUTH_TOKENS,
-  DEFAULT_FEATURE_FLAGS,
-  DEFAULT_LOADING_METHOD,
-  LOADING_METHODS
-} from '../constants/default-settings';
+import {AUTH_TOKENS, DEFAULT_FEATURE_FLAGS} from '../constants/default-settings';
 import {generateHashId} from '../utils/strings';
 
 // INITIAL_APP_STATE
 const initialAppState = {
   appName: 'example',
   loaded: false,
-  loadingMethod: DEFAULT_LOADING_METHOD,
-  currentOption: DEFAULT_LOADING_METHOD.options[0],
-  previousMethod: null,
   sampleMaps: [], // this is used to store sample maps fetch from a remote json file
   isMapLoading: false, // determine whether we are loading a sample map,
   error: null, // contains error when loading/retrieving data/configuration
-    // {
-    //   status: null,
-    //   message: null
-    // }
+  // {
+  //   status: null,
+  //   message: null
+  // }
   // eventually we may have an async process to fetch these from a remote location
   featureFlags: DEFAULT_FEATURE_FLAGS
 };
 
 // App reducer
-export const appReducer = handleActions({
-  [INIT]: (state) => ({
-    ...state,
-    loaded: true
-  }),
-  [SET_LOADING_METHOD]: (state, action) => ({
-    ...state,
-    previousMethod: state.loadingMethod,
-    loadingMethod: LOADING_METHODS.find(({id}) => id === action.method),
-    error: null
-  }),
-  [LOAD_MAP_SAMPLE_FILE]: (state, action) => ({
-    ...state,
-    sampleMaps: action.samples
-  }),
-  [SET_SAMPLE_LOADING_STATUS]: (state, action) => ({
-    ...state,
-    isMapLoading: action.isMapLoading
-  })
-}, initialAppState);
+export const appReducer = handleActions(
+  {
+    [INIT]: state => ({
+      ...state,
+      loaded: true
+    }),
+    [LOAD_MAP_SAMPLE_FILE]: (state, action) => ({
+      ...state,
+      sampleMaps: action.samples
+    }),
+    [SET_SAMPLE_LOADING_STATUS]: (state, action) => ({
+      ...state,
+      isMapLoading: action.isMapLoading
+    })
+  },
+  initialAppState
+);
 
 const {DEFAULT_EXPORT_MAP} = uiStateUpdaters;
 
@@ -146,8 +134,7 @@ export const loadRemoteResourceSuccess = (state, action) => {
     }
   });
 
-  const config = action.config ?
-    KeplerGlSchema.parseSavedConfig(action.config) : null;
+  const config = action.config ? KeplerGlSchema.parseSavedConfig(action.config) : null;
 
   const keplerGlInstance = combinedUpdaters.addDataToMapUpdater(
     state.keplerGl.map, // "map" is the id of your kepler.gl instance
@@ -191,7 +178,9 @@ export const loadRemoteResourceError = (state, action) => {
       ...state.keplerGl, // in case you keep multiple instances
       map: {
         ...state.keplerGl.map,
-        uiState: uiStateUpdaters.addNotificationUpdater(state.keplerGl.map.uiState, {payload: errorNote})
+        uiState: uiStateUpdaters.addNotificationUpdater(state.keplerGl.map.uiState, {
+          payload: errorNote
+        })
       }
     }
   };

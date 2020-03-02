@@ -711,14 +711,7 @@ export const savedStateWIthNonValidFilters = {
                   name: 'Global Warming',
                   type: 'sequential',
                   category: 'Uber',
-                  colors: [
-                    '#5A1846',
-                    '#900C3F',
-                    '#C70039',
-                    '#E3611C',
-                    '#F1920E',
-                    '#FFC300'
-                  ]
+                  colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
                 },
                 radius: 10,
                 sizeRange: [18.9, 47.6],

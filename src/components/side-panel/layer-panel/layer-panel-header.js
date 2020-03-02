@@ -24,13 +24,7 @@ import classnames from 'classnames';
 import styled from 'styled-components';
 import {sortableHandle} from 'react-sortable-hoc';
 import PanelHeaderAction from 'components/side-panel/panel-header-action';
-import {
-  EyeSeen,
-  EyeUnseen,
-  VertDots,
-  ArrowDown,
-  Trash
-} from 'components/common/icons';
+import {EyeSeen, EyeUnseen, VertDots, ArrowDown, Trash} from 'components/common/icons';
 
 import {InlineInput, StyledPanelHeader} from 'components/common/styled-components';
 
@@ -73,7 +67,7 @@ const StyledLayerPanelHeader = styled(StyledPanelHeader)`
     }
 
     .layer__enable-config {
-      color: white
+      color: white;
     }
   }
 `;
@@ -112,11 +106,9 @@ const StyledDragHandle = styled.div`
   }
 `;
 
-const DragHandle = sortableHandle(({className, children}) =>
-  <StyledDragHandle className={className}>
-    {children}
-  </StyledDragHandle>
-);
+const DragHandle = sortableHandle(({className, children}) => (
+  <StyledDragHandle className={className}>{children}</StyledDragHandle>
+));
 
 const LayerPanelHeader = ({
   className,

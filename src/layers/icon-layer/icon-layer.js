@@ -27,15 +27,13 @@ import IconLayerIcon from './icon-layer-icon';
 import {ICON_FIELDS, CLOUDFRONT} from 'constants/default-settings';
 import IconInfoModalFactory from './icon-info-modal';
 import Layer from '../base-layer';
+import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 
 const brushingExtension = new BrushingExtension();
 
 export const SVG_ICON_URL = `${CLOUDFRONT}/icons/svg-icons.json`;
 
-export const iconPosAccessor = ({lat, lng}) => d => [
-  d.data[lng.fieldIdx],
-  d.data[lat.fieldIdx]
-];
+export const iconPosAccessor = ({lat, lng}) => d => [d.data[lng.fieldIdx], d.data[lat.fieldIdx]];
 export const iconAccessor = ({icon}) => d => d.data[icon.fieldIdx];
 
 export const iconRequiredColumns = ['lat', 'lng', 'icon'];
@@ -49,9 +47,12 @@ export const pointVisConfigs = {
 };
 
 function flatterIconPositions(icon) {
+  // had to flip y, since @luma modal has changed
   return icon.mesh.cells.reduce((prev, cell) => {
     cell.forEach(p => {
-      Array.prototype.push.apply(prev, icon.mesh.positions[p]);
+      prev.push(
+        ...[icon.mesh.positions[p][0], -icon.mesh.positions[p][1], icon.mesh.positions[p][2]]
+      );
     });
     return prev;
   }, []);
@@ -117,8 +118,8 @@ export default class IconLayer extends Layer {
     };
 
     if (window.fetch) {
-
-      window.fetch(SVG_ICON_URL, fetchConfig)
+      window
+        .fetch(SVG_ICON_URL, fetchConfig)
         .then(response => response.json())
         .then((parsed = {}) => {
           const {svgIcons = []} = parsed;
@@ -131,7 +132,7 @@ export default class IconLayer extends Layer {
           );
 
           this._layerInfoModal = IconInfoModalFactory(svgIcons);
-      });
+        });
     }
   }
 
@@ -204,39 +205,43 @@ export default class IconLayer extends Layer {
       sizeField,
       sizeScale,
       sizeDomain,
+      textLabel,
       visConfig: {radiusRange, colorRange}
     } = this.config;
     const getPosition = this.getPositionAccessor();
 
     const {gpuFilter} = datasets[this.config.dataId];
-    const {data} = this.updateData(datasets, oldLayerData);
+    const {data, triggerChanged} = this.updateData(datasets, oldLayerData);
 
     // point color
     const cScale =
       colorField &&
-      this.getVisChannelScale(
-        colorScale,
-        colorDomain,
-        colorRange.colors.map(hexToRgb)
-      );
+      this.getVisChannelScale(colorScale, colorDomain, colorRange.colors.map(hexToRgb));
 
     // point radius
-    const rScale =
-      sizeField && this.getVisChannelScale(sizeScale, sizeDomain, radiusRange, 0);
+    const rScale = sizeField && this.getVisChannelScale(sizeScale, sizeDomain, radiusRange, 0);
 
-    const getRadius = rScale ? d =>
-      this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
+    const getRadius = rScale ? d => this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
 
     const getFillColor = cScale
       ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
       : color;
+
+    // get all distinct characters in the text labels
+    const textLabels = formatTextLabelData({
+      textLabel,
+      triggerChanged,
+      oldLayerData,
+      data
+    });
 
     return {
       data,
       getPosition,
       getFillColor,
       getFilterValue: gpuFilter.filterValueAccessor(),
-      getRadius
+      getRadius,
+      textLabels
     };
   }
 
@@ -246,21 +251,54 @@ export default class IconLayer extends Layer {
   }
 
   renderLayer(opts) {
-    const {
-      data,
-      gpuFilter,
-      objectHovered,
-      mapState,
-      interactionConfig
-    } = opts;
+    const {data, gpuFilter, objectHovered, mapState, interactionConfig} = opts;
+
+    const radiusScale = this.getRadiusScaleByZoom(mapState);
 
     const layerProps = {
-      radiusScale: this.getRadiusScaleByZoom(mapState),
+      radiusScale,
       ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
+    };
+
+    const updateTriggers = {
+      getFilterValue: gpuFilter.filterValueUpdateTriggers,
+      getRadius: {
+        sizeField: this.config.colorField,
+        radiusRange: this.config.visConfig.radiusRange,
+        sizeScale: this.config.sizeScale
+      },
+      getFillColor: {
+        color: this.config.color,
+        colorField: this.config.colorField,
+        colorRange: this.config.visConfig.colorRange,
+        colorScale: this.config.colorScale
+      }
     };
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const brushingProps = this.getBrushingExtensionProps(interactionConfig);
+    const getPixelOffset = getTextOffsetByRadius(radiusScale, data.getRadius, mapState);
+    const extensions = [...defaultLayerProps.extensions, brushingExtension];
+
+    // shared Props between layer and label layer
+    const sharedProps = {
+      getFilterValue: data.getFilterValue,
+      extensions,
+      filterRange: defaultLayerProps.filterRange,
+      ...brushingProps
+    };
+
+    const labelLayers = [
+      ...this.renderTextLabelLayer(
+        {
+          getPosition: data.getPosition,
+          sharedProps,
+          getPixelOffset,
+          updateTriggers
+        },
+        opts
+      )
+    ];
 
     return !this.iconGeometry
       ? []
@@ -273,21 +311,8 @@ export default class IconLayer extends Layer {
             getIconGeometry: id => this.iconGeometry[id],
 
             // update triggers
-            updateTriggers: {
-              getFilterValue: gpuFilter.filterValueUpdateTriggers,
-              getRadius: {
-                sizeField: this.config.colorField,
-                radiusRange: this.config.visConfig.radiusRange,
-                sizeScale: this.config.sizeScale
-              },
-              getFillColor: {
-                color: this.config.color,
-                colorField: this.config.colorField,
-                colorRange: this.config.visConfig.colorRange,
-                colorScale: this.config.colorScale
-              }
-            },
-            extensions: [...defaultLayerProps.extensions, brushingExtension]
+            updateTriggers,
+            extensions
           }),
 
           ...(this.isLayerHovered(objectHovered)
@@ -302,7 +327,10 @@ export default class IconLayer extends Layer {
                   getIconGeometry: id => this.iconGeometry[id]
                 })
               ]
-            : [])
+            : []),
+
+          // text label layer
+          ...labelLayers
         ];
   }
 }

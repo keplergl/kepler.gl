@@ -52,7 +52,7 @@ export const DEFAULT_CUSTOM_PALETTE = {
   type: 'custom',
   category: 'Custom',
   colors: []
-}
+};
 
 export const DEFAULT_COLOR_UI = {
   // customPalette in edit
@@ -249,9 +249,7 @@ export const LAYER_VIS_CONFIGS = {
     defaultValue: [0, 100],
     label: config =>
       `Filter by ${
-        config.sizeField
-          ? `${config.visConfig.sizeAggregation} ${config.sizeField.name}`
-          : 'count'
+        config.sizeField ? `${config.visConfig.sizeAggregation} ${config.sizeField.name}` : 'count'
       } percentile`,
     isRanged: true,
     range: [0, 100],
@@ -259,8 +257,7 @@ export const LAYER_VIS_CONFIGS = {
     group: PROPERTY_GROUPS.height,
     property: 'elevationPercentile',
     // percentile filter only makes sense with linear aggregation
-    condition: config =>
-      config.visConfig.enable3d && (config.colorField || config.sizeField)
+    condition: config => config.visConfig.enable3d && (config.colorField || config.sizeField)
   },
   resolution: {
     type: 'number',
@@ -279,18 +276,21 @@ export const LAYER_VIS_CONFIGS = {
     isRanged: false,
     range: [1, 1000],
     step: 1,
-    // group: PROPERTY_GROUPS.cell,
     property: 'sizeScale'
   },
   angle: {
     type: 'number',
     defaultValue: 0,
-    // label: 'Size Scale',
     isRanged: false,
     range: [0, 360],
     step: 1
-    // group: PROPERTY_GROUPS.cell,
-    // property: 'sizeScale'
+  },
+  angleZ: {
+    type: 'number',
+    defaultValue: 90,
+    isRanged: false,
+    range: [0, 360],
+    step: 1
   },
   worldUnitSize: {
     type: 'number',

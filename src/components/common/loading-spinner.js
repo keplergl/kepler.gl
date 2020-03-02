@@ -49,13 +49,7 @@ const LoadingWrapper = styled.div`
   padding: 2px;
 `;
 
-const LoadingSpinner = ({
-  size = 32,
-  color,
-  borderColor,
-  strokeWidth = 3,
-  gap = 2
-}) => (
+const LoadingSpinner = ({size = 32, color, borderColor, strokeWidth = 3, gap = 2}) => (
   <LoadingWrapper style={{width: `${size}px`, height: `${size}px`, padding: `${gap}px`}}>
     <Loader
       color={color}

@@ -141,9 +141,7 @@ export const addDataToMapUpdater = (state, {payload}) => {
   let bounds;
   if (options.centerMap) {
     // find map bounds for new layers
-    const newLayers = mergedState.visState.layers.filter(
-      nl => !oldLayers.find(ol => ol === nl)
-    );
+    const newLayers = mergedState.visState.layers.filter(nl => !oldLayers.find(ol => ol === nl));
     bounds = findMapBounds(newLayers);
   }
 
@@ -170,9 +168,7 @@ export const addDataToMapUpdater = (state, {payload}) => {
       ...toggleModalUpdater(loadFilesSuccessUpdater(mergedState.uiState), {
         payload: null
       }),
-      ...(options.hasOwnProperty('readOnly')
-        ? {readOnly: options.readOnly}
-        : {})
+      ...(options.hasOwnProperty('readOnly') ? {readOnly: options.readOnly} : {})
     }
   };
 

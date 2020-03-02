@@ -41,18 +41,23 @@ class MapStyleSchemaV1 extends Schema {
   key = 'mapStyles';
   save(mapStyles) {
     // save all custom styles
-    const saveCustomStyle = Object.keys(mapStyles).reduce((accu, key) => ({
-      ...(mapStyles[key].custom ?
-          {[key]: CustomMapStyleSchema.save(mapStyles[key]).customStyle} : {}
-      )
-    }), {});
+    const saveCustomStyle = Object.keys(mapStyles).reduce(
+      (accu, key) => ({
+        ...(mapStyles[key].custom
+          ? {[key]: CustomMapStyleSchema.save(mapStyles[key]).customStyle}
+          : {})
+      }),
+      {}
+    );
 
     return {[this.key]: saveCustomStyle};
   }
 
   load(mapStyles) {
     // If mapStyle is an empty object, do not load it
-    return typeof mapStyles === 'object' && Object.keys(mapStyles).length ? {[this.key]: mapStyles} : {};
+    return typeof mapStyles === 'object' && Object.keys(mapStyles).length
+      ? {[this.key]: mapStyles}
+      : {};
   }
 }
 

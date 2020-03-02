@@ -1,49 +1,47 @@
-# Map Settings
+# Map settings
 
-<!-- TOC -->
-  - [Split Maps](#split-maps)
-  - [View Maps in 3D](#view-maps-in-3d)
-  - [Display Legend](#display-legend)
-<!-- /TOC -->
+* [Split Maps](m-map-settings.md#split-maps)
+* [View Maps in 3D](m-map-settings.md#view-maps-in-3d)
+* [Display Legend](m-map-settings.md#display-legend)
 
-
-![Map Settings](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/m-map-settings-0.png "Split Maps")
+![Split Maps](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/m-map-settings-0.png)
 
 ## Split Maps
 
 You can display a side-by-side comparison of the same map area with different layers with the Split Map functionality.
 
-![Split Maps](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image36.png "Split Maps")
+![Split Maps](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image36.png)
 
 1. Enable this by clicking the Split Map icon in the top right corner of your map:
 
-![Split Maps Icon](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/m-map-settings-split.png "Split Maps Icon")
+![Split Maps Icon](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/m-map-settings-split.png)
 
-2. Toggle the layers visible in each map with the layer icon in the top right corner of each map.
+1. Toggle the layers visible in each map with the layer icon in the top right corner of each map.
 
-![Split Maps Icon](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/m-map-settings-layer.png "Split Maps Icon")
+![Split Maps Icon](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/m-map-settings-layer.png)
 
-![Toggle Layers](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image35.png "Toggle Layers")
+![Toggle Layers](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image35.png)
 
-3. Zoom in and out on each map and the other will automatically mimic.
-
+1. Zoom in and out on each map and the other will automatically mimic.
 
 ## View Maps in 3D
+
 View your map in 3D by clicking the 3D icon in the top right corner of your map
 
-![View Maps in 3D](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/m-map-settings-3d.png "View Maps in 3D")
+![View Maps in 3D](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/m-map-settings-3d.png)
 
-- __drag__:  pan
-- __cmd + drag__ (mac) or __ctrl + drag__ (win): rotate
+* **drag**:  pan
+* **cmd + drag** \(mac\) or **ctrl + drag** \(win\): rotate
 
-![Map in 3D](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/f-map-styles-7.png "Map in 3D")
-
+![Map in 3D](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/f-map-styles-7.png)
 
 ## Display Legend
+
 View your map in 3D by clicking the 3D icon in the top right corner of your map:
 
-![Display Legend](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/m-map-settings-legend.png "Display Legend")
+![Display Legend](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/m-map-settings-legend.png)
 
-![Sample Legend](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image14.png "Sample Legend")
+![Sample Legend](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image14.png)
 
-[Back to table of contents](./a-introduction.md)
+[Back to table of contents](a-introduction.md)
+
