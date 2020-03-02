@@ -49,8 +49,7 @@ export const QUERY_OPTIONS = keyMirror({
 
 export const LOADING_METHODS = keyMirror({
   remote: null,
-  sample: null,
-  storage: null
+  sample: null
 });
 
 export const LOADING_SAMPLE_LIST_ERROR_MESSAGE = 'Not able to load sample gallery';
@@ -60,13 +59,12 @@ export const LOADING_URL_MESSAGE =
 export const CORS_LINK = 'https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS';
 
 export const DEFAULT_FEATURE_FLAGS = {
-  cloudStorage: true,
-  backendStorage: true
+  cloudStorage: true
 };
 
 export const AUTH_TOKENS = {
   MAPBOX_TOKEN: process.env.MapboxAccessToken, // eslint-disable-line
   DROPBOX_CLIENT_ID: process.env.DropboxClientId, // eslint-disable-line
-  CARTO_CLIENT_ID: process.env.CartoClientId, // eslint-disable-line
   EXPORT_MAPBOX_TOKEN: process.env.MapboxExportToken, // eslint-disable-line
+  CARTO_CLIENT_ID: process.env.CartoClientId // eslint-disable-line
 };

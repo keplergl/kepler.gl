@@ -1504,11 +1504,7 @@ export function addDefaultTooltips(state, dataset) {
     ...tooltipFields
   };
 
-  return set(
-    ['interactionConfig', 'tooltip', 'config', 'fieldsToShow'],
-    merged,
-    state
-  );
+  return set(['interactionConfig', 'tooltip', 'config', 'fieldsToShow'], merged, state);
 }
 
 /**
@@ -1689,9 +1685,7 @@ export function deleteFeatureUpdater(state, {feature}) {
   if (getFilterIdInFeature(feature)) {
     const filterIdx = newState.filters.findIndex(f => f.id === getFilterIdInFeature(feature));
 
-    return filterIdx > -1
-      ? removeFilterUpdater(newState, {idx: filterIdx})
-      : newState;
+    return filterIdx > -1 ? removeFilterUpdater(newState, {idx: filterIdx}) : newState;
   }
 
   // modify editor object

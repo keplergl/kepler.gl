@@ -70,7 +70,6 @@ import {
 import {LAYER_VIS_CONFIGS, DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from 'layers/layer-factory';
 import {getNextColorMakerValue} from 'test/helpers/layer-utils';
 import {StateWFilesFiltersLayerColor} from 'test/helpers/mock-state';
-import {getDefaultMapInfo} from 'utils/map-info-utils';
 
 const mockData = {
   fields: [

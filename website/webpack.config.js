@@ -213,16 +213,16 @@ module.exports = env => {
     }
     if (!process.env.DropboxClientId) {
       logError('Error! DropboxClientId is not defined');
-      logInstruction(
-        `Make sure to run "export DropboxClientId=<token>" before deploy the website`
-      );
+      logInstruction(`Make sure to run "export DropboxClientId=<token>" before deploy the website`);
       logInstruction('You can get the token at https://www.dropbox.com/developers');
       throw new Error('Missing Export DropboxClientId Access token');
     }
     if (!process.env.CartoClientId) {
       logError('Error! CartoClientId is not defined');
       logInstruction(`Make sure to run "export CartoClientId=<token>" before deploy the website`);
-      logInstruction('You can get the token at https://carto.com/developers/fundamentals/oauth-apps/');
+      logInstruction(
+        'You can get the token at https://carto.com/developers/fundamentals/oauth-apps/'
+      );
       throw new Error('Missing Export CartoClientId Access token');
     }
     if (!process.env.MapboxExportToken) {

@@ -27,13 +27,7 @@ import get from 'lodash.get';
 
 import ModalDialogFactory from './modals/modal-dialog';
 import KeplerGlSchema from 'schemas';
-import {
-  exportJson,
-  exportHtml,
-  exportData,
-  exportImage,
-  exportMap
-} from 'utils/export-utils';
+import {exportJson, exportHtml, exportData, exportImage, exportMap} from 'utils/export-utils';
 import {isValidMapInfo} from 'utils/map-info-utils';
 
 // modals
@@ -282,11 +276,7 @@ export default function ModalContainerFactory(
             break;
           case DELETE_DATA_ID:
             // validate options
-            if (
-              datasetKeyToRemove &&
-              datasets &&
-              datasets[datasetKeyToRemove]
-            ) {
+            if (datasetKeyToRemove && datasets && datasets[datasetKeyToRemove]) {
               template = (
                 <DeleteDatasetModal dataset={datasets[datasetKeyToRemove]} layers={layers} />
               );
@@ -354,9 +344,7 @@ export default function ModalContainerFactory(
                 applyCPUFilter={this.props.visStateActions.applyCPUFilter}
                 onClose={this._closeModal}
                 onChangeExportDataType={uiStateActions.setExportDataType}
-                onChangeExportSelectedDataset={
-                  uiStateActions.setExportSelectedDataset
-                }
+                onChangeExportSelectedDataset={uiStateActions.setExportSelectedDataset}
                 onChangeExportFiltered={uiStateActions.setExportFiltered}
               />
             );
@@ -383,9 +371,7 @@ export default function ModalContainerFactory(
                 config={keplerGlConfig}
                 options={uiState.exportMap}
                 onChangeExportMapFormat={uiStateActions.setExportMapFormat}
-                onEditUserMapboxAccessToken={
-                  uiStateActions.setUserMapboxAccessToken
-                }
+                onEditUserMapboxAccessToken={uiStateActions.setUserMapboxAccessToken}
                 onChangeExportMapHTMLMode={uiStateActions.setExportHTMLMapMode}
               />
             );
@@ -408,9 +394,7 @@ export default function ModalContainerFactory(
                 mapState={this.props.mapState}
                 inputStyle={mapStyle.inputStyle}
                 inputMapStyle={this.props.mapStyleActions.inputMapStyle}
-                loadCustomMapStyle={
-                  this.props.mapStyleActions.loadCustomMapStyle
-                }
+                loadCustomMapStyle={this.props.mapStyleActions.loadCustomMapStyle}
               />
             );
             modalProps = {

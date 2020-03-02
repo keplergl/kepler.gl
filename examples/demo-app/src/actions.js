@@ -145,8 +145,7 @@ export function loadRemoteMap(options) {
       error => {
         const {target = {}} = error;
         const {status, responseText} = target;
-        dispatch(
-          loadRemoteResourceError({status, message: responseText}, options.dataUrl));
+        dispatch(loadRemoteResourceError({status, message: responseText}, options.dataUrl));
       }
     );
   };
