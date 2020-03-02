@@ -70,8 +70,6 @@ import {
   computeSplitMapLayers
 } from 'utils/split-map-utils';
 
-import {getDefaultMapInfo} from 'utils/map-info-utils';
-
 import {Layer, LayerClasses} from 'layers';
 import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
 import {EDITOR_MODES, DATASET_FORMATS} from 'constants/default-settings';

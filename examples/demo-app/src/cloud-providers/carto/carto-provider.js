@@ -22,18 +22,19 @@ import {OAuthApp} from '@carto/toolkit';
 import Console from 'global/console';
 import CartoIcon from './carto-icon';
 import {formatCsv} from 'processors/data-processor';
+import {Provider} from 'kepler.gl/cloud-providers';
+
 const NAME = 'carto';
 const DISPLAY_NAME = 'CARTO';
 const NAMESPACE = 'keplergl';
 const PRIVATE_STORAGE_ENABLED = true;
 const SHARING_ENABLED = true;
 
-export default class CartoProvider {
+export default class CartoProvider extends Provider {
   constructor(clientId) {
-    this.name = NAME;
-    this.displayName = DISPLAY_NAME;
+    super({name: NAME, displayName: DISPLAY_NAME, icon: CartoIcon});
+
     this.clientId = clientId;
-    this.icon = CartoIcon;
     this.thumbnail = {width: 300, height: 200};
     this.currentMap = null;
 
@@ -96,10 +97,7 @@ export default class CartoProvider {
   async uploadMap({mapData = {}, options = {}}) {
     try {
       const {isPublic = true, overwrite = true} = options;
-      const {
-        map: {config, datasets, info} = {},
-        thumbnail
-      } = mapData;
+      const {map: {config, datasets, info} = {}, thumbnail} = mapData;
 
       const cartoDatasets = datasets.map(this._convertDataset);
 
@@ -109,9 +107,7 @@ export default class CartoProvider {
       const name = title;
 
       const thumbnailBase64 =
-        mapData && thumbnail
-          ? await this._blobToBase64(mapData.thumbnail)
-          : null;
+        mapData && thumbnail ? await this._blobToBase64(mapData.thumbnail) : null;
 
       let result;
       if (overwrite) {
@@ -151,11 +147,14 @@ export default class CartoProvider {
       }
 
       return {
-        shareUrl: this.getMapPermalinkFromParams({
-          mapId: result.id,
-          owner: this._carto.username,
-          privateMap: !isPublic
-        }, true)
+        shareUrl: this.getMapPermalinkFromParams(
+          {
+            mapId: result.id,
+            owner: this._carto.username,
+            privateMap: !isPublic
+          },
+          true
+        )
       };
     } catch (error) {
       this._manageErrors(error);
@@ -222,10 +221,7 @@ export default class CartoProvider {
           visualization = await cs.getVisualization(mapId);
         }
       } else {
-        visualization = await this._carto.PublicStorageReader.getVisualization(
-          username,
-          mapId
-        );
+        visualization = await this._carto.PublicStorageReader.getVisualization(username, mapId);
       }
 
       if (!visualization) {
@@ -293,9 +289,7 @@ export default class CartoProvider {
         });
       }
 
-      formattedVis = formattedVis.sort(
-        (a, b) => b.lastModification - a.lastModification
-      );
+      formattedVis = formattedVis.sort((a, b) => b.lastModification - a.lastModification);
 
       return formattedVis;
     } catch (error) {
@@ -322,11 +316,14 @@ export default class CartoProvider {
 
   getMapUrl(fullUrl = true) {
     if (this.currentMap) {
-      return this.getMapPermalinkFromParams({
-        mapId: this.currentMap.id,
-        owner: this.getUserName(),
-        privateMap: this.currentMap.isPrivate
-      }, fullUrl);
+      return this.getMapPermalinkFromParams(
+        {
+          mapId: this.currentMap.id,
+          owner: this.getUserName(),
+          privateMap: this.currentMap.isPrivate
+        },
+        fullUrl
+      );
     }
   }
 
@@ -366,9 +363,7 @@ export default class CartoProvider {
         case 'Cannot set the client ID more than once':
           Console.error('CARTO provider already initialized');
           break;
-        case (
-          error.message.match(/relation "[a-zA-Z0-9_]+" does not exist/) || {}
-        ).input:
+        case (error.message.match(/relation "[a-zA-Z0-9_]+" does not exist/) || {}).input:
           Console.error('CARTO custom storage is not properly initialized');
           message = 'Custom storage is not properly initialized';
           break;
