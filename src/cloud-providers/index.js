@@ -18,26 +18,4 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-<<<<<<< HEAD:src/components/modals/error-display.js
-import React from 'react';
-import ErrorBoundary from 'components/common/error-boundary';
-import NotificationItemFactory from 'components/notification-panel/notification-item';
-const NotificationItem = NotificationItemFactory();
-
-const ErrorDisplay = ({error}) => (
-  <ErrorBoundary>
-    <NotificationItem
-      notification={{
-        type: 'error',
-        message: error,
-        id: 'cloud-export-error'
-      }}
-      isExpanded
-    />
-  </ErrorBoundary>
-);
-
-export default ErrorDisplay;
-=======
 export {default as Provider} from './provider';
->>>>>>> 10e9238bd14f375daaf1ac3f42d0804b30005192:src/cloud-providers/index.js
