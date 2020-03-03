@@ -8,7 +8,7 @@
     "start-local-https": "webpack-dev-server --mode development --https --env.es6 --progress --hot --open"
   },
   "dependencies": {
-    "@carto/toolkit": "0.0.1-rc.13",
+    "@carto/toolkit": "0.0.1-rc.15",
     "d3-request": "^1.0.6",
     "dropbox": "^4.0.12",
     "global": "^4.3.0",
@@ -26,8 +26,7 @@
     "react-virtualized": "^9.21.0",
     "redux-actions": "^2.2.1",
     "redux-thunk": "^1.0.0",
-    "styled-components": "^4.1.3",
-    "@carto/toolkit": "0.0.1-rc.13"
+    "styled-components": "^4.1.3"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0",
