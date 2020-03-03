@@ -214,12 +214,6 @@ export const CloudStorageDropdownFactory = PanelHeaderDropdown => {
         key: 'saveAs',
         onClick: props => props.onSaveAsToStorage
       }
-      // {
-      //   label: 'Settings',
-      //   icon: Gear,
-      //   key: 'settings',
-      //   onClick: props => props.onExportData
-      // }
     ]
   };
   return CloudStorageDropdown;
@@ -232,6 +226,7 @@ function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
   return class PanelHeader extends Component {
     static propTypes = {
       appName: PropTypes.string,
+      appWebsite: PropTypes.string,
       version: PropTypes.string,
       visibleDropdown: PropTypes.string,
       logoComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
@@ -269,6 +264,7 @@ function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
     render() {
       const {
         appName,
+        appWebsite,
         version,
         actionItems,
         visibleDropdown,
@@ -286,7 +282,7 @@ function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
       return (
         <StyledPanelHeader className="side-panel__panel-header">
           <StyledPanelHeaderTop className="side-panel__panel-header__top">
-            <this.props.logoComponent appName={appName} version={version} />
+            <this.props.logoComponent appName={appName} version={version} appWebsite={appWebsite}/>
             <StyledPanelTopActions>
               {items.map(item => (
                 <div
