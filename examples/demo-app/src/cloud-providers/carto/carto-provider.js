@@ -27,6 +27,7 @@ import {Provider} from 'kepler.gl/cloud-providers';
 const NAME = 'carto';
 const DISPLAY_NAME = 'CARTO';
 const NAMESPACE = 'keplergl';
+const DOMAIN = 'carto.com';
 const PRIVATE_STORAGE_ENABLED = true;
 const SHARING_ENABLED = true;
 
@@ -38,12 +39,16 @@ export default class CartoProvider extends Provider {
     this.thumbnail = {width: 300, height: 200};
     this.currentMap = null;
 
+    this._folderLink = `https://{user}.${DOMAIN}/dashboard/maps/external`;
+
     // Initialize CARTO API
     this._carto = new OAuthApp(
       {
+        authorization: `https://${DOMAIN}/oauth2`,
         scopes: 'schemas:c'
       },
       {
+        serverUrlTemplate: `https://{user}.${DOMAIN}/`,
         namespace: NAMESPACE
       }
     );
@@ -154,7 +159,8 @@ export default class CartoProvider extends Provider {
             privateMap: !isPublic
           },
           true
-        )
+        ),
+        folderLink: this._folderLink.replace('{user}', this._carto.username)
       };
     } catch (error) {
       this._manageErrors(error);
@@ -325,6 +331,10 @@ export default class CartoProvider extends Provider {
         fullUrl
       );
     }
+  }
+
+  getManagementUrl() {
+    return this._folderLink.replace('{user}', this._carto.username);
   }
 
   getCurrentVisualization() {

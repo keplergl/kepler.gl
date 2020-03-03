@@ -44,10 +44,17 @@ const StyledVisualizationSection = styled.div`
   align-items: stretch;
 `;
 
-const StyledBackBtn = styled.a`
+const StyledStorageHeader = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
   font-size: 12px;
   line-height: 14px;
-  margin-bottom: 16px;
+`;
+
+const StyledBackBtn = styled.a`
   color: #3a414c;
   cursor: pointer;
 
@@ -282,12 +289,25 @@ function LoadStorageMapFactory() {
               )}
               {!isProviderLoading && visualizations && (
                 <StyledVisualizationSection>
-                  <StyledBackBtn>
-                    <Button link onClick={() => onSetCloudProvider(null)}>
-                      <ArrowLeft height="14px" />
-                      Back
-                    </Button>
-                  </StyledBackBtn>
+                  <StyledStorageHeader>
+                    <StyledBackBtn>
+                      <Button link onClick={() => onSetCloudProvider(null)}>
+                        <ArrowLeft height="14px" />
+                        Back
+                      </Button>
+                    </StyledBackBtn>
+                    {provider.getManagementUrl && (
+                      <a
+                        key={1}
+                        href={provider.getManagementUrl()}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{textDecoration: 'underline'}}
+                      >
+                        Go to your Kepler.gl {provider.displayName} page
+                      </a>
+                    )}
+                  </StyledStorageHeader>
                   <StyledProviderVisSection>
                     <span className="title">
                       <span>{currentProvider}</span> Storage / Maps

@@ -193,6 +193,22 @@ function SaveMapModalFactory() {
                   ))}
                 </div>
               </StyledExportSection>
+              {provider && provider.getManagementUrl && (
+                <StyledExportSection style={{margin: '2px 0'}}>
+                  <div className="description" />
+                  <div className="selection">
+                    <a
+                      key={1}
+                      href={provider.getManagementUrl()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{textDecoration: 'underline'}}
+                    >
+                      Go to your Kepler.gl {provider.displayName} page
+                    </a>
+                  </div>
+                </StyledExportSection>
+              )}
               <StyledExportSection>
                 <div className="description image-preview-panel">
                   <ImagePreview

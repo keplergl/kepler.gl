@@ -167,7 +167,7 @@ export default function ShareMapUrlModalFactory() {
                     </div>
                     <div className="selection">
                       <SharingUrl key={0} url={shareUrl} />
-                      {folderLink && (
+                      {provider && folderLink && (
                         <a
                           key={1}
                           href={folderLink}
@@ -175,7 +175,7 @@ export default function ShareMapUrlModalFactory() {
                           rel="noopener noreferrer"
                           style={{textDecoration: 'underline'}}
                         >
-                          Go to your Kepler.gl {currentProvider} page
+                          Go to your Kepler.gl {provider.displayName} page
                         </a>
                       )}
                     </div>
