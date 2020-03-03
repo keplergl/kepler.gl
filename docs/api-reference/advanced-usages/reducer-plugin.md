@@ -4,7 +4,7 @@ For advanced users, who want to add additional action handler to kepler.gl reduc
 
 `Reducer.plugin` will allow advanced users to extend the kepler.gl reducer behavior. Here is an example of adding an additional action `HIDE_AND_SHOW_SIDE_PANEL` handler that modifies the `uiState`.
 
-```javascript
+```js
 import {combineReducers} from 'redux';
 import keplerGlReducer from 'kepler.gl/reducers';
 
@@ -27,12 +27,13 @@ const reducers = combineReducers({
 
 Note that, reducer plugin **should not be used to override default kepler.gl actions** The following code will not change `SET_FILTER`, because plugins are handled after default actions.
 
-```javascript
+```js
 const customizedKeplerGlReducer = keplerGlReducer
  .plugin({
    [ActionTypes.SET_FILTER]: (state, action) => state
  });
 ```
 
-For full implementation, take a look at the [custom reducer example](https://github.com/keplergl/kepler.gl/tree/master/examples/custom-reducer)
+For full implementation, take a look at the [custom reducer example][custom-reducer-example]
 
+[custom-reducer-example]: https://github.com/keplergl/kepler.gl/tree/master/examples/custom-reducer

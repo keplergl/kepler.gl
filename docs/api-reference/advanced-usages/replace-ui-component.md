@@ -5,10 +5,9 @@ To allow customize a child component, the library author usually has to pass the
 All you need to do is to create a component factory for the one you wish to replace, import the original component factory and call `injectComponents` at where `KeplerGl` is mounted. `injectComponents` will return a new `KeplerGl` component instance that renders the custom child component. This way we don’t have to keep track of hundreds of component as props and pass them all the way down. Dependency injection only happens once when `keplerGl` component is imported.
 
 ## Factory
-
 For each high level component in kepler.gl, we export a `factory`. A `factory` is a function that takes a set of `dependencies` and return a component instance. In this example below, the `MapContainerFactory` takes `MapPopover` and `MapControl` as dependencies and returns the `MapContainer` component instance. Not all components are exported as factories in kepler.gl at the moment, we are still testing this feature.
 
-```javascript
+```js
 import MapPopoverFactory from 'components/map/map-popover';
 import MapControlFactory from 'components/map/map-control';
 
@@ -32,13 +31,14 @@ MapContainerFactory.deps = [MapPopoverFactory, MapControlFactory];
 
 A recipe is an array of default factory, and the one to replace it. `[defaultFactory, customFactory]`. To replace default component, user can import the existing component factory, call `injectComponents` and pass in the new recipe to get a new `KeplerGl` instance.
 
+
 ### Inject Components
 
 In kepler.gl, we create the app injector by calling provide with an array of default recipes. We then export a `injectComponents` function that user can call to inject a different recipe and returns a new kepler.gl instance.
 
 Here is an example of how to use `injectComponents` to replace default `PanelHeader`.
 
-```javascript
+```js
 import {injectComponents, PanelHeaderFactory} from 'kepler.gl/components';
 
 // define custom header
@@ -56,17 +56,18 @@ const KeplerGl = injectComponents([
 const MapContainer = () => <KeplerGl id="foo"/>;
 ```
 
-## Pass custom component props
+##  Pass custom component props
+`injectComponents` allows user to render custom component, however, they usually also want to pass additional props to the customized component which current component injector doesn’t support. To enable passing additional props, we implemented a `withState`helper that passes additional props to the customized component. `withState` takes 3 arguments: `lenses`, `mapStateToProps` and `actionCreators`,  They allows user to pass in kepler.gl instance state, state from other part of the app, and custom actions.
 
-`injectComponents` allows user to render custom component, however, they usually also want to pass additional props to the customized component which current component injector doesn’t support. To enable passing additional props, we implemented a `withState`helper that passes additional props to the customized component. `withState` takes 3 arguments: `lenses`, `mapStateToProps` and `actionCreators`, They allows user to pass in kepler.gl instance state, state from other part of the app, and custom actions.
+- `lense` - A getter function to get a piece of kepler.gl subreducer state. Kepler.gl exports lenses for all its sub-reducers. For instance when pass `mapStateLens` to `withState`, the component will receive `mapState` of current kepler.gl instance as a prop.
 
-* `lense` - A getter function to get a piece of kepler.gl subreducer state. Kepler.gl exports lenses for all its sub-reducers. For instance when pass `mapStateLens` to `withState`, the component will receive `mapState` of current kepler.gl instance as a prop.
-* `mapStateToProps` - A wild card to play. You can pass a `mapStateToProps` function to get the state from any part of the app. If the lenses aren’t enough, use `mapStateToProps`.
-* `actions` - action creators that will be passed to `bindActionCreators`.
+- `mapStateToProps` - A wild card to play. You can pass a `mapStateToProps` function to get the state from any part of the app. If the lenses aren’t enough, use `mapStateToProps`.
+
+- `actions` - action creators that will be passed to `bindActionCreators`.
 
 Here is an example of using `withState` helper to add reducer state and actions to customized component as additional props.
 
-```javascript
+```js
 import {withState, injectComponents, PanelHeaderFactory} from 'kepler.gl/components';
 import {visStateLens} from 'kepler.gl/reducers';
 

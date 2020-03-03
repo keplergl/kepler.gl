@@ -1,2 +1,0 @@
-# kepler.gl Jupyter
-
