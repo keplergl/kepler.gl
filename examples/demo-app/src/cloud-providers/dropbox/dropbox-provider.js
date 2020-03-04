@@ -263,6 +263,10 @@ export default class DropboxProvider extends Provider {
       : `/${mapLink}`;
   }
 
+  getManagementUrl() {
+    return this._folderLink;
+  }
+
   /**
    * Provides the current dropbox auth token. If stored in localStorage is set onto dropbox handler and returned
    * @returns {any}
