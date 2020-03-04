@@ -28,11 +28,10 @@ import copy from 'copy-to-clipboard';
 import {parseFieldValue} from 'utils/data-utils';
 
 // Tasks
-import {LOAD_FILE_TASK, ACTION_TASK} from 'tasks/tasks';
+import {LOAD_FILE_TASK} from 'tasks/tasks';
 
 // Actions
-import {loadFilesErr, loadFileSuccess} from 'actions/vis-state-actions';
-import {addDataToMap} from 'actions';
+import {loadFilesErr, loadNextFile, loadFileSuccess} from 'actions/vis-state-actions';
 
 // Utils
 import {getDefaultInteraction, findFieldsToShow} from 'utils/interaction-utils';
@@ -1317,11 +1316,12 @@ function closeSpecificMapAtIndex(state, action) {
  * @param {Object} state `visState`
  * @param {Object} action action
  * @param {Array<Object>} action.files array of fileblob
+ * @param {Function} action.onFinish action creator to execute after load file succeed
  * @returns {Object} nextState
  * @public
  */
 export const loadFilesUpdater = (state, action) => {
-  const {files} = action;
+  const {files, onFinish = loadFileSuccess} = action;
   if (!files.length) {
     return state;
   }
@@ -1333,89 +1333,41 @@ export const loadFilesUpdater = (state, action) => {
       fileLoading: true,
       fileLoadingProgress: 0
     },
-    makeLoadFileTask(files.length, files, fileCache)
+    makeLoadFileTask(files.length, files, fileCache, onFinish)
   );
 };
 
-function makeLoadFileTask(totalCount, filesToLoad, fileCache) {
-  const file = filesToLoad.pop();
-
-  return LOAD_FILE_TASK({file, fileCache}).bimap(
-    // success
-    result =>
-      loadFileSuccess({
-        fileCache: result,
-        filesToLoad: [...filesToLoad],
-        totalCount
-      }),
-    // error
-    loadFilesErr
-  );
-}
-
-export const loadFileSuccessUpdater = (state, action) => {
-  const {fileCache, filesToLoad = [], totalCount} = action;
-
-  // still more to load
-  if (filesToLoad.length) {
-    const fileLoadingProgress = ((totalCount - filesToLoad.length) / totalCount) * 100;
-
-    return withTask(
-      {
-        ...state,
-        fileLoadingProgress
-      },
-      makeLoadFileTask(totalCount, filesToLoad, fileCache)
-    );
-  }
-
-  const result = fileCache.reduce(
-    (accu, file) => {
-      const {data, info = {}} = file;
-      const {format} = info;
-
-      if (format) {
-        if (format !== DATASET_FORMATS.keplergl) {
-          const newDataset = {
-            data,
-            info: {
-              id: generateHashId(4),
-              ...info
-            }
-          };
-
-          accu.datasets.push(newDataset);
-          return accu;
-        }
-
-        return {
-          datasets: accu.datasets.concat(data.datasets),
-          // we need to deep merge this thing unless we find a better solution
-          // this case will only happen if we allow to load multiple keplergl json files
-          config: {
-            ...accu.config,
-            ...(data.config || {})
-          }
-        };
-      }
-      return accu;
-    },
-    {datasets: [], config: {}}
-  );
-
-  const options = {
-    centerMap: !(result.config && result.config.mapState)
-  };
+export function loadNextFileUpdater(state, action) {
+  const {fileCache, filesToLoad, totalCount, onFinish} = action;
+  const fileLoadingProgress = ((totalCount - filesToLoad.length) / totalCount) * 100;
 
   return withTask(
     {
       ...state,
-      fileLoading: false,
-      fileLoadingProgress: 100
+      fileLoadingProgress
     },
-    ACTION_TASK().map(_ => addDataToMap({...result, options}))
+    makeLoadFileTask(totalCount, filesToLoad, fileCache, onFinish)
   );
-};
+}
+
+export function makeLoadFileTask(totalCount, filesToLoad, fileCache, onFinish) {
+  const [file, ...remainingFilesToLoad] = filesToLoad;
+
+  return LOAD_FILE_TASK({file, fileCache}).bimap(
+    // success
+    result =>
+      remainingFilesToLoad.length
+        ? loadNextFile({
+            fileCache: result,
+            filesToLoad: remainingFilesToLoad,
+            totalCount,
+            onFinish
+          })
+        : onFinish(result),
+    // error
+    loadFilesErr
+  );
+}
 
 /**
  * Trigger loading file error

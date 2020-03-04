@@ -4,6 +4,7 @@
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// to use, copy, modify, merge_, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
@@ -28,6 +29,8 @@ import {receiveMapConfigUpdater as styleMapConfigUpdater} from './map-style-upda
 import {findMapBounds} from 'utils/data-utils';
 import KeplerGlSchema from 'schemas';
 import {isPlainObject} from 'utils/utils';
+import {filesToDataPayload} from 'processors/file-handler';
+import Console from 'global/console';
 
 // compose action to apply result multiple reducers, with the output of one
 
@@ -78,10 +81,47 @@ const combinedUpdaters = null;
 
 export const isValidConfig = config =>
   isPlainObject(config) && isPlainObject(config.config) && config.version;
+
 export const defaultAddDataToMapOptions = {
   centerMap: true,
   keepExistingConfig: false
 };
+
+const identity = state => state;
+
+/* eslint-disable-next-line no-unused-vars */
+function log(text) {
+  return value => Console.log(text, value);
+}
+
+function payload_(p) {
+  return {payload: p};
+}
+
+function apply_(updater, payload) {
+  return state => updater(state, payload);
+}
+
+function with_(fn) {
+  return state => fn(state)(state);
+}
+
+function if_(pred, fn) {
+  return pred ? fn : identity;
+}
+
+function compose_(fns) {
+  return state => fns.reduce((state2, fn) => fn(state2), state);
+}
+
+function merge_(obj) {
+  return state => ({...state, ...obj});
+}
+
+function pick_(prop) {
+  return fn => state => ({...state, [prop]: fn(state[prop])});
+}
+
 /**
  * Combine data and full configuration update in a single action
  *
@@ -118,61 +158,58 @@ export const addDataToMapUpdater = (state, {payload}) => {
     parsedConfig = KeplerGlSchema.parseSavedConfig(config);
   }
   const oldLayers = state.visState.layers;
+  const filterNewlyAddedLayers = layers => layers.filter(nl => !oldLayers.find(ol => ol === nl));
 
-  // Update visState store
-  let mergedState = {
-    ...state,
-    visState: visStateUpdateVisDataUpdater(state.visState, {
-      datasets,
-      options,
-      config: parsedConfig
-    })
-  };
+  return compose_([
+    pick_('visState')(
+      apply_(visStateUpdateVisDataUpdater, {
+        datasets,
+        options,
+        config: parsedConfig
+      })
+    ),
 
-  // merge map info
-  // save title, description provider and queryParams
-  if (info) {
-    mergedState = {
-      ...mergedState,
-      visState: setMapInfoUpdater(mergedState.visState, {info})
-    };
-  }
+    if_(info, pick_('visState')(apply_(setMapInfoUpdater, {info}))),
 
-  let bounds;
-  if (options.centerMap) {
-    // find map bounds for new layers
-    const newLayers = mergedState.visState.layers.filter(nl => !oldLayers.find(ol => ol === nl));
-    bounds = findMapBounds(newLayers);
-  }
+    with_(({visState}) =>
+      pick_('mapState')(
+        apply_(
+          stateMapConfigUpdater,
+          payload_({
+            config: parsedConfig,
+            options,
+            bounds: options.centerMap
+              ? findMapBounds(filterNewlyAddedLayers(visState.layers))
+              : null
+          })
+        )
+      )
+    ),
 
-  // Update mapState store
-  mergedState = {
-    ...mergedState,
-    mapState: stateMapConfigUpdater(mergedState.mapState, {
-      payload: {config: parsedConfig, options, bounds}
-    })
-  };
+    pick_('mapStyle')(apply_(styleMapConfigUpdater, payload_({config: parsedConfig, options}))),
 
-  // Update mapStyle store
-  mergedState = {
-    ...mergedState,
-    mapStyle: styleMapConfigUpdater(mergedState.mapStyle, {
-      payload: {config: parsedConfig, options}
-    })
-  };
+    pick_('uiState')(apply_(loadFilesSuccessUpdater)),
 
-  // Update uiState
-  mergedState = {
-    ...mergedState,
-    uiState: {
-      ...toggleModalUpdater(loadFilesSuccessUpdater(mergedState.uiState), {
-        payload: null
-      }),
-      ...(options.hasOwnProperty('readOnly') ? {readOnly: options.readOnly} : {})
-    }
-  };
+    pick_('uiState')(apply_(toggleModalUpdater, payload_(null))),
 
-  return mergedState;
+    pick_('uiState')(merge_(options.hasOwnProperty('readOnly') ? {readOnly: options.readOnly} : {}))
+  ])(state);
+};
+
+export const loadFileSuccessUpdater = (state, action) => {
+  // still more to load
+  const payloads = filesToDataPayload(action.result);
+  const nextState = compose_([
+    pick_('visState')(
+      merge_({
+        fileLoading: false,
+        fileLoadingProgress: 100
+      })
+    )
+  ])(state);
+
+  // make multiple add data to map calls
+  return compose_(payloads.map(p => apply_(addDataToMapUpdater, payload_(p))))(nextState);
 };
 
 export const addDataToMapComposed = addDataToMapUpdater;
