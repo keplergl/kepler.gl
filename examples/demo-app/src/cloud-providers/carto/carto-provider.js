@@ -361,6 +361,7 @@ export default class CartoProvider extends Provider {
     };
   }
 
+  // eslint-disable-next-line complexity
   _manageErrors(error, throwException = true) {
     let message;
     if (error && error.message) {
@@ -376,6 +377,18 @@ export default class CartoProvider extends Provider {
         case (error.message.match(/relation "[a-zA-Z0-9_]+" does not exist/) || {}).input:
           Console.error('CARTO custom storage is not properly initialized');
           message = 'Custom storage is not properly initialized';
+          break;
+        case (
+          error.message.match(/Failed to copy to keplergl_[a-zA-Z0-9_]+: Too many retries/) || {}
+        ).input:
+          Console.error('CARTO Rate limit exceeded');
+          message =
+            "Failed to upload. You've exceeded the number of datasets allowed with your plan. Consider upgrading your plan.";
+          break;
+        case (error.message.match(/[a-zA-Z0-9_\s:]+: DB Quota exceeded/) || {}).input:
+          Console.error('CARTO DB Quota exceeded');
+          message =
+            "Failed to upload. You've exceeded your account's disk storage limit. Consider upgrading your plan.";
           break;
         default:
           Console.error(`CARTO provider: ${message}`);
