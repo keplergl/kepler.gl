@@ -61,7 +61,7 @@ const LogoSvg = () => (
   </svg>
 );
 
-const KeplerGlLogo = ({appName, version}) => (
+const KeplerGlLogo = ({appName, appWebsite = KEPLER_GL_WEBSITE, version}) => (
   <LogoWrapper className="side-panel-logo">
     <LogoSvgWrapper>
       <LogoSvg />
@@ -72,7 +72,7 @@ const KeplerGlLogo = ({appName, version}) => (
           className="logo__link"
           target="_blank"
           rel="noopener noreferrer"
-          href={KEPLER_GL_WEBSITE}
+          href={appWebsite}
         >
           {appName}
         </a>
