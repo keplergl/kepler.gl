@@ -31,7 +31,7 @@ const NotificationPanelContent = styled.div`
   flex-direction: column;
   align-items: flex-end;
   padding: 4px;
-  overflow-y: scroll;
+  overflow-y: auto;
   overflow-x: hidden;
   position: absolute;
   top: 1em;

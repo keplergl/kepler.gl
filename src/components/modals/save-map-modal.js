@@ -23,7 +23,7 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import CloudTile from './cloud-tile';
 import ImageModalContainer from './image-modal-container';
-import {UploadAnimation} from './status-panel';
+import StatusPanel, {UploadAnimation} from './status-panel';
 
 import {MAP_THUMBNAIL_DIMENSION, MAP_INFO_CHARACTER} from 'constants/default-settings';
 
@@ -156,6 +156,7 @@ function SaveMapModalFactory() {
         cloudProviders,
         isProviderLoading,
         currentProvider,
+        providerError,
         onSetCloudProvider,
         onUpdateImageSetting
       } = this.props;
@@ -192,6 +193,22 @@ function SaveMapModalFactory() {
                   ))}
                 </div>
               </StyledExportSection>
+              {provider && provider.getManagementUrl && (
+                <StyledExportSection style={{margin: '2px 0'}}>
+                  <div className="description" />
+                  <div className="selection">
+                    <a
+                      key={1}
+                      href={provider.getManagementUrl()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{textDecoration: 'underline'}}
+                    >
+                      Go to your Kepler.gl {provider.displayName} page
+                    </a>
+                  </div>
+                </StyledExportSection>
+              )}
               <StyledExportSection>
                 <div className="description image-preview-panel">
                   <ImagePreview
@@ -212,6 +229,13 @@ function SaveMapModalFactory() {
                   />
                 )}
               </StyledExportSection>
+              {providerError ? (
+                <StatusPanel
+                  isLoading={false}
+                  error={providerError}
+                  providerIcon={provider && provider.icon}
+                />
+              ) : null}
             </StyledModalContent>
           </StyledSaveMapModal>
         </ImageModalContainer>

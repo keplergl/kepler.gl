@@ -117,15 +117,6 @@ export default function SidePanelFactory(
       availableProviders: {}
     };
 
-    static defaultProps = {
-      panels: SIDEBAR_PANELS,
-      uiState: {},
-      visStateActions: {},
-      mapStyleActions: {},
-      uiStateActions: {},
-      availableProviders: {}
-    };
-
     /* component private functions */
     _onOpenOrClose = () => {
       this.props.uiStateActions.toggleSidePanel(
