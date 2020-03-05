@@ -129,7 +129,7 @@ export const DEFAULT_EXPORT_IMAGE = {
   imageSize: {
     zoomOffset: 0,
     scale: 1,
-    imagW: 0,
+    imageW: 0,
     imageH: 0
   },
   // exporting state
