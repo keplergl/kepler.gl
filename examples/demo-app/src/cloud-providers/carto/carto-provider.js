@@ -54,10 +54,6 @@ export default class CartoProvider extends Provider {
     );
 
     this._carto.setClientID(clientId);
-
-    if (this.getAccessToken()) {
-      this.login();
-    }
   }
 
   /**
@@ -85,10 +81,6 @@ export default class CartoProvider extends Provider {
 
   isEnabled() {
     return this.clientId !== null;
-  }
-
-  isConnected() {
-    return Boolean(this._carto.oauth.token);
   }
 
   hasPrivateStorage() {
@@ -152,7 +144,7 @@ export default class CartoProvider extends Provider {
       }
 
       return {
-        shareUrl: this.getMapPermalinkFromParams(
+        shareUrl: this._getMapPermalinkFromParams(
           {
             mapId: result.id,
             owner: this._carto.username,
@@ -165,14 +157,6 @@ export default class CartoProvider extends Provider {
     } catch (error) {
       this._manageErrors(error);
     }
-  }
-
-  /**
-   * The CARTO cloud provider sets by the default the privacity to public
-   * @param {*} metadata
-   */
-  shareFile(metadata) {
-    return;
   }
 
   /**
@@ -303,26 +287,13 @@ export default class CartoProvider extends Provider {
     }
   }
 
-  getMapPermalink(mapLink, fullURL = true) {
-    return fullURL
-      ? `${window.location.protocol}//${window.location.host}/${mapLink}`
-      : `/${mapLink}`;
-  }
-
-  getMapPermalinkFromParams({mapId, owner, privateMap}, fullURL = true) {
-    const mapLink = this._composeURL({mapId, owner, privateMap});
-    return fullURL
-      ? `${window.location.protocol}//${window.location.host}/${mapLink}`
-      : `/${mapLink}`;
-  }
-
   getShareUrl(fullUrl = false) {
     return this.getMapUrl(fullUrl);
   }
 
   getMapUrl(fullUrl = true) {
     if (this.currentMap) {
-      return this.getMapPermalinkFromParams(
+      return this._getMapPermalinkFromParams(
         {
           mapId: this.currentMap.id,
           owner: this.getUserName(),
@@ -344,6 +315,13 @@ export default class CartoProvider extends Provider {
   }
 
   // PRIVATE
+
+  _getMapPermalinkFromParams({mapId, owner, privateMap}, fullURL = true) {
+    const mapLink = this._composeURL({mapId, owner, privateMap});
+    return fullURL
+      ? `${window.location.protocol}//${window.location.host}/${mapLink}`
+      : `/${mapLink}`;
+  }
 
   _convertDataset({data: dataset}) {
     const {allData, fields, id} = dataset;
