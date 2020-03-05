@@ -37,7 +37,7 @@ class CartoIcon extends Component {
 
   render() {
     return (
-      <Icons.IconWrapper {...this.props} viewBox={'0 0 92 36'}>
+      <Icons.IconWrapper {...this.props}>
         <g id="Page-1" stroke="none" strokeWidth="1" fill="none" fillRule="evenodd">
           <g
             id="Logo-Scale-Negative"
