@@ -777,3 +777,5 @@ export const DATASET_FORMATS = keyMirror({
   csv: null,
   keplergl: null
 });
+
+export const DEFAULT_ELEVATION = 500;

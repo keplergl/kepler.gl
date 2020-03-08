@@ -20,7 +20,7 @@
 
 import {S2Layer} from '@deck.gl/geo-layers';
 import {hexToRgb} from 'utils/color-utils';
-import {HIGHLIGH_COLOR_3D} from 'constants/default-settings';
+import {HIGHLIGH_COLOR_3D, DEFAULT_ELEVATION} from 'constants/default-settings';
 import Layer from '../base-layer';
 import S2LayerIcon from './s2-layer-icon';
 import {getS2Center} from './s2-utils';
@@ -33,6 +33,7 @@ export const s2RequiredColumns = ['token'];
 export const S2TokenAccessor = ({token}) => d => d[token.fieldIdx];
 
 export const S2VisConfigs = {
+  // Filled color
   opacity: 'opacity',
   colorRange: 'colorRange',
   filled: {
@@ -44,9 +45,11 @@ export const S2VisConfigs = {
 
   // height
   enable3d: 'enable3d',
+  sizeRange: 'elevationRange',
   elevationScale: 'elevationScale',
-  elevationPercentile: 'elevationPercentile',
-  sizeRange: 'elevationRange'
+
+  // wireframe
+  wireframe: 'wireframe'
 };
 
 export default class S2GeometryLayer extends Layer {
@@ -70,6 +73,13 @@ export default class S2GeometryLayer extends Layer {
 
   get layerIcon() {
     return S2LayerIcon;
+  }
+
+  get visualChannels() {
+    return {
+      ...super.visualChannels;
+
+    }
   }
 
   static findDefaultLayerProps({fields = []}) {
@@ -116,15 +126,6 @@ export default class S2GeometryLayer extends Layer {
     this.updateMeta({bounds});
   }
 
-  getDefaultLayerConfig(props = {}) {
-    return {
-      ...super.getDefaultLayerConfig(props),
-
-      // filled
-      filled: true
-    };
-  }
-
   /* eslint-disable complexity */
   formatLayerData(datasets, oldLayerData, opt = {}) {
     const {
@@ -135,38 +136,31 @@ export default class S2GeometryLayer extends Layer {
       sizeField,
       sizeScale,
       sizeDomain,
-      visConfig: {sizeRange, colorRange}
+      visConfig: {colorRange, enable3d, sizeRange}
     } = this.config;
 
     const {gpuFilter} = datasets[this.config.dataId];
     const getS2Token = this.getPositionAccessor();
     const {data} = this.updateData(datasets, oldLayerData);
 
-    // color
     const cScale =
       colorField &&
-      this.getVisChannelScale(
-        colorScale,
-        colorDomain,
-        colorRange.colors.map(c => hexToRgb(c))
-      );
+      this.getVisChannelScale(colorScale, colorDomain, colorRange.colors.map(hexToRgb));
 
-    // height
-    const sScale = sizeField && this.getVisChannelScale(sizeScale, sizeDomain, sizeRange, 0);
-
-    const getFillColor = cScale
-      ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
-      : color;
-
-    const getElevation = sScale
-      ? d => this.getEncodedChannelValue(sScale, d.data, sizeField, 0)
-      : 0;
+    // calculate elevation scale - if extruded = true
+    const eScale =
+      sizeField && enable3d && this.getVisChannelScale(sizeScale, sizeDomain, sizeRange);
 
     return {
       data,
       getS2Token,
-      getFillColor,
-      getElevation,
+      getFillColor: cScale
+        ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
+        : () => color,
+      getElevation: eScale
+        ? d => this.getEncodedChannelValue(eScale, d.data, sizeField, 0)
+        : () => DEFAULT_ELEVATION,
+
       getFilterValue: gpuFilter.filterValueAccessor()
     };
   }
@@ -175,25 +169,26 @@ export default class S2GeometryLayer extends Layer {
   renderLayer(opts) {
     const {data, gpuFilter, interactionConfig, mapState} = opts;
 
+    const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
+
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
     const {config} = this;
     const {visConfig} = config;
 
     const updateTriggers = {
-      getElevation: {
-        sizeField: config.sizeField,
-        sizeRange: visConfig.sizeRange
-      },
       getFillColor: {
         color: config.color,
         colorField: config.colorField,
-        colorRange: config.visConfig.colorRange,
+        colorRange: visConfig.colorRange,
         colorScale: config.colorScale
+      },
+      getElevation: {
+        sizeField: config.sizeField,
+        sizeRange: visConfig.sizeRange,
+        sizeScale: config.sizeScale
       },
       getFilterValue: gpuFilter.filterValueUpdateTriggers
     };
-
-    const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
 
     return [
       new S2Layer({
@@ -202,24 +197,23 @@ export default class S2GeometryLayer extends Layer {
         ...data,
         getS2Token: d => d.token,
 
-        // color
-        opacity: visConfig.opacity,
-        filled: visConfig.filled,
-
-        // highlight
-        autoHighlight: true,
+        autoHighlight: visConfig.enable3d,
         highlightColor: HIGHLIGH_COLOR_3D,
 
-        // elevation
-        extruded: visConfig.enable3d,
-        elevationScale: visConfig.elevationScale * eleZoomFactor,
+        // Filled color
+        filled: visConfig.filled,
+        opacity: visConfig.opacity,
+        wrapLongitude: false,
 
-        // render
+        // Elevation
+        elevationScale: visConfig.elevationScale * eleZoomFactor,
+        extruded: visConfig.enable3d,
+
+        wireframe: visConfig.wireframe,
+
         pickable: true,
 
-        updateTriggers,
-        elevationLowerPercentile: visConfig.elevationPercentile[0],
-        elevationUpperPercentile: visConfig.elevationPercentile[1]
+        updateTriggers
       })
     ];
   }

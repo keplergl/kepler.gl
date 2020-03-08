@@ -26,7 +26,12 @@ import {GeoJsonLayer as DeckGLGeoJsonLayer} from '@deck.gl/layers';
 import {hexToRgb} from 'utils/color-utils';
 import {getGeojsonDataMaps, getGeojsonBounds, getGeojsonFeatureTypes} from './geojson-utils';
 import GeojsonLayerIcon from './geojson-layer-icon';
-import {GEOJSON_FIELDS, HIGHLIGH_COLOR_3D, CHANNEL_SCALES} from 'constants/default-settings';
+import {
+  GEOJSON_FIELDS,
+  HIGHLIGH_COLOR_3D,
+  CHANNEL_SCALES,
+  DEFAULT_ELEVATION
+} from 'constants/default-settings';
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
 
 const SUPPORTED_ANALYZER_TYPES = {
@@ -62,7 +67,6 @@ export const geojsonVisConfigs = {
 
 export const geoJsonRequiredColumns = ['geojson'];
 export const featureAccessor = ({geojson}) => d => d[geojson.fieldIdx];
-export const defaultElevation = 500;
 export const defaultLineWidth = 1;
 export const defaultRadius = 1;
 
@@ -271,7 +275,7 @@ export default class GeoJsonLayer extends Layer {
       getElevation: d =>
         eScale
           ? this.getEncodedChannelValue(eScale, allData[d.properties.index], heightField, 0)
-          : d.properties.elevation || defaultElevation,
+          : d.properties.elevation || DEFAULT_ELEVATION,
       getRadius: d =>
         rScale
           ? this.getEncodedChannelValue(rScale, allData[d.properties.index], radiusField, 0)
@@ -330,8 +334,7 @@ export default class GeoJsonLayer extends Layer {
     const layerProps = {
       lineWidthScale: visConfig.thickness * zoomFactor * 8,
       elevationScale: visConfig.elevationScale * eleZoomFactor,
-      pointRadiusScale: radiusScale,
-      lineMiterLimit: 4
+      pointRadiusScale: radiusScale
     };
 
     const updateTriggers = {

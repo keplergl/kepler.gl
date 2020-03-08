@@ -775,6 +775,9 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
       layerConfiguratorProps,
       layerChannelConfigProps
     }) {
+      const {
+        config: {visConfig}
+      } = layer;
       return (
         <StyledLayerVisualConfigurator>
           {/* Color */}
@@ -794,24 +797,54 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
                 channel={layer.visualChannels.color}
                 {...layerChannelConfigProps}
               />
-              <VisConfigSlider {...LAYER_VIS_CONFIGS.opacity} {...visConfiguratorProps} />
+              <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
 
-          {/* height */}
           <LayerConfigGroup {...LAYER_VIS_CONFIGS.enable3d} {...visConfiguratorProps} collapsible>
-            <VisConfigSlider
-              {...LAYER_VIS_CONFIGS.elevationRange}
-              {...visConfiguratorProps}
-              label={false}
+            <ChannelByValueSelector
+              channel={layer.visualChannels.size}
+              {...layerChannelConfigProps}
             />
             <ConfigGroupCollapsibleContent>
-              <ChannelByValueSelector
-                channel={layer.visualChannels.size}
-                {...layerChannelConfigProps}
+              <VisConfigSlider
+                {...LAYER_VIS_CONFIGS.elevationScale}
+                {...visConfiguratorProps}
+                labl="Zoom scale"
               />
+              <VisConfigSlider
+                {...LAYER_VIS_CONFIGS.elevationRange}
+                {...visConfiguratorProps}
+                label="Height Range"
+              />
+              <VisConfigSwitch {...visConfiguratorProps} {...LAYER_VIS_CONFIGS.wireframe} />
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
+
+          {/*<LayerConfigGroup*/}
+            {/*{...visConfiguratorProps}*/}
+            {/*{...LAYER_VIS_CONFIGS.enable3d}*/}
+            {/*disabled={!visConfig.filled}*/}
+            {/*collapsible*/}
+          {/*>*/}
+            {/*<ChannelByValueSelector*/}
+              {/*channel={layer.visualChannels.size}*/}
+              {/*{...layerChannelConfigProps}*/}
+            {/*/>*/}
+            {/*<ConfigGroupCollapsibleContent>*/}
+              {/*<VisConfigSlider*/}
+                {/*{...LAYER_VIS_CONFIGS.elevationScale}*/}
+                {/*{...visConfiguratorProps}*/}
+                {/*label={false}*/}
+              {/*/>*/}
+              {/*<VisConfigSlider*/}
+                {/*{...LAYER_VIS_CONFIGS.elevationRange}*/}
+                {/*{...visConfiguratorProps}*/}
+                {/*label="Height Range"*/}
+              {/*/>*/}
+              {/*<VisConfigSwitch {...visConfiguratorProps} {...LAYER_VIS_CONFIGS.wireframe} />*/}
+            {/*</ConfigGroupCollapsibleContent>*/}
+          {/*</LayerConfigGroup>*/}
         </StyledLayerVisualConfigurator>
       );
     }
