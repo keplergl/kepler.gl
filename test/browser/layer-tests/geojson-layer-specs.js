@@ -20,10 +20,10 @@
 
 import test from 'tape';
 import GeojsonLayer, {
-  defaultElevation,
   defaultLineWidth,
   defaultRadius
 } from 'layers/geojson-layer/geojson-layer';
+import {DEFAULT_ELEVATION} from 'constants/default-settings';
 
 import {updatedLayerV2} from 'test/fixtures/test-csv-data';
 import {
@@ -121,7 +121,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
         );
         t.deepEqual(
           layerData.data.map(layerData.getElevation),
-          [defaultElevation, defaultElevation],
+          [DEFAULT_ELEVATION, DEFAULT_ELEVATION],
           'getElevation should return correct value'
         );
         t.deepEqual(
@@ -359,7 +359,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
         );
         t.deepEqual(
           layerData.data.map(layerData.getElevation),
-          [defaultElevation, defaultElevation, defaultElevation],
+          [DEFAULT_ELEVATION, DEFAULT_ELEVATION, DEFAULT_ELEVATION],
           'getElevation should return correct value'
         );
         t.deepEqual(

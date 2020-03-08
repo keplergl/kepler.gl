@@ -19,11 +19,16 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {testCreateCases, testFormatLayerDataCases} from 'test/helpers/layer-utils';
+import {
+  testCreateCases,
+  testFormatLayerDataCases,
+  testRenderLayerCases
+} from 'test/helpers/layer-utils';
 import {getGpuFilterProps} from 'utils/gpu-filter-utils';
 import {data} from 'test/fixtures/s2-geometry';
 import S2GeometryLayer from 'layers/s2-geometry-layer/s2-geometry-layer';
 import {processCsvData} from 'processors/data-processor';
+import {DEFAULT_ELEVATION} from 'constants/default-settings';
 
 test('#S2Geometry -> constructor', t => {
   const TEST_CASES = [
@@ -43,9 +48,9 @@ test('#S2Geometry -> constructor', t => {
             'colorRange',
             'filled',
             'enable3d',
+            'sizeRange',
             'elevationScale',
-            'elevationPercentile',
-            'sizeRange'
+            'wireframe'
           ],
           'should provide the correct visConfigSettings properties'
         );
@@ -138,7 +143,11 @@ test('#S2Geometry -> formatLayerData', t => {
           getS2Token: () => {}
         };
 
-        t.equal(layerData.getElevation, 0, 'Elevation should be set to 0');
+        t.equal(
+          layerData.getElevation(),
+          DEFAULT_ELEVATION,
+          `Elevation should be set to ${DEFAULT_ELEVATION}`
+        );
 
         // test layer.meta
         t.deepEqual(
@@ -208,6 +217,100 @@ test('#S2Geometry -> formatLayerData', t => {
   ];
 
   testFormatLayerDataCases(t, S2GeometryLayer, TEST_CASES);
+
+  t.end();
+});
+
+test('#S2Geometry -> renderLayer', t => {
+  const {rows, fields} = processCsvData(data);
+  const filteredIndex = [0, 2, 4];
+
+  const dataId = 'puppy';
+
+  const nullRows = [
+    [null, 12345],
+    [null, 3456]
+  ];
+
+  const rowsWithNull = nullRows.concat(rows);
+  const dataset = {
+    fields,
+    rows,
+    id: dataId,
+    data: rowsWithNull,
+    allData: rowsWithNull,
+    filteredIndexForDomain: filteredIndex,
+    filteredIndex,
+    gpuFilter: getGpuFilterProps([], dataId, fields)
+  };
+
+  const props = {
+    name: 's2 layer',
+    layer: {
+      type: 's2',
+      id: 'test_layer_1',
+      config: {
+        dataId,
+        label: 'S2',
+        color: [255, 203, 153],
+        columns: {
+          token: 's2'
+        },
+        isVisible: true
+      }
+    },
+    datasets: {
+      [dataId]: dataset
+    }
+  };
+
+  const TEST_CASES = [
+    {
+      ...props,
+      data: [data, rows, filteredIndex, undefined],
+      assert: (deckLayers, layer) => {
+        t.equal(layer.type, 's2', 'should create 1 s2 layer');
+        t.equal(deckLayers.length, 4, 'Should create 4 deck.gl layers');
+
+        const expectedLayerIds = [
+          'test_layer_1',
+          'test_layer_1-cell',
+          'test_layer_1-cell-fill',
+          'test_layer_1-cell-stroke'
+        ];
+
+        t.deepEqual(
+          deckLayers.map(l => l.id),
+          expectedLayerIds,
+          'should create 1 composite, 1 hexagon-cell layer'
+        );
+
+        const {props: layerProps} = deckLayers[0];
+
+        const expectedProps = {
+          opacity: layer.config.visConfig.opacity,
+          filterRange: [
+            [0, 0],
+            [0, 0],
+            [0, 0],
+            [0, 0]
+          ],
+          filled: true,
+          wrapLongitude: false,
+          autoHighlight: false,
+          highlightColor: [255, 255, 255, 60],
+          extruded: false,
+          elevationScale: 5
+        };
+
+        Object.keys(expectedProps).forEach(key => {
+          t.deepEqual(layerProps[key], expectedProps[key], `should have correct props.${key}`);
+        });
+      }
+    }
+  ];
+
+  testRenderLayerCases(t, S2GeometryLayer, TEST_CASES);
 
   t.end();
 });

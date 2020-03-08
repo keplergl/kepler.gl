@@ -775,9 +775,6 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
       layerConfiguratorProps,
       layerChannelConfigProps
     }) {
-      const {
-        config: {visConfig}
-      } = layer;
       return (
         <StyledLayerVisualConfigurator>
           {/* Color */}
@@ -820,31 +817,6 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
               <VisConfigSwitch {...visConfiguratorProps} {...LAYER_VIS_CONFIGS.wireframe} />
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
-
-          {/*<LayerConfigGroup*/}
-            {/*{...visConfiguratorProps}*/}
-            {/*{...LAYER_VIS_CONFIGS.enable3d}*/}
-            {/*disabled={!visConfig.filled}*/}
-            {/*collapsible*/}
-          {/*>*/}
-            {/*<ChannelByValueSelector*/}
-              {/*channel={layer.visualChannels.size}*/}
-              {/*{...layerChannelConfigProps}*/}
-            {/*/>*/}
-            {/*<ConfigGroupCollapsibleContent>*/}
-              {/*<VisConfigSlider*/}
-                {/*{...LAYER_VIS_CONFIGS.elevationScale}*/}
-                {/*{...visConfiguratorProps}*/}
-                {/*label={false}*/}
-              {/*/>*/}
-              {/*<VisConfigSlider*/}
-                {/*{...LAYER_VIS_CONFIGS.elevationRange}*/}
-                {/*{...visConfiguratorProps}*/}
-                {/*label="Height Range"*/}
-              {/*/>*/}
-              {/*<VisConfigSwitch {...visConfiguratorProps} {...LAYER_VIS_CONFIGS.wireframe} />*/}
-            {/*</ConfigGroupCollapsibleContent>*/}
-          {/*</LayerConfigGroup>*/}
         </StyledLayerVisualConfigurator>
       );
     }

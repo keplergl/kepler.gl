@@ -75,13 +75,6 @@ export default class S2GeometryLayer extends Layer {
     return S2LayerIcon;
   }
 
-  get visualChannels() {
-    return {
-      ...super.visualChannels;
-
-    }
-  }
-
   static findDefaultLayerProps({fields = []}) {
     const foundColumns = this.findDefaultColumnField(S2_TOKEN_FIELDS, fields);
     if (!foundColumns || !foundColumns.length) {
