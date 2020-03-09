@@ -162,7 +162,7 @@ export const mergedFilters = [
     isAnimating: false,
     fieldIdx: [1],
     domain: [1, 76],
-    step: 0.1,
+    step: 0.01,
     interval: null,
     histogram: ['Not tested'],
     enlargedHistogram: ['Not tested'],
@@ -193,7 +193,7 @@ const mergedFields = [
     analyzerType: 'INT',
     filterProps: {
       domain: [1, 76],
-      step: 0.1,
+      step: 0.01,
       histogram: [
         {count: 4, x0: 1, x1: 2},
         {count: 2, x0: 2, x1: 4},

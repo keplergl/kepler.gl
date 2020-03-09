@@ -994,7 +994,7 @@ export const mergedFilters = [
     enlargedHistogram: ['not tested'],
     domain: [94107, 94132],
     value: [94115.3, 94132],
-    step: 0.1,
+    step: 0.01,
     speed: 1,
     fieldType: 'integer',
     typeOptions: ['range'],

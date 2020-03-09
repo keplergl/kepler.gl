@@ -20,7 +20,10 @@
 
 import test from 'tape';
 import moment from 'moment';
-import testData, {testFields} from 'test/fixtures/test-csv-data';
+import testData, {
+  numericRangesCsv,
+  testFields
+} from 'test/fixtures/test-csv-data';
 
 import {
   adjustValueToFilterDomain,
@@ -36,7 +39,9 @@ import {
   diffFilters
 } from 'utils/filter-utils';
 
+import {preciseRound} from 'utils/data-utils';
 import {getDatasetFieldIndexForFilter} from 'utils/gpu-filter-utils';
+
 
 import {FILTER_TYPES} from 'constants/default-settings';
 import {processCsvData} from 'processors/data-processor';
@@ -90,6 +95,44 @@ function testGetTimeFieldDomain(rows, allFields, t) {
 
   test_cases.forEach(tc =>
     t.deepEqual(tc.input, tc.output, `should process correct domain for timestamp ${tc.msg}`)
+  );
+}
+
+function testGetNumericFieldStep(rows, allFields, t) {
+  const test_cases = [
+    {
+      name: 'smallest',
+      input: getFieldDomain(rows, allFields[0]).step,
+      output: 0.0000001
+    },
+    {
+      name: 'small',
+      input: getFieldDomain(rows, allFields[1]).step,
+      output: 0.001
+    },
+    {
+      name: 'negative',
+      input: getFieldDomain(rows, allFields[2]).step,
+      output: 0.01
+    },
+    {
+      name: 'medium',
+      input: getFieldDomain(rows, allFields[3]).step,
+      output: 0.01
+    },
+    {
+      name: 'large',
+      input: getFieldDomain(rows, allFields[4]).step,
+      output: 1
+    },
+  ];
+
+  test_cases.forEach(tc =>
+    t.equal(
+      preciseRound(tc.input, 5),
+      preciseRound(tc.output, 5),
+      `should process correct step for field ${tc.name}`
+    )
   );
 }
 
@@ -284,6 +327,16 @@ test('filterUtils -> getFieldDomain.time', async t => {
   t.deepEqual(fields, expectedFields, 'should get current field type');
   testGetTimeFieldDomain(rows, fields, t);
   testGetFilterFunction(rows, fields, t);
+
+  t.end();
+});
+
+test('filterUtils -> getFieldDomain.numeric', async t => {
+  const data = numericRangesCsv;
+
+  const {fields, rows} = await processCsvData(data);
+
+  testGetNumericFieldStep(rows, fields, t);
 
   t.end();
 });
