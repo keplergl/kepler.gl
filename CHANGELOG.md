@@ -14,6 +14,16 @@ Each version should:
   Security to invite users to upgrade in case of vulnerabilities.
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
+
+## [2.0.1] - March 9 2020
+[Bug] Add cloud-providers.js to package.json (#991)
+[Feat] CARTO provider for cloud storage (#985)
+[Bugfix] Fix typo on variable name (#987)
+[Enhancement] pass appWebsite to logo component (#984)
+[Chore] Removed testing from publish action (#980)
+[Bug] remove console.log in filter.utils
+[Feat] Load cloud map with provider (#947)
+
 ## [2.0.0] - Feb 25 2020
 - [Enhancement] Independently customize Geojson layer fill stroke opacity (#966)
 - [Bug] Fix text collision on toggle input (#973)
