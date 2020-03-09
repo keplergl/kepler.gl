@@ -21,9 +21,11 @@
 import Long from 'long';
 import {S2} from 's2-geometry';
 
+const MAXIMUM_TOKEN_LENGTH = 16;
+
 export function getS2Center(s2Token) {
-  const paddedToken = s2Token.padEnd(16, '0');
-  const s2Id = Long.fromString(paddedToken, 16);
+  const paddedToken = s2Token.toString().padEnd(MAXIMUM_TOKEN_LENGTH, '0');
+  const s2Id = Long.fromString(paddedToken, MAXIMUM_TOKEN_LENGTH);
   const {lat, lng} = S2.idToLatLng(s2Id.toString());
   return [lng, lat];
 }

@@ -19,10 +19,7 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import GeojsonLayer, {
-  defaultLineWidth,
-  defaultRadius
-} from 'layers/geojson-layer/geojson-layer';
+import GeojsonLayer, {defaultLineWidth, defaultRadius} from 'layers/geojson-layer/geojson-layer';
 import {DEFAULT_ELEVATION} from 'constants/default-settings';
 
 import {updatedLayerV2} from 'test/fixtures/test-csv-data';

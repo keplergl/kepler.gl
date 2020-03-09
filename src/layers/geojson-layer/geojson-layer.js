@@ -26,7 +26,12 @@ import {GeoJsonLayer as DeckGLGeoJsonLayer} from '@deck.gl/layers';
 import {hexToRgb} from 'utils/color-utils';
 import {getGeojsonDataMaps, getGeojsonBounds, getGeojsonFeatureTypes} from './geojson-utils';
 import GeojsonLayerIcon from './geojson-layer-icon';
-import {GEOJSON_FIELDS, HIGHLIGH_COLOR_3D, CHANNEL_SCALES, DEFAULT_ELEVATION} from 'constants/default-settings';
+import {
+  GEOJSON_FIELDS,
+  HIGHLIGH_COLOR_3D,
+  CHANNEL_SCALES,
+  DEFAULT_ELEVATION
+} from 'constants/default-settings';
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
 
 const SUPPORTED_ANALYZER_TYPES = {

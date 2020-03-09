@@ -94,13 +94,20 @@ test('#S2Geometry -> formatLayerData', t => {
     [null, 12345],
     [null, 3456]
   ];
-  const rowsWithNull = nullRows.concat(rows);
+
+  const invalidRows = [
+    [0, 12345],
+    [1234, 3456],
+    ['abcd', 123]
+  ];
+
+  const allRows = nullRows.concat(rows).concat(invalidRows);
   const dataset = {
     fields,
     rows,
     id: dataId,
-    data: rowsWithNull,
-    allData: rowsWithNull,
+    data: allRows,
+    allData: allRows,
     filteredIndexForDomain: filteredIndex,
     filteredIndex,
     gpuFilter: getGpuFilterProps([], dataId, fields)
@@ -152,7 +159,9 @@ test('#S2Geometry -> formatLayerData', t => {
         // test layer.meta
         t.deepEqual(
           layer.meta,
-          {bounds: [-122.39575481805574, 37.79109908631398, -122.3617617587711, 37.81968456730113]},
+          {
+            bounds: [-122.39575481805574, -50.18582525999928, 143.41537625914856, 37.81968456730113]
+          },
           'should format correct S2 layer meta'
         );
 
@@ -179,7 +188,7 @@ test('#S2Geometry -> formatLayerData', t => {
           args: [dataset, 'color']
         }
       ],
-      data: [rowsWithNull, rowsWithNull, filteredIndex, undefined],
+      data: [allRows, allRows, filteredIndex, undefined],
       assert: result => {
         const {layerData} = result;
         const expectedLayerData = {
@@ -231,14 +240,20 @@ test('#S2Geometry -> renderLayer', t => {
     [null, 12345],
     [null, 3456]
   ];
+  const invalidRows = [
+    [0, 12345],
+    [1234, 3456],
+    ['abcd', 123]
+  ];
 
-  const rowsWithNull = nullRows.concat(rows);
+  const allRows = nullRows.concat(rows).concat(invalidRows);
+
   const dataset = {
     fields,
     rows,
     id: dataId,
-    data: rowsWithNull,
-    allData: rowsWithNull,
+    data: allRows,
+    allData: allRows,
     filteredIndexForDomain: filteredIndex,
     filteredIndex,
     gpuFilter: getGpuFilterProps([], dataId, fields)
