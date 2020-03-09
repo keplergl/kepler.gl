@@ -684,23 +684,13 @@ export function getNumericFieldDomain(data, valueAccessor) {
   return {domain, step, histogram, enlargedHistogram};
 }
 
-export function getNumericStepSize(diff) {
-  diff = Math.abs(diff);
-
+function getNumericStepSize(diff) {
   if (diff > 100) {
     return 1;
-  } else if (diff > 3) {
+  } else if (diff < 20 && diff > 3) {
     return 0.01;
-  } else if (diff > 1) {
+  } else if (diff <= 3) {
     return 0.001;
-  } else if (diff <= 1) {
-    // Try to get at least 1000 steps - and keep the step size below that of
-    // the (diff > 1) case.
-    const x = diff / 1000;
-    // Find the exponent and truncate to 10 to the power of that exponent.
-    const exponentialForm = x.toExponential();
-    const exponent = parseFloat(exponentialForm.split('e')[1]);
-    return Math.pow(10, exponent);
   }
 }
 

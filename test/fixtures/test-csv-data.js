@@ -1390,10 +1390,3 @@ export const updatedLayerV2 = {
   }
 };
 /* eslint-enable max-lens */
-
-export const numericRangesCsv = `smallest,small,negative,medium,large
-0.00000,0,-10,10,0
-0.00001,1,-20,20,200
-0.00005,1.5,-30,30,400
-0.00099,2,-40,40,800
-`;
