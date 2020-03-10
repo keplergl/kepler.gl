@@ -26,8 +26,11 @@ import LoadingDialog from './loading-dialog';
 import {Button} from 'components/common/styled-components';
 import CloudTile from './cloud-tile';
 import {Base, ArrowLeft} from 'components/common/icons';
+import ProviderModalContainer from './provider-modal-container';
 
-const StyledProviderSection = styled.div`
+const StyledProviderSection = styled.div.attrs({
+  className: 'provider-selection'
+})`
   display: flex;
 `;
 
@@ -215,17 +218,23 @@ const VisualizationItem = ({vis, onClick}) => {
     </StyledVisualizationItem>
   );
 };
-const ProviderSelect = ({cloudProviders, onSetCloudProvider, currentProvider}) =>
+
+export const ProviderSelect = ({
+  cloudProviders = [],
+  onSelect,
+  onSetCloudProvider,
+  currentProvider
+}) =>
   cloudProviders.length ? (
     <StyledProviderSection>
       {cloudProviders.map(provider => (
         <CloudTile
           key={provider.name}
-          onSelect={() => onSetCloudProvider(provider.name)}
+          onSelect={() => onSelect(provider.name)}
           onSetCloudProvider={onSetCloudProvider}
           cloudProvider={provider}
           isSelected={provider.name === currentProvider}
-          isConnected={Boolean(provider.getAccessToken())}
+          isConnected={Boolean(provider.getAccessToken && provider.getAccessToken())}
         />
       ))}
     </StyledProviderSection>
@@ -235,9 +244,14 @@ const ProviderSelect = ({cloudProviders, onSetCloudProvider, currentProvider}) =
 
 function LoadStorageMapFactory() {
   class LoadStorageMap extends Component {
+    state = {
+      showProviderSelect: true
+    };
+
     componentDidMount() {
       this._getSavedMaps();
     }
+
     componentDidUpdate(prevProps) {
       if (prevProps.currentProvider !== this.props.currentProvider) {
         this._getSavedMaps();
@@ -253,6 +267,7 @@ function LoadStorageMapFactory() {
       const provider = this._getProvider();
       if (provider) {
         this.props.getSavedMaps(provider);
+        this.setState({showProviderSelect: false});
       }
     }
 
@@ -262,11 +277,23 @@ function LoadStorageMapFactory() {
         provider
       });
     }
+
+    _clickBack = () => {
+      this.setState({showProviderSelect: true});
+    };
+
+    _selectProvider = providerName => {
+      this.props.onSetCloudProvider(providerName);
+      const provider = (this.props.cloudProviders || []).find(p => p.name === providerName);
+      this.props.getSavedMaps(provider);
+      this.setState({showProviderSelect: false});
+    };
+
     render() {
       const {
         visualizations,
         cloudProviders,
-        currentProvider = null,
+        currentProvider,
         isProviderLoading,
         onSetCloudProvider
       } = this.props;
@@ -274,9 +301,14 @@ function LoadStorageMapFactory() {
       const provider = this._getProvider();
 
       return (
-        <div>
-          {!provider ? (
+        <ProviderModalContainer
+          onSetCloudProvider={onSetCloudProvider}
+          cloudProviders={cloudProviders}
+          currentProvider={currentProvider}
+        >
+          {this.state.showProviderSelect ? (
             <ProviderSelect
+              onSelect={this._selectProvider}
               cloudProviders={cloudProviders}
               onSetCloudProvider={onSetCloudProvider}
               currentProvider={currentProvider}
@@ -292,7 +324,7 @@ function LoadStorageMapFactory() {
                 <StyledVisualizationSection>
                   <StyledStorageHeader>
                     <StyledBackBtn>
-                      <Button link onClick={() => onSetCloudProvider(null)}>
+                      <Button link onClick={this._clickBack}>
                         <ArrowLeft height="14px" />
                         Back
                       </Button>
@@ -332,7 +364,7 @@ function LoadStorageMapFactory() {
               )}
             </>
           )}
-        </div>
+        </ProviderModalContainer>
       );
     }
   }

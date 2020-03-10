@@ -23,6 +23,7 @@ import styled, {ThemeProvider} from 'styled-components';
 import {CopyToClipboard} from 'react-copy-to-clipboard';
 import {themeLT} from 'styles/base';
 import ImageModalContainer from './image-modal-container';
+import ProviderModalContainer from './provider-modal-container';
 
 import {
   StyledModalContent,
@@ -92,7 +93,8 @@ export default function ShareMapUrlModalFactory() {
       currentProvider: null,
       providerError: null,
       successInfo: {},
-      onSetCloudProvider: nop
+      onSetCloudProvider: nop,
+      onUpdateImageSetting: nop
     };
 
     render() {
@@ -114,76 +116,81 @@ export default function ShareMapUrlModalFactory() {
 
       return (
         <ThemeProvider theme={themeLT}>
-          <ImageModalContainer
-            currentProvider={currentProvider}
-            cloudProviders={cloudProviders}
-            onUpdateImageSetting={onUpdateImageSetting}
+          <ProviderModalContainer
             onSetCloudProvider={onSetCloudProvider}
+            cloudProviders={cloudProviders}
+            currentProvider={currentProvider}
           >
-            <StyledShareMapModal className="export-cloud-modal">
-              <StyledInnerDiv>
-                <StyledExportSection>
-                  <div className="description">
-                    <div className="title">Share Map Url</div>
-                    <div className="subtitle">Generate a map url to share with others</div>
-                  </div>
-                  <div className="selection">
-                    <div className="title warning">{SHARE_DISCLAIMER}</div>
-                  </div>
-                </StyledExportSection>
-                <StyledExportSection disabled={isProviderLoading}>
-                  <div className="description">
-                    <div className="title">Cloud storage</div>
-                    <div className="subtitle">
-                      Login and upload map data to your personal cloud storage
-                    </div>
-                  </div>
-                  <div className="selection">
-                    {cloudProviders.map(cloudProvider => (
-                      <CloudTile
-                        key={cloudProvider.name}
-                        onSelect={() => onExport(cloudProvider)}
-                        onSetCloudProvider={onSetCloudProvider}
-                        cloudProvider={cloudProvider}
-                        actionName="Upload"
-                        isSelected={cloudProvider.name === currentProvider}
-                        isConnected={Boolean(cloudProvider.getAccessToken())}
-                        isReady={isReady}
-                      />
-                    ))}
-                  </div>
-                </StyledExportSection>
-                {isProviderLoading || providerError ? (
-                  <StatusPanel
-                    isLoading={isProviderLoading}
-                    error={providerError}
-                    providerIcon={provider && provider.icon}
-                  />
-                ) : null}
-                {shareUrl && (
+            <ImageModalContainer
+              currentProvider={currentProvider}
+              cloudProviders={cloudProviders}
+              onUpdateImageSetting={onUpdateImageSetting}
+            >
+              <StyledShareMapModal className="export-cloud-modal">
+                <StyledInnerDiv>
                   <StyledExportSection>
                     <div className="description">
-                      <div className="title">Share Url</div>
+                      <div className="title">Share Map Url</div>
+                      <div className="subtitle">Generate a map url to share with others</div>
                     </div>
                     <div className="selection">
-                      <SharingUrl key={0} url={shareUrl} />
-                      {provider && folderLink && (
-                        <a
-                          key={1}
-                          href={folderLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{textDecoration: 'underline'}}
-                        >
-                          Go to your Kepler.gl {provider.displayName} page
-                        </a>
-                      )}
+                      <div className="title warning">{SHARE_DISCLAIMER}</div>
                     </div>
                   </StyledExportSection>
-                )}
-              </StyledInnerDiv>
-            </StyledShareMapModal>
-          </ImageModalContainer>
+                  <StyledExportSection disabled={isProviderLoading}>
+                    <div className="description">
+                      <div className="title">Cloud storage</div>
+                      <div className="subtitle">
+                        Login and upload map data to your personal cloud storage
+                      </div>
+                    </div>
+                    <div className="selection">
+                      {cloudProviders.map(cloudProvider => (
+                        <CloudTile
+                          key={cloudProvider.name}
+                          onSelect={() => onExport(cloudProvider)}
+                          onSetCloudProvider={onSetCloudProvider}
+                          cloudProvider={cloudProvider}
+                          actionName="Upload"
+                          isSelected={cloudProvider.name === currentProvider}
+                          isConnected={Boolean(cloudProvider.getAccessToken())}
+                          isReady={isReady}
+                        />
+                      ))}
+                    </div>
+                  </StyledExportSection>
+                  {isProviderLoading || providerError ? (
+                    <StatusPanel
+                      isLoading={isProviderLoading}
+                      error={providerError}
+                      providerIcon={provider && provider.icon}
+                    />
+                  ) : null}
+                  {shareUrl && (
+                    <StyledExportSection>
+                      <div className="description">
+                        <div className="title">Share Url</div>
+                      </div>
+                      <div className="selection">
+                        <SharingUrl key={0} url={shareUrl} />
+                        {provider && folderLink && (
+                          <a
+                            key={1}
+                            href={folderLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{textDecoration: 'underline'}}
+                          >
+                            Go to your Kepler.gl {provider.displayName} page
+                          </a>
+                        )}
+                      </div>
+                    </StyledExportSection>
+                  )}
+                </StyledInnerDiv>
+              </StyledShareMapModal>
+            </ImageModalContainer>
+          </ProviderModalContainer>
         </ThemeProvider>
       );
     }
