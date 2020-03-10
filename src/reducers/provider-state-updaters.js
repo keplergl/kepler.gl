@@ -318,6 +318,9 @@ export const resetProviderStatusUpdater = (state, action) => ({
  */
 export const setCloudProviderUpdater = (state, action) => ({
   ...state,
+  isProviderLoading: false,
+  providerError: null,
+  successInfo: {},
   currentProvider: action.payload
 });
 
