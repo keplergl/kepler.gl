@@ -141,7 +141,7 @@ class KeplerGLSchema {
     const config = Object.keys(this._reducerSchemas).reduce(
       (accu, key) => ({
         ...accu,
-        ...this._reducerSchemas[key][this._version].save(state[key])
+        ...(state[key] ? this._reducerSchemas[key][this._version].save(state[key]) : {})
       }),
       {}
     );

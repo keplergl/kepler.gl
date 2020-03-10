@@ -282,7 +282,7 @@ function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
       return (
         <StyledPanelHeader className="side-panel__panel-header">
           <StyledPanelHeaderTop className="side-panel__panel-header__top">
-            <this.props.logoComponent appName={appName} version={version} appWebsite={appWebsite}/>
+            <this.props.logoComponent appName={appName} version={version} appWebsite={appWebsite} />
             <StyledPanelTopActions>
               {items.map(item => (
                 <div

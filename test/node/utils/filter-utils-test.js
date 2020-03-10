@@ -20,10 +20,7 @@
 
 import test from 'tape';
 import moment from 'moment';
-import testData, {
-  numericRangesCsv,
-  testFields
-} from 'test/fixtures/test-csv-data';
+import testData, {numericRangesCsv, testFields} from 'test/fixtures/test-csv-data';
 
 import {
   adjustValueToFilterDomain,
@@ -41,7 +38,6 @@ import {
 
 import {preciseRound} from 'utils/data-utils';
 import {getDatasetFieldIndexForFilter} from 'utils/gpu-filter-utils';
-
 
 import {FILTER_TYPES} from 'constants/default-settings';
 import {processCsvData} from 'processors/data-processor';
@@ -124,7 +120,7 @@ function testGetNumericFieldStep(rows, allFields, t) {
       name: 'large',
       input: getFieldDomain(rows, allFields[4]).step,
       output: 1
-    },
+    }
   ];
 
   test_cases.forEach(tc =>

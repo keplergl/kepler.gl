@@ -43,6 +43,7 @@ class MapStyleSchemaV1 extends Schema {
     // save all custom styles
     const saveCustomStyle = Object.keys(mapStyles).reduce(
       (accu, key) => ({
+        ...accu,
         ...(mapStyles[key].custom
           ? {[key]: CustomMapStyleSchema.save(mapStyles[key]).customStyle}
           : {})
