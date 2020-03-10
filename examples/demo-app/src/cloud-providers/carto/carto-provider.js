@@ -291,8 +291,10 @@ export default class CartoProvider extends Provider {
     return this.getMapUrl(fullUrl);
   }
 
-  getMapUrl(fullUrl = true) {
-    if (this.currentMap) {
+  getMapUrl(fullUrl = true, mapParams = null) {
+    if (mapParams) {
+      return this._getMapPermalinkFromParams(mapParams, fullUrl);
+    } else if (this.currentMap) {
       return this._getMapPermalinkFromParams(
         {
           mapId: this.currentMap.id,

@@ -8,7 +8,7 @@
     "start-local-https": "webpack-dev-server --mode development --https --env.es6 --progress --hot --open"
   },
   "dependencies": {
-    "@carto/toolkit": "0.0.1-rc.16",
+    "@carto/toolkit": "0.0.1-rc.17",
     "d3-request": "^1.0.6",
     "dropbox": "^4.0.12",
     "global": "^4.3.0",
