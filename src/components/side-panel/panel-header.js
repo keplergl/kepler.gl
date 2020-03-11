@@ -73,7 +73,6 @@ const StyledPanelAction = styled.div.attrs({
 
   :hover {
     cursor: pointer;
-    background-color: ${props => props.theme.secondaryBtnActBgd};
     color: ${props => props.theme.textColorHl};
 
     a {
