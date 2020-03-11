@@ -242,12 +242,13 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD -> onSuccess : onError', t =
   const resultState2 = reducer(resultState1, succeedTaskInTest(task3, undefined));
 
   // saveToCloudSuccess
-  const [task4, task5, task6, ...more3] = drainTasksForTesting();
-  t.ok(more3.length === 0, 'should create 3 tasks');
+  const [task4, task5, task6, task7, ...more3] = drainTasksForTesting();
+  t.ok(more3.length === 0, 'should create 4 tasks');
 
-  t.ok(task4.type === 'ACTION_TASK', 'should create 2 ACTION_TASKS');
-  t.ok(task5.type === 'ACTION_TASK', 'should create 2 ACTION_TASKS');
-  t.ok(task6.type === 'DELAY_TASK', 'should create 1 DELAY_TASK');
+  t.ok(task4.type === 'ACTION_TASK', 'should create 3 ACTION_TASKS');
+  t.ok(task5.type === 'ACTION_TASK', 'should create 3 ACTION_TASKS');
+  t.ok(task6.type === 'ACTION_TASK', 'should create 3 ACTION_TASKS');
+  t.ok(task7.type === 'DELAY_TASK', 'should create 1 DELAY_TASK');
 
   // toggleModal(null),
   const resultState3 = composedReducer(resultState2, succeedTaskInTest(task4, undefined));
@@ -264,15 +265,31 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD -> onSuccess : onError', t =
     },
     'Should call toggleModal(null'
   );
+
   const resultState4 = composedReducer(resultState3, succeedTaskInTest(task5, undefined));
+  t.deepEqual(
+    resultState4,
+    {
+      isProviderLoading: false,
+      providerError: null,
+      currentProvider: 'taro',
+      mapSaved: 'taro',
+      initialState: {},
+      successInfo: {},
+      modalId: null
+    },
+    'Should call resetProviderStatus'
+  );
+
+  const resultState5 = composedReducer(resultState4, succeedTaskInTest(task6, undefined));
   t.equal(
-    resultState4.notification.type,
+    resultState5.notification.type,
     'success',
     'Should call addNotification with successNote'
   );
 
-  const resultState5 = composedReducer(resultState4, succeedTaskInTest(task6, undefined));
-  t.equal(resultState5.remove, true, 'Should call removeNotification');
+  const resultState6 = composedReducer(resultState5, succeedTaskInTest(task7, undefined));
+  t.equal(resultState6.remove, true, 'Should call removeNotification');
 
   t.end();
 });
