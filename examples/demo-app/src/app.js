@@ -366,7 +366,6 @@ class App extends Component {
                 <KeplerGl
                   mapboxApiAccessToken={AUTH_TOKENS.MAPBOX_TOKEN}
                   id="map"
-                  theme="light"
                   /*
                    * Specify path to keplerGl state, because it is not mount at the root
                    */
