@@ -192,6 +192,8 @@ export const Button = styled.div.attrs({
       ? props.theme.secondaryBtnBgd
       : props.link
       ? props.theme.linkBtnBgd
+      : props.floating
+      ? props.theme.floatingBtnBgd
       : props.theme.primaryBtnBgd};
   border-radius: ${props => props.theme.primaryBtnRadius};
   color: ${props =>
@@ -201,6 +203,8 @@ export const Button = styled.div.attrs({
       ? props.theme.secondaryBtnColor
       : props.link
       ? props.theme.linkBtnColor
+      : props.floating
+      ? props.theme.floatingBtnColor
       : props.theme.primaryBtnColor};
   cursor: pointer;
   display: inline-flex;
@@ -229,6 +233,8 @@ export const Button = styled.div.attrs({
         ? props.theme.secondaryBtnBgdHover
         : props.link
         ? props.theme.linkBtnActBgdHover
+        : props.floating
+        ? props.theme.floatingBtnBgdHover
         : props.theme.primaryBtnBgdHover};
     color: ${props =>
       props.negative
@@ -237,6 +243,8 @@ export const Button = styled.div.attrs({
         ? props.theme.secondaryBtnActColor
         : props.link
         ? props.theme.linkBtnActColor
+        : props.floating
+        ? props.theme.floatingBtnActColor
         : props.theme.primaryBtnActColor};
   }
 
@@ -558,33 +566,28 @@ export const BottomWidgetInner = styled.div`
   margin-top: ${props => props.theme.bottomPanelGap}px;
 `;
 
-export const MapControlButton = styled.div.attrs({
+export const MapControlButton = styled(Button).attrs({
   className: 'map-control-button'
 })`
-  align-items: center;
-  background-color: ${props =>
-    props.active ? props.theme.panelBackgroundHover : props.theme.panelBackground};
-  border: 0;
   box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.16);
-  color: ${props => props.theme.primaryBtnColor};
-  cursor: pointer;
-  display: flex;
   height: 32px;
-  justify-content: center;
-  margin: 0;
-  outline: none;
-  padding: 0;
-  transition: ${props => props.theme.transition};
   width: 32px;
+  padding: 0;
+  border-radius: 0;
+  background-color: ${props =>
+    props.active ? props.theme.floatingBtnBgdHover : props.theme.floatingBtnBgd};
+  color: ${props =>
+    props.active ? props.theme.floatingBtnActColor : props.theme.floatingBtnColor};
 
-  :focus {
-    outline: none;
+  :hover,
+  :focus,
+  :active,
+  &.active {
+    background-color: ${props => props.theme.floatingBtnBgdHover};
+    color: ${props => props.theme.floatingBtnActColor};
   }
-
-  :hover {
-    cursor: pointer;
-    background-color: ${props => props.theme.secondaryBtnActBgd};
-    color: ${props => props.theme.secondaryBtnActColor};
+  svg {
+    margin-right: 0;
   }
 `;
 

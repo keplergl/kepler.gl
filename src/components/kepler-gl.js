@@ -54,7 +54,7 @@ import NotificationPanelFactory from './notification-panel';
 import {generateHashId} from 'utils/utils';
 import {validateToken} from 'utils/mapbox-utils';
 
-import {theme as basicTheme, themeLT} from 'styles/base';
+import {theme as basicTheme, themeLT, themeBS} from 'styles/base';
 
 // Maybe we should think about exporting this or creating a variable
 // as part of the base.js theme
@@ -149,6 +149,8 @@ function KeplerGlFactory(
           }
         : theme === THEME.light
         ? themeLT
+        : theme === THEME.base
+        ? themeBS
         : theme
     );
 
