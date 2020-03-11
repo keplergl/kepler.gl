@@ -52,6 +52,7 @@ export const titleTextColor = '#FFFFFF';
 export const textColorHl = '#F0F0F0';
 export const textColorHlLT = '#F1F1F1';
 export const activeColor = '#1FBAD6';
+export const activeColorLT = '#2473BD';
 export const activeColorHover = '#108188';
 export const errorColor = '#F9042C';
 
@@ -1066,33 +1067,57 @@ export const themeLT = {
   ...theme,
 
   // template
+  activeColor: activeColorLT,
   input: inputLT,
   textColor: textColorLT,
-  sidePanelBg: '#ffffff',
+  sidePanelBg: '#FFFFFF',
+  selectColor: selectColorLT,
   titleTextColor: '#000000',
-  sidePanelHeaderBg: '#f7f7F7',
-  subtextColorActive: '#2473bd',
-  tooltipBg: '#1869b5',
-  tooltipColor: '#ffffff',
-  dropdownListBgd: '#ffffff',
-  textColorHl: '#2473bd',
-  inputBgd: '#f7f7f7',
-  inputBgdHover: '#ffffff',
-  inputBgdActive: '#ffffff',
-  dropdownListHighlightBg: '#f0f0f0',
-  panelBackground: '#f7f7F7',
-  panelBackgroundHover: '#f7f7F7',
+  sidePanelHeaderBg: '#F7F7F7',
+  subtextColorActive: activeColorLT,
+  tooltipBg: '#1869B5',
+  tooltipColor: '#FFFFFF',
+  dropdownListBgd: '#FFFFFF',
+  textColorHl: activeColorLT,
+  inputBgd: '#F7F7F7',
+  inputBgdHover: '#FFFFFF',
+  inputBgdActive: '#FFFFFF',
+  dropdownListHighlightBg: '#F0F0F0',
+  panelBackground: '#F7F7F7',
+  panelBackgroundHover: '#F7F7F7',
   panelBorderColor: '#D3D8E0',
-  secondaryInputBgd: '#f7f7F7',
-  secondaryInputBgdActive: '#f7f7F7',
-  secondaryInputBgdHover: '#ffffff',
-  panelActiveBg: '#f7f7F7',
-  mapPanelBackgroundColor: '#ffffff',
-  mapPanelHeaderBackgroundColor: '#f7f7F7',
-  sliderBarBgd: '#D3D8E0',
-  secondarySwitchBtnBgd: '#D3D8E0',
-  switchTrackBgd: '#D3D8E0',
+  secondaryInputBgd: '#F7F7F7',
+  secondaryInputBgdActive: '#F7F7F7',
+  secondaryInputBgdHover: '#FFFFFF',
+  panelActiveBg: '#F7F7F7',
+  mapPanelBackgroundColor: '#FFFFFF',
+  mapPanelHeaderBackgroundColor: '#F7F7F7',
 
-  // button
-  linkBtnActColor: textColorLT
+  sliderBarColor: '#A0A7B4',
+  sliderBarBgd: '#D3D8E0',
+  sliderHandleColor: '#F7F7F7',
+  sliderHandleHoverColor: '#F7F7F7',
+
+  subtextColor: subtextColorLT,
+  switchBtnBgd: '#F7F7F7',
+  secondarySwitchBtnBgd: '#F7F7F7',
+  secondarySwitchTrackBgd: '#D3D8E0',
+  switchBtnBgdActive: '#F7F7F7',
+  switchTrackBgd: '#D3D8E0',
+  switchTrackBgdActive: activeColorLT,
+
+  // button switch background and hover color
+  primaryBtnBgd: primaryBtnActBgd,
+  primaryBtnActBgd: primaryBtnBgd,
+  primaryBtnBgdHover: primaryBtnBgd,
+
+  secondaryBtnBgd: secondaryBtnActBgd,
+  secondaryBtnActBgd: secondaryBtnBgd,
+  secondaryBtnBgdHover: secondaryBtnBgd,
+
+  linkBtnActColor: textColorLT,
+
+  rangeBrushBgd: '#D3D8E0',
+  histogramFillInRange: activeColorLT,
+  histogramFillOutRange: '#A0A7B4'
 };

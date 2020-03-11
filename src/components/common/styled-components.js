@@ -566,8 +566,7 @@ export const MapControlButton = styled.div.attrs({
     props.active ? props.theme.panelBackgroundHover : props.theme.panelBackground};
   border: 0;
   box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.16);
-  color: ${props => props.theme.primaryBtnColor};
-  cursor: pointer;
+  color: ${props => (props.active ? props.theme.subtextColorActive : props.theme.subtextColor)};
   display: flex;
   height: 32px;
   justify-content: center;
@@ -583,8 +582,7 @@ export const MapControlButton = styled.div.attrs({
 
   :hover {
     cursor: pointer;
-    background-color: ${props => props.theme.secondaryBtnActBgd};
-    color: ${props => props.theme.secondaryBtnActColor};
+    color: ${props => props.theme.subtextColorActive};
   }
 `;
 
