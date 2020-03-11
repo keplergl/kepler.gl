@@ -34,7 +34,8 @@ import {
   postSaveLoadSuccess,
   loadCloudMapSuccess,
   getSavedMapsSuccess,
-  getSavedMapsError
+  getSavedMapsError,
+  resetProviderStatus
 } from 'actions/provider-actions';
 import {removeNotification, toggleModal, addNotification} from 'actions/ui-state-actions';
 import {addDataToMap} from 'actions/actions';
@@ -163,6 +164,7 @@ export const postSaveLoadSuccessUpdater = (state, action) => {
 
   const tasks = [
     ACTION_TASK().map(_ => toggleModal(null)),
+    ACTION_TASK().map(_ => resetProviderStatus()),
     ...createGlobalNotificationTasks({message})
   ];
 

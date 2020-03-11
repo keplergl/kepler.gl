@@ -103,7 +103,6 @@ export default function SidePanelFactory(
       datasets: PropTypes.object.isRequired,
       visStateActions: PropTypes.object.isRequired,
       mapStyleActions: PropTypes.object.isRequired,
-      providerActions: PropTypes.object.isRequired,
       availableProviders: PropTypes.object,
       mapSaved: PropTypes.string,
       panels: PropTypes.arrayOf(PropTypes.object)
@@ -115,7 +114,6 @@ export default function SidePanelFactory(
       visStateActions: {},
       mapStyleActions: {},
       uiStateActions: {},
-      providerActions: {},
       availableProviders: {}
     };
 
@@ -163,10 +161,7 @@ export default function SidePanelFactory(
       this.props.uiStateActions.toggleModal(SAVE_MAP_ID);
     };
 
-    _onClickShareMap = () => {
-      this.props.providerActions.resetProviderStatus();
-      this.props.uiStateActions.toggleModal(SHARE_MAP_ID);
-    };
+    _onClickShareMap = () => this.props.uiStateActions.toggleModal(SHARE_MAP_ID);
 
     // eslint-disable-next-line complexity
     render() {
