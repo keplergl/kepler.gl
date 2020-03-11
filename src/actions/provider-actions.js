@@ -61,6 +61,8 @@ export const loadCloudMapSuccess = createAction(
   payload => payload
 );
 
+export const loadCloudMapError = createAction(ActionTypes.LOAD_CLOUD_MAP_ERROR, payload => payload);
+
 export const getSavedMaps = createAction(ActionTypes.GET_SAVED_MAPS, provider => provider);
 
 export const getSavedMapsSuccess = createAction(

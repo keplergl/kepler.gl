@@ -34,7 +34,8 @@ import {
   postSaveLoadSuccess,
   loadCloudMapSuccess,
   getSavedMapsSuccess,
-  getSavedMapsError
+  getSavedMapsError,
+  loadCloudMapError
 } from 'actions/provider-actions';
 import {removeNotification, toggleModal, addNotification} from 'actions/ui-state-actions';
 import {addDataToMap} from 'actions/actions';
@@ -48,6 +49,7 @@ import KeplerGlSchema from 'schemas';
 
 export const INITIAL_PROVIDER_STATE = {
   isProviderLoading: false,
+  isCloudMapLoading: false,
   providerError: null,
   currentProvider: null,
   successInfo: {},
@@ -199,7 +201,8 @@ export const loadCloudMapUpdater = (state, action) => {
 
   const newState = {
     ...state,
-    isProviderLoading: true
+    isProviderLoading: true,
+    isCloudMapLoading: true
   };
 
   // payload called by provider.downloadMap
@@ -207,7 +210,7 @@ export const loadCloudMapUpdater = (state, action) => {
     // success
     response => loadCloudMapSuccess({response, loadParams, provider, onSuccess, onError}),
     // error
-    error => exportFileError({error, provider, onError})
+    error => loadCloudMapError({error, provider, onError})
   );
 
   return withTask(newState, uploadFileTask);
@@ -286,6 +289,7 @@ export const loadCloudMapSuccessUpdater = (state, action) => {
     ...state,
     mapSaved: provider.name,
     currentProvider: provider.name,
+    isCloudMapLoading: false,
     isProviderLoading: false
   };
 
@@ -299,6 +303,24 @@ export const loadCloudMapSuccessUpdater = (state, action) => {
 
   return tasks.length ? withTask(newState, tasks) : newState;
 };
+
+export const loadCloudMapErrorUpdater = (state, action) => {
+  const message = getError(action.payload.error) || `Error loading saved map`;
+
+  Console.warn(message);
+
+  const newState = {
+    ...state,
+    isProviderLoading: false,
+    isCloudMapLoading: false,
+    providerError: null
+  };
+
+  return withTask(
+    newState,
+    createGlobalNotificationTasks({type: 'error', message, delayClose: false})
+  );
+};
 /**
  *
  * @param {*} state
@@ -308,6 +330,7 @@ export const resetProviderStatusUpdater = (state, action) => ({
   ...state,
   isProviderLoading: false,
   providerError: null,
+  isCloudMapLoading: false,
   successInfo: {}
 });
 
