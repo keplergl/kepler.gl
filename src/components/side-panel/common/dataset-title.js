@@ -43,12 +43,12 @@ const StyledDatasetTitle = styled.div`
     }
 
     .dataset-action {
-      color: ${props => props.theme.textColorHl};
+      color: ${props => props.theme.textColor};
       opacity: 1;
     }
 
     .dataset-action:hover {
-      color: white;
+      color: ${props => props.theme.textColorHl};
     }
   }
 `;

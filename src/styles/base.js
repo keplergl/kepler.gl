@@ -52,8 +52,10 @@ export const titleTextColor = '#FFFFFF';
 export const textColorHl = '#F0F0F0';
 export const textColorHlLT = '#F1F1F1';
 export const activeColor = '#1FBAD6';
+export const activeColorLT = '#2473BD';
 export const activeColorHover = '#108188';
 export const errorColor = '#F9042C';
+export const logoColor = activeColor;
 
 // Button
 export const primaryBtnBgd = '#0F9668';
@@ -80,6 +82,12 @@ export const negativeBtnActBgd = '#FF193E';
 export const negativeBtnBgdHover = '#FF193E';
 export const negativeBtnColor = '#FFFFFF';
 export const negativeBtnActColor = '#FFFFFF';
+
+export const floatingBtnBgd = '#29323C';
+export const floatingBtnActBgd = '#3A4552';
+export const floatingBtnBgdHover = '#3A4552';
+export const floatingBtnColor = subtextColor;
+export const floatingBtnActColor = subtextColorActive;
 
 // Input
 export const inputBoxHeight = '34px';
@@ -939,6 +947,12 @@ export const theme = {
   linkBtnActColor,
   linkBtnActBgdHover,
 
+  floatingBtnBgd,
+  floatingBtnActBgd,
+  floatingBtnBgdHover,
+  floatingBtnColor,
+  floatingBtnActColor,
+
   // Modal
   modalTitleColor,
   modalTitleFontSize,
@@ -1000,6 +1014,7 @@ export const theme = {
   titleColorLT,
   tooltipBg,
   tooltipColor,
+  logoColor,
 
   // Bottom Panel
   bottomInnerPdSide,
@@ -1064,35 +1079,131 @@ export const theme = {
 
 export const themeLT = {
   ...theme,
-
   // template
+  activeColor: activeColorLT,
   input: inputLT,
   textColor: textColorLT,
-  sidePanelBg: '#ffffff',
+  sidePanelBg: '#FFFFFF',
+  selectColor: selectColorLT,
   titleTextColor: '#000000',
-  sidePanelHeaderBg: '#f7f7F7',
-  subtextColorActive: '#2473bd',
-  tooltipBg: '#1869b5',
-  tooltipColor: '#ffffff',
-  dropdownListBgd: '#ffffff',
-  textColorHl: '#2473bd',
-  inputBgd: '#f7f7f7',
-  inputBgdHover: '#ffffff',
-  inputBgdActive: '#ffffff',
-  dropdownListHighlightBg: '#f0f0f0',
-  panelBackground: '#f7f7F7',
-  panelBackgroundHover: '#f7f7F7',
-  panelBorderColor: '#D3D8E0',
-  secondaryInputBgd: '#f7f7F7',
-  secondaryInputBgdActive: '#f7f7F7',
-  secondaryInputBgdHover: '#ffffff',
-  panelActiveBg: '#f7f7F7',
-  mapPanelBackgroundColor: '#ffffff',
-  mapPanelHeaderBackgroundColor: '#f7f7F7',
-  sliderBarBgd: '#D3D8E0',
-  secondarySwitchBtnBgd: '#D3D8E0',
-  switchTrackBgd: '#D3D8E0',
+  sidePanelHeaderBg: '#F7F7F7',
+  subtextColorActive: activeColorLT,
+  tooltipBg: '#1869B5',
+  tooltipColor: '#FFFFFF',
+  dropdownListBgd: '#FFFFFF',
+  textColorHl: activeColorLT,
 
-  // button
-  linkBtnActColor: textColorLT
+  inputBgd: '#F7F7F7',
+  inputBgdHover: '#FFFFFF',
+  inputBgdActive: '#FFFFFF',
+
+  dropdownListHighlightBg: '#F0F0F0',
+
+  panelBackground: '#F7F7F7',
+  panelBackgroundHover: '#F7F7F7',
+  panelBorderColor: '#D3D8E0',
+
+  secondaryInputBgd: '#F7F7F7',
+  secondaryInputBgdActive: '#F7F7F7',
+  secondaryInputBgdHover: '#FFFFFF',
+  secondaryInputBorderActiveColor: '#000000',
+  secondaryInputBorderColor: 'none',
+  secondaryInputColor: '#545454',
+
+  panelActiveBg: '#F7F7F7',
+  mapPanelBackgroundColor: '#FFFFFF',
+  mapPanelHeaderBackgroundColor: '#F7F7F7',
+
+  sliderBarColor: '#A0A7B4',
+  sliderBarBgd: '#D3D8E0',
+  sliderHandleColor: '#F7F7F7',
+  sliderHandleHoverColor: '#F7F7F7',
+
+  subtextColor: subtextColorLT,
+  switchBtnBgd: '#F7F7F7',
+  secondarySwitchBtnBgd: '#F7F7F7',
+  secondarySwitchTrackBgd: '#D3D8E0',
+  switchBtnBgdActive: '#F7F7F7',
+  switchTrackBgd: '#D3D8E0',
+  switchTrackBgdActive: activeColorLT,
+
+  // button switch background and hover color
+  primaryBtnBgd: primaryBtnActBgd,
+  primaryBtnActBgd: primaryBtnBgd,
+  primaryBtnBgdHover: primaryBtnBgd,
+
+  secondaryBtnBgd: secondaryBtnActBgd,
+  secondaryBtnActBgd: secondaryBtnBgd,
+  secondaryBtnBgdHover: secondaryBtnBgd,
+
+  floatingBtnBgd: '#F7F7F7',
+  floatingBtnActBgd: '#F7F7F7',
+  floatingBtnBgdHover: '#F7F7F7',
+  floatingBtnColor: subtextColor,
+  floatingBtnActColor: activeColorLT,
+
+  linkBtnActColor: textColorLT,
+
+  rangeBrushBgd: '#D3D8E0',
+  histogramFillInRange: activeColorLT,
+  histogramFillOutRange: '#A0A7B4'
+};
+
+export const themeBS = {
+  ...theme,
+  activeColor: '#E2E2E2',
+  dropdownListBgd: '#FFFFFF',
+  dropdownListBorderTop: 'none',
+  dropdownListHighlightBg: '#F6F6F6',
+  inputBgd: '#E2E2E2',
+  inputBgdActive: '#E2E2E2',
+  inputBgdHover: 'inherit',
+  inputBorderActiveColor: '#000000',
+  inputColor: '#000000',
+  panelActiveBg: '#E2E2E2',
+  panelBackground: '#FFFFFF',
+  panelBackgroundHover: '#EEEEEE',
+  panelBorderColor: '#E2E2E2',
+  primaryBtnBgd: '#E2E2E2',
+  primaryBtnBgdHover: '#333333',
+  primaryBtnColor: '#000000',
+  secondaryBtnActBgd: '#EEEEEE',
+  secondaryBtnActColor: '#000000',
+  secondaryBtnBgd: '#E2E2E2',
+  secondaryBtnBgdHover: '#CBCBCB',
+
+  floatingBtnBgd: '#FFFFFF',
+  floatingBtnActBgd: '#EEEEEE',
+  floatingBtnBgdHover: '#EEEEEE',
+  floatingBtnColor: '#AFAFAF',
+  floatingBtnActColor: '#000000',
+
+  secondaryBtnColor: '#000000',
+  secondaryInputBgd: '#F6F6F6',
+  secondaryInputBgdActive: '#F6F6F6',
+  secondaryInputBgdHover: '#F6F6F6',
+  secondaryInputBorderActiveColor: '#000000',
+  secondaryInputBorderColor: 'none',
+  secondaryInputColor: '#545454',
+  sidePanelBg: '#F6F6F6',
+  sidePanelHeaderBg: '#FFFFFF',
+  subtextColor: '#AFAFAF',
+  subtextColorActive: '#000000',
+  textColor: '#000000',
+  textColorHl: '#545454',
+  mapPanelBackgroundColor: '#F6F6F6',
+  mapPanelHeaderBackgroundColor: '#FFFFFF',
+  titleTextColor: '#000000',
+  switchBtnBgdActive: '#000000',
+  switchBtnBgd: '#FFFFFF',
+  switchTrackBgdActive: '#E2E2E2',
+  secondarySwitchTrackBgd: '#E2E2E2',
+  switchTrackBgd: '#E2E2E2',
+  secondarySwitchBtnBgd: '#FFFFFF',
+  histogramFillInRange: '#000000',
+  histogramFillOutRange: '#E2E2E2',
+  rangeBrushBgd: '#E2E2E2',
+  sliderBarBgd: '#E2E2E2',
+  sliderHandleColor: '#FFFFFF',
+  sliderBarColor: '#000000'
 };

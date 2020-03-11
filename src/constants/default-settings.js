@@ -145,7 +145,8 @@ export const DIMENSIONS = {
  */
 export const THEME = keyMirror({
   light: null,
-  dark: null
+  dark: null,
+  base: null
 });
 
 export const SIDEBAR_PANELS = [

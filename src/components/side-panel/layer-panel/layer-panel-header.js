@@ -67,7 +67,7 @@ const StyledLayerPanelHeader = styled(StyledPanelHeader)`
     }
 
     .layer__enable-config {
-      color: white;
+      color: ${props => props.theme.textColorHl};
     }
   }
 `;
