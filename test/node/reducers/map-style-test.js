@@ -237,5 +237,39 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
     );
   });
 
+  const savedConfig = SchemaManager.getConfigToSave({mapStyle: resultState1});
+  const expectedSaved = {
+    version: 'v1',
+    config: {
+      mapStyle: {
+        styleType: 'smoothie_the_cat',
+        topLayerGroups: {},
+        visibleLayerGroups: {},
+        threeDBuildingColor: [1, 2, 3],
+        mapStyles: {
+          smoothie_the_cat: {
+            accessToken: 'secret_token',
+            custom: true,
+            icon:
+              'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+            id: 'smoothie_the_cat',
+            label: 'Smoothie the Cat',
+            url: 'mapbox://styles/shanhe/smoothie.the.cat'
+          }
+        }
+      }
+    }
+  };
+
+  t.deepEqual(
+    Object.keys(savedConfig).sort(),
+    Object.keys(expectedSaved).sort(),
+    'mapStyle state saved should have same keys'
+  );
+
+  Object.keys(savedConfig).forEach(key => {
+    t.deepEqual(savedConfig[key], expectedSaved[key], `should save state.${key} with correctly`);
+  });
+
   t.end();
 });

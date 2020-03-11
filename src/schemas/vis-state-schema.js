@@ -403,13 +403,14 @@ const visConfigModificationV1 = {
     const modified = {};
     const [layer] = parents.slice(-2, -1);
     const isOld =
+      layer.visualChannels &&
       !layer.visualChannels.hasOwnProperty('strokeColorField') &&
       !visConfig.strokeColor &&
       !visConfig.strokeColorRange;
     // make our best guess if this geojson layer contains point
     const isPoint =
-      layer.visualChannels.radiusField ||
-      visConfig.radius !== LAYER_VIS_CONFIGS.radius.defaultValue;
+      (layer.visualChannels && layer.visualChannels.radiusField) ||
+      (visConfig && visConfig.radius !== LAYER_VIS_CONFIGS.radius.defaultValue);
 
     if (isOld) {
       // color color & color range to stroke color
