@@ -269,7 +269,6 @@ const MapDrawPanel = React.memo(
               label={editor.visible ? 'hide' : 'show'}
               iconHeight="22px"
               icon={editor.visible ? EyeSeen : EyeUnseen}
-              active
             />
           </StyledToolbar>
         ) : null}

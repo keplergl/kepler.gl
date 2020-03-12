@@ -1103,6 +1103,10 @@ export const themeLT = {
   panelBackgroundHover: '#F7F7F7',
   panelBorderColor: '#D3D8E0',
 
+  sideBarCloseBtnBgd: '#F7F7F7',
+  sideBarCloseBtnColor: textColorLT,
+  sideBarCloseBtnBgdHover: '#F7F7F7',
+
   secondaryInputBgd: '#F7F7F7',
   secondaryInputBgdActive: '#F7F7F7',
   secondaryInputBgdHover: '#FFFFFF',
@@ -1171,6 +1175,10 @@ export const themeBS = {
   secondaryBtnActColor: '#000000',
   secondaryBtnBgd: '#E2E2E2',
   secondaryBtnBgdHover: '#CBCBCB',
+
+  sideBarCloseBtnBgd: '#E2E2E2',
+  sideBarCloseBtnColor: '#000000',
+  sideBarCloseBtnBgdHover: '#FFFFFF',
 
   floatingBtnBgd: '#FFFFFF',
   floatingBtnActBgd: '#EEEEEE',
