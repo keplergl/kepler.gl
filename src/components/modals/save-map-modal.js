@@ -23,6 +23,8 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import CloudTile from './cloud-tile';
 import ImageModalContainer from './image-modal-container';
+import ProviderModalContainer from './provider-modal-container';
+
 import StatusPanel, {UploadAnimation} from './status-panel';
 
 import {MAP_THUMBNAIL_DIMENSION, MAP_INFO_CHARACTER} from 'constants/default-settings';
@@ -138,7 +140,8 @@ function SaveMapModalFactory() {
       currentProvider: null,
       providerError: null,
       isProviderLoading: false,
-      onSetCloudProvider: nop
+      onSetCloudProvider: nop,
+      onUpdateImageSetting: nop
     };
 
     _onChangeInput = (key, e) => {
@@ -165,80 +168,85 @@ function SaveMapModalFactory() {
         : null;
 
       return (
-        <ImageModalContainer
-          currentProvider={currentProvider}
-          cloudProviders={cloudProviders}
-          onUpdateImageSetting={onUpdateImageSetting}
+        <ProviderModalContainer
           onSetCloudProvider={onSetCloudProvider}
+          cloudProviders={cloudProviders}
+          currentProvider={currentProvider}
         >
-          <StyledSaveMapModal>
-            <StyledModalContent className="save-map-modal-content">
-              <StyledExportSection disabled={isProviderLoading}>
-                <div className="description">
-                  <div className="title">Cloud storage</div>
-                  <div className="subtitle">Login save map to your personal cloud storage</div>
-                </div>
-                <div className="selection">
-                  {cloudProviders.map(cloudProvider => (
-                    <CloudTile
-                      key={cloudProvider.name}
-                      onSelect={() => onSetCloudProvider(cloudProvider.name)}
-                      onSetCloudProvider={onSetCloudProvider}
-                      cloudProvider={cloudProvider}
-                      isSelected={cloudProvider.name === currentProvider}
-                      isConnected={Boolean(
-                        cloudProvider.getAccessToken && cloudProvider.getAccessToken()
-                      )}
-                    />
-                  ))}
-                </div>
-              </StyledExportSection>
-              {provider && provider.getManagementUrl && (
-                <StyledExportSection style={{margin: '2px 0'}}>
-                  <div className="description" />
+          <ImageModalContainer
+            currentProvider={currentProvider}
+            cloudProviders={cloudProviders}
+            onUpdateImageSetting={onUpdateImageSetting}
+          >
+            <StyledSaveMapModal>
+              <StyledModalContent className="save-map-modal-content">
+                <StyledExportSection disabled={isProviderLoading}>
+                  <div className="description">
+                    <div className="title">Cloud storage</div>
+                    <div className="subtitle">Login save map to your personal cloud storage</div>
+                  </div>
                   <div className="selection">
-                    <a
-                      key={1}
-                      href={provider.getManagementUrl()}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{textDecoration: 'underline'}}
-                    >
-                      Go to your Kepler.gl {provider.displayName} page
-                    </a>
+                    {cloudProviders.map(cloudProvider => (
+                      <CloudTile
+                        key={cloudProvider.name}
+                        onSelect={() => onSetCloudProvider(cloudProvider.name)}
+                        onSetCloudProvider={onSetCloudProvider}
+                        cloudProvider={cloudProvider}
+                        isSelected={cloudProvider.name === currentProvider}
+                        isConnected={Boolean(
+                          cloudProvider.getAccessToken && cloudProvider.getAccessToken()
+                        )}
+                      />
+                    ))}
                   </div>
                 </StyledExportSection>
-              )}
-              <StyledExportSection>
-                <div className="description image-preview-panel">
-                  <ImagePreview
-                    exportImage={exportImage}
-                    width={MAP_THUMBNAIL_DIMENSION.width}
-                    showDimension={false}
-                  />
-                </div>
-                {isProviderLoading ? (
-                  <div className="selection map-saving-animation">
-                    <UploadAnimation icon={provider && provider.icon} />
-                  </div>
-                ) : (
-                  <MapInfoPanel
-                    mapInfo={mapInfo}
-                    characterLimits={characterLimits}
-                    onChangeInput={this._onChangeInput}
-                  />
+                {provider && provider.getManagementUrl && (
+                  <StyledExportSection style={{margin: '2px 0'}}>
+                    <div className="description" />
+                    <div className="selection">
+                      <a
+                        key={1}
+                        href={provider.getManagementUrl()}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{textDecoration: 'underline'}}
+                      >
+                        Go to your Kepler.gl {provider.displayName} page
+                      </a>
+                    </div>
+                  </StyledExportSection>
                 )}
-              </StyledExportSection>
-              {providerError ? (
-                <StatusPanel
-                  isLoading={false}
-                  error={providerError}
-                  providerIcon={provider && provider.icon}
-                />
-              ) : null}
-            </StyledModalContent>
-          </StyledSaveMapModal>
-        </ImageModalContainer>
+                <StyledExportSection>
+                  <div className="description image-preview-panel">
+                    <ImagePreview
+                      exportImage={exportImage}
+                      width={MAP_THUMBNAIL_DIMENSION.width}
+                      showDimension={false}
+                    />
+                  </div>
+                  {isProviderLoading ? (
+                    <div className="selection map-saving-animation">
+                      <UploadAnimation icon={provider && provider.icon} />
+                    </div>
+                  ) : (
+                    <MapInfoPanel
+                      mapInfo={mapInfo}
+                      characterLimits={characterLimits}
+                      onChangeInput={this._onChangeInput}
+                    />
+                  )}
+                </StyledExportSection>
+                {providerError ? (
+                  <StatusPanel
+                    isLoading={false}
+                    error={providerError}
+                    providerIcon={provider && provider.icon}
+                  />
+                ) : null}
+              </StyledModalContent>
+            </StyledSaveMapModal>
+          </ImageModalContainer>
+        </ProviderModalContainer>
       );
     }
   }

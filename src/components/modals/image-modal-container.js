@@ -24,9 +24,13 @@ import get from 'lodash.get';
 
 import {MAP_THUMBNAIL_DIMENSION, EXPORT_IMG_RATIOS} from 'constants/default-settings';
 
+/**
+ * A wrapper component in modals contain a image preview of the map with cloud providers
+ * It sets export image size based on provider thumbnail size
+ * @component
+ */
 export default class ImageModalContainer extends Component {
   static propTypes = {
-    onSetCloudProvider: PropTypes.func.isRequired,
     onUpdateImageSetting: PropTypes.func.isRequired,
     cloudProviders: PropTypes.arrayOf(PropTypes.object),
     currentProvider: PropTypes.string
@@ -38,18 +42,17 @@ export default class ImageModalContainer extends Component {
   };
 
   componentDidMount() {
-    this._updateThumbSize();
-    this._setDefaultProvider();
+    this._updateThumbSize(true);
   }
 
   componentDidUpdate(prevProps) {
     // set thumbnail size if provider changes
-    if (this.props.currentProvider !== prevProps.currentProvider) {
+    if (this.props.currentProvider !== prevProps.currentProvider && this.props.currentProvider) {
       this._updateThumbSize();
     }
   }
 
-  _updateThumbSize() {
+  _updateThumbSize(initialMount) {
     if (this.props.currentProvider && this.props.cloudProviders.length) {
       const provider = this.props.cloudProviders.find(p => p.name === this.props.currentProvider);
 
@@ -61,18 +64,12 @@ export default class ImageModalContainer extends Component {
           legend: false
         });
       }
-    }
-  }
-
-  _setDefaultProvider() {
-    if (!this.props.currentProvider && this.props.cloudProviders.length) {
-      const connected = this.props.cloudProviders.find(
-        p => typeof p.getAccessToken === 'function' && p.getAccessToken()
-      );
-
-      if (connected) {
-        this.props.onSetCloudProvider(connected.name);
-      }
+    } else if (initialMount) {
+      this.props.onUpdateImageSetting({
+        mapW: MAP_THUMBNAIL_DIMENSION.width,
+        mapH: MAP_THUMBNAIL_DIMENSION.height,
+        ratio: EXPORT_IMG_RATIOS.CUSTOM
+      });
     }
   }
 

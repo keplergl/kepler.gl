@@ -18,9 +18,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './data-table-modal-test';
-import './save-map-modal-test';
-import './share-map-modal-test';
-import './share-map-modal-test';
-import './load-data-modal-test';
-import './load-storage-map-test';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
+
+/**
+ * A wrapper component in modals contain cloud providers.
+ * It set default provider by checking which provider has logged in
+ * @component
+ */
+export default class ProviderModalContainer extends Component {
+  static propTypes = {
+    onSetCloudProvider: PropTypes.func.isRequired,
+    cloudProviders: PropTypes.arrayOf(PropTypes.object),
+    currentProvider: PropTypes.string
+  };
+
+  static defaultProps = {
+    cloudProviders: [],
+    currentProvider: null
+  };
+
+  componentDidMount() {
+    this._setDefaultProvider();
+  }
+
+  _setDefaultProvider() {
+    if (!this.props.currentProvider && this.props.cloudProviders.length) {
+      const connected = this.props.cloudProviders.find(
+        p => typeof p.getAccessToken === 'function' && p.getAccessToken()
+      );
+
+      if (connected && typeof this.props.onSetCloudProvider === 'function') {
+        this.props.onSetCloudProvider(connected.name);
+      }
+    }
+  }
+
+  render() {
+    return <>{this.props.children}</>;
+  }
+}
