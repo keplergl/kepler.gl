@@ -92,10 +92,12 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD', t => {
   const [task1, ...more] = drainTasksForTesting();
 
   t.ok(more.length === 0, 'should create 1 task');
+  t.comment(JSON.stringify(nextState));
   t.deepEqual(
     nextState,
     {
       isProviderLoading: true,
+      isCloudMapLoading: false,
       providerError: null,
       currentProvider: 'taro',
       successInfo: {},
@@ -127,6 +129,7 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD', t => {
     resultState1,
     {
       isProviderLoading: false,
+      isCloudMapLoading: false,
       providerError: null,
       currentProvider: 'taro',
       initialState: {},
@@ -144,6 +147,7 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD', t => {
     resultState2,
     {
       isProviderLoading: false,
+      isCloudMapLoading: false,
       providerError: 'hello',
       currentProvider: 'taro',
       initialState: {},
@@ -229,6 +233,7 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD -> onSuccess : onError', t =
     nextState,
     {
       isProviderLoading: false,
+      isCloudMapLoading: false,
       providerError: null,
       currentProvider: 'taro',
       mapSaved: 'taro',
@@ -256,6 +261,7 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD -> onSuccess : onError', t =
     resultState3,
     {
       isProviderLoading: false,
+      isCloudMapLoading: false,
       providerError: null,
       currentProvider: 'taro',
       mapSaved: 'taro',
@@ -312,6 +318,7 @@ test('#providerStateReducer -> RESET_PROVIDER_STATUS', t => {
     nextState1,
     {
       isProviderLoading: false,
+      isCloudMapLoading: false,
       providerError: null,
       currentProvider: 'taro',
       successInfo: {},
@@ -330,6 +337,7 @@ test('#providerStateReducer -> SET_CLOUD_PROVIDER', t => {
     nextState,
     {
       isProviderLoading: false,
+      isCloudMapLoading: false,
       providerError: null,
       currentProvider: 'blue',
       successInfo: {},

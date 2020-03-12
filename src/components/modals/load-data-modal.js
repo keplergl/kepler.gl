@@ -46,7 +46,7 @@ LoadDataModalFactory.deps = [ModalTabsFactory, FileUploadFactory, LoadStorageMap
 
 function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
   const LoadDataModal = props => {
-    const {fileLoading, loadingMethods} = props;
+    const {fileLoading, loadingMethods, isCloudMapLoading} = props;
     const [currentMethod, toggleMethod] = useState(getDefaultMethod(loadingMethods));
 
     return (
@@ -56,7 +56,7 @@ function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
           loadingMethods={loadingMethods}
           toggleMethod={toggleMethod}
         />
-        {fileLoading ? (
+        {fileLoading || isCloudMapLoading ? (
           <LoadingDialog size={64} />
         ) : (
           currentMethod && <currentMethod.elementType key={currentMethod.id} {...props} />
