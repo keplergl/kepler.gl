@@ -277,6 +277,7 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD -> onSuccess : onError', t =
     resultState4,
     {
       isProviderLoading: false,
+      isCloudMapLoading: false,
       providerError: null,
       currentProvider: 'taro',
       mapSaved: 'taro',
