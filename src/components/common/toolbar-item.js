@@ -24,7 +24,7 @@ import styled from 'styled-components';
 const StyledDiv = styled.div.attrs({
   className: 'toolbar-item'
 })`
-  color: ${props => (props.active ? 'white' : props.theme.textColor)};
+  color: ${props => (props.active ? props.theme.titleTextColor : props.theme.textColor)};
 `;
 
 const ToolbarItem = React.memo(props => (
