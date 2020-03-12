@@ -241,7 +241,10 @@ Read more about [Components][components].
 
 - default: `null`
 
+One of `"dark"`, `"light"` or `"base"`
 You can pass theme name or object used to customize Kepler.gl style. Kepler.gl provide an `'light'` theme besides the default 'dark' theme. When pass in a theme object Kepler.gl will use the value passed as input to override values from [theme](https://github.com/keplergl/kepler.gl/blob/master/src/styles/base.js).
+
+Read more about [Custom Theme][custom-theme]
 
 #### `mapboxApiUrl` (String, optional)
 
@@ -632,6 +635,7 @@ Read more about [addDataToMap](./docs/api-reference/actions/actions.md#adddatato
 [get-started]: ./docs/api-reference/get-started.md
 [reducers]: ./docs/api-reference/reducers/overview.md
 [components]: ./docs/api-reference/components/overview.md
+[custom-theme]: ./docs/api-reference/custom-theme/overview.md
 [reducers]: ./docs/api-reference/reducers/overview.md
 [actions-updaters]: ./docs/api-reference/actions/overview.md
 [processors]: ./docs/api-reference/processors/overview.md
