@@ -2,12 +2,11 @@
 
 ![S2 Layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/l-s2.png 'Grid layer')
 
-S2 layer can display visual data using [S2 region spatial index](https://s2geometry.io/).
-
-To use S2 layer, you need a `s2` or `s2_token` column in your dataset.
+To use S2 layer, you need to assign a column containing S2 tokens.
 
 ### Naming Convention
-Kepler.gl __auto generates__ S2 layer from 
+Kepler.gl __auto generates__ S2 layer from column named `s2` or `s2_token`
+
 
 ### Simple Dataset
 token | value |
