@@ -432,11 +432,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
               {...layerChannelConfigProps}
             />
             <ConfigGroupCollapsibleContent>
-              <VisConfigSlider
-                {...LAYER_VIS_CONFIGS.elevationScale}
-                {...visConfiguratorProps}
-                labl="Zoom scale"
-              />
+              <VisConfigSlider {...LAYER_VIS_CONFIGS.elevationScale} {...visConfiguratorProps} />
               <VisConfigSlider
                 {...LAYER_VIS_CONFIGS.elevationRange}
                 {...visConfiguratorProps}
@@ -775,6 +771,10 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
       layerConfiguratorProps,
       layerChannelConfigProps
     }) {
+      const {
+        config: {visConfig}
+      } = layer;
+
       return (
         <StyledLayerVisualConfigurator>
           {/* Color */}
@@ -798,19 +798,72 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
 
-          <LayerConfigGroup {...LAYER_VIS_CONFIGS.enable3d} {...visConfiguratorProps} collapsible>
+          {/* Stroke */}
+          <LayerConfigGroup
+            {...layer.visConfigSettings.stroked}
+            {...visConfiguratorProps}
+            label="Stroke Color"
+            collapsible
+          >
+            {layer.config.strokeColorField ? (
+              <LayerColorRangeSelector {...visConfiguratorProps} property="strokeColorRange" />
+            ) : (
+              <LayerColorSelector
+                {...visConfiguratorProps}
+                selectedColor={layer.config.visConfig.strokeColor}
+                property="strokeColor"
+              />
+            )}
+            <ConfigGroupCollapsibleContent>
+              <ChannelByValueSelector
+                channel={layer.visualChannels.strokeColor}
+                {...layerChannelConfigProps}
+              />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+
+          {/* Stroke Width */}
+          <LayerConfigGroup {...visConfiguratorProps} label="Stroke Width" collapsible>
+            {layer.config.sizeField ? (
+              <VisConfigSlider
+                {...LAYER_VIS_CONFIGS.strokeWidthRange}
+                {...visConfiguratorProps}
+                label={false}
+              />
+            ) : (
+              <VisConfigSlider
+                {...LAYER_VIS_CONFIGS.thickness}
+                {...visConfiguratorProps}
+                label={false}
+              />
+            )}
+            <ConfigGroupCollapsibleContent>
+              <ChannelByValueSelector
+                channel={layer.visualChannels.size}
+                {...layerChannelConfigProps}
+              />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+
+          {/* Elevation */}
+          <LayerConfigGroup
+            {...visConfiguratorProps}
+            {...LAYER_VIS_CONFIGS.enable3d}
+            disabled={!visConfig.filled}
+            collapsible
+          >
             <ChannelByValueSelector
-              channel={layer.visualChannels.size}
+              channel={layer.visualChannels.height}
               {...layerChannelConfigProps}
+            />
+            <VisConfigSlider
+              {...LAYER_VIS_CONFIGS.elevationScale}
+              {...visConfiguratorProps}
+              label="Elevation Scale"
             />
             <ConfigGroupCollapsibleContent>
               <VisConfigSlider
-                {...LAYER_VIS_CONFIGS.elevationScale}
-                {...visConfiguratorProps}
-                labl="Zoom scale"
-              />
-              <VisConfigSlider
-                {...LAYER_VIS_CONFIGS.elevationRange}
+                {...{...LAYER_VIS_CONFIGS.elevationRange, property: 'heightRange'}}
                 {...visConfiguratorProps}
                 label="Height Range"
               />

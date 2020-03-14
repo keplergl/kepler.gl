@@ -23,7 +23,7 @@ import uniq from 'lodash.uniq';
 import Layer from '../base-layer';
 import {TripsLayer as DeckGLTripsLayer} from '@deck.gl/geo-layers';
 
-import {GEOJSON_FIELDS} from 'constants/default-settings';
+import {GEOJSON_FIELDS, ZOOM_FACTOR_VALUE} from 'constants/default-settings';
 import TripLayerIcon from './trip-layer-icon';
 
 import {
@@ -283,7 +283,7 @@ export default class TripLayer extends Layer {
         ...defaultLayerProps,
         ...data,
         getTimestamps: d => data.getTimestamps(d).map(ts => ts - animationConfig.domain[0]),
-        widthScale: this.config.visConfig.thickness * zoomFactor * 8,
+        widthScale: this.config.visConfig.thickness * zoomFactor * ZOOM_FACTOR_VALUE,
         rounded: true,
         wrapLongitude: false,
         parameters: {

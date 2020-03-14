@@ -30,7 +30,8 @@ import {
   GEOJSON_FIELDS,
   HIGHLIGH_COLOR_3D,
   CHANNEL_SCALES,
-  DEFAULT_ELEVATION
+  DEFAULT_ELEVATION,
+  DEFAULT_LINE_WIDTH
 } from 'constants/default-settings';
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
 
@@ -67,7 +68,6 @@ export const geojsonVisConfigs = {
 
 export const geoJsonRequiredColumns = ['geojson'];
 export const featureAccessor = ({geojson}) => d => d[geojson.fieldIdx];
-export const defaultLineWidth = 1;
 export const defaultRadius = 1;
 
 export default class GeoJsonLayer extends Layer {
@@ -120,7 +120,7 @@ export default class GeoJsonLayer extends Layer {
         domain: 'heightDomain',
         range: 'heightRange',
         key: 'height',
-        channelScaleType: 'size',
+        channelScaleType: CHANNEL_SCALES.size,
         condition: config => config.visConfig.enable3d
       },
       radius: {
@@ -130,7 +130,7 @@ export default class GeoJsonLayer extends Layer {
         domain: 'radiusDomain',
         range: 'radiusRange',
         key: 'radius',
-        channelScaleType: 'radius'
+        channelScaleType: CHANNEL_SCALES.radius
       }
     };
   }
@@ -271,7 +271,7 @@ export default class GeoJsonLayer extends Layer {
       getLineWidth: d =>
         sScale
           ? this.getEncodedChannelValue(sScale, allData[d.properties.index], sizeField, 0)
-          : d.properties.lineWidth || defaultLineWidth,
+          : d.properties.lineWidth || DEFAULT_LINE_WIDTH,
       getElevation: d =>
         eScale
           ? this.getEncodedChannelValue(eScale, allData[d.properties.index], heightField, 0)

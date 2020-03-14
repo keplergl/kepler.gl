@@ -322,6 +322,16 @@ export const LAYER_VIS_CONFIGS = {
     group: PROPERTY_GROUPS.height,
     property: 'sizeRange'
   },
+  heightRange: {
+    type: 'number',
+    defaultValue: [0, 500],
+    label: 'Height Scale',
+    isRanged: true,
+    range: [0, 1000],
+    step: 0.01,
+    group: PROPERTY_GROUPS.height,
+    property: 'heightRange'
+  },
   coverageRange: {
     type: 'number',
     defaultValue: [0, 1],

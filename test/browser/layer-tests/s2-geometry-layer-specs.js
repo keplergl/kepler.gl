@@ -47,9 +47,14 @@ test('#S2Geometry -> constructor', t => {
             'opacity',
             'colorRange',
             'filled',
-            'enable3d',
+            'thickness',
+            'strokeColor',
+            'strokeColorRange',
             'sizeRange',
+            'stroked',
+            'enable3d',
             'elevationScale',
+            'heightRange',
             'wireframe'
           ],
           'should provide the correct visConfigSettings properties'
@@ -147,7 +152,9 @@ test('#S2Geometry -> formatLayerData', t => {
           getElevation: () => {},
           getFillColor: () => {},
           getFilterValue: () => {},
-          getS2Token: () => {}
+          getS2Token: () => {},
+          getLineColor: () => {},
+          getLineWidth: () => {}
         };
 
         t.equal(
@@ -199,7 +206,9 @@ test('#S2Geometry -> formatLayerData', t => {
           getElevation: () => {},
           getFillColor: () => {},
           getFilterValue: () => {},
-          getS2Token: () => {}
+          getS2Token: () => {},
+          getLineColor: () => {},
+          getLineWidth: () => {}
         };
 
         t.ok(typeof layerData.getFillColor === 'function', 'should have getFillColor');
@@ -219,7 +228,7 @@ test('#S2Geometry -> formatLayerData', t => {
         t.deepEqual(
           Object.keys(layerData).sort(),
           Object.keys(expectedLayerData).sort(),
-          `layerData should have ${expectedLayerData.length} keys`
+          `layerData should have ${Object.keys(expectedLayerData).length} keys`
         );
       }
     }

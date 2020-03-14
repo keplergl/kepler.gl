@@ -42,7 +42,6 @@ class S2LayerIcon extends Component {
       </Base>
     );
   }
-
 }
 
 export default S2LayerIcon;
