@@ -54,6 +54,7 @@ import sampleGeojson from './data/sample-small-geojson';
 import sampleGeojsonPoints from './data/sample-geojson-points';
 import sampleGeojsonConfig from './data/sample-geojson-config';
 import sampleH3Data, {config as h3MapConfig} from './data/sample-hex-id-csv';
+import sampleS2Data, {config as s2MapConfig, dataId as s2DataId} from './data/sample-s2-data';
 import sampleAnimateTrip from './data/sample-animate-trip-data';
 import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
 import {addDataToMap, addNotification} from 'kepler.gl/actions';
@@ -175,11 +176,12 @@ class App extends Component {
   }
 
   _loadSampleData() {
-    this._loadPointData();
+    // this._loadPointData();
     // this._loadGeojsonData();
     // this._loadTripGeoJson();
     // this._loadIconData();
     // this._loadH3HexagonData();
+    this._loadS2Data();
     // this._loadScenegraphLayer();
   }
 
@@ -302,6 +304,27 @@ class App extends Component {
           }
         ],
         config: h3MapConfig,
+        options: {
+          keepExistingConfig: true
+        }
+      })
+    );
+  }
+
+  _loadS2Data() {
+    // load s2
+    this.props.dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {
+              label: 'S2 Data',
+              id: s2DataId
+            },
+            data: processCsvData(sampleS2Data)
+          }
+        ],
+        config: s2MapConfig,
         options: {
           keepExistingConfig: true
         }
