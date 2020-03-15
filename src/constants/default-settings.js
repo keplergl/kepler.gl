@@ -30,6 +30,18 @@ import {
   scaleLog,
   scalePoint
 } from 'd3-scale';
+import {
+  Layers,
+  FilterFunnel,
+  Settings,
+  CursorClick,
+  Pin,
+  ArrowDown,
+  ArrowUp,
+  Clipboard,
+  Cancel
+} from 'components/common/icons';
+import {getHTMLMapModeTileUrl} from 'utils/utils';
 
 export const ACTION_PREFIX = '@@kepler.gl/';
 export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl';
@@ -107,9 +119,6 @@ export const OVERWRITE_MAP_ID = 'overwriteMap';
  * @public
  */
 export const SHARE_MAP_ID = 'shareMap';
-
-import {Layers, FilterFunnel, Settings, CursorClick} from 'components/common/icons';
-import {getHTMLMapModeTileUrl} from 'utils/utils';
 
 export const KEPLER_GL_NAME = 'kepler.gl';
 
@@ -307,6 +316,51 @@ export const ALL_FIELD_TYPES = keyMirror({
   timestamp: null,
   point: null
 });
+
+// Data Table
+export const SORT_ORDER = keyMirror({
+  ASCENDING: null,
+  DESCENDING: null,
+  UNSORT: null
+});
+
+export const TABLE_OPTION = keyMirror({
+  SORT_ASC: null,
+  SORT_DES: null,
+  UNSORT: null,
+  PIN: null,
+  UNPIN: null,
+  COPY: null
+});
+
+export const TABLE_OPTION_LIST = [
+  {
+    value: TABLE_OPTION.SORT_ASC,
+    display: 'Sort Ascending',
+    icon: ArrowUp,
+    condition: props => props.sortMode !== SORT_ORDER.ASCENDING
+  },
+  {
+    value: TABLE_OPTION.SORT_DES,
+    display: 'Sort Descending',
+    icon: ArrowDown,
+    condition: props => props.sortMode !== SORT_ORDER.DESCENDING
+  },
+  {
+    value: TABLE_OPTION.UNSORT,
+    display: 'Unsort Column',
+    icon: Cancel,
+    condition: props => props.isSorted
+  },
+  {value: TABLE_OPTION.PIN, display: 'Pin Column', icon: Pin, condition: props => !props.isPinned},
+  {
+    value: TABLE_OPTION.UNPIN,
+    display: 'Unpin Column',
+    icon: Cancel,
+    condition: props => props.isPinned
+  },
+  {value: TABLE_OPTION.COPY, display: 'Copy Column', icon: Clipboard}
+];
 
 const ORANGE = '248, 194, 28';
 const PINK = '231, 189, 194';

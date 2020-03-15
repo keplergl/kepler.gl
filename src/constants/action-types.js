@@ -98,6 +98,9 @@ const ActionTypes = keyMirror({
   TOGGLE_FEATURE_LAYER: null,
   APPLY_CPU_FILTER: null,
   SET_MAP_INFO: null,
+  SORT_TABLE_COLUMN: null,
+  PIN_TABLE_COLUMN: null,
+  COPY_TABLE_COLUMN: null,
 
   // mapState
   UPDATE_MAP: null,

@@ -26,11 +26,13 @@ import listensToClickOutside from 'react-onclickoutside';
 class ClickOutsideCloseDropdown extends Component {
   static propTypes = {
     onClose: PropTypes.func,
-    show: PropTypes.bool
+    show: PropTypes.bool,
+    type: PropTypes.string
   };
 
   static defaultProps = {
-    show: true
+    show: true,
+    type: 'dark'
   };
 
   handleClickOutside = e => {
@@ -41,7 +43,7 @@ class ClickOutsideCloseDropdown extends Component {
 
   render() {
     return (
-      <StyledPanelDropdown className={this.props.className}>
+      <StyledPanelDropdown type={this.props.type} className={this.props.className}>
         {this.props.children}
       </StyledPanelDropdown>
     );

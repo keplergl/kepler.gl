@@ -113,7 +113,13 @@ const actionHandler = {
 
   [ActionTypes.TOGGLE_FILTER_FEATURE]: visStateUpdaters.toggleFilterFeatureUpdater,
 
-  [ActionTypes.APPLY_CPU_FILTER]: visStateUpdaters.applyCPUFilterUpdater
+  [ActionTypes.APPLY_CPU_FILTER]: visStateUpdaters.applyCPUFilterUpdater,
+
+  [ActionTypes.SORT_TABLE_COLUMN]: visStateUpdaters.sortTableColumnUpdater,
+
+  [ActionTypes.PIN_TABLE_COLUMN]: visStateUpdaters.pinTableColumnUpdater,
+
+  [ActionTypes.COPY_TABLE_COLUMN]: visStateUpdaters.copyTableColumnUpdater
 };
 
 // construct vis-state reducer

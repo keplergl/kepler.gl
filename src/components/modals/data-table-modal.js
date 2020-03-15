@@ -20,8 +20,11 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import DataGridFactory from 'components/common/datagrid';
+// import DataGridFactory from 'components/common/datagrid';
 import DatasetLabel from 'components/common/dataset-label';
+import DataTableFactory from 'components/common/data-table';
+import {createSelector} from 'reselect';
+import {renderedSize} from 'components/common/data-table/cell-size';
 
 const dgSettings = {
   sidePadding: '38px',
@@ -71,30 +74,116 @@ export const DatasetTabs = React.memo(({activeDataset, datasets, showDatasetTabl
 
 DatasetTabs.displayName = 'DatasetTabs';
 
-DataTableModalFactory.deps = [DataGridFactory];
+DataTableModalFactory.deps = [DataTableFactory];
 
-function DataTableModalFactory(DataGrid) {
-  const DataTableModal = React.memo(({datasets, dataId, height, showDatasetTable, width}) => {
-    if (!datasets || !dataId) {
-      return null;
-    }
+const TableContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  min-height: 70vh;
+  max-height: 70vh;
+`;
 
-    const activeDataset = datasets[dataId];
-    const rows = activeDataset.allData;
-
-    return (
-      <StyledModal className="dataset-modal">
-        <DatasetTabs
-          activeDataset={activeDataset}
-          datasets={datasets}
-          showDatasetTable={showDatasetTable}
-        />
-        <DataGrid width={width} height={height} rows={rows} columns={activeDataset.fields} />
-      </StyledModal>
+function DataTableModalFactory(DataTable) {
+  class DataTableModal extends React.Component {
+    datasetCellSizeCache = {};
+    dataId = props => props.dataId;
+    datasets = props => props.datasets;
+    fields = props => (props.datasets[props.dataId] || {}).fields;
+    columns = createSelector(this.fields, fields => fields.map(f => f.name));
+    colMeta = createSelector(this.fields, fields =>
+      fields.reduce(
+        (acc, {name, type}) => ({
+          ...acc,
+          [name]: type
+        }),
+        {}
+      )
     );
-  });
+    cellSizeCache = createSelector(this.dataId, this.datasets, (dataId, datasets) => {
+      if (!this.props.datasets[dataId]) {
+        return {};
+      }
+      const {fields, allData} = this.props.datasets[dataId];
 
-  DataTableModal.displayName = 'DataTableModal';
+      let showCalculate = null;
+      if (!this.datasetCellSizeCache[dataId]) {
+        showCalculate = true;
+      } else if (
+        this.datasetCellSizeCache[dataId].fields !== fields ||
+        this.datasetCellSizeCache[dataId].allData !== allData
+      ) {
+        showCalculate = true;
+      }
+
+      if (!showCalculate) {
+        return this.datasetCellSizeCache[dataId].cellSizeCache;
+      }
+
+      const cellSizeCache = fields.reduce(
+        (acc, field, colIdx) => ({
+          ...acc,
+          [field.name]: renderedSize({
+            text: {
+              rows: allData,
+              column: field.name
+            },
+            colIdx,
+            type: field.type
+          })
+        }),
+        {}
+      );
+      // save it to cache
+      this.datasetCellSizeCache[dataId] = {
+        cellSizeCache,
+        fields,
+        allData
+      };
+      return cellSizeCache;
+    });
+
+    render() {
+      const {datasets, dataId, showDatasetTable} = this.props;
+      if (!datasets || !dataId) {
+        return null;
+      }
+
+      const activeDataset = datasets[dataId];
+      const columns = this.columns(this.props);
+      const colMeta = this.colMeta(this.props);
+      const cellSizeCache = this.cellSizeCache(this.props);
+
+      return (
+        <StyledModal className="dataset-modal" id="dataset-modal">
+          <TableContainer>
+            <DatasetTabs
+              activeDataset={activeDataset}
+              datasets={datasets}
+              showDatasetTable={showDatasetTable}
+            />
+            {datasets[dataId] ? (
+              <DataTable
+                key={dataId}
+                dataId={dataId}
+                columns={columns}
+                colMeta={colMeta}
+                cellSizeCache={cellSizeCache}
+                rows={activeDataset.allData}
+                pinnedColumns={activeDataset.pinnedColumns}
+                sortOrder={activeDataset.sortOrder}
+                sortColumn={activeDataset.sortColumn}
+                copyTableColumn={this.props.copyTableColumn}
+                pinTableColumn={this.props.pinTableColumn}
+                sortTableColumn={this.props.sortTableColumn}
+              />
+            ) : null}
+          </TableContainer>
+        </StyledModal>
+      );
+    }
+  }
+
   return DataTableModal;
 }
 

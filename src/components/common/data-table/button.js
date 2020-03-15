@@ -19,28 +19,45 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import PropTypes from 'prop-types';
-import Base from './base';
+import styled from 'styled-components';
 
-export default class ArrowDown extends Component {
-  static propTypes = {
-    /** Set the height of the icon, ex. '16px' */
-    height: PropTypes.string
+const Style = styled.button`
+  color: ${props => props.theme.optionButtonColor};
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  transition: ${props => props.theme.transition};
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  padding: 0;
+
+  &:hover {
+    opacity: 0.8;
+  }
+`;
+
+class Button extends Component {
+  static defaultProps = {
+    onClick: f => f
   };
 
-  static defaultProps = {
-    height: '16px',
-    predefinedClassName: 'data-ex-icons-arrowdown'
+  onClick = () => {
+    const {onClick, disabled} = this.props;
+    if (disabled) {
+      return;
+    }
+
+    onClick();
   };
 
   render() {
-    return (
-      <Base {...this.props}>
-        <path
-          d="M13.1,17.5c0.4-0.4,1.1-0.4,1.6,0L32,34.8l17.4-17.4c0.4-0.4,1.1-0.4,1.6,0l4.7,4.7c0.4,0.4,0.4,1.1,0,1.6L32.8,46.7
-	c-0.4,0.4-1.1,0.4-1.6,0L8.3,23.8c-0.4-0.4-0.4-1.1,0-1.6L13.1,17.5z"
-        />{' '}
-      </Base>
-    );
+    const {text, children, ...props} = this.props;
+    const p = {...props, onClick: this.onClick};
+
+    return <Style {...p}>{text || children}</Style>;
   }
 }
+
+export default Button;

@@ -28,7 +28,7 @@ import {Button} from 'components/common/styled-components';
 import {media} from 'styles/media-breakpoints';
 
 const ModalContentWrapper = styled.div`
-  overflow-y: scroll;
+  overflow-y: auto;
   max-width: 70vw;
   max-height: 85vh;
   padding: 24px 72px 40px;

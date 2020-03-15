@@ -291,7 +291,8 @@ export const StyledPanelHeader = styled.div`
 
 export const StyledPanelDropdown = styled.div`
   ${props => props.theme.panelDropdownScrollBar}
-  background-color: ${props => props.theme.panelBackground};
+  background-color: ${props =>
+    props.type === 'light' ? props.theme.modalDropdownBackground : props.theme.panelBackground};
   overflow-y: auto;
   box-shadow: ${props => props.theme.panelBoxShadow};
   border-radius: ${props => props.theme.panelBorderRadius};
