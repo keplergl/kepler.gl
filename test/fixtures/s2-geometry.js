@@ -18,17 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './data-utils-test';
-import './data-processor-test';
-import './filter-utils-test';
-import './gpu-filter-utils-test';
-import './layer-utils-test';
-import './data-scale-utils-test';
-import './interaction-utils-test';
-import './mapbox-gl-style-editor-test';
-import './notifications-utils-test';
-import './aggregate-utils-test';
-import './color-util-test';
-import './util-test';
-import './export-utils-test';
-import './s2-utils-test';
+export const data =
+  's2,value\n' +
+  '80858004,0.5979242952642347\n' +
+  '8085800c,0.5446256069712141\n' +
+  '80858014,0.1187171597109975\n' +
+  '8085801c,0.2859146314037557\n' +
+  '80858024,0.19549012367504126\n' +
+  '80858034,0.3373452974230604\n' +
+  '8085803c,0.9218176408795662\n' +
+  '80858044,0.23470692356446143\n' +
+  '8085804c,0.1580509670379684\n' +
+  '80858054,0.15992745628743954';

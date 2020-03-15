@@ -36,6 +36,7 @@ const DataGrid = DataGridFactory(FieldHeader, Cell);
 const DataTableModal = DataTableModalFactory(DataGrid);
 
 // This makes sure react-virtualized renders the full grid
+
 // width needs to be large enough to fit all
 const WIDTH = 2100;
 const HEIGHT = 800;

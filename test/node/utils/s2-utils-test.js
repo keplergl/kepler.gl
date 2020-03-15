@@ -18,17 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './data-utils-test';
-import './data-processor-test';
-import './filter-utils-test';
-import './gpu-filter-utils-test';
-import './layer-utils-test';
-import './data-scale-utils-test';
-import './interaction-utils-test';
-import './mapbox-gl-style-editor-test';
-import './notifications-utils-test';
-import './aggregate-utils-test';
-import './color-util-test';
-import './util-test';
-import './export-utils-test';
-import './s2-utils-test';
+import test from 'tape';
+import {getS2Center} from 'layers/s2-geometry-layer/s2-utils';
+
+test('Utils -> set', t => {
+  const s2Toekn = '8085873c';
+  t.deepEqual(getS2Center(s2Toekn), [-122.4637079795235, 37.78228912269449]);
+  t.end();
+});

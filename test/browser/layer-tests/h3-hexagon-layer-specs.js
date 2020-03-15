@@ -165,7 +165,8 @@ test('#H3Layer -> formatLayerData', t => {
             colorRange: {
               colors: ['#010101', '#020202', '#030303']
             },
-            elevationRange: [10, 20]
+            elevationRange: [10, 20],
+            enable3d: true
           }
         },
         type: 'hexagonId',
@@ -198,7 +199,7 @@ test('#H3Layer -> formatLayerData', t => {
         t.deepEqual(
           layerData.data.map(layerData.getElevation),
           [0, 41.445270988310305],
-          'getElevation should be a constant'
+          'getElevation should correct'
         );
         // getFilterValue
         t.deepEqual(

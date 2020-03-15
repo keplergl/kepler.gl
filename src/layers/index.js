@@ -30,6 +30,7 @@ import {default as HeatmapLayer} from './heatmap-layer/heatmap-layer';
 import {default as H3Layer} from './h3-hexagon-layer/h3-hexagon-layer';
 import {default as ScenegraphLayer} from './scenegraph-layer/scenegraph-layer';
 import {default as TripLayer} from './trip-layer/trip-layer';
+import {default as S2GeometryLayer} from './s2-geometry-layer/s2-geometry-layer';
 
 // base layer
 export {default as Layer} from './base-layer';
@@ -47,7 +48,8 @@ export const KeplerGlLayers = {
   HeatmapLayer,
   H3Layer,
   ScenegraphLayer,
-  TripLayer
+  TripLayer,
+  S2GeometryLayer
 };
 
 export const LayerClasses = {
@@ -62,5 +64,6 @@ export const LayerClasses = {
   heatmap: HeatmapLayer,
   hexagonId: H3Layer,
   '3D': ScenegraphLayer,
-  trip: TripLayer
+  trip: TripLayer,
+  s2: S2GeometryLayer
 };

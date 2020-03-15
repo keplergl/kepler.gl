@@ -18,17 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './data-utils-test';
-import './data-processor-test';
-import './filter-utils-test';
-import './gpu-filter-utils-test';
-import './layer-utils-test';
-import './data-scale-utils-test';
-import './interaction-utils-test';
-import './mapbox-gl-style-editor-test';
-import './notifications-utils-test';
-import './aggregate-utils-test';
-import './color-util-test';
-import './util-test';
-import './export-utils-test';
-import './s2-utils-test';
+import Long from 'long';
+import {S2} from 's2-geometry';
+
+const MAXIMUM_TOKEN_LENGTH = 16;
+
+/**
+ * Retrieve S2 geometry center
+ * @param s2Token string | number
+ * @return {*[]}
+ */
+export function getS2Center(s2Token) {
+  const paddedToken = s2Token.toString().padEnd(MAXIMUM_TOKEN_LENGTH, '0');
+  const s2Id = Long.fromString(paddedToken, MAXIMUM_TOKEN_LENGTH);
+  const {lat, lng} = S2.idToLatLng(s2Id.toString());
+  return [lng, lat];
+}

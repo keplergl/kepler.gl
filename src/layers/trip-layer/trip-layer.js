@@ -37,6 +37,8 @@ import {isTripGeoJsonField, parseTripGeoJsonTimestamp} from './trip-utils';
 import {hexToRgb} from 'utils/color-utils';
 import TripInfoModalFactory from './trip-info-modal';
 
+const zoomFactorValue = 8;
+
 export const defaultThickness = 0.5;
 export const defaultWidth = 1;
 
@@ -283,7 +285,7 @@ export default class TripLayer extends Layer {
         ...defaultLayerProps,
         ...data,
         getTimestamps: d => data.getTimestamps(d).map(ts => ts - animationConfig.domain[0]),
-        widthScale: this.config.visConfig.thickness * zoomFactor * 8,
+        widthScale: this.config.visConfig.thickness * zoomFactor * zoomFactorValue,
         rounded: true,
         wrapLongitude: false,
         parameters: {

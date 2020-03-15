@@ -25,6 +25,7 @@ import {GLTFLoader} from '@loaders.gl/gltf';
 import Layer from '../base-layer';
 import ScenegraphLayerIcon from './scenegraph-layer-icon';
 import ScenegraphInfoModalFactory from './scenegraph-info-modal';
+import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
 
 export const scenegraphRequiredColumns = ['lat', 'lng'];
 export const scenegraphOptionalColumns = ['altitude'];
@@ -51,9 +52,22 @@ export const scenegraphVisConfigs = {
   colorRange: 'colorRange',
   //
   sizeScale: 'sizeScale',
-  angleX: 'angle',
-  angleY: 'angle',
-  angleZ: 'angleZ'
+  angleX: {
+    ...LAYER_VIS_CONFIGS.angle,
+    property: 'angleX',
+    label: 'angle X'
+  },
+  angleY: {
+    ...LAYER_VIS_CONFIGS.angle,
+    property: 'angleY',
+    label: 'angle Y'
+  },
+  angleZ: {
+    ...LAYER_VIS_CONFIGS.angle,
+    property: 'angleZ',
+    defaultValue: 90,
+    label: 'angle Z'
+  }
 };
 
 const DEFAULT_MODEL =
