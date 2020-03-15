@@ -26,9 +26,8 @@ import {
 } from 'test/helpers/layer-utils';
 import {getGpuFilterProps} from 'utils/gpu-filter-utils';
 import {data} from 'test/fixtures/s2-geometry';
-import S2GeometryLayer from 'layers/s2-geometry-layer/s2-geometry-layer';
+import S2GeometryLayer, {defaultElevation} from 'layers/s2-geometry-layer/s2-geometry-layer';
 import {processCsvData} from 'processors/data-processor';
-import {DEFAULT_ELEVATION} from 'constants/default-settings';
 
 test('#S2Geometry -> constructor', t => {
   const TEST_CASES = [
@@ -159,8 +158,8 @@ test('#S2Geometry -> formatLayerData', t => {
 
         t.equal(
           layerData.getElevation(),
-          DEFAULT_ELEVATION,
-          `Elevation should be set to ${DEFAULT_ELEVATION}`
+          defaultElevation,
+          `Elevation should be set to ${defaultElevation}`
         );
 
         // test layer.meta

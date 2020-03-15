@@ -20,17 +20,13 @@
 
 import {S2Layer} from '@deck.gl/geo-layers';
 import {hexToRgb} from 'utils/color-utils';
-import {
-  HIGHLIGH_COLOR_3D,
-  DEFAULT_ELEVATION,
-  CHANNEL_SCALES,
-  DEFAULT_LINE_WIDTH,
-  ZOOM_FACTOR_VALUE
-} from 'constants/default-settings';
+import {HIGHLIGH_COLOR_3D, CHANNEL_SCALES} from 'constants/default-settings';
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
 import Layer from '../base-layer';
 import S2LayerIcon from './s2-layer-icon';
 import {getS2Center} from './s2-utils';
+
+const zoomFactorValue = 8;
 
 export const S2_TOKEN_FIELDS = {
   token: ['s2', 's2_token']
@@ -38,6 +34,8 @@ export const S2_TOKEN_FIELDS = {
 
 export const s2RequiredColumns = ['token'];
 export const S2TokenAccessor = ({token}) => d => d[token.fieldIdx];
+export const defaultElevation = 500;
+export const defaultLineWidth = 1;
 
 export const S2VisConfigs = {
   // Filled color
@@ -254,10 +252,10 @@ export default class S2GeometryLayer extends Layer {
           ? this.getEncodedChannelValue(scScale, d.data, strokeColorField)
           : strokeColor || color,
       getLineWidth: d =>
-        sScale ? this.getEncodedChannelValue(sScale, d.data, sizeField, 0) : DEFAULT_LINE_WIDTH,
+        sScale ? this.getEncodedChannelValue(sScale, d.data, sizeField, 0) : defaultLineWidth,
       getFillColor: d => (cScale ? this.getEncodedChannelValue(cScale, d.data, colorField) : color),
       getElevation: d =>
-        eScale ? this.getEncodedChannelValue(eScale, d.data, heightField, 0) : DEFAULT_ELEVATION,
+        eScale ? this.getEncodedChannelValue(eScale, d.data, heightField, 0) : defaultElevation,
       getFilterValue: gpuFilter.filterValueAccessor()
     };
   }
@@ -309,7 +307,7 @@ export default class S2GeometryLayer extends Layer {
         highlightColor: HIGHLIGH_COLOR_3D,
 
         // stroke
-        lineWidthScale: visConfig.thickness * zoomFactor * ZOOM_FACTOR_VALUE,
+        lineWidthScale: visConfig.thickness * zoomFactor * zoomFactorValue,
         stroked: visConfig.stroked,
         lineMiterLimit: 2,
 

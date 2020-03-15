@@ -19,8 +19,11 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import GeojsonLayer, {defaultRadius} from 'layers/geojson-layer/geojson-layer';
-import {DEFAULT_ELEVATION, DEFAULT_LINE_WIDTH} from 'constants/default-settings';
+import GeojsonLayer, {
+  defaultElevation,
+  defaultLineWidth,
+  defaultRadius
+} from 'layers/geojson-layer/geojson-layer';
 
 import {updatedLayerV2} from 'test/fixtures/test-csv-data';
 import {
@@ -118,7 +121,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
         );
         t.deepEqual(
           layerData.data.map(layerData.getElevation),
-          [DEFAULT_ELEVATION, DEFAULT_ELEVATION],
+          [defaultElevation, defaultElevation],
           'getElevation should return correct value'
         );
         t.deepEqual(
@@ -147,7 +150,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
         );
         t.deepEqual(
           layerData.data.map(layerData.getLineWidth),
-          [DEFAULT_LINE_WIDTH, DEFAULT_LINE_WIDTH],
+          [defaultLineWidth, defaultLineWidth],
           'getLineWidth should return correct value'
         );
         t.deepEqual(
@@ -356,7 +359,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
         );
         t.deepEqual(
           layerData.data.map(layerData.getElevation),
-          [DEFAULT_ELEVATION, DEFAULT_ELEVATION, DEFAULT_ELEVATION],
+          [defaultElevation, defaultElevation, defaultElevation],
           'getElevation should return correct value'
         );
         t.deepEqual(
@@ -393,7 +396,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
         );
         t.deepEqual(
           layerData.data.map(layerData.getRadius),
-          [DEFAULT_LINE_WIDTH, DEFAULT_LINE_WIDTH, DEFAULT_LINE_WIDTH],
+          [defaultLineWidth, defaultLineWidth, defaultLineWidth],
           'getRadius should return correct value'
         );
 

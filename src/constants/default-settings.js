@@ -777,7 +777,3 @@ export const DATASET_FORMATS = keyMirror({
   csv: null,
   keplergl: null
 });
-
-export const DEFAULT_ELEVATION = 500;
-export const DEFAULT_LINE_WIDTH = 1;
-export const ZOOM_FACTOR_VALUE = 8;
