@@ -42,6 +42,7 @@ export const HexagonIdVisConfigs = {
   opacity: 'opacity',
   colorRange: 'colorRange',
   coverage: 'coverage',
+  enable3d: 'enable3d',
   sizeRange: 'elevationRange',
   coverageRange: 'coverageRange',
   elevationScale: 'elevationScale'
@@ -151,7 +152,7 @@ export default class HexagonIdLayer extends Layer {
       coverageField,
       coverageScale,
       coverageDomain,
-      visConfig: {sizeRange, colorRange, coverageRange}
+      visConfig: {sizeRange, colorRange, coverageRange, enable3d}
     } = this.config;
 
     const {gpuFilter} = datasets[this.config.dataId];
@@ -167,7 +168,8 @@ export default class HexagonIdLayer extends Layer {
       );
 
     // height
-    const sScale = sizeField && this.getVisChannelScale(sizeScale, sizeDomain, sizeRange, 0);
+    const sScale =
+      sizeField && enable3d && this.getVisChannelScale(sizeScale, sizeDomain, sizeRange, 0);
 
     // coverage
     const coScale =
@@ -230,7 +232,8 @@ export default class HexagonIdLayer extends Layer {
       getElevation: {
         sizeField: config.sizeField,
         sizeRange: visConfig.sizeRange,
-        sizeScale: config.sizeScale
+        sizeScale: config.sizeScale,
+        enable3d: visConfig.enable3d
       },
       getFilterValue: gpuFilter.filterValueUpdateTriggers
     };
@@ -256,11 +259,11 @@ export default class HexagonIdLayer extends Layer {
         coverage: config.coverageField ? 1 : visConfig.coverage,
 
         // highlight
-        autoHighlight: Boolean(config.sizeField),
+        autoHighlight: visConfig.enable3d,
         highlightColor: HIGHLIGH_COLOR_3D,
 
         // elevation
-        extruded: Boolean(config.sizeField),
+        extruded: visConfig.enable3d,
         elevationScale: visConfig.elevationScale * eleZoomFactor,
 
         // render

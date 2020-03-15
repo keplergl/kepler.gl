@@ -285,13 +285,6 @@ export const LAYER_VIS_CONFIGS = {
     range: [0, 360],
     step: 1
   },
-  angleZ: {
-    type: 'number',
-    defaultValue: 90,
-    isRanged: false,
-    range: [0, 360],
-    step: 1
-  },
   worldUnitSize: {
     type: 'number',
     defaultValue: 1,
