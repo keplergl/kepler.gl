@@ -366,7 +366,8 @@ mergedH3Layer.config = {
     coverage: 1,
     sizeRange: [0, 500],
     coverageRange: [0, 1],
-    elevationScale: 5
+    elevationScale: 5,
+    enable3d: false
   },
   textLabel: [
     {
