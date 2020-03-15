@@ -863,7 +863,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
             />
             <ConfigGroupCollapsibleContent>
               <VisConfigSlider
-                {...{...LAYER_VIS_CONFIGS.elevationRange, property: 'heightRange'}}
+                {...LAYER_VIS_CONFIGS.heightRange}
                 {...visConfiguratorProps}
                 label="Height Range"
               />
