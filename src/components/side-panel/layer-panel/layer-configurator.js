@@ -37,8 +37,6 @@ import VisConfigSlider from './vis-config-slider';
 import LayerConfigGroup, {ConfigGroupCollapsibleContent} from './layer-config-group';
 import TextLabelPanel from './text-label-panel';
 
-import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
-
 import {capitalizeFirstLetter} from 'utils/utils';
 
 import {LAYER_TYPES, CHANNEL_SCALE_SUPPORTED_FIELDS} from 'constants/default-settings';
