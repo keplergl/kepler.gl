@@ -10,7 +10,7 @@ npm install
 ```
 or
 ```
-yarn --ignore-engines
+yarn
 ```
 
 add mapbox access token to node env

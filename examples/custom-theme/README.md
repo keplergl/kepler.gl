@@ -13,7 +13,7 @@ npm install
 or
 
 ```sh
-yarn --ignore-engines
+yarn
 ```
 
 

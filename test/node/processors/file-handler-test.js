@@ -18,17 +18,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const {existsSync} = require('fs');
-const {execSync} = require('child_process');
+import test from 'tape';
+import {getFileType, isKeplerGlMap} from 'processors/file-handler';
 
-const folder = process.argv[2];
-const script = process.argv[3];
+test('#file-handler -> getFileType', t => {
+  t.equal(getFileType('filename.csv'), 'csv');
 
-const cmd = !existsSync(`${folder}/node_modules`)
-  ? `yarn && npm run ${script}`
-  : `npm run ${script}`;
+  t.equal(getFileType('filename.json'), 'json');
 
-execSync(cmd, {
-  cwd: folder,
-  stdio: 'inherit'
+  t.equal(getFileType('filename.json.csv'), 'csv');
+
+  t.equal(getFileType('filename.geojson'), 'json');
+
+  t.equal(getFileType('filename.excel'), 'other');
+
+  t.end();
+});
+
+test('#file-handler -> isKeplerGlMap', t => {
+  t.equal(
+    isKeplerGlMap('{datasets: [], info: {app: "kepler.gl"}, config: {}}'),
+    false,
+    'Should return false when passing a json string'
+  );
+
+  t.equal(
+    isKeplerGlMap({datasets: [], info: {app: 'kepler.gl'}, config: {}}),
+    true,
+    'Should return true when object is a kepler map'
+  );
+
+  t.equal(
+    isKeplerGlMap({datasets: [], info: {app: 'kepler.gl'}}),
+    false,
+    'Should return false when object is not a kepler map'
+  );
+
+  t.end();
 });

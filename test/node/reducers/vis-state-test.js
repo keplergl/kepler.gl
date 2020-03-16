@@ -172,7 +172,6 @@ const mockRawData = {
   ]
 };
 
-// const InitialVisState = reducer(undefined, {});
 test('#visStateReducer', t => {
   t.deepEqual(
     reducer(undefined, {}),
