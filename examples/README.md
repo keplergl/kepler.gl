@@ -5,7 +5,7 @@ A list of examples to demonstrate adding `kepler.gl` to your app. Each of the ex
 To start each example, cd into the folder then run:
 
 ```
-yarn --ignore-engines && yarn start
+yarn && yarn start
 ```
 
 - ### [demo-app][demo-app]

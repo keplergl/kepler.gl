@@ -134,7 +134,7 @@ Python 2
 ```sh
     $ cd bindings/kepler.gl-jupyter
     $ cd js
-    $ yarn --ignore-engines
+    $ yarn
 ```
 
 #### 2. Load mapbox token

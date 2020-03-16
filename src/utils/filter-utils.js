@@ -23,6 +23,7 @@ import keyMirror from 'keymirror';
 import get from 'lodash.get';
 import booleanWithin from '@turf/boolean-within';
 import {point as turfPoint} from '@turf/helpers';
+import {Decimal} from 'decimal.js';
 import {ALL_FIELD_TYPES, FILTER_TYPES} from 'constants/default-settings';
 import {maybeToDate, notNullorUndefined, unique, timeToUnixMilli} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
@@ -697,10 +698,18 @@ export function getNumericStepSize(diff) {
     // Try to get at least 1000 steps - and keep the step size below that of
     // the (diff > 1) case.
     const x = diff / 1000;
-    // Find the exponent and truncate to 10 to the power of that exponent.
+    // Find the exponent and truncate to 10 to the power of that exponent
+
     const exponentialForm = x.toExponential();
     const exponent = parseFloat(exponentialForm.split('e')[1]);
-    return Math.pow(10, exponent);
+
+    // Getting ready for node 12
+    // this is why we need decimal.js
+    // Math.pow(10, -5) = 0.000009999999999999999
+    //  the above result shows in browser and node 10
+    //  node 12 behaves correctly
+
+    return new Decimal(10).pow(exponent).toNumber();
   }
 }
 

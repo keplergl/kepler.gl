@@ -51,7 +51,7 @@ cd kepler.gl
 git remote add upstream "git@github.com:keplergl/kepler.gl.git"
 
 # Install JavaScript dependencies:
-yarn --ignore-engines
+yarn
 
 # Setup mapbox access token locally
 export MapboxAccessToken=<insert_your_token>
