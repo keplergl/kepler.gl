@@ -49,7 +49,7 @@ import {
   featureToFilterValue,
   updateFilterDataId
 } from 'utils/filter-utils';
-import {setFilterGpuMode, assignGpuChannel} from 'utils/gpu-filter-utils';
+import {applyFilterGPU} from 'utils/gpu-filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
 import {set, toArray, generateHashId} from 'utils/utils';
 
@@ -505,40 +505,49 @@ export function interactionConfigChangeUpdater(state, action) {
  * @param {Number} action.idx `idx` of filter to be updated
  * @param {string} action.prop `prop` of filter, e,g, `dataId`, `name`, `value`
  * @param {*} action.value new value
- * @param {string} datasetId used when updating a prop (dataId, name) that can be linked to multiple datasets
  * @returns {Object} nextState
  * @public
  */
+/* eslint-disable complexity */
 export function setFilterUpdater(state, action) {
-  const {idx, prop, value, valueIndex = 0} = action;
+  const {idx, prop, value, valueIndex} = action;
 
   const oldFilter = state.filters[idx];
   let newFilter = set([prop], value, oldFilter);
   let newState = state;
 
+  const currentValueIndex = valueIndex || 0;
   const {dataId} = newFilter;
 
   // Ensuring backward compatibility
   let datasetIds = toArray(dataId);
 
   switch (prop) {
-    // TODO: Next PR for UI if we update dataId, we need to consider two cases:
-    // 1. dataId is empty: create a default filter
-    // 2. Add a new dataset id
     case FILTER_UPDATER_PROPS.dataId:
-
-      // if filter is just being initialized
-      if (oldFilter.dataId.length === 0 && newFilter.dataId.length > 0) {
-        // if trying to update filter dataId. create an empty new filter
+      // if no index is provided we replace the  current filter with a new one
+      if (oldFilter.dataId.length === 0 || Array.isArray(value)) {
         newFilter = updateFilterDataId(dataId);
+      } else if (valueIndex) {
+        // if we specify an index, we are going to replace an existing value
+        newFilter.dataId[valueIndex] = value;
+      } else {
+        // otherwise we are going to append it
+        newFilter.dataId = [...oldFilter.dataId, value];
       }
-
       break;
     case FILTER_UPDATER_PROPS.name:
+      // if value is an array replace all elements and must re-filter everything
+      // we could do some optmization in case some elements are the same
       // we are supporting the current functionality
-      // TODO: Next PR for UI filter name will only update filter name but it won't have side effects
-      // we are gonna use pair of datasets and fieldIdx to update the filter
-      const datasetId = newFilter.dataId[valueIndex];
+      if (Array.isArray(value)) {
+        // reset name
+      }
+
+      if (valueIndex !== undefined) {
+        // only set the value at the given index
+      }
+
+      const datasetId = newFilter.dataId[currentValueIndex];
       const {filter: updatedFilter, dataset: newDataset} = applyFilterFieldName(
         newFilter,
         state.datasets[datasetId],
@@ -552,12 +561,7 @@ export function setFilterUpdater(state, action) {
         return state;
       }
 
-      newFilter = updatedFilter;
-
-      if (newFilter.gpu) {
-        newFilter = setFilterGpuMode(newFilter, state.filters);
-        newFilter = assignGpuChannel(newFilter, state.filters);
-      }
+      newFilter = applyFilterGPU(updatedFilter, state.filters);
 
       newState = set(['datasets', datasetId], newDataset, state);
       break;
@@ -578,7 +582,7 @@ export function setFilterUpdater(state, action) {
           .filter(d => d)
       );
 
-      // only filter datasetsIds
+      // only filter datasetIds
       datasetIds = layerDataIds;
 
       // Update newFilter dataIds
@@ -617,7 +621,7 @@ export function setFilterUpdater(state, action) {
   // dataset we will pass only the current dataset to applyFiltersToDatasets and
   // updateAllLayerDomainData otherwise we pass the all list of datasets as defined in dataId
   const datasetIdsToFilter = LIMITED_FILTER_EFFECT_PROPS[prop]
-    ? [datasetIds[valueIndex]]
+    ? [datasetIds[currentValueIndex]]
     : datasetIds;
 
   // filter data
@@ -635,6 +639,7 @@ export function setFilterUpdater(state, action) {
 
   return newState;
 }
+/* eslint-enable complexity */
 
 /**
  * Set the property of a filter plot
