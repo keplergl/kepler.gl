@@ -1868,17 +1868,17 @@ test('#visStateReducer -> SET_FILTER.name', t => {
   t.end();
 });
 
-test.only('#visStateReducer -> SET_FILTER.dataId', t => {
+test('#visStateReducer -> SET_FILTER.dataId', t => {
   const oldState = StateWFilters.visState;
   let newState = reducer(oldState, VisStateActions.setFilter(1, 'dataId', testCsvDataId));
 
   let newFilter = newState.filters[1];
   let expectedFilter = {
-    ...getDefaultFilter(testCsvDataId),
-    id: newFilter.id
+    ...oldState.filters[1],
+    dataId: [...oldState.filters[1].dataId, testCsvDataId]
   };
 
-  t.deepEqual(newFilter, expectedFilter, 'Should create a new filter using the provided dataId');
+  t.deepEqual(newFilter, expectedFilter, 'Should add a new dataId value');
 
   // Using an array of dataId
   newState = reducer(newState, VisStateActions.setFilter(1, 'dataId', [testCsvDataId]));
@@ -1890,11 +1890,11 @@ test.only('#visStateReducer -> SET_FILTER.dataId', t => {
     id: newFilter.id
   };
 
-  // t.deepEqual(
-  //   newFilter,
-  //   expectedFilter,
-  //   'Should create a new filter using the provided list of dataId'
-  // );
+  t.deepEqual(
+    newFilter,
+    expectedFilter,
+    'Should create a new filter using the provided list of dataId'
+  );
 
   t.end();
 });
@@ -4143,11 +4143,7 @@ test('#visStateReducer -> multi dataset filter', t => {
 
   newState = reducer(newState, VisStateActions.setFilter(0, 'dataId', 'cat'));
 
-  t.deepEqual(
-    newState.filters[0].dataId,
-    ['puppy', 'cat'],
-    'Should set the correct dataId values'
-  );
+  t.deepEqual(newState.filters[0].dataId, ['puppy', 'cat'], 'Should set the correct dataId values');
 
   // // TODO: non existing dataId
   // newState = reducer(newState, VisStateActions.setFilter(0, 'dataId', 'start_point_lat'));
