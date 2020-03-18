@@ -41,7 +41,10 @@ export function renderedSize({
   optionsButton = 30
 }) {
   if (!document) {
-    return 0;
+    return {
+      row: 0,
+      header: 0
+    };
   }
   const textCanvas = document.createElement('canvas');
   document.body.appendChild(textCanvas);
@@ -62,7 +65,6 @@ export function renderedSize({
         cellPadding
     )
   );
-
   // header cell only has left padding
   const headerWidth =
     Math.ceil(context.measureText(column).width) + cellPadding / 2 + optionsButton;

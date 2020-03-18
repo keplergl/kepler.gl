@@ -27,6 +27,7 @@ import {withTheme} from 'styled-components';
 import {RootContext} from 'components/context';
 import Modal from 'react-modal';
 import window from 'global/window';
+import {theme} from 'styles/base';
 
 const listeners = {};
 
@@ -118,7 +119,8 @@ const noop = () => {};
 class Portaled extends Component {
   static defaultProps = {
     component: 'div',
-    onClose: noop
+    onClose: noop,
+    theme
   };
 
   state = {

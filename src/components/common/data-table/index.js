@@ -278,6 +278,7 @@ const renderHeaderCell = (columns, isPinned, props, toggleMoreOptions, moreOptio
     return (
       <div
         className={classnames('header-cell', {
+          [`column-${columnIndex}`]: true,
           'pinned-header-cell': isPinned,
           'first-cell': firstCell
         })}
@@ -361,6 +362,7 @@ const renderDataCell = (columns, isPinned, props) => {
       <div
         className={classnames('cell', {
           [rowIndex % 2 === 0 ? 'even-row' : 'odd-row']: true,
+          [`row-${rowIndex}`]: true,
           'pinned-cell': isPinned,
           'first-cell': firstCell,
           'end-cell': endCell,
@@ -379,12 +381,13 @@ const renderDataCell = (columns, isPinned, props) => {
   };
 };
 
-const TableSection = ({
+export const TableSection = ({
   classList,
   isPinned,
   columns,
   headerGridProps,
   fixedWidth,
+  fixedHeight,
   onScroll,
   scrollTop,
   dataGridProps,
@@ -401,7 +404,7 @@ const TableSection = ({
         columnWidth,
         width: fixedWidth || width
       };
-
+      const dataGridHeight = fixedHeight || height;
       return (
         <>
           <div className={classnames('scroll-in-ui-thread', classList.header)}>
@@ -423,7 +426,7 @@ const TableSection = ({
               {...dataGridProps}
               {...gridDimension}
               className={isPinned ? 'pinned-grid' : 'body-grid'}
-              height={height - headerGridProps.height}
+              height={dataGridHeight - headerGridProps.height}
               onScroll={onScroll}
               scrollTop={scrollTop}
               setGridRef={setGridRef}
@@ -435,185 +438,188 @@ const TableSection = ({
   </AutoSizer>
 );
 
-function DataTableFactory() {
-  class DataTable extends Component {
-    static defaultProps = {
-      rows: [],
-      pinnedColumns: [],
-      colMeta: {},
-      cellSizeCache: {},
-      sortColumn: {},
-      fixedWidth: null
-    };
+export class DataTable extends Component {
+  static defaultProps = {
+    rows: [],
+    pinnedColumns: [],
+    colMeta: {},
+    cellSizeCache: {},
+    sortColumn: {},
+    fixedWidth: null,
+    fixedHeight: null,
+    theme: {}
+  };
 
-    state = {
-      cellSizeCache: {},
-      moreOptionsColumn: null
-    };
+  state = {
+    cellSizeCache: {},
+    moreOptionsColumn: null
+  };
 
-    componentDidMount() {
-      window.addEventListener('resize', this.scaleCellsToWidth);
+  componentDidMount() {
+    window.addEventListener('resize', this.scaleCellsToWidth);
+    this.scaleCellsToWidth();
+  }
+
+  componentDidUpdate(prevProps) {
+    if (
+      this.props.cellSizeCache !== prevProps.cellSizeCache ||
+      this.props.pinnedColumns !== prevProps.pinnedColumns
+    ) {
       this.scaleCellsToWidth();
     }
+  }
 
-    componentDidUpdate(prevProps) {
-      if (
-        this.props.cellSizeCache !== prevProps.cellSizeCache ||
-        this.props.pinnedColumns !== prevProps.pinnedColumns
-      ) {
-        this.scaleCellsToWidth();
-      }
-    }
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.scaleCellsToWidth);
+  }
+  root = createRef();
+  columns = props => props.columns;
+  pinnedColumns = props => props.pinnedColumns;
+  unpinnedColumns = createSelector(this.columns, this.pinnedColumns, (columns, pinnedColumns) =>
+    !Array.isArray(pinnedColumns) ? columns : columns.filter(c => !pinnedColumns.includes(c))
+  );
 
-    componentWillUnmount() {
-      window.removeEventListener('resize', this.scaleCellsToWidth);
-    }
-    root = createRef();
-    columns = props => props.columns;
-    pinnedColumns = props => props.pinnedColumns;
-    unpinnedColumns = createSelector(this.columns, this.pinnedColumns, (columns, pinnedColumns) =>
-      !Array.isArray(pinnedColumns) ? columns : columns.filter(c => !pinnedColumns.includes(c))
+  toggleMoreOptions = moreOptionsColumn =>
+    this.setState({
+      moreOptionsColumn:
+        this.state.moreOptionsColumn === moreOptionsColumn ? null : moreOptionsColumn
+    });
+
+  getCellSizeCache = () => {
+    const {cellSizeCache: propsCache, fixedWidth, pinnedColumns} = this.props;
+    const unpinnedColumns = this.unpinnedColumns(this.props);
+
+    const width = fixedWidth ? fixedWidth : this.root.current ? this.root.current.clientWidth : 0;
+
+    // pin column border is 2 pixel vs 1 pixel
+    const adjustWidth = pinnedColumns.length ? width - 1 : width;
+    const {cellSizeCache, ghost} = adjustCellsToContainer(
+      adjustWidth,
+      propsCache,
+      pinnedColumns,
+      unpinnedColumns
+    );
+    return {
+      cellSizeCache,
+      ghost
+    };
+  };
+
+  doScaleCellsToWidth = () => {
+    this.setState(this.getCellSizeCache());
+  };
+
+  scaleCellsToWidth = debounce(this.doScaleCellsToWidth, 300);
+
+  render() {
+    const {rows, pinnedColumns, theme = {}, fixedWidth, fixedHeight} = this.props;
+    const unpinnedColumns = this.unpinnedColumns(this.props);
+
+    const {cellSizeCache, moreOptionsColumn, ghost} = this.state;
+    const unpinnedColumnsGhost = ghost ? [...unpinnedColumns, {ghost: true}] : unpinnedColumns;
+    const pinnedColumnsWidth = pinnedColumns.reduce(
+      (acc, val) => acc + get(cellSizeCache, val, 0),
+      0
     );
 
-    toggleMoreOptions = moreOptionsColumn =>
-      this.setState({
-        moreOptionsColumn:
-          this.state.moreOptionsColumn === moreOptionsColumn ? null : moreOptionsColumn
-      });
+    const hasPinnedColumns = Boolean(pinnedColumns.length);
+    const {headerRowHeight = defaultHeaderRowHeight, rowHeight = defaultRowHeight} = theme;
 
-    doScaleCellsToWidth = () => {
-      const {cellSizeCache: propsCache, fixedWidth, pinnedColumns} = this.props;
-      const unpinnedColumns = this.unpinnedColumns(this.props);
-
-      const width = fixedWidth ? fixedWidth : this.root.current ? this.root.current.clientWidth : 0;
-      // pin column border is 2 pixel vs 1 pixel
-      const adjustWidth = pinnedColumns.length ? width - 1 : width;
-      const {cellSizeCache, ghost} = adjustCellsToContainer(
-        adjustWidth,
-        propsCache,
-        pinnedColumns,
-        unpinnedColumns
-      );
-
-      this.setState({
-        cellSizeCache,
-        ghost
-      });
+    const headerGridProps = {
+      cellSizeCache,
+      className: 'header-grid',
+      height: headerRowHeight,
+      rowCount: 1,
+      rowHeight: headerRowHeight
     };
 
-    scaleCellsToWidth = debounce(this.doScaleCellsToWidth, 300);
+    const dataGridProps = {
+      cellSizeCache,
+      overscanColumnCount,
+      overscanRowCount,
+      rowCount: (rows || []).length,
+      rowHeight
+    };
 
-    render() {
-      const {rows, pinnedColumns, theme = {}} = this.props;
-      const unpinnedColumns = this.unpinnedColumns(this.props);
-
-      const {cellSizeCache, moreOptionsColumn, ghost} = this.state;
-      const unpinnedColumnsGhost = ghost ? [...unpinnedColumns, {ghost: true}] : unpinnedColumns;
-      const pinnedColumnsWidth = pinnedColumns.reduce(
-        (acc, val) => acc + get(cellSizeCache, val, 0),
-        0
-      );
-
-      const hasPinnedColumns = Boolean(pinnedColumns.length);
-      const {headerRowHeight = defaultHeaderRowHeight, rowHeight = defaultRowHeight} = theme;
-
-      const headerGridProps = {
-        cellSizeCache,
-        className: 'header-grid',
-        height: headerRowHeight,
-        rowCount: 1,
-        rowHeight: headerRowHeight
-      };
-
-      const dataGridProps = {
-        cellSizeCache,
-        overscanColumnCount,
-        overscanRowCount,
-        rowCount: (rows || []).length,
-        rowHeight
-      };
-
-      return (
-        <Container className="data-table-container" ref={this.root}>
-          {Object.keys(cellSizeCache).length && (
-            <ScrollSync>
-              {({onScroll, scrollLeft, scrollTop}) => {
-                return (
-                  <div className="results-table-wrapper">
-                    {hasPinnedColumns && (
-                      <div key="pinned-columns" className="pinned-columns grid-row">
-                        <TableSection
-                          classList={{
-                            header: 'pinned-columns--header pinned-grid-container',
-                            rows: 'pinned-columns--rows pinned-grid-container'
-                          }}
-                          isPinned
-                          columns={pinnedColumns}
-                          headerGridProps={headerGridProps}
-                          fixedWidth={pinnedColumnsWidth}
-                          onScroll={args => onScroll({...args, scrollLeft})}
-                          scrollTop={scrollTop}
-                          dataGridProps={dataGridProps}
-                          setGridRef={pinnedGrid => (this.pinnedGrid = pinnedGrid)}
-                          columnWidth={columnWidthFunction(pinnedColumns, cellSizeCache)}
-                          headerCellRender={renderHeaderCell(
-                            pinnedColumns,
-                            true,
-                            this.props,
-                            this.toggleMoreOptions,
-                            moreOptionsColumn
-                          )}
-                          dataCellRender={renderDataCell(pinnedColumns, true, this.props)}
-                        />
-                      </div>
-                    )}
-                    <div
-                      key="unpinned-columns"
-                      style={{
-                        marginLeft: `${hasPinnedColumns ? `${pinnedColumnsWidth}px` : '0'}`
-                      }}
-                      className="unpinned-columns grid-column"
-                    >
+    return (
+      <Container className="data-table-container" ref={this.root}>
+        {Object.keys(cellSizeCache).length && (
+          <ScrollSync>
+            {({onScroll, scrollLeft, scrollTop}) => {
+              return (
+                <div className="results-table-wrapper">
+                  {hasPinnedColumns && (
+                    <div key="pinned-columns" className="pinned-columns grid-row">
                       <TableSection
                         classList={{
-                          header: 'unpinned-columns--header unpinned-grid-container',
-                          rows: 'unpinned-columns--rows unpinned-grid-container'
+                          header: 'pinned-columns--header pinned-grid-container',
+                          rows: 'pinned-columns--rows pinned-grid-container'
                         }}
-                        isPinned={false}
-                        columns={unpinnedColumnsGhost}
-                        ghost={ghost}
+                        isPinned
+                        columns={pinnedColumns}
                         headerGridProps={headerGridProps}
-                        fixedWidth={false}
-                        onScroll={onScroll}
+                        fixedWidth={pinnedColumnsWidth}
+                        onScroll={args => onScroll({...args, scrollLeft})}
                         scrollTop={scrollTop}
-                        scrollLeft={scrollLeft}
                         dataGridProps={dataGridProps}
-                        setGridRef={unpinnedGrid => (this.unpinnedGrid = unpinnedGrid)}
-                        columnWidth={columnWidthFunction(
-                          unpinnedColumnsGhost,
-                          cellSizeCache,
-                          ghost
-                        )}
+                        setGridRef={pinnedGrid => (this.pinnedGrid = pinnedGrid)}
+                        columnWidth={columnWidthFunction(pinnedColumns, cellSizeCache)}
                         headerCellRender={renderHeaderCell(
-                          unpinnedColumnsGhost,
-                          false,
+                          pinnedColumns,
+                          true,
                           this.props,
                           this.toggleMoreOptions,
                           moreOptionsColumn
                         )}
-                        dataCellRender={renderDataCell(unpinnedColumnsGhost, false, this.props)}
+                        dataCellRender={renderDataCell(pinnedColumns, true, this.props)}
                       />
                     </div>
+                  )}
+                  <div
+                    key="unpinned-columns"
+                    style={{
+                      marginLeft: `${hasPinnedColumns ? `${pinnedColumnsWidth}px` : '0'}`
+                    }}
+                    className="unpinned-columns grid-column"
+                  >
+                    <TableSection
+                      classList={{
+                        header: 'unpinned-columns--header unpinned-grid-container',
+                        rows: 'unpinned-columns--rows unpinned-grid-container'
+                      }}
+                      isPinned={false}
+                      columns={unpinnedColumnsGhost}
+                      ghost={ghost}
+                      headerGridProps={headerGridProps}
+                      fixedWidth={fixedWidth}
+                      fixedHeight={fixedHeight}
+                      onScroll={onScroll}
+                      scrollTop={scrollTop}
+                      scrollLeft={scrollLeft}
+                      dataGridProps={dataGridProps}
+                      setGridRef={unpinnedGrid => (this.unpinnedGrid = unpinnedGrid)}
+                      columnWidth={columnWidthFunction(unpinnedColumnsGhost, cellSizeCache, ghost)}
+                      headerCellRender={renderHeaderCell(
+                        unpinnedColumnsGhost,
+                        false,
+                        this.props,
+                        this.toggleMoreOptions,
+                        moreOptionsColumn
+                      )}
+                      dataCellRender={renderDataCell(unpinnedColumnsGhost, false, this.props)}
+                    />
                   </div>
-                );
-              }}
-            </ScrollSync>
-          )}
-        </Container>
-      );
-    }
+                </div>
+              );
+            }}
+          </ScrollSync>
+        )}
+      </Container>
+    );
   }
+}
 
+function DataTableFactory() {
   return withTheme(DataTable);
 }
 

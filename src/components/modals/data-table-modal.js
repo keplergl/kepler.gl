@@ -20,7 +20,6 @@
 
 import React from 'react';
 import styled from 'styled-components';
-// import DataGridFactory from 'components/common/datagrid';
 import DatasetLabel from 'components/common/dataset-label';
 import DataTableFactory from 'components/common/data-table';
 import {createSelector} from 'reselect';
@@ -140,6 +139,7 @@ function DataTableModalFactory(DataTable) {
         fields,
         allData
       };
+      console.log(cellSizeCache)
       return cellSizeCache;
     });
 
