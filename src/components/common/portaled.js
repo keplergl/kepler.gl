@@ -20,10 +20,13 @@
 
 import React, {Component, createRef} from 'react';
 import debounce from 'lodash.debounce';
+import isEqual from 'lodash.isequal';
+
 import {canUseDOM} from 'exenv';
 import {withTheme} from 'styled-components';
 import {RootContext} from 'components/context';
 import Modal from 'react-modal';
+import window from 'global/window';
 
 const listeners = {};
 
@@ -44,6 +47,34 @@ const addEventListeners = () => {
   if (document && document.body)
     document.body.addEventListener('mousewheel', debounce(startListening, 100, true));
   window.addEventListener('resize', debounce(startListening, 50, true));
+};
+
+export const getChildPos = ({offsets, rect, childRect, pageOffset, padding}) => {
+  const {topOffset, leftOffset, rightOffset} = offsets;
+
+  const anchorLeft = leftOffset !== undefined;
+  const pos = {
+    top: pageOffset.y + rect.top + (topOffset || 0),
+    ...(anchorLeft
+      ? {left: pageOffset.x + rect.left + leftOffset}
+      : {right: window.innerWidth - rect.right - pageOffset.x + (rightOffset || 0)})
+  };
+
+  const leftOrRight = anchorLeft ? 'left' : 'right';
+
+  if (pos[leftOrRight] && pos[leftOrRight] < 0) {
+    pos[leftOrRight] = padding;
+  } else if (pos[leftOrRight] && pos[leftOrRight] + childRect.width > window.innerWidth) {
+    pos[leftOrRight] = window.innerWidth - childRect.width - padding;
+  }
+
+  if (pos.top < 0) {
+    pos.top = padding;
+  } else if (pos.top + childRect.height > window.innerHeight) {
+    pos.top = window.innerHeight - childRect.height - padding;
+  }
+
+  return pos;
 };
 
 if (canUseDOM) {
@@ -74,77 +105,43 @@ const defaultModalStyle = {
   overlay: {
     right: 'auto',
     bottom: 'auto',
+    width: '100vw',
+    height: '100vh',
     backgroundColor: 'rgba(0, 0, 0, 0)'
   }
 };
 
+const WINDOW_PAD = 40;
+
+const noop = () => {};
+
 class Portaled extends Component {
   static defaultProps = {
-    left: 0,
-    top: 0,
-    component: 'span',
-    closeOnEsc: true,
-    onHide: () => null
+    component: 'div',
+    onClose: noop
   };
 
   state = {
-    right: 0,
-    left: 0,
-    top: 0,
-    isPortalOpened: false,
+    pos: null,
     isVisible: false
   };
 
-  UNSAFE_componentWillMount() {
-    if (this.props.isOpened) {
-      this.setState({
-        isPortalOpened: true,
-        isVisible: true
-      });
-    }
-  }
-
   componentDidMount() {
     // relative
-    this.handleScroll = () => {
-      if (this.element.current) {
-        const rect = this.element.current.getBoundingClientRect();
-        const pageOffset = getPageOffset();
-        const top = pageOffset.y + rect.top;
-        const right = window.innerWidth - rect.right - pageOffset.x;
-        const left = pageOffset.x + rect.left;
-
-        if (top !== this.state.top || left !== this.state.left || right !== this.state.right) {
-          this.setState({left, top, right});
-        }
-      }
-    };
     this.unsubscribe = subscribe(this.handleScroll);
     this.handleScroll();
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    const {isOpened} = this.props;
-    const {isVisible, isPortalOpened} = this.state;
-
-    const willOpen = !isOpened && nextProps.isOpened;
-    if (willOpen) this.setState({isPortalOpened: true});
-
-    const willClose = isOpened && !nextProps.isOpened;
-    if (willClose) this.setState({isVisible: false});
-
-    const hasReopened = willOpen && !isVisible && isPortalOpened;
-    if (hasReopened) this.setState({isVisible: true});
-  }
-
   componentDidUpdate(prevProps) {
     const didOpen = this.props.isOpened && !prevProps.isOpened;
-    if (didOpen) {
+    const didClose = !this.props.isOpened && prevProps.isOpened;
+    if (didOpen || didClose) {
       window.requestAnimationFrame(() => {
         if (this._unmounted) return;
-        this.setState({isVisible: true});
+        this.setState({isVisible: didOpen});
       });
     }
+
     this.handleScroll();
   }
 
@@ -154,11 +151,27 @@ class Portaled extends Component {
   }
 
   element = createRef();
+  child = createRef();
 
-  handleRest = () => {
-    if (!this.state.isVisible) {
-      this.setState({isPortalOpened: false});
-      this.props.onHide();
+  // eslint-disable-next-line complexity
+  handleScroll = () => {
+    if (this.child.current) {
+      const rect = this.element.current.getBoundingClientRect();
+      const childRect = this.child.current && this.child.current.getBoundingClientRect();
+      const pageOffset = getPageOffset();
+      const {top: topOffset, left: leftOffset, right: rightOffset} = this.props;
+
+      const pos = getChildPos({
+        offsets: {topOffset, leftOffset, rightOffset},
+        rect,
+        childRect,
+        pageOffset,
+        padding: WINDOW_PAD
+      });
+
+      if (!isEqual(pos, this.state.pos)) {
+        this.setState({pos});
+      }
     }
   };
 
@@ -166,40 +179,31 @@ class Portaled extends Component {
     const {
       // relative
       component: Comp,
-      top,
-      left,
-      right,
-      fullWidth,
       overlayZIndex,
+      isOpened,
+      onClose,
 
-      // Mortal
+      // Mordal
       children,
       modalProps
     } = this.props;
 
-    const {isPortalOpened, isVisible} = this.state;
-
-    const fromLeftOrRight =
-      right !== undefined ? {right: this.state.right + right} : {left: this.state.left + left};
-
-    const horizontalPosition = fullWidth
-      ? {right: this.state.right + right, left: this.state.left + left}
-      : fromLeftOrRight;
+    const {isVisible, pos} = this.state;
 
     const modalStyle = {
       ...defaultModalStyle,
       overlay: {
         ...defaultModalStyle.overlay,
         // needs to be on top of existing modal
-        zIndex: overlayZIndex
+        zIndex: overlayZIndex || 9999
       }
     };
 
     return (
       <RootContext.Consumer>
-        {context =>
-          isPortalOpened ? (
-            <Comp ref={this.element}>
+        {context => (
+          <Comp ref={this.element}>
+            {isOpened ? (
               <Modal
                 className="modal-portal"
                 {...modalProps}
@@ -216,22 +220,34 @@ class Portaled extends Component {
                     }
                   );
                 }}
+                onRequestClose={onClose}
               >
                 <div
+                  className="portaled-content"
                   key="item"
                   style={{
                     position: 'fixed',
                     opacity: isVisible ? 1 : 0,
-                    top: this.state.top + top,
-                    ...horizontalPosition
+                    top: this.state.top,
+                    transition: this.props.theme.transition,
+                    marginTop: isVisible ? '0px' : '14px',
+                    ...pos
                   }}
                 >
-                  {children}
+                  <div
+                    ref={this.child}
+                    style={{
+                      position: 'absolute',
+                      zIndex: overlayZIndex ? overlayZIndex + 1 : 10000
+                    }}
+                  >
+                    {children}
+                  </div>
                 </div>
               </Modal>
-            </Comp>
-          ) : null
-        }
+            ) : null}
+          </Comp>
+        )}
       </RootContext.Consumer>
     );
   }

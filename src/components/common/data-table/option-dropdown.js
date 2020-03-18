@@ -20,7 +20,7 @@
 
 import React, {useCallback} from 'react';
 import styled from 'styled-components';
-import Portaled from './portaled';
+import Portaled from '../portaled';
 import DropdownList from 'components/common/item-selector/dropdown-list';
 import {SORT_ORDER, TABLE_OPTION, TABLE_OPTION_LIST} from 'constants/default-settings';
 
@@ -32,13 +32,6 @@ const ListItem = ({value}) => (
 );
 
 const StyledOptionsDropdown = styled.div`
-  transition: ${props => props.theme.transitionSlow};
-  margin-top: ${props => (props.show ? '6px' : '20px')};
-  pointer-events: ${props => (props.show ? 'all' : 'none')};
-  opacity: ${props => (props.show ? 1 : 0)};
-  z-index: 10000;
-  position: absolute;
-
   .list-selector {
     border-top: 0;
     width: max-content;
@@ -100,14 +93,8 @@ const OptionDropdown = props => {
   const options = TABLE_OPTION_LIST.filter(op => !op.condition || op.condition(props));
 
   return (
-    <Portaled
-      isOpened={isOpened}
-      right={90}
-      top={0}
-      overlay={() => toggleMoreOptions(column)}
-      overlayZIndex={9999}
-    >
-      <StyledOptionsDropdown show={isOpened} className="more-options">
+    <Portaled right={120} top={20} isOpened={isOpened} onClose={() => toggleMoreOptions(column)}>
+      <StyledOptionsDropdown className="more-options">
         <DropdownList
           displayOption={d => d.display}
           options={options}
