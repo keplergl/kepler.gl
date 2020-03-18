@@ -3984,7 +3984,7 @@ test('#uiStateReducer -> SET_FEATURES/SET_SELECTED_FEATURE/DELETE_FEATURE', t =>
   t.end();
 });
 
-test('#visStateReducer -> APPLY_CPU_FILTER. has multi datsets', t => {
+test('#visStateReducer -> APPLY_CPU_FILTER. has multi datasets', t => {
   const initialState = CloneDeep(StateWFilters.visState);
   const previousDataset1 = initialState.datasets[testCsvDataId];
   const previousDataset2 = initialState.datasets[testGeoJsonDataId];
@@ -4028,6 +4028,7 @@ test('#visStateReducer -> APPLY_CPU_FILTER. has multi datsets', t => {
   t.end();
 });
 
+/* eslint-disable max-statements */
 test('#visStateReducer -> multi dataset filter', t => {
   const state = {
     ...INITIAL_VIS_STATE
@@ -4145,49 +4146,63 @@ test('#visStateReducer -> multi dataset filter', t => {
 
   t.deepEqual(newState.filters[0].dataId, ['puppy', 'cat'], 'Should set the correct dataId values');
 
+  t.deepEqual(
+    newState.datasets.puppy.filteredIndexForDomain,
+    [0, 1],
+    'Puppy filteredIndexForDomain should not change'
+  );
+
+  // set filter name for cat
+  newState = reducer(newState, VisStateActions.setFilter(0, 'name', 'start_point_lat', 1));
+
+  t.deepEqual(
+    newState.filters[0].name,
+    ['start_point_lat', 'start_point_lat'],
+    'Should provide the correct filter name with two values'
+  );
+
+  t.deepEqual(
+    newState.filters[0].domain,
+    [11.25, 18.25],
+    'Should display the correct domain after applying the filter to the second dataset'
+  );
+
+  t.deepEqual(
+    newState.datasets.puppy.filteredIndexForDomain,
+    [0, 1],
+    'Should not change the first dataset filtered index value'
+  );
+
+  t.deepEqual(
+    newState.datasets.cat.filteredIndexForDomain,
+    [],
+    'Should provide the  correct filteredIndexForDomain value for second dataset'
+  );
+
+  // reset filter name
+  newState = reducer(newState, VisStateActions.setFilter(0, 'name', ['start_point_lat']));
+
+  t.deepEqual(
+    newState.filters[0].domain,
+    [12.25, 14.25],
+    'Should display the correct domain for first dataset after resetting name'
+  );
+
+  t.deepEqual(
+    newState.datasets.puppy.filteredIndexForDomain,
+    [0, 1],
+    'Should filter puppy dataset correctly'
+  );
+
+  t.deepEqual(
+    newState.datasets.cat.filteredIndexForDomain,
+    [0, 1, 2, 3],
+    'Should not filter cat dataset'
+  );
+
   // // TODO: non existing dataId
   // newState = reducer(newState, VisStateActions.setFilter(0, 'dataId', 'start_point_lat'));
 
-  // newState = reducer(newState, VisStateActions.setFilter(0, 'dataId', ['puppy', 'cat']));
-  //
-  // t.deepEqual(
-  //   newState.filters[0].dataId,
-  //   ['puppy', 'cat'],
-  //   'Should fill out filter dataId with both dataset ids'
-  // );
-  //
-  // t.deepEqual(
-  //   newState.datasets.puppy.filteredIndexForDomain,
-  //   [0, 1],
-  //   'Should provide the same filtered index after passing both datasets as dataId'
-  // );
-  //
-  // // set filter name for cat
-  // newState = reducer(newState, VisStateActions.setFilter(0, 'name', 'start_point_lat', 1));
-  //
-  // t.deepEqual(
-  //   newState.filters[0].domain,
-  //   [11.25, 18.25],
-  //   'Should display the correct domain after applying the filter to the second dataset'
-  // );
-  //
-  // t.deepEqual(
-  //   newState.datasets.puppy.filteredIndexForDomain,
-  //   [0, 1],
-  //   'Should not change the first dataset filtered index value'
-  // );
-  //
-  // t.deepEqual(
-  //   newState.filters[0].name,
-  //   ['start_point_lat', 'start_point_lat'],
-  //   'Should provide the correct filter name with two values'
-  // );
-  //
-  // t.deepEqual(
-  //   newState.datasets.cat.filteredIndexForDomain,
-  //   [],
-  //   'Should provide the  correct filteredIndexForDomain value for second dataset'
-  // );
-
   t.end();
 });
+/* eslint-enable max-statements */

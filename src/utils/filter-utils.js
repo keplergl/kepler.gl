@@ -28,7 +28,7 @@ import {ALL_FIELD_TYPES, FILTER_TYPES} from 'constants/default-settings';
 import {maybeToDate, notNullorUndefined, unique, timeToUnixMilli} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
 import {LAYER_TYPES} from '../constants';
-import {generateHashId, set, toArray} from './utils';
+import {generateHashId, set, toArray, and_, or_} from './utils';
 import {getGpuFilterProps, getDatasetFieldIndexForFilter} from './gpu-filter-utils';
 
 export const TimestampStepMap = [
@@ -61,13 +61,6 @@ export const FILTER_UPDATER_PROPS = keyMirror({
   name: null,
   layerId: null
 });
-
-export const LIMITED_FILTER_EFFECT_PROPS = keyMirror({
-  [FILTER_UPDATER_PROPS.name]: null
-});
-/**
- * Max number of filter value buffers that deck.gl provides
- */
 
 const SupportedPlotType = {
   [FILTER_TYPES.timeRange]: {
@@ -138,12 +131,21 @@ export function getDefaultFilter(dataId) {
 /**
  * Check if a filter is valid based on the given dataId
  * @param {object} filter to validate
- * @param {string} dataset id to validate filter against
+ * @param {string} datasetId id to validate filter against
  * @return {boolean} true if a filter is valid, false otherwise
  */
 export function shouldApplyFilter(filter, datasetId) {
   const dataIds = toArray(filter.dataId);
-  return dataIds.includes(datasetId) && filter.value !== null;
+  // return dataIds.includes(datasetId) && filter.value !== null;
+  // we need to make sure we have a name value for the same datasetId index
+  const name = toArray(filter.name);
+  const datasetIndex = dataIds.findIndex(dId => dId === datasetId);
+
+  return and_(
+    datasetIndex !== -1,
+    or_(filter.type === FILTER_TYPES.polygon, name[datasetIndex]),
+    filter.value !== null
+  );
 }
 
 /**
