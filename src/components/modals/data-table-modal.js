@@ -139,7 +139,6 @@ function DataTableModalFactory(DataTable) {
         fields,
         allData
       };
-      console.log(cellSizeCache)
       return cellSizeCache;
     });
 
