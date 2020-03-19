@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import styled from 'styled-components';
+import styled, {withTheme} from 'styled-components';
 import DatasetLabel from 'components/common/dataset-label';
 import DataTableFactory from 'components/common/data-table';
 import {createSelector} from 'reselect';
@@ -129,7 +129,9 @@ function DataTableModalFactory(DataTable) {
               column: field.name
             },
             colIdx,
-            type: field.type
+            type: field.type,
+            fontSize: this.props.theme.cellFontSize,
+            font: this.props.theme.fontFamily
           })
         }),
         {}
@@ -185,7 +187,7 @@ function DataTableModalFactory(DataTable) {
     }
   }
 
-  return DataTableModal;
+  return withTheme(DataTableModal);
 }
 
 export default DataTableModalFactory;

@@ -264,8 +264,8 @@ export const notificationPanelItemHeight = 60;
 // Data Table
 const headerRowHeight = 70;
 const rowHeight = 32;
-const headerPaddingTop = 3;
-const headerPaddingBottom = 8;
+const headerPaddingTop = 6;
+const headerPaddingBottom = 12;
 const cellPaddingSide = 10;
 const edgeCellPaddingSide = 10;
 const cellFontSize = 10;
