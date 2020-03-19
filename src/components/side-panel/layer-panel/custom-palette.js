@@ -21,10 +21,9 @@
 import React, {Component, createRef} from 'react';
 import classnames from 'classnames';
 import PropTypes from 'prop-types';
-import {createSelector} from 'reselect';
-import styled, {withTheme, css} from 'styled-components';
+import styled, {css} from 'styled-components';
 import {sortableContainer, sortableElement, sortableHandle} from 'react-sortable-hoc';
-import Modal from 'react-modal';
+import Portaled from 'components/common/portaled';
 
 import {Button, InlineInput} from 'components/common/styled-components';
 import {VertDots, Trash} from 'components/common/icons';
@@ -147,69 +146,15 @@ class CustomPalette extends Component {
       colors: PropTypes.arrayOf(PropTypes.string)
     }),
     setCustomPalette: PropTypes.func,
-    showSketcher: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]),
-    theme: PropTypes.object,
-    defaultSketcherPos: PropTypes.object,
-    sketcherHeight: PropTypes.number,
-    bottomBuffer: PropTypes.number
-  };
-
-  static defaultProps = {
-    defaultSketcherPos: {top: '320px', left: '320px'},
-    sketcherHeight: 228,
-    bottomBuffer: 212
+    showSketcher: PropTypes.oneOfType([PropTypes.bool, PropTypes.number])
   };
 
   state = {
-    // currentSwatchIndex: null,
     isSorting: false
   };
 
   root = createRef();
 
-  // derive sketcher position based on root component
-  showSketcherSelector = props => props.showSketcher;
-  themeSelector = props => props.theme;
-  sketcherPosSelector = createSelector(this.showSketcherSelector, (showSketcher, theme = {}) => {
-    const {defaultSketcherPos, bottomBuffer, sketcherHeight} = this.props;
-    if (showSketcher === false || !this.root || !this.root.current) return defaultSketcherPos;
-    const {sidePanelInnerPadding = 16, sidePanel = {}, sidePanelScrollBarWidth = 10} = theme;
-    const sidePanelLeft = (sidePanel.margin || {}).left || 20;
-    const offsetX = sidePanelInnerPadding + sidePanelLeft + sidePanelScrollBarWidth;
-    // find component Root position
-    const bounding = this.root.current.getBoundingClientRect();
-    const {x, y, width} = bounding;
-
-    // set the top so it won't collide with bottom widget
-    const top =
-      y + sketcherHeight <= window.innerHeight - bottomBuffer
-        ? y
-        : window.innerHeight - bottomBuffer - sketcherHeight;
-
-    return {top: `${top}px`, left: `${x + width + offsetX}px`};
-  });
-
-  modalStylesSelector = createSelector(
-    this.themeSelector,
-    this.sketcherPosSelector,
-    (theme, sketcherPos) => ({
-      content: {
-        top: 0,
-        left: 0,
-        border: 0,
-        right: 'auto',
-        bottom: 'auto',
-        padding: '0px 0px 0px 0px',
-        borderRadius: theme.panelBorderRadius || '2px'
-      },
-      overlay: {
-        ...sketcherPos,
-        right: 'auto',
-        bottom: 'auto',
-        backgroundColor: 'rgba(0, 0, 0, 0)'
-      }
-    })
-  );
   _setColorPaletteUI(colors) {
     this.props.setCustomPalette({
       colors
@@ -274,7 +219,6 @@ class CustomPalette extends Component {
 
   render() {
     const {colors} = this.props.customPalette;
-    const modalStyles = this.modalStylesSelector(this.props);
 
     return (
       <div className="custom-palette-panel" ref={this.root}>
@@ -324,36 +268,20 @@ class CustomPalette extends Component {
             Confirm
           </Button>
           <Button link onClick={this.props.onCancel}>
-            {' '}
             Cancel
           </Button>
         </StyledButtonContainer>
-        {this.props.showSketcher !== false ? (
-          <Modal
-            isOpen
-            style={modalStyles}
-            ariaHideApp={false}
-            parentSelector={() => {
-              // React modal issue: https://github.com/reactjs/react-modal/issues/769
-              // failed to execute removeChild on parent node when it is already unmounted
-              return (
-                this.root.current || {
-                  removeChild: () => {},
-                  appendChild: () => {}
-                }
-              );
-            }}
-          >
-            <CustomPicker
-              color={colors[this.props.showSketcher]}
-              onChange={this._onPickerUpdate}
-              onSwatchClose={this._onSwatchClose}
-            />
-          </Modal>
-        ) : null}
+
+        <Portaled isOpened={this.props.showSketcher !== false} left={280} top={-300}>
+          <CustomPicker
+            color={colors[this.props.showSketcher]}
+            onChange={this._onPickerUpdate}
+            onSwatchClose={this._onSwatchClose}
+          />
+        </Portaled>
       </div>
     );
   }
 }
 
-export default withTheme(CustomPalette);
+export default CustomPalette;

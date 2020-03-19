@@ -27,4 +27,6 @@ const KeplerGlContext = createContext({
   id: 'map'
 });
 
+export const RootContext = createContext(null);
+
 export default KeplerGlContext;

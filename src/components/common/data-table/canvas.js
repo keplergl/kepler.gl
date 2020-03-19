@@ -18,29 +18,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
-import PropTypes from 'prop-types';
-import Base from './base';
+import styled from 'styled-components';
 
-export default class ArrowDown extends Component {
-  static propTypes = {
-    /** Set the height of the icon, ex. '16px' */
-    height: PropTypes.string
-  };
+/*
+    ScrollSync works by getting a callback about the dom elements scroll amount
+    and then using that to pass into how much to scroll all child components,
+    it works great!
 
-  static defaultProps = {
-    height: '16px',
-    predefinedClassName: 'data-ex-icons-arrowdown'
-  };
+    Except... Because scrolling is managed by a separate thread, and JavaScript
+    is only periodically notified of the updated position, there's some latency
+    issues with this.
 
-  render() {
-    return (
-      <Base {...this.props}>
-        <path
-          d="M13.1,17.5c0.4-0.4,1.1-0.4,1.6,0L32,34.8l17.4-17.4c0.4-0.4,1.1-0.4,1.6,0l4.7,4.7c0.4,0.4,0.4,1.1,0,1.6L32.8,46.7
-	c-0.4,0.4-1.1,0.4-1.6,0L8.3,23.8c-0.4-0.4-0.4-1.1,0-1.6L13.1,17.5z"
-        />{' '}
-      </Base>
-    );
-  }
-}
+    We can hack around this by using a niche property of canvas that removes the
+    delay in scroll event firing! Easiest way to reproduce: enable "Trace React updates"
+    in React DevTools (it works by overlaying a viewport-wide canvas over the document).
+  */
+export default styled.canvas`
+  height: 100%;
+  left: 0;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  width: 100%;
+`;

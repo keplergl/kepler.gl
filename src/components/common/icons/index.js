@@ -20,11 +20,18 @@
 
 export {default as Add} from './add';
 export {default as ArrowDown} from './arrow-down';
+export {default as ArrowDownAlt} from './arrow-down-alt';
+export {default as ArrowDownSolid} from './arrow-down-alt';
 export {default as ArrowLeft} from './arrow-left';
 export {default as ArrowRight} from './arrow-right';
+export {default as ArrowUpSolid} from './arrow-up-solid';
+export {default as ArrowUpAlt} from './arrow-up-alt';
+export {default as ArrowUp} from './arrow-up';
 export {default as Base} from './base';
 export {default as Bug} from './bug';
+export {default as Cancel} from './cancel';
 export {default as Checkmark} from './checkmark';
+export {default as Clipboard} from './clipboard';
 export {default as Clock} from './clock';
 export {default as Close} from './close';
 export {default as Crosshairs} from './crosshairs';

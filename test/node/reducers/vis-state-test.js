@@ -48,7 +48,7 @@ import {
 } from 'test/fixtures/geojson';
 
 import tripGeojson, {timeStampDomain} from 'test/fixtures/trip-geojson';
-import {mockPolygonFeature, mockPolygonData} from '../../fixtures/polygon';
+import {mockPolygonFeature, mockPolygonData} from 'test/fixtures/polygon';
 
 // test helpers
 import {
@@ -64,12 +64,12 @@ import {
   StateWSplitMaps,
   StateWFilters,
   StateWFiles,
+  StateWFilesFiltersLayerColor,
   testCsvDataId,
   testGeoJsonDataId
 } from 'test/helpers/mock-state';
 import {LAYER_VIS_CONFIGS, DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from 'layers/layer-factory';
 import {getNextColorMakerValue} from 'test/helpers/layer-utils';
-import {StateWFilesFiltersLayerColor} from 'test/helpers/mock-state';
 
 const mockData = {
   fields: [
@@ -3978,6 +3978,148 @@ test('#visStateReducer -> APPLY_CPU_FILTER. has multi datsets', t => {
   };
 
   cmpDatasets(t, expectedDatasets, nextState.datasets);
+
+  t.end();
+});
+
+test('#visStateReducer -> SORT_TABLE_COLUMN', t => {
+  const initialState = CloneDeep(StateWFiles.visState);
+  const previousDataset1 = initialState.datasets[testCsvDataId];
+
+  // sort with default mode
+  const nextState = reducer(initialState, VisStateActions.sortTableColumn());
+  t.equal(nextState, initialState, 'state should not change when input is given');
+
+  // sort with
+  const nextState2 = reducer(
+    initialState,
+    VisStateActions.sortTableColumn(testCsvDataId, 'gps_data.lat')
+  );
+  t.ok(nextState2.datasets[testCsvDataId].sortOrder, 'should create sortOrder');
+
+  const expectedOrder = [
+    3,
+    0,
+    2,
+    4,
+    1,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    20,
+    19,
+    18,
+    23,
+    22,
+    21
+  ];
+  const newKeys = Object.keys(nextState2.datasets[testCsvDataId]);
+  const addedKeys = newKeys.filter(k => !Object.keys(previousDataset1).includes(k));
+
+  t.deepEqual(
+    addedKeys,
+    ['sortColumn', 'sortOrder'],
+    'should add sortColumn and sortOrder to dataset'
+  );
+  t.deepEqual(nextState2.datasets[testCsvDataId].sortOrder, expectedOrder, 'should sort correctly');
+  t.deepEqual(
+    nextState2.datasets[testCsvDataId].sortColumn,
+    {'gps_data.lat': 'ASCENDING'},
+    'should save sortOrder'
+  );
+
+  // sort again
+  const nextState3 = reducer(
+    nextState2,
+    VisStateActions.sortTableColumn(testCsvDataId, 'gps_data.lat')
+  );
+
+  const expectedOrder3 = [...expectedOrder].reverse();
+
+  t.deepEqual(
+    nextState3.datasets[testCsvDataId].sortOrder,
+    expectedOrder3,
+    'should sort correctly'
+  );
+  t.deepEqual(
+    nextState3.datasets[testCsvDataId].sortColumn,
+    {'gps_data.lat': 'DESCENDING'},
+    'should correctly sort'
+  );
+
+  // unsort
+  const nextState4 = reducer(
+    nextState3,
+    VisStateActions.sortTableColumn(testCsvDataId, 'gps_data.lat', 'UNSORT')
+  );
+  t.deepEqual(nextState4.datasets[testCsvDataId].sortOrder, null, 'should reset sortOrder');
+  t.deepEqual(nextState4.datasets[testCsvDataId].sortColumn, {}, 'should reset sortColumn');
+
+  // sort with mode
+  const nextState5 = reducer(
+    nextState4,
+    VisStateActions.sortTableColumn(testCsvDataId, 'gps_data.lat', 'DESCENDING')
+  );
+
+  t.deepEqual(
+    nextState5.datasets[testCsvDataId].sortOrder,
+    expectedOrder3,
+    'should sort correctly'
+  );
+  t.deepEqual(
+    nextState5.datasets[testCsvDataId].sortColumn,
+    {'gps_data.lat': 'DESCENDING'},
+    'should correctly sort'
+  );
+  t.end();
+});
+
+test('#visStateReducer -> PIN_TABLE_COLUMN', t => {
+  const initialState = CloneDeep(StateWFiles.visState);
+  const previousDataset1 = initialState.datasets[testCsvDataId];
+
+  // pin with empty arg
+  const nextState = reducer(initialState, VisStateActions.pinTableColumn());
+  t.equal(nextState, initialState, 'state should not change when input is not given');
+
+  // pin gps_data.lat
+  const nextState1 = reducer(
+    nextState,
+    VisStateActions.pinTableColumn(testCsvDataId, 'gps_data.lat')
+  );
+
+  const newKeys = Object.keys(nextState1.datasets[testCsvDataId]);
+  const addedKeys = newKeys.filter(k => !Object.keys(previousDataset1).includes(k));
+
+  t.deepEqual(addedKeys, ['pinnedColumns'], 'should add pinnedColumns to dataset');
+
+  t.deepEqual(
+    nextState1.datasets[testCsvDataId].pinnedColumns,
+    ['gps_data.lat'],
+    'should add to pinned columns'
+  );
+
+  // unpin
+  const nextState2 = reducer(
+    nextState1,
+    VisStateActions.pinTableColumn(testCsvDataId, 'gps_data.lat')
+  );
+
+  t.deepEqual(
+    nextState2.datasets[testCsvDataId].pinnedColumns,
+    [],
+    'should remove from pinned columns'
+  );
 
   t.end();
 });

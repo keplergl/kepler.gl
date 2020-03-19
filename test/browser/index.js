@@ -23,3 +23,6 @@ import './components';
 
 // test layers
 import './layer-tests';
+
+// test reducers
+import './reducers';

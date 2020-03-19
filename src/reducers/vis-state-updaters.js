@@ -24,6 +24,8 @@ import cloneDeep from 'lodash.clonedeep';
 import uniq from 'lodash.uniq';
 import get from 'lodash.get';
 import xor from 'lodash.xor';
+import copy from 'copy-to-clipboard';
+import {parseFieldValue} from 'utils/data-utils';
 
 // Tasks
 import {LOAD_FILE_TASK, ACTION_TASK} from 'tasks/tasks';
@@ -50,7 +52,7 @@ import {
   updateFilterDataId
 } from 'utils/filter-utils';
 import {setFilterGpuMode, assignGpuChannel} from 'utils/gpu-filter-utils';
-import {createNewDataEntry} from 'utils/dataset-utils';
+import {createNewDataEntry, sortDatasetByColumn} from 'utils/dataset-utils';
 import {set, toArray, generateHashId} from 'utils/utils';
 
 import {findDefaultLayer, calculateLayerData} from 'utils/layer-utils/layer-utils';
@@ -72,7 +74,7 @@ import {
 
 import {Layer, LayerClasses} from 'layers';
 import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
-import {EDITOR_MODES, DATASET_FORMATS} from 'constants/default-settings';
+import {EDITOR_MODES, DATASET_FORMATS, SORT_ORDER} from 'constants/default-settings';
 
 // react-palm
 // disable capture exception for react-palm call to withTask
@@ -1527,7 +1529,6 @@ export function updateAllLayerDomainData(state, dataId, updatedFilter) {
 
       const {layerData, layer} = calculateLayerData(newLayer, state, state.layerData[i]);
 
-      // console.log('LayerData', layerData);
       newLayers.push(layer);
       newLayerData.push(layerData);
     } else {
@@ -1772,6 +1773,60 @@ export function setPolygonFilterLayerUpdater(state, payload) {
     prop: 'layerId',
     value: newLayerId
   });
+}
+
+export function sortTableColumnUpdater(state, {dataId, column, mode}) {
+  const dataset = state.datasets[dataId];
+  if (!dataset) {
+    return state;
+  }
+  if (!mode) {
+    const currentMode = get(dataset, ['sortColumn', column]);
+    mode = currentMode
+      ? Object.keys(SORT_ORDER).find(m => m !== currentMode)
+      : SORT_ORDER.ASCENDING;
+  }
+
+  const sorted = sortDatasetByColumn(dataset, column, mode);
+  return set(['datasets', dataId], sorted, state);
+}
+
+export function pinTableColumnUpdater(state, {dataId, column}) {
+  const dataset = state.datasets[dataId];
+  if (!dataset) {
+    return state;
+  }
+  const field = dataset.fields.find(f => f.name === column);
+  if (!field) {
+    return state;
+  }
+
+  let pinnedColumns;
+  if (Array.isArray(dataset.pinnedColumns) && dataset.pinnedColumns.includes(field.name)) {
+    // unpin it
+    pinnedColumns = dataset.pinnedColumns.filter(co => co !== field.name);
+  } else {
+    pinnedColumns = (dataset.pinnedColumns || []).concat(field.name);
+  }
+
+  return set(['datasets', dataId, 'pinnedColumns'], pinnedColumns, state);
+}
+
+export function copyTableColumnUpdater(state, {dataId, column}) {
+  const dataset = state.datasets[dataId];
+  if (!dataset) {
+    return state;
+  }
+  const fieldIdx = dataset.fields.findIndex(f => f.name === column);
+  if (fieldIdx < 0) {
+    return state;
+  }
+  const {type} = dataset.fields[fieldIdx];
+  const text = dataset.allData.map(d => parseFieldValue(d[fieldIdx], type)).join('\n');
+
+  copy(text);
+
+  return state;
 }
 
 /**
