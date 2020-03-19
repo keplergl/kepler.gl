@@ -270,6 +270,11 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', t => {
         id: 'muted_night',
         url:
           'https://api.mapbox.com/styles/v1/uberdata/cjfxhlikmaj1b2soyzevnywgs?pluginName=Keplergl&access_token=smoothie-the-cat'
+      },
+      {
+        id: 'satellite',
+        url:
+          'https://api.mapbox.com/styles/v1/mapbox/satellite-v9?pluginName=Keplergl&access_token=smoothie-the-cat'
       }
     ]
   };
@@ -283,7 +288,8 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', t => {
       {id: 'dark', style: {layers: [], name: 'dark'}},
       {id: 'light', style: {layers: [], name: 'light'}},
       {id: 'muted', style: {hello: 'world'}},
-      {id: 'muted_night', style: {world: 'hello'}}
+      {id: 'muted_night', style: {world: 'hello'}},
+      {id: 'satellite', style: {satellite: 'yes'}}
     ])
   );
 
@@ -303,6 +309,11 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', t => {
     muted_night: {
       ...DEFAULT_MAP_STYLES[3],
       style: {world: 'hello'}
+    },
+    satellite: {
+      ...DEFAULT_MAP_STYLES[4],
+      style: {satellite: 'yes'},
+      layerGroups: []
     }
   };
 
@@ -437,6 +448,11 @@ test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
         id: 'muted_night',
         url:
           'https://api.mapbox.com/styles/v1/uberdata/cjfxhlikmaj1b2soyzevnywgs?pluginName=Keplergl&access_token=smoothie-the-cat'
+      },
+      {
+        id: 'satellite',
+        url:
+          'https://api.mapbox.com/styles/v1/mapbox/satellite-v9?pluginName=Keplergl&access_token=smoothie-the-cat'
       }
     ]
   };

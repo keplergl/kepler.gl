@@ -252,6 +252,12 @@ export const DEFAULT_MAP_STYLES = [
     url: 'mapbox://styles/uberdata/cjfxhlikmaj1b2soyzevnywgs',
     icon: `${ICON_PREFIX}/UBER_MUTED_NIGHT.png`,
     layerGroups: DEFAULT_LAYER_GROUPS
+  },
+  {
+    id: 'satellite',
+    label: 'Satellite',
+    url: `mapbox://styles/mapbox/satellite-v9`,
+    icon: `${ICON_PREFIX}/UBER_SATELLITE.png`
   }
 ];
 
