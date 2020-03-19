@@ -18,10 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React from 'react';
 import styled from 'styled-components';
 
-const Style = styled.button`
+const StyledButton = styled.button`
   color: ${props => props.theme.optionButtonColor};
   background-color: transparent;
   border: none;
@@ -37,27 +37,11 @@ const Style = styled.button`
     opacity: 0.8;
   }
 `;
+const noop = () => {};
+const TableHeaderButton = ({onClick = noop, disabled, text, children, ...props}) => (
+  <StyledButton {...props} onClick={disabled ? null : onClick}>
+    {text || children}
+  </StyledButton>
+);
 
-class Button extends Component {
-  static defaultProps = {
-    onClick: f => f
-  };
-
-  onClick = () => {
-    const {onClick, disabled} = this.props;
-    if (disabled) {
-      return;
-    }
-
-    onClick();
-  };
-
-  render() {
-    const {text, children, ...props} = this.props;
-    const p = {...props, onClick: this.onClick};
-
-    return <Style {...p}>{text || children}</Style>;
-  }
-}
-
-export default Button;
+export default TableHeaderButton;

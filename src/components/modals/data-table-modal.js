@@ -24,6 +24,7 @@ import DatasetLabel from 'components/common/dataset-label';
 import DataTableFactory from 'components/common/data-table';
 import {createSelector} from 'reselect';
 import {renderedSize} from 'components/common/data-table/cell-size';
+import CanvasHack from 'components/common/data-table/canvas';
 
 const dgSettings = {
   sidePadding: '38px',
@@ -155,6 +156,7 @@ function DataTableModalFactory(DataTable) {
 
       return (
         <StyledModal className="dataset-modal" id="dataset-modal">
+          <CanvasHack />
           <TableContainer>
             <DatasetTabs
               activeDataset={activeDataset}

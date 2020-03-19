@@ -20,7 +20,7 @@
 
 import React, {useCallback} from 'react';
 import styled from 'styled-components';
-import Portaled from '../portaled';
+import Portaled from 'components/common/portaled';
 import DropdownList from 'components/common/item-selector/dropdown-list';
 import {SORT_ORDER, TABLE_OPTION, TABLE_OPTION_LIST} from 'constants/default-settings';
 

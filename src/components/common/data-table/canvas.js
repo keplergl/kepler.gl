@@ -35,6 +35,7 @@ import styled from 'styled-components';
   */
 export default styled.canvas`
   height: 100%;
+  left: 0;
   pointer-events: none;
   position: absolute;
   top: 0;

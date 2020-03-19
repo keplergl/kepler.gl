@@ -40,16 +40,7 @@ import OptionDropdown from 'components/common/data-table/option-dropdown';
 
 import {testFields, testAllData} from 'test/fixtures/test-csv-data';
 import {geoStyleFields, geoStyleRows} from 'test/fixtures/geojson';
-import {
-  applyActions,
-  StateWTripGeojson,
-  StateWSplitMaps,
-  StateWFilters,
-  StateWFiles,
-  StateWFilesFiltersLayerColor,
-  testCsvDataId,
-  testGeoJsonDataId
-} from 'test/helpers/mock-state';
+import {StateWFiles, testCsvDataId, testGeoJsonDataId} from 'test/helpers/mock-state';
 
 const DataTableModal = DataTableModalFactory(DataTable);
 
@@ -535,7 +526,7 @@ test('Components -> DataTableModal.render: csv 2', t => {
     theme: {}
   };
 
-  const expectedExpandedCellSize = {
+  const expectedExpandedCellSizeGeo = {
     cellSizeCache: {
       _geojson: 400,
       fillColor: 90,
@@ -549,7 +540,7 @@ test('Components -> DataTableModal.render: csv 2', t => {
   const wrapper2 = mount(<DataTable {...enriched} />);
   const componentInstance = wrapper2.instance();
   const result = componentInstance.getCellSizeCache();
-  t.deepEqual(result, expectedExpandedCellSize, 'should calculate correct cell expansion');
+  t.deepEqual(result, expectedExpandedCellSizeGeo, 'should calculate correct cell expansion');
 
   wrapper2.setState(result);
   wrapper2.update();
